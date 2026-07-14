@@ -81,12 +81,6 @@ function action(mode, type, selection) {
         return;
     }
 
-    if (flow === "confirmBuffSharingPurchase") {
-        cm.sendOk(cm.adventurerPartnerPurchaseBuffSharingItem());
-        cm.dispose();
-        return;
-    }
-
     switch (selection) {
         case 0:
             flow = "roster";
@@ -140,8 +134,8 @@ function action(mode, type, selection) {
             cm.dispose();
             break;
         case 10:
-            flow = "confirmBuffSharingPurchase";
-            cm.sendYesNo(cm.adventurerPartnerBuffSharingPurchaseConfirmation());
+            cm.openShopNPC(9000036);
+            cm.dispose();
             break;
         default:
             cm.dispose();

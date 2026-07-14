@@ -98,6 +98,10 @@ public class Shop {
         if (item.getPrice() <= 0) {
             return TransactionResult.INVALID; // bots only use meso purchases
         }
+        if (ItemConstants.isMedal(itemId)
+                && (quantity != 1 || player.haveItemWithId(itemId, true))) {
+            return TransactionResult.INVALID;
+        }
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
         Client c = player.getClient();
         if (!ItemConstants.isRechargeable(itemId)) {
@@ -166,6 +170,17 @@ public class Shop {
             // Zero-price rechargeable rows are included only so the client can recharge owned stacks.
             c.sendPacket(PacketCreator.shopTransaction((byte) 0x06));
             return;
+        }
+        if (ItemConstants.isMedal(itemId)) {
+            if (quantity != 1) {
+                c.sendPacket(PacketCreator.shopTransaction((byte) 0x06));
+                return;
+            }
+            if (c.getPlayer().haveItemWithId(itemId, true)) {
+                c.sendPacket(PacketCreator.shopTransaction((byte) 0x06));
+                c.sendPacket(PacketCreator.serverNotice(1, "You already have that medal."));
+                return;
+            }
         }
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
         if (item.getPrice() > 0) {

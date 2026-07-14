@@ -6,6 +6,8 @@ import client.BuffStat;
 import client.Skill;
 import client.profile.CharacterProfileRepository;
 import config.AdventurerPartnerConfig;
+import config.PartnerMedalEffectConfig;
+import config.PartnerMedalEffectLevelConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -41,6 +43,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.never;
 
 class AdventurerPartnerServiceTest {
+    private static final int BOND_ITEM_ID = 1142073;
     private AdventurerPartnerConfig config;
     private AdventurerPartnerRepository repository;
     private CharacterProfileRepository profiles;
@@ -148,7 +151,7 @@ class AdventurerPartnerServiceTest {
 
     @Test
     void assigningSpToSelfBuffUpdatesOtherSoloProfile() throws Exception {
-        config.SOLO_TAG_BUFF_SHARING_ENABLED = true;
+        addBondEffect(config, BOND_ITEM_ID, 30);
         when(profiles.loadDetached(20, 0, 1)).thenReturn(partner);
         Skill shadowPartner = mock(Skill.class);
         StatEffect effect = mock(StatEffect.class);
@@ -204,7 +207,7 @@ class AdventurerPartnerServiceTest {
 
     @Test
     void doublePartnerSelfBuffSharesOnlyToAnEligibleReceiverWithoutRangeChecks() {
-        config.DOUBLE_PARTNER_BUFF_SHARING_ENABLED = true;
+        addBondEffect(config, BOND_ITEM_ID, 30);
         PartnerSessionRecord doubleJournal = new PartnerSessionRecord(
                 8L, 5L, 10, 20, PartnerMode.DOUBLE_PARTNER,
                 ProfileOrientation.CANONICAL, 0L, PartnerLifecycleStatus.ACTIVATING,
@@ -214,9 +217,9 @@ class AdventurerPartnerServiceTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(partner, player, null);
         when(agents.spawnFollowing(player, 20, "Yoona"))
                 .thenReturn(new PartnerAgentLifecycleBridge.SpawnedPartner(partner, entry));
-        when(partner.haveItemEquipped(config.DOUBLE_PARTNER_BUFF_SHARING_ITEM_ID))
+        when(partner.haveItemEquipped(BOND_ITEM_ID))
                 .thenReturn(true);
-        when(player.haveItemEquipped(config.DOUBLE_PARTNER_BUFF_SHARING_ITEM_ID))
+        when(player.haveItemEquipped(BOND_ITEM_ID))
                 .thenReturn(false);
         when(partner.getAllBuffs()).thenReturn(List.of());
         StatEffect shadowPartner = mock(StatEffect.class);
@@ -227,6 +230,7 @@ class AdventurerPartnerServiceTest {
         when(shadowPartner.getBuffSourceId()).thenReturn(4111002);
         when(shadowPartner.getStatups()).thenReturn(List.of(
                 new Pair<>(BuffStat.SHADOWPARTNER, 50)));
+        when(player.getSkillLevel(4111002)).thenReturn(30);
         when(shadowPartner.applyPartnerSharedBuff(player, partner)).thenReturn(true);
         service.activate(player, PartnerMode.DOUBLE_PARTNER);
 
@@ -239,12 +243,22 @@ class AdventurerPartnerServiceTest {
 
     @Test
     void doublePartnerNonEquipmentBondOnlyNeedsToBeCarried() {
-        config.DOUBLE_PARTNER_BUFF_SHARING_ITEM_ID = 4000144;
+        addBondEffect(config, 4000144, 30);
         when(player.haveItemWithId(4000144, false)).thenReturn(true);
 
         assertTrue(service.eligibleForDoublePartnerBuff(player));
 
         verify(player, never()).haveItemEquipped(4000144);
+    }
+
+    private static void addBondEffect(AdventurerPartnerConfig config, int itemId, int maxSkillLevel) {
+        PartnerMedalEffectConfig effect = new PartnerMedalEffectConfig();
+        effect.ITEM_ID = itemId;
+        effect.EFFECT = "SELF_BUFF_BOND";
+        PartnerMedalEffectLevelConfig level = new PartnerMedalEffectLevelConfig();
+        level.MAX_SKILL_LEVEL = maxSkillLevel;
+        effect.LEVELS.add(level);
+        config.MEDAL_EFFECTS.add(effect);
     }
 
     @Test

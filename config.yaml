@@ -185,11 +185,87 @@ adventurerPartner:
     TRIGGER_SKILL_IDS: [1002, 10001002, 20001002, 20011002]
     RESTORE_CANONICAL_ON_DISCONNECT: true
     APPLY_ORDINARY_TRIGGER_BUFF: false      # When active, Partner switching replaces the ordinary trigger buff by default.
-    SOLO_TAG_BUFF_SHARING_ENABLED: true     # Opt-in: share party buffs; self buffs require the receiving profile's bond item.
-    SOLO_TAG_BUFF_SHARING_ITEM_ID: 1142073  # Demo: Be My Friend Medal. Equipment must be equipped; other item types only need to be carried.
-    SOLO_TAG_BUFF_SHARING_PRICE_MESOS: 10000000
-    DOUBLE_PARTNER_BUFF_SHARING_ENABLED: true  # Opt-in: share self buffs live; each receiver must qualify with its own bond item.
-    DOUBLE_PARTNER_BUFF_SHARING_ITEM_ID: 1142073 # Equipment must be equipped; other item types only need to be carried. No range requirement.
+    # Each effect selects the last matching LEVEL. Conditions are inclusive; omitted bounds are unrestricted.
+    # Equipment effects are evaluated live, so unequipping the medal removes its benefit immediately.
+    MEDAL_EFFECTS:
+        - ITEM_ID: 1142137                 # Spirit Diviner
+          EFFECT: SWITCH_SKILL
+          SOLO_TAG_ENABLED: true
+          DOUBLE_PARTNER_ENABLED: true
+          LEVELS:
+              - SKILL_ID: 2321008          # Genesis
+                SKILL_LEVEL: 1
+                COOLDOWN_MS: 40000
+        - ITEM_ID: 1142138                 # Soul Conjurer
+          EFFECT: SWITCH_SKILL
+          SOLO_TAG_ENABLED: true
+          DOUBLE_PARTNER_ENABLED: true
+          LEVELS:
+              - SKILL_ID: 2321008
+                SKILL_LEVEL: 5
+                COOLDOWN_MS: 30000
+        - ITEM_ID: 1142139                 # Soul Guardian
+          EFFECT: SWITCH_SKILL
+          SOLO_TAG_ENABLED: true
+          DOUBLE_PARTNER_ENABLED: true
+          LEVELS:
+              - SKILL_ID: 2321008
+                SKILL_LEVEL: 10
+                COOLDOWN_MS: 20000
+        - ITEM_ID: 1142140                 # Saint Exorcist
+          EFFECT: SWITCH_SKILL
+          SOLO_TAG_ENABLED: true
+          DOUBLE_PARTNER_ENABLED: true
+          LEVELS:
+              - SKILL_ID: 2321008
+                SKILL_LEVEL: 20
+                COOLDOWN_MS: 10000
+        - ITEM_ID: 1142073                 # Be My Friend Medal
+          EFFECT: SELF_BUFF_BOND
+          SOLO_TAG_ENABLED: true
+          DOUBLE_PARTNER_ENABLED: true
+          LEVELS:
+              - CONDITIONS:
+                    MIN_PARTNER_LEVEL: 70
+                MAX_SKILL_LEVEL: 10
+              - CONDITIONS:
+                    MIN_PARTNER_LEVEL: 95
+                MAX_SKILL_LEVEL: 20
+              - CONDITIONS:
+                    MIN_PARTNER_LEVEL: 120
+                MAX_SKILL_LEVEL: 30
+        - ITEM_ID: 1142006                 # Maple Idol Medal: positive fame increases meso amount.
+          EFFECT: MESO_FAME_BONUS
+          SOLO_TAG_ENABLED: true
+          DOUBLE_PARTNER_ENABLED: true
+          LEVELS:
+              - FAME_PER_PERCENT: 10
+                MAX_PERCENT: 50.0
+        - ITEM_ID: 1142006                 # Maple Idol Medal: negative fame can duplicate ETC drops.
+          EFFECT: ETC_FAME_EXTRA_ROLL
+          SOLO_TAG_ENABLED: true
+          DOUBLE_PARTNER_ENABLED: true
+          LEVELS:
+              - FAME_PER_PERCENT: 10
+                MAX_PERCENT: 50.0
+        - ITEM_ID: 1142005                 # Legendary Hunter Medal
+          EFFECT: DROP_RATE_BONUS
+          SOLO_TAG_ENABLED: true
+          DOUBLE_PARTNER_ENABLED: true
+          LEVELS:
+              - PERCENT: 20.0
+        - ITEM_ID: 1142082                 # Lovely Pet Owner (v83 equivalent for Devoted Master)
+          EFFECT: EXP_BONUS
+          SOLO_TAG_ENABLED: true
+          DOUBLE_PARTNER_ENABLED: true
+          LEVELS:
+              - PERCENT: 10.0
+        - ITEM_ID: 1142083                 # Monster Expert (v83 equivalent for Dr. Monster)
+          EFFECT: REGULAR_MOB_BONUS_DAMAGE
+          SOLO_TAG_ENABLED: true
+          DOUBLE_PARTNER_ENABLED: true
+          LEVELS:
+              - PERCENT: 20.0
 
 server:
     #Database Configuration

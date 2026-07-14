@@ -99,6 +99,7 @@ import server.life.MonsterInformationProvider;
 import server.maps.MapItem;
 import server.maps.MapObject;
 import server.maps.MapleMap;
+import server.partner.PartnerMedalEffectService;
 import tools.PacketCreator;
 import tools.Randomizer;
 
@@ -537,6 +538,16 @@ public abstract class AbstractDealDamageHandler extends AbstractPacketHandler {
                         }
 
                         map.damageMonster(player, monster, totDamageToOneMonster, target.getValue().delay());
+                        if (!monster.isBoss() && monster.getHp() > 0) {
+                            int partnerBonus = PartnerMedalEffectService.INSTANCE.regularMobBonusDamage(
+                                    player, totDamageToOneMonster);
+                            if (partnerBonus > 0) {
+                                map.broadcastMessage(
+                                        PacketCreator.damageMonster(monster.getObjectId(), partnerBonus),
+                                        monster.getPosition());
+                                map.damageMonster(player, monster, partnerBonus);
+                            }
+                        }
                     }
                     if (monster.isBuffed(MonsterStatus.WEAPON_REFLECT) && !attack.magic) {
                         for (MobSkillId msId : monster.getSkills()) {

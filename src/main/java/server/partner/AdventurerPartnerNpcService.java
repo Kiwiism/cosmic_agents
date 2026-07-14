@@ -2,7 +2,6 @@ package server.partner;
 
 import client.Character;
 import client.Job;
-import constants.inventory.ItemConstants;
 
 import java.util.List;
 import java.util.Locale;
@@ -36,12 +35,8 @@ public final class AdventurerPartnerNpcService {
         StringBuilder menu = new StringBuilder(
                 "Even the strongest adventurers need someone they can trust.\r\n\r\n");
         if (buffSharing.enabled()) {
-            menu.append("Solo Tag Self-Buff Bond: ")
+            menu.append("Partner Self-Buff Bond: ")
                     .append(buffSharing.entitlementStatus(player)).append("\r\n\r\n");
-        }
-        if (service.doublePartnerBuffSharingEnabled()) {
-            menu.append("Double Partner Self-Buff Bond: ")
-                    .append(doublePartnerBuffSharingStatus(player)).append("\r\n\r\n");
         }
         if (found.isEmpty()) {
             menu.append("#dNo adventuring Partner is registered.#k\r\n\r\n")
@@ -68,11 +63,7 @@ public final class AdventurerPartnerNpcService {
             }
             menu.append("#L6#Release my partner#l\r\n");
         }
-        if (buffSharing.enabled() && !buffSharing.ownsItem(player)) {
-            menu.append("#L10#Purchase #t").append(buffSharing.itemId()).append("# for ")
-                    .append(String.format("%,d", buffSharing.priceMesos()))
-                    .append(" mesos#l\r\n");
-        }
+        menu.append("#L10#Browse Partner medals#l\r\n");
         return menu.append("#L7#Explain the Adventurer Partner Program#l\r\n")
                 .append("#L8#Continue with Agent E's regular duties#l\r\n")
                 .append("#L9#Leave#l")
@@ -228,44 +219,24 @@ public final class AdventurerPartnerNpcService {
         });
     }
 
-    public String buffSharingPurchaseConfirmation() {
-        return buffSharing.purchaseConfirmation();
-    }
-
-    public String purchaseBuffSharingItem(Character player) {
-        return execute(() -> buffSharing.purchase(player));
-    }
-
     public String explanation() {
         return "The Adventurer Partner Program links two independent characters from the same account and world. "
                 + "Your Partner's IGN, level, job, status, and selected mode are shown in my main menu.\r\n\r\n"
                 + "#bSolo Tag Mode#k safely loads one active and one dormant profile. Prepare Solo Tag, then use "
                 + "Nimble Feet to switch without moving the actor or camera. When Solo Tag buff sharing is enabled, "
-                + "ordinary party buffs merge automatically. A receiving character who carries the configured "
-                + "bond item (or equips it when it is equipment) also receives the other profile's self buffs. "
-                + "Eligibility is checked separately for each character, and the strongest value wins when buffs "
-                + "overlap.\r\n\r\n"
+                + "ordinary party buffs merge automatically. An equipped Partner medal can add tiered effects, "
+                + "including self-buff sharing and a skill cast when that medal's character tags in. The configured "
+                + "level conditions decide the strength, and the strongest value wins when buffs overlap.\r\n\r\n"
                 + "#bDouble Partner Mode#k invites your Partner as an Agent. Both actors remain visible, and Nimble "
                 + "Feet exchanges their profiles only while they are in the same map. When Double Partner buff "
-                + "sharing is enabled, a self buff is copied to the other actor as soon as it is cast, at any "
-                + "distance. The receiver must carry the configured bond item, or equip it when it is equipment. "
+                + "sharing is enabled by the receiving character's equipped bond medal, a self buff is copied to "
+                + "the other actor as soon as it is cast, at any distance. "
                 + "Your Partner announces in "
                 + "party chat when preparation starts and when switching is ready, falling back to a whisper if "
                 + "party chat is unavailable.\r\n\r\n"
                 + "#bRelease my partner#k restores canonical ownership, saves progress, logs out the Partner Agent, "
                 + "and clears a stuck Partner-managed session. Your Partner says goodbye before leaving. It never "
                 + "disconnects a character being played independently.";
-    }
-
-    private String doublePartnerBuffSharingStatus(Character player) {
-        int itemId = service.doublePartnerBuffSharingItemId();
-        if (service.eligibleForDoublePartnerBuff(player)) {
-            return "#bActive#k";
-        }
-        if (player.haveItemWithId(itemId, true) && ItemConstants.isEquipment(itemId)) {
-            return "#rInactive - equip #t" + itemId + "##k";
-        }
-        return "#dNot owned#k";
     }
 
     private static boolean canActivate(AdventurerPartnerService.PartnerOverview overview) {

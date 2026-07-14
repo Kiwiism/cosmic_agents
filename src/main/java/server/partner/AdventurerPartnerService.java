@@ -3,11 +3,11 @@ package server.partner;
 import client.BuffStat;
 import client.Character;
 import client.Skill;
+import client.SkillFactory;
 import client.profile.CharacterProfileRepository;
 import client.profile.CosmicCharacterProfileRepository;
 import config.AdventurerPartnerConfig;
 import config.YamlConfig;
-import constants.inventory.ItemConstants;
 import net.server.PlayerBuffValueHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +41,7 @@ public final class AdventurerPartnerService {
     private final ProfileTransitionCoordinator transitions;
     private final PartnerSessionSkillService sessionSkills;
     private final SoloTagBuffSharingService buffSharing;
+    private final PartnerMedalEffectService medalEffects;
     private final PreparationScheduler preparationScheduler;
 
     public static AdventurerPartnerService getInstance() {
@@ -96,7 +97,8 @@ public final class AdventurerPartnerService {
         this.triggerPolicy = triggerPolicy;
         this.transitions = transitions;
         this.sessionSkills = sessionSkills;
-        this.buffSharing = new SoloTagBuffSharingService(config);
+        this.medalEffects = new PartnerMedalEffectService(config, runtimes);
+        this.buffSharing = new SoloTagBuffSharingService(config, medalEffects);
         this.preparationScheduler = preparationScheduler;
     }
 
@@ -360,9 +362,9 @@ public final class AdventurerPartnerService {
             transitions.prepareSkillUnion(journal.id(), player, partnerHolder);
             if (mode == PartnerMode.SOLO_TAG) {
                 partnerHolder.suspendProfileRuntimeTasks();
-                transitions.prepareSessionSkills(
-                        journal.id(), mode, player, partnerHolder);
             }
+            transitions.prepareSessionSkills(
+                    journal.id(), mode, player, partnerHolder);
             transitions.prepareProfiles(player, partnerHolder);
             if (spawned != null) {
                 transitions.prepareAgent(spawned.runtimeEntry(), partnerHolder);
@@ -522,8 +524,9 @@ public final class AdventurerPartnerService {
             boolean synchronizedUnion = sessionSkills.synchronizeUnionSkill(
                     active.runtime().sessionId(), source, recipient, skill);
             if (!synchronizedUnion) {
-                if (active.runtime().mode() != PartnerMode.SOLO_TAG
-                        || !config.SOLO_TAG_BUFF_SHARING_ENABLED
+                int cap = medalEffects.configuredSelfBuffSkillCap(
+                        recipient, source, active.runtime().mode());
+                if (cap <= 0
                         || !buffSharing.isLearnedSelfBuffSkill(skill, level)) {
                     return;
                 }
@@ -532,7 +535,7 @@ public final class AdventurerPartnerService {
                         new SoloTagBuffSharingService.SkillGrant(
                                 recipient,
                                 skill,
-                                (byte) level,
+                                (byte) Math.min(level, cap),
                                 source.getMasterLevel(skill),
                                 source.getSkillExpiration(skill)));
             }
@@ -603,6 +606,7 @@ public final class AdventurerPartnerService {
                 return TriggerResult.rejected(transition.reason());
             }
             applySwitchSkillCooldown(active, player);
+            medalEffects.applySwitchInEffects(active);
             return transition.presentationComplete()
                     ? TriggerResult.switched(config.APPLY_ORDINARY_TRIGGER_BUFF)
                     : TriggerResult.switchedWithRefreshWarning(transition.reason());
@@ -629,7 +633,7 @@ public final class AdventurerPartnerService {
 
     /** Shares a successfully cast self buff with the other live Double Partner actor. */
     public void onSkillBuffApplied(Character source, StatEffect effect) {
-        if (!config.ENABLED || !config.DOUBLE_PARTNER_BUFF_SHARING_ENABLED
+        if (!config.ENABLED || !medalEffects.selfBuffSharingEnabled(PartnerMode.DOUBLE_PARTNER)
                 || source == null || !isTransferableDoublePartnerSelfBuff(effect)) {
             return;
         }
@@ -654,12 +658,32 @@ public final class AdventurerPartnerService {
             } else {
                 return;
             }
+            int selfBuffCap = medalEffects.selfBuffSkillCap(
+                    recipient, source, PartnerMode.DOUBLE_PARTNER);
             if (!recipient.isLoggedin() || recipient.isProfileTransitioning()
-                    || !eligibleForDoublePartnerBuff(recipient)
+                    || selfBuffCap <= 0
                     || hasConflictingBooster(recipient, effect)) {
                 return;
             }
-            if (effect.applyPartnerSharedBuff(source, recipient)) {
+            Skill skill = SkillFactory.getSkill(effect.getBuffSourceId());
+            int sourceLevel = source.getSkillLevel(effect.getBuffSourceId());
+            if (skill == null) {
+                if (sourceLevel > 0 && sourceLevel <= selfBuffCap) {
+                    effect.applyPartnerSharedBuff(source, recipient);
+                }
+                return;
+            }
+            int sharedLevel = Math.min(Math.min(sourceLevel, selfBuffCap), skill.getMaxLevel());
+            if (sharedLevel <= 0) {
+                return;
+            }
+            sessionSkills.grant(active.runtime().sessionId(),
+                    new SoloTagBuffSharingService.SkillGrant(
+                            recipient, skill, (byte) sharedLevel,
+                            source.getMasterLevel(skill), source.getSkillExpiration(skill)));
+            StatEffect sharedEffect = sharedLevel == sourceLevel
+                    ? effect : skill.getEffect(sharedLevel);
+            if (sharedEffect.applyPartnerSharedBuff(source, recipient)) {
                 log.info("partner_double_buff shared session={} sourceActor={} recipientActor={} skill={}",
                         active.runtime().sessionId(), source.getId(), recipient.getId(),
                         effect.getBuffSourceId());
@@ -673,18 +697,15 @@ public final class AdventurerPartnerService {
     }
 
     public boolean doublePartnerBuffSharingEnabled() {
-        return config.DOUBLE_PARTNER_BUFF_SHARING_ENABLED;
+        return medalEffects.selfBuffSharingEnabled(PartnerMode.DOUBLE_PARTNER);
     }
 
     public int doublePartnerBuffSharingItemId() {
-        return config.DOUBLE_PARTNER_BUFF_SHARING_ITEM_ID;
+        return medalEffects.selfBuffBondItemId();
     }
 
     public boolean eligibleForDoublePartnerBuff(Character recipient) {
-        int itemId = config.DOUBLE_PARTNER_BUFF_SHARING_ITEM_ID;
-        return ItemConstants.isEquipment(itemId)
-                ? recipient.haveItemEquipped(itemId)
-                : recipient.haveItemWithId(itemId, false);
+        return medalEffects.hasActiveSelfBuffBond(recipient);
     }
 
     private static boolean isTransferableDoublePartnerSelfBuff(StatEffect effect) {
@@ -762,6 +783,7 @@ public final class AdventurerPartnerService {
         if (active.runtime().status().isTerminal()) {
             runtimes.remove(active);
             leases.releaseSession(active.runtime().sessionId());
+            medalEffects.clearSession(active.runtime().sessionId());
             return;
         }
         if (active.runtime().status() != PartnerLifecycleStatus.ACTIVE) {
@@ -855,6 +877,7 @@ public final class AdventurerPartnerService {
             active.runtime().close(releaseGeneration, terminal);
             leases.releaseSession(active.runtime().sessionId());
             runtimes.remove(active);
+            medalEffects.clearSession(active.runtime().sessionId());
             discardPreparedProfiles(active.humanActor(), active.partnerActorOrDormantProfile());
             log.info("partner_release link={} session={} status={} reason={}",
                     active.link().id(), active.runtime().sessionId(), terminal, reason);

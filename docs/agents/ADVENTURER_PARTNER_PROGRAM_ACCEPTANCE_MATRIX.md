@@ -76,7 +76,7 @@ and cooldowns. Capture server logs and client video/screenshots for every item.
 13. Stop the server with an active swapped session, restart it, and verify canonical owners plus a recovered closed journal.
 14. Run repeated invite/switch/release/re-invite cycles while monitoring map objects, scheduled tasks, heap, and logs.
 15. Record switch pause, lock, cache, refresh, packet-count/byte, frame-hitch, and heap/task-growth measurements.
-16. Enable `SOLO_TAG_BUFF_SHARING_ENABLED`, buy the configured bond item separately on both characters, and test neither/left-only/right-only/both eligibility. For equipment, verify carried-but-unequipped is inactive and equipped is active. Exercise Magic Guard, Shadow Partner, weapon boosters, and overlapping party buffs at different levels; verify the strongest stat survives and remaining duration is preserved.
+16. Configure a `SELF_BUFF_BOND` medal, buy it separately on both characters, and test neither/left-only/right-only/both eligibility in both enabled modes. Verify carried-but-unequipped is inactive. Exercise the partner-level caps with Magic Guard, Shadow Partner, weapon boosters, and overlapping party buffs; verify the strongest stat survives and remaining duration is preserved. Test each switch-skill medal, reward medal, duplicate-purchase rejection, and immediate effect removal after unequipping.
 
 The feature does not satisfy the full Definition of Done until all 16 live items
 pass. Stock v83 actor IGN caching remains the documented client limitation;

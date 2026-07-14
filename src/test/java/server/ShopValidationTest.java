@@ -41,6 +41,21 @@ class ShopValidationTest {
     }
 
     @Test
+    void shouldRejectDuplicateMedalWithPopupBeforeCharging() {
+        Shop shop = new Shop(9000036, 9000036);
+        shop.addItem(new ShopItem((short) 1000, 1142073, 1_000_000, 0));
+        Client client = mock(Client.class);
+        Character player = mock(Character.class);
+        when(client.getPlayer()).thenReturn(player);
+        when(player.haveItemWithId(1142073, true)).thenReturn(true);
+
+        shop.buy(client, (short) 0, 1142073, (short) 1);
+
+        verify(client).sendPacket(PacketCreator.shopTransaction((byte) 0x06));
+        verify(client).sendPacket(PacketCreator.serverNotice(1, "You already have that medal."));
+    }
+
+    @Test
     void shouldRejectSaleProceedsThatDoNotFitMesoBalance() {
         Character player = mock(Character.class);
         when(player.canHoldMeso(50)).thenReturn(false);

@@ -55,24 +55,31 @@ The removed snapshot/row-replacement Double Agent POC is not used or restored.
 - Quest and Monster Book ownership still exchange in the authoritative in-memory profile and persist canonically. Switch presentation intentionally omits their normal gameplay delta packets because stock v83 treats every replay as a new quest/card notification and opens Quest Helper; the stock client has no silent bulk refresh packet. Their client panels refresh on the next normal character load.
 - A second stock-client notification path remains for quests whose completion/auto-start conditions are evaluated locally when ordinary level/job/inventory packets change. Live examples are quests 1026, 2230, and the 2300-2310 Mushking chain. The server cannot suppress those client-generated alerts without either a client patch or deliberately hiding/desynchronizing the swapped quest items, so the server keeps the authoritative inventory correct.
 - Agent E marks inactive Solo mode as `Unprepared`, confirms a live Partner Agent logout before changing to Solo, and confirms Release whenever a session, recovery state, or online Partner is present. Independently played characters remain protected from forced logout.
-- Optional Solo Tag buff sharing is disabled by default. Before each Solo transition, active skill buffs are captured by profile. When enabled, party buffs merge automatically after the binding exchange; self-only buffs such as Magic Guard, Shadow Partner, and weapon boosters require the receiving profile to qualify independently through the configured bond item. Equipment, including cash equipment, must be equipped; Use, Setup, Etc, and Cash items only need to be carried. The existing most-significant-buff resolver retains the strongest value when effects overlap.
-- Optional Double Partner buff sharing is also disabled by default. It copies successfully cast self buffs immediately to the other live actor without a range or same-map requirement. Eligibility is directional and evaluated against the receiver's configured item; equipment must be equipped and other inventory types only need to be carried. Party buffs retain their normal Cosmic behavior. Temporary union skills keep transferred buffs client-safe and are restored when the session ends.
+- Solo Tag medal effects are selected from ordered, YAML-configured levels; the last level whose partner-level, holder-level, and fame bounds match wins. Before each Solo transition, active skill buffs are captured by profile. Party buffs merge after the binding exchange; self-only buffs such as Magic Guard and Shadow Partner require the receiving profile to equip the configured bond medal and are capped by its selected level. The existing most-significant-buff resolver retains the strongest value when effects overlap.
+- Double Partner uses the same medal levels and independent mode flag. It copies successfully cast self buffs immediately to the other live actor without a range or same-map requirement. Eligibility is directional and evaluated against the receiver's equipped medal. Party buffs retain their normal Cosmic behavior. Temporary union skills keep transferred buffs client-safe and are restored when the session ends.
 - Weapon boosters never replace a different booster already active on the receiving profile. If multiple incoming booster sources conflict, all conflicting incoming boosters are skipped; a single booster still transfers when the recipient has none.
 - A normal Double Partner release sends one farewell through party chat, with an owner whisper fallback, before the Partner Agent is removed.
-- Agent E can sell the configured bond item for the configured meso price. Granting and inventory-space checks complete before mesos are charged. The demo default is `1142073` (Be My Friend Medal) at 10,000,000 mesos.
+- Agent E opens database shop `9000036`, seeded with the configured demo medals at 1,000,000 mesos. Prices can be edited in `shopitems`; a character cannot purchase a medal already owned or equipped.
 
 ## Configuration and rollback
 
 The feature is disabled by default under `adventurerPartner` in `config.yaml`. The dedicated switch cooldown defaults to 5000 ms. Enabling the feature requires `RESTORE_CANONICAL_ON_DISCONNECT: true`; startup rejects an unsafe configuration. Disabling the feature removes the Agent E menu and leaves the persistent link/session history intact. Every key in this block uses the same uppercase snake-case convention as the main server settings.
 
-Solo Tag buff sharing uses these independent settings:
+Medal effects use ordered levels and independent mode flags. For example:
 
 ```yaml
-SOLO_TAG_BUFF_SHARING_ENABLED: false
-SOLO_TAG_BUFF_SHARING_ITEM_ID: 1142073
-SOLO_TAG_BUFF_SHARING_PRICE_MESOS: 10000000
-DOUBLE_PARTNER_BUFF_SHARING_ENABLED: false
-DOUBLE_PARTNER_BUFF_SHARING_ITEM_ID: 1142073
+MEDAL_EFFECTS:
+    - ITEM_ID: 1142073
+      EFFECT: SELF_BUFF_BOND
+      SOLO_TAG_ENABLED: true
+      DOUBLE_PARTNER_ENABLED: true
+      LEVELS:
+          - CONDITIONS:
+                MIN_PARTNER_LEVEL: 70
+            MAX_SKILL_LEVEL: 10
+          - CONDITIONS:
+                MIN_PARTNER_LEVEL: 95
+            MAX_SKILL_LEVEL: 20
 ```
 
 Verified thematic demo candidates from the read-only v83 WZ data are:
@@ -85,7 +92,7 @@ Verified thematic demo candidates from the read-only v83 WZ data are:
 | Etc | `4000144` Free Spirit | Must be carried |
 | Cash | `5121000` Fighting Spirit | Must be carried |
 
-Only the single configured item ID is active at a time; the other entries are convenient category test candidates.
+Each effect has its own item ID. Equipment must be equipped; a configured non-equipment item only needs to be carried.
 
 The complete `adventurerPartner` block uses uppercase snake-case keys (`ENABLED`, `NPC_ID`, `SOLO_TAG_ENABLED`, and so on), matching the main server configuration convention.
 

@@ -63,6 +63,7 @@ import server.maps.AbstractAnimatedMapObject;
 import server.maps.MapObjectType;
 import server.maps.MapleMap;
 import server.maps.Summon;
+import server.partner.PartnerMedalEffectService;
 import tools.IntervalBuilder;
 import tools.PacketCreator;
 import tools.Pair;
@@ -731,6 +732,7 @@ public class Monster extends AbstractLoadedLife {
         if (attacker.isAlive()) {
             if (personalExp != null) {
                 personalExp *= getStatusExpMultiplier(attacker, hasPartySharers);
+                personalExp *= (float) PartnerMedalEffectService.INSTANCE.expMultiplier(attacker);
                 personalExp *= attacker.getExpRate();
             } else {
                 personalExp = 0.0f;
@@ -745,6 +747,7 @@ public class Monster extends AbstractLoadedLife {
 
             if (partyExp != null) {
                 partyExp *= getStatusExpMultiplier(attacker, hasPartySharers);
+                partyExp *= (float) PartnerMedalEffectService.INSTANCE.expMultiplier(attacker);
                 partyExp *= attacker.getExpRate();
                 partyExp *= YamlConfig.config.server.PARTY_BONUS_EXP_RATE;
             } else {

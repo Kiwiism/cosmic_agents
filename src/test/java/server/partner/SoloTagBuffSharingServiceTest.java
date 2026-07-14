@@ -4,6 +4,8 @@ import client.BuffStat;
 import client.Character;
 import client.Skill;
 import config.AdventurerPartnerConfig;
+import config.PartnerMedalEffectConfig;
+import config.PartnerMedalEffectLevelConfig;
 import net.server.PlayerBuffValueHolder;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -15,7 +17,6 @@ import java.util.Map;
 import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
@@ -24,6 +25,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class SoloTagBuffSharingServiceTest {
+    private static final int BOND_ITEM_ID = 1142073;
+
     @Test
     void soloPreparationPregrantsLearnedSelfBuffEvenWhenItIsNotActive() {
         AdventurerPartnerConfig config = enabledEquipConfig();
@@ -63,12 +66,20 @@ class SoloTagBuffSharingServiceTest {
         SoloTagBuffSharingService sharing = new SoloTagBuffSharingService(config);
         Character human = mock(Character.class);
         Character partner = mock(Character.class);
-        Skill magicGuard = new Skill(2001002);
-        Skill shadowPartner = new Skill(4111002);
+        Skill magicGuard = mock(Skill.class);
+        Skill shadowPartner = mock(Skill.class);
         PlayerBuffValueHolder magicGuardBuff =
-                buff(BuffStat.MAGIC_GUARD, 40, magicGuard.getId());
+                buff(BuffStat.MAGIC_GUARD, 40, 2001002);
         PlayerBuffValueHolder shadowPartnerBuff =
-                buff(BuffStat.SHADOWPARTNER, 50, shadowPartner.getId());
+                buff(BuffStat.SHADOWPARTNER, 50, 4111002);
+        when(magicGuard.getId()).thenReturn(2001002);
+        when(magicGuard.getMaxLevel()).thenReturn(20);
+        when(magicGuard.getEffect(20)).thenReturn(magicGuardBuff.effect);
+        when(magicGuard.getAction()).thenReturn(true);
+        when(shadowPartner.getId()).thenReturn(4111002);
+        when(shadowPartner.getMaxLevel()).thenReturn(30);
+        when(shadowPartner.getEffect(30)).thenReturn(shadowPartnerBuff.effect);
+        when(shadowPartner.getAction()).thenReturn(true);
         when(human.getAllBuffs()).thenReturn(List.of(magicGuardBuff));
         when(human.getSkills()).thenReturn(Map.of(
                 magicGuard, new Character.SkillEntry((byte) 20, 0, -1L)));
@@ -101,7 +112,7 @@ class SoloTagBuffSharingServiceTest {
                 shadowPartner, new Character.SkillEntry((byte) 30, 0, -1L)));
         when(partner.getAllBuffs()).thenReturn(List.of());
         when(partner.getSkills()).thenReturn(Map.of());
-        when(partner.haveItemEquipped(config.SOLO_TAG_BUFF_SHARING_ITEM_ID)).thenReturn(true);
+        when(partner.haveItemEquipped(BOND_ITEM_ID)).thenReturn(true);
 
         SoloTagBuffSharingService.SharingPlan plan =
                 sharing.capture(PartnerMode.SOLO_TAG, human, partner);
@@ -144,8 +155,8 @@ class SoloTagBuffSharingServiceTest {
         PlayerBuffValueHolder partnerBuff = buff(BuffStat.SHADOWPARTNER, 50, 4111002);
         when(human.getAllBuffs()).thenReturn(List.of(humanBuff));
         when(partner.getAllBuffs()).thenReturn(List.of(partnerBuff));
-        when(human.haveItemEquipped(config.SOLO_TAG_BUFF_SHARING_ITEM_ID)).thenReturn(false);
-        when(partner.haveItemEquipped(config.SOLO_TAG_BUFF_SHARING_ITEM_ID)).thenReturn(true);
+        when(human.haveItemEquipped(BOND_ITEM_ID)).thenReturn(false);
+        when(partner.haveItemEquipped(BOND_ITEM_ID)).thenReturn(true);
 
         SoloTagBuffSharingService.SharingPlan plan =
                 sharing.capture(PartnerMode.SOLO_TAG, human, partner);
@@ -162,8 +173,7 @@ class SoloTagBuffSharingServiceTest {
     @Test
     void carriedNonEquipmentItemQualifiesWithoutEquipmentCheck() {
         AdventurerPartnerConfig config = new AdventurerPartnerConfig();
-        config.SOLO_TAG_BUFF_SHARING_ENABLED = true;
-        config.SOLO_TAG_BUFF_SHARING_ITEM_ID = 4000144;
+        addBondEffect(config, 4000144, 30);
         Character character = mock(Character.class);
         when(character.haveItemWithId(4000144, false)).thenReturn(true);
 
@@ -175,7 +185,7 @@ class SoloTagBuffSharingServiceTest {
     void activeEntitlementUsesReadableDarkBlueText() {
         AdventurerPartnerConfig config = enabledEquipConfig();
         Character character = mock(Character.class);
-        when(character.haveItemEquipped(config.SOLO_TAG_BUFF_SHARING_ITEM_ID)).thenReturn(true);
+        when(character.haveItemEquipped(BOND_ITEM_ID)).thenReturn(true);
 
         assertEquals("#bActive#k", new SoloTagBuffSharingService(config).entitlementStatus(character));
     }
@@ -190,7 +200,7 @@ class SoloTagBuffSharingServiceTest {
         PlayerBuffValueHolder weak = buff(BuffStat.WATK, 5, 1101006);
         when(human.getAllBuffs()).thenReturn(List.of(strong, weak));
         when(partner.getAllBuffs()).thenReturn(List.of());
-        when(partner.haveItemEquipped(config.SOLO_TAG_BUFF_SHARING_ITEM_ID)).thenReturn(true);
+        when(partner.haveItemEquipped(BOND_ITEM_ID)).thenReturn(true);
 
         SoloTagBuffSharingService.SharingPlan plan =
                 sharing.capture(PartnerMode.SOLO_TAG, human, partner);
@@ -214,7 +224,7 @@ class SoloTagBuffSharingServiceTest {
         PlayerBuffValueHolder daggerBooster = buff(BuffStat.BOOSTER, -2, 4201002);
         when(human.getAllBuffs()).thenReturn(List.of(clawBooster));
         when(partner.getAllBuffs()).thenReturn(List.of(daggerBooster));
-        when(partner.haveItemEquipped(config.SOLO_TAG_BUFF_SHARING_ITEM_ID)).thenReturn(true);
+        when(partner.haveItemEquipped(BOND_ITEM_ID)).thenReturn(true);
 
         SoloTagBuffSharingService.SharingPlan plan =
                 sharing.capture(PartnerMode.SOLO_TAG, human, partner);
@@ -235,7 +245,7 @@ class SoloTagBuffSharingServiceTest {
         PlayerBuffValueHolder clawBooster = buff(BuffStat.BOOSTER, -2, 4101003);
         when(human.getAllBuffs()).thenReturn(List.of(clawBooster));
         when(partner.getAllBuffs()).thenReturn(List.of());
-        when(partner.haveItemEquipped(config.SOLO_TAG_BUFF_SHARING_ITEM_ID)).thenReturn(true);
+        when(partner.haveItemEquipped(BOND_ITEM_ID)).thenReturn(true);
 
         SoloTagBuffSharingService.SharingPlan plan =
                 sharing.capture(PartnerMode.SOLO_TAG, human, partner);
@@ -276,51 +286,28 @@ class SoloTagBuffSharingServiceTest {
                 .noneMatch(pair -> pair.getRight().effect == selfBuff.effect));
     }
 
-    @Test
-    void successfulPurchaseChargesConfiguredPriceAfterGrant() {
-        AdventurerPartnerConfig config = new AdventurerPartnerConfig();
-        config.SOLO_TAG_BUFF_SHARING_ENABLED = true;
-        config.SOLO_TAG_BUFF_SHARING_ITEM_ID = 4000144;
-        config.SOLO_TAG_BUFF_SHARING_PRICE_MESOS = 12_345_678;
-        Character buyer = mock(Character.class);
-        when(buyer.getMeso()).thenReturn(20_000_000);
-        when(buyer.canHold(4000144)).thenReturn(true);
-        SoloTagBuffSharingService sharing = new SoloTagBuffSharingService(config, (character, itemId) -> true);
-
-        String result = sharing.purchase(buyer);
-
-        assertTrue(result.contains("12,345,678 mesos"));
-        verify(buyer).gainMeso(-12_345_678, true, false, true);
-    }
-
-    @Test
-    void failedGrantNeverChargesMesos() {
-        AdventurerPartnerConfig config = new AdventurerPartnerConfig();
-        config.SOLO_TAG_BUFF_SHARING_ENABLED = true;
-        config.SOLO_TAG_BUFF_SHARING_ITEM_ID = 4000144;
-        Character buyer = mock(Character.class);
-        when(buyer.getMeso()).thenReturn(Integer.MAX_VALUE);
-        when(buyer.canHold(4000144)).thenReturn(true);
-        SoloTagBuffSharingService sharing = new SoloTagBuffSharingService(config, (character, itemId) -> false);
-
-        IllegalStateException failure = assertThrows(
-                IllegalStateException.class, () -> sharing.purchase(buyer));
-        assertTrue(failure.getMessage().contains("could not be added"));
-
-        verify(buyer, never()).gainMeso(anyInt(), org.mockito.ArgumentMatchers.anyBoolean(),
-                org.mockito.ArgumentMatchers.anyBoolean(), org.mockito.ArgumentMatchers.anyBoolean());
-    }
-
     private static AdventurerPartnerConfig enabledEquipConfig() {
         AdventurerPartnerConfig config = new AdventurerPartnerConfig();
-        config.SOLO_TAG_BUFF_SHARING_ENABLED = true;
-        config.SOLO_TAG_BUFF_SHARING_ITEM_ID = 1142073;
+        addBondEffect(config, BOND_ITEM_ID, 30);
         return config;
+    }
+
+    private static void addBondEffect(AdventurerPartnerConfig config, int itemId, int maxSkillLevel) {
+        PartnerMedalEffectConfig effect = new PartnerMedalEffectConfig();
+        effect.ITEM_ID = itemId;
+        effect.EFFECT = "SELF_BUFF_BOND";
+        PartnerMedalEffectLevelConfig level = new PartnerMedalEffectLevelConfig();
+        level.MAX_SKILL_LEVEL = maxSkillLevel;
+        effect.LEVELS.add(level);
+        config.MEDAL_EFFECTS.add(effect);
     }
 
     private static PlayerBuffValueHolder buff(BuffStat stat, int value, int sourceId) {
         StatEffect effect = mock(StatEffect.class);
         when(effect.isSkill()).thenReturn(true);
+        when(effect.isOverTime()).thenReturn(true);
+        when(effect.getDuration()).thenReturn(180_000);
+        when(effect.isPartyBuff()).thenReturn(false);
         when(effect.getBuffSourceId()).thenReturn(sourceId);
         when(effect.getStatups()).thenReturn(List.of(new Pair<>(stat, value)));
         return new PlayerBuffValueHolder(1_000, effect);

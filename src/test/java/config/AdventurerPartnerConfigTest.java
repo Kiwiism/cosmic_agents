@@ -19,6 +19,11 @@ class AdventurerPartnerConfigTest {
     }
 
     @Test
+    void checkedInYamlPartnerConfigurationIsValid() {
+        assertDoesNotThrow(YamlConfig.config.adventurerPartner::validate);
+    }
+
+    @Test
     void enabledProgramCannotDisableCanonicalDisconnectRecovery() {
         AdventurerPartnerConfig config = new AdventurerPartnerConfig();
         config.ENABLED = true;
@@ -28,18 +33,19 @@ class AdventurerPartnerConfigTest {
     }
 
     @Test
-    void buffSharingItemAndPriceMustBeValidEvenWhileFeatureIsOff() {
+    void medalEffectsRequireSupportedTypesItemsAndLevels() {
         AdventurerPartnerConfig config = new AdventurerPartnerConfig();
-        config.SOLO_TAG_BUFF_SHARING_ITEM_ID = 0;
+        PartnerMedalEffectConfig effect = new PartnerMedalEffectConfig();
+        effect.EFFECT = "SELF_BUFF_BOND";
+        effect.LEVELS.add(new PartnerMedalEffectLevelConfig());
+        config.MEDAL_EFFECTS.add(effect);
         assertThrows(IllegalStateException.class, config::validate);
 
-        config.SOLO_TAG_BUFF_SHARING_ITEM_ID = 1142073;
-        config.SOLO_TAG_BUFF_SHARING_PRICE_MESOS = -1;
+        effect.ITEM_ID = 1142073;
         assertThrows(IllegalStateException.class, config::validate);
 
-        config.SOLO_TAG_BUFF_SHARING_PRICE_MESOS = 10_000_000;
-        config.DOUBLE_PARTNER_BUFF_SHARING_ITEM_ID = 0;
-        assertThrows(IllegalStateException.class, config::validate);
+        effect.LEVELS.getFirst().MAX_SKILL_LEVEL = 10;
+        assertDoesNotThrow(config::validate);
     }
 
     @Test
@@ -59,11 +65,18 @@ class AdventurerPartnerConfigTest {
                     TRIGGER_SKILL_IDS: [1002, 20011002]
                     RESTORE_CANONICAL_ON_DISCONNECT: true
                     APPLY_ORDINARY_TRIGGER_BUFF: true
-                    SOLO_TAG_BUFF_SHARING_ENABLED: true
-                    SOLO_TAG_BUFF_SHARING_ITEM_ID: 4000144
-                    SOLO_TAG_BUFF_SHARING_PRICE_MESOS: 12345678
-                    DOUBLE_PARTNER_BUFF_SHARING_ENABLED: true
-                    DOUBLE_PARTNER_BUFF_SHARING_ITEM_ID: 4000145
+                    MEDAL_EFFECTS:
+                        - ITEM_ID: 1142073
+                          EFFECT: SELF_BUFF_BOND
+                          SOLO_TAG_ENABLED: true
+                          DOUBLE_PARTNER_ENABLED: false
+                          LEVELS:
+                              - CONDITIONS:
+                                    MIN_PARTNER_LEVEL: 70
+                                MAX_SKILL_LEVEL: 10
+                              - CONDITIONS:
+                                    MIN_PARTNER_LEVEL: 95
+                                MAX_SKILL_LEVEL: 20
                 """;
         YamlConfig loaded;
         try (YamlReader reader = new YamlReader(new StringReader(yaml))) {
@@ -84,11 +97,14 @@ class AdventurerPartnerConfigTest {
         assertEquals(List.of(1002, 20011002), config.TRIGGER_SKILL_IDS);
         assertTrue(config.RESTORE_CANONICAL_ON_DISCONNECT);
         assertTrue(config.APPLY_ORDINARY_TRIGGER_BUFF);
-        assertTrue(config.SOLO_TAG_BUFF_SHARING_ENABLED);
-        assertEquals(4000144, config.SOLO_TAG_BUFF_SHARING_ITEM_ID);
-        assertEquals(12_345_678, config.SOLO_TAG_BUFF_SHARING_PRICE_MESOS);
-        assertTrue(config.DOUBLE_PARTNER_BUFF_SHARING_ENABLED);
-        assertEquals(4000145, config.DOUBLE_PARTNER_BUFF_SHARING_ITEM_ID);
+        assertEquals(1, config.MEDAL_EFFECTS.size());
+        PartnerMedalEffectConfig bond = config.MEDAL_EFFECTS.getFirst();
+        assertEquals(1142073, bond.ITEM_ID);
+        assertEquals("SELF_BUFF_BOND", bond.EFFECT);
+        assertTrue(bond.SOLO_TAG_ENABLED);
+        assertFalse(bond.DOUBLE_PARTNER_ENABLED);
+        assertEquals(70, bond.LEVELS.getFirst().CONDITIONS.MIN_PARTNER_LEVEL);
+        assertEquals(20, bond.LEVELS.getLast().MAX_SKILL_LEVEL);
     }
 
     @Test

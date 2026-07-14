@@ -2,11 +2,10 @@ package server.partner;
 
 import client.Character;
 import client.Skill;
+import client.SkillFactory;
 import client.BuffStat;
-import client.inventory.manipulator.InventoryManipulator;
 import config.AdventurerPartnerConfig;
 import config.YamlConfig;
-import constants.inventory.ItemConstants;
 import net.server.PlayerBuffValueHolder;
 import net.server.Server;
 import server.StatEffect;
@@ -25,29 +24,29 @@ public final class SoloTagBuffSharingService {
     public static final SoloTagBuffSharingService INSTANCE =
             new SoloTagBuffSharingService(YamlConfig.config.adventurerPartner);
 
-    private final AdventurerPartnerConfig config;
-    private final ItemGrant itemGrant;
+    private final PartnerMedalEffectService medalEffects;
 
     SoloTagBuffSharingService(AdventurerPartnerConfig config) {
-        this(config, (buyer, itemId) ->
-                InventoryManipulator.addById(buyer.getClient(), itemId, (short) 1));
+        this(config, new PartnerMedalEffectService(config, PartnerRuntimeRegistry.global()));
     }
 
-    SoloTagBuffSharingService(AdventurerPartnerConfig config, ItemGrant itemGrant) {
-        this.config = config;
-        this.itemGrant = itemGrant;
+    SoloTagBuffSharingService(AdventurerPartnerConfig config,
+                              PartnerMedalEffectService medalEffects) {
+        this.medalEffects = medalEffects;
     }
 
     public SharingPlan capture(PartnerMode mode, Character humanActor,
                                Character partnerActorOrDormantProfile) {
-        if (!config.SOLO_TAG_BUFF_SHARING_ENABLED || mode != PartnerMode.SOLO_TAG) {
+        if (mode != PartnerMode.SOLO_TAG || !medalEffects.selfBuffSharingEnabled(mode)) {
             return SharingPlan.none();
         }
         return new SharingPlan(
                 transferableBuffs(humanActor),
                 transferableBuffs(partnerActorOrDormantProfile),
-                eligible(humanActor),
-                eligible(partnerActorOrDormantProfile));
+                medalEffects.selfBuffSkillCap(
+                        humanActor, partnerActorOrDormantProfile, mode),
+                medalEffects.selfBuffSkillCap(
+                        partnerActorOrDormantProfile, humanActor, mode));
     }
 
     /**
@@ -58,11 +57,13 @@ public final class SoloTagBuffSharingService {
                                      Character humanProfile,
                                      Character partnerProfile,
                                      Consumer<SkillGrant> skillGrant) {
-        if (!config.SOLO_TAG_BUFF_SHARING_ENABLED || mode != PartnerMode.SOLO_TAG) {
+        if (!medalEffects.selfBuffSharingEnabled(mode)) {
             return;
         }
-        grantLearnedSelfBuffSkills(humanProfile, partnerProfile, skillGrant);
-        grantLearnedSelfBuffSkills(partnerProfile, humanProfile, skillGrant);
+        grantLearnedSelfBuffSkills(
+                mode, humanProfile, partnerProfile, skillGrant);
+        grantLearnedSelfBuffSkills(
+                mode, partnerProfile, humanProfile, skillGrant);
         grantBuffSourceSkills(humanProfile, transferableBuffs(partnerProfile), skillGrant);
         grantBuffSourceSkills(partnerProfile, transferableBuffs(humanProfile), skillGrant);
     }
@@ -94,77 +95,30 @@ public final class SoloTagBuffSharingService {
         if (!plan.enabled()) {
             return;
         }
-        apply(humanActor, plan.humanProfileBuffs(), plan.partnerProfileEligible(), skillGrant);
+        apply(humanActor, plan.humanProfileBuffs(), plan.partnerProfileSelfBuffCap(), skillGrant);
         apply(partnerActorOrDormantProfile, plan.partnerProfileBuffs(),
-                plan.humanProfileEligible(), skillGrant);
+                plan.humanProfileSelfBuffCap(), skillGrant);
     }
 
     public boolean enabled() {
-        return config.SOLO_TAG_BUFF_SHARING_ENABLED;
+        return medalEffects.selfBuffSharingEnabled(PartnerMode.SOLO_TAG)
+                || medalEffects.selfBuffSharingEnabled(PartnerMode.DOUBLE_PARTNER);
     }
 
     public int itemId() {
-        return config.SOLO_TAG_BUFF_SHARING_ITEM_ID;
-    }
-
-    public int priceMesos() {
-        return config.SOLO_TAG_BUFF_SHARING_PRICE_MESOS;
+        return medalEffects.selfBuffBondItemId();
     }
 
     public boolean eligible(Character character) {
-        int itemId = itemId();
-        return ItemConstants.isEquipment(itemId)
-                ? character.haveItemEquipped(itemId)
-                : character.haveItemWithId(itemId, false);
+        return medalEffects.hasActiveSelfBuffBond(character);
     }
 
     public boolean ownsItem(Character character) {
-        return character.haveItemWithId(itemId(), true);
+        return medalEffects.ownsSelfBuffBond(character);
     }
 
     public String entitlementStatus(Character character) {
-        if (!enabled()) {
-            return "Disabled";
-        }
-        if (eligible(character)) {
-            return "#bActive#k";
-        }
-        if (ownsItem(character) && ItemConstants.isEquipment(itemId())) {
-            return "#rInactive - equip #t" + itemId() + "##k";
-        }
-        return "#dNot owned#k";
-    }
-
-    public String purchase(Character buyer) {
-        if (!enabled()) {
-            throw new IllegalStateException("Solo Tag buff sharing is disabled.");
-        }
-        if (ownsItem(buyer)) {
-            throw new IllegalStateException("You already own #t" + itemId() + "#.");
-        }
-        if (buyer.getMeso() < priceMesos()) {
-            throw new IllegalStateException("You need " + formatMesos(priceMesos())
-                    + " mesos to buy #t" + itemId() + "#.");
-        }
-        if (!buyer.canHold(itemId())) {
-            throw new IllegalStateException("Make room in the correct inventory tab first.");
-        }
-        if (!itemGrant.grant(buyer, itemId())) {
-            throw new IllegalStateException("The item could not be added to your inventory.");
-        }
-        buyer.gainMeso(-priceMesos(), true, false, true);
-        String equipInstruction = ItemConstants.isEquipment(itemId())
-                ? " Equip it before switching if you want this character to receive the other profile's buffs."
-                : " Keep it in this character's inventory to receive the other profile's buffs.";
-        return "You purchased #t" + itemId() + "# for " + formatMesos(priceMesos())
-                + " mesos." + equipInstruction;
-    }
-
-    public String purchaseConfirmation() {
-        return "Purchase #t" + itemId() + "# for " + formatMesos(priceMesos())
-                + " mesos? " + (ItemConstants.isEquipment(itemId())
-                ? "This character must equip it to receive Solo Tag buffs."
-                : "This character must carry it to receive Solo Tag buffs.");
+        return medalEffects.selfBuffBondStatus(character);
     }
 
     private static BuffBundle transferableBuffs(Character source) {
@@ -201,9 +155,9 @@ public final class SoloTagBuffSharingService {
     private static void grantBuffSourceSkills(Character recipient,
                                               BuffBundle sourceBuffs,
                                               Consumer<SkillGrant> skillGrant) {
-        List<BuffTransfer> allBuffs = new ArrayList<>(sourceBuffs.partyBuffs());
-        allBuffs.addAll(sourceBuffs.selfBuffs());
-        for (BuffTransfer transfer : allBuffs) {
+        // Self-buff skills are preloaded through grantLearnedSelfBuffSkills at the
+        // configured tier cap. Do not overwrite that cap with the donor's full level.
+        for (BuffTransfer transfer : sourceBuffs.partyBuffs()) {
             if (transfer.skill() != null && transfer.skillState() != null) {
                 skillGrant.accept(new SkillGrant(
                         recipient,
@@ -215,16 +169,22 @@ public final class SoloTagBuffSharingService {
         }
     }
 
-    private void grantLearnedSelfBuffSkills(Character recipient,
+    private void grantLearnedSelfBuffSkills(PartnerMode mode,
+                                            Character recipient,
                                             Character source,
                                             Consumer<SkillGrant> skillGrant) {
+        int cap = medalEffects.configuredSelfBuffSkillCap(recipient, source, mode);
+        if (cap <= 0) {
+            return;
+        }
         for (Map.Entry<Skill, Character.SkillEntry> entry : source.getSkills().entrySet()) {
             Character.SkillEntry state = entry.getValue();
             if (isLearnedSelfBuffSkill(entry.getKey(), state.skillevel)) {
+                byte grantedLevel = (byte) Math.min(Byte.toUnsignedInt(state.skillevel), cap);
                 skillGrant.accept(new SkillGrant(
                         recipient,
                         entry.getKey(),
-                        state.skillevel,
+                        grantedLevel,
                         state.masterlevel,
                         state.expiration));
             }
@@ -239,11 +199,14 @@ public final class SoloTagBuffSharingService {
 
     private static void apply(Character recipient,
                               BuffBundle sourceBuffs,
-                              boolean receivesSelfBuffs,
+                              int selfBuffCap,
                               Consumer<SkillGrant> skillGrant) {
         List<BuffTransfer> buffs = new ArrayList<>(sourceBuffs.partyBuffs());
-        if (receivesSelfBuffs) {
-            buffs.addAll(sourceBuffs.selfBuffs());
+        if (selfBuffCap > 0) {
+            sourceBuffs.selfBuffs().stream()
+                    .map(transfer -> capped(transfer, selfBuffCap))
+                    .filter(java.util.Objects::nonNull)
+                    .forEach(buffs::add);
         }
         buffs.sort(buffPriority());
         buffs = removeWeakerDuplicateSources(recipient, buffs);
@@ -309,8 +272,33 @@ public final class SoloTagBuffSharingService {
                 || (candidateScore == existingScore && candidate.usedTime < existing.usedTime);
     }
 
-    private static String formatMesos(int mesos) {
-        return String.format("%,d", mesos);
+    private static BuffTransfer capped(BuffTransfer transfer, int cap) {
+        int sourceLevel = transfer.skillState() == null
+                ? cap : Byte.toUnsignedInt(transfer.skillState().skillevel);
+        Skill skill = transfer.skill() != null
+                ? transfer.skill() : SkillFactory.getSkill(transfer.holder().effect.getBuffSourceId());
+        if (skill == null) {
+            return transfer;
+        }
+        int skillMaxLevel = skill.getMaxLevel();
+        int level = Math.min(sourceLevel, cap);
+        if (skillMaxLevel > 0) {
+            level = Math.min(level, skillMaxLevel);
+        }
+        if (level <= 0) {
+            return null;
+        }
+        Character.SkillEntry sourceState = transfer.skillState();
+        Character.SkillEntry cappedState = sourceState == null
+                ? null
+                : new Character.SkillEntry(
+                (byte) level, sourceState.masterlevel, sourceState.expiration);
+        StatEffect cappedEffect = skillMaxLevel > 0
+                ? skill.getEffect(level) : transfer.holder().effect;
+        return new BuffTransfer(
+                new PlayerBuffValueHolder(transfer.holder().usedTime, cappedEffect),
+                skill,
+                cappedState);
     }
 
     private record BuffTransfer(PlayerBuffValueHolder holder,
@@ -331,14 +319,14 @@ public final class SoloTagBuffSharingService {
 
     record SharingPlan(BuffBundle humanProfileBuffs,
                        BuffBundle partnerProfileBuffs,
-                       boolean humanProfileEligible,
-                       boolean partnerProfileEligible) {
+                       int humanProfileSelfBuffCap,
+                       int partnerProfileSelfBuffCap) {
         static SharingPlan none() {
-            return new SharingPlan(BuffBundle.none(), BuffBundle.none(), false, false);
+            return new SharingPlan(BuffBundle.none(), BuffBundle.none(), 0, 0);
         }
 
         private boolean enabled() {
-            return humanProfileEligible || partnerProfileEligible
+            return humanProfileSelfBuffCap > 0 || partnerProfileSelfBuffCap > 0
                     || !humanProfileBuffs.isEmpty() || !partnerProfileBuffs.isEmpty();
         }
     }
@@ -348,10 +336,5 @@ public final class SoloTagBuffSharingService {
                       byte level,
                       int masterLevel,
                       long expiration) {
-    }
-
-    @FunctionalInterface
-    interface ItemGrant {
-        boolean grant(Character buyer, int itemId);
     }
 }

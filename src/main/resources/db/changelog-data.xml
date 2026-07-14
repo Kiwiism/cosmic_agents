@@ -11,6 +11,14 @@
     <changeSet id="102" author="Ponk">
         <sqlFile path="db/data/102-shopitems-data.sql"/>
     </changeSet>
+    <changeSet id="103-adventurer-partner-medal-shop" author="Codex">
+        <preConditions onFail="HALT">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM shops WHERE shopid = 9000036 OR npcid = 9000036
+            </sqlCheck>
+        </preConditions>
+        <sqlFile path="db/data/103-adventurer-partner-medal-shop.sql"/>
+    </changeSet>
 
     <changeSet id="111" author="Ponk">
         <sqlFile path="db/data/111-makercreate-data.sql"/>

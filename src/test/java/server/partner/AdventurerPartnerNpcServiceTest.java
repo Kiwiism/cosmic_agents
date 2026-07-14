@@ -2,6 +2,8 @@ package server.partner;
 
 import client.Character;
 import config.AdventurerPartnerConfig;
+import config.PartnerMedalEffectConfig;
+import config.PartnerMedalEffectLevelConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -159,32 +161,40 @@ class AdventurerPartnerNpcServiceTest {
     }
 
     @Test
-    void enabledBuffSharingShowsPerCharacterStatusAndPurchaseOption() {
+    void enabledBuffSharingShowsPerCharacterStatusAndMedalShopOption() {
         AdventurerPartnerConfig config = new AdventurerPartnerConfig();
-        config.SOLO_TAG_BUFF_SHARING_ENABLED = true;
-        config.SOLO_TAG_BUFF_SHARING_ITEM_ID = 1142073;
-        config.SOLO_TAG_BUFF_SHARING_PRICE_MESOS = 10_000_000;
-        SoloTagBuffSharingService sharing =
-                new SoloTagBuffSharingService(config, (character, itemId) -> true);
+        addBondEffect(config);
+        SoloTagBuffSharingService sharing = new SoloTagBuffSharingService(config);
         npc = new AdventurerPartnerNpcService(service, sharing);
         when(service.overview(player)).thenReturn(Optional.empty());
 
         String menu = npc.mainMenu(player);
 
-        assertTrue(menu.contains("Solo Tag Self-Buff Bond: #dNot owned"));
-        assertTrue(menu.contains("Purchase #t1142073# for 10,000,000 mesos"));
+        assertTrue(menu.contains("Partner Self-Buff Bond: #dNot owned"));
+        assertTrue(menu.contains("Browse Partner medals"));
     }
 
     @Test
-    void enabledDoubleBuffSharingShowsReceiverBondStatus() {
-        when(service.doublePartnerBuffSharingEnabled()).thenReturn(true);
-        when(service.doublePartnerBuffSharingItemId()).thenReturn(1142073);
-        when(service.eligibleForDoublePartnerBuff(player)).thenReturn(true);
+    void equippedBondUsesReadableActiveStatus() {
+        AdventurerPartnerConfig config = new AdventurerPartnerConfig();
+        addBondEffect(config);
+        npc = new AdventurerPartnerNpcService(service, new SoloTagBuffSharingService(config));
+        when(player.haveItemEquipped(1142073)).thenReturn(true);
         when(service.overview(player)).thenReturn(Optional.empty());
 
         String menu = npc.mainMenu(player);
 
-        assertTrue(menu.contains("Double Partner Self-Buff Bond: #bActive#k"));
+        assertTrue(menu.contains("Partner Self-Buff Bond: #bActive#k"));
+    }
+
+    private static void addBondEffect(AdventurerPartnerConfig config) {
+        PartnerMedalEffectConfig effect = new PartnerMedalEffectConfig();
+        effect.ITEM_ID = 1142073;
+        effect.EFFECT = "SELF_BUFF_BOND";
+        PartnerMedalEffectLevelConfig level = new PartnerMedalEffectLevelConfig();
+        level.MAX_SKILL_LEVEL = 30;
+        effect.LEVELS.add(level);
+        config.MEDAL_EFFECTS.add(effect);
     }
 
     private void overview(PartnerLink link, AdventurerPartnerService.PartnerPresence presence) {

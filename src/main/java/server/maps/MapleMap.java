@@ -73,6 +73,7 @@ import server.monitoring.MapBroadcastDiagnostics;
 import server.partyquest.CarnivalFactory;
 import server.partyquest.CarnivalFactory.MCSkill;
 import server.partyquest.GuardianSpawnPoint;
+import server.partner.PartnerMedalEffectService;
 import tools.PacketCreator;
 import tools.Pair;
 import tools.Randomizer;
@@ -683,10 +684,14 @@ public class MapleMap {
 
         Item idrop;
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
+        double partnerDropMultiplier = PartnerMedalEffectService.INSTANCE.dropRateMultiplier(chr);
+        double extraEtcDropChance = PartnerMedalEffectService.INSTANCE.extraEtcDropChance(chr);
 
         for (final MonsterDropEntry de : dropEntry) {
             float cardRate = chr.getCardRate(de.itemId);
-            int dropChance = (int) Math.min((float) de.chance * chRate * cardRate, Integer.MAX_VALUE);
+            int dropChance = (int) Math.min(
+                    (float) de.chance * chRate * cardRate * partnerDropMultiplier,
+                    Integer.MAX_VALUE);
 
             if (Randomizer.nextInt(1_000_000) < dropChance) {
                 if (droptype == 3) {
@@ -698,6 +703,8 @@ public class MapleMap {
                     int mesos = Randomizer.rand(de.Minimum, de.Maximum);
 
                     if (mesos > 0) {
+                        mesos = (int) Math.min(Integer.MAX_VALUE,
+                                Math.round(mesos * PartnerMedalEffectService.INSTANCE.mesoMultiplier(chr)));
                         if (chr.getBuffedValue(BuffStat.MESOUP) != null) {
                             mesos = (int) (mesos * chr.getBuffedValue(BuffStat.MESOUP).doubleValue() / 100.0);
                         }
@@ -716,6 +723,23 @@ public class MapleMap {
                         idrop = new Item(de.itemId, (short) 0, (short) (de.Maximum != 1 ? Randomizer.rand(de.Minimum, de.Maximum) : 1));
                     }
                     spawnDrop(idrop, calcDropPos(pos, mob.getPosition()), mob, chr, droptype, de.questid, delay);
+                    if (ItemConstants.getInventoryType(de.itemId) == InventoryType.ETC
+                            && Randomizer.nextDouble() < extraEtcDropChance) {
+                        index++;
+                        if (droptype == 3) {
+                            pos.x = mobpos + ((index % 2 == 0)
+                                    ? (40 * ((index + 1) / 2)) : -(40 * (index / 2)));
+                        } else {
+                            pos.x = mobpos + ((index % 2 == 0)
+                                    ? (25 * ((index + 1) / 2)) : -(25 * (index / 2)));
+                        }
+                        Item extraDrop = new Item(
+                                de.itemId, (short) 0,
+                                (short) (de.Maximum != 1
+                                        ? Randomizer.rand(de.Minimum, de.Maximum) : 1));
+                        spawnDrop(extraDrop, calcDropPos(pos, mob.getPosition()), mob, chr,
+                                droptype, de.questid, delay);
+                    }
                 }
                 index++;
             }
@@ -730,9 +754,12 @@ public class MapleMap {
 
         Item idrop;
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
+        double partnerDropMultiplier = PartnerMedalEffectService.INSTANCE.dropRateMultiplier(chr);
+        double extraEtcDropChance = PartnerMedalEffectService.INSTANCE.extraEtcDropChance(chr);
 
         for (final MonsterGlobalDropEntry de : globalEntry) {
-            if (Randomizer.nextInt(1_000_000) < de.chance) {
+            int dropChance = (int) Math.min(de.chance * partnerDropMultiplier, Integer.MAX_VALUE);
+            if (Randomizer.nextInt(1_000_000) < dropChance) {
                 if (droptype == 3) {
                     pos.x = mobpos + (d % 2 == 0 ? (40 * (d + 1) / 2) : -(40 * (d / 2)));
                 } else {
@@ -746,6 +773,23 @@ public class MapleMap {
                     }
                     spawnDrop(idrop, calcDropPos(pos, mob.getPosition()), mob, chr, droptype, de.questid, delay);
                     d++;
+                    if (ItemConstants.getInventoryType(de.itemId) == InventoryType.ETC
+                            && Randomizer.nextDouble() < extraEtcDropChance) {
+                        if (droptype == 3) {
+                            pos.x = mobpos + ((d % 2 == 0)
+                                    ? (40 * ((d + 1) / 2)) : -(40 * (d / 2)));
+                        } else {
+                            pos.x = mobpos + ((d % 2 == 0)
+                                    ? (25 * ((d + 1) / 2)) : -(25 * (d / 2)));
+                        }
+                        Item extraDrop = new Item(
+                                de.itemId, (short) 0,
+                                (short) (de.Maximum != 1
+                                        ? Randomizer.rand(de.Minimum, de.Maximum) : 1));
+                        spawnDrop(extraDrop, calcDropPos(pos, mob.getPosition()), mob, chr,
+                                droptype, de.questid, delay);
+                        d++;
+                    }
                 }
             }
         }
