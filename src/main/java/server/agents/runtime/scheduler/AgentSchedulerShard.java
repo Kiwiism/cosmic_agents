@@ -130,6 +130,12 @@ final class AgentSchedulerShard<T> {
         return readyMembership.size();
     }
 
+    Map<AgentPriorityClass, Integer> readyDepths() {
+        Map<AgentPriorityClass, Integer> depths = new EnumMap<>(AgentPriorityClass.class);
+        readyQueues.forEach((priority, queue) -> depths.put(priority, queue.size()));
+        return Map.copyOf(depths);
+    }
+
     boolean isIdle() {
         return ingress.isEmpty() && dueHeap.isEmpty() && readyMembership.isEmpty();
     }

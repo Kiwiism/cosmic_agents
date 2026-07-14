@@ -361,13 +361,15 @@ public final class AgentTickScheduler {
                         registrations.size(),
                         shard.ingressDepth(),
                         shard.scheduledCount(),
-                        shard.readyCount());
+                        shard.readyCount(),
+                        shard.readyDepths());
             } else {
                 AgentSchedulerMetrics.recordDepths(
                         shard.ingressDepth(),
                         shard.ingressHighWaterMark(),
                         shard.scheduledCount(),
-                        shard.readyCount());
+                        shard.readyCount(),
+                        shard.readyDepths());
             }
         } finally {
             ticking.set(false);
@@ -687,9 +689,9 @@ public final class AgentTickScheduler {
             wakeQueued.set(false);
             AgentLoadSheddingRuntime.clearShard(shardId);
             if (config.mode() == AgentSchedulerMode.CENTRAL_SHARDED) {
-                AgentSchedulerMetrics.recordShardDepths(shardId, 0, 0, 0, 0);
+                AgentSchedulerMetrics.recordShardDepths(shardId, 0, 0, 0, 0, Map.of());
             } else {
-                AgentSchedulerMetrics.recordDepths(0, shard.ingressHighWaterMark(), 0, 0);
+                AgentSchedulerMetrics.recordDepths(0, shard.ingressHighWaterMark(), 0, 0, Map.of());
             }
         }
     }

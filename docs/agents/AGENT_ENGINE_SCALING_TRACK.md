@@ -270,11 +270,11 @@ Must provide:
 
 Current scheduler implementation provides bounded top slow/overdue Agent,
 map, mailbox, current failure-window, and instrumented capability views plus
-per-Agent and per-map drill-down. It also reports registration state, ready
-priority, cycle-budget utilization, lifecycle transitions, mailbox outcomes,
-and bounded work/simulation/tick-slice cost percentiles. Plan/objective and
-memory/journal counts remain capability-observability work outside scheduler
-ownership.
+per-Agent and per-map drill-down. It also reports registration state,
+global/per-shard ready-priority current and high-water depth, cycle-budget
+utilization, lifecycle transitions, mailbox outcomes, and bounded
+work/simulation/tick-slice cost percentiles. Plan/objective and memory/journal
+counts remain capability-observability work outside scheduler ownership.
 
 Why first:
 

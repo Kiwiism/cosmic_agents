@@ -257,10 +257,11 @@ aggregate depth gauges sum all reporting shards. Registration imbalance is the
 largest shard population minus the smallest.
 
 The operator snapshot also reports live central registration state (ready,
-waiting, paused, quiescent, and overdue), ready work by priority, cycle-budget
-average/maximum utilization, lifecycle register/replace/cancel/cleanup counts,
-and mailbox stale/expired/drained counts. `@agentscheduler costs` exposes the
-bounded p50/p95/p99 windows by work class, simulation mode, and tick slice.
+waiting, paused, quiescent, and overdue), current/high-water ready depth by
+priority globally and per shard, cycle-budget average/maximum utilization,
+lifecycle register/replace/cancel/cleanup counts, and mailbox
+stale/expired/drained counts. `@agentscheduler costs` exposes the bounded
+p50/p95/p99 windows by work class, simulation mode, and tick slice.
 In legacy mode, central registration-state detail is explicitly unavailable;
 the active population is still reported.
 

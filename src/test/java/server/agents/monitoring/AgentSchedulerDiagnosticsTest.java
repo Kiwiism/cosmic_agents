@@ -14,6 +14,7 @@ import server.agents.runtime.simulation.AgentSimulationMode;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -32,7 +33,8 @@ class AgentSchedulerDiagnosticsTest {
         System.setProperty("agents.scheduler.mode", "central-sharded");
         AgentSchedulerMetrics.recordCycle(2_500_000L);
         AgentSchedulerMetrics.recordUpdated(4L, 9_000L, AgentWorkClass.PRESENTATION_GAMEPLAY, false);
-        AgentSchedulerMetrics.recordShardDepths(0, 12, 2, 8, 1);
+        AgentSchedulerMetrics.recordShardDepths(
+                0, 12, 2, 8, 1, Map.of(AgentPriorityClass.VISIBLE, 1));
         AgentSchedulerMetrics.recordShardDepths(1, 10, 1, 7, 0);
         AgentSchedulerMetrics.recordLoadSheddingTransition(
                 1,
@@ -61,6 +63,7 @@ class AgentSchedulerDiagnosticsTest {
         assertTrue(lines.stream().anyMatch(line -> line.startsWith("Scheduler registrations:")));
         assertTrue(lines.stream().anyMatch(line -> line.startsWith("Scheduler cycle budget:")));
         assertTrue(lines.stream().anyMatch(line -> line.startsWith("Scheduler lifecycle:")));
+        assertTrue(lines.stream().anyMatch(line -> line.contains("Scheduler ready queues: VISIBLE=1/1")));
     }
 
     @Test
@@ -77,7 +80,7 @@ class AgentSchedulerDiagnosticsTest {
 
         assertTrue(lines.stream().anyMatch(line -> line.contains("4 more shard(s)")));
         assertTrue(lines.stream().anyMatch(line -> line.contains("4 more queue(s)")));
-        assertTrue(lines.size() <= 33);
+        assertTrue(lines.size() <= 34);
     }
 
     @Test

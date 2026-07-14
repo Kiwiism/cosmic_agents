@@ -53,7 +53,8 @@ Enable the existing Agent performance monitor before using `top capabilities`.
 - Agent population and per-shard registration counts;
 - ingress, due, and ready depths plus high-water marks;
 - scheduler delay and work-duration p50/p95/p99;
-- cycle-budget average/maximum utilization and ready work by priority;
+- cycle-budget average/maximum utilization and global/per-shard ready work
+  current/high-water depth by priority;
 - budget exhaustion, deferral, starvation, failure, and stale counts;
 - mailbox and async-lane depth, rejection, timeout, stale, expired, and drained
   counts;

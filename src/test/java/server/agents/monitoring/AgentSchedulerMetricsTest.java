@@ -6,9 +6,11 @@ import server.agents.runtime.AgentTickSliceKind;
 import server.agents.runtime.scheduler.AgentLoadSheddingLevel;
 import server.agents.runtime.scheduler.AgentLoadSheddingReason;
 import server.agents.runtime.scheduler.AgentLoadSheddingState;
-import server.agents.runtime.simulation.AgentSimulationMode;
+import server.agents.runtime.scheduler.AgentPriorityClass;
 import server.agents.runtime.scheduler.AgentWorkClass;
+import server.agents.runtime.simulation.AgentSimulationMode;
 
+import java.util.Map;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -71,8 +73,10 @@ class AgentSchedulerMetricsTest {
 
     @Test
     void recordsPerShardDepthAndRegistrationImbalance() {
-        AgentSchedulerMetrics.recordShardDepths(0, 12, 2, 8, 2);
-        AgentSchedulerMetrics.recordShardDepths(1, 9, 1, 7, 1);
+        AgentSchedulerMetrics.recordShardDepths(
+                0, 12, 2, 8, 2, Map.of(AgentPriorityClass.VISIBLE, 2));
+        AgentSchedulerMetrics.recordShardDepths(
+                1, 9, 1, 7, 1, Map.of(AgentPriorityClass.VISIBLE, 1));
 
         assertEquals(12, AgentSchedulerMetrics.shardSnapshots().get(0).registrations());
         assertEquals(9, AgentSchedulerMetrics.shardSnapshots().get(1).registrations());
@@ -81,6 +85,25 @@ class AgentSchedulerMetricsTest {
         assertEquals(3, AgentSchedulerMetrics.snapshot().ingressHighWaterMark());
         assertEquals(15, AgentSchedulerMetrics.snapshot().dueHeapDepth());
         assertEquals(3, AgentSchedulerMetrics.snapshot().readyDepth());
+        assertEquals(2L, AgentSchedulerMetrics.shardSnapshots().get(0).readyPriorities()
+                .get(AgentPriorityClass.VISIBLE).readyDepth());
+        assertEquals(3L, AgentSchedulerMetrics.readyPrioritySnapshots()
+                .get(AgentPriorityClass.VISIBLE).readyDepth());
+        assertEquals(3L, AgentSchedulerMetrics.readyPrioritySnapshots()
+                .get(AgentPriorityClass.VISIBLE).readyHighWaterMark());
+    }
+
+    @Test
+    void retainsReadyPriorityHighWaterAfterDepthFalls() {
+        AgentSchedulerMetrics.recordDepths(
+                0, 0, 0, 4, Map.of(AgentPriorityClass.INTERACTIVE, 4));
+        AgentSchedulerMetrics.recordDepths(
+                0, 0, 0, 1, Map.of(AgentPriorityClass.INTERACTIVE, 1));
+
+        AgentSchedulerMetrics.PrioritySnapshot snapshot = AgentSchedulerMetrics.readyPrioritySnapshots()
+                .get(AgentPriorityClass.INTERACTIVE);
+        assertEquals(1L, snapshot.readyDepth());
+        assertEquals(4L, snapshot.readyHighWaterMark());
     }
 
     @Test

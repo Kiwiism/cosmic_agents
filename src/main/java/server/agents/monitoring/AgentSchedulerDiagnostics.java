@@ -4,6 +4,7 @@ import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.scheduler.AgentLoadSheddingLevel;
 import server.agents.runtime.scheduler.AgentLoadSheddingReason;
 import server.agents.runtime.scheduler.AgentLoadSheddingState;
+import server.agents.runtime.scheduler.AgentPriorityClass;
 import server.agents.runtime.scheduler.AgentSchedulerConfig;
 import server.agents.runtime.scheduler.AgentSchedulerMode;
 
@@ -28,17 +29,19 @@ public final class AgentSchedulerDiagnostics {
             AgentSchedulerMetrics.Snapshot scheduler,
             Map<Integer, AgentSchedulerMetrics.ShardSnapshot> shards,
             int shardRegistrationImbalance,
+            Map<AgentPriorityClass, AgentSchedulerMetrics.PrioritySnapshot> readyPriorities,
             AgentSchedulerMetrics.LoadSheddingSnapshot loadShedding,
             AgentSchedulerMetrics.QuiescenceSnapshot quiescence,
             Map<String, AgentAsyncQueueMetrics.Snapshot> asyncQueues) {
         public Snapshot {
-            if (mode == null || scheduler == null || shards == null || loadShedding == null
+            if (mode == null || scheduler == null || shards == null || readyPriorities == null || loadShedding == null
                     || quiescence == null || asyncQueues == null) {
                 throw new IllegalArgumentException("Agent scheduler diagnostic snapshot is incomplete");
             }
             activeAgents = Math.max(0, activeAgents);
             shards = immutableSortedMap(shards);
             shardRegistrationImbalance = Math.max(0, shardRegistrationImbalance);
+            readyPriorities = Map.copyOf(readyPriorities);
             asyncQueues = immutableSortedMap(asyncQueues);
         }
     }
@@ -53,6 +56,7 @@ public final class AgentSchedulerDiagnostics {
                 AgentSchedulerMetrics.snapshot(),
                 AgentSchedulerMetrics.shardSnapshots(),
                 AgentSchedulerMetrics.shardRegistrationImbalance(),
+                AgentSchedulerMetrics.readyPrioritySnapshots(),
                 AgentSchedulerMetrics.loadSheddingSnapshot(),
                 AgentSchedulerMetrics.quiescenceSnapshot(),
                 AgentAsyncQueueMetrics.snapshots());
@@ -113,6 +117,7 @@ public final class AgentSchedulerDiagnostics {
                 + " deferred=" + scheduler.deferredWork() + " starvation="
                 + scheduler.starvationPromotions() + " mapDeferred=" + scheduler.mapBudgetDeferrals()
                 + " continuations=" + scheduler.tickContinuations());
+        lines.add("Scheduler ready queues: " + formatPriorityDepths(snapshot.readyPriorities()));
 
         appendShardLines(lines, snapshot);
         appendLoadSheddingLine(lines, snapshot.loadShedding());
@@ -137,7 +142,8 @@ public final class AgentSchedulerDiagnostics {
             AgentSchedulerMetrics.ShardSnapshot shard = entry.getValue();
             lines.add("  shard=" + entry.getKey() + " agents=" + shard.registrations()
                     + " ingress=" + shard.ingressDepth() + " due=" + shard.dueHeapDepth()
-                    + " ready=" + shard.readyDepth());
+                    + " ready=" + shard.readyDepth() + " priorities="
+                    + formatPriorityDepths(shard.readyPriorities()));
         }
     }
 
@@ -203,6 +209,18 @@ public final class AgentSchedulerDiagnostics {
     private static String formatPercent(long value, long total) {
         double percent = Math.max(0L, value) * 100.0 / Math.max(1L, total);
         return String.format(Locale.ROOT, "%.1f", percent);
+    }
+
+    private static String formatPriorityDepths(
+            Map<AgentPriorityClass, AgentSchedulerMetrics.PrioritySnapshot> priorities) {
+        List<String> values = new ArrayList<>();
+        for (AgentPriorityClass priority : AgentPriorityClass.values()) {
+            AgentSchedulerMetrics.PrioritySnapshot snapshot = priorities.get(priority);
+            if (snapshot != null && (snapshot.readyDepth() > 0L || snapshot.readyHighWaterMark() > 0L)) {
+                values.add(priority + "=" + snapshot.readyDepth() + "/" + snapshot.readyHighWaterMark());
+            }
+        }
+        return values.isEmpty() ? "none" : String.join(",", values);
     }
 
     private static <K extends Comparable<? super K>, V> Map<K, V> immutableSortedMap(Map<K, V> values) {

@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -53,5 +54,21 @@ class AgentSchedulerShardTest {
         assertEquals(0, shard.ingressDepth());
         assertEquals(0, shard.scheduledCount());
         assertEquals(0, shard.readyCount());
+    }
+
+    @Test
+    void reportsBoundedReadyDepthByPriority() {
+        AgentSchedulerShard<Integer> shard = new AgentSchedulerShard<>(2, Comparator.naturalOrder());
+        shard.addReady(1, AgentPriorityClass.VISIBLE);
+        shard.addReady(2, AgentPriorityClass.BACKGROUND_ACTIVE);
+
+        assertEquals(Map.of(
+                        AgentPriorityClass.CRITICAL, 0,
+                        AgentPriorityClass.INTERACTIVE, 0,
+                        AgentPriorityClass.VISIBLE, 1,
+                        AgentPriorityClass.BACKGROUND_ACTIVE, 1,
+                        AgentPriorityClass.BACKGROUND_ABSTRACT, 0,
+                        AgentPriorityClass.DEFERRED, 0),
+                shard.readyDepths());
     }
 }

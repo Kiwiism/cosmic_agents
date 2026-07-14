@@ -1,11 +1,12 @@
 package server.agents.monitoring;
 
-import server.agents.runtime.simulation.AgentSimulationMode;
 import server.agents.runtime.AgentTickSliceKind;
 import server.agents.runtime.scheduler.AgentLoadSheddingLevel;
 import server.agents.runtime.scheduler.AgentLoadSheddingReason;
 import server.agents.runtime.scheduler.AgentLoadSheddingState;
+import server.agents.runtime.scheduler.AgentPriorityClass;
 import server.agents.runtime.scheduler.AgentWorkClass;
+import server.agents.runtime.simulation.AgentSimulationMode;
 
 import java.util.EnumMap;
 import java.util.Map;
@@ -61,7 +62,15 @@ public final class AgentSchedulerMetrics {
     public record ShardSnapshot(int registrations,
                                 int ingressDepth,
                                 int dueHeapDepth,
-                                int readyDepth) {
+                                int readyDepth,
+                                Map<AgentPriorityClass, PrioritySnapshot> readyPriorities) {
+        public ShardSnapshot {
+            readyPriorities = Map.copyOf(readyPriorities);
+        }
+    }
+
+    public record PrioritySnapshot(long readyDepth,
+                                   long readyHighWaterMark) {
     }
 
     public record LoadSheddingSnapshot(Map<Integer, AgentLoadSheddingState> shardStates,
@@ -120,6 +129,10 @@ public final class AgentSchedulerMetrics {
     private static final AtomicLong INGRESS_HIGH_WATER_MARK = new AtomicLong();
     private static final AtomicLong DUE_HEAP_DEPTH = new AtomicLong();
     private static final AtomicLong READY_DEPTH = new AtomicLong();
+    private static final Map<AgentPriorityClass, AtomicLong> READY_PRIORITY_DEPTHS =
+            new EnumMap<>(AgentPriorityClass.class);
+    private static final Map<AgentPriorityClass, AtomicLong> READY_PRIORITY_HIGH_WATER_MARKS =
+            new EnumMap<>(AgentPriorityClass.class);
     private static final AgentSchedulerRollingWindow QUEUE_LAG_WINDOW =
             new AgentSchedulerRollingWindow(ROLLING_WINDOW_CAPACITY);
     private static final AgentSchedulerRollingWindow WORK_DURATION_WINDOW =
@@ -142,6 +155,10 @@ public final class AgentSchedulerMetrics {
     static {
         for (AgentWorkClass workClass : AgentWorkClass.values()) {
             WORK_CLASS_WINDOWS.put(workClass, new AgentSchedulerRollingWindow(ROLLING_WINDOW_CAPACITY));
+        }
+        for (AgentPriorityClass priority : AgentPriorityClass.values()) {
+            READY_PRIORITY_DEPTHS.put(priority, new AtomicLong());
+            READY_PRIORITY_HIGH_WATER_MARKS.put(priority, new AtomicLong());
         }
         for (AgentSimulationMode mode : AgentSimulationMode.values()) {
             SIMULATION_MODE_WINDOWS.put(mode, new AgentSchedulerRollingWindow(ROLLING_WINDOW_CAPACITY));
@@ -312,10 +329,19 @@ public final class AgentSchedulerMetrics {
                                     int ingressHighWaterMark,
                                     int dueHeapDepth,
                                     int readyDepth) {
+        recordDepths(ingressDepth, ingressHighWaterMark, dueHeapDepth, readyDepth, Map.of());
+    }
+
+    public static void recordDepths(int ingressDepth,
+                                    int ingressHighWaterMark,
+                                    int dueHeapDepth,
+                                    int readyDepth,
+                                    Map<AgentPriorityClass, Integer> readyPriorityDepths) {
         INGRESS_DEPTH.set(Math.max(0, ingressDepth));
         INGRESS_HIGH_WATER_MARK.accumulateAndGet(Math.max(0, ingressHighWaterMark), Math::max);
         DUE_HEAP_DEPTH.set(Math.max(0, dueHeapDepth));
         READY_DEPTH.set(Math.max(0, readyDepth));
+        recordReadyPriorityDepths(readyPriorityDepths);
     }
 
     public static void recordShardDepths(int shardId,
@@ -323,13 +349,34 @@ public final class AgentSchedulerMetrics {
                                          int ingressDepth,
                                          int dueHeapDepth,
                                          int readyDepth) {
+        recordShardDepths(shardId, registrations, ingressDepth, dueHeapDepth, readyDepth, Map.of());
+    }
+
+    public static void recordShardDepths(int shardId,
+                                         int registrations,
+                                         int ingressDepth,
+                                         int dueHeapDepth,
+                                         int readyDepth,
+                                         Map<AgentPriorityClass, Integer> readyPriorityDepths) {
+        int normalizedShardId = Math.max(0, shardId);
+        ShardSnapshot previous = SHARD_SNAPSHOTS.get(normalizedShardId);
+        Map<AgentPriorityClass, PrioritySnapshot> priorities = new EnumMap<>(AgentPriorityClass.class);
+        for (AgentPriorityClass priority : AgentPriorityClass.values()) {
+            long depth = Math.max(0, readyPriorityDepths.getOrDefault(priority, 0));
+            PrioritySnapshot previousPriority = previous == null
+                    ? null
+                    : previous.readyPriorities().get(priority);
+            long previousHigh = previousPriority == null ? 0L : previousPriority.readyHighWaterMark();
+            priorities.put(priority, new PrioritySnapshot(depth, Math.max(depth, previousHigh)));
+        }
         SHARD_SNAPSHOTS.put(
-                Math.max(0, shardId),
+                normalizedShardId,
                 new ShardSnapshot(
                         Math.max(0, registrations),
                         Math.max(0, ingressDepth),
                         Math.max(0, dueHeapDepth),
-                        Math.max(0, readyDepth)));
+                        Math.max(0, readyDepth),
+                        priorities));
         long aggregateIngressDepth = SHARD_SNAPSHOTS.values().stream()
                 .mapToLong(ShardSnapshot::ingressDepth)
                 .sum();
@@ -341,6 +388,15 @@ public final class AgentSchedulerMetrics {
         READY_DEPTH.set(SHARD_SNAPSHOTS.values().stream()
                 .mapToLong(ShardSnapshot::readyDepth)
                 .sum());
+        Map<AgentPriorityClass, Integer> aggregatePriorities = new EnumMap<>(AgentPriorityClass.class);
+        for (AgentPriorityClass priority : AgentPriorityClass.values()) {
+            int depth = SHARD_SNAPSHOTS.values().stream()
+                    .mapToInt(snapshot -> (int) snapshot.readyPriorities()
+                            .getOrDefault(priority, new PrioritySnapshot(0L, 0L)).readyDepth())
+                    .sum();
+            aggregatePriorities.put(priority, depth);
+        }
+        recordReadyPriorityDepths(aggregatePriorities);
     }
 
     public static Map<Integer, ShardSnapshot> shardSnapshots() {
@@ -358,6 +414,16 @@ public final class AgentSchedulerMetrics {
             maximum = Math.max(maximum, snapshot.registrations());
         }
         return maximum - minimum;
+    }
+
+    public static Map<AgentPriorityClass, PrioritySnapshot> readyPrioritySnapshots() {
+        Map<AgentPriorityClass, PrioritySnapshot> snapshots = new EnumMap<>(AgentPriorityClass.class);
+        for (AgentPriorityClass priority : AgentPriorityClass.values()) {
+            snapshots.put(priority, new PrioritySnapshot(
+                    READY_PRIORITY_DEPTHS.get(priority).get(),
+                    READY_PRIORITY_HIGH_WATER_MARKS.get(priority).get()));
+        }
+        return Map.copyOf(snapshots);
     }
 
     public static Snapshot snapshot() {
@@ -453,6 +519,8 @@ public final class AgentSchedulerMetrics {
         INGRESS_HIGH_WATER_MARK.set(0L);
         DUE_HEAP_DEPTH.set(0L);
         READY_DEPTH.set(0L);
+        READY_PRIORITY_DEPTHS.values().forEach(depth -> depth.set(0L));
+        READY_PRIORITY_HIGH_WATER_MARKS.values().forEach(depth -> depth.set(0L));
         QUEUE_LAG_WINDOW.reset();
         WORK_DURATION_WINDOW.reset();
         QUIESCENCE_DURATION_MS_WINDOW.reset();
@@ -470,5 +538,13 @@ public final class AgentSchedulerMetrics {
         Map<AgentLoadSheddingReason, Long> counts = new EnumMap<>(AgentLoadSheddingReason.class);
         counters.forEach((reason, counter) -> counts.put(reason, counter.sum()));
         return Map.copyOf(counts);
+    }
+
+    private static void recordReadyPriorityDepths(Map<AgentPriorityClass, Integer> readyPriorityDepths) {
+        for (AgentPriorityClass priority : AgentPriorityClass.values()) {
+            long depth = Math.max(0, readyPriorityDepths.getOrDefault(priority, 0));
+            READY_PRIORITY_DEPTHS.get(priority).set(depth);
+            READY_PRIORITY_HIGH_WATER_MARKS.get(priority).accumulateAndGet(depth, Math::max);
+        }
     }
 }

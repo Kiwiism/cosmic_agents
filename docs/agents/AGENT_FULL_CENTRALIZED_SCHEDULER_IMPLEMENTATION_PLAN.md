@@ -1026,11 +1026,12 @@ Required correlation:
 Metrics must use bounded rolling windows. Do not retain one event per tick for
 30 days.
 
-Implementation status: bounded scheduler registration snapshots, lifecycle and
-mailbox counters, cycle-budget utilization, bounded work/simulation/slice cost
-windows, and GM6 top-N views are locally complete. Slow/overdue views use
-current central registration state; map/mailbox/failure views use active runtime
-state; capability cost uses the existing bounded opt-in performance monitor.
+Implementation status: bounded scheduler registration snapshots, global and
+per-shard priority depth/high-water gauges, lifecycle and mailbox counters,
+cycle-budget utilization, bounded work/simulation/slice cost windows, and GM6
+top-N views are locally complete. Slow/overdue views use current central
+registration state; map/mailbox/failure views use active runtime state;
+capability cost uses the existing bounded opt-in performance monitor.
 Each operator list is capped at ten rows. There is no persistent quarantine
 state today: repeated tick failures retain their existing generation-bound
 disable/removal behavior and appear in the failure view while the session is

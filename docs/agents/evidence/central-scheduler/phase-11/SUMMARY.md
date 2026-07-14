@@ -17,9 +17,10 @@ The locally automatable part of Phase 11 is complete:
 - bounded top slow/overdue/map/capability/mailbox/failure views and Agent/map
   drill-down expose current pressure without retaining event history or
   dumping the full Agent population;
-- live registration state, ready priority, cycle-budget utilization, lifecycle
-  transitions, mailbox outcomes, and bounded scheduler cost windows complete
-  the locally automatable scheduler observability gate;
+- live registration state, global/per-shard priority depth and high-water,
+  cycle-budget utilization, lifecycle transitions, mailbox outcomes, and
+  bounded scheduler cost windows complete the locally automatable scheduler
+  observability gate;
 - process shutdown now closes admission, cancels session schedules, drains
   sequential/sharded state, invalidates pending async requests, stops bounded
   Agent executors, and publishes a structured final snapshot before Cosmic
