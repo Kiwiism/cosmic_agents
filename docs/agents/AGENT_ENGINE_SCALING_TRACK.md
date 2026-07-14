@@ -84,6 +84,11 @@ Current scheduler implementation checkpoint on
   duplicate self-execution and verifies that registrations, due/ready state,
   ingress, and scheduler ownership all return to zero after cancellation.
   This is not a substitute for live-client or sustained server soak evidence.
+- Process-level Agent shutdown is locally complete: admission closes before
+  Agent teardown, live schedule handles are cancelled, central shard state and
+  pending async requests are drained, workload executors stop under a bounded
+  deadline, and restart reopens only a clean runtime. Live server shutdown and
+  restart timing remain part of the staged gate.
 
 ## Track Split
 

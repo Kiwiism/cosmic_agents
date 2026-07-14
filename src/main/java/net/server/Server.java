@@ -71,8 +71,9 @@ import server.ExpLogger;
 import server.SkillbookInformationProvider;
 import server.ThreadManager;
 import server.TimerManager;
-import server.agents.population.AgentPopulationRuntime;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
+import server.agents.population.AgentPopulationRuntime;
+import server.agents.runtime.AgentRuntimeShutdownCoordinator;
 import server.expeditions.ExpeditionBossLog;
 import server.life.PlayerNPC;
 import server.monitoring.CharacterSaveDiagnostics;
@@ -897,6 +898,7 @@ public class Server {
         Instant beforeInit = Instant.now();
         log.info("Cosmic v{} starting up.", ServerConstants.VERSION);
 
+        AgentRuntimeShutdownCoordinator.start();
         AgentNavigationGraphService.startAsyncWarmups();
         warnRiskyRuntimeFeatures();
 
@@ -2164,8 +2166,25 @@ public class Server {
         }
         List<World> shuttingWorlds = new ArrayList<>(getWorlds());
         List<Channel> allChannels = getAllChannels();
+        AgentRuntimeShutdownCoordinator.beginShutdown();
         AgentPopulationRuntime.stop();
         AgentNavigationGraphService.shutdownAsyncWarmups();
+        AgentRuntimeShutdownCoordinator.Report agentShutdown = AgentRuntimeShutdownCoordinator.shutdown();
+        log.info("Agent runtime shutdown: sessions={} cancellations={} pendingAsync={} remaining={} "
+                        + "asyncExecutors={} queuedCancelled={} unterminated={} elapsedMs={} timedOut={}",
+                agentShutdown.sessionsObserved(),
+                agentShutdown.scheduleCancellationsRequested(),
+                agentShutdown.pendingAsyncRequestsCleared(),
+                agentShutdown.schedulerRegistrationsRemaining(),
+                agentShutdown.asyncExecutorsStopped(),
+                agentShutdown.queuedAsyncTasksCancelled(),
+                agentShutdown.unterminatedAsyncExecutors(),
+                agentShutdown.elapsedMs(),
+                agentShutdown.timedOut());
+        if (!agentShutdown.failedSessionIds().isEmpty()) {
+            log.warn("Agent sessions failed to cancel during shutdown: {}", agentShutdown.failedSessionIds());
+        }
+        log.info("Final Agent scheduler snapshot: {}", agentShutdown.finalSchedulerSnapshot());
         shutdownChannelsBounded(allChannels);
         for (World world : shuttingWorlds) {
             world.shutdownWorldResources();

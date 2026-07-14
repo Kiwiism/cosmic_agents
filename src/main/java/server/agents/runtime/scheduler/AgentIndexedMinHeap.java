@@ -54,6 +54,11 @@ final class AgentIndexedMinHeap<T> {
         return values.size();
     }
 
+    void clear() {
+        values.clear();
+        indices.clear();
+    }
+
     boolean isEmpty() {
         return values.isEmpty();
     }

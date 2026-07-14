@@ -4,6 +4,7 @@ import server.agents.integration.AgentGatewayAffinityCatalog;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
+import server.agents.runtime.AgentRuntimeShutdownCoordinator;
 import server.agents.runtime.async.AgentAsyncTaskGateway;
 
 import java.time.Duration;
@@ -11,6 +12,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -27,6 +29,9 @@ public final class AgentScheduler {
             AgentLifecycleService.AgentTickScheduler legacyScheduler) {
         if (entry == null || tick == null || legacyScheduler == null) {
             throw new IllegalArgumentException("Agent entry, tick, and legacy scheduler are required");
+        }
+        if (!AgentRuntimeShutdownCoordinator.acceptingRegistrations()) {
+            throw new RejectedExecutionException("Agent runtime is stopping");
         }
         AgentSchedulerConfig config = AgentSchedulerConfig.fromSystemProperties();
         entry.tickSliceState().configure(

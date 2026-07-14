@@ -32,6 +32,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.LockSupport;
 import java.util.function.BiFunction;
 import java.util.function.LongSupplier;
 
@@ -60,6 +61,13 @@ public final class AgentTickScheduler {
     private final int shardId;
     private int lastSuppressedReadyCount;
     private volatile ScheduledFuture<?> centralTask;
+    private volatile boolean acceptingRegistrations = true;
+
+    public record ShutdownResult(int registrations,
+                                 int cancelled,
+                                 int remaining,
+                                 boolean timedOut) {
+    }
 
     public static AgentTickScheduler instance() {
         return INSTANCE;
@@ -190,6 +198,9 @@ public final class AgentTickScheduler {
         Registration registration;
         boolean replaced;
         synchronized (lifecycleLock) {
+            if (!acceptingRegistrations) {
+                throw new RejectedExecutionException("Agent scheduler is stopping");
+            }
             if (ownedRegistrations.size() >= config.ingressCapacityPerShard()) {
                 throw new RejectedExecutionException(
                         "Agent scheduler registration capacity is full: " + config.ingressCapacityPerShard());
@@ -225,6 +236,9 @@ public final class AgentTickScheduler {
     }
 
     public void tickAll() {
+        if (!acceptingRegistrations) {
+            return;
+        }
         if (!ticking.compareAndSet(false, true)) {
             AgentSchedulerMetrics.recordSkipped(registrations.size());
             return;
@@ -356,11 +370,61 @@ public final class AgentTickScheduler {
         } finally {
             ticking.set(false);
             AgentSchedulerMetrics.recordCycle(Math.max(0L, nanoTime.getAsLong() - cycleStarted));
-            stopCentralTaskIfIdle();
-            if (continuationNeeded) {
-                queueWake();
+            if (acceptingRegistrations) {
+                stopCentralTaskIfIdle();
+                if (continuationNeeded) {
+                    queueWake();
+                }
+            } else {
+                clearStoppedState();
             }
         }
+    }
+
+    public void start() {
+        synchronized (lifecycleLock) {
+            if (ticking.get() || !registrations.isEmpty() || !ownedRegistrations.isEmpty() || !shard.isIdle()) {
+                throw new IllegalStateException("Agent scheduler still owns state from its previous lifecycle");
+            }
+            acceptingRegistrations = true;
+        }
+    }
+
+    public ShutdownResult shutdownAndDrain(Duration timeout) {
+        if (timeout == null || timeout.isNegative()) {
+            throw new IllegalArgumentException("Agent scheduler shutdown timeout must not be negative");
+        }
+        int registrationsAtStart;
+        synchronized (lifecycleLock) {
+            acceptingRegistrations = false;
+            ScheduledFuture<?> task = centralTask;
+            centralTask = null;
+            if (task != null) {
+                task.cancel(false);
+            }
+            registrationsAtStart = ownedRegistrations.size();
+            ownedRegistrations.keySet().forEach(Registration::cancelWithoutSync);
+            registrations.clear();
+            wakeQueued.set(false);
+        }
+
+        long deadline = System.nanoTime() + Math.max(0L, timeout.toNanos());
+        while (ticking.get() && System.nanoTime() < deadline) {
+            LockSupport.parkNanos(Math.min(1_000_000L, Math.max(1L, deadline - System.nanoTime())));
+        }
+        boolean timedOut = ticking.get();
+        if (!timedOut) {
+            clearStoppedState();
+        }
+        return new ShutdownResult(
+                registrationsAtStart,
+                registrationsAtStart,
+                ownedRegistrations.size(),
+                timedOut);
+    }
+
+    public boolean acceptingRegistrations() {
+        return acceptingRegistrations;
     }
 
     private void moveDueToReady(long now) {
@@ -529,6 +593,9 @@ public final class AgentTickScheduler {
     }
 
     private void ensureCentralTaskLocked() {
+        if (!acceptingRegistrations) {
+            throw new RejectedExecutionException("Agent scheduler is stopping");
+        }
         if (centralTask == null || centralTask.isCancelled() || centralTask.isDone()) {
             centralTask = loopScheduler.apply(this::tickAll, config.baseTickMs());
         }
@@ -578,6 +645,9 @@ public final class AgentTickScheduler {
     }
 
     private void queueWake() {
+        if (!acceptingRegistrations) {
+            return;
+        }
         if (!wakeQueued.compareAndSet(false, true)) {
             return;
         }
@@ -589,6 +659,25 @@ public final class AgentTickScheduler {
         } catch (RuntimeException | Error failure) {
             wakeQueued.set(false);
             throw failure;
+        }
+    }
+
+    private void clearStoppedState() {
+        synchronized (lifecycleLock) {
+            if (ticking.get()) {
+                return;
+            }
+            ownedRegistrations.keySet().forEach(Registration::cancelWithoutSync);
+            registrations.clear();
+            ownedRegistrations.clear();
+            shard.clear();
+            wakeQueued.set(false);
+            AgentLoadSheddingRuntime.clearShard(shardId);
+            if (config.mode() == AgentSchedulerMode.CENTRAL_SHARDED) {
+                AgentSchedulerMetrics.recordShardDepths(shardId, 0, 0, 0, 0);
+            } else {
+                AgentSchedulerMetrics.recordDepths(0, shard.ingressHighWaterMark(), 0, 0);
+            }
         }
     }
 

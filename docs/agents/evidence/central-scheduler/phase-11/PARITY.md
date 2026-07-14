@@ -8,3 +8,5 @@
 - The deterministic gate proves exact callback counts and no concurrent
   execution of one session; it does not prove what a MapleStory client sees.
 - Rollback remains a restart with `agents.scheduler.mode=legacy`.
+- Normal runtime behavior is unchanged. The new path executes only during
+  process shutdown/restart, before Cosmic tears down channels and timers.

@@ -8,6 +8,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.scheduler.AgentSessionId;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -62,6 +63,55 @@ class AgentAsyncTaskGatewayTest {
         assertEquals(submission.requestId(), delivered.get().requestId());
         assertEquals(0, gateway.pendingCount());
         assertEquals(0, gateway.pendingCount(AgentSessionId.from(entry)));
+    }
+
+    @Test
+    void clearAllInvalidatesEveryPendingRequest() throws Exception {
+        AgentAsyncTaskGateway gateway = new AgentAsyncTaskGateway(executors);
+        CountDownLatch started = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        gateway.submit(
+                entry,
+                AgentAsyncWorkKind.ECONOMY_ANALYSIS,
+                "shutdown",
+                () -> {
+                    started.countDown();
+                    try {
+                        release.await();
+                    } catch (InterruptedException interrupted) {
+                        Thread.currentThread().interrupt();
+                    }
+                    return "late";
+                },
+                (ignored, completion) -> { });
+        assertTrue(started.await(5, TimeUnit.SECONDS));
+
+        assertEquals(1, gateway.clearAll());
+        assertEquals(0, gateway.pendingCount());
+        release.countDown();
+    }
+
+    @Test
+    void stoppedExecutorAdmissionRejectsSubmittedAndTrackedWorkWithoutLeaks() {
+        AgentAsyncTaskGateway gateway = new AgentAsyncTaskGateway(executors);
+        executors.stopAccepting();
+
+        AgentAsyncTaskGateway.Submission submitted = gateway.submit(
+                entry,
+                AgentAsyncWorkKind.ECONOMY_ANALYSIS,
+                "submitted-after-stop",
+                () -> "late",
+                (ignored, completion) -> { });
+        AgentAsyncTaskGateway.Submission tracked = gateway.track(
+                entry,
+                AgentAsyncWorkKind.ECONOMY_ANALYSIS,
+                "tracked-after-stop",
+                CompletableFuture.completedFuture("late"),
+                (ignored, completion) -> { });
+
+        assertFalse(submitted.accepted());
+        assertFalse(tracked.accepted());
+        assertEquals(0, gateway.pendingCount());
     }
 
     @Test

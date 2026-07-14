@@ -1053,6 +1053,16 @@ count changes require restart until a proven safe migration mechanism exists.
 
 ## Shutdown
 
+Implementation status: locally complete on
+`feature/agent-central-scheduler-runtime`. `AgentRuntimeShutdownCoordinator`
+closes registration and async admission, cancels live session schedules,
+drains sequential and sharded scheduler state, invalidates pending async
+requests, stops bounded workload executors, and publishes a structured report
+plus final scheduler snapshot before Cosmic channel/timer teardown. Deterministic
+tests cover idempotency, restart, in-flight callback timeout, eventual cleanup,
+and async executor shutdown. Live shutdown/restart elapsed-time evidence remains
+a Phase 11 gate.
+
 Shutdown sequence:
 
 1. stop new Agent admissions and external ordinary commands.

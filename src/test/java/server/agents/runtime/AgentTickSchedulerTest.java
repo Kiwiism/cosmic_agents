@@ -9,8 +9,11 @@ import server.agents.runtime.scheduler.AgentSchedulerMode;
 import server.agents.runtime.scheduler.AgentScheduleHandle;
 import server.agents.runtime.scheduler.AgentTickScheduler;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -188,6 +191,60 @@ class AgentTickSchedulerTest {
         now.addAndGet(50L);
         scheduler.tickAll();
         assertEquals(3, ticks.get());
+    }
+
+    @Test
+    void shutdownRejectsRegistrationsDrainsStateAndCanRestartCleanly() {
+        AgentRuntimeEntry first = activeEntry(1, 101);
+        AgentRuntimeEntry second = activeEntry(1, 102);
+        AgentScheduleHandle firstHandle = scheduler.register(first, () -> { }, 50L);
+        AgentScheduleHandle secondHandle = scheduler.register(second, () -> { }, 50L);
+
+        AgentTickScheduler.ShutdownResult result = scheduler.shutdownAndDrain(Duration.ofSeconds(1));
+
+        assertEquals(2, result.registrations());
+        assertEquals(2, result.cancelled());
+        assertEquals(0, result.remaining());
+        assertFalse(result.timedOut());
+        assertTrue(firstHandle.isCancelled());
+        assertTrue(secondHandle.isCancelled());
+        assertEquals(0, scheduler.registrationCount());
+        assertFalse(scheduler.acceptingRegistrations());
+        assertThrows(RejectedExecutionException.class,
+                () -> scheduler.register(first, () -> { }, 50L));
+
+        scheduler.start();
+        AgentScheduleHandle restarted = scheduler.register(first, () -> { }, 50L);
+        assertTrue(scheduler.acceptingRegistrations());
+        assertTrue(restarted.cancel(false));
+        scheduler.tickAll();
+    }
+
+    @Test
+    void shutdownTimesOutAroundRunningCallbackThenCleansAfterCallbackReturns() throws Exception {
+        AgentRuntimeEntry entry = activeEntry(1, 101);
+        CountDownLatch started = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        scheduler.register(entry, () -> {
+            started.countDown();
+            try {
+                release.await();
+            } catch (InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
+            }
+        }, 50L);
+        Thread tick = Thread.ofPlatform().start(scheduler::tickAll);
+        assertTrue(started.await(1, TimeUnit.SECONDS));
+
+        AgentTickScheduler.ShutdownResult result = scheduler.shutdownAndDrain(Duration.ofMillis(1));
+
+        assertTrue(result.timedOut());
+        assertEquals(1, result.remaining());
+        release.countDown();
+        tick.join(1_000L);
+        assertFalse(tick.isAlive());
+        assertEquals(0, scheduler.registrationCount());
+        scheduler.start();
     }
 
     private AgentTickScheduler scheduler() {

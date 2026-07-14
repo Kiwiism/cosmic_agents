@@ -39,4 +39,19 @@ class AgentSchedulerShardTest {
         assertTrue(shard.remove(2));
         assertTrue(shard.isIdle());
     }
+
+    @Test
+    void clearReleasesIngressDueAndReadyState() {
+        AgentSchedulerShard<Integer> shard = new AgentSchedulerShard<>(2, Comparator.naturalOrder());
+        shard.offer(3);
+        shard.addOrUpdate(2);
+        shard.addReady(1, AgentPriorityClass.VISIBLE);
+
+        shard.clear();
+
+        assertTrue(shard.isIdle());
+        assertEquals(0, shard.ingressDepth());
+        assertEquals(0, shard.scheduledCount());
+        assertEquals(0, shard.readyCount());
+    }
 }

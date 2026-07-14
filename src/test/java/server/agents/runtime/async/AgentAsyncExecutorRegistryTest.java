@@ -83,6 +83,29 @@ class AgentAsyncExecutorRegistryTest {
         assertFalse(registry.isRunning(AgentAsyncWorkKind.LLM_NETWORK));
     }
 
+    @Test
+    void boundedShutdownRejectsNewWorkUntilRegistryIsReopened() throws Exception {
+        CountDownLatch started = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        registry.execute(AgentAsyncWorkKind.ECONOMY_ANALYSIS, () -> await(started, release));
+        assertTrue(started.await(5, TimeUnit.SECONDS));
+
+        AgentAsyncExecutorRegistry.ShutdownResult result =
+                registry.shutdownAllAndAwait(5, TimeUnit.SECONDS);
+
+        assertEquals(1, result.executors());
+        assertTrue(result.unterminatedExecutors().isEmpty());
+        assertFalse(result.interrupted());
+        assertFalse(registry.accepting());
+        assertThrows(RejectedExecutionException.class,
+                () -> registry.execute(AgentAsyncWorkKind.ECONOMY_ANALYSIS, () -> { }));
+
+        registry.startAccepting();
+        CountDownLatch restarted = new CountDownLatch(1);
+        registry.execute(AgentAsyncWorkKind.ECONOMY_ANALYSIS, restarted::countDown);
+        assertTrue(restarted.await(5, TimeUnit.SECONDS));
+    }
+
     private static void await(CountDownLatch started, CountDownLatch release) {
         started.countDown();
         try {

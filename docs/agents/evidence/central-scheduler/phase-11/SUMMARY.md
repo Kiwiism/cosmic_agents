@@ -14,6 +14,12 @@ The locally automatable part of Phase 11 is complete:
 - GM6 `@agentscheduler` exposes a bounded, read-only snapshot of scheduler,
   shard, load-shedding, quiescence, and Agent async-queue metrics for live
   evidence capture.
+- process shutdown now closes admission, cancels session schedules, drains
+  sequential/sharded state, invalidates pending async requests, stops bounded
+  Agent executors, and publishes a structured final snapshot before Cosmic
+  channel/timer teardown;
+- deterministic shutdown tests cover timeout, eventual cleanup, idempotency,
+  and clean restart admission.
 
 This evidence validates scheduler mechanics only. Phase 11 and the production
 default change remain blocked on live-client behavior and sustained server

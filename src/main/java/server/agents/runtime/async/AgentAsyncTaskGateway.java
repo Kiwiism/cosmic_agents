@@ -76,12 +76,12 @@ public final class AgentAsyncTaskGateway {
         return submit(entry, kind, requestKey, 0L, task, completionHandler);
     }
 
-    public <T> Submission submit(AgentRuntimeEntry entry,
-                                 AgentAsyncWorkKind kind,
-                                 String requestKey,
-                                 long timeoutMs,
-                                 Supplier<T> task,
-                                 CompletionHandler<T> completionHandler) {
+    public synchronized <T> Submission submit(AgentRuntimeEntry entry,
+                                              AgentAsyncWorkKind kind,
+                                              String requestKey,
+                                              long timeoutMs,
+                                              Supplier<T> task,
+                                              CompletionHandler<T> completionHandler) {
         validate(entry, kind, requestKey, task, completionHandler);
         AgentSessionId sessionId = AgentSessionId.from(entry);
         long requestId = nextRequestId.incrementAndGet();
@@ -94,21 +94,25 @@ public final class AgentAsyncTaskGateway {
             return new Submission(requestId, SubmissionStatus.ACCEPTED);
         } catch (RejectedExecutionException rejected) {
             pending.remove(key, request);
+            latestRequestIds.remove(key, requestId);
             return new Submission(requestId, SubmissionStatus.REJECTED);
         }
     }
 
-    public <T> Submission track(AgentRuntimeEntry entry,
-                                AgentAsyncWorkKind kind,
-                                String requestKey,
-                                CompletionStage<T> stage,
-                                CompletionHandler<T> completionHandler) {
+    public synchronized <T> Submission track(AgentRuntimeEntry entry,
+                                             AgentAsyncWorkKind kind,
+                                             String requestKey,
+                                             CompletionStage<T> stage,
+                                             CompletionHandler<T> completionHandler) {
         if (entry == null || kind == null || requestKey == null || requestKey.isBlank()
                 || stage == null || completionHandler == null) {
             throw new IllegalArgumentException("Agent async completion tracking inputs are required");
         }
         AgentSessionId sessionId = AgentSessionId.from(entry);
         long requestId = nextRequestId.incrementAndGet();
+        if (!executors.accepting()) {
+            return new Submission(requestId, SubmissionStatus.REJECTED);
+        }
         PendingKey key = new PendingKey(sessionId, kind, requestKey);
         PendingRequest request = new PendingRequest(entry, requestId);
         latestRequestIds.put(key, requestId);
@@ -126,6 +130,13 @@ public final class AgentAsyncTaskGateway {
     public void clearSession(int agentCharacterId) {
         pending.keySet().removeIf(key -> key.sessionId().agentCharacterId() == agentCharacterId);
         latestRequestIds.keySet().removeIf(key -> key.sessionId().agentCharacterId() == agentCharacterId);
+    }
+
+    public synchronized int clearAll() {
+        int cleared = pending.size();
+        pending.clear();
+        latestRequestIds.clear();
+        return cleared;
     }
 
     public int pendingCount() {

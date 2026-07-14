@@ -134,6 +134,13 @@ final class AgentSchedulerShard<T> {
         return ingress.isEmpty() && dueHeap.isEmpty() && readyMembership.isEmpty();
     }
 
+    void clear() {
+        ingress.clear();
+        dueHeap.clear();
+        readyQueues.values().forEach(ArrayDeque::clear);
+        readyMembership.clear();
+    }
+
     private T selectReady(int maximumEffectivePriority,
                           ToIntFunction<T> effectivePriority,
                           Comparator<? super T> readyComparator) {

@@ -295,6 +295,13 @@ public final class AgentRuntimeRegistry {
         return activeSessionsByAgentId.size();
     }
 
+    public static List<AgentRuntimeEntry> activeEntriesSnapshot() {
+        return activeSessionsByAgentId.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(entry -> entry.getValue().entry())
+                .toList();
+    }
+
     public static List<Character> activeAgentCharactersForLeader(int leaderCharId) {
         List<AgentRuntimeEntry> entries = entriesByLeaderId.get(leaderCharId);
         if (entries == null || entries.isEmpty()) {

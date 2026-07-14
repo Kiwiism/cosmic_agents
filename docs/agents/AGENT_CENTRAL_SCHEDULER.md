@@ -294,6 +294,21 @@ Phase 11 deterministic 2000-session scale/cleanup gate: locally complete
 production default switch: blocked on parity and staged soak evidence
 ```
 
+## Process Shutdown
+
+`AgentRuntimeShutdownCoordinator` now owns the process-level Agent stop/restart
+boundary. Cosmic shutdown closes Agent population admission first, stops
+navigation warmups, cancels every live session schedule, drains central shard
+state, invalidates pending generation-stamped async requests, stops all Agent
+workload executors within `agents.scheduler.shutdownTimeoutMs` (default 10,000
+ms), and logs a structured report plus the final scheduler snapshot before
+channel and timer teardown. A timed-out callback is reported and cannot accept
+new work; its scheduler state is released when the bounded callback returns.
+
+Server restart reopens the scheduler and async admission gates only after all
+previous scheduler state has drained. Legacy, sequential, and sharded modes use
+the same process boundary.
+
 The central-sequential global scan/sort has been removed. Important current
 limitations include disabled-by-default tick slicing and Cosmic thread
 affinity that is classified but not yet live/soak validated. Scheduler-reachable navigation graph construction, Amherst

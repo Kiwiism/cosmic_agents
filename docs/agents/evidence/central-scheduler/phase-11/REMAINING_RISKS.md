@@ -10,7 +10,9 @@ Do not change the production default until all of these are recorded:
 - mixed presentation/background transition and materialization validation;
 - load-shedding escalation and recovery without a wake-up storm;
 - 2,000-Agent 8-hour, 24-hour, and multi-day heap/GC/queue/latency evidence;
-- live shutdown and restart within the configured deadline;
+- live shutdown and restart within the configured deadline, confirming the
+  structured Agent shutdown report has no failed sessions, remaining
+  registrations, or unterminated async lanes;
 - restart rollback rehearsal in legacy mode.
 
 The repository-wide baseline test issues recorded in Phase 10 remain separate

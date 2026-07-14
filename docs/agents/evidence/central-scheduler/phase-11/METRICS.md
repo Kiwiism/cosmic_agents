@@ -21,6 +21,12 @@ the deterministic gates and includes initialized async-lane depth, capacity,
 high-water, rejection, timeout, and stale counts. Use `@serverhealth` for the
 complementary JVM, database, and core server snapshot.
 
+The shutdown report records sessions observed, schedule cancellation requests,
+session IDs that failed cancellation, pending async requests invalidated,
+remaining scheduler registrations, async executors stopped, queued tasks
+cancelled, unterminated lanes, interruption/timeout state, elapsed time, and the
+final scheduler snapshot.
+
 Heap plateau, GC pause, database-pool wait, real-player latency, scheduler p95/
 p99 stabilization, and shutdown elapsed time require a running server and are
 not inferred from this unit-scale gate.

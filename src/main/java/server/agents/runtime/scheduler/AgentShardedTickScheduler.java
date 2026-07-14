@@ -3,11 +3,19 @@ package server.agents.runtime.scheduler;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentSchedulerRuntime;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
 /** Fixed stable-hash owner set for explicit central-sharded scheduling. */
 public final class AgentShardedTickScheduler {
+    public record ShutdownResult(int shards,
+                                 int registrations,
+                                 int cancelled,
+                                 int remaining,
+                                 boolean timedOut) {
+    }
+
     private static final class Holder {
         private static final AgentShardedTickScheduler INSTANCE = createRuntime();
     }
@@ -47,6 +55,30 @@ public final class AgentShardedTickScheduler {
             maximum = Math.max(maximum, count);
         }
         return maximum - minimum;
+    }
+
+    public void start() {
+        shards.forEach(AgentTickScheduler::start);
+    }
+
+    public ShutdownResult shutdownAndDrain(Duration timeout) {
+        if (timeout == null || timeout.isNegative()) {
+            throw new IllegalArgumentException("Agent scheduler shutdown timeout must not be negative");
+        }
+        long deadline = System.nanoTime() + Math.max(0L, timeout.toNanos());
+        int registrations = 0;
+        int cancelled = 0;
+        int remaining = 0;
+        boolean timedOut = false;
+        for (AgentTickScheduler shard : shards) {
+            long remainingNanos = Math.max(0L, deadline - System.nanoTime());
+            AgentTickScheduler.ShutdownResult result = shard.shutdownAndDrain(Duration.ofNanos(remainingNanos));
+            registrations += result.registrations();
+            cancelled += result.cancelled();
+            remaining += result.remaining();
+            timedOut |= result.timedOut();
+        }
+        return new ShutdownResult(shards.size(), registrations, cancelled, remaining, timedOut);
     }
 
     static int shardIndex(AgentSessionId sessionId, int shardCount) {
