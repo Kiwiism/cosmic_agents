@@ -35,6 +35,12 @@ bounded `@agentpop list` review to confirm that the expected roster and target
 were loaded. A population preset is data-only and must not be treated as a
 runtime roster.
 
+For stages of 1,000 Agents or more, preflight automatically requires at least
+8 GiB of free physical memory before the server starts. Use
+`-MinimumFreePhysicalMemoryGiB <value>` only to impose a stricter host-specific
+floor. Do not lower the stage floor to obtain a nominal population count. The
+JSON report records the effective minimum and measured free/total memory.
+
 Before a populated stage, verify that the disposable database contains at
 least the requested number of eligible backing characters. This read-only
 query must return a count greater than or equal to the stage target:

@@ -32,10 +32,11 @@ Use `-SummaryOnly -Json` for compact automation output. The report includes
 centralized scheduler live gate. It verifies the expected branch and clean
 worktree, packaged server artifact, shared WZ directory junction, free server
 ports, running MapleStory client, explicitly pinned disposable database, and
-an external runtime/cache root. The shared WZ target remains policy-level
-read-only. The tool prints the exact scheduler JVM arguments and
-`COSMIC_AGENT_POPULATION_FILE` redirect without starting the server or writing
-runtime data.
+an external runtime/cache root. Stages requesting 1,000 Agents or more also
+require at least 8 GiB of free physical memory before startup. The shared WZ
+target remains policy-level read-only. The tool prints the exact scheduler JVM
+arguments and `COSMIC_AGENT_POPULATION_FILE` redirect without starting the
+server or writing runtime data.
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\tools\soak\Test-AgentSchedulerLiveGatePreflight.ps1 `
@@ -66,6 +67,11 @@ powershell -ExecutionPolicy Bypass -File .\tools\soak\Test-AgentSchedulerLiveGat
   -AllowConfigOverride `
   -AllowClientLaunchAfterServer
 ```
+
+`-MinimumFreePhysicalMemoryGiB` may set a stricter host-specific floor. A
+positive explicit value is combined with the automatic stage floor by taking
+the higher value, so it cannot weaken the 8 GiB requirement. JSON output
+includes the stage floor, effective minimum, and measured free/total memory.
 
 This is a read-only roster check. It does not create backing characters or
 query their Agent-only account eligibility. Confirm the live eligible count

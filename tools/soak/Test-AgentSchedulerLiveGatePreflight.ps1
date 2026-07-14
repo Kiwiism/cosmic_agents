@@ -7,6 +7,8 @@ param(
     [int[]] $ServerPorts = @(8484, 7575, 7576, 7577, 8787),
     [ValidateRange(0, 2000)]
     [int] $MinimumTargetAgents = 0,
+    [ValidateRange(0.0, 1024.0)]
+    [double] $MinimumFreePhysicalMemoryGiB = 0.0,
     [switch] $AllowConfigOverride,
     [switch] $AllowClientLaunchAfterServer,
     [switch] $SummaryOnly,
@@ -149,6 +151,36 @@ if ($listeners.Count -eq 0) {
     Add-Check $checks "ports:free" "FAIL" "Required port(s) already listening: $($busyPorts -join ', ')."
 }
 
+$stageMinimumFreePhysicalMemoryGiB = if ($MinimumTargetAgents -ge 1000) {
+    8.0
+} else {
+    0.0
+}
+$effectiveMinimumFreePhysicalMemoryGiB = [Math]::Max(
+    $stageMinimumFreePhysicalMemoryGiB,
+    $MinimumFreePhysicalMemoryGiB)
+$freePhysicalMemoryGiB = $null
+$totalVisibleMemoryGiB = $null
+try {
+    $operatingSystem = Get-CimInstance Win32_OperatingSystem
+    $freePhysicalMemoryGiB = [Math]::Round(
+        ([double] $operatingSystem.FreePhysicalMemory * 1KB) / 1GB,
+        2)
+    $totalVisibleMemoryGiB = [Math]::Round(
+        ([double] $operatingSystem.TotalVisibleMemorySize * 1KB) / 1GB,
+        2)
+
+    if ($effectiveMinimumFreePhysicalMemoryGiB -le 0.0) {
+        Add-Check $checks "host:memory" "PASS" "Host has $freePhysicalMemoryGiB GiB free of $totalVisibleMemoryGiB GiB; no minimum applies to this stage."
+    } elseif ($freePhysicalMemoryGiB -ge $effectiveMinimumFreePhysicalMemoryGiB) {
+        Add-Check $checks "host:memory" "PASS" "Host has $freePhysicalMemoryGiB GiB free of $totalVisibleMemoryGiB GiB; required minimum is $effectiveMinimumFreePhysicalMemoryGiB GiB."
+    } else {
+        Add-Check $checks "host:memory" "FAIL" "Host has only $freePhysicalMemoryGiB GiB free of $totalVisibleMemoryGiB GiB; this stage requires at least $effectiveMinimumFreePhysicalMemoryGiB GiB."
+    }
+} catch {
+    Add-Check $checks "host:memory" "FAIL" "Unable to measure host physical memory: $($_.Exception.Message)"
+}
+
 $clients = @(Get-Process -Name "MapleStory" -ErrorAction SilentlyContinue)
 if ($clients.Count -gt 0) {
     Add-Check $checks "client:available" "PASS" "Found $($clients.Count) MapleStory client process(es)."
@@ -271,6 +303,10 @@ $report = [ordered]@{
     minimumTargetAgents = $MinimumTargetAgents
     populationManagedAgents = $populationManagedAgents
     populationConfiguredTarget = $populationConfiguredTarget
+    stageMinimumFreePhysicalMemoryGiB = $stageMinimumFreePhysicalMemoryGiB
+    minimumFreePhysicalMemoryGiB = $effectiveMinimumFreePhysicalMemoryGiB
+    freePhysicalMemoryGiB = $freePhysicalMemoryGiB
+    totalVisibleMemoryGiB = $totalVisibleMemoryGiB
     wzTarget = $wzTarget
     failCount = $failCount
     warnCount = $warnCount

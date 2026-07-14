@@ -59,8 +59,10 @@ not evidence of a scheduler leak. Retain it as a risk until repeated sustained
 stages show a heap plateau and comparable post-GC process memory.
 
 The next 1,000-Agent attempt requires a clean host with at least 8 GiB reliably
-free after tooling is started. Do not weaken the 2 GiB abort threshold or
-continue to larger stages merely to obtain a nominal population count.
+free after tooling is started. The live-gate preflight now enforces that floor
+automatically for 1,000+ Agent stages and reports the measured host memory. Do
+not weaken the 2 GiB in-run abort threshold or continue to larger stages merely
+to obtain a nominal population count.
 
 The repository-wide baseline test issues recorded in Phase 10 remain separate
 from the scheduler-focused release gate.
