@@ -2,6 +2,9 @@ package server.agents.monitoring;
 
 import server.agents.runtime.simulation.AgentSimulationMode;
 import server.agents.runtime.AgentTickSliceKind;
+import server.agents.runtime.scheduler.AgentLoadSheddingLevel;
+import server.agents.runtime.scheduler.AgentLoadSheddingReason;
+import server.agents.runtime.scheduler.AgentLoadSheddingState;
 import server.agents.runtime.scheduler.AgentWorkClass;
 
 import java.util.EnumMap;
@@ -61,6 +64,14 @@ public final class AgentSchedulerMetrics {
                                 int readyDepth) {
     }
 
+    public record LoadSheddingSnapshot(Map<Integer, AgentLoadSheddingState> shardStates,
+                                       long transitions,
+                                       long suppressedWork,
+                                       long rejectedAdmissions,
+                                       Map<AgentLoadSheddingReason, Long> suppressedByReason,
+                                       Map<AgentLoadSheddingReason, Long> rejectedAdmissionsByReason) {
+    }
+
     private static final int ROLLING_WINDOW_CAPACITY = 2_048;
     private static final LongAdder CYCLES = new LongAdder();
     private static final LongAdder UPDATED = new LongAdder();
@@ -76,6 +87,9 @@ public final class AgentSchedulerMetrics {
     private static final LongAdder STARVATION_PROMOTIONS = new LongAdder();
     private static final LongAdder MAP_BUDGET_DEFERRALS = new LongAdder();
     private static final LongAdder TICK_CONTINUATIONS = new LongAdder();
+    private static final LongAdder LOAD_SHEDDING_TRANSITIONS = new LongAdder();
+    private static final LongAdder LOAD_SHEDDING_SUPPRESSED = new LongAdder();
+    private static final LongAdder AGENT_ADMISSIONS_REJECTED = new LongAdder();
     private static final AtomicLong INGRESS_DEPTH = new AtomicLong();
     private static final AtomicLong INGRESS_HIGH_WATER_MARK = new AtomicLong();
     private static final AtomicLong DUE_HEAP_DEPTH = new AtomicLong();
@@ -91,6 +105,11 @@ public final class AgentSchedulerMetrics {
     private static final Map<AgentTickSliceKind, AgentSchedulerRollingWindow> TICK_SLICE_WINDOWS =
             new EnumMap<>(AgentTickSliceKind.class);
     private static final Map<Integer, ShardSnapshot> SHARD_SNAPSHOTS = new ConcurrentHashMap<>();
+    private static final Map<Integer, AgentLoadSheddingState> LOAD_SHEDDING_STATES = new ConcurrentHashMap<>();
+    private static final Map<AgentLoadSheddingReason, LongAdder> SUPPRESSED_BY_REASON =
+            new EnumMap<>(AgentLoadSheddingReason.class);
+    private static final Map<AgentLoadSheddingReason, LongAdder> ADMISSION_REJECTIONS_BY_REASON =
+            new EnumMap<>(AgentLoadSheddingReason.class);
 
     static {
         for (AgentWorkClass workClass : AgentWorkClass.values()) {
@@ -101,6 +120,10 @@ public final class AgentSchedulerMetrics {
         }
         for (AgentTickSliceKind slice : AgentTickSliceKind.values()) {
             TICK_SLICE_WINDOWS.put(slice, new AgentSchedulerRollingWindow(ROLLING_WINDOW_CAPACITY));
+        }
+        for (AgentLoadSheddingReason reason : AgentLoadSheddingReason.values()) {
+            SUPPRESSED_BY_REASON.put(reason, new LongAdder());
+            ADMISSION_REJECTIONS_BY_REASON.put(reason, new LongAdder());
         }
     }
 
@@ -185,6 +208,39 @@ public final class AgentSchedulerMetrics {
         TICK_CONTINUATIONS.increment();
     }
 
+    public static void recordLoadSheddingTransition(int shardId,
+                                                    AgentLoadSheddingLevel previous,
+                                                    AgentLoadSheddingState state) {
+        if (previous == null || state == null) {
+            throw new IllegalArgumentException("Agent load-shedding transition is incomplete");
+        }
+        recordLoadSheddingState(shardId, state);
+        if (previous != state.level()) {
+            LOAD_SHEDDING_TRANSITIONS.increment();
+        }
+    }
+
+    public static void recordLoadSheddingState(int shardId, AgentLoadSheddingState state) {
+        if (state == null) {
+            throw new IllegalArgumentException("Agent load-shedding state is required");
+        }
+        LOAD_SHEDDING_STATES.put(Math.max(0, shardId), state);
+    }
+
+    public static void clearLoadSheddingShard(int shardId) {
+        LOAD_SHEDDING_STATES.remove(Math.max(0, shardId));
+    }
+
+    public static void recordLoadSheddingSuppressed(AgentLoadSheddingReason reason) {
+        LOAD_SHEDDING_SUPPRESSED.increment();
+        SUPPRESSED_BY_REASON.get(reason).increment();
+    }
+
+    public static void recordAgentAdmissionRejected(AgentLoadSheddingReason reason) {
+        AGENT_ADMISSIONS_REJECTED.increment();
+        ADMISSION_REJECTIONS_BY_REASON.get(reason).increment();
+    }
+
     public static void recordDepths(int ingressDepth,
                                     int ingressHighWaterMark,
                                     int dueHeapDepth,
@@ -267,6 +323,16 @@ public final class AgentSchedulerMetrics {
         return new TickSliceSnapshot(duration.p50(), duration.p95(), duration.p99(), duration.sampleCount());
     }
 
+    public static LoadSheddingSnapshot loadSheddingSnapshot() {
+        return new LoadSheddingSnapshot(
+                Map.copyOf(LOAD_SHEDDING_STATES),
+                LOAD_SHEDDING_TRANSITIONS.sum(),
+                LOAD_SHEDDING_SUPPRESSED.sum(),
+                AGENT_ADMISSIONS_REJECTED.sum(),
+                reasonCounts(SUPPRESSED_BY_REASON),
+                reasonCounts(ADMISSION_REJECTIONS_BY_REASON));
+    }
+
     static void reset() {
         CYCLES.reset();
         UPDATED.reset();
@@ -282,6 +348,9 @@ public final class AgentSchedulerMetrics {
         STARVATION_PROMOTIONS.reset();
         MAP_BUDGET_DEFERRALS.reset();
         TICK_CONTINUATIONS.reset();
+        LOAD_SHEDDING_TRANSITIONS.reset();
+        LOAD_SHEDDING_SUPPRESSED.reset();
+        AGENT_ADMISSIONS_REJECTED.reset();
         INGRESS_DEPTH.set(0L);
         INGRESS_HIGH_WATER_MARK.set(0L);
         DUE_HEAP_DEPTH.set(0L);
@@ -291,6 +360,16 @@ public final class AgentSchedulerMetrics {
         WORK_CLASS_WINDOWS.values().forEach(AgentSchedulerRollingWindow::reset);
         SIMULATION_MODE_WINDOWS.values().forEach(AgentSchedulerRollingWindow::reset);
         TICK_SLICE_WINDOWS.values().forEach(AgentSchedulerRollingWindow::reset);
+        SUPPRESSED_BY_REASON.values().forEach(LongAdder::reset);
+        ADMISSION_REJECTIONS_BY_REASON.values().forEach(LongAdder::reset);
         SHARD_SNAPSHOTS.clear();
+        LOAD_SHEDDING_STATES.clear();
+    }
+
+    private static Map<AgentLoadSheddingReason, Long> reasonCounts(
+            Map<AgentLoadSheddingReason, LongAdder> counters) {
+        Map<AgentLoadSheddingReason, Long> counts = new EnumMap<>(AgentLoadSheddingReason.class);
+        counters.forEach((reason, counter) -> counts.put(reason, counter.sum()));
+        return Map.copyOf(counts);
     }
 }

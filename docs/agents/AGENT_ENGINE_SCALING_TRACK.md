@@ -66,6 +66,12 @@ Current scheduler implementation checkpoint on
   per-slice metrics, and lifecycle cleanup. Mailbox drain, early-return,
   failure, and movement-settlement semantics remain unchanged. It is disabled
   by default pending live-client parity and measured p99 slice evidence.
+- Phase 9 is locally complete behind `agents.scheduler.loadShedding.enabled`.
+  Scheduler/JVM pressure drives six reason-coded levels with escalation and
+  recovery hysteresis. Cosmetic dialogue, selected external lanes, idle
+  low-priority background ticks, and new admission shed in order; visible,
+  critical, navigation, and mailbox/completion work stay admitted. The
+  configured 2000-session ceiling does not replace staged soak evidence.
 
 ## Track Split
 

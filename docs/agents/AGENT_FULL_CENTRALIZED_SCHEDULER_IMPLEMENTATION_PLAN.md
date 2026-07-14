@@ -86,6 +86,9 @@ Implementation progress on `feature/agent-central-scheduler-runtime`:
   preserving the authoritative guarded tick.
 - Phase 8 adds disabled-by-default bounded guarded-tick frames, ordered slices,
   continuation limits, lifecycle cleanup, and per-slice metrics.
+- Phase 9 adds disabled-by-default reason-coded load levels, sampled JVM and
+  scheduler pressure, hysteretic recovery, protected critical/completion work,
+  selected async suppression, and atomic population admission.
 
 The repository already contains a safe foundation:
 
@@ -129,7 +132,8 @@ The production target must address these gaps:
 5. Catalog rebuilds are not yet routed through the Phase 5 executor lane;
    current catalog loads are startup or explicit command work, not scheduler
    callbacks.
-6. There is no formal overload or load-shedding state machine.
+6. Load shedding is implemented but disabled by default and lacks live-player
+   responsiveness plus staged overload/recovery evidence.
 7. Pause/resume does not yet expose a wait-for-quiescence contract required by
     profile exchange and Double Agent operations.
 
@@ -1274,6 +1278,13 @@ Exit:
 - objective/capability behavior remains equivalent.
 
 ### Phase 9: Load Shedding And Admission Control
+
+Status: locally complete on `feature/agent-central-scheduler-runtime`, disabled
+by default. Evidence is recorded under
+`docs/agents/evidence/central-scheduler/phase-9`. Scheduler/JVM pressure,
+reason-coded suppression, hysteretic recovery, and atomic admission limits are
+implemented. Synthetic unit/integration overload tests pass; real-player
+responsiveness and staged population recovery remain rollout gates.
 
 Work:
 

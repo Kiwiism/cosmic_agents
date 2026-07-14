@@ -2,6 +2,7 @@ package server.agents.commands;
 
 import server.agents.monitoring.AgentAsyncQueueMetrics;
 import server.agents.runtime.AgentBoundedExecutorFactory;
+import server.agents.runtime.scheduler.AgentLoadSheddingRuntime;
 
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -59,6 +60,10 @@ public final class AgentReplyQueue {
             estimatedDelayMs = state.isSending()
                     ? (long) (state.size() + 1) * QUEUED_MESSAGE_SPACING_ESTIMATE_MS
                     : 0L;
+            if (!AgentLoadSheddingRuntime.permitsDialogue(ownerDirected)) {
+                AgentAsyncQueueMetrics.recordRejected("dialogue", state.size());
+                return estimatedDelayMs;
+            }
             AgentQueuedMessage queuedMessage = new AgentQueuedMessage(message, ownerDirected);
             if (state.size() >= MAX_PENDING_MESSAGES) {
                 if (state.contains(queuedMessage)) {

@@ -2,12 +2,19 @@ package server.agents.runtime.async;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import server.agents.runtime.scheduler.AgentLoadSheddingConfig;
+import server.agents.runtime.scheduler.AgentLoadSheddingController;
+import server.agents.runtime.scheduler.AgentLoadSheddingRuntime;
+import server.agents.runtime.scheduler.AgentSchedulerPressureSample;
+import server.agents.runtime.scheduler.AgentServerHealthSnapshot;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentAsyncExecutorRegistryTest {
@@ -20,6 +27,29 @@ class AgentAsyncExecutorRegistryTest {
         System.clearProperty("agents.async.navigation.queueCapacity");
         System.clearProperty("agents.async.llm.threads");
         System.clearProperty("agents.async.llm.queueCapacity");
+        AgentLoadSheddingRuntime.clearShard(99);
+    }
+
+    @Test
+    void loadSheddingRejectsLlmButKeepsRequiredNavigationLaneAvailable() throws Exception {
+        AgentLoadSheddingConfig config = new AgentLoadSheddingConfig(
+                true, 1, 2, 1L, 100L, 8, 75, 85.0d, 85.0d, 250L, 2, 2_000);
+        AgentLoadSheddingController controller = new AgentLoadSheddingController(99, config);
+        controller.evaluate(new AgentSchedulerPressureSample(
+                1_000L,
+                400L,
+                1,
+                0,
+                100,
+                0,
+                AgentServerHealthSnapshot.healthy()));
+
+        assertThrows(RejectedExecutionException.class,
+                () -> registry.execute(AgentAsyncWorkKind.LLM_NETWORK, () -> { }));
+
+        CountDownLatch navigationRan = new CountDownLatch(1);
+        registry.execute(AgentAsyncWorkKind.NAVIGATION_GRAPH, navigationRan::countDown);
+        assertTrue(navigationRan.await(5, TimeUnit.SECONDS));
     }
 
     @Test

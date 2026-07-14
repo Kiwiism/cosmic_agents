@@ -53,8 +53,10 @@ public final class AgentTickScheduler {
     private final BiFunction<Runnable, Long, ScheduledFuture<?>> wakeScheduler;
     private final AgentSchedulerConfig config;
     private final AgentSimulationSchedulePolicy simulationSchedulePolicy;
+    private final AgentLoadSheddingController loadSheddingController;
     private final AgentSchedulerShard<Registration> shard;
     private final int shardId;
+    private int lastSuppressedReadyCount;
     private volatile ScheduledFuture<?> centralTask;
 
     public static AgentTickScheduler instance() {
@@ -123,11 +125,30 @@ public final class AgentTickScheduler {
                        AgentSchedulerConfig config,
                        int shardId,
                        AgentSimulationSchedulePolicy simulationSchedulePolicy) {
+        this(
+                nowMs,
+                nanoTime,
+                loopScheduler,
+                wakeScheduler,
+                config,
+                shardId,
+                simulationSchedulePolicy,
+                new AgentLoadSheddingController(shardId, AgentLoadSheddingConfig.fromSystemProperties()));
+    }
+
+    AgentTickScheduler(LongSupplier nowMs,
+                       LongSupplier nanoTime,
+                       BiFunction<Runnable, Long, ScheduledFuture<?>> loopScheduler,
+                       BiFunction<Runnable, Long, ScheduledFuture<?>> wakeScheduler,
+                       AgentSchedulerConfig config,
+                       int shardId,
+                       AgentSimulationSchedulePolicy simulationSchedulePolicy,
+                       AgentLoadSheddingController loadSheddingController) {
         if (nowMs == null || nanoTime == null || loopScheduler == null || wakeScheduler == null || config == null) {
             throw new IllegalArgumentException("Agent scheduler dependencies are required");
         }
-        if (simulationSchedulePolicy == null) {
-            throw new IllegalArgumentException("Agent simulation schedule policy is required");
+        if (simulationSchedulePolicy == null || loadSheddingController == null) {
+            throw new IllegalArgumentException("Agent scheduler policies are required");
         }
         this.nowMs = nowMs;
         this.nanoTime = nanoTime;
@@ -135,6 +156,7 @@ public final class AgentTickScheduler {
         this.wakeScheduler = wakeScheduler;
         this.config = config;
         this.simulationSchedulePolicy = simulationSchedulePolicy;
+        this.loadSheddingController = loadSheddingController;
         this.shardId = Math.max(0, shardId);
         this.shard = new AgentSchedulerShard<>(
                 config.ingressCapacityPerShard(),
@@ -209,12 +231,28 @@ public final class AgentTickScheduler {
         AgentCycleBudget budget = new AgentCycleBudget(cycleStarted, config);
         Map<Integer, Integer> backgroundMapWork = new HashMap<>();
         int consecutiveMapDeferrals = 0;
+        int consecutiveSheddingDeferrals = 0;
         boolean continuationNeeded = false;
         boolean budgetLimited = false;
+        boolean onlySheddingDeferred = false;
         try {
             shard.drainIngress(this::synchronizeRegistration);
             long now = nowMs.getAsLong();
             moveDueToReady(now);
+            if (loadSheddingController.sampleDue(now)) {
+                int actionableReady = Math.max(0, shard.readyCount() - lastSuppressedReadyCount);
+                loadSheddingController.evaluate(new AgentSchedulerPressureSample(
+                        now,
+                        AgentSchedulerMetrics.snapshot().queueLagP95Ms(),
+                        registrations.size(),
+                        shard.ingressDepth(),
+                        config.ingressCapacityPerShard(),
+                        actionableReady,
+                        loadSheddingController.enabled()
+                                ? loadSheddingController.sampleServerHealth()
+                                : AgentServerHealthSnapshot.healthy()));
+            }
+            lastSuppressedReadyCount = 0;
             while (shard.readyCount() > 0) {
                 long selectionTimeNs = nanoTime.getAsLong();
                 if (budget.exhausted(selectionTimeNs)) {
@@ -242,6 +280,24 @@ public final class AgentTickScheduler {
                 }
                 AgentPriorityClass effectivePriority =
                         registration.effectivePriority(now, config.starvationPromotionMs());
+                registration.applyLoadShedding(loadSheddingController);
+                if (!registration.isLifecycleCritical()
+                        && registration.entry.actionMailbox().size() == 0
+                        && !loadSheddingController.allows(
+                        registration.workClass,
+                        effectivePriority,
+                        registration.simulationMode)) {
+                    shard.addReady(registration, registration.priority);
+                    lastSuppressedReadyCount++;
+                    consecutiveSheddingDeferrals++;
+                    AgentSchedulerMetrics.recordLoadSheddingSuppressed(loadSheddingController.primaryReason());
+                    if (consecutiveSheddingDeferrals >= shard.readyCount()) {
+                        onlySheddingDeferred = true;
+                        break;
+                    }
+                    continue;
+                }
+                consecutiveSheddingDeferrals = 0;
                 if (!admitsBackgroundMapWork(registration, backgroundMapWork)) {
                     shard.addReady(registration, registration.priority);
                     continuationNeeded = true;
@@ -272,7 +328,7 @@ public final class AgentTickScheduler {
                 }
             }
             int deferred = shard.readyCount();
-            if (deferred > 0) {
+            if (deferred > 0 && !onlySheddingDeferred) {
                 continuationNeeded = true;
                 AgentSchedulerMetrics.recordDeferred(deferred);
                 AgentSchedulerMetrics.recordSkipped(deferred);
@@ -502,6 +558,7 @@ public final class AgentTickScheduler {
                     && centralTask != null) {
                 centralTask.cancel(false);
                 centralTask = null;
+                AgentLoadSheddingRuntime.clearShard(shardId);
             }
         }
     }
@@ -550,6 +607,7 @@ public final class AgentTickScheduler {
         private final CompletableFuture<Void> completion = new CompletableFuture<>();
         private volatile long nextDueMs;
         private volatile long claimedDueMs;
+        private long simulationPeriodMs;
         private long periodMs;
         private AgentWorkClass workClass;
         private AgentPriorityClass priority;
@@ -578,6 +636,7 @@ public final class AgentTickScheduler {
             this.sequence = sequence;
             this.baseWorkClass = workClass;
             this.basePriority = priority;
+            this.simulationPeriodMs = periodMs;
             this.periodMs = periodMs;
             this.workClass = workClass;
             this.priority = priority;
@@ -631,6 +690,11 @@ public final class AgentTickScheduler {
             return AgentRuntimeIdentityRuntime.botMapId(entry);
         }
 
+        private boolean isLifecycleCritical() {
+            return baseWorkClass == AgentWorkClass.LIFECYCLE_CRITICAL
+                    || basePriority == AgentPriorityClass.CRITICAL;
+        }
+
         private void recordCost(long elapsedNs) {
             long sample = Math.max(1L, elapsedNs);
             if (!costObserved) {
@@ -650,11 +714,13 @@ public final class AgentTickScheduler {
                         basePriority,
                         now);
                 simulationMode = decision.mode();
-                periodMs = decision.periodMs();
+                simulationPeriodMs = decision.periodMs();
+                periodMs = simulationPeriodMs;
                 workClass = decision.workClass();
                 priority = decision.priority();
             } catch (Throwable failure) {
                 simulationMode = AgentSimulationMode.PRESENTATION;
+                simulationPeriodMs = basePeriodMs;
                 periodMs = basePeriodMs;
                 workClass = baseWorkClass;
                 priority = basePriority;
@@ -662,6 +728,10 @@ public final class AgentTickScheduler {
                 log.warn("Agent simulation policy failed for session {}; using presentation schedule",
                         sessionId, failure);
             }
+        }
+
+        private void applyLoadShedding(AgentLoadSheddingController controller) {
+            periodMs = controller.effectivePeriodMs(simulationPeriodMs, simulationMode);
         }
 
         private boolean prepare(long now) {

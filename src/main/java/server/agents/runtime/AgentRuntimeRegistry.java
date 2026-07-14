@@ -3,12 +3,15 @@ package server.agents.runtime;
 import client.Character;
 import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.runtime.scheduler.AgentAdmissionDecision;
+import server.agents.runtime.scheduler.AgentLoadSheddingRuntime;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.function.BiFunction;
 
 /**
@@ -46,6 +49,12 @@ public final class AgentRuntimeRegistry {
         synchronized (mutationLock) {
             int agentCharId = AgentRuntimeIdentityRuntime.botId(entry);
             ActiveSession previous = agentCharId < 0 ? null : activeSessionsByAgentId.get(agentCharId);
+            AgentAdmissionDecision admission = AgentLoadSheddingRuntime.admissionDecision(
+                    previous != null,
+                    activeSessionsByAgentId.size());
+            if (!admission.allowed()) {
+                throw new RejectedExecutionException(admission.message());
+            }
             if (previous != null && previous.entry() != entry) {
                 removeFromLeaderView(previous.leaderCharId(), previous.entry());
             }
@@ -280,6 +289,10 @@ public final class AgentRuntimeRegistry {
     public static int activeAgentCountForLeader(int leaderCharId) {
         List<AgentRuntimeEntry> entries = entriesByLeaderId.get(leaderCharId);
         return entries == null ? 0 : entries.size();
+    }
+
+    public static int activeAgentCount() {
+        return activeSessionsByAgentId.size();
     }
 
     public static List<Character> activeAgentCharactersForLeader(int leaderCharId) {

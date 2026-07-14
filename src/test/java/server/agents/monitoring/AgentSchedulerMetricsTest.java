@@ -3,8 +3,13 @@ package server.agents.monitoring;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import server.agents.runtime.AgentTickSliceKind;
+import server.agents.runtime.scheduler.AgentLoadSheddingLevel;
+import server.agents.runtime.scheduler.AgentLoadSheddingReason;
+import server.agents.runtime.scheduler.AgentLoadSheddingState;
 import server.agents.runtime.simulation.AgentSimulationMode;
 import server.agents.runtime.scheduler.AgentWorkClass;
+
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -105,5 +110,28 @@ class AgentSchedulerMetricsTest {
         assertEquals(125L, slice.durationP50Ns());
         assertEquals(125L, slice.durationP99Ns());
         assertEquals(1L, AgentSchedulerMetrics.snapshot().tickContinuations());
+    }
+
+    @Test
+    void recordsReasonCodedLoadSheddingAndAdmissionMetrics() {
+        AgentLoadSheddingState state = new AgentLoadSheddingState(
+                AgentLoadSheddingLevel.PAUSE_LOW_PRIORITY_BACKGROUND,
+                Set.of(AgentLoadSheddingReason.READY_BACKLOG),
+                10L,
+                1L);
+        AgentSchedulerMetrics.recordLoadSheddingTransition(
+                2,
+                AgentLoadSheddingLevel.NORMAL,
+                state);
+        AgentSchedulerMetrics.recordLoadSheddingSuppressed(AgentLoadSheddingReason.READY_BACKLOG);
+        AgentSchedulerMetrics.recordAgentAdmissionRejected(AgentLoadSheddingReason.POPULATION_LIMIT);
+
+        AgentSchedulerMetrics.LoadSheddingSnapshot snapshot = AgentSchedulerMetrics.loadSheddingSnapshot();
+        assertEquals(state, snapshot.shardStates().get(2));
+        assertEquals(1L, snapshot.transitions());
+        assertEquals(1L, snapshot.suppressedWork());
+        assertEquals(1L, snapshot.rejectedAdmissions());
+        assertEquals(1L, snapshot.suppressedByReason().get(AgentLoadSheddingReason.READY_BACKLOG));
+        assertEquals(1L, snapshot.rejectedAdmissionsByReason().get(AgentLoadSheddingReason.POPULATION_LIMIT));
     }
 }

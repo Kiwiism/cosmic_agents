@@ -7646,6 +7646,12 @@ Current physics correction:
   the only frame writer, continuation requests coalesce through its due heap,
   and lifecycle cancellation releases incomplete frames. Legacy scheduling
   and central tick slicing both remain disabled-by-default rollout choices.
+- Central scheduler pressure ownership: each shard owns one sampled,
+  hysteretic load-shedding controller. The strongest published shard state is
+  the process-wide policy for cosmetic dialogue, selected external async work,
+  and new Agent admission. Lifecycle-critical, visible, navigation, and queued
+  mailbox/completion work are never shed. Registry-owned admission is atomic,
+  reason-coded, and disabled by default with the rest of the pressure policy.
 
 Initial reconstruction order:
 

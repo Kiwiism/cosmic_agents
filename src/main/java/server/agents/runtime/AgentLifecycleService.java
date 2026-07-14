@@ -10,6 +10,8 @@ import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.registry.AgentResolvedCharacter;
 import server.agents.integration.AgentClientGatewayRuntime;
+import server.agents.runtime.scheduler.AgentAdmissionDecision;
+import server.agents.runtime.scheduler.AgentLoadSheddingRuntime;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -159,6 +161,13 @@ public final class AgentLifecycleService {
         AgentAuthorizationResult auth = ownershipService.ensureCanControl(leader, resolved);
         if (!auth.allowed()) {
             return AgentSpawnResult.fail(auth.failureMessage());
+        }
+
+        AgentAdmissionDecision admission = AgentLoadSheddingRuntime.admissionDecision(
+                AgentRuntimeRegistry.hasActiveAgentCharacterId(resolved.id()),
+                AgentRuntimeRegistry.activeAgentCount());
+        if (!admission.allowed()) {
+            return AgentSpawnResult.fail(admission.message());
         }
 
         MapleMap map = leader.getMap();

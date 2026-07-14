@@ -1,6 +1,7 @@
 package server.agents.runtime.async;
 
 import server.agents.runtime.AgentBoundedExecutorFactory;
+import server.agents.runtime.scheduler.AgentLoadSheddingRuntime;
 
 import java.util.EnumMap;
 import java.util.Map;
@@ -22,6 +23,9 @@ public final class AgentAsyncExecutorRegistry implements AutoCloseable {
     public void execute(AgentAsyncWorkKind kind, Runnable task) {
         if (kind == null || task == null) {
             throw new IllegalArgumentException("Agent async work kind and task are required");
+        }
+        if (!AgentLoadSheddingRuntime.permitsAsync(kind)) {
+            throw new RejectedExecutionException("Agent async work is paused by load shedding: " + kind);
         }
         executor(kind).execute(task);
     }

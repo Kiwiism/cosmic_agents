@@ -59,6 +59,18 @@ agents.scheduler.simulation.backgroundMaxWorkPerMapPerCycle=32
 agents.scheduler.tickSlicing.enabled=false
 agents.scheduler.tickSlicing.maxSlicesPerTurn=2
 agents.scheduler.tickSlicing.maxContinuationsPerFrame=8
+agents.scheduler.loadShedding.enabled=false
+agents.scheduler.loadShedding.sampleIntervalMs=1000
+agents.scheduler.loadShedding.pressureCycles=3
+agents.scheduler.loadShedding.recoveryCycles=20
+agents.scheduler.loadShedding.queueLagLevel1Ms=100
+agents.scheduler.loadShedding.readyDepthLevel1=256
+agents.scheduler.loadShedding.ingressLevel2Percent=75
+agents.scheduler.loadShedding.cpuLevel3Percent=85
+agents.scheduler.loadShedding.heapLevel3Percent=85
+agents.scheduler.loadShedding.gcPauseLevel3Ms=250
+agents.scheduler.loadShedding.backgroundCadenceMultiplier=2
+agents.scheduler.loadShedding.maxActiveAgents=2000
 ```
 
 `shardCount` is read at scheduler initialization and must remain between 1 and
@@ -147,6 +159,41 @@ configured bound through the existing per-Agent failure policy. Despawn,
 replacement, and lifecycle cancellation clear an incomplete frame and its
 captured references. Legacy per-Agent scheduling never enables slicing.
 
+## Load shedding and admission
+
+Load shedding is implemented behind
+`agents.scheduler.loadShedding.enabled=false`. Each shard samples bounded
+scheduler lag/backlog/ingress metrics plus process CPU, heap use, and GC time
+at `sampleIntervalMs`; these probes do not run in every dispatch cycle. Three
+pressured samples are required by default to escalate. Recovery requires 20
+healthy samples and lowers only one level at a time to avoid a thundering herd.
+
+The explicit levels are:
+
+```text
+NORMAL
+SUPPRESS_COSMETIC
+REDUCE_BACKGROUND_CADENCE
+PAUSE_DEFERRED_AND_LLM
+PAUSE_LOW_PRIORITY_BACKGROUND
+ADMISSION_CONTROL
+```
+
+Undirected cosmetic dialogue is rejected first. At higher levels, background
+cadence is multiplied, LLM/catalog/economy submissions are rejected from their
+bounded lanes, idle low-priority background ticks remain ready for a later
+periodic cycle, and new Agent sessions are rejected. Leader-directed replies,
+navigation work, presentation work, lifecycle-critical work, and any session
+with pending mailbox/completion work remain admitted. Intentionally shed ready
+work does not request an immediate scheduler wake.
+
+`maxActiveAgents` is checked atomically under registry mutation ownership;
+replacement sessions are exempt so recovery cannot strand an existing Agent.
+The strongest shard level controls process-wide cosmetic, async, and admission
+decisions. Every transition, suppression, and admission rejection records a
+reason code. The 2000 value is a safety ceiling, not evidence that the 2000-
+Agent soak gate has passed.
+
 ## Isolation and lifecycle
 
 - Removed or replaced sessions are unregistered through their existing
@@ -178,6 +225,8 @@ ingress/due/ready depth. Work-duration windows are also available by
 Equivalent bounded duration windows are available by `AgentSimulationMode`.
 Tick-slice windows expose bounded duration percentiles by slice kind, and the
 snapshot includes the number of requested frame continuations.
+Load-shedding metrics expose current state by shard, transitions, suppressed
+work, rejected admissions, and reason-coded counts.
 `shardSnapshots()` adds registrations and queue depths by shard, while the
 aggregate depth gauges sum all reporting shards. Registration imbalance is the
 largest shard population minus the smallest.
@@ -208,6 +257,7 @@ Phase 5 bounded async completion contract: complete
 Phase 6 gateway affinity and stable-hash sharding: locally complete, explicit opt-in
 Phase 7 simulation-aware cadence and transition hooks: locally complete, disabled by default
 Phase 8 bounded guarded-tick slicing: locally complete, disabled by default
+Phase 9 load shedding and admission control: locally complete, disabled by default
 production default switch: blocked on parity and staged soak evidence
 ```
 
@@ -247,6 +297,9 @@ mode-metric evidence is recorded under
 Phase 8 tick-frame ordering, continuation bounds, lifecycle cleanup, and
 slice-metric evidence is recorded under
 `docs/agents/evidence/central-scheduler/phase-8`.
+Phase 9 overload levels, hysteresis, protected-work, async suppression, and
+atomic admission evidence is recorded under
+`docs/agents/evidence/central-scheduler/phase-9`.
 
 ## Rollback
 
