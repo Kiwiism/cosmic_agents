@@ -26,10 +26,24 @@ to MySQL, create directories, or alter configuration. The override switch
 allows only a local uncommitted `config.yaml`; every other dirty path remains a
 failure.
 
+For stages with a managed population, also pass
+`-MinimumTargetAgents <stage-count>`. The check requires an enabled external
+runtime roster whose multiplier yields at least that target and rejects
+malformed or duplicate Agent records. It does not create or validate backing
+characters against the database. After startup, use `@agentpop status` and a
+bounded `@agentpop list` review to confirm the roster is eligible before
+enabling reconciliation. A population preset is data-only and must not be
+treated as a runtime roster.
+
 Omit `-AllowClientLaunchAfterServer` when a targetable client can remain open
 before server startup. When the switch is used, launch the client only after
 all server listeners are online and do not record live evidence until the
 client connection is confirmed.
+
+The legacy v83 password control can retain hidden input while appearing empty.
+Before the disposable-account login, focus the field, move to its end, clear
+the retained characters, and then enter the test password. Do not count a
+connection-only attempt as authenticated parity evidence.
 
 ## Stage Order
 

@@ -54,6 +54,25 @@ By default a running MapleStory process is required. Use
 the server reaches the listening state; the operator must still launch and
 verify the client before recording live evidence.
 
+For a populated stage, pass `-MinimumTargetAgents <count>`. The preflight then
+requires the external `population.json`, validates its required fields and
+Agent records, rejects duplicate character ids or case-insensitive names, and
+verifies that `enabled` plus `multiplier` produce at least the requested target:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\soak\Test-AgentSchedulerLiveGatePreflight.ps1 `
+  -ExpectedDatabaseName cosmic_scheduler_soak_20260714 `
+  -MinimumTargetAgents 500 `
+  -AllowConfigOverride `
+  -AllowClientLaunchAfterServer
+```
+
+This is a read-only roster check. It does not create backing characters or
+query their Agent-only account eligibility. Confirm the live eligible count
+with `@agentpop status` after startup. Population presets under
+`docs/agents/soak-test-harness/presets` describe desired distributions; they
+are not runtime rosters.
+
 ## Baseline Evidence Workflow
 
 Use this before a server-only baseline smoke/soak run.

@@ -5,6 +5,8 @@ param(
     [string] $ExpectedDatabaseName,
     [string] $RuntimeOutputRoot = (Join-Path $env:TEMP "cosmic-agent-scheduler-live-gate"),
     [int[]] $ServerPorts = @(8484, 7575, 7576, 7577, 8787),
+    [ValidateRange(0, 2000)]
+    [int] $MinimumTargetAgents = 0,
     [switch] $AllowConfigOverride,
     [switch] $AllowClientLaunchAfterServer,
     [switch] $SummaryOnly,
@@ -157,6 +159,82 @@ if ($clients.Count -gt 0) {
 }
 
 $populationFile = Join-Path $resolvedRuntimeRoot "population.json"
+$populationManagedAgents = $null
+$populationConfiguredTarget = $null
+if ($MinimumTargetAgents -gt 0) {
+    if (!(Test-Path -LiteralPath $populationFile -PathType Leaf)) {
+        Add-Check $checks "population:file" "FAIL" "Population file is required for a $MinimumTargetAgents-Agent stage: $populationFile."
+    } else {
+        try {
+            $population = Get-Content -LiteralPath $populationFile -Raw | ConvertFrom-Json
+            $requiredProperties = @("enabled", "multiplier", "agents")
+            $missingProperties = @(
+                $requiredProperties |
+                    Where-Object { $population.PSObject.Properties.Name -notcontains $_ }
+            )
+            if ($missingProperties.Count -gt 0) {
+                Add-Check $checks "population:shape" "FAIL" "Population file is missing: $($missingProperties -join ', ')."
+            } else {
+                $records = @($population.agents)
+                $invalidRecords = @(
+                    $records |
+                        Where-Object {
+                            $null -eq $_ -or
+                            $_.PSObject.Properties.Name -notcontains "characterId" -or
+                            $_.PSObject.Properties.Name -notcontains "name" -or
+                            [int] $_.characterId -le 0 -or
+                            [string]::IsNullOrWhiteSpace([string] $_.name)
+                        }
+                )
+                if ($invalidRecords.Count -gt 0) {
+                    Add-Check $checks "population:shape" "FAIL" "Population file contains $($invalidRecords.Count) invalid Agent record(s)."
+                } else {
+                    Add-Check $checks "population:shape" "PASS" "Population file contains structurally valid Agent records."
+                }
+
+                $duplicateIds = @(
+                    $records |
+                        Group-Object -Property characterId |
+                        Where-Object { $_.Count -gt 1 }
+                )
+                $duplicateNames = @(
+                    $records |
+                        ForEach-Object { ([string] $_.name).ToLowerInvariant() } |
+                        Group-Object |
+                        Where-Object { $_.Count -gt 1 }
+                )
+                if ($duplicateIds.Count -gt 0 -or $duplicateNames.Count -gt 0) {
+                    Add-Check $checks "population:unique" "FAIL" "Population file has duplicate character ids or case-insensitive names."
+                } else {
+                    Add-Check $checks "population:unique" "PASS" "Population character ids and names are unique."
+                }
+
+                $populationManagedAgents = $records.Count
+                $multiplier = [double] $population.multiplier
+                $validMultiplier = ![double]::IsNaN($multiplier) -and
+                        ![double]::IsInfinity($multiplier) -and
+                        $multiplier -ge 0.0 -and
+                        $multiplier -le 100.0
+                if ($population.enabled -isnot [bool] -or !$population.enabled) {
+                    Add-Check $checks "population:target" "FAIL" "Population scheduling must be enabled for a populated soak stage."
+                } elseif (!$validMultiplier) {
+                    Add-Check $checks "population:target" "FAIL" "Population multiplier must be finite and between 0 and 100."
+                } else {
+                    $populationConfiguredTarget = [int] [Math]::Min(
+                        $populationManagedAgents,
+                        [Math]::Floor($populationManagedAgents * $multiplier))
+                    if ($populationConfiguredTarget -lt $MinimumTargetAgents) {
+                        Add-Check $checks "population:target" "FAIL" "Population target is $populationConfiguredTarget; stage requires at least $MinimumTargetAgents."
+                    } else {
+                        Add-Check $checks "population:target" "PASS" "Population target $populationConfiguredTarget satisfies the $MinimumTargetAgents-Agent stage."
+                    }
+                }
+            }
+        } catch {
+            Add-Check $checks "population:parse" "FAIL" "Population file could not be parsed: $($_.Exception.Message)"
+        }
+    }
+}
 $navigationCache = Join-Path $resolvedRuntimeRoot "navigation-cache"
 $jvmArguments = @(
     "-Dagents.scheduler.mode=$SchedulerMode",
@@ -189,6 +267,10 @@ $report = [ordered]@{
     schedulerMode = $SchedulerMode
     databaseName = $databaseName
     runtimeOutputRoot = $resolvedRuntimeRoot
+    populationFile = $populationFile
+    minimumTargetAgents = $MinimumTargetAgents
+    populationManagedAgents = $populationManagedAgents
+    populationConfiguredTarget = $populationConfiguredTarget
     wzTarget = $wzTarget
     failCount = $failCount
     warnCount = $warnCount

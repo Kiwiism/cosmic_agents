@@ -15,6 +15,15 @@ Do not change the production default until all of these are recorded:
   registrations, or unterminated async lanes;
 - restart rollback rehearsal in legacy mode.
 
+The current population runtime only reconciles explicitly managed, eligible
+backing characters from the external `population.json`. The checked-in soak
+population preset is data-only, and the dedicated soak-harness specification
+forbids live integration until its simulation, background-action,
+observability, cleanup, and test-Agent identification gates exist. Therefore a
+real pre-provisioned roster remains an operator/environment prerequisite; this
+scheduler branch must not add an ad hoc synthetic or production provisioning
+shortcut and call it live 2,000-Agent evidence.
+
 The repository-wide baseline test issues recorded in Phase 10 remain separate
 from the scheduler-focused release gate.
 
