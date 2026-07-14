@@ -83,6 +83,8 @@ public final class SpecialMoveHandler extends AbstractPacketHandler {
         }
 
         boolean dojoEventSkill = skillid % 10000000 == 1010 || skillid % 10000000 == 1011;
+        AdventurerPartnerService partnerService = AdventurerPartnerService.getInstance();
+        partnerService.clearNativeTriggerCooldownIfManaged(chr, skillid);
         SkillEligibilityPolicy.Result eligibility = SkillEligibilityPolicy.evaluate(
                 chr, skill, skillLevel, dojoEventSkill, () -> true);
         if (!eligibility.allowed()) {
@@ -92,7 +94,7 @@ public final class SpecialMoveHandler extends AbstractPacketHandler {
         skillLevel = eligibility.executionLevel();
 
         AdventurerPartnerService.TriggerResult partnerTrigger =
-                AdventurerPartnerService.getInstance().handleSwitchTrigger(chr, skillid);
+                partnerService.handleSwitchTrigger(chr, skillid);
         if (partnerTrigger.handled()) {
             if (partnerTrigger.message() != null) {
                 chr.message(partnerTrigger.message());
@@ -182,9 +184,11 @@ public final class SpecialMoveHandler extends AbstractPacketHandler {
         if (chr.isAlive()) {
             if (skill.getId() != Priest.MYSTIC_DOOR) {
                 if (skill.getId() % 10000000 != 1005) {
-                    skill.getEffect(skillLevel).applyTo(chr, pos);
+                    if (effect.applyTo(chr, pos)) {
+                        AdventurerPartnerService.getInstance().onSkillBuffApplied(chr, effect);
+                    }
                 } else {
-                    skill.getEffect(skillLevel).applyEchoOfHero(chr);
+                    effect.applyEchoOfHero(chr);
                 }
             } else {
                 if (c.tryacquireClient()) {

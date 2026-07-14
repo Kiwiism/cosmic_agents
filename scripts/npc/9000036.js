@@ -30,6 +30,9 @@ function start() {
         cm.dispose();
         return;
     }
+    // Self-heal an invite prepared by an older loaded Java build. This is a no-op
+    // when there is no Double Partner session or the current session is ready.
+    cm.adventurerPartnerCompleteDoubleInvite();
     status = 0;
     cm.sendSimple(cm.adventurerPartnerMainMenu());
 }
@@ -62,8 +65,7 @@ function action(mode, type, selection) {
     }
 
     if (flow === "inviteAfterModeChange") {
-        flow = "completeDoubleInvite";
-        cm.sendOk(cm.adventurerPartnerInvite());
+        invitePartner();
         return;
     }
 
@@ -95,8 +97,7 @@ function action(mode, type, selection) {
             cm.sendYesNo("End this partnership permanently? Any active Partner session will be released safely first. Both characters keep their canonical progress.");
             break;
         case 2:
-            flow = "completeDoubleInvite";
-            cm.sendOk(cm.adventurerPartnerInvite());
+            invitePartner();
             break;
         case 3:
             cm.sendOk(cm.adventurerPartnerPrepareSoloTag());
@@ -146,4 +147,21 @@ function action(mode, type, selection) {
             cm.dispose();
             break;
     }
+}
+
+function invitePartner() {
+    var result = cm.adventurerPartnerInvite();
+    if (result.indexOf("Select OK to finish the link") !== -1) {
+        // Compatibility with a server process that still has the previous Java
+        // invite flow loaded while this NPC script has already been refreshed.
+        flow = "completeDoubleInvite";
+        cm.sendOk(result);
+        return;
+    }
+    if (result !== "") {
+        flow = "dispose";
+        cm.sendOk(result);
+        return;
+    }
+    cm.dispose();
 }

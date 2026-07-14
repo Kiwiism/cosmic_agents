@@ -1,14 +1,19 @@
 package server.partner;
 
+import client.BuffStat;
 import client.Character;
 import client.Skill;
 import client.profile.CharacterProfileRepository;
 import client.profile.CosmicCharacterProfileRepository;
 import config.AdventurerPartnerConfig;
 import config.YamlConfig;
+import constants.inventory.ItemConstants;
+import net.server.PlayerBuffValueHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import server.StatEffect;
 import server.TimerManager;
+import server.agents.integration.AgentReplyRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentTransitionBarrierState;
 import tools.PacketCreator;
@@ -348,6 +353,10 @@ public final class AdventurerPartnerService {
             repository.updateSession(
                     journal.id(), ProfileOrientation.CANONICAL, runtime.generation(),
                     PartnerLifecycleStatus.ACTIVE, null);
+            if (mode == PartnerMode.DOUBLE_PARTNER && !readyOnCompletion) {
+                announcePartnerStatus(active, player,
+                        "I'm here. Agent E is preparing our Partner link. I'll let you know when we're ready.");
+            }
             transitions.prepareSkillUnion(journal.id(), player, partnerHolder);
             if (mode == PartnerMode.SOLO_TAG) {
                 partnerHolder.suspendProfileRuntimeTasks();
@@ -434,17 +443,51 @@ public final class AdventurerPartnerService {
         if (!active.markSwitchReady()) {
             return;
         }
-        resetTriggerSkillCooldowns(player);
+        resetTriggerSkillCooldowns(active, player);
         if (announce) {
-            player.message(active.partnerActorOrDormantProfile().getName()
-                    + " is ready. Double Partner Mode can now switch roles with Nimble Feet.");
+            announcePartnerStatus(active, player,
+                    "Our Partner link is ready. Use Nimble Feet whenever you want to switch roles.");
         }
     }
 
-    private void resetTriggerSkillCooldowns(Character player) {
+    private void announcePartnerStatus(ActivePartnerSession active,
+                                       Character player,
+                                       String message) {
+        try {
+            AgentReplyRuntime.sayPartyOrWhisperNow(active.agentEntry(), player, message);
+        } catch (RuntimeException announcementFailure) {
+            log.warn("partner_status announcement_failed session={}",
+                    active.runtime().sessionId(), announcementFailure);
+        }
+    }
+
+    private void resetTriggerSkillCooldowns(ActivePartnerSession active, Character player) {
+        clearNativeTriggerCooldowns(active);
         for (int skillId : config.TRIGGER_SKILL_IDS) {
-            player.removeCooldown(skillId);
             player.sendPacket(PacketCreator.skillCooldown(skillId, 0));
+        }
+    }
+
+    /**
+     * Partner switching owns trigger cooldowns while a session is active. Remove any
+     * native WZ cooldown before general skill eligibility checks the character state.
+     */
+    public void clearNativeTriggerCooldownIfManaged(Character player, int skillId) {
+        if (!config.ENABLED || player == null || !config.TRIGGER_SKILL_IDS.contains(skillId)
+                || runtimes.findByHumanActorId(player.getId()).isEmpty()) {
+            return;
+        }
+        player.removeCooldown(skillId);
+    }
+
+    private void clearNativeTriggerCooldowns(ActivePartnerSession active) {
+        Character human = active.humanActor();
+        Character partner = active.partnerActorOrDormantProfile();
+        for (int skillId : config.TRIGGER_SKILL_IDS) {
+            human.removeCooldown(skillId);
+            if (partner != human) {
+                partner.removeCooldown(skillId);
+            }
         }
     }
 
@@ -523,7 +566,7 @@ public final class AdventurerPartnerService {
                 log.info("partner_switch rejected session={} generation={} reason=partner_preparing",
                         active.runtime().sessionId(), active.runtime().generation());
                 return TriggerResult.rejected(
-                        "Your Partner is still logging in. Wait for Agent E's ready signal.");
+                        "Your Partner is still preparing. Wait for their ready signal.");
             }
             return TriggerResult.rejected(null);
         }
@@ -559,12 +602,114 @@ public final class AdventurerPartnerService {
                         active.runtime().sessionId(), active.runtime().generation(), transition.reason());
                 return TriggerResult.rejected(transition.reason());
             }
+            applySwitchSkillCooldown(active, player);
             return transition.presentationComplete()
                     ? TriggerResult.switched(config.APPLY_ORDINARY_TRIGGER_BUFF)
                     : TriggerResult.switchedWithRefreshWarning(transition.reason());
         } finally {
             active.exitLifecycleOperation();
         }
+    }
+
+    private void applySwitchSkillCooldown(ActivePartnerSession active, Character player) {
+        long cooldownMs = config.SWITCH_COOLDOWN_MS;
+        clearNativeTriggerCooldowns(active);
+        long seconds = cooldownMs <= 0L ? 0L : 1L + ((cooldownMs - 1L) / 1_000L);
+        int clientSeconds = (int) Math.min(Short.MAX_VALUE, seconds);
+        for (int triggerSkillId : config.TRIGGER_SKILL_IDS) {
+            // Clear a locally-started native Nimble Feet cooldown before applying
+            // the common Partner cooldown. v83 represents this value in seconds.
+            player.sendPacket(PacketCreator.skillCooldown(triggerSkillId, 0));
+            if (clientSeconds == 0) {
+                continue;
+            }
+            player.sendPacket(PacketCreator.skillCooldown(triggerSkillId, clientSeconds));
+        }
+    }
+
+    /** Shares a successfully cast self buff with the other live Double Partner actor. */
+    public void onSkillBuffApplied(Character source, StatEffect effect) {
+        if (!config.ENABLED || !config.DOUBLE_PARTNER_BUFF_SHARING_ENABLED
+                || source == null || !isTransferableDoublePartnerSelfBuff(effect)) {
+            return;
+        }
+        Optional<ActivePartnerSession> found = runtimes.findByAnyActorId(source.getId());
+        if (found.isEmpty()) {
+            return;
+        }
+        ActivePartnerSession active = found.get();
+        active.enterLifecycleOperation();
+        try {
+            if (active.runtime().mode() != PartnerMode.DOUBLE_PARTNER
+                    || active.runtime().status() != PartnerLifecycleStatus.ACTIVE
+                    || active.isJournalClosed()
+                    || runtimes.findByAnyActorId(source.getId()).orElse(null) != active) {
+                return;
+            }
+            Character recipient;
+            if (source == active.humanActor()) {
+                recipient = active.partnerActorOrDormantProfile();
+            } else if (source == active.partnerActorOrDormantProfile()) {
+                recipient = active.humanActor();
+            } else {
+                return;
+            }
+            if (!recipient.isLoggedin() || recipient.isProfileTransitioning()
+                    || !eligibleForDoublePartnerBuff(recipient)
+                    || hasConflictingBooster(recipient, effect)) {
+                return;
+            }
+            if (effect.applyPartnerSharedBuff(source, recipient)) {
+                log.info("partner_double_buff shared session={} sourceActor={} recipientActor={} skill={}",
+                        active.runtime().sessionId(), source.getId(), recipient.getId(),
+                        effect.getBuffSourceId());
+            }
+        } catch (RuntimeException failure) {
+            log.warn("partner_double_buff share_failed sourceActor={} skill={}",
+                    source.getId(), effect.getBuffSourceId(), failure);
+        } finally {
+            active.exitLifecycleOperation();
+        }
+    }
+
+    public boolean doublePartnerBuffSharingEnabled() {
+        return config.DOUBLE_PARTNER_BUFF_SHARING_ENABLED;
+    }
+
+    public int doublePartnerBuffSharingItemId() {
+        return config.DOUBLE_PARTNER_BUFF_SHARING_ITEM_ID;
+    }
+
+    public boolean eligibleForDoublePartnerBuff(Character recipient) {
+        int itemId = config.DOUBLE_PARTNER_BUFF_SHARING_ITEM_ID;
+        return ItemConstants.isEquipment(itemId)
+                ? recipient.haveItemEquipped(itemId)
+                : recipient.haveItemWithId(itemId, false);
+    }
+
+    private static boolean isTransferableDoublePartnerSelfBuff(StatEffect effect) {
+        return effect != null && effect.isSkill() && effect.isOverTime()
+                && effect.getDuration() > 0 && !effect.getStatups().isEmpty()
+                && !effect.isPartyBuff()
+                && effect.getStatups().stream().noneMatch(statup ->
+                statup.getLeft() == BuffStat.SUMMON
+                        || statup.getLeft() == BuffStat.PUPPET
+                        || statup.getLeft() == BuffStat.MONSTER_RIDING);
+    }
+
+    private static boolean hasConflictingBooster(Character recipient, StatEffect incoming) {
+        if (incoming.getStatups().stream().noneMatch(statup -> statup.getLeft() == BuffStat.BOOSTER)) {
+            return false;
+        }
+        int incomingSource = incoming.getBuffSourceId();
+        for (PlayerBuffValueHolder active : recipient.getAllBuffs()) {
+            if (active.effect != null && active.effect.getBuffSourceId() != incomingSource
+                    && active.effect.getStatups().stream()
+                    .anyMatch(statup -> statup.getLeft() == BuffStat.BOOSTER)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void release(Character player, String reason) {
@@ -623,6 +768,7 @@ public final class AdventurerPartnerService {
             throw new IllegalStateException(
                     "Partner session is not releasable while " + active.runtime().status());
         }
+        boolean announceFarewell = !active.isJournalClosed();
         if (active.runtime().bindings().orientation() == ProfileOrientation.SWAPPED) {
             ProfileTransitionCoordinator.TransitionResult restore = transitions.transition(
                     active.runtime(), active.humanActor(), active.partnerActorOrDormantProfile(),
@@ -691,6 +837,10 @@ public final class AdventurerPartnerService {
 
             try {
                 if (active.runtime().mode() == PartnerMode.DOUBLE_PARTNER) {
+                    if (announceFarewell) {
+                        announcePartnerStatus(active, active.humanActor(),
+                                "I'm heading out now. Thanks for adventuring with me. See you next time!");
+                    }
                     agents.release(new PartnerAgentLifecycleBridge.SpawnedPartner(
                             active.partnerActorOrDormantProfile(), active.agentEntry()));
                 } else {

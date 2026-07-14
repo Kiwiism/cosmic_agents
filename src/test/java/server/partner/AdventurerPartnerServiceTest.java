@@ -34,6 +34,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -202,7 +203,74 @@ class AdventurerPartnerServiceTest {
     }
 
     @Test
-    void npcDoubleInviteWaitsForAcknowledgementAndCoalescesEarlyCasts() {
+    void doublePartnerSelfBuffSharesOnlyToAnEligibleReceiverWithoutRangeChecks() {
+        config.DOUBLE_PARTNER_BUFF_SHARING_ENABLED = true;
+        PartnerSessionRecord doubleJournal = new PartnerSessionRecord(
+                8L, 5L, 10, 20, PartnerMode.DOUBLE_PARTNER,
+                ProfileOrientation.CANONICAL, 0L, PartnerLifecycleStatus.ACTIVATING,
+                Instant.now(), Instant.now(), null, null);
+        when(repository.createSession(5L, 10, 20, PartnerMode.DOUBLE_PARTNER))
+                .thenReturn(doubleJournal);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(partner, player, null);
+        when(agents.spawnFollowing(player, 20, "Yoona"))
+                .thenReturn(new PartnerAgentLifecycleBridge.SpawnedPartner(partner, entry));
+        when(partner.haveItemEquipped(config.DOUBLE_PARTNER_BUFF_SHARING_ITEM_ID))
+                .thenReturn(true);
+        when(player.haveItemEquipped(config.DOUBLE_PARTNER_BUFF_SHARING_ITEM_ID))
+                .thenReturn(false);
+        when(partner.getAllBuffs()).thenReturn(List.of());
+        StatEffect shadowPartner = mock(StatEffect.class);
+        when(shadowPartner.isSkill()).thenReturn(true);
+        when(shadowPartner.isOverTime()).thenReturn(true);
+        when(shadowPartner.getDuration()).thenReturn(180_000);
+        when(shadowPartner.isPartyBuff()).thenReturn(false);
+        when(shadowPartner.getBuffSourceId()).thenReturn(4111002);
+        when(shadowPartner.getStatups()).thenReturn(List.of(
+                new Pair<>(BuffStat.SHADOWPARTNER, 50)));
+        when(shadowPartner.applyPartnerSharedBuff(player, partner)).thenReturn(true);
+        service.activate(player, PartnerMode.DOUBLE_PARTNER);
+
+        service.onSkillBuffApplied(player, shadowPartner);
+        service.onSkillBuffApplied(partner, shadowPartner);
+
+        verify(shadowPartner).applyPartnerSharedBuff(player, partner);
+        verify(shadowPartner, never()).applyPartnerSharedBuff(partner, player);
+    }
+
+    @Test
+    void doublePartnerNonEquipmentBondOnlyNeedsToBeCarried() {
+        config.DOUBLE_PARTNER_BUFF_SHARING_ITEM_ID = 4000144;
+        when(player.haveItemWithId(4000144, false)).thenReturn(true);
+
+        assertTrue(service.eligibleForDoublePartnerBuff(player));
+
+        verify(player, never()).haveItemEquipped(4000144);
+    }
+
+    @Test
+    void doubleReleaseSendsFarewellBeforeRemovingPartnerAgent() {
+        PartnerSessionRecord doubleJournal = new PartnerSessionRecord(
+                8L, 5L, 10, 20, PartnerMode.DOUBLE_PARTNER,
+                ProfileOrientation.CANONICAL, 0L, PartnerLifecycleStatus.ACTIVATING,
+                Instant.now(), Instant.now(), null, null);
+        when(repository.createSession(5L, 10, 20, PartnerMode.DOUBLE_PARTNER))
+                .thenReturn(doubleJournal);
+        when(partner.getName()).thenReturn("Yoona");
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(partner, player, null);
+        when(agents.spawnFollowing(player, 20, "Yoona"))
+                .thenReturn(new PartnerAgentLifecycleBridge.SpawnedPartner(partner, entry));
+        service.activate(player, PartnerMode.DOUBLE_PARTNER);
+        org.mockito.Mockito.clearInvocations(player, agents);
+
+        service.release(player, "farewell test");
+
+        org.mockito.InOrder order = org.mockito.Mockito.inOrder(player, agents);
+        order.verify(player).sendPacket(any(Packet.class));
+        order.verify(agents).release(any());
+    }
+
+    @Test
+    void doubleInvitePreparationCoalescesEarlyCastsUntilCompletion() {
         PartnerSessionRecord doubleJournal = new PartnerSessionRecord(
                 8L, 5L, 10, 20, PartnerMode.DOUBLE_PARTNER,
                 ProfileOrientation.CANONICAL, 0L, PartnerLifecycleStatus.ACTIVATING,
@@ -222,7 +290,7 @@ class AdventurerPartnerServiceTest {
                 service.handleSwitchTrigger(player, config.TRIGGER_SKILL_IDS.getFirst());
 
         assertFalse(active.isSwitchReady());
-        assertTrue(first.message().contains("still logging in"));
+        assertTrue(first.message().contains("still preparing"));
         org.junit.jupiter.api.Assertions.assertNull(repeated.message());
         verify(triggerPolicy, never()).validate(any(), any());
         for (int skillId : config.TRIGGER_SKILL_IDS) {
@@ -233,7 +301,7 @@ class AdventurerPartnerServiceTest {
 
         assertTrue(active.isSwitchReady());
         assertTriggerCooldownsReset();
-        verify(player).message("Yoona is ready. Double Partner Mode can now switch roles with Nimble Feet.");
+        verify(player, never()).message(any());
     }
 
     @Test
@@ -491,9 +559,37 @@ class AdventurerPartnerServiceTest {
                 service.handleSwitchTrigger(player, config.TRIGGER_SKILL_IDS.getFirst());
 
         assertTrue(switched.switched());
+        ArgumentCaptor<Packet> cooldownPackets = ArgumentCaptor.forClass(Packet.class);
+        verify(player, atLeast(config.TRIGGER_SKILL_IDS.size() + 1))
+                .sendPacket(cooldownPackets.capture());
+        for (int triggerSkillId : config.TRIGGER_SKILL_IDS) {
+            byte[] expectedCooldown = PacketCreator.skillCooldown(triggerSkillId, 5).getBytes();
+            assertTrue(cooldownPackets.getAllValues().stream().anyMatch(packet ->
+                    java.util.Arrays.equals(expectedCooldown, packet.getBytes())));
+        }
         assertTrue(firstRejected.message().contains("cooling down"));
         org.junit.jupiter.api.Assertions.assertNull(repeatedRejected.message());
         service.release(player, "cooldown message test cleanup");
+    }
+
+    @Test
+    void activeSessionIgnoresNativeTriggerCooldownState() throws Exception {
+        when(profiles.loadDetached(20, 0, 1)).thenReturn(partner);
+        service.activate(player, PartnerMode.SOLO_TAG);
+        org.mockito.Mockito.clearInvocations(player);
+
+        service.clearNativeTriggerCooldownIfManaged(
+                player, config.TRIGGER_SKILL_IDS.getFirst());
+
+        verify(player).removeCooldown(config.TRIGGER_SKILL_IDS.getFirst());
+    }
+
+    @Test
+    void triggerCooldownRemainsNativeOutsidePartnerSession() {
+        service.clearNativeTriggerCooldownIfManaged(
+                player, config.TRIGGER_SKILL_IDS.getFirst());
+
+        verify(player, never()).removeCooldown(org.mockito.ArgumentMatchers.anyInt());
     }
 
     @Test
@@ -664,6 +760,7 @@ class AdventurerPartnerServiceTest {
         when(character.getAccountID()).thenReturn(accountId);
         when(character.getWorld()).thenReturn(world);
         when(character.getClient()).thenReturn(client);
+        when(character.isLoggedin()).thenReturn(true);
         when(character.isProfileTransitioning()).thenReturn(false);
         when(character.isProfileSaving()).thenReturn(false);
         return character;
@@ -672,9 +769,10 @@ class AdventurerPartnerServiceTest {
     private void assertTriggerCooldownsReset() {
         for (int skillId : config.TRIGGER_SKILL_IDS) {
             verify(player).removeCooldown(skillId);
+            verify(partner).removeCooldown(skillId);
         }
         ArgumentCaptor<Packet> packets = ArgumentCaptor.forClass(Packet.class);
-        verify(player, times(config.TRIGGER_SKILL_IDS.size())).sendPacket(packets.capture());
+        verify(player, atLeast(config.TRIGGER_SKILL_IDS.size())).sendPacket(packets.capture());
         for (int skillId : config.TRIGGER_SKILL_IDS) {
             byte[] expected = PacketCreator.skillCooldown(skillId, 0).getBytes();
             assertTrue(packets.getAllValues().stream()

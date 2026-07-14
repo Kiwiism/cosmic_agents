@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.time.Instant;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -75,7 +76,7 @@ class AdventurerPartnerNpcServiceTest {
     }
 
     @Test
-    void inviteExplainsLoadingAndRequiresAReadyAcknowledgement() {
+    void successfulInviteReturnsWithoutAnotherNpcDialogue() {
         ActivePartnerSession active = mock(ActivePartnerSession.class);
         when(service.registeredLink(player)).thenReturn(Optional.of(doubleLink));
         when(service.findCharacter(20)).thenReturn(Optional.of(partner));
@@ -84,11 +85,15 @@ class AdventurerPartnerNpcServiceTest {
 
         String result = npc.invite(player);
 
-        verify(player).message("KiwiAgent is logging in. Agent E is preparing the Partner link.");
-        assertTrue(result.contains("has arrived"));
-        assertTrue(result.contains("Select OK to finish the link"));
+        assertEquals("", result);
+        verify(service).beginDoublePartnerInvite(player);
+        verify(service).completeDoublePartnerInvite(player);
+    }
 
+    @Test
+    void completionHookCanRecoverAnAlreadyPreparedDoubleInvite() {
         npc.completeDoublePartnerInvite(player);
+
         verify(service).completeDoublePartnerInvite(player);
     }
 
@@ -168,6 +173,18 @@ class AdventurerPartnerNpcServiceTest {
 
         assertTrue(menu.contains("Solo Tag Self-Buff Bond: #dNot owned"));
         assertTrue(menu.contains("Purchase #t1142073# for 10,000,000 mesos"));
+    }
+
+    @Test
+    void enabledDoubleBuffSharingShowsReceiverBondStatus() {
+        when(service.doublePartnerBuffSharingEnabled()).thenReturn(true);
+        when(service.doublePartnerBuffSharingItemId()).thenReturn(1142073);
+        when(service.eligibleForDoublePartnerBuff(player)).thenReturn(true);
+        when(service.overview(player)).thenReturn(Optional.empty());
+
+        String menu = npc.mainMenu(player);
+
+        assertTrue(menu.contains("Double Partner Self-Buff Bond: #bActive#k"));
     }
 
     private void overview(PartnerLink link, AdventurerPartnerService.PartnerPresence presence) {

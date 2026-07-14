@@ -127,7 +127,7 @@ class CosmicProfilePresentationServiceTest {
         int previousEffectId = YamlConfig.config.adventurerPartner.SWITCH_EFFECT_ID;
         boolean previousEffectBroadcast =
                 YamlConfig.config.adventurerPartner.SWITCH_EFFECT_BROADCAST;
-        YamlConfig.config.adventurerPartner.SWITCH_EFFECT_ID = 10;
+        YamlConfig.config.adventurerPartner.SWITCH_EFFECT_ID = 8;
         YamlConfig.config.adventurerPartner.SWITCH_EFFECT_BROADCAST = false;
         try {
             presentation.prepare(human, partner);
@@ -149,7 +149,9 @@ class CosmicProfilePresentationServiceTest {
             assertFalse(opcodes.contains(SendOpcode.INVENTORY_GROW.getValue()));
             assertArrayEquals(PacketCreator.enableActions().getBytes(), sent.getLast().getBytes());
             assertTrue(sent.stream().anyMatch(packet -> java.util.Arrays.equals(
-                    packet.getBytes(), PacketCreator.showSpecialEffect(10).getBytes())));
+                    packet.getBytes(), PacketCreator.showSpecialEffect(8).getBytes())));
+            assertTrue(sent.stream().anyMatch(packet -> java.util.Arrays.equals(
+                    packet.getBytes(), PacketCreator.showForeignEffect(partner.getId(), 8).getBytes())));
             assertFalse(opcodes.contains(SendOpcode.SHOW_STATUS_INFO.getValue()));
             assertFalse(opcodes.contains(SendOpcode.MONSTER_BOOK_SET_CARD.getValue()));
             assertFalse(opcodes.contains(SendOpcode.MONSTER_BOOK_SET_COVER.getValue()));

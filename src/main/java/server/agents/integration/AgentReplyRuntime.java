@@ -80,6 +80,36 @@ public final class AgentReplyRuntime {
         }
     }
 
+    /** Sends private Agent status through the shared party, or directly to its owner. */
+    public static boolean sayPartyOrWhisperNow(AgentRuntimeEntry entry,
+                                               Character recipient,
+                                               String message) {
+        Character bot = AgentRuntimeIdentityRuntime.bot(entry);
+        if (bot == null || recipient == null) {
+            return false;
+        }
+        String sanitized = AgentChatTextSanitizer.sanitize(message);
+        try {
+            AgentPartySnapshot botParty = AgentPartyGatewayRuntime.party().snapshot(bot);
+            AgentPartySnapshot recipientParty = AgentPartyGatewayRuntime.party().snapshot(recipient);
+            if (botParty != null && recipientParty != null && botParty.id() == recipientParty.id()
+                    && AgentPartyGatewayRuntime.party().sendPartyChat(bot, sanitized)) {
+                return true;
+            }
+        } catch (RuntimeException ignored) {
+            // Party delivery is optional for private status; use the owner whisper below.
+        }
+        if (!AgentClientGatewayRuntime.clients().hasClient(recipient)) {
+            return false;
+        }
+        int channel = AgentClientGatewayRuntime.clients().hasClient(bot)
+                ? AgentClientGatewayRuntime.clients().channel(bot)
+                : AgentClientGatewayRuntime.clients().channel(recipient);
+        AgentPacketGatewayRuntime.packets().sendWhisperReceive(
+                recipient, bot.getName(), Math.max(0, channel - 1), false, sanitized);
+        return true;
+    }
+
     private static AgentReplyQueue.State state(AgentRuntimeEntry entry) {
         return new AgentReplyQueue.State() {
             @Override

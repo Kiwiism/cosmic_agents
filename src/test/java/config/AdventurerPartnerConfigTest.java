@@ -36,6 +36,10 @@ class AdventurerPartnerConfigTest {
         config.SOLO_TAG_BUFF_SHARING_ITEM_ID = 1142073;
         config.SOLO_TAG_BUFF_SHARING_PRICE_MESOS = -1;
         assertThrows(IllegalStateException.class, config::validate);
+
+        config.SOLO_TAG_BUFF_SHARING_PRICE_MESOS = 10_000_000;
+        config.DOUBLE_PARTNER_BUFF_SHARING_ITEM_ID = 0;
+        assertThrows(IllegalStateException.class, config::validate);
     }
 
     @Test
@@ -58,6 +62,8 @@ class AdventurerPartnerConfigTest {
                     SOLO_TAG_BUFF_SHARING_ENABLED: true
                     SOLO_TAG_BUFF_SHARING_ITEM_ID: 4000144
                     SOLO_TAG_BUFF_SHARING_PRICE_MESOS: 12345678
+                    DOUBLE_PARTNER_BUFF_SHARING_ENABLED: true
+                    DOUBLE_PARTNER_BUFF_SHARING_ITEM_ID: 4000145
                 """;
         YamlConfig loaded;
         try (YamlReader reader = new YamlReader(new StringReader(yaml))) {
@@ -81,6 +87,8 @@ class AdventurerPartnerConfigTest {
         assertTrue(config.SOLO_TAG_BUFF_SHARING_ENABLED);
         assertEquals(4000144, config.SOLO_TAG_BUFF_SHARING_ITEM_ID);
         assertEquals(12_345_678, config.SOLO_TAG_BUFF_SHARING_PRICE_MESOS);
+        assertTrue(config.DOUBLE_PARTNER_BUFF_SHARING_ENABLED);
+        assertEquals(4000145, config.DOUBLE_PARTNER_BUFF_SHARING_ITEM_ID);
     }
 
     @Test
@@ -91,6 +99,9 @@ class AdventurerPartnerConfigTest {
 
         config.DOUBLE_PARTNER_READY_DELAY_MS = 0L;
         config.SWITCH_EFFECT_ID = 256;
+        assertThrows(IllegalStateException.class, config::validate);
+
+        config.SWITCH_EFFECT_ID = 10;
         assertThrows(IllegalStateException.class, config::validate);
 
         config.SWITCH_EFFECT_ID = -1;

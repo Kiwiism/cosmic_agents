@@ -916,26 +916,35 @@ public class StatEffect {
 
         boolean hwResult = applyTo(applyfrom);
         for (Character chr : mapPlayers.values()) {    // Echo of Hero not buffing players in the map detected thanks to Masterrulax
-            applyTo(applyfrom, chr, false, null, false, 1);
+            applyTo(applyfrom, chr, false, null, false, 1, false);
         }
 
         return hwResult;
     }
 
     public boolean applyTo(Character chr) {
-        return applyTo(chr, chr, true, null, false, 1);
+        return applyTo(chr, chr, true, null, false, 1, false);
     }
 
     public boolean applyTo(Character chr, boolean useMaxRange) {
-        return applyTo(chr, chr, true, null, useMaxRange, 1);
+        return applyTo(chr, chr, true, null, useMaxRange, 1, false);
     }
 
     public boolean applyTo(Character chr, Point pos) {
-        return applyTo(chr, chr, true, pos, false, 1);
+        return applyTo(chr, chr, true, pos, false, 1, false);
+    }
+
+    /** Applies an already-paid skill buff to a Partner without range or resource costs. */
+    public boolean applyPartnerSharedBuff(Character source, Character recipient) {
+        if (source == null || recipient == null) {
+            return false;
+        }
+        return applyTo(source, recipient, false, null, true, 1, true);
     }
 
     // primary: the player caster of the buff
-    private boolean applyTo(Character applyfrom, Character applyto, boolean primary, Point pos, boolean useMaxRange, int affectedPlayers) {
+    private boolean applyTo(Character applyfrom, Character applyto, boolean primary, Point pos,
+                            boolean useMaxRange, int affectedPlayers, boolean partnerShared) {
         if (skill && (sourceid == GM.HIDE || sourceid == SuperGM.HIDE)) {
             applyto.toggleHide(false);
             return true;
@@ -945,8 +954,8 @@ public class StatEffect {
             affectedPlayers = applyBuff(applyfrom, useMaxRange);
         }
 
-        int hpchange = calcHPChange(applyfrom, primary, affectedPlayers);
-        int mpchange = calcMPChange(applyfrom, primary);
+        int hpchange = partnerShared ? 0 : calcHPChange(applyfrom, primary, affectedPlayers);
+        int mpchange = partnerShared ? 0 : calcMPChange(applyfrom, primary);
         if (primary) {
             if (itemConNo != 0) {
                 if (!applyto.getAbstractPlayerInteraction().hasItem(itemCon, itemConNo)) {
@@ -962,23 +971,25 @@ public class StatEffect {
             }
         }
 
-        if (isDispel() && makeChanceResult()) {
-            applyto.dispelDebuffs();
-        } else if (isCureAllAbnormalStatus()) {
-            applyto.purgeDebuffs();
-        } else if (isComboReset()) {
-            applyto.setCombo((short) 0);
+        if (!partnerShared) {
+            if (isDispel() && makeChanceResult()) {
+                applyto.dispelDebuffs();
+            } else if (isCureAllAbnormalStatus()) {
+                applyto.purgeDebuffs();
+            } else if (isComboReset()) {
+                applyto.setCombo((short) 0);
+            }
         }
         /*if (applyfrom.getMp() < getMpCon()) {
          AutobanFactory.MPCON.addPoint(applyfrom.getAutobanManager(), "mpCon hack for skill:" + sourceid + "; Player MP: " + applyto.getMp() + " MP Needed: " + getMpCon());
          } */
 
-        if (!applyto.applyHpMpChange(hpCon, hpchange, mpchange)) {
+        if (!partnerShared && !applyto.applyHpMpChange(hpCon, hpchange, mpchange)) {
             applyto.sendPacket(PacketCreator.enableActions());
             return false;
         }
 
-        if (moveTo != -1) {
+        if (!partnerShared && moveTo != -1) {
             if (moveTo != applyto.getMapId()) {
                 MapleMap target;
                 Portal pt;
@@ -1001,7 +1012,7 @@ public class StatEffect {
                 return false;
             }
         }
-        if (isShadowClaw()) {
+        if (!partnerShared && isShadowClaw()) {
             short projectileConsume = this.getBulletConsume();  // noticed by shavit
 
             Inventory use = applyto.getInventory(InventoryType.USE);
@@ -1038,7 +1049,7 @@ public class StatEffect {
                 applyto.sendPacket(PacketCreator.enableActions());
             }
 
-            applyBuffEffect(applyfrom, applyto, primary);
+            applyBuffEffect(applyfrom, applyto, primary, partnerShared);
         }
 
         if (primary) {
@@ -1049,6 +1060,10 @@ public class StatEffect {
             if (isMonsterBuff()) {
                 applyMonsterBuff(applyfrom);
             }
+        }
+
+        if (partnerShared) {
+            return true;
         }
 
         if (this.getFatigue() != 0) {
@@ -1175,7 +1190,7 @@ public class StatEffect {
 
             affectedc += affectedp.size();   // used for heal
             for (Character affected : affectedp) {
-                applyTo(applyfrom, affected, false, null, useMaxRange, affectedc);
+                applyTo(applyfrom, affected, false, null, useMaxRange, affectedc, false);
                 affected.sendPacket(PacketCreator.showOwnBuffEffect(sourceid, 2));
                 affected.getMap().broadcastMessage(affected, PacketCreator.showBuffEffect(affected.getId(), sourceid, 2), false);
             }
@@ -1284,7 +1299,8 @@ public class StatEffect {
         }
     }
 
-    private void applyBuffEffect(Character applyfrom, Character applyto, boolean primary) {
+    private void applyBuffEffect(Character applyfrom, Character applyto,
+                                 boolean primary, boolean partnerShared) {
         if (!isMonsterRiding() && !isCouponBuff() && !isMysticDoor() && !isHyperBody() && !isCombo()) {     // last mystic door already dispelled if it has been used before.
             applyto.cancelEffect(this, true, -1);
         }
@@ -1380,7 +1396,7 @@ public class StatEffect {
             } else if (isSoulArrow()) {
                 List<Pair<BuffStat, Integer>> stat = Collections.singletonList(new Pair<>(BuffStat.SOULARROW, 0));
                 mbuff = PacketCreator.giveForeignBuff(applyto.getId(), stat);
-            } else if (isEnrage()) {
+            } else if (isEnrage() && !partnerShared) {
                 applyto.handleOrbconsume();
             } else if (isMorph()) {
                 List<Pair<BuffStat, Integer>> stat = Collections.singletonList(new Pair<>(BuffStat.MORPH, getMorph(applyto)));

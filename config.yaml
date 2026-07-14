@@ -176,10 +176,10 @@ adventurerPartner:
     NPC_ID: 9000036
     SOLO_TAG_ENABLED: true
     DOUBLE_PARTNER_ENABLED: true
-    SWITCH_COOLDOWN_MS: 500               # Dedicated Partner switch cooldown; independent from Nimble Feet.
+    SWITCH_COOLDOWN_MS: 500               # Exact shared server gate for every trigger skill; v83 UI rounds positive values up to whole seconds.
     SAME_MAP_REQUIRED: true
     DOUBLE_PARTNER_READY_DELAY_MS: 0       # Optional extra wait after the NPC closes; 0-10000 ms. Packet preparation still finishes first.
-    SWITCH_EFFECT_ID: 10                  # -1 disables it. Low-clutter candidates: 7 portal sound, 10 recovery, 11 buff, 17 buff with SFX. Legacy job-change is 8.
+    SWITCH_EFFECT_ID: 8                    # -1 disables it. Stock-safe default is the job-change effect (8); effect 10 crashes this v83 client.
     SWITCH_EFFECT_BROADCAST: false         # Keep frequent switch effects local unless nearby players should see them.
     SWITCH_TRIGGER_EFFECT_ENABLED: false   # The trigger skill already animates client-side; this suppresses the redundant server replay.
     TRIGGER_SKILL_IDS: [1002, 10001002, 20001002, 20011002]
@@ -188,6 +188,8 @@ adventurerPartner:
     SOLO_TAG_BUFF_SHARING_ENABLED: true     # Opt-in: share party buffs; self buffs require the receiving profile's bond item.
     SOLO_TAG_BUFF_SHARING_ITEM_ID: 1142073  # Demo: Be My Friend Medal. Equipment must be equipped; other item types only need to be carried.
     SOLO_TAG_BUFF_SHARING_PRICE_MESOS: 10000000
+    DOUBLE_PARTNER_BUFF_SHARING_ENABLED: true  # Opt-in: share self buffs live; each receiver must qualify with its own bond item.
+    DOUBLE_PARTNER_BUFF_SHARING_ITEM_ID: 1142073 # Equipment must be equipped; other item types only need to be carried. No range requirement.
 
 server:
     #Database Configuration

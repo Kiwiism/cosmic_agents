@@ -381,6 +381,10 @@ public final class CosmicProfilePresentationService implements ProfilePresentati
             if (mode == PartnerMode.DOUBLE_PARTNER) {
                 broadcastSwitchEffect(counter, partnerActorOrDormantProfile, effectId);
             }
+        } else if (mode == PartnerMode.DOUBLE_PARTNER
+                && partnerActorOrDormantProfile != null) {
+            counter.send("switch-effect", PacketCreator.showForeignEffect(
+                    partnerActorOrDormantProfile.getId(), effectId));
         }
     }
 

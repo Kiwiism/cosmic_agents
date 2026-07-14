@@ -1177,6 +1177,7 @@ public class NPCConversationManager extends AbstractPlayerInteraction {
         return AdventurerPartnerNpcService.INSTANCE.invite(getPlayer());
     }
 
+    /** Backward-compatible recovery hook for an invite prepared by an older server build. */
     public void adventurerPartnerCompleteDoubleInvite() {
         AdventurerPartnerNpcService.INSTANCE.completeDoublePartnerInvite(getPlayer());
     }

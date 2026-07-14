@@ -2,6 +2,7 @@ package server.partner;
 
 import client.Character;
 import client.Job;
+import constants.inventory.ItemConstants;
 
 import java.util.List;
 import java.util.Locale;
@@ -37,6 +38,10 @@ public final class AdventurerPartnerNpcService {
         if (buffSharing.enabled()) {
             menu.append("Solo Tag Self-Buff Bond: ")
                     .append(buffSharing.entitlementStatus(player)).append("\r\n\r\n");
+        }
+        if (service.doublePartnerBuffSharingEnabled()) {
+            menu.append("Double Partner Self-Buff Bond: ")
+                    .append(doublePartnerBuffSharingStatus(player)).append("\r\n\r\n");
         }
         if (found.isEmpty()) {
             menu.append("#dNo adventuring Partner is registered.#k\r\n\r\n")
@@ -106,16 +111,13 @@ public final class AdventurerPartnerNpcService {
             if (link.preferredMode() != PartnerMode.DOUBLE_PARTNER) {
                 throw new IllegalStateException("Change to Double Partner Mode before inviting your Partner.");
             }
-            String partnerName = partnerName(link, player.getId());
-            player.message(partnerName
-                    + " is logging in. Agent E is preparing the Partner link.");
-            ActivePartnerSession active = service.beginDoublePartnerInvite(player);
-            return partnerName(active.link(), player.getId())
-                    + " has arrived. Their skills and profile data are prepared. Select OK to finish the link; "
-                    + "Agent E will notify you when switching is ready.";
+            service.beginDoublePartnerInvite(player);
+            service.completeDoublePartnerInvite(player);
+            return "";
         });
     }
 
+    /** Idempotently completes or schedules readiness for a prepared Double Partner invite. */
     public void completeDoublePartnerInvite(Character player) {
         service.completeDoublePartnerInvite(player);
     }
@@ -244,10 +246,26 @@ public final class AdventurerPartnerNpcService {
                 + "Eligibility is checked separately for each character, and the strongest value wins when buffs "
                 + "overlap.\r\n\r\n"
                 + "#bDouble Partner Mode#k invites your Partner as an Agent. Both actors remain visible, and Nimble "
-                + "Feet exchanges their profiles only while they are in the same map. Agent E prepares both "
-                + "profiles before enabling the switch and announces when the Partner link is ready.\r\n\r\n"
+                + "Feet exchanges their profiles only while they are in the same map. When Double Partner buff "
+                + "sharing is enabled, a self buff is copied to the other actor as soon as it is cast, at any "
+                + "distance. The receiver must carry the configured bond item, or equip it when it is equipment. "
+                + "Your Partner announces in "
+                + "party chat when preparation starts and when switching is ready, falling back to a whisper if "
+                + "party chat is unavailable.\r\n\r\n"
                 + "#bRelease my partner#k restores canonical ownership, saves progress, logs out the Partner Agent, "
-                + "and clears a stuck Partner-managed session. It never disconnects a character being played independently.";
+                + "and clears a stuck Partner-managed session. Your Partner says goodbye before leaving. It never "
+                + "disconnects a character being played independently.";
+    }
+
+    private String doublePartnerBuffSharingStatus(Character player) {
+        int itemId = service.doublePartnerBuffSharingItemId();
+        if (service.eligibleForDoublePartnerBuff(player)) {
+            return "#bActive#k";
+        }
+        if (player.haveItemWithId(itemId, true) && ItemConstants.isEquipment(itemId)) {
+            return "#rInactive - equip #t" + itemId + "##k";
+        }
+        return "#dNot owned#k";
     }
 
     private static boolean canActivate(AdventurerPartnerService.PartnerOverview overview) {

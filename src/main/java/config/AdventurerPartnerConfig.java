@@ -17,7 +17,7 @@ public class AdventurerPartnerConfig {
     public long SWITCH_COOLDOWN_MS = 5_000L;
     public boolean SAME_MAP_REQUIRED = true;
     public long DOUBLE_PARTNER_READY_DELAY_MS = 0L;
-    public int SWITCH_EFFECT_ID = 10;
+    public int SWITCH_EFFECT_ID = 8;
     public boolean SWITCH_EFFECT_BROADCAST = false;
     public boolean SWITCH_TRIGGER_EFFECT_ENABLED = false;
     public List<Integer> TRIGGER_SKILL_IDS = new ArrayList<>(List.of(
@@ -30,6 +30,8 @@ public class AdventurerPartnerConfig {
     public boolean SOLO_TAG_BUFF_SHARING_ENABLED = false;
     public int SOLO_TAG_BUFF_SHARING_ITEM_ID = 1142073;
     public int SOLO_TAG_BUFF_SHARING_PRICE_MESOS = 10_000_000;
+    public boolean DOUBLE_PARTNER_BUFF_SHARING_ENABLED = false;
+    public int DOUBLE_PARTNER_BUFF_SHARING_ITEM_ID = 1142073;
 
     public void validate() {
         if (NPC_ID <= 0) {
@@ -46,6 +48,10 @@ public class AdventurerPartnerConfig {
             throw new IllegalStateException(
                     "adventurerPartner.SWITCH_EFFECT_ID must be -1 or a byte-sized effect ID");
         }
+        if (SWITCH_EFFECT_ID == 10) {
+            throw new IllegalStateException(
+                    "adventurerPartner.SWITCH_EFFECT_ID 10 is incompatible with the supported v83 client");
+        }
         if (TRIGGER_SKILL_IDS == null || TRIGGER_SKILL_IDS.isEmpty()
                 || TRIGGER_SKILL_IDS.stream().anyMatch(id -> id == null || id <= 0)) {
             throw new IllegalStateException("adventurerPartner.TRIGGER_SKILL_IDS must contain positive skill IDs");
@@ -57,6 +63,10 @@ public class AdventurerPartnerConfig {
         if (SOLO_TAG_BUFF_SHARING_PRICE_MESOS < 0) {
             throw new IllegalStateException(
                     "adventurerPartner.SOLO_TAG_BUFF_SHARING_PRICE_MESOS cannot be negative");
+        }
+        if (DOUBLE_PARTNER_BUFF_SHARING_ITEM_ID <= 0) {
+            throw new IllegalStateException(
+                    "adventurerPartner.DOUBLE_PARTNER_BUFF_SHARING_ITEM_ID must be positive");
         }
         if (ENABLED && !RESTORE_CANONICAL_ON_DISCONNECT) {
             throw new IllegalStateException(
