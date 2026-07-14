@@ -6,6 +6,7 @@ param(
     [string] $RuntimeOutputRoot = (Join-Path $env:TEMP "cosmic-agent-scheduler-live-gate"),
     [int[]] $ServerPorts = @(8484, 7575, 7576, 7577, 8787),
     [switch] $AllowConfigOverride,
+    [switch] $AllowClientLaunchAfterServer,
     [switch] $SummaryOnly,
     [switch] $Json
 )
@@ -149,6 +150,8 @@ if ($listeners.Count -eq 0) {
 $clients = @(Get-Process -Name "MapleStory" -ErrorAction SilentlyContinue)
 if ($clients.Count -gt 0) {
     Add-Check $checks "client:available" "PASS" "Found $($clients.Count) MapleStory client process(es)."
+} elseif ($AllowClientLaunchAfterServer) {
+    Add-Check $checks "client:launch-after-server" "PASS" "No client is running; explicit launch-after-server mode is enabled."
 } else {
     Add-Check $checks "client:available" "FAIL" "No MapleStory client process is running for visible parity validation."
 }

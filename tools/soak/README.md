@@ -40,7 +40,8 @@ runtime data.
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\tools\soak\Test-AgentSchedulerLiveGatePreflight.ps1 `
   -ExpectedDatabaseName cosmic_scheduler_soak_20260714 `
-  -AllowConfigOverride
+  -AllowConfigOverride `
+  -AllowClientLaunchAfterServer
 ```
 
 Use `-Json` or `-SummaryOnly -Json` for automation. A normal `cosmic` database
@@ -48,6 +49,10 @@ is rejected; the live gate must use an explicitly named disposable database.
 `-AllowConfigOverride` permits exactly one dirty path, `config.yaml`, so the
 operator can point this worktree at that database without committing the local
 credential/database override. Any other pending path still fails preflight.
+By default a running MapleStory process is required. Use
+`-AllowClientLaunchAfterServer` only when the v83 client must be launched after
+the server reaches the listening state; the operator must still launch and
+verify the client before recording live evidence.
 
 ## Baseline Evidence Workflow
 

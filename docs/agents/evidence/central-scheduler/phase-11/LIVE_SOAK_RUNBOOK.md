@@ -15,7 +15,8 @@ disposable database name:
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\tools\soak\Test-AgentSchedulerLiveGatePreflight.ps1 `
   -ExpectedDatabaseName <disposable-database-name> `
-  -AllowConfigOverride
+  -AllowConfigOverride `
+  -AllowClientLaunchAfterServer
 ```
 
 Do not continue unless it reports `PASS`. Use the emitted JVM arguments and
@@ -24,6 +25,11 @@ remain outside the worktree. The preflight does not start the server, connect
 to MySQL, create directories, or alter configuration. The override switch
 allows only a local uncommitted `config.yaml`; every other dirty path remains a
 failure.
+
+Omit `-AllowClientLaunchAfterServer` when a targetable client can remain open
+before server startup. When the switch is used, launch the client only after
+all server listeners are online and do not record live evidence until the
+client connection is confirmed.
 
 ## Stage Order
 
