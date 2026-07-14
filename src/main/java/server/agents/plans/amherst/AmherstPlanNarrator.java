@@ -63,6 +63,12 @@ public final class AmherstPlanNarrator {
                     + " and start " + quest(objective.questId()) + ".";
             case QUEST_COMPLETE -> "I'm going to " + map + " to talk to " + npc(objective.npcId())
                     + " and complete " + quest(objective.questId()) + ".";
+            case FORCE_COMPLETE_QUEST -> objective.questId() == 8020
+                    ? "I'm going to talk to Yoona, visit the Cash Shop for her shopping guide, then come back."
+                    : objective.questId() >= 8021 && objective.questId() <= 8025
+                    ? "I'm going to talk to Yoona and answer " + quest(objective.questId()) + "."
+                    : "I'm going to " + map + " to talk to " + npc(objective.npcId())
+                    + " and complete " + quest(objective.questId()) + ".";
             case QUEST_CHAIN, QUEST_CHAIN_IF_AVAILABLE -> "I'm going to " + map
                     + " to talk to " + chainNpc(objective) + " and work through "
                     + questChain(objective) + ".";
@@ -75,9 +81,9 @@ public final class AmherstPlanNarrator {
             case REACTOR_BOX_ITEMS -> "I'm collecting the recycled goods for "
                     + quest(objective.questId()) + ".";
             case STOP_PLAN -> objective.mapId() == MapleIslandSouthperryQuestCatalog.FINAL_MAP_ID
-                    ? "I've reached Southperry. My Maple Island run is complete."
+                    ? "I've reached Southperry. I'm going to find an open spot and rest on my Relaxer."
                     : "relaxer".equalsIgnoreCase(objective.mode())
-                    ? "I've reached Amherst. I'm going to sit on the Relaxer and rest."
+                    ? "I've reached Amherst. I'm going to find an open spot and rest on my Relaxer."
                     : "I've reached Amherst, so I'm stopping this quest run here.";
         };
     }

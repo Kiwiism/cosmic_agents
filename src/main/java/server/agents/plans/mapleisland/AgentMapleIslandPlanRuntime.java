@@ -18,6 +18,7 @@ import server.agents.plans.amherst.AmherstPlanValidationException;
 import server.agents.plans.amherst.AmherstPlanValidator;
 import server.agents.plans.amherst.FileAmherstPlanProgressStore;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.profiles.AgentBehaviorProfileRuntime;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -33,7 +34,8 @@ public final class AgentMapleIslandPlanRuntime {
                                    Character agent,
                                    long nowMs,
                                    AmherstPlanObserver observer) throws IOException, AmherstPlanValidationException {
-        defaultRunner(defaultCard()).start(
+        AgentBehaviorProfileRuntime.assignMapleIslandQuester(entry);
+        defaultRunner(defaultCard(), entry).start(
                 entry, agent, nowMs, AmherstPlanExecutionMode.MANUAL, observer);
     }
 
@@ -41,7 +43,8 @@ public final class AgentMapleIslandPlanRuntime {
                                  Character agent,
                                  long nowMs,
                                  AmherstPlanObserver observer) throws IOException, AmherstPlanValidationException {
-        defaultRunner(defaultCard()).start(
+        AgentBehaviorProfileRuntime.assignMapleIslandQuester(entry);
+        defaultRunner(defaultCard(), entry).start(
                 entry, agent, nowMs, AmherstPlanExecutionMode.AUTO, observer);
     }
 
@@ -62,14 +65,14 @@ public final class AgentMapleIslandPlanRuntime {
         return AgentAmherstPlanRuntime.requestNext(entry);
     }
 
-    private static AmherstPlanRuntimeRunner defaultRunner(AmherstPlanCard card) {
+    private static AmherstPlanRuntimeRunner defaultRunner(AmherstPlanCard card, AgentRuntimeEntry entry) {
         AmherstScopePolicy scopePolicy = AmherstScopePolicy.southperry();
         return new AmherstPlanRuntimeRunner(card,
                 defaultStore(), new AmherstPlanProgressService(),
                 new AmherstObjectiveReconciler(),
                 new AmherstObjectiveHandlerRegistry(
                         server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime.gateway(),
-                        AmherstNpcInteractionDelay.configured(), scopePolicy),
-                AmherstObjectiveDelay.configured());
+                        AmherstNpcInteractionDelay.profile(entry), scopePolicy),
+                AmherstObjectiveDelay.profile(entry));
     }
 }

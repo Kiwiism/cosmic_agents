@@ -56,6 +56,7 @@ class MapleIslandSouthperryBaselineTest {
         assertTrue(snapshot.resetQuestIds().contains(1046));
         assertTrue(snapshot.resetQuestIds().contains(1045));
         assertTrue(snapshot.resetQuestIds().contains(1028));
+        assertTrue(snapshot.resetQuestIds().contains(8020));
     }
 
     private static MapleIslandSouthperryBaseline.ItemState item(

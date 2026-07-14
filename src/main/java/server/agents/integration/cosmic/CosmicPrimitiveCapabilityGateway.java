@@ -24,6 +24,7 @@ import server.agents.runtime.AgentModeService;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
+import server.agents.runtime.AgentSchedulerRuntime;
 import server.life.Monster;
 import server.life.NPC;
 import server.maps.MapItem;
@@ -36,9 +37,13 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import tools.PacketCreator;
 
 public enum CosmicPrimitiveCapabilityGateway implements PrimitiveCapabilityGateway {
     INSTANCE;
+
+    private final Set<Integer> fieldAbsentAgentIds = ConcurrentHashMap.newKeySet();
 
     @Override
     public int mapId(Character agent) {
@@ -285,6 +290,45 @@ public enum CosmicPrimitiveCapabilityGateway implements PrimitiveCapabilityGatew
         }
         quest.complete(agent, npcId);
         return agent.getQuestStatus(questId) == QuestStatus.Status.COMPLETED.getId();
+    }
+
+    @Override
+    public boolean forceCompleteQuest(Character agent, int questId, int npcId) {
+        Quest.getInstance(questId).forceCompleteWithActions(agent, npcId, null);
+        return agent.getQuestStatus(questId) == QuestStatus.Status.COMPLETED.getId();
+    }
+
+    @Override
+    public boolean beginFieldAbsence(Character agent, long safetyRestoreDelayMs) {
+        if (agent == null || agent.getMap() == null) {
+            return false;
+        }
+        if (!fieldAbsentAgentIds.add(agent.getId())) {
+            return true;
+        }
+        AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(agent.getId());
+        if (entry != null) {
+            AgentModeService.startStop(entry);
+        }
+        agent.getMap().broadcastMessage(PacketCreator.removePlayerFromMap(agent.getId()));
+        AgentSchedulerRuntime.schedule(
+                () -> endFieldAbsence(agent), Math.max(1_000L, safetyRestoreDelayMs));
+        return true;
+    }
+
+    @Override
+    public boolean endFieldAbsence(Character agent) {
+        if (agent == null) {
+            return false;
+        }
+        if (!fieldAbsentAgentIds.remove(agent.getId())) {
+            return true;
+        }
+        if (agent.getMap() == null) {
+            return false;
+        }
+        agent.getMap().broadcastSpawnPlayerMapObjectMessage(agent, agent, true);
+        return true;
     }
 
     @Override

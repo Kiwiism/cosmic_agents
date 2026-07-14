@@ -10,6 +10,7 @@ import server.agents.capabilities.quest.AmherstTestResetMode;
 import server.agents.capabilities.quest.AmherstTestResetRequest;
 import server.agents.capabilities.quest.AmherstTestResetResult;
 import server.agents.capabilities.quest.AmherstTestResetService;
+import server.agents.capabilities.quest.MapleIslandSouthperryBaseline;
 import server.agents.capabilities.quest.MapleIslandSouthperryQuestCatalog;
 import server.agents.integration.AgentMapGatewayRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
@@ -22,6 +23,7 @@ import server.agents.runtime.AgentInteractionRuntime;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
+import server.agents.profiles.AgentBehaviorProfileRuntime;
 
 import java.awt.Point;
 import java.io.IOException;
@@ -85,7 +87,9 @@ public final class MapleIslandPlanCommandService {
         AgentMapleIslandPlanRuntime.defaultStore().delete(card.planId(), agent.getId());
         AgentMovementCommandRuntime.stop(entry);
         message(player, "Southperry baseline restored. 0/" + card.objectives().size()
-                + " objectives satisfied; Amherst quests remain complete.");
+                + " objectives satisfied; "
+                + MapleIslandSouthperryBaseline.snapshot().completedQuestIds().size()
+                + " Amherst quests verified complete.");
         return true;
     }
 
@@ -136,6 +140,11 @@ public final class MapleIslandPlanCommandService {
         message(player, "Quest states: 1046=" + agent.getQuestStatus(1046)
                 + " (must be active), 1028=" + agent.getQuestStatus(1028)
                 + " (must not be complete). Lv" + agent.getLevel() + " EXP " + agent.getExp() + ".");
+        AgentBehaviorProfileRuntime.current(entry).ifPresent(profile -> message(player,
+                "Behavior profile: " + profile.profileId() + " v" + profile.profileVersion()
+                        + "; NPC delay=" + format(profile.presentation().timing().beforeNpcInteractionMs())
+                        + "ms; objective delay=" + format(
+                        profile.presentation().timing().betweenObjectivesMs()) + "ms."));
         if (!state.lastError().isBlank()) {
             message(player, "Last error: " + state.lastError());
         }
@@ -226,6 +235,10 @@ public final class MapleIslandPlanCommandService {
         if (YamlConfig.config.server.AGENT_AMHERST_DEBUG_MESSAGES_ENABLED) {
             message(player, event);
         }
+    }
+
+    private static String format(server.agents.profiles.AgentBehaviorProfile.DelayRange range) {
+        return range.min() + "-" + range.max();
     }
 
     private static void message(Character player, String text) {

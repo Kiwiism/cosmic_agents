@@ -1,11 +1,13 @@
 package server.agents.plans.amherst;
 
 import server.agents.capabilities.objective.CombatQuestObjectiveCapability;
+import server.agents.capabilities.objective.ForceCompleteQuestObjectiveCapability;
 import server.agents.capabilities.objective.InventoryUseObjectiveCapability;
 import server.agents.capabilities.objective.AmherstNpcInteractionDelay;
 import server.agents.capabilities.objective.NpcQuestObjectiveCapability;
 import server.agents.capabilities.objective.PlanStopObjectiveCapability;
 import server.agents.capabilities.objective.ReactorLootObjectiveCapability;
+import server.agents.capabilities.movement.AgentRelaxerSpotCatalog;
 import server.agents.capabilities.quest.AmherstScopePolicy;
 import server.agents.capabilities.quest.MapleIslandSouthperryQuestCatalog;
 import server.agents.capabilities.runtime.AgentCapabilityCommand;
@@ -23,13 +25,17 @@ import java.util.Map;
 public final class AmherstObjectiveHandlerRegistry {
     private static final long OBJECTIVE_TIMEOUT_MS = 300_000L;
     private static final int OBJECTIVE_RETRIES = 1;
+    private static final String RELAXER_MODE = "relaxer";
+    private static final String SOUTHPERRY_RELAXER_MODE = "southperry-relaxer";
+    private static final String SOUTHPERRY_LEFT_RELAXER_MODE = "southperry-left-relaxer";
+    private static final String SOUTHPERRY_RIGHT_RELAXER_MODE = "southperry-right-relaxer";
 
     private final PrimitiveCapabilityGateway gateway;
     private final AmherstNpcInteractionDelay npcInteractionDelay;
     private final AmherstScopePolicy scopePolicy;
 
     public AmherstObjectiveHandlerRegistry() {
-        this(AgentPrimitiveCapabilityGatewayRuntime.gateway(), AmherstNpcInteractionDelay.configured(),
+        this(AgentPrimitiveCapabilityGatewayRuntime.gateway(), AmherstNpcInteractionDelay.NONE,
                 new AmherstScopePolicy());
     }
 
@@ -57,6 +63,10 @@ public final class AmherstObjectiveHandlerRegistry {
                     objective.npcId(), null)), false);
             case QUEST_COMPLETE -> npcQuest(objective, List.of(operation(objective.questId(), 2,
                     null, objective.npcId())), false);
+            case FORCE_COMPLETE_QUEST -> execution(objective.objectiveId(),
+                    new ForceCompleteQuestObjectiveCapability(gateway, scopePolicy, npcInteractionDelay),
+                    new ForceCompleteQuestObjectiveCapability.Command(
+                            objective.objectiveId(), objective.mapId(), objective.questId(), objective.npcId()));
             case QUEST_CHAIN -> npcQuest(objective, chainOperations(objective, 2), false);
             case QUEST_CHAIN_IF_AVAILABLE -> npcQuest(objective, chainOperations(objective, 2), true);
             case USE_ITEM -> execution(objective.objectiveId(), new InventoryUseObjectiveCapability(gateway),
@@ -76,7 +86,8 @@ public final class AmherstObjectiveHandlerRegistry {
                     new PlanStopObjectiveCapability.Command(objective.objectiveId(),
                             card.exitCriteria().finalMapId(), expectedQuestStatuses(card),
                             card.exitCriteria().blockedCompletedQuestIds(), objective.reason(),
-                            "relaxer".equalsIgnoreCase(objective.mode()) ? ItemId.RELAXER : null));
+                            isRelaxerMode(objective.mode()) ? ItemId.RELAXER : null,
+                            restSpotPool(objective.mode())));
         };
     }
 
@@ -151,6 +162,26 @@ public final class AmherstObjectiveHandlerRegistry {
             statuses.put(questId, card.exitCriteria().startOnlyQuestIds().contains(questId) ? 1 : 2);
         }
         return Map.copyOf(statuses);
+    }
+
+    private static boolean isRelaxerMode(String mode) {
+        return restSpotPool(mode) != null;
+    }
+
+    private static AgentRelaxerSpotCatalog.Pool restSpotPool(String mode) {
+        if (RELAXER_MODE.equalsIgnoreCase(mode)) {
+            return AgentRelaxerSpotCatalog.Pool.AMHERST;
+        }
+        if (SOUTHPERRY_RELAXER_MODE.equalsIgnoreCase(mode)) {
+            return AgentRelaxerSpotCatalog.Pool.SOUTHPERRY_ALL;
+        }
+        if (SOUTHPERRY_LEFT_RELAXER_MODE.equalsIgnoreCase(mode)) {
+            return AgentRelaxerSpotCatalog.Pool.SOUTHPERRY_LEFT;
+        }
+        if (SOUTHPERRY_RIGHT_RELAXER_MODE.equalsIgnoreCase(mode)) {
+            return AgentRelaxerSpotCatalog.Pool.SOUTHPERRY_RIGHT;
+        }
+        return null;
     }
 
     private static <C extends AgentCapabilityCommand> AmherstObjectiveExecution execution(

@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -99,6 +100,14 @@ public final class MutablePrimitiveGatewayFixture {
             items.replaceAll((id, count) -> 0);
             return true;
         });
+        when(gateway.forceCompleteQuest(any(), anyInt(), anyInt())).thenAnswer(invocation -> {
+            int questId = invocation.getArgument(1);
+            quests.put(questId, 2);
+            questCompletions.merge(questId, 1, Integer::sum);
+            return true;
+        });
+        when(gateway.beginFieldAbsence(any(), anyLong())).thenReturn(true);
+        when(gateway.endFieldAbsence(any())).thenReturn(true);
         when(gateway.useItem(any(), anyInt())).thenAnswer(invocation -> {
             int itemId = invocation.getArgument(1);
             items.computeIfPresent(itemId, (id, count) -> Math.max(0, count - 1));

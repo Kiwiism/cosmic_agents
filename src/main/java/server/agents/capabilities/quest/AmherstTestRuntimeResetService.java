@@ -5,6 +5,7 @@ import server.agents.capabilities.combat.AgentCombatObjectiveTargetStateRuntime;
 import server.agents.capabilities.dialogue.AgentPendingActionStateRuntime;
 import server.agents.capabilities.looting.AgentGrindLootStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
+import server.agents.capabilities.movement.AgentRelaxerSpotReservationRuntime;
 import server.agents.capabilities.runtime.AgentCapabilityRuntime;
 import server.agents.capabilities.trade.AgentTradeStateService;
 import server.agents.plans.AgentScriptTaskStateRuntime;
@@ -18,6 +19,7 @@ public final class AmherstTestRuntimeResetService {
 
     public static void reset(AgentRuntimeEntry entry, Character agent, long nowMs) {
         AgentCapabilityRuntime.cancelNow(entry, agent, nowMs);
+        AgentRelaxerSpotReservationRuntime.release(agent.getId());
         AgentModeService.startStop(entry);
         AgentMovementStateResetService.resetEntryState(entry);
         AgentCombatObjectiveTargetStateRuntime.clear(entry);

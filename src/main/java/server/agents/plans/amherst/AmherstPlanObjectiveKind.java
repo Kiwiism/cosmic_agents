@@ -5,6 +5,7 @@ import java.util.Arrays;
 public enum AmherstPlanObjectiveKind {
     QUEST_START("quest-start"),
     QUEST_COMPLETE("quest-complete"),
+    FORCE_COMPLETE_QUEST("force-complete-quest"),
     QUEST_CHAIN("quest-chain"),
     QUEST_CHAIN_IF_AVAILABLE("quest-chain-if-available"),
     USE_ITEM("use-item"),

@@ -18,6 +18,7 @@ import server.agents.runtime.AgentInteractionRuntime;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
+import server.agents.profiles.AgentBehaviorProfileRuntime;
 
 import java.awt.Point;
 import java.io.IOException;
@@ -246,6 +247,11 @@ public final class AmherstPlanCommandService {
                 + " objectives; " + completedQuests + "/" + card.requiredQuestIds().size()
                 + " required quests; map=" + agent.getMapId() + ".");
         message(player, "Agent progress: Lv" + agent.getLevel() + " EXP " + agent.getExp() + ".");
+        AgentBehaviorProfileRuntime.current(entry).ifPresent(profile -> message(player,
+                "Behavior profile: " + profile.profileId() + " v" + profile.profileVersion()
+                        + "; NPC delay=" + format(profile.presentation().timing().beforeNpcInteractionMs())
+                        + "ms; objective delay=" + format(
+                        profile.presentation().timing().betweenObjectivesMs()) + "ms."));
         if (state.assignedObjectiveId() != null) {
             AmherstPlanObjective current = objective(card, state.assignedObjectiveId());
             message(player, "Current: " + AmherstObjectiveFormatter.numbered(card, current));
@@ -372,5 +378,9 @@ public final class AmherstPlanCommandService {
 
     private static void message(Character player, String message) {
         player.yellowMessage("[Amherst] " + message);
+    }
+
+    private static String format(server.agents.profiles.AgentBehaviorProfile.DelayRange range) {
+        return range.min() + "-" + range.max();
     }
 }

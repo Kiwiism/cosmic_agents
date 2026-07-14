@@ -27,6 +27,7 @@ public final class AmherstObjectiveReconciler {
         boolean satisfied = switch (objective.kind()) {
             case QUEST_START -> gateway.questStatus(agent, objective.questId()) >= 1;
             case QUEST_COMPLETE -> gateway.questStatus(agent, objective.questId()) == 2;
+            case FORCE_COMPLETE_QUEST -> gateway.questStatus(agent, objective.questId()) == 2;
             case QUEST_CHAIN -> objective.questIds().stream().allMatch(questId ->
                     gateway.questStatus(agent, questId) == 2);
             case QUEST_CHAIN_IF_AVAILABLE -> objective.questIds().stream().allMatch(questId ->

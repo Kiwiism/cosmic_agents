@@ -73,6 +73,18 @@ public interface PrimitiveCapabilityGateway {
 
     boolean completeQuest(Character agent, int questId, int npcId);
 
+    default boolean forceCompleteQuest(Character agent, int questId, int npcId) {
+        return false;
+    }
+
+    default boolean beginFieldAbsence(Character agent, long safetyRestoreDelayMs) {
+        return false;
+    }
+
+    default boolean endFieldAbsence(Character agent) {
+        return false;
+    }
+
     boolean hitReactor(Character agent, int objectId);
 
     boolean lootNearby(Character agent, Set<Integer> itemIds);

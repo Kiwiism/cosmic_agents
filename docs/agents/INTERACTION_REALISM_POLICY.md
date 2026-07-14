@@ -112,10 +112,14 @@ agents:
     defaultProfileId: casual-quester
 ```
 
-The four current `AGENT_AMHERST_NPC_INTERACTION_DELAY_*` and
-`AGENT_AMHERST_NEXT_OBJECTIVE_DELAY_*` settings remain temporary fallbacks
-during migration. They should be removed only after current MVP tests use an
-explicit deterministic profile and live Agents resolve pacing from profiles.
+The old `AGENT_AMHERST_NPC_INTERACTION_DELAY_*` and
+`AGENT_AMHERST_NEXT_OBJECTIVE_DELAY_*` settings have been removed. Amherst and
+Southperry runs assign the executable `maple-island-quester` profile, and both
+NPC and between-objective pacing resolve from its `presentation.timing` block.
+Its profile-aware navigation policy also reuses the existing grounded `WAIT`,
+`PRONE`, and `SPAM_PRONE` fidgets. Global OFF/FULL modes, deterministic
+overrides, server caps, varied NPC approaches, encounter behavior, and
+profile-ranked rest selection in this document remain follow-up work.
 
 ## NPC Approach Variation
 

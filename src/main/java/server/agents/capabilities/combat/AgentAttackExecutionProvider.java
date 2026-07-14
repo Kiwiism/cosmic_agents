@@ -15,6 +15,7 @@ import server.agents.capabilities.combat.data.AgentAttackTiming;
 import server.agents.integration.AgentCombatGatewayRuntime;
 import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.integration.InventoryGateway;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -340,6 +341,13 @@ public final class AgentAttackExecutionProvider {
      * instead of fleeing the original target while shooting in the wrong direction.
      */
     public static server.life.Monster findCloserThreatMob(Character bot, Point botPos, Point targetPos) {
+        return findCloserThreatMob(null, bot, botPos, targetPos);
+    }
+
+    public static server.life.Monster findCloserThreatMob(AgentRuntimeEntry entry,
+                                                          Character bot,
+                                                          Point botPos,
+                                                          Point targetPos) {
         if (bot == null || botPos == null || targetPos == null) {
             return null;
         }
@@ -353,7 +361,7 @@ public final class AgentAttackExecutionProvider {
         server.life.Monster closest = null;
         double closestDistSq = targetDistSq;
         for (server.life.Monster m : bot.getMap().getAllMonsters()) {
-            if (!m.isAlive()) continue;
+            if (!m.isAlive() || !AgentCombatObjectiveTargetStateRuntime.allows(entry, m.getId())) continue;
             Point mp = m.getPosition();
             double mDistSq = mp.distanceSq(botPos);
             if (mDistSq >= closestDistSq) continue;

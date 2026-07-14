@@ -29,7 +29,7 @@ public final class AgentGrindTargetCommitmentService {
 
     @FunctionalInterface
     public interface CloserThreatFinder {
-        Monster find(Character agent, Point agentPosition, Point targetPosition);
+        Monster find(AgentRuntimeEntry entry, Character agent, Point agentPosition, Point targetPosition);
     }
 
     public static Result commitTarget(AgentRuntimeEntry entry,
@@ -53,7 +53,7 @@ public final class AgentGrindTargetCommitmentService {
         }
 
         Monster closerThreat = rangedPriorityTarget == null
-                ? hooks.closerThreatFinder().find(agent, agentPosition, targetPosition)
+                ? hooks.closerThreatFinder().find(entry, agent, agentPosition, targetPosition)
                 : null;
         if (closerThreat != null && closerThreat != target) {
             target = closerThreat;

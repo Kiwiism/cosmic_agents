@@ -1,7 +1,11 @@
 package server.agents.capabilities.objective;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.AgentCapabilityStatus;
+import server.agents.capabilities.movement.AgentRelaxerSpotCatalog;
+import server.agents.capabilities.movement.AgentRelaxerSpotReservationRuntime;
+import server.agents.capabilities.quest.AmherstScopePolicy;
 import server.agents.capabilities.runtime.AgentCapabilityCommand;
 import server.agents.capabilities.runtime.AgentCapabilityInvocation;
 import server.agents.capabilities.runtime.AgentCapabilityContext;
@@ -22,12 +26,18 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doNothing;
 
 class AmherstObjectiveCapabilitiesTest {
+    @AfterEach
+    void releaseRelaxerSpot() {
+        AgentRelaxerSpotReservationRuntime.release(77);
+    }
+
     @Test
     void combatChildAllowsTimeForNormalTenMobHunt() {
         var fixture = new MutablePrimitiveGatewayFixture();
@@ -73,6 +83,44 @@ class AmherstObjectiveCapabilitiesTest {
         run(fixture, 2L, 40);
 
         assertEquals(2, fixture.quests.get(1031));
+        assertSuccess(fixture);
+    }
+
+    @Test
+    void forceCompleteQuestApproachesYoonaAndBypassesMissingShoppingGuide() {
+        var fixture = new MutablePrimitiveGatewayFixture();
+        fixture.mapId.set(1010000);
+        var command = new ForceCompleteQuestObjectiveCapability.Command(
+                "q8020-force-complete", 1010000, 8020, 20100);
+
+        assign(fixture, new ForceCompleteQuestObjectiveCapability(
+                        fixture.gateway, AmherstScopePolicy.southperry(), AmherstNpcInteractionDelay.NONE, () -> 2L),
+                command, 10_000L);
+        run(fixture, 1L, 30, 1L);
+
+        assertEquals(2, fixture.quests.get(8020));
+        verify(fixture.gateway).beginFieldAbsence(fixture.agent, 2_002L);
+        verify(fixture.gateway).endFieldAbsence(fixture.agent);
+        verify(fixture.gateway).forceCompleteQuest(fixture.agent, 8020, 20100);
+        assertSuccess(fixture);
+    }
+
+    @Test
+    void forceCompleteYoonaQuizThreeDoesNotSimulateAnotherCashShopVisit() {
+        var fixture = new MutablePrimitiveGatewayFixture();
+        fixture.mapId.set(1010000);
+        var command = new ForceCompleteQuestObjectiveCapability.Command(
+                "q8023-force-complete", 1010000, 8023, 20100);
+
+        assign(fixture, new ForceCompleteQuestObjectiveCapability(
+                        fixture.gateway, AmherstScopePolicy.southperry(), AmherstNpcInteractionDelay.NONE, () -> 2L),
+                command, 10_000L);
+        run(fixture, 1L, 30, 1L);
+
+        assertEquals(2, fixture.quests.get(8023));
+        verify(fixture.gateway, never()).beginFieldAbsence(any(), anyLong());
+        verify(fixture.gateway, never()).endFieldAbsence(any());
+        verify(fixture.gateway).forceCompleteQuest(fixture.agent, 8023, 20100);
         assertSuccess(fixture);
     }
 
@@ -216,6 +264,26 @@ class AmherstObjectiveCapabilitiesTest {
         assertEquals(2, fixture.entry.capabilityRuntimeState().frameCount());
         run(fixture, 2L, 20);
 
+        verify(fixture.gateway).sitChair(fixture.agent, 3010000);
+        assertSuccess(fixture);
+    }
+
+    @Test
+    void amherstPlanStopUsesAReservedCatalogSpotBeforeSitting() {
+        var fixture = new MutablePrimitiveGatewayFixture();
+        fixture.mapId.set(1000000);
+        fixture.items.put(3010000, 1);
+
+        assign(fixture, new PlanStopObjectiveCapability(fixture.gateway),
+                new PlanStopObjectiveCapability.Command(
+                        "stop", 1000000, Map.of(), Set.of(1028), "stop in Amherst",
+                        3010000, AgentRelaxerSpotCatalog.Pool.AMHERST),
+                10_000L);
+        run(fixture, 1L, 30);
+
+        assertTrue(AgentRelaxerSpotCatalog.spots(AgentRelaxerSpotCatalog.Pool.AMHERST).stream()
+                .anyMatch(spot -> spot.x() == fixture.position.x && spot.y() == fixture.position.y));
+        assertTrue(AgentRelaxerSpotReservationRuntime.reservedSpot(77).isPresent());
         verify(fixture.gateway).sitChair(fixture.agent, 3010000);
         assertSuccess(fixture);
     }

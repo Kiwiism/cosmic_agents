@@ -97,6 +97,68 @@
       "type": "object",
       "additionalProperties": true
     },
+    "presentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["timing", "movement", "encounter", "rest"],
+      "properties": {
+        "timing": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["beforeNpcInteractionMs", "betweenObjectivesMs"],
+          "properties": {
+            "beforeNpcInteractionMs": { "$ref": "#/$defs/delayRange" },
+            "betweenObjectivesMs": { "$ref": "#/$defs/delayRange" }
+          }
+        },
+        "movement": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "navigationFidgetsEnabled",
+            "navigationFidgetModes",
+            "fidgetCooldownMs",
+            "fidgetDurationMs"
+          ],
+          "properties": {
+            "navigationFidgetsEnabled": { "type": "boolean" },
+            "navigationFidgetModes": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "enum": ["WAIT", "JUMP", "DIAGONAL_JUMP", "PRONE", "SPAM_PRONE", "SPAM_SIDEWAYS"]
+              }
+            },
+            "fidgetCooldownMs": { "$ref": "#/$defs/delayRange" },
+            "fidgetDurationMs": { "$ref": "#/$defs/delayRange" }
+          }
+        },
+        "encounter": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["style", "maxEstimatedHits"],
+          "properties": {
+            "style": {
+              "type": "string",
+              "enum": ["objective-only", "evasive", "attack-if-cheap", "attack-everything", "direct-walker"]
+            },
+            "maxEstimatedHits": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "rest": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["spotPreference"],
+          "properties": {
+            "spotPreference": {
+              "type": "string",
+              "enum": ["any", "high", "low", "left", "right", "quiet", "social"]
+            }
+          }
+        }
+      }
+    },
     "preferences": {
       "type": "object",
       "additionalProperties": true
@@ -157,6 +219,17 @@
     "metadata": {
       "type": "object",
       "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "delayRange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["min", "max"],
+      "properties": {
+        "min": { "type": "integer", "minimum": 0 },
+        "max": { "type": "integer", "minimum": 0 }
+      }
     }
   }
 }

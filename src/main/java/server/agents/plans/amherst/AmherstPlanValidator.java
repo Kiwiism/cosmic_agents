@@ -41,6 +41,13 @@ public final class AmherstPlanValidator {
                 104000000, MapleIslandSouthperryQuestCatalog.SHANKS_NPC_ID);
     }
 
+    public static AmherstPlanValidator fullMapleIsland() {
+        Set<Integer> requiredQuestIds = new HashSet<>(AmherstQuestCatalog.requiredQuestIdSet());
+        requiredQuestIds.addAll(MapleIslandSouthperryQuestCatalog.requiredQuestIdSet());
+        return new AmherstPlanValidator(AmherstScopePolicy.fullMapleIsland(),
+                requiredQuestIds, 104000000, MapleIslandSouthperryQuestCatalog.SHANKS_NPC_ID);
+    }
+
     public List<AmherstPlanValidationIssue> validate(AmherstPlanCard card) {
         List<AmherstPlanValidationIssue> issues = new ArrayList<>();
         if (card.schemaVersion() != 1) {
@@ -130,8 +137,12 @@ public final class AmherstPlanValidator {
             validateNpc(npcId, path + ".npcIds", issues);
         }
         switch (objective.kind()) {
-            case QUEST_START, QUEST_COMPLETE -> requirePositive(
-                    issues, path + ".questId", objective.questId(), "quest id");
+            case QUEST_START, QUEST_COMPLETE, FORCE_COMPLETE_QUEST -> {
+                requirePositive(issues, path + ".questId", objective.questId(), "quest id");
+                if (objective.kind() == AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST) {
+                    requirePositive(issues, path + ".npcId", objective.npcId(), "NPC id");
+                }
+            }
             case QUEST_CHAIN, QUEST_CHAIN_IF_AVAILABLE -> {
                 if (objective.questIds().isEmpty()) {
                     issue(issues, AmherstPlanValidationCode.MISSING_VALUE, path + ".questIds",

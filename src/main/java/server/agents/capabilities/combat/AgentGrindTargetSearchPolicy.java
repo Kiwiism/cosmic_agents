@@ -16,6 +16,18 @@ public final class AgentGrindTargetSearchPolicy {
                                                      Monster currentTarget,
                                                      AgentAttackPlan currentAttackPlan,
                                                      long now) {
+        boolean currentTargetReachable = agent != null && currentTarget != null
+                && AgentCombatTargetRuntime.isReachableGrindTarget(entry, agent, currentTarget);
+        return shouldSearchForGrindTarget(
+                entry, agent, currentTarget, currentAttackPlan, now, currentTargetReachable);
+    }
+
+    static boolean shouldSearchForGrindTarget(AgentRuntimeEntry entry,
+                                              Character agent,
+                                              Monster currentTarget,
+                                              AgentAttackPlan currentAttackPlan,
+                                              long now,
+                                              boolean currentTargetReachable) {
         if (entry == null) {
             return false;
         }
@@ -25,10 +37,14 @@ public final class AgentGrindTargetSearchPolicy {
         if (AgentGrindSearchStateRuntime.searchBlocked(entry, now)) {
             return false;
         }
-        if (agent == null
-                || currentAttackPlan == null
-                || !AgentCombatRangePolicy.isTargetInAttackRange(currentAttackPlan, agent, currentTarget)) {
+        if (agent == null) {
             return true;
+        }
+        if (currentAttackPlan == null) {
+            return !currentTargetReachable;
+        }
+        if (!AgentCombatRangePolicy.isTargetInAttackRange(currentAttackPlan, agent, currentTarget)) {
+            return !currentTargetReachable;
         }
         // In range we normally stay committed (avoids flip-flop). Exception: an AoE bot stuck
         // single-targeting keeps scanning for a better cluster; the switch itself is gated by

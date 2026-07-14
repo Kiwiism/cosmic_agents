@@ -8,6 +8,23 @@ It must not depend on server runtime classes.
 Profile self-learning and event-driven updates are specified in
 `docs/agents/profile-platform/PROFILE_ADAPTATION_SYSTEM.md`.
 
+## Current Executable Bridge
+
+The current server has a deliberately small executable presentation adapter:
+
+- `AgentBehaviorProfile` loads timing, movement-fidget, encounter, and rest
+  preferences without holding a `Character` or executing gameplay;
+- `AgentBehaviorProfileRuntime` assigns the generic `maple-island-quester`
+  profile to Amherst and Southperry runs and samples bounded timing decisions;
+- capabilities remain responsible for validation and execution;
+- the navigation hook reuses existing fidget actions and currently admits only
+  grounded stationary modes;
+- encounter and rest preferences are data-only until their policies are wired.
+
+This bridge is not a second identity system. Its `presentation` block is
+shaped for later inclusion in the portable profile described below, once the
+canonical store, identity linkage, and adaptation runtime are implemented.
+
 ## Goals
 
 - Store stable agent identity.

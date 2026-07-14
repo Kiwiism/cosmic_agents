@@ -25,6 +25,8 @@ import server.agents.runtime.AgentRuntimeRegistry;
 import server.quest.Quest;
 
 import java.awt.Point;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public enum CosmicAmherstTestResetPort implements AmherstTestResetPort {
     INSTANCE;
@@ -68,11 +70,14 @@ public enum CosmicAmherstTestResetPort implements AmherstTestResetPort {
         }
         if (plan.seedSouthperryBaseline()) {
             seedSouthperryBaseline(agent);
+            verifySouthperryBaseline(agent);
         }
         moveTo(entry, agent, plan.targetMapId(), plan.seedSouthperryBaseline());
         clearMapFixtureState(agent);
         agent.saveCharToDB(false);
-        return AmherstTestResetResult.allowed("Amherst test fixture reset complete");
+        return AmherstTestResetResult.allowed(plan.seedSouthperryBaseline()
+                ? "Maple Island continuation reset complete; captured post-Amherst quest state verified"
+                : "Amherst test fixture reset complete");
     }
 
     private static AgentRuntimeEntry runtimeEntry(Character agent) {
@@ -117,6 +122,22 @@ public enum CosmicAmherstTestResetPort implements AmherstTestResetPort {
             QuestStatus status = new QuestStatus(Quest.getInstance(questId), QuestStatus.Status.COMPLETED);
             status.setCompleted(1);
             agent.updateQuestStatus(status);
+        }
+    }
+
+    private static void verifySouthperryBaseline(Character agent) {
+        MapleIslandSouthperryBaseline.Snapshot baseline = MapleIslandSouthperryBaseline.snapshot();
+        Set<Integer> wrongStatus = new LinkedHashSet<>();
+        for (Integer questId : baseline.resetQuestIds()) {
+            int expected = baseline.completedQuestIds().contains(questId)
+                    ? QuestStatus.Status.COMPLETED.getId()
+                    : QuestStatus.Status.NOT_STARTED.getId();
+            if (agent.getQuestStatus(questId) != expected) {
+                wrongStatus.add(questId);
+            }
+        }
+        if (!wrongStatus.isEmpty()) {
+            throw new IllegalStateException("post-Amherst quest reset verification failed for " + wrongStatus);
         }
     }
 

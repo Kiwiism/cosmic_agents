@@ -82,6 +82,34 @@ public final class AgentFidgetService {
         AgentFidgetStateRuntime.clear(entry);
     }
 
+    public static boolean tryHandleProfileNavigationTick(
+            AgentRuntimeEntry entry,
+            Point targetPos,
+            long now) {
+        if (entry == null || targetPos == null
+                || AgentFidgetStateRuntime.trigger(entry) != AgentFidgetTrigger.PROFILE_NAVIGATION) {
+            return false;
+        }
+        Point botPos = AgentRuntimeIdentityRuntime.bot(entry) == null
+                ? null : AgentRuntimeIdentityRuntime.bot(entry).getPosition();
+        if (botPos == null
+                || AgentMovementStateRuntime.inAir(entry)
+                || AgentMovementStateRuntime.climbing(entry)
+                || AgentMovementStateRuntime.downJumpPending(entry)
+                || AgentFidgetStateRuntime.expired(entry, now)) {
+            finishFidget(entry, botPos);
+            return false;
+        }
+        return handleActiveTick(entry, botPos, targetPos, now);
+    }
+
+    public static void clearProfileNavigation(AgentRuntimeEntry entry) {
+        if (entry != null
+                && AgentFidgetStateRuntime.trigger(entry) == AgentFidgetTrigger.PROFILE_NAVIGATION) {
+            clear(entry);
+        }
+    }
+
     private static void finishFidget(AgentRuntimeEntry entry, Point botPos) {
         if (entry == null) {
             return;

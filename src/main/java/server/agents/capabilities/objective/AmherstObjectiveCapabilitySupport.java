@@ -42,7 +42,7 @@ final class AmherstObjectiveCapabilitySupport {
 
     AmherstObjectiveCapabilitySupport() {
         this(AgentPrimitiveCapabilityGatewayRuntime.gateway(), new AmherstScopePolicy(),
-                AmherstNpcInteractionDelay.configured());
+                AmherstNpcInteractionDelay.NONE);
     }
 
     AmherstObjectiveCapabilitySupport(PrimitiveCapabilityGateway gateway) {
@@ -128,6 +128,25 @@ final class AmherstObjectiveCapabilitySupport {
         return AgentCapabilityStep.handoff(invocation(new AgentNavigationCapability(gateway),
                 new AgentNavigationCapability.Command(mapId, npcPosition, NPC_RANGE_PX, true)),
                 "objective requests navigation to NPC");
+    }
+
+    AgentCapabilityStep approachPosition(AgentCapabilityContext context,
+                                         int mapId,
+                                         Point destination,
+                                         int arrivalRangePx) {
+        AgentCapabilityStep travel = travel(context, mapId);
+        if (travel != null) {
+            return travel;
+        }
+        if (gateway.position(context.agent()).distanceSq(destination)
+                <= (long) arrivalRangePx * arrivalRangePx) {
+            return gateway.grounded(context.agent())
+                    ? null
+                    : AgentCapabilityStep.running("waiting to land at destination", false);
+        }
+        return AgentCapabilityStep.handoff(invocation(new AgentNavigationCapability(gateway),
+                new AgentNavigationCapability.Command(mapId, destination, arrivalRangePx, true)),
+                "objective requests navigation to field position");
     }
 
     boolean waitForNpcInteraction(AgentCapabilityContext context, int operationIndex) {

@@ -7,6 +7,7 @@ import server.agents.capabilities.runtime.AgentCapabilityStep;
 import server.agents.capabilities.runtime.AgentExecutableCapability;
 import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
 import server.agents.integration.PrimitiveCapabilityGateway;
+import server.agents.capabilities.movement.fidget.AgentProfileNavigationFidgetPolicy;
 
 import java.awt.Point;
 
@@ -57,12 +58,16 @@ public final class AgentNavigationCapability
             gateway.stop(context.entry());
             return AgentCapabilityStep.terminal(AgentCapabilityResult.success("navigation destination reached"));
         }
+        if (AgentProfileNavigationFidgetPolicy.tick(context, command.destination(), gateway)) {
+            return AgentCapabilityStep.running("profile navigation fidget", true);
+        }
         gateway.navigate(context.entry(), command.destination(), command.precise());
         return AgentCapabilityStep.running("delegating to reconstructed navigation", false);
     }
 
     @Override
     public void onTerminal(AgentCapabilityContext context, Command command, AgentCapabilityResult result) {
+        AgentProfileNavigationFidgetPolicy.clear(context);
         gateway.stop(context.entry());
     }
 }

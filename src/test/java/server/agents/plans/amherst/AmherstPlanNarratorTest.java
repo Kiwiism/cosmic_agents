@@ -45,6 +45,16 @@ class AmherstPlanNarratorTest {
                 AmherstPlanNarrator.message(chain));
     }
 
+    @Test
+    void narratesYoonaQuizOverrideAsAnAnswerRatherThanAnotherCashShopVisit() {
+        AmherstPlanObjective quiz = objective(
+                AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 1010000, 8023, 20100,
+                List.of(), List.of(), List.of());
+
+        assertEquals("I'm going to talk to Yoona and answer Yoona's Quiz on Shopping 3.",
+                AmherstPlanNarrator.message(quiz));
+    }
+
     private static AmherstPlanObjective objective(AmherstPlanObjectiveKind kind,
                                                    int mapId,
                                                    Integer questId,

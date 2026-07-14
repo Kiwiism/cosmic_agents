@@ -65,6 +65,7 @@ import server.agents.capabilities.trade.AgentUpgradeOfferState;
 import server.agents.plans.AgentScriptTaskQueueState;
 import server.agents.plans.AgentScriptRuntimeState;
 import server.agents.plans.amherst.AmherstPlanExecutionState;
+import server.agents.profiles.AgentBehaviorProfileState;
 import java.awt.*;
 import java.util.List;
 import java.util.Map;
@@ -82,6 +83,7 @@ public class AgentRuntimeEntry implements AgentRuntimeHandle {
     private final AgentScheduledTaskScope scheduledTaskScope = new AgentScheduledTaskScope();
     private final AgentActionMailbox actionMailbox = new AgentActionMailbox(AgentMailboxRuntime.configuredCapacity());
     private final AgentMovementProfileState movementProfileState = new AgentMovementProfileState();
+    private final AgentBehaviorProfileState behaviorProfileState = new AgentBehaviorProfileState();
     private final AgentCapabilityRuntimeState capabilityRuntimeState = new AgentCapabilityRuntimeState();
     private final AmherstPlanExecutionState amherstPlanExecutionState = new AmherstPlanExecutionState();
 
@@ -115,6 +117,10 @@ public class AgentRuntimeEntry implements AgentRuntimeHandle {
 
     public AgentMovementProfileState movementProfileState() {
         return movementProfileState;
+    }
+
+    public AgentBehaviorProfileState behaviorProfileState() {
+        return behaviorProfileState;
     }
 
     // Physics

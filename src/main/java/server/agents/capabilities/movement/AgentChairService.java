@@ -33,6 +33,7 @@ public final class AgentChairService {
             return false;
         }
         agent.sitChair(-1);
+        AgentRelaxerSpotReservationRuntime.release(agent.getId());
         int stance = AgentMovementStateRuntime.facingDirectionSign(entry) < 0
                 ? CharacterStance.STAND_LEFT_STANCE : CharacterStance.STAND_RIGHT_STANCE;
         broadcast(entry, agent, 0, stance);

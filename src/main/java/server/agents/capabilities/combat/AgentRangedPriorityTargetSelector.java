@@ -58,6 +58,9 @@ public final class AgentRangedPriorityTargetSelector {
         if (target == null || !target.isAlive()) {
             return false;
         }
+        if (!AgentCombatObjectiveTargetStateRuntime.allows(entry, target.getId())) {
+            return false;
+        }
         Point targetPos = target.getPosition();
         if (AgentAttackExecutionProvider.shouldDegenerateRangedAttack(weaponType, agentPosition, targetPos)) {
             return false;

@@ -1,9 +1,12 @@
 package server.agents.plans.mapleisland;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import server.agents.capabilities.objective.AmherstNpcInteractionDelay;
+import server.agents.capabilities.movement.AgentRelaxerSpotCatalog;
+import server.agents.capabilities.movement.AgentRelaxerSpotReservationRuntime;
 import server.agents.capabilities.quest.AmherstQuestCatalog;
 import server.agents.capabilities.quest.AmherstScopePolicy;
 import server.agents.capabilities.quest.MapleIslandSouthperryQuestCatalog;
@@ -25,6 +28,7 @@ import server.agents.plans.amherst.FileAmherstPlanProgressStore;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.testing.MutablePrimitiveGatewayFixture;
 
+import java.awt.Point;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Set;
@@ -36,8 +40,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class MapleIslandSouthperryPlanTest {
@@ -47,6 +54,11 @@ class MapleIslandSouthperryPlanTest {
     @TempDir
     Path tempDir;
 
+    @AfterEach
+    void releaseRelaxerSpot() {
+        AgentRelaxerSpotReservationRuntime.release(77);
+    }
+
     @Test
     void planLoadsWithVerifiedPrerequisiteOrderAndNoAmherstObjectives() throws Exception {
         AmherstPlanCard card = loadCard();
@@ -54,8 +66,19 @@ class MapleIslandSouthperryPlanTest {
         assertEquals("maple-island-southperry-mvp", card.planId());
         assertEquals(2000000, card.exitCriteria().finalMapId());
         assertEquals(Set.of(1046), card.exitCriteria().startOnlyQuestIds());
-        assertEquals(Set.of(1039, 1040, 1041, 1042, 1043, 1044, 1045, 1046),
+        assertEquals(Set.of(1039, 1040, 1041, 1042, 1043, 1044, 1045, 1046,
+                        8020, 8021, 8022, 8023, 8024, 8025),
                 card.requiredQuestIds());
+        assertTrue(index(card, AmherstPlanObjectiveKind.QUEST_COMPLETE, 1039)
+                < index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8020));
+        assertTrue(index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8020)
+                < index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8021));
+        assertTrue(index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8022)
+                < index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8023));
+        assertTrue(index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8023)
+                < index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8024));
+        assertTrue(index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8025)
+                < index(card, AmherstPlanObjectiveKind.QUEST_START, 1041));
         assertTrue(index(card, AmherstPlanObjectiveKind.QUEST_START, 1040)
                 < index(card, AmherstPlanObjectiveKind.QUEST_START, 1041));
         assertTrue(index(card, AmherstPlanObjectiveKind.QUEST_COMPLETE, 1041)
@@ -137,7 +160,7 @@ class MapleIslandSouthperryPlanTest {
         runner.start(fixture.entry, fixture.agent, 1L);
         assertEquals(1000000, fixture.mapId.get());
         assertTrue(fixture.entry.amherstPlanExecutionState().active());
-        drive(runner, fixture.entry, fixture, 2L, 4_000);
+        drive(runner, fixture.entry, fixture, 2L, 12_000);
 
         assertTrue(fixture.entry.amherstPlanExecutionState().completed(),
                 () -> "error=" + fixture.entry.amherstPlanExecutionState().lastError()
@@ -154,6 +177,11 @@ class MapleIslandSouthperryPlanTest {
         assertTrue(AmherstQuestCatalog.requiredQuestIdSet().stream()
                 .noneMatch(fixture.questCompletions::containsKey));
         assertTrue(portalAttempts.get() > 1);
+        assertTrue(AgentRelaxerSpotCatalog.spots(AgentRelaxerSpotCatalog.Pool.SOUTHPERRY_ALL).stream()
+                .anyMatch(spot -> spot.x() == fixture.position.x && spot.y() == fixture.position.y),
+                () -> "unexpected Southperry rest position=" + fixture.position);
+        verify(fixture.gateway).sitChair(fixture.agent, 3010000);
+        verify(fixture.gateway, atLeastOnce()).facePosition(eq(fixture.agent), any(Point.class));
         var persisted = store.load(card.planId(), fixture.agent.getId());
         assertTrue(card.objectives().stream().allMatch(objective ->
                 persisted.objectives()
@@ -182,6 +210,10 @@ class MapleIslandSouthperryPlanTest {
 
     private static MutablePrimitiveGatewayFixture southperryFixture() {
         MutablePrimitiveGatewayFixture fixture = new MutablePrimitiveGatewayFixture();
+        fixture.items.put(3010000, 1);
+        when(fixture.gateway.itemCount(any(), eq(3010000))).thenReturn(1);
+        when(fixture.gateway.npcPosition(any(), eq(MapleIslandSouthperryQuestCatalog.SHANKS_NPC_ID)))
+                .thenReturn(new Point(3341, -105));
         fixture.directPortalEdges.addAll(Set.of(
                 "1000000:1010000", "1010000:1000000", "1010000:1020000",
                 "1010100:1010000", "1010200:1010000", "1010300:1010000",
@@ -292,7 +324,7 @@ class MapleIslandSouthperryPlanTest {
     private static int index(AmherstPlanCard card, AmherstPlanObjectiveKind kind, int questId) {
         for (int i = 0; i < card.objectives().size(); i++) {
             AmherstPlanObjective objective = card.objectives().get(i);
-            if (objective.kind() == kind && Integer.valueOf(questId).equals(objective.questId())) {
+            if (objective.kind() == kind && objective.allQuestIds().contains(questId)) {
                 return i;
             }
         }

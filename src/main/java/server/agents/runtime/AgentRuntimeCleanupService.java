@@ -1,6 +1,7 @@
 package server.agents.runtime;
 
 import server.agents.capabilities.movement.AgentFormationService;
+import server.agents.capabilities.movement.AgentRelaxerSpotReservationRuntime;
 import server.agents.capabilities.recovery.AgentLeaderSafetyService;
 import server.agents.capabilities.supplies.AgentAutopotCleanupService;
 import server.agents.capabilities.build.AgentMakerService;
@@ -104,6 +105,7 @@ public final class AgentRuntimeCleanupService {
         AgentLlmReplyService.clearAgentRuntimeState(agentId);
         AgentMakerService.clearAgentRuntimeState(agentId);
         AgentManualTradeService.clearAgentRuntimeState(agentId);
+        AgentRelaxerSpotReservationRuntime.release(agentId);
     }
 
     private static void clearLeaderStateIfInactive(int leaderId) {

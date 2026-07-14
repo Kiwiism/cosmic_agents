@@ -123,25 +123,52 @@ a mob, change a quest, or override a capability validator.
 
 ## Moving Current Delays Into Profiles
 
-### Current State
+### Implemented Runtime Bridge
 
-The current showcase uses plan-specific server settings:
+The Amherst-named YAML delay settings have been removed. Starting either the
+Amherst or Southperry plan assigns the executable `maple-island-quester`
+behavior profile to that Agent runtime entry. Its current presentation block
+is:
 
-```yaml
-AGENT_AMHERST_NPC_INTERACTION_DELAY_MIN_MS: 600
-AGENT_AMHERST_NPC_INTERACTION_DELAY_MAX_MS: 1400
-AGENT_AMHERST_NEXT_OBJECTIVE_DELAY_MIN_MS: 900
-AGENT_AMHERST_NEXT_OBJECTIVE_DELAY_MAX_MS: 1800
+```json
+{
+  "timing": {
+    "beforeNpcInteractionMs": { "min": 600, "max": 1400 },
+    "betweenObjectivesMs": { "min": 900, "max": 1800 }
+  },
+  "movement": {
+    "navigationFidgetsEnabled": true,
+    "navigationFidgetModes": ["WAIT", "PRONE", "SPAM_PRONE"],
+    "fidgetCooldownMs": { "min": 12000, "max": 25000 },
+    "fidgetDurationMs": { "min": 2000, "max": 3000 }
+  },
+  "encounter": {
+    "style": "objective-only",
+    "maxEstimatedHits": 0
+  },
+  "rest": {
+    "spotPreference": "any"
+  }
+}
 ```
 
-This was useful for proving the MVP, but every Agent receives the same ranges
-and the setting name is tied to Amherst even when the Southperry plan uses it.
+Timing and the stationary navigation fidget policy are active. Encounter and
+rest values are loaded and visible through the same profile contract, but they
+remain declarations until their capability policies are implemented.
+
+The runtime source is
+`src/main/resources/agents/profiles/maple-island-quester.profile.json`. The
+larger canonical template remains
+`docs/agents/profile-platform/templates/maple-island-mvp-tester.profile.json`.
+The small runtime record is an executable presentation bridge and can later be
+embedded in the full identity, memory, adaptation, and build profile without
+changing capability ownership.
 
 ### Target Ownership
 
-Move normal pacing to the assigned Agent profile. Keep server configuration
-only for mode selection, deterministic test overrides, fallback defaults, and
-hard safety caps.
+Normal pacing now belongs to the assigned Agent profile. Keep server
+configuration only for mode selection, deterministic test overrides, fallback
+defaults, and hard safety caps as those controls are added.
 
 Recommended profile extension:
 
@@ -150,14 +177,14 @@ Recommended profile extension:
   "presentation": {
     "mode": "LIGHT",
     "timing": {
-      "beforeNpcInteractionMs": [600, 1400],
-      "betweenObjectivesMs": [900, 1800],
-      "reactionDelayMs": [350, 900],
+      "beforeNpcInteractionMs": { "min": 600, "max": 1400 },
+      "betweenObjectivesMs": { "min": 900, "max": 1800 },
+      "reactionDelayMs": { "min": 350, "max": 900 },
       "microPauseChancePerWindow": 0.08
     },
     "npc": {
       "approachStyle": "crowd-aware-random",
-      "preferredDistancePx": [70, 150],
+      "preferredDistancePx": { "min": 70, "max": 150 },
       "sideBias": "either",
       "faceNpcBeforeInteraction": true
     },
@@ -167,7 +194,7 @@ Recommended profile extension:
       "backtrackChancePerWindow": 0.02,
       "crouchChancePerIdleWindow": 0.05,
       "expressionChancePerIdleWindow": 0.03,
-      "fidgetCooldownMs": [12000, 45000],
+      "fidgetCooldownMs": { "min": 12000, "max": 45000 },
       "maxFidgetDurationMs": 1500,
       "alternateDropEdgeWeight": 0.35
     },
@@ -185,8 +212,9 @@ Recommended profile extension:
 }
 ```
 
-These names are a proposed profile contract. The profile JSON schema must be
-updated and validated before executable templates use them.
+The timing, movement fidget, encounter-style, and rest-preference fields are
+already represented by the profile JSON schema. The additional reaction,
+approach, route, and budget fields above remain proposed extensions.
 
 ### Resolution Order
 
@@ -207,15 +235,14 @@ invalid ranges fall back instead of failing the plan
 capability deadline always exceeds the allowed delay plus execution budget
 ```
 
-### Migration
+### Remaining Migration
 
-1. Add profile timing reads while retaining current Amherst settings as the
-   fallback.
-2. Assign an explicit deterministic profile to current MVP tests.
-3. Add two or three realism templates and compare sampled output.
-4. Change the showcase profile to use profile-owned ranges.
-5. Deprecate the four `AGENT_AMHERST_*_DELAY_*` settings after no runtime path
-   depends on them.
+1. Add a deterministic test override and global presentation safety caps.
+2. Add two or three behavior templates and compare sampled output.
+3. Activate NPC approach, encounter, route, and rest policies one component at
+   a time after the baseline Maple Island run remains stable.
+4. Move the executable presentation bridge into the canonical profile runtime
+   when identity and profile persistence are wired.
 
 Do not put delay values into plan objectives. One Plan Card should work for a
 fast, cautious, distracted, or impatient Agent.
@@ -301,6 +328,12 @@ Those actions currently serve legacy-derived follow, idle, and social flows.
 The plan-running feature should reuse the normal movement and packet execution,
 but it needs a new profile-aware eligibility policy. It should not turn on the
 legacy follow fidget roll during an active objective.
+
+The executable profile vocabulary now includes all six existing actions. The
+first navigation policy deliberately permits only `WAIT`, `PRONE`, and
+`SPAM_PRONE`, because they remain grounded and stationary. `JUMP`,
+`DIAGONAL_JUMP`, and `SPAM_SIDEWAYS` stay available for a later corridor-aware
+policy rather than being copied or reimplemented.
 
 Safe eligibility:
 
