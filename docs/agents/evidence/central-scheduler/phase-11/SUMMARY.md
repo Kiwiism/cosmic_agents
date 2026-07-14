@@ -77,8 +77,8 @@ Agents when host free memory fell below the 2 GiB guard. Java remained below
 pressure. The partial run still drained all 220 sessions cleanly, but it is not
 a 1,000-Agent pass. See `POPULATED_1000_GATE_ATTEMPT_2026-07-15.md`.
 
-The read-only live-gate preflight now enforces an automatic 8 GiB free-memory
-floor for 1,000+ Agent stages. Explicit host floors can only raise that value,
-and JSON output records both thresholds plus measured memory. Smaller stages
-retain their previous admission behavior. See
+The read-only live-gate preflight now enforces automatic free-memory floors of
+2 GiB for a basic live gate, 4 GiB for populated stages below 1,000 Agents, and
+8 GiB for 1,000+ Agent stages. Explicit host floors can only raise these
+values, and JSON output records both thresholds plus measured memory. See
 `HOST_MEMORY_PREFLIGHT_GUARD_2026-07-15.md`.

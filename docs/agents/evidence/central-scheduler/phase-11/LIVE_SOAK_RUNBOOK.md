@@ -35,8 +35,9 @@ bounded `@agentpop list` review to confirm that the expected roster and target
 were loaded. A population preset is data-only and must not be treated as a
 runtime roster.
 
-For stages of 1,000 Agents or more, preflight automatically requires at least
-8 GiB of free physical memory before the server starts. Use
+Preflight requires at least 2 GiB free for a basic live gate, 4 GiB for a
+populated stage below 1,000 Agents, and 8 GiB for stages of 1,000 Agents or
+more. Use
 `-MinimumFreePhysicalMemoryGiB <value>` only to impose a stricter host-specific
 floor. Do not lower the stage floor to obtain a nominal population count. The
 JSON report records the effective minimum and measured free/total memory.

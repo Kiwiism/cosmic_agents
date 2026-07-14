@@ -153,8 +153,10 @@ if ($listeners.Count -eq 0) {
 
 $stageMinimumFreePhysicalMemoryGiB = if ($MinimumTargetAgents -ge 1000) {
     8.0
+} elseif ($MinimumTargetAgents -gt 0) {
+    4.0
 } else {
-    0.0
+    2.0
 }
 $effectiveMinimumFreePhysicalMemoryGiB = [Math]::Max(
     $stageMinimumFreePhysicalMemoryGiB,

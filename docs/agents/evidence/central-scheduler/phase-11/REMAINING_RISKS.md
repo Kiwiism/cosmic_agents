@@ -20,7 +20,9 @@ Server-only legacy, central-sequential, and four-shard runs now provide a
 250-session loaded-shutdown sample. All three cancelled 250 sessions and left
 zero scheduler registrations, pending async work, or unterminated lanes. The
 formal 250 gate still requires observing clients, and restart/rollback remains
-unrehearsed.
+unrehearsed. A planned central-sharded-to-legacy restart rehearsal was not
+started after preflight observed less than the new 4 GiB populated-stage memory
+floor; the normal configuration was restored without starting a server.
 
 The current population runtime only reconciles explicitly managed, eligible
 backing characters from the external `population.json`. The checked-in soak
@@ -60,9 +62,10 @@ stages show a heap plateau and comparable post-GC process memory.
 
 The next 1,000-Agent attempt requires a clean host with at least 8 GiB reliably
 free after tooling is started. The live-gate preflight now enforces that floor
-automatically for 1,000+ Agent stages and reports the measured host memory. Do
-not weaken the 2 GiB in-run abort threshold or continue to larger stages merely
-to obtain a nominal population count.
+automatically for 1,000+ Agent stages, applies smaller safety floors to lower
+stages, and reports the measured host memory. Do not weaken the 2 GiB in-run
+abort threshold or continue to larger stages merely to obtain a nominal
+population count.
 
 The repository-wide baseline test issues recorded in Phase 10 remain separate
 from the scheduler-focused release gate.
