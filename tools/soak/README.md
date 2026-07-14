@@ -18,6 +18,7 @@ Current tool:
 - `Get-BaselineSoakNextSteps.ps1`
 - `Set-BaselineSoakChecklistItem.ps1`
 - `Test-SoakPopulationPreset.ps1`
+- `Test-AgentSchedulerLiveGatePreflight.ps1`
 
 `Test-SoakPopulationPreset.ps1` verifies data-only Agent soak population
 presets under `docs/agents/soak-test-harness/presets`. It checks required
@@ -26,6 +27,27 @@ not create Agents or connect to the server.
 Use `-SummaryOnly -Json` for compact automation output. The report includes
 `checkCount`, `passCount`, `warningIds`, `failureIds`, and
 `returnedCheckCount`, and omits detailed check rows when summary mode is used.
+
+`Test-AgentSchedulerLiveGatePreflight.ps1` is a read-only safety check for the
+centralized scheduler live gate. It verifies the expected branch and clean
+worktree, packaged server artifact, shared WZ directory junction, free server
+ports, running MapleStory client, explicitly pinned disposable database, and
+an external runtime/cache root. The shared WZ target remains policy-level
+read-only. The tool prints the exact scheduler JVM arguments and
+`COSMIC_AGENT_POPULATION_FILE` redirect without starting the server or writing
+runtime data.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\soak\Test-AgentSchedulerLiveGatePreflight.ps1 `
+  -ExpectedDatabaseName cosmic_scheduler_soak_20260714 `
+  -AllowConfigOverride
+```
+
+Use `-Json` or `-SummaryOnly -Json` for automation. A normal `cosmic` database
+is rejected; the live gate must use an explicitly named disposable database.
+`-AllowConfigOverride` permits exactly one dirty path, `config.yaml`, so the
+operator can point this worktree at that database without committing the local
+credential/database override. Any other pending path still fails preflight.
 
 ## Baseline Evidence Workflow
 

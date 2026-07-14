@@ -32,3 +32,13 @@ independent worktree, and a randomized fidget movement assertion. No scheduler
 test failed. These repository-wide issues are not accepted as scheduler parity
 evidence and should be resolved or supplied in their owning tracks before a
 release-wide green-test claim.
+
+## Live-Gate Preflight Boundary
+
+The 2026-07-14 read-only preflight found the packaged server artifact, shared
+WZ junction, free login/channel/diagnostics ports, external runtime/cache
+redirects, and a running MapleStory client. It correctly rejected the current
+configuration because it targets the normal `cosmic` database. Live parity and
+soak work must not begin until `config.yaml` points to an explicitly named
+disposable database and the preflight passes. No server process or database
+connection was started by this check.

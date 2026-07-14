@@ -9,6 +9,22 @@
 - Stop a stage on stale execution, duplicate action, invalid inventory/economy
   state, unbounded queue growth, or visible parity failure.
 
+Before starting a server process, run the read-only preflight with the exact
+disposable database name:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\soak\Test-AgentSchedulerLiveGatePreflight.ps1 `
+  -ExpectedDatabaseName <disposable-database-name> `
+  -AllowConfigOverride
+```
+
+Do not continue unless it reports `PASS`. Use the emitted JVM arguments and
+`COSMIC_AGENT_POPULATION_FILE` value so population state and navigation caches
+remain outside the worktree. The preflight does not start the server, connect
+to MySQL, create directories, or alter configuration. The override switch
+allows only a local uncommitted `config.yaml`; every other dirty path remains a
+failure.
+
 ## Stage Order
 
 1. Legacy baseline at 250 Agents with one and two observing clients.
