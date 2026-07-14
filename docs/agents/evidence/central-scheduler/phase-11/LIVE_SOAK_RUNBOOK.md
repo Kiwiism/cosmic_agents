@@ -80,6 +80,15 @@ partial interrupted run is safe to repeat: eligible deterministic names are
 reused and only missing names are created. Do not run it against a retained or
 production database.
 
+Steady and fast-start population wake-ups enqueue onto the bounded,
+single-worker `population` async lane. Repeated wake-ups coalesce while a
+reconciliation is queued or running, and each reconciliation retains the
+existing 20-action limit and stable ordering. This keeps account/character
+loading off timer and scheduler workers; `@agentscheduler` reports the lane's
+depth, high-water, rejection, coalescing, and duration metrics. Shutdown first
+closes and awaits this lane before taking the final Agent-session snapshot, so
+an in-flight population load cannot publish a late session behind cleanup.
+
 Omit `-AllowClientLaunchAfterServer` when a targetable client can remain open
 before server startup. When the switch is used, launch the client only after
 all server listeners are online and do not record live evidence until the

@@ -104,7 +104,7 @@ public final class AgentAsyncExecutorRegistry implements AutoCloseable {
             throws InterruptedException {
         ThreadPoolExecutor executor;
         synchronized (this) {
-            executor = executors.remove(kind);
+            executor = executors.get(kind);
         }
         if (executor == null) {
             return true;

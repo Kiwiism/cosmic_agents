@@ -41,12 +41,12 @@ the roster still must be created and verified before each populated gate. A
 250-character roster has now been created and exercised server-side; 500 and
 larger rosters remain unprovisioned.
 
-Population convergence currently starts at most 20 sessions per sweep. The
-fast-start window launches the first 140 sessions, then steady reconciliation
-runs once per minute. Simply raising the batch would perform more blocking
-character loads on the timer callback. Before larger practical stages, move
-population lifecycle I/O to a bounded async lane while keeping the current
-limit and behavior as the default.
+Population convergence starts at most 20 sessions per sweep. The fast-start
+window launches the first 140 sessions, then steady reconciliation runs once
+per minute. Population lifecycle I/O now executes on a bounded single-worker
+async lane, and repeated timer wake-ups coalesce while work is outstanding.
+The default action limit and ordering are unchanged. Larger stages still need
+measured convergence evidence before any rate tuning is considered.
 
 The repository-wide baseline test issues recorded in Phase 10 remain separate
 from the scheduler-focused release gate.

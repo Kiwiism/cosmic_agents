@@ -106,6 +106,22 @@ class AgentAsyncExecutorRegistryTest {
         assertTrue(restarted.await(5, TimeUnit.SECONDS));
     }
 
+    @Test
+    void dedicatedLaneStoppedEarlyRemainsVisibleToFinalShutdownReport() throws Exception {
+        CountDownLatch completed = new CountDownLatch(1);
+        registry.execute(AgentAsyncWorkKind.POPULATION_LIFECYCLE, completed::countDown);
+        assertTrue(completed.await(5, TimeUnit.SECONDS));
+
+        assertTrue(registry.shutdownAndAwait(
+                AgentAsyncWorkKind.POPULATION_LIFECYCLE, 5, TimeUnit.SECONDS));
+
+        AgentAsyncExecutorRegistry.ShutdownResult result =
+                registry.shutdownAllAndAwait(5, TimeUnit.SECONDS);
+        assertEquals(1, result.executors());
+        assertTrue(result.unterminatedExecutors().isEmpty());
+        assertFalse(result.interrupted());
+    }
+
     private static void await(CountDownLatch started, CountDownLatch release) {
         started.countDown();
         try {
