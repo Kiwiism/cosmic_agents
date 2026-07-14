@@ -52,6 +52,13 @@ work. Four shards reduced p95/p99 lag and deferred work compared with the
 sequential bridge. See `POPULATED_250_SERVER_SMOKE_2026-07-15.md`. Client
 parity and sustained soak gates remain open.
 
+Population reconciliation now runs on a bounded single-worker Agent async
+lane rather than the timer callback. A post-change four-shard run again
+reached 250 sessions at `loadLevel=NORMAL`; shutdown cancelled all 250,
+reported zero remaining registrations, and stopped all three initialized
+async lanes with no timeout. The existing 20-action limit and stable roster
+ordering remain unchanged.
+
 The final local validation reran the explicit 2,000-session scale gates after
 the observability work; they passed. See `REMAINING_RISKS.md` for the unrelated
 failures observed during an optional incomplete full-repository test run.

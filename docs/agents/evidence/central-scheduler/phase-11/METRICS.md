@@ -75,3 +75,11 @@ Legacy also reached and drained 250 sessions; centralized scheduler counters
 correctly remained zero in that mode. These short server-only runs demonstrate
 bounded mechanics and clean lifecycle behavior, not a normalized performance
 benchmark or a replacement for client-visible and long-duration evidence.
+
+The post-population-lane four-shard safety rerun reached 250 online characters
+and remained at `loadLevel=NORMAL`. Its final snapshot recorded zero failed
+updates, 25/46/49 ms queue-lag p50/p95/p99, 109.2/245.5/892.1 us work
+p50/p95/p99, and 381,706 deferred items. Shutdown stopped three initialized
+async executors with no unterminated lane, cancelled all 250 sessions, and
+left zero scheduler registrations. This short rerun verifies the new lane and
+shutdown boundary; it is not added to the normalized comparison table.

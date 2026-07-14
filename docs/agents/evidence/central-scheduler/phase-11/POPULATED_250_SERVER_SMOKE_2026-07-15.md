@@ -90,3 +90,25 @@ measurement. All worlds and channels reached the offline state.
 - validate population convergence without blocking timer/scheduler workers;
 - continue 1,000/1,500/2,000 staged and long-duration gates;
 - preserve `legacy` as the production default.
+
+## Population Async-Lane Verification
+
+After population reconciliation moved off timer workers, a second guarded
+four-shard server-only run used the same 250-character roster and disposable
+database. Preflight again passed all 11 checks. The first health sample after
+full convergence reported 250 online characters, 244 loaded maps, and
+`loadLevel=NORMAL`; a second sample 92 seconds later remained at 250 and
+`NORMAL`. The normal `cosmic` configuration was restored after shutdown.
+
+The final scheduler snapshot reported 57,388 cycles, 1,813,207 updates, zero
+failed updates, lag p50/p95/p99 of 25/46/49 ms, work p50/p95/p99 of
+109.2/245.5/892.1 us, 23,035 budget exhaustions, 381,706 deferred work items,
+and zero starvation or map-budget deferrals. These values are a short safety
+sample, not a normalized benchmark.
+
+Shutdown observed and cancelled all 250 sessions, left zero registrations and
+pending async requests, stopped three initialized async executors including
+the population lifecycle lane, and reported no unterminated executor or
+timeout. Agent runtime shutdown took 61 ms. All 250 characters were then saved
+and all worlds/channels reached the offline state. No late population session
+appeared behind shutdown cleanup.
