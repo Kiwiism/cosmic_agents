@@ -31,3 +31,7 @@ The locally automatable part of Phase 11 is complete:
 This evidence validates scheduler mechanics only. Phase 11 and the production
 default change remain blocked on live-client behavior and sustained server
 soaks.
+
+The final local validation reran the explicit 2,000-session scale gates after
+the observability work; they passed. See `REMAINING_RISKS.md` for the unrelated
+failures observed during an optional incomplete full-repository test run.

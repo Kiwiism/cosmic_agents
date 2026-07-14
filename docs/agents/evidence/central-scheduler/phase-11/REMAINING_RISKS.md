@@ -17,3 +17,18 @@ Do not change the production default until all of these are recorded:
 
 The repository-wide baseline test issues recorded in Phase 10 remain separate
 from the scheduler-focused release gate.
+
+## Local Validation Boundary
+
+On 2026-07-14, the focused scheduler/runtime suite, the broad Agent regression
+suite, package build, and explicit central-sequential/four-shard 2,000-session
+gates passed after the final observability changes.
+
+An optional full `mvnw test` run was stopped after exceeding the local
+validation window. Before it was stopped it reported failures outside the
+scheduler diff: dialogue/supply tests expecting queued messages, one quest
+capability expectation, missing generated `tmp/game-catalog` fixtures in this
+independent worktree, and a randomized fidget movement assertion. No scheduler
+test failed. These repository-wide issues are not accepted as scheduler parity
+evidence and should be resolved or supplied in their owning tracks before a
+release-wide green-test claim.
