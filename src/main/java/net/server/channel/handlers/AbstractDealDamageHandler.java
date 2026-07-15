@@ -158,6 +158,18 @@ public abstract class AbstractDealDamageHandler extends AbstractPacketHandler {
         }
     }
 
+    private static boolean isClientReportedCriticalDamage(int damage) {
+        return damage < 0;
+    }
+
+    private static long realDamageFromWire(int damage) {
+        return isClientReportedCriticalDamage(damage) ? (long) damage + Integer.MAX_VALUE : damage;
+    }
+
+    private static int encodeCriticalDamage(long realDamage) {
+        return (int) (realDamage - Integer.MAX_VALUE);
+    }
+
     public static void applyAttack(AttackInfo attack, final Character player, int attackCount) {
         final MapleMap map = player.getMap();
         if (map.isOwnershipRestricted(player)) {
@@ -809,6 +821,8 @@ public abstract class AbstractDealDamageHandler extends AbstractPacketHandler {
 
             for (int j = 0; j < ret.numDamage; j++) {
                 int damage = p.readInt();
+                boolean clientReportedCrit = isClientReportedCriticalDamage(damage);
+                long realDamage = realDamageFromWire(damage);
                 long hitDmgMax = calcDmgMax;
                 if (ret.skill == Buccaneer.BARRAGE || ret.skill == ThunderBreaker.BARRAGE) {
                     if (j > 3) {
@@ -825,6 +839,8 @@ public abstract class AbstractDealDamageHandler extends AbstractPacketHandler {
 
                 if (ret.skill == Marksman.SNIPE) {
                     damage = 195000 + Randomizer.nextInt(5000);
+                    clientReportedCrit = false;
+                    realDamage = damage;
                     hitDmgMax = 200000;
                 } else if (ret.skill == Beginner.BAMBOO_RAIN || ret.skill == Noblesse.BAMBOO_RAIN || ret.skill == Evan.BAMBOO_THRUST || ret.skill == Legend.BAMBOO_THRUST) {
                     hitDmgMax = 82569000; // 30% of Max HP of strongest Dojo boss
@@ -837,18 +853,18 @@ public abstract class AbstractDealDamageHandler extends AbstractPacketHandler {
                 }
 
                 // Warn if the damage is over 1.5x what we calculated above.
-                if (damage > maxWithCrit * 1.5) {
-                    AutobanFactory.DAMAGE_HACK.alert(chr, "DMG: " + damage + " MaxDMG: " + maxWithCrit + " SID: " + ret.skill + " MobID: " + (monster != null ? monster.getId() : "null") + " Map: " + chr.getMap().getMapName() + " (" + chr.getMapId() + ")");
+                if (realDamage > maxWithCrit * 1.5) {
+                    AutobanFactory.DAMAGE_HACK.alert(chr, "DMG: " + realDamage + " MaxDMG: " + maxWithCrit + " SID: " + ret.skill + " MobID: " + (monster != null ? monster.getId() : "null") + " Map: " + chr.getMap().getMapName() + " (" + chr.getMapId() + ")");
                 }
 
                 // Add a ab point if its over 5x what we calculated.
-                if (damage > maxWithCrit * 5) {
-                    AutobanFactory.DAMAGE_HACK.addPoint(chr.getAutobanManager(), "DMG: " + damage + " MaxDMG: " + maxWithCrit + " SID: " + ret.skill + " MobID: " + (monster != null ? monster.getId() : "null") + " Map: " + chr.getMap().getMapName() + " (" + chr.getMapId() + ")");
+                if (realDamage > maxWithCrit * 5) {
+                    AutobanFactory.DAMAGE_HACK.addPoint(chr.getAutobanManager(), "DMG: " + realDamage + " MaxDMG: " + maxWithCrit + " SID: " + ret.skill + " MobID: " + (monster != null ? monster.getId() : "null") + " Map: " + chr.getMap().getMapName() + " (" + chr.getMapId() + ")");
                 }
 
-                if (ret.skill == Marksman.SNIPE || (canCrit && damage > hitDmgMax)) {
-                    // If the skill is a crit, inverse the damage to make it show up on clients.
-                    damage = -Integer.MAX_VALUE + damage - 1;
+                if (!clientReportedCrit && (ret.skill == Marksman.SNIPE || (canCrit && realDamage > hitDmgMax))) {
+                    // Unpatched clients do not send crit flags, so keep the legacy server-side fallback.
+                    damage = encodeCriticalDamage(realDamage);
                 }
 
                 if(effect != null) {
