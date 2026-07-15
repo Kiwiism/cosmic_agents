@@ -4,7 +4,7 @@ import client.Character;
 import client.inventory.Equip;
 import client.inventory.InventoryType;
 import client.inventory.Item;
-import config.YamlConfig;
+import server.ItemRestrictionPolicy;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy;
 import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.integration.InventoryGateway;
@@ -40,7 +40,7 @@ public final class AgentInventorySellTrashService {
     private static List<Item> collectNormalTradeEquips(AgentRuntimeEntry entry, Character agent, InventoryGateway inventory) {
         List<Item> all = AgentInventoryItemPolicy.collectSafeItems(agent, InventoryType.EQUIP, item -> true,
                 inventory::isQuestItem,
-                YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE);
+                itemId -> ItemRestrictionPolicy.allowsUntradeable(agent, itemId));
         Set<Item> selfKeep = AgentEquipmentReservePolicy.collectPotentialSelfUpgradeItems(agent);
 
         List<Item> normal = new ArrayList<>();

@@ -439,13 +439,13 @@ public class Inventory implements Iterable<Item> {
         }
     }
 
-    private static boolean checkItemRestricted(List<Pair<Item, InventoryType>> items) {
+    private static boolean checkItemRestricted(Character chr, List<Pair<Item, InventoryType>> items) {
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
 
         // thanks Shavit for noticing set creation that would be only effective in rare situations
         for (Pair<Item, InventoryType> p : items) {
             int itemid = p.getLeft().getItemId();
-            if (ii.isPickupRestricted(itemid) && p.getLeft().getQuantity() > 1) {
+            if (ii.isPickupRestricted(itemid, chr) && p.getLeft().getQuantity() > 1) {
                 return false;
             }
         }
@@ -483,7 +483,7 @@ public class Inventory implements Iterable<Item> {
     public static boolean checkSpots(Character chr, List<Pair<Item, InventoryType>> items, List<Integer> typesSlotsUsed, boolean useProofInv) {
         // assumption: no "UNDEFINED" or "EQUIPPED" items shall be tested here, all counts are >= 0.
 
-        if (!checkItemRestricted(items)) {
+        if (!checkItemRestricted(chr, items)) {
             return false;
         }
 
@@ -563,7 +563,7 @@ public class Inventory implements Iterable<Item> {
     public static boolean checkSpotsAndOwnership(Character chr, List<Pair<Item, InventoryType>> items, List<Integer> typesSlotsUsed, boolean useProofInv) {
         //assumption: no "UNDEFINED" or "EQUIPPED" items shall be tested here, all counts are >= 0 and item list to be checked is a legal one.
 
-        if (!checkItemRestricted(items)) {
+        if (!checkItemRestricted(chr, items)) {
             return false;
         }
 

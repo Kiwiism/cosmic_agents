@@ -2,7 +2,7 @@ package server.agents.capabilities.inventory;
 
 import client.Character;
 import client.inventory.Item;
-import config.YamlConfig;
+import server.ItemRestrictionPolicy;
 import server.agents.capabilities.dialogue.AgentItemQueryNormalizer;
 import server.agents.integration.InventoryGateway;
 
@@ -28,7 +28,21 @@ public final class AgentInventoryNamedItemService {
                 fragment,
                 itemId -> normalizedItemName(itemId, inventory),
                 inventory::isQuestItem,
-                YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE);
+                itemId -> ItemRestrictionPolicy.allowsUntradeable(agent, itemId));
+    }
+
+    static List<Item> collectNamedItems(Character agent,
+                                        String fragment,
+                                        IntFunction<String> normalizedItemName,
+                                        IntPredicate isQuestItem,
+                                        IntPredicate allowsUntradeableItem) {
+        return AgentInventoryItemPolicy.collectNamedItems(
+                agent,
+                fragment,
+                AgentItemQueryNormalizer::normalize,
+                normalizedItemName,
+                isQuestItem,
+                allowsUntradeableItem);
     }
 
     static List<Item> collectNamedItems(Character agent,

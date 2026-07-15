@@ -13,6 +13,8 @@ public class ServerConfig {
     public int INIT_CONNECTION_POOL_TIMEOUT;
 
     //Login Configuration
+    public String DEPLOYMENT_PROFILE;
+    public boolean ALLOW_INSECURE_PRODUCTION_AUTH;
     public int WORLDS;
     public int WLDLIST_SIZE;
     public int CHANNEL_SIZE;
@@ -144,6 +146,8 @@ public class ServerConfig {
     //Commands Configuration
     public boolean BLOCK_GENERATE_CASH_ITEM;
     public boolean USE_WHOLE_SERVER_RANKING;
+    public boolean DRESSING_ROOM_ENABLED;
+    public int DRESSING_ROOM_MIN_GM_LEVEL;
 
     public double EQUIP_EXP_RATE;
     public double PQ_BONUS_EXP_RATE;
@@ -176,6 +180,8 @@ public class ServerConfig {
     public int KITE_EXPIRE_TIME;
     public int ITEM_MONITOR_TIME;
     public int LOCK_MONITOR_TIME;
+    public boolean ITEMS_NEVER_EXPIRE;
+    public boolean PETS_NEVER_EXPIRE;
 
     //Map Monitor Configuration
     public int ITEM_EXPIRE_CHECK;
@@ -210,17 +216,29 @@ public class ServerConfig {
     // Godly Stats on Equip Drops/Rewards
     public boolean GODLY_STATS_ENABLED;
     public int GODLY_STATS_DROP_CHANCE;
+    public boolean GODLY_STATS_MAKER_ENABLED;
     public int GODLY_STATS_MAKER_CHANCE;
+    public double GODLY_STATS_MAKER_BONUS_SCALING;
+    public int GODLY_STATS_MAKER_MIN_BONUS;
+    public double GODLY_STATS_MAKER_HPMP_SCALING;
+    public int GODLY_STATS_MAKER_MIN_HPMP_BONUS;
+    public boolean GODLY_STATS_QUEST_ENABLED;
     public int GODLY_STATS_QUEST_CHANCE;
+    public double GODLY_STATS_QUEST_BONUS_SCALING;
+    public int GODLY_STATS_QUEST_MIN_BONUS;
+    public double GODLY_STATS_QUEST_HPMP_SCALING;
+    public int GODLY_STATS_QUEST_MIN_HPMP_BONUS;
+    public boolean GODLY_STATS_NPC_ENABLED;
     public int GODLY_STATS_NPC_CHANCE;
+    public double GODLY_STATS_NPC_BONUS_SCALING;
+    public int GODLY_STATS_NPC_MIN_BONUS;
+    public double GODLY_STATS_NPC_HPMP_SCALING;
+    public int GODLY_STATS_NPC_MIN_HPMP_BONUS;
     public double GODLY_STATS_BONUS_SCALING;
     public int GODLY_STATS_MIN_BONUS;
     public double GODLY_STATS_HPMP_SCALING;
     public int GODLY_STATS_MIN_HPMP_BONUS;
-    // Allow Untradeable Items to be Traded
-    public boolean UNTRADEABLE_ITEMS_TRADEABLE;
-    // Disable one-of-a-kind item restriction (info/only == 1)
-    public boolean DISABLE_ONE_OF_A_KIND_CHECK;
+    public boolean ALLOW_DROPS_ON_DROP_LIMIT_MAPS;
 
     //Beginner Skills Configuration
     public boolean USE_ULTRA_NIMBLE_FEET;

@@ -2157,8 +2157,10 @@ Examples:
 - `USE_ENFORCE_UNMERCHABLE_CASH`.
 - `USE_ENFORCE_UNMERCHABLE_PET`.
 - `BLOCK_GENERATE_CASH_ITEM`.
-- `UNTRADEABLE_ITEMS_TRADEABLE`.
-- `DISABLE_ONE_OF_A_KIND_CHECK`.
+- per-world `allow_all_untradeable_items` and `untradeable_item_allowlist`.
+- per-world `allow_multiple_one_of_a_kind_items` and
+  `multiple_one_of_a_kind_item_allowlist`.
+- `ALLOW_DROPS_ON_DROP_LIMIT_MAPS`.
 - `SCROLL_SUCCESS_BONUS_ENABLED`.
 - `SCROLL_SUCCESS_BONUS`.
 - `USE_PERFECT_SCROLLING`.

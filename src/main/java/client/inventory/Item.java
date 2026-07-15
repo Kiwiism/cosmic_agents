@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 package client.inventory;
 
 import client.inventory.manipulator.KarmaManipulator;
+import config.YamlConfig;
 import constants.inventory.ItemConstants;
 import server.ItemInformationProvider;
 
@@ -204,16 +205,16 @@ public class Item implements Comparable<Item> {
     }
 
     public void setExpiration(long expire) {
-//        if (ItemConstants.isPermanentItem(id)) {
-        long updated = ItemConstants.isPet(id) ? Long.MAX_VALUE : -1;
+        long updated = expire;
+        if (ItemConstants.isPet(id) && YamlConfig.config.server.PETS_NEVER_EXPIRE) {
+            updated = Long.MAX_VALUE;
+        } else if (YamlConfig.config.server.ITEMS_NEVER_EXPIRE) {
+            updated = -1;
+        }
         if (this.expiration != updated) {
             this.expiration = updated;
             markPersistenceDirty();
         }
-//        }
-//        else {
-//            this.expiration = expire;
-//        }
     }
 
     public int getSN() {

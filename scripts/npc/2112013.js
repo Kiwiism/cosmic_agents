@@ -39,9 +39,9 @@ function start() {
             cm.sendNext("Earned " + mgain + " mesos!");
             cm.gainMeso(mgain);
         } else if (res == 1) {  // exp
-            var egain = 500 * cm.getPlayer().getExpRate();
+            var egain = cm.getPlayer().getRateScaledExpGain(500);
             cm.sendNext("Earned " + egain + " exp!");
-            cm.gainExp(egain);
+            cm.gainExp(500);
         } else if (res == 2) {  // letter
             var letter = 4001130;
             if (!cm.canHold(letter)) {

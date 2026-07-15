@@ -4,6 +4,7 @@ import client.Character;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import constants.inventory.ItemConstants;
+import server.ItemRestrictionPolicy;
 import server.agents.capabilities.inventory.AgentEquipTradeGroupService.AgentEquipTradeGroups;
 import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy.AmmoTradeGroups;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy.AmmoGroup;
@@ -164,6 +165,6 @@ public final class AgentInventoryTradeCollectionService {
                 ItemConstants::isEquipScroll,
                 AgentUseItemClassificationPolicy::isBuffConsumable,
                 inventory::isQuestItem,
-                config.YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE);
+                itemId -> ItemRestrictionPolicy.allowsUntradeable(agent, itemId));
     }
 }

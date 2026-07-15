@@ -1196,10 +1196,19 @@ public class ItemInformationProvider {
     }
 
     public void randomizeGodlyStats(Equip equip) {
+        randomizeGodlyStats(equip,
+                YamlConfig.config.server.GODLY_STATS_BONUS_SCALING,
+                YamlConfig.config.server.GODLY_STATS_MIN_BONUS,
+                YamlConfig.config.server.GODLY_STATS_HPMP_SCALING,
+                YamlConfig.config.server.GODLY_STATS_MIN_HPMP_BONUS);
+    }
+
+    public void randomizeGodlyStats(Equip equip, double bonusScaling, int minimumBonus,
+                                    double hpMpScaling, int minimumHpMpBonus) {
         Map<String, Integer> stats = getEquipStats(equip.getItemId());
         short reqLevel = (short) ((stats == null || stats.get("reqLevel") == null) ? 0 : stats.get("reqLevel"));
-        int maxBonus = Math.max(Math.round((float)(reqLevel * YamlConfig.config.server.GODLY_STATS_BONUS_SCALING)), YamlConfig.config.server.GODLY_STATS_MIN_BONUS);
-        int maxHPMPBonus = (short) Math.max((int)(reqLevel * YamlConfig.config.server.GODLY_STATS_HPMP_SCALING), YamlConfig.config.server.GODLY_STATS_MIN_HPMP_BONUS);
+        int maxBonus = Math.max(Math.round((float) (reqLevel * bonusScaling)), minimumBonus);
+        int maxHPMPBonus = (short) Math.max((int) (reqLevel * hpMpScaling), minimumHpMpBonus);
         equip.setStr(getRandUpgradedStat(equip.getStr(), maxBonus));
         equip.setDex(getRandUpgradedStat(equip.getDex(), maxBonus));
         equip.setInt(getRandUpgradedStat(equip.getInt(), maxBonus));
@@ -1239,8 +1248,12 @@ public class ItemInformationProvider {
         equip.setHp(getRandUpgradedStat(equip.getHp(), 5));
         equip.setMp(getRandUpgradedStat(equip.getMp(), 5));
 
-        if (YamlConfig.config.server.GODLY_STATS_ENABLED && ItemInformationProvider.rollSuccessChance(YamlConfig.config.server.GODLY_STATS_MAKER_CHANCE)) {
-            randomizeGodlyStats(equip);
+        if (YamlConfig.config.server.GODLY_STATS_MAKER_ENABLED && ItemInformationProvider.rollSuccessChance(YamlConfig.config.server.GODLY_STATS_MAKER_CHANCE)) {
+            randomizeGodlyStats(equip,
+                    YamlConfig.config.server.GODLY_STATS_MAKER_BONUS_SCALING,
+                    YamlConfig.config.server.GODLY_STATS_MAKER_MIN_BONUS,
+                    YamlConfig.config.server.GODLY_STATS_MAKER_HPMP_SCALING,
+                    YamlConfig.config.server.GODLY_STATS_MAKER_MIN_HPMP_BONUS);
         }
         return equip;
     }
@@ -1381,9 +1394,6 @@ public class ItemInformationProvider {
     }
 
     public boolean isPickupRestricted(int itemId) {
-        if (YamlConfig.config.server.DISABLE_ONE_OF_A_KIND_CHECK) {
-            return false;
-        }
         if (pickupRestrictionCache.containsKey(itemId)) {
             return pickupRestrictionCache.get(itemId);
         }
@@ -1398,6 +1408,11 @@ public class ItemInformationProvider {
 
         pickupRestrictionCache.put(itemId, bRestricted);
         return bRestricted;
+    }
+
+    public boolean isPickupRestricted(int itemId, Character character) {
+        return isPickupRestricted(itemId)
+                && !ItemRestrictionPolicy.allowsMultipleOneOfAKind(character, itemId);
     }
 
     private Pair<Map<String, Integer>, Data> getSkillStatsInternal(int itemId) {

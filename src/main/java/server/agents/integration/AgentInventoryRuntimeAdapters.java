@@ -7,7 +7,7 @@ import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementTimers;
 
 import client.Character;
-import config.YamlConfig;
+import server.ItemRestrictionPolicy;
 import server.agents.auth.AgentOwnershipService;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy;
@@ -114,7 +114,7 @@ public final class AgentInventoryRuntimeAdapters {
                 AgentAttackExecutionProvider::getEquippedWeaponType,
                 itemId -> inventory().getProjectileWeaponAttack(itemId),
                 itemId -> inventory().isQuestItem(itemId),
-                () -> YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE,
+                itemId -> ItemRestrictionPolicy.allowsUntradeable(agent, itemId),
                 () -> AgentTradeCommandProfiler.profileCategory("equips"),
                 AgentEquipmentReservePolicy::collectPotentialSelfUpgradeItems,
                 item -> AgentOfferService.isReservedForOtherRecipients(entry, agent, item),

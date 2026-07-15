@@ -37,6 +37,7 @@ import constants.inventory.ItemConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.ItemInformationProvider;
+import server.ItemRestrictionPolicy;
 import server.maps.MapleMap;
 import tools.PacketCreator;
 
@@ -194,7 +195,7 @@ public class InventoryManipulator {
     private static boolean addFromDropInternal(Client c, Character chr, InventoryType type, Inventory inv, Item item, boolean show, int petId) {
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
         int itemid = item.getItemId();
-        if (ii.isPickupRestricted(itemid) && chr.haveItemWithId(itemid, true)) {
+        if (ii.isPickupRestricted(itemid, chr) && chr.haveItemWithId(itemid, true)) {
             c.sendPacket(PacketCreator.getInventoryFull());
             c.sendPacket(PacketCreator.showItemUnavailable());
             return false;
@@ -303,7 +304,7 @@ public class InventoryManipulator {
         Character chr = c.getPlayer();
         Inventory inv = chr.getInventory(type);
 
-        if (ii.isPickupRestricted(itemid)) {
+        if (ii.isPickupRestricted(itemid, chr)) {
             if (haveItemWithId(inv, itemid)) {
                 return false;
             } else if (ItemConstants.isEquipment(itemid) && haveItemWithId(chr.getInventory(InventoryType.EQUIPPED), itemid)) {
@@ -358,7 +359,7 @@ public class InventoryManipulator {
         Character chr = c.getPlayer();
         Inventory inv = chr.getInventory(type);
 
-        if (ii.isPickupRestricted(itemid)) {
+        if (ii.isPickupRestricted(itemid, chr)) {
             if (haveItemWithId(inv, itemid)) {
                 return 0;
             } else if (ItemConstants.isEquipment(itemid) && haveItemWithId(chr.getInventory(InventoryType.EQUIPPED), itemid)) {
@@ -557,7 +558,7 @@ public class InventoryManipulator {
             return;
         }
         boolean itemChanged = false;
-        if (ii.isUntradeableOnEquip(source.getItemId()) && !YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE) {
+        if (ii.isUntradeableOnEquip(source.getItemId()) && !ItemRestrictionPolicy.allowsUntradeable(chr, source.getItemId())) {
             short flag = source.getFlag();      // thanks BHB for noticing flags missing after equipping these
             flag |= ItemConstants.UNTRADEABLE;
             source.setFlag(flag);
@@ -727,25 +728,17 @@ public class InventoryManipulator {
         eqpInv.addItemFromDB(target);
     }
 
-    private static boolean isDisappearingItemDrop(Item it) {
-        // When everything is tradable, nothing should vanish on drop.
-        if (YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE) {
-            return false;
-        }
+    private static boolean isDisappearingItemDrop(Character chr, Item it) {
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
         if (ii.isDropRestricted(it.getItemId())) {
-            // Quest items always disappear; loot-restricted (tradeBlock) items respect the flag
-            if (ii.isQuestItem(it.getItemId()) || !YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE) {
-                return true;
-            }
-            return false;
+            return !ItemRestrictionPolicy.allowsUntradeable(chr, it.getItemId());
         } else if (ii.isCash(it.getItemId())) {
             if (YamlConfig.config.server.USE_ENFORCE_UNMERCHABLE_CASH) {     // thanks Ari for noticing cash drops not available server-side
                 return true;
             } else {
                 return ItemConstants.isPet(it.getItemId()) && YamlConfig.config.server.USE_ENFORCE_UNMERCHABLE_PET;
             }
-        } else if (isDroppedItemRestricted(it)) {
+        } else if (isDroppedItemRestricted(chr, it)) {
             return true;
         } else {
             return ItemId.isWeddingRing(it.getItemId());
@@ -803,7 +796,7 @@ public class InventoryManipulator {
                 }
             }
 
-            if (isDisappearingItemDrop(target)) {
+            if (isDisappearingItemDrop(chr, target)) {
                 map.disappearingItemDrop(chr, chr, target, dropPos);
             } else {
                 map.spawnItemDrop(chr, chr, target, dropPos, true, true);
@@ -834,7 +827,7 @@ public class InventoryManipulator {
                 }
             }
 
-            if (isDisappearingItemDrop(source)) {
+            if (isDisappearingItemDrop(chr, source)) {
                 map.disappearingItemDrop(chr, chr, source, dropPos);
             } else {
                 map.spawnItemDrop(chr, chr, source, dropPos, true, true);
@@ -856,9 +849,9 @@ public class InventoryManipulator {
         }
     }
 
-    private static boolean isDroppedItemRestricted(Item it) {
+    private static boolean isDroppedItemRestricted(Character chr, Item it) {
         return YamlConfig.config.server.USE_ERASE_UNTRADEABLE_DROP && it.isUntradeable()
-                && !YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE;
+                && !ItemRestrictionPolicy.allowsUntradeable(chr, it.getItemId());
     }
 
     public static boolean isSandboxItem(Item it) {

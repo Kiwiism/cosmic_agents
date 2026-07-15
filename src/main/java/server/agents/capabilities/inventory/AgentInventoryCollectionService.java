@@ -3,7 +3,7 @@ package server.agents.capabilities.inventory;
 import client.Character;
 import client.inventory.InventoryType;
 import client.inventory.Item;
-import config.YamlConfig;
+import server.ItemRestrictionPolicy;
 import server.agents.integration.InventoryGateway;
 
 import java.util.List;
@@ -23,7 +23,15 @@ public final class AgentInventoryCollectionService {
                 type,
                 filter,
                 inventory::isQuestItem,
-                YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE);
+                itemId -> ItemRestrictionPolicy.allowsUntradeable(agent, itemId));
+    }
+
+    public static List<Item> collectFromBag(Character agent,
+                                            InventoryType type,
+                                            Predicate<Item> filter,
+                                            IntPredicate isQuestItem,
+                                            IntPredicate allowsUntradeableItem) {
+        return AgentInventoryItemPolicy.collectSafeItems(agent, type, filter, isQuestItem, allowsUntradeableItem);
     }
 
     public static List<Item> collectFromBag(Character agent,

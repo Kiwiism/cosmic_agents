@@ -28,8 +28,6 @@ import client.Client;
 import client.command.Command;
 import config.YamlConfig;
 
-import java.util.Locale;
-
 public class ShowRatesCommand extends Command {
     {
         setDescription("Show all world/character rates.");
@@ -44,8 +42,7 @@ public class ShowRatesCommand extends Command {
         if (player.getCouponExpRate() != 1) {
             showMsg += "Coupon EXP Rate: #k" + player.getCouponExpRate() + "x#k" + "\r\n";
         }
-        showMsg += "Level EXP Multiplier: #k" + String.format(Locale.US, "%.2f", player.getDynamicExpRateMultiplier()) + "x#k" + "\r\n";
-        showMsg += "EXP Rate: #e#b" + String.format(Locale.US, "%.2f", player.getEffectiveExpRate()) + "x#k#n" + (player.hasNoviceExpRate() || player.hasFirstJobExpRate() ? " - novice rate" : "") + "\r\n";
+        showMsg += "EXP Rate: #e#b" + player.getExpRate() + "x#k#n" + (player.hasNoviceExpRate() || player.hasFirstJobExpRate() ? " - novice rate" : "") + "\r\n";
 
         showMsg += "\r\n" + "#eMESO RATE#n" + "\r\n";
         showMsg += "World MESO Rate: #k" + c.getWorldServer().getMesoRate() + "x#k" + "\r\n";
@@ -74,7 +71,7 @@ public class ShowRatesCommand extends Command {
         if (YamlConfig.config.server.USE_QUEST_RATE) {
             showMsg += "\r\n" + "#eQUEST RATE#n" + "\r\n";
             showMsg += "World QUEST Rate: #e#b" + c.getWorldServer().getQuestRate() + "x#k#n" + "\r\n";
-            showMsg += "Effective QUEST EXP Rate: #e#b" + String.format(Locale.US, "%.2f", player.getEffectiveQuestExpRate()) + "x#k#n" + "\r\n";
+            showMsg += "Effective QUEST EXP Rate: #e#b" + player.getQuestExpRate() + "x#k#n" + "\r\n";
         }
 
         showMsg += "\r\n";

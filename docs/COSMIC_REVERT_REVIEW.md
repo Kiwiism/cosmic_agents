@@ -1,6 +1,10 @@
 # Cosmic Revert Review List
 
-Pending items to review before reverting NuTNNuT custom behavior back toward original Cosmic.
+Historical review notes for NuTNNuT custom behavior over original Cosmic.
+
+The approved N01 to N26 disposition was implemented on 2026-07-15. See
+`docs/NUTNNUT_POLICY_IMPLEMENTATION_2026_07.md` for the authoritative status,
+configuration defaults, and Agent-versus-Player boundaries.
 
 ## Gameplay / Server Behavior
 

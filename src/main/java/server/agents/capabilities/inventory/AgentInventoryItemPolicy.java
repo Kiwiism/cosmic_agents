@@ -30,23 +30,27 @@ public final class AgentInventoryItemPolicy {
         return current == item;
     }
 
-    public static boolean isSafeToDrop(Item item, IntPredicate isQuestItem, boolean untradeableItemsTradeable) {
-        if (item.isUntradeable() && !untradeableItemsTradeable) return false;
+    public static boolean isSafeToDrop(Item item, IntPredicate isQuestItem, IntPredicate allowsUntradeableItem) {
+        if (item.isUntradeable() && !allowsUntradeableItem.test(item.getItemId())) return false;
         if (isQuestItem.test(item.getItemId())) return false;
         return true;
+    }
+
+    public static boolean isSafeToDrop(Item item, IntPredicate isQuestItem, boolean untradeableItemsTradeable) {
+        return isSafeToDrop(item, isQuestItem, itemId -> untradeableItemsTradeable);
     }
 
     public static List<Item> collectSafeItems(Character agent,
                                               InventoryType type,
                                               Predicate<Item> filter,
                                               IntPredicate isQuestItem,
-                                              boolean untradeableItemsTradeable) {
+                                              IntPredicate allowsUntradeableItem) {
         List<Item> result = new ArrayList<>();
         Inventory inventory = agent.getInventory(type);
         for (short slot = 1; slot <= inventory.getSlotLimit(); slot++) {
             Item item = inventory.getItem(slot);
             if (item != null
-                    && isSafeToDrop(item, isQuestItem, untradeableItemsTradeable)
+                    && isSafeToDrop(item, isQuestItem, allowsUntradeableItem)
                     && filter.test(item)) {
                 result.add(item);
             }
@@ -54,22 +58,56 @@ public final class AgentInventoryItemPolicy {
         return result;
     }
 
+    public static List<Item> collectSafeItems(Character agent,
+                                              InventoryType type,
+                                              Predicate<Item> filter,
+                                              IntPredicate isQuestItem,
+                                              boolean untradeableItemsTradeable) {
+        return collectSafeItems(agent, type, filter, isQuestItem, itemId -> untradeableItemsTradeable);
+    }
+
     public static List<Short> selectSafeDropSlots(Character agent,
                                                   InventoryType type,
                                                   Predicate<Item> filter,
                                                   IntPredicate isQuestItem,
-                                                  boolean untradeableItemsTradeable) {
+                                                  IntPredicate allowsUntradeableItem) {
         List<Short> slots = new ArrayList<>();
         Inventory inventory = agent.getInventory(type);
         for (short slot = 1; slot <= inventory.getSlotLimit(); slot++) {
             Item item = inventory.getItem(slot);
             if (item != null
-                    && isSafeToDrop(item, isQuestItem, untradeableItemsTradeable)
+                    && isSafeToDrop(item, isQuestItem, allowsUntradeableItem)
                     && filter.test(item)) {
                 slots.add(slot);
             }
         }
         return slots;
+    }
+
+    public static List<Short> selectSafeDropSlots(Character agent,
+                                                  InventoryType type,
+                                                  Predicate<Item> filter,
+                                                  IntPredicate isQuestItem,
+                                                  boolean untradeableItemsTradeable) {
+        return selectSafeDropSlots(agent, type, filter, isQuestItem, itemId -> untradeableItemsTradeable);
+    }
+
+    public static List<Item> collectNamedItems(Character agent,
+                                               String fragment,
+                                               Function<String, String> normalizer,
+                                               IntFunction<String> normalizedItemName,
+                                               IntPredicate isQuestItem,
+                                               IntPredicate allowsUntradeableItem) {
+        List<Item> result = new ArrayList<>();
+        String normalizedFragment = normalizer.apply(fragment);
+        for (InventoryType type : List.of(
+                InventoryType.EQUIP, InventoryType.USE, InventoryType.ETC, InventoryType.SETUP)) {
+            result.addAll(collectSafeItems(agent, type, item -> {
+                String name = normalizedItemName.apply(item.getItemId());
+                return name != null && name.contains(normalizedFragment);
+            }, isQuestItem, allowsUntradeableItem));
+        }
+        return result;
     }
 
     public static List<Item> collectNamedItems(Character agent,
@@ -78,15 +116,7 @@ public final class AgentInventoryItemPolicy {
                                                IntFunction<String> normalizedItemName,
                                                IntPredicate isQuestItem,
                                                boolean untradeableItemsTradeable) {
-        List<Item> result = new ArrayList<>();
-        String normalizedFragment = normalizer.apply(fragment);
-        for (InventoryType type : List.of(
-                InventoryType.EQUIP, InventoryType.USE, InventoryType.ETC, InventoryType.SETUP)) {
-            result.addAll(collectSafeItems(agent, type, item -> {
-                String name = normalizedItemName.apply(item.getItemId());
-                return name != null && name.contains(normalizedFragment);
-            }, isQuestItem, untradeableItemsTradeable));
-        }
-        return result;
+        return collectNamedItems(agent, fragment, normalizer, normalizedItemName, isQuestItem,
+                itemId -> untradeableItemsTradeable);
     }
 }

@@ -4,8 +4,8 @@ import client.Character;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
-import config.YamlConfig;
 import constants.inventory.ItemConstants;
+import server.ItemRestrictionPolicy;
 import server.StatEffect;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.agents.integration.InventoryGateway;
@@ -61,18 +61,18 @@ public final class AgentInventoryDialogueReporter {
             }
             sb.append(type.name().toLowerCase()).append(' ').append(used).append('/').append(total);
             if (type == InventoryType.USE) {
-                appendUseInventorySummary(sb, inv, inventoryGateway);
+                appendUseInventorySummary(sb, agent, inv, inventoryGateway);
             }
         }
         return sb.toString();
     }
 
-    private static void appendUseInventorySummary(StringBuilder sb, Inventory inventory, InventoryGateway inventoryGateway) {
+    private static void appendUseInventorySummary(StringBuilder sb, Character agent, Inventory inventory, InventoryGateway inventoryGateway) {
         int scrolls = 0;
         int pots = 0;
         int buffs = 0;
         for (Item item : inventory.list()) {
-            if (!isSafeToMention(item, inventoryGateway)) {
+            if (!isSafeToMention(agent, item, inventoryGateway)) {
                 continue;
             }
             int id = item.getItemId();
@@ -126,8 +126,8 @@ public final class AgentInventoryDialogueReporter {
         }
     }
 
-    private static boolean isSafeToMention(Item item, InventoryGateway inventoryGateway) {
-        if (item.isUntradeable() && !YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE) {
+    private static boolean isSafeToMention(Character agent, Item item, InventoryGateway inventoryGateway) {
+        if (item.isUntradeable() && !ItemRestrictionPolicy.allowsUntradeable(agent, item.getItemId())) {
             return false;
         }
         return !inventoryGateway.isQuestItem(item.getItemId());

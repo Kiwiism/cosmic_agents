@@ -648,9 +648,13 @@ public class AbstractPlayerInteraction {
             }
             if (ItemConstants.getInventoryType(id) == InventoryType.EQUIP) {
                 Equip eqp = randomStats ? ii.randomizeStats((Equip) item, false) : (Equip) item;
-                if (YamlConfig.config.server.GODLY_STATS_ENABLED &&
+                if (YamlConfig.config.server.GODLY_STATS_NPC_ENABLED &&
                         ItemInformationProvider.rollSuccessChance(YamlConfig.config.server.GODLY_STATS_NPC_CHANCE)) {
-                    ii.randomizeGodlyStats(eqp);
+                    ii.randomizeGodlyStats(eqp,
+                            YamlConfig.config.server.GODLY_STATS_NPC_BONUS_SCALING,
+                            YamlConfig.config.server.GODLY_STATS_NPC_MIN_BONUS,
+                            YamlConfig.config.server.GODLY_STATS_NPC_HPMP_SCALING,
+                            YamlConfig.config.server.GODLY_STATS_NPC_MIN_HPMP_BONUS);
                 }
                 InventoryManipulator.addFromDrop(c, eqp, false, petId);
             } else {
@@ -1225,6 +1229,10 @@ public class AbstractPlayerInteraction {
     }
 
     public void npcTalkDressingRoom(int npcid, String message) {
+        if (!canUseDressingRoom()) {
+            getPlayer().dropMessage(5, "The dressing room is disabled for this deployment.");
+            return;
+        }
         pendingNpcTalkMessages.put(c.getPlayer().getId(), message);
         pendingDressingRoomSelections.put(c.getPlayer().getId(), true);
         NPCScriptManager.getInstance().dispose(c);
@@ -1232,6 +1240,9 @@ public class AbstractPlayerInteraction {
     }
 
     public boolean spawnDressingRoomItem(int id, boolean randomStats) {
+        if (!canUseDressingRoom()) {
+            return false;
+        }
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
         if (ii.getName(id) == null || !ii.hasData(id)) {
             getPlayer().dropMessage(5, "The item you selected doesn't exist.");
@@ -1252,6 +1263,11 @@ public class AbstractPlayerInteraction {
 
         getPlayer().getMap().spawnItemDrop(getPlayer(), getPlayer(), toDrop, getPlayer().getPosition(), true, true);
         return true;
+    }
+
+    private boolean canUseDressingRoom() {
+        return YamlConfig.config.server.DRESSING_ROOM_ENABLED
+                && getPlayer().gmLevel() >= YamlConfig.config.server.DRESSING_ROOM_MIN_GM_LEVEL;
     }
 
     public long getCurrentTime() {

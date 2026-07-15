@@ -2271,7 +2271,7 @@ public class Character extends AbstractCharacterObject {
     public boolean canHoldUniques(List<Integer> itemids) {
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
         for (Integer itemid : itemids) {
-            if (ii.isPickupRestricted(itemid) && this.haveItem(itemid)) {
+            if (ii.isPickupRestricted(itemid, this) && this.haveItem(itemid)) {
                 return false;
             }
         }
@@ -3207,7 +3207,7 @@ public class Character extends AbstractCharacterObject {
         } else {
             expgain = this.gachaexp.getAndSet(0);
         }
-        gainExp(expgain, 0, false, true, true, false);
+        gainExp(expgain, 0, false, true, true);
         updateSingleStat(Stat.GACHAEXP, this.gachaexp.get());
     }
 
@@ -3228,19 +3228,9 @@ public class Character extends AbstractCharacterObject {
     }
 
     public void gainExp(int gain, int party, boolean show, boolean inChat, boolean white) {
-        gainExp(gain, party, show, inChat, white, true);
-    }
-
-    private void gainExp(int gain, int party, boolean show, boolean inChat, boolean white, boolean applyDynamicExpRate) {
         if (hasDisease(Disease.CURSE)) {
             gain *= 0.5;
             party *= 0.5;
-        }
-
-        if (applyDynamicExpRate) {
-            double dynamicExpRate = getDynamicExpRateMultiplier();
-            gain = applyExpRateMultiplier(gain, dynamicExpRate);
-            party = applyExpRateMultiplier(party, dynamicExpRate);
         }
 
         if (gain < 0) {
@@ -3256,55 +3246,28 @@ public class Character extends AbstractCharacterObject {
         gainExpInternal(gain, equip, party, show, inChat, white);
     }
 
-    private int applyExpRateMultiplier(int gain, double multiplier) {
-        if (gain <= 0 || multiplier == 1.0) {
-            return gain;
-        }
-
-        long scaledGain = Math.round(gain * multiplier);
-        return (int) Math.min(scaledGain, Integer.MAX_VALUE);
-    }
-
-    private int applyExpRate(int gain, int rate) {
-        if (gain <= 0 || rate == 1) {
-            return gain;
-        }
-
-        long scaledGain = (long) gain * rate;
-        return (int) Math.min(scaledGain, Integer.MAX_VALUE);
-    }
-
-    private int applyExpRate(double gain, int rate) {
-        if (gain <= 0) {
-            return (int) gain;
-        }
-
-        double scaledGain = gain * rate;
-        return (int) Math.min(scaledGain, Integer.MAX_VALUE);
-    }
-
     public int getRateScaledExpGain(int gain) {
-        return applyExpRateMultiplier(applyExpRate(gain, getExpRate()), getDynamicExpRateMultiplier());
+        return ExperienceRateScaler.scale(gain, getExpRate());
     }
 
     public int getQuestRateScaledExpGain(int gain) {
-        return applyExpRateMultiplier(applyExpRate(gain, getQuestExpRate()), getDynamicExpRateMultiplier());
+        return ExperienceRateScaler.scale(gain, getQuestExpRate());
     }
 
     public void gainExpRateScaled(int gain, boolean show, boolean inChat) {
-        gainExp(applyExpRate(gain, getExpRate()), show, inChat);
+        gainExp(ExperienceRateScaler.scale(gain, getExpRate()), show, inChat);
     }
 
     public void gainExpRateScaled(double gain, boolean show, boolean inChat) {
-        gainExp(applyExpRate(gain, getExpRate()), show, inChat);
+        gainExp(ExperienceRateScaler.scale(gain, getExpRate()), show, inChat);
     }
 
     public void gainExpRateScaled(int gain, boolean show, boolean inChat, boolean white) {
-        gainExp(applyExpRate(gain, getExpRate()), show, inChat, white);
+        gainExp(ExperienceRateScaler.scale(gain, getExpRate()), show, inChat, white);
     }
 
     public void gainQuestExpRateScaled(int gain, boolean show, boolean inChat) {
-        gainExp(applyExpRate(gain, getQuestExpRate()), show, inChat);
+        gainExp(ExperienceRateScaler.scale(gain, getQuestExpRate()), show, inChat);
     }
 
     public void loseExp(int loss, boolean show, boolean inChat) {
@@ -5160,30 +5123,6 @@ public class Character extends AbstractCharacterObject {
         return expRate;
     }
 
-    public double getDynamicExpRateMultiplier() {
-        List<config.LevelExpRateConfig> configuredRates = getWorldServer().getLevelExpRateMultipliers();
-        if (configuredRates == null || configuredRates.isEmpty()) {
-            return 1.0;
-        }
-
-        double multiplier = 1.0;
-        for (config.LevelExpRateConfig configuredRate : configuredRates) {
-            if (configuredRate == null) {
-                continue;
-            }
-
-            if (level >= configuredRate.level) {
-                multiplier = configuredRate.multiplier;
-            }
-        }
-
-        return Math.max(multiplier, 0.0);
-    }
-
-    public double getEffectiveExpRate() {
-        return getExpRate() * getDynamicExpRateMultiplier();
-    }
-
     public int getCouponExpRate() {
         return expCoupon;
     }
@@ -5231,10 +5170,6 @@ public class Character extends AbstractCharacterObject {
         }
 
         return w.getExpRate() * w.getQuestRate();
-    }
-
-    public double getEffectiveQuestExpRate() {
-        return getQuestExpRate() * getDynamicExpRateMultiplier();
     }
 
     public int getQuestMesoRate() {
