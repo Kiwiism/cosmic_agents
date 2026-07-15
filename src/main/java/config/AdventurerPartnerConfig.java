@@ -19,6 +19,7 @@ public class AdventurerPartnerConfig {
     public long SWITCH_COOLDOWN_MS = 5_000L;
     public boolean SAME_MAP_REQUIRED = true;
     public long DOUBLE_PARTNER_READY_DELAY_MS = 0L;
+    public long MEDAL_DAMAGE_DELAY_MS = 2_000L;
     public int SWITCH_EFFECT_ID = 8;
     public boolean SWITCH_EFFECT_BROADCAST = false;
     public boolean SWITCH_TRIGGER_EFFECT_ENABLED = false;
@@ -50,6 +51,10 @@ public class AdventurerPartnerConfig {
         if (DOUBLE_PARTNER_READY_DELAY_MS < 0L || DOUBLE_PARTNER_READY_DELAY_MS > 10_000L) {
             throw new IllegalStateException(
                     "adventurerPartner.DOUBLE_PARTNER_READY_DELAY_MS must be between 0 and 10000");
+        }
+        if (MEDAL_DAMAGE_DELAY_MS < 0L || MEDAL_DAMAGE_DELAY_MS > 10_000L) {
+            throw new IllegalStateException(
+                    "adventurerPartner.MEDAL_DAMAGE_DELAY_MS must be between 0 and 10000");
         }
         if (SWITCH_EFFECT_ID < -1 || SWITCH_EFFECT_ID > 255) {
             throw new IllegalStateException(

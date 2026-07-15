@@ -51,7 +51,7 @@ class ShopValidationTest {
 
         shop.buy(client, (short) 0, 1142073, (short) 1);
 
-        verify(client).sendPacket(PacketCreator.shopTransaction((byte) 0x06));
+        verify(client).sendPacket(PacketCreator.shopTransaction((byte) 0));
         verify(client).sendPacket(PacketCreator.serverNotice(1, "You already have that medal."));
     }
 

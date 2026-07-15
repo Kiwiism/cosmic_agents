@@ -114,6 +114,10 @@ public final class ActivePartnerSession {
         return Math.max(0L, nextAllowedSwitchAtMs.get() - nowMs);
     }
 
+    public long switchCooldownDeadlineMs() {
+        return nextAllowedSwitchAtMs.get();
+    }
+
     public PartnerLink link() {
         return link;
     }

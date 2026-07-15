@@ -28,6 +28,47 @@ class SoloTagBuffSharingServiceTest {
     private static final int BOND_ITEM_ID = 1142073;
 
     @Test
+    void preparationCapsBorrowedSelfBuffAtTheMatchingPartnerTier() {
+        AdventurerPartnerConfig config = new AdventurerPartnerConfig();
+        PartnerMedalEffectConfig bond = new PartnerMedalEffectConfig();
+        bond.ITEM_ID = BOND_ITEM_ID;
+        bond.EFFECT = "SELF_BUFF_BOND";
+        bond.LEVELS.add(bondLevel(70, 10));
+        bond.LEVELS.add(bondLevel(95, 20));
+        bond.LEVELS.add(bondLevel(120, 30));
+        config.MEDAL_EFFECTS.add(bond);
+        SoloTagBuffSharingService sharing = new SoloTagBuffSharingService(config);
+        Character recipient = mock(Character.class);
+        Character level95Partner = mock(Character.class);
+        Skill shadowPartner = mock(Skill.class);
+        StatEffect effect = mock(StatEffect.class);
+        when(level95Partner.getLevel()).thenReturn(95);
+        when(shadowPartner.getId()).thenReturn(4111002);
+        when(shadowPartner.getMaxLevel()).thenReturn(30);
+        when(shadowPartner.getEffect(30)).thenReturn(effect);
+        when(shadowPartner.getAction()).thenReturn(true);
+        when(effect.isSkill()).thenReturn(true);
+        when(effect.isOverTime()).thenReturn(true);
+        when(effect.getDuration()).thenReturn(180_000);
+        when(effect.getStatups()).thenReturn(List.of(
+                new Pair<>(BuffStat.SHADOWPARTNER, 50)));
+        when(effect.isPartyBuff()).thenReturn(false);
+        when(recipient.getSkills()).thenReturn(Map.of());
+        when(level95Partner.getSkills()).thenReturn(Map.of(
+                shadowPartner, new Character.SkillEntry((byte) 30, 0, -1L)));
+        when(recipient.getAllBuffs()).thenReturn(List.of());
+        when(level95Partner.getAllBuffs()).thenReturn(List.of());
+        List<SoloTagBuffSharingService.SkillGrant> grants = new ArrayList<>();
+
+        sharing.prepareSessionSkills(
+                PartnerMode.SOLO_TAG, recipient, level95Partner, grants::add);
+
+        assertEquals(1, grants.size());
+        assertEquals(recipient, grants.getFirst().recipient());
+        assertEquals(20, Byte.toUnsignedInt(grants.getFirst().level()));
+    }
+
+    @Test
     void soloPreparationPregrantsLearnedSelfBuffEvenWhenItIsNotActive() {
         AdventurerPartnerConfig config = enabledEquipConfig();
         SoloTagBuffSharingService sharing = new SoloTagBuffSharingService(config);
@@ -300,6 +341,13 @@ class SoloTagBuffSharingServiceTest {
         level.MAX_SKILL_LEVEL = maxSkillLevel;
         effect.LEVELS.add(level);
         config.MEDAL_EFFECTS.add(effect);
+    }
+
+    private static PartnerMedalEffectLevelConfig bondLevel(int partnerLevel, int maxSkillLevel) {
+        PartnerMedalEffectLevelConfig level = new PartnerMedalEffectLevelConfig();
+        level.CONDITIONS.MIN_PARTNER_LEVEL = partnerLevel;
+        level.MAX_SKILL_LEVEL = maxSkillLevel;
+        return level;
     }
 
     private static PlayerBuffValueHolder buff(BuffStat stat, int value, int sourceId) {

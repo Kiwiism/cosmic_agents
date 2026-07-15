@@ -19,6 +19,9 @@
         </preConditions>
         <sqlFile path="db/data/103-adventurer-partner-medal-shop.sql"/>
     </changeSet>
+    <changeSet id="104-adventurer-partner-exp-medal" author="Codex">
+        <sqlFile path="db/data/104-adventurer-partner-exp-medal.sql"/>
+    </changeSet>
 
     <changeSet id="111" author="Ponk">
         <sqlFile path="db/data/111-makercreate-data.sql"/>

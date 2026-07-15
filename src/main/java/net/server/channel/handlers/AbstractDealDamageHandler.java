@@ -127,6 +127,7 @@ public abstract class AbstractDealDamageHandler extends AbstractPacketHandler {
         public int speed = 4;
         public Point position = new Point();
         public List<Integer> explodedMesos;
+        public Map<Integer, Integer> partnerBonusDamageByTarget = Map.of();
         public Short attackDelay;
 
         public StatEffect getAttackEffect(Character chr, Skill theSkill) {
@@ -538,16 +539,6 @@ public abstract class AbstractDealDamageHandler extends AbstractPacketHandler {
                         }
 
                         map.damageMonster(player, monster, totDamageToOneMonster, target.getValue().delay());
-                        if (!monster.isBoss() && monster.getHp() > 0) {
-                            int partnerBonus = PartnerMedalEffectService.INSTANCE.regularMobBonusDamage(
-                                    player, totDamageToOneMonster);
-                            if (partnerBonus > 0) {
-                                map.broadcastMessage(
-                                        PacketCreator.damageMonster(monster.getObjectId(), partnerBonus),
-                                        monster.getPosition());
-                                map.damageMonster(player, monster, partnerBonus);
-                            }
-                        }
                     }
                     if (monster.isBuffed(MonsterStatus.WEAPON_REFLECT) && !attack.magic) {
                         for (MobSkillId msId : monster.getSkills()) {
@@ -569,6 +560,8 @@ public abstract class AbstractDealDamageHandler extends AbstractPacketHandler {
                     }
                 }
             }
+            PartnerMedalEffectService.INSTANCE.applyRegularMobBonusDamage(
+                    player, attack.partnerBonusDamageByTarget);
         } catch (Exception e) {
             monitoring.RuntimeFailureLogger.log(e);
         }
@@ -891,6 +884,7 @@ public abstract class AbstractDealDamageHandler extends AbstractPacketHandler {
             p.skip(4);
             ret.position.setLocation(p.readShort(), p.readShort());
         }
+        PartnerMedalEffectService.INSTANCE.prepareRegularMobBonusDamage(chr, ret);
         return ret;
     }
 

@@ -700,21 +700,29 @@ public class MapleMap {
                     pos.x = mobpos + ((index % 2 == 0) ? (25 * ((index + 1) / 2)) : -(25 * (index / 2)));
                 }
                 if (de.itemId == 0) { // meso
-                    int mesos = Randomizer.rand(de.Minimum, de.Maximum);
+                    int rolledMesos = Randomizer.rand(de.Minimum, de.Maximum);
 
-                    if (mesos > 0) {
-                        mesos = (int) Math.min(Integer.MAX_VALUE,
-                                Math.round(mesos * PartnerMedalEffectService.INSTANCE.mesoMultiplier(chr)));
-                        if (chr.getBuffedValue(BuffStat.MESOUP) != null) {
-                            mesos = (int) (mesos * chr.getBuffedValue(BuffStat.MESOUP).doubleValue() / 100.0);
-                        }
-                        mesos = mesos * chr.getMesoRate();
-                        if (mesos <= 0) {
-                            mesos = Integer.MAX_VALUE;
-                        }
+                    if (rolledMesos > 0) {
+                        int baseMesos = adjustedMesoDropAmount(rolledMesos, chr);
+                        long medalAdjustedRoll = Math.min(Integer.MAX_VALUE, Math.round(
+                                rolledMesos * PartnerMedalEffectService.INSTANCE.mesoMultiplier(chr)));
+                        int totalMesos = adjustedMesoDropAmount(medalAdjustedRoll, chr);
+                        int medalBonusMesos = Math.max(0, totalMesos - baseMesos);
 
-                        spawnMesoDrop(mesos, calcDropPos(pos, mob.getPosition()), mob, chr, false, droptype,
+                        spawnMesoDrop(baseMesos, calcDropPos(pos, mob.getPosition()), mob, chr, false, droptype,
                                 delay);
+                        if (medalBonusMesos > 0) {
+                            index++;
+                            if (droptype == 3) {
+                                pos.x = mobpos + ((index % 2 == 0)
+                                        ? (40 * ((index + 1) / 2)) : -(40 * (index / 2)));
+                            } else {
+                                pos.x = mobpos + ((index % 2 == 0)
+                                        ? (25 * ((index + 1) / 2)) : -(25 * (index / 2)));
+                            }
+                            spawnMesoDrop(medalBonusMesos, calcDropPos(pos, mob.getPosition()), mob, chr,
+                                    false, droptype, delay);
+                        }
                     }
                 } else {
                     if (ItemConstants.getInventoryType(de.itemId) == InventoryType.EQUIP) {
@@ -795,6 +803,18 @@ public class MapleMap {
         }
 
         return d;
+    }
+
+    private static int adjustedMesoDropAmount(long rolledMesos, Character chr) {
+        if (rolledMesos <= 0) {
+            return 0;
+        }
+        long adjusted = Math.min(Integer.MAX_VALUE, rolledMesos);
+        if (chr.getBuffedValue(BuffStat.MESOUP) != null) {
+            adjusted = (long) (adjusted * chr.getBuffedValue(BuffStat.MESOUP).doubleValue() / 100.0);
+        }
+        adjusted *= Math.max(1, chr.getMesoRate());
+        return (int) Math.min(Integer.MAX_VALUE, Math.max(1L, adjusted));
     }
 
     private void dropFromMonster(final Character chr, final Monster mob, final boolean useBaseRate, short delay) {

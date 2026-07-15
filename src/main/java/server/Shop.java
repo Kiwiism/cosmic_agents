@@ -177,7 +177,9 @@ public class Shop {
                 return;
             }
             if (c.getPlayer().haveItemWithId(itemId, true)) {
-                c.sendPacket(PacketCreator.shopTransaction((byte) 0x06));
+                // Acknowledge the shop action without the client's generic error dialog;
+                // the notice below is the only duplicate-medal popup the player needs.
+                c.sendPacket(PacketCreator.shopTransaction((byte) 0));
                 c.sendPacket(PacketCreator.serverNotice(1, "You already have that medal."));
                 return;
             }

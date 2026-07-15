@@ -556,6 +556,16 @@ class AdventurerPartnerServiceTest {
     @Test
     void repeatedCooldownRejectionsOnlyReturnOneChatMessage() throws Exception {
         config.SWITCH_COOLDOWN_MS = 5_000L;
+        List<Runnable> scheduled = new java.util.ArrayList<>();
+        List<Long> delays = new java.util.ArrayList<>();
+        service = new AdventurerPartnerService(
+                config, repository, profiles, leases, runtimes,
+                new PartnerRosterQueryService(repository, availability),
+                agents, triggerPolicy, transitions, sessionSkills,
+                (task, delayMs) -> {
+                    scheduled.add(task);
+                    delays.add(delayMs);
+                });
         when(profiles.loadDetached(20, 0, 1)).thenReturn(partner);
         when(triggerPolicy.validate(any(), any()))
                 .thenReturn(new PartnerTriggerPolicy.Result(true, null));
@@ -583,6 +593,20 @@ class AdventurerPartnerServiceTest {
         }
         assertTrue(firstRejected.message().contains("cooling down"));
         org.junit.jupiter.api.Assertions.assertNull(repeatedRejected.message());
+        assertEquals(1, scheduled.size());
+        assertTrue(delays.getFirst() > 0L && delays.getFirst() <= config.SWITCH_COOLDOWN_MS);
+
+        org.mockito.Mockito.clearInvocations(player);
+        scheduled.getFirst().run();
+
+        ArgumentCaptor<Packet> resetPackets = ArgumentCaptor.forClass(Packet.class);
+        verify(player, times(config.TRIGGER_SKILL_IDS.size()))
+                .sendPacket(resetPackets.capture());
+        for (int triggerSkillId : config.TRIGGER_SKILL_IDS) {
+            byte[] expectedReset = PacketCreator.skillCooldown(triggerSkillId, 0).getBytes();
+            assertTrue(resetPackets.getAllValues().stream().anyMatch(packet ->
+                    java.util.Arrays.equals(expectedReset, packet.getBytes())));
+        }
         service.release(player, "cooldown message test cleanup");
     }
 

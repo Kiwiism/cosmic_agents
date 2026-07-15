@@ -1677,12 +1677,21 @@ public class PacketCreator {
      * @return The exp gained packet.
      */
     public static Packet getShowExpGain(int gain, int equip, int party, boolean inChat, boolean white) {
+        return getShowExpGain(gain, equip, party, inChat, white, 0);
+    }
+
+    /**
+     * Uses v83's event-bonus EXP field so the client renders the bonus as its
+     * own yellow EXP line while the ordinary and party amounts remain separate.
+     */
+    public static Packet getShowExpGain(int gain, int equip, int party, boolean inChat, boolean white,
+                                        int eventBonus) {
         final OutPacket p = OutPacket.create(SendOpcode.SHOW_STATUS_INFO);
         p.writeByte(3); // 3 = exp, 4 = fame, 5 = mesos, 6 = guildpoints
         p.writeBool(white);
         p.writeInt(gain);
         p.writeBool(inChat);
-        p.writeInt(0); // bonus event exp
+        p.writeInt(eventBonus); // bonus event exp (rendered as a separate yellow line)
         p.writeByte(0); // third monster kill event
         p.writeByte(0); // RIP byte, this is always a 0
         p.writeInt(0); //wedding bonus

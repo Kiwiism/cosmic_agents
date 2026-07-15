@@ -10,9 +10,14 @@ import config.PartnerMedalEffectLevelConfig;
 import config.YamlConfig;
 import constants.inventory.ItemConstants;
 import constants.skills.Bishop;
+import net.packet.Packet;
+import net.server.channel.handlers.AbstractDealDamageHandler.AttackInfo;
 import net.server.channel.handlers.AbstractDealDamageHandler.AttackTarget;
 import server.StatEffect;
+import server.TimerManager;
+import server.combat.CombatFormulaProvider;
 import server.life.Monster;
+import server.maps.MapleMap;
 import server.maps.MapObject;
 import server.maps.MapObjectType;
 import tools.PacketCreator;
@@ -23,10 +28,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /** Resolves live, equipment-gated Partner medal levels and applies their server-side effects. */
 public final class PartnerMedalEffectService {
+    private static final int GENESIS_BODY_ACTION_ID = 69;
+
     public static final PartnerMedalEffectService INSTANCE = new PartnerMedalEffectService(
             YamlConfig.config.adventurerPartner, PartnerRuntimeRegistry.global());
 
@@ -137,6 +145,80 @@ public final class PartnerMedalEffectService {
         }
         double percent = flatPercent(REGULAR_MOB_BONUS_DAMAGE, holder);
         return clampPositiveDamage(baseDamage * percent / 100.0);
+    }
+
+    /** Records the medal proc without altering the client's canonical attack packet. */
+    public boolean prepareRegularMobBonusDamage(Character holder, AttackInfo attack) {
+        if (holder == null || holder.getMap() == null || attack == null
+                || attack.targets == null || attack.targets.isEmpty()) {
+            return false;
+        }
+
+        Map<Integer, Integer> bonusByTarget = new LinkedHashMap<>();
+        boolean hasBonus = false;
+        for (Map.Entry<Integer, AttackTarget> entry : attack.targets.entrySet()) {
+            Monster monster = holder.getMap().getMonsterByOid(entry.getKey());
+            int bonus = 0;
+            if (monster != null && !monster.isBoss()) {
+                long baseDamage = entry.getValue().damageLines().stream()
+                        .mapToLong(PartnerMedalEffectService::decodeDamageLine)
+                        .sum();
+                bonus = regularMobBonusDamage(
+                        holder, (int) Math.min(Integer.MAX_VALUE, baseDamage));
+            }
+            bonusByTarget.put(entry.getKey(), bonus);
+            hasBonus |= bonus > 0;
+        }
+        if (!hasBonus) {
+            return false;
+        }
+        attack.partnerBonusDamageByTarget = Map.copyOf(bonusByTarget);
+        return true;
+    }
+
+    /**
+     * Applies and presents a Monster Expert proc after the configured delay. A
+     * one-line attack packet is required because DAMAGE_MONSTER has no critical
+     * flag in v83; the high damage bit in an attack packet selects the critical skin.
+     */
+    public void applyRegularMobBonusDamage(Character attacker,
+                                           Map<Integer, Integer> bonusByTarget) {
+        if (attacker == null || attacker.getMap() == null || bonusByTarget == null
+                || bonusByTarget.values().stream().noneMatch(damage -> damage != null && damage > 0)) {
+            return;
+        }
+        MapleMap expectedMap = attacker.getMap();
+        int expectedProfileOwnerId = attacker.getProfileOwnerCharacterId();
+        Runnable proc = () -> {
+            if (attacker.getMap() != expectedMap
+                    || attacker.getProfileOwnerCharacterId() != expectedProfileOwnerId) {
+                return;
+            }
+            Map<Integer, AttackTarget> liveTargets = new LinkedHashMap<>();
+            for (Map.Entry<Integer, Integer> entry : bonusByTarget.entrySet()) {
+                if (liveTargets.size() >= 15 || entry.getValue() == null || entry.getValue() <= 0) {
+                    continue;
+                }
+                Monster monster = expectedMap.getMonsterByOid(entry.getKey());
+                if (monster == null || !monster.isAlive() || monster.isBoss()) {
+                    continue;
+                }
+                liveTargets.put(entry.getKey(), new AttackTarget(
+                        (short) 0, List.of(entry.getValue()), Set.of(0)));
+            }
+            if (liveTargets.isEmpty()) {
+                return;
+            }
+            expectedMap.broadcastMessage(bonusDamagePresentationPacket(attacker, liveTargets));
+            for (Map.Entry<Integer, AttackTarget> target : liveTargets.entrySet()) {
+                Monster monster = expectedMap.getMonsterByOid(target.getKey());
+                if (monster != null && monster.isAlive() && !monster.isBoss()) {
+                    expectedMap.damageMonster(
+                            attacker, monster, target.getValue().damageLines().getFirst());
+                }
+            }
+        };
+        scheduleMedalDamage(proc);
     }
 
     /** Applies switch skills only to the profile that has just entered the player-controlled actor. */
@@ -263,8 +345,8 @@ public final class PartnerMedalEffectService {
         return amount > Long.MAX_VALUE - value ? Long.MAX_VALUE : value + amount;
     }
 
-    private static boolean castConfiguredSwitchSkill(Character caster,
-                                                     PartnerMedalEffectLevelConfig configured) {
+    private boolean castConfiguredSwitchSkill(Character caster,
+                                              PartnerMedalEffectLevelConfig configured) {
         // The initial medal set deliberately supports Genesis only. Other attack families
         // require their own packet and damage formula and must not be guessed from an ID.
         if (configured.SKILL_ID != Bishop.GENESIS || caster.getMap() == null) {
@@ -283,9 +365,9 @@ public final class PartnerMedalEffectService {
         Map<Integer, AttackTarget> targets = new LinkedHashMap<>();
         int mobLimit = Math.max(1, effect.getMobCount());
         int attackCount = Math.max(1, effect.getAttackCount());
-        int maxDamage = clampPositiveDamage(
-                caster.calculateMaxBaseMagicDamage(caster.getTotalMagic())
-                        * effect.getDamagePercent() / 100.0);
+        int maxDamage = Math.max(1, clampPositiveDamage(
+                CombatFormulaProvider.getInstance().magicDamageBase(
+                        caster.getTotalMagic(), caster.getTotalInt()) * (double) effect.getMatk()));
         for (MapObject candidate : candidates) {
             Monster monster = (Monster) candidate;
             if (monster.getHp() <= 0 || targets.size() >= mobLimit) {
@@ -298,21 +380,60 @@ public final class PartnerMedalEffectService {
             targets.put(monster.getObjectId(), new AttackTarget((short) 0, List.copyOf(lines)));
         }
         int encodedCount = (targets.size() << 4) | Math.min(15, attackCount);
-        caster.getMap().broadcastMessage(PacketCreator.magicAttack(
-                caster, configured.SKILL_ID, configured.SKILL_LEVEL, caster.getStance(),
-                encodedCount, targets, -1, 4, caster.isFacingLeft() ? 1 : 0, 0));
-        for (Map.Entry<Integer, AttackTarget> target : targets.entrySet()) {
-            Monster monster = caster.getMap().getMonsterByOid(target.getKey());
-            if (monster == null) {
-                continue;
+        // A server-triggered switch skill has no originating client cast. v83 normally
+        // renders attack broadcasts for foreign actors, so explicitly show the local
+        // skill effect and damage numbers to the switched-in player as well.
+        caster.sendPacket(PacketCreator.showOwnBuffEffect(Bishop.GENESIS, 1));
+        caster.getMap().broadcastMessage(genesisAttackPacket(
+                caster, configured.SKILL_LEVEL, encodedCount, targets));
+        MapleMap expectedMap = caster.getMap();
+        int expectedProfileOwnerId = caster.getProfileOwnerCharacterId();
+        scheduleMedalDamage(() -> {
+            if (caster.getMap() != expectedMap
+                    || caster.getProfileOwnerCharacterId() != expectedProfileOwnerId) {
+                return;
             }
-            long summedDamage = target.getValue().damageLines().stream()
-                    .mapToLong(Integer::longValue)
-                    .sum();
-            int damage = (int) Math.min(Integer.MAX_VALUE, summedDamage);
-            caster.getMap().damageMonster(caster, monster, damage);
-        }
+            for (Map.Entry<Integer, AttackTarget> target : targets.entrySet()) {
+                Monster monster = expectedMap.getMonsterByOid(target.getKey());
+                if (monster == null || !monster.isAlive()) {
+                    continue;
+                }
+                long summedDamage = target.getValue().damageLines().stream()
+                        .mapToLong(Integer::longValue)
+                        .sum();
+                int damage = (int) Math.min(Integer.MAX_VALUE, summedDamage);
+                expectedMap.damageMonster(caster, monster, damage);
+            }
+        });
         return true;
+    }
+
+    private void scheduleMedalDamage(Runnable task) {
+        if (config.MEDAL_DAMAGE_DELAY_MS <= 0L) {
+            task.run();
+        } else {
+            TimerManager.getInstance().schedule(task, config.MEDAL_DAMAGE_DELAY_MS);
+        }
+    }
+
+    static Packet bonusDamagePresentationPacket(Character attacker,
+                                                Map<Integer, AttackTarget> targets) {
+        int encodedCount = (Math.min(15, targets.size()) << 4) | 1;
+        return PacketCreator.closeRangeAttack(
+                attacker, 0, 0, attacker.getStance(), encodedCount,
+                targets, 4, 0, 0);
+    }
+
+    static Packet genesisAttackPacket(Character caster, int skillLevel, int encodedCount,
+                                       Map<Integer, AttackTarget> targets) {
+        int facingStance = caster.isFacingLeft() ? 0x80 : 0;
+        return PacketCreator.magicAttack(
+                caster, Bishop.GENESIS, skillLevel, facingStance,
+                encodedCount, targets, -1, 4, GENESIS_BODY_ACTION_ID, 0);
+    }
+
+    private static long decodeDamageLine(int encodedDamage) {
+        return encodedDamage < 0 ? encodedDamage & Integer.MAX_VALUE : encodedDamage;
     }
 
     private record EffectContext(PartnerMode mode, Character partner) {

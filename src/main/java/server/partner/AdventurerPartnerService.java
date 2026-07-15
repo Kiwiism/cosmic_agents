@@ -521,13 +521,15 @@ public final class AdventurerPartnerService {
                 return;
             }
             int level = source.getSkillLevel(skill);
+            int cap = medalEffects.configuredSelfBuffSkillCap(
+                    recipient, source, active.runtime().mode());
+            boolean cappedSelfBuff = cap > 0
+                    && buffSharing.isLearnedSelfBuffSkill(skill, level);
             boolean synchronizedUnion = sessionSkills.synchronizeUnionSkill(
-                    active.runtime().sessionId(), source, recipient, skill);
+                    active.runtime().sessionId(), source, recipient, skill,
+                    cappedSelfBuff ? cap : Integer.MAX_VALUE);
             if (!synchronizedUnion) {
-                int cap = medalEffects.configuredSelfBuffSkillCap(
-                        recipient, source, active.runtime().mode());
-                if (cap <= 0
-                        || !buffSharing.isLearnedSelfBuffSkill(skill, level)) {
+                if (!cappedSelfBuff) {
                     return;
                 }
                 sessionSkills.grant(
@@ -616,9 +618,10 @@ public final class AdventurerPartnerService {
     }
 
     private void applySwitchSkillCooldown(ActivePartnerSession active, Character player) {
-        long cooldownMs = config.SWITCH_COOLDOWN_MS;
+        long cooldownDeadlineMs = active.switchCooldownDeadlineMs();
+        long remainingMs = active.remainingSwitchCooldownMs(System.currentTimeMillis());
         clearNativeTriggerCooldowns(active);
-        long seconds = cooldownMs <= 0L ? 0L : 1L + ((cooldownMs - 1L) / 1_000L);
+        long seconds = remainingMs <= 0L ? 0L : 1L + ((remainingMs - 1L) / 1_000L);
         int clientSeconds = (int) Math.min(Short.MAX_VALUE, seconds);
         for (int triggerSkillId : config.TRIGGER_SKILL_IDS) {
             // Clear a locally-started native Nimble Feet cooldown before applying
@@ -628,6 +631,37 @@ public final class AdventurerPartnerService {
                 continue;
             }
             player.sendPacket(PacketCreator.skillCooldown(triggerSkillId, clientSeconds));
+        }
+        if (remainingMs <= 0L) {
+            return;
+        }
+        try {
+            preparationScheduler.schedule(
+                    () -> clearExpiredSwitchSkillCooldown(
+                            active, player, cooldownDeadlineMs),
+                    remainingMs);
+        } catch (RuntimeException schedulingFailure) {
+            log.warn("partner_switch cooldown_reset_scheduling_failed session={} deadlineMs={}",
+                    active.runtime().sessionId(), cooldownDeadlineMs, schedulingFailure);
+            sendClientTriggerCooldownReset(player);
+        }
+    }
+
+    private void clearExpiredSwitchSkillCooldown(ActivePartnerSession scheduledSession,
+                                                 Character player,
+                                                 long cooldownDeadlineMs) {
+        Optional<ActivePartnerSession> current = runtimes.findByHumanActorId(player.getId());
+        if (current.isPresent()
+                && (current.get() != scheduledSession
+                || scheduledSession.switchCooldownDeadlineMs() != cooldownDeadlineMs)) {
+            return;
+        }
+        sendClientTriggerCooldownReset(player);
+    }
+
+    private void sendClientTriggerCooldownReset(Character player) {
+        for (int triggerSkillId : config.TRIGGER_SKILL_IDS) {
+            player.sendPacket(PacketCreator.skillCooldown(triggerSkillId, 0));
         }
     }
 

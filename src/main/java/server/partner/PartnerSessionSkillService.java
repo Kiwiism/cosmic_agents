@@ -148,12 +148,26 @@ public final class PartnerSessionSkillService {
                                          Character source,
                                          Character recipient,
                                          Skill skill) {
+        return synchronizeUnionSkill(
+                sessionId, source, recipient, skill, Integer.MAX_VALUE);
+    }
+
+    public boolean synchronizeUnionSkill(long sessionId,
+                                         Character source,
+                                         Character recipient,
+                                         Skill skill,
+                                         int maximumBorrowedLevel) {
         Character.SkillEntry sourceState = source.getSkills().entrySet().stream()
                 .filter(entry -> entry.getKey().getId() == skill.getId())
                 .map(Map.Entry::getValue)
                 .findFirst()
                 .orElse(null);
         if (sourceState == null) {
+            return false;
+        }
+        int borrowedLevel = Math.min(
+                Byte.toUnsignedInt(sourceState.skillevel), maximumBorrowedLevel);
+        if (borrowedLevel <= 0) {
             return false;
         }
         boolean borrowed = recipient.isPartnerSessionBorrowedSkill(skill.getId());
@@ -168,7 +182,7 @@ public final class PartnerSessionSkillService {
         grant(sessionId, new SoloTagBuffSharingService.SkillGrant(
                 recipient,
                 skill,
-                sourceState.skillevel,
+                (byte) borrowedLevel,
                 sourceState.masterlevel,
                 sourceState.expiration));
         return true;

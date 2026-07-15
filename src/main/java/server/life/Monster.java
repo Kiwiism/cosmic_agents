@@ -730,33 +730,50 @@ public class Monster extends AbstractLoadedLife {
 
     private void giveExpToCharacter(Character attacker, Float personalExp, Float partyExp, boolean white, boolean hasPartySharers) {
         if (attacker.isAlive()) {
+            float partnerExpMultiplier = (float) PartnerMedalEffectService.INSTANCE.expMultiplier(attacker);
+            float personalExpWithoutPartner;
             if (personalExp != null) {
                 personalExp *= getStatusExpMultiplier(attacker, hasPartySharers);
-                personalExp *= (float) PartnerMedalEffectService.INSTANCE.expMultiplier(attacker);
+                personalExpWithoutPartner = personalExp;
+                personalExp *= partnerExpMultiplier;
                 personalExp *= attacker.getExpRate();
+                personalExpWithoutPartner *= attacker.getExpRate();
             } else {
                 personalExp = 0.0f;
+                personalExpWithoutPartner = 0.0f;
             }
 
             Integer expBonus = attacker.getBuffedValue(BuffStat.EXP_INCREASE);
             if (expBonus != null) {     // exp increase player buff found thanks to HighKey21
                 personalExp += expBonus;
+                personalExpWithoutPartner += expBonus;
             }
 
             int _personalExp = expValueToInteger(personalExp); // assuming no negative xp here
+            int partnerPersonalBonus = Math.max(
+                    0, _personalExp - expValueToInteger(personalExpWithoutPartner));
 
+            float partyExpWithoutPartner;
             if (partyExp != null) {
                 partyExp *= getStatusExpMultiplier(attacker, hasPartySharers);
-                partyExp *= (float) PartnerMedalEffectService.INSTANCE.expMultiplier(attacker);
+                partyExpWithoutPartner = partyExp;
+                partyExp *= partnerExpMultiplier;
                 partyExp *= attacker.getExpRate();
                 partyExp *= YamlConfig.config.server.PARTY_BONUS_EXP_RATE;
+                partyExpWithoutPartner *= attacker.getExpRate();
+                partyExpWithoutPartner *= YamlConfig.config.server.PARTY_BONUS_EXP_RATE;
             } else {
                 partyExp = 0.0f;
+                partyExpWithoutPartner = 0.0f;
             }
 
             int _partyExp = expValueToInteger(partyExp);
+            int partnerPartyBonus = Math.max(
+                    0, _partyExp - expValueToInteger(partyExpWithoutPartner));
 
-            attacker.gainExp(_personalExp, _partyExp, true, false, white);
+            attacker.gainExpWithBonusBreakdown(
+                    _personalExp, _partyExp, partnerPersonalBonus, partnerPartyBonus,
+                    true, false, white);
             attacker.increaseEquipExp(_personalExp);
             attacker.raiseQuestMobCount(getId());
         }

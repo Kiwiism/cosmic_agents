@@ -157,6 +157,42 @@ class PartnerSessionSkillServiceTest {
     }
 
     @Test
+    void spChangeDoesNotRaiseABorrowedSelfBuffAboveItsBondTier() {
+        AdventurerPartnerRepository repository = mock(AdventurerPartnerRepository.class);
+        PartnerSessionSkillService service = new PartnerSessionSkillService(repository);
+        Character source = mock(Character.class);
+        Character recipient = mock(Character.class);
+        Skill shadowPartner = new Skill(4111002);
+        Character.SkillEntry borrowed = new Character.SkillEntry((byte) 20, 0, -1L);
+        when(source.getSkills()).thenReturn(Map.of(
+                shadowPartner, new Character.SkillEntry((byte) 30, 0, -1L)));
+        when(recipient.getProfileOwnerCharacterId()).thenReturn(20);
+        when(recipient.getSkills()).thenReturn(Map.of(shadowPartner, borrowed));
+        when(recipient.isPartnerSessionBorrowedSkill(4111002)).thenReturn(true);
+        when(repository.grantTemporarySkill(
+                org.mockito.ArgumentMatchers.eq(7L),
+                org.mockito.ArgumentMatchers.eq(20),
+                org.mockito.ArgumentMatchers.eq(4111002),
+                org.mockito.ArgumentMatchers.eq(20),
+                org.mockito.ArgumentMatchers.eq(0),
+                org.mockito.ArgumentMatchers.eq(-1L),
+                org.mockito.ArgumentMatchers.any()))
+                .thenReturn(new PartnerSessionSkillGrant(
+                        7L, 20, 4111002, null, null, null, 20, 0, -1L));
+
+        boolean synchronizedSkill = service.synchronizeUnionSkill(
+                7L, source, recipient, shadowPartner, 20);
+
+        org.junit.jupiter.api.Assertions.assertTrue(synchronizedSkill);
+        verify(recipient, never()).applyPartnerSessionSkill(
+                org.mockito.ArgumentMatchers.anyInt(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.anyByte(),
+                org.mockito.ArgumentMatchers.anyInt(),
+                org.mockito.ArgumentMatchers.anyLong());
+    }
+
+    @Test
     void firstSpInANewCrossJobSkillAddsItToTheUnion() {
         AdventurerPartnerRepository repository = mock(AdventurerPartnerRepository.class);
         PartnerSessionSkillService service = new PartnerSessionSkillService(repository);

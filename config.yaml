@@ -176,9 +176,10 @@ adventurerPartner:
     NPC_ID: 9000036
     SOLO_TAG_ENABLED: true
     DOUBLE_PARTNER_ENABLED: true
-    SWITCH_COOLDOWN_MS: 500               # Exact shared server gate for every trigger skill; v83 UI rounds positive values up to whole seconds.
+    SWITCH_COOLDOWN_MS: 1000               # Exact shared server gate for every trigger skill; v83 UI rounds positive values up to whole seconds.
     SAME_MAP_REQUIRED: true
     DOUBLE_PARTNER_READY_DELAY_MS: 0       # Optional extra wait after the NPC closes; 0-10000 ms. Packet preparation still finishes first.
+    MEDAL_DAMAGE_DELAY_MS: 2000            # Delays Genesis damage and Monster Expert's critical proc so their client animations can finish; 0-10000 ms.
     SWITCH_EFFECT_ID: 8                    # -1 disables it. Stock-safe default is the job-change effect (8); effect 10 crashes this v83 client.
     SWITCH_EFFECT_BROADCAST: false         # Keep frequent switch effects local unless nearby players should see them.
     SWITCH_TRIGGER_EFFECT_ENABLED: false   # The trigger skill already animates client-side; this suppresses the redundant server replay.
@@ -254,7 +255,7 @@ adventurerPartner:
           DOUBLE_PARTNER_ENABLED: true
           LEVELS:
               - PERCENT: 20.0
-        - ITEM_ID: 1142082                 # Lovely Pet Owner (v83 equivalent for Devoted Master)
+        - ITEM_ID: 1142000                 # Diligent Explorer Medal
           EFFECT: EXP_BONUS
           SOLO_TAG_ENABLED: true
           DOUBLE_PARTNER_ENABLED: true
