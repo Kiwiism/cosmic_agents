@@ -27,7 +27,7 @@ import client.BuddyList.BuddyOperation;
 import client.BuddylistEntry;
 import client.Character;
 import client.Family;
-import config.LevelExpRateConfig;
+import config.MobSpawnOverrideConfig;
 import config.YamlConfig;
 import constants.game.GameConstants;
 import net.packet.Packet;
@@ -121,15 +121,15 @@ public class World {
     private final int id;
     private int flag;
     private int exprate;
-    private final List<LevelExpRateConfig> levelExpRateMultipliers;
     private int droprate;
     private int bossdroprate;
     private int mesorate;
     private int questrate;
     private int travelrate;
     private int fishingrate;
-    private float mobrate;
-    private int mobperspawnpoint;
+    private final float mobrate;
+    private final int mobperspawnpoint;
+    private final List<MobSpawnOverrideConfig> mobSpawnOverrides;
     private final String eventmsg;
     private final List<Channel> channels = new ArrayList<>();
     private final Map<Integer, Byte> pnpcStep = new HashMap<>();
@@ -205,14 +205,18 @@ public class World {
     private ScheduledFuture<?> hpDecSchedule;
 
     public World(int world, int flag, String eventmsg, int exprate, int droprate, int bossdroprate, int mesorate,
+                 int questrate, int travelrate, int fishingrate, float mobrate, int mobperspawnpoint) {
+        this(world, flag, eventmsg, exprate, droprate, bossdroprate, mesorate, questrate, travelrate, fishingrate,
+                mobrate, mobperspawnpoint, List.of());
+    }
+
+    public World(int world, int flag, String eventmsg, int exprate, int droprate, int bossdroprate, int mesorate,
                  int questrate, int travelrate, int fishingrate, float mobrate, int mobperspawnpoint,
-                 List<LevelExpRateConfig> levelExpRateMultipliers) {
+                 List<MobSpawnOverrideConfig> mobSpawnOverrides) {
         this.id = world;
         this.flag = flag;
         this.eventmsg = eventmsg;
         this.exprate = exprate;
-        this.levelExpRateMultipliers = levelExpRateMultipliers == null ? new ArrayList<>() : new ArrayList<>(levelExpRateMultipliers);
-        this.levelExpRateMultipliers.sort(Comparator.comparingInt(cfg -> cfg.level));
         this.droprate = droprate;
         this.bossdroprate = bossdroprate;
         this.mesorate = mesorate;
@@ -221,6 +225,7 @@ public class World {
         this.fishingrate = fishingrate;
         this.mobrate = mobrate;
         this.mobperspawnpoint = mobperspawnpoint;
+        this.mobSpawnOverrides = mobSpawnOverrides == null ? List.of() : List.copyOf(mobSpawnOverrides);
         runningPartyId.set(1000000001); // partyid must not clash with charid to solve update item looting issues, found thanks to Vcoc
         runningMessengerId.set(1);
 
@@ -370,10 +375,6 @@ public class World {
         return exprate;
     }
 
-    public List<LevelExpRateConfig> getLevelExpRateMultipliers() {
-        return levelExpRateMultipliers;
-    }
-
     public void setExpRate(int exp) {
         Collection<Character> list = getPlayerStorage().getAllCharacters();
 
@@ -476,16 +477,16 @@ public class World {
         return mobrate;
     }
 
-    public void setMobrate(float mobrate) {
-        this.mobrate = mobrate;
+    public float getMobrate(int mapId) {
+        return MobSpawnOverrideConfig.resolveMobRate(mobSpawnOverrides, mapId, mobrate);
     }
 
     public int getMobperspawnpoint() {
         return mobperspawnpoint;
     }
 
-    public void setMobperspawnpoint(int mobperspawnpoint) {
-        this.mobperspawnpoint = mobperspawnpoint;
+    public int getMobperspawnpoint(int mapId) {
+        return MobSpawnOverrideConfig.resolveMaxMobPerSpawnpoint(mobSpawnOverrides, mapId, mobperspawnpoint);
     }
 
     public void loadAccountCharactersView(Integer accountId, List<Character> chars) {

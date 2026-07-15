@@ -9,19 +9,10 @@ worlds:
     why_am_i_recommended: Welcome to Scania!
     channels: 3
     exp_rate: 1
-    level_exp_rate_multipliers:          #Applied multiplicatively on top of this world's EXP rate. Independent from USE_ADD_RATES_BY_LEVEL.
-      - level: 10
-        multiplier: 3.0
-      - level: 30
-        multiplier: 3.5
-      - level: 70
-        multiplier: 4.0
-      - level: 120
-        multiplier: 4.5
-      - level: 150
-        multiplier: 5.0
     mob_rate: 1.0                            #Mob count multiplier
     max_mob_per_spawnpoint: 2                #Must be equal or higher than mob_rate
+    # mob_spawn_overrides examples: {map_ids: [100000000], mob_rate: 1.5} or {map_id_min: 100000000, map_id_max: 100000999, max_mob_per_spawnpoint: 3}
+    mob_spawn_overrides: []                  #Optional map-specific overrides. Later matching entries win per field.
     meso_rate: 1
     drop_rate: 1
     boss_drop_rate: 1                      #NOTE: Boss drop rate OVERRIDES common drop rate, for bosses-only.
@@ -29,6 +20,10 @@ worlds:
     quest_rate: 1                          #Multiplier for Exp & Meso gains when completing a quest. Only available when USE_QUEST_RATE is true. Stacks with server Exp & Meso rates.
     fishing_rate: 1                        #Multiplier for success likelihood on meso thrown during fishing.
     travel_rate: 10                         #Means of transportation rides/departs using 1/N of the default time.
+    allow_all_untradeable_items: false      #Prefer the allowlist below; this broad custom-world bypass is explicit.
+    untradeable_item_allowlist: []
+    allow_multiple_one_of_a_kind_items: false
+    multiple_one_of_a_kind_item_allowlist: []
 
     #Properties for Bera 1
   - flag: 0
@@ -180,6 +175,8 @@ server:
     INIT_CONNECTION_POOL_TIMEOUT: 90    # Seconds
 
     #Login Configuration
+    DEPLOYMENT_PROFILE: local            #Allowed values: local, production.
+    ALLOW_INSECURE_PRODUCTION_AUTH: false #Production must enable both PIN and PIC unless this risk is explicitly accepted.
     WORLDS: 1                           #Initial number of worlds on the server.
     WLDLIST_SIZE: 21                    #Max possible worlds on the server.
     CHANNEL_SIZE: 20                    #Max possible channels per world (which is 20, based on the channel list on login phase).
@@ -268,6 +265,8 @@ server:
     USE_ERASE_PERMIT_ON_OPENSHOP: true  #Forces "shop permit" item to be consumed when player deploy his/her player shop.
     USE_ERASE_UNTRADEABLE_DROP: true    #Forces flagged untradeable items to disappear when dropped.
     USE_ERASE_PET_ON_EXPIRATION: false  #Forces pets to be removed from inventory when expire time comes, rather than converting it to a doll.
+    ITEMS_NEVER_EXPIRE: false            #Explicit custom-world override. Normal item expiration is preserved by default.
+    PETS_NEVER_EXPIRE: false             #Explicit custom-world override. Normal pet expiration is preserved by default.
     USE_BUFF_MOST_SIGNIFICANT: true     #When applying buffs, the player will stick with the highest stat boost among the listed, rather than overwriting stats.
     USE_BUFF_EVERLASTING: false         #Every applied buff on players holds expiration time so high it'd be considered permanent. Suggestion thanks to Vcoc.
     USE_MULTIPLE_SAME_EQUIP_DROP: true  #Enables multiple drops by mobs of the same equipment, number of possible drops based on the quantities provided at the drop data.
@@ -310,6 +309,8 @@ server:
     #Commands Configuration
     BLOCK_GENERATE_CASH_ITEM: false     #Prevents creation of cash items with the item/drop command.
     USE_WHOLE_SERVER_RANKING: false     #Enables a ranking pool made from every character registered on the server for the "ranks" command, instead of separated by worlds.
+    DRESSING_ROOM_ENABLED: true         #Local/admin content-generation tool. Disable for production unless explicitly required.
+    DRESSING_ROOM_MIN_GM_LEVEL: 1       #Never expose dressing-room item spawning to normal players or Agents.
 
     EQUIP_EXP_RATE: 1.0                  #Rate for equipment exp gain, grows linearly. Set 1.0 for default (about 100~200 same-level range mobs killed to pass equip from level 1 to 2).
     PQ_BONUS_EXP_RATE: 0.5               #Rate for the PQ exp reward.
@@ -487,17 +488,31 @@ server:
     SCROLL_SUCCESS_BONUS: 10             # Flat % added to every scroll's success chance (capped at 100)
 
     # Maker Skills:
-    MAKER_CRYSTAL_ONLY_IMPROVE: true    # Black/Dark crystal only improves stats and never decreases, vanilla: false
+    MAKER_CRYSTAL_ONLY_IMPROVE: false   # Black/Dark crystal only improves stats and never decreases, vanilla: false
 
     # Godly Stats: chance for equipment to receive random bonus stats (like free-pre-applied chaos scroll)
-    GODLY_STATS_ENABLED: false
+    GODLY_STATS_ENABLED: false              # Dropped equipment only
     GODLY_STATS_DROP_CHANCE: 20          # % chance for dropped
+    GODLY_STATS_MAKER_ENABLED: false
     GODLY_STATS_MAKER_CHANCE: 20         # % chance for maker skill (with stimulant)
+    GODLY_STATS_MAKER_BONUS_SCALING: 0.1
+    GODLY_STATS_MAKER_MIN_BONUS: 5
+    GODLY_STATS_MAKER_HPMP_SCALING: 1.0
+    GODLY_STATS_MAKER_MIN_HPMP_BONUS: 30
+    GODLY_STATS_QUEST_ENABLED: false
     GODLY_STATS_QUEST_CHANCE: 100        # % chance for quest reward equips
+    GODLY_STATS_QUEST_BONUS_SCALING: 0.1
+    GODLY_STATS_QUEST_MIN_BONUS: 5
+    GODLY_STATS_QUEST_HPMP_SCALING: 1.0
+    GODLY_STATS_QUEST_MIN_HPMP_BONUS: 30
+    GODLY_STATS_NPC_ENABLED: false
     GODLY_STATS_NPC_CHANCE: 20           # % chance for NPC/event reward equips (e.g. KPQ reward)
+    GODLY_STATS_NPC_BONUS_SCALING: 0.1
+    GODLY_STATS_NPC_MIN_BONUS: 5
+    GODLY_STATS_NPC_HPMP_SCALING: 1.0
+    GODLY_STATS_NPC_MIN_HPMP_BONUS: 30
     GODLY_STATS_BONUS_SCALING: 0.1       # 0.1 -> lv 100 gear gain up to 10 str/dex/int/luk/atk/etc. (only if the stat already exists, like chaos scroll)
     GODLY_STATS_MIN_BONUS: 5             # Minimum max stat bonus
     GODLY_STATS_HPMP_SCALING: 1.0        # 1 -> lv 100 gear gain up to 100 bonus max HP/MP (even if equip had no hp/mp bonus)
     GODLY_STATS_MIN_HPMP_BONUS: 30       # Minimum max HP/MP bonus
-    UNTRADEABLE_ITEMS_TRADEABLE: true    # Allow untradeable items to be traded, dropped, and included in bot recommendations
-    DISABLE_ONE_OF_A_KIND_CHECK: true    # Disable the one-of-a-kind item restriction (info/only == 1 items)
+    ALLOW_DROPS_ON_DROP_LIMIT_MAPS: false #Independent map-rule override; not coupled to item tradeability.

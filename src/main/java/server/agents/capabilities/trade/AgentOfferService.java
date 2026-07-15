@@ -12,8 +12,8 @@ import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.WeaponType;
-import config.YamlConfig;
 import constants.inventory.ItemConstants;
+import server.ItemRestrictionPolicy;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
@@ -476,7 +476,7 @@ public final class AgentOfferService {
             if (!(item instanceof Equip equip) || inventory().isCashItem(item.getItemId())) {
                 continue;
             }
-            if (item.isUntradeable() && !YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE) {
+            if (item.isUntradeable() && !ItemRestrictionPolicy.allowsUntradeable(donor, item.getItemId())) {
                 continue;
             }
             if (AgentEquipmentService.shouldReserveOwnedItem(donor, item)) {

@@ -38,6 +38,7 @@ import net.packet.InPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.ItemInformationProvider;
+import server.ItemRestrictionPolicy;
 import server.Trade;
 import server.maps.FieldLimit;
 import server.maps.HiredMerchant;
@@ -551,7 +552,7 @@ public final class PlayerInteractionHandler extends AbstractPacketHandler {
                 Trade trade = chr.getTrade();
                 if (trade != null) {
                     if ((quantity <= item.getQuantity() && quantity >= 0) || ItemConstants.isRechargeable(item.getItemId())) {
-                        if (ii.isDropRestricted(item.getItemId()) && !YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE) { // ensure that undroppable items do not make it to the trade window
+                        if (ii.isDropRestricted(item.getItemId()) && !ItemRestrictionPolicy.allowsUntradeable(chr, item.getItemId())) { // ensure that undroppable items do not make it to the trade window
                             if (!KarmaManipulator.hasKarmaFlag(item)) {
                                 c.sendPacket(PacketCreator.serverNotice(1, "That item is untradeable."));
                                 c.sendPacket(PacketCreator.enableActions());
@@ -604,7 +605,7 @@ public final class PlayerInteractionHandler extends AbstractPacketHandler {
                 short bundles = p.readShort();
                 Item ivItem = chr.getInventory(ivType).getItem(slot);
 
-                if (ivItem == null || (ivItem.isUntradeable() && !YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE)) {
+                if (ivItem == null || (ivItem.isUntradeable() && !ItemRestrictionPolicy.allowsUntradeable(chr, ivItem.getItemId()))) {
                     c.sendPacket(PacketCreator.serverNotice(1, "Could not perform shop operation with that item."));
                     c.sendPacket(PacketCreator.enableActions());
                     return;

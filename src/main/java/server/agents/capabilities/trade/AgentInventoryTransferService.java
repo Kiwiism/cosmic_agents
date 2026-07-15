@@ -4,9 +4,9 @@ import server.agents.capabilities.movement.AgentMovementTimers;
 
 import client.Character;
 import client.inventory.Item;
-import config.YamlConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import server.ItemRestrictionPolicy;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.equipment.AgentEquipRecommendation;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy;
@@ -294,7 +294,7 @@ public final class AgentInventoryTransferService {
                         character -> AgentEquipTradeClassificationService.ClassificationCallbacks.collectEquipBag(
                                 character,
                                 inventory()::isQuestItem,
-                                YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE),
+                                itemId -> ItemRestrictionPolicy.allowsUntradeable(character, itemId)),
                         AgentEquipmentReservePolicy::collectPotentialSelfUpgradeItems,
                         item -> AgentOfferService.isReservedForOtherRecipients(entry, agent, item),
                         () -> AgentRuntimeIdentityRuntime.owner(entry),
@@ -323,7 +323,7 @@ public final class AgentInventoryTransferService {
                         () -> AgentAttackExecutionProvider.getEquippedWeaponType(agent),
                         inventory()::getProjectileWeaponAttack,
                         inventory()::isQuestItem,
-                        () -> YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE));
+                        itemId -> ItemRestrictionPolicy.allowsUntradeable(agent, itemId)));
     }
 
     private static InventoryGateway inventory() {

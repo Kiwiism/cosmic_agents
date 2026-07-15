@@ -2001,19 +2001,9 @@ public class MapleMap {
             }
         }
 
-        monster.buff(getBuffMultiplierFromMapID(mapid));
-
         spawnedMonstersOnMap.incrementAndGet();
         addSelfDestructive(monster);
         applyRemoveAfter(monster);  // thanks LightRyuzaki for pointing issues with spawned CWKPQ mobs not applying this
-    }
-
-    private static double getBuffMultiplierFromMapID(int mapid) {
-        int prefix = mapid / 1000000;
-        if (prefix == 450) { // arcane river - debuff mob
-            return 0.01;
-        }
-        return 1.0;
     }
 
     public void spawnDojoMonster(final Monster monster) {
@@ -2161,7 +2151,7 @@ public class MapleMap {
     public final void spawnItemDrop(final MapObject dropper, final Character owner, final Item item, Point pos,
                                     final byte dropType, final boolean playerDrop) {
         if (FieldLimit.DROP_LIMIT.check(this.getFieldLimit()) // thanks Conrad for noticing some maps shouldn't have loots available
-                && !YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE) { // when everything is tradable, allow drops even on drop-limited maps (e.g. free market)
+                && !YamlConfig.config.server.ALLOW_DROPS_ON_DROP_LIMIT_MAPS) {
             this.disappearingItemDrop(dropper, owner, item, pos);
             return;
         }
@@ -3726,7 +3716,7 @@ public class MapleMap {
     }
 
     private int getNumShouldSpawn(int numPlayers) {
-        float maxMob = monsterSpawn.size() * getWorldServer().getMobrate();
+        float maxMob = monsterSpawn.size() * getWorldServer().getMobrate(mapid);
 
         if (YamlConfig.config.server.USE_ENABLE_FULL_RESPAWN) {
             return (int) Math.ceil(maxMob) - spawnedMonstersOnMap.get();
@@ -3757,7 +3747,7 @@ public class MapleMap {
             Collections.shuffle(randomSpawn);
             short spawned = 0;
             for (SpawnPoint spawnPoint : randomSpawn) {
-                if (spawnPoint.shouldSpawn(getWorldServer().getMobperspawnpoint())) {
+                if (spawnPoint.shouldSpawn(getWorldServer().getMobperspawnpoint(mapid))) {
                     spawnMonster(spawnPoint.getMonster());
                     spawned++;
 

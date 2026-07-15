@@ -466,14 +466,13 @@ public class Server {
         int questrate = YamlConfig.config.worlds.get(i).quest_rate;
         int travelrate = YamlConfig.config.worlds.get(i).travel_rate;
         int fishingrate = YamlConfig.config.worlds.get(i).fishing_rate;
-        List<config.LevelExpRateConfig> levelExpRateMultipliers = YamlConfig.config.worlds.get(i).level_exp_rate_multipliers;
-
+        List<config.MobSpawnOverrideConfig> mobSpawnOverrides = YamlConfig.config.worlds.get(i).mob_spawn_overrides;
         int flag = YamlConfig.config.worlds.get(i).flag;
         String event_message = YamlConfig.config.worlds.get(i).event_message;
         String why_am_i_recommended = YamlConfig.config.worlds.get(i).why_am_i_recommended;
 
         World world = new World(i, flag, event_message, exprate, droprate, bossdroprate, mesorate, questrate,
-                travelrate, fishingrate, mobrate, mobperspawnpoint, levelExpRateMultipliers);
+                travelrate, fishingrate, mobrate, mobperspawnpoint, mobSpawnOverrides);
 
         Map<Integer, String> channelInfo = new HashMap<>();
         long bootTime = getCurrentTime();
@@ -898,6 +897,7 @@ public class Server {
         Instant beforeInit = Instant.now();
         log.info("Cosmic v{} starting up.", ServerConstants.VERSION);
 
+        validateDeploymentSecurityProfile();
         AgentRuntimeShutdownCoordinator.start();
         AgentNavigationGraphService.startAsyncWarmups();
         warnRiskyRuntimeFeatures();
@@ -984,7 +984,9 @@ public class Server {
         Duration initDuration = Duration.between(beforeInit, Instant.now());
         log.info("Cosmic is now online after {} ms.", initDuration.toMillis());
 
-        DressingRoom.load();
+        if (YamlConfig.config.server.DRESSING_ROOM_ENABLED) {
+            DressingRoom.load();
+        }
 
         OpcodeConstants.generateOpcodeNames();
         CommandsExecutor.getInstance();
@@ -1042,22 +1044,51 @@ public class Server {
                     YamlConfig.config.server.SCROLL_SUCCESS_BONUS);
         }
         if (YamlConfig.config.server.GODLY_STATS_ENABLED) {
-            log.warn("Runtime feature enabled: godly stats drop={} maker={} quest={} npc={} scaling={} hpmpScaling={}",
+            log.warn("Runtime feature enabled: godly stats on drops chance={} scaling={} hpmpScaling={}",
                     YamlConfig.config.server.GODLY_STATS_DROP_CHANCE,
-                    YamlConfig.config.server.GODLY_STATS_MAKER_CHANCE,
-                    YamlConfig.config.server.GODLY_STATS_QUEST_CHANCE,
-                    YamlConfig.config.server.GODLY_STATS_NPC_CHANCE,
                     YamlConfig.config.server.GODLY_STATS_BONUS_SCALING,
                     YamlConfig.config.server.GODLY_STATS_HPMP_SCALING);
         }
-        if (YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE) {
-            log.warn("Runtime feature enabled: untradeable items can be traded/dropped.");
+        if (YamlConfig.config.server.GODLY_STATS_MAKER_ENABLED) {
+            log.warn("Runtime feature enabled: godly stats on Maker rewards chance={}.",
+                    YamlConfig.config.server.GODLY_STATS_MAKER_CHANCE);
         }
-        if (YamlConfig.config.server.DISABLE_ONE_OF_A_KIND_CHECK) {
-            log.warn("Runtime feature enabled: one-of-a-kind item checks are disabled.");
+        if (YamlConfig.config.server.GODLY_STATS_QUEST_ENABLED) {
+            log.warn("Runtime feature enabled: godly stats on quest rewards chance={}.",
+                    YamlConfig.config.server.GODLY_STATS_QUEST_CHANCE);
+        }
+        if (YamlConfig.config.server.GODLY_STATS_NPC_ENABLED) {
+            log.warn("Runtime feature enabled: godly stats on NPC/event rewards chance={}.",
+                    YamlConfig.config.server.GODLY_STATS_NPC_CHANCE);
+        }
+        if (YamlConfig.config.worlds.stream().anyMatch(world -> world.allow_all_untradeable_items
+                || world.untradeable_item_allowlist != null && !world.untradeable_item_allowlist.isEmpty())) {
+            log.warn("Runtime feature enabled: at least one world permits selected untradeable items.");
+        }
+        if (YamlConfig.config.worlds.stream().anyMatch(world -> world.allow_multiple_one_of_a_kind_items
+                || world.multiple_one_of_a_kind_item_allowlist != null && !world.multiple_one_of_a_kind_item_allowlist.isEmpty())) {
+            log.warn("Runtime feature enabled: at least one world permits selected one-of-a-kind duplicates.");
+        }
+        if (YamlConfig.config.server.ALLOW_DROPS_ON_DROP_LIMIT_MAPS) {
+            log.warn("Runtime feature enabled: drops are allowed on DROP_LIMIT maps.");
         }
         if (YamlConfig.config.server.ALWAYS_MAX_INVENTORY_SLOTS) {
             log.warn("Runtime feature enabled: characters normalize to max inventory slots.");
+        }
+    }
+
+    private void validateDeploymentSecurityProfile() {
+        String profile = YamlConfig.config.server.DEPLOYMENT_PROFILE;
+        if ("local".equalsIgnoreCase(profile)) {
+            return;
+        }
+        if (!"production".equalsIgnoreCase(profile)) {
+            throw new IllegalStateException("DEPLOYMENT_PROFILE must be either local or production");
+        }
+        if ((!YamlConfig.config.server.ENABLE_PIN || !YamlConfig.config.server.ENABLE_PIC)
+                && !YamlConfig.config.server.ALLOW_INSECURE_PRODUCTION_AUTH) {
+            throw new IllegalStateException(
+                    "Production requires ENABLE_PIN and ENABLE_PIC, or an explicit ALLOW_INSECURE_PRODUCTION_AUTH override");
         }
     }
 

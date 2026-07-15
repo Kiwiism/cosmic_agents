@@ -84,7 +84,7 @@ public class StorageProcessor {
                     }
 
                     if (item != null) {
-                        if (ii.isPickupRestricted(item.getItemId()) && chr.haveItemWithId(item.getItemId(), true)) {
+                        if (ii.isPickupRestricted(item.getItemId(), chr) && chr.haveItemWithId(item.getItemId(), true)) {
                             c.sendPacket(PacketCreator.getStorageError((byte) 0x0C));
                             return;
                         }

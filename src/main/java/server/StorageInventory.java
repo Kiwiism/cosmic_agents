@@ -82,7 +82,7 @@ public class StorageInventory {
             source.setPosition(dSlot);
             inventory.put(dSlot, source);
             inventory.remove(sSlot);
-        } else if (target.getItemId() == source.getItemId() && !ItemConstants.isRechargeable(source.getItemId()) && !ItemInformationProvider.getInstance().isPickupRestricted(source.getItemId()) && isSameOwner(source, target)) {
+        } else if (target.getItemId() == source.getItemId() && !ItemConstants.isRechargeable(source.getItemId()) && !ItemInformationProvider.getInstance().isPickupRestricted(source.getItemId(), c.getPlayer()) && isSameOwner(source, target)) {
             if (isEquipOrCash(source)) {
                 swap(target, source);
             } else if (source.getQuantity() + target.getQuantity() > slotMax) {

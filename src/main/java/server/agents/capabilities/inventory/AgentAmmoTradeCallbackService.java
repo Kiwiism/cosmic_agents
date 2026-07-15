@@ -14,6 +14,18 @@ public final class AgentAmmoTradeCallbackService {
             Supplier<WeaponType> equippedWeaponType,
             IntUnaryOperator projectileWatk,
             IntPredicate isQuestItem,
+            IntPredicate allowsUntradeableItem) {
+        return AgentAmmoTradeClassificationService.AmmoTradeCallbacks.of(
+                equippedWeaponType,
+                projectileWatk,
+                isQuestItem,
+                allowsUntradeableItem);
+    }
+
+    public static AgentAmmoTradeClassificationService.AmmoTradeCallbacks ammoTradeCallbacks(
+            Supplier<WeaponType> equippedWeaponType,
+            IntUnaryOperator projectileWatk,
+            IntPredicate isQuestItem,
             Supplier<Boolean> untradeableItemsTradeable) {
         return AgentAmmoTradeClassificationService.AmmoTradeCallbacks.of(
                 equippedWeaponType,

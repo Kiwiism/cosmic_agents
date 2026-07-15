@@ -18,6 +18,6 @@ class AgentInventoryGatewayBoundaryTest {
 
         assertFalse(capability.contains("UseItemHandler"));
         assertTrue(capability.contains("inventory.consumeUseItem"));
-        assertTrue(cosmic.contains("UseItemHandler.consumeUseItem"));
+        assertTrue(cosmic.contains("AgentUseItemBridge.consumeUseItem"));
     }
 }

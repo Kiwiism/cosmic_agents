@@ -7,6 +7,7 @@ import client.inventory.manipulator.InventoryManipulator;
 import config.YamlConfig;
 import constants.inventory.ItemConstants;
 import server.ItemInformationProvider;
+import server.ItemRestrictionPolicy;
 import server.maps.PlayerShop;
 import server.maps.PlayerShopItem;
 import server.maps.reservation.CharacterSpaceReservation;
@@ -116,7 +117,7 @@ public final class AgentFreeMarketStallService {
             int removalQuantity = listing.perBundle() * listing.bundles();
             if (inventoryItem == null || inventoryItem.getQuantity() < removalQuantity
                     || (inventoryItem.isUntradeable()
-                    && !YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE)
+                    && !ItemRestrictionPolicy.allowsUntradeable(agent, inventoryItem.getItemId()))
                     || itemInfo.isUnmerchable(inventoryItem.getItemId())
                     || ItemConstants.isRechargeable(inventoryItem.getItemId())) {
                 return null;

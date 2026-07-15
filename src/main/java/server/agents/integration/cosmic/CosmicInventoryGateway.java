@@ -6,7 +6,7 @@ import client.inventory.Equip;
 import client.inventory.InventoryType;
 import client.inventory.WeaponType;
 import client.inventory.manipulator.InventoryManipulator;
-import net.server.channel.handlers.UseItemHandler;
+import net.server.channel.handlers.AgentUseItemBridge;
 import server.ItemInformationProvider;
 import server.StatEffect;
 import server.agents.integration.InventoryGateway;
@@ -122,6 +122,6 @@ public enum CosmicInventoryGateway implements InventoryGateway {
 
     @Override
     public boolean consumeUseItem(Character agent, short slot, int itemId) {
-        return UseItemHandler.consumeUseItem(agent, slot, itemId);
+        return AgentUseItemBridge.consumeUseItem(agent, slot, itemId);
     }
 }

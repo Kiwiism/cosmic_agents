@@ -46,10 +46,10 @@ public final class UseItemHandler extends AbstractPacketHandler {
         short slot = p.readShort();
         int itemId = p.readInt();
 
-        consumeUseItem(chr, slot, itemId);
+        consumeServerSideUseItem(chr, slot, itemId);
     }
 
-    public static boolean consumeUseItem(Character chr, short slot, int itemId) {
+    static boolean consumeServerSideUseItem(Character chr, short slot, int itemId) {
         Client c = chr.getClient();
 
         if (!chr.isAlive()) {

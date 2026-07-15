@@ -26,6 +26,7 @@ package client.command.commands.gm1;
 import client.Character;
 import client.Client;
 import client.command.Command;
+import config.YamlConfig;
 import constants.id.NpcId;
 import constants.inventory.EquipStats;
 import constants.inventory.EquipType;
@@ -46,6 +47,11 @@ public class DressingRoomCommand extends Command {
     @Override
     public void execute(Client c, String[] params) {
         Character player = c.getPlayer();
+        if (!YamlConfig.config.server.DRESSING_ROOM_ENABLED
+                || player.gmLevel() < YamlConfig.config.server.DRESSING_ROOM_MIN_GM_LEVEL) {
+            player.dropMessage(5, "The dressing room is disabled for this deployment.");
+            return;
+        }
         if (params.length < 1) {
             player.dropMessage(5, "Please do !dress <type> <job> <optional req.level>");
             return;

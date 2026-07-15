@@ -161,12 +161,16 @@ public class ItemAction extends AbstractQuestAction {
             int itemid = iEntry.getId(), count = iEntry.getCount(), period = iEntry.getPeriod();    // thanks Vcoc for noticing quest milestone item not getting removed from inventory after a while
 
             if (count == 1 && period <= 0
-                    && YamlConfig.config.server.GODLY_STATS_ENABLED
+                    && YamlConfig.config.server.GODLY_STATS_QUEST_ENABLED
                     && ItemConstants.getInventoryType(itemid) == InventoryType.EQUIP
                     && ItemInformationProvider.rollSuccessChance(YamlConfig.config.server.GODLY_STATS_QUEST_CHANCE)) {
                 Item eqItem = ItemInformationProvider.getInstance().getEquipById(itemid);
                 if (eqItem instanceof Equip equip) {
-                    ItemInformationProvider.getInstance().randomizeGodlyStats(equip);
+                    ItemInformationProvider.getInstance().randomizeGodlyStats(equip,
+                            YamlConfig.config.server.GODLY_STATS_QUEST_BONUS_SCALING,
+                            YamlConfig.config.server.GODLY_STATS_QUEST_MIN_BONUS,
+                            YamlConfig.config.server.GODLY_STATS_QUEST_HPMP_SCALING,
+                            YamlConfig.config.server.GODLY_STATS_QUEST_MIN_HPMP_BONUS);
                     InventoryManipulator.addFromDrop(chr.getClient(), eqItem, false, -1);
                     chr.sendPacket(PacketCreator.getShowItemGain(itemid, (short) count, true));
                     continue;
@@ -303,7 +307,7 @@ public class ItemAction extends AbstractQuestAction {
 
     private void announceInventoryLimit(List<Integer> itemids, Character chr) {
         for (Integer id : itemids) {
-            if (ItemInformationProvider.getInstance().isPickupRestricted(id) && chr.haveItemWithId(id, true)) {
+            if (ItemInformationProvider.getInstance().isPickupRestricted(id, chr) && chr.haveItemWithId(id, true)) {
                 chr.dropMessage(1, "Please check if you already have a similar one-of-a-kind item in your inventory.");
                 return;
             }

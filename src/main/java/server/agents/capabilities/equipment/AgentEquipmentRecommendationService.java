@@ -5,8 +5,8 @@ import client.inventory.Equip;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
-import config.YamlConfig;
 import constants.inventory.EquipSlot;
+import server.ItemRestrictionPolicy;
 import server.agents.capabilities.equipment.AgentEquipmentRecommendationPolicy.RecommendationScope;
 import server.agents.capabilities.equipment.AgentEquipmentRecommendationPolicy.RecommendationHooks;
 import server.agents.integration.AgentInventoryGatewayRuntime;
@@ -56,7 +56,7 @@ public final class AgentEquipmentRecommendationService {
         Set<Equip> holderItems = Collections.newSetFromMap(new IdentityHashMap<>());
         for (Item item : holderEquipInv.list()) {
             if (!(item instanceof Equip equip) || inventory.isCashItem(item.getItemId())) continue;
-            if (item.isUntradeable() && !YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE) continue;
+            if (item.isUntradeable() && !ItemRestrictionPolicy.allowsUntradeable(holder, item.getItemId())) continue;
             String textSlot = inventory.getEquipmentSlot(equip.getItemId());
             if (textSlot == null) continue;
             EquipSlot eslot = EquipSlot.getFromTextSlot(textSlot);
@@ -122,7 +122,7 @@ public final class AgentEquipmentRecommendationService {
         InventoryGateway inventory = inventory();
         RecommendationHooks hooks = AgentEquipmentRecommendationPolicy.RecommendationHooks.from(inventory);
         if (inventory.isCashItem(candidate.getItemId())) return null;
-        if (holderItem.isUntradeable() && !YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE) return null;
+        if (holderItem.isUntradeable() && !ItemRestrictionPolicy.allowsUntradeable(holder, holderItem.getItemId())) return null;
 
         String textSlot = inventory.getEquipmentSlot(candidate.getItemId());
         if (textSlot == null) return null;

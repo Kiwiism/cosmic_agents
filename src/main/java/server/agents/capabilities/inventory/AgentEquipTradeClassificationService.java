@@ -130,13 +130,19 @@ public final class AgentEquipTradeClassificationService {
 
         static List<Item> collectEquipBag(Character agent,
                                           IntPredicate isQuestItem,
-                                          boolean untradeableItemsTradeable) {
+                                          IntPredicate allowsUntradeableItem) {
             return AgentInventoryCollectionService.collectFromBag(
                     agent,
                     InventoryType.EQUIP,
                     item -> true,
                     isQuestItem,
-                    untradeableItemsTradeable);
+                    allowsUntradeableItem);
+        }
+
+        static List<Item> collectEquipBag(Character agent,
+                                          IntPredicate isQuestItem,
+                                          boolean untradeableItemsTradeable) {
+            return collectEquipBag(agent, isQuestItem, itemId -> untradeableItemsTradeable);
         }
     }
 

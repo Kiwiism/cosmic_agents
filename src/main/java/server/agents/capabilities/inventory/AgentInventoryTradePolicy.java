@@ -235,7 +235,7 @@ public final class AgentInventoryTradePolicy {
                                                         IntPredicate isEquipScroll,
                                                         IntPredicate isBuffConsumable,
                                                         IntPredicate isQuestItem,
-                                                        boolean untradeableItemsTradeable) {
+                                                        IntPredicate allowsUntradeableItem) {
         List<Item> uncategorized = new ArrayList<>();
         List<Item> categorizedOther = new ArrayList<>();
         List<Item> potionAmmo = new ArrayList<>();
@@ -250,12 +250,24 @@ public final class AgentInventoryTradePolicy {
                 return false;
             }
             return true;
-        }, isQuestItem, untradeableItemsTradeable));
+        }, isQuestItem, allowsUntradeableItem));
         List<Item> ordered = prioritizeTradeUseItems(uncategorized, categorizedOther, potionAmmo, recipient);
         int uncategorizedCount = uncategorized.size();
         return new UseTradeGroups(
                 new ArrayList<>(ordered.subList(0, uncategorizedCount)),
                 new ArrayList<>(ordered.subList(uncategorizedCount, ordered.size())));
+    }
+
+    public static UseTradeGroups classifyUseTradeGroups(Character agent,
+                                                        Character recipient,
+                                                        IntPredicate isRecoveryPotion,
+                                                        IntPredicate isTradeAmmoItem,
+                                                        IntPredicate isEquipScroll,
+                                                        IntPredicate isBuffConsumable,
+                                                        IntPredicate isQuestItem,
+                                                        boolean untradeableItemsTradeable) {
+        return classifyUseTradeGroups(agent, recipient, isRecoveryPotion, isTradeAmmoItem, isEquipScroll,
+                isBuffConsumable, isQuestItem, itemId -> untradeableItemsTradeable);
     }
 
     public static List<Item> prioritizeScrollTradeItems(List<Item> items, Character recipient) {

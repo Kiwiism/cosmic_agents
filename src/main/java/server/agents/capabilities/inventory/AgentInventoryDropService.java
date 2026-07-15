@@ -6,10 +6,12 @@ import client.inventory.InventoryType;
 import client.inventory.Item;
 import config.YamlConfig;
 import constants.inventory.ItemConstants;
+import server.ItemRestrictionPolicy;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.integration.InventoryGateway;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.FieldLimit;
+import server.maps.MapleMap;
 
 import java.util.HashSet;
 import java.util.List;
@@ -26,8 +28,10 @@ public final class AgentInventoryDropService {
                                     Character agent,
                                     InventoryGateway inventory,
                                     BiFunction<AgentRuntimeEntry, Character, List<Item>> trashEquipCollector) {
-        if (!YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE
-                && FieldLimit.DROP_LIMIT.check(agent.getMap().getFieldLimit())) {
+        MapleMap map = agent.getMap();
+        if (!YamlConfig.config.server.ALLOW_DROPS_ON_DROP_LIMIT_MAPS
+                && map != null
+                && FieldLimit.DROP_LIMIT.check(map.getFieldLimit())) {
             AgentInventoryRuntime.replyNow(entry, AgentDialogueCatalog.dropLimitedMapReply());
             return;
         }
@@ -109,7 +113,7 @@ public final class AgentInventoryDropService {
                     && AgentInventoryItemPolicy.isSafeToDrop(
                             item,
                             inventoryGateway::isQuestItem,
-                            YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE)
+                            itemId -> ItemRestrictionPolicy.allowsUntradeable(agent, itemId))
                     && filter.test(item)) {
                 inventoryGateway.dropItem(agent, type, slot, item.getQuantity());
                 count++;

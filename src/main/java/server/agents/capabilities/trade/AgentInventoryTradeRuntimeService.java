@@ -45,13 +45,14 @@ public final class AgentInventoryTradeRuntimeService {
     }
 
     public static AmmoTradeGroups classifyAmmoTradeGroups(Character agent, RuntimeCallbacks callbacks) {
+        callbacks.untradeableItemsTradeable();
         return AgentAmmoTradeClassificationService.classifyAmmoTradeGroups(
                 agent,
                 AgentAmmoTradeCallbackService.ammoTradeCallbacks(
                         () -> callbacks.equippedWeaponType(agent),
                         callbacks::projectileWatk,
                         callbacks::isQuestItem,
-                        callbacks::untradeableItemsTradeable));
+                        callbacks::allowsUntradeableItem));
     }
 
     public static AgentEquipTradeGroups classifyEquipTradeGroups(Character agent, RuntimeCallbacks callbacks) {
@@ -63,7 +64,7 @@ public final class AgentInventoryTradeRuntimeService {
                         character -> AgentEquipTradeClassificationService.ClassificationCallbacks.collectEquipBag(
                                 character,
                                 callbacks::isQuestItem,
-                                callbacks.untradeableItemsTradeable()),
+                                callbacks::allowsUntradeableItem),
                         callbacks::collectPotentialSelfUpgradeItems,
                         callbacks::isReservedForOtherRecipients,
                         callbacks::owner,
@@ -79,7 +80,11 @@ public final class AgentInventoryTradeRuntimeService {
 
         boolean isQuestItem(int itemId);
 
-        boolean untradeableItemsTradeable();
+        boolean allowsUntradeableItem(int itemId);
+
+        default boolean untradeableItemsTradeable() {
+            return allowsUntradeableItem(0);
+        }
 
         boolean profileEquips();
 
@@ -95,12 +100,42 @@ public final class AgentInventoryTradeRuntimeService {
                                    Function<Character, WeaponType> equippedWeaponType,
                                    IntUnaryOperator projectileWatk,
                                    IntPredicate isQuestItem,
+                                   IntPredicate allowsUntradeableItem,
+                                   BooleanSupplier profileEquips,
+                                   Function<Character, Set<Item>> collectPotentialSelfUpgradeItems,
+                                   Predicate<Item> isReservedForOtherRecipients,
+                                   Supplier<Character> owner,
+                                   Supplier<InventoryGateway> inventory) {
+            return callbacks(collectRecommendedItems, equippedWeaponType, projectileWatk, isQuestItem,
+                    allowsUntradeableItem, profileEquips, collectPotentialSelfUpgradeItems,
+                    isReservedForOtherRecipients, owner, inventory);
+        }
+
+        static RuntimeCallbacks of(BiFunction<Character, Character, List<Item>> collectRecommendedItems,
+                                   Function<Character, WeaponType> equippedWeaponType,
+                                   IntUnaryOperator projectileWatk,
+                                   IntPredicate isQuestItem,
                                    BooleanSupplier untradeableItemsTradeable,
                                    BooleanSupplier profileEquips,
                                    Function<Character, Set<Item>> collectPotentialSelfUpgradeItems,
                                    Predicate<Item> isReservedForOtherRecipients,
                                    Supplier<Character> owner,
                                    Supplier<InventoryGateway> inventory) {
+            return callbacks(collectRecommendedItems, equippedWeaponType, projectileWatk, isQuestItem,
+                    itemId -> untradeableItemsTradeable.getAsBoolean(), profileEquips,
+                    collectPotentialSelfUpgradeItems, isReservedForOtherRecipients, owner, inventory);
+        }
+
+        private static RuntimeCallbacks callbacks(BiFunction<Character, Character, List<Item>> collectRecommendedItems,
+                                                  Function<Character, WeaponType> equippedWeaponType,
+                                                  IntUnaryOperator projectileWatk,
+                                                  IntPredicate isQuestItem,
+                                                  IntPredicate allowsUntradeableItem,
+                                                  BooleanSupplier profileEquips,
+                                                  Function<Character, Set<Item>> collectPotentialSelfUpgradeItems,
+                                                  Predicate<Item> isReservedForOtherRecipients,
+                                                  Supplier<Character> owner,
+                                                  Supplier<InventoryGateway> inventory) {
             return new RuntimeCallbacks() {
                 @Override
                 public List<Item> collectRecommendedItems(Character owner, Character agent) {
@@ -123,8 +158,8 @@ public final class AgentInventoryTradeRuntimeService {
                 }
 
                 @Override
-                public boolean untradeableItemsTradeable() {
-                    return untradeableItemsTradeable.getAsBoolean();
+                public boolean allowsUntradeableItem(int itemId) {
+                    return allowsUntradeableItem.test(itemId);
                 }
 
                 @Override

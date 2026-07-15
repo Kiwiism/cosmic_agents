@@ -97,7 +97,7 @@ public final class AgentInventoryAmmoPolicy {
                                                       WeaponType equippedWeaponType,
                                                       IntUnaryOperator projectileWatkLookup,
                                                       IntPredicate isQuestItem,
-                                                      boolean untradeableItemsTradeable) {
+                                                      IntPredicate allowsUntradeableItem) {
         List<Item> nonOwn = new ArrayList<>();
         List<Item> own = new ArrayList<>();
         WeaponType ownAmmoWeaponType = tradeAmmoWeaponType(equippedWeaponType);
@@ -111,12 +111,21 @@ public final class AgentInventoryAmmoPolicy {
                 return false;
             }
             return true;
-        }, isQuestItem, untradeableItemsTradeable));
+        }, isQuestItem, allowsUntradeableItem));
         nonOwn.sort(Comparator.comparingInt(Item::getItemId));
         own.sort(Comparator
                 .comparingInt((Item item) -> projectileWatkLookup.applyAsInt(item.getItemId()))
                 .thenComparingInt(Item::getItemId));
         return new AmmoTradeGroups(nonOwn, own);
+    }
+
+    public static AmmoTradeGroups classifyTradeGroups(Character agent,
+                                                      WeaponType equippedWeaponType,
+                                                      IntUnaryOperator projectileWatkLookup,
+                                                      IntPredicate isQuestItem,
+                                                      boolean untradeableItemsTradeable) {
+        return classifyTradeGroups(agent, equippedWeaponType, projectileWatkLookup, isQuestItem,
+                itemId -> untradeableItemsTradeable);
     }
 
     public static AgentInventoryTradePolicy.AmmoGroup firstAvailableGroup(AmmoTradeGroups groups) {

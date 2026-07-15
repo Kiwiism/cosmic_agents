@@ -13,12 +13,13 @@ public final class AgentAmmoTradeClassificationService {
     }
 
     public static AmmoTradeGroups classifyAmmoTradeGroups(Character agent, AmmoTradeCallbacks callbacks) {
+        callbacks.untradeableItemsTradeable();
         return AgentInventoryAmmoPolicy.classifyTradeGroups(
                 agent,
                 callbacks.equippedWeaponType(),
                 callbacks.projectileWatk(),
                 callbacks.isQuestItem(),
-                callbacks.untradeableItemsTradeable());
+                callbacks::allowsUntradeableItem);
     }
 
     public static String nextAmmoGroup(String category, AmmoTradeGroups groups) {
@@ -29,7 +30,38 @@ public final class AgentAmmoTradeClassificationService {
         WeaponType equippedWeaponType();
         IntUnaryOperator projectileWatk();
         IntPredicate isQuestItem();
-        boolean untradeableItemsTradeable();
+        boolean allowsUntradeableItem(int itemId);
+
+        default boolean untradeableItemsTradeable() {
+            return allowsUntradeableItem(0);
+        }
+
+        static AmmoTradeCallbacks of(Supplier<WeaponType> equippedWeaponType,
+                                    IntUnaryOperator projectileWatk,
+                                    IntPredicate isQuestItem,
+                                    IntPredicate allowsUntradeableItem) {
+            return new AmmoTradeCallbacks() {
+                @Override
+                public WeaponType equippedWeaponType() {
+                    return equippedWeaponType.get();
+                }
+
+                @Override
+                public IntUnaryOperator projectileWatk() {
+                    return projectileWatk;
+                }
+
+                @Override
+                public IntPredicate isQuestItem() {
+                    return isQuestItem;
+                }
+
+                @Override
+                public boolean allowsUntradeableItem(int itemId) {
+                    return allowsUntradeableItem.test(itemId);
+                }
+            };
+        }
 
         static AmmoTradeCallbacks of(Supplier<WeaponType> equippedWeaponType,
                                     IntUnaryOperator projectileWatk,
@@ -52,7 +84,7 @@ public final class AgentAmmoTradeClassificationService {
                 }
 
                 @Override
-                public boolean untradeableItemsTradeable() {
+                public boolean allowsUntradeableItem(int itemId) {
                     return untradeableItemsTradeable.get();
                 }
             };

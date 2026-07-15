@@ -196,13 +196,6 @@ public class PetAutopotProcessor {
     }
 
     public static void triggerAutopotAction(Client c, short slot, int itemId) {
-        Character chr = c.getPlayer();
-        StatEffect stat = ItemInformationProvider.getInstance().getItemEffect(itemId);
-        if (stat != null && (stat.getMp() > 0 || stat.getMpRate() > 0.0)) {
-            float estimatedMp = ((float) chr.getMp()) / chr.getCurrentMaxMp();
-            chr.setAutopotMpAlert(Math.max(estimatedMp + 0.01f, chr.getAutopotMpAlert()));
-        }
-
         runAutopotAction(c, slot, itemId);
     }
 
