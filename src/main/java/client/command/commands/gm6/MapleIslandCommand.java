@@ -6,7 +6,7 @@ import server.agents.plans.mapleisland.MapleIslandPlanCommandService;
 
 public final class MapleIslandCommand extends Command {
     public MapleIslandCommand() {
-        setDescription("Run the guarded Amherst-to-Southperry Maple Island plan.");
+        setDescription("Run the guarded level-1 Mushroom Town-to-Southperry Maple Island plan.");
     }
 
     @Override

@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
+import server.maps.Portal;
 
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -81,5 +82,22 @@ class AgentAirbornePhysicsServiceTest {
         assertEquals(AgentAirborneStepResult.LANDED, result);
         assertEquals(new Point(250, 400), position.get());
         assertFalse(AgentMovementStateRuntime.inAir(entry));
+    }
+
+    @Test
+    void belowMapRecoveryPrefersTheActualEntryPortalOverAnUpperFoothold() {
+        MapleMap map = mock(MapleMap.class);
+        Portal entryPortal = mock(Portal.class);
+        when(map.getMapArea()).thenReturn(new Rectangle(0, 0, 1000, 500));
+        when(map.getPortal(4)).thenReturn(entryPortal);
+        when(entryPortal.getPosition()).thenReturn(new Point(455, 100));
+        when(map.getPointBelow(any(Point.class))).thenAnswer(invocation -> {
+            Point probe = invocation.getArgument(0);
+            return probe.x == 455 ? new Point(455, 400) : new Point(probe.x, 150);
+        });
+
+        assertEquals(new Point(455, 400),
+                AgentAirbornePhysicsService.belowMapRecoveryPoint(
+                        map, new Point(26, 565), 4));
     }
 }

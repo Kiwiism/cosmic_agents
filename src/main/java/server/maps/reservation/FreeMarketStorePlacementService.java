@@ -40,6 +40,18 @@ public final class FreeMarketStorePlacementService {
                 .filter(reservation -> reservation.scope().equals(scope(character)));
     }
 
+    public static boolean hasAvailablePlacement(Character character) {
+        if (reservation(character).isPresent()) {
+            return true;
+        }
+        Optional<CharacterSpaceReservation> probe = reserveNearest(character);
+        if (probe.isEmpty()) {
+            return false;
+        }
+        release(character);
+        return true;
+    }
+
     public static void release(Character character) {
         if (character != null && character.getId() > 0) {
             CharacterSpaceReservationRuntime.release(CharacterSpaceOwner.character(character.getId()));

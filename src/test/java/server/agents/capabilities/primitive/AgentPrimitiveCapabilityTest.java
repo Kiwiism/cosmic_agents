@@ -8,6 +8,7 @@ import server.agents.capabilities.quest.AmherstScopePolicy;
 import server.agents.capabilities.reactor.AgentReactorScopePolicy;
 import server.agents.capabilities.reactor.AgentReactorTargetSelector;
 import server.agents.capabilities.runtime.AgentCapabilityContext;
+import server.agents.capabilities.runtime.AgentCapabilityMemory;
 import server.agents.capabilities.runtime.AgentCapabilityStep;
 import server.agents.integration.PrimitiveCapabilityGateway;
 import server.agents.integration.AgentCharacterStateSnapshot;
@@ -81,9 +82,9 @@ class AgentPrimitiveCapabilityTest {
     }
 
     @Test
-    void portalUsesLivePresenceThenVerifiesDestinationOnFollowingTick() {
+    void portalUsesLivePresenceThenSettlesAtGroundedDestination() {
         Fixture fixture = fixture();
-        when(fixture.gateway.mapId(fixture.agent)).thenReturn(10000, 20000);
+        when(fixture.gateway.mapId(fixture.agent)).thenReturn(10000, 20000, 20000, 20000);
         when(fixture.gateway.portalPresent(fixture.agent, 1)).thenReturn(true);
         when(fixture.gateway.portalPosition(fixture.agent, 1)).thenReturn(new Point(50, 0));
         when(fixture.gateway.position(fixture.agent)).thenReturn(new Point(0, 0));
@@ -91,9 +92,17 @@ class AgentPrimitiveCapabilityTest {
         AgentPortalTravelCapability capability = new AgentPortalTravelCapability(
                 fixture.gateway, new AmherstScopePolicy());
         var command = new AgentPortalTravelCapability.Command(10000, 1, 20000, true);
+        AgentCapabilityMemory memory = new AgentCapabilityMemory();
 
-        assertEquals(AgentCapabilityStatus.RUNNING, capability.tick(fixture.context(), command).status());
-        assertEquals(AgentCapabilityStatus.SUCCESS, capability.tick(fixture.context(), command).status());
+        assertEquals(AgentCapabilityStatus.RUNNING,
+                capability.tick(fixture.context(100L, memory), command).status());
+        assertEquals(AgentCapabilityStatus.RUNNING,
+                capability.tick(fixture.context(200L, memory), command).status());
+        assertEquals(AgentCapabilityStatus.RUNNING,
+                capability.tick(fixture.context(1_199L, memory), command).status());
+        assertEquals(AgentCapabilityStatus.SUCCESS,
+                capability.tick(fixture.context(1_200L, memory), command).status());
+        verify(fixture.gateway).stop(fixture.entry);
     }
 
     @Test
@@ -361,6 +370,10 @@ class AgentPrimitiveCapabilityTest {
                            PrimitiveCapabilityGateway gateway) {
         AgentCapabilityContext context() {
             return new AgentCapabilityContext(entry, agent, 100L, 0L, 0, null);
+        }
+
+        AgentCapabilityContext context(long nowMs, AgentCapabilityMemory memory) {
+            return new AgentCapabilityContext(entry, agent, nowMs, 0L, 0, null, memory);
         }
     }
 }

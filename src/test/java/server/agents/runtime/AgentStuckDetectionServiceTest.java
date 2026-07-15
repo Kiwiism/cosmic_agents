@@ -102,19 +102,19 @@ class AgentStuckDetectionServiceTest {
     }
 
     @Test
-    void inAirResetsProgressDuringNavigation() {
+    void stationaryAirborneNavigationTriggersRecoveryAfterLongerThreshold() {
         AgentRuntimeEntry entry = entryAt(new Point(10, 20));
         AgentMoveTargetStateRuntime.setMoveTarget(entry, new Point(100, 20), false);
         AgentMovementStateRuntime.setInAir(entry, true);
-        AgentMovementStuckStateRuntime.addStuckMs(entry, 250);
+        AgentMovementStuckStateRuntime.addStuckMs(entry, 1_000);
         AgentMovementStuckStateRuntime.rememberStuckCheckPosition(entry, new Point(10, 20));
         AtomicInteger unstucks = new AtomicInteger();
 
-        AgentStuckDetectionService.tickStuckDetection(entry, hooks(unstucks, 50, true, remaining -> remaining));
+        AgentStuckDetectionService.tickStuckDetection(entry, hooks(unstucks, 500, true, remaining -> remaining));
 
         assertEquals(0, AgentMovementStuckStateRuntime.stuckMs(entry));
         assertFalse(AgentMovementStuckStateRuntime.hasStuckCheckPosition(entry));
-        assertEquals(0, unstucks.get());
+        assertEquals(1, unstucks.get());
     }
 
     private static AgentStuckDetectionService.StuckDetectionHooks hooks(AtomicInteger unstucks,

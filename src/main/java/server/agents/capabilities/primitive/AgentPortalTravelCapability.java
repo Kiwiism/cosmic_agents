@@ -17,6 +17,7 @@ public final class AgentPortalTravelCapability
     private static final int PORTAL_APPROACH_RANGE_PX = 60;
     private static final long NAVIGATION_TIMEOUT_MS = 60_000L;
     private static final int NAVIGATION_RETRIES = 2;
+    private static final long DESTINATION_SETTLE_MS = 1_000L;
 
     public record Command(int sourceMapId, int portalId, int destinationMapId, boolean requireAmherstScope)
             implements AgentCapabilityCommand {
@@ -57,6 +58,18 @@ public final class AgentPortalTravelCapability
         }
         int currentMap = gateway.mapId(context.agent());
         if (currentMap == command.destinationMapId()) {
+            if (!gateway.grounded(context.agent())) {
+                return AgentCapabilityStep.running("portal destination reached; waiting to land");
+            }
+            long settleStartedAtMs = context.memory().longValue("destinationSettleStartedAtMs", -1L);
+            if (settleStartedAtMs < 0L) {
+                gateway.stop(context.entry());
+                context.memory().putLong("destinationSettleStartedAtMs", context.nowMs());
+                return AgentCapabilityStep.running("portal destination reached; settling at entry");
+            }
+            if (context.nowMs() - settleStartedAtMs < DESTINATION_SETTLE_MS) {
+                return AgentCapabilityStep.running("settling at portal destination");
+            }
             return AgentCapabilityStep.terminal(AgentCapabilityResult.success("portal destination reached"));
         }
         if (currentMap != command.sourceMapId()) {

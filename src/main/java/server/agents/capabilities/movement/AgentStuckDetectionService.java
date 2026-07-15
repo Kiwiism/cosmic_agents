@@ -13,6 +13,8 @@ import java.util.function.IntUnaryOperator;
  */
 public final class AgentStuckDetectionService {
     private static final int STUCK_DRIFT_RADIUS_PX = 16;
+    private static final int GROUNDED_STUCK_THRESHOLD_MS = 500;
+    private static final int SUSPENDED_STUCK_THRESHOLD_MS = 1_500;
 
     @FunctionalInterface
     public interface UnstuckAction {
@@ -57,9 +59,9 @@ public final class AgentStuckDetectionService {
                 entry,
                 hooks.tickDown().applyAsInt(AgentMovementStuckStateRuntime.unstuckCooldownMs(entry)));
 
-        if (AgentMovementStateRuntime.inAir(entry)
-                || AgentMovementStateRuntime.climbing(entry)
-                || AgentNavigationDebugStateRuntime.graphWarmupFallback(entry)
+        boolean suspended = AgentMovementStateRuntime.inAir(entry)
+                || AgentMovementStateRuntime.climbing(entry);
+        if (AgentNavigationDebugStateRuntime.graphWarmupFallback(entry)
                 || (!AgentNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)
                         && !AgentMoveTargetStateRuntime.hasMoveTarget(entry))) {
             AgentMovementStuckStateRuntime.resetStuckProgress(entry);
@@ -81,8 +83,9 @@ public final class AgentStuckDetectionService {
             AgentMovementStuckStateRuntime.addStuckMs(entry, hooks.movementTickMs());
         }
 
+        int thresholdMs = suspended ? SUSPENDED_STUCK_THRESHOLD_MS : GROUNDED_STUCK_THRESHOLD_MS;
         if (hooks.enableUnstuck()
-                && AgentMovementStuckStateRuntime.stuckForAtLeast(entry, 500)
+                && AgentMovementStuckStateRuntime.stuckForAtLeast(entry, thresholdMs)
                 && !AgentMovementStuckStateRuntime.hasUnstuckCooldown(entry)) {
             AgentMovementStuckStateRuntime.resetStuckProgress(entry);
             hooks.unstuckAction().tick(entry);

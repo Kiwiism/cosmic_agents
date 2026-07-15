@@ -14,12 +14,8 @@
       }
     },
     "movement": {
-      "navigationFidgetsEnabled": true,
-      "navigationFidgetModes": [
-        "WAIT",
-        "PRONE",
-        "SPAM_PRONE"
-      ],
+      "navigationFidgetsEnabled": false,
+      "navigationFidgetModes": [],
       "fidgetCooldownMs": {
         "min": 12000,
         "max": 25000

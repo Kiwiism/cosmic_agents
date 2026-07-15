@@ -93,4 +93,6 @@ public interface PrimitiveCapabilityGateway {
     boolean lootNearby(Character agent, Set<Integer> itemIds);
 
     boolean sitChair(Character agent, int itemId);
+
+    int chairItemId(Character agent);
 }

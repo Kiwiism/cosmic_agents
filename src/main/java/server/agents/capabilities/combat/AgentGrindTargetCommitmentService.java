@@ -9,6 +9,8 @@ import server.life.Monster;
 import java.awt.Point;
 
 public final class AgentGrindTargetCommitmentService {
+    static final long TARGET_COMMITMENT_MS = 12_000L;
+
     private AgentGrindTargetCommitmentService() {
     }
 
@@ -37,27 +39,31 @@ public final class AgentGrindTargetCommitmentService {
                                       Point agentPosition,
                                       Monster target,
                                       AgentAttackPlan attackPlan,
+                                      long nowMs,
                                       Hooks hooks) {
-        AgentGrindTargetStateRuntime.setTarget(entry, target);
+        boolean alreadyCommitted = AgentGrindTargetStateRuntime.committedTo(entry, target, nowMs);
+        AgentGrindTargetStateRuntime.commitTarget(entry, target, nowMs, TARGET_COMMITMENT_MS);
         AgentGrindWanderStateRuntime.clearWanderDirection(entry);
         AgentPatrolStateRuntime.clearPatrolWanderTarget(entry);
         Point targetPosition = target.getPosition();
 
-        Monster rangedPriorityTarget = hooks.rangedPriorityTargetSelector().select(
+        Monster rangedPriorityTarget = alreadyCommitted ? null : hooks.rangedPriorityTargetSelector().select(
                 entry, agent, agentPosition, target);
         if (rangedPriorityTarget != null && rangedPriorityTarget != target) {
             target = rangedPriorityTarget;
-            AgentGrindTargetStateRuntime.setTarget(entry, rangedPriorityTarget);
+            AgentGrindTargetStateRuntime.commitTarget(
+                    entry, rangedPriorityTarget, nowMs, TARGET_COMMITMENT_MS);
             targetPosition = target.getPosition();
             attackPlan = null;
         }
 
-        Monster closerThreat = rangedPriorityTarget == null
+        Monster closerThreat = !alreadyCommitted && rangedPriorityTarget == null
                 ? hooks.closerThreatFinder().find(entry, agent, agentPosition, targetPosition)
                 : null;
         if (closerThreat != null && closerThreat != target) {
             target = closerThreat;
-            AgentGrindTargetStateRuntime.setTarget(entry, closerThreat);
+            AgentGrindTargetStateRuntime.commitTarget(
+                    entry, closerThreat, nowMs, TARGET_COMMITMENT_MS);
             targetPosition = target.getPosition();
             attackPlan = null;
         }

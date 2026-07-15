@@ -11,6 +11,8 @@ import java.awt.Point;
 
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -55,5 +57,16 @@ class AgentGrindTargetStateRuntimeTest {
         AgentGrindTargetStateRuntime.clear(entry);
 
         assertNull(AgentGrindTargetStateRuntime.target(entry));
+    }
+
+    @Test
+    void adaptsShortLivedTargetCommitment() {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
+        Monster target = mock(Monster.class);
+
+        AgentGrindTargetStateRuntime.commitTarget(entry, target, 1_000L, 4_000L);
+
+        assertTrue(AgentGrindTargetStateRuntime.committedTo(entry, target, 4_999L));
+        assertFalse(AgentGrindTargetStateRuntime.committedTo(entry, target, 5_000L));
     }
 }

@@ -241,8 +241,12 @@ public final class AgentCombatTargetRuntime {
                         candidates,
                         entry != null && AgentCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
                         entry == null ? 0 : AgentCombatSkillCacheStateRuntime.aoeSkillMobs(entry)),
-                group -> graphPathCost(context.graph(), context.map(), context.startPos(), context.startRegionId(),
-                        group.bestMonster().getPosition(), group.regionId(), context.profile()),
+                group -> AgentCombatScoringPolicy.addReachableGraphPenalty(
+                        graphPathCost(context.graph(), context.map(), context.startPos(), context.startRegionId(),
+                                group.bestMonster().getPosition(), group.regionId(), context.profile()),
+                        AgentCombatScoringPolicy.upwardPlatformPenalty(
+                                botPos, group.bestMonster().getPosition()),
+                        UNREACHABLE_GRAPH_COST),
                 group -> grindRegionOccupancyPenalty(context, bot, group.regionId(), config),
                 UNREACHABLE_GRAPH_COST);
     }

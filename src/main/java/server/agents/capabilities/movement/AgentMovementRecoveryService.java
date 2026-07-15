@@ -18,10 +18,15 @@ public final class AgentMovementRecoveryService {
      */
     public static void tickUnstuck(AgentRuntimeEntry entry) {
         Character agent = AgentRuntimeIdentityRuntime.bot(entry);
-        int walkStep = AgentMovementKinematicsService.walkStep(agent.getMap(), AgentMovementStateRuntime.movementProfile(entry));
-        switch (ThreadLocalRandom.current().nextInt(2)) {
-            case 0 -> AgentRopeMovementService.beginGroundJump(entry, agent, -walkStep);
-            default -> AgentRopeMovementService.beginGroundJump(entry, agent, walkStep);
+        if (AgentMovementStateRuntime.inAir(entry) || AgentMovementStateRuntime.climbing(entry)) {
+            AgentAirborneLaunchService.launchAirborne(entry, agent.getPosition(), 0f, 0, false);
+        } else {
+            int walkStep = AgentMovementKinematicsService.walkStep(
+                    agent.getMap(), AgentMovementStateRuntime.movementProfile(entry));
+            switch (ThreadLocalRandom.current().nextInt(2)) {
+                case 0 -> AgentRopeMovementService.beginGroundJump(entry, agent, -walkStep);
+                default -> AgentRopeMovementService.beginGroundJump(entry, agent, walkStep);
+            }
         }
         AgentMovementStateResetService.clearNavigationState(entry);
         AgentMovementStuckStateRuntime.setUnstuckCooldownMs(entry, AgentMovementTimers.delayAfterCurrentTick(5000));

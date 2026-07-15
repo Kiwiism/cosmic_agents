@@ -34,6 +34,7 @@ final class AmherstObjectiveCapabilitySupport {
     static final long PORTAL_TIMEOUT_MS = 90_000L;
     static final int CHILD_RETRIES = 2;
     static final int NPC_RANGE_PX = AgentNpcInteractionPolicy.DEFAULT_CLICK_RANGE_PX;
+    static final int NPC_ANCHOR_ARRIVAL_RANGE_PX = 8;
     static final int REACTOR_RANGE_PX = 60;
 
     private final PrimitiveCapabilityGateway gateway;
@@ -118,7 +119,17 @@ final class AmherstObjectiveCapabilitySupport {
         if (npcPosition == null) {
             return missing("objective NPC is not present on map " + mapId);
         }
-        if (gateway.position(context.agent()).distanceSq(npcPosition) <= (long) NPC_RANGE_PX * NPC_RANGE_PX) {
+        Point currentPosition = gateway.position(context.agent());
+        Point interactionAnchor = interactionAnchor(context, mapId, npcId, currentPosition);
+        if (interactionAnchor != null
+                && currentPosition.distanceSq(interactionAnchor)
+                > (long) NPC_ANCHOR_ARRIVAL_RANGE_PX * NPC_ANCHOR_ARRIVAL_RANGE_PX) {
+            return AgentCapabilityStep.handoff(invocation(new AgentNavigationCapability(gateway),
+                    new AgentNavigationCapability.Command(
+                            mapId, interactionAnchor, NPC_ANCHOR_ARRIVAL_RANGE_PX, true)),
+                    "objective requests navigation to safe NPC interaction anchor");
+        }
+        if (currentPosition.distanceSq(npcPosition) <= (long) NPC_RANGE_PX * NPC_RANGE_PX) {
             if (!gateway.grounded(context.agent())) {
                 return AgentCapabilityStep.running("waiting to land before NPC interaction", false);
             }
@@ -128,6 +139,29 @@ final class AmherstObjectiveCapabilitySupport {
         return AgentCapabilityStep.handoff(invocation(new AgentNavigationCapability(gateway),
                 new AgentNavigationCapability.Command(mapId, npcPosition, NPC_RANGE_PX, true)),
                 "objective requests navigation to NPC");
+    }
+
+    private Point interactionAnchor(AgentCapabilityContext context,
+                                    int mapId,
+                                    int npcId,
+                                    Point currentPosition) {
+        if (context.memory().intValue("npcAnchorMapId", -1) == mapId
+                && context.memory().intValue("npcAnchorNpcId", -1) == npcId
+                && context.memory().booleanValue("npcAnchorSelected", false)) {
+            return new Point(
+                    context.memory().intValue("npcAnchorX", 0),
+                    context.memory().intValue("npcAnchorY", 0));
+        }
+        Point anchor = AgentNpcInteractionAnchorCatalog.nearest(mapId, npcId, currentPosition);
+        if (anchor == null) {
+            return null;
+        }
+        context.memory().putInt("npcAnchorMapId", mapId);
+        context.memory().putInt("npcAnchorNpcId", npcId);
+        context.memory().putInt("npcAnchorX", anchor.x);
+        context.memory().putInt("npcAnchorY", anchor.y);
+        context.memory().putBoolean("npcAnchorSelected", true);
+        return anchor;
     }
 
     AgentCapabilityStep approachPosition(AgentCapabilityContext context,

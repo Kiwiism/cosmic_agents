@@ -24,8 +24,10 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 public final class AgentMapleIslandPlanRuntime {
-    private static final Path DEFAULT_CARD_PATH = Path.of(
+    private static final Path SOUTHPERRY_CARD_PATH = Path.of(
             "docs", "agents", "plans", "maple-island-southperry-mvp.plan.json");
+    private static final Path FULL_CARD_PATH = Path.of(
+            "docs", "agents", "plans", "maple-island-full-mvp.plan.json");
 
     private AgentMapleIslandPlanRuntime() {
     }
@@ -35,7 +37,7 @@ public final class AgentMapleIslandPlanRuntime {
                                    long nowMs,
                                    AmherstPlanObserver observer) throws IOException, AmherstPlanValidationException {
         AgentBehaviorProfileRuntime.assignMapleIslandQuester(entry);
-        defaultRunner(defaultCard(), entry).start(
+        defaultRunner(defaultCard(), entry, AmherstScopePolicy.southperry()).start(
                 entry, agent, nowMs, AmherstPlanExecutionMode.MANUAL, observer);
     }
 
@@ -44,13 +46,36 @@ public final class AgentMapleIslandPlanRuntime {
                                  long nowMs,
                                  AmherstPlanObserver observer) throws IOException, AmherstPlanValidationException {
         AgentBehaviorProfileRuntime.assignMapleIslandQuester(entry);
-        defaultRunner(defaultCard(), entry).start(
+        defaultRunner(defaultCard(), entry, AmherstScopePolicy.southperry()).start(
+                entry, agent, nowMs, AmherstPlanExecutionMode.AUTO, observer);
+    }
+
+    public static void startFullManual(AgentRuntimeEntry entry,
+                                       Character agent,
+                                       long nowMs,
+                                       AmherstPlanObserver observer) throws IOException, AmherstPlanValidationException {
+        AgentBehaviorProfileRuntime.assignMapleIslandQuester(entry);
+        defaultRunner(fullCard(), entry, AmherstScopePolicy.fullMapleIsland()).start(
+                entry, agent, nowMs, AmherstPlanExecutionMode.MANUAL, observer);
+    }
+
+    public static void startFullAuto(AgentRuntimeEntry entry,
+                                     Character agent,
+                                     long nowMs,
+                                     AmherstPlanObserver observer) throws IOException, AmherstPlanValidationException {
+        AgentBehaviorProfileRuntime.assignMapleIslandQuester(entry);
+        defaultRunner(fullCard(), entry, AmherstScopePolicy.fullMapleIsland()).start(
                 entry, agent, nowMs, AmherstPlanExecutionMode.AUTO, observer);
     }
 
     public static AmherstPlanCard defaultCard() throws IOException, AmherstPlanValidationException {
         return new AmherstPlanCardLoader(new ObjectMapper(), AmherstPlanValidator.southperry())
-                .load(DEFAULT_CARD_PATH);
+                .load(SOUTHPERRY_CARD_PATH);
+    }
+
+    public static AmherstPlanCard fullCard() throws IOException, AmherstPlanValidationException {
+        return new AmherstPlanCardLoader(new ObjectMapper(), AmherstPlanValidator.fullMapleIsland())
+                .load(FULL_CARD_PATH);
     }
 
     public static FileAmherstPlanProgressStore defaultStore() {
@@ -65,8 +90,9 @@ public final class AgentMapleIslandPlanRuntime {
         return AgentAmherstPlanRuntime.requestNext(entry);
     }
 
-    private static AmherstPlanRuntimeRunner defaultRunner(AmherstPlanCard card, AgentRuntimeEntry entry) {
-        AmherstScopePolicy scopePolicy = AmherstScopePolicy.southperry();
+    private static AmherstPlanRuntimeRunner defaultRunner(AmherstPlanCard card,
+                                                          AgentRuntimeEntry entry,
+                                                          AmherstScopePolicy scopePolicy) {
         return new AmherstPlanRuntimeRunner(card,
                 defaultStore(), new AmherstPlanProgressService(),
                 new AmherstObjectiveReconciler(),

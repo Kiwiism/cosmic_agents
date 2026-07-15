@@ -11,6 +11,7 @@ import java.util.Map;
  */
 public final class AgentMapTrackingState {
     private int lastMapId = -1;
+    private int entryPortalId = -1;
     private Map<Integer, Foothold> footholdIndex = new HashMap<>();
 
     public int lastMapId() {
@@ -19,6 +20,14 @@ public final class AgentMapTrackingState {
 
     public Map<Integer, Foothold> footholdIndex() {
         return Collections.unmodifiableMap(footholdIndex);
+    }
+
+    public int entryPortalId() {
+        return entryPortalId;
+    }
+
+    public void setEntryPortalId(int entryPortalId) {
+        this.entryPortalId = entryPortalId;
     }
 
     public void setMapTracking(int mapId, Map<Integer, Foothold> footholdIndex) {

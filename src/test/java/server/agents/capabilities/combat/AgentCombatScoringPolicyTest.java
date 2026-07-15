@@ -39,6 +39,26 @@ class AgentCombatScoringPolicyTest {
     }
 
     @Test
+    void shouldPreferSameOrLowerPlatformsBeforeClimbing() {
+        Point agent = new Point(100, 200);
+        Point lower = new Point(100, 260);
+        Point upper = new Point(100, 80);
+
+        assertEquals(0L, AgentCombatScoringPolicy.upwardPlatformPenalty(agent, lower));
+        assertTrue(AgentCombatScoringPolicy.upwardPlatformPenalty(agent, upper) > 2_500L);
+        assertTrue(AgentCombatScoringPolicy.localTargetScore(agent, upper, false, 50)
+                > AgentCombatScoringPolicy.localTargetScore(agent, lower, false, 50));
+    }
+
+    @Test
+    void shouldApplyVerticalWeightWithoutMakingUnreachableRegionsReachable() {
+        assertEquals(9_999L, AgentCombatScoringPolicy.addReachableGraphPenalty(
+                9_999L, 3_000L, 9_999L));
+        assertEquals(4_000L, AgentCombatScoringPolicy.addReachableGraphPenalty(
+                1_000L, 3_000L, 9_999L));
+    }
+
+    @Test
     void shouldCapAoeClusterBonusByMobCountMinusOne() {
         Monster target = mobAt(100, 100, true);
         Monster nearOne = mobAt(120, 100, true);
