@@ -151,6 +151,27 @@ public final class AgentLifecycleService {
                                                        String agentName,
                                                        AgentOwnershipService ownershipService,
                                                        SpawnHooks hooks) throws SQLException {
+        return spawnAgentForLeaderAt(
+                leader, agentName, leader.getMap(), leader.getPosition(), ownershipService, hooks, false);
+    }
+
+    public static AgentSpawnResult spawnAgentForLeaderAt(Character leader,
+                                                         String agentName,
+                                                         MapleMap spawnMap,
+                                                         Point desiredSpawnPosition,
+                                                         AgentOwnershipService ownershipService,
+                                                         SpawnHooks hooks) throws SQLException {
+        return spawnAgentForLeaderAt(
+                leader, agentName, spawnMap, desiredSpawnPosition, ownershipService, hooks, true);
+    }
+
+    private static AgentSpawnResult spawnAgentForLeaderAt(Character leader,
+                                                          String agentName,
+                                                          MapleMap spawnMap,
+                                                          Point desiredSpawnPosition,
+                                                          AgentOwnershipService ownershipService,
+                                                          SpawnHooks hooks,
+                                                          boolean changeMapBeforeRegistration) throws SQLException {
         AgentResolvedCharacter resolved = ownershipService.resolveCharacterByName(agentName);
         if (resolved == null) {
             return AgentSpawnResult.fail("No character named '" + agentName + "' exists.");
@@ -171,8 +192,8 @@ public final class AgentLifecycleService {
             return AgentSpawnResult.fail(admission.message());
         }
 
-        MapleMap map = leader.getMap();
-        Point spawnPosition = hooks.resolveSpawnPosition().apply(map, leader.getPosition());
+        MapleMap map = spawnMap;
+        Point spawnPosition = hooks.resolveSpawnPosition().apply(map, desiredSpawnPosition);
         if (resolved.isOnline()) {
             Character agent = resolved.onlineCharacter();
             Character activeLeader = AgentRuntimeRegistry.activeLeaderByAgentCharacterId(agent.getId());
@@ -180,10 +201,13 @@ public final class AgentLifecycleService {
                 return AgentSpawnResult.fail("Bot '" + agentName + "' is controlled by " + activeLeader.getName() + ".");
             }
 
+            if (changeMapBeforeRegistration && agent.getMapId() != map.getId()) {
+                hooks.changeMapToSpawn().change(agent, map, spawnPosition);
+            }
             AgentRuntimeEntry entry = activeLeader == null
                     ? hooks.registerSpawnedAgent().register(leader.getId(), leader, agent)
                     : AgentRuntimeRegistry.findByCharacterId(leader.getId(), agent.getId());
-            if (agent.getMapId() != map.getId()) {
+            if (!changeMapBeforeRegistration && agent.getMapId() != map.getId()) {
                 hooks.changeMapToSpawn().change(agent, map, spawnPosition);
             }
             hooks.placeSpawnedOnlineAgent().place(entry, agent, map, spawnPosition);
@@ -211,6 +235,22 @@ public final class AgentLifecycleService {
                                                              SpawnFailureLogger failureLogger) {
         try {
             return spawnAgentForLeader(leader, agentName, ownershipService, hooks);
+        } catch (SQLException e) {
+            failureLogger.log(agentName, leader, e);
+            return AgentSpawnResult.fail("Failed to load bot character '" + agentName + "'.");
+        }
+    }
+
+    public static AgentSpawnResult spawnAgentForLeaderAtQuietly(Character leader,
+                                                               String agentName,
+                                                               MapleMap spawnMap,
+                                                               Point desiredSpawnPosition,
+                                                               AgentOwnershipService ownershipService,
+                                                               SpawnHooks hooks,
+                                                               SpawnFailureLogger failureLogger) {
+        try {
+            return spawnAgentForLeaderAt(
+                    leader, agentName, spawnMap, desiredSpawnPosition, ownershipService, hooks);
         } catch (SQLException e) {
             failureLogger.log(agentName, leader, e);
             return AgentSpawnResult.fail("Failed to load bot character '" + agentName + "'.");

@@ -440,6 +440,59 @@ class AgentLifecycleServiceTest {
     }
 
     @Test
+    void spawnsOnlineAgentAtExplicitMapInsteadOfLeaderPosition() throws SQLException {
+        Character leader = character(100, "Leader");
+        Character agent = character(200, "Alpha", new BotClient(0, 0));
+        MapleMap leaderMap = mock(MapleMap.class);
+        MapleMap startMap = mock(MapleMap.class);
+        Point leaderPosition = new Point(500, 200);
+        Point desiredStart = new Point(-93, 450);
+        Point resolvedStart = new Point(-93, 451);
+        AgentOwnershipService ownership = mock(AgentOwnershipService.class);
+        AgentRuntimeRegistry.entriesByLeaderId().clear();
+        when(startMap.getId()).thenReturn(10000);
+        when(leader.getMap()).thenReturn(leaderMap);
+        when(leader.getPosition()).thenReturn(leaderPosition);
+        when(agent.getMapId()).thenReturn(999999999);
+        when(ownership.resolveCharacterByName("Alpha")).thenReturn(new AgentResolvedCharacter(200, "Alpha", 1, agent));
+        when(ownership.ensureCanControl(leader, new AgentResolvedCharacter(200, "Alpha", 1, agent)))
+                .thenReturn(AgentAuthorizationResult.allowed(false));
+
+        AgentLifecycleService.AgentSpawnResult result = AgentLifecycleService.spawnAgentForLeaderAt(
+                leader,
+                "Alpha",
+                startMap,
+                desiredStart,
+                ownership,
+                new AgentLifecycleService.SpawnHooks(
+                        (spawnMap, point) -> {
+                            assertSame(startMap, spawnMap);
+                            assertSame(desiredStart, point);
+                            return resolvedStart;
+                        },
+                        (leaderId, resolvedLeader, resolvedAgent) -> {
+                            AgentRuntimeEntry entry = new AgentRuntimeEntry(resolvedAgent, resolvedLeader, null);
+                            AgentRuntimeRegistry.mutableEntriesForLeader(leaderId).add(entry);
+                            return entry;
+                        },
+                        (charId, world, channel, targetMap, desiredPosition) -> {
+                            throw new AssertionError("online spawn should not load offline agent");
+                        },
+                        (entry, placedAgent, spawnMap, position) -> {
+                            assertSame(startMap, spawnMap);
+                            assertSame(resolvedStart, position);
+                        },
+                        entry -> { },
+                        (changedAgent, spawnMap, position) -> {
+                            assertSame(startMap, spawnMap);
+                            assertSame(resolvedStart, position);
+                        }));
+
+        assertTrue(result.success());
+        AgentRuntimeRegistry.entriesByLeaderId().clear();
+    }
+
+    @Test
     void failsWhenOnlineAgentIsControlledByAnotherLeader() throws SQLException {
         Character leader = character(100, "Leader");
         Character otherLeader = character(101, "Other");

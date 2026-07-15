@@ -1,6 +1,6 @@
 package server.agents.plans.amherst;
 
-import server.agents.capabilities.quest.AmherstQuestCatalog;
+import server.agents.capabilities.quest.MapleIslandSouthperryQuestCatalog;
 
 import java.util.List;
 
@@ -17,6 +17,7 @@ public final class AmherstObjectiveFormatter {
         return switch (objective.kind()) {
             case QUEST_START -> "Start " + quest(objective.questId()) + npc(objective.npcId());
             case QUEST_COMPLETE -> "Complete " + quest(objective.questId()) + npc(objective.npcId());
+            case FORCE_COMPLETE_QUEST -> "Force-complete " + quest(objective.questId()) + npc(objective.npcId());
             case QUEST_CHAIN -> "Quest chain " + quests(objective.questIds());
             case QUEST_CHAIN_IF_AVAILABLE -> "Available quest chain " + quests(objective.questIds());
             case USE_ITEM -> "Use item " + objective.itemId() + " for " + quest(objective.questId());
@@ -32,20 +33,22 @@ public final class AmherstObjectiveFormatter {
         return switch (objective.kind()) {
             case QUEST_START, QUEST_COMPLETE, QUEST_CHAIN, QUEST_CHAIN_IF_AVAILABLE ->
                     "navigate, talk to NPC, apply normal quest transition, verify quest state";
+            case FORCE_COMPLETE_QUEST ->
+                    "navigate, talk to NPC, apply explicit plan override, verify quest state";
             case USE_ITEM -> "inspect inventory, use item normally, verify inventory and quest state";
             case KILL_MOBS -> objective.itemIds().isEmpty()
                     ? "verify quest, navigate, fight required mobs, verify kill progress"
                     : "verify quest, navigate, fight required mobs, loot required items, verify progress";
             case REACTOR_HIT, REACTOR_BOX_ITEMS ->
                     "verify quest, approach reactor, hit through its cooldown states, loot normally, verify inventory";
-            case STOP_PLAN -> "relaxer".equalsIgnoreCase(objective.mode())
+            case STOP_PLAN -> objective.mode() != null && objective.mode().toLowerCase().contains("relaxer")
                     ? "reach final map, verify required final state, sit on Relaxer"
                     : "reach final map and verify required final state";
         };
     }
 
     private static String quest(int questId) {
-        return AmherstQuestCatalog.find(questId)
+        return MapleIslandSouthperryQuestCatalog.findAny(questId)
                 .map(definition -> "quest " + questId + " - " + definition.questName())
                 .orElse("quest " + questId);
     }

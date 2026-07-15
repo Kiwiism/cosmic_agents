@@ -41,10 +41,21 @@ public record AmherstPlanCard(
 
     public record ExitCriteria(String completeWhen,
                                int finalMapId,
+                               Set<Integer> startOnlyQuestIds,
                                Set<Integer> blockedCompletedQuestIds,
                                Set<Integer> forbiddenMapIds,
                                Set<Integer> forbiddenNpcIds) {
+        public ExitCriteria(String completeWhen,
+                            int finalMapId,
+                            Set<Integer> blockedCompletedQuestIds,
+                            Set<Integer> forbiddenMapIds,
+                            Set<Integer> forbiddenNpcIds) {
+            this(completeWhen, finalMapId, Set.of(), blockedCompletedQuestIds,
+                    forbiddenMapIds, forbiddenNpcIds);
+        }
+
         public ExitCriteria {
+            startOnlyQuestIds = startOnlyQuestIds == null ? Set.of() : Set.copyOf(startOnlyQuestIds);
             blockedCompletedQuestIds = blockedCompletedQuestIds == null
                     ? Set.of() : Set.copyOf(blockedCompletedQuestIds);
             forbiddenMapIds = forbiddenMapIds == null ? Set.of() : Set.copyOf(forbiddenMapIds);

@@ -294,21 +294,18 @@ runner output. `server.AGENT_AMHERST_INTENTION_CHAT_ENABLED` independently
 controls the Agent's map-chat announcement of the map, NPC, quest name,
 kill/loot target, or reactor action it is about to perform.
 
-`server.AGENT_AMHERST_NPC_INTERACTION_DELAY_MIN_MS` and
-`server.AGENT_AMHERST_NPC_INTERACTION_DELAY_MAX_MS` define a randomized pause
-after the Agent reaches and faces an NPC but before it interacts. Set both to
-`0` for deterministic fast runs. The maximum should remain below the
-30-second child-capability timeout.
-
-`server.AGENT_AMHERST_NEXT_OBJECTIVE_DELAY_MIN_MS` and
-`server.AGENT_AMHERST_NEXT_OBJECTIVE_DELAY_MAX_MS` define a separate randomized
-pause after an automatic objective completes and before the next objective is
-announced and assigned. These values do not add delay to manually authorized
-objectives.
+The assigned `maple-island-quester` behavior profile defines a randomized
+pause after the Agent reaches and faces an NPC but before it interacts. It also
+defines a separate randomized pause after an automatic objective completes and
+before the next objective is announced and assigned. Manual authorization does
+not add the between-objective delay. The executable profile is
+`src/main/resources/agents/profiles/maple-island-quester.profile.json`; use
+zero-valued ranges there for deterministic local timing tests. Delay maximums
+must remain below the 30-second child-capability timeout.
 
 NPC and navigation arrival cannot complete while the Agent is airborne. The
 capability yields to movement physics until the Agent lands, then faces the NPC
-and starts the configured interaction pause.
+and starts the profile-owned interaction pause.
 
 After the final objective equips the Relaxer state, the Amherst plan gate keeps
 ordinary follow and fidget movement from replacing the chair animation. The

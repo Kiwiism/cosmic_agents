@@ -1,6 +1,8 @@
 package server.agents.capabilities.movement;
 
 import client.Character;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentCombatDamageRuntime;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
@@ -9,11 +11,13 @@ import server.maps.Foothold;
 import server.maps.MapleMap;
 
 import java.awt.Point;
+import java.awt.Rectangle;
 
 /**
  * Agent-owned airborne movement integrator.
  */
 public final class AgentAirbornePhysicsService {
+    private static final Logger log = LoggerFactory.getLogger(AgentAirbornePhysicsService.class);
     private static final double CLIENT_GROUND_STEP_MS = 8.0;
     private static final double CLIENT_GROUND_STEP_S = CLIENT_GROUND_STEP_MS / 1000.0;
     private static final double GROUNDSLIP = 3.0;
@@ -22,6 +26,7 @@ public final class AgentAirbornePhysicsService {
     private static final float MAX_FALL_PXS = 670.0f;
     private static final double AIR_STEER_ACCEL = 0.5;
     private static final double AIR_STEER_MAX = 1.5;
+    private static final int BELOW_MAP_RECOVERY_MARGIN_PX = 64;
 
     private AgentAirbornePhysicsService() {
     }
@@ -50,8 +55,38 @@ public final class AgentAirbornePhysicsService {
                     nextPosition.x - previousPosition.x, nextPosition.y - previousPosition.y);
             return AgentAirborneStepResult.LANDED;
         }
+        Point recoveryPoint = belowMapRecoveryPoint(agent.getMap(), nextPosition);
+        if (recoveryPoint != null) {
+            log.warn("Recovered Agent '{}' below map bounds map={} from={} to={}",
+                    agent.getName(), agent.getMapId(), nextPosition, recoveryPoint);
+            AgentMovementPoseService.teleportTo(entry, agent, recoveryPoint);
+            return AgentAirborneStepResult.LANDED;
+        }
         applyAirbornePosition(entry, agent, nextPosition);
         return AgentAirborneStepResult.CONTINUE;
+    }
+
+    static Point belowMapRecoveryPoint(MapleMap map, Point position) {
+        Rectangle area = map == null ? null : map.getMapArea();
+        if (position == null || area == null || area.width <= 0 || area.height <= 0
+                || position.y <= area.y + area.height + BELOW_MAP_RECOVERY_MARGIN_PX) {
+            return null;
+        }
+
+        int recoveryX = Math.clamp(position.x, area.x, area.x + area.width);
+        Point ground = AgentGroundingService.findGroundPoint(map, new Point(recoveryX, area.y));
+        if (ground != null) {
+            return ground;
+        }
+
+        var portal = map.getPortal(0);
+        if (portal == null) {
+            return null;
+        }
+        Point portalPosition = portal.getPosition();
+        ground = AgentGroundingService.findGroundPoint(map,
+                new Point(portalPosition.x, portalPosition.y - 1));
+        return ground != null ? ground : new Point(portalPosition);
     }
 
     public static boolean canLand(AgentRuntimeEntry entry) {

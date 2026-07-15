@@ -56,7 +56,7 @@ class AgentLiveTickGateServiceTest {
                         }));
 
         assertFalse(consumed);
-        assertEquals(List.of("common", "capability", "trade", "idle", "recovery", "mapChange"), calls);
+        assertEquals(List.of("mapChange", "common", "capability", "trade", "idle", "recovery"), calls);
     }
 
     @Test
@@ -101,7 +101,7 @@ class AgentLiveTickGateServiceTest {
                         }));
 
         assertTrue(consumed);
-        assertEquals(List.of("common", "capability", "trade"), calls);
+        assertEquals(List.of("mapChange", "common", "capability", "trade"), calls);
     }
 
     @Test
@@ -128,9 +128,41 @@ class AgentLiveTickGateServiceTest {
                         },
                         (idleEntry, idleAgent) -> false,
                         (recoveryEntry, recoveryAgent, anchor, target) -> false,
-                        (mapEntry, mapAgent) -> false));
+                        (mapEntry, mapAgent) -> {
+                            calls.add("mapChange");
+                            return false;
+                        }));
 
         assertTrue(consumed);
-        assertEquals(List.of("common", "capability"), calls);
+        assertEquals(List.of("mapChange", "common", "capability"), calls);
+    }
+
+    @Test
+    void mapChangeIsGroundedBeforeCapabilityOrPhysicsWork() {
+        Character agent = mock(Character.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        List<String> calls = new ArrayList<>();
+
+        boolean consumed = AgentLiveTickGateService.tickLiveGates(
+                new AgentLiveTickGateService.Context(entry, agent, null, null, new Point(), true),
+                new AgentLiveTickGateService.Hooks(
+                        (commonEntry, commonAgent, commonLeader, runAiTick) -> {
+                            calls.add("common");
+                            return false;
+                        },
+                        (capabilityEntry, capabilityAgent) -> {
+                            calls.add("capability");
+                            return false;
+                        },
+                        (tradeEntry, tradeAgent) -> false,
+                        (idleEntry, idleAgent) -> false,
+                        (recoveryEntry, recoveryAgent, anchor, target) -> false,
+                        (mapEntry, mapAgent) -> {
+                            calls.add("mapChange");
+                            return true;
+                        }));
+
+        assertTrue(consumed);
+        assertEquals(List.of("mapChange"), calls);
     }
 }

@@ -141,6 +141,75 @@ Policy:
 
 Trait values should be `0.0` to `1.0`.
 
+## Presentation Realism Extension
+
+The current schema already gives the profile ownership of reaction timing,
+micro-pauses, and task-switch timing. Maple Island realism should extend that
+ownership instead of keeping one Amherst-specific delay range for every Agent.
+
+Proposed optional section:
+
+```json
+{
+  "presentation": {
+    "mode": "LIGHT",
+    "timing": {
+      "beforeNpcInteractionMs": [600, 1400],
+      "betweenObjectivesMs": [900, 1800],
+      "reactionDelayMs": [350, 900],
+      "microPauseChancePerWindow": 0.08
+    },
+    "npc": {
+      "approachStyle": "crowd-aware-random",
+      "preferredDistancePx": [70, 150],
+      "sideBias": "either",
+      "faceNpcBeforeInteraction": true
+    },
+    "movement": {
+      "style": "opportunistic",
+      "walkingJumpChancePerWindow": 0.08,
+      "backtrackChancePerWindow": 0.02,
+      "crouchChancePerIdleWindow": 0.05,
+      "expressionChancePerIdleWindow": 0.03,
+      "fidgetCooldownMs": [12000, 45000],
+      "maxFidgetDurationMs": 1500,
+      "alternateDropEdgeWeight": 0.35
+    },
+    "encounter": {
+      "style": "attack-if-cheap",
+      "maxEstimatedHits": 3,
+      "maxDetourMs": 1200,
+      "avoidTouchBelowHpPercent": 0.45
+    },
+    "rest": {
+      "style": "reserved-random",
+      "minimumSeparationPx": 32
+    }
+  }
+}
+```
+
+These are decision ranges and preferences, not movement commands. The profile
+runtime samples a bounded preference; the active capability decides whether
+the action is currently safe and executes it through normal server behavior.
+
+Do not use a chance per movement tick. Sample only at named decision windows
+and enforce cooldown, objective-time, distance, and safety budgets. Stable
+identity and run seeds must make choices replayable.
+
+Resolution order:
+
+```text
+deterministic test override
+  -> assigned profile
+  -> archetype/template default
+  -> server fallback
+  -> deterministic fail-safe
+```
+
+The detailed migration and 100-Agent validation plan is recorded in
+`docs/agents/MAPLE_ISLAND_REALISM_AND_100_AGENT_VALIDATION_PLAN.md`.
+
 ## Build Intent
 
 Build intent is the long-term gameplay direction that turns catalog facts into

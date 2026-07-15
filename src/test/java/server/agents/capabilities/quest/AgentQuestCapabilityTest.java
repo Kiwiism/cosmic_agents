@@ -59,10 +59,12 @@ class AgentQuestCapabilityTest {
     @Test
     void completeCapabilityAllowsAutoCompleteWithoutNpc() {
         AgentQuestCompleteCapability capability = new AgentQuestCompleteCapability();
+        AgentQuestRequirement requirement = new AgentQuestRequirement(9001, "auto-complete quest",
+                0, 0, 1, 0, Set.of(), Set.of(), Map.of(), Map.of(), Map.of(), true);
         AgentQuestSnapshot snapshot = new AgentQuestSnapshot(1, 0,
-                Map.of(1030, AgentQuestStatus.STARTED), Map.of(), Map.of(), Map.of());
-        AgentQuestCapabilityRequest request = new AgentQuestCapabilityRequest(1030, 1000000, 0,
-                null, null, 80, snapshot, null, true);
+                Map.of(9001, AgentQuestStatus.STARTED), Map.of(), Map.of(), Map.of());
+        AgentQuestCapabilityRequest request = new AgentQuestCapabilityRequest(9001, 1000000, 0,
+                null, null, 80, snapshot, requirement, false);
 
         AgentQuestCapabilityResult result = capability.plan(request);
 

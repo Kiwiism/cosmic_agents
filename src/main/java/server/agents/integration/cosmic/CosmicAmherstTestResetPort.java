@@ -19,11 +19,14 @@ import server.agents.capabilities.quest.AmherstTestResetMode;
 import server.agents.capabilities.quest.AmherstTestResetPort;
 import server.agents.capabilities.quest.AmherstTestResetRequest;
 import server.agents.capabilities.quest.AmherstTestResetResult;
+import server.agents.capabilities.quest.MapleIslandSouthperryBaseline;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.quest.Quest;
 
 import java.awt.Point;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public enum CosmicAmherstTestResetPort implements AmherstTestResetPort {
     INSTANCE;
@@ -50,7 +53,11 @@ public enum CosmicAmherstTestResetPort implements AmherstTestResetPort {
         clearRuntime(entry, agent);
         clearMapFixtureState(agent);
         if (plan.resetCharacterBaseline()) {
-            agent.resetAmherstTestBaseline();
+            if (plan.seedSouthperryBaseline()) {
+                agent.resetMapleIslandSouthperryBaseline();
+            } else {
+                agent.resetAmherstTestBaseline();
+            }
         }
         if (plan.resetAllAmherstQuests()) {
             resetAmherstQuests(agent);
@@ -61,10 +68,16 @@ public enum CosmicAmherstTestResetPort implements AmherstTestResetPort {
         if (plan.seedAmherstPrerequisites()) {
             seedAmherstPrerequisites(agent);
         }
-        moveTo(entry, agent, plan.targetMapId());
+        if (plan.seedSouthperryBaseline()) {
+            seedSouthperryBaseline(agent);
+            verifySouthperryBaseline(agent);
+        }
+        moveTo(entry, agent, plan.targetMapId(), plan.seedSouthperryBaseline());
         clearMapFixtureState(agent);
         agent.saveCharToDB(false);
-        return AmherstTestResetResult.allowed("Amherst test fixture reset complete");
+        return AmherstTestResetResult.allowed(plan.seedSouthperryBaseline()
+                ? "Maple Island continuation reset complete; captured post-Amherst quest state verified"
+                : "Amherst test fixture reset complete");
     }
 
     private static AgentRuntimeEntry runtimeEntry(Character agent) {
@@ -100,6 +113,34 @@ public enum CosmicAmherstTestResetPort implements AmherstTestResetPort {
         agent.updateQuestStatus(snailHunt);
     }
 
+    private static void seedSouthperryBaseline(Character agent) {
+        MapleIslandSouthperryBaseline.Snapshot baseline = MapleIslandSouthperryBaseline.snapshot();
+        for (Integer questId : baseline.resetQuestIds()) {
+            resetQuest(agent, questId);
+        }
+        for (Integer questId : baseline.completedQuestIds()) {
+            QuestStatus status = new QuestStatus(Quest.getInstance(questId), QuestStatus.Status.COMPLETED);
+            status.setCompleted(1);
+            agent.updateQuestStatus(status);
+        }
+    }
+
+    private static void verifySouthperryBaseline(Character agent) {
+        MapleIslandSouthperryBaseline.Snapshot baseline = MapleIslandSouthperryBaseline.snapshot();
+        Set<Integer> wrongStatus = new LinkedHashSet<>();
+        for (Integer questId : baseline.resetQuestIds()) {
+            int expected = baseline.completedQuestIds().contains(questId)
+                    ? QuestStatus.Status.COMPLETED.getId()
+                    : QuestStatus.Status.NOT_STARTED.getId();
+            if (agent.getQuestStatus(questId) != expected) {
+                wrongStatus.add(questId);
+            }
+        }
+        if (!wrongStatus.isEmpty()) {
+            throw new IllegalStateException("post-Amherst quest reset verification failed for " + wrongStatus);
+        }
+    }
+
     private static void clearKnownQuestItems(Character agent, int questId) {
         int[] itemIds = switch (questId) {
             case 1000, 1001 -> new int[]{4031003};
@@ -131,9 +172,15 @@ public enum CosmicAmherstTestResetPort implements AmherstTestResetPort {
         Quest.getInstance(questId).reset(agent);
     }
 
-    private static void moveTo(AgentRuntimeEntry entry, Character agent, int mapId) {
+    private static void moveTo(AgentRuntimeEntry entry,
+                               Character agent,
+                               int mapId,
+                               boolean useDeterministicStartPortal) {
         var map = CosmicMapGateway.INSTANCE.resolveMap(agent.getWorld(), agent.getClient().getChannel(), mapId);
-        Point spawn = new Point(map.getRandomPlayerSpawnpoint().getPosition());
+        Point spawn = (mapId == AmherstQuestCatalog.START_MAP_ID || useDeterministicStartPortal)
+                && map.getPortal(0) != null
+                ? new Point(map.getPortal(0).getPosition())
+                : new Point(map.getRandomPlayerSpawnpoint().getPosition());
         if (agent.getMapId() != mapId) {
             agent.changeMap(map, spawn);
         } else if (entry != null) {

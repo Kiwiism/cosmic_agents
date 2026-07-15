@@ -15,6 +15,13 @@ agent-interaction-realism
 
 This spec is documentation only until Agent reconstruction is stable.
 
+Scope note: this package owns interaction timing and NPC approach selection.
+Movement fidgets, navigation-edge variation, incidental mob responses, and
+rest-point selection consume the same Agent profile and seed conventions but
+belong to movement, navigation, combat, and plan-stop policy adapters. Their
+staged contract is in
+`docs/agents/MAPLE_ISLAND_REALISM_AND_100_AGENT_VALIDATION_PLAN.md`.
+
 ## Package Boundary
 
 Interaction Realism owns:

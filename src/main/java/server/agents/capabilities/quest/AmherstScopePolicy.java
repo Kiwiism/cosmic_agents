@@ -8,12 +8,24 @@ import java.util.Map;
 import java.util.Set;
 
 public final class AmherstScopePolicy {
-    private static final Set<Integer> ALLOWED_MAP_IDS = Set.of(10000, 20000, 30000, 30001, 40000, 50000, 1000000);
+    private enum Profile {
+        AMHERST,
+        SOUTHPERRY,
+        FULL_MAPLE_ISLAND
+    }
+
+    private static final Set<Integer> AMHERST_MAP_IDS = Set.of(
+            10000, 20000, 30000, 30001, 40000, 50000, 1000000);
+    private static final Set<Integer> SOUTHPERRY_MAP_IDS = Set.of(
+            1000000, 1010000, 1010100, 1010200, 1010300, 1010400, 1020000, 2000000);
+    private static final Set<Integer> FULL_MAPLE_ISLAND_MAP_IDS = Set.of(
+            10000, 20000, 30000, 30001, 40000, 50000, 1000000,
+            1010000, 1010100, 1010200, 1010300, 1010400, 1020000, 2000000);
     private static final Set<Integer> LEGACY_EXCLUDED_QUEST_IDS = Set.of(
             1000, 1001, 1003, 1004, 1005, 1006, 1018, 1025, 1029, 1030, 8031);
     private static final Set<Integer> LATER_MAP_QUEST_IDS = Set.of(1007, 1016, 1017, 1019, 1022, 1026, 1027, 1028,
-            1039, 1040, 1041, 1042, 1043, 1044, 1046, 8020, 8021, 8022, 8023, 8024, 8025, 8142);
-    private static final Map<Integer, Set<Integer>> ROUTE_EDGES = Map.of(
+            1039, 1040, 1041, 1042, 1043, 1044, 1045, 1046, 8020, 8021, 8022, 8023, 8024, 8025, 8142);
+    private static final Map<Integer, Set<Integer>> AMHERST_ROUTE_EDGES = Map.of(
             10000, Set.of(20000),
             20000, Set.of(30000),
             30000, Set.of(30001, 40000),
@@ -21,8 +33,77 @@ public final class AmherstScopePolicy {
             40000, Set.of(50000),
             50000, Set.of(1000000),
             1000000, Set.of(50000));
+    private static final Map<Integer, Set<Integer>> SOUTHPERRY_ROUTE_EDGES = Map.of(
+            1000000, Set.of(1010000),
+            1010000, Set.of(1000000, 1010100, 1010200, 1010300, 1010400, 1020000),
+            1010100, Set.of(1010000),
+            1010200, Set.of(1010000),
+            1010300, Set.of(1010000),
+            1010400, Set.of(1010000),
+            1020000, Set.of(1010000, 2000000),
+            2000000, Set.of(1020000));
+    private static final Map<Integer, Set<Integer>> FULL_MAPLE_ISLAND_ROUTE_EDGES = Map.ofEntries(
+            Map.entry(10000, Set.of(20000)),
+            Map.entry(20000, Set.of(30000)),
+            Map.entry(30000, Set.of(30001, 40000)),
+            Map.entry(30001, Set.of(30000)),
+            Map.entry(40000, Set.of(50000)),
+            Map.entry(50000, Set.of(1000000)),
+            Map.entry(1000000, Set.of(50000, 1010000)),
+            Map.entry(1010000, Set.of(1000000, 1010100, 1010200, 1010300, 1010400, 1020000)),
+            Map.entry(1010100, Set.of(1010000)),
+            Map.entry(1010200, Set.of(1010000)),
+            Map.entry(1010300, Set.of(1010000)),
+            Map.entry(1010400, Set.of(1010000)),
+            Map.entry(1020000, Set.of(1010000, 2000000)),
+            Map.entry(2000000, Set.of(1020000)));
+
+    private final Profile profile;
+
+    public AmherstScopePolicy() {
+        this(Profile.AMHERST);
+    }
+
+    private AmherstScopePolicy(Profile profile) {
+        this.profile = profile;
+    }
+
+    public static AmherstScopePolicy southperry() {
+        return new AmherstScopePolicy(Profile.SOUTHPERRY);
+    }
+
+    public static AmherstScopePolicy fullMapleIsland() {
+        return new AmherstScopePolicy(Profile.FULL_MAPLE_ISLAND);
+    }
 
     public AmherstScopeDecision checkQuest(int questId) {
+        if (profile == Profile.FULL_MAPLE_ISLAND) {
+            if (AmherstQuestCatalog.isRequiredQuest(questId)
+                    || MapleIslandSouthperryQuestCatalog.isRequiredQuest(questId)) {
+                return AmherstScopeDecision.allow();
+            }
+            if (questId == MapleIslandSouthperryQuestCatalog.FORBIDDEN_SHANKS_QUEST_ID) {
+                return AmherstScopeDecision.block(AgentCapabilityStatus.BLOCKED_FORBIDDEN_QUEST,
+                        "Shanks travel quest must remain incomplete in the Maple Island MVP");
+            }
+            return AmherstScopeDecision.block(AgentCapabilityStatus.BLOCKED_BY_SCOPE,
+                    "quest is not part of the combined Maple Island MVP catalog");
+        }
+        if (profile == Profile.SOUTHPERRY) {
+            if (MapleIslandSouthperryQuestCatalog.isRequiredQuest(questId)) {
+                return AmherstScopeDecision.allow();
+            }
+            if (questId == MapleIslandSouthperryQuestCatalog.FORBIDDEN_SHANKS_QUEST_ID) {
+                return AmherstScopeDecision.block(AgentCapabilityStatus.BLOCKED_FORBIDDEN_QUEST,
+                        "Shanks travel quest must remain incomplete in the Southperry MVP");
+            }
+            if (questId == MapleIslandSouthperryQuestCatalog.BIGGS_COLLECTION_QUEST_ID) {
+                return AmherstScopeDecision.block(AgentCapabilityStatus.BLOCKED_BY_SCOPE,
+                        "Biggs's Collection is unavailable from the captured female starter baseline");
+            }
+            return AmherstScopeDecision.block(AgentCapabilityStatus.BLOCKED_BY_SCOPE,
+                    "quest is not part of the Southperry MVP catalog");
+        }
         if (AmherstQuestCatalog.isRequiredQuest(questId)) {
             return AmherstScopeDecision.allow();
         }
@@ -39,16 +120,21 @@ public final class AmherstScopePolicy {
     }
 
     public AmherstScopeDecision checkMap(int mapId) {
-        if (ALLOWED_MAP_IDS.contains(mapId)) {
+        if (allowedMapIds().contains(mapId)) {
             return AmherstScopeDecision.allow();
         }
         return AmherstScopeDecision.block(AgentCapabilityStatus.BLOCKED_FORBIDDEN_MAP,
-                "map is outside the begin-to-Amherst sub-phase route");
+                switch (profile) {
+                    case AMHERST -> "map is outside the begin-to-Amherst sub-phase route";
+                    case SOUTHPERRY -> "map is outside the Amherst-to-Southperry MVP route";
+                    case FULL_MAPLE_ISLAND -> "map is outside the begin-to-Southperry MVP route";
+                });
     }
 
     public Integer nextHopMap(int sourceMapId, int destinationMapId) {
-        if (sourceMapId == destinationMapId || !ALLOWED_MAP_IDS.contains(sourceMapId)
-                || !ALLOWED_MAP_IDS.contains(destinationMapId)) {
+        Set<Integer> allowedMapIds = allowedMapIds();
+        if (sourceMapId == destinationMapId || !allowedMapIds.contains(sourceMapId)
+                || !allowedMapIds.contains(destinationMapId)) {
             return null;
         }
         ArrayDeque<Integer> queue = new ArrayDeque<>();
@@ -57,7 +143,7 @@ public final class AmherstScopePolicy {
         previous.put(sourceMapId, sourceMapId);
         while (!queue.isEmpty() && !previous.containsKey(destinationMapId)) {
             int current = queue.removeFirst();
-            for (Integer next : ROUTE_EDGES.getOrDefault(current, Set.of())) {
+            for (Integer next : routeEdges().getOrDefault(current, Set.of())) {
                 if (!previous.containsKey(next)) {
                     previous.put(next, current);
                     queue.addLast(next);
@@ -75,10 +161,42 @@ public final class AmherstScopePolicy {
     }
 
     public AmherstScopeDecision checkNpcTravel(int npcId) {
-        if (npcId == AmherstQuestCatalog.SHANKS_NPC_ID) {
+        if (profile == Profile.AMHERST && npcId == AmherstQuestCatalog.SHANKS_NPC_ID) {
             return AmherstScopeDecision.block(AgentCapabilityStatus.BLOCKED_FORBIDDEN_NPC,
                     "Shanks travel would leave Maple Island and is forbidden for this sub-phase");
         }
         return AmherstScopeDecision.allow();
+    }
+
+    public AmherstScopeDecision checkNpcTransport(int npcId) {
+        if (npcId == AmherstQuestCatalog.SHANKS_NPC_ID) {
+            return AmherstScopeDecision.block(AgentCapabilityStatus.BLOCKED_FORBIDDEN_NPC,
+                    "Shanks transport off Maple Island is forbidden");
+        }
+        return AmherstScopeDecision.allow();
+    }
+
+    public Integer scriptedPortalId(int sourceMapId, int destinationMapId) {
+        if (profile != Profile.AMHERST && sourceMapId == 1010000
+                && Set.of(1010100, 1010200, 1010300, 1010400).contains(destinationMapId)) {
+            return 1;
+        }
+        return null;
+    }
+
+    private Set<Integer> allowedMapIds() {
+        return switch (profile) {
+            case AMHERST -> AMHERST_MAP_IDS;
+            case SOUTHPERRY -> SOUTHPERRY_MAP_IDS;
+            case FULL_MAPLE_ISLAND -> FULL_MAPLE_ISLAND_MAP_IDS;
+        };
+    }
+
+    private Map<Integer, Set<Integer>> routeEdges() {
+        return switch (profile) {
+            case AMHERST -> AMHERST_ROUTE_EDGES;
+            case SOUTHPERRY -> SOUTHPERRY_ROUTE_EDGES;
+            case FULL_MAPLE_ISLAND -> FULL_MAPLE_ISLAND_ROUTE_EDGES;
+        };
     }
 }

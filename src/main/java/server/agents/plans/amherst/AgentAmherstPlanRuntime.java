@@ -2,7 +2,10 @@ package server.agents.plans.amherst;
 
 import client.Character;
 import server.agents.capabilities.runtime.AgentCapabilityRuntime;
+import server.agents.capabilities.movement.AgentRelaxerSpotReservationRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.profiles.AgentBehaviorProfileRuntime;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -16,7 +19,8 @@ public final class AgentAmherstPlanRuntime {
 
     public static void startDefault(AgentRuntimeEntry entry, Character agent, long nowMs) throws IOException,
             AmherstPlanValidationException {
-        AmherstPlanRuntimeRunner runner = defaultRunner(defaultCard());
+        AgentBehaviorProfileRuntime.assignMapleIslandQuester(entry);
+        AmherstPlanRuntimeRunner runner = defaultRunner(defaultCard(), entry);
         runner.start(entry, agent, nowMs);
     }
 
@@ -24,7 +28,8 @@ public final class AgentAmherstPlanRuntime {
                                    Character agent,
                                    long nowMs,
                                    AmherstPlanObserver observer) throws IOException, AmherstPlanValidationException {
-        AmherstPlanRuntimeRunner runner = defaultRunner(defaultCard());
+        AgentBehaviorProfileRuntime.assignMapleIslandQuester(entry);
+        AmherstPlanRuntimeRunner runner = defaultRunner(defaultCard(), entry);
         runner.start(entry, agent, nowMs, AmherstPlanExecutionMode.MANUAL, observer);
     }
 
@@ -32,7 +37,8 @@ public final class AgentAmherstPlanRuntime {
                                  Character agent,
                                  long nowMs,
                                  AmherstPlanObserver observer) throws IOException, AmherstPlanValidationException {
-        AmherstPlanRuntimeRunner runner = defaultRunner(defaultCard());
+        AgentBehaviorProfileRuntime.assignMapleIslandQuester(entry);
+        AmherstPlanRuntimeRunner runner = defaultRunner(defaultCard(), entry);
         runner.start(entry, agent, nowMs, AmherstPlanExecutionMode.AUTO, observer);
     }
 
@@ -68,6 +74,10 @@ public final class AgentAmherstPlanRuntime {
         if (runner != null) {
             runner.cancel(entry);
         }
+        Character agent = AgentRuntimeIdentityRuntime.bot(entry);
+        if (agent != null && agent.getChair() <= 0) {
+            AgentRelaxerSpotReservationRuntime.release(agent.getId());
+        }
     }
 
     public static boolean requestNext(AgentRuntimeEntry entry) {
@@ -90,10 +100,12 @@ public final class AgentAmherstPlanRuntime {
         return true;
     }
 
-    private static AmherstPlanRuntimeRunner defaultRunner(AmherstPlanCard card) {
+    private static AmherstPlanRuntimeRunner defaultRunner(AmherstPlanCard card, AgentRuntimeEntry entry) {
         return new AmherstPlanRuntimeRunner(card,
                 defaultStore(), new AmherstPlanProgressService(),
-                new AmherstObjectiveReconciler(), new AmherstObjectiveHandlerRegistry(),
-                AmherstObjectiveDelay.configured());
+                new AmherstObjectiveReconciler(), new AmherstObjectiveHandlerRegistry(
+                        server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime.gateway(),
+                        server.agents.capabilities.objective.AmherstNpcInteractionDelay.profile(entry)),
+                AmherstObjectiveDelay.profile(entry));
     }
 }

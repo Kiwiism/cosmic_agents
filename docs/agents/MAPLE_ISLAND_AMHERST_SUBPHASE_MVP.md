@@ -219,6 +219,10 @@ within 60 px, broadcasts a normal weapon swing, waits for the reactor hit
 cooldown, and repeats until the box breaks. Quest `1008` requires one Old
 Wooden Board `4031161` and one Old Screw `4031162`; one box may drop both.
 Completing `1020` awards Relaxer `3010000`, which the final objective uses.
+The final objective selects one of 117 pre-cataloged Amherst foothold
+positions at random. The reservation is exclusive to the Agent character id
+until it stands, resets, is removed, or cancels before seating, preventing
+active Agents from being assigned the same rest destination.
 The completed plan retains the seated state instead of allowing the next
 ordinary movement tick to replace the chair animation. NPC objectives face the
 Agent toward the live NPC position and use the configured randomized

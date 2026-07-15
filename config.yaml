@@ -279,12 +279,10 @@ server:
     AGENT_LEGACY_DIALOGUE_ENABLED: false #Experimental Agent plans narrate objectives; suppress NuTNNuT-era Agent chatter.
     AGENT_AMHERST_DEBUG_MESSAGES_ENABLED: false #Show detailed yellow Amherst capability and objective progress messages.
     AGENT_AMHERST_INTENTION_CHAT_ENABLED: true #Let the Agent announce its next Amherst action in map chat.
-    AGENT_AMHERST_NPC_INTERACTION_DELAY_MIN_MS: 600 #Minimum pause after facing an NPC before interacting; set both delays to 0 to disable.
-    AGENT_AMHERST_NPC_INTERACTION_DELAY_MAX_MS: 1400 #Maximum randomized NPC interaction pause; keep below the 30-second capability timeout.
-    AGENT_AMHERST_NEXT_OBJECTIVE_DELAY_MIN_MS: 900 #Minimum pause after one objective completes before the next begins.
-    AGENT_AMHERST_NEXT_OBJECTIVE_DELAY_MAX_MS: 1800 #Maximum randomized pause between automatic Amherst objectives; set both to 0 to disable.
     AGENT_AMHERST_SHOWCASE_ENABLED: true #Allow the guarded one-command Amherst showcase run.
     AGENT_AMHERST_SHOWCASE_AGENT_NAME: AmherstRun #Only this Agent IGN may use the showcase reset path.
+    AGENT_MAPLE_ISLAND_SHOWCASE_ENABLED: true #Allow the guarded one-command Amherst-to-Southperry run.
+    AGENT_MAPLE_ISLAND_SHOWCASE_AGENT_NAME: AmherstRun #Only this Agent IGN may use the Southperry showcase reset path.
 
     #Events/PQs Configuration
     USE_OLD_GMS_STYLED_PQ_NPCS: true     #Enables PQ NPCs with similar behaviour to old GMS style, that skips info about the PQs and immediately tries to register the party in.

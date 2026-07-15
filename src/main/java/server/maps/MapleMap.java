@@ -70,6 +70,9 @@ import server.life.PlayerNPC;
 import server.life.SpawnPoint;
 import server.integration.AgentPresence;
 import server.monitoring.MapBroadcastDiagnostics;
+import server.maps.reservation.CharacterSpaceOwner;
+import server.maps.reservation.CharacterSpaceReservationRuntime;
+import server.maps.reservation.FreeMarketTestMerchant;
 import server.partyquest.CarnivalFactory;
 import server.partyquest.CarnivalFactory.MCSkill;
 import server.partyquest.GuardianSpawnPoint;
@@ -500,11 +503,22 @@ public class MapleMap {
     }
 
     public void removeMapObject(int num) {
+        MapObject removed;
         objectWLock.lock();
         try {
-            this.mapobjects.remove(num);
+            removed = this.mapobjects.remove(num);
         } finally {
             objectWLock.unlock();
+        }
+        if (removed instanceof FreeMarketTestMerchant testMerchant) {
+            CharacterSpaceReservationRuntime.release(
+                    CharacterSpaceOwner.testStall(testMerchant.getOwnerId()));
+        } else if (removed instanceof PlayerShop shop) {
+            CharacterSpaceReservationRuntime.release(
+                    CharacterSpaceOwner.character(shop.getOwner().getId()));
+        } else if (removed instanceof HiredMerchant merchant && merchant.getOwnerId() > 0) {
+            CharacterSpaceReservationRuntime.release(
+                    CharacterSpaceOwner.character(merchant.getOwnerId()));
         }
     }
 

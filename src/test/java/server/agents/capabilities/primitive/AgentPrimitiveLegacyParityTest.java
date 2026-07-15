@@ -65,6 +65,7 @@ class AgentPrimitiveLegacyParityTest {
 
         PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
         when(gateway.alive(agent)).thenReturn(true);
+        when(gateway.grounded(agent)).thenReturn(true);
         when(gateway.questProgress(agent, 1037, 100100)).thenReturn(0);
         when(gateway.liveMonsterCount(agent, Set.of(100100))).thenReturn(1);
         doAnswer(invocation -> {

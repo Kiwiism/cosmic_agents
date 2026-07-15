@@ -9,7 +9,9 @@ import server.agents.runtime.AgentRegistrationCoordinator;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentSpawnPlacementCoordinator;
 import server.agents.runtime.AgentSpawnPositionService;
+import server.maps.MapleMap;
 
+import java.awt.Point;
 import java.util.function.Consumer;
 
 /**
@@ -50,6 +52,31 @@ public final class CosmicAgentSpawnCoordinator {
         return AgentLifecycleService.spawnAgentForLeaderQuietly(
                 leader,
                 agentName,
+                AgentOwnershipService.getInstance(),
+                new AgentLifecycleService.SpawnHooks(
+                        AgentSpawnPositionService::resolveSpawnPosition,
+                        registerSpawnedAgent,
+                        CosmicAgentOfflineLoader::loadOfflineAgent,
+                        AgentSpawnPlacementCoordinator::placeSpawnedOnlineAgent,
+                        startFollowLeader,
+                        AgentMapGatewayRuntime.map()::changeMapNear),
+                (failedAgentName, failedLeader, e) -> log.warn(
+                        "Failed to load bot character '{}' for owner '{}'", failedAgentName, failedLeader.getName(), e));
+    }
+
+    public static AgentLifecycleService.AgentSpawnResult spawnAgentForLeaderAt(
+            Character leader,
+            String agentName,
+            MapleMap spawnMap,
+            Point spawnPosition,
+            AgentLifecycleService.RegisterSpawnedAgent registerSpawnedAgent,
+            Consumer<AgentRuntimeEntry> startFollowLeader,
+            Logger log) {
+        return AgentLifecycleService.spawnAgentForLeaderAtQuietly(
+                leader,
+                agentName,
+                spawnMap,
+                spawnPosition,
                 AgentOwnershipService.getInstance(),
                 new AgentLifecycleService.SpawnHooks(
                         AgentSpawnPositionService::resolveSpawnPosition,

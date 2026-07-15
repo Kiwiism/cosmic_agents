@@ -13,12 +13,15 @@ import server.agents.runtime.async.AgentAsyncTaskGateway;
 import server.agents.runtime.async.AgentAsyncWorkKind;
 import server.agents.runtime.scheduler.AgentSchedulerConfig;
 import server.agents.runtime.scheduler.AgentSchedulerMode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.List;
 
 public final class AmherstPlanRuntimeRunner {
+    private static final Logger log = LoggerFactory.getLogger(AmherstPlanRuntimeRunner.class);
     private final AmherstPlanCard card;
     private final AmherstPlanProgressStore store;
     private final AmherstPlanProgressService progressService;
@@ -300,6 +303,11 @@ public final class AmherstPlanRuntimeRunner {
         publish(state, "Agent progress: Lv" + state.objectiveStartLevel + " EXP " + state.objectiveStartExp
                 + " -> Lv" + agent.getLevel() + " EXP " + agent.getExp() + ".");
         publish(state, progressSummary(state.progress));
+        if (result.status() != AgentCapabilityStatus.SUCCESS) {
+            log.warn("Agent plan objective failed agent={} map={} objective={} status={} reason={} message={}",
+                    agent.getName(), agent.getMapId(), objective.objectiveId(), result.status(),
+                    result.reasonCode(), result.message());
+        }
         if (result.status() != AgentCapabilityStatus.SUCCESS
                 && state.mode != AmherstPlanExecutionMode.MANUAL) {
             state.active = false;

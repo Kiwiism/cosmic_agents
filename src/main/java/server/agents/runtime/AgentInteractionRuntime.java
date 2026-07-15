@@ -9,6 +9,9 @@ import server.agents.capabilities.dialogue.AgentChatRouteCoordinator;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
 import server.agents.integration.cosmic.CosmicAgentSpawnCoordinator;
 import server.agents.integration.cosmic.CosmicAgentReloginCoordinator;
+import server.maps.MapleMap;
+
+import java.awt.Point;
 
 /**
  * Agent-owned public runtime entry points for server integrations that still
@@ -61,6 +64,21 @@ public final class AgentInteractionRuntime {
         return CosmicAgentSpawnCoordinator.spawnAgentForLeader(
                 leader,
                 agentName,
+                registerStationaryAgent,
+                entry -> { },
+                log);
+    }
+
+    public static AgentLifecycleService.AgentSpawnResult spawnStationaryAgentForLeaderAt(
+            Character leader, String agentName, MapleMap spawnMap, Point spawnPosition) {
+        AgentLifecycleService.RegisterSpawnedAgent registerStationaryAgent =
+                (leaderCharId, spawnLeader, agent) -> AgentRegistrationCoordinator.registerStationarySpawnedAgent(
+                        leaderCharId, spawnLeader, agent, AgentInteractionRuntime::tick);
+        return CosmicAgentSpawnCoordinator.spawnAgentForLeaderAt(
+                leader,
+                agentName,
+                spawnMap,
+                spawnPosition,
                 registerStationaryAgent,
                 entry -> { },
                 log);

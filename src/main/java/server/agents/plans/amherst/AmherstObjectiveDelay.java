@@ -1,8 +1,7 @@
 package server.agents.plans.amherst;
 
-import config.YamlConfig;
-
-import java.util.concurrent.ThreadLocalRandom;
+import server.agents.profiles.AgentBehaviorProfileRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 
 @FunctionalInterface
 public interface AmherstObjectiveDelay {
@@ -10,16 +9,7 @@ public interface AmherstObjectiveDelay {
 
     long nextDelayMs();
 
-    static AmherstObjectiveDelay configured() {
-        return () -> {
-            int configuredMin = YamlConfig.config.server.AGENT_AMHERST_NEXT_OBJECTIVE_DELAY_MIN_MS;
-            int configuredMax = YamlConfig.config.server.AGENT_AMHERST_NEXT_OBJECTIVE_DELAY_MAX_MS;
-            int min = Math.max(0, configuredMin);
-            int max = Math.max(min, configuredMax);
-            if (max == 0) {
-                return 0L;
-            }
-            return ThreadLocalRandom.current().nextLong(min, (long) max + 1L);
-        };
+    static AmherstObjectiveDelay profile(AgentRuntimeEntry entry) {
+        return () -> AgentBehaviorProfileRuntime.sampleBetweenObjectivesDelayMs(entry);
     }
 }

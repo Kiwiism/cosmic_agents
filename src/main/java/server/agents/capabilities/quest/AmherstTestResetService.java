@@ -22,6 +22,11 @@ public final class AmherstTestResetService {
         String agentName = YamlConfig.config.server.AGENT_AMHERST_SHOWCASE_AGENT_NAME;
         boolean enabled = YamlConfig.config.server.AGENT_AMHERST_SHOWCASE_ENABLED
                 && agentName != null && !agentName.isBlank();
+        return showcaseHarness(enabled, agentName);
+    }
+
+    public static AmherstTestResetHarness showcaseHarness(boolean enabled, String agentName) {
+        enabled = enabled && agentName != null && !agentName.isBlank();
         return new GuardedAmherstTestResetHarness(
                 enabled,
                 Set.of(),

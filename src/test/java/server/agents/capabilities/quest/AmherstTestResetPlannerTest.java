@@ -42,6 +42,19 @@ class AmherstTestResetPlannerTest {
         assertTrue(plan.resetCharacterBaseline());
         assertTrue(plan.resetAllAmherstQuests());
         assertTrue(plan.seedAmherstPrerequisites());
+        assertFalse(plan.seedSouthperryBaseline());
+    }
+
+    @Test
+    void southperryMvpStartsFromCapturedPostAmherstBaseline() {
+        AmherstTestResetPlan plan = planner.plan(new AmherstTestResetRequest(
+                1, "AmherstRun", AmherstTestResetMode.SOUTHPERRY_MVP_START, 0));
+
+        assertEquals(1000000, plan.targetMapId());
+        assertTrue(plan.resetCharacterBaseline());
+        assertTrue(plan.resetAllAmherstQuests());
+        assertFalse(plan.seedAmherstPrerequisites());
+        assertTrue(plan.seedSouthperryBaseline());
     }
 
     @Test

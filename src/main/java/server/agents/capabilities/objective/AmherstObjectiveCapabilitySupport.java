@@ -30,6 +30,7 @@ import java.util.Set;
 
 final class AmherstObjectiveCapabilitySupport {
     static final long CHILD_TIMEOUT_MS = 30_000L;
+    static final long COMBAT_TIMEOUT_MS = 180_000L;
     static final long PORTAL_TIMEOUT_MS = 90_000L;
     static final int CHILD_RETRIES = 2;
     static final int NPC_RANGE_PX = AgentNpcInteractionPolicy.DEFAULT_CLICK_RANGE_PX;
@@ -41,7 +42,7 @@ final class AmherstObjectiveCapabilitySupport {
 
     AmherstObjectiveCapabilitySupport() {
         this(AgentPrimitiveCapabilityGatewayRuntime.gateway(), new AmherstScopePolicy(),
-                AmherstNpcInteractionDelay.configured());
+                AmherstNpcInteractionDelay.NONE);
     }
 
     AmherstObjectiveCapabilitySupport(PrimitiveCapabilityGateway gateway) {
@@ -89,6 +90,9 @@ final class AmherstObjectiveCapabilitySupport {
             }
             portalId = gateway.directPortalIdTo(context.agent(), nextHopMapId);
             if (portalId == null) {
+                portalId = scopePolicy.scriptedPortalId(sourceMapId, nextHopMapId);
+            }
+            if (portalId == null) {
                 return blocked(AgentCapabilityStatus.BLOCKED_FORBIDDEN_MAP,
                         "expected in-scope portal to map " + nextHopMapId + " is unavailable");
             }
@@ -124,6 +128,25 @@ final class AmherstObjectiveCapabilitySupport {
         return AgentCapabilityStep.handoff(invocation(new AgentNavigationCapability(gateway),
                 new AgentNavigationCapability.Command(mapId, npcPosition, NPC_RANGE_PX, true)),
                 "objective requests navigation to NPC");
+    }
+
+    AgentCapabilityStep approachPosition(AgentCapabilityContext context,
+                                         int mapId,
+                                         Point destination,
+                                         int arrivalRangePx) {
+        AgentCapabilityStep travel = travel(context, mapId);
+        if (travel != null) {
+            return travel;
+        }
+        if (gateway.position(context.agent()).distanceSq(destination)
+                <= (long) arrivalRangePx * arrivalRangePx) {
+            return gateway.grounded(context.agent())
+                    ? null
+                    : AgentCapabilityStep.running("waiting to land at destination", false);
+        }
+        return AgentCapabilityStep.handoff(invocation(new AgentNavigationCapability(gateway),
+                new AgentNavigationCapability.Command(mapId, destination, arrivalRangePx, true)),
+                "objective requests navigation to field position");
     }
 
     boolean waitForNpcInteraction(AgentCapabilityContext context, int operationIndex) {
@@ -190,7 +213,14 @@ final class AmherstObjectiveCapabilitySupport {
     }
 
     AgentCapabilityInvocation<?> combat(int questId, Map<Integer, Integer> kills) {
-        return invocation(new AgentCombatCapability(gateway), new AgentCombatCapability.Command(questId, kills));
+        return combat(questId, kills, Map.of());
+    }
+
+    AgentCapabilityInvocation<?> combat(int questId,
+                                        Map<Integer, Integer> kills,
+                                        Map<Integer, Integer> loot) {
+        return invocation(new AgentCombatCapability(gateway),
+                new AgentCombatCapability.Command(questId, kills, loot), COMBAT_TIMEOUT_MS);
     }
 
     AgentCapabilityInvocation<?> reactor(int mapId,
@@ -207,7 +237,7 @@ final class AmherstObjectiveCapabilitySupport {
 
     AgentCapabilityInvocation<?> loot(Map<Integer, Integer> items) {
         return invocation(new AgentLootCapability(gateway),
-                new AgentLootCapability.Command(items, AgentLootCapability.ProtectionPolicy.QUEST_ITEMS_ONLY));
+                new AgentLootCapability.Command(items, AgentLootCapability.ProtectionPolicy.ANY_REQUIRED_ITEM));
     }
 
     AgentCapabilityInvocation<?> finalState(int mapId,

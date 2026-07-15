@@ -100,8 +100,9 @@ import scripting.AbstractPlayerInteraction;
 import scripting.event.EventInstanceManager;
 import scripting.item.ItemScriptManager;
 import server.agents.capabilities.quest.AgentPartyQuestSyncService;
-import server.agents.integration.cosmic.CosmicAgentPotionCheckRequestBridge;
+import server.agents.capabilities.quest.MapleIslandSouthperryBaseline;
 import server.agents.capabilities.trade.AgentOwnerItemNotificationService;
+import server.agents.integration.cosmic.CosmicAgentPotionCheckRequestBridge;
 import server.agents.runtime.AgentRuntimeCleanupService;
 import server.CashShop;
 import server.ExpLogger;
@@ -9723,6 +9724,75 @@ public class Character extends AbstractCharacterObject {
             for (Item item : baselineEquipment) {
                 equipped.addItemFromDB(item);
             }
+            recalcLocalStats();
+            markPersistenceDirty(PersistenceSection.STATS);
+            markPersistenceDirty(PersistenceSection.SKILLS);
+            markPersistenceDirty(PersistenceSection.INVENTORY);
+        } finally {
+            statWlock.unlock();
+            effLock.unlock();
+        }
+    }
+
+    /** Test-fixture mutation restoring AmherstRun immediately after the validated Amherst MVP. */
+    public synchronized void resetMapleIslandSouthperryBaseline() {
+        MapleIslandSouthperryBaseline.Snapshot baseline = MapleIslandSouthperryBaseline.snapshot();
+        MapleIslandSouthperryBaseline.CharacterState state = baseline.character();
+        sitChair(-1);
+        cancelAllBuffs(false);
+        dispelDebuffs();
+        effLock.lock();
+        statWlock.lock();
+        try {
+            job = Job.getById(state.jobId());
+            level = state.level();
+            exp.set(state.exp());
+            allowExpGain = true;
+            gachaexp.set(0);
+            str = state.str();
+            dex = state.dex();
+            int_ = state.intelligence();
+            luk = state.luk();
+            remainingAp = state.remainingAp();
+            Arrays.fill(remainingSp, 0);
+            int[] baselineSp = state.remainingSp();
+            System.arraycopy(baselineSp, 0, remainingSp, 0, Math.min(baselineSp.length, remainingSp.length));
+            hpMpApUsed = 0;
+            maxhp = state.maxHp();
+            maxmp = state.maxMp();
+            hp = state.hp();
+            mp = state.mp();
+            meso.set(state.mesos());
+            skinColor = SkinColor.getById(state.skinColorId());
+            gender = state.gender();
+            hair = state.hair();
+            face = state.face();
+            skills.clear();
+            removeAllCooldownsExcept(-1, false);
+
+            for (InventoryType type : InventoryType.values()) {
+                if (type == InventoryType.UNDEFINED || type == InventoryType.CANHOLD) {
+                    continue;
+                }
+                Inventory current = getInventory(type);
+                setInventory(type, new Inventory(this, type, current.getSlotLimit()));
+            }
+
+            for (MapleIslandSouthperryBaseline.ItemState itemState : baseline.items()) {
+                InventoryType inventoryType = InventoryType.valueOf(itemState.inventoryType());
+                Item item;
+                if (ItemConstants.isEquipment(itemState.itemId())) {
+                    item = ItemInformationProvider.getInstance().getEquipById(itemState.itemId());
+                    if (item == null) {
+                        throw new IllegalStateException("missing baseline equipment " + itemState.itemId());
+                    }
+                    item.setPosition(itemState.position());
+                } else {
+                    item = new Item(itemState.itemId(), itemState.position(), itemState.quantity());
+                }
+                getInventory(inventoryType).addItemFromDB(item);
+            }
+
             recalcLocalStats();
             markPersistenceDirty(PersistenceSection.STATS);
             markPersistenceDirty(PersistenceSection.SKILLS);

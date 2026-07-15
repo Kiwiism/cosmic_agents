@@ -1,0 +1,154 @@
+{
+  "schemaVersion": 1,
+  "planId": "maple-island-southperry-mvp",
+  "title": "Maple Island Southperry MVP",
+  "category": "questline",
+  "priority": "high",
+  "status": "draft",
+  "objectiveMode": "ordered-with-live-quest-validation",
+  "focusPolicy": {
+    "focusLevel": "locked",
+    "allowSidetracks": false,
+    "allowedSidetrackTypes": ["emergency"],
+    "returnToPlan": "always"
+  },
+  "entryCriteria": {
+    "requiredStartMapId": 1000000,
+    "requiredRegion": "maple-island",
+    "requiredCharacterState": "captured-post-amherst-baseline"
+  },
+  "exitCriteria": {
+    "completeWhen": "all-selected-quests-and-southperry-arrival-verified",
+    "finalMapId": 2000000,
+    "startOnlyQuestIds": [1046],
+    "blockedCompletedQuestIds": [1028],
+    "forbiddenActions": [
+      {
+        "type": "npc-travel",
+        "npcId": 22000,
+        "npcName": "Shanks",
+        "reason": "Quest interaction is allowed, but transport off Maple Island is forbidden."
+      },
+      {
+        "type": "map-travel",
+        "mapId": 104000000,
+        "reason": "Lith Harbor is outside the Southperry MVP."
+      }
+    ]
+  },
+  "questPolicy": {
+    "requiredQuestIds": [1039, 1040, 1041, 1042, 1043, 1044, 1045, 1046, 8020, 8021, 8022, 8023, 8024, 8025],
+    "excludedQuestIds": [
+      1007, 1016, 1017, 1019, 1022, 1025, 1026, 1027, 1028,
+      1029, 1030, 8031
+    ]
+  },
+  "route": [
+    {
+      "mapId": 1000000,
+      "label": "Amherst",
+      "objectives": [
+        { "kind": "quest-start", "questId": 1040, "npcId": 12000 }
+      ]
+    },
+    {
+      "mapId": 1010000,
+      "label": "Entrance to Adventurer Training Center",
+      "objectives": [
+        { "kind": "quest-start", "questId": 1039, "npcId": 20100 },
+        { "kind": "kill-mobs", "forQuestId": 1039, "mobIds": [100101, 120100], "counts": [10, 10] },
+        { "kind": "quest-complete", "questId": 1039, "npcId": 20100 },
+        { "kind": "force-complete-quest", "questId": 8020, "npcId": 20100 },
+        { "kind": "force-complete-quest", "questId": 8021, "npcId": 20100 },
+        { "kind": "force-complete-quest", "questId": 8022, "npcId": 20100 },
+        { "kind": "force-complete-quest", "questId": 8023, "npcId": 20100 },
+        { "kind": "force-complete-quest", "questId": 8024, "npcId": 20100 },
+        { "kind": "force-complete-quest", "questId": 8025, "npcId": 20100 },
+        { "kind": "quest-start", "questId": 1041, "npcId": 12100 }
+      ]
+    },
+    {
+      "mapId": 1010100,
+      "label": "Mai's First Training Ground",
+      "objectives": [
+        { "kind": "kill-mobs", "forQuestId": 1041, "mobIds": [130100], "counts": [5], "itemIds": [4000003, 4000003, 4000003] }
+      ]
+    },
+    {
+      "mapId": 1010000,
+      "label": "Entrance to Adventurer Training Center",
+      "objectives": [
+        { "kind": "quest-complete", "questId": 1041, "npcId": 12100 },
+        { "kind": "quest-start", "questId": 1042, "npcId": 12100 }
+      ]
+    },
+    {
+      "mapId": 1010200,
+      "label": "Mai's Second Training Ground",
+      "objectives": [
+        { "kind": "kill-mobs", "forQuestId": 1042, "mobIds": [130101], "counts": [5] }
+      ]
+    },
+    {
+      "mapId": 1010000,
+      "label": "Entrance to Adventurer Training Center",
+      "objectives": [
+        { "kind": "quest-complete", "questId": 1042, "npcId": 12100 },
+        { "kind": "quest-start", "questId": 1043, "npcId": 12100 }
+      ]
+    },
+    {
+      "mapId": 1010300,
+      "label": "Mai's Third Training Ground",
+      "objectives": [
+        { "kind": "kill-mobs", "forQuestId": 1043, "mobIds": [210100], "counts": [3], "itemIds": [4000004] }
+      ]
+    },
+    {
+      "mapId": 1010000,
+      "label": "Entrance to Adventurer Training Center",
+      "objectives": [
+        { "kind": "quest-complete", "questId": 1043, "npcId": 12100 },
+        { "kind": "quest-start", "questId": 1044, "npcId": 12100 }
+      ]
+    },
+    {
+      "mapId": 1010400,
+      "label": "Mai's Final Training Ground",
+      "objectives": [
+        { "kind": "kill-mobs", "forQuestId": 1044, "mobIds": [9500102], "counts": [2] }
+      ]
+    },
+    {
+      "mapId": 1010000,
+      "label": "Entrance to Adventurer Training Center",
+      "objectives": [
+        { "kind": "quest-complete", "questId": 1044, "npcId": 12100 }
+      ]
+    },
+    {
+      "mapId": 1000000,
+      "label": "Amherst",
+      "objectives": [
+        { "kind": "quest-complete", "questId": 1040, "npcId": 12000 }
+      ]
+    },
+    {
+      "mapId": 1010000,
+      "label": "Entrance to Adventurer Training Center",
+      "objectives": [
+        { "kind": "quest-start", "questId": 1045, "npcId": 20001 },
+        { "kind": "kill-mobs", "forQuestId": 1045, "mobIds": [1210102], "counts": [1], "itemIds": [4000001] },
+        { "kind": "quest-complete", "questId": 1045, "npcId": 20001 }
+      ]
+    },
+    {
+      "mapId": 2000000,
+      "label": "Southperry",
+      "objectives": [
+        { "kind": "quest-start", "questId": 1046, "npcId": 20002 },
+        { "kind": "stop-plan", "mode": "southperry-relaxer", "reason": "Southperry MVP complete; Biggs's Story remains active for Victoria Island." }
+      ]
+    }
+  ]
+}

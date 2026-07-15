@@ -1,17 +1,23 @@
 package server.agents.capabilities.combat;
 
 import client.Character;
+import client.inventory.WeaponType;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.combat.AgentGrindTargetStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
+import server.maps.MapleMap;
 
 import java.awt.Point;
+import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
 
 class AgentGrindTargetCommitmentServiceTest {
     @Test
@@ -85,15 +91,42 @@ class AgentGrindTargetCommitmentServiceTest {
         assertSame(closerThreat, AgentGrindTargetStateRuntime.target(entry));
     }
 
+    @Test
+    void closerThreatIgnoresMobsOutsideTheActiveObjective() {
+        Character agent = mock(Character.class);
+        MapleMap map = mock(MapleMap.class);
+        when(agent.getMap()).thenReturn(map);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
+        AgentCombatObjectiveTargetStateRuntime.setAllowedMobIds(entry, Set.of(100101));
+        Monster disallowed = liveMonsterAt(120100, 20, 0);
+        Monster allowed = liveMonsterAt(100101, 40, 0);
+        when(map.getAllMonsters()).thenReturn(List.of(disallowed, allowed));
+
+        try (var attacks = mockStatic(AgentAttackExecutionProvider.class, CALLS_REAL_METHODS)) {
+            attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(agent))
+                    .thenReturn(WeaponType.BOW);
+
+            assertSame(allowed, AgentAttackExecutionProvider.findCloserThreatMob(
+                    entry, agent, new Point(0, 0), new Point(200, 0)));
+        }
+    }
+
     private static AgentGrindTargetCommitmentService.Hooks hooks(Monster rangedPriority, Monster closerThreat) {
         return new AgentGrindTargetCommitmentService.Hooks(
                 (entry, agent, agentPosition, preferredTarget) -> rangedPriority,
-                (agent, agentPosition, targetPosition) -> closerThreat);
+                (entry, agent, agentPosition, targetPosition) -> closerThreat);
     }
 
     private static Monster monsterAt(int x, int y) {
         Monster monster = mock(Monster.class);
         when(monster.getPosition()).thenReturn(new Point(x, y));
+        return monster;
+    }
+
+    private static Monster liveMonsterAt(int mobId, int x, int y) {
+        Monster monster = monsterAt(x, y);
+        when(monster.getId()).thenReturn(mobId);
+        when(monster.isAlive()).thenReturn(true);
         return monster;
     }
 }

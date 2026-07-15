@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "profileId": "maple-island-quester",
+  "profileVersion": 1,
+  "presentation": {
+    "timing": {
+      "beforeNpcInteractionMs": {
+        "min": 600,
+        "max": 1400
+      },
+      "betweenObjectivesMs": {
+        "min": 900,
+        "max": 1800
+      }
+    },
+    "movement": {
+      "navigationFidgetsEnabled": true,
+      "navigationFidgetModes": [
+        "WAIT",
+        "PRONE",
+        "SPAM_PRONE"
+      ],
+      "fidgetCooldownMs": {
+        "min": 12000,
+        "max": 25000
+      },
+      "fidgetDurationMs": {
+        "min": 2000,
+        "max": 3000
+      }
+    },
+    "encounter": {
+      "style": "objective-only",
+      "maxEstimatedHits": 0
+    },
+    "rest": {
+      "spotPreference": "any"
+    }
+  }
+}

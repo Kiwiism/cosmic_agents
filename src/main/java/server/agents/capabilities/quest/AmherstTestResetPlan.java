@@ -6,5 +6,6 @@ public record AmherstTestResetPlan(
         boolean resetCharacterBaseline,
         boolean resetAllAmherstQuests,
         int selectedQuestId,
-        boolean seedAmherstPrerequisites) {
+        boolean seedAmherstPrerequisites,
+        boolean seedSouthperryBaseline) {
 }

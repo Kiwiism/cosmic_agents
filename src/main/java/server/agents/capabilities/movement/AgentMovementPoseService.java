@@ -131,6 +131,7 @@ public final class AgentMovementPoseService {
         AgentMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
         AgentMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
         AgentMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
+        AgentMovementPhysicsStateRuntime.resetFallPeakPhysicsY(entry);
         AgentMovementStateRuntime.setWasMovingX(entry, false);
         AgentMovementStateRuntime.clearMoveDirection(entry);
         AgentClimbStateRuntime.setClimbUpIntent(entry, false);

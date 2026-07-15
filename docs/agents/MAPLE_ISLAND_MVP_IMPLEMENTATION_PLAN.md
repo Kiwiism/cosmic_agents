@@ -40,6 +40,16 @@ policies, not Plan Card objectives. That design is tracked in:
 
 ```text
 docs/agents/INTERACTION_REALISM_POLICY.md
+docs/agents/MAPLE_ISLAND_REALISM_AND_100_AGENT_VALIDATION_PLAN.md
+```
+
+The current post-Amherst Southperry segment is validated separately before it
+is composed with the successful Amherst route. Post-Maple-Island Explorer
+builds and Victoria progression are deferred to:
+
+```text
+docs/agents/MAPLE_ISLAND_SOUTHPERRY_MVP.md
+docs/agents/POST_MAPLE_ISLAND_VICTORIA_PROGRESSION_ROADMAP.md
 ```
 
 The post-reconstruction implementation handoff is tracked in:
