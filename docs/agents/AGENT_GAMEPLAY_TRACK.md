@@ -42,6 +42,7 @@ Current and deferred planning:
 - `docs/agents/MAPLE_ISLAND_SOUTHPERRY_MVP.md`
 - `docs/agents/MAPLE_ISLAND_REALISM_AND_100_AGENT_VALIDATION_PLAN.md`
 - `docs/agents/POST_MAPLE_ISLAND_VICTORIA_PROGRESSION_ROADMAP.md`
+- `docs/agents/POLISHED_COMBAT_CAPABILITY_IMPLEMENTATION_PLAN.md`
 
 Required package cut:
 
