@@ -1,7 +1,6 @@
 package server.agents.profiles;
 
 import org.junit.jupiter.api.Test;
-import server.agents.capabilities.movement.fidget.AgentFidgetMode;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -19,9 +18,8 @@ class AgentBehaviorProfileRuntimeTest {
                 profile.presentation().timing().betweenObjectivesMs());
         assertEquals("objective-only", profile.presentation().encounter().style());
         assertEquals("any", profile.presentation().rest().spotPreference());
-        assertEquals(
-                java.util.Set.of(AgentFidgetMode.WAIT, AgentFidgetMode.PRONE, AgentFidgetMode.SPAM_PRONE),
-                profile.presentation().movement().navigationFidgetModes());
+        assertTrue(!profile.presentation().movement().navigationFidgetsEnabled());
+        assertTrue(profile.presentation().movement().navigationFidgetModes().isEmpty());
     }
 
     @Test

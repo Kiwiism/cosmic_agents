@@ -9,6 +9,9 @@ import server.life.Monster;
 public final class AgentCombatScoringPolicy {
     public static final int LEGACY_AOE_CLUSTER_RADIUS_PX = 150;
     public static final long LEGACY_AOE_CLUSTER_BONUS_PER_MOB = 200L;
+    static final int UPWARD_PLATFORM_TOLERANCE_PX = 60;
+    static final long UPWARD_PLATFORM_BASE_PENALTY = 2_500L;
+    static final long UPWARD_PLATFORM_PENALTY_PER_PX = 6L;
 
     private AgentCombatScoringPolicy() {
     }
@@ -43,7 +46,29 @@ public final class AgentCombatScoringPolicy {
         if (!sameFoothold) {
             score += 1200L;
         }
-        return score;
+        return score + upwardPlatformPenalty(botPos, targetPos);
+    }
+
+    public static long upwardPlatformPenalty(Point botPos, Point targetPos) {
+        if (botPos == null || targetPos == null) {
+            return 0L;
+        }
+        int upwardDistance = botPos.y - targetPos.y;
+        if (upwardDistance <= UPWARD_PLATFORM_TOLERANCE_PX) {
+            return 0L;
+        }
+        return UPWARD_PLATFORM_BASE_PENALTY
+                + (long) (upwardDistance - UPWARD_PLATFORM_TOLERANCE_PX)
+                * UPWARD_PLATFORM_PENALTY_PER_PX;
+    }
+
+    public static long addReachableGraphPenalty(long graphCost,
+                                                 long penalty,
+                                                 long unreachableGraphCost) {
+        if (graphCost >= unreachableGraphCost) {
+            return unreachableGraphCost;
+        }
+        return Math.min(unreachableGraphCost - 1L, graphCost + Math.max(0L, penalty));
     }
 
     public static long aoeClusterBonus(Monster target,

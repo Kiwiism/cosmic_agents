@@ -41,9 +41,15 @@ public final class AgentGrindTargetSearchPolicy {
             return true;
         }
         if (currentAttackPlan == null) {
+            if (AgentGrindTargetStateRuntime.committedTo(entry, currentTarget, now)) {
+                return false;
+            }
             return !currentTargetReachable;
         }
         if (!AgentCombatRangePolicy.isTargetInAttackRange(currentAttackPlan, agent, currentTarget)) {
+            if (AgentGrindTargetStateRuntime.committedTo(entry, currentTarget, now)) {
+                return false;
+            }
             return !currentTargetReachable;
         }
         // In range we normally stay committed (avoids flip-flop). Exception: an AoE bot stuck

@@ -117,6 +117,8 @@ public class ServerConfig {
     public String AGENT_AMHERST_SHOWCASE_AGENT_NAME;
     public boolean AGENT_MAPLE_ISLAND_SHOWCASE_ENABLED;
     public String AGENT_MAPLE_ISLAND_SHOWCASE_AGENT_NAME;
+    public boolean AGENT_SOUTHPERRY_SHOWCASE_ENABLED;
+    public String AGENT_SOUTHPERRY_SHOWCASE_AGENT_NAME;
 
     //Events/PQs Configuration
     public boolean USE_OLD_GMS_STYLED_PQ_NPCS;

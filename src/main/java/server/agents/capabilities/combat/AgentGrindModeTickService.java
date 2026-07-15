@@ -57,7 +57,8 @@ public final class AgentGrindModeTickService {
 
         AgentGrindTargetCommitmentService.Result commitment =
                 AgentGrindTargetCommitmentService.commitTarget(
-                        entry, agent, agentPosition, target, attackPlan, hooks.targetCommitmentHooks());
+                        entry, agent, agentPosition, target, attackPlan, now,
+                        hooks.targetCommitmentHooks());
         target = commitment.target();
         Point targetPosition = commitment.targetPosition();
         attackPlan = commitment.attackPlan();

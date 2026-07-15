@@ -46,6 +46,17 @@ class AmherstPlanNarratorTest {
     }
 
     @Test
+    void narratesEachSingleRainQuizAsItsOwnAnswer() {
+        AmherstPlanObjective quiz = new AmherstPlanObjective(
+                "test", AmherstPlanObjectiveKind.QUEST_CHAIN, 0, 0, 1000000,
+                null, List.of(1012), 12101, List.of(), null,
+                List.of(), List.of(), List.of(), null, null);
+
+        assertEquals("I'm going to Amherst to talk to Rain and answer Rain's Maple Quiz 4.",
+                AmherstPlanNarrator.message(quiz));
+    }
+
+    @Test
     void narratesYoonaQuizOverrideAsAnAnswerRatherThanAnotherCashShopVisit() {
         AmherstPlanObjective quiz = objective(
                 AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 1010000, 8023, 20100,

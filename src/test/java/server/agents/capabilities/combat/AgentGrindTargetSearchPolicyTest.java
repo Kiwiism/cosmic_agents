@@ -33,6 +33,21 @@ class AgentGrindTargetSearchPolicyTest {
                 entry, agent, target, null, 1_000L, false));
     }
 
+    @Test
+    void ignoresTransientRopeUnreachabilityDuringTargetCommitment() {
+        Character agent = mock(Character.class);
+        when(agent.getPosition()).thenReturn(new Point(0, 0));
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
+        Monster target = mock(Monster.class);
+        when(target.getPosition()).thenReturn(new Point(0, -200));
+        AgentGrindTargetStateRuntime.commitTarget(entry, target, 1_000L, 4_000L);
+
+        assertFalse(AgentGrindTargetSearchPolicy.shouldSearchForGrindTarget(
+                entry, agent, target, null, 2_000L, false));
+        assertTrue(AgentGrindTargetSearchPolicy.shouldSearchForGrindTarget(
+                entry, agent, target, null, 5_000L, false));
+    }
+
     private static AgentAttackPlan basicPlan(Monster target) {
         return new AgentAttackPlan(
                 0, 0, 1, null, List.of(target), AgentAttackRoute.CLOSE,

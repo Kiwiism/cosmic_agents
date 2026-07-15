@@ -48,6 +48,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class MapleIslandSouthperryPlanTest {
+    private static final long TEST_TICK_MS = 100L;
     private static final Path CARD = Path.of(
             "docs", "agents", "plans", "maple-island-southperry-mvp.plan.json");
 
@@ -177,7 +178,7 @@ class MapleIslandSouthperryPlanTest {
         assertTrue(AmherstQuestCatalog.requiredQuestIdSet().stream()
                 .noneMatch(fixture.questCompletions::containsKey));
         assertTrue(portalAttempts.get() > 1);
-        assertTrue(AgentRelaxerSpotCatalog.spots(AgentRelaxerSpotCatalog.Pool.SOUTHPERRY_ALL).stream()
+        assertTrue(AgentRelaxerSpotCatalog.spots(AgentRelaxerSpotCatalog.Pool.SOUTHPERRY_RIGHT).stream()
                 .anyMatch(spot -> spot.x() == fixture.position.x && spot.y() == fixture.position.y),
                 () -> "unexpected Southperry rest position=" + fixture.position);
         verify(fixture.gateway).sitChair(fixture.agent, 3010000);
@@ -284,7 +285,7 @@ class MapleIslandSouthperryPlanTest {
                               long startMs,
                               int maxTicks) {
         for (int i = 0; i < maxTicks && entry.amherstPlanExecutionState().active(); i++) {
-            long now = startMs + i;
+            long now = startMs + i * TEST_TICK_MS;
             boolean consumed = runner.tick(entry, fixture.agent, now);
             if (!consumed && entry.capabilityRuntimeState().hasActiveCapability()) {
                 AgentCapabilityRuntime.tick(entry, fixture.agent, now);
@@ -300,14 +301,14 @@ class MapleIslandSouthperryPlanTest {
                                         long startMs,
                                         int maxTicks) {
         for (int i = 0; i < maxTicks; i++) {
-            long now = startMs + i;
+            long now = startMs + i * TEST_TICK_MS;
             boolean consumed = runner.tick(entry, fixture.agent, now);
             if (!consumed && entry.capabilityRuntimeState().hasActiveCapability()) {
                 AgentCapabilityRuntime.tick(entry, fixture.agent, now);
             }
             if (fixture.quests.getOrDefault(questId, 0) == status
                     && !entry.capabilityRuntimeState().hasActiveCapability()) {
-                return now + 1L;
+                return now + TEST_TICK_MS;
             }
         }
         throw new AssertionError("quest state was not reached");

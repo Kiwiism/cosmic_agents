@@ -147,7 +147,7 @@
       "label": "Southperry",
       "objectives": [
         { "kind": "quest-start", "questId": 1046, "npcId": 20002 },
-        { "kind": "stop-plan", "mode": "southperry-relaxer", "reason": "Southperry MVP complete; Biggs's Story remains active for Victoria Island." }
+        { "kind": "stop-plan", "mode": "southperry-right-relaxer", "reason": "Southperry MVP complete; Biggs's Story remains active for Victoria Island." }
       ]
     }
   ]

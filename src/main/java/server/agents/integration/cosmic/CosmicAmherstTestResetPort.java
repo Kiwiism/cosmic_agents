@@ -20,6 +20,7 @@ import server.agents.capabilities.quest.AmherstTestResetPort;
 import server.agents.capabilities.quest.AmherstTestResetRequest;
 import server.agents.capabilities.quest.AmherstTestResetResult;
 import server.agents.capabilities.quest.MapleIslandSouthperryBaseline;
+import server.agents.capabilities.quest.MapleIslandSouthperryQuestCatalog;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.quest.Quest;
@@ -61,6 +62,9 @@ public enum CosmicAmherstTestResetPort implements AmherstTestResetPort {
         }
         if (plan.resetAllAmherstQuests()) {
             resetAmherstQuests(agent);
+            if (plan.mode() == AmherstTestResetMode.CLEAN_LV1_START) {
+                resetSouthperryQuests(agent);
+            }
         } else if (plan.selectedQuestId() > 0) {
             resetQuest(agent, plan.selectedQuestId());
             clearKnownQuestItems(agent, plan.selectedQuestId());
@@ -164,6 +168,12 @@ public enum CosmicAmherstTestResetPort implements AmherstTestResetPort {
 
     private static void resetAmherstQuests(Character agent) {
         for (Integer questId : AmherstQuestCatalog.requiredQuestIdSet()) {
+            resetQuest(agent, questId);
+        }
+    }
+
+    private static void resetSouthperryQuests(Character agent) {
+        for (Integer questId : MapleIslandSouthperryQuestCatalog.requiredQuestIdSet()) {
             resetQuest(agent, questId);
         }
     }

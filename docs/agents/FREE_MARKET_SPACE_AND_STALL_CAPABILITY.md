@@ -60,6 +60,28 @@ The coordinates were checked against the local `Map.wz` XML. The initial
 layout reference was the artificial Free Market implementation in
 [MadaraGameDev/SoloMapling](https://github.com/MadaraGameDev/SoloMapling).
 
+## Catalog Diagrams
+
+These diagrams are generated from the reservation catalogs and the local
+`Map.wz` footholds. Run `tools/render_character_space_catalogs.py` to refresh
+them after changing catalog coordinates.
+
+### Free Market layouts
+
+![Henesys Free Market spot catalog](images/space-catalogs/fm-henesys-spots.png)
+
+![Ludibrium Free Market spot catalog](images/space-catalogs/fm-ludibrium-spots.png)
+
+![Perion Free Market spot catalog](images/space-catalogs/fm-perion-spots.png)
+
+![El Nath Free Market spot catalog](images/space-catalogs/fm-el-nath-spots.png)
+
+### Maple Island character spaces
+
+![Amherst character-space catalog](images/space-catalogs/amherst-character-spots.png)
+
+![Southperry character-space catalog](images/space-catalogs/southperry-character-spots.png)
+
 ## Player Store Placement
 
 When a player creates a Player Shop or Hired Merchant in an FM room:

@@ -17,6 +17,8 @@ import java.util.concurrent.ThreadLocalRandom;
 public final class PlanStopObjectiveCapability
         implements AgentExecutableCapability<PlanStopObjectiveCapability.Command> {
     private static final int REST_SPOT_ARRIVAL_RANGE_PX = 8;
+    private static final long REST_SETTLE_DELAY_MS = 250L;
+    private static final long CHAIR_VERIFY_DELAY_MS = 250L;
 
     public record Command(String objectiveId,
                           int finalMapId,
@@ -125,14 +127,40 @@ public final class PlanStopObjectiveCapability
             int facingDirection = context.memory().intValue("restFacingDirection", 1);
             support.gateway().facePosition(context.agent(),
                     new Point(position.x + facingDirection, position.y));
+            if (!context.memory().booleanValue("restSettleStarted", false)) {
+                context.memory().putBoolean("restSettleStarted", true);
+                context.memory().putLong("restSettleReadyAtMs", context.nowMs() + REST_SETTLE_DELAY_MS);
+                return AgentCapabilityStep.running("settling at reserved Relaxer spot", false);
+            }
+            if (context.nowMs() < context.memory().longValue("restSettleReadyAtMs", context.nowMs())) {
+                return AgentCapabilityStep.running("settling at reserved Relaxer spot", false);
+            }
+        }
+        boolean chairActive = support.gateway().chairItemId(context.agent()) == command.chairItemId();
+        if (context.memory().booleanValue("chairSitIssued", false)) {
+            if (context.nowMs() < context.memory().longValue("chairVerifyAtMs", context.nowMs())) {
+                return AgentCapabilityStep.running("verifying Relaxer state", false);
+            }
+            if (chairActive) {
+                return AgentCapabilityStep.terminal(AmherstObjectiveCapabilitySupport.success(
+                        command.objectiveId(), command.reason() + " Agent is resting on the Relaxer."));
+            }
+            context.memory().putBoolean("chairSitIssued", false);
+            return AgentCapabilityStep.running("Relaxer state was interrupted; sitting again", false);
+        }
+        if (chairActive) {
+            return AgentCapabilityStep.terminal(AmherstObjectiveCapabilitySupport.success(
+                    command.objectiveId(), command.reason() + " Agent is resting on the Relaxer."));
         }
         if (!support.gateway().sitChair(context.agent(), command.chairItemId())) {
             AgentRelaxerSpotReservationRuntime.release(context.agent().getId());
             context.memory().putBoolean("restTargetSelected", false);
+            context.memory().putBoolean("restSettleStarted", false);
             return AgentCapabilityStep.retry("Agent could not sit on the Relaxer");
         }
-        return AgentCapabilityStep.terminal(AmherstObjectiveCapabilitySupport.success(
-                command.objectiveId(), command.reason() + " Agent is resting on the Relaxer."));
+        context.memory().putBoolean("chairSitIssued", true);
+        context.memory().putLong("chairVerifyAtMs", context.nowMs() + CHAIR_VERIFY_DELAY_MS);
+        return AgentCapabilityStep.running("verifying Relaxer state", false);
     }
 
     private AgentCapabilityStep approachRestSpot(AgentCapabilityContext context, Command command) {

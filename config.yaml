@@ -281,8 +281,10 @@ server:
     AGENT_AMHERST_INTENTION_CHAT_ENABLED: true #Let the Agent announce its next Amherst action in map chat.
     AGENT_AMHERST_SHOWCASE_ENABLED: true #Allow the guarded one-command Amherst showcase run.
     AGENT_AMHERST_SHOWCASE_AGENT_NAME: AmherstRun #Only this Agent IGN may use the showcase reset path.
-    AGENT_MAPLE_ISLAND_SHOWCASE_ENABLED: true #Allow the guarded one-command Amherst-to-Southperry run.
-    AGENT_MAPLE_ISLAND_SHOWCASE_AGENT_NAME: AmherstRun #Only this Agent IGN may use the Southperry showcase reset path.
+    AGENT_MAPLE_ISLAND_SHOWCASE_ENABLED: true #Allow the guarded one-command clean level-1 Mushroom Town-to-Southperry run.
+    AGENT_MAPLE_ISLAND_SHOWCASE_AGENT_NAME: AmherstRun #Only this Agent IGN may use the full Maple Island showcase reset path.
+    AGENT_SOUTHPERRY_SHOWCASE_ENABLED: true #Allow the guarded one-command post-Amherst-to-Southperry run.
+    AGENT_SOUTHPERRY_SHOWCASE_AGENT_NAME: AmherstRun #Only this Agent IGN may use the captured post-Amherst reset path.
 
     #Events/PQs Configuration
     USE_OLD_GMS_STYLED_PQ_NPCS: true     #Enables PQ NPCs with similar behaviour to old GMS style, that skips info about the PQs and immediately tries to register the party in.

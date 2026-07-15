@@ -69,9 +69,11 @@ public final class AmherstPlanNarrator {
                     ? "I'm going to talk to Yoona and answer " + quest(objective.questId()) + "."
                     : "I'm going to " + map + " to talk to " + npc(objective.npcId())
                     + " and complete " + quest(objective.questId()) + ".";
-            case QUEST_CHAIN, QUEST_CHAIN_IF_AVAILABLE -> "I'm going to " + map
-                    + " to talk to " + chainNpc(objective) + " and work through "
-                    + questChain(objective) + ".";
+            case QUEST_CHAIN, QUEST_CHAIN_IF_AVAILABLE -> isSingleRainQuiz(objective)
+                    ? "I'm going to " + map + " to talk to Rain and answer "
+                    + quest(objective.questIds().getFirst()) + "."
+                    : "I'm going to " + map + " to talk to " + chainNpc(objective)
+                    + " and work through " + questChain(objective) + ".";
             case USE_ITEM -> "I'm using " + item(objective.itemId()) + " for "
                     + quest(objective.questId()) + ".";
             case KILL_MOBS -> "I'm going to " + map + " to hunt " + mobs(objective)
@@ -108,6 +110,12 @@ public final class AmherstPlanNarrator {
             return quest(objective.questIds().getFirst());
         }
         return quest(objective.questIds().getFirst()) + " quest chain";
+    }
+
+    private static boolean isSingleRainQuiz(AmherstPlanObjective objective) {
+        return objective.questIds().size() == 1
+                && objective.questIds().getFirst() >= 1009
+                && objective.questIds().getFirst() <= 1015;
     }
 
     private static String chainNpc(AmherstPlanObjective objective) {

@@ -370,4 +370,9 @@ public enum CosmicPrimitiveCapabilityGateway implements PrimitiveCapabilityGatew
         AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(agent.getId());
         return AgentChairService.sit(entry, agent, itemId);
     }
+
+    @Override
+    public int chairItemId(Character agent) {
+        return agent == null ? -1 : agent.getChair();
+    }
 }

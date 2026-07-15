@@ -9,6 +9,7 @@ import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
 import server.maps.MapleMap;
+import server.maps.Portal;
 
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -55,7 +56,8 @@ public final class AgentAirbornePhysicsService {
                     nextPosition.x - previousPosition.x, nextPosition.y - previousPosition.y);
             return AgentAirborneStepResult.LANDED;
         }
-        Point recoveryPoint = belowMapRecoveryPoint(agent.getMap(), nextPosition);
+        Point recoveryPoint = belowMapRecoveryPoint(
+                agent.getMap(), nextPosition, AgentMapStateRuntime.entryPortalId(entry));
         if (recoveryPoint != null) {
             log.warn("Recovered Agent '{}' below map bounds map={} from={} to={}",
                     agent.getName(), agent.getMapId(), nextPosition, recoveryPoint);
@@ -67,24 +69,41 @@ public final class AgentAirbornePhysicsService {
     }
 
     static Point belowMapRecoveryPoint(MapleMap map, Point position) {
+        return belowMapRecoveryPoint(map, position, -1);
+    }
+
+    static Point belowMapRecoveryPoint(MapleMap map, Point position, int preferredPortalId) {
         Rectangle area = map == null ? null : map.getMapArea();
         if (position == null || area == null || area.width <= 0 || area.height <= 0
                 || position.y <= area.y + area.height + BELOW_MAP_RECOVERY_MARGIN_PX) {
             return null;
         }
 
-        int recoveryX = Math.clamp(position.x, area.x, area.x + area.width);
-        Point ground = AgentGroundingService.findGroundPoint(map, new Point(recoveryX, area.y));
-        if (ground != null) {
-            return ground;
+        Point portalRecovery = portalRecoveryPoint(map, preferredPortalId);
+        if (portalRecovery != null) {
+            return portalRecovery;
+        }
+        if (preferredPortalId != 0) {
+            portalRecovery = portalRecoveryPoint(map, 0);
+            if (portalRecovery != null) {
+                return portalRecovery;
+            }
         }
 
-        var portal = map.getPortal(0);
+        int recoveryX = Math.clamp(position.x, area.x, area.x + area.width);
+        return AgentGroundingService.findGroundPoint(map, new Point(recoveryX, area.y));
+    }
+
+    private static Point portalRecoveryPoint(MapleMap map, int portalId) {
+        if (portalId < 0) {
+            return null;
+        }
+        Portal portal = map.getPortal(portalId);
         if (portal == null) {
             return null;
         }
         Point portalPosition = portal.getPosition();
-        ground = AgentGroundingService.findGroundPoint(map,
+        Point ground = AgentGroundingService.findGroundPoint(map,
                 new Point(portalPosition.x, portalPosition.y - 1));
         return ground != null ? ground : new Point(portalPosition);
     }

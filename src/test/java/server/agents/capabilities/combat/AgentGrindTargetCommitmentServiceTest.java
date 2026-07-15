@@ -34,6 +34,7 @@ class AgentGrindTargetCommitmentServiceTest {
                         new Point(0, 0),
                         target,
                         plan,
+                        1_000L,
                         hooks(null, null));
 
         assertSame(target, result.target());
@@ -41,6 +42,8 @@ class AgentGrindTargetCommitmentServiceTest {
         assertSame(plan, result.attackPlan());
         assertNull(result.rangedPriorityTarget());
         assertSame(target, AgentGrindTargetStateRuntime.target(entry));
+        org.junit.jupiter.api.Assertions.assertTrue(
+                AgentGrindTargetStateRuntime.committedTo(entry, target, 12_999L));
     }
 
     @Test
@@ -58,6 +61,7 @@ class AgentGrindTargetCommitmentServiceTest {
                         new Point(0, 0),
                         target,
                         plan,
+                        1_000L,
                         hooks(priority, monsterAt(300, 100)));
 
         assertSame(priority, result.target());
@@ -82,6 +86,7 @@ class AgentGrindTargetCommitmentServiceTest {
                         new Point(0, 0),
                         target,
                         plan,
+                        1_000L,
                         hooks(null, closerThreat));
 
         assertSame(closerThreat, result.target());
@@ -89,6 +94,30 @@ class AgentGrindTargetCommitmentServiceTest {
         assertNull(result.attackPlan());
         assertNull(result.rangedPriorityTarget());
         assertSame(closerThreat, AgentGrindTargetStateRuntime.target(entry));
+    }
+
+    @Test
+    void activeCommitmentPreventsPerTickThreatReplacement() {
+        Character agent = mock(Character.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
+        Monster target = monsterAt(100, 100);
+        Monster replacement = monsterAt(50, 100);
+        AgentAttackPlan plan = mock(AgentAttackPlan.class);
+        AgentGrindTargetStateRuntime.commitTarget(entry, target, 1_000L, 12_000L);
+
+        AgentGrindTargetCommitmentService.Result result =
+                AgentGrindTargetCommitmentService.commitTarget(
+                        entry,
+                        agent,
+                        new Point(0, 0),
+                        target,
+                        plan,
+                        2_000L,
+                        hooks(replacement, replacement));
+
+        assertSame(target, result.target());
+        assertSame(plan, result.attackPlan());
+        assertNull(result.rangedPriorityTarget());
     }
 
     @Test

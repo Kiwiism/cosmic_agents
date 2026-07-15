@@ -31,6 +31,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.atLeastOnce;
 
 class AmherstObjectiveCapabilitiesTest {
     @AfterEach
@@ -102,6 +103,9 @@ class AmherstObjectiveCapabilitiesTest {
         verify(fixture.gateway).beginFieldAbsence(fixture.agent, 2_002L);
         verify(fixture.gateway).endFieldAbsence(fixture.agent);
         verify(fixture.gateway).forceCompleteQuest(fixture.agent, 8020, 20100);
+        assertTrue(AgentNpcInteractionAnchorCatalog.anchors(1010000, 20100)
+                .contains(fixture.position));
+        verify(fixture.gateway, atLeastOnce()).facePosition(fixture.agent, new Point(-188, 85));
         assertSuccess(fixture);
     }
 
@@ -262,7 +266,7 @@ class AmherstObjectiveCapabilitiesTest {
                 10_000L);
         AgentCapabilityRuntime.tick(fixture.entry, fixture.agent, 1L);
         assertEquals(2, fixture.entry.capabilityRuntimeState().frameCount());
-        run(fixture, 2L, 20);
+        run(fixture, 2L, 20, 100L);
 
         verify(fixture.gateway).sitChair(fixture.agent, 3010000);
         assertSuccess(fixture);
@@ -279,7 +283,7 @@ class AmherstObjectiveCapabilitiesTest {
                         "stop", 1000000, Map.of(), Set.of(1028), "stop in Amherst",
                         3010000, AgentRelaxerSpotCatalog.Pool.AMHERST),
                 10_000L);
-        run(fixture, 1L, 30);
+        run(fixture, 1L, 30, 100L);
 
         assertTrue(AgentRelaxerSpotCatalog.spots(AgentRelaxerSpotCatalog.Pool.AMHERST).stream()
                 .anyMatch(spot -> spot.x() == fixture.position.x && spot.y() == fixture.position.y));
@@ -403,7 +407,7 @@ class AmherstObjectiveCapabilitiesTest {
     }
 
     private static void run(MutablePrimitiveGatewayFixture fixture, long nowMs, int maxTicks) {
-        run(fixture, nowMs, maxTicks, 1L);
+        run(fixture, nowMs, maxTicks, 100L);
     }
 
     private static void run(MutablePrimitiveGatewayFixture fixture,

@@ -40,6 +40,18 @@ public final class AgentGrindTargetStateRuntime {
         entry.grindTargetState().setTarget(target);
     }
 
+    public static void commitTarget(AgentRuntimeEntry entry,
+                                    Monster target,
+                                    long nowMs,
+                                    long commitmentDurationMs) {
+        entry.grindTargetState().commitTarget(
+                target, nowMs + Math.max(0L, commitmentDurationMs));
+    }
+
+    public static boolean committedTo(AgentRuntimeEntry entry, Monster target, long nowMs) {
+        return entry != null && entry.grindTargetState().committedTo(target, nowMs);
+    }
+
     public static void clear(AgentRuntimeEntry entry) {
         entry.grindTargetState().clearTarget();
     }

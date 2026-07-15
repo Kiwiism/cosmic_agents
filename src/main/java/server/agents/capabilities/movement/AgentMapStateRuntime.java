@@ -29,6 +29,14 @@ public final class AgentMapStateRuntime {
         return entry.mapTrackingState().footholdIndex();
     }
 
+    public static int entryPortalId(AgentRuntimeEntry entry) {
+        return entry.mapTrackingState().entryPortalId();
+    }
+
+    public static void setEntryPortalId(AgentRuntimeEntry entry, int portalId) {
+        entry.mapTrackingState().setEntryPortalId(portalId);
+    }
+
     public static void setMapTracking(AgentRuntimeEntry entry, int mapId, Map<Integer, Foothold> footholdIndex) {
         entry.mapTrackingState().setMapTracking(mapId, footholdIndex);
     }

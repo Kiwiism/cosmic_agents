@@ -27,6 +27,7 @@ public final class MutablePrimitiveGatewayFixture {
     public final AtomicInteger level = new AtomicInteger(1);
     public final AtomicInteger experience = new AtomicInteger();
     public final AtomicInteger reactorHits = new AtomicInteger();
+    public final AtomicInteger chairItemId = new AtomicInteger(-1);
     public final Map<Integer, Integer> quests = new HashMap<>();
     public final Map<Integer, Integer> items = new HashMap<>();
     public final Map<String, Integer> progress = new HashMap<>();
@@ -44,6 +45,7 @@ public final class MutablePrimitiveGatewayFixture {
         when(agent.getId()).thenReturn(77);
         when(agent.getLevel()).thenAnswer(ignored -> level.get());
         when(agent.getExp()).thenAnswer(ignored -> experience.get());
+        when(agent.getChair()).thenAnswer(ignored -> chairItemId.get());
         when(gateway.mapId(agent)).thenAnswer(ignored -> mapId.get());
         when(gateway.position(agent)).thenAnswer(ignored -> new Point(position));
         when(gateway.alive(agent)).thenReturn(true);
@@ -76,7 +78,10 @@ public final class MutablePrimitiveGatewayFixture {
             mapId.set(pendingPortalDestination);
             return true;
         });
-        when(gateway.npcPosition(any(), anyInt())).thenReturn(new Point(20, 0));
+        when(gateway.npcPosition(any(), anyInt())).thenAnswer(invocation ->
+                invocation.<Integer>getArgument(1) == 20100
+                        ? new Point(-188, 85)
+                        : new Point(20, 0));
         when(gateway.nearestActiveReactorPosition(any(), any(), any())).thenReturn(new Point(30, 0));
         when(gateway.liveMonsterCount(any(), any())).thenReturn(1);
         when(gateway.interactNpc(any(), anyInt(), any(), any())).thenReturn(true);
@@ -138,7 +143,11 @@ public final class MutablePrimitiveGatewayFixture {
             });
             return true;
         });
-        when(gateway.sitChair(any(), anyInt())).thenReturn(true);
+        when(gateway.sitChair(any(), anyInt())).thenAnswer(invocation -> {
+            chairItemId.set(invocation.getArgument(1));
+            return true;
+        });
+        when(gateway.chairItemId(any())).thenAnswer(ignored -> chairItemId.get());
 
         Reactor reactor = mock(Reactor.class);
         when(reactor.isAlive()).thenAnswer(ignored -> reactorHits.get() < reactorHitsRequired);
