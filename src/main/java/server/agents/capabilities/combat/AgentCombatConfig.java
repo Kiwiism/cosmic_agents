@@ -129,10 +129,44 @@ public final class AgentCombatConfig {
                 YamlConfig.config.server.AGENT_MOB_PHYSICS_FLY_DEAD_ZONE_Y;
         public int MOB_PHYSICS_JUMP_COOLDOWN_MS =
                 YamlConfig.config.server.AGENT_MOB_PHYSICS_JUMP_COOLDOWN_MS;
+        public int MOB_PHYSICS_JUMP_COOLDOWN_JITTER_MS =
+                YamlConfig.config.server.AGENT_MOB_PHYSICS_JUMP_COOLDOWN_JITTER_MS;
         public int MOB_PHYSICS_JUMP_TARGET_HEIGHT =
                 YamlConfig.config.server.AGENT_MOB_PHYSICS_JUMP_TARGET_HEIGHT;
         public int MOB_PHYSICS_MAX_SAFE_EDGE_PX =
                 YamlConfig.config.server.AGENT_MOB_PHYSICS_MAX_SAFE_EDGE_PX;
+        public int MOB_PHYSICS_LEFT_EDGE_INSET_PX =
+                YamlConfig.config.server.AGENT_MOB_PHYSICS_LEFT_EDGE_INSET_PX;
+        public int MOB_PHYSICS_RIGHT_EDGE_INSET_PX =
+                YamlConfig.config.server.AGENT_MOB_PHYSICS_RIGHT_EDGE_INSET_PX;
+        public int MOB_PHYSICS_SPEED_PERCENT =
+                YamlConfig.config.server.AGENT_MOB_PHYSICS_SPEED_PERCENT;
+        public int MOB_PHYSICS_SPEED_VARIANCE_PERCENT =
+                YamlConfig.config.server.AGENT_MOB_PHYSICS_SPEED_VARIANCE_PERCENT;
+        public int MOB_PHYSICS_BEHAVIOR_JITTER_MS =
+                YamlConfig.config.server.AGENT_MOB_PHYSICS_BEHAVIOR_JITTER_MS;
+        public int MOB_PHYSICS_DIRECTION_REACTION_MAX_MS =
+                YamlConfig.config.server.AGENT_MOB_PHYSICS_DIRECTION_REACTION_MAX_MS;
+        public int MOB_PHYSICS_EDGE_RETREAT_CHANCE_PERCENT =
+                YamlConfig.config.server.AGENT_MOB_PHYSICS_EDGE_RETREAT_CHANCE_PERCENT;
+        public int MOB_PHYSICS_EDGE_IDLE_MIN_MS =
+                YamlConfig.config.server.AGENT_MOB_PHYSICS_EDGE_IDLE_MIN_MS;
+        public int MOB_PHYSICS_EDGE_IDLE_MAX_MS =
+                YamlConfig.config.server.AGENT_MOB_PHYSICS_EDGE_IDLE_MAX_MS;
+        public int MOB_PHYSICS_EDGE_RETREAT_MIN_MS =
+                YamlConfig.config.server.AGENT_MOB_PHYSICS_EDGE_RETREAT_MIN_MS;
+        public int MOB_PHYSICS_EDGE_RETREAT_MAX_MS =
+                YamlConfig.config.server.AGENT_MOB_PHYSICS_EDGE_RETREAT_MAX_MS;
+        public int MOB_PHYSICS_STUCK_DETECT_MS =
+                YamlConfig.config.server.AGENT_MOB_PHYSICS_STUCK_DETECT_MS;
+        public int MOB_PHYSICS_STUCK_RETREAT_CHANCE_PERCENT =
+                YamlConfig.config.server.AGENT_MOB_PHYSICS_STUCK_RETREAT_CHANCE_PERCENT;
+        public int MOB_PHYSICS_KNOCKBACK_PERCENT =
+                YamlConfig.config.server.AGENT_MOB_PHYSICS_KNOCKBACK_PERCENT;
+        public int MOB_PHYSICS_IMPACT_DELAY_PERCENT =
+                YamlConfig.config.server.AGENT_MOB_PHYSICS_IMPACT_DELAY_PERCENT;
+        public int MOB_PHYSICS_IMPACT_DELAY_OFFSET_MS =
+                YamlConfig.config.server.AGENT_MOB_PHYSICS_IMPACT_DELAY_OFFSET_MS;
         public boolean MOB_PHYSICS_DIAGNOSTIC_LOGGING =
                 YamlConfig.config.server.AGENT_MOB_PHYSICS_DIAGNOSTIC_LOGGING;
 

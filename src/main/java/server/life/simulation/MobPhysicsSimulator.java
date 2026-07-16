@@ -27,41 +27,57 @@ public final class MobPhysicsSimulator {
         double horizontal = 0.0;
         double vertical = 0.0;
         boolean turnAtEdges = false;
+        double speedMultiplier = session.speedMultiplier();
 
         if (session.motion() == MobMotionState.FLINCH) {
             horizontal = session.knockbackDirection()
                     * (body.grounded() && !profile.flying()
-                    ? GROUND_KNOCKBACK_FORCE : AIR_KNOCKBACK_FORCE);
+                    ? GROUND_KNOCKBACK_FORCE : AIR_KNOCKBACK_FORCE)
+                    * session.knockbackMultiplier();
         } else if (session.motion() != MobMotionState.PENDING_IMPACT
                 && profile.mode() != PhysicsMode.FIXED) {
             double dx = session.targetX() - body.x();
             double dy = session.targetY() - body.y();
             if (profile.flying()) {
-                horizontal = forceOutside(dx, AgentCombatConfig.cfg.MOB_PHYSICS_FLY_DEAD_ZONE_X,
-                        profile.flyingForce());
+                int horizontalDirection = session.chaseDirection(dx);
+                horizontal = Math.abs(dx) <= Math.max(0,
+                        AgentCombatConfig.cfg.MOB_PHYSICS_FLY_DEAD_ZONE_X)
+                        ? 0.0 : horizontalDirection * profile.flyingForce() * speedMultiplier;
                 vertical = forceOutside(dy, AgentCombatConfig.cfg.MOB_PHYSICS_FLY_DEAD_ZONE_Y,
-                        profile.flyingForce());
+                        profile.flyingForce() * speedMultiplier);
                 session.setMotion(horizontal == 0.0 && vertical == 0.0
                         ? MobMotionState.IDLE : MobMotionState.CHASE);
             } else {
-                updateGroundHysteresis(session, dx);
-                if (session.chasing()) {
-                    horizontal = Math.copySign(profile.walkingForce(), dx);
-                    turnAtEdges = true;
-                    session.setMotion(MobMotionState.CHASE);
+                session.prepareGroundBehavior(dx);
+                if (session.hasTemporaryBehavior()) {
+                    int direction = session.temporaryDirection();
+                    horizontal = direction * profile.walkingForce() * speedMultiplier;
+                    turnAtEdges = direction != 0;
+                    session.setMotion(direction == 0 ? MobMotionState.IDLE : MobMotionState.CHASE);
                 } else {
-                    session.setMotion(MobMotionState.IDLE);
-                }
-                if (session.shouldJump(dx, dy)) {
-                    vertical = JUMP_FORCE;
-                    turnAtEdges = false;
-                    session.markJump();
+                    updateGroundHysteresis(session, dx);
+                    if (session.chasing()) {
+                        horizontal = session.chaseDirection(dx)
+                                * profile.walkingForce() * speedMultiplier;
+                        turnAtEdges = true;
+                        session.setMotion(MobMotionState.CHASE);
+                    } else {
+                        session.setMotion(MobMotionState.IDLE);
+                    }
+                    if (session.shouldJump(dx, dy)) {
+                        vertical = JUMP_FORCE;
+                        turnAtEdges = false;
+                        session.markJump();
+                    }
                 }
             }
         }
 
         PhysicsStepResult result = integrator.step(body,
-                new PhysicsInput(horizontal, vertical, turnAtEdges, false), session.terrain());
+                new PhysicsInput(horizontal, vertical, turnAtEdges, false,
+                        Math.max(0, AgentCombatConfig.cfg.MOB_PHYSICS_LEFT_EDGE_INSET_PX),
+                        Math.max(0, AgentCombatConfig.cfg.MOB_PHYSICS_RIGHT_EDGE_INSET_PX)),
+                session.terrain());
         session.afterStep(result);
         return result;
     }

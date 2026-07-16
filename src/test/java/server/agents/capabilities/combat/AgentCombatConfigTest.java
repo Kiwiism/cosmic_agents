@@ -16,6 +16,9 @@ class AgentCombatConfigTest {
         assertEquals("ATTACK_RANGE_X = " + AgentCombatConfig.cfg.ATTACK_RANGE_X,
                 AgentCombatConfig.configFieldLine("attack_range_x"));
         assertNull(AgentCombatConfig.configFieldLine("missing_field"));
+        assertEquals("MOB_PHYSICS_SPEED_PERCENT = "
+                        + AgentCombatConfig.cfg.MOB_PHYSICS_SPEED_PERCENT,
+                AgentCombatConfig.configFieldLine("mob_physics_speed_percent"));
     }
 
     @Test

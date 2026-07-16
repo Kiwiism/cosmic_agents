@@ -36,6 +36,17 @@ class FootholdPhysicsIndexTest {
                 () -> new FootholdPhysicsIndex(List.of(floor, floor)));
     }
 
+    @Test
+    void resolvesTrueEdgesAcrossLongConnectedPlatform() {
+        FootholdSegment first = segment(1, 0, 2, 0, 100, 50, 100);
+        FootholdSegment middle = segment(2, 1, 3, 50, 100, 100, 100);
+        FootholdSegment last = segment(3, 2, 0, 100, 100, 150, 100);
+        FootholdPhysicsIndex index = new FootholdPhysicsIndex(List.of(first, middle, last));
+
+        assertEquals(0.0, index.edgeBoundary(2, true));
+        assertEquals(150.0, index.edgeBoundary(2, false));
+    }
+
     private static FootholdSegment segment(int id, int previous, int next,
                                            double x1, double y1, double x2, double y2) {
         return new FootholdSegment(id, previous, next, 1, 0,

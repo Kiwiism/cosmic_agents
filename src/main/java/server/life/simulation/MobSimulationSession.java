@@ -16,6 +16,8 @@ import java.awt.Point;
 
 /** Mutable per-monster state. It is stepped only by its channel service. */
 public final class MobSimulationSession {
+    private static final double PROGRESS_DISTANCE_PX = 1.0;
+    private static final long RANDOM_NONZERO_FALLBACK = 0x9E3779B97F4A7C15L;
     private final MapleMap map;
     private final Monster monster;
     private final MobPhysicsProfile profile;
@@ -42,6 +44,16 @@ public final class MobSimulationSession {
     private int blockedDirection;
     private boolean immediatePublication = true;
     private Point lastPublishedPosition;
+    private final double speedVariation;
+    private long randomState;
+    private double progressAnchorX;
+    private long nextStuckDecisionNanos;
+    private long temporaryBehaviorUntilNanos;
+    private int temporaryDirection;
+    private int chaseDirection;
+    private int pendingChaseDirection;
+    private long directionChangeAtNanos;
+    private boolean edgeJumpOpportunity;
 
     public MobSimulationSession(MapleMap map, Monster monster, Character agent,
                                 MobPhysicsProfile profile, PhysicsTerrain terrain,
@@ -57,6 +69,10 @@ public final class MobSimulationSession {
             mode = PhysicsMode.SWIMMING;
         }
         body = new PhysicsBody(position.x, position.y, mode);
+        randomState = mix64((((long) monster.getObjectId()) << 32)
+                ^ Integer.toUnsignedLong(map.getId()) ^ RANDOM_NONZERO_FALLBACK);
+        if (randomState == 0L) randomState = RANDOM_NONZERO_FALLBACK;
+        speedVariation = nextUnit() * 2.0 - 1.0;
         FootholdSegment foothold = terrain.foothold(monster.getFh());
         if (foothold == null) {
             foothold = terrain.findBelow(position.x, position.y - 1.0);
@@ -72,6 +88,10 @@ public final class MobSimulationSession {
             }
         }
         lastTickNanos = nowNanos;
+        progressAnchorX = body.x();
+        nextStuckDecisionNanos = nowNanos + stuckWindowNanos();
+        nextJumpNanos = nowNanos + randomMillis(
+                Math.max(0, AgentCombatConfig.cfg.MOB_PHYSICS_JUMP_COOLDOWN_JITTER_MS)) * 1_000_000L;
         lastPublishedPosition = new Point((int) Math.round(body.x()), (int) Math.round(body.y()));
     }
 
@@ -80,10 +100,16 @@ public final class MobSimulationSession {
         agent = newAgent;
         pendingDamage = Math.max(0, damage);
         knockbackDirection = direction < 0 ? -1 : 1;
-        impactAtNanos = nowNanos + Math.max(0L, delayMs) * 1_000_000L;
+        long scaledDelayMs = Math.max(0L, delayMs)
+                * Math.max(0, AgentCombatConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_PERCENT) / 100L;
+        scaledDelayMs = Math.max(0L, scaledDelayMs
+                + AgentCombatConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_OFFSET_MS);
+        impactAtNanos = nowNanos + scaledDelayMs * 1_000_000L;
         generation++;
         motion = MobMotionState.PENDING_IMPACT;
         flinchStepsRemaining = 0;
+        temporaryBehaviorUntilNanos = 0L;
+        temporaryDirection = 0;
         immediatePublication = true;
         return generation;
     }
@@ -124,6 +150,8 @@ public final class MobSimulationSession {
         } else {
             motion = MobMotionState.CHASE;
         }
+        progressAnchorX = body.x();
+        nextStuckDecisionNanos = stepTimeNanos + stuckWindowNanos();
         immediatePublication = true;
     }
 
@@ -143,14 +171,24 @@ public final class MobSimulationSession {
             blockedDirection = Double.compare(targetX - body.x(), 0.0);
             chasing = false;
         }
+        if (result.reachedEdge()) {
+            edgeJumpOpportunity = true;
+            beginTemporaryBehavior(
+                    AgentCombatConfig.cfg.MOB_PHYSICS_EDGE_RETREAT_CHANCE_PERCENT,
+                    AgentCombatConfig.cfg.MOB_PHYSICS_EDGE_IDLE_MIN_MS,
+                    AgentCombatConfig.cfg.MOB_PHYSICS_EDGE_IDLE_MAX_MS,
+                    AgentCombatConfig.cfg.MOB_PHYSICS_EDGE_RETREAT_MIN_MS,
+                    AgentCombatConfig.cfg.MOB_PHYSICS_EDGE_RETREAT_MAX_MS);
+        }
     }
 
     boolean shouldJump(double dx, double dy) {
-        if (!profile.canJump() || !body.grounded() || tickNowNanos < nextJumpNanos) {
+        if (!profile.canJump() || !body.grounded() || hasTemporaryBehavior()
+                || tickNowNanos < nextJumpNanos) {
             return false;
         }
         int height = Math.max(1, AgentCombatConfig.cfg.MOB_PHYSICS_JUMP_TARGET_HEIGHT);
-        if (!lastHitWall && blockedDirection == 0 && dy >= -height) {
+        if (!edgeJumpOpportunity && !lastHitWall && blockedDirection == 0 && dy >= -height) {
             return false;
         }
         double forward = Math.copySign(Math.max(8,
@@ -161,10 +199,13 @@ public final class MobSimulationSession {
     }
 
     void markJump() {
-        nextJumpNanos = tickNowNanos + Math.max(0,
-                AgentCombatConfig.cfg.MOB_PHYSICS_JUMP_COOLDOWN_MS) * 1_000_000L;
+        long cooldownMs = Math.max(0, AgentCombatConfig.cfg.MOB_PHYSICS_JUMP_COOLDOWN_MS);
+        cooldownMs += randomMillis(Math.max(0,
+                AgentCombatConfig.cfg.MOB_PHYSICS_JUMP_COOLDOWN_JITTER_MS));
+        nextJumpNanos = tickNowNanos + cooldownMs * 1_000_000L;
         motion = MobMotionState.JUMPING;
         blockedDirection = 0;
+        edgeJumpOpportunity = false;
         immediatePublication = true;
     }
 
@@ -198,12 +239,127 @@ public final class MobSimulationSession {
     public int knockbackDirection() { return knockbackDirection; }
     public double targetX() { return targetX; }
     public double targetY() { return targetY; }
+    public double speedMultiplier() {
+        double base = Math.max(0, AgentCombatConfig.cfg.MOB_PHYSICS_SPEED_PERCENT) / 100.0;
+        double variance = Math.min(100, Math.max(0,
+                AgentCombatConfig.cfg.MOB_PHYSICS_SPEED_VARIANCE_PERCENT)) / 100.0;
+        return base * (1.0 + speedVariation * variance);
+    }
+    public double knockbackMultiplier() {
+        return Math.max(0, AgentCombatConfig.cfg.MOB_PHYSICS_KNOCKBACK_PERCENT) / 100.0;
+    }
     public boolean chasing() { return chasing; }
     public void setChasing(boolean chasing) { this.chasing = chasing; }
     public boolean blockedAhead(double dx) {
         int direction = Double.compare(dx, 0.0);
         if (blockedDirection != 0 && direction != blockedDirection) blockedDirection = 0;
         return blockedDirection != 0;
+    }
+
+    void prepareGroundBehavior(double dx) {
+        if (Math.abs(body.x() - progressAnchorX) >= PROGRESS_DISTANCE_PX) {
+            progressAnchorX = body.x();
+            nextStuckDecisionNanos = tickNowNanos + stuckWindowNanos();
+        }
+        if (temporaryBehaviorUntilNanos != 0L
+                && tickNowNanos >= temporaryBehaviorUntilNanos) {
+            temporaryBehaviorUntilNanos = 0L;
+            temporaryDirection = 0;
+            blockedDirection = 0;
+            chasing = true;
+            progressAnchorX = body.x();
+            nextStuckDecisionNanos = tickNowNanos + stuckWindowNanos();
+        }
+        if (!hasTemporaryBehavior() && tickNowNanos >= nextStuckDecisionNanos
+                && Math.abs(dx) > Math.max(0, AgentCombatConfig.cfg.MOB_PHYSICS_STOP_DISTANCE_X)) {
+            beginTemporaryBehavior(
+                    AgentCombatConfig.cfg.MOB_PHYSICS_STUCK_RETREAT_CHANCE_PERCENT,
+                    AgentCombatConfig.cfg.MOB_PHYSICS_EDGE_IDLE_MIN_MS,
+                    AgentCombatConfig.cfg.MOB_PHYSICS_EDGE_IDLE_MAX_MS,
+                    AgentCombatConfig.cfg.MOB_PHYSICS_EDGE_RETREAT_MIN_MS,
+                    AgentCombatConfig.cfg.MOB_PHYSICS_EDGE_RETREAT_MAX_MS);
+        }
+    }
+
+    boolean hasTemporaryBehavior() {
+        return temporaryBehaviorUntilNanos > tickNowNanos;
+    }
+
+    int temporaryDirection() {
+        return temporaryDirection;
+    }
+
+    int chaseDirection(double dx) {
+        int desired = Double.compare(dx, 0.0);
+        if (desired == 0) return chaseDirection;
+        if (chaseDirection == 0) {
+            chaseDirection = desired;
+            return chaseDirection;
+        }
+        if (desired == chaseDirection) {
+            pendingChaseDirection = 0;
+            return chaseDirection;
+        }
+        if (pendingChaseDirection != desired) {
+            pendingChaseDirection = desired;
+            directionChangeAtNanos = tickNowNanos + randomMillis(Math.max(0,
+                    AgentCombatConfig.cfg.MOB_PHYSICS_DIRECTION_REACTION_MAX_MS)) * 1_000_000L;
+        }
+        if (tickNowNanos >= directionChangeAtNanos) {
+            chaseDirection = pendingChaseDirection;
+            pendingChaseDirection = 0;
+        }
+        return chaseDirection;
+    }
+
+    private void beginTemporaryBehavior(int retreatChancePercent,
+                                        int idleMinMs, int idleMaxMs,
+                                        int retreatMinMs, int retreatMaxMs) {
+        int awayFromBlock = blockedDirection == 0
+                ? (nextUnit() < 0.5 ? -1 : 1) : -blockedDirection;
+        boolean retreat = nextUnit() * 100.0
+                < Math.min(100, Math.max(0, retreatChancePercent));
+        temporaryDirection = retreat ? awayFromBlock : 0;
+        long durationMs = retreat
+                ? randomRangeMillis(retreatMinMs, retreatMaxMs)
+                : randomRangeMillis(idleMinMs, idleMaxMs);
+        temporaryBehaviorUntilNanos = tickNowNanos + durationMs * 1_000_000L;
+        nextStuckDecisionNanos = temporaryBehaviorUntilNanos + stuckWindowNanos();
+        immediatePublication = true;
+    }
+
+    private long stuckWindowNanos() {
+        long delayMs = Math.max(0, AgentCombatConfig.cfg.MOB_PHYSICS_STUCK_DETECT_MS);
+        delayMs += randomMillis(Math.max(0,
+                AgentCombatConfig.cfg.MOB_PHYSICS_BEHAVIOR_JITTER_MS));
+        return delayMs * 1_000_000L;
+    }
+
+    private long randomRangeMillis(int first, int second) {
+        int min = Math.max(0, Math.min(first, second));
+        int max = Math.max(min, Math.max(first, second));
+        return min + randomMillis(max - min);
+    }
+
+    private long randomMillis(int inclusiveMaximum) {
+        if (inclusiveMaximum <= 0) return 0L;
+        return (long) Math.floor(nextUnit() * (inclusiveMaximum + 1.0));
+    }
+
+    private double nextUnit() {
+        long x = randomState;
+        x ^= x >>> 12;
+        x ^= x << 25;
+        x ^= x >>> 27;
+        randomState = x;
+        long value = x * 0x2545F4914F6CDD1DL;
+        return (value >>> 11) * 0x1.0p-53;
+    }
+
+    private static long mix64(long value) {
+        value = (value ^ (value >>> 30)) * 0xBF58476D1CE4E5B9L;
+        value = (value ^ (value >>> 27)) * 0x94D049BB133111EBL;
+        return value ^ (value >>> 31);
     }
 
     public record AdvanceResult(int substeps, boolean catchUpCapped,

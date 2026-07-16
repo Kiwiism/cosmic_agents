@@ -89,6 +89,37 @@ another strategy can handle hits. `!botcfg status` reports active sessions,
 acquisitions, impacts, substeps, publications, capped catch-ups, recoveries,
 missing footholds, handoffs, releases by reason, and average/maximum tick time.
 
+Default behavior tuning:
+
+| Live field | Default | Effect |
+|---|---:|---|
+| `MOB_PHYSICS_LEFT_EDGE_INSET_PX` | 18 | Keeps a walking mob's feet this far inside a connected platform's left edge. |
+| `MOB_PHYSICS_RIGHT_EDGE_INSET_PX` | 10 | Equivalent right-edge inset. Knockback may still push a mob off an edge. |
+| `MOB_PHYSICS_SPEED_PERCENT` | 75 | Global walk/fly chase-force scale. |
+| `MOB_PHYSICS_SPEED_VARIANCE_PERCENT` | 10 | Deterministic per-mob variation around the global speed. |
+| `MOB_PHYSICS_DIRECTION_REACTION_MAX_MS` | 500 | Per-mob sampled delay before reversing toward a target that crossed sides. |
+| `MOB_PHYSICS_EDGE_RETREAT_CHANCE_PERCENT` | 60 | At an edge, chance to step away; otherwise the mob idles. |
+| `MOB_PHYSICS_EDGE_IDLE_MIN_MS` / `MAX_MS` | 250 / 700 | Randomized edge/stuck idle duration. |
+| `MOB_PHYSICS_EDGE_RETREAT_MIN_MS` / `MAX_MS` | 250 / 600 | Randomized retreat duration before aggro resumes. |
+| `MOB_PHYSICS_STUCK_DETECT_MS` | 500 | No-progress window before bounded idle/retreat recovery. |
+| `MOB_PHYSICS_STUCK_RETREAT_CHANCE_PERCENT` | 65 | Chance for stuck recovery to retreat rather than idle. |
+| `MOB_PHYSICS_BEHAVIOR_JITTER_MS` | 250 | Per-mob extra jitter on stuck decision timing. |
+| `MOB_PHYSICS_JUMP_COOLDOWN_MS` | 900 | Minimum interval between heuristic jumps. |
+| `MOB_PHYSICS_JUMP_COOLDOWN_JITTER_MS` | 900 | Per-mob random time added to the jump cooldown and initial jump. |
+| `MOB_PHYSICS_KNOCKBACK_PERCENT` | 50 | Scale for the translated hit force; 50 gives roughly half-distance knockback. |
+| `MOB_PHYSICS_IMPACT_DELAY_PERCENT` | 100 | Scale for the WZ attack-frame hit delay. |
+| `MOB_PHYSICS_IMPACT_DELAY_OFFSET_MS` | 0 | Signed adjustment after scaling the hit delay. |
+
+The physics step remains fixed at 8 ms. Variation is applied only to decisions
+and force, using a reproducible seed derived from map and monster object IDs;
+this prevents synchronized groups without making collision nondeterministic.
+The reaction and client damage display are both scheduled from the same WZ
+attack-frame delay. A small residual visible gap of up to one 50 ms channel
+tick plus network latency is therefore normal. Reduce
+`MOB_PHYSICS_IMPACT_DELAY_PERCENT` or use a negative
+`MOB_PHYSICS_IMPACT_DELAY_OFFSET_MS` only when captures show that movement
+consistently trails the rendered hit by more than that residual gap.
+
 ## Numerical verification
 
 Pure deterministic tests cover the reference constants and analytic
@@ -96,7 +127,10 @@ trajectories at `1e-9` or tighter tolerance: force/acceleration order, ground
 friction and stop threshold, gravity and landing, ascending/descending slopes,
 walls, edges, connected footholds, map bounds, fixed/ice modes, swimming,
 flying acceleration/deceleration, jump arc, invalid-state recovery, and bounded
-accumulation. The 31-step hit trace is asserted at 8 ms per step (248 ms).
+accumulation. Tests also cover asymmetric edge insets, connected platforms with
+more than two segments, deterministic per-mob decision variance, reversal
+delay, jump jitter, edge/stuck recovery, speed scaling and impact tuning. The
+31-step hit trace is asserted at 8 ms per step (248 ms).
 
 The Java tests use analytic values from the pinned C++ formulas rather than a
 compiled C++ golden-trace executable. This avoids toolchain-dependent float

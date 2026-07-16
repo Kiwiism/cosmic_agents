@@ -49,7 +49,7 @@ public final class MaplePhysicsIntegrator {
             }
         }
 
-        Collision collision = limitMovement(body, terrain);
+        Collision collision = limitMovement(body, input, terrain);
         body.setPosition(body.x() + body.velocityX(), body.y() + body.velocityY());
         if (!finite(body)) {
             recoverInvalid(body, terrain);
@@ -126,7 +126,8 @@ public final class MaplePhysicsIntegrator {
         body.setVelocity(velocityX, velocityY);
     }
 
-    private static Collision limitMovement(PhysicsBody body, PhysicsTerrain terrain) {
+    private static Collision limitMovement(PhysicsBody body, PhysicsInput input,
+                                           PhysicsTerrain terrain) {
         boolean hitWall = false;
         boolean reachedEdge = false;
         double velocityX = body.velocityX();
@@ -139,7 +140,8 @@ public final class MaplePhysicsIntegrator {
             boolean collision = crosses(currentX, nextX, boundary, left);
             if (!collision && body.hasFlag(PhysicsFlags.TURN_AT_EDGES)) {
                 boundary = terrain.edgeBoundary(body.footholdId(), left);
-                collision = crosses(currentX, nextX, boundary, left);
+                boundary += left ? input.leftEdgeInset() : -input.rightEdgeInset();
+                collision = left ? nextX <= boundary : nextX >= boundary;
                 reachedEdge = collision;
             }
             if (collision) {

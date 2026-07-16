@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -22,6 +23,8 @@ public final class FootholdPhysicsIndex implements PhysicsTerrain {
 
     private final Map<Integer, FootholdSegment> byId;
     private final Map<Integer, List<FootholdSegment>> horizontalBuckets;
+    private final Map<Integer, Double> leftEdges;
+    private final Map<Integer, Double> rightEdges;
     private final PhysicsBounds bounds;
 
     public FootholdPhysicsIndex(Collection<FootholdSegment> segments) {
@@ -54,6 +57,8 @@ public final class FootholdPhysicsIndex implements PhysicsTerrain {
         buckets.forEach((key, value) -> immutableBuckets.put(key, List.copyOf(value)));
         byId = Collections.unmodifiableMap(ids);
         horizontalBuckets = Collections.unmodifiableMap(immutableBuckets);
+        leftEdges = Collections.unmodifiableMap(resolveConnectedEdges(ids, true));
+        rightEdges = Collections.unmodifiableMap(resolveConnectedEdges(ids, false));
         double inset = Math.min(HORIZONTAL_INSET, Math.max(0.0, (right - left) / 4.0));
         bounds = new PhysicsBounds(left + inset, right - inset, top - TOP_MARGIN, bottom + BOTTOM_MARGIN);
     }
@@ -106,15 +111,8 @@ public final class FootholdPhysicsIndex implements PhysicsTerrain {
         if (current == null) {
             return left ? bounds.left() : bounds.right();
         }
-        FootholdSegment adjacent = foothold(left ? current.previousId() : current.nextId());
-        if (adjacent == null) {
-            return left ? current.left() : current.right();
-        }
-        FootholdSegment second = foothold(left ? adjacent.previousId() : adjacent.nextId());
-        if (second == null) {
-            return left ? adjacent.left() : adjacent.right();
-        }
-        return left ? bounds.left() : bounds.right();
+        return (left ? leftEdges : rightEdges).getOrDefault(current.id(),
+                left ? current.left() : current.right());
     }
 
     @Override
@@ -128,5 +126,38 @@ public final class FootholdPhysicsIndex implements PhysicsTerrain {
 
     private static int bucket(double x) {
         return Math.floorDiv((int) Math.floor(x), BUCKET_WIDTH);
+    }
+
+    private static Map<Integer, Double> resolveConnectedEdges(
+            Map<Integer, FootholdSegment> ids, boolean left) {
+        Map<Integer, Double> resolved = new HashMap<>();
+        for (FootholdSegment start : ids.values()) {
+            if (start.wall() || resolved.containsKey(start.id())) continue;
+            List<FootholdSegment> path = new ArrayList<>();
+            HashSet<Integer> visited = new HashSet<>();
+            FootholdSegment current = start;
+            double edge;
+            while (true) {
+                Double cached = resolved.get(current.id());
+                if (cached != null) {
+                    edge = cached;
+                    break;
+                }
+                if (!visited.add(current.id())) {
+                    edge = left ? current.left() : current.right();
+                    break;
+                }
+                path.add(current);
+                FootholdSegment adjacent = ids.get(
+                        left ? current.previousId() : current.nextId());
+                if (adjacent == null || adjacent.wall()) {
+                    edge = left ? current.left() : current.right();
+                    break;
+                }
+                current = adjacent;
+            }
+            for (FootholdSegment segment : path) resolved.put(segment.id(), edge);
+        }
+        return resolved;
     }
 }

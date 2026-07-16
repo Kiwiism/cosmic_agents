@@ -101,6 +101,24 @@ class MaplePhysicsIntegratorTest {
     }
 
     @Test
+    void asymmetricInsetsKeepFeetInsideLeftAndRightEdges() {
+        PhysicsTerrain terrain = flatTerrain();
+        PhysicsBody left = groundedBody(5.0, 100.0, 1);
+        left.setVelocity(-2.0, 0.0);
+        PhysicsStepResult leftResult = integrator.step(left,
+                new PhysicsInput(0.0, 0.0, true, false, 4.0, 7.0), terrain);
+        assertTrue(leftResult.reachedEdge());
+        assertEquals(4.0, left.x(), EPSILON);
+
+        PhysicsBody right = groundedBody(95.0, 100.0, 1);
+        right.setVelocity(2.0, 0.0);
+        PhysicsStepResult rightResult = integrator.step(right,
+                new PhysicsInput(0.0, 0.0, true, false, 4.0, 7.0), terrain);
+        assertTrue(rightResult.reachedEdge());
+        assertEquals(93.0, right.x(), EPSILON);
+    }
+
+    @Test
     void flyingAndSwimmingUseTheirReferenceFriction() {
         PhysicsTerrain terrain = flatTerrain();
         PhysicsBody flying = new PhysicsBody(50.0, 50.0, PhysicsMode.FLYING);
