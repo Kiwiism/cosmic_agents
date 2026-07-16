@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import net.packet.Packet;
 import server.agents.capabilities.combat.AgentCombatConfig;
+import server.agents.capabilities.combat.AgentMonsterControlService;
 import server.agents.capabilities.mobcontrol.AgentMobReactionMode;
 import server.life.Monster;
 import server.life.MonsterStats;
@@ -66,6 +67,21 @@ class MobPhysicsServiceTest {
         service.releaseMap(fixture.map, MobPhysicsService.ReleaseReason.OBSERVER_LOSS);
         assertEquals(0, service.activeSessionCountForTest());
         assertEquals(MobControlAuthority.NONE, fixture.monster.getControlAuthority());
+    }
+
+    @Test
+    void legacyAgentTickCleanupCannotRevokePhysicsBeforeFirstPublication() {
+        Fixture fixture = fixture(true, 1);
+        assertTrue(service.acceptedHit(fixture.agent, fixture.monster, 10, 0));
+        when(fixture.agent.getControlledMonsters()).thenReturn(List.of(fixture.monster));
+
+        AgentMonsterControlService.releaseControlledMonsters(fixture.agent);
+
+        assertEquals(MobControlAuthority.AGENT_PHYSICS,
+                fixture.monster.getControlAuthority());
+        assertEquals(1, service.activeSessionCountForTest());
+        service.tickForTest(System.nanoTime() + 100_000_000L);
+        verify(fixture.map).broadcastMessage(any(), any(Point.class));
     }
 
     @Test

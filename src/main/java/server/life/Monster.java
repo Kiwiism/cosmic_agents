@@ -2256,8 +2256,19 @@ public class Monster extends AbstractLoadedLife {
      * fetches for any player on the map to start controlling in place.
      */
     public void aggroRedirectController() {
-        this.aggroRemoveController();   // don't care if new controller not found, at least remove current controller
-        this.aggroUpdateController();
+        aggroUpdateLock.lock();
+        try {
+            // Agent physics has an explicit channel-owned lifecycle. Legacy
+            // headless-controller cleanup must not revoke it between its caller's
+            // authority check and this redirect operation.
+            if (controlAuthority == MobControlAuthority.AGENT_PHYSICS) {
+                return;
+            }
+            this.aggroRemoveController();   // don't care if new controller not found, at least remove current controller
+            this.aggroUpdateController();
+        } finally {
+            aggroUpdateLock.unlock();
+        }
     }
 
     /**

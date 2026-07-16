@@ -3,6 +3,7 @@ package server.agents.capabilities.combat;
 import client.Character;
 import server.life.Monster;
 import server.integration.AgentPresence;
+import server.life.simulation.MobControlAuthority;
 import server.maps.MapleMap;
 
 import java.util.Collection;
@@ -21,6 +22,14 @@ public final class AgentMonsterControlService {
         }
 
         for (Monster monster : controlled) {
+            // The channel MobPhysicsService owns the controller and lifecycle while
+            // this authority is active.  The legacy per-Agent cleanup exists for
+            // headless controllers that cannot simulate MOVE_LIFE; redirecting a
+            // physics-owned monster here tears down its session before the first
+            // server movement publication.
+            if (monster.getControlAuthority() == MobControlAuthority.AGENT_PHYSICS) {
+                continue;
+            }
             monster.aggroRedirectController();
         }
     }

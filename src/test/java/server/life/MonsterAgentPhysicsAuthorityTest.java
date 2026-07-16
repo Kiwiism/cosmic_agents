@@ -51,6 +51,10 @@ class MonsterAgentPhysicsAuthorityTest {
         assertSame(agent, monster.getController());
         assertNull(monster.aggroMoveLifeUpdate(real));
 
+        monster.aggroRedirectController();
+        assertSame(agent, monster.getController());
+        assertEquals(MobControlAuthority.AGENT_PHYSICS, monster.getControlAuthority());
+
         when(map.getCharacters()).thenReturn(List.of(real));
         assertTrue(monster.aggroReleaseAgentPhysics(agent, true));
         assertSame(real, monster.getController());
