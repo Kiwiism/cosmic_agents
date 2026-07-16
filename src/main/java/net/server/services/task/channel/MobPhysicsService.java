@@ -25,6 +25,7 @@ import tools.PacketCreator;
 
 import java.awt.Point;
 import java.util.EnumMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -43,7 +44,7 @@ public final class MobPhysicsService extends BaseService {
     public enum ReleaseReason {
         MODE_CHANGE, OBSERVER_LOSS, AGENT_DEPARTURE, AGENT_DEATH,
         MONSTER_GONE, MAP_CHANGE, INVALID_STATE, MISSING_TERRAIN,
-        BROADCAST_FAILURE, SERVICE_SHUTDOWN
+        BROADCAST_FAILURE, CLIENT_MAP_TRANSITION, AGGRO_TIMEOUT, SERVICE_SHUTDOWN
     }
 
     private final MobSimulationRegistry registry = new MobSimulationRegistry();
@@ -156,7 +157,9 @@ public final class MobPhysicsService extends BaseService {
             return false;
         }
         MapleMap map = monster.getMap();
-        return map != null && attacker.getMap() == map && map.isObservedByPlayer();
+        return map != null && attacker.getMap() == map && map.isObservedByPlayer()
+                && !map.hasTransitioningPlayerObserver()
+                && map.isMobPhysicsObserverWarmupComplete();
     }
 
     private void tickSafely() {
@@ -184,9 +187,18 @@ public final class MobPhysicsService extends BaseService {
     }
 
     private void tickAt(long now) {
-        for (MobSimulationSession session : registry.snapshot()) {
+        Map<MapleMap, ReleaseReason> mapInvalidReasons = new IdentityHashMap<>();
+        for (MobSimulationSession session : registry.liveSessions()) {
             try {
-                tickSession(session, now);
+                MapleMap map = session.map();
+                ReleaseReason mapInvalidReason;
+                if (mapInvalidReasons.containsKey(map)) {
+                    mapInvalidReason = mapInvalidReasons.get(map);
+                } else {
+                    mapInvalidReason = invalidMapReason(map);
+                    mapInvalidReasons.put(map, mapInvalidReason);
+                }
+                tickSession(session, now, mapInvalidReason);
             } catch (RuntimeException | LinkageError failure) {
                 log.warn("Releasing failed Agent mob-physics session for mob {}",
                         session.monster().getObjectId(), failure);
@@ -199,10 +211,12 @@ public final class MobPhysicsService extends BaseService {
     MobSimulationSession sessionForTest(Monster monster) { return registry.get(monster); }
     int activeSessionCountForTest() { return registry.size(); }
 
-    private void tickSession(MobSimulationSession session, long now) {
-        ReleaseReason invalid = invalidReason(session);
+    private void tickSession(MobSimulationSession session, long now,
+                             ReleaseReason mapInvalidReason) {
+        long generation = session.generation();
+        ReleaseReason invalid = invalidReason(session, mapInvalidReason, now);
         if (invalid != null) {
-            release(session, invalid);
+            releaseIfGeneration(session, invalid, generation);
             return;
         }
         MobSimulationSession.AdvanceResult advanced = session.advance(now);
@@ -227,7 +241,10 @@ public final class MobPhysicsService extends BaseService {
             }
             monster.setFh(body.footholdId());
             monster.setStance(stance);
-            session.map().moveMonster(monster, current);
+            Point previous = monster.getPosition();
+            if (previous == null || !previous.equals(current)) {
+                session.map().moveMonster(monster, current);
+            }
             if (session.publicationDue(now)) {
                 publish(session, current, stance, now);
             }
@@ -251,7 +268,7 @@ public final class MobPhysicsService extends BaseService {
         Packet packet = PacketCreator.moveMonster(session.monster().getObjectId(), rawActivity, start,
                 List.<LifeMovementFragment>of(movement));
         try {
-            session.map().broadcastMessage(packet, current);
+            session.map().broadcastMobPhysicsMessage(packet, current);
             publications.increment();
         } catch (RuntimeException failure) {
             release(session, ReleaseReason.BROADCAST_FAILURE);
@@ -281,31 +298,86 @@ public final class MobPhysicsService extends BaseService {
         return moving ? (facingLeft ? 1 : 0) : (facingLeft ? 5 : 4);
     }
 
-    private static ReleaseReason invalidReason(MobSimulationSession session) {
+    private static ReleaseReason invalidMapReason(MapleMap map) {
+        if (!map.isObservedByPlayer()) return ReleaseReason.OBSERVER_LOSS;
+        if (map.hasTransitioningPlayerObserver()) return ReleaseReason.CLIENT_MAP_TRANSITION;
+        if (!map.isMobPhysicsObserverWarmupComplete()) return ReleaseReason.CLIENT_MAP_TRANSITION;
+        return null;
+    }
+
+    private static ReleaseReason invalidReason(MobSimulationSession session,
+                                               ReleaseReason mapInvalidReason,
+                                               long nowNanos) {
         Monster monster = session.monster();
         Character agent = session.agent();
         MapleMap map = session.map();
-        if (!map.isObservedByPlayer()) return ReleaseReason.OBSERVER_LOSS;
+        if (mapInvalidReason != null) return mapInvalidReason;
         if (!monster.isAlive() || map.getMonsterByOid(monster.getObjectId()) != monster)
             return ReleaseReason.MONSTER_GONE;
         if (monster.getMap() != map) return ReleaseReason.MAP_CHANGE;
         if (!agent.isAlive()) return ReleaseReason.AGENT_DEATH;
         if (agent.getMap() != map) return ReleaseReason.AGENT_DEPARTURE;
+        if (session.agentHitLeaseExpired(nowNanos,
+                Math.max(0, AgentCombatConfig.cfg.MOB_PHYSICS_AGGRO_TIMEOUT_MS))) {
+            return ReleaseReason.AGGRO_TIMEOUT;
+        }
         return null;
     }
 
     private void release(MobSimulationSession session, ReleaseReason reason) {
-        if (!registry.remove(session.monster(), session)) {
-            return;
+        release(session, reason, null);
+    }
+
+    void releaseIfGeneration(MobSimulationSession session, ReleaseReason reason,
+                             long expectedGeneration) {
+        release(session, reason, expectedGeneration);
+    }
+
+    private void release(MobSimulationSession session, ReleaseReason reason,
+                         Long expectedGeneration) {
+        Monster monster = session.monster();
+        monster.lockMonster();
+        try {
+            if (expectedGeneration != null && !session.hasGeneration(expectedGeneration)) {
+                return;
+            }
+            if (!registry.remove(monster, session)) {
+                return;
+            }
+            if (reason == ReleaseReason.CLIENT_MAP_TRANSITION
+                    || reason == ReleaseReason.OBSERVER_LOSS
+                    || reason == ReleaseReason.AGGRO_TIMEOUT) {
+                // Spawn/control packets should describe a stable pose. A physics session
+                // can otherwise leave a recently hit mob in its transient walk/flinch
+                // stance after the last observer leaves or while publication is paused.
+                monster.setStance(stableTransitionStance(session));
+            }
+            releaseRemovedSession(session, reason);
+        } finally {
+            monster.unlockMonster();
         }
+        stopIfIdle();
+    }
+
+    static int stableTransitionStance(MobSimulationSession session) {
+        boolean facingLeft = Math.floorMod(session.monster().getStance(), 2) == 1;
+        if (session.profile().flying()) {
+            return facingLeft ? 3 : 2;
+        }
+        return facingLeft ? 5 : 4;
+    }
+
+    private void releaseRemovedSession(MobSimulationSession session, ReleaseReason reason) {
         releases.get(reason).increment();
         boolean selectRealController = reason != ReleaseReason.MONSTER_GONE
                 && reason != ReleaseReason.MAP_CHANGE
                 && reason != ReleaseReason.OBSERVER_LOSS
+                && reason != ReleaseReason.CLIENT_MAP_TRANSITION
                 && reason != ReleaseReason.SERVICE_SHUTDOWN;
         try {
             if (session.monster().aggroReleaseAgentPhysics(
-                    session.agent(), selectRealController)
+                    session.agent(), selectRealController,
+                    reason != ReleaseReason.AGGRO_TIMEOUT)
                     && session.monster().getControlAuthority() == MobControlAuthority.CLIENT) {
                 handoffs.increment();
             }
@@ -319,7 +391,6 @@ public final class MobPhysicsService extends BaseService {
                         session.monster().getObjectId(), fallbackFailure);
             }
         }
-        stopIfIdle();
     }
 
     public void releaseAll(ReleaseReason reason) {

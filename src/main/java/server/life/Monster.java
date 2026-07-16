@@ -1057,6 +1057,15 @@ public class Monster extends AbstractLoadedLife {
 
     /** Releases Agent authority; ordinary client selection resumes from current server state. */
     public boolean aggroReleaseAgentPhysics(Character expectedAgent, boolean selectRealController) {
+        return aggroReleaseAgentPhysics(expectedAgent, selectRealController, true);
+    }
+
+    /**
+     * Releases Agent authority and optionally assigns a real client. A timed-out Agent aggro
+     * lease uses {@code immediateAggro=false} so the client resumes ordinary wandering.
+     */
+    public boolean aggroReleaseAgentPhysics(Character expectedAgent, boolean selectRealController,
+                                            boolean immediateAggro) {
         Character agent;
         aggroUpdateLock.lock();
         try {
@@ -1088,7 +1097,7 @@ public class Monster extends AbstractLoadedLife {
                 }
             }
             if (candidate != null) {
-                aggroSwitchController(candidate, true);
+                aggroSwitchController(candidate, immediateAggro);
             }
         }
         return true;
@@ -2099,7 +2108,11 @@ public class Monster extends AbstractLoadedLife {
         }
 
         if (chrController != null) { // this can/should only happen when a hidden gm attacks the monster
-            if (!this.isFake()) {
+            // SET_FIELD already discards the departing client's old controller table.
+            // Sending STOP_CONTROLLING_MONSTER after SET_FIELD is especially unsafe for
+            // a same-map warp because the destination immediately reuses the same OIDs.
+            // Server-side ownership bookkeeping must still be cleared below.
+            if (!this.isFake() && !chrController.isChangingMaps()) {
                 chrController.sendPacket(PacketCreator.stopControllingMonster(this.getObjectId()));
             }
             chrController.stopControllingMonster(this);
@@ -2322,6 +2335,14 @@ public class Monster extends AbstractLoadedLife {
 
         Character chrController = this.getController();    // aggro based on DPS rather than first-come-first-served, now live after suggestions thanks to MedicOP, Thora, Vcoc
         if (controlAuthority == MobControlAuthority.AGENT_PHYSICS) {
+            setControllerHasAggro(true);
+            return;
+        }
+        // A BotClient cannot answer MOVE_LIFE. Do not briefly steal control from a
+        // real client here; PHYSICS mode acquires explicit Agent authority later in
+        // MapleMap.damageMonster, after damage has been accepted. If that acquisition
+        // is blocked during map warm-up, the existing real controller stays stable.
+        if (attacker.getClient() instanceof BotClient) {
             setControllerHasAggro(true);
             return;
         }

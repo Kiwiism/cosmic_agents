@@ -42,7 +42,7 @@ public final class MapleIslandCohortRunService {
                             int intervalSeconds,
                             Long requestedSeed) {
             this(ownerCharacterId, world, channel, total, batch, intervalSeconds,
-                    requestedSeed, MapleIslandCohortRealismMode.FULL);
+                    requestedSeed, MapleIslandCohortRealismMode.LIGHT);
         }
 
         public StartRequest {
@@ -60,7 +60,7 @@ public final class MapleIslandCohortRunService {
                         + " and " + MAX_INTERVAL_SECONDS + " seconds");
             }
             new Shard(world, channel);
-            realismMode = realismMode == null ? MapleIslandCohortRealismMode.FULL : realismMode;
+            realismMode = realismMode == null ? MapleIslandCohortRealismMode.LIGHT : realismMode;
         }
     }
 

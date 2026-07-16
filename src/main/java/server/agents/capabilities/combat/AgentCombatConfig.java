@@ -55,6 +55,10 @@ public final class AgentCombatConfig {
             try {
                 Object previous = f.get(cfg);
                 Object parsed = parseConfigValue(f.getType(), rawValue.trim());
+                String validationFailure = validateConfigValue(f.getName(), parsed);
+                if (validationFailure != null) {
+                    return validationFailure;
+                }
                 f.set(cfg, parsed);
                 if (f.getName().equals("AGENT_MOB_REACTION_MODE")) {
                     AgentMobReactionRouter.modeChanged(
@@ -100,6 +104,71 @@ public final class AgentCombatConfig {
             }
         }
         throw new NumberFormatException(v);
+    }
+
+    private static String validateConfigValue(String name, Object parsed) {
+        if (!(parsed instanceof Integer value)) {
+            return null;
+        }
+        int minimum;
+        int maximum;
+        switch (name) {
+            case "SYNTHETIC_MOB_KNOCKBACK_DISTANCE_X" -> { minimum = 0; maximum = 1_000; }
+            case "SYNTHETIC_MOB_KNOCKBACK_DURATION_MS" -> { minimum = 20; maximum = 5_000; }
+            case "SYNTHETIC_MOB_CONTROL_HOLD_MS" -> { minimum = 0; maximum = 10_000; }
+            case "MOB_PHYSICS_PUBLICATION_INTERVAL_MS" -> { minimum = 20; maximum = 1_000; }
+            case "MOB_PHYSICS_MAX_CATCH_UP_STEPS" -> { minimum = 1; maximum = 100; }
+            case "MOB_PHYSICS_STOP_DISTANCE_X", "MOB_PHYSICS_RESUME_DISTANCE_X",
+                 "MOB_PHYSICS_FLY_DEAD_ZONE_X", "MOB_PHYSICS_FLY_DEAD_ZONE_Y",
+                 "MOB_PHYSICS_RETREAT_MIN_DISTANCE_PX", "MOB_PHYSICS_RETREAT_MAX_DISTANCE_PX" -> {
+                minimum = 0; maximum = 2_000;
+            }
+            case "MOB_PHYSICS_JUMP_TARGET_HEIGHT" -> { minimum = 1; maximum = 2_000; }
+            case "MOB_PHYSICS_MAX_SAFE_EDGE_PX", "MOB_PHYSICS_LEFT_EDGE_INSET_PX",
+                 "MOB_PHYSICS_RIGHT_EDGE_INSET_PX" -> { minimum = 0; maximum = 1_000; }
+            case "MOB_PHYSICS_SPEED_PERCENT", "MOB_PHYSICS_KNOCKBACK_PERCENT" -> {
+                minimum = 0; maximum = 300;
+            }
+            case "MOB_PHYSICS_EDGE_RETREAT_CHANCE_PERCENT",
+                 "MOB_PHYSICS_STUCK_RETREAT_CHANCE_PERCENT" -> { minimum = 0; maximum = 100; }
+            case "MOB_PHYSICS_JUMP_COOLDOWN_MS", "MOB_PHYSICS_JUMP_COOLDOWN_JITTER_MS",
+                 "MOB_PHYSICS_BEHAVIOR_JITTER_MS", "MOB_PHYSICS_DIRECTION_REACTION_MAX_MS",
+                 "MOB_PHYSICS_EDGE_IDLE_MIN_MS", "MOB_PHYSICS_EDGE_IDLE_MAX_MS",
+                 "MOB_PHYSICS_EDGE_RETREAT_MIN_MS", "MOB_PHYSICS_EDGE_RETREAT_MAX_MS",
+                 "MOB_PHYSICS_STUCK_DETECT_MS", "MOB_PHYSICS_FLINCH_RECOVERY_MS",
+                 "MOB_PHYSICS_POST_FLINCH_CHASE_RAMP_MS",
+                 "MOB_PHYSICS_OBSERVER_WARMUP_MS",
+                 "MOB_PHYSICS_AGGRO_TIMEOUT_MS" -> { minimum = 0; maximum = 60_000; }
+            case "MOB_PHYSICS_IMPACT_DELAY_PERCENT" -> { minimum = 0; maximum = 200; }
+            case "MOB_PHYSICS_IMPACT_DELAY_OFFSET_MS" -> { minimum = -60_000; maximum = 60_000; }
+            default -> { return null; }
+        }
+        if (value < minimum || value > maximum) {
+            return "value for " + name + " must be between " + minimum + " and " + maximum;
+        }
+        return validatePairedPhysicsValue(name, value);
+    }
+
+    private static String validatePairedPhysicsValue(String name, int value) {
+        return switch (name) {
+            case "MOB_PHYSICS_STOP_DISTANCE_X" -> value > cfg.MOB_PHYSICS_RESUME_DISTANCE_X
+                    ? "MOB_PHYSICS_STOP_DISTANCE_X cannot exceed MOB_PHYSICS_RESUME_DISTANCE_X" : null;
+            case "MOB_PHYSICS_RESUME_DISTANCE_X" -> value < cfg.MOB_PHYSICS_STOP_DISTANCE_X
+                    ? "MOB_PHYSICS_RESUME_DISTANCE_X cannot be below MOB_PHYSICS_STOP_DISTANCE_X" : null;
+            case "MOB_PHYSICS_EDGE_IDLE_MIN_MS" -> value > cfg.MOB_PHYSICS_EDGE_IDLE_MAX_MS
+                    ? "MOB_PHYSICS_EDGE_IDLE_MIN_MS cannot exceed MOB_PHYSICS_EDGE_IDLE_MAX_MS" : null;
+            case "MOB_PHYSICS_EDGE_IDLE_MAX_MS" -> value < cfg.MOB_PHYSICS_EDGE_IDLE_MIN_MS
+                    ? "MOB_PHYSICS_EDGE_IDLE_MAX_MS cannot be below MOB_PHYSICS_EDGE_IDLE_MIN_MS" : null;
+            case "MOB_PHYSICS_EDGE_RETREAT_MIN_MS" -> value > cfg.MOB_PHYSICS_EDGE_RETREAT_MAX_MS
+                    ? "MOB_PHYSICS_EDGE_RETREAT_MIN_MS cannot exceed MOB_PHYSICS_EDGE_RETREAT_MAX_MS" : null;
+            case "MOB_PHYSICS_EDGE_RETREAT_MAX_MS" -> value < cfg.MOB_PHYSICS_EDGE_RETREAT_MIN_MS
+                    ? "MOB_PHYSICS_EDGE_RETREAT_MAX_MS cannot be below MOB_PHYSICS_EDGE_RETREAT_MIN_MS" : null;
+            case "MOB_PHYSICS_RETREAT_MIN_DISTANCE_PX" -> value > cfg.MOB_PHYSICS_RETREAT_MAX_DISTANCE_PX
+                    ? "MOB_PHYSICS_RETREAT_MIN_DISTANCE_PX cannot exceed MOB_PHYSICS_RETREAT_MAX_DISTANCE_PX" : null;
+            case "MOB_PHYSICS_RETREAT_MAX_DISTANCE_PX" -> value < cfg.MOB_PHYSICS_RETREAT_MIN_DISTANCE_PX
+                    ? "MOB_PHYSICS_RETREAT_MAX_DISTANCE_PX cannot be below MOB_PHYSICS_RETREAT_MIN_DISTANCE_PX" : null;
+            default -> null;
+        };
     }
 
     public static class Config {
@@ -177,6 +246,10 @@ public final class AgentCombatConfig {
                 YamlConfig.config.server.AGENT_MOB_PHYSICS_IMPACT_DELAY_OFFSET_MS;
         public boolean MOB_PHYSICS_DIAGNOSTIC_LOGGING =
                 YamlConfig.config.server.AGENT_MOB_PHYSICS_DIAGNOSTIC_LOGGING;
+        public int MOB_PHYSICS_OBSERVER_WARMUP_MS =
+                YamlConfig.config.server.AGENT_MOB_PHYSICS_OBSERVER_WARMUP_MS;
+        public int MOB_PHYSICS_AGGRO_TIMEOUT_MS =
+                YamlConfig.config.server.AGENT_MOB_PHYSICS_AGGRO_TIMEOUT_MS;
 
         // Basic attack fallback when weapon data cannot produce a real normal-attack hit box.
         public int ATTACK_RANGE_X = 80;

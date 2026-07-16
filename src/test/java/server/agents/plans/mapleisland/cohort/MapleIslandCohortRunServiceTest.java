@@ -27,7 +27,7 @@ class MapleIslandCohortRunServiceTest {
         MapleIslandCohortRunService.Status accepted = service.start(
                 new MapleIslandCohortRunService.StartRequest(99, 0, 1, 5, 2, 10, 44L));
         assertEquals(44L, accepted.runSeed());
-        assertEquals(MapleIslandCohortRealismMode.FULL, accepted.realismMode());
+        assertEquals(MapleIslandCohortRealismMode.LIGHT, accepted.realismMode());
 
         hooks.runNextWave();
         assertEquals(2, service.status(0, 1).launched());
@@ -40,11 +40,11 @@ class MapleIslandCohortRunServiceTest {
         assertEquals(5, status.launched());
         assertEquals(List.of(1, 2, 3, 4, 5), hooks.startedOrdinals);
         assertEquals(List.of(
-                MapleIslandCohortRealismMode.FULL,
-                MapleIslandCohortRealismMode.FULL,
-                MapleIslandCohortRealismMode.FULL,
-                MapleIslandCohortRealismMode.FULL,
-                MapleIslandCohortRealismMode.FULL), hooks.startedModes);
+                MapleIslandCohortRealismMode.LIGHT,
+                MapleIslandCohortRealismMode.LIGHT,
+                MapleIslandCohortRealismMode.LIGHT,
+                MapleIslandCohortRealismMode.LIGHT,
+                MapleIslandCohortRealismMode.LIGHT), hooks.startedModes);
         assertEquals(List.of(0L, 10_000L, 10_000L), hooks.scheduledDelays);
     }
 

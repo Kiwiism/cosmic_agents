@@ -54,6 +54,8 @@ import scripting.map.MapScriptManager;
 import server.ItemInformationProvider;
 import server.StatEffect;
 import server.TimerManager;
+import server.agents.capabilities.combat.AgentCombatConfig;
+import server.agents.diagnostics.MapTransitionPacketTraceRuntime;
 import server.agents.diagnostics.MobReactionCaptureRuntime;
 import server.events.gm.Coconut;
 import server.events.gm.Fitness;
@@ -127,6 +129,7 @@ public class MapleMap {
     private final AtomicInteger droppedItemCount = new AtomicInteger(0);
     private final Collection<Character> characters = new LinkedHashSet<>();
     private final MapPlayerObserverState playerObservers = new MapPlayerObserverState();
+    private volatile long mobPhysicsActivationBlockedUntilMillis;
     private final Map<Integer, Set<Integer>> mapParty = new LinkedHashMap<>();
     private final Map<Integer, Portal> portals = new HashMap<>();
     private final Map<Integer, Integer> backgroundTypes = new HashMap<>();
@@ -2357,6 +2360,16 @@ public class MapleMap {
     }
 
     public void addPlayer(final Character chr) {
+        if (MapPlayerObserverState.isObserver(chr) && chr.isChangingMaps()) {
+            beginMobPhysicsObserverWarmup();
+            // Release before sendObjectPlacement: otherwise a newly arriving client can
+            // receive SPAWN_MONSTER while the mob still has Agent-physics authority.
+            MobPhysicsService.releaseMapInstances(
+                    this, MobPhysicsService.ReleaseReason.CLIENT_MAP_TRANSITION);
+            MapTransitionPacketTraceRuntime.mark(chr.getClient(),
+                    "pre-placement physics released warmupRemainingMs="
+                            + mobPhysicsObserverWarmupRemainingMs());
+        }
         int chrSize;
         boolean observationStarted = false;
         Party party = chr.getParty();
@@ -2784,6 +2797,11 @@ public class MapleMap {
         broadcastMessage(null, packet, getRangedDistance(), rangedFrom);
     }
 
+    /** Ranged broadcast for server-owned mob movement after each recipient has entered the field. */
+    public void broadcastMobPhysicsMessage(Packet packet, Point rangedFrom) {
+        broadcastMessage(null, packet, getRangedDistance(), rangedFrom, true);
+    }
+
     /**
      * Always ranged from point. Does not repeat to source.
      *
@@ -2796,8 +2814,20 @@ public class MapleMap {
     }
 
     private void broadcastMessage(Character source, Packet packet, double rangeSq, Point rangedFrom) {
-        if (source != null && source.getClient() instanceof BotClient && !isObservedByPlayer()) {
-            return;
+        broadcastMessage(source, packet, rangeSq, rangedFrom, false);
+    }
+
+    private void broadcastMessage(Character source, Packet packet, double rangeSq, Point rangedFrom,
+                                  boolean realClientRecipientsOnly) {
+        if (source != null && source.getClient() instanceof BotClient) {
+            // Keep all Agent-originated animation/movement packets out of the same
+            // post-ack settling window as Agent combat and mob physics. The Agent's
+            // authoritative state continues updating and its next packet catches the
+            // observer up after warm-up.
+            if (!isObservedByPlayer() || hasTransitioningPlayerObserver()
+                    || !isMobPhysicsObserverWarmupComplete()) {
+                return;
+            }
         }
         try {
             MobReactionCaptureRuntime.recordBroadcast(this, source, packet);
@@ -2813,7 +2843,10 @@ public class MapleMap {
         chrRLock.lock();
         try {
             for (Character chr : characters) {
-                if (chr != source) {
+                boolean recipientReady = realClientRecipientsOnly
+                        ? isMobPhysicsBroadcastRecipientReady(chr)
+                        : isMapBroadcastRecipientReady(chr);
+                if (chr != source && recipientReady) {
                     if (rangeSq < Double.POSITIVE_INFINITY) {
                         if (rangedFrom.distanceSq(chr.getPosition()) <= rangeSq) {
                             chr.sendPacket(packet);
@@ -2833,9 +2866,66 @@ public class MapleMap {
         }
     }
 
+    /** Ordinary field broadcasts must not race the client's destination-object rebuild. */
+    static boolean isMapBroadcastRecipientReady(Character character) {
+        return character != null && !character.isChangingMaps();
+    }
+
+    /** Headless Agents cannot render or consume server-owned mob movement packets. */
+    static boolean isMobPhysicsBroadcastRecipientReady(Character character) {
+        return isMapBroadcastRecipientReady(character)
+                && !(character.getClient() instanceof BotClient);
+    }
+
     /** True when at least one real client, including a hidden GM, can render this map. */
     public boolean isObservedByPlayer() {
         return playerObservers.isObserved();
+    }
+
+    /** Starts or restarts the post-arrival period in which Agent physics cannot be acquired. */
+    public void beginMobPhysicsObserverWarmup() {
+        long durationMs = Math.max(0, AgentCombatConfig.cfg.MOB_PHYSICS_OBSERVER_WARMUP_MS);
+        mobPhysicsActivationBlockedUntilMillis = System.currentTimeMillis() + durationMs;
+    }
+
+    public boolean isMobPhysicsObserverWarmupComplete() {
+        return mobPhysicsObserverWarmupRemainingMs() == 0L;
+    }
+
+    public long mobPhysicsObserverWarmupRemainingMs() {
+        return Math.max(0L, mobPhysicsActivationBlockedUntilMillis - System.currentTimeMillis());
+    }
+
+    /** True while any real client in this map is still rebuilding its field objects. */
+    public boolean hasTransitioningPlayerObserver() {
+        chrRLock.lock();
+        try {
+            for (Character character : characters) {
+                if (MapPlayerObserverState.isObserver(character) && character.isChangingMaps()) {
+                    return true;
+                }
+            }
+            return false;
+        } finally {
+            chrRLock.unlock();
+        }
+    }
+
+    /** Removes monsters that were sent during placement but died before transition completion. */
+    public int reconcileTransitionMonsterVisibility(Character character) {
+        if (character == null || character.getClient() == null) {
+            return 0;
+        }
+        int removed = 0;
+        for (MapObject visible : character.getVisibleMapObjects()) {
+            if (visible instanceof Monster monster
+                    && getMonsterByOid(monster.getObjectId()) != monster) {
+                monster.sendDestroyData(character.getClient());
+                character.removeVisibleMapObject(monster);
+                removed++;
+            }
+        }
+        return removed;
     }
 
     private void updateBossSpawn(Monster monster) {
@@ -3019,7 +3109,12 @@ public class MapleMap {
                     o.sendSpawnData(chr.getClient());
                     chr.addVisibleMapObject(o);
 
-                    if (o.getType() == MapObjectType.MONSTER) {
+                    // A transitioning v83 client has received the monster object but has
+                    // not acknowledged that its field is ready yet. Assigning control here
+                    // makes PlayerMapTransitionHandler tear that control down and recreate
+                    // it a few hundred milliseconds later. Defer the single ownership
+                    // handoff until the acknowledgement instead.
+                    if (o.getType() == MapObjectType.MONSTER && !chr.isChangingMaps()) {
                         ((Monster) o).aggroUpdateController();
                     }
                 }

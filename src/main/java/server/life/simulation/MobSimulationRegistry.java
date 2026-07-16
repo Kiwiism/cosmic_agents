@@ -19,5 +19,7 @@ public final class MobSimulationRegistry {
         return sessions.remove(monster, session);
     }
     public Collection<MobSimulationSession> snapshot() { return List.copyOf(sessions.values()); }
+    /** Weakly consistent, allocation-free view for the periodic service tick. */
+    public Collection<MobSimulationSession> liveSessions() { return sessions.values(); }
     public int size() { return sessions.size(); }
 }

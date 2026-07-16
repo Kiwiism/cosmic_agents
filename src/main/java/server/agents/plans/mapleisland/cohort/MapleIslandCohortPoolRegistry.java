@@ -26,6 +26,7 @@ public final class MapleIslandCohortPoolRegistry {
         this.store = store;
         this.snapshot = store.load();
         validateUnique(snapshot);
+        assignMissingCharacterTemplates();
     }
 
     public synchronized MapleIslandCohortPoolSnapshot snapshot() {
@@ -78,8 +79,11 @@ public final class MapleIslandCohortPoolRegistry {
         if (!knownAccount) {
             throw new IOException("Pool Agent references an unknown account: " + agent.accountName());
         }
+        Agent storedAgent = agent.characterTemplateOrdinal() == null
+                ? agent.withCharacterTemplateOrdinal(firstUnusedCharacterTemplateOrdinal(snapshot.agents()))
+                : agent;
         List<Agent> agents = new ArrayList<>(snapshot.agents());
-        agents.add(agent);
+        agents.add(storedAgent);
         persist(snapshot.accounts(), agents);
     }
 
@@ -210,6 +214,25 @@ public final class MapleIslandCohortPoolRegistry {
         snapshot = next;
     }
 
+    private void assignMissingCharacterTemplates() throws IOException {
+        if (snapshot.agents().stream().noneMatch(agent -> agent.characterTemplateOrdinal() == null)) {
+            return;
+        }
+        List<Agent> updated = new ArrayList<>(snapshot.agents().size());
+        for (Agent agent : snapshot.agents()) {
+            if (agent.characterTemplateOrdinal() == null) {
+                agent = agent.withCharacterTemplateOrdinal(firstUnusedCharacterTemplateOrdinal(updated));
+            }
+            updated.add(agent);
+        }
+        persist(snapshot.accounts(), updated);
+    }
+
+    private static int firstUnusedCharacterTemplateOrdinal(List<Agent> agents) {
+        return MapleIslandCohortCharacterCatalog.firstUnusedOrdinal(
+                agents.stream().map(Agent::characterTemplateOrdinal).toList());
+    }
+
     private static void validateUnique(MapleIslandCohortPoolSnapshot snapshot) throws IOException {
         Map<Integer, String> accountIds = new LinkedHashMap<>();
         Set<String> accountNames = new HashSet<>();
@@ -221,6 +244,7 @@ public final class MapleIslandCohortPoolRegistry {
         }
         Map<Integer, String> characterIds = new LinkedHashMap<>();
         Set<String> characterNames = new HashSet<>();
+        Set<Integer> characterTemplateOrdinals = new HashSet<>();
         for (Agent agent : snapshot.agents()) {
             if (characterIds.putIfAbsent(agent.characterId(), agent.name()) != null
                     || !characterNames.add(agent.name().toLowerCase(Locale.ROOT))) {
@@ -231,6 +255,11 @@ public final class MapleIslandCohortPoolRegistry {
             }
             if (!accountIds.get(agent.accountId()).equalsIgnoreCase(agent.accountName())) {
                 throw new IOException("Pool character account name does not match account id: " + agent.name());
+            }
+            if (agent.characterTemplateOrdinal() != null
+                    && !characterTemplateOrdinals.add(agent.characterTemplateOrdinal())) {
+                throw new IOException("Duplicate cohort character template: "
+                        + agent.characterTemplateOrdinal());
             }
         }
     }

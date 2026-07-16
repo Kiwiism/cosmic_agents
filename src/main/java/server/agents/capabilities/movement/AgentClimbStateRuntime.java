@@ -78,8 +78,12 @@ public final class AgentClimbStateRuntime {
         return state(entry).ropeEntryY();
     }
 
-    public static void queueRopeEntry(AgentRuntimeEntry entry, Rope rope, int y) {
-        state(entry).queueRopeEntry(rope, y);
+    public static int ropeEntryDirection(AgentRuntimeEntry entry) {
+        return state(entry).ropeEntryDirection();
+    }
+
+    public static void queueRopeEntry(AgentRuntimeEntry entry, Rope rope, int y, int direction) {
+        state(entry).queueRopeEntry(rope, y, direction);
     }
 
     public static void clearRopeEntry(AgentRuntimeEntry entry) {

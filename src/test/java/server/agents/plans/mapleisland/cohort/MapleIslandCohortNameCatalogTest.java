@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class MapleIslandCohortNameCatalogTest {
     @Test
-    void allFiveThousandNamesAreUniqueAndAcceptedByCharacterPolicy() {
+    void allThirtyThousandNamesAreUniqueAndAcceptedByCharacterPolicy() {
         Set<String> normalized = new HashSet<>();
         java.util.List<String> rejected = new java.util.ArrayList<>();
 

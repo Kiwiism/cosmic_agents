@@ -1170,7 +1170,7 @@ class BotCombatManagerTest {
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.SWORD1H);
             attacks.when(() -> AgentAttackExecutionProvider.applyAttackRoute(
                     any(AgentAttackRoute.class), any(AbstractDealDamageHandler.AttackInfo.class), eq(bot)))
-                    .thenAnswer(invocation -> null);
+                    .thenReturn(true);
 
             runWithStubbedBotAfter(() -> AgentCombatAttackRuntime.attackMonster(entry, bot, plan));
 

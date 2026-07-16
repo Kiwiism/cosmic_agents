@@ -45,7 +45,8 @@ public final class MapleIslandCohortPoolProvisioner {
                             String accountName,
                             String characterName,
                             int world,
-                            int channel) throws Exception;
+                            int channel,
+                            MapleIslandCohortCharacterTemplate characterTemplate) throws Exception;
     }
 
     private final MapleIslandCohortPoolRegistry registry;
@@ -72,13 +73,18 @@ public final class MapleIslandCohortPoolProvisioner {
                 account = createAccount(createdByCharacterId);
             }
             String characterName = nextCharacterName();
+            int characterTemplateOrdinal = nextCharacterTemplateOrdinal();
+            MapleIslandCohortCharacterTemplate characterTemplate =
+                    MapleIslandCohortCharacterCatalog.template(characterTemplateOrdinal);
             int characterId = hooks.createCharacter(
-                    account.accountId(), account.accountName(), characterName, world, channel);
+                    account.accountId(), account.accountName(), characterName, world, channel,
+                    characterTemplate);
             if (characterId <= 0) {
                 throw new IOException("Failed to create pooled character '" + characterName + "'");
             }
             registry.addAgent(Agent.available(
-                    characterId, characterName, account, createdByCharacterId, world));
+                    characterId, characterName, account, createdByCharacterId, world,
+                    characterTemplateOrdinal));
             created++;
         }
         return created;
@@ -143,5 +149,12 @@ public final class MapleIslandCohortPoolProvisioner {
             return candidate;
         }
         throw new IOException("No unused Maple Island cohort character names remain");
+    }
+
+    private int nextCharacterTemplateOrdinal() {
+        return MapleIslandCohortCharacterCatalog.firstUnusedOrdinal(
+                registry.snapshot().agents().stream()
+                        .map(Agent::characterTemplateOrdinal)
+                        .toList());
     }
 }

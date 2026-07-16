@@ -21,6 +21,20 @@ public class BotCreator extends CharacterFactory {
     private static final Logger log = LoggerFactory.getLogger(BotCreator.class);
 
     public static int createCharacter(Client c, String name) {
+        return createCharacter(c, name, 20100, 30020, 0, 0,
+                1040002, 1060002, 1072001, 1302000);
+    }
+
+    public static int createCharacter(Client c,
+                                      String name,
+                                      int face,
+                                      int hair,
+                                      int skin,
+                                      int gender,
+                                      int topId,
+                                      int bottomId,
+                                      int shoesId,
+                                      int weaponId) {
         if (!Character.canCreateChar(name)) {
             log.warn("Bot creation rejected — invalid name '{}'", name);
             return -1;
@@ -28,11 +42,11 @@ public class BotCreator extends CharacterFactory {
 
         Character botChar = Character.getDefault(c);
         botChar.setWorld(c.getWorld());
-        botChar.setSkinColor(SkinColor.getById(0));
-        botChar.setGender(0);
+        botChar.setSkinColor(SkinColor.getById(skin));
+        botChar.setGender(gender);
         botChar.setName(name);
-        botChar.setHair(30020);
-        botChar.setFace(20100);
+        botChar.setHair(hair);
+        botChar.setFace(face);
         botChar.setJob(Job.BEGINNER);
         botChar.setLevel(1);
         botChar.setMapId(MapId.HENESYS);
@@ -41,23 +55,24 @@ public class BotCreator extends CharacterFactory {
         Inventory equipped = botChar.getInventory(InventoryType.EQUIPPED);
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
 
-        Item top = ii.getEquipById(1040002);    // White Undershirt
+        Item top = ii.getEquipById(topId);
         top.setPosition((byte) -5);
         equipped.addItemFromDB(top);
 
-        Item bottom = ii.getEquipById(1060002); // Undies (blue shorts)
+        Item bottom = ii.getEquipById(bottomId);
         bottom.setPosition((byte) -6);
         equipped.addItemFromDB(bottom);
 
-        Item shoes = ii.getEquipById(1072001);  // Rubber Boots
+        Item shoes = ii.getEquipById(shoesId);
         shoes.setPosition((byte) -7);
         equipped.addItemFromDB(shoes);
 
-        Item weapon = ii.getEquipById(1302000); // Wooden Sword
+        Item weapon = ii.getEquipById(weaponId);
         weapon.setPosition((byte) -11);
         equipped.addItemFromDB(weapon.copy());
 
-        CharacterFactoryRecipe recipe = new CharacterFactoryRecipe(Job.BEGINNER, 1, MapId.HENESYS, 1040002, 1060002, 1072001, 1302000);
+        CharacterFactoryRecipe recipe = new CharacterFactoryRecipe(
+                Job.BEGINNER, 1, MapId.HENESYS, topId, bottomId, shoesId, weaponId);
 
         if (!botChar.insertNewChar(recipe)) {
             log.error("insertNewChar failed for bot '{}'", name);

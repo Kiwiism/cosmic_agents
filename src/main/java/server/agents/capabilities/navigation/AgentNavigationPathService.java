@@ -95,7 +95,11 @@ public final class AgentNavigationPathService {
                                                            int startRegionId,
                                                            int targetRegionId,
                                                            Point targetPos) {
-        return findPath(graph, bot.getMap(), bot.getPosition(), startRegionId, targetRegionId, targetPos);
+        MapleMap map = bot.getMap();
+        return runSearch(graph, map, bot.getPosition(), startRegionId, targetRegionId, targetPos,
+                null, useAdmissibleHeuristic, true, MAX_EDGE_CHECKS, null,
+                AgentNavigationDangerCostService.intermediateRegionCosts(
+                        graph, map, startRegionId, targetRegionId)).path();
     }
 
     public static List<AgentNavigationGraph.Edge> findPath(AgentNavigationGraph graph,
@@ -141,7 +145,7 @@ public final class AgentNavigationPathService {
                                                          int startRegionId,
                                                          int targetRegionId,
                                                          Point targetPos) {
-        List<AgentNavigationGraph.Edge> path = findPath(graph, bot.getMap(), bot.getPosition(), startRegionId, targetRegionId, targetPos);
+        List<AgentNavigationGraph.Edge> path = findPath(graph, bot, startRegionId, targetRegionId, targetPos);
         if (path.isEmpty()) {
             return null;
         }
@@ -169,7 +173,9 @@ public final class AgentNavigationPathService {
                 useAdmissibleHeuristic,
                 true,
                 MAX_EDGE_CHECKS,
-                variation).path();
+                variation,
+                AgentNavigationDangerCostService.intermediateRegionCosts(
+                        graph, bot.getMap(), startRegionId, targetRegionId)).path();
         return path.isEmpty() ? null : collapseLeadingWalkEdges(path);
     }
 
@@ -235,6 +241,22 @@ public final class AgentNavigationPathService {
                                    boolean instrument,
                                    int edgeCheckBudget,
                                    AgentMapleIslandTravelRuntime.RouteVariation routeVariation) {
+        return runSearch(graph, map, startPos, startRegionId, targetRegionId, targetPos,
+                pathfindCaller, zeroHeuristic, instrument, edgeCheckBudget, routeVariation, Map.of());
+    }
+
+    static SearchOutcome runSearch(AgentNavigationGraph graph,
+                                   MapleMap map,
+                                   Point startPos,
+                                   int startRegionId,
+                                   int targetRegionId,
+                                   Point targetPos,
+                                   String pathfindCaller,
+                                   boolean zeroHeuristic,
+                                   boolean instrument,
+                                   int edgeCheckBudget,
+                                   AgentMapleIslandTravelRuntime.RouteVariation routeVariation,
+                                   Map<Integer, Integer> regionEntryCosts) {
         long startedAt = System.nanoTime();
         PathfindProfile profile = null;
         try {
@@ -306,6 +328,8 @@ public final class AgentNavigationPathService {
                     int transitionCost = intraRegionTravelCost(
                             graph, current.state.regionId, current.state.point, edge.startPoint) + edgeCost;
                     transitionCost = variedTransitionCost(transitionCost, edge, routeVariation);
+                    transitionCost = saturatedAdd(
+                            transitionCost, regionEntryCosts.getOrDefault(edge.toRegionId, 0));
                     int tentativeCost = saturatedAdd(current.cost, transitionCost);
                     SearchState nextState = new SearchState(edge.toRegionId, edge.endPoint, isPortal);
                     if (tentativeCost >= gScore.getOrDefault(nextState, Integer.MAX_VALUE)) {

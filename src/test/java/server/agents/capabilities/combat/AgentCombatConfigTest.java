@@ -72,4 +72,44 @@ class AgentCombatConfigTest {
             AgentCombatConfig.cfg.AGENT_MOB_REACTION_MODE = originalMode;
         }
     }
+
+    @Test
+    void rejectsUnsafeOrContradictoryLivePhysicsValues() {
+        int originalSpeed = AgentCombatConfig.cfg.MOB_PHYSICS_SPEED_PERCENT;
+        int originalChance = AgentCombatConfig.cfg.MOB_PHYSICS_EDGE_RETREAT_CHANCE_PERCENT;
+        int originalStop = AgentCombatConfig.cfg.MOB_PHYSICS_STOP_DISTANCE_X;
+        int originalWarmup = AgentCombatConfig.cfg.MOB_PHYSICS_OBSERVER_WARMUP_MS;
+        int originalAggroTimeout = AgentCombatConfig.cfg.MOB_PHYSICS_AGGRO_TIMEOUT_MS;
+        try {
+            assertEquals("value for MOB_PHYSICS_SPEED_PERCENT must be between 0 and 300",
+                    AgentCombatConfig.setConfigField("MOB_PHYSICS_SPEED_PERCENT", "301"));
+            assertEquals(originalSpeed, AgentCombatConfig.cfg.MOB_PHYSICS_SPEED_PERCENT);
+
+            assertEquals("value for MOB_PHYSICS_EDGE_RETREAT_CHANCE_PERCENT must be between 0 and 100",
+                    AgentCombatConfig.setConfigField(
+                            "MOB_PHYSICS_EDGE_RETREAT_CHANCE_PERCENT", "101"));
+            assertEquals(originalChance,
+                    AgentCombatConfig.cfg.MOB_PHYSICS_EDGE_RETREAT_CHANCE_PERCENT);
+
+            assertEquals("MOB_PHYSICS_STOP_DISTANCE_X cannot exceed MOB_PHYSICS_RESUME_DISTANCE_X",
+                    AgentCombatConfig.setConfigField("MOB_PHYSICS_STOP_DISTANCE_X",
+                            Integer.toString(AgentCombatConfig.cfg.MOB_PHYSICS_RESUME_DISTANCE_X + 1)));
+            assertEquals(originalStop, AgentCombatConfig.cfg.MOB_PHYSICS_STOP_DISTANCE_X);
+
+            assertEquals("value for MOB_PHYSICS_OBSERVER_WARMUP_MS must be between 0 and 60000",
+                    AgentCombatConfig.setConfigField("MOB_PHYSICS_OBSERVER_WARMUP_MS", "60001"));
+            assertEquals(originalWarmup, AgentCombatConfig.cfg.MOB_PHYSICS_OBSERVER_WARMUP_MS);
+
+            assertEquals("value for MOB_PHYSICS_AGGRO_TIMEOUT_MS must be between 0 and 60000",
+                    AgentCombatConfig.setConfigField("MOB_PHYSICS_AGGRO_TIMEOUT_MS", "60001"));
+            assertEquals(originalAggroTimeout,
+                    AgentCombatConfig.cfg.MOB_PHYSICS_AGGRO_TIMEOUT_MS);
+        } finally {
+            AgentCombatConfig.cfg.MOB_PHYSICS_SPEED_PERCENT = originalSpeed;
+            AgentCombatConfig.cfg.MOB_PHYSICS_EDGE_RETREAT_CHANCE_PERCENT = originalChance;
+            AgentCombatConfig.cfg.MOB_PHYSICS_STOP_DISTANCE_X = originalStop;
+            AgentCombatConfig.cfg.MOB_PHYSICS_OBSERVER_WARMUP_MS = originalWarmup;
+            AgentCombatConfig.cfg.MOB_PHYSICS_AGGRO_TIMEOUT_MS = originalAggroTimeout;
+        }
+    }
 }

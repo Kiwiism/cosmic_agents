@@ -45,8 +45,6 @@ class MapleIslandFullPlanTest {
                 .filter(objective -> objective.questIds().getFirst() >= 1009
                         && objective.questIds().getFirst() <= 1015)
                 .count());
-        assertTrue(index(card, AmherstPlanObjectiveKind.QUEST_COMPLETE, 1039)
-                < index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8020));
         assertTrue(index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8020)
                 < index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8021));
         assertTrue(index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8022)
@@ -54,6 +52,8 @@ class MapleIslandFullPlanTest {
         assertTrue(index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8023)
                 < index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8024));
         assertTrue(index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8025)
+                < index(card, AmherstPlanObjectiveKind.QUEST_START, 1039));
+        assertTrue(index(card, AmherstPlanObjectiveKind.QUEST_COMPLETE, 1039)
                 < index(card, AmherstPlanObjectiveKind.QUEST_START, 1041));
         assertEquals("southperry-right-relaxer", card.objectives().getLast().mode());
         assertEquals(1L, card.objectives().stream()

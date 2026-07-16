@@ -15,6 +15,7 @@ import server.agents.capabilities.quest.MapleIslandSouthperryBaseline;
 import server.agents.capabilities.quest.MapleIslandSouthperryQuestCatalog;
 import server.agents.integration.AgentMapGatewayRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.cosmic.CosmicMapleIslandCohortIdentity;
 import server.agents.plans.amherst.AmherstObjectiveProgressStatus;
 import server.agents.plans.amherst.AmherstPlanCard;
 import server.agents.plans.amherst.AmherstPlanExecutionState;
@@ -78,6 +79,7 @@ public final class MapleIslandPlanCommandService {
             switch (verb) {
                 case "reset" -> reset(player, entry, agent, card, false, route);
                 case "start" -> start(player, entry, agent, route);
+                case "resume" -> resume(player, entry, agent, route);
                 case "next" -> next(player, entry, agent, route);
                 case "status" -> status(player, entry, agent, card, route);
                 default -> usage(player, route);
@@ -148,7 +150,7 @@ public final class MapleIslandPlanCommandService {
         int batch = parseInt(params[2], "batch");
         int intervalSeconds = parseInt(params[3], "intervalSeconds");
         Long seed = null;
-        MapleIslandCohortRealismMode realismMode = MapleIslandCohortRealismMode.FULL;
+        MapleIslandCohortRealismMode realismMode = MapleIslandCohortRealismMode.LIGHT;
         if (params.length == 5) {
             try {
                 seed = Long.parseLong(params[4]);
@@ -230,8 +232,11 @@ public final class MapleIslandPlanCommandService {
         }
         for (MapleIslandCohortPoolSnapshot.Agent agent : snapshot.agents().subList(start, end)) {
             String session = agent.leaseSessionId().isBlank() ? "-" : agent.leaseSessionId();
+            String template = agent.characterTemplateOrdinal() == null
+                    ? "-" : agent.characterTemplateOrdinal().toString();
             message(player, agent.name() + " | " + agent.accountName() + " (" + agent.accountId()
-                    + ") | W" + agent.world() + " | " + agent.leaseState() + " | session=" + session);
+                    + ") | W" + agent.world() + " | look=" + template
+                    + " | " + agent.leaseState() + " | session=" + session);
         }
     }
 
@@ -297,6 +302,19 @@ public final class MapleIslandPlanCommandService {
         }
         route.startManual(entry, agent, event -> debugMessage(player, event));
         message(player, "Manual " + route.label + " plan started. Exactly one objective will execute.");
+    }
+
+    private static void resume(Character player,
+                               AgentRuntimeEntry entry,
+                               Character agent,
+                               Route route) throws IOException, AmherstPlanValidationException {
+        AmherstPlanExecutionState state = entry.amherstPlanExecutionState();
+        if (state.active()) {
+            message(player, "The " + route.label + " plan is already active.");
+            return;
+        }
+        route.startAuto(entry, agent, event -> debugMessage(player, event));
+        message(player, route.label + " resumed from live quest and inventory state; completed objectives were skipped.");
     }
 
     private static void next(Character player, AgentRuntimeEntry entry, Character agent, Route route) {
@@ -389,15 +407,34 @@ public final class MapleIslandPlanCommandService {
             if (!reset(player, entry, agent, card, true, route)) {
                 return;
             }
+            if (route == Route.FULL_MAPLE_ISLAND) {
+                CosmicMapleIslandCohortIdentity.applyDefaultStarterWeapon(agent);
+                agent.equipChanged();
+            }
             int playerId = player.getId();
             int agentId = agent.getId();
+            long startDelayMs = beginOpeningApproach(entry, agent, route) ? 1_000L : 3_000L;
             message(player, allowedName + " is ready in " + route.startMapName
-                    + " and will begin in 3 seconds.");
+                    + (startDelayMs == 1_000L
+                    ? ", is walking toward Heena, and will begin shortly."
+                    : " and will begin in 3 seconds."));
             TimerManager.getInstance().schedule(
-                    () -> startAfterDelay(player, playerId, agentId, allowedName, route), 3_000L);
+                    () -> startAfterDelay(player, playerId, agentId, allowedName, route), startDelayMs);
         } catch (IOException | AmherstPlanValidationException | RuntimeException failure) {
             message(player, "Showcase failed to prepare: " + failure.getMessage());
         }
+    }
+
+    private static boolean beginOpeningApproach(AgentRuntimeEntry entry, Character agent, Route route) {
+        if (route != Route.FULL_MAPLE_ISLAND || agent.getMap() == null) {
+            return false;
+        }
+        var heena = agent.getMap().getNPCById(2101);
+        if (heena == null) {
+            return false;
+        }
+        AgentMovementCommandRuntime.moveTo(entry, new Point(heena.getPosition()), false);
+        return true;
     }
 
     private static void startAfterDelay(Character player,
@@ -421,7 +458,7 @@ public final class MapleIslandPlanCommandService {
 
     private static void usage(Character player, Route route) {
         if (player != null) {
-            message(player, "Usage: !" + route.command + " reset|start|next|status|run <AgentIGN>");
+            message(player, "Usage: !" + route.command + " reset|start|resume|next|status|run <AgentIGN>");
             if (route == Route.FULL_MAPLE_ISLAND) {
                 message(player, "Cohort: !mapleisland run <total> <batch> <intervalSeconds> [seed] [off|light|full]");
                 message(player, "Cohort control: !mapleisland status|pool [page]|cancel|stop");

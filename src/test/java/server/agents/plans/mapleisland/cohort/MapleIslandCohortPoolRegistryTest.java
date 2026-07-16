@@ -65,7 +65,7 @@ class MapleIslandCohortPoolRegistryTest {
         MapleIslandCohortPoolSnapshot.Account account = new MapleIslandCohortPoolSnapshot.Account(
                 10, "MIQuest0001", 99, 15, 1_000L);
         MapleIslandCohortPoolSnapshot.Agent mismatched = new MapleIslandCohortPoolSnapshot.Agent(
-                20, "BlueSnail", 10, "MIQuest9999", 99, 0,
+                20, "BlueSnail", 10, "MIQuest9999", 99, 0, 0,
                 MapleIslandCohortPoolSnapshot.LeaseState.AVAILABLE,
                 "", 0, 0L, "", 0L, "");
         MemoryStore store = new MemoryStore();
@@ -83,7 +83,7 @@ class MapleIslandCohortPoolRegistryTest {
 
         assertThrows(IllegalArgumentException.class, () ->
                 new MapleIslandCohortPoolSnapshot.Agent(
-                        20, "BlueSnail", 10, "MIQuest0001", 99, 0,
+                        20, "BlueSnail", 10, "MIQuest0001", 99, 0, 0,
                         MapleIslandCohortPoolSnapshot.LeaseState.LEASED,
                         "session", 0, 0L, "", 0L, ""));
     }

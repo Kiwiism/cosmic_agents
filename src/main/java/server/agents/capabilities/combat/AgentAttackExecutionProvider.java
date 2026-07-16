@@ -242,8 +242,18 @@ public final class AgentAttackExecutionProvider {
         return sampleAttackAction(attackSpec.actions(), attackSpec.primaryAction());
     }
 
-    public static void applyAttackRoute(AgentAttackRoute route, AbstractDealDamageHandler.AttackInfo attack, Character bot) {
+    public static boolean applyAttackRoute(AgentAttackRoute route, AbstractDealDamageHandler.AttackInfo attack, Character bot) {
+        if (!mapReadyForAttack(bot)) {
+            return false;
+        }
         AgentCombatGatewayRuntime.combat().applyAttackEffects(route, attack, bot);
+        return true;
+    }
+
+    static boolean mapReadyForAttack(Character bot) {
+        return bot != null && bot.getMap() != null
+                && !bot.getMap().hasTransitioningPlayerObserver()
+                && bot.getMap().isMobPhysicsObserverWarmupComplete();
     }
 
     public static AgentAttackRoute determineBasicAttackRoute(Character bot) {

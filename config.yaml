@@ -275,42 +275,61 @@ server:
     USE_MAP_OWNERSHIP_SYSTEM: false      #Flag to enable/disable map ownership system
     USE_FISHING_SYSTEM: false            #Flag to enable/disable custom fishing system
     USE_NPCS_SCRIPTABLE: true           #Flag to enable/disable serverside predefined script NPCs.
-    # Agent-hit monster reaction. OFF preserves original Cosmic client control.
-    AGENT_MOB_REACTION_MODE: PHYSICS       # OFF, SYNTHETIC, or PHYSICS
-    AGENT_SYNTHETIC_MOB_KNOCKBACK_DISTANCE_X: 12
-    AGENT_SYNTHETIC_MOB_KNOCKBACK_DURATION_MS: 240
-    AGENT_SYNTHETIC_MOB_CONTROL_HOLD_MS: 350
-    AGENT_MOB_PHYSICS_PUBLICATION_INTERVAL_MS: 75 # Minimum interval between ordinary MOVE_MONSTER broadcasts; transitions publish immediately.
-    AGENT_MOB_PHYSICS_MAX_CATCH_UP_STEPS: 12 # Maximum 8 ms substeps processed after one delayed channel tick.
-    AGENT_MOB_PHYSICS_STOP_DISTANCE_X: 24 # Horizontal distance from the Agent where ground mobs stop chasing.
-    AGENT_MOB_PHYSICS_RESUME_DISTANCE_X: 36 # Horizontal distance where a stopped ground mob resumes chasing.
-    AGENT_MOB_PHYSICS_FLY_DEAD_ZONE_X: 24 # Horizontal no-chase radius for flying mobs.
-    AGENT_MOB_PHYSICS_FLY_DEAD_ZONE_Y: 20 # Vertical no-chase radius for flying mobs.
-    AGENT_MOB_PHYSICS_JUMP_COOLDOWN_MS: 900 # Minimum time between heuristic jumps.
-    AGENT_MOB_PHYSICS_JUMP_COOLDOWN_JITTER_MS: 900 # Random per-mob time added to initial and repeated jump cooldowns.
-    AGENT_MOB_PHYSICS_JUMP_TARGET_HEIGHT: 48 # Minimum target height difference considered for an ordinary jump.
-    AGENT_MOB_PHYSICS_MAX_SAFE_EDGE_PX: 48 # Maximum horizontal landing probe used by the local jump heuristic.
-    AGENT_MOB_PHYSICS_LEFT_EDGE_INSET_PX: 18 # Keeps walking mob feet this far inside the connected platform's left edge.
-    AGENT_MOB_PHYSICS_RIGHT_EDGE_INSET_PX: 10 # Keeps walking mob feet this far inside the connected platform's right edge.
-    AGENT_MOB_PHYSICS_SPEED_PERCENT: 100 # Shared scale for each mob's own WZ-derived chase speed; no per-mob random variance.
-    AGENT_MOB_PHYSICS_BEHAVIOR_JITTER_MS: 250 # Per-mob random time added to stuck-decision intervals.
-    AGENT_MOB_PHYSICS_DIRECTION_REACTION_MAX_MS: 500 # Maximum sampled delay before reversing toward an Agent that crossed sides.
-    AGENT_MOB_PHYSICS_EDGE_RETREAT_CHANCE_PERCENT: 60 # Chance to turn away at an edge; otherwise the mob idles there.
-    AGENT_MOB_PHYSICS_EDGE_IDLE_MIN_MS: 250 # Minimum sampled edge/stuck idle duration.
-    AGENT_MOB_PHYSICS_EDGE_IDLE_MAX_MS: 700 # Maximum sampled edge/stuck idle duration.
-    AGENT_MOB_PHYSICS_EDGE_RETREAT_MIN_MS: 250 # Lower bound for the sampled retreat safety timeout; distance may end it sooner.
-    AGENT_MOB_PHYSICS_EDGE_RETREAT_MAX_MS: 600 # Maximum retreat time if the sampled distance is not reached first.
-    AGENT_MOB_PHYSICS_RETREAT_MIN_DISTANCE_PX: 8 # Minimum sampled distance for edge/stuck retreat movement.
-    AGENT_MOB_PHYSICS_RETREAT_MAX_DISTANCE_PX: 24 # Maximum sampled distance for edge/stuck retreat movement.
-    AGENT_MOB_PHYSICS_STUCK_DETECT_MS: 500 # No-progress time before a mob attempts idle/retreat recovery.
-    AGENT_MOB_PHYSICS_STUCK_RETREAT_CHANCE_PERCENT: 65 # Chance for stuck recovery to retreat instead of idle.
-    AGENT_MOB_PHYSICS_KNOCKBACK_PERCENT: 40 # Percentage applied to translated knockback force.
-    AGENT_MOB_PHYSICS_FLINCH_RECOVERY_MS: 250 # Stationary recovery time after knockback ends and before aggro movement resumes.
-    AGENT_MOB_PHYSICS_POST_FLINCH_CHASE_RAMP_MS: 0 # Disabled: nonzero values gradually restore chase force after recovery.
-    AGENT_MOB_PHYSICS_HIT1_ENABLED: false # Experimental one-shot hit1 activity at flinch start; false retains the proven walk-animation behavior.
-    AGENT_MOB_PHYSICS_IMPACT_DELAY_PERCENT: 100 # Percentage of WZ hit-frame delay retained; 0 is immediate and 100 fully aligns to the visible hit.
-    AGENT_MOB_PHYSICS_IMPACT_DELAY_OFFSET_MS: 0 # Signed milliseconds added after scaling the impact delay.
-    AGENT_MOB_PHYSICS_DIAGNOSTIC_LOGGING: false # Logs aggregate physics status at most once every 30 seconds.
+    # Agent-hit mob reaction mode:
+    # OFF = original Cosmic client-controlled mobs; SYNTHETIC = simple shove only; PHYSICS = server-owned movement and aggro.
+    AGENT_MOB_REACTION_MODE: PHYSICS                                  # Allowed values: OFF, SYNTHETIC, PHYSICS.
+
+    # SYNTHETIC mode: lightweight visual knockback without server-owned mob physics.
+    AGENT_SYNTHETIC_MOB_KNOCKBACK_DISTANCE_X: 12                      # Horizontal shove distance in pixels; 0 disables displacement.
+    AGENT_SYNTHETIC_MOB_KNOCKBACK_DURATION_MS: 250                    # Time used to animate the shove; higher values make it look slower.
+    AGENT_SYNTHETIC_MOB_CONTROL_HOLD_MS: 350                          # Time to pause normal client mob control while the shove is playing.
+
+    # PHYSICS mode: simulation and network update cadence.
+    AGENT_MOB_PHYSICS_PUBLICATION_INTERVAL_MS: 75                     # Minimum time between routine mob movement packets; state changes may send sooner.
+    AGENT_MOB_PHYSICS_MAX_CATCH_UP_STEPS: 12                          # Maximum 8 ms physics steps processed after a delayed server tick.
+    AGENT_MOB_PHYSICS_OBSERVER_WARMUP_MS: 500                         # After map acknowledgement, pause Agent movement/attacks and server mob physics for this settling time.
+    AGENT_MOB_PHYSICS_AGGRO_TIMEOUT_MS: 7000                          # Give the mob back to a real client without aggro after this long without an Agent hit; 0 disables expiry.
+
+    # PHYSICS mode: chase movement. Each mob still uses its own WZ-defined base speed.
+    AGENT_MOB_PHYSICS_STOP_DISTANCE_X: 0                              # Mob stops advancing when it is within this horizontal distance of the Agent.
+    AGENT_MOB_PHYSICS_RESUME_DISTANCE_X: 0                            # Stopped mob resumes chasing after the Agent moves at least this far away.
+    AGENT_MOB_PHYSICS_FLY_DEAD_ZONE_X: 24                             # Flying mob stops correcting horizontally within this distance of the Agent.
+    AGENT_MOB_PHYSICS_FLY_DEAD_ZONE_Y: 20                             # Flying mob stops correcting vertically within this distance of the Agent.
+    AGENT_MOB_PHYSICS_SPEED_PERCENT: 100                              # Scale for every mob's own WZ chase speed; 100 keeps the derived speed unchanged.
+    AGENT_MOB_PHYSICS_DIRECTION_REACTION_MAX_MS: 500                  # Maximum turn delay after the Agent crosses sides; each mob samples from 0 to this value.
+
+    # PHYSICS mode: jumping and platform-edge safety.
+    AGENT_MOB_PHYSICS_JUMP_COOLDOWN_MS: 900                           # Minimum time a jump-capable mob must wait between jump attempts.
+    AGENT_MOB_PHYSICS_JUMP_COOLDOWN_JITTER_MS: 900                    # Maximum extra random delay per mob, preventing synchronized jumps.
+    AGENT_MOB_PHYSICS_JUMP_TARGET_HEIGHT: 48                          # Agent must be at least this many pixels above before a normal jump is considered.
+    AGENT_MOB_PHYSICS_MAX_SAFE_EDGE_PX: 48                            # Horizontal distance ahead checked for a possible jump landing foothold.
+    AGENT_MOB_PHYSICS_LEFT_EDGE_INSET_PX: 18                          # Minimum space kept between mob feet and the platform's connected left edge.
+    AGENT_MOB_PHYSICS_RIGHT_EDGE_INSET_PX: 10                         # Minimum space kept between mob feet and the platform's connected right edge.
+
+    # PHYSICS mode: per-mob edge/stuck recovery variation.
+    AGENT_MOB_PHYSICS_BEHAVIOR_JITTER_MS: 250                         # Maximum extra random delay before each mob makes another stuck decision.
+    AGENT_MOB_PHYSICS_EDGE_RETREAT_CHANCE_PERCENT: 60                 # Chance to turn away and retreat at an edge; otherwise the mob waits there.
+    AGENT_MOB_PHYSICS_EDGE_IDLE_MIN_MS: 250                           # Shortest random wait when edge/stuck recovery chooses to idle.
+    AGENT_MOB_PHYSICS_EDGE_IDLE_MAX_MS: 700                           # Longest random wait when edge/stuck recovery chooses to idle.
+    AGENT_MOB_PHYSICS_EDGE_RETREAT_MIN_MS: 250                        # Shortest retreat timeout; reaching the chosen distance ends it sooner.
+    AGENT_MOB_PHYSICS_EDGE_RETREAT_MAX_MS: 600                        # Longest retreat timeout; reaching the chosen distance ends it sooner.
+    AGENT_MOB_PHYSICS_RETREAT_MIN_DISTANCE_PX: 8                      # Shortest randomly selected retreat distance.
+    AGENT_MOB_PHYSICS_RETREAT_MAX_DISTANCE_PX: 24                     # Longest randomly selected retreat distance.
+    AGENT_MOB_PHYSICS_STUCK_DETECT_MS: 500                            # Time without at least 1 px progress before the mob attempts recovery.
+    AGENT_MOB_PHYSICS_STUCK_RETREAT_CHANCE_PERCENT: 65                # Chance for stuck recovery to retreat; otherwise the mob idles.
+
+    # PHYSICS mode: hit reaction and recovery.
+    AGENT_MOB_PHYSICS_KNOCKBACK_PERCENT: 50                           # Scale for ported knockback force; 100 is full force and 0 disables displacement.
+    AGENT_MOB_PHYSICS_FLINCH_RECOVERY_MS: 250                         # Stationary recovery after knockback; new hits cannot add knockback until it ends.
+    AGENT_MOB_PHYSICS_POST_FLINCH_CHASE_RAMP_MS: 0                    # Time to restore chase force gradually after flinch; 0 restores it immediately.
+    AGENT_MOB_PHYSICS_HIT1_ENABLED: false                             # Experimental hit1 pose during flinch; false keeps the proven walk-animation path.
+    AGENT_MOB_PHYSICS_IMPACT_DELAY_PERCENT: 100                       # Portion of the Agent attack's WZ hit delay used: 0 is immediate, 100 is full delay.
+    AGENT_MOB_PHYSICS_IMPACT_DELAY_OFFSET_MS: -50                     # Signed adjustment after scaling: positive delays impact, negative starts it earlier.
+
+    # PHYSICS mode: diagnostics.
+    AGENT_MOB_PHYSICS_DIAGNOSTIC_LOGGING: false                       # Log aggregate physics counters and timing at most once every 30 seconds.
+    AGENT_MAP_TRANSITION_PACKET_DIAGNOSTICS: true                     # If a client disconnects within 15 seconds of warping, write its bounded packet trace under logs/map-transition-crashes.
+
     AGENT_LEGACY_DIALOGUE_ENABLED: false #Experimental Agent plans narrate objectives; suppress NuTNNuT-era Agent chatter.
     AGENT_AMHERST_DEBUG_MESSAGES_ENABLED: false #Show detailed yellow Amherst capability and objective progress messages.
     AGENT_AMHERST_INTENTION_CHAT_ENABLED: true #Let the Agent announce its next Amherst action in map chat.

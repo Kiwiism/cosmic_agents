@@ -1,6 +1,7 @@
 package server.agents.capabilities.navigation;
 
 import client.Character;
+import server.agents.capabilities.movement.AgentClimbStateRuntime;
 import server.agents.capabilities.movement.AgentJumpActionService;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentQueuedMovementActionService;
@@ -32,19 +33,24 @@ public final class AgentNavigationClimbEntryExecutionService {
             return false;
         }
 
+        int climbDirection = plannedClimbDirection(entry, agentPos.y);
+
         if (AgentNavigationRopeEdgeService.canGrabRopeAtCurrentPosition(agentPos, rope)) {
             AgentNavigationDebugStateRuntime.clearLastEdgeBlockReason(entry);
             AgentNavigationClimbExecutionService.startClimbing(entry, agent, rope, agentPos.y);
+            AgentClimbStateRuntime.setClimbVerticalDirection(entry, climbDirection);
             return true;
         }
         if (AgentNavigationRopeEdgeService.canAttachToRopeFromTopPlatform(edge, agentPos, rope)) {
             AgentNavigationDebugStateRuntime.clearLastEdgeBlockReason(entry);
             AgentNavigationClimbExecutionService.startClimbing(entry, agent, rope, edge.endPoint.y);
+            AgentClimbStateRuntime.setClimbVerticalDirection(entry, climbDirection);
             return true;
         }
         if (AgentNavigationRopeEdgeService.canGrabRopeFromTopPlatform(edge, agentPos, rope)) {
             AgentNavigationDebugStateRuntime.clearLastEdgeBlockReason(entry);
-            AgentQueuedMovementActionService.queueTopRopeEntry(entry, agent, rope, edge.endPoint.y);
+            AgentQueuedMovementActionService.queueTopRopeEntry(
+                    entry, agent, rope, edge.endPoint.y, climbDirection);
             AgentMovementBroadcastService.broadcastMovement(entry);
             return true;
         }
@@ -57,5 +63,10 @@ public final class AgentNavigationClimbEntryExecutionService {
 
         AgentNavigationDebugStateRuntime.setLastEdgeBlockReason(entry, "climb-reach");
         return false;
+    }
+
+    private static int plannedClimbDirection(AgentRuntimeEntry entry, int entryY) {
+        Point plannedTarget = AgentNavigationDebugStateRuntime.plannedNavigationTargetPosition(entry);
+        return plannedTarget == null ? 0 : Integer.compare(plannedTarget.y, entryY);
     }
 }

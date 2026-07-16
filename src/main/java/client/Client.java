@@ -63,6 +63,7 @@ import server.MapleLeafLogger;
 import server.ThreadManager;
 import server.TimerManager;
 import server.agents.diagnostics.MobReactionCaptureRuntime;
+import server.agents.diagnostics.MapTransitionPacketTraceRuntime;
 import server.agents.runtime.AgentRuntimeCleanupService;
 import server.life.Monster;
 import server.maps.FieldLimit;
@@ -261,6 +262,8 @@ public class Client extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        MapTransitionPacketTraceRuntime.disconnected(this,
+                "pipeline exception=" + cause.getClass().getName() + " message=" + cause.getMessage());
         if (player != null) {
             log.warn("Exception caught by {}", player, cause);
         }
@@ -298,6 +301,7 @@ public class Client extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
+        MapTransitionPacketTraceRuntime.disconnected(this, "channel inactive");
         closeMapleSession();
     }
 
@@ -1535,6 +1539,11 @@ public class Client extends ChannelInboundHandlerAdapter {
     public void sendPacket(Packet packet) {
         announcerLock.lock();
         try {
+            try {
+                MapTransitionPacketTraceRuntime.recordOutbound(this, packet);
+            } catch (RuntimeException captureFailure) {
+                log.warn("Map transition trace could not retain an outbound packet", captureFailure);
+            }
             try {
                 MobReactionCaptureRuntime.recordOutbound(this, packet);
             } catch (RuntimeException captureFailure) {

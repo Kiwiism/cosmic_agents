@@ -17,7 +17,7 @@ class MapleIslandPlanCommandServiceCohortTest {
         assertEquals(5, parsed.batch());
         assertEquals(10, parsed.intervalSeconds());
         assertNull(parsed.seed());
-        assertEquals(MapleIslandCohortRealismMode.FULL, parsed.realismMode());
+        assertEquals(MapleIslandCohortRealismMode.LIGHT, parsed.realismMode());
     }
 
     @Test

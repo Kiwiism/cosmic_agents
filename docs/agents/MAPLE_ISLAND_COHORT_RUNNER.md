@@ -18,19 +18,36 @@ Mushroom Town-to-Southperry plan.
 can be replayed. The legacy `!mapleisland run <AgentIGN>` showcase remains
 available.
 
-The realism preset defaults to `full`. You may also give a preset without a
+The realism preset defaults to `light`. You may also give a preset without a
 seed, for example `!mapleisland run 25 5 10 light`.
 
 - `off`: deterministic control group; no added objective/NPC delay, nearest
   legacy navigation, deterministic rest-catalog order, and no optional travel
   hops.
-- `light`: seeded profile pacing, varied valid NPC approach points, and bounded
-  alternate routes plus seeded Southperry rest placement; optional travel hops
-  remain off.
+- `light` (recommended for demos and normal runs): seeded profile pacing,
+  varied valid NPC approach points, routes up to 8% longer than optimal, and
+  seeded Southperry rest placement. Optional travel hops remain off.
 - `full`: wider seeded pacing (600-2,200 ms before NPC interaction and
-  900-3,000 ms between objectives), varied valid NPC approach points, bounded
-  alternate routes, seeded Southperry rest placement/facing, and safe forward
-  travel/combat hops at 0.10 probability.
+  900-3,000 ms between objectives), varied valid NPC approach points, routes
+  up to 15% longer than optimal, seeded Southperry rest placement/facing, and
+  occasional safe forward travel/combat hops. Hop checks occur every 2.5-4.5
+  seconds at 4% probability with an 8-15 second cooldown after a hop.
+
+Recommended runs:
+
+```text
+# Fast correctness or performance baseline
+!mapleisland run 25 5 10 off
+
+# Normal visible demo/load run (also the default when mode is omitted)
+!mapleisland run 25 5 10 light
+
+# Maximum bounded presentation variation / soak run
+!mapleisland run 25 5 10 full
+
+# Replay any run exactly by inserting the reported seed before the mode
+!mapleisland run 25 5 10 123456 light
+```
 
 Every mode keeps required graph jumps, rope/ladder movement, portal behavior,
 quest/combat correctness, and the cash-shop return grounding guard unchanged.
@@ -61,8 +78,17 @@ The provisioner creates only dedicated, interactively locked Agent accounts.
 Only accounts already recorded in the cohort pool are expanded to 15 character
 slots, and 15 remains a hard usable cap even if a database row reports more.
 It never expands ordinary accounts, deletes characters, or overwrites an
-existing IGN. The deterministic candidate catalog contains 5,000 unique names
-that satisfy the server's 3-12-character and blocked-substring policy.
+existing IGN. The deterministic candidate catalog contains 30,000 mixed
+old-school Maple-style names that satisfy the server's 3-12-character and
+blocked-substring policy. It interleaves nickname-like, fantasy, Maple-themed,
+prefixed, suffixed, framed, and lightly numbered styles so even a small cohort
+has visible variety.
+
+Each pooled character also owns one non-repeating ordinal from the 24,192 valid
+v83 Beginner appearance/equipment combinations. The ordinal is durable pool
+metadata, and its gender, skin, face, colored hair, top, bottom, shoes, and
+weapon are reapplied before every clean run reset. Equipment acquired during a
+previous run therefore cannot replace the character's persistent identity.
 
 Before the destructive clean-level-1 reset, the runtime verifies that all of
 the following match: persisted pool character id, IGN, account id/name, current

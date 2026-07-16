@@ -99,16 +99,18 @@ class AgentClimbStateTest {
         AgentClimbState state = new AgentClimbState();
         Rope rope = new Rope(100, 20, 200, false);
 
-        state.queueRopeEntry(rope, 90);
+        state.queueRopeEntry(rope, 90, -1);
 
         assertTrue(state.ropeEntryPending());
         assertSame(rope, state.ropeEntryRope());
         assertEquals(90, state.ropeEntryY());
+        assertEquals(-1, state.ropeEntryDirection());
 
         state.clearRopeEntry();
 
         assertFalse(state.ropeEntryPending());
         assertNull(state.ropeEntryRope());
         assertEquals(0, state.ropeEntryY());
+        assertEquals(0, state.ropeEntryDirection());
     }
 }

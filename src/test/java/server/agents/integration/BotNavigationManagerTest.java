@@ -788,6 +788,31 @@ class BotNavigationManagerTest {
         assertFalse(AgentClimbStateRuntime.ropeEntryPending(entry));
         assertTrue(AgentClimbStateRuntime.climbing(entry));
         assertEquals(new Point(100, 101), bot.getPosition());
+        assertEquals(1, AgentClimbStateRuntime.climbVerticalDirection(entry),
+                "queued rope entry must preserve the route's downward intent");
+    }
+
+    @Test
+    void shouldNotReverseCommittedGrindClimbWhenCombatTargetFlipsBelow() {
+        MapleMap map = new MapleMap(910000203, 0, 0, 910000203, 1.0f);
+        map.setFootholds(new FootholdTree(new Point(-2000, -2000), new Point(2000, 2000)));
+        Rope rope = new Rope(100, 0, 200, false);
+        map.addRope(rope);
+
+        Character bot = mockBot(new Point(100, 120), map);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
+        AgentMovementStateRuntime.setMovementProfile(entry, AgentMovementProfile.base());
+        AgentModeStateRuntime.setGrinding(entry, true);
+        AgentRopeMovementService.attachToRope(entry, bot, rope, 120);
+        AgentClimbStateRuntime.setClimbVerticalDirection(entry, -1);
+        AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, null);
+
+        AgentClimbMovementService.tickClimbing(entry, new Point(150, 180), true);
+
+        assertTrue(AgentClimbStateRuntime.climbing(entry));
+        assertEquals(-1, AgentClimbStateRuntime.climbVerticalDirection(entry));
+        assertTrue(bot.getPosition().y < 120,
+                "a lower live target must not reverse an already committed upward rope route");
     }
 
     @Test

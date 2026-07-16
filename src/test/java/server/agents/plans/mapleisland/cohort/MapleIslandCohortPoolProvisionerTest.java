@@ -3,6 +3,7 @@ package server.agents.plans.mapleisland.cohort;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -29,6 +30,10 @@ class MapleIslandCohortPoolProvisionerTest {
         assertEquals(16, registry.snapshot().agents().size());
         assertEquals(15, hooks.accounts.get(10).slots);
         assertEquals(15, hooks.accounts.get(10).count);
+        assertEquals(16, hooks.templateOrdinals.size());
+        assertEquals(16, registry.snapshot().agents().stream()
+                .map(MapleIslandCohortPoolSnapshot.Agent::characterTemplateOrdinal)
+                .distinct().count());
         assertTrue(registry.snapshot().accounts().stream()
                 .allMatch(account -> account.characterSlots() == 15));
         assertEquals(0, provisioner.ensureLeaseCandidates(
@@ -61,6 +66,7 @@ class MapleIslandCohortPoolProvisionerTest {
         private int nextAccountId = 11;
         private int nextCharacterId = 100;
         private boolean preserveExistingSlotCount;
+        private final Set<Integer> templateOrdinals = new HashSet<>();
 
         @Override
         public boolean accountNameExists(String accountName) {
@@ -104,11 +110,14 @@ class MapleIslandCohortPoolProvisionerTest {
                                    String accountName,
                                    String characterName,
                                    int world,
-                                   int channel) {
+                                   int channel,
+                                   MapleIslandCohortCharacterTemplate characterTemplate) {
             FakeAccount account = accounts.get(accountId);
             if (account.count >= account.slots) {
                 throw new AssertionError("Provisioner overfilled account " + accountName);
             }
+            assertTrue(templateOrdinals.add(characterTemplate.ordinal()),
+                    "Provisioner repeated character template " + characterTemplate.ordinal());
             account.count++;
             return nextCharacterId++;
         }

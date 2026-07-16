@@ -13,6 +13,7 @@ import server.agents.capabilities.quest.AmherstTestResetResult;
 import server.agents.capabilities.quest.AmherstTestResetService;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentMapGatewayRuntime;
+import server.agents.integration.cosmic.CosmicMapleIslandCohortIdentity;
 import server.agents.runtime.AgentInteractionRuntime;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -210,6 +211,8 @@ public final class AmherstPlanCommandService {
         if (!AgentAmherstPlanRuntime.clearSession(entry)) {
             throw new IllegalStateException("the previous capability is still closing");
         }
+        CosmicMapleIslandCohortIdentity.applyDefaultStarterWeapon(agent);
+        agent.equipChanged();
         AgentAmherstPlanRuntime.defaultStore().delete(card.planId(), agent.getId());
         AgentMovementCommandRuntime.stop(entry);
     }

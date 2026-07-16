@@ -31,6 +31,17 @@ public final class AgentClimbMovementService {
             Rope climbRope = AgentClimbStateRuntime.climbRope(entry);
             int dxOwner = targetPos.x - climbRope.x();
 
+            // A grind route onto a rope is a committed traversal. Keep integrating the vertical
+            // direction selected at entry until the Agent reaches an exit. Re-deriving it from
+            // the live combat target lets target scoring alternate between mobs above and below,
+            // which makes the Agent repeatedly grab the rope, drop to ground, and grab it again.
+            if (AgentModeStateRuntime.grinding(entry)
+                    && AgentClimbStateRuntime.hasClimbVerticalDirection(entry)) {
+                AgentRopeMovementService.advanceClimb(entry, agent);
+                AgentMovementBroadcastService.broadcastMovement(entry);
+                return;
+            }
+
             if (runAiTick && !AgentNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)
                     && Math.abs(dxOwner) > AgentMovementPhysicsConfig.configuredFollowDist()
                     && climbRope.bottomY() < targetPos.y) {

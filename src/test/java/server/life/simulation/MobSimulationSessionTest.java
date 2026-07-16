@@ -13,12 +13,29 @@ import java.awt.Point;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class MobSimulationSessionTest {
+    @Test
+    void agentHitLeaseExpiresFromMostRecentAcceptedHit() {
+        Fixture fixture = fixture(new MobPhysicsProfile(0.08, 0.05, 1,
+                true, false, false, false));
+        fixture.session.acceptHit(fixture.agent, 10, 0, 1, 1_000_000_000L);
+
+        assertFalse(fixture.session.agentHitLeaseExpired(7_999_000_000L, 7_000));
+        assertTrue(fixture.session.agentHitLeaseExpired(8_000_000_000L, 7_000));
+        assertFalse(fixture.session.agentHitLeaseExpired(100_000_000_000L, 0),
+                "zero disables lease expiry");
+
+        fixture.session.acceptHit(fixture.agent, 10, 0, 1, 7_000_000_000L);
+        assertFalse(fixture.session.agentHitLeaseExpired(13_999_000_000L, 7_000));
+        assertTrue(fixture.session.agentHitLeaseExpired(14_000_000_000L, 7_000));
+    }
+
     @Test
     void moveActivityRefreshesAfterWzCycleAndOnFacingChange() {
         Fixture fixture = fixture(new MobPhysicsProfile(0.08, 0.05, 1,
@@ -108,6 +125,8 @@ class MobSimulationSessionTest {
                     true, false, false, false));
             fixture.session.body().setVelocity(-0.75, 0.0);
             fixture.session.acceptHit(fixture.agent, 10, 0, 1, 0L);
+            assertEquals(0.0, fixture.session.body().velocityX(), 1.0e-12,
+                    "accepted hit must stop inward chase momentum immediately");
             when(fixture.agent.getPosition()).thenReturn(new Point(-500, 100));
 
             fixture.session.advance(8_000_000L);
@@ -138,10 +157,58 @@ class MobSimulationSessionTest {
     }
 
     @Test
+    void additionalHitsCannotRestartOrReverseAnActiveReaction() {
+        int originalRecovery = AgentCombatConfig.cfg.MOB_PHYSICS_FLINCH_RECOVERY_MS;
+        try {
+            AgentCombatConfig.cfg.MOB_PHYSICS_FLINCH_RECOVERY_MS = 16;
+            Fixture fixture = fixture(new MobPhysicsProfile(0.08, 0.05, 1,
+                    true, false, false, false));
+            Character secondAgent = mock(Character.class);
+            when(secondAgent.getPosition()).thenReturn(new Point(500, 100));
+
+            fixture.session.acceptHit(fixture.agent, 10, 0, 1, 0L);
+            fixture.session.advance(8_000_000L);
+            double knockbackVelocity = fixture.session.body().velocityX();
+
+            fixture.session.acceptHit(secondAgent, 10, 200, -1, 8_000_000L);
+            assertEquals(MobMotionState.KNOCKBACK, fixture.session.motion());
+            assertEquals(1, fixture.session.knockbackDirection());
+            assertEquals(knockbackVelocity, fixture.session.body().velocityX(), 1.0e-12,
+                    "a second source must not stack or reverse active knockback");
+            assertEquals(secondAgent, fixture.session.agent(),
+                    "the latest hitter may still become the aggro target");
+
+            for (int step = 2; step <= 31; step++) {
+                fixture.session.advance(step * 8_000_000L);
+            }
+            assertEquals(MobMotionState.FLINCH, fixture.session.motion());
+            double recoveryX = fixture.session.body().x();
+
+            fixture.session.acceptHit(fixture.agent, 10, 0, -1, 248_000_000L);
+            assertEquals(MobMotionState.FLINCH, fixture.session.motion());
+            assertEquals(1, fixture.session.knockbackDirection());
+            fixture.session.advance(256_000_000L);
+            assertEquals(MobMotionState.FLINCH, fixture.session.motion());
+            assertEquals(recoveryX, fixture.session.body().x(), 1.0e-12);
+            fixture.session.advance(264_000_000L);
+            assertEquals(MobMotionState.CHASE, fixture.session.motion());
+
+            fixture.session.acceptHit(secondAgent, 10, 0, -1, 264_000_000L);
+            assertEquals(MobMotionState.PENDING_IMPACT, fixture.session.motion(),
+                    "new knockback may be scheduled after recovery completes");
+            assertEquals(-1, fixture.session.knockbackDirection());
+        } finally {
+            AgentCombatConfig.cfg.MOB_PHYSICS_FLINCH_RECOVERY_MS = originalRecovery;
+        }
+    }
+
+    @Test
     void attackDelayDoesNotApplyKnockbackToEarlierAccumulatorSteps() {
         int originalPercent = AgentCombatConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_PERCENT;
+        int originalOffset = AgentCombatConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_OFFSET_MS;
         try {
             AgentCombatConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_PERCENT = 100;
+            AgentCombatConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_OFFSET_MS = 0;
             Fixture fixture = fixture(new MobPhysicsProfile(0.08, 0.05, 1,
                     true, false, false, false));
             fixture.session.acceptHit(fixture.agent, 10, 40, 1, 0L);
@@ -155,6 +222,7 @@ class MobSimulationSessionTest {
             assertTrue(fixture.session.body().x() > 50.0);
         } finally {
             AgentCombatConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_PERCENT = originalPercent;
+            AgentCombatConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_OFFSET_MS = originalOffset;
         }
     }
 

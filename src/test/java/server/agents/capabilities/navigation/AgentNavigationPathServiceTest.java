@@ -4,8 +4,10 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementProfile;
+import server.life.Monster;
 import server.maps.MapleMap;
 import server.maps.Foothold;
+import server.maps.FootholdTree;
 
 import java.awt.Point;
 import java.util.List;
@@ -134,6 +136,49 @@ class AgentNavigationPathServiceTest {
         assertEquals(3, next.toRegionId);
         assertEquals(AgentNavigationGraph.EdgeType.JUMP, next.type);
         assertEquals(30, next.cost);
+    }
+
+    @Test
+    void findNextEdgePrefersClearDetourOverCrowdedShortRoute() {
+        AgentNavigationGraph.Edge crowdedFirst = edge(1, 2, AgentNavigationGraph.EdgeType.JUMP,
+                new Point(50, 100), new Point(150, 100), 100);
+        AgentNavigationGraph.Edge crowdedSecond = edge(2, 4, AgentNavigationGraph.EdgeType.JUMP,
+                new Point(150, 100), new Point(350, 100), 100);
+        AgentNavigationGraph.Edge clearFirst = edge(1, 3, AgentNavigationGraph.EdgeType.DROP,
+                new Point(50, 100), new Point(150, 200), 300);
+        AgentNavigationGraph.Edge clearSecond = edge(3, 4, AgentNavigationGraph.EdgeType.JUMP,
+                new Point(150, 200), new Point(350, 100), 300);
+        List<AgentNavigationGraph.Region> regions = List.of(
+                groundRegion(1, 0, 100, 100),
+                groundRegion(2, 100, 200, 100),
+                groundRegion(3, 100, 200, 200),
+                groundRegion(4, 300, 400, 100));
+        AgentNavigationGraph graph = graphWithRegionsAndEdges(regions, Map.of(
+                1, List.of(crowdedFirst, clearFirst),
+                2, List.of(crowdedSecond),
+                3, List.of(clearSecond)));
+
+        FootholdTree footholds = new FootholdTree(new Point(-1000, -1000), new Point(1000, 1000));
+        for (AgentNavigationGraph.Region region : regions) {
+            AgentNavigationGraph.Segment segment = region.segments.getFirst();
+            footholds.insert(new Foothold(
+                    new Point(segment.x1, segment.y1), new Point(segment.x2, segment.y2), segment.footholdId));
+        }
+        MapleMap map = mock(MapleMap.class);
+        when(map.getFootholds()).thenReturn(footholds);
+        Monster monster = mock(Monster.class);
+        when(monster.isAlive()).thenReturn(true);
+        when(monster.getPosition()).thenReturn(new Point(150, 100));
+        when(map.getAllMonsters()).thenReturn(List.of(monster));
+        Character bot = mock(Character.class);
+        when(bot.getMap()).thenReturn(map);
+        when(bot.getPosition()).thenReturn(new Point(50, 100));
+
+        AgentNavigationGraph.Edge selected = AgentNavigationPathService.findNextEdge(
+                graph, bot, 1, 4, new Point(350, 100));
+
+        assertEquals(clearFirst, selected,
+                "a populated intermediate platform should lose to a reasonably longer clear route");
     }
 
     @Test
@@ -301,10 +346,14 @@ class AgentNavigationPathServiceTest {
     }
 
     private static AgentNavigationGraph graphWithRegionsAndEdges(List<AgentNavigationGraph.Region> regions,
-                                                                 Map<Integer, List<AgentNavigationGraph.Edge>> outgoingByRegionId) {
+                                                                  Map<Integer, List<AgentNavigationGraph.Edge>> outgoingByRegionId) {
         Map<Integer, AgentNavigationGraph.Region> regionsById = new java.util.HashMap<>();
+        Map<Integer, Integer> regionIdByFootholdId = new java.util.HashMap<>();
         for (AgentNavigationGraph.Region region : regions) {
             regionsById.put(region.id, region);
+            for (AgentNavigationGraph.Segment segment : region.segments) {
+                regionIdByFootholdId.put(segment.footholdId, region.id);
+            }
         }
         return new AgentNavigationGraph(
                 1,
@@ -312,7 +361,7 @@ class AgentNavigationPathServiceTest {
                 AgentMovementProfile.base(),
                 regions,
                 regionsById,
-                Map.of(),
+                regionIdByFootholdId,
                 outgoingByRegionId,
                 Set.of());
     }

@@ -30,6 +30,7 @@ public final class MobSimulationSession {
     private volatile MobMotionState motion = MobMotionState.PENDING_IMPACT;
     private long generation;
     private long impactAtNanos;
+    private long lastAcceptedHitNanos;
     private long lastTickNanos;
     private long tickNowNanos;
     private long lastPublishedNanos;
@@ -96,6 +97,7 @@ public final class MobSimulationSession {
             }
         }
         lastTickNanos = nowNanos;
+        lastAcceptedHitNanos = nowNanos;
         progressAnchorX = body.x();
         nextStuckDecisionNanos = nowNanos + stuckWindowNanos();
         nextJumpNanos = nowNanos + randomMillis(
@@ -105,7 +107,15 @@ public final class MobSimulationSession {
 
     public synchronized long acceptHit(Character newAgent, int damage, long delayMs,
                                        int direction, long nowNanos) {
+        boolean reactionAlreadyInProgress = reactionInProgress();
         agent = newAgent;
+        // A hit received during knockback/flinch cannot stack another reaction, but it still
+        // renews the Agent aggro lease and may update which Agent is being chased afterwards.
+        lastAcceptedHitNanos = Math.max(lastAcceptedHitNanos, nowNanos);
+        generation++;
+        if (reactionAlreadyInProgress) {
+            return generation;
+        }
         pendingDamage = Math.max(0, damage);
         knockbackDirection = direction < 0 ? -1 : 1;
         impactFacingLeft = (monster.getStance() & 1) != 0;
@@ -114,8 +124,9 @@ public final class MobSimulationSession {
         scaledDelayMs = Math.max(0L, scaledDelayMs
                 + AgentCombatConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_OFFSET_MS);
         impactAtNanos = nowNanos + scaledDelayMs * 1_000_000L;
-        generation++;
         motion = MobMotionState.PENDING_IMPACT;
+        body.setVelocity(0.0, body.grounded() || profile.flying()
+                ? 0.0 : body.velocityY());
         knockbackStepsRemaining = 0;
         recoveryStepsRemaining = 0;
         hit1ActivityPending = false;
@@ -127,6 +138,25 @@ public final class MobSimulationSession {
         temporaryRetreatDistancePx = 0.0;
         immediatePublication = true;
         return generation;
+    }
+
+    private boolean reactionInProgress() {
+        return generation > 0 && (motion == MobMotionState.PENDING_IMPACT
+                || motion == MobMotionState.KNOCKBACK
+                || motion == MobMotionState.FLINCH);
+    }
+
+    public synchronized long generation() {
+        return generation;
+    }
+
+    public synchronized boolean hasGeneration(long expectedGeneration) {
+        return generation == expectedGeneration;
+    }
+
+    public synchronized boolean agentHitLeaseExpired(long nowNanos, long timeoutMs) {
+        return timeoutMs > 0
+                && nowNanos - lastAcceptedHitNanos >= timeoutMs * 1_000_000L;
     }
 
     public synchronized AdvanceResult advance(long nowNanos) {

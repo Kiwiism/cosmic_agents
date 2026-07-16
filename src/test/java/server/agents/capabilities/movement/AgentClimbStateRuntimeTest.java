@@ -55,17 +55,19 @@ class AgentClimbStateRuntimeTest {
         assertNull(AgentClimbStateRuntime.ropeEntryRope(entry));
         assertEquals(0, AgentClimbStateRuntime.ropeEntryY(entry));
 
-        AgentClimbStateRuntime.queueRopeEntry(entry, rope, 90);
+        AgentClimbStateRuntime.queueRopeEntry(entry, rope, 90, 1);
 
         assertTrue(AgentClimbStateRuntime.ropeEntryPending(entry));
         assertSame(rope, AgentClimbStateRuntime.ropeEntryRope(entry));
         assertEquals(90, AgentClimbStateRuntime.ropeEntryY(entry));
+        assertEquals(1, AgentClimbStateRuntime.ropeEntryDirection(entry));
 
         AgentClimbStateRuntime.clearRopeEntry(entry);
 
         assertFalse(AgentClimbStateRuntime.ropeEntryPending(entry));
         assertNull(AgentClimbStateRuntime.ropeEntryRope(entry));
         assertEquals(0, AgentClimbStateRuntime.ropeEntryY(entry));
+        assertEquals(0, AgentClimbStateRuntime.ropeEntryDirection(entry));
     }
 
     @Test

@@ -1,11 +1,13 @@
 package server.agents.integration.cosmic;
 
 import client.Client;
+import client.creator.BotCreator;
 import server.agents.integration.AgentAccountResolution;
 import server.agents.integration.AgentBackingAccountSecurityRuntime;
 import server.agents.integration.AgentClientGatewayRuntime;
 import server.agents.integration.AgentPersistenceGatewayRuntime;
 import server.agents.plans.mapleisland.cohort.MapleIslandCohortPoolProvisioner;
+import server.agents.plans.mapleisland.cohort.MapleIslandCohortCharacterTemplate;
 import tools.DatabaseConnection;
 
 import java.sql.Connection;
@@ -140,10 +142,21 @@ public final class CosmicMapleIslandCohortProvisioning implements MapleIslandCoh
                                String accountName,
                                String characterName,
                                int world,
-                               int channel) {
+                               int channel,
+                               MapleIslandCohortCharacterTemplate characterTemplate) {
         Client client = AgentClientGatewayRuntime.clients().createHeadlessClient(world, channel);
         client.setAccID(accountId);
         client.setAccountName(accountName);
-        return AgentClientGatewayRuntime.clients().createBackingCharacter(client, characterName);
+        return BotCreator.createCharacter(
+                client,
+                characterName,
+                characterTemplate.face(),
+                characterTemplate.hair(),
+                characterTemplate.skin(),
+                characterTemplate.gender(),
+                characterTemplate.top(),
+                characterTemplate.bottom(),
+                characterTemplate.shoes(),
+                characterTemplate.weapon());
     }
 }

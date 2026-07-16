@@ -10,7 +10,7 @@ public enum MapleIslandCohortRealismMode {
 
     public static MapleIslandCohortRealismMode parse(String value) {
         if (value == null || value.isBlank()) {
-            return FULL;
+            return LIGHT;
         }
         try {
             return valueOf(value.trim().toUpperCase(Locale.ROOT));

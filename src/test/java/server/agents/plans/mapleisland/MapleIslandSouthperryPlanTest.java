@@ -70,8 +70,6 @@ class MapleIslandSouthperryPlanTest {
         assertEquals(Set.of(1039, 1040, 1041, 1042, 1043, 1044, 1045, 1046,
                         8020, 8021, 8022, 8023, 8024, 8025),
                 card.requiredQuestIds());
-        assertTrue(index(card, AmherstPlanObjectiveKind.QUEST_COMPLETE, 1039)
-                < index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8020));
         assertTrue(index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8020)
                 < index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8021));
         assertTrue(index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8022)
@@ -79,6 +77,8 @@ class MapleIslandSouthperryPlanTest {
         assertTrue(index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8023)
                 < index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8024));
         assertTrue(index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8025)
+                < index(card, AmherstPlanObjectiveKind.QUEST_START, 1039));
+        assertTrue(index(card, AmherstPlanObjectiveKind.QUEST_COMPLETE, 1039)
                 < index(card, AmherstPlanObjectiveKind.QUEST_START, 1041));
         assertTrue(index(card, AmherstPlanObjectiveKind.QUEST_START, 1040)
                 < index(card, AmherstPlanObjectiveKind.QUEST_START, 1041));

@@ -103,6 +103,7 @@ import server.agents.capabilities.quest.AgentPartyQuestSyncService;
 import server.agents.capabilities.quest.MapleIslandSouthperryBaseline;
 import server.agents.capabilities.trade.AgentOwnerItemNotificationService;
 import server.agents.integration.cosmic.CosmicAgentPotionCheckRequestBridge;
+import server.agents.diagnostics.MapTransitionPacketTraceRuntime;
 import server.agents.runtime.AgentRuntimeCleanupService;
 import server.CashShop;
 import server.ExpLogger;
@@ -1879,6 +1880,7 @@ public class Character extends AbstractCharacterObject {
         }
 
         this.mapTransitioning.set(true);
+        MapTransitionPacketTraceRuntime.begin(client, map == null ? -1 : map.getId(), to.getId());
 
         this.unregisterChairBuff();
         Trade.cancelTrade(this, Trade.TradeResult.UNSUCCESSFUL_ANOTHER_MAP);

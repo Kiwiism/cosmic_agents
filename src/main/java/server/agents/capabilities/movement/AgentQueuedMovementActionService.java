@@ -19,9 +19,13 @@ public final class AgentQueuedMovementActionService {
         AgentMovementPoseService.syncCharacterState(entry);
     }
 
-    public static void queueTopRopeEntry(AgentRuntimeEntry entry, Character agent, Rope rope, int y) {
+    public static void queueTopRopeEntry(AgentRuntimeEntry entry,
+                                         Character agent,
+                                         Rope rope,
+                                         int y,
+                                         int climbDirection) {
         AgentMovementPoseService.idleOnGround(entry, agent);
-        AgentClimbStateRuntime.queueRopeEntry(entry, rope, y);
+        AgentClimbStateRuntime.queueRopeEntry(entry, rope, y, climbDirection);
         AgentMovementPoseService.syncCharacterState(entry);
     }
 
@@ -48,6 +52,7 @@ public final class AgentQueuedMovementActionService {
     public static void beginTopRopeEntry(AgentRuntimeEntry entry, Character agent) {
         Rope rope = AgentClimbStateRuntime.ropeEntryRope(entry);
         int ropeY = AgentClimbStateRuntime.ropeEntryY(entry);
+        int climbDirection = AgentClimbStateRuntime.ropeEntryDirection(entry);
         AgentClimbStateRuntime.clearRopeEntry(entry);
         if (rope == null || agent == null) {
             AgentMovementPoseService.syncCharacterState(entry);
@@ -59,5 +64,6 @@ public final class AgentQueuedMovementActionService {
             return;
         }
         AgentRopeMovementService.attachToRope(entry, agent, rope, ropeY);
+        AgentClimbStateRuntime.setClimbVerticalDirection(entry, climbDirection);
     }
 }

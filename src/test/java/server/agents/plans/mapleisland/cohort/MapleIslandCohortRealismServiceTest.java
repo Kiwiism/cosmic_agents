@@ -32,13 +32,13 @@ class MapleIslandCohortRealismServiceTest {
         assertTrue(MapleIslandObjectiveRandomnessRuntime.settings(first).restSpotVariationEnabled());
         assertTrue(AgentMapleIslandTravelRuntime.settings(first).routeVariationEnabled());
         assertTrue(AgentMapleIslandTravelRuntime.settings(first).travelHopsEnabled());
-        assertEquals(0.10d, AgentMapleIslandTravelRuntime.settings(first).travelHopProbability());
+        assertEquals(0.04d, AgentMapleIslandTravelRuntime.settings(first).travelHopProbability());
         assertTrue(AgentMapleIslandTravelRuntime.settings(first).travelHopDecisionIntervalMs()
-                >= 1_000L);
+                >= 2_500L);
         assertTrue(AgentMapleIslandTravelRuntime.settings(first).travelHopDecisionIntervalMs()
-                <= 2_000L);
-        assertTrue(AgentMapleIslandTravelRuntime.settings(first).travelHopCooldownMs() >= 3_000L);
-        assertTrue(AgentMapleIslandTravelRuntime.settings(first).travelHopCooldownMs() <= 5_000L);
+                <= 4_500L);
+        assertTrue(AgentMapleIslandTravelRuntime.settings(first).travelHopCooldownMs() >= 8_000L);
+        assertTrue(AgentMapleIslandTravelRuntime.settings(first).travelHopCooldownMs() <= 15_000L);
     }
 
     @Test

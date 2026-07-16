@@ -1,26 +1,40 @@
 package server.agents.plans.mapleisland.cohort;
 
-import java.util.ArrayList;
-import java.util.List;
+import client.Character;
 
-/** Deterministic 5,000-name catalog without storing 5,000 literal rows. */
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+
+/** Deterministic old-school Maple-style names filtered through the live character-name policy. */
 public final class MapleIslandCohortNameCatalog {
-    public static final int CANDIDATE_COUNT = 5_000;
-    private static final int CHARACTER_NAME_MAX = 12;
-    private static final String[] ADJECTIVES = {
-            "Blue", "Red", "Green", "Gold", "Silver", "Tiny", "Mega", "Swift", "Brave", "Calm",
-            "Wild", "Lucky", "Happy", "Sleepy", "Sunny", "Misty", "Frosty", "Fiery", "Jolly", "Quiet",
-            "Rapid", "Nimble", "Shiny", "Cozy", "Gentle", "Bold", "New", "Old", "Cool", "Warm",
-            "Fresh", "Bright", "Drowsy", "Clever", "Noble", "Kind", "Fair", "Merry", "Magic", "Mystic",
-            "Pure", "Silky", "Tough", "Spicy", "Sweet", "Fancy", "Dusty", "Breezy", "Peachy", "Zippy"
+    public static final int CANDIDATE_COUNT = 30_000;
+
+    private static final String[] ROOTS = {
+            "Aeri", "Aiko", "Akira", "Aluna", "Ami", "Anzu", "Aria", "Aster", "Auri", "Aya",
+            "Bambi", "Bao", "Beni", "Bibi", "Boba", "Ceri", "Ciel", "Coco", "Dango", "Deni",
+            "Dori", "Eira", "Elio", "Emi", "Faye", "Fina", "Hana", "Hani", "Haru", "Hoshi",
+            "Jae", "Jiji", "Juno", "Kairi", "Kiki", "Kira", "Koko", "Kumi", "Lana", "Lani",
+            "Leya", "Lili", "Lumi", "Luna", "Maki", "Melo", "Miki", "Mina", "Miro", "Momo",
+            "Nami", "Nana", "Neko", "Neri", "Niko", "Nori", "Nova", "Pika", "Pino", "Piyo",
+            "Reni", "Riku", "Rina", "Riri", "Rumi", "Saki", "Sena", "Shiro", "Sora", "Taki",
+            "Taro", "Tiki", "Tori", "Umi", "Vivi", "Yami", "Yori", "Yuki", "Yumi", "Zeri",
+            "Mushie", "Snaily", "Slimey", "Piggy", "Stumpy", "Ribbon", "Orange", "Sprout", "Leafy", "Cloudy",
+            "Starry", "Moonlit", "Lucky", "Sleepy", "Tiny", "Swift", "BowKid", "WandKid", "ClawKid", "DaggerKid"
     };
-    private static final String[] NOUNS = {
-            "Snail", "Slime", "Shroom", "Boar", "Ribbon", "Stump", "Sprout", "Leaf", "Seed", "Apple",
-            "Orange", "Shell", "Horn", "Star", "Moon", "Sun", "Cloud", "Rain", "Snow", "River",
-            "Stone", "Sword", "Bow", "Wand", "Claw", "Dagger", "Cape", "Boot", "Hat", "Potion",
-            "Coin", "Quest", "Scout", "Mage", "Rogue", "Archer", "Knight", "Buddy", "Panda", "Tiger",
-            "Bunny", "Puppy", "Kitty", "Bird", "Fish", "Drake", "Fairy", "Pixie", "Wisp", "Golem"
+    private static final String[] PREFIXES = {
+            "Lil", "Its", "Hey", "Im", "The", "Neo", "Mini", "Big", "Baby", "Dark",
+            "Blue", "Red", "Pink", "Sky", "Star", "Moon", "Sir", "Lady", "Mr", "Miss",
+            "i", "x", "Oo", "Pro", "Noob"
     };
+    private static final String[] SUFFIXES = {
+            "Jr", "MS", "Maple", "X", "x", "Kun", "Chan", "San", "Star", "Moon",
+            "Boy", "Girl", "Hero", "Pro", "Noob", "FTW", "Pls", "Go", "One", "Two",
+            "Kid", "Cat", "Bun", "Puff", "Pop"
+    };
+    private static final List<String> CANDIDATES = buildCandidates();
 
     private MapleIslandCohortNameCatalog() {
     }
@@ -29,23 +43,11 @@ public final class MapleIslandCohortNameCatalog {
         if (index < 0 || index >= CANDIDATE_COUNT) {
             throw new IllegalArgumentException("Name index must be between 0 and " + (CANDIDATE_COUNT - 1));
         }
-        boolean reversed = index >= ADJECTIVES.length * NOUNS.length;
-        int localIndex = reversed ? index - ADJECTIVES.length * NOUNS.length : index;
-        String adjective = ADJECTIVES[localIndex / NOUNS.length];
-        String noun = NOUNS[localIndex % NOUNS.length];
-        String name = reversed ? noun + adjective : adjective + noun;
-        if (name.length() > CHARACTER_NAME_MAX) {
-            throw new IllegalStateException("Generated overlong Maple Island name: " + name);
-        }
-        return name;
+        return CANDIDATES.get(index);
     }
 
     public static List<String> candidates() {
-        List<String> names = new ArrayList<>(CANDIDATE_COUNT);
-        for (int index = 0; index < CANDIDATE_COUNT; index++) {
-            names.add(candidate(index));
-        }
-        return List.copyOf(names);
+        return CANDIDATES;
     }
 
     public static String accountCandidate(int ordinal) {
@@ -53,5 +55,54 @@ public final class MapleIslandCohortNameCatalog {
             throw new IllegalArgumentException("Account ordinal must be between 1 and " + CANDIDATE_COUNT);
         }
         return "MIQuest%04d".formatted(ordinal);
+    }
+
+    private static List<String> buildCandidates() {
+        Set<String> names = new LinkedHashSet<>(CANDIDATE_COUNT * 2);
+        Set<String> normalizedNames = new java.util.HashSet<>(CANDIDATE_COUNT * 2);
+
+        // Interleave styles so even a small cohort does not look machine-generated.
+        for (int index = 0; index < ROOTS.length; index++) {
+            String root = ROOTS[index];
+            add(names, normalizedNames, root);
+            add(names, normalizedNames, PREFIXES[index % PREFIXES.length] + root);
+            add(names, normalizedNames, root + SUFFIXES[(index * 7) % SUFFIXES.length]);
+            add(names, normalizedNames, "x" + root + "x");
+            add(names, normalizedNames, root + "%02d".formatted((index * 13) % 100));
+        }
+
+        for (String prefix : PREFIXES) {
+            for (String root : ROOTS) {
+                add(names, normalizedNames, prefix + root);
+            }
+        }
+        for (String suffix : SUFFIXES) {
+            for (String root : ROOTS) {
+                add(names, normalizedNames, root + suffix);
+            }
+        }
+        for (int number = 0; names.size() < CANDIDATE_COUNT && number < 1_000; number++) {
+            for (String root : ROOTS) {
+                add(names, normalizedNames, root + number);
+                if (names.size() >= CANDIDATE_COUNT) {
+                    break;
+                }
+            }
+        }
+
+        if (names.size() < CANDIDATE_COUNT) {
+            throw new IllegalStateException("Could generate only " + names.size() + " safe cohort names");
+        }
+        return List.copyOf(new ArrayList<>(names).subList(0, CANDIDATE_COUNT));
+    }
+
+    private static void add(Set<String> names, Set<String> normalizedNames, String candidate) {
+        if (!Character.isValidCharacterNameSyntax(candidate)) {
+            return;
+        }
+        String normalized = candidate.toLowerCase(Locale.ROOT);
+        if (normalizedNames.add(normalized)) {
+            names.add(candidate);
+        }
     }
 }

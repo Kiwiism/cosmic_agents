@@ -10,8 +10,9 @@ import server.agents.runtime.AgentRuntimeEntry;
 
 /** Applies one deterministic, run-scoped realism preset to a cohort Agent. */
 public final class MapleIslandCohortRealismService {
-    private static final double MAX_ROUTE_STRETCH = 1.20d;
-    private static final double TRAVEL_HOP_PROBABILITY = 0.10d;
+    private static final double LIGHT_MAX_ROUTE_STRETCH = 1.08d;
+    private static final double FULL_MAX_ROUTE_STRETCH = 1.15d;
+    private static final double FULL_TRAVEL_HOP_PROBABILITY = 0.04d;
     private static final AgentBehaviorProfile.DelayRange NO_DELAY =
             new AgentBehaviorProfile.DelayRange(0, 0);
     private static final long HOP_INTERVAL_DOMAIN = 0x484F502D494E5456L;
@@ -28,7 +29,7 @@ public final class MapleIslandCohortRealismService {
             throw new IllegalArgumentException("cohort Agent entry and positive ordinal are required");
         }
         MapleIslandCohortRealismMode selected = mode == null
-                ? MapleIslandCohortRealismMode.FULL : mode;
+                ? MapleIslandCohortRealismMode.LIGHT : mode;
         long agentSeed = agentSeed(entry, runSeed, ordinal);
         switch (selected) {
             case OFF -> configureOff(entry, agentSeed);
@@ -51,8 +52,8 @@ public final class MapleIslandCohortRealismService {
                         true, seed, null, null, true, true));
         AgentMapleIslandTravelRuntime.configure(entry,
                 new AgentMapleIslandTravelSettings(
-                        seed, true, MAX_ROUTE_STRETCH, false, 0.0d,
-                        sampleRange(seed ^ HOP_INTERVAL_DOMAIN, 1_000L, 2_000L), 0L));
+                        seed, true, LIGHT_MAX_ROUTE_STRETCH, false, 0.0d,
+                        sampleRange(seed ^ HOP_INTERVAL_DOMAIN, 2_500L, 4_500L), 0L));
     }
 
     private static void configureFull(AgentRuntimeEntry entry, long seed) {
@@ -60,9 +61,9 @@ public final class MapleIslandCohortRealismService {
                 entry, MapleIslandObjectiveRandomnessSettings.cohort(seed));
         AgentMapleIslandTravelRuntime.configure(entry,
                 new AgentMapleIslandTravelSettings(
-                        seed, true, MAX_ROUTE_STRETCH, true, TRAVEL_HOP_PROBABILITY,
-                        sampleRange(seed ^ HOP_INTERVAL_DOMAIN, 1_000L, 2_000L),
-                        sampleRange(seed ^ HOP_COOLDOWN_DOMAIN, 3_000L, 5_000L)));
+                        seed, true, FULL_MAX_ROUTE_STRETCH, true, FULL_TRAVEL_HOP_PROBABILITY,
+                        sampleRange(seed ^ HOP_INTERVAL_DOMAIN, 2_500L, 4_500L),
+                        sampleRange(seed ^ HOP_COOLDOWN_DOMAIN, 8_000L, 15_000L)));
     }
 
     static long agentSeed(AgentRuntimeEntry entry, long runSeed, int ordinal) {

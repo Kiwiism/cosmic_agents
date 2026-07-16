@@ -58,6 +58,7 @@ NPC for `8023`.
 ```text
 !mapleisland reset AmherstRun
 !mapleisland start AmherstRun
+!mapleisland resume AmherstRun
 !mapleisland next AmherstRun
 !mapleisland status AmherstRun
 !mapleisland run AmherstRun
@@ -68,8 +69,10 @@ follow or party mode, restores `SOUTHPERRY_MVP_START`, clears only the
 Southperry progress journal, waits three seconds, and starts automatic mode.
 
 Manual mode runs one objective at a time. `next` authorizes the next live,
-unsatisfied objective. Progress is persisted under the existing Agent plan
-progress store and reconciled against live quest/map/inventory state on resume.
+unsatisfied objective. `resume` starts automatic mode without resetting the
+character or deleting progress; completed objectives are skipped from live
+quest and inventory state. Progress is persisted under the existing Agent plan
+progress store and reconciled against live state on resume.
 
 ## Configuration
 

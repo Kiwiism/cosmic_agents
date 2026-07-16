@@ -148,13 +148,13 @@ Move: `1000000 -> 1010000`
 
 1. Talk to Yoona `20100`.
    - Handle Yoona quests before Mai:
-     - `1039`
      - `8020`
      - `8021`
      - `8022`
      - `8023`
      - `8024`
      - `8025`
+     - `1039`
 2. For `8020`, grant/spawn item `4031180` for the Agent.
 3. For `8023`, use auto-complete handling if no complete NPC is present.
 

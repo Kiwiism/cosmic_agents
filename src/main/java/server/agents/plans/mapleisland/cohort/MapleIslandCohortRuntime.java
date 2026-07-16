@@ -16,6 +16,7 @@ import server.agents.integration.cosmic.CosmicAgentBackingAccountSecurity;
 import server.agents.integration.cosmic.CosmicAgentOfflineLoader;
 import server.agents.integration.cosmic.CosmicCharacterGateway;
 import server.agents.integration.cosmic.CosmicMapleIslandCohortProvisioning;
+import server.agents.integration.cosmic.CosmicMapleIslandCohortIdentity;
 import server.agents.plans.amherst.AmherstPlanCard;
 import server.agents.plans.mapleisland.AgentMapleIslandPlanRuntime;
 import server.agents.runtime.AgentInteractionRuntime;
@@ -171,6 +172,11 @@ public final class MapleIslandCohortRuntime {
             AgentRuntimeEntry entry = AgentInteractionRuntime.registerSelfDirectedAgent(agent);
             AgentMovementCommandRuntime.stop(entry);
             AgentPartyLifecycleService.leaveAgentParty(agent);
+
+            int characterTemplateOrdinal = java.util.Objects.requireNonNull(
+                    pooled.characterTemplateOrdinal(), "Pooled Agent has no character template");
+            CosmicMapleIslandCohortIdentity.apply(agent,
+                    MapleIslandCohortCharacterCatalog.template(characterTemplateOrdinal));
 
             AmherstTestResetResult reset = AmherstTestResetService
                     .showcaseHarness(true, pooled.name())

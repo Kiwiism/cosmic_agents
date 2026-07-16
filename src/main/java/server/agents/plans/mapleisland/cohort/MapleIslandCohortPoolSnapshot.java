@@ -57,6 +57,7 @@ public record MapleIslandCohortPoolSnapshot(
             String accountName,
             int createdByCharacterId,
             int world,
+            Integer characterTemplateOrdinal,
             LeaseState leaseState,
             String leaseSessionId,
             int leaseOwnerCharacterId,
@@ -74,6 +75,11 @@ public record MapleIslandCohortPoolSnapshot(
             leaseSessionId = normalize(leaseSessionId);
             lastSessionId = normalize(lastSessionId);
             lastError = normalize(lastError);
+            if (characterTemplateOrdinal != null
+                    && (characterTemplateOrdinal < 0
+                    || characterTemplateOrdinal >= MapleIslandCohortCharacterCatalog.COMBINATION_COUNT)) {
+                throw new IllegalArgumentException("Invalid cohort character-template ordinal");
+            }
             if (leaseOwnerCharacterId < 0 || leaseAcquiredAtMs < 0L || lastResetAtMs < 0L) {
                 throw new IllegalArgumentException("Pool Agent lease timestamps/owner must be nonnegative");
             }
@@ -95,35 +101,56 @@ public record MapleIslandCohortPoolSnapshot(
                                       String name,
                                       Account account,
                                       int createdByCharacterId,
+                                      int world,
+                                      int characterTemplateOrdinal) {
+            return new Agent(characterId, name, account.accountId(), account.accountName(),
+                    createdByCharacterId, world, characterTemplateOrdinal,
+                    LeaseState.AVAILABLE, "", 0, 0L, "", 0L, "");
+        }
+
+        public static Agent available(int characterId,
+                                      String name,
+                                      Account account,
+                                      int createdByCharacterId,
                                       int world) {
             return new Agent(characterId, name, account.accountId(), account.accountName(),
-                    createdByCharacterId, world, LeaseState.AVAILABLE, "", 0, 0L, "", 0L, "");
+                    createdByCharacterId, world, null,
+                    LeaseState.AVAILABLE, "", 0, 0L, "", 0L, "");
         }
 
         public Agent leased(String sessionId, int ownerCharacterId, long nowMs) {
             return new Agent(characterId, name, accountId, accountName, createdByCharacterId, world,
-                    LeaseState.LEASED, requireName(sessionId, "sessionId"), ownerCharacterId, nowMs,
+                    characterTemplateOrdinal, LeaseState.LEASED,
+                    requireName(sessionId, "sessionId"), ownerCharacterId, nowMs,
                     lastSessionId, lastResetAtMs, "");
         }
 
         public Agent active(String sessionId, long resetAtMs) {
             return new Agent(characterId, name, accountId, accountName, createdByCharacterId, world,
-                    LeaseState.ACTIVE, requireName(sessionId, "sessionId"), leaseOwnerCharacterId,
+                    characterTemplateOrdinal, LeaseState.ACTIVE,
+                    requireName(sessionId, "sessionId"), leaseOwnerCharacterId,
                     leaseAcquiredAtMs, sessionId, resetAtMs, "");
         }
 
         public Agent released(String completedSessionId) {
             return new Agent(characterId, name, accountId, accountName, createdByCharacterId, world,
-                    LeaseState.AVAILABLE, "", 0, 0L,
+                    characterTemplateOrdinal, LeaseState.AVAILABLE, "", 0, 0L,
                     normalize(completedSessionId).isEmpty() ? lastSessionId : completedSessionId,
                     lastResetAtMs, "");
         }
 
         public Agent broken(String sessionId, String error) {
             return new Agent(characterId, name, accountId, accountName, createdByCharacterId, world,
-                    LeaseState.BROKEN, normalize(sessionId), leaseOwnerCharacterId, leaseAcquiredAtMs,
+                    characterTemplateOrdinal, LeaseState.BROKEN,
+                    normalize(sessionId), leaseOwnerCharacterId, leaseAcquiredAtMs,
                     normalize(sessionId).isEmpty() ? lastSessionId : sessionId,
                     lastResetAtMs, normalize(error));
+        }
+
+        public Agent withCharacterTemplateOrdinal(int ordinal) {
+            return new Agent(characterId, name, accountId, accountName, createdByCharacterId, world,
+                    ordinal, leaseState, leaseSessionId, leaseOwnerCharacterId, leaseAcquiredAtMs,
+                    lastSessionId, lastResetAtMs, lastError);
         }
     }
 

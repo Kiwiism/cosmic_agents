@@ -327,7 +327,18 @@ public enum CosmicPrimitiveCapabilityGateway implements PrimitiveCapabilityGatew
         if (agent.getMap() == null) {
             return false;
         }
+        AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(agent.getId());
+        if (entry != null) {
+            // SPAWN_PLAYER with enteringField=true intentionally renders 42 px above the
+            // stored position. Follow it with the authoritative grounded state so a
+            // simulated Cash Shop return cannot remain visually airborne.
+            AgentMovementPoseService.idleOnGround(entry, agent);
+            AgentMovementBroadcastStateRuntime.invalidate(entry);
+        }
         agent.getMap().broadcastSpawnPlayerMapObjectMessage(agent, agent, true);
+        if (entry != null) {
+            AgentMovementBroadcastService.broadcastMovement(entry);
+        }
         return true;
     }
 

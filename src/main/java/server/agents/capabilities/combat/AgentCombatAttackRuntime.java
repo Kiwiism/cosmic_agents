@@ -57,9 +57,12 @@ public final class AgentCombatAttackRuntime {
                             attackPlan.skillId, damageProfile, attackPlan.hitDelayMs));
         }
 
-        AgentAttackExecutionProvider.applyAttackRoute(attackPlan.route, attack, bot);
+        if (!AgentAttackExecutionProvider.applyAttackRoute(attackPlan.route, attack, bot)) {
+            return;
+        }
         AgentCombatCooldownStateRuntime.maxAttackCooldown(entry, attackPlan.cooldownMs);
         AgentCombatFacingRuntime.rememberAttackFacing(entry, attackPlan.stance);
         AgentCombatAlertRuntime.markAlerted(entry);
     }
+
 }

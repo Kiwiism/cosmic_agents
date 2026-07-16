@@ -15,6 +15,7 @@ public final class AgentClimbState {
     private boolean ropeEntryPending;
     private Rope ropeEntryRope;
     private int ropeEntryY;
+    private int ropeEntryDirection;
 
     public boolean climbing() {
         return climbing;
@@ -89,15 +90,21 @@ public final class AgentClimbState {
         return ropeEntryY;
     }
 
-    public void queueRopeEntry(Rope rope, int y) {
+    public int ropeEntryDirection() {
+        return ropeEntryDirection;
+    }
+
+    public void queueRopeEntry(Rope rope, int y, int direction) {
         ropeEntryPending = true;
         ropeEntryRope = rope;
         ropeEntryY = y;
+        ropeEntryDirection = Integer.compare(direction, 0);
     }
 
     public void clearRopeEntry() {
         ropeEntryPending = false;
         ropeEntryRope = null;
         ropeEntryY = 0;
+        ropeEntryDirection = 0;
     }
 }
