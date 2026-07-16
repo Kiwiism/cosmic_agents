@@ -38,10 +38,16 @@ public final class AgentAmmoService {
     }
 
     public static void tickAmmoShareCheck(AgentRuntimeEntry entry, Character bot, InventoryGateway inventory) {
+        if (entry.isPartnerManaged()) {
+            return;
+        }
         requestLowAmmoShare(entry, bot, false, inventory);
     }
 
     public static boolean requestLowAmmoShare(AgentRuntimeEntry entry, Character bot, boolean bypassShareLimits, InventoryGateway inventory) {
+        if (entry.isPartnerManaged()) {
+            return false;
+        }
         WeaponType weaponType = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
         if (!canRequestShare(weaponType)) {
             AgentAmmoStateRuntime.clearAmmoShareRequested(entry);
@@ -63,6 +69,9 @@ public final class AgentAmmoService {
     }
 
     public static void checkAmmoShareOnModeStart(AgentRuntimeEntry entry, Character bot, InventoryGateway inventory) {
+        if (entry.isPartnerManaged()) {
+            return;
+        }
         AgentAmmoStateRuntime.clearAmmoShareRequested(entry);
         requestLowAmmoShare(entry, bot, false, inventory);
     }
@@ -77,6 +86,9 @@ public final class AgentAmmoService {
                                            int currentAmmo,
                                            boolean bypassShareLimits,
                                            InventoryGateway inventory) {
+        if (entry.isPartnerManaged()) {
+            return false;
+        }
         Character owner = AgentRuntimeIdentityRuntime.owner(entry);
         if (owner == null || bot.getTrade() != null || AgentPendingTradeStateRuntime.hasActiveSequence(entry)) {
             return false;
@@ -121,6 +133,9 @@ public final class AgentAmmoService {
     }
 
     public static OwnerAmmoShareResult offerAmmoShareToOwner(AgentRuntimeEntry entry, WeaponType weaponType, InventoryGateway inventory) {
+        if (entry.isPartnerManaged()) {
+            return OwnerAmmoShareResult.BLOCKED;
+        }
         Character owner = AgentRuntimeIdentityRuntime.owner(entry);
         if (owner == null || owner.getTrade() != null || !canRequestShare(weaponType)) {
             return OwnerAmmoShareResult.BLOCKED;
@@ -154,7 +169,8 @@ public final class AgentAmmoService {
         AgentAmmoDonorPlan<AgentRuntimeEntry> best = null;
         for (AgentRuntimeEntry sibling : AgentSessionLifecycleRuntime.getBotEntries(ownerId)) {
             Character donorBot = AgentRuntimeIdentityRuntime.bot(sibling);
-            if (sibling == excludedEntry || donorBot == null || donorBot.getMapId() != mapId) {
+            if (sibling == excludedEntry || sibling.isPartnerManaged()
+                    || donorBot == null || donorBot.getMapId() != mapId) {
                 continue;
             }
             int count = AgentCombatAmmoCounter.countAmmo(donorBot, needyWeaponType);
@@ -187,7 +203,9 @@ public final class AgentAmmoService {
         Character donorBot = AgentRuntimeIdentityRuntime.bot(donorEntry);
         int maxQty = plan.donationQty();
         AgentAmmoRuntime.afterDelay(donorEntry, initialDelayMs, () -> {
-            if (donorBot.getTrade() != null || AgentPendingTradeStateRuntime.hasActiveSequence(donorEntry) || recipient.getTrade() != null) {
+            if (donorEntry.isPartnerManaged() || donorBot.getTrade() != null
+                    || AgentPendingTradeStateRuntime.hasActiveSequence(donorEntry)
+                    || recipient.getTrade() != null) {
                 return;
             }
             List<Item> items = collectAmmoShareItems(donorBot, weaponType, maxQty, inventory);
@@ -195,8 +213,12 @@ public final class AgentAmmoService {
                 return;
             }
             AgentAmmoRuntime.sayMapNow(donorBot, AgentDialogueSelector.randomReply(AgentDialogueCatalog.ammoOfferReplies()));
-            AgentAmmoRuntime.afterRandomDelay(donorEntry, 900, 1100, () ->
-                    AgentSupplyShareTradeService.startAmmoShareTransfer(items, recipient, donorEntry, donorBot, maxQty));
+            AgentAmmoRuntime.afterRandomDelay(donorEntry, 900, 1100, () -> {
+                if (!donorEntry.isPartnerManaged()) {
+                    AgentSupplyShareTradeService.startAmmoShareTransfer(
+                            items, recipient, donorEntry, donorBot, maxQty);
+                }
+            });
         });
     }
 

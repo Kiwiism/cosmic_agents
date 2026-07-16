@@ -3,6 +3,7 @@ package server.agents.capabilities.supplies;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
+import server.agents.integration.InventoryGateway;
 import server.agents.capabilities.supplies.AgentPotionRuntime;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -16,9 +17,31 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 class AgentPotionServiceTest {
+    @Test
+    void partnerRefreshesSurvivalAutopotWithoutEnteringSupplyManagement() {
+        Character owner = mock(Character.class);
+        Character partner = mock(Character.class);
+        InventoryGateway inventory = mock(InventoryGateway.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(partner, owner, null);
+        entry.markPartnerManaged();
+
+        try (MockedStatic<AgentPotionService> potions =
+                     mockStatic(AgentPotionService.class, CALLS_REAL_METHODS)) {
+            potions.when(() -> AgentPotionService.setupAutopotForBot(partner))
+                    .thenAnswer(ignored -> null);
+            potions.clearInvocations();
+
+            AgentPotionService.tickPotionCheck(entry, partner, inventory);
+
+            potions.verify(() -> AgentPotionService.setupAutopotForBot(partner));
+            verifyNoInteractions(inventory);
+        }
+    }
+
     @Test
     @SuppressWarnings("unchecked")
     void ownerPotionShareSchedulesThroughAgentPotionRuntime() {

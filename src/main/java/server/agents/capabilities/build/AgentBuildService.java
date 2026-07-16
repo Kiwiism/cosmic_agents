@@ -24,6 +24,9 @@ import server.agents.integration.SkillGateway;
 import server.agents.runtime.AgentRuntimeEntry;
 
 public final class AgentBuildService {
+    private static final String PARTNER_MANAGED_BUILD_REPLY =
+            "I leave job, AP, and SP decisions to you while we're adventuring partners.";
+
     public enum StatType {
         STR,
         DEX,
@@ -60,6 +63,9 @@ public final class AgentBuildService {
 
     /** Stores the AP build, confirms it to the owner, and immediately spends any pending AP. */
     public static void setApBuild(AgentRuntimeEntry entry, ApBuild build, String confirmMsg) {
+        if (entry.isPartnerManaged()) {
+            return;
+        }
         AgentBuildStateRuntime.setApBuild(entry, build);
         AgentBuildRuntime.confirmApBuild(entry, confirmMsg);
         autoAssignAp(entry, AgentRuntimeIdentityRuntime.bot(entry));
@@ -71,6 +77,7 @@ public final class AgentBuildService {
      * or the bot is not on a supported branch.
      */
     public static String buildApPrompt(AgentRuntimeEntry entry, Character bot) {
+        if (entry.isPartnerManaged()) return null;
         String prompt = apPromptForJob(bot.getJob());
         if (prompt == null) return null;
         if (AgentBuildStateRuntime.hasApBuild(entry) || AgentBuildStateRuntime.apPromptSent(entry) || bot.getRemainingAp() < 1) return null;
@@ -78,6 +85,7 @@ public final class AgentBuildService {
     }
 
     public static String requestApBuildPrompt(AgentRuntimeEntry entry, Character bot) {
+        if (entry.isPartnerManaged()) return PARTNER_MANAGED_BUILD_REPLY;
         String prompt = apPromptForJob(bot.getJob());
         if (prompt == null) return null;
         AgentBuildStateRuntime.markApPromptSent(entry);
@@ -86,6 +94,7 @@ public final class AgentBuildService {
 
     /** Spends all remaining AP according to the stored build. */
     public static void autoAssignAp(AgentRuntimeEntry entry, Character bot) {
+        if (entry.isPartnerManaged()) return;
         ApBuild build = AgentBuildStateRuntime.apBuild(entry);
         if (build == null || bot.getRemainingAp() < 1) return;
 
@@ -111,6 +120,7 @@ public final class AgentBuildService {
     }
 
     public static String respecAp(AgentRuntimeEntry entry, Character bot) {
+        if (entry.isPartnerManaged()) return PARTNER_MANAGED_BUILD_REPLY;
         if (apPromptForJob(bot.getJob()) == null) {
             return "dont have an ap build for my job yet";
         }
@@ -128,6 +138,7 @@ public final class AgentBuildService {
     }
 
     public static void handleJobAdvance(AgentRuntimeEntry entry, Character bot, Job oldJob, Job newJob) {
+        if (entry.isPartnerManaged()) return;
         if (oldJob == Job.BEGINNER && oldJob != newJob && AgentBuildStateRuntime.hasApBuild(entry)) {
             reallocateAp(entry, bot);
         }
@@ -155,6 +166,7 @@ public final class AgentBuildService {
      * Currently only Hero has two documented builds.
      */
     public static String buildSpVariantPrompt(AgentRuntimeEntry entry, Character bot) {
+        if (entry.isPartnerManaged()) return null;
         if (bot.getJob() != Job.HERO) return null;
         if (AgentBuildStateRuntime.hasSpVariant(entry) || AgentBuildStateRuntime.spVariantPromptSent(entry) || bot.getRemainingSps()[3] < 1) return null;
         AgentBuildStateRuntime.markSpVariantPromptSent(entry);
@@ -170,6 +182,7 @@ public final class AgentBuildService {
     }
 
     static void autoAssignSp(AgentRuntimeEntry entry, Character bot, SkillGateway skills) {
+        if (entry.isPartnerManaged()) return;
         String spVariant = AgentBuildStateRuntime.spVariant(entry);
         if (bot.getJob() == Job.HERO && spVariant == null) return;
 
@@ -180,6 +193,7 @@ public final class AgentBuildService {
     }
 
     public static String respecSp(AgentRuntimeEntry entry, Character bot) {
+        if (entry.isPartnerManaged()) return PARTNER_MANAGED_BUILD_REPLY;
         String spVariant = AgentBuildStateRuntime.spVariant(entry);
         if (bot.getJob() == Job.HERO && spVariant == null) {
             return "need your hero build first. say '1h' or '2h'";
@@ -324,6 +338,7 @@ public final class AgentBuildService {
      * Detects level-up and sends prompts before spending SP/AP so gating can apply.
      */
     public static void checkLevelUp(AgentRuntimeEntry entry, Character bot) {
+        if (entry.isPartnerManaged()) return;
         int lvl = bot.getLevel();
         if (AgentBuildStateRuntime.lastKnownLevel(entry) == lvl) return;
 
@@ -346,6 +361,7 @@ public final class AgentBuildService {
 
     /** Returns the next job-advancement prompt, or null if none is pending. */
     public static String buildJobPrompt(AgentRuntimeEntry entry, Character bot) {
+        if (entry.isPartnerManaged()) return null;
         int lvl = bot.getLevel();
         Job job = bot.getJob();
         int prompted = AgentBuildStateRuntime.jobPromptSent(entry);
@@ -386,5 +402,9 @@ public final class AgentBuildService {
         }
 
         return null;
+    }
+
+    public static String partnerManagedBuildReply() {
+        return PARTNER_MANAGED_BUILD_REPLY;
     }
 }

@@ -15,9 +15,22 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 class AgentAutopotRuntimeCleanupServiceTest {
+    @Test
+    void preservesPlayerManagedPartnerAutopotStateForOneCleanup() {
+        Character agent = mock(Character.class);
+        when(agent.getId()).thenReturn(77);
+
+        AgentAutopotCleanupService.preserveOnNextCleanup(agent.getId());
+        AgentAutopotCleanupService.clearAgentAutopotState(agent);
+
+        verify(agent, org.mockito.Mockito.times(2)).getId();
+        verifyNoMoreInteractions(agent);
+    }
+
     @Test
     void clearsAlertsAndNormalizesPetAutopotKeys() {
         Character agent = mock(Character.class);

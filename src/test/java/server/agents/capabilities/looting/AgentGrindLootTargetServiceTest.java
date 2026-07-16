@@ -9,7 +9,10 @@ import server.maps.MapleMap;
 
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class AgentGrindLootTargetServiceTest {
@@ -61,6 +64,36 @@ class AgentGrindLootTargetServiceTest {
         AgentGrindLootTargetService.refreshGrindLootTarget(entry, agent, false, 100);
 
         assertSame(existingLoot, AgentGrindLootStateRuntime.grindLootTarget(entry));
+    }
+
+    @Test
+    void partnerManagedEntryClearsCachedLootWithoutInspectingTheMap() {
+        Character agent = mock(Character.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
+        entry.markPartnerManaged();
+        MapItem existingLoot = mockLoot(10, false);
+        AgentGrindLootStateRuntime.setGrindLootTarget(entry, existingLoot);
+        clearInvocations(agent, existingLoot);
+
+        AgentGrindLootTargetService.validateCachedGrindLootTarget(entry, agent);
+
+        assertNull(AgentGrindLootStateRuntime.grindLootTarget(entry));
+        verify(agent, never()).getMap();
+        verify(existingLoot, never()).isPickedUp();
+    }
+
+    @Test
+    void partnerManagedEntryCannotAcquireOrRetainAGrindLootTarget() {
+        Character agent = mock(Character.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
+        entry.markPartnerManaged();
+        AgentGrindLootStateRuntime.setGrindLootTarget(entry, mockLoot(11, false));
+        clearInvocations(agent);
+
+        AgentGrindLootTargetService.refreshGrindLootTarget(entry, agent, true, 100);
+
+        assertNull(AgentGrindLootStateRuntime.grindLootTarget(entry));
+        verify(agent, never()).getMap();
     }
 
     private static MapItem mockLoot(int objectId, boolean pickedUp) {

@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -86,5 +87,25 @@ class AgentStarterKitServiceTest {
             equipManager.verify(() -> AgentEquipmentService.autoEquip(bot, owner, null));
             statusRuntime.verify(() -> AgentBuildStatusRuntime.checkBuildStatus(entry, bot));
         }
+    }
+
+    @Test
+    void partnerManagedEntryDoesNotAdvanceJobGrantKitOrAutoEquip() {
+        Character bot = mock(Character.class);
+        Character owner = mock(Character.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, mock(ScheduledFuture.class));
+        entry.markPartnerManaged();
+
+        try (MockedStatic<AgentBuildService> buildManager = mockStatic(AgentBuildService.class);
+             MockedStatic<AgentBuildStatusRuntime> statusRuntime = mockStatic(AgentBuildStatusRuntime.class);
+             MockedStatic<AgentEquipmentService> equipManager = mockStatic(AgentEquipmentService.class)) {
+            AgentStarterKitService.advanceJob(entry, Job.HUNTER);
+
+            buildManager.verifyNoInteractions();
+            statusRuntime.verifyNoInteractions();
+            equipManager.verifyNoInteractions();
+        }
+
+        verify(bot, never()).changeJob(org.mockito.ArgumentMatchers.any());
     }
 }

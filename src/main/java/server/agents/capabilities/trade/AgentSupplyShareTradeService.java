@@ -38,6 +38,7 @@ public final class AgentSupplyShareTradeService {
                                                  AgentRuntimeEntry entry,
                                                  Character agent,
                                                  int maxQty) {
+        if (entry.isPartnerManaged()) return;
         if (items.isEmpty()) return;
         if (agent.getTrade() != null
                 || AgentPendingTradeStateRuntime.hasActiveSequence(entry)

@@ -42,6 +42,7 @@ public final class AgentControlRuntime {
 
             @Override
             public void setBuffConsumables(boolean enabled) {
+                if (rejectPartnerInventoryAutomation(entry)) return;
                 AgentSchedulerRuntime.afterRandomDelay(entry, 500, 700, () -> {
                     AgentBuffStateRuntime.setEnabled(entry, enabled);
                     AgentBuffStateRuntime.resetScan(entry);
@@ -52,6 +53,7 @@ public final class AgentControlRuntime {
 
             @Override
             public void setBuffConsumablesCheapMode(boolean cheapMode) {
+                if (rejectPartnerInventoryAutomation(entry)) return;
                 AgentSchedulerRuntime.afterRandomDelay(entry, 500, 700, () -> {
                     AgentBuffStateRuntime.setCheapMode(entry, cheapMode);
                     AgentBuffStateRuntime.resetScan(entry);
@@ -61,6 +63,7 @@ public final class AgentControlRuntime {
 
             @Override
             public void setProactiveOffers(boolean enabled) {
+                if (rejectPartnerInventoryAutomation(entry)) return;
                 AgentSchedulerRuntime.afterRandomDelay(entry, 500, 700, () -> {
                     entry.upgradeOfferState().setProactiveUpgradeOffers(enabled);
                     AgentReplyRuntime.replyNow(entry, AgentChatToggleFlow.proactiveOffersReply(enabled));
@@ -115,5 +118,14 @@ public final class AgentControlRuntime {
 
     private static Character bot(AgentRuntimeEntry entry) {
         return AgentRuntimeIdentityRuntime.bot(entry);
+    }
+
+    private static boolean rejectPartnerInventoryAutomation(AgentRuntimeEntry entry) {
+        if (!entry.isPartnerManaged()) {
+            return false;
+        }
+        AgentReplyRuntime.replyNow(entry,
+                "I leave consumables and inventory decisions to you while we're adventuring partners.");
+        return true;
     }
 }

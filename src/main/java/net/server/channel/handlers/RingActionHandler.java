@@ -38,6 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripting.event.EventInstanceManager;
 import server.ItemInformationProvider;
+import server.partner.PartnerInteractionPolicy;
 import service.NoteService;
 import tools.DatabaseConnection;
 import tools.PacketCreator;
@@ -410,6 +411,14 @@ public final class RingActionHandler extends AbstractPacketHandler {
                     c.getPlayer().dropMessage(5, "Unable to find " + name + "!");
                     return;
                 }
+                Character guestChr = c.getWorldServer().getPlayerStorage().getCharacterById(guest);
+                if (guestChr != null
+                        && !PartnerInteractionPolicy.isOwnerOrUnprotected(c.getPlayer(), guestChr)) {
+                    c.getPlayer().dropMessage(
+                            5, "That adventuring partner only accepts invitations from their owner.");
+                    c.sendPacket(PacketCreator.enableActions());
+                    return;
+                }
 
                 try {
                     World wserv = c.getWorldServer();
@@ -426,7 +435,6 @@ public final class RingActionHandler extends AbstractPacketHandler {
                                 long expiration = cserv.getWeddingTicketExpireTime(resStatus + 1);
 
                                 String baseMessage = "You've been invited to %s and %s's Wedding!".formatted(groom, bride);
-                                Character guestChr = c.getWorldServer().getPlayerStorage().getCharacterById(guest);
                                 if (guestChr != null && InventoryManipulator.checkSpace(guestChr.getClient(), newItemId, 1, "") && InventoryManipulator.addById(guestChr.getClient(), newItemId, (short) 1, expiration)) {
                                     guestChr.dropMessage(6, "[Wedding] %s".formatted(baseMessage));
                                 } else {

@@ -22,6 +22,9 @@ public final class AgentBuildStatusRuntime {
     }
 
     public static void checkBuildStatus(AgentRuntimeEntry entry, Character bot) {
+        if (entry.isPartnerManaged()) {
+            return;
+        }
         AgentChatStatusRuntime.checkStatus(
                 AgentStatusStateRuntime.statusCheckState(entry),
                 statusCheckActions(entry, bot));

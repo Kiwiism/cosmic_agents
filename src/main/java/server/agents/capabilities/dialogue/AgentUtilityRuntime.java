@@ -25,6 +25,11 @@ public final class AgentUtilityRuntime {
         return new AgentChatUtilityFlow.UtilityCallbacks() {
             @Override
             public void tradeInvite() {
+                if (entry.isPartnerManaged()) {
+                    AgentReplyRuntime.replyNow(entry,
+                            "Open a trade with me directly when you want to manage my inventory.");
+                    return;
+                }
                 Character bot = AgentRuntimeIdentityRuntime.bot(entry);
                 Character owner = AgentRuntimeIdentityRuntime.owner(entry);
                 if (owner != null && bot.getTrade() == null && owner.getTrade() == null
@@ -48,15 +53,26 @@ public final class AgentUtilityRuntime {
 
             @Override
             public void makeCrystals() {
+                if (rejectPartnerInventoryAutomation(entry)) return;
                 AgentSchedulerRuntime.afterRandomDelay(entry, 500, 700,
                         () -> AgentMakerService.handleMakeCrystals(entry, AgentInventoryGatewayRuntime.inventory()));
             }
 
             @Override
             public void disassembleTrash() {
+                if (rejectPartnerInventoryAutomation(entry)) return;
                 AgentSchedulerRuntime.afterRandomDelay(entry, 500, 700,
                         () -> AgentMakerService.handleDisassembleTrash(entry, AgentInventoryGatewayRuntime.inventory()));
             }
         };
+    }
+
+    private static boolean rejectPartnerInventoryAutomation(AgentRuntimeEntry entry) {
+        if (!entry.isPartnerManaged()) {
+            return false;
+        }
+        AgentReplyRuntime.replyNow(entry,
+                "I leave crafting and inventory decisions to you while we're adventuring partners.");
+        return true;
     }
 }

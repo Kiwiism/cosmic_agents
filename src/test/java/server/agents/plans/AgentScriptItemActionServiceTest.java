@@ -11,10 +11,24 @@ import testutil.Items;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class AgentScriptItemActionServiceTest {
+    @Test
+    void partnerManagedEntryCannotDropInventoryItems() {
+        Character agent = mock(Character.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
+        entry.markPartnerManaged();
+        InventoryGateway gateway = mock(InventoryGateway.class);
+
+        assertFalse(AgentScriptItemActionService.dropItem(
+                entry, InventoryType.ETC, 4000000, (short) 1, gateway));
+
+        verifyNoInteractions(agent, gateway);
+    }
+
     @Test
     void returnsFalseWhenAgentOrTypeIsMissing() {
         AgentRuntimeEntry missingAgent = new AgentRuntimeEntry(null, mock(Character.class), null);

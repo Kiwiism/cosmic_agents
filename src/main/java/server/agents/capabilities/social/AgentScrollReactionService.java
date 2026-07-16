@@ -99,6 +99,9 @@ public final class AgentScrollReactionService {
 
         for (List<? extends AgentRuntimeEntry> entries : allEntries) {
             for (AgentRuntimeEntry entry : entries) {
+                if (entry.isPartnerManaged()) {
+                    continue;
+                }
                 Character bot = AgentRuntimeIdentityRuntime.bot(entry);
                 if (bot == null || bot.getId() == source.getId() || bot.getMapId() != mapId) {
                     continue;
@@ -121,8 +124,11 @@ public final class AgentScrollReactionService {
     }
 
     public static void maybeReact(AgentRuntimeEntry entry, int scrollerId, boolean success, int scrollSuccessRate, long now) {
+        if (entry == null || entry.isPartnerManaged()) {
+            return;
+        }
         Character bot = AgentRuntimeIdentityRuntime.bot(entry);
-        if (entry == null || bot == null) {
+        if (bot == null) {
             return;
         }
 

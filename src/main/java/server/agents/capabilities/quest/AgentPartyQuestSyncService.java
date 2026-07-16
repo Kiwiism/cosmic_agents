@@ -7,6 +7,7 @@ import server.agents.integration.AgentQuestSyncGatewayRuntime;
 import server.agents.integration.AgentQuestSyncHandle;
 import server.agents.integration.AgentPartyGatewayRuntime;
 import server.agents.integration.AgentCharacterGatewayRuntime;
+import server.partner.PartnerInteractionPolicy;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -86,7 +87,8 @@ public final class AgentPartyQuestSyncService {
             if (member == null || member.getId() == source.getId()) {
                 continue;
             }
-            if (AgentCharacterGatewayRuntime.characters().isAgentCharacter(member)) {
+            if (AgentCharacterGatewayRuntime.characters().isAgentCharacter(member)
+                    && !PartnerInteractionPolicy.isProtectedPartner(member)) {
                 partyAgents.add(member);
             }
         }

@@ -31,6 +31,25 @@ public final class AgentRegistrationCoordinator {
                                                   Character agent,
                                                   boolean normalizeSpawnState,
                                                   AgentLifecycleService.AgentTickCallback tickCallback) {
+        return registerAgent(
+                leaderCharId, leader, agent, normalizeSpawnState, tickCallback, false);
+    }
+
+    public static AgentRuntimeEntry registerPartnerAgent(int leaderCharId,
+                                                         Character leader,
+                                                         Character agent,
+                                                         boolean normalizeSpawnState,
+                                                         AgentLifecycleService.AgentTickCallback tickCallback) {
+        return registerAgent(
+                leaderCharId, leader, agent, normalizeSpawnState, tickCallback, true);
+    }
+
+    private static AgentRuntimeEntry registerAgent(int leaderCharId,
+                                                   Character leader,
+                                                   Character agent,
+                                                   boolean normalizeSpawnState,
+                                                   AgentLifecycleService.AgentTickCallback tickCallback,
+                                                   boolean partnerManaged) {
         return AgentLifecycleService.registerAgent(
                 leaderCharId,
                 leader,
@@ -43,7 +62,12 @@ public final class AgentRegistrationCoordinator {
                         AgentScheduledTaskRuntime::cancelScheduledTask,
                         defaultFormationState(),
                         AgentSpawnPlacementCoordinator::normalizeSpawnedAgent,
-                        () -> AgentRandom.randMs(30_000, 31_000)));
+                        () -> AgentRandom.randMs(30_000, 31_000)),
+                entry -> {
+                    if (partnerManaged) {
+                        entry.markPartnerManaged();
+                    }
+                });
     }
 
     private static AgentFormationService.FormationState defaultFormationState() {

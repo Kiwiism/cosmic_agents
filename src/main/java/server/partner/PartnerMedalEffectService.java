@@ -1,13 +1,18 @@
 package server.partner;
 
+import client.BuffStat;
 import client.Character;
+import client.Client;
+import client.Job;
 import client.Skill;
 import client.SkillFactory;
 import config.AdventurerPartnerConfig;
+import config.GenesisVisualProxyConfig;
 import config.PartnerMedalEffectConditionConfig;
 import config.PartnerMedalEffectConfig;
 import config.PartnerMedalEffectLevelConfig;
 import config.YamlConfig;
+import constants.game.CharacterStance;
 import constants.inventory.ItemConstants;
 import constants.skills.Bishop;
 import net.packet.Packet;
@@ -21,19 +26,27 @@ import server.maps.MapleMap;
 import server.maps.MapObject;
 import server.maps.MapObjectType;
 import tools.PacketCreator;
+import tools.Pair;
 import tools.Randomizer;
 
+import java.awt.Point;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /** Resolves live, equipment-gated Partner medal levels and applies their server-side effects. */
 public final class PartnerMedalEffectService {
     private static final int GENESIS_BODY_ACTION_ID = 69;
+    private static final long GENESIS_DAMAGE_DELAY_MS = 1_800L;
+    // Character IDs are database IDs and map object IDs begin above one billion.
+    // A descending process-wide range prevents delayed cleanup from colliding
+    // with a newer proxy after a map transition.
+    private static final AtomicInteger NEXT_GENESIS_VISUAL_PROXY_ID =
+            new AtomicInteger(900_000_000);
 
     public static final PartnerMedalEffectService INSTANCE = new PartnerMedalEffectService(
             YamlConfig.config.adventurerPartner, PartnerRuntimeRegistry.global());
@@ -176,11 +189,7 @@ public final class PartnerMedalEffectService {
         return true;
     }
 
-    /**
-     * Applies and presents a Monster Expert proc after the configured delay. A
-     * one-line attack packet is required because DAMAGE_MONSTER has no critical
-     * flag in v83; the high damage bit in an attack packet selects the critical skin.
-     */
+    /** Applies and presents a Monster Expert proc after the configured delay. */
     public void applyRegularMobBonusDamage(Character attacker,
                                            Map<Integer, Integer> bonusByTarget) {
         if (attacker == null || attacker.getMap() == null || bonusByTarget == null
@@ -194,31 +203,34 @@ public final class PartnerMedalEffectService {
                     || attacker.getProfileOwnerCharacterId() != expectedProfileOwnerId) {
                 return;
             }
-            Map<Integer, AttackTarget> liveTargets = new LinkedHashMap<>();
+            Map<Integer, Integer> liveDamage = new LinkedHashMap<>();
             for (Map.Entry<Integer, Integer> entry : bonusByTarget.entrySet()) {
-                if (liveTargets.size() >= 15 || entry.getValue() == null || entry.getValue() <= 0) {
+                if (liveDamage.size() >= 15 || entry.getValue() == null || entry.getValue() <= 0) {
                     continue;
                 }
                 Monster monster = expectedMap.getMonsterByOid(entry.getKey());
                 if (monster == null || !monster.isAlive() || monster.isBoss()) {
                     continue;
                 }
-                liveTargets.put(entry.getKey(), new AttackTarget(
-                        (short) 0, List.of(entry.getValue()), Set.of(0)));
+                liveDamage.put(entry.getKey(), entry.getValue());
             }
-            if (liveTargets.isEmpty()) {
+            if (liveDamage.isEmpty()) {
                 return;
             }
-            expectedMap.broadcastMessage(bonusDamagePresentationPacket(attacker, liveTargets));
-            for (Map.Entry<Integer, AttackTarget> target : liveTargets.entrySet()) {
+            for (Map.Entry<Integer, Integer> target : liveDamage.entrySet()) {
                 Monster monster = expectedMap.getMonsterByOid(target.getKey());
                 if (monster != null && monster.isAlive() && !monster.isBoss()) {
-                    expectedMap.damageMonster(
-                            attacker, monster, target.getValue().damageLines().getFirst());
+                    // DAMAGE_MONSTER is the stock v83 presentation for delayed,
+                    // server-originated regular damage and does not replay an
+                    // extra attack animation from the character.
+                    expectedMap.broadcastMessage(
+                            PacketCreator.damageMonster(monster.getObjectId(), target.getValue()),
+                            monster.getPosition());
+                    expectedMap.damageMonster(attacker, monster, target.getValue());
                 }
             }
         };
-        scheduleMedalDamage(proc);
+        scheduleBonusDamage(proc);
     }
 
     /** Applies switch skills only to the profile that has just entered the player-controlled actor. */
@@ -380,15 +392,61 @@ public final class PartnerMedalEffectService {
             targets.put(monster.getObjectId(), new AttackTarget((short) 0, List.copyOf(lines)));
         }
         int encodedCount = (targets.size() << 4) | Math.min(15, attackCount);
-        // A server-triggered switch skill has no originating client cast. v83 normally
-        // renders attack broadcasts for foreign actors, so explicitly show the local
-        // skill effect and damage numbers to the switched-in player as well.
-        caster.sendPacket(PacketCreator.showOwnBuffEffect(Bishop.GENESIS, 1));
-        caster.getMap().broadcastMessage(genesisAttackPacket(
-                caster, configured.SKILL_LEVEL, encodedCount, targets));
+        // A server-triggered switch skill has no originating client cast. Observers
+        // accept the real caster's MAGIC_ATTACK, while the controlling v83 client
+        // needs a nearby foreign actor to render the full target animation. The
+        // proxy has its own packet-only appearance, so the real character is never
+        // mutated and does not replay the same animation locally.
         MapleMap expectedMap = caster.getMap();
         int expectedProfileOwnerId = caster.getProfileOwnerCharacterId();
-        scheduleMedalDamage(() -> {
+        if (!targets.isEmpty()) {
+            int visualCasterId = NEXT_GENESIS_VISUAL_PROXY_ID.getAndDecrement();
+            Point visualCasterPosition = genesisVisualProxyPosition(caster.getPosition());
+            Client visualClient = caster.getClient();
+            GenesisVisualProxyConfig visualConfig = config.GENESIS_VISUAL_PROXY;
+            PacketCreator.VisualProxyAppearance visualAppearance =
+                    genesisVisualProxyAppearance(visualConfig);
+            visualClient.sendPacket(PacketCreator.spawnPlayerVisualProxy(
+                    visualClient, caster, visualCasterId, visualCasterPosition,
+                    Job.BISHOP.getId(), visualAppearance));
+            if (!visualConfig.TRANSFORM_EFFECT_PATH.isBlank()) {
+                visualClient.sendPacket(PacketCreator.showForeignInfo(
+                        visualCasterId, visualConfig.TRANSFORM_EFFECT_PATH));
+            }
+            if (visualConfig.DARKSIGHT_ENABLED) {
+                visualClient.sendPacket(PacketCreator.giveForeignBuff(
+                        visualCasterId, List.of(new Pair<>(BuffStat.DARKSIGHT, 0))));
+            }
+            TimerManager.getInstance().schedule(() -> {
+                if (!visualProxyStillRelevant(
+                        caster, expectedMap, expectedProfileOwnerId, visualClient)) {
+                    return;
+                }
+                Packet observerAttack = genesisAttackPacket(
+                        caster, configured.SKILL_LEVEL, encodedCount, targets);
+                expectedMap.broadcastMessage(caster, observerAttack, false, true);
+                visualClient.sendPacket(genesisAttackPacket(
+                        visualCasterId, caster, configured.SKILL_LEVEL, encodedCount, targets,
+                        CharacterStance.isFacingLeft(visualAppearance.stance())));
+            }, visualConfig.ATTACK_DELAY_MS);
+            if (!visualConfig.TRANSFORM_EFFECT_PATH.isBlank()
+                    && visualConfig.EXIT_EFFECT_LEAD_MS > 0L) {
+                TimerManager.getInstance().schedule(() -> {
+                    if (visualProxyStillRelevant(
+                            caster, expectedMap, expectedProfileOwnerId, visualClient)) {
+                        visualClient.sendPacket(PacketCreator.showForeignInfo(
+                                visualCasterId, visualConfig.TRANSFORM_EFFECT_PATH));
+                    }
+                }, visualConfig.LIFETIME_MS - visualConfig.EXIT_EFFECT_LEAD_MS);
+            }
+            TimerManager.getInstance().schedule(
+                    () -> visualClient.sendPacket(PacketCreator.removePlayerFromMap(visualCasterId)),
+                    visualConfig.LIFETIME_MS);
+        } else {
+            expectedMap.broadcastMessage(caster, genesisAttackPacket(
+                    caster, configured.SKILL_LEVEL, encodedCount, targets), false, true);
+        }
+        TimerManager.getInstance().schedule(() -> {
             if (caster.getMap() != expectedMap
                     || caster.getProfileOwnerCharacterId() != expectedProfileOwnerId) {
                 return;
@@ -404,11 +462,11 @@ public final class PartnerMedalEffectService {
                 int damage = (int) Math.min(Integer.MAX_VALUE, summedDamage);
                 expectedMap.damageMonster(caster, monster, damage);
             }
-        });
+        }, config.GENESIS_VISUAL_PROXY.ATTACK_DELAY_MS + GENESIS_DAMAGE_DELAY_MS);
         return true;
     }
 
-    private void scheduleMedalDamage(Runnable task) {
+    private void scheduleBonusDamage(Runnable task) {
         if (config.MEDAL_DAMAGE_DELAY_MS <= 0L) {
             task.run();
         } else {
@@ -416,20 +474,53 @@ public final class PartnerMedalEffectService {
         }
     }
 
-    static Packet bonusDamagePresentationPacket(Character attacker,
-                                                Map<Integer, AttackTarget> targets) {
-        int encodedCount = (Math.min(15, targets.size()) << 4) | 1;
-        return PacketCreator.closeRangeAttack(
-                attacker, 0, 0, attacker.getStance(), encodedCount,
-                targets, 4, 0, 0);
-    }
-
     static Packet genesisAttackPacket(Character caster, int skillLevel, int encodedCount,
                                        Map<Integer, AttackTarget> targets) {
-        int facingStance = caster.isFacingLeft() ? 0x80 : 0;
-        return PacketCreator.magicAttack(
-                caster, Bishop.GENESIS, skillLevel, facingStance,
+        return genesisAttackPacket(caster.getId(), caster, skillLevel, encodedCount, targets);
+    }
+
+    static Packet genesisAttackPacket(int visualCasterId, Character caster, int skillLevel,
+                                       int encodedCount, Map<Integer, AttackTarget> targets) {
+        return genesisAttackPacket(
+                visualCasterId, caster, skillLevel, encodedCount, targets, caster.isFacingLeft());
+    }
+
+    private static Packet genesisAttackPacket(int visualCasterId, Character caster, int skillLevel,
+                                               int encodedCount, Map<Integer, AttackTarget> targets,
+                                               boolean facingLeft) {
+        int facingStance = facingLeft ? 0x80 : 0;
+        return PacketCreator.magicAttackFromVisualProxy(
+                visualCasterId, Bishop.GENESIS, skillLevel, facingStance,
                 encodedCount, targets, -1, 4, GENESIS_BODY_ACTION_ID, 0);
+    }
+
+    static PacketCreator.VisualProxyAppearance genesisVisualProxyAppearance(
+            GenesisVisualProxyConfig visualConfig) {
+        return new PacketCreator.VisualProxyAppearance(
+                visualConfig.NAME,
+                visualConfig.GENDER,
+                visualConfig.SKIN_COLOR_ID,
+                visualConfig.FACE_ID,
+                visualConfig.HAIR_ID,
+                visualConfig.resolvedVisibleEquips(),
+                visualConfig.CASH_WEAPON_ID,
+                visualConfig.STANCE);
+    }
+
+    private static boolean visualProxyStillRelevant(Character caster, MapleMap expectedMap,
+                                                     int expectedProfileOwnerId,
+                                                     Client visualClient) {
+        return caster.getMap() == expectedMap
+                && caster.getProfileOwnerCharacterId() == expectedProfileOwnerId
+                && caster.getClient() == visualClient;
+    }
+
+    static Point genesisVisualProxyPosition(Point casterPosition) {
+        int x = casterPosition == null
+                ? 0 : Math.max(Short.MIN_VALUE, Math.min(Short.MAX_VALUE, casterPosition.x));
+        int y = casterPosition == null
+                ? 0 : Math.max(Short.MIN_VALUE, Math.min(Short.MAX_VALUE, casterPosition.y));
+        return new Point(x, y);
     }
 
     private static long decodeDamageLine(int encodedDamage) {

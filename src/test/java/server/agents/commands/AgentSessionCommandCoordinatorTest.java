@@ -68,6 +68,21 @@ class AgentSessionCommandCoordinatorTest {
     }
 
     @Test
+    void partnerRejectsGenericAwayRequest() {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
+        entry.markPartnerManaged();
+
+        try (MockedStatic<AgentSchedulerRuntime> scheduler = mockStatic(AgentSchedulerRuntime.class);
+             MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
+            AgentSessionCommandCoordinator.sessionRequestCallbacks(entry).requestAway();
+
+            assertNull(AgentPendingActionStateRuntime.pendingAction(entry));
+            scheduler.verifyNoInteractions();
+            replies.verify(() -> AgentReplyRuntime.replyNow(eq(entry), anyString()));
+        }
+    }
+
+    @Test
     void awayChoiceStayClearsPendingActionAndKeepsAgentsNearOwner() {
         Character owner = mock(Character.class);
         when(owner.getId()).thenReturn(123);

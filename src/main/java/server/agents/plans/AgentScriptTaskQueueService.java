@@ -18,7 +18,7 @@ public final class AgentScriptTaskQueueService {
     }
 
     public static void queueTask(AgentRuntimeEntry entry, AgentTask task) {
-        if (entry == null || task == null) {
+        if (entry == null || task == null || entry.isPartnerManaged()) {
             return;
         }
         AgentScriptTaskStateRuntime.queueTask(entry, task);

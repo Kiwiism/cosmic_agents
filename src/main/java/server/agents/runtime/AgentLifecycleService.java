@@ -213,6 +213,16 @@ public final class AgentLifecycleService {
                                                   Character agent,
                                                   boolean normalizeSpawnState,
                                                   RegisterHooks hooks) {
+        return registerAgent(
+                leaderCharId, leader, agent, normalizeSpawnState, hooks, ignored -> { });
+    }
+
+    public static AgentRuntimeEntry registerAgent(int leaderCharId,
+                                                  Character leader,
+                                                  Character agent,
+                                                  boolean normalizeSpawnState,
+                                                  RegisterHooks hooks,
+                                                  Consumer<AgentRuntimeEntry> initializeEntry) {
         List<AgentRuntimeEntry> entries = AgentRuntimeRegistry.mutableEntriesForLeader(leaderCharId);
         List<AgentRuntimeEntry> replacedEntries = new ArrayList<>();
         for (AgentRuntimeEntry existingEntry : entries) {
@@ -224,6 +234,7 @@ public final class AgentLifecycleService {
 
         int agentCharId = agent.getId();
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
+        initializeEntry.accept(entry);
         AgentMovementStateRuntime.refreshMovementProfile(entry, agent);
         AgentNavigationGraphService.warmGraphAsync(agent.getMap(), AgentMovementStateRuntime.movementProfile(entry));
         entries.add(entry);

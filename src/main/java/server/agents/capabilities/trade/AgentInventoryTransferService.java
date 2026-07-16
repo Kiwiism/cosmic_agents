@@ -49,6 +49,9 @@ public final class AgentInventoryTransferService {
     }
 
     public static void executeChoice(String category, boolean tradeToOwner, AgentRuntimeEntry entry, Character agent) {
+        if (rejectPlayerManagedInventoryCommand(entry)) {
+            return;
+        }
         if (tradeToOwner) {
             startTradeTransfer(category, entry, agent);
             return;
@@ -68,6 +71,9 @@ public final class AgentInventoryTransferService {
     }
 
     public static void startTradeTransfer(String category, AgentRuntimeEntry entry, Character agent) {
+        if (rejectPlayerManagedInventoryCommand(entry)) {
+            return;
+        }
         long startedAt = AgentTradeCommandProfiler.profileCategory(category) ? System.nanoTime() : 0L;
         Character owner = AgentRuntimeIdentityRuntime.owner(entry);
 
@@ -112,6 +118,9 @@ public final class AgentInventoryTransferService {
     }
 
     public static void startTradeTransfer(Item item, Character recipient, AgentRuntimeEntry entry, Character agent) {
+        if (rejectPlayerManagedInventoryCommand(entry)) {
+            return;
+        }
         AgentDirectItemTradeService.DirectItemTradeDecision decision = AgentDirectItemTradeService.decideStart(
                 recipient != null,
                 AgentInventoryItemPolicy.hasItem(agent, item),
@@ -128,6 +137,9 @@ public final class AgentInventoryTransferService {
     }
 
     public static boolean hasTransferableItems(String category, AgentRuntimeEntry entry, Character agent) {
+        if (entry.isPartnerManaged()) {
+            return false;
+        }
         return AgentInventoryTradeCollectionService.hasTransferableItems(
                 category,
                 agent,
@@ -140,6 +152,9 @@ public final class AgentInventoryTransferService {
     }
 
     public static int countTransferableItems(String category, AgentRuntimeEntry entry, Character agent) {
+        if (entry.isPartnerManaged()) {
+            return 0;
+        }
         return AgentInventoryTradeCollectionService.countTransferableItems(
                 category,
                 agent,
@@ -153,6 +168,15 @@ public final class AgentInventoryTransferService {
                         AgentEquipmentService::slotsFromName,
                         inventory()),
                 () -> AgentInventoryTradePolicy.itemQuantitySum(collectItems(category, entry, agent)));
+    }
+
+    private static boolean rejectPlayerManagedInventoryCommand(AgentRuntimeEntry entry) {
+        if (!entry.isPartnerManaged()) {
+            return false;
+        }
+        AgentInventoryRuntime.replyNow(
+                entry, "I leave inventory decisions to you while we're adventuring partners.");
+        return true;
     }
 
     private static List<Item> collectItems(String category, AgentRuntimeEntry entry, Character agent) {

@@ -132,6 +132,20 @@ class AgentLootEligibilityTest {
         assertFalse(AgentLootEligibility.canBotTargetLoot(entry, bot, map, drop, System.currentTimeMillis()));
     }
 
+    @Test
+    void partnerManagedEntryCannotLootOrTargetOtherwiseEligibleDrops() {
+        MapleMap map = mock(MapleMap.class);
+        Character bot = mock(Character.class);
+        MapItem drop = mockLoot(1, 77, false, System.currentTimeMillis() - 16_000L);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, mock(Character.class), null);
+        entry.markPartnerManaged();
+        doReturn(drop).when(map).getMapObject(1);
+
+        assertFalse(AgentLootEligibility.canBotLoot(entry, bot, drop));
+        assertFalse(AgentLootEligibility.canBotTargetLoot(
+                entry, bot, map, drop, System.currentTimeMillis()));
+    }
+
     private static MapItem mockLoot(int objectId, int ownerId, boolean playerDrop, long dropTime) {
         MapItem drop = mock(MapItem.class);
         when(drop.getObjectId()).thenReturn(objectId);

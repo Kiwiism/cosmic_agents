@@ -71,12 +71,14 @@ public final class AgentMapTransitionService {
             return false;
         }
 
-        if (hooks.requiresGrind().test(entry, agent)) {
-            hooks.issueGrind().accept(entry);
-        } else if (hooks.requiresFollow().test(entry, agent)) {
-            hooks.issueFollow().accept(entry);
-        } else {
-            hooks.resetPartyQuestStage().accept(entry);
+        if (!entry.isPartnerManaged()) {
+            if (hooks.requiresGrind().test(entry, agent)) {
+                hooks.issueGrind().accept(entry);
+            } else if (hooks.requiresFollow().test(entry, agent)) {
+                hooks.issueFollow().accept(entry);
+            } else {
+                hooks.resetPartyQuestStage().accept(entry);
+            }
         }
         hooks.shopMapChange().accept(entry, agent);
         hooks.statusCheck().accept(entry, agent);

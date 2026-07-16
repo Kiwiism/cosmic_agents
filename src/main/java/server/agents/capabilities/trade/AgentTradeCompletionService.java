@@ -27,7 +27,7 @@ public final class AgentTradeCompletionService {
                                         Supplier<String> freebieReply,
                                         IntSupplier freebieRoll,
                                         BooleanSupplier glareExpression) {
-        if (partnerItems != null) {
+        if (!entry.isPartnerManaged() && partnerItems != null) {
             for (Item item : partnerItems) {
                 if (ItemConstants.getInventoryType(item.getItemId()) == InventoryType.EQUIP) {
                     AgentPendingTradeStateRuntime.addOwnerGivenItem(entry, item);

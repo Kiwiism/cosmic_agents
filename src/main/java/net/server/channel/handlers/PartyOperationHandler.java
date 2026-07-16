@@ -36,6 +36,7 @@ import net.server.world.PartyOperation;
 import net.server.world.World;
 import server.agents.runtime.AgentInteractionRuntime;
 import server.agents.runtime.AgentLifecycleService;
+import server.partner.PartnerInteractionPolicy;
 import tools.PacketCreator;
 
 import java.util.List;
@@ -55,6 +56,11 @@ public final class PartyOperationHandler extends AbstractPacketHandler {
             }
             case 2: { // leave/disband
                 if (party != null) {
+                    if (party.getLeaderId() == player.getId() && hasProtectedPartner(party)) {
+                        c.sendPacket(PacketCreator.serverNotice(
+                                5, "Release your adventuring partner through Agent E before disbanding the party."));
+                        return;
+                    }
                     List<Character> partymembers = player.getPartyMembersOnline();
 
                     Party.leaveParty(party, c);
@@ -84,6 +90,11 @@ public final class PartyOperationHandler extends AbstractPacketHandler {
                     if (spawnResult.success()) invited = spawnResult.agent();
                 }
                 if (invited != null) {
+                    if (!PartnerInteractionPolicy.isOwnerOrUnprotected(player, invited)) {
+                        c.sendPacket(PacketCreator.serverNotice(
+                                5, "That adventuring partner only accepts party invites from their owner."));
+                        return;
+                    }
                     if (invited.getParty() == null) {
                         if (party == null) {
                             if (!Party.createParty(player, false)) {
@@ -121,15 +132,44 @@ public final class PartyOperationHandler extends AbstractPacketHandler {
             }
             case 5: { // expel
                 int cid = p.readInt();
+                if (!isPartyLeader(player, party)) {
+                    return;
+                }
+                if (PartnerInteractionPolicy.isProtectedPartnerCharacterId(cid)) {
+                    c.sendPacket(PacketCreator.serverNotice(
+                            5, "Release your adventuring partner through Agent E instead."));
+                    return;
+                }
                 Party.expelFromParty(party, c, cid);
                 break;
             }
             case 6: { // change leader
                 int newLeader = p.readInt();
+                if (!isPartyLeader(player, party)) {
+                    return;
+                }
+                if (hasProtectedPartner(party)) {
+                    c.sendPacket(PacketCreator.serverNotice(
+                            5, "The Partner session requires you to remain the party leader."));
+                    return;
+                }
                 PartyCharacter newLeadr = party.getMemberById(newLeader);
+                if (newLeadr == null) {
+                    return;
+                }
                 world.updateParty(party.getId(), PartyOperation.CHANGE_LEADER, newLeadr);
                 break;
             }
         }
+    }
+
+    private static boolean isPartyLeader(Character player, Party party) {
+        return player != null && party != null && party.getLeaderId() == player.getId();
+    }
+
+    private static boolean hasProtectedPartner(Party party) {
+        return party != null && party.getMembers().stream()
+                .anyMatch(member -> PartnerInteractionPolicy
+                        .isProtectedPartnerCharacterId(member.getId()));
     }
 }

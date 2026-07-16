@@ -67,6 +67,9 @@ public final class AgentLeaderSafetyCoordinator {
     }
 
     public static boolean shouldTownWarpForInactiveEntry(AgentRuntimeEntry entry) {
+        if (entry.isPartnerManaged()) {
+            return false;
+        }
         MapleMap currentMap = AgentRuntimeIdentityRuntime.botMap(entry);
         return AgentLeaderSafetyService.shouldTownWarpForInactiveLeader(currentMap);
     }

@@ -57,6 +57,47 @@ class AgentBuildServiceTest {
     }
 
     @Test
+    void partnerManagedEntryDoesNotStoreOrSpendAnAgentBuild() {
+        Character bot = mock(Character.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
+        AgentBuildService.ApBuild build = new AgentBuildService.ApBuild(
+                AgentBuildService.StatType.LUK,
+                AgentBuildService.StatType.DEX,
+                25);
+        entry.markPartnerManaged();
+
+        when(bot.getRemainingAp()).thenReturn(5);
+
+        try (MockedStatic<AgentBuildRuntime> buildRuntime = mockStatic(AgentBuildRuntime.class)) {
+            AgentBuildService.setApBuild(entry, build, "confirm");
+            AgentBuildService.autoAssignAp(entry, bot);
+
+            buildRuntime.verifyNoInteractions();
+        }
+
+        assertNull(AgentBuildStateRuntime.apBuild(entry));
+        verify(bot, never()).assignStrDexIntLuk(anyInt(), anyInt(), anyInt(), anyInt());
+    }
+
+    @Test
+    void partnerManagedEntryDoesNotSpendSpOrReactToLevelUp() {
+        Character bot = mock(Character.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
+        SkillGateway skills = mock(SkillGateway.class);
+        entry.markPartnerManaged();
+
+        when(bot.getLevel()).thenReturn(70);
+
+        AgentBuildService.autoAssignSp(entry, bot, skills);
+        AgentBuildService.checkLevelUp(entry, bot);
+
+        assertEquals(-1, AgentBuildStateRuntime.lastKnownLevel(entry));
+        verify(skills, never()).getSkill(anyInt());
+        verify(bot, never()).gainSp(anyInt(), anyInt(), anyBoolean());
+        verify(bot, never()).changeSkillLevel(any(Skill.class), anyByte(), anyInt(), anyLong());
+    }
+
+    @Test
     void initialSyncWarriorSpendsPendingSpWithoutPrompt() {
         Character bot = mock(Character.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, mock(Character.class), mock(ScheduledFuture.class));

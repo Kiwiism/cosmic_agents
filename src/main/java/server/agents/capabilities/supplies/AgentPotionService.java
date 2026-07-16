@@ -173,6 +173,9 @@ public final class AgentPotionService {
     }
 
     public static void tickPotionCheck(AgentRuntimeEntry entry, Character bot, InventoryGateway inventory) {
+        if (entry.isPartnerManaged()) {
+            AgentSurvivalConsumableService.tryUseDiseaseCure(bot);
+        }
         if (AgentPotionStateRuntime.hasPotCheckDelay(entry)) {
             AgentPotionStateRuntime.tickPotCheckDelay(entry, AgentMovementTimers::tickDown);
             return;
@@ -184,6 +187,13 @@ public final class AgentPotionService {
         long startedAt = AgentPerformanceMonitor.start();
         setupAutopotForBot(bot);
         AgentPerformanceMonitor.recordSince("potion-autopot", startedAt);
+
+        // A player-owned Adventurer Partner may consume recovery items for
+        // survival, but must never enter the generic Agent supply-management
+        // flow (ammo/potion sharing, shopping, or grind-stop requests).
+        if (entry.isPartnerManaged()) {
+            return;
+        }
 
         startedAt = AgentPerformanceMonitor.start();
         AgentCombatAmmoCheckRuntime.tickAmmoCheck(entry, bot,
@@ -222,12 +232,18 @@ public final class AgentPotionService {
     }
 
     public static void checkPotShareOnModeStart(AgentRuntimeEntry entry, Character bot, InventoryGateway inventory) {
+        if (entry.isPartnerManaged()) {
+            return;
+        }
         AgentPotionStateRuntime.clearAllPotShareRequests(entry);
         AgentAmmoService.checkAmmoShareOnModeStart(entry, bot, inventory);
         requestLowPotShares(entry, bot, false);
     }
 
     public static boolean requestLowSuppliesFromOwnerAsk(AgentRuntimeEntry entry, Character bot, InventoryGateway inventory) {
+        if (entry.isPartnerManaged()) {
+            return false;
+        }
         boolean requestedPots = requestLowPotShares(entry, bot, true);
         boolean requestedAmmo = AgentAmmoService.requestLowAmmoShare(entry, bot, true, inventory);
         return requestedPots || requestedAmmo;
@@ -292,6 +308,9 @@ public final class AgentPotionService {
     }
 
     public static boolean requestPotShare(AgentRuntimeEntry entry, Character bot, boolean forHp, boolean bypassShareLimits) {
+        if (entry.isPartnerManaged()) {
+            return false;
+        }
         long startedAt = AgentPerformanceMonitor.start();
         Character owner = AgentRuntimeIdentityRuntime.owner(entry);
         if (owner == null || bot.getTrade() != null || AgentPendingTradeStateRuntime.hasActiveSequence(entry)) {
@@ -350,6 +369,9 @@ public final class AgentPotionService {
     }
 
     public static OwnerPotShareResult offerPotShareToOwner(AgentRuntimeEntry entry, boolean forHp) {
+        if (entry.isPartnerManaged()) {
+            return OwnerPotShareResult.BLOCKED;
+        }
         Character owner = AgentRuntimeIdentityRuntime.owner(entry);
         if (owner == null || owner.getTrade() != null) {
             return OwnerPotShareResult.BLOCKED;
@@ -370,7 +392,8 @@ public final class AgentPotionService {
         int bestCount = 0;
         for (AgentRuntimeEntry sibling : AgentSessionLifecycleRuntime.getBotEntries(owner.getId())) {
             Character siblingBot = AgentRuntimeIdentityRuntime.bot(sibling);
-            if (sibling == excludedEntry || siblingBot == null || siblingBot.getMapId() != recipient.getMapId()) {
+            if (sibling == excludedEntry || sibling.isPartnerManaged()
+                    || siblingBot == null || siblingBot.getMapId() != recipient.getMapId()) {
                 continue;
             }
             int[] pots = countPotions(siblingBot);
@@ -389,7 +412,9 @@ public final class AgentPotionService {
         Character donorBot = AgentRuntimeIdentityRuntime.bot(donorEntry);
         int maxQty = plan.donationQty();
         AgentPotionRuntime.afterDelay(donorEntry, initialDelayMs, () -> {
-            if (donorBot.getTrade() != null || AgentPendingTradeStateRuntime.hasActiveSequence(donorEntry) || recipient.getTrade() != null) {
+            if (donorEntry.isPartnerManaged() || donorBot.getTrade() != null
+                    || AgentPendingTradeStateRuntime.hasActiveSequence(donorEntry)
+                    || recipient.getTrade() != null) {
                 return;
             }
             List<Item> items = collectPotShareItems(donorBot, forHp, maxQty);
@@ -398,8 +423,12 @@ public final class AgentPotionService {
             }
             AgentPotionRuntime.sayMapNow(donorBot, AgentDialogueSelector.randomReply(
                     forHp ? AgentDialogueCatalog.potOfferHpReplies() : AgentDialogueCatalog.potOfferMpReplies()));
-            AgentPotionRuntime.afterRandomDelay(donorEntry, 900, 1100, () ->
-                    AgentSupplyShareTradeService.startPotShareTransfer(items, recipient, donorEntry, donorBot, maxQty));
+            AgentPotionRuntime.afterRandomDelay(donorEntry, 900, 1100, () -> {
+                if (!donorEntry.isPartnerManaged()) {
+                    AgentSupplyShareTradeService.startPotShareTransfer(
+                            items, recipient, donorEntry, donorBot, maxQty);
+                }
+            });
         });
     }
 

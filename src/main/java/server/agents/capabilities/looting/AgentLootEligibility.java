@@ -29,7 +29,8 @@ public final class AgentLootEligibility {
     }
 
     public static boolean canBotLoot(AgentRuntimeEntry entry, Character bot, MapItem drop) {
-        if (entry == null || bot == null || drop == null || !drop.canBePickedBy(bot)) {
+        if (entry == null || entry.isPartnerManaged()
+                || bot == null || drop == null || !drop.canBePickedBy(bot)) {
             return false;
         }
 

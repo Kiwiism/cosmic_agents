@@ -19,10 +19,11 @@ public class AdventurerPartnerConfig {
     public long SWITCH_COOLDOWN_MS = 5_000L;
     public boolean SAME_MAP_REQUIRED = true;
     public long DOUBLE_PARTNER_READY_DELAY_MS = 0L;
-    public long MEDAL_DAMAGE_DELAY_MS = 2_000L;
+    public long MEDAL_DAMAGE_DELAY_MS = 600L;
     public int SWITCH_EFFECT_ID = 8;
     public boolean SWITCH_EFFECT_BROADCAST = false;
     public boolean SWITCH_TRIGGER_EFFECT_ENABLED = false;
+    public GenesisVisualProxyConfig GENESIS_VISUAL_PROXY = new GenesisVisualProxyConfig();
     public List<Integer> TRIGGER_SKILL_IDS = new ArrayList<>(List.of(
             Beginner.NIMBLE_FEET,
             Noblesse.NIMBLE_FEET,
@@ -64,6 +65,10 @@ public class AdventurerPartnerConfig {
             throw new IllegalStateException(
                     "adventurerPartner.SWITCH_EFFECT_ID 10 is incompatible with the supported v83 client");
         }
+        if (GENESIS_VISUAL_PROXY == null) {
+            throw new IllegalStateException("adventurerPartner.GENESIS_VISUAL_PROXY cannot be null");
+        }
+        GENESIS_VISUAL_PROXY.validate();
         if (TRIGGER_SKILL_IDS == null || TRIGGER_SKILL_IDS.isEmpty()
                 || TRIGGER_SKILL_IDS.stream().anyMatch(id -> id == null || id <= 0)) {
             throw new IllegalStateException("adventurerPartner.TRIGGER_SKILL_IDS must contain positive skill IDs");

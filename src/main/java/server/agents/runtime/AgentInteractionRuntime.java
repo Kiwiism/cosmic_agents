@@ -53,6 +53,30 @@ public final class AgentInteractionRuntime {
                 log);
     }
 
+    /**
+     * Partner-specific registration marks the entry before its first scheduled
+     * tick, so generic Agent inventory/progression automation never gets a
+     * one-tick window during Double Partner activation.
+     */
+    public static AgentLifecycleService.AgentSpawnResult spawnPartnerAgentForLeader(
+            Character leader,
+            String agentName) {
+        AgentLifecycleService.RegisterSpawnedAgent registerPartner =
+                (leaderCharId, spawnLeader, agent) ->
+                    AgentRegistrationCoordinator.registerPartnerAgent(
+                            leaderCharId,
+                            spawnLeader,
+                            agent,
+                            true,
+                            AgentInteractionRuntime::tick);
+        return CosmicAgentSpawnCoordinator.spawnAgentForLeader(
+                leader,
+                agentName,
+                registerPartner,
+                AgentMovementCommandRuntime::followOwner,
+                log);
+    }
+
     public static void handleLeaderChat(Character leader, String message, AgentReplyChannel channel) {
         AgentChatRouteCoordinator.handleChat(
                 leader,

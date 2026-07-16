@@ -29,9 +29,9 @@ public final class PartnerSessionSkillService {
         List<PacketCreator.SkillUpdate> firstUpdates = new ArrayList<>();
         List<PacketCreator.SkillUpdate> secondUpdates = new ArrayList<>();
         grantMissingCrossJobSkills(
-                sessionId, firstProfile, secondSkills, firstSkills, firstUpdates);
+                sessionId, firstProfile, secondSkills, firstUpdates);
         grantMissingCrossJobSkills(
-                sessionId, secondProfile, firstSkills, secondSkills, secondUpdates);
+                sessionId, secondProfile, firstSkills, secondUpdates);
         announceSkillBatch(firstProfile, firstUpdates);
         announceSkillBatch(secondProfile, secondUpdates);
     }
@@ -45,17 +45,21 @@ public final class PartnerSessionSkillService {
                           boolean announce) {
         Character recipient = request.recipient();
         Skill skill = request.skill();
+        if (Byte.toUnsignedInt(request.level()) <= 0) {
+            return false;
+        }
         Character.SkillEntry current = recipient.getSkills().entrySet().stream()
                 .filter(entry -> entry.getKey().getId() == skill.getId())
                 .map(Map.Entry::getValue)
                 .findFirst()
                 .orElse(null);
         boolean borrowed = recipient.isPartnerSessionBorrowedSkill(skill.getId());
-        if (current != null && !borrowed) {
-            // A canonical copy is already client-safe. Do not temporarily replace real SP/mastery.
+        if (isProtectedCanonicalSkill(recipient, skill, current, borrowed)) {
+            // Never replace a real skill from this profile's own job tree. A
+            // positive cross-job row is session-normalized and restored later.
             return false;
         }
-        if (sameState(current, request)) {
+        if (borrowed && sameState(current, request)) {
             return false;
         }
 
@@ -63,7 +67,7 @@ public final class PartnerSessionSkillService {
                 ? null
                 : new AdventurerPartnerRepository.CharacterSkillState(
                         current.skillevel, current.masterlevel, current.expiration);
-        PartnerSessionSkillGrant recorded = repository.grantTemporarySkill(
+        repository.grantTemporarySkill(
                 sessionId,
                 recipient.getProfileOwnerCharacterId(),
                 skill.getId(),
@@ -88,7 +92,7 @@ public final class PartnerSessionSkillService {
                     false);
         }
         recipient.markPartnerSessionSkillBorrowed(
-                recipient.getProfileOwnerCharacterId(), skill.getId(), !recorded.hadOriginalSkill());
+                recipient.getProfileOwnerCharacterId(), skill.getId(), true);
         log.info("partner_temporary_skill granted session={} character={} skill={} level={}",
                 sessionId, recipient.getProfileOwnerCharacterId(), skill.getId(), request.level());
         return true;
@@ -171,10 +175,7 @@ public final class PartnerSessionSkillService {
             return false;
         }
         boolean borrowed = recipient.isPartnerSessionBorrowedSkill(skill.getId());
-        boolean recipientHasSkill = recipient.getSkills().keySet().stream()
-                .anyMatch(current -> current.getId() == skill.getId());
-        if (!borrowed && (recipientHasSkill
-                || skill.isBeginnerSkill()
+        if (!borrowed && (skill.isBeginnerSkill()
                 || GameConstants.isGMSkills(skill.getId())
                 || GameConstants.isInJobTree(skill.getId(), recipient.getJob().getId()))) {
             return false;
@@ -192,13 +193,11 @@ public final class PartnerSessionSkillService {
             long sessionId,
             Character recipient,
             Map<Integer, Map.Entry<Skill, Character.SkillEntry>> sourceSkills,
-            Map<Integer, Map.Entry<Skill, Character.SkillEntry>> recipientSkills,
             List<PacketCreator.SkillUpdate> updates) {
         for (Map.Entry<Integer, Map.Entry<Skill, Character.SkillEntry>> candidate
                 : sourceSkills.entrySet()) {
             Skill skill = candidate.getValue().getKey();
-            if (recipientSkills.containsKey(candidate.getKey())
-                    || skill.isBeginnerSkill()
+            if (skill.isBeginnerSkill()
                     || GameConstants.isGMSkills(skill.getId())
                     || GameConstants.isInJobTree(skill.getId(), recipient.getJob().getId())) {
                 continue;
@@ -223,9 +222,39 @@ public final class PartnerSessionSkillService {
             Character character) {
         Map<Integer, Map.Entry<Skill, Character.SkillEntry>> result = new LinkedHashMap<>();
         for (Map.Entry<Skill, Character.SkillEntry> entry : character.getSkills().entrySet()) {
-            result.put(entry.getKey().getId(), entry);
+            // A level-zero database row is not learned and has no level/0 WZ data.
+            // Never preload it into the other profile or count it as client-safe.
+            if (hasPositiveLevel(entry.getValue())) {
+                result.put(entry.getKey().getId(), entry);
+            }
         }
         return result;
+    }
+
+    static int clientVisibleSkillLevel(Character character, int skillId) {
+        if (character == null) {
+            return 0;
+        }
+        return character.getSkills().entrySet().stream()
+                .filter(entry -> entry.getKey().getId() == skillId)
+                .mapToInt(entry -> Byte.toUnsignedInt(entry.getValue().skillevel))
+                .findFirst()
+                .orElse(0);
+    }
+
+    private static boolean isProtectedCanonicalSkill(Character recipient,
+                                                       Skill skill,
+                                                       Character.SkillEntry current,
+                                                       boolean borrowed) {
+        return hasPositiveLevel(current) && !borrowed
+                && (recipient.getJob() == null
+                || skill.isBeginnerSkill()
+                || GameConstants.isGMSkills(skill.getId())
+                || GameConstants.isInJobTree(skill.getId(), recipient.getJob().getId()));
+    }
+
+    private static boolean hasPositiveLevel(Character.SkillEntry entry) {
+        return entry != null && Byte.toUnsignedInt(entry.skillevel) > 0;
     }
 
     private static boolean sameState(Character.SkillEntry current,

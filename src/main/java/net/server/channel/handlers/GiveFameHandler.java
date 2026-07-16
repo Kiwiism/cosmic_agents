@@ -29,6 +29,7 @@ import net.AbstractPacketHandler;
 import net.packet.InPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import server.partner.PartnerInteractionPolicy;
 import tools.PacketCreator;
 
 public final class GiveFameHandler extends AbstractPacketHandler {
@@ -41,6 +42,9 @@ public final class GiveFameHandler extends AbstractPacketHandler {
         int famechange = 2 * mode - 1;
         Character player = c.getPlayer();
         if (target == null || target.getId() == player.getId() || player.getLevel() < 15) {
+            return;
+        } else if (!PartnerInteractionPolicy.isOwnerOrUnprotected(player, target)) {
+            player.message("That adventuring partner only accepts fame changes from their owner.");
             return;
         } else if (famechange != 1 && famechange != -1) {
             AutobanFactory.PACKET_EDIT.alert(c.getPlayer(), c.getPlayer().getName() + " tried to packet edit fame.");

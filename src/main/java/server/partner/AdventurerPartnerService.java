@@ -701,13 +701,15 @@ public final class AdventurerPartnerService {
             }
             Skill skill = SkillFactory.getSkill(effect.getBuffSourceId());
             int sourceLevel = source.getSkillLevel(effect.getBuffSourceId());
+            int sharedLevel = Math.min(sourceLevel, selfBuffCap);
             if (skill == null) {
-                if (sourceLevel > 0 && sourceLevel <= selfBuffCap) {
+                if (sharedLevel > 0 && hasMatchingClientVisibleShadowPartnerLevel(
+                        active, source, recipient, effect, sharedLevel)) {
                     effect.applyPartnerSharedBuff(source, recipient);
                 }
                 return;
             }
-            int sharedLevel = Math.min(Math.min(sourceLevel, selfBuffCap), skill.getMaxLevel());
+            sharedLevel = Math.min(sharedLevel, skill.getMaxLevel());
             if (sharedLevel <= 0) {
                 return;
             }
@@ -715,6 +717,10 @@ public final class AdventurerPartnerService {
                     new SoloTagBuffSharingService.SkillGrant(
                             recipient, skill, (byte) sharedLevel,
                             source.getMasterLevel(skill), source.getSkillExpiration(skill)));
+            if (!hasMatchingClientVisibleShadowPartnerLevel(
+                    active, source, recipient, effect, sharedLevel)) {
+                return;
+            }
             StatEffect sharedEffect = sharedLevel == sourceLevel
                     ? effect : skill.getEffect(sharedLevel);
             if (sharedEffect.applyPartnerSharedBuff(source, recipient)) {
@@ -728,6 +734,28 @@ public final class AdventurerPartnerService {
         } finally {
             active.exitLifecycleOperation();
         }
+    }
+
+    private boolean hasMatchingClientVisibleShadowPartnerLevel(ActivePartnerSession active,
+                                                                 Character source,
+                                                                 Character recipient,
+                                                                 StatEffect effect,
+                                                                 int sharedLevel) {
+        if (effect.getStatups().stream().noneMatch(
+                statup -> statup.getLeft() == BuffStat.SHADOWPARTNER)) {
+            return true;
+        }
+        int clientVisibleLevel = PartnerSessionSkillService.clientVisibleSkillLevel(
+                recipient, effect.getBuffSourceId());
+        if (clientVisibleLevel == sharedLevel) {
+            return true;
+        }
+        log.warn("partner_double_buff skipped_mismatched_shadow_partner "
+                        + "session={} sourceActor={} recipientActor={} skill={} "
+                        + "expectedLevel={} actualLevel={}",
+                active.runtime().sessionId(), source.getId(), recipient.getId(),
+                effect.getBuffSourceId(), sharedLevel, clientVisibleLevel);
+        return false;
     }
 
     public boolean doublePartnerBuffSharingEnabled() {

@@ -125,6 +125,47 @@ class AgentLifecycleServiceTest {
     }
 
     @Test
+    void entryInitializerRunsBeforePublicationNormalizationAndImmediateTick() {
+        Character leader = character(100, "Leader");
+        Character agent = character(200, "Partner");
+        ScheduledFuture<?> scheduledTask = mock(ScheduledFuture.class);
+        AtomicReference<AgentRuntimeEntry> initializedEntry = new AtomicReference<>();
+        AgentRuntimeRegistry.entriesByLeaderId().clear();
+
+        try (MockedStatic<AgentLifecycleStatusCoordinator> status =
+                     mockStatic(AgentLifecycleStatusCoordinator.class)) {
+            AgentRuntimeEntry entry = AgentLifecycleService.registerAgent(
+                    leader.getId(), leader, agent, true,
+                    new AgentLifecycleService.RegisterHooks(
+                            50L,
+                            (tick, periodMs) -> {
+                                tick.run();
+                                return scheduledTask;
+                            },
+                            (activeEntry, leaderCharId, agentCharId) -> {
+                                assertTrue(activeEntry.isPartnerManaged());
+                                assertEquals(List.of(activeEntry),
+                                        AgentRuntimeRegistry.entriesForLeader(leaderCharId));
+                            },
+                            ignored -> { },
+                            AgentFormationService.defaultStagger(60, 120),
+                            activeEntry -> assertTrue(activeEntry.isPartnerManaged()),
+                            () -> 123L),
+                    activeEntry -> {
+                        assertTrue(AgentRuntimeRegistry.entriesForLeader(
+                                leader.getId()).isEmpty());
+                        activeEntry.markPartnerManaged();
+                        initializedEntry.set(activeEntry);
+                    });
+
+            assertSame(entry, initializedEntry.get());
+            assertTrue(entry.isPartnerManaged());
+        } finally {
+            AgentRuntimeRegistry.entriesByLeaderId().clear();
+        }
+    }
+
+    @Test
     void schedulingFailureRollsBackRegistryPublication() {
         Character leader = character(100, "Leader");
         Character agent = character(200, "Alpha");

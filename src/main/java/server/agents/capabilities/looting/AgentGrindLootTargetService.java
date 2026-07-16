@@ -11,6 +11,10 @@ public final class AgentGrindLootTargetService {
     }
 
     public static void validateCachedGrindLootTarget(AgentRuntimeEntry entry, Character agent) {
+        if (entry.isPartnerManaged()) {
+            AgentGrindLootStateRuntime.clearGrindLootTarget(entry);
+            return;
+        }
         if (!AgentGrindLootStateRuntime.hasGrindLootTarget(entry)) {
             return;
         }
@@ -25,6 +29,10 @@ public final class AgentGrindLootTargetService {
                                               Character agent,
                                               boolean runAiTick,
                                               int lootRadius) {
+        if (entry.isPartnerManaged()) {
+            AgentGrindLootStateRuntime.clearGrindLootTarget(entry);
+            return;
+        }
         if (!runAiTick || AgentPatrolStateRuntime.hasPatrolRegion(entry)) {
             return;
         }

@@ -24,6 +24,11 @@ public final class AgentSocialRuntime {
     }
 
     public static void handleFameCommand(AgentRuntimeEntry entry, String targetName) {
+        if (entry.isPartnerManaged()) {
+            AgentReplyRuntime.replyNow(
+                    entry, "I leave fame decisions to you while we're adventuring partners.");
+            return;
+        }
         Character bot = AgentRuntimeIdentityRuntime.bot(entry);
         Character target;
         if (AgentSocialDialogueClassifier.isSelfFameTarget(targetName)) {

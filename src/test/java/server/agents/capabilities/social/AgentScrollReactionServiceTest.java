@@ -60,4 +60,28 @@ class AgentScrollReactionServiceTest {
         assertEquals(60, AgentScrollReactionService.resolveScrollSuccessRate(2040001, inventory));
         assertEquals(0, AgentScrollReactionService.resolveScrollSuccessRate(0, inventory));
     }
+
+    @Test
+    void partnerDoesNotScheduleGenericNearbyScrollReaction() {
+        MapleMap map = mock(MapleMap.class);
+        Character source = mock(Character.class);
+        when(source.getMap()).thenReturn(map);
+        when(source.getMapId()).thenReturn(100000000);
+        when(source.getPosition()).thenReturn(new Point(50, 50));
+
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), null, null);
+        entry.markPartnerManaged();
+
+        try (MockedStatic<AgentScrollReactionRuntime> scheduler =
+                     mockStatic(AgentScrollReactionRuntime.class)) {
+            AgentScrollReactionService.handleScrollEvent(
+                    source,
+                    Equip.ScrollResult.SUCCESS,
+                    0,
+                    List.of(List.of(entry)),
+                    mock(InventoryGateway.class));
+
+            scheduler.verifyNoInteractions();
+        }
+    }
 }

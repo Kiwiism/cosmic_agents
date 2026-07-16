@@ -21,6 +21,7 @@ import tools.Pair;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -231,6 +232,8 @@ class AdventurerPartnerServiceTest {
         when(shadowPartner.getStatups()).thenReturn(List.of(
                 new Pair<>(BuffStat.SHADOWPARTNER, 50)));
         when(player.getSkillLevel(4111002)).thenReturn(30);
+        when(partner.getSkills()).thenReturn(Map.of(
+                new Skill(4111002), new Character.SkillEntry((byte) 30, 0, -1L)));
         when(shadowPartner.applyPartnerSharedBuff(player, partner)).thenReturn(true);
         service.activate(player, PartnerMode.DOUBLE_PARTNER);
 
@@ -239,6 +242,13 @@ class AdventurerPartnerServiceTest {
 
         verify(shadowPartner).applyPartnerSharedBuff(player, partner);
         verify(shadowPartner, never()).applyPartnerSharedBuff(partner, player);
+
+        org.mockito.Mockito.clearInvocations(shadowPartner);
+        when(partner.getSkills()).thenReturn(Map.of(
+                new Skill(4111002), new Character.SkillEntry((byte) 10, 0, -1L)));
+        service.onSkillBuffApplied(player, shadowPartner);
+
+        verify(shadowPartner, never()).applyPartnerSharedBuff(player, partner);
     }
 
     @Test

@@ -70,6 +70,27 @@ class AgentCommonTickServiceTest {
         assertEquals("actionLocked", scenario.calls.get(scenario.calls.size() - 1));
     }
 
+    @Test
+    void partnerManagedEntryKeepsCombatAndManualOwnerTradeWithoutProfileAutomation() {
+        Scenario scenario = new Scenario();
+        scenario.entry.markPartnerManaged();
+
+        boolean consumed = AgentCommonTickService.runCommonTickSystems(
+                scenario.entry, scenario.agent, scenario.leader, true, scenario.hooks());
+
+        assertFalse(consumed);
+        assertFalse(scenario.calls.contains("passiveLoot"));
+        assertTrue(scenario.calls.contains("potionCheck"));
+        assertFalse(scenario.calls.contains("levelUp"));
+        assertFalse(scenario.calls.contains("trade"));
+        assertFalse(scenario.calls.contains("pq"));
+        assertFalse(scenario.calls.contains("scriptTasks"));
+        assertFalse(scenario.calls.contains("buffPots"));
+        assertTrue(scenario.calls.contains("manualTrade"));
+        assertTrue(scenario.calls.contains("supportHeal"));
+        assertTrue(scenario.calls.contains("combatBuffs"));
+    }
+
     private static final class Scenario {
         private final Character agent = mock(Character.class);
         private final Character leader = mock(Character.class);

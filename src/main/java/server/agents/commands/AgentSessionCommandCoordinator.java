@@ -54,6 +54,11 @@ public final class AgentSessionCommandCoordinator {
 
             @Override
             public void requestAway() {
+                if (entry.isPartnerManaged()) {
+                    AgentReplyRuntime.replyNow(
+                            entry, "Agent E manages this Partner session. Use Release Partner instead.");
+                    return;
+                }
                 if (!AgentSessionControlRuntime.isPrimarySession(entry)) {
                     return;
                 }
@@ -102,6 +107,10 @@ public final class AgentSessionCommandCoordinator {
     }
 
     public static void handleOwnerAwayChoice(AgentRuntimeEntry entry, String message) {
+        if (entry.isPartnerManaged()) {
+            AgentPendingActionStateRuntime.clearPendingAction(entry);
+            return;
+        }
         AgentChatAwayFlow.handleOwnerAwayChoice(
                 message,
                 AgentSessionControlRuntime.shouldOfferTownForAwayCommand(entry),

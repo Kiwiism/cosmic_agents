@@ -28,6 +28,9 @@ public final class AgentScriptTaskStartService {
     }
 
     public static void start(AgentRuntimeEntry entry, AgentTask task, StartHooks hooks) {
+        if (entry.isPartnerManaged()) {
+            return;
+        }
         switch (task.type()) {
             case MOVE_TO -> hooks.startMoveTo().accept(task.point(), task.precise());
             case FOLLOW_OWNER -> hooks.startFollow().accept(AgentRuntimeIdentityRuntime.owner(entry));

@@ -58,6 +58,9 @@ public final class AgentOfferService {
     }
 
     public static void notifyOwnerGainedEquip(AgentRuntimeEntry entry, Character bot, Item item) {
+        if (entry.isPartnerManaged()) {
+            return;
+        }
         if (AgentOfferRuntime.isOwnerIdleForOffer(entry)) {
             return;
         }
@@ -81,6 +84,9 @@ public final class AgentOfferService {
     }
 
     public static void requestBestUpgradeFromOwner(AgentRuntimeEntry entry, Character bot) {
+        if (entry.isPartnerManaged()) {
+            return;
+        }
         Character owner = AgentRuntimeIdentityRuntime.owner(entry);
         if (owner == null) {
             return;
@@ -100,6 +106,9 @@ public final class AgentOfferService {
     }
 
     public static boolean offerBestRecommendedGear(AgentRuntimeEntry entry, Character bot, Character owner) {
+        if (entry.isPartnerManaged()) {
+            return false;
+        }
         if (owner == null) {
             return false;
         }
@@ -118,6 +127,9 @@ public final class AgentOfferService {
     }
 
     public static boolean offerBestGearToSibling(AgentRuntimeEntry entry, Character bot) {
+        if (entry.isPartnerManaged()) {
+            return false;
+        }
         Character owner = AgentRuntimeIdentityRuntime.owner(entry);
         if (owner == null) {
             return false;
@@ -152,6 +164,9 @@ public final class AgentOfferService {
     }
 
     public static void scheduleLootOfferPrompt(AgentRuntimeEntry entry, Character bot, Item item, long delayMs) {
+        if (entry.isPartnerManaged()) {
+            return;
+        }
         Character owner = AgentRuntimeIdentityRuntime.owner(entry);
         long now = System.currentTimeMillis();
         if (owner == null
@@ -179,6 +194,10 @@ public final class AgentOfferService {
     }
 
     public static boolean handlePendingOfferResponse(AgentRuntimeEntry entry, Character speaker, String message) {
+        if (entry.isPartnerManaged()) {
+            clearPendingOffer(entry);
+            return false;
+        }
         expirePendingOffer(entry);
         if (!hasPendingOffer(entry)
                 || speaker == null
@@ -256,6 +275,10 @@ public final class AgentOfferService {
     }
 
     private static void promptLootOfferAfterLoot(AgentRuntimeEntry entry, Character bot, Item item, int recipientId, long scheduledAt) {
+        if (entry.isPartnerManaged()) {
+            clearPendingOffer(entry);
+            return;
+        }
         if (!AgentOfferStateRuntime.isReservedGearPrompt(entry, scheduledAt)) {
             return;
         }
@@ -303,6 +326,10 @@ public final class AgentOfferService {
     }
 
     private static void autoAcceptLootOffer(AgentRuntimeEntry entry, Character recipientBot) {
+        if (entry.isPartnerManaged()) {
+            clearPendingOffer(entry);
+            return;
+        }
         if (!hasPendingOffer(entry) || !AgentOfferStateRuntime.pendingOfferRecipientIs(entry, recipientBot)) {
             return;
         }

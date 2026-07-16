@@ -46,4 +46,16 @@ class AgentSocialRuntimeTest {
             replies.verify(() -> AgentReplyRuntime.replyNow(eq(entry), contains("Alice")));
         }
     }
+
+    @Test
+    void partnerLeavesFameDecisionsToPlayer() {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
+        entry.markPartnerManaged();
+
+        try (MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
+            AgentSocialRuntime.handleFameCommand(entry, "Alice");
+
+            replies.verify(() -> AgentReplyRuntime.replyNow(eq(entry), contains("fame decisions")));
+        }
+    }
 }

@@ -135,6 +135,27 @@ class AgentMapTransitionServiceTest {
     }
 
     @Test
+    void partnerManagedMapChangeSkipsPartyQuestModeAndResetHooks() {
+        MapleMap map = map(100000008);
+        Character agent = character(200, map, map.getId(), new Point(10, 20));
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
+        entry.markPartnerManaged();
+        Counters counters = new Counters();
+
+        boolean handled = AgentMapTransitionService.handleTrackedMapChange(
+                entry, agent, mapChangeHooks(counters, true, true));
+
+        assertTrue(handled);
+        assertEquals(0, counters.grindRequirementChecks.get());
+        assertEquals(0, counters.followRequirementChecks.get());
+        assertEquals(0, counters.grindIssues.get());
+        assertEquals(0, counters.followIssues.get());
+        assertEquals(0, counters.partyQuestResets.get());
+        assertEquals(1, counters.shopMapChanges.get());
+        assertEquals(1, counters.statusChecks.get());
+    }
+
+    @Test
     void trackedMapChangeSkipsSideEffectsWhenMapIsAlreadyTracked() {
         MapleMap map = map(100000006);
         Character agent = character(200, map, map.getId(), new Point(10, 20));
@@ -183,9 +204,15 @@ class AgentMapTransitionServiceTest {
                                                                            boolean requiresFollow) {
         return new AgentMapTransitionService.MapChangeHooks(
                 hooks(counters, null),
-                (entry, agent) -> requiresGrind,
+                (entry, agent) -> {
+                    counters.grindRequirementChecks.incrementAndGet();
+                    return requiresGrind;
+                },
                 entry -> counters.grindIssues.incrementAndGet(),
-                (entry, agent) -> requiresFollow,
+                (entry, agent) -> {
+                    counters.followRequirementChecks.incrementAndGet();
+                    return requiresFollow;
+                },
                 entry -> counters.followIssues.incrementAndGet(),
                 entry -> counters.partyQuestResets.incrementAndGet(),
                 (entry, agent) -> counters.shopMapChanges.incrementAndGet(),
@@ -215,6 +242,8 @@ class AgentMapTransitionServiceTest {
         private final AtomicInteger spawnFalls = new AtomicInteger();
         private final AtomicInteger graphWarms = new AtomicInteger();
         private final AtomicInteger broadcasts = new AtomicInteger();
+        private final AtomicInteger grindRequirementChecks = new AtomicInteger();
+        private final AtomicInteger followRequirementChecks = new AtomicInteger();
         private final AtomicInteger grindIssues = new AtomicInteger();
         private final AtomicInteger followIssues = new AtomicInteger();
         private final AtomicInteger partyQuestResets = new AtomicInteger();

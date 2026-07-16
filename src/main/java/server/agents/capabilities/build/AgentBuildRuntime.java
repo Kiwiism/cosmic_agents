@@ -23,6 +23,7 @@ public final class AgentBuildRuntime {
         return new AgentChatBuildFlow.SpVariantCallbacks() {
             @Override
             public void oneHanded() {
+                if (rejectPartnerManagedBuild(entry)) return;
                 AgentBuildStateRuntime.setSpVariant(entry, AgentBuildDialogueClassifier.ONE_HANDED_SP_VARIANT);
                 AgentReplyRuntime.replyNow(entry, AgentChatBuildFlow.oneHandedSpVariantReply());
                 AgentBuildService.autoAssignSp(entry, bot(entry));
@@ -30,6 +31,7 @@ public final class AgentBuildRuntime {
 
             @Override
             public void twoHanded() {
+                if (rejectPartnerManagedBuild(entry)) return;
                 AgentBuildStateRuntime.setSpVariant(entry, AgentBuildDialogueClassifier.TWO_HANDED_SP_VARIANT);
                 AgentReplyRuntime.replyNow(entry, AgentChatBuildFlow.twoHandedSpVariantReply());
                 AgentBuildService.autoAssignSp(entry, bot(entry));
@@ -41,6 +43,7 @@ public final class AgentBuildRuntime {
         return new AgentChatBuildFlow.ApBuildCallbacks() {
             @Override
             public void requestBuildPrompt() {
+                if (rejectPartnerManagedBuild(entry)) return;
                 AgentBuildStateRuntime.clearApBuildPromptState(entry);
                 String prompt = AgentBuildService.requestApBuildPrompt(entry, bot(entry));
                 if (prompt != null) {
@@ -50,6 +53,7 @@ public final class AgentBuildRuntime {
 
             @Override
             public void selectBuild(String message) {
+                if (rejectPartnerManagedBuild(entry)) return;
                 handleApBuildSelection(entry, message);
             }
         };
@@ -57,6 +61,7 @@ public final class AgentBuildRuntime {
 
     public static AgentChatJobAdvancementFlow.JobAdvancementCallbacks jobAdvancementCallbacks(AgentRuntimeEntry entry) {
         return advJob -> {
+            if (rejectPartnerManagedBuild(entry)) return;
             String reply = AgentChatJobAdvancementFlow.jobChangeReply(advJob);
             AgentReplyRuntime.replyNow(entry, reply);
             AgentSchedulerRuntime.afterRandomDelay(entry, 900, 1100,
@@ -116,5 +121,13 @@ public final class AgentBuildRuntime {
 
     private static Character bot(AgentRuntimeEntry entry) {
         return AgentRuntimeIdentityRuntime.bot(entry);
+    }
+
+    private static boolean rejectPartnerManagedBuild(AgentRuntimeEntry entry) {
+        if (!entry.isPartnerManaged()) {
+            return false;
+        }
+        AgentReplyRuntime.replyNow(entry, AgentBuildService.partnerManagedBuildReply());
+        return true;
     }
 }

@@ -224,9 +224,23 @@ public final class SoloTagBuffSharingService {
                         transfer.skillState().masterlevel,
                         transfer.skillState().expiration));
             }
+            int expectedSkillLevel = transfer.skillState() == null
+                    ? 0 : Byte.toUnsignedInt(transfer.skillState().skillevel);
+            if (hasStat(transfer.holder(), BuffStat.SHADOWPARTNER)
+                    && (expectedSkillLevel <= 0
+                    || PartnerSessionSkillService.clientVisibleSkillLevel(
+                    recipient, transfer.holder().effect.getBuffSourceId())
+                    != expectedSkillLevel)) {
+                // Stock v83 resolves Shadow Partner duplicate-hit data from the
+                // recipient's skill table. A missing or different level can make
+                // the client resolve the wrong (or absent level/0) WZ node.
+                continue;
+            }
             timedBuffs.add(new Pair<>(now - transfer.holder().usedTime, transfer.holder()));
         }
-        recipient.silentGiveBuffs(timedBuffs);
+        if (!timedBuffs.isEmpty()) {
+            recipient.silentGiveBuffs(timedBuffs);
+        }
     }
 
     private static List<BuffTransfer> removeWeakerDuplicateSources(

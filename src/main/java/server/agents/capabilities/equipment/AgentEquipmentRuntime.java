@@ -17,6 +17,9 @@ import java.util.List;
  * movement stop side effects stay behind integration runtime boundaries.
  */
 public final class AgentEquipmentRuntime {
+    private static final String PLAYER_MANAGED_REPLY =
+            "I leave equipment decisions to you while we're adventuring partners.";
+
     private AgentEquipmentRuntime() {
     }
 
@@ -28,18 +31,29 @@ public final class AgentEquipmentRuntime {
         return new AgentChatEquipmentFlow.EquipmentCallbacks() {
             @Override
             public boolean unequipSlot(String slotName) {
+                if (entry.isPartnerManaged()) {
+                    AgentReplyRuntime.replyNow(entry, PLAYER_MANAGED_REPLY);
+                    return true;
+                }
                 short[] slots = AgentEquipmentService.slotsFromName(slotName);
                 if (slots.length == 0) {
                     return false;
                 }
-                AgentSchedulerRuntime.afterRandomDelay(entry, 500, 700, () ->
-                        AgentReplyRuntime.replyNow(entry, AgentEquipmentService.unequipSlot(bot(entry), slots)));
+                AgentSchedulerRuntime.afterRandomDelay(entry, 500, 700, () -> {
+                    if (entry.isPartnerManaged()) return;
+                    AgentReplyRuntime.replyNow(entry, AgentEquipmentService.unequipSlot(bot(entry), slots));
+                });
                 return true;
             }
 
             @Override
             public void unequipAll() {
+                if (entry.isPartnerManaged()) {
+                    AgentReplyRuntime.replyNow(entry, PLAYER_MANAGED_REPLY);
+                    return;
+                }
                 AgentSchedulerRuntime.afterRandomDelay(entry, 500, 700, () -> {
+                    if (entry.isPartnerManaged()) return;
                     AgentMovementCommandRuntime.stop(entry);
                     AgentReplyRuntime.replyNow(entry, AgentEquipmentService.unequipAll(bot(entry)));
                 });
@@ -57,7 +71,12 @@ public final class AgentEquipmentRuntime {
 
             @Override
             public void autoEquip() {
+                if (entry.isPartnerManaged()) {
+                    AgentReplyRuntime.replyNow(entry, PLAYER_MANAGED_REPLY);
+                    return;
+                }
                 AgentSchedulerRuntime.afterRandomDelay(entry, 400, 600, () -> {
+                    if (entry.isPartnerManaged()) return;
                     AgentEquipmentService.autoEquip(
                             bot(entry),
                             AgentRuntimeIdentityRuntime.owner(entry),

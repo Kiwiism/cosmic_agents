@@ -73,20 +73,47 @@ class PartnerSessionSkillServiceTest {
     }
 
     @Test
-    void unionDoesNotReplaceAnExistingRecipientSkill() {
+    void unionNormalizesAnExistingCrossJobSkillAndPreservesItsOriginalLevel() {
         AdventurerPartnerRepository repository = mock(AdventurerPartnerRepository.class);
         PartnerSessionSkillService service = new PartnerSessionSkillService(repository);
         Character first = mock(Character.class);
         Character second = mock(Character.class);
         Skill shared = new Skill(4111002);
+        when(first.getProfileOwnerCharacterId()).thenReturn(10);
         when(first.getJob()).thenReturn(Job.CHIEFBANDIT);
         when(second.getJob()).thenReturn(Job.HERMIT);
         when(first.getSkills()).thenReturn(Map.of(
                 shared, new Character.SkillEntry((byte) 10, 0, -1L)));
         when(second.getSkills()).thenReturn(Map.of(
                 shared, new Character.SkillEntry((byte) 30, 0, -1L)));
+        when(repository.grantTemporarySkill(
+                7L, 10, 4111002, 30, 0, -1L,
+                new AdventurerPartnerRepository.CharacterSkillState((byte) 10, 0, -1L)))
+                .thenReturn(new PartnerSessionSkillGrant(
+                        7L, 10, 4111002, 10, 0, -1L, 30, 0, -1L));
 
         service.prepareUnion(7L, first, second);
+
+        verify(first).applyPartnerSessionSkill(
+                10, shared, (byte) 30, 0, -1L, false);
+        verify(first).markPartnerSessionSkillBorrowed(10, 4111002, true);
+        verify(first).sendPacket(any(Packet.class));
+    }
+
+    @Test
+    void unionIgnoresZeroLevelSourceSkills() {
+        AdventurerPartnerRepository repository = mock(AdventurerPartnerRepository.class);
+        PartnerSessionSkillService service = new PartnerSessionSkillService(repository);
+        Character bandit = mock(Character.class);
+        Character hermit = mock(Character.class);
+        Skill shadowPartner = new Skill(4111002);
+        when(bandit.getJob()).thenReturn(Job.CHIEFBANDIT);
+        when(hermit.getJob()).thenReturn(Job.HERMIT);
+        when(bandit.getSkills()).thenReturn(Map.of());
+        when(hermit.getSkills()).thenReturn(Map.of(
+                shadowPartner, new Character.SkillEntry((byte) 0, 0, -1L)));
+
+        service.prepareUnion(7L, bandit, hermit);
 
         verify(repository, never()).grantTemporarySkill(
                 org.mockito.ArgumentMatchers.anyLong(),
@@ -96,6 +123,28 @@ class PartnerSessionSkillServiceTest {
                 org.mockito.ArgumentMatchers.anyInt(),
                 org.mockito.ArgumentMatchers.anyLong(),
                 org.mockito.ArgumentMatchers.any());
+        verify(bandit, never()).sendPacket(any(Packet.class));
+    }
+
+    @Test
+    void zeroLevelRecipientSkillIsProvisionedAndPreservedForRestoration() {
+        AdventurerPartnerRepository repository = mock(AdventurerPartnerRepository.class);
+        PartnerSessionSkillService service = new PartnerSessionSkillService(repository);
+        Character recipient = mock(Character.class);
+        Skill shadowPartner = new Skill(4111002);
+        Character.SkillEntry zeroLevel = new Character.SkillEntry((byte) 0, 0, -1L);
+        when(recipient.getProfileOwnerCharacterId()).thenReturn(20);
+        when(recipient.getSkills()).thenReturn(Map.of(shadowPartner, zeroLevel));
+
+        service.grant(7L, new SoloTagBuffSharingService.SkillGrant(
+                recipient, shadowPartner, (byte) 20, 0, -1L));
+
+        verify(repository).grantTemporarySkill(
+                7L, 20, 4111002, 20, 0, -1L,
+                new AdventurerPartnerRepository.CharacterSkillState((byte) 0, 0, -1L));
+        verify(recipient).applyPartnerSessionSkill(
+                20, shadowPartner, (byte) 20, 0, -1L);
+        verify(recipient).markPartnerSessionSkillBorrowed(20, 4111002, true);
     }
 
     @Test

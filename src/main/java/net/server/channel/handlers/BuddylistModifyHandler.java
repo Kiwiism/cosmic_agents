@@ -31,6 +31,7 @@ import client.Client;
 import net.AbstractPacketHandler;
 import server.agents.registry.AgentResolvedCharacter;
 import server.agents.auth.AgentOwnershipService;
+import server.partner.PartnerInteractionPolicy;
 import net.packet.InPacket;
 import net.server.world.World;
 import tools.DatabaseConnection;
@@ -100,6 +101,13 @@ public class BuddylistModifyHandler extends AbstractPacketHandler {
             } else if (ble == null) {
                 try {
                     World world = c.getWorldServer();
+                    Character protectedTarget = world.getPlayerStorage().getCharacterByName(addName);
+                    if (protectedTarget != null
+                            && !PartnerInteractionPolicy.isOwnerOrUnprotected(player, protectedTarget)) {
+                        c.sendPacket(PacketCreator.serverNotice(
+                                1, "That adventuring partner only accepts buddy requests from their owner."));
+                        return;
+                    }
                     CharacterIdNameBuddyCapacity charWithId;
                     int channel;
                     Character otherChar = c.getChannelServer().getPlayerStorage().getCharacterByName(addName);

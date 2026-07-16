@@ -65,7 +65,9 @@ public final class AgentCommonTickService {
         hooks.releaseControlledMonsters().accept(agent);
         if (perf) AgentPerformanceMonitor.record("common-release-mob", System.nanoTime() - startedAt);
 
-        if (agent.getTrade() == null) {
+        boolean agentManagedProfile = !entry.isPartnerManaged();
+
+        if (agentManagedProfile && agent.getTrade() == null) {
             if (perf) startedAt = System.nanoTime();
             hooks.tickPassiveLoot().accept(entry, agent);
             if (perf) AgentPerformanceMonitor.record("common-passive-loot", System.nanoTime() - startedAt);
@@ -83,29 +85,35 @@ public final class AgentCommonTickService {
         hooks.tickCriticalSurvivalBuff().accept(entry, agent);
         if (perf) AgentPerformanceMonitor.record("common-critical-survival-buff", System.nanoTime() - startedAt);
 
-        if (perf) startedAt = System.nanoTime();
-        hooks.checkLevelUp().accept(entry, agent);
-        if (perf) AgentPerformanceMonitor.record("common-build-levelup", System.nanoTime() - startedAt);
+        if (agentManagedProfile) {
+            if (perf) startedAt = System.nanoTime();
+            hooks.checkLevelUp().accept(entry, agent);
+            if (perf) AgentPerformanceMonitor.record("common-build-levelup", System.nanoTime() - startedAt);
+        }
 
         if (perf) startedAt = System.nanoTime();
         hooks.tickAfkCheck().accept(entry, agent, leader);
         if (perf) AgentPerformanceMonitor.record("common-afk-check", System.nanoTime() - startedAt);
 
-        if (perf) startedAt = System.nanoTime();
-        hooks.tickTrade().accept(entry, agent);
-        if (perf) AgentPerformanceMonitor.record("common-trade", System.nanoTime() - startedAt);
+        if (agentManagedProfile) {
+            if (perf) startedAt = System.nanoTime();
+            hooks.tickTrade().accept(entry, agent);
+            if (perf) AgentPerformanceMonitor.record("common-trade", System.nanoTime() - startedAt);
+        }
 
         if (perf) startedAt = System.nanoTime();
         hooks.tickManualTrade().accept(entry, agent);
         if (perf) AgentPerformanceMonitor.record("common-manual-trade", System.nanoTime() - startedAt);
 
-        if (perf) startedAt = System.nanoTime();
-        hooks.tickPartyQuest().accept(entry, agent, leader);
-        if (perf) AgentPerformanceMonitor.record("common-pq-hooks", System.nanoTime() - startedAt);
+        if (agentManagedProfile) {
+            if (perf) startedAt = System.nanoTime();
+            hooks.tickPartyQuest().accept(entry, agent, leader);
+            if (perf) AgentPerformanceMonitor.record("common-pq-hooks", System.nanoTime() - startedAt);
 
-        if (perf) startedAt = System.nanoTime();
-        hooks.tickScriptTasks().accept(entry);
-        if (perf) AgentPerformanceMonitor.record("common-script-tasks", System.nanoTime() - startedAt);
+            if (perf) startedAt = System.nanoTime();
+            hooks.tickScriptTasks().accept(entry);
+            if (perf) AgentPerformanceMonitor.record("common-script-tasks", System.nanoTime() - startedAt);
+        }
 
         if (hooks.isNpcLocked().test(entry)) {
             return true;
@@ -128,9 +136,11 @@ public final class AgentCommonTickService {
             hooks.tickCombatBuffs().accept(entry, agent);
             if (perf) AgentPerformanceMonitor.record("common-combat-buffs", System.nanoTime() - startedAt);
 
-            if (perf) startedAt = System.nanoTime();
-            hooks.tickBuffPots().accept(entry, agent);
-            if (perf) AgentPerformanceMonitor.record("common-buff-pots", System.nanoTime() - startedAt);
+            if (agentManagedProfile) {
+                if (perf) startedAt = System.nanoTime();
+                hooks.tickBuffPots().accept(entry, agent);
+                if (perf) AgentPerformanceMonitor.record("common-buff-pots", System.nanoTime() - startedAt);
+            }
         }
         return hooks.tickActionLocked().test(entry);
     }

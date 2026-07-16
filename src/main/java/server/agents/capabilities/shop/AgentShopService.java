@@ -78,6 +78,9 @@ public final class AgentShopService {
 
     public static void onMapChange(AgentRuntimeEntry entry, Character bot, InventoryGateway inventory) {
         clearShopState(entry);
+        if (entry.isPartnerManaged()) {
+            return;
+        }
 
         NpcShopMatch match = findBestShop(bot, false, inventory);
         if (match == null) {
@@ -105,6 +108,12 @@ public final class AgentShopService {
 
     public static void requestSellTrashVisit(AgentRuntimeEntry entry, Character bot, InventoryGateway inventory) {
         if (entry == null || bot == null || bot.getMap() == null) {
+            return;
+        }
+        if (entry.isPartnerManaged()) {
+            clearShopState(entry);
+            AgentShopRuntime.replyNow(
+                    entry, "I leave equipment, shopping, and selling decisions to you while we're partnered.");
             return;
         }
         if (AgentInventorySellTrashService.collectSellTrashEquips(entry, bot, inventory).isEmpty()) {
@@ -138,6 +147,10 @@ public final class AgentShopService {
     }
 
     public static boolean tickShopVisit(AgentRuntimeEntry entry, Character bot, InventoryGateway inventory) {
+        if (entry.isPartnerManaged()) {
+            clearShopState(entry);
+            return false;
+        }
         if (!AgentShopStateRuntime.shopVisitPending(entry)) {
             return false;
         }
@@ -665,6 +678,10 @@ public final class AgentShopService {
 
     private static void scheduleShopStep(AgentRuntimeEntry entry, long delayMs, Runnable step) {
         AgentShopRuntime.afterDelay(entry, delayMs, () -> {
+            if (entry.isPartnerManaged()) {
+                clearShopState(entry);
+                return;
+            }
             if (!AgentShopStateRuntime.shouldRunScheduledShopStep(entry)) {
                 return;
             }

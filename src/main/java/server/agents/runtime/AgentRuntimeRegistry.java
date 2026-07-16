@@ -83,6 +83,28 @@ public final class AgentRuntimeRegistry {
         return activeLeaderByAgentCharacterId(entriesByLeaderId, agentCharId);
     }
 
+    public static Integer partnerManagedOwnerIdByAgentCharacterId(int agentCharId) {
+        for (Map.Entry<Integer, List<AgentRuntimeEntry>> leaderEntries : entriesByLeaderId.entrySet()) {
+            for (AgentRuntimeEntry entry : leaderEntries.getValue()) {
+                if (entry.isPartnerManaged() && AgentRuntimeIdentityRuntime.botIs(entry, agentCharId)) {
+                    return leaderEntries.getKey();
+                }
+            }
+        }
+        return null;
+    }
+
+    public static boolean isPartnerManagedAgentCharacterId(int agentCharId) {
+        for (List<AgentRuntimeEntry> entries : entriesByLeaderId.values()) {
+            for (AgentRuntimeEntry entry : entries) {
+                if (entry.isPartnerManaged() && AgentRuntimeIdentityRuntime.botIs(entry, agentCharId)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public static boolean hasActiveAgentCharacterId(int agentCharId) {
         for (List<AgentRuntimeEntry> entries : entriesByLeaderId.values()) {
             for (AgentRuntimeEntry entry : entries) {

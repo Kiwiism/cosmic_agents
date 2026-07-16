@@ -84,4 +84,29 @@ class AgentTradeCompletionServiceTest {
             inventory.verify(() -> AgentInventoryRuntime.visibleSayNow(entry, "freebie"));
         }
     }
+
+    @Test
+    void partnerManagedOwnerTradeDoesNotSeedAutomaticEquipmentState() {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
+        entry.markPartnerManaged();
+        Character agent = mock(Character.class);
+        Item equip = new Item(1002000, (short) 1, (short) 1);
+
+        try (MockedStatic<Trade> tradeStatic = mockStatic(Trade.class);
+             MockedStatic<AgentInventoryRuntime> inventory = mockStatic(AgentInventoryRuntime.class)) {
+            AgentTradeCompletionService.completeAndReact(
+                    entry,
+                    agent,
+                    List.of(equip),
+                    true,
+                    () -> 900L,
+                    () -> "thanks",
+                    () -> "freebie",
+                    () -> 99,
+                    () -> true);
+
+            assertFalse(AgentPendingTradeStateRuntime.hasOwnerGivenItems(entry));
+            tradeStatic.verify(() -> Trade.completeTrade(agent));
+        }
+    }
 }

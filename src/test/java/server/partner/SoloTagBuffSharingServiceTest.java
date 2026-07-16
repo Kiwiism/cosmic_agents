@@ -170,6 +170,62 @@ class SoloTagBuffSharingServiceTest {
     }
 
     @Test
+    void shadowPartnerIsNotAppliedWhenClientSkillProvisioningFailed() {
+        AdventurerPartnerConfig config = enabledEquipConfig();
+        SoloTagBuffSharingService sharing = new SoloTagBuffSharingService(config);
+        Character human = mock(Character.class);
+        Character partner = mock(Character.class);
+        Skill shadowPartner = new Skill(4111002);
+        PlayerBuffValueHolder buff = buff(
+                BuffStat.SHADOWPARTNER, 50, shadowPartner.getId());
+        when(human.getAllBuffs()).thenReturn(List.of(buff));
+        when(human.getSkills()).thenReturn(Map.of(
+                shadowPartner, new Character.SkillEntry((byte) 30, 0, -1L)));
+        when(partner.getAllBuffs()).thenReturn(List.of());
+        when(partner.getSkills()).thenReturn(Map.of());
+        when(partner.haveItemEquipped(BOND_ITEM_ID)).thenReturn(true);
+
+        SoloTagBuffSharingService.SharingPlan plan =
+                sharing.capture(PartnerMode.SOLO_TAG, human, partner);
+        when(human.getAllBuffs()).thenReturn(List.of());
+        when(human.getSkills()).thenReturn(Map.of());
+        List<SoloTagBuffSharingService.SkillGrant> grants = new ArrayList<>();
+
+        sharing.applyAfterExchange(plan, human, partner, grants::add);
+
+        assertEquals(1, grants.size());
+        verify(human, never()).silentGiveBuffs(org.mockito.ArgumentMatchers.anyList());
+    }
+
+    @Test
+    void shadowPartnerIsNotAppliedAtADifferentClientSkillLevel() {
+        AdventurerPartnerConfig config = new AdventurerPartnerConfig();
+        addBondEffect(config, BOND_ITEM_ID, 20);
+        SoloTagBuffSharingService sharing = new SoloTagBuffSharingService(config);
+        Character human = mock(Character.class);
+        Character partner = mock(Character.class);
+        Skill shadowPartner = new Skill(4111002);
+        PlayerBuffValueHolder buff = buff(
+                BuffStat.SHADOWPARTNER, 50, shadowPartner.getId());
+        when(human.getAllBuffs()).thenReturn(List.of(buff));
+        when(human.getSkills()).thenReturn(Map.of(
+                shadowPartner, new Character.SkillEntry((byte) 30, 0, -1L)));
+        when(partner.getAllBuffs()).thenReturn(List.of());
+        when(partner.getSkills()).thenReturn(Map.of());
+        when(partner.haveItemEquipped(BOND_ITEM_ID)).thenReturn(true);
+
+        SoloTagBuffSharingService.SharingPlan plan =
+                sharing.capture(PartnerMode.SOLO_TAG, human, partner);
+        when(human.getAllBuffs()).thenReturn(List.of());
+        List<SoloTagBuffSharingService.SkillGrant> grants = new ArrayList<>();
+
+        sharing.applyAfterExchange(plan, human, partner, grants::add);
+
+        assertEquals(20, Byte.toUnsignedInt(grants.getFirst().level()));
+        verify(human, never()).silentGiveBuffs(org.mockito.ArgumentMatchers.anyList());
+    }
+
+    @Test
     void disabledFeatureDoesNotInspectOrApplyBuffs() {
         AdventurerPartnerConfig config = new AdventurerPartnerConfig();
         SoloTagBuffSharingService sharing = new SoloTagBuffSharingService(config);

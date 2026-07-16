@@ -41,6 +41,7 @@ import server.CashShop;
 import server.CashShop.CashItem;
 import server.CashShop.CashItemFactory;
 import server.ItemInformationProvider;
+import server.partner.PartnerInteractionPolicy;
 import service.NoteService;
 import tools.PacketCreator;
 import tools.Pair;
@@ -128,6 +129,14 @@ public final class CashOperationHandler extends AbstractPacketHandler {
                         return;
                     } else if (recipient.get("accountid").equals(String.valueOf(c.getAccID()))) {
                         c.sendPacket(PacketCreator.showCashShopMessage((byte) 0xA8));
+                        return;
+                    }
+                    Character giftRecipient = c.getWorldServer().getPlayerStorage()
+                            .getCharacterById(Integer.parseInt(recipient.get("id")));
+                    if (giftRecipient != null
+                            && !PartnerInteractionPolicy.isOwnerOrUnprotected(chr, giftRecipient)) {
+                        chr.dropMessage(1, "That adventuring partner only accepts gifts from their owner.");
+                        c.enableCSActions();
                         return;
                     }
                     cs.gainCash(4, cItem, chr.getWorld());
@@ -319,6 +328,9 @@ public final class CashOperationHandler extends AbstractPacketHandler {
                         Character partner = c.getChannelServer().getPlayerStorage().getCharacterByName(recipientName);
                         if (partner == null) {
                             chr.sendPacket(PacketCreator.serverNotice(1, "The partner you specified cannot be found.\r\nPlease make sure your partner is online and in the same channel."));
+                        } else if (!PartnerInteractionPolicy.isOwnerOrUnprotected(chr, partner)) {
+                            chr.sendPacket(PacketCreator.serverNotice(
+                                    1, "That adventuring partner only accepts rings from their owner."));
                         } else {
 
                           /*  if (partner.getGender() == chr.getGender()) {
@@ -384,6 +396,9 @@ public final class CashOperationHandler extends AbstractPacketHandler {
                         Character partner = c.getChannelServer().getPlayerStorage().getCharacterByName(sentTo);
                         if (partner == null) {
                             c.sendPacket(PacketCreator.showCashShopMessage((byte) 0xBE));
+                        } else if (!PartnerInteractionPolicy.isOwnerOrUnprotected(chr, partner)) {
+                            chr.sendPacket(PacketCreator.serverNotice(
+                                    1, "That adventuring partner only accepts rings from their owner."));
                         } else {
                             // Need to check to make sure its actually an equip and the right SN...
                             if (itemRing.toItem() instanceof Equip eqp) {

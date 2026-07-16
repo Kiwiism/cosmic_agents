@@ -41,21 +41,29 @@ public final class AgentActiveModeRuntime {
 
             @Override
             public void checkPotShareOnModeStart() {
-                AgentPotionService.checkPotShareOnModeStart(
-                        entry,
-                        bot(entry),
-                        AgentInventoryGatewayRuntime.inventory());
+                if (!entry.isPartnerManaged()) {
+                    AgentPotionService.checkPotShareOnModeStart(
+                            entry,
+                            bot(entry),
+                            AgentInventoryGatewayRuntime.inventory());
+                }
             }
         };
     }
 
     public static void autoEquipAndSuggestGearToSiblings(AgentRuntimeEntry entry) {
+        if (entry.isPartnerManaged()) {
+            return;
+        }
         autoEquip(entry);
         resetGearSuggestionCooldown(entry);
         maybeSuggestGearToSiblings(entry, bot(entry));
     }
 
     public static void maybeSuggestGearToSiblings(AgentRuntimeEntry entry, Character bot) {
+        if (entry.isPartnerManaged()) {
+            return;
+        }
         Character owner = AgentRuntimeIdentityRuntime.owner(entry);
         AgentChatStatusRuntime.maybeSuggestGear(
                 AgentStatusStateRuntime.gearSuggestionState(entry),
@@ -66,6 +74,9 @@ public final class AgentActiveModeRuntime {
     }
 
     private static void autoEquip(AgentRuntimeEntry entry) {
+        if (entry.isPartnerManaged()) {
+            return;
+        }
         AgentEquipmentService.autoEquip(
                 bot(entry),
                 AgentRuntimeIdentityRuntime.owner(entry),

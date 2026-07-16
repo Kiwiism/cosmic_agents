@@ -128,6 +128,20 @@ import java.util.stream.Collectors;
  * @author Frz
  */
 public class PacketCreator {
+    /**
+     * Packet-only appearance for a synthetic player actor. None of these values
+     * are written back to the backing {@link Character} or its inventories.
+     */
+    public record VisualProxyAppearance(String name, int gender, int skinColorId,
+                                        int faceId, int hairId,
+                                        Map<Integer, Integer> visibleEquips,
+                                        int cashWeaponId, int stance) {
+        public VisualProxyAppearance {
+            name = name == null ? "" : name;
+            visibleEquips = visibleEquips == null ? Map.of() : Map.copyOf(visibleEquips);
+        }
+    }
+
 
     public static final List<Pair<Stat, Integer>> EMPTY_STATUPDATE = Collections.emptyList();
     private final static long FT_UT_OFFSET = 116444736010800000L + (10000L * TimeZone.getDefault().getOffset(System.currentTimeMillis())); // normalize with timezone offset suggested by Ari
@@ -223,12 +237,26 @@ public class PacketCreator {
     }
 
     protected static void addCharLook(final OutPacket p, Character chr, boolean mega) {
+        addCharLook(p, chr, mega, true);
+    }
+
+    private static void addCharLook(final OutPacket p, Character chr, boolean mega,
+                                    boolean includePets) {
         p.writeByte(chr.getGender());
         p.writeByte(chr.getSkinColor().getId()); // skin color
         p.writeInt(chr.getFace()); // face
         p.writeBool(!mega);
         p.writeInt(chr.getHair()); // hair
-        addCharEquips(p, chr);
+        addCharEquips(p, chr, includePets);
+    }
+
+    private static void addCharLook(final OutPacket p, VisualProxyAppearance appearance) {
+        p.writeByte(appearance.gender());
+        p.writeByte(appearance.skinColorId());
+        p.writeInt(appearance.faceId());
+        p.writeBool(true);
+        p.writeInt(appearance.hairId());
+        addCharEquips(p, appearance);
     }
 
     private static void addCharacterInfo(OutPacket p, Character chr) {
@@ -298,8 +326,14 @@ public class PacketCreator {
     }
 
     private static void addCharEquips(final OutPacket p, Character chr) {
+        addCharEquips(p, chr, true);
+    }
+
+    private static void addCharEquips(final OutPacket p, Character chr, boolean includePets) {
         Inventory equip = chr.getInventory(InventoryType.EQUIPPED);
-        Collection<Item> ii = ItemInformationProvider.getInstance().canWearEquipment(chr, equip.list());
+        Collection<Item> ii = includePets
+                ? ItemInformationProvider.getInstance().canWearEquipment(chr, equip.list())
+                : equip.list();
         Map<Short, Integer> myEquip = new LinkedHashMap<>();
         Map<Short, Integer> maskedEquip = new LinkedHashMap<>();
         for (Item item : ii) {
@@ -329,12 +363,27 @@ public class PacketCreator {
         Item cWeapon = equip.getItem((short) -111);
         p.writeInt(cWeapon != null ? cWeapon.getItemId() : 0);
         for (int i = 0; i < 3; i++) {
-            if (chr.getPet(i) != null) {
+            if (includePets && chr.getPet(i) != null) {
                 p.writeInt(chr.getPet(i).getItemId());
             } else {
                 p.writeInt(0);
             }
         }
+    }
+
+    private static void addCharEquips(final OutPacket p, VisualProxyAppearance appearance) {
+        appearance.visibleEquips().entrySet().stream()
+                .sorted(Entry.comparingByKey())
+                .forEach(entry -> {
+                    p.writeByte(entry.getKey());
+                    p.writeInt(entry.getValue());
+                });
+        p.writeByte(0xFF);
+        p.writeByte(0xFF); // no masked equipment: this look already describes the visible layer
+        p.writeInt(appearance.cashWeaponId());
+        p.writeInt(0);
+        p.writeInt(0);
+        p.writeInt(0);
     }
 
     public static Packet setExtraPendantSlot(boolean toggleExtraSlot) {
@@ -1854,36 +1903,43 @@ public class PacketCreator {
     }
 
     private static void writeForeignBuffs(OutPacket p, Character chr) {
+        writeForeignBuffs(p, chr, true);
+    }
+
+    private static void writeForeignBuffs(OutPacket p, Character chr, boolean includeLiveState) {
         p.writeInt(0);
         p.writeShort(0); //v83
         p.writeByte(0xFC);
         p.writeByte(1);
-        if (chr.getBuffedValue(BuffStat.MORPH) != null) {
+        if (includeLiveState && chr.getBuffedValue(BuffStat.MORPH) != null) {
             p.writeInt(2);
         } else {
             p.writeInt(0);
         }
         long buffmask = 0;
         Integer buffvalue = null;
-        if ((chr.getBuffedValue(BuffStat.DARKSIGHT) != null || chr.getBuffedValue(BuffStat.WIND_WALK) != null) && !chr.isHidden()) {
+        if (includeLiveState
+                && (chr.getBuffedValue(BuffStat.DARKSIGHT) != null
+                || chr.getBuffedValue(BuffStat.WIND_WALK) != null)
+                && !chr.isHidden()) {
             buffmask |= BuffStat.DARKSIGHT.getValue();
         }
-        if (chr.getBuffedValue(BuffStat.COMBO) != null) {
+        if (includeLiveState && chr.getBuffedValue(BuffStat.COMBO) != null) {
             buffmask |= BuffStat.COMBO.getValue();
             buffvalue = Integer.valueOf(chr.getBuffedValue(BuffStat.COMBO));
         }
-        if (chr.getBuffedValue(BuffStat.SHADOWPARTNER) != null) {
+        if (includeLiveState && chr.getBuffedValue(BuffStat.SHADOWPARTNER) != null) {
             buffmask |= BuffStat.SHADOWPARTNER.getValue();
         }
-        if (chr.getBuffedValue(BuffStat.SOULARROW) != null) {
+        if (includeLiveState && chr.getBuffedValue(BuffStat.SOULARROW) != null) {
             buffmask |= BuffStat.SOULARROW.getValue();
         }
-        if (chr.getBuffedValue(BuffStat.MORPH) != null) {
+        if (includeLiveState && chr.getBuffedValue(BuffStat.MORPH) != null) {
             buffvalue = Integer.valueOf(chr.getBuffedValue(BuffStat.MORPH));
         }
         p.writeInt((int) ((buffmask >> 32) & 0xffffffffL));
         if (buffvalue != null) {
-            if (chr.getBuffedValue(BuffStat.MORPH) != null) { //TEST
+            if (includeLiveState && chr.getBuffedValue(BuffStat.MORPH) != null) { //TEST
                 p.writeShort(buffvalue);
             } else {
                 p.writeByte(buffvalue.byteValue());
@@ -1892,11 +1948,11 @@ public class PacketCreator {
         p.writeInt((int) (buffmask & 0xffffffffL));
 
         // Energy Charge
-        p.writeInt(chr.getEnergyBar() == 15000 ? 1 : 0);
+        p.writeInt(includeLiveState && chr.getEnergyBar() == 15000 ? 1 : 0);
         p.writeShort(0);
         p.skip(4);
 
-        boolean dashBuff = chr.getBuffedValue(BuffStat.DASH) != null;
+        boolean dashBuff = includeLiveState && chr.getBuffedValue(BuffStat.DASH) != null;
         // Dash Speed
         p.writeInt(dashBuff ? 1 << 24 : 0);
         p.skip(11);
@@ -1908,7 +1964,7 @@ public class PacketCreator {
         p.writeByte(0);
 
         // Monster Riding
-        Integer bv = chr.getBuffedValue(BuffStat.MONSTER_RIDING);
+        Integer bv = includeLiveState ? chr.getBuffedValue(BuffStat.MONSTER_RIDING) : null;
         if (bv != null) {
             Mount mount = chr.getMount();
             if (mount != null) {
@@ -1949,11 +2005,34 @@ public class PacketCreator {
      * @return The spawn player packet.
      */
     public static Packet spawnPlayerMapObject(Client target, Character chr, boolean enteringField) {
+        return spawnPlayerMapObject(
+                target, chr, enteringField, chr.getId(), chr.getPosition(),
+                chr.getJob().getId(), null);
+    }
+
+    /**
+     * Spawns a presentation-only player actor without mutating or registering the
+     * backing character. The caller owns removal of {@code visualCharacterId}.
+     */
+    public static Packet spawnPlayerVisualProxy(Client target, Character appearance,
+                                                int visualCharacterId, Point position,
+                                                int visualJobId,
+                                                VisualProxyAppearance visualAppearance) {
+        return spawnPlayerMapObject(
+                target, appearance, false, visualCharacterId, position,
+                visualJobId, visualAppearance);
+    }
+
+    private static Packet spawnPlayerMapObject(Client target, Character chr, boolean enteringField,
+                                               int visualCharacterId, Point position,
+                                               int visualJobId,
+                                               VisualProxyAppearance visualAppearance) {
+        boolean visualProxy = visualAppearance != null;
         OutPacket p = OutPacket.create(SendOpcode.SPAWN_PLAYER);
-        p.writeInt(chr.getId());
+        p.writeInt(visualCharacterId);
         p.writeByte(chr.getLevel()); //v83
-        p.writeString(chr.getName());
-        if (chr.getGuildId() < 1) {
+        p.writeString(visualProxy ? visualAppearance.name() : chr.getName());
+        if (visualProxy || chr.getGuildId() < 1) {
             p.writeString("");
             p.writeBytes(new byte[6]);
         } else {
@@ -1970,9 +2049,9 @@ public class PacketCreator {
             }
         }
 
-        writeForeignBuffs(p, chr);
+        writeForeignBuffs(p, chr, !visualProxy);
 
-        p.writeShort(chr.getJob().getId());
+        p.writeShort(visualJobId);
 
                 /* replace "p.writeShort(chr.getJob().getId())" with this snippet for 3rd person FJ animation on all classes
                 if (chr.getJob().isA(Job.HERMIT) || chr.getJob().isA(Job.DAWNWARRIOR2) || chr.getJob().isA(Job.NIGHTWALKER2)) {
@@ -1981,31 +2060,39 @@ public class PacketCreator {
 			p.writeShort(412);
                 }*/
 
-        addCharLook(p, chr, false);
-        p.writeInt(chr.getInventory(InventoryType.CASH).countById(ItemId.HEART_SHAPED_CHOCOLATE));
-        p.writeInt(chr.getItemEffect());
-        p.writeInt(ItemConstants.getInventoryType(chr.getChair()) == InventoryType.SETUP ? chr.getChair() : 0);
+        if (visualProxy) {
+            addCharLook(p, visualAppearance);
+        } else {
+            addCharLook(p, chr, false, true);
+        }
+        p.writeInt(visualProxy ? 0
+                : chr.getInventory(InventoryType.CASH).countById(ItemId.HEART_SHAPED_CHOCOLATE));
+        p.writeInt(visualProxy ? 0 : chr.getItemEffect());
+        p.writeInt(!visualProxy && ItemConstants.getInventoryType(chr.getChair()) == InventoryType.SETUP
+                ? chr.getChair() : 0);
 
         if (enteringField) {
-            Point spawnPos = new Point(chr.getPosition());
+            Point spawnPos = new Point(position);
             spawnPos.y -= 42;
             p.writePos(spawnPos);
             p.writeByte(6);
         } else {
-            p.writePos(chr.getPosition());
-            p.writeByte(chr.getStance());
+            p.writePos(position);
+            p.writeByte(visualProxy ? visualAppearance.stance() : chr.getStance());
         }
 
         p.writeShort(0);//chr.getFh()
         p.writeByte(0);
-        Pet[] pet = chr.getPets();
-        for (int i = 0; i < 3; i++) {
-            if (pet[i] != null) {
-                addPetInfo(p, pet[i], false);
+        if (!visualProxy) {
+            Pet[] pet = chr.getPets();
+            for (int i = 0; i < 3; i++) {
+                if (pet[i] != null) {
+                    addPetInfo(p, pet[i], false);
+                }
             }
         }
         p.writeByte(0); //end of pets
-        if (chr.getMount() == null) {
+        if (visualProxy || chr.getMount() == null) {
             p.writeInt(1); // mob level
             p.writeLong(0); // mob exp + tiredness
         } else {
@@ -2014,7 +2101,7 @@ public class PacketCreator {
             p.writeInt(chr.getMount().getTiredness());
         }
 
-        PlayerShop mps = chr.getPlayerShop();
+        PlayerShop mps = visualProxy ? null : chr.getPlayerShop();
         if (mps != null && mps.isOwner(chr)) {
             if (mps.hasFreeSlot()) {
                 addAnnounceBox(p, mps, mps.getVisitors().length);
@@ -2022,7 +2109,7 @@ public class PacketCreator {
                 addAnnounceBox(p, mps, 1);
             }
         } else {
-            MiniGame miniGame = chr.getMiniGame();
+            MiniGame miniGame = visualProxy ? null : chr.getMiniGame();
             if (miniGame != null && miniGame.isOwner(chr)) {
                 if (miniGame.hasFreeSlot()) {
                     addAnnounceBox(p, miniGame, 1, 0);
@@ -2034,16 +2121,23 @@ public class PacketCreator {
             }
         }
 
-        if (chr.getChalkboard() != null) {
+        if (!visualProxy && chr.getChalkboard() != null) {
             p.writeByte(1);
             p.writeString(chr.getChalkboard());
         } else {
             p.writeByte(0);
         }
-        addRingLook(p, chr, true);  // crush
-        addRingLook(p, chr, false); // friendship
-        addMarriageRingLook(target, p, chr);
-        encodeNewYearCardInfo(p, chr);  // new year seems to crash sometimes...
+        if (visualProxy) {
+            p.writeByte(0); // crush ring
+            p.writeByte(0); // friendship ring
+            p.writeByte(0); // marriage ring
+            p.writeByte(0); // New Year cards
+        } else {
+            addRingLook(p, chr, true);  // crush
+            addRingLook(p, chr, false); // friendship
+            addMarriageRingLook(target, p, chr);
+            encodeNewYearCardInfo(p, chr);  // new year seems to crash sometimes...
+        }
         p.writeByte(0);
         p.writeByte(0);
         p.writeByte(chr.getTeam());//only needed in specific fields
@@ -2372,9 +2466,20 @@ public class PacketCreator {
     public static Packet magicAttack(Character chr, int skill, int skilllevel, int stance, int numAttackedAndDamage,
                                      Map<Integer, AttackTarget> targets, int charge, int speed, int direction,
                                      int display) {
+        return magicAttackFromVisualProxy(
+                chr.getId(), skill, skilllevel, stance, numAttackedAndDamage,
+                targets, charge, speed, direction, display);
+    }
+
+    /** Builds a presentation-only magic attack using an already spawned visual actor ID. */
+    public static Packet magicAttackFromVisualProxy(int visualCharacterId, int skill,
+                                                    int skilllevel, int stance,
+                                                    int numAttackedAndDamage,
+                                                    Map<Integer, AttackTarget> targets, int charge,
+                                                    int speed, int direction, int display) {
         final OutPacket p = OutPacket.create(SendOpcode.MAGIC_ATTACK);
-        addAttackBody(p, chr, skill, skilllevel, stance, numAttackedAndDamage, 0, targets, speed, direction,
-                display);
+        addAttackBody(p, visualCharacterId, skill, skilllevel, stance,
+                numAttackedAndDamage, 0, targets, speed, direction, display);
         if (charge != -1) {
             p.writeInt(charge);
         }
@@ -2384,7 +2489,15 @@ public class PacketCreator {
     private static void addAttackBody(OutPacket p, Character chr, int skill, int skilllevel, int stance,
                                       int numAttackedAndDamage, int projectile, Map<Integer, AttackTarget> targets,
                                       int speed, int direction, int display) {
-        p.writeInt(chr.getId());
+        addAttackBody(p, chr.getId(), skill, skilllevel, stance, numAttackedAndDamage,
+                projectile, targets, speed, direction, display);
+    }
+
+    private static void addAttackBody(OutPacket p, int visualCharacterId, int skill, int skilllevel, int stance,
+                                      int numAttackedAndDamage, int projectile,
+                                      Map<Integer, AttackTarget> targets, int speed,
+                                      int direction, int display) {
+        p.writeInt(visualCharacterId);
         p.writeByte(numAttackedAndDamage);
         p.writeByte(0x5B);//?
         p.writeByte(skilllevel);

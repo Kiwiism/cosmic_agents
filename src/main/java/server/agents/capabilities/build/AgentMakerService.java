@@ -33,6 +33,8 @@ import java.util.concurrent.ThreadLocalRandom;
  * {@link AgentScriptTaskStateRuntime#activityEpoch(AgentRuntimeEntry)}.
  */
 public final class AgentMakerService {
+    private static final String PARTNER_MANAGED_INVENTORY_REPLY =
+            "I leave crafting and inventory decisions to you while we're adventuring partners.";
     private static final int LEFTOVERS_PER_CRYSTAL = 100;   // Maker type-3 recipe req count
     private static final long STEP_INTERVAL_MS = 5000L;     // 5 seconds per operation
     private static final int LONG_BATCH_THRESHOLD = 10;     // "will take a while" past this many ops
@@ -119,6 +121,10 @@ public final class AgentMakerService {
     }
 
     private static boolean guardStart(AgentRuntimeEntry entry, Character bot, MakerGateway maker) {
+        if (entry.isPartnerManaged()) {
+            AgentMakerRuntime.replyNow(entry, PARTNER_MANAGED_INVENTORY_REPLY);
+            return false;
+        }
         if (ACTIVE.contains(bot.getId())) {
             AgentMakerRuntime.replyNow(entry, "still working on the last batch, hang on");
             return false;
@@ -171,6 +177,12 @@ public final class AgentMakerService {
 
     private static void runStep(AgentRuntimeEntry entry, BatchStep step, String noun, int epoch, int done) {
         Character bot = AgentRuntimeIdentityRuntime.bot(entry);
+        if (entry.isPartnerManaged()) {
+            if (bot != null) {
+                ACTIVE.remove(bot.getId());
+            }
+            return;
+        }
         if (bot == null || !bot.isLoggedin()) {
             if (bot != null) {
                 ACTIVE.remove(bot.getId());

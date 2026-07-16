@@ -108,6 +108,10 @@ public class AgentRuntimeEntry implements AgentRuntimeHandle {
         partnerManaged = true;
     }
 
+    public void clearPartnerManaged() {
+        partnerManaged = false;
+    }
+
     public boolean isPartnerManaged() {
         return partnerManaged;
     }

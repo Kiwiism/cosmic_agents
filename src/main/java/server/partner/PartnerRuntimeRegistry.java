@@ -47,6 +47,10 @@ public final class PartnerRuntimeRegistry {
         return Optional.ofNullable(human != null ? human : byPartnerActorId.get(characterId));
     }
 
+    public Optional<ActivePartnerSession> findByPartnerActorId(int characterId) {
+        return Optional.ofNullable(byPartnerActorId.get(characterId));
+    }
+
     public void remove(ActivePartnerSession session) {
         synchronized (this) {
             byHumanActorId.remove(session.humanActor().getId(), session);

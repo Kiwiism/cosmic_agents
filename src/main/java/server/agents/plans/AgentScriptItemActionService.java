@@ -18,6 +18,9 @@ public final class AgentScriptItemActionService {
 
     static boolean dropItem(AgentRuntimeEntry entry, InventoryType type, int itemId, short quantity,
                             InventoryGateway inventoryGateway) {
+        if (entry == null || entry.isPartnerManaged()) {
+            return false;
+        }
         Character agent = AgentRuntimeIdentityRuntime.bot(entry);
         if (agent == null || type == null || inventoryGateway == null) {
             return false;

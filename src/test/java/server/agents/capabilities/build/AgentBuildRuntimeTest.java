@@ -15,6 +15,7 @@ import server.agents.runtime.AgentSchedulerRuntime;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -76,6 +77,27 @@ class AgentBuildRuntimeTest {
                     org.mockito.ArgumentMatchers.eq(1100),
                     org.mockito.ArgumentMatchers.any(Runnable.class)));
         }
+    }
+
+    @Test
+    void partnerManagedBuildCallbacksDoNotMutateOrScheduleProgression() {
+        Character bot = mock(Character.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
+        entry.markPartnerManaged();
+
+        try (MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class);
+             MockedStatic<AgentSchedulerRuntime> scheduler = mockStatic(AgentSchedulerRuntime.class)) {
+            AgentBuildRuntime.spVariantCallbacks(entry).oneHanded();
+            AgentBuildRuntime.apBuildCallbacks(entry).selectBuild("dexless");
+            AgentBuildRuntime.jobAdvancementCallbacks(entry).advanceTo(Job.HUNTER);
+
+            scheduler.verifyNoInteractions();
+        }
+
+        assertEquals(null, AgentBuildStateRuntime.spVariant(entry));
+        assertEquals(null, AgentBuildStateRuntime.apBuild(entry));
+        verify(bot, never()).getJob();
+        verify(bot, never()).changeJob(org.mockito.ArgumentMatchers.any());
     }
 
     @Test

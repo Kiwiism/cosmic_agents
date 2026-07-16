@@ -22,6 +22,9 @@ public final class AgentStarterKitService {
     private static final Logger log = LoggerFactory.getLogger(AgentStarterKitService.class);
 
     public static void advanceJob(AgentRuntimeEntry entry, Job newJob) {
+        if (entry.isPartnerManaged()) {
+            return;
+        }
         Character bot = AgentRuntimeIdentityRuntime.bot(entry);
         Character owner = AgentRuntimeIdentityRuntime.owner(entry);
         Job oldJob = bot.getJob();

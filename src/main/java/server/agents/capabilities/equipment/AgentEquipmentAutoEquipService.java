@@ -37,6 +37,7 @@ import server.agents.capabilities.dialogue.AgentRangeReportService;
 import server.agents.capabilities.equipment.AgentEquipmentRuntime;
 import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.integration.InventoryGateway;
+import server.agents.runtime.AgentRuntimeRegistry;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -77,6 +78,9 @@ public final class AgentEquipmentAutoEquipService {
     }
 
     public static void autoEquip(Character bot, Character owner, Item pendingOffer, boolean force) {
+        if (isPlayerManagedPartner(bot)) {
+            return;
+        }
         if (!shouldRunAutoEquip(bot, System.currentTimeMillis(), force)) {
             return;
         }
@@ -149,6 +153,13 @@ public final class AgentEquipmentAutoEquipService {
                 // Don't let a chat error block the equip pass.
             }
         }
+    }
+
+    private static boolean isPlayerManagedPartner(Character bot) {
+        if (bot == null) {
+            return false;
+        }
+        return AgentRuntimeRegistry.isPartnerManagedAgentCharacterId(bot.getId());
     }
 
     static boolean shouldRunAutoEquip(Character bot, long nowMs, boolean force) {

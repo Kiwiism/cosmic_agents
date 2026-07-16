@@ -179,10 +179,30 @@ adventurerPartner:
     SWITCH_COOLDOWN_MS: 1000               # Exact shared server gate for every trigger skill; v83 UI rounds positive values up to whole seconds.
     SAME_MAP_REQUIRED: true
     DOUBLE_PARTNER_READY_DELAY_MS: 0       # Optional extra wait after the NPC closes; 0-10000 ms. Packet preparation still finishes first.
-    MEDAL_DAMAGE_DELAY_MS: 2000            # Delays Genesis damage and Monster Expert's critical proc so their client animations can finish; 0-10000 ms.
+    MEDAL_DAMAGE_DELAY_MS: 600             # Delays Monster Expert's regular bonus line; Genesis follows its fixed 1800 ms WZ hit timing. 0-10000 ms.
     SWITCH_EFFECT_ID: 8                    # -1 disables it. Stock-safe default is the job-change effect (8); effect 10 crashes this v83 client.
     SWITCH_EFFECT_BROADCAST: false         # Keep frequent switch effects local unless nearby players should see them.
     SWITCH_TRIGGER_EFFECT_ENABLED: false   # The trigger skill already animates client-side; this suppresses the redundant server replay.
+    # Presentation-only angel used to render Genesis. These values never alter either partner's real appearance or inventory.
+    GENESIS_VISUAL_PROXY:
+        NAME: Seraph
+        GENDER: 1                          # 0 male, 1 female.
+        SKIN_COLOR_ID: 0                   # Stock v83 skin-colour ID.
+        FACE_ID: 21104
+        HAIR_ID: 31153
+        VISIBLE_EQUIPS:                    # Client appearance slots mapped to stock v83 item IDs.
+            1: 1002333
+            5: 1051190
+            7: 1072280
+            9: 1102222
+            11: 1372001
+        CASH_WEAPON_ID: 1702185            # 0 disables the cash-weapon override.
+        STANCE: 4                          # Idle stand-right (4) or stand-left (5); never follows player movement.
+        DARKSIGHT_ENABLED: false           # Optional translucent Dark Sight presentation; keep false for a visible angel.
+        TRANSFORM_EFFECT_PATH: Effect/BasicEff.img/Transform
+        ATTACK_DELAY_MS: 700               # Delay between spawning the proxy and broadcasting Genesis; 0-2000 ms.
+        LIFETIME_MS: 5000                  # Total proxy lifetime; 2500-15000 ms and at least ATTACK_DELAY_MS + 1800.
+        EXIT_EFFECT_LEAD_MS: 700           # Show the exit poof this many ms before removal; 0 disables it, max 2000.
     TRIGGER_SKILL_IDS: [1002, 10001002, 20001002, 20011002]
     RESTORE_CANONICAL_ON_DISCONNECT: true
     APPLY_ORDINARY_TRIGGER_BUFF: false      # When active, Partner switching replaces the ordinary trigger buff by default.

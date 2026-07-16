@@ -33,6 +33,19 @@ class AgentBuildStatusRuntimeTest {
     }
 
     @Test
+    void partnerManagedEntrySkipsBuildStatusAutomation() {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
+        Character bot = mock(Character.class);
+        entry.markPartnerManaged();
+
+        try (MockedStatic<AgentChatStatusRuntime> statusRuntime = mockStatic(AgentChatStatusRuntime.class)) {
+            AgentBuildStatusRuntime.checkBuildStatus(entry, bot);
+
+            statusRuntime.verifyNoInteractions();
+        }
+    }
+
+    @Test
     void statusCheckActionsDelegateBuildPromptsAndAssignments() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Character bot = mock(Character.class);

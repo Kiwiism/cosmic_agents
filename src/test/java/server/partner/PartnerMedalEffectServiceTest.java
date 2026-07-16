@@ -1,6 +1,7 @@
 package server.partner;
 
 import client.Character;
+import client.Client;
 import client.Skill;
 import client.SkillFactory;
 import config.AdventurerPartnerConfig;
@@ -8,32 +9,44 @@ import config.PartnerMedalEffectConfig;
 import config.PartnerMedalEffectLevelConfig;
 import constants.skills.Bishop;
 import net.packet.Packet;
+import net.opcodes.SendOpcode;
 import net.server.channel.handlers.AbstractDealDamageHandler.AttackInfo;
 import net.server.channel.handlers.AbstractDealDamageHandler.AttackTarget;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import server.StatEffect;
+import server.TimerManager;
 import server.life.Monster;
 import server.maps.MapleMap;
+import tools.PacketCreator;
 
-import java.time.Instant;
+import java.awt.Point;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.intThat;
-import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -174,30 +187,44 @@ class PartnerMedalEffectServiceTest {
     }
 
     @Test
-    void bonusPresentationUsesTheV83CriticalDamageBit() {
-        Map<Integer, AttackTarget> targets = Map.of(
-                101, new AttackTarget((short) 0, List.of(60), Set.of(0)));
+    void bonusDamageBroadcastsOneRegularServerDamageLineWithoutAnAttackReplay() {
+        MapleMap map = mock(MapleMap.class);
+        Monster monster = mock(Monster.class);
+        Point monsterPosition = new Point(12, 34);
+        when(human.getMap()).thenReturn(map);
+        when(map.getMonsterByOid(101)).thenReturn(monster);
+        when(monster.getObjectId()).thenReturn(101);
+        when(monster.isAlive()).thenReturn(true);
+        when(monster.getPosition()).thenReturn(monsterPosition);
 
-        byte[] packet = PartnerMedalEffectService.bonusDamagePresentationPacket(
-                human, targets).getBytes();
-        int encodedDamage = ByteBuffer.wrap(packet, 23, Integer.BYTES)
-                .order(ByteOrder.LITTLE_ENDIAN)
-                .getInt();
+        service.applyRegularMobBonusDamage(human, Map.of(101, 60));
 
-        assertEquals(0x11, Byte.toUnsignedInt(packet[6]));
-        assertTrue(encodedDamage < 0);
-        assertEquals(60, encodedDamage & Integer.MAX_VALUE);
+        ArgumentCaptor<Packet> damagePacket = ArgumentCaptor.forClass(Packet.class);
+        verify(map).broadcastMessage(damagePacket.capture(), eq(monsterPosition));
+        assertEquals(SendOpcode.DAMAGE_MONSTER.getValue(), opcode(damagePacket.getValue()));
+        verify(map).damageMonster(human, monster, 60);
     }
 
     @Test
     void genesisSwitchEffectUsesV83BodyActionAndFacingPacketFields() {
         byte[] packet = PartnerMedalEffectService.genesisAttackPacket(
-                human, 1, 1, Map.of()).getBytes();
+                1_000_000_002, human, 1, 1, Map.of()).getBytes();
 
+        assertEquals(1_000_000_002, ByteBuffer.wrap(packet, 2, Integer.BYTES)
+                .order(ByteOrder.LITTLE_ENDIAN).getInt());
         assertEquals(0, Byte.toUnsignedInt(packet[13]));
         assertEquals(69, Byte.toUnsignedInt(packet[14]));
         assertEquals(0, Byte.toUnsignedInt(packet[15]));
         assertEquals(4, Byte.toUnsignedInt(packet[16]));
+    }
+
+    @Test
+    void genesisVisualProxyOverlapsTheCasterAtAPacketSafePosition() {
+        assertEquals(new Point(50, 123),
+                PartnerMedalEffectService.genesisVisualProxyPosition(new Point(50, 123)));
+        assertEquals(new Point(-50, Short.MAX_VALUE),
+                PartnerMedalEffectService.genesisVisualProxyPosition(
+                        new Point(-50, Integer.MAX_VALUE)));
     }
 
     @Test
@@ -208,6 +235,7 @@ class PartnerMedalEffectServiceTest {
         level.SKILL_LEVEL = 1;
         genesis.LEVELS.add(level);
         config.MEDAL_EFFECTS.add(genesis);
+        config.GENESIS_VISUAL_PROXY.DARKSIGHT_ENABLED = true;
         when(human.haveItemEquipped(1142137)).thenReturn(true);
 
         MapleMap map = mock(MapleMap.class);
@@ -220,6 +248,8 @@ class PartnerMedalEffectServiceTest {
         when(monster.getObjectId()).thenReturn(101);
         when(monster.getHp()).thenReturn(10_000);
         when(monster.isAlive()).thenReturn(true);
+        Client client = mock(Client.class);
+        when(human.getClient()).thenReturn(client);
 
         Skill skill = mock(Skill.class);
         StatEffect effect = mock(StatEffect.class);
@@ -229,15 +259,80 @@ class PartnerMedalEffectServiceTest {
         when(effect.getAttackCount()).thenReturn(1);
         when(effect.getMatk()).thenReturn((short) 430);
 
-        try (MockedStatic<SkillFactory> skills = mockStatic(SkillFactory.class)) {
+        Packet proxySpawn = mock(Packet.class);
+        TimerManager timer = mock(TimerManager.class);
+        AtomicInteger proxyId = new AtomicInteger();
+        AtomicReference<PacketCreator.VisualProxyAppearance> proxyAppearance = new AtomicReference<>();
+        AtomicReference<Runnable> proxyExit = new AtomicReference<>();
+        AtomicReference<Runnable> proxyCleanup = new AtomicReference<>();
+        List<Long> scheduledDelays = new ArrayList<>();
+        when(timer.schedule(any(Runnable.class), anyLong())).thenAnswer(invocation -> {
+            long delay = invocation.getArgument(1);
+            scheduledDelays.add(delay);
+            if (delay == 700L || delay == 2_500L) {
+                invocation.getArgument(0, Runnable.class).run();
+            } else if (delay == 4_300L) {
+                proxyExit.set(invocation.getArgument(0, Runnable.class));
+            } else if (delay == 5_000L) {
+                proxyCleanup.set(invocation.getArgument(0, Runnable.class));
+            }
+            return null;
+        });
+        try (MockedStatic<SkillFactory> skills = mockStatic(SkillFactory.class);
+             MockedStatic<PacketCreator> packets = mockStatic(PacketCreator.class, CALLS_REAL_METHODS);
+             MockedStatic<TimerManager> timers = mockStatic(TimerManager.class)) {
             skills.when(() -> SkillFactory.getSkill(Bishop.GENESIS)).thenReturn(skill);
+            timers.when(TimerManager::getInstance).thenReturn(timer);
+            packets.when(() -> PacketCreator.spawnPlayerVisualProxy(
+                            eq(client), eq(human), anyInt(), eq(new Point(0, 0)),
+                            eq(232), any(PacketCreator.VisualProxyAppearance.class)))
+                    .thenAnswer(invocation -> {
+                        proxyId.set(invocation.getArgument(2));
+                        proxyAppearance.set(invocation.getArgument(5));
+                        return proxySpawn;
+                    });
 
             service.applySwitchInEffects(runtimes.findByAnyActorId(10).orElseThrow());
+            packets.verify(
+                    () -> PacketCreator.showOwnBuffEffect(Bishop.GENESIS, 1), never());
         }
 
-        verify(map).broadcastMessage(any(Packet.class));
+        verify(map).broadcastMessage(eq(human), any(Packet.class), eq(false), eq(true));
         verify(map).damageMonster(eq(human), eq(monster), intThat(damage -> damage > 0));
-        verify(human, atLeast(1)).sendPacket(any(Packet.class));
+        verify(client).sendPacket(proxySpawn);
+        verify(client).sendPacket(argThat(packet ->
+                packet != null && packet.getBytes() != null
+                        && opcode(packet) == SendOpcode.GIVE_FOREIGN_BUFF.getValue()
+                        && characterId(packet) == proxyId.get()));
+        verify(client).sendPacket(argThat(packet ->
+                packet != null && packet.getBytes() != null
+                        && opcode(packet) == SendOpcode.MAGIC_ATTACK.getValue()
+                        && characterId(packet) == proxyId.get()));
+        assertEquals("Seraph", proxyAppearance.get().name());
+        assertEquals(1, proxyAppearance.get().gender());
+        assertEquals(4, proxyAppearance.get().stance());
+        assertEquals(1002333, proxyAppearance.get().visibleEquips().get(1));
+        assertEquals(List.of(700L, 4_300L, 5_000L, 2_500L), scheduledDelays);
+
+        proxyExit.get().run();
+        proxyCleanup.get().run();
+        verify(client).sendPacket(argThat(packet ->
+                packet != null && packet.getBytes() != null
+                        && opcode(packet) == SendOpcode.REMOVE_PLAYER_FROM_MAP.getValue()
+                        && characterId(packet) == proxyId.get()));
+    }
+
+    private static int opcode(Packet packet) {
+        byte[] bytes = packet.getBytes();
+        return Short.toUnsignedInt(ByteBuffer.wrap(bytes, 0, Short.BYTES)
+                .order(ByteOrder.LITTLE_ENDIAN)
+                .getShort());
+    }
+
+    private static int characterId(Packet packet) {
+        return ByteBuffer.wrap(packet.getBytes(), Short.BYTES, Integer.BYTES)
+                .order(ByteOrder.LITTLE_ENDIAN)
+                .getInt();
     }
 
     private void register(PartnerMode mode) {
