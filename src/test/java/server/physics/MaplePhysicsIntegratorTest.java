@@ -160,7 +160,14 @@ class MaplePhysicsIntegratorTest {
         up.setGrounded(true);
         integrator.step(up, new PhysicsInput(0.1, 0.0, true, false), uphill);
         assertTrue(up.x() > 25.0);
+        assertEquals(uphill.foothold(1).groundY(up.x()), up.y(), EPSILON);
         assertEquals(-0.2, up.footholdSlope(), EPSILON);
+
+        for (int step = 0; step < 30; step++) {
+            integrator.step(up, new PhysicsInput(0.2, 0.0, false, false), uphill);
+            assertEquals(uphill.foothold(1).groundY(up.x()), up.y(), EPSILON,
+                    "grounded uphill motion must not penetrate the foothold");
+        }
 
         PhysicsTerrain downhill = new FootholdPhysicsIndex(List.of(
                 segment(1, 0, 0, 0, 80, 100, 100)));
@@ -169,6 +176,7 @@ class MaplePhysicsIntegratorTest {
         down.setGrounded(true);
         integrator.step(down, new PhysicsInput(0.1, 0.0, true, false), downhill);
         assertTrue(down.x() > 25.0);
+        assertEquals(downhill.foothold(1).groundY(down.x()), down.y(), EPSILON);
         assertEquals(0.2, down.footholdSlope(), EPSILON);
     }
 

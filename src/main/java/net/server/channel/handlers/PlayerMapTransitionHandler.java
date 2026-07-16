@@ -41,7 +41,6 @@ public final class PlayerMapTransitionHandler extends AbstractPacketHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         Character chr = c.getPlayer();
-        chr.setMapTransitionComplete();
 
         int beaconid = chr.getBuffSource(BuffStat.HOMING_BEACON);
         if (beaconid != -1) {
@@ -69,5 +68,10 @@ public final class PlayerMapTransitionHandler extends AbstractPacketHandler {
                 }
             }
         }
+
+        // Keep the transition gate closed until the destination's monsters have been
+        // rebuilt for this client. Agent follow/physics ticks run on another thread and
+        // must not publish MOVE_MONSTER packets into this half-initialized window.
+        chr.setMapTransitionComplete();
     }
 }

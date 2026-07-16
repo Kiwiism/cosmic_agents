@@ -20,21 +20,121 @@ import static org.mockito.Mockito.when;
 
 class MobSimulationSessionTest {
     @Test
-    void qualifyingImpactUsesCapturedDirectionForExactlyThirtyOneSteps() {
-        Fixture fixture = fixture(new MobPhysicsProfile(0.08, 0.05, 10,
+    void moveActivityRefreshesAfterWzCycleAndOnFacingChange() {
+        Fixture fixture = fixture(new MobPhysicsProfile(0.08, 0.05, 1,
                 true, false, false, false));
-        fixture.session.acceptHit(fixture.agent, 10, 0, 1, 0L);
-        when(fixture.agent.getPosition()).thenReturn(new Point(-500, 100));
 
-        for (int step = 1; step <= 30; step++) {
-            fixture.session.advance(step * 8_000_000L);
+        fixture.session.setMotion(MobMotionState.CHASE);
+        assertEquals(0, fixture.session.rawActivityForPublication(0, 1_000_000L));
+        assertEquals(-1, fixture.session.rawActivityForPublication(0, 700_000_000L));
+        assertEquals(0, fixture.session.rawActivityForPublication(0, 721_000_000L),
+                "move activity must refresh after one WZ animation cycle");
+        assertEquals(1, fixture.session.rawActivityForPublication(1, 722_000_000L));
+        assertEquals(-1, fixture.session.rawActivityForPublication(1, 723_000_000L));
+
+        fixture.session.setMotion(MobMotionState.FLINCH);
+        assertEquals(-1, fixture.session.rawActivityForPublication(1, 724_000_000L));
+        assertEquals(1, fixture.session.rawActivityForPublication(1, 1_442_000_000L),
+                "stationary flinch must continue the WZ move-animation loop");
+        fixture.session.setMotion(MobMotionState.CHASE);
+        assertEquals(-1, fixture.session.rawActivityForPublication(1, 1_443_000_000L));
+    }
+
+    @Test
+    void optionalHit1IsOneShotAndWalkRestartsAfterRecovery() {
+        int originalRecovery = AgentCombatConfig.cfg.MOB_PHYSICS_FLINCH_RECOVERY_MS;
+        boolean originalHit1 = AgentCombatConfig.cfg.MOB_PHYSICS_HIT1_ENABLED;
+        try {
+            AgentCombatConfig.cfg.MOB_PHYSICS_FLINCH_RECOVERY_MS = 8;
+            AgentCombatConfig.cfg.MOB_PHYSICS_HIT1_ENABLED = true;
+            Fixture fixture = fixture(new MobPhysicsProfile(0.08, 0.05, 1,
+                    true, false, false, false));
+            fixture.session.acceptHit(fixture.agent, 10, 0, 1, 0L);
+
+            fixture.session.advance(8_000_000L);
+            assertEquals(0, fixture.session.rawActivityForPublication(0, 8_000_000L));
+            for (int step = 2; step <= 31; step++) {
+                fixture.session.advance(step * 8_000_000L);
+            }
+
             assertEquals(MobMotionState.FLINCH, fixture.session.motion());
-        }
-        fixture.session.advance(31 * 8_000_000L);
+            assertEquals(8, fixture.session.rawActivityForPublication(0, 248_000_000L));
+            assertEquals(-1, fixture.session.rawActivityForPublication(0, 249_000_000L));
 
-        assertEquals(MobMotionState.CHASE, fixture.session.motion());
-        assertTrue(fixture.session.body().x() > 50.0);
-        assertEquals(1, fixture.session.knockbackDirection());
+            fixture.session.advance(256_000_000L);
+            assertEquals(MobMotionState.CHASE, fixture.session.motion());
+            assertEquals(0, fixture.session.rawActivityForPublication(0, 256_000_000L),
+                    "walk activity must restart immediately after experimental hit1");
+        } finally {
+            AgentCombatConfig.cfg.MOB_PHYSICS_FLINCH_RECOVERY_MS = originalRecovery;
+            AgentCombatConfig.cfg.MOB_PHYSICS_HIT1_ENABLED = originalHit1;
+        }
+    }
+
+    @Test
+    void chaseForceRampsUpAfterFlinchRecovery() {
+        int originalRecovery = AgentCombatConfig.cfg.MOB_PHYSICS_FLINCH_RECOVERY_MS;
+        int originalRamp = AgentCombatConfig.cfg.MOB_PHYSICS_POST_FLINCH_CHASE_RAMP_MS;
+        boolean originalHit1 = AgentCombatConfig.cfg.MOB_PHYSICS_HIT1_ENABLED;
+        try {
+            AgentCombatConfig.cfg.MOB_PHYSICS_FLINCH_RECOVERY_MS = 8;
+            AgentCombatConfig.cfg.MOB_PHYSICS_POST_FLINCH_CHASE_RAMP_MS = 24;
+            AgentCombatConfig.cfg.MOB_PHYSICS_HIT1_ENABLED = false;
+            Fixture fixture = fixture(new MobPhysicsProfile(0.08, 0.05, 1,
+                    true, false, false, false));
+            fixture.session.acceptHit(fixture.agent, 10, 0, 1, 0L);
+            for (int step = 1; step <= 32; step++) {
+                fixture.session.advance(step * 8_000_000L);
+            }
+
+            assertEquals(MobMotionState.CHASE, fixture.session.motion());
+            assertEquals(1.0 / 3.0, fixture.session.consumeChaseRampMultiplier(), 1.0e-12);
+            assertEquals(2.0 / 3.0, fixture.session.consumeChaseRampMultiplier(), 1.0e-12);
+            assertEquals(1.0, fixture.session.consumeChaseRampMultiplier(), 1.0e-12);
+            assertEquals(1.0, fixture.session.consumeChaseRampMultiplier(), 1.0e-12);
+        } finally {
+            AgentCombatConfig.cfg.MOB_PHYSICS_FLINCH_RECOVERY_MS = originalRecovery;
+            AgentCombatConfig.cfg.MOB_PHYSICS_POST_FLINCH_CHASE_RAMP_MS = originalRamp;
+            AgentCombatConfig.cfg.MOB_PHYSICS_HIT1_ENABLED = originalHit1;
+        }
+    }
+
+    @Test
+    void qualifyingImpactKnocksBackThenRecoversWithoutMoving() {
+        int originalRecovery = AgentCombatConfig.cfg.MOB_PHYSICS_FLINCH_RECOVERY_MS;
+        try {
+            AgentCombatConfig.cfg.MOB_PHYSICS_FLINCH_RECOVERY_MS = 16;
+            Fixture fixture = fixture(new MobPhysicsProfile(0.08, 0.05, 10,
+                    true, false, false, false));
+            fixture.session.body().setVelocity(-0.75, 0.0);
+            fixture.session.acceptHit(fixture.agent, 10, 0, 1, 0L);
+            when(fixture.agent.getPosition()).thenReturn(new Point(-500, 100));
+
+            fixture.session.advance(8_000_000L);
+            assertEquals(MobMotionState.KNOCKBACK, fixture.session.motion());
+            assertTrue(fixture.session.body().velocityX() > 0.0,
+                    "knockback must replace opposing chase momentum");
+            for (int step = 2; step <= 30; step++) {
+                fixture.session.advance(step * 8_000_000L);
+                assertEquals(MobMotionState.KNOCKBACK, fixture.session.motion());
+            }
+            fixture.session.advance(31 * 8_000_000L);
+            assertEquals(MobMotionState.FLINCH, fixture.session.motion());
+            double recoveryX = fixture.session.body().x();
+            assertEquals(0.0, fixture.session.body().velocityX(), 1.0e-12);
+
+            fixture.session.advance(32 * 8_000_000L);
+            assertEquals(MobMotionState.FLINCH, fixture.session.motion());
+            assertEquals(recoveryX, fixture.session.body().x(), 1.0e-12);
+            fixture.session.advance(33 * 8_000_000L);
+
+            assertEquals(MobMotionState.CHASE, fixture.session.motion());
+            assertEquals(recoveryX, fixture.session.body().x(), 1.0e-12);
+            assertTrue(recoveryX > 50.0);
+            assertEquals(1, fixture.session.knockbackDirection());
+        } finally {
+            AgentCombatConfig.cfg.MOB_PHYSICS_FLINCH_RECOVERY_MS = originalRecovery;
+        }
     }
 
     @Test
@@ -51,7 +151,7 @@ class MobSimulationSessionTest {
             assertEquals(50.0, fixture.session.body().x(), 1.0e-9);
 
             fixture.session.advance(40_000_000L);
-            assertEquals(MobMotionState.FLINCH, fixture.session.motion());
+            assertEquals(MobMotionState.KNOCKBACK, fixture.session.motion());
             assertTrue(fixture.session.body().x() > 50.0);
         } finally {
             AgentCombatConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_PERCENT = originalPercent;
@@ -69,7 +169,7 @@ class MobSimulationSessionTest {
 
             fixture.session.advance(8_000_000L);
 
-            assertEquals(MobMotionState.FLINCH, fixture.session.motion());
+            assertEquals(MobMotionState.KNOCKBACK, fixture.session.motion());
             assertTrue(fixture.session.body().x() > 50.0);
         } finally {
             AgentCombatConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_PERCENT = originalPercent;
@@ -198,7 +298,7 @@ class MobSimulationSessionTest {
             fixture.session.advance(16_000_000L);
             assertEquals(MobMotionState.PENDING_IMPACT, fixture.session.motion());
             fixture.session.advance(24_000_000L);
-            assertEquals(MobMotionState.FLINCH, fixture.session.motion());
+            assertEquals(MobMotionState.KNOCKBACK, fixture.session.motion());
         } finally {
             AgentCombatConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_PERCENT = originalPercent;
             AgentCombatConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_OFFSET_MS = originalOffset;
@@ -302,6 +402,8 @@ class MobSimulationSessionTest {
         when(monster.getPosition()).thenReturn(new Point(x, 100));
         when(monster.getFh()).thenReturn(1);
         when(monster.getObjectId()).thenReturn(objectId);
+        when(monster.getAnimationTime("move")).thenReturn(720);
+        when(monster.getAnimationTime("fly")).thenReturn(720);
         when(agent.getPosition()).thenReturn(new Point(200, 40));
         when(agent.getId()).thenReturn(9);
         FootholdPhysicsIndex terrain = new FootholdPhysicsIndex(List.of(

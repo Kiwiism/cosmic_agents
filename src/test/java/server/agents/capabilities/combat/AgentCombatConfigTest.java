@@ -25,6 +25,7 @@ class AgentCombatConfigTest {
     void setsConfigFieldsUsingLegacyParsingRules() {
         int originalRange = AgentCombatConfig.cfg.ATTACK_RANGE_X;
         boolean originalDebug = AgentCombatConfig.cfg.AOE_REPOSITION_DEBUG;
+        boolean originalHit1 = AgentCombatConfig.cfg.MOB_PHYSICS_HIT1_ENABLED;
         try {
             assertEquals("OK: ATTACK_RANGE_X = 123",
                     AgentCombatConfig.setConfigField("attack_range_x", "123"));
@@ -33,6 +34,10 @@ class AgentCombatConfigTest {
             assertEquals("OK: AOE_REPOSITION_DEBUG = true",
                     AgentCombatConfig.setConfigField("AOE_REPOSITION_DEBUG", "on"));
             assertTrue(AgentCombatConfig.cfg.AOE_REPOSITION_DEBUG);
+
+            assertEquals("OK: MOB_PHYSICS_HIT1_ENABLED = false",
+                    AgentCombatConfig.setConfigField("MOB_PHYSICS_HIT1_ENABLED", "off"));
+            assertEquals(false, AgentCombatConfig.cfg.MOB_PHYSICS_HIT1_ENABLED);
 
             String badValue = AgentCombatConfig.setConfigField("ATTACK_RANGE_X", "abc");
             assertTrue(badValue.startsWith("bad value 'abc' for ATTACK_RANGE_X"));
@@ -43,6 +48,7 @@ class AgentCombatConfigTest {
         } finally {
             AgentCombatConfig.cfg.ATTACK_RANGE_X = originalRange;
             AgentCombatConfig.cfg.AOE_REPOSITION_DEBUG = originalDebug;
+            AgentCombatConfig.cfg.MOB_PHYSICS_HIT1_ENABLED = originalHit1;
         }
     }
 

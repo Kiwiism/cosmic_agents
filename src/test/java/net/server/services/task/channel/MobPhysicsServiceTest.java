@@ -156,9 +156,10 @@ class MobPhysicsServiceTest {
         ArgumentCaptor<Packet> packets = ArgumentCaptor.forClass(Packet.class);
         verify(fixture.map).broadcastMessage(packets.capture(), any(Point.class));
         byte[] bytes = packets.getValue().getBytes();
-        assertEquals(0xff, bytes[8] & 0xff, "raw activity must be ordinary/no skill");
-        assertTrue((bytes[29] & 0xff) == 4 || (bytes[29] & 0xff) == 5,
-                "flinch must publish a neutral stand stance");
+        assertEquals(bytes[29] & 1, bytes[8] & 0xff,
+                "moving raw activity must select WZ move with matching facing");
+        assertTrue((bytes[29] & 0xff) == 0 || (bytes[29] & 0xff) == 1,
+                "moving knockback must publish the walk-animation fallback");
 
         service.tickForTest(first + 100_000_000L);
         verify(fixture.map, times(2)).broadcastMessage(any(), any(Point.class));
@@ -176,6 +177,24 @@ class MobPhysicsServiceTest {
 
         session.body().setVelocity(0.5, 0.0);
         assertEquals(0, MobPhysicsService.stance(session));
+
+        session.body().setVelocity(0.02, 0.0);
+        assertEquals(0, MobPhysicsService.stance(session),
+                "slow chase must still publish the walk animation");
+    }
+
+    @Test
+    void knockbackAndFlinchPreserveFacingFromBeforeHit() {
+        Fixture fixture = fixture(true, 1);
+        fixture.monster.setStance(0);
+        assertTrue(service.acceptedHit(fixture.agent, fixture.monster, 10, 0));
+        MobSimulationSession session = service.sessionForTest(fixture.monster);
+        assertEquals(1, session.knockbackDirection());
+        session.setMotion(server.life.simulation.MobMotionState.KNOCKBACK);
+        assertEquals(0, MobPhysicsService.stance(session));
+        session.setMotion(server.life.simulation.MobMotionState.FLINCH);
+        assertEquals(0, MobPhysicsService.stance(session),
+                "stationary flinch must retain the walk-facing stance");
     }
 
     @Test

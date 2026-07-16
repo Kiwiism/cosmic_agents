@@ -247,7 +247,8 @@ public final class MobPhysicsService extends BaseService {
                 (int) Math.round(body.velocityX() * 125.0),
                 (int) Math.round(body.velocityY() * 125.0)));
         movement.setFh(body.footholdId());
-        Packet packet = PacketCreator.moveMonster(session.monster().getObjectId(), -1, start,
+        int rawActivity = session.rawActivityForPublication(stance, now);
+        Packet packet = PacketCreator.moveMonster(session.monster().getObjectId(), rawActivity, start,
                 List.<LifeMovementFragment>of(movement));
         try {
             session.map().broadcastMessage(packet, current);
@@ -260,9 +261,13 @@ public final class MobPhysicsService extends BaseService {
     static int stance(MobSimulationSession session) {
         PhysicsBody body = session.body();
         boolean facingLeft;
+        if (session.motion() == MobMotionState.KNOCKBACK) {
+            facingLeft = session.impactFacingLeft();
+            return facingLeft ? 1 : 0;
+        }
         if (session.motion() == MobMotionState.FLINCH) {
-            facingLeft = session.knockbackDirection() > 0;
-            return facingLeft ? 5 : 4;
+            facingLeft = session.impactFacingLeft();
+            return facingLeft ? 1 : 0;
         }
         facingLeft = Math.abs(body.velocityX()) >= 0.1
                 ? body.velocityX() < 0.0
@@ -270,7 +275,8 @@ public final class MobPhysicsService extends BaseService {
         if (!body.grounded() && !session.profile().flying()) {
             return facingLeft ? 3 : 2;
         }
-        boolean moving = Math.abs(body.velocityX()) >= 0.1
+        boolean moving = session.motion() == MobMotionState.CHASE
+                || Math.abs(body.velocityX()) >= 0.1
                 || session.profile().flying() && Math.abs(body.velocityY()) >= 0.1;
         return moving ? (facingLeft ? 1 : 0) : (facingLeft ? 5 : 4);
     }

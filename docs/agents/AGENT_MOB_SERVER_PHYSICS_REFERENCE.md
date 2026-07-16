@@ -34,8 +34,8 @@ unrelated gameplay code was copied.
 - The requested 0.1 airborne/flying knockback force is applied explicitly.
   Journey's normal airborne hit path does not consistently consume its
   horizontal hit force, but the server needs visible, deterministic reaction.
-- v83 `hit1` is not used because it does not render reliably. FLINCH publishes
-  a neutral standing-facing stance while physics continues.
+- Optional experimental v83 `hit1` activity is sent once at FLINCH entry. FLINCH
+  stops physical movement, and chase explicitly restores the proven walk loop.
 - Packet coordinates are rounded only at publication and use the existing v83
   two-pixel client Y convention. Internal state remains double precision.
 - Jumping is intentionally a safe local heuristic, not platform pathfinding.
@@ -106,8 +106,11 @@ Default behavior tuning:
 | `MOB_PHYSICS_BEHAVIOR_JITTER_MS` | 250 | Per-mob extra jitter on stuck decision timing. |
 | `MOB_PHYSICS_JUMP_COOLDOWN_MS` | 900 | Minimum interval between heuristic jumps. |
 | `MOB_PHYSICS_JUMP_COOLDOWN_JITTER_MS` | 900 | Per-mob random time added to the jump cooldown and initial jump. |
-| `MOB_PHYSICS_KNOCKBACK_PERCENT` | 35 | Scale for the translated hit force. |
-| `MOB_PHYSICS_IMPACT_DELAY_PERCENT` | 0 | Scale for the WZ attack-frame hit delay; zero starts at the first physics opportunity. |
+| `MOB_PHYSICS_KNOCKBACK_PERCENT` | 50 | Scale for the translated hit force. |
+| `MOB_PHYSICS_FLINCH_RECOVERY_MS` | 250 | Stationary recovery after knockback before aggro movement resumes. |
+| `MOB_PHYSICS_POST_FLINCH_CHASE_RAMP_MS` | 0 | Disabled after worsening pull-in interpolation. Nonzero values linearly restore chase force after recovery. |
+| `MOB_PHYSICS_HIT1_ENABLED` | false | Sends one experimental `hit1` activity at flinch entry; disabled because v83 did not render it in testing. |
+| `MOB_PHYSICS_IMPACT_DELAY_PERCENT` | 20 | Retains one fifth of the WZ attack-frame hit delay. |
 | `MOB_PHYSICS_IMPACT_DELAY_OFFSET_MS` | 0 | Signed adjustment after scaling the hit delay. |
 
 The physics step remains fixed at 8 ms. Variation is applied only to behavior
@@ -116,12 +119,19 @@ monster object IDs. Chase force has no per-mob variance: every mob retains its
 own WZ-defined speed, scaled by the shared `MOB_PHYSICS_SPEED_PERCENT` value.
 This desynchronizes groups without making collision or chase speed random.
 
-With the default zero impact-delay percentage, knockback starts on the first
-physics opportunity after the server accepts the hit instead of waiting for the
-WZ attack frame. This is the next service pass, not synchronous execution in the
-combat handler, so up to one 50 ms channel tick plus network latency remains
-normal. Set `MOB_PHYSICS_IMPACT_DELAY_PERCENT` to `100` to restore WZ hit-frame
-timing, then use `MOB_PHYSICS_IMPACT_DELAY_OFFSET_MS` for a signed adjustment.
+With the default 20% impact delay, knockback begins after one fifth of the WZ
+attack-frame timing. The next physics service pass can add up to 50 ms, plus
+network latency. Set `MOB_PHYSICS_IMPACT_DELAY_PERCENT` to `0` for the first
+physics opportunity after the server accepts the hit, or `100` for full visual
+hit-frame alignment. `MOB_PHYSICS_IMPACT_DELAY_OFFSET_MS` provides a signed
+adjustment.
+
+The WZ `pushed` value is a damage threshold, not a displacement value. A hit
+enters knockback only when its applied damage is at least the monster's `pushed`
+value. Fixed/non-mobile monsters remain ineligible. After the 248 ms knockback
+trace, horizontal movement stops for `MOB_PHYSICS_FLINCH_RECOVERY_MS` before
+aggro movement resumes. Existing chase velocity is cleared at impact so fast
+mobs cannot cancel the visible knockback by continuing toward the Agent.
 
 ## Numerical verification
 

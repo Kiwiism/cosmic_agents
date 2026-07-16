@@ -14,7 +14,7 @@ import server.physics.PhysicsStepResult;
  * bc0234fe7c7f53322453e7bdd79564d9aca4cd8b (AGPL-3.0-or-later).
  */
 public final class MobPhysicsSimulator {
-    public static final int FLINCH_STEPS = 31;
+    public static final int KNOCKBACK_STEPS = 31;
     public static final double GROUND_KNOCKBACK_FORCE = 0.2;
     public static final double AIR_KNOCKBACK_FORCE = 0.1;
     public static final double JUMP_FORCE = -5.0;
@@ -29,11 +29,14 @@ public final class MobPhysicsSimulator {
         boolean turnAtEdges = false;
         double speedMultiplier = session.speedMultiplier();
 
-        if (session.motion() == MobMotionState.FLINCH) {
+        if (session.motion() == MobMotionState.KNOCKBACK) {
             horizontal = session.knockbackDirection()
                     * (body.grounded() && !profile.flying()
                     ? GROUND_KNOCKBACK_FORCE : AIR_KNOCKBACK_FORCE)
                     * session.knockbackMultiplier();
+        } else if (session.motion() == MobMotionState.FLINCH) {
+            body.setVelocity(0.0, body.grounded() || profile.flying()
+                    ? 0.0 : body.velocityY());
         } else if (session.motion() != MobMotionState.PENDING_IMPACT
                 && profile.mode() != PhysicsMode.FIXED) {
             double dx = session.targetX() - body.x();
@@ -45,6 +48,11 @@ public final class MobPhysicsSimulator {
                         ? 0.0 : horizontalDirection * profile.flyingForce() * speedMultiplier;
                 vertical = forceOutside(dy, AgentCombatConfig.cfg.MOB_PHYSICS_FLY_DEAD_ZONE_Y,
                         profile.flyingForce() * speedMultiplier);
+                if (horizontal != 0.0 || vertical != 0.0) {
+                    double rampMultiplier = session.consumeChaseRampMultiplier();
+                    horizontal *= rampMultiplier;
+                    vertical *= rampMultiplier;
+                }
                 session.setMotion(horizontal == 0.0 && vertical == 0.0
                         ? MobMotionState.IDLE : MobMotionState.CHASE);
             } else {
@@ -58,7 +66,8 @@ public final class MobPhysicsSimulator {
                     updateGroundHysteresis(session, dx);
                     if (session.chasing()) {
                         horizontal = session.chaseDirection(dx)
-                                * profile.walkingForce() * speedMultiplier;
+                                * profile.walkingForce() * speedMultiplier
+                                * session.consumeChaseRampMultiplier();
                         turnAtEdges = true;
                         session.setMotion(MobMotionState.CHASE);
                     } else {

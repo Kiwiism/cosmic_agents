@@ -165,6 +165,12 @@ public final class AgentCombatConfig {
                 YamlConfig.config.server.AGENT_MOB_PHYSICS_STUCK_RETREAT_CHANCE_PERCENT;
         public int MOB_PHYSICS_KNOCKBACK_PERCENT =
                 YamlConfig.config.server.AGENT_MOB_PHYSICS_KNOCKBACK_PERCENT;
+        public int MOB_PHYSICS_FLINCH_RECOVERY_MS =
+                YamlConfig.config.server.AGENT_MOB_PHYSICS_FLINCH_RECOVERY_MS;
+        public int MOB_PHYSICS_POST_FLINCH_CHASE_RAMP_MS =
+                YamlConfig.config.server.AGENT_MOB_PHYSICS_POST_FLINCH_CHASE_RAMP_MS;
+        public boolean MOB_PHYSICS_HIT1_ENABLED =
+                YamlConfig.config.server.AGENT_MOB_PHYSICS_HIT1_ENABLED;
         public int MOB_PHYSICS_IMPACT_DELAY_PERCENT =
                 YamlConfig.config.server.AGENT_MOB_PHYSICS_IMPACT_DELAY_PERCENT;
         public int MOB_PHYSICS_IMPACT_DELAY_OFFSET_MS =

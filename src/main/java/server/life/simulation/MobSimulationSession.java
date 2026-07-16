@@ -33,10 +33,18 @@ public final class MobSimulationSession {
     private long lastTickNanos;
     private long tickNowNanos;
     private long lastPublishedNanos;
+    private int lastPublishedMoveActivity = -1;
+    private long lastPublishedMoveActivityNanos;
     private long nextJumpNanos;
     private int pendingDamage;
     private volatile int knockbackDirection = 1;
-    private int flinchStepsRemaining;
+    private volatile boolean impactFacingLeft;
+    private int knockbackStepsRemaining;
+    private int recoveryStepsRemaining;
+    private boolean hit1ActivityPending;
+    private boolean hit1ActivityPublished;
+    private int chaseRampStepsTotal;
+    private int chaseRampStepsRemaining;
     private double targetX;
     private double targetY;
     private boolean chasing = true;
@@ -100,6 +108,7 @@ public final class MobSimulationSession {
         agent = newAgent;
         pendingDamage = Math.max(0, damage);
         knockbackDirection = direction < 0 ? -1 : 1;
+        impactFacingLeft = (monster.getStance() & 1) != 0;
         long scaledDelayMs = Math.max(0L, delayMs)
                 * Math.max(0, AgentCombatConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_PERCENT) / 100L;
         scaledDelayMs = Math.max(0L, scaledDelayMs
@@ -107,7 +116,12 @@ public final class MobSimulationSession {
         impactAtNanos = nowNanos + scaledDelayMs * 1_000_000L;
         generation++;
         motion = MobMotionState.PENDING_IMPACT;
-        flinchStepsRemaining = 0;
+        knockbackStepsRemaining = 0;
+        recoveryStepsRemaining = 0;
+        hit1ActivityPending = false;
+        hit1ActivityPublished = false;
+        chaseRampStepsTotal = 0;
+        chaseRampStepsRemaining = 0;
         temporaryBehaviorUntilNanos = 0L;
         temporaryDirection = 0;
         temporaryRetreatDistancePx = 0.0;
@@ -146,8 +160,10 @@ public final class MobSimulationSession {
             return;
         }
         if (pendingDamage >= profile.pushed() && profile.mode() != PhysicsMode.FIXED) {
-            motion = MobMotionState.FLINCH;
-            flinchStepsRemaining = MobPhysicsSimulator.FLINCH_STEPS;
+            body.setVelocity(0.0, body.grounded() || profile.flying()
+                    ? 0.0 : body.velocityY());
+            motion = MobMotionState.KNOCKBACK;
+            knockbackStepsRemaining = MobPhysicsSimulator.KNOCKBACK_STEPS;
         } else {
             motion = MobMotionState.CHASE;
         }
@@ -158,8 +174,30 @@ public final class MobSimulationSession {
 
     void afterStep(PhysicsStepResult result) {
         lastHitWall = result.hitWall();
-        if (motion == MobMotionState.FLINCH && --flinchStepsRemaining <= 0) {
+        if (motion == MobMotionState.KNOCKBACK && --knockbackStepsRemaining <= 0) {
+            body.setVelocity(0.0, body.grounded() || profile.flying()
+                    ? 0.0 : body.velocityY());
+            int recoveryMs = Math.max(0,
+                    AgentCombatConfig.cfg.MOB_PHYSICS_FLINCH_RECOVERY_MS);
+            recoveryStepsRemaining = (recoveryMs + MaplePhysicsConstants.STEP_MS - 1)
+                    / MaplePhysicsConstants.STEP_MS;
+            if (recoveryStepsRemaining > 0) {
+                motion = MobMotionState.FLINCH;
+                hit1ActivityPending = AgentCombatConfig.cfg.MOB_PHYSICS_HIT1_ENABLED;
+                hit1ActivityPublished = false;
+            } else {
+                motion = MobMotionState.CHASE;
+            }
+            immediatePublication = true;
+        } else if (motion == MobMotionState.FLINCH && --recoveryStepsRemaining <= 0) {
             motion = MobMotionState.CHASE;
+            beginPostFlinchChaseRamp();
+            if (hit1ActivityPublished) {
+                lastPublishedMoveActivity = -1;
+                lastPublishedMoveActivityNanos = 0L;
+            }
+            hit1ActivityPending = false;
+            hit1ActivityPublished = false;
             immediatePublication = true;
         } else if (motion == MobMotionState.JUMPING && result.landed()) {
             motion = MobMotionState.CHASE;
@@ -224,6 +262,42 @@ public final class MobSimulationSession {
         return start;
     }
 
+    /**
+     * Requests a client move action when movement starts, its facing changes, or the current WZ
+     * move cycle expires. Repeating it on every position packet restarts slow animations at frame zero.
+     */
+    public synchronized int rawActivityForPublication(int stance, long nowNanos) {
+        if (motion == MobMotionState.FLINCH && hit1ActivityPending) {
+            hit1ActivityPending = false;
+            if (AgentCombatConfig.cfg.MOB_PHYSICS_HIT1_ENABLED) {
+                hit1ActivityPublished = true;
+                return impactFacingLeft ? 9 : 8;
+            }
+        }
+        if (motion == MobMotionState.FLINCH && hit1ActivityPublished) {
+            return -1;
+        }
+        boolean moveAnimationActive = motion == MobMotionState.CHASE
+                || motion == MobMotionState.KNOCKBACK
+                || motion == MobMotionState.FLINCH;
+        if (!moveAnimationActive) {
+            lastPublishedMoveActivity = -1;
+            lastPublishedMoveActivityNanos = 0L;
+            return -1;
+        }
+        int moveActivity = stance & 1;
+        String animation = profile.flying() ? "fly" : "move";
+        int configuredCycleMs = monster.getAnimationTime(animation);
+        long cycleNanos = (configuredCycleMs > 0 ? configuredCycleMs : 500L) * 1_000_000L;
+        if (lastPublishedMoveActivity == moveActivity
+                && nowNanos - lastPublishedMoveActivityNanos < cycleNanos) {
+            return -1;
+        }
+        lastPublishedMoveActivity = moveActivity;
+        lastPublishedMoveActivityNanos = nowNanos;
+        return moveActivity;
+    }
+
     public synchronized MobPhysicsState snapshot() {
         return new MobPhysicsState(monster.getObjectId(), agent.getId(), motion,
                 body.x(), body.y(), body.velocityX(), body.velocityY(), body.footholdId(), generation);
@@ -238,6 +312,7 @@ public final class MobSimulationSession {
     public MobMotionState motion() { return motion; }
     public void setMotion(MobMotionState motion) { this.motion = motion; }
     public int knockbackDirection() { return knockbackDirection; }
+    public boolean impactFacingLeft() { return impactFacingLeft; }
     public double targetX() { return targetX; }
     public double targetY() { return targetY; }
     public double speedMultiplier() {
@@ -245,6 +320,14 @@ public final class MobSimulationSession {
     }
     public double knockbackMultiplier() {
         return Math.max(0, AgentCombatConfig.cfg.MOB_PHYSICS_KNOCKBACK_PERCENT) / 100.0;
+    }
+    double consumeChaseRampMultiplier() {
+        if (chaseRampStepsRemaining <= 0 || chaseRampStepsTotal <= 0) {
+            return 1.0;
+        }
+        int step = chaseRampStepsTotal - chaseRampStepsRemaining + 1;
+        chaseRampStepsRemaining--;
+        return step / (double) chaseRampStepsTotal;
     }
     public boolean chasing() { return chasing; }
     public void setChasing(boolean chasing) { this.chasing = chasing; }
@@ -283,6 +366,14 @@ public final class MobSimulationSession {
                     AgentCombatConfig.cfg.MOB_PHYSICS_EDGE_RETREAT_MIN_MS,
                     AgentCombatConfig.cfg.MOB_PHYSICS_EDGE_RETREAT_MAX_MS);
         }
+    }
+
+    private void beginPostFlinchChaseRamp() {
+        int rampMs = Math.max(0,
+                AgentCombatConfig.cfg.MOB_PHYSICS_POST_FLINCH_CHASE_RAMP_MS);
+        chaseRampStepsTotal = (rampMs + MaplePhysicsConstants.STEP_MS - 1)
+                / MaplePhysicsConstants.STEP_MS;
+        chaseRampStepsRemaining = chaseRampStepsTotal;
     }
 
     boolean hasTemporaryBehavior() {

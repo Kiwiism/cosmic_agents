@@ -34,6 +34,7 @@ public final class AgentFollowMapSyncService {
                                         FollowMapSyncHooks hooks) {
         if (!AgentModeStateRuntime.following(entry)
                 || followAnchor == null
+                || followAnchor.isChangingMaps()
                 || agent.getMapId() == followAnchor.getMapId()) {
             return false;
         }

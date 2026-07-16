@@ -153,6 +153,15 @@ public final class MaplePhysicsIntegrator {
             }
         }
 
+        velocityX = body.velocityX();
+        if (body.grounded() && body.velocityY() == 0.0 && velocityX != 0.0) {
+            FootholdSegment foothold = terrain.foothold(body.footholdId());
+            double destinationX = body.x() + velocityX;
+            if (foothold != null && !foothold.wall() && foothold.containsX(destinationX)) {
+                body.setPosition(body.x(), foothold.groundY(destinationX));
+            }
+        }
+
         velocityY = body.velocityY();
         if (velocityY != 0.0) {
             FootholdSegment foothold = terrain.foothold(body.footholdId());

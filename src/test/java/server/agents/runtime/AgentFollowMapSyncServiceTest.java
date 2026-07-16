@@ -49,6 +49,23 @@ class AgentFollowMapSyncServiceTest {
     }
 
     @Test
+    void waitsUntilAnchorClientCompletesMapTransition() {
+        MapleMap agentMap = map(100000000);
+        MapleMap anchorMap = map(200000000);
+        Character agent = character(agentMap, 100000000, new Point(10, 10));
+        Character anchor = character(anchorMap, 200000000, new Point(20, 30));
+        when(anchor.isChangingMaps()).thenReturn(true);
+        AgentRuntimeEntry entry = entry(agent);
+        AgentModeStateRuntime.setFollowing(entry, true);
+        Counters counters = new Counters(null);
+
+        boolean synced = AgentFollowMapSyncService.syncFollowMap(entry, agent, anchor, hooks(counters));
+
+        assertFalse(synced);
+        counters.assertNoSideEffects();
+    }
+
+    @Test
     void changesMapToGroundedAnchorPosition() {
         MapleMap agentMap = map(100000000);
         MapleMap anchorMap = map(200000000);
