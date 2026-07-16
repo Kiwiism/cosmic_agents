@@ -48,6 +48,10 @@ public interface AdventurerPartnerRepository {
         return List.of();
     }
 
+    default void suspendTemporarySkill(long sessionId, int characterId, int skillId) {
+        throw new UnsupportedOperationException("Temporary Partner skills are not supported");
+    }
+
     default List<PartnerSessionSkillGrant> restoreTemporarySkills(long sessionId) {
         return List.of();
     }

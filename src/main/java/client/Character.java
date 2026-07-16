@@ -139,6 +139,7 @@ import server.maps.MapManager;
 import server.maps.MapObject;
 import server.maps.MapObjectType;
 import server.maps.MapleMap;
+import server.partner.AdventurerPartnerService;
 import server.maps.MiniGame;
 import server.maps.MiniGame.MiniGameResult;
 import server.maps.PlayerShop;
@@ -3583,6 +3584,7 @@ public class Character extends AbstractCharacterObject {
         getMap().broadcastUpdateCharLookMessage(this, this);
         equipchanged = true;
         updateLocalStats();
+        AdventurerPartnerService.getInstance().onEquipmentChanged(this);
         if (getMessenger() != null) {
             getWorldServer().updateMessenger(getMessenger(), getName(), getWorld(), client.getChannel());
         }

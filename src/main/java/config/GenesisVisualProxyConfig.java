@@ -23,12 +23,19 @@ public class GenesisVisualProxyConfig {
     public long EXIT_EFFECT_LEAD_MS = 700L;
 
     private static Map<String, Integer> defaultVisibleEquips() {
+        // v83 avatar visible-equip slots (normalized from EQUIPPED positions -1 through -11):
+        //  1 = Hat             2 = Face accessory   3 = Eye accessory
+        //  4 = Earrings        5 = Top or overall   6 = Bottom (hidden by an overall)
+        //  7 = Shoes           8 = Gloves           9 = Cape
+        // 10 = Shield         11 = Weapon
+        // Cash equips use the same normalized visible slot. A cash weapon is encoded
+        // separately through CASH_WEAPON_ID, so it should not be placed in this map.
         Map<String, Integer> equips = new LinkedHashMap<>();
-        equips.put("1", 1002333);
-        equips.put("5", 1051190);
-        equips.put("7", 1072280);
-        equips.put("9", 1102222);
-        equips.put("11", 1372001);
+        equips.put("1", 1002333); // Hat
+        equips.put("5", 1051190); // Overall
+        equips.put("7", 1072280); // Shoes
+        equips.put("9", 1102222); // Cape
+        equips.put("11", 1372001); // Weapon
         return equips;
     }
 

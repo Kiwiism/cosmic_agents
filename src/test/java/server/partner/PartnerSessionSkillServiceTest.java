@@ -345,6 +345,38 @@ class PartnerSessionSkillServiceTest {
     }
 
     @Test
+    void unequippingBondRemovesOnlyBorrowedForeignSelfBuffSkills() {
+        AdventurerPartnerRepository repository = mock(AdventurerPartnerRepository.class);
+        PartnerSessionSkillService service = new PartnerSessionSkillService(repository);
+        SoloTagBuffSharingService buffSharing = mock(SoloTagBuffSharingService.class);
+        Character holder = mock(Character.class);
+        Skill shadowPartner = new Skill(4111002);
+        Skill nativeSelfBuff = new Skill(4211005);
+        PartnerSessionSkillGrant foreignGrant = new PartnerSessionSkillGrant(
+                7L, 10, shadowPartner.getId(), null, null, null, 20, 0, -1L);
+        PartnerSessionSkillGrant nativeGrant = new PartnerSessionSkillGrant(
+                7L, 10, nativeSelfBuff.getId(), null, null, null, 20, 0, -1L);
+        when(holder.getProfileOwnerCharacterId()).thenReturn(10);
+        when(holder.getJob()).thenReturn(Job.CHIEFBANDIT);
+        when(holder.getSkills()).thenReturn(Map.of(
+                shadowPartner, new Character.SkillEntry((byte) 20, 0, -1L),
+                nativeSelfBuff, new Character.SkillEntry((byte) 20, 0, -1L)));
+        when(holder.isPartnerSessionBorrowedSkill(shadowPartner.getId())).thenReturn(true);
+        when(holder.isPartnerSessionBorrowedSkill(nativeSelfBuff.getId())).thenReturn(true);
+        when(repository.findTemporarySkills(7L)).thenReturn(List.of(foreignGrant, nativeGrant));
+        when(buffSharing.isLearnedSelfBuffSkill(shadowPartner, 20)).thenReturn(true);
+        when(buffSharing.isLearnedSelfBuffSkill(nativeSelfBuff, 20)).thenReturn(true);
+
+        service.removeBorrowedSelfBuffSkills(7L, holder, buffSharing);
+
+        InOrder order = inOrder(repository, holder);
+        order.verify(repository).suspendTemporarySkill(7L, 10, shadowPartner.getId());
+        order.verify(holder).cancelPartnerBuffFromSource(shadowPartner.getId());
+        order.verify(holder).restorePartnerSessionSkill(10, shadowPartner, null);
+        verify(repository, never()).suspendTemporarySkill(7L, 10, nativeSelfBuff.getId());
+    }
+
+    @Test
     void runtimeRestoreFailureLeavesDurableSkillJournalForRetry() {
         AdventurerPartnerRepository repository = mock(AdventurerPartnerRepository.class);
         PartnerSessionSkillService service = new PartnerSessionSkillService(repository);

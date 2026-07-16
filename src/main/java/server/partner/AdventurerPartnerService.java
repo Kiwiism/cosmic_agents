@@ -555,6 +555,45 @@ public final class AdventurerPartnerService {
         }
     }
 
+    public void onEquipmentChanged(Character character) {
+        if (!config.ENABLED || character == null || medalEffects.selfBuffBondItemId() <= 0) {
+            return;
+        }
+        Optional<ActivePartnerSession> found =
+                runtimes.findByProfileOwnerId(character.getProfileOwnerCharacterId());
+        if (found.isEmpty()) {
+            return;
+        }
+        ActivePartnerSession active = found.get();
+        active.enterLifecycleOperation();
+        try {
+            if (active.runtime().status() != PartnerLifecycleStatus.ACTIVE
+                    || active.isJournalClosed()) {
+                return;
+            }
+            if (medalEffects.hasActiveSelfBuffBond(character)) {
+                Character source = active.humanActor().getProfileOwnerCharacterId()
+                        == character.getProfileOwnerCharacterId()
+                        ? active.partnerActorOrDormantProfile() : active.humanActor();
+                buffSharing.prepareSelfBuffSkillsForRecipient(
+                        active.runtime().mode(),
+                        character,
+                        source,
+                        request -> sessionSkills.grant(active.runtime().sessionId(), request));
+            } else {
+                sessionSkills.removeBorrowedSelfBuffSkills(
+                        active.runtime().sessionId(), character, buffSharing);
+            }
+        } catch (RuntimeException failure) {
+            log.warn("partner_bond_equipment reconciliation_failed session={} character={}",
+                    active.runtime().sessionId(), character.getProfileOwnerCharacterId(), failure);
+            character.message("Your Partner bond skills could not be refreshed. "
+                    + "Release and prepare the Partner session again.");
+        } finally {
+            active.exitLifecycleOperation();
+        }
+    }
+
     public TriggerResult handleSwitchTrigger(Character player, int skillId) {
         if (!config.ENABLED || !config.TRIGGER_SKILL_IDS.contains(skillId)) {
             return TriggerResult.notHandled();

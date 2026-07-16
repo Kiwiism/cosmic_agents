@@ -68,6 +68,16 @@ public final class SoloTagBuffSharingService {
         grantBuffSourceSkills(partnerProfile, transferableBuffs(humanProfile), skillGrant);
     }
 
+    public void prepareSelfBuffSkillsForRecipient(PartnerMode mode,
+                                                   Character recipient,
+                                                   Character source,
+                                                   Consumer<SkillGrant> skillGrant) {
+        if (!medalEffects.selfBuffSharingEnabled(mode)) {
+            return;
+        }
+        grantLearnedSelfBuffSkills(mode, recipient, source, skillGrant);
+    }
+
     public boolean isLearnedSelfBuffSkill(Skill skill, int level) {
         if (skill == null || level <= 0 || skill.getMaxLevel() <= 0) {
             return false;

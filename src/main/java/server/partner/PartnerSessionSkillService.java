@@ -148,6 +148,41 @@ public final class PartnerSessionSkillService {
         repository.restoreTemporarySkills(sessionId);
     }
 
+    public void removeBorrowedSelfBuffSkills(long sessionId,
+                                              Character holder,
+                                              SoloTagBuffSharingService buffSharing) {
+        if (holder == null || buffSharing == null) {
+            return;
+        }
+        int profileOwnerId = holder.getProfileOwnerCharacterId();
+        Map<Integer, Map.Entry<Skill, Character.SkillEntry>> currentSkills = skillsById(holder);
+        for (PartnerSessionSkillGrant grant : repository.findTemporarySkills(sessionId)) {
+            if (grant.characterId() != profileOwnerId
+                    || !holder.isPartnerSessionBorrowedSkill(grant.skillId())) {
+                continue;
+            }
+            Map.Entry<Skill, Character.SkillEntry> current = currentSkills.get(grant.skillId());
+            Skill skill = current == null ? SkillFactory.getSkill(grant.skillId()) : current.getKey();
+            if (skill == null
+                    || GameConstants.isInJobTree(skill.getId(), holder.getJob().getId())
+                    || !buffSharing.isLearnedSelfBuffSkill(skill, grant.grantedSkillLevel())) {
+                continue;
+            }
+
+            repository.suspendTemporarySkill(sessionId, profileOwnerId, grant.skillId());
+            holder.cancelPartnerBuffFromSource(grant.skillId());
+            Character.SkillEntry original = grant.hadOriginalSkill()
+                    ? new Character.SkillEntry(
+                            grant.originalSkillLevel().byteValue(),
+                            grant.originalMasterLevel(),
+                            grant.originalExpiration())
+                    : null;
+            holder.restorePartnerSessionSkill(profileOwnerId, skill, original);
+            log.info("partner_temporary_self_buff suspended session={} character={} skill={}",
+                    sessionId, profileOwnerId, grant.skillId());
+        }
+    }
+
     public boolean synchronizeUnionSkill(long sessionId,
                                          Character source,
                                          Character recipient,

@@ -396,6 +396,32 @@ public final class JdbcAdventurerPartnerRepository implements AdventurerPartnerR
     }
 
     @Override
+    public void suspendTemporarySkill(long sessionId, int characterId, int skillId) {
+        try (Connection con = DatabaseConnection.getConnection()) {
+            con.setAutoCommit(false);
+            try {
+                requireOpenSessionCharacter(con, sessionId, characterId);
+                PartnerSessionSkillGrant grant = findTemporarySkill(
+                        con, sessionId, characterId, skillId, true)
+                        .orElseThrow(() -> new PartnerPersistenceException(
+                                "Temporary Partner skill was not recorded"));
+                restoreTemporarySkill(con, grant);
+                con.commit();
+            } catch (RuntimeException | SQLException failure) {
+                rollback(con, failure);
+                if (failure instanceof PartnerPersistenceException persistenceFailure) {
+                    throw persistenceFailure;
+                }
+                throw new PartnerPersistenceException(
+                        "Failed to suspend temporary Partner skill", failure);
+            }
+        } catch (SQLException e) {
+            throw new PartnerPersistenceException(
+                    "Failed to suspend temporary Partner skill", e);
+        }
+    }
+
+    @Override
     public List<PartnerSessionSkillGrant> restoreTemporarySkills(long sessionId) {
         try (Connection con = DatabaseConnection.getConnection()) {
             con.setAutoCommit(false);
@@ -569,27 +595,7 @@ public final class JdbcAdventurerPartnerRepository implements AdventurerPartnerR
             Connection con,
             List<PartnerSessionSkillGrant> grants) throws SQLException {
         for (PartnerSessionSkillGrant grant : grants) {
-            if (grant.hadOriginalSkill()) {
-                try (PreparedStatement ps = con.prepareStatement(
-                        "INSERT INTO skills (characterid, skillid, skilllevel, masterlevel, expiration) "
-                                + "VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE "
-                                + "skilllevel = VALUES(skilllevel), masterlevel = VALUES(masterlevel), "
-                                + "expiration = VALUES(expiration)")) {
-                    ps.setInt(1, grant.characterId());
-                    ps.setInt(2, grant.skillId());
-                    ps.setInt(3, grant.originalSkillLevel());
-                    ps.setInt(4, grant.originalMasterLevel());
-                    ps.setLong(5, grant.originalExpiration());
-                    ps.executeUpdate();
-                }
-            } else {
-                try (PreparedStatement ps = con.prepareStatement(
-                        "DELETE FROM skills WHERE characterid = ? AND skillid = ?")) {
-                    ps.setInt(1, grant.characterId());
-                    ps.setInt(2, grant.skillId());
-                    ps.executeUpdate();
-                }
-            }
+            restoreTemporarySkill(con, grant);
         }
         if (!grants.isEmpty()) {
             try (PreparedStatement ps = con.prepareStatement(
@@ -599,6 +605,31 @@ public final class JdbcAdventurerPartnerRepository implements AdventurerPartnerR
                     ps.addBatch();
                 }
                 ps.executeBatch();
+            }
+        }
+    }
+
+    private static void restoreTemporarySkill(
+            Connection con, PartnerSessionSkillGrant grant) throws SQLException {
+        if (grant.hadOriginalSkill()) {
+            try (PreparedStatement ps = con.prepareStatement(
+                    "INSERT INTO skills (characterid, skillid, skilllevel, masterlevel, expiration) "
+                            + "VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE "
+                            + "skilllevel = VALUES(skilllevel), masterlevel = VALUES(masterlevel), "
+                            + "expiration = VALUES(expiration)")) {
+                ps.setInt(1, grant.characterId());
+                ps.setInt(2, grant.skillId());
+                ps.setInt(3, grant.originalSkillLevel());
+                ps.setInt(4, grant.originalMasterLevel());
+                ps.setLong(5, grant.originalExpiration());
+                ps.executeUpdate();
+            }
+        } else {
+            try (PreparedStatement ps = con.prepareStatement(
+                    "DELETE FROM skills WHERE characterid = ? AND skillid = ?")) {
+                ps.setInt(1, grant.characterId());
+                ps.setInt(2, grant.skillId());
+                ps.executeUpdate();
             }
         }
     }
