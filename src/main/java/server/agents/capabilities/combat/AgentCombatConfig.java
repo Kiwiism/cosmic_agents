@@ -141,8 +141,6 @@ public final class AgentCombatConfig {
                 YamlConfig.config.server.AGENT_MOB_PHYSICS_RIGHT_EDGE_INSET_PX;
         public int MOB_PHYSICS_SPEED_PERCENT =
                 YamlConfig.config.server.AGENT_MOB_PHYSICS_SPEED_PERCENT;
-        public int MOB_PHYSICS_SPEED_VARIANCE_PERCENT =
-                YamlConfig.config.server.AGENT_MOB_PHYSICS_SPEED_VARIANCE_PERCENT;
         public int MOB_PHYSICS_BEHAVIOR_JITTER_MS =
                 YamlConfig.config.server.AGENT_MOB_PHYSICS_BEHAVIOR_JITTER_MS;
         public int MOB_PHYSICS_DIRECTION_REACTION_MAX_MS =
@@ -157,6 +155,10 @@ public final class AgentCombatConfig {
                 YamlConfig.config.server.AGENT_MOB_PHYSICS_EDGE_RETREAT_MIN_MS;
         public int MOB_PHYSICS_EDGE_RETREAT_MAX_MS =
                 YamlConfig.config.server.AGENT_MOB_PHYSICS_EDGE_RETREAT_MAX_MS;
+        public int MOB_PHYSICS_RETREAT_MIN_DISTANCE_PX =
+                YamlConfig.config.server.AGENT_MOB_PHYSICS_RETREAT_MIN_DISTANCE_PX;
+        public int MOB_PHYSICS_RETREAT_MAX_DISTANCE_PX =
+                YamlConfig.config.server.AGENT_MOB_PHYSICS_RETREAT_MAX_DISTANCE_PX;
         public int MOB_PHYSICS_STUCK_DETECT_MS =
                 YamlConfig.config.server.AGENT_MOB_PHYSICS_STUCK_DETECT_MS;
         public int MOB_PHYSICS_STUCK_RETREAT_CHANCE_PERCENT =

@@ -39,17 +39,41 @@ class MobSimulationSessionTest {
 
     @Test
     void attackDelayDoesNotApplyKnockbackToEarlierAccumulatorSteps() {
-        Fixture fixture = fixture(new MobPhysicsProfile(0.08, 0.05, 1,
-                true, false, false, false));
-        fixture.session.acceptHit(fixture.agent, 10, 40, 1, 0L);
+        int originalPercent = AgentCombatConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_PERCENT;
+        try {
+            AgentCombatConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_PERCENT = 100;
+            Fixture fixture = fixture(new MobPhysicsProfile(0.08, 0.05, 1,
+                    true, false, false, false));
+            fixture.session.acceptHit(fixture.agent, 10, 40, 1, 0L);
 
-        fixture.session.advance(32_000_000L);
-        assertEquals(MobMotionState.PENDING_IMPACT, fixture.session.motion());
-        assertEquals(50.0, fixture.session.body().x(), 1.0e-9);
+            fixture.session.advance(32_000_000L);
+            assertEquals(MobMotionState.PENDING_IMPACT, fixture.session.motion());
+            assertEquals(50.0, fixture.session.body().x(), 1.0e-9);
 
-        fixture.session.advance(40_000_000L);
-        assertEquals(MobMotionState.FLINCH, fixture.session.motion());
-        assertTrue(fixture.session.body().x() > 50.0);
+            fixture.session.advance(40_000_000L);
+            assertEquals(MobMotionState.FLINCH, fixture.session.motion());
+            assertTrue(fixture.session.body().x() > 50.0);
+        } finally {
+            AgentCombatConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_PERCENT = originalPercent;
+        }
+    }
+
+    @Test
+    void zeroImpactDelayStartsKnockbackOnFirstPhysicsStep() {
+        int originalPercent = AgentCombatConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_PERCENT;
+        try {
+            AgentCombatConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_PERCENT = 0;
+            Fixture fixture = fixture(new MobPhysicsProfile(0.08, 0.05, 1,
+                    true, false, false, false));
+            fixture.session.acceptHit(fixture.agent, 10, 300, 1, 0L);
+
+            fixture.session.advance(8_000_000L);
+
+            assertEquals(MobMotionState.FLINCH, fixture.session.motion());
+            assertTrue(fixture.session.body().x() > 50.0);
+        } finally {
+            AgentCombatConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_PERCENT = originalPercent;
+        }
     }
 
     @Test
@@ -109,10 +133,8 @@ class MobSimulationSessionTest {
     @Test
     void liveSpeedAndKnockbackPercentagesScaleForces() {
         int originalSpeed = AgentCombatConfig.cfg.MOB_PHYSICS_SPEED_PERCENT;
-        int originalVariance = AgentCombatConfig.cfg.MOB_PHYSICS_SPEED_VARIANCE_PERCENT;
         int originalKnockback = AgentCombatConfig.cfg.MOB_PHYSICS_KNOCKBACK_PERCENT;
         try {
-            AgentCombatConfig.cfg.MOB_PHYSICS_SPEED_VARIANCE_PERCENT = 0;
             AgentCombatConfig.cfg.MOB_PHYSICS_SPEED_PERCENT = 100;
             Fixture fullSpeed = fixture(new MobPhysicsProfile(0.08, 0.05, 100,
                     true, false, false, false));
@@ -142,9 +164,24 @@ class MobSimulationSessionTest {
                     reducedKnockback.session.body().velocityX(), 1.0e-12);
         } finally {
             AgentCombatConfig.cfg.MOB_PHYSICS_SPEED_PERCENT = originalSpeed;
-            AgentCombatConfig.cfg.MOB_PHYSICS_SPEED_VARIANCE_PERCENT = originalVariance;
             AgentCombatConfig.cfg.MOB_PHYSICS_KNOCKBACK_PERCENT = originalKnockback;
         }
+    }
+
+    @Test
+    void differentMobSeedsDoNotVaryChaseSpeed() {
+        Fixture first = fixture(new MobPhysicsProfile(0.08, 0.05, 100,
+                true, false, false, false), 7, 50, -1000, 1000);
+        Fixture second = fixture(new MobPhysicsProfile(0.08, 0.05, 100,
+                true, false, false, false), 8, 50, -1000, 1000);
+        first.session.acceptHit(first.agent, 10, 0, 1, 0L);
+        second.session.acceptHit(second.agent, 10, 0, 1, 0L);
+
+        first.session.advance(8_000_000L);
+        second.session.advance(8_000_000L);
+
+        assertEquals(first.session.body().velocityX(),
+                second.session.body().velocityX(), 1.0e-12);
     }
 
     @Test
@@ -173,12 +210,10 @@ class MobSimulationSessionTest {
         int originalReaction = AgentCombatConfig.cfg.MOB_PHYSICS_DIRECTION_REACTION_MAX_MS;
         int originalJitter = AgentCombatConfig.cfg.MOB_PHYSICS_JUMP_COOLDOWN_JITTER_MS;
         int originalStuck = AgentCombatConfig.cfg.MOB_PHYSICS_STUCK_DETECT_MS;
-        int originalVariance = AgentCombatConfig.cfg.MOB_PHYSICS_SPEED_VARIANCE_PERCENT;
         try {
             AgentCombatConfig.cfg.MOB_PHYSICS_DIRECTION_REACTION_MAX_MS = 500;
             AgentCombatConfig.cfg.MOB_PHYSICS_JUMP_COOLDOWN_JITTER_MS = 500;
             AgentCombatConfig.cfg.MOB_PHYSICS_STUCK_DETECT_MS = 5000;
-            AgentCombatConfig.cfg.MOB_PHYSICS_SPEED_VARIANCE_PERCENT = 0;
 
             Fixture first = fixture(new MobPhysicsProfile(0.08, 0.05, 100,
                     true, false, false, false), 7, 50, -1000, 1000);
@@ -199,7 +234,6 @@ class MobSimulationSessionTest {
             AgentCombatConfig.cfg.MOB_PHYSICS_DIRECTION_REACTION_MAX_MS = originalReaction;
             AgentCombatConfig.cfg.MOB_PHYSICS_JUMP_COOLDOWN_JITTER_MS = originalJitter;
             AgentCombatConfig.cfg.MOB_PHYSICS_STUCK_DETECT_MS = originalStuck;
-            AgentCombatConfig.cfg.MOB_PHYSICS_SPEED_VARIANCE_PERCENT = originalVariance;
         }
     }
 
@@ -211,6 +245,8 @@ class MobSimulationSessionTest {
         int originalStuck = AgentCombatConfig.cfg.MOB_PHYSICS_STUCK_DETECT_MS;
         int originalJitter = AgentCombatConfig.cfg.MOB_PHYSICS_BEHAVIOR_JITTER_MS;
         int originalStuckChance = AgentCombatConfig.cfg.MOB_PHYSICS_STUCK_RETREAT_CHANCE_PERCENT;
+        int originalMinDistance = AgentCombatConfig.cfg.MOB_PHYSICS_RETREAT_MIN_DISTANCE_PX;
+        int originalMaxDistance = AgentCombatConfig.cfg.MOB_PHYSICS_RETREAT_MAX_DISTANCE_PX;
         try {
             AgentCombatConfig.cfg.MOB_PHYSICS_EDGE_RETREAT_CHANCE_PERCENT = 100;
             AgentCombatConfig.cfg.MOB_PHYSICS_LEFT_EDGE_INSET_PX = 18;
@@ -218,6 +254,8 @@ class MobSimulationSessionTest {
             AgentCombatConfig.cfg.MOB_PHYSICS_STUCK_DETECT_MS = 500;
             AgentCombatConfig.cfg.MOB_PHYSICS_BEHAVIOR_JITTER_MS = 0;
             AgentCombatConfig.cfg.MOB_PHYSICS_STUCK_RETREAT_CHANCE_PERCENT = 100;
+            AgentCombatConfig.cfg.MOB_PHYSICS_RETREAT_MIN_DISTANCE_PX = 8;
+            AgentCombatConfig.cfg.MOB_PHYSICS_RETREAT_MAX_DISTANCE_PX = 8;
 
             Fixture edge = fixture(new MobPhysicsProfile(0.08, 0.05, 100,
                     true, false, false, false), 7, 80, 0, 100);
@@ -227,6 +265,7 @@ class MobSimulationSessionTest {
             }
             assertTrue(edge.session.hasTemporaryBehavior());
             assertEquals(-1, edge.session.temporaryDirection());
+            assertEquals(8.0, edge.session.temporaryRetreatDistancePx());
             assertEquals(90.0, edge.session.body().x(), 1.0e-9);
 
             Fixture stuck = fixture(new MobPhysicsProfile(0.0, 0.05, 100,
@@ -244,6 +283,8 @@ class MobSimulationSessionTest {
             AgentCombatConfig.cfg.MOB_PHYSICS_STUCK_DETECT_MS = originalStuck;
             AgentCombatConfig.cfg.MOB_PHYSICS_BEHAVIOR_JITTER_MS = originalJitter;
             AgentCombatConfig.cfg.MOB_PHYSICS_STUCK_RETREAT_CHANCE_PERCENT = originalStuckChance;
+            AgentCombatConfig.cfg.MOB_PHYSICS_RETREAT_MIN_DISTANCE_PX = originalMinDistance;
+            AgentCombatConfig.cfg.MOB_PHYSICS_RETREAT_MAX_DISTANCE_PX = originalMaxDistance;
         }
     }
 

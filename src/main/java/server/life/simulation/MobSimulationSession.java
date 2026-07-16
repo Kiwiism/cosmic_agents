@@ -44,12 +44,13 @@ public final class MobSimulationSession {
     private int blockedDirection;
     private boolean immediatePublication = true;
     private Point lastPublishedPosition;
-    private final double speedVariation;
     private long randomState;
     private double progressAnchorX;
     private long nextStuckDecisionNanos;
     private long temporaryBehaviorUntilNanos;
     private int temporaryDirection;
+    private double temporaryRetreatStartX;
+    private double temporaryRetreatDistancePx;
     private int chaseDirection;
     private int pendingChaseDirection;
     private long directionChangeAtNanos;
@@ -72,7 +73,6 @@ public final class MobSimulationSession {
         randomState = mix64((((long) monster.getObjectId()) << 32)
                 ^ Integer.toUnsignedLong(map.getId()) ^ RANDOM_NONZERO_FALLBACK);
         if (randomState == 0L) randomState = RANDOM_NONZERO_FALLBACK;
-        speedVariation = nextUnit() * 2.0 - 1.0;
         FootholdSegment foothold = terrain.foothold(monster.getFh());
         if (foothold == null) {
             foothold = terrain.findBelow(position.x, position.y - 1.0);
@@ -110,6 +110,7 @@ public final class MobSimulationSession {
         flinchStepsRemaining = 0;
         temporaryBehaviorUntilNanos = 0L;
         temporaryDirection = 0;
+        temporaryRetreatDistancePx = 0.0;
         immediatePublication = true;
         return generation;
     }
@@ -240,10 +241,7 @@ public final class MobSimulationSession {
     public double targetX() { return targetX; }
     public double targetY() { return targetY; }
     public double speedMultiplier() {
-        double base = Math.max(0, AgentCombatConfig.cfg.MOB_PHYSICS_SPEED_PERCENT) / 100.0;
-        double variance = Math.min(100, Math.max(0,
-                AgentCombatConfig.cfg.MOB_PHYSICS_SPEED_VARIANCE_PERCENT)) / 100.0;
-        return base * (1.0 + speedVariation * variance);
+        return Math.max(0, AgentCombatConfig.cfg.MOB_PHYSICS_SPEED_PERCENT) / 100.0;
     }
     public double knockbackMultiplier() {
         return Math.max(0, AgentCombatConfig.cfg.MOB_PHYSICS_KNOCKBACK_PERCENT) / 100.0;
@@ -257,6 +255,11 @@ public final class MobSimulationSession {
     }
 
     void prepareGroundBehavior(double dx) {
+        if (hasTemporaryBehavior() && temporaryDirection != 0
+                && Math.abs(body.x() - temporaryRetreatStartX)
+                >= temporaryRetreatDistancePx) {
+            temporaryBehaviorUntilNanos = tickNowNanos;
+        }
         if (Math.abs(body.x() - progressAnchorX) >= PROGRESS_DISTANCE_PX) {
             progressAnchorX = body.x();
             nextStuckDecisionNanos = tickNowNanos + stuckWindowNanos();
@@ -265,6 +268,7 @@ public final class MobSimulationSession {
                 && tickNowNanos >= temporaryBehaviorUntilNanos) {
             temporaryBehaviorUntilNanos = 0L;
             temporaryDirection = 0;
+            temporaryRetreatDistancePx = 0.0;
             blockedDirection = 0;
             chasing = true;
             progressAnchorX = body.x();
@@ -287,6 +291,10 @@ public final class MobSimulationSession {
 
     int temporaryDirection() {
         return temporaryDirection;
+    }
+
+    double temporaryRetreatDistancePx() {
+        return temporaryRetreatDistancePx;
     }
 
     int chaseDirection(double dx) {
@@ -320,9 +328,15 @@ public final class MobSimulationSession {
         boolean retreat = nextUnit() * 100.0
                 < Math.min(100, Math.max(0, retreatChancePercent));
         temporaryDirection = retreat ? awayFromBlock : 0;
+        temporaryRetreatStartX = body.x();
+        temporaryRetreatDistancePx = retreat
+                ? randomRangeInclusive(
+                        AgentCombatConfig.cfg.MOB_PHYSICS_RETREAT_MIN_DISTANCE_PX,
+                        AgentCombatConfig.cfg.MOB_PHYSICS_RETREAT_MAX_DISTANCE_PX)
+                : 0.0;
         long durationMs = retreat
-                ? randomRangeMillis(retreatMinMs, retreatMaxMs)
-                : randomRangeMillis(idleMinMs, idleMaxMs);
+                ? randomRangeInclusive(retreatMinMs, retreatMaxMs)
+                : randomRangeInclusive(idleMinMs, idleMaxMs);
         temporaryBehaviorUntilNanos = tickNowNanos + durationMs * 1_000_000L;
         nextStuckDecisionNanos = temporaryBehaviorUntilNanos + stuckWindowNanos();
         immediatePublication = true;
@@ -335,7 +349,7 @@ public final class MobSimulationSession {
         return delayMs * 1_000_000L;
     }
 
-    private long randomRangeMillis(int first, int second) {
+    private long randomRangeInclusive(int first, int second) {
         int min = Math.max(0, Math.min(first, second));
         int max = Math.max(min, Math.max(first, second));
         return min + randomMillis(max - min);

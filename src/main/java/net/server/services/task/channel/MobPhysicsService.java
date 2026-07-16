@@ -257,14 +257,16 @@ public final class MobPhysicsService extends BaseService {
         }
     }
 
-    private static int stance(MobSimulationSession session) {
+    static int stance(MobSimulationSession session) {
         PhysicsBody body = session.body();
         boolean facingLeft;
         if (session.motion() == MobMotionState.FLINCH) {
             facingLeft = session.knockbackDirection() > 0;
             return facingLeft ? 5 : 4;
         }
-        facingLeft = session.targetX() < body.x();
+        facingLeft = Math.abs(body.velocityX()) >= 0.1
+                ? body.velocityX() < 0.0
+                : session.targetX() < body.x();
         if (!body.grounded() && !session.profile().flying()) {
             return facingLeft ? 3 : 2;
         }

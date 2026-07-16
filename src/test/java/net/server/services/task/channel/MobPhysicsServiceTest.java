@@ -165,6 +165,20 @@ class MobPhysicsServiceTest {
     }
 
     @Test
+    void walkingStanceFacesActualMovementDuringRetreat() {
+        Fixture fixture = fixture(true, 100);
+        assertTrue(service.acceptedHit(fixture.agent, fixture.monster, 10, 0));
+        MobSimulationSession session = service.sessionForTest(fixture.monster);
+
+        session.setMotion(server.life.simulation.MobMotionState.CHASE);
+        session.body().setVelocity(-0.5, 0.0);
+        assertEquals(1, MobPhysicsService.stance(session));
+
+        session.body().setVelocity(0.5, 0.0);
+        assertEquals(0, MobPhysicsService.stance(session));
+    }
+
+    @Test
     void liveModeChangeImmediatelyReleasesAllPhysicsAuthority() {
         Fixture fixture = fixture(true, 1);
         assertTrue(service.acceptedHit(fixture.agent, fixture.monster, 10, 0));
