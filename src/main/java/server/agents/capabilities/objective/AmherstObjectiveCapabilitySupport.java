@@ -120,7 +120,8 @@ final class AmherstObjectiveCapabilitySupport {
             return missing("objective NPC is not present on map " + mapId);
         }
         Point currentPosition = gateway.position(context.agent());
-        Point interactionAnchor = interactionAnchor(context, mapId, npcId, currentPosition);
+        Point interactionAnchor = interactionAnchor(
+                context, mapId, npcId, currentPosition, npcPosition);
         if (interactionAnchor != null
                 && currentPosition.distanceSq(interactionAnchor)
                 > (long) NPC_ANCHOR_ARRIVAL_RANGE_PX * NPC_ANCHOR_ARRIVAL_RANGE_PX) {
@@ -144,7 +145,8 @@ final class AmherstObjectiveCapabilitySupport {
     private Point interactionAnchor(AgentCapabilityContext context,
                                     int mapId,
                                     int npcId,
-                                    Point currentPosition) {
+                                    Point currentPosition,
+                                    Point npcPosition) {
         if (context.memory().intValue("npcAnchorMapId", -1) == mapId
                 && context.memory().intValue("npcAnchorNpcId", -1) == npcId
                 && context.memory().booleanValue("npcAnchorSelected", false)) {
@@ -152,7 +154,15 @@ final class AmherstObjectiveCapabilitySupport {
                     context.memory().intValue("npcAnchorX", 0),
                     context.memory().intValue("npcAnchorY", 0));
         }
-        Point anchor = AgentNpcInteractionAnchorCatalog.nearest(mapId, npcId, currentPosition);
+        java.util.List<Point> candidates = AgentNpcInteractionAnchorCatalog.anchors(mapId, npcId).stream()
+                .filter(candidate -> candidate.distanceSq(npcPosition)
+                        <= (long) NPC_RANGE_PX * NPC_RANGE_PX)
+                .toList();
+        java.util.OptionalInt selected = MapleIslandObjectiveRandomnessRuntime.selectNpcAnchorIndex(
+                context.entry(), mapId, npcId, candidates.size());
+        Point anchor = selected.isPresent()
+                ? candidates.get(selected.getAsInt())
+                : AgentNpcInteractionAnchorCatalog.nearest(mapId, npcId, currentPosition);
         if (anchor == null) {
             return null;
         }
@@ -184,11 +194,19 @@ final class AmherstObjectiveCapabilitySupport {
     }
 
     boolean waitForNpcInteraction(AgentCapabilityContext context, int operationIndex) {
+        return waitForNpcInteraction(context, operationIndex, 0);
+    }
+
+    boolean waitForNpcInteraction(AgentCapabilityContext context,
+                                  int operationIndex,
+                                  int interactionStage) {
         String operationKey = "npcDelayOperation";
         String readyAtKey = "npcReadyAtMs";
-        if (context.memory().intValue(operationKey, -1) != operationIndex) {
+        int delayOperation = MapleIslandObjectiveRandomnessRuntime.settings(context.entry()).enabled()
+                ? 31 * operationIndex + interactionStage : operationIndex;
+        if (context.memory().intValue(operationKey, -1) != delayOperation) {
             long delayMs = Math.max(0L, npcInteractionDelay.nextDelayMs());
-            context.memory().putInt(operationKey, operationIndex);
+            context.memory().putInt(operationKey, delayOperation);
             context.memory().putLong(readyAtKey, context.nowMs() + delayMs);
         }
         return context.nowMs() < context.memory().longValue(readyAtKey, context.nowMs());

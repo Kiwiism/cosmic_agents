@@ -99,10 +99,26 @@ class AgentPrimitiveCapabilityTest {
         assertEquals(AgentCapabilityStatus.RUNNING,
                 capability.tick(fixture.context(200L, memory), command).status());
         assertEquals(AgentCapabilityStatus.RUNNING,
-                capability.tick(fixture.context(1_199L, memory), command).status());
+                capability.tick(fixture.context(2_699L, memory), command).status());
         assertEquals(AgentCapabilityStatus.SUCCESS,
-                capability.tick(fixture.context(1_200L, memory), command).status());
+                capability.tick(fixture.context(2_700L, memory), command).status());
         verify(fixture.gateway).stop(fixture.entry);
+    }
+
+    @Test
+    void portalDestinationLandingDoesNotConsumeMovementTick() {
+        Fixture fixture = fixture();
+        when(fixture.gateway.mapId(fixture.agent)).thenReturn(20000);
+        when(fixture.gateway.grounded(fixture.agent)).thenReturn(false);
+        AgentPortalTravelCapability capability = new AgentPortalTravelCapability(
+                fixture.gateway, new AmherstScopePolicy());
+
+        AgentCapabilityStep result = capability.tick(fixture.context(),
+                new AgentPortalTravelCapability.Command(10000, 1, 20000, true));
+
+        assertEquals(AgentCapabilityStatus.RUNNING, result.status());
+        assertFalse(result.consumedTick());
+        verify(fixture.gateway, never()).stop(fixture.entry);
     }
 
     @Test

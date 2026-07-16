@@ -23,8 +23,11 @@ package net.server.channel.handlers;
 
 import client.Client;
 import net.packet.InPacket;
+import server.agents.diagnostics.ClimbMovementCaptureRuntime;
 import tools.PacketCreator;
 import tools.exceptions.EmptyMovementException;
+
+import java.util.Arrays;
 
 public final class MovePlayerHandler extends AbstractMovementPacketHandler {
     @Override
@@ -32,8 +35,16 @@ public final class MovePlayerHandler extends AbstractMovementPacketHandler {
         p.skip(9);
         try {   // thanks Sa for noticing empty movement sequences crashing players
             int movementDataStart = p.getPosition();
+            byte[] captureSource = ClimbMovementCaptureRuntime.isCapturing(c.getPlayer().getId())
+                    ? p.getBytes()
+                    : null;
             updatePosition(p, c.getPlayer(), 0);
             long movementDataLength = p.getPosition() - movementDataStart; //how many bytes were read by updatePosition
+            if (captureSource != null) {
+                int captureLength = Math.min(Math.toIntExact(movementDataLength), captureSource.length);
+                ClimbMovementCaptureRuntime.recordNative(
+                        c.getPlayer(), Arrays.copyOf(captureSource, captureLength));
+            }
             p.seek(movementDataStart);
 
             c.getPlayer().getMap().movePlayer(c.getPlayer(), c.getPlayer().getPosition());

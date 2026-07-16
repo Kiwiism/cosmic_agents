@@ -41,4 +41,22 @@ class AgentCombatConfigTest {
             AgentCombatConfig.cfg.AOE_REPOSITION_DEBUG = originalDebug;
         }
     }
+
+    @Test
+    void syntheticReactionSwitchSupportsLiveOffAndOnValues() {
+        boolean originalEnabled = AgentCombatConfig.cfg.SYNTHETIC_MOB_REACTION_ENABLED;
+        try {
+            assertEquals("OK: SYNTHETIC_MOB_REACTION_ENABLED = false",
+                    AgentCombatConfig.setConfigField(
+                            "SYNTHETIC_MOB_REACTION_ENABLED", "off"));
+            assertEquals(false, AgentCombatConfig.cfg.SYNTHETIC_MOB_REACTION_ENABLED);
+
+            assertEquals("OK: SYNTHETIC_MOB_REACTION_ENABLED = true",
+                    AgentCombatConfig.setConfigField(
+                            "SYNTHETIC_MOB_REACTION_ENABLED", "on"));
+            assertTrue(AgentCombatConfig.cfg.SYNTHETIC_MOB_REACTION_ENABLED);
+        } finally {
+            AgentCombatConfig.cfg.SYNTHETIC_MOB_REACTION_ENABLED = originalEnabled;
+        }
+    }
 }

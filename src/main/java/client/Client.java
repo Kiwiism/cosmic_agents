@@ -62,6 +62,7 @@ import scripting.quest.QuestScriptManager;
 import server.MapleLeafLogger;
 import server.ThreadManager;
 import server.TimerManager;
+import server.agents.diagnostics.MobReactionCaptureRuntime;
 import server.agents.runtime.AgentRuntimeCleanupService;
 import server.life.Monster;
 import server.maps.FieldLimit;
@@ -229,6 +230,12 @@ public class Client extends ChannelInboundHandlerAdapter {
 
         if (YamlConfig.config.server.USE_DEBUG_SHOW_RCVD_PACKET && !LoggingUtil.isIgnoredRecvPacket(opcode)) {
             log.debug("Received packet id {}", opcode);
+        }
+
+        try {
+            MobReactionCaptureRuntime.recordInbound(this, opcode, packet);
+        } catch (RuntimeException captureFailure) {
+            log.warn("Mob reaction capture could not retain inbound opcode {}", opcode, captureFailure);
         }
 
         if (handler != null && handler.validateState(this)) {
@@ -1031,6 +1038,13 @@ public class Client extends ChannelInboundHandlerAdapter {
     }
 
     private void disconnectInternal(boolean shutdown, boolean cashshop) {//once per Client instance
+        if (player != null) {
+            try {
+                MobReactionCaptureRuntime.stopIfOwned(player);
+            } catch (RuntimeException captureFailure) {
+                log.warn("Unable to finalize mob reaction capture during disconnect", captureFailure);
+            }
+        }
         if (this instanceof BotClient && player != null) {
             AgentRuntimeCleanupService.cleanupAgentRuntimeState(player);
         }
@@ -1521,6 +1535,11 @@ public class Client extends ChannelInboundHandlerAdapter {
     public void sendPacket(Packet packet) {
         announcerLock.lock();
         try {
+            try {
+                MobReactionCaptureRuntime.recordOutbound(this, packet);
+            } catch (RuntimeException captureFailure) {
+                log.warn("Mob reaction capture could not retain an outbound packet", captureFailure);
+            }
             ioChannel.writeAndFlush(packet);
         } finally {
             announcerLock.unlock();

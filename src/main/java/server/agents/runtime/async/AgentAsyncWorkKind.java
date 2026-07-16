@@ -10,6 +10,8 @@ public enum AgentAsyncWorkKind {
             "agents.async.persistence.threads", "agents.async.persistence.queueCapacity"),
     POPULATION_LIFECYCLE("population", "agent-population-lifecycle", 1, 1, Thread.NORM_PRIORITY,
             "agents.async.population.threads", "agents.async.population.queueCapacity"),
+    MAPLE_ISLAND_COHORT("maple-island-cohort", "maple-island-cohort", 1, 64, Thread.NORM_PRIORITY,
+            "agents.async.mapleIslandCohort.threads", "agents.async.mapleIslandCohort.queueCapacity"),
     LLM_NETWORK("llm", "bot-llm", 2, 64, Thread.NORM_PRIORITY,
             "agents.async.llm.threads", "agents.async.llm.queueCapacity"),
     CATALOG_REBUILD("catalog", "agent-catalog", 1, 32, Thread.MIN_PRIORITY,

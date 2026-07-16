@@ -3,6 +3,7 @@ package server.integration;
 import client.Character;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import server.life.Monster;
 import server.maps.MapleMap;
 
 public final class AgentPresence {
@@ -31,6 +32,29 @@ public final class AgentPresence {
         } catch (RuntimeException failure) {
             log.warn("Agent map-observation hook failed for map {} observed={}",
                     map == null ? -1 : map.getId(), observed, failure);
+        }
+    }
+
+    public static void agentLeftMap(MapleMap map) {
+        try {
+            provider.agentLeftMap(map);
+        } catch (RuntimeException failure) {
+            log.warn("Agent map-departure hook failed for map {}",
+                    map == null ? -1 : map.getId(), failure);
+        }
+    }
+
+    public static void mobHitAccepted(Character attacker, Monster monster,
+                                      int appliedDamage, long reactionDelayMs) {
+        try {
+            if (attacker == null || !provider.isAgent(attacker)) {
+                return;
+            }
+            provider.mobHitAccepted(attacker, monster, appliedDamage, reactionDelayMs);
+        } catch (RuntimeException | LinkageError failure) {
+            log.warn("Agent accepted-mob-hit hook failed for mob {} attacker {}",
+                    monster == null ? -1 : monster.getObjectId(),
+                    attacker == null ? -1 : attacker.getId(), failure);
         }
     }
 

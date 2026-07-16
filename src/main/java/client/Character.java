@@ -1104,13 +1104,21 @@ public class Character extends AbstractCharacterObject {
     }
 
     public static boolean canCreateChar(String name) {
+        return isValidCharacterNameSyntax(name) && getIdByName(name) < 0;
+    }
+
+    /** Pure character-name policy check, separated from the database uniqueness lookup. */
+    public static boolean isValidCharacterNameSyntax(String name) {
+        if (name == null) {
+            return false;
+        }
         String lname = name.toLowerCase();
         for (String nameTest : BLOCKED_NAMES) {
-            if (lname.contains(nameTest)) {
+            if (lname.contains(nameTest.toLowerCase())) {
                 return false;
             }
         }
-        return getIdByName(name) < 0 && Pattern.compile("[a-zA-Z0-9]{3,12}").matcher(name).matches();
+        return Pattern.compile("[a-zA-Z0-9]{3,12}").matcher(name).matches();
     }
 
     public boolean canDoor() {

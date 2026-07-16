@@ -35,6 +35,7 @@ import constants.id.ItemId;
 import constants.id.MapId;
 import constants.id.MobId;
 import constants.skills.Aran;
+import constants.skills.Archer;
 import constants.skills.Assassin;
 import constants.skills.Bandit;
 import constants.skills.Beginner;
@@ -105,6 +106,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -116,6 +118,15 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 public abstract class AbstractDealDamageHandler extends AbstractPacketHandler {
     private static final int EXPLODED_MESO_SPREAD_DELAY = 100;
     private static final int EXPLODED_MESO_MAX_DELAY = 1000;
+    private static final int[] GENERAL_CRITICAL_PASSIVE_SKILLS = {
+            Archer.CRITICAL_SHOT,
+            WindArcher.CRITICAL_SHOT,
+            Assassin.CRITICAL_THROW,
+            NightWalker.CRITICAL_THROW,
+            Aran.COMBO_CRITICAL,
+            ThunderBreaker.CRITICAL_PUNCH,
+            Evan.CRITICAL_MAGIC
+    };
 
     public static class AttackInfo {
 
@@ -158,16 +169,26 @@ public abstract class AbstractDealDamageHandler extends AbstractPacketHandler {
         }
     }
 
-    private static boolean isClientReportedCriticalDamage(int damage) {
-        return damage < 0;
+    /**
+     * v83 does not carry authoritative critical state in the inbound damage integer.
+     * Keep damage magnitude separate from the outbound bit-31 display flag so a signed
+     * client value can never make an ordinary line look critical to other players.
+     */
+    static int normalizeClientDamage(int wireDamage) {
+        return wireDamage & Integer.MAX_VALUE;
     }
 
-    private static long realDamageFromWire(int damage) {
-        return isClientReportedCriticalDamage(damage) ? (long) damage + Integer.MAX_VALUE : damage;
+    static boolean shouldBroadcastCritical(int skill, boolean canCrit, long damage, long nonCriticalMaximum) {
+        return skill == Marksman.SNIPE || (canCrit && damage > nonCriticalMaximum);
     }
 
-    private static int encodeCriticalDamage(long realDamage) {
-        return (int) (realDamage - Integer.MAX_VALUE);
+    static boolean hasLearnedGeneralCriticalPassive(Character character) {
+        for (int skillId : GENERAL_CRITICAL_PASSIVE_SKILLS) {
+            if (character.getSkillLevel(skillId) > 0) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static void applyAttack(AttackInfo attack, final Character player, int attackCount) {
@@ -759,7 +780,7 @@ public abstract class AbstractDealDamageHandler extends AbstractPacketHandler {
             calcDmgMax += 80000; // Aran Tutorial.
         }
 
-        boolean canCrit = chr.getJob().isA((Job.BOWMAN)) || chr.getJob().isA(Job.THIEF) || chr.getJob().isA(Job.NIGHTWALKER1) || chr.getJob().isA(Job.WINDARCHER1) || chr.getJob() == Job.ARAN3 || chr.getJob() == Job.ARAN4 || chr.getJob() == Job.MARAUDER || chr.getJob() == Job.BUCCANEER;
+        boolean canCrit = hasLearnedGeneralCriticalPassive(chr);
 
         if (chr.getBuffEffect(BuffStat.SHARP_EYES) != null) {
             // Any class that has sharp eyes can crit. Also, since it stacks with normal crit go ahead
@@ -788,7 +809,11 @@ public abstract class AbstractDealDamageHandler extends AbstractPacketHandler {
             Point nextPos = p.readPos();
             short delay = p.readShort();
             List<Integer> damageLines = new ArrayList<>();
+            Set<Integer> criticalLineIndices = new HashSet<>();
             final Monster monster = chr.getMap().getMonsterByOid(oid);
+            boolean canCritThisTarget = canCrit || (monster != null
+                    && monster.isBuffed(MonsterStatus.STUN)
+                    && chr.getSkillLevel(Marauder.STUN_MASTERY) > 0);
             calcDmgMax = server.combat.CombatFormulaProvider.getInstance().applyWkChargeElementalBonus(calcDmgMax, chr, monster);
 
             if (ret.skill != 0) {
@@ -820,9 +845,7 @@ public abstract class AbstractDealDamageHandler extends AbstractPacketHandler {
             }
 
             for (int j = 0; j < ret.numDamage; j++) {
-                int damage = p.readInt();
-                boolean clientReportedCrit = isClientReportedCriticalDamage(damage);
-                long realDamage = realDamageFromWire(damage);
+                int damage = normalizeClientDamage(p.readInt());
                 long hitDmgMax = calcDmgMax;
                 if (ret.skill == Buccaneer.BARRAGE || ret.skill == ThunderBreaker.BARRAGE) {
                     if (j > 3) {
@@ -839,32 +862,29 @@ public abstract class AbstractDealDamageHandler extends AbstractPacketHandler {
 
                 if (ret.skill == Marksman.SNIPE) {
                     damage = 195000 + Randomizer.nextInt(5000);
-                    clientReportedCrit = false;
-                    realDamage = damage;
                     hitDmgMax = 200000;
                 } else if (ret.skill == Beginner.BAMBOO_RAIN || ret.skill == Noblesse.BAMBOO_RAIN || ret.skill == Evan.BAMBOO_THRUST || ret.skill == Legend.BAMBOO_THRUST) {
                     hitDmgMax = 82569000; // 30% of Max HP of strongest Dojo boss
                 }
 
                 long maxWithCrit = hitDmgMax;
-                if (canCrit) // They can crit, so up the max.
+                if (canCritThisTarget) // They can crit, so up the max.
                 {
                     maxWithCrit *= 2;
                 }
 
                 // Warn if the damage is over 1.5x what we calculated above.
-                if (realDamage > maxWithCrit * 1.5) {
-                    AutobanFactory.DAMAGE_HACK.alert(chr, "DMG: " + realDamage + " MaxDMG: " + maxWithCrit + " SID: " + ret.skill + " MobID: " + (monster != null ? monster.getId() : "null") + " Map: " + chr.getMap().getMapName() + " (" + chr.getMapId() + ")");
+                if (damage > maxWithCrit * 1.5) {
+                    AutobanFactory.DAMAGE_HACK.alert(chr, "DMG: " + damage + " MaxDMG: " + maxWithCrit + " SID: " + ret.skill + " MobID: " + (monster != null ? monster.getId() : "null") + " Map: " + chr.getMap().getMapName() + " (" + chr.getMapId() + ")");
                 }
 
                 // Add a ab point if its over 5x what we calculated.
-                if (realDamage > maxWithCrit * 5) {
-                    AutobanFactory.DAMAGE_HACK.addPoint(chr.getAutobanManager(), "DMG: " + realDamage + " MaxDMG: " + maxWithCrit + " SID: " + ret.skill + " MobID: " + (monster != null ? monster.getId() : "null") + " Map: " + chr.getMap().getMapName() + " (" + chr.getMapId() + ")");
+                if (damage > maxWithCrit * 5) {
+                    AutobanFactory.DAMAGE_HACK.addPoint(chr.getAutobanManager(), "DMG: " + damage + " MaxDMG: " + maxWithCrit + " SID: " + ret.skill + " MobID: " + (monster != null ? monster.getId() : "null") + " Map: " + chr.getMap().getMapName() + " (" + chr.getMapId() + ")");
                 }
 
-                if (!clientReportedCrit && (ret.skill == Marksman.SNIPE || (canCrit && realDamage > hitDmgMax))) {
-                    // Unpatched clients do not send crit flags, so keep the legacy server-side fallback.
-                    damage = encodeCriticalDamage(realDamage);
+                if (shouldBroadcastCritical(ret.skill, canCritThisTarget, damage, hitDmgMax)) {
+                    criticalLineIndices.add(j);
                 }
 
                 if(effect != null) {
@@ -882,7 +902,7 @@ public abstract class AbstractDealDamageHandler extends AbstractPacketHandler {
             if (ret.skill != Corsair.RAPID_FIRE || ret.skill != Aran.HIDDEN_FULL_DOUBLE || ret.skill != Aran.HIDDEN_FULL_TRIPLE || ret.skill != Aran.HIDDEN_OVER_DOUBLE || ret.skill != Aran.HIDDEN_OVER_TRIPLE) {
                 p.skip(4);
             }
-            ret.targets.put(oid, new AttackTarget(delay, damageLines));
+            ret.targets.put(oid, new AttackTarget(delay, damageLines, criticalLineIndices));
         }
         if (ret.skill == NightWalker.POISON_BOMB) { // Poison Bomb
             p.skip(4);

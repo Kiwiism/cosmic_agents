@@ -15,6 +15,21 @@ import static org.mockito.Mockito.when;
 
 class AgentMovementSnapshotServiceTest {
     @Test
+    void currentSnapshotPreservesChairStanceForHeartbeatBroadcasts() {
+        Character agent = mock(Character.class);
+        when(agent.getHp()).thenReturn(1);
+        when(agent.getChair()).thenReturn(3010000);
+        when(agent.getStance()).thenReturn(CharacterStance.STAND_RIGHT_STANCE);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        AgentMovementStateRuntime.setFacingDirection(entry, -1);
+
+        AgentMovementPacketSnapshot snapshot = AgentMovementSnapshotService.currentSnapshot(entry);
+
+        assertEquals(CharacterStance.SIT_LEFT_STANCE, snapshot.stance());
+        verify(agent).setStance(CharacterStance.SIT_LEFT_STANCE);
+    }
+
+    @Test
     void currentSnapshotPreservesLegacyPacketFacingMovementState() {
         Character agent = mock(Character.class);
         when(agent.getPosition()).thenReturn(new Point(10, 20));

@@ -44,6 +44,8 @@ class AgentGrindTargetCommitmentServiceTest {
         assertSame(target, AgentGrindTargetStateRuntime.target(entry));
         org.junit.jupiter.api.Assertions.assertTrue(
                 AgentGrindTargetStateRuntime.committedTo(entry, target, 12_999L));
+        org.junit.jupiter.api.Assertions.assertFalse(
+                AgentGrindTargetStateRuntime.committedTo(entry, target, 13_000L));
     }
 
     @Test
@@ -121,6 +123,36 @@ class AgentGrindTargetCommitmentServiceTest {
     }
 
     @Test
+    void progressivelyLengthensCommitmentAfterRepeatedTargetSwitches() {
+        Character agent = mock(Character.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
+        Monster first = monsterAt(100, 100);
+        Monster second = monsterAt(200, 100);
+        Monster third = monsterAt(300, 100);
+        Monster fourth = monsterAt(400, 100);
+
+        AgentGrindTargetCommitmentService.commitTarget(
+                entry, agent, new Point(), first, null, 0L, hooks(null, null));
+        AgentGrindTargetCommitmentService.commitTarget(
+                entry, agent, new Point(), second, null, 12_000L, hooks(null, null));
+        assertSame(second, AgentGrindTargetStateRuntime.target(entry));
+        org.junit.jupiter.api.Assertions.assertTrue(
+                AgentGrindTargetStateRuntime.committedTo(entry, second, 31_999L));
+
+        AgentGrindTargetCommitmentService.commitTarget(
+                entry, agent, new Point(), third, null, 32_000L, hooks(null, null));
+        org.junit.jupiter.api.Assertions.assertTrue(
+                AgentGrindTargetStateRuntime.committedTo(entry, third, 66_999L));
+
+        AgentGrindTargetCommitmentService.commitTarget(
+                entry, agent, new Point(), fourth, null, 67_000L, hooks(null, null));
+        org.junit.jupiter.api.Assertions.assertTrue(
+                AgentGrindTargetStateRuntime.committedTo(entry, fourth, 126_999L));
+        org.junit.jupiter.api.Assertions.assertEquals(3,
+                AgentGrindTargetStateRuntime.targetSwitchCount(entry));
+    }
+
+    @Test
     void closerThreatIgnoresMobsOutsideTheActiveObjective() {
         Character agent = mock(Character.class);
         MapleMap map = mock(MapleMap.class);
@@ -149,6 +181,7 @@ class AgentGrindTargetCommitmentServiceTest {
     private static Monster monsterAt(int x, int y) {
         Monster monster = mock(Monster.class);
         when(monster.getPosition()).thenReturn(new Point(x, y));
+        when(monster.isAlive()).thenReturn(true);
         return monster;
     }
 

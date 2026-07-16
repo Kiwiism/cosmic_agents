@@ -29,6 +29,34 @@ public final class AgentRelaxerSpotReservationRuntime {
         return reserveRandom(agent.getId(), agent.getWorld(), agent.getClient().getChannel(), pool);
     }
 
+    public static synchronized Optional<AgentRelaxerSpotCatalog.Spot> reserveFromIndex(
+            Character agent,
+            AgentRelaxerSpotCatalog.Pool pool,
+            int startIndex) {
+        if (agent == null || pool == null) {
+            return Optional.empty();
+        }
+        int world = agent.getClient() == null ? 0 : agent.getWorld();
+        int channel = agent.getClient() == null ? 0 : agent.getClient().getChannel();
+        var candidates = AgentRelaxerSpotCatalog.spaces(pool);
+        if (agent.getId() <= 0 || candidates.isEmpty()) {
+            return Optional.empty();
+        }
+        CharacterSpaceScope scope = new CharacterSpaceScope(world, channel, pool.mapId());
+        CharacterSpaceOwner owner = CharacterSpaceOwner.character(agent.getId());
+        int first = Math.floorMod(startIndex, candidates.size());
+        for (int offset = 0; offset < candidates.size(); offset++) {
+            var candidate = candidates.get((first + offset) % candidates.size());
+            var reservation = CharacterSpaceReservationRuntime.reserveExact(
+                    scope, owner, candidates, candidate, 1);
+            if (reservation.isPresent()) {
+                return reservation.map(found -> new AgentRelaxerSpotCatalog.Spot(
+                        found.scope().mapId(), found.position().x, found.position().y));
+            }
+        }
+        return Optional.empty();
+    }
+
     public static synchronized Optional<AgentRelaxerSpotCatalog.Spot> reservedSpot(int agentCharacterId) {
         return CharacterSpaceReservationRuntime.reservation(CharacterSpaceOwner.character(agentCharacterId))
                 .map(reservation -> new AgentRelaxerSpotCatalog.Spot(

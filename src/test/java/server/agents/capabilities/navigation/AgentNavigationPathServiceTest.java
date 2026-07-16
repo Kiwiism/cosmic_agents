@@ -137,6 +137,58 @@ class AgentNavigationPathServiceTest {
     }
 
     @Test
+    void seededVariationCanChooseBoundedReachableAlternativeAndIsStable() {
+        AgentNavigationGraph.Edge viaFirst = edge(1, 2, AgentNavigationGraph.EdgeType.WALK,
+                new Point(0, 100), new Point(100, 100), 100);
+        AgentNavigationGraph.Edge viaSecond = edge(2, 3, AgentNavigationGraph.EdgeType.WALK,
+                new Point(100, 100), new Point(200, 100), 100);
+        AgentNavigationGraph.Edge direct = edge(1, 3, AgentNavigationGraph.EdgeType.WALK,
+                new Point(0, 100), new Point(200, 100), 210);
+        AgentNavigationGraph graph = graphWithRegionsAndEdges(
+                List.of(
+                        groundRegion(1, 0, 100, 100),
+                        groundRegion(2, 100, 200, 100),
+                        groundRegion(3, 200, 300, 100)),
+                Map.of(1, List.of(viaFirst, direct), 2, List.of(viaSecond)));
+        Character bot = mock(Character.class);
+        when(bot.getMap()).thenReturn(null);
+        when(bot.getPosition()).thenReturn(new Point(0, 100));
+
+        AgentNavigationGraph.Edge selected = null;
+        long selectedSeed = -1L;
+        for (long seed = 0L; seed < 10_000L; seed++) {
+            AgentMapleIslandTravelRuntime.RouteVariation variation =
+                    new AgentMapleIslandTravelRuntime.RouteVariation(seed, 2.0d);
+            AgentNavigationGraph.Edge candidate = AgentNavigationPathService.findNextEdgeVaried(
+                    graph, bot, 1, 3, new Point(200, 100), variation);
+            if (candidate == direct) {
+                selected = candidate;
+                selectedSeed = seed;
+                break;
+            }
+        }
+
+        assertEquals(direct, selected);
+        assertTrue(direct.cost <= Math.ceil((viaFirst.cost + viaSecond.cost) * 2.0d));
+        assertEquals(direct, AgentNavigationPathService.findNextEdgeVaried(
+                graph, bot, 1, 3, new Point(200, 100),
+                new AgentMapleIslandTravelRuntime.RouteVariation(selectedSeed, 2.0d)));
+    }
+
+    @Test
+    void transitionVariationIsNeverCheaperAndHonorsStretchBound() {
+        AgentNavigationGraph.Edge edge = edge(1, 2, AgentNavigationGraph.EdgeType.JUMP,
+                new Point(10, 100), new Point(80, 60), 250);
+        AgentMapleIslandTravelRuntime.RouteVariation variation =
+                new AgentMapleIslandTravelRuntime.RouteVariation(123L, 1.2d);
+
+        int varied = AgentNavigationPathService.variedTransitionCost(250, edge, variation);
+
+        assertTrue(varied >= 250);
+        assertTrue(varied <= 300);
+    }
+
+    @Test
     void measureOptimalityRunsAgentOwnedSearch() {
         AgentNavigationGraph graph = graphWithRegionsAndEdges(
                 List.of(

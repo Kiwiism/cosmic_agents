@@ -118,6 +118,24 @@ public final class PlanStopObjectiveCapability
             return AmherstObjectiveCapabilitySupport.missing(
                     "Pio's Relaxer reward is required before the showcase can finish");
         }
+        // Once sitting has been issued, no approach or facing packet may run: either one can
+        // replace the client's sit stance even though the server-side chair id remains active.
+        boolean chairActive = support.gateway().chairItemId(context.agent()) == command.chairItemId();
+        if (context.memory().booleanValue("chairSitIssued", false)) {
+            if (context.nowMs() < context.memory().longValue("chairVerifyAtMs", context.nowMs())) {
+                return AgentCapabilityStep.running("verifying Relaxer state", true);
+            }
+            if (chairActive) {
+                return AgentCapabilityStep.terminal(AmherstObjectiveCapabilitySupport.success(
+                        command.objectiveId(), command.reason() + " Agent is resting on the Relaxer."));
+            }
+            context.memory().putBoolean("chairSitIssued", false);
+            return AgentCapabilityStep.running("Relaxer state was interrupted; sitting again", true);
+        }
+        if (chairActive) {
+            return AgentCapabilityStep.terminal(AmherstObjectiveCapabilitySupport.success(
+                    command.objectiveId(), command.reason() + " Agent is resting on the Relaxer."));
+        }
         if (command.restSpotPool() != null) {
             AgentCapabilityStep restApproach = approachRestSpot(context, command);
             if (restApproach != null) {
@@ -136,22 +154,6 @@ public final class PlanStopObjectiveCapability
                 return AgentCapabilityStep.running("settling at reserved Relaxer spot", false);
             }
         }
-        boolean chairActive = support.gateway().chairItemId(context.agent()) == command.chairItemId();
-        if (context.memory().booleanValue("chairSitIssued", false)) {
-            if (context.nowMs() < context.memory().longValue("chairVerifyAtMs", context.nowMs())) {
-                return AgentCapabilityStep.running("verifying Relaxer state", false);
-            }
-            if (chairActive) {
-                return AgentCapabilityStep.terminal(AmherstObjectiveCapabilitySupport.success(
-                        command.objectiveId(), command.reason() + " Agent is resting on the Relaxer."));
-            }
-            context.memory().putBoolean("chairSitIssued", false);
-            return AgentCapabilityStep.running("Relaxer state was interrupted; sitting again", false);
-        }
-        if (chairActive) {
-            return AgentCapabilityStep.terminal(AmherstObjectiveCapabilitySupport.success(
-                    command.objectiveId(), command.reason() + " Agent is resting on the Relaxer."));
-        }
         if (!support.gateway().sitChair(context.agent(), command.chairItemId())) {
             AgentRelaxerSpotReservationRuntime.release(context.agent().getId());
             context.memory().putBoolean("restTargetSelected", false);
@@ -160,12 +162,18 @@ public final class PlanStopObjectiveCapability
         }
         context.memory().putBoolean("chairSitIssued", true);
         context.memory().putLong("chairVerifyAtMs", context.nowMs() + CHAIR_VERIFY_DELAY_MS);
-        return AgentCapabilityStep.running("verifying Relaxer state", false);
+        return AgentCapabilityStep.running("verifying Relaxer state", true);
     }
 
     private AgentCapabilityStep approachRestSpot(AgentCapabilityContext context, Command command) {
         if (!context.memory().booleanValue("restTargetSelected", false)) {
-            var reserved = AgentRelaxerSpotReservationRuntime.reserveRandom(
+            int candidateCount = AgentRelaxerSpotCatalog.spots(command.restSpotPool()).size();
+            var controlledIndex = MapleIslandObjectiveRandomnessRuntime.selectRestSpotIndex(
+                    context.entry(), command.finalMapId(), candidateCount);
+            var reserved = controlledIndex.isPresent()
+                    ? AgentRelaxerSpotReservationRuntime.reserveFromIndex(
+                    context.agent(), command.restSpotPool(), controlledIndex.getAsInt())
+                    : AgentRelaxerSpotReservationRuntime.reserveRandom(
                     context.agent(), command.restSpotPool());
             if (reserved.isEmpty()) {
                 return AgentCapabilityStep.retry("No unoccupied Relaxer spot is available");
@@ -173,8 +181,10 @@ public final class PlanStopObjectiveCapability
             AgentRelaxerSpotCatalog.Spot spot = reserved.get();
             context.memory().putInt("restTargetX", spot.x());
             context.memory().putInt("restTargetY", spot.y());
-            context.memory().putInt("restFacingDirection",
-                    ThreadLocalRandom.current().nextBoolean() ? 1 : -1);
+            int facingDirection = MapleIslandObjectiveRandomnessRuntime
+                    .selectRestFacingDirection(context.entry(), command.finalMapId())
+                    .orElseGet(() -> ThreadLocalRandom.current().nextBoolean() ? 1 : -1);
+            context.memory().putInt("restFacingDirection", facingDirection);
             context.memory().putBoolean("restTargetSelected", true);
         }
         Point destination = new Point(

@@ -15,8 +15,8 @@ public final class AgentMovementSnapshotService {
     }
 
     public static AgentMovementPacketSnapshot currentSnapshot(AgentRuntimeEntry entry) {
-        int stance = AgentMovementPoseService.resolveStance(entry);
         Character agent = AgentRuntimeIdentityRuntime.bot(entry);
+        int stance = resolveSnapshotStance(entry, agent);
         if (agent != null && agent.getStance() != stance) {
             agent.setStance(stance);
         }
@@ -24,6 +24,15 @@ public final class AgentMovementSnapshotService {
                 AgentMovementStateRuntime.movementVelocityX(entry),
                 AgentMovementStateRuntime.movementVelocityY(entry),
                 broadcastStance(entry, stance));
+    }
+
+    private static int resolveSnapshotStance(AgentRuntimeEntry entry, Character agent) {
+        if (agent != null && agent.getChair() > 0) {
+            return AgentMovementStateRuntime.facingDirectionSign(entry) < 0
+                    ? CharacterStance.SIT_LEFT_STANCE
+                    : CharacterStance.SIT_RIGHT_STANCE;
+        }
+        return AgentMovementPoseService.resolveStance(entry);
     }
 
     private static int broadcastStance(AgentRuntimeEntry entry, int baseStance) {

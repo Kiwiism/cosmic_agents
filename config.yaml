@@ -275,6 +275,11 @@ server:
     USE_MAP_OWNERSHIP_SYSTEM: false      #Flag to enable/disable map ownership system
     USE_FISHING_SYSTEM: false            #Flag to enable/disable custom fishing system
     USE_NPCS_SCRIPTABLE: true           #Flag to enable/disable serverside predefined script NPCs.
+    # Agent-only synthetic mob hit reaction. Set enabled false for original behavior.
+    AGENT_SYNTHETIC_MOB_REACTION_ENABLED: false
+    AGENT_SYNTHETIC_MOB_KNOCKBACK_DISTANCE_X: 12
+    AGENT_SYNTHETIC_MOB_KNOCKBACK_DURATION_MS: 240
+    AGENT_SYNTHETIC_MOB_CONTROL_HOLD_MS: 350
     AGENT_LEGACY_DIALOGUE_ENABLED: false #Experimental Agent plans narrate objectives; suppress NuTNNuT-era Agent chatter.
     AGENT_AMHERST_DEBUG_MESSAGES_ENABLED: false #Show detailed yellow Amherst capability and objective progress messages.
     AGENT_AMHERST_INTENTION_CHAT_ENABLED: true #Let the Agent announce its next Amherst action in map chat.
@@ -282,6 +287,7 @@ server:
     AGENT_AMHERST_SHOWCASE_AGENT_NAME: AmherstRun #Only this Agent IGN may use the showcase reset path.
     AGENT_MAPLE_ISLAND_SHOWCASE_ENABLED: true #Allow the guarded one-command clean level-1 Mushroom Town-to-Southperry run.
     AGENT_MAPLE_ISLAND_SHOWCASE_AGENT_NAME: AmherstRun #Only this Agent IGN may use the full Maple Island showcase reset path.
+    AGENT_MAPLE_ISLAND_COHORT_ENABLED: true #Allow guarded persistent-pool cohort provisioning and full Maple Island runs.
     AGENT_SOUTHPERRY_SHOWCASE_ENABLED: true #Allow the guarded one-command post-Amherst-to-Southperry run.
     AGENT_SOUTHPERRY_SHOWCASE_AGENT_NAME: AmherstRun #Only this Agent IGN may use the captured post-Amherst reset path.
 

@@ -6,6 +6,7 @@ import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.monitoring.AgentPerformanceMonitor;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
+import server.maps.Rope;
 
 import java.awt.Point;
 
@@ -14,6 +15,11 @@ import java.awt.Point;
  * are delegated to the packet gateway boundary.
  */
 public final class AgentMovementBroadcastService {
+    /** Sentinel used for rope climbs to select the client-side rope render layer. */
+    static final int ROPE_CLIMB_FOOTHOLD_ID = -2;
+    /** Sentinel emitted between leaving a climbable and landing on real ground. */
+    static final int AIRBORNE_FOOTHOLD_ID = 0;
+
     private AgentMovementBroadcastService() {
     }
 
@@ -54,10 +60,22 @@ public final class AgentMovementBroadcastService {
     }
 
     // Real clients report the foothold ID they're standing on in every move packet; the
-    // client uses it to pick the render z-layer. Without it, bots draw on the top layer
-    // (in front of tiles/walls). While airborne, clients keep sending the last-known
-    // ground fh, so cache it on the bot entry.
-    private static int resolveBroadcastFhId(AgentRuntimeEntry entry, Character bot) {
+    // client uses it to pick the render z-layer. Cache the last real ground foothold for
+    // ordinary movement, but use the captured rope sentinel while attached to a rope.
+    static int resolveBroadcastFhId(AgentRuntimeEntry entry, Character bot) {
+        // Native capture confirms every sustained rope fragment carries fh=-2. Sending the
+        // ground foothold here makes remote clients retain the ground render layer, which is
+        // why synthetic characters appeared behind rope artwork.
+        Rope climbable = AgentClimbStateRuntime.climbRope(entry);
+        if (AgentClimbStateRuntime.climbing(entry) && climbable != null && !climbable.isLadder()) {
+            return ROPE_CLIMB_FOOTHOLD_ID;
+        }
+        // Native rope-jump capture switches from fh=-2 to fh=0 until the landing
+        // fragment supplies the destination foothold. Resolving a platform below an
+        // airborne Agent preserves the wrong render layer during detachment.
+        if (AgentMovementStateRuntime.inAir(entry)) {
+            return AIRBORNE_FOOTHOLD_ID;
+        }
         Foothold fh = AgentGroundingService.findGroundFoothold(bot.getMap(), bot.getPosition());
         if (fh != null) {
             AgentMovementPhysicsStateRuntime.setLastGroundFhId(entry, fh.getId());

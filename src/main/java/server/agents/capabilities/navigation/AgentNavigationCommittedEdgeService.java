@@ -70,18 +70,10 @@ public final class AgentNavigationCommittedEdgeService {
         if (climbExitReadinessChecker.canExecuteClimbExit(graph, bot, botPos, edge)) {
             return edge;
         }
-
-        AgentNavigationGraph.Edge bestEdge = nextEdgeFinder.findNextEdge(graph, bot, startRegionId, targetRegionId, targetPos);
-        if (sameEdge(edge, bestEdge) || bestEdge == null) {
-            return edge;
-        }
-
-        AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, bestEdge);
-        AgentNavigationDebugStateRuntime.setPlannedNavigationTargetPosition(entry, targetPos);
-        AgentNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
-        AgentNavigationDebugStateRuntime.clearNavTargetPosition(entry);
-        AgentNavigationDebugStateRuntime.setNavPreciseTarget(entry, false);
-        return bestEdge;
+        // Once attached to a rope, finish the authored exit before considering a new target.
+        // Replanning here can reverse vertical direction every AI tick when monsters above and
+        // below alternately win the target score, producing a permanent rope oscillation.
+        return edge;
     }
 
     public static AgentNavigationGraph.Edge refreshCommittedGroundEdge(AgentNavigationGraph graph,
@@ -110,7 +102,6 @@ public final class AgentNavigationCommittedEdgeService {
         if (shouldRetainCommittedGroundEdge(edge, bestEdge)) {
             return edge;
         }
-
         AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, bestEdge);
         AgentNavigationDebugStateRuntime.setPlannedNavigationTargetPosition(entry, targetPos);
         AgentNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
@@ -162,18 +153,22 @@ public final class AgentNavigationCommittedEdgeService {
         if (edge == null) {
             return null;
         }
-        if (targetRegionId < 0) {
-            return null;
-        }
-        if (!plannedTargetStillMatches(entry, targetPos)) {
+        boolean committedClimb = AgentClimbStateRuntime.climbing(entry)
+                && edge.type == AgentNavigationGraph.EdgeType.CLIMB;
+        if (targetRegionId < 0 && !committedClimb) {
             return null;
         }
         int previousTargetRegionId = AgentNavigationDebugStateRuntime.navTargetRegionId(entry);
+        if (!committedClimb && !plannedTargetStillMatches(entry, targetPos)) {
+            return null;
+        }
         // Update stored target in-place rather than discarding. The Y-snap offset causes
         // followBase.x to differ between AI and non-AI ticks, making targetRegionId fluctuate
         // even when the owner hasn't meaningfully moved. Relying on structural checks below
         // (start-region match, usability, arrival) is sufficient to detect actual invalidity.
-        AgentNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
+        if (!committedClimb) {
+            AgentNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
+        }
         if (!edgeUsabilityChecker.isUsable(graph, AgentRuntimeIdentityRuntime.bot(entry), edge)) {
             return null;
         }

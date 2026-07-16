@@ -13,8 +13,40 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class AgentTickCoreServiceTest {
+    @Test
+    void ownerLogoutPreservesSeatedPoseWithoutRunningOwnerlessPhysics() {
+        Character agent = mock(Character.class);
+        when(agent.getChair()).thenReturn(3010000);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        List<String> calls = new ArrayList<>();
+
+        AgentTickCoreService.tickCore(entry, 1, 2, new AgentTickCoreService.Hooks(
+                () -> 123L,
+                (tickEntry, agentCharId, nowMs) -> {
+                    calls.add("preflight");
+                    return new AgentTickPreflightService.Result(false, agent, true);
+                },
+                (tickEntry, leaderCharId) -> {
+                    calls.add("leader");
+                    return null;
+                },
+                (tickEntry, tickAgent, leader, nowMs, leaderCharId) -> {
+                    calls.add("inactive");
+                    return false;
+                },
+                (tickEntry, tickAgent, runAiTick) -> calls.add("ownerless"),
+                (tickEntry, tickAgent, leader) -> false,
+                (tickEntry, tickAgent, leader) -> liveContext(),
+                () -> false,
+                (tickEntry, tickAgent, leader, anchor, context, runAiTick, perf) -> false,
+                (tickEntry, tickAgent, anchor, context, runAiTick, nowMs, perf) -> calls.add("mode")));
+
+        assertEquals(List.of("preflight", "leader"), calls);
+    }
+
     @Test
     void stopsWhenPreflightConsumesTick() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);

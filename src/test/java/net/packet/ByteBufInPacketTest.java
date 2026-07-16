@@ -223,6 +223,17 @@ class ByteBufInPacketTest {
     }
 
     @Test
+    void getBytesAfterSkipReturnsRemainingBytesWithoutMovingPosition() {
+        givenWrittenBytes(10, 11, 12, 13, 14);
+        inPacket.skip(2);
+
+        byte[] remaining = inPacket.getBytes();
+
+        assertArrayEquals(new byte[]{12, 13, 14}, remaining);
+        assertEquals(2, inPacket.getPosition());
+    }
+
+    @Test
     void toString_shouldIncludeEntirePacket() {
         OutPacket outPacket = OutPacket.create(SendOpcode.COCONUT_HIT);
         outPacket.writeByte(111);

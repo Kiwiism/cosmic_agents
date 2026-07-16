@@ -18,9 +18,17 @@ class AgentSpawnFallServiceTest {
     void dropThresholdDistinguishesSnapFromVisibleFall() {
         Point spawn = new Point(10, 20);
 
-        assertFalse(AgentSpawnFallService.shouldFall(spawn, new Point(10, 32)));
-        assertTrue(AgentSpawnFallService.shouldFall(spawn, new Point(10, 33)));
+        assertFalse(AgentSpawnFallService.shouldFall(spawn, new Point(10, 36)));
+        assertTrue(AgentSpawnFallService.shouldFall(spawn, new Point(10, 37)));
         assertFalse(AgentSpawnFallService.shouldFall(spawn, null));
+    }
+
+    @Test
+    void trainingCampPortalGapSnapsToGroundInsteadOfStartingAirPhysics() {
+        Point portalSpawn = new Point(315, -760);
+        Point foothold = new Point(315, -745);
+
+        assertFalse(AgentSpawnFallService.shouldFall(portalSpawn, foothold));
     }
 
     @Test

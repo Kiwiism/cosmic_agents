@@ -99,7 +99,7 @@ public final class NpcQuestObjectiveCapability
             if (approach != null) {
                 return approach;
             }
-            if (support.waitForNpcInteraction(context, operationIndex)) {
+            if (support.waitForNpcInteraction(context, operationIndex, targetStatus)) {
                 return AgentCapabilityStep.running("waiting briefly before NPC interaction", true);
             }
             context.memory().putInt("phase", 1);

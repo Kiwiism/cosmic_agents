@@ -3,6 +3,7 @@ package server.agents.capabilities.objective;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.AgentCapabilityStatus;
+import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.capabilities.movement.AgentRelaxerSpotCatalog;
 import server.agents.capabilities.movement.AgentRelaxerSpotReservationRuntime;
 import server.agents.capabilities.quest.AmherstScopePolicy;
@@ -27,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -73,6 +75,70 @@ class AmherstObjectiveCapabilitiesTest {
     }
 
     @Test
+    void controlledRunDelaysQuestStartAndCompletionAsSeparateInteractions() {
+        var fixture = new MutablePrimitiveGatewayFixture();
+        var support = new AmherstObjectiveCapabilitySupport(
+                fixture.gateway, AmherstScopePolicy.fullMapleIsland(), () -> 500L);
+        MapleIslandObjectiveRandomnessRuntime.configure(fixture.entry,
+                new MapleIslandObjectiveRandomnessSettings(true, 9L, null, null, false, false));
+        AgentCapabilityMemory memory = new AgentCapabilityMemory();
+
+        assertTrue(support.waitForNpcInteraction(new AgentCapabilityContext(
+                fixture.entry, fixture.agent, 100L, 0L, 0, null, memory), 0, 1));
+        assertFalse(support.waitForNpcInteraction(new AgentCapabilityContext(
+                fixture.entry, fixture.agent, 600L, 500L, 0, null, memory), 0, 1));
+        assertTrue(support.waitForNpcInteraction(new AgentCapabilityContext(
+                fixture.entry, fixture.agent, 601L, 1L, 0, null, memory), 0, 2));
+        assertFalse(support.waitForNpcInteraction(new AgentCapabilityContext(
+                fixture.entry, fixture.agent, 1_101L, 500L, 0, null, memory), 0, 2));
+    }
+
+    @Test
+    void controlledRunUsesSeededCuratedAnchorForNonYoonaNpc() {
+        var fixture = new MutablePrimitiveGatewayFixture();
+        when(fixture.gateway.npcPosition(any(), eq(2101))).thenReturn(new Point(130, 293));
+        MapleIslandObjectiveRandomnessRuntime.configure(fixture.entry,
+                new MapleIslandObjectiveRandomnessSettings(
+                        true, 123L,
+                        new server.agents.profiles.AgentBehaviorProfile.DelayRange(0, 0),
+                        new server.agents.profiles.AgentBehaviorProfile.DelayRange(0, 0),
+                        true,
+                        true));
+        var command = new NpcQuestObjectiveCapability.Command("q1031-start", 10000,
+                List.of(new NpcQuestObjectiveCapability.QuestOperation(1031, 2101, 2100, 1)), false);
+
+        assign(fixture, new NpcQuestObjectiveCapability(
+                        fixture.gateway, AmherstScopePolicy.fullMapleIsland(),
+                        AmherstNpcInteractionDelay.profile(fixture.entry)),
+                command, 10_000L);
+        run(fixture, 1L, 40, 100L);
+
+        assertTrue(AgentNpcInteractionAnchorCatalog.anchors(10000, 2101)
+                .contains(fixture.position));
+        assertSuccess(fixture);
+    }
+
+    @Test
+    void controlledRunFallsBackToDirectNpcWhenNoAnchorPassesLiveRangeFilter() {
+        var fixture = new MutablePrimitiveGatewayFixture();
+        Point displacedNpc = new Point(5_000, 0);
+        when(fixture.gateway.npcPosition(any(), eq(2101))).thenReturn(displacedNpc);
+        MapleIslandObjectiveRandomnessRuntime.configure(
+                fixture.entry, MapleIslandObjectiveRandomnessSettings.cohort(456L));
+        var command = new NpcQuestObjectiveCapability.Command("q1031-start", 10000,
+                List.of(new NpcQuestObjectiveCapability.QuestOperation(1031, 2101, 2100, 1)), false);
+
+        assign(fixture, new NpcQuestObjectiveCapability(
+                        fixture.gateway, AmherstScopePolicy.fullMapleIsland(),
+                        AmherstNpcInteractionDelay.NONE),
+                command, 10_000L);
+        run(fixture, 1L, 40, 100L);
+
+        assertEquals(displacedNpc, fixture.position);
+        assertSuccess(fixture);
+    }
+
+    @Test
     void npcQuest1031SuspendsForChildrenAndCompletesNormally() {
         var fixture = new MutablePrimitiveGatewayFixture();
         var command = new NpcQuestObjectiveCapability.Command("q1031", 10000,
@@ -97,16 +163,65 @@ class AmherstObjectiveCapabilitiesTest {
         assign(fixture, new ForceCompleteQuestObjectiveCapability(
                         fixture.gateway, AmherstScopePolicy.southperry(), AmherstNpcInteractionDelay.NONE, () -> 2L),
                 command, 10_000L);
-        run(fixture, 1L, 30, 1L);
+        run(fixture, 1L, 80, 100L);
 
         assertEquals(2, fixture.quests.get(8020));
         verify(fixture.gateway).beginFieldAbsence(fixture.agent, 2_002L);
         verify(fixture.gateway).endFieldAbsence(fixture.agent);
         verify(fixture.gateway).forceCompleteQuest(fixture.agent, 8020, 20100);
-        assertTrue(AgentNpcInteractionAnchorCatalog.anchors(1010000, 20100)
+        assertTrue(AgentNpcInteractionAnchorCatalog.legacyAnchorsFor(1010000, 20100)
                 .contains(fixture.position));
         verify(fixture.gateway, atLeastOnce()).facePosition(fixture.agent, new Point(-188, 85));
         assertSuccess(fixture);
+    }
+
+    @Test
+    void yoonaShoppingGuideRequiresContinuousRuntimeGroundingAndPostReturnDelay() {
+        var fixture = new MutablePrimitiveGatewayFixture();
+        fixture.mapId.set(1010000);
+        when(fixture.gateway.grounded(fixture.agent)).thenReturn(true);
+        var capability = new ForceCompleteQuestObjectiveCapability(
+                fixture.gateway, AmherstScopePolicy.southperry(), () -> 500L, () -> 2L);
+        var command = new ForceCompleteQuestObjectiveCapability.Command(
+                "q8020-force-complete", 1010000, 8020, 20100);
+        AgentCapabilityMemory memory = new AgentCapabilityMemory();
+        memory.putInt("phase", 2);
+        memory.putLong("returnAtMs", 100L);
+        AgentMovementStateRuntime.setInAir(fixture.entry, true);
+
+        AgentCapabilityStep returned = capability.tick(new AgentCapabilityContext(
+                fixture.entry, fixture.agent, 100L, 0L, 0, null, memory), command);
+        assertEquals(AgentCapabilityStatus.RUNNING, returned.status());
+        verify(fixture.gateway).endFieldAbsence(fixture.agent);
+        verify(fixture.gateway, never()).forceCompleteQuest(fixture.agent, 8020, 20100);
+
+        capability.tick(new AgentCapabilityContext(
+                fixture.entry, fixture.agent, 101L, 1L, 0, null, memory), command);
+        verify(fixture.gateway, never()).forceCompleteQuest(fixture.agent, 8020, 20100);
+
+        AgentMovementStateRuntime.setInAir(fixture.entry, false);
+        capability.tick(new AgentCapabilityContext(
+                fixture.entry, fixture.agent, 200L, 99L, 0, null, memory), command);
+        capability.tick(new AgentCapabilityContext(
+                fixture.entry, fixture.agent, 3_699L, 3_499L, 0, null, memory), command);
+        verify(fixture.gateway, never()).forceCompleteQuest(fixture.agent, 8020, 20100);
+
+        AgentMovementStateRuntime.setInAir(fixture.entry, true);
+        capability.tick(new AgentCapabilityContext(
+                fixture.entry, fixture.agent, 3_700L, 1L, 0, null, memory), command);
+        verify(fixture.gateway, never()).forceCompleteQuest(fixture.agent, 8020, 20100);
+
+        AgentMovementStateRuntime.setInAir(fixture.entry, false);
+        capability.tick(new AgentCapabilityContext(
+                fixture.entry, fixture.agent, 4_000L, 300L, 0, null, memory), command);
+        capability.tick(new AgentCapabilityContext(
+                fixture.entry, fixture.agent, 7_499L, 3_499L, 0, null, memory), command);
+        verify(fixture.gateway, never()).forceCompleteQuest(fixture.agent, 8020, 20100);
+
+        AgentCapabilityStep settled = capability.tick(new AgentCapabilityContext(
+                fixture.entry, fixture.agent, 7_500L, 1L, 0, null, memory), command);
+        assertEquals(AgentCapabilityStatus.RUNNING, settled.status());
+        verify(fixture.gateway).forceCompleteQuest(fixture.agent, 8020, 20100);
     }
 
     @Test
@@ -270,6 +385,51 @@ class AmherstObjectiveCapabilitiesTest {
 
         verify(fixture.gateway).sitChair(fixture.agent, 3010000);
         assertSuccess(fixture);
+    }
+
+    @Test
+    void planStopConsumesTickWhileChairAnimationIsBeingVerified() {
+        var fixture = new MutablePrimitiveGatewayFixture();
+        fixture.mapId.set(1000000);
+        fixture.items.put(3010000, 1);
+        AgentCapabilityMemory memory = new AgentCapabilityMemory();
+        memory.putInt("phase", 1);
+        var capability = new PlanStopObjectiveCapability(fixture.gateway);
+        var command = new PlanStopObjectiveCapability.Command(
+                "stop", 1000000, Set.of(1028), "stop in Amherst", 3010000);
+
+        AgentCapabilityStep sitting = capability.tick(new AgentCapabilityContext(
+                fixture.entry, fixture.agent, 1L, 0L, 0, null, memory), command);
+
+        assertTrue(sitting.consumedTick());
+        verify(fixture.gateway).sitChair(fixture.agent, 3010000);
+    }
+
+    @Test
+    void planStopDoesNotBroadcastStandingFacingWhileVerifyingChair() {
+        var fixture = new MutablePrimitiveGatewayFixture();
+        fixture.mapId.set(1000000);
+        fixture.items.put(3010000, 1);
+        fixture.chairItemId.set(3010000);
+        AgentCapabilityMemory memory = new AgentCapabilityMemory();
+        memory.putInt("phase", 1);
+        memory.putBoolean("restTargetSelected", true);
+        memory.putInt("restTargetX", fixture.position.x);
+        memory.putInt("restTargetY", fixture.position.y);
+        memory.putBoolean("restSettleStarted", true);
+        memory.putLong("restSettleReadyAtMs", 0L);
+        memory.putBoolean("chairSitIssued", true);
+        memory.putLong("chairVerifyAtMs", 0L);
+        var capability = new PlanStopObjectiveCapability(fixture.gateway);
+        var command = new PlanStopObjectiveCapability.Command(
+                "stop", 1000000, Map.of(), Set.of(1028), "stop in Amherst",
+                3010000, AgentRelaxerSpotCatalog.Pool.AMHERST);
+
+        AgentCapabilityStep verified = capability.tick(new AgentCapabilityContext(
+                fixture.entry, fixture.agent, 1L, 0L, 0, null, memory), command);
+
+        assertEquals(AgentCapabilityStatus.SUCCESS, verified.result().status());
+        verify(fixture.gateway, never()).facePosition(any(), any());
     }
 
     @Test

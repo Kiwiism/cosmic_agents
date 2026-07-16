@@ -7,7 +7,8 @@ import java.awt.Point;
 
 /** Initializes normal airborne physics when a map portal spawns an Agent above ground. */
 public final class AgentSpawnFallService {
-    public static final int MIN_DROP_PX = 12;
+    /** Portal spawns commonly place the character slightly above its destination foothold. */
+    public static final int MIN_DROP_PX = 16;
 
     private AgentSpawnFallService() {
     }

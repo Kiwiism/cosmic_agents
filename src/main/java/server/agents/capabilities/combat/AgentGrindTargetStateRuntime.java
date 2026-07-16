@@ -52,6 +52,10 @@ public final class AgentGrindTargetStateRuntime {
         return entry != null && entry.grindTargetState().committedTo(target, nowMs);
     }
 
+    public static int targetSwitchCount(AgentRuntimeEntry entry) {
+        return entry == null ? 0 : entry.grindTargetState().targetSwitchCount();
+    }
+
     public static void clear(AgentRuntimeEntry entry) {
         entry.grindTargetState().clearTarget();
     }

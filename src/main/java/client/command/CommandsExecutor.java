@@ -190,7 +190,9 @@ import client.command.commands.gm4.SetEqStatCommand;
 import client.command.commands.gm4.TravelRateCommand;
 import client.command.commands.gm4.ZakumCommand;
 import client.command.commands.gm5.DebugCommand;
+import client.command.commands.gm5.ClimbCaptureCommand;
 import client.command.commands.gm5.IpListCommand;
+import client.command.commands.gm5.MobCaptureCommand;
 import client.command.commands.gm5.SetCommand;
 import client.command.commands.gm5.ShowMoveLifeCommand;
 import client.command.commands.gm5.ShowPacketsCommand;
@@ -566,6 +568,9 @@ public class CommandsExecutor {
         levelCommandsCursor = new Pair<>(new ArrayList<String>(), new ArrayList<String>());
 
         addCommand("debug", 5, DebugCommand.class);
+        addCommand("climbcapture", 5, ClimbCaptureCommand.class);
+        addCommand("mobcapture", 5, MobCaptureCommand.class);
+        addCommand("mobreactioncapture", 5, MobCaptureCommand.class);
         addCommand("set", 5, SetCommand.class);
         addCommand("showpackets", 5, ShowPacketsCommand.class);
         addCommand("showmovelife", 5, ShowMoveLifeCommand.class);

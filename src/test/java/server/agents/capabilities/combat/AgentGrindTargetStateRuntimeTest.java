@@ -69,4 +69,19 @@ class AgentGrindTargetStateRuntimeTest {
         assertTrue(AgentGrindTargetStateRuntime.committedTo(entry, target, 4_999L));
         assertFalse(AgentGrindTargetStateRuntime.committedTo(entry, target, 5_000L));
     }
+
+    @Test
+    void countsTargetSwitchesAndResetsThemWithTargetState() {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
+        Monster first = mock(Monster.class);
+        Monster second = mock(Monster.class);
+        when(first.isAlive()).thenReturn(true);
+
+        AgentGrindTargetStateRuntime.commitTarget(entry, first, 0L, 1_000L);
+        AgentGrindTargetStateRuntime.commitTarget(entry, second, 1_000L, 2_000L);
+
+        assertTrue(AgentGrindTargetStateRuntime.targetSwitchCount(entry) == 1);
+        AgentGrindTargetStateRuntime.clear(entry);
+        assertTrue(AgentGrindTargetStateRuntime.targetSwitchCount(entry) == 0);
+    }
 }

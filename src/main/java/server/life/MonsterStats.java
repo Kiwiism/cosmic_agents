@@ -142,6 +142,10 @@ public class MonsterStats {
         return animationTimes.containsKey("move") || animationTimes.containsKey("fly");
     }
 
+    public boolean isFlying() {
+        return animationTimes.containsKey("fly");
+    }
+
     public List<Integer> getRevives() {
         return revives;
     }

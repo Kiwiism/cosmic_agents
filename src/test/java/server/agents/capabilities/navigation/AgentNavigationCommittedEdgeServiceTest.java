@@ -95,7 +95,7 @@ class AgentNavigationCommittedEdgeServiceTest {
     }
 
     @Test
-    void refreshPendingClimbExitEdgeSwitchesWhenExitIsNotReadyAndBetterEdgeExists() {
+    void refreshPendingClimbExitEdgeKeepsAuthoredExitUntilItIsReady() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         AgentClimbStateRuntime.setClimbingOnRope(entry, mock(Rope.class));
         AgentNavigationGraph.Edge current = edge(1, 2, AgentNavigationGraph.EdgeType.CLIMB,
@@ -105,16 +105,36 @@ class AgentNavigationCommittedEdgeServiceTest {
         AgentNavigationDebugStateRuntime.setNavTargetPosition(entry, new Point(99, 99));
         AgentNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
 
+        AtomicBoolean finderCalled = new AtomicBoolean(false);
         AgentNavigationGraph.Edge result = AgentNavigationCommittedEdgeService.refreshPendingClimbExitEdge(
                 null, entry, null, new Point(0, 0), 1, 3, new Point(50, 0), current, true,
                 (graph, bot, botPos, edge) -> false,
-                (graph, bot, startRegionId, targetRegionId, targetPos) -> replacement);
+                (graph, bot, startRegionId, targetRegionId, targetPos) -> {
+                    finderCalled.set(true);
+                    return replacement;
+                });
 
-        assertSame(replacement, result);
-        assertSame(replacement, AgentNavigationDebugStateRuntime.activeNavigationEdge(entry));
-        assertEquals(3, AgentNavigationDebugStateRuntime.navTargetRegionId(entry));
-        assertNull(AgentNavigationDebugStateRuntime.navTargetPosition(entry));
-        assertFalse(AgentNavigationDebugStateRuntime.navPreciseTarget(entry));
+        assertSame(current, result);
+        assertFalse(finderCalled.get());
+        assertEquals(new Point(99, 99), AgentNavigationDebugStateRuntime.navTargetPosition(entry));
+        assertTrue(AgentNavigationDebugStateRuntime.navPreciseTarget(entry));
+    }
+
+    @Test
+    void refreshPendingClimbExitEdgeKeepsAuthoredExitOnSameRopeRoute() {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
+        AgentClimbStateRuntime.setClimbingOnRope(entry, mock(Rope.class));
+        AgentNavigationGraph.Edge current = edge(7, 5, AgentNavigationGraph.EdgeType.CLIMB,
+                new Point(-41, -1043), new Point(-71, -1043), -41, -41, -1, 0, -41, -1103, -807);
+        AgentNavigationGraph.Edge nearbyExit = edge(7, 5, AgentNavigationGraph.EdgeType.CLIMB,
+                new Point(-41, -1013), new Point(-71, -1013), -41, -41, -1, 0, -41, -1103, -807);
+
+        AgentNavigationGraph.Edge result = AgentNavigationCommittedEdgeService.refreshPendingClimbExitEdge(
+                null, entry, null, new Point(-41, -1020), 7, 5, new Point(100, -900), current, true,
+                (graph, bot, botPos, edge) -> false,
+                (graph, bot, startRegionId, targetRegionId, targetPos) -> nearbyExit);
+
+        assertSame(current, result);
     }
 
     @Test
@@ -253,6 +273,37 @@ class AgentNavigationCommittedEdgeServiceTest {
         assertNull(AgentNavigationCommittedEdgeService.reuseCommittedEdge(
                 null, entry, 1, 1, new Point(129, 0),
                 (graph, bot, candidate) -> true, (graph, candidate) -> false));
+    }
+
+    @Test
+    void reuseCommittedClimbIgnoresMovingGoalWithinSameDestinationRegion() {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
+        AgentNavigationGraph.Edge climbExit = edge(7, 5, AgentNavigationGraph.EdgeType.CLIMB,
+                new Point(-41, -1043), new Point(-71, -1043), -41, -41, -1, 0, -41, -1103, -807);
+        AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, climbExit);
+        AgentNavigationDebugStateRuntime.setNavTargetRegionId(entry, 5);
+        AgentNavigationDebugStateRuntime.setPlannedNavigationTargetPosition(entry, new Point(0, 0));
+        AgentClimbStateRuntime.setClimbingOnRope(entry, mock(Rope.class));
+
+        assertSame(climbExit, AgentNavigationCommittedEdgeService.reuseCommittedEdge(
+                null, entry, 7, 5, new Point(500, 0),
+                (graph, bot, candidate) -> true, (graph, candidate) -> false));
+    }
+
+    @Test
+    void reuseCommittedClimbIgnoresRetargetToAnotherRegionUntilRopeExitCompletes() {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
+        AgentNavigationGraph.Edge climbExit = edge(7, 5, AgentNavigationGraph.EdgeType.CLIMB,
+                new Point(-41, -1043), new Point(-71, -1043), -41, -41, -1, 0, -41, -1103, -807);
+        AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, climbExit);
+        AgentNavigationDebugStateRuntime.setNavTargetRegionId(entry, 5);
+        AgentNavigationDebugStateRuntime.setPlannedNavigationTargetPosition(entry, new Point(0, 0));
+        AgentClimbStateRuntime.setClimbingOnRope(entry, mock(Rope.class));
+
+        assertSame(climbExit, AgentNavigationCommittedEdgeService.reuseCommittedEdge(
+                null, entry, 7, 4, new Point(500, 500),
+                (graph, bot, candidate) -> true, (graph, candidate) -> false));
+        assertEquals(5, AgentNavigationDebugStateRuntime.navTargetRegionId(entry));
     }
 
     @Test

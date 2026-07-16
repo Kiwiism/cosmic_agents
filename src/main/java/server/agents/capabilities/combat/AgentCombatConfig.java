@@ -1,5 +1,7 @@
 package server.agents.capabilities.combat;
 
+import config.YamlConfig;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -91,6 +93,14 @@ public final class AgentCombatConfig {
         // OpenStory Player::damage sets hspeed = +/-1.5 and vforce -= 3.5 on mob knockback.
         public float KNOCKBACK_HSPEED = 1.5f;
         public float KNOCKBACK_VFORCE = 3.5f;
+        public boolean SYNTHETIC_MOB_REACTION_ENABLED =
+                YamlConfig.config.server.AGENT_SYNTHETIC_MOB_REACTION_ENABLED;
+        public int SYNTHETIC_MOB_KNOCKBACK_DISTANCE_X =
+                YamlConfig.config.server.AGENT_SYNTHETIC_MOB_KNOCKBACK_DISTANCE_X;
+        public int SYNTHETIC_MOB_KNOCKBACK_DURATION_MS =
+                YamlConfig.config.server.AGENT_SYNTHETIC_MOB_KNOCKBACK_DURATION_MS;
+        public int SYNTHETIC_MOB_CONTROL_HOLD_MS =
+                YamlConfig.config.server.AGENT_SYNTHETIC_MOB_CONTROL_HOLD_MS;
 
         // Basic attack fallback when weapon data cannot produce a real normal-attack hit box.
         public int ATTACK_RANGE_X = 80;

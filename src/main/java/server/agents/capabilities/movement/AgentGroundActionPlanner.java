@@ -59,6 +59,10 @@ public final class AgentGroundActionPlanner {
         if (AgentMobAvoidanceService.shouldJumpToAvoidMob(entry, currentFoothold, botPos, stepX)) {
             return AgentGroundAction.jump(stepX);
         }
+        if (AgentOptionalTravelHopPolicy.shouldHop(
+                entry, currentFoothold, botPos, targetPos, stepX, System.currentTimeMillis())) {
+            return AgentGroundAction.jump(stepX);
+        }
         return AgentGroundAction.walk(stepX);
     }
 }

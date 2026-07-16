@@ -148,6 +148,31 @@ public final class AgentNavigationPathService {
         return collapseLeadingWalkEdges(path);
     }
 
+    public static AgentNavigationGraph.Edge findNextEdgeVaried(
+            AgentNavigationGraph graph,
+            Character bot,
+            int startRegionId,
+            int targetRegionId,
+            Point targetPos,
+            AgentMapleIslandTravelRuntime.RouteVariation variation) {
+        if (variation == null || variation.maxRouteStretch() <= 1.0d) {
+            return findNextEdge(graph, bot, startRegionId, targetRegionId, targetPos);
+        }
+        List<AgentNavigationGraph.Edge> path = runSearch(
+                graph,
+                bot.getMap(),
+                bot.getPosition(),
+                startRegionId,
+                targetRegionId,
+                targetPos,
+                "maple-island-varied",
+                useAdmissibleHeuristic,
+                true,
+                MAX_EDGE_CHECKS,
+                variation).path();
+        return path.isEmpty() ? null : collapseLeadingWalkEdges(path);
+    }
+
     public static List<AgentNavigationGraph.Edge> findPath(AgentNavigationGraph graph,
                                                            MapleMap map,
                                                            Point startPos,
@@ -195,6 +220,21 @@ public final class AgentNavigationPathService {
                                    boolean zeroHeuristic,
                                    boolean instrument,
                                    int edgeCheckBudget) {
+        return runSearch(graph, map, startPos, startRegionId, targetRegionId, targetPos,
+                pathfindCaller, zeroHeuristic, instrument, edgeCheckBudget, null);
+    }
+
+    static SearchOutcome runSearch(AgentNavigationGraph graph,
+                                   MapleMap map,
+                                   Point startPos,
+                                   int startRegionId,
+                                   int targetRegionId,
+                                   Point targetPos,
+                                   String pathfindCaller,
+                                   boolean zeroHeuristic,
+                                   boolean instrument,
+                                   int edgeCheckBudget,
+                                   AgentMapleIslandTravelRuntime.RouteVariation routeVariation) {
         long startedAt = System.nanoTime();
         PathfindProfile profile = null;
         try {
@@ -263,7 +303,10 @@ public final class AgentNavigationPathService {
                     boolean enteredThroughExit = current.state.viaPortal
                             && current.state.point.equals(edge.startPoint);
                     int edgeCost = isPortal && enteredThroughExit ? (int) PORTAL_USE_COOLDOWN_MS : edge.cost;
-                    int tentativeCost = current.cost + intraRegionTravelCost(graph, current.state.regionId, current.state.point, edge.startPoint) + edgeCost;
+                    int transitionCost = intraRegionTravelCost(
+                            graph, current.state.regionId, current.state.point, edge.startPoint) + edgeCost;
+                    transitionCost = variedTransitionCost(transitionCost, edge, routeVariation);
+                    int tentativeCost = saturatedAdd(current.cost, transitionCost);
                     SearchState nextState = new SearchState(edge.toRegionId, edge.endPoint, isPortal);
                     if (tentativeCost >= gScore.getOrDefault(nextState, Integer.MAX_VALUE)) {
                         continue;
@@ -337,8 +380,36 @@ public final class AgentNavigationPathService {
         }
     }
 
+    static int variedTransitionCost(
+            int baseCost,
+            AgentNavigationGraph.Edge edge,
+            AgentMapleIslandTravelRuntime.RouteVariation variation) {
+        if (baseCost <= 0 || edge == null || variation == null || variation.maxRouteStretch() <= 1.0d) {
+            return Math.max(0, baseCost);
+        }
+        long edgeSeed = variation.seed();
+        edgeSeed = AgentMapleIslandTravelRuntime.mix(edgeSeed ^ edge.fromRegionId);
+        edgeSeed = AgentMapleIslandTravelRuntime.mix(edgeSeed ^ edge.toRegionId);
+        edgeSeed = AgentMapleIslandTravelRuntime.mix(edgeSeed ^ edge.type.ordinal());
+        edgeSeed = AgentMapleIslandTravelRuntime.mix(
+                edgeSeed ^ (((long) edge.startPoint.x) << 32) ^ (edge.startPoint.y & 0xffffffffL));
+        edgeSeed = AgentMapleIslandTravelRuntime.mix(
+                edgeSeed ^ (((long) edge.endPoint.x) << 32) ^ (edge.endPoint.y & 0xffffffffL));
+        edgeSeed = AgentMapleIslandTravelRuntime.mix(edgeSeed ^ edge.portalId ^ edge.launchStepX);
+        double multiplier = 1.0d + AgentMapleIslandTravelRuntime.unitDouble(edgeSeed)
+                * (variation.maxRouteStretch() - 1.0d);
+        long varied = (long) Math.ceil(baseCost * multiplier);
+        return (int) Math.min(Integer.MAX_VALUE, varied);
+    }
+
+    private static int saturatedAdd(int left, int right) {
+        long total = (long) left + right;
+        return (int) Math.min(Integer.MAX_VALUE, total);
+    }
+
     private static boolean bestEffortCaller(String caller) {
-        return caller == null || caller.isBlank() || "committed".equals(caller);
+        return caller == null || caller.isBlank() || "committed".equals(caller)
+                || "maple-island-varied".equals(caller);
     }
 
     private static long rawDistance(Point from, Point to) {

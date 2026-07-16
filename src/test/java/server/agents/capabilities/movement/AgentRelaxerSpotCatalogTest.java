@@ -1,5 +1,6 @@
 package server.agents.capabilities.movement;
 
+import client.Character;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -10,6 +11,8 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class AgentRelaxerSpotCatalogTest {
     @AfterEach
@@ -63,6 +66,21 @@ class AgentRelaxerSpotCatalogTest {
 
         assertTrue(AgentRelaxerSpotReservationRuntime.reserveRandom(
                 capacity + 1, AgentRelaxerSpotCatalog.Pool.SOUTHPERRY_RIGHT).isPresent());
+    }
+
+    @Test
+    void controlledReservationStartsAtSeededIndexThenSkipsOccupiedSpot() {
+        var pool = AgentRelaxerSpotCatalog.Pool.SOUTHPERRY_ALL;
+        List<AgentRelaxerSpotCatalog.Spot> candidates = spots(pool);
+        Character first = mock(Character.class);
+        Character second = mock(Character.class);
+        when(first.getId()).thenReturn(1);
+        when(second.getId()).thenReturn(2);
+
+        assertEquals(candidates.get(17),
+                AgentRelaxerSpotReservationRuntime.reserveFromIndex(first, pool, 17).orElseThrow());
+        assertEquals(candidates.get(18),
+                AgentRelaxerSpotReservationRuntime.reserveFromIndex(second, pool, 17).orElseThrow());
     }
 
     private static List<AgentRelaxerSpotCatalog.Spot> spots(AgentRelaxerSpotCatalog.Pool pool) {

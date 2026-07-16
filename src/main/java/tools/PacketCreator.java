@@ -2305,6 +2305,21 @@ public class PacketCreator {
         return p;
     }
 
+    public static Packet moveMonster(int oid, int rawActivity, Point startPos,
+                                     List<LifeMovementFragment> movements) {
+        final OutPacket p = OutPacket.create(SendOpcode.MOVE_MONSTER);
+        p.writeInt(oid);
+        p.writeByte(0);
+        p.writeBool(false);
+        p.writeByte(rawActivity);
+        p.writeByte(0);
+        p.writeByte(0);
+        p.writeShort(0);
+        p.writePos(startPos);
+        serializeMovementList(p, movements);
+        return p;
+    }
+
     public static Packet summonAttack(int cid, int summonOid, byte direction, List<SummonAttackTarget> targets) {
         OutPacket p = OutPacket.create(SendOpcode.SUMMON_ATTACK);
         //b2 00 29 f7 00 00 9a a3 04 00 c8 04 01 94 a3 04 00 06 ff 2b 00

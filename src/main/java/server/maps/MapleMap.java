@@ -53,6 +53,7 @@ import scripting.map.MapScriptManager;
 import server.ItemInformationProvider;
 import server.StatEffect;
 import server.TimerManager;
+import server.agents.diagnostics.MobReactionCaptureRuntime;
 import server.events.gm.Coconut;
 import server.events.gm.Fitness;
 import server.events.gm.Ola;
@@ -1323,7 +1324,22 @@ public class MapleMap {
             return false;
         }
 
-        boolean killed = monster.damage(chr, damage, false);
+        int appliedDamage;
+        boolean killed;
+        monster.lockMonster();
+        try {
+            int hpBefore = monster.getHp();
+            killed = monster.damage(chr, damage, false);
+            appliedDamage = Math.max(0, hpBefore - Math.max(0, monster.getHp()));
+        } finally {
+            monster.unlockMonster();
+        }
+        try {
+            MobReactionCaptureRuntime.recordDamage(chr, monster, damage, killed);
+        } catch (RuntimeException captureFailure) {
+            log.warn("Mob reaction capture could not retain damage for OID {}", monster.getObjectId(),
+                    captureFailure);
+        }
 
         selfDestruction selfDestr = monster.getStats().selfDestruction();
         if (selfDestr != null && selfDestr.getHp() > -1) {// should work ;p
@@ -1334,6 +1350,8 @@ public class MapleMap {
         }
         if (killed) {
             killMonster(monster, chr, true, delay);
+        } else if (appliedDamage > 0 && monster.isAlive()) {
+            AgentPresence.mobHitAccepted(chr, monster, appliedDamage, delay);
         }
         return true;
     }
@@ -2678,6 +2696,9 @@ public class MapleMap {
         if (observationEnded) {
             AgentPresence.mapObservationChanged(this, false);
         }
+        if (AgentPresence.isAgent(chr)) {
+            AgentPresence.agentLeftMap(this);
+        }
 
         if (MiniDungeonInfo.isDungeonMap(mapid)) {
             MiniDungeon mmd = cserv.getMiniDungeon(mapid);
@@ -2770,6 +2791,11 @@ public class MapleMap {
     private void broadcastMessage(Character source, Packet packet, double rangeSq, Point rangedFrom) {
         if (source != null && source.getClient() instanceof BotClient && !isObservedByPlayer()) {
             return;
+        }
+        try {
+            MobReactionCaptureRuntime.recordBroadcast(this, source, packet);
+        } catch (RuntimeException captureFailure) {
+            log.warn("Mob reaction capture could not retain a map broadcast on {}", mapid, captureFailure);
         }
         final long slowThresholdMs = 100;
         long broadcastStartedNs = server.monitoring.SlowOperationLogger.start();

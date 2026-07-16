@@ -1,7 +1,11 @@
 package server.agents.integration.cosmic;
 
 import client.Character;
+import server.agents.capabilities.movement.AgentMovementPoseService;
+import server.agents.capabilities.movement.AgentMovementStateResetService;
 import server.agents.integration.MapGateway;
+import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.AgentRuntimeRegistry;
 import server.maps.MapleMap;
 import net.server.Server;
 
@@ -60,9 +64,20 @@ public enum CosmicMapGateway implements MapGateway {
         }
 
         int oldMapId = agent.getMapId();
-        Point oldPos = agent.getPosition();
+        Point oldPos = new Point(agent.getPosition());
         portal.enterPortal(agent.getClient());
-        return agent.getMapId() != oldMapId || !agent.getPosition().equals(oldPos);
+        boolean transitioned = agent.getMapId() != oldMapId || !agent.getPosition().equals(oldPos);
+        if (transitioned) {
+            // Character.changeMap places the character at the destination portal, but an agent
+            // also owns a physics pose. Synchronize it immediately so the next physics tick
+            // cannot restore the source-map X coordinate on the destination map.
+            AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(agent.getId());
+            if (entry != null) {
+                AgentMovementPoseService.teleportTo(entry, agent, new Point(agent.getPosition()));
+                AgentMovementStateResetService.resetEntryStateAfterTeleport(entry);
+            }
+        }
+        return transitioned;
     }
 
     @Override

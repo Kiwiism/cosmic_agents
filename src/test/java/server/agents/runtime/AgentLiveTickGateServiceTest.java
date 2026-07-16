@@ -11,8 +11,42 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class AgentLiveTickGateServiceTest {
+    @Test
+    void seatedAgentRunsOnlyMapChangeAndCapabilityBeforeConsumingTick() {
+        Character agent = mock(Character.class);
+        when(agent.getChair()).thenReturn(3010000);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        List<String> calls = new ArrayList<>();
+
+        boolean consumed = AgentLiveTickGateService.tickLiveGates(
+                new AgentLiveTickGateService.Context(entry, agent, null, null, new Point(), true),
+                new AgentLiveTickGateService.Hooks(
+                        (commonEntry, commonAgent, commonLeader, runAiTick) -> {
+                            calls.add("common");
+                            return false;
+                        },
+                        (capabilityEntry, capabilityAgent) -> {
+                            calls.add("capability");
+                            return false;
+                        },
+                        (tradeEntry, tradeAgent) -> {
+                            calls.add("trade");
+                            return false;
+                        },
+                        (idleEntry, idleAgent) -> false,
+                        (recoveryEntry, recoveryAgent, anchor, target) -> false,
+                        (mapEntry, mapAgent) -> {
+                            calls.add("mapChange");
+                            return false;
+                        }));
+
+        assertTrue(consumed);
+        assertEquals(List.of("mapChange", "capability"), calls);
+    }
+
     @Test
     void runsLiveGatesInLegacyOrderWhenNoneConsumesTick() {
         Character agent = mock(Character.class);

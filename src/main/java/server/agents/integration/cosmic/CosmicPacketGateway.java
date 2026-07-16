@@ -7,6 +7,7 @@ import net.packet.ByteBufInPacket;
 import net.packet.InPacket;
 import net.packet.Packet;
 import net.server.channel.handlers.AbstractDealDamageHandler.AttackTarget;
+import server.agents.diagnostics.ClimbMovementCaptureRuntime;
 import server.life.Monster;
 import server.agents.integration.PacketGateway;
 import server.maps.MapleMap;
@@ -27,6 +28,7 @@ public enum CosmicPacketGateway implements PacketGateway {
         if (agent == null || agent.getMap() == null || movementData == null) {
             return;
         }
+        ClimbMovementCaptureRuntime.recordSynthetic(agent, movementData);
         InPacket packet = new ByteBufInPacket(Unpooled.wrappedBuffer(movementData));
         Packet movePacket = PacketCreator.movePlayer(agent.getId(), packet, movementData.length);
         agent.getMap().broadcastMessage(agent, movePacket, false);

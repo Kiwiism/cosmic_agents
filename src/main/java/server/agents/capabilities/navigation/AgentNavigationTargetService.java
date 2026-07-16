@@ -2,6 +2,7 @@ package server.agents.capabilities.navigation;
 
 import client.Character;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
+import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
 import server.agents.capabilities.movement.AgentClimbStateRuntime;
 import server.agents.capabilities.movement.AgentMovementTargetRuntime;
@@ -96,7 +97,7 @@ public final class AgentNavigationTargetService {
                 // self-loop edges (fromRegionId == toRegionId) and A* picks them when the
                 // walk-to-entry + walk-from-exit cost beats the direct walk. findPath returns
                 // an empty path when direct walk wins, falling through to direct steering.
-                edge = AgentNavigationPathService.findNextEdge(graph, bot, startRegionId, targetRegionId, pathTargetPos);
+                edge = findNextEdge(graph, entry, bot, startRegionId, targetRegionId, pathTargetPos);
                 if (edge != null) {
                     AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, edge);
                     AgentNavigationDebugStateRuntime.setPlannedNavigationTargetPosition(entry, pathTargetPos);
@@ -197,7 +198,9 @@ public final class AgentNavigationTargetService {
                 startRegionId, targetRegionId, targetPos, edge, runAiTick,
                 (activeGraph, activeBot, activeBotPos, activeEdge) ->
                         canExecuteClimbExitFromCurrentPosition(activeGraph, activeBot.getMap(), activeBotPos, activeEdge),
-                AgentNavigationPathService::findNextEdge);
+                (activeGraph, activeBot, activeStartRegionId, activeTargetRegionId, activeTargetPos) ->
+                        findNextEdge(activeGraph, entry, activeBot, activeStartRegionId,
+                                activeTargetRegionId, activeTargetPos));
     }
 
     private static AgentNavigationGraph.Edge refreshCommittedGroundEdge(AgentNavigationGraph graph,
@@ -209,7 +212,10 @@ public final class AgentNavigationTargetService {
                                                                         AgentNavigationGraph.Edge edge,
                                                                         boolean runAiTick) {
         return AgentNavigationCommittedEdgeService.refreshCommittedGroundEdge(graph, entry, bot,
-                startRegionId, targetRegionId, targetPos, edge, runAiTick, AgentNavigationPathService::findNextEdge);
+                startRegionId, targetRegionId, targetPos, edge, runAiTick,
+                (activeGraph, activeBot, activeStartRegionId, activeTargetRegionId, activeTargetPos) ->
+                        findNextEdge(activeGraph, entry, activeBot, activeStartRegionId,
+                                activeTargetRegionId, activeTargetPos));
     }
 
     private static AgentNavigationGraph.Edge reuseCommittedEdge(AgentNavigationGraph graph,
@@ -221,6 +227,30 @@ public final class AgentNavigationTargetService {
                 targetPos,
                 AgentNavigationPathService::isEdgeUsable,
                 AgentNavigationRopeEdgeService::isRopeEntryEdge);
+    }
+
+    private static AgentNavigationGraph.Edge findNextEdge(AgentNavigationGraph graph,
+                                                           AgentRuntimeEntry entry,
+                                                           Character bot,
+                                                           int startRegionId,
+                                                           int targetRegionId,
+                                                           Point targetPos) {
+        AgentMapleIslandTravelRuntime.RouteVariation variation = scriptedRouteVariation(
+                entry, graph.mapId, targetRegionId, targetPos);
+        return AgentNavigationPathService.findNextEdgeVaried(
+                graph, bot, startRegionId, targetRegionId, targetPos, variation);
+    }
+
+    static AgentMapleIslandTravelRuntime.RouteVariation scriptedRouteVariation(
+            AgentRuntimeEntry entry,
+            int mapId,
+            int targetRegionId,
+            Point targetPos) {
+        Point scriptedTarget = AgentMoveTargetStateRuntime.moveTarget(entry);
+        return scriptedTarget != null && scriptedTarget.equals(targetPos)
+                ? AgentMapleIslandTravelRuntime.routeVariation(
+                entry, mapId, targetRegionId, scriptedTarget)
+                : null;
     }
 
     private static NavigationDirective tryExecuteEdge(AgentNavigationGraph graph,

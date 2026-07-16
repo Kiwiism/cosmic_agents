@@ -82,6 +82,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
@@ -97,6 +98,7 @@ public class Monster extends AbstractLoadedLife {
     private int mp;
     private WeakReference<Character> controller = new WeakReference<>(null);
     private boolean controllerHasAggro, controllerKnowsAboutAggro, controllerHasPuppet;
+    private long controllerAssignmentHoldUntilNanos;
     private final Collection<MonsterListener> listeners = new LinkedList<>();
     private final EnumMap<MonsterStatus, MonsterStatusEffect> stati = new EnumMap<>(MonsterStatus.class);
     private final ArrayList<MonsterStatus> alreadyBuffed = new ArrayList<>();
@@ -1925,12 +1927,81 @@ public class Monster extends AbstractLoadedLife {
      * Removes controllability status from the current controller of this mob.
      */
     public Pair<Character, Boolean> aggroRemoveController() {
+        return aggroRemoveController(false);
+    }
+
+    /**
+     * Atomically removes a missing or BotClient controller while preserving a
+     * real client that may have taken authority concurrently.
+     */
+    public Pair<Character, Boolean> aggroRemoveControllerIfHeadless() {
+        return aggroRemoveController(true);
+    }
+
+    /** Temporarily makes this monster server-driven for a synthetic reaction. */
+    public Pair<Character, Boolean> aggroSuspendControllerForSyntheticReaction(
+            long controllerHoldMs) {
+        aggroUpdateLock.lock();
+        try {
+            Pair<Character, Boolean> removedController = aggroRemoveController(false);
+            holdControllerAssignment(controllerHoldMs);
+            return removedController;
+        } finally {
+            aggroUpdateLock.unlock();
+        }
+    }
+
+    /**
+     * Commits synthetic movement only while no real client owns the monster.
+     */
+    public Pair<Character, Boolean> aggroCommitIfHeadless(
+            long controllerHoldMs, Runnable commit) {
+        aggroUpdateLock.lock();
+        try {
+            Pair<Character, Boolean> removedController = aggroRemoveController(true);
+            if (removedController == null) {
+                return null;
+            }
+            holdControllerAssignment(controllerHoldMs);
+            commit.run();
+            return removedController;
+        } finally {
+            aggroUpdateLock.unlock();
+        }
+    }
+
+    private void holdControllerAssignment(long durationMs) {
+        if (durationMs <= 0) {
+            return;
+        }
+        long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(durationMs);
+        if (controllerAssignmentHoldUntilNanos == 0L
+                || deadline - controllerAssignmentHoldUntilNanos > 0L) {
+            controllerAssignmentHoldUntilNanos = deadline;
+        }
+    }
+
+    public void aggroReleaseControllerAssignmentHold() {
+        aggroUpdateLock.lock();
+        try {
+            controllerAssignmentHoldUntilNanos = 0L;
+        } finally {
+            aggroUpdateLock.unlock();
+        }
+    }
+
+    private Pair<Character, Boolean> aggroRemoveController(
+            boolean preserveRealClientController) {
         Character chrController;
         boolean hadAggro;
 
         aggroUpdateLock.lock();
         try {
             chrController = getActiveController();
+            if (preserveRealClientController && chrController != null
+                    && !(chrController.getClient() instanceof BotClient)) {
+                return null;
+            }
             hadAggro = isControllerHasAggro();
 
             this.setController(null);
@@ -1957,6 +2028,16 @@ public class Monster extends AbstractLoadedLife {
     public void aggroSwitchController(Character newController, boolean immediateAggro) {
         if (aggroUpdateLock.tryLock()) {
             try {
+                long now = System.nanoTime();
+                if (controllerAssignmentHoldUntilNanos != 0L
+                        && controllerAssignmentHoldUntilNanos - now > 0L) {
+                    if (newController != null) {
+                        return;
+                    }
+                } else {
+                    controllerAssignmentHoldUntilNanos = 0L;
+                }
+
                 Character prevController = getController();
                 if (prevController == newController) {
                     return;
@@ -2008,6 +2089,10 @@ public class Monster extends AbstractLoadedLife {
      * on the map it is from...
      */
     public void aggroUpdateController() {
+        aggroUpdateController(false);
+    }
+
+    public void aggroUpdateController(boolean immediateAggro) {
         Character chrController = this.getActiveController();
         if (chrController != null && chrController.isAlive()) {
             return;
@@ -2018,7 +2103,7 @@ public class Monster extends AbstractLoadedLife {
             return;
         }
 
-        this.aggroSwitchController(newController, false);
+        this.aggroSwitchController(newController, immediateAggro);
     }
 
     /**

@@ -20,6 +20,11 @@ import server.agents.plans.amherst.AmherstPlanCard;
 import server.agents.plans.amherst.AmherstPlanExecutionState;
 import server.agents.plans.amherst.AmherstPlanProgressSnapshot;
 import server.agents.plans.amherst.AmherstPlanValidationException;
+import server.agents.plans.mapleisland.cohort.MapleIslandCohortPoolRegistry;
+import server.agents.plans.mapleisland.cohort.MapleIslandCohortPoolSnapshot;
+import server.agents.plans.mapleisland.cohort.MapleIslandCohortRealismMode;
+import server.agents.plans.mapleisland.cohort.MapleIslandCohortRunService;
+import server.agents.plans.mapleisland.cohort.MapleIslandCohortRuntime;
 import server.agents.runtime.AgentInteractionRuntime;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -42,11 +47,18 @@ public final class MapleIslandPlanCommandService {
     }
 
     private static void execute(Character player, String[] params, Route route) {
-        if (player == null || params == null || params.length < 2) {
+        if (player == null || params == null || params.length == 0) {
             usage(player, route);
             return;
         }
         String verb = params[0].toLowerCase();
+        if (route == Route.FULL_MAPLE_ISLAND && executeCohortCommand(player, params, verb)) {
+            return;
+        }
+        if (params.length < 2) {
+            usage(player, route);
+            return;
+        }
         if (verb.equals("run")) {
             run(player, params[1], route);
             return;
@@ -72,6 +84,170 @@ public final class MapleIslandPlanCommandService {
             }
         } catch (IOException | AmherstPlanValidationException | IllegalArgumentException failure) {
             message(player, "Command failed: " + failure.getMessage());
+        }
+    }
+
+    private static boolean executeCohortCommand(Character player, String[] params, String verb) {
+        try {
+            if (verb.equals("run") && params.length >= 3) {
+                runCohort(player, params);
+                return true;
+            }
+            if (verb.equals("status") && params.length == 1) {
+                cohortStatus(player, MapleIslandCohortRuntime.instance());
+                return true;
+            }
+            if (verb.equals("pool")) {
+                cohortPool(player, params);
+                return true;
+            }
+            if (verb.equals("cancel") && params.length == 1) {
+                MapleIslandCohortRuntime runtime = MapleIslandCohortRuntime.instance();
+                MapleIslandCohortRunService.Status status = runtime.cancel(
+                        player.getWorld(), player.getClient().getChannel());
+                message(player, "Future cohort waves cancelled; already launched Agents keep running.");
+                cohortStatus(player, runtime, status);
+                return true;
+            }
+            if (verb.equals("stop") && params.length == 1) {
+                MapleIslandCohortRuntime runtime = MapleIslandCohortRuntime.instance();
+                MapleIslandCohortRunService.Status status = runtime.stop(
+                        player.getWorld(), player.getClient().getChannel());
+                message(player, "Cohort stop queued; Agents will disconnect and leases will be released.");
+                cohortStatus(player, runtime, status);
+                return true;
+            }
+            return false;
+        } catch (IOException | RuntimeException failure) {
+            message(player, "Cohort command failed: " + failure.getMessage());
+            return true;
+        }
+    }
+
+    private static void runCohort(Character player, String[] params) throws IOException {
+        CohortRunArguments arguments = parseCohortRunArguments(params);
+        MapleIslandCohortRuntime runtime = MapleIslandCohortRuntime.instance();
+        MapleIslandCohortRunService.Status status = runtime.start(
+                new MapleIslandCohortRunService.StartRequest(
+                        player.getId(), player.getWorld(), player.getClient().getChannel(),
+                        arguments.total(), arguments.batch(), arguments.intervalSeconds(),
+                        arguments.seed(), arguments.realismMode()));
+        message(player, "Cohort accepted: " + arguments.total() + " Agents in waves of "
+                + arguments.batch() + " every " + arguments.intervalSeconds()
+                + "s; seed=" + status.runSeed()
+                + "; realism=" + status.realismMode() + ".");
+        cohortStatus(player, runtime, status);
+    }
+
+    static CohortRunArguments parseCohortRunArguments(String[] params) {
+        if (params.length < 4 || params.length > 6) {
+            throw new IllegalArgumentException(
+                    "Usage: !mapleisland run <total> <batch> <intervalSeconds> [seed] [off|light|full]");
+        }
+        int total = parseInt(params[1], "total");
+        int batch = parseInt(params[2], "batch");
+        int intervalSeconds = parseInt(params[3], "intervalSeconds");
+        Long seed = null;
+        MapleIslandCohortRealismMode realismMode = MapleIslandCohortRealismMode.FULL;
+        if (params.length == 5) {
+            try {
+                seed = Long.parseLong(params[4]);
+            } catch (NumberFormatException ignored) {
+                realismMode = MapleIslandCohortRealismMode.parse(params[4]);
+            }
+        } else if (params.length == 6) {
+            seed = parseLong(params[4], "seed");
+            realismMode = MapleIslandCohortRealismMode.parse(params[5]);
+        }
+        return new CohortRunArguments(total, batch, intervalSeconds, seed, realismMode);
+    }
+
+    record CohortRunArguments(int total,
+                              int batch,
+                              int intervalSeconds,
+                              Long seed,
+                              MapleIslandCohortRealismMode realismMode) {
+    }
+
+    private static void cohortStatus(Character player, MapleIslandCohortRuntime runtime) {
+        MapleIslandCohortRunService.Status status = runtime.status(
+                player.getWorld(), player.getClient().getChannel());
+        if (status == null) {
+            message(player, "No cohort session exists on this channel.");
+        } else {
+            cohortStatus(player, runtime, status);
+            return;
+        }
+        cohortPoolStatus(player, runtime.poolStats());
+    }
+
+    private static void cohortStatus(Character player,
+                                     MapleIslandCohortRuntime runtime,
+                                     MapleIslandCohortRunService.Status status) {
+        message(player, "Cohort " + status.state() + ": launched=" + status.launched()
+                + "/" + status.requested() + ", pending=" + status.pending()
+                + ", running=" + status.running() + ", complete=" + status.completed()
+                + ", failed=" + (status.failedStarts() + status.failedRuns())
+                + ", missing=" + status.missing() + ".");
+        message(player, "Session=" + status.sessionId() + "; batch=" + status.batch()
+                + "; interval=" + status.intervalSeconds() + "s; seed=" + status.runSeed()
+                + "; realism=" + status.realismMode() + ".");
+        if (!status.lastError().isBlank()) {
+            message(player, "Last cohort error: " + status.lastError());
+        }
+        cohortPoolStatus(player, runtime.poolStats());
+    }
+
+    private static void cohortPoolStatus(Character player, MapleIslandCohortPoolRegistry.Stats stats) {
+        message(player, "Reusable pool: accounts=" + stats.accounts() + ", total=" + stats.total()
+                + ", available=" + stats.available() + ", leased=" + stats.leased()
+                + ", active=" + stats.active() + ", broken=" + stats.broken() + ".");
+    }
+
+    private static void cohortPool(Character player, String[] params) {
+        if (params.length > 2) {
+            throw new IllegalArgumentException("Usage: !mapleisland pool [page]");
+        }
+        int requestedPage = params.length == 2 ? parseInt(params[1], "page") : 1;
+        if (requestedPage < 1) {
+            throw new IllegalArgumentException("page must be at least 1");
+        }
+        MapleIslandCohortRuntime runtime = MapleIslandCohortRuntime.instance();
+        MapleIslandCohortPoolSnapshot snapshot = runtime.poolSnapshot();
+        final int pageSize = 8;
+        int pageCount = Math.max(1, (snapshot.agents().size() + pageSize - 1) / pageSize);
+        if (requestedPage > pageCount) {
+            throw new IllegalArgumentException("page must be between 1 and " + pageCount);
+        }
+        cohortPoolStatus(player, runtime.poolStats());
+        message(player, "Pool roster page " + requestedPage + "/" + pageCount
+                + " (revision " + snapshot.revision() + "):");
+        int start = (requestedPage - 1) * pageSize;
+        int end = Math.min(snapshot.agents().size(), start + pageSize);
+        if (start == end) {
+            message(player, "Pool roster is empty; the first cohort run provisions it.");
+            return;
+        }
+        for (MapleIslandCohortPoolSnapshot.Agent agent : snapshot.agents().subList(start, end)) {
+            String session = agent.leaseSessionId().isBlank() ? "-" : agent.leaseSessionId();
+            message(player, agent.name() + " | " + agent.accountName() + " (" + agent.accountId()
+                    + ") | W" + agent.world() + " | " + agent.leaseState() + " | session=" + session);
+        }
+    }
+
+    private static int parseInt(String value, String label) {
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException failure) {
+            throw new IllegalArgumentException(label + " must be a whole number");
+        }
+    }
+
+    private static long parseLong(String value, String label) {
+        try {
+            return Long.parseLong(value);
+        } catch (NumberFormatException failure) {
+            throw new IllegalArgumentException(label + " must be a signed 64-bit whole number");
         }
     }
 
@@ -246,6 +422,10 @@ public final class MapleIslandPlanCommandService {
     private static void usage(Character player, Route route) {
         if (player != null) {
             message(player, "Usage: !" + route.command + " reset|start|next|status|run <AgentIGN>");
+            if (route == Route.FULL_MAPLE_ISLAND) {
+                message(player, "Cohort: !mapleisland run <total> <batch> <intervalSeconds> [seed] [off|light|full]");
+                message(player, "Cohort control: !mapleisland status|pool [page]|cancel|stop");
+            }
         }
     }
 

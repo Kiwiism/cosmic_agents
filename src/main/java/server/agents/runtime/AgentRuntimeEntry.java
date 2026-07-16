@@ -6,7 +6,9 @@ import server.agents.capabilities.navigation.AgentNavigationDebugState;
 import server.agents.capabilities.navigation.AgentNavigationEdgeState;
 import server.agents.capabilities.navigation.AgentNavigationTargetState;
 import server.agents.capabilities.navigation.AgentPortalCooldownState;
+import server.agents.capabilities.navigation.AgentMapleIslandTravelState;
 import server.agents.capabilities.runtime.AgentCapabilityRuntimeState;
+import server.agents.capabilities.objective.MapleIslandObjectiveRandomnessState;
 
 import server.agents.capabilities.build.AgentBuildState;
 import server.agents.capabilities.combat.AgentCombatBuffState;
@@ -86,12 +88,18 @@ public class AgentRuntimeEntry implements AgentRuntimeHandle {
     private final AgentMovementProfileState movementProfileState = new AgentMovementProfileState();
     private final AgentBehaviorProfileState behaviorProfileState = new AgentBehaviorProfileState();
     private final AgentCapabilityRuntimeState capabilityRuntimeState = new AgentCapabilityRuntimeState();
+    private final MapleIslandObjectiveRandomnessState mapleIslandObjectiveRandomnessState =
+            new MapleIslandObjectiveRandomnessState();
     private final AmherstPlanExecutionState amherstPlanExecutionState = new AmherstPlanExecutionState();
     private final AgentSimulationState simulationState = new AgentSimulationState();
     private final AgentTickSliceState tickSliceState = new AgentTickSliceState();
 
     public AgentCapabilityRuntimeState capabilityRuntimeState() {
         return capabilityRuntimeState;
+    }
+
+    public MapleIslandObjectiveRandomnessState mapleIslandObjectiveRandomnessState() {
+        return mapleIslandObjectiveRandomnessState;
     }
 
     public AmherstPlanExecutionState amherstPlanExecutionState() {
@@ -402,6 +410,7 @@ public class AgentRuntimeEntry implements AgentRuntimeHandle {
     private final AgentNavigationContinuityState navigationContinuityState = new AgentNavigationContinuityState();
     private final AgentNavigationEdgeState navigationEdgeState = new AgentNavigationEdgeState();
     private final AgentNavigationTargetState navigationTargetState = new AgentNavigationTargetState();
+    private final AgentMapleIslandTravelState mapleIslandTravelState = new AgentMapleIslandTravelState();
     private final AgentFarmAnchorState farmAnchorState = new AgentFarmAnchorState();
     private final AgentMovementBroadcastState movementBroadcastState = new AgentMovementBroadcastState();
     private final AgentMovementPhysicsCacheState movementPhysicsCacheState = new AgentMovementPhysicsCacheState();
@@ -433,6 +442,10 @@ public class AgentRuntimeEntry implements AgentRuntimeHandle {
 
     public AgentNavigationTargetState navigationTargetState() {
         return navigationTargetState;
+    }
+
+    public AgentMapleIslandTravelState mapleIslandTravelState() {
+        return mapleIslandTravelState;
     }
 
     public AgentFarmAnchorState farmAnchorState() {

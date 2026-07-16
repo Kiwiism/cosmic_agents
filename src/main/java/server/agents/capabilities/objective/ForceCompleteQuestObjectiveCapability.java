@@ -1,5 +1,6 @@
 package server.agents.capabilities.objective;
 
+import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.capabilities.quest.AmherstScopePolicy;
 import server.agents.capabilities.quest.MapleIslandSouthperryQuestCatalog;
 import server.agents.capabilities.runtime.AgentCapabilityCommand;
@@ -19,6 +20,7 @@ public final class ForceCompleteQuestObjectiveCapability
     private static final long MIN_CASH_SHOP_VISIT_MS = 2_500L;
     private static final long MAX_CASH_SHOP_VISIT_MS = 5_000L;
     private static final long SAFETY_RESTORE_GRACE_MS = 2_000L;
+    private static final long MIN_RETURN_LANDING_SETTLE_MS = 3_000L;
     public record Command(String objectiveId, int mapId, int questId, int npcId)
             implements AgentCapabilityCommand {
         public Command {
@@ -35,6 +37,7 @@ public final class ForceCompleteQuestObjectiveCapability
 
     private final AmherstObjectiveCapabilitySupport support;
     private final AmherstScopePolicy scopePolicy;
+    private final AmherstNpcInteractionDelay npcInteractionDelay;
     private final LongSupplier absenceDelayMs;
 
     public ForceCompleteQuestObjectiveCapability(PrimitiveCapabilityGateway gateway,
@@ -49,7 +52,9 @@ public final class ForceCompleteQuestObjectiveCapability
                                           AmherstScopePolicy scopePolicy,
                                           AmherstNpcInteractionDelay npcInteractionDelay,
                                           LongSupplier absenceDelayMs) {
-        this.support = new AmherstObjectiveCapabilitySupport(gateway, scopePolicy, npcInteractionDelay);
+        this.npcInteractionDelay = npcInteractionDelay == null
+                ? AmherstNpcInteractionDelay.NONE : npcInteractionDelay;
+        this.support = new AmherstObjectiveCapabilitySupport(gateway, scopePolicy, this.npcInteractionDelay);
         this.scopePolicy = scopePolicy;
         this.absenceDelayMs = absenceDelayMs;
     }
@@ -95,7 +100,9 @@ public final class ForceCompleteQuestObjectiveCapability
                 context.memory().putInt("phase", 3);
                 return AgentCapabilityStep.running("special quest completion authorized", false);
             }
-            long delayMs = Math.max(0L, absenceDelayMs.getAsLong());
+            long delayMs = MapleIslandObjectiveRandomnessRuntime.sampleCashShopVisitDelayMs(
+                            context.entry(), MIN_CASH_SHOP_VISIT_MS, MAX_CASH_SHOP_VISIT_MS)
+                    .orElseGet(() -> Math.max(0L, absenceDelayMs.getAsLong()));
             if (!support.gateway().beginFieldAbsence(
                     context.agent(), delayMs + SAFETY_RESTORE_GRACE_MS)) {
                 return AgentCapabilityStep.retry("Agent could not begin the simulated Cash Shop visit");
@@ -111,12 +118,39 @@ public final class ForceCompleteQuestObjectiveCapability
             if (!support.gateway().endFieldAbsence(context.agent())) {
                 return AgentCapabilityStep.retry("Agent could not return from the simulated Cash Shop visit");
             }
+            context.memory().putLong("returnSettleDelayMs",
+                    MIN_RETURN_LANDING_SETTLE_MS + Math.max(0L, npcInteractionDelay.nextDelayMs()));
+            context.memory().putLong("returnGroundedAtMs", -1L);
             context.memory().putInt("phase", 3);
             return AgentCapabilityStep.running("Agent returned from the Cash Shop", false);
+        }
+        if (phase == 3
+                && command.questId() == MapleIslandSouthperryQuestCatalog.YOONA_SHOPPING_GUIDE_QUEST_ID) {
+            if (!settledAfterCashShopReturn(context)) {
+                context.memory().putLong("returnGroundedAtMs", -1L);
+                return AgentCapabilityStep.running("waiting to land after returning from the Cash Shop", false);
+            }
+            long groundedAtMs = context.memory().longValue("returnGroundedAtMs", -1L);
+            if (groundedAtMs < 0L) {
+                context.memory().putLong("returnGroundedAtMs", context.nowMs());
+                return AgentCapabilityStep.running("settling after returning from the Cash Shop", false);
+            }
+            long settleDelayMs = context.memory().longValue(
+                    "returnSettleDelayMs", MIN_RETURN_LANDING_SETTLE_MS);
+            if (context.nowMs() - groundedAtMs < settleDelayMs) {
+                return AgentCapabilityStep.running("settling after returning from the Cash Shop", false);
+            }
+            context.memory().putInt("phase", 4);
         }
         if (!support.gateway().forceCompleteQuest(context.agent(), command.questId(), command.npcId())) {
             return AgentCapabilityStep.retry("forced quest completion was not accepted");
         }
         return AgentCapabilityStep.running("quest force-completed; verifying live quest state");
+    }
+
+    private boolean settledAfterCashShopReturn(AgentCapabilityContext context) {
+        return support.gateway().grounded(context.agent())
+                && !AgentMovementStateRuntime.inAir(context.entry())
+                && !AgentMovementStateRuntime.climbing(context.entry());
     }
 }

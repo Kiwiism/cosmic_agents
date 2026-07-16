@@ -5,6 +5,7 @@ import server.life.Monster;
 public final class AgentGrindTargetState {
     private Monster target = null;
     private long targetCommittedUntilMs = 0L;
+    private int targetSwitchCount = 0;
     private long nextSearchAtMs = 0L;
 
     public Monster target() {
@@ -20,9 +21,16 @@ public final class AgentGrindTargetState {
 
     public void commitTarget(Monster target, long committedUntilMs) {
         if (this.target != target) {
+            if (this.target != null && target != null) {
+                targetSwitchCount = this.target.isAlive() ? targetSwitchCount + 1 : 0;
+            }
             this.target = target;
             this.targetCommittedUntilMs = committedUntilMs;
         }
+    }
+
+    public int targetSwitchCount() {
+        return targetSwitchCount;
     }
 
     public boolean committedTo(Monster target, long nowMs) {
@@ -32,6 +40,7 @@ public final class AgentGrindTargetState {
     public void clearTarget() {
         target = null;
         targetCommittedUntilMs = 0L;
+        targetSwitchCount = 0;
     }
 
     public long nextSearchAtMs() {
