@@ -48,6 +48,7 @@ import net.server.coordinator.world.MonsterAggroCoordinator;
 import net.server.services.task.channel.MobAnimationService;
 import net.server.services.task.channel.MobClearSkillService;
 import net.server.services.task.channel.MobStatusService;
+import net.server.services.task.channel.MobPhysicsService;
 import net.server.services.task.channel.OverallService;
 import net.server.services.type.ChannelServices;
 import net.server.world.Party;
@@ -59,6 +60,7 @@ import server.StatEffect;
 import server.TimerManager;
 import server.integration.AgentPresence;
 import server.loot.LootManager;
+import server.life.simulation.MobControlAuthority;
 import server.maps.AbstractAnimatedMapObject;
 import server.maps.MapObjectType;
 import server.maps.MapleMap;
@@ -99,6 +101,7 @@ public class Monster extends AbstractLoadedLife {
     private WeakReference<Character> controller = new WeakReference<>(null);
     private boolean controllerHasAggro, controllerKnowsAboutAggro, controllerHasPuppet;
     private long controllerAssignmentHoldUntilNanos;
+    private volatile MobControlAuthority controlAuthority = MobControlAuthority.NONE;
     private final Collection<MonsterListener> listeners = new LinkedList<>();
     private final EnumMap<MonsterStatus, MonsterStatusEffect> stati = new EnumMap<>(MonsterStatus.class);
     private final ArrayList<MonsterStatus> alreadyBuffed = new ArrayList<>();
@@ -173,6 +176,10 @@ public class Monster extends AbstractLoadedLife {
     }
 
     public void setMap(MapleMap map) {
+        if (this.map != null && this.map != map) {
+            MobPhysicsService.releaseMonsterInstances(
+                    this, MobPhysicsService.ReleaseReason.MAP_CHANGE);
+        }
         this.map = map;
     }
 
@@ -1006,6 +1013,85 @@ public class Monster extends AbstractLoadedLife {
 
     public Character getController() {
         return controller.get();
+    }
+
+    public MobControlAuthority getControlAuthority() {
+        return controlAuthority;
+    }
+
+    /**
+     * Atomically transfers logical control to a headless Agent. Lock order is
+     * monsterLock (caller, when needed), then aggroUpdateLock, then Character's
+     * controlled-monster lock through the public collection methods.
+     */
+    public boolean aggroAcquireAgentPhysics(Character agent) {
+        if (agent == null || !(agent.getClient() instanceof BotClient)) {
+            return false;
+        }
+        aggroUpdateLock.lock();
+        try {
+            if (!isAlive() || map == null || agent.getMap() != map) {
+                return false;
+            }
+            Character previous = getController();
+            if (previous != null && previous != agent) {
+                if (!isFake()) {
+                    previous.sendPacket(PacketCreator.stopControllingMonster(getObjectId()));
+                }
+                previous.stopControllingMonster(this);
+            }
+            if (previous != agent) {
+                setController(agent);
+                agent.controlMonster(this);
+            }
+            setControllerHasAggro(true);
+            setControllerKnowsAboutAggro(false);
+            setControllerHasPuppet(false);
+            controllerAssignmentHoldUntilNanos = 0L;
+            controlAuthority = MobControlAuthority.AGENT_PHYSICS;
+            return true;
+        } finally {
+            aggroUpdateLock.unlock();
+        }
+    }
+
+    /** Releases Agent authority; ordinary client selection resumes from current server state. */
+    public boolean aggroReleaseAgentPhysics(Character expectedAgent, boolean selectRealController) {
+        Character agent;
+        aggroUpdateLock.lock();
+        try {
+            if (controlAuthority != MobControlAuthority.AGENT_PHYSICS) {
+                return false;
+            }
+            agent = getController();
+            if (expectedAgent != null && agent != expectedAgent) {
+                return false;
+            }
+            setController(null);
+            setControllerHasAggro(false);
+            setControllerKnowsAboutAggro(false);
+            setControllerHasPuppet(false);
+            controlAuthority = MobControlAuthority.NONE;
+        } finally {
+            aggroUpdateLock.unlock();
+        }
+        if (agent != null) {
+            agent.stopControllingMonster(this);
+        }
+        if (selectRealController && map != null && isAlive()) {
+            Character candidate = null;
+            for (Character chr : map.getCharacters()) {
+                if (!(chr.getClient() instanceof BotClient) && chr.isLoggedinWorld()
+                        && chr.getMap() == map && chr.isAlive()) {
+                    candidate = chr;
+                    break;
+                }
+            }
+            if (candidate != null) {
+                aggroSwitchController(candidate, true);
+            }
+        }
+        return true;
     }
 
     private void setController(Character controller) {
@@ -2007,6 +2093,7 @@ public class Monster extends AbstractLoadedLife {
             this.setController(null);
             this.setControllerHasAggro(false);
             this.setControllerKnowsAboutAggro(false);
+            this.controlAuthority = MobControlAuthority.NONE;
         } finally {
             aggroUpdateLock.unlock();
         }
@@ -2028,6 +2115,10 @@ public class Monster extends AbstractLoadedLife {
     public void aggroSwitchController(Character newController, boolean immediateAggro) {
         if (aggroUpdateLock.tryLock()) {
             try {
+                if (controlAuthority == MobControlAuthority.AGENT_PHYSICS
+                        && newController != getController()) {
+                    return;
+                }
                 long now = System.nanoTime();
                 if (controllerAssignmentHoldUntilNanos != 0L
                         && controllerAssignmentHoldUntilNanos - now > 0L) {
@@ -2052,6 +2143,7 @@ public class Monster extends AbstractLoadedLife {
                 this.setControllerHasAggro(immediateAggro);
                 this.setControllerKnowsAboutAggro(false);
                 this.setControllerHasPuppet(false);
+                this.controlAuthority = MobControlAuthority.CLIENT;
             } finally {
                 aggroUpdateLock.unlock();
             }
@@ -2173,6 +2265,9 @@ public class Monster extends AbstractLoadedLife {
      * specified player is currently not this mob's controller.
      */
     public Boolean aggroMoveLifeUpdate(Character player) {
+        if (controlAuthority == MobControlAuthority.AGENT_PHYSICS) {
+            return null;
+        }
         Character chrController = getController();
         if (chrController != null && player.getId() == chrController.getId()) {
             boolean aggro = this.isControllerHasAggro();
@@ -2191,6 +2286,9 @@ public class Monster extends AbstractLoadedLife {
      * there is already an active controller for this mob.
      */
     public void aggroAutoAggroUpdate(Character player) {
+        if (controlAuthority == MobControlAuthority.AGENT_PHYSICS) {
+            return;
+        }
         Character chrController = this.getActiveController();
 
         if (chrController == null) {
@@ -2212,6 +2310,10 @@ public class Monster extends AbstractLoadedLife {
         mmac.addAggroDamage(this, attacker.getId(), damage);
 
         Character chrController = this.getController();    // aggro based on DPS rather than first-come-first-served, now live after suggestions thanks to MedicOP, Thora, Vcoc
+        if (controlAuthority == MobControlAuthority.AGENT_PHYSICS) {
+            setControllerHasAggro(true);
+            return;
+        }
         if (chrController != attacker) {
             if (this.getMapAggroCoordinator().isLeadingCharacterAggro(this, attacker)) {
                 this.aggroSwitchController(attacker, true);
@@ -2327,6 +2429,8 @@ public class Monster extends AbstractLoadedLife {
     }
 
     public void dispose() {
+        MobPhysicsService.releaseMonsterInstances(
+                this, MobPhysicsService.ReleaseReason.MONSTER_GONE);
         if (monsterItemDrop != null) {
             monsterItemDrop.cancel(false);
         }

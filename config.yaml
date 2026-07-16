@@ -275,11 +275,21 @@ server:
     USE_MAP_OWNERSHIP_SYSTEM: false      #Flag to enable/disable map ownership system
     USE_FISHING_SYSTEM: false            #Flag to enable/disable custom fishing system
     USE_NPCS_SCRIPTABLE: true           #Flag to enable/disable serverside predefined script NPCs.
-    # Agent-only synthetic mob hit reaction. Set enabled false for original behavior.
-    AGENT_SYNTHETIC_MOB_REACTION_ENABLED: false
+    # Agent-hit monster reaction. OFF preserves original Cosmic client control.
+    AGENT_MOB_REACTION_MODE: OFF       # OFF, SYNTHETIC, or PHYSICS
     AGENT_SYNTHETIC_MOB_KNOCKBACK_DISTANCE_X: 12
     AGENT_SYNTHETIC_MOB_KNOCKBACK_DURATION_MS: 240
     AGENT_SYNTHETIC_MOB_CONTROL_HOLD_MS: 350
+    AGENT_MOB_PHYSICS_PUBLICATION_INTERVAL_MS: 75
+    AGENT_MOB_PHYSICS_MAX_CATCH_UP_STEPS: 12
+    AGENT_MOB_PHYSICS_STOP_DISTANCE_X: 24
+    AGENT_MOB_PHYSICS_RESUME_DISTANCE_X: 36
+    AGENT_MOB_PHYSICS_FLY_DEAD_ZONE_X: 24
+    AGENT_MOB_PHYSICS_FLY_DEAD_ZONE_Y: 20
+    AGENT_MOB_PHYSICS_JUMP_COOLDOWN_MS: 900
+    AGENT_MOB_PHYSICS_JUMP_TARGET_HEIGHT: 48
+    AGENT_MOB_PHYSICS_MAX_SAFE_EDGE_PX: 48
+    AGENT_MOB_PHYSICS_DIAGNOSTIC_LOGGING: false
     AGENT_LEGACY_DIALOGUE_ENABLED: false #Experimental Agent plans narrate objectives; suppress NuTNNuT-era Agent chatter.
     AGENT_AMHERST_DEBUG_MESSAGES_ENABLED: false #Show detailed yellow Amherst capability and objective progress messages.
     AGENT_AMHERST_INTENTION_CHAT_ENABLED: true #Let the Agent announce its next Amherst action in map chat.

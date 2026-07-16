@@ -4,6 +4,7 @@ import client.Character;
 import client.Client;
 import client.command.Command;
 import server.agents.commands.AgentLegacyCommandBridge;
+import net.server.services.task.channel.MobPhysicsService;
 
 public class BotCfgCommand extends Command {
     {
@@ -22,6 +23,11 @@ public class BotCfgCommand extends Command {
             return;
         }
         if (params.length == 1) {
+            if (params[0].equalsIgnoreCase("status")
+                    || params[0].equalsIgnoreCase("physicsstatus")) {
+                player.yellowMessage(MobPhysicsService.globalStatus());
+                return;
+            }
             String line = AgentLegacyCommandBridge.combatConfigLine(params[0]);
             player.yellowMessage(line != null ? line : "unknown field: " + params[0] + " (use !botcfg to list)");
             return;

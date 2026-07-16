@@ -1,8 +1,9 @@
 package server.agents.integration.cosmic;
 
 import client.Character;
+import net.server.services.task.channel.MobPhysicsService;
 import server.agents.capabilities.combat.AgentMonsterControlService;
-import server.agents.capabilities.combat.AgentSyntheticMobReactionService;
+import server.agents.capabilities.mobcontrol.AgentMobReactionRouter;
 import server.agents.runtime.simulation.AgentSimulationMapPresenceListener;
 import server.integration.AgentPresenceProvider;
 import server.life.Monster;
@@ -22,17 +23,22 @@ public enum CosmicAgentPresenceProvider implements AgentPresenceProvider {
     @Override
     public void mapObservationChanged(MapleMap map, boolean observed) {
         simulationListener.observationChanged(map, observed);
+        if (!observed) {
+            MobPhysicsService.releaseMapInstances(
+                    map, MobPhysicsService.ReleaseReason.OBSERVER_LOSS);
+        }
     }
 
     @Override
     public void agentLeftMap(MapleMap map) {
         AgentMonsterControlService.releaseHiddenSimulationControllers(map);
+        MobPhysicsService.releaseDepartedAgents(map);
     }
 
     @Override
     public void mobHitAccepted(Character attacker, Monster monster,
                                int appliedDamage, long reactionDelayMs) {
-        AgentSyntheticMobReactionService.acceptedHit(
+        AgentMobReactionRouter.acceptedHit(
                 attacker, monster, appliedDamage, reactionDelayMs);
     }
 }

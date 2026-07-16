@@ -4,6 +4,7 @@ import client.BotClient;
 import client.Character;
 import net.packet.Packet;
 import server.agents.runtime.AgentSchedulerRuntime;
+import server.agents.capabilities.mobcontrol.AgentMobReactionMode;
 import server.life.Monster;
 import server.maps.Foothold;
 import server.maps.FootholdTree;
@@ -95,7 +96,7 @@ public final class AgentSyntheticMobReactionService {
     }
 
     private static boolean canReact(Character attacker, Monster monster, int appliedDamage) {
-        if (!AgentCombatConfig.cfg.SYNTHETIC_MOB_REACTION_ENABLED
+        if (AgentCombatConfig.cfg.AGENT_MOB_REACTION_MODE != AgentMobReactionMode.SYNTHETIC
                 || attacker == null || monster == null || appliedDamage <= 0
                 || !(attacker.getClient() instanceof BotClient)
                 || !monster.isAlive() || !monster.isMobile()) {
@@ -168,7 +169,7 @@ public final class AgentSyntheticMobReactionService {
 
     private static boolean canApplyImpact(PendingReaction pending) {
         Monster monster = pending.monster;
-        return AgentCombatConfig.cfg.SYNTHETIC_MOB_REACTION_ENABLED
+        return AgentCombatConfig.cfg.AGENT_MOB_REACTION_MODE == AgentMobReactionMode.SYNTHETIC
                 && monster.getMap() == pending.map
                 && pending.attacker.getMap() == pending.map
                 && pending.map.getMonsterByOid(pending.monsterOid) == monster
@@ -232,6 +233,13 @@ public final class AgentSyntheticMobReactionService {
             }
         } finally {
             monster.unlockMonster();
+        }
+    }
+
+    /** Immediately retires all pending one-shot reactions during a live mode switch. */
+    public static void releaseAll() {
+        for (PendingReaction pending : List.copyOf(PENDING_REACTIONS.values())) {
+            completeReaction(pending);
         }
     }
 

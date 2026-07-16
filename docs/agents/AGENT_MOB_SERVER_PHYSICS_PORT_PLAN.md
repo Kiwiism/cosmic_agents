@@ -3,6 +3,9 @@
 Status: implementation specification
 Target repository: Cosmic Agents
 Reference client: `nmnsnv/maplestory-wasm` / Journey physics
+
+Implementation record and pinned-source attribution:
+[`AGENT_MOB_SERVER_PHYSICS_REFERENCE.md`](AGENT_MOB_SERVER_PHYSICS_REFERENCE.md).
 Reference revision inspected: `bc0234fe7c7f53322453e7bdd79564d9aca4cd8b`
 
 ## 1. Objective

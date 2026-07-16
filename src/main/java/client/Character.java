@@ -2027,22 +2027,20 @@ public class Character extends AbstractCharacterObject {
     }
 
     public void controlMonster(Monster monster) {
-        if (cpnLock.tryLock()) {
-            try {
-                controlled.add(monster);
-            } finally {
-                cpnLock.unlock();
-            }
+        cpnLock.lock();
+        try {
+            controlled.add(monster);
+        } finally {
+            cpnLock.unlock();
         }
     }
 
     public void stopControllingMonster(Monster monster) {
-        if (cpnLock.tryLock()) {
-            try {
-                controlled.remove(monster);
-            } finally {
-                cpnLock.unlock();
-            }
+        cpnLock.lock();
+        try {
+            controlled.remove(monster);
+        } finally {
+            cpnLock.unlock();
         }
     }
 

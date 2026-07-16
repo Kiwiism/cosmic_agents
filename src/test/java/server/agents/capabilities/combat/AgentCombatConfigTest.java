@@ -1,6 +1,7 @@
 package server.agents.capabilities.combat;
 
 import org.junit.jupiter.api.Test;
+import server.agents.capabilities.mobcontrol.AgentMobReactionMode;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -43,20 +44,23 @@ class AgentCombatConfigTest {
     }
 
     @Test
-    void syntheticReactionSwitchSupportsLiveOffAndOnValues() {
-        boolean originalEnabled = AgentCombatConfig.cfg.SYNTHETIC_MOB_REACTION_ENABLED;
+    void reactionModeSupportsCaseInsensitiveLiveValues() {
+        AgentMobReactionMode originalMode = AgentCombatConfig.cfg.AGENT_MOB_REACTION_MODE;
         try {
-            assertEquals("OK: SYNTHETIC_MOB_REACTION_ENABLED = false",
+            assertEquals("OK: AGENT_MOB_REACTION_MODE = OFF",
                     AgentCombatConfig.setConfigField(
-                            "SYNTHETIC_MOB_REACTION_ENABLED", "off"));
-            assertEquals(false, AgentCombatConfig.cfg.SYNTHETIC_MOB_REACTION_ENABLED);
+                            "AGENT_MOB_REACTION_MODE", "off"));
+            assertEquals(AgentMobReactionMode.OFF, AgentCombatConfig.cfg.AGENT_MOB_REACTION_MODE);
 
-            assertEquals("OK: SYNTHETIC_MOB_REACTION_ENABLED = true",
+            assertEquals("OK: AGENT_MOB_REACTION_MODE = SYNTHETIC",
                     AgentCombatConfig.setConfigField(
-                            "SYNTHETIC_MOB_REACTION_ENABLED", "on"));
-            assertTrue(AgentCombatConfig.cfg.SYNTHETIC_MOB_REACTION_ENABLED);
+                            "AGENT_MOB_REACTION_MODE", "synthetic"));
+            assertEquals(AgentMobReactionMode.SYNTHETIC,
+                    AgentCombatConfig.cfg.AGENT_MOB_REACTION_MODE);
+            assertTrue(AgentCombatConfig.setConfigField(
+                    "AGENT_MOB_REACTION_MODE", "invalid").startsWith("bad value"));
         } finally {
-            AgentCombatConfig.cfg.SYNTHETIC_MOB_REACTION_ENABLED = originalEnabled;
+            AgentCombatConfig.cfg.AGENT_MOB_REACTION_MODE = originalMode;
         }
     }
 }

@@ -42,6 +42,7 @@ import net.server.Server;
 import net.server.channel.Channel;
 import net.server.coordinator.world.MonsterAggroCoordinator;
 import net.server.services.task.channel.MobMistService;
+import net.server.services.task.channel.MobPhysicsService;
 import net.server.services.task.channel.OverallService;
 import net.server.services.type.ChannelServices;
 import net.server.world.Party;
@@ -77,6 +78,9 @@ import server.maps.reservation.FreeMarketTestMerchant;
 import server.partyquest.CarnivalFactory;
 import server.partyquest.CarnivalFactory.MCSkill;
 import server.partyquest.GuardianSpawnPoint;
+import server.physics.PhysicsTerrain;
+import server.physics.foothold.FootholdPhysicsIndex;
+import server.physics.foothold.FootholdSegment;
 import tools.PacketCreator;
 import tools.Pair;
 import tools.Randomizer;
@@ -132,6 +136,7 @@ public class MapleMap {
     private final Map<Integer, Runnable> statUpdateRunnables = new ConcurrentHashMap<>();
     private final List<Rectangle> areas = new ArrayList<>();
     private FootholdTree footholds = null;
+    private PhysicsTerrain physicsTerrain = null;
     private final List<Rope> ropes = new ArrayList<>();
     private Pair<Integer, Integer> xLimits;  // caches the min and max x's with available footholds
     private final Rectangle mapArea = new Rectangle();
@@ -1379,6 +1384,8 @@ public class MapleMap {
                 return false;
             }
 
+            MobPhysicsService.releaseMonsterInstances(
+                    monster, MobPhysicsService.ReleaseReason.MONSTER_GONE);
             spawnedMonstersOnMap.decrementAndGet();
             removeMapObject(monster);
             monster.disposeMapObject();
@@ -3085,6 +3092,16 @@ public class MapleMap {
 
     public void setFootholds(FootholdTree footholds) {
         this.footholds = footholds;
+        if (footholds == null) {
+            physicsTerrain = null;
+            return;
+        }
+        List<FootholdSegment> segments = footholds.getAllFootholds().stream()
+                .map(fh -> new FootholdSegment(
+                        fh.getId(), fh.getPrev(), fh.getNext(), fh.getLayer(), fh.getZMass(),
+                        fh.isForbidFallDown(), fh.getX1(), fh.getY1(), fh.getX2(), fh.getY2()))
+                .toList();
+        physicsTerrain = segments.isEmpty() ? null : new FootholdPhysicsIndex(segments);
     }
 
     public void addRope(Rope rope) { ropes.add(rope); }
@@ -3092,6 +3109,10 @@ public class MapleMap {
 
     public FootholdTree getFootholds() {
         return footholds;
+    }
+
+    public PhysicsTerrain getPhysicsTerrain() {
+        return physicsTerrain;
     }
 
     public void setMapPointBoundings(int px, int py, int h, int w) {

@@ -8,6 +8,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import server.agents.capabilities.mobcontrol.AgentMobReactionMode;
 import server.life.Monster;
 import server.life.MonsterStats;
 import server.maps.Foothold;
@@ -35,24 +36,24 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class AgentSyntheticMobReactionServiceTest {
-    private boolean startupReactionEnabled;
+    private AgentMobReactionMode startupReactionMode;
 
     @BeforeEach
     void enableReactionForBehaviorTests() {
-        startupReactionEnabled = AgentCombatConfig.cfg.SYNTHETIC_MOB_REACTION_ENABLED;
-        AgentCombatConfig.cfg.SYNTHETIC_MOB_REACTION_ENABLED = true;
+        startupReactionMode = AgentCombatConfig.cfg.AGENT_MOB_REACTION_MODE;
+        AgentCombatConfig.cfg.AGENT_MOB_REACTION_MODE = AgentMobReactionMode.SYNTHETIC;
     }
 
     @AfterEach
     void restoreConfiguredReactionMode() {
-        AgentCombatConfig.cfg.SYNTHETIC_MOB_REACTION_ENABLED = startupReactionEnabled;
+        AgentCombatConfig.cfg.AGENT_MOB_REACTION_MODE = startupReactionMode;
     }
 
     @Test
     void disabledReactionLeavesOriginalBehaviorUntouched() {
-        boolean originalEnabled = AgentCombatConfig.cfg.SYNTHETIC_MOB_REACTION_ENABLED;
+        AgentMobReactionMode originalMode = AgentCombatConfig.cfg.AGENT_MOB_REACTION_MODE;
         try {
-            AgentCombatConfig.cfg.SYNTHETIC_MOB_REACTION_ENABLED = false;
+            AgentCombatConfig.cfg.AGENT_MOB_REACTION_MODE = AgentMobReactionMode.OFF;
             Fixture fixture = fixture(new Point(-40, 99));
             List<ScheduledAction> scheduled = new ArrayList<>();
 
@@ -67,15 +68,15 @@ class AgentSyntheticMobReactionServiceTest {
             verify(fixture.map, never())
                     .broadcastMessage(any(Packet.class), any(Point.class));
         } finally {
-            AgentCombatConfig.cfg.SYNTHETIC_MOB_REACTION_ENABLED = originalEnabled;
+            AgentCombatConfig.cfg.AGENT_MOB_REACTION_MODE = originalMode;
         }
     }
 
     @Test
     void liveDisableCancelsReactionWaitingOnAttackDelay() {
-        boolean originalEnabled = AgentCombatConfig.cfg.SYNTHETIC_MOB_REACTION_ENABLED;
+        AgentMobReactionMode originalMode = AgentCombatConfig.cfg.AGENT_MOB_REACTION_MODE;
         try {
-            AgentCombatConfig.cfg.SYNTHETIC_MOB_REACTION_ENABLED = true;
+            AgentCombatConfig.cfg.AGENT_MOB_REACTION_MODE = AgentMobReactionMode.SYNTHETIC;
             Fixture fixture = fixture(new Point(-40, 99));
             List<ScheduledAction> scheduled = new ArrayList<>();
             AgentSyntheticMobReactionService.acceptedHit(
@@ -83,7 +84,7 @@ class AgentSyntheticMobReactionServiceTest {
                     (action, delayMs) -> scheduled.add(
                             new ScheduledAction(action, delayMs)));
 
-            AgentCombatConfig.cfg.SYNTHETIC_MOB_REACTION_ENABLED = false;
+            AgentCombatConfig.cfg.AGENT_MOB_REACTION_MODE = AgentMobReactionMode.OFF;
             scheduled.get(0).action().run();
 
             verify(fixture.map, never())
@@ -92,7 +93,7 @@ class AgentSyntheticMobReactionServiceTest {
             verify(fixture.monster).aggroUpdateController(true);
             assertEquals(1, scheduled.size());
         } finally {
-            AgentCombatConfig.cfg.SYNTHETIC_MOB_REACTION_ENABLED = originalEnabled;
+            AgentCombatConfig.cfg.AGENT_MOB_REACTION_MODE = originalMode;
         }
     }
 

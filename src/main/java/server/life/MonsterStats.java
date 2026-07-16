@@ -53,6 +53,12 @@ public class MonsterStats {
     public selfDestruction selfDestruction = null;
     public int fixedStance = 0;
     public boolean friendly;
+    private int rawSpeed;
+    private int rawFlySpeed;
+    private int pushed;
+    private boolean physicsMobile;
+    private boolean physicsFlying;
+    private boolean canJump;
 
     public void setChange(boolean change) {
         this.changeable = change;
@@ -145,6 +151,19 @@ public class MonsterStats {
     public boolean isFlying() {
         return animationTimes.containsKey("fly");
     }
+
+    public int getRawSpeed() { return rawSpeed; }
+    public void setRawSpeed(int rawSpeed) { this.rawSpeed = rawSpeed; }
+    public int getRawFlySpeed() { return rawFlySpeed; }
+    public void setRawFlySpeed(int rawFlySpeed) { this.rawFlySpeed = rawFlySpeed; }
+    public int getPushed() { return pushed; }
+    public void setPushed(int pushed) { this.pushed = pushed; }
+    public boolean isPhysicsMobile() { return physicsMobile; }
+    public void setPhysicsMobile(boolean physicsMobile) { this.physicsMobile = physicsMobile; }
+    public boolean isPhysicsFlying() { return physicsFlying; }
+    public void setPhysicsFlying(boolean physicsFlying) { this.physicsFlying = physicsFlying; }
+    public boolean canJump() { return canJump; }
+    public void setCanJump(boolean canJump) { this.canJump = canJump; }
 
     public List<Integer> getRevives() {
         return revives;
@@ -399,6 +418,12 @@ public class MonsterStats {
         copy.selfDestruction = selfDestruction;
         copy.fixedStance = fixedStance;
         copy.friendly = friendly;
+        copy.rawSpeed = rawSpeed;
+        copy.rawFlySpeed = rawFlySpeed;
+        copy.pushed = pushed;
+        copy.physicsMobile = physicsMobile;
+        copy.physicsFlying = physicsFlying;
+        copy.canJump = canJump;
         return copy;
     }
 }

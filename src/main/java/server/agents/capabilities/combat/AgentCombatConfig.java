@@ -1,6 +1,8 @@
 package server.agents.capabilities.combat;
 
 import config.YamlConfig;
+import server.agents.capabilities.mobcontrol.AgentMobReactionMode;
+import server.agents.capabilities.mobcontrol.AgentMobReactionRouter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,8 +53,13 @@ public final class AgentCombatConfig {
                 continue;
             }
             try {
+                Object previous = f.get(cfg);
                 Object parsed = parseConfigValue(f.getType(), rawValue.trim());
                 f.set(cfg, parsed);
+                if (f.getName().equals("AGENT_MOB_REACTION_MODE")) {
+                    AgentMobReactionRouter.modeChanged(
+                            (AgentMobReactionMode) previous, (AgentMobReactionMode) parsed);
+                }
                 return "OK: " + f.getName() + " = " + parsed;
             } catch (NumberFormatException e) {
                 return "bad value '" + rawValue + "' for " + f.getName() + " (" + f.getType().getSimpleName() + ")";
@@ -85,6 +92,13 @@ public final class AgentCombatConfig {
         if (type == float.class || type == Float.class) {
             return Float.parseFloat(v);
         }
+        if (type == AgentMobReactionMode.class) {
+            try {
+                return AgentMobReactionMode.parse(v);
+            } catch (IllegalArgumentException invalid) {
+                throw new NumberFormatException(invalid.getMessage());
+            }
+        }
         throw new NumberFormatException(v);
     }
 
@@ -93,14 +107,34 @@ public final class AgentCombatConfig {
         // OpenStory Player::damage sets hspeed = +/-1.5 and vforce -= 3.5 on mob knockback.
         public float KNOCKBACK_HSPEED = 1.5f;
         public float KNOCKBACK_VFORCE = 3.5f;
-        public boolean SYNTHETIC_MOB_REACTION_ENABLED =
-                YamlConfig.config.server.AGENT_SYNTHETIC_MOB_REACTION_ENABLED;
+        public AgentMobReactionMode AGENT_MOB_REACTION_MODE = AgentMobReactionMode.parse(
+                YamlConfig.config.server.AGENT_MOB_REACTION_MODE);
         public int SYNTHETIC_MOB_KNOCKBACK_DISTANCE_X =
                 YamlConfig.config.server.AGENT_SYNTHETIC_MOB_KNOCKBACK_DISTANCE_X;
         public int SYNTHETIC_MOB_KNOCKBACK_DURATION_MS =
                 YamlConfig.config.server.AGENT_SYNTHETIC_MOB_KNOCKBACK_DURATION_MS;
         public int SYNTHETIC_MOB_CONTROL_HOLD_MS =
                 YamlConfig.config.server.AGENT_SYNTHETIC_MOB_CONTROL_HOLD_MS;
+        public int MOB_PHYSICS_PUBLICATION_INTERVAL_MS =
+                YamlConfig.config.server.AGENT_MOB_PHYSICS_PUBLICATION_INTERVAL_MS;
+        public int MOB_PHYSICS_MAX_CATCH_UP_STEPS =
+                YamlConfig.config.server.AGENT_MOB_PHYSICS_MAX_CATCH_UP_STEPS;
+        public int MOB_PHYSICS_STOP_DISTANCE_X =
+                YamlConfig.config.server.AGENT_MOB_PHYSICS_STOP_DISTANCE_X;
+        public int MOB_PHYSICS_RESUME_DISTANCE_X =
+                YamlConfig.config.server.AGENT_MOB_PHYSICS_RESUME_DISTANCE_X;
+        public int MOB_PHYSICS_FLY_DEAD_ZONE_X =
+                YamlConfig.config.server.AGENT_MOB_PHYSICS_FLY_DEAD_ZONE_X;
+        public int MOB_PHYSICS_FLY_DEAD_ZONE_Y =
+                YamlConfig.config.server.AGENT_MOB_PHYSICS_FLY_DEAD_ZONE_Y;
+        public int MOB_PHYSICS_JUMP_COOLDOWN_MS =
+                YamlConfig.config.server.AGENT_MOB_PHYSICS_JUMP_COOLDOWN_MS;
+        public int MOB_PHYSICS_JUMP_TARGET_HEIGHT =
+                YamlConfig.config.server.AGENT_MOB_PHYSICS_JUMP_TARGET_HEIGHT;
+        public int MOB_PHYSICS_MAX_SAFE_EDGE_PX =
+                YamlConfig.config.server.AGENT_MOB_PHYSICS_MAX_SAFE_EDGE_PX;
+        public boolean MOB_PHYSICS_DIAGNOSTIC_LOGGING =
+                YamlConfig.config.server.AGENT_MOB_PHYSICS_DIAGNOSTIC_LOGGING;
 
         // Basic attack fallback when weapon data cannot produce a real normal-attack hit box.
         public int ATTACK_RANGE_X = 80;

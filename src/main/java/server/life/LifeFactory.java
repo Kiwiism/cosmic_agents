@@ -98,6 +98,24 @@ public class LifeFactory {
     }
 
     private static Pair<MonsterStats, List<MobAttackInfoHolder>> getMonsterStats(int mid) {
+        return getMonsterStats(mid, new HashSet<>());
+    }
+
+    private static Pair<MonsterStats, List<MobAttackInfoHolder>> getMonsterStats(
+            int mid, Set<Integer> resolvingLinks) {
+        if (!resolvingLinks.add(mid)) {
+            log.warn("Cyclic Mob.wz info/link detected at monster {}", mid);
+            return new Pair<>(new MonsterStats(), List.of());
+        }
+        try {
+            return loadMonsterStatsData(mid, resolvingLinks);
+        } finally {
+            resolvingLinks.remove(mid);
+        }
+    }
+
+    private static Pair<MonsterStats, List<MobAttackInfoHolder>> loadMonsterStatsData(
+            int mid, Set<Integer> resolvingLinks) {
         Data monsterData = data.getData(StringUtil.getLeftPaddedStr(mid + ".img", '0', 11));
         if (monsterData == null) {
             return null;
@@ -106,17 +124,22 @@ public class LifeFactory {
 
         List<MobAttackInfoHolder> attackInfos = new LinkedList<>();
         MonsterStats stats = new MonsterStats();
+        MonsterStats linkedStats = null;
 
         int linkMid = DataTool.getIntConvert("link", monsterInfoData, 0);
         if (linkMid != 0) {
-            Pair<MonsterStats, List<MobAttackInfoHolder>> linkStats = getMonsterStats(linkMid);
+            Pair<MonsterStats, List<MobAttackInfoHolder>> linkStats =
+                    getMonsterStats(linkMid, resolvingLinks);
             if (linkStats == null) {
                 return null;
             }
 
             // thanks resinate for noticing non-propagable infos such as revives getting retrieved
             attackInfos.addAll(linkStats.getRight());
+            linkedStats = linkStats.getLeft();
         }
+
+        loadMonsterPhysicsStats(stats, monsterData, monsterInfoData, linkedStats);
 
         stats.setHp(DataTool.getIntConvert("maxHP", monsterInfoData));
         stats.setFriendly(DataTool.getIntConvert("damagedByMob", monsterInfoData, stats.isFriendly() ? 1 : 0) == 1);
@@ -249,6 +272,25 @@ public class LifeFactory {
         }
 
         return new Pair<>(stats, attackInfos);
+    }
+
+    static void loadMonsterPhysicsStats(MonsterStats stats, Data monsterData,
+                                        Data monsterInfoData, MonsterStats linked) {
+        int linkedSpeed = linked == null ? 0 : linked.getRawSpeed();
+        int linkedFlySpeed = linked == null ? 0 : linked.getRawFlySpeed();
+        int linkedPushed = linked == null ? 0 : linked.getPushed();
+        stats.setRawSpeed(DataTool.getIntConvert("speed", monsterInfoData, linkedSpeed));
+        stats.setRawFlySpeed(DataTool.getIntConvert("flySpeed", monsterInfoData, linkedFlySpeed));
+        stats.setPushed(DataTool.getIntConvert("pushed", monsterInfoData, linkedPushed));
+        stats.setPhysicsFlying(monsterData.getChildByPath("fly") != null
+                || linked != null && linked.isPhysicsFlying());
+        stats.setPhysicsMobile(monsterData.getChildByPath("move") != null
+                || stats.isPhysicsFlying() || linked != null && linked.isPhysicsMobile());
+        stats.setCanJump(monsterData.getChildByPath("jump") != null
+                || linked != null && linked.canJump());
+        if (linked != null) {
+            stats.setFixedStance(linked.getFixedStance());
+        }
     }
 
     public static Monster getMonster(int mid) {
