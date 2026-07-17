@@ -61,6 +61,16 @@ class MapleIslandCohortPoolRegistryTest {
     }
 
     @Test
+    void snapshotFindsAgentsBySortedCharacterId() throws Exception {
+        MapleIslandCohortPoolRegistry registry = populated(new MemoryStore());
+
+        assertEquals("BlueSnail", registry.snapshot().findAgent(20).orElseThrow().name());
+        assertEquals("RedSnail", registry.snapshot().findAgent(21).orElseThrow().name());
+        assertEquals(true, registry.snapshot().findAgent(19).isEmpty());
+        assertEquals(true, registry.snapshot().findAgent(22).isEmpty());
+    }
+
+    @Test
     void rejectsPoolCharacterWhoseAccountNameDoesNotMatchAccountId() {
         MapleIslandCohortPoolSnapshot.Account account = new MapleIslandCohortPoolSnapshot.Account(
                 10, "MIQuest0001", 99, 15, 1_000L);

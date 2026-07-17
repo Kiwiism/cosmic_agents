@@ -21,6 +21,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class AmherstPlanRuntimeRunnerTest {
+    private static final long TICK_MS = 50L;
+
     @TempDir
     Path tempDir;
 
@@ -210,14 +212,17 @@ class AmherstPlanRuntimeRunnerTest {
                               long startMs,
                               int maxTicks) {
         for (int i = 0; i < maxTicks && entry.amherstPlanExecutionState().active(); i++) {
-            long now = startMs + i;
+            long now = startMs + i * TICK_MS;
             boolean consumed = runner.tick(entry, fixture.agent, now);
             if (!consumed && entry.capabilityRuntimeState().hasActiveCapability()) {
                 AgentCapabilityRuntime.tick(entry, fixture.agent, now);
             }
         }
         assertFalse(entry.amherstPlanExecutionState().active(),
-                () -> "plan did not stop: " + entry.amherstPlanExecutionState().lastError());
+                () -> "plan did not stop: error=" + entry.amherstPlanExecutionState().lastError()
+                        + " objective=" + entry.amherstPlanExecutionState().assignedObjectiveId()
+                        + " capability=" + entry.capabilityRuntimeState().activeCapabilityId()
+                        + " result=" + entry.capabilityRuntimeState().lastResult());
     }
 
     private static long driveUntilSatisfied(AmherstPlanRuntimeRunner runner,
@@ -227,7 +232,7 @@ class AmherstPlanRuntimeRunnerTest {
                                             long startMs,
                                             int maxTicks) {
         for (int i = 0; i < maxTicks; i++) {
-            long now = startMs + i;
+            long now = startMs + i * TICK_MS;
             boolean consumed = runner.tick(entry, fixture.agent, now);
             if (!consumed && entry.capabilityRuntimeState().hasActiveCapability()) {
                 AgentCapabilityRuntime.tick(entry, fixture.agent, now);
@@ -235,7 +240,7 @@ class AmherstPlanRuntimeRunnerTest {
             AmherstObjectiveProgress progress = entry.amherstPlanExecutionState().progress()
                     .objectives().get(objectiveId);
             if (progress != null && progress.status() == AmherstObjectiveProgressStatus.SATISFIED) {
-                return now + 1;
+                return now + TICK_MS;
             }
         }
         throw new AssertionError("objective was not satisfied");
@@ -247,14 +252,14 @@ class AmherstPlanRuntimeRunnerTest {
                                          long startMs,
                                          int maxTicks) {
         for (int i = 0; i < maxTicks; i++) {
-            long now = startMs + i;
+            long now = startMs + i * TICK_MS;
             boolean consumed = runner.tick(entry, fixture.agent, now);
             if (!consumed && entry.capabilityRuntimeState().hasActiveCapability()) {
                 AgentCapabilityRuntime.tick(entry, fixture.agent, now);
             }
             if (entry.amherstPlanExecutionState().waitingForAdvance()
                     && !entry.capabilityRuntimeState().hasActiveCapability()) {
-                return now + 1;
+                return now + TICK_MS;
             }
         }
         throw new AssertionError("manual plan did not pause");

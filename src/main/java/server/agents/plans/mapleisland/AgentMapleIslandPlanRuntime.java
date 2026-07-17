@@ -98,7 +98,7 @@ public final class AgentMapleIslandPlanRuntime {
                 new AmherstObjectiveReconciler(),
                 new AmherstObjectiveHandlerRegistry(
                         server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime.gateway(),
-                        AmherstNpcInteractionDelay.profile(entry), scopePolicy),
+                        AmherstNpcInteractionDelay.profile(entry), scopePolicy, entry),
                 AmherstObjectiveDelay.profile(entry));
     }
 }

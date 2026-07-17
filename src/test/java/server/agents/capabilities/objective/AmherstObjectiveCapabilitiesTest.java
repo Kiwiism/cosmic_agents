@@ -165,6 +165,8 @@ class AmherstObjectiveCapabilitiesTest {
     void forceCompleteQuestApproachesYoonaAndBypassesMissingShoppingGuide() {
         var fixture = new MutablePrimitiveGatewayFixture();
         fixture.mapId.set(1010000);
+        MapleIslandObjectiveRandomnessRuntime.configure(
+                fixture.entry, MapleIslandObjectiveRandomnessSettings.cohort(8020L));
         var command = new ForceCompleteQuestObjectiveCapability.Command(
                 "q8020-force-complete", 1010000, 8020, 20100,
                 new ForceCompleteQuestObjectiveCapability.FieldAbsence(
@@ -180,7 +182,7 @@ class AmherstObjectiveCapabilitiesTest {
         verify(fixture.gateway).beginFieldAbsence(fixture.agent, 2_002L);
         verify(fixture.gateway).endFieldAbsence(fixture.agent);
         verify(fixture.gateway).forceCompleteQuest(fixture.agent, 8020, 20100);
-        assertTrue(MapleIslandNpcInteractionAnchorCatalog.legacyAnchorsFor(1010000, 20100)
+        assertTrue(MapleIslandNpcInteractionAnchorCatalog.anchors(1010000, 20100)
                 .contains(fixture.position));
         verify(fixture.gateway, atLeastOnce()).facePosition(fixture.agent, new Point(-188, 85));
         assertSuccess(fixture);

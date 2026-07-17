@@ -1,5 +1,6 @@
 package server.agents.plans.amherst;
 
+import config.YamlConfig;
 import server.agents.capabilities.objective.CombatQuestObjectiveCapability;
 import server.agents.capabilities.objective.ForceCompleteQuestObjectiveCapability;
 import server.agents.capabilities.objective.InventoryUseObjectiveCapability;
@@ -14,6 +15,7 @@ import server.agents.capabilities.runtime.AgentExecutableCapability;
 import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
 import server.agents.integration.PrimitiveCapabilityGateway;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.capabilities.objective.AgentObjectiveVariationRuntime;
 import server.agents.plans.mapleisland.AgentSplitRoadRouteService;
 import server.agents.plans.mapleisland.MapleIslandNpcInteractionPlacementPolicy;
 import constants.id.ItemId;
@@ -35,6 +37,7 @@ public final class AmherstObjectiveHandlerRegistry {
     private final AmherstNpcInteractionDelay npcInteractionDelay;
     private final AmherstScopePolicy scopePolicy;
     private final AgentRuntimeEntry entry;
+    private final long objectiveTimeoutMs;
 
     public AmherstObjectiveHandlerRegistry() {
         this(AgentPrimitiveCapabilityGatewayRuntime.gateway(), AmherstNpcInteractionDelay.NONE,
@@ -65,6 +68,7 @@ public final class AmherstObjectiveHandlerRegistry {
                 ? AmherstNpcInteractionDelay.NONE : npcInteractionDelay;
         this.scopePolicy = scopePolicy;
         this.entry = entry;
+        this.objectiveTimeoutMs = objectiveTimeoutMs(entry);
     }
 
     public AmherstObjectiveExecution create(AmherstPlanCard card, AmherstPlanObjective objective) {
@@ -211,9 +215,17 @@ public final class AmherstObjectiveHandlerRegistry {
         return null;
     }
 
-    private static <C extends AgentCapabilityCommand> AmherstObjectiveExecution execution(
+    private <C extends AgentCapabilityCommand> AmherstObjectiveExecution execution(
             String objectiveId, AgentExecutableCapability<C> capability, C command) {
         return new AmherstObjectiveExecution(objectiveId,
-                new AgentCapabilityInvocation<>(capability, command, OBJECTIVE_TIMEOUT_MS, OBJECTIVE_RETRIES));
+                new AgentCapabilityInvocation<>(capability, command, objectiveTimeoutMs, OBJECTIVE_RETRIES));
+    }
+
+    private static long objectiveTimeoutMs(AgentRuntimeEntry entry) {
+        if (!AgentObjectiveVariationRuntime.settings(entry).enabled()) {
+            return OBJECTIVE_TIMEOUT_MS;
+        }
+        int configured = YamlConfig.config.server.AGENT_MAPLE_ISLAND_COHORT_OBJECTIVE_TIMEOUT_MS;
+        return Math.max(OBJECTIVE_TIMEOUT_MS, configured);
     }
 }

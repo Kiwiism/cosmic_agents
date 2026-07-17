@@ -13,10 +13,11 @@ Mushroom Town-to-Southperry plan.
 !mapleisland stop
 ```
 
-`total` is 1-100, `batch` is 1-10 and cannot exceed `total`, and the interval is
-5-3,600 seconds. Omitting `seed` creates one and reports it in status so a run
-can be replayed. The legacy `!mapleisland run <AgentIGN>` showcase remains
-available.
+`total` is 1 through `AGENT_MAPLE_ISLAND_COHORT_MAX_TOTAL` (500 by default and
+hard-capped at 2,000), `batch` is 1-10 and cannot exceed `total`, and the
+interval is 5-3,600 seconds. Omitting `seed` creates one and reports it in
+status so a run can be replayed. The legacy `!mapleisland run <AgentIGN>`
+showcase remains available.
 
 The realism preset defaults to `light`. You may also give a preset without a
 seed, for example `!mapleisland run 25 5 10 light`.
@@ -101,7 +102,10 @@ are released by `stop` and reused on later sessions.
 
 Database provisioning, password hashing, offline loading, reset, and plan start
 all run on the dedicated serialized `MAPLE_ISLAND_COHORT` worker. Timer callbacks
-only enqueue the next wave.
+only enqueue the next wave. New waves pause automatically while the persistence
+queue is at least 75% full or the central scheduler ready queue is unusually
+deep. A run becomes `STALLED` after the configured no-progress timeout instead
+of remaining silently active forever.
 
 ## Deterministic behavior hook
 

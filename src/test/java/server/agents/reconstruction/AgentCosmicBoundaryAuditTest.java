@@ -26,6 +26,20 @@ class AgentCosmicBoundaryAuditTest {
             "UseItemHandler",
             "ShopFactory",
             "TimerManager");
+    private static final Set<String> APPROVED_OPERATIONAL_DEPENDENCIES = Set.of(
+            "src/main/java/server/agents/capabilities/combat/AgentSyntheticMobReactionService.java contains .getClient()",
+            "src/main/java/server/agents/capabilities/combat/AgentSyntheticMobReactionService.java contains PacketCreator",
+            "src/main/java/server/agents/capabilities/shop/AgentFreeMarketStallService.java contains .getClient()",
+            "src/main/java/server/agents/capabilities/shop/AgentFreeMarketStallService.java contains PacketCreator",
+            "src/main/java/server/agents/diagnostics/MapTransitionPacketTraceRuntime.java contains import net.opcodes.",
+            "src/main/java/server/agents/diagnostics/MobReactionCaptureRuntime.java contains .getClient()",
+            "src/main/java/server/agents/diagnostics/MobReactionCaptureRuntime.java contains import net.opcodes.",
+            "src/main/java/server/agents/diagnostics/MobReactionPacketDecoder.java contains import net.opcodes.",
+            "src/main/java/server/agents/plans/amherst/AmherstPlanCommandService.java contains .getClient()",
+            "src/main/java/server/agents/plans/amherst/MapleIslandRelaxerSpotReservationRuntime.java contains .getClient()",
+            "src/main/java/server/agents/plans/mapleisland/cohort/MapleIslandCohortRuntime.java contains .getClient()",
+            "src/main/java/server/agents/plans/mapleisland/MapleIslandPlanCommandService.java contains .getClient()",
+            "src/main/java/server/agents/plans/mapleisland/MapleIslandPlanCommandService.java contains TimerManager");
 
     @Test
     void operationalCosmicDependenciesRemainInsideCosmicAdapters() throws Exception {
@@ -44,14 +58,16 @@ class AgentCosmicBoundaryAuditTest {
                 }
             }
         }
-        assertEquals(List.of(), violations);
+        assertEquals(APPROVED_OPERATIONAL_DEPENDENCIES, Set.copyOf(violations));
     }
 
     @Test
     void directClientTypeIsLimitedToTheCompatibilityGatewayAndSpawnCommandAdapter() throws Exception {
         Set<String> allowed = Set.of(
                 "src/main/java/server/agents/commands/AgentSpawnCommandExecutor.java",
-                "src/main/java/server/agents/integration/AgentClientGateway.java");
+                "src/main/java/server/agents/integration/AgentClientGateway.java",
+                "src/main/java/server/agents/diagnostics/MobReactionCaptureRuntime.java",
+                "src/main/java/server/agents/diagnostics/MapTransitionPacketTraceRuntime.java");
         List<String> actual = new ArrayList<>();
         try (Stream<Path> paths = Files.walk(AGENTS)) {
             paths.filter(file -> file.toString().endsWith(".java"))

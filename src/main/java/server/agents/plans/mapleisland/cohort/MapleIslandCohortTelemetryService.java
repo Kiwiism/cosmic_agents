@@ -1,6 +1,7 @@
 package server.agents.plans.mapleisland.cohort;
 
 import client.Character;
+import config.YamlConfig;
 import server.agents.plans.amherst.AmherstQuestCatalog;
 import server.agents.plans.amherst.MapleIslandSouthperryQuestCatalog;
 import server.agents.capabilities.runtime.AgentCapabilityJournalEventType;
@@ -53,6 +54,15 @@ public final class MapleIslandCohortTelemetryService {
 
     private final Map<String, Session> sessions = new LinkedHashMap<>();
     private final Map<Integer, AgentTracker> agents = new LinkedHashMap<>();
+    private final int retainedRuns;
+
+    public MapleIslandCohortTelemetryService() {
+        this(configuredRetainedRuns());
+    }
+
+    MapleIslandCohortTelemetryService(int retainedRuns) {
+        this.retainedRuns = Math.max(1, retainedRuns);
+    }
 
     public synchronized void beginSession(String sessionId, MapleIslandCohortRealismMode realismMode) {
         if (sessionId != null && !sessionId.isBlank()) {
@@ -135,6 +145,9 @@ public final class MapleIslandCohortTelemetryService {
         if (session == null) {
             return null;
         }
+        if (session.finalSnapshot != null) {
+            return session.finalSnapshot;
+        }
         List<AgentTracker> trackers = new ArrayList<>(session.agents.values());
         ActiveObjective longest = trackers.stream()
                 .filter(tracker -> tracker.currentObjectiveStartedAtMs > 0L)
@@ -163,6 +176,43 @@ public final class MapleIslandCohortTelemetryService {
         }
         session.finalSummaryLogged = true;
         return true;
+    }
+
+    public synchronized Snapshot completeSession(String sessionId, long nowMs) {
+        Session session = sessions.get(sessionId);
+        if (session == null) {
+            return null;
+        }
+        if (session.finalSnapshot == null) {
+            session.finalSnapshot = snapshot(sessionId, nowMs);
+            for (AgentTracker tracker : List.copyOf(session.agents.values())) {
+                detach(tracker);
+                agents.remove(tracker.agentId, tracker);
+            }
+            session.agents.clear();
+            session.objectives.clear();
+            pruneCompletedSessions();
+        }
+        return session.finalSnapshot;
+    }
+
+    private void pruneCompletedSessions() {
+        int completed = (int) sessions.values().stream()
+                .filter(session -> session.finalSnapshot != null)
+                .count();
+        var iterator = sessions.entrySet().iterator();
+        while (iterator.hasNext() && completed > retainedRuns) {
+            Session session = iterator.next().getValue();
+            if (session.finalSnapshot != null) {
+                iterator.remove();
+                completed--;
+            }
+        }
+    }
+
+    private static int configuredRetainedRuns() {
+        int configured = YamlConfig.config.server.AGENT_MAPLE_ISLAND_COHORT_TELEMETRY_RETAINED_RUNS;
+        return configured <= 0 ? 20 : configured;
     }
 
     synchronized void recordMapChanged(int agentId, int mapId, long nowMs) {
@@ -285,6 +335,7 @@ public final class MapleIslandCohortTelemetryService {
         private int liveStateRecoveries;
         private int movementUnstucks;
         private boolean finalSummaryLogged;
+        private Snapshot finalSnapshot;
 
         private Session(String sessionId, MapleIslandCohortRealismMode realismMode) {
             this.sessionId = sessionId;

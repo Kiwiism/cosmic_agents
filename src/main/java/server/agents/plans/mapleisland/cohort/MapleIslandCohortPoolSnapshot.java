@@ -3,6 +3,7 @@ package server.agents.plans.mapleisland.cohort;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /** Durable metadata for the reusable Maple Island test-character pool. */
 public record MapleIslandCohortPoolSnapshot(
@@ -34,6 +35,25 @@ public record MapleIslandCohortPoolSnapshot(
         LEASED,
         ACTIVE,
         BROKEN
+    }
+
+    /** Finds an Agent without rescanning the entire sorted pool for every cohort launch. */
+    public Optional<Agent> findAgent(int characterId) {
+        int low = 0;
+        int high = agents.size() - 1;
+        while (low <= high) {
+            int middle = (low + high) >>> 1;
+            Agent candidate = agents.get(middle);
+            if (candidate.characterId() == characterId) {
+                return Optional.of(candidate);
+            }
+            if (candidate.characterId() < characterId) {
+                low = middle + 1;
+            } else {
+                high = middle - 1;
+            }
+        }
+        return Optional.empty();
     }
 
     public record Account(

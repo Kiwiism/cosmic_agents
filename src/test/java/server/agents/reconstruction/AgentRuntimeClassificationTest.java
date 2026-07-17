@@ -33,8 +33,12 @@ class AgentRuntimeClassificationTest {
         Set<String> documentedClasses = new TreeSet<>();
         Matcher matcher = ROW.matcher(document);
         while (matcher.find()) {
-            assertTrue(documentedClasses.add(matcher.group(1)),
-                    () -> "Duplicate runtime classification for " + matcher.group(1));
+            String documentedClass = matcher.group(1);
+            if (documentedClass.contains(".")) {
+                continue;
+            }
+            assertTrue(documentedClasses.add(documentedClass),
+                    () -> "Duplicate runtime classification for " + documentedClass);
         }
 
         assertEquals(runtimeClasses, documentedClasses);

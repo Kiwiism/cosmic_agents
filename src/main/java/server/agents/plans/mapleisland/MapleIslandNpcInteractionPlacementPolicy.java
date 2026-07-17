@@ -34,6 +34,9 @@ public final class MapleIslandNpcInteractionPlacementPolicy
     public static server.agents.capabilities.objective.AgentNpcInteractionPlacementData data(
             AgentRuntimeEntry entry, int mapId, int npcId, int defaultRangePx) {
         MapleIslandObjectiveRandomnessSettings settings = MapleIslandObjectiveRandomnessRuntime.settings(entry);
+        if (!settings.enabled() || !settings.npcAnchorVariationEnabled()) {
+            return server.agents.capabilities.objective.AgentNpcInteractionPlacementData.direct(defaultRangePx);
+        }
         int range = settings.enabled() && settings.npcAnchorVariationEnabled()
                 && mapId == DANGEROUS_FOREST_MAP_ID && npcId == SAM_NPC_ID
                 ? Math.max(defaultRangePx, SAM_COHORT_INTERACTION_RANGE_PX) : defaultRangePx;

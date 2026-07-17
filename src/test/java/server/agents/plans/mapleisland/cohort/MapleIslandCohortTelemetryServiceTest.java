@@ -10,6 +10,7 @@ import server.agents.plans.amherst.AmherstPlanObservation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -68,6 +69,23 @@ class MapleIslandCohortTelemetryServiceTest {
         assertEquals(1, snapshot.liveStateRecoveries());
         assertEquals(4_000L, snapshot.slowestObjectives().getFirst().averageMs());
         assertEquals(8_000L, snapshot.completion().averageMs());
+    }
+
+    @Test
+    void completedSessionsAreCompactedAndRetentionIsBounded() {
+        MapleIslandCohortTelemetryService service = new MapleIslandCohortTelemetryService(1);
+        service.beginSession("first", MapleIslandCohortRealismMode.LIGHT);
+        service.register("first", MapleIslandCohortRealismMode.LIGHT, agent(4, "Reusable"), 1_000L);
+        var first = service.completeSession("first", 2_000L);
+        assertEquals(1, first.trackedAgents());
+
+        service.beginSession("second", MapleIslandCohortRealismMode.FULL);
+        service.register("second", MapleIslandCohortRealismMode.FULL, agent(4, "Reusable"), 3_000L);
+        var second = service.completeSession("second", 4_000L);
+
+        assertNull(service.snapshot("first", 5_000L));
+        assertEquals(1, second.trackedAgents());
+        assertNotNull(service.snapshot("second", 5_000L));
     }
 
     private static Character agent(int id, String name) {

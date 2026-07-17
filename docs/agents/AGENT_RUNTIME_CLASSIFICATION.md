@@ -56,6 +56,7 @@ Classifications:
 | `AgentRuntimeHandle` | `RUNTIME_STATE` | Minimal runtime identity contract used by generic lifecycle services. |
 | `AgentRuntimeIdentityState` | `RUNTIME_STATE` | Stores the live Agent character and current leader reference. |
 | `AgentRuntimeRegistry` | `RUNTIME_STATE` | Owns active session registration and leader/Agent lookup indexes. |
+| `AgentRuntimeShutdownCoordinator` | `LEGITIMATE_RUNTIME_ORCHESTRATION` | Quiesces registrations, schedulers, asynchronous work, and live sessions during process shutdown. |
 | `AgentScheduledTaskRuntime` | `RUNTIME_ADAPTER` | Exposes scheduled-task cancellation on a live runtime entry. |
 | `AgentScheduledTaskScope` | `RUNTIME_STATE` | Tracks and cancels delayed callbacks belonging to one live session generation. |
 | `AgentScheduledTaskState` | `RUNTIME_STATE` | Stores and cancels the scheduled tick handle for one session. |
@@ -79,10 +80,17 @@ Classifications:
 | `AgentTickFailureRuntime` | `RUNTIME_ADAPTER` | Applies failure decisions to live session and capability state through gateways. |
 | `AgentTickFailureState` | `RUNTIME_STATE` | Stores the per-session failure count and failure-window timestamp. |
 | `AgentTickFailureStateRuntime` | `RUNTIME_ADAPTER` | Exposes failure state held by the live runtime entry. |
+| `AgentTickFrame` | `RUNTIME_STATE` | Contract for resumable slices belonging to one logical Agent update. |
+| `AgentTickNextRunHint` | `RUNTIME_STATE` | Communicates whether a completed slice resumes immediately or at normal cadence. |
 | `AgentTickOrchestrator` | `LEGITIMATE_RUNTIME_ORCHESTRATION` | Executes one guarded Agent update and isolates failure handling per session. |
 | `AgentTickPreflightRuntime` | `RUNTIME_ADAPTER` | Wires preflight checks to identity, lifecycle, and heartbeat integrations. |
 | `AgentTickPreflightService` | `RUNTIME_SERVICE` | Validates session/character readiness and determines AI cadence eligibility. |
 | `AgentTickRuntime` | `LEGITIMATE_RUNTIME_ORCHESTRATION` | Public callback target connecting scheduled sessions to the core tick runtime. |
+| `AgentTickSliceKind` | `RUNTIME_STATE` | Identifies the bounded phase represented by a resumable tick slice. |
+| `AgentTickSliceResult` | `RUNTIME_STATE` | Immutable result describing slice completion and next-run cadence. |
+| `AgentTickSliceRuntime` | `RUNTIME_ADAPTER` | Connects slice execution and metrics to the live runtime entry. |
+| `AgentTickSliceState` | `RUNTIME_STATE` | Stores the resumable frame and continuation count for one session. |
+| `AgentTickSlicingService` | `RUNTIME_SERVICE` | Executes bounded slices while preserving logical tick ordering and continuation limits. |
 | `runtime.scheduler.AgentTickScheduler` | `RUNTIME_SERVICE` | Optional central-sequential due-time dispatcher with stable ordering and isolated Agent updates. |
 | `AgentTickSchedulingService` | `RUNTIME_SERVICE` | Selects legacy or central tick registration without changing lifecycle callers. |
 | `AgentTickState` | `RUNTIME_STATE` | Stores tick timestamps, heartbeat, follow-idle, and cadence counters. |

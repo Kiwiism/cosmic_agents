@@ -24,7 +24,11 @@ class AgentLiveTickGateRuntimeTest {
         Character followAnchor = mock(Character.class);
         List<String> calls = new ArrayList<>();
 
-        try (MockedStatic<AgentCommonTickRuntime> commonTick = mockStatic(AgentCommonTickRuntime.class)) {
+        try (MockedStatic<AgentMapTransitionRuntime> mapTransition = mockStatic(AgentMapTransitionRuntime.class);
+             MockedStatic<AgentCommonTickRuntime> commonTick = mockStatic(AgentCommonTickRuntime.class)) {
+            mapTransition.when(() -> AgentMapTransitionRuntime.handleTrackedMapChange(
+                    any(AgentRuntimeEntry.class), any(Character.class), any(), any()))
+                    .thenReturn(false);
             commonTick.when(() -> AgentCommonTickRuntime.runCommonTickSystems(
                             any(AgentRuntimeEntry.class),
                             any(Character.class),

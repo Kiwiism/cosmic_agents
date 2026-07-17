@@ -338,6 +338,10 @@ server:
     AGENT_MAPLE_ISLAND_SHOWCASE_ENABLED: true #Allow the guarded one-command clean level-1 Mushroom Town-to-Southperry run.
     AGENT_MAPLE_ISLAND_SHOWCASE_AGENT_NAME: AmherstRun #Only this Agent IGN may use the full Maple Island showcase reset path.
     AGENT_MAPLE_ISLAND_COHORT_ENABLED: true #Allow guarded persistent-pool cohort provisioning and full Maple Island runs.
+    AGENT_MAPLE_ISLAND_COHORT_MAX_TOTAL: 500 # Maximum Agents accepted by one Maple Island cohort run; the command still releases them in small waves.
+    AGENT_MAPLE_ISLAND_COHORT_STALL_TIMEOUT_MS: 1800000 # Mark a running cohort stalled after this long with no Agent reaching a new terminal state (30 minutes).
+    AGENT_MAPLE_ISLAND_COHORT_TELEMETRY_RETAINED_RUNS: 20 # Keep this many compact completed-run summaries in memory; live per-Agent trackers are discarded.
+    AGENT_MAPLE_ISLAND_COHORT_OBJECTIVE_TIMEOUT_MS: 900000 # Per-objective deadline for realism/cohort runs; allows 15 minutes for shared mob/reactor contention before recovery fails the objective.
     AGENT_SOUTHPERRY_SHOWCASE_ENABLED: true #Allow the guarded one-command post-Amherst-to-Southperry run.
     AGENT_SOUTHPERRY_SHOWCASE_AGENT_NAME: AmherstRun #Only this Agent IGN may use the captured post-Amherst reset path.
 

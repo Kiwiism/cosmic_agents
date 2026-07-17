@@ -28,6 +28,8 @@ import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.runtime.async.AgentAsyncExecutorRegistry;
 import server.agents.runtime.async.AgentAsyncWorkKind;
+import server.agents.monitoring.AgentAsyncQueueMetrics;
+import server.agents.monitoring.AgentSchedulerMetrics;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -160,6 +162,29 @@ public final class MapleIslandCohortRuntime {
             public void dispatch(Runnable action) {
                 AgentAsyncExecutorRegistry.runtime().execute(AgentAsyncWorkKind.MAPLE_ISLAND_COHORT, action);
             }
+
+            @Override
+            public long waveAdmissionDelayMs(int world, int channel, int launched) {
+                AgentAsyncQueueMetrics.Snapshot persistence = AgentAsyncQueueMetrics.snapshot(
+                        AgentAsyncWorkKind.PERSISTENCE.metricName());
+                boolean persistenceBusy = persistence.capacity() > 0
+                        && persistence.currentDepth() * 4 >= persistence.capacity() * 3;
+                AgentSchedulerMetrics.Snapshot scheduler = AgentSchedulerMetrics.snapshot();
+                boolean schedulerBusy = scheduler.readyDepth() >= 256L;
+                if (persistenceBusy || schedulerBusy) {
+                    log.info("Deferring Maple Island cohort wave world={} channel={} launched={} "
+                                    + "persistenceDepth={}/{} schedulerReady={}",
+                            world, channel, launched, persistence.currentDepth(), persistence.capacity(),
+                            scheduler.readyDepth());
+                    return 5_000L;
+                }
+                return 0L;
+            }
+
+            @Override
+            public void runTerminated(String sessionId, MapleIslandCohortRunService.RunState state) {
+                logFinalTelemetry(sessionId, state);
+            }
         };
     }
 
@@ -214,9 +239,6 @@ public final class MapleIslandCohortRuntime {
                         @Override
                         public void observe(AmherstPlanObservation observation) {
                             telemetry.observe(agentId, observation);
-                            if (observation.type() == AmherstPlanObservation.Type.PLAN_COMPLETED) {
-                                AgentSchedulerRuntime.schedule(() -> logFinalTelemetryIfComplete(context), 0L);
-                            }
                         }
                     });
             pool.markActive(pooled.characterId(), context.sessionId(), System.currentTimeMillis());
@@ -236,9 +258,7 @@ public final class MapleIslandCohortRuntime {
     private void verifyLeasedDedicatedPoolAgent(MapleIslandCohortPoolSnapshot.Agent pooled,
                                                 String sessionId,
                                                 int requestedWorld) throws Exception {
-        MapleIslandCohortPoolSnapshot.Agent durable = pool.snapshot().agents().stream()
-                .filter(agent -> agent.characterId() == pooled.characterId())
-                .findFirst()
+        MapleIslandCohortPoolSnapshot.Agent durable = pool.snapshot().findAgent(pooled.characterId())
                 .orElseThrow(() -> new IllegalStateException("Character is not in the persisted cohort pool"));
         if (durable.leaseState() != MapleIslandCohortPoolSnapshot.LeaseState.LEASED
                 || !durable.leaseSessionId().equals(sessionId)
@@ -258,19 +278,21 @@ public final class MapleIslandCohortRuntime {
         }
     }
 
-    private void logFinalTelemetryIfComplete(MapleIslandCohortRunService.AgentContext context) {
-        MapleIslandCohortRunService.Status status = runs.status(context.world(), context.channel());
-        if (status == null || status.state() != MapleIslandCohortRunService.RunState.COMPLETED
-                || !telemetry.markFinalSummaryLogged(context.sessionId())) {
+    private void logFinalTelemetry(String sessionId, MapleIslandCohortRunService.RunState state) {
+        boolean compact = state == MapleIslandCohortRunService.RunState.COMPLETED
+                || state == MapleIslandCohortRunService.RunState.COMPLETED_WITH_FAILURES
+                || state == MapleIslandCohortRunService.RunState.STOPPED;
+        if (compact && !telemetry.markFinalSummaryLogged(sessionId)) {
             return;
         }
-        MapleIslandCohortTelemetryService.Snapshot snapshot = telemetry.snapshot(
-                context.sessionId(), System.currentTimeMillis());
+        MapleIslandCohortTelemetryService.Snapshot snapshot = compact
+                ? telemetry.completeSession(sessionId, System.currentTimeMillis())
+                : telemetry.snapshot(sessionId, System.currentTimeMillis());
         if (snapshot != null) {
-            log.info("Maple Island cohort complete session={} realism={} tracked={} "
+            log.info("Maple Island cohort terminal session={} state={} realism={} tracked={} "
                             + "amherstAvgMs={} southperryAvgMs={} fullRunAvgMs={} "
                             + "retries={} timeouts={} blocked={} failures={} liveStateRecoveries={} unstucks={}",
-                    snapshot.sessionId(), snapshot.realismMode(), snapshot.trackedAgents(),
+                    snapshot.sessionId(), state, snapshot.realismMode(), snapshot.trackedAgents(),
                     snapshot.amherst().averageMs(), snapshot.southperry().averageMs(),
                     snapshot.completion().averageMs(), snapshot.retries(), snapshot.timeouts(),
                     snapshot.blocks(), snapshot.failures(), snapshot.liveStateRecoveries(),

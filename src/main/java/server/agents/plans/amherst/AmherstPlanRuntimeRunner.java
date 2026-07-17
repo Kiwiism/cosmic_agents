@@ -8,6 +8,7 @@ import server.agents.capabilities.runtime.AgentCapabilityReasonCode;
 import server.agents.capabilities.runtime.AgentCapabilityResult;
 import server.agents.capabilities.runtime.AgentCapabilityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.runtime.async.AgentAsyncCompletion;
 import server.agents.runtime.async.AgentAsyncTaskGateway;
 import server.agents.runtime.async.AgentAsyncWorkKind;
@@ -28,6 +29,11 @@ public final class AmherstPlanRuntimeRunner {
     private final AmherstObjectiveReconciler reconciler;
     private final AmherstObjectiveHandlerRegistry handlers;
     private final AmherstObjectiveDelay objectiveDelay;
+    private final Object saveLock = new Object();
+    private AmherstPlanProgressSnapshot pendingSave;
+    private boolean saveWorkerRunning;
+    private boolean saveRetryScheduled;
+    private static final long SAVE_RETRY_DELAY_MS = 250L;
 
     public AmherstPlanRuntimeRunner(AmherstPlanCard card,
                                     AmherstPlanProgressStore store,
@@ -471,32 +477,114 @@ public final class AmherstPlanRuntimeRunner {
             store.save(after);
             return;
         }
+        enqueueLatestSave(entry, state, after);
+    }
+
+    private void enqueueLatestSave(AgentRuntimeEntry entry,
+                                   AmherstPlanExecutionState state,
+                                   AmherstPlanProgressSnapshot snapshot) {
+        synchronized (saveLock) {
+            pendingSave = snapshot;
+            if (saveWorkerRunning) {
+                return;
+            }
+            saveWorkerRunning = true;
+        }
+        submitSaveWorker(entry, state);
+    }
+
+    private void submitSaveWorker(AgentRuntimeEntry entry, AmherstPlanExecutionState state) {
         AgentAsyncTaskGateway.Submission submission = AgentAsyncTaskGateway.runtime().submit(
                 entry,
                 AgentAsyncWorkKind.PERSISTENCE,
                 persistenceRequestKey("save"),
-                () -> {
-                    try {
-                        store.save(after);
-                        return null;
-                    } catch (IOException failure) {
-                        throw new UncheckedIOException(failure);
-                    }
-                },
-                (completionEntry, completion) -> {
-                    if (completion.succeeded()) {
+                this::drainLatestSaves,
+                (completionEntry, completion) -> finishSaveWorker(
+                        completionEntry, state, completion));
+        if (!submission.accepted()) {
+            synchronized (saveLock) {
+                saveWorkerRunning = false;
+            }
+            scheduleSaveRetry(entry, state);
+        }
+    }
+
+    private Void drainLatestSaves() {
+        while (true) {
+            AmherstPlanProgressSnapshot snapshot;
+            synchronized (saveLock) {
+                snapshot = pendingSave;
+                pendingSave = null;
+            }
+            if (snapshot == null) {
+                return null;
+            }
+            try {
+                store.save(snapshot);
+            } catch (IOException failure) {
+                throw new UncheckedIOException(failure);
+            }
+        }
+    }
+
+    private void finishSaveWorker(AgentRuntimeEntry entry,
+                                  AmherstPlanExecutionState state,
+                                  AgentAsyncCompletion<Void> completion) {
+        boolean restart;
+        synchronized (saveLock) {
+            saveWorkerRunning = false;
+            restart = pendingSave != null;
+        }
+        if (!completion.succeeded()) {
+            synchronized (state) {
+                if (state.runner == this) {
+                    state.lastError = failureMessage(completion);
+                    state.active = false;
+                    publish(state, "PLAN ERROR: " + state.lastError);
+                }
+            }
+            return;
+        }
+        if (restart) {
+            synchronized (saveLock) {
+                if (saveWorkerRunning || pendingSave == null) {
+                    return;
+                }
+                saveWorkerRunning = true;
+            }
+            submitSaveWorker(entry, state);
+        }
+    }
+
+    private void scheduleSaveRetry(AgentRuntimeEntry entry, AmherstPlanExecutionState state) {
+        synchronized (saveLock) {
+            if (saveRetryScheduled || pendingSave == null) {
+                return;
+            }
+            saveRetryScheduled = true;
+        }
+        try {
+            AgentSchedulerRuntime.schedule(entry, () -> {
+                synchronized (saveLock) {
+                    saveRetryScheduled = false;
+                    if (saveWorkerRunning || pendingSave == null) {
                         return;
                     }
-                    synchronized (state) {
-                        if (state.runner == this) {
-                            state.lastError = failureMessage(completion);
-                            state.active = false;
-                            publish(state, "PLAN ERROR: " + state.lastError);
-                        }
-                    }
-                });
-        if (!submission.accepted()) {
-            throw new IOException("Agent persistence queue is full");
+                    saveWorkerRunning = true;
+                }
+                submitSaveWorker(entry, state);
+            }, SAVE_RETRY_DELAY_MS);
+        } catch (RuntimeException failure) {
+            synchronized (saveLock) {
+                saveRetryScheduled = false;
+            }
+            synchronized (state) {
+                if (state.runner == this) {
+                    state.lastError = "Unable to retry progress persistence: " + failure.getMessage();
+                    state.active = false;
+                    publish(state, "PLAN ERROR: " + state.lastError);
+                }
+            }
         }
     }
 

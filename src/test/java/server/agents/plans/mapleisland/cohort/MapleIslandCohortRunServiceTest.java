@@ -45,7 +45,7 @@ class MapleIslandCohortRunServiceTest {
                 MapleIslandCohortRealismMode.LIGHT,
                 MapleIslandCohortRealismMode.LIGHT,
                 MapleIslandCohortRealismMode.LIGHT), hooks.startedModes);
-        assertEquals(List.of(0L, 10_000L, 10_000L), hooks.scheduledDelays);
+        assertEquals(List.of(0L, 10_000L, 10_000L, 5_000L), hooks.scheduledDelays);
     }
 
     @Test
@@ -70,12 +70,55 @@ class MapleIslandCohortRunServiceTest {
 
     @Test
     void startRequestEnforcesOperationalBounds() {
+        FakeHooks hooks = new FakeHooks();
+        MapleIslandCohortRunService service = new MapleIslandCohortRunService(
+                hooks, 500, 60_000L, hooks::nowMs);
         assertThrows(IllegalArgumentException.class,
-                () -> new MapleIslandCohortRunService.StartRequest(99, 0, 1, 101, 5, 10, null));
+                () -> service.start(new MapleIslandCohortRunService.StartRequest(
+                        99, 0, 1, 501, 5, 10, null)));
         assertThrows(IllegalArgumentException.class,
                 () -> new MapleIslandCohortRunService.StartRequest(99, 0, 1, 10, 11, 10, null));
         assertThrows(IllegalArgumentException.class,
                 () -> new MapleIslandCohortRunService.StartRequest(99, 0, 1, 10, 5, 4, null));
+    }
+
+    @Test
+    void terminalFailuresBecomeCompletedWithFailuresAfterGracePeriod() {
+        FakeHooks hooks = new FakeHooks();
+        MapleIslandCohortRunService service = new MapleIslandCohortRunService(
+                hooks, 500, 60_000L, hooks::nowMs);
+        service.start(new MapleIslandCohortRunService.StartRequest(99, 0, 1, 2, 2, 10, 90L));
+        hooks.runNextWave();
+        hooks.states.put(100, MapleIslandCohortRunService.AgentState.COMPLETED);
+        hooks.states.put(101, MapleIslandCohortRunService.AgentState.FAILED);
+
+        assertEquals(MapleIslandCohortRunService.RunState.RUNNING, service.status(0, 1).state());
+        hooks.advanceTime(30_000L);
+        hooks.runNextWave();
+
+        assertEquals(MapleIslandCohortRunService.RunState.COMPLETED_WITH_FAILURES,
+                service.status(0, 1).state());
+    }
+
+    @Test
+    void runningCohortBecomesStalledWhenNoAgentFinishes() {
+        FakeHooks hooks = new FakeHooks();
+        MapleIslandCohortRunService service = new MapleIslandCohortRunService(
+                hooks, 500, 10_000L, hooks::nowMs);
+        service.start(new MapleIslandCohortRunService.StartRequest(99, 0, 1, 1, 1, 10, 91L));
+        hooks.runNextWave();
+
+        hooks.advanceTime(10_000L);
+        hooks.runNextWave();
+
+        assertEquals(MapleIslandCohortRunService.RunState.STALLED, service.status(0, 1).state());
+        assertEquals(List.of(MapleIslandCohortRunService.RunState.STALLED), hooks.terminalStates);
+
+        service.stop(0, 1);
+        hooks.runWorkers();
+
+        assertEquals(List.of(MapleIslandCohortRunService.RunState.STALLED,
+                MapleIslandCohortRunService.RunState.STOPPED), hooks.terminalStates);
     }
 
     @Test
@@ -131,9 +174,11 @@ class MapleIslandCohortRunServiceTest {
         private final List<Integer> startedOrdinals = new ArrayList<>();
         private final List<MapleIslandCohortRealismMode> startedModes = new ArrayList<>();
         private final List<Integer> stopped = new ArrayList<>();
+        private final List<MapleIslandCohortRunService.RunState> terminalStates = new ArrayList<>();
         private final Map<Integer, MapleIslandCohortRunService.AgentState> states = new HashMap<>();
         private int nextCharacterId = 100;
         private int releaseCalls;
+        private long nowMs;
         private boolean rejectSchedule;
         private boolean rejectStop;
 
@@ -204,6 +249,11 @@ class MapleIslandCohortRunServiceTest {
             workers.addLast(action);
         }
 
+        @Override
+        public void runTerminated(String sessionId, MapleIslandCohortRunService.RunState state) {
+            terminalStates.add(state);
+        }
+
         private void runNextWave() {
             TestFuture future;
             do {
@@ -217,6 +267,14 @@ class MapleIslandCohortRunServiceTest {
             while (!workers.isEmpty()) {
                 workers.removeFirst().run();
             }
+        }
+
+        private long nowMs() {
+            return nowMs;
+        }
+
+        private void advanceTime(long elapsedMs) {
+            nowMs += elapsedMs;
         }
     }
 

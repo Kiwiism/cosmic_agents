@@ -198,7 +198,8 @@ public final class MapleIslandPlanCommandService {
                 + ", missing=" + status.missing() + ".");
         message(player, "Session=" + status.sessionId() + "; batch=" + status.batch()
                 + "; interval=" + status.intervalSeconds() + "s; seed=" + status.runSeed()
-                + "; realism=" + status.realismMode() + ".");
+                + "; realism=" + status.realismMode()
+                + "; admissionDeferrals=" + status.admissionDeferrals() + ".");
         if (!status.lastError().isBlank()) {
             message(player, "Last cohort error: " + status.lastError());
         }

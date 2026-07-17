@@ -1,10 +1,18 @@
 package server.agents.capabilities.runtime;
 
 import client.Character;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import server.agents.capabilities.AgentCapabilityStatus;
 import server.agents.runtime.AgentRuntimeEntry;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 public final class AgentCapabilityRuntime {
+    private static final Logger log = LoggerFactory.getLogger(AgentCapabilityRuntime.class);
+    private static final long TERMINAL_FAILURE_LOG_INTERVAL_MS = 60_000L;
+    private static final AtomicLong lastTerminalFailureLogMs = new AtomicLong();
+
     private AgentCapabilityRuntime() {
     }
 
@@ -215,8 +223,15 @@ public final class AgentCapabilityRuntime {
                 frame.memory);
         try {
             frame.invocation.onTerminal(context, result);
-        } catch (RuntimeException ignored) {
+        } catch (RuntimeException failure) {
             // Terminal cleanup must not prevent the runtime from closing the frame.
+            long now = System.currentTimeMillis();
+            long previous = lastTerminalFailureLogMs.get();
+            if (now - previous >= TERMINAL_FAILURE_LOG_INTERVAL_MS
+                    && lastTerminalFailureLogMs.compareAndSet(previous, now)) {
+                log.warn("Agent capability terminal cleanup failed capability={} command={} status={}",
+                        frame.invocation.capabilityId(), frame.invocation.commandType(), result.status(), failure);
+            }
         }
     }
 
