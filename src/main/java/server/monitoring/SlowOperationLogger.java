@@ -17,9 +17,17 @@ public final class SlowOperationLogger {
     }
 
     public static void warnIfSlow(String label, long startedNs, long thresholdMs) {
-        long elapsedMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedNs);
-        if (elapsedMs >= thresholdMs) {
-            log.warn("Slow operation {} took {} ms", label, elapsedMs);
+        warnIfSlowElapsed(label, System.nanoTime() - startedNs, thresholdMs);
+    }
+
+    public static boolean isSlow(long elapsedNs, long thresholdMs) {
+        return elapsedNs >= TimeUnit.MILLISECONDS.toNanos(thresholdMs);
+    }
+
+    public static void warnIfSlowElapsed(String label, long elapsedNs, long thresholdMs) {
+        if (isSlow(elapsedNs, thresholdMs)) {
+            log.warn("Slow operation {} took {} ms", label,
+                    TimeUnit.NANOSECONDS.toMillis(elapsedNs));
         }
     }
 

@@ -37,6 +37,10 @@ class MapleIslandFullPlanTest {
         assertEquals(2000000, card.exitCriteria().finalMapId());
         assertEquals(expectedQuests, card.requiredQuestIds());
         assertEquals(Set.of(1046), card.exitCriteria().startOnlyQuestIds());
+        assertTrue(index(card, AmherstPlanObjectiveKind.QUEST_CHAIN, 1015)
+                < index(card, AmherstPlanObjectiveKind.QUEST_COMPLETE, 1037));
+        assertTrue(index(card, AmherstPlanObjectiveKind.QUEST_COMPLETE, 1037)
+                < index(card, AmherstPlanObjectiveKind.QUEST_CHAIN, 1038));
         assertTrue(index(card, AmherstPlanObjectiveKind.QUEST_CHAIN, 1038)
                 < index(card, AmherstPlanObjectiveKind.QUEST_START, 1040));
         assertEquals(7L, card.objectives().stream()

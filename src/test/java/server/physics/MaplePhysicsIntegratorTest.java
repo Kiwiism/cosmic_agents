@@ -55,19 +55,21 @@ class MaplePhysicsIntegratorTest {
     }
 
     @Test
-    void connectedFootholdTransitionUpdatesIdAndSlope() {
+    void connectedFootholdTransitionUpdatesIdSlopeAndHeightInSameStep() {
         FootholdSegment first = segment(1, 0, 2, 0, 100, 100, 100);
         FootholdSegment second = segment(2, 1, 0, 100, 100, 200, 80);
         PhysicsTerrain terrain = new FootholdPhysicsIndex(List.of(first, second));
         PhysicsBody body = groundedBody(99.5, 100.0, 1);
         body.setVelocity(2.0, 0.0);
 
-        integrator.step(body, PhysicsInput.NONE, terrain);
         PhysicsStepResult transition = integrator.step(body, PhysicsInput.NONE, terrain);
 
         assertTrue(transition.changedFoothold());
         assertEquals(2, body.footholdId());
         assertEquals(-0.2, body.footholdSlope(), EPSILON);
+        assertEquals(second.groundY(body.x()), body.y(), EPSILON,
+                "the crossing step must not leave the body below the upslope");
+        assertTrue(body.grounded());
     }
 
     @Test

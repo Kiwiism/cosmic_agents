@@ -1,6 +1,5 @@
 package server.life.simulation;
 
-import server.agents.capabilities.combat.AgentCombatConfig;
 import server.physics.MaplePhysicsIntegrator;
 import server.physics.PhysicsBody;
 import server.physics.PhysicsInput;
@@ -21,19 +20,20 @@ public final class MobPhysicsSimulator {
 
     private final MaplePhysicsIntegrator integrator = new MaplePhysicsIntegrator();
 
-    public PhysicsStepResult step(MobSimulationSession session) {
+    public PhysicsStepResult step(MobSimulationSession session,
+                                  MobPhysicsTuningSnapshot tuning) {
         PhysicsBody body = session.body();
         MobPhysicsProfile profile = session.profile();
         double horizontal = 0.0;
         double vertical = 0.0;
         boolean turnAtEdges = false;
-        double speedMultiplier = session.speedMultiplier();
+        double speedMultiplier = tuning.speedMultiplier();
 
         if (session.motion() == MobMotionState.KNOCKBACK) {
             horizontal = session.knockbackDirection()
                     * (body.grounded() && !profile.flying()
                     ? GROUND_KNOCKBACK_FORCE : AIR_KNOCKBACK_FORCE)
-                    * session.knockbackMultiplier();
+                    * tuning.knockbackMultiplier();
         } else if (session.motion() == MobMotionState.FLINCH) {
             body.setVelocity(0.0, body.grounded() || profile.flying()
                     ? 0.0 : body.velocityY());
@@ -43,10 +43,9 @@ public final class MobPhysicsSimulator {
             double dy = session.targetY() - body.y();
             if (profile.flying()) {
                 int horizontalDirection = session.chaseDirection(dx);
-                horizontal = Math.abs(dx) <= Math.max(0,
-                        AgentCombatConfig.cfg.MOB_PHYSICS_FLY_DEAD_ZONE_X)
+                horizontal = Math.abs(dx) <= tuning.flyDeadZoneX()
                         ? 0.0 : horizontalDirection * profile.flyingForce() * speedMultiplier;
-                vertical = forceOutside(dy, AgentCombatConfig.cfg.MOB_PHYSICS_FLY_DEAD_ZONE_Y,
+                vertical = forceOutside(dy, tuning.flyDeadZoneY(),
                         profile.flyingForce() * speedMultiplier);
                 if (horizontal != 0.0 || vertical != 0.0) {
                     double rampMultiplier = session.consumeChaseRampMultiplier();
@@ -56,14 +55,14 @@ public final class MobPhysicsSimulator {
                 session.setMotion(horizontal == 0.0 && vertical == 0.0
                         ? MobMotionState.IDLE : MobMotionState.CHASE);
             } else {
-                session.prepareGroundBehavior(dx);
+                session.prepareGroundBehavior(dx, tuning);
                 if (session.hasTemporaryBehavior()) {
                     int direction = session.temporaryDirection();
                     horizontal = direction * profile.walkingForce() * speedMultiplier;
                     turnAtEdges = direction != 0;
                     session.setMotion(direction == 0 ? MobMotionState.IDLE : MobMotionState.CHASE);
                 } else {
-                    updateGroundHysteresis(session, dx);
+                    updateGroundHysteresis(session, dx, tuning);
                     if (session.chasing()) {
                         horizontal = session.chaseDirection(dx)
                                 * profile.walkingForce() * speedMultiplier
@@ -73,7 +72,7 @@ public final class MobPhysicsSimulator {
                     } else {
                         session.setMotion(MobMotionState.IDLE);
                     }
-                    if (session.shouldJump(dx, dy)) {
+                    if (session.shouldJump(dx, dy, tuning)) {
                         vertical = JUMP_FORCE;
                         turnAtEdges = false;
                         session.markJump();
@@ -84,8 +83,7 @@ public final class MobPhysicsSimulator {
 
         PhysicsStepResult result = integrator.step(body,
                 new PhysicsInput(horizontal, vertical, turnAtEdges, false,
-                        Math.max(0, AgentCombatConfig.cfg.MOB_PHYSICS_LEFT_EDGE_INSET_PX),
-                        Math.max(0, AgentCombatConfig.cfg.MOB_PHYSICS_RIGHT_EDGE_INSET_PX)),
+                        tuning.leftEdgeInsetPx(), tuning.rightEdgeInsetPx()),
                 session.terrain());
         session.afterStep(result);
         return result;
@@ -95,17 +93,18 @@ public final class MobPhysicsSimulator {
         return Math.abs(delta) <= Math.max(0, deadZone) ? 0.0 : Math.copySign(force, delta);
     }
 
-    private static void updateGroundHysteresis(MobSimulationSession session, double delta) {
+    private static void updateGroundHysteresis(MobSimulationSession session, double delta,
+                                               MobPhysicsTuningSnapshot tuning) {
         double distance = Math.abs(delta);
         if (session.blockedAhead(delta)) {
             session.setChasing(false);
             return;
         }
         if (session.chasing()) {
-            if (distance <= Math.max(0, AgentCombatConfig.cfg.MOB_PHYSICS_STOP_DISTANCE_X)) {
+            if (distance <= tuning.stopDistanceX()) {
                 session.setChasing(false);
             }
-        } else if (distance >= Math.max(0, AgentCombatConfig.cfg.MOB_PHYSICS_RESUME_DISTANCE_X)) {
+        } else if (distance >= tuning.resumeDistanceX()) {
             session.setChasing(true);
         }
     }

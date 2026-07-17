@@ -287,7 +287,7 @@ server:
     # PHYSICS mode: simulation and network update cadence.
     AGENT_MOB_PHYSICS_PUBLICATION_INTERVAL_MS: 75                     # Minimum time between routine mob movement packets; state changes may send sooner.
     AGENT_MOB_PHYSICS_MAX_CATCH_UP_STEPS: 12                          # Maximum 8 ms physics steps processed after a delayed server tick.
-    AGENT_MOB_PHYSICS_OBSERVER_WARMUP_MS: 500                         # After map acknowledgement, pause Agent movement/attacks and server mob physics for this settling time.
+    AGENT_MOB_PHYSICS_OBSERVER_WARMUP_MS: 100                         # After map acknowledgement, pause Agent movement/attacks and server mob physics for this settling time.
     AGENT_MOB_PHYSICS_AGGRO_TIMEOUT_MS: 7000                          # Give the mob back to a real client without aggro after this long without an Agent hit; 0 disables expiry.
 
     # PHYSICS mode: chase movement. Each mob still uses its own WZ-defined base speed.

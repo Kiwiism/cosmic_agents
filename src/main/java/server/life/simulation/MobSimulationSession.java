@@ -25,7 +25,7 @@ public final class MobSimulationSession {
     private final PhysicsBody body;
     private final FixedStepAccumulator accumulator =
             new FixedStepAccumulator(MaplePhysicsConstants.STEP_MS);
-    private final MobPhysicsSimulator simulator = new MobPhysicsSimulator();
+    private static final MobPhysicsSimulator SIMULATOR = new MobPhysicsSimulator();
     private volatile Character agent;
     private volatile MobMotionState motion = MobMotionState.PENDING_IMPACT;
     private long generation;
@@ -159,7 +159,15 @@ public final class MobSimulationSession {
                 && nowNanos - lastAcceptedHitNanos >= timeoutMs * 1_000_000L;
     }
 
+    public synchronized boolean agentHitLeaseExpiredNanos(long nowNanos, long timeoutNanos) {
+        return timeoutNanos > 0 && nowNanos - lastAcceptedHitNanos >= timeoutNanos;
+    }
+
     public synchronized AdvanceResult advance(long nowNanos) {
+        return advance(nowNanos, MobPhysicsTuningSnapshot.capture());
+    }
+
+    public synchronized AdvanceResult advance(long nowNanos, MobPhysicsTuningSnapshot tuning) {
         tickNowNanos = nowNanos;
         Point target = agent.getPosition();
         if (target != null) {
@@ -168,8 +176,8 @@ public final class MobSimulationSession {
         }
         long elapsed = Math.max(0L, nowNanos - lastTickNanos);
         lastTickNanos = nowNanos;
-        FixedStepAccumulator.StepBatch batch = accumulator.accumulate(elapsed,
-                Math.max(1, AgentCombatConfig.cfg.MOB_PHYSICS_MAX_CATCH_UP_STEPS));
+        FixedStepAccumulator.StepBatch batch = accumulator.accumulate(
+                elapsed, tuning.maxCatchUpSteps());
         int recoveries = 0;
         boolean changed = false;
         for (int i = 0; i < batch.steps(); i++) {
@@ -178,7 +186,7 @@ public final class MobSimulationSession {
             beginImpactIfDue(stepTime);
             double oldX = body.x();
             double oldY = body.y();
-            PhysicsStepResult step = simulator.step(this);
+            PhysicsStepResult step = SIMULATOR.step(this, tuning);
             changed |= oldX != body.x() || oldY != body.y();
             recoveries += step.recovered() ? 1 : 0;
         }
@@ -251,17 +259,17 @@ public final class MobSimulationSession {
         }
     }
 
-    boolean shouldJump(double dx, double dy) {
+    boolean shouldJump(double dx, double dy, MobPhysicsTuningSnapshot tuning) {
         if (!profile.canJump() || !body.grounded() || hasTemporaryBehavior()
                 || tickNowNanos < nextJumpNanos) {
             return false;
         }
-        int height = Math.max(1, AgentCombatConfig.cfg.MOB_PHYSICS_JUMP_TARGET_HEIGHT);
+        int height = tuning.jumpTargetHeight();
         if (!edgeJumpOpportunity && !lastHitWall && blockedDirection == 0 && dy >= -height) {
             return false;
         }
-        double forward = Math.copySign(Math.max(8,
-                AgentCombatConfig.cfg.MOB_PHYSICS_MAX_SAFE_EDGE_PX), dx == 0.0 ? 1.0 : dx);
+        double forward = Math.copySign(Math.max(8, tuning.maxSafeEdgePx()),
+                dx == 0.0 ? 1.0 : dx);
         FootholdSegment landing = terrain.findBelow(body.x() + forward, body.y() - height);
         return landing != null && !landing.wall()
                 && landing.groundY(body.x() + forward) - body.y() < 180.0;
@@ -279,9 +287,11 @@ public final class MobSimulationSession {
     }
 
     public synchronized boolean publicationDue(long nowNanos) {
-        long interval = Math.max(20, AgentCombatConfig.cfg.MOB_PHYSICS_PUBLICATION_INTERVAL_MS)
-                * 1_000_000L;
-        return immediatePublication || nowNanos - lastPublishedNanos >= interval;
+        return publicationDue(nowNanos, MobPhysicsTuningSnapshot.capture().publicationIntervalNanos());
+    }
+
+    public synchronized boolean publicationDue(long nowNanos, long intervalNanos) {
+        return immediatePublication || nowNanos - lastPublishedNanos >= intervalNanos;
     }
 
     public synchronized Point markPublished(long nowNanos, Point current) {
@@ -345,12 +355,6 @@ public final class MobSimulationSession {
     public boolean impactFacingLeft() { return impactFacingLeft; }
     public double targetX() { return targetX; }
     public double targetY() { return targetY; }
-    public double speedMultiplier() {
-        return Math.max(0, AgentCombatConfig.cfg.MOB_PHYSICS_SPEED_PERCENT) / 100.0;
-    }
-    public double knockbackMultiplier() {
-        return Math.max(0, AgentCombatConfig.cfg.MOB_PHYSICS_KNOCKBACK_PERCENT) / 100.0;
-    }
     double consumeChaseRampMultiplier() {
         if (chaseRampStepsRemaining <= 0 || chaseRampStepsTotal <= 0) {
             return 1.0;
@@ -367,7 +371,7 @@ public final class MobSimulationSession {
         return blockedDirection != 0;
     }
 
-    void prepareGroundBehavior(double dx) {
+    void prepareGroundBehavior(double dx, MobPhysicsTuningSnapshot tuning) {
         if (hasTemporaryBehavior() && temporaryDirection != 0
                 && Math.abs(body.x() - temporaryRetreatStartX)
                 >= temporaryRetreatDistancePx) {
@@ -388,7 +392,7 @@ public final class MobSimulationSession {
             nextStuckDecisionNanos = tickNowNanos + stuckWindowNanos();
         }
         if (!hasTemporaryBehavior() && tickNowNanos >= nextStuckDecisionNanos
-                && Math.abs(dx) > Math.max(0, AgentCombatConfig.cfg.MOB_PHYSICS_STOP_DISTANCE_X)) {
+                && Math.abs(dx) > tuning.stopDistanceX()) {
             beginTemporaryBehavior(
                     AgentCombatConfig.cfg.MOB_PHYSICS_STUCK_RETREAT_CHANCE_PERCENT,
                     AgentCombatConfig.cfg.MOB_PHYSICS_EDGE_IDLE_MIN_MS,

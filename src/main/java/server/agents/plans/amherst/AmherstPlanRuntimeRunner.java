@@ -181,13 +181,18 @@ public final class AmherstPlanRuntimeRunner {
             }
             try {
                 syncCapabilityJournal(entry, state, nowMs);
-                if (entry.capabilityRuntimeState().hasActiveCapability()) {
-                    return false;
-                }
                 boolean finishedObjective = false;
-                if (state.assignedObjectiveId != null) {
+                if (entry.capabilityRuntimeState().hasActiveCapability()) {
+                    if (!finishLiveSatisfiedQuest(entry, agent, state, nowMs)) {
+                        return false;
+                    }
+                    finishedObjective = true;
+                }
+                if (!finishedObjective && state.assignedObjectiveId != null) {
                     finishAssigned(entry, agent, state, nowMs);
                     finishedObjective = true;
+                }
+                if (finishedObjective) {
                     if (!state.active) {
                         return true;
                     }
@@ -253,6 +258,30 @@ public final class AmherstPlanRuntimeRunner {
         }
     }
 
+    private boolean finishLiveSatisfiedQuest(AgentRuntimeEntry entry,
+                                             Character agent,
+                                             AmherstPlanExecutionState state,
+                                             long nowMs) throws IOException {
+        if (state.assignedObjectiveId == null) {
+            return false;
+        }
+        AmherstPlanObjective objective = objective(state.assignedObjectiveId);
+        if (!canRecoverQuestResultFromLiveState(objective.kind())) {
+            return false;
+        }
+        AmherstObjectiveReconciler.Decision decision = reconciler.reconcile(card, objective, agent);
+        if (!decision.satisfied()) {
+            return false;
+        }
+
+        AgentCapabilityRuntime.cancelNow(entry, agent, nowMs);
+        finishAssigned(entry, agent, state, nowMs, AgentCapabilityResult.success(
+                "authoritative live state satisfied objective; stale capability work cancelled"));
+        log.info("Completed active Agent quest objective from live state agent={} map={} objective={}",
+                agent.getName(), agent.getMapId(), objective.objectiveId());
+        return true;
+    }
+
     public boolean requestAdvance(AgentRuntimeEntry entry) {
         AmherstPlanExecutionState state = entry.amherstPlanExecutionState();
         synchronized (state) {
@@ -281,7 +310,15 @@ public final class AmherstPlanRuntimeRunner {
                                 Character agent,
                                 AmherstPlanExecutionState state,
                                 long nowMs) throws IOException {
-        AgentCapabilityResult result = entry.capabilityRuntimeState().lastResult();
+        finishAssigned(entry, agent, state, nowMs, entry.capabilityRuntimeState().lastResult());
+    }
+
+    private void finishAssigned(AgentRuntimeEntry entry,
+                                Character agent,
+                                AmherstPlanExecutionState state,
+                                long nowMs,
+                                AgentCapabilityResult terminalResult) throws IOException {
+        AgentCapabilityResult result = terminalResult;
         if (result == null) {
             return;
         }
@@ -291,6 +328,18 @@ public final class AmherstPlanRuntimeRunner {
             if (!decision.satisfied()) {
                 result = AgentCapabilityResult.failed(AgentCapabilityReasonCode.LIVE_STATE_MISMATCH,
                         "objective child chain ended but live state is unsatisfied");
+            }
+        } else if (result.status() != AgentCapabilityStatus.CANCELLED
+                && canRecoverQuestResultFromLiveState(objective.kind())) {
+            AmherstObjectiveReconciler.Decision decision = reconciler.reconcile(card, objective, agent);
+            if (decision.satisfied()) {
+                AgentCapabilityStatus recoveredStatus = result.status();
+                AgentCapabilityReasonCode recoveredReason = result.reasonCode();
+                result = AgentCapabilityResult.success(
+                        "live state satisfied after " + recoveredStatus + ": " + decision.reason());
+                log.info("Recovered Agent plan objective from live state agent={} map={} objective={} status={} reason={}",
+                        agent.getName(), agent.getMapId(), objective.objectiveId(),
+                        recoveredStatus, recoveredReason);
             }
         }
         AmherstPlanProgressSnapshot before = state.progress;
@@ -312,6 +361,14 @@ public final class AmherstPlanRuntimeRunner {
                 && state.mode != AmherstPlanExecutionMode.MANUAL) {
             state.active = false;
         }
+    }
+
+    private static boolean canRecoverQuestResultFromLiveState(AmherstPlanObjectiveKind kind) {
+        return switch (kind) {
+            case QUEST_START, QUEST_COMPLETE, FORCE_COMPLETE_QUEST,
+                    QUEST_CHAIN, QUEST_CHAIN_IF_AVAILABLE -> true;
+            default -> false;
+        };
     }
 
     private AmherstPlanObjective reconcileAndFindNext(AgentRuntimeEntry entry,

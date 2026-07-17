@@ -123,9 +123,9 @@
       "mapId": 1000000,
       "label": "Amherst",
       "objectives": [
-        { "kind": "quest-complete", "questId": 1037, "npcId": 2103 },
-        { "kind": "quest-chain", "questIds": [1038], "npcIds": [2103, 12000] },
-        { "kind": "quest-chain", "questIds": [1009, 1010, 1011, 1012, 1013, 1014, 1015], "npcId": 12101 },
+        { "objectiveId": "r008-o002-quest-chain", "kind": "quest-chain", "questIds": [1009, 1010, 1011, 1012, 1013, 1014, 1015], "npcId": 12101 },
+        { "objectiveId": "r008-o000-quest-complete", "kind": "quest-complete", "questId": 1037, "npcId": 2103 },
+        { "objectiveId": "r008-o001-quest-chain", "kind": "quest-chain", "questIds": [1038], "npcIds": [2103, 12000] },
         { "kind": "quest-start", "questId": 1008, "npcId": 10000 },
         { "kind": "reactor-hit", "forQuestId": 1008, "npcId": 10000, "mode": "hit" },
         { "kind": "reactor-box-items", "forQuestId": 1008, "itemIds": [4031161, 4031162] },

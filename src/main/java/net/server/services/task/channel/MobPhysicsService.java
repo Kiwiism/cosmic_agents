@@ -14,9 +14,12 @@ import server.life.simulation.MobControlAuthority;
 import server.life.simulation.MobMotionState;
 import server.life.simulation.MobPhysicsProfile;
 import server.life.simulation.MobPhysicsProfileFactory;
+import server.life.simulation.MobPhysicsTuningSnapshot;
 import server.life.simulation.MobSimulationRegistry;
 import server.life.simulation.MobSimulationSession;
 import server.maps.MapleMap;
+import server.monitoring.MapBroadcastDiagnostics;
+import server.monitoring.SlowOperationLogger;
 import server.movement.AbsoluteLifeMovement;
 import server.movement.LifeMovementFragment;
 import server.physics.PhysicsBody;
@@ -39,6 +42,8 @@ public final class MobPhysicsService extends BaseService {
     private static final Logger log = LoggerFactory.getLogger(MobPhysicsService.class);
     private static final int OUTER_TICK_MS = 50;
     private static final int CLIENT_Y_OFFSET = 2;
+    private static final int BROADCAST_TIMING_SAMPLE_MASK = 127;
+    private static final long SLOW_BROADCAST_THRESHOLD_MS = 100L;
     private static final Set<MobPhysicsService> INSTANCES = ConcurrentHashMap.newKeySet();
 
     public enum ReleaseReason {
@@ -61,7 +66,11 @@ public final class MobPhysicsService extends BaseService {
     private final AtomicLong maximumTickNanos = new AtomicLong();
     private final AtomicLong lastDiagnosticNanos = new AtomicLong();
     private final Map<ReleaseReason, LongAdder> releases = new EnumMap<>(ReleaseReason.class);
+    private final Object tickPassLock = new Object();
+    private final Map<MapleMap, ReleaseReason> tickMapInvalidReasons = new IdentityHashMap<>();
+    private final TickStats tickStats = new TickStats();
     private final boolean schedulingEnabled;
+    private long broadcastSequence;
     private volatile ScheduledFuture<?> task;
 
     public MobPhysicsService() {
@@ -187,23 +196,28 @@ public final class MobPhysicsService extends BaseService {
     }
 
     private void tickAt(long now) {
-        Map<MapleMap, ReleaseReason> mapInvalidReasons = new IdentityHashMap<>();
-        for (MobSimulationSession session : registry.liveSessions()) {
-            try {
-                MapleMap map = session.map();
-                ReleaseReason mapInvalidReason;
-                if (mapInvalidReasons.containsKey(map)) {
-                    mapInvalidReason = mapInvalidReasons.get(map);
-                } else {
-                    mapInvalidReason = invalidMapReason(map);
-                    mapInvalidReasons.put(map, mapInvalidReason);
+        synchronized (tickPassLock) {
+            MobPhysicsTuningSnapshot tuning = MobPhysicsTuningSnapshot.capture();
+            tickMapInvalidReasons.clear();
+            tickStats.reset();
+            for (MobSimulationSession session : registry.liveSessions()) {
+                try {
+                    MapleMap map = session.map();
+                    ReleaseReason mapInvalidReason;
+                    if (tickMapInvalidReasons.containsKey(map)) {
+                        mapInvalidReason = tickMapInvalidReasons.get(map);
+                    } else {
+                        mapInvalidReason = invalidMapReason(map);
+                        tickMapInvalidReasons.put(map, mapInvalidReason);
+                    }
+                    tickSession(session, now, mapInvalidReason, tuning, tickStats);
+                } catch (RuntimeException | LinkageError failure) {
+                    log.warn("Releasing failed Agent mob-physics session for mob {}",
+                            session.monster().getObjectId(), failure);
+                    release(session, ReleaseReason.INVALID_STATE);
                 }
-                tickSession(session, now, mapInvalidReason);
-            } catch (RuntimeException | LinkageError failure) {
-                log.warn("Releasing failed Agent mob-physics session for mob {}",
-                        session.monster().getObjectId(), failure);
-                release(session, ReleaseReason.INVALID_STATE);
             }
+            flushTickStats(tickStats);
         }
     }
 
@@ -212,17 +226,20 @@ public final class MobPhysicsService extends BaseService {
     int activeSessionCountForTest() { return registry.size(); }
 
     private void tickSession(MobSimulationSession session, long now,
-                             ReleaseReason mapInvalidReason) {
+                             ReleaseReason mapInvalidReason,
+                             MobPhysicsTuningSnapshot tuning,
+                             TickStats stats) {
         long generation = session.generation();
-        ReleaseReason invalid = invalidReason(session, mapInvalidReason, now);
+        ReleaseReason invalid = invalidReason(session, mapInvalidReason, now,
+                tuning.aggroTimeoutNanos());
         if (invalid != null) {
             releaseIfGeneration(session, invalid, generation);
             return;
         }
-        MobSimulationSession.AdvanceResult advanced = session.advance(now);
-        substeps.add(advanced.substeps());
-        if (advanced.catchUpCapped()) cappedCatchUps.increment();
-        if (advanced.invalidRecoveries() > 0) invalidRecoveries.add(advanced.invalidRecoveries());
+        MobSimulationSession.AdvanceResult advanced = session.advance(now, tuning);
+        stats.substeps += advanced.substeps();
+        if (advanced.catchUpCapped()) stats.cappedCatchUps++;
+        stats.invalidRecoveries += advanced.invalidRecoveries();
 
         Monster monster = session.monster();
         PhysicsBody body = session.body();
@@ -231,7 +248,8 @@ public final class MobPhysicsService extends BaseService {
             release(session, ReleaseReason.INVALID_STATE);
             return;
         }
-        Point current = new Point((int) Math.round(body.x()), (int) Math.round(body.y()));
+        int currentX = (int) Math.round(body.x());
+        int currentY = (int) Math.round(body.y());
         int stance = stance(session);
         monster.lockMonster();
         try {
@@ -239,26 +257,36 @@ public final class MobPhysicsService extends BaseService {
                 release(session, ReleaseReason.MONSTER_GONE);
                 return;
             }
-            monster.setFh(body.footholdId());
-            monster.setStance(stance);
-            Point previous = monster.getPosition();
-            if (previous == null || !previous.equals(current)) {
-                session.map().moveMonster(monster, current);
+            if (monster.getFh() != body.footholdId()) {
+                monster.setFh(body.footholdId());
             }
-            if (session.publicationDue(now)) {
-                publish(session, current, stance, now);
+            if (monster.getStance() != stance) {
+                monster.setStance(stance);
+            }
+            Point previous = monster.getPosition();
+            boolean positionChanged = previous == null
+                    || previous.x != currentX || previous.y != currentY;
+            boolean publicationDue = session.publicationDue(
+                    now, tuning.publicationIntervalNanos());
+            Point current = positionChanged || publicationDue
+                    ? new Point(currentX, currentY) : null;
+            if (positionChanged) {
+                session.map().moveMonsterFromServerPhysics(monster, current);
+            }
+            if (publicationDue) {
+                publish(session, current, stance, now, tuning, stats);
             }
         } finally {
             monster.unlockMonster();
         }
     }
 
-    private void publish(MobSimulationSession session, Point current, int stance, long now) {
+    private void publish(MobSimulationSession session, Point current, int stance, long now,
+                         MobPhysicsTuningSnapshot tuning, TickStats stats) {
         Point start = session.markPublished(now, current);
         PhysicsBody body = session.body();
         Point clientEnd = new Point(current.x, current.y + CLIENT_Y_OFFSET);
-        int duration = Math.max(20, Math.min(Short.MAX_VALUE,
-                AgentCombatConfig.cfg.MOB_PHYSICS_PUBLICATION_INTERVAL_MS));
+        int duration = Math.min(Short.MAX_VALUE, tuning.publicationIntervalMs());
         AbsoluteLifeMovement movement = new AbsoluteLifeMovement(0, clientEnd, duration, stance);
         movement.setPixelsPerSecond(new Point(
                 (int) Math.round(body.velocityX() * 125.0),
@@ -268,8 +296,17 @@ public final class MobPhysicsService extends BaseService {
         Packet packet = PacketCreator.moveMonster(session.monster().getObjectId(), rawActivity, start,
                 List.<LifeMovementFragment>of(movement));
         try {
-            session.map().broadcastMobPhysicsMessage(packet, current);
-            publications.increment();
+            boolean timed = (broadcastSequence++ & BROADCAST_TIMING_SAMPLE_MASK) == 0;
+            long started = timed ? System.nanoTime() : 0L;
+            int recipients = session.map().broadcastMobPhysicsMessage(packet, current);
+            long elapsed = timed ? System.nanoTime() - started : 0L;
+            stats.recordBroadcast(session.map().getId(), recipients, timed, elapsed);
+            if (timed && SlowOperationLogger.isSlow(elapsed, SLOW_BROADCAST_THRESHOLD_MS)) {
+                SlowOperationLogger.warnIfSlowElapsed(
+                        "mob-physics-broadcast map=" + session.map().getId()
+                                + " recipients=" + recipients,
+                        elapsed, SLOW_BROADCAST_THRESHOLD_MS);
+            }
         } catch (RuntimeException failure) {
             release(session, ReleaseReason.BROADCAST_FAILURE);
         }
@@ -307,7 +344,8 @@ public final class MobPhysicsService extends BaseService {
 
     private static ReleaseReason invalidReason(MobSimulationSession session,
                                                ReleaseReason mapInvalidReason,
-                                               long nowNanos) {
+                                               long nowNanos,
+                                               long aggroTimeoutNanos) {
         Monster monster = session.monster();
         Character agent = session.agent();
         MapleMap map = session.map();
@@ -317,11 +355,71 @@ public final class MobPhysicsService extends BaseService {
         if (monster.getMap() != map) return ReleaseReason.MAP_CHANGE;
         if (!agent.isAlive()) return ReleaseReason.AGENT_DEATH;
         if (agent.getMap() != map) return ReleaseReason.AGENT_DEPARTURE;
-        if (session.agentHitLeaseExpired(nowNanos,
-                Math.max(0, AgentCombatConfig.cfg.MOB_PHYSICS_AGGRO_TIMEOUT_MS))) {
+        if (session.agentHitLeaseExpiredNanos(nowNanos, aggroTimeoutNanos)) {
             return ReleaseReason.AGGRO_TIMEOUT;
         }
         return null;
+    }
+
+    private void flushTickStats(TickStats stats) {
+        if (stats.substeps != 0) substeps.add(stats.substeps);
+        if (stats.publications != 0) publications.add(stats.publications);
+        if (stats.cappedCatchUps != 0) cappedCatchUps.add(stats.cappedCatchUps);
+        if (stats.invalidRecoveries != 0) invalidRecoveries.add(stats.invalidRecoveries);
+        if (stats.publications != 0) {
+            MapBroadcastDiagnostics.recordBatch(stats.broadcastBatch());
+        }
+    }
+
+    private static final class TickStats {
+        private long substeps;
+        private long publications;
+        private long cappedCatchUps;
+        private long invalidRecoveries;
+        private long recipients;
+        private long timedBroadcasts;
+        private long slowBroadcasts;
+        private long totalDurationNanos;
+        private long maxDurationNanos;
+        private int maxMapId;
+        private int maxRecipients;
+        private long lastDurationNanos;
+        private int lastMapId;
+        private int lastRecipients;
+
+        private void reset() {
+            substeps = publications = cappedCatchUps = invalidRecoveries = 0L;
+            recipients = timedBroadcasts = slowBroadcasts = totalDurationNanos = 0L;
+            maxDurationNanos = lastDurationNanos = 0L;
+            maxMapId = maxRecipients = lastMapId = lastRecipients = 0;
+        }
+
+        private void recordBroadcast(int mapId, int recipientCount,
+                                     boolean timed, long elapsedNanos) {
+            publications++;
+            recipients += recipientCount;
+            if (!timed) return;
+            timedBroadcasts++;
+            totalDurationNanos += elapsedNanos;
+            if (SlowOperationLogger.isSlow(elapsedNanos, SLOW_BROADCAST_THRESHOLD_MS)) {
+                slowBroadcasts++;
+            }
+            lastDurationNanos = elapsedNanos;
+            lastMapId = mapId;
+            lastRecipients = recipientCount;
+            if (elapsedNanos > maxDurationNanos) {
+                maxDurationNanos = elapsedNanos;
+                maxMapId = mapId;
+                maxRecipients = recipientCount;
+            }
+        }
+
+        private MapBroadcastDiagnostics.Batch broadcastBatch() {
+            return new MapBroadcastDiagnostics.Batch(
+                    publications, recipients, publications, timedBroadcasts,
+                    slowBroadcasts, totalDurationNanos, maxDurationNanos,
+                    maxMapId, maxRecipients, lastDurationNanos, lastMapId, lastRecipients);
+        }
     }
 
     private void release(MobSimulationSession session, ReleaseReason reason) {

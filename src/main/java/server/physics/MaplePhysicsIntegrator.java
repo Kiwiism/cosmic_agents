@@ -155,10 +155,12 @@ public final class MaplePhysicsIntegrator {
 
         velocityX = body.velocityX();
         if (body.grounded() && body.velocityY() == 0.0 && velocityX != 0.0) {
-            FootholdSegment foothold = terrain.foothold(body.footholdId());
             double destinationX = body.x() + velocityX;
-            if (foothold != null && !foothold.wall() && foothold.containsX(destinationX)) {
+            FootholdSegment foothold = connectedGroundAt(
+                    terrain, body.footholdId(), destinationX, velocityX);
+            if (foothold != null) {
                 body.setPosition(body.x(), foothold.groundY(destinationX));
+                body.setFoothold(foothold.id(), foothold.slope(), foothold.layer());
             }
         }
 
@@ -187,6 +189,30 @@ public final class MaplePhysicsIntegrator {
             }
         }
         return new Collision(hitWall, reachedEdge);
+    }
+
+    /**
+     * Resolves the connected floor that will support a grounded body at its horizontal
+     * destination. Waiting until the next fixed step to change footholds leaves the body at the
+     * previous segment's height for one frame, which is visible as penetration when knockback
+     * crosses onto an upslope.
+     */
+    private static FootholdSegment connectedGroundAt(PhysicsTerrain terrain,
+                                                      int footholdId,
+                                                      double destinationX,
+                                                      double velocityX) {
+        FootholdSegment current = terrain.foothold(footholdId);
+        for (int remaining = 64; remaining > 0 && current != null && !current.wall(); remaining--) {
+            if (current.containsX(destinationX)) {
+                return current;
+            }
+            int adjacentId = velocityX < 0.0 ? current.previousId() : current.nextId();
+            if (adjacentId == 0 || adjacentId == current.id()) {
+                return null;
+            }
+            current = terrain.foothold(adjacentId);
+        }
+        return null;
     }
 
     private static boolean updateFoothold(PhysicsBody body, PhysicsTerrain terrain) {

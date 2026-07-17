@@ -18,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class AmherstPlanRuntimeRunnerTest {
     @TempDir
@@ -137,6 +138,29 @@ class AmherstPlanRuntimeRunnerTest {
         assertTrue(fixture.entry.amherstPlanExecutionState().completed());
         assertEquals(2, store.load(card.planId(), fixture.agent.getId())
                 .objectives().get("q1031").attempts());
+    }
+
+    @Test
+    void activeQuestCapabilityContinuesWhenLiveQuestStateAlreadySatisfied() throws Exception {
+        var fixture = new MutablePrimitiveGatewayFixture();
+        AmherstPlanCard card = minimalCard();
+        FileAmherstPlanProgressStore store = new FileAmherstPlanProgressStore(tempDir);
+        AmherstPlanRuntimeRunner runner = runner(card, store, fixture);
+        when(fixture.gateway.completeQuest(fixture.agent, 1031, 2100)).thenAnswer(invocation -> {
+            fixture.quests.put(1031, 2);
+            return false;
+        });
+        runner.start(fixture.entry, fixture.agent, 1L);
+
+        long nextTick = driveUntilSatisfied(
+                runner, fixture.entry, fixture, "q1031", 2L, 150);
+
+        assertTrue(fixture.entry.amherstPlanExecutionState().active());
+        assertEquals(AmherstObjectiveProgressStatus.SATISFIED,
+                store.load(card.planId(), fixture.agent.getId()).objectives().get("q1031").status());
+        runner.tick(fixture.entry, fixture.agent, nextTick);
+        assertEquals("q1021-start",
+                fixture.entry.amherstPlanExecutionState().assignedObjectiveId());
     }
 
     @Test

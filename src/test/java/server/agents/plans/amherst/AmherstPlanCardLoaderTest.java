@@ -36,6 +36,8 @@ class AmherstPlanCardLoaderTest {
         int pioStart = indexOf(first, AmherstPlanObjectiveKind.QUEST_START, 1008);
         int pioReactor = indexOf(first, AmherstPlanObjectiveKind.REACTOR_HIT, 1008);
         assertTrue(pioStart < pioReactor);
+        assertTrue(indexOfQuest(first, 1015) < indexOf(first, AmherstPlanObjectiveKind.QUEST_COMPLETE, 1037));
+        assertTrue(indexOf(first, AmherstPlanObjectiveKind.QUEST_COMPLETE, 1037) < indexOfQuest(first, 1038));
         assertTrue(first.objectives().stream().anyMatch(objective -> objective.mapId() == 30001
                 && objective.kind() == AmherstPlanObjectiveKind.QUEST_COMPLETE
                 && Integer.valueOf(1032).equals(objective.questId())));
@@ -48,6 +50,15 @@ class AmherstPlanCardLoaderTest {
         for (int index = 0; index < card.objectives().size(); index++) {
             AmherstPlanObjective objective = card.objectives().get(index);
             if (objective.kind() == kind && Integer.valueOf(questId).equals(objective.questId())) {
+                return index;
+            }
+        }
+        return Integer.MAX_VALUE;
+    }
+
+    private static int indexOfQuest(AmherstPlanCard card, int questId) {
+        for (int index = 0; index < card.objectives().size(); index++) {
+            if (card.objectives().get(index).allQuestIds().contains(questId)) {
                 return index;
             }
         }

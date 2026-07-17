@@ -236,7 +236,7 @@ class MobPhysicsServiceTest {
 
         service.tickForTest(System.nanoTime() + 100_000_000L);
 
-        verify(fixture.map, never()).moveMonster(any(), any(Point.class));
+        verify(fixture.map, never()).moveMonsterFromServerPhysics(any(), any(Point.class));
         verify(fixture.map).broadcastMobPhysicsMessage(any(), any(Point.class));
     }
 

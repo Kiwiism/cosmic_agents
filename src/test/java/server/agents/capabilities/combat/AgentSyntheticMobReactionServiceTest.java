@@ -37,16 +37,20 @@ import static org.mockito.Mockito.when;
 
 class AgentSyntheticMobReactionServiceTest {
     private AgentMobReactionMode startupReactionMode;
+    private int startupKnockbackDurationMs;
 
     @BeforeEach
     void enableReactionForBehaviorTests() {
         startupReactionMode = AgentCombatConfig.cfg.AGENT_MOB_REACTION_MODE;
+        startupKnockbackDurationMs = AgentCombatConfig.cfg.SYNTHETIC_MOB_KNOCKBACK_DURATION_MS;
         AgentCombatConfig.cfg.AGENT_MOB_REACTION_MODE = AgentMobReactionMode.SYNTHETIC;
+        AgentCombatConfig.cfg.SYNTHETIC_MOB_KNOCKBACK_DURATION_MS = 240;
     }
 
     @AfterEach
     void restoreConfiguredReactionMode() {
         AgentCombatConfig.cfg.AGENT_MOB_REACTION_MODE = startupReactionMode;
+        AgentCombatConfig.cfg.SYNTHETIC_MOB_KNOCKBACK_DURATION_MS = startupKnockbackDurationMs;
     }
 
     @Test

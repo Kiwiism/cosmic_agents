@@ -2798,8 +2798,8 @@ public class MapleMap {
     }
 
     /** Ranged broadcast for server-owned mob movement after each recipient has entered the field. */
-    public void broadcastMobPhysicsMessage(Packet packet, Point rangedFrom) {
-        broadcastMessage(null, packet, getRangedDistance(), rangedFrom, true);
+    public int broadcastMobPhysicsMessage(Packet packet, Point rangedFrom) {
+        return broadcastMessage(null, packet, getRangedDistance(), rangedFrom, true, false);
     }
 
     /**
@@ -2814,11 +2814,12 @@ public class MapleMap {
     }
 
     private void broadcastMessage(Character source, Packet packet, double rangeSq, Point rangedFrom) {
-        broadcastMessage(source, packet, rangeSq, rangedFrom, false);
+        broadcastMessage(source, packet, rangeSq, rangedFrom, false, true);
     }
 
-    private void broadcastMessage(Character source, Packet packet, double rangeSq, Point rangedFrom,
-                                  boolean realClientRecipientsOnly) {
+    private int broadcastMessage(Character source, Packet packet, double rangeSq, Point rangedFrom,
+                                 boolean realClientRecipientsOnly,
+                                 boolean recordGenericDiagnostics) {
         if (source != null && source.getClient() instanceof BotClient) {
             // Keep all Agent-originated animation/movement packets out of the same
             // post-ack settling window as Agent combat and mob physics. The Agent's
@@ -2826,7 +2827,7 @@ public class MapleMap {
             // observer up after warm-up.
             if (!isObservedByPlayer() || hasTransitioningPlayerObserver()
                     || !isMobPhysicsObserverWarmupComplete()) {
-                return;
+                return 0;
             }
         }
         try {
@@ -2835,8 +2836,9 @@ public class MapleMap {
             log.warn("Mob reaction capture could not retain a map broadcast on {}", mapid, captureFailure);
         }
         final long slowThresholdMs = 100;
-        long broadcastStartedNs = server.monitoring.SlowOperationLogger.start();
-        if (net.packet.logging.MonitoredChrLogger.hasMonitoredCharacters()) {
+        long broadcastStartedNs = recordGenericDiagnostics
+                ? server.monitoring.SlowOperationLogger.start() : 0L;
+        if (source != null && net.packet.logging.MonitoredChrLogger.hasMonitoredCharacters()) {
             net.packet.logging.MonitoredChrLogger.logBroadcastIfMonitored(source, packet.getBytes());
         }
         int recipients = 0;
@@ -2860,10 +2862,19 @@ public class MapleMap {
             }
         } finally {
             chrRLock.unlock();
-            MapBroadcastDiagnostics.record(mapid, recipients, rangeSq < Double.POSITIVE_INFINITY, broadcastStartedNs, slowThresholdMs);
-            server.monitoring.SlowOperationLogger.warnIfSlow("map-broadcast map=" + mapid + " chars=" + characters.size(),
-                    broadcastStartedNs, slowThresholdMs);
+            if (recordGenericDiagnostics) {
+                long elapsedNanos = System.nanoTime() - broadcastStartedNs;
+                MapBroadcastDiagnostics.recordElapsed(mapid, recipients,
+                        rangeSq < Double.POSITIVE_INFINITY, elapsedNanos, slowThresholdMs);
+                if (server.monitoring.SlowOperationLogger.isSlow(
+                        elapsedNanos, slowThresholdMs)) {
+                    server.monitoring.SlowOperationLogger.warnIfSlowElapsed(
+                            "map-broadcast map=" + mapid + " chars=" + characters.size(),
+                            elapsedNanos, slowThresholdMs);
+                }
+            }
         }
+        return recipients;
     }
 
     /** Ordinary field broadcasts must not race the client's destination-object rebuild. */
@@ -3471,6 +3482,19 @@ public class MapleMap {
         monster.setPosition(reportedPos);
         for (Character chr : getAllPlayers()) {
             updateMapObjectVisibility(chr, monster);
+        }
+    }
+
+    /** Physics hot path: update visibility under the map lock without allocating a player copy. */
+    public void moveMonsterFromServerPhysics(Monster monster, Point reportedPos) {
+        monster.setPosition(reportedPos);
+        chrRLock.lock();
+        try {
+            for (Character chr : characters) {
+                updateMapObjectVisibility(chr, monster);
+            }
+        } finally {
+            chrRLock.unlock();
         }
     }
 
