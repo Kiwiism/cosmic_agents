@@ -27,11 +27,14 @@ import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.capabilities.supplies.AgentPotionRuntime;
 import server.agents.capabilities.supplies.AgentCombatAmmoCheckRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.integration.InventoryGateway;
 import server.agents.runtime.AgentSessionLifecycleRuntime;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.StatEffect;
+import server.agents.coordination.AgentCoordinationRuntime;
+import server.agents.coordination.AgentSupplyNeedMessage;
 
 import java.util.List;
 import java.util.Map;
@@ -40,18 +43,18 @@ import java.util.function.Function;
 
 public final class AgentPotionService {
     // ownerCharId -> shared HP/MP 30 s request cooldown
-    private static final Map<Integer, Long> potShareCooldownUntil = new ConcurrentHashMap<>();
+    private static final Map<Long, Long> potShareCooldownUntil = new ConcurrentHashMap<>();
     // ownerCharId -> category-specific 10 min failed-request backoff
-    private static final Map<Integer, Long> potShareHpBackoffUntil = new ConcurrentHashMap<>();
-    private static final Map<Integer, Long> potShareMpBackoffUntil = new ConcurrentHashMap<>();
+    private static final Map<Long, Long> potShareHpBackoffUntil = new ConcurrentHashMap<>();
+    private static final Map<Long, Long> potShareMpBackoffUntil = new ConcurrentHashMap<>();
 
     private AgentPotionService() {
     }
 
     public static void clearLeaderRuntimeState(int leaderId) {
-        potShareCooldownUntil.remove(leaderId);
-        potShareHpBackoffUntil.remove(leaderId);
-        potShareMpBackoffUntil.remove(leaderId);
+        potShareCooldownUntil.remove((long) leaderId);
+        potShareHpBackoffUntil.remove((long) leaderId);
+        potShareMpBackoffUntil.remove((long) leaderId);
     }
 
     /** Single source of truth: items the bot has that count as recovery pots. */
@@ -214,7 +217,11 @@ public final class AgentPotionService {
         }
         startedAt = AgentPerformanceMonitor.start();
         if (pots[0] < AgentRuntimeConfig.cfg.POT_STOP && bot.getHp() < bot.getMaxHp() * 0.4f) {
-            AgentMovementCommandRuntime.followOwner(entry);
+            if (AgentRelationshipRuntime.followTarget(entry) != null) {
+                AgentMovementCommandRuntime.followConfiguredTarget(entry);
+            } else {
+                AgentMovementCommandRuntime.stop(entry);
+            }
             AgentPotionRuntime.sayMapNow(bot, AgentDialogueCatalog.potLowReturnReply());
             bot.changeFaceExpression(AgentEmote.GLARE.getValue());
         }
@@ -293,33 +300,46 @@ public final class AgentPotionService {
 
     public static boolean requestPotShare(AgentRuntimeEntry entry, Character bot, boolean forHp, boolean bypassShareLimits) {
         long startedAt = AgentPerformanceMonitor.start();
-        Character owner = AgentRuntimeIdentityRuntime.owner(entry);
-        if (owner == null || bot.getTrade() != null || AgentPendingTradeStateRuntime.hasActiveSequence(entry)) {
+        if (bot.getTrade() != null || AgentPendingTradeStateRuntime.hasActiveSequence(entry)) {
             AgentPerformanceMonitor.recordSince("potion-request", startedAt);
             return false;
         }
 
         long now = System.currentTimeMillis();
-        Map<Integer, Long> categoryBackoff = forHp ? potShareHpBackoffUntil : potShareMpBackoffUntil;
+        long cohortId = AgentRelationshipRuntime.cohortId(entry);
+        Map<Long, Long> categoryBackoff = forHp ? potShareHpBackoffUntil : potShareMpBackoffUntil;
         if (!bypassShareLimits) {
-            if (now < categoryBackoff.getOrDefault(owner.getId(), 0L)) {
+            if (now < categoryBackoff.getOrDefault(cohortId, 0L)) {
                 AgentPerformanceMonitor.recordSince("potion-request", startedAt);
                 return false;
             }
-            if (now < potShareCooldownUntil.getOrDefault(owner.getId(), 0L)) {
+            if (now < potShareCooldownUntil.getOrDefault(cohortId, 0L)) {
                 AgentPerformanceMonitor.recordSince("potion-request", startedAt);
                 return false;
             }
-            potShareCooldownUntil.put(owner.getId(), now + 30_000L);
+            potShareCooldownUntil.put(cohortId, now + 30_000L);
         }
+
+        int[] currentPots = bot.getInventory(InventoryType.USE) == null
+                ? new int[]{-1, -1}
+                : countPotions(bot);
+        AgentCoordinationRuntime.publish(new AgentSupplyNeedMessage(
+                bot.getId(),
+                cohortId,
+                bot.getMapId(),
+                forHp ? AgentSupplyNeedMessage.SupplyKind.HP_POTION
+                        : AgentSupplyNeedMessage.SupplyKind.MP_POTION,
+                forHp ? currentPots[0] : currentPots[1],
+                "",
+                now));
 
         AgentPotionRuntime.sayMapNow(bot, AgentDialogueSelector.randomReply(
                 forHp ? AgentDialogueCatalog.potRequestHpReplies() : AgentDialogueCatalog.potRequestMpReplies()));
 
-        AgentPotionDonorPlan<AgentRuntimeEntry> plan = selectPotDonor(owner, bot, entry, forHp);
+        AgentPotionDonorPlan<AgentRuntimeEntry> plan = selectPotDonor(entry, bot, entry, forHp);
         if (plan == null) {
             if (!bypassShareLimits) {
-                categoryBackoff.put(owner.getId(), now + 10 * 60_000L);
+                categoryBackoff.put(cohortId, now + 10 * 60_000L);
             }
             AgentPerformanceMonitor.recordSince("potion-request", startedAt);
             return true;
@@ -327,9 +347,9 @@ public final class AgentPotionService {
 
         if (!plan.qualifies()) {
             if (!bypassShareLimits) {
-                categoryBackoff.put(owner.getId(), now + 10 * 60_000L);
+                categoryBackoff.put(cohortId, now + 10 * 60_000L);
             }
-            String ownerName = owner.getName();
+            String ownerName = bot.getName();
             AgentPotionRuntime.afterRandomDelay(entry, 4000, 6000, () ->
                     AgentPotionRuntime.sayMapNow(
                             AgentRuntimeIdentityRuntime.bot(plan.entry()),
@@ -350,12 +370,12 @@ public final class AgentPotionService {
     }
 
     public static OwnerPotShareResult offerPotShareToOwner(AgentRuntimeEntry entry, boolean forHp) {
-        Character owner = AgentRuntimeIdentityRuntime.owner(entry);
+        Character owner = AgentRelationshipRuntime.interactionTarget(entry);
         if (owner == null || owner.getTrade() != null) {
             return OwnerPotShareResult.BLOCKED;
         }
 
-        AgentPotionDonorPlan<AgentRuntimeEntry> plan = selectPotDonor(owner, owner, null, forHp);
+        AgentPotionDonorPlan<AgentRuntimeEntry> plan = selectPotDonor(entry, owner, null, forHp);
         if (plan == null || !plan.qualifies()) {
             return OwnerPotShareResult.NO_DONOR;
         }
@@ -364,11 +384,11 @@ public final class AgentPotionService {
         return OwnerPotShareResult.OFFERED;
     }
 
-    private static AgentPotionDonorPlan<AgentRuntimeEntry> selectPotDonor(Character owner, Character recipient, AgentRuntimeEntry excludedEntry, boolean forHp) {
+    private static AgentPotionDonorPlan<AgentRuntimeEntry> selectPotDonor(AgentRuntimeEntry requesterEntry, Character recipient, AgentRuntimeEntry excludedEntry, boolean forHp) {
         long startedAt = AgentPerformanceMonitor.start();
         AgentRuntimeEntry bestEntry = null;
         int bestCount = 0;
-        for (AgentRuntimeEntry sibling : AgentSessionLifecycleRuntime.getBotEntries(owner.getId())) {
+        for (AgentRuntimeEntry sibling : AgentSessionLifecycleRuntime.getCohortEntries(requesterEntry)) {
             Character siblingBot = AgentRuntimeIdentityRuntime.bot(sibling);
             if (sibling == excludedEntry || siblingBot == null || siblingBot.getMapId() != recipient.getMapId()) {
                 continue;

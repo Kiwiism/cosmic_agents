@@ -28,6 +28,8 @@ import net.packet.InPacket;
 import server.agents.runtime.AgentMailboxAction;
 import server.agents.runtime.AgentMailboxRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.auth.AgentAuthorityService;
+import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.ItemInformationProvider;
 import config.YamlConfig;
@@ -120,8 +122,9 @@ public final class AgentEquipHandler extends AbstractPacketHandler {
         @Override
         public Character execute(AgentRuntimeEntry entry) {
             Character bot = entry.bot();
-            Character player = entry.owner();
-            if (bot == null || player == null || player.getClient() == null) {
+            Character player = AgentRelationshipRuntime.interactionTarget(entry);
+            if (bot == null || player == null || player.getClient() == null
+                    || !AgentAuthorityService.mayOperate(player)) {
                 return bot;
             }
             switch (action) {

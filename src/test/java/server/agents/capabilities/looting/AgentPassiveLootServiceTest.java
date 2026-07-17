@@ -80,13 +80,13 @@ class AgentPassiveLootServiceTest {
         assertSame(agent, callbacks.pickupCharacter.get());
         assertTrue(callbacks.cleaned.get());
         assertSame(agent, callbacks.autoEquipAgent.get());
-        assertSame(owner, callbacks.autoEquipOwner.get());
+        assertSame(null, callbacks.autoEquipOwner.get());
         assertSame(item, callbacks.offerItem.get());
         assertEquals(5_000L, callbacks.offerDelayMs.get());
     }
 
     @Test
-    void nxCardPickupRoutesToOwnerOnSameMap() {
+    void nxCardPickupRoutesToAgentOnSameMap() {
         Character agent = agentOnMap();
         MapleMap map = agent.getMap();
         Character owner = mock(Character.class);
@@ -104,7 +104,7 @@ class AgentPassiveLootServiceTest {
             AgentPassiveLootService.tickPassiveLoot(entry(agent), agent, callbacks);
         }
 
-        assertSame(owner, callbacks.pickupCharacter.get());
+        assertSame(agent, callbacks.pickupCharacter.get());
     }
 
     private static AgentRuntimeEntry entry(Character agent) {

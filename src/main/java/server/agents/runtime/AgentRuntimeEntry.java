@@ -11,6 +11,8 @@ import server.agents.capabilities.runtime.AgentCapabilityRuntimeState;
 import server.agents.capabilities.objective.MapleIslandObjectiveRandomnessState;
 
 import server.agents.capabilities.build.AgentBuildState;
+import server.agents.capabilities.build.profiles.AgentApBuildProfileState;
+import server.agents.capabilities.build.profiles.AgentSpBuildProfileState;
 import server.agents.capabilities.combat.AgentCombatBuffState;
 import server.agents.capabilities.combat.AgentAoeRepositionState;
 import server.agents.capabilities.combat.AgentBreakoutState;
@@ -80,6 +82,8 @@ public class AgentRuntimeEntry implements AgentRuntimeHandle {
 
     private final long sessionGeneration = NEXT_SESSION_GENERATION.incrementAndGet();
     private final AgentRuntimeIdentityState identityState;
+    private final AgentRelationshipState relationshipState;
+    private final AgentLifecycleState lifecycleState = new AgentLifecycleState();
     private final AgentModeState modeState = new AgentModeState();
     private final AgentAirshowState airshowState = new AgentAirshowState();
     private final AgentScheduledTaskState scheduledTaskState;
@@ -270,6 +274,8 @@ public class AgentRuntimeEntry implements AgentRuntimeHandle {
 
     private final AgentLeaderActivityState leaderActivityState = new AgentLeaderActivityState();
     private final AgentBuildState buildState = new AgentBuildState();
+    private final AgentApBuildProfileState apBuildProfileState = new AgentApBuildProfileState();
+    private final AgentSpBuildProfileState spBuildProfileState = new AgentSpBuildProfileState();
 
     public AgentLeaderActivityState leaderActivityState() {
         return leaderActivityState;
@@ -277,11 +283,29 @@ public class AgentRuntimeEntry implements AgentRuntimeHandle {
 
     public AgentModeState modeState() { return modeState; }
     public Character bot() { return identityState.agent(); }
-    public Character owner() { return identityState.leader(); }
-    public void setOwner(Character owner) { identityState.setLeader(owner); }
+    /** @deprecated Use the explicit follow or interaction relationship. */
+    @Deprecated
+    public Character owner() { return relationshipState.interactionTarget(); }
+    /** @deprecated Use the explicit follow or interaction relationship. */
+    @Deprecated
+    public void setOwner(Character owner) {
+        Character previous = relationshipState.interactionTarget();
+        relationshipState.setInteractionTarget(owner);
+        if (relationshipState.followTarget() == previous) {
+            relationshipState.setFollowTarget(owner);
+        }
+    }
     public AgentRuntimeIdentityState identityState() { return identityState; }
+    public AgentRelationshipState relationshipState() { return relationshipState; }
+    public AgentLifecycleState lifecycleState() { return lifecycleState; }
     public AgentBuildState buildState() {
         return buildState;
+    }
+    public AgentApBuildProfileState apBuildProfileState() {
+        return apBuildProfileState;
+    }
+    public AgentSpBuildProfileState spBuildProfileState() {
+        return spBuildProfileState;
     }
     private final AgentMoveTargetState moveTargetState = new AgentMoveTargetState();
 
@@ -492,7 +516,9 @@ public class AgentRuntimeEntry implements AgentRuntimeHandle {
     }
 
     public AgentRuntimeEntry(Character bot, Character owner, ScheduledFuture<?> task) {
-        this.identityState = new AgentRuntimeIdentityState(bot, owner);
+        this.identityState = new AgentRuntimeIdentityState(bot);
+        long compatibilityGroupId = owner != null ? owner.getId() : 0L;
+        this.relationshipState = new AgentRelationshipState(owner, compatibilityGroupId, compatibilityGroupId);
         this.scheduledTaskState = new AgentScheduledTaskState(task);
     }
 

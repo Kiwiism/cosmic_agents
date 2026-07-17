@@ -10,6 +10,7 @@ import server.agents.capabilities.dialogue.AgentChatSupplyRequestFlow;
 import server.agents.capabilities.dialogue.AgentSupplyRequestOutcomeFlow;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.trade.AgentOfferService;
@@ -54,7 +55,7 @@ public final class AgentSupplyRuntime {
     }
 
     public static void handleNeedAnyPotionCommand(AgentRuntimeEntry entry) {
-        Character owner = AgentRuntimeIdentityRuntime.owner(entry);
+        Character owner = AgentRelationshipRuntime.interactionTarget(entry);
         if (owner == null) {
             return;
         }
@@ -73,7 +74,7 @@ public final class AgentSupplyRuntime {
     }
 
     public static void handleNeedAmmoCommand(AgentRuntimeEntry entry) {
-        Character owner = AgentRuntimeIdentityRuntime.owner(entry);
+        Character owner = AgentRelationshipRuntime.interactionTarget(entry);
         if (owner == null) {
             return;
         }

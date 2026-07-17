@@ -8,6 +8,7 @@ import server.agents.capabilities.dialogue.AgentFameDialogueFlow;
 import server.agents.capabilities.dialogue.AgentSocialDialogueClassifier;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**
@@ -27,7 +28,7 @@ public final class AgentSocialRuntime {
         Character bot = AgentRuntimeIdentityRuntime.bot(entry);
         Character target;
         if (AgentSocialDialogueClassifier.isSelfFameTarget(targetName)) {
-            target = AgentRuntimeIdentityRuntime.owner(entry);
+            target = AgentRelationshipRuntime.interactionTarget(entry);
         } else {
             target = bot.getMap().getCharacters().stream()
                     .filter(c -> c.getName().equalsIgnoreCase(targetName))

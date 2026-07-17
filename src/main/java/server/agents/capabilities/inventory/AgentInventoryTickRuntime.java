@@ -10,6 +10,7 @@ import server.agents.capabilities.trade.AgentTradeTickRuntimeService;
 import server.agents.capabilities.trade.AgentTradeTransferAvailabilityRuntimeService;
 import server.agents.integration.AgentInventoryRuntimeAdapters;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**
@@ -30,7 +31,7 @@ public final class AgentInventoryTickRuntime {
         AgentManualTradeRuntimeService.tickManualTrade(
                 entry,
                 agent,
-                AgentRuntimeIdentityRuntime.owner(entry),
+                AgentRelationshipRuntime.interactionTarget(entry),
                 AgentInventoryRuntimeAdapters.manualTradeRuntimeCallbacks(entry),
                 AgentTradeLifecycleRuntimeService.lifecycleCallbacks(
                         AgentInventoryRuntimeAdapters.tradeLifecycleRuntimeCallbacks()));

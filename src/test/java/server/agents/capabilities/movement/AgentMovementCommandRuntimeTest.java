@@ -30,7 +30,7 @@ class AgentMovementCommandRuntimeTest {
 
         assertTrue(AgentModeStateRuntime.following(entry));
         assertFalse(AgentModeStateRuntime.grinding(entry));
-        assertEquals(0, AgentModeStateRuntime.followTargetId(entry));
+        assertEquals(owner.getId(), AgentModeStateRuntime.followTargetId(entry));
     }
 
     @Test

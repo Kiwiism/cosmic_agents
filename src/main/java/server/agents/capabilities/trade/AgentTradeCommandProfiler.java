@@ -4,6 +4,7 @@ import client.Character;
 import org.slf4j.Logger;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 public final class AgentTradeCommandProfiler {
@@ -35,7 +36,7 @@ public final class AgentTradeCommandProfiler {
             return;
         }
         String agentName = agent != null ? agent.getName() : "?";
-        Character owner = AgentRuntimeIdentityRuntime.owner(entry);
+        Character owner = AgentRelationshipRuntime.interactionTarget(entry);
         String ownerName = owner != null ? owner.getName() : "?";
         logger.warn("Slow bot trade command phase: category={} phase={} took {} ms bot={} owner={}",
                 category,

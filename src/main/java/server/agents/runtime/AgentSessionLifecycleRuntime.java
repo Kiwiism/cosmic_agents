@@ -1,6 +1,7 @@
 package server.agents.runtime;
 
 import client.Character;
+import server.agents.integration.AgentRelationshipRuntime;
 
 import java.util.List;
 
@@ -15,8 +16,16 @@ public final class AgentSessionLifecycleRuntime {
         AgentInteractionRuntime.reloginAgent(charId, ownerCharId, world, channel);
     }
 
+    public static void reloginAgent(AgentReloginRequest request) {
+        AgentInteractionRuntime.reloginAgent(request);
+    }
+
     public static List<AgentRuntimeEntry> getBotEntries(int ownerCharId) {
         return AgentRuntimeRegistry.agentEntriesForLeader(ownerCharId);
+    }
+
+    public static List<AgentRuntimeEntry> getCohortEntries(AgentRuntimeEntry entry) {
+        return AgentRuntimeRegistry.entriesForCohort(AgentRelationshipRuntime.cohortId(entry));
     }
 
     public static AgentRuntimeEntry getAgentEntry(int ownerCharId, String agentName) {

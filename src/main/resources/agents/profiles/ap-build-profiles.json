@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "profiles": [
+    {
+      "profileId": "warrior-dex20-str-lv30-v1",
+      "profileVersion": 1,
+      "jobFamily": "WARRIOR",
+      "primaryStat": "STR",
+      "targetStat": "DEX",
+      "progressionStartLevel": 10,
+      "targetAtStartLevel": 4,
+      "targetGainPerLevel": 1,
+      "targetCap": 20,
+      "supportedThroughLevel": 30
+    },
+    {
+      "profileId": "warrior-dex40-str-lv30-v1",
+      "profileVersion": 1,
+      "jobFamily": "WARRIOR",
+      "primaryStat": "STR",
+      "targetStat": "DEX",
+      "progressionStartLevel": 10,
+      "targetAtStartLevel": 4,
+      "targetGainPerLevel": 2,
+      "targetCap": 40,
+      "supportedThroughLevel": 30
+    },
+    {
+      "profileId": "bowman-str30-dex-lv30-v1",
+      "profileVersion": 1,
+      "jobFamily": "BOWMAN",
+      "primaryStat": "DEX",
+      "targetStat": "STR",
+      "progressionStartLevel": 10,
+      "targetAtStartLevel": 10,
+      "targetGainPerLevel": 1,
+      "targetCap": 30,
+      "supportedThroughLevel": 30
+    },
+    {
+      "profileId": "bowman-str4-dex-lv30-v1",
+      "profileVersion": 1,
+      "jobFamily": "BOWMAN",
+      "primaryStat": "DEX",
+      "targetStat": "STR",
+      "progressionStartLevel": 10,
+      "targetAtStartLevel": 4,
+      "targetGainPerLevel": 0,
+      "targetCap": 4,
+      "supportedThroughLevel": 30
+    },
+    {
+      "profileId": "thief-dex60-luk-lv30-v1",
+      "profileVersion": 1,
+      "jobFamily": "THIEF",
+      "primaryStat": "LUK",
+      "targetStat": "DEX",
+      "progressionStartLevel": 10,
+      "targetAtStartLevel": 20,
+      "targetGainPerLevel": 2,
+      "targetCap": 60,
+      "supportedThroughLevel": 30
+    },
+    {
+      "profileId": "thief-dex25-luk-lv30-v1",
+      "profileVersion": 1,
+      "jobFamily": "THIEF",
+      "primaryStat": "LUK",
+      "targetStat": "DEX",
+      "progressionStartLevel": 10,
+      "targetAtStartLevel": 25,
+      "targetGainPerLevel": 0,
+      "targetCap": 25,
+      "supportedThroughLevel": 30
+    },
+    {
+      "profileId": "magician-luk33-int-lv30-v1",
+      "profileVersion": 1,
+      "jobFamily": "MAGICIAN",
+      "primaryStat": "INT",
+      "targetStat": "LUK",
+      "progressionStartLevel": 8,
+      "targetAtStartLevel": 11,
+      "targetGainPerLevel": 1,
+      "targetCap": 33,
+      "supportedThroughLevel": 30
+    },
+    {
+      "profileId": "magician-luk4-int-lv30-v1",
+      "profileVersion": 1,
+      "jobFamily": "MAGICIAN",
+      "primaryStat": "INT",
+      "targetStat": "LUK",
+      "progressionStartLevel": 8,
+      "targetAtStartLevel": 4,
+      "targetGainPerLevel": 0,
+      "targetCap": 4,
+      "supportedThroughLevel": 30
+    },
+    {
+      "profileId": "pirate-str30-dex-lv30-v1",
+      "profileVersion": 1,
+      "jobFamily": "PIRATE",
+      "primaryStat": "DEX",
+      "targetStat": "STR",
+      "progressionStartLevel": 10,
+      "targetAtStartLevel": 10,
+      "targetGainPerLevel": 1,
+      "targetCap": 30,
+      "supportedThroughLevel": 30
+    },
+    {
+      "profileId": "pirate-dex30-str-lv30-v1",
+      "profileVersion": 1,
+      "jobFamily": "PIRATE",
+      "primaryStat": "STR",
+      "targetStat": "DEX",
+      "progressionStartLevel": 10,
+      "targetAtStartLevel": 10,
+      "targetGainPerLevel": 1,
+      "targetCap": 30,
+      "supportedThroughLevel": 30
+    }
+  ]
+}

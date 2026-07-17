@@ -1,5 +1,11 @@
 # Post-Maple-Island Victoria Progression Roadmap
 
+Current implementation sequencing and the consolidated level-30/level-70
+autonomy gate are defined in
+`docs/agents/TIER_1_INDEPENDENT_AGENT_PROGRESSION_IMPLEMENTATION_PLAN.md`.
+This document remains authoritative for the detailed Explorer career/AP/SP/gear
+composition and build matrix referenced by that plan.
+
 ## Status
 
 This roadmap is intentionally deferred until the following Maple Island gates

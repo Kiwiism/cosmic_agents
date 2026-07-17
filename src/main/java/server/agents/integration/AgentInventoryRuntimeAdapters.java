@@ -8,7 +8,7 @@ import server.agents.capabilities.movement.AgentMovementTimers;
 
 import client.Character;
 import server.ItemRestrictionPolicy;
-import server.agents.auth.AgentOwnershipService;
+import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy;
 import server.agents.capabilities.inventory.AgentEquippedSlotTradeService;
@@ -52,7 +52,7 @@ public final class AgentInventoryRuntimeAdapters {
                 AgentInventoryRuntime::replyNow,
                 () -> AgentMovementTimers.delayAfterCurrentTick(AgentRuntimeConfig.cfg.INV_FULL_WARN_CD_MS),
                 AgentInventoryStateRuntime::setInventoryFullWarnCooldownMs,
-                AgentRuntimeIdentityRuntime::owner,
+                ignoredEntry -> null,
                 AgentOfferStateRuntime::pendingLootOfferItem,
                 AgentInventoryItemPolicy::hasItem,
                 AgentEquipmentService::autoEquip,
@@ -67,7 +67,7 @@ public final class AgentInventoryRuntimeAdapters {
                 AgentMovementTimers::tickDown,
                 AgentMovementPhysicsConfig::configuredMovementTickMs,
                 peer -> AgentCharacterGatewayRuntime.characters().isAgentCharacter(peer),
-                (peerId, ownerId) -> AgentOwnershipService.getInstance().isAuthorizedOwner(peerId, ownerId),
+                (peerId, ignoredInteractionTargetId) -> AgentRuntimeRegistry.hasActiveAgentCharacterId(peerId),
                 AgentTradeDialogueService::manualTradeGreeting,
                 (agent, owner) -> AgentEquipmentService.autoEquip(agent, owner, null));
     }
@@ -78,7 +78,7 @@ public final class AgentInventoryRuntimeAdapters {
                 agent -> AgentTradeGatewayRuntime.trade().currentWindow(agent),
                 AgentMovementTimers::delayAfterCurrentTick,
                 AgentMovementPhysicsConfig::configuredMovementTickMs,
-                AgentRuntimeIdentityRuntime::owner,
+                AgentRelationshipRuntime::interactionTarget,
                 (agent, owner) -> AgentEquipmentService.autoEquip(agent, owner, null),
                 AgentTradeRecipientService::resolveTradeRecipient,
                 recipient -> AgentCharacterGatewayRuntime.characters().isAgentCharacter(recipient));
@@ -88,7 +88,7 @@ public final class AgentInventoryRuntimeAdapters {
         return AgentTradeLifecycleRuntimeService.RuntimeCallbacks.of(
                 AgentEquippedSlotTradeService::restoreTemporarilyUnequippedItems,
                 AgentManualTradeService::clearState,
-                AgentRuntimeIdentityRuntime::owner,
+                AgentRelationshipRuntime::interactionTarget,
                 (agent, owner) -> AgentEquipmentService.autoEquip(agent, owner, null),
                 AgentRandom::randMs,
                 AgentTradeDialogueService::thanksReply,
@@ -118,7 +118,7 @@ public final class AgentInventoryRuntimeAdapters {
                 () -> AgentTradeCommandProfiler.profileCategory("equips"),
                 AgentEquipmentReservePolicy::collectPotentialSelfUpgradeItems,
                 item -> AgentOfferService.isReservedForOtherRecipients(entry, agent, item),
-                () -> AgentRuntimeIdentityRuntime.owner(entry),
+                () -> AgentRelationshipRuntime.interactionTarget(entry),
                 AgentInventoryRuntimeAdapters::inventory);
     }
 

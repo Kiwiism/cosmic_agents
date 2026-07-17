@@ -8,7 +8,7 @@ import client.Client;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.auth.AgentAuthorizationResult;
-import server.agents.auth.AgentOwnershipService;
+import server.agents.auth.AgentControlAccess;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.registry.AgentResolvedCharacter;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -382,7 +382,7 @@ class AgentLifecycleServiceTest {
         MapleMap map = mock(MapleMap.class);
         Point leaderPosition = new Point(10, 20);
         Point spawnPosition = new Point(11, 21);
-        AgentOwnershipService ownership = mock(AgentOwnershipService.class);
+        AgentControlAccess ownership = mock(AgentControlAccess.class);
         AtomicInteger registered = new AtomicInteger();
         AtomicInteger placed = new AtomicInteger();
         AtomicInteger followed = new AtomicInteger();
@@ -448,7 +448,7 @@ class AgentLifecycleServiceTest {
         Point leaderPosition = new Point(500, 200);
         Point desiredStart = new Point(-93, 450);
         Point resolvedStart = new Point(-93, 451);
-        AgentOwnershipService ownership = mock(AgentOwnershipService.class);
+        AgentControlAccess ownership = mock(AgentControlAccess.class);
         AgentRuntimeRegistry.entriesByLeaderId().clear();
         when(startMap.getId()).thenReturn(10000);
         when(leader.getMap()).thenReturn(leaderMap);
@@ -498,7 +498,7 @@ class AgentLifecycleServiceTest {
         Character otherLeader = character(101, "Other");
         Character agent = character(200, "Alpha", new BotClient(0, 0));
         MapleMap map = mock(MapleMap.class);
-        AgentOwnershipService ownership = mock(AgentOwnershipService.class);
+        AgentControlAccess ownership = mock(AgentControlAccess.class);
         AgentRuntimeRegistry.clear();
         AgentRuntimeRegistry.registerEntry(
                 otherLeader.getId(), new AgentRuntimeEntry(agent, otherLeader, null));
@@ -527,7 +527,7 @@ class AgentLifecycleServiceTest {
         Character agent = character(200, "Alpha");
         MapleMap map = mock(MapleMap.class);
         Point spawnPosition = new Point(11, 21);
-        AgentOwnershipService ownership = mock(AgentOwnershipService.class);
+        AgentControlAccess ownership = mock(AgentControlAccess.class);
         AtomicReference<AgentRuntimeEntry> registeredEntry = new AtomicReference<>();
         AtomicInteger followed = new AtomicInteger();
         when(leader.getClient()).thenReturn(client);
@@ -582,7 +582,7 @@ class AgentLifecycleServiceTest {
         MapleMap map = mock(MapleMap.class);
         Point spawnPosition = new Point(11, 21);
         SQLException failure = new SQLException("load failed");
-        AgentOwnershipService ownership = mock(AgentOwnershipService.class);
+        AgentControlAccess ownership = mock(AgentControlAccess.class);
         AtomicReference<String> loggedAgentName = new AtomicReference<>();
         AtomicReference<Character> loggedLeader = new AtomicReference<>();
         AtomicReference<SQLException> loggedFailure = new AtomicReference<>();
@@ -633,7 +633,7 @@ class AgentLifecycleServiceTest {
     void returnsLegacySpawnFailures() throws SQLException {
         Character leader = character(100, "Leader");
         Character realPlayer = character(200, "Alpha", mock(Client.class));
-        AgentOwnershipService ownership = mock(AgentOwnershipService.class);
+        AgentControlAccess ownership = mock(AgentControlAccess.class);
         when(ownership.resolveCharacterByName("Missing")).thenReturn(null);
         when(ownership.resolveCharacterByName("Alpha")).thenReturn(new AgentResolvedCharacter(200, "Alpha", 1, realPlayer));
 

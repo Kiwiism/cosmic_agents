@@ -133,6 +133,11 @@ public class ServerConfig {
     public boolean AGENT_MAPLE_ISLAND_COHORT_ENABLED;
     public boolean AGENT_SOUTHPERRY_SHOWCASE_ENABLED;
     public String AGENT_SOUTHPERRY_SHOWCASE_AGENT_NAME;
+    public String AGENT_AUTHORITY_ADMINISTRATOR_NAMES;
+    public String AGENT_AUTHORITY_OPERATOR_NAMES;
+    public String AGENT_AUTHORITY_OBSERVER_NAMES;
+    public String AGENT_TRUSTED_TRADE_PLAYER_NAMES;
+    public boolean AGENT_LEGACY_OWNER_COMPATIBILITY_ENABLED;
 
     //Events/PQs Configuration
     public boolean USE_OLD_GMS_STYLED_PQ_NPCS;

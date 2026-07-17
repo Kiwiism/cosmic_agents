@@ -682,8 +682,10 @@ class BotManagerTest {
             assertNull(AgentMoveTargetStateRuntime.moveTarget(entry));
 
             AgentTickFailureRuntime.handleFailure(entry, owner.getId(), bot.getId(), new NullPointerException("bad drop"));
-            assertFalse(bots.containsKey(owner.getId()));
-            verify(task).cancel(false);
+            assertTrue(bots.containsKey(owner.getId()));
+            assertEquals(
+                    server.agents.runtime.AgentLifecyclePhase.QUARANTINED,
+                    entry.lifecycleState().phase());
         } finally {
             AgentRuntimeRegistry.unregisterLeader(owner.getId());
         }
@@ -1159,39 +1161,39 @@ class BotManagerTest {
         @SuppressWarnings("unchecked")
         Map<Integer, List<AgentRuntimeEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
         @SuppressWarnings("unchecked")
-        Map<Integer, Long> sharedCooldown = (Map<Integer, Long>) field(AgentPotionService.class, "potShareCooldownUntil").get(null);
+        Map<Long, Long> sharedCooldown = (Map<Long, Long>) field(AgentPotionService.class, "potShareCooldownUntil").get(null);
         @SuppressWarnings("unchecked")
-        Map<Integer, Long> hpBackoff = (Map<Integer, Long>) field(AgentPotionService.class, "potShareHpBackoffUntil").get(null);
+        Map<Long, Long> hpBackoff = (Map<Long, Long>) field(AgentPotionService.class, "potShareHpBackoffUntil").get(null);
         @SuppressWarnings("unchecked")
-        Map<Integer, Long> mpBackoff = (Map<Integer, Long>) field(AgentPotionService.class, "potShareMpBackoffUntil").get(null);
+        Map<Long, Long> mpBackoff = (Map<Long, Long>) field(AgentPotionService.class, "potShareMpBackoffUntil").get(null);
 
         AgentRuntimeRegistry.registerEntry(owner.getId(), entry);
-        sharedCooldown.remove(owner.getId());
-        hpBackoff.remove(owner.getId());
-        mpBackoff.remove(owner.getId());
+        sharedCooldown.remove((long) owner.getId());
+        hpBackoff.remove((long) owner.getId());
+        mpBackoff.remove((long) owner.getId());
 
         Method requestPotShare = AgentPotionService.class.getDeclaredMethod("requestPotShare", AgentRuntimeEntry.class, Character.class, boolean.class);
         requestPotShare.setAccessible(true);
         try {
             assertTrue((Boolean) requestPotShare.invoke(null, entry, bot, false),
                     "first MP request should broadcast and install MP-only long backoff when no donor exists");
-            assertTrue(mpBackoff.get(owner.getId()) > System.currentTimeMillis());
-            assertFalse(hpBackoff.containsKey(owner.getId()));
+            assertTrue(mpBackoff.get((long) owner.getId()) > System.currentTimeMillis());
+            assertFalse(hpBackoff.containsKey((long) owner.getId()));
 
-            sharedCooldown.put(owner.getId(), 0L);
+            sharedCooldown.put((long) owner.getId(), 0L);
 
             assertTrue((Boolean) requestPotShare.invoke(null, entry, bot, true),
                     "HP request should still be allowed after shared 30 s cooldown even if MP is under 10 min backoff");
-            assertTrue(hpBackoff.get(owner.getId()) > System.currentTimeMillis());
+            assertTrue(hpBackoff.get((long) owner.getId()) > System.currentTimeMillis());
 
-            sharedCooldown.put(owner.getId(), 0L);
+            sharedCooldown.put((long) owner.getId(), 0L);
             assertFalse((Boolean) requestPotShare.invoke(null, entry, bot, false),
                     "MP request should remain blocked by its own 10 min backoff");
         } finally {
             AgentRuntimeRegistry.unregisterLeader(owner.getId());
-            sharedCooldown.remove(owner.getId());
-            hpBackoff.remove(owner.getId());
-            mpBackoff.remove(owner.getId());
+            sharedCooldown.remove((long) owner.getId());
+            hpBackoff.remove((long) owner.getId());
+            mpBackoff.remove((long) owner.getId());
         }
     }
 

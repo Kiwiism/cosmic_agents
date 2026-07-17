@@ -4,7 +4,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.slf4j.Logger;
-import server.agents.auth.AgentOwnershipService;
+import server.agents.auth.AgentControlAccess;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentRegistrationCoordinator;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -35,7 +35,7 @@ class CosmicAgentSpawnCoordinatorTest {
             lifecycle.when(() -> AgentLifecycleService.spawnAgentForLeaderQuietly(
                             eq(leader),
                             eq("Alpha"),
-                            any(AgentOwnershipService.class),
+                            any(AgentControlAccess.class),
                             any(AgentLifecycleService.SpawnHooks.class),
                             any(AgentLifecycleService.SpawnFailureLogger.class)))
                     .thenAnswer(invocation -> {

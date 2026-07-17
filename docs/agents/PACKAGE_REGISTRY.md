@@ -12,6 +12,16 @@ Top-level post-reconstruction platform specification:
 
 - `docs/agents/POST_RECONSTRUCTION_AGENT_PLATFORM_SPECIFICATION.md`
 
+Cross-capability ownership, behavior migration order, and dynamic-engine
+roadmap:
+
+- `docs/agents/AGENT_CAPABILITY_MIGRATION_AND_DYNAMIC_ENGINE_ROADMAP.md`
+
+First independent-progression milestone, required Tier 1 capabilities, and
+level-30/level-70 implementation sequence:
+
+- `docs/agents/TIER_1_INDEPENDENT_AGENT_PROGRESSION_IMPLEMENTATION_PLAN.md`
+
 Pre-reconstruction readiness and safety status:
 
 - `docs/agents/PRE_RECONSTRUCTION_SAFE_PREP_STATUS.md`
@@ -1166,6 +1176,15 @@ There are now two implementation tracks:
 - scaling-first track: `docs/agents/AGENT_ENGINE_SCALING_TRACK.md`.
 - gameplay track: `docs/agents/AGENT_GAMEPLAY_TRACK.md`.
 
+Current gameplay execution authority:
+
+- `docs/agents/TIER_1_INDEPENDENT_AGENT_PROGRESSION_IMPLEMENTATION_PLAN.md`.
+
+The Tier 1 plan consolidates the packages below into a complete level-30 and
+level-70 autonomous progression loop. The older package lists remain useful as
+reconstruction/platform history, but they do not override its capability
+dependencies or acceptance gates.
+
 Current sequencing decision:
 
 ```text
@@ -1218,31 +1237,31 @@ exists.
 
 ### Gameplay Order
 
-For after reconstruction, implement packages in this order:
+For the first independent progression milestone, use this condensed order:
 
-1. `agent-event-bus`
-2. `agent-catalog-platform`
-3. `agent-profile-platform` read-only mode
-4. `agent-plan-runtime` read-only loader and objective state
-5. `agent-capability-runtime` common command/result interfaces
-6. `agent-npc-quest-capability`
-7. `agent-recovery-policy`
-8. `maple-island-mvp`
-9. `agent-observability`
-10. `agent-economy-engine`
-11. `agent-interaction-realism`
-12. `agent-simulation-tier-runtime`
-13. `agent-llm-gateway`
-14. `agent-population-director`
+1. behavior routing, events, decision journals, capability runtime, and
+   reconciliation foundation;
+2. catalog, map-strategy, profile/build binding, and generalized Plan Runtime;
+3. Inventory, Supplies, NPC Shopping, Equipment, Acquisition, and Recovery;
+4. career/AP/SP profiles and normal Job Advancement;
+5. Quest, Navigation, Combat, Loot, and training-map integration;
+6. one reference Agent and then all five first jobs to level 30;
+7. conservative Upgrade V1 and selected second-job paths to level 70;
+8. simulation-tier parity, Population Director integration, and scale soak;
+9. Social, Trade, Economy, richer Dialogue, and LLM autonomy.
 
 Reasoning:
 
-- Event bus first keeps later packages decoupled.
-- Catalog/profile/plan provide read-only decision foundations.
-- Capability runtime and NPC quest unlock Maple Island MVP.
-- Observability should come before large-scale economy/LLM behavior.
-- Simulation tiers and LLM gateway are powerful, but safer after the basic
-  autonomous loop is visible and explainable.
+- the event/capability/plan foundation makes each behavior replaceable and
+  recoverable;
+- Inventory and resource ownership must stabilize before long quest/grind
+  loops or destructive item decisions;
+- build and job progression must be legal before class-specific combat scales;
+- level 30 proves the complete independent loop before scrolling and wider
+  level-70 content increase the state space;
+- simulation/population scaling follows single-Agent correctness;
+- Social, Trade, Economy, and LLM behavior add alternate choices but must not
+  be dependencies of basic self-progression.
 
 ## Next Specs To Write
 

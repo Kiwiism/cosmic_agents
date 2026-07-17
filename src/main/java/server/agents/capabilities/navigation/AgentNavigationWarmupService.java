@@ -2,6 +2,7 @@ package server.agents.capabilities.navigation;
 
 import client.Character;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.Map;
@@ -21,7 +22,7 @@ public final class AgentNavigationWarmupService {
     }
 
     public static void notifyWarmup(AgentRuntimeEntry entry, Character agent) {
-        Character leader = AgentRuntimeIdentityRuntime.owner(entry);
+        Character leader = AgentRelationshipRuntime.interactionTarget(entry);
         if (leader == null) {
             return;
         }

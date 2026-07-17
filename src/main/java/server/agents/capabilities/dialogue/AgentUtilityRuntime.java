@@ -7,6 +7,7 @@ import server.agents.capabilities.trade.AgentPendingTradeStateRuntime;
 import client.Character;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.integration.AgentTradeInviteGateway;
 import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -26,7 +27,7 @@ public final class AgentUtilityRuntime {
             @Override
             public void tradeInvite() {
                 Character bot = AgentRuntimeIdentityRuntime.bot(entry);
-                Character owner = AgentRuntimeIdentityRuntime.owner(entry);
+                Character owner = AgentRelationshipRuntime.interactionTarget(entry);
                 if (owner != null && bot.getTrade() == null && owner.getTrade() == null
                         && AgentPendingTradeStateRuntime.isIdle(entry)) {
                     AgentSchedulerRuntime.afterRandomDelay(entry, 600, 1000, () -> {

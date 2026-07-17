@@ -299,6 +299,11 @@ server:
     AGENT_MAPLE_ISLAND_COHORT_ENABLED: true #Allow guarded persistent-pool cohort provisioning and full Maple Island runs.
     AGENT_SOUTHPERRY_SHOWCASE_ENABLED: true #Allow the guarded one-command post-Amherst-to-Southperry run.
     AGENT_SOUTHPERRY_SHOWCASE_AGENT_NAME: AmherstRun #Only this Agent IGN may use the captured post-Amherst reset path.
+    AGENT_AUTHORITY_ADMINISTRATOR_NAMES: Kiwi #Comma-separated IGNs allowed to administer all Agents.
+    AGENT_AUTHORITY_OPERATOR_NAMES: '' #Comma-separated IGNs allowed to run bounded Agent tests and lifecycle commands.
+    AGENT_AUTHORITY_OBSERVER_NAMES: '' #Comma-separated IGNs allowed to inspect Agent diagnostics without mutation.
+    AGENT_TRUSTED_TRADE_PLAYER_NAMES: Kiwi #Independent allowlist for unsolicited human-to-Agent trades.
+    AGENT_LEGACY_OWNER_COMPATIBILITY_ENABLED: false #Rollback gate only; owner-free authority, lifecycle, and relationships are active by default.
 
     #Events/PQs Configuration
     USE_OLD_GMS_STYLED_PQ_NPCS: true     #Enables PQ NPCs with similar behaviour to old GMS style, that skips info about the PQs and immediately tries to register the party in.

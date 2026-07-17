@@ -2,6 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import server.agents.integration.AgentCharacterGatewayRuntime;
+import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.scheduler.AgentAdmissionDecision;
 import server.agents.runtime.scheduler.AgentLoadSheddingRuntime;
@@ -20,9 +21,10 @@ import java.util.function.BiFunction;
 public final class AgentRuntimeRegistry {
     private static final Object mutationLock = new Object();
     private static final Map<Integer, ActiveSession> activeSessionsByAgentId = new ConcurrentHashMap<>();
+    private static final Map<Long, List<AgentRuntimeEntry>> entriesByCohortId = new ConcurrentHashMap<>();
     private static final Map<Integer, List<AgentRuntimeEntry>> entriesByLeaderId = new ConcurrentHashMap<>();
 
-    private record ActiveSession(int leaderCharId, AgentRuntimeEntry entry, long generation) {
+    private record ActiveSession(long cohortId, AgentRuntimeEntry entry, long generation) {
         private boolean matches(AgentRuntimeEntry expectedEntry, long expectedGeneration) {
             return entry == expectedEntry && generation == expectedGeneration;
         }
@@ -36,6 +38,10 @@ public final class AgentRuntimeRegistry {
         return entriesByLeaderId;
     }
 
+    public static Map<Long, List<AgentRuntimeEntry>> entriesByCohortId() {
+        return entriesByCohortId;
+    }
+
     /** @deprecated New mutation code must use the explicit registry methods. */
     @Deprecated
     public static List<AgentRuntimeEntry> mutableEntriesForLeader(int leaderCharId) {
@@ -43,11 +49,26 @@ public final class AgentRuntimeRegistry {
     }
 
     public static void registerEntry(int leaderCharId, AgentRuntimeEntry entry) {
+        if (entry != null) {
+            entry.relationshipState().setCohortId(leaderCharId);
+        }
+        registerEntry(entry);
+    }
+
+    public static void registerEntry(AgentRuntimeEntry entry) {
         if (entry == null) {
             throw new IllegalArgumentException("Agent runtime entry is required");
         }
         synchronized (mutationLock) {
+            long cohortId = AgentRelationshipRuntime.cohortId(entry);
             int agentCharId = AgentRuntimeIdentityRuntime.botId(entry);
+            if (cohortId == 0L && agentCharId >= 0) {
+                cohortId = agentCharId;
+                AgentRelationshipRuntime.setCohortId(entry, cohortId);
+                if (AgentRelationshipRuntime.formationId(entry) == 0L) {
+                    AgentRelationshipRuntime.setFormationId(entry, cohortId);
+                }
+            }
             ActiveSession previous = agentCharId < 0 ? null : activeSessionsByAgentId.get(agentCharId);
             AgentAdmissionDecision admission = AgentLoadSheddingRuntime.admissionDecision(
                     previous != null,
@@ -56,48 +77,48 @@ public final class AgentRuntimeRegistry {
                 throw new RejectedExecutionException(admission.message());
             }
             if (previous != null && previous.entry() != entry) {
-                removeFromLeaderView(previous.leaderCharId(), previous.entry());
+                removeFromCohortView(previous.cohortId(), previous.entry());
+                removeFromLeaderView(Math.toIntExact(previous.cohortId()), previous.entry());
+            }
+            List<AgentRuntimeEntry> cohortEntries = entriesByCohortId.computeIfAbsent(
+                    cohortId,
+                    ignored -> new CopyOnWriteArrayList<>());
+            if (!cohortEntries.contains(entry)) {
+                cohortEntries.add(entry);
             }
             List<AgentRuntimeEntry> entries = entriesByLeaderId.computeIfAbsent(
-                    leaderCharId,
+                    Math.toIntExact(cohortId),
                     ignored -> new CopyOnWriteArrayList<>());
             if (!entries.contains(entry)) {
                 entries.add(entry);
             }
-            index(leaderCharId, entry);
+            index(cohortId, entry);
         }
     }
 
     public static boolean unregisterEntry(int leaderCharId, AgentRuntimeEntry entry) {
+        return unregisterEntry(entry);
+    }
+
+    public static boolean unregisterEntry(AgentRuntimeEntry entry) {
         synchronized (mutationLock) {
-            List<AgentRuntimeEntry> entries = entriesByLeaderId.get(leaderCharId);
+            long cohortId = AgentRelationshipRuntime.cohortId(entry);
+            List<AgentRuntimeEntry> entries = entriesByCohortId.get(cohortId);
             if (entries == null || !entries.remove(entry)) {
                 return false;
             }
             unindex(entry);
             if (entries.isEmpty()) {
-                entriesByLeaderId.remove(leaderCharId, entries);
+                entriesByCohortId.remove(cohortId, entries);
             }
+            removeFromLeaderView(Math.toIntExact(cohortId), entry);
             return true;
         }
     }
 
     public static List<AgentRuntimeEntry> unregisterAgentCharacter(int leaderCharId, int agentCharId) {
-        synchronized (mutationLock) {
-            List<AgentRuntimeEntry> entries = entriesByLeaderId.get(leaderCharId);
-            if (entries == null) {
-                return List.of();
-            }
-            List<AgentRuntimeEntry> removed = entries.stream()
-                    .filter(entry -> AgentRuntimeIdentityRuntime.botIs(entry, agentCharId))
-                    .toList();
-            entries.removeAll(removed);
-            removed.forEach(AgentRuntimeRegistry::unindex);
-            if (entries.isEmpty()) {
-                entriesByLeaderId.remove(leaderCharId, entries);
-            }
-            return removed;
-        }
+        AgentRuntimeEntry removed = unregisterAgentCharacter(agentCharId);
+        return removed == null ? List.of() : List.of(removed);
     }
 
     public static AgentRuntimeEntry unregisterAgentCharacter(int agentCharId) {
@@ -106,16 +127,21 @@ public final class AgentRuntimeRegistry {
             if (session == null) {
                 return null;
             }
-            return unregisterEntry(session.leaderCharId(), session.entry()) ? session.entry() : null;
+            return unregisterEntry(session.entry()) ? session.entry() : null;
         }
     }
 
     public static List<AgentRuntimeEntry> unregisterLeader(int leaderCharId) {
+        return unregisterCohort(leaderCharId);
+    }
+
+    public static List<AgentRuntimeEntry> unregisterCohort(long cohortId) {
         synchronized (mutationLock) {
-            List<AgentRuntimeEntry> entries = entriesByLeaderId.remove(leaderCharId);
+            List<AgentRuntimeEntry> entries = entriesByCohortId.remove(cohortId);
             if (entries == null) {
                 return List.of();
             }
+            entriesByLeaderId.remove(Math.toIntExact(cohortId));
             entries.forEach(AgentRuntimeRegistry::unindex);
             return List.copyOf(entries);
         }
@@ -123,7 +149,12 @@ public final class AgentRuntimeRegistry {
 
     public static int leaderIdForAgentCharacter(int agentCharId) {
         ActiveSession session = activeSessionsByAgentId.get(agentCharId);
-        return session == null ? -1 : session.leaderCharId();
+        return session == null ? -1 : Math.toIntExact(session.cohortId());
+    }
+
+    public static long cohortIdForAgentCharacter(int agentCharId) {
+        ActiveSession session = activeSessionsByAgentId.get(agentCharId);
+        return session == null ? 0L : session.cohortId();
     }
 
     public static AgentRuntimeEntry findByCharacterInstance(Character agent) {
@@ -137,6 +168,7 @@ public final class AgentRuntimeRegistry {
     public static void clear() {
         synchronized (mutationLock) {
             entriesByLeaderId.clear();
+            entriesByCohortId.clear();
             activeSessionsByAgentId.clear();
         }
     }
@@ -189,7 +221,7 @@ public final class AgentRuntimeRegistry {
         for (List<AgentRuntimeEntry> entries : entriesByLeaderId.values()) {
             for (AgentRuntimeEntry entry : entries) {
                 if (AgentRuntimeIdentityRuntime.botIs(entry, agentCharId)) {
-                    return AgentRuntimeIdentityRuntime.owner(entry);
+                    return AgentRelationshipRuntime.interactionTarget(entry);
                 }
             }
         }
@@ -197,7 +229,7 @@ public final class AgentRuntimeRegistry {
     }
 
     public static Character activeLeaderByAgentCharacterId(int agentCharId) {
-        return AgentRuntimeIdentityRuntime.owner(findByAgentCharacterId(agentCharId));
+        return AgentRelationshipRuntime.interactionTarget(findByAgentCharacterId(agentCharId));
     }
 
     public static boolean hasActiveAgentCharacterId(int agentCharId) {
@@ -250,10 +282,15 @@ public final class AgentRuntimeRegistry {
     }
 
     public static boolean isFirstEntryForLeader(Map<Integer, List<AgentRuntimeEntry>> entriesByLeaderId, AgentRuntimeEntry entry) {
-        if (entry == null || AgentRuntimeIdentityRuntime.owner(entry) == null) {
+        if (entry == null) {
             return false;
         }
-        return firstEntry(entriesByLeaderId, AgentRuntimeIdentityRuntime.ownerId(entry)) == entry;
+        for (List<AgentRuntimeEntry> entries : entriesByLeaderId.values()) {
+            if (entries.contains(entry)) {
+                return !entries.isEmpty() && entries.getFirst() == entry;
+            }
+        }
+        return false;
     }
 
     public static boolean isFirstEntryForLeader(AgentRuntimeEntry entry) {
@@ -271,6 +308,23 @@ public final class AgentRuntimeRegistry {
 
     public static List<AgentRuntimeEntry> entriesForLeader(int leaderCharId) {
         return entriesForLeader(entriesByLeaderId, leaderCharId);
+    }
+
+    public static List<AgentRuntimeEntry> entriesForCohort(long cohortId) {
+        List<AgentRuntimeEntry> entries = entriesByCohortId.get(cohortId);
+        return entries == null || entries.isEmpty() ? List.of() : List.copyOf(entries);
+    }
+
+    public static AgentRuntimeEntry findByNameInCohort(long cohortId, String agentName) {
+        if (agentName == null) {
+            return null;
+        }
+        for (AgentRuntimeEntry entry : entriesForCohort(cohortId)) {
+            if (AgentRuntimeIdentityRuntime.botNameEquals(entry, agentName)) {
+                return entry;
+            }
+        }
+        return null;
     }
 
     public static List<AgentRuntimeEntry> agentEntriesForLeader(Map<Integer, List<AgentRuntimeEntry>> entriesByLeaderId,
@@ -314,12 +368,12 @@ public final class AgentRuntimeRegistry {
                 .toList();
     }
 
-    private static void index(int leaderCharId, AgentRuntimeEntry entry) {
+    private static void index(long cohortId, AgentRuntimeEntry entry) {
         int agentCharId = AgentRuntimeIdentityRuntime.botId(entry);
         if (agentCharId >= 0) {
             activeSessionsByAgentId.put(
                     agentCharId,
-                    new ActiveSession(leaderCharId, entry, entry.sessionGeneration()));
+                    new ActiveSession(cohortId, entry, entry.sessionGeneration()));
         }
     }
 
@@ -341,6 +395,17 @@ public final class AgentRuntimeRegistry {
         entries.remove(entry);
         if (entries.isEmpty()) {
             entriesByLeaderId.remove(leaderCharId, entries);
+        }
+    }
+
+    private static void removeFromCohortView(long cohortId, AgentRuntimeEntry entry) {
+        List<AgentRuntimeEntry> entries = entriesByCohortId.get(cohortId);
+        if (entries == null) {
+            return;
+        }
+        entries.remove(entry);
+        if (entries.isEmpty()) {
+            entriesByCohortId.remove(cohortId, entries);
         }
     }
 

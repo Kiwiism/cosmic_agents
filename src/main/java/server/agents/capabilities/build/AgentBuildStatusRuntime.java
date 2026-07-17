@@ -6,6 +6,7 @@ import client.Character;
 import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.capabilities.dialogue.AgentPendingActionStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.dialogue.AgentStatusStateRuntime;
@@ -61,7 +62,7 @@ public final class AgentBuildStatusRuntime {
 
             @Override
             public void maybeSuggestRecommendedGear() {
-                Character owner = AgentRuntimeIdentityRuntime.owner(entry);
+                Character owner = AgentRelationshipRuntime.interactionTarget(entry);
                 AgentChatStatusRuntime.maybeSuggestGear(
                         AgentStatusStateRuntime.gearSuggestionState(entry),
                         AgentChatStatusRuntime.gearSuggestionActions(
@@ -72,7 +73,7 @@ public final class AgentBuildStatusRuntime {
 
             @Override
             public void maybeSuggestGearToSiblings() {
-                Character owner = AgentRuntimeIdentityRuntime.owner(entry);
+                Character owner = AgentRelationshipRuntime.interactionTarget(entry);
                 AgentChatStatusRuntime.maybeSuggestGear(
                         AgentStatusStateRuntime.gearSuggestionState(entry),
                         AgentChatStatusRuntime.gearSuggestionActions(
@@ -83,7 +84,7 @@ public final class AgentBuildStatusRuntime {
 
             @Override
             public boolean canOfferSpawnUpgrade() {
-                return AgentRuntimeIdentityRuntime.owner(entry) != null
+                return AgentRelationshipRuntime.interactionTarget(entry) != null
                         && !AgentChatStatusRuntime.isOwnerIdle(AgentStatusStateRuntime.statusState(entry))
                         && !AgentPendingActionStateRuntime.hasPendingAction(entry)
                         && !AgentOfferService.hasPendingOffer(entry);
@@ -91,7 +92,7 @@ public final class AgentBuildStatusRuntime {
 
             @Override
             public void offerSpawnUpgradeIfAvailable() {
-                Character owner = AgentRuntimeIdentityRuntime.owner(entry);
+                Character owner = AgentRelationshipRuntime.interactionTarget(entry);
                 List<AgentEquipRecommendation> recs =
                         AgentEquipmentService.findRecommendedEquips(bot, owner);
                 if (!recs.isEmpty()) {

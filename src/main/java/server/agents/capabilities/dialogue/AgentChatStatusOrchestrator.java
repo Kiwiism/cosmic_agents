@@ -3,6 +3,7 @@ package server.agents.capabilities.dialogue;
 import client.Character;
 import server.agents.capabilities.build.AgentBuildStatusRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.capabilities.dialogue.AgentStatusRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -16,7 +17,7 @@ public final class AgentChatStatusOrchestrator {
     }
 
     public static void markOwnerActive(AgentRuntimeEntry entry) {
-        Character owner = AgentRuntimeIdentityRuntime.owner(entry);
+        Character owner = AgentRelationshipRuntime.interactionTarget(entry);
         AgentChatStatusRuntime.markActive(
                 AgentStatusStateRuntime.statusState(entry),
                 owner != null ? owner.getPosition() : null,

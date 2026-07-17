@@ -3,7 +3,7 @@ package server.agents.commands;
 import server.agents.capabilities.trade.AgentTransferService;
 
 import client.Character;
-import server.agents.auth.AgentOwnershipService;
+import server.agents.auth.AgentAuthorizationResult;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.runtime.AgentRandom;
@@ -37,7 +37,7 @@ public final class AgentLeaderTransferCoordinator {
                         AgentRuntimeRegistry::findByName,
                         AgentRuntimeRegistry::unregisterEntry,
                         (candidateLeader, target) -> candidateLeader.getMap().getCharacterByName(target),
-                        (target, agent) -> AgentOwnershipService.getInstance().ensureCanControl(target, agent),
+                        (target, agent) -> AgentAuthorizationResult.allowed(false),
                         AgentScheduledTaskRuntime::cancelScheduledTask,
                         stopper,
                         registrar,

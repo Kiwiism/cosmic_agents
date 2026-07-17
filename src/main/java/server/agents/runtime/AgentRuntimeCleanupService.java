@@ -13,6 +13,7 @@ import server.agents.capabilities.supplies.AgentPotionService;
 import server.agents.capabilities.trade.AgentManualTradeService;
 import server.agents.capabilities.trade.AgentTransferRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.runtime.async.AgentAsyncTaskGateway;
 
 import client.Character;
@@ -24,17 +25,25 @@ public final class AgentRuntimeCleanupService {
     }
 
     public static void removeAgentsForLeader(int leaderCharId) {
-        List<AgentRuntimeEntry> removedEntries = AgentRuntimeRegistry.unregisterLeader(leaderCharId);
+        removeAgentsForCohort(leaderCharId);
+    }
+
+    public static void removeAgentsForCohort(long cohortId) {
+        List<AgentRuntimeEntry> removedEntries = AgentRuntimeRegistry.unregisterCohort(cohortId);
         List<Integer> agentIds = removedEntries.stream()
                 .map(AgentRuntimeIdentityRuntime::bot)
                 .filter(java.util.Objects::nonNull)
                 .map(Character::getId)
                 .toList();
-        removedEntries.forEach(AgentLifecycleService::cancelScheduledTickIfPresent);
-        AgentFormationService.formationsByLeaderId().remove(leaderCharId);
-        AgentLeaderSafetyService.townClusterAnchorsByLeaderId().remove(leaderCharId);
+        removedEntries.forEach(entry -> {
+            AgentLifecycleStateRuntime.transition(entry, AgentLifecyclePhase.OFFLINE, "cohort runtime cleanup");
+            AgentLifecycleService.cancelScheduledTickIfPresent(entry);
+        });
+        int compatibilityId = Math.toIntExact(cohortId);
+        AgentFormationService.formationsByLeaderId().remove(compatibilityId);
+        AgentLeaderSafetyService.townClusterAnchorsByLeaderId().remove(compatibilityId);
         agentIds.forEach(AgentRuntimeCleanupService::clearAgentStateIfInactive);
-        clearLeaderStateIfInactive(leaderCharId);
+        clearCohortStateIfInactive(cohortId);
     }
 
     public static boolean removeAgentByCharacterId(int agentCharId) {
@@ -42,31 +51,28 @@ public final class AgentRuntimeCleanupService {
         AgentRuntimeEntry removedEntry = AgentRuntimeRegistry.unregisterAgentCharacter(agentCharId);
         boolean removed = removedEntry != null;
         if (removed) {
+            AgentLifecycleStateRuntime.transition(removedEntry, AgentLifecyclePhase.OFFLINE, "runtime cleanup");
             AgentLifecycleService.cancelScheduledTickIfPresent(removedEntry);
         }
         clearAgentStateIfInactive(agentCharId);
         if (leaderId >= 0) {
-            clearLeaderStateIfInactive(leaderId);
+            clearCohortStateIfInactive(leaderId);
         }
         return removed;
     }
 
     public static boolean removeAgent(AgentRuntimeEntry entry) {
         Character agent = AgentRuntimeIdentityRuntime.bot(entry);
-        Character leader = AgentRuntimeIdentityRuntime.owner(entry);
-        int leaderId = leader == null
-                ? AgentRuntimeRegistry.leaderIdForAgentCharacter(AgentRuntimeIdentityRuntime.botId(entry))
-                : leader.getId();
-        boolean removed = leaderId >= 0 && AgentRuntimeRegistry.unregisterEntry(leaderId, entry);
+        long cohortId = AgentRelationshipRuntime.cohortId(entry);
+        boolean removed = AgentRuntimeRegistry.unregisterEntry(entry);
         if (removed) {
+            AgentLifecycleStateRuntime.transition(entry, AgentLifecyclePhase.OFFLINE, "runtime cleanup");
             AgentLifecycleService.cancelScheduledTickIfPresent(entry);
         }
         if (agent != null) {
             clearAgentStateIfInactive(agent.getId());
         }
-        if (leader != null) {
-            clearLeaderStateIfInactive(leader.getId());
-        }
+        clearCohortStateIfInactive(cohortId);
         return removed;
     }
 
@@ -99,14 +105,15 @@ public final class AgentRuntimeCleanupService {
         AgentRelaxerSpotReservationRuntime.release(agentId);
     }
 
-    private static void clearLeaderStateIfInactive(int leaderId) {
-        if (!AgentRuntimeRegistry.entriesForLeader(leaderId).isEmpty()) {
+    private static void clearCohortStateIfInactive(long cohortId) {
+        if (!AgentRuntimeRegistry.entriesForCohort(cohortId).isEmpty()) {
             return;
         }
-        AgentFormationService.formationsByLeaderId().remove(leaderId);
-        AgentLeaderSafetyService.townClusterAnchorsByLeaderId().remove(leaderId);
-        AgentPotionService.clearLeaderRuntimeState(leaderId);
-        AgentAmmoService.clearLeaderRuntimeState(leaderId);
-        AgentNavigationWarmupService.clearLeaderRuntimeState(leaderId);
+        int compatibilityId = Math.toIntExact(cohortId);
+        AgentFormationService.formationsByLeaderId().remove(compatibilityId);
+        AgentLeaderSafetyService.townClusterAnchorsByLeaderId().remove(compatibilityId);
+        AgentPotionService.clearLeaderRuntimeState(compatibilityId);
+        AgentAmmoService.clearLeaderRuntimeState(compatibilityId);
+        AgentNavigationWarmupService.clearLeaderRuntimeState(compatibilityId);
     }
 }

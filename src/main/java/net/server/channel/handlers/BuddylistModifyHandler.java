@@ -29,8 +29,6 @@ import client.Character;
 import client.CharacterNameAndId;
 import client.Client;
 import net.AbstractPacketHandler;
-import server.agents.registry.AgentResolvedCharacter;
-import server.agents.auth.AgentOwnershipService;
 import net.packet.InPacket;
 import net.server.world.World;
 import tools.DatabaseConnection;
@@ -111,15 +109,6 @@ public class BuddylistModifyHandler extends AbstractPacketHandler {
                         charWithId = getCharacterIdAndNameFromDatabase(addName);
                     }
                     if (charWithId != null) {
-                        // Bot shortcut: skip pending request, add immediately as always-online
-                        AgentOwnershipService ownershipService = AgentOwnershipService.getInstance();
-                        AgentResolvedCharacter resolved = ownershipService.resolveCharacterById(charWithId.getId());
-                        if (resolved != null && ownershipService.ensureCanControl(player, resolved).allowed()) {
-                            buddylist.put(new BuddylistEntry(charWithId.getName(), group, charWithId.getId(), 1, true));
-                            c.sendPacket(PacketCreator.updateBuddylist(buddylist.getBuddies()));
-                            c.sendPacket(PacketCreator.updateBuddyChannel(charWithId.getId(), c.getChannel()));
-                            return;
-                        }
                         BuddyAddResult buddyAddResult = null;
                         if (channel != -1) {
                             buddyAddResult = world.requestBuddyAdd(addName, c.getChannel(), player.getId(), player.getName());

@@ -13,6 +13,7 @@ import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.capabilities.movement.AgentPatrolStateRuntime;
 import server.agents.capabilities.combat.AgentRetreatHoldStateRuntime;
+import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 
 import java.awt.Point;
@@ -23,11 +24,8 @@ public final class AgentModeService {
     }
 
     public static void startFollow(AgentRuntimeEntry entry, Character target) {
-        Character leader = AgentRuntimeIdentityRuntime.owner(entry);
-        AgentModeStateRuntime.setFollowTargetId(entry,
-                leader != null && target != null && leader.getId() != target.getId()
-                        ? target.getId()
-                        : 0);
+        AgentRelationshipRuntime.setFollowTarget(entry, target);
+        AgentModeStateRuntime.setFollowTargetId(entry, target == null ? 0 : target.getId());
         AgentModeStateRuntime.setGrinding(entry, false);
         AgentMoveTargetStateRuntime.clearMoveTarget(entry);
         AgentFarmAnchorStateRuntime.clearFarmAnchor(entry);
@@ -40,6 +38,7 @@ public final class AgentModeService {
 
     public static void startStop(AgentRuntimeEntry entry) {
         clearMode(entry);
+        AgentRelationshipRuntime.setFollowTarget(entry, null);
         AgentMoveTargetStateRuntime.clearMoveTarget(entry);
     }
 
@@ -61,6 +60,7 @@ public final class AgentModeService {
 
     public static void enterActiveMode(AgentRuntimeEntry entry, Consumer<AgentRuntimeEntry> navigationClearer) {
         AgentModeStateRuntime.stopFollowing(entry);
+        AgentRelationshipRuntime.setFollowTarget(entry, null);
         AgentMoveTargetStateRuntime.clearMoveTarget(entry);
         AgentFarmAnchorStateRuntime.clearFarmAnchor(entry);
         AgentPatrolStateRuntime.clearPatrol(entry);

@@ -83,7 +83,7 @@ class AgentStarterKitServiceTest {
 
             verify(bot).changeJob(Job.HUNTER);
             buildManager.verify(() -> AgentBuildService.handleJobAdvance(entry, bot, Job.BOWMAN, Job.HUNTER));
-            equipManager.verify(() -> AgentEquipmentService.autoEquip(bot, owner, null));
+            equipManager.verify(() -> AgentEquipmentService.autoEquip(bot, null, null));
             statusRuntime.verify(() -> AgentBuildStatusRuntime.checkBuildStatus(entry, bot));
         }
     }

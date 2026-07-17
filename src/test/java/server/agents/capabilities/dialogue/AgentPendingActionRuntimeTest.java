@@ -3,6 +3,9 @@ package server.agents.capabilities.dialogue;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import config.YamlConfig;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.trade.AgentInventoryTransferService;
 import server.agents.commands.AgentMessageQueueStateRuntime;
@@ -18,6 +21,19 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockStatic;
 
 class AgentPendingActionRuntimeTest {
+    private boolean oldLegacyDialogue;
+
+    @BeforeEach
+    void enableDialogueForQueueTests() {
+        oldLegacyDialogue = YamlConfig.config.server.AGENT_LEGACY_DIALOGUE_ENABLED;
+        YamlConfig.config.server.AGENT_LEGACY_DIALOGUE_ENABLED = true;
+    }
+
+    @AfterEach
+    void restoreDialogueSetting() {
+        YamlConfig.config.server.AGENT_LEGACY_DIALOGUE_ENABLED = oldLegacyDialogue;
+    }
+
     @Test
     void pendingActionStateAdaptsAgentRuntimeEntryFields() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);

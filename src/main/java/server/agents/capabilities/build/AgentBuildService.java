@@ -9,6 +9,8 @@ import constants.game.GameConstants;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import server.agents.capabilities.build.profiles.AgentApBuildProfileService;
+import server.agents.capabilities.build.profiles.AgentSpBuildProfileService;
 import server.agents.capabilities.build.profiles.BowmanBuilds;
 import server.agents.capabilities.build.profiles.BuildStep;
 import server.agents.capabilities.build.profiles.MageBuilds;
@@ -128,12 +130,13 @@ public final class AgentBuildService {
     }
 
     public static void handleJobAdvance(AgentRuntimeEntry entry, Character bot, Job oldJob, Job newJob) {
-        if (oldJob == Job.BEGINNER && oldJob != newJob && AgentBuildStateRuntime.hasApBuild(entry)) {
+        if (oldJob == Job.BEGINNER && oldJob != newJob && AgentBuildStateRuntime.hasApBuild(entry)
+                && !entry.apBuildProfileState().hasProfile()) {
             reallocateAp(entry, bot);
         }
 
         autoAssignSp(entry, bot);
-        autoAssignAp(entry, bot);
+        autoAssignConfiguredAp(entry, bot);
     }
 
     private static boolean reallocateAp(AgentRuntimeEntry entry, Character bot) {
@@ -170,6 +173,9 @@ public final class AgentBuildService {
     }
 
     static void autoAssignSp(AgentRuntimeEntry entry, Character bot, SkillGateway skills) {
+        if (AgentSpBuildProfileService.autoAssign(entry, bot, skills)) {
+            return;
+        }
         String spVariant = AgentBuildStateRuntime.spVariant(entry);
         if (bot.getJob() == Job.HERO && spVariant == null) return;
 
@@ -319,6 +325,12 @@ public final class AgentBuildService {
         };
     }
 
+    private static void autoAssignConfiguredAp(AgentRuntimeEntry entry, Character bot) {
+        if (!AgentApBuildProfileService.autoAssign(entry, bot)) {
+            autoAssignAp(entry, bot);
+        }
+    }
+
     /**
      * Detects level-up and sends prompts before spending SP/AP so gating can apply.
      */
@@ -330,17 +342,17 @@ public final class AgentBuildService {
         AgentBuildStateRuntime.setLastKnownLevel(entry, lvl);
         if (prev == -1) {
             autoAssignSp(entry, bot);
-            autoAssignAp(entry, bot);
+            autoAssignConfiguredAp(entry, bot);
             return;
         }
 
         if (lvl == 8 || lvl == 10 || lvl == 30 || lvl == 70 || lvl == 120) {
-            AgentMovementCommandRuntime.followOwner(entry);
+            AgentMovementCommandRuntime.followConfiguredTarget(entry);
             AgentBuildStatusRuntime.checkBuildStatus(entry, bot);
         }
 
         autoAssignSp(entry, bot);
-        autoAssignAp(entry, bot);
+        autoAssignConfiguredAp(entry, bot);
     }
 
     /** Returns the next job-advancement prompt, or null if none is pending. */

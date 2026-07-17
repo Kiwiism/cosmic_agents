@@ -104,7 +104,7 @@ class AgentMovementRuntimeTest {
                     (AgentRuntimeEntry) eq(entry),
                     eq(bot),
                     any(InventoryGateway.class)));
-            movementCommands.verify(() -> AgentMovementCommandRuntime.followOwner(entry));
+            movementCommands.verify(() -> AgentMovementCommandRuntime.followConfiguredTarget(entry));
         }
     }
 

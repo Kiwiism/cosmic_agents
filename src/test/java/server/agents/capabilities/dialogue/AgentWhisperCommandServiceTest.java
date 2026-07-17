@@ -84,6 +84,7 @@ class AgentWhisperCommandServiceTest {
     private static Character character(int id, Client client) {
         Character character = mock(Character.class);
         when(character.getId()).thenReturn(id);
+        when(character.getName()).thenReturn(id == 1 ? "Kiwi" : "Agent" + id);
         when(character.getClient()).thenReturn(client);
         return character;
     }

@@ -9,6 +9,9 @@ import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import client.Character;
 import client.inventory.WeaponType;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import config.YamlConfig;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatSupplyRequestFlow;
 import server.agents.commands.AgentMessageQueueStateRuntime;
@@ -24,6 +27,19 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
 
 class AgentSupplyRuntimeTest {
+    private boolean oldLegacyDialogue;
+
+    @BeforeEach
+    void enableDialogueForQueueTests() {
+        oldLegacyDialogue = YamlConfig.config.server.AGENT_LEGACY_DIALOGUE_ENABLED;
+        YamlConfig.config.server.AGENT_LEGACY_DIALOGUE_ENABLED = true;
+    }
+
+    @AfterEach
+    void restoreDialogueSetting() {
+        YamlConfig.config.server.AGENT_LEGACY_DIALOGUE_ENABLED = oldLegacyDialogue;
+    }
+
     @Test
     void requestUpgradeFallsBackToBestGearWhenNoSupplyRequestIsMade() {
         Character bot = mock(Character.class);

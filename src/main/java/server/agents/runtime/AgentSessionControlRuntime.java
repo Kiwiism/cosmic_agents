@@ -1,6 +1,7 @@
 package server.agents.runtime;
 
 import server.agents.capabilities.recovery.AgentLeaderSafetyService;
+import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentSessionLifecycleRuntime;
 
@@ -13,10 +14,10 @@ public final class AgentSessionControlRuntime {
     }
 
     public static boolean isPrimarySession(AgentRuntimeEntry entry) {
-        if (entry == null || AgentRuntimeIdentityRuntime.owner(entry) == null) {
+        if (entry == null) {
             return false;
         }
-        return AgentSessionLifecycleRuntime.getBotEntries(AgentRuntimeIdentityRuntime.ownerId(entry))
+        return AgentRuntimeRegistry.entriesForCohort(AgentRelationshipRuntime.cohortId(entry))
                 .stream()
                 .findFirst()
                 .filter(first -> first == entry)

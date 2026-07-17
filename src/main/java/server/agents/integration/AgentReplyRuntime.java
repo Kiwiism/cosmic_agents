@@ -56,7 +56,7 @@ public final class AgentReplyRuntime {
         switch (AgentReplyChannelStateRuntime.replyChannel(entry)) {
             case PARTY -> sayPartyNow(AgentRuntimeIdentityRuntime.bot(entry), message);
             case WHISPER -> {
-                Character owner = AgentRuntimeIdentityRuntime.owner(entry);
+                Character owner = AgentRelationshipRuntime.interactionTarget(entry);
                 Character bot = AgentRuntimeIdentityRuntime.bot(entry);
                 if (owner != null && AgentClientGatewayRuntime.clients().hasClient(owner)) {
                     AgentPacketGatewayRuntime.packets().sendWhisperReceive(
