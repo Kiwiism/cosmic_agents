@@ -1,5 +1,7 @@
 package server.agents.capabilities.quest;
 
+import server.agents.plans.amherst.AmherstQuestCatalog;
+
 public final class AmherstTestResetPlanner {
     public AmherstTestResetPlan plan(AmherstTestResetRequest request) {
         return switch (request.mode()) {

@@ -1,7 +1,6 @@
 package server.agents.plans.amherst;
 
 import client.Character;
-import server.agents.capabilities.quest.MapleIslandSouthperryQuestCatalog;
 import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
 import server.agents.integration.PrimitiveCapabilityGateway;
 

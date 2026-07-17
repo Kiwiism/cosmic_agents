@@ -1,7 +1,7 @@
 package server.agents.capabilities.movement;
 
 import server.agents.capabilities.navigation.AgentFootholdDetourService;
-import server.agents.capabilities.navigation.AgentMapleIslandTravelRuntime;
+import server.agents.capabilities.navigation.AgentTravelVariationRuntime;
 import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
@@ -51,7 +51,7 @@ public final class AgentOptionalTravelHopPolicy {
         }
         int currentRegionId = graph.regionIdByFootholdId.getOrDefault(currentFoothold.getId(), -1);
         if (currentRegionId < 0
-                || !AgentMapleIslandTravelRuntime.shouldAttemptTravelHop(
+                || !AgentTravelVariationRuntime.shouldAttemptTravelHop(
                 entry, nowMs)) {
             return false;
         }
@@ -72,7 +72,7 @@ public final class AgentOptionalTravelHopPolicy {
             return false;
         }
 
-        AgentMapleIslandTravelRuntime.markTravelHopStarted(entry, nowMs);
+        AgentTravelVariationRuntime.markTravelHopStarted(entry, nowMs);
         return true;
     }
 }

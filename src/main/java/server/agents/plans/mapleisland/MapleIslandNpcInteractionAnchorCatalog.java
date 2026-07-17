@@ -1,17 +1,16 @@
-package server.agents.capabilities.objective;
+package server.agents.plans.mapleisland;
 
 import java.awt.Point;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-final class AgentNpcInteractionAnchorCatalog {
+public final class MapleIslandNpcInteractionAnchorCatalog {
     private static final int YOONA_MAP_ID = 1010000;
     private static final int YOONA_NPC_ID = 20100;
     private static final List<Point> LEGACY_YOONA_ANCHORS = List.of(
-            new Point(-210, 95),
-            new Point(-150, 95),
-            new Point(-210, 215),
-            new Point(-150, 215));
+            new Point(-210, 95), new Point(-150, 95),
+            new Point(-210, 215), new Point(-150, 215));
     private static final Map<NpcPlacement, List<Point>> VARIATION_ANCHORS = Map.ofEntries(
             anchors(10000, 2101, points(116, 305, 136, 305, 156, 305, 96, 305, 174, 305)),
             anchors(10000, 2100, points(824, 125, 844, 125, 855, 125, 804, 125)),
@@ -32,46 +31,31 @@ final class AgentNpcInteractionAnchorCatalog {
             anchors(1010000, 20001, points(321, 95, 341, 95, 361, 95, 381, 95, 399, 95)),
             anchors(2000000, 20002, points(360, 527, 330, 527, 350, 527, 310, 527, 290, 527)));
 
-    private AgentNpcInteractionAnchorCatalog() {
+    private MapleIslandNpcInteractionAnchorCatalog() {
     }
 
-    static Point nearest(int mapId, int npcId, Point origin) {
-        List<Point> anchors = legacyAnchors(mapId, npcId);
+    public static Point nearestLegacy(int mapId, int npcId, Point origin) {
+        List<Point> anchors = mapId == YOONA_MAP_ID && npcId == YOONA_NPC_ID
+                ? LEGACY_YOONA_ANCHORS : List.of();
         if (anchors.isEmpty() || origin == null) {
             return null;
         }
-        Point nearest = anchors.getFirst();
-        double nearestDistanceSq = origin.distanceSq(nearest);
-        for (int i = 1; i < anchors.size(); i++) {
-            Point candidate = anchors.get(i);
-            double distanceSq = origin.distanceSq(candidate);
-            if (distanceSq < nearestDistanceSq) {
-                nearest = candidate;
-                nearestDistanceSq = distanceSq;
-            }
-        }
-        return new Point(nearest);
+        return anchors.stream().min(java.util.Comparator.comparingDouble(origin::distanceSq))
+                .map(Point::new).orElse(null);
     }
 
-    static List<Point> anchors(int mapId, int npcId) {
+    public static List<Point> anchors(int mapId, int npcId) {
         return VARIATION_ANCHORS.getOrDefault(new NpcPlacement(mapId, npcId), List.of())
                 .stream().map(Point::new).toList();
     }
 
-    private static List<Point> legacyAnchors(int mapId, int npcId) {
+    public static List<Point> legacyAnchorsFor(int mapId, int npcId) {
         return mapId == YOONA_MAP_ID && npcId == YOONA_NPC_ID
-                ? LEGACY_YOONA_ANCHORS.stream().map(Point::new).toList()
-                : List.of();
-    }
-
-    static List<Point> legacyAnchorsFor(int mapId, int npcId) {
-        return legacyAnchors(mapId, npcId);
+                ? LEGACY_YOONA_ANCHORS.stream().map(Point::new).toList() : List.of();
     }
 
     private static Map.Entry<NpcPlacement, List<Point>> anchors(
-            int mapId,
-            int npcId,
-            List<Point> points) {
+            int mapId, int npcId, List<Point> points) {
         return Map.entry(new NpcPlacement(mapId, npcId), List.copyOf(points));
     }
 
@@ -79,7 +63,7 @@ final class AgentNpcInteractionAnchorCatalog {
         if (coordinates.length % 2 != 0) {
             throw new IllegalArgumentException("anchor coordinates must be x/y pairs");
         }
-        java.util.ArrayList<Point> points = new java.util.ArrayList<>(coordinates.length / 2);
+        ArrayList<Point> points = new ArrayList<>(coordinates.length / 2);
         for (int index = 0; index < coordinates.length; index += 2) {
             points.add(new Point(coordinates[index], coordinates[index + 1]));
         }

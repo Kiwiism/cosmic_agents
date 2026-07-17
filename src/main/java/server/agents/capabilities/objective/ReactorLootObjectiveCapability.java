@@ -5,6 +5,8 @@ import server.agents.capabilities.runtime.AgentCapabilityContext;
 import server.agents.capabilities.runtime.AgentCapabilityStep;
 import server.agents.capabilities.runtime.AgentExecutableCapability;
 import server.agents.integration.PrimitiveCapabilityGateway;
+import server.agents.capabilities.navigation.AgentPortalRoutePolicy;
+import server.agents.capabilities.quest.AmherstScopePolicy;
 
 import java.util.Map;
 
@@ -41,6 +43,13 @@ public final class ReactorLootObjectiveCapability
         support = new AmherstObjectiveCapabilitySupport(gateway);
     }
 
+    public ReactorLootObjectiveCapability(PrimitiveCapabilityGateway gateway,
+                                          AmherstScopePolicy scopePolicy,
+                                          AgentPortalRoutePolicy routePolicy) {
+        support = new AmherstObjectiveCapabilitySupport(
+                gateway, scopePolicy, AmherstNpcInteractionDelay.NONE, routePolicy);
+    }
+
     @Override
     public String id() {
         return "reactor-loot-objective";
@@ -66,7 +75,8 @@ public final class ReactorLootObjectiveCapability
         }
         if (phase == 1 && !itemsReady) {
             AgentCapabilityStep approach = support.approachReactor(
-                    context, command.mapId(), command.reactorId(), command.reactorName());
+                    context, command.mapId(), command.questId(),
+                    command.reactorId(), command.reactorName());
             if (approach != null) {
                 return approach;
             }

@@ -1,7 +1,7 @@
 package server.agents.plans.mapleisland.cohort;
 
-import server.agents.capabilities.navigation.AgentMapleIslandTravelRuntime;
-import server.agents.capabilities.navigation.AgentMapleIslandTravelSettings;
+import server.agents.capabilities.navigation.AgentTravelVariationRuntime;
+import server.agents.capabilities.navigation.AgentTravelVariationSettings;
 import server.agents.capabilities.objective.MapleIslandObjectiveRandomnessRuntime;
 import server.agents.capabilities.objective.MapleIslandObjectiveRandomnessSettings;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
@@ -43,15 +43,15 @@ public final class MapleIslandCohortRealismService {
         MapleIslandObjectiveRandomnessRuntime.configure(entry,
                 new MapleIslandObjectiveRandomnessSettings(
                         true, seed, NO_DELAY, NO_DELAY, false, false));
-        AgentMapleIslandTravelRuntime.clear(entry);
+        AgentTravelVariationRuntime.clear(entry);
     }
 
     private static void configureLight(AgentRuntimeEntry entry, long seed) {
         MapleIslandObjectiveRandomnessRuntime.configure(entry,
                 new MapleIslandObjectiveRandomnessSettings(
                         true, seed, null, null, true, true));
-        AgentMapleIslandTravelRuntime.configure(entry,
-                new AgentMapleIslandTravelSettings(
+        AgentTravelVariationRuntime.configure(entry,
+                new AgentTravelVariationSettings(
                         seed, true, LIGHT_MAX_ROUTE_STRETCH, false, 0.0d,
                         sampleRange(seed ^ HOP_INTERVAL_DOMAIN, 2_500L, 4_500L), 0L));
     }
@@ -59,8 +59,8 @@ public final class MapleIslandCohortRealismService {
     private static void configureFull(AgentRuntimeEntry entry, long seed) {
         MapleIslandObjectiveRandomnessRuntime.configure(
                 entry, MapleIslandObjectiveRandomnessSettings.cohort(seed));
-        AgentMapleIslandTravelRuntime.configure(entry,
-                new AgentMapleIslandTravelSettings(
+        AgentTravelVariationRuntime.configure(entry,
+                new AgentTravelVariationSettings(
                         seed, true, FULL_MAX_ROUTE_STRETCH, true, FULL_TRAVEL_HOP_PROBABILITY,
                         sampleRange(seed ^ HOP_INTERVAL_DOMAIN, 2_500L, 4_500L),
                         sampleRange(seed ^ HOP_COOLDOWN_DOMAIN, 8_000L, 15_000L)));

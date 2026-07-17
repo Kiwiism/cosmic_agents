@@ -1,6 +1,5 @@
 package server.agents.capabilities.navigation;
 
-import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
@@ -15,64 +14,39 @@ public final class AgentMapleIslandTravelRuntime {
 
     public static void configure(AgentRuntimeEntry entry, AgentMapleIslandTravelSettings settings) {
         if (entry != null) {
-            entry.mapleIslandTravelState().configure(settings);
+            AgentTravelVariationRuntime.configure(entry, toGeneric(settings));
         }
     }
 
     public static void clear(AgentRuntimeEntry entry) {
         if (entry != null) {
-            entry.mapleIslandTravelState().clear();
+            AgentTravelVariationRuntime.clear(entry);
         }
     }
 
     public static AgentMapleIslandTravelSettings settings(AgentRuntimeEntry entry) {
         return entry == null
                 ? AgentMapleIslandTravelSettings.disabled()
-                : entry.mapleIslandTravelState().settings();
+                : toMapleIsland(AgentTravelVariationRuntime.settings(entry));
     }
 
     public static RouteVariation routeVariation(AgentRuntimeEntry entry,
                                                 int mapId,
                                                 int targetRegionId,
                                                 Point targetPosition) {
-        AgentMapleIslandTravelSettings settings = settings(entry);
-        if (!settings.routeVariationEnabled() || settings.maxRouteStretch() <= 1.0d) {
-            return null;
-        }
-        long seed = settings.seed();
-        seed = mix(seed ^ agentId(entry));
-        seed = mix(seed ^ mapId);
-        seed = mix(seed ^ targetRegionId);
-        if (targetPosition != null) {
-            seed = mix(seed ^ (((long) targetPosition.x) << 32) ^ (targetPosition.y & 0xffffffffL));
-        }
-        return new RouteVariation(seed, settings.maxRouteStretch());
+        AgentTravelVariationRuntime.RouteVariation variation =
+                AgentTravelVariationRuntime.routeVariation(entry, mapId, targetRegionId, targetPosition);
+        return variation == null ? null : new RouteVariation(variation.seed(), variation.maxRouteStretch());
     }
 
     public static boolean shouldAttemptTravelHop(AgentRuntimeEntry entry,
                                                   long nowMs) {
-        if (entry == null) {
-            return false;
-        }
-        AgentMapleIslandTravelState.HopDecision decision =
-                entry.mapleIslandTravelState().beginHopDecision(nowMs);
-        if (decision == null) {
-            return false;
-        }
-        AgentMapleIslandTravelSettings settings = decision.settings();
-        if (settings.travelHopProbability() <= 0.0d) {
-            return false;
-        }
-        if (settings.travelHopProbability() >= 1.0d) {
-            return true;
-        }
-        long sampleSeed = mix(settings.seed() ^ agentId(entry) ^ decision.sequence());
-        return unitDouble(sampleSeed) < settings.travelHopProbability();
+        return AgentTravelVariationRuntime.shouldAttemptTravelHop(entry, nowMs);
     }
 
     public static void markTravelHopStarted(AgentRuntimeEntry entry, long nowMs) {
         if (entry != null) {
-            entry.mapleIslandTravelState().markHopStarted(nowMs);
+            AgentTravelVariationRuntime.markTravelHopStarted(entry, nowMs);
         }
     }
 
@@ -87,9 +61,15 @@ public final class AgentMapleIslandTravelRuntime {
         return (mix(seed) >>> 11) * 0x1.0p-53;
     }
 
-    private static long agentId(AgentRuntimeEntry entry) {
-        return entry != null && AgentRuntimeIdentityRuntime.hasBot(entry)
-                ? AgentRuntimeIdentityRuntime.bot(entry).getId()
-                : 0L;
+    private static AgentTravelVariationSettings toGeneric(AgentMapleIslandTravelSettings settings) {
+        return new AgentTravelVariationSettings(settings.seed(), settings.routeVariationEnabled(),
+                settings.maxRouteStretch(), settings.travelHopsEnabled(), settings.travelHopProbability(),
+                settings.travelHopDecisionIntervalMs(), settings.travelHopCooldownMs());
+    }
+
+    private static AgentMapleIslandTravelSettings toMapleIsland(AgentTravelVariationSettings settings) {
+        return new AgentMapleIslandTravelSettings(settings.seed(), settings.routeVariationEnabled(),
+                settings.maxRouteStretch(), settings.travelHopsEnabled(), settings.travelHopProbability(),
+                settings.travelHopDecisionIntervalMs(), settings.travelHopCooldownMs());
     }
 }

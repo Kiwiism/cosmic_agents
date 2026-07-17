@@ -1,5 +1,8 @@
 package server.agents.capabilities.quest;
 
+import server.agents.plans.amherst.AmherstQuestCatalog;
+import server.agents.plans.amherst.MapleIslandSouthperryQuestCatalog;
+
 import server.agents.capabilities.AgentCapabilityStatus;
 
 import java.util.ArrayDeque;

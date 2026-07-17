@@ -1,5 +1,7 @@
 package server.agents.capabilities.primitive;
 
+import server.agents.capabilities.movement.AgentClimbStateRuntime;
+import server.agents.capabilities.movement.fidget.AgentProfileNavigationFidgetPolicy;
 import server.agents.capabilities.runtime.AgentCapabilityCommand;
 import server.agents.capabilities.runtime.AgentCapabilityContext;
 import server.agents.capabilities.runtime.AgentCapabilityResult;
@@ -7,14 +9,22 @@ import server.agents.capabilities.runtime.AgentCapabilityStep;
 import server.agents.capabilities.runtime.AgentExecutableCapability;
 import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
 import server.agents.integration.PrimitiveCapabilityGateway;
-import server.agents.capabilities.movement.fidget.AgentProfileNavigationFidgetPolicy;
+import server.maps.Rope;
 
 import java.awt.Point;
 
 public final class AgentNavigationCapability
         implements AgentExecutableCapability<AgentNavigationCapability.Command> {
-    public record Command(int mapId, Point destination, int tolerancePx, boolean precise)
+    public record Command(int mapId,
+                          Point destination,
+                          int tolerancePx,
+                          boolean precise,
+                          boolean allowClimbingArrival)
             implements AgentCapabilityCommand {
+        public Command(int mapId, Point destination, int tolerancePx, boolean precise) {
+            this(mapId, destination, tolerancePx, precise, false);
+        }
+
         public Command {
             if (destination == null || tolerancePx < 0) {
                 throw new IllegalArgumentException("destination and non-negative tolerance are required");
@@ -52,7 +62,8 @@ public final class AgentNavigationCapability
         }
         if (gateway.position(context.agent()).distanceSq(command.destination())
                 <= (long) command.tolerancePx() * command.tolerancePx()) {
-            if (!gateway.grounded(context.agent())) {
+            if (!gateway.grounded(context.agent())
+                    && !matchesClimbingArrival(context, command)) {
                 return AgentCapabilityStep.running("waiting to land at navigation destination", false);
             }
             gateway.stop(context.entry());
@@ -63,6 +74,14 @@ public final class AgentNavigationCapability
         }
         gateway.navigate(context.entry(), command.destination(), command.precise());
         return AgentCapabilityStep.running("delegating to reconstructed navigation", false);
+    }
+
+    private boolean matchesClimbingArrival(AgentCapabilityContext context, Command command) {
+        Rope rope = AgentClimbStateRuntime.climbRope(context.entry());
+        return command.allowClimbingArrival() && rope != null
+                && rope.x() == command.destination().x
+                && command.destination().y >= rope.topY()
+                && command.destination().y <= rope.bottomY();
     }
 
     @Override

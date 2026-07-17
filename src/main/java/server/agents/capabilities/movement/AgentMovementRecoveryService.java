@@ -5,6 +5,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStuckStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.diagnostics.AgentRunObservationRuntime;
 
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -31,5 +32,6 @@ public final class AgentMovementRecoveryService {
         AgentMovementStateResetService.clearNavigationState(entry);
         AgentMovementStuckStateRuntime.setUnstuckCooldownMs(entry, AgentMovementTimers.delayAfterCurrentTick(5000));
         AgentMovementBroadcastService.broadcastMovement(entry);
+        AgentRunObservationRuntime.recovery(entry, agent, "movement-unstuck", System.currentTimeMillis());
     }
 }

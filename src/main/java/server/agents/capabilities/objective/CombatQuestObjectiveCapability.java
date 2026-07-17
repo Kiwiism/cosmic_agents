@@ -6,6 +6,7 @@ import server.agents.capabilities.runtime.AgentCapabilityStep;
 import server.agents.capabilities.runtime.AgentExecutableCapability;
 import server.agents.integration.PrimitiveCapabilityGateway;
 import server.agents.capabilities.quest.AmherstScopePolicy;
+import server.agents.capabilities.navigation.AgentPortalRoutePolicy;
 
 import java.util.Map;
 
@@ -53,6 +54,13 @@ public final class CombatQuestObjectiveCapability
     public CombatQuestObjectiveCapability(PrimitiveCapabilityGateway gateway,
                                           AmherstScopePolicy scopePolicy) {
         support = new AmherstObjectiveCapabilitySupport(gateway, scopePolicy);
+    }
+
+    public CombatQuestObjectiveCapability(PrimitiveCapabilityGateway gateway,
+                                          AmherstScopePolicy scopePolicy,
+                                          AgentPortalRoutePolicy routePolicy) {
+        support = new AmherstObjectiveCapabilitySupport(
+                gateway, scopePolicy, AmherstNpcInteractionDelay.NONE, routePolicy);
     }
 
     @Override

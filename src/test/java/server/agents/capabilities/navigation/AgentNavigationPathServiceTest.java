@@ -202,8 +202,8 @@ class AgentNavigationPathServiceTest {
         AgentNavigationGraph.Edge selected = null;
         long selectedSeed = -1L;
         for (long seed = 0L; seed < 10_000L; seed++) {
-            AgentMapleIslandTravelRuntime.RouteVariation variation =
-                    new AgentMapleIslandTravelRuntime.RouteVariation(seed, 2.0d);
+            AgentTravelVariationRuntime.RouteVariation variation =
+                    new AgentTravelVariationRuntime.RouteVariation(seed, 2.0d);
             AgentNavigationGraph.Edge candidate = AgentNavigationPathService.findNextEdgeVaried(
                     graph, bot, 1, 3, new Point(200, 100), variation);
             if (candidate == direct) {
@@ -217,15 +217,15 @@ class AgentNavigationPathServiceTest {
         assertTrue(direct.cost <= Math.ceil((viaFirst.cost + viaSecond.cost) * 2.0d));
         assertEquals(direct, AgentNavigationPathService.findNextEdgeVaried(
                 graph, bot, 1, 3, new Point(200, 100),
-                new AgentMapleIslandTravelRuntime.RouteVariation(selectedSeed, 2.0d)));
+                new AgentTravelVariationRuntime.RouteVariation(selectedSeed, 2.0d)));
     }
 
     @Test
     void transitionVariationIsNeverCheaperAndHonorsStretchBound() {
         AgentNavigationGraph.Edge edge = edge(1, 2, AgentNavigationGraph.EdgeType.JUMP,
                 new Point(10, 100), new Point(80, 60), 250);
-        AgentMapleIslandTravelRuntime.RouteVariation variation =
-                new AgentMapleIslandTravelRuntime.RouteVariation(123L, 1.2d);
+        AgentTravelVariationRuntime.RouteVariation variation =
+                new AgentTravelVariationRuntime.RouteVariation(123L, 1.2d);
 
         int varied = AgentNavigationPathService.variedTransitionCost(250, edge, variation);
 

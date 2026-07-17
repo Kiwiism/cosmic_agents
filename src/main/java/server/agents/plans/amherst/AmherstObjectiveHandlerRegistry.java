@@ -7,14 +7,15 @@ import server.agents.capabilities.objective.AmherstNpcInteractionDelay;
 import server.agents.capabilities.objective.NpcQuestObjectiveCapability;
 import server.agents.capabilities.objective.PlanStopObjectiveCapability;
 import server.agents.capabilities.objective.ReactorLootObjectiveCapability;
-import server.agents.capabilities.movement.AgentRelaxerSpotCatalog;
 import server.agents.capabilities.quest.AmherstScopePolicy;
-import server.agents.capabilities.quest.MapleIslandSouthperryQuestCatalog;
 import server.agents.capabilities.runtime.AgentCapabilityCommand;
 import server.agents.capabilities.runtime.AgentCapabilityInvocation;
 import server.agents.capabilities.runtime.AgentExecutableCapability;
 import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
 import server.agents.integration.PrimitiveCapabilityGateway;
+import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.plans.mapleisland.AgentSplitRoadRouteService;
+import server.agents.plans.mapleisland.MapleIslandNpcInteractionPlacementPolicy;
 import constants.id.ItemId;
 
 import java.util.ArrayList;
@@ -33,61 +34,78 @@ public final class AmherstObjectiveHandlerRegistry {
     private final PrimitiveCapabilityGateway gateway;
     private final AmherstNpcInteractionDelay npcInteractionDelay;
     private final AmherstScopePolicy scopePolicy;
+    private final AgentRuntimeEntry entry;
 
     public AmherstObjectiveHandlerRegistry() {
         this(AgentPrimitiveCapabilityGatewayRuntime.gateway(), AmherstNpcInteractionDelay.NONE,
-                new AmherstScopePolicy());
+                new AmherstScopePolicy(), null);
     }
 
     public AmherstObjectiveHandlerRegistry(PrimitiveCapabilityGateway gateway) {
-        this(gateway, AmherstNpcInteractionDelay.NONE, new AmherstScopePolicy());
+        this(gateway, AmherstNpcInteractionDelay.NONE, new AmherstScopePolicy(), null);
     }
 
     public AmherstObjectiveHandlerRegistry(PrimitiveCapabilityGateway gateway,
                                             AmherstNpcInteractionDelay npcInteractionDelay) {
-        this(gateway, npcInteractionDelay, new AmherstScopePolicy());
+        this(gateway, npcInteractionDelay, new AmherstScopePolicy(), null);
     }
 
     public AmherstObjectiveHandlerRegistry(PrimitiveCapabilityGateway gateway,
                                             AmherstNpcInteractionDelay npcInteractionDelay,
                                             AmherstScopePolicy scopePolicy) {
+        this(gateway, npcInteractionDelay, scopePolicy, null);
+    }
+
+    public AmherstObjectiveHandlerRegistry(PrimitiveCapabilityGateway gateway,
+                                            AmherstNpcInteractionDelay npcInteractionDelay,
+                                            AmherstScopePolicy scopePolicy,
+                                            AgentRuntimeEntry entry) {
         this.gateway = gateway;
         this.npcInteractionDelay = npcInteractionDelay == null
                 ? AmherstNpcInteractionDelay.NONE : npcInteractionDelay;
         this.scopePolicy = scopePolicy;
+        this.entry = entry;
     }
 
     public AmherstObjectiveExecution create(AmherstPlanCard card, AmherstPlanObjective objective) {
         return switch (objective.kind()) {
-            case QUEST_START -> npcQuest(objective, List.of(operation(objective.questId(), 1,
+            case QUEST_START -> npcQuest(objective, List.of(operation(objective.mapId(), objective.questId(), 1,
                     objective.npcId(), null)), false);
-            case QUEST_COMPLETE -> npcQuest(objective, List.of(operation(objective.questId(), 2,
+            case QUEST_COMPLETE -> npcQuest(objective, List.of(operation(objective.mapId(), objective.questId(), 2,
                     null, objective.npcId())), false);
             case FORCE_COMPLETE_QUEST -> execution(objective.objectiveId(),
-                    new ForceCompleteQuestObjectiveCapability(gateway, scopePolicy, npcInteractionDelay),
+                    new ForceCompleteQuestObjectiveCapability(gateway, scopePolicy, npcInteractionDelay,
+                            AgentSplitRoadRouteService.INSTANCE),
                     new ForceCompleteQuestObjectiveCapability.Command(
-                            objective.objectiveId(), objective.mapId(), objective.questId(), objective.npcId()));
+                            objective.objectiveId(), objective.mapId(), objective.questId(), objective.npcId(),
+                            MapleIslandForcedQuestBehavior.fieldAbsence(entry, objective.questId()),
+                            npcPlacement(objective.mapId(), objective.npcId())));
             case QUEST_CHAIN -> npcQuest(objective, chainOperations(objective, 2), false);
             case QUEST_CHAIN_IF_AVAILABLE -> npcQuest(objective, chainOperations(objective, 2), true);
             case USE_ITEM -> execution(objective.objectiveId(), new InventoryUseObjectiveCapability(gateway),
                     new InventoryUseObjectiveCapability.Command(
                             objective.objectiveId(), objective.questId(), objective.itemId()));
             case KILL_MOBS -> execution(objective.objectiveId(),
-                    new CombatQuestObjectiveCapability(gateway, scopePolicy),
+                    new CombatQuestObjectiveCapability(
+                            gateway, scopePolicy, AgentSplitRoadRouteService.INSTANCE),
                     new CombatQuestObjectiveCapability.Command(objective.objectiveId(), objective.mapId(),
                             objective.questId(), zip(objective.mobIds(), objective.counts()),
                             itemCounts(objective.itemIds())));
             case REACTOR_HIT, REACTOR_BOX_ITEMS -> execution(objective.objectiveId(),
-                    new ReactorLootObjectiveCapability(gateway),
+                    new ReactorLootObjectiveCapability(
+                            gateway, scopePolicy, AgentSplitRoadRouteService.INSTANCE),
                     new ReactorLootObjectiveCapability.Command(objective.objectiveId(), objective.mapId(),
                             objective.questId(), null, null, reactorItems(card, objective), null));
             case STOP_PLAN -> execution(objective.objectiveId(),
-                    new PlanStopObjectiveCapability(gateway, scopePolicy),
+                    new PlanStopObjectiveCapability(
+                            gateway, scopePolicy,
+                            new MapleIslandPlanCompletionBehavior(gateway,
+                                    isRelaxerMode(objective.mode()) ? ItemId.RELAXER : null,
+                                    restSpotPool(objective.mode())),
+                            AgentSplitRoadRouteService.INSTANCE),
                     new PlanStopObjectiveCapability.Command(objective.objectiveId(),
                             card.exitCriteria().finalMapId(), expectedQuestStatuses(card),
-                            card.exitCriteria().blockedCompletedQuestIds(), objective.reason(),
-                            isRelaxerMode(objective.mode()) ? ItemId.RELAXER : null,
-                            restSpotPool(objective.mode())));
+                            card.exitCriteria().blockedCompletedQuestIds(), objective.reason()));
         };
     }
 
@@ -95,7 +113,8 @@ public final class AmherstObjectiveHandlerRegistry {
                                                 List<NpcQuestObjectiveCapability.QuestOperation> operations,
                                                 boolean skipUnavailable) {
         return execution(objective.objectiveId(), new NpcQuestObjectiveCapability(
-                        gateway, scopePolicy, npcInteractionDelay),
+                        gateway, scopePolicy, npcInteractionDelay,
+                        AgentSplitRoadRouteService.INSTANCE),
                 new NpcQuestObjectiveCapability.Command(
                         objective.objectiveId(), objective.mapId(), operations, skipUnavailable));
     }
@@ -104,12 +123,13 @@ public final class AmherstObjectiveHandlerRegistry {
                                                                              int desiredStatus) {
         List<NpcQuestObjectiveCapability.QuestOperation> operations = new ArrayList<>();
         for (Integer questId : objective.questIds()) {
-            operations.add(operation(questId, desiredStatus, null, null));
+            operations.add(operation(objective.mapId(), questId, desiredStatus, null, null));
         }
         return List.copyOf(operations);
     }
 
-    private NpcQuestObjectiveCapability.QuestOperation operation(int questId,
+    private NpcQuestObjectiveCapability.QuestOperation operation(int mapId,
+                                                                 int questId,
                                                                  int desiredStatus,
                                                                  Integer startOverride,
                                                                  Integer completeOverride) {
@@ -121,7 +141,14 @@ public final class AmherstObjectiveHandlerRegistry {
             completeNpc = startNpc;
         }
         return new NpcQuestObjectiveCapability.QuestOperation(
-                questId, startNpc, completeNpc, desiredStatus);
+                questId, startNpc, completeNpc, desiredStatus,
+                npcPlacement(mapId, startNpc), npcPlacement(mapId, completeNpc));
+    }
+
+    private server.agents.capabilities.objective.AgentNpcInteractionPlacementData npcPlacement(
+            int mapId, int npcId) {
+        return MapleIslandNpcInteractionPlacementPolicy.data(entry, mapId, npcId,
+                server.agents.capabilities.npc.AgentNpcInteractionPolicy.DEFAULT_CLICK_RANGE_PX);
     }
 
     private Map<Integer, Integer> reactorItems(AmherstPlanCard card, AmherstPlanObjective objective) {
@@ -168,18 +195,18 @@ public final class AmherstObjectiveHandlerRegistry {
         return restSpotPool(mode) != null;
     }
 
-    private static AgentRelaxerSpotCatalog.Pool restSpotPool(String mode) {
+    private static MapleIslandRelaxerSpotCatalog.Pool restSpotPool(String mode) {
         if (RELAXER_MODE.equalsIgnoreCase(mode)) {
-            return AgentRelaxerSpotCatalog.Pool.AMHERST;
+            return MapleIslandRelaxerSpotCatalog.Pool.AMHERST;
         }
         if (SOUTHPERRY_RELAXER_MODE.equalsIgnoreCase(mode)) {
-            return AgentRelaxerSpotCatalog.Pool.SOUTHPERRY_ALL;
+            return MapleIslandRelaxerSpotCatalog.Pool.SOUTHPERRY_ALL;
         }
         if (SOUTHPERRY_LEFT_RELAXER_MODE.equalsIgnoreCase(mode)) {
-            return AgentRelaxerSpotCatalog.Pool.SOUTHPERRY_LEFT;
+            return MapleIslandRelaxerSpotCatalog.Pool.SOUTHPERRY_LEFT;
         }
         if (SOUTHPERRY_RIGHT_RELAXER_MODE.equalsIgnoreCase(mode)) {
-            return AgentRelaxerSpotCatalog.Pool.SOUTHPERRY_RIGHT;
+            return MapleIslandRelaxerSpotCatalog.Pool.SOUTHPERRY_RIGHT;
         }
         return null;
     }

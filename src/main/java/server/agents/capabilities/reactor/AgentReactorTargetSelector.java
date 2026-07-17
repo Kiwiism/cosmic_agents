@@ -9,14 +9,29 @@ import java.util.Optional;
 
 public final class AgentReactorTargetSelector {
     public Optional<AgentReactorTarget> select(List<Reactor> reactors, AgentReactorInteractionRequest request) {
+        return matchingTargets(reactors, request).stream().findFirst();
+    }
+
+    public Optional<AgentReactorTarget> selectReserved(List<Reactor> reactors,
+                                                       AgentReactorInteractionRequest request,
+                                                       int agentId,
+                                                       Object mapScope) {
+        return AgentReactorTargetReservationRuntime.reserveNearest(
+                agentId, mapScope, matchingTargets(reactors, request));
+    }
+
+    private List<AgentReactorTarget> matchingTargets(
+            List<Reactor> reactors, AgentReactorInteractionRequest request) {
         if (reactors == null || request == null) {
-            return Optional.empty();
+            return List.of();
         }
 
         return reactors.stream()
                 .filter(reactor -> matches(reactor, request))
-                .min(Comparator.comparingLong(reactor -> distanceSq(request.agentPosition(), reactor.getPosition())))
-                .map(this::toTarget);
+                .sorted(Comparator.comparingLong(
+                        reactor -> distanceSq(request.agentPosition(), reactor.getPosition())))
+                .map(this::toTarget)
+                .toList();
     }
 
     private boolean matches(Reactor reactor, AgentReactorInteractionRequest request) {

@@ -7,7 +7,7 @@ worlds:
     server_message: Welcome to Scania!
     event_message: Scania!
     why_am_i_recommended: Welcome to Scania!
-    channels: 3
+    channels: 1
     exp_rate: 1
     mob_rate: 1.0                            #Mob count multiplier
     max_mob_per_spawnpoint: 2                #Must be equal or higher than mob_rate
@@ -180,7 +180,7 @@ server:
     WORLDS: 1                           #Initial number of worlds on the server.
     WLDLIST_SIZE: 21                    #Max possible worlds on the server.
     CHANNEL_SIZE: 20                    #Max possible channels per world (which is 20, based on the channel list on login phase).
-    CHANNEL_LOAD: 100                   #Max players per channel (limit actually used to calculate the World server capacity).
+    CHANNEL_LOAD: 1000                  #Max players per channel (limit actually used to calculate the World server capacity).
     CHANNEL_LOCKS: 20                   #Total number of structure management locks each channel has.
 
     RESPAWN_INTERVAL: 10000             #10 seconds, 10000.

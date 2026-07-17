@@ -1,5 +1,8 @@
 package server.agents.capabilities.movement;
 
+import server.maps.reservation.CharacterSpaceOwner;
+import server.maps.reservation.CharacterSpaceReservationRuntime;
+
 import client.Character;
 import constants.game.CharacterStance;
 import server.agents.integration.AgentPacketGatewayRuntime;
@@ -33,7 +36,7 @@ public final class AgentChairService {
             return false;
         }
         agent.sitChair(-1);
-        AgentRelaxerSpotReservationRuntime.release(agent.getId());
+        CharacterSpaceReservationRuntime.release(CharacterSpaceOwner.character(agent.getId()));
         int stance = AgentMovementStateRuntime.facingDirectionSign(entry) < 0
                 ? CharacterStance.STAND_LEFT_STANCE : CharacterStance.STAND_RIGHT_STANCE;
         broadcast(entry, agent, 0, stance);

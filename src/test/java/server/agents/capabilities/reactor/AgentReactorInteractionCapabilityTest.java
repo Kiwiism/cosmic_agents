@@ -1,6 +1,7 @@
 package server.agents.capabilities.reactor;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
 import server.agents.capabilities.AgentCapabilityStatus;
 import server.maps.Reactor;
 
@@ -17,6 +18,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class AgentReactorInteractionCapabilityTest {
+    @AfterEach
+    void clearTargetReservations() {
+        AgentReactorTargetReservationRuntime.clear();
+    }
+
     @Test
     void defaultScopeAllowsOnlyPioReactorQuestInAmherst() {
         AgentReactorInteractionCapability capability = new AgentReactorInteractionCapability();
@@ -48,6 +54,26 @@ class AgentReactorInteractionCapabilityTest {
         assertEquals(1002000, selected.reactorId());
         assertEquals("box", selected.reactorName());
         assertEquals(new Point(10, 0), selected.targetPosition());
+    }
+
+    @Test
+    void reservedSelectionSpreadsAgentsAcrossNearestAvailableReactors() {
+        AgentReactorTargetSelector selector = new AgentReactorTargetSelector();
+        Reactor nearest = reactor(10, 1002000, "box", new Point(10, 0), true, true);
+        Reactor farther = reactor(11, 1002000, "box", new Point(50, 0), true, true);
+        AgentReactorInteractionRequest request = new AgentReactorInteractionRequest(
+                1000000, 1008, AgentReactorInteractionMode.HIT,
+                1002000, "box", null, new Point(0, 0), 100);
+        Object mapScope = new Object();
+
+        assertEquals(10, selector.selectReserved(
+                List.of(farther, nearest), request, 1, mapScope).orElseThrow().objectId());
+        assertEquals(11, selector.selectReserved(
+                List.of(farther, nearest), request, 2, mapScope).orElseThrow().objectId());
+
+        AgentReactorTargetReservationRuntime.release(1);
+        assertEquals(10, selector.selectReserved(
+                List.of(farther, nearest), request, 3, mapScope).orElseThrow().objectId());
     }
 
     @Test

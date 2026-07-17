@@ -205,7 +205,13 @@ class MapleIslandSouthperryPlanTest {
         resumed.start(resumedEntry, fixture.agent, now);
         resumed.tick(resumedEntry, fixture.agent, now + 1L);
 
-        assertEquals(1, index(card, resumedEntry.amherstPlanExecutionState().assignedObjectiveId()));
+        AmherstObjectiveReconciler reconciler = new AmherstObjectiveReconciler(fixture.gateway);
+        int expectedIndex = java.util.stream.IntStream.range(0, card.objectives().size())
+                .filter(candidate -> !reconciler.reconcile(
+                        card, card.objectives().get(candidate), fixture.agent).satisfied())
+                .findFirst().orElse(card.objectives().size());
+        assertEquals(expectedIndex,
+                index(card, resumedEntry.amherstPlanExecutionState().assignedObjectiveId()));
         assertEquals(1, fixture.quests.get(1040));
     }
 

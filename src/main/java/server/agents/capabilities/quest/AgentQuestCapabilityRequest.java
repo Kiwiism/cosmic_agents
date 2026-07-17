@@ -1,5 +1,6 @@
 package server.agents.capabilities.quest;
 
+
 import java.awt.Point;
 
 public record AgentQuestCapabilityRequest(
@@ -22,11 +23,6 @@ public record AgentQuestCapabilityRequest(
         }
         if (snapshot == null) {
             snapshot = AgentQuestSnapshot.emptyLv1Beginner();
-        }
-        if (requirement == null) {
-            requirement = AmherstQuestCatalog.find(questId)
-                    .map(AgentQuestRequirement::fromAmherst)
-                    .orElse(null);
         }
     }
 }

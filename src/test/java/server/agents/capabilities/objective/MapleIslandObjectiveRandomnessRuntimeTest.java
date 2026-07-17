@@ -5,9 +5,10 @@ import server.agents.profiles.AgentBehaviorProfile;
 import server.agents.profiles.AgentBehaviorProfileRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
-import java.util.OptionalInt;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.OptionalInt;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -58,6 +59,21 @@ class MapleIslandObjectiveRandomnessRuntimeTest {
                     MapleIslandObjectiveRandomnessRuntime.selectRestFacingDirection(
                             second, 2000000));
         }
+    }
+
+    @Test
+    void cohortSeedsCoverAllSouthperryPostPlanBehaviors() {
+        EnumSet<AgentPlanCompletionMode> behaviors =
+                EnumSet.noneOf(AgentPlanCompletionMode.class);
+        AgentRuntimeEntry entry = entryWithProfile();
+        for (long seed = 0L; seed < 500L; seed++) {
+            MapleIslandObjectiveRandomnessRuntime.configure(
+                    entry, MapleIslandObjectiveRandomnessSettings.cohort(seed));
+            behaviors.add(MapleIslandObjectiveRandomnessRuntime.selectPostPlanBehavior(
+                    entry, 2000000));
+        }
+
+        assertEquals(EnumSet.allOf(AgentPlanCompletionMode.class), behaviors);
     }
 
     @Test

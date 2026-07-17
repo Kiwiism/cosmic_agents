@@ -158,7 +158,7 @@ public final class AgentNavigationPathService {
             int startRegionId,
             int targetRegionId,
             Point targetPos,
-            AgentMapleIslandTravelRuntime.RouteVariation variation) {
+            AgentTravelVariationRuntime.RouteVariation variation) {
         if (variation == null || variation.maxRouteStretch() <= 1.0d) {
             return findNextEdge(graph, bot, startRegionId, targetRegionId, targetPos);
         }
@@ -240,7 +240,7 @@ public final class AgentNavigationPathService {
                                    boolean zeroHeuristic,
                                    boolean instrument,
                                    int edgeCheckBudget,
-                                   AgentMapleIslandTravelRuntime.RouteVariation routeVariation) {
+                                   AgentTravelVariationRuntime.RouteVariation routeVariation) {
         return runSearch(graph, map, startPos, startRegionId, targetRegionId, targetPos,
                 pathfindCaller, zeroHeuristic, instrument, edgeCheckBudget, routeVariation, Map.of());
     }
@@ -255,7 +255,7 @@ public final class AgentNavigationPathService {
                                    boolean zeroHeuristic,
                                    boolean instrument,
                                    int edgeCheckBudget,
-                                   AgentMapleIslandTravelRuntime.RouteVariation routeVariation,
+                                   AgentTravelVariationRuntime.RouteVariation routeVariation,
                                    Map<Integer, Integer> regionEntryCosts) {
         long startedAt = System.nanoTime();
         PathfindProfile profile = null;
@@ -407,20 +407,20 @@ public final class AgentNavigationPathService {
     static int variedTransitionCost(
             int baseCost,
             AgentNavigationGraph.Edge edge,
-            AgentMapleIslandTravelRuntime.RouteVariation variation) {
+            AgentTravelVariationRuntime.RouteVariation variation) {
         if (baseCost <= 0 || edge == null || variation == null || variation.maxRouteStretch() <= 1.0d) {
             return Math.max(0, baseCost);
         }
         long edgeSeed = variation.seed();
-        edgeSeed = AgentMapleIslandTravelRuntime.mix(edgeSeed ^ edge.fromRegionId);
-        edgeSeed = AgentMapleIslandTravelRuntime.mix(edgeSeed ^ edge.toRegionId);
-        edgeSeed = AgentMapleIslandTravelRuntime.mix(edgeSeed ^ edge.type.ordinal());
-        edgeSeed = AgentMapleIslandTravelRuntime.mix(
+        edgeSeed = AgentTravelVariationRuntime.mix(edgeSeed ^ edge.fromRegionId);
+        edgeSeed = AgentTravelVariationRuntime.mix(edgeSeed ^ edge.toRegionId);
+        edgeSeed = AgentTravelVariationRuntime.mix(edgeSeed ^ edge.type.ordinal());
+        edgeSeed = AgentTravelVariationRuntime.mix(
                 edgeSeed ^ (((long) edge.startPoint.x) << 32) ^ (edge.startPoint.y & 0xffffffffL));
-        edgeSeed = AgentMapleIslandTravelRuntime.mix(
+        edgeSeed = AgentTravelVariationRuntime.mix(
                 edgeSeed ^ (((long) edge.endPoint.x) << 32) ^ (edge.endPoint.y & 0xffffffffL));
-        edgeSeed = AgentMapleIslandTravelRuntime.mix(edgeSeed ^ edge.portalId ^ edge.launchStepX);
-        double multiplier = 1.0d + AgentMapleIslandTravelRuntime.unitDouble(edgeSeed)
+        edgeSeed = AgentTravelVariationRuntime.mix(edgeSeed ^ edge.portalId ^ edge.launchStepX);
+        double multiplier = 1.0d + AgentTravelVariationRuntime.unitDouble(edgeSeed)
                 * (variation.maxRouteStretch() - 1.0d);
         long varied = (long) Math.ceil(baseCost * multiplier);
         return (int) Math.min(Integer.MAX_VALUE, varied);

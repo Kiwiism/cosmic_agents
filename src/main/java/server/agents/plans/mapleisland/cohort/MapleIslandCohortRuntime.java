@@ -10,7 +10,7 @@ import server.agents.capabilities.quest.AmherstTestResetMode;
 import server.agents.capabilities.quest.AmherstTestResetRequest;
 import server.agents.capabilities.quest.AmherstTestResetResult;
 import server.agents.capabilities.quest.AmherstTestResetService;
-import server.agents.capabilities.quest.AmherstQuestCatalog;
+import server.agents.plans.amherst.AmherstQuestCatalog;
 import server.agents.integration.AgentMapGatewayRuntime;
 import server.agents.integration.cosmic.CosmicAgentBackingAccountSecurity;
 import server.agents.integration.cosmic.CosmicAgentOfflineLoader;
@@ -18,6 +18,8 @@ import server.agents.integration.cosmic.CosmicCharacterGateway;
 import server.agents.integration.cosmic.CosmicMapleIslandCohortProvisioning;
 import server.agents.integration.cosmic.CosmicMapleIslandCohortIdentity;
 import server.agents.plans.amherst.AmherstPlanCard;
+import server.agents.plans.amherst.AmherstPlanObservation;
+import server.agents.plans.amherst.AmherstPlanObserver;
 import server.agents.plans.mapleisland.AgentMapleIslandPlanRuntime;
 import server.agents.runtime.AgentInteractionRuntime;
 import server.agents.runtime.AgentRuntimeCleanupService;
@@ -42,6 +44,7 @@ public final class MapleIslandCohortRuntime {
 
     private final MapleIslandCohortPoolService pool;
     private final MapleIslandCohortRunService runs;
+    private final MapleIslandCohortTelemetryService telemetry = new MapleIslandCohortTelemetryService();
 
     private MapleIslandCohortRuntime() throws IOException {
         MapleIslandCohortPoolRegistry registry = new MapleIslandCohortPoolRegistry(
@@ -77,11 +80,18 @@ public final class MapleIslandCohortRuntime {
             throw new IllegalStateException("Maple Island showcase runs are disabled");
         }
         pool.recoverStaleLeases(runs.activeSessionIds());
-        return runs.start(request);
+        MapleIslandCohortRunService.Status status = runs.start(request);
+        telemetry.beginSession(status.sessionId(), status.realismMode());
+        return status;
     }
 
     public MapleIslandCohortRunService.Status status(int world, int channel) {
         return runs.status(world, channel);
+    }
+
+    public MapleIslandCohortTelemetryService.Snapshot telemetry(int world, int channel) {
+        MapleIslandCohortRunService.Status status = runs.status(world, channel);
+        return status == null ? null : telemetry.snapshot(status.sessionId(), System.currentTimeMillis());
     }
 
     public MapleIslandCohortRunService.Status cancel(int world, int channel) {
@@ -170,6 +180,7 @@ public final class MapleIslandCohortRuntime {
             agent = CosmicAgentOfflineLoader.loadOfflineAgent(
                     pooled.characterId(), context.world(), context.channel(), startMap, startPosition);
             AgentRuntimeEntry entry = AgentInteractionRuntime.registerSelfDirectedAgent(agent);
+            telemetry.register(context.sessionId(), context.realismMode(), agent, System.currentTimeMillis());
             AgentMovementCommandRuntime.stop(entry);
             AgentPartyLifecycleService.leaveAgentParty(agent);
 
@@ -191,12 +202,28 @@ public final class MapleIslandCohortRuntime {
             AmherstPlanCard card = AgentMapleIslandPlanRuntime.fullCard();
             AgentMapleIslandPlanRuntime.defaultStore().delete(card.planId(), agent.getId());
             MapleIslandCohortEntrySetup.apply(entry, context);
-            AgentMapleIslandPlanRuntime.startFullAuto(entry, agent, System.currentTimeMillis(), event ->
-                    log.debug("Maple Island cohort session={} agent={} {}",
-                            context.sessionId(), pooled.name(), event));
+            int agentId = agent.getId();
+            AgentMapleIslandPlanRuntime.startFullAuto(entry, agent, System.currentTimeMillis(),
+                    new AmherstPlanObserver() {
+                        @Override
+                        public void publish(String event) {
+                            log.debug("Maple Island cohort session={} agent={} {}",
+                                    context.sessionId(), pooled.name(), event);
+                        }
+
+                        @Override
+                        public void observe(AmherstPlanObservation observation) {
+                            telemetry.observe(agentId, observation);
+                            if (observation.type() == AmherstPlanObservation.Type.PLAN_COMPLETED) {
+                                AgentSchedulerRuntime.schedule(() -> logFinalTelemetryIfComplete(context), 0L);
+                            }
+                        }
+                    });
             pool.markActive(pooled.characterId(), context.sessionId(), System.currentTimeMillis());
         } catch (Exception | Error failure) {
+            telemetry.startupFailed(context.sessionId(), pooled.name());
             if (agent != null) {
+                telemetry.detach(agent.getId());
                 AgentRuntimeCleanupService.removeAgentByCharacterId(agent.getId());
                 if (agent.getClient() != null) {
                     agent.getClient().forceDisconnect();
@@ -231,6 +258,26 @@ public final class MapleIslandCohortRuntime {
         }
     }
 
+    private void logFinalTelemetryIfComplete(MapleIslandCohortRunService.AgentContext context) {
+        MapleIslandCohortRunService.Status status = runs.status(context.world(), context.channel());
+        if (status == null || status.state() != MapleIslandCohortRunService.RunState.COMPLETED
+                || !telemetry.markFinalSummaryLogged(context.sessionId())) {
+            return;
+        }
+        MapleIslandCohortTelemetryService.Snapshot snapshot = telemetry.snapshot(
+                context.sessionId(), System.currentTimeMillis());
+        if (snapshot != null) {
+            log.info("Maple Island cohort complete session={} realism={} tracked={} "
+                            + "amherstAvgMs={} southperryAvgMs={} fullRunAvgMs={} "
+                            + "retries={} timeouts={} blocked={} failures={} liveStateRecoveries={} unstucks={}",
+                    snapshot.sessionId(), snapshot.realismMode(), snapshot.trackedAgents(),
+                    snapshot.amherst().averageMs(), snapshot.southperry().averageMs(),
+                    snapshot.completion().averageMs(), snapshot.retries(), snapshot.timeouts(),
+                    snapshot.blocks(), snapshot.failures(), snapshot.liveStateRecoveries(),
+                    snapshot.movementUnstucks());
+        }
+    }
+
     private static MapleIslandCohortRunService.AgentState liveAgentState(int characterId) {
         AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(characterId);
         if (entry == null) {
@@ -248,8 +295,9 @@ public final class MapleIslandCohortRuntime {
                 : MapleIslandCohortRunService.AgentState.FAILED;
     }
 
-    private static void stopPooledAgent(int characterId) {
+    private void stopPooledAgent(int characterId) {
         Character agent = CosmicCharacterGateway.INSTANCE.findOnlineCharacterById(characterId);
+        telemetry.detach(characterId);
         AgentRuntimeCleanupService.removeAgentByCharacterId(characterId);
         if (agent != null && agent.getClient() != null) {
             agent.getClient().forceDisconnect();

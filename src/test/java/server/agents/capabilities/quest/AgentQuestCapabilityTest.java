@@ -122,7 +122,9 @@ class AgentQuestCapabilityTest {
 
     private static AgentQuestCapabilityRequest startRequest(int questId, int npcId, AgentQuestSnapshot snapshot) {
         return new AgentQuestCapabilityRequest(questId, 10000, npcId, new Point(0, 0),
-                new Point(20, 0), 80, snapshot, null, true);
+                new Point(20, 0), 80, snapshot,
+                server.agents.plans.amherst.AmherstQuestCatalog.find(questId)
+                        .map(AgentQuestRequirement::fromAmherst).orElse(null), true);
     }
 
     private static AgentQuestCapabilityRequest request(int questId, int npcId, AgentQuestSnapshot snapshot,

@@ -2,7 +2,6 @@ package server.agents.plans.amherst;
 
 import client.Character;
 import server.agents.capabilities.runtime.AgentCapabilityRuntime;
-import server.agents.capabilities.movement.AgentRelaxerSpotReservationRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.profiles.AgentBehaviorProfileRuntime;
@@ -59,8 +58,13 @@ public final class AgentAmherstPlanRuntime {
         if (runner != null && runner.tick(entry, agent, nowMs)) {
             return true;
         }
-        if (agent.getChair() >= 0 && state.completed()) {
-            return true;
+        if (state.completed()) {
+            if (agent.getChair() >= 0) {
+                return true;
+            }
+            if (AgentSouthperryPostPlanService.tick(entry, agent, nowMs)) {
+                return true;
+            }
         }
         return AgentCapabilityRuntime.tick(entry, agent, nowMs);
     }
@@ -76,7 +80,7 @@ public final class AgentAmherstPlanRuntime {
         }
         Character agent = AgentRuntimeIdentityRuntime.bot(entry);
         if (agent != null && agent.getChair() <= 0) {
-            AgentRelaxerSpotReservationRuntime.release(agent.getId());
+            MapleIslandRelaxerSpotReservationRuntime.release(agent.getId());
         }
     }
 
@@ -105,7 +109,9 @@ public final class AgentAmherstPlanRuntime {
                 defaultStore(), new AmherstPlanProgressService(),
                 new AmherstObjectiveReconciler(), new AmherstObjectiveHandlerRegistry(
                         server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime.gateway(),
-                        server.agents.capabilities.objective.AmherstNpcInteractionDelay.profile(entry)),
+                        server.agents.capabilities.objective.AmherstNpcInteractionDelay.profile(entry),
+                        new server.agents.capabilities.quest.AmherstScopePolicy(), entry),
                 AmherstObjectiveDelay.profile(entry));
     }
+
 }

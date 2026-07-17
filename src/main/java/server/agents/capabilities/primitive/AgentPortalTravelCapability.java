@@ -1,6 +1,7 @@
 package server.agents.capabilities.primitive;
 
 import server.agents.capabilities.AgentCapabilityStatus;
+import server.agents.capabilities.navigation.AgentPortalRoutePlan;
 import server.agents.capabilities.quest.AmherstScopePolicy;
 import server.agents.capabilities.runtime.AgentCapabilityCommand;
 import server.agents.capabilities.runtime.AgentCapabilityContext;
@@ -19,12 +20,18 @@ public final class AgentPortalTravelCapability
     private static final int NAVIGATION_RETRIES = 2;
     private static final long DESTINATION_SETTLE_MS = 2_500L;
 
-    public record Command(int sourceMapId, int portalId, int destinationMapId, boolean requireAmherstScope)
+    public record Command(int sourceMapId, int portalId, int destinationMapId,
+                          boolean requireAmherstScope, AgentPortalRoutePlan routePlan)
             implements AgentCapabilityCommand {
+        public Command(int sourceMapId, int portalId, int destinationMapId, boolean requireAmherstScope) {
+            this(sourceMapId, portalId, destinationMapId, requireAmherstScope, AgentPortalRoutePlan.DIRECT);
+        }
+
         public Command {
             if (sourceMapId <= 0 || portalId < 0 || destinationMapId <= 0) {
                 throw new IllegalArgumentException("source map, portal, and destination map are required");
             }
+            routePlan = routePlan == null ? AgentPortalRoutePlan.DIRECT : routePlan;
         }
 
         @Override
@@ -88,6 +95,10 @@ public final class AgentPortalTravelCapability
         if (portalPosition == null) {
             return AgentPrimitiveResults.missing("portal position is unavailable on the source map");
         }
+        AgentCapabilityStep configuredRoute = followConfiguredRoute(context, command);
+        if (configuredRoute != null) {
+            return configuredRoute;
+        }
         if (gateway.position(context.agent()).distanceSq(portalPosition)
                 > (long) PORTAL_APPROACH_RANGE_PX * PORTAL_APPROACH_RANGE_PX) {
             return AgentCapabilityStep.handoff(
@@ -103,5 +114,57 @@ public final class AgentPortalTravelCapability
             return AgentCapabilityStep.retry("portal entry was not accepted");
         }
         return AgentCapabilityStep.running("portal entered; verifying destination");
+    }
+
+    private AgentCapabilityStep followConfiguredRoute(
+            AgentCapabilityContext context,
+            Command command) {
+        AgentPortalRoutePlan plan = command.routePlan();
+        if (plan == null || !plan.usesInternalPortal()) {
+            return null;
+        }
+
+        int stage = context.memory().intValue("configuredPortalRouteStage", 0);
+        if (stage == 0) {
+            if (!gateway.portalPresent(context.agent(), plan.internalPortalId())) {
+                return null;
+            }
+            Point internalPortal = gateway.portalPosition(context.agent(), plan.internalPortalId());
+            if (internalPortal == null) {
+                return null;
+            }
+            if (gateway.position(context.agent()).distanceSq(internalPortal)
+                    > (long) PORTAL_APPROACH_RANGE_PX * PORTAL_APPROACH_RANGE_PX) {
+                return navigationHandoff(command.sourceMapId(), internalPortal,
+                        plan.description() + " approaches its internal portal");
+            }
+            if (!gateway.enterPortal(context.agent(), plan.internalPortalId())) {
+                return AgentCapabilityStep.retry(plan.description() + " portal entry was not accepted");
+            }
+            context.memory().putInt("configuredPortalRouteStage", 1);
+            return AgentCapabilityStep.running(plan.description() + " entered");
+        }
+
+        int waypointIndex = stage - 1;
+        if (waypointIndex >= plan.waypoints().size()) {
+            return null;
+        }
+        Point waypoint = plan.waypoints().get(waypointIndex);
+        context.memory().putInt("configuredPortalRouteStage", stage + 1);
+        if (gateway.position(context.agent()).distanceSq(waypoint) <= 24L * 24L) {
+            return AgentCapabilityStep.running(plan.description() + " waypoint reached");
+        }
+        return navigationHandoff(command.sourceMapId(), waypoint,
+                plan.description() + " traverses an alternate platform");
+    }
+
+    private AgentCapabilityStep navigationHandoff(int mapId, Point destination, String message) {
+        return AgentCapabilityStep.handoff(
+                new server.agents.capabilities.runtime.AgentCapabilityInvocation<>(
+                        new AgentNavigationCapability(gateway),
+                        new AgentNavigationCapability.Command(mapId, destination, 24, true),
+                        NAVIGATION_TIMEOUT_MS,
+                        NAVIGATION_RETRIES),
+                message);
     }
 }

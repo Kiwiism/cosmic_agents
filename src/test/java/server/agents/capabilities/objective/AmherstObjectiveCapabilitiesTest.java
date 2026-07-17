@@ -4,8 +4,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.AgentCapabilityStatus;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
-import server.agents.capabilities.movement.AgentRelaxerSpotCatalog;
-import server.agents.capabilities.movement.AgentRelaxerSpotReservationRuntime;
+import server.agents.plans.amherst.MapleIslandRelaxerSpotCatalog;
+import server.agents.plans.amherst.MapleIslandRelaxerSpotReservationRuntime;
+import server.agents.plans.amherst.MapleIslandPlanCompletionBehavior;
+import server.agents.capabilities.navigation.AgentPortalRoutePolicy;
 import server.agents.capabilities.quest.AmherstScopePolicy;
 import server.agents.capabilities.runtime.AgentCapabilityCommand;
 import server.agents.capabilities.runtime.AgentCapabilityInvocation;
@@ -16,6 +18,8 @@ import server.agents.capabilities.runtime.AgentCapabilityRuntime;
 import server.agents.capabilities.runtime.AgentCapabilityStep;
 import server.agents.capabilities.runtime.AgentExecutableCapability;
 import server.agents.testing.MutablePrimitiveGatewayFixture;
+import server.agents.plans.mapleisland.MapleIslandNpcInteractionAnchorCatalog;
+import server.agents.plans.mapleisland.MapleIslandNpcInteractionPlacementPolicy;
 
 import java.awt.Point;
 import java.util.List;
@@ -38,7 +42,7 @@ import static org.mockito.Mockito.atLeastOnce;
 class AmherstObjectiveCapabilitiesTest {
     @AfterEach
     void releaseRelaxerSpot() {
-        AgentRelaxerSpotReservationRuntime.release(77);
+        MapleIslandRelaxerSpotReservationRuntime.release(77);
     }
 
     @Test
@@ -84,13 +88,13 @@ class AmherstObjectiveCapabilitiesTest {
         AgentCapabilityMemory memory = new AgentCapabilityMemory();
 
         assertTrue(support.waitForNpcInteraction(new AgentCapabilityContext(
-                fixture.entry, fixture.agent, 100L, 0L, 0, null, memory), 0, 1));
+                fixture.entry, fixture.agent, 100L, 0L, 0, null, memory), 0, 1, true));
         assertFalse(support.waitForNpcInteraction(new AgentCapabilityContext(
-                fixture.entry, fixture.agent, 600L, 500L, 0, null, memory), 0, 1));
+                fixture.entry, fixture.agent, 600L, 500L, 0, null, memory), 0, 1, true));
         assertTrue(support.waitForNpcInteraction(new AgentCapabilityContext(
-                fixture.entry, fixture.agent, 601L, 1L, 0, null, memory), 0, 2));
+                fixture.entry, fixture.agent, 601L, 1L, 0, null, memory), 0, 2, true));
         assertFalse(support.waitForNpcInteraction(new AgentCapabilityContext(
-                fixture.entry, fixture.agent, 1_101L, 500L, 0, null, memory), 0, 2));
+                fixture.entry, fixture.agent, 1_101L, 500L, 0, null, memory), 0, 2, true));
     }
 
     @Test
@@ -105,7 +109,9 @@ class AmherstObjectiveCapabilitiesTest {
                         true,
                         true));
         var command = new NpcQuestObjectiveCapability.Command("q1031-start", 10000,
-                List.of(new NpcQuestObjectiveCapability.QuestOperation(1031, 2101, 2100, 1)), false);
+                List.of(new NpcQuestObjectiveCapability.QuestOperation(1031, 2101, 2100, 1,
+                        MapleIslandNpcInteractionPlacementPolicy.data(fixture.entry, 10000, 2101, 250),
+                        MapleIslandNpcInteractionPlacementPolicy.data(fixture.entry, 10000, 2100, 250))), false);
 
         assign(fixture, new NpcQuestObjectiveCapability(
                         fixture.gateway, AmherstScopePolicy.fullMapleIsland(),
@@ -113,7 +119,7 @@ class AmherstObjectiveCapabilitiesTest {
                 command, 10_000L);
         run(fixture, 1L, 40, 100L);
 
-        assertTrue(AgentNpcInteractionAnchorCatalog.anchors(10000, 2101)
+        assertTrue(MapleIslandNpcInteractionAnchorCatalog.anchors(10000, 2101)
                 .contains(fixture.position));
         assertSuccess(fixture);
     }
@@ -126,7 +132,9 @@ class AmherstObjectiveCapabilitiesTest {
         MapleIslandObjectiveRandomnessRuntime.configure(
                 fixture.entry, MapleIslandObjectiveRandomnessSettings.cohort(456L));
         var command = new NpcQuestObjectiveCapability.Command("q1031-start", 10000,
-                List.of(new NpcQuestObjectiveCapability.QuestOperation(1031, 2101, 2100, 1)), false);
+                List.of(new NpcQuestObjectiveCapability.QuestOperation(1031, 2101, 2100, 1,
+                        MapleIslandNpcInteractionPlacementPolicy.data(fixture.entry, 10000, 2101, 250),
+                        MapleIslandNpcInteractionPlacementPolicy.data(fixture.entry, 10000, 2100, 250))), false);
 
         assign(fixture, new NpcQuestObjectiveCapability(
                         fixture.gateway, AmherstScopePolicy.fullMapleIsland(),
@@ -158,10 +166,13 @@ class AmherstObjectiveCapabilitiesTest {
         var fixture = new MutablePrimitiveGatewayFixture();
         fixture.mapId.set(1010000);
         var command = new ForceCompleteQuestObjectiveCapability.Command(
-                "q8020-force-complete", 1010000, 8020, 20100);
+                "q8020-force-complete", 1010000, 8020, 20100,
+                new ForceCompleteQuestObjectiveCapability.FieldAbsence(
+                        2L, 2_000L, 3_000L, "Cash Shop"),
+                MapleIslandNpcInteractionPlacementPolicy.data(fixture.entry, 1010000, 20100, 250));
 
         assign(fixture, new ForceCompleteQuestObjectiveCapability(
-                        fixture.gateway, AmherstScopePolicy.southperry(), AmherstNpcInteractionDelay.NONE, () -> 2L),
+                        fixture.gateway, AmherstScopePolicy.southperry(), AmherstNpcInteractionDelay.NONE),
                 command, 10_000L);
         run(fixture, 1L, 80, 100L);
 
@@ -169,7 +180,7 @@ class AmherstObjectiveCapabilitiesTest {
         verify(fixture.gateway).beginFieldAbsence(fixture.agent, 2_002L);
         verify(fixture.gateway).endFieldAbsence(fixture.agent);
         verify(fixture.gateway).forceCompleteQuest(fixture.agent, 8020, 20100);
-        assertTrue(AgentNpcInteractionAnchorCatalog.legacyAnchorsFor(1010000, 20100)
+        assertTrue(MapleIslandNpcInteractionAnchorCatalog.legacyAnchorsFor(1010000, 20100)
                 .contains(fixture.position));
         verify(fixture.gateway, atLeastOnce()).facePosition(fixture.agent, new Point(-188, 85));
         assertSuccess(fixture);
@@ -181,9 +192,11 @@ class AmherstObjectiveCapabilitiesTest {
         fixture.mapId.set(1010000);
         when(fixture.gateway.grounded(fixture.agent)).thenReturn(true);
         var capability = new ForceCompleteQuestObjectiveCapability(
-                fixture.gateway, AmherstScopePolicy.southperry(), () -> 500L, () -> 2L);
+                fixture.gateway, AmherstScopePolicy.southperry(), () -> 500L);
         var command = new ForceCompleteQuestObjectiveCapability.Command(
-                "q8020-force-complete", 1010000, 8020, 20100);
+                "q8020-force-complete", 1010000, 8020, 20100,
+                new ForceCompleteQuestObjectiveCapability.FieldAbsence(
+                        2L, 2_000L, 3_000L, "Cash Shop"));
         AgentCapabilityMemory memory = new AgentCapabilityMemory();
         memory.putInt("phase", 2);
         memory.putLong("returnAtMs", 100L);
@@ -232,7 +245,7 @@ class AmherstObjectiveCapabilitiesTest {
                 "q8023-force-complete", 1010000, 8023, 20100);
 
         assign(fixture, new ForceCompleteQuestObjectiveCapability(
-                        fixture.gateway, AmherstScopePolicy.southperry(), AmherstNpcInteractionDelay.NONE, () -> 2L),
+                        fixture.gateway, AmherstScopePolicy.southperry(), AmherstNpcInteractionDelay.NONE),
                 command, 10_000L);
         run(fixture, 1L, 30, 1L);
 
@@ -375,9 +388,9 @@ class AmherstObjectiveCapabilitiesTest {
         fixture.mapId.set(1000000);
         fixture.items.put(3010000, 1);
 
-        assign(fixture, new PlanStopObjectiveCapability(fixture.gateway),
+        assign(fixture, planStop(fixture, MapleIslandRelaxerSpotCatalog.Pool.AMHERST),
                 new PlanStopObjectiveCapability.Command(
-                        "stop", 1000000, Set.of(1028), "stop in Amherst", 3010000),
+                        "stop", 1000000, Set.of(1028), "stop in Amherst"),
                 10_000L);
         AgentCapabilityRuntime.tick(fixture.entry, fixture.agent, 1L);
         assertEquals(2, fixture.entry.capabilityRuntimeState().frameCount());
@@ -394,9 +407,9 @@ class AmherstObjectiveCapabilitiesTest {
         fixture.items.put(3010000, 1);
         AgentCapabilityMemory memory = new AgentCapabilityMemory();
         memory.putInt("phase", 1);
-        var capability = new PlanStopObjectiveCapability(fixture.gateway);
+        var capability = planStop(fixture, null);
         var command = new PlanStopObjectiveCapability.Command(
-                "stop", 1000000, Set.of(1028), "stop in Amherst", 3010000);
+                "stop", 1000000, Set.of(1028), "stop in Amherst");
 
         AgentCapabilityStep sitting = capability.tick(new AgentCapabilityContext(
                 fixture.entry, fixture.agent, 1L, 0L, 0, null, memory), command);
@@ -420,10 +433,9 @@ class AmherstObjectiveCapabilitiesTest {
         memory.putLong("restSettleReadyAtMs", 0L);
         memory.putBoolean("chairSitIssued", true);
         memory.putLong("chairVerifyAtMs", 0L);
-        var capability = new PlanStopObjectiveCapability(fixture.gateway);
+        var capability = planStop(fixture, MapleIslandRelaxerSpotCatalog.Pool.AMHERST);
         var command = new PlanStopObjectiveCapability.Command(
-                "stop", 1000000, Map.of(), Set.of(1028), "stop in Amherst",
-                3010000, AgentRelaxerSpotCatalog.Pool.AMHERST);
+                "stop", 1000000, Map.of(), Set.of(1028), "stop in Amherst");
 
         AgentCapabilityStep verified = capability.tick(new AgentCapabilityContext(
                 fixture.entry, fixture.agent, 1L, 0L, 0, null, memory), command);
@@ -438,18 +450,47 @@ class AmherstObjectiveCapabilitiesTest {
         fixture.mapId.set(1000000);
         fixture.items.put(3010000, 1);
 
-        assign(fixture, new PlanStopObjectiveCapability(fixture.gateway),
+        assign(fixture, planStop(fixture, MapleIslandRelaxerSpotCatalog.Pool.AMHERST),
                 new PlanStopObjectiveCapability.Command(
-                        "stop", 1000000, Map.of(), Set.of(1028), "stop in Amherst",
-                        3010000, AgentRelaxerSpotCatalog.Pool.AMHERST),
+                        "stop", 1000000, Map.of(), Set.of(1028), "stop in Amherst"),
                 10_000L);
         run(fixture, 1L, 30, 100L);
 
-        assertTrue(AgentRelaxerSpotCatalog.spots(AgentRelaxerSpotCatalog.Pool.AMHERST).stream()
+        assertTrue(MapleIslandRelaxerSpotCatalog.spots(MapleIslandRelaxerSpotCatalog.Pool.AMHERST).stream()
                 .anyMatch(spot -> spot.x() == fixture.position.x && spot.y() == fixture.position.y));
-        assertTrue(AgentRelaxerSpotReservationRuntime.reservedSpot(77).isPresent());
+        assertTrue(MapleIslandRelaxerSpotReservationRuntime.reservedSpot(77).isPresent());
         verify(fixture.gateway).sitChair(fixture.agent, 3010000);
         assertSuccess(fixture);
+    }
+
+    @Test
+    void cohortSouthperryIdleEndingFacesRandomDirectionWithoutSitting() {
+        var fixture = new MutablePrimitiveGatewayFixture();
+        fixture.mapId.set(2000000);
+        fixture.items.put(3010000, 1);
+        long seed = 0L;
+        do {
+            MapleIslandObjectiveRandomnessRuntime.configure(
+                    fixture.entry, MapleIslandObjectiveRandomnessSettings.cohort(seed++));
+        } while (MapleIslandObjectiveRandomnessRuntime.selectPostPlanBehavior(
+                fixture.entry, 2000000) != AgentPlanCompletionMode.IDLE);
+        AgentCapabilityMemory memory = new AgentCapabilityMemory();
+        memory.putInt("phase", 1);
+        memory.putBoolean("restTargetSelected", true);
+        memory.putInt("restTargetX", fixture.position.x);
+        memory.putInt("restTargetY", fixture.position.y);
+        memory.putInt("restFacingDirection", -1);
+        var capability = planStop(fixture, MapleIslandRelaxerSpotCatalog.Pool.SOUTHPERRY_RIGHT);
+        var command = new PlanStopObjectiveCapability.Command(
+                "stop", 2000000, Map.of(), Set.of(1028), "stop in Southperry");
+
+        AgentCapabilityStep result = capability.tick(new AgentCapabilityContext(
+                fixture.entry, fixture.agent, 1L, 0L, 0, null, memory), command);
+
+        assertEquals(AgentCapabilityStatus.SUCCESS, result.status());
+        verify(fixture.gateway).facePosition(fixture.agent, new Point(-1, 0));
+        verify(fixture.gateway).stop(fixture.entry);
+        verify(fixture.gateway, never()).sitChair(any(), anyInt());
     }
 
     @Test
@@ -564,6 +605,13 @@ class AmherstObjectiveCapabilitiesTest {
             long timeoutMs) {
         assertTrue(AgentCapabilityRuntime.assign(fixture.entry,
                 new AgentCapabilityInvocation<>(capability, command, timeoutMs, 1)));
+    }
+
+    private static PlanStopObjectiveCapability planStop(
+            MutablePrimitiveGatewayFixture fixture, MapleIslandRelaxerSpotCatalog.Pool pool) {
+        return new PlanStopObjectiveCapability(fixture.gateway, new AmherstScopePolicy(),
+                new MapleIslandPlanCompletionBehavior(fixture.gateway, 3010000, pool),
+                AgentPortalRoutePolicy.DIRECT);
     }
 
     private static void run(MutablePrimitiveGatewayFixture fixture, long nowMs, int maxTicks) {

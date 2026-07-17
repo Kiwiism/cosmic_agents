@@ -3,6 +3,7 @@ package server.agents.capabilities.primitive;
 import server.agents.capabilities.reactor.AgentReactorInteractionMode;
 import server.agents.capabilities.reactor.AgentReactorInteractionRequest;
 import server.agents.capabilities.reactor.AgentReactorTargetSelector;
+import server.agents.capabilities.reactor.AgentReactorTargetReservationRuntime;
 import server.agents.capabilities.reactor.AgentReactorScopePolicy;
 import server.agents.capabilities.runtime.AgentCapabilityCommand;
 import server.agents.capabilities.runtime.AgentCapabilityContext;
@@ -73,6 +74,7 @@ public final class AgentReactorPrimitiveCapability
                 && command.expectedItemCounts().entrySet().stream().allMatch(entry ->
                 gateway.itemCount(context.agent(), entry.getKey()) >= entry.getValue());
         if (itemsComplete) {
+            AgentReactorTargetReservationRuntime.release(context.agent().getId());
             return AgentCapabilityStep.terminal(AgentCapabilityResult.success("reactor item result verified"));
         }
         AgentReactorInteractionRequest request = new AgentReactorInteractionRequest(
@@ -83,7 +85,8 @@ public final class AgentReactorPrimitiveCapability
         if (!scope.allowed()) {
             return AgentPrimitiveResults.blocked(scope.status(), scope.reason());
         }
-        var target = selector.select(List.copyOf(gateway.reactors(context.agent())), request);
+        var target = selector.selectReserved(List.copyOf(gateway.reactors(context.agent())), request,
+                context.agent().getId(), context.agent().getMap());
         if (target.isEmpty()) {
             if (gateway.lootNearby(context.agent(), command.expectedItemCounts().keySet())) {
                 return AgentCapabilityStep.running("reactor drops found; verifying normal pickup result", false);

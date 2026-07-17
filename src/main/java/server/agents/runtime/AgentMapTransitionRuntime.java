@@ -9,6 +9,7 @@ import server.agents.capabilities.shop.AgentShopService;
 import server.agents.capabilities.partyquest.AgentPqRuntime;
 import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.capabilities.dialogue.AgentChatStatusOrchestrator;
+import server.agents.diagnostics.AgentRunObservationRuntime;
 
 import java.util.function.Consumer;
 
@@ -24,7 +25,7 @@ public final class AgentMapTransitionRuntime {
                                                  Character agent,
                                                  Consumer<AgentRuntimeEntry> issueGrind,
                                                  Consumer<AgentRuntimeEntry> issueFollow) {
-        return AgentMapTransitionService.handleTrackedMapChange(
+        boolean changed = AgentMapTransitionService.handleTrackedMapChange(
                 entry,
                 agent,
                 new AgentMapTransitionService.MapChangeHooks(
@@ -37,6 +38,10 @@ public final class AgentMapTransitionRuntime {
                         (shopEntry, shopAgent) -> AgentShopService.onMapChange(
                                 shopEntry, shopAgent, AgentInventoryGatewayRuntime.inventory()),
                         AgentChatStatusOrchestrator::checkBotStatus));
+        if (changed) {
+            AgentRunObservationRuntime.mapChanged(entry, agent, System.currentTimeMillis());
+        }
+        return changed;
     }
 
 }

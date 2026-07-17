@@ -235,20 +235,20 @@ public final class AgentNavigationTargetService {
                                                            int startRegionId,
                                                            int targetRegionId,
                                                            Point targetPos) {
-        AgentMapleIslandTravelRuntime.RouteVariation variation = scriptedRouteVariation(
+        AgentTravelVariationRuntime.RouteVariation variation = scriptedRouteVariation(
                 entry, graph.mapId, targetRegionId, targetPos);
         return AgentNavigationPathService.findNextEdgeVaried(
                 graph, bot, startRegionId, targetRegionId, targetPos, variation);
     }
 
-    static AgentMapleIslandTravelRuntime.RouteVariation scriptedRouteVariation(
+    static AgentTravelVariationRuntime.RouteVariation scriptedRouteVariation(
             AgentRuntimeEntry entry,
             int mapId,
             int targetRegionId,
             Point targetPos) {
         Point scriptedTarget = AgentMoveTargetStateRuntime.moveTarget(entry);
         return scriptedTarget != null && scriptedTarget.equals(targetPos)
-                ? AgentMapleIslandTravelRuntime.routeVariation(
+                ? AgentTravelVariationRuntime.routeVariation(
                 entry, mapId, targetRegionId, scriptedTarget)
                 : null;
     }

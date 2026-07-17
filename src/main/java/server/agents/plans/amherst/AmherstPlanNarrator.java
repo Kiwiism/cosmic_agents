@@ -3,8 +3,6 @@ package server.agents.plans.amherst;
 import client.Character;
 import config.YamlConfig;
 import server.agents.capabilities.dialogue.AgentChatTextSanitizer;
-import server.agents.capabilities.quest.AmherstQuestCatalog;
-import server.agents.capabilities.quest.MapleIslandSouthperryQuestCatalog;
 import server.agents.integration.AgentPacketGatewayRuntime;
 
 import java.util.Map;

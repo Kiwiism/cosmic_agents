@@ -1,8 +1,6 @@
 package server.agents.plans.amherst;
 
-import server.agents.capabilities.quest.AmherstQuestCatalog;
 import server.agents.capabilities.quest.AmherstScopePolicy;
-import server.agents.capabilities.quest.MapleIslandSouthperryQuestCatalog;
 
 import java.util.ArrayList;
 import java.util.HashSet;

@@ -11,6 +11,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import server.agents.plans.mapleisland.MapleIslandNpcInteractionAnchorCatalog;
 
 class AgentNpcInteractionAnchorCatalogTest {
     private static final List<NpcPlacement> FULL_PLAN_NPCS = List.of(
@@ -35,7 +36,7 @@ class AgentNpcInteractionAnchorCatalogTest {
     @Test
     void everyNpcUsedByFullPlanHasSeveralCuratedSafeAnchors() {
         for (NpcPlacement placement : FULL_PLAN_NPCS) {
-            assertTrue(AgentNpcInteractionAnchorCatalog.anchors(
+            assertTrue(MapleIslandNpcInteractionAnchorCatalog.anchors(
                             placement.mapId(), placement.npcId()).size() >= 4,
                     () -> "missing varied anchors for " + placement);
         }
@@ -58,7 +59,7 @@ class AgentNpcInteractionAnchorCatalogTest {
             List<CatalogRecord> generatedCandidates =
                     npcCatalog.approachCandidates(npc.npcId(), npc.mapId());
 
-            for (Point anchor : AgentNpcInteractionAnchorCatalog.anchors(
+            for (Point anchor : MapleIslandNpcInteractionAnchorCatalog.anchors(
                     npc.mapId(), npc.npcId())) {
                 assertTrue(generatedCandidates.stream().anyMatch(candidate ->
                                 candidate.intValue("x").orElse(Integer.MIN_VALUE) == anchor.x
@@ -74,21 +75,21 @@ class AgentNpcInteractionAnchorCatalogTest {
 
     @Test
     void callersCannotMutateCatalogPoints() {
-        List<Point> first = AgentNpcInteractionAnchorCatalog.anchors(10000, 2101);
+        List<Point> first = MapleIslandNpcInteractionAnchorCatalog.anchors(10000, 2101);
         Point original = new Point(first.getFirst());
         first.getFirst().translate(999, 999);
 
         assertEquals(original,
-                AgentNpcInteractionAnchorCatalog.anchors(10000, 2101).getFirst());
+                MapleIslandNpcInteractionAnchorCatalog.anchors(10000, 2101).getFirst());
     }
 
     @Test
     void disabledVariationRetainsLegacyYoonaNearestBehaviorOnly() {
         assertEquals(new Point(-210, 95),
-                AgentNpcInteractionAnchorCatalog.nearest(
+                MapleIslandNpcInteractionAnchorCatalog.nearestLegacy(
                         1010000, 20100, new Point(-250, 95)));
         assertEquals(null,
-                AgentNpcInteractionAnchorCatalog.nearest(
+                MapleIslandNpcInteractionAnchorCatalog.nearestLegacy(
                         10000, 2101, new Point(0, 305)));
     }
 

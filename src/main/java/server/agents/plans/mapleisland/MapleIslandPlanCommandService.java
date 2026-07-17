@@ -10,9 +10,9 @@ import server.agents.capabilities.quest.AmherstTestResetMode;
 import server.agents.capabilities.quest.AmherstTestResetRequest;
 import server.agents.capabilities.quest.AmherstTestResetResult;
 import server.agents.capabilities.quest.AmherstTestResetService;
-import server.agents.capabilities.quest.AmherstQuestCatalog;
+import server.agents.plans.amherst.AmherstQuestCatalog;
 import server.agents.capabilities.quest.MapleIslandSouthperryBaseline;
-import server.agents.capabilities.quest.MapleIslandSouthperryQuestCatalog;
+import server.agents.plans.amherst.MapleIslandSouthperryQuestCatalog;
 import server.agents.integration.AgentMapGatewayRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.cosmic.CosmicMapleIslandCohortIdentity;
@@ -26,6 +26,7 @@ import server.agents.plans.mapleisland.cohort.MapleIslandCohortPoolSnapshot;
 import server.agents.plans.mapleisland.cohort.MapleIslandCohortRealismMode;
 import server.agents.plans.mapleisland.cohort.MapleIslandCohortRunService;
 import server.agents.plans.mapleisland.cohort.MapleIslandCohortRuntime;
+import server.agents.plans.mapleisland.cohort.MapleIslandCohortTelemetryService;
 import server.agents.runtime.AgentInteractionRuntime;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -97,6 +98,10 @@ public final class MapleIslandPlanCommandService {
             }
             if (verb.equals("status") && params.length == 1) {
                 cohortStatus(player, MapleIslandCohortRuntime.instance());
+                return true;
+            }
+            if (verb.equals("stats") && params.length == 1) {
+                cohortStats(player, MapleIslandCohortRuntime.instance());
                 return true;
             }
             if (verb.equals("pool")) {
@@ -304,6 +309,58 @@ public final class MapleIslandPlanCommandService {
         message(player, "Manual " + route.label + " plan started. Exactly one objective will execute.");
     }
 
+    private static void cohortStats(Character player, MapleIslandCohortRuntime runtime) {
+        MapleIslandCohortTelemetryService.Snapshot snapshot = runtime.telemetry(
+                player.getWorld(), player.getClient().getChannel());
+        if (snapshot == null) {
+            message(player, "No cohort telemetry exists on this channel.");
+            return;
+        }
+        message(player, "Cohort stats: tracked=" + snapshot.trackedAgents()
+                + "; realism=" + snapshot.realismMode() + "; all times are relative to each Agent's spawn.");
+        milestone(player, "Amherst", snapshot.amherst(), snapshot.trackedAgents());
+        milestone(player, "Southperry", snapshot.southperry(), snapshot.trackedAgents());
+        milestone(player, "Full run", snapshot.completion(), snapshot.trackedAgents());
+        message(player, "Recovery: retries=" + snapshot.retries()
+                + ", timeouts=" + snapshot.timeouts() + ", blocked=" + snapshot.blocks()
+                + ", failures=" + snapshot.failures()
+                + ", live-state recoveries=" + snapshot.liveStateRecoveries()
+                + ", movement unstucks=" + snapshot.movementUnstucks() + ".");
+        if (snapshot.longestActiveObjective() != null) {
+            var active = snapshot.longestActiveObjective();
+            message(player, "Longest current objective: " + active.agentName() + " on "
+                    + active.objectiveId() + " for " + duration(active.elapsedMs()) + ".");
+        }
+        for (var objective : snapshot.slowestObjectives()) {
+            message(player, "Slow objective: " + objective.objectiveId() + " avg="
+                    + duration(objective.averageMs()) + " over " + objective.samples()
+                    + "; max=" + duration(objective.slowestMs())
+                    + " (" + objective.slowestAgent() + ").");
+        }
+    }
+
+    private static void milestone(Character player,
+                                  String label,
+                                  MapleIslandCohortTelemetryService.DurationSummary summary,
+                                  int trackedAgents) {
+        if (summary.samples() == 0) {
+            message(player, label + ": 0/" + trackedAgents + " reached.");
+            return;
+        }
+        message(player, label + ": " + summary.samples() + "/" + trackedAgents
+                + " reached; avg=" + duration(summary.averageMs())
+                + ", p50=" + duration(summary.medianMs()) + ", p95=" + duration(summary.p95Ms())
+                + ", fastest=" + duration(summary.fastestMs()) + " (" + summary.fastestAgent() + ")"
+                + ", slowest=" + duration(summary.slowestMs()) + " (" + summary.slowestAgent() + ").");
+    }
+
+    private static String duration(long durationMs) {
+        long seconds = Math.max(0L, durationMs) / 1_000L;
+        long minutes = seconds / 60L;
+        long remainingSeconds = seconds % 60L;
+        return minutes == 0L ? remainingSeconds + "s" : minutes + "m " + remainingSeconds + "s";
+    }
+
     private static void resume(Character player,
                                AgentRuntimeEntry entry,
                                Character agent,
@@ -461,7 +518,7 @@ public final class MapleIslandPlanCommandService {
             message(player, "Usage: !" + route.command + " reset|start|resume|next|status|run <AgentIGN>");
             if (route == Route.FULL_MAPLE_ISLAND) {
                 message(player, "Cohort: !mapleisland run <total> <batch> <intervalSeconds> [seed] [off|light|full]");
-                message(player, "Cohort control: !mapleisland status|pool [page]|cancel|stop");
+                message(player, "Cohort control: !mapleisland status|stats|pool [page]|cancel|stop");
             }
         }
     }

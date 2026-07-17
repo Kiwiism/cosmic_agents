@@ -3,7 +3,11 @@ package server.agents.capabilities.primitive;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.AgentCapabilityStatus;
+import server.agents.capabilities.movement.AgentClimbStateRuntime;
 import server.agents.capabilities.npc.AgentNpcInteractionType;
+import server.agents.capabilities.navigation.AgentMapleIslandTravelRuntime;
+import server.agents.capabilities.navigation.AgentMapleIslandTravelSettings;
+import server.agents.plans.mapleisland.AgentSplitRoadRouteService;
 import server.agents.capabilities.quest.AmherstScopePolicy;
 import server.agents.capabilities.reactor.AgentReactorScopePolicy;
 import server.agents.capabilities.reactor.AgentReactorTargetSelector;
@@ -65,6 +69,25 @@ class AgentPrimitiveCapabilityTest {
         assertFalse(airborne.consumedTick());
 
         assertEquals(AgentCapabilityStatus.SUCCESS, capability.tick(fixture.context(), command).status());
+    }
+
+    @Test
+    void navigationCanCompleteAtExplicitNpcClimbingAnchor() {
+        Fixture fixture = fixture();
+        when(fixture.gateway.mapId(fixture.agent)).thenReturn(10000);
+        when(fixture.gateway.position(fixture.agent)).thenReturn(new Point(100, 80));
+        when(fixture.gateway.grounded(fixture.agent)).thenReturn(false);
+        AgentClimbStateRuntime.setClimbingOnRope(
+                fixture.entry, new server.maps.Rope(90, 20, 200, false));
+        AgentNavigationCapability capability = new AgentNavigationCapability(fixture.gateway);
+        var command = new AgentNavigationCapability.Command(
+                10000, new Point(100, 80), 5, true, true);
+
+        assertEquals(AgentCapabilityStatus.RUNNING, capability.tick(fixture.context(), command).status());
+        AgentClimbStateRuntime.setClimbingOnRope(
+                fixture.entry, new server.maps.Rope(100, 20, 200, false));
+        assertEquals(AgentCapabilityStatus.SUCCESS, capability.tick(fixture.context(), command).status());
+        verify(fixture.gateway).stop(fixture.entry);
     }
 
     @Test
@@ -137,6 +160,38 @@ class AgentPrimitiveCapabilityTest {
         assertEquals(AgentCapabilityStatus.WAITING_CHILD, result.status());
         assertEquals("navigation", result.child().capabilityId());
         verify(fixture.gateway, never()).enterPortal(any(), eq(1));
+    }
+
+    @Test
+    void splitRoadUpperVariantUsesInternalPortalBeforeSouthperryPortal() {
+        Fixture fixture = fixture();
+        long seed = 0L;
+        do {
+            AgentMapleIslandTravelRuntime.configure(fixture.entry, new AgentMapleIslandTravelSettings(
+                    seed++, true, 1.15d, false, 0.0d, 3_000L, 0L));
+        } while (!AgentSplitRoadRouteService.INSTANCE.select(fixture.entry).usesInternalPortal());
+        when(fixture.gateway.mapId(fixture.agent)).thenReturn(1020000);
+        when(fixture.gateway.portalPresent(fixture.agent, 1)).thenReturn(true);
+        when(fixture.gateway.portalPresent(
+                fixture.agent, AgentSplitRoadRouteService.UPPER_PLATFORM_PORTAL_ID)).thenReturn(true);
+        when(fixture.gateway.portalPosition(fixture.agent, 1)).thenReturn(new Point(701, 209));
+        when(fixture.gateway.portalPosition(
+                fixture.agent, AgentSplitRoadRouteService.UPPER_PLATFORM_PORTAL_ID))
+                .thenReturn(new Point(174, 217));
+        when(fixture.gateway.position(fixture.agent)).thenReturn(new Point(174, 217));
+        when(fixture.gateway.enterPortal(
+                fixture.agent, AgentSplitRoadRouteService.UPPER_PLATFORM_PORTAL_ID)).thenReturn(true);
+        AgentPortalTravelCapability capability = new AgentPortalTravelCapability(
+                fixture.gateway, new AmherstScopePolicy());
+
+        AgentCapabilityStep result = capability.tick(fixture.context(),
+                new AgentPortalTravelCapability.Command(1020000, 1, 2000000, false,
+                        AgentSplitRoadRouteService.INSTANCE.plan(fixture.entry, 1020000, 2000000)));
+
+        assertEquals(AgentCapabilityStatus.RUNNING, result.status());
+        verify(fixture.gateway).enterPortal(
+                fixture.agent, AgentSplitRoadRouteService.UPPER_PLATFORM_PORTAL_ID);
+        verify(fixture.gateway, never()).enterPortal(fixture.agent, 1);
     }
 
     @Test

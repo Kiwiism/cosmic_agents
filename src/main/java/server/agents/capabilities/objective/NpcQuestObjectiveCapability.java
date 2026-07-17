@@ -7,17 +7,31 @@ import server.agents.capabilities.runtime.AgentCapabilityStep;
 import server.agents.capabilities.runtime.AgentExecutableCapability;
 import server.agents.integration.PrimitiveCapabilityGateway;
 import server.agents.capabilities.quest.AmherstScopePolicy;
+import server.agents.capabilities.navigation.AgentPortalRoutePolicy;
 
 import java.util.List;
 
 public final class NpcQuestObjectiveCapability
         implements AgentExecutableCapability<NpcQuestObjectiveCapability.Command> {
-    public record QuestOperation(int questId, int startNpcId, int completeNpcId, int desiredStatus) {
+    public record QuestOperation(int questId, int startNpcId, int completeNpcId, int desiredStatus,
+                                 AgentNpcInteractionPlacementData startPlacement,
+                                 AgentNpcInteractionPlacementData completePlacement) {
+        public QuestOperation(int questId, int startNpcId, int completeNpcId, int desiredStatus) {
+            this(questId, startNpcId, completeNpcId, desiredStatus,
+                    AgentNpcInteractionPlacementData.direct(AmherstObjectiveCapabilitySupport.NPC_RANGE_PX),
+                    AgentNpcInteractionPlacementData.direct(AmherstObjectiveCapabilitySupport.NPC_RANGE_PX));
+        }
         public QuestOperation {
             if (questId <= 0 || startNpcId <= 0 || completeNpcId <= 0
                     || desiredStatus < 1 || desiredStatus > 2) {
                 throw new IllegalArgumentException("quest operation is invalid");
             }
+            startPlacement = startPlacement == null
+                    ? AgentNpcInteractionPlacementData.direct(AmherstObjectiveCapabilitySupport.NPC_RANGE_PX)
+                    : startPlacement;
+            completePlacement = completePlacement == null
+                    ? AgentNpcInteractionPlacementData.direct(AmherstObjectiveCapabilitySupport.NPC_RANGE_PX)
+                    : completePlacement;
         }
     }
 
@@ -59,6 +73,14 @@ public final class NpcQuestObjectiveCapability
         this.support = new AmherstObjectiveCapabilitySupport(gateway, scopePolicy, npcInteractionDelay);
     }
 
+    public NpcQuestObjectiveCapability(PrimitiveCapabilityGateway gateway,
+                                       AmherstScopePolicy scopePolicy,
+                                       AmherstNpcInteractionDelay npcInteractionDelay,
+                                       AgentPortalRoutePolicy routePolicy) {
+        this.support = new AmherstObjectiveCapabilitySupport(
+                gateway, scopePolicy, npcInteractionDelay, routePolicy);
+    }
+
     @Override
     public String id() {
         return "npc-quest-objective";
@@ -87,6 +109,8 @@ public final class NpcQuestObjectiveCapability
         if (phase == 0) {
             boolean completing = operation.desiredStatus() == 2 && liveStatus == 1;
             int npcId = completing ? operation.completeNpcId() : operation.startNpcId();
+            AgentNpcInteractionPlacementData placement = completing
+                    ? operation.completePlacement() : operation.startPlacement();
             int targetStatus = completing ? 2 : 1;
             if (!completing && command.skipUnavailable()
                     && !support.gateway().canStartQuest(context.agent(), operation.questId(), npcId)) {
@@ -95,15 +119,19 @@ public final class NpcQuestObjectiveCapability
             }
             context.memory().putInt("npcId", npcId);
             context.memory().putInt("targetStatus", targetStatus);
-            AgentCapabilityStep approach = support.approachNpc(context, command.mapId(), npcId);
+            AgentCapabilityStep approach = support.approachNpc(context, command.mapId(), npcId, placement);
             if (approach != null) {
                 return approach;
             }
-            if (support.waitForNpcInteraction(context, operationIndex, targetStatus)) {
+            if (support.waitForNpcInteraction(context, operationIndex, targetStatus,
+                    placement.distinguishInteractionStages())) {
                 return AgentCapabilityStep.running("waiting briefly before NPC interaction", true);
             }
             context.memory().putInt("phase", 1);
-            return AgentCapabilityStep.handoff(support.talk(command.mapId(), npcId, operation.questId()),
+            int interactionRangePx = context.memory().intValue(
+                    "npcInteractionRangePx", AmherstObjectiveCapabilitySupport.NPC_RANGE_PX);
+            return AgentCapabilityStep.handoff(support.talk(
+                            command.mapId(), npcId, operation.questId(), interactionRangePx),
                     "NPC quest objective requests dialogue");
         }
         int npcId = context.memory().intValue("npcId", operation.startNpcId());

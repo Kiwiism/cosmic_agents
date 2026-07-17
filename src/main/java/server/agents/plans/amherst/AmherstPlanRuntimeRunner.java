@@ -128,6 +128,9 @@ public final class AmherstPlanRuntimeRunner {
                 state.active = false;
                 state.lastError = failureMessage(completion);
                 publish(state, "PLAN ERROR: " + state.lastError);
+                observe(state, new AmherstPlanObservation(
+                        AmherstPlanObservation.Type.PLAN_ERROR, nowMs,
+                        "", null, null, null, state.lastError));
                 return;
             }
         }
@@ -139,6 +142,9 @@ public final class AmherstPlanRuntimeRunner {
                 state.active = false;
                 state.lastError = failure.getClass().getSimpleName() + ": " + failure.getMessage();
                 publish(state, "PLAN ERROR: " + state.lastError);
+                observe(state, new AmherstPlanObservation(
+                        AmherstPlanObservation.Type.PLAN_ERROR, nowMs,
+                        "", null, null, null, state.lastError));
             }
         }
     }
@@ -167,6 +173,9 @@ public final class AmherstPlanRuntimeRunner {
             state.lastError = "";
             saveIfChanged(entry, state, loaded, state.progress);
             publish(state, "Plan loaded in " + state.mode + " mode. " + progressSummary(state.progress));
+            observe(state, new AmherstPlanObservation(
+                    AmherstPlanObservation.Type.PLAN_STARTED, nowMs,
+                    "", null, null, null, state.mode.name()));
         }
     }
 
@@ -223,6 +232,10 @@ public final class AmherstPlanRuntimeRunner {
                     state.completed = true;
                     state.waitingForAdvance = false;
                     publish(state, "PLAN COMPLETE. " + progressSummary(state.progress));
+                    observe(state, new AmherstPlanObservation(
+                            AmherstPlanObservation.Type.PLAN_COMPLETED, nowMs,
+                            "", null, AgentCapabilityStatus.SUCCESS, null,
+                            "all objectives satisfy live state"));
                     return true;
                 }
                 if (state.mode == AmherstPlanExecutionMode.MANUAL && !state.advanceRequested) {
@@ -247,12 +260,18 @@ public final class AmherstPlanRuntimeRunner {
                 saveIfChanged(entry, state, before, state.progress);
                 publish(state, "Starting " + AmherstObjectiveFormatter.numbered(card, next));
                 publish(state, "Expected steps: " + AmherstObjectiveFormatter.expectedSteps(next));
+                observe(state, new AmherstPlanObservation(
+                        AmherstPlanObservation.Type.OBJECTIVE_STARTED, nowMs,
+                        next.objectiveId(), next.kind(), null, null, next.reason()));
                 AmherstPlanNarrator.announce(agent, next);
                 return true;
             } catch (IOException | RuntimeException failure) {
                 state.lastError = failure.getClass().getSimpleName() + ": " + failure.getMessage();
                 state.active = false;
                 publish(state, "PLAN ERROR: " + state.lastError);
+                observe(state, new AmherstPlanObservation(
+                        AmherstPlanObservation.Type.PLAN_ERROR, nowMs,
+                        state.assignedObjectiveId, null, null, null, state.lastError));
                 return true;
             }
         }
@@ -347,6 +366,9 @@ public final class AmherstPlanRuntimeRunner {
                 nowMs, entry.capabilityRuntimeState().journalSnapshot().size());
         state.assignedObjectiveId = null;
         saveIfChanged(entry, state, before, state.progress);
+        observe(state, new AmherstPlanObservation(
+                AmherstPlanObservation.Type.OBJECTIVE_FINISHED, nowMs,
+                objective.objectiveId(), objective.kind(), result.status(), null, result.message()));
         publish(state, result.status() + " " + AmherstObjectiveFormatter.numbered(card, objective)
                 + " - " + result.message());
         publish(state, "Agent progress: Lv" + state.objectiveStartLevel + " EXP " + state.objectiveStartExp
@@ -414,6 +436,9 @@ public final class AmherstPlanRuntimeRunner {
                                 event.reasonCode().name(), event.capabilityId() + ": " + event.message()), nowMs);
             }
             publishCapabilityEvent(state, event);
+            observe(state, new AmherstPlanObservation(
+                    AmherstPlanObservation.Type.CAPABILITY_EVENT, event.timestampMs(),
+                    state.assignedObjectiveId, null, event.status(), event, event.message()));
         }
         state.syncedCapabilityJournalCount = journal.size();
         saveIfChanged(entry, state, before, state.progress);
@@ -516,6 +541,14 @@ public final class AmherstPlanRuntimeRunner {
     private static void publish(AmherstPlanExecutionState state, String message) {
         try {
             state.observer.publish(message);
+        } catch (RuntimeException ignored) {
+            // Observability must never stop plan execution.
+        }
+    }
+
+    private static void observe(AmherstPlanExecutionState state, AmherstPlanObservation observation) {
+        try {
+            state.observer.observe(observation);
         } catch (RuntimeException ignored) {
             // Observability must never stop plan execution.
         }

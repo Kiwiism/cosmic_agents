@@ -1,6 +1,5 @@
 package server.agents.plans.amherst;
 
-import server.agents.capabilities.quest.MapleIslandSouthperryQuestCatalog;
 
 import java.util.List;
 

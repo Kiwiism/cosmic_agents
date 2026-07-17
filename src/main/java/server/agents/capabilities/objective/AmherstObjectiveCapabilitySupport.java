@@ -1,6 +1,8 @@
 package server.agents.capabilities.objective;
 
 import server.agents.capabilities.AgentCapabilityStatus;
+import server.agents.capabilities.movement.AgentClimbStateRuntime;
+import server.agents.capabilities.navigation.AgentPortalRoutePolicy;
 import server.agents.capabilities.npc.AgentNpcInteractionType;
 import server.agents.capabilities.npc.AgentNpcInteractionPolicy;
 import server.agents.capabilities.primitive.AgentCombatCapability;
@@ -16,6 +18,9 @@ import server.agents.capabilities.primitive.AgentQuestStartPrimitiveCapability;
 import server.agents.capabilities.primitive.AgentQuestStateCapability;
 import server.agents.capabilities.primitive.AgentReactorPrimitiveCapability;
 import server.agents.capabilities.quest.AmherstScopePolicy;
+import server.agents.capabilities.reactor.AgentReactorInteractionMode;
+import server.agents.capabilities.reactor.AgentReactorInteractionRequest;
+import server.agents.capabilities.reactor.AgentReactorTargetSelector;
 import server.agents.capabilities.runtime.AgentCapabilityContext;
 import server.agents.capabilities.runtime.AgentCapabilityInvocation;
 import server.agents.capabilities.runtime.AgentCapabilityReasonCode;
@@ -23,8 +28,10 @@ import server.agents.capabilities.runtime.AgentCapabilityResult;
 import server.agents.capabilities.runtime.AgentCapabilityStep;
 import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
 import server.agents.integration.PrimitiveCapabilityGateway;
+import server.maps.Rope;
 
 import java.awt.Point;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -40,27 +47,38 @@ final class AmherstObjectiveCapabilitySupport {
     private final PrimitiveCapabilityGateway gateway;
     private final AmherstScopePolicy scopePolicy;
     private final AmherstNpcInteractionDelay npcInteractionDelay;
+    private final AgentPortalRoutePolicy portalRoutePolicy;
 
     AmherstObjectiveCapabilitySupport() {
         this(AgentPrimitiveCapabilityGatewayRuntime.gateway(), new AmherstScopePolicy(),
-                AmherstNpcInteractionDelay.NONE);
+                AmherstNpcInteractionDelay.NONE, AgentPortalRoutePolicy.DIRECT);
     }
 
     AmherstObjectiveCapabilitySupport(PrimitiveCapabilityGateway gateway) {
-        this(gateway, new AmherstScopePolicy(), AmherstNpcInteractionDelay.NONE);
+        this(gateway, new AmherstScopePolicy(), AmherstNpcInteractionDelay.NONE,
+                AgentPortalRoutePolicy.DIRECT);
     }
 
     AmherstObjectiveCapabilitySupport(PrimitiveCapabilityGateway gateway, AmherstScopePolicy scopePolicy) {
-        this(gateway, scopePolicy, AmherstNpcInteractionDelay.NONE);
+        this(gateway, scopePolicy, AmherstNpcInteractionDelay.NONE, AgentPortalRoutePolicy.DIRECT);
     }
 
     AmherstObjectiveCapabilitySupport(PrimitiveCapabilityGateway gateway,
                                       AmherstScopePolicy scopePolicy,
                                       AmherstNpcInteractionDelay npcInteractionDelay) {
+        this(gateway, scopePolicy, npcInteractionDelay, AgentPortalRoutePolicy.DIRECT);
+    }
+
+    AmherstObjectiveCapabilitySupport(PrimitiveCapabilityGateway gateway,
+                                      AmherstScopePolicy scopePolicy,
+                                      AmherstNpcInteractionDelay npcInteractionDelay,
+                                      AgentPortalRoutePolicy portalRoutePolicy) {
         this.gateway = gateway;
         this.scopePolicy = scopePolicy;
         this.npcInteractionDelay = npcInteractionDelay == null
                 ? AmherstNpcInteractionDelay.NONE : npcInteractionDelay;
+        this.portalRoutePolicy = portalRoutePolicy == null
+                ? AgentPortalRoutePolicy.DIRECT : portalRoutePolicy;
     }
 
     PrimitiveCapabilityGateway gateway() {
@@ -101,12 +119,18 @@ final class AmherstObjectiveCapabilitySupport {
         }
         return AgentCapabilityStep.handoff(invocation(
                 new AgentPortalTravelCapability(gateway, scopePolicy),
-                new AgentPortalTravelCapability.Command(sourceMapId, portalId, destinationMapId, true),
+                new AgentPortalTravelCapability.Command(sourceMapId, portalId, destinationMapId, true,
+                        portalRoutePolicy.plan(context.entry(), sourceMapId, destinationMapId)),
                 PORTAL_TIMEOUT_MS),
                 "objective requests portal travel");
     }
 
     AgentCapabilityStep approachNpc(AgentCapabilityContext context, int mapId, int npcId) {
+        return approachNpc(context, mapId, npcId, AgentNpcInteractionPlacementData.direct(NPC_RANGE_PX));
+    }
+
+    AgentCapabilityStep approachNpc(AgentCapabilityContext context, int mapId, int npcId,
+                                    AgentNpcInteractionPlacementData placementData) {
         var npcScope = scopePolicy.checkNpcTravel(npcId);
         if (!npcScope.allowed()) {
             return blocked(npcScope.status(), npcScope.reason());
@@ -120,58 +144,102 @@ final class AmherstObjectiveCapabilitySupport {
             return missing("objective NPC is not present on map " + mapId);
         }
         Point currentPosition = gateway.position(context.agent());
-        Point interactionAnchor = interactionAnchor(
-                context, mapId, npcId, currentPosition, npcPosition);
+        AgentNpcInteractionPlacementPolicy.Placement placement = interactionPlacement(
+                context, mapId, npcId, currentPosition, npcPosition, placementData);
+        int interactionRangePx = placement.interactionRangePx();
+        context.memory().putInt("npcInteractionRangePx", interactionRangePx);
+        Point interactionAnchor = placement.anchor();
+        boolean climbableAnchor = placement.climbable();
         if (interactionAnchor != null
                 && currentPosition.distanceSq(interactionAnchor)
                 > (long) NPC_ANCHOR_ARRIVAL_RANGE_PX * NPC_ANCHOR_ARRIVAL_RANGE_PX) {
             return AgentCapabilityStep.handoff(invocation(new AgentNavigationCapability(gateway),
                     new AgentNavigationCapability.Command(
-                            mapId, interactionAnchor, NPC_ANCHOR_ARRIVAL_RANGE_PX, true)),
+                            mapId, interactionAnchor, NPC_ANCHOR_ARRIVAL_RANGE_PX, true,
+                            climbableAnchor)),
                     "objective requests navigation to safe NPC interaction anchor");
         }
-        if (currentPosition.distanceSq(npcPosition) <= (long) NPC_RANGE_PX * NPC_RANGE_PX) {
-            if (!gateway.grounded(context.agent())) {
+        if (currentPosition.distanceSq(npcPosition)
+                <= (long) interactionRangePx * interactionRangePx) {
+            if (!gateway.grounded(context.agent())
+                    && !matchesClimbingAnchor(context, interactionAnchor, climbableAnchor)) {
                 return AgentCapabilityStep.running("waiting to land before NPC interaction", false);
             }
             gateway.facePosition(context.agent(), npcPosition);
             return null;
         }
         return AgentCapabilityStep.handoff(invocation(new AgentNavigationCapability(gateway),
-                new AgentNavigationCapability.Command(mapId, npcPosition, NPC_RANGE_PX, true)),
+                new AgentNavigationCapability.Command(mapId, npcPosition, interactionRangePx, true)),
                 "objective requests navigation to NPC");
     }
 
-    private Point interactionAnchor(AgentCapabilityContext context,
-                                    int mapId,
-                                    int npcId,
-                                    Point currentPosition,
-                                    Point npcPosition) {
+    private boolean matchesClimbingAnchor(AgentCapabilityContext context,
+                                          Point anchor,
+                                          boolean climbableAnchor) {
+        Rope rope = AgentClimbStateRuntime.climbRope(context.entry());
+        return climbableAnchor && anchor != null && rope != null
+                && rope.x() == anchor.x
+                && anchor.y >= rope.topY()
+                && anchor.y <= rope.bottomY();
+    }
+
+    private AgentNpcInteractionPlacementPolicy.Placement interactionPlacement(
+            AgentCapabilityContext context,
+            int mapId,
+            int npcId,
+            Point currentPosition,
+            Point npcPosition,
+            AgentNpcInteractionPlacementData data) {
         if (context.memory().intValue("npcAnchorMapId", -1) == mapId
                 && context.memory().intValue("npcAnchorNpcId", -1) == npcId
                 && context.memory().booleanValue("npcAnchorSelected", false)) {
-            return new Point(
-                    context.memory().intValue("npcAnchorX", 0),
-                    context.memory().intValue("npcAnchorY", 0));
+            return new AgentNpcInteractionPlacementPolicy.Placement(
+                    context.memory().intValue("npcInteractionRangePx", NPC_RANGE_PX),
+                    new Point(context.memory().intValue("npcAnchorX", 0),
+                            context.memory().intValue("npcAnchorY", 0)),
+                    context.memory().booleanValue("npcAnchorClimbable", false));
         }
-        java.util.List<Point> candidates = AgentNpcInteractionAnchorCatalog.anchors(mapId, npcId).stream()
-                .filter(candidate -> candidate.distanceSq(npcPosition)
-                        <= (long) NPC_RANGE_PX * NPC_RANGE_PX)
-                .toList();
-        java.util.OptionalInt selected = MapleIslandObjectiveRandomnessRuntime.selectNpcAnchorIndex(
-                context.entry(), mapId, npcId, candidates.size());
-        Point anchor = selected.isPresent()
-                ? candidates.get(selected.getAsInt())
-                : AgentNpcInteractionAnchorCatalog.nearest(mapId, npcId, currentPosition);
+        AgentNpcInteractionPlacementPolicy.Placement placement = selectPlacement(
+                context, mapId, npcId, currentPosition, npcPosition, data);
+        Point anchor = placement.anchor();
         if (anchor == null) {
-            return null;
+            return placement;
         }
         context.memory().putInt("npcAnchorMapId", mapId);
         context.memory().putInt("npcAnchorNpcId", npcId);
         context.memory().putInt("npcAnchorX", anchor.x);
         context.memory().putInt("npcAnchorY", anchor.y);
+        context.memory().putInt("npcInteractionRangePx", placement.interactionRangePx());
+        context.memory().putBoolean("npcAnchorClimbable", placement.climbable());
         context.memory().putBoolean("npcAnchorSelected", true);
-        return anchor;
+        return placement;
+    }
+
+    private AgentNpcInteractionPlacementPolicy.Placement selectPlacement(
+            AgentCapabilityContext context, int mapId, int npcId,
+            Point currentPosition, Point npcPosition, AgentNpcInteractionPlacementData data) {
+        AgentNpcInteractionPlacementData resolved = data == null
+                ? AgentNpcInteractionPlacementData.direct(NPC_RANGE_PX) : data;
+        List<Point> curated = resolved.anchors().stream()
+                .filter(candidate -> candidate.distanceSq(npcPosition)
+                        <= (long) resolved.interactionRangePx() * resolved.interactionRangePx())
+                .toList();
+        List<Point> spread = resolved.dynamicSpread()
+                ? AgentNpcInteractionSpreadService.candidates(context.agent(), currentPosition,
+                npcPosition, resolved.interactionRangePx()) : List.of();
+        List<Point> candidates = spread.size() >= 2
+                ? AgentNpcInteractionSpreadService.selectionPool(spread,
+                resolved.trafficBiasX() == null ? currentPosition
+                        : new Point(npcPosition.x + resolved.trafficBiasX(), npcPosition.y))
+                : curated;
+        var selected = AgentObjectiveVariationRuntime.selectNpcAnchorIndex(
+                context.entry(), mapId, npcId, candidates.size());
+        Point anchor = selected.isPresent() ? candidates.get(selected.getAsInt())
+                : resolved.legacyAnchors().stream()
+                .min(java.util.Comparator.comparingDouble(currentPosition::distanceSq))
+                .map(Point::new).orElse(null);
+        return new AgentNpcInteractionPlacementPolicy.Placement(resolved.interactionRangePx(), anchor,
+                AgentNpcInteractionSpreadService.isClimbableAnchor(context.agent(), anchor));
     }
 
     AgentCapabilityStep approachPosition(AgentCapabilityContext context,
@@ -200,9 +268,16 @@ final class AmherstObjectiveCapabilitySupport {
     boolean waitForNpcInteraction(AgentCapabilityContext context,
                                   int operationIndex,
                                   int interactionStage) {
+        return waitForNpcInteraction(context, operationIndex, interactionStage, false);
+    }
+
+    boolean waitForNpcInteraction(AgentCapabilityContext context,
+                                  int operationIndex,
+                                  int interactionStage,
+                                  boolean distinguishInteractionStages) {
         String operationKey = "npcDelayOperation";
         String readyAtKey = "npcReadyAtMs";
-        int delayOperation = MapleIslandObjectiveRandomnessRuntime.settings(context.entry()).enabled()
+        int delayOperation = distinguishInteractionStages
                 ? 31 * operationIndex + interactionStage : operationIndex;
         if (context.memory().intValue(operationKey, -1) != delayOperation) {
             long delayMs = Math.max(0L, npcInteractionDelay.nextDelayMs());
@@ -214,16 +289,23 @@ final class AmherstObjectiveCapabilitySupport {
 
     AgentCapabilityStep approachReactor(AgentCapabilityContext context,
                                         int mapId,
+                                        int questId,
                                         Integer reactorId,
                                         String reactorName) {
         AgentCapabilityStep travel = travel(context, mapId);
         if (travel != null) {
             return travel;
         }
-        Point position = gateway.nearestActiveReactorPosition(context.agent(), reactorId, reactorName);
-        if (position == null) {
+        var request = new AgentReactorInteractionRequest(
+                mapId, questId, AgentReactorInteractionMode.HIT,
+                reactorId, reactorName, null, gateway.position(context.agent()), -1);
+        var target = new AgentReactorTargetSelector()
+                .selectReserved(List.copyOf(gateway.reactors(context.agent())), request,
+                        context.agent().getId(), context.agent().getMap());
+        if (target.isEmpty()) {
             return missing("no matching active reactor is available");
         }
+        Point position = target.get().targetPosition();
         if (gateway.position(context.agent()).distanceSq(position)
                 <= (long) REACTOR_RANGE_PX * REACTOR_RANGE_PX) {
             return null;
@@ -234,9 +316,13 @@ final class AmherstObjectiveCapabilitySupport {
     }
 
     AgentCapabilityInvocation<?> talk(int mapId, int npcId, Integer questId) {
+        return talk(mapId, npcId, questId, NPC_RANGE_PX);
+    }
+
+    AgentCapabilityInvocation<?> talk(int mapId, int npcId, Integer questId, int interactionRangePx) {
         return invocation(new AgentNpcInteractionPrimitiveCapability(gateway, scopePolicy),
                 new AgentNpcInteractionPrimitiveCapability.Command(mapId, npcId,
-                        AgentNpcInteractionType.TALK, questId, true));
+                        AgentNpcInteractionType.TALK, questId, interactionRangePx, true));
     }
 
     AgentCapabilityInvocation<?> questStart(int questId, int npcId) {

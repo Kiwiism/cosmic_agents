@@ -1,7 +1,7 @@
 package server.agents.capabilities.reactor;
 
 import server.agents.capabilities.AgentCapabilityStatus;
-import server.agents.capabilities.quest.AmherstQuestCatalog;
+import server.agents.plans.amherst.AmherstQuestCatalog;
 import server.agents.capabilities.quest.AmherstScopeDecision;
 
 import java.util.Set;

@@ -1,6 +1,5 @@
 package server.agents.profiles;
 
-import server.agents.capabilities.objective.MapleIslandObjectiveRandomnessRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.Optional;
@@ -24,7 +23,7 @@ public final class AgentBehaviorProfileRuntime {
         AgentBehaviorProfile.DelayRange range = current(entry)
                 .map(profile -> profile.presentation().timing().beforeNpcInteractionMs())
                 .orElse(null);
-        return MapleIslandObjectiveRandomnessRuntime.sampleNpcInteractionDelayMs(entry, range)
+        return AgentObjectiveVariationRuntime.sampleNpcInteractionDelayMs(entry, range)
                 .orElseGet(() -> sample(range));
     }
 
@@ -32,7 +31,7 @@ public final class AgentBehaviorProfileRuntime {
         AgentBehaviorProfile.DelayRange range = current(entry)
                 .map(profile -> profile.presentation().timing().betweenObjectivesMs())
                 .orElse(null);
-        return MapleIslandObjectiveRandomnessRuntime.sampleBetweenObjectivesDelayMs(entry, range)
+        return AgentObjectiveVariationRuntime.sampleBetweenObjectivesDelayMs(entry, range)
                 .orElseGet(() -> sample(range));
     }
 
