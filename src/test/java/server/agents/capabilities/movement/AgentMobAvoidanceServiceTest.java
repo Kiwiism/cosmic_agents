@@ -11,6 +11,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 import server.maps.Foothold;
 import server.maps.FootholdTree;
+import server.maps.MapPerceptionSnapshot;
 import server.maps.MapleMap;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -29,7 +30,7 @@ class AgentMobAvoidanceServiceTest {
         Foothold foothold = new Foothold(new Point(0, 100), new Point(300, 100), 1);
         map.setFootholds(footholds(foothold));
         AgentNavigationGraphService.rebuildGraph(map);
-        doReturn(List.of(mockMob(new Point(130, 100), 100100))).when(map).getAllMonsters();
+        doReturn(snapshot(mockMob(new Point(130, 100), 100100))).when(map).getPerceptionSnapshot();
 
         Character bot = mockBot(new Point(100, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
@@ -44,7 +45,7 @@ class AgentMobAvoidanceServiceTest {
         Foothold foothold = new Foothold(new Point(0, 100), new Point(140, 100), 1);
         map.setFootholds(footholds(foothold));
         AgentNavigationGraphService.rebuildGraph(map);
-        doReturn(List.of(mockMob(new Point(120, 100), 100100))).when(map).getAllMonsters();
+        doReturn(snapshot(mockMob(new Point(120, 100), 100100))).when(map).getPerceptionSnapshot();
 
         Character bot = mockBot(new Point(100, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
@@ -82,5 +83,9 @@ class AgentMobAvoidanceServiceTest {
         when(mob.isAlive()).thenReturn(true);
         when(mob.isFacingLeft()).thenReturn(false);
         return mob;
+    }
+
+    private static MapPerceptionSnapshot snapshot(Monster monster) {
+        return new MapPerceptionSnapshot(1, List.of(monster), List.of(), List.of());
     }
 }

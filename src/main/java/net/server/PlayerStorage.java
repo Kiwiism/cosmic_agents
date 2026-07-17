@@ -21,6 +21,7 @@
 */
 package net.server;
 
+import client.BotClient;
 import client.Character;
 import client.Client;
 
@@ -38,6 +39,9 @@ public class PlayerStorage {
     private final Map<String, Character> nameStorage = new LinkedHashMap<>();
     private final Lock rlock;
     private final Lock wlock;
+    private volatile Snapshot snapshot = Snapshot.EMPTY;
+    private int realPlayerCount;
+    private int agentCount;
 
     public PlayerStorage() {
         ReadWriteLock readWriteLock = new ReentrantReadWriteLock(true);
@@ -48,8 +52,14 @@ public class PlayerStorage {
     public void addPlayer(Character chr) {
         wlock.lock();
         try {
-            storage.put(chr.getId(), chr);
+            Character previous = storage.put(chr.getId(), chr);
+            if (previous != null) {
+                nameStorage.remove(previous.getName().toLowerCase());
+                decrementPopulation(previous);
+            }
             nameStorage.put(chr.getName().toLowerCase(), chr);
+            incrementPopulation(chr);
+            snapshot = null;
         } finally {
             wlock.unlock();
         }
@@ -61,6 +71,8 @@ public class PlayerStorage {
             Character mc = storage.remove(chr);
             if (mc != null) {
                 nameStorage.remove(mc.getName().toLowerCase());
+                decrementPopulation(mc);
+                snapshot = null;
             }
 
             return mc;
@@ -88,22 +100,23 @@ public class PlayerStorage {
     }
 
     public Collection<Character> getAllCharacters() {
-        rlock.lock();
-        try {
-            return new ArrayList<>(storage.values());
-        } finally {
-            rlock.unlock();
-        }
+        return currentSnapshot().allCharacters();
+    }
+
+    public Collection<Character> getRealPlayers() {
+        return currentSnapshot().realPlayers();
+    }
+
+    public Collection<Character> getNetworkRecipients() {
+        return currentSnapshot().networkRecipients();
+    }
+
+    public Collection<Character> getAgents() {
+        return currentSnapshot().agents();
     }
 
     public final void disconnectAll() {
-        List<Character> chrList;
-        rlock.lock();
-        try {
-            chrList = new ArrayList<>(storage.values());
-        } finally {
-            rlock.unlock();
-        }
+        List<Character> chrList = currentSnapshot().allCharacters();
 
         for (Character mc : chrList) {
             Client client = mc.getClient();
@@ -116,6 +129,9 @@ public class PlayerStorage {
         try {
             storage.clear();
             nameStorage.clear();
+            realPlayerCount = 0;
+            agentCount = 0;
+            snapshot = Snapshot.EMPTY;
         } finally {
             wlock.unlock();
         }
@@ -128,5 +144,82 @@ public class PlayerStorage {
         } finally {
             rlock.unlock();
         }
+    }
+
+    public int getRealPlayerCount() {
+        rlock.lock();
+        try {
+            return realPlayerCount;
+        } finally {
+            rlock.unlock();
+        }
+    }
+
+    public int getAgentCount() {
+        rlock.lock();
+        try {
+            return agentCount;
+        } finally {
+            rlock.unlock();
+        }
+    }
+
+    private void incrementPopulation(Character character) {
+        if (character.getClient() instanceof BotClient) {
+            agentCount++;
+        } else {
+            realPlayerCount++;
+        }
+    }
+
+    private void decrementPopulation(Character character) {
+        if (character.getClient() instanceof BotClient) {
+            agentCount--;
+        } else {
+            realPlayerCount--;
+        }
+    }
+
+    private Snapshot currentSnapshot() {
+        Snapshot current = snapshot;
+        if (current != null) {
+            return current;
+        }
+
+        rlock.lock();
+        try {
+            current = snapshot;
+            if (current == null) {
+                List<Character> allCharacters = List.copyOf(storage.values());
+                List<Character> realPlayers = new ArrayList<>(realPlayerCount);
+                List<Character> networkRecipients = new ArrayList<>(realPlayerCount);
+                List<Character> agents = new ArrayList<>(agentCount);
+                for (Character character : allCharacters) {
+                    if (character.getClient() instanceof BotClient) {
+                        agents.add(character);
+                    } else {
+                        realPlayers.add(character);
+                        if (character.getClient() != null) {
+                            networkRecipients.add(character);
+                        }
+                    }
+                }
+                current = new Snapshot(allCharacters, List.copyOf(realPlayers),
+                        List.copyOf(networkRecipients), List.copyOf(agents));
+                snapshot = current;
+            }
+            return current;
+        } finally {
+            rlock.unlock();
+        }
+    }
+
+    private record Snapshot(
+            List<Character> allCharacters,
+            List<Character> realPlayers,
+            List<Character> networkRecipients,
+            List<Character> agents
+    ) {
+        private static final Snapshot EMPTY = new Snapshot(List.of(), List.of(), List.of(), List.of());
     }
 }

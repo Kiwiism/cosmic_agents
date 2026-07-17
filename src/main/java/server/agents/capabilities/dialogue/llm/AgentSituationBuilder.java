@@ -94,7 +94,7 @@ public final class AgentSituationBuilder {
         // Preserve discovery order so the same map produces stable text.
         LinkedHashMap<String, int[]> counts = new LinkedHashMap<>();
         try {
-            for (Monster mob : map.getAllMonsters()) {
+            for (Monster mob : server.agents.perception.AgentMapPerception.monsters(map)) {
                 if (mob == null || !mob.isAlive()) continue;
                 String key = mob.getName() + "|" + mob.getLevel();
                 counts.computeIfAbsent(key, k -> new int[1])[0]++;

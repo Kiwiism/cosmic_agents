@@ -250,7 +250,12 @@ public class World {
         mountsSchedule = tman.register(new MountTirednessTask(this), MINUTES.toMillis(1), MINUTES.toMillis(1));
         merchantSchedule = tman.register(new HiredMerchantTask(this), 10 * MINUTES.toMillis(1), 10 * MINUTES.toMillis(1));
         timedMapObjectsSchedule = tman.register(new TimedMapObjectTask(this), MINUTES.toMillis(1), MINUTES.toMillis(1));
-        charactersSchedule = tman.register(new CharacterAutosaverTask(this), HOURS.toMillis(1), HOURS.toMillis(1));
+        CharacterAutosaverTask autosaver = new CharacterAutosaverTask(this);
+        charactersSchedule = tman.register(
+                TimerManager.SchedulerLane.SAVE,
+                autosaver,
+                autosaver.dispatchIntervalMs(),
+                autosaver.dispatchIntervalMs());
         marriagesSchedule = tman.register(new WeddingReservationTask(this), MINUTES.toMillis(YamlConfig.config.server.WEDDING_RESERVATION_INTERVAL), MINUTES.toMillis(YamlConfig.config.server.WEDDING_RESERVATION_INTERVAL));
         mapOwnershipSchedule = tman.register(new MapOwnershipTask(this), SECONDS.toMillis(20), SECONDS.toMillis(20));
         fishingSchedule = tman.register(new FishingTask(this), SECONDS.toMillis(10), SECONDS.toMillis(10));
@@ -710,7 +715,7 @@ public class World {
 
     public int getWorldCapacityStatus() {
         int worldCap = getChannelsSize() * YamlConfig.config.server.CHANNEL_LOAD;
-        int num = players.getSize();
+        int num = players.getRealPlayerCount();
 
         int status;
         if (num >= worldCap) {
@@ -2045,7 +2050,7 @@ public class World {
     }
 
     public void broadcastPacket(Packet packet) {
-        for (Character chr : players.getAllCharacters()) {
+        for (Character chr : players.getNetworkRecipients()) {
             chr.sendPacket(packet);
         }
     }
@@ -2192,7 +2197,7 @@ public class World {
     }
 
     public void dropMessage(int type, String message) {
-        for (Character player : getPlayerStorage().getAllCharacters()) {
+        for (Character player : getPlayerStorage().getNetworkRecipients()) {
             player.dropMessage(type, message);
         }
     }

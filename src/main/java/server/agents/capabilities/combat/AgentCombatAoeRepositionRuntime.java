@@ -40,7 +40,7 @@ public final class AgentCombatAoeRepositionRuntime {
         }
         List<Monster> cluster = AgentCombatScoringPolicy.legacyClusterMonsters(
                 primaryTarget, AgentCombatObjectiveTargetStateRuntime.allowedMonsters(
-                        entry, bot.getMap().getAllMonsters()));
+                        entry, server.agents.perception.AgentMapPerception.monsters(bot.getMap())));
         if (cluster.size() <= fireNowBest.targets.size()) {
             return null;
         }
@@ -63,7 +63,7 @@ public final class AgentCombatAoeRepositionRuntime {
         }
         List<Monster> sweetTargets = AgentCombatTargetSelector.collectTargetsInHitBox(
                 sweetPrimary, shifted, aoeSkillMobs,
-                AgentCombatObjectiveTargetStateRuntime.allowedMonsters(entry, bot.getMap().getAllMonsters()));
+                AgentCombatObjectiveTargetStateRuntime.allowedMonsters(entry, server.agents.perception.AgentMapPerception.monsters(bot.getMap())));
         if (sweetTargets.size() <= fireNowBest.targets.size()) {
             return null;
         }

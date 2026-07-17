@@ -49,7 +49,7 @@ public record AgentMapDamageProfile(int mobWdef, int mobAvoid, int mobLevel) {
         List<MonsterStats> candidates = new ArrayList<>();
         List<Monster> mobs;
         try {
-            mobs = map.getAllMonsters();
+            mobs = server.agents.perception.AgentMapPerception.monsters(map);
         } catch (Throwable t) {
             return null;
         }

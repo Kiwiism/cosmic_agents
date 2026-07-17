@@ -14,14 +14,14 @@ public final class AgentBasicAttackPlanRuntime {
                 target,
                 candidate -> AgentAttackExecutionProvider.buildBasicAttackData(bot, candidate.getPosition()),
                 (candidate, hitBox) -> AgentCombatTargetSelector.resolveEffectivePrimary(
-                        bot.getPosition(), candidate, hitBox, bot.getMap().getAllMonsters()),
+                        bot.getPosition(), candidate, hitBox, server.agents.perception.AgentMapPerception.monsters(bot.getMap())),
                 AgentCombatHitboxIntersection::intersectsMonster,
                 candidate -> bot == null ? null : AgentCombatTargetSelector.findReachableOnOppositeFacing(
                         bot.getPosition(),
                         candidate,
                         mirroredPos -> AgentAttackExecutionProvider.buildBasicAttackData(bot, mirroredPos).hitBox(),
                         hitBox -> AgentCombatTargetSelector.resolveEffectivePrimary(
-                                bot.getPosition(), candidate, hitBox, bot.getMap().getAllMonsters())));
+                                bot.getPosition(), candidate, hitBox, server.agents.perception.AgentMapPerception.monsters(bot.getMap()))));
         if (selection == null) {
             return null;
         }

@@ -1,5 +1,6 @@
 package server.life;
 
+import client.BotClient;
 import client.Character;
 import client.Client;
 import net.packet.Packet;
@@ -10,6 +11,7 @@ import tools.Pair;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -67,6 +69,33 @@ class MonsterControllerAssignmentHoldTest {
         assertNull(monster.getController());
 
         monster.aggroReleaseControllerAssignmentHold();
+        monster.aggroSwitchController(replacement, true);
+        assertSame(replacement, monster.getController());
+    }
+
+    @Test
+    void agentPhysicsAuthorityRejectsRealControllerUntilRelease() {
+        MonsterStats stats = new MonsterStats();
+        stats.setHp(100);
+        TestMonster monster = new TestMonster(100100, stats);
+        MapleMap map = mock(MapleMap.class);
+        monster.setMap(map);
+
+        Character original = controllerOn(map);
+        Character replacement = controllerOn(map);
+        Character agent = mock(Character.class);
+        when(agent.getMap()).thenReturn(map);
+        when(agent.getClient()).thenReturn(mock(BotClient.class));
+        monster.aggroSwitchController(original, true);
+
+        assertTrue(monster.aggroAcquireAgentPhysicsController(agent));
+        assertSame(agent, monster.getController());
+        verify(original).stopControllingMonster(monster);
+
+        monster.aggroSwitchController(replacement, true);
+        assertSame(agent, monster.getController());
+
+        assertTrue(monster.aggroReleaseAgentPhysicsController(agent));
         monster.aggroSwitchController(replacement, true);
         assertSame(replacement, monster.getController());
     }

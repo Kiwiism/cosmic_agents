@@ -360,7 +360,7 @@ public final class AgentAttackExecutionProvider {
         double targetDistSq = targetPos.distanceSq(botPos);
         server.life.Monster closest = null;
         double closestDistSq = targetDistSq;
-        for (server.life.Monster m : bot.getMap().getAllMonsters()) {
+        for (server.life.Monster m : server.agents.perception.AgentMapPerception.monsters(bot.getMap())) {
             if (!m.isAlive() || !AgentCombatObjectiveTargetStateRuntime.allows(entry, m.getId())) continue;
             Point mp = m.getPosition();
             double mDistSq = mp.distanceSq(botPos);
@@ -400,7 +400,7 @@ public final class AgentAttackExecutionProvider {
         for (int step = minStep; step <= maxStep; step += 30) {
             int candX = botPos.x + direction * step;
             long minMobDistSq = Long.MAX_VALUE;
-            for (server.life.Monster m : bot.getMap().getAllMonsters()) {
+            for (server.life.Monster m : server.agents.perception.AgentMapPerception.monsters(bot.getMap())) {
                 if (!m.isAlive()) continue;
                 Point mp = m.getPosition();
                 int dy = Math.abs(mp.y - botPos.y);
@@ -457,7 +457,7 @@ public final class AgentAttackExecutionProvider {
         int scanHeight = AgentCombatConfig.cfg.RANGED_DEGENERATE_RANGE_Y * 2;
         int bandX = AgentCombatConfig.cfg.RANGED_RETREAT_THRESHOLD_X;
         int bandY = AgentCombatConfig.cfg.RANGED_DEGENERATE_RANGE_Y;
-        for (server.life.Monster m : bot.getMap().getAllMonsters()) {
+        for (server.life.Monster m : server.agents.perception.AgentMapPerception.monsters(bot.getMap())) {
             if (!m.isAlive()) continue;
             Point mp = m.getPosition();
             int dy = Math.abs(mp.y - botPos.y);

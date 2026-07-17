@@ -33,6 +33,16 @@ class MapPlayerObserverStateTest {
     }
 
     @Test
+    void ignoresCharactersWithoutAnAttachedNetworkClient() {
+        Character detached = mock(Character.class);
+        MapPlayerObserverState state = new MapPlayerObserverState();
+
+        assertFalse(state.characterAdded(detached));
+        assertFalse(state.isObserved());
+        assertEquals(0, state.count());
+    }
+
+    @Test
     void reportsOnlyZeroToOneAndOneToZeroTransitions() {
         Character first = mock(Character.class);
         when(first.getClient()).thenReturn(mock(Client.class));

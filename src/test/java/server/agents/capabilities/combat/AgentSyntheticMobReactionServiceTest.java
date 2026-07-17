@@ -36,16 +36,20 @@ import static org.mockito.Mockito.when;
 
 class AgentSyntheticMobReactionServiceTest {
     private boolean startupReactionEnabled;
+    private boolean startupPhysicsProofEnabled;
 
     @BeforeEach
     void enableReactionForBehaviorTests() {
         startupReactionEnabled = AgentCombatConfig.cfg.SYNTHETIC_MOB_REACTION_ENABLED;
+        startupPhysicsProofEnabled = AgentCombatConfig.cfg.MOB_PHYSICS_POC_ENABLED;
         AgentCombatConfig.cfg.SYNTHETIC_MOB_REACTION_ENABLED = true;
+        AgentCombatConfig.cfg.MOB_PHYSICS_POC_ENABLED = false;
     }
 
     @AfterEach
     void restoreConfiguredReactionMode() {
         AgentCombatConfig.cfg.SYNTHETIC_MOB_REACTION_ENABLED = startupReactionEnabled;
+        AgentCombatConfig.cfg.MOB_PHYSICS_POC_ENABLED = startupPhysicsProofEnabled;
     }
 
     @Test

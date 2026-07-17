@@ -64,7 +64,7 @@ public final class AgentSkillAttackPlanRuntime {
                     route,
                     facingLeft -> AgentCombatRangePolicy.basicWeaponReachRect(bot, facingLeft, route),
                     hitBox -> AgentCombatTargetSelector.resolveEffectivePrimary(
-                            bot.getPosition(), strikePointFallback, hitBox, bot.getMap().getAllMonsters()));
+                            bot.getPosition(), strikePointFallback, hitBox, server.agents.perception.AgentMapPerception.monsters(bot.getMap())));
         }
 
         Rectangle hitBox = AgentCombatSkillHitboxPolicy.calculateSkillHitBox(
@@ -83,7 +83,7 @@ public final class AgentSkillAttackPlanRuntime {
                         () -> AgentCombatRangePolicy.isPrimaryReachableByBasicWeapon(
                                 bot, preSelectionPrimaryTarget, route),
                         (candidate, candidateHitBox) -> AgentCombatTargetSelector.resolveEffectivePrimary(
-                                bot.getPosition(), candidate, candidateHitBox, bot.getMap().getAllMonsters()),
+                                bot.getPosition(), candidate, candidateHitBox, server.agents.perception.AgentMapPerception.monsters(bot.getMap())),
                         AgentCombatHitboxIntersection::intersectsMonster);
         if (targetSelection == null) {
             return null;
@@ -108,7 +108,7 @@ public final class AgentSkillAttackPlanRuntime {
         AgentAttackExecutionProvider.SkillAttackTiming skillTiming =
                 AgentAttackExecutionProvider.resolveSkillAttackTiming(skill, action, bot, fallbackAttackData);
         List<Monster> targets = AgentCombatTargetSelector.collectTargetsInHitBox(
-                primaryTarget, hitBox, Math.max(1, effect.getMobCount()), bot.getMap().getAllMonsters());
+                primaryTarget, hitBox, Math.max(1, effect.getMobCount()), server.agents.perception.AgentMapPerception.monsters(bot.getMap()));
         if (skillId == DragonKnight.DRAGON_ROAR
                 && !AgentCombatSupportPolicy.canUseDragonRoarPlan(
                 bot, targets.size(),

@@ -352,11 +352,11 @@ public final class Channel {
 
     public int getChannelCapacity() {
         if (players == null) return 0;
-        return (int) (Math.ceil(((float) players.getAllCharacters().size() / YamlConfig.config.server.CHANNEL_LOAD) * 800));
+        return (int) (Math.ceil(((float) players.getRealPlayerCount() / YamlConfig.config.server.CHANNEL_LOAD) * 800));
     }
 
     public void broadcastPacket(Packet packet) {
-        for (Character chr : players.getAllCharacters()) {
+        for (Character chr : players.getNetworkRecipients()) {
             chr.sendPacket(packet);
         }
     }
@@ -382,7 +382,7 @@ public final class Channel {
     }
 
     public void broadcastGMPacket(Packet packet) {
-        for (Character chr : players.getAllCharacters()) {
+        for (Character chr : players.getNetworkRecipients()) {
             if (chr.isGM()) {
                 chr.sendPacket(packet);
             }
@@ -1085,7 +1085,7 @@ public final class Channel {
     }
 
     public void dropMessage(int type, String message) {
-        for (Character player : getPlayerStorage().getAllCharacters()) {
+        for (Character player : getPlayerStorage().getNetworkRecipients()) {
             player.dropMessage(type, message);
         }
     }

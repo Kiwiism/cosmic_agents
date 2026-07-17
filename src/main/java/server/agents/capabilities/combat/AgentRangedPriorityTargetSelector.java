@@ -34,7 +34,7 @@ public final class AgentRangedPriorityTargetSelector {
 
         Monster best = null;
         double bestDistanceSq = Double.MAX_VALUE;
-        for (Monster candidate : agent.getMap().getAllMonsters()) {
+        for (Monster candidate : server.agents.perception.AgentMapPerception.monsters(agent.getMap())) {
             if (candidate == preferredTarget) {
                 continue;
             }

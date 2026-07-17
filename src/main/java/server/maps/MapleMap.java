@@ -116,12 +116,15 @@ public class MapleMap {
     private static final Map<Integer, Pair<Integer, Integer>> dropBoundsCache = new ConcurrentHashMap<>(100);
 
     private final Map<Integer, MapObject> mapobjects = new LinkedHashMap<>();
+    private volatile MapPerceptionSnapshot perceptionSnapshot;
+    private long mapObjectRevision;
     private final Set<Integer> selfDestructives = new LinkedHashSet<>();
     private final Collection<SpawnPoint> monsterSpawn = Collections.synchronizedList(new LinkedList<>());
     private final Collection<SpawnPoint> allMonsterSpawn = Collections.synchronizedList(new LinkedList<>());
     private final AtomicInteger spawnedMonstersOnMap = new AtomicInteger(0);
     private final AtomicInteger droppedItemCount = new AtomicInteger(0);
     private final Collection<Character> characters = new LinkedHashSet<>();
+    private final Collection<Character> networkRecipients = new LinkedHashSet<>();
     private final MapPlayerObserverState playerObservers = new MapPlayerObserverState();
     private final Map<Integer, Set<Integer>> mapParty = new LinkedHashMap<>();
     private final Map<Integer, Portal> portals = new HashMap<>();
@@ -411,6 +414,7 @@ public class MapleMap {
         try {
             mapobject.setObjectId(curOID);
             this.mapobjects.put(curOID, mapobject);
+            invalidatePerceptionSnapshot(mapobject);
         } finally {
             objectWLock.unlock();
         }
@@ -439,11 +443,14 @@ public class MapleMap {
         try {
             mapobject.setObjectId(curOID);
             this.mapobjects.put(curOID, mapobject);
+            invalidatePerceptionSnapshot(mapobject);
             for (Character chr : characters) {
                 if (condition == null || condition.canSpawn(chr)) {
                     if (chr.getPosition().distanceSq(mapobject.getPosition()) <= getRangedDistance()) {
-                        inRangeCharacters.add(chr);
                         chr.addVisibleMapObject(mapobject);
+                        if (MapPlayerObserverState.isObserver(chr)) {
+                            inRangeCharacters.add(chr);
+                        }
                     }
                 }
             }
@@ -467,8 +474,10 @@ public class MapleMap {
             for (Character chr : characters) {
                 if (condition == null || condition.canSpawn(chr)) {
                     if (chr.getPosition().distanceSq(mapobject.getPosition()) <= getRangedDistance()) {
-                        inRangeCharacters.add(chr);
                         chr.addVisibleMapObject(mapobject);
+                        if (MapPlayerObserverState.isObserver(chr)) {
+                            inRangeCharacters.add(chr);
+                        }
                     }
                 }
             }
@@ -508,6 +517,9 @@ public class MapleMap {
         objectWLock.lock();
         try {
             removed = this.mapobjects.remove(num);
+            if (removed != null) {
+                invalidatePerceptionSnapshot(removed);
+            }
         } finally {
             objectWLock.unlock();
         }
@@ -1228,6 +1240,47 @@ public class MapleMap {
         return list;
     }
 
+    public MapPerceptionSnapshot getPerceptionSnapshot() {
+        MapPerceptionSnapshot current = perceptionSnapshot;
+        if (current != null) {
+            return current;
+        }
+
+        objectRLock.lock();
+        try {
+            current = perceptionSnapshot;
+            if (current == null) {
+                List<Monster> monsters = new ArrayList<>();
+                List<MapItem> items = new ArrayList<>();
+                List<NPC> npcs = new ArrayList<>();
+                for (MapObject object : mapobjects.values()) {
+                    switch (object.getType()) {
+                        case MONSTER -> monsters.add((Monster) object);
+                        case ITEM -> items.add((MapItem) object);
+                        case NPC -> npcs.add((NPC) object);
+                        default -> {
+                        }
+                    }
+                }
+                current = new MapPerceptionSnapshot(
+                        mapObjectRevision, List.copyOf(monsters), List.copyOf(items), List.copyOf(npcs));
+                perceptionSnapshot = current;
+            }
+            return current;
+        } finally {
+            objectRLock.unlock();
+        }
+    }
+
+    private void invalidatePerceptionSnapshot(MapObject object) {
+        if (object != null && (object.getType() == MapObjectType.MONSTER
+                || object.getType() == MapObjectType.ITEM
+                || object.getType() == MapObjectType.NPC)) {
+            mapObjectRevision++;
+            perceptionSnapshot = null;
+        }
+    }
+
     public int countItems() {
         return getMapObjectsInRange(new Point(0, 0), Double.POSITIVE_INFINITY, Arrays.asList(MapObjectType.ITEM)).size();
     }
@@ -1761,6 +1814,7 @@ public class MapleMap {
                     broadcastMessage(PacketCreator.removeNPC(obj.getObjectId()));
 
                     this.mapobjects.remove(obj.getObjectId());
+                    invalidatePerceptionSnapshot(obj);
                 }
             }
         } finally {
@@ -2357,6 +2411,9 @@ public class MapleMap {
         try {
             if (characters.add(chr)) {
                 observationStarted = playerObservers.characterAdded(chr);
+                if (MapPlayerObserverState.isObserver(chr)) {
+                    networkRecipients.add(chr);
+                }
             }
             chrSize = characters.size();
 
@@ -2689,6 +2746,7 @@ public class MapleMap {
 
             if (characters.remove(chr)) {
                 observationEnded = playerObservers.characterRemoved(chr);
+                networkRecipients.remove(chr);
             }
         } finally {
             chrWLock.unlock();
@@ -2805,7 +2863,7 @@ public class MapleMap {
         int recipients = 0;
         chrRLock.lock();
         try {
-            for (Character chr : characters) {
+            for (Character chr : networkRecipients) {
                 if (chr != source) {
                     if (rangeSq < Double.POSITIVE_INFINITY) {
                         if (rangedFrom.distanceSq(chr.getPosition()) <= rangeSq) {
@@ -2821,7 +2879,7 @@ public class MapleMap {
         } finally {
             chrRLock.unlock();
             MapBroadcastDiagnostics.record(mapid, recipients, rangeSq < Double.POSITIVE_INFINITY, broadcastStartedNs, slowThresholdMs);
-            server.monitoring.SlowOperationLogger.warnIfSlow("map-broadcast map=" + mapid + " chars=" + characters.size(),
+            server.monitoring.SlowOperationLogger.warnIfSlow("map-broadcast map=" + mapid + " recipients=" + playerObservers.count(),
                     broadcastStartedNs, slowThresholdMs);
         }
     }
@@ -2857,7 +2915,7 @@ public class MapleMap {
     private void broadcastBossHpMessage(Monster mm, int bossHash, Character source, Packet packet, double rangeSq, Point rangedFrom) {
         chrRLock.lock();
         try {
-            for (Character chr : characters) {
+            for (Character chr : networkRecipients) {
                 if (chr != source) {
                     if (rangeSq < Double.POSITIVE_INFINITY) {
                         if (rangedFrom.distanceSq(chr.getPosition()) <= rangeSq) {
@@ -2886,7 +2944,7 @@ public class MapleMap {
                                           double rangeSq, Point rangedFrom) {
         chrRLock.lock();
         try {
-            for (Character chr : characters) {
+            for (Character chr : networkRecipients) {
                 Packet packet = PacketCreator.dropItemFromMapObject(chr, mdrop, dropperPos, dropPos, mod, delay);
 
                 // TODO: remove along with USE_MAXRANGE config
@@ -2915,7 +2973,7 @@ public class MapleMap {
         chrRLock.lock();
         try {
             if (gmBroadcast) {
-                for (Character chr : characters) {
+                for (Character chr : networkRecipients) {
                     if (chr.isGM()) {
                         if (chr != source) {
                             chr.sendPacket(PacketCreator.spawnPlayerMapObject(chr.getClient(), player, enteringField));
@@ -2923,7 +2981,7 @@ public class MapleMap {
                     }
                 }
             } else {
-                for (Character chr : characters) {
+                for (Character chr : networkRecipients) {
                     if (chr != source) {
                         chr.sendPacket(PacketCreator.spawnPlayerMapObject(chr.getClient(), player, enteringField));
                     }
@@ -2937,7 +2995,7 @@ public class MapleMap {
     public void broadcastUpdateCharLookMessage(Character source, Character player) {
         chrRLock.lock();
         try {
-            for (Character chr : characters) {
+            for (Character chr : networkRecipients) {
                 if (chr != source) {
                     chr.sendPacket(PacketCreator.updateCharLook(chr.getClient(), player));
                 }
@@ -2972,6 +3030,7 @@ public class MapleMap {
 
     private void sendObjectPlacement(Client c) {
         Character chr = c.getPlayer();
+        boolean networkRecipient = MapPlayerObserverState.isObserver(chr);
         Collection<MapObject> objects;
 
         objectRLock.lock();
@@ -2983,7 +3042,9 @@ public class MapleMap {
 
         for (MapObject o : objects) {
             if (isNonRangedType(o.getType())) {
-                o.sendSpawnData(c);
+                if (networkRecipient) {
+                    o.sendSpawnData(c);
+                }
             } else if (o.getType() == MapObjectType.SUMMON) {
                 Summon summon = (Summon) o;
                 if (summon.getOwner() == chr) {
@@ -3005,11 +3066,15 @@ public class MapleMap {
             for (MapObject o : getMapObjectsInRange(chr.getPosition(), getRangedDistance(), rangedMapobjectTypes)) {
                 if (o.getType() == MapObjectType.REACTOR) {
                     if (((Reactor) o).isAlive()) {
-                        o.sendSpawnData(chr.getClient());
+                        if (networkRecipient) {
+                            o.sendSpawnData(chr.getClient());
+                        }
                         chr.addVisibleMapObject(o);
                     }
                 } else {
-                    o.sendSpawnData(chr.getClient());
+                    if (networkRecipient) {
+                        o.sendSpawnData(chr.getClient());
+                    }
                     chr.addVisibleMapObject(o);
 
                     if (o.getType() == MapObjectType.MONSTER) {
@@ -3343,11 +3408,15 @@ public class MapleMap {
         if (!chr.isMapObjectVisible(mo)) { // object entered view range
             if (mo.getType() == MapObjectType.SUMMON || mo.getPosition().distanceSq(chr.getPosition()) <= getRangedDistance()) {
                 chr.addVisibleMapObject(mo);
-                mo.sendSpawnData(chr.getClient());
+                if (MapPlayerObserverState.isObserver(chr)) {
+                    mo.sendSpawnData(chr.getClient());
+                }
             }
         } else if (mo.getType() != MapObjectType.SUMMON && mo.getPosition().distanceSq(chr.getPosition()) > getRangedDistance()) {
             chr.removeVisibleMapObject(mo);
-            mo.sendDestroyData(chr.getClient());
+            if (MapPlayerObserverState.isObserver(chr)) {
+                mo.sendDestroyData(chr.getClient());
+            }
         }
     }
 
@@ -3898,7 +3967,7 @@ public class MapleMap {
     private void broadcastGMMessage(Character source, Packet packet, double rangeSq, Point rangedFrom) {
         chrRLock.lock();
         try {
-            for (Character chr : characters) {
+            for (Character chr : networkRecipients) {
                 if (chr != source && chr.isGM()) {
                     if (rangeSq < Double.POSITIVE_INFINITY) {
                         if (rangedFrom.distanceSq(chr.getPosition()) <= rangeSq) {
@@ -3917,7 +3986,7 @@ public class MapleMap {
     public void broadcastNONGMMessage(Character source, Packet packet, boolean repeatToSource) {
         chrRLock.lock();
         try {
-            for (Character chr : characters) {
+            for (Character chr : networkRecipients) {
                 if (chr != source && !chr.isGM()) {
                     chr.sendPacket(packet);
                 }

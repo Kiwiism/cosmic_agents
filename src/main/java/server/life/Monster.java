@@ -98,6 +98,7 @@ public class Monster extends AbstractLoadedLife {
     private int mp;
     private WeakReference<Character> controller = new WeakReference<>(null);
     private boolean controllerHasAggro, controllerKnowsAboutAggro, controllerHasPuppet;
+    private boolean agentPhysicsAuthority;
     private long controllerAssignmentHoldUntilNanos;
     private final Collection<MonsterListener> listeners = new LinkedList<>();
     private final EnumMap<MonsterStatus, MonsterStatusEffect> stati = new EnumMap<>(MonsterStatus.class);
@@ -1938,6 +1939,68 @@ public class Monster extends AbstractLoadedLife {
         return aggroRemoveController(true);
     }
 
+    /** Atomically transfers logical movement authority to an Agent BotClient. */
+    public boolean aggroAcquireAgentPhysicsController(Character agent) {
+        if (agent == null || !(agent.getClient() instanceof BotClient)
+                || agent.getMap() != getMap()) {
+            return false;
+        }
+
+        Character previousController;
+        aggroUpdateLock.lock();
+        try {
+            if (agent.getMap() != getMap()) {
+                return false;
+            }
+            previousController = getActiveController();
+            if (previousController == agent) {
+                setControllerHasAggro(true);
+                agentPhysicsAuthority = true;
+                controllerAssignmentHoldUntilNanos = 0L;
+                return true;
+            }
+            setController(agent);
+            setControllerHasAggro(true);
+            setControllerKnowsAboutAggro(false);
+            setControllerHasPuppet(false);
+            agentPhysicsAuthority = true;
+            controllerAssignmentHoldUntilNanos = 0L;
+        } finally {
+            aggroUpdateLock.unlock();
+        }
+
+        if (previousController != null) {
+            if (!isFake()) {
+                previousController.sendPacket(PacketCreator.stopControllingMonster(getObjectId()));
+            }
+            previousController.stopControllingMonster(this);
+        }
+        agent.controlMonster(this);
+        return true;
+    }
+
+    /** Releases Agent physics authority and hands the final server state to a real client. */
+    public boolean aggroReleaseAgentPhysicsController(Character agent) {
+        aggroUpdateLock.lock();
+        try {
+            if (agent == null || getController() != agent
+                    || !(agent.getClient() instanceof BotClient)) {
+                return false;
+            }
+            setController(null);
+            setControllerHasAggro(false);
+            setControllerKnowsAboutAggro(false);
+            setControllerHasPuppet(false);
+            agentPhysicsAuthority = false;
+        } finally {
+            aggroUpdateLock.unlock();
+        }
+
+        agent.stopControllingMonster(this);
+        aggroUpdateController(true);
+        return true;
+    }
+
     /** Temporarily makes this monster server-driven for a synthetic reaction. */
     public Pair<Character, Boolean> aggroSuspendControllerForSyntheticReaction(
             long controllerHoldMs) {
@@ -2007,6 +2070,7 @@ public class Monster extends AbstractLoadedLife {
             this.setController(null);
             this.setControllerHasAggro(false);
             this.setControllerKnowsAboutAggro(false);
+            this.agentPhysicsAuthority = false;
         } finally {
             aggroUpdateLock.unlock();
         }
@@ -2040,6 +2104,9 @@ public class Monster extends AbstractLoadedLife {
 
                 Character prevController = getController();
                 if (prevController == newController) {
+                    return;
+                }
+                if (agentPhysicsAuthority) {
                     return;
                 }
 

@@ -96,6 +96,7 @@ public final class AgentSyntheticMobReactionService {
 
     private static boolean canReact(Character attacker, Monster monster, int appliedDamage) {
         if (!AgentCombatConfig.cfg.SYNTHETIC_MOB_REACTION_ENABLED
+                || AgentCombatConfig.cfg.MOB_PHYSICS_POC_ENABLED
                 || attacker == null || monster == null || appliedDamage <= 0
                 || !(attacker.getClient() instanceof BotClient)
                 || !monster.isAlive() || !monster.isMobile()) {
@@ -169,6 +170,7 @@ public final class AgentSyntheticMobReactionService {
     private static boolean canApplyImpact(PendingReaction pending) {
         Monster monster = pending.monster;
         return AgentCombatConfig.cfg.SYNTHETIC_MOB_REACTION_ENABLED
+                && !AgentCombatConfig.cfg.MOB_PHYSICS_POC_ENABLED
                 && monster.getMap() == pending.map
                 && pending.attacker.getMap() == pending.map
                 && pending.map.getMonsterByOid(pending.monsterOid) == monster

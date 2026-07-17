@@ -69,9 +69,41 @@ class ThreadManagerConfigurationTest {
         }
     }
 
+    @Test
+    void autosaveLaneReportsBackpressureWithoutUsingAnotherExecutor() throws InterruptedException {
+        ThreadManager manager = ThreadManager.getInstance();
+        Map<String, String> previous = configureSingleWorkerPools();
+        CountDownLatch runningTaskStarted = new CountDownLatch(1);
+        CountDownLatch releaseRunningTask = new CountDownLatch(1);
+
+        manager.stop();
+        try {
+            manager.start();
+            assertTrue(manager.newAutosaveTask(() -> {
+                runningTaskStarted.countDown();
+                try {
+                    releaseRunningTask.await();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }));
+            assertTrue(runningTaskStarted.await(2, SECONDS));
+            assertTrue(manager.newAutosaveTask(() -> {
+            }));
+            assertFalse(manager.newAutosaveTask(() -> {
+            }));
+            assertTrue(manager.diagnostics().contains(
+                    "autosave[active=1,queued=1,pool=1,completed=0,submitted=3,rejected=1]"));
+        } finally {
+            releaseRunningTask.countDown();
+            manager.stop();
+            restoreProperties(previous);
+        }
+    }
+
     private static Map<String, String> configureSingleWorkerPools() {
         Map<String, String> previous = new LinkedHashMap<>();
-        for (String workload : new String[]{"general", "blocking", "database"}) {
+        for (String workload : new String[]{"general", "blocking", "database", "autosave"}) {
             for (String setting : new String[]{"core", "max", "queue"}) {
                 String key = "cosmic.threads." + workload + "." + setting;
                 previous.put(key, System.getProperty(key));

@@ -413,7 +413,7 @@ public final class AgentGrindNavigationTargetSelector {
                                          MapleMap map,
                                          AgentNavigationGraph.Region region) {
         int count = 0;
-        for (server.life.Monster m : map.getAllMonsters()) {
+        for (server.life.Monster m : server.agents.perception.AgentMapPerception.monsters(map)) {
             if (!m.isAlive()) {
                 continue;
             }

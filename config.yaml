@@ -280,6 +280,15 @@ server:
     AGENT_SYNTHETIC_MOB_KNOCKBACK_DISTANCE_X: 12
     AGENT_SYNTHETIC_MOB_KNOCKBACK_DURATION_MS: 240
     AGENT_SYNTHETIC_MOB_CONTROL_HOLD_MS: 350
+    # Transport-first proof of concept: Agent owns grounded mobs after a hit and the server
+    # publishes a short knockback followed by simple horizontal aggro movement.
+    AGENT_MOB_PHYSICS_POC_ENABLED: false
+    AGENT_MOB_PHYSICS_POC_KNOCKBACK_DISTANCE_X: 12
+    AGENT_MOB_PHYSICS_POC_KNOCKBACK_DURATION_MS: 240
+    AGENT_MOB_PHYSICS_POC_PUBLISH_INTERVAL_MS: 100
+    AGENT_MOB_PHYSICS_POC_AGGRO_STEP_X: 4
+    AGENT_MOB_PHYSICS_POC_STOP_DISTANCE_X: 24
+    AGENT_MOB_PHYSICS_POC_RESUME_DISTANCE_X: 36
     AGENT_LEGACY_DIALOGUE_ENABLED: false #Experimental Agent plans narrate objectives; suppress NuTNNuT-era Agent chatter.
     AGENT_AMHERST_DEBUG_MESSAGES_ENABLED: false #Show detailed yellow Amherst capability and objective progress messages.
     AGENT_AMHERST_INTENTION_CHAT_ENABLED: true #Let the Agent announce its next Amherst action in map chat.
