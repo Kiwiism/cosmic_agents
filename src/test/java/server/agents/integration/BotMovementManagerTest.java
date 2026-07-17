@@ -42,6 +42,7 @@ import server.agents.capabilities.follow.AgentOwnerMotionStateRuntime;
 import server.life.Monster;
 import server.maps.Foothold;
 import server.maps.MapleMap;
+import server.maps.MapPerceptionSnapshot;
 import server.maps.Rope;
 
 import java.awt.*;
@@ -405,7 +406,8 @@ class BotMovementManagerTest {
         footholds.insert(new Foothold(new Point(0, 100), new Point(300, 100), 1));
         map.setFootholds(footholds);
         AgentNavigationGraphService.rebuildGraph(map);
-        doReturn(List.of(mockMob(new Point(130, 100), 100100))).when(map).getAllMonsters();
+        doReturn(perception(List.of(mockMob(new Point(130, 100), 100100))))
+                .when(map).getPerceptionSnapshot();
 
         Character bot = mockBot(new Point(100, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
@@ -429,7 +431,8 @@ class BotMovementManagerTest {
         footholds.insert(new Foothold(new Point(0, 100), new Point(140, 100), 1));
         map.setFootholds(footholds);
         AgentNavigationGraphService.rebuildGraph(map);
-        doReturn(List.of(mockMob(new Point(120, 100), 100100))).when(map).getAllMonsters();
+        doReturn(perception(List.of(mockMob(new Point(120, 100), 100100))))
+                .when(map).getPerceptionSnapshot();
 
         Character bot = mockBot(new Point(100, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
@@ -1093,5 +1096,9 @@ class BotMovementManagerTest {
         when(mob.isAlive()).thenReturn(true);
         when(mob.isFacingLeft()).thenReturn(false);
         return mob;
+    }
+
+    private static MapPerceptionSnapshot perception(List<Monster> monsters) {
+        return new MapPerceptionSnapshot(1, monsters, List.of(), List.of());
     }
 }

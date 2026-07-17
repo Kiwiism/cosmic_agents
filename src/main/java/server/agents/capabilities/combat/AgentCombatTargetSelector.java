@@ -68,7 +68,7 @@ public final class AgentCombatTargetSelector {
     }
 
     public static List<Monster> aliveMonstersInRange(Character agent, Point origin, double rangeSq) {
-        return aliveMonstersInRange(agent.getMap().getAllMonsters(), origin, rangeSq);
+        return aliveMonstersInRange(server.agents.perception.AgentMapPerception.monsters(agent.getMap()), origin, rangeSq);
     }
 
     public static Monster resolveEffectivePrimary(Point origin,

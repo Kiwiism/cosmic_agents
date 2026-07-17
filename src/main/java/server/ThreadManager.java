@@ -55,7 +55,17 @@ public final class ThreadManager {
         submit(Workload.DATABASE, task);
     }
 
-    private void submit(Workload workload, Runnable task) {
+    /**
+     * Submits a routine character autosave without allowing save pressure to
+     * consume the database or gameplay executor queues.
+     *
+     * @return {@code false} when the bounded autosave lane cannot accept more work
+     */
+    public boolean newAutosaveTask(Runnable task) {
+        return submit(Workload.AUTOSAVE, task);
+    }
+
+    private boolean submit(Workload workload, Runnable task) {
         if (task == null) {
             throw new IllegalArgumentException("task must not be null");
         }
@@ -65,7 +75,7 @@ public final class ThreadManager {
         }
         if (pool == null || pool.executor.isShutdown()) {
             log.error("Rejected {} task because ThreadManager is not running", workload.label);
-            return;
+            return false;
         }
 
         pool.submitted.incrementAndGet();
@@ -77,11 +87,15 @@ public final class ThreadManager {
                     log.error("Unhandled exception in {} task", workload.label, e);
                 }
             });
+            return true;
         } catch (RejectedExecutionException e) {
             long rejected = pool.rejected.incrementAndGet();
-            log.warn("Rejected {} task: active={} queued={} completed={} rejected={}", workload.label,
-                    pool.executor.getActiveCount(), pool.executor.getQueue().size(),
-                    pool.executor.getCompletedTaskCount(), rejected);
+            if (workload != Workload.AUTOSAVE || rejected == 1L || rejected % 100L == 0L) {
+                log.warn("Rejected {} task: active={} queued={} completed={} rejected={}", workload.label,
+                        pool.executor.getActiveCount(), pool.executor.getQueue().size(),
+                        pool.executor.getCompletedTaskCount(), rejected);
+            }
+            return false;
         }
     }
 
@@ -102,6 +116,10 @@ public final class ThreadManager {
                 configuredInt("database.core", 2),
                 configuredInt("database.max", 10),
                 configuredInt("database.queue", 1024)));
+        pools.put(Workload.AUTOSAVE, createPool(Workload.AUTOSAVE,
+                configuredInt("autosave.core", 2),
+                configuredInt("autosave.max", 2),
+                configuredInt("autosave.queue", 256)));
     }
 
     private PoolState createPool(Workload workload, int configuredCore, int configuredMax, int queueCapacity) {
@@ -187,7 +205,8 @@ public final class ThreadManager {
     private enum Workload {
         GENERAL("general"),
         BLOCKING("blocking"),
-        DATABASE("database");
+        DATABASE("database"),
+        AUTOSAVE("autosave");
 
         private final String label;
 

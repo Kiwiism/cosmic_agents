@@ -43,7 +43,7 @@ public final class AgentCombatDamageRuntime {
             }
             if (bot.getHp() <= 0) return;
 
-            for (Monster mob : bot.getMap().getAllMonsters()) {
+            for (Monster mob : server.agents.perception.AgentMapPerception.monsters(bot.getMap())) {
                 if (!AgentCombatTargetEligibilityPolicy.isHostileLivingMonster(mob)) continue;
                 if (AgentMobTouchPolicy.ignoresTouchDamage(mob.getId())) continue;
                 if (AgentMobTouchRuntime.isMobTouchingAgent(entry, bot, mob, config.MOB_TOUCH_SWEEP_HEIGHT)) {

@@ -50,6 +50,7 @@ import net.server.guild.Alliance;
 import net.server.guild.Guild;
 import net.server.guild.GuildCharacter;
 import net.server.task.BossLogTask;
+import net.server.task.CharacterAutosaverTask;
 import net.server.task.CharacterDiseaseTask;
 import net.server.task.CouponTask;
 import net.server.task.DueyFredrickTask;
@@ -77,6 +78,8 @@ import server.agents.runtime.AgentRuntimeShutdownCoordinator;
 import server.expeditions.ExpeditionBossLog;
 import server.life.PlayerNPC;
 import server.monitoring.CharacterSaveDiagnostics;
+import server.monitoring.DiskSpaceMonitor;
+import server.monitoring.JvmGuardrailVerifier;
 import server.monitoring.MapBroadcastDiagnostics;
 import server.monitoring.ServerLoadMonitor;
 import server.monitoring.ServerMetricsSnapshot;
@@ -1122,6 +1125,10 @@ public class Server {
         tMan.register(TimerManager.SchedulerLane.EVENT, new InvitationTask(), SECONDS.toMillis(30), SECONDS.toMillis(30));
         tMan.register(TimerManager.SchedulerLane.MAP, new RespawnTask(), YamlConfig.config.server.RESPAWN_INTERVAL, YamlConfig.config.server.RESPAWN_INTERVAL);
         tMan.register(TimerManager.SchedulerLane.LOW_PRIORITY, this::logScaleHealth, MINUTES.toMillis(5), MINUTES.toMillis(5));
+        JvmGuardrailVerifier.warnIfIncomplete();
+        DiskSpaceMonitor.checkNow();
+        tMan.register(TimerManager.SchedulerLane.LOW_PRIORITY, DiskSpaceMonitor::checkNow,
+                MINUTES.toMillis(5), MINUTES.toMillis(5));
 
         timeLeft = getTimeLeftForNextDay();
         ExpeditionBossLog.resetBossLogTable();
@@ -1195,11 +1202,13 @@ public class Server {
                 + " dormantTicksSkipped=" + skippedDormantMapUpdates
                 + " unloaded=" + unloadedMaps);
         lines.add("Save pressure: " + CharacterSaveDiagnostics.diagnostics());
+        lines.add("Autosave queue: " + CharacterAutosaverTask.runtimeDiagnostics());
         lines.add("Save reasons: " + CharacterSaveDiagnostics.reasonDiagnostics());
         lines.add("Save sections: " + CharacterSaveDiagnostics.sectionDiagnostics());
         lines.add("Broadcast pressure: " + MapBroadcastDiagnostics.diagnostics());
         lines.add("DB: " + DatabaseConnection.poolStats());
         lines.add("Threads: " + ThreadManager.getInstance().diagnostics());
+        lines.add("JVM guardrails: " + JvmGuardrailVerifier.currentStatus().compact());
         lines.add("EXP logs: " + ExpLogger.diagnostics());
         lines.add("Runtime failure keys: " + monitoring.RuntimeFailureLogger.trackedFailureKeyCount());
         lines.add("Timers: " + TimerManager.getInstance().diagnostics());
@@ -1215,11 +1224,13 @@ public class Server {
         long maxHeapMb = runtime.maxMemory() / 1024 / 1024;
 
         int onlinePlayers = 0;
+        int onlineAgents = 0;
         int loadedMaps = 0;
         int activeMaps = 0;
         int idleMapCandidates = 0;
         for (World world : getWorlds()) {
-            onlinePlayers += world.getPlayerStorage().getSize();
+            onlinePlayers += world.getPlayerStorage().getRealPlayerCount();
+            onlineAgents += world.getPlayerStorage().getAgentCount();
             for (Channel channel : world.getChannels()) {
                 loadedMaps += channel.loadedMapCount();
                 activeMaps += channel.activeMapCount();
@@ -1229,11 +1240,13 @@ public class Server {
 
         return new ServerMetricsSnapshot(
                 onlinePlayers,
+                onlineAgents,
                 loadedMaps,
                 activeMaps,
                 idleMapCandidates,
                 usedHeapMb,
                 maxHeapMb,
+                DiskSpaceMonitor.latest().compact(),
                 DatabaseConnection.poolStats(),
                 ThreadManager.getInstance().diagnostics(),
                 TimerManager.getInstance().diagnostics(),
@@ -1564,7 +1577,7 @@ public class Server {
 
     public boolean isGmOnline(int world) {
         for (Channel ch : getChannelsFromWorld(world)) {
-            for (Character player : ch.getPlayerStorage().getAllCharacters()) {
+            for (Character player : ch.getPlayerStorage().getNetworkRecipients()) {
                 if (player.isGM()) {
                     return true;
                 }

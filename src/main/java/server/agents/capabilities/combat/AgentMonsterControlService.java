@@ -39,7 +39,7 @@ public final class AgentMonsterControlService {
         if (map == null) {
             return;
         }
-        for (Monster monster : map.getAllMonsters()) {
+        for (Monster monster : server.agents.perception.AgentMapPerception.monsters(map)) {
             Character controller = monster.getController();
             if (controller != null
                     && controller.isHidden()

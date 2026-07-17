@@ -21,6 +21,12 @@ public final class HeapDumpService {
             if (parent != null) {
                 Files.createDirectories(parent);
             }
+            long estimatedDumpBytes = Runtime.getRuntime().maxMemory();
+            if (!DiskSpaceMonitor.hasRoomFor(path, estimatedDumpBytes)) {
+                log.error("Refusing heap dump to {}: insufficient free space for estimated {} MB dump plus reserve",
+                        path.toAbsolutePath(), estimatedDumpBytes / 1024 / 1024);
+                return false;
+            }
 
             HotSpotDiagnosticMXBean mxBean = ManagementFactory.newPlatformMXBeanProxy(
                     ManagementFactory.getPlatformMBeanServer(),

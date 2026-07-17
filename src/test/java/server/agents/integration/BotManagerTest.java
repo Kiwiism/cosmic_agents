@@ -85,6 +85,7 @@ import server.maps.Foothold;
 import server.maps.FootholdTree;
 import server.maps.MapItem;
 import server.maps.MapleMap;
+import server.maps.MapPerceptionSnapshot;
 import server.maps.Rope;
 import testutil.Items;
 import java.util.concurrent.ScheduledFuture;
@@ -505,7 +506,7 @@ class BotManagerTest {
         // Pincer: a mob inside the retreat band on each side (dx 60 <= 80, dy 0 <= 50).
         Monster leftMob = mockMob(new Point(40, 100), 9300600);
         Monster rightMob = mockMob(new Point(160, 100), 9300601);
-        doReturn(List.of(leftMob, rightMob)).when(map).getAllMonsters();
+        doReturn(perception(List.of(leftMob, rightMob))).when(map).getPerceptionSnapshot();
 
         try (MockedStatic<AgentAttackExecutionProvider> attacks =
                      mockStatic(AgentAttackExecutionProvider.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
@@ -539,7 +540,7 @@ class BotManagerTest {
 
         // Only one flank occupied -> not surrounded -> the breakout latch must release.
         Monster rightMob = mockMob(new Point(160, 100), 9300602);
-        doReturn(List.of(rightMob)).when(map).getAllMonsters();
+        doReturn(perception(List.of(rightMob))).when(map).getPerceptionSnapshot();
 
         try (MockedStatic<AgentAttackExecutionProvider> attacks =
                      mockStatic(AgentAttackExecutionProvider.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
@@ -562,7 +563,7 @@ class BotManagerTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
 
         Monster rightMob = mockMob(new Point(160, 100), 9300603);
-        doReturn(List.of(rightMob)).when(map).getAllMonsters();
+        doReturn(perception(List.of(rightMob))).when(map).getPerceptionSnapshot();
 
         try (MockedStatic<AgentAttackExecutionProvider> attacks =
                      mockStatic(AgentAttackExecutionProvider.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
@@ -1588,6 +1589,10 @@ class BotManagerTest {
         when(mob.getObjectId()).thenReturn(id);
         when(mob.isAlive()).thenReturn(true);
         return mob;
+    }
+
+    private static MapPerceptionSnapshot perception(List<Monster> monsters) {
+        return new MapPerceptionSnapshot(1, monsters, List.of(), List.of());
     }
 
     private static MapItem mockLoot(int objectId, Point position) {

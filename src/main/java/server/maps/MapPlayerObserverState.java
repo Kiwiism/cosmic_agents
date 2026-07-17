@@ -33,6 +33,8 @@ final class MapPlayerObserverState {
     }
 
     static boolean isObserver(Character character) {
-        return character != null && !(character.getClient() instanceof BotClient);
+        return character != null
+                && character.getClient() != null
+                && !(character.getClient() instanceof BotClient);
     }
 }

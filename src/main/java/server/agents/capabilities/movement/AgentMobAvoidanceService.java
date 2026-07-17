@@ -55,7 +55,7 @@ public final class AgentMobAvoidanceService {
 
         Monster nearest = null;
         int nearestDistance = Integer.MAX_VALUE;
-        for (Monster mob : map.getAllMonsters()) {
+        for (Monster mob : server.agents.perception.AgentMapPerception.monsters(map)) {
             if (!mob.isAlive() || !isMobInCurrentGroundRegion(entry, currentFoothold, mob)) {
                 continue;
             }

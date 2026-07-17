@@ -15,7 +15,7 @@ public class RespawnTask implements Runnable {
         for (Channel ch : Server.getInstance().getAllChannels()) {
             PlayerStorage ps = ch.getPlayerStorage();
             if (ps != null) {
-                if (!ps.getAllCharacters().isEmpty()) {
+                if (ps.getSize() > 0) {
                     MapManager mapManager = ch.getMapFactory();
                     if (mapManager != null) {
                         mapManager.updateMaps();

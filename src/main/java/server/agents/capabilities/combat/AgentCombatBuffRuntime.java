@@ -42,7 +42,7 @@ public final class AgentCombatBuffRuntime {
             }
             return;
         }
-        boolean hasLivingMobs = bot.getMap().getAllMonsters().stream().anyMatch(Monster::isAlive);
+        boolean hasLivingMobs = server.agents.perception.AgentMapPerception.monsters(bot.getMap()).stream().anyMatch(Monster::isAlive);
         if (AgentCombatSupportPolicy.shouldSkipSkillBuffsWithoutLivingMobs(hasLivingMobs)) return;
 
         long now = System.currentTimeMillis();

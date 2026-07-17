@@ -5,9 +5,9 @@ Implementation status through 2026-07-10 is recorded in
 
 ## Bounded Work Executors
 
-- `ThreadManager` now owns separate bounded `general`, `blocking`, and
-  `database` executors. The former 20-to-1000-thread pool and caller-run
-  rejection fallback are gone.
+- `ThreadManager` now owns separate bounded `general`, `blocking`, `database`,
+  and routine `autosave` executors. The former 20-to-1000-thread pool and
+  caller-run rejection fallback are gone.
 - Every lane reports active, queued, pool, completed, submitted, and rejected
   counts. Thread names identify their lane.
 - Sizing can be changed without editing YAML through
@@ -114,6 +114,26 @@ These items were implemented as diagnostics-first changes because enabling full 
   - logout, manual, Cash Shop, MTS, server-transition, save-all, and other
     `notAutosave` routes remain full transactional checkpoints.
   - diagnostics include clean autosaves skipped and per-section write counts.
+  - 2026-07-17 scaling update:
+    - each world snapshots logged-in character ids once per autosave window and
+      randomizes their order;
+    - saves are spaced across the complete one-hour window rather than fired as
+      one synchronous hourly sweep;
+    - dispatch resolves the current Character by id, so a logged-out instance
+      is not retained for the rest of the window;
+    - a dedicated bounded two-worker, 256-entry autosave executor isolates
+      routine saves from gameplay, logout, and database task lanes;
+    - duplicate character work coalesces, queue saturation applies backpressure
+      without dropping the character from the current cycle, and catch-up work
+      is capped per dispatcher pass;
+    - `!serverhealth` reports autosave pending, accepted, coalesced, and
+      backpressured counts beside the executor queue metrics.
+  - autosave runtime controls preserve the production defaults:
+    - `cosmic.persistence.autosaveWindowMs` (default `3600000`)
+    - `cosmic.persistence.autosaveDispatchIntervalMs` (default `250`)
+    - `cosmic.persistence.autosaveMaxDispatchPerRun` (default `8`)
+    - `cosmic.threads.autosave.core` / `.max` (default `2` / `2`)
+    - `cosmic.threads.autosave.queue` (default `256`)
   - 2026-07-11 ownership audit added Item/Equip, Pet, Mount, SkillMacro,
     CashShop, FamilyEntry, Storage, BuddyList, QuestStatus, MonsterBook, and
     Events callbacks, including detached-child cleanup and zero-row failures.
@@ -173,14 +193,68 @@ These items were implemented as diagnostics-first changes because enabling full 
   - audit specialized broadcast methods that generate per-recipient packets.
   - keep player packet semantics unchanged until agent perception is decoupled.
 
+2026-07-17 population and recipient update:
+
+- `PlayerStorage` maintains immutable, lazily rebuilt snapshots for all
+  characters, real players, headless Agents, and attached network recipients.
+- Player and Agent counts are maintained independently without rebuilding the
+  snapshots. Channel/world capacity uses real-player counts only.
+- `!serverhealth`, scale-health logs, and the internal health endpoint report
+  players, Agents, and total characters separately.
+- Map, channel, and world packet broadcasts iterate real network recipients;
+  Agent characters remain in the combined gameplay collections.
+- Session timeout checks inspect only attached real-network clients.
+
+## Shared Agent Perception
+
+- Each `MapleMap` exposes one immutable membership snapshot containing its
+  monsters, dropped items, and NPCs.
+- The snapshot is reused across Agent reads and invalidated under the existing
+  map-object write lock whenever relevant membership changes.
+- Snapshot entries retain live map-object references, so HP, position, pickup,
+  and other mutable gameplay state are not frozen.
+- The original direct map-query methods remain available as a compatibility
+  fallback.
+
+## JVM And Disk Guardrails
+
+- `launch.bat` and the Docker entrypoint enable bounded GC/safepoint logs,
+  heap dumps on OOM, fatal JVM error files, and process exit on OOM.
+- Docker Compose persists the log directory and restarts unexpected exits.
+- Disk space is checked on startup and every five minutes. State transitions
+  are logged and current state is included in health diagnostics.
+- Manual heap dumps are rejected when the estimated dump would breach the
+  configured critical free-space reserve.
+- Full settings and IntelliJ VM options are documented in
+  `docs/PRODUCTION_JVM_GUARDRAILS.md`.
+
 ## Autosave Backpressure
 
-- Character save scheduler now exposes pending-save count.
-- Save queue logs a backpressure warning when pending saves exceed the current warning threshold.
+- Character autosaves use a dedicated bounded executor and expose its active,
+  queued, submitted, completed, and rejected counts.
+- The dispatcher exposes pending, accepted, coalesced, and backpressured totals.
+- A full queue pauses the current staggered cycle at that character and retries
+  on a later dispatcher pass; it does not push routine saves onto a caller or
+  gameplay thread.
 - Revisit later:
-  - make the threshold configurable.
-  - add save reason and priority lanes.
+  - add durable priority ordering if logout saves are ever made asynchronous.
   - keep logout saves synchronous unless there is a durable retry queue.
+
+## Production Logging
+
+- The production root and console levels default to `INFO`; packet logging and
+  JDBI, Netty, and Hikari library noise default to `WARN`.
+- General file output uses an 8,192-entry blocking asynchronous appender. The
+  queue remains finite and never silently discards an accepted log event.
+- Every file appender now rolls daily and at 20 MB. There are no remaining
+  plain unbounded file appenders.
+- General archives retain at most 30 days and 2 GB. Chat retains 30 days and
+  1 GB. Trade retains 30 days and 512 MB. Monitored packets retain 7 days and
+  512 MB. Other specialist archives retain 30 days and 256 MB each.
+- Temporary diagnostic overrides are available without editing the XML:
+  - `-Dcosmic.log.rootLevel=debug`
+  - `-Dcosmic.log.consoleLevel=debug`
+  - `-Dcosmic.log.packetLevel=debug`
 
 ## Hired Merchant Guard
 

@@ -74,7 +74,7 @@ public final class AgentLeaderSafetyService {
 
     public static boolean shouldTownWarpForInactiveLeader(MapleMap currentMap) {
         return currentMap != null
-                && currentMap.getAllMonsters().stream().anyMatch(Monster::isAlive)
+                && server.agents.perception.AgentMapPerception.monsters(currentMap).stream().anyMatch(Monster::isAlive)
                 && canReturnToDifferentMap(currentMap);
     }
 

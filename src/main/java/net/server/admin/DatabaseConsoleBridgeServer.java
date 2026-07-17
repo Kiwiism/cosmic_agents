@@ -72,7 +72,10 @@ public class DatabaseConsoleBridgeServer {
                         "status", Server.getInstance().isOnline() ? "UP" : "STARTING",
                         "checkedAt", Instant.now().toString(),
                         "onlinePlayers", metrics.onlinePlayers(),
+                        "onlineAgents", metrics.onlineAgents(),
+                        "onlineCharacters", metrics.onlinePlayers() + metrics.onlineAgents(),
                         "loadedMaps", metrics.loadedMaps(),
+                        "disk", metrics.disk(),
                         "loadLevel", metrics.loadLevel().name()));
                 return;
             }

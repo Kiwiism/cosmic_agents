@@ -4,79 +4,175 @@
         <Property name="filename">cosmic-log</Property>
         <Property name="standard-pattern">%d{HH:mm:ss.SSS} [%t] %-5level %logger{2} - %msg%n</Property>
         <Property name="packet-pattern">%d{HH:mm:ss.SSS} %-15logger{1} - %msg%n</Property>
+        <Property name="root-level">${sys:cosmic.log.rootLevel:-info}</Property>
+        <Property name="console-level">${sys:cosmic.log.consoleLevel:-info}</Property>
+        <Property name="packet-level">${sys:cosmic.log.packetLevel:-warn}</Property>
     </Properties>
 
     <Appenders>
         <Console name="Console" target="SYSTEM_OUT">
-            <PatternLayout>
-                    <Pattern>${standard-pattern}</Pattern>
-            </PatternLayout>
+            <ThresholdFilter level="${console-level}" onMatch="ACCEPT" onMismatch="DENY"/>
+            <PatternLayout pattern="${standard-pattern}"/>
         </Console>
 
         <RollingFile name="File"
                      fileName="logs/${filename}.log"
-                     filePattern="logs/$${date:yyyy-MM}/$${date:yyyy-MM-dd}/${filename}-%d{yyyy-MM-dd_HH-mm-ss}-%i.log">
-            <PatternLayout>
-                <Pattern>${standard-pattern}</Pattern>
-            </PatternLayout>
+                     filePattern="logs/archive/server/${filename}-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="${standard-pattern}"/>
             <Policies>
-                <OnStartupTriggeringPolicy minSize="0"/>
+                <OnStartupTriggeringPolicy minSize="1"/>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
                 <SizeBasedTriggeringPolicy size="20 MB"/>
             </Policies>
+            <DefaultRolloverStrategy max="100">
+                <Delete basePath="logs/archive/server" maxDepth="1">
+                    <SortByModificationTime recentFirst="true"/>
+                    <IfFileName glob="*.log.gz"/>
+                    <IfAny>
+                        <IfLastModified age="30d"/>
+                        <IfAccumulatedFileSize exceeds="2 GB"/>
+                    </IfAny>
+                </Delete>
+            </DefaultRolloverStrategy>
         </RollingFile>
+        <Async name="AsyncFile" bufferSize="8192" blocking="true" includeLocation="false">
+            <AppenderRef ref="File"/>
+        </Async>
 
         <Console name="PacketConsole" target="SYSTEM_OUT">
-            <PatternLayout>
-                <Pattern>${packet-pattern}</Pattern>
-            </PatternLayout>
+            <PatternLayout pattern="${packet-pattern}"/>
         </Console>
 
-        <File name="MonitoredPacketFile" fileName="logs/monitored-packets.log">
-            <PatternLayout>
-                <Pattern>${standard-pattern}</Pattern>
-            </PatternLayout>
-        </File>
+        <RollingFile name="MonitoredPacketFile"
+                     fileName="logs/monitored-packets.log"
+                     filePattern="logs/archive/monitored-packets/monitored-packets-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="${standard-pattern}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <SizeBasedTriggeringPolicy size="20 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="50">
+                <Delete basePath="logs/archive/monitored-packets" maxDepth="1">
+                    <SortByModificationTime recentFirst="true"/>
+                    <IfFileName glob="*.log.gz"/>
+                    <IfAny>
+                        <IfLastModified age="7d"/>
+                        <IfAccumulatedFileSize exceeds="512 MB"/>
+                    </IfAny>
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
 
-        <File name="TradeFile" fileName="logs/trades.log">
-            <PatternLayout>
-                <Pattern>${standard-pattern}</Pattern>
-            </PatternLayout>
-        </File>
+        <RollingFile name="TradeFile"
+                     fileName="logs/trades.log"
+                     filePattern="logs/archive/trades/trades-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="${standard-pattern}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <SizeBasedTriggeringPolicy size="20 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="50">
+                <Delete basePath="logs/archive/trades" maxDepth="1">
+                    <SortByModificationTime recentFirst="true"/>
+                    <IfFileName glob="*.log.gz"/>
+                    <IfAny>
+                        <IfLastModified age="30d"/>
+                        <IfAccumulatedFileSize exceeds="512 MB"/>
+                    </IfAny>
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
 
-        <File name="ExpeditionFile" fileName="logs/expeditions.log">
-            <PatternLayout>
-                <Pattern>${standard-pattern}</Pattern>
-            </PatternLayout>
-        </File>
+        <RollingFile name="ExpeditionFile"
+                     fileName="logs/expeditions.log"
+                     filePattern="logs/archive/expeditions/expeditions-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="${standard-pattern}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <SizeBasedTriggeringPolicy size="20 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="50">
+                <Delete basePath="logs/archive/expeditions" maxDepth="1">
+                    <SortByModificationTime recentFirst="true"/>
+                    <IfFileName glob="*.log.gz"/>
+                    <IfAny>
+                        <IfLastModified age="30d"/>
+                        <IfAccumulatedFileSize exceeds="256 MB"/>
+                    </IfAny>
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
 
-        <File name="ChatFile" fileName="logs/chat.log">
-            <PatternLayout>
-                <Pattern>${standard-pattern}</Pattern>
-            </PatternLayout>
-        </File>
+        <RollingFile name="ChatFile"
+                     fileName="logs/chat.log"
+                     filePattern="logs/archive/chat/chat-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="${standard-pattern}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <SizeBasedTriggeringPolicy size="20 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="50">
+                <Delete basePath="logs/archive/chat" maxDepth="1">
+                    <SortByModificationTime recentFirst="true"/>
+                    <IfFileName glob="*.log.gz"/>
+                    <IfAny>
+                        <IfLastModified age="30d"/>
+                        <IfAccumulatedFileSize exceeds="1 GB"/>
+                    </IfAny>
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
 
-        <File name="GachaponFile" fileName="logs/gachapon.log">
-            <PatternLayout>
-                <Pattern>${standard-pattern}</Pattern>
-            </PatternLayout>
-        </File>
+        <RollingFile name="GachaponFile"
+                     fileName="logs/gachapon.log"
+                     filePattern="logs/archive/gachapon/gachapon-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="${standard-pattern}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <SizeBasedTriggeringPolicy size="20 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="50">
+                <Delete basePath="logs/archive/gachapon" maxDepth="1">
+                    <SortByModificationTime recentFirst="true"/>
+                    <IfFileName glob="*.log.gz"/>
+                    <IfAny>
+                        <IfLastModified age="30d"/>
+                        <IfAccumulatedFileSize exceeds="256 MB"/>
+                    </IfAny>
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
 
-        <File name="MapleLeafFile" fileName="logs/mapleleaf.log">
-            <PatternLayout>
-                <Pattern>${standard-pattern}</Pattern>
-            </PatternLayout>
-        </File>
+        <RollingFile name="MapleLeafFile"
+                     fileName="logs/mapleleaf.log"
+                     filePattern="logs/archive/mapleleaf/mapleleaf-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="${standard-pattern}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <SizeBasedTriggeringPolicy size="20 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="50">
+                <Delete basePath="logs/archive/mapleleaf" maxDepth="1">
+                    <SortByModificationTime recentFirst="true"/>
+                    <IfFileName glob="*.log.gz"/>
+                    <IfAny>
+                        <IfLastModified age="30d"/>
+                        <IfAccumulatedFileSize exceeds="256 MB"/>
+                    </IfAny>
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
     </Appenders>
 
     <Loggers>
-        <Root level="trace">
-            <AppenderRef ref="File" level="debug"/>
-            <AppenderRef ref="Console" level="trace"/>
+        <Root level="${root-level}">
+            <AppenderRef ref="AsyncFile"/>
+            <AppenderRef ref="Console"/>
         </Root>
 
-        <Logger name="net.packet.logging" level="debug" additivity="false">
+        <Logger name="net.packet.logging" level="${packet-level}" additivity="false">
             <AppenderRef ref="PacketConsole"/>
-            <AppenderRef ref="File"/>
+            <AppenderRef ref="AsyncFile"/>
         </Logger>
         <Logger name="net.packet.logging.MonitoredChrLogger" level="info" additivity="false">
             <AppenderRef ref="MonitoredPacketFile"/>
@@ -98,7 +194,8 @@
             <AppenderRef ref="MapleLeafFile"/>
         </Logger>
 
-        <Logger name="com.zaxxer.hikari" level="info"/>
-        <Logger name="io.netty" level="info"/>
+        <Logger name="com.zaxxer.hikari" level="warn"/>
+        <Logger name="io.netty" level="warn"/>
+        <Logger name="org.jdbi" level="warn"/>
     </Loggers>
 </Configuration>

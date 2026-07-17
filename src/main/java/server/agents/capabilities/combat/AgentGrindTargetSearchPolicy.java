@@ -85,14 +85,14 @@ public final class AgentGrindTargetSearchPolicy {
                 ? 0
                 : AgentCombatScoringPolicy.legacyCappedAoeClusterSize(
                         searched,
-                        agent.getMap().getAllMonsters(),
+                        server.agents.perception.AgentMapPerception.monsters(agent.getMap()),
                         AgentCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
                         AgentCombatSkillCacheStateRuntime.aoeSkillMobs(entry));
         int currentClusterSize = agent.getMap() == null || current.getPosition() == null
                 ? 0
                 : AgentCombatScoringPolicy.legacyCappedAoeClusterSize(
                         current,
-                        agent.getMap().getAllMonsters(),
+                        server.agents.perception.AgentMapPerception.monsters(agent.getMap()),
                         AgentCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
                         AgentCombatSkillCacheStateRuntime.aoeSkillMobs(entry));
         return searchedClusterSize > currentClusterSize;

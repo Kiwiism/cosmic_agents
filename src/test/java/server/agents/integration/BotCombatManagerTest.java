@@ -90,6 +90,7 @@ import server.life.Monster;
 import server.life.MonsterStats;
 import server.maps.Foothold;
 import server.maps.MapleMap;
+import server.maps.MapPerceptionSnapshot;
 
 import java.awt.*;
 import java.util.List;
@@ -1586,7 +1587,7 @@ class BotCombatManagerTest {
         Monster closest = mockMob(new Point(260, 200), 9300300);
         Monster splash = mockMob(new Point(275, 200), 9300301);
         Monster farSelected = mockMob(new Point(390, 200), 9300302);
-        doReturn(List.of(farSelected, splash, closest)).when(map).getAllMonsters();
+        doReturn(perception(List.of(farSelected, splash, closest))).when(map).getPerceptionSnapshot();
 
         Skill arrowBomb = skillWithAnchoredAoe(Hunter.ARROW_BOMB, 1, 6, 260);
         when(bot.getSkillLevel(arrowBomb)).thenReturn((byte) 1);
@@ -1662,7 +1663,7 @@ class BotCombatManagerTest {
         Character bot = mockBot(new Point(100, 100), map, 20_000, null);
         Monster currentFootholdMob = mockMob(new Point(180, 100), 100100);
         Monster otherRegionMob = mockMob(new Point(105, 200), 100100);
-        doReturn(List.of(otherRegionMob, currentFootholdMob)).when(map).getAllMonsters();
+        doReturn(perception(List.of(otherRegionMob, currentFootholdMob))).when(map).getPerceptionSnapshot();
 
         Monster target = AgentCombatTargetRuntime.findGrindTarget(
                 new AgentRuntimeEntry(bot, null, null), bot, AgentCombatConfig.cfg);
@@ -1687,8 +1688,8 @@ class BotCombatManagerTest {
         Monster clusterAnchor = mockMob(new Point(-100, 100), 100100);
         Monster clusterNeighbor1 = mockMob(new Point(-130, 100), 100100);
         Monster clusterNeighbor2 = mockMob(new Point(-160, 100), 100100);
-        doReturn(List.of(loneClose, clusterAnchor, clusterNeighbor1, clusterNeighbor2))
-                .when(map).getAllMonsters();
+        doReturn(perception(List.of(loneClose, clusterAnchor, clusterNeighbor1, clusterNeighbor2)))
+                .when(map).getPerceptionSnapshot();
 
         AgentRuntimeEntry noAoeEntry = new AgentRuntimeEntry(bot, null, null);
         // Sanity: without AoE skill, the lone close mob wins on plain distance score.
@@ -1739,7 +1740,7 @@ class BotCombatManagerTest {
         Character siblingBot = mockBot(new Point(220, 100), map, 20_000, null);
         Monster occupiedTarget = mockMob(new Point(220, 100), 9300400);
         Monster openTarget = mockMob(new Point(340, 100), 9300401);
-        doReturn(List.of(occupiedTarget, openTarget)).when(map).getAllMonsters();
+        doReturn(perception(List.of(occupiedTarget, openTarget))).when(map).getPerceptionSnapshot();
 
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, null);
         AgentModeStateRuntime.setGrinding(entry, true);
@@ -1773,7 +1774,7 @@ class BotCombatManagerTest {
 
         Character bot = mockBot(new Point(100, 100), map, 20_000, null);
         Monster otherRegionMob = mockMob(new Point(300, 130), 100100);
-        doReturn(List.of(otherRegionMob)).when(map).getAllMonsters();
+        doReturn(perception(List.of(otherRegionMob))).when(map).getPerceptionSnapshot();
 
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
 
@@ -1825,7 +1826,7 @@ class BotCombatManagerTest {
         Character bot = mockBot(new Point(50, 100), map, 20_000, null);
         Monster oneWayTarget = mockMob(new Point(240, 140), 9300402);
         Monster returnableTarget = mockMob(new Point(440, 100), 9300403);
-        doReturn(List.of(oneWayTarget, returnableTarget)).when(map).getAllMonsters();
+        doReturn(perception(List.of(oneWayTarget, returnableTarget))).when(map).getPerceptionSnapshot();
 
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
         AgentPatrolStateRuntime.startPatrol(entry, 1, map.getId());
@@ -2053,6 +2054,10 @@ class BotCombatManagerTest {
             return new Rectangle(anchor.x - 30, anchor.y - 50, 80, 100);
         });
         return skill;
+    }
+
+    private static MapPerceptionSnapshot perception(List<Monster> monsters) {
+        return new MapPerceptionSnapshot(1, monsters, List.of(), List.of());
     }
 
 }

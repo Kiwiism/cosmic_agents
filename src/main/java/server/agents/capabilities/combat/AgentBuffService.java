@@ -58,7 +58,7 @@ public final class AgentBuffService {
         if (!AgentBuffStateRuntime.scanDue(entry, now, TICK_MS)) return;
         AgentBuffStateRuntime.markScanned(entry, now);
 
-        if (bot.getMap().getAllMonsters().stream().noneMatch(Monster::isAlive)) return;
+        if (server.agents.perception.AgentMapPerception.monsters(bot.getMap()).stream().noneMatch(Monster::isAlive)) return;
 
         List<SelectedBuff> selected = buildSelection(bot, AgentBuffStateRuntime.cheapMode(entry), inventory);
         if (selected.isEmpty()) {
@@ -170,7 +170,7 @@ public final class AgentBuffService {
     private static boolean needsAccBuff(AgentRuntimeEntry entry, Character bot) {
         Monster ref = AgentGrindTargetStateRuntime.target(entry);
         if (ref == null) {
-            for (Monster monster : bot.getMap().getAllMonsters()) {
+            for (Monster monster : server.agents.perception.AgentMapPerception.monsters(bot.getMap())) {
                 if (monster.isAlive()) {
                     ref = monster;
                     break;

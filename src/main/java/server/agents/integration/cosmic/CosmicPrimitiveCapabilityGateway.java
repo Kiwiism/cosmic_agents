@@ -213,7 +213,7 @@ public enum CosmicPrimitiveCapabilityGateway implements PrimitiveCapabilityGatew
     @Override
     public int liveMonsterCount(Character agent, Set<Integer> mobIds) {
         int count = 0;
-        for (Monster monster : agent.getMap().getAllMonsters()) {
+        for (Monster monster : server.agents.perception.AgentMapPerception.monsters(agent.getMap())) {
             if (monster.isAlive() && mobIds.contains(monster.getId())) {
                 count++;
             }
@@ -363,8 +363,7 @@ public enum CosmicPrimitiveCapabilityGateway implements PrimitiveCapabilityGatew
     @Override
     public boolean lootNearby(Character agent, Set<Integer> itemIds) {
         boolean found = false;
-        for (MapObject object : agent.getMap().getItems()) {
-            MapItem item = (MapItem) object;
+        for (MapItem item : server.agents.perception.AgentMapPerception.items(agent.getMap())) {
             if (!item.isPickedUp() && itemIds.contains(item.getItemId())) {
                 found = true;
                 agent.pickupItem(item);
