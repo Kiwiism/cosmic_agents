@@ -33,6 +33,35 @@ class MapleIslandCohortCharacterCatalogTest {
         assertEquals(50, female);
     }
 
+    @Test
+    void earlyCohortVariesEveryVisibleAppearanceDimension() {
+        Set<Integer> skins = new HashSet<>();
+        Set<Integer> faces = new HashSet<>();
+        Set<Integer> hairs = new HashSet<>();
+        Set<Integer> tops = new HashSet<>();
+        Set<Integer> bottoms = new HashSet<>();
+        Set<Integer> shoes = new HashSet<>();
+        Set<Integer> weapons = new HashSet<>();
+        for (int ordinal = 0; ordinal < 100; ordinal++) {
+            MapleIslandCohortCharacterTemplate template =
+                    MapleIslandCohortCharacterCatalog.template(ordinal);
+            skins.add(template.skin());
+            faces.add(template.face());
+            hairs.add(template.hair());
+            tops.add(template.top());
+            bottoms.add(template.bottom());
+            shoes.add(template.shoes());
+            weapons.add(template.weapon());
+        }
+        assertEquals(4, skins.size());
+        assertEquals(6, faces.size());
+        assertEquals(24, hairs.size());
+        assertEquals(7, tops.size());
+        assertEquals(4, bottoms.size());
+        assertEquals(4, shoes.size());
+        assertEquals(3, weapons.size());
+    }
+
     private static String signature(MapleIslandCohortCharacterTemplate template) {
         return template.gender() + ":" + template.skin() + ":" + template.face() + ":"
                 + template.hair() + ":" + template.top() + ":" + template.bottom() + ":"

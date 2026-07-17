@@ -42,25 +42,40 @@ public final class CombatQuestObjectiveCapability
     }
 
     private final AmherstObjectiveCapabilitySupport support;
+    private final long combatTimeoutMs;
 
     public CombatQuestObjectiveCapability() {
         support = new AmherstObjectiveCapabilitySupport();
+        combatTimeoutMs = AmherstObjectiveCapabilitySupport.COMBAT_TIMEOUT_MS;
     }
 
     public CombatQuestObjectiveCapability(PrimitiveCapabilityGateway gateway) {
         support = new AmherstObjectiveCapabilitySupport(gateway);
+        combatTimeoutMs = AmherstObjectiveCapabilitySupport.COMBAT_TIMEOUT_MS;
     }
 
     public CombatQuestObjectiveCapability(PrimitiveCapabilityGateway gateway,
                                           AmherstScopePolicy scopePolicy) {
         support = new AmherstObjectiveCapabilitySupport(gateway, scopePolicy);
+        combatTimeoutMs = AmherstObjectiveCapabilitySupport.COMBAT_TIMEOUT_MS;
     }
 
     public CombatQuestObjectiveCapability(PrimitiveCapabilityGateway gateway,
                                           AmherstScopePolicy scopePolicy,
                                           AgentPortalRoutePolicy routePolicy) {
+        this(gateway, scopePolicy, routePolicy, AmherstObjectiveCapabilitySupport.COMBAT_TIMEOUT_MS);
+    }
+
+    public CombatQuestObjectiveCapability(PrimitiveCapabilityGateway gateway,
+                                          AmherstScopePolicy scopePolicy,
+                                          AgentPortalRoutePolicy routePolicy,
+                                          long combatTimeoutMs) {
         support = new AmherstObjectiveCapabilitySupport(
                 gateway, scopePolicy, AmherstNpcInteractionDelay.NONE, routePolicy);
+        if (combatTimeoutMs <= 0L) {
+            throw new IllegalArgumentException("combat timeout must be positive");
+        }
+        this.combatTimeoutMs = combatTimeoutMs;
     }
 
     @Override
@@ -91,7 +106,7 @@ public final class CombatQuestObjectiveCapability
             }
             context.memory().putInt("phase", 2);
             return AgentCapabilityStep.handoff(support.combat(
-                            command.questId(), command.requiredKills(), command.requiredLoot()),
+                            command.questId(), command.requiredKills(), command.requiredLoot(), combatTimeoutMs),
                     "combat objective delegates required kills");
         }
         if (phase == 2) {

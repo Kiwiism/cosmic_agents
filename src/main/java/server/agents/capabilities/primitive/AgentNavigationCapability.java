@@ -78,10 +78,26 @@ public final class AgentNavigationCapability
 
     private boolean matchesClimbingArrival(AgentCapabilityContext context, Command command) {
         Rope rope = AgentClimbStateRuntime.climbRope(context.entry());
-        return command.allowClimbingArrival() && rope != null
-                && rope.x() == command.destination().x
-                && command.destination().y >= rope.topY()
-                && command.destination().y <= rope.bottomY();
+        if (!command.allowClimbingArrival()) {
+            return false;
+        }
+        if (matches(rope, command.destination())) {
+            return true;
+        }
+        // A movement stop may clear transient climb state between ticks while
+        // the character remains visibly attached to the ladder. The command
+        // explicitly permits this arrival, so fall back to immutable map
+        // geometry before deciding that the agent must land.
+        return context.agent().getMap() != null
+                && context.agent().getMap().getRopes().stream()
+                .anyMatch(candidate -> matches(candidate, command.destination()));
+    }
+
+    private static boolean matches(Rope rope, Point destination) {
+        return rope != null && destination != null
+                && rope.x() == destination.x
+                && destination.y >= rope.topY()
+                && destination.y <= rope.bottomY();
     }
 
     @Override

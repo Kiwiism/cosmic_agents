@@ -17,7 +17,9 @@ import server.agents.capabilities.runtime.AgentCapabilityStep;
 import server.agents.integration.PrimitiveCapabilityGateway;
 import server.agents.integration.AgentCharacterStateSnapshot;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.maps.MapleMap;
 import server.maps.Reactor;
+import server.maps.Rope;
 
 import java.awt.Point;
 import java.util.List;
@@ -86,6 +88,23 @@ class AgentPrimitiveCapabilityTest {
         assertEquals(AgentCapabilityStatus.RUNNING, capability.tick(fixture.context(), command).status());
         AgentClimbStateRuntime.setClimbingOnRope(
                 fixture.entry, new server.maps.Rope(100, 20, 200, false));
+        assertEquals(AgentCapabilityStatus.SUCCESS, capability.tick(fixture.context(), command).status());
+        verify(fixture.gateway).stop(fixture.entry);
+    }
+
+    @Test
+    void navigationUsesMapRopeAfterTransientClimbStateWasCleared() {
+        Fixture fixture = fixture();
+        MapleMap map = new MapleMap(10000, 0, 0, 10000, 1.0f);
+        map.addRope(new Rope(100, 20, 200, true));
+        when(fixture.agent.getMap()).thenReturn(map);
+        when(fixture.gateway.mapId(fixture.agent)).thenReturn(10000);
+        when(fixture.gateway.position(fixture.agent)).thenReturn(new Point(100, 80));
+        when(fixture.gateway.grounded(fixture.agent)).thenReturn(false);
+        AgentNavigationCapability capability = new AgentNavigationCapability(fixture.gateway);
+        var command = new AgentNavigationCapability.Command(
+                10000, new Point(100, 80), 5, true, true);
+
         assertEquals(AgentCapabilityStatus.SUCCESS, capability.tick(fixture.context(), command).status());
         verify(fixture.gateway).stop(fixture.entry);
     }
@@ -212,6 +231,41 @@ class AgentPrimitiveCapabilityTest {
         AgentCapabilityStep success = capability.tick(fixture.context(), command);
         assertEquals(AgentCapabilityStatus.SUCCESS, success.status());
         verify(fixture.gateway).stop(fixture.entry);
+    }
+
+    @Test
+    void combatKeepsGrindNavigationActiveWhileClimbingTowardTarget() {
+        Fixture fixture = fixture();
+        when(fixture.gateway.alive(fixture.agent)).thenReturn(true);
+        when(fixture.gateway.grounded(fixture.agent)).thenReturn(false);
+        when(fixture.gateway.questProgress(fixture.agent, 1039, 100101)).thenReturn(0);
+        AgentClimbStateRuntime.setClimbingOnRope(
+                fixture.entry, new Rope(100, 20, 200, true));
+        AgentCombatCapability capability = new AgentCombatCapability(fixture.gateway);
+
+        AgentCapabilityStep step = capability.tick(fixture.context(),
+                new AgentCombatCapability.Command(1039, Map.of(100101, 10)));
+
+        assertEquals(AgentCapabilityStatus.RUNNING, step.status());
+        verify(fixture.gateway).grind(fixture.entry, Set.of(100101));
+        verify(fixture.gateway, never()).stop(fixture.entry);
+    }
+
+    @Test
+    void combatTargetsOnlyMobTypesWhoseQuestCountIsIncomplete() {
+        Fixture fixture = fixture();
+        when(fixture.gateway.alive(fixture.agent)).thenReturn(true);
+        when(fixture.gateway.questProgress(fixture.agent, 1039, 100101)).thenReturn(10);
+        when(fixture.gateway.questProgress(fixture.agent, 1039, 120100)).thenReturn(4);
+        when(fixture.gateway.liveMonsterCount(fixture.agent, Set.of(120100))).thenReturn(2);
+        AgentCombatCapability capability = new AgentCombatCapability(fixture.gateway);
+
+        AgentCapabilityStep step = capability.tick(fixture.context(),
+                new AgentCombatCapability.Command(
+                        1039, Map.of(100101, 10, 120100, 10)));
+
+        assertEquals(AgentCapabilityStatus.RUNNING, step.status());
+        verify(fixture.gateway).grind(fixture.entry, Set.of(120100));
     }
 
     @Test

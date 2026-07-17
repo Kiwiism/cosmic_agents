@@ -32,9 +32,11 @@ import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.profiles.AgentBehaviorProfileRuntime;
+import server.quest.Quest;
 
 import java.awt.Point;
 import java.io.IOException;
+import java.util.TreeSet;
 
 public final class MapleIslandPlanCommandService {
     private MapleIslandPlanCommandService() {
@@ -102,6 +104,14 @@ public final class MapleIslandPlanCommandService {
             }
             if (verb.equals("stats") && params.length == 1) {
                 cohortStats(player, MapleIslandCohortRuntime.instance());
+                return true;
+            }
+            if (verb.equals("radii")) {
+                cohortNpcRadii(player, params);
+                return true;
+            }
+            if (verb.equals("resetme") && params.length == 1) {
+                resetPlayerMapleIslandQuests(player);
                 return true;
             }
             if (verb.equals("pool")) {
@@ -244,6 +254,47 @@ public final class MapleIslandPlanCommandService {
                     + ") | W" + agent.world() + " | look=" + template
                     + " | " + agent.leaseState() + " | session=" + session);
         }
+    }
+
+    private static void cohortNpcRadii(Character player, String[] params) {
+        if (params.length > 2) {
+            throw new IllegalArgumentException("Usage: !mapleisland radii [page]");
+        }
+        int requestedPage = params.length == 2 ? parseInt(params[1], "page") : 1;
+        final int pageSize = 6;
+        var entries = MapleIslandNpcInteractionRadiusCatalog.entries();
+        int pageCount = Math.max(1, (entries.size() + pageSize - 1) / pageSize);
+        if (requestedPage < 1 || requestedPage > pageCount) {
+            throw new IllegalArgumentException("page must be between 1 and " + pageCount);
+        }
+        message(player, "NPC cohort spread radii page " + requestedPage + "/" + pageCount
+                + " (generic non-cohort click allowance="
+                + server.agents.capabilities.npc.AgentNpcInteractionPolicy.DEFAULT_CLICK_RANGE_PX + " px):");
+        int start = (requestedPage - 1) * pageSize;
+        int end = Math.min(entries.size(), start + pageSize);
+        for (var entry : entries.subList(start, end)) {
+            int anchors = MapleIslandNpcInteractionAnchorCatalog
+                    .anchors(entry.mapId(), entry.npcId()).size();
+            message(player, entry.npcName() + " | " + entry.mapName() + " (" + entry.mapId()
+                    + ") | offset=(" + signed(entry.centerOffsetX()) + ","
+                    + signed(entry.centerOffsetY()) + ") | radius=" + entry.radiusPx()
+                    + " px | curated=" + anchors);
+        }
+    }
+
+    private static String signed(int value) {
+        return value >= 0 ? "+" + value : Integer.toString(value);
+    }
+
+    private static void resetPlayerMapleIslandQuests(Character player) {
+        TreeSet<Integer> questIds = new TreeSet<>(AmherstQuestCatalog.requiredQuestIdSet());
+        questIds.addAll(MapleIslandSouthperryQuestCatalog.requiredQuestIdSet());
+        for (Integer questId : questIds) {
+            Quest.getInstance(questId).reset(player);
+        }
+        player.saveCharToDB(false);
+        message(player, "Reset " + questIds.size() + " Maple Island run quests for "
+                + player.getName() + ". Level, stats, equipment, inventory, position, and unrelated quests were preserved.");
     }
 
     private static int parseInt(String value, String label) {
@@ -511,7 +562,8 @@ public final class MapleIslandPlanCommandService {
             message(player, "Usage: !" + route.command + " reset|start|resume|next|status|run <AgentIGN>");
             if (route == Route.FULL_MAPLE_ISLAND) {
                 message(player, "Cohort: !mapleisland run <total> <batch> <intervalSeconds> [seed] [off|light|full]");
-                message(player, "Cohort control: !mapleisland status|stats|pool [page]|cancel|stop");
+                message(player, "Self reset: !mapleisland resetme (Maple Island run quests only)");
+                message(player, "Cohort control: !mapleisland status|stats|pool [page]|radii [page]|cancel|stop");
             }
         }
     }

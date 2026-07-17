@@ -47,18 +47,51 @@ class MapleIslandNpcInteractionPlacementPolicyTest {
     }
 
     @Test
-    void extendsOnlySamRangeForCohortAnchorVariation() {
+    void exposesExplicitCohortRadiiWithoutChangingNonCohortRange() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         MapleIslandObjectiveRandomnessRuntime.configure(
                 entry, MapleIslandObjectiveRandomnessSettings.cohort(77L));
 
-        assertEquals(500, MapleIslandNpcInteractionPlacementPolicy.INSTANCE.select(
+        assertEquals(511, MapleIslandNpcInteractionPlacementPolicy.INSTANCE.select(
                 entry, null, 50000, 2005, new Point(), new Point(), 300).interactionRangePx());
-        assertEquals(300, MapleIslandNpcInteractionPlacementPolicy.INSTANCE.select(
+        assertEquals(221, MapleIslandNpcInteractionPlacementPolicy.INSTANCE.select(
                 entry, null, 50000, 2003, new Point(), new Point(), 300).interactionRangePx());
+        assertEquals(403, MapleIslandNpcInteractionPlacementPolicy.INSTANCE.select(
+                entry, null, 20000, 2000, new Point(), new Point(), 300).interactionRangePx());
 
         MapleIslandObjectiveRandomnessRuntime.clear(entry);
         assertEquals(300, MapleIslandNpcInteractionPlacementPolicy.INSTANCE.select(
                 entry, null, 50000, 2005, new Point(), new Point(), 300).interactionRangePx());
+    }
+
+    @Test
+    void ninaUsesCuratedGroundSpreadWithOneLadderSlot() {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
+        MapleIslandObjectiveRandomnessRuntime.configure(
+                entry, MapleIslandObjectiveRandomnessSettings.cohort(77L));
+
+        var data = MapleIslandNpcInteractionPlacementPolicy.data(entry, 30001, 2001, 300);
+
+        assertEquals(false, data.dynamicSpread());
+        assertEquals(new Point(-50, -35), data.placementCenterOffset());
+        assertEquals(110, data.placementRadiusPx());
+        assertEquals(1L, data.anchors().stream()
+                .filter(point -> point.x == 77 && point.y < 246).count());
+        assertEquals(6L, data.anchors().stream().filter(point -> point.y == 246).count());
+    }
+
+    @Test
+    void rogerUsesOnlyReachableGroundSlots() {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
+        MapleIslandObjectiveRandomnessRuntime.configure(
+                entry, MapleIslandObjectiveRandomnessSettings.cohort(77L));
+
+        var data = MapleIslandNpcInteractionPlacementPolicy.data(entry, 20000, 2000, 300);
+
+        assertEquals(false, data.dynamicSpread());
+        assertEquals(new Point(-160, 155), data.placementCenterOffset());
+        assertEquals(180, data.placementRadiusPx());
+        assertEquals(7, data.anchors().size());
+        assertEquals(true, data.anchors().stream().allMatch(point -> point.y == 215));
     }
 }

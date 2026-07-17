@@ -20,6 +20,8 @@ import server.agents.capabilities.runtime.AgentExecutableCapability;
 import server.agents.testing.MutablePrimitiveGatewayFixture;
 import server.agents.plans.mapleisland.MapleIslandNpcInteractionAnchorCatalog;
 import server.agents.plans.mapleisland.MapleIslandNpcInteractionPlacementPolicy;
+import server.maps.MapleMap;
+import server.maps.Rope;
 
 import java.awt.Point;
 import java.util.List;
@@ -53,6 +55,28 @@ class AmherstObjectiveCapabilitiesTest {
         AgentCapabilityInvocation<?> invocation = support.combat(1037, Map.of(100100, 10));
 
         assertEquals(180_000L, invocation.timeoutMs());
+    }
+
+    @Test
+    void cohortCombatCanUseTheFullConfiguredObjectiveWindow() {
+        var fixture = new MutablePrimitiveGatewayFixture();
+        fixture.mapId.set(1010000);
+        fixture.quests.put(1039, 1);
+        AgentCapabilityMemory memory = new AgentCapabilityMemory();
+        memory.putInt("phase", 1);
+        var capability = new CombatQuestObjectiveCapability(
+                fixture.gateway, AmherstScopePolicy.fullMapleIsland(),
+                AgentPortalRoutePolicy.DIRECT, 900_000L);
+        var command = new CombatQuestObjectiveCapability.Command(
+                "q1039-kills", 1010000, 1039,
+                Map.of(100101, 10, 120100, 10));
+
+        AgentCapabilityStep step = capability.tick(new AgentCapabilityContext(
+                fixture.entry, fixture.agent, 100L, 0L, 0, null, memory), command);
+
+        assertEquals(AgentCapabilityStatus.WAITING_CHILD, step.status());
+        assertEquals("combat", step.child().capabilityId());
+        assertEquals(900_000L, step.child().timeoutMs());
     }
 
     @Test
@@ -144,6 +168,36 @@ class AmherstObjectiveCapabilitiesTest {
 
         assertEquals(displacedNpc, fixture.position);
         assertSuccess(fixture);
+    }
+
+    @Test
+    void reachedLadderAnchorCanProceedAfterNavigationClearsTransientClimbState() {
+        var fixture = new MutablePrimitiveGatewayFixture();
+        MapleMap map = new MapleMap(1000000, 0, 0, 1000000, 1.0f);
+        Point ladderAnchor = new Point(100, 150);
+        map.addRope(new Rope(100, 50, 250, true));
+        when(fixture.agent.getMap()).thenReturn(map);
+        fixture.mapId.set(1000000);
+        fixture.position = new Point(ladderAnchor);
+        fixture.quests.put(1037, 1);
+        when(fixture.gateway.grounded(fixture.agent)).thenReturn(false);
+        when(fixture.gateway.npcPosition(fixture.agent, 2103)).thenReturn(new Point(120, 150));
+        MapleIslandObjectiveRandomnessRuntime.configure(
+                fixture.entry, MapleIslandObjectiveRandomnessSettings.cohort(77L));
+        var placement = new AgentNpcInteractionPlacementData(
+                300, List.of(ladderAnchor), List.of(), null, false, false,
+                new Point(), 300);
+        var command = new NpcQuestObjectiveCapability.Command("q1037-complete", 1000000,
+                List.of(new NpcQuestObjectiveCapability.QuestOperation(
+                        1037, 2005, 2103, 2, placement, placement)), false);
+
+        AgentCapabilityStep step = new NpcQuestObjectiveCapability(
+                fixture.gateway, AmherstScopePolicy.fullMapleIsland(), AmherstNpcInteractionDelay.NONE)
+                .tick(new AgentCapabilityContext(fixture.entry, fixture.agent,
+                        100L, 0L, 0, null, new AgentCapabilityMemory()), command);
+
+        assertEquals(AgentCapabilityStatus.WAITING_CHILD, step.status());
+        assertEquals("npc-interaction", step.child().capabilityId());
     }
 
     @Test

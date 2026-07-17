@@ -22,6 +22,10 @@ public final class MapleIslandCohortCharacterCatalog {
     public static final int FEMALE_COMBINATION_COUNT = 13_824;
     public static final int COMBINATION_COUNT = MALE_COMBINATION_COUNT + FEMALE_COMBINATION_COUNT;
     private static final int INTERLEAVED_COUNT = MALE_COMBINATION_COUNT * 2;
+    // Coprime to both per-gender catalog sizes. This affine permutation keeps
+    // every full combination unique while making adjacent pool ordinals vary
+    // across hair, face, skin, clothing, shoes, and weapon immediately.
+    private static final int VISUAL_DIVERSITY_STRIDE = 104_729;
 
     private MapleIslandCohortCharacterCatalog() {
     }
@@ -60,7 +64,8 @@ public final class MapleIslandCohortCharacterCatalog {
         int[] hairs = gender == 0 ? MALE_HAIRS : FEMALE_HAIRS;
         int[] tops = gender == 0 ? MALE_TOPS : FEMALE_TOPS;
         int[] bottoms = gender == 0 ? MALE_BOTTOMS : FEMALE_BOTTOMS;
-        int value = localOrdinal;
+        int combinationCount = gender == 0 ? MALE_COMBINATION_COUNT : FEMALE_COMBINATION_COUNT;
+        int value = (int) ((long) localOrdinal * VISUAL_DIVERSITY_STRIDE % combinationCount);
         int weapon = WEAPONS[value % WEAPONS.length];
         value /= WEAPONS.length;
         int shoes = SHOES[value % SHOES.length];

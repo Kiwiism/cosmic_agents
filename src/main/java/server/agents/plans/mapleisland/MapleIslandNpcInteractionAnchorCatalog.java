@@ -14,9 +14,16 @@ public final class MapleIslandNpcInteractionAnchorCatalog {
     private static final Map<NpcPlacement, List<Point>> VARIATION_ANCHORS = Map.ofEntries(
             anchors(10000, 2101, points(116, 305, 136, 305, 156, 305, 96, 305, 174, 305)),
             anchors(10000, 2100, points(824, 125, 844, 125, 855, 125, 804, 125)),
-            anchors(20000, 2000, points(246, 65, 226, 65, 206, 65, 264, 65, 186, 65)),
+            // Roger's own y=65 foothold is enclosed by walls with no ladder.
+            // These reachable ground slots remain within the normal click range.
+            anchors(20000, 2000,
+                    points(120, 215, 168, 215, 216, 215, 264, 215,
+                            312, 215, 360, 215, 408, 215)),
             anchors(30000, 2102, points(-51, 95, -69, 95, -89, 95, -109, 95, -129, 95)),
-            anchors(30001, 2001, points(24, 246, 4, 246, 44, 246, -16, 246, 64, 246, -36, 246)),
+            // One ladder position is intentional; the rest keep Nina traffic on ground.
+            anchors(30001, 2001,
+                    points(24, 246, 4, 246, 44, 246, -16, 246,
+                            64, 246, -36, 246, 77, 198)),
             anchors(40000, 2004, points(-50, 215, -70, 215, -30, 215, -90, 215, -10, 215)),
             anchors(40000, 2002, points(900, 155, 890, 155, 870, 155, 850, 155, 830, 155)),
             anchors(50000, 2003, points(180, 335, 150, 335, 170, 335, 130, 335, 110, 335)),

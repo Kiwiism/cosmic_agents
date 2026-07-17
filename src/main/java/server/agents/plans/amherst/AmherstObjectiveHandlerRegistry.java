@@ -90,8 +90,7 @@ public final class AmherstObjectiveHandlerRegistry {
                     new InventoryUseObjectiveCapability.Command(
                             objective.objectiveId(), objective.questId(), objective.itemId()));
             case KILL_MOBS -> execution(objective.objectiveId(),
-                    new CombatQuestObjectiveCapability(
-                            gateway, scopePolicy, AgentSplitRoadRouteService.INSTANCE),
+                    combatQuestCapability(),
                     new CombatQuestObjectiveCapability.Command(objective.objectiveId(), objective.mapId(),
                             objective.questId(), zip(objective.mobIds(), objective.counts()),
                             itemCounts(objective.itemIds())));
@@ -153,6 +152,14 @@ public final class AmherstObjectiveHandlerRegistry {
             int mapId, int npcId) {
         return MapleIslandNpcInteractionPlacementPolicy.data(entry, mapId, npcId,
                 server.agents.capabilities.npc.AgentNpcInteractionPolicy.DEFAULT_CLICK_RANGE_PX);
+    }
+
+    private CombatQuestObjectiveCapability combatQuestCapability() {
+        return AgentObjectiveVariationRuntime.settings(entry).enabled()
+                ? new CombatQuestObjectiveCapability(
+                        gateway, scopePolicy, AgentSplitRoadRouteService.INSTANCE, objectiveTimeoutMs)
+                : new CombatQuestObjectiveCapability(
+                        gateway, scopePolicy, AgentSplitRoadRouteService.INSTANCE);
     }
 
     private Map<Integer, Integer> reactorItems(AmherstPlanCard card, AmherstPlanObjective objective) {

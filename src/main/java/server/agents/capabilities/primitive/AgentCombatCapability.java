@@ -1,5 +1,6 @@
 package server.agents.capabilities.primitive;
 
+import server.agents.capabilities.movement.AgentClimbStateRuntime;
 import server.agents.capabilities.runtime.AgentCapabilityCommand;
 import server.agents.capabilities.runtime.AgentCapabilityContext;
 import server.agents.capabilities.runtime.AgentCapabilityResult;
@@ -8,6 +9,7 @@ import server.agents.capabilities.runtime.AgentExecutableCapability;
 import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
 import server.agents.integration.PrimitiveCapabilityGateway;
 
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -60,15 +62,16 @@ public final class AgentCombatCapability
             gateway.stop(context.entry());
             return AgentPrimitiveResults.missing("agent is dead and cannot continue combat");
         }
-        if (!gateway.grounded(context.agent())) {
-            gateway.stop(context.entry());
-            return AgentCapabilityStep.running("waiting to land before combat", false);
-        }
         if (!command.requiredItemCounts().isEmpty()) {
             gateway.lootNearby(context.agent(), command.requiredItemCounts().keySet());
         }
-        boolean killsComplete = command.requiredKillCounts().entrySet().stream().allMatch(entry ->
-                gateway.questProgress(context.agent(), command.questId(), entry.getKey()) >= entry.getValue());
+        Set<Integer> pendingMobIds = new LinkedHashSet<>();
+        command.requiredKillCounts().forEach((mobId, requiredCount) -> {
+            if (gateway.questProgress(context.agent(), command.questId(), mobId) < requiredCount) {
+                pendingMobIds.add(mobId);
+            }
+        });
+        boolean killsComplete = pendingMobIds.isEmpty();
         boolean lootComplete = command.requiredItemCounts().entrySet().stream().allMatch(entry ->
                 gateway.itemCount(context.agent(), entry.getKey()) >= entry.getValue());
         boolean complete = killsComplete && lootComplete;
@@ -76,7 +79,17 @@ public final class AgentCombatCapability
             gateway.stop(context.entry());
             return AgentCapabilityStep.terminal(AgentCapabilityResult.success("combat kill requirements verified"));
         }
-        Set<Integer> allowedMobIds = command.requiredKillCounts().keySet();
+        Set<Integer> allowedMobIds = pendingMobIds.isEmpty()
+                ? command.requiredKillCounts().keySet() : Set.copyOf(pendingMobIds);
+        if (!gateway.grounded(context.agent())) {
+            if (AgentClimbStateRuntime.climbing(context.entry())) {
+                gateway.grind(context.entry(), allowedMobIds);
+                return AgentCapabilityStep.running(
+                        "continuing combat navigation while climbing", false);
+            }
+            gateway.stop(context.entry());
+            return AgentCapabilityStep.running("waiting to land before combat", false);
+        }
         if (gateway.liveMonsterCount(context.agent(), allowedMobIds) == 0) {
             return AgentCapabilityStep.retry("no required target mob is currently available");
         }

@@ -1,7 +1,6 @@
 package server.agents.capabilities.objective;
 
 import server.agents.capabilities.AgentCapabilityStatus;
-import server.agents.capabilities.movement.AgentClimbStateRuntime;
 import server.agents.capabilities.navigation.AgentPortalRoutePolicy;
 import server.agents.capabilities.npc.AgentNpcInteractionType;
 import server.agents.capabilities.npc.AgentNpcInteractionPolicy;
@@ -28,7 +27,6 @@ import server.agents.capabilities.runtime.AgentCapabilityResult;
 import server.agents.capabilities.runtime.AgentCapabilityStep;
 import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
 import server.agents.integration.PrimitiveCapabilityGateway;
-import server.maps.Rope;
 
 import java.awt.Point;
 import java.util.List;
@@ -176,11 +174,12 @@ final class AmherstObjectiveCapabilitySupport {
     private boolean matchesClimbingAnchor(AgentCapabilityContext context,
                                           Point anchor,
                                           boolean climbableAnchor) {
-        Rope rope = AgentClimbStateRuntime.climbRope(context.entry());
-        return climbableAnchor && anchor != null && rope != null
-                && rope.x() == anchor.x
-                && anchor.y >= rope.topY()
-                && anchor.y <= rope.bottomY();
+        // Navigation already required an active climb state before reporting
+        // arrival. Its terminal stop clears that transient state, so validate
+        // the remembered anchor against the map instead of requiring the state
+        // to survive across the child-to-parent handoff.
+        return climbableAnchor && anchor != null
+                && AgentNpcInteractionSpreadService.isClimbableAnchor(context.agent(), anchor);
     }
 
     private AgentNpcInteractionPlacementPolicy.Placement interactionPlacement(
@@ -220,13 +219,16 @@ final class AmherstObjectiveCapabilitySupport {
             Point currentPosition, Point npcPosition, AgentNpcInteractionPlacementData data) {
         AgentNpcInteractionPlacementData resolved = data == null
                 ? AgentNpcInteractionPlacementData.direct(NPC_RANGE_PX) : data;
+        Point placementCenter = new Point(
+                npcPosition.x + resolved.placementCenterOffset().x,
+                npcPosition.y + resolved.placementCenterOffset().y);
         List<Point> curated = resolved.anchors().stream()
-                .filter(candidate -> candidate.distanceSq(npcPosition)
-                        <= (long) resolved.interactionRangePx() * resolved.interactionRangePx())
+                .filter(candidate -> candidate.distanceSq(placementCenter)
+                        <= (long) resolved.placementRadiusPx() * resolved.placementRadiusPx())
                 .toList();
         List<Point> spread = resolved.dynamicSpread()
                 ? AgentNpcInteractionSpreadService.candidates(context.agent(), currentPosition,
-                npcPosition, resolved.interactionRangePx()) : List.of();
+                placementCenter, resolved.placementRadiusPx()) : List.of();
         List<Point> candidates = spread.size() >= 2
                 ? AgentNpcInteractionSpreadService.selectionPool(spread,
                 resolved.trafficBiasX() == null ? currentPosition
@@ -357,8 +359,15 @@ final class AmherstObjectiveCapabilitySupport {
     AgentCapabilityInvocation<?> combat(int questId,
                                         Map<Integer, Integer> kills,
                                         Map<Integer, Integer> loot) {
+        return combat(questId, kills, loot, COMBAT_TIMEOUT_MS);
+    }
+
+    AgentCapabilityInvocation<?> combat(int questId,
+                                        Map<Integer, Integer> kills,
+                                        Map<Integer, Integer> loot,
+                                        long timeoutMs) {
         return invocation(new AgentCombatCapability(gateway),
-                new AgentCombatCapability.Command(questId, kills, loot), COMBAT_TIMEOUT_MS);
+                new AgentCombatCapability.Command(questId, kills, loot), timeoutMs);
     }
 
     AgentCapabilityInvocation<?> reactor(int mapId,
