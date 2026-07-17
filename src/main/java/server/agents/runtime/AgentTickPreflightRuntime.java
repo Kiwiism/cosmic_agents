@@ -6,6 +6,7 @@ import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.capabilities.social.airshow.AgentAirshowStateRuntime;
 import server.agents.integration.AgentCharacterGatewayRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentTickCadenceStateRuntime;
 
 public final class AgentTickPreflightRuntime {
@@ -17,6 +18,9 @@ public final class AgentTickPreflightRuntime {
     public static AgentTickPreflightService.Result runPreflight(AgentRuntimeEntry entry,
                                                                int agentCharId,
                                                                long nowMs) {
+        if (entry != null && !AgentLifecycleStateRuntime.active(entry)) {
+            return new AgentTickPreflightService.Result(true, AgentRuntimeIdentityRuntime.bot(entry), false);
+        }
         return AgentTickPreflightService.runPreflight(
                 entry,
                 agentCharId,

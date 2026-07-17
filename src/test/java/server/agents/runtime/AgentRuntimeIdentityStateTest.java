@@ -8,18 +8,10 @@ import static org.mockito.Mockito.mock;
 
 class AgentRuntimeIdentityStateTest {
     @Test
-    void keepsAgentStableAndAllowsLeaderRefresh() {
+    void keepsOnlyTheStableAgentIdentity() {
         Character agent = mock(Character.class);
-        Character firstLeader = mock(Character.class);
-        Character refreshedLeader = mock(Character.class);
-        AgentRuntimeIdentityState state = new AgentRuntimeIdentityState(agent, firstLeader);
+        AgentRuntimeIdentityState state = new AgentRuntimeIdentityState(agent);
 
         assertSame(agent, state.agent());
-        assertSame(firstLeader, state.leader());
-
-        state.setLeader(refreshedLeader);
-
-        assertSame(agent, state.agent());
-        assertSame(refreshedLeader, state.leader());
     }
 }

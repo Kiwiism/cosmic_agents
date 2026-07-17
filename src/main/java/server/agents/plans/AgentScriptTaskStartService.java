@@ -3,6 +3,7 @@ package server.agents.plans;
 import client.Character;
 import client.inventory.InventoryType;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
@@ -30,7 +31,7 @@ public final class AgentScriptTaskStartService {
     public static void start(AgentRuntimeEntry entry, AgentTask task, StartHooks hooks) {
         switch (task.type()) {
             case MOVE_TO -> hooks.startMoveTo().accept(task.point(), task.precise());
-            case FOLLOW_OWNER -> hooks.startFollow().accept(AgentRuntimeIdentityRuntime.owner(entry));
+            case FOLLOW_OWNER -> hooks.startFollow().accept(AgentRelationshipRuntime.followTarget(entry));
             case FOLLOW_TARGET -> hooks.startFollow().accept(hooks.resolveFollowTarget().apply(task.targetCharacterId()));
             case FOLLOW_UNTIL_NEAR -> hooks.startFollow().accept(hooks.resolveFollowTarget().apply(task.targetCharacterId()));
             case GRIND -> hooks.startGrind().run();

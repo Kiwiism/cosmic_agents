@@ -2,6 +2,7 @@ package server.agents.capabilities.movement;
 
 import client.Character;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
@@ -87,7 +88,7 @@ public final class AgentMovementOnlyTickService {
         }
 
         Character agent = AgentRuntimeIdentityRuntime.bot(entry);
-        Character leader = AgentRuntimeIdentityRuntime.owner(entry);
+        Character leader = AgentRelationshipRuntime.followTarget(entry);
 
         if (hooks.idleTick().tick(entry, agent)) {
             return;

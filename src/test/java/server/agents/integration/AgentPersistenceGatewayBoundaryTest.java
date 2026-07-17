@@ -14,16 +14,16 @@ class AgentPersistenceGatewayBoundaryTest {
     void databaseOperationsLiveAtCosmicBoundary() throws IOException {
         String command = Files.readString(Path.of(
                 "src/main/java/server/agents/commands/AgentSpawnCommandExecutor.java"));
-        String ownership = Files.readString(Path.of(
-                "src/main/java/server/agents/auth/AgentOwnershipService.java"));
+        String control = Files.readString(Path.of(
+                "src/main/java/server/agents/auth/AgentControlService.java"));
         String cosmic = Files.readString(Path.of(
                 "src/main/java/server/agents/integration/cosmic/CosmicAgentPersistenceGateway.java"));
 
         assertFalse(command.contains("tools.DatabaseConnection"));
-        assertFalse(ownership.contains("tools.DatabaseConnection"));
+        assertFalse(control.contains("tools.DatabaseConnection"));
         assertTrue(command.contains("AgentPersistenceGatewayRuntime.persistence()"));
-        assertTrue(ownership.contains("AgentPersistenceGatewayRuntime.persistence()"));
+        assertTrue(control.contains("AgentPersistenceGatewayRuntime.persistence()"));
         assertTrue(cosmic.contains("tools.DatabaseConnection"));
-        assertTrue(cosmic.contains("bot_owners"));
+        assertFalse(cosmic.contains("bot_owners"));
     }
 }

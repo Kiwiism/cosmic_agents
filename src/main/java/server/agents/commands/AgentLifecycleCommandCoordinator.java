@@ -2,7 +2,7 @@ package server.agents.commands;
 
 import server.agents.capabilities.trade.AgentTransferCommandService;
 import server.agents.capabilities.trade.AgentTransferService;
-import server.agents.auth.AgentOwnershipService;
+import server.agents.auth.AgentControlService;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.runtime.AgentLifecycleService;
@@ -38,7 +38,7 @@ public final class AgentLifecycleCommandCoordinator {
                 agentName,
                 new AgentRecruitService.Hooks(
                         AgentRuntimeRegistry::findUnclaimedOnlineAgentByName,
-                        (candidateLeader, agent) -> AgentOwnershipService.getInstance()
+                        (candidateLeader, agent) -> AgentControlService.getInstance()
                                 .ensureCanControl(candidateLeader, agent),
                         registrar));
     }

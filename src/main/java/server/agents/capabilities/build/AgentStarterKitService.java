@@ -23,12 +23,11 @@ public final class AgentStarterKitService {
 
     public static void advanceJob(AgentRuntimeEntry entry, Job newJob) {
         Character bot = AgentRuntimeIdentityRuntime.bot(entry);
-        Character owner = AgentRuntimeIdentityRuntime.owner(entry);
         Job oldJob = bot.getJob();
         bot.changeJob(newJob);
         AgentBuildService.handleJobAdvance(entry, bot, oldJob, newJob);
         grantStarterKitIfEligible(bot, oldJob, newJob, AgentInventoryGatewayRuntime.inventory());
-        AgentEquipmentService.autoEquip(bot, owner, null);
+        AgentEquipmentService.autoEquip(bot, null, null);
         AgentBuildStatusRuntime.checkBuildStatus(entry, bot);
     }
 

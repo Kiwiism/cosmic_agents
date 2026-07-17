@@ -28,6 +28,8 @@ import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentMailboxRuntime;
+import server.agents.auth.AgentAuthorityService;
+import server.agents.integration.AgentRelationshipRuntime;
 
 import java.util.List;
 import java.util.Map;
@@ -43,6 +45,9 @@ public final class AgentChatRouteCoordinator {
                                   AgentRecruitCommandService.RecruitAction recruitAction,
                                   AgentTransferCommandService.TransferAction transferAction,
                                   AgentDismissCommandService.DismissAction dismissAction) {
+        if (!AgentAuthorityService.mayOperate(leader)) {
+            return;
+        }
         handleChat(
                 leader,
                 message,
@@ -66,6 +71,10 @@ public final class AgentChatRouteCoordinator {
                                   AgentFormationService.FormationState defaultFormation,
                                   int defaultFollowStaggerPx,
                                   int defaultSnapRangePx) {
+        List<E> interactionEntries = entriesByLeader.get(leader.getId());
+        if (interactionEntries != null) {
+            interactionEntries.forEach(entry -> setInteractionTarget(entry, leader));
+        }
         AgentChatIngressService.handleChat(
                 leader,
                 message,
@@ -141,7 +150,7 @@ public final class AgentChatRouteCoordinator {
                 AgentChatRouteCoordinator::queueReply,
                 AgentChatRouteCoordinator::handleAgentChat,
                 System::currentTimeMillis,
-                AgentRuntimeIdentityRuntime::owner,
+                AgentRelationshipRuntime::interactionTarget,
                 AgentActivityStateRuntime::recordLastOwnerCommand,
                 () -> AgentLlmConfig.enabled,
                 AgentLlmReplyCoordinator::maybeRespond,
@@ -232,5 +241,9 @@ public final class AgentChatRouteCoordinator {
             String message,
             AgentReplyChannel channel) {
         return AgentChatMailboxDispatcher.handleChat(entry, message, channel);
+    }
+
+    private static void setInteractionTarget(AgentRuntimeEntry entry, Character sender) {
+        AgentRelationshipRuntime.setInteractionTarget(entry, sender);
     }
 }

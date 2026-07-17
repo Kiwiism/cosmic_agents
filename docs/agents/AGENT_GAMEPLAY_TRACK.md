@@ -4,6 +4,14 @@ This track contains Agent gameplay capability, correctness, and autonomy work.
 It is intentionally separated from the scaling track. The current
 post-reconstruction order is capability proof first, then scaling.
 
+Current next-step authority for independent level-30 and level-70 progression:
+
+- `docs/agents/TIER_1_INDEPENDENT_AGENT_PROGRESSION_IMPLEMENTATION_PLAN.md`
+
+That plan consolidates the scattered gameplay backlog below into the first
+complete autonomous loop. This document remains the reconstruction and Maple
+Island gameplay history.
+
 ## Gameplay Scope
 
 Gameplay packages include:

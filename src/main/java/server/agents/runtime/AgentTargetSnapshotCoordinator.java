@@ -8,6 +8,7 @@ import server.agents.capabilities.movement.AgentFormationService;
 import server.agents.capabilities.movement.AgentTargetSnapshot;
 import server.agents.capabilities.movement.AgentTargetSnapshotService;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentRelationshipRuntime;
 
 import java.util.List;
 
@@ -22,17 +23,14 @@ public final class AgentTargetSnapshotCoordinator {
     }
 
     public static Character resolveFollowAnchor(AgentRuntimeEntry entry, Character leader) {
-        List<? extends AgentRuntimeEntry> siblingEntries = leader == null
-                ? List.of()
-                : AgentRuntimeRegistry.agentEntriesForLeader(leader.getId());
+        List<? extends AgentRuntimeEntry> siblingEntries =
+                AgentRuntimeRegistry.entriesForCohort(AgentRelationshipRuntime.cohortId(entry));
         return AgentFollowAnchorService.resolve(entry, leader, siblingEntries);
     }
 
     public static AgentTargetSnapshot captureTargetSnapshot(AgentRuntimeEntry entry) {
-        Character leader = AgentRuntimeIdentityRuntime.owner(entry);
-        List<? extends AgentRuntimeEntry> siblingEntries = leader == null
-                ? List.of()
-                : AgentRuntimeRegistry.agentEntriesForLeader(leader.getId());
+        List<? extends AgentRuntimeEntry> siblingEntries =
+                AgentRuntimeRegistry.entriesForCohort(AgentRelationshipRuntime.cohortId(entry));
         return AgentTargetSnapshotService.capture(
                 entry,
                 siblingEntries,

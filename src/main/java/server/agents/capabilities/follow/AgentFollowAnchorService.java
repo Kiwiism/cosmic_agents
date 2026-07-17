@@ -2,6 +2,7 @@ package server.agents.capabilities.follow;
 
 import client.Character;
 import server.agents.integration.AgentPartyGatewayRuntime;
+import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -55,10 +56,9 @@ public final class AgentFollowAnchorService {
     }
 
     public static Character resolveTargetFromRuntimeRegistry(AgentRuntimeEntry entry, int targetId) {
-        Character leader = AgentRuntimeIdentityRuntime.owner(entry);
-        List<? extends AgentRuntimeEntry> siblingEntries = leader == null
-                ? List.of()
-                : AgentRuntimeRegistry.agentEntriesForLeader(leader.getId());
-        return resolveTarget(entry, leader, targetId, siblingEntries);
+        Character target = AgentRelationshipRuntime.followTarget(entry);
+        List<? extends AgentRuntimeEntry> cohortEntries =
+                AgentRuntimeRegistry.entriesForCohort(AgentRelationshipRuntime.cohortId(entry));
+        return resolveTarget(entry, target, targetId, cohortEntries);
     }
 }

@@ -3,7 +3,7 @@ package server.agents.plans.amherst;
 import client.Character;
 import config.YamlConfig;
 import constants.id.ItemId;
-import server.agents.auth.AgentOwnershipService;
+import server.agents.auth.AgentControlService;
 import server.agents.capabilities.movement.AgentChairService;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
 import server.agents.capabilities.quest.AmherstTestResetMode;
@@ -150,20 +150,11 @@ public final class AmherstPlanCommandService {
             return;
         }
         String showcaseAgentName = allowedName;
-        AgentOwnershipService ownership = AgentOwnershipService.getInstance();
-        var resolved = ownership.resolveCharacterByName(showcaseAgentName);
+        AgentControlService control = AgentControlService.getInstance();
+        var resolved = control.resolveCharacterByName(showcaseAgentName);
         if (resolved == null) {
             message(player, "No character named '" + showcaseAgentName + "' exists.");
             return;
-        }
-        Integer registeredOwnerId = ownership.getRegisteredOwnerId(resolved.id());
-        if (registeredOwnerId == null) {
-            try {
-                ownership.registerOwner(resolved.id(), player.getId());
-            } catch (RuntimeException failure) {
-                message(player, "Failed to register " + showcaseAgentName + " to " + player.getName() + ".");
-                return;
-            }
         }
         var startMap = AgentMapGatewayRuntime.map().resolveMap(
                 player.getWorld(), player.getClient().getChannel(), AmherstQuestCatalog.START_MAP_ID);

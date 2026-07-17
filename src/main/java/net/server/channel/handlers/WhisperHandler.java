@@ -30,8 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.ChatLogger;
 import server.agents.integration.cosmic.CosmicAgentWhisperCommandBridge;
-import server.agents.registry.AgentResolvedCharacter;
-import server.agents.auth.AgentOwnershipService;
 import tools.PacketCreator;
 import tools.PacketCreator.WhisperFlag;
 
@@ -54,13 +52,7 @@ public final class WhisperHandler extends AbstractPacketHandler {
         Character target = c.getWorldServer().getPlayerStorage().getCharacterByName(name);
 
         if (target == null) {
-            // Bots should always appear online; suppress the not-found reply for any
-            // registered bot name (whisper-spam during the bot-spawn flow is noise).
-            AgentOwnershipService ownership = AgentOwnershipService.getInstance();
-            AgentResolvedCharacter resolved = ownership.resolveCharacterByName(name);
-            if (resolved == null || ownership.getRegisteredOwnerId(resolved.id()) == null) {
-                c.sendPacket(PacketCreator.getWhisperResult(name, false));
-            }
+            c.sendPacket(PacketCreator.getWhisperResult(name, false));
             return;
         }
 

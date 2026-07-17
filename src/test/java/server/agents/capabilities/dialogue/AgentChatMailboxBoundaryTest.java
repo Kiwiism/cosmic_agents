@@ -34,7 +34,7 @@ class AgentChatMailboxBoundaryTest {
                 "src/main/java/server/agents/integration/cosmic/CosmicAgentWhisperCommandBridge.java"));
 
         assertTrue(route.contains("AgentChatMailboxDispatcher.handleChat"));
-        assertTrue(whisper.contains("AgentChatMailboxDispatcher::handleChat"));
+        assertTrue(whisper.contains("AgentChatMailboxDispatcher.handleChat"));
     }
 
     @Test

@@ -104,6 +104,10 @@ public final class AgentInteractionRuntime {
                 log);
     }
 
+    public static void reloginAgent(AgentReloginRequest request) {
+        CosmicAgentReloginCoordinator.reloginAgent(request, AgentInteractionRuntime::tick, log);
+    }
+
     private static void tick(AgentRuntimeEntry entry, int leaderCharId, int agentCharId) {
         AgentTickRuntime.tick(
                 entry,

@@ -50,7 +50,13 @@ public final class AgentTickFailureRuntime {
                                 log.error("Bot tick failed for missing entry ownerCharId={} botCharId={}",
                                         missingLeaderCharId, missingAgentCharId, missingFailure),
                         (failedEntry, ignored) -> AgentMovementStateResetService.resetEntryStateAfterTeleport(failedEntry),
-                        AgentRuntimeCleanupService::removeAgent,
+                        failedEntry -> {
+                            AgentLifecycleStateRuntime.transition(
+                                    failedEntry,
+                                    AgentLifecyclePhase.QUARANTINED,
+                                    "repeated tick failure");
+                            stopAgent.accept(failedEntry);
+                        },
                         failedEntry -> forceIdleAfterTickFailure(failedEntry, log, stopAgent),
                         (context, disableFailure) -> log.error(
                                 "Disabling bot '{}' after {} tick failures within {} ms (owner={}, map={}, grinding={}, following={})",

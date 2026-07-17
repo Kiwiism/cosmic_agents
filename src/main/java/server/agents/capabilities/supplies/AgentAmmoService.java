@@ -16,9 +16,12 @@ import server.agents.capabilities.supplies.AgentAmmoSharePolicy.DonorScore;
 import server.agents.capabilities.trade.AgentSupplyShareTradeService;
 import server.agents.capabilities.supplies.AgentAmmoRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.integration.InventoryGateway;
 import server.agents.runtime.AgentSessionLifecycleRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.coordination.AgentCoordinationRuntime;
+import server.agents.coordination.AgentSupplyNeedMessage;
 
 import java.util.List;
 import java.util.Map;
@@ -27,12 +30,12 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class AgentAmmoService {
 
     private static final Map<String, Long> ammoShareBackoffUntil = new ConcurrentHashMap<>();
-    private static final Map<Integer, Long> ammoShareCooldownUntil = new ConcurrentHashMap<>();
+    private static final Map<Long, Long> ammoShareCooldownUntil = new ConcurrentHashMap<>();
 
     private AgentAmmoService() {}
 
     public static void clearLeaderRuntimeState(int leaderId) {
-        ammoShareCooldownUntil.remove(leaderId);
+        ammoShareCooldownUntil.remove((long) leaderId);
         String keyPrefix = leaderId + ":";
         ammoShareBackoffUntil.keySet().removeIf(key -> key.startsWith(keyPrefix));
     }
@@ -77,8 +80,7 @@ public final class AgentAmmoService {
                                            int currentAmmo,
                                            boolean bypassShareLimits,
                                            InventoryGateway inventory) {
-        Character owner = AgentRuntimeIdentityRuntime.owner(entry);
-        if (owner == null || bot.getTrade() != null || AgentPendingTradeStateRuntime.hasActiveSequence(entry)) {
+        if (bot.getTrade() != null || AgentPendingTradeStateRuntime.hasActiveSequence(entry)) {
             return false;
         }
         if (!canRequestShare(weaponType) || currentAmmo >= AgentCombatConfig.cfg.AMMO_LOW_WARN) {
@@ -86,16 +88,26 @@ public final class AgentAmmoService {
         }
 
         long now = System.currentTimeMillis();
-        String backoffKey = owner.getId() + ":" + weaponType.name();
+        long cohortId = AgentRelationshipRuntime.cohortId(entry);
+        String backoffKey = cohortId + ":" + weaponType.name();
         if (!bypassShareLimits) {
             if (now < ammoShareBackoffUntil.getOrDefault(backoffKey, 0L)) {
                 return false;
             }
-            if (now < ammoShareCooldownUntil.getOrDefault(owner.getId(), 0L)) {
+            if (now < ammoShareCooldownUntil.getOrDefault(cohortId, 0L)) {
                 return false;
             }
-            ammoShareCooldownUntil.put(owner.getId(), now + 30_000L);
+            ammoShareCooldownUntil.put(cohortId, now + 30_000L);
         }
+
+        AgentCoordinationRuntime.publish(new AgentSupplyNeedMessage(
+                bot.getId(),
+                cohortId,
+                bot.getMapId(),
+                AgentSupplyNeedMessage.SupplyKind.AMMUNITION,
+                currentAmmo,
+                weaponType.name(),
+                now));
 
         AgentAmmoRuntime.sayMapNow(bot, AgentDialogueSelector.randomReply(
                 weaponType == WeaponType.BOW
@@ -121,12 +133,12 @@ public final class AgentAmmoService {
     }
 
     public static OwnerAmmoShareResult offerAmmoShareToOwner(AgentRuntimeEntry entry, WeaponType weaponType, InventoryGateway inventory) {
-        Character owner = AgentRuntimeIdentityRuntime.owner(entry);
+        Character owner = AgentRelationshipRuntime.interactionTarget(entry);
         if (owner == null || owner.getTrade() != null || !canRequestShare(weaponType)) {
             return OwnerAmmoShareResult.BLOCKED;
         }
 
-        AgentAmmoDonorPlan<AgentRuntimeEntry> plan = selectAmmoDonorForRecipient(owner, weaponType);
+        AgentAmmoDonorPlan<AgentRuntimeEntry> plan = selectAmmoDonorForRecipient(entry, owner, weaponType);
         if (plan == null) {
             return OwnerAmmoShareResult.NO_DONOR;
         }
@@ -136,23 +148,22 @@ public final class AgentAmmoService {
     }
 
     public static AgentAmmoDonorPlan<AgentRuntimeEntry> selectAmmoDonor(AgentRuntimeEntry needyEntry, Character needyBot, WeaponType needyWeaponType) {
-        Character owner = AgentRuntimeIdentityRuntime.owner(needyEntry);
-        if (owner == null || !canRequestShare(needyWeaponType)) {
+        if (!canRequestShare(needyWeaponType)) {
             return null;
         }
-        return selectAmmoDonor(owner.getId(), needyBot.getMapId(), needyEntry, needyWeaponType);
+        return selectAmmoDonor(needyEntry, needyBot.getMapId(), needyEntry, needyWeaponType);
     }
 
-    public static AgentAmmoDonorPlan<AgentRuntimeEntry> selectAmmoDonorForRecipient(Character recipient, WeaponType needyWeaponType) {
+    public static AgentAmmoDonorPlan<AgentRuntimeEntry> selectAmmoDonorForRecipient(AgentRuntimeEntry requesterEntry, Character recipient, WeaponType needyWeaponType) {
         if (recipient == null || !canRequestShare(needyWeaponType)) {
             return null;
         }
-        return selectAmmoDonor(recipient.getId(), recipient.getMapId(), null, needyWeaponType);
+        return selectAmmoDonor(requesterEntry, recipient.getMapId(), null, needyWeaponType);
     }
 
-    private static AgentAmmoDonorPlan<AgentRuntimeEntry> selectAmmoDonor(int ownerId, int mapId, AgentRuntimeEntry excludedEntry, WeaponType needyWeaponType) {
+    private static AgentAmmoDonorPlan<AgentRuntimeEntry> selectAmmoDonor(AgentRuntimeEntry requesterEntry, int mapId, AgentRuntimeEntry excludedEntry, WeaponType needyWeaponType) {
         AgentAmmoDonorPlan<AgentRuntimeEntry> best = null;
-        for (AgentRuntimeEntry sibling : AgentSessionLifecycleRuntime.getBotEntries(ownerId)) {
+        for (AgentRuntimeEntry sibling : AgentSessionLifecycleRuntime.getCohortEntries(requesterEntry)) {
             Character donorBot = AgentRuntimeIdentityRuntime.bot(sibling);
             if (sibling == excludedEntry || donorBot == null || donorBot.getMapId() != mapId) {
                 continue;

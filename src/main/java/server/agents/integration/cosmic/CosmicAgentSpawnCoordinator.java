@@ -2,7 +2,7 @@ package server.agents.integration.cosmic;
 
 import client.Character;
 import org.slf4j.Logger;
-import server.agents.auth.AgentOwnershipService;
+import server.agents.auth.AgentControlService;
 import server.agents.integration.AgentMapGatewayRuntime;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentRegistrationCoordinator;
@@ -52,7 +52,7 @@ public final class CosmicAgentSpawnCoordinator {
         return AgentLifecycleService.spawnAgentForLeaderQuietly(
                 leader,
                 agentName,
-                AgentOwnershipService.getInstance(),
+                AgentControlService.getInstance(),
                 new AgentLifecycleService.SpawnHooks(
                         AgentSpawnPositionService::resolveSpawnPosition,
                         registerSpawnedAgent,
@@ -77,7 +77,7 @@ public final class CosmicAgentSpawnCoordinator {
                 agentName,
                 spawnMap,
                 spawnPosition,
-                AgentOwnershipService.getInstance(),
+                AgentControlService.getInstance(),
                 new AgentLifecycleService.SpawnHooks(
                         AgentSpawnPositionService::resolveSpawnPosition,
                         registerSpawnedAgent,

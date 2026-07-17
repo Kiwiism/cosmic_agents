@@ -1,22 +1,19 @@
 package server.agents.capabilities.supplies;
 
-import config.YamlConfig;
-import server.agents.runtime.AgentRuntimeEntry;
-
-import server.agents.capabilities.trade.AgentOfferService;
-
-import server.agents.capabilities.combat.AgentAttackExecutionProvider;
-
 import client.Character;
 import client.inventory.WeaponType;
+import config.YamlConfig;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
+import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.dialogue.AgentChatSupplyRequestFlow;
+import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.commands.AgentMessageQueueStateRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.InventoryGateway;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentSchedulerRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;

@@ -1,15 +1,14 @@
 package server.agents.capabilities.dialogue;
 
-import config.YamlConfig;
-import server.agents.runtime.AgentRuntimeEntry;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import config.YamlConfig;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.trade.AgentInventoryTransferService;
 import server.agents.commands.AgentMessageQueueStateRuntime;
 import server.agents.integration.AgentReplyRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentSchedulerRuntime;
 
 import java.util.List;

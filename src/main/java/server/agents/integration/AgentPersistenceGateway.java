@@ -12,11 +12,5 @@ public interface AgentPersistenceGateway {
 
     AgentResolvedCharacter findCharacterById(int characterId) throws SQLException;
 
-    Integer getRegisteredOwnerId(int agentCharacterId) throws SQLException;
-
-    void registerOwner(int agentCharacterId, int ownerCharacterId) throws SQLException;
-
-    int countRegisteredAgents(int ownerCharacterId) throws SQLException;
-
     AgentAccountResolution resolveOrCreateAgentAccount(String name) throws SQLException;
 }

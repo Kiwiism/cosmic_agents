@@ -27,6 +27,7 @@ import server.agents.capabilities.inventory.AgentInventoryRuntime;
 import server.agents.capabilities.inventory.AgentInventoryStateRuntime;
 import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.integration.InventoryGateway;
 import server.agents.integration.TradeGateway;
 import server.agents.integration.AgentTradeGatewayRuntime;
@@ -69,7 +70,7 @@ public final class AgentInventoryTransferService {
 
     public static void startTradeTransfer(String category, AgentRuntimeEntry entry, Character agent) {
         long startedAt = AgentTradeCommandProfiler.profileCategory(category) ? System.nanoTime() : 0L;
-        Character owner = AgentRuntimeIdentityRuntime.owner(entry);
+        Character owner = AgentRelationshipRuntime.interactionTarget(entry);
 
         AgentTradeTransferRouter.routeCategoryTransfer(
                 category,
@@ -159,7 +160,7 @@ public final class AgentInventoryTransferService {
         return AgentTradeItemCollectionService.collectItems(
                 category,
                 agent,
-                AgentRuntimeIdentityRuntime.owner(entry),
+                AgentRelationshipRuntime.interactionTarget(entry),
                 AgentTradeItemCollectionService.TradeItemCollectionCallbacks.of(
                         () -> recommendedItems(entry, agent),
                         () -> classifyEquipTradeGroups(entry, agent),
@@ -200,7 +201,7 @@ public final class AgentInventoryTransferService {
                                 agent,
                                 () -> AgentEquippedSlotTradeService.restoreTemporarilyUnequippedItems(entry, agent),
                                 () -> AgentManualTradeService.clearState(entry, agent),
-                                () -> AgentEquipmentService.autoEquip(agent, AgentRuntimeIdentityRuntime.owner(entry), null))),
+                                () -> AgentEquipmentService.autoEquip(agent, null, null))),
                 () -> trade().startTrade(agent),
                 trade()::inviteTrade,
                 AgentTradeDialogueService::invitationReply,
@@ -208,7 +209,7 @@ public final class AgentInventoryTransferService {
     }
 
     private static void startTradeMesoTransfer(String category, AgentRuntimeEntry entry, Character agent) {
-        Character owner = AgentRuntimeIdentityRuntime.owner(entry);
+        Character owner = AgentRelationshipRuntime.interactionTarget(entry);
         AgentMesoTradeService.MesoTradeStartDecision decision = AgentMesoTradeService.decideStart(
                 category,
                 owner != null,
@@ -243,7 +244,7 @@ public final class AgentInventoryTransferService {
                 () -> recommendedItems(entry, agent),
                 () -> classifyEquipTradeGroups(entry, agent),
                 () -> classifyAmmoTradeGroups(agent),
-                AgentRuntimeIdentityRuntime.owner(entry),
+                AgentRelationshipRuntime.interactionTarget(entry),
                 inventory());
     }
 
@@ -276,7 +277,7 @@ public final class AgentInventoryTransferService {
     }
 
     private static List<Item> recommendedItems(AgentRuntimeEntry entry, Character agent) {
-        Character owner = AgentRuntimeIdentityRuntime.owner(entry);
+        Character owner = AgentRelationshipRuntime.interactionTarget(entry);
         if (owner == null) {
             return List.of();
         }
@@ -297,7 +298,7 @@ public final class AgentInventoryTransferService {
                                 itemId -> ItemRestrictionPolicy.allowsUntradeable(character, itemId)),
                         AgentEquipmentReservePolicy::collectPotentialSelfUpgradeItems,
                         item -> AgentOfferService.isReservedForOtherRecipients(entry, agent, item),
-                        () -> AgentRuntimeIdentityRuntime.owner(entry),
+                        () -> AgentRelationshipRuntime.interactionTarget(entry),
                         report -> log.warn(
                         "Slow equip trade classification: took {} ms bot={} owner={} bagItems={} selfKeep={} normalItems={} reservedOtherItems={} reservedSelfItems={} bagScanMs={} selfKeepMs={} reservedOtherMs={} reservedOtherChecks={} reservedOtherHits={} sortMs={}",
                         String.format("%.1f", report.elapsedNs() / 1_000_000.0),

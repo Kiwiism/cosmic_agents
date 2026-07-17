@@ -8,6 +8,7 @@ import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.commands.AgentReplyChannelStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentRelationshipRuntime;
 import server.maps.MapleMap;
 
 public final class AgentLlmReplyCoordinator {
@@ -29,7 +30,7 @@ public final class AgentLlmReplyCoordinator {
                 AgentRuntimeIdentityRuntime.botId(entry),
                 AgentRuntimeIdentityRuntime.botName(entry),
                 AgentReplyChannelStateRuntime.replyChannel(entry),
-                AgentSenderRelation.resolve(agent, AgentRuntimeIdentityRuntime.owner(entry), sender),
+                AgentSenderRelation.resolve(agent, AgentRelationshipRuntime.interactionTarget(entry), sender),
                 new AgentLlmPromptContext(
                         agent,
                         AgentRuntimeIdentityRuntime.hasBot(entry)

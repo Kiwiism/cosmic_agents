@@ -11,8 +11,12 @@ import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.integration.AgentClientGatewayRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.runtime.AgentMailboxRuntime;
+import server.agents.runtime.AgentLifecyclePhase;
+import server.agents.runtime.AgentLifecycleStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.AgentReloginRequest;
 import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.runtime.AgentSessionControlRuntime;
 import server.agents.runtime.AgentSessionLifecycleRuntime;
@@ -47,6 +51,9 @@ public final class AgentSessionCommandCoordinator {
 
             @Override
             public void requestAway() {
+                if (!server.agents.runtime.AgentLegacyOwnerCompatibility.enabled()) {
+                    return;
+                }
                 if (!AgentSessionControlRuntime.isPrimarySession(entry)) {
                     return;
                 }
@@ -57,30 +64,41 @@ public final class AgentSessionCommandCoordinator {
 
     public static void scheduleRelogConfirm(AgentRuntimeEntry entry) {
         AgentSchedulerRuntime.afterRandomDelay(entry, 900, 1100, () -> {
-            Character owner = owner(entry);
-            if (owner == null) {
-                return;
-            }
             AgentReplyRuntime.replyNow(entry, AgentChatSessionRequestFlow.relogConfirmedReply());
             Character bot = bot(entry);
-            int charId = bot.getId();
-            int ownerCharId = owner.getId();
-            int world = AgentClientGatewayRuntime.clients().world(bot);
-            int channel = AgentClientGatewayRuntime.clients().channel(bot);
+            AgentReloginRequest request = reloginRequest(entry, bot);
             AgentSchedulerRuntime.afterRandomDelay(entry, 1800, 2200, () -> {
+                AgentLifecycleStateRuntime.transition(
+                        entry, AgentLifecyclePhase.RELOGIN_BACKOFF, "requested relog");
                 Character relogBot = bot(entry);
                 AgentCharacterGatewayRuntime.characters().save(relogBot, true);
                 AgentCharacterGatewayRuntime.characters().disconnect(relogBot, false, false);
                 AgentSchedulerRuntime.afterRandomDelay(10000, 10100,
-                        () -> AgentSessionLifecycleRuntime.reloginBot(charId, ownerCharId, world, channel));
+                        () -> AgentSessionLifecycleRuntime.reloginAgent(request));
             });
         });
+    }
+
+    private static AgentReloginRequest reloginRequest(AgentRuntimeEntry entry, Character bot) {
+        Character followTarget = AgentRelationshipRuntime.followTarget(entry);
+        Character interactionTarget = AgentRelationshipRuntime.interactionTarget(entry);
+        return new AgentReloginRequest(
+                bot.getId(),
+                Math.toIntExact(AgentRelationshipRuntime.cohortId(entry)),
+                AgentRelationshipRuntime.formationId(entry),
+                followTarget == null ? 0 : followTarget.getId(),
+                interactionTarget == null ? 0 : interactionTarget.getId(),
+                AgentClientGatewayRuntime.clients().world(bot),
+                AgentClientGatewayRuntime.clients().channel(bot),
+                bot.getMapId(),
+                bot.getPosition());
     }
 
     public static void scheduleLogoutConfirm(AgentRuntimeEntry entry) {
         AgentSchedulerRuntime.afterRandomDelay(entry, 900, 1100, () -> {
             AgentReplyRuntime.replyNow(entry, AgentChatSessionRequestFlow.logoutConfirmedReply());
             AgentSchedulerRuntime.afterRandomDelay(entry, 1800, 2200, () -> {
+                AgentLifecycleStateRuntime.transition(entry, AgentLifecyclePhase.STOPPING, "requested logout");
                 Character logoutBot = bot(entry);
                 AgentCharacterGatewayRuntime.characters().save(logoutBot, true);
                 AgentCharacterGatewayRuntime.characters().disconnect(logoutBot, false, false);
@@ -192,7 +210,7 @@ public final class AgentSessionCommandCoordinator {
     }
 
     private static Character owner(AgentRuntimeEntry entry) {
-        return AgentRuntimeIdentityRuntime.owner(entry);
+        return AgentRelationshipRuntime.interactionTarget(entry);
     }
 
     private static int ownerId(AgentRuntimeEntry entry) {

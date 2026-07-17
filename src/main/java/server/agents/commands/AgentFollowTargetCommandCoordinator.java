@@ -93,7 +93,7 @@ public final class AgentFollowTargetCommandCoordinator {
     private static void autoEquipForFollow(AgentRuntimeEntry entry) {
         AgentEquipmentService.autoEquip(
                 AgentRuntimeIdentityRuntime.bot(entry),
-                AgentRuntimeIdentityRuntime.owner(entry),
+                null,
                 AgentOfferStateRuntime.pendingLootOfferItem(entry));
     }
 

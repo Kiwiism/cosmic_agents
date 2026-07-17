@@ -12,7 +12,8 @@ import server.agents.integration.AgentBackingAccountSecurityRuntime;
 import server.agents.runtime.AgentInteractionRuntime;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.capabilities.party.AgentPartyLifecycleService;
-import server.agents.auth.AgentOwnershipService;
+import server.agents.auth.AgentAuthorityService;
+import server.agents.auth.AgentControlService;
 import server.agents.auth.AgentProvisioningPolicy;
 import java.sql.SQLException;
 
@@ -23,7 +24,11 @@ public final class AgentSpawnCommandExecutor {
 
     public void execute(Client c, String[] params) {
         Character player = c.getPlayer();
-        AgentOwnershipService ownershipService = AgentOwnershipService.getInstance();
+        AgentControlService controlService = AgentControlService.getInstance();
+        if (!AgentAuthorityService.mayOperate(player)) {
+            player.yellowMessage("You are not configured as an Agent operator.");
+            return;
+        }
         if (params.length < 1) {
             player.yellowMessage("Syntax: @spawnbot <name> [confirm]");
             return;
@@ -33,7 +38,7 @@ public final class AgentSpawnCommandExecutor {
         String botName = rawArgs[0];
         boolean createRequested = params.length >= 2 && params[1].equals("confirm");
 
-        AgentResolvedCharacter bot = ownershipService.resolveCharacterByName(botName);
+        AgentResolvedCharacter bot = controlService.resolveCharacterByName(botName);
         if (bot == null) {
             if (!createRequested) {
                 player.yellowMessage("Bot '" + botName + "' does not exist. Run: @spawnbot " + botName + " confirm  to create it.");
@@ -67,8 +72,7 @@ public final class AgentSpawnCommandExecutor {
                 return;
             }
 
-            ownershipService.registerOwner(createdCharId, player.getId());
-            bot = ownershipService.resolveCharacterByName(botName);
+            bot = controlService.resolveCharacterByName(botName);
             if (account.created()) {
                 player.yellowMessage("Bot '" + botName + "' created with an Agent-only backing account.");
             } else {
@@ -82,22 +86,12 @@ public final class AgentSpawnCommandExecutor {
             return;
         }
         AgentPartyLifecycleService.joinAgentToLeaderParty(player, result.agent());
-        if (result.autoRegistered()) {
-            player.yellowMessage("Bot '" + result.agent().getName() + "' auto-registered to " + player.getName() + " because it is on the same account.");
-        }
-        player.yellowMessage("Bot '" + result.agent().getName() + "' spawned. Say 'follow me' or 'stop' to control it.");
+        player.yellowMessage("Agent '" + result.agent().getName() + "' spawned. Say 'follow me' or 'stop' to direct it.");
     }
 
     private String validateProvisioning(Character player) {
-        try {
-            int registeredAgents = AgentPersistenceGatewayRuntime.persistence()
-                    .countRegisteredAgents(player.getId());
-            return PROVISIONING_POLICY.validateAndRecordAttempt(
-                    player.getId(), player.gmLevel(), registeredAgents);
-        } catch (SQLException e) {
-            log.warn("Failed to verify Agent provisioning quota for character {}", player.getId(), e);
-            return "Failed to verify Agent backing-account creation policy.";
-        }
+        return PROVISIONING_POLICY.validateAndRecordAttempt(
+                player.getId(), player.gmLevel(), 0);
     }
 
     private AgentAccountResolution resolveAgentAccount(String name) {

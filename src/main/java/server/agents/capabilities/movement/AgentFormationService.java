@@ -1,7 +1,6 @@
 package server.agents.capabilities.movement;
 
-import client.Character;
-import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.runtime.AgentMailboxRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -48,11 +47,10 @@ public final class AgentFormationService {
     public static FormationState stateForEntry(AgentRuntimeEntry entry,
                                                Map<Integer, FormationState> formationsByLeaderId,
                                                FormationState defaultFormation) {
-        Character leader = AgentRuntimeIdentityRuntime.owner(entry);
-        if (leader == null) {
-            return defaultFormation;
-        }
-        return stateForLeader(formationsByLeaderId, leader.getId(), defaultFormation);
+        return stateForLeader(
+                formationsByLeaderId,
+                Math.toIntExact(AgentRelationshipRuntime.formationId(entry)),
+                defaultFormation);
     }
 
     public static FormationState stateForLeader(Map<Integer, FormationState> formationsByLeaderId,

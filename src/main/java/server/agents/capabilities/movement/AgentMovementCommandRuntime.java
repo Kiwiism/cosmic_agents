@@ -5,6 +5,7 @@ import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.shop.AgentShopService;
 import server.agents.integration.AgentReplyRuntime;
+import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.commands.AgentCommandModeService;
 import server.agents.runtime.AgentModeService;
@@ -22,8 +23,19 @@ public final class AgentMovementCommandRuntime {
     private AgentMovementCommandRuntime() {
     }
 
+    /** @deprecated Use the configured follow target or pass an explicit target. */
+    @Deprecated
     public static void followOwner(AgentRuntimeEntry entry) {
-        follow(entry, AgentRuntimeIdentityRuntime.owner(entry));
+        followConfiguredTarget(entry);
+    }
+
+    public static void followConfiguredTarget(AgentRuntimeEntry entry) {
+        Character target = AgentRelationshipRuntime.followTarget(entry);
+        if (target == null) {
+            stop(entry);
+            return;
+        }
+        follow(entry, target);
     }
 
     public static void follow(AgentRuntimeEntry entry, Character target) {

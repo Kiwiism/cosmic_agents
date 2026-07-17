@@ -3,7 +3,7 @@ package server.agents.plans.mapleisland;
 import client.Character;
 import config.YamlConfig;
 import server.TimerManager;
-import server.agents.auth.AgentOwnershipService;
+import server.agents.auth.AgentControlService;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
 import server.agents.capabilities.party.AgentPartyLifecycleService;
 import server.agents.capabilities.quest.AmherstTestResetMode;
@@ -427,19 +427,11 @@ public final class MapleIslandPlanCommandService {
                     + "' is not the configured Agent.");
             return;
         }
-        AgentOwnershipService ownership = AgentOwnershipService.getInstance();
-        var resolved = ownership.resolveCharacterByName(allowedName);
+        AgentControlService control = AgentControlService.getInstance();
+        var resolved = control.resolveCharacterByName(allowedName);
         if (resolved == null) {
             message(player, "No character named '" + allowedName + "' exists.");
             return;
-        }
-        if (ownership.getRegisteredOwnerId(resolved.id()) == null) {
-            try {
-                ownership.registerOwner(resolved.id(), player.getId());
-            } catch (RuntimeException failure) {
-                message(player, "Failed to register " + allowedName + " to " + player.getName() + ".");
-                return;
-            }
         }
         var startMap = AgentMapGatewayRuntime.map().resolveMap(
                 player.getWorld(), player.getClient().getChannel(),

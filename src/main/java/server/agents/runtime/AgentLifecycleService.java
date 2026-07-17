@@ -3,11 +3,12 @@ package server.agents.runtime;
 import client.Character;
 import server.agents.capabilities.movement.AgentFormationService;
 import server.agents.auth.AgentAuthorizationResult;
-import server.agents.auth.AgentOwnershipService;
+import server.agents.auth.AgentControlAccess;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.dialogue.AgentEmote;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.monitoring.AgentSchedulerMetrics;
 import server.agents.registry.AgentResolvedCharacter;
 import server.agents.integration.AgentClientGatewayRuntime;
@@ -101,9 +102,29 @@ public final class AgentLifecycleService {
                                AgentMapSpeaker mapSpeaker) {
     }
 
+    public record AgentReloginHooks(AgentMapResolver resolveMap,
+                                    AgentCharacterResolver resolveCharacter,
+                                    BiFunction<MapleMap, Point, Point> resolveSpawnPosition,
+                                    OfflineAgentLoader loadOfflineAgent,
+                                    RegisterSpawnedAgent registerSpawnedAgent,
+                                    SessionDelayedActionScheduler delayedActionScheduler,
+                                    LongSupplier returnAnnouncementDelayMs,
+                                    AgentMapSpeaker mapSpeaker) {
+    }
+
     @FunctionalInterface
     public interface LeaderResolver {
         Character resolve(int world, int leaderCharId);
+    }
+
+    @FunctionalInterface
+    public interface AgentMapResolver {
+        MapleMap resolve(int world, int channel, int mapId);
+    }
+
+    @FunctionalInterface
+    public interface AgentCharacterResolver {
+        Character resolve(int world, int characterId);
     }
 
     @FunctionalInterface
@@ -149,7 +170,7 @@ public final class AgentLifecycleService {
 
     public static AgentSpawnResult spawnAgentForLeader(Character leader,
                                                        String agentName,
-                                                       AgentOwnershipService ownershipService,
+                                                       AgentControlAccess ownershipService,
                                                        SpawnHooks hooks) throws SQLException {
         return spawnAgentForLeaderAt(
                 leader, agentName, leader.getMap(), leader.getPosition(), ownershipService, hooks, false);
@@ -159,7 +180,7 @@ public final class AgentLifecycleService {
                                                          String agentName,
                                                          MapleMap spawnMap,
                                                          Point desiredSpawnPosition,
-                                                         AgentOwnershipService ownershipService,
+                                                         AgentControlAccess ownershipService,
                                                          SpawnHooks hooks) throws SQLException {
         return spawnAgentForLeaderAt(
                 leader, agentName, spawnMap, desiredSpawnPosition, ownershipService, hooks, true);
@@ -169,7 +190,7 @@ public final class AgentLifecycleService {
                                                           String agentName,
                                                           MapleMap spawnMap,
                                                           Point desiredSpawnPosition,
-                                                          AgentOwnershipService ownershipService,
+                                                          AgentControlAccess ownershipService,
                                                           SpawnHooks hooks,
                                                           boolean changeMapBeforeRegistration) throws SQLException {
         AgentResolvedCharacter resolved = ownershipService.resolveCharacterByName(agentName);
@@ -230,7 +251,7 @@ public final class AgentLifecycleService {
 
     public static AgentSpawnResult spawnAgentForLeaderQuietly(Character leader,
                                                              String agentName,
-                                                             AgentOwnershipService ownershipService,
+                                                             AgentControlAccess ownershipService,
                                                              SpawnHooks hooks,
                                                              SpawnFailureLogger failureLogger) {
         try {
@@ -245,7 +266,7 @@ public final class AgentLifecycleService {
                                                                String agentName,
                                                                MapleMap spawnMap,
                                                                Point desiredSpawnPosition,
-                                                               AgentOwnershipService ownershipService,
+                                                               AgentControlAccess ownershipService,
                                                                SpawnHooks hooks,
                                                                SpawnFailureLogger failureLogger) {
         try {
@@ -266,6 +287,8 @@ public final class AgentLifecycleService {
         List<AgentRuntimeEntry> replacedEntries = AgentRuntimeRegistry.unregisterAgentCharacter(
                 leaderCharId, agentCharId);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
+        AgentRelationshipRuntime.setCohortId(entry, leaderCharId);
+        AgentRelationshipRuntime.setFormationId(entry, leaderCharId);
         AgentMovementStateRuntime.refreshMovementProfile(entry, agent);
         AgentNavigationGraphService.warmGraphAsync(agent.getMap(), AgentMovementStateRuntime.movementProfile(entry));
         AgentRuntimeRegistry.registerEntry(leaderCharId, entry);
@@ -299,6 +322,50 @@ public final class AgentLifecycleService {
         AgentLifecycleStatusCoordinator.scheduleSpawnStatusCheck(
                 entry, agent, hooks.spawnStatusDelayMs().getAsLong());
         return entry;
+    }
+
+    public static boolean reloginAgent(AgentReloginRequest request,
+                                       AgentReloginHooks hooks) throws SQLException {
+        MapleMap map = hooks.resolveMap().resolve(request.world(), request.channel(), request.mapId());
+        if (map == null) {
+            return false;
+        }
+
+        Point spawnPosition = hooks.resolveSpawnPosition().apply(map, request.position());
+        Character agent = hooks.loadOfflineAgent().load(
+                request.agentCharacterId(), request.world(), request.channel(), map, spawnPosition);
+        Character interactionTarget = resolveOptionalCharacter(
+                hooks.resolveCharacter(), request.world(), request.interactionTargetCharacterId());
+        Character followTarget = resolveOptionalCharacter(
+                hooks.resolveCharacter(), request.world(), request.followTargetCharacterId());
+        AgentRuntimeEntry entry = hooks.registerSpawnedAgent().register(
+                request.cohortId(), interactionTarget, agent);
+        AgentRelationshipRuntime.setCohortId(entry, request.cohortId());
+        AgentRelationshipRuntime.setFormationId(entry, request.formationId());
+        AgentRelationshipRuntime.setInteractionTarget(entry, interactionTarget);
+        AgentRelationshipRuntime.setFollowTarget(entry, followTarget);
+        hooks.delayedActionScheduler().schedule(entry, hooks.returnAnnouncementDelayMs().getAsLong(), () -> {
+            hooks.mapSpeaker().say(agent, "back!!");
+            agent.changeFaceExpression(AgentEmote.HAPPY.getValue());
+        });
+        return true;
+    }
+
+    public static boolean reloginAgentQuietly(AgentReloginRequest request,
+                                              AgentReloginHooks hooks,
+                                              ReloginFailureLogger failureLogger) {
+        try {
+            return reloginAgent(request, hooks);
+        } catch (SQLException e) {
+            failureLogger.log(request.agentCharacterId(), e);
+            return false;
+        }
+    }
+
+    private static Character resolveOptionalCharacter(AgentCharacterResolver resolver,
+                                                       int world,
+                                                       int characterId) {
+        return characterId == 0 ? null : resolver.resolve(world, characterId);
     }
 
     public static boolean reloginAgent(int agentCharId,

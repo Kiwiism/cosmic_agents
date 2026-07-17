@@ -18,8 +18,10 @@ public final class AgentRuntimeIdentityRuntime {
         return entry == null ? null : entry.identityState().agent();
     }
 
+    /** @deprecated Select an explicit relationship through AgentRelationshipRuntime. */
+    @Deprecated
     public static Character owner(AgentRuntimeEntry entry) {
-        return entry == null ? null : entry.identityState().leader();
+        return AgentRelationshipRuntime.interactionTarget(entry);
     }
 
     public static int botId(AgentRuntimeEntry entry) {
@@ -32,14 +34,16 @@ public final class AgentRuntimeIdentityRuntime {
         return bot == null ? -1 : bot.getAccountID();
     }
 
-    public static String botName(AgentRuntimeEntry entry) {
-        Character bot = bot(entry);
-        return bot == null ? null : bot.getName();
-    }
-
+    /** @deprecated Select an explicit relationship through AgentRelationshipRuntime. */
+    @Deprecated
     public static int ownerId(AgentRuntimeEntry entry) {
         Character owner = owner(entry);
         return owner == null ? -1 : owner.getId();
+    }
+
+    public static String botName(AgentRuntimeEntry entry) {
+        Character bot = bot(entry);
+        return bot == null ? null : bot.getName();
     }
 
     public static boolean hasBot(AgentRuntimeEntry entry) {

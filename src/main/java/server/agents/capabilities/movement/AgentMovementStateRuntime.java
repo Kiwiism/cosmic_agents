@@ -2,6 +2,7 @@ package server.agents.capabilities.movement;
 
 import client.Character;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -28,7 +29,7 @@ public final class AgentMovementStateRuntime {
                 AgentPatrolStateRuntime.patrolMapId(entry),
                 AgentPatrolStateRuntime.patrolWanderTarget(entry),
                 position(AgentRuntimeIdentityRuntime.bot(entry)),
-                position(AgentRuntimeIdentityRuntime.owner(entry)),
+                position(AgentRelationshipRuntime.followTarget(entry)),
                 mode(entry));
     }
 

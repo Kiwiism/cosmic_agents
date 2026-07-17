@@ -7,6 +7,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.combat.AgentGrindTargetStateRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.capabilities.shop.AgentShopStateRuntime;
 import server.life.Monster;
 import server.maps.MapleMap;
@@ -29,8 +30,8 @@ public final class AgentTargetSnapshotService {
                                               Map<Integer, AgentFormationService.FormationState> formationsByLeaderId,
                                               AgentFormationService.FormationState defaultFormation,
                                               FollowTargetResolver followTargetResolver) {
-        Character owner = AgentRuntimeIdentityRuntime.owner(entry);
-        Character followAnchor = AgentFollowAnchorService.resolve(entry, owner, siblingEntries);
+        Character configuredTarget = AgentRelationshipRuntime.followTarget(entry);
+        Character followAnchor = AgentFollowAnchorService.resolve(entry, configuredTarget, siblingEntries);
         AgentFormationService.FormationState formation =
                 AgentFormationService.stateForEntry(entry, formationsByLeaderId, defaultFormation);
         return capture(entry, followAnchor, formation, followTargetResolver);
@@ -41,11 +42,11 @@ public final class AgentTargetSnapshotService {
                                               AgentFormationService.FormationState formation,
                                               FollowTargetResolver followTargetResolver) {
         Character bot = AgentRuntimeIdentityRuntime.bot(entry);
-        Character owner = AgentRuntimeIdentityRuntime.owner(entry);
+        Character configuredTarget = AgentRelationshipRuntime.followTarget(entry);
         Point fallbackPos = bot.getPosition();
-        Point rawOwnerPos = owner != null ? owner.getPosition() : fallbackPos;
+        Point rawOwnerPos = configuredTarget != null ? configuredTarget.getPosition() : fallbackPos;
         Point rawFollowAnchorPos = followAnchor != null ? followAnchor.getPosition() : rawOwnerPos;
-        String followAnchorName = followAnchor != null ? followAnchor.getName() : "owner";
+        String followAnchorName = followAnchor != null ? followAnchor.getName() : "self";
         Point followBasePos = new Point(
                 rawFollowAnchorPos.x + AgentFormationStateRuntime.followOffsetX(entry),
                 rawFollowAnchorPos.y);
@@ -81,7 +82,7 @@ public final class AgentTargetSnapshotService {
             primaryTargetSource = "follow-target";
         } else {
             primaryTargetPos = rawOwnerPos;
-            primaryTargetSource = "owner-raw";
+            primaryTargetSource = "self";
         }
         return new AgentTargetSnapshot(
                 formation,

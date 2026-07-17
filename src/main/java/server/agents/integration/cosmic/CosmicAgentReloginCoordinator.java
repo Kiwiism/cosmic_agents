@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.runtime.AgentLifecycleService;
+import server.agents.runtime.AgentReloginRequest;
 import server.agents.runtime.AgentRandom;
 import server.agents.runtime.AgentRegistrationCoordinator;
 import server.agents.runtime.AgentSchedulerRuntime;
@@ -19,6 +20,28 @@ import java.sql.SQLException;
  */
 public final class CosmicAgentReloginCoordinator {
     private CosmicAgentReloginCoordinator() {
+    }
+
+    public static void reloginAgent(AgentReloginRequest request,
+                                    AgentLifecycleService.AgentTickCallback tickCallback,
+                                    Logger log) {
+        AgentLifecycleService.RegisterSpawnedAgent registerSpawnedAgent =
+                (cohortId, interactionTarget, agent) -> AgentRegistrationCoordinator.registerAgent(
+                        cohortId, interactionTarget, agent, true, tickCallback);
+        AgentLifecycleService.reloginAgentQuietly(
+                request,
+                new AgentLifecycleService.AgentReloginHooks(
+                        server.agents.integration.AgentMapGatewayRuntime.map()::resolveMap,
+                        (world, characterId) -> AgentCharacterGatewayRuntime.characters()
+                                .findWorldCharacterById(world, characterId),
+                        server.agents.runtime.AgentSpawnPositionService::resolveSpawnPosition,
+                        CosmicAgentReloginCoordinator::loadOfflineAgent,
+                        registerSpawnedAgent,
+                        AgentSchedulerRuntime::afterDelay,
+                        () -> AgentRandom.randMs(900, 1100),
+                        AgentReplyRuntime::sayMapNow),
+                (failedAgentCharId, e) -> log.warn(
+                        "reloginAgent: failed to reload charId={}", failedAgentCharId, e));
     }
 
     public static void reloginAgent(int agentCharId,

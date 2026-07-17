@@ -40,6 +40,11 @@ import org.slf4j.LoggerFactory;
 import server.ItemInformationProvider;
 import server.ItemRestrictionPolicy;
 import server.Trade;
+import server.agents.auth.AgentAuthorityService;
+import server.agents.integration.AgentCharacterGatewayRuntime;
+import server.agents.integration.AgentRelationshipRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.AgentRuntimeRegistry;
 import server.maps.FieldLimit;
 import server.maps.HiredMerchant;
 import server.maps.MapObject;
@@ -302,6 +307,16 @@ public final class PlayerInteractionHandler extends AbstractPacketHandler {
                 Character other = chr.getMap().getCharacterById(otherCid);
                 if (other == null || chr.getId() == other.getId()) {
                     return;
+                }
+
+                if (AgentCharacterGatewayRuntime.characters().isAgentCharacter(other)
+                        && !AgentCharacterGatewayRuntime.characters().isAgentCharacter(chr)) {
+                    if (!AgentAuthorityService.isTrustedTradePlayer(chr)) {
+                        chr.dropMessage(1, "That Agent is not configured to accept your trade requests.");
+                        return;
+                    }
+                    AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(other.getId());
+                    AgentRelationshipRuntime.setInteractionTarget(entry, chr);
                 }
 
                 Trade.inviteTrade(chr, other);

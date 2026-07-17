@@ -13,7 +13,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
-class AgentOwnershipServiceGatewayTest {
+class AgentControlServiceGatewayTest {
     @Test
     void resolvesOfflineCharacterThroughPersistenceGateway() throws Exception {
         CharacterGateway characters = mock(CharacterGateway.class);
@@ -27,7 +27,7 @@ class AgentOwnershipServiceGatewayTest {
             characterRuntime.when(AgentCharacterGatewayRuntime::characters).thenReturn(characters);
             persistenceRuntime.when(AgentPersistenceGatewayRuntime::persistence).thenReturn(persistence);
 
-            assertSame(resolved, AgentOwnershipService.getInstance().resolveCharacterByName("Alpha"));
+            assertSame(resolved, AgentControlService.getInstance().resolveCharacterByName("Alpha"));
         }
     }
 }

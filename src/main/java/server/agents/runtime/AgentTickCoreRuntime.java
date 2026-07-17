@@ -52,8 +52,8 @@ public final class AgentTickCoreRuntime {
     private static AgentTickCoreService.Hooks defaultHooks(Consumer<AgentRuntimeEntry> issueGrind,
                                                            Consumer<AgentRuntimeEntry> issueFollow) {
         return hooks(
-                (runtimeEntry, runtimeLeaderCharId) ->
-                        AgentLeaderSessionResolver.resolveTickLeader(runtimeEntry, runtimeLeaderCharId),
+                (runtimeEntry, ignoredCohortId) ->
+                        AgentFollowTargetSessionService.resolveLiveFollowTarget(runtimeEntry),
                 (runtimeEntry, agent, leader, nowMs, runtimeLeaderCharId) ->
                         AgentLeaderSafetyCoordinator.handleInactiveLeaderTick(
                                 runtimeEntry,

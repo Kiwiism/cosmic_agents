@@ -63,17 +63,12 @@ public final class AgentPassiveLootService {
 
             Item pickedItem = drop.getItem();
             int pickedItemId = drop.getItemId();
-            Character owner = callbacks.owner();
-            if (ItemId.isNxCard(pickedItemId) && owner != null && owner.getMap() == agent.getMap()) {
-                callbacks.pickup(owner, drop);
-            } else {
-                callbacks.pickup(agent, drop);
-            }
+            callbacks.pickup(agent, drop);
             callbacks.cleanupGhostDrop(agent, drop);
             if (pickedItem != null && pickedItemId > 0 && callbacks.hasItem(agent, pickedItem)) {
                 InventoryType pickedType = ItemConstants.getInventoryType(pickedItemId);
                 if (pickedType == InventoryType.EQUIP) {
-                    callbacks.autoEquip(agent, owner, callbacks.pendingLootOfferItem());
+                    callbacks.autoEquip(agent, null, callbacks.pendingLootOfferItem());
                     if (callbacks.hasItem(agent, pickedItem)) {
                         callbacks.scheduleLootOfferPrompt(entry, agent, pickedItem, 5_000L);
                     }

@@ -63,42 +63,6 @@ public final class CosmicAgentPersistenceGateway implements AgentPersistenceGate
     }
 
     @Override
-    public Integer getRegisteredOwnerId(int agentCharacterId) throws SQLException {
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(
-                     "SELECT owner_char_id FROM bot_owners WHERE bot_char_id = ?")) {
-            ps.setInt(1, agentCharacterId);
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next() ? rs.getInt("owner_char_id") : null;
-            }
-        }
-    }
-
-    @Override
-    public void registerOwner(int agentCharacterId, int ownerCharacterId) throws SQLException {
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(
-                     "INSERT INTO bot_owners (bot_char_id, owner_char_id) VALUES (?, ?) "
-                             + "ON DUPLICATE KEY UPDATE owner_char_id = VALUES(owner_char_id)")) {
-            ps.setInt(1, agentCharacterId);
-            ps.setInt(2, ownerCharacterId);
-            ps.executeUpdate();
-        }
-    }
-
-    @Override
-    public int countRegisteredAgents(int ownerCharacterId) throws SQLException {
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(
-                     "SELECT COUNT(*) AS rowcount FROM bot_owners WHERE owner_char_id = ?")) {
-            ps.setInt(1, ownerCharacterId);
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next() ? rs.getInt("rowcount") : 0;
-            }
-        }
-    }
-
-    @Override
     public AgentAccountResolution resolveOrCreateAgentAccount(String name) throws SQLException {
         try (Connection con = DatabaseConnection.getConnection()) {
             Integer existingAccountId = findAccountId(con, name);

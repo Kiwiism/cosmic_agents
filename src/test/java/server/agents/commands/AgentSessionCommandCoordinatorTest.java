@@ -3,6 +3,7 @@ package server.agents.commands;
 import server.agents.capabilities.dialogue.AgentPendingActionStateRuntime;
 import client.Character;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatAwayFlow;
@@ -13,6 +14,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.runtime.AgentSessionControlRuntime;
 import server.agents.runtime.AgentSessionLifecycleRuntime;
+import config.YamlConfig;
 
 import java.util.List;
 
@@ -26,14 +28,25 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 class AgentSessionCommandCoordinatorTest {
+    private boolean originalLegacyOwnerCompatibility;
+
+    @BeforeEach
+    void enableLegacyOwnerCompatibilityForLegacyCommandCoverage() {
+        originalLegacyOwnerCompatibility =
+                YamlConfig.config.server.AGENT_LEGACY_OWNER_COMPATIBILITY_ENABLED;
+        YamlConfig.config.server.AGENT_LEGACY_OWNER_COMPATIBILITY_ENABLED = true;
+    }
+
     @AfterEach
     void clearSchedulerMode() {
         System.clearProperty("agents.scheduler.mode");
+        YamlConfig.config.server.AGENT_LEGACY_OWNER_COMPATIBILITY_ENABLED =
+                originalLegacyOwnerCompatibility;
     }
 
     @Test
     void relogRequestSchedulesStopPromptAndPendingAction() {
-        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), null, null);
 
         try (MockedStatic<AgentSchedulerRuntime> scheduler = mockStatic(AgentSchedulerRuntime.class);
              MockedStatic<AgentMovementCommandRuntime> movementCommands = mockStatic(AgentMovementCommandRuntime.class);
@@ -54,7 +67,7 @@ class AgentSessionCommandCoordinatorTest {
 
     @Test
     void awayRequestPromptsFirstBotAndSetsPendingOwnerAway() {
-        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), null, null);
 
         try (MockedStatic<AgentSchedulerRuntime> scheduler = mockStatic(AgentSchedulerRuntime.class);
              MockedStatic<AgentMovementCommandRuntime> movementCommands = mockStatic(AgentMovementCommandRuntime.class);
@@ -80,7 +93,7 @@ class AgentSessionCommandCoordinatorTest {
     void awayChoiceStayClearsPendingActionAndKeepsAgentsNearOwner() {
         Character owner = mock(Character.class);
         when(owner.getId()).thenReturn(123);
-        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, owner, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), owner, null);
         AgentPendingActionStateRuntime.setPendingAction(entry, AgentChatPendingAction.OWNER_AWAY);
 
         try (MockedStatic<AgentSchedulerRuntime> scheduler = mockStatic(AgentSchedulerRuntime.class);
@@ -103,7 +116,7 @@ class AgentSessionCommandCoordinatorTest {
 
     @Test
     void broadReplyRuntimeStillSupportsSessionReplies() {
-        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), null, null);
 
         try (MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
             AgentReplyRuntime.replyNow(entry, "reply");

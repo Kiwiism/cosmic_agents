@@ -9,6 +9,7 @@ import client.Skill;
 import net.server.channel.handlers.AbstractDealDamageHandler;
 import server.StatEffect;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.integration.AgentSkillGatewayRuntime;
 import server.agents.integration.SkillGateway;
 import server.agents.runtime.AgentSessionLifecycleRuntime;
@@ -66,11 +67,11 @@ public final class AgentCombatHealRuntime {
                 && AgentMovementStateRuntime.grounded(entry)
                 && AgentMovementStateRuntime.notClimbing(entry)
                 && config.JUMP_HEAL_LEADER_AHEAD_PX > 0) {
-            Character leader = AgentRuntimeIdentityRuntime.owner(entry);
+            Character leader = AgentRelationshipRuntime.followTarget(entry);
             Character anchor = AgentFollowAnchorService.resolve(
                     entry,
                     leader,
-                    leader == null ? List.of() : AgentSessionLifecycleRuntime.getBotEntries(leader.getId()));
+                    AgentSessionLifecycleRuntime.getCohortEntries(entry));
             if (anchor != null && anchor != bot && anchor.getMap() == bot.getMap()) {
                 int dx = anchor.getPosition().x - bot.getPosition().x;
                 if (Math.abs(dx) >= config.JUMP_HEAL_LEADER_AHEAD_PX) {

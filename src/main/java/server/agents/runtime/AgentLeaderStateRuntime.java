@@ -10,12 +10,12 @@ public final class AgentLeaderStateRuntime {
     }
 
     public static Character leader(AgentRuntimeEntry entry) {
-        return entry == null ? null : entry.identityState().leader();
+        return entry == null ? null : entry.relationshipState().interactionTarget();
     }
 
     public static void setLeader(AgentRuntimeEntry entry, Character leader) {
         if (entry != null) {
-            entry.identityState().setLeader(leader);
+            entry.setOwner(leader);
         }
     }
 

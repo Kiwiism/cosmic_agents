@@ -110,6 +110,14 @@
         <sqlFile path="db/tables/025-bot-ownership.sql"/>
     </changeSet>
 
+    <!-- Keep changeset 25 immutable for existing Liquibase histories, then retire the table forward-only. -->
+    <changeSet id="26-remove-bot-owners" author="Codex">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="bot_owners"/>
+        </preConditions>
+        <dropTable tableName="bot_owners" cascadeConstraints="true"/>
+    </changeSet>
+
     <!-- Retire the removed experimental Double Agent POC table on existing installs. -->
     <changeSet id="27-remove-character-tag-sessions" author="Codex">
         <preConditions onFail="MARK_RAN">

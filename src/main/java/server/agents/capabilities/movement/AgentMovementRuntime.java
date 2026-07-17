@@ -10,6 +10,7 @@ import server.agents.capabilities.dialogue.AgentChatMovementFlow;
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.supplies.AgentPotionService;
@@ -29,7 +30,7 @@ public final class AgentMovementRuntime {
         return new AgentChatMovementFlow.MovementCallbacks() {
             @Override
             public boolean farmHere() {
-                Character owner = AgentRuntimeIdentityRuntime.owner(entry);
+                Character owner = AgentRelationshipRuntime.interactionTarget(entry);
                 Point dest = owner != null ? new Point(owner.getPosition()) : null;
                 if (dest == null) {
                     return false;
@@ -44,7 +45,7 @@ public final class AgentMovementRuntime {
 
             @Override
             public boolean patrol() {
-                Character owner = AgentRuntimeIdentityRuntime.owner(entry);
+                Character owner = AgentRelationshipRuntime.interactionTarget(entry);
                 Point ownerPos = owner != null ? new Point(owner.getPosition()) : null;
                 if (ownerPos == null) {
                     return false;
@@ -59,7 +60,7 @@ public final class AgentMovementRuntime {
 
             @Override
             public boolean moveHere() {
-                Character owner = AgentRuntimeIdentityRuntime.owner(entry);
+                Character owner = AgentRelationshipRuntime.interactionTarget(entry);
                 Point dest = owner != null ? new Point(owner.getPosition()) : null;
                 if (dest == null) {
                     return false;
@@ -81,7 +82,7 @@ public final class AgentMovementRuntime {
                             bot(entry),
                             AgentInventoryGatewayRuntime.inventory());
                     AgentSchedulerRuntime.afterRandomDelay(entry, 250, 750,
-                            () -> AgentMovementCommandRuntime.followOwner(entry));
+                            () -> AgentMovementCommandRuntime.followConfiguredTarget(entry));
                 });
             }
 

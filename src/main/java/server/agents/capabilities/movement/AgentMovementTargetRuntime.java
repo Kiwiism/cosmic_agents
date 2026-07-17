@@ -2,6 +2,7 @@ package server.agents.capabilities.movement;
 
 import client.Character;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.capabilities.follow.AgentFollowTargetPositionService;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -66,10 +67,8 @@ public final class AgentMovementTargetRuntime {
     }
 
     private static AgentTargetSnapshot captureAgentTargetSnapshot(AgentRuntimeEntry entry) {
-        Character leader = AgentRuntimeIdentityRuntime.owner(entry);
-        List<? extends AgentRuntimeEntry> siblingEntries = leader == null
-                ? List.of()
-                : AgentRuntimeRegistry.agentEntriesForLeader(leader.getId());
+        List<? extends AgentRuntimeEntry> siblingEntries =
+                AgentRuntimeRegistry.entriesForCohort(AgentRelationshipRuntime.cohortId(entry));
         return AgentTargetSnapshotService.capture(
                 entry,
                 siblingEntries,

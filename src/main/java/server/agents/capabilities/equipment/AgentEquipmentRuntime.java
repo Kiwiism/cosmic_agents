@@ -60,7 +60,7 @@ public final class AgentEquipmentRuntime {
                 AgentSchedulerRuntime.afterRandomDelay(entry, 400, 600, () -> {
                     AgentEquipmentService.autoEquip(
                             bot(entry),
-                            AgentRuntimeIdentityRuntime.owner(entry),
+                            null,
                             AgentOfferStateRuntime.pendingLootOfferItem(entry),
                             true);
                     AgentReplyRuntime.replyNow(entry, AgentChatEquipmentFlow.gearOptimizedReply());

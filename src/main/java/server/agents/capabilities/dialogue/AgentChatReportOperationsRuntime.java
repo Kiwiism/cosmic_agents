@@ -22,6 +22,7 @@ import server.agents.capabilities.equipment.AgentEquipmentService;
 import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
@@ -215,7 +216,7 @@ public final class AgentChatReportOperationsRuntime {
     }
 
     public static void reportRecommendedGear(AgentRuntimeEntry entry, Character bot) {
-        Character owner = AgentRuntimeIdentityRuntime.owner(entry);
+        Character owner = AgentRelationshipRuntime.interactionTarget(entry);
         AgentChatReportRuntime.reportRecommendedGear(
                 AgentStatusStateRuntime.recommendedGearReportState(entry),
                 AgentOfferRuntime.recommendedGearActions(entry, bot, owner),

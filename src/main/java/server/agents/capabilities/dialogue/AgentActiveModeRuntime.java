@@ -2,6 +2,7 @@ package server.agents.capabilities.dialogue;
 
 import client.Character;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.equipment.AgentEquipmentService;
@@ -56,7 +57,7 @@ public final class AgentActiveModeRuntime {
     }
 
     public static void maybeSuggestGearToSiblings(AgentRuntimeEntry entry, Character bot) {
-        Character owner = AgentRuntimeIdentityRuntime.owner(entry);
+        Character owner = AgentRelationshipRuntime.interactionTarget(entry);
         AgentChatStatusRuntime.maybeSuggestGear(
                 AgentStatusStateRuntime.gearSuggestionState(entry),
                 AgentChatStatusRuntime.gearSuggestionActions(
@@ -68,7 +69,7 @@ public final class AgentActiveModeRuntime {
     private static void autoEquip(AgentRuntimeEntry entry) {
         AgentEquipmentService.autoEquip(
                 bot(entry),
-                AgentRuntimeIdentityRuntime.owner(entry),
+                AgentRelationshipRuntime.interactionTarget(entry),
                 AgentOfferStateRuntime.pendingLootOfferItem(entry));
     }
 
