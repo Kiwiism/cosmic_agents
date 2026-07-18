@@ -12,6 +12,7 @@ import server.agents.capabilities.quest.AmherstScopePolicy;
 import server.agents.capabilities.quest.MapleIslandSouthperryQuestCatalog;
 import server.agents.capabilities.runtime.AgentCapabilityCommand;
 import server.agents.capabilities.runtime.AgentCapabilityInvocation;
+import server.agents.capabilities.runtime.AgentCapabilityInvocationMetadata;
 import server.agents.capabilities.runtime.AgentExecutableCapability;
 import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
 import server.agents.integration.PrimitiveCapabilityGateway;
@@ -187,6 +188,8 @@ public final class AmherstObjectiveHandlerRegistry {
     private static <C extends AgentCapabilityCommand> AmherstObjectiveExecution execution(
             String objectiveId, AgentExecutableCapability<C> capability, C command) {
         return new AmherstObjectiveExecution(objectiveId,
-                new AgentCapabilityInvocation<>(capability, command, OBJECTIVE_TIMEOUT_MS, OBJECTIVE_RETRIES));
+                new AgentCapabilityInvocation<>(capability, command, OBJECTIVE_TIMEOUT_MS, OBJECTIVE_RETRIES,
+                        new AgentCapabilityInvocationMetadata(objectiveId, "QUEST_PLAN",
+                                "maple-island-objective-v1", objectiveId)));
     }
 }

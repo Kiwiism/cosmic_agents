@@ -9,8 +9,6 @@ public final class AgentLifecycleStateRuntime {
     }
 
     public static void transition(AgentRuntimeEntry entry, AgentLifecyclePhase phase, String reason) {
-        if (entry != null) {
-            entry.lifecycleState().transition(phase, reason);
-        }
+        AgentLifecycleTransitionService.transition(entry, phase, reason);
     }
 }

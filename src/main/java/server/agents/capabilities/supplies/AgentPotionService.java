@@ -35,6 +35,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 import server.StatEffect;
 import server.agents.coordination.AgentCoordinationRuntime;
 import server.agents.coordination.AgentSupplyNeedMessage;
+import server.agents.capabilities.contracts.AgentResourceCategory;
 
 import java.util.List;
 import java.util.Map;
@@ -203,6 +204,14 @@ public final class AgentPotionService {
         startedAt = AgentPerformanceMonitor.start();
         int[] pots = countPotions(bot);
         AgentPerformanceMonitor.recordSince("potion-count", startedAt);
+
+        long supplyObservedAt = System.currentTimeMillis();
+        AgentResourcePlanningRuntime.observe(entry, AgentResourceCategory.HP_POTION,
+                pots[0], AgentRuntimeConfig.cfg.POT_LOW_WARN, AgentRuntimeConfig.cfg.POT_STOP,
+                Math.max(AgentRuntimeConfig.cfg.POT_LOW_WARN * 2, pots[0]), supplyObservedAt);
+        AgentResourcePlanningRuntime.observe(entry, AgentResourceCategory.MP_POTION,
+                pots[1], AgentRuntimeConfig.cfg.POT_LOW_WARN, AgentRuntimeConfig.cfg.POT_STOP,
+                Math.max(AgentRuntimeConfig.cfg.POT_LOW_WARN * 2, pots[1]), supplyObservedAt);
 
         startedAt = AgentPerformanceMonitor.start();
         requestLowPotShare(entry, bot, pots[0], true, false);

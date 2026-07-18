@@ -56,6 +56,8 @@ public final class AgentNavigationGraphService {
     private static final Path CACHE_DIR = Path.of(
             System.getProperty("agents.navigation.cacheDir", "cache/bot-nav"),
             "v" + GRAPH_VERSION);
+    private static final FileAgentNavigationGraphRepository GRAPH_REPOSITORY =
+            new FileAgentNavigationGraphRepository(CACHE_DIR, GRAPH_VERSION);
     private static final AgentWeightedLruCache<GraphCacheKey, AgentNavigationGraph> GRAPHS =
             new AgentWeightedLruCache<>(configuredGraphCacheMaxWeight(), AgentNavigationGraphService::graphWeight);
     private static final Map<GraphCacheKey, CompletableFuture<AgentNavigationGraph>> PENDING_GRAPHS = new ConcurrentHashMap<>();
@@ -581,12 +583,8 @@ public final class AgentNavigationGraphService {
     }
 
     private static AgentNavigationGraph loadGraph(GraphCacheKey key) {
-        Path file = graphFile(key);
         try {
-            AgentNavigationGraph graph = AgentNavigationGraphCacheFile.read(
-                    file,
-                    GRAPH_VERSION,
-                    key.mapId(),
+            AgentNavigationGraph graph = GRAPH_REPOSITORY.load(key.mapId(),
                     new AgentMovementProfile(key.totalSpeedStat(), key.totalJumpStat()));
             if (graph == null) {
                 return null;
@@ -602,15 +600,15 @@ public final class AgentNavigationGraphService {
 
     private static void saveGraph(AgentNavigationGraph graph) {
         try {
-            AgentNavigationGraphCacheFile.write(
-                    graphFile(GraphCacheKey.from(graph.mapId, graph.movementProfile)), graph);
+            GRAPH_REPOSITORY.save(graph);
         } catch (IOException e) {
             log.debug("Failed to save bot nav graph cache for map {}", graph.mapId, e);
         }
     }
 
     private static Path graphFile(GraphCacheKey key) {
-        return CACHE_DIR.resolve(key.mapId() + "-s" + key.totalSpeedStat() + "-j" + key.totalJumpStat() + ".bin");
+        return GRAPH_REPOSITORY.file(key.mapId(),
+                new AgentMovementProfile(key.totalSpeedStat(), key.totalJumpStat()));
     }
 
     private static String graphRequestKey(GraphCacheKey key) {

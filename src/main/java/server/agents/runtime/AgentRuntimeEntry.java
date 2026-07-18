@@ -26,7 +26,7 @@ import server.agents.capabilities.combat.AgentCombatSkillCacheState;
 import server.agents.capabilities.combat.AgentCombatObjectiveTargetState;
 import server.agents.capabilities.combat.AgentMobTouchState;
 import server.agents.capabilities.combat.AgentDeathState;
-import server.agents.capabilities.follow.AgentOwnerMotionState;
+import server.agents.capabilities.follow.AgentFollowTargetMotionState;
 import server.agents.capabilities.follow.AgentLeaderActivityState;
 
 import server.agents.capabilities.movement.AgentGroundTravelState;
@@ -63,13 +63,14 @@ import server.agents.capabilities.partyquest.kpq.AgentKpqState;
 import server.agents.capabilities.trade.AgentPendingLootOfferState;
 import server.agents.capabilities.trade.AgentPendingTradeSequenceState;
 import server.agents.capabilities.trade.AgentManualTradeState;
-import server.agents.capabilities.trade.AgentOwnerGivenTradeItemState;
+import server.agents.capabilities.trade.AgentTradeReceivedItemState;
 import server.agents.capabilities.trade.AgentTradeRetryState;
 import server.agents.capabilities.trade.AgentUpgradeOfferState;
 import server.agents.plans.AgentScriptTaskQueueState;
 import server.agents.plans.AgentScriptRuntimeState;
 import server.agents.plans.amherst.AmherstPlanExecutionState;
 import server.agents.runtime.simulation.AgentSimulationState;
+import server.agents.runtime.state.AgentCapabilityStateRegistry;
 import server.agents.profiles.AgentBehaviorProfileState;
 import java.awt.*;
 import java.util.List;
@@ -91,7 +92,7 @@ public class AgentRuntimeEntry implements AgentRuntimeHandle {
     private final AgentActionMailbox actionMailbox = new AgentActionMailbox(AgentMailboxRuntime.configuredCapacity());
     private final AgentMovementProfileState movementProfileState = new AgentMovementProfileState();
     private final AgentBehaviorProfileState behaviorProfileState = new AgentBehaviorProfileState();
-    private final AgentCapabilityRuntimeState capabilityRuntimeState = new AgentCapabilityRuntimeState();
+    private final AgentCapabilityStateRegistry capabilityStates = new AgentCapabilityStateRegistry();
     private final MapleIslandObjectiveRandomnessState mapleIslandObjectiveRandomnessState =
             new MapleIslandObjectiveRandomnessState();
     private final AmherstPlanExecutionState amherstPlanExecutionState = new AmherstPlanExecutionState();
@@ -99,7 +100,11 @@ public class AgentRuntimeEntry implements AgentRuntimeHandle {
     private final AgentTickSliceState tickSliceState = new AgentTickSliceState();
 
     public AgentCapabilityRuntimeState capabilityRuntimeState() {
-        return capabilityRuntimeState;
+        return capabilityStates.require(AgentCapabilityRuntimeState.STATE_KEY);
+    }
+
+    public AgentCapabilityStateRegistry capabilityStates() {
+        return capabilityStates;
     }
 
     public MapleIslandObjectiveRandomnessState mapleIslandObjectiveRandomnessState() {
@@ -424,10 +429,10 @@ public class AgentRuntimeEntry implements AgentRuntimeHandle {
         return scriptRuntimeState;
     }
 
-    private final AgentOwnerGivenTradeItemState ownerGivenTradeItemState = new AgentOwnerGivenTradeItemState();
+    private final AgentTradeReceivedItemState tradeReceivedItemState = new AgentTradeReceivedItemState();
 
-    public AgentOwnerGivenTradeItemState ownerGivenTradeItemState() {
-        return ownerGivenTradeItemState;
+    public AgentTradeReceivedItemState tradeReceivedItemState() {
+        return tradeReceivedItemState;
     }
 
     private final AgentNavigationDebugState navigationDebugState = new AgentNavigationDebugState();
@@ -439,7 +444,7 @@ public class AgentRuntimeEntry implements AgentRuntimeHandle {
     private final AgentMovementBroadcastState movementBroadcastState = new AgentMovementBroadcastState();
     private final AgentMovementPhysicsCacheState movementPhysicsCacheState = new AgentMovementPhysicsCacheState();
     private final AgentMovementStuckState movementStuckState = new AgentMovementStuckState();
-    private final AgentOwnerMotionState ownerMotionState = new AgentOwnerMotionState();
+    private final AgentFollowTargetMotionState followTargetMotionState = new AgentFollowTargetMotionState();
     private final AgentPatrolState patrolState = new AgentPatrolState();
     private final AgentTickFailureState tickFailureState = new AgentTickFailureState();
     private final AgentTickState tickState = new AgentTickState();
@@ -476,8 +481,8 @@ public class AgentRuntimeEntry implements AgentRuntimeHandle {
         return farmAnchorState;
     }
 
-    public AgentOwnerMotionState ownerMotionState() {
-        return ownerMotionState;
+    public AgentFollowTargetMotionState followTargetMotionState() {
+        return followTargetMotionState;
     }
 
     public AgentPatrolState patrolState() {

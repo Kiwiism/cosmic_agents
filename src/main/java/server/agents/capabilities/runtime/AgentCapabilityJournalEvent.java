@@ -9,5 +9,9 @@ public record AgentCapabilityJournalEvent(
         String commandType,
         AgentCapabilityStatus status,
         AgentCapabilityReasonCode reasonCode,
-        String message) {
+        String message,
+        String objectiveId,
+        String objectiveSource,
+        String behaviorVersion,
+        String correlationId) {
 }

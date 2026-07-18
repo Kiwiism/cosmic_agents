@@ -4,8 +4,12 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
+import server.agents.runtime.state.AgentCapabilityStateKey;
 
 public final class AgentCapabilityRuntimeState {
+    public static final AgentCapabilityStateKey<AgentCapabilityRuntimeState> STATE_KEY =
+            new AgentCapabilityStateKey<>("runtime.capability-stack", AgentCapabilityRuntimeState.class,
+                    AgentCapabilityRuntimeState::new);
     static final int MAX_JOURNAL_EVENTS = 256;
 
     final Deque<AgentCapabilityFrame> frames = new ArrayDeque<>();

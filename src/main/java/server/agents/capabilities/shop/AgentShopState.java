@@ -6,6 +6,7 @@ import java.awt.Point;
  * Mutable runtime state for one Agent shop visit/resupply sequence.
  */
 public final class AgentShopState {
+    private final AgentShopWorkflow workflow = new AgentShopWorkflow();
     private volatile boolean visitPending = false;
     private volatile Point npcPosition = null;
     private volatile Point targetPosition = null;
@@ -19,6 +20,10 @@ public final class AgentShopState {
 
     public boolean visitPending() {
         return visitPending;
+    }
+
+    public AgentShopWorkflow workflow() {
+        return workflow;
     }
 
     public boolean sequenceActive() {
@@ -79,6 +84,10 @@ public final class AgentShopState {
     }
 
     public void startVisit(Point npcPosition, Point targetPosition, int approachDelayMs, long startedAtMs) {
+        if (workflow.phase() == AgentShopWorkflowPhase.IDLE || workflow.phase().terminal()) {
+            workflow.start("shop:" + startedAtMs, 0, startedAtMs);
+            workflow.transition(AgentShopWorkflowPhase.APPROACHING, "travelling to shop NPC", startedAtMs);
+        }
         visitPending = true;
         this.npcPosition = npcPosition == null ? null : new Point(npcPosition);
         this.targetPosition = targetPosition == null ? null : new Point(targetPosition);
@@ -88,6 +97,7 @@ public final class AgentShopState {
     }
 
     public void markSequenceActive(long startedAtMs) {
+        workflow.transition(AgentShopWorkflowPhase.TRANSACTING, "shop transaction opened", startedAtMs);
         sequenceActive = true;
         sequenceStartedAtMs = startedAtMs;
     }
@@ -123,6 +133,10 @@ public final class AgentShopState {
     }
 
     public void clear() {
+        if (!workflow.phase().terminal() && workflow.phase() != AgentShopWorkflowPhase.IDLE) {
+            workflow.transition(AgentShopWorkflowPhase.CANCELLED, "legacy shop state cleared",
+                    Math.max(System.currentTimeMillis(), workflow.updatedAtMs()));
+        }
         visitPending = false;
         npcPosition = null;
         targetPosition = null;
@@ -133,6 +147,18 @@ public final class AgentShopState {
         sellTrashPending = false;
         stuckCheckPosition = null;
         stuckCheckAtMs = 0L;
+    }
+
+    public void complete(String reason, long nowMs) {
+        if (!workflow.phase().terminal() && workflow.phase() != AgentShopWorkflowPhase.IDLE) {
+            workflow.transition(AgentShopWorkflowPhase.COMPLETED, reason, Math.max(nowMs, workflow.updatedAtMs()));
+        }
+    }
+
+    public void block(String reason, long nowMs) {
+        if (!workflow.phase().terminal() && workflow.phase() != AgentShopWorkflowPhase.IDLE) {
+            workflow.transition(AgentShopWorkflowPhase.BLOCKED, reason, Math.max(nowMs, workflow.updatedAtMs()));
+        }
     }
 
     private static int manhattan(Point a, Point b) {

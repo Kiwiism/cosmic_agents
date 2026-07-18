@@ -22,6 +22,7 @@ import server.agents.runtime.AgentSessionLifecycleRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.coordination.AgentCoordinationRuntime;
 import server.agents.coordination.AgentSupplyNeedMessage;
+import server.agents.capabilities.contracts.AgentResourceCategory;
 
 import java.util.List;
 import java.util.Map;
@@ -52,6 +53,11 @@ public final class AgentAmmoService {
         }
 
         int ammo = AgentCombatAmmoCounter.countAmmo(bot, weaponType);
+        AgentResourcePlanningRuntime.observe(entry, resourceCategory(weaponType), ammo,
+                AgentCombatConfig.cfg.AMMO_LOW_WARN,
+                Math.max(1, AgentCombatConfig.cfg.AMMO_LOW_WARN / 4),
+                Math.max(AgentCombatConfig.cfg.AMMO_LOW_WARN * 2, ammo),
+                System.currentTimeMillis());
         if (ammo >= AgentCombatConfig.cfg.AMMO_LOW_WARN) {
             AgentAmmoStateRuntime.clearAmmoShareRequested(entry);
             return false;
@@ -63,6 +69,16 @@ public final class AgentAmmoService {
             return true;
         }
         return false;
+    }
+
+    private static AgentResourceCategory resourceCategory(WeaponType weaponType) {
+        return switch (weaponType) {
+            case BOW -> AgentResourceCategory.ARROW;
+            case CROSSBOW -> AgentResourceCategory.CROSSBOW_BOLT;
+            case CLAW -> AgentResourceCategory.THROWING_STAR;
+            case GUN -> AgentResourceCategory.BULLET;
+            default -> AgentResourceCategory.EQUIPMENT;
+        };
     }
 
     public static void checkAmmoShareOnModeStart(AgentRuntimeEntry entry, Character bot, InventoryGateway inventory) {

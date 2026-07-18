@@ -13,38 +13,38 @@ public final class AgentOwnerMotionStateRuntime {
     }
 
     public static Point lastOwnerPosition(AgentRuntimeEntry entry) {
-        return entry.ownerMotionState().lastOwnerPosition();
+        return AgentFollowTargetMotionRuntime.lastPosition(entry);
     }
 
     public static void rememberOwnerPosition(AgentRuntimeEntry entry, Point ownerPosition) {
-        entry.ownerMotionState().setLastOwnerPosition(ownerPosition);
+        AgentFollowTargetMotionRuntime.remember(entry, ownerPosition);
     }
 
     public static int observedOwnerStepX(AgentRuntimeEntry entry) {
-        return entry.ownerMotionState().observedOwnerStepX();
+        return AgentFollowTargetMotionRuntime.observedStepX(entry);
     }
 
     public static int observedOwnerStepY(AgentRuntimeEntry entry) {
-        return entry.ownerMotionState().observedOwnerStepY();
+        return AgentFollowTargetMotionRuntime.observedStepY(entry);
     }
 
     public static boolean observedOwnerMoved(AgentRuntimeEntry entry) {
-        return entry.ownerMotionState().observedOwnerMoved();
+        return AgentFollowTargetMotionRuntime.observedMovement(entry);
     }
 
     public static int maxObservedOwnerStep(AgentRuntimeEntry entry) {
-        return entry.ownerMotionState().maxObservedOwnerStep();
+        return AgentFollowTargetMotionRuntime.maximumObservedStep(entry);
     }
 
     public static boolean ownerMostlyIdle(AgentRuntimeEntry entry) {
-        return entry.ownerMotionState().ownerMostlyIdle();
+        return AgentFollowTargetMotionRuntime.mostlyIdle(entry);
     }
 
     public static void clearObservedOwnerStep(AgentRuntimeEntry entry) {
-        entry.ownerMotionState().clearObservedOwnerStep();
+        AgentFollowTargetMotionRuntime.clearObservedStep(entry);
     }
 
     public static void updateObservedOwnerStep(AgentRuntimeEntry entry, Point ownerPosition) {
-        entry.ownerMotionState().updateObservedOwnerStep(ownerPosition);
+        AgentFollowTargetMotionRuntime.updateObservedStep(entry, ownerPosition);
     }
 }
