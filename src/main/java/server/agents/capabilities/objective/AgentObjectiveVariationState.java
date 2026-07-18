@@ -14,6 +14,7 @@ public final class AgentObjectiveVariationState {
     private static final long REST_SPOT_DOMAIN = 0x524553542D53504FL;
     private static final long REST_FACING_DOMAIN = 0x524553542D464143L;
     private static final long POST_PLAN_BEHAVIOR_DOMAIN = 0x504F5354504C414EL;
+    private static final long PLAN_VARIANT_DOMAIN = 0x504C414E2D564152L;
 
     private AgentObjectiveVariationSettings settings = AgentObjectiveVariationSettings.disabled();
     private long identitySalt;
@@ -99,6 +100,15 @@ public final class AgentObjectiveVariationState {
         if (sample < 70) return AgentPlanCompletionMode.WANDER;
         if (sample < 85) return AgentPlanCompletionMode.FIDGET;
         return AgentPlanCompletionMode.IDLE;
+    }
+
+    synchronized int selectPlanVariant(String variationKey, int count) {
+        if (variationKey == null || variationKey.isBlank() || count <= 0) {
+            throw new IllegalArgumentException("Plan variation key and positive count are required");
+        }
+        return new SplittableRandom(decisionSeed(
+                PLAN_VARIANT_DOMAIN ^ Integer.toUnsignedLong(variationKey.hashCode()), 0L))
+                .nextInt(count);
     }
 
     private long sample(AgentBehaviorProfile.DelayRange range, long domain, long ordinal) {

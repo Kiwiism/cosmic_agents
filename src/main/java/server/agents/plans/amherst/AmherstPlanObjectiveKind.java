@@ -24,6 +24,13 @@ public enum AmherstPlanObjectiveKind {
         return jsonName;
     }
 
+    public boolean waitsForWorldResource() {
+        return switch (this) {
+            case KILL_MOBS, REACTOR_HIT, REACTOR_BOX_ITEMS -> true;
+            default -> false;
+        };
+    }
+
     public static AmherstPlanObjectiveKind fromJsonName(String value) {
         return Arrays.stream(values())
                 .filter(kind -> kind.jsonName.equals(value))

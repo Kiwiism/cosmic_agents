@@ -86,6 +86,7 @@ class MapleIslandObjectiveRandomnessRuntimeTest {
                         new AgentBehaviorProfile.DelayRange(2_500, 2_500),
                         new AgentBehaviorProfile.DelayRange(4_000, 4_000),
                         false,
+                        false,
                         false));
 
         assertEquals(2_500L, AgentBehaviorProfileRuntime.sampleNpcInteractionDelayMs(entry));
@@ -111,7 +112,8 @@ class MapleIslandObjectiveRandomnessRuntimeTest {
         AgentRuntimeEntry first = entryWithProfile();
         AgentRuntimeEntry second = entryWithProfile();
         MapleIslandObjectiveRandomnessSettings settings =
-                new MapleIslandObjectiveRandomnessSettings(true, 99L, null, null, true, true);
+                new MapleIslandObjectiveRandomnessSettings(
+                        true, 99L, null, null, true, true, true);
         MapleIslandObjectiveRandomnessRuntime.configure(first, settings);
         MapleIslandObjectiveRandomnessRuntime.configure(second, settings);
 

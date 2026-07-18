@@ -60,6 +60,10 @@ public interface PrimitiveCapabilityGateway {
 
     int liveMonsterCount(Character agent, Set<Integer> mobIds);
 
+    default Set<Integer> configuredMonsterSpawnIds(Character agent) {
+        return Set.of();
+    }
+
     void navigate(AgentRuntimeEntry entry, Point destination, boolean precise);
 
     void grind(AgentRuntimeEntry entry, Set<Integer> allowedMobIds);

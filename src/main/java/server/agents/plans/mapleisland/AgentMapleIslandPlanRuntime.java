@@ -65,7 +65,7 @@ public final class AgentMapleIslandPlanRuntime {
                                        long nowMs,
                                        AmherstPlanObserver observer) throws IOException, AmherstPlanValidationException {
         AgentBehaviorProfileRuntime.assignMapleIslandQuester(entry);
-        AmherstPlanCard card = fullCard();
+        AmherstPlanCard card = fullCard(entry);
         prepareObjective(entry, card, nowMs);
         defaultRunner(card, entry, AmherstScopePolicy.fullMapleIsland()).start(
                 entry, agent, nowMs, AmherstPlanExecutionMode.MANUAL, observer);
@@ -84,7 +84,7 @@ public final class AgentMapleIslandPlanRuntime {
                                      AmherstPlanObserver observer,
                                      long initialObjectiveDelayMs) throws IOException, AmherstPlanValidationException {
         AgentBehaviorProfileRuntime.assignMapleIslandQuester(entry);
-        AmherstPlanCard card = fullCard();
+        AmherstPlanCard card = fullCard(entry);
         prepareObjective(entry, card, nowMs);
         defaultRunner(card, entry, AmherstScopePolicy.fullMapleIsland()).start(
                 entry, agent, nowMs, AmherstPlanExecutionMode.AUTO, observer,
@@ -99,6 +99,11 @@ public final class AgentMapleIslandPlanRuntime {
     public static AmherstPlanCard fullCard() throws IOException, AmherstPlanValidationException {
         return new AmherstPlanCardLoader(new ObjectMapper(), AmherstPlanValidator.fullMapleIsland())
                 .load(FULL_CARD_PATH);
+    }
+
+    private static AmherstPlanCard fullCard(AgentRuntimeEntry entry)
+            throws IOException, AmherstPlanValidationException {
+        return MapleIslandAmherstQuestOrderPolicy.apply(fullCard(), entry);
     }
 
     public static FileAmherstPlanProgressStore defaultStore() {

@@ -45,14 +45,14 @@ public final class MapleIslandCohortRealismService {
     private static void configureOff(AgentRuntimeEntry entry, long seed) {
         MapleIslandObjectiveRandomnessRuntime.configure(entry,
                 new MapleIslandObjectiveRandomnessSettings(
-                        true, seed, NO_DELAY, NO_DELAY, false, false));
+                        true, seed, NO_DELAY, NO_DELAY, false, false, false));
         AgentTravelVariationRuntime.clear(entry);
     }
 
     private static void configureLight(AgentRuntimeEntry entry, long seed) {
         MapleIslandObjectiveRandomnessRuntime.configure(entry,
                 new MapleIslandObjectiveRandomnessSettings(
-                        true, seed, null, null, true, true));
+                        true, seed, null, null, true, true, true));
         AgentTravelVariationRuntime.configure(entry,
                 new AgentTravelVariationSettings(
                         seed, true, LIGHT_MAX_ROUTE_STRETCH, false, 0.0d,

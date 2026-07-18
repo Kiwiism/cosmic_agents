@@ -68,6 +68,12 @@ public final class AgentObjectiveVariationRuntime {
         return settings.enabled() && settings.restSpotVariationEnabled()
                 ? entry.objectiveVariationState().selectPostPlanBehavior(mapId) : AgentPlanCompletionMode.SIT;
     }
+    public static OptionalInt selectPlanVariant(AgentRuntimeEntry entry, String variationKey, int count) {
+        AgentObjectiveVariationSettings settings = settings(entry);
+        return settings.enabled() && settings.objectiveOrderVariationEnabled() && count > 0
+                ? OptionalInt.of(entry.objectiveVariationState().selectPlanVariant(variationKey, count))
+                : OptionalInt.empty();
+    }
     private static long agentId(AgentRuntimeEntry entry) {
         return entry != null && AgentRuntimeIdentityRuntime.hasBot(entry)
                 ? AgentRuntimeIdentityRuntime.bot(entry).getId() : 0L;

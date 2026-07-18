@@ -29,7 +29,7 @@ class AmherstPlanCardLoaderTest {
                 second.objectives().stream().map(AmherstPlanObjective::objectiveId).toList());
         assertTrue(first.objectives().stream().map(AmherstPlanObjective::objectiveId).distinct().count()
                 == first.objectives().size());
-        assertEquals(25, first.objectives().size());
+        assertEquals(31, first.objectives().size());
         assertTrue(first.objectives().stream().anyMatch(objective -> objective.mapId() == 30000
                 && objective.kind() == AmherstPlanObjectiveKind.QUEST_START
                 && Integer.valueOf(1032).equals(objective.questId())));

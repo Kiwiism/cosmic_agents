@@ -91,6 +91,17 @@ public final class AgentCombatCapability
             return AgentCapabilityStep.running("waiting to land before combat", false);
         }
         if (gateway.liveMonsterCount(context.agent(), allowedMobIds) == 0) {
+            Set<Integer> configuredSpawnIds = gateway.configuredMonsterSpawnIds(context.agent());
+            if (configuredSpawnIds.containsAll(allowedMobIds)) {
+                Set<Integer> spawnPressureMobIds = new LinkedHashSet<>(configuredSpawnIds);
+                spawnPressureMobIds.removeAll(command.requiredKillCounts().keySet());
+                if (!spawnPressureMobIds.isEmpty()
+                        && gateway.liveMonsterCount(context.agent(), spawnPressureMobIds) > 0) {
+                    gateway.grind(context.entry(), spawnPressureMobIds);
+                    return AgentCapabilityStep.running(
+                            "clearing non-required map mobs to free required spawn slots", false);
+                }
+            }
             gateway.grind(context.entry(), allowedMobIds);
             return AgentCapabilityStep.running(
                     "waiting for a required target mob to become available", false);

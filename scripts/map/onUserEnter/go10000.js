@@ -22,9 +22,4 @@
 
 function start(ms) {
     ms.unlockUI();
-    // Keep the beginner tutorial prompt for normal first-time characters, but do
-    // not reopen its "skip to Lith Harbor" UI during repeated GM test warps.
-    if (!ms.getPlayer().isGM()) {
-        ms.mapEffect("maplemap/enter/10000");
-    }
 }
