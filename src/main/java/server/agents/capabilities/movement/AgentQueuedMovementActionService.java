@@ -63,7 +63,6 @@ public final class AgentQueuedMovementActionService {
             AgentMovementPoseService.syncCharacterState(entry);
             return;
         }
-        AgentRopeMovementService.attachToRope(entry, agent, rope, ropeY);
-        AgentClimbStateRuntime.setClimbVerticalDirection(entry, climbDirection);
+        AgentRopeMovementService.attachToRope(entry, agent, rope, ropeY, climbDirection);
     }
 }

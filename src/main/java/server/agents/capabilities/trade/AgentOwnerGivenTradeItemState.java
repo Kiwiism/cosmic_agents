@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Set;
 
+@Deprecated(forRemoval = true)
 public final class AgentOwnerGivenTradeItemState {
     private final Set<Item> items = Collections.newSetFromMap(new IdentityHashMap<>());
 

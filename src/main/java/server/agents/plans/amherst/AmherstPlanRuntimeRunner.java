@@ -12,6 +12,9 @@ import server.agents.capabilities.objective.AgentObjectiveProgressWatchdog;
 import server.agents.capabilities.objective.AgentObjectiveRecoveryPolicy;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentSchedulerRuntime;
+import server.agents.objectives.AgentObjectiveDefinition;
+import server.agents.objectives.AgentObjectiveKernel;
+import server.agents.objectives.AgentObjectiveStatus;
 import server.agents.runtime.async.AgentAsyncCompletion;
 import server.agents.runtime.async.AgentAsyncTaskGateway;
 import server.agents.runtime.async.AgentAsyncWorkKind;
@@ -280,6 +283,8 @@ public final class AmherstPlanRuntimeRunner {
                             AmherstPlanObservation.Type.PLAN_COMPLETED, nowMs,
                             "", null, AgentCapabilityStatus.SUCCESS, null,
                             "all objectives satisfy live state"));
+                    transitionPlanObjective(entry, AgentObjectiveStatus.SUCCEEDED,
+                            "all plan objectives satisfy live state", nowMs);
                     return true;
                 }
                 if (state.mode == AmherstPlanExecutionMode.MANUAL && !state.advanceRequested) {
@@ -367,6 +372,8 @@ public final class AmherstPlanRuntimeRunner {
         synchronized (state) {
             if (state.active) {
                 AgentCapabilityRuntime.requestCancellation(entry);
+                transitionPlanObjective(entry, AgentObjectiveStatus.CANCELLED,
+                        "plan cancellation requested", System.currentTimeMillis());
             }
         }
     }
@@ -432,7 +439,19 @@ public final class AmherstPlanRuntimeRunner {
             }
             if (state.mode != AmherstPlanExecutionMode.MANUAL) {
                 state.active = false;
+                transitionPlanObjective(entry, AgentObjectiveStatus.BLOCKED,
+                        result.reasonCode() + ": " + result.message(), nowMs);
             }
+        }
+    }
+
+    private static void transitionPlanObjective(AgentRuntimeEntry entry,
+                                                AgentObjectiveStatus status,
+                                                String reason,
+                                                long nowMs) {
+        AgentObjectiveDefinition active = AgentObjectiveKernel.active(entry);
+        if (active != null) {
+            AgentObjectiveKernel.transition(entry, active.objectiveId(), status, reason, nowMs);
         }
     }
 

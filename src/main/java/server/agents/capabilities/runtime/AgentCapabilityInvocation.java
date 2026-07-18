@@ -5,11 +5,21 @@ public final class AgentCapabilityInvocation<C extends AgentCapabilityCommand> {
     private final C command;
     private final long timeoutMs;
     private final int maxRetries;
+    private final AgentCapabilityInvocationMetadata metadata;
 
     public AgentCapabilityInvocation(AgentExecutableCapability<C> capability,
                                      C command,
                                      long timeoutMs,
                                      int maxRetries) {
+        this(capability, command, timeoutMs, maxRetries,
+                AgentCapabilityInvocationMetadata.UNSPECIFIED);
+    }
+
+    public AgentCapabilityInvocation(AgentExecutableCapability<C> capability,
+                                     C command,
+                                     long timeoutMs,
+                                     int maxRetries,
+                                     AgentCapabilityInvocationMetadata metadata) {
         if (capability == null || command == null) {
             throw new IllegalArgumentException("capability and command are required");
         }
@@ -20,6 +30,7 @@ public final class AgentCapabilityInvocation<C extends AgentCapabilityCommand> {
         this.command = command;
         this.timeoutMs = timeoutMs;
         this.maxRetries = maxRetries;
+        this.metadata = metadata == null ? AgentCapabilityInvocationMetadata.UNSPECIFIED : metadata;
     }
 
     public String capabilityId() {
@@ -36,6 +47,10 @@ public final class AgentCapabilityInvocation<C extends AgentCapabilityCommand> {
 
     public int maxRetries() {
         return maxRetries;
+    }
+
+    public AgentCapabilityInvocationMetadata metadata() {
+        return metadata;
     }
 
     AgentCapabilityStep tick(AgentCapabilityContext context) {

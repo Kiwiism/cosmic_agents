@@ -19,8 +19,16 @@ public final class AgentRopeMovementService {
     }
 
     public static void attachToRope(AgentRuntimeEntry entry, Character agent, Rope rope, int y) {
+        attachToRope(entry, agent, rope, y, 0);
+    }
+
+    public static void attachToRope(AgentRuntimeEntry entry,
+                                    Character agent,
+                                    Rope rope,
+                                    int y,
+                                    int climbDirection) {
         int ropeY = Math.clamp(y, AgentNavigationPhysicsService.firstClimbableY(rope), rope.bottomY());
-        AgentClimbStateRuntime.setClimbVerticalDirection(entry, 0);
+        AgentClimbStateRuntime.setClimbVerticalDirection(entry, climbDirection);
         setClimbPosition(entry, agent, rope, ropeY);
     }
 

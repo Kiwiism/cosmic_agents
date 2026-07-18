@@ -262,14 +262,14 @@ public final class AgentPendingTradeStateRuntime {
     }
 
     public static boolean hasOwnerGivenItems(AgentRuntimeEntry entry) {
-        return entry.ownerGivenTradeItemState().hasItems();
+        return entry.tradeReceivedItemState().hasItems();
     }
 
     public static void addOwnerGivenItem(AgentRuntimeEntry entry, Item item) {
-        entry.ownerGivenTradeItemState().add(item);
+        entry.tradeReceivedItemState().add(item);
     }
 
     public static void clearOwnerGivenItems(AgentRuntimeEntry entry) {
-        entry.ownerGivenTradeItemState().clear();
+        entry.tradeReceivedItemState().clear();
     }
 }

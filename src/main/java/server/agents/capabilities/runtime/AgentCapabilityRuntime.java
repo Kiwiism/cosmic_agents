@@ -3,6 +3,7 @@ package server.agents.capabilities.runtime;
 import client.Character;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import server.agents.integration.cosmic.CosmicAgentCapabilityViewFactory;
 import server.agents.capabilities.AgentCapabilityStatus;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -84,7 +85,8 @@ public final class AgentCapabilityRuntime {
                     Math.max(0L, nowMs - frame.startedAtMs),
                     frame.retryCount,
                     frame.childResult,
-                    frame.memory);
+                    frame.memory,
+                    CosmicAgentCapabilityViewFactory.create(entry, agent, nowMs));
             AgentCapabilityStep step;
             try {
                 step = frame.invocation.tick(context);
@@ -220,7 +222,8 @@ public final class AgentCapabilityRuntime {
                         : Math.max(0L, nowMs - frame.startedAtMs),
                 frame.retryCount,
                 frame.childResult,
-                frame.memory);
+                frame.memory,
+                CosmicAgentCapabilityViewFactory.create(entry, agent, nowMs));
         try {
             frame.invocation.onTerminal(context, result);
         } catch (RuntimeException failure) {
@@ -272,7 +275,11 @@ public final class AgentCapabilityRuntime {
                 frame.invocation.commandType(),
                 result.status(),
                 result.reasonCode(),
-                result.message()));
+                result.message(),
+                frame.invocation.metadata().objectiveId(),
+                frame.invocation.metadata().objectiveSource(),
+                frame.invocation.metadata().behaviorVersion(),
+                frame.invocation.metadata().correlationId()));
         state.journalSequence++;
     }
 

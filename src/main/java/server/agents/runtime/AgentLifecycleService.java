@@ -437,17 +437,7 @@ public final class AgentLifecycleService {
     }
 
     public static void cancelScheduledTickIfPresent(AgentRuntimeEntry entry) {
-        if (entry != null) {
-            if (entry.scheduledTaskState().hasScheduledTask()) {
-                if (entry.scheduledTaskState().cancelScheduledTask()) {
-                    AgentSchedulerMetrics.recordLifecycleCancellationRequested();
-                    AgentSchedulerMetrics.recordLifecycleCleanedUp();
-                }
-            }
-            entry.scheduledTaskScope().cancelAll();
-            entry.tickSliceState().clear();
-            AgentMailboxRuntime.close(entry);
-        }
+        AgentSessionCleanupService.cancelScheduledWork(entry);
     }
 
     public static boolean removeAgentByCharacterId(Map<Integer, List<AgentRuntimeEntry>> entriesByLeaderId,

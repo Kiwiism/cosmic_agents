@@ -1,7 +1,6 @@
 package server.agents.capabilities.navigation;
 
 import client.Character;
-import server.agents.capabilities.movement.AgentClimbStateRuntime;
 import server.agents.capabilities.movement.AgentJumpActionService;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentQueuedMovementActionService;
@@ -37,14 +36,13 @@ public final class AgentNavigationClimbEntryExecutionService {
 
         if (AgentNavigationRopeEdgeService.canGrabRopeAtCurrentPosition(agentPos, rope)) {
             AgentNavigationDebugStateRuntime.clearLastEdgeBlockReason(entry);
-            AgentNavigationClimbExecutionService.startClimbing(entry, agent, rope, agentPos.y);
-            AgentClimbStateRuntime.setClimbVerticalDirection(entry, climbDirection);
+            AgentNavigationClimbExecutionService.startClimbing(entry, agent, rope, agentPos.y, climbDirection);
             return true;
         }
         if (AgentNavigationRopeEdgeService.canAttachToRopeFromTopPlatform(edge, agentPos, rope)) {
             AgentNavigationDebugStateRuntime.clearLastEdgeBlockReason(entry);
-            AgentNavigationClimbExecutionService.startClimbing(entry, agent, rope, edge.endPoint.y);
-            AgentClimbStateRuntime.setClimbVerticalDirection(entry, climbDirection);
+            AgentNavigationClimbExecutionService.startClimbing(
+                    entry, agent, rope, edge.endPoint.y, climbDirection);
             return true;
         }
         if (AgentNavigationRopeEdgeService.canGrabRopeFromTopPlatform(edge, agentPos, rope)) {

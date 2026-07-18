@@ -317,6 +317,8 @@ public final class AgentShopService {
                 // Never end a resupply visit silently: nothing was bought and nothing fell short.
                 AgentShopRuntime.sayMapNow(sequence.bot(), AgentDialogueCatalog.shopEmptyResupplyReply());
             }
+            AgentShopStateRuntime.completeWorkflow(sequence.entry(), "shop transaction reconciled",
+                    System.currentTimeMillis());
             clearShopState(sequence.entry());
         };
 
@@ -648,6 +650,7 @@ public final class AgentShopService {
         if (AgentShopStateRuntime.shopVisitPending(entry)) {
             AgentShopRuntime.sayMapNow(bot, reason);
         }
+        AgentShopStateRuntime.blockWorkflow(entry, reason, System.currentTimeMillis());
         clearShopState(entry);
     }
 

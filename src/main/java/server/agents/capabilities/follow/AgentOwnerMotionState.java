@@ -2,6 +2,7 @@ package server.agents.capabilities.follow;
 
 import java.awt.Point;
 
+@Deprecated(forRemoval = true)
 public final class AgentOwnerMotionState {
     private Point lastOwnerPosition = null;
     private int observedOwnerStepX = 0;

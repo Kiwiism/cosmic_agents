@@ -92,4 +92,16 @@ public final class AgentShopStateRuntime {
     public static void clearShopState(AgentRuntimeEntry entry) {
         entry.shopState().clear();
     }
+
+    public static AgentShopWorkflow workflow(AgentRuntimeEntry entry) {
+        return entry.shopState().workflow();
+    }
+
+    public static void completeWorkflow(AgentRuntimeEntry entry, String reason, long nowMs) {
+        entry.shopState().complete(reason, nowMs);
+    }
+
+    public static void blockWorkflow(AgentRuntimeEntry entry, String reason, long nowMs) {
+        entry.shopState().block(reason, nowMs);
+    }
 }

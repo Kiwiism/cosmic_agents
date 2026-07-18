@@ -49,7 +49,8 @@ class MapleIslandCohortTelemetryServiceTest {
                 2_000L, "hunt-snails", AgentCapabilityStatus.RUNNING, null, ""));
         var retry = new AgentCapabilityJournalEvent(2_500L, AgentCapabilityJournalEventType.RETRY,
                 "hunt", "attack", AgentCapabilityStatus.RETRY,
-                AgentCapabilityReasonCode.RETRY_REQUESTED, "try again");
+                AgentCapabilityReasonCode.RETRY_REQUESTED, "try again",
+                "hunt-snails", "QUEST_PLAN", "maple-island-objective-v1", "hunt-snails");
         service.observe(3, observation(AmherstPlanObservation.Type.CAPABILITY_EVENT,
                 2_500L, "hunt-snails", AgentCapabilityStatus.RETRY, retry, "try again"));
 

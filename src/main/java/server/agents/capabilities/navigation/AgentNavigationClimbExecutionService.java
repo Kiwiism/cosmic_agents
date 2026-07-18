@@ -14,7 +14,15 @@ public final class AgentNavigationClimbExecutionService {
     }
 
     public static void startClimbing(AgentRuntimeEntry entry, Character agent, Rope rope, int climbY) {
-        AgentRopeMovementService.attachToRope(entry, agent, rope, climbY);
+        startClimbing(entry, agent, rope, climbY, 0);
+    }
+
+    public static void startClimbing(AgentRuntimeEntry entry,
+                                     Character agent,
+                                     Rope rope,
+                                     int climbY,
+                                     int climbDirection) {
+        AgentRopeMovementService.attachToRope(entry, agent, rope, climbY, climbDirection);
         AgentMovementBroadcastService.broadcastMovement(entry);
     }
 }
