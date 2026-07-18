@@ -17,6 +17,9 @@ public final class MapleIslandCohortRealismService {
             new AgentBehaviorProfile.DelayRange(0, 0);
     private static final long HOP_INTERVAL_DOMAIN = 0x484F502D494E5456L;
     private static final long HOP_COOLDOWN_DOMAIN = 0x484F502D434F4F4CL;
+    private static final long INITIAL_INTENTION_DELAY_DOMAIN = 0x535041574E2D5741L;
+    private static final long INITIAL_INTENTION_DELAY_MIN_MS = 2_000L;
+    private static final long INITIAL_INTENTION_DELAY_MAX_MS = 5_000L;
 
     private MapleIslandCohortRealismService() {
     }
@@ -71,6 +74,11 @@ public final class MapleIslandCohortRealismService {
                 ? Integer.toUnsignedLong(AgentRuntimeIdentityRuntime.bot(entry).getId()) : 0L;
         return mix(runSeed ^ (characterId << 32)
                 ^ (ordinal * 0x9E3779B97F4A7C15L));
+    }
+
+    static long initialIntentionDelayMs(long agentSeed) {
+        return sampleRange(agentSeed ^ INITIAL_INTENTION_DELAY_DOMAIN,
+                INITIAL_INTENTION_DELAY_MIN_MS, INITIAL_INTENTION_DELAY_MAX_MS);
     }
 
     private static long sampleRange(long seed, long minimum, long maximum) {

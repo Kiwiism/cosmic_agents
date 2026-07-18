@@ -273,6 +273,7 @@ public final class AgentCapabilityRuntime {
                 result.status(),
                 result.reasonCode(),
                 result.message()));
+        state.journalSequence++;
     }
 
     private static long saturatedAdd(long value, long increment) {

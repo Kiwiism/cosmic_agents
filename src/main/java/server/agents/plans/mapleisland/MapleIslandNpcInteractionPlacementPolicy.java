@@ -15,10 +15,6 @@ public final class MapleIslandNpcInteractionPlacementPolicy
         implements AgentNpcInteractionPlacementPolicy {
     public static final MapleIslandNpcInteractionPlacementPolicy INSTANCE =
             new MapleIslandNpcInteractionPlacementPolicy();
-    private static final int SNAIL_FIELD_OF_FLOWERS_MAP_ID = 30001;
-    private static final int NINA_NPC_ID = 2001;
-    private static final int SNAIL_GARDEN_MAP_ID = 20000;
-    private static final int ROGER_NPC_ID = 2000;
     private static final Map<NpcPlacement, Integer> TRAFFIC_BIAS_X = Map.ofEntries(
             Map.entry(new NpcPlacement(10000, 2100), -120),
             Map.entry(new NpcPlacement(20000, 2000), 100),
@@ -42,7 +38,7 @@ public final class MapleIslandNpcInteractionPlacementPolicy
                 mapId, npcId, defaultRangePx);
         var offset = MapleIslandNpcInteractionRadiusCatalog.centerOffset(mapId, npcId);
         boolean dynamicSpread = settings.enabled() && settings.npcAnchorVariationEnabled()
-                && !usesCuratedReachableSlots(mapId, npcId);
+                && MapleIslandNpcInteractionRadiusCatalog.dynamicSpread(mapId, npcId);
         return new server.agents.capabilities.objective.AgentNpcInteractionPlacementData(
                 range,
                 MapleIslandNpcInteractionAnchorCatalog.anchors(mapId, npcId),
@@ -77,7 +73,8 @@ public final class MapleIslandNpcInteractionPlacementPolicy
                 .filter(candidate -> candidate.distanceSq(placementCenter)
                         <= (long) placementRadiusPx * placementRadiusPx)
                 .toList();
-        List<Point> spread = usesCuratedReachableSlots(mapId, npcId) ? List.of()
+        List<Point> spread = !MapleIslandNpcInteractionRadiusCatalog.dynamicSpread(mapId, npcId)
+                ? List.of()
                 : AgentNpcInteractionSpreadService.candidates(
                         agent, currentPosition, placementCenter, placementRadiusPx);
         List<Point> candidates = spread.size() >= 2
@@ -106,14 +103,6 @@ public final class MapleIslandNpcInteractionPlacementPolicy
         Point focus = biasX == null || npcPosition == null
                 ? arrivalPosition : new Point(npcPosition.x + biasX, npcPosition.y);
         return AgentNpcInteractionSpreadService.selectionPool(candidates, focus);
-    }
-
-    private static boolean usesCuratedReachableSlots(int mapId, int npcId) {
-        // Roger's y=65 foothold is enclosed by walls and has no ladder. Nina's
-        // ladder is reachable, but represents one traffic lane rather than
-        // three independent vertical waiting slots.
-        return mapId == SNAIL_GARDEN_MAP_ID && npcId == ROGER_NPC_ID
-                || mapId == SNAIL_FIELD_OF_FLOWERS_MAP_ID && npcId == NINA_NPC_ID;
     }
 
     private record NpcPlacement(int mapId, int npcId) {

@@ -6,11 +6,9 @@ import java.util.List;
 import java.util.Map;
 
 public final class MapleIslandNpcInteractionAnchorCatalog {
-    private static final int YOONA_MAP_ID = 1010000;
-    private static final int YOONA_NPC_ID = 20100;
-    private static final List<Point> LEGACY_YOONA_ANCHORS = List.of(
-            new Point(-210, 95), new Point(-150, 95),
-            new Point(-210, 215), new Point(-150, 215));
+    private static final Map<NpcPlacement, List<Point>> LEGACY_ANCHORS = Map.ofEntries(
+            anchors(1010000, 20100,
+                    points(-210, 95, -150, 95, -210, 215, -150, 215)));
     private static final Map<NpcPlacement, List<Point>> VARIATION_ANCHORS = Map.ofEntries(
             anchors(10000, 2101, points(116, 305, 136, 305, 156, 305, 96, 305, 174, 305)),
             anchors(10000, 2100, points(824, 125, 844, 125, 855, 125, 804, 125)),
@@ -19,8 +17,12 @@ public final class MapleIslandNpcInteractionAnchorCatalog {
             anchors(20000, 2000,
                     points(120, 215, 168, 215, 216, 215, 264, 215,
                             312, 215, 360, 215, 408, 215)),
-            anchors(30000, 2102, points(-51, 95, -69, 95, -89, 95, -109, 95, -129, 95)),
-            // One ladder position is intentional; the rest keep Nina traffic on ground.
+            // Use the lower approach foothold so reaching Nina never requires the
+            // fragile upper-ladder exit and jump back toward her platform.
+            anchors(30000, 2102,
+                    points(-200, 215, -160, 215, -120, 215, -80, 215,
+                            -40, 215, 0, 215, 40, 215, 80, 215, 120, 215)),
+            // One ladder position is intentional; the rest keep Sen traffic on ground.
             anchors(30001, 2001,
                     points(24, 246, 4, 246, 44, 246, -16, 246,
                             64, 246, -36, 246, 77, 198)),
@@ -32,7 +34,7 @@ public final class MapleIslandNpcInteractionAnchorCatalog {
             anchors(1000000, 12000, points(1620, 154, 1610, 154, 1590, 154, 1570, 154, 1550, 154)),
             anchors(1000000, 12101, points(90, 274, 110, 274, 130, 274, 150, 274, 170, 274)),
             anchors(1000000, 10000, points(560, 274, 540, 274, 580, 274, 600, 274, 620, 274)),
-            anchors(YOONA_MAP_ID, YOONA_NPC_ID,
+            anchors(1010000, 20100,
                     points(-179, 95, -199, 95, -159, 95, -219, 95, -141, 95)),
             anchors(1010000, 12100, points(-31, 155, 0, 155, -11, 155, -51, 155)),
             anchors(1010000, 20001, points(321, 95, 341, 95, 361, 95, 381, 95, 399, 95)),
@@ -42,8 +44,8 @@ public final class MapleIslandNpcInteractionAnchorCatalog {
     }
 
     public static Point nearestLegacy(int mapId, int npcId, Point origin) {
-        List<Point> anchors = mapId == YOONA_MAP_ID && npcId == YOONA_NPC_ID
-                ? LEGACY_YOONA_ANCHORS : List.of();
+        List<Point> anchors = LEGACY_ANCHORS.getOrDefault(
+                new NpcPlacement(mapId, npcId), List.of());
         if (anchors.isEmpty() || origin == null) {
             return null;
         }
@@ -57,8 +59,8 @@ public final class MapleIslandNpcInteractionAnchorCatalog {
     }
 
     public static List<Point> legacyAnchorsFor(int mapId, int npcId) {
-        return mapId == YOONA_MAP_ID && npcId == YOONA_NPC_ID
-                ? LEGACY_YOONA_ANCHORS.stream().map(Point::new).toList() : List.of();
+        return LEGACY_ANCHORS.getOrDefault(new NpcPlacement(mapId, npcId), List.of())
+                .stream().map(Point::new).toList();
     }
 
     private static Map.Entry<NpcPlacement, List<Point>> anchors(

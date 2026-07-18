@@ -39,7 +39,10 @@ final class AmherstObjectiveCapabilitySupport {
     static final long PORTAL_TIMEOUT_MS = 90_000L;
     static final int CHILD_RETRIES = 2;
     static final int NPC_RANGE_PX = AgentNpcInteractionPolicy.DEFAULT_CLICK_RANGE_PX;
-    static final int NPC_ANCHOR_ARRIVAL_RANGE_PX = 8;
+    // Spread slots are presentation targets sampled 24 px apart. Requiring an
+    // exact 8 px landing can leave an otherwise in-range Agent retrying the
+    // same final movement forever when ground movement settles between slots.
+    static final int NPC_ANCHOR_ARRIVAL_RANGE_PX = 24;
     static final int REACTOR_RANGE_PX = 60;
 
     private final PrimitiveCapabilityGateway gateway;
@@ -142,6 +145,20 @@ final class AmherstObjectiveCapabilitySupport {
             return missing("objective NPC is not present on map " + mapId);
         }
         Point currentPosition = gateway.position(context.agent());
+        if (AgentObjectiveVariationRuntime.canReuseNpcInteractionPosition(
+                context.entry(), mapId, npcId, currentPosition, NPC_ANCHOR_ARRIVAL_RANGE_PX)) {
+            int interactionRangePx = placementData == null
+                    ? NPC_RANGE_PX : placementData.interactionRangePx();
+            if (currentPosition.distanceSq(npcPosition)
+                    <= (long) interactionRangePx * interactionRangePx
+                    && (gateway.grounded(context.agent())
+                    || AgentObjectiveVariationRuntime.lastNpcInteractionWasClimbable(
+                    context.entry(), mapId, npcId))) {
+                context.memory().putInt("npcInteractionRangePx", interactionRangePx);
+                gateway.facePosition(context.agent(), npcPosition);
+                return null;
+            }
+        }
         AgentNpcInteractionPlacementPolicy.Placement placement = interactionPlacement(
                 context, mapId, npcId, currentPosition, npcPosition, placementData);
         int interactionRangePx = placement.interactionRangePx();
@@ -159,11 +176,15 @@ final class AmherstObjectiveCapabilitySupport {
         }
         if (currentPosition.distanceSq(npcPosition)
                 <= (long) interactionRangePx * interactionRangePx) {
-            if (!gateway.grounded(context.agent())
-                    && !matchesClimbingAnchor(context, interactionAnchor, climbableAnchor)) {
+            boolean grounded = gateway.grounded(context.agent());
+            boolean atClimbingAnchor = matchesClimbingAnchor(
+                    context, interactionAnchor, climbableAnchor);
+            if (!grounded && !atClimbingAnchor) {
                 return AgentCapabilityStep.running("waiting to land before NPC interaction", false);
             }
             gateway.facePosition(context.agent(), npcPosition);
+            AgentObjectiveVariationRuntime.rememberNpcInteractionPosition(
+                    context.entry(), mapId, npcId, currentPosition, !grounded && atClimbingAnchor);
             return null;
         }
         return AgentCapabilityStep.handoff(invocation(new AgentNavigationCapability(gateway),
@@ -305,7 +326,8 @@ final class AmherstObjectiveCapabilitySupport {
                 .selectReserved(List.copyOf(gateway.reactors(context.agent())), request,
                         context.agent().getId(), context.agent().getMap());
         if (target.isEmpty()) {
-            return missing("no matching active reactor is available");
+            return AgentCapabilityStep.running(
+                    "waiting for a matching active reactor to become available", false);
         }
         Point position = target.get().targetPosition();
         if (gateway.position(context.agent()).distanceSq(position)

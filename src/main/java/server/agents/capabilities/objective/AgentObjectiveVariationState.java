@@ -2,6 +2,7 @@ package server.agents.capabilities.objective;
 
 import server.agents.profiles.AgentBehaviorProfile;
 
+import java.awt.Point;
 import java.util.SplittableRandom;
 
 /** Mutable decision counters owned by one Agent runtime entry, independent of any plan. */
@@ -22,12 +23,19 @@ public final class AgentObjectiveVariationState {
     private long cashShopVisitOrdinal;
     private long restSpotOrdinal;
     private long restFacingOrdinal;
+    private int lastNpcMapId = -1;
+    private int lastNpcId = -1;
+    private Point lastNpcInteractionPosition;
+    private boolean lastNpcInteractionClimbable;
 
     public synchronized void configure(AgentObjectiveVariationSettings configured, long identitySalt) {
         settings = configured == null ? AgentObjectiveVariationSettings.disabled() : configured;
         this.identitySalt = identitySalt;
         npcDelayOrdinal = objectiveDelayOrdinal = npcAnchorOrdinal = cashShopVisitOrdinal = 0L;
         restSpotOrdinal = restFacingOrdinal = 0L;
+        lastNpcMapId = lastNpcId = -1;
+        lastNpcInteractionPosition = null;
+        lastNpcInteractionClimbable = false;
     }
 
     public synchronized AgentObjectiveVariationSettings settings() { return settings; }
@@ -45,6 +53,26 @@ public final class AgentObjectiveVariationState {
     synchronized int selectNpcAnchorIndex(int mapId, int npcId, int count) {
         long salt = ((long) mapId << 32) ^ Integer.toUnsignedLong(npcId);
         return new SplittableRandom(decisionSeed(NPC_ANCHOR_DOMAIN ^ salt, npcAnchorOrdinal++)).nextInt(count);
+    }
+
+    synchronized void rememberNpcInteractionPosition(int mapId, int npcId,
+                                                      Point position, boolean climbable) {
+        lastNpcMapId = mapId;
+        lastNpcId = npcId;
+        lastNpcInteractionPosition = position == null ? null : new Point(position);
+        lastNpcInteractionClimbable = climbable;
+    }
+
+    synchronized boolean canReuseNpcInteractionPosition(int mapId, int npcId,
+                                                        Point currentPosition, int tolerancePx) {
+        return lastNpcMapId == mapId && lastNpcId == npcId
+                && lastNpcInteractionPosition != null && currentPosition != null
+                && currentPosition.distanceSq(lastNpcInteractionPosition)
+                <= (long) tolerancePx * tolerancePx;
+    }
+
+    synchronized boolean lastNpcInteractionWasClimbable(int mapId, int npcId) {
+        return lastNpcMapId == mapId && lastNpcId == npcId && lastNpcInteractionClimbable;
     }
 
     synchronized long sampleCashShopVisitDelay(long minimumMs, long maximumMs) {

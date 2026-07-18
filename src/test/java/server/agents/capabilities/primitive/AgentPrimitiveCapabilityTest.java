@@ -252,6 +252,22 @@ class AgentPrimitiveCapabilityTest {
     }
 
     @Test
+    void combatWaitsForRequiredMobRespawnWithoutConsumingCapabilityRetries() {
+        Fixture fixture = fixture();
+        when(fixture.gateway.alive(fixture.agent)).thenReturn(true);
+        when(fixture.gateway.questProgress(fixture.agent, 1039, 100101)).thenReturn(0);
+        when(fixture.gateway.liveMonsterCount(fixture.agent, Set.of(100101))).thenReturn(0);
+        AgentCombatCapability capability = new AgentCombatCapability(fixture.gateway);
+
+        AgentCapabilityStep step = capability.tick(fixture.context(),
+                new AgentCombatCapability.Command(1039, Map.of(100101, 10)));
+
+        assertEquals(AgentCapabilityStatus.RUNNING, step.status());
+        assertFalse(step.consumedTick());
+        verify(fixture.gateway).grind(fixture.entry, Set.of(100101));
+    }
+
+    @Test
     void combatTargetsOnlyMobTypesWhoseQuestCountIsIncomplete() {
         Fixture fixture = fixture();
         when(fixture.gateway.alive(fixture.agent)).thenReturn(true);

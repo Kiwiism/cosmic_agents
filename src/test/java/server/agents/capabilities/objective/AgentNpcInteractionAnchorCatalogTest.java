@@ -4,6 +4,8 @@ import org.junit.jupiter.api.Test;
 import server.agents.capabilities.npc.AgentNpcInteractionPolicy;
 import server.agents.catalog.AgentCatalogService;
 import server.agents.catalog.CatalogRecord;
+import server.agents.plans.mapleisland.MapleIslandNpcInteractionAnchorCatalog;
+import server.agents.plans.mapleisland.MapleIslandNpcInteractionRadiusCatalog;
 
 import java.awt.Point;
 import java.nio.file.Path;
@@ -11,7 +13,6 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import server.agents.plans.mapleisland.MapleIslandNpcInteractionAnchorCatalog;
 
 class AgentNpcInteractionAnchorCatalogTest {
     private static final List<NpcPlacement> FULL_PLAN_NPCS = List.of(
@@ -43,11 +44,8 @@ class AgentNpcInteractionAnchorCatalogTest {
     }
 
     @Test
-    void curatedAnchorsMatchGeneratedGroundedNpcGeometryAndClickRange() {
+    void anchorsMatchTheirPlacementStrategyAndNpcClickRange() {
         var npcCatalog = AgentCatalogService.loadFromRepoRoot(Path.of(".")).queries().npc();
-        long clickRangeSquared = (long) AgentNpcInteractionPolicy.DEFAULT_CLICK_RANGE_PX
-                * AgentNpcInteractionPolicy.DEFAULT_CLICK_RANGE_PX;
-
         for (NpcPlacement npc : FULL_PLAN_NPCS) {
             CatalogRecord placement = npcCatalog.placementsForNpc(npc.npcId()).stream()
                     .filter(candidate -> candidate.intValue("mapId").orElse(-1) == npc.mapId())
@@ -56,17 +54,25 @@ class AgentNpcInteractionAnchorCatalogTest {
             int npcX = placement.intValue("x").orElseThrow();
             int npcY = placement.intValue("y").orElseThrow();
             int npcFootholdId = placement.intValue("footholdId").orElseThrow();
+            boolean dynamicSpread = MapleIslandNpcInteractionRadiusCatalog.dynamicSpread(
+                    npc.mapId(), npc.npcId());
+            int interactionRange = MapleIslandNpcInteractionRadiusCatalog.requiredInteractionRangePx(
+                    npc.mapId(), npc.npcId(), AgentNpcInteractionPolicy.DEFAULT_CLICK_RANGE_PX);
+            long clickRangeSquared = (long) interactionRange * interactionRange;
             List<CatalogRecord> generatedCandidates =
                     npcCatalog.approachCandidates(npc.npcId(), npc.mapId());
 
             for (Point anchor : MapleIslandNpcInteractionAnchorCatalog.anchors(
                     npc.mapId(), npc.npcId())) {
-                assertTrue(generatedCandidates.stream().anyMatch(candidate ->
-                                candidate.intValue("x").orElse(Integer.MIN_VALUE) == anchor.x
-                                        && candidate.intValue("y").orElse(Integer.MIN_VALUE) == anchor.y
-                                        && candidate.booleanValue("sameFootholdAsNpc").orElse(false)
-                                        && candidate.intValue("footholdId").orElse(-1) == npcFootholdId),
-                        () -> "anchor is not a generated same-foothold point: " + npc + " " + anchor);
+                if (dynamicSpread) {
+                    assertTrue(generatedCandidates.stream().anyMatch(candidate ->
+                                    candidate.intValue("x").orElse(Integer.MIN_VALUE) == anchor.x
+                                            && candidate.intValue("y").orElse(Integer.MIN_VALUE) == anchor.y
+                                            && candidate.booleanValue("sameFootholdAsNpc").orElse(false)
+                                            && candidate.intValue("footholdId").orElse(-1) == npcFootholdId),
+                            () -> "dynamic anchor is not on generated NPC foothold geometry: "
+                                    + npc + " " + anchor);
+                }
                 assertTrue(anchor.distanceSq(npcX, npcY) <= clickRangeSquared,
                         () -> "anchor is outside NPC click range: " + npc + " " + anchor);
             }

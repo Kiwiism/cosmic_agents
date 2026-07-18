@@ -43,14 +43,17 @@ import static org.mockito.Mockito.times;
 class MobPhysicsServiceTest {
     private AgentMobReactionMode originalMode;
     private int originalAggroTimeoutMs;
+    private boolean originalVirtualObserverStress;
     private MobPhysicsService service;
 
     @BeforeEach
     void setUp() {
         originalMode = AgentCombatConfig.cfg.AGENT_MOB_REACTION_MODE;
         originalAggroTimeoutMs = AgentCombatConfig.cfg.MOB_PHYSICS_AGGRO_TIMEOUT_MS;
+        originalVirtualObserverStress = AgentCombatConfig.cfg.MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS;
         AgentCombatConfig.cfg.AGENT_MOB_REACTION_MODE = AgentMobReactionMode.PHYSICS;
         AgentCombatConfig.cfg.MOB_PHYSICS_AGGRO_TIMEOUT_MS = 7_000;
+        AgentCombatConfig.cfg.MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS = false;
         service = new MobPhysicsService(false);
     }
 
@@ -59,6 +62,7 @@ class MobPhysicsServiceTest {
         service.dispose();
         AgentCombatConfig.cfg.AGENT_MOB_REACTION_MODE = originalMode;
         AgentCombatConfig.cfg.MOB_PHYSICS_AGGRO_TIMEOUT_MS = originalAggroTimeoutMs;
+        AgentCombatConfig.cfg.MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS = originalVirtualObserverStress;
     }
 
     @Test
@@ -171,6 +175,43 @@ class MobPhysicsServiceTest {
         assertFalse(service.acceptedHit(fixture.agent, fixture.monster, 10, 0));
         assertEquals(0, service.activeSessionCountForTest());
         verify(fixture.map, never()).broadcastMobPhysicsMessage(any(), any(Point.class));
+    }
+
+    @Test
+    void virtualObserverStressRunsProductionPhysicsWithoutFakeRecipient() {
+        AgentCombatConfig.cfg.MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS = true;
+        Fixture fixture = fixture(false, 1);
+
+        assertTrue(service.acceptedHit(fixture.agent, fixture.monster, 10, 0));
+        service.tickForTest(System.nanoTime() + 100_000_000L);
+
+        assertEquals(1, service.activeSessionCountForTest());
+        verify(fixture.map).broadcastMobPhysicsMessage(any(), any(Point.class));
+        assertTrue(MobPhysicsService.globalStatus().contains("virtualStress=true"));
+        assertTrue(MobPhysicsService.globalStatus().contains("virtualSessions=1"));
+    }
+
+    @Test
+    void disablingVirtualObserverStressReleasesUnobservedSessions() {
+        AgentCombatConfig.cfg.MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS = true;
+        Fixture fixture = fixture(false, 1);
+        assertTrue(service.acceptedHit(fixture.agent, fixture.monster, 10, 0));
+
+        AgentCombatConfig.cfg.MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS = false;
+        service.tickForTest(System.nanoTime() + 100_000_000L);
+
+        assertEquals(0, service.activeSessionCountForTest());
+        assertEquals(MobControlAuthority.NONE, fixture.monster.getControlAuthority());
+    }
+
+    @Test
+    void virtualObserverStressCannotBypassClientTransitionGuard() {
+        AgentCombatConfig.cfg.MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS = true;
+        Fixture fixture = fixture(false, 1);
+        when(fixture.map.hasTransitioningPlayerObserver()).thenReturn(true);
+
+        assertFalse(service.acceptedHit(fixture.agent, fixture.monster, 10, 0));
+        assertEquals(0, service.activeSessionCountForTest());
     }
 
     @Test

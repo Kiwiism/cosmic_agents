@@ -10,6 +10,7 @@ public final class AgentCapabilityRuntimeState {
 
     final Deque<AgentCapabilityFrame> frames = new ArrayDeque<>();
     final Deque<AgentCapabilityJournalEvent> journal = new ArrayDeque<>();
+    long journalSequence;
     boolean cancellationRequested;
     AgentCapabilityResult lastResult;
 
@@ -32,5 +33,9 @@ public final class AgentCapabilityRuntimeState {
 
     public synchronized List<AgentCapabilityJournalEvent> journalSnapshot() {
         return List.copyOf(new ArrayList<>(journal));
+    }
+
+    public synchronized long journalSequence() {
+        return journalSequence;
     }
 }

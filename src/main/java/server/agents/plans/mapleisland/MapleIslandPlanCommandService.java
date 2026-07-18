@@ -150,7 +150,7 @@ public final class MapleIslandPlanCommandService {
                         arguments.total(), arguments.batch(), arguments.intervalSeconds(),
                         arguments.seed(), arguments.realismMode()));
         message(player, "Cohort accepted: " + arguments.total() + " Agents in waves of "
-                + arguments.batch() + " every " + arguments.intervalSeconds()
+                + arguments.batch() + " spread across each " + arguments.intervalSeconds()
                 + "s; seed=" + status.runSeed()
                 + "; realism=" + status.realismMode() + ".");
         cohortStatus(player, runtime, status);
@@ -550,6 +550,13 @@ public final class MapleIslandPlanCommandService {
             return;
         }
         try {
+            if (route == Route.FULL_MAPLE_ISLAND) {
+                // Reassert the starter weapon after the opening map placement.
+                // The initial look update can otherwise arrive while clients are
+                // still rebuilding the freshly reset Agent's field presence.
+                CosmicMapleIslandCohortIdentity.applyDefaultStarterWeapon(agent);
+                agent.equipChanged();
+            }
             route.startAuto(entry, agent, event -> debugMessage(player, event));
             message(player, route.label + " run started for " + agentName + ".");
         } catch (IOException | AmherstPlanValidationException | RuntimeException failure) {

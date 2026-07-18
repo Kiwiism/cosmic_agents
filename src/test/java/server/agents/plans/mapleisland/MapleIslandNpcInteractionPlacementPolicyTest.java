@@ -52,7 +52,7 @@ class MapleIslandNpcInteractionPlacementPolicyTest {
         MapleIslandObjectiveRandomnessRuntime.configure(
                 entry, MapleIslandObjectiveRandomnessSettings.cohort(77L));
 
-        assertEquals(511, MapleIslandNpcInteractionPlacementPolicy.INSTANCE.select(
+        assertEquals(678, MapleIslandNpcInteractionPlacementPolicy.INSTANCE.select(
                 entry, null, 50000, 2005, new Point(), new Point(), 300).interactionRangePx());
         assertEquals(221, MapleIslandNpcInteractionPlacementPolicy.INSTANCE.select(
                 entry, null, 50000, 2003, new Point(), new Point(), 300).interactionRangePx());
@@ -65,7 +65,7 @@ class MapleIslandNpcInteractionPlacementPolicyTest {
     }
 
     @Test
-    void ninaUsesCuratedGroundSpreadWithOneLadderSlot() {
+    void senUsesCuratedGroundSpreadWithOneLadderSlot() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         MapleIslandObjectiveRandomnessRuntime.configure(
                 entry, MapleIslandObjectiveRandomnessSettings.cohort(77L));
@@ -73,11 +73,26 @@ class MapleIslandNpcInteractionPlacementPolicyTest {
         var data = MapleIslandNpcInteractionPlacementPolicy.data(entry, 30001, 2001, 300);
 
         assertEquals(false, data.dynamicSpread());
-        assertEquals(new Point(-50, -35), data.placementCenterOffset());
-        assertEquals(110, data.placementRadiusPx());
+        assertEquals(new Point(-70, -10), data.placementCenterOffset());
+        assertEquals(90, data.placementRadiusPx());
         assertEquals(1L, data.anchors().stream()
                 .filter(point -> point.x == 77 && point.y < 246).count());
         assertEquals(6L, data.anchors().stream().filter(point -> point.y == 246).count());
+    }
+
+    @Test
+    void ninaUsesOnlyCuratedGroundSlots() {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
+        MapleIslandObjectiveRandomnessRuntime.configure(
+                entry, MapleIslandObjectiveRandomnessSettings.cohort(77L));
+
+        var data = MapleIslandNpcInteractionPlacementPolicy.data(entry, 30000, 2102, 300);
+
+        assertEquals(false, data.dynamicSpread());
+        assertEquals(new Point(25, 120), data.placementCenterOffset());
+        assertEquals(215, data.placementRadiusPx());
+        assertEquals(9, data.anchors().size());
+        assertEquals(true, data.anchors().stream().allMatch(point -> point.y == 215));
     }
 
     @Test

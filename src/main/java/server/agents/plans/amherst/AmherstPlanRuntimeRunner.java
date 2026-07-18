@@ -7,6 +7,9 @@ import server.agents.capabilities.runtime.AgentCapabilityJournalEventType;
 import server.agents.capabilities.runtime.AgentCapabilityReasonCode;
 import server.agents.capabilities.runtime.AgentCapabilityResult;
 import server.agents.capabilities.runtime.AgentCapabilityRuntime;
+import server.agents.capabilities.movement.AgentMovementRecoveryService;
+import server.agents.capabilities.objective.AgentObjectiveProgressWatchdog;
+import server.agents.capabilities.objective.AgentObjectiveRecoveryPolicy;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.runtime.async.AgentAsyncCompletion;
@@ -29,6 +32,7 @@ public final class AmherstPlanRuntimeRunner {
     private final AmherstObjectiveReconciler reconciler;
     private final AmherstObjectiveHandlerRegistry handlers;
     private final AmherstObjectiveDelay objectiveDelay;
+    private final AgentObjectiveRecoveryPolicy recoveryPolicy;
     private final Object saveLock = new Object();
     private AmherstPlanProgressSnapshot pendingSave;
     private boolean saveWorkerRunning;
@@ -49,12 +53,25 @@ public final class AmherstPlanRuntimeRunner {
                                     AmherstObjectiveReconciler reconciler,
                                     AmherstObjectiveHandlerRegistry handlers,
                                     AmherstObjectiveDelay objectiveDelay) {
+        this(card, store, progressService, reconciler, handlers, objectiveDelay,
+                AgentObjectiveRecoveryPolicy.configured());
+    }
+
+    AmherstPlanRuntimeRunner(AmherstPlanCard card,
+                             AmherstPlanProgressStore store,
+                             AmherstPlanProgressService progressService,
+                             AmherstObjectiveReconciler reconciler,
+                             AmherstObjectiveHandlerRegistry handlers,
+                             AmherstObjectiveDelay objectiveDelay,
+                             AgentObjectiveRecoveryPolicy recoveryPolicy) {
         this.card = card;
         this.store = store;
         this.progressService = progressService;
         this.reconciler = reconciler;
         this.handlers = handlers;
         this.objectiveDelay = objectiveDelay == null ? AmherstObjectiveDelay.NONE : objectiveDelay;
+        this.recoveryPolicy = recoveryPolicy == null
+                ? AgentObjectiveRecoveryPolicy.configured() : recoveryPolicy;
     }
 
     public void start(AgentRuntimeEntry entry, Character agent, long nowMs) throws IOException {
@@ -66,11 +83,21 @@ public final class AmherstPlanRuntimeRunner {
                       long nowMs,
                       AmherstPlanExecutionMode mode,
                       AmherstPlanObserver observer) throws IOException {
+        start(entry, agent, nowMs, mode, observer, 0L);
+    }
+
+    public void start(AgentRuntimeEntry entry,
+                      Character agent,
+                      long nowMs,
+                      AmherstPlanExecutionMode mode,
+                      AmherstPlanObserver observer,
+                      long initialObjectiveDelayMs) throws IOException {
+        long firstObjectiveAtMs = nowMs + Math.max(0L, initialObjectiveDelayMs);
         if (asyncPersistenceEnabled()) {
-            startAsync(entry, agent, nowMs, mode, observer);
+            startAsync(entry, agent, nowMs, mode, observer, firstObjectiveAtMs);
             return;
         }
-        initialize(entry, agent, nowMs, mode, observer,
+        initialize(entry, agent, nowMs, mode, observer, firstObjectiveAtMs,
                 store.load(card.planId(), agent.getId()));
     }
 
@@ -78,7 +105,8 @@ public final class AmherstPlanRuntimeRunner {
                             Character agent,
                             long nowMs,
                             AmherstPlanExecutionMode mode,
-                            AmherstPlanObserver observer) throws IOException {
+                            AmherstPlanObserver observer,
+                            long firstObjectiveAtMs) throws IOException {
         AmherstPlanExecutionState state = entry.amherstPlanExecutionState();
         synchronized (state) {
             state.runner = this;
@@ -89,7 +117,8 @@ public final class AmherstPlanRuntimeRunner {
             state.mode = mode == null ? AmherstPlanExecutionMode.AUTO : mode;
             state.advanceRequested = state.mode == AmherstPlanExecutionMode.MANUAL;
             state.waitingForAdvance = false;
-            state.nextObjectiveAtMs = 0L;
+            state.nextObjectiveAtMs = firstObjectiveAtMs;
+            state.objectiveWatchdog.reset();
             state.observer = observer == null ? AmherstPlanObserver.NONE : observer;
             state.lastError = "";
         }
@@ -99,7 +128,8 @@ public final class AmherstPlanRuntimeRunner {
                 persistenceRequestKey("load"),
                 () -> loadProgress(agent.getId()),
                 (completionEntry, completion) -> finishAsyncStart(
-                        completionEntry, agent, nowMs, mode, observer, completion));
+                        completionEntry, agent, nowMs, mode, observer,
+                        firstObjectiveAtMs, completion));
         if (!submission.accepted()) {
             synchronized (state) {
                 if (state.runner == this && state.loading) {
@@ -123,6 +153,7 @@ public final class AmherstPlanRuntimeRunner {
                                   long nowMs,
                                   AmherstPlanExecutionMode mode,
                                   AmherstPlanObserver observer,
+                                  long firstObjectiveAtMs,
                                   AgentAsyncCompletion<AmherstPlanProgressSnapshot> completion) {
         AmherstPlanExecutionState state = entry.amherstPlanExecutionState();
         synchronized (state) {
@@ -141,7 +172,8 @@ public final class AmherstPlanRuntimeRunner {
             }
         }
         try {
-            initialize(entry, agent, nowMs, mode, observer, completion.result());
+            initialize(entry, agent, nowMs, mode, observer,
+                    firstObjectiveAtMs, completion.result());
         } catch (IOException failure) {
             synchronized (state) {
                 state.loading = false;
@@ -160,6 +192,7 @@ public final class AmherstPlanRuntimeRunner {
                             long nowMs,
                             AmherstPlanExecutionMode mode,
                             AmherstPlanObserver observer,
+                            long firstObjectiveAtMs,
                             AmherstPlanProgressSnapshot loaded) throws IOException {
         AmherstPlanExecutionState state = entry.amherstPlanExecutionState();
         synchronized (state) {
@@ -174,7 +207,8 @@ public final class AmherstPlanRuntimeRunner {
             state.mode = mode == null ? AmherstPlanExecutionMode.AUTO : mode;
             state.advanceRequested = state.mode == AmherstPlanExecutionMode.MANUAL;
             state.waitingForAdvance = false;
-            state.nextObjectiveAtMs = 0L;
+            state.nextObjectiveAtMs = firstObjectiveAtMs;
+            state.objectiveWatchdog.reset();
             state.observer = observer == null ? AmherstPlanObserver.NONE : observer;
             state.lastError = "";
             saveIfChanged(entry, state, loaded, state.progress);
@@ -199,6 +233,9 @@ public final class AmherstPlanRuntimeRunner {
                 boolean finishedObjective = false;
                 if (entry.capabilityRuntimeState().hasActiveCapability()) {
                     if (!finishLiveSatisfiedQuest(entry, agent, state, nowMs)) {
+                        if (recoverStalledObjective(entry, agent, state, nowMs)) {
+                            return true;
+                        }
                         return false;
                     }
                     finishedObjective = true;
@@ -212,7 +249,8 @@ public final class AmherstPlanRuntimeRunner {
                         return true;
                     }
                     if (state.mode == AmherstPlanExecutionMode.AUTO) {
-                        state.nextObjectiveAtMs = nowMs + Math.max(0L, objectiveDelay.nextDelayMs());
+                        state.nextObjectiveAtMs = Math.max(state.nextObjectiveAtMs,
+                                nowMs + Math.max(0L, objectiveDelay.nextDelayMs()));
                     }
                 }
 
@@ -222,7 +260,7 @@ public final class AmherstPlanRuntimeRunner {
                     return false;
                 }
 
-                if (state.mode == AmherstPlanExecutionMode.AUTO && nowMs < state.nextObjectiveAtMs) {
+                if (nowMs < state.nextObjectiveAtMs) {
                     return true;
                 }
                 state.nextObjectiveAtMs = 0L;
@@ -261,6 +299,8 @@ public final class AmherstPlanRuntimeRunner {
                 state.assignedObjectiveId = next.objectiveId();
                 state.objectiveStartLevel = agent.getLevel();
                 state.objectiveStartExp = agent.getExp();
+                AgentObjectiveProgressWatchdog.start(
+                        state.objectiveWatchdog, entry, agent, nowMs);
                 state.advanceRequested = false;
                 state.waitingForAdvance = false;
                 saveIfChanged(entry, state, before, state.progress);
@@ -371,6 +411,7 @@ public final class AmherstPlanRuntimeRunner {
         state.progress = progressService.terminal(state.progress, objective.objectiveId(), result,
                 nowMs, entry.capabilityRuntimeState().journalSnapshot().size());
         state.assignedObjectiveId = null;
+        state.objectiveWatchdog.reset();
         saveIfChanged(entry, state, before, state.progress);
         observe(state, new AmherstPlanObservation(
                 AmherstPlanObservation.Type.OBJECTIVE_FINISHED, nowMs,
@@ -385,10 +426,85 @@ public final class AmherstPlanRuntimeRunner {
                     agent.getName(), agent.getMapId(), objective.objectiveId(), result.status(),
                     result.reasonCode(), result.message());
         }
-        if (result.status() != AgentCapabilityStatus.SUCCESS
-                && state.mode != AmherstPlanExecutionMode.MANUAL) {
-            state.active = false;
+        if (result.status() != AgentCapabilityStatus.SUCCESS) {
+            if (queueAutomaticRecovery(entry, agent, state, objective, result, nowMs)) {
+                return;
+            }
+            if (state.mode != AmherstPlanExecutionMode.MANUAL) {
+                state.active = false;
+            }
         }
+    }
+
+    private boolean recoverStalledObjective(AgentRuntimeEntry entry,
+                                            Character agent,
+                                            AmherstPlanExecutionState state,
+                                            long nowMs) throws IOException {
+        if (state.assignedObjectiveId == null) {
+            return false;
+        }
+        AgentObjectiveProgressWatchdog.Evaluation evaluation =
+                AgentObjectiveProgressWatchdog.evaluate(
+                        state.objectiveWatchdog, entry, agent, nowMs, recoveryPolicy);
+        if (evaluation.action() == AgentObjectiveProgressWatchdog.Action.RECOVER) {
+            String objectiveId = state.assignedObjectiveId;
+            AgentCapabilityRuntime.cancelNow(entry, agent, nowMs);
+            finishAssigned(entry, agent, state, nowMs, new AgentCapabilityResult(
+                    AgentCapabilityStatus.TIMED_OUT,
+                    AgentCapabilityReasonCode.DEADLINE_EXCEEDED,
+                    "objective made no progress for " + evaluation.stalledMs()
+                            + " ms; stale capability state cancelled for replanning"));
+            log.warn("Recovered stalled Agent objective agent={} map={} objective={} stalledMs={}",
+                    agent.getName(), agent.getMapId(), objectiveId, evaluation.stalledMs());
+            return true;
+        }
+        if (evaluation.action() == AgentObjectiveProgressWatchdog.Action.NUDGE) {
+            AgentMovementRecoveryService.nudgeForObjectiveReplan(entry);
+            publish(state, "No objective progress for " + evaluation.stalledMs()
+                    + " ms; cleared stale movement so navigation can replan.");
+        }
+        return false;
+    }
+
+    private boolean queueAutomaticRecovery(AgentRuntimeEntry entry,
+                                           Character agent,
+                                           AmherstPlanExecutionState state,
+                                           AmherstPlanObjective objective,
+                                           AgentCapabilityResult result,
+                                           long nowMs) throws IOException {
+        if (!recoverable(result)) {
+            return false;
+        }
+        AmherstObjectiveProgress durable = state.progress.objectives().get(objective.objectiveId());
+        int attempts = durable == null ? 0 : durable.attempts();
+        if (attempts > recoveryPolicy.maxAutomaticRecoveries()) {
+            publish(state, "Automatic recovery limit reached for " + objective.objectiveId() + ".");
+            return false;
+        }
+        AgentMovementRecoveryService.nudgeForObjectiveReplan(entry);
+        AmherstPlanProgressSnapshot before = state.progress;
+        state.progress = progressService.append(state.progress,
+                new AmherstPlanJournalEvent(nowMs, AmherstPlanJournalEventType.RETRY,
+                        objective.objectiveId(), result.reasonCode().name(),
+                        "automatic recovery queued after attempt " + attempts), nowMs);
+        saveIfChanged(entry, state, before, state.progress);
+        state.nextObjectiveAtMs = nowMs + recoveryPolicy.recoveryDelayMs();
+        if (state.mode == AmherstPlanExecutionMode.MANUAL) {
+            state.advanceRequested = true;
+        }
+        publish(state, "Recovery queued for " + AmherstObjectiveFormatter.numbered(card, objective)
+                + "; the same live-unsatisfied objective will be replanned.");
+        log.info("Queued Agent objective recovery agent={} map={} objective={} attempt={} reason={}",
+                agent.getName(), agent.getMapId(), objective.objectiveId(), attempts,
+                result.reasonCode());
+        return true;
+    }
+
+    private static boolean recoverable(AgentCapabilityResult result) {
+        return result.status() == AgentCapabilityStatus.TIMED_OUT
+                || result.reasonCode() == AgentCapabilityReasonCode.RETRIES_EXHAUSTED
+                || result.reasonCode() == AgentCapabilityReasonCode.EXECUTION_FAILED
+                || result.reasonCode() == AgentCapabilityReasonCode.LIVE_STATE_MISMATCH;
     }
 
     private static boolean canRecoverQuestResultFromLiveState(AmherstPlanObjectiveKind kind) {

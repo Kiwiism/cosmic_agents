@@ -30,6 +30,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -168,6 +169,11 @@ class AmherstObjectiveCapabilitiesTest {
 
         assertEquals(displacedNpc, fixture.position);
         assertSuccess(fixture);
+    }
+
+    @Test
+    void npcSpreadAnchorUsesOneSlotOfArrivalTolerance() {
+        assertEquals(24, AmherstObjectiveCapabilitySupport.NPC_ANCHOR_ARRIVAL_RANGE_PX);
     }
 
     @Test
@@ -313,6 +319,35 @@ class AmherstObjectiveCapabilitiesTest {
     }
 
     @Test
+    void consecutiveObjectivesAtSameNpcReuseTheValidInteractionPosition() {
+        var fixture = new MutablePrimitiveGatewayFixture();
+        fixture.mapId.set(1010000);
+        fixture.position = new Point(-200, 200);
+        when(fixture.gateway.npcPosition(fixture.agent, 20100)).thenReturn(new Point(-188, 85));
+        var support = new AmherstObjectiveCapabilitySupport(
+                fixture.gateway, AmherstScopePolicy.southperry(), AmherstNpcInteractionDelay.NONE);
+        var firstPlacement = new AgentNpcInteractionPlacementData(
+                330, List.of(new Point(-200, 200)), List.of(), null,
+                false, true, new Point(-30, 145), 180);
+        var nextPlacement = new AgentNpcInteractionPlacementData(
+                330, List.of(new Point(-100, 200)), List.of(), null,
+                false, true, new Point(-30, 145), 180);
+
+        AgentCapabilityStep first = support.approachNpc(new AgentCapabilityContext(
+                fixture.entry, fixture.agent, 100L, 0L, 0, null,
+                new AgentCapabilityMemory()), 1010000, 20100, firstPlacement);
+        AgentCapabilityStep next = support.approachNpc(new AgentCapabilityContext(
+                fixture.entry, fixture.agent, 200L, 100L, 0, null,
+                new AgentCapabilityMemory()), 1010000, 20100, nextPlacement);
+
+        assertNull(first);
+        assertNull(next);
+        assertEquals(new Point(-200, 200), fixture.position);
+        verify(fixture.gateway, org.mockito.Mockito.times(2))
+                .facePosition(fixture.agent, new Point(-188, 85));
+    }
+
+    @Test
     void inventoryUse1021InspectsUsesAndVerifies() {
         var fixture = new MutablePrimitiveGatewayFixture();
         fixture.quests.put(1021, 1);
@@ -436,6 +471,26 @@ class AmherstObjectiveCapabilitiesTest {
         assertEquals(1, fixture.items.get(4031161));
         assertEquals(1, fixture.items.get(4031162));
         assertSuccess(fixture);
+    }
+
+    @Test
+    void reactorObjectiveWaitsForRespawnInsteadOfFailingWhenAllReactorsAreReserved() {
+        var fixture = new MutablePrimitiveGatewayFixture();
+        fixture.mapId.set(1000000);
+        fixture.quests.put(1008, 1);
+        when(fixture.gateway.reactors(any())).thenReturn(List.of());
+        AgentCapabilityMemory memory = new AgentCapabilityMemory();
+        memory.putInt("phase", 1);
+        var capability = new ReactorLootObjectiveCapability(fixture.gateway);
+        var command = new ReactorLootObjectiveCapability.Command(
+                "q1008-reactor", 1000000, 1008,
+                null, null, Map.of(4031161, 1), null);
+
+        AgentCapabilityStep step = capability.tick(new AgentCapabilityContext(
+                fixture.entry, fixture.agent, 100L, 0L, 0, null, memory), command);
+
+        assertEquals(AgentCapabilityStatus.RUNNING, step.status());
+        assertTrue(step.result().message().contains("active reactor"));
     }
 
     @Test

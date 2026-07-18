@@ -4,6 +4,7 @@ import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.profiles.AgentBehaviorProfile;
 import server.agents.runtime.AgentRuntimeEntry;
 
+import java.awt.Point;
 import java.util.OptionalInt;
 import java.util.OptionalLong;
 
@@ -29,6 +30,22 @@ public final class AgentObjectiveVariationRuntime {
         return settings.enabled() && settings.npcAnchorVariationEnabled() && count > 0
                 ? OptionalInt.of(entry.objectiveVariationState().selectNpcAnchorIndex(mapId, npcId, count))
                 : OptionalInt.empty();
+    }
+    public static void rememberNpcInteractionPosition(AgentRuntimeEntry entry, int mapId, int npcId,
+                                                      Point position, boolean climbable) {
+        if (entry != null) {
+            entry.objectiveVariationState().rememberNpcInteractionPosition(
+                    mapId, npcId, position, climbable);
+        }
+    }
+    public static boolean canReuseNpcInteractionPosition(AgentRuntimeEntry entry, int mapId, int npcId,
+                                                         Point currentPosition, int tolerancePx) {
+        return entry != null && entry.objectiveVariationState().canReuseNpcInteractionPosition(
+                mapId, npcId, currentPosition, tolerancePx);
+    }
+    public static boolean lastNpcInteractionWasClimbable(AgentRuntimeEntry entry, int mapId, int npcId) {
+        return entry != null && entry.objectiveVariationState()
+                .lastNpcInteractionWasClimbable(mapId, npcId);
     }
     public static OptionalLong sampleCashShopVisitDelayMs(AgentRuntimeEntry entry, long min, long max) {
         return settings(entry).enabled()

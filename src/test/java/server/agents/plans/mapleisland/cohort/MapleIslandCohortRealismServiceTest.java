@@ -80,6 +80,18 @@ class MapleIslandCohortRealismServiceTest {
         assertNotEquals(first, otherOrdinal);
     }
 
+    @Test
+    void initialIntentionDelayIsReplayableAndBetweenTwoAndFiveSeconds() {
+        long seed = MapleIslandCohortRealismService.agentSeed(entry(46), 124L, 1);
+
+        long first = MapleIslandCohortRealismService.initialIntentionDelayMs(seed);
+        long replay = MapleIslandCohortRealismService.initialIntentionDelayMs(seed);
+
+        assertEquals(first, replay);
+        assertTrue(first >= 2_000L);
+        assertTrue(first <= 5_000L);
+    }
+
     private static AgentRuntimeEntry entry(int characterId) {
         Character bot = mock(Character.class);
         when(bot.getId()).thenReturn(characterId);

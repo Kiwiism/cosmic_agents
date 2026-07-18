@@ -91,7 +91,9 @@ public final class AgentCombatCapability
             return AgentCapabilityStep.running("waiting to land before combat", false);
         }
         if (gateway.liveMonsterCount(context.agent(), allowedMobIds) == 0) {
-            return AgentCapabilityStep.retry("no required target mob is currently available");
+            gateway.grind(context.entry(), allowedMobIds);
+            return AgentCapabilityStep.running(
+                    "waiting for a required target mob to become available", false);
         }
         gateway.grind(context.entry(), allowedMobIds);
         return AgentCapabilityStep.running("delegating to reconstructed combat", false);

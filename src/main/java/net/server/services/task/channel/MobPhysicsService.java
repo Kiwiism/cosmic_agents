@@ -27,6 +27,7 @@ import server.physics.PhysicsTerrain;
 import tools.PacketCreator;
 
 import java.awt.Point;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -166,7 +167,7 @@ public final class MobPhysicsService extends BaseService {
             return false;
         }
         MapleMap map = monster.getMap();
-        return map != null && attacker.getMap() == map && map.isObservedByPlayer()
+        return map != null && attacker.getMap() == map && hasPhysicsAudience(map)
                 && !map.hasTransitioningPlayerObserver()
                 && map.isMobPhysicsObserverWarmupComplete();
     }
@@ -336,10 +337,20 @@ public final class MobPhysicsService extends BaseService {
     }
 
     private static ReleaseReason invalidMapReason(MapleMap map) {
-        if (!map.isObservedByPlayer()) return ReleaseReason.OBSERVER_LOSS;
         if (map.hasTransitioningPlayerObserver()) return ReleaseReason.CLIENT_MAP_TRANSITION;
         if (!map.isMobPhysicsObserverWarmupComplete()) return ReleaseReason.CLIENT_MAP_TRANSITION;
+        if (!hasPhysicsAudience(map)) return ReleaseReason.OBSERVER_LOSS;
         return null;
+    }
+
+    /**
+     * The stress switch deliberately substitutes only the demand signal. Real-client
+     * transition and warm-up checks remain mandatory, and no fake packet recipient is
+     * added to the map.
+     */
+    private static boolean hasPhysicsAudience(MapleMap map) {
+        return map.isObservedByPlayer()
+                || AgentCombatConfig.cfg.MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS;
     }
 
     private static ReleaseReason invalidReason(MobSimulationSession session,
@@ -537,10 +548,21 @@ public final class MobPhysicsService extends BaseService {
     public static String globalStatus() {
         long active = 0, acquired = 0, impactCount = 0, steps = 0, sent = 0, capped = 0;
         long recovered = 0, missing = 0, handoffCount = 0, ticks = 0, total = 0, max = 0;
+        long virtualSessions = 0;
+        Set<MapleMap> activeMaps = Collections.newSetFromMap(new IdentityHashMap<>());
+        Set<MapleMap> virtualMaps = Collections.newSetFromMap(new IdentityHashMap<>());
         EnumMap<ReleaseReason, Long> released = new EnumMap<>(ReleaseReason.class);
         for (ReleaseReason reason : ReleaseReason.values()) released.put(reason, 0L);
         for (MobPhysicsService service : Set.copyOf(INSTANCES)) {
             active += service.registry.size(); acquired += service.acquisitions.sum();
+            for (MobSimulationSession session : service.registry.snapshot()) {
+                MapleMap map = session.map();
+                activeMaps.add(map);
+                if (!map.isObservedByPlayer()) {
+                    virtualSessions++;
+                    virtualMaps.add(map);
+                }
+            }
             impactCount += service.impacts.sum();
             steps += service.substeps.sum(); sent += service.publications.sum();
             capped += service.cappedCatchUps.sum(); ticks += service.tickCount.sum();
@@ -552,7 +574,10 @@ public final class MobPhysicsService extends BaseService {
             total += service.totalTickNanos.sum(); max = Math.max(max, service.maximumTickNanos.get());
         }
         double averageMs = ticks == 0 ? 0.0 : total / 1_000_000.0 / ticks;
-        return "mob physics: active=" + active + " acquisitions=" + acquired + " impacts=" + impactCount
+        return "mob physics: active=" + active + " maps=" + activeMaps.size()
+                + " virtualStress=" + AgentCombatConfig.cfg.MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS
+                + " virtualSessions=" + virtualSessions + " virtualMaps=" + virtualMaps.size()
+                + " acquisitions=" + acquired + " impacts=" + impactCount
                 + " substeps=" + steps + " publications=" + sent + " capped=" + capped
                 + " recoveries=" + recovered + " missingFootholds=" + missing
                 + " handoffs=" + handoffCount + " releases=" + released + " avgTickMs="

@@ -63,9 +63,18 @@ public final class AgentMapleIslandPlanRuntime {
                                      Character agent,
                                      long nowMs,
                                      AmherstPlanObserver observer) throws IOException, AmherstPlanValidationException {
+        startFullAuto(entry, agent, nowMs, observer, 0L);
+    }
+
+    public static void startFullAuto(AgentRuntimeEntry entry,
+                                     Character agent,
+                                     long nowMs,
+                                     AmherstPlanObserver observer,
+                                     long initialObjectiveDelayMs) throws IOException, AmherstPlanValidationException {
         AgentBehaviorProfileRuntime.assignMapleIslandQuester(entry);
         defaultRunner(fullCard(), entry, AmherstScopePolicy.fullMapleIsland()).start(
-                entry, agent, nowMs, AmherstPlanExecutionMode.AUTO, observer);
+                entry, agent, nowMs, AmherstPlanExecutionMode.AUTO, observer,
+                initialObjectiveDelayMs);
     }
 
     public static AmherstPlanCard defaultCard() throws IOException, AmherstPlanValidationException {

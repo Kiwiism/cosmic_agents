@@ -10,8 +10,8 @@ public final class MapleIslandCohortEntrySetup {
     private MapleIslandCohortEntrySetup() {
     }
 
-    public static void apply(AgentRuntimeEntry entry, MapleIslandCohortRunService.AgentContext context) {
-        MapleIslandCohortRealismService.configure(
+    public static long apply(AgentRuntimeEntry entry, MapleIslandCohortRunService.AgentContext context) {
+        return MapleIslandCohortRealismService.configure(
                 entry, context.realismMode(), context.runSeed(), context.ordinal());
     }
 }

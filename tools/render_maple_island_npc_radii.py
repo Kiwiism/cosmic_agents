@@ -31,6 +31,15 @@ class Npc:
     anchors: tuple[tuple[int, int], ...]
 
 
+@dataclass(frozen=True)
+class Portal:
+    name: str
+    x: int
+    y: int
+    target_map_id: int | None
+    arrival: bool
+
+
 def font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont:
     filename = "seguisb.ttf" if bold else "segoeui.ttf"
     return ImageFont.truetype(str(Path("C:/Windows/Fonts") / filename), size=size)
@@ -57,7 +66,7 @@ def child_value(node: ET.Element, name: str, tag: str | None = None) -> str | No
 def parse_radius_rows() -> list[tuple[int, str, int, str, int, int, int]]:
     source = RADIUS_SOURCE.read_text(encoding="utf-8")
     pattern = re.compile(
-        r'entry\(([\d_]+),\s*"([^"]+)",\s*([\d_]+),\s*"([^"]+)",'
+        r'(?:curatedEntry|entry)\(([\d_]+),\s*"([^"]+)",\s*([\d_]+),\s*"([^"]+)",'
         r'\s*(-?\d+),\s*(-?\d+),\s*(\d+)\)'
     )
     rows = []
@@ -110,16 +119,35 @@ def parse_map(map_id: int):
                       for child in node if child.tag == "int" and child.attrib.get("name") in {"x", "y1", "y2"}}
             if values.keys() >= {"x", "y1", "y2"}:
                 ropes.append((values["x"], values["y1"], values["x"], values["y2"]))
-    return npc_positions, footholds, ropes
+    portals = []
+    portal_root = next((node for node in root
+                        if node.tag == "imgdir" and node.attrib.get("name") == "portal"), None)
+    if portal_root is not None:
+        for node in portal_root:
+            portal_type = int(child_value(node, "pt", "int") or -1)
+            target_map_id = int(child_value(node, "tm", "int") or 999_999_999)
+            # Keep route-relevant exits and arrival points. Tutorial prompts,
+            # random spawn points, and same-map teleport helpers obscure them.
+            if target_map_id == 999_999_999 and portal_type not in {1, 7}:
+                continue
+            portals.append(Portal(
+                child_value(node, "pn", "string") or "portal",
+                int(child_value(node, "x", "int") or 0),
+                int(child_value(node, "y", "int") or 0),
+                None if target_map_id == 999_999_999 else target_map_id,
+                target_map_id == 999_999_999,
+            ))
+    return npc_positions, footholds, ropes, portals
 
 
-def load_maps() -> dict[int, tuple[str, list[Npc], list[tuple[int, int, int, int]], list[tuple[int, int, int, int]]]]:
+def load_maps() -> dict[int, tuple[str, list[Npc], list[tuple[int, int, int, int]],
+                                 list[tuple[int, int, int, int]], list[Portal]]]:
     anchors = parse_anchor_rows()
     result = {}
     for map_id, map_name, npc_id, npc_name, offset_x, offset_y, radius in parse_radius_rows():
         if map_id not in result:
-            positions, footholds, ropes = parse_map(map_id)
-            result[map_id] = (map_name, [], footholds, ropes)
+            positions, footholds, ropes, portals = parse_map(map_id)
+            result[map_id] = (map_name, [], footholds, ropes, portals)
         position = parse_map(map_id)[0].get(npc_id)
         if position is None:
             raise RuntimeError(f"NPC {npc_id} is missing from map {map_id}")
@@ -130,7 +158,7 @@ def load_maps() -> dict[int, tuple[str, list[Npc], list[tuple[int, int, int, int
     return result
 
 
-def panel_projection(npcs: list[Npc], footholds, ropes):
+def panel_projection(npcs: list[Npc], footholds, ropes, portals):
     width, height = PANEL_SIZE
     margin = 70
     header = 105
@@ -142,6 +170,8 @@ def panel_projection(npcs: list[Npc], footholds, ropes):
         all_y.extend((npc.y + npc.offset_y - npc.radius, npc.y + npc.offset_y + npc.radius))
         all_x.extend(x for x, _ in npc.anchors)
         all_y.extend(y for _, y in npc.anchors)
+    all_x.extend(portal.x for portal in portals)
+    all_y.extend(portal.y for portal in portals)
     x_min, x_max = min(all_x), max(all_x)
     y_min, y_max = min(all_y), max(all_y)
     x_pad = max(40, int((x_max - x_min) * .03))
@@ -162,12 +192,12 @@ def panel_projection(npcs: list[Npc], footholds, ropes):
     return scale, point
 
 
-def draw_panel(map_id: int, map_name: str, npcs: list[Npc], footholds, ropes) -> Image.Image:
+def draw_panel(map_id: int, map_name: str, npcs: list[Npc], footholds, ropes, portals) -> Image.Image:
     width, height = PANEL_SIZE
     margin = 70
     header = 105
     footer = 55
-    scale, point = panel_projection(npcs, footholds, ropes)
+    scale, point = panel_projection(npcs, footholds, ropes, portals)
 
     image = Image.new("RGB", PANEL_SIZE, "#f4f6f8")
     draw = ImageDraw.Draw(image, "RGBA")
@@ -178,6 +208,17 @@ def draw_panel(map_id: int, map_name: str, npcs: list[Npc], footholds, ropes) ->
         draw.line((*point(x1, y1), *point(x2, y2)), fill="#293e52", width=5)
     for x1, y1, x2, y2 in ropes:
         draw.line((*point(x1, y1), *point(x2, y2)), fill="#9b6b35", width=4)
+
+    for portal in portals:
+        px, py = point(portal.x, portal.y)
+        marker = 12
+        draw.polygon(((px, py - marker), (px + marker, py),
+                      (px, py + marker), (px - marker, py)),
+                     fill="#f59e0b" if not portal.arrival else "#f4f6f8",
+                     outline="#9a5b00")
+        destination = "arrival" if portal.arrival else f"to {portal.target_map_id}"
+        draw.text((px + 16, py - 15), f"{portal.name} {destination}",
+                  font=BODY, fill="#6b4100")
 
     colors = ((30, 136, 229), (236, 88, 64), (117, 86, 201), (13, 148, 136))
     for index, npc in enumerate(npcs):
@@ -199,7 +240,7 @@ def draw_panel(map_id: int, map_name: str, npcs: list[Npc], footholds, ropes) ->
                                radius=7, fill=(244, 246, 248, 230), outline=(*color, 210), width=2)
         draw.text((lx, ly), label, font=LABEL, fill="#18232f")
 
-    draw.text((margin, height - 42), "circle = cohort spread radius   • = NPC   ■ = curated anchor   brown = ladder/rope",
+    draw.text((margin, height - 42), "circle = cohort spread radius   • = NPC   ■ = curated anchor   ◆ = exit portal   ◇ = arrival   brown = ladder/rope",
               font=BODY, fill="#4f5d6b")
     return image
 
@@ -220,14 +261,14 @@ def measure_annotation(path: Path) -> None:
     }
     maps = load_maps()
     pixels = annotated.load()
-    for index, (map_id, (map_name, npcs, footholds, ropes)) in enumerate(maps.items()):
+    for index, (map_id, (map_name, npcs, footholds, ropes, portals)) in enumerate(maps.items()):
         column = index % 2
         row = index // 2
         left = round((28 + column * (1500 + 28)) * scale_x)
         top = round((28 + row * (875 + 28)) * scale_y)
         right = round((28 + column * (1500 + 28) + 1500) * scale_x)
         bottom = round((28 + row * (875 + 28) + 875) * scale_y)
-        panel_scale, project = panel_projection(npcs, footholds, ropes)
+        panel_scale, project = panel_projection(npcs, footholds, ropes, portals)
         game_scale_x = panel_scale * (1500 / PANEL_SIZE[0]) * scale_x
         game_scale_y = panel_scale * (875 / PANEL_SIZE[1]) * scale_y
         for color_name, color in overlay_colors.items():
@@ -269,8 +310,8 @@ def main() -> None:
         return
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     panels = []
-    for map_id, (map_name, npcs, footholds, ropes) in load_maps().items():
-        panel = draw_panel(map_id, map_name, npcs, footholds, ropes)
+    for map_id, (map_name, npcs, footholds, ropes, portals) in load_maps().items():
+        panel = draw_panel(map_id, map_name, npcs, footholds, ropes, portals)
         filename = f"{map_id:09d}-{re.sub(r'[^a-z0-9]+', '-', map_name.lower()).strip('-')}.png"
         panel.save(OUTPUT_DIR / filename, optimize=True)
         panels.append((map_id, map_name, panel))

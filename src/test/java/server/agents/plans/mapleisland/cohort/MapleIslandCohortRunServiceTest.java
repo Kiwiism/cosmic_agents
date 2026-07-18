@@ -17,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class MapleIslandCohortRunServiceTest {
     @Test
@@ -29,11 +30,9 @@ class MapleIslandCohortRunServiceTest {
         assertEquals(44L, accepted.runSeed());
         assertEquals(MapleIslandCohortRealismMode.LIGHT, accepted.realismMode());
 
-        hooks.runNextWave();
-        assertEquals(2, service.status(0, 1).launched());
-        hooks.runNextWave();
-        assertEquals(4, service.status(0, 1).launched());
-        hooks.runNextWave();
+        hooks.runUntilLaunched(service, 2);
+        hooks.runUntilLaunched(service, 4);
+        hooks.runUntilLaunched(service, 5);
 
         MapleIslandCohortRunService.Status status = service.status(0, 1);
         assertEquals(MapleIslandCohortRunService.RunState.RUNNING, status.state());
@@ -45,7 +44,12 @@ class MapleIslandCohortRunServiceTest {
                 MapleIslandCohortRealismMode.LIGHT,
                 MapleIslandCohortRealismMode.LIGHT,
                 MapleIslandCohortRealismMode.LIGHT), hooks.startedModes);
-        assertEquals(List.of(0L, 10_000L, 10_000L, 5_000L), hooks.scheduledDelays);
+        assertEquals(5, hooks.startedAtMs.size());
+        assertTrue(hooks.startedAtMs.get(0) >= 0L && hooks.startedAtMs.get(0) < 5_000L);
+        assertTrue(hooks.startedAtMs.get(1) >= 5_000L && hooks.startedAtMs.get(1) < 10_000L);
+        assertTrue(hooks.startedAtMs.get(2) >= 10_000L && hooks.startedAtMs.get(2) < 15_000L);
+        assertTrue(hooks.startedAtMs.get(3) >= 15_000L && hooks.startedAtMs.get(3) < 20_000L);
+        assertTrue(hooks.startedAtMs.get(4) >= 20_000L && hooks.startedAtMs.get(4) < 30_000L);
     }
 
     @Test
@@ -53,7 +57,7 @@ class MapleIslandCohortRunServiceTest {
         FakeHooks hooks = new FakeHooks();
         MapleIslandCohortRunService service = new MapleIslandCohortRunService(hooks);
         service.start(new MapleIslandCohortRunService.StartRequest(99, 0, 1, 5, 2, 10, 55L));
-        hooks.runNextWave();
+        hooks.runUntilLaunched(service, 2);
 
         assertEquals(MapleIslandCohortRunService.RunState.CANCELLED,
                 service.cancel(0, 1).state());
@@ -66,6 +70,35 @@ class MapleIslandCohortRunServiceTest {
                 service.status(0, 1).state());
         assertEquals(Set.of(100, 101), Set.copyOf(hooks.stopped));
         assertEquals(1, hooks.releaseCalls);
+    }
+
+    @Test
+    void cancelDuringWavePreventsRemainingLaunchSlots() {
+        FakeHooks hooks = new FakeHooks();
+        MapleIslandCohortRunService service = new MapleIslandCohortRunService(hooks);
+        service.start(new MapleIslandCohortRunService.StartRequest(99, 0, 1, 5, 5, 10, 56L));
+        hooks.runUntilLaunched(service, 1);
+
+        service.cancel(0, 1);
+
+        assertEquals(1, service.status(0, 1).launched());
+        assertEquals(1, service.status(0, 1).running());
+        assertTrue(hooks.scheduled.stream().allMatch(TestFuture::isCancelled));
+    }
+
+    @Test
+    void sameSeedReplaysLaunchTiming() {
+        FakeHooks firstHooks = new FakeHooks();
+        MapleIslandCohortRunService first = new MapleIslandCohortRunService(firstHooks);
+        first.start(new MapleIslandCohortRunService.StartRequest(99, 0, 1, 5, 5, 10, 57L));
+        firstHooks.runUntilLaunched(first, 5);
+
+        FakeHooks secondHooks = new FakeHooks();
+        MapleIslandCohortRunService second = new MapleIslandCohortRunService(secondHooks);
+        second.start(new MapleIslandCohortRunService.StartRequest(99, 0, 1, 5, 5, 10, 57L));
+        secondHooks.runUntilLaunched(second, 5);
+
+        assertEquals(firstHooks.startedAtMs, secondHooks.startedAtMs);
     }
 
     @Test
@@ -88,13 +121,13 @@ class MapleIslandCohortRunServiceTest {
         MapleIslandCohortRunService service = new MapleIslandCohortRunService(
                 hooks, 500, 60_000L, hooks::nowMs);
         service.start(new MapleIslandCohortRunService.StartRequest(99, 0, 1, 2, 2, 10, 90L));
-        hooks.runNextWave();
+        hooks.runUntilLaunched(service, 2);
         hooks.states.put(100, MapleIslandCohortRunService.AgentState.COMPLETED);
         hooks.states.put(101, MapleIslandCohortRunService.AgentState.FAILED);
 
         assertEquals(MapleIslandCohortRunService.RunState.RUNNING, service.status(0, 1).state());
         hooks.advanceTime(30_000L);
-        hooks.runNextWave();
+        hooks.runNextScheduled();
 
         assertEquals(MapleIslandCohortRunService.RunState.COMPLETED_WITH_FAILURES,
                 service.status(0, 1).state());
@@ -106,10 +139,10 @@ class MapleIslandCohortRunServiceTest {
         MapleIslandCohortRunService service = new MapleIslandCohortRunService(
                 hooks, 500, 10_000L, hooks::nowMs);
         service.start(new MapleIslandCohortRunService.StartRequest(99, 0, 1, 1, 1, 10, 91L));
-        hooks.runNextWave();
+        hooks.runUntilLaunched(service, 1);
 
         hooks.advanceTime(10_000L);
-        hooks.runNextWave();
+        hooks.runNextScheduled();
 
         assertEquals(MapleIslandCohortRunService.RunState.STALLED, service.status(0, 1).state());
         assertEquals(List.of(MapleIslandCohortRunService.RunState.STALLED), hooks.terminalStates);
@@ -128,7 +161,7 @@ class MapleIslandCohortRunServiceTest {
         service.start(new MapleIslandCohortRunService.StartRequest(
                 99, 0, 1, 2, 2, 10, 77L, MapleIslandCohortRealismMode.OFF));
 
-        hooks.runNextWave();
+        hooks.runUntilLaunched(service, 2);
 
         assertEquals(List.of(MapleIslandCohortRealismMode.OFF,
                 MapleIslandCohortRealismMode.OFF), hooks.startedModes);
@@ -151,7 +184,7 @@ class MapleIslandCohortRunServiceTest {
         FakeHooks hooks = new FakeHooks();
         MapleIslandCohortRunService service = new MapleIslandCohortRunService(hooks);
         service.start(new MapleIslandCohortRunService.StartRequest(99, 0, 1, 1, 1, 10, 89L));
-        hooks.runNextWave();
+        hooks.runUntilLaunched(service, 1);
         hooks.rejectStop = true;
 
         service.stop(0, 1);
@@ -170,9 +203,9 @@ class MapleIslandCohortRunServiceTest {
     private static final class FakeHooks implements MapleIslandCohortRunService.Hooks {
         private final Deque<TestFuture> scheduled = new ArrayDeque<>();
         private final Deque<Runnable> workers = new ArrayDeque<>();
-        private final List<Long> scheduledDelays = new ArrayList<>();
         private final List<Integer> startedOrdinals = new ArrayList<>();
         private final List<MapleIslandCohortRealismMode> startedModes = new ArrayList<>();
+        private final List<Long> startedAtMs = new ArrayList<>();
         private final List<Integer> stopped = new ArrayList<>();
         private final List<MapleIslandCohortRunService.RunState> terminalStates = new ArrayList<>();
         private final Map<Integer, MapleIslandCohortRunService.AgentState> states = new HashMap<>();
@@ -207,6 +240,7 @@ class MapleIslandCohortRunServiceTest {
                                MapleIslandCohortRunService.AgentContext context) {
             startedOrdinals.add(context.ordinal());
             startedModes.add(context.realismMode());
+            startedAtMs.add(nowMs);
             states.put(agent.characterId(), MapleIslandCohortRunService.AgentState.RUNNING);
         }
 
@@ -238,7 +272,6 @@ class MapleIslandCohortRunServiceTest {
             if (rejectSchedule) {
                 throw new RejectedExecutionException("schedule rejected");
             }
-            scheduledDelays.add(delayMs);
             TestFuture future = new TestFuture(action, delayMs);
             scheduled.addLast(future);
             return future;
@@ -254,13 +287,20 @@ class MapleIslandCohortRunServiceTest {
             terminalStates.add(state);
         }
 
-        private void runNextWave() {
+        private void runNextScheduled() {
             TestFuture future;
             do {
                 future = scheduled.removeFirst();
             } while (future.cancelled);
+            nowMs += future.delayMs;
             future.run();
             runWorkers();
+        }
+
+        private void runUntilLaunched(MapleIslandCohortRunService service, int launched) {
+            while (service.status(0, 1).launched() < launched) {
+                runNextScheduled();
+            }
         }
 
         private void runWorkers() {

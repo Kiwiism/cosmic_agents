@@ -2,6 +2,7 @@ package server.agents.plans.amherst;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import server.agents.capabilities.objective.AgentObjectiveRecoveryPolicy;
 import server.agents.capabilities.runtime.AgentCapabilityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.testing.MutablePrimitiveGatewayFixture;
@@ -76,6 +77,21 @@ class AmherstPlanRuntimeRunnerTest {
     }
 
     @Test
+    void initialDelayPreventsFirstObjectiveAssignment() throws Exception {
+        var fixture = new MutablePrimitiveGatewayFixture();
+        AmherstPlanRuntimeRunner runner = runner(
+                minimalCard(), new FileAmherstPlanProgressStore(tempDir), fixture);
+
+        runner.start(fixture.entry, fixture.agent, 1_000L,
+                AmherstPlanExecutionMode.AUTO, AmherstPlanObserver.NONE, 3_000L);
+
+        assertTrue(runner.tick(fixture.entry, fixture.agent, 3_999L));
+        assertNull(fixture.entry.amherstPlanExecutionState().assignedObjectiveId());
+        assertTrue(runner.tick(fixture.entry, fixture.agent, 4_000L));
+        assertEquals("q1031", fixture.entry.amherstPlanExecutionState().assignedObjectiveId());
+    }
+
+    @Test
     void restartReconcilesAndResumesAtFirstUnsatisfiedWithoutRepeatingReward() throws Exception {
         var fixture = new MutablePrimitiveGatewayFixture();
         AmherstPlanCard card = minimalCard();
@@ -139,6 +155,40 @@ class AmherstPlanRuntimeRunnerTest {
 
         assertTrue(fixture.entry.amherstPlanExecutionState().completed());
         assertEquals(2, store.load(card.planId(), fixture.agent.getId())
+                .objectives().get("q1031").attempts());
+    }
+
+    @Test
+    void stalledObjectiveIsNudgedThenReplannedWithoutStoppingThePlan() throws Exception {
+        var fixture = new MutablePrimitiveGatewayFixture();
+        AmherstPlanCard card = minimalCard();
+        FileAmherstPlanProgressStore store = new FileAmherstPlanProgressStore(tempDir);
+        AmherstPlanRuntimeRunner runner = new AmherstPlanRuntimeRunner(
+                card, store, new AmherstPlanProgressService(),
+                new AmherstObjectiveReconciler(fixture.gateway),
+                new AmherstObjectiveHandlerRegistry(fixture.gateway),
+                AmherstObjectiveDelay.NONE,
+                new AgentObjectiveRecoveryPolicy(5_000L, 15_000L, 2, 500L));
+        runner.start(fixture.entry, fixture.agent, 1L);
+        runner.tick(fixture.entry, fixture.agent, 2L);
+
+        assertFalse(runner.tick(fixture.entry, fixture.agent, 5_002L));
+        assertTrue(fixture.entry.amherstPlanExecutionState().active());
+        assertEquals("q1031", fixture.entry.amherstPlanExecutionState().assignedObjectiveId());
+        assertEquals(5_002L, fixture.entry.amherstPlanExecutionState()
+                .objectiveWatchdog.lastNudgeAtMs());
+
+        assertTrue(runner.tick(fixture.entry, fixture.agent, 15_002L));
+        assertTrue(fixture.entry.amherstPlanExecutionState().active());
+        assertNull(fixture.entry.amherstPlanExecutionState().assignedObjectiveId());
+        assertFalse(fixture.entry.capabilityRuntimeState().hasActiveCapability());
+        assertEquals(AmherstObjectiveProgressStatus.FAILED,
+                fixture.entry.amherstPlanExecutionState().progress()
+                        .objectives().get("q1031").status());
+
+        assertTrue(runner.tick(fixture.entry, fixture.agent, 15_502L));
+        assertEquals("q1031", fixture.entry.amherstPlanExecutionState().assignedObjectiveId());
+        assertEquals(2, fixture.entry.amherstPlanExecutionState().progress()
                 .objectives().get("q1031").attempts());
     }
 

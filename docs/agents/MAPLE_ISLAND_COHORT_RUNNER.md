@@ -19,6 +19,12 @@ interval is 5-3,600 seconds. Omitting `seed` creates one and reports it in
 status so a run can be replayed. The legacy `!mapleisland run <AgentIGN>`
 showcase remains available.
 
+Agents within a batch are spread across that batch's interval using seeded
+stratified jitter. For example, `100 5 10` launches 100 Agents total and places
+one of each five-Agent batch at a random point inside each successive two-second
+part of its ten-second wave. This avoids synchronized bursts while keeping runs
+replayable from their reported seed.
+
 The realism preset defaults to `light`. You may also give a preset without a
 seed, for example `!mapleisland run 25 5 10 light`.
 

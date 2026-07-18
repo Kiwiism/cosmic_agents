@@ -25,6 +25,7 @@ import server.agents.runtime.AgentInteractionRuntime;
 import server.agents.runtime.AgentRuntimeCleanupService;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
+import server.agents.runtime.AgentSpawnPlacementCoordinator;
 import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.runtime.async.AgentAsyncExecutorRegistry;
 import server.agents.runtime.async.AgentAsyncWorkKind;
@@ -213,6 +214,10 @@ public final class MapleIslandCohortRuntime {
                     pooled.characterTemplateOrdinal(), "Pooled Agent has no character template");
             CosmicMapleIslandCohortIdentity.apply(agent,
                     MapleIslandCohortCharacterCatalog.template(characterTemplateOrdinal));
+            // The offline loader has already published the character's saved
+            // look to map observers. Publish the assigned cohort template so
+            // existing pooled characters do not all retain that stale look.
+            agent.equipChanged();
 
             AmherstTestResetResult reset = AmherstTestResetService
                     .showcaseHarness(true, pooled.name())
@@ -226,7 +231,12 @@ public final class MapleIslandCohortRuntime {
             }
             AmherstPlanCard card = AgentMapleIslandPlanRuntime.fullCard();
             AgentMapleIslandPlanRuntime.defaultStore().delete(card.planId(), agent.getId());
-            MapleIslandCohortEntrySetup.apply(entry, context);
+            // CLEAN_LV1_START normally preserves the visible portal-entry fall. A cohort
+            // launch instead settles at the resolved foothold before its first intention.
+            AgentSpawnPlacementCoordinator.normalizeSpawnedAgentWithoutParty(entry);
+            long agentSeed = MapleIslandCohortEntrySetup.apply(entry, context);
+            long initialIntentionDelayMs =
+                    MapleIslandCohortRealismService.initialIntentionDelayMs(agentSeed);
             int agentId = agent.getId();
             AgentMapleIslandPlanRuntime.startFullAuto(entry, agent, System.currentTimeMillis(),
                     new AmherstPlanObserver() {
@@ -240,7 +250,7 @@ public final class MapleIslandCohortRuntime {
                         public void observe(AmherstPlanObservation observation) {
                             telemetry.observe(agentId, observation);
                         }
-                    });
+                    }, initialIntentionDelayMs);
             pool.markActive(pooled.characterId(), context.sessionId(), System.currentTimeMillis());
         } catch (Exception | Error failure) {
             telemetry.startupFailed(context.sessionId(), pooled.name());

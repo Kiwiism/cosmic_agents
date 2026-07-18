@@ -11,19 +11,19 @@ import java.util.List;
 public final class MapleIslandNpcInteractionRadiusCatalog {
     private static final List<Entry> ENTRIES = List.of(
             entry(10_000, "Mushroom Town", 2_101, "Heena", -55, 135, 230),
-            entry(10_000, "Mushroom Town", 2_100, "Sera", -35, 105, 220),
-            entry(20_000, "Snail Garden", 2_000, "Roger", -160, 155, 180),
-            entry(30_000, "Snail Field of Flowers", 2_102, "Nina", 125, 70, 225),
-            entry(30_001, "Mushroom Town Townstreet", 2_001, "Sen", -50, -35, 110),
+            entry(10_000, "Mushroom Town", 2_100, "Sera", -40, 250, 235),
+            curatedEntry(20_000, "Snail Garden", 2_000, "Roger", -160, 155, 180),
+            curatedEntry(30_000, "Snail Field of Flowers", 2_102, "Nina", 25, 120, 215),
+            curatedEntry(30_001, "Mushroom Town Townstreet", 2_001, "Sen", -70, -10, 90),
             entry(40_000, "Mushroom Town Training Ground", 2_004, "Todd", 5, -10, 180),
             entry(40_000, "Mushroom Town Training Ground", 2_002, "Peter", -180, -15, 205),
             entry(50_000, "Dangerous Forest", 2_003, "Robin", -65, -10, 155),
-            entry(50_000, "Dangerous Forest", 2_005, "Sam", -280, -5, 230),
+            entry(50_000, "Dangerous Forest", 2_005, "Sam", -395, 120, 265),
             entry(1_000_000, "Amherst", 2_103, "Maria", 30, 0, 205),
-            entry(1_000_000, "Amherst", 12_000, "Lucas", 5, 5, 300),
+            entry(1_000_000, "Amherst", 12_000, "Lucas", 10, 20, 280),
             entry(1_000_000, "Amherst", 12_101, "Rain", 10, -5, 260),
             entry(1_000_000, "Amherst", 10_000, "Pio", 55, -50, 230),
-            entry(1_010_000, "Entrance to Adventurer Training Center", 20_100, "Yoona", -80, 90, 125),
+            entry(1_010_000, "Entrance to Adventurer Training Center", 20_100, "Yoona", -30, 145, 180),
             entry(1_010_000, "Entrance to Adventurer Training Center", 12_100, "Mai", 40, -35, 150),
             entry(1_010_000, "Entrance to Adventurer Training Center", 20_001, "Bari", 55, 30, 155),
             entry(2_000_000, "Southperry", 20_002, "Biggs", -5, -10, 300));
@@ -47,6 +47,10 @@ public final class MapleIslandNpcInteractionRadiusCatalog {
                 .orElse(fallbackRangePx);
     }
 
+    public static boolean dynamicSpread(int mapId, int npcId) {
+        return find(mapId, npcId).map(Entry::dynamicSpread).orElse(true);
+    }
+
     public static List<Entry> entries() {
         return ENTRIES;
     }
@@ -59,11 +63,19 @@ public final class MapleIslandNpcInteractionRadiusCatalog {
 
     private static Entry entry(int mapId, String mapName, int npcId, String npcName,
                                int centerOffsetX, int centerOffsetY, int radiusPx) {
-        return new Entry(mapId, mapName, npcId, npcName, centerOffsetX, centerOffsetY, radiusPx);
+        return new Entry(mapId, mapName, npcId, npcName,
+                centerOffsetX, centerOffsetY, radiusPx, true);
+    }
+
+    private static Entry curatedEntry(int mapId, String mapName, int npcId, String npcName,
+                                      int centerOffsetX, int centerOffsetY, int radiusPx) {
+        return new Entry(mapId, mapName, npcId, npcName,
+                centerOffsetX, centerOffsetY, radiusPx, false);
     }
 
     public record Entry(int mapId, String mapName, int npcId, String npcName,
-                        int centerOffsetX, int centerOffsetY, int radiusPx) {
+                        int centerOffsetX, int centerOffsetY, int radiusPx,
+                        boolean dynamicSpread) {
         public Entry {
             if (radiusPx <= 0) {
                 throw new IllegalArgumentException("NPC interaction radius must be positive");

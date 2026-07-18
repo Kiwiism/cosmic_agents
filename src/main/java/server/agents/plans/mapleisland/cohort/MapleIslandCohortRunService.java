@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
+import java.util.SplittableRandom;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.LongSupplier;
 
@@ -23,6 +24,7 @@ public final class MapleIslandCohortRunService {
     private static final long MONITOR_INTERVAL_MS = 5_000L;
     private static final long TERMINAL_FAILURE_GRACE_MS = 30_000L;
     private static final long DEFAULT_STALL_TIMEOUT_MS = 30L * 60L * 1_000L;
+    private static final long WAVE_JITTER_DOMAIN = 0x574156452D4A4954L;
 
     public record Shard(int world, int channel) {
         public Shard {
@@ -247,7 +249,7 @@ public final class MapleIslandCohortRunService {
             session.waveInFlight = true;
         }
         try {
-            hooks.dispatch(() -> executeWave(session));
+            hooks.dispatch(() -> prepareWave(session));
         } catch (RuntimeException failure) {
             synchronized (this) {
                 session.waveInFlight = false;
@@ -256,80 +258,109 @@ public final class MapleIslandCohortRunService {
         }
     }
 
-    private void executeWave(Session session) {
+    private void prepareWave(Session session) {
         int count;
-        Set<Integer> excluded;
+        long[] launchOffsetsMs;
         synchronized (this) {
             if (session.state != RunState.RELEASING) {
                 session.waveInFlight = false;
                 return;
             }
             count = Math.min(session.request.batch(), session.request.total() - session.launchedIds.size());
-            excluded = Set.copyOf(session.attemptedIds);
+            launchOffsetsMs = launchOffsetsMs(session, count);
+            session.waveInFlight = false;
         }
+        scheduleLaunch(session, launchOffsetsMs, 0, launchOffsetsMs[0]);
+    }
 
+    private void handoffLaunch(Session session, long[] launchOffsetsMs, int slot) {
+        synchronized (this) {
+            if (session.state != RunState.RELEASING || session.waveInFlight) {
+                return;
+            }
+            session.scheduledWave = null;
+            session.waveInFlight = true;
+        }
         try {
-            List<Agent> agents = hooks.acquire(count, session.sessionId,
-                    session.request.ownerCharacterId(), session.request.world(), session.request.channel(), excluded);
+            hooks.dispatch(() -> executeLaunch(session, launchOffsetsMs, slot));
+        } catch (RuntimeException failure) {
+            synchronized (this) {
+                session.waveInFlight = false;
+                fail(session, failure);
+            }
+        }
+    }
+
+    private void executeLaunch(Session session, long[] launchOffsetsMs, int slot) {
+        Agent leased = null;
+        try {
+            Set<Integer> excluded;
+            synchronized (this) {
+                if (session.state != RunState.RELEASING) {
+                    return;
+                }
+                excluded = Set.copyOf(session.attemptedIds);
+            }
+            List<Agent> agents = hooks.acquire(1, session.sessionId,
+                    session.request.ownerCharacterId(), session.request.world(),
+                    session.request.channel(), excluded);
             if (agents.isEmpty()) {
                 throw new IllegalStateException("No reusable cohort Agent could be leased");
             }
-            for (Agent agent : agents) {
-                AgentContext context;
-                boolean releaseCancelledWave;
-                synchronized (this) {
-                    session.attemptedIds.add(agent.characterId());
-                    releaseCancelledWave = session.state != RunState.RELEASING;
-                    context = releaseCancelledWave ? null : new AgentContext(
-                            session.sessionId, session.runSeed, session.nextOrdinal++,
-                            session.request.ownerCharacterId(), session.request.world(), session.request.channel(),
-                            session.request.realismMode());
-                }
-                if (releaseCancelledWave) {
-                    hooks.releaseSession(session.sessionId);
-                    break;
-                }
-                try {
-                    hooks.startAgent(agent, context);
-                    synchronized (this) {
-                        session.launchedIds.add(agent.characterId());
-                    }
-                } catch (Exception failure) {
-                    synchronized (this) {
-                        session.failedStarts++;
-                        session.lastError = message(failure);
-                    }
-                    try {
-                        hooks.markBroken(agent, session.sessionId, message(failure));
-                    } catch (Exception markFailure) {
-                        synchronized (this) {
-                            session.lastError = "Failed to persist broken lease after "
-                                    + message(failure) + "; " + message(markFailure);
-                            session.state = RunState.FAILED;
-                        }
-                        break;
-                    }
-                }
+            leased = agents.getFirst();
+            AgentContext context;
+            boolean cancelled;
+            synchronized (this) {
+                session.attemptedIds.add(leased.characterId());
+                cancelled = session.state != RunState.RELEASING;
+                context = cancelled ? null : new AgentContext(
+                        session.sessionId, session.runSeed, session.nextOrdinal++,
+                        session.request.ownerCharacterId(), session.request.world(),
+                        session.request.channel(), session.request.realismMode());
+            }
+            if (cancelled) {
+                hooks.releaseSession(session.sessionId);
+                return;
+            }
+            hooks.startAgent(leased, context);
+            synchronized (this) {
+                session.launchedIds.add(leased.characterId());
             }
         } catch (Exception failure) {
             synchronized (this) {
                 session.failedStarts++;
                 session.lastError = message(failure);
             }
+            if (leased != null) {
+                try {
+                    hooks.markBroken(leased, session.sessionId, message(failure));
+                } catch (Exception markFailure) {
+                    synchronized (this) {
+                        session.lastError = "Failed to persist broken lease after "
+                                + message(failure) + "; " + message(markFailure);
+                        session.state = RunState.FAILED;
+                    }
+                }
+            }
         } finally {
             synchronized (this) {
                 session.waveInFlight = false;
-                finishWave(session);
+                finishLaunch(session, launchOffsetsMs, slot);
             }
         }
     }
 
-    private void finishWave(Session session) {
+    private void finishLaunch(Session session, long[] launchOffsetsMs, int slot) {
         if (session.state == RunState.FAILED) {
             notifyTerminal(session);
             return;
         }
         if (session.state != RunState.RELEASING) {
+            return;
+        }
+        if (slot + 1 < launchOffsetsMs.length) {
+            long nextDelayMs = launchOffsetsMs[slot + 1] - launchOffsetsMs[slot];
+            scheduleLaunch(session, launchOffsetsMs, slot + 1, nextDelayMs);
             return;
         }
         if (session.launchedIds.size() >= session.request.total()) {
@@ -346,10 +377,39 @@ public final class MapleIslandCohortRunService {
             return;
         }
         try {
-            scheduleWave(session, session.request.intervalSeconds() * 1_000L);
+            long waveWindowMs = session.request.intervalSeconds() * 1_000L;
+            scheduleWave(session, Math.max(0L,
+                    waveWindowMs - launchOffsetsMs[launchOffsetsMs.length - 1]));
         } catch (RuntimeException failure) {
             fail(session, failure);
         }
+    }
+
+    private void scheduleLaunch(Session session, long[] launchOffsetsMs, int slot, long delayMs) {
+        synchronized (this) {
+            if (session.state != RunState.RELEASING) {
+                return;
+            }
+            try {
+                session.scheduledWave = hooks.schedule(
+                        () -> handoffLaunch(session, launchOffsetsMs, slot), delayMs);
+            } catch (RuntimeException failure) {
+                fail(session, failure);
+            }
+        }
+    }
+
+    private static long[] launchOffsetsMs(Session session, int count) {
+        long windowMs = session.request.intervalSeconds() * 1_000L;
+        long[] offsets = new long[count];
+        SplittableRandom random = new SplittableRandom(
+                session.runSeed ^ WAVE_JITTER_DOMAIN ^ Integer.toUnsignedLong(session.nextWave++));
+        for (int slot = 0; slot < count; slot++) {
+            long start = windowMs * slot / count;
+            long end = windowMs * (slot + 1L) / count;
+            offsets[slot] = start + random.nextLong(Math.max(1L, end - start));
+        }
+        return offsets;
     }
 
     private void stopOnWorker(Session session) {
@@ -537,6 +597,7 @@ public final class MapleIslandCohortRunService {
         private ScheduledFuture<?> scheduledWave;
         private ScheduledFuture<?> monitor;
         private boolean waveInFlight;
+        private int nextWave;
         private int nextOrdinal = 1;
         private int failedStarts;
         private int admissionDeferrals;

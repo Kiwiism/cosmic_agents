@@ -328,6 +328,7 @@ server:
 
     # PHYSICS mode: diagnostics.
     AGENT_MOB_PHYSICS_DIAGNOSTIC_LOGGING: false                       # Log aggregate physics counters and timing at most once every 30 seconds.
+    AGENT_MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS: false                  # Diagnostic only: let Agent hits run real mob physics in maps without a player; packets are built but have no fake network recipient.
     AGENT_MAP_TRANSITION_PACKET_DIAGNOSTICS: true                     # If a client disconnects within 15 seconds of warping, write its bounded packet trace under logs/map-transition-crashes.
 
     AGENT_LEGACY_DIALOGUE_ENABLED: false #Experimental Agent plans narrate objectives; suppress NuTNNuT-era Agent chatter.
@@ -342,6 +343,10 @@ server:
     AGENT_MAPLE_ISLAND_COHORT_STALL_TIMEOUT_MS: 1800000 # Mark a running cohort stalled after this long with no Agent reaching a new terminal state (30 minutes).
     AGENT_MAPLE_ISLAND_COHORT_TELEMETRY_RETAINED_RUNS: 20 # Keep this many compact completed-run summaries in memory; live per-Agent trackers are discarded.
     AGENT_MAPLE_ISLAND_COHORT_OBJECTIVE_TIMEOUT_MS: 900000 # Per-objective deadline for realism/cohort runs; allows 15 minutes for shared mob/reactor contention before recovery fails the objective.
+    AGENT_OBJECTIVE_NUDGE_MS: 5000 # After this much objective inactivity, clear stale navigation and let an airborne/climbing Agent fall naturally; applies to every region, never teleports, and 0 disables the nudge.
+    AGENT_OBJECTIVE_STALL_RECOVERY_MS: 15000 # After this much objective inactivity, cancel stale capability state and replan the same live-unsatisfied objective in any region; 0 disables stall recovery.
+    AGENT_OBJECTIVE_AUTO_RECOVERY_ATTEMPTS: 20 # Maximum automatic replans after recoverable timeouts or execution/retry failures before a plan stops for diagnosis.
+    AGENT_OBJECTIVE_RECOVERY_DELAY_MS: 500 # Brief pause before assigning a recovered objective again, allowing movement state and live map state to settle.
     AGENT_SOUTHPERRY_SHOWCASE_ENABLED: true #Allow the guarded one-command post-Amherst-to-Southperry run.
     AGENT_SOUTHPERRY_SHOWCASE_AGENT_NAME: AmherstRun #Only this Agent IGN may use the captured post-Amherst reset path.
     AGENT_AUTHORITY_ADMINISTRATOR_NAMES: Kiwi #Comma-separated IGNs allowed to administer all Agents.

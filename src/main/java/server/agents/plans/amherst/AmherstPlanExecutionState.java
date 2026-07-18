@@ -1,5 +1,7 @@
 package server.agents.plans.amherst;
 
+import server.agents.capabilities.objective.AgentObjectiveProgressWatchdog;
+
 public final class AmherstPlanExecutionState {
     AmherstPlanRuntimeRunner runner;
     AmherstPlanProgressSnapshot progress;
@@ -7,6 +9,8 @@ public final class AmherstPlanExecutionState {
     int objectiveStartLevel;
     int objectiveStartExp;
     int syncedCapabilityJournalCount;
+    final AgentObjectiveProgressWatchdog.State objectiveWatchdog =
+            new AgentObjectiveProgressWatchdog.State();
     boolean active;
     boolean loading;
     boolean completed;
@@ -52,6 +56,7 @@ public final class AmherstPlanExecutionState {
         objectiveStartLevel = 0;
         objectiveStartExp = 0;
         syncedCapabilityJournalCount = 0;
+        objectiveWatchdog.reset();
         active = false;
         loading = false;
         completed = false;

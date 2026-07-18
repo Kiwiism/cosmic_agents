@@ -34,4 +34,18 @@ public final class AgentMovementRecoveryService {
         AgentMovementBroadcastService.broadcastMovement(entry);
         AgentRunObservationRuntime.recovery(entry, agent, "movement-unstuck", System.currentTimeMillis());
     }
+
+    /**
+     * Clears stale navigation and lets an airborne or climbing Agent fall naturally before replanning.
+     * This intentionally does not move or teleport a grounded Agent.
+     */
+    public static void nudgeForObjectiveReplan(AgentRuntimeEntry entry) {
+        Character agent = AgentRuntimeIdentityRuntime.bot(entry);
+        if (AgentMovementStateRuntime.inAir(entry) || AgentMovementStateRuntime.climbing(entry)) {
+            AgentAirborneLaunchService.launchAirborne(entry, agent.getPosition(), 0f, 0, false);
+        }
+        AgentMovementStateResetService.clearNavigationState(entry);
+        AgentRunObservationRuntime.recovery(
+                entry, agent, "objective-navigation-nudge", System.currentTimeMillis());
+    }
 }

@@ -246,6 +246,8 @@ public final class AgentCombatConfig {
                 YamlConfig.config.server.AGENT_MOB_PHYSICS_IMPACT_DELAY_OFFSET_MS;
         public boolean MOB_PHYSICS_DIAGNOSTIC_LOGGING =
                 YamlConfig.config.server.AGENT_MOB_PHYSICS_DIAGNOSTIC_LOGGING;
+        public boolean MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS =
+                YamlConfig.config.server.AGENT_MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS;
         public int MOB_PHYSICS_OBSERVER_WARMUP_MS =
                 YamlConfig.config.server.AGENT_MOB_PHYSICS_OBSERVER_WARMUP_MS;
         public int MOB_PHYSICS_AGGRO_TIMEOUT_MS =

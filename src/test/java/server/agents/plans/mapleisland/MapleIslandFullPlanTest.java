@@ -43,11 +43,10 @@ class MapleIslandFullPlanTest {
                 < index(card, AmherstPlanObjectiveKind.QUEST_CHAIN, 1038));
         assertTrue(index(card, AmherstPlanObjectiveKind.QUEST_CHAIN, 1038)
                 < index(card, AmherstPlanObjectiveKind.QUEST_START, 1040));
-        assertEquals(7L, card.objectives().stream()
+        assertEquals(1L, card.objectives().stream()
                 .filter(objective -> objective.kind() == AmherstPlanObjectiveKind.QUEST_CHAIN)
-                .filter(objective -> objective.questIds().size() == 1)
-                .filter(objective -> objective.questIds().getFirst() >= 1009
-                        && objective.questIds().getFirst() <= 1015)
+                .filter(objective -> objective.questIds().equals(
+                        java.util.List.of(1009, 1010, 1011, 1012, 1013, 1014, 1015)))
                 .count());
         assertTrue(index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8020)
                 < index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8021));
