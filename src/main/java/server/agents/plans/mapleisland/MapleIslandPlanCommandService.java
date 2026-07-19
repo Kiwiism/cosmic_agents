@@ -213,6 +213,18 @@ public final class MapleIslandPlanCommandService {
         if (!status.lastError().isBlank()) {
             message(player, "Last cohort error: " + status.lastError());
         }
+        MapleIslandCohortTelemetryService.Snapshot snapshot = runtime.telemetry(
+                player.getWorld(), player.getClient().getChannel());
+        if (snapshot != null && snapshot.trackedAgents() > 0) {
+            message(player, "Milestones: Amherst=" + snapshot.amherst().samples()
+                    + ", Southperry=" + snapshot.southperry().samples()
+                    + ", full-run=" + snapshot.completion().samples()
+                    + "/" + snapshot.trackedAgents() + ".");
+            message(player, "Recovery signals: retries=" + snapshot.retries()
+                    + ", timeouts=" + snapshot.timeouts() + ", blocked=" + snapshot.blocks()
+                    + ", failures=" + snapshot.failures()
+                    + ", unstucks=" + snapshot.movementUnstucks() + ".");
+        }
         cohortPoolStatus(player, runtime.poolStats());
     }
 

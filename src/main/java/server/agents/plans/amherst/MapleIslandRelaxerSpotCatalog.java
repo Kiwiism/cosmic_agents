@@ -17,7 +17,8 @@ public final class MapleIslandRelaxerSpotCatalog {
         AMHERST(AMHERST_MAP_ID),
         SOUTHPERRY_ALL(SOUTHPERRY_MAP_ID),
         SOUTHPERRY_LEFT(SOUTHPERRY_MAP_ID),
-        SOUTHPERRY_RIGHT(SOUTHPERRY_MAP_ID);
+        SOUTHPERRY_RIGHT(SOUTHPERRY_MAP_ID),
+        SOUTHPERRY_FACE_HOLES(SOUTHPERRY_MAP_ID);
 
         private final int mapId;
 
@@ -48,6 +49,7 @@ public final class MapleIslandRelaxerSpotCatalog {
             case SOUTHPERRY_ALL -> MapleIslandCharacterSpaceCatalog.southperry();
             case SOUTHPERRY_LEFT -> MapleIslandCharacterSpaceCatalog.southperryLeft();
             case SOUTHPERRY_RIGHT -> MapleIslandCharacterSpaceCatalog.southperryRight();
+            case SOUTHPERRY_FACE_HOLES -> MapleIslandCharacterSpaceCatalog.southperryFaceHoles();
         };
     }
 }

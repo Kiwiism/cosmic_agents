@@ -44,19 +44,25 @@ public final class MapleIslandCharacterSpaceCatalog {
                     new HorizontalRange(1640, 1880, 407),
                     new HorizontalRange(1900, 2200, 407),
                     new HorizontalRange(2218, 2282, 347),
-                    new HorizontalRange(2308, 2668, 287),
+                    new HorizontalRange(2308, 2408, 287),
+                    new HorizontalRange(2432, 2432, 287),
+                    new HorizontalRange(2458, 2508, 287),
+                    new HorizontalRange(2545, 2545, 287),
+                    new HorizontalRange(2558, 2668, 287),
                     new HorizontalRange(2398, 2462, 167),
                     new HorizontalRange(2398, 2462, 227),
                     new HorizontalRange(2668, 2732, 227),
                     new HorizontalRange(2758, 2822, 167),
                     new HorizontalRange(2848, 3870, 107),
-                    new HorizontalRange(2605, 2708, -256),
-                    new HorizontalRange(2941, 3124, -196),
                     new HorizontalRange(3157, 3285, -167),
                     new HorizontalRange(3298, 3298, -100),
                     new HorizontalRange(3393, 3418, -100),
                     new HorizontalRange(3464, 3536, 5),
                     new HorizontalRange(3489, 3573, 44)));
+
+    private static final List<CharacterSpace> SOUTHPERRY_FACE_HOLES = SOUTHPERRY.stream()
+            .filter(space -> space.y() == 287 && (space.x() == 2432 || space.x() == 2545))
+            .toList();
 
     private static final List<CharacterSpace> SOUTHPERRY_LEFT = SOUTHPERRY.stream()
             .filter(space -> space.x() < SOUTHPERRY_MIDPOINT_X)
@@ -82,6 +88,10 @@ public final class MapleIslandCharacterSpaceCatalog {
 
     public static List<CharacterSpace> southperryRight() {
         return SOUTHPERRY_RIGHT;
+    }
+
+    public static List<CharacterSpace> southperryFaceHoles() {
+        return SOUTHPERRY_FACE_HOLES;
     }
 
     private static List<CharacterSpace> build(
