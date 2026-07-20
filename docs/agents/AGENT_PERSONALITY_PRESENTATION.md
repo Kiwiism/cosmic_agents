@@ -1,0 +1,107 @@
+# Agent personality presentation
+
+This first implementation slice makes visible Agent behavior less synchronized
+without moving correctness decisions into personality code. It is deliberately
+enabled only for Maple Island cohort runs using `full` realism.
+
+## Boundaries
+
+Personality is a durable semantic identity. It does not choose quests, bypass
+navigation, alter damage, change rewards, or own career progression. The
+presentation resolver may only request bounded cosmetic actions such as a
+pause, turn, prone tap, short shuffle, hop, combat pause, or linger.
+
+The execution safety gate rejects a presentation intent when the Agent is dead,
+airborne, climbing, down-jumping, on an active navigation edge, already
+fidgeting, near a precise destination, or lacks safe ground. Required plan and
+movement work therefore keeps priority.
+
+Cosmetic intents execute only while at least one real player observes the map.
+Agent-to-Agent simulation does not spend movement work on presentation. The
+resolver is deterministic from the durable behavior seed, event sequence, and
+trigger, so a problem can be replayed without making every Agent act alike.
+
+## Profiles and persistence
+
+The versioned catalog is:
+
+```text
+src/main/resources/agents/profiles/personality-profiles.json
+```
+
+It currently contains four archetypes:
+
+- `efficient-v1`: active but routine-oriented and minimally expressive;
+- `relaxed-v1`: patient, slower, and more likely to linger;
+- `restless-v1`: highly active and expressive with more movement variation;
+- `explorer-v1`: curiosity-led with more route and reposition variation.
+
+Each character receives a deterministic profile on first use. Its independent
+behavior seed and exact profile version are then stored under:
+
+```text
+.runtime/agents/personality/assignments/<characterId>.json
+```
+
+Assignments survive relogs and cohort reuse. A catalog profile version cannot
+silently change beneath an assignment; a future schema change must include an
+explicit migration.
+
+## Event and execution flow
+
+Meaningful existing Agent events feed the presentation resolver:
+
+- session start;
+- map arrival;
+- objective or quest completion;
+- combat target engaged or cleared;
+- mob killed;
+- transition from no real observer to an observed map.
+
+The resolver holds at most one pending intent per Agent. Additional eligible
+events coalesce instead of creating an unbounded action queue. The serialized
+navigation tick consumes due intents through the same movement/fidget services
+as existing Agent behavior.
+
+This is intentionally a presentation adapter over the event system. Future
+personality-driven decisions can consume the same semantic profile through a
+separate policy without coupling the durable identity to packets or movement.
+
+## Configuration and testing
+
+The server flag is:
+
+```yaml
+AGENT_PERSONALITY_PRESENTATION_ENABLED: true
+```
+
+Both the flag and cohort realism mode `full` are required. `off` and `light`
+remain unchanged control modes. Disable the flag to retain the prior `full`
+cohort behavior without deleting durable assignments.
+
+Recommended comparison:
+
+```text
+!mapleisland run 25 5 10 light
+!mapleisland run 25 5 10 123456 full
+!mapleisland stats
+```
+
+`!mapleisland stats` includes fixed-cardinality, server-lifetime presentation
+counters: triggers, scheduled, executed, observer-suppressed, unsafe-blocked,
+coalesced, and executed totals per intent kind. It retains no character-name or
+per-Agent telemetry labels, so cardinality remains bounded during soak tests.
+
+## Next extension seam
+
+Personality profiles should later be assigned by a richer profile bundle rather
+than the current deterministic cohort distribution. Keep the current three
+layers separate during that migration:
+
+1. durable semantic traits;
+2. a context-specific resolver producing an intent;
+3. a safety policy deciding whether that intent may execute now.
+
+This allows future personality, goal selection, dialogue, and LLM presentation
+to share stable identity while retaining independent constraints and rollout
+flags.

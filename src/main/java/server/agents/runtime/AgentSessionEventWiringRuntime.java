@@ -1,5 +1,6 @@
 package server.agents.runtime;
 
+import config.YamlConfig;
 import server.agents.capabilities.dialogue.AgentDialogueIntentEvent;
 import server.agents.capabilities.dialogue.AgentDialogueProjectionRuntime;
 import server.agents.capabilities.dialogue.AgentDialogueProjectionService;
@@ -9,6 +10,7 @@ import server.agents.capabilities.supplies.AgentSupplyDialogueReactionService;
 import server.agents.capabilities.supplies.AgentSupplyMaintenanceEventListener;
 import server.agents.capabilities.supplies.AgentSupplyMonitoringProjectionService;
 import server.agents.capabilities.supplies.AgentSupplyThresholdChangedEvent;
+import server.agents.capabilities.presentation.AgentPersonalityPresentationEventListener;
 import server.agents.events.AgentEventSubscription;
 import server.agents.events.BoundedAgentEventBus;
 import server.agents.events.journal.AgentDurableEventJournalListener;
@@ -93,6 +95,10 @@ public final class AgentSessionEventWiringRuntime {
                 if (rollout.dialogueEnabled()) {
                     subscriptions.add(bus.subscribe("*",
                             new AgentOperationalDialogueReactionService(bus)));
+                }
+                if (YamlConfig.config.server.AGENT_PERSONALITY_PRESENTATION_ENABLED) {
+                    subscriptions.add(bus.subscribe("*",
+                            new AgentPersonalityPresentationEventListener(entry)));
                 }
                 subscriptions.add(bus.subscribe("*", new AgentDurableEventJournalListener()));
                 if (rollout.llmContextEnabled()) {

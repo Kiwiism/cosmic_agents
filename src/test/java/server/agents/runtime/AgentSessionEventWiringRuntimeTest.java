@@ -1,6 +1,7 @@
 package server.agents.runtime;
 
 import client.Character;
+import config.YamlConfig;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import server.agents.events.AgentEventBus;
@@ -24,9 +25,12 @@ class AgentSessionEventWiringRuntimeTest {
     void productionSubscriptionsAreRegisteredOnceAndClosedWithSession() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), null, null);
         AgentEventBus bus = AgentSessionEventRuntime.bus(entry);
+        int personalityListener = YamlConfig.config.server.AGENT_PERSONALITY_PRESENTATION_ENABLED
+                ? 1 : 0;
 
-        assertEquals(16, bus.snapshot().subscriptions());
-        assertEquals(16, AgentSessionEventRuntime.bus(entry).snapshot().subscriptions());
+        assertEquals(16 + personalityListener, bus.snapshot().subscriptions());
+        assertEquals(16 + personalityListener,
+                AgentSessionEventRuntime.bus(entry).snapshot().subscriptions());
 
         AgentSessionEventRuntime.close(entry);
 
@@ -43,8 +47,10 @@ class AgentSessionEventWiringRuntimeTest {
         System.setProperty("agents.events.llmContext.enabled", "false");
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), null, null);
         AgentEventBus bus = AgentSessionEventRuntime.bus(entry);
+        int personalityListener = YamlConfig.config.server.AGENT_PERSONALITY_PRESENTATION_ENABLED
+                ? 1 : 0;
 
-        assertEquals(5, bus.snapshot().subscriptions());
+        assertEquals(5 + personalityListener, bus.snapshot().subscriptions());
 
         AgentSessionEventRuntime.close(entry);
     }

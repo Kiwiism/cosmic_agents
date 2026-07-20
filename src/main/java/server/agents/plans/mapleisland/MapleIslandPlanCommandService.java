@@ -5,6 +5,7 @@ import config.YamlConfig;
 import server.TimerManager;
 import server.agents.auth.AgentControlService;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
+import server.agents.capabilities.presentation.AgentPresentationTelemetry;
 import server.agents.capabilities.party.AgentPartyLifecycleService;
 import server.agents.capabilities.quest.AmherstTestResetMode;
 import server.agents.capabilities.quest.AmherstTestResetRequest;
@@ -401,6 +402,19 @@ public final class MapleIslandPlanCommandService {
                     + "; max=" + duration(objective.slowestMs())
                     + " (" + objective.slowestAgent() + ").");
         }
+        AgentPresentationTelemetry.Snapshot presentation = AgentPresentationTelemetry.snapshot();
+        String intents = presentation.executedByIntent().entrySet().stream()
+                .filter(entry -> entry.getValue() > 0L)
+                .map(entry -> entry.getKey().name().toLowerCase() + "=" + entry.getValue())
+                .sorted()
+                .collect(java.util.stream.Collectors.joining(", "));
+        message(player, "Personality presentation: triggers=" + presentation.triggers()
+                + ", scheduled=" + presentation.scheduled()
+                + ", executed=" + presentation.executed()
+                + ", observer-suppressed=" + presentation.observerSuppressed()
+                + ", unsafe-blocked=" + presentation.unsafeBlocked()
+                + ", coalesced=" + presentation.coalesced()
+                + "; intents=" + (intents.isEmpty() ? "none" : intents) + ".");
     }
 
     private static void milestone(Character player,

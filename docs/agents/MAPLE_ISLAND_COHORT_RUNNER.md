@@ -37,8 +37,11 @@ seed, for example `!mapleisland run 25 5 10 light`.
 - `full`: wider seeded pacing (600-2,200 ms before NPC interaction and
   900-3,000 ms between objectives), varied valid NPC approach points, routes
   up to 15% longer than optimal, seeded Southperry rest placement/facing, and
-  occasional safe forward travel/combat hops. Hop checks occur every 2.5-4.5
-  seconds at 4% probability with an 8-15 second cooldown after a hop.
+  observer-gated personality presentation. Safe travel-hop probability varies
+  by the Agent's durable archetype (bounded to 1-12%); checks occur every
+  2.5-4.5 seconds with an 8-15 second cooldown after a hop. Presentation may
+  also produce bounded pauses, turns, prone taps, shuffles, and combat-idle
+  variation, but never while required navigation is unsafe.
 
 Recommended runs:
 
@@ -58,6 +61,9 @@ Recommended runs:
 
 Every mode keeps required graph jumps, rope/ladder movement, portal behavior,
 quest/combat correctness, and the cash-shop return grounding guard unchanged.
+Set `AGENT_PERSONALITY_PRESENTATION_ENABLED: false` to disable only the new
+personality layer. See `docs/agents/AGENT_PERSONALITY_PRESENTATION.md` for its
+catalog, persistence, observer gate, and safety model.
 
 `cancel` cancels only future waves; Agents already released continue their
 runs. `stop` cancels future waves, disconnects this channel's cohort Agents,
@@ -68,6 +74,10 @@ cohort worker, so `STOPPING` can be visible briefly.
 name/id, character world, lease state, and session. `status` reports wave
 progress and global pool counts; availability is selected strictly within the
 world where the command is run.
+
+`stats` reports cohort milestones/recovery plus bounded presentation totals.
+The presentation totals are server-lifetime aggregate counters rather than
+per-run or per-Agent labels.
 
 ## Safety and persistence
 

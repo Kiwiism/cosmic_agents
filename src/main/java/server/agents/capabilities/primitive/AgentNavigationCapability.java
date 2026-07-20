@@ -2,6 +2,7 @@ package server.agents.capabilities.primitive;
 
 import server.agents.capabilities.movement.AgentClimbStateRuntime;
 import server.agents.capabilities.movement.fidget.AgentProfileNavigationFidgetPolicy;
+import server.agents.capabilities.presentation.AgentPersonalityPresentationPolicy;
 import server.agents.capabilities.runtime.AgentCapabilityCommand;
 import server.agents.capabilities.runtime.AgentCapabilityContext;
 import server.agents.capabilities.runtime.AgentCapabilityResult;
@@ -69,6 +70,10 @@ public final class AgentNavigationCapability
             gateway.stop(context.entry());
             return AgentCapabilityStep.terminal(AgentCapabilityResult.success("navigation destination reached"));
         }
+        if (AgentPersonalityPresentationPolicy.tick(context, command.destination(),
+                command.tolerancePx(), command.precise(), gateway)) {
+            return AgentCapabilityStep.running("personality presentation intent", true);
+        }
         if (AgentProfileNavigationFidgetPolicy.tick(context, command.destination(), gateway)) {
             return AgentCapabilityStep.running("profile navigation fidget", true);
         }
@@ -102,6 +107,7 @@ public final class AgentNavigationCapability
 
     @Override
     public void onTerminal(AgentCapabilityContext context, Command command, AgentCapabilityResult result) {
+        AgentPersonalityPresentationPolicy.clear(context);
         AgentProfileNavigationFidgetPolicy.clear(context);
         gateway.stop(context.entry());
     }
