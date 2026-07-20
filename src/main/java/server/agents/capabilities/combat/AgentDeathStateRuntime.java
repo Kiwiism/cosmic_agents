@@ -9,6 +9,10 @@ public final class AgentDeathStateRuntime {
     private AgentDeathStateRuntime() {
     }
 
+    public static long deadSinceMs(AgentRuntimeEntry entry) {
+        return entry.deathState().deadSinceMs();
+    }
+
     public static long deadUntilMs(AgentRuntimeEntry entry) {
         return entry.deathState().deadUntilMs();
     }
@@ -27,6 +31,10 @@ public final class AgentDeathStateRuntime {
 
     public static void enterDeadState(AgentRuntimeEntry entry, long nowMs, long deadDurationMs) {
         entry.deathState().enterDeadState(nowMs, deadDurationMs);
+    }
+
+    public static void deferRespawnUntil(AgentRuntimeEntry entry, long retryAtMs) {
+        entry.deathState().setDeadUntilMs(retryAtMs);
     }
 
     public static void clear(AgentRuntimeEntry entry) {

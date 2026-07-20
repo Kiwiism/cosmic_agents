@@ -112,6 +112,8 @@ public class ServerConfig {
     public boolean USE_MAP_OWNERSHIP_SYSTEM;
     public boolean USE_FISHING_SYSTEM;
     public boolean USE_NPCS_SCRIPTABLE;
+    public boolean AGENT_DEATH_REVIVE_NEAR_FOLLOW_TARGET;
+    public boolean AGENT_DEATH_FULL_HP_IN_TOWN;
     public String AGENT_MOB_REACTION_MODE;
     public int AGENT_SYNTHETIC_MOB_KNOCKBACK_DISTANCE_X;
     public int AGENT_SYNTHETIC_MOB_KNOCKBACK_DURATION_MS;

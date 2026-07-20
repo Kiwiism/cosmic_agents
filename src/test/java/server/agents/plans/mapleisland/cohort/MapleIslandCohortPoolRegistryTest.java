@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -96,6 +97,19 @@ class MapleIslandCohortPoolRegistryTest {
                         20, "BlueSnail", 10, "MIQuest0001", 99, 0, 0,
                         MapleIslandCohortPoolSnapshot.LeaseState.LEASED,
                         "session", 0, 0L, "", 0L, ""));
+    }
+
+    @Test
+    void renamesOnlyKnownPoolCharactersAndPersistsTheIdentity() throws Exception {
+        MemoryStore store = new MemoryStore();
+        MapleIslandCohortPoolRegistry registry = populated(store);
+
+        registry.renameAgents(Map.of(20, "Aeri", 21, "Bambi"));
+
+        assertEquals("Aeri", registry.snapshot().findAgent(20).orElseThrow().name());
+        assertEquals("Bambi", new MapleIslandCohortPoolRegistry(store)
+                .snapshot().findAgent(21).orElseThrow().name());
+        assertThrows(IOException.class, () -> registry.renameAgents(Map.of(999, "Dori")));
     }
 
     private static MapleIslandCohortPoolRegistry populated(MemoryStore store) throws Exception {

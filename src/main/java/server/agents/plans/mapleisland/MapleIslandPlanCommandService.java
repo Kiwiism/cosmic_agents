@@ -22,6 +22,7 @@ import server.agents.plans.amherst.AmherstPlanExecutionState;
 import server.agents.plans.amherst.AmherstPlanProgressSnapshot;
 import server.agents.plans.amherst.AmherstPlanValidationException;
 import server.agents.plans.mapleisland.cohort.MapleIslandCohortPoolRegistry;
+import server.agents.plans.mapleisland.cohort.MapleIslandCohortPoolRenamer;
 import server.agents.plans.mapleisland.cohort.MapleIslandCohortPoolSnapshot;
 import server.agents.plans.mapleisland.cohort.MapleIslandCohortRealismMode;
 import server.agents.plans.mapleisland.cohort.MapleIslandCohortRunService;
@@ -236,13 +237,24 @@ public final class MapleIslandPlanCommandService {
 
     private static void cohortPool(Character player, String[] params) {
         if (params.length > 2) {
-            throw new IllegalArgumentException("Usage: !mapleisland pool [page]");
+            throw new IllegalArgumentException("Usage: !mapleisland pool [page|rename]");
+        }
+        MapleIslandCohortRuntime runtime = MapleIslandCohortRuntime.instance();
+        if (params.length == 2 && params[1].equalsIgnoreCase("rename")) {
+            try {
+                MapleIslandCohortPoolRenamer.Result result = runtime.renamePoolCharacters();
+                message(player, "Reusable pool names redistributed: renamed=" + result.renamed()
+                        + "/" + result.total() + (result.total() == 0 ? "."
+                        : ", range=" + result.firstName() + " ... " + result.lastName() + "."));
+            } catch (IOException failure) {
+                throw new IllegalStateException(failure.getMessage(), failure);
+            }
+            return;
         }
         int requestedPage = params.length == 2 ? parseInt(params[1], "page") : 1;
         if (requestedPage < 1) {
             throw new IllegalArgumentException("page must be at least 1");
         }
-        MapleIslandCohortRuntime runtime = MapleIslandCohortRuntime.instance();
         MapleIslandCohortPoolSnapshot snapshot = runtime.poolSnapshot();
         final int pageSize = 8;
         int pageCount = Math.max(1, (snapshot.agents().size() + pageSize - 1) / pageSize);
@@ -582,7 +594,7 @@ public final class MapleIslandPlanCommandService {
             if (route == Route.FULL_MAPLE_ISLAND) {
                 message(player, "Cohort: !mapleisland run <total> <batch> <intervalSeconds> [seed] [off|light|full]");
                 message(player, "Self reset: !mapleisland resetme (Maple Island run quests only)");
-                message(player, "Cohort control: !mapleisland status|stats|pool [page]|radii [page]|cancel|stop");
+                message(player, "Cohort control: !mapleisland status|stats|pool [page|rename]|radii [page]|cancel|stop");
             }
         }
     }

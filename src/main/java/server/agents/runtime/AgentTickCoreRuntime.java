@@ -63,8 +63,7 @@ public final class AgentTickCoreRuntime {
                                 runtimeLeaderCharId),
                 AgentMapTransitionRuntime::groundAfterMapChange,
                 AgentStandaloneMoveTargetCoordinator::tickStandaloneMoveTarget,
-                (runtimeEntry, agent, leader) ->
-                        AgentDeathTickCoordinator.handleDeadTick(runtimeEntry, agent, leader),
+                AgentDeathTickCoordinator::handleDeadTick,
                 AgentTargetSnapshotCoordinator::resolveFollowAnchor,
                 AgentTargetSnapshotCoordinator::captureTargetSnapshot,
                 AgentScriptTaskCoordinator::tick,

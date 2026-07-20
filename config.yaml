@@ -4,7 +4,7 @@
 worlds:
     #Properties for Scania 0
   - flag: 0
-    server_message: Welcome to Scania!
+    server_message: ""                         #Keep the scrolling marquee hidden until a GM sets one with !servermessage.
     event_message: Scania!
     why_am_i_recommended: Welcome to Scania!
     channels: 1
@@ -13,6 +13,11 @@ worlds:
     max_mob_per_spawnpoint: 2                #Must be equal or higher than mob_rate
     # mob_spawn_overrides examples: {map_ids: [100000000], mob_rate: 1.5} or {map_id_min: 100000000, map_id_max: 100000999, max_mob_per_spawnpoint: 3}
     mob_spawn_overrides: []                  #Optional map-specific overrides. Later matching entries win per field.
+    # Omit map selectors to affect every map in this world. Positive values override WZ delays; later matching entries win per field.
+    map_respawn_overrides:
+      - mob_respawn_seconds: 5               #Respawn ordinary mobs five seconds after death; WZ mobTime=-1 remains non-respawning.
+      - map_ids: [1000000]
+        reactor_respawn_seconds: 5           #Respawn all five Pio recycling boxes in Amherst five seconds after destruction.
     meso_rate: 1
     drop_rate: 1
     boss_drop_rate: 1                      #NOTE: Boss drop rate OVERRIDES common drop rate, for bosses-only.
@@ -275,6 +280,11 @@ server:
     USE_MAP_OWNERSHIP_SYSTEM: false      #Flag to enable/disable map ownership system
     USE_FISHING_SYSTEM: false            #Flag to enable/disable custom fishing system
     USE_NPCS_SCRIPTABLE: true           #Flag to enable/disable serverside predefined script NPCs.
+
+    # Agent death recovery. Event/PQ scripts always retain first authority over legal revives.
+    AGENT_DEATH_REVIVE_NEAR_FOLLOW_TARGET: true # In follow mode, revive at the valid player spawn nearest the live followed player; otherwise use the map return spawn.
+    AGENT_DEATH_FULL_HP_IN_TOWN: true # Restore maximum HP when the legal revive destination is a town; false keeps the normal 50 HP (or Safety Charm recovery).
+
     # Agent-hit mob reaction mode:
     # OFF = original Cosmic client-controlled mobs; SYNTHETIC = simple shove only; PHYSICS = server-owned movement and aggro.
     AGENT_MOB_REACTION_MODE: PHYSICS                                  # Allowed values: OFF, SYNTHETIC, PHYSICS.

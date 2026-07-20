@@ -16,6 +16,7 @@ import server.agents.integration.cosmic.CosmicAgentBackingAccountSecurity;
 import server.agents.integration.cosmic.CosmicAgentOfflineLoader;
 import server.agents.integration.cosmic.CosmicCharacterGateway;
 import server.agents.integration.cosmic.CosmicMapleIslandCohortProvisioning;
+import server.agents.integration.cosmic.CosmicMapleIslandCohortPoolRenaming;
 import server.agents.integration.cosmic.CosmicMapleIslandCohortIdentity;
 import server.agents.plans.amherst.AmherstPlanCard;
 import server.agents.plans.amherst.AmherstPlanObservation;
@@ -46,6 +47,7 @@ public final class MapleIslandCohortRuntime {
     private static MapleIslandCohortRuntime instance;
 
     private final MapleIslandCohortPoolService pool;
+    private final MapleIslandCohortPoolRenamer poolRenamer;
     private final MapleIslandCohortRunService runs;
     private final MapleIslandCohortTelemetryService telemetry = new MapleIslandCohortTelemetryService();
 
@@ -55,6 +57,9 @@ public final class MapleIslandCohortRuntime {
         MapleIslandCohortPoolProvisioner provisioner = new MapleIslandCohortPoolProvisioner(
                 registry, CosmicMapleIslandCohortProvisioning.INSTANCE);
         pool = new MapleIslandCohortPoolService(registry, provisioner,
+                MapleIslandCohortRuntime::isCharacterLive);
+        poolRenamer = new MapleIslandCohortPoolRenamer(
+                registry, CosmicMapleIslandCohortPoolRenaming.INSTANCE,
                 MapleIslandCohortRuntime::isCharacterLive);
         runs = new MapleIslandCohortRunService(liveHooks());
         int recovered = pool.recoverStaleLeases(Set.of());
@@ -111,6 +116,16 @@ public final class MapleIslandCohortRuntime {
 
     public MapleIslandCohortPoolSnapshot poolSnapshot() {
         return pool.snapshot();
+    }
+
+    public MapleIslandCohortPoolRenamer.Result renamePoolCharacters() throws IOException {
+        try {
+            return poolRenamer.renameAll();
+        } catch (IOException | RuntimeException failure) {
+            throw failure;
+        } catch (Exception failure) {
+            throw new IOException("Reusable pool rename failed: " + failure.getMessage(), failure);
+        }
     }
 
     private MapleIslandCohortRunService.Hooks liveHooks() {

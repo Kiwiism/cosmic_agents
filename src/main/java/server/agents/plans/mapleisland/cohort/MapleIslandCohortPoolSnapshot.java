@@ -172,6 +172,12 @@ public record MapleIslandCohortPoolSnapshot(
                     ordinal, leaseState, leaseSessionId, leaseOwnerCharacterId, leaseAcquiredAtMs,
                     lastSessionId, lastResetAtMs, lastError);
         }
+
+        public Agent withName(String newName) {
+            return new Agent(characterId, newName, accountId, accountName, createdByCharacterId, world,
+                    characterTemplateOrdinal, leaseState, leaseSessionId, leaseOwnerCharacterId,
+                    leaseAcquiredAtMs, lastSessionId, lastResetAtMs, lastError);
+        }
     }
 
     private static String requireName(String value, String field) {

@@ -183,6 +183,24 @@ public final class MapleIslandCohortPoolRegistry {
         return recovered[0];
     }
 
+    public synchronized void renameAgents(Map<Integer, String> namesByCharacterId) throws IOException {
+        if (namesByCharacterId == null || namesByCharacterId.isEmpty()) {
+            return;
+        }
+        Set<Integer> knownIds = snapshot.agents().stream()
+                .map(Agent::characterId)
+                .collect(java.util.stream.Collectors.toSet());
+        if (!knownIds.containsAll(namesByCharacterId.keySet())) {
+            throw new IOException("Cannot rename a character outside the reusable cohort pool");
+        }
+        List<Agent> updated = snapshot.agents().stream()
+                .map(agent -> namesByCharacterId.containsKey(agent.characterId())
+                        ? agent.withName(namesByCharacterId.get(agent.characterId()))
+                        : agent)
+                .toList();
+        persist(snapshot.accounts(), updated);
+    }
+
     private void updateLeased(int characterId,
                               String sessionId,
                               java.util.function.UnaryOperator<Agent> update) throws IOException {

@@ -15,11 +15,13 @@ class AgentDeathStateRuntimeTest {
 
         AgentDeathStateRuntime.enterDeadState(entry, 1_000L, 5_000L);
 
+        assertEquals(1_000L, AgentDeathStateRuntime.deadSinceMs(entry));
         assertEquals(6_000L, AgentDeathStateRuntime.deadUntilMs(entry));
         assertTrue(AgentDeathStateRuntime.isDead(entry));
 
         AgentDeathStateRuntime.clear(entry);
 
+        assertEquals(0L, AgentDeathStateRuntime.deadSinceMs(entry));
         assertEquals(0L, AgentDeathStateRuntime.deadUntilMs(entry));
         assertFalse(AgentDeathStateRuntime.isDead(entry));
     }

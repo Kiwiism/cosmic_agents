@@ -38,7 +38,7 @@ class AgentTickCoreServiceTest {
                     return false;
                 },
                 (tickEntry, tickAgent, runAiTick) -> calls.add("ownerless"),
-                (tickEntry, tickAgent, leader) -> false,
+                (tickEntry, tickAgent) -> false,
                 (tickEntry, tickAgent, leader) -> liveContext(),
                 () -> false,
                 (tickEntry, tickAgent, leader, anchor, context, runAiTick, perf) -> false,
@@ -67,7 +67,7 @@ class AgentTickCoreServiceTest {
                     return false;
                 },
                 (tickEntry, agent, runAiTick) -> calls.add("ownerless"),
-                (tickEntry, agent, leader) -> {
+                (tickEntry, agent) -> {
                     calls.add("dead");
                     return false;
                 },
@@ -83,6 +83,42 @@ class AgentTickCoreServiceTest {
                 (tickEntry, agent, followAnchor, liveContext, runAiTick, nowMs, perf) -> calls.add("mode")));
 
         assertEquals(List.of("preflight"), calls);
+    }
+
+    @Test
+    void deadOwnerlessAgentRecoversBeforeLeaderResolution() {
+        Character agent = mock(Character.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        List<String> calls = new ArrayList<>();
+
+        AgentTickCoreService.tickCore(entry, 1, 2, new AgentTickCoreService.Hooks(
+                () -> 123L,
+                (tickEntry, agentCharId, nowMs) -> {
+                    calls.add("preflight");
+                    return new AgentTickPreflightService.Result(false, agent, true);
+                },
+                (tickEntry, leaderCharId) -> {
+                    calls.add("leader");
+                    return null;
+                },
+                (tickEntry, tickAgent, leader, nowMs, leaderCharId) -> {
+                    calls.add("inactive");
+                    return false;
+                },
+                (tickEntry, tickAgent, runAiTick) -> calls.add("ownerless"),
+                (tickEntry, tickAgent) -> {
+                    calls.add("dead");
+                    return true;
+                },
+                (tickEntry, tickAgent, leader) -> {
+                    calls.add("context");
+                    return liveContext();
+                },
+                () -> false,
+                (tickEntry, tickAgent, leader, anchor, context, runAiTick, perf) -> false,
+                (tickEntry, tickAgent, anchor, context, runAiTick, nowMs, perf) -> calls.add("mode")));
+
+        assertEquals(List.of("preflight", "dead"), calls);
     }
 
     @Test
@@ -108,7 +144,7 @@ class AgentTickCoreServiceTest {
                     return false;
                 },
                 (tickEntry, tickAgent, runAiTick) -> calls.add("ownerless"),
-                (tickEntry, tickAgent, tickLeader) -> {
+                (tickEntry, tickAgent) -> {
                     calls.add("dead");
                     return false;
                 },
@@ -129,9 +165,9 @@ class AgentTickCoreServiceTest {
 
         assertEquals(List.of(
                 "preflight:123",
+                "dead",
                 "leader",
                 "inactive",
-                "dead",
                 "context",
                 "perf",
                 "gate:true:true",
@@ -164,9 +200,9 @@ class AgentTickCoreServiceTest {
         assertTrue(frame.isComplete());
         assertEquals(List.of(
                 "preflight:123",
+                "dead",
                 "leader",
                 "inactive",
-                "dead",
                 "context",
                 "perf",
                 "gate:true:true",
@@ -192,7 +228,7 @@ class AgentTickCoreServiceTest {
                     return false;
                 },
                 (tickEntry, tickAgent, runAiTick) -> calls.add("ownerless"),
-                (tickEntry, tickAgent, tickLeader) -> {
+                (tickEntry, tickAgent) -> {
                     calls.add("dead");
                     return false;
                 },

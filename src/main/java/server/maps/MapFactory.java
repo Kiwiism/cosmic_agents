@@ -21,6 +21,9 @@
  */
 package server.maps;
 
+import config.MapRespawnOverrideConfig;
+import config.WorldConfig;
+import config.YamlConfig;
 import constants.id.MapId;
 import provider.Data;
 import provider.DataProvider;
@@ -56,7 +59,9 @@ public class MapFactory {
         mapSource = DataProviderFactory.getDataProvider(WZFiles.MAP);
     }
 
-    private static void loadLifeFromWz(MapleMap map, Data mapData) {
+    private static void loadLifeFromWz(MapleMap map,
+                                       Data mapData,
+                                       List<MapRespawnOverrideConfig> respawnOverrides) {
         for (Data life : mapData.getChildByPath("life")) {
             life.getName();
             String id = DataTool.getString(life.getChildByPath("id"));
@@ -80,11 +85,12 @@ public class MapFactory {
             int hide = DataTool.getInt("hide", life, 0);
             int mobTime = DataTool.getInt("mobTime", life, 0);
 
-            loadLifeRaw(map, Integer.parseInt(id), type, cy, f, fh, rx0, rx1, x, y, hide, mobTime, team);
+            loadLifeRaw(map, Integer.parseInt(id), type, cy, f, fh, rx0, rx1, x, y, hide,
+                    mobTime, team, respawnOverrides);
         }
     }
 
-    private static void loadLifeFromDb(MapleMap map) {
+    private static void loadLifeFromDb(MapleMap map, List<MapRespawnOverrideConfig> respawnOverrides) {
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement("SELECT * FROM plife WHERE map = ? and world = ?")) {
             ps.setInt(1, map.getId());
@@ -105,7 +111,8 @@ public class MapFactory {
                     int mobTime = rs.getInt("mobtime");
                     int team = rs.getInt("team");
 
-                    loadLifeRaw(map, id, type, cy, f, fh, rx0, rx1, x, y, hide, mobTime, team);
+                    loadLifeRaw(map, id, type, cy, f, fh, rx0, rx1, x, y, hide,
+                            mobTime, team, respawnOverrides);
                 }
             }
         } catch (SQLException sqle) {
@@ -113,9 +120,13 @@ public class MapFactory {
         }
     }
 
-    private static void loadLifeRaw(MapleMap map, int id, String type, int cy, int f, int fh, int rx0, int rx1, int x, int y, int hide, int mobTime, int team) {
+    private static void loadLifeRaw(MapleMap map, int id, String type, int cy, int f, int fh,
+                                    int rx0, int rx1, int x, int y, int hide, int mobTime, int team,
+                                    List<MapRespawnOverrideConfig> respawnOverrides) {
         AbstractLoadedLife myLife = loadLife(id, type, cy, f, fh, rx0, rx1, x, y, hide);
         if (myLife instanceof Monster monster) {
+            mobTime = MapRespawnOverrideConfig.resolveMobRespawnSeconds(
+                    respawnOverrides, map.getId(), mobTime);
 
             if (mobTime == -1) { //does not respawn, force spawn once
                 map.spawnMonster(monster);
@@ -132,6 +143,7 @@ public class MapFactory {
 
     public static MapleMap loadMapFromWz(int mapid, int world, int channel, EventInstanceManager event) {
         MapleMap map;
+        List<MapRespawnOverrideConfig> respawnOverrides = respawnOverrides(world);
 
         String mapName = getMapName(mapid);
         Data mapData = mapSource.getData(mapName);    // source.getData issue with giving nulls in rare ocasions found thanks to MedicOP
@@ -267,8 +279,8 @@ public class MapFactory {
             }
         }
 
-        loadLifeFromWz(map, mapData);
-        loadLifeFromDb(map);
+        loadLifeFromWz(map, mapData, respawnOverrides);
+        loadLifeFromDb(map, respawnOverrides);
 
         if (map.isCPQMap()) {
             Data mcData = mapData.getChildByPath("monsterCarnival");
@@ -304,7 +316,9 @@ public class MapFactory {
             for (Data reactor : mapData.getChildByPath("reactor")) {
                 String id = DataTool.getString(reactor.getChildByPath("id"));
                 if (id != null) {
-                    Reactor newReactor = loadReactor(reactor, id, (byte) DataTool.getInt(reactor.getChildByPath("f"), 0));
+                    Reactor newReactor = loadReactor(reactor, id,
+                            (byte) DataTool.getInt(reactor.getChildByPath("f"), 0),
+                            mapid, respawnOverrides);
                     map.spawnReactor(newReactor);
                 }
             }
@@ -374,16 +388,32 @@ public class MapFactory {
         return myLife;
     }
 
-    private static Reactor loadReactor(Data reactor, String id, final byte FacingDirection) {
+    private static Reactor loadReactor(Data reactor,
+                                       String id,
+                                       final byte FacingDirection,
+                                       int mapId,
+                                       List<MapRespawnOverrideConfig> respawnOverrides) {
         Reactor myReactor = new Reactor(ReactorFactory.getReactor(Integer.parseInt(id)), Integer.parseInt(id));
         int x = DataTool.getInt(reactor.getChildByPath("x"));
         int y = DataTool.getInt(reactor.getChildByPath("y"));
+        int respawnSeconds = MapRespawnOverrideConfig.resolveReactorRespawnSeconds(
+                respawnOverrides, mapId,
+                DataTool.getInt(reactor.getChildByPath("reactorTime")));
         myReactor.setFacingDirection(FacingDirection);
         myReactor.setPosition(new Point(x, y));
-        myReactor.setDelay((int) SECONDS.toMillis(DataTool.getInt(reactor.getChildByPath("reactorTime"))));
+        myReactor.setDelay((int) SECONDS.toMillis(respawnSeconds));
         myReactor.setName(DataTool.getString(reactor.getChildByPath("name"), ""));
         myReactor.resetReactorActions(0);
         return myReactor;
+    }
+
+    private static List<MapRespawnOverrideConfig> respawnOverrides(int world) {
+        List<WorldConfig> worlds = YamlConfig.config.worlds;
+        if (worlds == null || world < 0 || world >= worlds.size()) {
+            return List.of();
+        }
+        List<MapRespawnOverrideConfig> overrides = worlds.get(world).map_respawn_overrides;
+        return overrides == null ? List.of() : overrides;
     }
 
     private static String getMapName(int mapid) {

@@ -13,6 +13,7 @@ public class WorldConfig {
     public float mob_rate = 1;
     public int max_mob_per_spawnpoint = 1;
     public List<MobSpawnOverrideConfig> mob_spawn_overrides = new ArrayList<>();
+    public List<MapRespawnOverrideConfig> map_respawn_overrides = new ArrayList<>();
     public int meso_rate = 1;
     public int drop_rate = 1;
     public int boss_drop_rate = 1;

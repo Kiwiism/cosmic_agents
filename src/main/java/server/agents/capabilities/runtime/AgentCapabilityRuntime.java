@@ -39,6 +39,26 @@ public final class AgentCapabilityRuntime {
         }
     }
 
+    /**
+     * Excludes a lifecycle pause from active capability elapsed time and deadlines.
+     * The invocation and its memory stay intact so it can resume from the same step.
+     */
+    public static void extendActiveDeadlines(AgentRuntimeEntry entry, long pausedDurationMs) {
+        if (entry == null || pausedDurationMs <= 0L) {
+            return;
+        }
+        AgentCapabilityRuntimeState state = entry.capabilityRuntimeState();
+        synchronized (state) {
+            for (AgentCapabilityFrame frame : state.frames) {
+                if (frame.state == AgentCapabilityFrameState.STARTING) {
+                    continue;
+                }
+                frame.startedAtMs = saturatedAdd(frame.startedAtMs, pausedDurationMs);
+                frame.deadlineMs = saturatedAdd(frame.deadlineMs, pausedDurationMs);
+            }
+        }
+    }
+
     public static void cancelNow(AgentRuntimeEntry entry, Character agent, long nowMs) {
         AgentCapabilityRuntimeState state = entry.capabilityRuntimeState();
         synchronized (state) {

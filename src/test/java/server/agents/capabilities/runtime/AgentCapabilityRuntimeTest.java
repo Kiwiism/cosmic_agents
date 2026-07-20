@@ -119,6 +119,34 @@ class AgentCapabilityRuntimeTest {
     }
 
     @Test
+    void deathPauseExtendsActiveCapabilityDeadlineWithoutRestartingIt() {
+        AgentRuntimeEntry entry = entry();
+        AtomicInteger ticks = new AtomicInteger();
+        AgentExecutableCapability<Command> running = capability("running", (context, command) -> {
+            ticks.incrementAndGet();
+            context.memory().putInt("progress", 7);
+            return AgentCapabilityStep.running("working");
+        });
+        AgentCapabilityRuntime.assign(entry,
+                new AgentCapabilityInvocation<>(running, new Command("run"), 50L, 0));
+
+        AgentCapabilityRuntime.tick(entry, entry.bot(), 100L);
+        AgentCapabilityRuntime.extendActiveDeadlines(entry, 1_000L);
+
+        AgentCapabilityRuntime.tick(entry, entry.bot(), 1_149L);
+
+        assertEquals(2, ticks.get());
+        assertTrue(entry.capabilityRuntimeState().hasActiveCapability());
+        assertEquals(7, entry.capabilityRuntimeState().frames.peek().memory.intValue("progress", 0));
+
+        AgentCapabilityRuntime.tick(entry, entry.bot(), 1_150L);
+
+        assertFalse(entry.capabilityRuntimeState().hasActiveCapability());
+        assertEquals(AgentCapabilityStatus.TIMED_OUT,
+                entry.capabilityRuntimeState().lastResult().status());
+    }
+
+    @Test
     void cancellationClearsParentAndChildWithoutExecutingEitherAgain() {
         AgentRuntimeEntry entry = entry();
         AtomicInteger terminalCallbacks = new AtomicInteger();

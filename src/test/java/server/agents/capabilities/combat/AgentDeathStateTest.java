@@ -13,11 +13,13 @@ class AgentDeathStateTest {
 
         state.enterDeadState(1_000L, 5_000L);
 
+        assertEquals(1_000L, state.deadSinceMs());
         assertEquals(6_000L, state.deadUntilMs());
         assertTrue(state.isDead());
 
         state.clear();
 
+        assertEquals(0L, state.deadSinceMs());
         assertEquals(0L, state.deadUntilMs());
         assertFalse(state.isDead());
     }

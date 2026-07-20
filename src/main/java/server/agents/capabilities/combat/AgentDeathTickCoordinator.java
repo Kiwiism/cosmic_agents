@@ -15,15 +15,16 @@ public final class AgentDeathTickCoordinator {
     private AgentDeathTickCoordinator() {
     }
 
-    public static boolean handleDeadTick(AgentRuntimeEntry entry, Character agent, Character leader) {
+    public static boolean handleDeadTick(AgentRuntimeEntry entry, Character agent) {
+        LongSupplier nowMs = System::currentTimeMillis;
         return handleDeadTick(
                 entry,
                 agent,
                 () -> AgentDeathStateRuntime.shouldEnterDeadState(entry, agent.getHp()),
                 (deadEntry, deadAgent) -> AgentCombatDeathRuntime.enterDeadState(
                         deadEntry, deadAgent, false, AgentCombatConfig.cfg),
-                () -> AgentRespawnCoordinator.respawnNearLeader(entry, agent, leader),
-                System::currentTimeMillis);
+                () -> AgentRespawnCoordinator.recover(entry, agent, nowMs.getAsLong()),
+                nowMs);
     }
 
     static boolean handleDeadTick(AgentRuntimeEntry entry,

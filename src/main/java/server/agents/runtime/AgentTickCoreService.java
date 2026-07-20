@@ -47,7 +47,7 @@ public final class AgentTickCoreService {
 
     @FunctionalInterface
     public interface DeadTick {
-        boolean tick(AgentRuntimeEntry entry, Character agent, Character leader);
+        boolean tick(AgentRuntimeEntry entry, Character agent);
     }
 
     @FunctionalInterface
@@ -155,6 +155,10 @@ public final class AgentTickCoreService {
         }
 
         private void runLifecycle() {
+            if (hooks.deadTick().tick(entry, agent)) {
+                complete = true;
+                return;
+            }
             leader = hooks.leaderResolver().resolve(entry, leaderCharId);
             // Logging out removes the leader before this agent's next tick. Preserve a seated
             // agent as-is instead of routing it through ownerless idle physics, which changes
@@ -169,10 +173,6 @@ public final class AgentTickCoreService {
             }
             if (leader == null) {
                 hooks.ownerlessTick().tick(entry, agent, runAiTick);
-                complete = true;
-                return;
-            }
-            if (hooks.deadTick().tick(entry, agent, leader)) {
                 complete = true;
                 return;
             }
