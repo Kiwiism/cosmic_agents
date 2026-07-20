@@ -51,21 +51,21 @@ public final class AgentInventoryDropService {
     }
 
     static void dropScrolls(AgentRuntimeEntry entry, Character agent, InventoryGateway inventory) {
-        int count = dropFromBag(agent, InventoryType.USE,
+        int count = dropFromBag(entry, agent, InventoryType.USE,
                 inventory,
                 item -> ItemConstants.isEquipScroll(item.getItemId()));
         reply(entry, count, "scroll");
     }
 
     static void dropPotions(AgentRuntimeEntry entry, Character agent, InventoryGateway inventory) {
-        int count = dropFromBag(agent, InventoryType.USE,
+        int count = dropFromBag(entry, agent, InventoryType.USE,
                 inventory,
                 item -> AgentUseItemClassificationPolicy.isRecoveryPotion(item.getItemId()));
         reply(entry, count, "potion");
     }
 
     static void dropEquips(AgentRuntimeEntry entry, Character agent, InventoryGateway inventory) {
-        int count = dropFromBag(agent, InventoryType.EQUIP, inventory, item -> true);
+        int count = dropFromBag(entry, agent, InventoryType.EQUIP, inventory, item -> true);
         AgentInventoryRuntime.replyNow(entry,
                 count > 0 ? "dropped " + count + " equip" + (count != 1 ? "s" : "") + "!"
                           : "equip bag is already empty");
@@ -73,21 +73,21 @@ public final class AgentInventoryDropService {
 
     static void dropTrashEquips(AgentRuntimeEntry entry, Character agent, InventoryGateway inventory, List<Item> trashEquips) {
         Set<Item> trash = new HashSet<>(trashEquips);
-        int count = dropFromBag(agent, InventoryType.EQUIP, inventory, trash::contains);
+        int count = dropFromBag(entry, agent, InventoryType.EQUIP, inventory, trash::contains);
         AgentInventoryRuntime.replyNow(entry,
                 count > 0 ? "dropped " + count + " trash equip" + (count != 1 ? "s" : "") + "!"
                           : "no trash equips to drop");
     }
 
     static void dropBuffPots(AgentRuntimeEntry entry, Character agent, InventoryGateway inventory) {
-        int count = dropFromBag(agent, InventoryType.USE,
+        int count = dropFromBag(entry, agent, InventoryType.USE,
                 inventory,
                 item -> AgentUseItemClassificationPolicy.isBuffConsumable(item.getItemId()));
         reply(entry, count, "buff pot");
     }
 
     static void dropEtc(AgentRuntimeEntry entry, Character agent, InventoryGateway inventory) {
-        int count = dropFromBag(agent, InventoryType.ETC, inventory, item -> true);
+        int count = dropFromBag(entry, agent, InventoryType.ETC, inventory, item -> true);
         reply(entry, count, "etc item");
     }
 
@@ -96,7 +96,7 @@ public final class AgentInventoryDropService {
         int total = 0;
         for (InventoryType type : List.of(
                 InventoryType.EQUIP, InventoryType.USE, InventoryType.ETC, InventoryType.SETUP)) {
-            total += dropFromBag(agent, type, inventory,
+            total += dropFromBag(entry, agent, type, inventory,
                     item -> AgentInventoryNamedItemService.itemNameContains(item.getItemId(), normalizedFragment, inventory));
         }
         if (total <= 0) {
@@ -105,6 +105,11 @@ public final class AgentInventoryDropService {
     }
 
     static int dropFromBag(Character agent, InventoryType type, InventoryGateway inventoryGateway, Predicate<Item> filter) {
+        return dropFromBag(null, agent, type, inventoryGateway, filter);
+    }
+
+    static int dropFromBag(AgentRuntimeEntry entry, Character agent, InventoryType type,
+                           InventoryGateway inventoryGateway, Predicate<Item> filter) {
         int count = 0;
         Inventory inventory = agent.getInventory(type);
         for (short slot = 1; slot <= inventory.getSlotLimit(); slot++) {
@@ -114,6 +119,7 @@ public final class AgentInventoryDropService {
                             item,
                             inventoryGateway::isQuestItem,
                             itemId -> ItemRestrictionPolicy.allowsUntradeable(agent, itemId))
+                    && AgentInventoryReservationRuntime.mayConsume(entry, item, System.currentTimeMillis())
                     && filter.test(item)) {
                 inventoryGateway.dropItem(agent, type, slot, item.getQuantity());
                 count++;

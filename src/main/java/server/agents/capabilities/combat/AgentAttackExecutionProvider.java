@@ -24,6 +24,8 @@ import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
 public final class AgentAttackExecutionProvider {
+    private static final List<String> WAND_MAGIC_CAST_ACTIONS = List.of("wand1", "wand2");
+
     // This server's close-range packet path uses:
     // byte 2 = body action id from Character/00002000.img
     // byte 3 = facing mask (0 / 0x80)
@@ -222,7 +224,14 @@ public final class AgentAttackExecutionProvider {
         if (skill != null && FORCED_CLOSE_RANGE_SKILL_IDS.contains(skill.getId())) {
             return sampleDegenerateCloseRangeAction(bot, weaponType);
         }
+        if (skill != null && isMagicAttackSkill(skill.getId()) && isWandMagicWeapon(weaponType)) {
+            return sampleAttackAction(WAND_MAGIC_CAST_ACTIONS, WAND_MAGIC_CAST_ACTIONS.get(0));
+        }
         return sampleWeaponAttackAction(bot, weaponType);
+    }
+
+    private static boolean isWandMagicWeapon(WeaponType weaponType) {
+        return weaponType == WeaponType.WAND || weaponType == WeaponType.STAFF;
     }
 
     private static String sampleDegenerateCloseRangeAction(Character bot, WeaponType weaponType) {
@@ -500,7 +509,7 @@ public final class AgentAttackExecutionProvider {
         int fallbackHitDelayMs = fallbackAttackData != null ? fallbackAttackData.hitDelayMs() : defaultHitDelayMs(600);
         int fallbackCooldownMs = fallbackAttackData != null ? fallbackAttackData.cooldownMs() : toCooldownMs(600);
         return resolveSkillAttackTiming(action, resolveWeaponAttackProfile(bot), resolveSkillAttackDelayMillis(skill),
-                resolveWeaponAttackSpeed(bot),
+                resolveSkillEffectiveAttackSpeed(skill, bot),
                 fallbackHitDelayMs, fallbackCooldownMs);
     }
 
@@ -627,7 +636,7 @@ public final class AgentAttackExecutionProvider {
         };
     }
 
-    private static boolean isDegenerateCapableRangedWeapon(WeaponType weaponType) {
+    public static boolean isDegenerateCapableRangedWeapon(WeaponType weaponType) {
         return weaponType == WeaponType.BOW
                 || weaponType == WeaponType.CROSSBOW
                 || weaponType == WeaponType.CLAW
@@ -701,6 +710,26 @@ public final class AgentAttackExecutionProvider {
             return 305;
         }
         return Math.max(0, animationDelayMs / 2);
+    }
+
+    private static final int MAGIC_ATTACK_SPEED_GRADE = 6;
+
+    static int resolveSkillEffectiveAttackSpeed(Skill skill, Character bot) {
+        if (skill != null && isMagicAttackSkill(skill.getId())) {
+            return resolveMagicAttackSpeed(bot);
+        }
+        return resolveWeaponAttackSpeed(bot);
+    }
+
+    static int resolveMagicAttackSpeed(Character bot) {
+        int grade = MAGIC_ATTACK_SPEED_GRADE;
+        if (bot != null) {
+            Integer booster = bot.getBuffedValue(BuffStat.BOOSTER);
+            if (booster != null) {
+                grade += booster;
+            }
+        }
+        return Math.max(0, Math.min(12, grade));
     }
 
     private static int resolveWeaponAttackSpeed(Character bot) {

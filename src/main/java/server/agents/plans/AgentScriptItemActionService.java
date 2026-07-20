@@ -6,6 +6,7 @@ import client.inventory.Item;
 import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.integration.InventoryGateway;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.capabilities.inventory.AgentInventoryReservationRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 public final class AgentScriptItemActionService {
@@ -27,7 +28,9 @@ public final class AgentScriptItemActionService {
             return false;
         }
         Item item = inventory.findById(itemId);
-        if (item == null || item.getQuantity() <= 0) {
+        if (item == null || item.getQuantity() <= 0
+                || !AgentInventoryReservationRuntime.mayConsume(
+                entry, item, System.currentTimeMillis())) {
             return false;
         }
         short dropQuantity = quantity <= 0 ? item.getQuantity() : (short) Math.min(quantity, item.getQuantity());

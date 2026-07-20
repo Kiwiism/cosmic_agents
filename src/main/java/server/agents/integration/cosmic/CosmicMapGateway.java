@@ -91,6 +91,13 @@ public enum CosmicMapGateway implements MapGateway {
     }
 
     @Override
+    public int activeCharacterCountIfLoaded(int world, int channel, int mapId) {
+        MapleMap map = Server.getInstance().getChannel(world, channel)
+                .getMapFactory().getLoadedMap(mapId);
+        return map == null ? 0 : map.getCharacterCount();
+    }
+
+    @Override
     public Point pointBelow(MapleMap map, Point position) {
         if (map == null || position == null) {
             return null;

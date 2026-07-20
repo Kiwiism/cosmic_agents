@@ -186,6 +186,7 @@ $requiredFiles = [ordered]@{
     affordances = "generated_action_affordance_catalog.json"
     mapleIslandMvp = "generated_maple_island_mvp_catalog.json"
     mapleIslandMvpIndexes = "generated_maple_island_mvp_fast_indexes.json"
+    victoriaQuestHunting = "generated_victoria_lt30_quest_hunting_catalog.json"
     manifest = "generated_catalog_manifest.json"
 }
 
@@ -197,6 +198,27 @@ foreach ($key in $requiredFiles.Keys) {
 
 foreach ($key in @("portalGraph", "mobSpawn", "mapSummary", "questObjectives", "itemSources", "resupply", "affordances")) {
     Test-NonEmptyArray $checks $key $loaded[$key]
+}
+
+if ($null -ne $loaded.victoriaQuestHunting -and $loaded.victoriaQuestHunting.entries.Count -gt 0) {
+    Add-Check $checks "victoria-quest-hunting:entries" "PASS" "Victoria quest-hunting entries are present."
+    $eligibleMissingMaps = @($loaded.victoriaQuestHunting.entries |
+        Where-Object autonomousStartAllowed |
+        ForEach-Object { $_.huntingObjectives } |
+        Where-Object { $_.preferredMaps.Count -eq 0 })
+    if ($eligibleMissingMaps.Count -eq 0) {
+        Add-Check $checks "victoria-quest-hunting:eligible-map-coverage" "PASS" "Every autonomous hunting objective has at least one preferred Victoria map."
+    } else {
+        Add-Check $checks "victoria-quest-hunting:eligible-map-coverage" "FAIL" "$($eligibleMissingMaps.Count) autonomous hunting objective(s) have no preferred Victoria map."
+    }
+    $manji = @($loaded.victoriaQuestHunting.entries | Where-Object { [int] $_.questId -eq 2127 })
+    if ($manji.Count -eq 1 -and !$manji[0].autonomousStartAllowed) {
+        Add-Check $checks "victoria-quest-hunting:manji-boundary" "PASS" "Manji desert handoff is excluded from Victoria-only autonomous starts."
+    } else {
+        Add-Check $checks "victoria-quest-hunting:manji-boundary" "FAIL" "Manji desert handoff must remain excluded from Victoria-only autonomous starts."
+    }
+} else {
+    Add-Check $checks "victoria-quest-hunting:entries" "FAIL" "Victoria quest-hunting catalog has no entries."
 }
 
 $manifest = $loaded.manifest

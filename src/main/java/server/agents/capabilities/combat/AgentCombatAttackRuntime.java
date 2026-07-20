@@ -16,10 +16,17 @@ public final class AgentCombatAttackRuntime {
     }
 
     public static void attackMonster(AgentRuntimeEntry entry, Character bot, AgentAttackPlan attackPlan) {
+        if (entry == null || bot == null || attackPlan == null || attackPlan.targets.isEmpty()) {
+            return;
+        }
+        Monster primaryTarget = attackPlan.targets.get(0);
+        if (primaryTarget == null || !primaryTarget.isAlive()) {
+            return;
+        }
         AgentCombatAttackExecutionPolicy.AttackExecutionReadiness readiness =
                 AgentCombatAttackExecutionPolicy.attackExecutionReadiness(
                         AgentCombatCooldownStateRuntime.hasAttackCooldown(entry),
-                        AgentAmmoStateRuntime.noAmmo(entry),
+                        AgentAmmoStateRuntime.noAmmo(entry) && attackPlan.route == AgentAttackRoute.RANGED,
                         attackPlan.skillId,
                         () -> AgentCombatSkillUsePolicy.canPaySkillCost(
                                 bot, attackPlan.skillId, attackPlan.skillLevel),
@@ -45,9 +52,7 @@ public final class AgentCombatAttackRuntime {
         attack.direction = attackPlan.direction;
         attack.rangedirection = attackPlan.rangedDirection;
         attack.ranged = attackPlan.route == AgentAttackRoute.RANGED;
-        CombatFormulaProvider.DamageProfile damageProfile = CombatFormulaProvider.getInstance().resolveDamageProfile(
-                bot, attackPlan.skillId, attackPlan.skillLevel,
-                attackPlan.route == AgentAttackRoute.MAGIC, attackPlan.damageWeaponType);
+        CombatFormulaProvider.DamageProfile damageProfile = AgentAttackDamageProfileService.resolve(bot, attackPlan);
         attack.magic = damageProfile.magicAttack();
         attack.targets = new HashMap<>();
 

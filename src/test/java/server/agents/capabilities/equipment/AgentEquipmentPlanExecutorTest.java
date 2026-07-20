@@ -14,6 +14,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.anyShort;
 
 class AgentEquipmentPlanExecutorTest {
     @Test
@@ -68,7 +69,7 @@ class AgentEquipmentPlanExecutorTest {
 
         AgentEquipmentPlanExecutor.unequipInfeasibleEquipped(agent, hooks);
 
-        verify(hooks, never()).canWearEquipment(agent, cashEquip, (short) -1);
+        verify(hooks, never()).meetsEquipRequirements(agent, cashEquip);
     }
 
     @Test
@@ -80,11 +81,31 @@ class AgentEquipmentPlanExecutorTest {
                 mock(AgentEquipmentPlanExecutor.InfeasibleEquipHooks.class);
         when(agent.getInventory(InventoryType.EQUIPPED)).thenReturn(equipped);
         when(equipped.list()).thenReturn(List.of(equip));
-        when(hooks.canWearEquipment(agent, equip, (short) -2)).thenReturn(true);
+        when(hooks.meetsEquipRequirements(agent, equip)).thenReturn(true);
 
         AgentEquipmentPlanExecutor.unequipInfeasibleEquipped(agent, hooks);
 
-        verify(hooks).canWearEquipment(agent, equip, (short) -2);
+        verify(hooks).meetsEquipRequirements(agent, equip);
+    }
+
+    @Test
+    void relocateEquippedStraysMovesOnlyPositivePositionEquipsToBag() {
+        Character agent = mock(Character.class);
+        when(agent.getName()).thenReturn("TestAgent");
+        Inventory equipInventory = mock(Inventory.class);
+        Inventory equippedInventory = mock(Inventory.class);
+        Equip stray = equip(1003, (short) 1);
+        Equip worn = equip(1004, (short) -5);
+        when(equippedInventory.list()).thenReturn(List.of(stray, worn));
+        when(equipInventory.getNextFreeSlot()).thenReturn((short) 7);
+
+        AgentEquipmentPlanExecutor.relocateEquippedStrays(agent, equipInventory, equippedInventory);
+
+        verify(equippedInventory).removeSlot((short) 1);
+        verify(stray).setPosition((short) 7);
+        verify(equipInventory).addItemFromDB(stray);
+        verify(equippedInventory, never()).removeSlot((short) -5);
+        verify(worn, never()).setPosition(anyShort());
     }
 
     private static Equip equip(int itemId, short position) {

@@ -37,6 +37,10 @@ public final class AgentMovementBroadcastStateRuntime {
         return entry.movementBroadcastState().velocityY();
     }
 
+    public static int lastStance(AgentRuntimeEntry entry) {
+        return entry.movementBroadcastState().stance();
+    }
+
     public static boolean matches(AgentRuntimeEntry entry,
                                   int x,
                                   int y,

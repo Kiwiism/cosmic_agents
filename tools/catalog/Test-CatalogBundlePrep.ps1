@@ -317,6 +317,7 @@ Add-Entry $entries "index" "mapSummary" (Join-Path $AgentLlmCatalogDir "generate
 Add-Entry $entries "index" "itemSources" (Join-Path $AgentLlmCatalogDir "generated_item_source_index.json") $true "Item acquisition source lookup."
 Add-Entry $entries "index" "mobSpawn" (Join-Path $AgentLlmCatalogDir "generated_mob_spawn_catalog.json") $true "Mob spawn and target pressure lookup."
 Add-Entry $entries "index" "questObjectives" (Join-Path $AgentLlmCatalogDir "generated_quest_objective_catalog.json") $true "Quest objective lookup."
+Add-Entry $entries "index" "victoriaQuestHunting" (Join-Path $AgentLlmCatalogDir "generated_victoria_lt30_quest_hunting_catalog.json") $true "Ranked Victoria level-30-and-below quest hunting maps and region guards."
 Add-Entry $entries "index" "mapleIslandMvp" (Join-Path $AgentLlmCatalogDir "generated_maple_island_mvp_catalog.json") $true "Maple Island MVP sequence lookup."
 Add-Entry $entries "index" "mapleIslandMvpFastIndexes" (Join-Path $AgentLlmCatalogDir "generated_maple_island_mvp_fast_indexes.json") $true "Maple Island MVP fast objective indexes."
 Add-Entry $entries "index" "resupply" (Join-Path $AgentLlmCatalogDir "generated_resupply_catalog.json") $true "Resupply fallback lookup."

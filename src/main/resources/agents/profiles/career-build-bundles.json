@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "bundles": [
+    { "bundleId": "warrior-standard-v1", "bundleVersion": 1, "career": "warrior", "firstJobId": 100, "advancementLevel": 10, "apProfileId": "warrior-dex20-str-lv30-v1", "spProfileId": "warrior-first-job-lv30-v1", "instructorNpcId": 1022000, "instructorMapId": 102000003, "instructorTrainingQuestIds": [2128, 2129, 2130, 2131], "milestoneLevel": 15 },
+    { "bundleId": "bowman-standard-v1", "bundleVersion": 1, "career": "bowman", "firstJobId": 300, "advancementLevel": 10, "apProfileId": "bowman-str30-dex-lv30-v1", "spProfileId": "bowman-first-job-lv30-v1", "instructorNpcId": 1012100, "instructorMapId": 100000201, "instructorTrainingQuestIds": [2136, 2137, 2138, 2139], "milestoneLevel": 15 },
+    { "bundleId": "magician-standard-v1", "bundleVersion": 1, "career": "magician", "firstJobId": 200, "advancementLevel": 8, "apProfileId": "magician-luk33-int-lv30-v1", "spProfileId": "magician-first-job-lv30-v1", "instructorNpcId": 1032001, "instructorMapId": 101000003, "instructorTrainingQuestIds": [2132, 2133, 2134, 2135], "milestoneLevel": 15 },
+    { "bundleId": "thief-claw-standard-v1", "bundleVersion": 1, "career": "thief-claw", "firstJobId": 400, "advancementLevel": 10, "apProfileId": "thief-dex60-luk-lv30-v1", "spProfileId": "thief-claw-first-job-lv30-v1", "instructorNpcId": 1052001, "instructorMapId": 103000003, "instructorTrainingQuestIds": [2140, 2141, 2142, 2143], "milestoneLevel": 15 },
+    { "bundleId": "thief-dagger-standard-v1", "bundleVersion": 1, "career": "thief-dagger", "firstJobId": 400, "advancementLevel": 10, "apProfileId": "thief-dex60-luk-lv30-v1", "spProfileId": "thief-dagger-first-job-lv30-v1", "instructorNpcId": 1052001, "instructorMapId": 103000003, "instructorTrainingQuestIds": [2140, 2141, 2142, 2143], "milestoneLevel": 15 },
+    { "bundleId": "pirate-gun-standard-v1", "bundleVersion": 1, "career": "pirate-gun", "firstJobId": 500, "advancementLevel": 10, "apProfileId": "pirate-str30-dex-lv30-v1", "spProfileId": "pirate-gun-first-job-lv30-v1", "instructorNpcId": 1090000, "instructorMapId": 120000101, "instructorTrainingQuestIds": [2193, 2194, 2195, 2196], "milestoneLevel": 15 },
+    { "bundleId": "pirate-knuckle-standard-v1", "bundleVersion": 1, "career": "pirate-knuckle", "firstJobId": 500, "advancementLevel": 10, "apProfileId": "pirate-dex30-str-lv30-v1", "spProfileId": "pirate-knuckle-first-job-lv30-v1", "instructorNpcId": 1090000, "instructorMapId": 120000101, "instructorTrainingQuestIds": [2193, 2194, 2195, 2196], "milestoneLevel": 15 }
+  ]
+}

@@ -29,6 +29,7 @@ import provider.Data;
 import provider.DataTool;
 import server.quest.Quest;
 import server.quest.QuestRequirementType;
+import server.quest.QuestSourceDataCorrections;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -53,7 +54,8 @@ public class MobRequirement extends AbstractQuestRequirement {
     @Override
     public void processData(Data data) {
         for (Data questEntry : data.getChildren()) {
-            int mobID = DataTool.getInt(questEntry.getChildByPath("id"));
+            int mobID = QuestSourceDataCorrections.mobRequirementId(
+                    questID, DataTool.getInt(questEntry.getChildByPath("id")));
             int countReq = DataTool.getInt(questEntry.getChildByPath("count"));
             mobs.put(mobID, countReq);
         }

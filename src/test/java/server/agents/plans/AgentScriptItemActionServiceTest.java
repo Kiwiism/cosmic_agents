@@ -6,7 +6,11 @@ import client.inventory.InventoryType;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.InventoryGateway;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.capabilities.contracts.AgentDisposition;
+import server.agents.capabilities.inventory.AgentInventoryReservationRuntime;
 import testutil.Items;
+
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -70,5 +74,22 @@ class AgentScriptItemActionServiceTest {
         gateway = mock(InventoryGateway.class);
         assertTrue(AgentScriptItemActionService.dropItem(entry, InventoryType.ETC, 4000000, (short) 99, gateway));
         verify(gateway).dropItem(agent, InventoryType.ETC, (short) 1, (short) 7);
+    }
+
+    @Test
+    void refusesToDropAnItemReservedByAnotherCapability() {
+        Character agent = mock(Character.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
+        Inventory inventory = new Inventory(agent, InventoryType.ETC, (byte) 8);
+        inventory.addItem(Items.itemWithQuantity(4000000, 7));
+        when(agent.getInventory(InventoryType.ETC)).thenReturn(inventory);
+        InventoryGateway gateway = mock(InventoryGateway.class);
+        long nowMs = System.currentTimeMillis();
+        AgentInventoryReservationRuntime.reserveObjectiveItems(
+                entry, Map.of(4000000, 7), AgentInventoryReservationRuntime.LOOT_CAPABILITY,
+                AgentDisposition.QUEST_RESERVE, "active quest", 900, nowMs);
+
+        assertFalse(AgentScriptItemActionService.dropItem(
+                entry, InventoryType.ETC, 4000000, (short) 3, gateway));
     }
 }

@@ -26,6 +26,10 @@ public final class AgentResourcePlanningState {
         return procurements.get(category);
     }
 
+    public synchronized Map<AgentResourceCategory, AgentProcurementRequest> procurementSnapshot() {
+        return Map.copyOf(procurements);
+    }
+
     synchronized void update(AgentSupplyNeed need, AgentProcurementRequest procurement) {
         needs.put(need.category(), need);
         if (procurement == null) {
@@ -33,5 +37,9 @@ public final class AgentResourcePlanningState {
         } else {
             procurements.put(need.category(), procurement);
         }
+    }
+
+    synchronized void resolve(AgentResourceCategory category) {
+        procurements.remove(category);
     }
 }

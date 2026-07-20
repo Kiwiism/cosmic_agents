@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "catalogId": "quest-reward-choice-policy-v1",
+  "priorityOrder": [
+    "authored-fixed-choice",
+    "job-eligible-equipment",
+    "current-supply-need",
+    "market-value",
+    "stable-source-order"
+  ],
+  "fixedRewardItemByQuestId": {}
+}

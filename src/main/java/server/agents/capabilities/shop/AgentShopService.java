@@ -22,6 +22,7 @@ import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
 import server.agents.capabilities.inventory.AgentInventorySellTrashService;
+import server.agents.capabilities.inventory.AgentInventoryReservationRuntime;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
@@ -78,6 +79,9 @@ public final class AgentShopService {
 
     public static void onMapChange(AgentRuntimeEntry entry, Character bot, InventoryGateway inventory) {
         clearShopState(entry);
+        if (bot == null || bot.getMap() == null) {
+            return;
+        }
 
         NpcShopMatch match = findBestShop(bot, false, inventory);
         if (match == null) {
@@ -101,6 +105,19 @@ public final class AgentShopService {
         }
 
         startShopVisit(entry, bot, match);
+    }
+
+    /** Starts the planned MVP shop visit even when current supplies already satisfy restock thresholds. */
+    public static boolean requestVisitAtNpc(AgentRuntimeEntry entry, Character bot, int npcId) {
+        if (entry == null || bot == null || bot.getMap() == null) {
+            return false;
+        }
+        NpcShopMatch match = findShopForNpc(bot, npcId);
+        if (match == null) {
+            return false;
+        }
+        startShopVisit(entry, bot, match);
+        return true;
     }
 
     public static void requestSellTrashVisit(AgentRuntimeEntry entry, Character bot, InventoryGateway inventory) {
@@ -205,6 +222,21 @@ public final class AgentShopService {
                 continue;
             }
             if (allowAnyShop || shopHasAnythingNeeded(bot, shop, inventory)) {
+                return new NpcShopMatch(npc, shop, npc.getPosition());
+            }
+        }
+        return null;
+    }
+
+    private static NpcShopMatch findShopForNpc(Character bot, int npcId) {
+        for (MapObject obj : bot.getMap().getMapObjectsInRange(
+                new Point(0, 0), Double.POSITIVE_INFINITY, List.of(MapObjectType.NPC))) {
+            NPC npc = (NPC) obj;
+            if (npc.getId() != npcId || !npc.hasShop()) {
+                continue;
+            }
+            Shop shop = AgentShopGatewayRuntime.shop().findForNpc(npc.getId());
+            if (shop != null) {
                 return new NpcShopMatch(npc, shop, npc.getPosition());
             }
         }
@@ -368,6 +400,8 @@ public final class AgentShopService {
         List<Item> items = plan.stream()
                 .filter(item -> AgentInventoryItemPolicy.hasItem(bot, item))
                 .filter(item -> !failedItems.contains(item))
+                .filter(item -> AgentInventoryReservationRuntime.mayConsume(
+                        entry, item, System.currentTimeMillis()))
                 .toList();
         if (items.isEmpty()) {
             AgentShopStateRuntime.setShopSellTrashPending(entry, false);
@@ -384,6 +418,12 @@ public final class AgentShopService {
         }
 
         Item item = items.get(0);
+        if (!AgentInventoryReservationRuntime.mayConsume(entry, item, System.currentTimeMillis())) {
+            scheduleShopStep(entry, SELL_TRASH_STEP_DELAY_MS,
+                    () -> runSellTrashStep(entry, bot, npcPos, soldCount, failedItems,
+                            plan, bought, firstShortfall, inventory));
+            return;
+        }
         if (!AgentInventoryItemPolicy.hasItem(bot, item)) {
             scheduleShopStep(entry, SELL_TRASH_STEP_DELAY_MS,
                     () -> runSellTrashStep(entry, bot, npcPos, soldCount, failedItems, plan, bought, firstShortfall, inventory));

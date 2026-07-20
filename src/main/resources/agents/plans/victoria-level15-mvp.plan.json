@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "planId": "victoria-level15-mvp-v2",
+  "title": "Maple Island Handoff to First Job Level 15 MVP",
+  "status": "executable",
+  "catalogId": "victoria-level15-mvp-catalog-v2",
+  "entryCriteria": {
+    "mapId": 104000000,
+    "jobId": 0,
+    "minimumLevel": 9,
+    "maximumLevel": 10,
+    "mesos": 1000,
+    "careerBundleRequired": true,
+    "startVariantIds": ["lv10", "lv9-olaf", "lv9-grind"]
+  },
+  "requiredCapabilityIds": [
+    "progression.career-assignment",
+    "progression.ap-build",
+    "progression.sp-build",
+    "equipment.auto-equip",
+    "navigation.portal-route",
+    "quest.victoria-handoff",
+    "interaction.npc-script",
+    "interaction.npc-shop",
+    "quest.instructor-training",
+    "combat.generic-grind",
+    "loot.combat-drops",
+    "survival.potion-use",
+    "supplies.procurement",
+    "inventory.capacity-management",
+    "recovery.physics"
+  ],
+  "stages": [
+    { "stageId": "complete-biggs-at-olaf", "capabilityIds": ["quest.victoria-handoff", "interaction.npc-script"], "postcondition": "biggs-1046-complete" },
+    { "stageId": "complete-olaf-lesson", "capabilityIds": ["quest.victoria-handoff", "interaction.npc-script"], "postcondition": "olaf-2081-complete" },
+    { "stageId": "start-career-path", "capabilityIds": ["quest.victoria-handoff", "interaction.npc-script", "progression.career-assignment"], "postcondition": "profile-matched-olaf-path-started" },
+    { "stageId": "pre-job-level-grind", "capabilityIds": ["navigation.portal-route", "combat.generic-grind", "loot.combat-drops", "survival.potion-use", "recovery.physics"], "postcondition": "level-at-least-10-and-returned-to-lith" },
+    { "stageId": "take-taxi", "capabilityIds": ["interaction.npc-script"], "postcondition": "arrived-in-selected-career-town" },
+    { "stageId": "enter-instructor", "capabilityIds": ["navigation.portal-route"], "postcondition": "in-instructor-map" },
+    { "stageId": "complete-career-path", "capabilityIds": ["quest.victoria-handoff", "interaction.npc-script"], "postcondition": "olaf-career-path-complete" },
+    { "stageId": "advance-first-job", "capabilityIds": ["interaction.npc-script", "equipment.auto-equip"], "postcondition": "job-and-starter-kit-reconciled" },
+    { "stageId": "allocate-initial-ap-sp", "capabilityIds": ["progression.ap-build", "progression.sp-build"], "postcondition": "selected-build-profiles-applied" },
+    { "stageId": "initial-shop-trip", "capabilityIds": ["navigation.portal-route", "interaction.npc-shop", "supplies.procurement"], "postcondition": "shop-workflow-terminal-success" },
+    { "stageId": "return-to-instructor", "capabilityIds": ["navigation.portal-route"], "postcondition": "in-instructor-map" },
+    { "stageId": "instructor-training", "capabilityIds": ["quest.instructor-training", "navigation.portal-route", "combat.generic-grind", "loot.combat-drops", "survival.potion-use", "inventory.capacity-management", "recovery.physics"], "postcondition": "all-career-training-quests-complete" },
+    { "stageId": "fallback-grind", "capabilityIds": ["navigation.portal-route", "combat.generic-grind", "loot.combat-drops", "survival.potion-use", "supplies.procurement", "inventory.capacity-management", "recovery.physics"], "postcondition": "level-at-least-15" },
+    { "stageId": "final-return", "capabilityIds": ["navigation.portal-route", "recovery.physics"], "postcondition": "grounded-near-instructor" }
+  ],
+  "exitCriteria": {
+    "minimumLevel": 15,
+    "firstJobRequired": true,
+    "allInstructorTrainingQuestsComplete": true,
+    "finalMap": "career-instructor-map",
+    "groundedNearInstructor": true
+  }
+}

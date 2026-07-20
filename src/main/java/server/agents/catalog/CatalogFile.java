@@ -20,6 +20,8 @@ enum CatalogFile {
     MAP_SUMMARY("mapSummary", true, CatalogDirectory.AGENT_LLM, "generated_map_summary_index.json"),
     MOB_SPAWN("mobSpawn", true, CatalogDirectory.AGENT_LLM, "generated_mob_spawn_catalog.json"),
     QUEST_OBJECTIVES("questObjectives", true, CatalogDirectory.AGENT_LLM, "generated_quest_objective_catalog.json"),
+    VICTORIA_LT30_QUEST_HUNTING("victoriaLt30QuestHunting", false, CatalogDirectory.AGENT_LLM,
+            "generated_victoria_lt30_quest_hunting_catalog.json"),
     ITEM_SOURCES("itemSources", true, CatalogDirectory.AGENT_LLM, "generated_item_source_index.json"),
     RESUPPLY("resupply", true, CatalogDirectory.AGENT_LLM, "generated_resupply_catalog.json"),
     ACTION_AFFORDANCES("actionAffordances", true, CatalogDirectory.AGENT_LLM, "generated_action_affordance_catalog.json"),

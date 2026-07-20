@@ -197,6 +197,18 @@ public final class AgentRuntimeRegistry {
         return session == null ? null : session.entry();
     }
 
+    public static AgentRuntimeEntry findByAgentName(String agentName) {
+        if (agentName == null) {
+            return null;
+        }
+        for (ActiveSession session : activeSessionsByAgentId.values()) {
+            if (AgentRuntimeIdentityRuntime.botNameEquals(session.entry(), agentName)) {
+                return session.entry();
+            }
+        }
+        return null;
+    }
+
     public static AgentRuntimeEntry findByName(Map<Integer, List<AgentRuntimeEntry>> entriesByLeaderId,
                                                int leaderCharId,
                                                String agentName) {

@@ -1016,6 +1016,7 @@ $out = @{
     affordances = Join-Path $OutputDir "generated_action_affordance_catalog.json"
     mapleIslandMvp = Join-Path $OutputDir "generated_maple_island_mvp_catalog.json"
     mapleIslandMvpIndexes = Join-Path $OutputDir "generated_maple_island_mvp_fast_indexes.json"
+    victoriaQuestHunting = Join-Path $OutputDir "generated_victoria_lt30_quest_hunting_catalog.json"
     manifest = Join-Path $OutputDir "generated_catalog_manifest.json"
     summary = Join-Path $OutputDir "AGENT_LLM_CATALOG_SUMMARY.md"
 }
@@ -1030,6 +1031,17 @@ $actionAffordanceCatalog | ConvertTo-Json -Depth 8 | Set-Content -Encoding UTF8 
 $mapleIslandMvpCatalog | ConvertTo-Json -Depth 18 | Set-Content -Encoding UTF8 $out.mapleIslandMvp
 $mapleIslandMvpCatalog.fastIndexes | ConvertTo-Json -Depth 16 | Set-Content -Encoding UTF8 $out.mapleIslandMvpIndexes
 
+$victoriaExporter = Join-Path $PSScriptRoot "Export-VictoriaLt30QuestHuntingCatalog.ps1"
+$victoriaOutput = & powershell -NoProfile -ExecutionPolicy Bypass -File $victoriaExporter `
+    -QuestObjectiveCatalogPath $out.questObjectives `
+    -MobSpawnCatalogPath $out.mobSpawn `
+    -MapCatalogPath $paths.maps `
+    -OutputPath $out.victoriaQuestHunting 2>&1
+if ($LASTEXITCODE -ne 0) {
+    throw "Victoria quest-hunting catalog export failed: $($victoriaOutput -join [Environment]::NewLine)"
+}
+$victoriaQuestHuntingCatalog = Get-Content -Raw -LiteralPath $out.victoriaQuestHunting | ConvertFrom-Json
+
 $counts = @{
     maps = @($maps).Count
     portalEdges = @($portalGraph).Count
@@ -1041,6 +1053,8 @@ $counts = @{
     actionAffordances = @($actionAffordanceCatalog).Count
     mapleIslandMvpQuests = @($mapleIslandMvpCatalog.quests).Count
     mapleIslandMvpReachableMaps = @($mapleIslandMvpCatalog.reachableMapIds).Count
+    victoriaLt30Quests = [int] $victoriaQuestHuntingCatalog.summary.questCount
+    victoriaLt30HuntingObjectives = [int] $victoriaQuestHuntingCatalog.summary.huntingObjectiveCount
 }
 
 $manifest = Export-Manifest $out $counts
@@ -1065,6 +1079,8 @@ $summary = @(
     "- Action affordances: $($counts.actionAffordances)",
     "- Maple Island MVP quest rules: $($counts.mapleIslandMvpQuests)",
     "- Maps reachable from Maple Island MVP start: $($counts.mapleIslandMvpReachableMaps)",
+    "- Victoria level-30-and-below quests: $($counts.victoriaLt30Quests)",
+    "- Victoria quest hunting objectives: $($counts.victoriaLt30HuntingObjectives)",
     "",
     "## Outputs",
     "",
@@ -1077,6 +1093,7 @@ $summary = @(
     "- `generated_action_affordance_catalog.json` - capability/action contract hints for LLM command planning.",
     "- `generated_maple_island_mvp_catalog.json` - Maple Island MVP route, quest availability, special handling, and forbidden actions.",
     "- `generated_maple_island_mvp_fast_indexes.json` - compact lookup maps for Maple Island MVP quest/map decisions.",
+    "- `generated_victoria_lt30_quest_hunting_catalog.json` - ranked Victoria-only hunt maps, occupancy limits, and off-island warnings for level-30-and-below quests.",
     "- `generated_catalog_manifest.json` - file list and generation metadata.",
     "",
     "## Integration Notes",
@@ -1097,6 +1114,7 @@ $outputFiles = @(
     [pscustomobject] @{ key = "affordances"; path = $out.affordances }
     [pscustomobject] @{ key = "mapleIslandMvp"; path = $out.mapleIslandMvp }
     [pscustomobject] @{ key = "mapleIslandMvpIndexes"; path = $out.mapleIslandMvpIndexes }
+    [pscustomobject] @{ key = "victoriaQuestHunting"; path = $out.victoriaQuestHunting }
     [pscustomobject] @{ key = "manifest"; path = $out.manifest }
     [pscustomobject] @{ key = "summary"; path = $out.summary }
 )

@@ -1,6 +1,7 @@
 package server.agents.capabilities.movement;
 
 import client.Character;
+import constants.game.CharacterStance;
 import server.agents.capabilities.social.airshow.AgentAirshowStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -28,7 +29,8 @@ public final class AgentMovementSettleService {
                 || AgentMovementBroadcastStateRuntime.reconciledThisTick(entry)
                 || !AgentMovementBroadcastStateRuntime.valid(entry)
                 || (AgentMovementBroadcastStateRuntime.lastVelocityX(entry) == 0
-                && AgentMovementBroadcastStateRuntime.lastVelocityY(entry) == 0)
+                && AgentMovementBroadcastStateRuntime.lastVelocityY(entry) == 0
+                && !CharacterStance.isWalking(AgentMovementBroadcastStateRuntime.lastStance(entry)))
                 || AgentMovementStateRuntime.inAir(entry)
                 || AgentMovementStateRuntime.climbing(entry)
                 || AgentAirshowStateRuntime.active(entry)) {

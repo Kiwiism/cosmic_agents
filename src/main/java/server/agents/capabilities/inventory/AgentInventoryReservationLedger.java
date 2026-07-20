@@ -4,6 +4,7 @@ import server.agents.capabilities.contracts.AgentInventoryReservation;
 import server.agents.runtime.state.AgentCapabilityStateKey;
 
 import java.util.Comparator;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +26,27 @@ public final class AgentInventoryReservationLedger {
 
     public synchronized boolean release(String reservationId) {
         return reservationId != null && reservations.remove(reservationId) != null;
+    }
+
+    public synchronized int releaseCapability(String capability) {
+        if (capability == null || capability.isBlank()) {
+            return 0;
+        }
+        int before = reservations.size();
+        reservations.values().removeIf(reservation -> capability.equals(reservation.capability()));
+        return before - reservations.size();
+    }
+
+    public synchronized void replaceCapabilityReservations(
+            String capability,
+            Collection<AgentInventoryReservation> replacements) {
+        if (capability == null || capability.isBlank() || replacements == null
+                || replacements.stream().anyMatch(reservation -> reservation == null
+                || !capability.equals(reservation.capability()))) {
+            throw new IllegalArgumentException("Replacement reservations must share one capability");
+        }
+        releaseCapability(capability);
+        replacements.forEach(reservation -> reservations.put(reservation.reservationId(), reservation));
     }
 
     public synchronized int reservedQuantity(int itemId, long nowMs) {

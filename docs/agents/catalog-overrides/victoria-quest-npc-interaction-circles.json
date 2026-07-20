@@ -1,0 +1,2634 @@
+﻿{
+    "schemaVersion":  1,
+    "description":  "Adjustable cohort interaction circles for Victoria Island quests in the level-30-and-below progression scope.",
+    "scope":  {
+                  "questScope":  "Victoria level-30-and-below status catalog",
+                  "questCount":  183,
+                  "includedMapPrefixes":  [
+                                              100,
+                                              101,
+                                              102,
+                                              103,
+                                              104,
+                                              105,
+                                              106,
+                                              107,
+                                              110,
+                                              120
+                                          ],
+                  "includedAreas":  [
+                                        "Victoria mainland towns, roads, and dungeons",
+                                        "Mushroom Castle",
+                                        "Hut in the Swamp",
+                                        "Florina Beach",
+                                        "The Nautilus"
+                                    ],
+                  "excludedAreas":  [
+                                        "Maple Island",
+                                        "Ereve",
+                                        "Rien",
+                                        "Aran\u0027s Past",
+                                        "event maps"
+                                    ]
+              },
+    "defaults":  {
+                     "centerOffset":  {
+                                          "x":  0,
+                                          "y":  0
+                                      },
+                     "radiusPx":  180,
+                     "dynamicSpread":  true
+                 },
+    "placementCount":  76,
+    "mapCount":  38,
+    "entries":  [
+                    {
+                        "placementKey":  "100000000:3:1010100",
+                        "mapId":  100000000,
+                        "mapName":  "Henesys",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "3",
+                        "npcId":  1010100,
+                        "npcName":  "Rina",
+                        "npcPosition":  {
+                                            "x":  1574,
+                                            "y":  333,
+                                            "footholdId":  110
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  1,
+                                           "completes":  1,
+                                           "startQuestIds":  [
+                                                                 28267
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    28267
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "100000000:4:1012003",
+                        "mapId":  100000000,
+                        "mapName":  "Henesys",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "4",
+                        "npcId":  1012003,
+                        "npcName":  "Chief Stan",
+                        "npcPosition":  {
+                                            "x":  3486,
+                                            "y":  122,
+                                            "footholdId":  28
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  2,
+                                           "completes":  2,
+                                           "startQuestIds":  [
+                                                                 2015,
+                                                                 2016
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2014,
+                                                                    2015
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "100000000:5:1012106",
+                        "mapId":  100000000,
+                        "mapName":  "Henesys",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "5",
+                        "npcId":  1012106,
+                        "npcName":  "Mrs. Ming Ming",
+                        "npcPosition":  {
+                                            "x":  4203,
+                                            "y":  117,
+                                            "footholdId":  3
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  4,
+                                           "completes":  2,
+                                           "startQuestIds":  [
+                                                                 2062,
+                                                                 2063,
+                                                                 2154,
+                                                                 2185
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2062,
+                                                                    2076
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "100000000:6:1012108",
+                        "mapId":  100000000,
+                        "mapName":  "Henesys",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "6",
+                        "npcId":  1012108,
+                        "npcName":  "Camila",
+                        "npcPosition":  {
+                                            "x":  5036,
+                                            "y":  -127,
+                                            "footholdId":  68
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  2,
+                                           "completes":  1,
+                                           "startQuestIds":  [
+                                                                 2073,
+                                                                 28268
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    28268
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "100000000:7:1012109",
+                        "mapId":  100000000,
+                        "mapName":  "Henesys",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "7",
+                        "npcId":  1012109,
+                        "npcName":  "Jay",
+                        "npcPosition":  {
+                                            "x":  2477,
+                                            "y":  329,
+                                            "footholdId":  136
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  2,
+                                           "completes":  3,
+                                           "startQuestIds":  [
+                                                                 2074,
+                                                                 28269
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2075,
+                                                                    2153,
+                                                                    28269
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "100000000:9:9010000",
+                        "mapId":  100000000,
+                        "mapName":  "Henesys",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "9",
+                        "npcId":  9010000,
+                        "npcName":  "Maple Administrator",
+                        "npcPosition":  {
+                                            "x":  3650,
+                                            "y":  115,
+                                            "footholdId":  10
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  4,
+                                           "completes":  2,
+                                           "startQuestIds":  [
+                                                                 8700,
+                                                                 8800,
+                                                                 8833,
+                                                                 8834
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    8700,
+                                                                    8800
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "100000000:10:1012111",
+                        "mapId":  100000000,
+                        "mapName":  "Henesys",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "10",
+                        "npcId":  1012111,
+                        "npcName":  "Bruce",
+                        "npcPosition":  {
+                                            "x":  4139,
+                                            "y":  447,
+                                            "footholdId":  132
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  2,
+                                           "completes":  2,
+                                           "startQuestIds":  [
+                                                                 2088,
+                                                                 2092
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2088,
+                                                                    2093
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "100000000:11:9200000",
+                        "mapId":  100000000,
+                        "mapName":  "Henesys",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "11",
+                        "npcId":  9200000,
+                        "npcName":  "Cody",
+                        "npcPosition":  {
+                                            "x":  424,
+                                            "y":  259,
+                                            "footholdId":  134
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  3,
+                                           "completes":  3,
+                                           "startQuestIds":  [
+                                                                 8801,
+                                                                 8804,
+                                                                 8821
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    8801,
+                                                                    8804,
+                                                                    8821
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "100000001:0:1012101",
+                        "mapId":  100000001,
+                        "mapName":  "Henesys Townstreet",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "0",
+                        "npcId":  1012101,
+                        "npcName":  "Maya",
+                        "npcPosition":  {
+                                            "x":  -17,
+                                            "y":  36,
+                                            "footholdId":  26
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  2,
+                                           "completes":  2,
+                                           "startQuestIds":  [
+                                                                 1115,
+                                                                 2002
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    1115,
+                                                                    2008
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "100000200:0:1012102",
+                        "mapId":  100000200,
+                        "mapName":  "Henesys Park",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "0",
+                        "npcId":  1012102,
+                        "npcName":  "Pia",
+                        "npcPosition":  {
+                                            "x":  2756,
+                                            "y":  574,
+                                            "footholdId":  109
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  3,
+                                           "completes":  2,
+                                           "startQuestIds":  [
+                                                                 2009,
+                                                                 2153,
+                                                                 2156
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2009,
+                                                                    2156
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "100000202:0:1012006",
+                        "mapId":  100000202,
+                        "mapName":  "Pet-Walking Road",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "0",
+                        "npcId":  1012006,
+                        "npcName":  "Trainer Bartos",
+                        "npcPosition":  {
+                                            "x":  -2108,
+                                            "y":  236,
+                                            "footholdId":  37
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  2,
+                                           "completes":  2,
+                                           "startQuestIds":  [
+                                                                 4646,
+                                                                 4647
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    4646,
+                                                                    4647
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "100010000:52:1012110",
+                        "mapId":  100010000,
+                        "mapName":  "The Hill East of Henesys",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "52",
+                        "npcId":  1012110,
+                        "npcName":  "Anne",
+                        "npcPosition":  {
+                                            "x":  -95,
+                                            "y":  167,
+                                            "footholdId":  47
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  1,
+                                           "completes":  1,
+                                           "startQuestIds":  [
+                                                                 2069
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2068
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "100050000:58:1032105",
+                        "mapId":  100050000,
+                        "mapName":  "The Field South of Ellinia",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "58",
+                        "npcId":  1032105,
+                        "npcName":  "Estelle",
+                        "npcPosition":  {
+                                            "x":  -387,
+                                            "y":  1467,
+                                            "footholdId":  160
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  3,
+                                           "completes":  3,
+                                           "startQuestIds":  [
+                                                                 2064,
+                                                                 2076,
+                                                                 3049
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2063,
+                                                                    2064,
+                                                                    3049
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "101000000:2:1032100",
+                        "mapId":  101000000,
+                        "mapName":  "Ellinia",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "2",
+                        "npcId":  1032100,
+                        "npcName":  "Arwen the Fairy",
+                        "npcPosition":  {
+                                            "x":  -855,
+                                            "y":  -1755,
+                                            "footholdId":  65
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  4,
+                                           "completes":  4,
+                                           "startQuestIds":  [
+                                                                 2017,
+                                                                 2226,
+                                                                 8048,
+                                                                 9415
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2017,
+                                                                    2225,
+                                                                    8048,
+                                                                    9415
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "101000000:3:1032101",
+                        "mapId":  101000000,
+                        "mapName":  "Ellinia",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "3",
+                        "npcId":  1032101,
+                        "npcName":  "Rowen the Fairy",
+                        "npcPosition":  {
+                                            "x":  807,
+                                            "y":  -1660,
+                                            "footholdId":  957
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  2,
+                                           "completes":  2,
+                                           "startQuestIds":  [
+                                                                 1116,
+                                                                 28274
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    1116,
+                                                                    28274
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "101000000:7:1032104",
+                        "mapId":  101000000,
+                        "mapName":  "Ellinia",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "7",
+                        "npcId":  1032104,
+                        "npcName":  "Betty",
+                        "npcPosition":  {
+                                            "x":  -573,
+                                            "y":  -950,
+                                            "footholdId":  203
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  5,
+                                           "completes":  5,
+                                           "startQuestIds":  [
+                                                                 2067,
+                                                                 2068,
+                                                                 2070,
+                                                                 2152,
+                                                                 28275
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2066,
+                                                                    2067,
+                                                                    2069,
+                                                                    2152,
+                                                                    28275
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "101000000:9:1032106",
+                        "mapId":  101000000,
+                        "mapName":  "Ellinia",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "9",
+                        "npcId":  1032106,
+                        "npcName":  "Wing the Fairy",
+                        "npcPosition":  {
+                                            "x":  1113,
+                                            "y":  -302,
+                                            "footholdId":  1066
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  3,
+                                           "completes":  4,
+                                           "startQuestIds":  [
+                                                                 2089,
+                                                                 2155,
+                                                                 28273
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2089,
+                                                                    2154,
+                                                                    2155,
+                                                                    28273
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "101000000:15:9200000",
+                        "mapId":  101000000,
+                        "mapName":  "Ellinia",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "15",
+                        "npcId":  9200000,
+                        "npcName":  "Cody",
+                        "npcPosition":  {
+                                            "x":  -125,
+                                            "y":  -2580,
+                                            "footholdId":  410
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  3,
+                                           "completes":  3,
+                                           "startQuestIds":  [
+                                                                 8801,
+                                                                 8804,
+                                                                 8821
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    8801,
+                                                                    8804,
+                                                                    8821
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "101000200:0:1032102",
+                        "mapId":  101000200,
+                        "mapName":  "Mar\u0027s Forest",
+                        "streetName":  "Hidden Street",
+                        "lifeIndex":  "0",
+                        "npcId":  1032102,
+                        "npcName":  "Mar the Fairy",
+                        "npcPosition":  {
+                                            "x":  3,
+                                            "y":  40,
+                                            "footholdId":  10
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  1,
+                                           "completes":  1,
+                                           "startQuestIds":  [
+                                                                 2230
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2230
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "101020000:60:1040002",
+                        "mapId":  101020000,
+                        "mapName":  "The Forest North of Ellinia",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "60",
+                        "npcId":  1040002,
+                        "npcName":  "Fanzy",
+                        "npcPosition":  {
+                                            "x":  -441,
+                                            "y":  1983,
+                                            "footholdId":  73
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  3,
+                                           "completes":  3,
+                                           "startQuestIds":  [
+                                                                 2104,
+                                                                 2223,
+                                                                 2224
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2103,
+                                                                    2104,
+                                                                    2223
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "101030401:40:1022006",
+                        "mapId":  101030401,
+                        "mapName":  "East Rocky Mountain II",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "40",
+                        "npcId":  1022006,
+                        "npcName":  "Winston",
+                        "npcPosition":  {
+                                            "x":  1293,
+                                            "y":  1830,
+                                            "footholdId":  43
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  8,
+                                           "completes":  7,
+                                           "startQuestIds":  [
+                                                                 2065,
+                                                                 2066,
+                                                                 2116,
+                                                                 2117,
+                                                                 2118,
+                                                                 2145,
+                                                                 2146,
+                                                                 2147
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2065,
+                                                                    2070,
+                                                                    2116,
+                                                                    2118,
+                                                                    2145,
+                                                                    2146,
+                                                                    2147
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "101030402:40:1022008",
+                        "mapId":  101030402,
+                        "mapName":  "East Rocky Mountain III",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "40",
+                        "npcId":  1022008,
+                        "npcName":  "Burnt Sword",
+                        "npcPosition":  {
+                                            "x":  1047,
+                                            "y":  1107,
+                                            "footholdId":  71
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  1,
+                                           "completes":  1,
+                                           "startQuestIds":  [
+                                                                 9414
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    9414
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "102000000:1:1020000",
+                        "mapId":  102000000,
+                        "mapName":  "Perion",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "1",
+                        "npcId":  1020000,
+                        "npcName":  "Blackbull",
+                        "npcPosition":  {
+                                            "x":  1120,
+                                            "y":  1556,
+                                            "footholdId":  175
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  3,
+                                           "completes":  3,
+                                           "startQuestIds":  [
+                                                                 2000,
+                                                                 2148,
+                                                                 28281
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2000,
+                                                                    2148,
+                                                                    28281
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "102000000:2:1022002",
+                        "mapId":  102000000,
+                        "mapName":  "Perion",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "2",
+                        "npcId":  1022002,
+                        "npcName":  "Manji",
+                        "npcPosition":  {
+                                            "x":  746,
+                                            "y":  248,
+                                            "footholdId":  97
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  6,
+                                           "completes":  5,
+                                           "startQuestIds":  [
+                                                                 2005,
+                                                                 2006,
+                                                                 2122,
+                                                                 2123,
+                                                                 2127,
+                                                                 2149
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2004,
+                                                                    2005,
+                                                                    2122,
+                                                                    2127,
+                                                                    2149
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "102000000:7:1022007",
+                        "mapId":  102000000,
+                        "mapName":  "Perion",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "7",
+                        "npcId":  1022007,
+                        "npcName":  "Ayan",
+                        "npcPosition":  {
+                                            "x":  1915,
+                                            "y":  1226,
+                                            "footholdId":  276
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  5,
+                                           "completes":  5,
+                                           "startQuestIds":  [
+                                                                 1117,
+                                                                 2082,
+                                                                 2093,
+                                                                 2150,
+                                                                 28280
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    1117,
+                                                                    2082,
+                                                                    2092,
+                                                                    2150,
+                                                                    28280
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "102000000:13:9200000",
+                        "mapId":  102000000,
+                        "mapName":  "Perion",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "13",
+                        "npcId":  9200000,
+                        "npcName":  "Cody",
+                        "npcPosition":  {
+                                            "x":  2349,
+                                            "y":  1926,
+                                            "footholdId":  423
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  3,
+                                           "completes":  3,
+                                           "startQuestIds":  [
+                                                                 8801,
+                                                                 8804,
+                                                                 8821
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    8801,
+                                                                    8804,
+                                                                    8821
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "102000002:1:1022100",
+                        "mapId":  102000002,
+                        "mapName":  "Perion Department Store",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "1",
+                        "npcId":  1022100,
+                        "npcName":  "Sophia",
+                        "npcPosition":  {
+                                            "x":  -303,
+                                            "y":  136,
+                                            "footholdId":  15
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  3,
+                                           "completes":  3,
+                                           "startQuestIds":  [
+                                                                 2004,
+                                                                 2007,
+                                                                 8084
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2003,
+                                                                    2006,
+                                                                    8084
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "102000003:0:1022000",
+                        "mapId":  102000003,
+                        "mapName":  "Warriors\u0027 Sanctuary",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "0",
+                        "npcId":  1022000,
+                        "npcName":  "Dances with Balrog",
+                        "npcPosition":  {
+                                            "x":  -295,
+                                            "y":  16,
+                                            "footholdId":  44
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  2,
+                                           "completes":  3,
+                                           "startQuestIds":  [
+                                                                 2151,
+                                                                 28257
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2077,
+                                                                    2151,
+                                                                    28257
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "103000000:0:1052002",
+                        "mapId":  103000000,
+                        "mapName":  "Kerning City",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "0",
+                        "npcId":  1052002,
+                        "npcName":  "JM From tha Streetz",
+                        "npcPosition":  {
+                                            "x":  -199,
+                                            "y":  303,
+                                            "footholdId":  192
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  4,
+                                           "completes":  1,
+                                           "startQuestIds":  [
+                                                                 2214,
+                                                                 2215,
+                                                                 2220,
+                                                                 2221
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2221
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "103000000:1:1052000",
+                        "mapId":  103000000,
+                        "mapName":  "Kerning City",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "1",
+                        "npcId":  1052000,
+                        "npcName":  "Alex",
+                        "npcPosition":  {
+                                            "x":  1005,
+                                            "y":  -511,
+                                            "footholdId":  336
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  2,
+                                           "completes":  2,
+                                           "startQuestIds":  [
+                                                                 2014,
+                                                                 28271
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2016,
+                                                                    28271
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "103000000:2:9000008",
+                        "mapId":  103000000,
+                        "mapName":  "Kerning City",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "2",
+                        "npcId":  9000008,
+                        "npcName":  "Mr. Pickall",
+                        "npcPosition":  {
+                                            "x":  1112,
+                                            "y":  399,
+                                            "footholdId":  347
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  1,
+                                           "completes":  0,
+                                           "startQuestIds":  [
+                                                                 2216
+                                                             ],
+                                           "completeQuestIds":  [
+
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "103000000:3:1052102",
+                        "mapId":  103000000,
+                        "mapName":  "Kerning City",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "3",
+                        "npcId":  1052102,
+                        "npcName":  "Shumi",
+                        "npcPosition":  {
+                                            "x":  445,
+                                            "y":  417,
+                                            "footholdId":  258
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  2,
+                                           "completes":  1,
+                                           "startQuestIds":  [
+                                                                 2055,
+                                                                 2217
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2055
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "103000000:6:9020000",
+                        "mapId":  103000000,
+                        "mapName":  "Kerning City",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "6",
+                        "npcId":  9020000,
+                        "npcName":  "Lakelis",
+                        "npcPosition":  {
+                                            "x":  -540,
+                                            "y":  421,
+                                            "footholdId":  167
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  0,
+                                           "completes":  1,
+                                           "startQuestIds":  [
+
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2220
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "103000000:7:1052103",
+                        "mapId":  103000000,
+                        "mapName":  "Kerning City",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "7",
+                        "npcId":  1052103,
+                        "npcName":  "Nella",
+                        "npcPosition":  {
+                                            "x":  71,
+                                            "y":  -60,
+                                            "footholdId":  211
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  10,
+                                           "completes":  8,
+                                           "startQuestIds":  [
+                                                                 1118,
+                                                                 2029,
+                                                                 2030,
+                                                                 2031,
+                                                                 2032,
+                                                                 2033,
+                                                                 2034,
+                                                                 2103,
+                                                                 2218,
+                                                                 28270
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    1118,
+                                                                    2029,
+                                                                    2030,
+                                                                    2031,
+                                                                    2032,
+                                                                    2033,
+                                                                    2034,
+                                                                    28270
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "103000000:8:1052106",
+                        "mapId":  103000000,
+                        "mapName":  "Kerning City",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "8",
+                        "npcId":  1052106,
+                        "npcName":  "Icarus",
+                        "npcPosition":  {
+                                            "x":  -435,
+                                            "y":  -43,
+                                            "footholdId":  169
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  3,
+                                           "completes":  3,
+                                           "startQuestIds":  [
+                                                                 2090,
+                                                                 2091,
+                                                                 28272
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2090,
+                                                                    2091,
+                                                                    28272
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "103000000:13:9200000",
+                        "mapId":  103000000,
+                        "mapName":  "Kerning City",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "13",
+                        "npcId":  9200000,
+                        "npcName":  "Cody",
+                        "npcPosition":  {
+                                            "x":  287,
+                                            "y":  146,
+                                            "footholdId":  238
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  3,
+                                           "completes":  3,
+                                           "startQuestIds":  [
+                                                                 8801,
+                                                                 8804,
+                                                                 8821
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    8801,
+                                                                    8804,
+                                                                    8821
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "103000003:0:1052001",
+                        "mapId":  103000003,
+                        "mapName":  "Thieves\u0027 Hideout",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "0",
+                        "npcId":  1052001,
+                        "npcName":  "Dark Lord",
+                        "npcPosition":  {
+                                            "x":  113,
+                                            "y":  122,
+                                            "footholdId":  39
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  1,
+                                           "completes":  2,
+                                           "startQuestIds":  [
+                                                                 28258
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2079,
+                                                                    28258
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "103000004:0:1052105",
+                        "mapId":  103000004,
+                        "mapName":  "Naora Hospital",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "0",
+                        "npcId":  1052105,
+                        "npcName":  "Jane Doe",
+                        "npcPosition":  {
+                                            "x":  189,
+                                            "y":  -52,
+                                            "footholdId":  25
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  2,
+                                           "completes":  1,
+                                           "startQuestIds":  [
+                                                                 2071,
+                                                                 2072
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2072
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "103000100:0:1052006",
+                        "mapId":  103000100,
+                        "mapName":  "Subway Ticketing Booth",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "0",
+                        "npcId":  1052006,
+                        "npcName":  "Jake",
+                        "npcPosition":  {
+                                            "x":  71,
+                                            "y":  187,
+                                            "footholdId":  16
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  2,
+                                           "completes":  0,
+                                           "startQuestIds":  [
+                                                                 2219,
+                                                                 2264
+                                                             ],
+                                           "completeQuestIds":  [
+
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "104000000:1:20000",
+                        "mapId":  104000000,
+                        "mapName":  "Lith Harbor",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "1",
+                        "npcId":  20000,
+                        "npcName":  "John",
+                        "npcPosition":  {
+                                            "x":  2223,
+                                            "y":  489,
+                                            "footholdId":  85
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  1,
+                                           "completes":  1,
+                                           "startQuestIds":  [
+                                                                 2052
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2052
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "104000000:2:1002001",
+                        "mapId":  104000000,
+                        "mapName":  "Lith Harbor",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "2",
+                        "npcId":  1002001,
+                        "npcName":  "Teo",
+                        "npcPosition":  {
+                                            "x":  486,
+                                            "y":  278,
+                                            "footholdId":  185
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  2,
+                                           "completes":  2,
+                                           "startQuestIds":  [
+                                                                 2003,
+                                                                 2008
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2002,
+                                                                    2007
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "104000000:3:1002100",
+                        "mapId":  104000000,
+                        "mapName":  "Lith Harbor",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "3",
+                        "npcId":  1002100,
+                        "npcName":  "Jane",
+                        "npcPosition":  {
+                                            "x":  954,
+                                            "y":  339,
+                                            "footholdId":  194
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  1,
+                                           "completes":  1,
+                                           "startQuestIds":  [
+                                                                 2010
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2010
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "104000000:11:1002101",
+                        "mapId":  104000000,
+                        "mapName":  "Lith Harbor",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "11",
+                        "npcId":  1002101,
+                        "npcName":  "Olaf",
+                        "npcPosition":  {
+                                            "x":  3392,
+                                            "y":  518,
+                                            "footholdId":  455
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  6,
+                                           "completes":  2,
+                                           "startQuestIds":  [
+                                                                 2077,
+                                                                 2078,
+                                                                 2079,
+                                                                 2080,
+                                                                 2081,
+                                                                 8053
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2081,
+                                                                    8059
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "104000000:12:9010000",
+                        "mapId":  104000000,
+                        "mapName":  "Lith Harbor",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "12",
+                        "npcId":  9010000,
+                        "npcName":  "Maple Administrator",
+                        "npcPosition":  {
+                                            "x":  5066,
+                                            "y":  133,
+                                            "footholdId":  128
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  4,
+                                           "completes":  2,
+                                           "startQuestIds":  [
+                                                                 8700,
+                                                                 8800,
+                                                                 8833,
+                                                                 8834
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    8700,
+                                                                    8800
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "104000000:15:9200000",
+                        "mapId":  104000000,
+                        "mapName":  "Lith Harbor",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "15",
+                        "npcId":  9200000,
+                        "npcName":  "Cody",
+                        "npcPosition":  {
+                                            "x":  1238,
+                                            "y":  633,
+                                            "footholdId":  433
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  3,
+                                           "completes":  3,
+                                           "startQuestIds":  [
+                                                                 8801,
+                                                                 8804,
+                                                                 8821
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    8801,
+                                                                    8804,
+                                                                    8821
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "104000000:20:2006",
+                        "mapId":  104000000,
+                        "mapName":  "Lith Harbor",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "20",
+                        "npcId":  2006,
+                        "npcName":  "Tienk",
+                        "npcPosition":  {
+                                            "x":  1193,
+                                            "y":  -230,
+                                            "footholdId":  1
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  1,
+                                           "completes":  1,
+                                           "startQuestIds":  [
+                                                                 2197
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2197
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "104000000:21:1002103",
+                        "mapId":  104000000,
+                        "mapName":  "Lith Harbor",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "21",
+                        "npcId":  1002103,
+                        "npcName":  "Captain Al",
+                        "npcPosition":  {
+                                            "x":  1309,
+                                            "y":  -146,
+                                            "footholdId":  262
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  4,
+                                           "completes":  1,
+                                           "startQuestIds":  [
+                                                                 2231,
+                                                                 2232,
+                                                                 2233,
+                                                                 2234
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2231
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "105030000:43:1063003",
+                        "mapId":  105030000,
+                        "mapName":  "Deep Forest",
+                        "streetName":  "Dungeon",
+                        "lifeIndex":  "43",
+                        "npcId":  1063003,
+                        "npcName":  "Wanted : G. Mushroom",
+                        "npcPosition":  {
+                                            "x":  310,
+                                            "y":  157,
+                                            "footholdId":  45
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  2,
+                                           "completes":  0,
+                                           "startQuestIds":  [
+                                                                 2105,
+                                                                 2111
+                                                             ],
+                                           "completeQuestIds":  [
+
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "105040200:39:1063004",
+                        "mapId":  105040200,
+                        "mapName":  "Hunting Ground in the Deep Forest II",
+                        "streetName":  "Dungeon",
+                        "lifeIndex":  "39",
+                        "npcId":  1063004,
+                        "npcName":  "Wanted : Curse Eye",
+                        "npcPosition":  {
+                                            "x":  979,
+                                            "y":  -291,
+                                            "footholdId":  36
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  1,
+                                           "completes":  0,
+                                           "startQuestIds":  [
+                                                                 2115
+                                                             ],
+                                           "completeQuestIds":  [
+
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "105040300:2:1061005",
+                        "mapId":  105040300,
+                        "mapName":  "Sleepywood",
+                        "streetName":  "Dungeon",
+                        "lifeIndex":  "2",
+                        "npcId":  1061005,
+                        "npcName":  "Sabitrama",
+                        "npcPosition":  {
+                                            "x":  765,
+                                            "y":  -378,
+                                            "footholdId":  19
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  1,
+                                           "completes":  1,
+                                           "startQuestIds":  [
+                                                                 2050
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2050
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "105040300:5:2040050",
+                        "mapId":  105040300,
+                        "mapName":  "Sleepywood",
+                        "streetName":  "Dungeon",
+                        "lifeIndex":  "5",
+                        "npcId":  2040050,
+                        "npcName":  "Eurek the Alchemist",
+                        "npcPosition":  {
+                                            "x":  1415,
+                                            "y":  242,
+                                            "footholdId":  94
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  2,
+                                           "completes":  2,
+                                           "startQuestIds":  [
+                                                                 6000,
+                                                                 28136
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    6000,
+                                                                    28136
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "105040300:6:1061011",
+                        "mapId":  105040300,
+                        "mapName":  "Sleepywood",
+                        "streetName":  "Dungeon",
+                        "lifeIndex":  "6",
+                        "npcId":  1061011,
+                        "npcName":  "The Rememberer",
+                        "npcPosition":  {
+                                            "x":  -81,
+                                            "y":  -181,
+                                            "footholdId":  151
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  16,
+                                           "completes":  24,
+                                           "startQuestIds":  [
+                                                                 2246,
+                                                                 2247,
+                                                                 2248,
+                                                                 2249,
+                                                                 2250,
+                                                                 2251,
+                                                                 2252,
+                                                                 2253,
+                                                                 2254,
+                                                                 28262,
+                                                                 28263,
+                                                                 28264,
+                                                                 28265,
+                                                                 28266,
+                                                                 28282,
+                                                                 28283
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2105,
+                                                                    2106,
+                                                                    2107,
+                                                                    2108,
+                                                                    2111,
+                                                                    2112,
+                                                                    2113,
+                                                                    2114,
+                                                                    2115,
+                                                                    2246,
+                                                                    2247,
+                                                                    2248,
+                                                                    2249,
+                                                                    2250,
+                                                                    2251,
+                                                                    2252,
+                                                                    2253,
+                                                                    28262,
+                                                                    28263,
+                                                                    28264,
+                                                                    28265,
+                                                                    28266,
+                                                                    28282,
+                                                                    28283
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "105050200:17:1063008",
+                        "mapId":  105050200,
+                        "mapName":  "Ant Tunnel III",
+                        "streetName":  "Dungeon",
+                        "lifeIndex":  "17",
+                        "npcId":  1063008,
+                        "npcName":  "Wanted : H. Mushroom",
+                        "npcPosition":  {
+                                            "x":  22,
+                                            "y":  188,
+                                            "footholdId":  282
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  2,
+                                           "completes":  0,
+                                           "startQuestIds":  [
+                                                                 2106,
+                                                                 2112
+                                                             ],
+                                           "completeQuestIds":  [
+
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "105050300:28:1063007",
+                        "mapId":  105050300,
+                        "mapName":  "Ant Tunnel IV",
+                        "streetName":  "Dungeon",
+                        "lifeIndex":  "28",
+                        "npcId":  1063007,
+                        "npcName":  "Wanted : Z. Mushroom",
+                        "npcPosition":  {
+                                            "x":  -517,
+                                            "y":  -432,
+                                            "footholdId":  595
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  2,
+                                           "completes":  0,
+                                           "startQuestIds":  [
+                                                                 2107,
+                                                                 2113
+                                                             ],
+                                           "completeQuestIds":  [
+
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "105070100:21:1063005",
+                        "mapId":  105070100,
+                        "mapName":  "The Cave of Evil Eye I",
+                        "streetName":  "Dungeon",
+                        "lifeIndex":  "21",
+                        "npcId":  1063005,
+                        "npcName":  "Wanted : Evil Eye",
+                        "npcPosition":  {
+                                            "x":  11,
+                                            "y":  146,
+                                            "footholdId":  606
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  2,
+                                           "completes":  0,
+                                           "startQuestIds":  [
+                                                                 2108,
+                                                                 2114
+                                                             ],
+                                           "completeQuestIds":  [
+
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "105090200:0:1061012",
+                        "mapId":  105090200,
+                        "mapName":  "Another Entrance",
+                        "streetName":  "Dungeon",
+                        "lifeIndex":  "0",
+                        "npcId":  1061012,
+                        "npcName":  "Insignificant Being",
+                        "npcPosition":  {
+                                            "x":  -114,
+                                            "y":  1018,
+                                            "footholdId":  27
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  1,
+                                           "completes":  1,
+                                           "startQuestIds":  [
+                                                                 2097
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2097
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "106000300:31:1040001",
+                        "mapId":  106000300,
+                        "mapName":  "Perion Dungeon Entrance",
+                        "streetName":  "Warning Street",
+                        "lifeIndex":  "31",
+                        "npcId":  1040001,
+                        "npcName":  "Mike",
+                        "npcPosition":  {
+                                            "x":  -294,
+                                            "y":  2024,
+                                            "footholdId":  23
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  1,
+                                           "completes":  1,
+                                           "startQuestIds":  [
+                                                                 2229
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2229
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "106010100:31:1040000",
+                        "mapId":  106010100,
+                        "mapName":  "Henesys Dungeon Entrance",
+                        "streetName":  "Warning Street",
+                        "lifeIndex":  "31",
+                        "npcId":  1040000,
+                        "npcName":  "Luke",
+                        "npcPosition":  {
+                                            "x":  2980,
+                                            "y":  120,
+                                            "footholdId":  218
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  1,
+                                           "completes":  1,
+                                           "startQuestIds":  [
+                                                                 2018
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2018
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "107000301:0:1052108",
+                        "mapId":  107000301,
+                        "mapName":  "Hut in the Swamp",
+                        "streetName":  "Hidden Street",
+                        "lifeIndex":  "0",
+                        "npcId":  1052108,
+                        "npcName":  "Knocked Trash Can",
+                        "npcPosition":  {
+                                            "x":  274,
+                                            "y":  153,
+                                            "footholdId":  8
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  0,
+                                           "completes":  2,
+                                           "startQuestIds":  [
+
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2214,
+                                                                    2215
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "120000000:0:1094000",
+                        "mapId":  120000000,
+                        "mapName":  "Nautilus Harbor",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "0",
+                        "npcId":  1094000,
+                        "npcName":  "Bart",
+                        "npcPosition":  {
+                                            "x":  4501,
+                                            "y":  -394,
+                                            "footholdId":  861
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  1,
+                                           "completes":  1,
+                                           "startQuestIds":  [
+                                                                 2172
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2171
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "120000000:8:1094001",
+                        "mapId":  120000000,
+                        "mapName":  "Nautilus Harbor",
+                        "streetName":  "Victoria Road",
+                        "lifeIndex":  "8",
+                        "npcId":  1094001,
+                        "npcName":  "Abel",
+                        "npcPosition":  {
+                                            "x":  666,
+                                            "y":  98,
+                                            "footholdId":  80
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  1,
+                                           "completes":  1,
+                                           "startQuestIds":  [
+                                                                 2186
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2186
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "120000100:0:1092007",
+                        "mapId":  120000100,
+                        "mapName":  "Top Floor - Hallway",
+                        "streetName":  "The Nautilus",
+                        "lifeIndex":  "0",
+                        "npcId":  1092007,
+                        "npcName":  "Muirhat",
+                        "npcPosition":  {
+                                            "x":  450,
+                                            "y":  146,
+                                            "footholdId":  48
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  2,
+                                           "completes":  4,
+                                           "startQuestIds":  [
+                                                                 2162,
+                                                                 2175
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2169,
+                                                                    2174,
+                                                                    2175,
+                                                                    2210
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "120000100:1:1092009",
+                        "mapId":  120000100,
+                        "mapName":  "Top Floor - Hallway",
+                        "streetName":  "The Nautilus",
+                        "lifeIndex":  "1",
+                        "npcId":  1092009,
+                        "npcName":  "Mrs. Reade",
+                        "npcPosition":  {
+                                            "x":  1293,
+                                            "y":  147,
+                                            "footholdId":  54
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  3,
+                                           "completes":  2,
+                                           "startQuestIds":  [
+                                                                 2176,
+                                                                 2177,
+                                                                 2178
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2176,
+                                                                    2177
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "120000100:2:1092010",
+                        "mapId":  120000100,
+                        "mapName":  "Top Floor - Hallway",
+                        "streetName":  "The Nautilus",
+                        "lifeIndex":  "2",
+                        "npcId":  1092010,
+                        "npcName":  "Jack",
+                        "npcPosition":  {
+                                            "x":  1395,
+                                            "y":  146,
+                                            "footholdId":  55
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  0,
+                                           "completes":  1,
+                                           "startQuestIds":  [
+
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2178
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "120000101:0:1090000",
+                        "mapId":  120000101,
+                        "mapName":  "Navigation Room",
+                        "streetName":  "The Nautilus",
+                        "lifeIndex":  "0",
+                        "npcId":  1090000,
+                        "npcName":  "Kyrin",
+                        "npcPosition":  {
+                                            "x":  174,
+                                            "y":  57,
+                                            "footholdId":  1
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  1,
+                                           "completes":  2,
+                                           "startQuestIds":  [
+                                                                 28260
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2164,
+                                                                    28260
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "120000103:0:1092000",
+                        "mapId":  120000103,
+                        "mapName":  "Cafeteria",
+                        "streetName":  "The Nautilus",
+                        "lifeIndex":  "0",
+                        "npcId":  1092000,
+                        "npcName":  "Tangyoon",
+                        "npcPosition":  {
+                                            "x":  314,
+                                            "y":  133,
+                                            "footholdId":  61
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  3,
+                                           "completes":  3,
+                                           "startQuestIds":  [
+                                                                 2179,
+                                                                 2180,
+                                                                 2204
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2179,
+                                                                    2180,
+                                                                    2204
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "120000104:0:1092008",
+                        "mapId":  120000104,
+                        "mapName":  "Training Room",
+                        "streetName":  "The Nautilus",
+                        "lifeIndex":  "0",
+                        "npcId":  1092008,
+                        "npcName":  "Shulynch",
+                        "npcPosition":  {
+                                            "x":  56,
+                                            "y":  -188,
+                                            "footholdId":  1
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  0,
+                                           "completes":  1,
+                                           "startQuestIds":  [
+
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2209
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "120000200:2:1092012",
+                        "mapId":  120000200,
+                        "mapName":  "Mid Floor - Hallway",
+                        "streetName":  "The Nautilus",
+                        "lifeIndex":  "2",
+                        "npcId":  1092012,
+                        "npcName":  "Rolonay",
+                        "npcPosition":  {
+                                            "x":  1701,
+                                            "y":  143,
+                                            "footholdId":  55
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  1,
+                                           "completes":  1,
+                                           "startQuestIds":  [
+                                                                 28279
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    28279
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "120000200:3:1092011",
+                        "mapId":  120000200,
+                        "mapName":  "Mid Floor - Hallway",
+                        "streetName":  "The Nautilus",
+                        "lifeIndex":  "3",
+                        "npcId":  1092011,
+                        "npcName":  "Bartol",
+                        "npcPosition":  {
+                                            "x":  3193,
+                                            "y":  41,
+                                            "footholdId":  33
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  5,
+                                           "completes":  1,
+                                           "startQuestIds":  [
+                                                                 2207,
+                                                                 2209,
+                                                                 2210,
+                                                                 2211,
+                                                                 28277
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    28277
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "120000200:6:1092004",
+                        "mapId":  120000200,
+                        "mapName":  "Mid Floor - Hallway",
+                        "streetName":  "The Nautilus",
+                        "lifeIndex":  "6",
+                        "npcId":  1092004,
+                        "npcName":  "Calico",
+                        "npcPosition":  {
+                                            "x":  5305,
+                                            "y":  148,
+                                            "footholdId":  79
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  1,
+                                           "completes":  2,
+                                           "startQuestIds":  [
+                                                                 28276
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2207,
+                                                                    28276
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "120000200:9:9010000",
+                        "mapId":  120000200,
+                        "mapName":  "Mid Floor - Hallway",
+                        "streetName":  "The Nautilus",
+                        "lifeIndex":  "9",
+                        "npcId":  9010000,
+                        "npcName":  "Maple Administrator",
+                        "npcPosition":  {
+                                            "x":  4911,
+                                            "y":  146,
+                                            "footholdId":  76
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  4,
+                                           "completes":  2,
+                                           "startQuestIds":  [
+                                                                 8700,
+                                                                 8800,
+                                                                 8833,
+                                                                 8834
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    8700,
+                                                                    8800
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "120000201:0:1092006",
+                        "mapId":  120000201,
+                        "mapName":  "Conference Room",
+                        "streetName":  "The Nautilus",
+                        "lifeIndex":  "0",
+                        "npcId":  1092006,
+                        "npcName":  "Black Bark",
+                        "npcPosition":  {
+                                            "x":  5,
+                                            "y":  140,
+                                            "footholdId":  11
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  0,
+                                           "completes":  2,
+                                           "startQuestIds":  [
+
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2185,
+                                                                    2211
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "120000300:0:1092003",
+                        "mapId":  120000300,
+                        "mapName":  "Bottom Floor - Hallway",
+                        "streetName":  "The Nautilus",
+                        "lifeIndex":  "0",
+                        "npcId":  1092003,
+                        "npcName":  "Sharyl",
+                        "npcPosition":  {
+                                            "x":  2648,
+                                            "y":  144,
+                                            "footholdId":  72
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  4,
+                                           "completes":  3,
+                                           "startQuestIds":  [
+                                                                 2165,
+                                                                 2166,
+                                                                 2167,
+                                                                 2169
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2165,
+                                                                    2166,
+                                                                    2168
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "120000300:1:1092001",
+                        "mapId":  120000300,
+                        "mapName":  "Bottom Floor - Hallway",
+                        "streetName":  "The Nautilus",
+                        "lifeIndex":  "1",
+                        "npcId":  1092001,
+                        "npcName":  "Bonnie",
+                        "npcPosition":  {
+                                            "x":  1277,
+                                            "y":  33,
+                                            "footholdId":  49
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  1,
+                                           "completes":  1,
+                                           "startQuestIds":  [
+                                                                 28278
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    28278
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "120000300:2:1092002",
+                        "mapId":  120000300,
+                        "mapName":  "Bottom Floor - Hallway",
+                        "streetName":  "The Nautilus",
+                        "lifeIndex":  "2",
+                        "npcId":  1092002,
+                        "npcName":  "Baine",
+                        "npcPosition":  {
+                                            "x":  113,
+                                            "y":  144,
+                                            "footholdId":  55
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  3,
+                                           "completes":  2,
+                                           "startQuestIds":  [
+                                                                 2171,
+                                                                 2173,
+                                                                 2174
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2172,
+                                                                    2173
+                                                                ]
+                                       },
+                        "notes":  ""
+                    },
+                    {
+                        "placementKey":  "120000301:1:1092013",
+                        "mapId":  120000301,
+                        "mapName":  "Generator Room",
+                        "streetName":  "The Nautilus",
+                        "lifeIndex":  "1",
+                        "npcId":  1092013,
+                        "npcName":  "Porchay",
+                        "npcPosition":  {
+                                            "x":  -124,
+                                            "y":  -144,
+                                            "footholdId":  1
+                                        },
+                        "centerOffset":  {
+                                             "x":  0,
+                                             "y":  0
+                                         },
+                        "radiusPx":  180,
+                        "dynamicSpread":  true,
+                        "questLinks":  {
+                                           "starts":  1,
+                                           "completes":  1,
+                                           "startQuestIds":  [
+                                                                 2181
+                                                             ],
+                                           "completeQuestIds":  [
+                                                                    2183
+                                                                ]
+                                       },
+                        "notes":  ""
+                    }
+                ]
+}

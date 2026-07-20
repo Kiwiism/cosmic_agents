@@ -46,9 +46,7 @@ public final class AgentAttackPlanScoringPolicy {
     }
 
     public static <T extends AgentAttackPlan> AgentAttackPlanScore<T> scoreAttackPlan(Character agent, T attackPlan) {
-        CombatFormulaProvider.DamageProfile damageProfile = CombatFormulaProvider.getInstance().resolveDamageProfile(
-                agent, attackPlan.skillId, attackPlan.skillLevel,
-                attackPlan.route == AgentAttackRoute.MAGIC, attackPlan.damageWeaponType);
+        CombatFormulaProvider.DamageProfile damageProfile = AgentAttackDamageProfileService.resolve(agent, attackPlan);
         double usefulDamage = 0.0d;
         double rawDamage = 0.0d;
         boolean minimumKillsFullHpTargets = !attackPlan.targets.isEmpty();

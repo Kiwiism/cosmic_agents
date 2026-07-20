@@ -10,8 +10,9 @@ import java.awt.Point;
 /** Resolves a standable or climbable point inside a collision portal hitbox. */
 public final class AgentPortalApproachService {
     public static final int COLLISION_PORTAL_TYPE = 3;
-    public static final int COLLISION_ENTER_X = 30;
-    public static final int COLLISION_ENTER_Y = 60;
+    public static final int SCRIPTED_COLLISION_PORTAL_TYPE = 9;
+    public static final int COLLISION_ENTER_X = 50;
+    public static final int COLLISION_ENTER_Y = 50;
 
     private AgentPortalApproachService() {
     }
@@ -21,7 +22,8 @@ public final class AgentPortalApproachService {
             return null;
         }
         Point center = portal.getPosition();
-        if (map == null || portal.getType() != COLLISION_PORTAL_TYPE) {
+        if (map == null || (portal.getType() != COLLISION_PORTAL_TYPE
+                && portal.getType() != SCRIPTED_COLLISION_PORTAL_TYPE)) {
             return center;
         }
         Point reachable = reachableApproachInBox(map, center, COLLISION_ENTER_X, COLLISION_ENTER_Y);

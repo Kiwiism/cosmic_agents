@@ -13,6 +13,7 @@ public final class AgentTickPreflightService {
     public record Hooks(AirshowState airshowState,
                         SkipDelayConsumer skipDelayConsumer,
                         RemovedAgentCleanup removedAgentCleanup,
+                        CollisionPortalTick collisionPortalTick,
                         HeartbeatTick heartbeatTick,
                         PendingOfferExpiry pendingOfferExpiry,
                         AiTickPreparation aiTickPreparation,
@@ -34,6 +35,11 @@ public final class AgentTickPreflightService {
     @FunctionalInterface
     public interface RemovedAgentCleanup {
         void remove(int agentCharId);
+    }
+
+    @FunctionalInterface
+    public interface CollisionPortalTick {
+        boolean tick(AgentRuntimeEntry entry, Character agent);
     }
 
     @FunctionalInterface
@@ -68,6 +74,9 @@ public final class AgentTickPreflightService {
         Character agent = AgentRuntimeIdentityRuntime.bot(entry);
         if (agent.getMap() == null) {
             hooks.removedAgentCleanup().remove(agentCharId);
+            return new Result(true, agent, false);
+        }
+        if (hooks.collisionPortalTick().tick(entry, agent)) {
             return new Result(true, agent, false);
         }
 

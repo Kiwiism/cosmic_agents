@@ -3,6 +3,7 @@ package server.agents.runtime;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
+import server.agents.capabilities.navigation.AgentCollisionPortalService;
 import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.capabilities.social.airshow.AgentAirshowStateRuntime;
 import server.agents.integration.AgentCharacterGatewayRuntime;
@@ -33,6 +34,7 @@ public final class AgentTickPreflightRuntime {
                 AgentAirshowStateRuntime::active,
                 AgentTickCadenceStateRuntime::consumeSkipDelay,
                 AgentRuntimeCleanupService::removeAgentByCharacterId,
+                AgentCollisionPortalService::tick,
                 (entry, agent, nowMs, heartbeatIntervalMs) -> AgentHeartbeatService.tickHeartbeat(
                         entry,
                         agent,

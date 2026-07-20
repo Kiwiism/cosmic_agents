@@ -42,10 +42,15 @@ public final class AgentInventorySellTrashService {
                 inventory::isQuestItem,
                 itemId -> ItemRestrictionPolicy.allowsUntradeable(agent, itemId));
         Set<Item> selfKeep = AgentEquipmentReservePolicy.collectPotentialSelfUpgradeItems(agent);
+        long nowMs = System.currentTimeMillis();
+        AgentInventoryReservationRuntime.refreshEquipmentReservations(entry, agent, nowMs);
 
         List<Item> normal = new ArrayList<>();
         for (Item item : all) {
             if (selfKeep.contains(item)) {
+                continue;
+            }
+            if (!AgentInventoryReservationRuntime.mayConsume(entry, item, nowMs)) {
                 continue;
             }
             if (AgentOfferService.isReservedForOtherRecipients(entry, agent, item)) {

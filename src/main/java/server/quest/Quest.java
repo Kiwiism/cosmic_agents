@@ -157,7 +157,8 @@ public class Quest {
                     break;
                 case MOB:
                     for (Data mob : startReq.getChildren()) {
-                        relevantMobs.add(DataTool.getInt(mob.getChildByPath("id")));
+                        relevantMobs.add(QuestSourceDataCorrections.mobRequirementId(
+                                id, DataTool.getInt(mob.getChildByPath("id"))));
                     }
                     break;
                 }
@@ -183,7 +184,8 @@ public class Quest {
 
                 if (type.equals(QuestRequirementType.MOB)) {
                     for (Data mob : completeReq.getChildren()) {
-                        relevantMobs.add(DataTool.getInt(mob.getChildByPath("id")));
+                        relevantMobs.add(QuestSourceDataCorrections.mobRequirementId(
+                                id, DataTool.getInt(mob.getChildByPath("id"))));
                     }
                 }
                 completeReqs.put(type, req);
@@ -351,6 +353,12 @@ public class Quest {
             }
             AgentPartyQuestSyncService.syncPartyAgentsQuestComplete(chr, getId(), npc, selection);
         }
+    }
+
+    public List<Integer> selectableRewardItemIds(Character chr) {
+        AbstractQuestAction action = completeActs.get(QuestActionType.ITEM);
+        return action instanceof ItemAction items
+                ? items.selectableRewardItemIds(chr) : List.of();
     }
 
     public void reset(Character chr) {

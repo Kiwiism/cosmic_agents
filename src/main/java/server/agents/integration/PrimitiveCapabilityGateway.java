@@ -90,9 +90,18 @@ public interface PrimitiveCapabilityGateway {
 
     boolean interactNpc(Character agent, int npcId, AgentNpcInteractionType type, Integer questId);
 
+    /** Runs an ordinary NPC script with explicit menu selections for a headless Agent. */
+    default boolean runNpcScript(Character agent, int npcId, int... selections) {
+        return false;
+    }
+
     boolean startQuest(Character agent, int questId, int npcId);
 
     boolean completeQuest(Character agent, int questId, int npcId);
+
+    default boolean completeQuest(Character agent, int questId, int npcId, Integer rewardSelection) {
+        return completeQuest(agent, questId, npcId);
+    }
 
     default boolean forceCompleteQuest(Character agent, int questId, int npcId) {
         return false;
