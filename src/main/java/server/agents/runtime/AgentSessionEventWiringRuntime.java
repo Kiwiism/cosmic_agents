@@ -10,6 +10,7 @@ import server.agents.capabilities.supplies.AgentSupplyMonitoringProjectionServic
 import server.agents.capabilities.supplies.AgentSupplyThresholdChangedEvent;
 import server.agents.events.AgentEventSubscription;
 import server.agents.events.BoundedAgentEventBus;
+import server.agents.events.journal.AgentDurableEventJournalListener;
 import server.agents.progression.events.AgentProgressionCheckpointProjectionService;
 import server.agents.progression.events.AgentProgressionDialogueReactionService;
 import server.agents.progression.events.AgentProgressionMonitoringProjectionService;
@@ -71,6 +72,7 @@ public final class AgentSessionEventWiringRuntime {
                         new AgentOperationalEvaluationListener(entry)));
                 subscriptions.add(bus.subscribe("*",
                         new AgentOperationalDialogueReactionService(bus)));
+                subscriptions.add(bus.subscribe("*", new AgentDurableEventJournalListener()));
                 state.attach(subscriptions);
             } catch (RuntimeException failure) {
                 subscriptions.forEach(AgentEventSubscription::close);
