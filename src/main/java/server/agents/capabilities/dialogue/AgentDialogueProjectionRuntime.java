@@ -12,6 +12,7 @@ import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.progression.events.AgentProgressionDialogueReactionService;
 import server.agents.resources.events.AgentResourceDialogueReactionService;
+import server.agents.operations.events.AgentOperationalDialogueReactionService;
 import client.Job;
 
 import java.util.List;
@@ -78,6 +79,13 @@ public final class AgentDialogueProjectionRuntime {
                 case "SUCCESS" -> "the scroll worked!";
                 case "CURSE" -> "the item was destroyed...";
                 case "FAIL" -> "the scroll failed.";
+                default -> "";
+            };
+        }
+        if (AgentOperationalDialogueReactionService.LIFE_STATE_INTENT.equals(intent.intentKey())) {
+            return switch (intent.parameters().getOrDefault("state", "")) {
+                case "DEAD" -> AgentDialogueSelector.randomReply(AgentDialogueCatalog.combatDeathReplies());
+                case "ALIVE" -> "back!";
                 default -> "";
             };
         }

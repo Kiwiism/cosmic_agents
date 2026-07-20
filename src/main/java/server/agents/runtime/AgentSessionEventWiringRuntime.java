@@ -16,6 +16,9 @@ import server.agents.progression.events.AgentProgressionMonitoringProjectionServ
 import server.agents.resources.events.AgentInventoryMaintenanceEventListener;
 import server.agents.resources.events.AgentResourceDialogueReactionService;
 import server.agents.resources.events.AgentResourceMonitoringProjectionService;
+import server.agents.operations.events.AgentOperationalDialogueReactionService;
+import server.agents.operations.events.AgentOperationalEvaluationListener;
+import server.agents.operations.events.AgentOperationalMonitoringProjectionService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,6 +65,12 @@ public final class AgentSessionEventWiringRuntime {
                         new AgentInventoryMaintenanceEventListener(entry)));
                 subscriptions.add(bus.subscribe("*",
                         new AgentResourceDialogueReactionService(bus)));
+                subscriptions.add(bus.subscribe("*",
+                        new AgentOperationalMonitoringProjectionService(entry)));
+                subscriptions.add(bus.subscribe("*",
+                        new AgentOperationalEvaluationListener(entry)));
+                subscriptions.add(bus.subscribe("*",
+                        new AgentOperationalDialogueReactionService(bus)));
                 state.attach(subscriptions);
             } catch (RuntimeException failure) {
                 subscriptions.forEach(AgentEventSubscription::close);

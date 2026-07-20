@@ -9,6 +9,7 @@ public record AgentLifeStateChangedEvent(
         String previousState,
         String state,
         int mapId,
+        boolean observerDialogue,
         String objectiveId) implements AgentEvent {
     public static final String TYPE = "combat.life-state-changed";
 

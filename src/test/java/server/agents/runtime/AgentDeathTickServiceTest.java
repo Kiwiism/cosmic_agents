@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
 
 class AgentDeathTickServiceTest {
     @Test
-    void respawnNearLeaderRestoresHpTeleportsAndAnnounces() {
+    void respawnNearLeaderRestoresHpAndTeleports() {
         MapleMap map = mock(MapleMap.class);
         Character leader = character(100, 1, map, new Point(50, 100));
         Character agent = character(200, 1, map, new Point(10, 100));
@@ -34,7 +34,6 @@ class AgentDeathTickServiceTest {
         AtomicReference<Point> teleportedTo = new AtomicReference<>();
         AtomicInteger resets = new AtomicInteger();
         AtomicInteger broadcasts = new AtomicInteger();
-        AtomicReference<String> spoken = new AtomicReference<>();
         AgentDeathStateRuntime.enterDeadState(entry, 1_000L, 500L);
         when(agent.getMaxHp()).thenReturn(123);
 
@@ -63,10 +62,6 @@ class AgentDeathTickServiceTest {
                             assertSame(entry, broadcastEntry);
                             assertSame(agent, broadcastAgent);
                             broadcasts.incrementAndGet();
-                        },
-                        (speakingAgent, text) -> {
-                            assertSame(agent, speakingAgent);
-                            spoken.set(text);
                         }));
 
         assertFalse(AgentDeathStateRuntime.isDead(entry));
@@ -76,7 +71,6 @@ class AgentDeathTickServiceTest {
         assertSame(ground, teleportedTo.get());
         assertEquals(1, resets.get());
         assertEquals(1, broadcasts.get());
-        assertEquals("back!", spoken.get());
         verify(agent).changeFaceExpression(AgentEmote.GLARE.getValue());
     }
 
@@ -106,8 +100,7 @@ class AgentDeathTickServiceTest {
                         (targetMap, point) -> null,
                         (teleportEntry, teleportAgent, point) -> teleportedTo.set(point),
                         (resetEntry, resetAgent) -> {},
-                        (broadcastEntry, broadcastAgent) -> {},
-                        (speakingAgent, text) -> {}));
+                        (broadcastEntry, broadcastAgent) -> {}));
 
         assertEquals(1, mapChanges.get());
         assertSame(leaderPosition, teleportedTo.get());

@@ -17,8 +17,7 @@ public final class AgentDeathTickService {
                                GroundPointResolver groundPointResolver,
                                TeleportToPoint teleportToPoint,
                                BiConsumer<AgentRuntimeEntry, Character> resetEntryStateAfterTeleport,
-                               BiConsumer<AgentRuntimeEntry, Character> broadcastMovement,
-                               BiConsumer<Character, String> mapSpeaker) {
+                               BiConsumer<AgentRuntimeEntry, Character> broadcastMovement) {
     }
 
     @FunctionalInterface
@@ -70,12 +69,11 @@ public final class AgentDeathTickService {
         hooks.teleportToPoint().teleport(entry, agent, spawnPosition != null ? spawnPosition : leaderPosition);
         hooks.resetEntryStateAfterTeleport().accept(entry, agent);
         hooks.broadcastMovement().accept(entry, agent);
-        hooks.mapSpeaker().accept(agent, "back!");
         agent.changeFaceExpression(AgentEmote.GLARE.getValue());
         AgentOperationalEventPublisher.publish(entry,
                 objectiveId -> new AgentLifeStateChangedEvent(
                         agent.getId(), System.currentTimeMillis(), "DEAD", "ALIVE",
-                        agent.getMapId(), objectiveId),
+                        agent.getMapId(), true, objectiveId),
                 AgentEventPriority.IMPORTANT);
     }
 }

@@ -6,7 +6,6 @@ import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentMovementPoseService;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
 import server.agents.integration.AgentMapGatewayRuntime;
-import server.agents.integration.AgentReplyRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**
@@ -29,8 +28,7 @@ public final class AgentRespawnCoordinator {
                         (respawnEntry, ignoredAgent) ->
                                 AgentMovementStateResetService.resetEntryStateAfterTeleport(respawnEntry),
                         (respawnEntry, ignoredAgent) ->
-                                AgentMovementBroadcastService.broadcastMovement(respawnEntry),
-                        AgentReplyRuntime::sayMapNow));
+                                AgentMovementBroadcastService.broadcastMovement(respawnEntry)));
     }
 
     static void respawnNearLeader(AgentRuntimeEntry entry,

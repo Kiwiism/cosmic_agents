@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import server.agents.capabilities.supplies.AgentSupplyDialogueReactionService;
 import server.agents.progression.events.AgentProgressionDialogueReactionService;
 import server.agents.resources.events.AgentResourceDialogueReactionService;
+import server.agents.operations.events.AgentOperationalDialogueReactionService;
 
 import java.util.Map;
 
@@ -68,5 +69,15 @@ class AgentDialogueProjectionRuntimeTest {
 
         assertEquals("use inventory is full!", AgentDialogueProjectionRuntime.render(inventory));
         assertEquals("the scroll worked!", AgentDialogueProjectionRuntime.render(scroll));
+    }
+
+    @Test
+    void rendersOperationalLifeStateIntent() {
+        AgentDialogueIntentEvent respawn = new AgentDialogueIntentEvent(
+                1, 100L, AgentOperationalDialogueReactionService.LIFE_STATE_INTENT,
+                AgentDialogueAudience.NEARBY_REAL_PLAYER, "respawn", 1_000L,
+                Map.of("state", "ALIVE"));
+
+        assertEquals("back!", AgentDialogueProjectionRuntime.render(respawn));
     }
 }
