@@ -17,6 +17,11 @@ public interface AgentClientGateway {
 
     boolean hasClient(Character character);
 
+    @AgentGatewayAffinity(
+            value = AgentGatewayThreadAffinity.READ_ONLY_SNAPSHOT,
+            rationale = "Client type is immutable for the lifetime of a live Agent or player session.")
+    boolean isRealPlayer(Character character);
+
     boolean tryAcquire(Character character);
 
     void release(Character character);

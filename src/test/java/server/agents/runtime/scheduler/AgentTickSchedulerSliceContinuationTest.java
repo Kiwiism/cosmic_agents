@@ -55,6 +55,7 @@ class AgentTickSchedulerSliceContinuationTest {
                         () -> frame,
                         () -> { },
                         () -> { },
+                        () -> { },
                         failure -> { }));
         scheduler.register(entry, tick, 50L);
 

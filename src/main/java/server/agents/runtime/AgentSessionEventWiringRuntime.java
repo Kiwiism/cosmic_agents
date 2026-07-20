@@ -1,0 +1,56 @@
+package server.agents.runtime;
+
+import server.agents.capabilities.dialogue.AgentDialogueIntentEvent;
+import server.agents.capabilities.dialogue.AgentDialogueProjectionRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueProjectionService;
+import server.agents.capabilities.supplies.AgentSupplyCoordinationProjectionService;
+import server.agents.capabilities.supplies.AgentSupplyDialogueReactionService;
+import server.agents.capabilities.supplies.AgentSupplyMaintenanceEventListener;
+import server.agents.capabilities.supplies.AgentSupplyMonitoringProjectionService;
+import server.agents.capabilities.supplies.AgentSupplyThresholdChangedEvent;
+import server.agents.events.AgentEventSubscription;
+import server.agents.events.BoundedAgentEventBus;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/** Registers production listeners once and binds their lifetime to the Agent session. */
+public final class AgentSessionEventWiringRuntime {
+    private AgentSessionEventWiringRuntime() {
+    }
+
+    static void ensureWired(AgentRuntimeEntry entry, BoundedAgentEventBus bus) {
+        AgentSessionEventWiringState state = entry.capabilityStates()
+                .require(AgentSessionEventWiringState.STATE_KEY);
+        synchronized (state) {
+            if (state.wired()) {
+                return;
+            }
+            List<AgentEventSubscription> subscriptions = new ArrayList<>();
+            try {
+                subscriptions.add(bus.subscribe(AgentSupplyThresholdChangedEvent.TYPE,
+                        new AgentSupplyMaintenanceEventListener(entry)));
+                subscriptions.add(bus.subscribe(AgentSupplyThresholdChangedEvent.TYPE,
+                        new AgentSupplyCoordinationProjectionService()));
+                subscriptions.add(bus.subscribe(AgentSupplyThresholdChangedEvent.TYPE,
+                        new AgentSupplyDialogueReactionService(bus)));
+                subscriptions.add(bus.subscribe(AgentSupplyThresholdChangedEvent.TYPE,
+                        new AgentSupplyMonitoringProjectionService(entry)));
+                subscriptions.add(bus.subscribe(AgentDialogueIntentEvent.TYPE,
+                        new AgentDialogueProjectionService(
+                                (agentId, audience) -> AgentDialogueProjectionRuntime.hasAudience(
+                                        entry, agentId, audience),
+                                intent -> AgentDialogueProjectionRuntime.project(entry, intent))));
+                state.attach(subscriptions);
+            } catch (RuntimeException failure) {
+                subscriptions.forEach(AgentEventSubscription::close);
+                throw failure;
+            }
+        }
+    }
+
+    static void close(AgentRuntimeEntry entry) {
+        entry.capabilityStates().remove(AgentSessionEventWiringState.STATE_KEY)
+                .ifPresent(AgentSessionEventWiringState::close);
+    }
+}

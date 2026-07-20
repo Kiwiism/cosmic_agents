@@ -23,6 +23,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.coordination.AgentCoordinationRuntime;
 import server.agents.coordination.AgentSupplyNeedMessage;
 import server.agents.capabilities.contracts.AgentResourceCategory;
+import server.agents.capabilities.contracts.AgentSupplyNeed;
 
 import java.util.List;
 import java.util.Map;
@@ -53,18 +54,24 @@ public final class AgentAmmoService {
         }
 
         int ammo = AgentCombatAmmoCounter.countAmmo(bot, weaponType);
-        AgentResourcePlanningRuntime.observe(entry, resourceCategory(weaponType), ammo,
+        AgentResourceCategory category = resourceCategory(weaponType);
+        AgentSupplyNeed previous = entry.capabilityStates()
+                .require(AgentResourcePlanningState.STATE_KEY).need(category);
+        AgentSupplyNeed observed = AgentResourcePlanningRuntime.observe(entry, category, ammo,
                 AgentCombatConfig.cfg.AMMO_LOW_WARN,
                 Math.max(1, AgentCombatConfig.cfg.AMMO_LOW_WARN / 4),
                 Math.max(AgentCombatConfig.cfg.AMMO_LOW_WARN * 2, ammo),
                 System.currentTimeMillis());
+        boolean thresholdEventPublished = previous == null
+                || previous.urgency() != observed.urgency();
         if (ammo >= AgentCombatConfig.cfg.AMMO_LOW_WARN) {
             AgentAmmoStateRuntime.clearAmmoShareRequested(entry);
             return false;
         }
 
         if ((!AgentAmmoStateRuntime.ammoShareRequested(entry) || bypassShareLimits)
-                && requestAmmoShare(entry, bot, weaponType, ammo, bypassShareLimits, inventory)) {
+                && requestAmmoShare(entry, bot, weaponType, ammo, bypassShareLimits,
+                inventory, thresholdEventPublished)) {
             AgentAmmoStateRuntime.setAmmoShareRequested(entry, true);
             return true;
         }
@@ -96,6 +103,17 @@ public final class AgentAmmoService {
                                            int currentAmmo,
                                            boolean bypassShareLimits,
                                            InventoryGateway inventory) {
+        return requestAmmoShare(entry, bot, weaponType, currentAmmo,
+                bypassShareLimits, inventory, false);
+    }
+
+    private static boolean requestAmmoShare(AgentRuntimeEntry entry,
+                                            Character bot,
+                                            WeaponType weaponType,
+                                            int currentAmmo,
+                                            boolean bypassShareLimits,
+                                            InventoryGateway inventory,
+                                            boolean thresholdEventPublished) {
         if (bot.getTrade() != null || AgentPendingTradeStateRuntime.hasActiveSequence(entry)) {
             return false;
         }
@@ -116,19 +134,20 @@ public final class AgentAmmoService {
             ammoShareCooldownUntil.put(cohortId, now + 30_000L);
         }
 
-        AgentCoordinationRuntime.publish(new AgentSupplyNeedMessage(
-                bot.getId(),
-                cohortId,
-                bot.getMapId(),
-                AgentSupplyNeedMessage.SupplyKind.AMMUNITION,
-                currentAmmo,
-                weaponType.name(),
-                now));
-
-        AgentAmmoRuntime.sayMapNow(bot, AgentDialogueSelector.randomReply(
-                weaponType == WeaponType.BOW
-                        ? AgentDialogueCatalog.arrowRequestReplies()
-                        : AgentDialogueCatalog.boltRequestReplies()));
+        if (bypassShareLimits && !thresholdEventPublished) {
+            AgentCoordinationRuntime.publish(new AgentSupplyNeedMessage(
+                    bot.getId(),
+                    cohortId,
+                    bot.getMapId(),
+                    AgentSupplyNeedMessage.SupplyKind.AMMUNITION,
+                    currentAmmo,
+                    weaponType.name(),
+                    now));
+            AgentAmmoRuntime.sayMapNow(bot, AgentDialogueSelector.randomReply(
+                    weaponType == WeaponType.BOW
+                            ? AgentDialogueCatalog.arrowRequestReplies()
+                            : AgentDialogueCatalog.boltRequestReplies()));
+        }
 
         AgentAmmoDonorPlan<AgentRuntimeEntry> plan = selectAmmoDonor(entry, bot, weaponType);
         if (plan == null) {

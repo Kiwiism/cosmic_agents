@@ -4,14 +4,12 @@ import server.agents.capabilities.contracts.AgentProcurementRequest;
 import server.agents.capabilities.contracts.AgentResourceCategory;
 import server.agents.capabilities.contracts.AgentSupplyNeed;
 import server.agents.capabilities.contracts.AgentSupplyUrgency;
-import server.agents.events.AgentDomainEvent;
 import server.agents.events.AgentEventPriority;
+import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.objectives.AgentObjectiveDefinition;
 import server.agents.objectives.AgentObjectiveKernel;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentSessionEventRuntime;
-
-import java.util.Map;
 
 /** Side-effect-free supply observation plus event/procurement projection. */
 public final class AgentResourcePlanningRuntime {
@@ -33,7 +31,7 @@ public final class AgentResourcePlanningRuntime {
                 : null;
         state.update(need, procurement);
         if (previous == null || previous.urgency() != urgency) {
-            publish(entry, need, nowMs);
+            publish(entry, previous == null ? null : previous.urgency(), need, nowMs);
         }
         return need;
     }
@@ -45,15 +43,22 @@ public final class AgentResourcePlanningRuntime {
         return AgentSupplyUrgency.HEALTHY;
     }
 
-    private static void publish(AgentRuntimeEntry entry, AgentSupplyNeed need, long nowMs) {
+    private static void publish(AgentRuntimeEntry entry, AgentSupplyUrgency previousUrgency,
+                                AgentSupplyNeed need, long nowMs) {
         int agentId = entry.bot() == null ? 0 : entry.bot().getId();
         if (agentId <= 0) return;
-        AgentSessionEventRuntime.bus(entry).publish(new AgentDomainEvent(agentId, nowMs,
-                        "supply.threshold-changed", need.category() + ":" + need.urgency(),
-                        Map.of("category", need.category().name(), "urgency", need.urgency().name(),
-                                "current", String.valueOf(need.currentQuantity()),
-                                "target", String.valueOf(need.targetQuantity()),
-                                "objectiveId", need.objectiveId())),
+        int mapId = entry.bot().getMap() == null ? -1 : entry.bot().getMapId();
+        AgentSessionEventRuntime.bus(entry).publish(new AgentSupplyThresholdChangedEvent(
+                        agentId,
+                        nowMs,
+                        AgentRelationshipRuntime.cohortId(entry),
+                        mapId,
+                        need.category(),
+                        need.currentQuantity(),
+                        need.targetQuantity(),
+                        previousUrgency,
+                        need.urgency(),
+                        need.objectiveId()),
                 need.urgency().ordinal() >= AgentSupplyUrgency.CRITICAL.ordinal()
                         ? AgentEventPriority.IMPORTANT : AgentEventPriority.NORMAL);
     }

@@ -36,6 +36,7 @@ public final class AgentTickOrchestrator {
             AgentMailboxRuntime.drain(entry);
             tickCore.run(entry, leaderCharId, agentCharId);
             AgentMovementSettleService.settleIfNeeded(entry);
+            AgentEventDispatchRuntime.drain(entry);
             AgentTickFailurePolicy.resetFailures(entry);
         } catch (Throwable t) {
             failureHandler.handle(entry, leaderCharId, agentCharId, t);

@@ -14,10 +14,22 @@ public final class AgentSessionEventRuntime {
     }
 
     public static AgentEventBus bus(AgentRuntimeEntry entry) {
-        return entry.capabilityStates().require(STATE_KEY);
+        BoundedAgentEventBus bus = entry.capabilityStates().require(STATE_KEY);
+        AgentSessionEventWiringRuntime.ensureWired(entry, bus);
+        return bus;
+    }
+
+    static int drain(AgentRuntimeEntry entry, int budget) {
+        if (entry == null) {
+            return 0;
+        }
+        return entry.capabilityStates().find(STATE_KEY)
+                .map(bus -> bus.drain(budget))
+                .orElse(0);
     }
 
     public static void close(AgentRuntimeEntry entry) {
+        AgentSessionEventWiringRuntime.close(entry);
         entry.capabilityStates().remove(STATE_KEY).ifPresent(BoundedAgentEventBus::close);
     }
 }

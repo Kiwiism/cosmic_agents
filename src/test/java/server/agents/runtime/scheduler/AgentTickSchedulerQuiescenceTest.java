@@ -98,6 +98,7 @@ class AgentTickSchedulerQuiescenceTest {
                         () -> frame,
                         () -> { },
                         () -> { },
+                        () -> { },
                         failure -> { }));
         AgentScheduleHandle handle = scheduler.register(entry, tick, 50L);
 

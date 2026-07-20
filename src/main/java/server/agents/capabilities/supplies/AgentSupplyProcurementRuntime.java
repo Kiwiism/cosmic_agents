@@ -3,6 +3,7 @@ package server.agents.capabilities.supplies;
 import client.Character;
 import server.agents.capabilities.contracts.AgentProcurementMethod;
 import server.agents.capabilities.contracts.AgentProcurementRequest;
+import server.agents.capabilities.contracts.AgentResourceCategory;
 import server.agents.capabilities.contracts.AgentSupplyUrgency;
 import server.agents.capabilities.shop.AgentShopService;
 import server.agents.capabilities.shop.AgentShopStateRuntime;
@@ -33,12 +34,17 @@ public final class AgentSupplyProcurementRuntime {
                 AgentResourcePlanningState.STATE_KEY);
         AgentSupplyProcurementState execution = entry.capabilityStates().require(
                 AgentSupplyProcurementState.STATE_KEY);
-        AgentProcurementRequest request = planning.procurementSnapshot().values().stream()
-                .filter(candidate -> candidate.expiresAtMs() >= nowMs)
-                .filter(candidate -> candidate.urgency().ordinal() >= AgentSupplyUrgency.CRITICAL.ordinal())
-                .filter(candidate -> candidate.permittedMethods().contains(AgentProcurementMethod.NPC_SHOP))
-                .max(Comparator.comparingInt(candidate -> candidate.urgency().ordinal()))
-                .orElse(null);
+        AgentSupplyMaintenanceEvaluationState evaluations = entry.capabilityStates().require(
+                AgentSupplyMaintenanceEvaluationState.STATE_KEY);
+        AgentSupplyThresholdChangedEvent signal = execution.isActive() ? null : evaluations.next();
+        AgentProcurementRequest request = signal == null
+                ? null : selectRequest(planning, nowMs, signal.category());
+        if (signal != null && request == null) {
+            evaluations.resolve(signal.category());
+        }
+        if (request == null) {
+            request = selectRequest(planning, nowMs, null);
+        }
 
         if (request == null) {
             if (!execution.isActive()) {
@@ -53,6 +59,7 @@ public final class AgentSupplyProcurementRuntime {
             if (!begin(entry, agent, request, execution, nowMs)) {
                 return false;
             }
+            evaluations.resolve(request.category());
         } else if (!execution.requestId().equals(request.requestId())) {
             return true;
         }
@@ -63,6 +70,18 @@ public final class AgentSupplyProcurementRuntime {
             case RETURNING -> returnToPlan(entry, agent, planning, execution, nowMs);
             case IDLE -> false;
         };
+    }
+
+    private static AgentProcurementRequest selectRequest(AgentResourcePlanningState planning,
+                                                         long nowMs,
+                                                         AgentResourceCategory category) {
+        return planning.procurementSnapshot().values().stream()
+                .filter(candidate -> candidate.expiresAtMs() >= nowMs)
+                .filter(candidate -> candidate.urgency().ordinal() >= AgentSupplyUrgency.CRITICAL.ordinal())
+                .filter(candidate -> candidate.permittedMethods().contains(AgentProcurementMethod.NPC_SHOP))
+                .filter(candidate -> category == null || candidate.category() == category)
+                .max(Comparator.comparingInt(candidate -> candidate.urgency().ordinal()))
+                .orElse(null);
     }
 
     static boolean begin(AgentRuntimeEntry entry,
@@ -195,6 +214,8 @@ public final class AgentSupplyProcurementRuntime {
         execution.clear();
         if (category != null) {
             planning.resolve(category);
+            entry.capabilityStates().require(AgentSupplyMaintenanceEvaluationState.STATE_KEY)
+                    .resolve(category);
         }
         AgentObjectiveKernel.finishAndResume(entry, objectiveId, status, reason, nowMs);
     }
