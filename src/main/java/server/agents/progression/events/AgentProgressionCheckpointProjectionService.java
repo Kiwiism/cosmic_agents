@@ -7,6 +7,7 @@ import server.agents.progression.AgentCareerProgressionState;
 import server.agents.runtime.AgentMailboxRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.mailbox.AgentMailboxOptions;
+import server.agents.monitoring.AgentEventReactionMetrics;
 
 /** Coalesces progression changes into a next-tick durable career checkpoint. */
 public final class AgentProgressionCheckpointProjectionService implements AgentEventListener<AgentEvent> {
@@ -27,10 +28,11 @@ public final class AgentProgressionCheckpointProjectionService implements AgentE
         if (entry.capabilityStates().find(AgentCareerProgressionState.STATE_KEY).isEmpty()) {
             return;
         }
-        AgentMailboxRuntime.submit(entry, runtimeEntry -> {
+        var submission = AgentMailboxRuntime.submit(entry, runtimeEntry -> {
             AgentCareerProgressionCheckpointRuntime.persistIfDirty(
                     runtimeEntry, System.currentTimeMillis());
             return null;
         }, AgentMailboxOptions.coalesceLatest(MAILBOX_KEY));
+        AgentEventReactionMetrics.record(MAILBOX_KEY, submission);
     }
 }

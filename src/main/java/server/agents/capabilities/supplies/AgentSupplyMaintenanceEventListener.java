@@ -5,6 +5,7 @@ import server.agents.events.AgentEventListener;
 import server.agents.runtime.AgentMailboxRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.mailbox.AgentMailboxOptions;
+import server.agents.monitoring.AgentEventReactionMetrics;
 
 /** Converts a supply fact into a coalesced next-tick maintenance evaluation. */
 public final class AgentSupplyMaintenanceEventListener implements AgentEventListener<AgentEvent> {
@@ -19,11 +20,12 @@ public final class AgentSupplyMaintenanceEventListener implements AgentEventList
         if (!(event instanceof AgentSupplyThresholdChangedEvent threshold)) {
             return;
         }
-        AgentMailboxRuntime.submit(entry, runtimeEntry -> {
+        var submission = AgentMailboxRuntime.submit(entry, runtimeEntry -> {
             runtimeEntry.capabilityStates()
                     .require(AgentSupplyMaintenanceEvaluationState.STATE_KEY)
                     .project(threshold);
             return null;
         }, AgentMailboxOptions.coalesceLatest("supply-maintenance:" + threshold.category()));
+        AgentEventReactionMetrics.record("supply-maintenance", submission);
     }
 }

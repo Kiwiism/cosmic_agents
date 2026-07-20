@@ -8,5 +8,12 @@ public record AgentEventBusSnapshot(
         long delivered,
         long dropped,
         long deduplicated,
+        int highWaterMark,
+        long listenerInvocations,
+        long listenerFailures,
+        long listenerTotalDurationNs,
+        long listenerMaxDurationNs,
+        long queueLatencyTotalNs,
+        long queueLatencyMaxNs,
         boolean closed) {
 }

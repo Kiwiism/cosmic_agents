@@ -5,6 +5,7 @@ import server.agents.events.AgentEventListener;
 import server.agents.runtime.AgentMailboxRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.mailbox.AgentMailboxOptions;
+import server.agents.monitoring.AgentEventReactionMetrics;
 
 /** Converts inventory capacity facts into coalesced next-tick maintenance evaluation. */
 public final class AgentInventoryMaintenanceEventListener implements AgentEventListener<AgentEvent> {
@@ -19,11 +20,12 @@ public final class AgentInventoryMaintenanceEventListener implements AgentEventL
         if (!(event instanceof AgentInventoryThresholdChangedEvent threshold)) {
             return;
         }
-        AgentMailboxRuntime.submit(entry, runtimeEntry -> {
+        var submission = AgentMailboxRuntime.submit(entry, runtimeEntry -> {
             runtimeEntry.capabilityStates()
                     .require(AgentInventoryMaintenanceEvaluationState.STATE_KEY)
                     .project(threshold);
             return null;
         }, AgentMailboxOptions.coalesceLatest("inventory-maintenance:" + threshold.inventoryType()));
+        AgentEventReactionMetrics.record("inventory-maintenance", submission);
     }
 }

@@ -5,6 +5,7 @@ import server.agents.events.AgentEventListener;
 import server.agents.runtime.AgentMailboxRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.mailbox.AgentMailboxOptions;
+import server.agents.monitoring.AgentEventReactionMetrics;
 
 /** Defers operational blocker projection to the next Agent tick. */
 public final class AgentOperationalEvaluationListener implements AgentEventListener<AgentEvent> {
@@ -24,10 +25,11 @@ public final class AgentOperationalEvaluationListener implements AgentEventListe
                 && !(event instanceof AgentLifeStateChangedEvent)) {
             return;
         }
-        AgentMailboxRuntime.submit(entry, runtimeEntry -> {
+        var submission = AgentMailboxRuntime.submit(entry, runtimeEntry -> {
             runtimeEntry.capabilityStates().require(AgentOperationalEvaluationState.STATE_KEY)
                     .project(event);
             return null;
         }, AgentMailboxOptions.coalesceLatest(MAILBOX_KEY));
+        AgentEventReactionMetrics.record(MAILBOX_KEY, submission);
     }
 }

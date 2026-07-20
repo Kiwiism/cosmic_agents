@@ -2,6 +2,7 @@ package server.agents.runtime;
 
 import server.agents.events.AgentEventBus;
 import server.agents.events.BoundedAgentEventBus;
+import server.agents.events.AgentEventBusSnapshot;
 import server.agents.runtime.state.AgentCapabilityStateKey;
 
 /** Session ownership boundary for the bounded Agent event bus. */
@@ -26,6 +27,15 @@ public final class AgentSessionEventRuntime {
         return entry.capabilityStates().find(STATE_KEY)
                 .map(bus -> bus.drain(budget))
                 .orElse(0);
+    }
+
+    public static AgentEventBusSnapshot snapshot(AgentRuntimeEntry entry) {
+        if (entry == null) {
+            return null;
+        }
+        return entry.capabilityStates().find(STATE_KEY)
+                .map(BoundedAgentEventBus::snapshot)
+                .orElse(null);
     }
 
     public static void close(AgentRuntimeEntry entry) {

@@ -33,6 +33,7 @@ class BoundedAgentEventBusTest {
         assertTrue(bus.publish(event("critical"), AgentEventPriority.CRITICAL));
 
         assertEquals(2, bus.snapshot().queued());
+        assertEquals(2, bus.snapshot().highWaterMark());
         assertEquals(1, bus.snapshot().deduplicated());
         assertEquals(1, bus.snapshot().dropped());
     }
@@ -57,6 +58,10 @@ class BoundedAgentEventBusTest {
 
         assertEquals(1, bus.drain(1));
         assertEquals(List.of("safe"), delivered);
+        assertEquals(2, bus.snapshot().listenerInvocations());
+        assertEquals(1, bus.snapshot().listenerFailures());
+        assertTrue(bus.snapshot().listenerMaxDurationNs() >= 0L);
+        assertTrue(bus.snapshot().queueLatencyMaxNs() >= 0L);
     }
 
     private static AgentDomainEvent event(String key) {

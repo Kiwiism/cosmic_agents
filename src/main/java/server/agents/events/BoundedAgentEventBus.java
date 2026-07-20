@@ -20,6 +20,13 @@ public final class BoundedAgentEventBus implements AgentEventBus {
     private long delivered;
     private long dropped;
     private long deduplicated;
+    private int highWaterMark;
+    private long listenerInvocations;
+    private long listenerFailures;
+    private long listenerTotalDurationNs;
+    private long listenerMaxDurationNs;
+    private long queueLatencyTotalNs;
+    private long queueLatencyMaxNs;
     private boolean closed;
 
     public BoundedAgentEventBus() {
@@ -52,7 +59,8 @@ public final class BoundedAgentEventBus implements AgentEventBus {
             dropped++;
             return false;
         }
-        queue.addLast(new AgentEventEnvelope(++nextSequence, event, priority));
+        queue.addLast(new AgentEventEnvelope(++nextSequence, event, priority, System.nanoTime()));
+        highWaterMark = Math.max(highWaterMark, queue.size());
         if (!dedupeKey.isEmpty()) {
             queuedDedupeKeys.add(dedupeKey);
         }
@@ -86,16 +94,34 @@ public final class BoundedAgentEventBus implements AgentEventBus {
                 }
                 queuedDedupeKeys.remove(normalizedDedupeKey(envelope.event()));
                 targets = listenersFor(envelope.event().type());
+                long queueLatencyNs = Math.max(0L, System.nanoTime() - envelope.enqueuedAtNanos());
+                queueLatencyTotalNs += queueLatencyNs;
+                queueLatencyMaxNs = Math.max(queueLatencyMaxNs, queueLatencyNs);
             }
+            long invocationCount = 0L;
+            long failureCount = 0L;
+            long totalDurationNs = 0L;
+            long maxDurationNs = 0L;
             for (AgentEventListener<? super AgentEvent> listener : targets) {
+                long listenerStartedAt = System.nanoTime();
                 try {
                     listener.onAgentEvent(envelope.event());
-                } catch (RuntimeException ignored) {
+                } catch (Throwable ignored) {
                     // One projection must not block other consumers or the Agent tick.
+                    failureCount++;
+                } finally {
+                    long durationNs = Math.max(0L, System.nanoTime() - listenerStartedAt);
+                    invocationCount++;
+                    totalDurationNs += durationNs;
+                    maxDurationNs = Math.max(maxDurationNs, durationNs);
                 }
             }
             synchronized (this) {
                 delivered++;
+                listenerInvocations += invocationCount;
+                listenerFailures += failureCount;
+                listenerTotalDurationNs += totalDurationNs;
+                listenerMaxDurationNs = Math.max(listenerMaxDurationNs, maxDurationNs);
             }
             deliveredEvents++;
         }
@@ -106,7 +132,9 @@ public final class BoundedAgentEventBus implements AgentEventBus {
     public synchronized AgentEventBusSnapshot snapshot() {
         int subscriptions = listeners.values().stream().mapToInt(List::size).sum();
         return new AgentEventBusSnapshot(capacity, queue.size(), subscriptions,
-                published, delivered, dropped, deduplicated, closed);
+                published, delivered, dropped, deduplicated, highWaterMark,
+                listenerInvocations, listenerFailures, listenerTotalDurationNs,
+                listenerMaxDurationNs, queueLatencyTotalNs, queueLatencyMaxNs, closed);
     }
 
     @Override
