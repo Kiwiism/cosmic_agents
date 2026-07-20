@@ -27,6 +27,7 @@ import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentSchedulerRuntime;
 import server.life.Monster;
 import server.life.NPC;
+import server.life.SpawnPoint;
 import server.maps.MapItem;
 import server.maps.MapObject;
 import server.maps.Reactor;
@@ -34,6 +35,7 @@ import server.quest.Quest;
 
 import java.awt.Point;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -219,6 +221,18 @@ public enum CosmicPrimitiveCapabilityGateway implements PrimitiveCapabilityGatew
             }
         }
         return count;
+    }
+
+    @Override
+    public Set<Integer> configuredMonsterSpawnIds(Character agent) {
+        if (agent == null || agent.getMap() == null) {
+            return Set.of();
+        }
+        Set<Integer> spawnIds = new LinkedHashSet<>();
+        for (SpawnPoint spawnPoint : agent.getMap().getMonsterSpawn()) {
+            spawnIds.add(spawnPoint.getMonsterId());
+        }
+        return Set.copyOf(spawnIds);
     }
 
     @Override

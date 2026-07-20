@@ -113,12 +113,14 @@ public final class MapleIslandObjectiveRandomnessRuntime {
     private static AgentObjectiveVariationSettings toGeneric(MapleIslandObjectiveRandomnessSettings settings) {
         return new AgentObjectiveVariationSettings(settings.enabled(), settings.seed(),
                 settings.beforeNpcInteractionMs(), settings.betweenObjectivesMs(),
-                settings.npcAnchorVariationEnabled(), settings.restSpotVariationEnabled());
+                settings.npcAnchorVariationEnabled(), settings.restSpotVariationEnabled(),
+                settings.objectiveOrderVariationEnabled());
     }
 
     private static MapleIslandObjectiveRandomnessSettings toMapleIsland(AgentObjectiveVariationSettings settings) {
         return new MapleIslandObjectiveRandomnessSettings(settings.enabled(), settings.seed(),
                 settings.beforeNpcInteractionMs(), settings.betweenObjectivesMs(),
-                settings.npcAnchorVariationEnabled(), settings.restSpotVariationEnabled());
+                settings.npcAnchorVariationEnabled(), settings.restSpotVariationEnabled(),
+                settings.objectiveOrderVariationEnabled());
     }
 }

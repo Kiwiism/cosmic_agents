@@ -193,6 +193,43 @@ class AmherstPlanRuntimeRunnerTest {
     }
 
     @Test
+    void exhaustedWorldResourceObjectiveWaitsAndPeriodicallyResumes() throws Exception {
+        var fixture = new MutablePrimitiveGatewayFixture();
+        fixture.mapId.set(1010000);
+        fixture.quests.put(1045, 1);
+        AmherstPlanCard card = worldResourceCard();
+        AmherstPlanRuntimeRunner runner = new AmherstPlanRuntimeRunner(
+                card, new FileAmherstPlanProgressStore(tempDir), new AmherstPlanProgressService(),
+                new AmherstObjectiveReconciler(fixture.gateway),
+                new AmherstObjectiveHandlerRegistry(fixture.gateway),
+                AmherstObjectiveDelay.NONE,
+                new AgentObjectiveRecoveryPolicy(5_000L, 15_000L, 0, 500L));
+        runner.start(fixture.entry, fixture.agent, 1L);
+
+        assertTrue(runner.tick(fixture.entry, fixture.agent, 2L));
+        assertEquals("wait-for-orange-mushroom",
+                fixture.entry.amherstPlanExecutionState().assignedObjectiveId());
+
+        assertTrue(runner.tick(fixture.entry, fixture.agent, 15_002L));
+        assertTrue(fixture.entry.amherstPlanExecutionState().active());
+        assertNull(fixture.entry.amherstPlanExecutionState().assignedObjectiveId());
+        assertEquals(30_002L, fixture.entry.amherstPlanExecutionState().nextObjectiveAtMs);
+        assertTrue(fixture.entry.amherstPlanExecutionState().progress().journal().stream()
+                .anyMatch(event -> event.type() == AmherstPlanJournalEventType.RETRY
+                        && event.message().contains("world-resource recheck")));
+
+        assertTrue(runner.tick(fixture.entry, fixture.agent, 30_001L));
+        assertNull(fixture.entry.amherstPlanExecutionState().assignedObjectiveId());
+        assertTrue(runner.tick(fixture.entry, fixture.agent, 30_002L));
+        assertEquals("wait-for-orange-mushroom",
+                fixture.entry.amherstPlanExecutionState().assignedObjectiveId());
+
+        assertTrue(runner.tick(fixture.entry, fixture.agent, 45_002L));
+        assertTrue(fixture.entry.amherstPlanExecutionState().active());
+        assertEquals(60_002L, fixture.entry.amherstPlanExecutionState().nextObjectiveAtMs);
+    }
+
+    @Test
     void activeQuestCapabilityContinuesWhenLiveQuestStateAlreadySatisfied() throws Exception {
         var fixture = new MutablePrimitiveGatewayFixture();
         AmherstPlanCard card = minimalCard();
@@ -333,6 +370,19 @@ class AmherstPlanRuntimeRunnerTest {
                 new AmherstPlanCard.EntryCriteria(10000, "maple-island", "clean"),
                 new AmherstPlanCard.ExitCriteria("all", 20000, Set.of(1028), Set.of(1010000), Set.of(22000)),
                 Set.of(1031, 1021), Set.of(1000, 1001, 1028), objectives);
+    }
+
+    private static AmherstPlanCard worldResourceCard() {
+        List<AmherstPlanObjective> objectives = List.of(
+                objective("wait-for-orange-mushroom", AmherstPlanObjectiveKind.KILL_MOBS, 1010000,
+                        1045, List.of(), null, null, List.of(1001000), List.of(1),
+                        "wait for a world-spawned Orange Mushroom"));
+        return new AmherstPlanCard(1, "world-resource-recovery", "resource recovery", "test", "high", "test",
+                "live-world-resource-retry",
+                new AmherstPlanCard.FocusPolicy("locked", false, Set.of("emergency"), "always"),
+                new AmherstPlanCard.EntryCriteria(1010000, "maple-island", "clean"),
+                new AmherstPlanCard.ExitCriteria("all", 1010000, Set.of(), Set.of(), Set.of()),
+                Set.of(1045), Set.of(), objectives);
     }
 
     private static AmherstPlanObjective objective(String id,

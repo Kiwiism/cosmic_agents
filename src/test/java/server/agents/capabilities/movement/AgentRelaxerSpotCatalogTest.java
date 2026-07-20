@@ -26,17 +26,26 @@ class AgentRelaxerSpotCatalogTest {
         List<AgentRelaxerSpotCatalog.Spot> left = spots(AgentRelaxerSpotCatalog.Pool.SOUTHPERRY_LEFT);
         List<AgentRelaxerSpotCatalog.Spot> right = spots(AgentRelaxerSpotCatalog.Pool.SOUTHPERRY_RIGHT);
         List<AgentRelaxerSpotCatalog.Spot> all = spots(AgentRelaxerSpotCatalog.Pool.SOUTHPERRY_ALL);
+        List<AgentRelaxerSpotCatalog.Spot> faceHoles = spots(
+                AgentRelaxerSpotCatalog.Pool.SOUTHPERRY_FACE_HOLES);
 
         assertEquals(117, amherst.size());
         assertEquals(107, left.size());
-        assertEquals(113, right.size());
-        assertEquals(220, all.size());
+        assertEquals(100, right.size());
+        assertEquals(207, all.size());
+        assertEquals(Set.of(
+                        new AgentRelaxerSpotCatalog.Spot(2000000, 2432, 287),
+                        new AgentRelaxerSpotCatalog.Spot(2000000, 2545, 287)),
+                Set.copyOf(faceHoles));
         assertEquals(amherst.size(), new HashSet<>(amherst).size());
         assertEquals(all.size(), new HashSet<>(all).size());
         assertTrue(left.stream().allMatch(spot -> spot.mapId() == AgentRelaxerSpotCatalog.SOUTHPERRY_MAP_ID
                 && spot.x() < AgentRelaxerSpotCatalog.SOUTHPERRY_MIDPOINT_X));
         assertTrue(right.stream().allMatch(spot -> spot.mapId() == AgentRelaxerSpotCatalog.SOUTHPERRY_MAP_ID
                 && spot.x() >= AgentRelaxerSpotCatalog.SOUTHPERRY_MIDPOINT_X));
+        assertTrue(all.stream().noneMatch(spot ->
+                (spot.y() == -256 && spot.x() >= 2605 && spot.x() <= 2708)
+                        || (spot.y() == -196 && spot.x() >= 2941 && spot.x() <= 3124)));
         assertEquals(Set.copyOf(all), union(left, right));
     }
 

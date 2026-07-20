@@ -8,7 +8,7 @@ public final class AgentRelaxerSpotCatalog {
     public static final int AMHERST_MAP_ID = server.agents.plans.amherst.MapleIslandRelaxerSpotCatalog.AMHERST_MAP_ID;
     public static final int SOUTHPERRY_MAP_ID = server.agents.plans.amherst.MapleIslandRelaxerSpotCatalog.SOUTHPERRY_MAP_ID;
     public static final int SOUTHPERRY_MIDPOINT_X = server.agents.plans.amherst.MapleIslandRelaxerSpotCatalog.SOUTHPERRY_MIDPOINT_X;
-    public enum Pool { AMHERST, SOUTHPERRY_ALL, SOUTHPERRY_LEFT, SOUTHPERRY_RIGHT }
+    public enum Pool { AMHERST, SOUTHPERRY_ALL, SOUTHPERRY_LEFT, SOUTHPERRY_RIGHT, SOUTHPERRY_FACE_HOLES }
     public record Spot(int mapId, int x, int y) {}
     private AgentRelaxerSpotCatalog() {}
     public static List<Spot> spots(Pool pool) {

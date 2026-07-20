@@ -22,8 +22,9 @@
 
 function start(ms) {
     ms.unlockUI();
-    // Keep the beginner tutorial prompt for normal first-time characters, but do
-    // not reopen its "skip to Lith Harbor" UI during repeated GM test warps.
+    // Keep the normal beginner map presentation, but do not replay it during
+    // repeated GM test warps. The tutorial-skip dialog is controlled by the
+    // separate tutoChatNPC portal script.
     if (!ms.getPlayer().isGM()) {
         ms.mapEffect("maplemap/enter/10000");
     }

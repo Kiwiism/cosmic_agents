@@ -4,7 +4,6 @@ import server.agents.capabilities.AgentCapabilityStatus;
 import server.agents.capabilities.objective.AgentObjectiveResult;
 import server.agents.capabilities.objective.AgentPlanCompletionBehavior;
 import server.agents.capabilities.objective.AgentPlanCompletionMode;
-import server.agents.capabilities.objective.AgentPlanCompletionPolicy;
 import server.agents.capabilities.primitive.AgentNavigationCapability;
 import server.agents.capabilities.runtime.AgentCapabilityContext;
 import server.agents.capabilities.runtime.AgentCapabilityInvocation;
@@ -14,6 +13,7 @@ import server.agents.capabilities.runtime.AgentCapabilityStep;
 import server.agents.integration.PrimitiveCapabilityGateway;
 
 import java.awt.Point;
+import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 
 /** Maple Island's Relaxer/idle/wander presentation after the plan is complete. */
@@ -26,7 +26,7 @@ public final class MapleIslandPlanCompletionBehavior implements AgentPlanComplet
     private final PrimitiveCapabilityGateway gateway;
     private final Integer chairItemId;
     private final MapleIslandRelaxerSpotCatalog.Pool restSpotPool;
-    private final AgentPlanCompletionPolicy policy;
+    private final MapleIslandPlanCompletionPolicy policy;
 
     public MapleIslandPlanCompletionBehavior(PrimitiveCapabilityGateway gateway,
                                               Integer chairItemId,
@@ -49,7 +49,7 @@ public final class MapleIslandPlanCompletionBehavior implements AgentPlanComplet
         AgentPlanCompletionMode mode = restSpotPool == null
                 ? AgentPlanCompletionMode.SIT : policy.selectMode(context.entry(), gateway.mapId(context.agent()));
         if (mode != AgentPlanCompletionMode.SIT) {
-            AgentCapabilityStep approach = approachRestSpot(context);
+            AgentCapabilityStep approach = approachRestSpot(context, mode);
             if (approach != null) return approach;
             faceRestDirection(context);
             String location = policy.locationName(context.entry(), gateway.mapId(context.agent()));
@@ -76,7 +76,7 @@ public final class MapleIslandPlanCompletionBehavior implements AgentPlanComplet
         }
         if (chairActive) return success(objectiveId, reason + " Agent is resting on the Relaxer.");
         if (restSpotPool != null) {
-            AgentCapabilityStep approach = approachRestSpot(context);
+            AgentCapabilityStep approach = approachRestSpot(context, mode);
             if (approach != null) return approach;
             faceRestDirection(context);
             if (!context.memory().booleanValue("restSettleStarted", false)) {
@@ -102,13 +102,18 @@ public final class MapleIslandPlanCompletionBehavior implements AgentPlanComplet
         MapleIslandRelaxerSpotReservationRuntime.release(context.agent().getId());
     }
 
-    private AgentCapabilityStep approachRestSpot(AgentCapabilityContext context) {
+    private AgentCapabilityStep approachRestSpot(
+            AgentCapabilityContext context,
+            AgentPlanCompletionMode mode) {
         if (!context.memory().booleanValue("restTargetSelected", false)) {
-            int count = MapleIslandRelaxerSpotCatalog.spots(restSpotPool).size();
-            var selected = policy.selectRestSpotIndex(context.entry(), gateway.mapId(context.agent()), count);
-            var reserved = selected.isPresent()
-                    ? MapleIslandRelaxerSpotReservationRuntime.reserveFromIndex(context.agent(), restSpotPool, selected.getAsInt())
-                    : MapleIslandRelaxerSpotReservationRuntime.reserveRandom(context.agent(), restSpotPool);
+            int mapId = gateway.mapId(context.agent());
+            MapleIslandRelaxerSpotCatalog.Pool selectedPool = policy.selectRestSpotPool(
+                    context.entry(), mapId, mode, restSpotPool);
+            Optional<MapleIslandRelaxerSpotCatalog.Spot> reserved = reserveRestSpot(
+                    context, selectedPool, mapId);
+            if (reserved.isEmpty() && selectedPool != restSpotPool) {
+                reserved = reserveRestSpot(context, restSpotPool, mapId);
+            }
             if (reserved.isEmpty()) return AgentCapabilityStep.retry("No unoccupied Relaxer spot is available");
             var spot = reserved.get();
             context.memory().putInt("restTargetX", spot.x());
@@ -128,6 +133,18 @@ public final class MapleIslandPlanCompletionBehavior implements AgentPlanComplet
                 new AgentNavigationCapability.Command(gateway.mapId(context.agent()), destination,
                         ARRIVAL_RANGE_PX, true), NAVIGATION_TIMEOUT_MS, 2),
                 "Maple Island completion requests navigation to a Relaxer spot");
+    }
+
+    private Optional<MapleIslandRelaxerSpotCatalog.Spot> reserveRestSpot(
+            AgentCapabilityContext context,
+            MapleIslandRelaxerSpotCatalog.Pool pool,
+            int mapId) {
+        int count = MapleIslandRelaxerSpotCatalog.spots(pool).size();
+        var selected = policy.selectRestSpotIndex(context.entry(), mapId, count);
+        return selected.isPresent()
+                ? MapleIslandRelaxerSpotReservationRuntime.reserveFromIndex(
+                context.agent(), pool, selected.getAsInt())
+                : MapleIslandRelaxerSpotReservationRuntime.reserveRandom(context.agent(), pool);
     }
 
     private void faceRestDirection(AgentCapabilityContext context) {

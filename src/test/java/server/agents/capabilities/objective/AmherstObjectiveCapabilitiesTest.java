@@ -109,7 +109,8 @@ class AmherstObjectiveCapabilitiesTest {
         var support = new AmherstObjectiveCapabilitySupport(
                 fixture.gateway, AmherstScopePolicy.fullMapleIsland(), () -> 500L);
         MapleIslandObjectiveRandomnessRuntime.configure(fixture.entry,
-                new MapleIslandObjectiveRandomnessSettings(true, 9L, null, null, false, false));
+                new MapleIslandObjectiveRandomnessSettings(
+                        true, 9L, null, null, false, false, false));
         AgentCapabilityMemory memory = new AgentCapabilityMemory();
 
         assertTrue(support.waitForNpcInteraction(new AgentCapabilityContext(
@@ -123,7 +124,7 @@ class AmherstObjectiveCapabilitiesTest {
     }
 
     @Test
-    void controlledRunUsesSeededCuratedAnchorForNonYoonaNpc() {
+    void controlledRunFallsBackToDirectNpcWhenUpdatedCircleExcludesLegacyAnchors() {
         var fixture = new MutablePrimitiveGatewayFixture();
         when(fixture.gateway.npcPosition(any(), eq(2101))).thenReturn(new Point(130, 293));
         MapleIslandObjectiveRandomnessRuntime.configure(fixture.entry,
@@ -131,6 +132,7 @@ class AmherstObjectiveCapabilitiesTest {
                         true, 123L,
                         new server.agents.profiles.AgentBehaviorProfile.DelayRange(0, 0),
                         new server.agents.profiles.AgentBehaviorProfile.DelayRange(0, 0),
+                        true,
                         true,
                         true));
         var command = new NpcQuestObjectiveCapability.Command("q1031-start", 10000,
@@ -144,8 +146,7 @@ class AmherstObjectiveCapabilitiesTest {
                 command, 10_000L);
         run(fixture, 1L, 40, 100L);
 
-        assertTrue(MapleIslandNpcInteractionAnchorCatalog.anchors(10000, 2101)
-                .contains(fixture.position));
+        assertEquals(new Point(0, 0), fixture.position);
         assertSuccess(fixture);
     }
 

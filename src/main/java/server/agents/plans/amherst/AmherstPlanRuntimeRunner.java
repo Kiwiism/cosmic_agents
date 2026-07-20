@@ -496,27 +496,45 @@ public final class AmherstPlanRuntimeRunner {
         }
         AmherstObjectiveProgress durable = state.progress.objectives().get(objective.objectiveId());
         int attempts = durable == null ? 0 : durable.attempts();
-        if (attempts > recoveryPolicy.maxAutomaticRecoveries()) {
+        boolean automaticLimitReached = attempts > recoveryPolicy.maxAutomaticRecoveries();
+        boolean worldResourceWait = automaticLimitReached
+                && canWaitForWorldResource(objective, result);
+        if (automaticLimitReached && !worldResourceWait) {
             publish(state, "Automatic recovery limit reached for " + objective.objectiveId() + ".");
             return false;
         }
         AgentMovementRecoveryService.nudgeForObjectiveReplan(entry);
+        long retryDelayMs = worldResourceWait
+                ? Math.max(recoveryPolicy.recoverAfterMs(), recoveryPolicy.recoveryDelayMs())
+                : recoveryPolicy.recoveryDelayMs();
         AmherstPlanProgressSnapshot before = state.progress;
         state.progress = progressService.append(state.progress,
                 new AmherstPlanJournalEvent(nowMs, AmherstPlanJournalEventType.RETRY,
                         objective.objectiveId(), result.reasonCode().name(),
-                        "automatic recovery queued after attempt " + attempts), nowMs);
+                        worldResourceWait
+                                ? "world-resource recheck queued after attempt " + attempts
+                                : "automatic recovery queued after attempt " + attempts), nowMs);
         saveIfChanged(entry, state, before, state.progress);
-        state.nextObjectiveAtMs = nowMs + recoveryPolicy.recoveryDelayMs();
+        state.nextObjectiveAtMs = nowMs + retryDelayMs;
         if (state.mode == AmherstPlanExecutionMode.MANUAL) {
             state.advanceRequested = true;
         }
-        publish(state, "Recovery queued for " + AmherstObjectiveFormatter.numbered(card, objective)
-                + "; the same live-unsatisfied objective will be replanned.");
-        log.info("Queued Agent objective recovery agent={} map={} objective={} attempt={} reason={}",
+        publish(state, worldResourceWait
+                ? "Waiting for world resources for " + AmherstObjectiveFormatter.numbered(card, objective)
+                        + "; live state will be checked again in " + retryDelayMs + " ms."
+                : "Recovery queued for " + AmherstObjectiveFormatter.numbered(card, objective)
+                        + "; the same live-unsatisfied objective will be replanned.");
+        log.info("Queued Agent objective recovery agent={} map={} objective={} attempt={} reason={} delayMs={} worldResourceWait={}",
                 agent.getName(), agent.getMapId(), objective.objectiveId(), attempts,
-                result.reasonCode());
+                result.reasonCode(), retryDelayMs, worldResourceWait);
         return true;
+    }
+
+    private static boolean canWaitForWorldResource(AmherstPlanObjective objective,
+                                                   AgentCapabilityResult result) {
+        return objective.kind().waitsForWorldResource()
+                && (result.status() == AgentCapabilityStatus.TIMED_OUT
+                || result.reasonCode() == AgentCapabilityReasonCode.RETRIES_EXHAUSTED);
     }
 
     private static boolean recoverable(AgentCapabilityResult result) {

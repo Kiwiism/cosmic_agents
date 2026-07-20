@@ -30,6 +30,7 @@ class MapleIslandCohortRealismServiceTest {
                 AgentBehaviorProfileRuntime.sampleNpcInteractionDelayMs(second));
         assertTrue(MapleIslandObjectiveRandomnessRuntime.settings(first).npcAnchorVariationEnabled());
         assertTrue(MapleIslandObjectiveRandomnessRuntime.settings(first).restSpotVariationEnabled());
+        assertTrue(MapleIslandObjectiveRandomnessRuntime.settings(first).objectiveOrderVariationEnabled());
         assertTrue(AgentMapleIslandTravelRuntime.settings(first).routeVariationEnabled());
         assertTrue(AgentMapleIslandTravelRuntime.settings(first).travelHopsEnabled());
         assertEquals(0.04d, AgentMapleIslandTravelRuntime.settings(first).travelHopProbability());
@@ -51,6 +52,7 @@ class MapleIslandCohortRealismServiceTest {
         assertTrue(MapleIslandObjectiveRandomnessRuntime.settings(entry).enabled());
         assertTrue(MapleIslandObjectiveRandomnessRuntime.settings(entry).npcAnchorVariationEnabled());
         assertTrue(MapleIslandObjectiveRandomnessRuntime.settings(entry).restSpotVariationEnabled());
+        assertTrue(MapleIslandObjectiveRandomnessRuntime.settings(entry).objectiveOrderVariationEnabled());
         assertTrue(AgentMapleIslandTravelRuntime.settings(entry).routeVariationEnabled());
         assertFalse(AgentMapleIslandTravelRuntime.settings(entry).travelHopsEnabled());
     }
@@ -66,6 +68,7 @@ class MapleIslandCohortRealismServiceTest {
         assertEquals(0L, AgentBehaviorProfileRuntime.sampleBetweenObjectivesDelayMs(entry));
         assertFalse(MapleIslandObjectiveRandomnessRuntime.settings(entry).npcAnchorVariationEnabled());
         assertFalse(MapleIslandObjectiveRandomnessRuntime.settings(entry).restSpotVariationEnabled());
+        assertFalse(MapleIslandObjectiveRandomnessRuntime.settings(entry).objectiveOrderVariationEnabled());
         assertFalse(AgentMapleIslandTravelRuntime.settings(entry).routeVariationEnabled());
         assertFalse(AgentMapleIslandTravelRuntime.settings(entry).travelHopsEnabled());
     }

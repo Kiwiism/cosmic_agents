@@ -15,6 +15,7 @@ import server.agents.testing.MutablePrimitiveGatewayFixture;
 
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -43,11 +44,12 @@ class MapleIslandFullPlanTest {
                 < index(card, AmherstPlanObjectiveKind.QUEST_CHAIN, 1038));
         assertTrue(index(card, AmherstPlanObjectiveKind.QUEST_CHAIN, 1038)
                 < index(card, AmherstPlanObjectiveKind.QUEST_START, 1040));
-        assertEquals(1L, card.objectives().stream()
+        assertEquals(List.of(1009, 1010, 1011, 1012, 1013, 1014, 1015),
+                card.objectives().stream()
                 .filter(objective -> objective.kind() == AmherstPlanObjectiveKind.QUEST_CHAIN)
-                .filter(objective -> objective.questIds().equals(
-                        java.util.List.of(1009, 1010, 1011, 1012, 1013, 1014, 1015)))
-                .count());
+                .filter(objective -> objective.npcId() != null && objective.npcId() == 12101)
+                .map(objective -> objective.questIds().getFirst())
+                .toList());
         assertTrue(index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8020)
                 < index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8021));
         assertTrue(index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8022)

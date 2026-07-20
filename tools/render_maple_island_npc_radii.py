@@ -168,8 +168,8 @@ def panel_projection(npcs: list[Npc], footholds, ropes, portals):
     for npc in npcs:
         all_x.extend((npc.x + npc.offset_x - npc.radius, npc.x + npc.offset_x + npc.radius))
         all_y.extend((npc.y + npc.offset_y - npc.radius, npc.y + npc.offset_y + npc.radius))
-        all_x.extend(x for x, _ in npc.anchors)
-        all_y.extend(y for _, y in npc.anchors)
+        all_x.extend(x for x, _ in selectable_anchors(npc))
+        all_y.extend(y for _, y in selectable_anchors(npc))
     all_x.extend(portal.x for portal in portals)
     all_y.extend(portal.y for portal in portals)
     x_min, x_max = min(all_x), max(all_x)
@@ -190,6 +190,16 @@ def panel_projection(npcs: list[Npc], footholds, ropes, portals):
         return x_off + (x - x_min) * scale, y_off + (y - y_min) * scale
 
     return scale, point
+
+
+def selectable_anchors(npc: Npc) -> tuple[tuple[int, int], ...]:
+    center_x = npc.x + npc.offset_x
+    center_y = npc.y + npc.offset_y
+    radius_squared = npc.radius * npc.radius
+    return tuple(
+        (x, y) for x, y in npc.anchors
+        if (x - center_x) ** 2 + (y - center_y) ** 2 <= radius_squared
+    )
 
 
 def draw_panel(map_id: int, map_name: str, npcs: list[Npc], footholds, ropes, portals) -> Image.Image:
@@ -229,7 +239,7 @@ def draw_panel(map_id: int, map_name: str, npcs: list[Npc], footholds, ropes, po
         draw.ellipse((circle_x - radius, circle_y - radius, circle_x + radius, circle_y + radius),
                      fill=(*color, 32), outline=(*color, 220), width=5)
         draw.ellipse((cx - 9, cy - 9, cx + 9, cy + 9), fill=(*color, 255), outline="#ffffff", width=3)
-        for anchor_x, anchor_y in npc.anchors:
+        for anchor_x, anchor_y in selectable_anchors(npc):
             ax, ay = point(anchor_x, anchor_y)
             draw.rectangle((ax - 6, ay - 6, ax + 6, ay + 6), fill=(*color, 255), outline="#ffffff", width=2)
         label = f"{npc.name}  offset=({npc.offset_x:+d},{npc.offset_y:+d})  r={npc.radius}px"
@@ -255,6 +265,8 @@ def measure_annotation(path: Path) -> None:
     overlay_colors = {
         "blue": (63, 72, 204),
         "red": (136, 0, 21),
+        "bright-red": (237, 28, 36),
+        "orange": (255, 127, 39),
         "cyan": (0, 162, 232),
         "purple": (163, 73, 164),
         "green": (34, 177, 76),

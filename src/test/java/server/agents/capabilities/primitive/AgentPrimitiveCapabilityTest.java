@@ -268,6 +268,44 @@ class AgentPrimitiveCapabilityTest {
     }
 
     @Test
+    void combatClearsRegularNonRequiredMobsWhenRequiredSpawnIsStarved() {
+        Fixture fixture = fixture();
+        when(fixture.gateway.alive(fixture.agent)).thenReturn(true);
+        when(fixture.gateway.questProgress(fixture.agent, 1022, 1210102)).thenReturn(0);
+        when(fixture.gateway.liveMonsterCount(fixture.agent, Set.of(1210102))).thenReturn(0);
+        when(fixture.gateway.configuredMonsterSpawnIds(fixture.agent))
+                .thenReturn(Set.of(100101, 120100, 1210102));
+        when(fixture.gateway.liveMonsterCount(fixture.agent, Set.of(100101, 120100))).thenReturn(12);
+        AgentCombatCapability capability = new AgentCombatCapability(fixture.gateway);
+
+        AgentCapabilityStep step = capability.tick(fixture.context(),
+                new AgentCombatCapability.Command(1022, Map.of(1210102, 1)));
+
+        assertEquals(AgentCapabilityStatus.RUNNING, step.status());
+        assertFalse(step.consumedTick());
+        verify(fixture.gateway).grind(fixture.entry, Set.of(100101, 120100));
+    }
+
+    @Test
+    void combatDoesNotClearOtherMobsWhenRequiredMobIsNotConfiguredOnMap() {
+        Fixture fixture = fixture();
+        when(fixture.gateway.alive(fixture.agent)).thenReturn(true);
+        when(fixture.gateway.questProgress(fixture.agent, 1022, 1210102)).thenReturn(0);
+        when(fixture.gateway.liveMonsterCount(fixture.agent, Set.of(1210102))).thenReturn(0);
+        when(fixture.gateway.configuredMonsterSpawnIds(fixture.agent))
+                .thenReturn(Set.of(100101, 120100));
+        AgentCombatCapability capability = new AgentCombatCapability(fixture.gateway);
+
+        AgentCapabilityStep step = capability.tick(fixture.context(),
+                new AgentCombatCapability.Command(1022, Map.of(1210102, 1)));
+
+        assertEquals(AgentCapabilityStatus.RUNNING, step.status());
+        verify(fixture.gateway).grind(fixture.entry, Set.of(1210102));
+        verify(fixture.gateway, never()).liveMonsterCount(
+                fixture.agent, Set.of(100101, 120100));
+    }
+
+    @Test
     void combatTargetsOnlyMobTypesWhoseQuestCountIsIncomplete() {
         Fixture fixture = fixture();
         when(fixture.gateway.alive(fixture.agent)).thenReturn(true);
