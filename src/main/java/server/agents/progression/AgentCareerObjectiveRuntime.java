@@ -19,7 +19,7 @@ final class AgentCareerObjectiveRuntime {
         String objectiveId = objectiveId(entry);
         String planId = AgentVictoriaLevel15PlanRepository.defaultPlan().planId();
         AgentObjectiveKernel.start(entry, new AgentObjectiveDefinition(
-                objectiveId, "progression.first-job-level15", 100, Long.MAX_VALUE, 3,
+                objectiveId, AgentFirstJobJourneyRuntime.OBJECTIVE_TYPE, 100, Long.MAX_VALUE, 3,
                 AgentObjectiveSource.PROGRESSION_POLICY, planId,
                 bundle.bundleId() + ':' + entry.bot().getId()), nowMs);
     }

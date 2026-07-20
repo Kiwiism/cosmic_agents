@@ -4,6 +4,7 @@ import client.Character;
 import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
 import server.agents.integration.PrimitiveCapabilityGateway;
 import server.agents.objectives.AgentObjectiveDefinition;
+import server.agents.objectives.AgentObjectiveAttachment;
 import server.agents.objectives.AgentObjectiveKernel;
 import server.agents.objectives.AgentObjectiveSource;
 import server.agents.objectives.AgentObjectiveStatus;
@@ -17,12 +18,36 @@ import java.util.Set;
 
 /** Occupancy-aware, resumable level 15-30 Victoria grinding objective. */
 public final class AgentVictoriaTrainingObjectiveRuntime {
-    static final String OBJECTIVE_TYPE = "progression.victoria-training";
+    public static final String OBJECTIVE_TYPE = "progression.victoria-training";
     private static final String OBJECTIVE_PREFIX = "victoria:training:";
     private static final long NO_SELECTION_RETRY_MS = 15_000L;
     private static final long DESTINATION_RETRY_MS = 120_000L;
 
     private AgentVictoriaTrainingObjectiveRuntime() {
+    }
+
+    public static AgentObjectiveAttachment reattach(AgentRuntimeEntry entry,
+                                                    Character agent,
+                                                    AgentObjectiveDefinition objective,
+                                                    long nowMs) {
+        AgentVictoriaTrainingState state = entry.capabilityStates().require(
+                AgentVictoriaTrainingState.STATE_KEY);
+        if (state.active()) {
+            return AgentObjectiveAttachment.ALREADY_ATTACHED;
+        }
+        int target = targetLevel(objective.objectiveId());
+        if (target < 16 || target > 30) {
+            AgentObjectiveKernel.transition(entry, objective.objectiveId(), AgentObjectiveStatus.BLOCKED,
+                    "durable Victoria objective has an invalid target level", nowMs);
+            return AgentObjectiveAttachment.TERMINAL;
+        }
+        if (agent.getLevel() >= target) {
+            AgentObjectiveKernel.transition(entry, objective.objectiveId(), AgentObjectiveStatus.SUCCEEDED,
+                    "durable Victoria target level is already reached", nowMs);
+            return AgentObjectiveAttachment.TERMINAL;
+        }
+        state.start(target, !objective.correlationId().endsWith(":mode-grind"), nowMs);
+        return AgentObjectiveAttachment.ATTACHED;
     }
 
     public static boolean start(AgentRuntimeEntry entry, Character agent, int targetLevel, long nowMs) {

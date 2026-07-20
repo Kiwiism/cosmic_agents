@@ -7,6 +7,8 @@ import server.agents.capabilities.runtime.AgentCapabilityStep;
 import server.agents.capabilities.runtime.AgentExecutableCapability;
 import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
 import server.agents.integration.PrimitiveCapabilityGateway;
+import server.agents.capabilities.contracts.AgentDisposition;
+import server.agents.capabilities.inventory.AgentInventoryReservationRuntime;
 
 import java.util.Map;
 
@@ -55,6 +57,10 @@ public final class AgentLootCapability
 
     @Override
     public AgentCapabilityStep tick(AgentCapabilityContext context, Command command) {
+        AgentInventoryReservationRuntime.reserveObjectiveItems(
+                context.entry(), command.requiredItemCounts(),
+                AgentInventoryReservationRuntime.LOOT_CAPABILITY,
+                AgentDisposition.QUEST_RESERVE, "active loot objective", 900, context.nowMs());
         if (command.protectionPolicy() == ProtectionPolicy.QUEST_ITEMS_ONLY
                 && command.requiredItemCounts().keySet().stream().anyMatch(itemId -> !gateway.questItem(itemId))) {
             return AgentPrimitiveResults.blocked(
@@ -74,5 +80,11 @@ public final class AgentLootCapability
         }
         gateway.lootNearby(context.agent(), command.requiredItemCounts().keySet());
         return AgentCapabilityStep.running("delegating to normal item pickup", false);
+    }
+
+    @Override
+    public void onTerminal(AgentCapabilityContext context, Command command, AgentCapabilityResult result) {
+        AgentInventoryReservationRuntime.releaseCapability(
+                context.entry(), AgentInventoryReservationRuntime.LOOT_CAPABILITY);
     }
 }

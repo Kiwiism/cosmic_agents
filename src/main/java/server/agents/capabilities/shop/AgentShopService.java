@@ -22,6 +22,7 @@ import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
 import server.agents.capabilities.inventory.AgentInventorySellTrashService;
+import server.agents.capabilities.inventory.AgentInventoryReservationRuntime;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
@@ -78,6 +79,9 @@ public final class AgentShopService {
 
     public static void onMapChange(AgentRuntimeEntry entry, Character bot, InventoryGateway inventory) {
         clearShopState(entry);
+        if (bot == null || bot.getMap() == null) {
+            return;
+        }
 
         NpcShopMatch match = findBestShop(bot, false, inventory);
         if (match == null) {
@@ -396,6 +400,8 @@ public final class AgentShopService {
         List<Item> items = plan.stream()
                 .filter(item -> AgentInventoryItemPolicy.hasItem(bot, item))
                 .filter(item -> !failedItems.contains(item))
+                .filter(item -> AgentInventoryReservationRuntime.mayConsume(
+                        entry, item, System.currentTimeMillis()))
                 .toList();
         if (items.isEmpty()) {
             AgentShopStateRuntime.setShopSellTrashPending(entry, false);
@@ -412,6 +418,12 @@ public final class AgentShopService {
         }
 
         Item item = items.get(0);
+        if (!AgentInventoryReservationRuntime.mayConsume(entry, item, System.currentTimeMillis())) {
+            scheduleShopStep(entry, SELL_TRASH_STEP_DELAY_MS,
+                    () -> runSellTrashStep(entry, bot, npcPos, soldCount, failedItems,
+                            plan, bought, firstShortfall, inventory));
+            return;
+        }
         if (!AgentInventoryItemPolicy.hasItem(bot, item)) {
             scheduleShopStep(entry, SELL_TRASH_STEP_DELAY_MS,
                     () -> runSellTrashStep(entry, bot, npcPos, soldCount, failedItems, plan, bought, firstShortfall, inventory));

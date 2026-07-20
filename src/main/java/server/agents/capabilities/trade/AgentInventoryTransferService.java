@@ -27,6 +27,7 @@ import server.agents.capabilities.inventory.AgentInventoryRuntime;
 import server.agents.capabilities.inventory.AgentInventoryStateRuntime;
 import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentInventoryReservationGatewayRuntime;
 import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.integration.InventoryGateway;
 import server.agents.integration.TradeGateway;
@@ -115,7 +116,9 @@ public final class AgentInventoryTransferService {
     public static void startTradeTransfer(Item item, Character recipient, AgentRuntimeEntry entry, Character agent) {
         AgentDirectItemTradeService.DirectItemTradeDecision decision = AgentDirectItemTradeService.decideStart(
                 recipient != null,
-                AgentInventoryItemPolicy.hasItem(agent, item),
+                AgentInventoryItemPolicy.hasItem(agent, item)
+                        && AgentInventoryReservationGatewayRuntime.mayConsume(
+                        entry, item, System.currentTimeMillis()),
                 agent.getTrade() != null || AgentPendingTradeStateRuntime.hasActiveSequence(entry),
                 recipient != null && recipient.getTrade() != null);
         AgentDirectItemTradeService.routeStart(
@@ -157,7 +160,7 @@ public final class AgentInventoryTransferService {
     }
 
     private static List<Item> collectItems(String category, AgentRuntimeEntry entry, Character agent) {
-        return AgentTradeItemCollectionService.collectItems(
+        List<Item> collected = AgentTradeItemCollectionService.collectItems(
                 category,
                 agent,
                 AgentRelationshipRuntime.interactionTarget(entry),
@@ -166,6 +169,8 @@ public final class AgentInventoryTransferService {
                         () -> classifyEquipTradeGroups(entry, agent),
                         () -> classifyAmmoTradeGroups(agent)),
                 inventory());
+        return AgentInventoryReservationGatewayRuntime.unreservedItems(
+                entry, collected, System.currentTimeMillis());
     }
 
     private static void startTradeSequence(String category,
@@ -175,10 +180,17 @@ public final class AgentInventoryTransferService {
                                            boolean singleBatch,
                                            AgentRuntimeEntry entry,
                                            Character agent) {
+        List<Item> transferable = AgentInventoryReservationGatewayRuntime.unreservedItems(
+                entry, items, System.currentTimeMillis());
+        if (!items.isEmpty() && transferable.isEmpty() && mesos <= 0) {
+            AgentEquippedSlotTradeService.restoreTemporarilyUnequippedItems(entry, agent);
+            AgentInventoryRuntime.replyNow(entry, "those items are reserved for another objective");
+            return;
+        }
         AgentTradeSequenceService.startSequence(
                 category,
                 recipient,
-                items,
+                transferable,
                 mesos,
                 singleBatch,
                 entry,

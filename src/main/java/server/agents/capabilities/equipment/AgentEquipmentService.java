@@ -9,6 +9,9 @@ import client.inventory.Item;
 import client.inventory.WeaponType;
 import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.integration.InventoryGateway;
+import server.agents.capabilities.inventory.AgentInventoryReservationRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.AgentRuntimeRegistry;
 
 import java.util.Collection;
 import java.util.List;
@@ -23,15 +26,19 @@ public final class AgentEquipmentService {
 
     public static void autoEquip(Character agent, Character leader, Item pendingOffer) {
         AgentEquipmentAutoEquipService.autoEquip(agent, leader, pendingOffer);
+        refreshReservations(agent);
     }
 
     public static void autoEquip(Character agent, Character leader, Item pendingOffer, boolean force) {
         AgentEquipmentAutoEquipService.autoEquip(agent, leader, pendingOffer, force);
+        refreshReservations(agent);
     }
 
     /** Selects a catalog-authored starter weapon after the general optimizer reconciles the loadout. */
     public static boolean equipPreferredWeapon(Character agent, int itemId) {
-        return equipPreferredWeapon(agent, itemId, AgentInventoryGatewayRuntime.inventory());
+        boolean equipped = equipPreferredWeapon(agent, itemId, AgentInventoryGatewayRuntime.inventory());
+        refreshReservations(agent);
+        return equipped;
     }
 
     static boolean equipPreferredWeapon(Character agent, int itemId, InventoryGateway inventory) {
@@ -99,5 +106,13 @@ public final class AgentEquipmentService {
 
     public static boolean isMageJob(Job job) {
         return AgentWeaponCompatibilityPolicy.isMageJob(job);
+    }
+
+    private static void refreshReservations(Character agent) {
+        AgentRuntimeEntry entry = AgentRuntimeRegistry.findByCharacterInstance(agent);
+        if (entry != null) {
+            AgentInventoryReservationRuntime.refreshEquipmentReservations(
+                    entry, agent, System.currentTimeMillis());
+        }
     }
 }

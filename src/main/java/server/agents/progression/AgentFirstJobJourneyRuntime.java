@@ -11,6 +11,10 @@ import server.agents.capabilities.shop.AgentShopWorkflowPhase;
 import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
 import server.agents.integration.PrimitiveCapabilityGateway;
+import server.agents.objectives.AgentObjectiveAttachment;
+import server.agents.objectives.AgentObjectiveDefinition;
+import server.agents.objectives.AgentObjectiveKernel;
+import server.agents.objectives.AgentObjectiveStatus;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
@@ -18,6 +22,7 @@ import java.util.Set;
 
 /** Real-script Southperry -> Lith -> taxi -> instructor -> first-job journey. */
 public final class AgentFirstJobJourneyRuntime {
+    public static final String OBJECTIVE_TYPE = "progression.first-job-level15";
     private static final int SOUTHPERRY_MAP_ID = 2_000_000;
     private static final int SHANKS_NPC_ID = 22_000;
     private static final int LITH_TAXI_NPC_ID = 1_002_000;
@@ -25,6 +30,28 @@ public final class AgentFirstJobJourneyRuntime {
     private static final long INTERACTION_DELAY_MS = 3_000L;
 
     private AgentFirstJobJourneyRuntime() {
+    }
+
+    public static AgentObjectiveAttachment reattach(AgentRuntimeEntry entry,
+                                                    Character agent,
+                                                    AgentObjectiveDefinition objective,
+                                                    long nowMs) {
+        AgentCareerProgressionState state = entry.capabilityStates().require(
+                AgentCareerProgressionState.STATE_KEY);
+        if (state.bundle() == null) {
+            throw new IllegalStateException("career build bundle was not restored before objective attachment");
+        }
+        if (state.stage() == AgentCareerProgressionState.Stage.COMPLETE) {
+            AgentObjectiveKernel.transition(entry, objective.objectiveId(), AgentObjectiveStatus.SUCCEEDED,
+                    "career checkpoint is already complete", nowMs);
+            return AgentObjectiveAttachment.TERMINAL;
+        }
+        if (state.stage() == AgentCareerProgressionState.Stage.BLOCKED) {
+            AgentObjectiveKernel.transition(entry, objective.objectiveId(), AgentObjectiveStatus.BLOCKED,
+                    state.blockReason(), nowMs);
+            return AgentObjectiveAttachment.TERMINAL;
+        }
+        return AgentObjectiveAttachment.ALREADY_ATTACHED;
     }
 
     public static boolean tick(AgentRuntimeEntry entry, Character agent, long nowMs) {

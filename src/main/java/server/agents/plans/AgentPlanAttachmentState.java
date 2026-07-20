@@ -14,9 +14,9 @@ public final class AgentPlanAttachmentState {
         return !candidateObjectiveId.equals(objectiveId) || nowMs >= nextRetryAtMs;
     }
 
-    public synchronized void attached(String candidateObjectiveId, long retryAtMs) {
+    public synchronized void attached(String candidateObjectiveId) {
         objectiveId = candidateObjectiveId;
-        nextRetryAtMs = retryAtMs;
+        nextRetryAtMs = 0L;
     }
 
     public synchronized void failed(String candidateObjectiveId, long retryAtMs) {

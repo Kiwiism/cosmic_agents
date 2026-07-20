@@ -8,6 +8,8 @@ import server.agents.capabilities.runtime.AgentCapabilityStep;
 import server.agents.capabilities.runtime.AgentExecutableCapability;
 import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
 import server.agents.integration.PrimitiveCapabilityGateway;
+import server.agents.capabilities.contracts.AgentDisposition;
+import server.agents.capabilities.inventory.AgentInventoryReservationRuntime;
 
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -58,6 +60,12 @@ public final class AgentCombatCapability
 
     @Override
     public AgentCapabilityStep tick(AgentCapabilityContext context, Command command) {
+        if (!command.requiredItemCounts().isEmpty()) {
+            AgentInventoryReservationRuntime.reserveObjectiveItems(
+                    context.entry(), command.requiredItemCounts(),
+                    AgentInventoryReservationRuntime.COMBAT_LOOT_CAPABILITY,
+                    AgentDisposition.QUEST_RESERVE, "active combat loot objective", 900, context.nowMs());
+        }
         if (!gateway.alive(context.agent())) {
             gateway.stop(context.entry());
             return AgentPrimitiveResults.missing("agent is dead and cannot continue combat");
@@ -112,6 +120,8 @@ public final class AgentCombatCapability
 
     @Override
     public void onTerminal(AgentCapabilityContext context, Command command, AgentCapabilityResult result) {
+        AgentInventoryReservationRuntime.releaseCapability(
+                context.entry(), AgentInventoryReservationRuntime.COMBAT_LOOT_CAPABILITY);
         gateway.stop(context.entry());
     }
 }

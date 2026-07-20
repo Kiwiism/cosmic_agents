@@ -2,11 +2,11 @@ package server.agents.plans.amherst;
 
 import client.Character;
 import server.agents.capabilities.runtime.AgentCapabilityRuntime;
-import server.agents.capabilities.supplies.AgentSupplyProcurementRuntime;
 import server.agents.progression.AgentFirstJobJourneyRuntime;
 import server.agents.progression.AgentVictoriaTrainingObjectiveRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.maintenance.AgentMaintenanceSupervisor;
 import server.agents.profiles.AgentBehaviorProfileRuntime;
 import server.agents.plans.AgentPlanReattachmentRuntime;
 
@@ -57,7 +57,7 @@ public final class AgentAmherstPlanRuntime {
         if (AgentPlanReattachmentRuntime.reattachIfNeeded(entry, agent, nowMs)) {
             return true;
         }
-        if (AgentSupplyProcurementRuntime.tick(entry, agent, nowMs)) {
+        if (AgentMaintenanceSupervisor.tickRuntime(entry, agent, nowMs)) {
             return true;
         }
         if (AgentFirstJobJourneyRuntime.tick(entry, agent, nowMs)) {

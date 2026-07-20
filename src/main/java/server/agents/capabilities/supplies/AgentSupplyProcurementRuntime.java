@@ -65,11 +65,11 @@ public final class AgentSupplyProcurementRuntime {
         };
     }
 
-    private static boolean begin(AgentRuntimeEntry entry,
-                                 Character agent,
-                                 AgentProcurementRequest request,
-                                 AgentSupplyProcurementState execution,
-                                 long nowMs) {
+    static boolean begin(AgentRuntimeEntry entry,
+                         Character agent,
+                         AgentProcurementRequest request,
+                         AgentSupplyProcurementState execution,
+                         long nowMs) {
         AgentShopService.onMapChange(entry, agent, AgentInventoryGatewayRuntime.inventory());
         int supplierMapId = agent.getMapId();
         int supplierNpcId = 0;
