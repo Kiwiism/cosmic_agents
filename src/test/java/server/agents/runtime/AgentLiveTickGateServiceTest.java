@@ -28,6 +28,7 @@ class AgentLiveTickGateServiceTest {
                             calls.add("common");
                             return false;
                         },
+                        (supervisionEntry, supervisionAgent) -> false,
                         (capabilityEntry, capabilityAgent) -> {
                             calls.add("capability");
                             return false;
@@ -68,6 +69,10 @@ class AgentLiveTickGateServiceTest {
                             calls.add("common");
                             return false;
                         },
+                        (supervisionEntry, supervisionAgent) -> {
+                            calls.add("supervision");
+                            return false;
+                        },
                         (capabilityEntry, capabilityAgent) -> {
                             calls.add("capability");
                             return false;
@@ -90,7 +95,7 @@ class AgentLiveTickGateServiceTest {
                         }));
 
         assertFalse(consumed);
-        assertEquals(List.of("mapChange", "common", "capability", "trade", "idle", "recovery"), calls);
+        assertEquals(List.of("mapChange", "supervision", "common", "capability", "trade", "idle", "recovery"), calls);
     }
 
     @Test
@@ -111,6 +116,10 @@ class AgentLiveTickGateServiceTest {
                 new AgentLiveTickGateService.Hooks(
                         (commonEntry, commonAgent, commonLeader, runAiTick) -> {
                             calls.add("common");
+                            return false;
+                        },
+                        (supervisionEntry, supervisionAgent) -> {
+                            calls.add("supervision");
                             return false;
                         },
                         (capabilityEntry, capabilityAgent) -> {
@@ -135,7 +144,7 @@ class AgentLiveTickGateServiceTest {
                         }));
 
         assertTrue(consumed);
-        assertEquals(List.of("mapChange", "common", "capability", "trade"), calls);
+        assertEquals(List.of("mapChange", "supervision", "common", "capability", "trade"), calls);
     }
 
     @Test
@@ -150,6 +159,10 @@ class AgentLiveTickGateServiceTest {
                 new AgentLiveTickGateService.Hooks(
                         (commonEntry, commonAgent, commonLeader, runAiTick) -> {
                             calls.add("common");
+                            return false;
+                        },
+                        (supervisionEntry, supervisionAgent) -> {
+                            calls.add("supervision");
                             return false;
                         },
                         (capabilityEntry, capabilityAgent) -> {
@@ -168,7 +181,7 @@ class AgentLiveTickGateServiceTest {
                         }));
 
         assertTrue(consumed);
-        assertEquals(List.of("mapChange", "common", "capability"), calls);
+        assertEquals(List.of("mapChange", "supervision", "common", "capability"), calls);
     }
 
     @Test
@@ -184,6 +197,7 @@ class AgentLiveTickGateServiceTest {
                             calls.add("common");
                             return false;
                         },
+                        (supervisionEntry, supervisionAgent) -> false,
                         (capabilityEntry, capabilityAgent) -> {
                             calls.add("capability");
                             return false;

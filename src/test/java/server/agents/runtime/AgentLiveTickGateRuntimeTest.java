@@ -3,6 +3,8 @@ package server.agents.runtime;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
+import server.agents.plans.AgentPlanReattachmentRuntime;
+import server.agents.runtime.maintenance.AgentMaintenanceSupervisor;
 
 import java.awt.Point;
 import java.util.ArrayList;
@@ -17,6 +19,32 @@ import static org.mockito.Mockito.mockStatic;
 
 class AgentLiveTickGateRuntimeTest {
     @Test
+    void objectiveSupervisionRunsBeforeCommonTickSystems() {
+        AgentRuntimeEntry entry = mock(AgentRuntimeEntry.class);
+        Character agent = mock(Character.class);
+        List<String> calls = new ArrayList<>();
+
+        try (MockedStatic<AgentPlanReattachmentRuntime> reattachment =
+                     mockStatic(AgentPlanReattachmentRuntime.class);
+             MockedStatic<AgentMaintenanceSupervisor> maintenance =
+                     mockStatic(AgentMaintenanceSupervisor.class)) {
+            reattachment.when(() -> AgentPlanReattachmentRuntime.reattachIfNeeded(entry, agent, 100L))
+                    .thenAnswer(invocation -> {
+                        calls.add("reattach");
+                        return false;
+                    });
+            maintenance.when(() -> AgentMaintenanceSupervisor.tickRuntime(entry, agent, 100L))
+                    .thenAnswer(invocation -> {
+                        calls.add("maintenance");
+                        return true;
+                    });
+
+            assertTrue(AgentLiveTickGateRuntime.tickObjectiveSupervision(entry, agent, 100L));
+            assertEquals(List.of("reattach", "maintenance"), calls);
+        }
+    }
+
+    @Test
     void commonTickConsumptionShortCircuitsRemainingLiveGates() {
         AgentRuntimeEntry entry = mock(AgentRuntimeEntry.class);
         Character agent = mock(Character.class);
@@ -25,7 +53,11 @@ class AgentLiveTickGateRuntimeTest {
         List<String> calls = new ArrayList<>();
 
         try (MockedStatic<AgentMapTransitionRuntime> mapTransition = mockStatic(AgentMapTransitionRuntime.class);
-             MockedStatic<AgentCommonTickRuntime> commonTick = mockStatic(AgentCommonTickRuntime.class)) {
+             MockedStatic<AgentCommonTickRuntime> commonTick = mockStatic(AgentCommonTickRuntime.class);
+             MockedStatic<AgentPlanReattachmentRuntime> reattachment =
+                     mockStatic(AgentPlanReattachmentRuntime.class);
+             MockedStatic<AgentMaintenanceSupervisor> maintenance =
+                     mockStatic(AgentMaintenanceSupervisor.class)) {
             mapTransition.when(() -> AgentMapTransitionRuntime.handleTrackedMapChange(
                     any(AgentRuntimeEntry.class), any(Character.class), any(), any()))
                     .thenReturn(false);

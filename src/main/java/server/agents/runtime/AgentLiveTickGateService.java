@@ -17,6 +17,7 @@ public final class AgentLiveTickGateService {
     }
 
     public record Hooks(CommonTickSystems commonTickSystems,
+                        ObjectiveSupervisionTick objectiveSupervisionTick,
                         ActiveCapabilityTick activeCapabilityTick,
                         TradeWindowTick tradeWindowTick,
                         IdleModeTick idleModeTick,
@@ -27,6 +28,11 @@ public final class AgentLiveTickGateService {
     @FunctionalInterface
     public interface CommonTickSystems {
         boolean run(AgentRuntimeEntry entry, Character agent, Character leader, boolean runAiTick);
+    }
+
+    @FunctionalInterface
+    public interface ObjectiveSupervisionTick {
+        boolean tick(AgentRuntimeEntry entry, Character agent);
     }
 
     @FunctionalInterface
@@ -63,6 +69,9 @@ public final class AgentLiveTickGateService {
         // sit. The active capability still gets one chance to verify/finish the sit command.
         if (context.agent().getChair() > 0) {
             hooks.activeCapabilityTick().tick(context.entry(), context.agent());
+            return true;
+        }
+        if (hooks.objectiveSupervisionTick().tick(context.entry(), context.agent())) {
             return true;
         }
         if (hooks.commonTickSystems().run(context.entry(), context.agent(), context.leader(), context.runAiTick())) {
