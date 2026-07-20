@@ -17,6 +17,7 @@ class AgentSessionEventWiringRuntimeTest {
         System.clearProperty("agents.events.dialogue.enabled");
         System.clearProperty("agents.events.coordination.enabled");
         System.clearProperty("agents.events.llmContext.enabled");
+        System.clearProperty("agents.events.capacity");
     }
 
     @Test
@@ -44,6 +45,17 @@ class AgentSessionEventWiringRuntimeTest {
         AgentEventBus bus = AgentSessionEventRuntime.bus(entry);
 
         assertEquals(5, bus.snapshot().subscriptions());
+
+        AgentSessionEventRuntime.close(entry);
+    }
+
+    @Test
+    void sessionQueueCapacityCanBeTunedAtStartup() {
+        System.setProperty("agents.events.capacity", "7");
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), null, null);
+        AgentEventBus bus = AgentSessionEventRuntime.bus(entry);
+
+        assertEquals(7, bus.snapshot().capacity());
 
         AgentSessionEventRuntime.close(entry);
     }

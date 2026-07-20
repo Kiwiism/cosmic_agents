@@ -9,9 +9,15 @@ import server.agents.runtime.state.AgentCapabilityStateKey;
 public final class AgentSessionEventRuntime {
     public static final AgentCapabilityStateKey<BoundedAgentEventBus> STATE_KEY =
             new AgentCapabilityStateKey<>("runtime.event-bus", BoundedAgentEventBus.class,
-                    BoundedAgentEventBus::new);
+                    AgentSessionEventRuntime::newBus);
 
     private AgentSessionEventRuntime() {
+    }
+
+    private static BoundedAgentEventBus newBus() {
+        int capacity = AgentBoundedExecutorFactory.positiveIntegerProperty(
+                "agents.events.capacity", BoundedAgentEventBus.DEFAULT_CAPACITY);
+        return new BoundedAgentEventBus(capacity);
     }
 
     public static AgentEventBus bus(AgentRuntimeEntry entry) {

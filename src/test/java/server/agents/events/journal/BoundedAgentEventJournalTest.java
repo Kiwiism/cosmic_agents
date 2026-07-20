@@ -61,4 +61,21 @@ class BoundedAgentEventJournalTest {
         assertEquals(2, records.getFirst().agentId());
         assertEquals("magician", records.getFirst().context().objectiveId());
     }
+
+    @Test
+    void rotatesAtTheConfiguredDiskBoundAndReplaysBothSegments() {
+        Path journalPath = temporaryDirectory.resolve("rotating.jsonl");
+        BoundedAgentEventJournal journal = new BoundedAgentEventJournal(
+                new AgentEventJournalConfig(true, journalPath, 4, 1));
+        journal.offer(new AgentJobAdvancedEvent(
+                1, 20L, 0, 100, 10, 100000000, "warrior"));
+        journal.offer(new AgentJobAdvancedEvent(
+                2, 30L, 0, 200, 10, 101000000, "magician"));
+        journal.close();
+
+        assertTrue(Files.isRegularFile(journalPath));
+        assertTrue(Files.isRegularFile(journalPath.resolveSibling("rotating.jsonl.1")));
+        assertEquals(2, new AgentEventJournalReplayReader(journalPath)
+                .query(AgentEventReplayQuery.all(2)).size());
+    }
 }
