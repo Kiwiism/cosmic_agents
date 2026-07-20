@@ -35,6 +35,17 @@
     { "sourceMapId": 101000000, "destinationMapId": 101000003, "portalId": 26 },
     { "sourceMapId": 100000200, "destinationMapId": 100000201, "portalId": 9 }
   ],
+  "questPacks": [
+    { "packId": "perion-pre15", "questIds": [28280, 2082, 28281] },
+    { "packId": "ellinia-pre15", "questIds": [28273, 2089, 28274] },
+    { "packId": "henesys-pre15", "questIds": [28268, 2088, 28269, 28267] },
+    { "packId": "kerning-pre15", "questIds": [28270, 2090, 2091, 28271, 28272] },
+    { "packId": "nautilus-pre15", "questIds": [28276, 28277, 28278, 28279] }
+  ],
+  "interactionQuests": [
+    { "questId": 2090, "startNpcId": 1052106, "startMapId": 103000000,
+      "completeNpcId": 1052106, "completeMapId": 103000000 }
+  ],
   "careers": [
     {
       "firstJobId": 100,
@@ -55,7 +66,13 @@
         { "questId": 2130, "huntingMapId": 102010000, "mobIds": [130100], "requiredCounts": [80], "rewardExp": 645 },
         { "questId": 2131, "huntingMapId": 102010000, "mobIds": [1110101], "requiredCounts": [15], "rewardExp": 840 }
       ],
-      "milestoneGrind": { "huntingMapId": 102010000, "mobIds": [130100, 1110101] }
+      "milestoneGrind": { "huntingMapId": 102010000, "mobIds": [130100, 1110101] },
+      "catchUpPlan": {
+        "homePackId": "perion-pre15",
+        "afterHomeStrategy": "ROTATION_PACK",
+        "rotationPackId": "ellinia-pre15",
+        "fallbackGrind": { "huntingMapId": 101010000, "mobIds": [210100] }
+      }
     },
     {
       "firstJobId": 200,
@@ -76,7 +93,13 @@
         { "questId": 2134, "huntingMapId": 101010000, "mobIds": [210100], "requiredCounts": [35], "rewardExp": 345 },
         { "questId": 2135, "huntingMapId": 101010101, "mobIds": [1110101], "requiredCounts": [10], "rewardExp": 470 }
       ],
-      "milestoneGrind": { "huntingMapId": 101010000, "mobIds": [210100] }
+      "milestoneGrind": { "huntingMapId": 101010000, "mobIds": [210100] },
+      "catchUpPlan": {
+        "homePackId": "ellinia-pre15",
+        "afterHomeStrategy": "ROTATION_PACK",
+        "rotationPackId": "nautilus-pre15",
+        "fallbackGrind": { "huntingMapId": 120010000, "mobIds": [1210100] }
+      }
     },
     {
       "firstJobId": 300,
@@ -97,7 +120,13 @@
         { "questId": 2138, "huntingMapId": 100040000, "mobIds": [210100], "requiredCounts": [65], "rewardExp": 645 },
         { "questId": 2139, "huntingMapId": 100030000, "mobIds": [1210101], "requiredCounts": [15], "rewardExp": 840 }
       ],
-      "milestoneGrind": { "huntingMapId": 100040000, "mobIds": [210100, 1110101] }
+      "milestoneGrind": { "huntingMapId": 100040000, "mobIds": [210100, 1110101] },
+      "catchUpPlan": {
+        "homePackId": "henesys-pre15",
+        "afterHomeStrategy": "LOCAL_GRIND",
+        "rotationPackId": "",
+        "fallbackGrind": { "huntingMapId": 100040000, "mobIds": [210100, 1110101] }
+      }
     },
     {
       "firstJobId": 400,
@@ -121,7 +150,13 @@
         { "questId": 2142, "huntingMapId": 102020000, "mobIds": [130100], "requiredCounts": [80], "rewardExp": 645 },
         { "questId": 2143, "huntingMapId": 103010000, "mobIds": [1120100], "requiredCounts": [10], "rewardExp": 840 }
       ],
-      "milestoneGrind": { "huntingMapId": 103010000, "mobIds": [210100, 1120100] }
+      "milestoneGrind": { "huntingMapId": 103010000, "mobIds": [210100, 1120100] },
+      "catchUpPlan": {
+        "homePackId": "kerning-pre15",
+        "afterHomeStrategy": "ROTATION_PACK",
+        "rotationPackId": "perion-pre15",
+        "fallbackGrind": { "huntingMapId": 102010000, "mobIds": [130100, 1110101] }
+      }
     },
     {
       "firstJobId": 500,
@@ -145,7 +180,13 @@
         { "questId": 2195, "huntingMapId": 120010000, "mobIds": [1210100], "requiredCounts": [43], "rewardExp": 645 },
         { "questId": 2196, "huntingMapId": 100040003, "mobIds": [1110100], "requiredCounts": [10], "rewardExp": 840 }
       ],
-      "milestoneGrind": { "huntingMapId": 120010000, "mobIds": [1210100] }
+      "milestoneGrind": { "huntingMapId": 120010000, "mobIds": [1210100] },
+      "catchUpPlan": {
+        "homePackId": "nautilus-pre15",
+        "afterHomeStrategy": "LOCAL_GRIND",
+        "rotationPackId": "",
+        "fallbackGrind": { "huntingMapId": 120010000, "mobIds": [1210100] }
+      }
     }
   ]
 }

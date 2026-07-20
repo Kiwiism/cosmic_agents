@@ -6,6 +6,7 @@ public record AgentCareerAssignment(
         String characterName,
         String bundleId,
         int bundleVersion,
+        String progressionProfileId,
         long assignedAtMs) {
 
     public AgentCareerAssignment {
@@ -14,5 +15,6 @@ public record AgentCareerAssignment(
             throw new IllegalArgumentException("valid durable career assignment fields are required");
         }
         characterName = characterName.trim();
+        progressionProfileId = progressionProfileId == null ? "" : progressionProfileId.trim();
     }
 }

@@ -28,4 +28,25 @@ public interface AmherstPlanObjectiveDeferralPolicy {
             int deferralStage) {
         return List.of();
     }
+
+    /**
+     * Number of declared alternative-work stages. A runner records an empty stage as visited so a
+     * resumed plan can advance past work that live-state reconciliation already satisfied.
+     */
+    default int alternativeStageCount(AmherstPlanCard card,
+                                      AmherstPlanObjective blocked) {
+        return 0;
+    }
+
+    /**
+     * Allows a plan to enter slow, indefinite world-resource rechecks immediately after all of its
+     * alternative-work stages have been attempted.
+     */
+    default boolean waitForWorldResourceAfterAlternatives(
+            AmherstPlanCard card,
+            AmherstPlanObjective blocked,
+            AgentCapabilityResult result,
+            int nextDeferralStage) {
+        return false;
+    }
 }

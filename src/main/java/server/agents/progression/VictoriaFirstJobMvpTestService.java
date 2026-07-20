@@ -58,6 +58,8 @@ public final class VictoriaFirstJobMvpTestService {
         entry.capabilityStates().remove(AgentResourcePlanningState.STATE_KEY);
         entry.capabilityStates().remove(AgentSupplyProcurementState.STATE_KEY);
         entry.capabilityStates().remove(AgentCareerProgressionState.STATE_KEY);
+        entry.capabilityStates().remove(AgentVictoriaQuestSchedulerState.STATE_KEY);
+        entry.capabilityStates().remove(AgentVictoriaTrainingState.STATE_KEY);
 
         agent.resetVictoriaFirstJobTestBaseline(
                 bundle.firstJobId(), startVariant.level(), startVariant.exp());
@@ -71,6 +73,12 @@ public final class VictoriaFirstJobMvpTestService {
         for (int questId : bundle.instructorTrainingQuestIds()) {
             Quest.getInstance(questId).reset(agent);
         }
+        for (AgentVictoriaLevel15Catalog.QuestPack pack : catalog.questPacks()) {
+            for (int questId : pack.questIds()) {
+                Quest.getInstance(questId).reset(agent);
+            }
+        }
+        AgentVictoriaProgressionDiagnostics.deleteMilestones(agent.getId());
         Quest.getInstance(catalog.islandHandoff().biggsQuestId())
                 .forceStart(agent, catalog.islandHandoff().biggsNpcId());
         bundle = AgentCareerBuildBundleService.assignForTest(entry, bundle.bundleId(), nowMs);

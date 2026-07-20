@@ -124,13 +124,13 @@
         { "objectiveId": "r008-rain-1013-quest-chain", "kind": "quest-chain", "questIds": [1013], "npcId": 12101 },
         { "objectiveId": "r008-rain-1014-quest-chain", "kind": "quest-chain", "questIds": [1014], "npcId": 12101 },
         { "objectiveId": "r008-rain-1015-quest-chain", "kind": "quest-chain", "questIds": [1015], "npcId": 12101 },
+        { "objectiveId": "r008-o009-quest-start", "kind": "quest-start", "questId": 1008, "npcId": 10000 },
+        { "objectiveId": "r008-o010-reactor-hit", "kind": "reactor-hit", "forQuestId": 1008, "npcId": 10000, "mode": "hit" },
+        { "objectiveId": "r008-o011-reactor-box-items", "kind": "reactor-box-items", "forQuestId": 1008, "itemIds": [4031161, 4031162] },
+        { "objectiveId": "r008-o012-quest-complete", "kind": "quest-complete", "questId": 1008, "npcId": 10000 },
+        { "objectiveId": "r008-o013-quest-chain", "kind": "quest-chain", "questIds": [1020], "npcId": 10000 },
         { "objectiveId": "r008-o000-quest-complete", "kind": "quest-complete", "questId": 1037, "npcId": 2103 },
         { "objectiveId": "r008-o001-quest-chain", "kind": "quest-chain", "questIds": [1038], "npcIds": [2103, 12000] },
-        { "kind": "quest-start", "questId": 1008, "npcId": 10000 },
-        { "kind": "reactor-hit", "forQuestId": 1008, "npcId": 10000, "mode": "hit" },
-        { "kind": "reactor-box-items", "forQuestId": 1008, "itemIds": [4031161, 4031162] },
-        { "kind": "quest-complete", "questId": 1008, "npcId": 10000 },
-        { "kind": "quest-chain", "questIds": [1020], "npcId": 10000 },
         { "kind": "quest-start", "questId": 1040, "npcId": 12000 }
       ]
     },

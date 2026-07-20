@@ -15,6 +15,7 @@ class AgentCareerProgressionCheckpointTest {
         original.reset(bundle, AgentCareerProgressionState.RunMode.LEVEL15_WITH_INITIAL_SHOP,
                 "lv9-grind", AgentCareerProgressionState.Stage.INSTRUCTOR_TRAINING, 3_000L);
         original.trainingQuestIndex(2);
+        original.questPackIndex(1);
         AgentCareerProgressionCheckpoint checkpoint = original.pendingCheckpoint(44, 2_000L);
         assertNotNull(checkpoint);
 
@@ -23,6 +24,7 @@ class AgentCareerProgressionCheckpointTest {
 
         assertEquals(AgentCareerProgressionState.Stage.INSTRUCTOR_TRAINING, restored.stage());
         assertEquals(2, restored.trainingQuestIndex());
+        assertEquals(1, restored.questPackIndex());
         assertEquals("lv9-grind", restored.startVariantId());
         assertNull(restored.pendingCheckpoint(44, 2_100L));
     }

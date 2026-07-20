@@ -87,9 +87,11 @@ final class AgentVictoriaQuestSchedulerRuntime {
         if (state.deferUntilLevel() == agent.getLevel()) {
             return false;
         }
-        AgentVictoriaProgressionPolicy policy = AgentVictoriaProgressionPolicy.defaultPolicy();
+        AgentProgressionProfile profile = AgentProgressionProfileRuntime.profile(entry);
         int decision = Math.floorMod(agent.getId() * 31 + agent.getLevel() * 17, 100);
-        if (decision >= policy.questDecisionPercent()) {
+        int questDecisionPercent = AgentProgressionDecisionPolicy.questDecisionPercent(profile,
+                AgentVictoriaProgressionPolicy.defaultPolicy().questDecisionPercent());
+        if (decision >= questDecisionPercent) {
             state.defer(agent.getLevel());
             return false;
         }
@@ -100,8 +102,9 @@ final class AgentVictoriaQuestSchedulerRuntime {
                 .filter(quest -> gateway.canStartQuest(agent, quest.questId(), quest.startNpcId()))
                 .filter(quest -> firstReachable(agent.getMapId(), quest.startMapIds()) > 0)
                 .sorted(Comparator
-                        .comparingInt((AgentVictoriaQuestRuntimeCatalog.Entry quest) ->
-                                quest.minLevel() == null ? 0 : quest.minLevel()).reversed()
+                        .comparingLong((AgentVictoriaQuestRuntimeCatalog.Entry quest) ->
+                                AgentProgressionDecisionPolicy.questScore(profile, agent.getId(),
+                                        agent.getLevel(), agent.getMapId(), quest)).reversed()
                         .thenComparingInt(AgentVictoriaQuestRuntimeCatalog.Entry::questId))
                 .findFirst().orElse(null);
         if (selected == null) {
@@ -147,7 +150,7 @@ final class AgentVictoriaQuestSchedulerRuntime {
                 .findFirst().orElse(null);
         if (huntMap == null) {
             state.huntMapId(0);
-            huntMap = selectHuntMap(agent, objective.huntMaps());
+            huntMap = selectHuntMap(entry, agent, objective.huntMaps());
             if (huntMap == null) {
                 state.failAndDefer(agent.getLevel());
                 return false;
@@ -168,7 +171,9 @@ final class AgentVictoriaQuestSchedulerRuntime {
     }
 
     private static AgentVictoriaQuestRuntimeCatalog.HuntMap selectHuntMap(
-            Character agent, List<AgentVictoriaQuestRuntimeCatalog.HuntMap> candidates) {
+            AgentRuntimeEntry entry,
+            Character agent,
+            List<AgentVictoriaQuestRuntimeCatalog.HuntMap> candidates) {
         Set<Integer> eligibleIds = new LinkedHashSet<>();
         for (AgentVictoriaQuestRuntimeCatalog.HuntMap map : candidates) {
             if (AgentVictoriaTrainingRouteCatalog.canRoute(agent.getMapId(), map.mapId())) {
@@ -176,14 +181,13 @@ final class AgentVictoriaQuestSchedulerRuntime {
             }
         }
         Map<Integer, Integer> occupancy = AgentVictoriaTrainingPopulation.snapshot(agent, eligibleIds);
+        AgentProgressionProfile profile = AgentProgressionProfileRuntime.profile(entry);
         return candidates.stream()
                 .filter(map -> eligibleIds.contains(map.mapId()))
-                .filter(map -> occupancy.getOrDefault(map.mapId(), 0) < map.recommendedAgents())
-                .findFirst()
-                .or(() -> candidates.stream()
-                        .filter(map -> eligibleIds.contains(map.mapId()))
-                        .filter(map -> occupancy.getOrDefault(map.mapId(), 0) < map.maximumAgents())
-                        .findFirst())
+                .filter(map -> occupancy.getOrDefault(map.mapId(), 0) < map.maximumAgents())
+                .max(Comparator.comparingLong(map -> AgentProgressionDecisionPolicy.huntMapScore(
+                        profile, agent.getId(), agent.getLevel(), agent.getMapId(), map,
+                        occupancy.getOrDefault(map.mapId(), 0))))
                 .orElse(null);
     }
 

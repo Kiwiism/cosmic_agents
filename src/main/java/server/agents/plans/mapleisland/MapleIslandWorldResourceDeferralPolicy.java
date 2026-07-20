@@ -6,22 +6,18 @@ import server.agents.plans.amherst.AmherstObjectiveProgressStatus;
 import server.agents.plans.amherst.AmherstPlanCard;
 import server.agents.plans.amherst.AmherstPlanObjective;
 import server.agents.plans.amherst.AmherstPlanObjectiveDeferralPolicy;
+import server.agents.plans.amherst.AmherstPlanObjectiveKind;
 import server.agents.plans.amherst.AmherstPlanProgressSnapshot;
 
 import java.util.List;
-import java.util.Set;
+import java.util.function.Predicate;
 
 /** Maple Island plan extension declaring staged quest work that is independent of Pio's boxes. */
 final class MapleIslandWorldResourceDeferralPolicy implements AmherstPlanObjectiveDeferralPolicy {
     static final MapleIslandWorldResourceDeferralPolicy INSTANCE =
             new MapleIslandWorldResourceDeferralPolicy();
     private static final int PIO_RECYCLED_GOODS_QUEST_ID = 1008;
-    private static final Set<Integer> TRAINING_AND_LUCAS_QUEST_IDS = Set.of(
-            1040,
-            8020, 8021, 8022, 8023, 8024, 8025,
-            1039,
-            1041, 1042, 1043, 1044);
-    private static final Set<Integer> BARI_QUEST_IDS = Set.of(1045);
+    private static final int LAST_ALTERNATIVE_STAGE = 3;
 
     private MapleIslandWorldResourceDeferralPolicy() {
     }
@@ -42,28 +38,58 @@ final class MapleIslandWorldResourceDeferralPolicy implements AmherstPlanObjecti
         if (!supports(card, blocked)) {
             return List.of();
         }
-        if (deferralStage <= 1) {
-            List<AmherstPlanObjective> trainingAndLucas = pendingObjectives(
-                    card, progress, TRAINING_AND_LUCAS_QUEST_IDS);
-            if (!trainingAndLucas.isEmpty()) {
-                return trainingAndLucas;
-            }
-        }
-        if (deferralStage <= 2) {
-            return pendingObjectives(card, progress, BARI_QUEST_IDS);
-        }
-        return List.of();
+        return switch (deferralStage) {
+            case 1 -> pendingObjectives(card, progress,
+                    MapleIslandWorldResourceDeferralPolicy::isMariaAndLucasPreparation);
+            case 2 -> pendingObjectives(card, progress,
+                    MapleIslandWorldResourceDeferralPolicy::isYoonaMaiAndLucasCompletion);
+            case 3 -> pendingObjectives(card, progress,
+                    objective -> objective.allQuestIds().contains(1045));
+            default -> List.of();
+        };
+    }
+
+    @Override
+    public int alternativeStageCount(AmherstPlanCard card, AmherstPlanObjective blocked) {
+        return supports(card, blocked) ? LAST_ALTERNATIVE_STAGE : 0;
+    }
+
+    @Override
+    public boolean waitForWorldResourceAfterAlternatives(
+            AmherstPlanCard card,
+            AmherstPlanObjective blocked,
+            AgentCapabilityResult result,
+            int nextDeferralStage) {
+        return supports(card, blocked) && nextDeferralStage > LAST_ALTERNATIVE_STAGE;
     }
 
     private static List<AmherstPlanObjective> pendingObjectives(
             AmherstPlanCard card,
             AmherstPlanProgressSnapshot progress,
-            Set<Integer> questIds) {
+            Predicate<AmherstPlanObjective> stageSelector) {
         return card.objectives().stream()
-                .filter(objective -> objective.allQuestIds().stream()
-                        .anyMatch(questIds::contains))
+                .filter(stageSelector)
                 .filter(objective -> !satisfied(progress, objective.objectiveId()))
                 .toList();
+    }
+
+    private static boolean isMariaAndLucasPreparation(AmherstPlanObjective objective) {
+        return (objective.kind() == AmherstPlanObjectiveKind.QUEST_COMPLETE
+                && objective.allQuestIds().contains(1037))
+                || (objective.kind() == AmherstPlanObjectiveKind.QUEST_CHAIN
+                && objective.allQuestIds().contains(1038))
+                || (objective.kind() == AmherstPlanObjectiveKind.QUEST_START
+                && objective.allQuestIds().contains(1040));
+    }
+
+    private static boolean isYoonaMaiAndLucasCompletion(AmherstPlanObjective objective) {
+        boolean yoonaOrMai = objective.allQuestIds().stream().anyMatch(questId ->
+                questId >= 8020 && questId <= 8025
+                        || questId == 1039
+                        || questId >= 1041 && questId <= 1044);
+        boolean lucasCompletion = objective.kind() == AmherstPlanObjectiveKind.QUEST_COMPLETE
+                && objective.allQuestIds().contains(1040);
+        return yoonaOrMai || lucasCompletion;
     }
 
     private static boolean satisfied(AmherstPlanProgressSnapshot progress, String objectiveId) {

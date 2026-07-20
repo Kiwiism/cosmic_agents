@@ -23,6 +23,7 @@
     "interaction.npc-script",
     "interaction.npc-shop",
     "quest.instructor-training",
+    "quest.victoria-pre15-packs",
     "combat.generic-grind",
     "loot.combat-drops",
     "survival.potion-use",
@@ -43,6 +44,9 @@
     { "stageId": "initial-shop-trip", "capabilityIds": ["navigation.portal-route", "interaction.npc-shop", "supplies.procurement"], "postcondition": "shop-workflow-terminal-success" },
     { "stageId": "return-to-instructor", "capabilityIds": ["navigation.portal-route"], "postcondition": "in-instructor-map" },
     { "stageId": "instructor-training", "capabilityIds": ["quest.instructor-training", "navigation.portal-route", "combat.generic-grind", "loot.combat-drops", "survival.potion-use", "inventory.capacity-management", "recovery.physics"], "postcondition": "all-career-training-quests-complete" },
+    { "stageId": "home-quest-pack", "capabilityIds": ["quest.victoria-pre15-packs", "navigation.portal-route", "combat.generic-grind", "loot.combat-drops", "survival.potion-use", "inventory.capacity-management", "recovery.physics"], "postcondition": "career-home-pack-complete" },
+    { "stageId": "post-home-decision", "capabilityIds": ["quest.victoria-pre15-packs"], "postcondition": "rotation-or-local-grind-selected" },
+    { "stageId": "rotation-quest-pack", "capabilityIds": ["quest.victoria-pre15-packs", "navigation.portal-route", "combat.generic-grind", "loot.combat-drops", "survival.potion-use", "inventory.capacity-management", "recovery.physics"], "postcondition": "required-rotation-pack-complete-or-not-configured" },
     { "stageId": "fallback-grind", "capabilityIds": ["navigation.portal-route", "combat.generic-grind", "loot.combat-drops", "survival.potion-use", "supplies.procurement", "inventory.capacity-management", "recovery.physics"], "postcondition": "level-at-least-15" },
     { "stageId": "final-return", "capabilityIds": ["navigation.portal-route", "recovery.physics"], "postcondition": "grounded-near-instructor" }
   ],
