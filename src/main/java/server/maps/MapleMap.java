@@ -57,6 +57,9 @@ import server.TimerManager;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.diagnostics.MapTransitionPacketTraceRuntime;
 import server.agents.diagnostics.MobReactionCaptureRuntime;
+import server.agents.events.AgentEventPriority;
+import server.agents.operations.events.AgentMobKilledEvent;
+import server.agents.operations.events.AgentOperationalEventPublisher;
 import server.events.gm.Coconut;
 import server.events.gm.Fitness;
 import server.events.gm.Ola;
@@ -1536,6 +1539,11 @@ public class MapleMap {
             }
 
             Character dropOwner = monster.killBy(chr);
+            AgentOperationalEventPublisher.publishFor(chr,
+                    objectiveId -> new AgentMobKilledEvent(
+                            chr.getId(), System.currentTimeMillis(), getId(), monster.getId(),
+                            monster.getObjectId(), monster.getStats().getLevel(), objectiveId),
+                    AgentEventPriority.NORMAL);
             if (withDrops && !monster.dropsDisabled()) {
                 if (dropOwner == null) {
                     dropOwner = chr;

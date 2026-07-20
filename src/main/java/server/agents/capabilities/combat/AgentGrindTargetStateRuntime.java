@@ -4,6 +4,9 @@ import client.Character;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 import server.maps.MapleMap;
+import server.agents.events.AgentEventPriority;
+import server.agents.operations.events.AgentCombatTargetChangedEvent;
+import server.agents.operations.events.AgentOperationalEventPublisher;
 
 import java.awt.Point;
 
@@ -37,15 +40,19 @@ public final class AgentGrindTargetStateRuntime {
     }
 
     public static void setTarget(AgentRuntimeEntry entry, Monster target) {
+        Monster previous = entry.grindTargetState().target();
         entry.grindTargetState().setTarget(target);
+        publishTargetChange(entry, previous, target);
     }
 
     public static void commitTarget(AgentRuntimeEntry entry,
                                     Monster target,
                                     long nowMs,
                                     long commitmentDurationMs) {
+        Monster previous = entry.grindTargetState().target();
         entry.grindTargetState().commitTarget(
                 target, nowMs + Math.max(0L, commitmentDurationMs));
+        publishTargetChange(entry, previous, target);
     }
 
     public static boolean committedTo(AgentRuntimeEntry entry, Monster target, long nowMs) {
@@ -57,6 +64,25 @@ public final class AgentGrindTargetStateRuntime {
     }
 
     public static void clear(AgentRuntimeEntry entry) {
+        Monster previous = entry.grindTargetState().target();
         entry.grindTargetState().clearTarget();
+        publishTargetChange(entry, previous, null);
+    }
+
+    private static void publishTargetChange(AgentRuntimeEntry entry, Monster previous, Monster target) {
+        if (previous == target) {
+            return;
+        }
+        int previousObjectId = previous == null ? 0 : Math.max(0, previous.getObjectId());
+        int targetObjectId = target == null ? 0 : Math.max(0, target.getObjectId());
+        if (target != null && targetObjectId == 0) {
+            return;
+        }
+        int targetMobId = target == null ? 0 : Math.max(0, target.getId());
+        AgentOperationalEventPublisher.publish(entry,
+                objectiveId -> new AgentCombatTargetChangedEvent(
+                        entry.bot().getId(), System.currentTimeMillis(), previousObjectId,
+                        targetObjectId, targetMobId, targetSwitchCount(entry), objectiveId),
+                AgentEventPriority.NORMAL);
     }
 }

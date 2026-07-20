@@ -12,6 +12,9 @@ import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.monitoring.AgentPerformanceMonitor;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.events.AgentEventPriority;
+import server.agents.operations.events.AgentNavigationRouteFailedEvent;
+import server.agents.operations.events.AgentOperationalEventPublisher;
 import server.maps.MapleMap;
 import server.maps.Rope;
 
@@ -139,9 +142,23 @@ public final class AgentNavigationTargetService {
             }
 
             if (edge == null) {
-                AgentNavigationDebugStateRuntime.setLastDecision(entry, !runAiTick ? "no-ai"
+                String previousDecision = AgentNavigationDebugStateRuntime.lastDecision(entry);
+                String decision = !runAiTick ? "no-ai"
                         : startRegionId < 0 || targetRegionId < 0 ? "no-region"
-                        : startRegionId == targetRegionId ? "same-region" : "no-path");
+                        : startRegionId == targetRegionId ? "same-region" : "no-path";
+                AgentNavigationDebugStateRuntime.setLastDecision(entry, decision);
+                if ("no-path".equals(decision) && !decision.equals(previousDecision)) {
+                    Point failedTarget = pathTargetPos == null ? botPos : pathTargetPos;
+                    int failedStartRegionId = startRegionId;
+                    int failedTargetRegionId = targetRegionId;
+                    AgentOperationalEventPublisher.publish(entry,
+                            objectiveId -> new AgentNavigationRouteFailedEvent(
+                                    bot.getId(), System.currentTimeMillis(), bot.getMapId(),
+                                    failedStartRegionId, failedTargetRegionId,
+                                    failedTarget.x, failedTarget.y,
+                                    decision, objectiveId),
+                            AgentEventPriority.IMPORTANT);
+                }
                 AgentMovementStateResetService.clearNavigationState(entry);
                 AgentNavigationDebugStateRuntime.recordPathLog(entry,
                         AgentMovementTargetRuntime.captureTargetSnapshot(entry, rawTargetPos),

@@ -6,7 +6,11 @@ import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStuckStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.diagnostics.AgentRunObservationRuntime;
+import server.agents.events.AgentEventPriority;
+import server.agents.operations.events.AgentOperationalEventPublisher;
+import server.agents.operations.events.AgentRecoveryPerformedEvent;
 
+import java.awt.Point;
 import java.util.concurrent.ThreadLocalRandom;
 
 public final class AgentMovementRecoveryService {
@@ -19,6 +23,7 @@ public final class AgentMovementRecoveryService {
      */
     public static void tickUnstuck(AgentRuntimeEntry entry) {
         Character agent = AgentRuntimeIdentityRuntime.bot(entry);
+        Point from = new Point(agent.getPosition());
         if (AgentMovementStateRuntime.inAir(entry) || AgentMovementStateRuntime.climbing(entry)) {
             AgentAirborneLaunchService.launchAirborne(entry, agent.getPosition(), 0f, 0, false);
         } else {
@@ -33,6 +38,7 @@ public final class AgentMovementRecoveryService {
         AgentMovementStuckStateRuntime.setUnstuckCooldownMs(entry, AgentMovementTimers.delayAfterCurrentTick(5000));
         AgentMovementBroadcastService.broadcastMovement(entry);
         AgentRunObservationRuntime.recovery(entry, agent, "movement-unstuck", System.currentTimeMillis());
+        publishRecovery(entry, agent, "movement-unstuck", from, agent.getPosition());
     }
 
     /**
@@ -41,11 +47,25 @@ public final class AgentMovementRecoveryService {
      */
     public static void nudgeForObjectiveReplan(AgentRuntimeEntry entry) {
         Character agent = AgentRuntimeIdentityRuntime.bot(entry);
+        Point from = new Point(agent.getPosition());
         if (AgentMovementStateRuntime.inAir(entry) || AgentMovementStateRuntime.climbing(entry)) {
             AgentAirborneLaunchService.launchAirborne(entry, agent.getPosition(), 0f, 0, false);
         }
         AgentMovementStateResetService.clearNavigationState(entry);
         AgentRunObservationRuntime.recovery(
                 entry, agent, "objective-navigation-nudge", System.currentTimeMillis());
+        publishRecovery(entry, agent, "objective-navigation-nudge", from, agent.getPosition());
+    }
+
+    private static void publishRecovery(AgentRuntimeEntry entry,
+                                        Character agent,
+                                        String recoveryType,
+                                        Point from,
+                                        Point to) {
+        AgentOperationalEventPublisher.publish(entry,
+                objectiveId -> new AgentRecoveryPerformedEvent(
+                        agent.getId(), System.currentTimeMillis(), agent.getMapId(), recoveryType,
+                        from.x, from.y, to.x, to.y, objectiveId),
+                AgentEventPriority.IMPORTANT);
     }
 }

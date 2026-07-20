@@ -4,6 +4,9 @@ import client.Character;
 import server.agents.capabilities.dialogue.AgentEmote;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
+import server.agents.events.AgentEventPriority;
+import server.agents.operations.events.AgentLifeStateChangedEvent;
+import server.agents.operations.events.AgentOperationalEventPublisher;
 
 import java.awt.Point;
 import java.util.function.BiConsumer;
@@ -69,5 +72,10 @@ public final class AgentDeathTickService {
         hooks.broadcastMovement().accept(entry, agent);
         hooks.mapSpeaker().accept(agent, "back!");
         agent.changeFaceExpression(AgentEmote.GLARE.getValue());
+        AgentOperationalEventPublisher.publish(entry,
+                objectiveId -> new AgentLifeStateChangedEvent(
+                        agent.getId(), System.currentTimeMillis(), "DEAD", "ALIVE",
+                        agent.getMapId(), objectiveId),
+                AgentEventPriority.IMPORTANT);
     }
 }
