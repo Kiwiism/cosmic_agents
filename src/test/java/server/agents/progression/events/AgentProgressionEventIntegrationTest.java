@@ -40,7 +40,7 @@ class AgentProgressionEventIntegrationTest {
             AgentBuildService.checkLevelUp(entry, agent);
             AgentBuildService.handleJobAdvance(entry, agent, Job.BEGINNER, Job.WARRIOR);
 
-            assertEquals(2, AgentEventDispatchRuntime.drain(entry));
+            assertEquals(4, AgentEventDispatchRuntime.drain(entry));
             assertEquals(2, events.size());
             AgentLevelChangedEvent level = assertInstanceOf(AgentLevelChangedEvent.class, events.get(0));
             AgentJobAdvancedEvent job = assertInstanceOf(AgentJobAdvancedEvent.class, events.get(1));

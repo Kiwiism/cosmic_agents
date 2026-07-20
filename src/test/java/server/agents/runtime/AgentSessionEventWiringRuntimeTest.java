@@ -15,8 +15,8 @@ class AgentSessionEventWiringRuntimeTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), null, null);
         AgentEventBus bus = AgentSessionEventRuntime.bus(entry);
 
-        assertEquals(5, bus.snapshot().subscriptions());
-        assertEquals(5, AgentSessionEventRuntime.bus(entry).snapshot().subscriptions());
+        assertEquals(8, bus.snapshot().subscriptions());
+        assertEquals(8, AgentSessionEventRuntime.bus(entry).snapshot().subscriptions());
 
         AgentSessionEventRuntime.close(entry);
 

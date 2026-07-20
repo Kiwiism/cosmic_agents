@@ -10,6 +10,8 @@ import server.agents.integration.AgentPacketGatewayRuntime;
 import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.progression.events.AgentProgressionDialogueReactionService;
+import client.Job;
 
 import java.util.List;
 
@@ -50,6 +52,22 @@ public final class AgentDialogueProjectionRuntime {
     }
 
     static String render(AgentDialogueIntentEvent intent) {
+        if (AgentProgressionDialogueReactionService.LEVEL_INTENT.equals(intent.intentKey())) {
+            return "level " + intent.parameters().getOrDefault("level", "") + "!";
+        }
+        if (AgentProgressionDialogueReactionService.JOB_INTENT.equals(intent.intentKey())) {
+            try {
+                Job job = Job.getById(Integer.parseInt(intent.parameters().getOrDefault("jobId", "-1")));
+                return job == null ? "job advancement complete!"
+                        : "job advancement complete - "
+                        + AgentDialogueReportFormatter.jobDisplayName(job) + "!";
+            } catch (NumberFormatException ignored) {
+                return "job advancement complete!";
+            }
+        }
+        if (AgentProgressionDialogueReactionService.QUEST_INTENT.equals(intent.intentKey())) {
+            return "quest complete!";
+        }
         if (!AgentSupplyDialogueReactionService.INTENT_KEY.equals(intent.intentKey())) {
             return "";
         }

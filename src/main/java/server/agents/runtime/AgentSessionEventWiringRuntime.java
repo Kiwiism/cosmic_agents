@@ -10,6 +10,9 @@ import server.agents.capabilities.supplies.AgentSupplyMonitoringProjectionServic
 import server.agents.capabilities.supplies.AgentSupplyThresholdChangedEvent;
 import server.agents.events.AgentEventSubscription;
 import server.agents.events.BoundedAgentEventBus;
+import server.agents.progression.events.AgentProgressionCheckpointProjectionService;
+import server.agents.progression.events.AgentProgressionDialogueReactionService;
+import server.agents.progression.events.AgentProgressionMonitoringProjectionService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +44,15 @@ public final class AgentSessionEventWiringRuntime {
                                 (agentId, audience) -> AgentDialogueProjectionRuntime.hasAudience(
                                         entry, agentId, audience),
                                 intent -> AgentDialogueProjectionRuntime.project(entry, intent))));
+                AgentProgressionMonitoringProjectionService progressionMonitoring =
+                        new AgentProgressionMonitoringProjectionService(entry);
+                AgentProgressionDialogueReactionService progressionDialogue =
+                        new AgentProgressionDialogueReactionService(bus);
+                AgentProgressionCheckpointProjectionService progressionCheckpoint =
+                        new AgentProgressionCheckpointProjectionService(entry);
+                subscriptions.add(bus.subscribe("*", progressionMonitoring));
+                subscriptions.add(bus.subscribe("*", progressionDialogue));
+                subscriptions.add(bus.subscribe("*", progressionCheckpoint));
                 state.attach(subscriptions);
             } catch (RuntimeException failure) {
                 subscriptions.forEach(AgentEventSubscription::close);

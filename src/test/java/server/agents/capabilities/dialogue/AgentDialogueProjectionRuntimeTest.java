@@ -2,9 +2,11 @@ package server.agents.capabilities.dialogue;
 
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.supplies.AgentSupplyDialogueReactionService;
+import server.agents.progression.events.AgentProgressionDialogueReactionService;
 
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -35,5 +37,20 @@ class AgentDialogueProjectionRuntimeTest {
                 Map.of("category", "UNKNOWN", "urgency", "CRITICAL"));
 
         assertTrue(AgentDialogueProjectionRuntime.render(malformed).isBlank());
+    }
+
+    @Test
+    void rendersProgressionIntentsWithoutExposingTechnicalContext() {
+        AgentDialogueIntentEvent level = new AgentDialogueIntentEvent(
+                1, 100L, AgentProgressionDialogueReactionService.LEVEL_INTENT,
+                AgentDialogueAudience.NEARBY_REAL_PLAYER, "level", 1_000L,
+                Map.of("level", "15"));
+        AgentDialogueIntentEvent quest = new AgentDialogueIntentEvent(
+                1, 100L, AgentProgressionDialogueReactionService.QUEST_INTENT,
+                AgentDialogueAudience.NEARBY_REAL_PLAYER, "quest", 1_000L,
+                Map.of("questId", "1001"));
+
+        assertTrue(AgentDialogueProjectionRuntime.render(level).contains("15"));
+        assertEquals("quest complete!", AgentDialogueProjectionRuntime.render(quest));
     }
 }
