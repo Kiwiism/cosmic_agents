@@ -3,6 +3,8 @@ package server.agents.monitoring;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentSessionEventRuntime;
 import server.agents.events.AgentEventBusSnapshot;
+import server.agents.events.journal.AgentEventJournalRuntime;
+import server.agents.events.journal.AgentEventJournalSnapshot;
 import server.agents.coordination.AgentCoordinationRuntime;
 import server.agents.coordination.AgentCoordinationRuntimeSnapshot;
 import server.agents.runtime.scheduler.AgentLoadSheddingLevel;
@@ -57,11 +59,12 @@ public final class AgentSchedulerDiagnostics {
             Map<String, AgentAsyncQueueMetrics.Snapshot> asyncQueues,
             Map<String, AgentEventReactionMetrics.Snapshot> eventReactions,
             EventRuntimeSnapshot eventRuntime,
-            AgentCoordinationRuntimeSnapshot coordination) {
+            AgentCoordinationRuntimeSnapshot coordination,
+            AgentEventJournalSnapshot eventJournal) {
         public Snapshot {
             if (mode == null || scheduler == null || shards == null || readyPriorities == null || loadShedding == null
                     || quiescence == null || asyncQueues == null || eventReactions == null
-                    || eventRuntime == null || coordination == null) {
+                    || eventRuntime == null || coordination == null || eventJournal == null) {
                 throw new IllegalArgumentException("Agent scheduler diagnostic snapshot is incomplete");
             }
             activeAgents = Math.max(0, activeAgents);
@@ -89,7 +92,8 @@ public final class AgentSchedulerDiagnostics {
                 AgentAsyncQueueMetrics.snapshots(),
                 AgentEventReactionMetrics.snapshots(),
                 captureEventRuntime(),
-                AgentCoordinationRuntime.snapshot());
+                AgentCoordinationRuntime.snapshot(),
+                AgentEventJournalRuntime.snapshot());
     }
 
     public static List<String> lines() {
@@ -178,6 +182,11 @@ public final class AgentSchedulerDiagnostics {
                 + " rejected=" + coordination.rejectedCapacity()
                 + " expired=" + coordination.expired()
                 + " listenerFailures=" + coordination.listenerFailures());
+        AgentEventJournalSnapshot journal = snapshot.eventJournal();
+        lines.add("Agent event journal: enabled=" + journal.enabled()
+                + " queued=" + journal.queued() + "/" + journal.capacity()
+                + " accepted=" + journal.accepted() + " rejected=" + journal.rejected()
+                + " written=" + journal.written() + " failures=" + journal.failures());
     }
 
     private static EventRuntimeSnapshot captureEventRuntime() {

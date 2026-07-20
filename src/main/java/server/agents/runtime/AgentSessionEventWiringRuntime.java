@@ -38,20 +38,29 @@ public final class AgentSessionEventWiringRuntime {
                 return;
             }
             List<AgentEventSubscription> subscriptions = new ArrayList<>();
+            AgentEventRolloutConfig rollout = AgentEventRolloutConfig.fromSystemProperties();
             try {
-                subscriptions.add(bus.subscribe(AgentSupplyThresholdChangedEvent.TYPE,
-                        new AgentSupplyMaintenanceEventListener(entry)));
-                subscriptions.add(bus.subscribe(AgentSupplyThresholdChangedEvent.TYPE,
-                        new AgentSupplyCoordinationProjectionService()));
-                subscriptions.add(bus.subscribe(AgentSupplyThresholdChangedEvent.TYPE,
-                        new AgentSupplyDialogueReactionService(bus)));
+                if (rollout.reactionsEnabled()) {
+                    subscriptions.add(bus.subscribe(AgentSupplyThresholdChangedEvent.TYPE,
+                            new AgentSupplyMaintenanceEventListener(entry)));
+                }
+                if (rollout.coordinationEnabled()) {
+                    subscriptions.add(bus.subscribe(AgentSupplyThresholdChangedEvent.TYPE,
+                            new AgentSupplyCoordinationProjectionService()));
+                }
+                if (rollout.dialogueEnabled()) {
+                    subscriptions.add(bus.subscribe(AgentSupplyThresholdChangedEvent.TYPE,
+                            new AgentSupplyDialogueReactionService(bus)));
+                }
                 subscriptions.add(bus.subscribe(AgentSupplyThresholdChangedEvent.TYPE,
                         new AgentSupplyMonitoringProjectionService(entry)));
-                subscriptions.add(bus.subscribe(AgentDialogueIntentEvent.TYPE,
-                        new AgentDialogueProjectionService(
-                                (agentId, audience) -> AgentDialogueProjectionRuntime.hasAudience(
-                                        entry, agentId, audience),
-                                intent -> AgentDialogueProjectionRuntime.project(entry, intent))));
+                if (rollout.dialogueEnabled()) {
+                    subscriptions.add(bus.subscribe(AgentDialogueIntentEvent.TYPE,
+                            new AgentDialogueProjectionService(
+                                    (agentId, audience) -> AgentDialogueProjectionRuntime.hasAudience(
+                                            entry, agentId, audience),
+                                    intent -> AgentDialogueProjectionRuntime.project(entry, intent))));
+                }
                 AgentProgressionMonitoringProjectionService progressionMonitoring =
                         new AgentProgressionMonitoringProjectionService(entry);
                 AgentProgressionDialogueReactionService progressionDialogue =
@@ -59,22 +68,36 @@ public final class AgentSessionEventWiringRuntime {
                 AgentProgressionCheckpointProjectionService progressionCheckpoint =
                         new AgentProgressionCheckpointProjectionService(entry);
                 subscriptions.add(bus.subscribe("*", progressionMonitoring));
-                subscriptions.add(bus.subscribe("*", progressionDialogue));
-                subscriptions.add(bus.subscribe("*", progressionCheckpoint));
+                if (rollout.dialogueEnabled()) {
+                    subscriptions.add(bus.subscribe("*", progressionDialogue));
+                }
+                if (rollout.reactionsEnabled()) {
+                    subscriptions.add(bus.subscribe("*", progressionCheckpoint));
+                }
                 subscriptions.add(bus.subscribe("*",
                         new AgentResourceMonitoringProjectionService(entry)));
-                subscriptions.add(bus.subscribe("*",
-                        new AgentInventoryMaintenanceEventListener(entry)));
-                subscriptions.add(bus.subscribe("*",
-                        new AgentResourceDialogueReactionService(bus)));
+                if (rollout.reactionsEnabled()) {
+                    subscriptions.add(bus.subscribe("*",
+                            new AgentInventoryMaintenanceEventListener(entry)));
+                }
+                if (rollout.dialogueEnabled()) {
+                    subscriptions.add(bus.subscribe("*",
+                            new AgentResourceDialogueReactionService(bus)));
+                }
                 subscriptions.add(bus.subscribe("*",
                         new AgentOperationalMonitoringProjectionService(entry)));
-                subscriptions.add(bus.subscribe("*",
-                        new AgentOperationalEvaluationListener(entry)));
-                subscriptions.add(bus.subscribe("*",
-                        new AgentOperationalDialogueReactionService(bus)));
+                if (rollout.reactionsEnabled()) {
+                    subscriptions.add(bus.subscribe("*",
+                            new AgentOperationalEvaluationListener(entry)));
+                }
+                if (rollout.dialogueEnabled()) {
+                    subscriptions.add(bus.subscribe("*",
+                            new AgentOperationalDialogueReactionService(bus)));
+                }
                 subscriptions.add(bus.subscribe("*", new AgentDurableEventJournalListener()));
-                subscriptions.add(bus.subscribe("*", new AgentLlmContextProjectionService(entry)));
+                if (rollout.llmContextEnabled()) {
+                    subscriptions.add(bus.subscribe("*", new AgentLlmContextProjectionService(entry)));
+                }
                 state.attach(subscriptions);
             } catch (RuntimeException failure) {
                 subscriptions.forEach(AgentEventSubscription::close);

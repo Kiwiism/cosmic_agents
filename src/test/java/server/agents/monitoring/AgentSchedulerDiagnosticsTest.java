@@ -67,6 +67,7 @@ class AgentSchedulerDiagnosticsTest {
         assertTrue(lines.stream().anyMatch(line -> line.startsWith("Agent events:")));
         assertTrue(lines.stream().anyMatch(line -> line.startsWith("Agent event reactions:")));
         assertTrue(lines.stream().anyMatch(line -> line.startsWith("Agent coordination:")));
+        assertTrue(lines.stream().anyMatch(line -> line.startsWith("Agent event journal:")));
         assertTrue(lines.stream().anyMatch(line -> line.contains("Scheduler ready queues: VISIBLE=1/1")));
     }
 
@@ -84,7 +85,7 @@ class AgentSchedulerDiagnosticsTest {
 
         assertTrue(lines.stream().anyMatch(line -> line.contains("4 more shard(s)")));
         assertTrue(lines.stream().anyMatch(line -> line.contains("4 more queue(s)")));
-        assertTrue(lines.size() <= 37);
+        assertTrue(lines.size() <= 38);
     }
 
     @Test
