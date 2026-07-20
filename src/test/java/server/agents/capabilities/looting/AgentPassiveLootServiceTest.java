@@ -42,7 +42,7 @@ class AgentPassiveLootServiceTest {
     }
 
     @Test
-    void fullInventoryWarningUsesLegacyMessageAndCooldown() {
+    void fullInventoryWarningUsesEventPathAndCooldown() {
         Character agent = agentOnMap();
         Inventory inventory = mock(Inventory.class);
         when(inventory.isFull()).thenReturn(true);
@@ -56,7 +56,6 @@ class AgentPassiveLootServiceTest {
 
         AgentPassiveLootService.tickPassiveLoot(entry(agent), agent, callbacks);
 
-        assertEquals("use inventory is full!", callbacks.replyMessage.get());
         assertEquals(321, callbacks.warnCooldown.get());
         assertFalse(callbacks.pickedUp.get());
     }
@@ -140,7 +139,6 @@ class AgentPassiveLootServiceTest {
         int delayCooldown;
         final AtomicBoolean lootInhibitTicked = new AtomicBoolean();
         final AtomicBoolean inventoryCooldownTicked = new AtomicBoolean();
-        final AtomicReference<String> replyMessage = new AtomicReference<>();
         final AtomicInteger warnCooldown = new AtomicInteger();
         final AtomicReference<Character> owner = new AtomicReference<>();
         final AtomicReference<Character> pickupCharacter = new AtomicReference<>();
@@ -159,7 +157,6 @@ class AgentPassiveLootServiceTest {
         @Override public long nowMs() { return System.currentTimeMillis(); }
         @Override public int lootRadius() { return 100; }
         @Override public boolean canWarnInventoryFull() { return warnAllowed; }
-        @Override public void replyNow(AgentRuntimeEntry entry, String message) { replyMessage.set(message); }
         @Override public int delayInventoryFullWarnCooldown() { return delayCooldown; }
         @Override public void setInventoryFullWarnCooldownMs(int cooldownMs) { warnCooldown.set(cooldownMs); }
         @Override public Character owner() { return owner.get(); }

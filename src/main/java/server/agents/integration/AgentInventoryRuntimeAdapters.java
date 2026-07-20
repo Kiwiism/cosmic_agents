@@ -14,7 +14,6 @@ import server.agents.capabilities.equipment.AgentEquipmentReservePolicy;
 import server.agents.capabilities.inventory.AgentEquippedSlotTradeService;
 import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
 import server.agents.capabilities.inventory.AgentInventoryNamedItemService;
-import server.agents.capabilities.inventory.AgentInventoryRuntime;
 import server.agents.capabilities.inventory.AgentInventoryStateRuntime;
 import server.agents.capabilities.looting.AgentLootCleanupService;
 import server.agents.capabilities.looting.AgentPassiveLootRuntimeService;
@@ -49,7 +48,6 @@ public final class AgentInventoryRuntimeAdapters {
                 System::currentTimeMillis,
                 () -> AgentRuntimeConfig.cfg.LOOT_RADIUS,
                 AgentInventoryStateRuntime::canWarnInventoryFull,
-                AgentInventoryRuntime::replyNow,
                 () -> AgentMovementTimers.delayAfterCurrentTick(AgentRuntimeConfig.cfg.INV_FULL_WARN_CD_MS),
                 AgentInventoryStateRuntime::setInventoryFullWarnCooldownMs,
                 ignoredEntry -> null,

@@ -114,7 +114,6 @@ public final class AgentPassiveLootService {
         if (!callbacks.canWarnInventoryFull()) {
             return;
         }
-        callbacks.replyNow(entry, type.name().toLowerCase() + " inventory is full!");
         callbacks.setInventoryFullWarnCooldownMs(callbacks.delayInventoryFullWarnCooldown());
         AgentResourceEventPublisher.publishFor(agent,
                 objectiveId -> new AgentInventoryThresholdChangedEvent(
@@ -131,7 +130,6 @@ public final class AgentPassiveLootService {
         long nowMs();
         int lootRadius();
         boolean canWarnInventoryFull();
-        void replyNow(AgentRuntimeEntry entry, String message);
         int delayInventoryFullWarnCooldown();
         void setInventoryFullWarnCooldownMs(int cooldownMs);
         Character owner();
@@ -149,7 +147,6 @@ public final class AgentPassiveLootService {
                                       LongSupplier nowMs,
                                       IntSupplier lootRadius,
                                       BooleanSupplier canWarnInventoryFull,
-                                      ReplySink replyNow,
                                       IntSupplier delayInventoryFullWarnCooldown,
                                       Consumer<Integer> setInventoryFullWarnCooldownMs,
                                       Supplier<Character> owner,
@@ -167,7 +164,6 @@ public final class AgentPassiveLootService {
                 @Override public long nowMs() { return nowMs.getAsLong(); }
                 @Override public int lootRadius() { return lootRadius.getAsInt(); }
                 @Override public boolean canWarnInventoryFull() { return canWarnInventoryFull.getAsBoolean(); }
-                @Override public void replyNow(AgentRuntimeEntry entry, String message) { replyNow.reply(entry, message); }
                 @Override public int delayInventoryFullWarnCooldown() { return delayInventoryFullWarnCooldown.getAsInt(); }
                 @Override public void setInventoryFullWarnCooldownMs(int cooldownMs) {
                     setInventoryFullWarnCooldownMs.accept(cooldownMs);
@@ -189,11 +185,6 @@ public final class AgentPassiveLootService {
                 }
             };
         }
-    }
-
-    @FunctionalInterface
-    public interface ReplySink {
-        void reply(AgentRuntimeEntry entry, String message);
     }
 
     @FunctionalInterface

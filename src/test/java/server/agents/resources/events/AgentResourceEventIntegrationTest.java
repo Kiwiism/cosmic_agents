@@ -41,7 +41,7 @@ class AgentResourceEventIntegrationTest {
                             agent.getId(), 25L, 2040001, "SUCCESS", 100000000, objectiveId),
                     AgentEventPriority.IMPORTANT);
 
-            assertEquals(1, AgentEventDispatchRuntime.drain(entry));
+            assertEquals(2, AgentEventDispatchRuntime.drain(entry));
             AgentScrollResolvedEvent event = assertInstanceOf(
                     AgentScrollResolvedEvent.class, received.getFirst());
             assertEquals(301, event.agentId());

@@ -31,7 +31,6 @@ public final class AgentPassiveLootRuntimeService {
                         callbacks::nowMs,
                         callbacks::lootRadius,
                         () -> callbacks.canWarnInventoryFull(entry),
-                        callbacks::replyNow,
                         callbacks::delayInventoryFullWarnCooldown,
                         cooldown -> callbacks.setInventoryFullWarnCooldownMs(entry, cooldown),
                         () -> callbacks.owner(entry),
@@ -58,8 +57,6 @@ public final class AgentPassiveLootRuntimeService {
 
         boolean canWarnInventoryFull(AgentRuntimeEntry entry);
 
-        void replyNow(AgentRuntimeEntry entry, String message);
-
         int delayInventoryFullWarnCooldown();
 
         void setInventoryFullWarnCooldownMs(AgentRuntimeEntry entry, int cooldownMs);
@@ -85,7 +82,6 @@ public final class AgentPassiveLootRuntimeService {
                                    LongSupplier nowMs,
                                    IntSupplier lootRadius,
                                    java.util.function.Predicate<AgentRuntimeEntry> canWarnInventoryFull,
-                                   AgentPassiveLootService.ReplySink replyNow,
                                    IntSupplier delayInventoryFullWarnCooldown,
                                    SetInventoryCooldown setInventoryFullWarnCooldownMs,
                                    Function<AgentRuntimeEntry, Character> owner,
@@ -129,11 +125,6 @@ public final class AgentPassiveLootRuntimeService {
                 @Override
                 public boolean canWarnInventoryFull(AgentRuntimeEntry entry) {
                     return canWarnInventoryFull.test(entry);
-                }
-
-                @Override
-                public void replyNow(AgentRuntimeEntry entry, String message) {
-                    replyNow.reply(entry, message);
                 }
 
                 @Override

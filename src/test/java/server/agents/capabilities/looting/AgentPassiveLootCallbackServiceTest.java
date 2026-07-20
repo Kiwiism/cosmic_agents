@@ -25,7 +25,6 @@ class AgentPassiveLootCallbackServiceTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, owner, null);
         AtomicBoolean lootInhibitTicked = new AtomicBoolean();
         AtomicBoolean cooldownTicked = new AtomicBoolean();
-        AtomicReference<String> reply = new AtomicReference<>();
         AtomicInteger cooldown = new AtomicInteger();
         AtomicReference<Character> autoEquipAgent = new AtomicReference<>();
         AtomicReference<Character> pickupCharacter = new AtomicReference<>();
@@ -41,10 +40,6 @@ class AgentPassiveLootCallbackServiceTest {
                         () -> 123L,
                         () -> 456,
                         () -> true,
-                        (currentEntry, message) -> {
-                            assertSame(entry, currentEntry);
-                            reply.set(message);
-                        },
                         () -> 789,
                         cooldown::set,
                         () -> owner,
@@ -79,7 +74,6 @@ class AgentPassiveLootCallbackServiceTest {
         assertEquals(123L, callbacks.nowMs());
         assertEquals(456, callbacks.lootRadius());
         assertTrue(callbacks.canWarnInventoryFull());
-        callbacks.replyNow(entry, "full");
         assertEquals(789, callbacks.delayInventoryFullWarnCooldown());
         callbacks.setInventoryFullWarnCooldownMs(321);
         assertSame(owner, callbacks.owner());
@@ -92,7 +86,6 @@ class AgentPassiveLootCallbackServiceTest {
 
         assertTrue(lootInhibitTicked.get());
         assertTrue(cooldownTicked.get());
-        assertEquals("full", reply.get());
         assertEquals(321, cooldown.get());
         assertSame(agent, autoEquipAgent.get());
         assertTrue(offerScheduled.get());

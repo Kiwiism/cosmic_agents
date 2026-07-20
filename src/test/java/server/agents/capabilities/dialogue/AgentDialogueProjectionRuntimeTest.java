@@ -3,6 +3,7 @@ package server.agents.capabilities.dialogue;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.supplies.AgentSupplyDialogueReactionService;
 import server.agents.progression.events.AgentProgressionDialogueReactionService;
+import server.agents.resources.events.AgentResourceDialogueReactionService;
 
 import java.util.Map;
 
@@ -52,5 +53,20 @@ class AgentDialogueProjectionRuntimeTest {
 
         assertTrue(AgentDialogueProjectionRuntime.render(level).contains("15"));
         assertEquals("quest complete!", AgentDialogueProjectionRuntime.render(quest));
+    }
+
+    @Test
+    void rendersResourceIntentsWithoutExposingTechnicalContext() {
+        AgentDialogueIntentEvent inventory = new AgentDialogueIntentEvent(
+                1, 100L, AgentResourceDialogueReactionService.INVENTORY_FULL_INTENT,
+                AgentDialogueAudience.NEARBY_REAL_PLAYER, "inventory", 1_000L,
+                Map.of("inventoryType", "USE"));
+        AgentDialogueIntentEvent scroll = new AgentDialogueIntentEvent(
+                1, 100L, AgentResourceDialogueReactionService.SCROLL_INTENT,
+                AgentDialogueAudience.NEARBY_REAL_PLAYER, "scroll", 1_000L,
+                Map.of("result", "SUCCESS"));
+
+        assertEquals("use inventory is full!", AgentDialogueProjectionRuntime.render(inventory));
+        assertEquals("the scroll worked!", AgentDialogueProjectionRuntime.render(scroll));
     }
 }
