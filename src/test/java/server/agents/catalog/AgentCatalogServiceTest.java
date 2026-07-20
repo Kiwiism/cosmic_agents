@@ -125,6 +125,16 @@ class AgentCatalogServiceTest {
         assertFalse(objectivePlan.recordList("objectives").isEmpty());
         assertFalse(queries.quest().startActionsForQuest(1000).isEmpty());
         assertFalse(queries.quest().completeActionsForQuest(1000).isEmpty());
+
+        CatalogRecord hunting = queries.quest().victoriaLt30HuntingPlan(2010).orElseThrow();
+        assertTrue(hunting.booleanValue("autonomousStartAllowed").orElseThrow());
+        assertFalse(hunting.recordList("huntingObjectives").isEmpty());
+        CatalogRecord huntingObjective = hunting.recordList("huntingObjectives").getFirst();
+        assertFalse(huntingObjective.recordList("preferredMaps").isEmpty());
+        assertEquals(1, huntingObjective.recordList("preferredMaps").getFirst().intValue("rank").orElseThrow());
+
+        CatalogRecord manjiDesert = queries.quest().victoriaLt30HuntingPlan(2127).orElseThrow();
+        assertFalse(manjiDesert.booleanValue("autonomousStartAllowed").orElseThrow());
     }
 
     @Test

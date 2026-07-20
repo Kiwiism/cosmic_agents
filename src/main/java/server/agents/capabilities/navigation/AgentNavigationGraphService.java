@@ -60,6 +60,8 @@ public final class AgentNavigationGraphService {
             new FileAgentNavigationGraphRepository(CACHE_DIR, GRAPH_VERSION);
     private static final AgentWeightedLruCache<GraphCacheKey, AgentNavigationGraph> GRAPHS =
             new AgentWeightedLruCache<>(configuredGraphCacheMaxWeight(), AgentNavigationGraphService::graphWeight);
+    /** O(1) arbitrary-profile lookup for physics hot paths; refreshed on cache insert/eviction. */
+    private static final Map<Integer, AgentNavigationGraph> ANY_GRAPH_BY_MAP = new ConcurrentHashMap<>();
     private static final Map<GraphCacheKey, CompletableFuture<AgentNavigationGraph>> PENDING_GRAPHS = new ConcurrentHashMap<>();
     private static final Map<GraphCacheKey, GraphBuildReport> LAST_BUILD_REPORTS = new ConcurrentHashMap<>();
     private static final Map<Integer, Set<Integer>> COLLIDABLE_FROM_BELOW_IDS_BY_MAP_ID = new ConcurrentHashMap<>();
@@ -332,12 +334,7 @@ public final class AgentNavigationGraphService {
         if (map == null) {
             return null;
         }
-        for (Map.Entry<GraphCacheKey, AgentNavigationGraph> entry : GRAPHS.snapshotEntries()) {
-            if (entry.getKey().mapId() == map.getId()) {
-                return entry.getValue();
-            }
-        }
-        return null;
+        return ANY_GRAPH_BY_MAP.get(map.getId());
     }
 
     /** Returns the cached graph for the requested profile without triggering a build. */
@@ -759,14 +756,30 @@ public final class AgentNavigationGraphService {
         }
     }
 
-    private static void cacheGraph(GraphCacheKey key, AgentNavigationGraph graph) {
+    private static synchronized void cacheGraph(GraphCacheKey key, AgentNavigationGraph graph) {
         List<GraphCacheKey> evicted = GRAPHS.put(key, graph);
+        Set<Integer> affectedMapIds = new HashSet<>();
+        affectedMapIds.add(key.mapId());
         for (GraphCacheKey evictedKey : evicted) {
+            affectedMapIds.add(evictedKey.mapId());
             LAST_BUILD_REPORTS.remove(evictedKey);
             if (!GRAPHS.anyKeyMatches(candidate -> candidate.mapId() == evictedKey.mapId())) {
                 COLLIDABLE_FROM_BELOW_IDS_BY_MAP_ID.remove(evictedKey.mapId());
             }
         }
+        for (int mapId : affectedMapIds) {
+            refreshAnyGraphForMap(mapId);
+        }
+    }
+
+    private static void refreshAnyGraphForMap(int mapId) {
+        for (Map.Entry<GraphCacheKey, AgentNavigationGraph> entry : GRAPHS.snapshotEntries()) {
+            if (entry.getKey().mapId() == mapId) {
+                ANY_GRAPH_BY_MAP.put(mapId, entry.getValue());
+                return;
+            }
+        }
+        ANY_GRAPH_BY_MAP.remove(mapId);
     }
 
     private static long graphWeight(AgentNavigationGraph graph) {

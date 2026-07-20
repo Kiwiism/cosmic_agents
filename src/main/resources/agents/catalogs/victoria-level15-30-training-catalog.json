@@ -1,0 +1,656 @@
+{
+  "schemaVersion": 1,
+  "catalogId": "victoria-level15-30-training-v1",
+  "gameDataVersion": "cosmic-v83-local-wz-2026-07-19",
+  "dropOverlay": {
+    "schemaVersion": 1,
+    "generatorPath": "tools/game-catalog/Export-VictoriaTrainingDropOverlay.ps1",
+    "defaultDropCatalogPath": "tmp/game-catalog/generated_drop_catalog.json"
+  },
+  "selectionPolicy": {
+    "rankingMode": "ranked-soft-capacity-then-hard-capacity",
+    "preserveCurrentMapWhenEligible": true,
+    "currentMapMaximumRank": 4,
+    "fallbackLevelLookback": 2,
+    "softCapacityField": "recommendedAgents",
+    "hardCapacityField": "maximumAgents"
+  },
+  "evidenceSources": [
+    {
+      "sourceId": "wikibooks-classic-training",
+      "title": "MapleStory Training Guide",
+      "url": "https://en.wikibooks.org/wiki/MapleStory/Training_Guide",
+      "evidenceKind": "community-level-bands"
+    },
+    {
+      "sourceId": "gamefaqs-2009-training",
+      "title": "Training areas from 14-30",
+      "url": "https://gamefaqs.gamespot.com/boards/924697-maplestory/50017600",
+      "evidenceKind": "contemporary-community-preference"
+    },
+    {
+      "sourceId": "mapleroyals-mage-guide",
+      "title": "Guide for Newbie Magician to level 30",
+      "url": "https://royals.ms/forum/threads/guide-for-newbie-magician-to-level-30-by-dave.198200/",
+      "evidenceKind": "class-specific-risk-and-level-band"
+    },
+    {
+      "sourceId": "mapleroyals-bowman-guide",
+      "title": "Bowman Training Guide",
+      "url": "https://royals.ms/forum/threads/bowman-training-guide.434/",
+      "evidenceKind": "class-specific-map-preference"
+    },
+    {
+      "sourceId": "maplelegends-training-v2",
+      "title": "Comprehensive Training Guide v2.0",
+      "url": "https://forum.maplelegends.com/index.php?threads/comprehensive-training-guide-v2-0.54165/",
+      "evidenceKind": "old-school-server-density-preference"
+    },
+    {
+      "sourceId": "mapleroyals-tw-grinding",
+      "title": "MapleRoyals grinding spots",
+      "url": "https://mapleroyals.net/game-tips/grinding-spot",
+      "evidenceKind": "old-school-server-level-bands"
+    }
+  ],
+  "trainingMaps": [
+    {
+      "mapId": 104040000,
+      "mapName": "Henesys Hunting Ground I",
+      "sourcePath": "wz/Map.wz/Map/Map1/104040000.img.xml",
+      "recommendedMinLevel": 15,
+      "recommendedMaxLevel": 17,
+      "recommendedAgents": 3,
+      "maximumAgents": 4,
+      "terrain": "stacked-platforms",
+      "tags": ["classic-popular", "safe", "high-total-spawn", "early-transition"],
+      "hazards": ["most mobs are far below level 15"],
+      "evidenceSourceIds": ["wikibooks-classic-training", "mapleroyals-mage-guide"],
+      "spawns": [
+        {"mobId": 100101, "mobName": "Blue Snail", "mobLevel": 2, "expectedCount": 8, "role": "filler"},
+        {"mobId": 120100, "mobName": "Shroom", "mobLevel": 2, "expectedCount": 10, "role": "filler"},
+        {"mobId": 130101, "mobName": "Red Snail", "mobLevel": 4, "expectedCount": 12, "role": "filler"},
+        {"mobId": 1210100, "mobName": "Pig", "mobLevel": 7, "expectedCount": 9, "role": "primary"}
+      ]
+    },
+    {
+      "mapId": 100020000,
+      "mapName": "The Rain-Forest East of Henesys",
+      "sourcePath": "wz/Map.wz/Map/Map1/100020000.img.xml",
+      "recommendedMinLevel": 15,
+      "recommendedMaxLevel": 17,
+      "recommendedAgents": 1,
+      "maximumAgents": 2,
+      "terrain": "rolling-ground",
+      "tags": ["safe", "near-henesys", "low-navigation-cost"],
+      "hazards": ["low spawn count"],
+      "evidenceSourceIds": ["wikibooks-classic-training"],
+      "spawns": [
+        {"mobId": 1210100, "mobName": "Pig", "mobLevel": 7, "expectedCount": 6, "role": "primary"},
+        {"mobId": 1210102, "mobName": "Orange Mushroom", "mobLevel": 8, "expectedCount": 4, "role": "primary"}
+      ]
+    },
+    {
+      "mapId": 100020100,
+      "mapName": "Henesys Pig Farm",
+      "sourcePath": "wz/Map.wz/Map/Map1/100020100.img.xml",
+      "recommendedMinLevel": 15,
+      "recommendedMaxLevel": 20,
+      "recommendedAgents": 1,
+      "maximumAgents": 1,
+      "terrain": "compact-mini-dungeon",
+      "tags": ["classic-popular", "dense", "private-instance", "pig-items"],
+      "hazards": ["scripted mini-dungeon entry must be available"],
+      "evidenceSourceIds": ["maplelegends-training-v2"],
+      "spawns": [
+        {"mobId": 1210100, "mobName": "Pig", "mobLevel": 7, "expectedCount": 10, "role": "primary"},
+        {"mobId": 1210101, "mobName": "Ribbon Pig", "mobLevel": 10, "expectedCount": 11, "role": "primary"}
+      ]
+    },
+    {
+      "mapId": 101010100,
+      "mapName": "The Tree That Grew I",
+      "sourcePath": "wz/Map.wz/Map/Map1/101010100.img.xml",
+      "recommendedMinLevel": 15,
+      "recommendedMaxLevel": 17,
+      "recommendedAgents": 2,
+      "maximumAgents": 3,
+      "terrain": "vertical-rope-tree",
+      "tags": ["classic-popular", "slime-density", "safe"],
+      "hazards": ["rope traversal", "mobs are below level 15"],
+      "evidenceSourceIds": ["wikibooks-classic-training", "gamefaqs-2009-training"],
+      "spawns": [
+        {"mobId": 130101, "mobName": "Red Snail", "mobLevel": 4, "expectedCount": 5, "role": "filler"},
+        {"mobId": 210100, "mobName": "Slime", "mobLevel": 6, "expectedCount": 25, "role": "primary"}
+      ]
+    },
+    {
+      "mapId": 101010101,
+      "mapName": "The Tree That Grew II",
+      "sourcePath": "wz/Map.wz/Map/Map1/101010101.img.xml",
+      "recommendedMinLevel": 15,
+      "recommendedMaxLevel": 18,
+      "recommendedAgents": 3,
+      "maximumAgents": 4,
+      "terrain": "vertical-rope-tree",
+      "tags": ["classic-popular", "very-high-spawn", "slime-density", "party-splittable"],
+      "hazards": ["rope traversal", "mobs are below level 15"],
+      "evidenceSourceIds": ["wikibooks-classic-training", "gamefaqs-2009-training"],
+      "spawns": [
+        {"mobId": 210100, "mobName": "Slime", "mobLevel": 6, "expectedCount": 53, "role": "primary"},
+        {"mobId": 1110101, "mobName": "Dark Stump", "mobLevel": 10, "expectedCount": 11, "role": "primary"}
+      ]
+    },
+    {
+      "mapId": 104030001,
+      "mapName": "Mushroom Garden",
+      "sourcePath": "wz/Map.wz/Map/Map1/104030001.img.xml",
+      "recommendedMinLevel": 15,
+      "recommendedMaxLevel": 18,
+      "recommendedAgents": 2,
+      "maximumAgents": 3,
+      "terrain": "stacked-platforms",
+      "tags": ["classic-popular", "mixed-mushrooms", "high-total-spawn"],
+      "hazards": ["mixed low-value filler mobs"],
+      "evidenceSourceIds": ["wikibooks-classic-training"],
+      "spawns": [
+        {"mobId": 120100, "mobName": "Shroom", "mobLevel": 2, "expectedCount": 12, "role": "filler"},
+        {"mobId": 1210102, "mobName": "Orange Mushroom", "mobLevel": 8, "expectedCount": 18, "role": "primary"},
+        {"mobId": 1110100, "mobName": "Green Mushroom", "mobLevel": 15, "expectedCount": 4, "role": "primary"}
+      ]
+    },
+    {
+      "mapId": 104010001,
+      "mapName": "The Pig Beach",
+      "sourcePath": "wz/Map.wz/Map/Map1/104010001.img.xml",
+      "recommendedMinLevel": 17,
+      "recommendedMaxLevel": 24,
+      "recommendedAgents": 2,
+      "maximumAgents": 3,
+      "terrain": "wide-rolling-ground",
+      "tags": ["classic-popular", "dense", "pig-items", "simple-loop"],
+      "hazards": ["one level-42 Iron Hook spawn in local WZ"],
+      "evidenceSourceIds": ["wikibooks-classic-training", "gamefaqs-2009-training"],
+      "spawns": [
+        {"mobId": 1210100, "mobName": "Pig", "mobLevel": 7, "expectedCount": 10, "role": "primary"},
+        {"mobId": 1210101, "mobName": "Ribbon Pig", "mobLevel": 10, "expectedCount": 11, "role": "primary"},
+        {"mobId": 4090000, "mobName": "Iron Hook", "mobLevel": 42, "expectedCount": 1, "role": "hazard"}
+      ]
+    },
+    {
+      "mapId": 103010001,
+      "mapName": "Caution Falling Down",
+      "sourcePath": "wz/Map.wz/Map/Map1/103010001.img.xml",
+      "recommendedMinLevel": 16,
+      "recommendedMaxLevel": 22,
+      "recommendedAgents": 1,
+      "maximumAgents": 2,
+      "terrain": "construction-platforms",
+      "tags": ["classic-popular", "safe-ledges", "octopus-hunting"],
+      "hazards": ["low spawn count", "vertical repositioning"],
+      "evidenceSourceIds": ["gamefaqs-2009-training"],
+      "spawns": [
+        {"mobId": 1120100, "mobName": "Octopus", "mobLevel": 12, "expectedCount": 8, "role": "primary"},
+        {"mobId": 1210103, "mobName": "Bubbling", "mobLevel": 15, "expectedCount": 2, "role": "primary"}
+      ]
+    },
+    {
+      "mapId": 103000101,
+      "mapName": "Subway Line 1 Area 1",
+      "sourcePath": "wz/Map.wz/Map/Map1/103000101.img.xml",
+      "recommendedMinLevel": 15,
+      "recommendedMaxLevel": 25,
+      "recommendedAgents": 3,
+      "maximumAgents": 4,
+      "terrain": "large-subway-platforms",
+      "tags": ["very-high-spawn", "bubbling-hunting", "party-splittable"],
+      "hazards": ["ticketed or scripted entry", "high avoidability for low-accuracy builds", "many ladders and ropes"],
+      "evidenceSourceIds": ["maplelegends-training-v2", "mapleroyals-bowman-guide"],
+      "spawns": [
+        {"mobId": 1210103, "mobName": "Bubbling", "mobLevel": 15, "expectedCount": 64, "role": "primary"}
+      ]
+    },
+    {
+      "mapId": 100000003,
+      "mapName": "Pig Park",
+      "sourcePath": "wz/Map.wz/Map/Map1/100000003.img.xml",
+      "recommendedMinLevel": 19,
+      "recommendedMaxLevel": 24,
+      "recommendedAgents": 2,
+      "maximumAgents": 3,
+      "terrain": "stacked-platforms",
+      "tags": ["level-fit", "green-mushroom-hunting", "blue-mushroom-hunting"],
+      "hazards": ["vertical traversal"],
+      "evidenceSourceIds": ["wikibooks-classic-training"],
+      "spawns": [
+        {"mobId": 1110100, "mobName": "Green Mushroom", "mobLevel": 15, "expectedCount": 9, "role": "primary"},
+        {"mobId": 2220100, "mobName": "Blue Mushroom", "mobLevel": 20, "expectedCount": 9, "role": "primary"}
+      ]
+    },
+    {
+      "mapId": 100030001,
+      "mapName": "The Blue Mushroom Forest",
+      "sourcePath": "wz/Map.wz/Map/Map1/100030001.img.xml",
+      "recommendedMinLevel": 20,
+      "recommendedMaxLevel": 26,
+      "recommendedAgents": 2,
+      "maximumAgents": 3,
+      "terrain": "forest-platforms",
+      "tags": ["level-fit", "blue-mushroom-hunting", "horny-mushroom-hunting"],
+      "hazards": ["platform traversal"],
+      "evidenceSourceIds": ["wikibooks-classic-training"],
+      "spawns": [
+        {"mobId": 2220100, "mobName": "Blue Mushroom", "mobLevel": 20, "expectedCount": 15, "role": "primary"},
+        {"mobId": 2110200, "mobName": "Horny Mushroom", "mobLevel": 22, "expectedCount": 8, "role": "primary"}
+      ]
+    },
+    {
+      "mapId": 106000000,
+      "mapName": "Deep Valley I",
+      "sourcePath": "wz/Map.wz/Map/Map1/106000000.img.xml",
+      "recommendedMinLevel": 18,
+      "recommendedMaxLevel": 25,
+      "recommendedAgents": 3,
+      "maximumAgents": 4,
+      "terrain": "wide-valley-platforms",
+      "tags": ["high-total-spawn", "stump-hunting", "party-splittable"],
+      "hazards": ["wide travel loop"],
+      "evidenceSourceIds": ["gamefaqs-2009-training"],
+      "spawns": [
+        {"mobId": 1130100, "mobName": "Axe Stump", "mobLevel": 17, "expectedCount": 32, "role": "primary"},
+        {"mobId": 1140100, "mobName": "Ghost Stump", "mobLevel": 19, "expectedCount": 10, "role": "primary"}
+      ]
+    },
+    {
+      "mapId": 101030101,
+      "mapName": "Excavation Site I",
+      "sourcePath": "wz/Map.wz/Map/Map1/101030101.img.xml",
+      "recommendedMinLevel": 21,
+      "recommendedMaxLevel": 27,
+      "recommendedAgents": 3,
+      "maximumAgents": 4,
+      "terrain": "layered-excavation",
+      "tags": ["high-total-spawn", "mask-hunting", "stump-hunting", "party-splittable"],
+      "hazards": ["multi-layer traversal"],
+      "evidenceSourceIds": ["mapleroyals-bowman-guide", "mapleroyals-tw-grinding"],
+      "spawns": [
+        {"mobId": 1140100, "mobName": "Ghost Stump", "mobLevel": 19, "expectedCount": 18, "role": "primary"},
+        {"mobId": 1140130, "mobName": "Smirking Ghost Stump", "mobLevel": 19, "expectedCount": 11, "role": "primary"},
+        {"mobId": 2230110, "mobName": "Wooden Mask", "mobLevel": 23, "expectedCount": 10, "role": "primary"}
+      ]
+    },
+    {
+      "mapId": 101030102,
+      "mapName": "Excavation Site II",
+      "sourcePath": "wz/Map.wz/Map/Map1/101030102.img.xml",
+      "recommendedMinLevel": 23,
+      "recommendedMaxLevel": 30,
+      "recommendedAgents": 3,
+      "maximumAgents": 4,
+      "terrain": "layered-excavation",
+      "tags": ["very-high-spawn", "mask-hunting", "party-splittable"],
+      "hazards": ["multi-layer traversal"],
+      "evidenceSourceIds": ["mapleroyals-bowman-guide", "mapleroyals-tw-grinding"],
+      "spawns": [
+        {"mobId": 1140100, "mobName": "Ghost Stump", "mobLevel": 19, "expectedCount": 7, "role": "filler"},
+        {"mobId": 2230110, "mobName": "Wooden Mask", "mobLevel": 23, "expectedCount": 39, "role": "primary"},
+        {"mobId": 2230111, "mobName": "Rocky Mask", "mobLevel": 24, "expectedCount": 9, "role": "primary"}
+      ]
+    },
+    {
+      "mapId": 101030103,
+      "mapName": "Excavation Site III",
+      "sourcePath": "wz/Map.wz/Map/Map1/101030103.img.xml",
+      "recommendedMinLevel": 24,
+      "recommendedMaxLevel": 30,
+      "recommendedAgents": 2,
+      "maximumAgents": 3,
+      "terrain": "layered-excavation",
+      "tags": ["mask-hunting", "clean-mob-mix", "high-twenties-community-pick"],
+      "hazards": ["multi-layer traversal"],
+      "evidenceSourceIds": ["mapleroyals-bowman-guide", "mapleroyals-tw-grinding"],
+      "spawns": [
+        {"mobId": 2230110, "mobName": "Wooden Mask", "mobLevel": 23, "expectedCount": 4, "role": "primary"},
+        {"mobId": 2230111, "mobName": "Rocky Mask", "mobLevel": 24, "expectedCount": 21, "role": "primary"}
+      ]
+    },
+    {
+      "mapId": 101030001,
+      "mapName": "The Land of Wild Boar II",
+      "sourcePath": "wz/Map.wz/Map/Map1/101030001.img.xml",
+      "recommendedMinLevel": 23,
+      "recommendedMaxLevel": 30,
+      "recommendedAgents": 2,
+      "maximumAgents": 3,
+      "terrain": "wide-boar-loop",
+      "tags": ["classic-popular", "wild-boar-hunting", "clean-mob-mix", "high-spawn"],
+      "hazards": ["higher contact-damage pressure than pig maps"],
+      "evidenceSourceIds": ["wikibooks-classic-training", "gamefaqs-2009-training", "mapleroyals-bowman-guide"],
+      "spawns": [
+        {"mobId": 2130100, "mobName": "Dark Axe Stump", "mobLevel": 22, "expectedCount": 3, "role": "filler"},
+        {"mobId": 2230102, "mobName": "Wild Boar", "mobLevel": 25, "expectedCount": 30, "role": "primary"}
+      ]
+    },
+    {
+      "mapId": 101040001,
+      "mapName": "Land of Wild Boar",
+      "sourcePath": "wz/Map.wz/Map/Map1/101040001.img.xml",
+      "recommendedMinLevel": 25,
+      "recommendedMaxLevel": 30,
+      "recommendedAgents": 2,
+      "maximumAgents": 3,
+      "terrain": "wide-boar-loop",
+      "tags": ["classic-popular", "wild-boar-hunting", "high-spawn"],
+      "hazards": ["six level-35 Jr. Boogie spawns", "higher potion pressure"],
+      "evidenceSourceIds": ["wikibooks-classic-training", "gamefaqs-2009-training", "mapleroyals-bowman-guide"],
+      "spawns": [
+        {"mobId": 2130100, "mobName": "Dark Axe Stump", "mobLevel": 22, "expectedCount": 7, "role": "filler"},
+        {"mobId": 2230102, "mobName": "Wild Boar", "mobLevel": 25, "expectedCount": 22, "role": "primary"},
+        {"mobId": 3230300, "mobName": "Jr. Boogie 1", "mobLevel": 35, "expectedCount": 3, "role": "hazard"},
+        {"mobId": 3230301, "mobName": "Jr. Boogie 2", "mobLevel": 35, "expectedCount": 3, "role": "hazard"}
+      ]
+    },
+    {
+      "mapId": 105050000,
+      "mapName": "Ant Tunnel I",
+      "sourcePath": "wz/Map.wz/Map/Map1/105050000.img.xml",
+      "recommendedMinLevel": 20,
+      "recommendedMaxLevel": 30,
+      "recommendedAgents": 2,
+      "maximumAgents": 3,
+      "terrain": "layered-dungeon",
+      "tags": ["classic-popular", "mushroom-hunting", "sleepywood-resupply"],
+      "hazards": ["dangerous before adequate HP and potions", "rope traversal"],
+      "evidenceSourceIds": ["wikibooks-classic-training", "gamefaqs-2009-training", "mapleroyals-mage-guide", "mapleroyals-tw-grinding"],
+      "spawns": [
+        {"mobId": 2110200, "mobName": "Horny Mushroom", "mobLevel": 22, "expectedCount": 15, "role": "primary"},
+        {"mobId": 2230101, "mobName": "Zombie Mushroom", "mobLevel": 24, "expectedCount": 9, "role": "primary"},
+        {"mobId": 2230131, "mobName": "Annoyed Zombie Mushroom", "mobLevel": 24, "expectedCount": 2, "role": "primary"}
+      ]
+    },
+    {
+      "mapId": 105050100,
+      "mapName": "Ant Tunnel II",
+      "sourcePath": "wz/Map.wz/Map/Map1/105050100.img.xml",
+      "recommendedMinLevel": 22,
+      "recommendedMaxLevel": 30,
+      "recommendedAgents": 3,
+      "maximumAgents": 4,
+      "terrain": "layered-dungeon",
+      "tags": ["classic-popular", "high-spawn", "mushroom-hunting", "party-splittable"],
+      "hazards": ["rope traversal", "potion pressure"],
+      "evidenceSourceIds": ["wikibooks-classic-training", "gamefaqs-2009-training", "mapleroyals-mage-guide", "mapleroyals-tw-grinding"],
+      "spawns": [
+        {"mobId": 2110200, "mobName": "Horny Mushroom", "mobLevel": 22, "expectedCount": 15, "role": "primary"},
+        {"mobId": 2230101, "mobName": "Zombie Mushroom", "mobLevel": 24, "expectedCount": 24, "role": "primary"},
+        {"mobId": 2230131, "mobName": "Annoyed Zombie Mushroom", "mobLevel": 24, "expectedCount": 8, "role": "primary"}
+      ]
+    },
+    {
+      "mapId": 105050200,
+      "mapName": "Ant Tunnel III",
+      "sourcePath": "wz/Map.wz/Map/Map1/105050200.img.xml",
+      "recommendedMinLevel": 23,
+      "recommendedMaxLevel": 30,
+      "recommendedAgents": 4,
+      "maximumAgents": 6,
+      "terrain": "large-layered-dungeon",
+      "tags": ["classic-popular", "very-high-spawn", "mushroom-hunting", "party-splittable"],
+      "hazards": ["large navigation loop", "rope traversal", "potion pressure"],
+      "evidenceSourceIds": ["wikibooks-classic-training", "gamefaqs-2009-training", "mapleroyals-mage-guide", "mapleroyals-tw-grinding"],
+      "spawns": [
+        {"mobId": 2110200, "mobName": "Horny Mushroom", "mobLevel": 22, "expectedCount": 38, "role": "primary"},
+        {"mobId": 2230101, "mobName": "Zombie Mushroom", "mobLevel": 24, "expectedCount": 50, "role": "primary"},
+        {"mobId": 2230131, "mobName": "Annoyed Zombie Mushroom", "mobLevel": 24, "expectedCount": 12, "role": "primary"}
+      ]
+    },
+    {
+      "mapId": 105050300,
+      "mapName": "Ant Tunnel IV",
+      "sourcePath": "wz/Map.wz/Map/Map1/105050300.img.xml",
+      "recommendedMinLevel": 23,
+      "recommendedMaxLevel": 30,
+      "recommendedAgents": 3,
+      "maximumAgents": 5,
+      "terrain": "large-layered-dungeon",
+      "tags": ["classic-popular", "very-high-spawn", "horny-mushroom-hunting", "party-splittable"],
+      "hazards": ["large navigation loop", "rope traversal", "potion pressure"],
+      "evidenceSourceIds": ["wikibooks-classic-training", "gamefaqs-2009-training", "mapleroyals-mage-guide", "mapleroyals-tw-grinding"],
+      "spawns": [
+        {"mobId": 2110200, "mobName": "Horny Mushroom", "mobLevel": 22, "expectedCount": 42, "role": "primary"},
+        {"mobId": 2230101, "mobName": "Zombie Mushroom", "mobLevel": 24, "expectedCount": 6, "role": "primary"},
+        {"mobId": 2230131, "mobName": "Annoyed Zombie Mushroom", "mobLevel": 24, "expectedCount": 17, "role": "primary"}
+      ]
+    },
+    {
+      "mapId": 101020009,
+      "mapName": "Tree Dungeon, Forest Up North",
+      "sourcePath": "wz/Map.wz/Map/Map1/101020009.img.xml",
+      "recommendedMinLevel": 26,
+      "recommendedMaxLevel": 30,
+      "recommendedAgents": 2,
+      "maximumAgents": 3,
+      "terrain": "vertical-rope-tree",
+      "tags": ["level-fit", "clean-mob-mix", "evil-eye-hunting"],
+      "hazards": ["rope traversal", "accuracy pressure below level 27"],
+      "evidenceSourceIds": ["maplelegends-training-v2", "mapleroyals-tw-grinding"],
+      "spawns": [
+        {"mobId": 2230100, "mobName": "Evil Eye", "mobLevel": 27, "expectedCount": 21, "role": "primary"}
+      ]
+    },
+    {
+      "mapId": 105070100,
+      "mapName": "The Cave of Evil Eye I",
+      "sourcePath": "wz/Map.wz/Map/Map1/105070100.img.xml",
+      "recommendedMinLevel": 27,
+      "recommendedMaxLevel": 30,
+      "recommendedAgents": 2,
+      "maximumAgents": 3,
+      "terrain": "layered-dungeon",
+      "tags": ["level-fit", "evil-eye-hunting"],
+      "hazards": ["two level-35 Jr. Boogie spawns", "potion pressure"],
+      "evidenceSourceIds": ["maplelegends-training-v2", "mapleroyals-tw-grinding"],
+      "spawns": [
+        {"mobId": 2230100, "mobName": "Evil Eye", "mobLevel": 27, "expectedCount": 19, "role": "primary"},
+        {"mobId": 3230301, "mobName": "Jr. Boogie 2", "mobLevel": 35, "expectedCount": 2, "role": "hazard"}
+      ]
+    }
+  ],
+  "levelPlans": [
+    {
+      "level": 15,
+      "choices": [
+        {"mapId": 101010101, "rank": 1, "weight": 100, "rationale": "extreme Slime density makes up for low mob level", "conditions": ["rope navigation healthy"]},
+        {"mapId": 104040000, "rank": 2, "weight": 85, "rationale": "safe familiar map with many easy targets", "conditions": []},
+        {"mapId": 104030001, "rank": 3, "weight": 80, "rationale": "mixed mushroom density with some level-15 targets", "conditions": []},
+        {"mapId": 101010100, "rank": 4, "weight": 65, "rationale": "classic low-risk Slime tree alternative", "conditions": ["rope navigation healthy"]},
+        {"mapId": 100020100, "rank": 5, "weight": 60, "rationale": "compact Pig and Ribbon Pig mini-dungeon", "conditions": ["mini-dungeon entry available"]},
+        {"mapId": 100020000, "rank": 6, "weight": 40, "rationale": "near-town low-risk fallback", "conditions": []},
+        {"mapId": 103000101, "rank": 7, "weight": 35, "rationale": "high-density Bubblings for accurate builds", "conditions": ["subway entry available", "adequate hit rate"]}
+      ]
+    },
+    {
+      "level": 16,
+      "choices": [
+        {"mapId": 100020100, "rank": 1, "weight": 100, "rationale": "compact Pig and Ribbon Pig density", "conditions": ["mini-dungeon entry available"]},
+        {"mapId": 101010101, "rank": 2, "weight": 90, "rationale": "very high spawn and low danger", "conditions": ["rope navigation healthy"]},
+        {"mapId": 104030001, "rank": 3, "weight": 80, "rationale": "mixed mushrooms provide easy continuous kills", "conditions": []},
+        {"mapId": 103010001, "rank": 4, "weight": 65, "rationale": "Octopus map with safe ledges", "conditions": ["construction-site route available"]},
+        {"mapId": 104040000, "rank": 5, "weight": 55, "rationale": "safe fallback near Henesys", "conditions": []},
+        {"mapId": 103000101, "rank": 6, "weight": 45, "rationale": "Bubbling density rewards adequate accuracy", "conditions": ["subway entry available", "adequate hit rate"]},
+        {"mapId": 100020000, "rank": 7, "weight": 30, "rationale": "near-town fallback when popular maps are full", "conditions": []}
+      ]
+    },
+    {
+      "level": 17,
+      "choices": [
+        {"mapId": 100020100, "rank": 1, "weight": 100, "rationale": "private dense Pig training", "conditions": ["mini-dungeon entry available"]},
+        {"mapId": 104010001, "rank": 2, "weight": 90, "rationale": "classic Pig Beach transition", "conditions": ["hazard target exclusion active"]},
+        {"mapId": 103010001, "rank": 3, "weight": 80, "rationale": "Octopus and Bubbling level fit", "conditions": []},
+        {"mapId": 101010101, "rank": 4, "weight": 55, "rationale": "safe high-density fallback", "conditions": ["rope navigation healthy"]},
+        {"mapId": 104030001, "rank": 5, "weight": 50, "rationale": "mixed mushroom fallback", "conditions": []},
+        {"mapId": 103000101, "rank": 6, "weight": 50, "rationale": "high-density Bubblings", "conditions": ["subway entry available", "adequate hit rate"]}
+      ]
+    },
+    {
+      "level": 18,
+      "choices": [
+        {"mapId": 100020100, "rank": 1, "weight": 100, "rationale": "efficient compact Pig loop", "conditions": ["mini-dungeon entry available"]},
+        {"mapId": 104010001, "rank": 2, "weight": 95, "rationale": "classic high-density Pig Beach", "conditions": ["hazard target exclusion active"]},
+        {"mapId": 103010001, "rank": 3, "weight": 85, "rationale": "Octopus and Bubbling remain efficient", "conditions": []},
+        {"mapId": 106000000, "rank": 4, "weight": 70, "rationale": "Axe and Ghost Stumps provide closer level fit", "conditions": []},
+        {"mapId": 103000101, "rank": 5, "weight": 65, "rationale": "Bubbling density supports fast ranged or magic clears", "conditions": ["subway entry available", "adequate hit rate"]},
+        {"mapId": 104030001, "rank": 6, "weight": 35, "rationale": "low-risk overflow fallback", "conditions": []}
+      ]
+    },
+    {
+      "level": 19,
+      "choices": [
+        {"mapId": 104010001, "rank": 1, "weight": 100, "rationale": "Pig Beach remains a classic density choice", "conditions": ["hazard target exclusion active"]},
+        {"mapId": 106000000, "rank": 2, "weight": 95, "rationale": "dense level-17 and level-19 Stumps", "conditions": []},
+        {"mapId": 103010001, "rank": 3, "weight": 85, "rationale": "safe Octopus hunting alternative", "conditions": []},
+        {"mapId": 103000101, "rank": 4, "weight": 80, "rationale": "very high Bubbling spawn", "conditions": ["subway entry available", "adequate hit rate"]},
+        {"mapId": 100000003, "rank": 5, "weight": 70, "rationale": "Green and Blue Mushrooms improve level fit", "conditions": []},
+        {"mapId": 100020100, "rank": 6, "weight": 60, "rationale": "compact low-risk fallback", "conditions": ["mini-dungeon entry available"]}
+      ]
+    },
+    {
+      "level": 20,
+      "choices": [
+        {"mapId": 100000003, "rank": 1, "weight": 100, "rationale": "balanced level-15 and level-20 mushroom mix", "conditions": []},
+        {"mapId": 100030001, "rank": 2, "weight": 95, "rationale": "Blue and Horny Mushrooms closely match level", "conditions": []},
+        {"mapId": 106000000, "rank": 3, "weight": 90, "rationale": "high Stump density and simple party split", "conditions": []},
+        {"mapId": 103000101, "rank": 4, "weight": 85, "rationale": "very high Bubbling density", "conditions": ["subway entry available", "adequate hit rate"]},
+        {"mapId": 105050000, "rank": 5, "weight": 65, "rationale": "early Ant Tunnel option for durable builds", "conditions": ["adequate potions", "survival check passed"]},
+        {"mapId": 104010001, "rank": 6, "weight": 55, "rationale": "legacy density fallback", "conditions": ["hazard target exclusion active"]},
+        {"mapId": 100020100, "rank": 7, "weight": 40, "rationale": "private fallback when public maps are occupied", "conditions": ["mini-dungeon entry available"]}
+      ]
+    },
+    {
+      "level": 21,
+      "choices": [
+        {"mapId": 100030001, "rank": 1, "weight": 100, "rationale": "level-20 and level-22 mushroom mix", "conditions": []},
+        {"mapId": 106000000, "rank": 2, "weight": 95, "rationale": "dense Stumps remain efficient", "conditions": []},
+        {"mapId": 101030101, "rank": 3, "weight": 85, "rationale": "first mask map with high total spawn", "conditions": []},
+        {"mapId": 103000101, "rank": 4, "weight": 75, "rationale": "Bubbling density offsets lower mob level", "conditions": ["subway entry available", "adequate hit rate"]},
+        {"mapId": 105050000, "rank": 5, "weight": 75, "rationale": "Horny and Zombie Mushrooms offer better level fit", "conditions": ["adequate potions", "survival check passed"]},
+        {"mapId": 100000003, "rank": 6, "weight": 65, "rationale": "safe mushroom fallback", "conditions": []},
+        {"mapId": 104010001, "rank": 7, "weight": 35, "rationale": "legacy low-risk density fallback", "conditions": ["hazard target exclusion active"]}
+      ]
+    },
+    {
+      "level": 22,
+      "choices": [
+        {"mapId": 101030101, "rank": 1, "weight": 100, "rationale": "dense Ghost Stumps and Wooden Masks", "conditions": []},
+        {"mapId": 100030001, "rank": 2, "weight": 95, "rationale": "Blue and Horny Mushrooms remain level-appropriate", "conditions": []},
+        {"mapId": 105050000, "rank": 3, "weight": 90, "rationale": "entry Ant Tunnel now matches mob levels", "conditions": ["adequate potions"]},
+        {"mapId": 105050100, "rank": 4, "weight": 80, "rationale": "higher Zombie Mushroom density", "conditions": ["adequate potions"]},
+        {"mapId": 106000000, "rank": 5, "weight": 70, "rationale": "high-density lower-risk fallback", "conditions": []},
+        {"mapId": 103000101, "rank": 6, "weight": 55, "rationale": "very high spawn fallback for accurate builds", "conditions": ["subway entry available", "adequate hit rate"]}
+      ]
+    },
+    {
+      "level": 23,
+      "choices": [
+        {"mapId": 101030101, "rank": 1, "weight": 100, "rationale": "strong density and level-23 Wooden Masks", "conditions": []},
+        {"mapId": 105050100, "rank": 2, "weight": 95, "rationale": "dense Horny and Zombie Mushroom mix", "conditions": ["adequate potions"]},
+        {"mapId": 101030102, "rank": 3, "weight": 90, "rationale": "very high Wooden Mask density", "conditions": []},
+        {"mapId": 105050000, "rank": 4, "weight": 85, "rationale": "safer Ant Tunnel entry map", "conditions": ["adequate potions"]},
+        {"mapId": 101030001, "rank": 5, "weight": 75, "rationale": "clean Wild Boar map for strong builds", "conditions": ["survival check passed"]},
+        {"mapId": 105050200, "rank": 6, "weight": 60, "rationale": "extreme Ant Tunnel density", "conditions": ["navigation healthy", "adequate potions"]}
+      ]
+    },
+    {
+      "level": 24,
+      "choices": [
+        {"mapId": 101030102, "rank": 1, "weight": 100, "rationale": "very high level-23 and level-24 mask density", "conditions": []},
+        {"mapId": 105050100, "rank": 2, "weight": 100, "rationale": "high Zombie Mushroom density", "conditions": ["adequate potions"]},
+        {"mapId": 101030001, "rank": 3, "weight": 90, "rationale": "thirty Wild Boar spawns with little filler", "conditions": ["survival check passed"]},
+        {"mapId": 105050200, "rank": 4, "weight": 90, "rationale": "extreme Ant Tunnel density", "conditions": ["navigation healthy", "adequate potions"]},
+        {"mapId": 101030103, "rank": 5, "weight": 80, "rationale": "clean Wooden and Rocky Mask mix", "conditions": []},
+        {"mapId": 105050300, "rank": 6, "weight": 75, "rationale": "high Horny Mushroom density", "conditions": ["navigation healthy", "adequate potions"]},
+        {"mapId": 105050000, "rank": 7, "weight": 65, "rationale": "lower-density safer Ant Tunnel fallback", "conditions": ["adequate potions"]},
+        {"mapId": 104010001, "rank": 8, "weight": 25, "rationale": "legacy Pig Beach overflow option", "conditions": ["hazard target exclusion active"]}
+      ]
+    },
+    {
+      "level": 25,
+      "choices": [
+        {"mapId": 101030001, "rank": 1, "weight": 100, "rationale": "clean high-density Wild Boar map", "conditions": ["survival check passed"]},
+        {"mapId": 105050100, "rank": 2, "weight": 100, "rationale": "dense level-22 to level-24 mushroom mix", "conditions": ["adequate potions"]},
+        {"mapId": 105050200, "rank": 3, "weight": 95, "rationale": "highest cataloged Ant Tunnel spawn", "conditions": ["navigation healthy", "adequate potions"]},
+        {"mapId": 101030102, "rank": 4, "weight": 90, "rationale": "very high mask density", "conditions": []},
+        {"mapId": 105050300, "rank": 5, "weight": 85, "rationale": "high Horny Mushroom density", "conditions": ["navigation healthy", "adequate potions"]},
+        {"mapId": 101030103, "rank": 6, "weight": 80, "rationale": "clean mask-only alternative", "conditions": []},
+        {"mapId": 101040001, "rank": 7, "weight": 45, "rationale": "classic boar map with additional danger", "conditions": ["hazard target exclusion active", "adequate potions"]},
+        {"mapId": 103000101, "rank": 8, "weight": 25, "rationale": "lower-risk density fallback for accurate builds", "conditions": ["subway entry available", "adequate hit rate"]}
+      ]
+    },
+    {
+      "level": 26,
+      "choices": [
+        {"mapId": 105050200, "rank": 1, "weight": 100, "rationale": "extreme Ant Tunnel density", "conditions": ["navigation healthy", "adequate potions"]},
+        {"mapId": 101030001, "rank": 2, "weight": 100, "rationale": "clean Wild Boar concentration", "conditions": ["survival check passed"]},
+        {"mapId": 101030103, "rank": 3, "weight": 90, "rationale": "clean mask mix near agent level", "conditions": []},
+        {"mapId": 105050300, "rank": 4, "weight": 90, "rationale": "high Ant Tunnel density with Horny Mushroom bias", "conditions": ["navigation healthy", "adequate potions"]},
+        {"mapId": 101030102, "rank": 5, "weight": 85, "rationale": "very high Wooden Mask density", "conditions": []},
+        {"mapId": 101020009, "rank": 6, "weight": 75, "rationale": "clean level-27 Evil Eye target map", "conditions": ["adequate hit rate", "rope navigation healthy"]},
+        {"mapId": 105050100, "rank": 7, "weight": 70, "rationale": "lower-complexity Ant Tunnel fallback", "conditions": ["adequate potions"]},
+        {"mapId": 101040001, "rank": 8, "weight": 45, "rationale": "classic boar alternative", "conditions": ["hazard target exclusion active", "adequate potions"]},
+        {"mapId": 100030001, "rank": 9, "weight": 25, "rationale": "safe lower-level mushroom fallback", "conditions": []}
+      ]
+    },
+    {
+      "level": 27,
+      "choices": [
+        {"mapId": 105050200, "rank": 1, "weight": 100, "rationale": "extreme density remains efficient", "conditions": ["navigation healthy", "adequate potions"]},
+        {"mapId": 101020009, "rank": 2, "weight": 100, "rationale": "clean same-level Evil Eye map", "conditions": ["rope navigation healthy"]},
+        {"mapId": 101030001, "rank": 3, "weight": 90, "rationale": "clean Wild Boar concentration", "conditions": ["survival check passed"]},
+        {"mapId": 101030103, "rank": 4, "weight": 90, "rationale": "clean mask-only alternative", "conditions": []},
+        {"mapId": 105050300, "rank": 5, "weight": 85, "rationale": "high Horny Mushroom density", "conditions": ["navigation healthy", "adequate potions"]},
+        {"mapId": 105070100, "rank": 6, "weight": 60, "rationale": "same-level Evil Eyes with a small hazard population", "conditions": ["hazard target exclusion active", "adequate potions"]},
+        {"mapId": 101030102, "rank": 7, "weight": 60, "rationale": "high-density mask fallback", "conditions": []},
+        {"mapId": 101040001, "rank": 8, "weight": 40, "rationale": "classic boar alternative", "conditions": ["hazard target exclusion active", "adequate potions"]}
+      ]
+    },
+    {
+      "level": 28,
+      "choices": [
+        {"mapId": 105050200, "rank": 1, "weight": 100, "rationale": "extreme Ant Tunnel density", "conditions": ["navigation healthy", "adequate potions"]},
+        {"mapId": 101020009, "rank": 2, "weight": 100, "rationale": "clean Evil Eye concentration", "conditions": ["rope navigation healthy"]},
+        {"mapId": 101030001, "rank": 3, "weight": 85, "rationale": "clean Wild Boar concentration", "conditions": ["survival check passed"]},
+        {"mapId": 101030103, "rank": 4, "weight": 85, "rationale": "clean mask-only alternative", "conditions": []},
+        {"mapId": 105050300, "rank": 5, "weight": 80, "rationale": "high Horny Mushroom density", "conditions": ["navigation healthy", "adequate potions"]},
+        {"mapId": 105070100, "rank": 6, "weight": 70, "rationale": "same-band Evil Eyes with limited hazards", "conditions": ["hazard target exclusion active", "adequate potions"]},
+        {"mapId": 101040001, "rank": 7, "weight": 45, "rationale": "classic boar map when safer maps are occupied", "conditions": ["hazard target exclusion active", "adequate potions"]},
+        {"mapId": 101030102, "rank": 8, "weight": 40, "rationale": "high-density mask overflow map", "conditions": []}
+      ]
+    },
+    {
+      "level": 29,
+      "choices": [
+        {"mapId": 105050200, "rank": 1, "weight": 100, "rationale": "extreme density compensates for lower mob levels", "conditions": ["navigation healthy", "adequate potions"]},
+        {"mapId": 101020009, "rank": 2, "weight": 100, "rationale": "clean Evil Eye concentration", "conditions": ["rope navigation healthy"]},
+        {"mapId": 101030001, "rank": 3, "weight": 80, "rationale": "clean Wild Boar concentration", "conditions": ["survival check passed"]},
+        {"mapId": 101030103, "rank": 4, "weight": 80, "rationale": "clean mask-only alternative", "conditions": []},
+        {"mapId": 105050300, "rank": 5, "weight": 75, "rationale": "high Ant Tunnel spawn alternative", "conditions": ["navigation healthy", "adequate potions"]},
+        {"mapId": 105070100, "rank": 6, "weight": 75, "rationale": "Evil Eyes with limited level-35 hazards", "conditions": ["hazard target exclusion active", "adequate potions"]},
+        {"mapId": 101040001, "rank": 7, "weight": 45, "rationale": "classic boar overflow map", "conditions": ["hazard target exclusion active", "adequate potions"]},
+        {"mapId": 101030102, "rank": 8, "weight": 35, "rationale": "high-density lower-level mask fallback", "conditions": []}
+      ]
+    },
+    {
+      "level": 30,
+      "choices": [
+        {"mapId": 105050200, "rank": 1, "weight": 100, "rationale": "highest density before second-job transition", "conditions": ["navigation healthy", "adequate potions"]},
+        {"mapId": 101020009, "rank": 2, "weight": 100, "rationale": "clean level-27 Evil Eye map", "conditions": ["rope navigation healthy"]},
+        {"mapId": 101030103, "rank": 3, "weight": 80, "rationale": "clean mask-only alternative", "conditions": []},
+        {"mapId": 101030001, "rank": 4, "weight": 75, "rationale": "clean Wild Boar concentration", "conditions": ["survival check passed"]},
+        {"mapId": 105070100, "rank": 5, "weight": 75, "rationale": "Evil Eyes with manageable hazards", "conditions": ["hazard target exclusion active", "adequate potions"]},
+        {"mapId": 105050300, "rank": 6, "weight": 70, "rationale": "high-density Ant Tunnel alternative", "conditions": ["navigation healthy", "adequate potions"]},
+        {"mapId": 101040001, "rank": 7, "weight": 45, "rationale": "classic boar overflow map", "conditions": ["hazard target exclusion active", "adequate potions"]},
+        {"mapId": 101030102, "rank": 8, "weight": 30, "rationale": "high-density mask fallback", "conditions": []}
+      ]
+    }
+  ]
+}

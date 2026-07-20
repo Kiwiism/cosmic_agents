@@ -30,6 +30,12 @@ public interface MapGateway {
             rationale = "MapleMap maintains an O(1) real-player observer count.")
     boolean isObservedByPlayer(MapleMap map);
 
+    /** Returns zero for an unloaded map so population reads do not create dormant map instances. */
+    @AgentGatewayAffinity(
+            value = AgentGatewayThreadAffinity.READ_ONLY_SNAPSHOT,
+            rationale = "The loaded map owns a locked O(1) character count.")
+    int activeCharacterCountIfLoaded(int world, int channel, int mapId);
+
     Point pointBelow(MapleMap map, Point position);
 }
 

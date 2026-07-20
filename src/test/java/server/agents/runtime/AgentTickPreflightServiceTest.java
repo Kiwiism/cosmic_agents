@@ -67,6 +67,7 @@ class AgentTickPreflightServiceTest {
                         ignored -> {
                             throw new AssertionError("remove should not run");
                         },
+                        (tickEntry, tickAgent) -> false,
                         (tickEntry, tickAgent, nowMs, intervalMs) -> {
                             assertSame(entry, tickEntry);
                             assertSame(agent, tickAgent);
@@ -97,6 +98,35 @@ class AgentTickPreflightServiceTest {
         assertEquals(12_345L, tickAtSeen.get());
     }
 
+    @Test
+    void collisionPortalConsumesTickBeforePeriodicWork() {
+        Character agent = mock(Character.class);
+        when(agent.getMap()).thenReturn(mock(MapleMap.class));
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        AtomicBoolean heartbeatRan = new AtomicBoolean();
+
+        AgentTickPreflightService.Result result = AgentTickPreflightService.runPreflight(
+                entry,
+                789,
+                12_345L,
+                new AgentTickPreflightService.Hooks(
+                        ignored -> false,
+                        (ignored, movementTickMs) -> false,
+                        ignored -> { },
+                        (tickEntry, tickAgent) -> true,
+                        (tickEntry, tickAgent, nowMs, intervalMs) -> heartbeatRan.set(true),
+                        tickEntry -> { },
+                        (tickEntry, movementTickMs, aiTickMs, tickAtMs) -> true,
+                        100,
+                        300,
+                        600_000L));
+
+        assertTrue(result.consumedTick());
+        assertSame(agent, result.agent());
+        assertFalse(result.runAiTick());
+        assertFalse(heartbeatRan.get());
+    }
+
     private static AgentTickPreflightService.Hooks hooks(boolean airshowActive,
                                                          boolean skipDelay,
                                                          boolean allowRemove,
@@ -112,6 +142,7 @@ class AgentTickPreflightServiceTest {
                     }
                     removedId.set(agentCharId);
                 },
+                (entry, agent) -> false,
                 (entry, agent, nowMs, intervalMs) -> heartbeatRan.set(true),
                 entry -> offerExpired.set(true),
                 (entry, movementTickMs, aiTickMs, tickAtMs) -> true,

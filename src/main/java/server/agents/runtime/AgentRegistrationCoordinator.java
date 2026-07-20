@@ -3,6 +3,11 @@ package server.agents.runtime;
 import client.Character;
 import server.agents.capabilities.movement.AgentFormationService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
+import server.agents.progression.AgentCareerBuildBundleService;
+import server.agents.progression.AgentCareerBuildBundle;
+import server.agents.progression.AgentCareerProgressionCheckpointRuntime;
+import server.agents.objectives.AgentObjectiveCheckpointRuntime;
+import server.agents.plans.AgentPlanReattachmentRuntime;
 
 /**
  * Runtime coordinator for Agent registration, scheduling, formation defaults,
@@ -49,7 +54,7 @@ public final class AgentRegistrationCoordinator {
                                                    boolean normalizeSpawnState,
                                                    AgentLifecycleService.AgentTickCallback tickCallback,
                                                    java.util.function.Consumer<AgentRuntimeEntry> spawnNormalizer) {
-        return AgentLifecycleService.registerAgent(
+        AgentRuntimeEntry entry = AgentLifecycleService.registerAgent(
                 leaderCharId,
                 leader,
                 agent,
@@ -62,6 +67,12 @@ public final class AgentRegistrationCoordinator {
                         defaultFormationState(),
                         spawnNormalizer,
                         () -> AgentRandom.randMs(30_000, 31_000)));
+        long nowMs = System.currentTimeMillis();
+        AgentCareerBuildBundle bundle = AgentCareerBuildBundleService.restoreOrAssign(entry, nowMs);
+        AgentObjectiveCheckpointRuntime.restore(entry);
+        AgentCareerProgressionCheckpointRuntime.restore(entry, bundle);
+        AgentPlanReattachmentRuntime.reattachIfNeeded(entry, agent, nowMs);
+        return entry;
     }
 
     private static AgentFormationService.FormationState defaultFormationState() {

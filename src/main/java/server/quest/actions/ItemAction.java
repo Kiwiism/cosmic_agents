@@ -358,6 +358,18 @@ public class ItemAction extends AbstractQuestAction {
         return true;
     }
 
+    /** Ordered client selection values after the same job/gender filtering used by quest completion. */
+    public List<Integer> selectableRewardItemIds(Character chr) {
+        List<Integer> result = new ArrayList<>();
+        for (ItemData item : items) {
+            if (item.getCount() > 0 && item.getProp() != null && item.getProp() == -1
+                    && canGetItem(item, chr)) {
+                result.add(item.getId());
+            }
+        }
+        return List.copyOf(result);
+    }
+
     public boolean restoreLostItem(Character chr, int itemid) {
         if (!ItemInformationProvider.getInstance().isQuestItem(itemid)) {
             return false;

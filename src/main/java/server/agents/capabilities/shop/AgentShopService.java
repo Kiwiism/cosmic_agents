@@ -103,6 +103,19 @@ public final class AgentShopService {
         startShopVisit(entry, bot, match);
     }
 
+    /** Starts the planned MVP shop visit even when current supplies already satisfy restock thresholds. */
+    public static boolean requestVisitAtNpc(AgentRuntimeEntry entry, Character bot, int npcId) {
+        if (entry == null || bot == null || bot.getMap() == null) {
+            return false;
+        }
+        NpcShopMatch match = findShopForNpc(bot, npcId);
+        if (match == null) {
+            return false;
+        }
+        startShopVisit(entry, bot, match);
+        return true;
+    }
+
     public static void requestSellTrashVisit(AgentRuntimeEntry entry, Character bot, InventoryGateway inventory) {
         if (entry == null || bot == null || bot.getMap() == null) {
             return;
@@ -205,6 +218,21 @@ public final class AgentShopService {
                 continue;
             }
             if (allowAnyShop || shopHasAnythingNeeded(bot, shop, inventory)) {
+                return new NpcShopMatch(npc, shop, npc.getPosition());
+            }
+        }
+        return null;
+    }
+
+    private static NpcShopMatch findShopForNpc(Character bot, int npcId) {
+        for (MapObject obj : bot.getMap().getMapObjectsInRange(
+                new Point(0, 0), Double.POSITIVE_INFINITY, List.of(MapObjectType.NPC))) {
+            NPC npc = (NPC) obj;
+            if (npc.getId() != npcId || !npc.hasShop()) {
+                continue;
+            }
+            Shop shop = AgentShopGatewayRuntime.shop().findForNpc(npc.getId());
+            if (shop != null) {
                 return new NpcShopMatch(npc, shop, npc.getPosition());
             }
         }

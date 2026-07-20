@@ -199,6 +199,7 @@ import client.command.commands.gm6.ClearQuestCacheCommand;
 import client.command.commands.gm6.AgentPopCommand;
 import client.command.commands.gm6.AgentSchedulerCommand;
 import client.command.commands.gm6.AmherstCommand;
+import client.command.commands.gm6.VictoriaCommand;
 import client.command.commands.gm6.MapleIslandCommand;
 import client.command.commands.gm6.SouthperryCommand;
 import client.command.commands.gm6.BotPopCommand;
@@ -601,6 +602,7 @@ public class CommandsExecutor {
         addCommand("agentpop", 6, AgentPopCommand.class);
         addCommand("agentscheduler", 6, AgentSchedulerCommand.class);
         addCommand("amherst", 6, AmherstCommand.class);
+        addCommand("victoria", 6, VictoriaCommand.class);
         addCommand("mapleisland", 6, MapleIslandCommand.class);
         addCommand("southperry", 6, SouthperryCommand.class);
         addCommand("fmspots", 6, FreeMarketSpotsCommand.class);

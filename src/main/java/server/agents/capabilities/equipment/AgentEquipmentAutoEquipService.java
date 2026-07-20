@@ -86,6 +86,8 @@ public final class AgentEquipmentAutoEquipService {
         Inventory eqdInv = bot.getInventory(InventoryType.EQUIPPED);
         AgentMapDamageProfile mob = AgentMapDamageProfile.snapshotByAvoid(bot);
 
+        AgentEquipmentPlanExecutor.relocateEquippedStrays(bot, eqpInv, eqdInv);
+
         Map<Short, List<Equip>> bySlot = collectAutoEquipCandidates(bot, ii, eqpInv, eqdInv, pendingOffer);
         Map<Short, Equip> currentBySlot = new HashMap<>();
         for (Item it : eqdInv.list()) {

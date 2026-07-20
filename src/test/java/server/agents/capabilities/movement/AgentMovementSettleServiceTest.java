@@ -1,6 +1,7 @@
 package server.agents.capabilities.movement;
 
 import client.Character;
+import constants.game.CharacterStance;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.social.airshow.AgentAirshowStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -35,6 +36,10 @@ class AgentMovementSettleServiceTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
         AgentMovementBroadcastStateRuntime.record(entry, 10, 20, 0, 0, 0, 2);
         assertFalse(AgentMovementSettleService.shouldSettle(entry));
+
+        AgentMovementBroadcastStateRuntime.record(
+                entry, 10, 20, 0, 0, CharacterStance.WALK_RIGHT_STANCE, 2);
+        assertTrue(AgentMovementSettleService.shouldSettle(entry));
 
         AgentMovementBroadcastStateRuntime.record(entry, 10, 20, 50, 0, 1, 2);
         AgentMovementStateRuntime.setInAir(entry, true);

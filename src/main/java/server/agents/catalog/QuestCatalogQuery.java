@@ -58,4 +58,8 @@ public final class QuestCatalogQuery {
                 .filter(status -> status.intValue("questId").orElse(-1) == questId)
                 .findFirst();
     }
+
+    public Optional<CatalogRecord> victoriaLt30HuntingPlan(int questId) {
+        return Optional.ofNullable(indexes.victoriaQuestHuntingById.get(questId));
+    }
 }

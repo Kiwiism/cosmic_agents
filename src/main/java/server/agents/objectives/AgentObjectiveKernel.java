@@ -22,12 +22,14 @@ public final class AgentObjectiveKernel {
             state.active = objective;
             append(state, nowMs, objective, AgentObjectiveStatus.ACTIVE, "objective started");
         }
+        AgentObjectiveCheckpointRuntime.persist(entry, nowMs);
         publish(entry, objective, AgentObjectiveStatus.ACTIVE, nowMs, "objective started");
     }
 
     public static boolean transition(AgentRuntimeEntry entry, String objectiveId,
                                      AgentObjectiveStatus status, String reason, long nowMs) {
-        if (status == null || status == AgentObjectiveStatus.ACTIVE) {
+        if (status == null || status == AgentObjectiveStatus.ACTIVE
+                || status == AgentObjectiveStatus.SUSPENDED || status == AgentObjectiveStatus.RESUMED) {
             throw new IllegalArgumentException("A terminal objective status is required");
         }
         AgentObjectiveState state = entry.capabilityStates().require(AgentObjectiveState.STATE_KEY);
@@ -40,12 +42,83 @@ public final class AgentObjectiveKernel {
             append(state, nowMs, completed, status, reason);
             state.active = null;
         }
+        AgentObjectiveCheckpointRuntime.persist(entry, nowMs);
         publish(entry, completed, status, nowMs, reason);
         return true;
     }
 
     public static AgentObjectiveDefinition active(AgentRuntimeEntry entry) {
         return entry.capabilityStates().require(AgentObjectiveState.STATE_KEY).active();
+    }
+
+    /** Suspends the foreground objective and starts a bounded maintenance objective. */
+    public static boolean suspendFor(AgentRuntimeEntry entry,
+                                     AgentObjectiveDefinition maintenance,
+                                     String reason,
+                                     long nowMs) {
+        AgentObjectiveState state = entry.capabilityStates().require(AgentObjectiveState.STATE_KEY);
+        AgentObjectiveDefinition suspended;
+        synchronized (state) {
+            suspended = state.active;
+            if (suspended == null || suspended.objectiveId().equals(maintenance.objectiveId())) {
+                return false;
+            }
+            state.suspended.addFirst(new AgentObjectiveSuspension(suspended, reason, nowMs));
+            append(state, nowMs, suspended, AgentObjectiveStatus.SUSPENDED, reason);
+            state.active = maintenance;
+            append(state, nowMs, maintenance, AgentObjectiveStatus.ACTIVE,
+                    "maintenance started after suspending " + suspended.objectiveId());
+        }
+        AgentObjectiveCheckpointRuntime.persist(entry, nowMs);
+        publish(entry, suspended, AgentObjectiveStatus.SUSPENDED, nowMs, reason);
+        publish(entry, maintenance, AgentObjectiveStatus.ACTIVE, nowMs, reason);
+        return true;
+    }
+
+    /** Completes maintenance and restores the most recently suspended objective. */
+    public static boolean completeAndResume(AgentRuntimeEntry entry,
+                                            String maintenanceObjectiveId,
+                                            String reason,
+                                            long nowMs) {
+        return finishAndResume(entry, maintenanceObjectiveId, AgentObjectiveStatus.SUCCEEDED,
+                reason, nowMs);
+    }
+
+    /** Terminates maintenance and restores the suspended foreground even when maintenance failed. */
+    public static boolean finishAndResume(AgentRuntimeEntry entry,
+                                          String maintenanceObjectiveId,
+                                          AgentObjectiveStatus terminalStatus,
+                                          String reason,
+                                          long nowMs) {
+        if (terminalStatus == null || terminalStatus == AgentObjectiveStatus.ACTIVE
+                || terminalStatus == AgentObjectiveStatus.SUSPENDED
+                || terminalStatus == AgentObjectiveStatus.RESUMED) {
+            throw new IllegalArgumentException("A terminal maintenance status is required");
+        }
+        AgentObjectiveState state = entry.capabilityStates().require(AgentObjectiveState.STATE_KEY);
+        AgentObjectiveDefinition maintenance;
+        AgentObjectiveDefinition resumed;
+        synchronized (state) {
+            maintenance = state.active;
+            if (maintenance == null || !maintenance.objectiveId().equals(maintenanceObjectiveId)) {
+                return false;
+            }
+            append(state, nowMs, maintenance, terminalStatus, reason);
+            AgentObjectiveSuspension suspension = state.suspended.pollFirst();
+            resumed = suspension == null ? null : suspension.objective();
+            state.active = resumed;
+            if (resumed != null) {
+                append(state, nowMs, resumed, AgentObjectiveStatus.RESUMED,
+                        "resumed after " + maintenanceObjectiveId);
+            }
+        }
+        AgentObjectiveCheckpointRuntime.persist(entry, nowMs);
+        publish(entry, maintenance, terminalStatus, nowMs, reason);
+        if (resumed != null) {
+            publish(entry, resumed, AgentObjectiveStatus.RESUMED, nowMs,
+                    "resumed after " + maintenanceObjectiveId);
+        }
+        return true;
     }
 
     private static void append(AgentObjectiveState state, long nowMs,

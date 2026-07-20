@@ -56,7 +56,11 @@ import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
 public final class CombatFormulaProvider {
-    public record DamageProfile(int minDamage, int maxDamage, boolean magicAttack, boolean alwaysHit) {
+    public record DamageProfile(int minDamage, int maxDamage, boolean magicAttack, boolean alwaysHit,
+                                boolean noCrit) {
+        public DamageProfile(int minDamage, int maxDamage, boolean magicAttack, boolean alwaysHit) {
+            this(minDamage, maxDamage, magicAttack, alwaysHit, false);
+        }
     }
 
     /**
@@ -310,7 +314,7 @@ public final class CombatFormulaProvider {
         int[] adjustedDamage = applyMonsterDefense(bot, monster, modMin, modMax, damageProfile.magicAttack());
         boolean shadowPartner = hits > 1 && bot.getBuffEffect(BuffStat.SHADOWPARTNER) != null;
         if (!damageProfile.magicAttack()) {
-            CritProfile crit = resolveCritProfile(bot);
+            CritProfile crit = damageProfile.noCrit() ? CritProfile.NONE : resolveCritProfile(bot);
             double hitChance = calculateMobHitChance(bot, monster, false);
             if (skillId == Buccaneer.BARRAGE || skillId == ThunderBreaker.BARRAGE) {
                 return rollBarrageDamageLines(hits, adjustedDamage, hitChance, crit, normalizedHitDelay);
@@ -361,7 +365,7 @@ public final class CombatFormulaProvider {
             return hitChance * averageDamage(adjustedDamage[0], adjustedDamage[1]) * normalizedHits;
         }
 
-        CritProfile crit = resolveCritProfile(bot);
+        CritProfile crit = damageProfile.noCrit() ? CritProfile.NONE : resolveCritProfile(bot);
         if (skillId == Buccaneer.BARRAGE || skillId == ThunderBreaker.BARRAGE) {
             double total = 0.0d;
             for (int j = 0; j < normalizedHits; j++) {
@@ -689,6 +693,49 @@ public final class CombatFormulaProvider {
         return new CritDamageResult(damageLines, critIndices);
     }
 
+    /**
+     * Close-range swing with a ranged weapon. The v83 client uses a weak mismatched-weapon
+     * formula with fixed minimum mastery and without ranged critical passives.
+     */
+    public DamageProfile resolveDegenerateDamageProfile(Character bot, WeaponType weaponType, StatEffect effect) {
+        int watk = Math.max(0, bot.getTotalWatk());
+        double maxBase;
+        double minBase;
+        switch (weaponType) {
+            case BOW, CROSSBOW -> {
+                maxBase = (bot.getTotalDex() * 3.4d + bot.getTotalStr()) * watk / 150.0d;
+                minBase = (bot.getTotalDex() * 3.4d * DEGENERATE_MASTERY_FACTOR + bot.getTotalStr())
+                        * watk / 150.0d;
+            }
+            case CLAW -> {
+                maxBase = (bot.getTotalLuk() + bot.getTotalStr() + bot.getTotalDex()) * watk / 150.0d;
+                minBase = (bot.getTotalLuk() * DEGENERATE_MASTERY_FACTOR
+                        + bot.getTotalStr() + bot.getTotalDex()) * watk / 150.0d;
+            }
+            case GUN -> {
+                maxBase = (bot.getTotalDex() + bot.getTotalStr()) * watk / 200.0d;
+                minBase = (bot.getTotalDex() * DEGENERATE_MASTERY_FACTOR + bot.getTotalStr())
+                        * watk / 200.0d;
+            }
+            default -> {
+                return resolveDamageProfile(bot, 0, effect, false);
+            }
+        }
+
+        long maxDamage = (long) Math.ceil(maxBase);
+        long minDamage = Math.max(1L, Math.round(minBase));
+        if (effect != null && effect.getDamagePercent() > 0) {
+            maxDamage = maxDamage * effect.getDamagePercent() / 100L;
+            minDamage = minDamage * effect.getDamagePercent() / 100L;
+        }
+
+        int normalizedMaxDamage = clampDamage(maxDamage);
+        int normalizedMinDamage = Math.min(normalizedMaxDamage, clampDamage(minDamage));
+        return new DamageProfile(normalizedMinDamage, normalizedMaxDamage, false, false, true);
+    }
+
+    private static final double DEGENERATE_MASTERY_FACTOR = 0.09d;
+
     private DamageProfile resolvePhysicalDamageProfile(Character bot, int skillId, StatEffect effect,
                                                        WeaponType physicalWeaponTypeOverride) {
         int watk = Math.max(0, bot.getTotalWatk());
@@ -751,12 +798,11 @@ public final class CombatFormulaProvider {
     }
 
     private long physicalMaxBaseDamage(Character bot, int watk, WeaponType weaponType) {
-        return (long) Math.ceil((weaponType.getMaxDamageMultiplier() * bot.getTotalStr() + bot.getTotalDex()) * watk / 100.0d);
+        return bot.calculateMaxBaseDamage(watk, weaponType);
     }
 
     private long physicalMinBaseDamage(Character bot, int watk, WeaponType weaponType, double mastery) {
-        return Math.max(1L, Math.round((weaponType.getMaxDamageMultiplier() * bot.getTotalStr() * mastery * 0.9d
-                + bot.getTotalDex()) * watk / 100.0d));
+        return Math.max(1L, bot.calculateMinBaseDamage(watk, mastery, weaponType));
     }
 
     private DamageProfile resolveMagicDamageProfile(Character bot, int skillId, StatEffect effect, int healTargetCount) {

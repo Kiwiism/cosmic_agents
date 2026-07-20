@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 1,
+  "catalogId": "victoria-level15-mvp-catalog-v2",
+  "islandHandoff": {
+    "lithHarborMapId": 104000000,
+    "olafNpcId": 1002101,
+    "biggsNpcId": 20002,
+    "biggsQuestId": 1046,
+    "biggsRewardExp": 500,
+    "olafLessonQuestId": 2081,
+    "olafLessonRewardExp": 65,
+    "targetLevel": 10,
+    "grindMapId": 104000100,
+    "grindMobIds": [100100, 100101]
+  },
+  "startVariants": [
+    { "variantId": "lv10", "level": 10, "exp": 0, "expectsPreJobGrind": false },
+    { "variantId": "lv9-olaf", "level": 9, "exp": 579, "expectsPreJobGrind": false },
+    { "variantId": "lv9-grind", "level": 9, "exp": 0, "expectsPreJobGrind": true }
+  ],
+  "routeCorridors": [
+    { "corridorId": "lith-right-one", "mapIds": [104000000, 104000100] },
+    { "corridorId": "perion-training", "mapIds": [102000003, 102000000, 102010000, 102020000] },
+    { "corridorId": "perion-shop", "mapIds": [102000000, 102000002] },
+    { "corridorId": "ellinia-training", "mapIds": [101000003, 101000000, 101010000, 101010100, 101010101] },
+    { "corridorId": "ellinia-shop", "mapIds": [101000000, 101000002] },
+    { "corridorId": "henesys-training", "mapIds": [100000201, 100000200, 100000000, 100010000, 100020000, 100030000, 100040000] },
+    { "corridorId": "henesys-shop", "mapIds": [100000000, 100000100, 100000102] },
+    { "corridorId": "kerning-training", "mapIds": [103000003, 103000000, 103010000] },
+    { "corridorId": "kerning-stump-training", "mapIds": [103000000, 102050000, 102040000, 102030000, 102020000] },
+    { "corridorId": "kerning-shop", "mapIds": [103000000, 103000002] },
+    { "corridorId": "nautilus-training-and-shop", "mapIds": [120000101, 120000100, 120000200, 120000000, 120010000, 100030000, 100040000, 100040003] }
+  ],
+  "scriptedPortals": [
+    { "sourceMapId": 101000000, "destinationMapId": 101000003, "portalId": 26 },
+    { "sourceMapId": 100000200, "destinationMapId": 100000201, "portalId": 9 }
+  ],
+  "careers": [
+    {
+      "firstJobId": 100,
+      "supportedBundleIds": ["warrior-standard-v1"],
+      "olafPathQuestId": 2077,
+      "taxiSelection": 0,
+      "townMapId": 102000000,
+      "instructorNpcId": 1022000,
+      "instructorMapId": 102000003,
+      "shopNpcId": 1021100,
+      "shopMapId": 102000002,
+      "starterKitItemIds": [1302077],
+      "preferredStarterWeaponByBundleId": { "warrior-standard-v1": 1302077 },
+      "verifiedShopItemIds": [2000000, 2000001],
+      "trainingSteps": [
+        { "questId": 2128, "huntingMapId": 102010000, "mobIds": [130100], "requiredCounts": [20], "rewardExp": 590 },
+        { "questId": 2129, "huntingMapId": 102010000, "mobIds": [130100], "requiredCounts": [50], "rewardExp": 610 },
+        { "questId": 2130, "huntingMapId": 102010000, "mobIds": [130100], "requiredCounts": [80], "rewardExp": 645 },
+        { "questId": 2131, "huntingMapId": 102010000, "mobIds": [1110101], "requiredCounts": [15], "rewardExp": 840 }
+      ],
+      "milestoneGrind": { "huntingMapId": 102010000, "mobIds": [130100, 1110101] }
+    },
+    {
+      "firstJobId": 200,
+      "supportedBundleIds": ["magician-standard-v1"],
+      "olafPathQuestId": 2080,
+      "taxiSelection": 2,
+      "townMapId": 101000000,
+      "instructorNpcId": 1032001,
+      "instructorMapId": 101000003,
+      "shopNpcId": 1031100,
+      "shopMapId": 101000002,
+      "starterKitItemIds": [1372043],
+      "preferredStarterWeaponByBundleId": { "magician-standard-v1": 1372043 },
+      "verifiedShopItemIds": [2000000, 2000001],
+      "trainingSteps": [
+        { "questId": 2132, "huntingMapId": 101010000, "mobIds": [210100], "requiredCounts": [8], "rewardExp": 290 },
+        { "questId": 2133, "huntingMapId": 101010000, "mobIds": [210100], "requiredCounts": [20], "rewardExp": 323 },
+        { "questId": 2134, "huntingMapId": 101010000, "mobIds": [210100], "requiredCounts": [35], "rewardExp": 345 },
+        { "questId": 2135, "huntingMapId": 101010101, "mobIds": [1110101], "requiredCounts": [10], "rewardExp": 470 }
+      ],
+      "milestoneGrind": { "huntingMapId": 101010000, "mobIds": [210100] }
+    },
+    {
+      "firstJobId": 300,
+      "supportedBundleIds": ["bowman-standard-v1"],
+      "olafPathQuestId": 2078,
+      "taxiSelection": 1,
+      "townMapId": 100000000,
+      "instructorNpcId": 1012100,
+      "instructorMapId": 100000201,
+      "shopNpcId": 1011100,
+      "shopMapId": 100000102,
+      "starterKitItemIds": [1452051, 2060000],
+      "preferredStarterWeaponByBundleId": { "bowman-standard-v1": 1452051 },
+      "verifiedShopItemIds": [2000000, 2000001, 2060000],
+      "trainingSteps": [
+        { "questId": 2136, "huntingMapId": 100040000, "mobIds": [210100], "requiredCounts": [16], "rewardExp": 590 },
+        { "questId": 2137, "huntingMapId": 100040000, "mobIds": [210100], "requiredCounts": [40], "rewardExp": 610 },
+        { "questId": 2138, "huntingMapId": 100040000, "mobIds": [210100], "requiredCounts": [65], "rewardExp": 645 },
+        { "questId": 2139, "huntingMapId": 100030000, "mobIds": [1210101], "requiredCounts": [15], "rewardExp": 840 }
+      ],
+      "milestoneGrind": { "huntingMapId": 100040000, "mobIds": [210100, 1110101] }
+    },
+    {
+      "firstJobId": 400,
+      "supportedBundleIds": ["thief-claw-standard-v1", "thief-dagger-standard-v1"],
+      "olafPathQuestId": 2079,
+      "taxiSelection": 3,
+      "townMapId": 103000000,
+      "instructorNpcId": 1052001,
+      "instructorMapId": 103000003,
+      "shopNpcId": 1051002,
+      "shopMapId": 103000002,
+      "starterKitItemIds": [1472061, 1332063, 2070015],
+      "preferredStarterWeaponByBundleId": {
+        "thief-claw-standard-v1": 1472061,
+        "thief-dagger-standard-v1": 1332063
+      },
+      "verifiedShopItemIds": [2000000, 2000001, 2070000],
+      "trainingSteps": [
+        { "questId": 2140, "huntingMapId": 102020000, "mobIds": [130100], "requiredCounts": [20], "rewardExp": 590 },
+        { "questId": 2141, "huntingMapId": 102020000, "mobIds": [130100], "requiredCounts": [50], "rewardExp": 610 },
+        { "questId": 2142, "huntingMapId": 102020000, "mobIds": [130100], "requiredCounts": [80], "rewardExp": 645 },
+        { "questId": 2143, "huntingMapId": 103010000, "mobIds": [1120100], "requiredCounts": [10], "rewardExp": 840 }
+      ],
+      "milestoneGrind": { "huntingMapId": 103010000, "mobIds": [210100, 1120100] }
+    },
+    {
+      "firstJobId": 500,
+      "supportedBundleIds": ["pirate-gun-standard-v1", "pirate-knuckle-standard-v1"],
+      "olafPathQuestId": 2212,
+      "taxiSelection": 4,
+      "townMapId": 120000000,
+      "instructorNpcId": 1090000,
+      "instructorMapId": 120000101,
+      "shopNpcId": 1091002,
+      "shopMapId": 120000200,
+      "starterKitItemIds": [1492000, 1482000, 2330000],
+      "preferredStarterWeaponByBundleId": {
+        "pirate-gun-standard-v1": 1492000,
+        "pirate-knuckle-standard-v1": 1482000
+      },
+      "verifiedShopItemIds": [2000000, 2000001, 2330000],
+      "trainingSteps": [
+        { "questId": 2193, "huntingMapId": 120010000, "mobIds": [1210100], "requiredCounts": [11], "rewardExp": 590 },
+        { "questId": 2194, "huntingMapId": 120010000, "mobIds": [1210100], "requiredCounts": [26], "rewardExp": 610 },
+        { "questId": 2195, "huntingMapId": 120010000, "mobIds": [1210100], "requiredCounts": [43], "rewardExp": 645 },
+        { "questId": 2196, "huntingMapId": 100040003, "mobIds": [1110100], "requiredCounts": [10], "rewardExp": 840 }
+      ],
+      "milestoneGrind": { "huntingMapId": 120010000, "mobIds": [1210100] }
+    }
+  ]
+}

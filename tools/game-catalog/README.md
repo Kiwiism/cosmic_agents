@@ -62,6 +62,20 @@ classification rows and the compact `summary` object, and omits detailed
 missing source rows.
 Compact drop-source output omits detailed missing source rows by design.
 
+## Victoria Training Hunting Overlay
+
+After generating the main catalogs, build a drop-table-specific item-hunting
+view for the stable Victoria level 15-30 training catalog:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\game-catalog\Export-VictoriaTrainingDropOverlay.ps1
+```
+
+The output filename and `dropTableRevision` use the SHA-256 of
+`generated_drop_catalog.json`. Regenerating after a drop-table change therefore
+creates a new overlay without changing the stable map and training-strategy
+catalog. See `docs/agents/VICTORIA_LEVEL15_30_TRAINING_CATALOG.md`.
+
 ## Outputs
 
 Generated files are written to `tmp/game-catalog/`:

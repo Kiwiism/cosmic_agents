@@ -7,6 +7,8 @@ import client.inventory.InventoryType;
 import client.inventory.Item;
 import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.integration.InventoryGateway;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,6 +19,8 @@ import java.util.Map;
  * Applies optimizer-selected equipment plans to the live Agent character.
  */
 public final class AgentEquipmentPlanExecutor {
+    private static final Logger log = LoggerFactory.getLogger(AgentEquipmentPlanExecutor.class);
+
     private AgentEquipmentPlanExecutor() {
     }
 
@@ -67,6 +71,37 @@ public final class AgentEquipmentPlanExecutor {
         unequipInfeasibleEquipped(agent, InfeasibleEquipHooks.live(AgentInventoryGatewayRuntime.inventory()));
     }
 
+    static void relocateEquippedStrays(Character agent, Inventory equipInventory, Inventory equippedInventory) {
+        List<Equip> strays = new ArrayList<>();
+        for (Item item : equippedInventory.list()) {
+            if (item instanceof Equip equip && equip.getPosition() >= 0) {
+                strays.add(equip);
+            }
+        }
+        for (Equip stray : strays) {
+            short destination = equipInventory.getNextFreeSlot();
+            if (destination < 0) {
+                break;
+            }
+            short source = stray.getPosition();
+            equippedInventory.lockInventory();
+            try {
+                equippedInventory.removeSlot(source);
+            } finally {
+                equippedInventory.unlockInventory();
+            }
+            stray.setPosition(destination);
+            equipInventory.lockInventory();
+            try {
+                equipInventory.addItemFromDB(stray);
+            } finally {
+                equipInventory.unlockInventory();
+            }
+            log.warn("Agent '{}' had stray equip id {} in EQUIPPED slot {}; moved to EQUIP slot {}",
+                    agent.getName(), stray.getItemId(), source, destination);
+        }
+    }
+
     static void unequipInfeasibleEquipped(Character agent, InfeasibleEquipHooks hooks) {
         Inventory equippedInventory = agent.getInventory(InventoryType.EQUIPPED);
         List<Short> bad = new ArrayList<>();
@@ -77,7 +112,10 @@ public final class AgentEquipmentPlanExecutor {
             if (hooks.isCashItem(equip.getItemId())) {
                 continue;
             }
-            if (!hooks.canWearEquipment(agent, equip, equip.getPosition())) {
+            if (equip.getPosition() >= 0) {
+                continue;
+            }
+            if (!hooks.meetsEquipRequirements(agent, equip)) {
                 bad.add(equip.getPosition());
             }
         }
@@ -94,7 +132,7 @@ public final class AgentEquipmentPlanExecutor {
     interface InfeasibleEquipHooks {
         boolean isCashItem(int itemId);
 
-        boolean canWearEquipment(Character agent, Equip equip, short primarySlot);
+        boolean meetsEquipRequirements(Character agent, Equip equip);
 
         static InfeasibleEquipHooks live(InventoryGateway inventory) {
             return new InfeasibleEquipHooks() {
@@ -104,8 +142,10 @@ public final class AgentEquipmentPlanExecutor {
                 }
 
                 @Override
-                public boolean canWearEquipment(Character agent, Equip equip, short primarySlot) {
-                    return inventory.canWearEquipment(agent, equip, primarySlot);
+                public boolean meetsEquipRequirements(Character agent, Equip equip) {
+                    return inventory.meetsEquipRequirements(equip, agent.getJob(), agent.getLevel(),
+                            agent.getTotalStr(), agent.getTotalDex(), agent.getTotalInt(),
+                            agent.getTotalLuk(), agent.getFame());
                 }
             };
         }

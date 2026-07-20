@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "policyId": "victoria-level15-30-mixed-progression-v1",
+  "questingEnabledByDefault": true,
+  "questDecisionPercent": 35,
+  "interactionDelayMinMs": 2000,
+  "interactionDelayMaxMs": 6000
+}

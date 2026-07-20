@@ -911,7 +911,11 @@ public class Character extends AbstractCharacterObject {
         if (weapon_item == null) {
             return 1;
         }
-        WeaponType weapon = ItemInformationProvider.getInstance().getWeaponType(weapon_item.getItemId());
+        return calculateMinBaseDamage(watk, mastery,
+                ItemInformationProvider.getInstance().getWeaponType(weapon_item.getItemId()));
+    }
+
+    public int calculateMinBaseDamage(int watk, double mastery, WeaponType weapon) {
         if (getJob().isA(Job.THIEF) && weapon == WeaponType.DAGGER_OTHER) {
             weapon = WeaponType.DAGGER_THIEVES;
         }
@@ -4850,9 +4854,18 @@ public class Character extends AbstractCharacterObject {
         return client.getAbstractPlayerInteraction();
     }
 
+    // Membership snapshot for kill-time quest scans. QuestStatus objects remain live; only map
+    // insert/remove/replace operations invalidate this immutable list.
+    private List<QuestStatus> questStatusSnapshot;
+
     private List<QuestStatus> getQuests() {
         synchronized (quests) {
-            return new ArrayList<>(quests.values());
+            List<QuestStatus> snapshot = questStatusSnapshot;
+            if (snapshot == null) {
+                snapshot = List.copyOf(quests.values());
+                questStatusSnapshot = snapshot;
+            }
+            return snapshot;
         }
     }
 
@@ -6003,6 +6016,7 @@ public class Character extends AbstractCharacterObject {
                 qs = new QuestStatus(quest, QuestStatus.Status.NOT_STARTED);
                 attachQuestStatus(qs);
                 quests.put(questid, qs);
+                questStatusSnapshot = null;
             }
             return qs;
         }
@@ -6017,6 +6031,7 @@ public class Character extends AbstractCharacterObject {
                 stat.setCustomData(customData);
                 attachQuestStatus(stat);
                 quests.put(quest.getId(), stat);
+                questStatusSnapshot = null;
                 markPersistenceDirty(PersistenceSection.QUESTS);
             }
         }
@@ -6028,6 +6043,7 @@ public class Character extends AbstractCharacterObject {
                 final QuestStatus status = new QuestStatus(quest, QuestStatus.Status.NOT_STARTED);
                 attachQuestStatus(status);
                 quests.put(quest.getId(), status);
+                questStatusSnapshot = null;
                 return status;
             }
             return quests.get(quest.getId());
@@ -6044,6 +6060,7 @@ public class Character extends AbstractCharacterObject {
         synchronized (quests) {
             QuestStatus removed = quests.remove(quest.getId());
             if (removed != null) {
+                questStatusSnapshot = null;
                 removed.setPersistenceDirtyMarker(() -> {});
                 markPersistenceDirty(PersistenceSection.QUESTS);
             }
@@ -7422,6 +7439,7 @@ public class Character extends AbstractCharacterObject {
                             status.setForfeited(rs.getInt("forfeited"));
                             status.setCompleted(rs.getInt("completed"));
                             ret.quests.put(q.getId(), status);
+                            ret.questStatusSnapshot = null;
                             loadedQuestStatus.put(rs.getInt("queststatusid"), status);
                         }
                     }
@@ -9677,6 +9695,76 @@ public class Character extends AbstractCharacterObject {
         }
     }
 
+    /** Test-fixture mutation for a real Lith Harbor first-job journey. */
+    public synchronized void resetVictoriaFirstJobTestBaseline(int firstJobId) {
+        resetVictoriaFirstJobTestBaseline(firstJobId, 10, 0);
+    }
+
+    /** Test-fixture mutation for the level-9 and level-10 Lith Harbor entry variants. */
+    public synchronized void resetVictoriaFirstJobTestBaseline(int firstJobId, int startLevel, int startExp) {
+        if (startLevel < 8 || startLevel > 10 || startExp < 0
+                || startExp >= ExpTable.getExpNeededForLevel(startLevel)) {
+            throw new IllegalArgumentException("Victoria test start must be level 8-10 with valid EXP");
+        }
+        int requiredStr = firstJobId == 100 ? 35 : 4;
+        int requiredDex = switch (firstJobId) {
+            case 300, 400 -> 25;
+            case 500 -> 20;
+            case 100, 200 -> 4;
+            default -> throw new IllegalArgumentException("unsupported first job " + firstJobId);
+        };
+        int requiredInt = firstJobId == 200 ? 20 : 4;
+        int requiredLuk = 4;
+        int totalStatPoints = 20 + (5 * startLevel);
+        int availableAp = totalStatPoints - requiredStr - requiredDex - requiredInt - requiredLuk;
+        if (availableAp < 0) {
+            throw new IllegalArgumentException("start level cannot satisfy first-job stat baseline");
+        }
+
+        sitChair(-1);
+        cancelAllBuffs(false);
+        dispelDebuffs();
+        effLock.lock();
+        statWlock.lock();
+        try {
+            job = Job.BEGINNER;
+            level = startLevel;
+            exp.set(startExp);
+            allowExpGain = true;
+            gachaexp.set(0);
+            str = requiredStr;
+            dex = requiredDex;
+            int_ = requiredInt;
+            luk = requiredLuk;
+            remainingAp = availableAp;
+            Arrays.fill(remainingSp, 0);
+            hpMpApUsed = 0;
+            maxhp = 140 - ((10 - startLevel) * 14);
+            maxmp = 50 - ((10 - startLevel) * 11);
+            hp = maxhp;
+            mp = maxmp;
+            meso.set(1_000);
+            skills.clear();
+            removeAllCooldownsExcept(-1, false);
+
+            for (InventoryType type : InventoryType.values()) {
+                if (type == InventoryType.UNDEFINED || type == InventoryType.CANHOLD) {
+                    continue;
+                }
+                Inventory current = getInventory(type);
+                setInventory(type, new Inventory(this, type, current.getSlotLimit()));
+            }
+
+            recalcLocalStats();
+            markPersistenceDirty(PersistenceSection.STATS);
+            markPersistenceDirty(PersistenceSection.SKILLS);
+            markPersistenceDirty(PersistenceSection.INVENTORY);
+        } finally {
+            statWlock.unlock();
+            effLock.unlock();
+        }
+    }
+
     /** Test-fixture mutation restoring AmherstRun immediately after the validated Amherst MVP. */
     public synchronized void resetMapleIslandSouthperryBaseline() {
         MapleIslandSouthperryBaseline.Snapshot baseline = MapleIslandSouthperryBaseline.snapshot();
@@ -10248,6 +10336,7 @@ public class Character extends AbstractCharacterObject {
         attachQuestStatus(qs);
         synchronized (quests) {
             QuestStatus previous = quests.put(qs.getQuestID(), qs);
+            questStatusSnapshot = null;
             if (previous != null && previous != qs) {
                 previous.setPersistenceDirtyMarker(() -> {});
             }

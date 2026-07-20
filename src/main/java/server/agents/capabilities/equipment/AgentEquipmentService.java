@@ -3,8 +3,12 @@ package server.agents.capabilities.equipment;
 import client.Character;
 import client.Job;
 import client.inventory.Equip;
+import client.inventory.Inventory;
+import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.WeaponType;
+import server.agents.integration.AgentInventoryGatewayRuntime;
+import server.agents.integration.InventoryGateway;
 
 import java.util.Collection;
 import java.util.List;
@@ -23,6 +27,31 @@ public final class AgentEquipmentService {
 
     public static void autoEquip(Character agent, Character leader, Item pendingOffer, boolean force) {
         AgentEquipmentAutoEquipService.autoEquip(agent, leader, pendingOffer, force);
+    }
+
+    /** Selects a catalog-authored starter weapon after the general optimizer reconciles the loadout. */
+    public static boolean equipPreferredWeapon(Character agent, int itemId) {
+        return equipPreferredWeapon(agent, itemId, AgentInventoryGatewayRuntime.inventory());
+    }
+
+    static boolean equipPreferredWeapon(Character agent, int itemId, InventoryGateway inventory) {
+        if (agent == null || itemId <= 0 || inventory == null) {
+            return false;
+        }
+        Item equipped = agent.getInventory(InventoryType.EQUIPPED).getItem((short) -11);
+        if (equipped != null && equipped.getItemId() == itemId) {
+            return true;
+        }
+        Inventory equipInventory = agent.getInventory(InventoryType.EQUIP);
+        for (Item item : equipInventory.list()) {
+            if (item instanceof Equip equip && equip.getItemId() == itemId && equip.getPosition() > 0
+                    && inventory.canWearEquipment(agent, equip, (short) -11)) {
+                inventory.moveItem(agent, InventoryType.EQUIP, equip.getPosition(), (short) -11, (short) 1);
+                Item selected = agent.getInventory(InventoryType.EQUIPPED).getItem((short) -11);
+                return selected != null && selected.getItemId() == itemId;
+            }
+        }
+        return false;
     }
 
     public static List<String> autoEquipDebug(Character agent) {

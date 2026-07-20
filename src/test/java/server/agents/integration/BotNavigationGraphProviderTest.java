@@ -45,6 +45,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -104,6 +105,18 @@ class AgentNavigationGraphServiceTest {
     @BeforeAll
     static void initWzPath() {
         System.setProperty("wz-path", Path.of("wz").toAbsolutePath().toString());
+    }
+
+    @Test
+    void shouldIndexAnArbitraryCachedProfileByMap() {
+        MapleMap map = new MapleMap(910000036, 0, 0, 910000036, 1.0f);
+        map.setMapLineBoundings(-100, 100, -100, 100);
+        map.setFootholds(new server.maps.FootholdTree(
+                new Point(-100, -100), new Point(100, 100)));
+
+        AgentNavigationGraph graph = AgentNavigationGraphService.rebuildGraph(map);
+
+        assertSame(graph, AgentNavigationGraphService.peekGraph(map));
     }
 
     @Test

@@ -271,6 +271,12 @@ public enum CosmicPrimitiveCapabilityGateway implements PrimitiveCapabilityGatew
     }
 
     @Override
+    public boolean runNpcScript(Character agent, int npcId, int... selections) {
+        return npcPosition(agent, npcId) != null
+                && CosmicHeadlessNpcScriptGateway.execute(agent, npcId, selections);
+    }
+
+    @Override
     public boolean startQuest(Character agent, int questId, int npcId) {
         Quest quest = Quest.getInstance(questId);
         if (quest.hasScriptRequirement(false)) {
@@ -288,7 +294,21 @@ public enum CosmicPrimitiveCapabilityGateway implements PrimitiveCapabilityGatew
         if (quest.hasScriptRequirement(true)) {
             return CosmicHeadlessQuestScriptGateway.complete(agent, questId, npcId);
         }
-        quest.complete(agent, npcId);
+        Integer selection = server.agents.capabilities.quest.AgentQuestRewardChoicePolicy
+                .choose(agent, quest).map(
+                        server.agents.capabilities.quest.AgentQuestRewardChoicePolicy.Decision::selectionIndex)
+                .orElse(null);
+        quest.complete(agent, npcId, selection);
+        return agent.getQuestStatus(questId) == QuestStatus.Status.COMPLETED.getId();
+    }
+
+    @Override
+    public boolean completeQuest(Character agent, int questId, int npcId, Integer rewardSelection) {
+        Quest quest = Quest.getInstance(questId);
+        if (quest.hasScriptRequirement(true)) {
+            return CosmicHeadlessQuestScriptGateway.complete(agent, questId, npcId);
+        }
+        quest.complete(agent, npcId, rewardSelection);
         return agent.getQuestStatus(questId) == QuestStatus.Status.COMPLETED.getId();
     }
 

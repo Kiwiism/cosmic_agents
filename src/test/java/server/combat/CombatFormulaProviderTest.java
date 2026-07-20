@@ -246,6 +246,10 @@ class CombatFormulaProviderTest {
         when(masteryEffect.getMastery()).thenReturn(10);
         when(masterySkill.getEffect(20)).thenReturn(masteryEffect);
         when(bot.getSkillLevel(constants.skills.Spearman.SPEAR_MASTERY)).thenReturn(20);
+        when(bot.calculateMaxBaseDamage(100, WeaponType.SPEAR_STAB)).thenReturn(550);
+        when(bot.calculateMinBaseDamage(100, 0.6d, WeaponType.SPEAR_STAB)).thenReturn(320);
+        when(bot.calculateMaxBaseDamage(100, WeaponType.SPEAR_SWING)).thenReturn(350);
+        when(bot.calculateMinBaseDamage(100, 0.6d, WeaponType.SPEAR_SWING)).thenReturn(212);
 
         try (MockedStatic<SkillFactory> skillFactory = Mockito.mockStatic(SkillFactory.class)) {
             skillFactory.when(() -> SkillFactory.getSkill(constants.skills.Spearman.SPEAR_MASTERY)).thenReturn(masterySkill);
@@ -277,6 +281,10 @@ class CombatFormulaProviderTest {
         when(masteryEffect.getMastery()).thenReturn(10);
         when(masterySkill.getEffect(20)).thenReturn(masteryEffect);
         when(bot.getSkillLevel(constants.skills.Spearman.POLEARM_MASTERY)).thenReturn(20);
+        when(bot.calculateMaxBaseDamage(100, WeaponType.POLE_ARM_STAB)).thenReturn(350);
+        when(bot.calculateMinBaseDamage(100, 0.6d, WeaponType.POLE_ARM_STAB)).thenReturn(212);
+        when(bot.calculateMaxBaseDamage(100, WeaponType.POLE_ARM_SWING)).thenReturn(550);
+        when(bot.calculateMinBaseDamage(100, 0.6d, WeaponType.POLE_ARM_SWING)).thenReturn(320);
 
         try (MockedStatic<SkillFactory> skillFactory = Mockito.mockStatic(SkillFactory.class)) {
             skillFactory.when(() -> SkillFactory.getSkill(constants.skills.Spearman.POLEARM_MASTERY)).thenReturn(masterySkill);
@@ -308,6 +316,10 @@ class CombatFormulaProviderTest {
         when(masteryEffect.getMastery()).thenReturn(10);
         when(masterySkill.getEffect(20)).thenReturn(masteryEffect);
         when(bot.getSkillLevel(constants.skills.Spearman.SPEAR_MASTERY)).thenReturn(20);
+        when(bot.calculateMaxBaseDamage(100, WeaponType.SPEAR_STAB)).thenReturn(550);
+        when(bot.calculateMinBaseDamage(100, 0.6d, WeaponType.SPEAR_STAB)).thenReturn(320);
+        when(bot.calculateMaxBaseDamage(100, WeaponType.SPEAR_SWING)).thenReturn(350);
+        when(bot.calculateMinBaseDamage(100, 0.6d, WeaponType.SPEAR_SWING)).thenReturn(212);
 
         try (MockedStatic<SkillFactory> skillFactory = Mockito.mockStatic(SkillFactory.class)) {
             skillFactory.when(() -> SkillFactory.getSkill(constants.skills.Spearman.SPEAR_MASTERY)).thenReturn(masterySkill);
@@ -435,6 +447,40 @@ class CombatFormulaProviderTest {
         assertEquals(777, profile.minDamage());
         assertEquals(777, profile.maxDamage());
         assertTrue(profile.alwaysHit());
+    }
+
+    @Test
+    void shouldUseWeakNoCritFormulaForDegenerateBowSwing() {
+        Character bot = mockDamageBot();
+        when(bot.getTotalWatk()).thenReturn(100);
+        when(bot.getTotalDex()).thenReturn(100);
+        when(bot.getTotalStr()).thenReturn(40);
+
+        CombatFormulaProvider.DamageProfile profile =
+                provider.resolveDegenerateDamageProfile(bot, WeaponType.BOW, null);
+
+        assertEquals(47, profile.minDamage());
+        assertEquals(254, profile.maxDamage());
+        assertTrue(profile.noCrit());
+        assertFalse(profile.magicAttack());
+    }
+
+    @Test
+    void shouldComposeSkillPercentOnDegenerateClawPunch() {
+        Character bot = mockDamageBot();
+        StatEffect effect = mock(StatEffect.class);
+        when(bot.getTotalWatk()).thenReturn(75);
+        when(bot.getTotalLuk()).thenReturn(120);
+        when(bot.getTotalStr()).thenReturn(30);
+        when(bot.getTotalDex()).thenReturn(60);
+        when(effect.getDamagePercent()).thenReturn(130);
+
+        CombatFormulaProvider.DamageProfile profile =
+                provider.resolveDegenerateDamageProfile(bot, WeaponType.CLAW, effect);
+
+        assertEquals(65, profile.minDamage());
+        assertEquals(136, profile.maxDamage());
+        assertTrue(profile.noCrit());
     }
 
     // --- Critical hit profile tests ---

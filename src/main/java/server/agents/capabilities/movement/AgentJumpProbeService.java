@@ -14,6 +14,7 @@ import java.util.Set;
 public final class AgentJumpProbeService {
     private static final int SYNTHETIC_MAP_BOUND_SIZE = 1 << 18;
     private static final float MAX_FALL_PXS = 670.0f;
+    private static final int FALL_SIM_TICK_CAP = 2000;
 
     private AgentJumpProbeService() {
     }
@@ -272,8 +273,10 @@ public final class AgentJumpProbeService {
         long remainingLandingGraceMs = Math.max(0L, landingGraceMs);
         float gravity = AgentMovementKinematicsService.gravityPerTick();
         float maxFall = maxFallPerTick();
+        int floorY = mapFloorY(map);
+        int tickLimit = fallSimulationTickLimit(from.y, initialVelocityY, gravity, maxFall, floorY);
 
-        for (int tick = 0; tick < (1500 / AgentMovementPhysicsConfig.configuredMovementTickMs()); tick++) {
+        for (int tick = 0; tick < tickLimit; tick++) {
             if (Thread.currentThread().isInterrupted()) {
                 return null;
             }
@@ -313,6 +316,9 @@ public final class AgentJumpProbeService {
                 return null;
             }
 
+            if (intY > floorY) {
+                return null;
+            }
             previousIntY = intY;
         }
 
@@ -337,8 +343,10 @@ public final class AgentJumpProbeService {
         long remainingLandingGraceMs = Math.max(0L, landingGraceMs);
         float gravity = AgentMovementKinematicsService.gravityPerTick();
         float maxFall = maxFallPerTick();
+        int floorY = mapFloorY(map);
+        int tickLimit = fallSimulationTickLimit(from.y, initialVelocityY, gravity, maxFall, floorY);
 
-        for (int tick = 0; tick < (1500 / AgentMovementPhysicsConfig.configuredMovementTickMs()); tick++) {
+        for (int tick = 0; tick < tickLimit; tick++) {
             if (Thread.currentThread().isInterrupted()) {
                 return null;
             }
@@ -376,10 +384,45 @@ public final class AgentJumpProbeService {
                         (tick + 1) * AgentMovementPhysicsConfig.configuredMovementTickMs());
             }
 
+            if (intY > floorY) {
+                return null;
+            }
             previousIntY = intY;
         }
 
         return null;
+    }
+
+    private static int mapFloorY(MapleMap map) {
+        Rectangle area = map == null ? null : map.getMapArea();
+        return area != null && area.height > 0 ? area.y + area.height + 600 : Integer.MAX_VALUE;
+    }
+
+    /**
+     * Bounds expensive collision probes to the free-fall time needed to pass the map floor.
+     * Wall collisions preserve vertical progress and ceiling collisions shorten an ascent, so
+     * free fall plus a small rounding margin is a safe upper bound when VR/minimap bounds exist.
+     * Maps without bounds retain the large runaway backstop.
+     */
+    private static int fallSimulationTickLimit(int fromY,
+                                               float initialVelocityY,
+                                               float gravity,
+                                               float maxFall,
+                                               int floorY) {
+        if (floorY == Integer.MAX_VALUE || gravity <= 0f || maxFall <= 0f) {
+            return FALL_SIM_TICK_CAP;
+        }
+
+        double y = fromY;
+        float velocityY = initialVelocityY;
+        for (int tick = 0; tick < FALL_SIM_TICK_CAP; tick++) {
+            y += velocityY + 0.5f * gravity;
+            velocityY = Math.min(velocityY + gravity, maxFall);
+            if (y > floorY) {
+                return Math.min(FALL_SIM_TICK_CAP, tick + 9);
+            }
+        }
+        return FALL_SIM_TICK_CAP;
     }
 
     private static int estimateLandingTimeMs(MapleMap map,

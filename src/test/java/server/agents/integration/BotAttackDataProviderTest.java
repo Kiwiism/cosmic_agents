@@ -29,6 +29,8 @@ class AgentAttackDataProviderTest {
         assertEquals(7, provider.getBodyActionId("swingO3"));
         assertEquals(16, provider.getBodyActionId("stabO1"));
         assertEquals(17, provider.getBodyActionId("stabO2"));
+        assertEquals(28, provider.getBodyActionId("wand1"));
+        assertEquals(29, provider.getBodyActionId("wand2"));
         assertEquals(32, provider.getBodyActionId("proneStab"));
         assertEquals(56, provider.getBodyActionId("avenger"));
         assertEquals(69, provider.getBodyActionId("genesis"));
@@ -47,6 +49,17 @@ class AgentAttackDataProviderTest {
         assertNotNull(profile);
         assertTrue(profile.getSourceActions().contains("swingO1"));
         assertTrue(profile.getAfterimageFirstFrame("swingO1") > 0);
+    }
+
+    @Test
+    void staffAndWandMeleeUseStandardSwingO2PacketAction() {
+        AgentAttackDataProvider provider = AgentAttackDataProvider.getInstance();
+
+        for (client.inventory.WeaponType type : List.of(
+                client.inventory.WeaponType.WAND, client.inventory.WeaponType.STAFF)) {
+            assertEquals(List.of("swingO2"), provider.getBasicAttackSpec(type).actions());
+            assertEquals(6, provider.getBodyActionId("swingO2", type));
+        }
     }
 
     @Test

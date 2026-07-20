@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "catalogId": "victoria-lt30-quest-hunting-policy-v1",
+  "questPolicies": [
+    {
+      "questId": 2122,
+      "autonomousStartAllowed": true,
+      "warnings": [
+        "Manji chain boundary: this quest is Victoria-local, but do not automatically continue into A Special Assignment or To the Desert."
+      ],
+      "blockAutoFollowupQuestIds": [2123, 2127]
+    },
+    {
+      "questId": 2123,
+      "autonomousStartAllowed": false,
+      "warnings": [
+        "A Special Assignment completes at Moppie outside the current Victoria-only scope."
+      ],
+      "blockAutoFollowupQuestIds": []
+    },
+    {
+      "questId": 2127,
+      "autonomousStartAllowed": false,
+      "warnings": [
+        "To the Desert is an explicit Manji chain handoff toward the Ariant route; retain it for later world-travel policy."
+      ],
+      "blockAutoFollowupQuestIds": []
+    }
+  ]
+}

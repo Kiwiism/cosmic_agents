@@ -21,6 +21,7 @@ final class CatalogIndexes {
     final Map<String, List<CatalogRecord>> itemsByName = new HashMap<>();
     final Map<Integer, CatalogRecord> questsById = new HashMap<>();
     final Map<Integer, CatalogRecord> questObjectivesById = new HashMap<>();
+    final Map<Integer, CatalogRecord> victoriaQuestHuntingById = new HashMap<>();
     final Map<Integer, CatalogRecord> npcsById = new HashMap<>();
     final Map<String, List<CatalogRecord>> npcsByName = new HashMap<>();
     final Map<Integer, List<CatalogRecord>> npcPlacementsByNpcId = new HashMap<>();
@@ -55,6 +56,8 @@ final class CatalogIndexes {
         indexes.indexSimple(bundle.node(CatalogFile.ITEMS), mapper, "itemId", indexes.itemsById, "name", indexes.itemsByName);
         indexes.indexSimple(bundle.node(CatalogFile.QUESTS), mapper, "questId", indexes.questsById, null, null);
         indexes.indexSimple(bundle.node(CatalogFile.QUEST_OBJECTIVES), mapper, "questId", indexes.questObjectivesById, null, null);
+        indexes.indexSimple(bundle.node(CatalogFile.VICTORIA_LT30_QUEST_HUNTING), mapper,
+                "questId", indexes.victoriaQuestHuntingById, null, null);
         indexes.indexSimple(bundle.node(CatalogFile.NPCS), mapper, "npcId", indexes.npcsById, "name", indexes.npcsByName);
 
         indexes.indexList(bundle.node(CatalogFile.NPC_PLACEMENTS), mapper, "npcId", indexes.npcPlacementsByNpcId);
