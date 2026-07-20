@@ -5,6 +5,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
+import server.agents.events.AgentEventPriority;
+import server.agents.progression.events.AgentProgressionCheckpointEvent;
+import server.agents.progression.events.AgentProgressionEventPublisher;
 
 import java.io.IOException;
 
@@ -58,6 +61,12 @@ public final class AgentCareerProgressionCheckpointRuntime {
         try {
             STORE.save(checkpoint);
             state.markPersisted(checkpoint.stateRevision());
+            AgentProgressionEventPublisher.publish(entry, new AgentProgressionCheckpointEvent(
+                            agent.getId(), nowMs, checkpoint.bundleId(), checkpoint.bundleVersion(),
+                            checkpoint.stage().name(), checkpoint.stateRevision(), agent.getLevel(),
+                            agent.getJob().getId(), agent.getMapId(),
+                            AgentProgressionEventPublisher.objectiveId(entry)),
+                    AgentEventPriority.IMPORTANT);
         } catch (IOException | RuntimeException failure) {
             log.warn("Could not persist career checkpoint for {} ({})",
                     agent.getName(), agent.getId(), failure);

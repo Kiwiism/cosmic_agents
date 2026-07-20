@@ -2,6 +2,9 @@ package server.agents.capabilities.build.profiles;
 
 import client.Character;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.events.AgentEventPriority;
+import server.agents.progression.events.AgentApAssignedEvent;
+import server.agents.progression.events.AgentProgressionEventPublisher;
 
 public final class AgentApBuildProfileService {
     private AgentApBuildProfileService() {
@@ -32,8 +35,17 @@ public final class AgentApBuildProfileService {
         Allocation allocation = allocation(profile, agent.getLevel(), agent.getRemainingAp(),
                 currentStat(agent, profile.targetStat()));
         if (allocation.spent() > 0) {
-            agent.assignStrDexIntLuk(
-                    allocation.str(), allocation.dex(), allocation.intelligence(), allocation.luk());
+            if (agent.assignStrDexIntLuk(
+                    allocation.str(), allocation.dex(), allocation.intelligence(), allocation.luk())) {
+                if (agent.getId() > 0) {
+                    AgentProgressionEventPublisher.publish(entry, new AgentApAssignedEvent(
+                                    agent.getId(), System.currentTimeMillis(), agent.getLevel(),
+                                    allocation.str(), allocation.dex(), allocation.intelligence(), allocation.luk(),
+                                    agent.getRemainingAp(), profile.profileId(),
+                                    AgentProgressionEventPublisher.objectiveId(entry)),
+                            AgentEventPriority.NORMAL);
+                }
+            }
         }
         return true;
     }
