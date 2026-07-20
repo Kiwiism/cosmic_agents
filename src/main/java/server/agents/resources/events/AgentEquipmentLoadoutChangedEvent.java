@@ -1,6 +1,6 @@
 package server.agents.resources.events;
 
-import server.agents.events.AgentEvent;
+import server.agents.events.AgentContextualEvent;
 
 import java.util.Map;
 
@@ -11,7 +11,7 @@ public record AgentEquipmentLoadoutChangedEvent(
         Map<Short, Integer> previousLoadout,
         Map<Short, Integer> loadout,
         String reason,
-        String objectiveId) implements AgentEvent {
+        String objectiveId) implements AgentContextualEvent {
     public static final String TYPE = "equipment.loadout-changed";
 
     public AgentEquipmentLoadoutChangedEvent {

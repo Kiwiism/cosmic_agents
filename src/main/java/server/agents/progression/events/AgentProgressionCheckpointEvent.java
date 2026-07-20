@@ -1,6 +1,6 @@
 package server.agents.progression.events;
 
-import server.agents.events.AgentEvent;
+import server.agents.events.AgentContextualEvent;
 
 /** Durable career state successfully written to the progression checkpoint store. */
 public record AgentProgressionCheckpointEvent(
@@ -13,7 +13,7 @@ public record AgentProgressionCheckpointEvent(
         int level,
         int jobId,
         int mapId,
-        String objectiveId) implements AgentEvent {
+        String objectiveId) implements AgentContextualEvent {
     public static final String TYPE = "progression.checkpoint-reached";
 
     public AgentProgressionCheckpointEvent {

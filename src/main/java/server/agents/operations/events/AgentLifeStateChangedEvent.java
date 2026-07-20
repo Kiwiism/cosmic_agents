@@ -1,6 +1,6 @@
 package server.agents.operations.events;
 
-import server.agents.events.AgentEvent;
+import server.agents.events.AgentContextualEvent;
 
 /** Agent entered a dead window or completed respawn recovery. */
 public record AgentLifeStateChangedEvent(
@@ -10,7 +10,7 @@ public record AgentLifeStateChangedEvent(
         String state,
         int mapId,
         boolean observerDialogue,
-        String objectiveId) implements AgentEvent {
+        String objectiveId) implements AgentContextualEvent {
     public static final String TYPE = "combat.life-state-changed";
 
     public AgentLifeStateChangedEvent {

@@ -1,6 +1,6 @@
 package server.agents.operations.events;
 
-import server.agents.events.AgentEvent;
+import server.agents.events.AgentContextualEvent;
 
 /** Stuck threshold crossed before an unstuck action is requested. */
 public record AgentStuckDetectedEvent(
@@ -11,7 +11,7 @@ public record AgentStuckDetectedEvent(
         int y,
         int stuckMs,
         boolean suspended,
-        String objectiveId) implements AgentEvent {
+        String objectiveId) implements AgentContextualEvent {
     public static final String TYPE = "navigation.stuck-detected";
 
     public AgentStuckDetectedEvent {

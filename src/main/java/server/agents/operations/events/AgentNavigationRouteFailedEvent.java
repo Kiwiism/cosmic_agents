@@ -1,6 +1,6 @@
 package server.agents.operations.events;
 
-import server.agents.events.AgentEvent;
+import server.agents.events.AgentContextualEvent;
 
 /** Navigation could not produce a route between two distinct valid regions. */
 public record AgentNavigationRouteFailedEvent(
@@ -12,7 +12,7 @@ public record AgentNavigationRouteFailedEvent(
         int targetX,
         int targetY,
         String reason,
-        String objectiveId) implements AgentEvent {
+        String objectiveId) implements AgentContextualEvent {
     public static final String TYPE = "navigation.route-failed";
 
     public AgentNavigationRouteFailedEvent {

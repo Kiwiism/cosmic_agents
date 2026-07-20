@@ -1,6 +1,6 @@
 package server.agents.operations.events;
 
-import server.agents.events.AgentEvent;
+import server.agents.events.AgentContextualEvent;
 
 /** Agent completed an inter-map or intra-map portal/map transition. */
 public record AgentMapTransitionedEvent(
@@ -10,7 +10,7 @@ public record AgentMapTransitionedEvent(
         int mapId,
         int portalId,
         String reason,
-        String objectiveId) implements AgentEvent {
+        String objectiveId) implements AgentContextualEvent {
     public static final String TYPE = "navigation.map-transitioned";
 
     public AgentMapTransitionedEvent {

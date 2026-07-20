@@ -1,6 +1,6 @@
 package server.agents.progression.events;
 
-import server.agents.events.AgentEvent;
+import server.agents.events.AgentContextualEvent;
 
 /** Quest lifecycle fact emitted only after the live quest status changes. */
 public record AgentQuestStateChangedEvent(
@@ -12,7 +12,7 @@ public record AgentQuestStateChangedEvent(
         int npcId,
         int mapId,
         Integer rewardSelection,
-        String objectiveId) implements AgentEvent {
+        String objectiveId) implements AgentContextualEvent {
     public static final String TYPE = "progression.quest-state-changed";
 
     public AgentQuestStateChangedEvent {

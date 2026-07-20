@@ -1,6 +1,6 @@
 package server.agents.operations.events;
 
-import server.agents.events.AgentEvent;
+import server.agents.events.AgentContextualEvent;
 
 /** A monster kill was credited to an Agent at the authoritative map boundary. */
 public record AgentMobKilledEvent(
@@ -10,7 +10,7 @@ public record AgentMobKilledEvent(
         int mobId,
         int mobObjectId,
         int mobLevel,
-        String objectiveId) implements AgentEvent {
+        String objectiveId) implements AgentContextualEvent {
     public static final String TYPE = "combat.mob-killed";
 
     public AgentMobKilledEvent {

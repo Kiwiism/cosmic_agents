@@ -1,6 +1,6 @@
 package server.agents.progression.events;
 
-import server.agents.events.AgentEvent;
+import server.agents.events.AgentContextualEvent;
 
 /** Job transition emitted after the server has accepted the advancement. */
 public record AgentJobAdvancedEvent(
@@ -10,7 +10,7 @@ public record AgentJobAdvancedEvent(
         int jobId,
         int level,
         int mapId,
-        String objectiveId) implements AgentEvent {
+        String objectiveId) implements AgentContextualEvent {
     public static final String TYPE = "progression.job-advanced";
 
     public AgentJobAdvancedEvent {

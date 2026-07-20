@@ -1,6 +1,6 @@
 package server.agents.resources.events;
 
-import server.agents.events.AgentEvent;
+import server.agents.events.AgentContextualEvent;
 
 /** Committed or rejected NPC-shop operation. */
 public record AgentShopTransactionEvent(
@@ -12,7 +12,7 @@ public record AgentShopTransactionEvent(
         int quantity,
         int mesoDelta,
         String result,
-        String objectiveId) implements AgentEvent {
+        String objectiveId) implements AgentContextualEvent {
     public static final String TYPE = "shopping.transaction-resolved";
 
     public AgentShopTransactionEvent {

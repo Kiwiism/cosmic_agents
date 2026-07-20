@@ -1,6 +1,6 @@
 package server.agents.progression.events;
 
-import server.agents.events.AgentEvent;
+import server.agents.events.AgentContextualEvent;
 
 /** Skill-level transition emitted after one or more SP have been committed. */
 public record AgentSkillLearnedEvent(
@@ -12,7 +12,7 @@ public record AgentSkillLearnedEvent(
         int skillLevel,
         int remainingSp,
         String profileId,
-        String objectiveId) implements AgentEvent {
+        String objectiveId) implements AgentContextualEvent {
     public static final String TYPE = "progression.skill-learned";
 
     public AgentSkillLearnedEvent {

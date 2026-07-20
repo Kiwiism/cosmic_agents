@@ -1,6 +1,6 @@
 package server.agents.operations.events;
 
-import server.agents.events.AgentEvent;
+import server.agents.events.AgentContextualEvent;
 
 /** A recovery action changed or reset Agent movement state. */
 public record AgentRecoveryPerformedEvent(
@@ -12,7 +12,7 @@ public record AgentRecoveryPerformedEvent(
         int fromY,
         int toX,
         int toY,
-        String objectiveId) implements AgentEvent {
+        String objectiveId) implements AgentContextualEvent {
     public static final String TYPE = "recovery.performed";
 
     public AgentRecoveryPerformedEvent {

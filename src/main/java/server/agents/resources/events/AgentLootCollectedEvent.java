@@ -1,6 +1,6 @@
 package server.agents.resources.events;
 
-import server.agents.events.AgentEvent;
+import server.agents.events.AgentContextualEvent;
 
 /** Ground loot collected by the Agent, including mesos. */
 public record AgentLootCollectedEvent(
@@ -11,7 +11,7 @@ public record AgentLootCollectedEvent(
         int itemId,
         int quantity,
         int mesos,
-        String objectiveId) implements AgentEvent {
+        String objectiveId) implements AgentContextualEvent {
     public static final String TYPE = "loot.collected";
 
     public AgentLootCollectedEvent {

@@ -1,6 +1,6 @@
 package server.agents.operations.events;
 
-import server.agents.events.AgentEvent;
+import server.agents.events.AgentContextualEvent;
 
 /** Combat target identity changed at the grind-target boundary. */
 public record AgentCombatTargetChangedEvent(
@@ -10,7 +10,7 @@ public record AgentCombatTargetChangedEvent(
         int targetObjectId,
         int targetMobId,
         int switchCount,
-        String objectiveId) implements AgentEvent {
+        String objectiveId) implements AgentContextualEvent {
     public static final String TYPE = "combat.target-changed";
 
     public AgentCombatTargetChangedEvent {

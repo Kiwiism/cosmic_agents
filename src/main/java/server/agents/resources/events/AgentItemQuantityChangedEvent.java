@@ -1,6 +1,6 @@
 package server.agents.resources.events;
 
-import server.agents.events.AgentEvent;
+import server.agents.events.AgentContextualEvent;
 
 /** Inventory quantity transition after an Agent-owned inventory mutation. */
 public record AgentItemQuantityChangedEvent(
@@ -11,7 +11,7 @@ public record AgentItemQuantityChangedEvent(
         int quantity,
         String inventoryType,
         String source,
-        String objectiveId) implements AgentEvent {
+        String objectiveId) implements AgentContextualEvent {
     public static final String TYPE = "inventory.item-quantity-changed";
 
     public AgentItemQuantityChangedEvent {

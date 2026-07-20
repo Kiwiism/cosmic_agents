@@ -64,7 +64,44 @@ class BoundedAgentEventBusTest {
         assertTrue(bus.snapshot().queueLatencyMaxNs() >= 0L);
     }
 
+    @Test
+    void envelopesPayloadWithVersionedSourceAndIdentity() {
+        AgentDomainEvent event = event("context");
+
+        AgentEventEnvelope envelope = AgentEventEnvelope.queued(
+                7L, event, AgentEventPriority.NORMAL, 11L);
+
+        assertEquals("1:100:7:test", envelope.eventId());
+        assertEquals(1, envelope.context().schemaVersion());
+        assertEquals("test", envelope.context().sourceCapability());
+        assertEquals("agent:1", envelope.context().correlationId());
+        assertSame(event, envelope.event());
+    }
+
+    @Test
+    void extractsObjectiveAndMapContextFromTypedEvents() {
+        AgentEventEnvelope envelope = AgentEventEnvelope.queued(
+                2L, new ContextEvent(4, 200L, 100000000, "objective-7"),
+                AgentEventPriority.IMPORTANT, 12L);
+
+        assertEquals("progression", envelope.context().sourceCapability());
+        assertEquals("objective-7", envelope.context().objectiveId());
+        assertEquals("objective-7", envelope.context().correlationId());
+        assertEquals(100000000, envelope.context().mapId());
+    }
+
     private static AgentDomainEvent event(String key) {
         return new AgentDomainEvent(1, 100L, "test", key, Map.of());
+    }
+
+    private record ContextEvent(
+            int agentId,
+            long occurredAtMs,
+            int mapId,
+            String objectiveId) implements AgentContextualEvent {
+        @Override
+        public String type() {
+            return "progression.test";
+        }
     }
 }

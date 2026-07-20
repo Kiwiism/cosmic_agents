@@ -59,7 +59,7 @@ public final class BoundedAgentEventBus implements AgentEventBus {
             dropped++;
             return false;
         }
-        queue.addLast(new AgentEventEnvelope(++nextSequence, event, priority, System.nanoTime()));
+        queue.addLast(AgentEventEnvelope.queued(++nextSequence, event, priority, System.nanoTime()));
         highWaterMark = Math.max(highWaterMark, queue.size());
         if (!dedupeKey.isEmpty()) {
             queuedDedupeKeys.add(dedupeKey);

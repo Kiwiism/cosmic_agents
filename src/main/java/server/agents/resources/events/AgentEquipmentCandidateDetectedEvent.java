@@ -1,6 +1,6 @@
 package server.agents.resources.events;
 
-import server.agents.events.AgentEvent;
+import server.agents.events.AgentContextualEvent;
 
 /** Equipment policy identified an item as a usable upgrade candidate. */
 public record AgentEquipmentCandidateDetectedEvent(
@@ -8,7 +8,7 @@ public record AgentEquipmentCandidateDetectedEvent(
         long occurredAtMs,
         int itemId,
         int sourceCharacterId,
-        String objectiveId) implements AgentEvent {
+        String objectiveId) implements AgentContextualEvent {
     public static final String TYPE = "equipment.candidate-detected";
 
     public AgentEquipmentCandidateDetectedEvent {

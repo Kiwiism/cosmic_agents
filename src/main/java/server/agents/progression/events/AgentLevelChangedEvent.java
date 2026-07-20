@@ -1,6 +1,6 @@
 package server.agents.progression.events;
 
-import server.agents.events.AgentEvent;
+import server.agents.events.AgentContextualEvent;
 
 /** Authoritative level transition observed by the Agent build runtime. */
 public record AgentLevelChangedEvent(
@@ -10,7 +10,7 @@ public record AgentLevelChangedEvent(
         int level,
         int jobId,
         int mapId,
-        String objectiveId) implements AgentEvent {
+        String objectiveId) implements AgentContextualEvent {
     public static final String TYPE = "progression.level-changed";
 
     public AgentLevelChangedEvent {

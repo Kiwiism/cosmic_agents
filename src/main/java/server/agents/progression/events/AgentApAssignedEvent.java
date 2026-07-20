@@ -1,6 +1,6 @@
 package server.agents.progression.events;
 
-import server.agents.events.AgentEvent;
+import server.agents.events.AgentContextualEvent;
 
 /** Aggregate AP allocation fact; one event is emitted for one assignment operation. */
 public record AgentApAssignedEvent(
@@ -13,7 +13,7 @@ public record AgentApAssignedEvent(
         int luk,
         int remainingAp,
         String profileId,
-        String objectiveId) implements AgentEvent {
+        String objectiveId) implements AgentContextualEvent {
     public static final String TYPE = "progression.ap-assigned";
 
     public AgentApAssignedEvent {

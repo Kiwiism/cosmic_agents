@@ -1,6 +1,6 @@
 package server.agents.resources.events;
 
-import server.agents.events.AgentEvent;
+import server.agents.events.AgentContextualEvent;
 
 /** Inventory capacity threshold observed while considering or collecting loot. */
 public record AgentInventoryThresholdChangedEvent(
@@ -10,7 +10,7 @@ public record AgentInventoryThresholdChangedEvent(
         int freeSlots,
         int slotLimit,
         String threshold,
-        String objectiveId) implements AgentEvent {
+        String objectiveId) implements AgentContextualEvent {
     public static final String TYPE = "inventory.threshold-changed";
 
     public AgentInventoryThresholdChangedEvent {

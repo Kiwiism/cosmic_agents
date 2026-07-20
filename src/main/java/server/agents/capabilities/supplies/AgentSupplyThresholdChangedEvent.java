@@ -2,7 +2,7 @@ package server.agents.capabilities.supplies;
 
 import server.agents.capabilities.contracts.AgentResourceCategory;
 import server.agents.capabilities.contracts.AgentSupplyUrgency;
-import server.agents.events.AgentEvent;
+import server.agents.events.AgentContextualEvent;
 
 /** Immutable supply fact captured when an Agent crosses a configured threshold. */
 public record AgentSupplyThresholdChangedEvent(
@@ -15,7 +15,7 @@ public record AgentSupplyThresholdChangedEvent(
         int targetQuantity,
         AgentSupplyUrgency previousUrgency,
         AgentSupplyUrgency urgency,
-        String objectiveId) implements AgentEvent {
+        String objectiveId) implements AgentContextualEvent {
     public static final String TYPE = "supply.threshold-changed";
 
     public AgentSupplyThresholdChangedEvent {

@@ -1,6 +1,6 @@
 package server.agents.resources.events;
 
-import server.agents.events.AgentEvent;
+import server.agents.events.AgentContextualEvent;
 
 /** Scroll outcome for an Agent-owned scrolling attempt. */
 public record AgentScrollResolvedEvent(
@@ -9,7 +9,7 @@ public record AgentScrollResolvedEvent(
         int scrollItemId,
         String result,
         int mapId,
-        String objectiveId) implements AgentEvent {
+        String objectiveId) implements AgentContextualEvent {
     public static final String TYPE = "equipment.scroll-resolved";
 
     public AgentScrollResolvedEvent {
