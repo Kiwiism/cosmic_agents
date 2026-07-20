@@ -3,6 +3,7 @@ package server.agents.runtime;
 import server.agents.capabilities.dialogue.AgentDialogueIntentEvent;
 import server.agents.capabilities.dialogue.AgentDialogueProjectionRuntime;
 import server.agents.capabilities.dialogue.AgentDialogueProjectionService;
+import server.agents.capabilities.dialogue.llm.context.AgentLlmContextProjectionService;
 import server.agents.capabilities.supplies.AgentSupplyCoordinationProjectionService;
 import server.agents.capabilities.supplies.AgentSupplyDialogueReactionService;
 import server.agents.capabilities.supplies.AgentSupplyMaintenanceEventListener;
@@ -73,6 +74,7 @@ public final class AgentSessionEventWiringRuntime {
                 subscriptions.add(bus.subscribe("*",
                         new AgentOperationalDialogueReactionService(bus)));
                 subscriptions.add(bus.subscribe("*", new AgentDurableEventJournalListener()));
+                subscriptions.add(bus.subscribe("*", new AgentLlmContextProjectionService(entry)));
                 state.attach(subscriptions);
             } catch (RuntimeException failure) {
                 subscriptions.forEach(AgentEventSubscription::close);
