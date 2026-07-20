@@ -12,7 +12,15 @@ public final class AgentCombatObjectiveTargetStateRuntime {
 
     public static void setAllowedMobIds(AgentRuntimeEntry entry, Set<Integer> mobIds) {
         if (entry.combatObjectiveTargetState().setAllowedMobIds(mobIds)) {
-            AgentGrindTargetStateRuntime.clear(entry);
+            clearDisallowedTarget(entry);
+        }
+    }
+
+    public static void setTargetPreferences(AgentRuntimeEntry entry,
+                                            Set<Integer> preferredMobIds,
+                                            Set<Integer> fallbackMobIds) {
+        if (entry.combatObjectiveTargetState().setTargetPreferences(preferredMobIds, fallbackMobIds)) {
+            clearDisallowedTarget(entry);
         }
     }
 
@@ -23,6 +31,14 @@ public final class AgentCombatObjectiveTargetStateRuntime {
 
     public static boolean allows(AgentRuntimeEntry entry, int mobId) {
         return entry == null || entry.combatObjectiveTargetState().allows(mobId);
+    }
+
+    public static boolean prefers(AgentRuntimeEntry entry, int mobId) {
+        return entry == null || entry.combatObjectiveTargetState().prefers(mobId);
+    }
+
+    public static boolean hasPreferredTargets(AgentRuntimeEntry entry) {
+        return entry != null && entry.combatObjectiveTargetState().hasPreferredTargets();
     }
 
     public static List<server.life.Monster> allowedMonsters(
@@ -45,5 +61,12 @@ public final class AgentCombatObjectiveTargetStateRuntime {
         return new AgentAttackPlan(plan.skillId, plan.skillLevel, plan.numDamage, plan.hitBox, targets,
                 plan.route, plan.display, plan.direction, plan.rangedDirection, plan.stance,
                 plan.speed, plan.hitDelayMs, plan.cooldownMs, plan.damageWeaponType);
+    }
+
+    private static void clearDisallowedTarget(AgentRuntimeEntry entry) {
+        server.life.Monster target = AgentGrindTargetStateRuntime.target(entry);
+        if (target != null && !allows(entry, target.getId())) {
+            AgentGrindTargetStateRuntime.clear(entry);
+        }
     }
 }

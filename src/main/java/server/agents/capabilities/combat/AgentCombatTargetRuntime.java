@@ -21,7 +21,9 @@ import server.maps.MapleMap;
 
 import java.awt.Point;
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public final class AgentCombatTargetRuntime {
@@ -39,9 +41,11 @@ public final class AgentCombatTargetRuntime {
             List<Monster> candidates = AgentCombatTargetSelector.aliveMonstersInRange(bot, botPos, rangeSq);
             candidates.removeIf(monster -> !AgentCombatObjectiveTargetStateRuntime.allows(entry, monster.getId()));
             if (candidates.isEmpty()) return null;
+            candidates = preferRequiredTargets(entry, candidates);
 
+            Map<Monster, Integer> targetOccupancy = grindTargetOccupancy(entry, bot);
             List<AgentScoredGrindTarget> scoredTargets = scoreGrindTargets(
-                    entry, bot, botPos, botFoothold, candidates, config);
+                    entry, bot, botPos, botFoothold, candidates, targetOccupancy, config);
             if (scoredTargets.isEmpty()) {
                 return null;
             }
@@ -92,8 +96,16 @@ public final class AgentCombatTargetRuntime {
             if (filtered.isEmpty()) {
                 return null;
             }
+            filtered = preferRequiredTargets(entry, filtered);
 
-            List<AgentScoredGrindTarget> scored = scoreGrindTargets(entry, bot, botPos, botFoothold, filtered, config);
+            List<AgentScoredGrindTarget> scored = scoreGrindTargets(
+                    entry,
+                    bot,
+                    botPos,
+                    botFoothold,
+                    filtered,
+                    grindTargetOccupancy(entry, bot),
+                    config);
             if (scored.isEmpty()) {
                 return null;
             }
@@ -127,7 +139,8 @@ public final class AgentCombatTargetRuntime {
                             candidate,
                             entry == null || AgentAmmoStateRuntime.noAmmo(entry),
                             entry == null ? 0 : AgentCombatSkillCacheStateRuntime.attackSkillId(entry)),
-                    candidate -> grindTargetScore(bot, botPos, botFoothold, candidate, config),
+                    candidate -> grindTargetScore(
+                            bot, botPos, botFoothold, candidate, Map.of(), config),
                     candidate -> AgentCombatScoringPolicy.legacyAoeClusterBonus(
                             candidate,
                             candidates,
@@ -182,12 +195,14 @@ public final class AgentCombatTargetRuntime {
                                                                   Point botPos,
                                                                   Foothold botFoothold,
                                                                   List<Monster> candidates,
+                                                                  Map<Monster, Integer> targetOccupancy,
                                                                   AgentCombatConfig.Config config) {
         GrindGraphContext graphContext = GrindGraphContext.resolve(entry, bot, botPos);
         return AgentCombatGrindTargetPolicy.scoreGrindTargets(
                 graphContext.available(),
-                () -> scoreLocalTargets(entry, bot, botPos, botFoothold, candidates, config),
-                () -> scoreTargetRegions(entry, graphContext, bot, botPos, botFoothold, candidates, config));
+                () -> scoreLocalTargets(entry, bot, botPos, botFoothold, candidates, targetOccupancy, config),
+                () -> scoreTargetRegions(entry, graphContext, bot, botPos, botFoothold,
+                        candidates, targetOccupancy, config));
     }
 
     private static boolean isLocalCombatTarget(GrindGraphContext context,
@@ -211,11 +226,13 @@ public final class AgentCombatTargetRuntime {
                                                                   Point botPos,
                                                                   Foothold botFoothold,
                                                                   List<Monster> candidates,
+                                                                  Map<Monster, Integer> targetOccupancy,
                                                                   AgentCombatConfig.Config config) {
         return AgentCombatGrindTargetPolicy.scoreLocalTargets(
                 candidates,
                 botPos,
-                candidate -> grindTargetScore(bot, botPos, botFoothold, candidate, config),
+                candidate -> grindTargetScore(
+                        bot, botPos, botFoothold, candidate, targetOccupancy, config),
                 candidate -> AgentCombatScoringPolicy.legacyAoeClusterBonus(
                         candidate,
                         candidates,
@@ -229,13 +246,15 @@ public final class AgentCombatTargetRuntime {
                                                                    Point botPos,
                                                                    Foothold botFoothold,
                                                                    List<Monster> candidates,
+                                                                   Map<Monster, Integer> targetOccupancy,
                                                                    AgentCombatConfig.Config config) {
         return AgentCombatGrindTargetPolicy.scoreTargetRegions(
                 candidates,
                 botPos,
                 candidate -> AgentNavigationRegionService.resolveTargetRegionId(
                         context.graph(), context.entry(), context.map(), candidate.getPosition()),
-                candidate -> grindTargetScore(bot, botPos, botFoothold, candidate, config)
+                candidate -> grindTargetScore(
+                        bot, botPos, botFoothold, candidate, targetOccupancy, config)
                         - AgentCombatScoringPolicy.legacyAoeClusterBonus(
                         candidate,
                         candidates,
@@ -276,14 +295,55 @@ public final class AgentCombatTargetRuntime {
         return AgentCombatGrindTargetPolicy.graphPathCost(true, false, 0L, edgeCosts, UNREACHABLE_GRAPH_COST);
     }
 
-    private static long grindTargetScore(Character bot, Point botPos, Foothold botFoothold, Monster target,
+    private static long grindTargetScore(Character bot,
+                                         Point botPos,
+                                         Foothold botFoothold,
+                                         Monster target,
+                                         Map<Monster, Integer> targetOccupancy,
                                          AgentCombatConfig.Config config) {
         Point targetPos = target.getPosition();
         Foothold targetFoothold = AgentCombatGroundRuntime.findGroundFoothold(targetPos, bot);
 
         boolean sameFoothold = botFoothold != null && targetFoothold != null
                 && botFoothold.getId() == targetFoothold.getId();
-        return AgentCombatScoringPolicy.localTargetScore(botPos, targetPos, sameFoothold, config.ATTACK_RANGE_Y);
+        return AgentCombatScoringPolicy.localTargetScore(botPos, targetPos, sameFoothold, config.ATTACK_RANGE_Y)
+                + AgentCombatGrindTargetPolicy.occupancyPenalty(
+                        targetOccupancy.getOrDefault(target, 0),
+                        config.GRIND_TARGET_OCCUPANCY_PENALTY,
+                        config.GRIND_TARGET_OCCUPANCY_PENALTY_CAP);
+    }
+
+    private static Map<Monster, Integer> grindTargetOccupancy(
+            AgentRuntimeEntry entry,
+            Character bot) {
+        if (entry == null || bot == null || bot.getMap() == null) {
+            return Map.of();
+        }
+        Map<Monster, Integer> occupancy = new IdentityHashMap<>();
+        for (AgentRuntimeEntry sibling : AgentSessionLifecycleRuntime.getCohortEntries(entry)) {
+            if (sibling == null || sibling == entry || !AgentModeStateRuntime.grinding(sibling)) {
+                continue;
+            }
+            Character siblingBot = AgentRuntimeIdentityRuntime.bot(sibling);
+            Monster siblingTarget = AgentGrindTargetStateRuntime.target(sibling);
+            if (siblingBot != null && siblingBot.getMap() == bot.getMap()
+                    && siblingBot.getHp() > 0 && siblingTarget != null) {
+                occupancy.merge(siblingTarget, 1, Integer::sum);
+            }
+        }
+        return occupancy;
+    }
+
+    private static List<Monster> preferRequiredTargets(
+            AgentRuntimeEntry entry,
+            List<Monster> candidates) {
+        if (!AgentCombatObjectiveTargetStateRuntime.hasPreferredTargets(entry)) {
+            return candidates;
+        }
+        List<Monster> preferred = candidates.stream()
+                .filter(monster -> AgentCombatObjectiveTargetStateRuntime.prefers(entry, monster.getId()))
+                .toList();
+        return preferred.isEmpty() ? candidates : new ArrayList<>(preferred);
     }
 
     private static long grindRegionOccupancyPenalty(GrindGraphContext context, Character bot, int targetRegionId,

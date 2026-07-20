@@ -81,9 +81,10 @@ public final class AgentCombatCapability
         }
         Set<Integer> allowedMobIds = pendingMobIds.isEmpty()
                 ? command.requiredKillCounts().keySet() : Set.copyOf(pendingMobIds);
+        Set<Integer> spawnPressureMobIds = spawnPressureMobIds(context, command, allowedMobIds);
         if (!gateway.grounded(context.agent())) {
             if (AgentClimbStateRuntime.climbing(context.entry())) {
-                gateway.grind(context.entry(), allowedMobIds);
+                grind(context, allowedMobIds, spawnPressureMobIds);
                 return AgentCapabilityStep.running(
                         "continuing combat navigation while climbing", false);
             }
@@ -91,23 +92,40 @@ public final class AgentCombatCapability
             return AgentCapabilityStep.running("waiting to land before combat", false);
         }
         if (gateway.liveMonsterCount(context.agent(), allowedMobIds) == 0) {
-            Set<Integer> configuredSpawnIds = gateway.configuredMonsterSpawnIds(context.agent());
-            if (configuredSpawnIds.containsAll(allowedMobIds)) {
-                Set<Integer> spawnPressureMobIds = new LinkedHashSet<>(configuredSpawnIds);
-                spawnPressureMobIds.removeAll(command.requiredKillCounts().keySet());
-                if (!spawnPressureMobIds.isEmpty()
-                        && gateway.liveMonsterCount(context.agent(), spawnPressureMobIds) > 0) {
-                    gateway.grind(context.entry(), spawnPressureMobIds);
-                    return AgentCapabilityStep.running(
-                            "clearing non-required map mobs to free required spawn slots", false);
-                }
+            if (!spawnPressureMobIds.isEmpty()
+                    && gateway.liveMonsterCount(context.agent(), spawnPressureMobIds) > 0) {
+                grind(context, allowedMobIds, spawnPressureMobIds);
+                return AgentCapabilityStep.running(
+                        "clearing non-required map mobs to free required spawn slots", false);
             }
-            gateway.grind(context.entry(), allowedMobIds);
+            grind(context, allowedMobIds, Set.of());
             return AgentCapabilityStep.running(
                     "waiting for a required target mob to become available", false);
         }
-        gateway.grind(context.entry(), allowedMobIds);
+        grind(context, allowedMobIds, spawnPressureMobIds);
         return AgentCapabilityStep.running("delegating to reconstructed combat", false);
+    }
+
+    private void grind(AgentCapabilityContext context,
+                       Set<Integer> requiredMobIds,
+                       Set<Integer> spawnPressureMobIds) {
+        if (spawnPressureMobIds.isEmpty()) {
+            gateway.grind(context.entry(), requiredMobIds);
+            return;
+        }
+        gateway.grind(context.entry(), requiredMobIds, spawnPressureMobIds);
+    }
+
+    private Set<Integer> spawnPressureMobIds(AgentCapabilityContext context,
+                                             Command command,
+                                             Set<Integer> requiredMobIds) {
+        Set<Integer> configuredSpawnIds = gateway.configuredMonsterSpawnIds(context.agent());
+        if (!configuredSpawnIds.containsAll(requiredMobIds)) {
+            return Set.of();
+        }
+        Set<Integer> fallback = new LinkedHashSet<>(configuredSpawnIds);
+        fallback.removeAll(command.requiredKillCounts().keySet());
+        return Set.copyOf(fallback);
     }
 
     @Override

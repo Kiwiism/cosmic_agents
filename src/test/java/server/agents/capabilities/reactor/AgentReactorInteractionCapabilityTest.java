@@ -70,6 +70,8 @@ class AgentReactorInteractionCapabilityTest {
                 List.of(farther, nearest), request, 1, mapScope).orElseThrow().objectId());
         assertEquals(11, selector.selectReserved(
                 List.of(farther, nearest), request, 2, mapScope).orElseThrow().objectId());
+        assertTrue(selector.selectReserved(
+                List.of(farther, nearest), request, 3, mapScope).isEmpty());
 
         AgentReactorTargetReservationRuntime.release(1);
         assertEquals(10, selector.selectReserved(

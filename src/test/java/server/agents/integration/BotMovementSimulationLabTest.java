@@ -111,7 +111,7 @@ class BotMovementSimulationLabTest {
     }
 
     @Test
-    void shouldResolveSlashRopeOscillationDumpByRefreshingPendingExitEdge() {
+    void shouldResolveSlashRopeOscillationDumpByExecutingCommittedExit() {
         MapleMap map = AgentNavigationMapLoader.loadMapGeometry(103000000);
         AgentNavigationGraphService.rebuildGraph(map);
         BotMovementSimulationLab lab = BotMovementSimulationLab.fromMap(map);

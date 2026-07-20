@@ -283,6 +283,8 @@ public final class AgentCombatConfig {
         public long AOE_REPOSITION_MAX_MS = 800L;
         public int GRIND_REGION_OCCUPANCY_PENALTY = 1200;
         public int GRIND_REGION_OCCUPANCY_PENALTY_CAP = 3600;
+        public int GRIND_TARGET_OCCUPANCY_PENALTY = 800;
+        public int GRIND_TARGET_OCCUPANCY_PENALTY_CAP = 2400;
 
         // Mob damage
         public int MOB_TOUCH_SWEEP_HEIGHT = 50;

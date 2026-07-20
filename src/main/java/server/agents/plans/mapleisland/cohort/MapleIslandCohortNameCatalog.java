@@ -34,6 +34,7 @@ public final class MapleIslandCohortNameCatalog {
             "Boy", "Girl", "Hero", "Pro", "Noob", "FTW", "Pls", "Go", "One", "Two",
             "Kid", "Cat", "Bun", "Puff", "Pop"
     };
+    private static final int ROOT_SPREAD_COLUMNS = 10;
     private static final List<String> CANDIDATES = buildCandidates();
 
     private MapleIslandCohortNameCatalog() {
@@ -60,29 +61,41 @@ public final class MapleIslandCohortNameCatalog {
     private static List<String> buildCandidates() {
         Set<String> names = new LinkedHashSet<>(CANDIDATE_COUNT * 2);
         Set<String> normalizedNames = new java.util.HashSet<>(CANDIDATE_COUNT * 2);
+        List<String> roots = breadthFirstRoots();
 
-        // Interleave styles so even a small cohort does not look machine-generated.
-        for (int index = 0; index < ROOTS.length; index++) {
-            String root = ROOTS[index];
+        // Use every root family before consuming deeper style variants. The root order samples
+        // across the full catalog so even one small launch batch is not alphabetically clustered.
+        for (String root : roots) {
             add(names, normalizedNames, root);
+        }
+        for (int index = 0; index < roots.size(); index++) {
+            String root = roots.get(index);
             add(names, normalizedNames, PREFIXES[index % PREFIXES.length] + root);
+        }
+        for (int index = 0; index < roots.size(); index++) {
+            String root = roots.get(index);
             add(names, normalizedNames, root + SUFFIXES[(index * 7) % SUFFIXES.length]);
+        }
+        for (String root : roots) {
             add(names, normalizedNames, "x" + root + "x");
+        }
+        for (int index = 0; index < roots.size(); index++) {
+            String root = roots.get(index);
             add(names, normalizedNames, root + "%02d".formatted((index * 13) % 100));
         }
 
         for (String prefix : PREFIXES) {
-            for (String root : ROOTS) {
+            for (String root : roots) {
                 add(names, normalizedNames, prefix + root);
             }
         }
         for (String suffix : SUFFIXES) {
-            for (String root : ROOTS) {
+            for (String root : roots) {
                 add(names, normalizedNames, root + suffix);
             }
         }
         for (int number = 0; names.size() < CANDIDATE_COUNT && number < 1_000; number++) {
-            for (String root : ROOTS) {
+            for (String root : roots) {
                 add(names, normalizedNames, root + number);
                 if (names.size() >= CANDIDATE_COUNT) {
                     break;
@@ -94,6 +107,20 @@ public final class MapleIslandCohortNameCatalog {
             throw new IllegalStateException("Could generate only " + names.size() + " safe cohort names");
         }
         return List.copyOf(new ArrayList<>(names).subList(0, CANDIDATE_COUNT));
+    }
+
+    private static List<String> breadthFirstRoots() {
+        List<String> roots = new ArrayList<>(ROOTS.length);
+        int rows = (ROOTS.length + ROOT_SPREAD_COLUMNS - 1) / ROOT_SPREAD_COLUMNS;
+        for (int row = 0; row < rows; row++) {
+            for (int column = 0; column < ROOT_SPREAD_COLUMNS; column++) {
+                int index = column * rows + row;
+                if (index < ROOTS.length) {
+                    roots.add(ROOTS[index]);
+                }
+            }
+        }
+        return roots;
     }
 
     private static void add(Set<String> names, Set<String> normalizedNames, String candidate) {

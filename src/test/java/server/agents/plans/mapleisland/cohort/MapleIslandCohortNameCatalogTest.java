@@ -4,6 +4,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -11,6 +12,21 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class MapleIslandCohortNameCatalogTest {
+    @Test
+    void earlyCandidatesSpreadAcrossRootFamiliesBeforeUsingDeeperVariants() {
+        assertEquals(List.of(
+                        "Aeri", "Bambi", "Dori", "Jae", "Leya",
+                        "Nami", "Reni", "Taro", "Mushie", "Starry"),
+                MapleIslandCohortNameCatalog.candidates().subList(0, 10));
+
+        Set<java.lang.Character> initials = new HashSet<>();
+        MapleIslandCohortNameCatalog.candidates().subList(0, 10)
+                .forEach(name -> initials.add(name.charAt(0)));
+        assertEquals(10, initials.size());
+        assertEquals("DaggerKid", MapleIslandCohortNameCatalog.candidate(99));
+        assertEquals("LilAeri", MapleIslandCohortNameCatalog.candidate(100));
+    }
+
     @Test
     void allThirtyThousandNamesAreUniqueAndAcceptedByCharacterPolicy() {
         Set<String> normalized = new HashSet<>();

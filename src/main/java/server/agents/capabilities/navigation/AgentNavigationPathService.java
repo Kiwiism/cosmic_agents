@@ -159,13 +159,27 @@ public final class AgentNavigationPathService {
             int targetRegionId,
             Point targetPos,
             AgentTravelVariationRuntime.RouteVariation variation) {
+        return findNextEdgeVaried(
+                graph, bot.getMap(), bot.getPosition(), startRegionId, targetRegionId, targetPos, variation);
+    }
+
+    public static AgentNavigationGraph.Edge findNextEdgeVaried(
+            AgentNavigationGraph graph,
+            MapleMap map,
+            Point startPos,
+            int startRegionId,
+            int targetRegionId,
+            Point targetPos,
+            AgentTravelVariationRuntime.RouteVariation variation) {
         if (variation == null || variation.maxRouteStretch() <= 1.0d) {
-            return findNextEdge(graph, bot, startRegionId, targetRegionId, targetPos);
+            List<AgentNavigationGraph.Edge> path = findPath(
+                    graph, map, startPos, startRegionId, targetRegionId, targetPos);
+            return path.isEmpty() ? null : collapseLeadingWalkEdges(path);
         }
         List<AgentNavigationGraph.Edge> path = runSearch(
                 graph,
-                bot.getMap(),
-                bot.getPosition(),
+                map,
+                startPos,
                 startRegionId,
                 targetRegionId,
                 targetPos,
@@ -175,7 +189,7 @@ public final class AgentNavigationPathService {
                 MAX_EDGE_CHECKS,
                 variation,
                 AgentNavigationDangerCostService.intermediateRegionCosts(
-                        graph, bot.getMap(), startRegionId, targetRegionId)).path();
+                        graph, map, startRegionId, targetRegionId)).path();
         return path.isEmpty() ? null : collapseLeadingWalkEdges(path);
     }
 

@@ -283,7 +283,8 @@ class AgentPrimitiveCapabilityTest {
 
         assertEquals(AgentCapabilityStatus.RUNNING, step.status());
         assertFalse(step.consumedTick());
-        verify(fixture.gateway).grind(fixture.entry, Set.of(100101, 120100));
+        verify(fixture.gateway).grind(
+                fixture.entry, Set.of(1210102), Set.of(100101, 120100));
     }
 
     @Test

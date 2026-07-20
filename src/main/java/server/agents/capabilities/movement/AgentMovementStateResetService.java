@@ -6,6 +6,7 @@ import server.agents.capabilities.movement.fidget.AgentFidgetService;
 import server.agents.capabilities.combat.AgentCombatCooldownStateRuntime;
 import server.agents.capabilities.combat.AgentGrindTargetStateRuntime;
 import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
+import server.agents.capabilities.navigation.AgentVerticalTraversalStateRuntime;
 import server.agents.capabilities.follow.AgentOwnerMotionStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -38,6 +39,7 @@ public final class AgentMovementStateResetService {
     }
 
     public static void clearNavigationState(AgentRuntimeEntry entry) {
+        AgentVerticalTraversalStateRuntime.clear(entry);
         AgentNavigationDebugStateRuntime.clearActiveNavigationEdge(entry);
         AgentNavigationDebugStateRuntime.clearNavJumpLaunch(entry);
         AgentNavigationDebugStateRuntime.clearNavTarget(entry);

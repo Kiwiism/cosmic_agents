@@ -7,6 +7,7 @@ import server.maps.Reactor;
 
 import java.awt.Point;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 @AgentGatewayAffinity(
@@ -67,6 +68,19 @@ public interface PrimitiveCapabilityGateway {
     void navigate(AgentRuntimeEntry entry, Point destination, boolean precise);
 
     void grind(AgentRuntimeEntry entry, Set<Integer> allowedMobIds);
+
+    default void grind(AgentRuntimeEntry entry,
+                       Set<Integer> preferredMobIds,
+                       Set<Integer> fallbackMobIds) {
+        Set<Integer> allowedMobIds = new LinkedHashSet<>();
+        if (preferredMobIds != null) {
+            allowedMobIds.addAll(preferredMobIds);
+        }
+        if (fallbackMobIds != null) {
+            allowedMobIds.addAll(fallbackMobIds);
+        }
+        grind(entry, Set.copyOf(allowedMobIds));
+    }
 
     void stop(AgentRuntimeEntry entry);
 

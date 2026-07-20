@@ -36,6 +36,7 @@ public final class AmherstPlanRuntimeRunner {
     private final AmherstObjectiveHandlerRegistry handlers;
     private final AmherstObjectiveDelay objectiveDelay;
     private final AgentObjectiveRecoveryPolicy recoveryPolicy;
+    private final AmherstPlanObjectiveDeferralPolicy deferralPolicy;
     private final Object saveLock = new Object();
     private AmherstPlanProgressSnapshot pendingSave;
     private boolean saveWorkerRunning;
@@ -57,7 +58,18 @@ public final class AmherstPlanRuntimeRunner {
                                     AmherstObjectiveHandlerRegistry handlers,
                                     AmherstObjectiveDelay objectiveDelay) {
         this(card, store, progressService, reconciler, handlers, objectiveDelay,
-                AgentObjectiveRecoveryPolicy.configured());
+                AgentObjectiveRecoveryPolicy.configured(), AmherstPlanObjectiveDeferralPolicy.NONE);
+    }
+
+    public AmherstPlanRuntimeRunner(AmherstPlanCard card,
+                                    AmherstPlanProgressStore store,
+                                    AmherstPlanProgressService progressService,
+                                    AmherstObjectiveReconciler reconciler,
+                                    AmherstObjectiveHandlerRegistry handlers,
+                                    AmherstObjectiveDelay objectiveDelay,
+                                    AmherstPlanObjectiveDeferralPolicy deferralPolicy) {
+        this(card, store, progressService, reconciler, handlers, objectiveDelay,
+                AgentObjectiveRecoveryPolicy.configured(), deferralPolicy);
     }
 
     AmherstPlanRuntimeRunner(AmherstPlanCard card,
@@ -67,6 +79,18 @@ public final class AmherstPlanRuntimeRunner {
                              AmherstObjectiveHandlerRegistry handlers,
                              AmherstObjectiveDelay objectiveDelay,
                              AgentObjectiveRecoveryPolicy recoveryPolicy) {
+        this(card, store, progressService, reconciler, handlers, objectiveDelay,
+                recoveryPolicy, AmherstPlanObjectiveDeferralPolicy.NONE);
+    }
+
+    AmherstPlanRuntimeRunner(AmherstPlanCard card,
+                             AmherstPlanProgressStore store,
+                             AmherstPlanProgressService progressService,
+                             AmherstObjectiveReconciler reconciler,
+                             AmherstObjectiveHandlerRegistry handlers,
+                             AmherstObjectiveDelay objectiveDelay,
+                             AgentObjectiveRecoveryPolicy recoveryPolicy,
+                             AmherstPlanObjectiveDeferralPolicy deferralPolicy) {
         this.card = card;
         this.store = store;
         this.progressService = progressService;
@@ -75,6 +99,8 @@ public final class AmherstPlanRuntimeRunner {
         this.objectiveDelay = objectiveDelay == null ? AmherstObjectiveDelay.NONE : objectiveDelay;
         this.recoveryPolicy = recoveryPolicy == null
                 ? AgentObjectiveRecoveryPolicy.configured() : recoveryPolicy;
+        this.deferralPolicy = deferralPolicy == null
+                ? AmherstPlanObjectiveDeferralPolicy.NONE : deferralPolicy;
     }
 
     public void start(AgentRuntimeEntry entry, Character agent, long nowMs) throws IOException {
@@ -122,6 +148,8 @@ public final class AmherstPlanRuntimeRunner {
             state.waitingForAdvance = false;
             state.nextObjectiveAtMs = firstObjectiveAtMs;
             state.objectiveWatchdog.reset();
+            state.deferredObjectiveIds.clear();
+            state.objectiveDeferralStages.clear();
             state.observer = observer == null ? AmherstPlanObserver.NONE : observer;
             state.lastError = "";
         }
@@ -212,6 +240,8 @@ public final class AmherstPlanRuntimeRunner {
             state.waitingForAdvance = false;
             state.nextObjectiveAtMs = firstObjectiveAtMs;
             state.objectiveWatchdog.reset();
+            state.deferredObjectiveIds.clear();
+            state.objectiveDeferralStages.clear();
             state.observer = observer == null ? AmherstPlanObserver.NONE : observer;
             state.lastError = "";
             saveIfChanged(entry, state, loaded, state.progress);
@@ -497,13 +527,24 @@ public final class AmherstPlanRuntimeRunner {
         AmherstObjectiveProgress durable = state.progress.objectives().get(objective.objectiveId());
         int attempts = durable == null ? 0 : durable.attempts();
         boolean automaticLimitReached = attempts > recoveryPolicy.maxAutomaticRecoveries();
-        boolean worldResourceWait = automaticLimitReached
+        boolean deferrableWorldResource = canWaitForWorldResource(objective, result)
+                && deferralPolicy.canDefer(card, objective, result);
+        int nextDeferralStage = state.objectiveDeferralStages
+                .getOrDefault(objective.objectiveId(), 0) + 1;
+        boolean dependencySafeDeferral = deferrableWorldResource
+                && !deferralPolicy.independentAlternatives(
+                        card, objective, state.progress, nextDeferralStage).isEmpty();
+        boolean worldResourceWait = !dependencySafeDeferral && automaticLimitReached
                 && canWaitForWorldResource(objective, result);
-        if (automaticLimitReached && !worldResourceWait) {
+        if (automaticLimitReached && !worldResourceWait && !dependencySafeDeferral) {
             publish(state, "Automatic recovery limit reached for " + objective.objectiveId() + ".");
             return false;
         }
         AgentMovementRecoveryService.nudgeForObjectiveReplan(entry);
+        if (dependencySafeDeferral) {
+            state.deferredObjectiveIds.add(objective.objectiveId());
+            state.objectiveDeferralStages.put(objective.objectiveId(), nextDeferralStage);
+        }
         long retryDelayMs = worldResourceWait
                 ? Math.max(recoveryPolicy.recoverAfterMs(), recoveryPolicy.recoveryDelayMs())
                 : recoveryPolicy.recoveryDelayMs();
@@ -511,7 +552,9 @@ public final class AmherstPlanRuntimeRunner {
         state.progress = progressService.append(state.progress,
                 new AmherstPlanJournalEvent(nowMs, AmherstPlanJournalEventType.RETRY,
                         objective.objectiveId(), result.reasonCode().name(),
-                        worldResourceWait
+                        dependencySafeDeferral
+                                ? "scarce world resource deferred for independent plan work after attempt " + attempts
+                                : worldResourceWait
                                 ? "world-resource recheck queued after attempt " + attempts
                                 : "automatic recovery queued after attempt " + attempts), nowMs);
         saveIfChanged(entry, state, before, state.progress);
@@ -519,14 +562,17 @@ public final class AmherstPlanRuntimeRunner {
         if (state.mode == AmherstPlanExecutionMode.MANUAL) {
             state.advanceRequested = true;
         }
-        publish(state, worldResourceWait
+        publish(state, dependencySafeDeferral
+                ? "Temporarily deferred " + AmherstObjectiveFormatter.numbered(card, objective)
+                        + "; dependency-safe plan work may continue before this objective is retried."
+                : worldResourceWait
                 ? "Waiting for world resources for " + AmherstObjectiveFormatter.numbered(card, objective)
                         + "; live state will be checked again in " + retryDelayMs + " ms."
                 : "Recovery queued for " + AmherstObjectiveFormatter.numbered(card, objective)
                         + "; the same live-unsatisfied objective will be replanned.");
-        log.info("Queued Agent objective recovery agent={} map={} objective={} attempt={} reason={} delayMs={} worldResourceWait={}",
+        log.info("Queued Agent objective recovery agent={} map={} objective={} attempt={} reason={} delayMs={} worldResourceWait={} deferred={}",
                 agent.getName(), agent.getMapId(), objective.objectiveId(), attempts,
-                result.reasonCode(), retryDelayMs, worldResourceWait);
+                result.reasonCode(), retryDelayMs, worldResourceWait, dependencySafeDeferral);
         return true;
     }
 
@@ -568,13 +614,46 @@ public final class AmherstPlanRuntimeRunner {
             AmherstObjectiveReconciler.Decision decision = reconciler.reconcile(card, objective, agent);
             state.progress = progressService.reconcile(state.progress, objective.objectiveId(),
                     decision.satisfied(), decision.reason(), nowMs);
+            if (decision.satisfied()) {
+                state.deferredObjectiveIds.remove(objective.objectiveId());
+                state.objectiveDeferralStages.remove(objective.objectiveId());
+            }
             if (!decision.satisfied() && firstUnsatisfied == null) {
                 firstUnsatisfied = objective;
                 break;
             }
         }
+        if (firstUnsatisfied != null
+                && state.deferredObjectiveIds.contains(firstUnsatisfied.objectiveId())) {
+            AmherstPlanObjective alternative = reconcileIndependentAlternative(
+                    agent, state, firstUnsatisfied, nowMs);
+            if (alternative != null) {
+                firstUnsatisfied = alternative;
+            } else {
+                state.deferredObjectiveIds.remove(firstUnsatisfied.objectiveId());
+            }
+        }
         saveIfChanged(entry, state, before, state.progress);
         return firstUnsatisfied;
+    }
+
+    private AmherstPlanObjective reconcileIndependentAlternative(
+            Character agent,
+            AmherstPlanExecutionState state,
+            AmherstPlanObjective blocked,
+            long nowMs) {
+        for (AmherstPlanObjective alternative : deferralPolicy.independentAlternatives(
+                card, blocked, state.progress,
+                state.objectiveDeferralStages.getOrDefault(blocked.objectiveId(), 1))) {
+            AmherstObjectiveReconciler.Decision decision = reconciler.reconcile(
+                    card, alternative, agent);
+            state.progress = progressService.reconcile(state.progress, alternative.objectiveId(),
+                    decision.satisfied(), decision.reason(), nowMs);
+            if (!decision.satisfied()) {
+                return alternative;
+            }
+        }
+        return null;
     }
 
     private void syncCapabilityJournal(AgentRuntimeEntry entry,

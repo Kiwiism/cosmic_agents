@@ -19,6 +19,8 @@ import java.util.Map;
 public final class AgentReactorPrimitiveCapability
         implements AgentExecutableCapability<AgentReactorPrimitiveCapability.Command> {
     static final int HIT_INTERVAL_MS = 650;
+    static final int TARGET_RECHECK_MIN_MS = 750;
+    static final int TARGET_RECHECK_JITTER_MS = 750;
 
     public record Command(int mapId,
                           int questId,
@@ -85,14 +87,27 @@ public final class AgentReactorPrimitiveCapability
         if (!scope.allowed()) {
             return AgentPrimitiveResults.blocked(scope.status(), scope.reason());
         }
+        int nextSearchAtMs = context.memory().intValue("nextSearchAtMs", 0);
+        if (context.elapsedMs() < nextSearchAtMs) {
+            if (gateway.lootNearby(context.agent(), command.expectedItemCounts().keySet())) {
+                return AgentCapabilityStep.running(
+                        "reactor drops found; verifying normal pickup result", false);
+            }
+            return AgentCapabilityStep.running("waiting before the next reactor availability check", false);
+        }
         var target = selector.selectReserved(List.copyOf(gateway.reactors(context.agent())), request,
                 context.agent().getId(), context.agent().getMap());
         if (target.isEmpty()) {
             if (gateway.lootNearby(context.agent(), command.expectedItemCounts().keySet())) {
                 return AgentCapabilityStep.running("reactor drops found; verifying normal pickup result", false);
             }
-            return AgentPrimitiveResults.missing("no matching active reactor is in range");
+            int jitter = Math.floorMod(context.agent().getId() * 31, TARGET_RECHECK_JITTER_MS + 1);
+            context.memory().putInt("nextSearchAtMs", (int) Math.min(Integer.MAX_VALUE,
+                    context.elapsedMs() + TARGET_RECHECK_MIN_MS + jitter));
+            return AgentCapabilityStep.running(
+                    "waiting for an unreserved active reactor or an existing quest drop", false);
         }
+        context.memory().putInt("nextSearchAtMs", 0);
         int nextHitAtMs = context.memory().intValue("nextHitAtMs", 0);
         if (context.elapsedMs() < nextHitAtMs) {
             return AgentCapabilityStep.running("waiting for reactor hit cooldown", false);
@@ -103,5 +118,10 @@ public final class AgentReactorPrimitiveCapability
         context.memory().putInt("nextHitAtMs", (int) Math.min(Integer.MAX_VALUE,
                 context.elapsedMs() + HIT_INTERVAL_MS));
         return AgentCapabilityStep.running("reactor hit; verifying resulting live state");
+    }
+
+    @Override
+    public void onTerminal(AgentCapabilityContext context, Command command, AgentCapabilityResult result) {
+        AgentReactorTargetReservationRuntime.release(context.agent().getId());
     }
 }

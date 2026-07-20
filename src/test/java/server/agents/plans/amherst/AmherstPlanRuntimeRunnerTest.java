@@ -230,6 +230,57 @@ class AmherstPlanRuntimeRunnerTest {
     }
 
     @Test
+    void declaredIndependentWorkRunsBeforeADeferredWorldResourceRetry() throws Exception {
+        var fixture = new MutablePrimitiveGatewayFixture();
+        fixture.mapId.set(1010000);
+        fixture.quests.put(1045, 1);
+        AmherstPlanCard base = worldResourceCard();
+        AmherstPlanObjective independent = objective(
+                "independent-quest", AmherstPlanObjectiveKind.QUEST_CHAIN, 1010000,
+                null, List.of(1031), null, null, null, null, null);
+        AmherstPlanCard card = new AmherstPlanCard(
+                base.schemaVersion(), base.planId(), base.title(), base.category(), base.priority(),
+                base.status(), base.objectiveMode(), base.focusPolicy(), base.entryCriteria(),
+                base.exitCriteria(), base.requiredQuestIds(), base.excludedQuestIds(),
+                List.of(base.objectives().get(0), independent));
+        AmherstPlanObjectiveDeferralPolicy policy = new AmherstPlanObjectiveDeferralPolicy() {
+            @Override
+            public boolean canDefer(AmherstPlanCard ignoredCard,
+                                    AmherstPlanObjective ignoredObjective,
+                                    server.agents.capabilities.runtime.AgentCapabilityResult ignoredResult) {
+                return true;
+            }
+
+            @Override
+            public List<AmherstPlanObjective> independentAlternatives(
+                    AmherstPlanCard ignoredCard,
+                    AmherstPlanObjective ignoredObjective,
+                    AmherstPlanProgressSnapshot ignoredProgress,
+                    int ignoredDeferralStage) {
+                return List.of(independent);
+            }
+        };
+        AmherstPlanRuntimeRunner runner = new AmherstPlanRuntimeRunner(
+                card, new FileAmherstPlanProgressStore(tempDir), new AmherstPlanProgressService(),
+                new AmherstObjectiveReconciler(fixture.gateway),
+                new AmherstObjectiveHandlerRegistry(fixture.gateway), AmherstObjectiveDelay.NONE,
+                new AgentObjectiveRecoveryPolicy(5_000L, 15_000L, 2, 500L), policy);
+        runner.start(fixture.entry, fixture.agent, 1L);
+
+        assertTrue(runner.tick(fixture.entry, fixture.agent, 2L));
+        assertTrue(runner.tick(fixture.entry, fixture.agent, 15_002L));
+        assertNull(fixture.entry.amherstPlanExecutionState().assignedObjectiveId());
+        assertTrue(runner.tick(fixture.entry, fixture.agent, 15_502L));
+
+        assertEquals("independent-quest",
+                fixture.entry.amherstPlanExecutionState().assignedObjectiveId());
+        assertEquals(1, fixture.entry.amherstPlanExecutionState()
+                .objectiveDeferralStages.get("wait-for-orange-mushroom"));
+        assertTrue(fixture.entry.amherstPlanExecutionState().progress().journal().stream()
+                .anyMatch(event -> event.message().contains("deferred for independent plan work")));
+    }
+
+    @Test
     void activeQuestCapabilityContinuesWhenLiveQuestStateAlreadySatisfied() throws Exception {
         var fixture = new MutablePrimitiveGatewayFixture();
         AmherstPlanCard card = minimalCard();

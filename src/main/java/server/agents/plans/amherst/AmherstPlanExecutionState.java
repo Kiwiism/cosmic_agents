@@ -2,6 +2,11 @@ package server.agents.plans.amherst;
 
 import server.agents.capabilities.objective.AgentObjectiveProgressWatchdog;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 public final class AmherstPlanExecutionState {
     AmherstPlanRuntimeRunner runner;
     AmherstPlanProgressSnapshot progress;
@@ -11,6 +16,8 @@ public final class AmherstPlanExecutionState {
     int syncedCapabilityJournalCount;
     final AgentObjectiveProgressWatchdog.State objectiveWatchdog =
             new AgentObjectiveProgressWatchdog.State();
+    final Set<String> deferredObjectiveIds = new HashSet<>();
+    final Map<String, Integer> objectiveDeferralStages = new HashMap<>();
     boolean active;
     boolean loading;
     boolean completed;
@@ -57,6 +64,8 @@ public final class AmherstPlanExecutionState {
         objectiveStartExp = 0;
         syncedCapabilityJournalCount = 0;
         objectiveWatchdog.reset();
+        deferredObjectiveIds.clear();
+        objectiveDeferralStages.clear();
         active = false;
         loading = false;
         completed = false;

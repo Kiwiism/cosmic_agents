@@ -4,6 +4,7 @@ import client.Character;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
+import server.agents.capabilities.navigation.AgentVerticalTraversalStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.monitoring.AgentPerformanceMonitor;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -31,11 +32,10 @@ public final class AgentClimbMovementService {
             Rope climbRope = AgentClimbStateRuntime.climbRope(entry);
             int dxOwner = targetPos.x - climbRope.x();
 
-            // A grind route onto a rope is a committed traversal. Keep integrating the vertical
-            // direction selected at entry until the Agent reaches an exit. Re-deriving it from
-            // the live combat target lets target scoring alternate between mobs above and below,
-            // which makes the Agent repeatedly grab the rope, drop to ground, and grab it again.
-            if (AgentModeStateRuntime.grinding(entry)
+            // A vertical transaction keeps integrating the direction selected at entry until its
+            // authored exit. The grind condition remains a compatibility fallback for Agents
+            // attached before a transaction could be formed (for example, restored runtime state).
+            if ((AgentVerticalTraversalStateRuntime.active(entry) || AgentModeStateRuntime.grinding(entry))
                     && AgentClimbStateRuntime.hasClimbVerticalDirection(entry)) {
                 AgentRopeMovementService.advanceClimb(entry, agent);
                 AgentMovementBroadcastService.broadcastMovement(entry);

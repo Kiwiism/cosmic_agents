@@ -58,9 +58,10 @@ import org.slf4j.LoggerFactory;
 import scripting.event.EventInstanceManager;
 import server.StatEffect;
 import server.TimerManager;
+import server.agents.capabilities.quest.AgentQuestKillCreditPolicy;
 import server.integration.AgentPresence;
-import server.loot.LootManager;
 import server.life.simulation.MobControlAuthority;
+import server.loot.LootManager;
 import server.maps.AbstractAnimatedMapObject;
 import server.maps.MapObjectType;
 import server.maps.MapleMap;
@@ -543,7 +544,9 @@ public class Monster extends AbstractLoadedLife {
         return avgExpReward + Math.sqrt(varExpReward);
     }
 
-    private void distributePlayerExperience(Character chr, float exp, float partyBonusMod, int totalPartyLevel, boolean highestPartyDamager, boolean whiteExpGain, boolean hasPartySharers) {
+    private void distributePlayerExperience(Character chr, float exp, float partyBonusMod, int totalPartyLevel,
+                                            boolean highestPartyDamager, boolean whiteExpGain,
+                                            boolean hasPartySharers, int questCreditAgentId) {
         float playerExp = (YamlConfig.config.server.EXP_SPLIT_COMMON_MOD * chr.getLevel()) / totalPartyLevel;
         if (highestPartyDamager) {
             playerExp += YamlConfig.config.server.EXP_SPLIT_MVP_MOD;
@@ -552,11 +555,14 @@ public class Monster extends AbstractLoadedLife {
         playerExp *= exp;
         float bonusExp = partyBonusMod * playerExp;
 
-        this.giveExpToCharacter(chr, playerExp, bonusExp, whiteExpGain, hasPartySharers);
+        this.giveExpToCharacter(chr, playerExp, bonusExp, whiteExpGain, hasPartySharers,
+                questCreditAgentId);
         giveFamilyRep(chr.getFamilyEntry());
     }
 
-    private void distributePartyExperience(Map<Character, Long> partyParticipation, float expPerDmg, Set<Character> underleveled, Map<Integer, Float> personalRatio, double sdevRatio) {
+    private void distributePartyExperience(Map<Character, Long> partyParticipation, float expPerDmg,
+                                           Set<Character> underleveled, Map<Integer, Float> personalRatio,
+                                           double sdevRatio, int questCreditAgentId) {
         IntervalBuilder leechInterval = new IntervalBuilder();
         leechInterval.addInterval(this.getLevel() - YamlConfig.config.server.EXP_SPLIT_LEVEL_INTERVAL, this.getLevel() + YamlConfig.config.server.EXP_SPLIT_LEVEL_INTERVAL);
 
@@ -605,7 +611,9 @@ public class Monster extends AbstractLoadedLife {
         float partyBonusMod = hasPartySharers ? 0.05f * membersSize : 0.0f;
 
         for (Character mc : expMembers) {
-            distributePlayerExperience(mc, participationExp, partyBonusMod, totalPartyLevel, mc == participationMvp, isWhiteExpGain(mc, personalRatio, sdevRatio), hasPartySharers);
+            distributePlayerExperience(mc, participationExp, partyBonusMod, totalPartyLevel,
+                    mc == participationMvp, isWhiteExpGain(mc, personalRatio, sdevRatio),
+                    hasPartySharers, questCreditAgentId);
             giveFamilyRep(mc.getFamilyEntry());
         }
     }
@@ -619,6 +627,7 @@ public class Monster extends AbstractLoadedLife {
         Map<Character, Long> soloExpDist = new HashMap<>();
 
         Map<Integer, Character> mapPlayers = map.getMapAllPlayers();
+        int questCreditAgentId = highestAgentDamagerId(mapPlayers);
 
         int totalEntries = 0;   // counts "participant parties", players who no longer are available in the map is an "independent party"
         for (Entry<Integer, AtomicLong> e : takenDamage.entrySet()) {
@@ -679,11 +688,13 @@ public class Monster extends AbstractLoadedLife {
             float exp = chrParticipation.getValue() * expPerDmg;
             Character chr = chrParticipation.getKey();
 
-            distributePlayerExperience(chr, exp, 0.0f, chr.getLevel(), true, isWhiteExpGain(chr, personalRatio, sdevRatio), false);
+            distributePlayerExperience(chr, exp, 0.0f, chr.getLevel(), true,
+                    isWhiteExpGain(chr, personalRatio, sdevRatio), false, questCreditAgentId);
         }
 
         for (Map<Character, Long> partyParticipation : partyExpDist.values()) {
-            distributePartyExperience(partyParticipation, expPerDmg, underleveled, personalRatio, sdevRatio);
+            distributePartyExperience(partyParticipation, expPerDmg, underleveled, personalRatio,
+                    sdevRatio, questCreditAgentId);
         }
 
         EventInstanceManager eim = getMap().getEventInstance();
@@ -736,7 +747,8 @@ public class Monster extends AbstractLoadedLife {
         return (int) Math.round(exp);    // operations on float point are not point-precise... thanks IxianMace for noticing -1 EXP gains
     }
 
-    private void giveExpToCharacter(Character attacker, Float personalExp, Float partyExp, boolean white, boolean hasPartySharers) {
+    private void giveExpToCharacter(Character attacker, Float personalExp, Float partyExp, boolean white,
+                                    boolean hasPartySharers, int questCreditAgentId) {
         if (attacker.isAlive()) {
             if (personalExp != null) {
                 personalExp *= getStatusExpMultiplier(attacker, hasPartySharers);
@@ -764,8 +776,27 @@ public class Monster extends AbstractLoadedLife {
 
             attacker.gainExp(_personalExp, _partyExp, true, false, white);
             attacker.increaseEquipExp(_personalExp);
-            attacker.raiseQuestMobCount(getId());
+            if (!AgentPresence.isAgent(attacker) || attacker.getId() == questCreditAgentId) {
+                attacker.raiseQuestMobCount(getId());
+            }
         }
+    }
+
+    /**
+     * Agent party members still receive normal EXP, but only the Agent that contributed the most
+     * exact damage receives quest kill credit. Human-player quest behaviour remains unchanged.
+     */
+    private int highestAgentDamagerId(Map<Integer, Character> mapPlayers) {
+        return AgentQuestKillCreditPolicy.highestDamageAgentId(
+                takenDamage.keySet(),
+                attackerId -> {
+                    Character candidate = mapPlayers.get(attackerId);
+                    return candidate != null && AgentPresence.isAgent(candidate);
+                },
+                attackerId -> {
+                    AtomicLong damage = takenDamage.get(attackerId);
+                    return damage == null ? 0L : damage.longValue();
+                });
     }
 
     public List<MonsterDropEntry> retrieveRelevantDrops() {
@@ -893,11 +924,13 @@ public class Monster extends AbstractLoadedLife {
             Map<Integer, Character> mapChars = map.getMapPlayers();
             if (!mapChars.isEmpty()) {
                 int mobid = getId();
+                int questCreditAgentId = highestAgentDamagerId(mapChars);
 
                 for (Integer chrid : attackerChrids) {
                     Character chr = mapChars.get(chrid);
 
-                    if (chr != null && chr.isLoggedinWorld()) {
+                    if (chr != null && chr.isLoggedinWorld()
+                            && (!AgentPresence.isAgent(chr) || chr.getId() == questCreditAgentId)) {
                         chr.raiseQuestMobCount(mobid);
                     }
                 }

@@ -64,6 +64,10 @@ public final class AgentNavigationClimbEntryExecutionService {
     }
 
     private static int plannedClimbDirection(AgentRuntimeEntry entry, int entryY) {
+        int committedDirection = AgentVerticalTraversalService.committedClimbDirection(entry, entryY);
+        if (committedDirection != 0) {
+            return committedDirection;
+        }
         Point plannedTarget = AgentNavigationDebugStateRuntime.plannedNavigationTargetPosition(entry);
         return plannedTarget == null ? 0 : Integer.compare(plannedTarget.y, entryY);
     }

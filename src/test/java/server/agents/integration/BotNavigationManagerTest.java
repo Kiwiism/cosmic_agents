@@ -14,6 +14,7 @@ import server.agents.capabilities.movement.AgentRopeMovementService;
 import server.agents.capabilities.navigation.AgentNavigationEdgeReadinessService;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationTargetService;
+import server.agents.capabilities.navigation.AgentVerticalTraversalStateRuntime;
 import server.agents.capabilities.navigation.AgentNavigationLaunchWindowService;
 import server.agents.capabilities.navigation.AgentNavigationPhysicsService;
 import server.agents.capabilities.navigation.AgentNavigationPathService;
@@ -813,6 +814,64 @@ class BotNavigationManagerTest {
         assertEquals(-1, AgentClimbStateRuntime.climbVerticalDirection(entry));
         assertTrue(bot.getPosition().y < 120,
                 "a lower live target must not reverse an already committed upward rope route");
+    }
+
+    @Test
+    void shouldCommitCompleteRopeCrossingBeforeAcceptingOppositeLiveTarget() {
+        MapleMap map = new MapleMap(910000205, 0, 0, 910000205, 1.0f);
+        FootholdTree footholds = new FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(200, 100), 1));
+        footholds.insert(new Foothold(new Point(0, 300), new Point(200, 300), 2));
+        map.setFootholds(footholds);
+        Rope rope = new Rope(100, 100, 300, false);
+        map.addRope(rope);
+        AgentNavigationGraph graph = AgentNavigationGraphService.rebuildGraph(map);
+
+        Character bot = mockBot(new Point(100, 300), map);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
+        AgentMovementStateRuntime.setMovementProfile(entry, AgentMovementProfile.base());
+        Point upperTarget = new Point(150, 100);
+
+        AgentNavigationTargetService.NavigationDirective entryDirective =
+                AgentNavigationTargetService.resolveTarget(entry, upperTarget, true);
+
+        assertTrue(entryDirective.consumedTick());
+        assertTrue(AgentVerticalTraversalStateRuntime.active(entry));
+        assertTrue(AgentClimbStateRuntime.climbing(entry));
+        assertEquals(-1, AgentClimbStateRuntime.climbVerticalDirection(entry));
+
+        // Combat scoring now prefers a mob back on the lower platform. The crossing remains
+        // latched to the upper exit instead of re-entering the ground/rope oscillation.
+        AgentNavigationTargetService.resolveTarget(entry, new Point(50, 300), true);
+
+        AgentNavigationGraph.Edge committedExit =
+                (AgentNavigationGraph.Edge) AgentNavigationDebugStateRuntime.activeNavigationEdge(entry);
+        assertNotNull(committedExit);
+        assertEquals(AgentNavigationGraph.EdgeType.CLIMB, committedExit.type);
+        assertTrue(graph.getRegion(committedExit.fromRegionId).isRopeRegion);
+        assertEquals(graph.findRegionId(map, upperTarget), committedExit.toRegionId);
+        assertEquals(upperTarget, AgentNavigationDebugStateRuntime.plannedNavigationTargetPosition(entry));
+        assertEquals(-1, AgentClimbStateRuntime.climbVerticalDirection(entry));
+
+        AgentRopeMovementService.attachToRope(entry, bot, rope, 101, -1);
+        AgentClimbMovementService.tickClimbing(entry, new Point(50, 300), true);
+        assertFalse(AgentClimbStateRuntime.climbing(entry));
+        assertEquals(new Point(100, 100), bot.getPosition());
+
+        assertFalse(AgentNavigationTargetService.tryExecuteCommittedEdgeAfterGroundMovement(
+                entry, new Point(50, 300)));
+        assertTrue(AgentVerticalTraversalStateRuntime.active(entry),
+                "the post-movement landing hook must preserve the wider traversal transaction");
+
+        AgentNavigationTargetService.NavigationDirective groundedHandoff =
+                AgentNavigationTargetService.resolveTarget(entry, new Point(50, 300), true);
+        assertFalse(groundedHandoff.consumedTick());
+        assertEquals(upperTarget, groundedHandoff.targetPos());
+        assertEquals("vertical-settle", AgentNavigationDebugStateRuntime.lastDecision(entry));
+        assertTrue(AgentVerticalTraversalStateRuntime.active(entry));
+
+        AgentNavigationTargetService.resolveTarget(entry, new Point(50, 300), true);
+        assertFalse(AgentVerticalTraversalStateRuntime.active(entry));
     }
 
     @Test

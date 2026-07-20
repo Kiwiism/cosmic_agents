@@ -43,8 +43,9 @@ public final class AgentReactorTargetReservationRuntime {
             }
         }
 
-        // More Agents than boxes: allow sharing rather than stalling the quest.
-        return candidates.stream().findFirst();
+        // A live reactor can only satisfy one hit sequence at a time. Returning no target lets
+        // the objective wait/replan instead of sending a cohort to the same respawning box.
+        return Optional.empty();
     }
 
     public static synchronized void release(int agentId) {

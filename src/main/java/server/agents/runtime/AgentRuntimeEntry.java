@@ -7,6 +7,7 @@ import server.agents.capabilities.navigation.AgentNavigationEdgeState;
 import server.agents.capabilities.navigation.AgentNavigationTargetState;
 import server.agents.capabilities.navigation.AgentPortalCooldownState;
 import server.agents.capabilities.navigation.AgentTravelVariationState;
+import server.agents.capabilities.navigation.AgentVerticalTraversalState;
 import server.agents.capabilities.runtime.AgentCapabilityRuntimeState;
 import server.agents.capabilities.objective.AgentObjectiveVariationState;
 
@@ -439,6 +440,7 @@ public class AgentRuntimeEntry implements AgentRuntimeHandle {
     private final AgentNavigationContinuityState navigationContinuityState = new AgentNavigationContinuityState();
     private final AgentNavigationEdgeState navigationEdgeState = new AgentNavigationEdgeState();
     private final AgentNavigationTargetState navigationTargetState = new AgentNavigationTargetState();
+    private final AgentVerticalTraversalState verticalTraversalState = new AgentVerticalTraversalState();
     private final AgentTravelVariationState travelVariationState = new AgentTravelVariationState();
     private final AgentFarmAnchorState farmAnchorState = new AgentFarmAnchorState();
     private final AgentMovementBroadcastState movementBroadcastState = new AgentMovementBroadcastState();
@@ -471,6 +473,10 @@ public class AgentRuntimeEntry implements AgentRuntimeHandle {
 
     public AgentNavigationTargetState navigationTargetState() {
         return navigationTargetState;
+    }
+
+    public AgentVerticalTraversalState verticalTraversalState() {
+        return verticalTraversalState;
     }
 
     public AgentTravelVariationState travelVariationState() {

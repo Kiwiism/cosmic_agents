@@ -249,6 +249,17 @@ public enum CosmicPrimitiveCapabilityGateway implements PrimitiveCapabilityGatew
     }
 
     @Override
+    public void grind(AgentRuntimeEntry entry,
+                      Set<Integer> preferredMobIds,
+                      Set<Integer> fallbackMobIds) {
+        AgentCombatObjectiveTargetStateRuntime.setTargetPreferences(
+                entry, preferredMobIds, fallbackMobIds);
+        if (!AgentModeStateRuntime.grinding(entry)) {
+            AgentModeService.startGrind(entry, AgentMovementStateResetService::clearNavigationState);
+        }
+    }
+
+    @Override
     public void stop(AgentRuntimeEntry entry) {
         AgentCombatObjectiveTargetStateRuntime.clear(entry);
         AgentModeService.startStop(entry);

@@ -73,16 +73,43 @@ public final class AgentNavigationTargetService {
             int targetRegionId = AgentNavigationRegionService.resolveTargetRegionId(graph, entry, bot.getMap(), rawTargetPos);
             Point pathTargetPos = adjustPathTarget(entry, graph, targetRegionId, rawTargetPos);
 
-            AgentNavigationGraph.Edge edge = reuseCommittedEdge(
-                    graph, entry, startRegionId, targetRegionId, pathTargetPos);
-            boolean edgeReused = (edge != null);
-            if (edgeReused) {
-                AgentNavigationGraph.Edge refreshedEdge = refreshPendingClimbExitEdge(
-                        graph, entry, bot, botPos, startRegionId, targetRegionId, pathTargetPos, edge, runAiTick);
-                if (refreshedEdge != edge) {
-                    edge = refreshedEdge;
-                    edgeReused = edge != null;
-                }
+            boolean traversalWasActive = AgentVerticalTraversalStateRuntime.active(entry);
+            AgentVerticalTraversalService.TraversalDirective traversal =
+                    AgentVerticalTraversalService.resolve(
+                            graph, entry, bot, startRegionId, runAiTick,
+                            AgentNavigationPathService::isEdgeUsable);
+            if (traversal != null && traversal.holdGroundedExit()) {
+                AgentNavigationDebugStateRuntime.clearActiveNavigationEdge(entry);
+                AgentNavigationDebugStateRuntime.clearNavJumpLaunch(entry);
+                AgentNavigationDebugStateRuntime.setNavTargetRegionId(entry, traversal.targetRegionId());
+                AgentNavigationDebugStateRuntime.setNavWaypoint(entry, traversal.targetPosition(), false);
+                AgentNavigationDebugStateRuntime.setLastDecision(entry, "vertical-settle");
+                AgentNavigationDebugStateRuntime.recordPathLog(entry,
+                        AgentMovementTargetRuntime.captureTargetSnapshot(entry, rawTargetPos),
+                        startRegionId, false, runAiTick);
+                return new NavigationDirective(traversal.targetPosition(), false);
+            }
+            if (traversalWasActive && traversal == null) {
+                // The transaction either completed or invalidated. Do not let its last component
+                // leak into ordinary live-target planning.
+                AgentNavigationDebugStateRuntime.clearActiveNavigationEdge(entry);
+                AgentNavigationDebugStateRuntime.clearNavJumpLaunch(entry);
+                AgentNavigationDebugStateRuntime.clearNavTarget(entry);
+            }
+
+            AgentNavigationGraph.Edge edge;
+            boolean edgeReused;
+            if (traversal != null) {
+                edge = traversal.edge();
+                pathTargetPos = traversal.targetPosition();
+                targetRegionId = traversal.targetRegionId();
+                edgeReused = true;
+                AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, edge);
+                AgentNavigationDebugStateRuntime.setPlannedNavigationTargetPosition(entry, pathTargetPos);
+                AgentNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
+            } else {
+                edge = reuseCommittedEdge(graph, entry, startRegionId, targetRegionId, pathTargetPos);
+                edgeReused = edge != null;
                 if (edgeReused) {
                     AgentNavigationGraph.Edge refreshedGroundEdge = refreshCommittedGroundEdge(
                             graph, entry, bot, startRegionId, targetRegionId, pathTargetPos, edge, runAiTick);
@@ -102,6 +129,12 @@ public final class AgentNavigationTargetService {
                     AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, edge);
                     AgentNavigationDebugStateRuntime.setPlannedNavigationTargetPosition(entry, pathTargetPos);
                     AgentNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
+                    AgentVerticalTraversalService.beginIfRopeEntry(
+                            graph, entry, bot, edge, targetRegionId, pathTargetPos,
+                            (activeGraph, activeBot, activeStartPosition, activeStartRegionId,
+                             activeTargetRegionId, activeTargetPos) ->
+                                    findNextEdge(activeGraph, entry, activeBot, activeStartPosition,
+                                            activeStartRegionId, activeTargetRegionId, activeTargetPos));
                 }
             }
 
@@ -171,7 +204,15 @@ public final class AgentNavigationTargetService {
                 AgentNavigationDebugStateRuntime.navTargetRegionId(entry),
                 AgentNavigationDebugStateRuntime.plannedNavigationTargetPosition(entry));
         if (edge == null) {
-            AgentMovementStateResetService.clearNavigationState(entry);
+            if (AgentVerticalTraversalStateRuntime.active(entry)) {
+                // Landing can complete the exit edge between resolveTarget and this post-movement
+                // hook. Preserve the wider traversal transaction so the next resolver observes
+                // the grounded destination and performs its one-tick hand-off there.
+                AgentNavigationDebugStateRuntime.clearActiveNavigationEdge(entry);
+                AgentNavigationDebugStateRuntime.clearNavJumpLaunch(entry);
+            } else {
+                AgentMovementStateResetService.clearNavigationState(entry);
+            }
             return false;
         }
 
@@ -183,24 +224,6 @@ public final class AgentNavigationTargetService {
 
         AgentNavigationDebugStateRuntime.setLastDecision(entry, "exec");
         return true;
-    }
-
-    private static AgentNavigationGraph.Edge refreshPendingClimbExitEdge(AgentNavigationGraph graph,
-                                                                         AgentRuntimeEntry entry,
-                                                                         Character bot,
-                                                                         Point botPos,
-                                                                         int startRegionId,
-                                                                         int targetRegionId,
-                                                                         Point targetPos,
-                                                                         AgentNavigationGraph.Edge edge,
-                                                                         boolean runAiTick) {
-        return AgentNavigationCommittedEdgeService.refreshPendingClimbExitEdge(graph, entry, bot, botPos,
-                startRegionId, targetRegionId, targetPos, edge, runAiTick,
-                (activeGraph, activeBot, activeBotPos, activeEdge) ->
-                        canExecuteClimbExitFromCurrentPosition(activeGraph, activeBot.getMap(), activeBotPos, activeEdge),
-                (activeGraph, activeBot, activeStartRegionId, activeTargetRegionId, activeTargetPos) ->
-                        findNextEdge(activeGraph, entry, activeBot, activeStartRegionId,
-                                activeTargetRegionId, activeTargetPos));
     }
 
     private static AgentNavigationGraph.Edge refreshCommittedGroundEdge(AgentNavigationGraph graph,
@@ -235,10 +258,20 @@ public final class AgentNavigationTargetService {
                                                            int startRegionId,
                                                            int targetRegionId,
                                                            Point targetPos) {
+        return findNextEdge(graph, entry, bot, bot.getPosition(), startRegionId, targetRegionId, targetPos);
+    }
+
+    private static AgentNavigationGraph.Edge findNextEdge(AgentNavigationGraph graph,
+                                                           AgentRuntimeEntry entry,
+                                                           Character bot,
+                                                           Point startPosition,
+                                                           int startRegionId,
+                                                           int targetRegionId,
+                                                           Point targetPos) {
         AgentTravelVariationRuntime.RouteVariation variation = scriptedRouteVariation(
                 entry, graph.mapId, targetRegionId, targetPos);
         return AgentNavigationPathService.findNextEdgeVaried(
-                graph, bot, startRegionId, targetRegionId, targetPos, variation);
+                graph, bot.getMap(), startPosition, startRegionId, targetRegionId, targetPos, variation);
     }
 
     static AgentTravelVariationRuntime.RouteVariation scriptedRouteVariation(
