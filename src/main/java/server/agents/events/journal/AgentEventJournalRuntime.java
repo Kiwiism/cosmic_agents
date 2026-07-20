@@ -2,6 +2,8 @@ package server.agents.events.journal;
 
 import server.agents.events.AgentEvent;
 
+import java.util.List;
+
 /** Lazily owns the optional process-wide durable event writer. */
 public final class AgentEventJournalRuntime {
     private static AgentEventJournalConfig config;
@@ -28,6 +30,11 @@ public final class AgentEventJournalRuntime {
                     0, 0L, 0L, 0L, 0L);
         }
         return journal.snapshot();
+    }
+
+    /** Explicit blocking diagnostic/offline read; never call from an Agent tick or event listener. */
+    public static synchronized List<AgentEventJournalRecord> replay(AgentEventReplayQuery query) {
+        return new AgentEventJournalReplayReader(config().path()).query(query);
     }
 
     static synchronized void resetForTests() {

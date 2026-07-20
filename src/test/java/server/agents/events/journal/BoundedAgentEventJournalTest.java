@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -39,5 +40,25 @@ class BoundedAgentEventJournalTest {
         assertEquals("advance-warrior", record.path("context").path("objectiveId").asText());
         assertEquals(1, journal.snapshot().written());
         assertEquals(0, journal.snapshot().rejected());
+    }
+
+    @Test
+    void replaysUsingBoundedAgentObjectiveTypeAndTimeFilters() {
+        Path journalPath = temporaryDirectory.resolve("replay.jsonl");
+        BoundedAgentEventJournal journal = new BoundedAgentEventJournal(
+                new AgentEventJournalConfig(true, journalPath, 4, 1024 * 1024));
+        journal.offer(new AgentJobAdvancedEvent(
+                1, 20L, 0, 100, 10, 100000000, "warrior"));
+        journal.offer(new AgentJobAdvancedEvent(
+                2, 30L, 0, 200, 10, 101000000, "magician"));
+        journal.close();
+
+        List<AgentEventJournalRecord> records = new AgentEventJournalReplayReader(journalPath).query(
+                new AgentEventReplayQuery(2, "magician", "magician",
+                        Set.of(AgentJobAdvancedEvent.TYPE), 25L, 35L, 1));
+
+        assertEquals(1, records.size());
+        assertEquals(2, records.getFirst().agentId());
+        assertEquals("magician", records.getFirst().context().objectiveId());
     }
 }
