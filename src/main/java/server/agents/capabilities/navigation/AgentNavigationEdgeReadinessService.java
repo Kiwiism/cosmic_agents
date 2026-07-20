@@ -1,7 +1,5 @@
 package server.agents.capabilities.navigation;
 
-import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
-
 import java.awt.Point;
 
 /**
@@ -21,11 +19,11 @@ public final class AgentNavigationEdgeReadinessService {
 
         return switch (edge.type) {
             case JUMP -> dx <= JUMP_READY_X_TOLERANCE
-                    && dy <= AgentMovementPhysicsConfig.configuredJumpYThreshold();
+                    && dy <= AgentNavigationPhysicsService.jumpYThreshold();
             case DROP, CLIMB, PORTAL -> dx <= EDGE_READY_X_TOLERANCE
-                    && dy <= AgentMovementPhysicsConfig.configuredJumpYThreshold() * 2;
-            default -> dx <= AgentMovementPhysicsConfig.configuredStopDist() + 8
-                    && dy <= AgentMovementPhysicsConfig.configuredJumpYThreshold() * 2;
+                    && dy <= AgentNavigationPhysicsService.jumpYThreshold() * 2;
+            default -> dx <= AgentNavigationPhysicsService.stopDistance() + 8
+                    && dy <= AgentNavigationPhysicsService.jumpYThreshold() * 2;
         };
     }
 

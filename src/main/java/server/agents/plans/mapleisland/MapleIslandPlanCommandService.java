@@ -15,6 +15,7 @@ import server.agents.plans.amherst.AmherstQuestCatalog;
 import server.agents.capabilities.quest.MapleIslandSouthperryBaseline;
 import server.agents.plans.amherst.MapleIslandSouthperryQuestCatalog;
 import server.agents.integration.AgentMapGatewayRuntime;
+import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.cosmic.CosmicMapleIslandCohortIdentity;
 import server.agents.plans.amherst.AmherstObjectiveProgressStatus;
@@ -305,7 +306,7 @@ public final class MapleIslandPlanCommandService {
         for (Integer questId : questIds) {
             Quest.getInstance(questId).reset(player);
         }
-        player.saveCharToDB(false);
+        AgentCharacterGatewayRuntime.characters().save(player, false);
         message(player, "Reset " + questIds.size() + " Maple Island run quests for "
                 + player.getName() + ". Level, stats, equipment, inventory, position, and unrelated quests were preserved.");
     }

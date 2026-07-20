@@ -9,6 +9,8 @@ import server.agents.capabilities.quest.AmherstTestRuntimeResetService;
 import server.agents.capabilities.shop.AgentShopService;
 import server.agents.capabilities.supplies.AgentResourcePlanningState;
 import server.agents.capabilities.supplies.AgentSupplyProcurementState;
+import server.agents.integration.AgentCharacterGatewayRuntime;
+import server.agents.integration.AgentClientGatewayRuntime;
 import server.agents.integration.AgentMapGatewayRuntime;
 import server.agents.integration.cosmic.CosmicMapleIslandCohortIdentity;
 import server.agents.objectives.AgentObjectiveState;
@@ -91,7 +93,7 @@ public final class VictoriaFirstJobMvpTestService {
                 nowMs + START_DELAY_MS);
         AgentCareerProgressionCheckpointRuntime.persistIfDirty(entry, nowMs);
         agent.equipChanged();
-        agent.saveCharToDB(false);
+        AgentCharacterGatewayRuntime.characters().save(agent, false);
         return bundle;
     }
 
@@ -123,7 +125,9 @@ public final class VictoriaFirstJobMvpTestService {
 
     private static void moveToLithHarbor(AgentRuntimeEntry entry, Character agent) {
         var maps = AgentMapGatewayRuntime.map();
-        var map = maps.resolveMap(agent.getWorld(), agent.getClient().getChannel(), LITH_HARBOR_MAP_ID);
+        var clients = AgentClientGatewayRuntime.clients();
+        var map = maps.resolveMap(
+                clients.world(agent), clients.channel(agent), LITH_HARBOR_MAP_ID);
         Point spawn = map.getPortal(0) != null
                 ? new Point(map.getPortal(0).getPosition())
                 : new Point(map.getRandomPlayerSpawnpoint().getPosition());

@@ -3,7 +3,6 @@ package server.agents.capabilities.dialogue;
 import client.Character;
 import server.agents.capabilities.contracts.AgentResourceCategory;
 import server.agents.capabilities.contracts.AgentSupplyUrgency;
-import server.agents.capabilities.supplies.AgentSupplyDialogueReactionService;
 import server.agents.integration.AgentClientGatewayRuntime;
 import server.agents.integration.AgentMapGatewayRuntime;
 import server.agents.integration.AgentPacketGatewayRuntime;

@@ -1,7 +1,5 @@
 package server.agents.capabilities.navigation;
 
-import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
-
 import java.awt.Point;
 
 /**
@@ -36,7 +34,7 @@ public final class AgentNavigationLaunchWindowService {
         }
 
         Point expectedLaunchPoint = fromRegion.pointAt(botPos.x);
-        return Math.abs(botPos.y - expectedLaunchPoint.y) <= AgentMovementPhysicsConfig.configuredJumpYThreshold();
+        return Math.abs(botPos.y - expectedLaunchPoint.y) <= AgentNavigationPhysicsService.jumpYThreshold();
     }
 
     public static boolean isWithinDropLaunchWindow(AgentNavigationGraph graph,
@@ -50,7 +48,7 @@ public final class AgentNavigationLaunchWindowService {
         }
 
         if (graph == null) {
-            return Math.abs(botPos.y - edge.startPoint.y) <= AgentMovementPhysicsConfig.configuredJumpYThreshold();
+            return Math.abs(botPos.y - edge.startPoint.y) <= AgentNavigationPhysicsService.jumpYThreshold();
         }
 
         AgentNavigationGraph.Region fromRegion = graph.getRegion(edge.fromRegionId);
@@ -59,7 +57,7 @@ public final class AgentNavigationLaunchWindowService {
         }
 
         Point expectedLaunchPoint = fromRegion.pointAt(botPos.x);
-        return Math.abs(botPos.y - expectedLaunchPoint.y) <= AgentMovementPhysicsConfig.configuredJumpYThreshold();
+        return Math.abs(botPos.y - expectedLaunchPoint.y) <= AgentNavigationPhysicsService.jumpYThreshold();
     }
 
     public static boolean hasReachedDirectionalDropRunway(Point botPos, AgentNavigationGraph.Edge edge) {

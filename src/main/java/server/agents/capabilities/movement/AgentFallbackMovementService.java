@@ -2,7 +2,6 @@ package server.agents.capabilities.movement;
 
 import client.Character;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
-import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
@@ -103,7 +102,7 @@ public final class AgentFallbackMovementService {
     }
 
     public static boolean shouldWalkOffLedge(AgentRuntimeEntry entry, Point botPos, Point targetPos, int stepX) {
-        if (entry == null || !AgentNavigationDebugStateRuntime.graphWarmupFallback(entry) || botPos == null || targetPos == null || stepX == 0) {
+        if (entry == null || !AgentMovementNavigationStateRuntime.graphWarmupFallback(entry) || botPos == null || targetPos == null || stepX == 0) {
             return false;
         }
         if (targetPos.y <= botPos.y + AgentMovementPhysicsConfig.configuredMaxSnapDrop()) {

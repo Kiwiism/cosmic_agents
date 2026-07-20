@@ -1,8 +1,9 @@
 # Agent personality presentation
 
 This first implementation slice makes visible Agent behavior less synchronized
-without moving correctness decisions into personality code. It is deliberately
-enabled only for Maple Island cohort runs using `full` realism.
+without moving correctness decisions into personality code. Durable personality
+identity is assigned during normal Agent registration; visible presentation is
+deliberately enabled only for Maple Island cohort runs using `full` realism.
 
 ## Boundaries
 
@@ -13,8 +14,8 @@ pause, turn, prone tap, short shuffle, hop, combat pause, or linger.
 
 The execution safety gate rejects a presentation intent when the Agent is dead,
 airborne, climbing, down-jumping, on an active navigation edge, already
-fidgeting, near a precise destination, or lacks safe ground. Required plan and
-movement work therefore keeps priority.
+fidgeting, or lacks safe ground. Movement intents are also rejected near a
+destination. Required plan and movement work therefore keeps priority.
 
 Cosmetic intents execute only while at least one real player observes the map.
 Agent-to-Agent simulation does not spend movement work on presentation. The
@@ -36,8 +37,8 @@ It currently contains four archetypes:
 - `restless-v1`: highly active and expressive with more movement variation;
 - `explorer-v1`: curiosity-led with more route and reposition variation.
 
-Each character receives a deterministic profile on first use. Its independent
-behavior seed and exact profile version are then stored under:
+Each registered Agent receives a deterministic profile. Its independent behavior
+seed and exact profile version are then stored under:
 
 ```text
 .runtime/agents/personality/assignments/<characterId>.json
@@ -60,8 +61,9 @@ Meaningful existing Agent events feed the presentation resolver:
 
 The resolver holds at most one pending intent per Agent. Additional eligible
 events coalesce instead of creating an unbounded action queue. The serialized
-navigation tick consumes due intents through the same movement/fidget services
-as existing Agent behavior.
+Agent live-mode tick consumes due intents after higher-priority capability and
+shop work, but before follow, combat, and ordinary movement modes. Execution
+uses the existing movement/fidget services without belonging to navigation.
 
 This is intentionally a presentation adapter over the event system. Future
 personality-driven decisions can consume the same semantic profile through a

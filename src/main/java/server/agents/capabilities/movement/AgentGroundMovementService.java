@@ -1,7 +1,6 @@
 package server.agents.capabilities.movement;
 
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
-import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
@@ -16,7 +15,7 @@ public final class AgentGroundMovementService {
         if (entry == null || !AgentRuntimeIdentityRuntime.hasBot(entry) || botPos == null || targetPos == null) {
             return 0;
         }
-        if (AgentNavigationDebugStateRuntime.graphWarmupFallback(entry)) {
+        if (AgentMovementNavigationStateRuntime.graphWarmupFallback(entry)) {
             int localStopDist = Math.min(stopDist, 12);
             return updateStepX(entry, AgentRuntimeIdentityRuntime.botMap(entry), botPos.x, targetPos.x, localStopDist, localStopDist);
         }

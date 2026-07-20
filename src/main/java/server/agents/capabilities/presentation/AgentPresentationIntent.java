@@ -1,6 +1,6 @@
 package server.agents.capabilities.presentation;
 
-/** Cosmetic intent. Execution remains inside existing movement/combat capabilities. */
+/** Cosmetic intent executed through existing movement/fidget services. */
 public enum AgentPresentationIntent {
     WAIT,
     TURN,

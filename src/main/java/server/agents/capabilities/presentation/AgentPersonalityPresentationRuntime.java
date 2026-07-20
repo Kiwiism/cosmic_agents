@@ -1,11 +1,8 @@
 package server.agents.capabilities.presentation;
 
-import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.model.AgentId;
-import server.agents.model.AgentIdentity;
-import server.agents.personality.AgentPersonalityAssignmentService;
 import server.agents.personality.AgentPersonalityProfile;
 import server.agents.personality.AgentPersonalityState;
+import server.agents.runtime.AgentPersonalityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /** Runtime assignment and deterministic scheduling; rollout adapters choose activation. */
@@ -15,16 +12,11 @@ public final class AgentPersonalityPresentationRuntime {
 
     public static AgentPersonalityProfile configure(
             AgentRuntimeEntry entry, boolean enabled, long nowMs) {
-        int characterId = AgentRuntimeIdentityRuntime.botId(entry);
-        String characterName = AgentRuntimeIdentityRuntime.botName(entry);
-        if (characterId <= 0 || characterName == null || characterName.isBlank()) {
+        AgentPersonalityProfile profile = AgentPersonalityRuntime.restoreOrAssign(
+                entry, enabled, nowMs);
+        if (entry == null) {
             return null;
         }
-        AgentPersonalityState personality = entry.capabilityStates().require(
-                AgentPersonalityState.STATE_KEY);
-        AgentPersonalityProfile profile = AgentPersonalityAssignmentService.restoreOrAssign(
-                personality, new AgentIdentity(new AgentId(characterId), characterName),
-                enabled, nowMs);
         AgentPresentationState state = entry.capabilityStates().require(AgentPresentationState.STATE_KEY);
         state.clear();
         if (profile != null && enabled) {

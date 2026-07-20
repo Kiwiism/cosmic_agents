@@ -1,12 +1,13 @@
 package server.agents.capabilities.presentation;
 
+import client.Character;
 import server.agents.capabilities.movement.AgentGroundCollisionService;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.capabilities.movement.fidget.AgentFidgetStateRuntime;
 import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
-import server.agents.capabilities.runtime.AgentCapabilityContext;
 import server.agents.integration.PrimitiveCapabilityGateway;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
@@ -27,51 +28,60 @@ public final class AgentPresentationSafetyGate {
     private AgentPresentationSafetyGate() {
     }
 
-    public static Result evaluate(AgentCapabilityContext context,
+    public static Result evaluate(AgentRuntimeEntry entry,
+                                  Character agent,
                                   AgentPresentationDecision decision,
                                   Point destination,
-                                  int tolerancePx,
-                                  boolean precise,
                                   PrimitiveCapabilityGateway gateway) {
-        if (!gateway.alive(context.agent())) {
+        if (!gateway.alive(agent)) {
             return Result.DEAD;
         }
-        if (precise) {
+        if (AgentNavigationDebugStateRuntime.navPreciseTarget(entry)) {
             return Result.PRECISE_NAVIGATION;
         }
-        Point position = gateway.position(context.agent());
-        int arrivalGuardPx = Math.max(48, tolerancePx + 32);
-        if (position.distanceSq(destination) <= (long) arrivalGuardPx * arrivalGuardPx) {
+        Point position = gateway.position(agent);
+        if (position == null) {
+            return Result.UNSAFE_GROUND;
+        }
+        int arrivalGuardPx = 48;
+        if (destination != null && movementIntent(decision.intent())
+                && position.distanceSq(destination) <= (long) arrivalGuardPx * arrivalGuardPx) {
             return Result.NEAR_DESTINATION;
         }
-        if (!gateway.grounded(context.agent()) || AgentMovementStateRuntime.inAir(context.entry())) {
+        if (!gateway.grounded(agent) || AgentMovementStateRuntime.inAir(entry)) {
             return Result.AIRBORNE;
         }
-        if (AgentMovementStateRuntime.climbing(context.entry())) {
+        if (AgentMovementStateRuntime.climbing(entry)) {
             return Result.CLIMBING;
         }
-        if (AgentMovementStateRuntime.downJumpPending(context.entry())) {
+        if (AgentMovementStateRuntime.downJumpPending(entry)) {
             return Result.DOWN_JUMP;
         }
-        if (AgentNavigationDebugStateRuntime.hasActiveNavigationEdge(context.entry())) {
+        if (AgentNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)) {
             return Result.ACTIVE_NAVIGATION_EDGE;
         }
-        if (AgentFidgetStateRuntime.active(context.entry())) {
+        if (AgentFidgetStateRuntime.active(entry)) {
             return Result.ACTIVE_FIDGET;
         }
         if (decision.intent() == AgentPresentationIntent.HOP
                 || decision.intent() == AgentPresentationIntent.SHUFFLE
                 || decision.intent() == AgentPresentationIntent.COMBAT_REPOSITION) {
             int step = AgentMovementKinematicsService.walkStep(
-                    context.agent().getMap(), AgentMovementStateRuntime.movementProfile(context.entry()));
+                    agent.getMap(), AgentMovementStateRuntime.movementProfile(entry));
             boolean left = AgentGroundCollisionService.canWalkGroundStep(
-                    context.agent().getMap(), position, -step);
+                    agent.getMap(), position, -step);
             boolean right = AgentGroundCollisionService.canWalkGroundStep(
-                    context.agent().getMap(), position, step);
+                    agent.getMap(), position, step);
             if (decision.intent() == AgentPresentationIntent.HOP ? !(left && right) : !(left || right)) {
                 return Result.UNSAFE_GROUND;
             }
         }
         return Result.SAFE;
+    }
+
+    private static boolean movementIntent(AgentPresentationIntent intent) {
+        return intent == AgentPresentationIntent.HOP
+                || intent == AgentPresentationIntent.SHUFFLE
+                || intent == AgentPresentationIntent.COMBAT_REPOSITION;
     }
 }

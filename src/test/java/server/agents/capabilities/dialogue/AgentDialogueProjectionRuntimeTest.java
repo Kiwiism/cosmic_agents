@@ -1,7 +1,6 @@
 package server.agents.capabilities.dialogue;
 
 import org.junit.jupiter.api.Test;
-import server.agents.capabilities.supplies.AgentSupplyDialogueReactionService;
 import server.agents.progression.events.AgentProgressionDialogueReactionService;
 import server.agents.resources.events.AgentResourceDialogueReactionService;
 import server.agents.operations.events.AgentOperationalDialogueReactionService;

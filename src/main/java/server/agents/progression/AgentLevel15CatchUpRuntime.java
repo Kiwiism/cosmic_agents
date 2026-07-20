@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.capabilities.build.AgentBuildService;
 import server.agents.capabilities.build.profiles.AgentApBuildProfileService;
+import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.integration.PrimitiveCapabilityGateway;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -129,7 +130,7 @@ final class AgentLevel15CatchUpRuntime {
         AgentBuildService.autoAssignSp(entry, agent);
         state.stage(AgentCareerProgressionState.Stage.COMPLETE, nowMs);
         AgentCareerObjectiveRuntime.succeed(entry, nowMs);
-        agent.saveCharToDB(false);
+        AgentCharacterGatewayRuntime.characters().save(agent, false);
         try {
             AgentVictoriaProgressionDiagnostics.captureMilestone(
                     entry, agent, "first-job-level15", nowMs);

@@ -1,9 +1,8 @@
-package server.agents.capabilities.supplies;
+package server.agents.capabilities.dialogue;
 
 import server.agents.capabilities.contracts.AgentResourceCategory;
 import server.agents.capabilities.contracts.AgentSupplyUrgency;
-import server.agents.capabilities.dialogue.AgentDialogueAudience;
-import server.agents.capabilities.dialogue.AgentDialogueIntentEvent;
+import server.agents.capabilities.supplies.AgentSupplyThresholdChangedEvent;
 import server.agents.events.AgentEvent;
 import server.agents.events.AgentEventBus;
 import server.agents.events.AgentEventListener;
