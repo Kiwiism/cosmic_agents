@@ -1,7 +1,8 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.dialogue.conversation.AgentConversationRuntime;
+import server.agents.capabilities.dialogue.semantic.AgentDialogueMetrics;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
-
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.navigation.AgentCollisionPortalService;
 import server.agents.capabilities.trade.AgentOfferService;
@@ -22,11 +23,20 @@ public final class AgentTickPreflightRuntime {
         if (entry != null && !AgentLifecycleStateRuntime.active(entry)) {
             return new AgentTickPreflightService.Result(true, AgentRuntimeIdentityRuntime.bot(entry), false);
         }
-        return AgentTickPreflightService.runPreflight(
+        AgentTickPreflightService.Result result = AgentTickPreflightService.runPreflight(
                 entry,
                 agentCharId,
                 nowMs,
                 hooks());
+        if (!result.consumedTick() && result.agent() != null) {
+            try {
+                AgentConversationRuntime.tick(entry, result.agent(), nowMs);
+            } catch (RuntimeException ignored) {
+                // Ancillary dialogue must never consume or fail the gameplay tick.
+                AgentDialogueMetrics.recordFailure();
+            }
+        }
+        return result;
     }
 
     private static AgentTickPreflightService.Hooks hooks() {

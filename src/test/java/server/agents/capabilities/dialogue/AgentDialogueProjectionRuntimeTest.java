@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import server.agents.progression.events.AgentProgressionDialogueReactionService;
 import server.agents.resources.events.AgentResourceDialogueReactionService;
 import server.agents.operations.events.AgentOperationalDialogueReactionService;
+import server.agents.capabilities.dialogue.semantic.AgentSemanticDialogueRuntime;
 
 import java.util.Map;
 
@@ -12,6 +13,16 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentDialogueProjectionRuntimeTest {
+    @Test
+    void rendersAlreadyRealizedSemanticDialogueText() {
+        AgentDialogueIntentEvent semantic = new AgentDialogueIntentEvent(
+                1, 100L, AgentSemanticDialogueRuntime.SEMANTIC_INTENT_KEY,
+                AgentDialogueAudience.NEARBY_REAL_PLAYER, "semantic", 0L,
+                Map.of("text", "Let's keep going!", "topicId", "encouragement"));
+
+        assertEquals("Let's keep going!", AgentDialogueProjectionRuntime.render(semantic));
+    }
+
     @Test
     void rendersSupportedSupplyIntentFromStructuredParameters() {
         AgentDialogueIntentEvent intent = new AgentDialogueIntentEvent(

@@ -1,5 +1,7 @@
 package server.agents.capabilities.dialogue;
 
+import server.agents.capabilities.dialogue.semantic.AgentDialogueMetrics;
+import server.agents.capabilities.dialogue.semantic.AgentSemanticDialogueRuntime;
 import server.agents.events.AgentEvent;
 import server.agents.events.AgentEventListener;
 
@@ -27,12 +29,22 @@ public final class AgentDialogueProjectionService implements AgentEventListener<
         if (!(event instanceof AgentDialogueIntentEvent intent)) {
             return;
         }
+        boolean semantic = AgentSemanticDialogueRuntime.SEMANTIC_INTENT_KEY.equals(intent.intentKey());
         if (!observers.hasAudience(intent.agentId(), intent.audience())) {
+            if (semantic) {
+                AgentDialogueMetrics.recordNoAudienceSuppressed();
+            }
             return;
         }
         String cooldownKey = intent.agentId() + ":" + intent.dedupeKey();
         if (intent.occurredAtMs() < cooldownUntil.getOrDefault(cooldownKey, 0L)) {
+            if (semantic) {
+                AgentDialogueMetrics.recordCooldownSuppressed();
+            }
             return;
+        }
+        if (semantic) {
+            AgentDialogueMetrics.recordProjectionRequest();
         }
         gateway.project(intent);
         cooldownUntil.put(cooldownKey, saturatedAdd(intent.occurredAtMs(), intent.cooldownMs()));

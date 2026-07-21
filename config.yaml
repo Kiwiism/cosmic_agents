@@ -342,6 +342,18 @@ server:
     AGENT_MAP_TRANSITION_PACKET_DIAGNOSTICS: true                     # If a client disconnects within 15 seconds of warping, write its bounded packet trace under logs/map-transition-crashes.
 
     AGENT_LEGACY_DIALOGUE_ENABLED: false #Experimental Agent plans narrate objectives; suppress NuTNNuT-era Agent chatter.
+    AGENT_DIALOGUE_SYSTEM_ENABLED: true #Master switch for semantic Agent dialogue, including objective announcements and ambient conversations.
+    AGENT_DIALOGUE_ENABLED_TOPICS: objective_intention,greeting,quest_progress,hunting,travel,encouragement,farewell,daily_life,slow_spawn,quest_relief,maple_island.pio_boxes,maple_island.rain_quiz,maple_island.yoona_quiz #Comma-separated topic IDs; each can also be toggled live with !agentchat topic.
+    AGENT_CONVERSATION_ENABLED: true #Allow bounded Agent-to-Agent conversations that run alongside objectives without taking capability control.
+    AGENT_CONVERSATION_SIMULATE_UNOBSERVED: false #When false, do not create ambient conversations in maps without a real-player observer.
+    AGENT_CONVERSATION_TICK_INTERVAL_MS: 250 #Minimum cadence for this ancillary system; keeps conversation bookkeeping off high-frequency movement ticks.
+    AGENT_CONVERSATION_ATTEMPT_INTERVAL_MS: 15000 #Minimum time between an Agent's attempts to find a same-map conversation partner.
+    AGENT_CONVERSATION_SESSION_COOLDOWN_MS: 45000 #Minimum rest after a conversation before either participant can start another.
+    AGENT_CONVERSATION_TURN_INTERVAL_MS: 2200 #Base delay between visible turns; deterministic personality jitter is added.
+    AGENT_CONVERSATION_SESSION_TIMEOUT_MS: 20000 #Hard lifetime for a pair session so a stale participant can never reserve another Agent indefinitely.
+    AGENT_CONVERSATION_MAX_TURNS: 4 #Maximum public turns in one pair conversation, including greeting and farewell.
+    AGENT_CONVERSATION_MAX_VISIBLE_SESSIONS_PER_MAP: 2 #Maximum concurrent pair conversations projected in one observed map.
+    AGENT_DIALOGUE_MAP_MESSAGE_INTERVAL_MS: 900 #Minimum spacing between semantic Agent chat lines in one map to prevent overlapping floods.
     AGENT_AMHERST_DEBUG_MESSAGES_ENABLED: false #Show detailed yellow Amherst capability and objective progress messages.
     AGENT_AMHERST_INTENTION_CHAT_ENABLED: true #Let the Agent announce its next Amherst action in map chat.
     AGENT_AMHERST_SHOWCASE_ENABLED: true #Allow the guarded one-command Amherst showcase run.

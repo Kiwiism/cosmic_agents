@@ -344,7 +344,7 @@ public final class AmherstPlanRuntimeRunner {
                 observe(state, new AmherstPlanObservation(
                         AmherstPlanObservation.Type.OBJECTIVE_STARTED, nowMs,
                         next.objectiveId(), next.kind(), null, null, next.reason()));
-                AmherstPlanNarrator.announce(agent, next);
+                AmherstPlanNarrator.announce(entry, agent, next);
                 return true;
             } catch (IOException | RuntimeException failure) {
                 state.lastError = failure.getClass().getSimpleName() + ": " + failure.getMessage();

@@ -130,6 +130,20 @@ public final class AgentCoordinationRuntime {
         return result.envelopes();
     }
 
+    /** Releases a caller-owned unused inbox after that owner has stopped concurrent publication. */
+    public static boolean releaseRouteIfEmpty(AgentCoordinationScope scope, long routeId) {
+        RouteKey key = new RouteKey(scope, routeId);
+        AgentCoordinationInbox inbox = inboxes.get(key);
+        return inbox == null || inbox.size() == 0 && !routeListeners.containsKey(key)
+                && inboxes.remove(key, inbox);
+    }
+
+    /** Discards a caller-owned private route during cleanup so stale messages cannot retain it. */
+    public static int discardRoute(AgentCoordinationScope scope, long routeId) {
+        AgentCoordinationInbox removed = inboxes.remove(new RouteKey(scope, routeId));
+        return removed == null ? 0 : removed.size();
+    }
+
     public static AgentCoordinationReceipt recordDisposition(long messageId,
                                                               int agentCharacterId,
                                                               AgentCoordinationDisposition disposition,

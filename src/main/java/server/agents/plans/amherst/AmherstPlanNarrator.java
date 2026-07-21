@@ -2,12 +2,15 @@ package server.agents.plans.amherst;
 
 import client.Character;
 import config.YamlConfig;
-import server.agents.capabilities.dialogue.AgentChatTextSanitizer;
-import server.agents.integration.AgentPacketGatewayRuntime;
+import server.agents.capabilities.dialogue.semantic.AgentDialogueMetrics;
+import server.agents.capabilities.dialogue.semantic.AgentSemanticDialogueRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.Map;
 
 public final class AmherstPlanNarrator {
+    private static final AmherstObjectiveIntentionDialogueModel MODEL =
+            new AmherstObjectiveIntentionDialogueModel();
     private static final Map<Integer, String> MAP_NAMES = Map.ofEntries(
             Map.entry(10000, "Mushroom Town"),
             Map.entry(20000, "Snail Garden"),
@@ -45,13 +48,22 @@ public final class AmherstPlanNarrator {
     private AmherstPlanNarrator() {
     }
 
-    public static void announce(Character agent, AmherstPlanObjective objective) {
-        if (agent == null || objective == null
+    public static void announce(AgentRuntimeEntry entry,
+                                Character agent,
+                                AmherstPlanObjective objective) {
+        if (entry == null || agent == null || objective == null
                 || !YamlConfig.config.server.AGENT_AMHERST_INTENTION_CHAT_ENABLED) {
             return;
         }
-        AgentPacketGatewayRuntime.packets().broadcastChatText(
-                agent, AgentChatTextSanitizer.sanitize(message(objective)), false, 0);
+        try {
+            AgentSemanticDialogueRuntime.emit(
+                    entry,
+                    MODEL.produce(new AmherstObjectiveIntentionDialogueModel.Context(
+                            entry, agent, objective, System.currentTimeMillis())));
+        } catch (RuntimeException ignored) {
+            // Intention narration is optional presentation, never plan control flow.
+            AgentDialogueMetrics.recordFailure();
+        }
     }
 
     static String message(AmherstPlanObjective objective) {

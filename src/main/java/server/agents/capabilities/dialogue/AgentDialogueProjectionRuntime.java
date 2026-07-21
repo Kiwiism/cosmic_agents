@@ -1,6 +1,10 @@
 package server.agents.capabilities.dialogue;
 
 import client.Character;
+import client.Job;
+import server.agents.capabilities.dialogue.semantic.AgentDialogueMapProjectionBudget;
+import server.agents.capabilities.dialogue.semantic.AgentDialogueMetrics;
+import server.agents.capabilities.dialogue.semantic.AgentSemanticDialogueRuntime;
 import server.agents.capabilities.contracts.AgentResourceCategory;
 import server.agents.capabilities.contracts.AgentSupplyUrgency;
 import server.agents.integration.AgentClientGatewayRuntime;
@@ -8,11 +12,10 @@ import server.agents.integration.AgentMapGatewayRuntime;
 import server.agents.integration.AgentPacketGatewayRuntime;
 import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.operations.events.AgentOperationalDialogueReactionService;
 import server.agents.progression.events.AgentProgressionDialogueReactionService;
 import server.agents.resources.events.AgentResourceDialogueReactionService;
-import server.agents.operations.events.AgentOperationalDialogueReactionService;
-import client.Job;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 
@@ -44,15 +47,26 @@ public final class AgentDialogueProjectionRuntime {
         }
         String message = render(intent);
         if (!message.isBlank()) {
+            if (AgentSemanticDialogueRuntime.SEMANTIC_INTENT_KEY.equals(intent.intentKey())
+                    && !AgentDialogueMapProjectionBudget.tryAcquire(agent, intent.occurredAtMs())) {
+                AgentDialogueMetrics.recordMapBudgetSuppressed();
+                return;
+            }
             AgentPacketGatewayRuntime.packets().broadcastChatText(
                     agent,
                     AgentChatTextSanitizer.sanitize(message),
                     false,
                     0);
+            if (AgentSemanticDialogueRuntime.SEMANTIC_INTENT_KEY.equals(intent.intentKey())) {
+                AgentDialogueMetrics.recordProjected();
+            }
         }
     }
 
     static String render(AgentDialogueIntentEvent intent) {
+        if (AgentSemanticDialogueRuntime.SEMANTIC_INTENT_KEY.equals(intent.intentKey())) {
+            return intent.parameters().getOrDefault("text", "");
+        }
         if (AgentProgressionDialogueReactionService.LEVEL_INTENT.equals(intent.intentKey())) {
             return "level " + intent.parameters().getOrDefault("level", "") + "!";
         }
