@@ -218,7 +218,7 @@ Test-RequiredProperties $checks "mobs" $rows.mobs @("schemaVersion", "mobId", "l
 Test-RequiredProperties $checks "drops" $rows.drops @("schemaVersion", "sourceType", "sourceId", "itemId", "minimumQuantity", "maximumQuantity", "questId", "chance")
 Test-RequiredProperties $checks "items" $rows.items @("schemaVersion", "itemId", "category", "dropSourceCount", "shopSourceCount", "flags")
 Test-RequiredProperties $checks "shops" $rows.shops @("schemaVersion", "shopId", "npcId", "mapIds", "itemCount", "items")
-Test-RequiredProperties $checks "quests" $rows.quests @("schemaVersion", "questId", "requirements", "rewards", "flags")
+Test-RequiredProperties $checks "quests" $rows.quests @("schemaVersion", "questId", "questName", "questArea", "requirements", "rewards", "flags")
 Test-RequiredProperties $checks "skills" $rows.skills @("schemaVersion", "skillId", "sourceFile", "maxLevel")
 
 $mapIds = New-IdSet $rows.maps "mapId"
@@ -260,6 +260,7 @@ $mapsWithMobs = @($rows.maps | Where-Object { @($_.mobIds).Count -gt 0 }).Count
 $mobsWithMaps = @($rows.mobs | Where-Object { @($_.mapIds).Count -gt 0 }).Count
 $itemsWithSources = @($rows.items | Where-Object { $_.dropSourceCount -gt 0 -or $_.shopSourceCount -gt 0 }).Count
 $questsWithNpc = @($rows.quests | Where-Object { $null -ne $_.startNpcId -or $null -ne $_.completeNpcId }).Count
+$questsWithNames = @($rows.quests | Where-Object { -not [string]::IsNullOrWhiteSpace([string] $_.questName) }).Count
 
 if ($mapsWithPortals -gt 0) {
     Add-Check $checks "coverage:maps-with-portals" "PASS" "$mapsWithPortals map(s) have portals."
@@ -283,6 +284,12 @@ if ($questsWithNpc -gt 0) {
     Add-Check $checks "coverage:quest-npc-links" "PASS" "$questsWithNpc quest(s) have start or complete NPC data."
 } else {
     Add-Check $checks "coverage:quest-npc-links" "WARN" "No quest start/complete NPC data found."
+}
+
+if ($questsWithNames -eq $rows.quests.Count) {
+    Add-Check $checks "coverage:quest-names" "PASS" "All $questsWithNames quest(s) have QuestInfo names."
+} else {
+    Add-Check $checks "coverage:quest-names" "FAIL" "$questsWithNames of $($rows.quests.Count) quest(s) have QuestInfo names."
 }
 
 foreach ($requiredMapId in @(10000, 2000000)) {

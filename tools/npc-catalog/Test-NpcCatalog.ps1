@@ -164,6 +164,8 @@ $files = [ordered]@{
     services = "generated_npc_services.json"
     rewardChoices = "generated_npc_reward_choices.json"
     shopInventory = "generated_npc_shop_inventory.json"
+    interactionSpots = "generated_npc_interaction_spot_catalog.json"
+    questInteractions = "generated_quest_npc_interaction_catalog.json"
     fastIndexes = "generated_npc_fast_indexes.json"
     mapNpcSummary = "generated_map_npc_summary.json"
 }
@@ -192,6 +194,8 @@ Test-RequiredProperties $checks "dialogueOptions" $rows.dialogueOptions @("schem
 Test-RequiredProperties $checks "services" $rows.services @("schemaVersion", "npcId", "scriptName", "serviceType", "confidence")
 Test-RequiredProperties $checks "rewardChoices" $rows.rewardChoices @("schemaVersion", "questId", "phase", "npcId", "candidates")
 Test-RequiredProperties $checks "shopInventory" $rows.shopInventory @("schemaVersion", "inventoryKey", "npcId", "shopId", "itemCount", "items")
+Test-RequiredProperties $checks "interactionSpots" $rows.interactionSpots @("schemaVersion", "interactionSpotKey", "placementStatus", "npcId", "questLinks", "candidateSpotCount", "candidateSpots", "navigationValidationRequired")
+Test-RequiredProperties $checks "questInteractions" $rows.questInteractions @("schemaVersion", "questId", "questName", "start", "complete", "canonicalQuestCatalog")
 Test-RequiredProperties $checks "mapNpcSummary" $rows.mapNpcSummary @("schemaVersion", "mapId", "npcPlacementCount", "uniqueNpcCount", "npcIds")
 
 $npcIds = New-IdSet $rows.npcs "npcId"
@@ -201,6 +205,7 @@ Test-ReferenceCoverage -Checks $checks -Id "placements.npcId_to_npcs" -Rows $row
 Test-ReferenceCoverage -Checks $checks -Id "approach.npcId_to_npcs" -Rows $rows.approach -Property "npcId" -TargetIds $npcIds -WarnLimit 0
 Test-ReferenceCoverage -Checks $checks -Id "actions.npcId_to_npcs" -Rows $rows.actions -Property "npcId" -TargetIds $npcIds -WarnLimit 25
 Test-ReferenceCoverage -Checks $checks -Id "shopInventory.npcId_to_npcs" -Rows $rows.shopInventory -Property "npcId" -TargetIds $npcIds -WarnLimit 0
+Test-ReferenceCoverage -Checks $checks -Id "interactionSpots.npcId_to_npcs" -Rows $rows.interactionSpots -Property "npcId" -TargetIds $npcIds -WarnLimit 0
 
 $placedNpcCount = @($rows.npcs | Where-Object { @($_.placements).Count -gt 0 }).Count
 $shopNpcCount = @($rows.npcs | Where-Object { $_.interactions.shop.hasShop }).Count
@@ -212,6 +217,29 @@ $dialogueTimingWithDelays = @($rows.dialogueTiming | Where-Object {
     @($_.firstReadDelayMsRange).Count -eq 2 -and @($_.repeatReadDelayMsRange).Count -eq 2
 }).Count
 $doNotAutoUseCount = @($rows.npcs | Where-Object { $_.automation.doNotAutoUse }).Count
+$placedInteractionSpotCount = @($rows.interactionSpots | Where-Object { $_.placementStatus -eq "placed" }).Count
+$missingPlacementInteractionCount = @($rows.interactionSpots | Where-Object { $_.placementStatus -eq "missing-placement" }).Count
+$questInteractionMissingEndpointCount = @($rows.questInteractions | Where-Object {
+    $_.start.status -in @("missing-npc-catalog", "missing-placement", "placed-without-candidate") -or
+        $_.complete.status -in @("missing-npc-catalog", "missing-placement", "placed-without-candidate")
+}).Count
+$unnamedQuestInteractionCount = @($rows.questInteractions | Where-Object {
+    [string]::IsNullOrWhiteSpace([string] $_.questName)
+}).Count
+$approachByPlacementKey = @{}
+foreach ($approachRow in $rows.approach) {
+    $approachByPlacementKey["$($approachRow.mapId)|$($approachRow.lifeIndex)|$($approachRow.npcId)"] = $approachRow
+}
+$interactionSpotJoinGaps = @($rows.interactionSpots | Where-Object {
+    if ($_.placementStatus -ne "placed") {
+        return $false
+    }
+    $approachRow = $approachByPlacementKey[[string] $_.placementKey]
+    return $null -eq $approachRow -or
+        [int] $approachRow.npcPosition.x -ne [int] $_.npcPosition.x -or
+        [int] $approachRow.npcPosition.y -ne [int] $_.npcPosition.y -or
+        [int] $approachRow.npcPosition.footholdId -ne [int] $_.npcPosition.footholdId
+}).Count
 
 if ($placedNpcCount -gt 0) {
     Add-Check $checks "coverage:placed-npcs" "PASS" "$placedNpcCount NPC(s) have placements."
@@ -247,6 +275,36 @@ if ($doNotAutoUseCount -gt 0) {
     Add-Check $checks "review:do-not-auto-use" "PASS" "$doNotAutoUseCount NPC(s) are gated as do-not-auto-use for review."
 } else {
     Add-Check $checks "review:do-not-auto-use" "WARN" "No do-not-auto-use NPC review gates found."
+}
+
+if ($placedInteractionSpotCount -eq $rows.placements.Count) {
+    Add-Check $checks "coverage:interaction-spots" "PASS" "Every one of the $placedInteractionSpotCount NPC placements has a joined interaction-spot row."
+} else {
+    Add-Check $checks "coverage:interaction-spots" "FAIL" "Interaction-spot rows cover $placedInteractionSpotCount of $($rows.placements.Count) NPC placements."
+}
+
+if ($interactionSpotJoinGaps -eq 0) {
+    Add-Check $checks "xref:interaction-spots-to-approach" "PASS" "Every placed interaction row matches its approach row and NPC coordinates."
+} else {
+    Add-Check $checks "xref:interaction-spots-to-approach" "FAIL" "$interactionSpotJoinGaps placed interaction row(s) are missing or disagree with their approach row."
+}
+
+if ($rows.questInteractions.Count -gt 0) {
+    Add-Check $checks "coverage:quest-interactions" "PASS" "$($rows.questInteractions.Count) quest(s) have explicit start/completion interaction endpoints."
+} else {
+    Add-Check $checks "coverage:quest-interactions" "FAIL" "No quest-to-NPC interaction rows were generated."
+}
+
+if ($unnamedQuestInteractionCount -eq 0) {
+    Add-Check $checks "coverage:quest-interaction-names" "PASS" "Every quest interaction row has a QuestInfo name."
+} else {
+    Add-Check $checks "coverage:quest-interaction-names" "FAIL" "$unnamedQuestInteractionCount quest interaction row(s) lack a QuestInfo name."
+}
+
+if ($missingPlacementInteractionCount -gt 0 -or $questInteractionMissingEndpointCount -gt 0) {
+    Add-Check $checks "review:unresolved-interaction-endpoints" "WARN" "$missingPlacementInteractionCount NPC interaction row(s) lack WZ placement; $questInteractionMissingEndpointCount quest(s) reference an unresolved endpoint."
+} else {
+    Add-Check $checks "review:unresolved-interaction-endpoints" "PASS" "All NPC and quest interaction endpoints have placement evidence."
 }
 
 $fastIndexProperties = Get-IndexPropertyNames $rows.fastIndexes
@@ -309,6 +367,13 @@ $report = [ordered]@{
         services = $rows.services.Count
         rewardChoices = $rows.rewardChoices.Count
         shopInventory = $rows.shopInventory.Count
+        interactionSpots = $rows.interactionSpots.Count
+        placedInteractionSpots = $placedInteractionSpotCount
+        missingPlacementInteractions = $missingPlacementInteractionCount
+        questInteractions = $rows.questInteractions.Count
+        questInteractionsWithUnresolvedEndpoints = $questInteractionMissingEndpointCount
+        interactionSpotJoinGaps = $interactionSpotJoinGaps
+        unnamedQuestInteractions = $unnamedQuestInteractionCount
         mapNpcSummary = $rows.mapNpcSummary.Count
         placedNpcs = $placedNpcCount
         shopNpcs = $shopNpcCount

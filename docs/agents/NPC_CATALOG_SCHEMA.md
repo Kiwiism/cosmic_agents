@@ -12,6 +12,10 @@ Run:
 powershell -ExecutionPolicy Bypass -File tools\npc-catalog\Export-NpcCatalog.ps1
 ```
 
+For a schema-only refresh against unchanged WZ placement data, pass
+`-ReuseExistingApproach`; a normal source-data refresh must regenerate approach
+points without that switch.
+
 Outputs are written to `tmp/npc-catalog/`:
 
 - `generated_npc_catalog.json`
@@ -23,6 +27,8 @@ Outputs are written to `tmp/npc-catalog/`:
 - `generated_npc_services.json`
 - `generated_npc_reward_choices.json`
 - `generated_npc_shop_inventory.json`
+- `generated_npc_interaction_spot_catalog.json`
+- `generated_quest_npc_interaction_catalog.json`
 - `generated_npc_fast_indexes.json`
 - `generated_map_npc_summary.json`
 - `NPC_CATALOG_SUMMARY.md`
@@ -300,6 +306,38 @@ does not scan full NPC arrays during agent ticks:
 
 Agent runtime and LLM batch queries should only use these indexes or bounded
 query APIs. Full catalog scans should be builder/runtime-load only.
+
+## Joined NPC Interaction Spot Catalog
+
+`generated_npc_interaction_spot_catalog.json` contains one row per WZ NPC
+placement, plus an explicit unresolved row for every catalog NPC without a map
+placement. A placed row joins:
+
+- the stable `mapId|lifeIndex|npcId` placement key;
+- map and NPC coordinates;
+- interaction, shop, service, and quest links;
+- the configured interaction box;
+- ranked foothold standing candidates;
+- automation review state.
+
+Candidate spots are bounded static options, not proof of reachability. The
+navigation capability must still validate a selected candidate against the
+live map state.
+
+## Quest-to-NPC Interaction Catalog
+
+`generated_quest_npc_interaction_catalog.json` contains every quest found in
+`Quest.wz/Check.img.xml`, including its QuestInfo name/area and independently
+resolved start and completion endpoints. Endpoint statuses are:
+
+- `not-npc-driven`;
+- `missing-npc-catalog`;
+- `missing-placement`;
+- `placed-without-candidate`;
+- `ready-for-navigation-validation`.
+
+The row deliberately references the canonical game quest catalog instead of
+copying requirements and rewards into another ownership surface.
 
 ## Map NPC Summary Row
 

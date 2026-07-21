@@ -9,6 +9,7 @@ param(
     [int] $MaxApproachPointsPerNpc = 12,
     [int] $ValidationTopN = 100,
     [switch] $SkipApproach,
+    [switch] $ReuseExistingApproach,
     [switch] $SummaryOnly,
     [switch] $Json
 )
@@ -258,6 +259,53 @@ function Get-QuestNpcMap {
         }
     }
     return $result
+}
+
+function Get-QuestDefinitionRows {
+    param(
+        [string] $CheckPath,
+        [string] $QuestInfoPath
+    )
+
+    $infoByQuest = @{}
+    if (Test-Path $QuestInfoPath) {
+        $infoDoc = Load-XmlDocument $QuestInfoPath
+        foreach ($entry in $infoDoc.DocumentElement.ChildNodes) {
+            $questIdText = Get-AttrValue $entry "name"
+            if ($questIdText -notmatch "^\d+$") {
+                continue
+            }
+            $infoByQuest[[int] $questIdText] = [pscustomobject] @{
+                questName = Get-AttrValue (Get-ChildByName $entry "name") "value"
+                questParent = Get-AttrValue (Get-ChildByName $entry "parent") "value"
+                questArea = Get-IntChildValue $entry "area"
+            }
+        }
+    }
+
+    $rows = New-Object System.Collections.Generic.List[object]
+    if (!(Test-Path $CheckPath)) {
+        return $rows
+    }
+
+    $checkDoc = Load-XmlDocument $CheckPath
+    foreach ($quest in $checkDoc.DocumentElement.ChildNodes) {
+        $questIdText = Get-AttrValue $quest "name"
+        if ($questIdText -notmatch "^\d+$") {
+            continue
+        }
+        $questId = [int] $questIdText
+        $info = if ($infoByQuest.ContainsKey($questId)) { $infoByQuest[$questId] } else { $null }
+        [void] $rows.Add([pscustomobject] @{
+            questId = $questId
+            questName = if ($null -ne $info) { $info.questName } else { $null }
+            questParent = if ($null -ne $info) { $info.questParent } else { $null }
+            questArea = if ($null -ne $info) { $info.questArea } else { $null }
+            startNpcId = Get-IntChildValue (Get-ChildByName $quest "0") "npc"
+            completeNpcId = Get-IntChildValue (Get-ChildByName $quest "1") "npc"
+        })
+    }
+    return $rows
 }
 
 function Get-LifePlacements {
@@ -1099,6 +1147,73 @@ function New-QuestPhaseKey {
     return "$QuestId|$Phase"
 }
 
+function New-QuestNpcInteractionEndpoint {
+    param(
+        [object] $NpcId,
+        [hashtable] $NpcById,
+        [hashtable] $InteractionSpotsByNpcId
+    )
+
+    if ($null -eq $NpcId) {
+        return [pscustomobject] @{
+            status = "not-npc-driven"
+            npcId = $null
+            npcName = $null
+            placementCount = 0
+            candidateSpotCount = 0
+            placements = @()
+            reviewReasons = @()
+        }
+    }
+
+    $npcKey = [string] ([int] $NpcId)
+    $npc = $NpcById[$npcKey]
+    $spotRows = if ($InteractionSpotsByNpcId.ContainsKey($npcKey)) {
+        @($InteractionSpotsByNpcId[$npcKey] | Where-Object { $_.placementStatus -eq "placed" })
+    } else {
+        @()
+    }
+    $candidateSpotCount = ($spotRows | ForEach-Object { $_.candidateSpotCount } | Measure-Object -Sum).Sum
+    if ($null -eq $candidateSpotCount) {
+        $candidateSpotCount = 0
+    }
+
+    $status = if ($null -eq $npc) {
+        "missing-npc-catalog"
+    } elseif ($spotRows.Count -eq 0) {
+        "missing-placement"
+    } elseif ($candidateSpotCount -eq 0) {
+        "placed-without-candidate"
+    } else {
+        "ready-for-navigation-validation"
+    }
+
+    return [pscustomobject] @{
+        status = $status
+        npcId = [int] $NpcId
+        npcName = if ($null -ne $npc) { $npc.name } else { $null }
+        placementCount = $spotRows.Count
+        candidateSpotCount = [int] $candidateSpotCount
+        placements = @(
+            $spotRows | ForEach-Object {
+                [pscustomobject] @{
+                    interactionSpotKey = $_.interactionSpotKey
+                    placementKey = $_.placementKey
+                    mapId = $_.mapId
+                    mapName = $_.mapName
+                    streetName = $_.streetName
+                    candidateSpotCount = $_.candidateSpotCount
+                }
+            }
+        )
+        reviewReasons = @(
+            if ($status -eq "missing-npc-catalog") { "npc-not-present-in-generated-npc-catalog" }
+            if ($status -eq "missing-placement") { "npc-has-no-wz-map-placement" }
+            if ($status -eq "placed-without-candidate") { "placement-has-no-generated-foothold-candidate" }
+        )
+    }
+}
+
 function Convert-IndexLists {
     param([hashtable] $Index)
 
@@ -1304,6 +1419,9 @@ $mapNames = Get-MapStringTable (Join-Path $WzRoot "String.wz/Map.img.xml")
 $shopNpcIds = Get-ShopNpcIds "src/main/resources/db/data/101-shops-data.sql"
 $shopItems = Get-ShopItems "src/main/resources/db/data/102-shopitems-data.sql"
 $questNpcMap = Get-QuestNpcMap (Join-Path $WzRoot "Quest.wz/Check.img.xml")
+$questDefinitions = Get-QuestDefinitionRows `
+    (Join-Path $WzRoot "Quest.wz/Check.img.xml") `
+    (Join-Path $WzRoot "Quest.wz/QuestInfo.img.xml")
 $questDialogueTiming = Get-QuestDialogueTiming (Join-Path $WzRoot "Quest.wz/Say.img.xml")
 $questActions = Get-NpcQuestActions (Join-Path $WzRoot "Quest.wz/Check.img.xml") (Join-Path $WzRoot "Quest.wz/Act.img.xml")
 $scriptCatalog = Get-NpcScriptCatalogRows "scripts/npc" $npcNames
@@ -1315,9 +1433,43 @@ $mapRoot = Join-Path $WzRoot "Map.wz/Map"
 $placements = Get-LifePlacements $mapRoot $npcNames $mapNames
 $approachRows = New-Object System.Collections.Generic.List[object]
 if (!$SkipApproach) {
-    $placementMapIds = @($placements | Select-Object -ExpandProperty mapId -Unique)
-    $footholdsByMap = Get-FootholdsByMap $mapRoot $placementMapIds
-    $approachRows = Get-ApproachPointRows @($placements) $footholdsByMap
+    $existingApproachPath = Join-Path $OutputDir "generated_npc_approach_points.json"
+    if ($ReuseExistingApproach -and (Test-Path -LiteralPath $existingApproachPath -PathType Leaf)) {
+        $loadedApproachRows = Get-Content -Raw -LiteralPath $existingApproachPath | ConvertFrom-Json
+        # Windows PowerShell can wrap a previously piped array as
+        # { value: [...], Count: n }. Accept that legacy/interrupted shape once,
+        # then always normalize back to a plain row array on write.
+        if ($loadedApproachRows.PSObject.Properties.Name -contains "value" -and
+            $loadedApproachRows.PSObject.Properties.Name -contains "Count") {
+            $loadedApproachRows = $loadedApproachRows.value
+        }
+        $approachRows = New-Object System.Collections.Generic.List[object]
+        foreach ($loadedApproachRow in $loadedApproachRows) {
+            [void] $approachRows.Add($loadedApproachRow)
+        }
+
+        $reusedApproachByPlacement = @{}
+        foreach ($loadedApproachRow in $approachRows) {
+            $reusedApproachByPlacement[(New-PlacementKey $loadedApproachRow)] = $loadedApproachRow
+        }
+        if ($reusedApproachByPlacement.Count -ne @($placements).Count) {
+            throw "Reused approach catalog covers $($reusedApproachByPlacement.Count) unique placements, but current WZ contains $(@($placements).Count). Run without -ReuseExistingApproach."
+        }
+        foreach ($placement in $placements) {
+            $placementKey = New-PlacementKey $placement
+            $reused = $reusedApproachByPlacement[$placementKey]
+            if ($null -eq $reused -or
+                [int] $reused.npcPosition.x -ne [int] $placement.x -or
+                [int] $reused.npcPosition.y -ne [int] $placement.y -or
+                [int] $reused.npcPosition.footholdId -ne [int] $placement.footholdId) {
+                throw "Reused approach catalog is stale at placement $placementKey. Run without -ReuseExistingApproach."
+            }
+        }
+    } else {
+        $placementMapIds = @($placements | Select-Object -ExpandProperty mapId -Unique)
+        $footholdsByMap = Get-FootholdsByMap $mapRoot $placementMapIds
+        $approachRows = Get-ApproachPointRows @($placements) $footholdsByMap
+    }
 }
 
 $npcIds = New-Object System.Collections.Generic.HashSet[int]
@@ -1407,6 +1559,8 @@ $dialogueOptionsPath = Join-Path $OutputDir "generated_npc_dialogue_options.json
 $servicesPath = Join-Path $OutputDir "generated_npc_services.json"
 $rewardChoicesPath = Join-Path $OutputDir "generated_npc_reward_choices.json"
 $shopInventoryPath = Join-Path $OutputDir "generated_npc_shop_inventory.json"
+$interactionSpotsPath = Join-Path $OutputDir "generated_npc_interaction_spot_catalog.json"
+$questInteractionsPath = Join-Path $OutputDir "generated_quest_npc_interaction_catalog.json"
 $fastIndexesPath = Join-Path $OutputDir "generated_npc_fast_indexes.json"
 $mapSummaryPath = Join-Path $OutputDir "generated_map_npc_summary.json"
 $summaryPath = Join-Path $OutputDir "NPC_CATALOG_SUMMARY.md"
@@ -1417,6 +1571,116 @@ $approachByPlacement = @{}
 foreach ($row in $approachRows) {
     $key = "$($row.mapId)|$($row.lifeIndex)|$($row.npcId)"
     $approachByPlacement[$key] = $row
+}
+
+$npcById = @{}
+foreach ($npc in $catalog) {
+    $npcById[[string] $npc.npcId] = $npc
+}
+
+$interactionSpotCatalog = New-Object System.Collections.Generic.List[object]
+$interactionSpotsByNpcId = @{}
+foreach ($npc in $catalog) {
+    $npcPlacements = @($npc.placements)
+    if ($npcPlacements.Count -eq 0) {
+        $missingRow = [pscustomobject] @{
+            schemaVersion = 1
+            interactionSpotKey = "$($npc.npcId)|missing-placement"
+            placementStatus = "missing-placement"
+            placementKey = $null
+            mapId = $null
+            mapName = $null
+            streetName = $null
+            lifeIndex = $null
+            npcId = [int] $npc.npcId
+            npcName = $npc.name
+            npcPosition = $null
+            interactionTypes = @($npc.interactions.types)
+            shopIds = @($npc.interactions.shop.shopIds)
+            serviceTypes = @($npc.interactions.services)
+            questLinks = [pscustomobject] @{
+                startQuestIds = @($npc.interactions.quests.starts)
+                completeQuestIds = @($npc.interactions.quests.completes)
+            }
+            interactionBox = $null
+            candidateSpotCount = 0
+            candidateSpots = @()
+            navigationValidationRequired = $true
+            automation = $npc.automation
+            sources = @("Quest.wz/Check.img.xml", "String.wz/Npc.img.xml")
+        }
+        [void] $interactionSpotCatalog.Add($missingRow)
+        Add-IndexValue $interactionSpotsByNpcId ([string] $npc.npcId) $missingRow
+        continue
+    }
+
+    foreach ($placement in $npcPlacements) {
+        $placementKey = New-PlacementKey $placement
+        $approach = $approachByPlacement[$placementKey]
+        $candidateSpots = New-Object System.Collections.Generic.List[object]
+        if ($null -ne $approach) {
+            foreach ($candidateSpot in @($approach.candidates)) {
+                [void] $candidateSpots.Add($candidateSpot)
+            }
+        }
+        $interactionBox = if ($null -ne $approach) {
+            $approach.interactionBox
+        } else {
+            [pscustomobject] @{
+                left = $ApproachLeftPx
+                right = $ApproachRightPx
+                up = $ApproachUpPx
+                down = $ApproachDownPx
+            }
+        }
+        $spotRow = [pscustomobject] @{
+            schemaVersion = 1
+            interactionSpotKey = $placementKey
+            placementStatus = "placed"
+            placementKey = $placementKey
+            mapId = [int] $placement.mapId
+            mapName = $placement.mapName
+            streetName = $placement.streetName
+            lifeIndex = [string] $placement.lifeIndex
+            npcId = [int] $npc.npcId
+            npcName = $npc.name
+            npcPosition = [pscustomobject] @{
+                x = $placement.x
+                y = $placement.y
+                footholdId = $placement.footholdId
+            }
+            interactionTypes = @($npc.interactions.types)
+            shopIds = @($npc.interactions.shop.shopIds)
+            serviceTypes = @($npc.interactions.services)
+            questLinks = [pscustomobject] @{
+                startQuestIds = @($npc.interactions.quests.starts)
+                completeQuestIds = @($npc.interactions.quests.completes)
+            }
+            interactionBox = $interactionBox
+            candidateSpotCount = $candidateSpots.Count
+            candidateSpots = $candidateSpots
+            navigationValidationRequired = $true
+            automation = $npc.automation
+            sources = @($placement.source, "Quest.wz/Check.img.xml")
+        }
+        [void] $interactionSpotCatalog.Add($spotRow)
+        Add-IndexValue $interactionSpotsByNpcId ([string] $npc.npcId) $spotRow
+    }
+}
+
+$questInteractionCatalog = New-Object System.Collections.Generic.List[object]
+foreach ($quest in $questDefinitions) {
+    [void] $questInteractionCatalog.Add([pscustomobject] @{
+        schemaVersion = 1
+        questId = [int] $quest.questId
+        questName = $quest.questName
+        questParent = $quest.questParent
+        questArea = $quest.questArea
+        start = New-QuestNpcInteractionEndpoint $quest.startNpcId $npcById $interactionSpotsByNpcId
+        complete = New-QuestNpcInteractionEndpoint $quest.completeNpcId $npcById $interactionSpotsByNpcId
+        canonicalQuestCatalog = "tmp/game-catalog/generated_quest_catalog.json"
+        source = "Quest.wz/Check.img.xml"
+    })
 }
 
 $mapSummaries = foreach ($group in ($placements | Group-Object mapId | Sort-Object { [int] $_.Name })) {
@@ -1472,6 +1736,27 @@ $dialogueOptions | ConvertTo-Json -Depth 10 | Set-Content -Encoding UTF8 $dialog
 $services | ConvertTo-Json -Depth 10 | Set-Content -Encoding UTF8 $servicesPath
 $rewardChoices | ConvertTo-Json -Depth 12 | Set-Content -Encoding UTF8 $rewardChoicesPath
 $shopInventory | ConvertTo-Json -Depth 10 | Set-Content -Encoding UTF8 $shopInventoryPath
+$interactionSpotCatalog | ConvertTo-Json -Depth 12 | Set-Content -Encoding UTF8 $interactionSpotsPath
+$questInteractionCatalog | ConvertTo-Json -Depth 12 | Set-Content -Encoding UTF8 $questInteractionsPath
+$placedInteractionSpotCount = @($interactionSpotCatalog | Where-Object { $_.placementStatus -eq "placed" }).Count
+$missingPlacementInteractionCount = @($interactionSpotCatalog | Where-Object { $_.placementStatus -eq "missing-placement" }).Count
+$questInteractionCount = $questInteractionCatalog.Count
+$questInteractionMissingEndpointCount = @($questInteractionCatalog | Where-Object {
+    $_.start.status -in @("missing-npc-catalog", "missing-placement", "placed-without-candidate") -or
+        $_.complete.status -in @("missing-npc-catalog", "missing-placement", "placed-without-candidate")
+}).Count
+
+# The joined catalogs intentionally reuse approach/NPC objects. Release their
+# additional reference graphs before Windows PowerShell serializes the large
+# legacy fast-index document, otherwise ConvertTo-Json can exceed its internal
+# StringBuilder capacity despite the final file itself remaining valid-sized.
+$interactionSpotCatalog = $null
+$questInteractionCatalog = $null
+$interactionSpotsByNpcId = $null
+$npcById = $null
+[System.GC]::Collect()
+[System.GC]::WaitForPendingFinalizers()
+
 $fastIndexes | ConvertTo-Json -Depth 16 | Set-Content -Encoding UTF8 $fastIndexesPath
 $mapSummaries | ConvertTo-Json -Depth 8 | Set-Content -Encoding UTF8 $mapSummaryPath
 
@@ -1537,6 +1822,10 @@ $summary = @(
     "- NPC reward choice rows: $rewardChoiceCount"
     "- NPC shop inventory rows: $shopInventoryCount"
     "- NPC shop inventory item rows: $shopInventoryItemCount"
+    "- Placed NPC interaction spot rows: $placedInteractionSpotCount"
+    "- NPC interaction rows missing WZ placement: $missingPlacementInteractionCount"
+    "- Quest-to-NPC interaction rows: $questInteractionCount"
+    "- Quests with at least one unresolved NPC endpoint: $questInteractionMissingEndpointCount"
     ""
     "## Outputs"
     ""
@@ -1549,6 +1838,8 @@ $summary = @(
     "- ``generated_npc_services.json``"
     "- ``generated_npc_reward_choices.json``"
     "- ``generated_npc_shop_inventory.json``"
+    "- ``generated_npc_interaction_spot_catalog.json``"
+    "- ``generated_quest_npc_interaction_catalog.json``"
     "- ``generated_npc_fast_indexes.json``"
     "- ``generated_map_npc_summary.json``"
     "- ``NPC_CATALOG_SUMMARY.md``"
@@ -1568,6 +1859,8 @@ $summary = @(
     "- Shop interactions come from ``src/main/resources/db/data/101-shops-data.sql``."
     "- Candidate standing points are generated from a default interaction box and raw foothold samples."
     "- Candidate points are not reachability/path validated yet; runtime integration should verify navigation before use."
+    "- The interaction-spot catalog joins every NPC placement with its interaction types, quest links, and bounded approach candidates."
+    "- The quest-NPC interaction catalog retains all quests, including non-NPC-driven phases and explicit missing-placement review states."
     "- Quest dialogue timing is an estimate from WZ text length/options; runtime profiles should still apply per-agent jitter."
     "- Script dialogue options and services are pattern-scanned hints; they require runtime validators or manual overrides before automation."
     "- Reward choice rows identify NPC-facing quest rewards that need profile/build/inventory selection policy."
@@ -1666,6 +1959,10 @@ $validation = @(
     "- Script service hint rows: $serviceCount"
     "- Reward choice rows needing policy: $rewardChoiceCount"
     "- Shop inventory rows: $shopInventoryCount"
+    "- Placed NPC interaction spot rows: $placedInteractionSpotCount"
+    "- NPC interaction rows missing WZ placement: $missingPlacementInteractionCount"
+    "- Quest-to-NPC interaction rows: $questInteractionCount"
+    "- Quests with at least one unresolved NPC endpoint: $questInteractionMissingEndpointCount"
     ""
     "## Do Not Auto Use"
     ""
@@ -1720,6 +2017,8 @@ $outputFiles = @(
     [pscustomobject] @{ key = "services"; path = $servicesPath }
     [pscustomobject] @{ key = "rewardChoices"; path = $rewardChoicesPath }
     [pscustomobject] @{ key = "shopInventory"; path = $shopInventoryPath }
+    [pscustomobject] @{ key = "interactionSpots"; path = $interactionSpotsPath }
+    [pscustomobject] @{ key = "questInteractions"; path = $questInteractionsPath }
     [pscustomobject] @{ key = "fastIndexes"; path = $fastIndexesPath }
     [pscustomobject] @{ key = "mapSummary"; path = $mapSummaryPath }
     [pscustomobject] @{ key = "summary"; path = $summaryPath }
@@ -1734,6 +2033,7 @@ $report = [ordered]@{
     wzRoot = $WzRoot
     outputDir = $OutputDir
     skipApproach = [bool] $SkipApproach
+    reuseExistingApproach = [bool] $ReuseExistingApproach
     summaryOnly = [bool] $SummaryOnly
     rowsOmitted = [bool] $SummaryOnly
     outputFileCount = $outputFiles.Count
@@ -1754,6 +2054,10 @@ $report = [ordered]@{
         rewardChoiceRows = $rewardChoiceCount
         shopInventoryRows = $shopInventoryCount
         shopInventoryItemRows = $shopInventoryItemCount
+        placedInteractionSpots = $placedInteractionSpotCount
+        missingPlacementInteractions = $missingPlacementInteractionCount
+        questInteractions = $questInteractionCount
+        questInteractionsWithUnresolvedEndpoints = $questInteractionMissingEndpointCount
     }
     reviewCounts = [ordered]@{
         missingNames = $missingNameRows.Count
@@ -1784,6 +2088,8 @@ Write-Host "  $dialogueOptionsPath"
 Write-Host "  $servicesPath"
 Write-Host "  $rewardChoicesPath"
 Write-Host "  $shopInventoryPath"
+Write-Host "  $interactionSpotsPath"
+Write-Host "  $questInteractionsPath"
 Write-Host "  $fastIndexesPath"
 Write-Host "  $mapSummaryPath"
 Write-Host "  $summaryPath"

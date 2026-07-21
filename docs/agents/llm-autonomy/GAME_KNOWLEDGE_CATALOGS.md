@@ -838,8 +838,16 @@ The first offline exporter currently prepares:
 The extended target should also prepare:
 
 - `generated_reactor_catalog.json`
-- `generated_foothold_reachability_catalog.json`
-- `generated_travel_service_catalog.json`
+- `generated_navigation_topology_catalog.json` *(implemented: footholds,
+  components, climbables, anchors, and non-authoritative transitions)*
+- `generated_combat_map_policy_catalog.json` *(implemented: farming anchors,
+  capacity, incidental-mob policy, and party partitions)*
+- `generated_travel_service_catalog.json` *(implemented: literal destinations,
+  costs, placements, and live-validation boundaries)*
+- `generated_progression_item_policy_catalog.json` *(implemented: equipment,
+  recovery supply, scroll, and inventory-policy facts)*
+- `generated_quest_chain_policy_catalog.json` *(implemented: complete chain and
+  special-handler classification)*
 - `generated_quest_reward_choice_catalog.json`
 - `generated_dialogue_option_catalog.json`
 - `generated_maker_crafting_catalog.json`

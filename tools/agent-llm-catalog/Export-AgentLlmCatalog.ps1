@@ -3,6 +3,7 @@ param(
     [string] $GameCatalogDir = "tmp/game-catalog",
     [string] $NpcCatalogDir = "tmp/npc-catalog",
     [string] $OutputDir = "tmp/agent-llm-catalog",
+    [switch] $SkipDecisionCatalogs,
     [switch] $SummaryOnly,
     [switch] $Json
 )
@@ -1017,6 +1018,13 @@ $out = @{
     mapleIslandMvp = Join-Path $OutputDir "generated_maple_island_mvp_catalog.json"
     mapleIslandMvpIndexes = Join-Path $OutputDir "generated_maple_island_mvp_fast_indexes.json"
     victoriaQuestHunting = Join-Path $OutputDir "generated_victoria_lt30_quest_hunting_catalog.json"
+    navigationTopology = Join-Path $OutputDir "generated_navigation_topology_catalog.json"
+    combatMapPolicy = Join-Path $OutputDir "generated_combat_map_policy_catalog.json"
+    travelService = Join-Path $OutputDir "generated_travel_service_catalog.json"
+    progressionItemPolicy = Join-Path $OutputDir "generated_progression_item_policy_catalog.json"
+    questChainPolicy = Join-Path $OutputDir "generated_quest_chain_policy_catalog.json"
+    decisionManifest = Join-Path $OutputDir "generated_agent_decision_catalog_manifest.json"
+    decisionSummary = Join-Path $OutputDir "AGENT_DECISION_CATALOG_SUMMARY.md"
     manifest = Join-Path $OutputDir "generated_catalog_manifest.json"
     summary = Join-Path $OutputDir "AGENT_LLM_CATALOG_SUMMARY.md"
 }
@@ -1042,6 +1050,33 @@ if ($LASTEXITCODE -ne 0) {
 }
 $victoriaQuestHuntingCatalog = Get-Content -Raw -LiteralPath $out.victoriaQuestHunting | ConvertFrom-Json
 
+$decisionCounts = @{
+    navigationMaps = 0
+    combatMaps = 0
+    travelServices = 0
+    equipment = 0
+    supplies = 0
+    scrolls = 0
+    questPolicies = 0
+}
+if (!$SkipDecisionCatalogs) {
+    $decisionExporter = Join-Path $PSScriptRoot "Export-AgentDecisionCatalogs.ps1"
+    $decisionOutput = & powershell -NoProfile -ExecutionPolicy Bypass -File $decisionExporter `
+        -WzRoot $WzRoot `
+        -GameCatalogDir $GameCatalogDir `
+        -NpcCatalogDir $NpcCatalogDir `
+        -AgentCatalogDir $OutputDir `
+        -OutputDir $OutputDir `
+        -SummaryOnly 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        throw "Agent decision catalog export failed: $($decisionOutput -join [Environment]::NewLine)"
+    }
+    $decisionManifest = Get-Content -Raw -LiteralPath $out.decisionManifest | ConvertFrom-Json
+    foreach ($key in @($decisionCounts.Keys)) {
+        if ($null -ne $decisionManifest.counts.$key) { $decisionCounts[$key] = [int] $decisionManifest.counts.$key }
+    }
+}
+
 $counts = @{
     maps = @($maps).Count
     portalEdges = @($portalGraph).Count
@@ -1055,9 +1090,22 @@ $counts = @{
     mapleIslandMvpReachableMaps = @($mapleIslandMvpCatalog.reachableMapIds).Count
     victoriaLt30Quests = [int] $victoriaQuestHuntingCatalog.summary.questCount
     victoriaLt30HuntingObjectives = [int] $victoriaQuestHuntingCatalog.summary.huntingObjectiveCount
+    navigationTopologyMaps = $decisionCounts.navigationMaps
+    combatPolicyMaps = $decisionCounts.combatMaps
+    travelServices = $decisionCounts.travelServices
+    equipmentPolicies = $decisionCounts.equipment
+    supplyPolicies = $decisionCounts.supplies
+    scrollPolicies = $decisionCounts.scrolls
+    questChainPolicies = $decisionCounts.questPolicies
 }
 
-$manifest = Export-Manifest $out $counts
+$manifestFiles = @{}
+$decisionFileKeys = @("navigationTopology", "combatMapPolicy", "travelService", "progressionItemPolicy", "questChainPolicy", "decisionManifest", "decisionSummary")
+foreach ($key in @($out.Keys)) {
+    if ($SkipDecisionCatalogs -and $decisionFileKeys -contains $key) { continue }
+    $manifestFiles[$key] = $out[$key]
+}
+$manifest = Export-Manifest $manifestFiles $counts
 $manifest | ConvertTo-Json -Depth 8 | Set-Content -Encoding UTF8 $out.manifest
 
 $summary = @(
@@ -1081,6 +1129,13 @@ $summary = @(
     "- Maps reachable from Maple Island MVP start: $($counts.mapleIslandMvpReachableMaps)",
     "- Victoria level-30-and-below quests: $($counts.victoriaLt30Quests)",
     "- Victoria quest hunting objectives: $($counts.victoriaLt30HuntingObjectives)",
+    "- Navigation topology maps: $($counts.navigationTopologyMaps)",
+    "- Combat policy maps: $($counts.combatPolicyMaps)",
+    "- Travel services: $($counts.travelServices)",
+    "- Equipment policy facts: $($counts.equipmentPolicies)",
+    "- Supply policy facts: $($counts.supplyPolicies)",
+    "- Scroll policy facts: $($counts.scrollPolicies)",
+    "- Quest-chain policy rows: $($counts.questChainPolicies)",
     "",
     "## Outputs",
     "",
@@ -1094,6 +1149,12 @@ $summary = @(
     "- `generated_maple_island_mvp_catalog.json` - Maple Island MVP route, quest availability, special handling, and forbidden actions.",
     "- `generated_maple_island_mvp_fast_indexes.json` - compact lookup maps for Maple Island MVP quest/map decisions.",
     "- `generated_victoria_lt30_quest_hunting_catalog.json` - ranked Victoria-only hunt maps, occupancy limits, and off-island warnings for level-30-and-below quests.",
+    "- `generated_navigation_topology_catalog.json` - exact footholds/components plus runtime-validated climb, jump, drop, portal, and spawn anchors.",
+    "- `generated_combat_map_policy_catalog.json` - farming anchors, capacity hints, incidental-mob rules, and party partitions.",
+    "- `generated_travel_service_catalog.json` - literal NPC travel destinations, costs, placements, and execution-safety boundaries.",
+    "- `generated_progression_item_policy_catalog.json` - equipment requirements/stats, recovery supplies, scroll facts, and inventory defaults.",
+    "- `generated_quest_chain_policy_catalog.json` - complete prerequisite/dependent graph and special-handler classification.",
+    "- `generated_agent_decision_catalog_manifest.json` - counts and file metadata for the five decision catalogs.",
     "- `generated_catalog_manifest.json` - file list and generation metadata.",
     "",
     "## Integration Notes",
@@ -1115,6 +1176,15 @@ $outputFiles = @(
     [pscustomobject] @{ key = "mapleIslandMvp"; path = $out.mapleIslandMvp }
     [pscustomobject] @{ key = "mapleIslandMvpIndexes"; path = $out.mapleIslandMvpIndexes }
     [pscustomobject] @{ key = "victoriaQuestHunting"; path = $out.victoriaQuestHunting }
+    if (!$SkipDecisionCatalogs) {
+        [pscustomobject] @{ key = "navigationTopology"; path = $out.navigationTopology }
+        [pscustomobject] @{ key = "combatMapPolicy"; path = $out.combatMapPolicy }
+        [pscustomobject] @{ key = "travelService"; path = $out.travelService }
+        [pscustomobject] @{ key = "progressionItemPolicy"; path = $out.progressionItemPolicy }
+        [pscustomobject] @{ key = "questChainPolicy"; path = $out.questChainPolicy }
+        [pscustomobject] @{ key = "decisionManifest"; path = $out.decisionManifest }
+        [pscustomobject] @{ key = "decisionSummary"; path = $out.decisionSummary }
+    }
     [pscustomobject] @{ key = "manifest"; path = $out.manifest }
     [pscustomobject] @{ key = "summary"; path = $out.summary }
 )
@@ -1128,6 +1198,7 @@ $report = [ordered]@{
     npcCatalogDir = $NpcCatalogDir
     outputDir = $OutputDir
     summaryOnly = [bool] $SummaryOnly
+    skipDecisionCatalogs = [bool] $SkipDecisionCatalogs
     rowsOmitted = [bool] $SummaryOnly
     outputFileCount = $outputFiles.Count
     returnedOutputFileCount = if ($SummaryOnly) { 0 } else { $outputFiles.Count }
@@ -1142,6 +1213,13 @@ $report = [ordered]@{
         actionAffordances = $counts.actionAffordances
         mapleIslandMvpQuests = $counts.mapleIslandMvpQuests
         mapleIslandMvpReachableMaps = $counts.mapleIslandMvpReachableMaps
+        navigationTopologyMaps = $counts.navigationTopologyMaps
+        combatPolicyMaps = $counts.combatPolicyMaps
+        travelServices = $counts.travelServices
+        equipmentPolicies = $counts.equipmentPolicies
+        supplyPolicies = $counts.supplyPolicies
+        scrollPolicies = $counts.scrollPolicies
+        questChainPolicies = $counts.questChainPolicies
     }
     outputFiles = if ($SummaryOnly) { $null } else { $outputFiles }
 }

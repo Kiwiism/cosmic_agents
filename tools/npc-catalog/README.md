@@ -11,6 +11,16 @@ powershell -ExecutionPolicy Bypass -File tools\npc-catalog\Export-NpcCatalog.ps1
 
 The full export parses map footholds and can take several minutes.
 
+When map/NPC placement WZ data is unchanged and only joined metadata or output
+schemas changed, reuse the last validated approach-point file to avoid a second
+full foothold pass:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\npc-catalog\Export-NpcCatalog.ps1 -ReuseExistingApproach
+```
+
+The verifier still checks placement and interaction-spot coverage after reuse.
+
 Machine-readable compact export summary:
 
 ```powershell
@@ -50,6 +60,8 @@ Generated files are written to `tmp/npc-catalog/`:
 - `generated_npc_services.json`
 - `generated_npc_reward_choices.json`
 - `generated_npc_shop_inventory.json`
+- `generated_npc_interaction_spot_catalog.json`
+- `generated_quest_npc_interaction_catalog.json`
 - `generated_npc_fast_indexes.json`
 - `generated_map_npc_summary.json`
 - `NPC_CATALOG_SUMMARY.md`
@@ -76,6 +88,17 @@ still validate live NPC presence, interaction range, and navigation reachability
 Interaction types, confidence, and do-not-auto-use flags are generated review
 hints. They should gate future automation until a runtime validator and manual
 override path exist.
+
+`generated_npc_interaction_spot_catalog.json` is the placement-centric joined
+view: every known NPC placement carries its interaction labels, shop/service
+links, quest IDs, interaction box, and ranked foothold candidates. NPCs known
+only through scripts, shops, or quests remain present as explicit
+`missing-placement` rows.
+
+`generated_quest_npc_interaction_catalog.json` is the quest-centric joined
+view: every Quest.wz check row resolves its start and completion NPC to the
+available placements and candidate-count summary. Non-NPC-driven phases and
+missing WZ placements are represented as statuses, never silently omitted.
 
 The expanded target also needs service classification, dialogue-option
 classification, and reward-choice metadata. Quest requirements and rewards are

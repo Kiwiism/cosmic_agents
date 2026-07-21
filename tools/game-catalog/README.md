@@ -89,6 +89,11 @@ Generated files are written to `tmp/game-catalog/`:
 - `generated_skill_catalog.json`
 - `GAME_CATALOG_SUMMARY.md`
 
+Quest rows include the human-readable quest name, QuestInfo area, parent label,
+automatic-flow flags, start/completion NPCs, requirements, and rewards. The
+QuestInfo metadata and the Check/Act rules remain separate fields so callers do
+not need to parse display text to make gameplay decisions.
+
 ## Sources
 
 - `wz/Map.wz/Map`

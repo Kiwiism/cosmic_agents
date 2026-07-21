@@ -14,7 +14,8 @@ function Invoke-CatalogVerifier {
         [string] $Name,
         [string] $ScriptPath,
         [string] $DirectoryParameter,
-        [string] $CatalogDir
+        [string] $CatalogDir,
+        [object[]] $AdditionalArguments = @()
     )
 
     $arguments = @(
@@ -23,6 +24,7 @@ function Invoke-CatalogVerifier {
         $DirectoryParameter, $CatalogDir,
         "-Json"
     )
+    $arguments += $AdditionalArguments
 
     $output = & powershell @arguments 2>&1
     $exitCode = $LASTEXITCODE
@@ -150,6 +152,7 @@ $verifiers = @(
     Invoke-CatalogVerifier "game" "tools/game-catalog/Test-GameKnowledgeCatalog.ps1" "-CatalogDir" $GameCatalogDir
     Invoke-CatalogVerifier "npc" "tools/npc-catalog/Test-NpcCatalog.ps1" "-CatalogDir" $NpcCatalogDir
     Invoke-CatalogVerifier "agent-llm" "tools/agent-llm-catalog/Test-AgentLlmCatalog.ps1" "-CatalogDir" $AgentLlmCatalogDir
+    Invoke-CatalogVerifier "agent-decision" "tools/agent-llm-catalog/Test-AgentDecisionCatalogs.ps1" "-CatalogDir" $AgentLlmCatalogDir @("-GameCatalogDir", $GameCatalogDir)
 )
 
 $failCount = 0

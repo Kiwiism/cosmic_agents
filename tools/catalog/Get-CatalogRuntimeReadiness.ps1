@@ -172,6 +172,12 @@ $files = [ordered]@{
     affordances = Get-FileFact (Join-Path $AgentLlmCatalogDir "generated_action_affordance_catalog.json")
     mapleIslandMvp = Get-FileFact (Join-Path $AgentLlmCatalogDir "generated_maple_island_mvp_catalog.json")
     mapleIslandMvpIndexes = Get-FileFact (Join-Path $AgentLlmCatalogDir "generated_maple_island_mvp_fast_indexes.json")
+    navigationTopology = Get-FileFact (Join-Path $AgentLlmCatalogDir "generated_navigation_topology_catalog.json")
+    combatMapPolicy = Get-FileFact (Join-Path $AgentLlmCatalogDir "generated_combat_map_policy_catalog.json")
+    travelServices = Get-FileFact (Join-Path $AgentLlmCatalogDir "generated_travel_service_catalog.json")
+    progressionItemPolicy = Get-FileFact (Join-Path $AgentLlmCatalogDir "generated_progression_item_policy_catalog.json")
+    questChainPolicy = Get-FileFact (Join-Path $AgentLlmCatalogDir "generated_quest_chain_policy_catalog.json")
+    decisionManifest = Get-FileFact (Join-Path $AgentLlmCatalogDir "generated_agent_decision_catalog_manifest.json")
     reactorCatalog = Get-FileFact (Join-Path $ReactorCatalogDir "generated_reactor_catalog.json")
     manifest = Get-FileFact (Join-Path $AgentLlmCatalogDir "generated_catalog_manifest.json")
 }
@@ -211,6 +217,9 @@ $resupplyReady = $files.resupply.exists
 
 $affordanceReady = $files.affordances.exists
 [void] $areas.Add((New-Area "llm-action-affordances" $(if ($affordanceReady) { "ready" } else { "missing" }) "llm-control" @("affordances") "LLM-safe action affordance summaries." "Command execution waits for LLM gateway and capability validators."))
+
+$decisionReady = $files.navigationTopology.exists -and $files.combatMapPolicy.exists -and $files.travelServices.exists -and $files.progressionItemPolicy.exists -and $files.questChainPolicy.exists -and $files.decisionManifest.exists
+[void] $areas.Add((New-Area "agent-decision-catalogs" $(if ($decisionReady) { "ready" } else { "missing" }) "catalog-runtime" @("navigationTopology", "combatMapPolicy", "travelServices", "progressionItemPolicy", "questChainPolicy", "decisionManifest") "Shared spatial, combat, travel, progression-item, and quest-chain facts/policy hints." "Every state-changing action remains subject to live capability and server validation."))
 
 $reactorReady = $files.reactorCatalog.exists
 [void] $areas.Add((New-Area "reactor-and-field-object-lookup" $(if ($reactorReady) { "ready" } else { "deferred" }) "catalog-runtime" @("reactorCatalog") "Reactor, box, and field-object lookup for future reactor capability." "Run tools/reactor-catalog/Export-ReactorCatalog.ps1 to generate optional reactor lookup data."))

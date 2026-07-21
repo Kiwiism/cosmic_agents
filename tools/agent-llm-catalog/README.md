@@ -33,11 +33,21 @@ edges, mob spawn maps, map summaries, quest objective plans, item source
 indexes, resupply shops, action affordances, and Maple Island MVP rows.
 Summary mode omits detailed output file rows while still writing the same generated Agent/LLM catalog artifacts.
 
+The default export also runs the five decision catalogs documented in
+`docs/agents/catalog-platform/AGENT_DECISION_CATALOGS.md`. Use
+`-SkipDecisionCatalogs` only for a focused legacy-catalog diagnostic; skipped
+outputs are not a publishable full bundle.
+
+Decision topology defaults to the current Maple Island and Victoria milestone.
+Run `Export-AgentDecisionCatalogs.ps1 -AllRegions` when preparing a world-wide
+bundle.
+
 ## Verify
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File tools\agent-llm-catalog\Test-AgentLlmCatalog.ps1
 powershell -ExecutionPolicy Bypass -File tools\agent-llm-catalog\Test-AgentLlmCatalog.ps1 -SummaryOnly -Json
+powershell -ExecutionPolicy Bypass -File tools\agent-llm-catalog\Test-AgentDecisionCatalogs.ps1
 ```
 
 The verifier checks required generated files, JSON validity, manifest entries,
@@ -116,8 +126,16 @@ Generated files are written to `tmp/agent-llm-catalog/`:
 - `generated_action_affordance_catalog.json`
 - `generated_maple_island_mvp_catalog.json`
 - `generated_maple_island_mvp_fast_indexes.json`
+- `generated_victoria_lt30_quest_hunting_catalog.json`
+- `generated_navigation_topology_catalog.json`
+- `generated_combat_map_policy_catalog.json`
+- `generated_travel_service_catalog.json`
+- `generated_progression_item_policy_catalog.json`
+- `generated_quest_chain_policy_catalog.json`
+- `generated_agent_decision_catalog_manifest.json`
 - `generated_catalog_manifest.json`
 - `AGENT_LLM_CATALOG_SUMMARY.md`
+- `AGENT_DECISION_CATALOG_SUMMARY.md`
 
 The Maple Island MVP catalog is a curated slice for the first reconstructed
 Agent quest milestone. It records the `10000` start route, Yoona-before-Mai

@@ -112,6 +112,23 @@ catalog-bundle/
     applied_overrides.json
 ```
 
+## Current decision-catalog mapping
+
+The preparation workflow currently generates the following source artifacts
+before final bundle packaging:
+
+| Generated artifact | Bundle responsibility |
+| --- | --- |
+| `generated_navigation_topology_catalog.json` | `foothold_reachability.json`, safe-point and spatial indexes |
+| `generated_combat_map_policy_catalog.json` | `training.json`, party partitions, combat-map capacity |
+| `generated_travel_service_catalog.json` | `travel_services.json` and service-route indexes |
+| `generated_progression_item_policy_catalog.json` | item/equipment facts, `return_resupply.json`, and `scroll_upgrades.json` inputs |
+| `generated_quest_chain_policy_catalog.json` | prerequisite, chain, risk, and manual-review indexes |
+
+These generated files are not renamed into the portable bundle yet. The bundle
+builder should split the combined progression-item envelope and derive compact
+indexes without changing its source facts.
+
 Small servers may omit optional catalogs, but `manifest.json` must list what is
 present.
 

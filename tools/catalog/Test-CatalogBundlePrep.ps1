@@ -308,6 +308,8 @@ Add-Entry $entries "catalog" "questDialogueTiming" (Join-Path $NpcCatalogDir "ge
 Add-Entry $entries "catalog" "npcServices" (Join-Path $NpcCatalogDir "generated_npc_services.json") $true "NPC service/action classification."
 Add-Entry $entries "catalog" "npcShopInventory" (Join-Path $NpcCatalogDir "generated_npc_shop_inventory.json") $true "NPC shop inventory reverse lookup source."
 Add-Entry $entries "catalog" "npcRewardChoices" (Join-Path $NpcCatalogDir "generated_npc_reward_choices.json") $true "Reward choice lookup."
+Add-Entry $entries "catalog" "npcInteractionSpots" (Join-Path $NpcCatalogDir "generated_npc_interaction_spot_catalog.json") $true "Joined NPC placement, service, quest, and approach-point facts."
+Add-Entry $entries "catalog" "questNpcInteractions" (Join-Path $NpcCatalogDir "generated_quest_npc_interaction_catalog.json") $true "Quest start/complete NPC placement coverage and review status."
 Add-Entry $entries "catalog" "reactors" (Join-Path $ReactorCatalogDir "generated_reactor_catalog.json") $false "Reactor, box, and field-object lookup source for future reactor capability." "Run tools/reactor-catalog/Export-ReactorCatalog.ps1 to generate optional reactor lookup data."
 
 Add-Entry $entries "index" "npcFastIndexes" (Join-Path $NpcCatalogDir "generated_npc_fast_indexes.json") $true "High-frequency NPC reverse indexes."
@@ -322,10 +324,17 @@ Add-Entry $entries "index" "mapleIslandMvp" (Join-Path $AgentLlmCatalogDir "gene
 Add-Entry $entries "index" "mapleIslandMvpFastIndexes" (Join-Path $AgentLlmCatalogDir "generated_maple_island_mvp_fast_indexes.json") $true "Maple Island MVP fast objective indexes."
 Add-Entry $entries "index" "resupply" (Join-Path $AgentLlmCatalogDir "generated_resupply_catalog.json") $true "Resupply fallback lookup."
 Add-Entry $entries "index" "actionAffordances" (Join-Path $AgentLlmCatalogDir "generated_action_affordance_catalog.json") $true "LLM-safe action affordance lookup."
+Add-Entry $entries "index" "navigationTopology" (Join-Path $AgentLlmCatalogDir "generated_navigation_topology_catalog.json") $true "Exact footholds, components, climbables, and runtime-validation movement hints."
+Add-Entry $entries "index" "combatMapPolicy" (Join-Path $AgentLlmCatalogDir "generated_combat_map_policy_catalog.json") $true "Combat anchors, occupancy capacity, and party partitions."
+Add-Entry $entries "index" "travelServices" (Join-Path $AgentLlmCatalogDir "generated_travel_service_catalog.json") $true "NPC travel destination, cost, placement, and safety facts."
+Add-Entry $entries "index" "progressionItemPolicy" (Join-Path $AgentLlmCatalogDir "generated_progression_item_policy_catalog.json") $true "Equipment, recovery supply, scroll, and inventory policy facts."
+Add-Entry $entries "index" "questChainPolicy" (Join-Path $AgentLlmCatalogDir "generated_quest_chain_policy_catalog.json") $true "Quest prerequisites, dependents, capabilities, and special-handler classification."
+Add-Entry $entries "index" "agentDecisionManifest" (Join-Path $AgentLlmCatalogDir "generated_agent_decision_catalog_manifest.json") $true "Five-catalog decision slice counts and provenance."
 
 Add-Entry $entries "summary" "gameSummary" (Join-Path $GameCatalogDir "GAME_CATALOG_SUMMARY.md") $true "Human review summary for game catalog."
 Add-Entry $entries "summary" "npcSummary" (Join-Path $NpcCatalogDir "NPC_CATALOG_SUMMARY.md") $true "Human review summary for NPC catalog."
 Add-Entry $entries "summary" "agentLlmSummary" (Join-Path $AgentLlmCatalogDir "AGENT_LLM_CATALOG_SUMMARY.md") $true "Human review summary for Agent/LLM catalog."
+Add-Entry $entries "summary" "agentDecisionSummary" (Join-Path $AgentLlmCatalogDir "AGENT_DECISION_CATALOG_SUMMARY.md") $true "Human review summary for navigation, combat, travel, item, and quest-chain policies."
 
 Add-Entry $entries "report" "npcValidation" (Join-Path $NpcCatalogDir "NPC_CATALOG_VALIDATION.md") $true "NPC catalog validation report."
 Add-Entry $entries "report" "npcGaps" (Join-Path $NpcCatalogDir "NPC_CATALOG_GAPS.md") $true "NPC catalog gap report."

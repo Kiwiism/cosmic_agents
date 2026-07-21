@@ -181,6 +181,32 @@ function Get-MapStringTable {
     return $result
 }
 
+function Get-QuestInfoTable {
+    param([string] $Path)
+
+    $result = @{}
+    if (!(Test-Path $Path)) {
+        return $result
+    }
+
+    $doc = Load-XmlDocument $Path
+    foreach ($entry in $doc.DocumentElement.ChildNodes) {
+        $id = Get-AttrValue $entry "name"
+        if ($id -notmatch "^\d+$") {
+            continue
+        }
+        $result[[int] $id] = [pscustomobject] @{
+            name = Get-StringChildValue $entry "name"
+            parent = Get-StringChildValue $entry "parent"
+            area = Get-IntChildValue $entry "area"
+            autoStart = (Get-IntChildValue $entry "autoStart") -eq 1
+            autoPreComplete = (Get-IntChildValue $entry "autoPreComplete") -eq 1
+            autoComplete = (Get-IntChildValue $entry "autoComplete") -eq 1
+        }
+    }
+    return $result
+}
+
 function Get-ItemCategory {
     param([int] $ItemId)
 
@@ -514,7 +540,8 @@ function Export-ShopCatalog {
 function Export-QuestCatalog {
     param(
         [string] $CheckPath,
-        [string] $ActPath
+        [string] $ActPath,
+        [hashtable] $QuestInfo
     )
 
     $actsByQuest = @{}
@@ -541,6 +568,7 @@ function Export-QuestCatalog {
         $start = Get-ChildByName $quest "0"
         $complete = Get-ChildByName $quest "1"
         $actQuest = if ($actsByQuest.ContainsKey($questId)) { $actsByQuest[$questId] } else { $null }
+        $info = if ($QuestInfo.ContainsKey($questId)) { $QuestInfo[$questId] } else { $null }
 
         $requirements = @{
             start = Get-QuestPhaseChecks $start
@@ -554,12 +582,18 @@ function Export-QuestCatalog {
         [void] $rows.Add([pscustomobject] @{
             schemaVersion = 1
             questId = $questId
+            questName = if ($null -ne $info) { $info.name } else { $null }
+            questParent = if ($null -ne $info) { $info.parent } else { $null }
+            questArea = if ($null -ne $info) { $info.area } else { $null }
             startNpcId = Get-IntChildValue $start "npc"
             completeNpcId = Get-IntChildValue $complete "npc"
             requirements = $requirements
             rewards = $rewards
             flags = New-StringList @(
                 if ((Get-IntChildValue $start "interval") -gt 0 -or (Get-IntChildValue $complete "interval") -gt 0) { "repeatable-or-timed" } else { $null }
+                if ($null -ne $info -and $info.autoStart) { "auto-start" } else { $null }
+                if ($null -ne $info -and $info.autoPreComplete) { "auto-pre-complete" } else { $null }
+                if ($null -ne $info -and $info.autoComplete) { "auto-complete" } else { $null }
             )
         })
     }
@@ -736,6 +770,7 @@ $mobNames = Get-StringTableFlat (Join-Path $stringRoot "Mob.img.xml")
 $npcNames = Get-StringTableFlat (Join-Path $stringRoot "Npc.img.xml")
 $skillNames = Get-StringTableFlat (Join-Path $stringRoot "Skill.img.xml")
 $itemNames = Get-ItemNames $stringRoot
+$questInfo = Get-QuestInfoTable (Join-Path $WzRoot "Quest.wz/QuestInfo.img.xml")
 
 $mapRows = Export-MapCatalog (Join-Path $WzRoot "Map.wz/Map") $mapNames
 $indexes = Build-MobAndNpcMapIndexes $mapRows
@@ -748,7 +783,10 @@ $shopExport = Export-ShopCatalog `
 $dropRows = Export-DropCatalog "src/main/resources/db/data/152-drop-data.sql" $itemNames $mobNames $indexes.mapsByMob
 $itemRows = Export-ItemCatalog $itemNames $dropRows $shopExport.shopItems
 $mobRows = Export-MobCatalog (Join-Path $WzRoot "Mob.wz") $mobNames $indexes.mapsByMob
-$questRows = Export-QuestCatalog (Join-Path $WzRoot "Quest.wz/Check.img.xml") (Join-Path $WzRoot "Quest.wz/Act.img.xml")
+$questRows = Export-QuestCatalog `
+    (Join-Path $WzRoot "Quest.wz/Check.img.xml") `
+    (Join-Path $WzRoot "Quest.wz/Act.img.xml") `
+    $questInfo
 $skillRows = Export-SkillCatalog (Join-Path $WzRoot "Skill.wz") $skillNames
 
 $paths = @{
