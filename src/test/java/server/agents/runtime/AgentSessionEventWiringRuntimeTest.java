@@ -3,6 +3,7 @@ package server.agents.runtime;
 import client.Character;
 import config.YamlConfig;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import server.agents.events.AgentEventBus;
 
@@ -12,8 +13,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 class AgentSessionEventWiringRuntimeTest {
+    private boolean previousLegacyDialogue;
+
+    @BeforeEach
+    void enableDialogueForExistingWiringExpectations() {
+        previousLegacyDialogue = YamlConfig.config.server.AGENT_LEGACY_DIALOGUE_ENABLED;
+        YamlConfig.config.server.AGENT_LEGACY_DIALOGUE_ENABLED = true;
+    }
+
     @AfterEach
     void clearRolloutProperties() {
+        YamlConfig.config.server.AGENT_LEGACY_DIALOGUE_ENABLED = previousLegacyDialogue;
         System.clearProperty("agents.events.reactions.enabled");
         System.clearProperty("agents.events.dialogue.enabled");
         System.clearProperty("agents.events.coordination.enabled");
@@ -51,6 +61,19 @@ class AgentSessionEventWiringRuntimeTest {
                 ? 1 : 0;
 
         assertEquals(5 + personalityListener, bus.snapshot().subscriptions());
+
+        AgentSessionEventRuntime.close(entry);
+    }
+
+    @Test
+    void legacyDialogueYamlGateAlsoDisablesEventDialogueConsumers() {
+        YamlConfig.config.server.AGENT_LEGACY_DIALOGUE_ENABLED = false;
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), null, null);
+        AgentEventBus bus = AgentSessionEventRuntime.bus(entry);
+        int personalityListener = YamlConfig.config.server.AGENT_PERSONALITY_PRESENTATION_ENABLED
+                ? 1 : 0;
+
+        assertEquals(11 + personalityListener, bus.snapshot().subscriptions());
 
         AgentSessionEventRuntime.close(entry);
     }

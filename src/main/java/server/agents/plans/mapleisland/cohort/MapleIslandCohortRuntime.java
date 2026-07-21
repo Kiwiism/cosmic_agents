@@ -21,6 +21,8 @@ import server.agents.plans.amherst.AmherstPlanCard;
 import server.agents.plans.amherst.AmherstPlanObservation;
 import server.agents.plans.amherst.AmherstPlanObserver;
 import server.agents.plans.mapleisland.AgentMapleIslandPlanRuntime;
+import server.agents.objectives.AgentObjectiveCheckpointRuntime;
+import server.agents.progression.AgentCareerProgressionCheckpointRuntime;
 import server.agents.runtime.AgentInteractionRuntime;
 import server.agents.runtime.AgentRuntimeCleanupService;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -195,6 +197,13 @@ public final class MapleIslandCohortRuntime {
         if (isCharacterLive(pooled.characterId())) {
             throw new IllegalStateException("Pooled Agent is already online: " + pooled.name());
         }
+
+        // A clean Maple Island cohort run must not restore an objective from an
+        // earlier Victoria/job-training session while the Agent is registered.
+        // Clear these before registration so the first scheduler tick cannot
+        // race the reset and give the stale career runtime priority over this plan.
+        AgentObjectiveCheckpointRuntime.delete(pooled.characterId());
+        AgentCareerProgressionCheckpointRuntime.delete(pooled.characterId());
 
         MapleMap startMap = AgentMapGatewayRuntime.map().resolveMap(
                 context.world(), context.channel(), AmherstQuestCatalog.START_MAP_ID);

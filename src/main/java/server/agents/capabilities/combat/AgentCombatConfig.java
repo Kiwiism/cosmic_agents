@@ -289,7 +289,8 @@ public final class AgentCombatConfig {
         // Mob damage
         public int MOB_TOUCH_SWEEP_HEIGHT = 50;
         public int MOB_HIT_COOLDOWN_MS = 1500;
-        public long BOT_DEAD_MS = 30_000L;
+        public long BOT_DEAD_MS = YamlConfig.config.server.AGENT_DEATH_RESPAWN_DELAY_MS;
+        public int RESPAWN_HP_PERCENT = YamlConfig.config.server.AGENT_DEATH_RESPAWN_HP_PERCENT;
 
         // Support
         public int SUPPORT_RANGE = 400;

@@ -2144,6 +2144,7 @@ public class MapleMap {
     }
 
     public void spawnReactor(final Reactor reactor) {
+        reactor.setDelay(SpawnTimeOverridePolicy.reactorRespawnMilliseconds(mapid, reactor.getDelay()));
         reactor.setMap(this);
         spawnAndAddRangedMapObject(reactor, c -> c.sendPacket(reactor.makeSpawnData()));
     }
@@ -3315,9 +3316,10 @@ public class MapleMap {
     public void addMonsterSpawn(Monster monster, int mobTime, int team) {
         Point newpos = calcPointBelow(monster.getPosition());
         newpos.y -= 1;
-        SpawnPoint sp = new SpawnPoint(monster, newpos, !monster.isMobile(), mobTime, mobInterval, team);
+        int respawnSeconds = SpawnTimeOverridePolicy.mobRespawnSeconds(mapid, mobTime);
+        SpawnPoint sp = new SpawnPoint(monster, newpos, !monster.isMobile(), respawnSeconds, mobInterval, team);
         monsterSpawn.add(sp);
-        if (sp.shouldSpawn() || mobTime == -1) {// -1 does not respawn and should not either but force ONE spawn
+        if (sp.shouldSpawn() || respawnSeconds == -1) {// -1 does not respawn and should not either but force ONE spawn
             spawnMonster(sp.getMonster());
         }
     }
@@ -3325,7 +3327,8 @@ public class MapleMap {
     public void addAllMonsterSpawn(Monster monster, int mobTime, int team) {
         Point newpos = calcPointBelow(monster.getPosition());
         newpos.y -= 1;
-        SpawnPoint sp = new SpawnPoint(monster, newpos, !monster.isMobile(), mobTime, mobInterval, team);
+        int respawnSeconds = SpawnTimeOverridePolicy.mobRespawnSeconds(mapid, mobTime);
+        SpawnPoint sp = new SpawnPoint(monster, newpos, !monster.isMobile(), respawnSeconds, mobInterval, team);
         allMonsterSpawn.add(sp);
     }
 

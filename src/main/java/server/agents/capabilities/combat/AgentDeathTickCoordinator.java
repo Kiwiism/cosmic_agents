@@ -22,7 +22,7 @@ public final class AgentDeathTickCoordinator {
                 () -> AgentDeathStateRuntime.shouldEnterDeadState(entry, agent.getHp()),
                 (deadEntry, deadAgent) -> AgentCombatDeathRuntime.enterDeadState(
                         deadEntry, deadAgent, false, AgentCombatConfig.cfg),
-                () -> AgentRespawnCoordinator.respawnNearLeader(entry, agent, leader),
+                () -> AgentRespawnCoordinator.respawnAtNearestTown(entry, agent),
                 System::currentTimeMillis);
     }
 

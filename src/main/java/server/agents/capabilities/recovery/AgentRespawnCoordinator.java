@@ -1,6 +1,7 @@
 package server.agents.capabilities.recovery;
 
 import client.Character;
+import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentDeathTickService;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentMovementPoseService;
@@ -15,14 +16,13 @@ public final class AgentRespawnCoordinator {
     private AgentRespawnCoordinator() {
     }
 
-    public static void respawnNearLeader(AgentRuntimeEntry entry, Character agent, Character leader) {
-        respawnNearLeader(
+    public static void respawnAtNearestTown(AgentRuntimeEntry entry, Character agent) {
+        respawnAtNearestTown(
                 entry,
                 agent,
-                leader,
+                AgentCombatConfig.cfg.RESPAWN_HP_PERCENT,
                 new AgentDeathTickService.RespawnHooks(
                         AgentMapGatewayRuntime.map()::changeMapNear,
-                        AgentMapGatewayRuntime.map()::pointBelow,
                         (respawnEntry, respawnAgent, point) ->
                                 AgentMovementPoseService.teleportTo(respawnEntry, respawnAgent, point),
                         (respawnEntry, ignoredAgent) ->
@@ -31,14 +31,14 @@ public final class AgentRespawnCoordinator {
                                 AgentMovementBroadcastService.broadcastMovement(respawnEntry)));
     }
 
-    static void respawnNearLeader(AgentRuntimeEntry entry,
-                                  Character agent,
-                                  Character leader,
-                                  AgentDeathTickService.RespawnHooks hooks) {
-        AgentDeathTickService.respawnNearLeader(
+    static void respawnAtNearestTown(AgentRuntimeEntry entry,
+                                     Character agent,
+                                     int restoredHpPercent,
+                                     AgentDeathTickService.RespawnHooks hooks) {
+        AgentDeathTickService.respawnAtNearestTown(
                 entry,
                 agent,
-                leader,
+                restoredHpPercent,
                 hooks);
     }
 }

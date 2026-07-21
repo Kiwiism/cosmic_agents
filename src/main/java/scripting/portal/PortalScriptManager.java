@@ -43,7 +43,7 @@ public class PortalScriptManager extends AbstractScriptManager {
         return instance;
     }
 
-    private PortalScript getPortalScript(String scriptName) throws ScriptException {
+    private synchronized PortalScript getPortalScript(String scriptName) throws ScriptException {
         String scriptPath = "portal/" + scriptName + ".js";
         PortalScript script = scripts.get(scriptPath);
         if (script != null) {
@@ -55,13 +55,21 @@ public class PortalScriptManager extends AbstractScriptManager {
             return null;
         }
 
-        script = iv.getInterface(PortalScript.class);
-        if (script == null) {
+        PortalScript delegate = iv.getInterface(PortalScript.class);
+        if (delegate == null) {
             throw new ScriptException(String.format("Portal script \"%s\" fails to implement the PortalScript interface", scriptName));
         }
 
+        script = serialized(delegate);
         scripts.put(scriptPath, script);
         return script;
+    }
+
+    static PortalScript serialized(PortalScript delegate) {
+        if (delegate == null) {
+            throw new IllegalArgumentException("Portal script delegate is required");
+        }
+        return new SerializedPortalScript(delegate);
     }
 
     public boolean executePortalScript(Portal portal, Client c) {
@@ -76,7 +84,21 @@ public class PortalScriptManager extends AbstractScriptManager {
         return false;
     }
 
-    public void reloadPortalScripts() {
+    public synchronized void reloadPortalScripts() {
         scripts.clear();
+    }
+
+    /** GraalJS contexts cannot be entered concurrently from Agent timer threads. */
+    private static final class SerializedPortalScript implements PortalScript {
+        private final PortalScript delegate;
+
+        private SerializedPortalScript(PortalScript delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public synchronized boolean enter(PortalPlayerInteraction ppi) {
+            return delegate.enter(ppi);
+        }
     }
 }

@@ -183,7 +183,7 @@ server:
     CHANNEL_LOAD: 1000                  #Max players per channel (limit actually used to calculate the World server capacity).
     CHANNEL_LOCKS: 20                   #Total number of structure management locks each channel has.
 
-    RESPAWN_INTERVAL: 10000             #10 seconds, 10000.
+    RESPAWN_INTERVAL: 5000              #Mob respawn eligibility poll; actual delays use the overrides below.
     PURGING_INTERVAL: 300000            #5 minutes, 300000.
     RANKING_INTERVAL: 3600000           #60 minutes, 3600000.
     COUPON_INTERVAL: 3600000            #60 minutes, 3600000.
@@ -275,6 +275,10 @@ server:
     USE_MAP_OWNERSHIP_SYSTEM: false      #Flag to enable/disable map ownership system
     USE_FISHING_SYSTEM: false            #Flag to enable/disable custom fishing system
     USE_NPCS_SCRIPTABLE: true           #Flag to enable/disable serverside predefined script NPCs.
+    MOB_RESPAWN_TIME_OVERRIDE_SECONDS: 10                 #Generic respawn delay; 0 preserves each source-map value.
+    REACTOR_RESPAWN_TIME_OVERRIDE_SECONDS: 10             #Generic reactor respawn delay; 0 preserves each source-map value.
+    MAPLE_ISLAND_MOB_RESPAWN_TIME_OVERRIDE_SECONDS: 5     #Overrides the generic mob delay on Maple Island.
+    MAPLE_ISLAND_REACTOR_RESPAWN_TIME_OVERRIDE_SECONDS: 5 #Overrides the generic reactor delay on Maple Island.
     # Agent-hit mob reaction mode:
     # OFF = original Cosmic client-controlled mobs; SYNTHETIC = simple shove only; PHYSICS = server-owned movement and aggro.
     AGENT_MOB_REACTION_MODE: PHYSICS                                  # Allowed values: OFF, SYNTHETIC, PHYSICS.
@@ -330,8 +334,10 @@ server:
     AGENT_MOB_PHYSICS_DIAGNOSTIC_LOGGING: false                       # Log aggregate physics counters and timing at most once every 30 seconds.
     AGENT_MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS: false                  # Diagnostic only: let Agent hits run real mob physics in maps without a player; packets are built but have no fake network recipient.
     AGENT_MAP_TRANSITION_PACKET_DIAGNOSTICS: true                     # If a client disconnects within 15 seconds of warping, write its bounded packet trace under logs/map-transition-crashes.
+    AGENT_DEATH_RESPAWN_DELAY_MS: 10000                               # Dead-state presentation before an Agent returns to the nearest town.
+    AGENT_DEATH_RESPAWN_HP_PERCENT: 0                                 # 1-100 restores that max-HP percentage; 0 restores 50 HP.
 
-    AGENT_LEGACY_DIALOGUE_ENABLED: false #Experimental Agent plans narrate objectives; suppress NuTNNuT-era Agent chatter.
+    AGENT_LEGACY_DIALOGUE_ENABLED: false #Allow non-objective Agent chatter, including legacy replies and event-derived dialogue.
     AGENT_AMHERST_DEBUG_MESSAGES_ENABLED: false #Show detailed yellow Amherst capability and objective progress messages.
     AGENT_AMHERST_INTENTION_CHAT_ENABLED: true #Let the Agent announce its next Amherst action in map chat.
     AGENT_AMHERST_SHOWCASE_ENABLED: true #Allow the guarded one-command Amherst showcase run.

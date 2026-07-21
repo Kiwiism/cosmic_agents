@@ -16,23 +16,22 @@ class AgentRespawnCoordinatorTest {
     void delegatesRespawnThroughRecoveryHooks() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         Character agent = entry.bot();
-        Character leader = entry.owner();
         AgentDeathTickService.RespawnHooks hooks = mock(AgentDeathTickService.RespawnHooks.class);
 
         try (MockedStatic<AgentDeathTickService> service = mockStatic(AgentDeathTickService.class)) {
-            service.when(() -> AgentDeathTickService.respawnNearLeader(
+            service.when(() -> AgentDeathTickService.respawnAtNearestTown(
                             eq(entry),
                             eq(agent),
-                            eq(leader),
+                            eq(25),
                             any(AgentDeathTickService.RespawnHooks.class)))
                     .thenAnswer(invocation -> null);
 
-            AgentRespawnCoordinator.respawnNearLeader(entry, agent, leader, hooks);
+            AgentRespawnCoordinator.respawnAtNearestTown(entry, agent, 25, hooks);
 
-            service.verify(() -> AgentDeathTickService.respawnNearLeader(
+            service.verify(() -> AgentDeathTickService.respawnAtNearestTown(
                     eq(entry),
                     eq(agent),
-                    eq(leader),
+                    eq(25),
                     any(AgentDeathTickService.RespawnHooks.class)));
         }
     }

@@ -2,8 +2,10 @@ package server.agents.capabilities.combat;
 
 import client.Character;
 import server.agents.capabilities.dialogue.AgentEmote;
+import server.agents.capabilities.recovery.AgentRespawnHealthPolicy;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
+import server.maps.Portal;
 import server.agents.events.AgentEventPriority;
 import server.agents.operations.events.AgentLifeStateChangedEvent;
 import server.agents.operations.events.AgentOperationalEventPublisher;
@@ -13,21 +15,15 @@ import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
 
 public final class AgentDeathTickService {
-    public record RespawnHooks(ChangeMapNearLeader changeMapNearLeader,
-                               GroundPointResolver groundPointResolver,
+    public record RespawnHooks(ChangeMapToTown changeMapToTown,
                                TeleportToPoint teleportToPoint,
                                BiConsumer<AgentRuntimeEntry, Character> resetEntryStateAfterTeleport,
                                BiConsumer<AgentRuntimeEntry, Character> broadcastMovement) {
     }
 
     @FunctionalInterface
-    public interface ChangeMapNearLeader {
-        void change(Character agent, MapleMap leaderMap, Point leaderPosition);
-    }
-
-    @FunctionalInterface
-    public interface GroundPointResolver {
-        Point resolve(MapleMap map, Point point);
+    public interface ChangeMapToTown {
+        void change(Character agent, MapleMap townMap, Point spawnPosition);
     }
 
     @FunctionalInterface
@@ -56,17 +52,23 @@ public final class AgentDeathTickService {
         return true;
     }
 
-    public static void respawnNearLeader(AgentRuntimeEntry entry, Character agent, Character leader, RespawnHooks hooks) {
+    public static void respawnAtNearestTown(AgentRuntimeEntry entry,
+                                            Character agent,
+                                            int restoredHpPercent,
+                                            RespawnHooks hooks) {
         AgentDeathStateRuntime.clear(entry);
-        agent.updateHp(agent.getMaxHp());
+        agent.updateHp(AgentRespawnHealthPolicy.restoredHp(agent.getMaxHp(), restoredHpPercent));
 
-        if (agent.getMapId() != leader.getMapId()) {
-            hooks.changeMapNearLeader().change(agent, leader.getMap(), leader.getPosition());
+        MapleMap currentMap = agent.getMap();
+        MapleMap townMap = currentMap == null ? null : currentMap.getReturnMap();
+        if (townMap == null) {
+            townMap = currentMap;
         }
-        Point leaderPosition = leader.getPosition();
-        Point spawnPosition = hooks.groundPointResolver().resolve(
-                agent.getMap(), new Point(leaderPosition.x, leaderPosition.y - 1));
-        hooks.teleportToPoint().teleport(entry, agent, spawnPosition != null ? spawnPosition : leaderPosition);
+        Point spawnPosition = townSpawnPosition(townMap, agent.getPosition());
+        if (townMap != null && (currentMap == null || currentMap.getId() != townMap.getId())) {
+            hooks.changeMapToTown().change(agent, townMap, spawnPosition);
+        }
+        hooks.teleportToPoint().teleport(entry, agent, spawnPosition);
         hooks.resetEntryStateAfterTeleport().accept(entry, agent);
         hooks.broadcastMovement().accept(entry, agent);
         agent.changeFaceExpression(AgentEmote.GLARE.getValue());
@@ -75,5 +77,15 @@ public final class AgentDeathTickService {
                         agent.getId(), System.currentTimeMillis(), "DEAD", "ALIVE",
                         agent.getMapId(), true, objectiveId),
                 AgentEventPriority.IMPORTANT);
+    }
+
+    private static Point townSpawnPosition(MapleMap townMap, Point fallback) {
+        if (townMap != null) {
+            Portal portal = townMap.getPortal(0);
+            if (portal != null && portal.getPosition() != null) {
+                return new Point(portal.getPosition());
+            }
+        }
+        return fallback == null ? new Point() : new Point(fallback);
     }
 }

@@ -72,6 +72,7 @@ import server.ExpLogger;
 import server.SkillbookInformationProvider;
 import server.ThreadManager;
 import server.TimerManager;
+import server.agents.catalog.decision.AgentDecisionCatalogRuntime;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.population.AgentPopulationRuntime;
 import server.agents.runtime.AgentRuntimeShutdownCoordinator;
@@ -902,6 +903,7 @@ public class Server {
 
         validateDeploymentSecurityProfile();
         AgentRuntimeShutdownCoordinator.start();
+        AgentDecisionCatalogRuntime.start();
         AgentNavigationGraphService.startAsyncWarmups();
         warnRiskyRuntimeFeatures();
 
@@ -2212,6 +2214,7 @@ public class Server {
         List<Channel> allChannels = getAllChannels();
         AgentRuntimeShutdownCoordinator.beginShutdown();
         AgentPopulationRuntime.stop();
+        AgentDecisionCatalogRuntime.stop();
         AgentNavigationGraphService.shutdownAsyncWarmups();
         AgentRuntimeShutdownCoordinator.Report agentShutdown = AgentRuntimeShutdownCoordinator.shutdown();
         log.info("Agent runtime shutdown: sessions={} cancellations={} pendingAsync={} remaining={} "

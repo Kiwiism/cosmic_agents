@@ -1,6 +1,7 @@
 package server.agents.capabilities.navigation;
 
 import client.Character;
+import server.agents.catalog.decision.AgentDecisionCatalogRuntime;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
@@ -75,6 +76,18 @@ public final class AgentNavigationTargetService {
             int startRegionId = AgentNavigationRegionService.resolveCurrentRegionId(graph, entry, bot.getMap(), botPos);
             int targetRegionId = AgentNavigationRegionService.resolveTargetRegionId(graph, entry, bot.getMap(), rawTargetPos);
             Point pathTargetPos = adjustPathTarget(entry, graph, targetRegionId, rawTargetPos);
+            if (runAiTick && rawTargetPos != null) {
+                AgentDecisionCatalogRuntime.observeNavigation(
+                        entry,
+                        bot.getMapId(),
+                        botPos.x,
+                        botPos.y,
+                        rawTargetPos.x,
+                        rawTargetPos.y,
+                        startRegionId,
+                        targetRegionId,
+                        System.currentTimeMillis());
+            }
 
             boolean traversalWasActive = AgentVerticalTraversalStateRuntime.active(entry);
             AgentVerticalTraversalService.TraversalDirective traversal =

@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import server.agents.capabilities.dialogue.AgentEmote;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
+import server.maps.Portal;
 
 import java.awt.Point;
 import java.util.concurrent.atomic.AtomicReference;
@@ -23,31 +24,30 @@ import static org.mockito.Mockito.when;
 
 class AgentDeathTickServiceTest {
     @Test
-    void respawnNearLeaderRestoresHpAndTeleports() {
+    void respawnInTownRestoresDefaultHpAndTeleportsToTownSpawn() {
         MapleMap map = mock(MapleMap.class);
+        Portal portal = mock(Portal.class);
         Character leader = character(100, 1, map, new Point(50, 100));
         Character agent = character(200, 1, map, new Point(10, 100));
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
-        Point ground = new Point(50, 99);
+        Point townSpawn = new Point(25, 99);
         AtomicInteger mapChanges = new AtomicInteger();
-        AtomicReference<Point> groundedFrom = new AtomicReference<>();
         AtomicReference<Point> teleportedTo = new AtomicReference<>();
         AtomicInteger resets = new AtomicInteger();
         AtomicInteger broadcasts = new AtomicInteger();
         AgentDeathStateRuntime.enterDeadState(entry, 1_000L, 500L);
         when(agent.getMaxHp()).thenReturn(123);
+        when(map.getId()).thenReturn(1);
+        when(map.getReturnMap()).thenReturn(map);
+        when(map.getPortal(0)).thenReturn(portal);
+        when(portal.getPosition()).thenReturn(townSpawn);
 
-        AgentDeathTickService.respawnNearLeader(
+        AgentDeathTickService.respawnAtNearestTown(
                 entry,
                 agent,
-                leader,
+                0,
                 new AgentDeathTickService.RespawnHooks(
-                        (changedAgent, leaderMap, leaderPosition) -> mapChanges.incrementAndGet(),
-                        (targetMap, point) -> {
-                            assertSame(map, targetMap);
-                            groundedFrom.set(point);
-                            return ground;
-                        },
+                        (changedAgent, townMap, spawnPosition) -> mapChanges.incrementAndGet(),
                         (teleportEntry, teleportAgent, point) -> {
                             assertSame(entry, teleportEntry);
                             assertSame(agent, teleportAgent);
@@ -65,45 +65,50 @@ class AgentDeathTickServiceTest {
                         }));
 
         assertFalse(AgentDeathStateRuntime.isDead(entry));
-        verify(agent).updateHp(123);
+        verify(agent).updateHp(50);
         assertEquals(0, mapChanges.get());
-        assertEquals(new Point(50, 99), groundedFrom.get());
-        assertSame(ground, teleportedTo.get());
+        assertEquals(townSpawn, teleportedTo.get());
         assertEquals(1, resets.get());
         assertEquals(1, broadcasts.get());
         verify(agent).changeFaceExpression(AgentEmote.GLARE.getValue());
     }
 
     @Test
-    void respawnNearLeaderChangesMapWhenAgentIsElsewhereAndFallsBackToLeaderPosition() {
-        MapleMap leaderMap = mock(MapleMap.class);
+    void respawnChangesToReturnTownAndRestoresConfiguredHpPercentage() {
+        MapleMap townMap = mock(MapleMap.class);
         MapleMap agentMap = mock(MapleMap.class);
-        Point leaderPosition = new Point(50, 100);
-        Character leader = character(100, 1, leaderMap, leaderPosition);
+        Portal portal = mock(Portal.class);
+        Point townSpawn = new Point(50, 100);
+        Character leader = character(100, 1, townMap, townSpawn);
         Character agent = character(200, 2, agentMap, new Point(10, 100));
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
         AtomicInteger mapChanges = new AtomicInteger();
         AtomicReference<Point> teleportedTo = new AtomicReference<>();
         when(agent.getMaxHp()).thenReturn(123);
+        when(agentMap.getId()).thenReturn(2);
+        when(agentMap.getReturnMap()).thenReturn(townMap);
+        when(townMap.getId()).thenReturn(1);
+        when(townMap.getPortal(0)).thenReturn(portal);
+        when(portal.getPosition()).thenReturn(townSpawn);
 
-        AgentDeathTickService.respawnNearLeader(
+        AgentDeathTickService.respawnAtNearestTown(
                 entry,
                 agent,
-                leader,
+                25,
                 new AgentDeathTickService.RespawnHooks(
                         (changedAgent, targetMap, targetPosition) -> {
                             assertSame(agent, changedAgent);
-                            assertSame(leaderMap, targetMap);
-                            assertSame(leaderPosition, targetPosition);
+                            assertSame(townMap, targetMap);
+                            assertEquals(townSpawn, targetPosition);
                             mapChanges.incrementAndGet();
                         },
-                        (targetMap, point) -> null,
                         (teleportEntry, teleportAgent, point) -> teleportedTo.set(point),
                         (resetEntry, resetAgent) -> {},
                         (broadcastEntry, broadcastAgent) -> {}));
 
         assertEquals(1, mapChanges.get());
-        assertSame(leaderPosition, teleportedTo.get());
+        assertEquals(townSpawn, teleportedTo.get());
+        verify(agent).updateHp(31);
     }
 
     @Test

@@ -181,3 +181,65 @@ inverse links, and reward-choice safety.
 The event system may announce source changes or live outcomes, but it should not
 duplicate these catalogs in event payloads. Events should carry stable IDs and
 technical context; listeners resolve static facts through catalog repositories.
+
+### Immutable runtime repository
+
+The optional runtime integration loads the manifest, navigation topology, and
+combat-map policy through `AgentDecisionCatalogRepository`. Capabilities and
+policy services consume a single immutable `AgentDecisionCatalogSnapshot`; they
+do not parse JSON files themselves. Startup rejects:
+
+- unsupported or mixed schema versions;
+- partial exports;
+- manifest count mismatches;
+- duplicate or dangling component, foothold, anchor, and partition references;
+- movement or climb records that claim execution authority; and
+- combat policies that do not retain runtime reachability validation.
+
+The repository snapshot carries the schema version, generation timestamp,
+region scope, and manifest counts. A failed load is fail-closed for the catalog
+path: the server reports the failure and continues with existing live Agent
+behavior.
+
+### Shared topology and combat queries
+
+`AgentTopologyQueryService` supplies the common map/component/foothold vocabulary
+for navigation, combat, interaction, recovery, and future perception services.
+It can locate a point in the nearest catalog component and return bounded
+transition candidates between two locations. It does not claim that a
+transition is currently reachable.
+
+`AgentCombatPolicyQueryService` exposes map capacity, anchors, party partitions,
+and the catalog anchor nearest a selected mob. Its outputs are recommendations.
+Live occupancy, current mob state, party membership, collision state, and
+physics validation remain mandatory before any future policy may act on them.
+When the optional runtime is available, it publishes both services as one
+shared read-only query bundle rather than giving each capability its own parser.
+
+### Shadow rollout
+
+The first live integration is observation-only and disabled by default. When
+enabled, the existing navigation and combat decisions run normally; sampled
+catalog queries only record coverage and agreement telemetry. No catalog result
+changes a target, route, movement packet, attack, or partition assignment.
+
+Enable the runtime with JVM system properties:
+
+```text
+-Dagents.catalog.decision.enabled=true
+-Dagents.catalog.decision.dir=tmp/agent-llm-catalog
+-Dagents.catalog.decision.navigationShadow.enabled=true
+-Dagents.catalog.decision.combatShadow.enabled=true
+-Dagents.catalog.decision.sampleIntervalMs=2000
+-Dagents.catalog.decision.logIntervalMs=60000
+```
+
+The master gate defaults to `false`. The two shadow capability gates default to
+`true` only after the master gate is enabled. Sampling is bounded per Agent and
+per capability, and aggregate telemetry is rate-limited. The runtime status API
+also exposes catalog availability, version/count metadata, load failures, and
+the current telemetry counters.
+
+Promotion beyond shadow mode should require reviewed agreement data and a
+separate rollout flag. Even then, these records remain advisory: live map
+occupancy and the navigation/physics validators retain final authority.

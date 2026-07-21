@@ -1,9 +1,12 @@
 package server.agents.capabilities.combat;
 
 import client.Character;
+import server.agents.catalog.decision.AgentDecisionCatalogRuntime;
 import server.agents.capabilities.movement.AgentPatrolStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
+
+import java.awt.Point;
 
 public final class AgentGrindTargetSearchService {
     private AgentGrindTargetSearchService() {
@@ -42,7 +45,29 @@ public final class AgentGrindTargetSearchService {
             currentTarget = searchedTarget;
             currentAttackPlan = null;
         }
+        observeCatalogRecommendation(entry, agent, currentTarget, nowMs);
         AgentGrindSearchStateRuntime.scheduleNextSearch(entry, nowMs + hooks.retargetIntervalMs());
         return new SearchResult(currentTarget, currentAttackPlan);
+    }
+
+    private static void observeCatalogRecommendation(AgentRuntimeEntry entry,
+                                                       Character agent,
+                                                       Monster target,
+                                                       long nowMs) {
+        if (agent == null || agent.getMap() == null || target == null
+                || agent.getPosition() == null || target.getPosition() == null) {
+            return;
+        }
+        Point agentPosition = agent.getPosition();
+        Point targetPosition = target.getPosition();
+        AgentDecisionCatalogRuntime.observeCombatTarget(
+                entry,
+                agent.getMapId(),
+                agentPosition.x,
+                agentPosition.y,
+                target.getId(),
+                targetPosition.x,
+                targetPosition.y,
+                nowMs);
     }
 }
