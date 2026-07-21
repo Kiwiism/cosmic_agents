@@ -44,6 +44,7 @@ class AgentTickSlicingServiceTest {
                 "PLAN_AND_GATES",
                 "CAPABILITY_AND_MOVEMENT",
                 "settle",
+                "events",
                 "reset"), calls);
         assertNull(state.frame());
     }
@@ -101,6 +102,7 @@ class AgentTickSlicingServiceTest {
                 () -> calls.add("mailbox"),
                 () -> frame,
                 () -> calls.add("settle"),
+                () -> calls.add("events"),
                 () -> calls.add("reset"),
                 failure -> calls.add("failure"));
     }

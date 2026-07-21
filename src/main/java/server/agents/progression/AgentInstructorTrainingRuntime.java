@@ -8,7 +8,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 import java.awt.Point;
 import java.util.List;
 
-/** Runs the four normal instructor quests, then grinds only the remaining levels to 15. */
+/** Runs the four normal instructor quests before handing off to the level-15 catch-up plan. */
 public final class AgentInstructorTrainingRuntime {
     private static final int NPC_DISTANCE_PX = 100;
     private static final long NPC_DELAY_MS = 3_000L;
@@ -33,28 +33,8 @@ public final class AgentInstructorTrainingRuntime {
         List<AgentInstructorTrainingStep> steps = AgentInstructorTrainingCatalog.steps(bundle);
         int index = reconcileCompleted(state, gateway, agent, steps);
         if (index >= steps.size()) {
-            if (agent.getLevel() >= bundle.milestoneLevel()) {
-                if (state.stage() != AgentCareerProgressionState.Stage.FINAL_RETURN_TO_INSTRUCTOR) {
-                    state.stage(AgentCareerProgressionState.Stage.FINAL_RETURN_TO_INSTRUCTOR, nowMs);
-                }
-                if (AgentVictoriaRouteRuntime.travel(entry, agent, bundle.instructorMapId(), gateway)) {
-                    return true;
-                }
-                if (!approachNpc(entry, agent, bundle.instructorNpcId(), gateway)) {
-                    return true;
-                }
-                gateway.stop(entry);
-                state.stage(AgentCareerProgressionState.Stage.COMPLETE, nowMs);
-                AgentCareerObjectiveRuntime.succeed(entry, nowMs);
-                return false;
-            }
-            if (state.stage() != AgentCareerProgressionState.Stage.GRIND_TO_MILESTONE) {
-                state.stage(AgentCareerProgressionState.Stage.GRIND_TO_MILESTONE, nowMs);
-            }
-            AgentInstructorTrainingStep grind = AgentInstructorTrainingCatalog.milestoneGrind(bundle);
-            if (!AgentVictoriaRouteRuntime.travel(entry, agent, grind.huntingMapId(), gateway)) {
-                gateway.grind(entry, grind.mobIds());
-            }
+            state.questPackIndex(0);
+            state.stage(AgentCareerProgressionState.Stage.HOME_QUEST_PACK, nowMs);
             return true;
         }
 

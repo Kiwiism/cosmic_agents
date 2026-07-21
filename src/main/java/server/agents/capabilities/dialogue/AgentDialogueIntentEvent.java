@@ -13,6 +13,7 @@ public record AgentDialogueIntentEvent(
         String dedupeKey,
         long cooldownMs,
         Map<String, String> parameters) implements AgentEvent {
+    public static final String TYPE = "dialogue.intent";
 
     public AgentDialogueIntentEvent {
         if (agentId <= 0 || occurredAtMs < 0 || intentKey == null || intentKey.isBlank()
@@ -25,6 +26,6 @@ public record AgentDialogueIntentEvent(
 
     @Override
     public String type() {
-        return "dialogue.intent";
+        return TYPE;
     }
 }

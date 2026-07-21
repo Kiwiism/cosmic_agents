@@ -7,6 +7,9 @@ import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.capabilities.shop.AgentShopStateRuntime;
 import server.maps.MapleMap;
+import server.agents.events.AgentEventPriority;
+import server.agents.operations.events.AgentOperationalEventPublisher;
+import server.agents.operations.events.AgentRecoveryPerformedEvent;
 
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -95,6 +98,7 @@ public final class AgentRecoveryTeleportService {
                                                    Character agent,
                                                    Point targetPosition,
                                                    RecoveryHooks hooks) {
+        Point from = new Point(agent.getPosition());
         Point spawn = hooks.groundPointFinder().apply(agent.getMap(), new Point(targetPosition.x, targetPosition.y - 1));
         if (spawn == null) {
             spawn = targetPosition;
@@ -102,6 +106,12 @@ public final class AgentRecoveryTeleportService {
         hooks.teleporter().teleport(entry, agent, spawn);
         hooks.afterTeleportReset().accept(entry);
         hooks.movementBroadcaster().accept(entry);
+        Point to = new Point(agent.getPosition());
+        AgentOperationalEventPublisher.publish(entry,
+                objectiveId -> new AgentRecoveryPerformedEvent(
+                        agent.getId(), System.currentTimeMillis(), agent.getMapId(),
+                        "distance-teleport", from.x, from.y, to.x, to.y, objectiveId),
+                AgentEventPriority.IMPORTANT);
         return true;
     }
 

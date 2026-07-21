@@ -53,10 +53,11 @@ public final class AgentCareerBuildBundleService {
         AgentCareerBuildBundle bundle = repository
                 .find(bundleId)
                 .orElseThrow(() -> new IllegalArgumentException("unknown career bundle " + bundleId));
-        store.save(new AgentCareerAssignment(1, agent.getId(), agent.getName(),
-                bundle.bundleId(), bundle.bundleVersion(), nowMs));
-        AgentApBuildProfileService.select(entry, bundle.apProfileId());
-        AgentSpBuildProfileService.select(entry, bundle.spProfileId());
+        AgentProgressionProfile profile = AgentProgressionProfileRepository.defaultRepository()
+                .deterministicFor(agent.getId());
+        store.save(new AgentCareerAssignment(2, agent.getId(), agent.getName(),
+                bundle.bundleId(), bundle.bundleVersion(), profile.profileId(), nowMs));
+        assignProfiles(entry, bundle, profile);
         entry.capabilityStates().require(AgentCareerProgressionState.STATE_KEY).assign(bundle);
         return bundle;
     }
@@ -71,8 +72,10 @@ public final class AgentCareerBuildBundleService {
         if (assignment == null) {
             List<AgentCareerBuildBundle> choices = compatibleChoices(repository.all(), agent.getJob().getId());
             bundle = choices.get(Math.floorMod(agent.getId(), choices.size()));
-            assignment = new AgentCareerAssignment(1, agent.getId(), agent.getName(),
-                    bundle.bundleId(), bundle.bundleVersion(), nowMs);
+            AgentProgressionProfile profile = AgentProgressionProfileRepository.defaultRepository()
+                    .deterministicFor(agent.getId());
+            assignment = new AgentCareerAssignment(2, agent.getId(), agent.getName(),
+                    bundle.bundleId(), bundle.bundleVersion(), profile.profileId(), nowMs);
             store.save(assignment);
         } else {
             String assignedBundleId = assignment.bundleId();
@@ -84,10 +87,31 @@ public final class AgentCareerBuildBundleService {
                         + assignment.bundleId());
             }
         }
-        AgentApBuildProfileService.select(entry, bundle.apProfileId());
-        AgentSpBuildProfileService.select(entry, bundle.spProfileId());
+        AgentProgressionProfileRepository profiles = AgentProgressionProfileRepository.defaultRepository();
+        AgentProgressionProfile profile;
+        if (assignment.progressionProfileId().isBlank()) {
+            profile = profiles.deterministicFor(agent.getId());
+            assignment = new AgentCareerAssignment(2, assignment.characterId(), assignment.characterName(),
+                    assignment.bundleId(), assignment.bundleVersion(), profile.profileId(), assignment.assignedAtMs());
+            store.save(assignment);
+        } else {
+            String assignedProfileId = assignment.progressionProfileId();
+            profile = profiles.find(assignedProfileId).orElseThrow(
+                    () -> new IOException("assigned progression profile no longer exists: "
+                            + assignedProfileId));
+        }
+        assignProfiles(entry, bundle, profile);
         entry.capabilityStates().require(AgentCareerProgressionState.STATE_KEY).assign(bundle);
         return bundle;
+    }
+
+    private static void assignProfiles(AgentRuntimeEntry entry,
+                                       AgentCareerBuildBundle bundle,
+                                       AgentProgressionProfile progressionProfile) {
+        AgentApBuildProfileService.select(entry, bundle.apProfileId());
+        AgentSpBuildProfileService.select(entry, bundle.spProfileId());
+        entry.capabilityStates().require(AgentProgressionProfileState.STATE_KEY)
+                .assign(progressionProfile);
     }
 
     private static List<AgentCareerBuildBundle> compatibleChoices(List<AgentCareerBuildBundle> all, int jobId) {

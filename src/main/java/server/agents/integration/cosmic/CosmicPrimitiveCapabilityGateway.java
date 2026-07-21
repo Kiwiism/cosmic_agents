@@ -25,6 +25,9 @@ import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentSchedulerRuntime;
+import server.agents.events.AgentEventPriority;
+import server.agents.progression.events.AgentProgressionEventPublisher;
+import server.agents.progression.events.AgentQuestStateChangedEvent;
 import server.life.Monster;
 import server.life.NPC;
 import server.life.SpawnPoint;
@@ -303,44 +306,79 @@ public enum CosmicPrimitiveCapabilityGateway implements PrimitiveCapabilityGatew
 
     @Override
     public boolean startQuest(Character agent, int questId, int npcId) {
+        int previousStatus = agent.getQuestStatus(questId);
         Quest quest = Quest.getInstance(questId);
+        boolean succeeded;
         if (quest.hasScriptRequirement(false)) {
-            return CosmicHeadlessQuestScriptGateway.start(agent, questId, npcId);
+            succeeded = CosmicHeadlessQuestScriptGateway.start(agent, questId, npcId);
+        } else {
+            quest.start(agent, npcId);
+            int status = agent.getQuestStatus(questId);
+            succeeded = status == QuestStatus.Status.STARTED.getId()
+                    || status == QuestStatus.Status.COMPLETED.getId();
         }
-        quest.start(agent, npcId);
-        int status = agent.getQuestStatus(questId);
-        return status == QuestStatus.Status.STARTED.getId()
-                || status == QuestStatus.Status.COMPLETED.getId();
+        publishQuestTransition(agent, questId, previousStatus, npcId, null);
+        return succeeded;
     }
 
     @Override
     public boolean completeQuest(Character agent, int questId, int npcId) {
+        int previousStatus = agent.getQuestStatus(questId);
         Quest quest = Quest.getInstance(questId);
+        Integer selection = null;
+        boolean succeeded;
         if (quest.hasScriptRequirement(true)) {
-            return CosmicHeadlessQuestScriptGateway.complete(agent, questId, npcId);
+            succeeded = CosmicHeadlessQuestScriptGateway.complete(agent, questId, npcId);
+        } else {
+            selection = server.agents.capabilities.quest.AgentQuestRewardChoicePolicy
+                    .choose(agent, quest).map(
+                            server.agents.capabilities.quest.AgentQuestRewardChoicePolicy.Decision::selectionIndex)
+                    .orElse(null);
+            quest.complete(agent, npcId, selection);
+            succeeded = agent.getQuestStatus(questId) == QuestStatus.Status.COMPLETED.getId();
         }
-        Integer selection = server.agents.capabilities.quest.AgentQuestRewardChoicePolicy
-                .choose(agent, quest).map(
-                        server.agents.capabilities.quest.AgentQuestRewardChoicePolicy.Decision::selectionIndex)
-                .orElse(null);
-        quest.complete(agent, npcId, selection);
-        return agent.getQuestStatus(questId) == QuestStatus.Status.COMPLETED.getId();
+        publishQuestTransition(agent, questId, previousStatus, npcId, selection);
+        return succeeded;
     }
 
     @Override
     public boolean completeQuest(Character agent, int questId, int npcId, Integer rewardSelection) {
+        int previousStatus = agent.getQuestStatus(questId);
         Quest quest = Quest.getInstance(questId);
+        boolean succeeded;
         if (quest.hasScriptRequirement(true)) {
-            return CosmicHeadlessQuestScriptGateway.complete(agent, questId, npcId);
+            succeeded = CosmicHeadlessQuestScriptGateway.complete(agent, questId, npcId);
+        } else {
+            quest.complete(agent, npcId, rewardSelection);
+            succeeded = agent.getQuestStatus(questId) == QuestStatus.Status.COMPLETED.getId();
         }
-        quest.complete(agent, npcId, rewardSelection);
-        return agent.getQuestStatus(questId) == QuestStatus.Status.COMPLETED.getId();
+        publishQuestTransition(agent, questId, previousStatus, npcId, rewardSelection);
+        return succeeded;
     }
 
     @Override
     public boolean forceCompleteQuest(Character agent, int questId, int npcId) {
+        int previousStatus = agent.getQuestStatus(questId);
         Quest.getInstance(questId).forceCompleteWithActions(agent, npcId, null);
+        publishQuestTransition(agent, questId, previousStatus, npcId, null);
         return agent.getQuestStatus(questId) == QuestStatus.Status.COMPLETED.getId();
+    }
+
+    private static void publishQuestTransition(Character agent,
+                                               int questId,
+                                               int previousStatus,
+                                               int npcId,
+                                               Integer rewardSelection) {
+        int status = agent.getQuestStatus(questId);
+        if (status == previousStatus) {
+            return;
+        }
+        AgentProgressionEventPublisher.publishFor(agent,
+                (entry, objectiveId) -> new AgentQuestStateChangedEvent(
+                        agent.getId(), System.currentTimeMillis(), questId, previousStatus, status,
+                        npcId, agent.getMapId(), rewardSelection, objectiveId),
+                status == QuestStatus.Status.COMPLETED.getId()
+                        ? AgentEventPriority.IMPORTANT : AgentEventPriority.NORMAL);
     }
 
     @Override

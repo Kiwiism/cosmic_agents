@@ -24,6 +24,12 @@ import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentSkillGatewayRuntime;
 import server.agents.integration.SkillGateway;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.events.AgentEventPriority;
+import server.agents.progression.events.AgentApAssignedEvent;
+import server.agents.progression.events.AgentJobAdvancedEvent;
+import server.agents.progression.events.AgentLevelChangedEvent;
+import server.agents.progression.events.AgentProgressionEventPublisher;
+import server.agents.progression.events.AgentSkillLearnedEvent;
 
 public final class AgentBuildService {
     public enum StatType {
@@ -103,12 +109,22 @@ public final class AgentBuildService {
                 || gains[StatType.DEX.ordinal()] > 0
                 || gains[StatType.INT.ordinal()] > 0
                 || gains[StatType.LUK.ordinal()] > 0) {
-            bot.assignStrDexIntLuk(
+            if (bot.assignStrDexIntLuk(
                     gains[StatType.STR.ordinal()],
                     gains[StatType.DEX.ordinal()],
                     gains[StatType.INT.ordinal()],
                     gains[StatType.LUK.ordinal()]
-            );
+            )) {
+                if (bot.getId() > 0) {
+                    AgentProgressionEventPublisher.publish(entry, new AgentApAssignedEvent(
+                                    bot.getId(), System.currentTimeMillis(), bot.getLevel(),
+                                    gains[StatType.STR.ordinal()], gains[StatType.DEX.ordinal()],
+                                    gains[StatType.INT.ordinal()], gains[StatType.LUK.ordinal()],
+                                    bot.getRemainingAp(), "legacy",
+                                    AgentProgressionEventPublisher.objectiveId(entry)),
+                            AgentEventPriority.NORMAL);
+                }
+            }
         }
     }
 
@@ -130,6 +146,12 @@ public final class AgentBuildService {
     }
 
     public static void handleJobAdvance(AgentRuntimeEntry entry, Character bot, Job oldJob, Job newJob) {
+        if (oldJob != newJob && bot.getId() > 0) {
+            AgentProgressionEventPublisher.publish(entry, new AgentJobAdvancedEvent(
+                            bot.getId(), System.currentTimeMillis(), oldJob.getId(), newJob.getId(),
+                            bot.getLevel(), bot.getMapId(), AgentProgressionEventPublisher.objectiveId(entry)),
+                    AgentEventPriority.IMPORTANT);
+        }
         if (oldJob == Job.BEGINNER && oldJob != newJob && AgentBuildStateRuntime.hasApBuild(entry)
                 && !entry.apBuildProfileState().hasProfile()) {
             reallocateAp(entry, bot);
@@ -182,7 +204,7 @@ public final class AgentBuildService {
         List<BuildStep> steps = getBuildOrder(bot.getJob(), spVariant, skills);
         if (steps == null) return;
 
-        autoAssignSp(bot, steps, skills);
+        autoAssignSp(entry, bot, steps, skills);
     }
 
     public static String respecSp(AgentRuntimeEntry entry, Character bot) {
@@ -230,14 +252,17 @@ public final class AgentBuildService {
         for (Job job : buildPath) {
             List<BuildStep> steps = getBuildOrder(job, spVariant, skills);
             if (steps != null) {
-                autoAssignSp(bot, steps, skills);
+                autoAssignSp(entry, bot, steps, skills);
             }
         }
 
         return "ok, rebuilt my sp using the bot build";
     }
 
-    private static void autoAssignSp(Character bot, List<BuildStep> steps, SkillGateway skills) {
+    private static void autoAssignSp(AgentRuntimeEntry entry,
+                                     Character bot,
+                                     List<BuildStep> steps,
+                                     SkillGateway skills) {
         for (BuildStep step : steps) {
             Skill skill = skills.getSkill(step.skillId());
             if (skill == null) continue;
@@ -257,6 +282,13 @@ public final class AgentBuildService {
                         bot.getMasterLevel(skill),
                         bot.getSkillExpiration(skill)
                 );
+                if (bot.getId() > 0) {
+                    AgentProgressionEventPublisher.publish(entry, new AgentSkillLearnedEvent(
+                                    bot.getId(), System.currentTimeMillis(), bot.getLevel(), skill.getId(),
+                                    currentLevel, currentLevel + 1, bot.getRemainingSps()[book], "legacy",
+                                    AgentProgressionEventPublisher.objectiveId(entry)),
+                            AgentEventPriority.NORMAL);
+                }
             }
         }
     }
@@ -344,6 +376,13 @@ public final class AgentBuildService {
             autoAssignSp(entry, bot);
             autoAssignConfiguredAp(entry, bot);
             return;
+        }
+
+        if (bot.getId() > 0) {
+            AgentProgressionEventPublisher.publish(entry, new AgentLevelChangedEvent(
+                            bot.getId(), System.currentTimeMillis(), prev, lvl, bot.getJob().getId(),
+                            bot.getMapId(), AgentProgressionEventPublisher.objectiveId(entry)),
+                    AgentEventPriority.IMPORTANT);
         }
 
         if (lvl == 8 || lvl == 10 || lvl == 30 || lvl == 70 || lvl == 120) {

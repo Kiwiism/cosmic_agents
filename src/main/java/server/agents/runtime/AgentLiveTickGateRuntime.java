@@ -8,7 +8,9 @@ import server.agents.capabilities.follow.AgentFollowMapSyncCoordinator;
 import server.agents.capabilities.movement.AgentIdlePhysicsService;
 import server.agents.capabilities.trade.AgentTradeWindowTickService;
 import server.agents.capabilities.recovery.AgentRecoveryTickService;
+import server.agents.plans.AgentPlanReattachmentRuntime;
 import server.agents.plans.amherst.AgentAmherstPlanRuntime;
+import server.agents.runtime.maintenance.AgentMaintenanceSupervisor;
 
 import client.Character;
 import java.util.function.Consumer;
@@ -47,6 +49,7 @@ public final class AgentLiveTickGateRuntime {
         return new AgentLiveTickGateService.Hooks(
                 (entry, agent, leader, runAiTick) ->
                         AgentCommonTickRuntime.runCommonTickSystems(entry, agent, leader, runAiTick, tickScriptTasks),
+                (entry, agent) -> tickObjectiveSupervision(entry, agent, System.currentTimeMillis()),
                 (entry, agent) -> AgentAmherstPlanRuntime.tickGate(entry, agent, System.currentTimeMillis()),
                 (tradeEntry, tradeAgent) -> AgentTradeWindowTickService.tickIfTradeWindowOpen(
                         tradeEntry,
@@ -82,6 +85,13 @@ public final class AgentLiveTickGateRuntime {
                         mapAgent,
                         new AgentTrackedMapChangeTickService.Hooks((trackedEntry, trackedAgent) ->
                                 tickTrackedMapChange(trackedEntry, trackedAgent, issueGrind, issueFollow, perf))));
+    }
+
+    static boolean tickObjectiveSupervision(AgentRuntimeEntry entry, Character agent, long nowMs) {
+        if (AgentPlanReattachmentRuntime.reattachIfNeeded(entry, agent, nowMs)) {
+            return true;
+        }
+        return AgentMaintenanceSupervisor.tickRuntime(entry, agent, nowMs);
     }
 
     private static void tickTradePhysics(AgentRuntimeEntry entry, Character agent, boolean perf) {

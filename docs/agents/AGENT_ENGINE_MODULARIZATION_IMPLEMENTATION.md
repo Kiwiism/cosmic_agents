@@ -3,6 +3,13 @@
 Status: migration foundation implemented on `master`; legacy gameplay remains
 available behind compatibility adapters while capabilities are migrated.
 
+The event-driven migration has since advanced through typed progression,
+resource, combat/navigation/recovery events, bounded coordination, versioned
+envelopes, optional durable append/replay, rollout controls, observability, and
+an LLM-ready context projection. See
+[Agent Event Runtime Implementation Status](event-bus/AGENT_EVENT_RUNTIME_IMPLEMENTATION_STATUS.md)
+for the current contract and remaining portable-platform work.
+
 This implementation intentionally establishes boundaries before replacing all
 legacy behavior. It does not change attack packet construction, player combat
 handlers, navigation physics, or map portal mechanics. The purpose is to let

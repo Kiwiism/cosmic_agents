@@ -9,8 +9,11 @@ import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentMovementPoseService;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
 import server.agents.capabilities.runtime.AgentCapabilityRuntime;
+import server.agents.events.AgentEventPriority;
 import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.integration.AgentReplyRuntime;
+import server.agents.operations.events.AgentLifeStateChangedEvent;
+import server.agents.operations.events.AgentOperationalEventPublisher;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
@@ -187,6 +190,11 @@ public final class AgentRespawnCoordinator {
         hooks.broadcastMovement().accept(entry, agent);
         hooks.mapSpeaker().accept(agent, "back!");
         agent.changeFaceExpression(AgentEmote.GLARE.getValue());
+        AgentOperationalEventPublisher.publish(entry,
+                objectiveId -> new AgentLifeStateChangedEvent(
+                        agent.getId(), nowMs, "DEAD", "ALIVE",
+                        agent.getMapId(), true, objectiveId),
+                AgentEventPriority.IMPORTANT);
     }
 
     private static void deferEventRecovery(AgentRuntimeEntry entry, long nowMs) {

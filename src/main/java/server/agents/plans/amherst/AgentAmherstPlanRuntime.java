@@ -6,9 +6,7 @@ import server.agents.progression.AgentFirstJobJourneyRuntime;
 import server.agents.progression.AgentVictoriaTrainingObjectiveRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.agents.runtime.maintenance.AgentMaintenanceSupervisor;
 import server.agents.profiles.AgentBehaviorProfileRuntime;
-import server.agents.plans.AgentPlanReattachmentRuntime;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -54,12 +52,6 @@ public final class AgentAmherstPlanRuntime {
     }
 
     public static boolean tickGate(AgentRuntimeEntry entry, Character agent, long nowMs) {
-        if (AgentPlanReattachmentRuntime.reattachIfNeeded(entry, agent, nowMs)) {
-            return true;
-        }
-        if (AgentMaintenanceSupervisor.tickRuntime(entry, agent, nowMs)) {
-            return true;
-        }
         if (AgentFirstJobJourneyRuntime.tick(entry, agent, nowMs)) {
             return true;
         }

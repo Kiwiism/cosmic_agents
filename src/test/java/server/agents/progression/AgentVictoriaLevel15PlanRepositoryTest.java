@@ -20,6 +20,7 @@ class AgentVictoriaLevel15PlanRepositoryTest {
                         "pre-job-level-grind", "take-taxi", "enter-instructor", "complete-career-path",
                         "advance-first-job", "allocate-initial-ap-sp",
                         "initial-shop-trip", "return-to-instructor", "instructor-training",
+                        "home-quest-pack", "post-home-decision", "rotation-quest-pack",
                         "fallback-grind", "final-return"),
                 plan.stages().stream().map(AgentVictoriaLevel15PlanCard.Stage::stageId).toList());
         assertTrue(plan.requiredCapabilityIds().containsAll(List.of(
@@ -27,7 +28,8 @@ class AgentVictoriaLevel15PlanRepositoryTest {
                 "equipment.auto-equip",
                 "navigation.portal-route", "quest.victoria-handoff",
                 "interaction.npc-script", "interaction.npc-shop",
-                "quest.instructor-training", "combat.generic-grind", "loot.combat-drops",
+                "quest.instructor-training", "quest.victoria-pre15-packs",
+                "combat.generic-grind", "loot.combat-drops",
                 "survival.potion-use", "supplies.procurement", "inventory.capacity-management",
                 "recovery.physics")));
         assertEquals(104000000, plan.entryCriteria().mapId());

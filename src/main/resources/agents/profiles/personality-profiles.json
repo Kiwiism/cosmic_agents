@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "defaultProfileId": "efficient-v1",
+  "profiles": [
+    {
+      "profileId": "efficient-v1",
+      "profileVersion": 1,
+      "traits": {
+        "activity": 65,
+        "patience": 65,
+        "expressiveness": 20,
+        "curiosity": 25,
+        "sociability": 35,
+        "riskTolerance": 45,
+        "routinePreference": 85
+      }
+    },
+    {
+      "profileId": "relaxed-v1",
+      "profileVersion": 1,
+      "traits": {
+        "activity": 35,
+        "patience": 90,
+        "expressiveness": 45,
+        "curiosity": 40,
+        "sociability": 55,
+        "riskTolerance": 30,
+        "routinePreference": 55
+      }
+    },
+    {
+      "profileId": "restless-v1",
+      "profileVersion": 1,
+      "traits": {
+        "activity": 95,
+        "patience": 20,
+        "expressiveness": 85,
+        "curiosity": 65,
+        "sociability": 55,
+        "riskTolerance": 70,
+        "routinePreference": 20
+      }
+    },
+    {
+      "profileId": "explorer-v1",
+      "profileVersion": 1,
+      "traits": {
+        "activity": 70,
+        "patience": 50,
+        "expressiveness": 60,
+        "curiosity": 95,
+        "sociability": 50,
+        "riskTolerance": 60,
+        "routinePreference": 15
+      }
+    }
+  ]
+}

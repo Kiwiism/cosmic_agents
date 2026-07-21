@@ -107,8 +107,11 @@ public final class AgentFirstJobJourneyRuntime {
             case TRAVEL_TO_INITIAL_SHOP -> travelToInitialShop(entry, agent, state, bundle, nowMs, gateway);
             case INITIAL_SHOPPING -> waitForInitialShopping(entry, state, nowMs);
             case RETURN_TO_INSTRUCTOR -> returnToInstructor(entry, agent, state, bundle, nowMs, gateway);
-            case INSTRUCTOR_TRAINING, GRIND_TO_MILESTONE, FINAL_RETURN_TO_INSTRUCTOR ->
+            case INSTRUCTOR_TRAINING ->
                     AgentInstructorTrainingRuntime.tick(entry, agent, nowMs, gateway);
+            case HOME_QUEST_PACK, POST_HOME_DECISION, ROTATION_QUEST_PACK,
+                    GRIND_TO_MILESTONE, FINAL_RETURN_TO_INSTRUCTOR ->
+                    AgentLevel15CatchUpRuntime.tick(entry, agent, nowMs, gateway);
             case COMPLETE, BLOCKED -> false;
         };
     }
@@ -117,7 +120,9 @@ public final class AgentFirstJobJourneyRuntime {
                                   Character agent,
                                   AgentCareerBuildBundle bundle,
                                   long nowMs) {
-        if (agent.getLevel() >= bundle.milestoneLevel()
+        if ((state.stage() == AgentCareerProgressionState.Stage.INSTRUCTOR_TRAINING
+                || state.stage() == AgentCareerProgressionState.Stage.GRIND_TO_MILESTONE)
+                && agent.getLevel() >= bundle.milestoneLevel()
                 && agent.getJob().getId() == bundle.firstJobId()
                 && state.trainingQuestIndex() >= bundle.instructorTrainingQuestIds().size()) {
             transitionIfNeeded(state, AgentCareerProgressionState.Stage.FINAL_RETURN_TO_INSTRUCTOR, nowMs);

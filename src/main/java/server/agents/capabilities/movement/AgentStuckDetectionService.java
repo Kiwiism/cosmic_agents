@@ -4,6 +4,9 @@ import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.monitoring.AgentPerformanceMonitor;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.events.AgentEventPriority;
+import server.agents.operations.events.AgentOperationalEventPublisher;
+import server.agents.operations.events.AgentStuckDetectedEvent;
 
 import java.awt.Point;
 import java.util.function.IntUnaryOperator;
@@ -87,6 +90,12 @@ public final class AgentStuckDetectionService {
         if (hooks.enableUnstuck()
                 && AgentMovementStuckStateRuntime.stuckForAtLeast(entry, thresholdMs)
                 && !AgentMovementStuckStateRuntime.hasUnstuckCooldown(entry)) {
+            int stuckMs = AgentMovementStuckStateRuntime.stuckMs(entry);
+            AgentOperationalEventPublisher.publish(entry,
+                    objectiveId -> new AgentStuckDetectedEvent(
+                            entry.bot().getId(), System.currentTimeMillis(), entry.bot().getMapId(),
+                            agentPosition.x, agentPosition.y, stuckMs, suspended, objectiveId),
+                    AgentEventPriority.IMPORTANT);
             AgentMovementStuckStateRuntime.resetStuckProgress(entry);
             hooks.unstuckAction().tick(entry);
         }

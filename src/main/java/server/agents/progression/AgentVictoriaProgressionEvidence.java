@@ -16,12 +16,15 @@ public record AgentVictoriaProgressionEvidence(
         String careerBundleId,
         String apProfileId,
         String spProfileId,
+        String progressionProfileId,
+        int progressionProfileVersion,
         String careerStage,
         String activeObjectiveId,
         String activeObjectiveType,
         List<String> suspendedObjectiveIds,
         int trainingTargetLevel,
         int selectedTrainingMapId,
+        String trainingSelectionReason,
         String questStage,
         int scheduledQuestId,
         String supplyPhase,
@@ -32,10 +35,12 @@ public record AgentVictoriaProgressionEvidence(
         careerBundleId = text(careerBundleId);
         apProfileId = text(apProfileId);
         spProfileId = text(spProfileId);
+        progressionProfileId = text(progressionProfileId);
         careerStage = text(careerStage);
         activeObjectiveId = text(activeObjectiveId);
         activeObjectiveType = text(activeObjectiveType);
         suspendedObjectiveIds = suspendedObjectiveIds == null ? List.of() : List.copyOf(suspendedObjectiveIds);
+        trainingSelectionReason = text(trainingSelectionReason);
         questStage = text(questStage);
         supplyPhase = text(supplyPhase);
         supplyCategory = text(supplyCategory);

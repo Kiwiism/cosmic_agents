@@ -6,7 +6,11 @@ import server.agents.capabilities.movement.AgentMovementStateResetService;
 import server.agents.integration.MapGateway;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
+import server.agents.events.AgentEventPriority;
+import server.agents.operations.events.AgentMapTransitionedEvent;
+import server.agents.operations.events.AgentOperationalEventPublisher;
 import server.maps.MapleMap;
+import server.maps.Portal;
 import net.server.Server;
 
 import java.awt.Point;
@@ -42,7 +46,9 @@ public enum CosmicMapGateway implements MapGateway {
         if (agent == null || map == null) {
             return;
         }
+        int previousMapId = agent.getMapId();
         agent.changeMap(map, position);
+        publishTransition(agent, previousMapId, -1, "change-map");
     }
 
     @Override
@@ -50,7 +56,10 @@ public enum CosmicMapGateway implements MapGateway {
         if (agent == null || map == null) {
             return;
         }
-        agent.forceChangeMap(map, map.findClosestPortal(position));
+        int previousMapId = agent.getMapId();
+        Portal portal = map.findClosestPortal(position);
+        agent.forceChangeMap(map, portal);
+        publishTransition(agent, previousMapId, portal == null ? -1 : portal.getId(), "change-map-near");
     }
 
     @Override
@@ -76,8 +85,20 @@ public enum CosmicMapGateway implements MapGateway {
                 AgentMovementPoseService.teleportTo(entry, agent, new Point(agent.getPosition()));
                 AgentMovementStateResetService.resetEntryStateAfterTeleport(entry);
             }
+            publishTransition(agent, oldMapId, portalId, "portal");
         }
         return transitioned;
+    }
+
+    private static void publishTransition(Character agent,
+                                          int previousMapId,
+                                          int portalId,
+                                          String reason) {
+        AgentOperationalEventPublisher.publishFor(agent,
+                objectiveId -> new AgentMapTransitionedEvent(
+                        agent.getId(), System.currentTimeMillis(), previousMapId,
+                        agent.getMapId(), portalId, reason, objectiveId),
+                AgentEventPriority.IMPORTANT);
     }
 
     @Override

@@ -27,6 +27,14 @@ public final class AgentNavigationPhysicsService {
                 && dy >= -AgentMovementPhysicsConfig.configuredMaxSlopeUp();
     }
 
+    public static int jumpYThreshold() {
+        return AgentMovementPhysicsConfig.configuredJumpYThreshold();
+    }
+
+    public static int stopDistance() {
+        return AgentMovementPhysicsConfig.configuredStopDist();
+    }
+
     public static boolean canWalkAcrossFootholds(Foothold first, Foothold second) {
         if (first == null || second == null || first.isWall() || second.isWall()) {
             return false;

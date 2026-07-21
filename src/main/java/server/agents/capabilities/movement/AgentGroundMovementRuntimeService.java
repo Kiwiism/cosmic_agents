@@ -3,7 +3,6 @@ package server.agents.capabilities.movement;
 import client.Character;
 import java.awt.Point;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
-import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.monitoring.AgentPerformanceMonitor;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -39,7 +38,7 @@ public final class AgentGroundMovementRuntimeService {
 
             targetPos = AgentGroundTargetService.adjustGrindingTargetPosition(entry, currentFoothold, targetPos);
             boolean walkOffWaypoint = false;
-            if (AgentNavigationDebugStateRuntime.graphWarmupFallback(entry) && targetPos != null) {
+            if (AgentMovementNavigationStateRuntime.graphWarmupFallback(entry) && targetPos != null) {
                 if (AgentFallbackMovementService.tryImmediateAction(entry, botPos, targetPos)) {
                     return;
                 }

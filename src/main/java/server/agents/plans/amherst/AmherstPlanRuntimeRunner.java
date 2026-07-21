@@ -531,19 +531,29 @@ public final class AmherstPlanRuntimeRunner {
                 && deferralPolicy.canDefer(card, objective, result);
         int nextDeferralStage = state.objectiveDeferralStages
                 .getOrDefault(objective.objectiveId(), 0) + 1;
-        boolean dependencySafeDeferral = deferrableWorldResource
-                && !deferralPolicy.independentAlternatives(
-                        card, objective, state.progress, nextDeferralStage).isEmpty();
-        boolean worldResourceWait = !dependencySafeDeferral && automaticLimitReached
-                && canWaitForWorldResource(objective, result);
+        List<AmherstPlanObjective> alternatives = deferrableWorldResource
+                ? deferralPolicy.independentAlternatives(
+                        card, objective, state.progress, nextDeferralStage)
+                : List.of();
+        boolean dependencySafeDeferral = !alternatives.isEmpty();
+        boolean declaredEmptyStage = deferrableWorldResource
+                && nextDeferralStage <= deferralPolicy.alternativeStageCount(card, objective);
+        boolean policyWorldResourceWait = deferrableWorldResource
+                && deferralPolicy.waitForWorldResourceAfterAlternatives(
+                        card, objective, result, nextDeferralStage);
+        boolean worldResourceWait = !dependencySafeDeferral
+                && canWaitForWorldResource(objective, result)
+                && (automaticLimitReached || policyWorldResourceWait);
         if (automaticLimitReached && !worldResourceWait && !dependencySafeDeferral) {
             publish(state, "Automatic recovery limit reached for " + objective.objectiveId() + ".");
             return false;
         }
         AgentMovementRecoveryService.nudgeForObjectiveReplan(entry);
+        if (dependencySafeDeferral || declaredEmptyStage) {
+            state.objectiveDeferralStages.put(objective.objectiveId(), nextDeferralStage);
+        }
         if (dependencySafeDeferral) {
             state.deferredObjectiveIds.add(objective.objectiveId());
-            state.objectiveDeferralStages.put(objective.objectiveId(), nextDeferralStage);
         }
         long retryDelayMs = worldResourceWait
                 ? Math.max(recoveryPolicy.recoverAfterMs(), recoveryPolicy.recoveryDelayMs())

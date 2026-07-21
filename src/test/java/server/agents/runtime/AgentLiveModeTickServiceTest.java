@@ -28,6 +28,7 @@ class AgentLiveModeTickServiceTest {
                             calls.add("shop");
                             return AgentLiveModeTickService.PhaseResult.fallThrough(null);
                         },
+                        (presentationEntry, presentationAgent, targetPosition, nowMs) -> false,
                         (followEntry, followAgent, agentPosition, targetPosition, followTarget, anchor, runAiTick) ->
                                 AgentLiveModeTickService.PhaseResult.fallThrough(targetPosition),
                         (idleEntry, idleAgent, targetPosition, nowMs) -> false,
@@ -70,6 +71,10 @@ class AgentLiveModeTickServiceTest {
                             calls.add("shop");
                             return AgentLiveModeTickService.PhaseResult.fallThrough(shopTarget);
                         },
+                        (presentationEntry, presentationAgent, targetPosition, nowMs) -> {
+                            calls.add("presentation:" + targetPosition.x);
+                            return false;
+                        },
                         (followEntry, followAgent, followAgentPosition, targetPosition, followTargetPosition, anchor, runAiTick) -> {
                             calls.add("follow:" + targetPosition.x);
                             return AgentLiveModeTickService.PhaseResult.fallThrough(followTargetPosition);
@@ -94,6 +99,7 @@ class AgentLiveModeTickServiceTest {
 
         assertEquals(List.of(
                 "shop",
+                "presentation:50",
                 "follow:50",
                 "followIdle:70",
                 "script:70",
@@ -127,6 +133,10 @@ class AgentLiveModeTickServiceTest {
                             calls.add("shop");
                             return AgentLiveModeTickService.PhaseResult.fallThrough(null);
                         },
+                        (presentationEntry, presentationAgent, targetPosition, nowMs) -> {
+                            calls.add("presentation");
+                            return false;
+                        },
                         (followEntry, followAgent, followAgentPosition, targetPosition, followTargetPosition, anchor, runAiTick) -> {
                             calls.add("follow");
                             return new AgentLiveModeTickService.PhaseResult(true, consumedTarget);
@@ -149,7 +159,42 @@ class AgentLiveModeTickServiceTest {
                         },
                         (moveEntry, targetPosition, runAiTick) -> calls.add("final")));
 
-        assertEquals(List.of("shop", "follow"), calls);
+        assertEquals(List.of("shop", "presentation", "follow"), calls);
         assertEquals(consumedTarget, result.targetPosition());
+    }
+
+    @Test
+    void presentationConsumptionStopsBeforeCombatAndMovementModes() {
+        Character agent = mock(Character.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        Point target = new Point(30, 40);
+        List<String> calls = new ArrayList<>();
+
+        AgentLiveModeTickService.Result result = AgentLiveModeTickService.tickLiveModes(
+                new AgentLiveModeTickService.Context(
+                        entry, agent, new Point(10, 20), target, null, null, true, 123L),
+                new AgentLiveModeTickService.Hooks(
+                        (shopEntry, shopAgent, runAiTick) -> {
+                            calls.add("shop");
+                            return AgentLiveModeTickService.PhaseResult.fallThrough(null);
+                        },
+                        (presentationEntry, presentationAgent, targetPosition, nowMs) -> {
+                            calls.add("presentation");
+                            return true;
+                        },
+                        (followEntry, followAgent, agentPosition, targetPosition, followTarget, anchor, runAiTick) -> {
+                            calls.add("follow");
+                            return AgentLiveModeTickService.PhaseResult.fallThrough(targetPosition);
+                        },
+                        (idleEntry, idleAgent, targetPosition, nowMs) -> false,
+                        (scriptEntry, scriptAgent, agentPosition, targetPosition, runAiTick) ->
+                                AgentLiveModeTickService.PhaseResult.fallThrough(targetPosition),
+                        (farmEntry, farmAgent, agentPosition, runAiTick) -> false,
+                        (grindEntry, grindAgent, agentPosition, targetPosition, runAiTick) ->
+                                AgentLiveModeTickService.PhaseResult.fallThrough(targetPosition),
+                        (moveEntry, targetPosition, runAiTick) -> calls.add("final")));
+
+        assertEquals(List.of("shop", "presentation"), calls);
+        assertEquals(target, result.targetPosition());
     }
 }

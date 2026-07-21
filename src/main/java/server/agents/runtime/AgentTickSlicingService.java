@@ -11,11 +11,13 @@ public final class AgentTickSlicingService {
                         Runnable drainMailbox,
                         Supplier<AgentTickFrame> frameFactory,
                         Runnable settleMovement,
+                        Runnable drainEvents,
                         Runnable resetFailures,
                         Consumer<Throwable> failureHandler) {
         public Hooks {
             if (beginTick == null || drainMailbox == null || frameFactory == null
-                    || settleMovement == null || resetFailures == null || failureHandler == null) {
+                    || settleMovement == null || drainEvents == null
+                    || resetFailures == null || failureHandler == null) {
                 throw new IllegalArgumentException("Agent tick slicing hooks are required");
             }
         }
@@ -57,6 +59,7 @@ public final class AgentTickSlicingService {
                 slicesRun++;
                 if (result.frameComplete()) {
                     hooks.settleMovement().run();
+                    hooks.drainEvents().run();
                     hooks.resetFailures().run();
                     long frameExecutionNs = state.accumulatedExecutionNs();
                     state.clear();

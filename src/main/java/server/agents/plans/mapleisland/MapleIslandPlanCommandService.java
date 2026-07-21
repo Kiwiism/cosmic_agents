@@ -5,6 +5,7 @@ import config.YamlConfig;
 import server.TimerManager;
 import server.agents.auth.AgentControlService;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
+import server.agents.capabilities.presentation.AgentPresentationTelemetry;
 import server.agents.capabilities.party.AgentPartyLifecycleService;
 import server.agents.capabilities.quest.AmherstTestResetMode;
 import server.agents.capabilities.quest.AmherstTestResetRequest;
@@ -14,6 +15,7 @@ import server.agents.plans.amherst.AmherstQuestCatalog;
 import server.agents.capabilities.quest.MapleIslandSouthperryBaseline;
 import server.agents.plans.amherst.MapleIslandSouthperryQuestCatalog;
 import server.agents.integration.AgentMapGatewayRuntime;
+import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.cosmic.CosmicMapleIslandCohortIdentity;
 import server.agents.plans.amherst.AmherstObjectiveProgressStatus;
@@ -316,7 +318,7 @@ public final class MapleIslandPlanCommandService {
         for (Integer questId : questIds) {
             Quest.getInstance(questId).reset(player);
         }
-        player.saveCharToDB(false);
+        AgentCharacterGatewayRuntime.characters().save(player, false);
         message(player, "Reset " + questIds.size() + " Maple Island run quests for "
                 + player.getName() + ". Level, stats, equipment, inventory, position, and unrelated quests were preserved.");
     }
@@ -413,6 +415,19 @@ public final class MapleIslandPlanCommandService {
                     + "; max=" + duration(objective.slowestMs())
                     + " (" + objective.slowestAgent() + ").");
         }
+        AgentPresentationTelemetry.Snapshot presentation = AgentPresentationTelemetry.snapshot();
+        String intents = presentation.executedByIntent().entrySet().stream()
+                .filter(entry -> entry.getValue() > 0L)
+                .map(entry -> entry.getKey().name().toLowerCase() + "=" + entry.getValue())
+                .sorted()
+                .collect(java.util.stream.Collectors.joining(", "));
+        message(player, "Personality presentation: triggers=" + presentation.triggers()
+                + ", scheduled=" + presentation.scheduled()
+                + ", executed=" + presentation.executed()
+                + ", observer-suppressed=" + presentation.observerSuppressed()
+                + ", unsafe-blocked=" + presentation.unsafeBlocked()
+                + ", coalesced=" + presentation.coalesced()
+                + "; intents=" + (intents.isEmpty() ? "none" : intents) + ".");
     }
 
     private static void milestone(Character player,

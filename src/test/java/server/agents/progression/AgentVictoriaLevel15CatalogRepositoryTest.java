@@ -80,6 +80,25 @@ class AgentVictoriaLevel15CatalogRepositoryTest {
         assertEquals(1332063, thief.preferredStarterWeaponByBundleId().get("thief-dagger-standard-v1"));
     }
 
+    @Test
+    void catalogsHomeRotationAndFallbackForEveryCareer() {
+        AgentVictoriaLevel15CatalogRepository repository =
+                AgentVictoriaLevel15CatalogRepository.defaultRepository();
+
+        assertEquals(Set.of("perion-pre15", "ellinia-pre15", "henesys-pre15",
+                        "kerning-pre15", "nautilus-pre15"),
+                repository.catalog().questPacks().stream()
+                        .map(AgentVictoriaLevel15Catalog.QuestPack::packId).collect(java.util.stream.Collectors.toSet()));
+        assertEquals("ellinia-pre15", repository.careerForFirstJob(100).catchUpPlan().rotationPackId());
+        assertEquals("nautilus-pre15", repository.careerForFirstJob(200).catchUpPlan().rotationPackId());
+        assertEquals(AgentVictoriaLevel15Catalog.AfterHomeStrategy.LOCAL_GRIND,
+                repository.careerForFirstJob(300).catchUpPlan().afterHomeStrategy());
+        assertEquals("perion-pre15", repository.careerForFirstJob(400).catchUpPlan().rotationPackId());
+        assertEquals(AgentVictoriaLevel15Catalog.AfterHomeStrategy.LOCAL_GRIND,
+                repository.careerForFirstJob(500).catchUpPlan().afterHomeStrategy());
+        assertEquals(1052106, repository.interactionQuest(2090).orElseThrow().startNpcId());
+    }
+
     private static void assertCareer(AgentVictoriaLevel15CatalogRepository repository,
                                      int jobId,
                                      int taxiSelection,

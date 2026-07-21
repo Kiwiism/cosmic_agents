@@ -14,7 +14,11 @@ Package name:
 agent-event-bus
 ```
 
-This spec is documentation only until Agent reconstruction is stable.
+Implementation status: the bounded in-process runtime, versioned context,
+selected JSONL append/replay, projections, rollout gates, and diagnostics are
+implemented. See
+[Agent Event Runtime Implementation Status](AGENT_EVENT_RUNTIME_IMPLEMENTATION_STATUS.md).
+The package layout below remains the larger portable extraction target.
 
 ## Package Boundary
 
@@ -115,6 +119,8 @@ public interface AgentEventReplay {
 Portable JSON contract:
 
 - `docs/agents/event-bus/agent-event.schema.json`
+- Runtime journal contract:
+  `docs/agents/event-bus/agent-event-journal-record.schema.json`
 
 ```java
 record AgentEvent(

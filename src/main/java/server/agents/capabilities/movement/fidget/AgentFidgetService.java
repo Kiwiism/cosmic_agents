@@ -86,8 +86,25 @@ public final class AgentFidgetService {
             AgentRuntimeEntry entry,
             Point targetPos,
             long now) {
+        return tryHandleBoundedPresentationTick(
+                entry, targetPos, now, AgentFidgetTrigger.PROFILE_NAVIGATION);
+    }
+
+    public static boolean tryHandlePersonalityPresentationTick(
+            AgentRuntimeEntry entry,
+            Point targetPos,
+            long now) {
+        return tryHandleBoundedPresentationTick(
+                entry, targetPos, now, AgentFidgetTrigger.PERSONALITY_PRESENTATION);
+    }
+
+    private static boolean tryHandleBoundedPresentationTick(
+            AgentRuntimeEntry entry,
+            Point targetPos,
+            long now,
+            AgentFidgetTrigger expectedTrigger) {
         if (entry == null || targetPos == null
-                || AgentFidgetStateRuntime.trigger(entry) != AgentFidgetTrigger.PROFILE_NAVIGATION) {
+                || AgentFidgetStateRuntime.trigger(entry) != expectedTrigger) {
             return false;
         }
         Point botPos = AgentRuntimeIdentityRuntime.bot(entry) == null
@@ -106,6 +123,14 @@ public final class AgentFidgetService {
     public static void clearProfileNavigation(AgentRuntimeEntry entry) {
         if (entry != null
                 && AgentFidgetStateRuntime.trigger(entry) == AgentFidgetTrigger.PROFILE_NAVIGATION) {
+            clear(entry);
+        }
+    }
+
+    public static void clearPersonalityPresentation(AgentRuntimeEntry entry) {
+        if (entry != null
+                && AgentFidgetStateRuntime.trigger(entry)
+                == AgentFidgetTrigger.PERSONALITY_PRESENTATION) {
             clear(entry);
         }
     }

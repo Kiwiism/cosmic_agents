@@ -20,7 +20,7 @@ class FileAgentCareerProgressionCheckpointStoreTest {
                 1, 91, "thief-claw-standard-v1", 1,
                 AgentCareerProgressionState.RunMode.LEVEL15_WITH_INITIAL_SHOP,
                 "lv9-grind", AgentCareerProgressionState.Stage.INSTRUCTOR_TRAINING,
-                2, 2_000L, "", 7L, 1_000L);
+                2, 1, 2_000L, "", 7L, 1_000L);
 
         assertTrue(store.load(91).isEmpty());
         store.save(checkpoint);

@@ -25,6 +25,15 @@ public final class AgentVictoriaTrainingMapSelector {
                                       int currentMapId,
                                       Map<Integer, Integer> occupancyByMap,
                                       Set<Integer> eligibleMapIds) {
+        return select(level, currentMapId, occupancyByMap, eligibleMapIds, null, 0);
+    }
+
+    public Optional<Selection> select(int level,
+                                      int currentMapId,
+                                      Map<Integer, Integer> occupancyByMap,
+                                      Set<Integer> eligibleMapIds,
+                                      AgentProgressionProfile profile,
+                                      int characterId) {
         AgentVictoriaTrainingCatalog.SelectionPolicy policy = repository.catalog().selectionPolicy();
         List<Selection> candidates = repository.choicesForLevel(level).stream()
                 .sorted(Comparator.comparingInt(AgentVictoriaTrainingCatalog.TrainingChoice::rank))
@@ -32,6 +41,15 @@ public final class AgentVictoriaTrainingMapSelector {
                 .map(choice -> candidate(choice, occupancyByMap))
                 .filter(candidate -> candidate.occupancy() < candidate.map().maximumAgents())
                 .toList();
+
+        if (profile != null) {
+            return candidates.stream()
+                    .max(Comparator.comparingLong(candidate -> AgentProgressionDecisionPolicy.trainingMapScore(
+                            profile, characterId, level, currentMapId, candidate.choice(),
+                            candidate.map(), candidate.occupancy())))
+                    .map(selected -> new Selection(selected.choice(), selected.map(), selected.occupancy(),
+                            "personality=" + profile.profileId() + "; weighted quest/grind map score"));
+        }
 
         if (policy.preserveCurrentMapWhenEligible()) {
             Optional<Selection> current = candidates.stream()

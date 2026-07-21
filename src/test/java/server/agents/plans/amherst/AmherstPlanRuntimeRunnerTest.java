@@ -230,6 +230,46 @@ class AmherstPlanRuntimeRunnerTest {
     }
 
     @Test
+    void policyCanEnterSlowWorldResourceWaitingBeforeAutomaticRecoveryIsExhausted() throws Exception {
+        var fixture = new MutablePrimitiveGatewayFixture();
+        fixture.mapId.set(1010000);
+        fixture.quests.put(1045, 1);
+        AmherstPlanCard card = worldResourceCard();
+        AmherstPlanObjectiveDeferralPolicy policy = new AmherstPlanObjectiveDeferralPolicy() {
+            @Override
+            public boolean canDefer(AmherstPlanCard ignoredCard,
+                                    AmherstPlanObjective ignoredObjective,
+                                    server.agents.capabilities.runtime.AgentCapabilityResult ignoredResult) {
+                return true;
+            }
+
+            @Override
+            public boolean waitForWorldResourceAfterAlternatives(
+                    AmherstPlanCard ignoredCard,
+                    AmherstPlanObjective ignoredObjective,
+                    server.agents.capabilities.runtime.AgentCapabilityResult ignoredResult,
+                    int ignoredDeferralStage) {
+                return true;
+            }
+        };
+        AmherstPlanRuntimeRunner runner = new AmherstPlanRuntimeRunner(
+                card, new FileAmherstPlanProgressStore(tempDir), new AmherstPlanProgressService(),
+                new AmherstObjectiveReconciler(fixture.gateway),
+                new AmherstObjectiveHandlerRegistry(fixture.gateway), AmherstObjectiveDelay.NONE,
+                new AgentObjectiveRecoveryPolicy(5_000L, 15_000L, 20, 500L), policy);
+        runner.start(fixture.entry, fixture.agent, 1L);
+
+        assertTrue(runner.tick(fixture.entry, fixture.agent, 2L));
+        assertTrue(runner.tick(fixture.entry, fixture.agent, 15_002L));
+
+        assertTrue(fixture.entry.amherstPlanExecutionState().active());
+        assertNull(fixture.entry.amherstPlanExecutionState().assignedObjectiveId());
+        assertEquals(30_002L, fixture.entry.amherstPlanExecutionState().nextObjectiveAtMs);
+        assertTrue(fixture.entry.amherstPlanExecutionState().progress().journal().stream()
+                .anyMatch(event -> event.message().contains("world-resource recheck")));
+    }
+
+    @Test
     void declaredIndependentWorkRunsBeforeADeferredWorldResourceRetry() throws Exception {
         var fixture = new MutablePrimitiveGatewayFixture();
         fixture.mapId.set(1010000);

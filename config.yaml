@@ -259,7 +259,7 @@ server:
     USE_ENFORCE_HPMP_SWAP: false        #Forces players to reuse stats (via AP Resetting) located on HP/MP pool only inside the HP/MP stats.
     USE_ENFORCE_MOB_LEVEL_RANGE: true   #Players N levels below the killed mob will gain no experience from defeating it.
     USE_ENFORCE_JOB_LEVEL_RANGE: false  #Caps the player level on the minimum required to advance their current jobs.
-    USE_ENFORCE_JOB_SP_RANGE: false     #Caps the player SP level on the total obtainable by their current jobs. After changing jobs, missing SP will be retrieved.
+    USE_ENFORCE_JOB_SP_RANGE: true      #Caps the player SP level on the total obtainable by their current jobs. After changing jobs, missing SP will be retrieved.
     USE_ENFORCE_ITEM_SUGGESTION: false  #Forces the Owl of Minerva and the Cash Shop to always display the defined item array instead of those featured by the players.
     USE_ENFORCE_UNMERCHABLE_CASH: true  #Forces players to not sell CASH items via merchants, drops of it disappears.
     USE_ENFORCE_UNMERCHABLE_PET: true   #Forces players to not sell pets via merchants, drops of it disappears. (since non-named pets gets dirty name and other possible DB-related issues)
@@ -349,6 +349,7 @@ server:
     AGENT_MAPLE_ISLAND_SHOWCASE_ENABLED: true #Allow the guarded one-command clean level-1 Mushroom Town-to-Southperry run.
     AGENT_MAPLE_ISLAND_SHOWCASE_AGENT_NAME: AmherstRun #Only this Agent IGN may use the full Maple Island showcase reset path.
     AGENT_MAPLE_ISLAND_COHORT_ENABLED: true #Allow guarded persistent-pool cohort provisioning and full Maple Island runs.
+    AGENT_PERSONALITY_PRESENTATION_ENABLED: true #Enable durable, observer-gated personality presentation for Maple Island cohorts running in full realism mode.
     AGENT_MAPLE_ISLAND_COHORT_MAX_TOTAL: 500 # Maximum Agents accepted by one Maple Island cohort run; the command still releases them in small waves.
     AGENT_MAPLE_ISLAND_COHORT_STALL_TIMEOUT_MS: 1800000 # Mark a running cohort stalled after this long with no Agent reaching a new terminal state (30 minutes).
     AGENT_MAPLE_ISLAND_COHORT_TELEMETRY_RETAINED_RUNS: 20 # Keep this many compact completed-run summaries in memory; live per-Agent trackers are discarded.

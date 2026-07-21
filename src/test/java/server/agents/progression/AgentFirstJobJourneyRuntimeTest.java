@@ -155,6 +155,78 @@ class AgentFirstJobJourneyRuntimeTest {
         assertEquals(AgentCareerProgressionState.Stage.FINAL_RETURN_TO_INSTRUCTOR, state.stage());
     }
 
+    @Test
+    void completedInstructorChainHandsOffToCareerHomeQuestPack() {
+        Character agent = mock(Character.class);
+        when(agent.getId()).thenReturn(44);
+        when(agent.getName()).thenReturn("HomePackNext");
+        when(agent.getJob()).thenReturn(Job.THIEF);
+        when(agent.getLevel()).thenReturn(14);
+        when(agent.getMapId()).thenReturn(103000003);
+        AgentRuntimeEntry entry = entry(agent, "thief-claw-standard-v1",
+                AgentCareerProgressionState.Stage.INSTRUCTOR_TRAINING);
+        PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
+        for (int questId : Set.of(2140, 2141, 2142, 2143)) {
+            when(gateway.questStatus(agent, questId)).thenReturn(2);
+        }
+
+        assertTrue(AgentFirstJobJourneyRuntime.tick(entry, agent, 100L, gateway));
+
+        AgentCareerProgressionState state = entry.capabilityStates().require(
+                AgentCareerProgressionState.STATE_KEY);
+        assertEquals(4, state.trainingQuestIndex());
+        assertEquals(AgentCareerProgressionState.Stage.HOME_QUEST_PACK, state.stage());
+    }
+
+    @Test
+    void reachingLevel15DoesNotSkipAnInProgressRequiredHomePack() {
+        Character agent = mock(Character.class);
+        when(agent.getId()).thenReturn(45);
+        when(agent.getName()).thenReturn("StillQuesting");
+        when(agent.getJob()).thenReturn(Job.THIEF);
+        when(agent.getLevel()).thenReturn(15);
+        when(agent.getMapId()).thenReturn(103000000);
+        when(agent.getPosition()).thenReturn(new Point(0, 0));
+        AgentRuntimeEntry entry = entry(agent, "thief-claw-standard-v1",
+                AgentCareerProgressionState.Stage.HOME_QUEST_PACK);
+        AgentCareerProgressionState state = entry.capabilityStates().require(
+                AgentCareerProgressionState.STATE_KEY);
+        state.trainingQuestIndex(4);
+        PrimitiveCapabilityGateway gateway = npcGateway(agent, 1052103);
+        when(gateway.questStatus(agent, 28270)).thenReturn(0);
+        when(gateway.canStartQuest(agent, 28270, 1052103)).thenReturn(true);
+        when(gateway.startQuest(agent, 28270, 1052103)).thenReturn(true);
+
+        assertTrue(AgentFirstJobJourneyRuntime.tick(entry, agent, 100L, gateway));
+
+        verify(gateway).startQuest(agent, 28270, 1052103);
+        assertEquals(AgentCareerProgressionState.Stage.HOME_QUEST_PACK, state.stage());
+    }
+
+    @Test
+    void homePackReconcilesCompletedQuestAndResumesAtNextInteraction() {
+        Character agent = mock(Character.class);
+        when(agent.getId()).thenReturn(46);
+        when(agent.getName()).thenReturn("PackResume");
+        when(agent.getJob()).thenReturn(Job.THIEF);
+        when(agent.getLevel()).thenReturn(14);
+        when(agent.getMapId()).thenReturn(103000000);
+        when(agent.getPosition()).thenReturn(new Point(0, 0));
+        AgentRuntimeEntry entry = entry(agent, "thief-claw-standard-v1",
+                AgentCareerProgressionState.Stage.HOME_QUEST_PACK);
+        PrimitiveCapabilityGateway gateway = npcGateway(agent, 1052106);
+        when(gateway.questStatus(agent, 28270)).thenReturn(2);
+        when(gateway.questStatus(agent, 2090)).thenReturn(0);
+        when(gateway.canStartQuest(agent, 2090, 1052106)).thenReturn(true);
+        when(gateway.startQuest(agent, 2090, 1052106)).thenReturn(true);
+
+        assertTrue(AgentFirstJobJourneyRuntime.tick(entry, agent, 100L, gateway));
+
+        verify(gateway).startQuest(agent, 2090, 1052106);
+        assertEquals(1, entry.capabilityStates().require(
+                AgentCareerProgressionState.STATE_KEY).questPackIndex());
+    }
+
     private static Character beginner(String name, int level, int mapId) {
         Character agent = mock(Character.class);
         when(agent.getId()).thenReturn(Math.abs(name.hashCode()));

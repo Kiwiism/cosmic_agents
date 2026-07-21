@@ -190,8 +190,9 @@ public final class AgentVictoriaTrainingObjectiveRuntime {
         }
         Map<Integer, Integer> occupancy = AgentVictoriaTrainingPopulation.snapshot(agent, eligible);
         AgentVictoriaTrainingMapSelector selector = new AgentVictoriaTrainingMapSelector(repository);
+        AgentProgressionProfile profile = AgentProgressionProfileRuntime.profile(entry);
         Optional<AgentVictoriaTrainingMapSelector.Selection> selection = selector.select(
-                agent.getLevel(), agent.getMapId(), occupancy, eligible);
+                agent.getLevel(), agent.getMapId(), occupancy, eligible, profile, agent.getId());
         selection.ifPresent(value -> state.selected(value.map().mapId(), agent.getLevel(),
                 value.reason() + "; occupancy=" + value.occupancy(), nowMs));
         return selection.map(AgentVictoriaTrainingMapSelector.Selection::map);

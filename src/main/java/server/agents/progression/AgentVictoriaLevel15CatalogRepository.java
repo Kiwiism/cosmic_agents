@@ -23,6 +23,8 @@ public final class AgentVictoriaLevel15CatalogRepository {
     private final Map<String, AgentVictoriaLevel15Catalog.Career> byBundleId;
     private final Map<Integer, AgentVictoriaLevel15Catalog.Career> byFirstJobId;
     private final Map<String, AgentVictoriaLevel15Catalog.StartVariant> startVariantsById;
+    private final Map<String, AgentVictoriaLevel15Catalog.QuestPack> questPacksById;
+    private final Map<Integer, AgentVictoriaLevel15Catalog.InteractionQuest> interactionQuestsById;
 
     AgentVictoriaLevel15CatalogRepository(AgentVictoriaLevel15Catalog catalog,
                                            AgentCareerBuildBundleRepository bundles) {
@@ -30,6 +32,8 @@ public final class AgentVictoriaLevel15CatalogRepository {
         Map<String, AgentVictoriaLevel15Catalog.Career> bundleIndex = new LinkedHashMap<>();
         Map<Integer, AgentVictoriaLevel15Catalog.Career> jobIndex = new LinkedHashMap<>();
         Map<String, AgentVictoriaLevel15Catalog.StartVariant> variantIndex = new LinkedHashMap<>();
+        Map<String, AgentVictoriaLevel15Catalog.QuestPack> packIndex = new LinkedHashMap<>();
+        Map<Integer, AgentVictoriaLevel15Catalog.InteractionQuest> interactionQuestIndex = new LinkedHashMap<>();
         for (AgentVictoriaLevel15Catalog.StartVariant variant : catalog.startVariants()) {
             if (variantIndex.putIfAbsent(variant.variantId(), variant) != null) {
                 throw new IllegalArgumentException("duplicate Victoria start variant: " + variant.variantId());
@@ -39,6 +43,25 @@ public final class AgentVictoriaLevel15CatalogRepository {
         for (AgentVictoriaLevel15Catalog.RouteCorridor corridor : catalog.routeCorridors()) {
             if (!corridorIds.add(corridor.corridorId())) {
                 throw new IllegalArgumentException("duplicate Victoria route corridor: " + corridor.corridorId());
+            }
+        }
+        for (AgentVictoriaLevel15Catalog.InteractionQuest quest : catalog.interactionQuests()) {
+            if (interactionQuestIndex.putIfAbsent(quest.questId(), quest) != null) {
+                throw new IllegalArgumentException("duplicate Victoria interaction quest: " + quest.questId());
+            }
+        }
+        AgentVictoriaQuestRuntimeCatalogRepository questRepository =
+                AgentVictoriaQuestRuntimeCatalogRepository.defaultRepository();
+        for (AgentVictoriaLevel15Catalog.QuestPack pack : catalog.questPacks()) {
+            if (packIndex.putIfAbsent(pack.packId(), pack) != null) {
+                throw new IllegalArgumentException("duplicate Victoria quest pack: " + pack.packId());
+            }
+            for (int questId : pack.questIds()) {
+                if (questRepository.find(questId).isEmpty()
+                        && !interactionQuestIndex.containsKey(questId)) {
+                    throw new IllegalArgumentException("Victoria quest pack " + pack.packId()
+                            + " references an unavailable quest " + questId);
+                }
             }
         }
         for (AgentVictoriaLevel15Catalog.Career career : catalog.careers()) {
@@ -53,6 +76,7 @@ public final class AgentVictoriaLevel15CatalogRepository {
                     throw new IllegalArgumentException("duplicate Victoria career bundle: " + bundleId);
                 }
             }
+            validateCatchUpPlan(career, packIndex);
         }
         for (AgentCareerBuildBundle bundle : bundles.all()) {
             if (!bundleIndex.containsKey(bundle.bundleId())) {
@@ -63,6 +87,8 @@ public final class AgentVictoriaLevel15CatalogRepository {
         byBundleId = Map.copyOf(bundleIndex);
         byFirstJobId = Map.copyOf(jobIndex);
         startVariantsById = Map.copyOf(variantIndex);
+        questPacksById = Map.copyOf(packIndex);
+        interactionQuestsById = Map.copyOf(interactionQuestIndex);
     }
 
     public static AgentVictoriaLevel15CatalogRepository defaultRepository() {
@@ -91,6 +117,15 @@ public final class AgentVictoriaLevel15CatalogRepository {
                 () -> new IllegalArgumentException("unknown Victoria start variant " + variantId));
     }
 
+    public AgentVictoriaLevel15Catalog.QuestPack questPack(String packId) {
+        return Optional.ofNullable(questPacksById.get(packId)).orElseThrow(
+                () -> new IllegalArgumentException("unknown Victoria quest pack " + packId));
+    }
+
+    public Optional<AgentVictoriaLevel15Catalog.InteractionQuest> interactionQuest(int questId) {
+        return Optional.ofNullable(interactionQuestsById.get(questId));
+    }
+
     private static void validateCareer(AgentCareerBuildBundle bundle,
                                        AgentVictoriaLevel15Catalog.Career career) {
         List<Integer> questIds = career.trainingSteps().stream()
@@ -101,6 +136,21 @@ public final class AgentVictoriaLevel15CatalogRepository {
                 || bundle.instructorMapId() != career.instructorMapId()
                 || !bundle.instructorTrainingQuestIds().equals(questIds)) {
             throw new IllegalArgumentException("Victoria catalog conflicts with career bundle " + bundle.bundleId());
+        }
+    }
+
+    private static void validateCatchUpPlan(
+            AgentVictoriaLevel15Catalog.Career career,
+            Map<String, AgentVictoriaLevel15Catalog.QuestPack> packs) {
+        AgentVictoriaLevel15Catalog.CatchUpPlan plan = career.catchUpPlan();
+        if (!packs.containsKey(plan.homePackId())) {
+            throw new IllegalArgumentException("unknown home quest pack for job " + career.firstJobId()
+                    + ": " + plan.homePackId());
+        }
+        if (plan.afterHomeStrategy() == AgentVictoriaLevel15Catalog.AfterHomeStrategy.ROTATION_PACK
+                && !packs.containsKey(plan.rotationPackId())) {
+            throw new IllegalArgumentException("unknown rotation quest pack for job " + career.firstJobId()
+                    + ": " + plan.rotationPackId());
         }
     }
 

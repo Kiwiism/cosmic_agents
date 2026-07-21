@@ -9,6 +9,9 @@ import client.inventory.Item;
 import client.inventory.WeaponType;
 import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.integration.InventoryGateway;
+import server.agents.events.AgentEventPriority;
+import server.agents.resources.events.AgentEquipmentCandidateDetectedEvent;
+import server.agents.resources.events.AgentResourceEventPublisher;
 import server.agents.capabilities.inventory.AgentInventoryReservationRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
@@ -89,7 +92,16 @@ public final class AgentEquipmentService {
     public static AgentEquipRecommendation findRecommendationForItem(Character agent,
                                                                      Character leader,
                                                                      Item item) {
-        return AgentEquipmentRecommendationService.findRecommendationForItem(agent, leader, item);
+        AgentEquipRecommendation recommendation =
+                AgentEquipmentRecommendationService.findRecommendationForItem(agent, leader, item);
+        if (recommendation != null && item != null) {
+            AgentResourceEventPublisher.publishFor(agent,
+                    objectiveId -> new AgentEquipmentCandidateDetectedEvent(
+                            agent.getId(), System.currentTimeMillis(), item.getItemId(),
+                            leader == null ? 0 : Math.max(0, leader.getId()), objectiveId),
+                    AgentEventPriority.NORMAL);
+        }
+        return recommendation;
     }
 
     public static boolean shouldReserveOwnedItem(Character agent, Item item) {

@@ -8,6 +8,10 @@ import constants.id.ItemId;
 import constants.inventory.ItemConstants;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapItem;
+import server.agents.events.AgentEventPriority;
+import server.agents.resources.events.AgentInventoryThresholdChangedEvent;
+import server.agents.resources.events.AgentLootCollectedEvent;
+import server.agents.resources.events.AgentResourceEventPublisher;
 
 import java.awt.Point;
 import java.util.function.BooleanSupplier;
@@ -56,7 +60,7 @@ public final class AgentPassiveLootService {
                 InventoryType type = ItemConstants.getInventoryType(drop.getItemId());
                 Inventory inventory = agent.getInventory(type);
                 if (inventory != null && inventory.isFull()) {
-                    warnInventoryFull(entry, type, callbacks);
+                    warnInventoryFull(entry, agent, type, inventory, callbacks);
                     continue;
                 }
             }
@@ -64,6 +68,15 @@ public final class AgentPassiveLootService {
             Item pickedItem = drop.getItem();
             int pickedItemId = drop.getItemId();
             callbacks.pickup(agent, drop);
+            if (drop.isPickedUp()) {
+                int itemId = pickedItem == null ? 0 : pickedItem.getItemId();
+                int quantity = pickedItem == null ? 0 : Math.max(0, pickedItem.getQuantity());
+                AgentResourceEventPublisher.publishFor(agent,
+                        objectiveId -> new AgentLootCollectedEvent(
+                                agent.getId(), now, agent.getMapId(), drop.getObjectId(), itemId,
+                                quantity, Math.max(0, drop.getMeso()), objectiveId),
+                        AgentEventPriority.NORMAL);
+            }
             callbacks.cleanupGhostDrop(agent, drop);
             if (pickedItem != null && pickedItemId > 0 && callbacks.hasItem(agent, pickedItem)) {
                 InventoryType pickedType = ItemConstants.getInventoryType(pickedItemId);
@@ -89,18 +102,24 @@ public final class AgentPassiveLootService {
         InventoryType type = ItemConstants.getInventoryType(drop.getItemId());
         Inventory inventory = agent.getInventory(type);
         if (inventory != null && inventory.isFull()) {
-            warnInventoryFull(entry, type, callbacks);
+            warnInventoryFull(entry, agent, type, inventory, callbacks);
         }
     }
 
     private static void warnInventoryFull(AgentRuntimeEntry entry,
+                                          Character agent,
                                           InventoryType type,
+                                          Inventory inventory,
                                           PassiveLootCallbacks callbacks) {
         if (!callbacks.canWarnInventoryFull()) {
             return;
         }
-        callbacks.replyNow(entry, type.name().toLowerCase() + " inventory is full!");
         callbacks.setInventoryFullWarnCooldownMs(callbacks.delayInventoryFullWarnCooldown());
+        AgentResourceEventPublisher.publishFor(agent,
+                objectiveId -> new AgentInventoryThresholdChangedEvent(
+                        agent.getId(), callbacks.nowMs(), type.name(), inventory.getNumFreeSlot(),
+                        Byte.toUnsignedInt(inventory.getSlotLimit()), "FULL", objectiveId),
+                AgentEventPriority.IMPORTANT);
     }
 
     public interface PassiveLootCallbacks {
@@ -111,7 +130,6 @@ public final class AgentPassiveLootService {
         long nowMs();
         int lootRadius();
         boolean canWarnInventoryFull();
-        void replyNow(AgentRuntimeEntry entry, String message);
         int delayInventoryFullWarnCooldown();
         void setInventoryFullWarnCooldownMs(int cooldownMs);
         Character owner();
@@ -129,7 +147,6 @@ public final class AgentPassiveLootService {
                                       LongSupplier nowMs,
                                       IntSupplier lootRadius,
                                       BooleanSupplier canWarnInventoryFull,
-                                      ReplySink replyNow,
                                       IntSupplier delayInventoryFullWarnCooldown,
                                       Consumer<Integer> setInventoryFullWarnCooldownMs,
                                       Supplier<Character> owner,
@@ -147,7 +164,6 @@ public final class AgentPassiveLootService {
                 @Override public long nowMs() { return nowMs.getAsLong(); }
                 @Override public int lootRadius() { return lootRadius.getAsInt(); }
                 @Override public boolean canWarnInventoryFull() { return canWarnInventoryFull.getAsBoolean(); }
-                @Override public void replyNow(AgentRuntimeEntry entry, String message) { replyNow.reply(entry, message); }
                 @Override public int delayInventoryFullWarnCooldown() { return delayInventoryFullWarnCooldown.getAsInt(); }
                 @Override public void setInventoryFullWarnCooldownMs(int cooldownMs) {
                     setInventoryFullWarnCooldownMs.accept(cooldownMs);
@@ -169,11 +185,6 @@ public final class AgentPassiveLootService {
                 }
             };
         }
-    }
-
-    @FunctionalInterface
-    public interface ReplySink {
-        void reply(AgentRuntimeEntry entry, String message);
     }
 
     @FunctionalInterface

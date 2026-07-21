@@ -69,6 +69,7 @@ public final class AgentRegistrationCoordinator {
                         () -> AgentRandom.randMs(30_000, 31_000)));
         long nowMs = System.currentTimeMillis();
         AgentCareerBuildBundle bundle = AgentCareerBuildBundleService.restoreOrAssign(entry, nowMs);
+        AgentPersonalityRuntime.restoreOrAssign(entry, false, nowMs);
         AgentObjectiveCheckpointRuntime.restore(entry);
         AgentCareerProgressionCheckpointRuntime.restore(entry, bundle);
         AgentPlanReattachmentRuntime.reattachIfNeeded(entry, agent, nowMs);

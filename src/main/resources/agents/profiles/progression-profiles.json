@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "defaultProfileId": "balanced-v1",
+  "profiles": [
+    {
+      "profileId": "balanced-v1",
+      "profileVersion": 1,
+      "questPreference": 55,
+      "grindPreference": 45,
+      "efficiencyPreference": 65,
+      "explorationPreference": 35,
+      "crowdAvoidance": 55,
+      "travelTolerance": 50,
+      "riskTolerance": 50,
+      "routinePreference": 55
+    },
+    {
+      "profileId": "quester-v1",
+      "profileVersion": 1,
+      "questPreference": 82,
+      "grindPreference": 18,
+      "efficiencyPreference": 55,
+      "explorationPreference": 60,
+      "crowdAvoidance": 50,
+      "travelTolerance": 85,
+      "riskTolerance": 40,
+      "routinePreference": 30
+    },
+    {
+      "profileId": "grinder-v1",
+      "profileVersion": 1,
+      "questPreference": 20,
+      "grindPreference": 80,
+      "efficiencyPreference": 88,
+      "explorationPreference": 15,
+      "crowdAvoidance": 45,
+      "travelTolerance": 30,
+      "riskTolerance": 60,
+      "routinePreference": 90
+    },
+    {
+      "profileId": "explorer-v1",
+      "profileVersion": 1,
+      "questPreference": 58,
+      "grindPreference": 42,
+      "efficiencyPreference": 35,
+      "explorationPreference": 95,
+      "crowdAvoidance": 65,
+      "travelTolerance": 95,
+      "riskTolerance": 60,
+      "routinePreference": 15
+    },
+    {
+      "profileId": "hunter-v1",
+      "profileVersion": 1,
+      "questPreference": 45,
+      "grindPreference": 55,
+      "efficiencyPreference": 75,
+      "explorationPreference": 45,
+      "crowdAvoidance": 85,
+      "travelTolerance": 60,
+      "riskTolerance": 70,
+      "routinePreference": 50
+    }
+  ]
+}

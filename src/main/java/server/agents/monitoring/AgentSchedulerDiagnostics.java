@@ -1,6 +1,12 @@
 package server.agents.monitoring;
 
 import server.agents.runtime.AgentRuntimeRegistry;
+import server.agents.runtime.AgentSessionEventRuntime;
+import server.agents.events.AgentEventBusSnapshot;
+import server.agents.events.journal.AgentEventJournalRuntime;
+import server.agents.events.journal.AgentEventJournalSnapshot;
+import server.agents.coordination.AgentCoordinationRuntime;
+import server.agents.coordination.AgentCoordinationRuntimeSnapshot;
 import server.agents.runtime.scheduler.AgentLoadSheddingLevel;
 import server.agents.runtime.scheduler.AgentLoadSheddingReason;
 import server.agents.runtime.scheduler.AgentLoadSheddingState;
@@ -23,6 +29,24 @@ public final class AgentSchedulerDiagnostics {
     private static final int MAX_SHARD_LINES = 8;
     private static final int MAX_ASYNC_QUEUE_LINES = 12;
 
+    public record EventRuntimeSnapshot(
+            int sessions,
+            long capacity,
+            long queued,
+            int maxHighWaterMark,
+            long subscriptions,
+            long published,
+            long delivered,
+            long dropped,
+            long deduplicated,
+            long listenerInvocations,
+            long listenerFailures,
+            long listenerTotalDurationNs,
+            long listenerMaxDurationNs,
+            long queueLatencyTotalNs,
+            long queueLatencyMaxNs) {
+    }
+
     public record Snapshot(
             AgentSchedulerMode mode,
             int activeAgents,
@@ -32,10 +56,15 @@ public final class AgentSchedulerDiagnostics {
             Map<AgentPriorityClass, AgentSchedulerMetrics.PrioritySnapshot> readyPriorities,
             AgentSchedulerMetrics.LoadSheddingSnapshot loadShedding,
             AgentSchedulerMetrics.QuiescenceSnapshot quiescence,
-            Map<String, AgentAsyncQueueMetrics.Snapshot> asyncQueues) {
+            Map<String, AgentAsyncQueueMetrics.Snapshot> asyncQueues,
+            Map<String, AgentEventReactionMetrics.Snapshot> eventReactions,
+            EventRuntimeSnapshot eventRuntime,
+            AgentCoordinationRuntimeSnapshot coordination,
+            AgentEventJournalSnapshot eventJournal) {
         public Snapshot {
             if (mode == null || scheduler == null || shards == null || readyPriorities == null || loadShedding == null
-                    || quiescence == null || asyncQueues == null) {
+                    || quiescence == null || asyncQueues == null || eventReactions == null
+                    || eventRuntime == null || coordination == null || eventJournal == null) {
                 throw new IllegalArgumentException("Agent scheduler diagnostic snapshot is incomplete");
             }
             activeAgents = Math.max(0, activeAgents);
@@ -43,6 +72,7 @@ public final class AgentSchedulerDiagnostics {
             shardRegistrationImbalance = Math.max(0, shardRegistrationImbalance);
             readyPriorities = Map.copyOf(readyPriorities);
             asyncQueues = immutableSortedMap(asyncQueues);
+            eventReactions = immutableSortedMap(eventReactions);
         }
     }
 
@@ -59,7 +89,11 @@ public final class AgentSchedulerDiagnostics {
                 AgentSchedulerMetrics.readyPrioritySnapshots(),
                 AgentSchedulerMetrics.loadSheddingSnapshot(),
                 AgentSchedulerMetrics.quiescenceSnapshot(),
-                AgentAsyncQueueMetrics.snapshots());
+                AgentAsyncQueueMetrics.snapshots(),
+                AgentEventReactionMetrics.snapshots(),
+                captureEventRuntime(),
+                AgentCoordinationRuntime.snapshot(),
+                AgentEventJournalRuntime.snapshot());
     }
 
     public static List<String> lines() {
@@ -123,7 +157,79 @@ public final class AgentSchedulerDiagnostics {
         appendLoadSheddingLine(lines, snapshot.loadShedding());
         appendQuiescenceLine(lines, snapshot.quiescence());
         appendAsyncQueueLines(lines, snapshot.asyncQueues());
+        appendEventRuntimeLines(lines, snapshot);
         return List.copyOf(lines);
+    }
+
+    private static void appendEventRuntimeLines(List<String> lines, Snapshot snapshot) {
+        EventRuntimeSnapshot events = snapshot.eventRuntime();
+        lines.add("Agent events: sessions=" + events.sessions() + " queued=" + events.queued()
+                + "/" + events.capacity() + " high=" + events.maxHighWaterMark()
+                + " published=" + events.published() + " delivered=" + events.delivered()
+                + " dropped=" + events.dropped() + " deduped=" + events.deduplicated()
+                + " listenerFailures=" + events.listenerFailures()
+                + " listenerMaxUs=" + nanosToMicros(events.listenerMaxDurationNs())
+                + " queueMaxUs=" + nanosToMicros(events.queueLatencyMaxNs()));
+        long reactionAccepted = snapshot.eventReactions().values().stream()
+                .mapToLong(value -> value.accepted() + value.coalesced()).sum();
+        long reactionRejected = snapshot.eventReactions().values().stream()
+                .mapToLong(AgentEventReactionMetrics.Snapshot::rejected).sum();
+        lines.add("Agent event reactions: types=" + snapshot.eventReactions().size()
+                + " accepted=" + reactionAccepted + " rejected=" + reactionRejected);
+        AgentCoordinationRuntimeSnapshot coordination = snapshot.coordination();
+        lines.add("Agent coordination: routes=" + coordination.routes()
+                + " queued=" + coordination.queued() + " accepted=" + coordination.accepted()
+                + " rejected=" + coordination.rejectedCapacity()
+                + " expired=" + coordination.expired()
+                + " listenerFailures=" + coordination.listenerFailures());
+        AgentEventJournalSnapshot journal = snapshot.eventJournal();
+        lines.add("Agent event journal: enabled=" + journal.enabled()
+                + " queued=" + journal.queued() + "/" + journal.capacity()
+                + " accepted=" + journal.accepted() + " rejected=" + journal.rejected()
+                + " written=" + journal.written() + " failures=" + journal.failures());
+    }
+
+    private static EventRuntimeSnapshot captureEventRuntime() {
+        int sessions = 0;
+        long capacity = 0L;
+        long queued = 0L;
+        int maxHighWaterMark = 0;
+        long subscriptions = 0L;
+        long published = 0L;
+        long delivered = 0L;
+        long dropped = 0L;
+        long deduplicated = 0L;
+        long listenerInvocations = 0L;
+        long listenerFailures = 0L;
+        long listenerTotalDurationNs = 0L;
+        long listenerMaxDurationNs = 0L;
+        long queueLatencyTotalNs = 0L;
+        long queueLatencyMaxNs = 0L;
+        for (var entry : AgentRuntimeRegistry.activeEntriesSnapshot()) {
+            AgentEventBusSnapshot event = AgentSessionEventRuntime.snapshot(entry);
+            if (event == null) {
+                continue;
+            }
+            sessions++;
+            capacity += event.capacity();
+            queued += event.queued();
+            maxHighWaterMark = Math.max(maxHighWaterMark, event.highWaterMark());
+            subscriptions += event.subscriptions();
+            published += event.published();
+            delivered += event.delivered();
+            dropped += event.dropped();
+            deduplicated += event.deduplicated();
+            listenerInvocations += event.listenerInvocations();
+            listenerFailures += event.listenerFailures();
+            listenerTotalDurationNs += event.listenerTotalDurationNs();
+            listenerMaxDurationNs = Math.max(listenerMaxDurationNs, event.listenerMaxDurationNs());
+            queueLatencyTotalNs += event.queueLatencyTotalNs();
+            queueLatencyMaxNs = Math.max(queueLatencyMaxNs, event.queueLatencyMaxNs());
+        }
+        return new EventRuntimeSnapshot(sessions, capacity, queued, maxHighWaterMark,
+                subscriptions, published, delivered, dropped, deduplicated,
+                listenerInvocations, listenerFailures, listenerTotalDurationNs,
+                listenerMaxDurationNs, queueLatencyTotalNs, queueLatencyMaxNs);
     }
 
     private static void appendShardLines(List<String> lines, Snapshot snapshot) {

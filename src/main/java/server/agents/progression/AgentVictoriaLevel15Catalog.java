@@ -12,18 +12,23 @@ public record AgentVictoriaLevel15Catalog(
         List<StartVariant> startVariants,
         List<RouteCorridor> routeCorridors,
         List<ScriptedPortal> scriptedPortals,
+        List<QuestPack> questPacks,
+        List<InteractionQuest> interactionQuests,
         List<Career> careers) {
 
     public AgentVictoriaLevel15Catalog {
         if (schemaVersion <= 0 || blank(catalogId) || islandHandoff == null
                 || startVariants == null || startVariants.isEmpty()
                 || routeCorridors == null || routeCorridors.isEmpty()
-                || scriptedPortals == null || careers == null || careers.isEmpty()) {
+                || scriptedPortals == null || questPacks == null || questPacks.isEmpty()
+                || interactionQuests == null || careers == null || careers.isEmpty()) {
             throw new IllegalArgumentException("a versioned Victoria level-15 catalog is required");
         }
         startVariants = List.copyOf(startVariants);
         routeCorridors = List.copyOf(routeCorridors);
         scriptedPortals = List.copyOf(scriptedPortals);
+        questPacks = List.copyOf(questPacks);
+        interactionQuests = List.copyOf(interactionQuests);
         careers = List.copyOf(careers);
     }
 
@@ -76,6 +81,54 @@ public record AgentVictoriaLevel15Catalog(
         }
     }
 
+    public record QuestPack(String packId, List<Integer> questIds) {
+        public QuestPack {
+            if (blank(packId) || questIds == null || questIds.isEmpty()
+                    || questIds.stream().anyMatch(questId -> questId == null || questId <= 0)
+                    || Set.copyOf(questIds).size() != questIds.size()) {
+                throw new IllegalArgumentException("a quest pack requires an id and unique quest ids");
+            }
+            questIds = List.copyOf(questIds);
+        }
+    }
+
+    /** Quest whose start/finish interaction is valid but has no hunting objective catalog entry. */
+    public record InteractionQuest(
+            int questId,
+            int startNpcId,
+            int startMapId,
+            int completeNpcId,
+            int completeMapId) {
+        public InteractionQuest {
+            if (questId <= 0 || startNpcId <= 0 || startMapId <= 0
+                    || completeNpcId <= 0 || completeMapId <= 0) {
+                throw new IllegalArgumentException("complete interaction-only quest content is required");
+            }
+        }
+    }
+
+    public enum AfterHomeStrategy {
+        LOCAL_GRIND,
+        ROTATION_PACK
+    }
+
+    public record CatchUpPlan(
+            String homePackId,
+            AfterHomeStrategy afterHomeStrategy,
+            String rotationPackId,
+            MilestoneGrind fallbackGrind) {
+        public CatchUpPlan {
+            rotationPackId = rotationPackId == null ? "" : rotationPackId.trim();
+            if (blank(homePackId) || afterHomeStrategy == null || fallbackGrind == null
+                    || (afterHomeStrategy == AfterHomeStrategy.ROTATION_PACK
+                    && blank(rotationPackId))
+                    || (afterHomeStrategy == AfterHomeStrategy.LOCAL_GRIND
+                    && !rotationPackId.isEmpty())) {
+                throw new IllegalArgumentException("a valid level-15 catch-up plan is required");
+            }
+        }
+    }
+
     public record Career(
             int firstJobId,
             List<String> supportedBundleIds,
@@ -90,7 +143,8 @@ public record AgentVictoriaLevel15Catalog(
             Map<String, Integer> preferredStarterWeaponByBundleId,
             List<Integer> verifiedShopItemIds,
             List<TrainingStep> trainingSteps,
-            MilestoneGrind milestoneGrind) {
+            MilestoneGrind milestoneGrind,
+            CatchUpPlan catchUpPlan) {
 
         public Career {
             Set<String> supportedBundles = supportedBundleIds == null
@@ -109,7 +163,8 @@ public record AgentVictoriaLevel15Catalog(
                     .anyMatch(itemId -> itemId == null || !starterKitItems.contains(itemId))
                     || verifiedShopItemIds == null || verifiedShopItemIds.isEmpty()
                     || verifiedShopItemIds.stream().anyMatch(itemId -> itemId == null || itemId <= 0)
-                    || trainingSteps == null || trainingSteps.isEmpty() || milestoneGrind == null) {
+                    || trainingSteps == null || trainingSteps.isEmpty() || milestoneGrind == null
+                    || catchUpPlan == null) {
                 throw new IllegalArgumentException("complete Victoria career content is required");
             }
             supportedBundleIds = List.copyOf(supportedBundleIds);

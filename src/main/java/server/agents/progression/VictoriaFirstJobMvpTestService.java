@@ -9,6 +9,8 @@ import server.agents.capabilities.quest.AmherstTestRuntimeResetService;
 import server.agents.capabilities.shop.AgentShopService;
 import server.agents.capabilities.supplies.AgentResourcePlanningState;
 import server.agents.capabilities.supplies.AgentSupplyProcurementState;
+import server.agents.integration.AgentCharacterGatewayRuntime;
+import server.agents.integration.AgentClientGatewayRuntime;
 import server.agents.integration.AgentMapGatewayRuntime;
 import server.agents.integration.cosmic.CosmicMapleIslandCohortIdentity;
 import server.agents.objectives.AgentObjectiveState;
@@ -58,6 +60,8 @@ public final class VictoriaFirstJobMvpTestService {
         entry.capabilityStates().remove(AgentResourcePlanningState.STATE_KEY);
         entry.capabilityStates().remove(AgentSupplyProcurementState.STATE_KEY);
         entry.capabilityStates().remove(AgentCareerProgressionState.STATE_KEY);
+        entry.capabilityStates().remove(AgentVictoriaQuestSchedulerState.STATE_KEY);
+        entry.capabilityStates().remove(AgentVictoriaTrainingState.STATE_KEY);
 
         agent.resetVictoriaFirstJobTestBaseline(
                 bundle.firstJobId(), startVariant.level(), startVariant.exp());
@@ -71,6 +75,12 @@ public final class VictoriaFirstJobMvpTestService {
         for (int questId : bundle.instructorTrainingQuestIds()) {
             Quest.getInstance(questId).reset(agent);
         }
+        for (AgentVictoriaLevel15Catalog.QuestPack pack : catalog.questPacks()) {
+            for (int questId : pack.questIds()) {
+                Quest.getInstance(questId).reset(agent);
+            }
+        }
+        AgentVictoriaProgressionDiagnostics.deleteMilestones(agent.getId());
         Quest.getInstance(catalog.islandHandoff().biggsQuestId())
                 .forceStart(agent, catalog.islandHandoff().biggsNpcId());
         bundle = AgentCareerBuildBundleService.assignForTest(entry, bundle.bundleId(), nowMs);
@@ -83,7 +93,7 @@ public final class VictoriaFirstJobMvpTestService {
                 nowMs + START_DELAY_MS);
         AgentCareerProgressionCheckpointRuntime.persistIfDirty(entry, nowMs);
         agent.equipChanged();
-        agent.saveCharToDB(false);
+        AgentCharacterGatewayRuntime.characters().save(agent, false);
         return bundle;
     }
 
@@ -115,7 +125,9 @@ public final class VictoriaFirstJobMvpTestService {
 
     private static void moveToLithHarbor(AgentRuntimeEntry entry, Character agent) {
         var maps = AgentMapGatewayRuntime.map();
-        var map = maps.resolveMap(agent.getWorld(), agent.getClient().getChannel(), LITH_HARBOR_MAP_ID);
+        var clients = AgentClientGatewayRuntime.clients();
+        var map = maps.resolveMap(
+                clients.world(agent), clients.channel(agent), LITH_HARBOR_MAP_ID);
         Point spawn = map.getPortal(0) != null
                 ? new Point(map.getPortal(0).getPosition())
                 : new Point(map.getRandomPlayerSpawnpoint().getPosition());

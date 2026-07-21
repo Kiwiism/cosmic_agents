@@ -36,6 +36,7 @@ import server.StatEffect;
 import server.agents.coordination.AgentCoordinationRuntime;
 import server.agents.coordination.AgentSupplyNeedMessage;
 import server.agents.capabilities.contracts.AgentResourceCategory;
+import server.agents.capabilities.contracts.AgentSupplyNeed;
 
 import java.util.List;
 import java.util.Map;
@@ -205,14 +206,6 @@ public final class AgentPotionService {
         int[] pots = countPotions(bot);
         AgentPerformanceMonitor.recordSince("potion-count", startedAt);
 
-        long supplyObservedAt = System.currentTimeMillis();
-        AgentResourcePlanningRuntime.observe(entry, AgentResourceCategory.HP_POTION,
-                pots[0], AgentRuntimeConfig.cfg.POT_LOW_WARN, AgentRuntimeConfig.cfg.POT_STOP,
-                Math.max(AgentRuntimeConfig.cfg.POT_LOW_WARN * 2, pots[0]), supplyObservedAt);
-        AgentResourcePlanningRuntime.observe(entry, AgentResourceCategory.MP_POTION,
-                pots[1], AgentRuntimeConfig.cfg.POT_LOW_WARN, AgentRuntimeConfig.cfg.POT_STOP,
-                Math.max(AgentRuntimeConfig.cfg.POT_LOW_WARN * 2, pots[1]), supplyObservedAt);
-
         startedAt = AgentPerformanceMonitor.start();
         requestLowPotShare(entry, bot, pots[0], true, false);
         AgentPerformanceMonitor.recordSince("potion-share-hp", startedAt);
@@ -264,6 +257,21 @@ public final class AgentPotionService {
                                               int count,
                                               boolean forHp,
                                               boolean bypassShareLimits) {
+        long observedAtMs = System.currentTimeMillis();
+        AgentResourceCategory category = forHp
+                ? AgentResourceCategory.HP_POTION : AgentResourceCategory.MP_POTION;
+        AgentSupplyNeed previous = entry.capabilityStates()
+                .require(AgentResourcePlanningState.STATE_KEY).need(category);
+        AgentSupplyNeed observed = AgentResourcePlanningRuntime.observe(
+                entry,
+                category,
+                count,
+                AgentRuntimeConfig.cfg.POT_LOW_WARN,
+                AgentRuntimeConfig.cfg.POT_STOP,
+                Math.max(AgentRuntimeConfig.cfg.POT_LOW_WARN * 2, Math.max(0, count)),
+                observedAtMs);
+        boolean thresholdEventPublished = previous == null
+                || previous.urgency() != observed.urgency();
         if (count >= AgentRuntimeConfig.cfg.POT_LOW_WARN) {
             AgentPotionStateRuntime.clearPotShareRequested(entry, forHp);
             return false;
@@ -271,7 +279,7 @@ public final class AgentPotionService {
 
         boolean alreadyRequested = AgentPotionStateRuntime.potShareRequested(entry, forHp);
         if ((alreadyRequested && !bypassShareLimits)
-                || !requestPotShare(entry, bot, forHp, bypassShareLimits)) {
+                || !requestPotShare(entry, bot, forHp, bypassShareLimits, thresholdEventPublished)) {
             return false;
         }
         AgentPotionStateRuntime.setPotShareRequested(entry, forHp, true);
@@ -308,6 +316,14 @@ public final class AgentPotionService {
     }
 
     public static boolean requestPotShare(AgentRuntimeEntry entry, Character bot, boolean forHp, boolean bypassShareLimits) {
+        return requestPotShare(entry, bot, forHp, bypassShareLimits, false);
+    }
+
+    private static boolean requestPotShare(AgentRuntimeEntry entry,
+                                           Character bot,
+                                           boolean forHp,
+                                           boolean bypassShareLimits,
+                                           boolean thresholdEventPublished) {
         long startedAt = AgentPerformanceMonitor.start();
         if (bot.getTrade() != null || AgentPendingTradeStateRuntime.hasActiveSequence(entry)) {
             AgentPerformanceMonitor.recordSince("potion-request", startedAt);
@@ -332,18 +348,21 @@ public final class AgentPotionService {
         int[] currentPots = bot.getInventory(InventoryType.USE) == null
                 ? new int[]{-1, -1}
                 : countPotions(bot);
-        AgentCoordinationRuntime.publish(new AgentSupplyNeedMessage(
-                bot.getId(),
-                cohortId,
-                bot.getMapId(),
-                forHp ? AgentSupplyNeedMessage.SupplyKind.HP_POTION
-                        : AgentSupplyNeedMessage.SupplyKind.MP_POTION,
-                forHp ? currentPots[0] : currentPots[1],
-                "",
-                now));
-
-        AgentPotionRuntime.sayMapNow(bot, AgentDialogueSelector.randomReply(
-                forHp ? AgentDialogueCatalog.potRequestHpReplies() : AgentDialogueCatalog.potRequestMpReplies()));
+        int currentCount = forHp ? currentPots[0] : currentPots[1];
+        if (bypassShareLimits && !thresholdEventPublished) {
+            AgentCoordinationRuntime.publish(new AgentSupplyNeedMessage(
+                    bot.getId(),
+                    cohortId,
+                    bot.getMapId(),
+                    forHp ? AgentSupplyNeedMessage.SupplyKind.HP_POTION
+                            : AgentSupplyNeedMessage.SupplyKind.MP_POTION,
+                    currentCount,
+                    "",
+                    now));
+            AgentPotionRuntime.sayMapNow(bot, AgentDialogueSelector.randomReply(
+                    forHp ? AgentDialogueCatalog.potRequestHpReplies()
+                            : AgentDialogueCatalog.potRequestMpReplies()));
+        }
 
         AgentPotionDonorPlan<AgentRuntimeEntry> plan = selectPotDonor(entry, bot, entry, forHp);
         if (plan == null) {

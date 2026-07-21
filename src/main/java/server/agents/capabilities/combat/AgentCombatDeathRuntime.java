@@ -3,10 +3,11 @@ package server.agents.capabilities.combat;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 
 import client.Character;
-import server.agents.capabilities.dialogue.AgentDialogueCatalog;
-import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.movement.AgentMovementPoseService;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.events.AgentEventPriority;
+import server.agents.operations.events.AgentLifeStateChangedEvent;
+import server.agents.operations.events.AgentOperationalEventPublisher;
 
 public final class AgentCombatDeathRuntime {
     private AgentCombatDeathRuntime() {
@@ -19,8 +20,10 @@ public final class AgentCombatDeathRuntime {
         AgentMovementPoseService.markDead(entry, bot);
         AgentMovementBroadcastService.broadcastMovement(entry);
         AgentDeathStateRuntime.enterDeadState(entry, System.currentTimeMillis(), config.BOT_DEAD_MS);
-        if (announceDeath) {
-            AgentCombatRuntime.sayMapNow(bot, AgentDialogueSelector.randomReply(AgentDialogueCatalog.combatDeathReplies()));
-        }
+        AgentOperationalEventPublisher.publish(entry,
+                objectiveId -> new AgentLifeStateChangedEvent(
+                        bot.getId(), System.currentTimeMillis(), "ALIVE", "DEAD",
+                        bot.getMapId(), announceDeath, objectiveId),
+                AgentEventPriority.CRITICAL);
     }
 }

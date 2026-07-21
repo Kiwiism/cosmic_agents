@@ -20,6 +20,9 @@ public final class AgentCareerProgressionState {
         INITIAL_SHOPPING,
         RETURN_TO_INSTRUCTOR,
         INSTRUCTOR_TRAINING,
+        HOME_QUEST_PACK,
+        POST_HOME_DECISION,
+        ROTATION_QUEST_PACK,
         GRIND_TO_MILESTONE,
         FINAL_RETURN_TO_INSTRUCTOR,
         COMPLETE,
@@ -40,6 +43,7 @@ public final class AgentCareerProgressionState {
     private RunMode runMode = RunMode.LEVEL15;
     private String startVariantId = "lv10";
     private int trainingQuestIndex;
+    private int questPackIndex;
     private long nextActionAtMs;
     private String blockReason = "";
     private long revision;
@@ -77,6 +81,7 @@ public final class AgentCareerProgressionState {
                 ? "lv10" : startVariantId;
         this.stage = stage;
         this.trainingQuestIndex = 0;
+        this.questPackIndex = 0;
         this.nextActionAtMs = Math.max(0L, nextActionAtMs);
         this.blockReason = "";
         revision++;
@@ -116,6 +121,18 @@ public final class AgentCareerProgressionState {
         }
     }
 
+    public synchronized int questPackIndex() {
+        return questPackIndex;
+    }
+
+    public synchronized void questPackIndex(int value) {
+        int next = Math.max(0, value);
+        if (questPackIndex != next) {
+            questPackIndex = next;
+            revision++;
+        }
+    }
+
     public synchronized boolean ready(long nowMs) {
         return nowMs >= nextActionAtMs;
     }
@@ -134,9 +151,9 @@ public final class AgentCareerProgressionState {
         if (bundle == null || revision == persistedRevision) {
             return null;
         }
-        return new AgentCareerProgressionCheckpoint(1, characterId,
+        return new AgentCareerProgressionCheckpoint(2, characterId,
                 bundle.bundleId(), bundle.bundleVersion(), runMode, startVariantId, stage,
-                trainingQuestIndex, nextActionAtMs, blockReason, revision, nowMs);
+                trainingQuestIndex, questPackIndex, nextActionAtMs, blockReason, revision, nowMs);
     }
 
     synchronized void markPersisted(long savedRevision) {
@@ -150,6 +167,7 @@ public final class AgentCareerProgressionState {
         this.startVariantId = checkpoint.startVariantId();
         this.stage = checkpoint.stage();
         this.trainingQuestIndex = checkpoint.trainingQuestIndex();
+        this.questPackIndex = checkpoint.questPackIndex();
         this.nextActionAtMs = checkpoint.nextActionAtMs();
         this.blockReason = checkpoint.blockReason();
         this.revision = checkpoint.stateRevision();

@@ -7,6 +7,9 @@ import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentCombatDamageRuntime;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.events.AgentEventPriority;
+import server.agents.operations.events.AgentOperationalEventPublisher;
+import server.agents.operations.events.AgentRecoveryPerformedEvent;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 import server.maps.Portal;
@@ -62,6 +65,12 @@ public final class AgentAirbornePhysicsService {
             log.warn("Recovered Agent '{}' below map bounds map={} from={} to={}",
                     agent.getName(), agent.getMapId(), nextPosition, recoveryPoint);
             AgentMovementPoseService.teleportTo(entry, agent, recoveryPoint);
+            AgentOperationalEventPublisher.publish(entry,
+                    objectiveId -> new AgentRecoveryPerformedEvent(
+                            agent.getId(), System.currentTimeMillis(), agent.getMapId(),
+                            "below-map-bounds", nextPosition.x, nextPosition.y,
+                            recoveryPoint.x, recoveryPoint.y, objectiveId),
+                    AgentEventPriority.CRITICAL);
             return AgentAirborneStepResult.LANDED;
         }
         applyAirbornePosition(entry, agent, nextPosition);

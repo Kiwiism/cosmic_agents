@@ -32,6 +32,12 @@ public enum CosmicAgentClientGateway implements AgentClientGateway {
     }
 
     @Override
+    public boolean isRealPlayer(Character character) {
+        return character != null && character.getClient() != null
+                && !(character.getClient() instanceof BotClient);
+    }
+
+    @Override
     public boolean tryAcquire(Character character) {
         return character.getClient().tryacquireClient();
     }

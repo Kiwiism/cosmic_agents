@@ -28,6 +28,7 @@ public final class AgentLiveModeTickService {
     }
 
     public record Hooks(ShopVisitTick shopVisitTick,
+                        PresentationTick presentationTick,
                         FollowOpportunityTick followOpportunityTick,
                         FollowIdleFastPath followIdleFastPath,
                         ScriptedMoveCombatTick scriptedMoveCombatTick,
@@ -39,6 +40,14 @@ public final class AgentLiveModeTickService {
     @FunctionalInterface
     public interface ShopVisitTick {
         PhaseResult tick(AgentRuntimeEntry entry, Character agent, boolean runAiTick);
+    }
+
+    @FunctionalInterface
+    public interface PresentationTick {
+        boolean tick(AgentRuntimeEntry entry,
+                     Character agent,
+                     Point targetPosition,
+                     long nowMs);
     }
 
     @FunctionalInterface
@@ -97,6 +106,11 @@ public final class AgentLiveModeTickService {
         }
         if (shopVisitResult.targetPosition() != null) {
             targetPosition = shopVisitResult.targetPosition();
+        }
+
+        if (hooks.presentationTick().tick(
+                context.entry(), context.agent(), targetPosition, context.nowMs())) {
+            return new Result(targetPosition);
         }
 
         PhaseResult followOpportunity = hooks.followOpportunityTick().tick(

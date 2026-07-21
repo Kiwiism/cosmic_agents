@@ -9,6 +9,7 @@ public record AgentCareerProgressionCheckpoint(
         String startVariantId,
         AgentCareerProgressionState.Stage stage,
         int trainingQuestIndex,
+        int questPackIndex,
         long nextActionAtMs,
         String blockReason,
         long stateRevision,
@@ -18,6 +19,7 @@ public record AgentCareerProgressionCheckpoint(
         if (schemaVersion <= 0 || characterId <= 0 || bundleId == null || bundleId.isBlank()
                 || bundleVersion <= 0 || runMode == null || startVariantId == null
                 || startVariantId.isBlank() || stage == null || trainingQuestIndex < 0
+                || questPackIndex < 0
                 || nextActionAtMs < 0 || stateRevision < 0 || updatedAtMs < 0) {
             throw new IllegalArgumentException("complete career progression checkpoint is required");
         }

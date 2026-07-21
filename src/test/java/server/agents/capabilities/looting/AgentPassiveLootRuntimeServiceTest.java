@@ -57,8 +57,6 @@ class AgentPassiveLootRuntimeServiceTest {
                 System::currentTimeMillis,
                 () -> 100,
                 ignored -> false,
-                (entry, message) -> {
-                },
                 () -> 1000,
                 (entry, cooldown) -> {
                 },

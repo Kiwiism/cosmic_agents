@@ -27,6 +27,7 @@ public final class AgentTickSliceRuntime {
                                 issueGrind,
                                 issueFollow),
                         () -> AgentMovementSettleService.settleIfNeeded(entry),
+                        () -> AgentEventDispatchRuntime.drain(entry),
                         () -> AgentTickFailurePolicy.resetFailures(entry),
                         failure -> AgentTickFailureRuntime.handleFailure(
                                 entry,

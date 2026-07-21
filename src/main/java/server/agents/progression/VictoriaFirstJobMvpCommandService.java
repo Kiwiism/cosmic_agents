@@ -72,7 +72,8 @@ public final class VictoriaFirstJobMvpCommandService {
                     if (AgentVictoriaTrainingObjectiveRuntime.start(
                             entry, agent, targetLevel, questsEnabled, System.currentTimeMillis())) {
                         player.yellowMessage(agent.getName() + " started occupancy-aware Victoria training to Lv"
-                                + targetLevel + " in " + (questsEnabled ? "mixed" : "grind") + " mode.");
+                                + targetLevel + " in " + (questsEnabled ? "personality-weighted mixed" : "grind")
+                                + " mode.");
                     } else {
                         player.yellowMessage("Victoria training requires a Lv15+ first-job Agent below the target, "
                                 + "with no other foreground objective.");
@@ -114,9 +115,12 @@ public final class VictoriaFirstJobMvpCommandService {
                 + " catalog=" + AgentVictoriaLevel15CatalogRepository.defaultRepository().catalog().catalogId()
                 + ".");
         if (bundle != null) {
+            AgentProgressionProfile profile = AgentProgressionProfileRuntime.profile(entry);
             player.yellowMessage("Bundle=" + bundle.bundleId() + " AP=" + bundle.apProfileId()
-                    + " SP=" + bundle.spProfileId() + " quests=" + state.trainingQuestIndex()
-                    + "/" + bundle.instructorTrainingQuestIds().size() + ".");
+                    + " SP=" + bundle.spProfileId() + " personality=" + profile.profileId()
+                    + " instructorQuests=" + state.trainingQuestIndex()
+                    + "/" + bundle.instructorTrainingQuestIds().size()
+                    + " packCursor=" + state.questPackIndex() + ".");
         }
         if (!state.blockReason().isBlank()) {
             player.yellowMessage("Blocked: " + state.blockReason());

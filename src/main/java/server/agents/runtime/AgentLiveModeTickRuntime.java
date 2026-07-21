@@ -89,6 +89,7 @@ public final class AgentLiveModeTickRuntime {
                             shopVisitResult.consumedTick(),
                             shopVisitResult.targetPos());
                 },
+                AgentPresentationTickRuntime::tick,
                 (attackEntry, attackAgent, attackAgentPos, attackTargetPos, attackFollowTargetPos, attackFollowAnchor, attackRunAiTick) -> {
                     AgentFollowOpportunityTickService.Result followOpportunity =
                             AgentFollowOpportunityTickService.tickFollowOpportunity(

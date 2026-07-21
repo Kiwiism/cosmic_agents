@@ -6,6 +6,9 @@ import constants.game.GameConstants;
 import server.agents.integration.AgentSkillGatewayRuntime;
 import server.agents.integration.SkillGateway;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.events.AgentEventPriority;
+import server.agents.progression.events.AgentProgressionEventPublisher;
+import server.agents.progression.events.AgentSkillLearnedEvent;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -63,6 +66,14 @@ public final class AgentSpBuildProfileService {
                     agent.gainSp(-1, book, false);
                     agent.changeSkillLevel(skill, (byte) (currentLevel + 1),
                             agent.getMasterLevel(skill), agent.getSkillExpiration(skill));
+                    if (agent.getId() > 0) {
+                        AgentProgressionEventPublisher.publish(entry, new AgentSkillLearnedEvent(
+                                        agent.getId(), System.currentTimeMillis(), agent.getLevel(),
+                                        allocation.skillId(), currentLevel, currentLevel + 1,
+                                        agent.getRemainingSps()[book], profile.profileId(),
+                                        AgentProgressionEventPublisher.objectiveId(entry)),
+                                AgentEventPriority.NORMAL);
+                    }
                 }
             }
         }

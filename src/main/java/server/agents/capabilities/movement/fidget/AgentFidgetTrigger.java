@@ -5,5 +5,6 @@ public enum AgentFidgetTrigger {
     AUTO_FOLLOW,
     IDLE,
     SOCIAL,
-    PROFILE_NAVIGATION
+    PROFILE_NAVIGATION,
+    PERSONALITY_PRESENTATION
 }

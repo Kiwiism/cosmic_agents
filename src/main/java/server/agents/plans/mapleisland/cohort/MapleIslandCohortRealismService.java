@@ -4,6 +4,7 @@ import server.agents.capabilities.navigation.AgentTravelVariationRuntime;
 import server.agents.capabilities.navigation.AgentTravelVariationSettings;
 import server.agents.capabilities.objective.MapleIslandObjectiveRandomnessRuntime;
 import server.agents.capabilities.objective.MapleIslandObjectiveRandomnessSettings;
+import server.agents.capabilities.presentation.AgentPersonalityPresentationRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.profiles.AgentBehaviorProfile;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -64,7 +65,9 @@ public final class MapleIslandCohortRealismService {
                 entry, MapleIslandObjectiveRandomnessSettings.cohort(seed));
         AgentTravelVariationRuntime.configure(entry,
                 new AgentTravelVariationSettings(
-                        seed, true, FULL_MAX_ROUTE_STRETCH, true, FULL_TRAVEL_HOP_PROBABILITY,
+                        seed, true, FULL_MAX_ROUTE_STRETCH, true,
+                        AgentPersonalityPresentationRuntime.travelHopProbability(
+                                entry, FULL_TRAVEL_HOP_PROBABILITY),
                         sampleRange(seed ^ HOP_INTERVAL_DOMAIN, 2_500L, 4_500L),
                         sampleRange(seed ^ HOP_COOLDOWN_DOMAIN, 8_000L, 15_000L)));
     }

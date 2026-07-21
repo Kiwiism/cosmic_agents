@@ -31,5 +31,8 @@ class AgentCareerBuildBundleServiceTest {
         assertEquals(bundle, entry.capabilityStates().require(AgentCareerProgressionState.STATE_KEY).bundle());
         assertEquals(bundle.apProfileId(), entry.apBuildProfileState().profile().profileId());
         assertEquals(bundle.spProfileId(), entry.spBuildProfileState().profile().profileId());
+        assertEquals(AgentProgressionProfileRepository.defaultRepository().deterministicFor(91).profileId(),
+                entry.capabilityStates().require(AgentProgressionProfileState.STATE_KEY)
+                        .profile().profileId());
     }
 }

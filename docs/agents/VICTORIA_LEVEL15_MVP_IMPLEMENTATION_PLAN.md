@@ -12,7 +12,8 @@ The first post-Maple-Island vertical slice is complete only when an Agent can re
 6. complete the Olaf career path at the selected instructor, then advance through the instructor's ordinary NPC script;
 7. receive the script's native starter kit exactly once;
 8. complete all four first-job instructor training quests in order;
-9. grind only the remaining experience needed for level 15;
+9. complete the career-town quest pack, complete the configured rotation-town pack when applicable, then grind only
+   the remaining experience needed for level 15;
 10. assign AP and SP from the selected profiles at every level;
 11. suspend the foreground objective for critical supplies, shop, and resume the same objective;
 12. survive logout/relog without changing career, build, quest cursor, or foreground intent.
@@ -31,7 +32,7 @@ switches:
 - `src/main/resources/agents/catalogs/victoria-level15-mvp-catalog.json` owns taxi selections, town/instructor/shop
   locations, Biggs/Olaf handoff quests, three reset variants, each career's Olaf path, native starter-kit items,
   relevant verified shop stock, route corridors, scripted portals, all instructor quest kill requirements/reward EXP,
-  and each career's fallback grind map.
+  five pre-level-15 town quest packs, each career's home/rotation policy, and each career's fallback grind map.
 
 Both resources are loaded and validated before `!victoria run` or `!victoria reset` can mutate an Agent. Catalog entries are
 cross-checked against every durable career bundle: job, instructor, map, and ordered quest IDs must agree. The live
@@ -140,21 +141,33 @@ For this fixture the sequence is:
 4. enter the real instructor map, complete the Olaf path, and advance through the ordinary NPC script;
 5. let the configured AP/SP profiles reconcile the script-created AP/SP pool;
 6. walk to the career town's verified potion shop and run the ordinary shop workflow;
-7. walk back to the instructor and run the four instructor quests plus any remaining level-15 grind;
-8. return to and approach the instructor before marking the objective complete.
+7. walk back to the instructor and run the four instructor quests;
+8. complete the configured home-town pack, then the configured rotation-town pack for Warrior, Magician, and Thief;
+9. grind locally only if the Agent is still below level 15;
+10. return to and approach the original instructor before marking the objective complete.
 
 The initial shop stops are Perion Department Store (`102000002`), Henesys Department Store (`100000102`), Ellinia
 Department Store (`101000002`), Kerning Pharmacy (`103000002`), and Nautilus Mid Floor (`120000200`). A shortfall from
 the deliberately small 1,000-meso budget is a valid reconciled shop visit; a missing shop/NPC or interrupted workflow
 blocks the test instead of silently skipping it.
 
-### Instructor training and milestone grind
+### Instructor training, town packs, and milestone grind
 
 The runner reconciles each ordered quest from live quest status, starts/completes it through the normal quest gateway,
 walks the verified portal corridor to its hunting map, and gives combat only the required mob ids. It returns to the
-instructor after `canComplete` becomes true. After quest four it recalculates level and grinds on the career's safe map
-only while below level 15. A relogged first-job Agent can enter this runner without requiring the old Maple Island
-in-memory plan session.
+instructor after `canComplete` becomes true. After quest four, the durable cursor enters a data-driven town-pack stage:
+
+- Warrior: Perion home pack, then Ellinia;
+- Magician: Ellinia home pack, then Nautilus;
+- Bowman: Henesys home pack, then local grind if still required;
+- Thief: Kerning home pack, then Perion;
+- Pirate: Nautilus home pack, then local grind if still required.
+
+Each pack reconciles its cursor from live quest status after relog, so completed quests are never replayed. Only after
+the required pack sequence does the Agent recalculate level and use the cataloged fallback grind while below level 15.
+The final return writes an immutable `first-job-level15.json` evidence checkpoint under
+`.runtime/agents/progression/milestones/<characterId>/`. The reset command clears pack quests, transient post-15 state,
+and prior test milestone evidence so repeated runs are independent.
 
 ## Verified instructor chains
 
@@ -170,8 +183,8 @@ correction: its QuestInfo and Say records repeatedly name ordinary Green Mushroo
 | Thief (claw/dagger) | `1052001` | `2140`–`2143` | Stump 20/50/80, Octopus 10 | 2,685 |
 | Pirate (gun/knuckle) | `1090000` | `2193`–`2196` | Pig 11/26/43, quest Green Mushroom 10 | 2,685 |
 
-The quest chains do not guarantee level 15. Magician is especially short, so every career uses the same rule: complete
-the chain, recalculate experience/level, then select a nearby safe grind map until level 15.
+The instructor chains do not guarantee level 15. Magician is especially short, so the home/rotation packs close the
+expected gap first; the fallback grind is retained as a postcondition guard rather than assuming fixed EXP rates.
 
 ### Pirate quest 2196 source correction
 
@@ -244,10 +257,16 @@ silently treats its menu default as Agent policy. Fixed per-quest overrides can 
 ### 5. Mixed quest/grind continuation and evidence gate
 
 `progression.victoria-training` now drives levels 15-30. It selects ranked maps using live player plus Agent occupancy,
-keeps a suitable current map to avoid artificial churn, ignores cataloged hazard mobs as combat targets, and replans
-around temporarily failed route edges. `mixed` mode deterministically chooses eligible Victoria-only quests for roughly
-35 percent of level decisions; `grind` mode disables quest scheduling. The conservative runnable quest catalog contains
-71 quests whose acquisition requirements are fully supported by current combat/loot execution.
+ignores cataloged hazard mobs as combat targets, and replans around temporarily failed route edges. `mixed` mode uses
+the Agent's durable progression profile to choose quests versus grinding and to rank both ordinary training maps and
+quest hunt maps; `grind` mode disables quest scheduling. The conservative runnable quest catalog contains 71 quests
+whose acquisition requirements are fully supported by current combat/loot execution.
+
+Five versioned profiles live in `agents/profiles/progression-profiles.json`: balanced, quester, grinder, explorer, and
+hunter. They independently weight quest/grind preference, efficiency, exploration, crowd avoidance, travel tolerance,
+risk tolerance, and routine. The first deterministic assignment is stored with the durable career assignment, and old
+assignment files are migrated once without changing their career bundle. Hard route eligibility and map capacity remain
+constraints; personality only ranks valid candidates.
 
 Use:
 
@@ -259,6 +278,9 @@ Use:
 
 Automatic per-level evidence is written atomically under
 `.runtime/agents/progression/evidence/<characterId>/level-<level>.json`.
+Immutable `victoria-level20.json`, `victoria-level25.json`, and `victoria-level30.json` milestone snapshots are also
+captured under `.runtime/agents/progression/milestones/<characterId>/`. Evidence schema 2 records the progression
+profile id/version and the map-selection reason so cohort behavior can be audited rather than inferred.
 
 Run one standard thief-claw Agent first because its AP/SP profile and quest chain exercise DEX/LUK, ranged ammunition,
 and the common Stump/Octopus routes. Capture after every level:
