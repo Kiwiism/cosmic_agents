@@ -79,7 +79,6 @@ import server.integration.AgentPresence;
 import server.monitoring.MapBroadcastDiagnostics;
 import server.maps.reservation.CharacterSpaceOwner;
 import server.maps.reservation.CharacterSpaceReservationRuntime;
-import server.maps.reservation.FreeMarketTestMerchant;
 import server.partyquest.CarnivalFactory;
 import server.partyquest.CarnivalFactory.MCSkill;
 import server.partyquest.GuardianSpawnPoint;
@@ -534,15 +533,16 @@ public class MapleMap {
         } finally {
             objectWLock.unlock();
         }
-        if (removed instanceof FreeMarketTestMerchant testMerchant) {
-            CharacterSpaceReservationRuntime.release(
-                    CharacterSpaceOwner.testStall(testMerchant.getOwnerId()));
-        } else if (removed instanceof PlayerShop shop) {
+        if (removed instanceof PlayerShop shop) {
             CharacterSpaceReservationRuntime.release(
                     CharacterSpaceOwner.character(shop.getOwner().getId()));
         } else if (removed instanceof HiredMerchant merchant && merchant.getOwnerId() > 0) {
-            CharacterSpaceReservationRuntime.release(
-                    CharacterSpaceOwner.character(merchant.getOwnerId()));
+            CharacterSpaceOwner testStallOwner = CharacterSpaceOwner.testStall(merchant.getOwnerId());
+            CharacterSpaceOwner reservationOwner = CharacterSpaceReservationRuntime
+                    .reservation(testStallOwner)
+                    .map(ignored -> testStallOwner)
+                    .orElseGet(() -> CharacterSpaceOwner.character(merchant.getOwnerId()));
+            CharacterSpaceReservationRuntime.release(reservationOwner);
         }
     }
 
