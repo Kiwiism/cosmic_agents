@@ -3,6 +3,7 @@ package server.agents.plans.mapleisland.cohort;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.navigation.AgentMapleIslandTravelRuntime;
+import server.agents.capabilities.combat.AgentCombatVariationRuntime;
 import server.agents.capabilities.objective.MapleIslandObjectiveRandomnessRuntime;
 import server.agents.profiles.AgentBehaviorProfileRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -40,6 +41,11 @@ class MapleIslandCohortRealismServiceTest {
                 <= 4_500L);
         assertTrue(AgentMapleIslandTravelRuntime.settings(first).travelHopCooldownMs() >= 8_000L);
         assertTrue(AgentMapleIslandTravelRuntime.settings(first).travelHopCooldownMs() <= 15_000L);
+        assertTrue(AgentCombatVariationRuntime.settings(first).targetSelectionVariationEnabled());
+        assertEquals(0.35d, AgentCombatVariationRuntime.settings(first).middleTargetProbability());
+        assertEquals(10, AgentCombatVariationRuntime.settings(first).targetShortlistLimit());
+        assertTrue(AgentCombatVariationRuntime.settings(first).platformAnchorEnabled());
+        assertEquals(0.30d, AgentCombatVariationRuntime.settings(first).platformAnchorProbability());
     }
 
     @Test
@@ -55,6 +61,8 @@ class MapleIslandCohortRealismServiceTest {
         assertTrue(MapleIslandObjectiveRandomnessRuntime.settings(entry).objectiveOrderVariationEnabled());
         assertTrue(AgentMapleIslandTravelRuntime.settings(entry).routeVariationEnabled());
         assertFalse(AgentMapleIslandTravelRuntime.settings(entry).travelHopsEnabled());
+        assertFalse(AgentCombatVariationRuntime.settings(entry).targetSelectionVariationEnabled());
+        assertFalse(AgentCombatVariationRuntime.settings(entry).platformAnchorEnabled());
     }
 
     @Test
@@ -71,6 +79,8 @@ class MapleIslandCohortRealismServiceTest {
         assertFalse(MapleIslandObjectiveRandomnessRuntime.settings(entry).objectiveOrderVariationEnabled());
         assertFalse(AgentMapleIslandTravelRuntime.settings(entry).routeVariationEnabled());
         assertFalse(AgentMapleIslandTravelRuntime.settings(entry).travelHopsEnabled());
+        assertFalse(AgentCombatVariationRuntime.settings(entry).targetSelectionVariationEnabled());
+        assertFalse(AgentCombatVariationRuntime.settings(entry).platformAnchorEnabled());
     }
 
     @Test

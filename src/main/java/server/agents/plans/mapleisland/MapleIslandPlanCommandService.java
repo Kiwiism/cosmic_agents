@@ -6,6 +6,7 @@ import server.TimerManager;
 import server.agents.auth.AgentControlService;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
 import server.agents.capabilities.presentation.AgentPresentationTelemetry;
+import server.agents.capabilities.townlife.AgentTownLifeCommandService;
 import server.agents.capabilities.party.AgentPartyLifecycleService;
 import server.agents.capabilities.quest.AmherstTestResetMode;
 import server.agents.capabilities.quest.AmherstTestResetRequest;
@@ -110,6 +111,10 @@ public final class MapleIslandPlanCommandService {
             }
             if (verb.equals("radii")) {
                 cohortNpcRadii(player, params);
+                return true;
+            }
+            if (verb.equals("lithharbor") || verb.equals("lith")) {
+                lithHarborTownLife(player, params);
                 return true;
             }
             if (verb.equals("resetme") && params.length == 1) {
@@ -418,6 +423,31 @@ public final class MapleIslandPlanCommandService {
                 + "; intents=" + (intents.isEmpty() ? "none" : intents) + ".");
     }
 
+    private static void lithHarborTownLife(Character player, String[] params) {
+        if (params.length == 1 || (params.length == 2 && params[1].equalsIgnoreCase("start"))) {
+            AgentTownLifeCommandService.Result result =
+                    AgentTownLifeCommandService.startCompletedSouthperryAgents(
+                            player, System.currentTimeMillis());
+            message(player, "Lith Harbor town life started for " + result.started()
+                    + " completed Southperry Agents; already active=" + result.alreadyActive()
+                    + ", not eligible=" + result.notEligible() + ".");
+            return;
+        }
+        if (params.length == 2 && params[1].equalsIgnoreCase("stop")) {
+            message(player, "Stopped Lith Harbor town life for "
+                    + AgentTownLifeCommandService.stop(player) + " Agents.");
+            return;
+        }
+        if (params.length == 2 && params[1].equalsIgnoreCase("status")) {
+            AgentTownLifeCommandService.Status status = AgentTownLifeCommandService.status(player);
+            message(player, "Lith Harbor town life: total=" + status.total()
+                    + ", traveling=" + status.traveling() + ", in town=" + status.inTown()
+                    + ", in shops=" + status.inShops() + ".");
+            return;
+        }
+        throw new IllegalArgumentException("Usage: !mapleisland lithharbor [start|status|stop]");
+    }
+
     private static void milestone(Character player,
                                   String label,
                                   MapleIslandCohortTelemetryService.DurationSummary summary,
@@ -598,6 +628,7 @@ public final class MapleIslandPlanCommandService {
                 message(player, "Cohort: !mapleisland run <total> <batch> <intervalSeconds> [seed] [off|light|full]");
                 message(player, "Self reset: !mapleisland resetme (Maple Island run quests only)");
                 message(player, "Cohort control: !mapleisland status|stats|pool [page]|radii [page]|cancel|stop");
+                message(player, "Town life: !mapleisland lithharbor [start|status|stop]");
             }
         }
     }

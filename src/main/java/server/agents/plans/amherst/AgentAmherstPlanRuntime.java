@@ -2,6 +2,7 @@ package server.agents.plans.amherst;
 
 import client.Character;
 import server.agents.capabilities.runtime.AgentCapabilityRuntime;
+import server.agents.capabilities.townlife.AgentTownLifeRuntime;
 import server.agents.progression.AgentFirstJobJourneyRuntime;
 import server.agents.progression.AgentVictoriaTrainingObjectiveRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
@@ -52,6 +53,9 @@ public final class AgentAmherstPlanRuntime {
     }
 
     public static boolean tickGate(AgentRuntimeEntry entry, Character agent, long nowMs) {
+        if (AgentTownLifeRuntime.active(entry)) {
+            return AgentTownLifeRuntime.tick(entry, agent, nowMs);
+        }
         if (AgentFirstJobJourneyRuntime.tick(entry, agent, nowMs)) {
             return true;
         }

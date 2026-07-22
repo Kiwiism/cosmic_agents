@@ -86,7 +86,7 @@ public final class Channel {
 
     private PlayerStorage players = new PlayerStorage();
     private ChannelServer channelServer;
-    private String serverMessage;
+    private String serverMessage = "";
     private MapManager mapManager;
     private EventScriptManager eventSM;
     private ServicesManager services;

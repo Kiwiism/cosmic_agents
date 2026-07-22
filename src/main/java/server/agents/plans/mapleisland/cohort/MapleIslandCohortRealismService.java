@@ -1,5 +1,8 @@
 package server.agents.plans.mapleisland.cohort;
 
+import config.YamlConfig;
+import server.agents.capabilities.combat.AgentCombatVariationRuntime;
+import server.agents.capabilities.combat.AgentCombatVariationSettings;
 import server.agents.capabilities.navigation.AgentTravelVariationRuntime;
 import server.agents.capabilities.navigation.AgentTravelVariationSettings;
 import server.agents.capabilities.objective.MapleIslandObjectiveRandomnessRuntime;
@@ -48,6 +51,7 @@ public final class MapleIslandCohortRealismService {
                 new MapleIslandObjectiveRandomnessSettings(
                         true, seed, NO_DELAY, NO_DELAY, false, false, false));
         AgentTravelVariationRuntime.clear(entry);
+        AgentCombatVariationRuntime.clear(entry);
     }
 
     private static void configureLight(AgentRuntimeEntry entry, long seed) {
@@ -58,6 +62,7 @@ public final class MapleIslandCohortRealismService {
                 new AgentTravelVariationSettings(
                         seed, true, LIGHT_MAX_ROUTE_STRETCH, false, 0.0d,
                         sampleRange(seed ^ HOP_INTERVAL_DOMAIN, 2_500L, 4_500L), 0L));
+        AgentCombatVariationRuntime.clear(entry);
     }
 
     private static void configureFull(AgentRuntimeEntry entry, long seed) {
@@ -70,6 +75,13 @@ public final class MapleIslandCohortRealismService {
                                 entry, FULL_TRAVEL_HOP_PROBABILITY),
                         sampleRange(seed ^ HOP_INTERVAL_DOMAIN, 2_500L, 4_500L),
                         sampleRange(seed ^ HOP_COOLDOWN_DOMAIN, 8_000L, 15_000L)));
+        AgentCombatVariationRuntime.configure(entry,
+                new AgentCombatVariationSettings(
+                        seed, true,
+                        percentProbability(YamlConfig.config.server.AGENT_MAPLE_ISLAND_FULL_MIDDLE_TARGET_PERCENT),
+                        Math.clamp(YamlConfig.config.server.AGENT_MAPLE_ISLAND_FULL_TARGET_SHORTLIST_LIMIT, 1, 64),
+                        true,
+                        percentProbability(YamlConfig.config.server.AGENT_MAPLE_ISLAND_FULL_PLATFORM_ANCHOR_PERCENT)));
     }
 
     static long agentSeed(AgentRuntimeEntry entry, long runSeed, int ordinal) {
@@ -87,6 +99,10 @@ public final class MapleIslandCohortRealismService {
     private static long sampleRange(long seed, long minimum, long maximum) {
         long width = maximum - minimum + 1L;
         return minimum + Long.remainderUnsigned(mix(seed), width);
+    }
+
+    private static double percentProbability(int configuredPercent) {
+        return Math.clamp(configuredPercent, 0, 100) / 100.0d;
     }
 
     private static long mix(long value) {

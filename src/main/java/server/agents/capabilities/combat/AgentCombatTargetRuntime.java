@@ -50,7 +50,15 @@ public final class AgentCombatTargetRuntime {
                 return null;
             }
 
-            return AgentCombatGrindTargetPolicy.pickReachableOrBestTarget(scoredTargets, UNREACHABLE_GRAPH_COST);
+            RankedTargetSelection rankedSelection = selectVariedReachableTarget(entry, scoredTargets);
+            Monster selected = rankedSelection.target();
+            if (!rankedSelection.variationDecisionConsumed()) {
+                selected = selectVariedTargetWithinWinningRegion(
+                        entry, bot, botPos, botFoothold, candidates, targetOccupancy, config, selected);
+            }
+            AgentCombatVariationRuntime.maybeAnchorAtTarget(
+                    entry, bot, selected, targetRegionId(entry, bot, botPos, selected));
+            return selected;
         } finally {
             AgentPerformanceMonitor.record("combat-target-search", System.nanoTime() - startedAt);
         }
@@ -86,6 +94,9 @@ public final class AgentCombatTargetRuntime {
                 }
             }
             if (filtered.isEmpty()) {
+                if (AgentCombatVariationRuntime.isAutomaticPlatformAnchor(entry)) {
+                    return null;
+                }
                 for (Monster m : candidates) {
                     int mId = graph.findRegionId(map, m.getPosition());
                     if (mId == patrolId || adjacentIds.contains(mId)) {
@@ -203,6 +214,78 @@ public final class AgentCombatTargetRuntime {
                 () -> scoreLocalTargets(entry, bot, botPos, botFoothold, candidates, targetOccupancy, config),
                 () -> scoreTargetRegions(entry, graphContext, bot, botPos, botFoothold,
                         candidates, targetOccupancy, config));
+    }
+
+    private static Monster selectVariedTargetWithinWinningRegion(AgentRuntimeEntry entry,
+                                                                  Character bot,
+                                                                  Point botPos,
+                                                                  Foothold botFoothold,
+                                                                  List<Monster> candidates,
+                                                                  Map<Monster, Integer> targetOccupancy,
+                                                                  AgentCombatConfig.Config config,
+                                                                  Monster selected) {
+        if (selected == null || candidates.size() < 3
+                || !AgentCombatVariationRuntime.settings(entry).targetSelectionVariationEnabled()) {
+            return selected;
+        }
+
+        GrindGraphContext context = GrindGraphContext.resolve(entry, bot, botPos);
+        List<Monster> sameReachableRegion = candidates;
+        if (context.available()) {
+            int selectedRegionId = AgentNavigationRegionService.resolveTargetRegionId(
+                    context.graph(), context.entry(), context.map(), selected.getPosition());
+            sameReachableRegion = candidates.stream()
+                    .filter(candidate -> AgentNavigationRegionService.resolveTargetRegionId(
+                            context.graph(), context.entry(), context.map(), candidate.getPosition())
+                            == selectedRegionId)
+                    .toList();
+        }
+        if (sameReachableRegion.size() < 3) {
+            return selected;
+        }
+
+        List<AgentScoredGrindTarget> localScores = scoreLocalTargets(
+                entry, bot, botPos, botFoothold, sameReachableRegion, targetOccupancy, config);
+        AgentCombatGrindTargetPolicy.sortByLegacyTargetOrder(localScores);
+        int index = AgentCombatVariationRuntime.selectTargetIndex(entry, localScores.size());
+        return localScores.get(Math.min(index, localScores.size() - 1)).monster();
+    }
+
+    private static RankedTargetSelection selectVariedReachableTarget(
+            AgentRuntimeEntry entry,
+            List<AgentScoredGrindTarget> scoredTargets) {
+        Monster best = AgentCombatGrindTargetPolicy.pickReachableOrBestTarget(
+                scoredTargets, UNREACHABLE_GRAPH_COST);
+        if (best == null
+                || !AgentCombatVariationRuntime.settings(entry).targetSelectionVariationEnabled()) {
+            return new RankedTargetSelection(best, false);
+        }
+        List<AgentScoredGrindTarget> reachableTargets = scoredTargets.stream()
+                .filter(target -> target.graphCost() < UNREACHABLE_GRAPH_COST)
+                .toList();
+        if (reachableTargets.size() < 3) {
+            return new RankedTargetSelection(best, false);
+        }
+        int index = AgentCombatVariationRuntime.selectTargetIndex(entry, reachableTargets.size());
+        return new RankedTargetSelection(
+                reachableTargets.get(Math.min(index, reachableTargets.size() - 1)).monster(), true);
+    }
+
+    private static int targetRegionId(AgentRuntimeEntry entry,
+                                      Character bot,
+                                      Point botPos,
+                                      Monster target) {
+        if (target == null) {
+            return -1;
+        }
+        GrindGraphContext context = GrindGraphContext.resolve(entry, bot, botPos);
+        return context.available()
+                ? AgentNavigationRegionService.resolveTargetRegionId(
+                context.graph(), context.entry(), context.map(), target.getPosition())
+                : -1;
+    }
+
+    private record RankedTargetSelection(Monster target, boolean variationDecisionConsumed) {
     }
 
     private static boolean isLocalCombatTarget(GrindGraphContext context,

@@ -16,6 +16,7 @@ import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentAttackRoute;
 import server.agents.capabilities.combat.AgentCombatObjectiveTargetStateRuntime;
+import server.agents.capabilities.combat.AgentCombatVariationRuntime;
 import server.agents.capabilities.npc.AgentNpcInteractionType;
 import server.agents.integration.PrimitiveCapabilityGateway;
 import server.agents.integration.AgentCharacterStateSnapshot;
@@ -245,6 +246,7 @@ public enum CosmicPrimitiveCapabilityGateway implements PrimitiveCapabilityGatew
 
     @Override
     public void grind(AgentRuntimeEntry entry, Set<Integer> allowedMobIds) {
+        AgentCombatVariationRuntime.retainAutomaticAnchorFor(entry, allowedMobIds);
         AgentCombatObjectiveTargetStateRuntime.setAllowedMobIds(entry, allowedMobIds);
         if (!AgentModeStateRuntime.grinding(entry)) {
             AgentModeService.startGrind(entry, AgentMovementStateResetService::clearNavigationState);
@@ -255,6 +257,9 @@ public enum CosmicPrimitiveCapabilityGateway implements PrimitiveCapabilityGatew
     public void grind(AgentRuntimeEntry entry,
                       Set<Integer> preferredMobIds,
                       Set<Integer> fallbackMobIds) {
+        Set<Integer> permittedMobIds = new LinkedHashSet<>(preferredMobIds);
+        permittedMobIds.addAll(fallbackMobIds);
+        AgentCombatVariationRuntime.retainAutomaticAnchorFor(entry, permittedMobIds);
         AgentCombatObjectiveTargetStateRuntime.setTargetPreferences(
                 entry, preferredMobIds, fallbackMobIds);
         if (!AgentModeStateRuntime.grinding(entry)) {
@@ -264,6 +269,7 @@ public enum CosmicPrimitiveCapabilityGateway implements PrimitiveCapabilityGatew
 
     @Override
     public void stop(AgentRuntimeEntry entry) {
+        AgentCombatVariationRuntime.clearAutomaticAnchor(entry);
         AgentCombatObjectiveTargetStateRuntime.clear(entry);
         AgentModeService.startStop(entry);
     }

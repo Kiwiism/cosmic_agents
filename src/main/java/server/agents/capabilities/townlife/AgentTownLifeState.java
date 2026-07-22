@@ -1,0 +1,158 @@
+package server.agents.capabilities.townlife;
+
+import server.agents.runtime.state.AgentCapabilityStateKey;
+
+import java.awt.Point;
+
+public final class AgentTownLifeState {
+    private static final int MIN_INITIAL_RESPONSE_DELAY_MS = 500;
+    private static final int MAX_INITIAL_RESPONSE_DELAY_MS = 10_000;
+    public static final AgentCapabilityStateKey<AgentTownLifeState> STATE_KEY =
+            new AgentCapabilityStateKey<>(
+                    "town-life", AgentTownLifeState.class, AgentTownLifeState::new);
+
+    public enum Stage {
+        DISABLED,
+        TRAVEL_TO_LITH,
+        COMPLETE_ISLAND_HANDOFF,
+        SETTLING,
+        CHOOSE_ACTIVITY,
+        MOVE_TO_ACTIVITY,
+        DWELL,
+        VISIT_SHOP,
+        RETURN_FROM_SHOP
+    }
+
+    public enum Activity {
+        NONE,
+        REST,
+        SOCIAL,
+        NPC_PAUSE,
+        WANDER,
+        SHOP_VISIT,
+        WEAPON_FLOURISH
+    }
+
+    private boolean enabled;
+    private Stage stage = Stage.DISABLED;
+    private Activity activity = Activity.NONE;
+    private Point target;
+    private int targetCharacterId;
+    private int destinationMapId;
+    private long nextActionAtMs;
+    private int sequence;
+    private boolean expressionShown;
+    private boolean flourishShown;
+
+    public synchronized void start(long nowMs, int initialSequence) {
+        enabled = true;
+        stage = Stage.TRAVEL_TO_LITH;
+        activity = Activity.NONE;
+        target = null;
+        targetCharacterId = 0;
+        destinationMapId = 0;
+        nextActionAtMs = nowMs + initialResponseDelayMs(initialSequence);
+        sequence = Math.max(0, initialSequence);
+        expressionShown = false;
+        flourishShown = false;
+    }
+
+    static long initialResponseDelayMs(int characterId) {
+        int mixed = characterId;
+        mixed ^= mixed >>> 16;
+        mixed *= 0x7feb352d;
+        mixed ^= mixed >>> 15;
+        mixed *= 0x846ca68b;
+        mixed ^= mixed >>> 16;
+        int range = MAX_INITIAL_RESPONSE_DELAY_MS - MIN_INITIAL_RESPONSE_DELAY_MS + 1;
+        return MIN_INITIAL_RESPONSE_DELAY_MS + Math.floorMod(mixed, range);
+    }
+
+    public synchronized void stop() {
+        enabled = false;
+        stage = Stage.DISABLED;
+        activity = Activity.NONE;
+        target = null;
+        targetCharacterId = 0;
+        destinationMapId = 0;
+        nextActionAtMs = 0L;
+        expressionShown = false;
+        flourishShown = false;
+    }
+
+    public synchronized boolean enabled() {
+        return enabled;
+    }
+
+    public synchronized Stage stage() {
+        return stage;
+    }
+
+    public synchronized Activity activity() {
+        return activity;
+    }
+
+    public synchronized Point target() {
+        return target == null ? null : new Point(target);
+    }
+
+    public synchronized int targetCharacterId() {
+        return targetCharacterId;
+    }
+
+    public synchronized int destinationMapId() {
+        return destinationMapId;
+    }
+
+    public synchronized long nextActionAtMs() {
+        return nextActionAtMs;
+    }
+
+    public synchronized int sequence() {
+        return sequence;
+    }
+
+    public synchronized boolean expressionShown() {
+        return expressionShown;
+    }
+
+    public synchronized boolean flourishShown() {
+        return flourishShown;
+    }
+
+    public synchronized void transition(Stage nextStage, long dueAtMs) {
+        stage = nextStage;
+        nextActionAtMs = dueAtMs;
+    }
+
+    public synchronized void select(Activity nextActivity,
+                                    Point nextTarget,
+                                    int nextTargetCharacterId,
+                                    int nextDestinationMapId,
+                                    long dueAtMs) {
+        activity = nextActivity;
+        target = nextTarget == null ? null : new Point(nextTarget);
+        targetCharacterId = nextTargetCharacterId;
+        destinationMapId = nextDestinationMapId;
+        stage = nextActivity == Activity.SHOP_VISIT ? Stage.VISIT_SHOP : Stage.MOVE_TO_ACTIVITY;
+        nextActionAtMs = dueAtMs;
+        expressionShown = false;
+        flourishShown = false;
+        sequence++;
+    }
+
+    public synchronized void beginDwell(long untilMs) {
+        stage = Stage.DWELL;
+        nextActionAtMs = untilMs;
+        expressionShown = false;
+        flourishShown = false;
+    }
+
+    public synchronized void markExpressionShown() {
+        expressionShown = true;
+    }
+
+    public synchronized void markFlourishShown() {
+        flourishShown = true;
+    }
+}

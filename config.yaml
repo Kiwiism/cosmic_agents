@@ -346,6 +346,9 @@ server:
     AGENT_MAPLE_ISLAND_SHOWCASE_AGENT_NAME: AmherstRun #Only this Agent IGN may use the full Maple Island showcase reset path.
     AGENT_MAPLE_ISLAND_COHORT_ENABLED: true #Allow guarded persistent-pool cohort provisioning and full Maple Island runs.
     AGENT_PERSONALITY_PRESENTATION_ENABLED: true #Enable durable, observer-gated personality presentation for Maple Island cohorts running in full realism mode.
+    AGENT_MAPLE_ISLAND_FULL_PLATFORM_ANCHOR_PERCENT: 30 # Full realism: percent of cohort Agents assigned to farm and loot within one target-bearing navigation platform.
+    AGENT_MAPLE_ISLAND_FULL_MIDDLE_TARGET_PERCENT: 35 # Full realism: percent of ordinary target searches that choose from the middle third instead of rank 1.
+    AGENT_MAPLE_ISLAND_FULL_TARGET_SHORTLIST_LIMIT: 10 # Full realism: maximum reachable ranked targets considered by the middle-choice policy.
     AGENT_MAPLE_ISLAND_COHORT_MAX_TOTAL: 500 # Maximum Agents accepted by one Maple Island cohort run; the command still releases them in small waves.
     AGENT_MAPLE_ISLAND_COHORT_STALL_TIMEOUT_MS: 1800000 # Mark a running cohort stalled after this long with no Agent reaching a new terminal state (30 minutes).
     AGENT_MAPLE_ISLAND_COHORT_TELEMETRY_RETAINED_RUNS: 20 # Keep this many compact completed-run summaries in memory; live per-Agent trackers are discarded.

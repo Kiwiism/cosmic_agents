@@ -98,6 +98,14 @@ public final class AgentFidgetService {
                 entry, targetPos, now, AgentFidgetTrigger.PERSONALITY_PRESENTATION);
     }
 
+    public static boolean tryHandleTownLifeTick(
+            AgentRuntimeEntry entry,
+            Point targetPos,
+            long now) {
+        return tryHandleBoundedPresentationTick(
+                entry, targetPos, now, AgentFidgetTrigger.TOWN_LIFE);
+    }
+
     private static boolean tryHandleBoundedPresentationTick(
             AgentRuntimeEntry entry,
             Point targetPos,
