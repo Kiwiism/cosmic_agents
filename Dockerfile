@@ -32,7 +32,7 @@ FROM amazoncorretto:21
 # Host the server in a location that won't have permissions issues.
 WORKDIR /opt/server
 # Copy the wizet files first since they're so big and won't change often.
-COPY wz ./wz
+COPY wz_victoria ./wz
 # Copy the JAR we build earlier.
 COPY --from=jar /opt/cosmic/target/Cosmic.jar ./Server.jar
 # Scripts are sourced on server startup, so you can mount over them for quicker redeploy.

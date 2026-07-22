@@ -3,8 +3,10 @@ package server.agents.capabilities.combat;
 import server.agents.capabilities.supplies.AgentAmmoStateRuntime;
 
 import client.Character;
-import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.runtime.AgentSessionLifecycleRuntime;
+import server.agents.integration.cosmic.CosmicAgentPerceptionSnapshotFactory;
+import server.agents.perception.AgentMapPerception;
+import server.agents.perception.AgentPeerPerception;
+import server.agents.perception.AgentPerceptionSnapshot;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.monitoring.AgentPerformanceMonitor;
@@ -13,7 +15,6 @@ import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationPathService;
 import server.agents.capabilities.navigation.AgentNavigationRegionService;
-import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.capabilities.movement.AgentPatrolStateRuntime;
 import server.life.Monster;
 import server.maps.Foothold;
@@ -25,6 +26,8 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public final class AgentCombatTargetRuntime {
     private static final long UNREACHABLE_GRAPH_COST = Long.MAX_VALUE / 4;
@@ -44,6 +47,10 @@ public final class AgentCombatTargetRuntime {
             candidates = preferRequiredTargets(entry, candidates);
 
             Map<Monster, Integer> targetOccupancy = grindTargetOccupancy(entry, bot);
+            candidates = AgentCombatBehaviorRuntime.respectClaims(entry, candidates, targetOccupancy);
+            if (!AgentCombatBehaviorRuntime.responseReady(entry, candidates, System.currentTimeMillis())) {
+                return null;
+            }
             List<AgentScoredGrindTarget> scoredTargets = scoreGrindTargets(
                     entry, bot, botPos, botFoothold, candidates, targetOccupancy, config);
             if (scoredTargets.isEmpty()) {
@@ -58,6 +65,7 @@ public final class AgentCombatTargetRuntime {
             }
             AgentCombatVariationRuntime.maybeAnchorAtTarget(
                     entry, bot, selected, targetRegionId(entry, bot, botPos, selected));
+            AgentCombatBehaviorRuntime.targetAcquired(entry);
             return selected;
         } finally {
             AgentPerformanceMonitor.record("combat-target-search", System.nanoTime() - startedAt);
@@ -403,14 +411,12 @@ public final class AgentCombatTargetRuntime {
             return Map.of();
         }
         Map<Monster, Integer> occupancy = new IdentityHashMap<>();
-        for (AgentRuntimeEntry sibling : AgentSessionLifecycleRuntime.getCohortEntries(entry)) {
-            if (sibling == null || sibling == entry || !AgentModeStateRuntime.grinding(sibling)) {
-                continue;
-            }
-            Character siblingBot = AgentRuntimeIdentityRuntime.bot(sibling);
-            Monster siblingTarget = AgentGrindTargetStateRuntime.target(sibling);
-            if (siblingBot != null && siblingBot.getMap() == bot.getMap()
-                    && siblingBot.getHp() > 0 && siblingTarget != null) {
+        Map<Integer, Monster> monstersByObjectId = AgentMapPerception.monsters(bot.getMap()).stream()
+                .collect(Collectors.toMap(Monster::getObjectId, Function.identity(), (left, right) -> left));
+        AgentPerceptionSnapshot snapshot = CosmicAgentPerceptionSnapshotFactory.capture(bot, System.currentTimeMillis());
+        for (AgentPeerPerception peer : snapshot.agentPeers()) {
+            Monster siblingTarget = monstersByObjectId.get(peer.targetObjectId());
+            if (peer.characterId() != bot.getId() && peer.grinding() && siblingTarget != null) {
                 occupancy.merge(siblingTarget, 1, Integer::sum);
             }
         }
@@ -436,28 +442,16 @@ public final class AgentCombatTargetRuntime {
         }
 
         int occupiedCount = 0;
-        for (AgentRuntimeEntry sibling : AgentSessionLifecycleRuntime.getCohortEntries(context.entry())) {
-            if (sibling == context.entry() || sibling == null || !AgentModeStateRuntime.grinding(sibling)) {
-                continue;
-            }
-            Character siblingBot = AgentRuntimeIdentityRuntime.bot(sibling);
-            if (siblingBot == null) {
-                continue;
-            }
-            boolean sameMap = siblingBot.getMap() == context.map();
-            boolean alive = siblingBot.getHp() > 0;
-            boolean hasPosition = siblingBot.getPosition() != null;
+        AgentPerceptionSnapshot snapshot = CosmicAgentPerceptionSnapshotFactory.capture(bot, System.currentTimeMillis());
+        for (AgentPeerPerception peer : snapshot.agentPeers()) {
+            boolean self = peer.characterId() == bot.getId();
             if (!AgentCombatGrindTargetPolicy.shouldInspectRegionOccupant(
-                    sibling == context.entry(),
-                    AgentModeStateRuntime.grinding(sibling),
-                    sameMap,
-                    alive,
-                    hasPosition)) {
+                    self, peer.grinding(), true, true, peer.position() != null)) {
                 continue;
             }
 
-            int occupiedRegionId = AgentNavigationRegionService.resolveCurrentRegionId(
-                    context.graph(), sibling, context.map(), siblingBot.getPosition());
+            int occupiedRegionId = AgentNavigationRegionService.resolvePointTargetRegionId(
+                    context.graph(), context.map(), new Point(peer.position().x(), peer.position().y()));
             if (AgentCombatGrindTargetPolicy.shouldCountRegionOccupant(occupiedRegionId, targetRegionId)) {
                 occupiedCount++;
             }

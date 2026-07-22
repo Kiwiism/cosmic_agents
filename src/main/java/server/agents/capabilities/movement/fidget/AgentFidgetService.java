@@ -106,6 +106,14 @@ public final class AgentFidgetService {
                 entry, targetPos, now, AgentFidgetTrigger.TOWN_LIFE);
     }
 
+    public static boolean tryHandleCombatIdleTick(AgentRuntimeEntry entry, Point targetPos, long now) {
+        return tryHandleBoundedPresentationTick(entry, targetPos, now, AgentFidgetTrigger.COMBAT_IDLE);
+    }
+
+    public static boolean tryHandleCrowdRespiteTick(AgentRuntimeEntry entry, Point targetPos, long now) {
+        return tryHandleBoundedPresentationTick(entry, targetPos, now, AgentFidgetTrigger.CROWD_RESPITE);
+    }
+
     private static boolean tryHandleBoundedPresentationTick(
             AgentRuntimeEntry entry,
             Point targetPos,

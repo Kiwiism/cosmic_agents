@@ -37,11 +37,17 @@ public final class AgentCombatVariationRuntime {
     }
 
     public static int selectTargetIndex(AgentRuntimeEntry entry, int candidateCount) {
+        int behaviorIndex = AgentCombatBehaviorRuntime.selectTargetIndex(entry, candidateCount);
+        if (behaviorIndex >= 0) {
+            return behaviorIndex;
+        }
         return entry == null ? 0 : state(entry).selectTargetIndex(candidateCount);
     }
 
     public static boolean isPlatformAnchorRole(AgentRuntimeEntry entry) {
-        return entry != null && state(entry).platformAnchorRole();
+        return entry != null && (AgentCombatBehaviorRuntime.anchorRole(entry)
+                || (!server.agents.behavior.AgentBehaviorRuntime.enabled(entry)
+                && state(entry).platformAnchorRole()));
     }
 
     public static void maybeAnchorAtTarget(AgentRuntimeEntry entry,

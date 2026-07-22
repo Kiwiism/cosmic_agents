@@ -37,6 +37,22 @@ It currently contains four archetypes:
 - `restless-v1`: highly active and expressive with more movement variation;
 - `explorer-v1`: curiosity-led with more route and reposition variation.
 
+After Pio's Collecting Recycled Goods is completed and the Relaxer is awarded,
+the visible `full`-realism run also has one bounded personality-specific
+interlude:
+
+- `relaxed-v1` reserves a free ground spot near Pio and sits for 15-60 seconds;
+- `restless-v1` reserves a spot, shows F2, and alternates sitting/standing for
+  10-15 seconds;
+- `efficient-v1` and `explorer-v1` continue directly to their next objective.
+
+The positions come from Amherst's WZ foothold at `y=274`, exclude Pio's center
+at `x=547`, reserve a two-slot footprint, and reject a position occupied by a
+live character. The plan clock and current objective are paused without being
+replaced. Reservations are released on completion, cancellation, reset, map
+change, death, or missing chair; if no safe position opens within 15 seconds,
+the Agent resumes instead of stacking or waiting indefinitely.
+
 Each registered Agent receives a deterministic profile. Its independent behavior
 seed and exact profile version are then stored under:
 

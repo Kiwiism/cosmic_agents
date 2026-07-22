@@ -2,9 +2,9 @@
 .idea/*
 !.idea/codeStyles/
 *.iml
-wz/*
-/wz/*
-/wz
+wz_victoria/*
+/wz_victoria/*
+/wz_victoria
 /target
 database-console/api/target/
 database-console/web/.next/

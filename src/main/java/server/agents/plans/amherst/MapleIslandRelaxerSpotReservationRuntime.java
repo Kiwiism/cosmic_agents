@@ -5,9 +5,13 @@ import server.maps.reservation.CharacterSpaceOwner;
 import server.maps.reservation.CharacterSpaceReservationRuntime;
 import server.maps.reservation.CharacterSpaceScope;
 
+import java.awt.Point;
 import java.util.Optional;
 
 public final class MapleIslandRelaxerSpotReservationRuntime {
+    private static final int PIO_INTERLUDE_FOOTPRINT_SLOTS = 2;
+    private static final int PIO_INTERLUDE_OCCUPANT_CLEARANCE_PX = 55;
+
     private MapleIslandRelaxerSpotReservationRuntime() {
     }
 
@@ -57,6 +61,36 @@ public final class MapleIslandRelaxerSpotReservationRuntime {
         return Optional.empty();
     }
 
+    public static synchronized Optional<MapleIslandRelaxerSpotCatalog.Spot> reserveNearPio(
+            Character agent,
+            int startIndex) {
+        if (agent == null || agent.getMap() == null || agent.getId() <= 0
+                || agent.getMapId() != MapleIslandRelaxerSpotCatalog.AMHERST_MAP_ID) {
+            return Optional.empty();
+        }
+        int world = agent.getClient() == null ? 0 : agent.getWorld();
+        int channel = agent.getClient() == null ? 0 : agent.getClient().getChannel();
+        var candidates = MapleIslandRelaxerSpotCatalog.spaces(
+                MapleIslandRelaxerSpotCatalog.Pool.AMHERST_NEAR_PIO);
+        if (candidates.isEmpty()) {
+            return Optional.empty();
+        }
+        CharacterSpaceScope scope = new CharacterSpaceScope(world, channel, agent.getMapId());
+        CharacterSpaceOwner owner = CharacterSpaceOwner.character(agent.getId());
+        int first = Math.floorMod(startIndex, candidates.size());
+        for (int offset = 0; offset < candidates.size(); offset++) {
+            var candidate = candidates.get((first + offset) % candidates.size());
+            var reservation = CharacterSpaceReservationRuntime.reserveExact(
+                    scope, owner, candidates, candidate, PIO_INTERLUDE_FOOTPRINT_SLOTS,
+                    position -> unoccupiedByCharacter(agent, position));
+            if (reservation.isPresent()) {
+                return reservation.map(found -> new MapleIslandRelaxerSpotCatalog.Spot(
+                        found.scope().mapId(), found.position().x, found.position().y));
+            }
+        }
+        return Optional.empty();
+    }
+
     public static synchronized Optional<MapleIslandRelaxerSpotCatalog.Spot> reservedSpot(int agentCharacterId) {
         return CharacterSpaceReservationRuntime.reservation(CharacterSpaceOwner.character(agentCharacterId))
                 .map(reservation -> new MapleIslandRelaxerSpotCatalog.Spot(
@@ -77,6 +111,16 @@ public final class MapleIslandRelaxerSpotReservationRuntime {
 
     public static synchronized void clear() {
         CharacterSpaceReservationRuntime.clear();
+    }
+
+    private static boolean unoccupiedByCharacter(Character agent, Point position) {
+        long clearanceSquared = (long) PIO_INTERLUDE_OCCUPANT_CLEARANCE_PX
+                * PIO_INTERLUDE_OCCUPANT_CLEARANCE_PX;
+        return agent.getMap().getCharacters().stream()
+                .filter(character -> character.getId() != agent.getId())
+                .map(Character::getPosition)
+                .filter(java.util.Objects::nonNull)
+                .noneMatch(other -> other.distanceSq(position) < clearanceSquared);
     }
 
     private static Optional<MapleIslandRelaxerSpotCatalog.Spot> reserveRandom(

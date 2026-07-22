@@ -57,6 +57,13 @@ public final class AgentGrindNoTargetFallbackService {
             hooks.airborneTick().tick(entry, currentTargetPos);
             return new Result(true, currentTargetPos);
         }
+        if (AgentCombatBehaviorRuntime.waitingForResponse(entry)) {
+            return new Result(true, agentPosition);
+        }
+
+        if (AgentCombatIdleBehaviorRuntime.tick(entry, agent, agentPosition, System.currentTimeMillis())) {
+            return new Result(true, agentPosition);
+        }
 
         // Preserve the legacy pre-resolve wander-direction side effect before
         // the shared no-target resolver recomputes the concrete target.

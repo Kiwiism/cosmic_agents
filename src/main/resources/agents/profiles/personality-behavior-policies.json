@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "defaultPersonalityProfileId": "efficient-v1",
+  "policies": [
+    {
+      "personalityProfileId": "efficient-v1", "version": 1,
+      "response": { "minMs": 250, "maxMs": 650 },
+      "targeting": { "bestWeight": 70, "nearWeight": 25, "middleWeight": 5, "claimTolerance": 2, "anchorPercent": 45 },
+      "crowd": { "avoidPercent": 20, "minRestMs": 5000, "maxRestMs": 12000, "chairPercent": 20 },
+      "idle": { "waitWeight": 45, "patrolWeight": 30, "jumpWeight": 10, "proneWeight": 5, "emptyAttackWeight": 10 },
+      "reactions": { "missEmotePercent": 10, "restEmotePercent": 10, "cooldownMs": 30000 },
+      "navigation": { "alternateRoutePercent": 10, "travelJumpPercent": 6, "maxRouteStretch": 1.08 }
+    },
+    {
+      "personalityProfileId": "relaxed-v1", "version": 1,
+      "response": { "minMs": 1000, "maxMs": 2500 },
+      "targeting": { "bestWeight": 45, "nearWeight": 40, "middleWeight": 15, "claimTolerance": 1, "anchorPercent": 55 },
+      "crowd": { "avoidPercent": 85, "minRestMs": 12000, "maxRestMs": 35000, "chairPercent": 55 },
+      "idle": { "waitWeight": 55, "patrolWeight": 10, "jumpWeight": 5, "proneWeight": 15, "emptyAttackWeight": 15 },
+      "reactions": { "missEmotePercent": 12, "restEmotePercent": 18, "cooldownMs": 35000 },
+      "navigation": { "alternateRoutePercent": 15, "travelJumpPercent": 3, "maxRouteStretch": 1.12 }
+    },
+    {
+      "personalityProfileId": "restless-v1", "version": 1,
+      "response": { "minMs": 120, "maxMs": 550 },
+      "targeting": { "bestWeight": 55, "nearWeight": 25, "middleWeight": 20, "claimTolerance": 4, "anchorPercent": 10 },
+      "crowd": { "avoidPercent": 10, "minRestMs": 3000, "maxRestMs": 8000, "chairPercent": 5 },
+      "idle": { "waitWeight": 10, "patrolWeight": 25, "jumpWeight": 30, "proneWeight": 15, "emptyAttackWeight": 20 },
+      "reactions": { "missEmotePercent": 18, "restEmotePercent": 8, "cooldownMs": 22000 },
+      "navigation": { "alternateRoutePercent": 25, "travelJumpPercent": 12, "maxRouteStretch": 1.18 }
+    },
+    {
+      "personalityProfileId": "explorer-v1", "version": 1,
+      "response": { "minMs": 500, "maxMs": 1400 },
+      "targeting": { "bestWeight": 35, "nearWeight": 25, "middleWeight": 40, "claimTolerance": 2, "anchorPercent": 20 },
+      "crowd": { "avoidPercent": 55, "minRestMs": 7000, "maxRestMs": 18000, "chairPercent": 15 },
+      "idle": { "waitWeight": 20, "patrolWeight": 45, "jumpWeight": 15, "proneWeight": 5, "emptyAttackWeight": 15 },
+      "reactions": { "missEmotePercent": 15, "restEmotePercent": 12, "cooldownMs": 28000 },
+      "navigation": { "alternateRoutePercent": 55, "travelJumpPercent": 10, "maxRouteStretch": 1.25 }
+    }
+  ]
+}

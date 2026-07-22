@@ -11,6 +11,9 @@ Mushroom Town-to-Southperry plan.
 !mapleisland pool [page]
 !mapleisland cancel
 !mapleisland stop
+!mapleisland lithharbor test <total> [batch] [intervalSeconds] [seed]
+!mapleisland lithharbor test status
+!mapleisland lithharbor test stop
 ```
 
 `total` is 1 through `AGENT_MAPLE_ISLAND_COHORT_MAX_TOTAL` (500 by default and
@@ -27,6 +30,32 @@ replayable from their reported seed.
 
 The realism preset defaults to `light`. You may also give a preset without a
 seed, for example `!mapleisland run 25 5 10 light`.
+
+### Direct Lith Harbor town-life load test
+
+The `lithharbor test` command leases the same durable cohort characters but
+places them directly at Lith Harbor's real Shanks arrival portal. It prepares
+each one as a level-9 or level-10 Beginner, gives it a Relaxer, starts Biggs's
+Maple Island handoff quest, and hands control to the normal Lith Harbor
+town-life capability. Each Agent has a stable 0.5-10 second initial response
+delay before it begins moving, so a large wave does not start in lockstep.
+
+```text
+# 100 Agents, released five at a time across each ten-second wave
+!mapleisland lithharbor test 100
+
+# Explicit batch, interval, and replay seed
+!mapleisland lithharbor test 100 10 20 424242
+
+!mapleisland lithharbor test status
+!mapleisland lithharbor test stop
+```
+
+This is a town-behavior/load fixture, not a substitute for validating the real
+Southperry-to-Shanks transition. `!mapleisland lithharbor start` retains that
+real path for Agents which completed the Southperry plan. The direct fixture
+visits Biggs first and then rotates through rests, social/fidget interactions,
+NPC pauses, wandering, enterable shops, and occasional weapon flourishes.
 
 - `off`: deterministic control group; no added objective/NPC delay, nearest
   legacy navigation, deterministic rest-catalog order, and no optional travel
@@ -100,6 +129,14 @@ old-school Maple-style names that satisfy the server's 3-12-character and
 blocked-substring policy. It interleaves nickname-like, fantasy, Maple-themed,
 prefixed, suffixed, framed, and lightly numbered styles so even a small cohort
 has visible variety.
+
+Leasing also applies a visible name-family cap: when enough candidates are
+available, no recognized prefix such as `Blue`, `Dark`, or `Maple` occupies
+more than 20% of a requested cohort. If an older durable pool is dominated by
+one prefix, the provisioner creates only the additional diverse identities
+needed to meet that cap. Existing characters are deliberately not renamed or
+deleted because their database ids, progression, and durable test history must
+remain intact.
 
 Each pooled character also owns one non-repeating ordinal from the 24,192 valid
 v83 Beginner appearance/equipment combinations. The ordinal is durable pool

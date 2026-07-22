@@ -6,6 +6,7 @@ import server.TimerManager;
 import server.agents.auth.AgentControlService;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
 import server.agents.capabilities.presentation.AgentPresentationTelemetry;
+import server.agents.capabilities.behavior.AgentBehaviorTelemetry;
 import server.agents.capabilities.townlife.AgentTownLifeCommandService;
 import server.agents.capabilities.party.AgentPartyLifecycleService;
 import server.agents.capabilities.quest.AmherstTestResetMode;
@@ -421,9 +422,21 @@ public final class MapleIslandPlanCommandService {
                 + ", unsafe-blocked=" + presentation.unsafeBlocked()
                 + ", coalesced=" + presentation.coalesced()
                 + "; intents=" + (intents.isEmpty() ? "none" : intents) + ".");
+        AgentBehaviorTelemetry.Snapshot behavior = AgentBehaviorTelemetry.snapshot();
+        message(player, "Behavior policy: response-deferred=" + behavior.responseDeferred()
+                + ", claim-alternatives=" + behavior.claimAlternatives()
+                + ", crowd-rests=" + behavior.crowdRestStarted()
+                + ", crowd-resumes=" + behavior.crowdRestResumed()
+                + ", idle-presentations=" + behavior.idlePresentation()
+                + ", expressions=" + behavior.expressionsShown()
+                + ", expression-suppressed=" + behavior.expressionsSuppressed() + ".");
     }
 
     private static void lithHarborTownLife(Character player, String[] params) {
+        if (params.length >= 2 && params[1].equalsIgnoreCase("test")) {
+            lithHarborTownLifeTest(player, params);
+            return;
+        }
         if (params.length == 1 || (params.length == 2 && params[1].equalsIgnoreCase("start"))) {
             AgentTownLifeCommandService.Result result =
                     AgentTownLifeCommandService.startCompletedSouthperryAgents(
@@ -446,6 +459,64 @@ public final class MapleIslandPlanCommandService {
             return;
         }
         throw new IllegalArgumentException("Usage: !mapleisland lithharbor [start|status|stop]");
+    }
+
+    private static void lithHarborTownLifeTest(Character player, String[] params) {
+        MapleIslandCohortRuntime runtime = MapleIslandCohortRuntime.instance();
+        if (params.length == 3 && params[2].equalsIgnoreCase("status")) {
+            lithHarborTownLifeTestStatus(player, runtime.lithHarborTownLifeTestStatus(
+                    player.getWorld(), player.getClient().getChannel()));
+            return;
+        }
+        if (params.length == 3 && params[2].equalsIgnoreCase("stop")) {
+            MapleIslandCohortRunService.Status status = runtime.stopLithHarborTownLifeTest(
+                    player.getWorld(), player.getClient().getChannel());
+            message(player, "Lith Harbor test stop queued; Agents will disconnect and leases will be released.");
+            lithHarborTownLifeTestStatus(player, status);
+            return;
+        }
+        LithHarborTestArguments arguments = parseLithHarborTestArguments(params);
+        try {
+            MapleIslandCohortRunService.Status status = runtime.startLithHarborTownLifeTest(
+                    new MapleIslandCohortRunService.StartRequest(
+                            player.getId(), player.getWorld(), player.getClient().getChannel(),
+                            arguments.total(), arguments.batch(), arguments.intervalSeconds(),
+                            arguments.seed(), MapleIslandCohortRealismMode.OFF));
+            message(player, "Lith Harbor test accepted: " + arguments.total()
+                    + " Lv9/10 Agents arriving at the ship in waves of " + arguments.batch()
+                    + " across each " + arguments.intervalSeconds() + "s; seed=" + status.runSeed() + ".");
+            lithHarborTownLifeTestStatus(player, status);
+        } catch (IOException | RuntimeException failure) {
+            message(player, "Lith Harbor test failed: " + failure.getMessage());
+        }
+    }
+
+    static LithHarborTestArguments parseLithHarborTestArguments(String[] params) {
+        if (params.length < 3 || params.length > 6 || !params[1].equalsIgnoreCase("test")) {
+            throw new IllegalArgumentException("Usage: !mapleisland lithharbor test "
+                    + "<total> [batch] [intervalSeconds] [seed]");
+        }
+        int total = parseInt(params[2], "total");
+        int batch = params.length >= 4 ? parseInt(params[3], "batch") : Math.min(5, total);
+        int intervalSeconds = params.length >= 5 ? parseInt(params[4], "intervalSeconds") : 10;
+        Long seed = params.length == 6 ? parseLong(params[5], "seed") : null;
+        return new LithHarborTestArguments(total, batch, intervalSeconds, seed);
+    }
+
+    private static void lithHarborTownLifeTestStatus(
+            Character player, MapleIslandCohortRunService.Status status) {
+        if (status == null) {
+            message(player, "No Lith Harbor town-life test exists on this channel.");
+            return;
+        }
+        message(player, "Lith Harbor test: state=" + status.state()
+                + ", launched=" + status.launched() + "/" + status.requested()
+                + ", active=" + status.running() + ", pending=" + status.pending()
+                + ", failed-starts=" + status.failedStarts()
+                + (status.lastError().isBlank() ? "." : ", error=" + status.lastError() + "."));
+    }
+
+    record LithHarborTestArguments(int total, int batch, int intervalSeconds, Long seed) {
     }
 
     private static void milestone(Character player,
@@ -629,6 +700,8 @@ public final class MapleIslandPlanCommandService {
                 message(player, "Self reset: !mapleisland resetme (Maple Island run quests only)");
                 message(player, "Cohort control: !mapleisland status|stats|pool [page]|radii [page]|cancel|stop");
                 message(player, "Town life: !mapleisland lithharbor [start|status|stop]");
+                message(player, "Town load test: !mapleisland lithharbor test "
+                        + "<total> [batch] [intervalSeconds] [seed]");
             }
         }
     }

@@ -34,7 +34,8 @@ class AgentTownLifeRuntimeTest {
                 .thenReturn(shanks);
         when(gateway.grounded(agent)).thenReturn(true);
 
-        assertFalse(AgentTownLifeRuntime.tick(entry, agent, 1L, gateway));
+        long responseAtMs = entry.capabilityStates().require(AgentTownLifeState.STATE_KEY).nextActionAtMs();
+        assertFalse(AgentTownLifeRuntime.tick(entry, agent, responseAtMs, gateway));
 
         verify(gateway).navigate(entry, shanks, true);
     }
@@ -60,7 +61,7 @@ class AgentTownLifeRuntimeTest {
             return true;
         }).when(gateway).runNpcScript(agent, MapleIslandSouthperryQuestCatalog.SHANKS_NPC_ID);
 
-        assertTrue(AgentTownLifeRuntime.tick(entry, agent, 1L, gateway));
+        assertTrue(AgentTownLifeRuntime.tick(entry, agent, state.nextActionAtMs(), gateway));
 
         verify(gateway).runNpcScript(agent, MapleIslandSouthperryQuestCatalog.SHANKS_NPC_ID);
         assertEquals(AgentTownLifeState.Stage.COMPLETE_ISLAND_HANDOFF, state.stage());

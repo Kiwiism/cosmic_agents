@@ -15,6 +15,29 @@ import static org.mockito.Mockito.when;
 
 class AgentLiveTickGateServiceTest {
     @Test
+    void planExecutionGateCanResumeASeatedAgentBeforeChairShortCircuit() {
+        Character agent = mock(Character.class);
+        when(agent.getChair()).thenReturn(3010000);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        List<String> calls = new ArrayList<>();
+
+        boolean consumed = AgentLiveTickGateService.tickLiveGates(
+                new AgentLiveTickGateService.Context(entry, agent, null, null, new Point(), true),
+                new AgentLiveTickGateService.Hooks(
+                        (commonEntry, commonAgent, commonLeader, runAiTick) -> false,
+                        (gateEntry, gateAgent, runAiTick) -> { calls.add("planGate"); return true; },
+                        (supervisionEntry, supervisionAgent) -> false,
+                        (capabilityEntry, capabilityAgent) -> { calls.add("capability"); return false; },
+                        (tradeEntry, tradeAgent) -> false,
+                        (idleEntry, idleAgent) -> false,
+                        (recoveryEntry, recoveryAgent, anchor, target) -> false,
+                        (mapEntry, mapAgent) -> { calls.add("mapChange"); return false; }));
+
+        assertTrue(consumed);
+        assertEquals(List.of("mapChange", "planGate"), calls);
+    }
+
+    @Test
     void seatedAgentRunsOnlyMapChangeAndCapabilityBeforeConsumingTick() {
         Character agent = mock(Character.class);
         when(agent.getChair()).thenReturn(3010000);

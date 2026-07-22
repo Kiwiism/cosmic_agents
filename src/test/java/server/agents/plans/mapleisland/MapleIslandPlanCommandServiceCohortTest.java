@@ -9,6 +9,22 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class MapleIslandPlanCommandServiceCohortTest {
     @Test
+    void parsesLithHarborTownLifeLoadTestDefaultsAndOverrides() {
+        var defaults = MapleIslandPlanCommandService.parseLithHarborTestArguments(
+                new String[]{"lithharbor", "test", "100"});
+        var replay = MapleIslandPlanCommandService.parseLithHarborTestArguments(
+                new String[]{"lithharbor", "test", "100", "10", "20", "424242"});
+
+        assertEquals(100, defaults.total());
+        assertEquals(5, defaults.batch());
+        assertEquals(10, defaults.intervalSeconds());
+        assertNull(defaults.seed());
+        assertEquals(10, replay.batch());
+        assertEquals(20, replay.intervalSeconds());
+        assertEquals(424242L, replay.seed());
+    }
+
+    @Test
     void parsesDefaultFullRun() {
         var parsed = MapleIslandPlanCommandService.parseCohortRunArguments(
                 new String[]{"run", "100", "5", "10"});

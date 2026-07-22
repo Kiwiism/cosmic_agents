@@ -1,13 +1,15 @@
 package server.agents.plans.amherst;
 
 import client.Character;
+import server.agents.capabilities.behavior.AgentPioRelaxerInterludeRuntime;
 import server.agents.capabilities.runtime.AgentCapabilityRuntime;
 import server.agents.capabilities.townlife.AgentTownLifeRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.plans.AgentPlanPauseRuntime;
+import server.agents.profiles.AgentBehaviorProfileRuntime;
 import server.agents.progression.AgentFirstJobJourneyRuntime;
 import server.agents.progression.AgentVictoriaTrainingObjectiveRuntime;
-import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.agents.profiles.AgentBehaviorProfileRuntime;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -21,6 +23,8 @@ public final class AgentAmherstPlanRuntime {
 
     public static void startDefault(AgentRuntimeEntry entry, Character agent, long nowMs) throws IOException,
             AmherstPlanValidationException {
+        AgentPioRelaxerInterludeRuntime.cancel(entry, agent, nowMs);
+        AgentPlanPauseRuntime.reset(entry);
         AgentBehaviorProfileRuntime.assignMapleIslandQuester(entry);
         AmherstPlanRuntimeRunner runner = defaultRunner(defaultCard(), entry);
         runner.start(entry, agent, nowMs);
@@ -30,6 +34,8 @@ public final class AgentAmherstPlanRuntime {
                                    Character agent,
                                    long nowMs,
                                    AmherstPlanObserver observer) throws IOException, AmherstPlanValidationException {
+        AgentPioRelaxerInterludeRuntime.cancel(entry, agent, nowMs);
+        AgentPlanPauseRuntime.reset(entry);
         AgentBehaviorProfileRuntime.assignMapleIslandQuester(entry);
         AmherstPlanRuntimeRunner runner = defaultRunner(defaultCard(), entry);
         runner.start(entry, agent, nowMs, AmherstPlanExecutionMode.MANUAL, observer);
@@ -39,6 +45,8 @@ public final class AgentAmherstPlanRuntime {
                                  Character agent,
                                  long nowMs,
                                  AmherstPlanObserver observer) throws IOException, AmherstPlanValidationException {
+        AgentPioRelaxerInterludeRuntime.cancel(entry, agent, nowMs);
+        AgentPlanPauseRuntime.reset(entry);
         AgentBehaviorProfileRuntime.assignMapleIslandQuester(entry);
         AmherstPlanRuntimeRunner runner = defaultRunner(defaultCard(), entry);
         runner.start(entry, agent, nowMs, AmherstPlanExecutionMode.AUTO, observer);
@@ -53,13 +61,14 @@ public final class AgentAmherstPlanRuntime {
     }
 
     public static boolean tickGate(AgentRuntimeEntry entry, Character agent, long nowMs) {
+        long planNowMs = AgentPlanPauseRuntime.effectiveNow(entry, nowMs);
         if (AgentTownLifeRuntime.active(entry)) {
-            return AgentTownLifeRuntime.tick(entry, agent, nowMs);
+            return AgentTownLifeRuntime.tick(entry, agent, planNowMs);
         }
-        if (AgentFirstJobJourneyRuntime.tick(entry, agent, nowMs)) {
+        if (AgentFirstJobJourneyRuntime.tick(entry, agent, planNowMs)) {
             return true;
         }
-        if (AgentVictoriaTrainingObjectiveRuntime.tick(entry, agent, nowMs)) {
+        if (AgentVictoriaTrainingObjectiveRuntime.tick(entry, agent, planNowMs)) {
             return true;
         }
         AmherstPlanExecutionState state = entry.amherstPlanExecutionState();
@@ -67,18 +76,18 @@ public final class AgentAmherstPlanRuntime {
         synchronized (state) {
             runner = state.runner;
         }
-        if (runner != null && runner.tick(entry, agent, nowMs)) {
+        if (runner != null && runner.tick(entry, agent, planNowMs)) {
             return true;
         }
         if (state.completed()) {
             if (agent.getChair() >= 0) {
                 return true;
             }
-            if (AgentSouthperryPostPlanService.tick(entry, agent, nowMs)) {
+            if (AgentSouthperryPostPlanService.tick(entry, agent, planNowMs)) {
                 return true;
             }
         }
-        return AgentCapabilityRuntime.tick(entry, agent, nowMs);
+        return AgentCapabilityRuntime.tick(entry, agent, planNowMs);
     }
 
     public static void cancel(AgentRuntimeEntry entry) {
@@ -91,6 +100,7 @@ public final class AgentAmherstPlanRuntime {
             runner.cancel(entry);
         }
         Character agent = AgentRuntimeIdentityRuntime.bot(entry);
+        AgentPioRelaxerInterludeRuntime.cancel(entry, agent, System.currentTimeMillis());
         if (agent != null && agent.getChair() <= 0) {
             MapleIslandRelaxerSpotReservationRuntime.release(agent.getId());
         }

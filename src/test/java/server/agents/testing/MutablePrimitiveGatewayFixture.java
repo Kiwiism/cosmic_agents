@@ -43,6 +43,8 @@ public final class MutablePrimitiveGatewayFixture {
 
     public MutablePrimitiveGatewayFixture() {
         when(agent.getId()).thenReturn(77);
+        when(agent.getMapId()).thenAnswer(ignored -> mapId.get());
+        when(agent.getPosition()).thenAnswer(ignored -> new Point(position));
         when(agent.getLevel()).thenAnswer(ignored -> level.get());
         when(agent.getExp()).thenAnswer(ignored -> experience.get());
         when(agent.getChair()).thenAnswer(ignored -> chairItemId.get());

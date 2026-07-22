@@ -11,6 +11,8 @@ import server.agents.capabilities.recovery.AgentRecoveryTickService;
 import server.agents.plans.AgentPlanReattachmentRuntime;
 import server.agents.plans.amherst.AgentAmherstPlanRuntime;
 import server.agents.runtime.maintenance.AgentMaintenanceSupervisor;
+import server.agents.capabilities.behavior.AgentCrowdRespiteRuntime;
+import server.agents.capabilities.behavior.AgentPioRelaxerInterludeRuntime;
 
 import client.Character;
 import java.util.function.Consumer;
@@ -49,6 +51,11 @@ public final class AgentLiveTickGateRuntime {
         return new AgentLiveTickGateService.Hooks(
                 (entry, agent, leader, runAiTick) ->
                         AgentCommonTickRuntime.runCommonTickSystems(entry, agent, leader, runAiTick, tickScriptTasks),
+                (entry, agent, runAiTick) -> {
+                    long nowMs = System.currentTimeMillis();
+                    return AgentPioRelaxerInterludeRuntime.tick(entry, agent, nowMs, runAiTick)
+                            || AgentCrowdRespiteRuntime.tick(entry, agent, nowMs, runAiTick);
+                },
                 (entry, agent) -> tickObjectiveSupervision(entry, agent, System.currentTimeMillis()),
                 (entry, agent) -> AgentAmherstPlanRuntime.tickGate(entry, agent, System.currentTimeMillis()),
                 (tradeEntry, tradeAgent) -> AgentTradeWindowTickService.tickIfTradeWindowOpen(

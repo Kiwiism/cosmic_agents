@@ -4,7 +4,9 @@ import server.agents.plans.mapleisland.cohort.MapleIslandCohortPoolSnapshot.Acco
 import server.agents.plans.mapleisland.cohort.MapleIslandCohortPoolSnapshot.Agent;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.IntPredicate;
 
@@ -67,7 +69,7 @@ public final class MapleIslandCohortPoolProvisioner {
             throw new IllegalArgumentException("Desired pool capacity is out of range");
         }
         int created = 0;
-        while (candidateCount(world, excludedCharacterIds, isCharacterLive) < desired) {
+        while (diverseCandidateCapacity(desired, world, excludedCharacterIds, isCharacterLive) < desired) {
             Account account = reusableAccount();
             if (account == null) {
                 account = createAccount(createdByCharacterId);
@@ -90,16 +92,23 @@ public final class MapleIslandCohortPoolProvisioner {
         return created;
     }
 
-    private int candidateCount(int world,
-                               Set<Integer> excludedCharacterIds,
-                               IntPredicate isCharacterLive) {
+    private int diverseCandidateCapacity(int desired,
+                                         int world,
+                                         Set<Integer> excludedCharacterIds,
+                                         IntPredicate isCharacterLive) {
         Set<Integer> excluded = excludedCharacterIds == null ? Set.of() : excludedCharacterIds;
-        return (int) registry.snapshot().agents().stream()
+        Map<String, Integer> prefixCounts = new HashMap<>();
+        registry.snapshot().agents().stream()
                 .filter(agent -> agent.leaseState() == MapleIslandCohortPoolSnapshot.LeaseState.AVAILABLE)
                 .filter(agent -> agent.world() == world)
                 .filter(agent -> !excluded.contains(agent.characterId()))
                 .filter(agent -> !isCharacterLive.test(agent.characterId()))
-                .count();
+                .forEach(agent -> prefixCounts.merge(
+                        MapleIslandCohortNameCatalog.diversityKey(agent.name()), 1, Integer::sum));
+        int prefixLimit = MapleIslandCohortNameCatalog.maximumSamePrefix(desired);
+        return prefixCounts.values().stream()
+                .mapToInt(count -> Math.min(count, prefixLimit))
+                .sum();
     }
 
     private Account reusableAccount() throws Exception {

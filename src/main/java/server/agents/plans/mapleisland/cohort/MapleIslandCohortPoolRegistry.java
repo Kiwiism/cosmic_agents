@@ -116,13 +116,13 @@ public final class MapleIslandCohortPoolRegistry {
             return List.of();
         }
         Set<Integer> exclusions = excludedCharacterIds == null ? Set.of() : excludedCharacterIds;
-        List<Agent> selected = snapshot.agents().stream()
+        List<Agent> candidates = snapshot.agents().stream()
                 .filter(agent -> agent.leaseState() == LeaseState.AVAILABLE)
                 .filter(agent -> agent.world() == world)
                 .filter(agent -> !exclusions.contains(agent.characterId()))
                 .filter(agent -> !isCharacterLive.test(agent.characterId()))
-                .limit(count)
                 .toList();
+        List<Agent> selected = selectNameDiverse(candidates, count);
         if (selected.isEmpty()) {
             return List.of();
         }
@@ -133,9 +133,49 @@ public final class MapleIslandCohortPoolRegistry {
                         : agent)
                 .toList();
         persist(snapshot.accounts(), updated);
-        return snapshot.agents().stream()
-                .filter(agent -> selectedIds.contains(agent.characterId()))
+        return selected.stream()
+                .map(agent -> snapshot.findAgent(agent.characterId()).orElseThrow())
                 .toList();
+    }
+
+    private static List<Agent> selectNameDiverse(List<Agent> candidates, int requested) {
+        int prefixLimit = MapleIslandCohortNameCatalog.maximumSamePrefix(requested);
+        Map<String, List<Agent>> candidatesByPrefix = new LinkedHashMap<>();
+        for (Agent candidate : candidates) {
+            candidatesByPrefix.computeIfAbsent(
+                    MapleIslandCohortNameCatalog.diversityKey(candidate.name()),
+                    ignored -> new ArrayList<>()).add(candidate);
+        }
+        Map<String, Integer> selectedByPrefix = new LinkedHashMap<>();
+        List<Agent> selected = new ArrayList<>(Math.min(requested, candidates.size()));
+        Set<Integer> selectedIds = new HashSet<>();
+        boolean selectedAnother;
+        do {
+            selectedAnother = false;
+            for (Map.Entry<String, List<Agent>> family : candidatesByPrefix.entrySet()) {
+                int familyIndex = selectedByPrefix.getOrDefault(family.getKey(), 0);
+                if (familyIndex >= prefixLimit || familyIndex >= family.getValue().size()) {
+                    continue;
+                }
+                Agent candidate = family.getValue().get(familyIndex);
+                selected.add(candidate);
+                selectedIds.add(candidate.characterId());
+                selectedByPrefix.put(family.getKey(), familyIndex + 1);
+                selectedAnother = true;
+                if (selected.size() >= requested) {
+                    return selected;
+                }
+            }
+        } while (selectedAnother);
+        for (Agent candidate : candidates) {
+            if (selectedIds.add(candidate.characterId())) {
+                selected.add(candidate);
+                if (selected.size() >= requested) {
+                    break;
+                }
+            }
+        }
+        return selected;
     }
 
     public synchronized void markActive(int characterId, String sessionId, long resetAtMs) throws IOException {

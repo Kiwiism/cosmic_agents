@@ -51,6 +51,22 @@ public final class MapleIslandCohortNameCatalog {
         return CANDIDATES;
     }
 
+    static String diversityKey(String name) {
+        String normalized = name == null ? "" : name.toLowerCase(Locale.ROOT);
+        for (String prefix : PREFIXES) {
+            String normalizedPrefix = prefix.toLowerCase(Locale.ROOT);
+            if (normalized.length() > normalizedPrefix.length()
+                    && normalized.startsWith(normalizedPrefix)) {
+                return normalizedPrefix;
+            }
+        }
+        return normalized;
+    }
+
+    static int maximumSamePrefix(int requested) {
+        return Math.max(1, (requested + 4) / 5);
+    }
+
     public static String accountCandidate(int ordinal) {
         if (ordinal < 1 || ordinal > CANDIDATE_COUNT) {
             throw new IllegalArgumentException("Account ordinal must be between 1 and " + CANDIDATE_COUNT);

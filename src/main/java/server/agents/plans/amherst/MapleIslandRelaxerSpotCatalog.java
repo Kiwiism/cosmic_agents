@@ -15,6 +15,7 @@ public final class MapleIslandRelaxerSpotCatalog {
 
     public enum Pool {
         AMHERST(AMHERST_MAP_ID),
+        AMHERST_NEAR_PIO(AMHERST_MAP_ID),
         SOUTHPERRY_ALL(SOUTHPERRY_MAP_ID),
         SOUTHPERRY_LEFT(SOUTHPERRY_MAP_ID),
         SOUTHPERRY_RIGHT(SOUTHPERRY_MAP_ID),
@@ -46,6 +47,7 @@ public final class MapleIslandRelaxerSpotCatalog {
     static List<CharacterSpace> spaces(Pool pool) {
         return switch (pool) {
             case AMHERST -> MapleIslandCharacterSpaceCatalog.amherst();
+            case AMHERST_NEAR_PIO -> MapleIslandCharacterSpaceCatalog.amherstNearPio();
             case SOUTHPERRY_ALL -> MapleIslandCharacterSpaceCatalog.southperry();
             case SOUTHPERRY_LEFT -> MapleIslandCharacterSpaceCatalog.southperryLeft();
             case SOUTHPERRY_RIGHT -> MapleIslandCharacterSpaceCatalog.southperryRight();

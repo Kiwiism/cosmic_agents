@@ -8,17 +8,25 @@ public record AgentPerceptionSnapshot(
         long observedAtMs,
         List<AgentMobPerception> mobs,
         List<AgentDropPerception> drops,
-        int realPlayerObservers) {
+        int realPlayerObservers,
+        List<AgentPeerPerception> agentPeers) {
 
     public AgentPerceptionSnapshot {
-        if (mapId < 0 || observedAtMs < 0 || mobs == null || drops == null || realPlayerObservers < 0) {
+        if (mapId < 0 || observedAtMs < 0 || mobs == null || drops == null || realPlayerObservers < 0
+                || agentPeers == null) {
             throw new IllegalArgumentException("Valid perception map, timestamp, collections, and observer count are required");
         }
         mobs = List.copyOf(mobs);
         drops = List.copyOf(drops);
+        agentPeers = List.copyOf(agentPeers);
+    }
+
+    public AgentPerceptionSnapshot(int mapId, long observedAtMs, List<AgentMobPerception> mobs,
+                                   List<AgentDropPerception> drops, int realPlayerObservers) {
+        this(mapId, observedAtMs, mobs, drops, realPlayerObservers, List.of());
     }
 
     public static AgentPerceptionSnapshot unavailable() {
-        return new AgentPerceptionSnapshot(0, 0, List.of(), List.of(), 0);
+        return new AgentPerceptionSnapshot(0, 0, List.of(), List.of(), 0, List.of());
     }
 }

@@ -11,6 +11,8 @@ import server.agents.capabilities.presentation.AgentPersonalityPresentationRunti
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.profiles.AgentBehaviorProfile;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.behavior.AgentBehaviorPolicyProfile;
+import server.agents.behavior.AgentBehaviorRuntime;
 
 /** Applies one deterministic, run-scoped realism preset to a cohort Agent. */
 public final class MapleIslandCohortRealismService {
@@ -66,13 +68,19 @@ public final class MapleIslandCohortRealismService {
     }
 
     private static void configureFull(AgentRuntimeEntry entry, long seed) {
+        AgentBehaviorPolicyProfile behaviorPolicy = AgentBehaviorRuntime.enabled(entry)
+                && YamlConfig.config.server.AGENT_NAVIGATION_BEHAVIOR_ENABLED
+                ? AgentBehaviorRuntime.policy(entry) : null;
+        double routeStretch = behaviorPolicy == null
+                ? FULL_MAX_ROUTE_STRETCH : behaviorPolicy.navigation().maxRouteStretch();
+        double hopProbability = behaviorPolicy == null
+                ? AgentPersonalityPresentationRuntime.travelHopProbability(entry, FULL_TRAVEL_HOP_PROBABILITY)
+                : percentProbability(behaviorPolicy.navigation().travelJumpPercent());
         MapleIslandObjectiveRandomnessRuntime.configure(
                 entry, MapleIslandObjectiveRandomnessSettings.cohort(seed));
         AgentTravelVariationRuntime.configure(entry,
                 new AgentTravelVariationSettings(
-                        seed, true, FULL_MAX_ROUTE_STRETCH, true,
-                        AgentPersonalityPresentationRuntime.travelHopProbability(
-                                entry, FULL_TRAVEL_HOP_PROBABILITY),
+                        seed, true, routeStretch, true, hopProbability,
                         sampleRange(seed ^ HOP_INTERVAL_DOMAIN, 2_500L, 4_500L),
                         sampleRange(seed ^ HOP_COOLDOWN_DOMAIN, 8_000L, 15_000L)));
         AgentCombatVariationRuntime.configure(entry,

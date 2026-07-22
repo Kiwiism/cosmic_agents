@@ -115,12 +115,22 @@ public final class CharacterSpaceReservationRuntime {
             List<CharacterSpace> candidates,
             CharacterSpace candidate,
             int footprintSlots) {
-        if (!validRequest(scope, owner, candidates, footprintSlots, ignored -> true)
+        return reserveExact(scope, owner, candidates, candidate, footprintSlots, ignored -> true);
+    }
+
+    public static synchronized Optional<CharacterSpaceReservation> reserveExact(
+            CharacterSpaceScope scope,
+            CharacterSpaceOwner owner,
+            List<CharacterSpace> candidates,
+            CharacterSpace candidate,
+            int footprintSlots,
+            Predicate<Point> positionAvailable) {
+        if (!validRequest(scope, owner, candidates, footprintSlots, positionAvailable)
                 || candidate == null || !candidates.contains(candidate)) {
             return Optional.empty();
         }
         release(owner);
-        return tryReserve(scope, owner, candidates, candidate, footprintSlots, ignored -> true);
+        return tryReserve(scope, owner, candidates, candidate, footprintSlots, positionAvailable);
     }
 
     public static synchronized Optional<CharacterSpaceReservation> reservation(CharacterSpaceOwner owner) {

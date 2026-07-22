@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -59,6 +60,38 @@ class MapleIslandCohortPoolProvisionerTest {
                 .filter(account -> account.accountId() == 10)
                 .findFirst().orElseThrow().characterSlots());
         assertEquals(2, registry.snapshot().accounts().size());
+    }
+
+    @Test
+    void expandsLegacySinglePrefixPoolAndLeasesAVisiblyMixedCohort() throws Exception {
+        MemoryStore store = new MemoryStore();
+        MapleIslandCohortPoolRegistry registry = new MapleIslandCohortPoolRegistry(store);
+        MapleIslandCohortPoolSnapshot.Account account = new MapleIslandCohortPoolSnapshot.Account(
+                10, "MIQuest0001", 99, 15, 1_000L);
+        registry.addAccount(account);
+        FakeHooks hooks = new FakeHooks();
+        FakeAccount fakeAccount = new FakeAccount("MIQuest0001", 15);
+        fakeAccount.count = 10;
+        hooks.accounts.put(10, fakeAccount);
+        for (int index = 0; index < 10; index++) {
+            registry.addAgent(MapleIslandCohortPoolSnapshot.Agent.available(
+                    20 + index, "BlueA%02d".formatted(index), account, 99, 0));
+        }
+        MapleIslandCohortPoolProvisioner provisioner =
+                new MapleIslandCohortPoolProvisioner(registry, hooks);
+
+        assertEquals(8, provisioner.ensureLeaseCandidates(
+                10, 99, 0, 1, Set.of(), ignored -> false));
+        List<MapleIslandCohortPoolSnapshot.Agent> leased = registry.leaseAvailable(
+                10, "mixed", 99, 2_000L, 0, Set.of(), ignored -> false);
+
+        assertEquals(10, leased.size());
+        assertTrue(leased.stream().filter(agent -> agent.name().startsWith("Blue")).count() <= 2);
+        assertTrue(leased.stream().limit(5)
+                .filter(agent -> agent.name().startsWith("Blue")).count() <= 1,
+                () -> "first wave was not name-diverse: "
+                        + leased.stream().limit(5).map(MapleIslandCohortPoolSnapshot.Agent::name).toList());
+        assertTrue(leased.stream().map(agent -> agent.name().substring(0, 1)).distinct().count() >= 6);
     }
 
     private static final class FakeHooks implements MapleIslandCohortPoolProvisioner.Hooks {

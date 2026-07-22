@@ -23,6 +23,8 @@ class AgentRelaxerSpotCatalogTest {
     @Test
     void catalogsExposeFixedUniqueMapPositionsAndSouthperryHalves() {
         List<AgentRelaxerSpotCatalog.Spot> amherst = spots(AgentRelaxerSpotCatalog.Pool.AMHERST);
+        List<AgentRelaxerSpotCatalog.Spot> nearPio = spots(
+                AgentRelaxerSpotCatalog.Pool.AMHERST_NEAR_PIO);
         List<AgentRelaxerSpotCatalog.Spot> left = spots(AgentRelaxerSpotCatalog.Pool.SOUTHPERRY_LEFT);
         List<AgentRelaxerSpotCatalog.Spot> right = spots(AgentRelaxerSpotCatalog.Pool.SOUTHPERRY_RIGHT);
         List<AgentRelaxerSpotCatalog.Spot> all = spots(AgentRelaxerSpotCatalog.Pool.SOUTHPERRY_ALL);
@@ -30,6 +32,7 @@ class AgentRelaxerSpotCatalogTest {
                 AgentRelaxerSpotCatalog.Pool.SOUTHPERRY_FACE_HOLES);
 
         assertEquals(117, amherst.size());
+        assertEquals(12, nearPio.size());
         assertEquals(107, left.size());
         assertEquals(100, right.size());
         assertEquals(207, all.size());
@@ -38,6 +41,9 @@ class AgentRelaxerSpotCatalogTest {
                         new AgentRelaxerSpotCatalog.Spot(2000000, 2545, 287)),
                 Set.copyOf(faceHoles));
         assertEquals(amherst.size(), new HashSet<>(amherst).size());
+        assertTrue(nearPio.stream().allMatch(spot -> spot.mapId() == 1000000
+                && spot.y() == 274 && spot.x() >= 250 && spot.x() <= 690
+                && Math.abs(spot.x() - 547) >= 75));
         assertEquals(all.size(), new HashSet<>(all).size());
         assertTrue(left.stream().allMatch(spot -> spot.mapId() == AgentRelaxerSpotCatalog.SOUTHPERRY_MAP_ID
                 && spot.x() < AgentRelaxerSpotCatalog.SOUTHPERRY_MIDPOINT_X));

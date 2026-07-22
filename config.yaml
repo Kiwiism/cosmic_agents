@@ -346,6 +346,18 @@ server:
     AGENT_MAPLE_ISLAND_SHOWCASE_AGENT_NAME: AmherstRun #Only this Agent IGN may use the full Maple Island showcase reset path.
     AGENT_MAPLE_ISLAND_COHORT_ENABLED: true #Allow guarded persistent-pool cohort provisioning and full Maple Island runs.
     AGENT_PERSONALITY_PRESENTATION_ENABLED: true #Enable durable, observer-gated personality presentation for Maple Island cohorts running in full realism mode.
+    AGENT_COMBAT_BEHAVIOR_ENABLED: true #Master switch for profile-driven response, target, crowd, idle, reaction, and navigation adapters.
+    AGENT_RESPONSE_LATENCY_ENABLED: true #Delay only new target acquisition using each Agent's stable personality response baseline.
+    AGENT_MAP_CROWD_RESPITE_ENABLED: true #Allow patient Agents to pause plans at safe spots while a map is crowded, then resume the same objective.
+    AGENT_TARGET_CLAIM_POLICY_ENABLED: true #Use map-wide Agent target claims instead of cohort-only contention.
+    AGENT_TARGET_VARIATION_ENABLED: true #Let personality choose among best, near-best, and middle-ranked legal targets.
+    AGENT_PLATFORM_ANCHOR_BEHAVIOR_ENABLED: true #Let suitable profiles retain a target-bearing farming platform.
+    AGENT_NAVIGATION_BEHAVIOR_ENABLED: true #Let personality tune bounded alternate routes and incidental travel jumps.
+    AGENT_IDLE_COMBAT_PRESENTATION_ENABLED: true #Allow profile-selected wait, patrol, hop, prone, and empty-attack no-target behavior.
+    AGENT_COMBAT_EMOTES_ENABLED: true #Allow observer-gated, budgeted facial reactions to repeated misses and rests.
+    AGENT_MAP_MAX_ACTIVE_COMBAT_PERCENT: 70 #Soft share of same-map Agents allowed to compete; remaining eligible Agents may rest.
+    AGENT_MAP_CROWD_MIN_AGENTS: 4 #Do not apply crowd respite below this same-map Agent count.
+    AGENT_COMBAT_EMOTE_MAP_BUDGET_PER_10S: 3 #Maximum combat/rest emotes presented per map in a rolling ten-second window.
     AGENT_MAPLE_ISLAND_FULL_PLATFORM_ANCHOR_PERCENT: 30 # Full realism: percent of cohort Agents assigned to farm and loot within one target-bearing navigation platform.
     AGENT_MAPLE_ISLAND_FULL_MIDDLE_TARGET_PERCENT: 35 # Full realism: percent of ordinary target searches that choose from the middle third instead of rank 1.
     AGENT_MAPLE_ISLAND_FULL_TARGET_SHORTLIST_LIMIT: 10 # Full realism: maximum reachable ranked targets considered by the middle-choice policy.

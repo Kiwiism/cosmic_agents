@@ -17,12 +17,28 @@ public final class AgentLiveTickGateService {
     }
 
     public record Hooks(CommonTickSystems commonTickSystems,
+                        PlanExecutionGateTick planExecutionGateTick,
                         ObjectiveSupervisionTick objectiveSupervisionTick,
                         ActiveCapabilityTick activeCapabilityTick,
                         TradeWindowTick tradeWindowTick,
                         IdleModeTick idleModeTick,
                         RecoveryTick recoveryTick,
                         TrackedMapChangeTick trackedMapChangeTick) {
+        public Hooks(CommonTickSystems commonTickSystems,
+                     ObjectiveSupervisionTick objectiveSupervisionTick,
+                     ActiveCapabilityTick activeCapabilityTick,
+                     TradeWindowTick tradeWindowTick,
+                     IdleModeTick idleModeTick,
+                     RecoveryTick recoveryTick,
+                     TrackedMapChangeTick trackedMapChangeTick) {
+            this(commonTickSystems, (entry, agent, runAiTick) -> false, objectiveSupervisionTick,
+                    activeCapabilityTick, tradeWindowTick, idleModeTick, recoveryTick, trackedMapChangeTick);
+        }
+    }
+
+    @FunctionalInterface
+    public interface PlanExecutionGateTick {
+        boolean tick(AgentRuntimeEntry entry, Character agent, boolean runAiTick);
     }
 
     @FunctionalInterface
@@ -68,6 +84,10 @@ public final class AgentLiveTickGateService {
         // facing, fidget and loot ticks that can overwrite the chair pose after a successful
         // sit. The active capability still gets one chance to verify/finish the sit command.
         if (context.agent().getChair() > 0) {
+            if (hooks.planExecutionGateTick().tick(
+                    context.entry(), context.agent(), context.runAiTick())) {
+                return true;
+            }
             hooks.activeCapabilityTick().tick(context.entry(), context.agent());
             return true;
         }
@@ -75,6 +95,9 @@ public final class AgentLiveTickGateService {
             return true;
         }
         if (hooks.commonTickSystems().run(context.entry(), context.agent(), context.leader(), context.runAiTick())) {
+            return true;
+        }
+        if (hooks.planExecutionGateTick().tick(context.entry(), context.agent(), context.runAiTick())) {
             return true;
         }
         if (hooks.activeCapabilityTick().tick(context.entry(), context.agent())) {

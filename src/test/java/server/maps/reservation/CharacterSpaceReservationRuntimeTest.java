@@ -59,4 +59,14 @@ class CharacterSpaceReservationRuntimeTest {
         assertTrue(CharacterSpaceReservationRuntime.reserveExact(
                 otherChannel, CharacterSpaceOwner.character(2), SPACES, SPACES.get(0), 1).isPresent());
     }
+
+    @Test
+    void exactReservationHonorsLivePositionAvailabilityCheck() {
+        assertFalse(CharacterSpaceReservationRuntime.reserveExact(
+                SCOPE, CharacterSpaceOwner.character(1), SPACES, SPACES.get(0), 1,
+                ignored -> false).isPresent());
+        assertTrue(CharacterSpaceReservationRuntime.reserveExact(
+                SCOPE, CharacterSpaceOwner.character(1), SPACES, SPACES.get(0), 1,
+                ignored -> true).isPresent());
+    }
 }

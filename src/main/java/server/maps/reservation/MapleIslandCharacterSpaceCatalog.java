@@ -7,6 +7,7 @@ public final class MapleIslandCharacterSpaceCatalog {
     public static final int AMHERST_MAP_ID = 1000000;
     public static final int SOUTHPERRY_MAP_ID = 2000000;
     public static final int SOUTHPERRY_MIDPOINT_X = 1890;
+    private static final int PIO_X = 547;
     private static final int SPACING_PX = 25;
 
     private record HorizontalRange(int startX, int endX, int y) {
@@ -64,6 +65,14 @@ public final class MapleIslandCharacterSpaceCatalog {
             .filter(space -> space.y() == 287 && (space.x() == 2432 || space.x() == 2545))
             .toList();
 
+    // WZ map 001000000 places Pio at (547, 274). Keep seats on his ground
+    // foothold, nearby but outside his sprite/interaction center.
+    private static final List<CharacterSpace> AMHERST_NEAR_PIO = AMHERST.stream()
+            .filter(space -> space.y() == 274
+                    && space.x() >= 250 && space.x() <= 690
+                    && Math.abs(space.x() - PIO_X) >= 75)
+            .toList();
+
     private static final List<CharacterSpace> SOUTHPERRY_LEFT = SOUTHPERRY.stream()
             .filter(space -> space.x() < SOUTHPERRY_MIDPOINT_X)
             .toList();
@@ -76,6 +85,10 @@ public final class MapleIslandCharacterSpaceCatalog {
 
     public static List<CharacterSpace> amherst() {
         return AMHERST;
+    }
+
+    public static List<CharacterSpace> amherstNearPio() {
+        return AMHERST_NEAR_PIO;
     }
 
     public static List<CharacterSpace> southperry() {

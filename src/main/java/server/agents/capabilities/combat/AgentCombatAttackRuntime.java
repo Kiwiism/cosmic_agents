@@ -10,6 +10,8 @@ import server.combat.CombatFormulaProvider;
 import server.life.Monster;
 
 import java.util.HashMap;
+import server.agents.operations.events.AgentAttackResolvedEvent;
+import server.agents.runtime.AgentSessionEventRuntime;
 
 public final class AgentCombatAttackRuntime {
     private AgentCombatAttackRuntime() {
@@ -65,6 +67,12 @@ public final class AgentCombatAttackRuntime {
         if (!AgentAttackExecutionProvider.applyAttackRoute(attackPlan.route, attack, bot)) {
             return;
         }
+        int hitLines = attack.targets.values().stream().flatMap(target -> target.damageLines().stream())
+                .mapToInt(damage -> damage > 0 ? 1 : 0).sum();
+        int totalLines = attack.targets.values().stream().mapToInt(target -> target.damageLines().size()).sum();
+        AgentSessionEventRuntime.bus(entry).publish(new AgentAttackResolvedEvent(
+                bot.getId(), System.currentTimeMillis(), bot.getMapId(), attack.targets.size(),
+                hitLines, totalLines - hitLines));
         AgentCombatCooldownStateRuntime.maxAttackCooldown(entry, attackPlan.cooldownMs);
         AgentCombatFacingRuntime.rememberAttackFacing(entry, attackPlan.stance);
         AgentCombatAlertRuntime.markAlerted(entry);

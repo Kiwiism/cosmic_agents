@@ -23,6 +23,9 @@ import server.agents.resources.events.AgentResourceMonitoringProjectionService;
 import server.agents.operations.events.AgentOperationalDialogueReactionService;
 import server.agents.operations.events.AgentOperationalEvaluationListener;
 import server.agents.operations.events.AgentOperationalMonitoringProjectionService;
+import server.agents.capabilities.behavior.AgentBehaviorEventListener;
+import server.agents.capabilities.behavior.AgentPioRelaxerInterludeEventListener;
+import server.agents.progression.events.AgentQuestStateChangedEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -99,6 +102,11 @@ public final class AgentSessionEventWiringRuntime {
                 if (YamlConfig.config.server.AGENT_PERSONALITY_PRESENTATION_ENABLED) {
                     subscriptions.add(bus.subscribe("*",
                             new AgentPersonalityPresentationEventListener(entry)));
+                    subscriptions.add(bus.subscribe(AgentQuestStateChangedEvent.TYPE,
+                            new AgentPioRelaxerInterludeEventListener(entry)));
+                }
+                if (YamlConfig.config.server.AGENT_COMBAT_BEHAVIOR_ENABLED) {
+                    subscriptions.add(bus.subscribe("*", new AgentBehaviorEventListener(entry)));
                 }
                 subscriptions.add(bus.subscribe("*", new AgentDurableEventJournalListener()));
                 if (rollout.llmContextEnabled()) {
