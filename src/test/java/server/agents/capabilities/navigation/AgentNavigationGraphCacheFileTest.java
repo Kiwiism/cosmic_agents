@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Date;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -65,6 +66,25 @@ class AgentNavigationGraphCacheFileTest {
     }
 
     @Test
+    void discardsImpossibleUpwardDropsFromAnExistingCache() throws Exception {
+        Path file = temporaryDirectory.resolve("stale-drop-graph.bin");
+        AgentNavigationGraph graph = new AgentNavigationGraph(
+                MAP_ID, VERSION, PROFILE, List.of(), Map.of(), Map.of(), Map.of(), Set.of());
+        AgentNavigationGraph.Edge valid = edge(new java.awt.Point(20, 100), new java.awt.Point(20, 180));
+        AgentNavigationGraph.Edge impossible = edge(new java.awt.Point(20, 100), new java.awt.Point(80, 40));
+        graph.outgoingByRegionId.put(1, new ArrayList<>(List.of(valid, impossible)));
+
+        AgentNavigationGraphCacheFile.write(file, graph);
+        AgentNavigationGraph loaded = AgentNavigationGraphCacheFile.read(
+                file, VERSION, MAP_ID, PROFILE);
+
+        assertNotNull(loaded);
+        assertEquals(1, loaded.getOutgoing(1).size());
+        assertEquals(valid.startPoint, loaded.getOutgoing(1).getFirst().startPoint);
+        assertEquals(valid.endPoint, loaded.getOutgoing(1).getFirst().endPoint);
+    }
+
+    @Test
     void rejectsAndDeletesUnexpectedSerializedType() throws Exception {
         Path file = temporaryDirectory.resolve("unexpected.bin");
         try (ObjectOutputStream out = new ObjectOutputStream(Files.newOutputStream(file))) {
@@ -87,5 +107,11 @@ class AgentNavigationGraphCacheFileTest {
 
         assertNull(AgentNavigationGraphCacheFile.read(file, VERSION, MAP_ID, PROFILE));
         assertFalse(Files.exists(file));
+    }
+
+    private static AgentNavigationGraph.Edge edge(java.awt.Point start, java.awt.Point end) {
+        return new AgentNavigationGraph.Edge(
+                1, 2, AgentNavigationGraph.EdgeType.DROP,
+                start, end, 0, 0, 0, 0, 0, 100);
     }
 }

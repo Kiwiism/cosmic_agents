@@ -159,7 +159,7 @@ public final class AgentTickCoreService {
             // Logging out removes the leader before this agent's next tick. Preserve a seated
             // agent as-is instead of routing it through ownerless idle physics, which changes
             // the stored stance to standing and is then exposed to the client on relog.
-            if (leader == null && agent.getChair() > 0) {
+            if (leader == null && agent.getChair() >= 0) {
                 complete = true;
                 return;
             }

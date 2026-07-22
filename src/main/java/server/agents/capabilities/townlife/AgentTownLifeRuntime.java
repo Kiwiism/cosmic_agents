@@ -22,6 +22,8 @@ import java.util.List;
 public final class AgentTownLifeRuntime {
     private static final int SHANKS_INTERACTION_DISTANCE_PX = 90;
     private static final int ACTIVITY_ARRIVAL_DISTANCE_PX = 70;
+    private static final int ACTIVITY_ARRIVAL_VERTICAL_DISTANCE_PX = 12;
+    private static final int MAP_SEAT_ARRIVAL_DISTANCE_PX = 12;
 
     private AgentTownLifeRuntime() {
     }
@@ -83,7 +85,7 @@ public final class AgentTownLifeRuntime {
         AgentTownLifeState state = entry.capabilityStates().require(AgentTownLifeState.STATE_KEY);
         state.stop();
         AgentFidgetService.clear(entry);
-        if (agent != null && agent.getChair() > 0) {
+        if (agent != null && agent.getChair() >= 0) {
             AgentChairService.stand(entry, agent);
         }
         AgentPrimitiveCapabilityGatewayRuntime.gateway().stop(entry);
@@ -105,7 +107,7 @@ public final class AgentTownLifeRuntime {
                     entry, agent, LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID, gateway, nowMs);
             return outcome.status() != AgentVictoriaRouteRuntime.Status.MOVING;
         }
-        if (agent.getChair() > 0) {
+        if (agent.getChair() >= 0) {
             AgentChairService.stand(entry, agent);
             return true;
         }
@@ -208,7 +210,7 @@ public final class AgentTownLifeRuntime {
         if (nowMs < state.nextActionAtMs()) {
             return true;
         }
-        if (agent.getChair() > 0) {
+        if (agent.getChair() >= 0) {
             AgentChairService.stand(entry, agent);
         }
         AgentFidgetService.clear(entry);
@@ -267,9 +269,13 @@ public final class AgentTownLifeRuntime {
             state.transition(AgentTownLifeState.Stage.CHOOSE_ACTIVITY, nowMs);
             return true;
         }
+        int arrivalDistance = state.activity() == AgentTownLifeState.Activity.REST
+                && LithHarborTownLifeCatalog.mapSeatId(target) >= 0
+                ? MAP_SEAT_ARRIVAL_DISTANCE_PX
+                : ACTIVITY_ARRIVAL_DISTANCE_PX;
         if (!gateway.grounded(agent)
-                || agent.getPosition().distanceSq(target)
-                > ACTIVITY_ARRIVAL_DISTANCE_PX * ACTIVITY_ARRIVAL_DISTANCE_PX) {
+                || Math.abs(agent.getPosition().y - target.y) > ACTIVITY_ARRIVAL_VERTICAL_DISTANCE_PX
+                || agent.getPosition().distanceSq(target) > arrivalDistance * arrivalDistance) {
             gateway.navigate(entry, target, false);
             return false;
         }
@@ -296,7 +302,7 @@ public final class AgentTownLifeRuntime {
                                      PrimitiveCapabilityGateway gateway) {
         if (nowMs >= state.nextActionAtMs()) {
             AgentFidgetService.clear(entry);
-            if (agent.getChair() > 0) {
+            if (agent.getChair() >= 0) {
                 AgentChairService.stand(entry, agent);
             }
             if (state.activity() == AgentTownLifeState.Activity.SHOP_VISIT
@@ -318,8 +324,13 @@ public final class AgentTownLifeRuntime {
             state.markExpressionShown();
         }
         if (state.activity() == AgentTownLifeState.Activity.REST) {
-            if (agent.getChair() <= 0 && gateway.itemCount(agent, ItemId.RELAXER) > 0) {
-                gateway.sitChair(agent, ItemId.RELAXER);
+            if (agent.getChair() < 0) {
+                int mapSeatId = LithHarborTownLifeCatalog.mapSeatId(state.target());
+                if (mapSeatId >= 0) {
+                    gateway.sitMapSeat(agent, mapSeatId, state.target());
+                } else if (gateway.itemCount(agent, ItemId.RELAXER) > 0) {
+                    gateway.sitChair(agent, ItemId.RELAXER);
+                }
             }
             return true;
         }

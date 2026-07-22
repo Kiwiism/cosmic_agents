@@ -67,7 +67,8 @@ public final class AgentMovementBroadcastService {
         // ground foothold here makes remote clients retain the ground render layer, which is
         // why synthetic characters appeared behind rope artwork.
         Rope climbable = AgentClimbStateRuntime.climbRope(entry);
-        if (AgentClimbStateRuntime.climbing(entry) && climbable != null && !climbable.isLadder()) {
+        if (AgentClimbStateRuntime.climbing(entry)
+                && AgentClimbRenderLayerCatalog.usesClimbRenderLayer(bot.getMapId(), climbable)) {
             return ROPE_CLIMB_FOOTHOLD_ID;
         }
         // Native rope-jump capture switches from fh=-2 to fh=0 until the landing

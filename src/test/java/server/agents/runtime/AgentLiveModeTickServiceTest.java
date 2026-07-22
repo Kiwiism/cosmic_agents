@@ -46,6 +46,7 @@ class AgentLiveModeTickServiceTest {
     @Test
     void preservesLiveModeOrderingAndTargetPropagation() {
         Character agent = mock(Character.class);
+        when(agent.getChair()).thenReturn(-1);
         Character leader = mock(Character.class);
         Character followAnchor = mock(Character.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
@@ -112,6 +113,7 @@ class AgentLiveModeTickServiceTest {
     @Test
     void stopsBeforeLaterPhasesWhenFollowOpportunityConsumesTick() {
         Character agent = mock(Character.class);
+        when(agent.getChair()).thenReturn(-1);
         Character leader = mock(Character.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
         Point initialTarget = new Point(30, 40);
@@ -166,6 +168,7 @@ class AgentLiveModeTickServiceTest {
     @Test
     void presentationConsumptionStopsBeforeCombatAndMovementModes() {
         Character agent = mock(Character.class);
+        when(agent.getChair()).thenReturn(-1);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
         Point target = new Point(30, 40);
         List<String> calls = new ArrayList<>();

@@ -74,6 +74,7 @@ class AgentLiveTickGateServiceTest {
     @Test
     void runsLiveGatesInLegacyOrderWhenNoneConsumesTick() {
         Character agent = mock(Character.class);
+        when(agent.getChair()).thenReturn(-1);
         Character leader = mock(Character.class);
         Character followAnchor = mock(Character.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
@@ -124,6 +125,7 @@ class AgentLiveTickGateServiceTest {
     @Test
     void stopsWhenTradeWindowGateConsumesTick() {
         Character agent = mock(Character.class);
+        when(agent.getChair()).thenReturn(-1);
         Character leader = mock(Character.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
         List<String> calls = new ArrayList<>();
@@ -173,6 +175,7 @@ class AgentLiveTickGateServiceTest {
     @Test
     void activeCapabilityRunsBeforeLegacyLiveGatesAndConsumesTick() {
         Character agent = mock(Character.class);
+        when(agent.getChair()).thenReturn(-1);
         Character leader = mock(Character.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
         List<String> calls = new ArrayList<>();
@@ -210,6 +213,7 @@ class AgentLiveTickGateServiceTest {
     @Test
     void mapChangeIsGroundedBeforeCapabilityOrPhysicsWork() {
         Character agent = mock(Character.class);
+        when(agent.getChair()).thenReturn(-1);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
         List<String> calls = new ArrayList<>();
 

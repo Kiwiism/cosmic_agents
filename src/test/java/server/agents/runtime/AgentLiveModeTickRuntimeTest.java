@@ -16,12 +16,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
 
 class AgentLiveModeTickRuntimeTest {
     @Test
     void shopVisitConsumptionShortCircuitsRemainingLiveModes() {
         AgentRuntimeEntry entry = mock(AgentRuntimeEntry.class);
         Character agent = mock(Character.class);
+        when(agent.getChair()).thenReturn(-1);
         Character followAnchor = mock(Character.class);
         Point agentPos = new Point(10, 20);
         Point targetPos = new Point(30, 40);

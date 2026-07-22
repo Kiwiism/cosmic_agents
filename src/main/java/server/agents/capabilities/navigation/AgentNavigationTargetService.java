@@ -60,7 +60,12 @@ public final class AgentNavigationTargetService {
                 AgentNavigationWarmupService.notifyWarmup(entry, bot);
                 AgentNavigationDebugStateRuntime.setLastDecision(entry, "graph-warmup");
                 AgentMovementStateResetService.clearNavigationState(entry);
-                Point fallbackTarget = rawTargetPos != null ? new Point(rawTargetPos) : bot.getPosition();
+                // A raw cross-map target is not a safe warm-up fallback. In disconnected maps
+                // (notably Lith Harbor's ship arrival) steering toward that coordinate makes an
+                // airborne Agent travel through open space before the graph exposes the hidden
+                // transfer portal. Hold horizontal position and let ordinary gravity settle the
+                // Agent; the next AI pass retries once the graph is available.
+                Point fallbackTarget = bot.getPosition();
                 AgentNavigationDebugStateRuntime.recordPathLog(entry,
                         AgentMovementTargetRuntime.captureTargetSnapshot(entry, rawTargetPos),
                         -1, false, runAiTick);
@@ -176,7 +181,9 @@ public final class AgentNavigationTargetService {
                 AgentNavigationDebugStateRuntime.recordPathLog(entry,
                         AgentMovementTargetRuntime.captureTargetSnapshot(entry, rawTargetPos),
                         startRegionId, false, runAiTick);
-                return new NavigationDirective(rawTargetPos, false);
+                return new NavigationDirective(
+                        safeFallbackTarget(botPos, rawTargetPos, startRegionId, targetRegionId),
+                        false);
             }
 
             NavigationDirective executionDirective = tryExecuteEdge(graph, entry, bot, botPos, rawTargetPos, edge, runAiTick);
@@ -302,6 +309,16 @@ public final class AgentNavigationTargetService {
                 entry, graph.mapId, targetRegionId, targetPos);
         return AgentNavigationPathService.findNextEdgeVaried(
                 graph, bot.getMap(), startPosition, startRegionId, targetRegionId, targetPos, variation);
+    }
+
+    static Point safeFallbackTarget(Point botPos,
+                                    Point rawTargetPos,
+                                    int startRegionId,
+                                    int targetRegionId) {
+        boolean sameResolvedRegion = startRegionId >= 0 && startRegionId == targetRegionId;
+        return sameResolvedRegion && rawTargetPos != null
+                ? new Point(rawTargetPos)
+                : new Point(botPos);
     }
 
     static AgentTravelVariationRuntime.RouteVariation scriptedRouteVariation(

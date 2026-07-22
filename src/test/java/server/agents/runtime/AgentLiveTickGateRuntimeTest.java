@@ -16,12 +16,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
 
 class AgentLiveTickGateRuntimeTest {
     @Test
     void objectiveSupervisionRunsBeforeCommonTickSystems() {
         AgentRuntimeEntry entry = mock(AgentRuntimeEntry.class);
         Character agent = mock(Character.class);
+        when(agent.getChair()).thenReturn(-1);
         List<String> calls = new ArrayList<>();
 
         try (MockedStatic<AgentPlanReattachmentRuntime> reattachment =
@@ -48,6 +50,7 @@ class AgentLiveTickGateRuntimeTest {
     void commonTickConsumptionShortCircuitsRemainingLiveGates() {
         AgentRuntimeEntry entry = mock(AgentRuntimeEntry.class);
         Character agent = mock(Character.class);
+        when(agent.getChair()).thenReturn(-1);
         Character leader = mock(Character.class);
         Character followAnchor = mock(Character.class);
         List<String> calls = new ArrayList<>();

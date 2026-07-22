@@ -7,12 +7,26 @@ import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class AgentNavigationTargetServiceVariationTest {
+    @Test
+    void unresolvedOrCrossRegionFallbackHoldsPositionInsteadOfSteeringThroughGeometry() {
+        Point position = new Point(-495, -62);
+        Point olaf = new Point(3392, 518);
+
+        assertEquals(position,
+                AgentNavigationTargetService.safeFallbackTarget(position, olaf, -1, 72));
+        assertEquals(position,
+                AgentNavigationTargetService.safeFallbackTarget(position, olaf, 23, 72));
+        assertEquals(olaf,
+                AgentNavigationTargetService.safeFallbackTarget(position, olaf, 72, 72));
+    }
+
     @Test
     void variationOnlyAppliesToTheActiveScriptedMoveTarget() {
         Character bot = mock(Character.class);

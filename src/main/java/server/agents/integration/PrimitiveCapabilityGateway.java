@@ -121,5 +121,9 @@ public interface PrimitiveCapabilityGateway {
 
     boolean sitChair(Character agent, int itemId);
 
+    default boolean sitMapSeat(Character agent, int seatId, Point seatPosition) {
+        return sitChair(agent, seatId);
+    }
+
     int chairItemId(Character agent);
 }

@@ -83,7 +83,7 @@ public final class AgentLiveTickGateService {
         // A seated character must not reach passive/common systems: those include physics,
         // facing, fidget and loot ticks that can overwrite the chair pose after a successful
         // sit. The active capability still gets one chance to verify/finish the sit command.
-        if (context.agent().getChair() > 0) {
+        if (context.agent().getChair() >= 0) {
             if (hooks.planExecutionGateTick().tick(
                     context.entry(), context.agent(), context.runAiTick())) {
                 return true;

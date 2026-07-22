@@ -34,6 +34,7 @@ class AgentMovementSnapshotServiceTest {
         Character agent = mock(Character.class);
         when(agent.getPosition()).thenReturn(new Point(10, 20));
         when(agent.getHp()).thenReturn(1);
+        when(agent.getChair()).thenReturn(-1);
         when(agent.getStance()).thenReturn(CharacterStance.STAND_LEFT_STANCE);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
         AgentMovementStateRuntime.setFacingDirection(entry, 1);

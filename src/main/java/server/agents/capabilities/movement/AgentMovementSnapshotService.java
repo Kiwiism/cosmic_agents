@@ -27,7 +27,7 @@ public final class AgentMovementSnapshotService {
     }
 
     private static int resolveSnapshotStance(AgentRuntimeEntry entry, Character agent) {
-        if (agent != null && agent.getChair() > 0) {
+        if (agent != null && agent.getChair() >= 0) {
             return AgentMovementStateRuntime.facingDirectionSign(entry) < 0
                     ? CharacterStance.SIT_LEFT_STANCE
                     : CharacterStance.SIT_RIGHT_STANCE;

@@ -2249,6 +2249,10 @@ public final class AgentNavigationGraphService {
                                 int cost,
                                 Map<Integer, List<AgentNavigationGraph.Edge>> outgoing,
                                 Set<String> edgeKeys) {
+        if (type == AgentNavigationGraph.EdgeType.DROP
+                && endPoint.y <= startPoint.y + 4) {
+            return;
+        }
         String key = fromRegionId + ":" + toRegionId + ":" + type + ":" + startPoint.x + ":" + startPoint.y + ":"
                 + endPoint.x + ":" + endPoint.y + ":" + launchStepX + ":" + portalId + ":"
                 + ropeX + ":" + ropeTopY + ":" + ropeBottomY + ":" + launchMinX + ":" + launchMaxX;

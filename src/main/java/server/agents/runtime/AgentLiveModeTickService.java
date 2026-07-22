@@ -96,7 +96,7 @@ public final class AgentLiveModeTickService {
 
     public static Result tickLiveModes(Context context, Hooks hooks) {
         Point targetPosition = context.targetPosition();
-        if (context.agent().getChair() > 0) {
+        if (context.agent().getChair() >= 0) {
             return new Result(targetPosition);
         }
 

@@ -463,11 +463,21 @@ public enum CosmicPrimitiveCapabilityGateway implements PrimitiveCapabilityGatew
 
     @Override
     public boolean sitChair(Character agent, int itemId) {
-        if (itemCount(agent, itemId) < 1) {
+        if (itemId < 0 || (itemId >= 1_000_000 && itemCount(agent, itemId) < 1)) {
             return false;
         }
         AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(agent.getId());
         return AgentChairService.sit(entry, agent, itemId);
+    }
+
+    @Override
+    public boolean sitMapSeat(Character agent, int seatId, Point seatPosition) {
+        if (agent == null || seatId < 0 || seatId >= 1_000_000 || seatPosition == null
+                || agent.getMap() == null || seatId >= agent.getMap().getSeats()) {
+            return false;
+        }
+        AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(agent.getId());
+        return AgentChairService.sitMapSeat(entry, agent, seatId, seatPosition);
     }
 
     @Override

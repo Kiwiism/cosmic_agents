@@ -2,6 +2,7 @@ package server.agents.capabilities.townlife;
 
 import java.awt.Point;
 import java.util.List;
+import java.util.Map;
 
 /** WZ-verified Lith Harbor activity anchors and enterable shop interiors. */
 public final class LithHarborTownLifeCatalog {
@@ -11,9 +12,29 @@ public final class LithHarborTownLifeCatalog {
     private static final List<Point> REST_SPOTS = List.of(
             new Point(650, 338),
             new Point(1_650, 641),
+            // Native Lith Harbor bench seats from Map.wz/104000000 seat/0..8.
+            new Point(2_404, 525),
+            new Point(2_427, 525),
+            new Point(2_448, 525),
+            new Point(2_504, 525),
+            new Point(2_527, 525),
+            new Point(2_548, 525),
+            new Point(2_606, 525),
+            new Point(2_629, 525),
+            new Point(2_650, 525),
             new Point(2_880, 520),
             new Point(3_240, 518),
             new Point(4_570, 75));
+    private static final Map<Point, Integer> MAP_SEATS = Map.ofEntries(
+            Map.entry(new Point(2_404, 525), 0),
+            Map.entry(new Point(2_427, 525), 1),
+            Map.entry(new Point(2_448, 525), 2),
+            Map.entry(new Point(2_606, 525), 3),
+            Map.entry(new Point(2_629, 525), 4),
+            Map.entry(new Point(2_650, 525), 5),
+            Map.entry(new Point(2_504, 525), 6),
+            Map.entry(new Point(2_527, 525), 7),
+            Map.entry(new Point(2_548, 525), 8));
     private static final List<Point> WANDER_SPOTS = List.of(
             new Point(360, 278),
             new Point(1_100, 279),
@@ -45,6 +66,10 @@ public final class LithHarborTownLifeCatalog {
 
     public static Point wanderSpot(int index) {
         return copy(WANDER_SPOTS.get(Math.floorMod(index, WANDER_SPOTS.size())));
+    }
+
+    public static int mapSeatId(Point point) {
+        return point == null ? -1 : MAP_SEATS.getOrDefault(point, -1);
     }
 
     public static NpcSpot npcSpot(int index) {

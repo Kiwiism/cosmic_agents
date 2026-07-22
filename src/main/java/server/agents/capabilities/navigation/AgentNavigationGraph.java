@@ -332,6 +332,7 @@ public final class AgentNavigationGraph implements Serializable {
         for (Map.Entry<Integer, List<Edge>> entry : outgoingByRegionId.entrySet()) {
             this.outgoingByRegionId.put(entry.getKey(), new ArrayList<>(entry.getValue()));
         }
+        discardImpossibleDropEdges();
         this.collidableWallIds = new java.util.HashSet<>(collidableWallIds);
         this.collidableFromBelowIds = new java.util.HashSet<>(collidableFromBelowIds);
     }
@@ -363,6 +364,26 @@ public final class AgentNavigationGraph implements Serializable {
 
     public List<Edge> getOutgoing(int regionId) {
         return outgoingByRegionId.getOrDefault(regionId, List.of());
+    }
+
+    int discardImpossibleDropEdges() {
+        int removed = 0;
+        for (List<Edge> edges : outgoingByRegionId.values()) {
+            int before = edges.size();
+            edges.removeIf(AgentNavigationGraph::isImpossibleDrop);
+            removed += before - edges.size();
+        }
+        if (removed > 0) {
+            connectedComponentByRegionId = null;
+            costToGoalByTargetRegion = null;
+        }
+        return removed;
+    }
+
+    private static boolean isImpossibleDrop(Edge edge) {
+        return edge != null
+                && edge.type == EdgeType.DROP
+                && edge.endPoint.y <= edge.startPoint.y + 4;
     }
 
     public int connectedComponentId(int regionId) {

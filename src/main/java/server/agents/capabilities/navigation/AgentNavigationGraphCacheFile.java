@@ -64,6 +64,7 @@ final class AgentNavigationGraphCacheFile {
                 Files.deleteIfExists(file);
                 return null;
             }
+            graph.discardImpossibleDropEdges();
             return graph;
         } catch (IOException | ClassNotFoundException failure) {
             Files.deleteIfExists(file);
