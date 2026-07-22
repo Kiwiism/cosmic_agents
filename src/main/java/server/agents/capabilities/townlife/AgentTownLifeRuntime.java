@@ -17,7 +17,6 @@ import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
 
 import java.awt.Point;
-import java.util.List;
 
 public final class AgentTownLifeRuntime {
     private static final int SHANKS_INTERACTION_DISTANCE_PX = 90;
@@ -62,6 +61,8 @@ public final class AgentTownLifeRuntime {
                 && state.stage() != AgentTownLifeState.Stage.RETURN_FROM_SHOP
                 && !(state.stage() == AgentTownLifeState.Stage.DWELL
                 && state.activity() == AgentTownLifeState.Activity.SHOP_VISIT)) {
+            AgentTownLifeDestinationService.release(agent);
+            AgentFidgetService.clear(entry);
             state.transition(AgentTownLifeState.Stage.RETURN_FROM_SHOP, nowMs);
         }
         return switch (state.stage()) {
@@ -84,6 +85,7 @@ public final class AgentTownLifeRuntime {
         }
         AgentTownLifeState state = entry.capabilityStates().require(AgentTownLifeState.STATE_KEY);
         state.stop();
+        AgentTownLifeDestinationService.release(agent);
         AgentFidgetService.clear(entry);
         if (agent != null && agent.getChair() >= 0) {
             AgentChairService.stand(entry, agent);
@@ -214,48 +216,19 @@ public final class AgentTownLifeRuntime {
             AgentChairService.stand(entry, agent);
         }
         AgentFidgetService.clear(entry);
-        int roll = varied(agent, state, 100, 17);
-        AgentTownLifeState.Activity activity = roll < 20
-                ? AgentTownLifeState.Activity.REST
-                : roll < 45 ? AgentTownLifeState.Activity.SOCIAL
-                : roll < 63 ? AgentTownLifeState.Activity.NPC_PAUSE
-                : roll < 78 ? AgentTownLifeState.Activity.WANDER
-                : roll < 92 ? AgentTownLifeState.Activity.SHOP_VISIT
-                : AgentTownLifeState.Activity.WEAPON_FLOURISH;
-        int sequence = state.sequence();
-        if (activity == AgentTownLifeState.Activity.REST) {
-            state.select(activity, LithHarborTownLifeCatalog.restSpot(varied(agent, state, 97, 31)),
-                    0, 0, nowMs);
+        AgentTownLifeRolePolicy.resolve(entry, agent, state, nowMs);
+        AgentTownLifeState.Activity activity = AgentTownLifeActivityPolicy.choose(entry, agent, state);
+        AgentTownLifeDestinationService.Destination destination =
+                AgentTownLifeDestinationService.select(
+                        entry, agent, state, activity, nowMs, gateway);
+        if (destination == null) {
+            state.transition(AgentTownLifeState.Stage.CHOOSE_ACTIVITY,
+                    nowMs + delay(agent, state, 500, 1_501));
             return true;
         }
-        if (activity == AgentTownLifeState.Activity.NPC_PAUSE) {
-            LithHarborTownLifeCatalog.NpcSpot spot =
-                    LithHarborTownLifeCatalog.npcSpot(varied(agent, state, 101, 47));
-            Point npc = gateway.npcPosition(agent, spot.npcId());
-            Point target = npc == null
-                    ? LithHarborTownLifeCatalog.wanderSpot(sequence)
-                    : new Point(npc.x + spot.offsetX(), npc.y);
-            state.select(activity, target, 0, 0, nowMs);
-            return true;
-        }
-        if (activity == AgentTownLifeState.Activity.SHOP_VISIT) {
-            state.select(activity, null, 0,
-                    LithHarborTownLifeCatalog.shopMapId(varied(agent, state, 103, 61)), nowMs);
-            return true;
-        }
-        if (activity == AgentTownLifeState.Activity.SOCIAL
-                || activity == AgentTownLifeState.Activity.WEAPON_FLOURISH) {
-            Character peer = choosePeer(agent, state);
-            if (peer != null) {
-                int side = varied(agent, state, 2, 73) == 0 ? -1 : 1;
-                Point target = new Point(peer.getPosition().x + side * 52, peer.getPosition().y);
-                state.select(activity, target, peer.getId(), 0, nowMs);
-                return true;
-            }
-            activity = AgentTownLifeState.Activity.WANDER;
-        }
-        state.select(activity, LithHarborTownLifeCatalog.wanderSpot(varied(agent, state, 109, 89)),
-                0, 0, nowMs);
+        state.select(destination.activity(), destination.point(), destination.targetCharacterId(),
+                destination.destinationMapId(), destination.key(), nowMs);
+        state.memory().remember(destination.activity(), destination.key(), nowMs);
         return true;
     }
 
@@ -266,6 +239,7 @@ public final class AgentTownLifeRuntime {
                                           PrimitiveCapabilityGateway gateway) {
         Point target = state.target();
         if (target == null) {
+            AgentTownLifeDestinationService.release(agent);
             state.transition(AgentTownLifeState.Stage.CHOOSE_ACTIVITY, nowMs);
             return true;
         }
@@ -276,6 +250,12 @@ public final class AgentTownLifeRuntime {
         if (!gateway.grounded(agent)
                 || Math.abs(agent.getPosition().y - target.y) > ACTIVITY_ARRIVAL_VERTICAL_DISTANCE_PX
                 || agent.getPosition().distanceSq(target) > arrivalDistance * arrivalDistance) {
+            AgentTownLifeProgressWatchdog.Result progress =
+                    state.progressWatchdog().observe(agent.getPosition(), nowMs);
+            if (progress != AgentTownLifeProgressWatchdog.Result.PROGRESSING) {
+                abandonDestination(entry, agent, state, nowMs, gateway);
+                return true;
+            }
             gateway.navigate(entry, target, false);
             return false;
         }
@@ -302,6 +282,7 @@ public final class AgentTownLifeRuntime {
                                      PrimitiveCapabilityGateway gateway) {
         if (nowMs >= state.nextActionAtMs()) {
             AgentFidgetService.clear(entry);
+            AgentTownLifeDestinationService.release(agent);
             if (agent.getChair() >= 0) {
                 AgentChairService.stand(entry, agent);
             }
@@ -381,20 +362,25 @@ public final class AgentTownLifeRuntime {
                                          Character agent,
                                          AgentTownLifeState state,
                                          long nowMs) {
-        AgentFidgetMode mode = switch (state.activity()) {
-            case SOCIAL -> varied(agent, state, 3, 107) == 0
-                    ? AgentFidgetMode.DIAGONAL_JUMP : AgentFidgetMode.SPAM_PRONE;
-            case NPC_PAUSE -> varied(agent, state, 2, 109) == 0
-                    ? AgentFidgetMode.PRONE : AgentFidgetMode.WAIT;
-            case WANDER -> varied(agent, state, 4, 113) == 0
-                    ? AgentFidgetMode.JUMP : AgentFidgetMode.WAIT;
-            case SHOP_VISIT, WEAPON_FLOURISH -> AgentFidgetMode.WAIT;
-            default -> AgentFidgetMode.NONE;
-        };
+        AgentFidgetMode mode = AgentTownLifeFidgetPolicy.choose(agent, state);
         if (mode != AgentFidgetMode.NONE) {
             int duration = (int) Math.max(2_000L, state.nextActionAtMs() - nowMs);
             AgentFidgetService.startFidget(entry, mode, nowMs, duration, AgentFidgetTrigger.TOWN_LIFE);
         }
+    }
+
+    private static void abandonDestination(AgentRuntimeEntry entry,
+                                           Character agent,
+                                           AgentTownLifeState state,
+                                           long nowMs,
+                                           PrimitiveCapabilityGateway gateway) {
+        gateway.stop(entry);
+        AgentFidgetService.clear(entry);
+        AgentTownLifeDestinationService.release(agent);
+        state.memory().rememberFailure(state.destinationKey(), nowMs);
+        state.progressWatchdog().clear();
+        state.transition(AgentTownLifeState.Stage.CHOOSE_ACTIVITY,
+                nowMs + delay(agent, state, 700, 2_001));
     }
 
     private static int expressionFor(Character agent, AgentTownLifeState state) {
@@ -408,20 +394,6 @@ public final class AgentTownLifeRuntime {
                     ? AgentEmote.GLARE.getValue() : AgentEmote.ANGRY.getValue();
             default -> AgentEmote.HAPPY.getValue();
         };
-    }
-
-    private static Character choosePeer(Character agent, AgentTownLifeState state) {
-        List<Character> peers = AgentRuntimeRegistry.activeEntriesSnapshot().stream()
-                .map(AgentRuntimeIdentityRuntime::bot)
-                .filter(peer -> peer != null && peer != agent)
-                .filter(peer -> peer.getMapId() == agent.getMapId())
-                .filter(peer -> active(AgentRuntimeRegistry.findByCharacterInstance(peer)))
-                .sorted(java.util.Comparator.comparingInt(Character::getId))
-                .toList();
-        if (peers.isEmpty()) {
-            return null;
-        }
-        return peers.get(varied(agent, state, peers.size(), 149));
     }
 
     private static Point peerPosition(AgentTownLifeState state, Character agent) {

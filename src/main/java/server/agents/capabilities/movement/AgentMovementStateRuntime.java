@@ -116,6 +116,10 @@ public final class AgentMovementStateRuntime {
         return entry.climbState().climbing();
     }
 
+    public static boolean hasPatrolRegion(AgentRuntimeEntry entry) {
+        return AgentPatrolStateRuntime.hasPatrolRegion(entry);
+    }
+
     public static boolean notClimbing(AgentRuntimeEntry entry) {
         return !entry.climbState().climbing();
     }

@@ -33,6 +33,11 @@ public final class AgentTownLifeState {
         WEAPON_FLOURISH
     }
 
+    public enum Role {
+        STATIONED,
+        WANDERER
+    }
+
     private boolean enabled;
     private Stage stage = Stage.DISABLED;
     private Activity activity = Activity.NONE;
@@ -43,6 +48,11 @@ public final class AgentTownLifeState {
     private int sequence;
     private boolean expressionShown;
     private boolean flourishShown;
+    private Role role = Role.WANDERER;
+    private long roleUntilMs;
+    private String destinationKey;
+    private final AgentTownLifeMemory memory = new AgentTownLifeMemory();
+    private final AgentTownLifeProgressWatchdog progressWatchdog = new AgentTownLifeProgressWatchdog();
 
     public synchronized void start(long nowMs, int initialSequence) {
         enabled = true;
@@ -55,6 +65,11 @@ public final class AgentTownLifeState {
         sequence = Math.max(0, initialSequence);
         expressionShown = false;
         flourishShown = false;
+        role = Role.WANDERER;
+        roleUntilMs = 0L;
+        destinationKey = null;
+        memory.clear();
+        progressWatchdog.clear();
     }
 
     static long initialResponseDelayMs(int characterId) {
@@ -78,6 +93,10 @@ public final class AgentTownLifeState {
         nextActionAtMs = 0L;
         expressionShown = false;
         flourishShown = false;
+        roleUntilMs = 0L;
+        destinationKey = null;
+        memory.clear();
+        progressWatchdog.clear();
     }
 
     public synchronized boolean enabled() {
@@ -120,6 +139,31 @@ public final class AgentTownLifeState {
         return flourishShown;
     }
 
+    public synchronized Role role() {
+        return role;
+    }
+
+    public synchronized long roleUntilMs() {
+        return roleUntilMs;
+    }
+
+    public synchronized String destinationKey() {
+        return destinationKey;
+    }
+
+    AgentTownLifeMemory memory() {
+        return memory;
+    }
+
+    AgentTownLifeProgressWatchdog progressWatchdog() {
+        return progressWatchdog;
+    }
+
+    public synchronized void assignRole(Role nextRole, long untilMs) {
+        role = nextRole == null ? Role.WANDERER : nextRole;
+        roleUntilMs = untilMs;
+    }
+
     public synchronized void transition(Stage nextStage, long dueAtMs) {
         stage = nextStage;
         nextActionAtMs = dueAtMs;
@@ -130,6 +174,15 @@ public final class AgentTownLifeState {
                                     int nextTargetCharacterId,
                                     int nextDestinationMapId,
                                     long dueAtMs) {
+        select(nextActivity, nextTarget, nextTargetCharacterId, nextDestinationMapId, null, dueAtMs);
+    }
+
+    public synchronized void select(Activity nextActivity,
+                                    Point nextTarget,
+                                    int nextTargetCharacterId,
+                                    int nextDestinationMapId,
+                                    String nextDestinationKey,
+                                    long dueAtMs) {
         activity = nextActivity;
         target = nextTarget == null ? null : new Point(nextTarget);
         targetCharacterId = nextTargetCharacterId;
@@ -138,6 +191,8 @@ public final class AgentTownLifeState {
         nextActionAtMs = dueAtMs;
         expressionShown = false;
         flourishShown = false;
+        destinationKey = nextDestinationKey;
+        progressWatchdog.begin(target, dueAtMs);
         sequence++;
     }
 

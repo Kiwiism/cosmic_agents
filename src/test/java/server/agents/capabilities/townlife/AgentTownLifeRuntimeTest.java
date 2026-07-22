@@ -153,4 +153,25 @@ class AgentTownLifeRuntimeTest {
         verify(gateway, never()).sitChair(agent, ItemId.RELAXER);
         assertEquals(AgentTownLifeState.Stage.MOVE_TO_ACTIVITY, state.stage());
     }
+
+    @Test
+    void abandonsAStalledTownDestinationAndAllowsAReplan() {
+        Character agent = mock(Character.class);
+        when(agent.getId()).thenReturn(29);
+        when(agent.getMapId()).thenReturn(LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID);
+        when(agent.getPosition()).thenReturn(new Point(0, 0));
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        AgentTownLifeState state = entry.capabilityStates().require(AgentTownLifeState.STATE_KEY);
+        state.start(0L, 0);
+        state.select(AgentTownLifeState.Activity.WANDER, new Point(500, 0),
+                0, 0, "wander:test", 0L);
+        PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
+        when(gateway.grounded(agent)).thenReturn(true);
+
+        assertFalse(AgentTownLifeRuntime.tick(entry, agent, 1L, gateway));
+        assertTrue(AgentTownLifeRuntime.tick(entry, agent, 8_001L, gateway));
+
+        assertEquals(AgentTownLifeState.Stage.CHOOSE_ACTIVITY, state.stage());
+        verify(gateway).stop(entry);
+    }
 }

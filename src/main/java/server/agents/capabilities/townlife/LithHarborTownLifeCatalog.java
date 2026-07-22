@@ -80,6 +80,18 @@ public final class LithHarborTownLifeCatalog {
         return SHOP_MAP_IDS.get(Math.floorMod(index, SHOP_MAP_IDS.size()));
     }
 
+    static List<Point> restSpots() {
+        return REST_SPOTS.stream().map(LithHarborTownLifeCatalog::copy).toList();
+    }
+
+    static List<Point> wanderSpots() {
+        return WANDER_SPOTS.stream().map(LithHarborTownLifeCatalog::copy).toList();
+    }
+
+    static List<NpcSpot> npcSpots() {
+        return NPC_SPOTS;
+    }
+
     private static Point copy(Point point) {
         return new Point(point);
     }

@@ -3,7 +3,6 @@ package server.agents.capabilities.combat;
 import server.agents.capabilities.movement.AgentMapEnvironmentService;
 import client.Character;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
-import server.agents.capabilities.movement.AgentPatrolStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
 
@@ -71,7 +70,7 @@ public final class AgentGrindNoTargetFallbackService {
                 agentPosition.x + AgentGrindWanderStateRuntime.ensureWanderDirection(entry) * 200,
                 agentPosition.y);
         MapleMap map = agent.getMap();
-        fallbackTargetPos = AgentPatrolStateRuntime.hasPatrolRegion(entry)
+        fallbackTargetPos = AgentMovementStateRuntime.hasPatrolRegion(entry)
                 ? hooks.patrolWanderTargetResolver().resolve(entry, agentPosition, map)
                 : hooks.noGrindTargetResolver().resolve(entry, agentPosition, map);
         hooks.movementStep().step(entry, fallbackTargetPos, runAiTick);

@@ -369,7 +369,11 @@ public final class AgentFidgetService {
             return;
         }
 
-        int steerDir = ThreadLocalRandom.current().nextBoolean() ? 1 : -1;
+        int steerDir = boundedTownLifeDirection(entry,
+                AgentRuntimeIdentityRuntime.bot(entry).getPosition(), 0);
+        if (steerDir == 0) {
+            steerDir = ThreadLocalRandom.current().nextBoolean() ? 1 : -1;
+        }
         AgentFidgetStateRuntime.setAirSteerDir(entry, steerDir);
         AgentMovementStateRuntime.setMoveDirection(entry, steerDir);
         AgentFidgetStateRuntime.setNextActionAtMs(
@@ -448,11 +452,14 @@ public final class AgentFidgetService {
             AgentFidgetStateRuntime.setAirSteerDir(entry, jumpDir);
         } else {
             int dx = targetPos.x - botPos.x;
-            jumpDx = switch (ThreadLocalRandom.current().nextInt(3)) {
-                case 0 -> 0;
-                case 1 -> dx == 0 ? walkStep : Integer.signum(dx) * walkStep;
-                default -> (ThreadLocalRandom.current().nextBoolean() ? 1 : -1) * walkStep;
-            };
+            int boundedDirection = boundedTownLifeDirection(entry, botPos, walkStep);
+            jumpDx = boundedDirection == 0
+                    ? switch (ThreadLocalRandom.current().nextInt(3)) {
+                        case 0 -> 0;
+                        case 1 -> dx == 0 ? walkStep : Integer.signum(dx) * walkStep;
+                        default -> (ThreadLocalRandom.current().nextBoolean() ? 1 : -1) * walkStep;
+                    }
+                    : boundedDirection * walkStep;
             AgentFidgetStateRuntime.setAirSteerDir(entry, Integer.signum(jumpDx));
         }
 
@@ -572,5 +579,22 @@ public final class AgentFidgetService {
                 4,
                 direction,
                 0);
+    }
+
+    static int boundedTownLifeDirection(AgentRuntimeEntry entry, Point botPos, int walkStep) {
+        if (entry == null || botPos == null
+                || AgentFidgetStateRuntime.trigger(entry) != AgentFidgetTrigger.TOWN_LIFE) {
+            return 0;
+        }
+        Point origin = AgentFidgetStateRuntime.originPos(entry);
+        if (origin == null) {
+            return 0;
+        }
+        int bound = Math.max(24, Math.max(1, walkStep) * 2);
+        int dx = botPos.x - origin.x;
+        if (dx >= bound) {
+            return -1;
+        }
+        return dx <= -bound ? 1 : 0;
     }
 }
