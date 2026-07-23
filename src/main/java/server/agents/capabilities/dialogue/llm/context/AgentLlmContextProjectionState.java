@@ -17,6 +17,9 @@ import server.agents.resources.events.AgentInventoryThresholdChangedEvent;
 import server.agents.resources.events.AgentScrollResolvedEvent;
 import server.agents.resources.events.AgentShopTransactionEvent;
 import server.agents.runtime.state.AgentCapabilityStateKey;
+import server.agents.capabilities.townlife.AgentTownLifeActivityEvent;
+import server.agents.capabilities.townlife.AgentTownLifeEncounterEvent;
+import server.agents.capabilities.townlife.AgentTownLifeEncounterState;
 
 import java.util.ArrayDeque;
 import java.util.LinkedHashMap;
@@ -111,6 +114,28 @@ public final class AgentLlmContextProjectionState {
             put("combat.lifeState", life.state());
             context(life);
             milestone(life, "state=" + life.state());
+        } else if (event instanceof AgentTownLifeActivityEvent activity) {
+            put("townlife.activity", activity.activity().name());
+            put("townlife.phase", activity.phase().name());
+            put("townlife.venue", activity.venueId());
+            put("townlife.controller", activity.decisionSource());
+            context(activity);
+            if (activity.phase() == AgentTownLifeActivityEvent.Phase.SELECTED
+                    || activity.phase() == AgentTownLifeActivityEvent.Phase.COMPLETED) {
+                milestone(activity, "activity=" + activity.activity()
+                        + ",phase=" + activity.phase() + ",venue=" + activity.venueId());
+            }
+        } else if (event instanceof AgentTownLifeEncounterEvent encounter) {
+            put("townlife.encounterType", encounter.encounterType().name());
+            put("townlife.encounterPhase", encounter.phase().name());
+            put("townlife.peerAgentId", String.valueOf(encounter.peerAgentId()));
+            context(encounter);
+            if (encounter.phase() == AgentTownLifeEncounterState.Phase.ACTIVE
+                    || encounter.phase() == AgentTownLifeEncounterState.Phase.COMPLETED
+                    || encounter.phase() == AgentTownLifeEncounterState.Phase.CANCELLED) {
+                milestone(encounter, "encounter=" + encounter.encounterType()
+                        + ",phase=" + encounter.phase() + ",peer=" + encounter.peerAgentId());
+            }
         } else if (event instanceof AgentDomainEvent domain && domain.type().startsWith("objective.")) {
             projectObjective(domain);
         } else {

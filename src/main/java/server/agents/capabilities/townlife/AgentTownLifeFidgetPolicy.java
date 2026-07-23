@@ -14,7 +14,7 @@ final class AgentTownLifeFidgetPolicy {
             case SOCIAL -> variation < 3 ? AgentFidgetMode.DIAGONAL_JUMP
                     : variation < 9 ? AgentFidgetMode.SPAM_PRONE : AgentFidgetMode.WAIT;
             case NPC_PAUSE -> variation < 3 ? AgentFidgetMode.PRONE : AgentFidgetMode.WAIT;
-            case WANDER -> state.role() == AgentTownLifeState.Role.WANDERER && variation < 3
+            case ROAM -> state.role() == AgentTownLifeState.Role.WANDERER && variation < 3
                     ? AgentFidgetMode.JUMP : variation == 3
                     ? AgentFidgetMode.SPAM_SIDEWAYS : AgentFidgetMode.WAIT;
             case SHOP_VISIT, WEAPON_FLOURISH -> AgentFidgetMode.WAIT;

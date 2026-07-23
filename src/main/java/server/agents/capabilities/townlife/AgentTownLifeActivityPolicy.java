@@ -15,19 +15,22 @@ final class AgentTownLifeActivityPolicy {
     static AgentTownLifeState.Activity choose(AgentRuntimeEntry entry,
                                               Character agent,
                                               AgentTownLifeState state) {
+        if (!state.initialPlacementComplete()) {
+            return AgentTownLifeState.Activity.ROAM;
+        }
         Map<AgentTownLifeState.Activity, Integer> weights = new EnumMap<>(AgentTownLifeState.Activity.class);
         if (state.role() == AgentTownLifeState.Role.STATIONED) {
             weights.put(AgentTownLifeState.Activity.REST, 32);
             weights.put(AgentTownLifeState.Activity.SOCIAL, 27);
             weights.put(AgentTownLifeState.Activity.NPC_PAUSE, 22);
-            weights.put(AgentTownLifeState.Activity.WANDER, 6);
+            weights.put(AgentTownLifeState.Activity.ROAM, 6);
             weights.put(AgentTownLifeState.Activity.SHOP_VISIT, 5);
             weights.put(AgentTownLifeState.Activity.WEAPON_FLOURISH, 8);
         } else {
             weights.put(AgentTownLifeState.Activity.REST, 12);
             weights.put(AgentTownLifeState.Activity.SOCIAL, 20);
             weights.put(AgentTownLifeState.Activity.NPC_PAUSE, 15);
-            weights.put(AgentTownLifeState.Activity.WANDER, 27);
+            weights.put(AgentTownLifeState.Activity.ROAM, 27);
             weights.put(AgentTownLifeState.Activity.SHOP_VISIT, 18);
             weights.put(AgentTownLifeState.Activity.WEAPON_FLOURISH, 8);
         }
@@ -40,7 +43,7 @@ final class AgentTownLifeActivityPolicy {
                     (traits.patience() + traits.routinePreference() - 100) / 12);
             adjust(weights, AgentTownLifeState.Activity.SOCIAL, (traits.sociability() - 50) / 6);
             adjust(weights, AgentTownLifeState.Activity.NPC_PAUSE, (traits.curiosity() - 50) / 8);
-            adjust(weights, AgentTownLifeState.Activity.WANDER, (traits.activity() - 50) / 6);
+            adjust(weights, AgentTownLifeState.Activity.ROAM, (traits.activity() - 50) / 6);
             adjust(weights, AgentTownLifeState.Activity.SHOP_VISIT, (traits.curiosity() - 50) / 10);
             adjust(weights, AgentTownLifeState.Activity.WEAPON_FLOURISH,
                     (traits.expressiveness() - 50) / 8);
@@ -59,7 +62,7 @@ final class AgentTownLifeActivityPolicy {
             }
             roll -= candidate.getValue();
         }
-        return AgentTownLifeState.Activity.WANDER;
+        return AgentTownLifeState.Activity.ROAM;
     }
 
     private static void adjust(Map<AgentTownLifeState.Activity, Integer> weights,

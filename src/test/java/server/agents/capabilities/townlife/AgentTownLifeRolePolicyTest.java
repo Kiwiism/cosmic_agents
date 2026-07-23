@@ -26,7 +26,7 @@ class AgentTownLifeRolePolicyTest {
                         new AgentPersonalityProfile.Traits(20, 90, 40, 30, 55, 20, 90)),
                 true);
         AgentTownLifeState state = entry.capabilityStates().require(AgentTownLifeState.STATE_KEY);
-        state.start(0L, 4);
+        state.start(0L, 4, LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID);
 
         AgentTownLifeState.Role first = AgentTownLifeRolePolicy.resolve(entry, agent, state, 1_000L);
         long assignedUntil = state.roleUntilMs();

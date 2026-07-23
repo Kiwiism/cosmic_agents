@@ -9,7 +9,7 @@ import server.agents.capabilities.movement.AgentIdlePhysicsService;
 import server.agents.capabilities.trade.AgentTradeWindowTickService;
 import server.agents.capabilities.recovery.AgentRecoveryTickService;
 import server.agents.plans.AgentPlanReattachmentRuntime;
-import server.agents.plans.amherst.AgentAmherstPlanRuntime;
+import server.agents.plans.AgentForegroundPlanRuntime;
 import server.agents.runtime.maintenance.AgentMaintenanceSupervisor;
 import server.agents.capabilities.behavior.AgentCrowdRespiteRuntime;
 import server.agents.capabilities.behavior.AgentPioRelaxerInterludeRuntime;
@@ -57,7 +57,8 @@ public final class AgentLiveTickGateRuntime {
                             || AgentCrowdRespiteRuntime.tick(entry, agent, nowMs, runAiTick);
                 },
                 (entry, agent) -> tickObjectiveSupervision(entry, agent, System.currentTimeMillis()),
-                (entry, agent) -> AgentAmherstPlanRuntime.tickGate(entry, agent, System.currentTimeMillis()),
+                (entry, agent) -> AgentForegroundPlanRuntime.tick(
+                        entry, agent, System.currentTimeMillis()),
                 (tradeEntry, tradeAgent) -> AgentTradeWindowTickService.tickIfTradeWindowOpen(
                         tradeEntry,
                         tradeAgent,

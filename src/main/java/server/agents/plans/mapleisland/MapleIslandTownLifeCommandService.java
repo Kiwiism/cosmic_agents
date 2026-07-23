@@ -1,14 +1,18 @@
-package server.agents.capabilities.townlife;
+package server.agents.plans.mapleisland;
 
 import client.Character;
 import client.QuestStatus;
+import server.agents.capabilities.townlife.AgentTownLifeRuntime;
+import server.agents.capabilities.townlife.AgentTownLifeState;
+import server.agents.capabilities.townlife.LithHarborTownLifeCatalog;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.plans.amherst.MapleIslandSouthperryQuestCatalog;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
 
-public final class AgentTownLifeCommandService {
-    private AgentTownLifeCommandService() {
+/** Maple Island command adapter that hands eligible Agents to the generic TownLife capability. */
+public final class MapleIslandTownLifeCommandService {
+    private MapleIslandTownLifeCommandService() {
     }
 
     public static Result startCompletedSouthperryAgents(Character issuer, long nowMs) {
@@ -29,7 +33,8 @@ public final class AgentTownLifeCommandService {
                 notEligible++;
                 continue;
             }
-            state.start(nowMs, agent.getId());
+            AgentTownLifeRuntime.start(entry, LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID,
+                    nowMs, agent.getId());
             started++;
         }
         return new Result(started, alreadyActive, notEligible);
@@ -58,9 +63,9 @@ public final class AgentTownLifeCommandService {
                 continue;
             }
             AgentTownLifeState state = entry.capabilityStates().require(AgentTownLifeState.STATE_KEY);
-            if (state.stage() == AgentTownLifeState.Stage.TRAVEL_TO_LITH) {
+            if (state.stage() == AgentTownLifeState.Stage.TRAVEL_TO_TOWN) {
                 traveling++;
-            } else if (agent.getMapId() == LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID) {
+            } else if (agent.getMapId() == state.townMapId()) {
                 inTown++;
             } else {
                 inShops++;

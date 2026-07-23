@@ -22,7 +22,8 @@ final class AgentTownLifeDestinationService {
                        Point point,
                        int targetCharacterId,
                        int destinationMapId,
-                       String key) {
+                       String key,
+                       String venueId) {
     }
 
     private AgentTownLifeDestinationService() {
@@ -34,18 +35,40 @@ final class AgentTownLifeDestinationService {
                               AgentTownLifeState.Activity requested,
                               long nowMs,
                               PrimitiveCapabilityGateway gateway) {
+        return select(entry, agent, state, AgentTownLifeDecision.deterministic(requested), nowMs, gateway);
+    }
+
+    static Destination select(AgentRuntimeEntry entry,
+                              Character agent,
+                              AgentTownLifeState state,
+                              AgentTownLifeDecision decision,
+                              long nowMs,
+                              PrimitiveCapabilityGateway gateway) {
         release(agent);
         long seed = ((long) agent.getId() << 32) ^ state.sequence();
+        AgentTownLifeProfile profile = AgentTownLifeProfileRepository.defaultRepository()
+                .require(state.townMapId());
+        AgentTownLifeState.Activity requested = decision.activity();
+        if (!decision.venueId().isBlank()) {
+            Destination directed = directedVenueDestination(
+                    agent, state, decision, profile, nowMs, seed);
+            if (directed != null) {
+                return directed;
+            }
+            if (!"default-policy".equals(decision.source())) {
+                return null;
+            }
+        }
         if (requested == AgentTownLifeState.Activity.SHOP_VISIT) {
-            int mapId = LithHarborTownLifeCatalog.shopMapId(
+            int mapId = profile.shopMapId(
                     AgentTownLifeRolePolicy.variation(seed, state.sequence(), 103, 61));
             String key = "shop:" + mapId;
             return state.memory().destinationAvailable(key, nowMs)
-                    ? new Destination(requested, null, 0, mapId, key) : null;
+                    ? new Destination(requested, null, 0, mapId, key, "") : null;
         }
         if (requested == AgentTownLifeState.Activity.SOCIAL
                 || requested == AgentTownLifeState.Activity.WEAPON_FLOURISH) {
-            Character peer = choosePeer(agent, state, seed);
+            Character peer = choosePeer(agent, state, seed, decision.targetAgentId());
             if (peer != null) {
                 int side = AgentTownLifeRolePolicy.variation(seed, state.sequence(), 2, 73) == 0 ? -1 : 1;
                 Point target = new Point(peer.getPosition().x + side * 52, peer.getPosition().y);
@@ -53,42 +76,46 @@ final class AgentTownLifeDestinationService {
                 Point reserved = reserveFirst(agent, state, nowMs,
                         List.of(space("town-social", agent.getMapId(), target, socialSpotNumber(target))), key);
                 if (reserved != null) {
-                    return new Destination(requested, reserved, peer.getId(), 0, key);
+                    return new Destination(requested, reserved, peer.getId(), 0, key, "");
                 }
             }
-            requested = AgentTownLifeState.Activity.WANDER;
+            requested = AgentTownLifeState.Activity.ROAM;
         }
         if (requested == AgentTownLifeState.Activity.REST) {
             List<CharacterSpace> spaces = spaces("town-rest", agent.getMapId(),
-                    LithHarborTownLifeCatalog.restSpots());
+                    profile.restPoints());
+            spaces = AgentTownLifeSpotSampler.orderAuthoredSpaces(agent, state, spaces, seed);
             return reservedDestination(agent, state, requested, spaces, nowMs, seed);
         }
         if (requested == AgentTownLifeState.Activity.NPC_PAUSE) {
             List<Point> points = new ArrayList<>();
-            for (LithHarborTownLifeCatalog.NpcSpot spot : LithHarborTownLifeCatalog.npcSpots()) {
+            for (AgentTownLifeProfile.NpcSpot spot : profile.npcSpots()) {
                 Point npc = gateway.npcPosition(agent, spot.npcId());
                 if (npc != null) {
                     points.add(new Point(npc.x + spot.offsetX(), npc.y));
                 }
             }
-            Destination result = reservedDestination(agent, state, requested,
-                    spaces("town-npc", agent.getMapId(), points), nowMs, seed);
+            List<CharacterSpace> npcSpaces = spaces("town-npc", agent.getMapId(), points);
+            npcSpaces = AgentTownLifeSpotSampler.orderAuthoredSpaces(
+                    agent, state, npcSpaces, seed);
+            Destination result = reservedDestination(
+                    agent, state, requested, npcSpaces, nowMs, seed);
             if (result != null) {
                 return result;
             }
-            requested = AgentTownLifeState.Activity.WANDER;
+            requested = AgentTownLifeState.Activity.ROAM;
         }
-        List<Point> anchors = new ArrayList<>(LithHarborTownLifeCatalog.restSpots());
-        for (LithHarborTownLifeCatalog.NpcSpot spot : LithHarborTownLifeCatalog.npcSpots()) {
+        List<Point> anchors = new ArrayList<>(profile.restPoints());
+        for (AgentTownLifeProfile.NpcSpot spot : profile.npcSpots()) {
             Point npc = gateway.npcPosition(agent, spot.npcId());
             if (npc != null) {
                 anchors.add(npc);
             }
         }
         List<CharacterSpace> dynamic = AgentTownLifeSpotSampler.reachableSpaces(
-                entry, agent, anchors, seed);
+                entry, agent, state, anchors, seed);
         if (dynamic.isEmpty()) {
-            dynamic = spaces("town-wander", agent.getMapId(), LithHarborTownLifeCatalog.wanderSpots());
+            dynamic = spaces("town-roam", agent.getMapId(), profile.roamFallbackPoints());
         }
         return reservedDestination(agent, state, requested, dynamic, nowMs, seed);
     }
@@ -115,7 +142,7 @@ final class AgentTownLifeDestinationService {
             String key = space.catalogId() + ':' + space.spotNumber();
             Point reserved = reserveFirst(agent, state, nowMs, spaces, key, space);
             if (reserved != null) {
-                return new Destination(activity, reserved, 0, 0, key);
+                return new Destination(activity, reserved, 0, 0, key, "");
             }
         }
         return null;
@@ -165,17 +192,75 @@ final class AgentTownLifeDestinationService {
         return Math.max(1, Math.floorDiv(point.x + 20_000, 24) + 1);
     }
 
-    private static Character choosePeer(Character agent, AgentTownLifeState state, long seed) {
+    private static Destination directedVenueDestination(Character agent,
+                                                        AgentTownLifeState state,
+                                                        AgentTownLifeDecision decision,
+                                                        AgentTownLifeProfile profile,
+                                                        long nowMs,
+                                                        long seed) {
+        AgentTownLifeProfile.Venue venue = profile.venue(decision.venueId()).orElse(null);
+        if (venue == null || !venue.supports(decision.activity())) {
+            return null;
+        }
+        String key = "venue:" + venue.id();
+        if (decision.activity() == AgentTownLifeState.Activity.SHOP_VISIT) {
+            return venue.destinationMapId() > 0 && state.memory().destinationAvailable(key, nowMs)
+                    ? new Destination(decision.activity(), null, 0, venue.destinationMapId(), key, venue.id())
+                    : null;
+        }
+        List<CharacterSpace> spaces = new ArrayList<>();
+        for (int index = 0; index < venue.spots().size(); index++) {
+            spaces.add(space("town-venue-" + venue.id(), agent.getMapId(),
+                    venue.spots().get(index).point(), index + 1));
+        }
+        spaces = AgentTownLifeSpotSampler.orderAuthoredSpaces(agent, state, spaces, seed);
+        Destination reserved = reservedDestination(
+                agent, state, decision.activity(), spaces, nowMs, seed, venue.id());
+        if (reserved == null) {
+            return null;
+        }
+        int targetId = decision.targetAgentId();
+        if ((decision.activity() == AgentTownLifeState.Activity.SOCIAL
+                || decision.activity() == AgentTownLifeState.Activity.WEAPON_FLOURISH)
+                && targetId <= 0) {
+            Character peer = choosePeer(agent, state, seed, 0);
+            targetId = peer == null ? 0 : peer.getId();
+        }
+        return new Destination(reserved.activity(), reserved.point(), targetId,
+                reserved.destinationMapId(), reserved.key(), venue.id());
+    }
+
+    private static Destination reservedDestination(Character agent,
+                                                   AgentTownLifeState state,
+                                                   AgentTownLifeState.Activity activity,
+                                                   List<CharacterSpace> spaces,
+                                                   long nowMs,
+                                                   long seed,
+                                                   String venueId) {
+        Destination result = reservedDestination(agent, state, activity, spaces, nowMs, seed);
+        return result == null ? null : new Destination(result.activity(), result.point(),
+                result.targetCharacterId(), result.destinationMapId(), result.key(), venueId);
+    }
+
+    private static Character choosePeer(Character agent,
+                                        AgentTownLifeState state,
+                                        long seed,
+                                        int requestedAgentId) {
         List<Character> peers = AgentRuntimeRegistry.activeEntriesSnapshot().stream()
                 .map(AgentRuntimeIdentityRuntime::bot)
                 .filter(peer -> peer != null && peer != agent)
                 .filter(peer -> peer.getMapId() == agent.getMapId())
                 .filter(peer -> AgentTownLifeRuntime.active(
                         AgentRuntimeRegistry.findByCharacterInstance(peer)))
+                .filter(peer -> !AgentTownLifeEncounterCoordinator.active(
+                        AgentRuntimeRegistry.findByCharacterInstance(peer)))
                 .sorted(Comparator.comparingInt(Character::getId))
                 .toList();
         if (peers.isEmpty()) {
             return null;
+        }
+        if (requestedAgentId > 0) {
+            return peers.stream().filter(peer -> peer.getId() == requestedAgentId).findFirst().orElse(null);
         }
         return peers.get(AgentTownLifeRolePolicy.variation(seed, state.sequence(), peers.size(), 149));
     }

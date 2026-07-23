@@ -39,8 +39,8 @@ class AgentSessionEventWiringRuntimeTest {
                 ? 2 : 0;
         int behaviorListener = YamlConfig.config.server.AGENT_COMBAT_BEHAVIOR_ENABLED ? 1 : 0;
 
-        assertEquals(16 + personalityListeners + behaviorListener, bus.snapshot().subscriptions());
-        assertEquals(16 + personalityListeners + behaviorListener,
+        assertEquals(17 + personalityListeners + behaviorListener, bus.snapshot().subscriptions());
+        assertEquals(17 + personalityListeners + behaviorListener,
                 AgentSessionEventRuntime.bus(entry).snapshot().subscriptions());
 
         AgentSessionEventRuntime.close(entry);

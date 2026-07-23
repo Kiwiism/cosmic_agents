@@ -5,6 +5,8 @@ import server.agents.capabilities.dialogue.AgentDialogueIntentEvent;
 import server.agents.capabilities.dialogue.AgentDialogueProjectionRuntime;
 import server.agents.capabilities.dialogue.AgentDialogueProjectionService;
 import server.agents.capabilities.dialogue.AgentSupplyDialogueReactionService;
+import server.agents.capabilities.dialogue.AgentTownLifeDialogueReactionService;
+import server.agents.capabilities.townlife.AgentTownLifeEncounterEvent;
 import server.agents.capabilities.dialogue.llm.context.AgentLlmContextProjectionService;
 import server.agents.capabilities.supplies.AgentSupplyCoordinationProjectionService;
 import server.agents.capabilities.supplies.AgentSupplyMaintenanceEventListener;
@@ -98,6 +100,8 @@ public final class AgentSessionEventWiringRuntime {
                 if (rollout.dialogueEnabled()) {
                     subscriptions.add(bus.subscribe("*",
                             new AgentOperationalDialogueReactionService(bus)));
+                    subscriptions.add(bus.subscribe(AgentTownLifeEncounterEvent.TYPE,
+                            new AgentTownLifeDialogueReactionService(bus)));
                 }
                 if (YamlConfig.config.server.AGENT_PERSONALITY_PRESENTATION_ENABLED) {
                     subscriptions.add(bus.subscribe("*",

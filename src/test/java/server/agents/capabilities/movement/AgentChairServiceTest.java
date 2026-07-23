@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -52,8 +53,10 @@ class AgentChairServiceTest {
             return null;
         }).when(agent).sitChair(0);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, agent, null);
+        AgentMovementStateRuntime.setInAir(entry, true);
 
         assertTrue(AgentChairService.sit(entry, agent, 0));
+        assertFalse(AgentMovementStateRuntime.inAir(entry));
     }
 
     @Test

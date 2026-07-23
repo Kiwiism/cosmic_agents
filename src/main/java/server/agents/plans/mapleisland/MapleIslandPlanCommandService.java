@@ -7,7 +7,6 @@ import server.agents.auth.AgentControlService;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
 import server.agents.capabilities.presentation.AgentPresentationTelemetry;
 import server.agents.capabilities.behavior.AgentBehaviorTelemetry;
-import server.agents.capabilities.townlife.AgentTownLifeCommandService;
 import server.agents.capabilities.party.AgentPartyLifecycleService;
 import server.agents.capabilities.quest.AmherstTestResetMode;
 import server.agents.capabilities.quest.AmherstTestResetRequest;
@@ -438,8 +437,8 @@ public final class MapleIslandPlanCommandService {
             return;
         }
         if (params.length == 1 || (params.length == 2 && params[1].equalsIgnoreCase("start"))) {
-            AgentTownLifeCommandService.Result result =
-                    AgentTownLifeCommandService.startCompletedSouthperryAgents(
+            MapleIslandTownLifeCommandService.Result result =
+                    MapleIslandTownLifeCommandService.startCompletedSouthperryAgents(
                             player, System.currentTimeMillis());
             message(player, "Lith Harbor town life started for " + result.started()
                     + " completed Southperry Agents; already active=" + result.alreadyActive()
@@ -448,11 +447,11 @@ public final class MapleIslandPlanCommandService {
         }
         if (params.length == 2 && params[1].equalsIgnoreCase("stop")) {
             message(player, "Stopped Lith Harbor town life for "
-                    + AgentTownLifeCommandService.stop(player) + " Agents.");
+                    + MapleIslandTownLifeCommandService.stop(player) + " Agents.");
             return;
         }
         if (params.length == 2 && params[1].equalsIgnoreCase("status")) {
-            AgentTownLifeCommandService.Status status = AgentTownLifeCommandService.status(player);
+            MapleIslandTownLifeCommandService.Status status = MapleIslandTownLifeCommandService.status(player);
             message(player, "Lith Harbor town life: total=" + status.total()
                     + ", traveling=" + status.traveling() + ", in town=" + status.inTown()
                     + ", in shops=" + status.inShops() + ".");

@@ -3,6 +3,7 @@ package server.agents.capabilities.townlife;
 import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
 
 final class AgentTownLifeMemory {
     private static final int RECENT_ACTIVITY_LIMIT = 3;
@@ -47,6 +48,10 @@ final class AgentTownLifeMemory {
     synchronized void clear() {
         recentActivities.clear();
         destinationCooldowns.clear();
+    }
+
+    synchronized List<AgentTownLifeState.Activity> recentActivitiesSnapshot() {
+        return List.copyOf(recentActivities);
     }
 
     private void coolDown(String key, long untilMs) {

@@ -28,8 +28,8 @@ class AgentTownLifeDestinationServiceTest {
         AgentRuntimeEntry secondEntry = new AgentRuntimeEntry(second, null, null);
         AgentTownLifeState firstState = firstEntry.capabilityStates().require(AgentTownLifeState.STATE_KEY);
         AgentTownLifeState secondState = secondEntry.capabilityStates().require(AgentTownLifeState.STATE_KEY);
-        firstState.start(0L, 1);
-        secondState.start(0L, 2);
+        firstState.start(0L, 1, LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID);
+        secondState.start(0L, 2, LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID);
         PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
 
         AgentTownLifeDestinationService.Destination firstDestination =

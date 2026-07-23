@@ -8,6 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.behavior.AgentBehaviorRuntime;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
+import server.agents.capabilities.movement.AgentMovementProfile;
+import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.party.AgentPartyLifecycleService;
 import server.agents.capabilities.quest.AmherstTestResetMode;
 import server.agents.capabilities.quest.AmherstTestResetRequest;
@@ -16,7 +18,9 @@ import server.agents.capabilities.quest.AmherstTestResetService;
 import server.agents.plans.amherst.AmherstQuestCatalog;
 import server.agents.capabilities.quest.AmherstTestRuntimeResetService;
 import server.agents.capabilities.townlife.AgentTownLifeRuntime;
-import server.agents.capabilities.townlife.AgentTownLifeState;
+import server.agents.capabilities.townlife.AgentTownLifeArrivalStagingService;
+import server.agents.capabilities.townlife.AgentTownLifeProfile;
+import server.agents.capabilities.townlife.AgentTownLifeProfileRepository;
 import server.agents.capabilities.townlife.LithHarborTownLifeCatalog;
 import server.agents.integration.AgentMapGatewayRuntime;
 import server.agents.integration.AgentCharacterGatewayRuntime;
@@ -379,9 +383,15 @@ public final class MapleIslandCohortRuntime {
         AgentCareerProgressionCheckpointRuntime.delete(pooled.characterId());
         MapleMap lithHarbor = AgentMapGatewayRuntime.map().resolveMap(
                 context.world(), context.channel(), LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID);
-        Point shipArrival = lithHarbor.getPortal(0) == null
-                ? new Point(lithHarbor.getRandomPlayerSpawnpoint().getPosition())
-                : new Point(lithHarbor.getPortal(0).getPosition());
+        // Build one usable graph before releasing a load-test wave. The exact per-Agent profile
+        // may warm asynchronously later, but this shared base graph prevents raw-coordinate
+        // steering from a ship marker while no topology is available.
+        var navigationGraph = AgentNavigationGraphService.getGraph(
+                lithHarbor, AgentMovementProfile.base());
+        AgentTownLifeProfile townProfile = AgentTownLifeProfileRepository.defaultRepository()
+                .require(LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID);
+        Point shipArrival = AgentTownLifeArrivalStagingService.select(
+                townProfile, lithHarbor, navigationGraph, context.ordinal());
         Character agent = null;
         try {
             agent = CosmicAgentOfflineLoader.loadOfflineAgent(
@@ -416,8 +426,8 @@ public final class MapleIslandCohortRuntime {
                     .forceStart(agent, southperryBiggsId);
             AgentSpawnPlacementCoordinator.normalizeSpawnedAgentWithoutParty(entry);
             AgentBehaviorRuntime.configure(entry, false);
-            entry.capabilityStates().require(AgentTownLifeState.STATE_KEY)
-                    .start(System.currentTimeMillis(), agent.getId());
+            AgentTownLifeRuntime.start(entry, LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID,
+                    System.currentTimeMillis(), agent.getId());
             agent.equipChanged();
             AgentCharacterGatewayRuntime.characters().save(agent, false);
             pool.markActive(pooled.characterId(), context.sessionId(), System.currentTimeMillis());

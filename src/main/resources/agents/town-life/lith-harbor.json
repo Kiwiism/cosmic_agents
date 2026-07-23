@@ -1,0 +1,184 @@
+{
+  "profileId": "lith-harbor",
+  "mapId": 104000000,
+  "geometry": {
+    "upperMaxY": 300,
+    "middleMaxY": 500,
+    "miniPlatformMaxWidth": 260,
+    "minimumPlatformWidth": 48,
+    "edgeInsetPx": 30,
+    "slotSpacingPx": 80,
+    "maxSlotsPerPlatform": 8
+  },
+  "distribution": {
+    "upperWeight": 40,
+    "middleWeight": 30,
+    "lowerWeight": 20,
+    "anyWeight": 10,
+    "miniPlatformPercent": 35,
+    "crossDistrictEveryActivities": 6
+  },
+  "extensions": {
+    "arrival": "lith-harbor"
+  },
+  "arrivalPortals": [
+    { "name": "maple00", "weight": 100 }
+  ],
+  "restSpots": [
+    { "x": 650, "y": 338, "seatId": -1 },
+    { "x": 1650, "y": 641, "seatId": -1 },
+    { "x": 2404, "y": 525, "seatId": 0 },
+    { "x": 2427, "y": 525, "seatId": 1 },
+    { "x": 2448, "y": 525, "seatId": 2 },
+    { "x": 2504, "y": 525, "seatId": 6 },
+    { "x": 2527, "y": 525, "seatId": 7 },
+    { "x": 2548, "y": 525, "seatId": 8 },
+    { "x": 2606, "y": 525, "seatId": 3 },
+    { "x": 2629, "y": 525, "seatId": 4 },
+    { "x": 2650, "y": 525, "seatId": 5 },
+    { "x": 2880, "y": 520, "seatId": -1 },
+    { "x": 3240, "y": 518, "seatId": -1 },
+    { "x": 4570, "y": 75, "seatId": -1 }
+  ],
+  "roamFallbackSpots": [
+    { "x": 360, "y": 278 },
+    { "x": 1100, "y": 279 },
+    { "x": 1800, "y": 641 },
+    { "x": 2570, "y": 522 },
+    { "x": 3390, "y": 518 },
+    { "x": 4360, "y": 433 },
+    { "x": 4930, "y": 431 }
+  ],
+  "npcSpots": [
+    { "npcId": 1002000, "offsetX": -70 },
+    { "npcId": 1002001, "offsetX": 65 },
+    { "npcId": 1002002, "offsetX": -70 },
+    { "npcId": 1002003, "offsetX": 65 },
+    { "npcId": 1002004, "offsetX": -70 },
+    { "npcId": 1002005, "offsetX": 70 },
+    { "npcId": 1002006, "offsetX": -65 },
+    { "npcId": 1002101, "offsetX": 70 }
+  ],
+  "shopMapIds": [104000001, 104000002, 104000003],
+  "venues": [
+    {
+      "id": "ship-upper-deck",
+      "label": "Lith Harbor arrival deck",
+      "district": "UPPER",
+      "platformKind": "MAIN",
+      "capacity": 3,
+      "affordances": ["ROAM", "SOCIAL", "WAIT", "SIGHTSEE"],
+      "spots": [
+        { "x": 360, "y": 278, "seatId": -1 },
+        { "x": 650, "y": 338, "seatId": -1 },
+        { "x": 1100, "y": 279, "seatId": -1 }
+      ],
+      "destinationMapId": 0
+    },
+    {
+      "id": "world-tour-platform",
+      "label": "World Tour platform",
+      "district": "MIDDLE",
+      "platformKind": "MINI",
+      "capacity": 2,
+      "affordances": ["NPC_PAUSE", "SOCIAL", "WAIT", "SIGHTSEE"],
+      "spots": [
+        { "x": 1575, "y": 641, "seatId": -1 },
+        { "x": 1650, "y": 641, "seatId": -1 }
+      ],
+      "destinationMapId": 0
+    },
+    {
+      "id": "central-benches",
+      "label": "Central harbor benches",
+      "district": "LOWER",
+      "platformKind": "MAIN",
+      "capacity": 9,
+      "affordances": ["REST", "SOCIAL", "WAIT"],
+      "spots": [
+        { "x": 2404, "y": 525, "seatId": 0 },
+        { "x": 2427, "y": 525, "seatId": 1 },
+        { "x": 2448, "y": 525, "seatId": 2 },
+        { "x": 2504, "y": 525, "seatId": 6 },
+        { "x": 2527, "y": 525, "seatId": 7 },
+        { "x": 2548, "y": 525, "seatId": 8 },
+        { "x": 2606, "y": 525, "seatId": 3 },
+        { "x": 2629, "y": 525, "seatId": 4 },
+        { "x": 2650, "y": 525, "seatId": 5 }
+      ],
+      "destinationMapId": 0
+    },
+    {
+      "id": "olaf-crossroads",
+      "label": "Olaf and Biggs crossroads",
+      "district": "LOWER",
+      "platformKind": "MAIN",
+      "capacity": 3,
+      "affordances": ["NPC_PAUSE", "SOCIAL", "WAIT", "ROAM"],
+      "spots": [
+        { "x": 2800, "y": 520, "seatId": -1 },
+        { "x": 2880, "y": 520, "seatId": -1 },
+        { "x": 2960, "y": 520, "seatId": -1 }
+      ],
+      "destinationMapId": 0
+    },
+    {
+      "id": "east-town-street",
+      "label": "East town street",
+      "district": "LOWER",
+      "platformKind": "MAIN",
+      "capacity": 3,
+      "affordances": ["ROAM", "SOCIAL", "WEAPON_FLOURISH", "WAIT"],
+      "spots": [
+        { "x": 3240, "y": 518, "seatId": -1 },
+        { "x": 3390, "y": 518, "seatId": -1 },
+        { "x": 3520, "y": 518, "seatId": -1 }
+      ],
+      "destinationMapId": 0
+    },
+    {
+      "id": "upper-town-overlook",
+      "label": "Upper town overlook",
+      "district": "UPPER",
+      "platformKind": "MINI",
+      "capacity": 3,
+      "affordances": ["REST", "ROAM", "SOCIAL", "SIGHTSEE"],
+      "spots": [
+        { "x": 4360, "y": 433, "seatId": -1 },
+        { "x": 4570, "y": 75, "seatId": -1 },
+        { "x": 4930, "y": 431, "seatId": -1 }
+      ],
+      "destinationMapId": 0
+    },
+    {
+      "id": "equipment-shop",
+      "label": "Equipment shop",
+      "district": "LOWER",
+      "platformKind": "MAIN",
+      "capacity": 4,
+      "affordances": ["SHOP_VISIT"],
+      "spots": [],
+      "destinationMapId": 104000001
+    },
+    {
+      "id": "general-store",
+      "label": "General store",
+      "district": "LOWER",
+      "platformKind": "MAIN",
+      "capacity": 4,
+      "affordances": ["SHOP_VISIT"],
+      "spots": [],
+      "destinationMapId": 104000002
+    },
+    {
+      "id": "weapon-shop",
+      "label": "Weapon shop",
+      "district": "LOWER",
+      "platformKind": "MAIN",
+      "capacity": 4,
+      "affordances": ["SHOP_VISIT"],
+      "spots": [],
+      "destinationMapId": 104000003
+    }
+  ]
+}

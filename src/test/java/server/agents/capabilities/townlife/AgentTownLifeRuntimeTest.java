@@ -6,6 +6,7 @@ import constants.id.ItemId;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.PrimitiveCapabilityGateway;
 import server.agents.plans.amherst.MapleIslandSouthperryQuestCatalog;
+import server.agents.plans.AgentPlanPauseRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
@@ -22,6 +23,23 @@ import static org.mockito.Mockito.when;
 
 class AgentTownLifeRuntimeTest {
     @Test
+    void startAndStopPauseAndResumeTheForegroundPlanClock() {
+        Character agent = mock(Character.class);
+        when(agent.getId()).thenReturn(31);
+        when(agent.getChair()).thenReturn(-1);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, agent, null);
+
+        AgentTownLifeRuntime.start(entry, LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID,
+                1_000L, agent.getId());
+
+        assertTrue(AgentPlanPauseRuntime.paused(entry));
+
+        AgentTownLifeRuntime.stop(entry, agent);
+
+        assertFalse(AgentPlanPauseRuntime.paused(entry));
+    }
+
+    @Test
     void walksToShanksBeforeRunningTheRealNpcScript() {
         Character agent = mock(Character.class);
         when(agent.getId()).thenReturn(12);
@@ -29,7 +47,8 @@ class AgentTownLifeRuntimeTest {
         when(agent.getPosition()).thenReturn(new Point(0, 0));
         when(agent.getChair()).thenReturn(-1);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, agent, null);
-        entry.capabilityStates().require(AgentTownLifeState.STATE_KEY).start(0L, 0);
+        entry.capabilityStates().require(AgentTownLifeState.STATE_KEY).start(
+                0L, 0, LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID);
         PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
         Point shanks = new Point(200, 0);
         when(gateway.npcPosition(agent, MapleIslandSouthperryQuestCatalog.SHANKS_NPC_ID))
@@ -52,7 +71,7 @@ class AgentTownLifeRuntimeTest {
         when(agent.getChair()).thenReturn(-1);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, agent, null);
         AgentTownLifeState state = entry.capabilityStates().require(AgentTownLifeState.STATE_KEY);
-        state.start(0L, 0);
+        state.start(0L, 0, LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID);
         PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
         Point shanks = new Point(10, 0);
         when(gateway.npcPosition(agent, MapleIslandSouthperryQuestCatalog.SHANKS_NPC_ID))
@@ -66,7 +85,7 @@ class AgentTownLifeRuntimeTest {
         assertTrue(AgentTownLifeRuntime.tick(entry, agent, state.nextActionAtMs(), gateway));
 
         verify(gateway).runNpcScript(agent, MapleIslandSouthperryQuestCatalog.SHANKS_NPC_ID);
-        assertEquals(AgentTownLifeState.Stage.COMPLETE_ISLAND_HANDOFF, state.stage());
+        assertEquals(AgentTownLifeState.Stage.COMPLETE_ARRIVAL, state.stage());
 
         assertTrue(AgentTownLifeRuntime.tick(entry, agent, state.nextActionAtMs(), gateway));
 
@@ -85,8 +104,8 @@ class AgentTownLifeRuntimeTest {
                 .thenAnswer(ignored -> (byte) questStatus.get());
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, agent, null);
         AgentTownLifeState state = entry.capabilityStates().require(AgentTownLifeState.STATE_KEY);
-        state.start(0L, 0);
-        state.transition(AgentTownLifeState.Stage.COMPLETE_ISLAND_HANDOFF, 0L);
+        state.start(0L, 0, LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID);
+        state.transition(AgentTownLifeState.Stage.COMPLETE_ARRIVAL, 0L);
         PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
         Point biggs = new Point(10, 0);
         when(gateway.npcPosition(agent, LithHarborTownLifeCatalog.BIGGS_NPC_ID)).thenReturn(biggs);
@@ -121,12 +140,13 @@ class AgentTownLifeRuntimeTest {
         when(agent.getChair()).thenReturn(-1);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, agent, null);
         AgentTownLifeState state = entry.capabilityStates().require(AgentTownLifeState.STATE_KEY);
-        state.start(0L, 0);
+        state.start(0L, 0, LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID);
         state.select(AgentTownLifeState.Activity.REST, new Point(2_404, 525), 0, 0, 0L);
         state.beginDwell(10_000L);
         PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
 
         assertTrue(AgentTownLifeRuntime.tick(entry, agent, 1L, gateway));
+        assertTrue(AgentTownLifeRuntime.tick(entry, agent, 800L, gateway));
 
         verify(gateway).sitMapSeat(agent, 0, new Point(2_404, 525));
         verify(gateway, never()).itemCount(agent, ItemId.RELAXER);
@@ -141,7 +161,7 @@ class AgentTownLifeRuntimeTest {
         when(agent.getChair()).thenReturn(-1);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, agent, null);
         AgentTownLifeState state = entry.capabilityStates().require(AgentTownLifeState.STATE_KEY);
-        state.start(0L, 0);
+        state.start(0L, 0, LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID);
         Point groundRestSpot = new Point(3_240, 518);
         state.select(AgentTownLifeState.Activity.REST, groundRestSpot, 0, 0, 0L);
         PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
@@ -162,8 +182,8 @@ class AgentTownLifeRuntimeTest {
         when(agent.getPosition()).thenReturn(new Point(0, 0));
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
         AgentTownLifeState state = entry.capabilityStates().require(AgentTownLifeState.STATE_KEY);
-        state.start(0L, 0);
-        state.select(AgentTownLifeState.Activity.WANDER, new Point(500, 0),
+        state.start(0L, 0, LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID);
+        state.select(AgentTownLifeState.Activity.ROAM, new Point(500, 0),
                 0, 0, "wander:test", 0L);
         PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
         when(gateway.grounded(agent)).thenReturn(true);

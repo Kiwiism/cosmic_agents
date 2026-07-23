@@ -13,8 +13,8 @@ public final class AgentTownLifeState {
 
     public enum Stage {
         DISABLED,
-        TRAVEL_TO_LITH,
-        COMPLETE_ISLAND_HANDOFF,
+        TRAVEL_TO_TOWN,
+        COMPLETE_ARRIVAL,
         SETTLING,
         CHOOSE_ACTIVITY,
         MOVE_TO_ACTIVITY,
@@ -28,7 +28,7 @@ public final class AgentTownLifeState {
         REST,
         SOCIAL,
         NPC_PAUSE,
-        WANDER,
+        ROAM,
         SHOP_VISIT,
         WEAPON_FLOURISH
     }
@@ -38,7 +38,21 @@ public final class AgentTownLifeState {
         WANDERER
     }
 
+    public enum District {
+        UPPER,
+        MIDDLE,
+        LOWER,
+        ANY
+    }
+
+    public enum PlatformKind {
+        MAIN,
+        MINI,
+        ANY
+    }
+
     private boolean enabled;
+    private int townMapId;
     private Stage stage = Stage.DISABLED;
     private Activity activity = Activity.NONE;
     private Point target;
@@ -49,14 +63,23 @@ public final class AgentTownLifeState {
     private boolean expressionShown;
     private boolean flourishShown;
     private Role role = Role.WANDERER;
+    private District homeDistrict = District.ANY;
+    private PlatformKind platformPreference = PlatformKind.ANY;
+    private boolean initialPlacementComplete;
     private long roleUntilMs;
     private String destinationKey;
+    private String venueId = "";
+    private String decisionSource = "default-policy";
+    private String decisionCorrelationId = "";
     private final AgentTownLifeMemory memory = new AgentTownLifeMemory();
     private final AgentTownLifeProgressWatchdog progressWatchdog = new AgentTownLifeProgressWatchdog();
 
-    public synchronized void start(long nowMs, int initialSequence) {
+    public synchronized void start(long nowMs, int initialSequence, int selectedTownMapId) {
+        AgentTownLifeProfile profile = AgentTownLifeProfileRepository.defaultRepository()
+                .require(selectedTownMapId);
         enabled = true;
-        stage = Stage.TRAVEL_TO_LITH;
+        townMapId = selectedTownMapId;
+        stage = Stage.TRAVEL_TO_TOWN;
         activity = Activity.NONE;
         target = null;
         targetCharacterId = 0;
@@ -66,8 +89,16 @@ public final class AgentTownLifeState {
         expressionShown = false;
         flourishShown = false;
         role = Role.WANDERER;
+        homeDistrict = AgentTownLifeDistributionPolicy.homeDistrict(
+                initialSequence, profile.distribution());
+        platformPreference = AgentTownLifeDistributionPolicy.platformPreference(
+                initialSequence, profile.distribution());
+        initialPlacementComplete = false;
         roleUntilMs = 0L;
         destinationKey = null;
+        venueId = "";
+        decisionSource = "default-policy";
+        decisionCorrelationId = "";
         memory.clear();
         progressWatchdog.clear();
     }
@@ -95,12 +126,19 @@ public final class AgentTownLifeState {
         flourishShown = false;
         roleUntilMs = 0L;
         destinationKey = null;
+        venueId = "";
+        decisionSource = "default-policy";
+        decisionCorrelationId = "";
         memory.clear();
         progressWatchdog.clear();
     }
 
     public synchronized boolean enabled() {
         return enabled;
+    }
+
+    public synchronized int townMapId() {
+        return townMapId;
     }
 
     public synchronized Stage stage() {
@@ -147,8 +185,44 @@ public final class AgentTownLifeState {
         return roleUntilMs;
     }
 
+    public synchronized District preferredDistrict() {
+        AgentTownLifeProfile profile = AgentTownLifeProfileRepository.defaultRepository()
+                .require(townMapId);
+        return AgentTownLifeDistributionPolicy.allowsCrossDistrictVisit(
+                sequence, profile.distribution())
+                ? District.ANY : homeDistrict;
+    }
+
+    public synchronized District homeDistrict() {
+        return homeDistrict;
+    }
+
+    public synchronized PlatformKind platformPreference() {
+        return platformPreference;
+    }
+
+    public synchronized boolean initialPlacementComplete() {
+        return initialPlacementComplete;
+    }
+
+    public synchronized void markInitialPlacementComplete() {
+        initialPlacementComplete = true;
+    }
+
     public synchronized String destinationKey() {
         return destinationKey;
+    }
+
+    public synchronized String venueId() {
+        return venueId;
+    }
+
+    public synchronized String decisionSource() {
+        return decisionSource;
+    }
+
+    public synchronized String decisionCorrelationId() {
+        return decisionCorrelationId;
     }
 
     AgentTownLifeMemory memory() {
@@ -183,6 +257,19 @@ public final class AgentTownLifeState {
                                     int nextDestinationMapId,
                                     String nextDestinationKey,
                                     long dueAtMs) {
+        select(nextActivity, nextTarget, nextTargetCharacterId, nextDestinationMapId,
+                nextDestinationKey, "", "default-policy", "", dueAtMs);
+    }
+
+    public synchronized void select(Activity nextActivity,
+                                    Point nextTarget,
+                                    int nextTargetCharacterId,
+                                    int nextDestinationMapId,
+                                    String nextDestinationKey,
+                                    String nextVenueId,
+                                    String nextDecisionSource,
+                                    String nextDecisionCorrelationId,
+                                    long dueAtMs) {
         activity = nextActivity;
         target = nextTarget == null ? null : new Point(nextTarget);
         targetCharacterId = nextTargetCharacterId;
@@ -192,6 +279,10 @@ public final class AgentTownLifeState {
         expressionShown = false;
         flourishShown = false;
         destinationKey = nextDestinationKey;
+        venueId = nextVenueId == null ? "" : nextVenueId;
+        decisionSource = nextDecisionSource == null || nextDecisionSource.isBlank()
+                ? "default-policy" : nextDecisionSource;
+        decisionCorrelationId = nextDecisionCorrelationId == null ? "" : nextDecisionCorrelationId;
         progressWatchdog.begin(target, dueAtMs);
         sequence++;
     }

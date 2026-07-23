@@ -5,6 +5,8 @@ import server.agents.operations.events.AgentMapTransitionedEvent;
 import server.agents.operations.events.AgentNavigationRouteFailedEvent;
 import server.agents.operations.events.AgentRecoveryPerformedEvent;
 import server.agents.progression.events.AgentLevelChangedEvent;
+import server.agents.capabilities.townlife.AgentTownLifeActivityEvent;
+import server.agents.capabilities.townlife.AgentTownLifeState;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -40,5 +42,21 @@ class AgentLlmContextProjectionStateTest {
         AgentLlmContextProjectionState.Snapshot snapshot = state.snapshot();
         assertEquals(AgentLlmContextProjectionState.MAX_MILESTONES, snapshot.milestones().size());
         assertEquals(5L, snapshot.milestones().getFirst().occurredAtMs());
+    }
+
+    @Test
+    void projectsTownLifeControllerVenueAndActivityWithoutLiveMapObjects() {
+        AgentLlmContextProjectionState state = new AgentLlmContextProjectionState();
+
+        state.record(new AgentTownLifeActivityEvent(
+                7, 40L, 104000000, "lith-harbor", AgentTownLifeState.Activity.REST,
+                AgentTownLifeActivityEvent.Phase.SELECTED, "central-benches", 0,
+                "external:test", "town-decision-1"));
+
+        AgentLlmContextProjectionState.Snapshot snapshot = state.snapshot();
+        assertEquals("REST", snapshot.facts().get("townlife.activity"));
+        assertEquals("central-benches", snapshot.facts().get("townlife.venue"));
+        assertEquals("external:test", snapshot.facts().get("townlife.controller"));
+        assertEquals("104000000", snapshot.facts().get("world.mapId"));
     }
 }

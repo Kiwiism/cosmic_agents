@@ -15,62 +15,100 @@ import java.util.Comparator;
 import java.util.List;
 
 final class AgentTownLifeSpotSampler {
-    private static final int MAX_SPOTS_PER_REGION = 3;
-    private static final int EDGE_INSET_PX = 30;
 
     private AgentTownLifeSpotSampler() {
     }
 
     static List<CharacterSpace> reachableSpaces(AgentRuntimeEntry entry,
                                                 Character agent,
+                                                AgentTownLifeState state,
                                                 List<Point> activityAnchors,
                                                 long variationSeed) {
         MapleMap map = agent.getMap();
         if (map == null) {
             return List.of();
         }
-        AgentMovementProfile profile = AgentMovementStateRuntime.movementProfileOrCharacter(entry, agent);
-        AgentNavigationGraph graph = AgentNavigationGraphService.peekBestGraph(map, profile);
+        AgentMovementProfile movementProfile = AgentMovementStateRuntime.movementProfileOrCharacter(entry, agent);
+        AgentNavigationGraph graph = AgentNavigationGraphService.peekBestGraph(map, movementProfile);
         if (graph == null) {
-            AgentNavigationGraphService.warmGraphAsync(entry, map, profile);
+            AgentNavigationGraphService.warmGraphAsync(entry, map, movementProfile);
             return List.of();
         }
         int originRegionId = graph.findRegionId(map, agent.getPosition());
         int originComponent = originRegionId < 0 ? -1 : graph.connectedComponentId(originRegionId);
-        int mainGroundY = graph.regions.stream()
-                .filter(region -> !region.isRopeRegion)
-                .mapToInt(region -> region.maxY)
-                .max()
-                .orElse(agent.getPosition().y);
+        AgentTownLifeProfile townProfile = AgentTownLifeProfileRepository.defaultRepository()
+                .require(map.getId());
         List<WeightedSpace> weighted = new ArrayList<>();
-        int spotNumber = 1;
-        for (AgentNavigationGraph.Region region : graph.regions.stream()
-                .sorted(Comparator.comparingInt(region -> region.id)).toList()) {
-            if (region.isRopeRegion || region.width() < 48
-                    || (originComponent >= 0 && graph.connectedComponentId(region.id) != originComponent)) {
-                continue;
-            }
-            int count = Math.min(MAX_SPOTS_PER_REGION, Math.max(1, region.width() / 180));
-            int inset = Math.min(EDGE_INSET_PX, Math.max(8, region.width() / 8));
-            for (int slot = 0; slot < count; slot++) {
-                int usableWidth = Math.max(0, region.width() - inset * 2);
-                int x = region.minX + inset + (slot + 1) * usableWidth / (count + 1);
-                Point point = region.pointAt(x);
-                int anchorBonus = activityAnchors.stream()
-                        .mapToInt(anchor -> anchor.distanceSq(point) <= 220L * 220L ? 180 : 0)
-                        .sum();
-                int heightPenalty = Math.abs(point.y - mainGroundY) / 4;
-                int weight = Math.max(10, Math.min(500, region.width() + anchorBonus - heightPenalty));
-                CharacterSpace space = new CharacterSpace(
-                        "town-nav-" + map.getId(), spotNumber++, map.getId(),
-                        Math.max(0, region.id), slot,
-                        point.x, point.y);
-                weighted.add(new WeightedSpace(space, weight,
-                        orderingScore(variationSeed, space.spotNumber(), weight)));
-            }
+        for (AgentTownLifePlatformCatalog.PlatformSpot spot :
+                AgentTownLifePlatformCatalog.reachable(graph, townProfile, originComponent)) {
+            CharacterSpace space = spot.space();
+            int anchorBonus = activityAnchors.stream()
+                    .mapToInt(anchor -> anchor.distanceSq(space.position()) <= 220L * 220L ? 180 : 0)
+                    .sum();
+            int preferenceBonus = preferenceBonus(state, spot.district(), spot.platformKind());
+            int weight = Math.max(10, Math.min(1_200, 300 + anchorBonus + preferenceBonus));
+            weighted.add(new WeightedSpace(space, weight,
+                    preferenceRank(state, spot.district(), spot.platformKind()),
+                    orderingScore(variationSeed, space.spotNumber(), weight)));
         }
-        weighted.sort(Comparator.comparingDouble(WeightedSpace::score));
+        weighted.sort(Comparator.comparingInt(WeightedSpace::preferenceRank)
+                .thenComparingDouble(WeightedSpace::score));
         return weighted.stream().map(WeightedSpace::space).toList();
+    }
+
+    static List<CharacterSpace> orderAuthoredSpaces(Character agent,
+                                                     AgentTownLifeState state,
+                                                     List<CharacterSpace> spaces,
+                                                     long variationSeed) {
+        if (agent == null || state == null || spaces == null || spaces.size() < 2) {
+            return spaces == null ? List.of() : spaces;
+        }
+        AgentTownLifeMapExtension extension =
+                AgentTownLifeMapExtensionRepository.forMap(agent.getMapId());
+        return spaces.stream()
+                .map(space -> {
+                    AgentTownLifeState.District district = extension.classify(space.position());
+                    int weight = 100 + preferenceBonus(
+                            state, district, AgentTownLifeState.PlatformKind.ANY);
+                    return new WeightedSpace(space, weight,
+                            preferenceRank(state, district, AgentTownLifeState.PlatformKind.ANY),
+                            orderingScore(variationSeed, space.spotNumber(), weight));
+                })
+                .sorted(Comparator.comparingInt(WeightedSpace::preferenceRank)
+                        .thenComparingDouble(WeightedSpace::score))
+                .map(WeightedSpace::space)
+                .toList();
+    }
+
+    private static int preferenceBonus(AgentTownLifeState state,
+                                       AgentTownLifeState.District district,
+                                       AgentTownLifeState.PlatformKind platform) {
+        int bonus = 0;
+        AgentTownLifeState.District preferredDistrict = state.preferredDistrict();
+        if (preferredDistrict != AgentTownLifeState.District.ANY
+                && preferredDistrict == district) {
+            bonus += 750;
+        }
+        AgentTownLifeState.PlatformKind preferredPlatform = state.platformPreference();
+        if (preferredPlatform != AgentTownLifeState.PlatformKind.ANY
+                && preferredPlatform == platform) {
+            bonus += 500;
+        }
+        return bonus;
+    }
+
+    private static int preferenceRank(AgentTownLifeState state,
+                                      AgentTownLifeState.District district,
+                                      AgentTownLifeState.PlatformKind platform) {
+        boolean districtMatch = state.preferredDistrict() == AgentTownLifeState.District.ANY
+                || state.preferredDistrict() == district;
+        boolean platformMatch = state.platformPreference() == AgentTownLifeState.PlatformKind.ANY
+                || state.platformPreference() == platform
+                || platform == AgentTownLifeState.PlatformKind.ANY;
+        if (districtMatch && platformMatch) {
+            return 0;
+        }
+        return districtMatch || platformMatch ? 1 : 2;
     }
 
     private static double orderingScore(long seed, int spotNumber, int weight) {
@@ -82,6 +120,9 @@ final class AgentTownLifeSpotSampler {
         return (positive / (double) Long.MAX_VALUE) / weight;
     }
 
-    private record WeightedSpace(CharacterSpace space, int weight, double score) {
+    private record WeightedSpace(CharacterSpace space,
+                                 int weight,
+                                 int preferenceRank,
+                                 double score) {
     }
 }

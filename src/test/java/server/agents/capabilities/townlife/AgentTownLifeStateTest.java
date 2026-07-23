@@ -14,10 +14,11 @@ class AgentTownLifeStateTest {
     void startAndStopOwnTheWholeTownLifeSession() {
         AgentTownLifeState state = new AgentTownLifeState();
 
-        state.start(1_000L, 8);
+        state.start(1_000L, 8, LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID);
 
         assertTrue(state.enabled());
-        assertEquals(AgentTownLifeState.Stage.TRAVEL_TO_LITH, state.stage());
+        assertEquals(AgentTownLifeState.Stage.TRAVEL_TO_TOWN, state.stage());
+        assertFalse(state.initialPlacementComplete());
         assertTrue(state.nextActionAtMs() >= 1_500L);
         assertTrue(state.nextActionAtMs() <= 11_000L);
 

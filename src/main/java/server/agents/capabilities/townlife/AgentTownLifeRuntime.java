@@ -8,18 +8,20 @@ import server.agents.capabilities.movement.fidget.AgentFidgetMode;
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
 import server.agents.capabilities.movement.fidget.AgentFidgetStateRuntime;
 import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
+import server.agents.capabilities.navigation.AgentTravelVariationRuntime;
+import server.agents.capabilities.navigation.AgentTravelVariationSettings;
 import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.PrimitiveCapabilityGateway;
-import server.agents.plans.amherst.MapleIslandSouthperryQuestCatalog;
 import server.agents.progression.AgentVictoriaRouteRuntime;
+import server.agents.plans.AgentPlanPauseRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
 
 import java.awt.Point;
 
 public final class AgentTownLifeRuntime {
-    private static final int SHANKS_INTERACTION_DISTANCE_PX = 90;
+    private static final String PLAN_PAUSE_REASON = "town-life";
     private static final int ACTIVITY_ARRIVAL_DISTANCE_PX = 70;
     private static final int ACTIVITY_ARRIVAL_VERTICAL_DISTANCE_PX = 12;
     private static final int MAP_SEAT_ARRIVAL_DISTANCE_PX = 12;
@@ -32,6 +34,22 @@ public final class AgentTownLifeRuntime {
                 .find(AgentTownLifeState.STATE_KEY)
                 .map(AgentTownLifeState::enabled)
                 .orElse(false);
+    }
+
+    public static void start(AgentRuntimeEntry entry,
+                             int townMapId,
+                             long nowMs,
+                             int identitySeed) {
+        if (entry == null) {
+            return;
+        }
+        entry.capabilityStates().require(AgentTownLifeState.STATE_KEY)
+                .start(nowMs, identitySeed, townMapId);
+        AgentPlanPauseRuntime.pause(entry, PLAN_PAUSE_REASON, nowMs);
+        AgentTravelVariationRuntime.configure(entry,
+                new AgentTravelVariationSettings(
+                        Integer.toUnsignedLong(identitySeed), true, 1.30d,
+                        false, 0.0d, 3_000L, 0L));
     }
 
     /**
@@ -53,10 +71,13 @@ public final class AgentTownLifeRuntime {
         if (!state.enabled()) {
             return false;
         }
-        if (state.stage() == AgentTownLifeState.Stage.TRAVEL_TO_LITH) {
-            return travelToLith(entry, agent, state, nowMs, gateway);
+        AgentTownLifeEncounterCoordinator.tickPassive(entry, agent, state, gateway, nowMs);
+        AgentTownLifeArrivalExtension arrival =
+                AgentTownLifeArrivalExtensionRepository.forTown(state.townMapId());
+        if (state.stage() == AgentTownLifeState.Stage.TRAVEL_TO_TOWN) {
+            return arrival.tickTravel(entry, agent, state, nowMs, gateway);
         }
-        if (agent.getMapId() != LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID
+        if (agent.getMapId() != state.townMapId()
                 && state.stage() != AgentTownLifeState.Stage.VISIT_SHOP
                 && state.stage() != AgentTownLifeState.Stage.RETURN_FROM_SHOP
                 && !(state.stage() == AgentTownLifeState.Stage.DWELL
@@ -67,9 +88,8 @@ public final class AgentTownLifeRuntime {
         }
         return switch (state.stage()) {
             case DISABLED -> false;
-            case TRAVEL_TO_LITH -> true;
-            case COMPLETE_ISLAND_HANDOFF -> completeIslandHandoff(
-                    entry, agent, state, nowMs, gateway);
+            case TRAVEL_TO_TOWN -> true;
+            case COMPLETE_ARRIVAL -> arrival.tickArrival(entry, agent, state, nowMs, gateway);
             case SETTLING -> tickSettling(entry, agent, state, nowMs, gateway);
             case CHOOSE_ACTIVITY -> chooseActivity(entry, agent, state, nowMs, gateway);
             case MOVE_TO_ACTIVITY -> moveToActivity(entry, agent, state, nowMs, gateway);
@@ -84,109 +104,16 @@ public final class AgentTownLifeRuntime {
             return;
         }
         AgentTownLifeState state = entry.capabilityStates().require(AgentTownLifeState.STATE_KEY);
+        AgentTownLifeEncounterCoordinator.finish(entry, agent, false, System.currentTimeMillis());
+        entry.capabilityStates().require(AgentTownLifeActivitySequenceState.STATE_KEY).clear();
         state.stop();
+        AgentPlanPauseRuntime.resume(entry, PLAN_PAUSE_REASON, System.currentTimeMillis());
         AgentTownLifeDestinationService.release(agent);
         AgentFidgetService.clear(entry);
         if (agent != null && agent.getChair() >= 0) {
             AgentChairService.stand(entry, agent);
         }
         AgentPrimitiveCapabilityGatewayRuntime.gateway().stop(entry);
-    }
-
-    private static boolean travelToLith(AgentRuntimeEntry entry,
-                                        Character agent,
-                                        AgentTownLifeState state,
-                                        long nowMs,
-                                        PrimitiveCapabilityGateway gateway) {
-        if (agent.getMapId() == LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID) {
-            gateway.stop(entry);
-            state.transition(AgentTownLifeState.Stage.COMPLETE_ISLAND_HANDOFF,
-                    nowMs + delay(agent, state, 1_500, 3_501));
-            return true;
-        }
-        if (agent.getMapId() != MapleIslandSouthperryQuestCatalog.FINAL_MAP_ID) {
-            AgentVictoriaRouteRuntime.TravelOutcome outcome = AgentVictoriaRouteRuntime.travelStatus(
-                    entry, agent, LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID, gateway, nowMs);
-            return outcome.status() != AgentVictoriaRouteRuntime.Status.MOVING;
-        }
-        if (agent.getChair() >= 0) {
-            AgentChairService.stand(entry, agent);
-            return true;
-        }
-        if (nowMs < state.nextActionAtMs()) {
-            return true;
-        }
-        Point shanks = gateway.npcPosition(agent, MapleIslandSouthperryQuestCatalog.SHANKS_NPC_ID);
-        if (shanks == null) {
-            state.transition(AgentTownLifeState.Stage.TRAVEL_TO_LITH, nowMs + 2_000L);
-            return true;
-        }
-        if (!gateway.grounded(agent)
-                || agent.getPosition().distanceSq(shanks)
-                > SHANKS_INTERACTION_DISTANCE_PX * SHANKS_INTERACTION_DISTANCE_PX) {
-            gateway.navigate(entry, shanks, true);
-            return false;
-        }
-        gateway.stop(entry);
-        gateway.facePosition(agent, shanks);
-        boolean entered = gateway.runNpcScript(agent, MapleIslandSouthperryQuestCatalog.SHANKS_NPC_ID);
-        if (entered && agent.getMapId() == LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID) {
-            state.transition(AgentTownLifeState.Stage.COMPLETE_ISLAND_HANDOFF,
-                    nowMs + delay(agent, state, 1_500, 3_501));
-        } else {
-            state.transition(AgentTownLifeState.Stage.TRAVEL_TO_LITH, nowMs + 3_000L);
-        }
-        return true;
-    }
-
-    private static boolean completeIslandHandoff(AgentRuntimeEntry entry,
-                                                 Character agent,
-                                                 AgentTownLifeState state,
-                                                 long nowMs,
-                                                 PrimitiveCapabilityGateway gateway) {
-        if (agent.getMapId() != LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID) {
-            state.transition(AgentTownLifeState.Stage.RETURN_FROM_SHOP, nowMs);
-            return true;
-        }
-        if (agent.getQuestStatus(MapleIslandSouthperryQuestCatalog.START_ONLY_BIGGS_STORY_QUEST_ID)
-                != client.QuestStatus.Status.STARTED.getId()) {
-            state.transition(AgentTownLifeState.Stage.SETTLING,
-                    nowMs + delay(agent, state, 2_000, 5_001));
-            return true;
-        }
-        if (nowMs < state.nextActionAtMs()) {
-            return true;
-        }
-        Point biggs = gateway.npcPosition(agent, LithHarborTownLifeCatalog.BIGGS_NPC_ID);
-        if (biggs == null) {
-            state.transition(AgentTownLifeState.Stage.COMPLETE_ISLAND_HANDOFF, nowMs + 2_000L);
-            return true;
-        }
-        if (!gateway.grounded(agent)
-                || agent.getPosition().distanceSq(biggs)
-                > SHANKS_INTERACTION_DISTANCE_PX * SHANKS_INTERACTION_DISTANCE_PX) {
-            gateway.navigate(entry, biggs, true);
-            return false;
-        }
-        gateway.stop(entry);
-        gateway.facePosition(agent, biggs);
-        boolean completed = gateway.canCompleteQuest(
-                agent,
-                MapleIslandSouthperryQuestCatalog.START_ONLY_BIGGS_STORY_QUEST_ID,
-                LithHarborTownLifeCatalog.BIGGS_NPC_ID)
-                && gateway.completeQuest(
-                agent,
-                MapleIslandSouthperryQuestCatalog.START_ONLY_BIGGS_STORY_QUEST_ID,
-                LithHarborTownLifeCatalog.BIGGS_NPC_ID);
-        if (completed || agent.getQuestStatus(
-                MapleIslandSouthperryQuestCatalog.START_ONLY_BIGGS_STORY_QUEST_ID)
-                == client.QuestStatus.Status.COMPLETED.getId()) {
-            state.transition(AgentTownLifeState.Stage.SETTLING,
-                    nowMs + delay(agent, state, 2_000, 5_001));
-        } else {
-            state.transition(AgentTownLifeState.Stage.COMPLETE_ISLAND_HANDOFF, nowMs + 3_000L);
-        }
-        return true;
     }
 
     private static boolean tickSettling(AgentRuntimeEntry entry,
@@ -217,18 +144,23 @@ public final class AgentTownLifeRuntime {
         }
         AgentFidgetService.clear(entry);
         AgentTownLifeRolePolicy.resolve(entry, agent, state, nowMs);
-        AgentTownLifeState.Activity activity = AgentTownLifeActivityPolicy.choose(entry, agent, state);
+        AgentTownLifeDecision decision = AgentTownLifeControllerRuntime.choose(entry, agent, state, nowMs);
         AgentTownLifeDestinationService.Destination destination =
                 AgentTownLifeDestinationService.select(
-                        entry, agent, state, activity, nowMs, gateway);
+                        entry, agent, state, decision, nowMs, gateway);
         if (destination == null) {
             state.transition(AgentTownLifeState.Stage.CHOOSE_ACTIVITY,
                     nowMs + delay(agent, state, 500, 1_501));
             return true;
         }
         state.select(destination.activity(), destination.point(), destination.targetCharacterId(),
-                destination.destinationMapId(), destination.key(), nowMs);
+                destination.destinationMapId(), destination.key(), destination.venueId(),
+                decision.source(), decision.correlationId(), nowMs);
         state.memory().remember(destination.activity(), destination.key(), nowMs);
+        entry.capabilityStates().require(AgentTownLifeActivitySequenceState.STATE_KEY).clear();
+        AgentTownLifeEventPublisher.activity(
+                entry, agent, state, AgentTownLifeActivityEvent.Phase.SELECTED, nowMs);
+        AgentTownLifeEncounterCoordinator.begin(entry, agent, state, decision.encounterType(), nowMs);
         return true;
     }
 
@@ -244,7 +176,7 @@ public final class AgentTownLifeRuntime {
             return true;
         }
         int arrivalDistance = state.activity() == AgentTownLifeState.Activity.REST
-                && LithHarborTownLifeCatalog.mapSeatId(target) >= 0
+                && townProfile(state).mapSeatId(target) >= 0
                 ? MAP_SEAT_ARRIVAL_DISTANCE_PX
                 : ACTIVITY_ARRIVAL_DISTANCE_PX;
         if (!gateway.grounded(agent)
@@ -260,18 +192,30 @@ public final class AgentTownLifeRuntime {
             return false;
         }
         gateway.stop(entry);
+        if (state.activity() == AgentTownLifeState.Activity.ROAM) {
+            state.markInitialPlacementComplete();
+        }
         Point facing = peerPosition(state, agent);
         gateway.facePosition(agent, facing == null ? target : facing);
+        AgentTownLifeEventPublisher.activity(
+                entry, agent, state, AgentTownLifeActivityEvent.Phase.ARRIVED, nowMs);
+        if (!AgentTownLifeEncounterCoordinator.activate(entry, agent, nowMs)) {
+            abandonDestination(entry, agent, state, nowMs, gateway);
+            return true;
+        }
         long dwellMs = switch (state.activity()) {
             case REST -> delay(agent, state, 12_000, 36_001);
             case SOCIAL -> delay(agent, state, 5_000, 13_001);
             case NPC_PAUSE -> delay(agent, state, 4_000, 11_001);
-            case WANDER -> delay(agent, state, 3_000, 9_001);
+            case ROAM -> delay(agent, state, 3_000, 9_001);
             case WEAPON_FLOURISH -> delay(agent, state, 3_000, 7_001);
             default -> 4_000L;
         };
         state.beginDwell(nowMs + dwellMs);
-        beginDwellMotion(entry, agent, state, nowMs);
+        entry.capabilityStates().require(AgentTownLifeActivitySequenceState.STATE_KEY)
+                .start(nowMs, state.nextActionAtMs());
+        AgentTownLifeEventPublisher.activity(
+                entry, agent, state, AgentTownLifeActivityEvent.Phase.ORIENTING, nowMs);
         return true;
     }
 
@@ -281,13 +225,17 @@ public final class AgentTownLifeRuntime {
                                      long nowMs,
                                      PrimitiveCapabilityGateway gateway) {
         if (nowMs >= state.nextActionAtMs()) {
+            AgentTownLifeEventPublisher.activity(
+                    entry, agent, state, AgentTownLifeActivityEvent.Phase.COMPLETED, nowMs);
+            AgentTownLifeEncounterCoordinator.finish(entry, agent, true, nowMs);
+            entry.capabilityStates().require(AgentTownLifeActivitySequenceState.STATE_KEY).clear();
             AgentFidgetService.clear(entry);
             AgentTownLifeDestinationService.release(agent);
             if (agent.getChair() >= 0) {
                 AgentChairService.stand(entry, agent);
             }
             if (state.activity() == AgentTownLifeState.Activity.SHOP_VISIT
-                    && agent.getMapId() != LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID) {
+                    && agent.getMapId() != state.townMapId()) {
                 state.transition(AgentTownLifeState.Stage.RETURN_FROM_SHOP, nowMs);
             } else {
                 state.transition(AgentTownLifeState.Stage.CHOOSE_ACTIVITY,
@@ -295,18 +243,33 @@ public final class AgentTownLifeRuntime {
             }
             return true;
         }
-        Point facing = peerPosition(state, agent);
-        if (facing == null) {
-            facing = state.target() == null ? agent.getPosition() : state.target();
+        AgentTownLifeActivitySequenceState sequence = entry.capabilityStates()
+                .require(AgentTownLifeActivitySequenceState.STATE_KEY);
+        if (sequence.phase() == AgentTownLifeActivitySequenceState.Phase.IDLE) {
+            sequence.start(nowMs, state.nextActionAtMs());
         }
-        gateway.facePosition(agent, facing);
-        if (!state.expressionShown()) {
+        AgentTownLifeActivitySequenceState.Phase previousPhase = sequence.phase();
+        AgentTownLifeActivitySequenceState.Phase phase = sequence.advance(nowMs);
+        if (phase != previousPhase) {
+            AgentTownLifeEventPublisher.activity(entry, agent, state, eventPhase(phase), nowMs);
+            if (phase == AgentTownLifeActivitySequenceState.Phase.REACTION) {
+                AgentTownLifeEncounterCoordinator.requestReaction(entry, agent, nowMs);
+            } else if (phase == AgentTownLifeActivitySequenceState.Phase.CLOSING) {
+                AgentTownLifeEncounterCoordinator.beginClosing(entry, agent, nowMs);
+            }
+        }
+        if (phase.ordinal() >= AgentTownLifeActivitySequenceState.Phase.OPENING.ordinal()
+                && !state.expressionShown()) {
             agent.changeFaceExpression(expressionFor(agent, state));
             state.markExpressionShown();
         }
         if (state.activity() == AgentTownLifeState.Activity.REST) {
+            AgentFidgetService.clear(entry);
+            if (phase.ordinal() < AgentTownLifeActivitySequenceState.Phase.OPENING.ordinal()) {
+                return true;
+            }
             if (agent.getChair() < 0) {
-                int mapSeatId = LithHarborTownLifeCatalog.mapSeatId(state.target());
+                int mapSeatId = townProfile(state).mapSeatId(state.target());
                 if (mapSeatId >= 0) {
                     gateway.sitMapSeat(agent, mapSeatId, state.target());
                 } else if (gateway.itemCount(agent, ItemId.RELAXER) > 0) {
@@ -315,12 +278,24 @@ public final class AgentTownLifeRuntime {
             }
             return true;
         }
-        if (state.activity() == AgentTownLifeState.Activity.WEAPON_FLOURISH
+        Point facing = peerPosition(state, agent);
+        if (facing == null) {
+            facing = state.target() == null ? agent.getPosition() : state.target();
+        }
+        gateway.facePosition(agent, facing);
+        if (phase == AgentTownLifeActivitySequenceState.Phase.PERFORMING
+                && state.activity() == AgentTownLifeState.Activity.WEAPON_FLOURISH
                 && !state.flourishShown()) {
             AgentTownLifeVisualService.flourish(agent, facing);
             state.markFlourishShown();
         }
-        if (AgentFidgetStateRuntime.active(entry)) {
+        if (phase == AgentTownLifeActivitySequenceState.Phase.PERFORMING
+                && !sequence.performanceStarted()) {
+            beginDwellMotion(entry, agent, state, nowMs);
+            sequence.markPerformanceStarted();
+        }
+        if (phase == AgentTownLifeActivitySequenceState.Phase.PERFORMING
+                && AgentFidgetStateRuntime.active(entry)) {
             AgentFidgetService.tryHandleTownLifeTick(entry, facing, nowMs);
         }
         return true;
@@ -336,7 +311,10 @@ public final class AgentTownLifeRuntime {
         if (outcome.status() == AgentVictoriaRouteRuntime.Status.ARRIVED) {
             gateway.stop(entry);
             state.beginDwell(nowMs + delay(agent, state, 8_000, 21_001));
-            beginDwellMotion(entry, agent, state, nowMs);
+            entry.capabilityStates().require(AgentTownLifeActivitySequenceState.STATE_KEY)
+                    .start(nowMs, state.nextActionAtMs());
+            AgentTownLifeEventPublisher.activity(
+                    entry, agent, state, AgentTownLifeActivityEvent.Phase.ORIENTING, nowMs);
             return true;
         }
         return outcome.status() != AgentVictoriaRouteRuntime.Status.MOVING;
@@ -348,7 +326,7 @@ public final class AgentTownLifeRuntime {
                                           long nowMs,
                                           PrimitiveCapabilityGateway gateway) {
         AgentVictoriaRouteRuntime.TravelOutcome outcome = AgentVictoriaRouteRuntime.travelStatus(
-                entry, agent, LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID, gateway, nowMs);
+                entry, agent, state.townMapId(), gateway, nowMs);
         if (outcome.status() == AgentVictoriaRouteRuntime.Status.ARRIVED) {
             gateway.stop(entry);
             state.transition(AgentTownLifeState.Stage.SETTLING,
@@ -378,6 +356,10 @@ public final class AgentTownLifeRuntime {
         AgentFidgetService.clear(entry);
         AgentTownLifeDestinationService.release(agent);
         state.memory().rememberFailure(state.destinationKey(), nowMs);
+        AgentTownLifeEventPublisher.activity(
+                entry, agent, state, AgentTownLifeActivityEvent.Phase.ABANDONED, nowMs);
+        AgentTownLifeEncounterCoordinator.finish(entry, agent, false, nowMs);
+        entry.capabilityStates().require(AgentTownLifeActivitySequenceState.STATE_KEY).clear();
         state.progressWatchdog().clear();
         state.transition(AgentTownLifeState.Stage.CHOOSE_ACTIVITY,
                 nowMs + delay(agent, state, 700, 2_001));
@@ -385,7 +367,7 @@ public final class AgentTownLifeRuntime {
 
     private static int expressionFor(Character agent, AgentTownLifeState state) {
         return switch (state.activity()) {
-            case REST, WANDER, SHOP_VISIT -> AgentEmote.HAPPY.getValue();
+            case REST, ROAM, SHOP_VISIT -> AgentEmote.HAPPY.getValue();
             case NPC_PAUSE -> varied(agent, state, 2, 127) == 0
                     ? AgentEmote.GLARE.getValue() : AgentEmote.DISTURBED.getValue();
             case SOCIAL -> varied(agent, state, 3, 131) == 0
@@ -408,25 +390,32 @@ public final class AgentTownLifeRuntime {
         return new Point(peer.getPosition());
     }
 
+    private static AgentTownLifeProfile townProfile(AgentTownLifeState state) {
+        return AgentTownLifeProfileRepository.defaultRepository().require(state.townMapId());
+    }
+
     private static long delay(Character agent,
                               AgentTownLifeState state,
                               int minimumInclusive,
                               int maximumExclusive) {
-        return minimumInclusive + varied(agent, state, maximumExclusive - minimumInclusive, 157);
+        return AgentTownLifeTimingPolicy.delay(
+                agent, state, minimumInclusive, maximumExclusive);
     }
 
     private static int varied(Character agent, AgentTownLifeState state, int bound, int salt) {
-        if (bound <= 1) {
-            return 0;
-        }
-        long value = agent.getId() * 0x9E3779B97F4A7C15L
-                + (long) state.sequence() * 0xBF58476D1CE4E5B9L
-                + salt * 0x94D049BB133111EBL;
-        value ^= value >>> 30;
-        value *= 0xBF58476D1CE4E5B9L;
-        value ^= value >>> 27;
-        value *= 0x94D049BB133111EBL;
-        value ^= value >>> 31;
-        return Math.floorMod((int) value, bound);
+        return AgentTownLifeTimingPolicy.varied(agent, state, bound, salt);
+    }
+
+    private static AgentTownLifeActivityEvent.Phase eventPhase(
+            AgentTownLifeActivitySequenceState.Phase phase) {
+        return switch (phase) {
+            case ORIENT -> AgentTownLifeActivityEvent.Phase.ORIENTING;
+            case OPENING -> AgentTownLifeActivityEvent.Phase.OPENING;
+            case PERFORMING -> AgentTownLifeActivityEvent.Phase.PERFORMING;
+            case REACTION -> AgentTownLifeActivityEvent.Phase.REACTING;
+            case CLOSING -> AgentTownLifeActivityEvent.Phase.CLOSING;
+            case COMPLETE -> AgentTownLifeActivityEvent.Phase.COMPLETED;
+            case IDLE -> AgentTownLifeActivityEvent.Phase.SELECTED;
+        };
     }
 }

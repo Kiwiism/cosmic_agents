@@ -88,6 +88,20 @@ public final class AgentDialogueProjectionRuntime {
                 default -> "";
             };
         }
+        if (AgentTownLifeDialogueReactionService.SOCIAL_INTENT.equals(intent.intentKey())) {
+            return variant(intent, List.of(
+                    "nice day to hang around town.",
+                    "taking a break before heading out.",
+                    "this place is pretty lively today.",
+                    "just checking out the harbor."));
+        }
+        if (AgentTownLifeDialogueReactionService.SPARRING_INTENT.equals(intent.intentKey())) {
+            return variant(intent, List.of(
+                    "wanna practice a little?",
+                    "just warming up.",
+                    "that was close!",
+                    "okay, one more swing."));
+        }
         if (!AgentSupplyDialogueReactionService.INTENT_KEY.equals(intent.intentKey())) {
             return "";
         }
@@ -114,5 +128,14 @@ public final class AgentDialogueProjectionRuntime {
 
     private static boolean isRealPlayer(Character character) {
         return AgentClientGatewayRuntime.clients().isRealPlayer(character);
+    }
+
+    private static String variant(AgentDialogueIntentEvent intent, List<String> lines) {
+        try {
+            int index = Integer.parseInt(intent.parameters().getOrDefault("variant", "0"));
+            return lines.get(Math.floorMod(index, lines.size()));
+        } catch (NumberFormatException ignored) {
+            return lines.getFirst();
+        }
     }
 }

@@ -7,6 +7,7 @@ import client.Character;
 import constants.game.CharacterStance;
 import server.agents.integration.AgentPacketGatewayRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.capabilities.movement.fidget.AgentFidgetService;
 
 import java.awt.Point;
 
@@ -20,6 +21,8 @@ public final class AgentChairService {
         if (entry == null || agent == null || itemId < 0) {
             return false;
         }
+        AgentFidgetService.clear(entry);
+        AgentMovementPoseService.idleOnGround(entry, agent);
         agent.sitChair(itemId);
         if (agent.getChair() != itemId) {
             return false;

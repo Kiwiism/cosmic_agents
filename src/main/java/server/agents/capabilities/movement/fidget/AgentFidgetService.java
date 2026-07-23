@@ -125,8 +125,10 @@ public final class AgentFidgetService {
         }
         Point botPos = AgentRuntimeIdentityRuntime.bot(entry) == null
                 ? null : AgentRuntimeIdentityRuntime.bot(entry).getPosition();
+        Character bot = AgentRuntimeIdentityRuntime.bot(entry);
         if (botPos == null
-                || AgentMovementStateRuntime.inAir(entry)
+                || (bot != null && bot.getChair() >= 0)
+                || invalidBoundedAirborneState(entry)
                 || AgentMovementStateRuntime.climbing(entry)
                 || AgentMovementStateRuntime.downJumpPending(entry)
                 || AgentFidgetStateRuntime.expired(entry, now)) {
@@ -134,6 +136,11 @@ public final class AgentFidgetService {
             return false;
         }
         return handleActiveTick(entry, botPos, targetPos, now);
+    }
+
+    static boolean invalidBoundedAirborneState(AgentRuntimeEntry entry) {
+        return AgentMovementStateRuntime.inAir(entry)
+                && !isJumpFidget(AgentFidgetStateRuntime.mode(entry));
     }
 
     public static void clearProfileNavigation(AgentRuntimeEntry entry) {

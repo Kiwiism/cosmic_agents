@@ -3,7 +3,6 @@ package server.agents.plans.amherst;
 import client.Character;
 import server.agents.capabilities.behavior.AgentPioRelaxerInterludeRuntime;
 import server.agents.capabilities.runtime.AgentCapabilityRuntime;
-import server.agents.capabilities.townlife.AgentTownLifeRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.plans.AgentPlanPauseRuntime;
 import server.agents.profiles.AgentBehaviorProfileRuntime;
@@ -62,9 +61,6 @@ public final class AgentAmherstPlanRuntime {
 
     public static boolean tickGate(AgentRuntimeEntry entry, Character agent, long nowMs) {
         long planNowMs = AgentPlanPauseRuntime.effectiveNow(entry, nowMs);
-        if (AgentTownLifeRuntime.active(entry)) {
-            return AgentTownLifeRuntime.tick(entry, agent, planNowMs);
-        }
         if (AgentFirstJobJourneyRuntime.tick(entry, agent, planNowMs)) {
             return true;
         }
