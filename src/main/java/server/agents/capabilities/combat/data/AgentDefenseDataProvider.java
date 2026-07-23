@@ -12,8 +12,8 @@ import java.util.TreeMap;
 import java.util.concurrent.ThreadLocalRandom;
 
 public final class AgentDefenseDataProvider {
-    private static final double MIN_DAMAGE_FACTOR = 0.008d;
-    private static final double MAX_DAMAGE_FACTOR = 0.0085d;
+    private static final double MIN_DAMAGE_FACTOR = config.AgentTuning.doubleValue("server.agents.capabilities.combat.data.AgentDefenseDataProvider.MIN_DAMAGE_FACTOR");
+    private static final double MAX_DAMAGE_FACTOR = config.AgentTuning.doubleValue("server.agents.capabilities.combat.data.AgentDefenseDataProvider.MAX_DAMAGE_FACTOR");
     private static final AgentDefenseDataProvider instance = new AgentDefenseDataProvider();
 
     private enum JobFamily {

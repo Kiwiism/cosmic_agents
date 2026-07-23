@@ -27,8 +27,8 @@ final class AgentTownLifeEncounterCoordinator {
     }
 
     private static final Object LOCK = new Object();
-    private static final long ENCOUNTER_TIMEOUT_MS = 45_000L;
-    private static final int PRESENTATION_DISTANCE_PX = 150;
+    private static final long ENCOUNTER_TIMEOUT_MS = config.AgentTuning.longValue("server.agents.capabilities.townlife.AgentTownLifeEncounterCoordinator.ENCOUNTER_TIMEOUT_MS");
+    private static final int PRESENTATION_DISTANCE_PX = config.AgentTuning.intValue("server.agents.capabilities.townlife.AgentTownLifeEncounterCoordinator.PRESENTATION_DISTANCE_PX");
 
     private AgentTownLifeEncounterCoordinator() {
     }

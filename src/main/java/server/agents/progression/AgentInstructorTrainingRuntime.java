@@ -10,8 +10,8 @@ import java.util.List;
 
 /** Runs the four normal instructor quests before handing off to the level-15 catch-up plan. */
 public final class AgentInstructorTrainingRuntime {
-    private static final int NPC_DISTANCE_PX = 100;
-    private static final long NPC_DELAY_MS = 3_000L;
+    private static final int NPC_DISTANCE_PX = config.AgentTuning.intValue("server.agents.progression.AgentInstructorTrainingRuntime.NPC_DISTANCE_PX");
+    private static final long NPC_DELAY_MS = config.AgentTuning.longValue("server.agents.progression.AgentInstructorTrainingRuntime.NPC_DELAY_MS");
 
     private AgentInstructorTrainingRuntime() {
     }

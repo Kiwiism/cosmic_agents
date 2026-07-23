@@ -7,7 +7,7 @@ import java.util.Optional;
 
 /** Prevents a cohort of Agents from all walking to the same live reactor. */
 public final class AgentReactorTargetReservationRuntime {
-    private static final long RESERVATION_TTL_MS = 30_000L;
+    private static final long RESERVATION_TTL_MS = config.AgentTuning.longValue("server.agents.capabilities.reactor.AgentReactorTargetReservationRuntime.RESERVATION_TTL_MS");
     private static final Map<Integer, Reservation> BY_AGENT = new HashMap<>();
     private static final Map<TargetKey, Integer> OWNER_BY_TARGET = new HashMap<>();
 

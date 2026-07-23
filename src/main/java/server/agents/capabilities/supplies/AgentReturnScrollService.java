@@ -11,7 +11,7 @@ import server.agents.integration.InventoryGateway;
  * Agent supply helper for using a Return Scroll - Nearest Town.
  */
 public final class AgentReturnScrollService {
-    private static final int RETURN_SCROLL_NEAREST_TOWN = 2030000;
+    private static final int RETURN_SCROLL_NEAREST_TOWN = config.AgentTuning.intValue("server.agents.capabilities.supplies.AgentReturnScrollService.RETURN_SCROLL_NEAREST_TOWN");
 
     private AgentReturnScrollService() {
     }

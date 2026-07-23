@@ -9,7 +9,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class AgentFormationCommandService {
-    private static final int MAX_FORMATION_DISTANCE_PX = 10_000;
+    private static final int MAX_FORMATION_DISTANCE_PX = config.AgentTuning.intValue("server.agents.capabilities.movement.AgentFormationCommandService.MAX_FORMATION_DISTANCE_PX");
     private static final Pattern FORMATION_PATTERN = Pattern.compile(
             "\\b(?:formation|form)\\b(?:\\s+(stagger|split|random|stack|spread|tight|loose|left|right|snap)(?:\\s+(\\d+|tight|loose|on|off))?)?",
             Pattern.CASE_INSENSITIVE);

@@ -45,7 +45,7 @@ import java.util.List;
  */
 public final class AgentInventoryTransferService {
     private static final Logger log = LoggerFactory.getLogger(AgentInventoryTransferService.class);
-    private static final long TRADE_COMMAND_PROFILE_WARN_NS = 50_000_000L;
+    private static final long TRADE_COMMAND_PROFILE_WARN_NS = config.AgentTuning.longValue("server.agents.capabilities.trade.AgentInventoryTransferService.TRADE_COMMAND_PROFILE_WARN_NS");
 
     private AgentInventoryTransferService() {
     }

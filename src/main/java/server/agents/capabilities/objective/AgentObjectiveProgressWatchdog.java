@@ -7,7 +7,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 import java.awt.Point;
 
 public final class AgentObjectiveProgressWatchdog {
-    private static final int MEANINGFUL_APPROACH_PX = 12;
+    private static final int MEANINGFUL_APPROACH_PX = config.AgentTuning.intValue("server.agents.capabilities.objective.AgentObjectiveProgressWatchdog.MEANINGFUL_APPROACH_PX");
     private AgentObjectiveProgressWatchdog() {
     }
 

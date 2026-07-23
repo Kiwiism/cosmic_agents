@@ -20,6 +20,8 @@ import java.util.concurrent.TimeoutException;
 
 /** Stable lifecycle-facing facade over all Agent scheduler modes. */
 public final class AgentScheduler {
+    private static final long DEFAULT_QUIESCENCE_TIMEOUT_MS = config.AgentTuning.longValue(
+            "server.agents.runtime.scheduler.AgentScheduler.DEFAULT_QUIESCENCE_TIMEOUT_MS");
     private AgentScheduler() {
     }
 
@@ -124,7 +126,11 @@ public final class AgentScheduler {
     }
 
     private static long defaultQuiescenceTimeoutMs() {
-        return Math.max(1L, Long.getLong("agents.scheduler.quiescenceTimeoutMs", 5_000L));
+        return Math.max(
+                1L,
+                Long.getLong(
+                        "agents.scheduler.quiescenceTimeoutMs",
+                        DEFAULT_QUIESCENCE_TIMEOUT_MS));
     }
 
     private static final class LegacyTickGuard {

@@ -47,7 +47,7 @@ public final class AmherstPlanNarrator {
 
     public static void announce(Character agent, AmherstPlanObjective objective) {
         if (agent == null || objective == null
-                || !YamlConfig.config.server.AGENT_AMHERST_INTENTION_CHAT_ENABLED) {
+                || !config.AgentYamlConfig.config.agent.AGENT_AMHERST_INTENTION_CHAT_ENABLED) {
             return;
         }
         AgentPacketGatewayRuntime.packets().broadcastChatText(

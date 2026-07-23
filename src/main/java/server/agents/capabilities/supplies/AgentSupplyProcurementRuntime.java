@@ -8,6 +8,8 @@ import server.agents.capabilities.contracts.AgentSupplyUrgency;
 import server.agents.capabilities.shop.AgentShopService;
 import server.agents.capabilities.shop.AgentShopStateRuntime;
 import server.agents.capabilities.shop.AgentShopWorkflowPhase;
+import server.agents.capabilities.navigation.AgentRouteOutcome;
+import server.agents.capabilities.navigation.AgentRouteStatus;
 import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
 import server.agents.objectives.AgentObjectiveDefinition;
@@ -17,7 +19,6 @@ import server.agents.objectives.AgentObjectiveStatus;
 import server.agents.progression.AgentCareerBuildBundle;
 import server.agents.progression.AgentCareerProgressionState;
 import server.agents.progression.AgentCareerShopCatalog;
-import server.agents.progression.AgentVictoriaRouteRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.Comparator;
@@ -132,15 +133,14 @@ public final class AgentSupplyProcurementRuntime {
                                             AgentResourcePlanningState planning,
                                             AgentSupplyProcurementState execution,
                                             long nowMs) {
-        AgentVictoriaRouteRuntime.TravelOutcome outcome = AgentVictoriaRouteRuntime.travelStatus(
-                entry, agent, execution.supplierMapId(),
-                AgentPrimitiveCapabilityGatewayRuntime.gateway(), nowMs);
-        if (outcome.status() == AgentVictoriaRouteRuntime.Status.NO_ROUTE) {
+        AgentRouteOutcome outcome = AgentPrimitiveCapabilityGatewayRuntime.gateway().travelTo(
+                entry, agent, execution.supplierMapId(), nowMs);
+        if (outcome.status() == AgentRouteStatus.NO_ROUTE) {
             finish(entry, planning, execution, AgentObjectiveStatus.FAILED,
                     "no portal route reaches the selected supplier", nowMs);
             return false;
         }
-        if (outcome.status() != AgentVictoriaRouteRuntime.Status.ARRIVED) {
+        if (outcome.status() != AgentRouteStatus.ARRIVED) {
             return true;
         }
         if (!AgentShopService.requestVisitAtNpc(entry, agent, execution.supplierNpcId())) {
@@ -187,15 +187,14 @@ public final class AgentSupplyProcurementRuntime {
                                         AgentResourcePlanningState planning,
                                         AgentSupplyProcurementState execution,
                                         long nowMs) {
-        AgentVictoriaRouteRuntime.TravelOutcome outcome = AgentVictoriaRouteRuntime.travelStatus(
-                entry, agent, execution.returnMapId(),
-                AgentPrimitiveCapabilityGatewayRuntime.gateway(), nowMs);
-        if (outcome.status() == AgentVictoriaRouteRuntime.Status.NO_ROUTE) {
+        AgentRouteOutcome outcome = AgentPrimitiveCapabilityGatewayRuntime.gateway().travelTo(
+                entry, agent, execution.returnMapId(), nowMs);
+        if (outcome.status() == AgentRouteStatus.NO_ROUTE) {
             finish(entry, planning, execution, AgentObjectiveStatus.FAILED,
                     "supplier visit completed but no return route reaches the suspended plan", nowMs);
             return false;
         }
-        if (outcome.status() != AgentVictoriaRouteRuntime.Status.ARRIVED) {
+        if (outcome.status() != AgentRouteStatus.ARRIVED) {
             return true;
         }
         finish(entry, planning, execution, AgentObjectiveStatus.SUCCEEDED,

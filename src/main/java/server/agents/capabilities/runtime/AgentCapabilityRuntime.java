@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public final class AgentCapabilityRuntime {
     private static final Logger log = LoggerFactory.getLogger(AgentCapabilityRuntime.class);
-    private static final long TERMINAL_FAILURE_LOG_INTERVAL_MS = 60_000L;
+    private static final long TERMINAL_FAILURE_LOG_INTERVAL_MS = config.AgentTuning.longValue("server.agents.capabilities.runtime.AgentCapabilityRuntime.TERMINAL_FAILURE_LOG_INTERVAL_MS");
     private static final AtomicLong lastTerminalFailureLogMs = new AtomicLong();
 
     private AgentCapabilityRuntime() {

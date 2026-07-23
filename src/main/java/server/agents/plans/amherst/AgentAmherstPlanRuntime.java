@@ -4,10 +4,8 @@ import client.Character;
 import server.agents.capabilities.behavior.AgentPioRelaxerInterludeRuntime;
 import server.agents.capabilities.runtime.AgentCapabilityRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.plans.AgentPlanPauseRuntime;
+import server.agents.runtime.AgentForegroundPauseRuntime;
 import server.agents.profiles.AgentBehaviorProfileRuntime;
-import server.agents.progression.AgentFirstJobJourneyRuntime;
-import server.agents.progression.AgentVictoriaTrainingObjectiveRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.io.IOException;
@@ -23,7 +21,7 @@ public final class AgentAmherstPlanRuntime {
     public static void startDefault(AgentRuntimeEntry entry, Character agent, long nowMs) throws IOException,
             AmherstPlanValidationException {
         AgentPioRelaxerInterludeRuntime.cancel(entry, agent, nowMs);
-        AgentPlanPauseRuntime.reset(entry);
+        AgentForegroundPauseRuntime.reset(entry);
         AgentBehaviorProfileRuntime.assignMapleIslandQuester(entry);
         AmherstPlanRuntimeRunner runner = defaultRunner(defaultCard(), entry);
         runner.start(entry, agent, nowMs);
@@ -34,7 +32,7 @@ public final class AgentAmherstPlanRuntime {
                                    long nowMs,
                                    AmherstPlanObserver observer) throws IOException, AmherstPlanValidationException {
         AgentPioRelaxerInterludeRuntime.cancel(entry, agent, nowMs);
-        AgentPlanPauseRuntime.reset(entry);
+        AgentForegroundPauseRuntime.reset(entry);
         AgentBehaviorProfileRuntime.assignMapleIslandQuester(entry);
         AmherstPlanRuntimeRunner runner = defaultRunner(defaultCard(), entry);
         runner.start(entry, agent, nowMs, AmherstPlanExecutionMode.MANUAL, observer);
@@ -45,7 +43,7 @@ public final class AgentAmherstPlanRuntime {
                                  long nowMs,
                                  AmherstPlanObserver observer) throws IOException, AmherstPlanValidationException {
         AgentPioRelaxerInterludeRuntime.cancel(entry, agent, nowMs);
-        AgentPlanPauseRuntime.reset(entry);
+        AgentForegroundPauseRuntime.reset(entry);
         AgentBehaviorProfileRuntime.assignMapleIslandQuester(entry);
         AmherstPlanRuntimeRunner runner = defaultRunner(defaultCard(), entry);
         runner.start(entry, agent, nowMs, AmherstPlanExecutionMode.AUTO, observer);
@@ -60,13 +58,7 @@ public final class AgentAmherstPlanRuntime {
     }
 
     public static boolean tickGate(AgentRuntimeEntry entry, Character agent, long nowMs) {
-        long planNowMs = AgentPlanPauseRuntime.effectiveNow(entry, nowMs);
-        if (AgentFirstJobJourneyRuntime.tick(entry, agent, planNowMs)) {
-            return true;
-        }
-        if (AgentVictoriaTrainingObjectiveRuntime.tick(entry, agent, planNowMs)) {
-            return true;
-        }
+        long planNowMs = AgentForegroundPauseRuntime.effectiveNow(entry, nowMs);
         AmherstPlanExecutionState state = entry.amherstPlanExecutionState();
         AmherstPlanRuntimeRunner runner;
         synchronized (state) {

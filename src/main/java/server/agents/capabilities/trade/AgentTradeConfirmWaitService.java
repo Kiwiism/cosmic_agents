@@ -11,7 +11,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public final class AgentTradeConfirmWaitService {
-    private static final int CONFIRM_TIMEOUT_MS = 60_000;
+    private static final int CONFIRM_TIMEOUT_MS = config.AgentTuning.intValue("server.agents.capabilities.trade.AgentTradeConfirmWaitService.CONFIRM_TIMEOUT_MS");
 
     private AgentTradeConfirmWaitService() {
     }

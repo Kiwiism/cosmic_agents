@@ -19,7 +19,7 @@ import java.util.Map;
  * Fixed-weapon equipment DP optimizer lifted unchanged from the legacy bot implementation.
  */
 public final class AgentEquipmentOptimizer {
-    private static final int MAX_PARETO_STATES = 2000;
+    private static final int MAX_PARETO_STATES = config.AgentTuning.intValue("server.agents.capabilities.equipment.AgentEquipmentOptimizer.MAX_PARETO_STATES");
 
     private AgentEquipmentOptimizer() {
     }

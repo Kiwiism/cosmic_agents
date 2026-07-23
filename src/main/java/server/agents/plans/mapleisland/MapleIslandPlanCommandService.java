@@ -24,6 +24,9 @@ import server.agents.plans.amherst.AmherstPlanCard;
 import server.agents.plans.amherst.AmherstPlanExecutionState;
 import server.agents.plans.amherst.AmherstPlanProgressSnapshot;
 import server.agents.plans.amherst.AmherstPlanValidationException;
+import server.agents.plans.AgentOrderedPlanStartOptions;
+import server.agents.plans.AgentPlanStartRequest;
+import server.agents.plans.AgentUniversalPlanRuntime;
 import server.agents.plans.mapleisland.cohort.MapleIslandCohortPoolRegistry;
 import server.agents.plans.mapleisland.cohort.MapleIslandCohortPoolSnapshot;
 import server.agents.plans.mapleisland.cohort.MapleIslandCohortRealismMode;
@@ -40,6 +43,7 @@ import server.quest.Quest;
 import java.awt.Point;
 import java.io.IOException;
 import java.util.TreeSet;
+import java.util.Map;
 
 public final class MapleIslandPlanCommandService {
     private MapleIslandPlanCommandService() {
@@ -352,6 +356,7 @@ public final class MapleIslandPlanCommandService {
             return false;
         }
         AgentMapleIslandPlanRuntime.defaultStore().delete(card.planId(), agent.getId());
+        AgentUniversalPlanRuntime.clearCheckpoint(entry, agent.getId());
         AgentMovementCommandRuntime.stop(entry);
         if (route == Route.FULL_MAPLE_ISLAND) {
             message(player, "Clean level-1 Mushroom Town baseline restored. 0/"
@@ -706,7 +711,7 @@ public final class MapleIslandPlanCommandService {
     }
 
     private static void debugMessage(Character player, String event) {
-        if (YamlConfig.config.server.AGENT_AMHERST_DEBUG_MESSAGES_ENABLED) {
+        if (config.AgentYamlConfig.config.agent.AGENT_AMHERST_DEBUG_MESSAGES_ENABLED) {
             message(player, event);
         }
     }
@@ -745,14 +750,14 @@ public final class MapleIslandPlanCommandService {
 
         private boolean showcaseEnabled() {
             return this == FULL_MAPLE_ISLAND
-                    ? YamlConfig.config.server.AGENT_MAPLE_ISLAND_SHOWCASE_ENABLED
-                    : YamlConfig.config.server.AGENT_SOUTHPERRY_SHOWCASE_ENABLED;
+                    ? config.AgentYamlConfig.config.agent.AGENT_MAPLE_ISLAND_SHOWCASE_ENABLED
+                    : config.AgentYamlConfig.config.agent.AGENT_SOUTHPERRY_SHOWCASE_ENABLED;
         }
 
         private String configuredAgentName() {
             return this == FULL_MAPLE_ISLAND
-                    ? YamlConfig.config.server.AGENT_MAPLE_ISLAND_SHOWCASE_AGENT_NAME
-                    : YamlConfig.config.server.AGENT_SOUTHPERRY_SHOWCASE_AGENT_NAME;
+                    ? config.AgentYamlConfig.config.agent.AGENT_MAPLE_ISLAND_SHOWCASE_AGENT_NAME
+                    : config.AgentYamlConfig.config.agent.AGENT_SOUTHPERRY_SHOWCASE_AGENT_NAME;
         }
 
         private AmherstPlanCard card() throws IOException, AmherstPlanValidationException {
@@ -765,26 +770,25 @@ public final class MapleIslandPlanCommandService {
                                  Character agent,
                                  server.agents.plans.amherst.AmherstPlanObserver observer)
                 throws IOException, AmherstPlanValidationException {
-            if (this == FULL_MAPLE_ISLAND) {
-                AgentMapleIslandPlanRuntime.startFullManual(
-                        entry, agent, System.currentTimeMillis(), observer);
-            } else {
-                AgentMapleIslandPlanRuntime.startManual(
-                        entry, agent, System.currentTimeMillis(), observer);
-            }
+            AgentUniversalPlanRuntime.start(entry, agent, universalPlanId(),
+                    new AgentPlanStartRequest(Map.of(),
+                            AgentOrderedPlanStartOptions.manual(observer)),
+                    System.currentTimeMillis());
         }
 
         private void startAuto(AgentRuntimeEntry entry,
                                Character agent,
                                server.agents.plans.amherst.AmherstPlanObserver observer)
                 throws IOException, AmherstPlanValidationException {
-            if (this == FULL_MAPLE_ISLAND) {
-                AgentMapleIslandPlanRuntime.startFullAuto(
-                        entry, agent, System.currentTimeMillis(), observer);
-            } else {
-                AgentMapleIslandPlanRuntime.startAuto(
-                        entry, agent, System.currentTimeMillis(), observer);
-            }
+            AgentUniversalPlanRuntime.start(entry, agent, universalPlanId(),
+                    new AgentPlanStartRequest(Map.of(),
+                            AgentOrderedPlanStartOptions.automatic(observer)),
+                    System.currentTimeMillis());
+        }
+
+        private String universalPlanId() {
+            return this == FULL_MAPLE_ISLAND
+                    ? "maple-island-full-mvp" : "maple-island-southperry-mvp";
         }
     }
 }

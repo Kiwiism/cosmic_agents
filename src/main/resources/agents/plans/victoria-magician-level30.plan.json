@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "planId": "victoria-magician-level30",
+  "planVersion": "1",
+  "title": "Magician First Job to Level 30",
+  "status": "executable",
+  "objective": { "type": "progression.career-level30", "priority": 100, "deadlineMs": 9223372036854775807, "retryBudget": 5, "source": "PROGRESSION_POLICY", "behaviorVersion": "victoria-career-level30-v1", "registration": "STEP" },
+  "entryCriteria": [
+    { "fact": "career.bundleId", "operator": "in", "value": ["magician-standard-v1"] },
+    { "fact": "character.level", "operator": "gte", "value": 8 }
+  ],
+  "steps": [
+    { "stepId": "first-job-to-level15", "operation": "staged-first-job-journey", "capabilityIds": ["quest.victoria-handoff", "progression.career-assignment", "progression.ap-build", "progression.sp-build", "interaction.npc-script", "interaction.npc-shop", "navigation.portal-route", "combat.generic-grind", "loot.combat-drops", "survival.potion-use", "supplies.procurement", "inventory.capacity-management", "equipment.auto-equip", "recovery.physics"], "parameters": { "bundleIds": ["magician-standard-v1"], "targetLevel": 15 }, "timeoutMs": 0, "retryBudget": 3 },
+    { "stepId": "progress-to-level30", "operation": "victoria-training", "capabilityIds": ["quest.victoria-lt30", "navigation.portal-route", "combat.generic-grind", "loot.combat-drops", "survival.potion-use", "supplies.procurement", "inventory.capacity-management", "recovery.physics"], "parameters": { "targetLevel": 30, "questsEnabled": true }, "timeoutMs": 0, "retryBudget": 5 }
+  ],
+  "exitCriteria": [
+    { "fact": "character.level", "operator": "gte", "value": 30 },
+    { "fact": "character.firstJob", "operator": "present", "value": true }
+  ],
+  "successors": []
+}

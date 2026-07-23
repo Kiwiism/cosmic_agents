@@ -11,7 +11,7 @@ import java.util.OptionalInt;
 
 public final class MapleIslandPlanCompletionPolicy implements AgentPlanCompletionPolicy {
     private static final String FACE_HOLE_VARIATION_KEY = "southperry-face-hole-idle";
-    private static final int FACE_HOLE_CHANCE_DENOMINATOR = 2;
+    private static final int FACE_HOLE_CHANCE_DENOMINATOR = config.AgentTuning.intValue("server.agents.plans.amherst.MapleIslandPlanCompletionPolicy.FACE_HOLE_CHANCE_DENOMINATOR");
     public static final MapleIslandPlanCompletionPolicy INSTANCE = new MapleIslandPlanCompletionPolicy();
 
     private MapleIslandPlanCompletionPolicy() {

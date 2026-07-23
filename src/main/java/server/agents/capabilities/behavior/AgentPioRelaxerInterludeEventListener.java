@@ -5,17 +5,17 @@ import server.agents.events.AgentEvent;
 import server.agents.events.AgentEventListener;
 import server.agents.personality.AgentPersonalityProfile;
 import server.agents.personality.AgentPersonalityState;
-import server.agents.plans.AgentPlanPauseRuntime;
+import server.agents.runtime.AgentForegroundPauseRuntime;
 import server.agents.progression.events.AgentQuestStateChangedEvent;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /** Selects a stable personality response when Pio awards the first Relaxer. */
 public final class AgentPioRelaxerInterludeEventListener implements AgentEventListener<AgentEvent> {
     public static final int PIO_QUEST_ID = 1008;
-    private static final long REST_MIN_MS = 15_000L;
-    private static final long REST_MAX_MS = 60_000L;
-    private static final long PLAYFUL_MIN_MS = 10_000L;
-    private static final long PLAYFUL_MAX_MS = 15_000L;
+    private static final long REST_MIN_MS = config.AgentTuning.longValue("server.agents.capabilities.behavior.AgentPioRelaxerInterludeEventListener.REST_MIN_MS");
+    private static final long REST_MAX_MS = config.AgentTuning.longValue("server.agents.capabilities.behavior.AgentPioRelaxerInterludeEventListener.REST_MAX_MS");
+    private static final long PLAYFUL_MIN_MS = config.AgentTuning.longValue("server.agents.capabilities.behavior.AgentPioRelaxerInterludeEventListener.PLAYFUL_MIN_MS");
+    private static final long PLAYFUL_MAX_MS = config.AgentTuning.longValue("server.agents.capabilities.behavior.AgentPioRelaxerInterludeEventListener.PLAYFUL_MAX_MS");
     private static final long DURATION_DOMAIN = 0x50494F2D43484149L;
 
     private final AgentRuntimeEntry entry;
@@ -43,7 +43,7 @@ public final class AgentPioRelaxerInterludeEventListener implements AgentEventLi
         long durationMs = durationMs(mode, personality.behaviorSeed());
         if (entry.capabilityStates().require(AgentPioRelaxerInterludeState.STATE_KEY)
                 .request(mode, durationMs, quest.occurredAtMs())) {
-            AgentPlanPauseRuntime.pause(
+            AgentForegroundPauseRuntime.pause(
                     entry, AgentPioRelaxerInterludeRuntime.PAUSE_REASON, quest.occurredAtMs());
         }
     }

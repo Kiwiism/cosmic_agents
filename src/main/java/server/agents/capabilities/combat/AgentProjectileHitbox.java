@@ -18,9 +18,9 @@ import java.util.Map;
 public final class AgentProjectileHitbox {
     // Journey client CharStats::get_range() returns Rectangle(-projectilerange, -5, -50, 50).
     public static final int CLIENT_PROJECTILE_BASE_RANGE = 400;
-    private static final int CLIENT_PROJECTILE_NEAR_INSET = 5;
-    private static final int CLIENT_PROJECTILE_TOP = 50;
-    private static final int CLIENT_PROJECTILE_BOTTOM = 50;
+    private static final int CLIENT_PROJECTILE_NEAR_INSET = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentProjectileHitbox.CLIENT_PROJECTILE_NEAR_INSET");
+    private static final int CLIENT_PROJECTILE_TOP = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentProjectileHitbox.CLIENT_PROJECTILE_TOP");
+    private static final int CLIENT_PROJECTILE_BOTTOM = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentProjectileHitbox.CLIENT_PROJECTILE_BOTTOM");
 
     private static final List<Integer> PASSIVE_PROJECTILE_RANGE_SKILL_IDS = List.of(
             Archer.EYE_OF_AMAZON,

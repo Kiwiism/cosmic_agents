@@ -22,10 +22,10 @@ import java.util.concurrent.ConcurrentMap;
 
 /** Supplies the mob hit reaction a headless Agent cannot produce through MOVE_LIFE. */
 public final class AgentSyntheticMobReactionService {
-    private static final int MAX_GROUND_Y_DELTA = 28;
-    private static final int MOVEMENT_SETTLE_MS = 50;
-    private static final int ASSIGNMENT_HOLD_GRACE_MS = 50;
-    private static final int CLIENT_MOB_Y_OFFSET = 2;
+    private static final int MAX_GROUND_Y_DELTA = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentSyntheticMobReactionService.MAX_GROUND_Y_DELTA");
+    private static final int MOVEMENT_SETTLE_MS = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentSyntheticMobReactionService.MOVEMENT_SETTLE_MS");
+    private static final int ASSIGNMENT_HOLD_GRACE_MS = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentSyntheticMobReactionService.ASSIGNMENT_HOLD_GRACE_MS");
+    private static final int CLIENT_MOB_Y_OFFSET = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentSyntheticMobReactionService.CLIENT_MOB_Y_OFFSET");
     // Header activity HIT is 8/9. Movement stance remains STAND (4/5) so the
     // one-shot flinch does not seed continued client-side hit physics.
     private static final int HIT_FACING_RIGHT = 8;

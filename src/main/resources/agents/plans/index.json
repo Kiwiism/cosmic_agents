@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "resources": [
+    "maple-island-amherst-subphase.plan.json",
+    "maple-island-southperry-mvp.plan.json",
+    "maple-island-full-mvp.plan.json",
+    "southperry-to-lith-harbor.plan.json",
+    "victoria-level15-mvp.universal-plan.json",
+    "victoria-training.plan.json",
+    "victoria-warrior-level30.plan.json",
+    "victoria-bowman-level30.plan.json",
+    "victoria-magician-level30.plan.json",
+    "victoria-thief-level30.plan.json",
+    "victoria-pirate-level30.plan.json"
+  ]
+}

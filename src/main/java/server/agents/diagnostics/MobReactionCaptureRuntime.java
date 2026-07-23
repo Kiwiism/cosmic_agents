@@ -35,7 +35,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class MobReactionCaptureRuntime {
     public static final int DEFAULT_EVENT_LIMIT = 500;
     public static final int MAX_EVENT_LIMIT = 2_000;
-    private static final int MAX_RETAINED_PACKET_BYTES = 16_384;
+    private static final int MAX_RETAINED_PACKET_BYTES = config.AgentTuning.intValue("server.agents.diagnostics.MobReactionCaptureRuntime.MAX_RETAINED_PACKET_BYTES");
 
     private static final Logger log = LoggerFactory.getLogger(MobReactionCaptureRuntime.class);
     private static final Object sessionLock = new Object();

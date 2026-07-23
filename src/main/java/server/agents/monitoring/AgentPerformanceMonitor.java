@@ -12,10 +12,10 @@ import java.util.Map;
 
 public final class AgentPerformanceMonitor {
     static final class Config {
-        public boolean ENABLED = false;
-        public int LOG_INTERVAL_MS = 15000;
-        public double SLOW_SAMPLE_MS = 50.0;
-        public double REPORT_MAX_MS = 250.0;
+        public boolean ENABLED = config.AgentTuning.booleanValue("server.agents.monitoring.AgentPerformanceMonitor.ENABLED");
+        public int LOG_INTERVAL_MS = config.AgentTuning.intValue("server.agents.monitoring.AgentPerformanceMonitor.LOG_INTERVAL_MS");
+        public double SLOW_SAMPLE_MS = config.AgentTuning.doubleValue("server.agents.monitoring.AgentPerformanceMonitor.SLOW_SAMPLE_MS");
+        public double REPORT_MAX_MS = config.AgentTuning.doubleValue("server.agents.monitoring.AgentPerformanceMonitor.REPORT_MAX_MS");
     }
 
     private static final class Stat {
@@ -46,7 +46,7 @@ public final class AgentPerformanceMonitor {
 
     private static final Logger log = LoggerFactory.getLogger(AgentPerformanceMonitor.class);
     private static final Object LOCK = new Object();
-    private static final int MAX_LOGGED_SECTIONS = 12;
+    private static final int MAX_LOGGED_SECTIONS = config.AgentTuning.intValue("server.agents.monitoring.AgentPerformanceMonitor.MAX_LOGGED_SECTIONS");
     static Config cfg = new Config();
     private static volatile boolean enabled = cfg.ENABLED;
 

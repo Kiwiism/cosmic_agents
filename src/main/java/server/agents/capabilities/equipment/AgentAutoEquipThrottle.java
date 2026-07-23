@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class AgentAutoEquipThrottle {
-    private static final long AUTO_EQUIP_THROTTLE_MS = 30_000L;
+    private static final long AUTO_EQUIP_THROTTLE_MS = config.AgentTuning.longValue("server.agents.capabilities.equipment.AgentAutoEquipThrottle.AUTO_EQUIP_THROTTLE_MS");
     private static final Map<Integer, Long> LAST_AUTO_EQUIP_MS = new ConcurrentHashMap<>();
 
     private AgentAutoEquipThrottle() {

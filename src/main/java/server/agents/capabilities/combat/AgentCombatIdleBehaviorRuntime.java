@@ -18,7 +18,7 @@ public final class AgentCombatIdleBehaviorRuntime {
 
     public static boolean tick(AgentRuntimeEntry entry, Character agent, Point position, long nowMs) {
         if (!AgentBehaviorRuntime.enabled(entry)
-                || !YamlConfig.config.server.AGENT_IDLE_COMBAT_PRESENTATION_ENABLED) return false;
+                || !config.AgentYamlConfig.config.agent.AGENT_IDLE_COMBAT_PRESENTATION_ENABLED) return false;
         if (AgentFidgetGateway.combatIdleActive(entry)) {
             return AgentFidgetGateway.tickCombatIdle(entry, position, nowMs);
         }

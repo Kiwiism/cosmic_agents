@@ -14,12 +14,12 @@ public final class MapleIslandCohortEntrySetup {
     }
 
     public static long apply(AgentRuntimeEntry entry, MapleIslandCohortRunService.AgentContext context) {
-        boolean presentationEnabled = YamlConfig.config.server.AGENT_PERSONALITY_PRESENTATION_ENABLED
+        boolean presentationEnabled = config.AgentYamlConfig.config.agent.AGENT_PERSONALITY_PRESENTATION_ENABLED
                 && context.realismMode() == MapleIslandCohortRealismMode.FULL;
         AgentPersonalityPresentationRuntime.configure(
                 entry, presentationEnabled, System.currentTimeMillis());
         AgentBehaviorRuntime.configure(entry,
-                YamlConfig.config.server.AGENT_COMBAT_BEHAVIOR_ENABLED
+                config.AgentYamlConfig.config.agent.AGENT_COMBAT_BEHAVIOR_ENABLED
                         && context.realismMode() == MapleIslandCohortRealismMode.FULL);
         return MapleIslandCohortRealismService.configure(
                 entry, context.realismMode(), context.runSeed(), context.ordinal());

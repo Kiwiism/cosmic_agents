@@ -17,7 +17,7 @@ import java.sql.SQLException;
 
 /** Cosmic SQL/client adapter for the guarded reusable cohort provisioner. */
 public final class CosmicMapleIslandCohortProvisioning implements MapleIslandCohortPoolProvisioner.Hooks {
-    private static final int COHORT_ACCOUNT_CHARACTER_SLOTS = 15;
+    private static final int COHORT_ACCOUNT_CHARACTER_SLOTS = config.AgentTuning.intValue("server.agents.integration.cosmic.CosmicMapleIslandCohortProvisioning.COHORT_ACCOUNT_CHARACTER_SLOTS");
     public static final CosmicMapleIslandCohortProvisioning INSTANCE =
             new CosmicMapleIslandCohortProvisioning();
 

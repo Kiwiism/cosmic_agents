@@ -21,7 +21,7 @@ This layer makes independently running Agents look different without allowing pr
 
 ## Dynamic pause and resume
 
-`AgentPlanPauseState` supports multiple simultaneous pause reasons. The first reason freezes one logical clock window; the last reason resumed closes it. `AgentAmherstPlanRuntime` supplies the resulting effective time to Maple Island, first-job, Victoria training, Southperry, town-life, and active capability ticks.
+`AgentForegroundPauseState` supports multiple simultaneous pause reasons. The first reason freezes one logical clock window; the last reason resumed closes it. The neutral `AgentForegroundPauseRuntime` supplies the resulting effective time to universal plans and compatibility runners. A personality or presentation capability can therefore request a pause without importing or controlling a plan implementation.
 
 Crowd respite uses the reason `map-crowd-respite`. The execution gate runs before the seated-character short circuit, which lets an Agent later stand, release the reason, and continue the same objective. Objective state, journal identity, quest state, and navigation goal are not discarded. Maintenance suspensions remain separate and can overlap safely.
 
@@ -83,7 +83,7 @@ Turning the master switch off restores the previous full-mode target variation a
 Focused unit coverage verifies policy catalog coverage, durable-seed replay, overlapping pause reasons, pre-chair execution-gate ordering, and compatibility with existing combat variation. Run:
 
 ```powershell
-.\mvnw.cmd "-Dtest=AgentBehaviorPolicyRepositoryTest,AgentBehaviorCalibrationStateTest,AgentPlanPauseStateTest,AgentLiveTickGateServiceTest,AgentCombatVariationRuntimeTest" test
+.\mvnw.cmd "-Dtest=AgentBehaviorPolicyRepositoryTest,AgentBehaviorCalibrationStateTest,AgentForegroundPauseStateTest,AgentLiveTickGateServiceTest,AgentCombatVariationRuntimeTest" test
 ```
 
 For a live rollout, run a full-realism Maple Island cohort, inspect `!mapleisland stats`, then verify that disabling each YAML switch independently restores the corresponding prior behavior without resetting active plans.

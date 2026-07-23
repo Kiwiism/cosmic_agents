@@ -9,9 +9,9 @@ final class AgentTownLifeProgressWatchdog {
         TIMED_OUT
     }
 
-    private static final int MEANINGFUL_PROGRESS_PX = 12;
-    private static final long STALL_TIMEOUT_MS = 8_000L;
-    private static final long TOTAL_TIMEOUT_MS = 60_000L;
+    private static final int MEANINGFUL_PROGRESS_PX = config.AgentTuning.intValue("server.agents.capabilities.townlife.AgentTownLifeProgressWatchdog.MEANINGFUL_PROGRESS_PX");
+    private static final long STALL_TIMEOUT_MS = config.AgentTuning.longValue("server.agents.capabilities.townlife.AgentTownLifeProgressWatchdog.STALL_TIMEOUT_MS");
+    private static final long TOTAL_TIMEOUT_MS = config.AgentTuning.longValue("server.agents.capabilities.townlife.AgentTownLifeProgressWatchdog.TOTAL_TIMEOUT_MS");
 
     private Point target;
     private Point lastPosition;

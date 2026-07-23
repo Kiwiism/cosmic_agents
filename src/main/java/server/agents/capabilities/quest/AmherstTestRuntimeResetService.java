@@ -9,7 +9,7 @@ import server.agents.capabilities.movement.AgentMovementStateResetService;
 import server.agents.plans.amherst.MapleIslandRelaxerSpotReservationRuntime;
 import server.agents.capabilities.runtime.AgentCapabilityRuntime;
 import server.agents.capabilities.trade.AgentTradeStateService;
-import server.agents.plans.AgentPlanPauseRuntime;
+import server.agents.runtime.AgentForegroundPauseRuntime;
 import server.agents.plans.AgentScriptTaskStateRuntime;
 import server.agents.runtime.AgentModeService;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -21,7 +21,7 @@ public final class AmherstTestRuntimeResetService {
 
     public static void reset(AgentRuntimeEntry entry, Character agent, long nowMs) {
         AgentPioRelaxerInterludeRuntime.cancel(entry, agent, nowMs);
-        AgentPlanPauseRuntime.reset(entry);
+        AgentForegroundPauseRuntime.reset(entry);
         AgentCapabilityRuntime.cancelNow(entry, agent, nowMs);
         MapleIslandRelaxerSpotReservationRuntime.release(agent.getId());
         AgentModeService.startStop(entry);

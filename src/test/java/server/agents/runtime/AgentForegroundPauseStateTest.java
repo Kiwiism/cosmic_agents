@@ -1,4 +1,4 @@
-package server.agents.plans;
+package server.agents.runtime;
 
 import org.junit.jupiter.api.Test;
 
@@ -6,10 +6,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class AgentPlanPauseStateTest {
+class AgentForegroundPauseStateTest {
     @Test
     void overlappingReasonsPauseOneLogicalClockWindow() {
-        AgentPlanPauseState state = new AgentPlanPauseState();
+        AgentForegroundPauseState state = new AgentForegroundPauseState();
         state.pause("crowd", 1_000L);
         state.pause("maintenance", 1_500L);
 

@@ -27,8 +27,8 @@ import java.util.List;
 import java.util.Map;
 
 public final class AmherstObjectiveHandlerRegistry {
-    private static final long OBJECTIVE_TIMEOUT_MS = 300_000L;
-    private static final int OBJECTIVE_RETRIES = 1;
+    private static final long OBJECTIVE_TIMEOUT_MS = config.AgentTuning.longValue("server.agents.plans.amherst.AmherstObjectiveHandlerRegistry.OBJECTIVE_TIMEOUT_MS");
+    private static final int OBJECTIVE_RETRIES = config.AgentTuning.intValue("server.agents.plans.amherst.AmherstObjectiveHandlerRegistry.OBJECTIVE_RETRIES");
     private static final String RELAXER_MODE = "relaxer";
     private static final String SOUTHPERRY_RELAXER_MODE = "southperry-relaxer";
     private static final String SOUTHPERRY_LEFT_RELAXER_MODE = "southperry-left-relaxer";
@@ -235,7 +235,7 @@ public final class AmherstObjectiveHandlerRegistry {
         if (!AgentObjectiveVariationRuntime.settings(entry).enabled()) {
             return OBJECTIVE_TIMEOUT_MS;
         }
-        int configured = YamlConfig.config.server.AGENT_MAPLE_ISLAND_COHORT_OBJECTIVE_TIMEOUT_MS;
+        int configured = config.AgentYamlConfig.config.agent.AGENT_MAPLE_ISLAND_COHORT_OBJECTIVE_TIMEOUT_MS;
         return Math.max(OBJECTIVE_TIMEOUT_MS, configured);
     }
 }

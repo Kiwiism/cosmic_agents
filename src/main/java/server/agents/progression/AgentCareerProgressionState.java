@@ -2,6 +2,8 @@ package server.agents.progression;
 
 import server.agents.runtime.state.AgentCapabilityStateKey;
 
+import java.util.EnumSet;
+
 public final class AgentCareerProgressionState {
     public enum Stage {
         WAITING_FOR_MAPLE_ISLAND,
@@ -46,6 +48,7 @@ public final class AgentCareerProgressionState {
     private int questPackIndex;
     private long nextActionAtMs;
     private String blockReason = "";
+    private final EnumSet<Stage> announcedStages = EnumSet.noneOf(Stage.class);
     private long revision;
     private long persistedRevision = -1L;
 
@@ -84,6 +87,7 @@ public final class AgentCareerProgressionState {
         this.questPackIndex = 0;
         this.nextActionAtMs = Math.max(0L, nextActionAtMs);
         this.blockReason = "";
+        this.announcedStages.clear();
         revision++;
     }
 
@@ -147,6 +151,10 @@ public final class AgentCareerProgressionState {
         return blockReason;
     }
 
+    public synchronized boolean markStageAnnounced(Stage stage) {
+        return stage != null && announcedStages.add(stage);
+    }
+
     synchronized AgentCareerProgressionCheckpoint pendingCheckpoint(int characterId, long nowMs) {
         if (bundle == null || revision == persistedRevision) {
             return null;
@@ -170,6 +178,7 @@ public final class AgentCareerProgressionState {
         this.questPackIndex = checkpoint.questPackIndex();
         this.nextActionAtMs = checkpoint.nextActionAtMs();
         this.blockReason = checkpoint.blockReason();
+        this.announcedStages.clear();
         this.revision = checkpoint.stateRevision();
         this.persistedRevision = checkpoint.stateRevision();
     }

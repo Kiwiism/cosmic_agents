@@ -15,6 +15,18 @@ import java.util.Comparator;
 import java.util.List;
 
 final class AgentTownLifeSpotSampler {
+    private static final String TUNING_PREFIX =
+            "server.agents.capabilities.townlife.AgentTownLifeSpotSampler.";
+    private static final int ANCHOR_RADIUS_PX = tuningInt("ANCHOR_RADIUS_PX");
+    private static final int ANCHOR_BONUS = tuningInt("ANCHOR_BONUS");
+    private static final int BASE_WEIGHT = tuningInt("BASE_WEIGHT");
+    private static final int AUTHORED_BASE_WEIGHT = tuningInt("AUTHORED_BASE_WEIGHT");
+    private static final int MIN_WEIGHT = tuningInt("MIN_WEIGHT");
+    private static final int MAX_WEIGHT = tuningInt("MAX_WEIGHT");
+    private static final int DISTRICT_PREFERENCE_BONUS =
+            tuningInt("DISTRICT_PREFERENCE_BONUS");
+    private static final int PLATFORM_PREFERENCE_BONUS =
+            tuningInt("PLATFORM_PREFERENCE_BONUS");
 
     private AgentTownLifeSpotSampler() {
     }
@@ -46,10 +58,13 @@ final class AgentTownLifeSpotSampler {
                 continue;
             }
             int anchorBonus = activityAnchors.stream()
-                    .mapToInt(anchor -> anchor.distanceSq(space.position()) <= 220L * 220L ? 180 : 0)
+                    .mapToInt(anchor -> anchor.distanceSq(space.position())
+                            <= (long) ANCHOR_RADIUS_PX * ANCHOR_RADIUS_PX ? ANCHOR_BONUS : 0)
                     .sum();
             int preferenceBonus = preferenceBonus(state, spot.district(), spot.platformKind());
-            int weight = Math.max(10, Math.min(1_200, 300 + anchorBonus + preferenceBonus));
+            int weight = Math.max(
+                    MIN_WEIGHT,
+                    Math.min(MAX_WEIGHT, BASE_WEIGHT + anchorBonus + preferenceBonus));
             weighted.add(new WeightedSpace(space, weight,
                     preferenceRank(state, spot.district(), spot.platformKind()),
                     orderingScore(variationSeed, space.spotNumber(), weight)));
@@ -74,7 +89,7 @@ final class AgentTownLifeSpotSampler {
                 .filter(space -> profile.allowsOccupancy(space.position()))
                 .map(space -> {
                     AgentTownLifeState.District district = extension.classify(space.position());
-                    int weight = 100 + preferenceBonus(
+                    int weight = AUTHORED_BASE_WEIGHT + preferenceBonus(
                             state, district, AgentTownLifeState.PlatformKind.ANY);
                     return new WeightedSpace(space, weight,
                             preferenceRank(state, district, AgentTownLifeState.PlatformKind.ANY),
@@ -93,12 +108,12 @@ final class AgentTownLifeSpotSampler {
         AgentTownLifeState.District preferredDistrict = state.preferredDistrict();
         if (preferredDistrict != AgentTownLifeState.District.ANY
                 && preferredDistrict == district) {
-            bonus += 750;
+            bonus += DISTRICT_PREFERENCE_BONUS;
         }
         AgentTownLifeState.PlatformKind preferredPlatform = state.platformPreference();
         if (preferredPlatform != AgentTownLifeState.PlatformKind.ANY
                 && preferredPlatform == platform) {
-            bonus += 500;
+            bonus += PLATFORM_PREFERENCE_BONUS;
         }
         return bonus;
     }
@@ -124,6 +139,10 @@ final class AgentTownLifeSpotSampler {
         mixed ^= mixed >>> 27;
         long positive = (mixed ^ mixed >>> 31) & Long.MAX_VALUE;
         return (positive / (double) Long.MAX_VALUE) / weight;
+    }
+
+    private static int tuningInt(String name) {
+        return config.AgentTuning.intValue(TUNING_PREFIX + name);
     }
 
     private record WeightedSpace(CharacterSpace space,

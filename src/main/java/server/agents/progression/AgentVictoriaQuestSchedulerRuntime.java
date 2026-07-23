@@ -14,7 +14,7 @@ import java.util.Set;
 
 /** Conservative generic quest compiler for local, hunting-only Victoria quests. */
 final class AgentVictoriaQuestSchedulerRuntime {
-    private static final int INTERACTION_DISTANCE_PX = 100;
+    private static final int INTERACTION_DISTANCE_PX = config.AgentTuning.intValue("server.agents.progression.AgentVictoriaQuestSchedulerRuntime.INTERACTION_DISTANCE_PX");
 
     private AgentVictoriaQuestSchedulerRuntime() {
     }

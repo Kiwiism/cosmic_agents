@@ -11,10 +11,10 @@ import java.util.function.Consumer;
 
 /** Bounded in-process router for structured cohort, party, and direct-Agent messages. */
 public final class AgentCoordinationRuntime {
-    private static final int DEFAULT_ROUTE_CAPACITY = 256;
-    private static final int DEFAULT_MAX_ROUTES = 4_096;
-    private static final int DEFAULT_MAX_RECEIPTS = 16_384;
-    private static final long DEFAULT_TTL_MS = 30_000L;
+    private static final int DEFAULT_ROUTE_CAPACITY = config.AgentTuning.intValue("server.agents.coordination.AgentCoordinationRuntime.DEFAULT_ROUTE_CAPACITY");
+    private static final int DEFAULT_MAX_ROUTES = config.AgentTuning.intValue("server.agents.coordination.AgentCoordinationRuntime.DEFAULT_MAX_ROUTES");
+    private static final int DEFAULT_MAX_RECEIPTS = config.AgentTuning.intValue("server.agents.coordination.AgentCoordinationRuntime.DEFAULT_MAX_RECEIPTS");
+    private static final long DEFAULT_TTL_MS = config.AgentTuning.longValue("server.agents.coordination.AgentCoordinationRuntime.DEFAULT_TTL_MS");
 
     private static final CopyOnWriteArrayList<Consumer<AgentCoordinationMessage>> legacyListeners =
             new CopyOnWriteArrayList<>();

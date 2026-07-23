@@ -17,7 +17,7 @@ final class MapleIslandWorldResourceDeferralPolicy implements AmherstPlanObjecti
     static final MapleIslandWorldResourceDeferralPolicy INSTANCE =
             new MapleIslandWorldResourceDeferralPolicy();
     private static final int PIO_RECYCLED_GOODS_QUEST_ID = 1008;
-    private static final int LAST_ALTERNATIVE_STAGE = 3;
+    private static final int LAST_ALTERNATIVE_STAGE = config.AgentTuning.intValue("server.agents.plans.mapleisland.MapleIslandWorldResourceDeferralPolicy.LAST_ALTERNATIVE_STAGE");
 
     private MapleIslandWorldResourceDeferralPolicy() {
     }

@@ -16,6 +16,8 @@ import java.util.concurrent.ScheduledFuture;
 
 /** Process-level start/stop boundary for Agent scheduler-owned runtime work. */
 public final class AgentRuntimeShutdownCoordinator {
+    private static final long DEFAULT_SHUTDOWN_TIMEOUT_MS = config.AgentTuning.longValue(
+            "server.agents.runtime.AgentRuntimeShutdownCoordinator.DEFAULT_SHUTDOWN_TIMEOUT_MS");
     public record Report(int sessionsObserved,
                          int scheduleCancellationsRequested,
                          List<Integer> failedSessionIds,
@@ -69,7 +71,11 @@ public final class AgentRuntimeShutdownCoordinator {
     }
 
     public static Report shutdown() {
-        long timeoutMs = Math.max(1L, Long.getLong("agents.scheduler.shutdownTimeoutMs", 10_000L));
+        long timeoutMs = Math.max(
+                1L,
+                Long.getLong(
+                        "agents.scheduler.shutdownTimeoutMs",
+                        DEFAULT_SHUTDOWN_TIMEOUT_MS));
         return shutdown(Duration.ofMillis(timeoutMs));
     }
 

@@ -24,7 +24,8 @@ class AgentArchitectureBoundaryTest {
         List<Path> roots = List.of(
                 AGENTS.resolve("model"),
                 AGENTS.resolve("capabilities").resolve("contracts"),
-                AGENTS.resolve("policy").resolve("behavior"));
+                AGENTS.resolve("policy").resolve("behavior"),
+                AGENTS.resolve("profiles"));
         for (Path root : roots) {
             try (var files = Files.walk(root)) {
                 for (Path file : files.filter(path -> path.toString().endsWith(".java")).toList()) {
@@ -34,6 +35,45 @@ class AgentArchitectureBoundaryTest {
                 }
             }
         }
+    }
+
+    @Test
+    void behaviorProfilesDoNotOwnCapabilityImplementations() throws IOException {
+        assertTreeExcludes(
+                AGENTS.resolve("profiles"),
+                List.of(
+                        "import server.agents.capabilities.",
+                        "import server.agents.plans.",
+                        "import server.agents.progression.",
+                        "import server.agents.integration.cosmic."),
+                "behavior profiles must remain declarative inputs to policy adapters");
+    }
+
+    @Test
+    void genericTownLifeCoreDoesNotOwnProgressionOrPlanImplementations() throws IOException {
+        List<Path> genericCore = List.of(
+                AGENTS.resolve("capabilities").resolve("townlife")
+                        .resolve("AgentTownLifeRuntime.java"),
+                AGENTS.resolve("capabilities").resolve("townlife")
+                        .resolve("AgentTownLifeArrivalExtensionRepository.java"),
+                AGENTS.resolve("capabilities").resolve("townlife")
+                        .resolve("AgentTownLifeController.java"));
+        for (Path file : genericCore) {
+            if (!Files.exists(file)) {
+                continue;
+            }
+            String source = Files.readString(file);
+            assertFalse(source.contains("import server.agents.progression."),
+                    () -> file + " must request routing and lifecycle through neutral contracts");
+            assertFalse(source.contains("import server.agents.plans."),
+                    () -> file + " must not own a progression plan implementation");
+        }
+    }
+
+    @Test
+    void foregroundPauseContractIsRuntimeOwned() {
+        assertTrue(Files.exists(AGENTS.resolve("runtime").resolve("AgentForegroundPauseRuntime.java")));
+        assertFalse(Files.exists(AGENTS.resolve("plans").resolve("AgentPlanPauseRuntime.java")));
     }
 
     @Test
@@ -72,5 +112,19 @@ class AgentArchitectureBoundaryTest {
             }
         }
         return counts;
+    }
+
+    private static void assertTreeExcludes(Path root,
+                                           List<String> forbidden,
+                                           String rationale) throws IOException {
+        try (var files = Files.walk(root)) {
+            for (Path file : files.filter(path -> path.toString().endsWith(".java")).toList()) {
+                String source = Files.readString(file);
+                for (String token : forbidden) {
+                    assertFalse(source.contains(token),
+                            () -> file + " contains " + token + ": " + rationale);
+                }
+            }
+        }
     }
 }

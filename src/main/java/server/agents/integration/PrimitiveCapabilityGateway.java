@@ -1,9 +1,11 @@
 package server.agents.integration;
 
 import client.Character;
+import server.agents.capabilities.navigation.AgentRouteOutcome;
 import server.agents.capabilities.npc.AgentNpcInteractionType;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Reactor;
+import server.maps.MapleMap;
 
 import java.awt.Point;
 import java.util.Collection;
@@ -51,6 +53,30 @@ public interface PrimitiveCapabilityGateway {
     Point npcPosition(Character agent, int npcId);
 
     default void facePosition(Character agent, Point targetPosition) {
+    }
+
+    /** Places an Agent for an explicit route-arrival ceremony and broadcasts the authoritative pose. */
+    default void stagePosition(AgentRuntimeEntry entry, Character agent, Point position) {
+    }
+
+    /** Resolves an authored arrival point to its supporting foothold. */
+    default Point groundPoint(MapleMap map, Point candidate) {
+        return candidate == null ? null : new Point(candidate);
+    }
+
+    /** Warms navigation data without exposing movement-profile implementation details to callers. */
+    default void prepareNavigation(AgentRuntimeEntry entry, Character agent) {
+    }
+
+    /**
+     * Advances cross-map travel without exposing a progression-specific route
+     * catalog to the requesting capability.
+     */
+    default AgentRouteOutcome travelTo(AgentRuntimeEntry entry,
+                                       Character agent,
+                                       int destinationMapId,
+                                       long nowMs) {
+        return AgentRouteOutcome.unavailable(mapId(agent), destinationMapId);
     }
 
     Collection<Reactor> reactors(Character agent);

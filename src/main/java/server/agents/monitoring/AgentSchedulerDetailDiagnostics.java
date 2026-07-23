@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 
 /** Bounded detail views for live scheduler diagnosis without retaining tick history. */
 final class AgentSchedulerDetailDiagnostics {
-    private static final int MAX_TOP = 10;
+    private static final int MAX_TOP = config.AgentTuning.intValue("server.agents.monitoring.AgentSchedulerDetailDiagnostics.MAX_TOP");
 
     record AgentView(int agentId,
                      long generation,

@@ -6,7 +6,7 @@ import constants.id.ItemId;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.PrimitiveCapabilityGateway;
 import server.agents.plans.amherst.MapleIslandSouthperryQuestCatalog;
-import server.agents.plans.AgentPlanPauseRuntime;
+import server.agents.runtime.AgentForegroundPauseRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
@@ -32,11 +32,11 @@ class AgentTownLifeRuntimeTest {
         AgentTownLifeRuntime.start(entry, LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID,
                 1_000L, agent.getId());
 
-        assertTrue(AgentPlanPauseRuntime.paused(entry));
+        assertTrue(AgentForegroundPauseRuntime.paused(entry));
 
         AgentTownLifeRuntime.stop(entry, agent);
 
-        assertFalse(AgentPlanPauseRuntime.paused(entry));
+        assertFalse(AgentForegroundPauseRuntime.paused(entry));
     }
 
     @Test

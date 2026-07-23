@@ -14,6 +14,8 @@ import java.awt.Point;
 import java.util.concurrent.ThreadLocalRandom;
 
 public final class AgentMovementRecoveryService {
+    private static final int UNSTUCK_COOLDOWN_MS = config.AgentTuning.intValue(
+            "server.agents.capabilities.movement.AgentMovementRecoveryService.UNSTUCK_COOLDOWN_MS");
     private AgentMovementRecoveryService() {
     }
 
@@ -35,7 +37,9 @@ public final class AgentMovementRecoveryService {
             }
         }
         AgentMovementStateResetService.clearNavigationState(entry);
-        AgentMovementStuckStateRuntime.setUnstuckCooldownMs(entry, AgentMovementTimers.delayAfterCurrentTick(5000));
+        AgentMovementStuckStateRuntime.setUnstuckCooldownMs(
+                entry,
+                AgentMovementTimers.delayAfterCurrentTick(UNSTUCK_COOLDOWN_MS));
         AgentMovementBroadcastService.broadcastMovement(entry);
         AgentRunObservationRuntime.recovery(entry, agent, "movement-unstuck", System.currentTimeMillis());
         publishRecovery(entry, agent, "movement-unstuck", from, agent.getPosition());

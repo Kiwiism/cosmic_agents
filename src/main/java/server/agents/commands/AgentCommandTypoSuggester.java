@@ -31,8 +31,8 @@ public final class AgentCommandTypoSuggester {
             "recruit", "dismiss", "relog", "logout"
     );
 
-    private static final int MIN_LEN = 4;
-    private static final int MAX_DISTANCE = 2;
+    private static final int MIN_LEN = config.AgentTuning.intValue("server.agents.commands.AgentCommandTypoSuggester.MIN_LEN");
+    private static final int MAX_DISTANCE = config.AgentTuning.intValue("server.agents.commands.AgentCommandTypoSuggester.MAX_DISTANCE");
 
     // Common chat words that look close to a verb but should never autocorrect.
     // Without this guard "hello" -> "help" and "hey" / "yes" produce noise replies.

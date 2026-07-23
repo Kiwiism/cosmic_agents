@@ -28,13 +28,13 @@ class AgentSupplyRuntimeTest {
 
     @BeforeEach
     void enableLegacyDialogueForQueueBehaviorTests() {
-        previousLegacyDialogue = YamlConfig.config.server.AGENT_LEGACY_DIALOGUE_ENABLED;
-        YamlConfig.config.server.AGENT_LEGACY_DIALOGUE_ENABLED = true;
+        previousLegacyDialogue = config.AgentYamlConfig.config.agent.AGENT_LEGACY_DIALOGUE_ENABLED;
+        config.AgentYamlConfig.config.agent.AGENT_LEGACY_DIALOGUE_ENABLED = true;
     }
 
     @AfterEach
     void restoreLegacyDialogueSetting() {
-        YamlConfig.config.server.AGENT_LEGACY_DIALOGUE_ENABLED = previousLegacyDialogue;
+        config.AgentYamlConfig.config.agent.AGENT_LEGACY_DIALOGUE_ENABLED = previousLegacyDialogue;
     }
 
     @Test

@@ -18,10 +18,10 @@ import java.util.concurrent.ThreadLocalRandom;
 
 /** Maple Island's Relaxer/idle/wander presentation after the plan is complete. */
 public final class MapleIslandPlanCompletionBehavior implements AgentPlanCompletionBehavior {
-    private static final int ARRIVAL_RANGE_PX = 8;
-    private static final long REST_SETTLE_DELAY_MS = 250L;
-    private static final long CHAIR_VERIFY_DELAY_MS = 250L;
-    private static final long NAVIGATION_TIMEOUT_MS = 30_000L;
+    private static final int ARRIVAL_RANGE_PX = config.AgentTuning.intValue("server.agents.plans.amherst.MapleIslandPlanCompletionBehavior.ARRIVAL_RANGE_PX");
+    private static final long REST_SETTLE_DELAY_MS = config.AgentTuning.longValue("server.agents.plans.amherst.MapleIslandPlanCompletionBehavior.REST_SETTLE_DELAY_MS");
+    private static final long CHAIR_VERIFY_DELAY_MS = config.AgentTuning.longValue("server.agents.plans.amherst.MapleIslandPlanCompletionBehavior.CHAIR_VERIFY_DELAY_MS");
+    private static final long NAVIGATION_TIMEOUT_MS = config.AgentTuning.longValue("server.agents.plans.amherst.MapleIslandPlanCompletionBehavior.NAVIGATION_TIMEOUT_MS");
 
     private final PrimitiveCapabilityGateway gateway;
     private final Integer chairItemId;

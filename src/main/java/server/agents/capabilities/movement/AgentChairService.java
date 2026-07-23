@@ -12,7 +12,7 @@ import server.agents.capabilities.movement.fidget.AgentFidgetService;
 import java.awt.Point;
 
 public final class AgentChairService {
-    private static final int CHAIR_MOVEMENT_COMMAND = 11;
+    private static final int CHAIR_MOVEMENT_COMMAND = config.AgentTuning.intValue("server.agents.capabilities.movement.AgentChairService.CHAIR_MOVEMENT_COMMAND");
 
     private AgentChairService() {
     }
@@ -65,7 +65,7 @@ public final class AgentChairService {
         byte[] data = new byte[11];
         int offset = 0;
         data[offset++] = 1;
-        data[offset++] = CHAIR_MOVEMENT_COMMAND;
+        data[offset++] = (byte) CHAIR_MOVEMENT_COMMAND;
         offset = putShort(data, offset, position.x);
         offset = putShort(data, offset, position.y);
         offset = putShort(data, offset, 0);

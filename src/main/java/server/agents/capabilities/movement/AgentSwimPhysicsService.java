@@ -13,17 +13,17 @@ import java.awt.Point;
  * Agent-owned swim movement integrator.
  */
 public final class AgentSwimPhysicsService {
-    private static final float SWIM_VEL_PXS = 140.0f;
-    private static final float SWIM_GRAVITY_PXS2 = 590.0f;
-    private static final float SWIM_FRICTION_HZ = 4.21f;
-    private static final float SWIM_ACCEL_PXS2 = 600.0f;
-    private static final float SWIM_MAX_SPEED_PXS = 800.0f;
-    private static final float SWIM_JUMP_BURST_PXS = 1000.0f;
-    private static final float SWIM_UP_THRUST_PXS2 = 412.0f;
-    private static final float SWIM_DOWN_THRUST_PXS2 = 295.0f;
-    private static final float SWIM_FREE_MAX_SINK_PXS = 140.0f;
-    private static final float SWIM_DOWN_MAX_SPEED_PXS = 210.0f;
-    private static final float SWIM_UP_MAX_SINK_PXS = 42.0f;
+    private static final float SWIM_VEL_PXS = config.AgentTuning.floatValue("server.agents.capabilities.movement.AgentSwimPhysicsService.SWIM_VEL_PXS");
+    private static final float SWIM_GRAVITY_PXS2 = config.AgentTuning.floatValue("server.agents.capabilities.movement.AgentSwimPhysicsService.SWIM_GRAVITY_PXS2");
+    private static final float SWIM_FRICTION_HZ = config.AgentTuning.floatValue("server.agents.capabilities.movement.AgentSwimPhysicsService.SWIM_FRICTION_HZ");
+    private static final float SWIM_ACCEL_PXS2 = config.AgentTuning.floatValue("server.agents.capabilities.movement.AgentSwimPhysicsService.SWIM_ACCEL_PXS2");
+    private static final float SWIM_MAX_SPEED_PXS = config.AgentTuning.floatValue("server.agents.capabilities.movement.AgentSwimPhysicsService.SWIM_MAX_SPEED_PXS");
+    private static final float SWIM_JUMP_BURST_PXS = config.AgentTuning.floatValue("server.agents.capabilities.movement.AgentSwimPhysicsService.SWIM_JUMP_BURST_PXS");
+    private static final float SWIM_UP_THRUST_PXS2 = config.AgentTuning.floatValue("server.agents.capabilities.movement.AgentSwimPhysicsService.SWIM_UP_THRUST_PXS2");
+    private static final float SWIM_DOWN_THRUST_PXS2 = config.AgentTuning.floatValue("server.agents.capabilities.movement.AgentSwimPhysicsService.SWIM_DOWN_THRUST_PXS2");
+    private static final float SWIM_FREE_MAX_SINK_PXS = config.AgentTuning.floatValue("server.agents.capabilities.movement.AgentSwimPhysicsService.SWIM_FREE_MAX_SINK_PXS");
+    private static final float SWIM_DOWN_MAX_SPEED_PXS = config.AgentTuning.floatValue("server.agents.capabilities.movement.AgentSwimPhysicsService.SWIM_DOWN_MAX_SPEED_PXS");
+    private static final float SWIM_UP_MAX_SINK_PXS = config.AgentTuning.floatValue("server.agents.capabilities.movement.AgentSwimPhysicsService.SWIM_UP_MAX_SINK_PXS");
 
     private AgentSwimPhysicsService() {
     }

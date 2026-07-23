@@ -10,11 +10,12 @@ import server.agents.capabilities.movement.fidget.AgentFidgetStateRuntime;
 import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
 import server.agents.capabilities.navigation.AgentTravelVariationRuntime;
 import server.agents.capabilities.navigation.AgentTravelVariationSettings;
+import server.agents.capabilities.navigation.AgentRouteOutcome;
+import server.agents.capabilities.navigation.AgentRouteStatus;
 import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.PrimitiveCapabilityGateway;
-import server.agents.progression.AgentVictoriaRouteRuntime;
-import server.agents.plans.AgentPlanPauseRuntime;
+import server.agents.runtime.AgentForegroundPauseRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
 
@@ -22,9 +23,61 @@ import java.awt.Point;
 
 public final class AgentTownLifeRuntime {
     private static final String PLAN_PAUSE_REASON = "town-life";
-    private static final int ACTIVITY_ARRIVAL_DISTANCE_PX = 70;
-    private static final int ACTIVITY_ARRIVAL_VERTICAL_DISTANCE_PX = 12;
-    private static final int MAP_SEAT_ARRIVAL_DISTANCE_PX = 12;
+    private static final int ACTIVITY_ARRIVAL_DISTANCE_PX = config.AgentTuning.intValue("server.agents.capabilities.townlife.AgentTownLifeRuntime.ACTIVITY_ARRIVAL_DISTANCE_PX");
+    private static final int ACTIVITY_ARRIVAL_VERTICAL_DISTANCE_PX = config.AgentTuning.intValue("server.agents.capabilities.townlife.AgentTownLifeRuntime.ACTIVITY_ARRIVAL_VERTICAL_DISTANCE_PX");
+    private static final int MAP_SEAT_ARRIVAL_DISTANCE_PX = config.AgentTuning.intValue("server.agents.capabilities.townlife.AgentTownLifeRuntime.MAP_SEAT_ARRIVAL_DISTANCE_PX");
+    private static final int SETTLING_DELAY_MIN_MS = config.AgentTuning.intValue(
+            "server.agents.capabilities.townlife.AgentTownLifeRuntime.SETTLING_DELAY_MIN_MS");
+    private static final int SETTLING_DELAY_MAX_EXCLUSIVE_MS = config.AgentTuning.intValue(
+            "server.agents.capabilities.townlife.AgentTownLifeRuntime.SETTLING_DELAY_MAX_EXCLUSIVE_MS");
+    private static final int RETRY_DELAY_MIN_MS = config.AgentTuning.intValue(
+            "server.agents.capabilities.townlife.AgentTownLifeRuntime.RETRY_DELAY_MIN_MS");
+    private static final int RETRY_DELAY_MAX_EXCLUSIVE_MS = config.AgentTuning.intValue(
+            "server.agents.capabilities.townlife.AgentTownLifeRuntime.RETRY_DELAY_MAX_EXCLUSIVE_MS");
+    private static final int ABANDON_RETRY_DELAY_MIN_MS = config.AgentTuning.intValue(
+            "server.agents.capabilities.townlife.AgentTownLifeRuntime.ABANDON_RETRY_DELAY_MIN_MS");
+    private static final int ABANDON_RETRY_DELAY_MAX_EXCLUSIVE_MS = config.AgentTuning.intValue(
+            "server.agents.capabilities.townlife.AgentTownLifeRuntime.ABANDON_RETRY_DELAY_MAX_EXCLUSIVE_MS");
+    private static final int ACTIVITY_TRANSITION_MIN_MS = config.AgentTuning.intValue(
+            "server.agents.capabilities.townlife.AgentTownLifeRuntime.ACTIVITY_TRANSITION_MIN_MS");
+    private static final int ACTIVITY_TRANSITION_MAX_EXCLUSIVE_MS = config.AgentTuning.intValue(
+            "server.agents.capabilities.townlife.AgentTownLifeRuntime.ACTIVITY_TRANSITION_MAX_EXCLUSIVE_MS");
+    private static final int SHOP_DWELL_MIN_MS = config.AgentTuning.intValue(
+            "server.agents.capabilities.townlife.AgentTownLifeRuntime.SHOP_DWELL_MIN_MS");
+    private static final int SHOP_DWELL_MAX_EXCLUSIVE_MS = config.AgentTuning.intValue(
+            "server.agents.capabilities.townlife.AgentTownLifeRuntime.SHOP_DWELL_MAX_EXCLUSIVE_MS");
+    private static final int RETURN_SETTLE_MIN_MS = config.AgentTuning.intValue(
+            "server.agents.capabilities.townlife.AgentTownLifeRuntime.RETURN_SETTLE_MIN_MS");
+    private static final int RETURN_SETTLE_MAX_EXCLUSIVE_MS = config.AgentTuning.intValue(
+            "server.agents.capabilities.townlife.AgentTownLifeRuntime.RETURN_SETTLE_MAX_EXCLUSIVE_MS");
+    private static final int MIN_FIDGET_DURATION_MS = config.AgentTuning.intValue(
+            "server.agents.capabilities.townlife.AgentTownLifeRuntime.MIN_FIDGET_DURATION_MS");
+    private static final int REST_DWELL_MIN_MS = config.AgentTuning.intValue(
+            "server.agents.capabilities.townlife.AgentTownLifeRuntime.REST_DWELL_MIN_MS");
+    private static final int REST_DWELL_MAX_EXCLUSIVE_MS = config.AgentTuning.intValue(
+            "server.agents.capabilities.townlife.AgentTownLifeRuntime.REST_DWELL_MAX_EXCLUSIVE_MS");
+    private static final int SOCIAL_DWELL_MIN_MS = config.AgentTuning.intValue(
+            "server.agents.capabilities.townlife.AgentTownLifeRuntime.SOCIAL_DWELL_MIN_MS");
+    private static final int SOCIAL_DWELL_MAX_EXCLUSIVE_MS = config.AgentTuning.intValue(
+            "server.agents.capabilities.townlife.AgentTownLifeRuntime.SOCIAL_DWELL_MAX_EXCLUSIVE_MS");
+    private static final int NPC_DWELL_MIN_MS = config.AgentTuning.intValue(
+            "server.agents.capabilities.townlife.AgentTownLifeRuntime.NPC_DWELL_MIN_MS");
+    private static final int NPC_DWELL_MAX_EXCLUSIVE_MS = config.AgentTuning.intValue(
+            "server.agents.capabilities.townlife.AgentTownLifeRuntime.NPC_DWELL_MAX_EXCLUSIVE_MS");
+    private static final int ROAM_DWELL_MIN_MS = config.AgentTuning.intValue(
+            "server.agents.capabilities.townlife.AgentTownLifeRuntime.ROAM_DWELL_MIN_MS");
+    private static final int ROAM_DWELL_MAX_EXCLUSIVE_MS = config.AgentTuning.intValue(
+            "server.agents.capabilities.townlife.AgentTownLifeRuntime.ROAM_DWELL_MAX_EXCLUSIVE_MS");
+    private static final int FLOURISH_DWELL_MIN_MS = config.AgentTuning.intValue(
+            "server.agents.capabilities.townlife.AgentTownLifeRuntime.FLOURISH_DWELL_MIN_MS");
+    private static final int FLOURISH_DWELL_MAX_EXCLUSIVE_MS = config.AgentTuning.intValue(
+            "server.agents.capabilities.townlife.AgentTownLifeRuntime.FLOURISH_DWELL_MAX_EXCLUSIVE_MS");
+    private static final int DEFAULT_DWELL_MS = config.AgentTuning.intValue(
+            "server.agents.capabilities.townlife.AgentTownLifeRuntime.DEFAULT_DWELL_MS");
+    private static final int BACKGROUND_DWELL_MAX_MS = config.AgentTuning.intValue(
+            "server.agents.capabilities.townlife.AgentTownLifeRuntime.BACKGROUND_DWELL_MAX_MS");
+    private static final int BACKGROUND_DWELL_MULTIPLIER = config.AgentTuning.intValue(
+            "server.agents.capabilities.townlife.AgentTownLifeRuntime.BACKGROUND_DWELL_MULTIPLIER");
 
     private AgentTownLifeRuntime() {
     }
@@ -52,7 +105,7 @@ public final class AgentTownLifeRuntime {
         }
         entry.capabilityStates().require(AgentTownLifeState.STATE_KEY)
                 .start(nowMs, identitySeed, request);
-        AgentPlanPauseRuntime.pause(entry, PLAN_PAUSE_REASON, nowMs);
+        AgentForegroundPauseRuntime.pause(entry, PLAN_PAUSE_REASON, nowMs);
         AgentTravelVariationRuntime.configure(entry,
                 new AgentTravelVariationSettings(
                         Integer.toUnsignedLong(identitySeed), true, 1.30d,
@@ -135,7 +188,7 @@ public final class AgentTownLifeRuntime {
         AgentTownLifeEncounterCoordinator.finish(entry, agent, false, System.currentTimeMillis());
         entry.capabilityStates().require(AgentTownLifeActivitySequenceState.STATE_KEY).clear();
         state.stop();
-        AgentPlanPauseRuntime.resume(entry, PLAN_PAUSE_REASON, System.currentTimeMillis());
+        AgentForegroundPauseRuntime.resume(entry, PLAN_PAUSE_REASON, System.currentTimeMillis());
         AgentTownLifeDestinationService.release(agent);
         AgentFidgetService.clear(entry);
         if (agent != null && agent.getChair() >= 0) {
@@ -157,7 +210,8 @@ public final class AgentTownLifeRuntime {
             agent.changeFaceExpression(AgentEmote.HAPPY.getValue());
         }
         state.transition(AgentTownLifeState.Stage.CHOOSE_ACTIVITY,
-                nowMs + delay(agent, state, 900, 2_501));
+                nowMs + delay(
+                        agent, state, SETTLING_DELAY_MIN_MS, SETTLING_DELAY_MAX_EXCLUSIVE_MS));
         return true;
     }
 
@@ -185,7 +239,8 @@ public final class AgentTownLifeRuntime {
                         entry, agent, state, decision, nowMs, gateway);
         if (destination == null) {
             state.transition(AgentTownLifeState.Stage.CHOOSE_ACTIVITY,
-                    nowMs + delay(agent, state, 500, 1_501));
+                    nowMs + delay(
+                            agent, state, RETRY_DELAY_MIN_MS, RETRY_DELAY_MAX_EXCLUSIVE_MS));
             return true;
         }
         state.select(destination.activity(), destination.point(), destination.targetCharacterId(),
@@ -276,7 +331,7 @@ public final class AgentTownLifeRuntime {
                 .require(AgentTownLifeEncounterState.STATE_KEY).snapshot();
         if (nowMs >= state.nextActionAtMs() && encounter.active()
                 && encounter.role() == AgentTownLifeEncounterState.Role.RESPONDER) {
-            state.beginDwell(nowMs + 1_000L);
+            state.beginDwell(nowMs + ACTIVITY_TRANSITION_MIN_MS);
             return true;
         }
         if (nowMs >= state.nextActionAtMs()) {
@@ -294,7 +349,11 @@ public final class AgentTownLifeRuntime {
                 state.transition(AgentTownLifeState.Stage.RETURN_FROM_SHOP, nowMs);
             } else {
                 state.transition(AgentTownLifeState.Stage.CHOOSE_ACTIVITY,
-                        nowMs + delay(agent, state, 1_000, 4_501));
+                        nowMs + delay(
+                                agent,
+                                state,
+                                ACTIVITY_TRANSITION_MIN_MS,
+                                ACTIVITY_TRANSITION_MAX_EXCLUSIVE_MS));
             }
             return true;
         }
@@ -368,18 +427,19 @@ public final class AgentTownLifeRuntime {
                                      AgentTownLifeState state,
                                      long nowMs,
                                      PrimitiveCapabilityGateway gateway) {
-        AgentVictoriaRouteRuntime.TravelOutcome outcome = AgentVictoriaRouteRuntime.travelStatus(
-                entry, agent, state.destinationMapId(), gateway, nowMs);
-        if (outcome.status() == AgentVictoriaRouteRuntime.Status.ARRIVED) {
+        AgentRouteOutcome outcome = gateway.travelTo(
+                entry, agent, state.destinationMapId(), nowMs);
+        if (outcome.status() == AgentRouteStatus.ARRIVED) {
             gateway.stop(entry);
-            state.beginDwell(nowMs + delay(agent, state, 8_000, 21_001));
+            state.beginDwell(nowMs + delay(
+                    agent, state, SHOP_DWELL_MIN_MS, SHOP_DWELL_MAX_EXCLUSIVE_MS));
             entry.capabilityStates().require(AgentTownLifeActivitySequenceState.STATE_KEY)
                     .start(nowMs, state.nextActionAtMs());
             AgentTownLifeEventPublisher.activity(
                     entry, agent, state, AgentTownLifeActivityEvent.Phase.ORIENTING, nowMs);
             return true;
         }
-        return outcome.status() != AgentVictoriaRouteRuntime.Status.MOVING;
+        return outcome.status() != AgentRouteStatus.MOVING;
     }
 
     private static boolean returnFromShop(AgentRuntimeEntry entry,
@@ -387,15 +447,19 @@ public final class AgentTownLifeRuntime {
                                           AgentTownLifeState state,
                                           long nowMs,
                                           PrimitiveCapabilityGateway gateway) {
-        AgentVictoriaRouteRuntime.TravelOutcome outcome = AgentVictoriaRouteRuntime.travelStatus(
-                entry, agent, state.townMapId(), gateway, nowMs);
-        if (outcome.status() == AgentVictoriaRouteRuntime.Status.ARRIVED) {
+        AgentRouteOutcome outcome = gateway.travelTo(
+                entry, agent, state.townMapId(), nowMs);
+        if (outcome.status() == AgentRouteStatus.ARRIVED) {
             gateway.stop(entry);
             state.transition(AgentTownLifeState.Stage.SETTLING,
-                    nowMs + delay(agent, state, 1_500, 4_501));
+                    nowMs + delay(
+                            agent,
+                            state,
+                            RETURN_SETTLE_MIN_MS,
+                            RETURN_SETTLE_MAX_EXCLUSIVE_MS));
             return true;
         }
-        return outcome.status() != AgentVictoriaRouteRuntime.Status.MOVING;
+        return outcome.status() != AgentRouteStatus.MOVING;
     }
 
     private static void beginDwellMotion(AgentRuntimeEntry entry,
@@ -404,22 +468,26 @@ public final class AgentTownLifeRuntime {
                                          long nowMs) {
         AgentFidgetMode mode = AgentTownLifeFidgetPolicy.choose(agent, state);
         if (mode != AgentFidgetMode.NONE) {
-            int duration = (int) Math.max(2_000L, state.nextActionAtMs() - nowMs);
+            int duration = (int) Math.max(
+                    MIN_FIDGET_DURATION_MS, state.nextActionAtMs() - nowMs);
             AgentFidgetService.startFidget(entry, mode, nowMs, duration, AgentFidgetTrigger.TOWN_LIFE);
         }
     }
 
     private static long dwellDuration(Character agent, AgentTownLifeState state) {
         long duration = switch (state.activity()) {
-            case REST -> delay(agent, state, 12_000, 36_001);
-            case SOCIAL -> delay(agent, state, 5_000, 13_001);
-            case NPC_PAUSE -> delay(agent, state, 4_000, 11_001);
-            case ROAM -> delay(agent, state, 3_000, 9_001);
-            case WEAPON_FLOURISH -> delay(agent, state, 3_000, 7_001);
-            default -> 4_000L;
+            case REST -> delay(agent, state, REST_DWELL_MIN_MS, REST_DWELL_MAX_EXCLUSIVE_MS);
+            case SOCIAL -> delay(
+                    agent, state, SOCIAL_DWELL_MIN_MS, SOCIAL_DWELL_MAX_EXCLUSIVE_MS);
+            case NPC_PAUSE -> delay(agent, state, NPC_DWELL_MIN_MS, NPC_DWELL_MAX_EXCLUSIVE_MS);
+            case ROAM -> delay(agent, state, ROAM_DWELL_MIN_MS, ROAM_DWELL_MAX_EXCLUSIVE_MS);
+            case WEAPON_FLOURISH -> delay(
+                    agent, state, FLOURISH_DWELL_MIN_MS, FLOURISH_DWELL_MAX_EXCLUSIVE_MS);
+            default -> DEFAULT_DWELL_MS;
         };
         return state.fidelity() == AgentTownLifeFidelity.PRESENTATION
-                ? duration : Math.min(90_000L, duration * 2L);
+                ? duration
+                : Math.min(BACKGROUND_DWELL_MAX_MS, duration * BACKGROUND_DWELL_MULTIPLIER);
     }
 
     private static void abandonDestination(AgentRuntimeEntry entry,
@@ -437,7 +505,11 @@ public final class AgentTownLifeRuntime {
         entry.capabilityStates().require(AgentTownLifeActivitySequenceState.STATE_KEY).clear();
         state.progressWatchdog().clear();
         state.transition(AgentTownLifeState.Stage.CHOOSE_ACTIVITY,
-                nowMs + delay(agent, state, 700, 2_001));
+                nowMs + delay(
+                        agent,
+                        state,
+                        ABANDON_RETRY_DELAY_MIN_MS,
+                        ABANDON_RETRY_DELAY_MAX_EXCLUSIVE_MS));
     }
 
     private static int expressionFor(Character agent, AgentTownLifeState state) {

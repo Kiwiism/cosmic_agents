@@ -1,565 +1,469 @@
-#World Name: (0 "Scania", 1 "Bera", 2 "Broa", 3 "Windia", 4 "Khaini", 5 "Bellocan", 6 "Mardia", 7 "Kradia", 8 "Yellonde", 9 "Demethos", 10 "Galicia", 11 "El Nido", 12 "Zenith", 13 "Arcenia", 14 "Kastia", 15 "Judis", 16 "Plana", 17 "Kalluna", 18 "Stius", 19 "Croa", 20 "Medere")
-#Flag types: (0 = nothing, 1 = event, 2 = new, 3 = hot)
-#Recommended to use only up to 15 worlds
+# World names: 0 Scania, 1 Bera, 2 Broa, 3 Windia, 4 Khaini, 5 Bellocan,
+# 6 Mardia, 7 Kradia, 8 Yellonde, 9 Demethos, 10 Galicia, 11 El Nido,
+# 12 Zenith, 13 Arcenia, 14 Kastia, 15 Judis, 16 Plana, 17 Kalluna,
+# 18 Stius, 19 Croa, 20 Medere.
+# Flag types: 0 = none, 1 = event, 2 = new, 3 = hot.
+# Recommended maximum: 15 worlds.
 worlds:
-    #Properties for Scania 0
+  # Properties for Scania (world 0)
   - flag: 0
     server_message: Welcome to Scania!
     event_message: Scania!
     why_am_i_recommended: Welcome to Scania!
     channels: 1
     exp_rate: 1
-    mob_rate: 1.0                            #Mob count multiplier
-    max_mob_per_spawnpoint: 2                #Must be equal or higher than mob_rate
+    mob_rate: 1.0                                           # Mob count multiplier
+    max_mob_per_spawnpoint: 2                               # Must be equal or higher than mob_rate
     # mob_spawn_overrides examples: {map_ids: [100000000], mob_rate: 1.5} or {map_id_min: 100000000, map_id_max: 100000999, max_mob_per_spawnpoint: 3}
-    mob_spawn_overrides: []                  #Optional map-specific overrides. Later matching entries win per field.
+    mob_spawn_overrides: []                                 # Optional map-specific overrides. Later matching entries win per field.
     meso_rate: 1
     drop_rate: 1
-    boss_drop_rate: 1                      #NOTE: Boss drop rate OVERRIDES common drop rate, for bosses-only.
-    maker_rate: 1                         #CUSTOM: Monster Crystals produced from Maker leftover conversion. 1 = vanilla, 2 = 2x.
-    quest_rate: 1                          #Multiplier for Exp & Meso gains when completing a quest. Only available when USE_QUEST_RATE is true. Stacks with server Exp & Meso rates.
-    fishing_rate: 1                        #Multiplier for success likelihood on meso thrown during fishing.
-    travel_rate: 10                         #Means of transportation rides/departs using 1/N of the default time.
-    allow_all_untradeable_items: false      #Prefer the allowlist below; this broad custom-world bypass is explicit.
+    boss_drop_rate: 1                                       # NOTE: Boss drop rate OVERRIDES common drop rate, for bosses-only.
+    maker_rate: 1                                           # CUSTOM: Monster Crystals produced from Maker leftover conversion. 1 = vanilla, 2 = 2x.
+    quest_rate: 1                                           # Multiplier for Exp & Meso gains when completing a quest. Only available when USE_QUEST_RATE is true. Stacks with server Exp & Meso rates.
+    fishing_rate: 1                                         # Multiplier for success likelihood on meso thrown during fishing.
+    travel_rate: 10                                         # Means of transportation rides/departs using 1/N of the default time.
+    allow_all_untradeable_items: false                      # Prefer the allowlist below; this broad custom-world bypass is explicit.
     untradeable_item_allowlist: []
     allow_multiple_one_of_a_kind_items: false
     multiple_one_of_a_kind_item_allowlist: []
 
-    #Properties for Bera 1
+  # Properties for Bera (world 1)
   - flag: 0
     server_message: Welcome to Bera!
     event_message: Bera!
     why_am_i_recommended: Welcome to Bera!
     channels: 3
 
-    #Properties for Broa 2
+  # Properties for Broa (world 2)
   - flag: 0
     server_message: Welcome to Broa!
     event_message: Broa!
     why_am_i_recommended: Welcome to Broa!
     channels: 3
 
-    #Properties for Windia 3
+  # Properties for Windia (world 3)
   - flag: 0
     server_message: Welcome to Windia!
     event_message: Windia!
     why_am_i_recommended: Welcome to Windia!
     channels: 3
 
-    #Properties for Khaini 4
+  # Properties for Khaini (world 4)
   - flag: 0
     server_message: Welcome to Khaini!
     event_message: Khaini!
     why_am_i_recommended: Welcome to Khaini!
     channels: 3
 
-    #Properties for Bellocan 5
+  # Properties for Bellocan (world 5)
   - flag: 0
     server_message: Welcome to Bellocan!
     event_message: Bellocan!
     why_am_i_recommended: Welcome to Bellocan!
     channels: 3
 
-    #Properties for Mardia 6
+  # Properties for Mardia (world 6)
   - flag: 0
     server_message: Welcome to Mardia!
     event_message: Mardia!
     why_am_i_recommended: Welcome to Mardia!
     channels: 3
 
-    #Properties for Kradia 7
+  # Properties for Kradia (world 7)
   - flag: 0
     server_message: Welcome to Kradia!
     event_message: Kradia!
     why_am_i_recommended: Welcome to Kradia!
     channels: 3
 
-    #Properties for Yellonde 8
+  # Properties for Yellonde (world 8)
   - flag: 0
     server_message: Welcome to Yellonde!
     event_message: Yellonde!
     why_am_i_recommended: Welcome to Yellonde!
     channels: 3
 
-    #Properties for Demethos 9
+  # Properties for Demethos (world 9)
   - flag: 0
     server_message: Welcome to Demethos!
     event_message: Demethos!
     why_am_i_recommended: Welcome to Demethos!
     channels: 3
 
-    #Properties for Galicia 10
+  # Properties for Galicia (world 10)
   - flag: 0
     server_message: Welcome to Galicia!
     event_message: Galicia!
     why_am_i_recommended: Welcome to Galicia!
     channels: 3
 
-    #Properties for Kastia 11
+  # Properties for Kastia (world 11)
   - flag: 0
     server_message: Welcome to Kastia!
     event_message: Kastia!
     why_am_i_recommended: Welcome to Kastia!
     channels: 3
 
-    #Properties for Judis 12
+  # Properties for Judis (world 12)
   - flag: 0
     server_message: Welcome to Judis!
     event_message: Judis!
     why_am_i_recommended: Welcome to Judis!
     channels: 3
 
-    #Properties for Arcenia 13
+  # Properties for Arcenia (world 13)
   - flag: 0
     server_message: Welcome to Arcenia!
     event_message: Arcenia!
     why_am_i_recommended: Welcome to Arcenia!
     channels: 3
 
-    #Properties for Plana 14
+  # Properties for Plana (world 14)
   - flag: 0
     server_message: Welcome to Plana!
     event_message: Plana!
     why_am_i_recommended: Welcome to Plana!
     channels: 3
 
-    #Properties for El Nido 15
+  # Properties for El Nido (world 15)
   - flag: 0
     server_message: Welcome to El Nido!
     event_message: El Nido!
     why_am_i_recommended: Welcome to El Nido!
     channels: 3
 
-    #Properties for Kalluna 16
+  # Properties for Kalluna (world 16)
   - flag: 0
     server_message: Welcome to Kalluna!
     event_message: Kalluna!
     why_am_i_recommended: Welcome to Kalluna!
     channels: 3
 
-    #Properties for Stius 17
+  # Properties for Stius (world 17)
   - flag: 0
     server_message: Welcome to Stius!
     event_message: Stius!
     why_am_i_recommended: Welcome to Stius!
     channels: 3
 
-    #Properties for Croa 18
+  # Properties for Croa (world 18)
   - flag: 0
     server_message: Welcome to Croa!
     event_message: Croa!
     why_am_i_recommended: Welcome to Croa!
     channels: 3
 
-    #Properties for Zenith 19
+  # Properties for Zenith (world 19)
   - flag: 0
     server_message: Welcome to Zenith!
     event_message: Zenith!
     why_am_i_recommended: Welcome to Zenith!
     channels: 3
 
-    #Properties for Medere 20
+  # Properties for Medere (world 20)
   - flag: 0
     server_message: Welcome to Medere!
     event_message: Medere!
     why_am_i_recommended: Welcome to Medere!
     channels: 3
 
-
 server:
-    #Database Configuration
-    DB_URL_FORMAT: "jdbc:mysql://%s:3306/cosmic" # If the docker ENV for DB_HOST is anything but "db", this string format should be changed from 3306 to 3307 (or whichever port it was changed to in docker) 
-    DB_HOST: "localhost" 
+    # Database Configuration
+    DB_URL_FORMAT: "jdbc:mysql://%s:3306/cosmic"            # If the docker ENV for DB_HOST is anything but "db", this string format should be changed from 3306 to 3307 (or whichever port it was changed to in docker)
+    DB_HOST: "localhost"
     DB_USER: "root"
     DB_PASS: "root"
-    INIT_CONNECTION_POOL_TIMEOUT: 90    # Seconds
+    INIT_CONNECTION_POOL_TIMEOUT: 90                        # Seconds
 
-    #Login Configuration
-    DEPLOYMENT_PROFILE: local            #Allowed values: local, production.
-    ALLOW_INSECURE_PRODUCTION_AUTH: false #Production must enable both PIN and PIC unless this risk is explicitly accepted.
-    WORLDS: 1                           #Initial number of worlds on the server.
-    WLDLIST_SIZE: 21                    #Max possible worlds on the server.
-    CHANNEL_SIZE: 20                    #Max possible channels per world (which is 20, based on the channel list on login phase).
-    CHANNEL_LOAD: 1000                  #Max players per channel (limit actually used to calculate the World server capacity).
-    CHANNEL_LOCKS: 20                   #Total number of structure management locks each channel has.
+    # Login Configuration
+    DEPLOYMENT_PROFILE: local                               # Allowed values: local, production.
+    ALLOW_INSECURE_PRODUCTION_AUTH: false                   # Production must enable both PIN and PIC unless this risk is explicitly accepted.
+    WORLDS: 1                                               # Initial number of worlds on the server.
+    WLDLIST_SIZE: 21                                        # Max possible worlds on the server.
+    CHANNEL_SIZE: 20                                        # Max possible channels per world (which is 20, based on the channel list on login phase).
+    CHANNEL_LOAD: 1000                                      # Max players per channel (limit actually used to calculate the World server capacity).
+    CHANNEL_LOCKS: 20                                       # Total number of structure management locks each channel has.
 
-    RESPAWN_INTERVAL: 5000              #Mob respawn eligibility poll; actual delays use the overrides below.
-    PURGING_INTERVAL: 300000            #5 minutes, 300000.
-    RANKING_INTERVAL: 3600000           #60 minutes, 3600000.
-    COUPON_INTERVAL: 3600000            #60 minutes, 3600000.
-    UPDATE_INTERVAL: 777                #Dictates the frequency on which the "centralized server time" is updated.
+    RESPAWN_INTERVAL: 5000                                  # Mob respawn eligibility poll; actual delays use the overrides below.
+    PURGING_INTERVAL: 300000                                # 5 minutes, 300000.
+    RANKING_INTERVAL: 3600000                               # 60 minutes, 3600000.
+    COUPON_INTERVAL: 3600000                                # 60 minutes, 3600000.
+    UPDATE_INTERVAL: 777                                    # Dictates the frequency on which the "centralized server time" is updated.
 
-    ENABLE_PIC: false               #Pick true/false to enable or disable Pic. Delete character requires PIC available.
-    ENABLE_PIN: false               #Pick true/false to enable or disable Pin.
+    ENABLE_PIC: false                                       # Pick true/false to enable or disable Pic. Delete character requires PIC available.
+    ENABLE_PIN: false                                       # Pick true/false to enable or disable Pin.
 
-    BYPASS_PIC_EXPIRATION: 20           #Enables PIC bypass, which will remain active for that account by that client machine for N minutes. Set 0 to disable.
-    BYPASS_PIN_EXPIRATION: 15           #Enables PIN bypass, which will remain active for that account by that client machine for N minutes. Set 0 to disable.
+    BYPASS_PIC_EXPIRATION: 20                               # Enables PIC bypass, which will remain active for that account by that client machine for N minutes. Set 0 to disable.
+    BYPASS_PIN_EXPIRATION: 15                               # Enables PIN bypass, which will remain active for that account by that client machine for N minutes. Set 0 to disable.
 
-    AUTOMATIC_REGISTER: true        #Automatically register players when they login with a nonexistent username.
-    BCRYPT_MIGRATION: true          #Performs a migration from old SHA-1 and SHA-512 password to bcrypt.
-    COLLECTIVE_CHARSLOT: false      #Available character slots are contabilized globally rather than per world server.
-    DETERRED_MULTICLIENT: false     #Enables detection of multi-client and suspicious remote IP on the login system.
-    #Besides blocking logging in with several client sessions on the same machine, this also blocks suspicious login attempts for players that tries to login on an account using several diferent remote addresses.
+    AUTOMATIC_REGISTER: true                                # Automatically register players when they login with a nonexistent username.
+    BCRYPT_MIGRATION: true                                  # Performs a migration from old SHA-1 and SHA-512 password to bcrypt.
+    COLLECTIVE_CHARSLOT: false                              # Available character slots are contabilized globally rather than per world server.
+    DETERRED_MULTICLIENT: false                             # Enables detection of multi-client and suspicious remote IP on the login system.
+    # Besides blocking logging in with several client sessions on the same machine, this also blocks suspicious login attempts for players that tries to login on an account using several diferent remote addresses.
 
-    #Multiclient Coordinator Configuration
-    MAX_ALLOWED_ACCOUNT_HWID: 10        #Allows up to N concurrent HWID's for an account. HWID's remains linked to an account longer the more times it's used to login.
-    MAX_ACCOUNT_LOGIN_ATTEMPT: 15       #After N tries on an account, login on that account gets disabled for a short period.
-    LOGIN_ATTEMPT_DURATION: 120         #Period in seconds the login attempt remains registered on the system.
+    # Multiclient Coordinator Configuration
+    MAX_ALLOWED_ACCOUNT_HWID: 10                            # Allows up to N concurrent HWID's for an account. HWID's remains linked to an account longer the more times it's used to login.
+    MAX_ACCOUNT_LOGIN_ATTEMPT: 15                           # After N tries on an account, login on that account gets disabled for a short period.
+    LOGIN_ATTEMPT_DURATION: 120                             # Period in seconds the login attempt remains registered on the system.
 
-    #Ip Configuration
-    HOST: 182.52.44.189                 #WAN IPv4 address
-    LANHOST: 192.168.50.10              #LAN IPv4 address
-    LOCALHOST: 127.0.0.1            #Loopback IPv4 address
-    TAILSCALEHOST: 100.109.79.4         #Tailscale (100.64.0.0/10) IPv4 address
+    # Ip Configuration
+    HOST: 182.52.44.189                                     # WAN IPv4 address
+    LANHOST: 192.168.50.10                                  # LAN IPv4 address
+    LOCALHOST: 127.0.0.1                                    # Loopback IPv4 address
+    TAILSCALEHOST: 100.109.79.4                             # Tailscale (100.64.0.0/10) IPv4 address
     GMSERVER: false
 
-    #Other configuration
+    # Other configuration
     SHUTDOWNHOOK: true
 
-    #Server Flags
-    USE_CUSTOM_KEYSET: false             #Enables auto-setup of the HeavenMS's custom keybindings when creating characters.
-    USE_DEBUG: false                    #Will enable some text prints on the client, oriented for debugging purposes.
-    USE_DEBUG_SHOW_INFO_EQPEXP: false   #Prints on the cmd all equip exp gain info.
-    USE_DEBUG_SHOW_RCVD_PACKET: false   #Prints on the cmd all received packet ids.
-    USE_DEBUG_SHOW_RCVD_MVLIFE: false   #Prints on the cmd all received move life content.
+    # Server Flags
+    USE_CUSTOM_KEYSET: false                                # Enables auto-setup of the HeavenMS's custom keybindings when creating characters.
+    USE_DEBUG: false                                        # Will enable some text prints on the client, oriented for debugging purposes.
+    USE_DEBUG_SHOW_INFO_EQPEXP: false                       # Prints on the cmd all equip exp gain info.
+    USE_DEBUG_SHOW_RCVD_PACKET: false                       # Prints on the cmd all received packet ids.
+    USE_DEBUG_SHOW_RCVD_MVLIFE: false                       # Prints on the cmd all received move life content.
     USE_DEBUG_SHOW_PACKET: false
-    USE_SUPPLY_RATE_COUPONS: true       #Allows rate coupons to be sold through the Cash Shop.
-    USE_IP_VALIDATION: false             #Enables IP checking when logging in.
-    USE_CHARACTER_ACCOUNT_CHECK: false  #Enables one-character-per-account check when logging in. This might be resource intensive.
+    USE_SUPPLY_RATE_COUPONS: true                           # Allows rate coupons to be sold through the Cash Shop.
+    USE_IP_VALIDATION: false                                # Enables IP checking when logging in.
+    USE_CHARACTER_ACCOUNT_CHECK: false                      # Enables one-character-per-account check when logging in. This might be resource intensive.
 
-    USE_MAXRANGE: true                  #Will send and receive packets from all events on a map, rather than those of only view range.
+    USE_MAXRANGE: true                                      # Will send and receive packets from all events on a map, rather than those of only view range.
     USE_MAXRANGE_ECHO_OF_HERO: true
     USE_MTS: false
-    USE_CPQ: true                       #Renders the CPQ available or not.
-    USE_AUTOHIDE_GM: false              #When enabled, GMs are automatically hidden when joining. Thanks to Steven Deblois (steven1152).
-    USE_FIXED_RATIO_HPMP_UPDATE: false   #Enables the HeavenMS-builtin HPMP update based on the current pool to max pool ratio.
+    USE_CPQ: true                                           # Renders the CPQ available or not.
+    USE_AUTOHIDE_GM: false                                  # When enabled, GMs are automatically hidden when joining. Thanks to Steven Deblois (steven1152).
+    USE_FIXED_RATIO_HPMP_UPDATE: false                      # Enables the HeavenMS-builtin HPMP update based on the current pool to max pool ratio.
     USE_FAMILY_SYSTEM: true
     USE_DUEY: true
-    USE_RANDOMIZE_HPMP_GAIN: true       #Enables randomizing on MaxHP/MaxMP gains and INT accounting for the MaxMP gain on level up.
-    USE_STORAGE_ITEM_SORT: true         #Enables storage "Arrange Items" feature.
-    USE_ITEM_SORT: true                 #Enables inventory "Item Sort/Merge" feature.
-    USE_ITEM_SORT_BY_NAME: false        #Item sorting based on name rather than id.
-    USE_PARTY_FOR_STARTERS: true        #Players level 10 or below can create/invite other players on the given level range.
-    USE_AUTOASSIGN_STARTERS_AP: true   #Beginners level 10 or below have their AP autoassigned (they can't choose to levelup a stat). Set true ONLY if the localhost doesn't support AP assigning for beginners level 10 or below.
-    USE_AUTOASSIGN_SECONDARY_CAP: true  #Prevents AP autoassign from spending on secondary stats after the player class' cap (defined on the autoassign handler) has been reached.
-    USE_STARTING_AP_4: false             #Use early-GMS 4/4/4/4 starting stats. To overcome AP shortage, this gives 4AP/5AP at 1st/2nd job advancements.
-    USE_AUTOBAN: false                  #Commands the server to detect infractors automatically.
-    USE_AUTOBAN_LOG: false               #Log autoban related messages. Still logs even with USE_AUTOBAN disabled.
-    USE_EXP_GAIN_LOG: false #Logs characters exp gains; logs world rate & coupon exp, total gained exp, and current exp, level can be calculated from "ExpTable".
-    USE_AUTOSAVE: true                  #Enables server autosaving feature (saves characters to DB each 1 hour).
-    USE_SERVER_AUTOASSIGNER: false       #HeavenMS-builtin autoassigner, uses algorithm based on distributing AP accordingly with required secondary stat on equipments.
+    USE_RANDOMIZE_HPMP_GAIN: true                           # Enables randomizing on MaxHP/MaxMP gains and INT accounting for the MaxMP gain on level up.
+    USE_STORAGE_ITEM_SORT: true                             # Enables storage "Arrange Items" feature.
+    USE_ITEM_SORT: true                                     # Enables inventory "Item Sort/Merge" feature.
+    USE_ITEM_SORT_BY_NAME: false                            # Item sorting based on name rather than id.
+    USE_PARTY_FOR_STARTERS: true                            # Players level 10 or below can create/invite other players on the given level range.
+    USE_AUTOASSIGN_STARTERS_AP: true                        # Beginners level 10 or below have their AP autoassigned (they can't choose to levelup a stat). Set true ONLY if the localhost doesn't support AP assigning for beginners level 10 or below.
+    USE_AUTOASSIGN_SECONDARY_CAP: true                      # Prevents AP autoassign from spending on secondary stats after the player class' cap (defined on the autoassign handler) has been reached.
+    USE_STARTING_AP_4: false                                # Use early-GMS 4/4/4/4 starting stats. To overcome AP shortage, this gives 4AP/5AP at 1st/2nd job advancements.
+    USE_AUTOBAN: false                                      # Commands the server to detect infractors automatically.
+    USE_AUTOBAN_LOG: false                                  # Log autoban related messages. Still logs even with USE_AUTOBAN disabled.
+    USE_EXP_GAIN_LOG: false                                 # Logs characters exp gains; logs world rate & coupon exp, total gained exp, and current exp, level can be calculated from "ExpTable".
+    USE_AUTOSAVE: true                                      # Enables server autosaving feature (saves characters to DB each 1 hour).
+    USE_SERVER_AUTOASSIGNER: false                          # HeavenMS-builtin autoassigner, uses algorithm based on distributing AP accordingly with required secondary stat on equipments.
     USE_REFRESH_RANK_MOVE: true
-    USE_ENFORCE_ADMIN_ACCOUNT: false    #Forces accounts having GM characters to be treated as a "GM account" by the client (localhost). Some of the GM account perks is the ability to FLY, but unable to TRADE.
-    USE_ENFORCE_NOVICE_EXPRATE: true    #Hardsets experience rate 1x for beginners level 10 or under. Ideal for roaming on novice areas without caring too much about losing some stats.
-    USE_ENFORCE_HPMP_SWAP: false        #Forces players to reuse stats (via AP Resetting) located on HP/MP pool only inside the HP/MP stats.
-    USE_ENFORCE_MOB_LEVEL_RANGE: true   #Players N levels below the killed mob will gain no experience from defeating it.
-    USE_ENFORCE_JOB_LEVEL_RANGE: false  #Caps the player level on the minimum required to advance their current jobs.
-    USE_ENFORCE_JOB_SP_RANGE: true      #Caps the player SP level on the total obtainable by their current jobs. After changing jobs, missing SP will be retrieved.
-    USE_ENFORCE_ITEM_SUGGESTION: false  #Forces the Owl of Minerva and the Cash Shop to always display the defined item array instead of those featured by the players.
-    USE_ENFORCE_UNMERCHABLE_CASH: true  #Forces players to not sell CASH items via merchants, drops of it disappears.
-    USE_ENFORCE_UNMERCHABLE_PET: true   #Forces players to not sell pets via merchants, drops of it disappears. (since non-named pets gets dirty name and other possible DB-related issues)
-    USE_ENFORCE_MERCHANT_SAVE: true     #Forces automatic DB save on merchant owners, at every item movement on shop.
-    USE_ENFORCE_MDOOR_POSITION: false   #Forces mystic door to be spawned near spawnpoints.
-    USE_SPAWN_CLEAN_MDOOR: false         #Makes mystic doors to be spawned without deploy animation. This clears disconnecting issues that may happen when trying to cancel doors a couple seconds after deployment.
-    USE_SPAWN_RELEVANT_LOOT: true       #Forces to only spawn loots that are collectable by the player or any of their party members.
-    USE_ERASE_PERMIT_ON_OPENSHOP: true  #Forces "shop permit" item to be consumed when player deploy his/her player shop.
-    USE_ERASE_UNTRADEABLE_DROP: true    #Forces flagged untradeable items to disappear when dropped.
-    USE_ERASE_PET_ON_EXPIRATION: false  #Forces pets to be removed from inventory when expire time comes, rather than converting it to a doll.
-    ITEMS_NEVER_EXPIRE: false            #Explicit custom-world override. Normal item expiration is preserved by default.
-    PETS_NEVER_EXPIRE: false             #Explicit custom-world override. Normal pet expiration is preserved by default.
-    USE_BUFF_MOST_SIGNIFICANT: true     #When applying buffs, the player will stick with the highest stat boost among the listed, rather than overwriting stats.
-    USE_BUFF_EVERLASTING: false         #Every applied buff on players holds expiration time so high it'd be considered permanent. Suggestion thanks to Vcoc.
-    USE_MULTIPLE_SAME_EQUIP_DROP: true  #Enables multiple drops by mobs of the same equipment, number of possible drops based on the quantities provided at the drop data.
-    USE_ENABLE_FULL_RESPAWN: false       #At respawn task, always respawn missing mobs when they're available. Spawn count doesn't depend on how many players are currently there.
-    USE_ENABLE_CHAT_LOG: false          #Write in-game chat to log
-    USE_MAP_OWNERSHIP_SYSTEM: false      #Flag to enable/disable map ownership system
-    USE_FISHING_SYSTEM: false            #Flag to enable/disable custom fishing system
-    USE_NPCS_SCRIPTABLE: true           #Flag to enable/disable serverside predefined script NPCs.
-    MOB_RESPAWN_TIME_OVERRIDE_SECONDS: 10                 #Generic respawn delay; 0 preserves each source-map value.
-    REACTOR_RESPAWN_TIME_OVERRIDE_SECONDS: 10             #Generic reactor respawn delay; 0 preserves each source-map value.
-    MAPLE_ISLAND_MOB_RESPAWN_TIME_OVERRIDE_SECONDS: 5     #Overrides the generic mob delay on Maple Island.
-    MAPLE_ISLAND_REACTOR_RESPAWN_TIME_OVERRIDE_SECONDS: 5 #Overrides the generic reactor delay on Maple Island.
-    # Agent-hit mob reaction mode:
-    # OFF = original Cosmic client-controlled mobs; SYNTHETIC = simple shove only; PHYSICS = server-owned movement and aggro.
-    AGENT_MOB_REACTION_MODE: PHYSICS                                  # Allowed values: OFF, SYNTHETIC, PHYSICS.
+    USE_ENFORCE_ADMIN_ACCOUNT: false                        # Forces accounts having GM characters to be treated as a "GM account" by the client (localhost). Some of the GM account perks is the ability to FLY, but unable to TRADE.
+    USE_ENFORCE_NOVICE_EXPRATE: true                        # Hardsets experience rate 1x for beginners level 10 or under. Ideal for roaming on novice areas without caring too much about losing some stats.
+    USE_ENFORCE_HPMP_SWAP: false                            # Forces players to reuse stats (via AP Resetting) located on HP/MP pool only inside the HP/MP stats.
+    USE_ENFORCE_MOB_LEVEL_RANGE: true                       # Players N levels below the killed mob will gain no experience from defeating it.
+    USE_ENFORCE_JOB_LEVEL_RANGE: false                      # Caps the player level on the minimum required to advance their current jobs.
+    USE_ENFORCE_JOB_SP_RANGE: true                          # Caps the player SP level on the total obtainable by their current jobs. After changing jobs, missing SP will be retrieved.
+    USE_ENFORCE_ITEM_SUGGESTION: false                      # Forces the Owl of Minerva and the Cash Shop to always display the defined item array instead of those featured by the players.
+    USE_ENFORCE_UNMERCHABLE_CASH: true                      # Forces players to not sell CASH items via merchants, drops of it disappears.
+    USE_ENFORCE_UNMERCHABLE_PET: true                       # Forces players to not sell pets via merchants, drops of it disappears. (since non-named pets gets dirty name and other possible DB-related issues)
+    USE_ENFORCE_MERCHANT_SAVE: true                         # Forces automatic DB save on merchant owners, at every item movement on shop.
+    USE_ENFORCE_MDOOR_POSITION: false                       # Forces mystic door to be spawned near spawnpoints.
+    USE_SPAWN_CLEAN_MDOOR: false                            # Makes mystic doors to be spawned without deploy animation. This clears disconnecting issues that may happen when trying to cancel doors a couple seconds after deployment.
+    USE_SPAWN_RELEVANT_LOOT: true                           # Forces to only spawn loots that are collectable by the player or any of their party members.
+    USE_ERASE_PERMIT_ON_OPENSHOP: true                      # Forces "shop permit" item to be consumed when player deploy his/her player shop.
+    USE_ERASE_UNTRADEABLE_DROP: true                        # Forces flagged untradeable items to disappear when dropped.
+    USE_ERASE_PET_ON_EXPIRATION: false                      # Forces pets to be removed from inventory when expire time comes, rather than converting it to a doll.
+    ITEMS_NEVER_EXPIRE: false                               # Explicit custom-world override. Normal item expiration is preserved by default.
+    PETS_NEVER_EXPIRE: false                                # Explicit custom-world override. Normal pet expiration is preserved by default.
+    USE_BUFF_MOST_SIGNIFICANT: true                         # When applying buffs, the player will stick with the highest stat boost among the listed, rather than overwriting stats.
+    USE_BUFF_EVERLASTING: false                             # Every applied buff on players holds expiration time so high it'd be considered permanent. Suggestion thanks to Vcoc.
+    USE_MULTIPLE_SAME_EQUIP_DROP: true                      # Enables multiple drops by mobs of the same equipment, number of possible drops based on the quantities provided at the drop data.
+    USE_ENABLE_FULL_RESPAWN: false                          # At respawn task, always respawn missing mobs when they're available. Spawn count doesn't depend on how many players are currently there.
+    USE_ENABLE_CHAT_LOG: false                              # Write in-game chat to log
+    USE_MAP_OWNERSHIP_SYSTEM: false                         # Flag to enable/disable map ownership system
+    USE_FISHING_SYSTEM: false                               # Flag to enable/disable custom fishing system
+    USE_NPCS_SCRIPTABLE: true                               # Flag to enable/disable serverside predefined script NPCs.
+    MOB_RESPAWN_TIME_OVERRIDE_SECONDS: 10                   # Generic respawn delay; 0 preserves each source-map value.
+    REACTOR_RESPAWN_TIME_OVERRIDE_SECONDS: 10               # Generic reactor respawn delay; 0 preserves each source-map value.
+    MAPLE_ISLAND_MOB_RESPAWN_TIME_OVERRIDE_SECONDS: 5       # Overrides the generic mob delay on Maple Island.
+    MAPLE_ISLAND_REACTOR_RESPAWN_TIME_OVERRIDE_SECONDS: 5   # Overrides the generic reactor delay on Maple Island.
+    # Events/PQs Configuration
+    USE_OLD_GMS_STYLED_PQ_NPCS: true                        # Enables PQ NPCs with similar behaviour to old GMS style, that skips info about the PQs and immediately tries to register the party in.
+    USE_ENABLE_SOLO_EXPEDITIONS: false                      # Enables start expeditions with any number of players. This will also bypass all the Zakum prequest.
+    USE_ENABLE_DAILY_EXPEDITIONS: false                     # Enables daily entry limitations in expeditions.
+    USE_ENABLE_RECALL_EVENT: false                          # Enables a disconnected player to reaccess the last event instance they were in before logging out. Recall only works if the event isn't cleared or disposed yet. Suggestion thanks to Alisson (Goukken).
 
-    # SYNTHETIC mode: lightweight visual knockback without server-owned mob physics.
-    AGENT_SYNTHETIC_MOB_KNOCKBACK_DISTANCE_X: 12                      # Horizontal shove distance in pixels; 0 disables displacement.
-    AGENT_SYNTHETIC_MOB_KNOCKBACK_DURATION_MS: 250                    # Time used to animate the shove; higher values make it look slower.
-    AGENT_SYNTHETIC_MOB_CONTROL_HOLD_MS: 350                          # Time to pause normal client mob control while the shove is playing.
+    # Announcement Configuration
+    USE_ANNOUNCE_SHOPITEMSOLD: false                        # Automatic message sent to owner when an item from the Player Shop or Hired Merchant is sold.
+    USE_ANNOUNCE_CHANGEJOB: false                           # Automatic message sent to acquantainces when changing jobs.
+    USE_ANNOUNCE_NX_COUPON_LOOT: true                       # Enables or disables the floating text when a player loots a NX card
 
-    # PHYSICS mode: simulation and network update cadence.
-    AGENT_MOB_PHYSICS_PUBLICATION_INTERVAL_MS: 75                     # Minimum time between routine mob movement packets; state changes may send sooner.
-    AGENT_MOB_PHYSICS_MAX_CATCH_UP_STEPS: 12                          # Maximum 8 ms physics steps processed after a delayed server tick.
-    AGENT_MOB_PHYSICS_OBSERVER_WARMUP_MS: 100                         # After map acknowledgement, pause Agent movement/attacks and server mob physics for this settling time.
-    AGENT_MOB_PHYSICS_AGGRO_TIMEOUT_MS: 7000                          # Give the mob back to a real client without aggro after this long without an Agent hit; 0 disables expiry.
+    # Cash Shop Configuration
+    USE_JOINT_CASHSHOP_INVENTORY: false                     # Enables usage of a same cash shop inventory for explorers, cygnus and legends. Items from exclusive cash shop inventories won't show up on the shared inventory, though.
+    USE_CLEAR_OUTDATED_COUPONS: true                        # Enables deletion of older code coupon registry from the DB, freeing so-long irrelevant data.
+    ALLOW_CASHSHOP_NAME_CHANGE: true                        # Allows players to buy name changes in the cash shop.
+    ALLOW_CASHSHOP_WORLD_TRANSFER: true                     # Allows players to buy world transfers in the cash shop.
 
-    # PHYSICS mode: chase movement. Each mob still uses its own WZ-defined base speed.
-    AGENT_MOB_PHYSICS_STOP_DISTANCE_X: 0                              # Mob stops advancing when it is within this horizontal distance of the Agent.
-    AGENT_MOB_PHYSICS_RESUME_DISTANCE_X: 0                            # Stopped mob resumes chasing after the Agent moves at least this far away.
-    AGENT_MOB_PHYSICS_FLY_DEAD_ZONE_X: 24                             # Flying mob stops correcting horizontally within this distance of the Agent.
-    AGENT_MOB_PHYSICS_FLY_DEAD_ZONE_Y: 20                             # Flying mob stops correcting vertically within this distance of the Agent.
-    AGENT_MOB_PHYSICS_SPEED_PERCENT: 100                              # Scale for every mob's own WZ chase speed; 100 keeps the derived speed unchanged.
-    AGENT_MOB_PHYSICS_DIRECTION_REACTION_MAX_MS: 500                  # Maximum turn delay after the Agent crosses sides; each mob samples from 0 to this value.
+    # Maker Configuration
+    USE_MAKER_PERMISSIVE_ATKUP: false                       # Allows players to use attack-based strengthening gems on non-weapon items.
+    USE_MAKER_FEE_HEURISTICS: true                          # Apply compiled values for stimulants and reagents into the Maker fee calculations (max error revolves around 50k mesos). Set false to use basic constant values instead (results are never higher than requested by the client-side).
 
-    # PHYSICS mode: jumping and platform-edge safety.
-    AGENT_MOB_PHYSICS_JUMP_COOLDOWN_MS: 900                           # Minimum time a jump-capable mob must wait between jump attempts.
-    AGENT_MOB_PHYSICS_JUMP_COOLDOWN_JITTER_MS: 900                    # Maximum extra random delay per mob, preventing synchronized jumps.
-    AGENT_MOB_PHYSICS_JUMP_TARGET_HEIGHT: 48                          # Agent must be at least this many pixels above before a normal jump is considered.
-    AGENT_MOB_PHYSICS_MAX_SAFE_EDGE_PX: 48                            # Horizontal distance ahead checked for a possible jump landing foothold.
-    AGENT_MOB_PHYSICS_LEFT_EDGE_INSET_PX: 18                          # Minimum space kept between mob feet and the platform's connected left edge.
-    AGENT_MOB_PHYSICS_RIGHT_EDGE_INSET_PX: 10                         # Minimum space kept between mob feet and the platform's connected right edge.
+    # Commands Configuration
+    BLOCK_GENERATE_CASH_ITEM: false                         # Prevents creation of cash items with the item/drop command.
+    USE_WHOLE_SERVER_RANKING: false                         # Enables a ranking pool made from every character registered on the server for the "ranks" command, instead of separated by worlds.
+    DRESSING_ROOM_ENABLED: true                             # Local/admin content-generation tool. Disable for production unless explicitly required.
+    DRESSING_ROOM_MIN_GM_LEVEL: 1                           # Never expose dressing-room item spawning to normal players or Agents.
 
-    # PHYSICS mode: per-mob edge/stuck recovery variation.
-    AGENT_MOB_PHYSICS_BEHAVIOR_JITTER_MS: 250                         # Maximum extra random delay before each mob makes another stuck decision.
-    AGENT_MOB_PHYSICS_EDGE_RETREAT_CHANCE_PERCENT: 60                 # Chance to turn away and retreat at an edge; otherwise the mob waits there.
-    AGENT_MOB_PHYSICS_EDGE_IDLE_MIN_MS: 250                           # Shortest random wait when edge/stuck recovery chooses to idle.
-    AGENT_MOB_PHYSICS_EDGE_IDLE_MAX_MS: 700                           # Longest random wait when edge/stuck recovery chooses to idle.
-    AGENT_MOB_PHYSICS_EDGE_RETREAT_MIN_MS: 250                        # Shortest retreat timeout; reaching the chosen distance ends it sooner.
-    AGENT_MOB_PHYSICS_EDGE_RETREAT_MAX_MS: 600                        # Longest retreat timeout; reaching the chosen distance ends it sooner.
-    AGENT_MOB_PHYSICS_RETREAT_MIN_DISTANCE_PX: 8                      # Shortest randomly selected retreat distance.
-    AGENT_MOB_PHYSICS_RETREAT_MAX_DISTANCE_PX: 24                     # Longest randomly selected retreat distance.
-    AGENT_MOB_PHYSICS_STUCK_DETECT_MS: 500                            # Time without at least 1 px progress before the mob attempts recovery.
-    AGENT_MOB_PHYSICS_STUCK_RETREAT_CHANCE_PERCENT: 65                # Chance for stuck recovery to retreat; otherwise the mob idles.
+    EQUIP_EXP_RATE: 1.0                                     # Rate for equipment exp gain, grows linearly. Set 1.0 for default (about 100~200 same-level range mobs killed to pass equip from level 1 to 2).
+    PQ_BONUS_EXP_RATE: 0.5                                  # Rate for the PQ exp reward.
 
-    # PHYSICS mode: hit reaction and recovery.
-    AGENT_MOB_PHYSICS_KNOCKBACK_PERCENT: 50                           # Scale for ported knockback force; 100 is full force and 0 disables displacement.
-    AGENT_MOB_PHYSICS_FLINCH_RECOVERY_MS: 250                         # Stationary recovery after knockback; new hits cannot add knockback until it ends.
-    AGENT_MOB_PHYSICS_POST_FLINCH_CHASE_RAMP_MS: 0                    # Time to restore chase force gradually after flinch; 0 restores it immediately.
-    AGENT_MOB_PHYSICS_HIT1_ENABLED: false                             # Experimental hit1 pose during flinch; false keeps the proven walk-animation path.
-    AGENT_MOB_PHYSICS_IMPACT_DELAY_PERCENT: 100                       # Portion of the Agent attack's WZ hit delay used: 0 is immediate, 100 is full delay.
-    AGENT_MOB_PHYSICS_IMPACT_DELAY_OFFSET_MS: -50                     # Signed adjustment after scaling: positive delays impact, negative starts it earlier.
-
-    # PHYSICS mode: diagnostics.
-    AGENT_MOB_PHYSICS_DIAGNOSTIC_LOGGING: false                       # Log aggregate physics counters and timing at most once every 30 seconds.
-    AGENT_MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS: false                  # Diagnostic only: let Agent hits run real mob physics in maps without a player; packets are built but have no fake network recipient.
-    AGENT_MAP_TRANSITION_PACKET_DIAGNOSTICS: true                     # If a client disconnects within 15 seconds of warping, write its bounded packet trace under logs/map-transition-crashes.
-    AGENT_DEATH_RESPAWN_DELAY_MS: 10000                               # Dead-state presentation before an Agent returns to the nearest town.
-    AGENT_DEATH_RESPAWN_HP_PERCENT: 0                                 # 1-100 restores that max-HP percentage; 0 restores 50 HP.
-
-    AGENT_LEGACY_DIALOGUE_ENABLED: false #Allow non-objective Agent chatter, including legacy replies and event-derived dialogue.
-    AGENT_AMHERST_DEBUG_MESSAGES_ENABLED: false #Show detailed yellow Amherst capability and objective progress messages.
-    AGENT_AMHERST_INTENTION_CHAT_ENABLED: true #Let the Agent announce its next Amherst action in map chat.
-    AGENT_AMHERST_SHOWCASE_ENABLED: true #Allow the guarded one-command Amherst showcase run.
-    AGENT_AMHERST_SHOWCASE_AGENT_NAME: AmherstRun #Only this Agent IGN may use the showcase reset path.
-    AGENT_MAPLE_ISLAND_SHOWCASE_ENABLED: true #Allow the guarded one-command clean level-1 Mushroom Town-to-Southperry run.
-    AGENT_MAPLE_ISLAND_SHOWCASE_AGENT_NAME: AmherstRun #Only this Agent IGN may use the full Maple Island showcase reset path.
-    AGENT_MAPLE_ISLAND_COHORT_ENABLED: true #Allow guarded persistent-pool cohort provisioning and full Maple Island runs.
-    AGENT_PERSONALITY_PRESENTATION_ENABLED: true #Enable durable, observer-gated personality presentation for Maple Island cohorts running in full realism mode.
-    AGENT_COMBAT_BEHAVIOR_ENABLED: true #Master switch for profile-driven response, target, crowd, idle, reaction, and navigation adapters.
-    AGENT_RESPONSE_LATENCY_ENABLED: true #Delay only new target acquisition using each Agent's stable personality response baseline.
-    AGENT_MAP_CROWD_RESPITE_ENABLED: true #Allow patient Agents to pause plans at safe spots while a map is crowded, then resume the same objective.
-    AGENT_TARGET_CLAIM_POLICY_ENABLED: true #Use map-wide Agent target claims instead of cohort-only contention.
-    AGENT_TARGET_VARIATION_ENABLED: true #Let personality choose among best, near-best, and middle-ranked legal targets.
-    AGENT_PLATFORM_ANCHOR_BEHAVIOR_ENABLED: true #Let suitable profiles retain a target-bearing farming platform.
-    AGENT_NAVIGATION_BEHAVIOR_ENABLED: true #Let personality tune bounded alternate routes and incidental travel jumps.
-    AGENT_IDLE_COMBAT_PRESENTATION_ENABLED: true #Allow profile-selected wait, patrol, hop, prone, and empty-attack no-target behavior.
-    AGENT_COMBAT_EMOTES_ENABLED: true #Allow observer-gated, budgeted facial reactions to repeated misses and rests.
-    AGENT_MAP_MAX_ACTIVE_COMBAT_PERCENT: 70 #Soft share of same-map Agents allowed to compete; remaining eligible Agents may rest.
-    AGENT_MAP_CROWD_MIN_AGENTS: 4 #Do not apply crowd respite below this same-map Agent count.
-    AGENT_COMBAT_EMOTE_MAP_BUDGET_PER_10S: 3 #Maximum combat/rest emotes presented per map in a rolling ten-second window.
-    AGENT_MAPLE_ISLAND_FULL_PLATFORM_ANCHOR_PERCENT: 30 # Full realism: percent of cohort Agents assigned to farm and loot within one target-bearing navigation platform.
-    AGENT_MAPLE_ISLAND_FULL_MIDDLE_TARGET_PERCENT: 35 # Full realism: percent of ordinary target searches that choose from the middle third instead of rank 1.
-    AGENT_MAPLE_ISLAND_FULL_TARGET_SHORTLIST_LIMIT: 10 # Full realism: maximum reachable ranked targets considered by the middle-choice policy.
-    AGENT_MAPLE_ISLAND_COHORT_MAX_TOTAL: 500 # Maximum Agents accepted by one Maple Island cohort run; the command still releases them in small waves.
-    AGENT_MAPLE_ISLAND_COHORT_STALL_TIMEOUT_MS: 1800000 # Mark a running cohort stalled after this long with no Agent reaching a new terminal state (30 minutes).
-    AGENT_MAPLE_ISLAND_COHORT_TELEMETRY_RETAINED_RUNS: 20 # Keep this many compact completed-run summaries in memory; live per-Agent trackers are discarded.
-    AGENT_MAPLE_ISLAND_COHORT_OBJECTIVE_TIMEOUT_MS: 900000 # Per-objective deadline for realism/cohort runs; allows 15 minutes for shared mob/reactor contention before recovery fails the objective.
-    AGENT_OBJECTIVE_NUDGE_MS: 5000 # After this much objective inactivity, clear stale navigation and let an airborne/climbing Agent fall naturally; applies to every region, never teleports, and 0 disables the nudge.
-    AGENT_OBJECTIVE_STALL_RECOVERY_MS: 15000 # After this much objective inactivity, cancel stale capability state and replan the same live-unsatisfied objective in any region; 0 disables stall recovery.
-    AGENT_OBJECTIVE_AUTO_RECOVERY_ATTEMPTS: 20 # Fast automatic replans before ordinary failures stop for diagnosis; mob/reactor objectives instead continue with slower world-resource rechecks.
-    AGENT_OBJECTIVE_RECOVERY_DELAY_MS: 500 # Brief pause before assigning a recovered objective again, allowing movement state and live map state to settle.
-    AGENT_SOUTHPERRY_SHOWCASE_ENABLED: true #Allow the guarded one-command post-Amherst-to-Southperry run.
-    AGENT_SOUTHPERRY_SHOWCASE_AGENT_NAME: AmherstRun #Only this Agent IGN may use the captured post-Amherst reset path.
-    AGENT_AUTHORITY_ADMINISTRATOR_NAMES: Kiwi #Comma-separated IGNs allowed to administer all Agents.
-    AGENT_AUTHORITY_OPERATOR_NAMES: '' #Comma-separated IGNs allowed to run bounded Agent tests and lifecycle commands.
-    AGENT_AUTHORITY_OBSERVER_NAMES: '' #Comma-separated IGNs allowed to inspect Agent diagnostics without mutation.
-    AGENT_TRUSTED_TRADE_PLAYER_NAMES: Kiwi #Independent allowlist for unsolicited human-to-Agent trades.
-    AGENT_LEGACY_OWNER_COMPATIBILITY_ENABLED: false #Rollback gate only; owner-free authority, lifecycle, and relationships are active by default.
-
-    #Events/PQs Configuration
-    USE_OLD_GMS_STYLED_PQ_NPCS: true     #Enables PQ NPCs with similar behaviour to old GMS style, that skips info about the PQs and immediately tries to register the party in.
-    USE_ENABLE_SOLO_EXPEDITIONS: false    #Enables start expeditions with any number of players. This will also bypass all the Zakum prequest.
-    USE_ENABLE_DAILY_EXPEDITIONS: false  #Enables daily entry limitations in expeditions.
-    USE_ENABLE_RECALL_EVENT: false        #Enables a disconnected player to reaccess the last event instance they were in before logging out. Recall only works if the event isn't cleared or disposed yet. Suggestion thanks to Alisson (Goukken).
-
-    #Announcement Configuration
-    USE_ANNOUNCE_SHOPITEMSOLD: false    #Automatic message sent to owner when an item from the Player Shop or Hired Merchant is sold.
-    USE_ANNOUNCE_CHANGEJOB: false       #Automatic message sent to acquantainces when changing jobs.
-    USE_ANNOUNCE_NX_COUPON_LOOT: true    #Enables or disables the floating text when a player loots a NX card
-
-    #Cash Shop Configuration
-    USE_JOINT_CASHSHOP_INVENTORY: false  #Enables usage of a same cash shop inventory for explorers, cygnus and legends. Items from exclusive cash shop inventories won't show up on the shared inventory, though.
-    USE_CLEAR_OUTDATED_COUPONS: true    #Enables deletion of older code coupon registry from the DB, freeing so-long irrelevant data.
-    ALLOW_CASHSHOP_NAME_CHANGE: true    #Allows players to buy name changes in the cash shop.
-    ALLOW_CASHSHOP_WORLD_TRANSFER: true  #Allows players to buy world transfers in the cash shop.
-
-    #Maker Configuration
-    USE_MAKER_PERMISSIVE_ATKUP: false    #Allows players to use attack-based strengthening gems on non-weapon items.
-    USE_MAKER_FEE_HEURISTICS: true      #Apply compiled values for stimulants and reagents into the Maker fee calculations (max error revolves around 50k mesos). Set false to use basic constant values instead (results are never higher than requested by the client-side).
-
-    #Commands Configuration
-    BLOCK_GENERATE_CASH_ITEM: false     #Prevents creation of cash items with the item/drop command.
-    USE_WHOLE_SERVER_RANKING: false     #Enables a ranking pool made from every character registered on the server for the "ranks" command, instead of separated by worlds.
-    DRESSING_ROOM_ENABLED: true         #Local/admin content-generation tool. Disable for production unless explicitly required.
-    DRESSING_ROOM_MIN_GM_LEVEL: 1       #Never expose dressing-room item spawning to normal players or Agents.
-
-    EQUIP_EXP_RATE: 1.0                  #Rate for equipment exp gain, grows linearly. Set 1.0 for default (about 100~200 same-level range mobs killed to pass equip from level 1 to 2).
-    PQ_BONUS_EXP_RATE: 0.5               #Rate for the PQ exp reward.
-
-    EXP_SPLIT_LEVEL_INTERVAL: 5            #Non-contributing players must be within N level between the mob to receive EXP.
-    EXP_SPLIT_LEECH_INTERVAL: 5            #Non-contributing players must be within N level between any contributing party member to receive EXP.
+    EXP_SPLIT_LEVEL_INTERVAL: 5                             # Non-contributing players must be within N level between the mob to receive EXP.
+    EXP_SPLIT_LEECH_INTERVAL: 5                             # Non-contributing players must be within N level between any contributing party member to receive EXP.
     EXP_SPLIT_MVP_MOD: 0.2
     EXP_SPLIT_COMMON_MOD: 0.8
-    PARTY_BONUS_EXP_RATE: 1.0            #Rate for the party exp bonus reward.
+    PARTY_BONUS_EXP_RATE: 1.0                               # Rate for the party exp bonus reward.
 
-    #Miscellaneous Configuration
+    # Miscellaneous Configuration
     TIMEZONE: GMT
-    CHARSET: US-ASCII                          # Is loaded first, so applies to the rest of this config. Defaults to US-ASCII if invalid or not set.
-    USE_DISPLAY_NUMBERS_WITH_COMMA: true          #Enforce comma on displayed strings (use this when USE_UNITPRICE_WITH_COMMA is active and you still want to display comma-separated values).
-    USE_UNITPRICE_WITH_COMMA: true                #Set this accordingly with the layout of the unitPrices on Item.wz XML's, whether it's using commas or dots to represent fractions.
-    MAX_MONITORED_BUFFSTATS: 5                 #Limits accounting for "dormant" buff effects, that should take place when stronger stat buffs expires.
-    MAX_AP: 32767                               #Max AP allotted on the auto-assigner.
-    PLAYER_HP_MP_CAP: 30000                    #Final HP/MP cap after equipment and buffs. Values above 30000 require a compatible client patch.
-    MAX_EVENT_LEVELS: 8                         #Event has different levels of rewarding system.
-    BLOCK_NPC_RACE_CONDT: 500   # (0.5 * 1000) Time the player client must wait before reopening a conversation with an NPC.
-    TOT_MOB_QUEST_REQUIREMENT: 0               #Overwrites old 999-mobs requirement for the ToT questline with new requirement value, set 0 for default.
-    MOB_REACTOR_REFRESH_TIME: 0         # (30 * 1000) Overwrites refresh time for those reactors oriented to inflict damage to bosses (Ice Queen, Riche), set 0 for default.
-    PARTY_SEARCH_REENTRY_LIMIT: 10              #Max amount of times a party leader is allowed to persist on the Party Search before entry expiration (thus needing to manually restart the Party Search to be able to search for members).
-    NAME_CHANGE_COOLDOWN: 2592000000      # (30*24*60*60*1000) Cooldown for name changes, default (GMS) is 30 days.
-    WORLD_TRANSFER_COOLDOWN: 2592000000  # (30*24*60*60*1000) Cooldown for world tranfers, default is same as name change (30 days).
-    INSTANT_NAME_CHANGE: false              #Whether or not to wait for server restart to apply name changes. Does on reconnect otherwise (requires queries on every login).
+    CHARSET: US-ASCII                                       # Is loaded first, so applies to the rest of this config. Defaults to US-ASCII if invalid or not set.
+    USE_DISPLAY_NUMBERS_WITH_COMMA: true                    # Enforce comma on displayed strings (use this when USE_UNITPRICE_WITH_COMMA is active and you still want to display comma-separated values).
+    USE_UNITPRICE_WITH_COMMA: true                          # Set this accordingly with the layout of the unitPrices on Item.wz XML's, whether it's using commas or dots to represent fractions.
+    MAX_MONITORED_BUFFSTATS: 5                              # Limits accounting for "dormant" buff effects, that should take place when stronger stat buffs expires.
+    MAX_AP: 32767                                           # Max AP allotted on the auto-assigner.
+    PLAYER_HP_MP_CAP: 30000                                 # Final HP/MP cap after equipment and buffs. Values above 30000 require a compatible client patch.
+    MAX_EVENT_LEVELS: 8                                     # Event has different levels of rewarding system.
+    BLOCK_NPC_RACE_CONDT: 500                               # (0.5 * 1000) Time the player client must wait before reopening a conversation with an NPC.
+    TOT_MOB_QUEST_REQUIREMENT: 0                            # Overwrites old 999-mobs requirement for the ToT questline with new requirement value, set 0 for default.
+    MOB_REACTOR_REFRESH_TIME: 0                             # (30 * 1000) Overwrites refresh time for those reactors oriented to inflict damage to bosses (Ice Queen, Riche), set 0 for default.
+    PARTY_SEARCH_REENTRY_LIMIT: 10                          # Max amount of times a party leader is allowed to persist on the Party Search before entry expiration (thus needing to manually restart the Party Search to be able to search for members).
+    NAME_CHANGE_COOLDOWN: 2592000000                        # (30*24*60*60*1000) Cooldown for name changes, default (GMS) is 30 days.
+    WORLD_TRANSFER_COOLDOWN: 2592000000                     # (30*24*60*60*1000) Cooldown for world tranfers, default is same as name change (30 days).
+    INSTANT_NAME_CHANGE: false                              # Whether or not to wait for server restart to apply name changes. Does on reconnect otherwise (requires queries on every login).
 
-    #Dangling Items/Locks Configuration
-    ITEM_EXPIRE_TIME: 180000    # (3 * 60 * 1000) Time before items start disappearing. Recommended to be set up to 3 minutes.
-    KITE_EXPIRE_TIME: 3600000   # (60 * 60 * 1000) Time before kites (cash item) disappears.
-    ITEM_MONITOR_TIME: 300000    # (5 * 60 * 1000) Interval between item monitoring tasks on maps, which checks for dangling (null) item objects on the map item history.
-    LOCK_MONITOR_TIME: 30000        # (30 * 1000) Waiting time for a lock to be released. If it reaches timeout, a critical server deadlock has made present.
+    # Dangling Items/Locks Configuration
+    ITEM_EXPIRE_TIME: 180000                                # (3 * 60 * 1000) Time before items start disappearing. Recommended to be set up to 3 minutes.
+    KITE_EXPIRE_TIME: 3600000                               # (60 * 60 * 1000) Time before kites (cash item) disappears.
+    ITEM_MONITOR_TIME: 300000                               # (5 * 60 * 1000) Interval between item monitoring tasks on maps, which checks for dangling (null) item objects on the map item history.
+    LOCK_MONITOR_TIME: 30000                                # (30 * 1000) Waiting time for a lock to be released. If it reaches timeout, a critical server deadlock has made present.
 
-    #Map Monitor Configuration
-    ITEM_EXPIRE_CHECK: 10000        # (10 * 10000) Interval between item expiring tasks on maps, which checks and makes disappear expired items.
-    ITEM_LIMIT_ON_MAP: 200              #Max number of items allowed on a map.
-    MAP_VISITED_SIZE: 5                 #Max length for last mapids visited by a player. This is used to recover and update drops on these maps accordingly with player actions.
-    MAP_DAMAGE_OVERTIME_INTERVAL: 2500  #Interval in milliseconds between map environment damage (e.g. El Nath and Aqua Road surrondings).
+    # Map Monitor Configuration
+    ITEM_EXPIRE_CHECK: 10000                                # (10 * 10000) Interval between item expiring tasks on maps, which checks and makes disappear expired items.
+    ITEM_LIMIT_ON_MAP: 200                                  # Max number of items allowed on a map.
+    MAP_VISITED_SIZE: 5                                     # Max length for last mapids visited by a player. This is used to recover and update drops on these maps accordingly with player actions.
+    MAP_DAMAGE_OVERTIME_INTERVAL: 2500                      # Interval in milliseconds between map environment damage (e.g. El Nath and Aqua Road surrondings).
     MAP_DAMAGE_OVERTIME_COUNT: 2
 
-    #Channel Mob Disease Monitor Configuration
-    MOB_STATUS_MONITOR_PROC: 200        #Frequency in milliseconds between each proc on the mob disease monitor schedule.
-    MOB_STATUS_MONITOR_LIFE: 84         #Idle proc count the mob disease monitor is allowed to be there before closing it due to inactivity.
-    MOB_STATUS_AGGRO_PERSISTENCE: 2     #Idle proc count on aggro update for a mob to keep following the current controller, given him/her is the leading damage dealer.
-    MOB_STATUS_AGGRO_INTERVAL: 5000     #Interval in milliseconds between aggro logistics update.
-    USE_AUTOAGGRO_NEARBY: false         #Mobs start following the player when approached.
+    # Channel Mob Disease Monitor Configuration
+    MOB_STATUS_MONITOR_PROC: 200                            # Frequency in milliseconds between each proc on the mob disease monitor schedule.
+    MOB_STATUS_MONITOR_LIFE: 84                             # Idle proc count the mob disease monitor is allowed to be there before closing it due to inactivity.
+    MOB_STATUS_AGGRO_PERSISTENCE: 2                         # Idle proc count on aggro update for a mob to keep following the current controller, given him/her is the leading damage dealer.
+    MOB_STATUS_AGGRO_INTERVAL: 5000                         # Interval in milliseconds between aggro logistics update.
+    USE_AUTOAGGRO_NEARBY: false                             # Mobs start following the player when approached.
 
-    #Some Gameplay Enhancing Configurations
-    #Scroll Configuration
-    USE_PERFECT_GM_SCROLL: false     #Scrolls from GMs never uses up slots nor fails.
-    USE_PERFECT_SCROLLING: false     #Scrolls doesn't use slots upon failure.
-    USE_ENHANCED_CHSCROLL: false     #Equips even more powerful with chaos upgrade.
-    USE_ENHANCED_CRAFTING: false     #Apply chaos scroll on every equip crafted.
-    SCROLL_CHANCE_ROLLS: 1         #Number of rolls for success on a scroll, set 1 for default.
-    CHSCROLL_STAT_RATE: 1               #Number of rolls of stat upgrade on a successfully applied chaos scroll, set 1 for default.
-    CHSCROLL_STAT_RANGE: 5              #Stat upgrade range (-N, N) on chaos scrolls.
+    # Some Gameplay Enhancing Configurations
+    # Scroll Configuration
+    USE_PERFECT_GM_SCROLL: false                            # Scrolls from GMs never uses up slots nor fails.
+    USE_PERFECT_SCROLLING: false                            # Scrolls doesn't use slots upon failure.
+    USE_ENHANCED_CHSCROLL: false                            # Equips even more powerful with chaos upgrade.
+    USE_ENHANCED_CRAFTING: false                            # Apply chaos scroll on every equip crafted.
+    SCROLL_CHANCE_ROLLS: 1                                  # Number of rolls for success on a scroll, set 1 for default.
+    CHSCROLL_STAT_RATE: 1                                   # Number of rolls of stat upgrade on a successfully applied chaos scroll, set 1 for default.
+    CHSCROLL_STAT_RANGE: 5                                  # Stat upgrade range (-N, N) on chaos scrolls.
 
-    #Beginner Skills Configuration
-    USE_ULTRA_NIMBLE_FEET: false     #Massive speed & jump upgrade.
-    USE_ULTRA_RECOVERY: false        #Massive recovery amounts overtime.
-    USE_ULTRA_THREE_SNAILS: false    #Massive damage on shell toss.
+    # Beginner Skills Configuration
+    USE_ULTRA_NIMBLE_FEET: false                            # Massive speed & jump upgrade.
+    USE_ULTRA_RECOVERY: false                               # Massive recovery amounts overtime.
+    USE_ULTRA_THREE_SNAILS: false                           # Massive damage on shell toss.
 
-    #Other Skills Configuration
-    USE_FULL_ARAN_SKILLSET: false   #Enables starter availability to all Aran job skills. Suggestion thanks to Masterrulax.
-    USE_FAST_REUSE_HERO_WILL: false  #Greatly reduce cooldown on Hero's Will.
-    USE_ANTI_IMMUNITY_CRASH: false   #Crash skills additionally removes the mob's invincibility buffs. Suggestion thanks to Celestial.
-    USE_UNDISPEL_HOLY_SHIELD: false  #Holy shield buff also prevents players from suffering dispel from mobs.
-    USE_FULL_HOLY_SYMBOL: false      #Holy symbol doesn't require EXP sharers to work in full.
+    # Other Skills Configuration
+    USE_FULL_ARAN_SKILLSET: false                           # Enables starter availability to all Aran job skills. Suggestion thanks to Masterrulax.
+    USE_FAST_REUSE_HERO_WILL: false                         # Greatly reduce cooldown on Hero's Will.
+    USE_ANTI_IMMUNITY_CRASH: false                          # Crash skills additionally removes the mob's invincibility buffs. Suggestion thanks to Celestial.
+    USE_UNDISPEL_HOLY_SHIELD: false                         # Holy shield buff also prevents players from suffering dispel from mobs.
+    USE_FULL_HOLY_SYMBOL: false                             # Holy symbol doesn't require EXP sharers to work in full.
 
-    #Character Configuration
-    ALWAYS_MAX_INVENTORY_SLOTS: true #If true, new characters start with max equip/use/setup/etc slots and every login normalizes existing characters to max slots.
-    USE_ADD_SLOTS_BY_LEVEL: false    #Slots are added each 20 levels.
-    USE_ADD_RATES_BY_LEVEL: false    #Rates are added each 20 levels.
-    USE_STACK_COUPON_RATES: false   #Multiple coupons effects builds up together.
-    USE_PERFECT_PITCH: false         #For lvl 30 or above, each lvlup grants player 1 perfect pitch.
+    # Character Configuration
+    ALWAYS_MAX_INVENTORY_SLOTS: true                        # If true, new characters start with max equip/use/setup/etc slots and every login normalizes existing characters to max slots.
+    USE_ADD_SLOTS_BY_LEVEL: false                           # Slots are added each 20 levels.
+    USE_ADD_RATES_BY_LEVEL: false                           # Rates are added each 20 levels.
+    USE_STACK_COUPON_RATES: false                           # Multiple coupons effects builds up together.
+    USE_PERFECT_PITCH: false                                # For lvl 30 or above, each lvlup grants player 1 perfect pitch.
 
-    #Quest Configuration
-    USE_QUEST_RATE: true           #Exp/Meso gained by quests uses fixed server exp/meso rate times quest rate as multiplier, instead of player rates.
+    # Quest Configuration
+    USE_QUEST_RATE: true                                    # Exp/Meso gained by quests uses fixed server exp/meso rate times quest rate as multiplier, instead of player rates.
 
-    #Quest Points Configuration
-    QUEST_POINT_REPEATABLE_INTERVAL: 25  #Minimum interval between repeatable quest completions for quest points to be awarded.
-    QUEST_POINT_REQUIREMENT: 0          #Exchange factor between N quest points to +1 fame, set 0 to disable the entire quest point mechanism.
-    QUEST_POINT_PER_QUEST_COMPLETE: 0    #Each completed quest awards N quest points, set 0 to disable.
-    QUEST_POINT_PER_EVENT_CLEAR: 0       #Each completed event instance awards N quest points, set 0 to disable.
+    # Quest Points Configuration
+    QUEST_POINT_REPEATABLE_INTERVAL: 25                     # Minimum interval between repeatable quest completions for quest points to be awarded.
+    QUEST_POINT_REQUIREMENT: 0                              # Exchange factor between N quest points to +1 fame, set 0 to disable the entire quest point mechanism.
+    QUEST_POINT_PER_QUEST_COMPLETE: 0                       # Each completed quest awards N quest points, set 0 to disable.
+    QUEST_POINT_PER_EVENT_CLEAR: 0                          # Each completed event instance awards N quest points, set 0 to disable.
 
-    #Guild Configuration
-    CREATE_GUILD_MIN_PARTNERS: 6         #Minimum number of members on Guild Headquarters to establish a new guild.
+    # Guild Configuration
+    CREATE_GUILD_MIN_PARTNERS: 6                            # Minimum number of members on Guild Headquarters to establish a new guild.
     CREATE_GUILD_COST: 1500000
     CHANGE_EMBLEM_COST: 5000000
     EXPAND_GUILD_BASE_COST: 500000
     EXPAND_GUILD_TIER_COST: 1000000
     EXPAND_GUILD_MAX_COST: 5000000
 
-    #Family Configuration
-    FAMILY_REP_PER_KILL: 4               #Amount of rep gained per monster kill.
-    FAMILY_REP_PER_BOSS_KILL: 20         #Amount of rep gained per boss kill.
-    FAMILY_REP_PER_LEVELUP: 200          #Amount of rep gained upon leveling up.
-    FAMILY_MAX_GENERATIONS: 1000         #Maximum depth of family tree. (Distance from leader to farthest junior)
+    # Family Configuration
+    FAMILY_REP_PER_KILL: 4                                  # Amount of rep gained per monster kill.
+    FAMILY_REP_PER_BOSS_KILL: 20                            # Amount of rep gained per boss kill.
+    FAMILY_REP_PER_LEVELUP: 200                             # Amount of rep gained upon leveling up.
+    FAMILY_MAX_GENERATIONS: 1000                            # Maximum depth of family tree. (Distance from leader to farthest junior)
 
-    #Equipment Configuration
-    USE_EQUIPMNT_LVLUP_SLOTS: false  #Equips can upgrade slots at level up.
-    USE_EQUIPMNT_LVLUP_POWER: false  #Enable more powerful stat upgrades at equip level up.
-    USE_EQUIPMNT_LVLUP_CASH: false   #Enable equip leveling up on cash equipments as well.
-    MAX_EQUIPMNT_LVLUP_STAT_UP: 10000   #Max stat upgrade an equipment can have on a levelup.
-    MAX_EQUIPMNT_STAT: 32767            #Max stat on an equipment by leveling up.
-    USE_EQUIPMNT_LVLUP: 1               #All equips lvlup at max level of N, set 1 to disable.
+    # Equipment Configuration
+    USE_EQUIPMNT_LVLUP_SLOTS: false                         # Equips can upgrade slots at level up.
+    USE_EQUIPMNT_LVLUP_POWER: false                         # Enable more powerful stat upgrades at equip level up.
+    USE_EQUIPMNT_LVLUP_CASH: false                          # Enable equip leveling up on cash equipments as well.
+    MAX_EQUIPMNT_LVLUP_STAT_UP: 10000                       # Max stat upgrade an equipment can have on a levelup.
+    MAX_EQUIPMNT_STAT: 32767                                # Max stat on an equipment by leveling up.
+    USE_EQUIPMNT_LVLUP: 1                                   # All equips lvlup at max level of N, set 1 to disable.
 
-    #Map-Chair Configuration
-    USE_CHAIR_EXTRAHEAL: false       #Enable map chairs to further recover player's HP and MP (player must have the Chair Mastery skill).
-    CHAIR_EXTRA_HEAL_MULTIPLIER: 10    #Due to only being able to be send up-to-255 heal values, values being actually updated is the one displayed times this.
-    CHAIR_EXTRA_HEAL_MAX_DELAY: 21      #Players are expected to recover fully after using this skill for N seconds.
+    # Map-Chair Configuration
+    USE_CHAIR_EXTRAHEAL: false                              # Enable map chairs to further recover player's HP and MP (player must have the Chair Mastery skill).
+    CHAIR_EXTRA_HEAL_MULTIPLIER: 10                         # Due to only being able to be send up-to-255 heal values, values being actually updated is the one displayed times this.
+    CHAIR_EXTRA_HEAL_MAX_DELAY: 21                          # Players are expected to recover fully after using this skill for N seconds.
 
-    #Player NPC Configuration
-    PLAYERNPC_INITIAL_X: 262            #Map frame width for putting PlayerNPCs.
-    PLAYERNPC_INITIAL_Y: 262            #Map frame height for putting PlayerNPCs.
-    PLAYERNPC_AREA_X: 320               #Initial width gap between PlayerNPCs.
-    PLAYERNPC_AREA_Y: 160               #Initial height gap between PlayerNPCs.
-    PLAYERNPC_AREA_STEPS: 4             #Max number of times gap is shortened to comport PlayerNPCs.
-    PLAYERNPC_ORGANIZE_AREA: true   #Automatically rearranges PlayerNPCs on the map if there is no space set the new NPC. Current distance gap between NPCs is decreased to solve this issue.
-    PLAYERNPC_AUTODEPLOY: true      #Makes PlayerNPC automatically deployed on the Hall of Fame at the instant one reaches max level. If false, eligible players must talk to 1st job instructor to deploy a NPC.
+    # Player NPC Configuration
+    PLAYERNPC_INITIAL_X: 262                                # Map frame width for putting PlayerNPCs.
+    PLAYERNPC_INITIAL_Y: 262                                # Map frame height for putting PlayerNPCs.
+    PLAYERNPC_AREA_X: 320                                   # Initial width gap between PlayerNPCs.
+    PLAYERNPC_AREA_Y: 160                                   # Initial height gap between PlayerNPCs.
+    PLAYERNPC_AREA_STEPS: 4                                 # Max number of times gap is shortened to comport PlayerNPCs.
+    PLAYERNPC_ORGANIZE_AREA: true                           # Automatically rearranges PlayerNPCs on the map if there is no space set the new NPC. Current distance gap between NPCs is decreased to solve this issue.
+    PLAYERNPC_AUTODEPLOY: true                              # Makes PlayerNPC automatically deployed on the Hall of Fame at the instant one reaches max level. If false, eligible players must talk to 1st job instructor to deploy a NPC.
 
-    #Pet Auto-Pot Configuration
-    USE_COMPULSORY_AUTOPOT: true    #Pets will consume as many potions as needed to fulfill the AUTOHP/MP ratio threshold.
-    USE_EQUIPS_ON_AUTOPOT: true     #Player MaxHP and MaxMP check values on autopot handler will be updated by the HP/MP bonuses on equipped items.
-    PET_AUTOHP_RATIO: 0.99          #Will automatically consume potions until given ratio of the MaxHP/MaxMP is reached.
+    # Pet Auto-Pot Configuration
+    USE_COMPULSORY_AUTOPOT: true                            # Pets will consume as many potions as needed to fulfill the AUTOHP/MP ratio threshold.
+    USE_EQUIPS_ON_AUTOPOT: true                             # Player MaxHP and MaxMP check values on autopot handler will be updated by the HP/MP bonuses on equipped items.
+    PET_AUTOHP_RATIO: 0.99                                  # Will automatically consume potions until given ratio of the MaxHP/MaxMP is reached.
     PET_AUTOMP_RATIO: 0.99
 
-    #Pet & Mount Configuration
-    PET_EXHAUST_COUNT: 3               #Number of proc counts (1 per minute) on the exhaust schedule for fullness.
-    MOUNT_EXHAUST_COUNT: 1             #Number of proc counts (1 per minute) on the exhaust schedule for tiredness.
+    # Pet & Mount Configuration
+    PET_EXHAUST_COUNT: 3                                    # Number of proc counts (1 per minute) on the exhaust schedule for fullness.
+    MOUNT_EXHAUST_COUNT: 1                                  # Number of proc counts (1 per minute) on the exhaust schedule for tiredness.
 
-    #Pet Hunger Configuration
-    PETS_NEVER_HUNGRY: false        #If true, pets and mounts will never grow hungry.
-    GM_PETS_NEVER_HUNGRY: true      #If true, pets and mounts owned by GMs will never grow hungry.
+    # Pet Hunger Configuration
+    PETS_NEVER_HUNGRY: false                                # If true, pets and mounts will never grow hungry.
+    GM_PETS_NEVER_HUNGRY: true                              # If true, pets and mounts owned by GMs will never grow hungry.
 
-    #Event Configuration
-    EVENT_MAX_GUILD_QUEUE: 10           #Max number of guilds in queue for GPQ.
-    EVENT_LOBBY_DELAY: 10              #Cooldown duration in seconds before reopening an event lobby.
+    # Event Configuration
+    EVENT_MAX_GUILD_QUEUE: 10                               # Max number of guilds in queue for GPQ.
+    EVENT_LOBBY_DELAY: 10                                   # Cooldown duration in seconds before reopening an event lobby.
 
-    #Dojo Configuration
-    USE_FAST_DOJO_UPGRADE: false     #Reduced Dojo training points amount required for a belt upgrade.
-    USE_DEADLY_DOJO: true          #Should bosses really use 1HP,1MP attacks in dojo?
-    DOJO_ENERGY_ATK: 100                #Dojo energy gain when deal attack
-    DOJO_ENERGY_DMG: 20                #Dojo energy gain when recv attack
+    # Dojo Configuration
+    USE_FAST_DOJO_UPGRADE: false                            # Reduced Dojo training points amount required for a belt upgrade.
+    USE_DEADLY_DOJO: true                                   # Should bosses really use 1HP,1MP attacks in dojo?
+    DOJO_ENERGY_ATK: 100                                    # Dojo energy gain when deal attack
+    DOJO_ENERGY_DMG: 20                                     # Dojo energy gain when recv attack
 
-    #Wedding Configuration
-    WEDDING_RESERVATION_DELAY: 3        #Minimum idle slots before processing a wedding reservation.
-    WEDDING_RESERVATION_TIMEOUT: 10     #Limit time in minutes for the couple to show up before cancelling the wedding reservation.
-    WEDDING_RESERVATION_INTERVAL: 60    #Time between wedding starts in minutes.
-    WEDDING_BLESS_EXP: 30000            #Exp gained per bless count.
-    WEDDING_GIFT_LIMIT: 1               #Max number of gifts per person to same wishlist on marriage instances.
-    WEDDING_BLESSER_SHOWFX: true    #Pops bubble sprite effect on players blessing the couple. Setting this false shows the blessing effect on the couple instead.
+    # Wedding Configuration
+    WEDDING_RESERVATION_DELAY: 3                            # Minimum idle slots before processing a wedding reservation.
+    WEDDING_RESERVATION_TIMEOUT: 10                         # Limit time in minutes for the couple to show up before cancelling the wedding reservation.
+    WEDDING_RESERVATION_INTERVAL: 60                        # Time between wedding starts in minutes.
+    WEDDING_BLESS_EXP: 30000                                # Exp gained per bless count.
+    WEDDING_GIFT_LIMIT: 1                                   # Max number of gifts per person to same wishlist on marriage instances.
+    WEDDING_BLESSER_SHOWFX: true                            # Pops bubble sprite effect on players blessing the couple. Setting this false shows the blessing effect on the couple instead.
 
     # Login timeout by shavit
-    TIMEOUT_DURATION: 3600000               # Kicks clients who don't send any packet to the game server in due time (in millisseconds).
+    TIMEOUT_DURATION: 3600000                               # Kicks clients who don't send any packet to the game server in due time (in millisseconds).
 
-    #Event End Timestamp
+    # Event End Timestamp
     EVENT_END_TIMESTAMP: 1428897600000
 
     # GM Security Configuration
@@ -567,44 +471,44 @@ server:
     MINIMUM_GM_LEVEL_TO_USE_STORAGE: 4
     MINIMUM_GM_LEVEL_TO_USE_DUEY: 4
     MINIMUM_GM_LEVEL_TO_DROP: 4
-    GM_NO_FAME_COOLDOWN: false          #If true, GMs bypass the daily/monthly fame cooldown. Set false so bot GMs respect normal limits.
+    GM_NO_FAME_COOLDOWN: false                              # If true, GMs bypass the daily/monthly fame cooldown. Set false so bot GMs respect normal limits.
 
-    #Any NPC ids that should search for a js override script (useful if they already have wz entries since otherwise they're ignored).
+    # Any NPC ids that should search for a js override script (useful if they already have wz entries since otherwise they're ignored).
     NPCS_SCRIPTABLE:
-      #9200000: Talk to Cody # Cody
-      9001105: Rescue Gaga!  # Grandpa moon bunny
+      # 9200000: Talk to Cody                               # Cody
+      9001105: Rescue Gaga!                                 # Grandpa moon bunny
 
     # NuTNNuT's custom features
     # Scroll Success Bonus: adds a flat bonus % to all scroll success chances
     SCROLL_SUCCESS_BONUS_ENABLED: false
-    SCROLL_SUCCESS_BONUS: 10             # Flat % added to every scroll's success chance (capped at 100)
+    SCROLL_SUCCESS_BONUS: 10                                # Flat % added to every scroll's success chance (capped at 100)
 
     # Maker Skills:
-    MAKER_CRYSTAL_ONLY_IMPROVE: false   # Black/Dark crystal only improves stats and never decreases, vanilla: false
+    MAKER_CRYSTAL_ONLY_IMPROVE: false                       # Black/Dark crystal only improves stats and never decreases, vanilla: false
 
     # Godly Stats: chance for equipment to receive random bonus stats (like free-pre-applied chaos scroll)
-    GODLY_STATS_ENABLED: false              # Dropped equipment only
-    GODLY_STATS_DROP_CHANCE: 20          # % chance for dropped
+    GODLY_STATS_ENABLED: false                              # Dropped equipment only
+    GODLY_STATS_DROP_CHANCE: 20                             # % chance for dropped
     GODLY_STATS_MAKER_ENABLED: false
-    GODLY_STATS_MAKER_CHANCE: 20         # % chance for maker skill (with stimulant)
+    GODLY_STATS_MAKER_CHANCE: 20                            # % chance for maker skill (with stimulant)
     GODLY_STATS_MAKER_BONUS_SCALING: 0.1
     GODLY_STATS_MAKER_MIN_BONUS: 5
     GODLY_STATS_MAKER_HPMP_SCALING: 1.0
     GODLY_STATS_MAKER_MIN_HPMP_BONUS: 30
     GODLY_STATS_QUEST_ENABLED: false
-    GODLY_STATS_QUEST_CHANCE: 100        # % chance for quest reward equips
+    GODLY_STATS_QUEST_CHANCE: 100                           # % chance for quest reward equips
     GODLY_STATS_QUEST_BONUS_SCALING: 0.1
     GODLY_STATS_QUEST_MIN_BONUS: 5
     GODLY_STATS_QUEST_HPMP_SCALING: 1.0
     GODLY_STATS_QUEST_MIN_HPMP_BONUS: 30
     GODLY_STATS_NPC_ENABLED: false
-    GODLY_STATS_NPC_CHANCE: 20           # % chance for NPC/event reward equips (e.g. KPQ reward)
+    GODLY_STATS_NPC_CHANCE: 20                              # % chance for NPC/event reward equips (e.g. KPQ reward)
     GODLY_STATS_NPC_BONUS_SCALING: 0.1
     GODLY_STATS_NPC_MIN_BONUS: 5
     GODLY_STATS_NPC_HPMP_SCALING: 1.0
     GODLY_STATS_NPC_MIN_HPMP_BONUS: 30
-    GODLY_STATS_BONUS_SCALING: 0.1       # 0.1 -> lv 100 gear gain up to 10 str/dex/int/luk/atk/etc. (only if the stat already exists, like chaos scroll)
-    GODLY_STATS_MIN_BONUS: 5             # Minimum max stat bonus
-    GODLY_STATS_HPMP_SCALING: 1.0        # 1 -> lv 100 gear gain up to 100 bonus max HP/MP (even if equip had no hp/mp bonus)
-    GODLY_STATS_MIN_HPMP_BONUS: 30       # Minimum max HP/MP bonus
-    ALLOW_DROPS_ON_DROP_LIMIT_MAPS: false #Independent map-rule override; not coupled to item tradeability.
+    GODLY_STATS_BONUS_SCALING: 0.1                          # 0.1 -> lv 100 gear gain up to 10 str/dex/int/luk/atk/etc. (only if the stat already exists, like chaos scroll)
+    GODLY_STATS_MIN_BONUS: 5                                # Minimum max stat bonus
+    GODLY_STATS_HPMP_SCALING: 1.0                           # 1 -> lv 100 gear gain up to 100 bonus max HP/MP (even if equip had no hp/mp bonus)
+    GODLY_STATS_MIN_HPMP_BONUS: 30                          # Minimum max HP/MP bonus
+    ALLOW_DROPS_ON_DROP_LIMIT_MAPS: false                   # Independent map-rule override; not coupled to item tradeability.

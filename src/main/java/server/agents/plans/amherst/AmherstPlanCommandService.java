@@ -20,14 +20,18 @@ import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentMailboxRuntime;
 import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.profiles.AgentBehaviorProfileRuntime;
+import server.agents.plans.AgentOrderedPlanStartOptions;
+import server.agents.plans.AgentPlanStartRequest;
+import server.agents.plans.AgentUniversalPlanRuntime;
 
 import java.awt.Point;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 public final class AmherstPlanCommandService {
-    private static final int PAGE_SIZE = 10;
-    private static final int MAX_JOURNAL_LINES = 20;
+    private static final int PAGE_SIZE = config.AgentTuning.intValue("server.agents.plans.amherst.AmherstPlanCommandService.PAGE_SIZE");
+    private static final int MAX_JOURNAL_LINES = config.AgentTuning.intValue("server.agents.plans.amherst.AmherstPlanCommandService.MAX_JOURNAL_LINES");
 
     private AmherstPlanCommandService() {
     }
@@ -117,6 +121,7 @@ public final class AmherstPlanCommandService {
             return;
         }
         AgentAmherstPlanRuntime.defaultStore().delete(card.planId(), agent.getId());
+        AgentUniversalPlanRuntime.clearCheckpoint(entry, agent.getId());
         message(player, "Plan and Agent reset complete. 0/" + card.objectives().size()
                 + " objectives satisfied.");
         if (debugMessagesEnabled()) {
@@ -136,14 +141,16 @@ public final class AmherstPlanCommandService {
                     : "An Amherst objective is already active.");
             return;
         }
-        AgentAmherstPlanRuntime.startManual(entry, agent, System.currentTimeMillis(),
-                event -> debugMessage(player, event));
+        AgentUniversalPlanRuntime.start(entry, agent, "maple-island-amherst-subphase",
+                new AgentPlanStartRequest(Map.of(),
+                        AgentOrderedPlanStartOptions.manual(event -> debugMessage(player, event))),
+                System.currentTimeMillis());
         message(player, "Manual plan started. Exactly one objective will execute.");
     }
 
     private static void showcase(Character player, String agentName) {
-        String allowedName = YamlConfig.config.server.AGENT_AMHERST_SHOWCASE_AGENT_NAME;
-        if (!YamlConfig.config.server.AGENT_AMHERST_SHOWCASE_ENABLED
+        String allowedName = config.AgentYamlConfig.config.agent.AGENT_AMHERST_SHOWCASE_AGENT_NAME;
+        if (!config.AgentYamlConfig.config.agent.AGENT_AMHERST_SHOWCASE_ENABLED
                 || allowedName == null || !allowedName.equalsIgnoreCase(agentName)) {
             message(player, "Showcase run is disabled or '" + agentName
                     + "' is not the configured showcase Agent.");
@@ -204,6 +211,7 @@ public final class AmherstPlanCommandService {
         CosmicMapleIslandCohortIdentity.applyDefaultStarterWeapon(agent);
         agent.equipChanged();
         AgentAmherstPlanRuntime.defaultStore().delete(card.planId(), agent.getId());
+        AgentUniversalPlanRuntime.clearCheckpoint(entry, agent.getId());
         AgentMovementCommandRuntime.stop(entry);
     }
 
@@ -218,10 +226,13 @@ public final class AmherstPlanCommandService {
         }
         Character agent = AgentRuntimeIdentityRuntime.bot(entry);
         try {
-            AgentAmherstPlanRuntime.startAuto(entry, agent, System.currentTimeMillis(),
-                    event -> debugMessage(player, event));
+            AgentUniversalPlanRuntime.start(entry, agent, "maple-island-amherst-subphase",
+                    new AgentPlanStartRequest(Map.of(),
+                            AgentOrderedPlanStartOptions.automatic(
+                                    event -> debugMessage(player, event))),
+                    System.currentTimeMillis());
             message(player, "Amherst showcase started for " + agentName + ".");
-        } catch (IOException | AmherstPlanValidationException | RuntimeException failure) {
+        } catch (RuntimeException failure) {
             message(player, "Showcase failed to start: " + failure.getMessage());
         }
     }
@@ -251,7 +262,13 @@ public final class AmherstPlanCommandService {
             message(player, "The manual plan is already paused between objectives.");
             return;
         }
-        AgentAmherstPlanRuntime.cancel(entry);
+        Character agent = AgentRuntimeIdentityRuntime.bot(entry);
+        if (agent != null) {
+            AgentUniversalPlanRuntime.cancel(entry, agent,
+                    "cancelled by Amherst command", System.currentTimeMillis());
+        } else {
+            AgentAmherstPlanRuntime.cancel(entry);
+        }
         message(player, "Cancellation requested. Progress remains resumable after the terminal result is recorded.");
     }
 
@@ -399,7 +416,7 @@ public final class AmherstPlanCommandService {
     }
 
     private static boolean debugMessagesEnabled() {
-        return YamlConfig.config.server.AGENT_AMHERST_DEBUG_MESSAGES_ENABLED;
+        return config.AgentYamlConfig.config.agent.AGENT_AMHERST_DEBUG_MESSAGES_ENABLED;
     }
 
     private static void message(Character player, String message) {

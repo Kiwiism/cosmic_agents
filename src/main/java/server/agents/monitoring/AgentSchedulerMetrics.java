@@ -98,7 +98,7 @@ public final class AgentSchedulerMetrics {
                                     long cleanedUp) {
     }
 
-    private static final int ROLLING_WINDOW_CAPACITY = 2_048;
+    private static final int ROLLING_WINDOW_CAPACITY = config.AgentTuning.intValue("server.agents.monitoring.AgentSchedulerMetrics.ROLLING_WINDOW_CAPACITY");
     private static final LongAdder CYCLES = new LongAdder();
     private static final LongAdder UPDATED = new LongAdder();
     private static final LongAdder SKIPPED = new LongAdder();

@@ -5,6 +5,7 @@
 wz_victoria/*
 /wz_victoria/*
 /wz_victoria
+/wz/
 /target
 database-console/api/target/
 database-console/web/.next/
@@ -40,6 +41,9 @@ tmp/
 .qwen/
 models/
 .m2/
+
+# Local client repack experiments and their external MapleLib dependency.
+/tools/client-repack/
 
 # LLM bot chat memory (per-bot plain-text JSONL + summaries)
 bots/llm-memory/

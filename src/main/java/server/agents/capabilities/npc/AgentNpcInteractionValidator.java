@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 public final class AgentNpcInteractionValidator {
-    private static final long DEFAULT_DIALOGUE_DELAY_MS = 800L;
+    private static final long DEFAULT_DIALOGUE_DELAY_MS = config.AgentTuning.longValue("server.agents.capabilities.npc.AgentNpcInteractionValidator.DEFAULT_DIALOGUE_DELAY_MS");
 
     private final NpcCatalogQuery catalogQuery;
 

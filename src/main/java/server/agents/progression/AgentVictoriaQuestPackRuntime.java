@@ -13,7 +13,7 @@ import java.util.Set;
 
 /** Executes one configured quest pack in order and reconciles progress from live quest truth. */
 final class AgentVictoriaQuestPackRuntime {
-    private static final int INTERACTION_DISTANCE_PX = 100;
+    private static final int INTERACTION_DISTANCE_PX = config.AgentTuning.intValue("server.agents.progression.AgentVictoriaQuestPackRuntime.INTERACTION_DISTANCE_PX");
 
     enum Result {
         RUNNING,

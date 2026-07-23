@@ -8,6 +8,8 @@ import java.util.Set;
 
 /** Session route health; durable objectives recalculate it from the live map after relog. */
 final class AgentVictoriaRouteState {
+    private static final long EDGE_FAILURE_MEMORY_MS = config.AgentTuning.longValue(
+            "server.agents.progression.AgentVictoriaRouteState.EDGE_FAILURE_MEMORY_MS");
     static final AgentCapabilityStateKey<AgentVictoriaRouteState> STATE_KEY =
             new AgentCapabilityStateKey<>("progression.victoria-route", AgentVictoriaRouteState.class,
                     AgentVictoriaRouteState::new);
@@ -37,7 +39,7 @@ final class AgentVictoriaRouteState {
     }
 
     synchronized boolean recordFailure(long edge, long nowMs, long blockDurationMs) {
-        if (failingEdge == edge && nowMs - lastFailureAtMs < 2_000L) {
+        if (failingEdge == edge && nowMs - lastFailureAtMs < EDGE_FAILURE_MEMORY_MS) {
             return false;
         }
         if (failingEdge != edge) {

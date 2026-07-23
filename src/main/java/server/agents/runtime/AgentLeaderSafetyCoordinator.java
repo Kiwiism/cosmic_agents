@@ -26,7 +26,7 @@ import java.util.List;
  * formation, map transition, and runtime registry boundaries.
  */
 public final class AgentLeaderSafetyCoordinator {
-    private static final int PLATFORM_EDGE_INSET_PX = 12;
+    private static final int PLATFORM_EDGE_INSET_PX = config.AgentTuning.intValue("server.agents.runtime.AgentLeaderSafetyCoordinator.PLATFORM_EDGE_INSET_PX");
 
     private AgentLeaderSafetyCoordinator() {
     }

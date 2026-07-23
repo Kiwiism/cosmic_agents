@@ -18,9 +18,9 @@ public record AgentObjectiveRecoveryPolicy(
 
     public static AgentObjectiveRecoveryPolicy configured() {
         return new AgentObjectiveRecoveryPolicy(
-                YamlConfig.config.server.AGENT_OBJECTIVE_NUDGE_MS,
-                YamlConfig.config.server.AGENT_OBJECTIVE_STALL_RECOVERY_MS,
-                YamlConfig.config.server.AGENT_OBJECTIVE_AUTO_RECOVERY_ATTEMPTS,
-                YamlConfig.config.server.AGENT_OBJECTIVE_RECOVERY_DELAY_MS);
+                config.AgentYamlConfig.config.agent.AGENT_OBJECTIVE_NUDGE_MS,
+                config.AgentYamlConfig.config.agent.AGENT_OBJECTIVE_STALL_RECOVERY_MS,
+                config.AgentYamlConfig.config.agent.AGENT_OBJECTIVE_AUTO_RECOVERY_ATTEMPTS,
+                config.AgentYamlConfig.config.agent.AGENT_OBJECTIVE_RECOVERY_DELAY_MS);
     }
 }

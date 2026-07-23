@@ -8,6 +8,6 @@ public final class AgentLegacyOwnerCompatibility {
     }
 
     public static boolean enabled() {
-        return YamlConfig.config.server.AGENT_LEGACY_OWNER_COMPATIBILITY_ENABLED;
+        return config.AgentYamlConfig.config.agent.AGENT_LEGACY_OWNER_COMPATIBILITY_ENABLED;
     }
 }

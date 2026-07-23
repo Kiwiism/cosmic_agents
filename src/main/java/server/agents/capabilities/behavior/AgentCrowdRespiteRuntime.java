@@ -12,7 +12,7 @@ import server.agents.capabilities.movement.fidget.AgentFidgetService;
 import server.agents.capabilities.movement.fidget.AgentFidgetStateRuntime;
 import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
 import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
-import server.agents.plans.AgentPlanPauseRuntime;
+import server.agents.runtime.AgentForegroundPauseRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentSessionEventRuntime;
@@ -23,6 +23,14 @@ import java.awt.Point;
 /** Execution gate for crowd rests. It pauses time, not the current objective. */
 public final class AgentCrowdRespiteRuntime {
     public static final String PAUSE_REASON = "map-crowd-respite";
+    private static final int SAFE_SPOT_ARRIVAL_X_PX = config.AgentTuning.intValue(
+            "server.agents.capabilities.behavior.AgentCrowdRespiteRuntime.SAFE_SPOT_ARRIVAL_X_PX");
+    private static final int SAFE_SPOT_ARRIVAL_Y_PX = config.AgentTuning.intValue(
+            "server.agents.capabilities.behavior.AgentCrowdRespiteRuntime.SAFE_SPOT_ARRIVAL_Y_PX");
+    private static final int WAIT_FIDGET_PERCENT = config.AgentTuning.intValue(
+            "server.agents.capabilities.behavior.AgentCrowdRespiteRuntime.WAIT_FIDGET_PERCENT");
+    private static final int FIDGET_DURATION_MS = config.AgentTuning.intValue(
+            "server.agents.capabilities.behavior.AgentCrowdRespiteRuntime.FIDGET_DURATION_MS");
 
     private AgentCrowdRespiteRuntime() {
     }
@@ -30,7 +38,7 @@ public final class AgentCrowdRespiteRuntime {
     public static boolean tick(AgentRuntimeEntry entry, Character agent, long nowMs, boolean runAiTick) {
         AgentCrowdRespiteState state = entry.capabilityStates().require(AgentCrowdRespiteState.STATE_KEY);
         boolean eligible = AgentBehaviorRuntime.enabled(entry)
-                && YamlConfig.config.server.AGENT_MAP_CROWD_RESPITE_ENABLED
+                && config.AgentYamlConfig.config.agent.AGENT_MAP_CROWD_RESPITE_ENABLED
                 && AgentModeStateRuntime.grinding(entry) && agent.getHp() > 0;
         if (!eligible) {
             if (state.active()) finish(entry, agent, state, nowMs);
@@ -43,7 +51,7 @@ public final class AgentCrowdRespiteRuntime {
                     .nextPercent("crowd-duration") * Math.max(1, policy.maxRestMs() - policy.minRestMs()) / 100;
             boolean chair = AgentBehaviorRuntime.calibration(entry).nextPercent("crowd-chair") < policy.chairPercent();
             state.start(nowMs, nowMs + duration, AgentSafeSpotSelector.select(entry, agent), chair);
-            AgentPlanPauseRuntime.pause(entry, PAUSE_REASON, nowMs);
+            AgentForegroundPauseRuntime.pause(entry, PAUSE_REASON, nowMs);
             AgentBehaviorTelemetry.crowdRestStarted();
             publish(entry, agent, nowMs, AgentCrowdRespiteEvent.Stage.STARTED);
         }
@@ -54,7 +62,8 @@ public final class AgentCrowdRespiteRuntime {
         Point spot = state.safeSpot();
         if (spot == null) return true;
         Point position = agent.getPosition();
-        if (Math.abs(position.x - spot.x) > 24 || Math.abs(position.y - spot.y) > 45) {
+        if (Math.abs(position.x - spot.x) > SAFE_SPOT_ARRIVAL_X_PX
+                || Math.abs(position.y - spot.y) > SAFE_SPOT_ARRIVAL_Y_PX) {
             if (agent.getChair() > 0) AgentChairService.stand(entry, agent);
             AgentMovementTickCoordinator.stepMovementCore(entry, spot, runAiTick);
             return true;
@@ -68,9 +77,15 @@ public final class AgentCrowdRespiteRuntime {
             return true;
         }
         if (AgentFidgetStateRuntime.trigger(entry) != AgentFidgetTrigger.CROWD_RESPITE) {
-            AgentFidgetMode mode = AgentBehaviorRuntime.calibration(entry).nextPercent("crowd-fidget") < 65
+            AgentFidgetMode mode = AgentBehaviorRuntime.calibration(entry)
+                    .nextPercent("crowd-fidget") < WAIT_FIDGET_PERCENT
                     ? AgentFidgetMode.WAIT : AgentFidgetMode.PRONE;
-            AgentFidgetService.startFidget(entry, mode, nowMs, 4000, AgentFidgetTrigger.CROWD_RESPITE);
+            AgentFidgetService.startFidget(
+                    entry,
+                    mode,
+                    nowMs,
+                    FIDGET_DURATION_MS,
+                    AgentFidgetTrigger.CROWD_RESPITE);
         }
         AgentFidgetService.tryHandleCrowdRespiteTick(entry, position, nowMs);
         return true;
@@ -81,7 +96,7 @@ public final class AgentCrowdRespiteRuntime {
         if (agent != null && agent.getChair() > 0) AgentChairService.stand(entry, agent);
         AgentFidgetService.clear(entry);
         state.clear();
-        AgentPlanPauseRuntime.resume(entry, PAUSE_REASON, nowMs);
+        AgentForegroundPauseRuntime.resume(entry, PAUSE_REASON, nowMs);
         AgentBehaviorTelemetry.crowdRestResumed();
         publish(entry, agent, nowMs, AgentCrowdRespiteEvent.Stage.RESUMED);
     }

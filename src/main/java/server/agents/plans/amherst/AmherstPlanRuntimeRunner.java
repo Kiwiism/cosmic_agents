@@ -41,7 +41,7 @@ public final class AmherstPlanRuntimeRunner {
     private AmherstPlanProgressSnapshot pendingSave;
     private boolean saveWorkerRunning;
     private boolean saveRetryScheduled;
-    private static final long SAVE_RETRY_DELAY_MS = 250L;
+    private static final long SAVE_RETRY_DELAY_MS = config.AgentTuning.longValue("server.agents.plans.amherst.AmherstPlanRuntimeRunner.SAVE_RETRY_DELAY_MS");
 
     public AmherstPlanRuntimeRunner(AmherstPlanCard card,
                                     AmherstPlanProgressStore store,

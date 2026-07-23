@@ -15,9 +15,9 @@ import java.util.Set;
 
 /** Builds safe, reproducible NPC waiting slots on nearby footholds, ropes, and ladders. */
 public final class AgentNpcInteractionSpreadService {
-    private static final int EDGE_INSET_PX = 12;
-    private static final int SLOT_SPACING_PX = 24;
-    private static final int CLIMB_SLOT_SPACING_PX = 48;
+    private static final int EDGE_INSET_PX = config.AgentTuning.intValue("server.agents.capabilities.objective.AgentNpcInteractionSpreadService.EDGE_INSET_PX");
+    private static final int SLOT_SPACING_PX = config.AgentTuning.intValue("server.agents.capabilities.objective.AgentNpcInteractionSpreadService.SLOT_SPACING_PX");
+    private static final int CLIMB_SLOT_SPACING_PX = config.AgentTuning.intValue("server.agents.capabilities.objective.AgentNpcInteractionSpreadService.CLIMB_SLOT_SPACING_PX");
     private AgentNpcInteractionSpreadService() {
     }
 

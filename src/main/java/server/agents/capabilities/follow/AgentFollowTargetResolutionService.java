@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class AgentFollowTargetResolutionService {
-    private static final int MIN_PREFIX_TARGET_LENGTH = 2;
+    private static final int MIN_PREFIX_TARGET_LENGTH = config.AgentTuning.intValue("server.agents.capabilities.follow.AgentFollowTargetResolutionService.MIN_PREFIX_TARGET_LENGTH");
 
     private AgentFollowTargetResolutionService() {
     }

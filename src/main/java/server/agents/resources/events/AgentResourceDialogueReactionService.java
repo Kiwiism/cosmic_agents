@@ -13,8 +13,8 @@ import java.util.Map;
 public final class AgentResourceDialogueReactionService implements AgentEventListener<AgentEvent> {
     public static final String INVENTORY_FULL_INTENT = "resource.inventory-full";
     public static final String SCROLL_INTENT = "resource.scroll-result";
-    private static final long INVENTORY_COOLDOWN_MS = 60_000L;
-    private static final long SCROLL_COOLDOWN_MS = 15_000L;
+    private static final long INVENTORY_COOLDOWN_MS = config.AgentTuning.longValue("server.agents.resources.events.AgentResourceDialogueReactionService.INVENTORY_COOLDOWN_MS");
+    private static final long SCROLL_COOLDOWN_MS = config.AgentTuning.longValue("server.agents.resources.events.AgentResourceDialogueReactionService.SCROLL_COOLDOWN_MS");
 
     private final AgentEventBus bus;
 

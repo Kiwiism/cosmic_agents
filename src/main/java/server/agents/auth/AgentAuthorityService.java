@@ -42,13 +42,13 @@ public final class AgentAuthorityService {
         if (normalized.isEmpty()) {
             return null;
         }
-        if (names(YamlConfig.config.server.AGENT_AUTHORITY_ADMINISTRATOR_NAMES).contains(normalized)) {
+        if (names(config.AgentYamlConfig.config.agent.AGENT_AUTHORITY_ADMINISTRATOR_NAMES).contains(normalized)) {
             return AgentAuthorityRole.ADMINISTRATOR;
         }
-        if (names(YamlConfig.config.server.AGENT_AUTHORITY_OPERATOR_NAMES).contains(normalized)) {
+        if (names(config.AgentYamlConfig.config.agent.AGENT_AUTHORITY_OPERATOR_NAMES).contains(normalized)) {
             return AgentAuthorityRole.OPERATOR;
         }
-        if (names(YamlConfig.config.server.AGENT_AUTHORITY_OBSERVER_NAMES).contains(normalized)) {
+        if (names(config.AgentYamlConfig.config.agent.AGENT_AUTHORITY_OBSERVER_NAMES).contains(normalized)) {
             return AgentAuthorityRole.OBSERVER;
         }
         return null;
@@ -56,7 +56,7 @@ public final class AgentAuthorityService {
 
     public static boolean isTrustedTradePlayer(Character character) {
         return character != null
-                && names(YamlConfig.config.server.AGENT_TRUSTED_TRADE_PLAYER_NAMES)
+                && names(config.AgentYamlConfig.config.agent.AGENT_TRUSTED_TRADE_PLAYER_NAMES)
                 .contains(normalize(character.getName()));
     }
 

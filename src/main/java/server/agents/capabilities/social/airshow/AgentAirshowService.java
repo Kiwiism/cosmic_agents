@@ -23,12 +23,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.CompletableFuture;
 
 public final class AgentAirshowService {
-    private static final int FRAME_MS = 50;
-    private static final int HORIZONTAL_SPEED_PX_PER_SEC = 2000;
-    private static final int VERTICAL_SPEED_PX_PER_SEC = 1200;
-    private static final long TRAIL_INTERVAL_MS = 100L;
-    private static final long TRAIL_DEATH_DELAY_MS = 120L;
-    private static final long BETWEEN_RUN_DELAY_MS = 1000L;
+    private static final int FRAME_MS = config.AgentTuning.intValue("server.agents.capabilities.social.airshow.AgentAirshowService.FRAME_MS");
+    private static final int HORIZONTAL_SPEED_PX_PER_SEC = config.AgentTuning.intValue("server.agents.capabilities.social.airshow.AgentAirshowService.HORIZONTAL_SPEED_PX_PER_SEC");
+    private static final int VERTICAL_SPEED_PX_PER_SEC = config.AgentTuning.intValue("server.agents.capabilities.social.airshow.AgentAirshowService.VERTICAL_SPEED_PX_PER_SEC");
+    private static final long TRAIL_INTERVAL_MS = config.AgentTuning.longValue("server.agents.capabilities.social.airshow.AgentAirshowService.TRAIL_INTERVAL_MS");
+    private static final long TRAIL_DEATH_DELAY_MS = config.AgentTuning.longValue("server.agents.capabilities.social.airshow.AgentAirshowService.TRAIL_DEATH_DELAY_MS");
+    private static final long BETWEEN_RUN_DELAY_MS = config.AgentTuning.longValue("server.agents.capabilities.social.airshow.AgentAirshowService.BETWEEN_RUN_DELAY_MS");
     private static final AtomicInteger TRAIL_OBJECT_IDS = new AtomicInteger(1_900_000_000);
 
     private AgentAirshowService() {

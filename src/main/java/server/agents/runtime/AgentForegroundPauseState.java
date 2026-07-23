@@ -1,4 +1,4 @@
-package server.agents.plans;
+package server.agents.runtime;
 
 import server.agents.runtime.state.AgentCapabilityStateKey;
 
@@ -6,9 +6,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 /** Multi-reason pause clock. Objective identity and progress remain untouched while paused. */
-public final class AgentPlanPauseState {
-    public static final AgentCapabilityStateKey<AgentPlanPauseState> STATE_KEY =
-            new AgentCapabilityStateKey<>("plans.pause-clock", AgentPlanPauseState.class, AgentPlanPauseState::new);
+public final class AgentForegroundPauseState {
+    public static final AgentCapabilityStateKey<AgentForegroundPauseState> STATE_KEY =
+            new AgentCapabilityStateKey<>(
+                    "runtime.foreground-pause-clock",
+                    AgentForegroundPauseState.class,
+                    AgentForegroundPauseState::new);
 
     private final Map<String, Long> reasons = new HashMap<>();
     private long accumulatedPausedMs;

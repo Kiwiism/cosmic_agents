@@ -6,7 +6,7 @@ import server.agents.capabilities.inventory.AgentEquipTradeClassificationService
 
 public final class AgentEquipTradeSlowLogService {
     private static final Logger log = LoggerFactory.getLogger(AgentEquipTradeSlowLogService.class);
-    private static final long TRADE_COMMAND_PROFILE_WARN_NS = 50_000_000L;
+    private static final long TRADE_COMMAND_PROFILE_WARN_NS = config.AgentTuning.longValue("server.agents.capabilities.inventory.AgentEquipTradeSlowLogService.TRADE_COMMAND_PROFILE_WARN_NS");
 
     private AgentEquipTradeSlowLogService() {
     }

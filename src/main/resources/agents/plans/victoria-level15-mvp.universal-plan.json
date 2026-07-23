@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "planId": "victoria-level15-mvp",
+  "planVersion": "2",
+  "title": "Maple Island Handoff to First Job Level 15 MVP",
+  "status": "executable",
+  "objective": {
+    "type": "progression.first-job-level15",
+    "priority": 100,
+    "deadlineMs": 9223372036854775807,
+    "retryBudget": 3,
+    "source": "PROGRESSION_POLICY",
+    "behaviorVersion": "victoria-level15-mvp-v2",
+    "registration": "EXECUTOR"
+  },
+  "entryCriteria": [
+    { "fact": "career.bundle", "operator": "present", "value": true },
+    { "fact": "character.level", "operator": "gte", "value": 9 }
+  ],
+  "steps": [
+    {
+      "stepId": "first-job-level15-journey",
+      "operation": "staged-first-job-journey",
+      "capabilityIds": [
+        "progression.career-assignment",
+        "progression.ap-build",
+        "progression.sp-build",
+        "equipment.auto-equip",
+        "navigation.portal-route",
+        "quest.victoria-handoff",
+        "interaction.npc-script",
+        "interaction.npc-shop",
+        "quest.instructor-training",
+        "quest.victoria-pre15-packs",
+        "combat.generic-grind",
+        "loot.combat-drops",
+        "survival.potion-use",
+        "supplies.procurement",
+        "inventory.capacity-management",
+        "recovery.physics"
+      ],
+      "parameters": {
+        "stageContractResource": "/agents/progression/victoria-level15-stage-contract.json"
+      },
+      "timeoutMs": 0,
+      "retryBudget": 3
+    }
+  ],
+  "exitCriteria": [
+    { "fact": "character.level", "operator": "gte", "value": 15 },
+    { "fact": "character.firstJob", "operator": "present", "value": true },
+    { "fact": "career.stage", "operator": "eq", "value": "COMPLETE" }
+  ],
+  "successors": []
+}

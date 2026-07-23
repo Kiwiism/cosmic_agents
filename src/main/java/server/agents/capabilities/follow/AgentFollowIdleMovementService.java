@@ -18,7 +18,7 @@ import java.awt.Point;
  * Agent-owned parked-follow fast path used to skip expensive movement work.
  */
 public final class AgentFollowIdleMovementService {
-    private static final long FOLLOW_IDLE_RECHECK_MS = 1000L;
+    private static final long FOLLOW_IDLE_RECHECK_MS = config.AgentTuning.longValue("server.agents.capabilities.follow.AgentFollowIdleMovementService.FOLLOW_IDLE_RECHECK_MS");
 
     private AgentFollowIdleMovementService() {
     }

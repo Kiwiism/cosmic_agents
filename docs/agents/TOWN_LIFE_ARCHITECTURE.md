@@ -3,6 +3,11 @@
 TownLife is the Agent-owned capability for spending non-progression time in a town. `ROAM` is one
 activity inside TownLife; it is not the name of the subsystem.
 
+TownLife deliberately keeps its own town-agnostic activity/directive schema and per-town extension
+profiles. It does not use progression-plan step rows. It shares the foreground lifecycle envelope
+described in `UNIVERSAL_AGENT_PLAN_SCHEMA.md`: explicit activation, suspension/resumption,
+checkpoint ownership, cancellation, and handoff.
+
 ## Responsibility boundaries
 
 - `AgentTownLifeRuntime` owns the resumable stage machine and pauses ordinary Agent objectives while

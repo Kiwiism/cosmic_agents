@@ -712,7 +712,7 @@ public final class AgentAttackExecutionProvider {
         return Math.max(0, animationDelayMs / 2);
     }
 
-    private static final int MAGIC_ATTACK_SPEED_GRADE = 6;
+    private static final int MAGIC_ATTACK_SPEED_GRADE = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentAttackExecutionProvider.MAGIC_ATTACK_SPEED_GRADE");
 
     static int resolveSkillEffectiveAttackSpeed(Skill skill, Character bot) {
         if (skill != null && isMagicAttackSkill(skill.getId())) {

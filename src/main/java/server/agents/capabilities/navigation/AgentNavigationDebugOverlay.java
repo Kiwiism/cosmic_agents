@@ -30,16 +30,16 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 
 public final class AgentNavigationDebugOverlay {
-    private static final int AUTO_CLEAR_MS = 30_000;
-    private static final int MAX_MISTS = 900;
-    private static final int NODE_SIZE = 10;
-    private static final int GRAPH_NODE_SIZE = 8;
-    private static final int LINE_THICKNESS = 4;
-    private static final int PATH_THICKNESS = 6;
-    private static final int DOTTED_SPACING = 22;
-    private static final int GRAPH_EDGE_SPACING = 60;
-    private static final int GRAPH_REGION_SPACING = 90;
-    private static final int PATH_EDGE_SPACING = 28;
+    private static final int AUTO_CLEAR_MS = config.AgentTuning.intValue("server.agents.capabilities.navigation.AgentNavigationDebugOverlay.AUTO_CLEAR_MS");
+    private static final int MAX_MISTS = config.AgentTuning.intValue("server.agents.capabilities.navigation.AgentNavigationDebugOverlay.MAX_MISTS");
+    private static final int NODE_SIZE = config.AgentTuning.intValue("server.agents.capabilities.navigation.AgentNavigationDebugOverlay.NODE_SIZE");
+    private static final int GRAPH_NODE_SIZE = config.AgentTuning.intValue("server.agents.capabilities.navigation.AgentNavigationDebugOverlay.GRAPH_NODE_SIZE");
+    private static final int LINE_THICKNESS = config.AgentTuning.intValue("server.agents.capabilities.navigation.AgentNavigationDebugOverlay.LINE_THICKNESS");
+    private static final int PATH_THICKNESS = config.AgentTuning.intValue("server.agents.capabilities.navigation.AgentNavigationDebugOverlay.PATH_THICKNESS");
+    private static final int DOTTED_SPACING = config.AgentTuning.intValue("server.agents.capabilities.navigation.AgentNavigationDebugOverlay.DOTTED_SPACING");
+    private static final int GRAPH_EDGE_SPACING = config.AgentTuning.intValue("server.agents.capabilities.navigation.AgentNavigationDebugOverlay.GRAPH_EDGE_SPACING");
+    private static final int GRAPH_REGION_SPACING = config.AgentTuning.intValue("server.agents.capabilities.navigation.AgentNavigationDebugOverlay.GRAPH_REGION_SPACING");
+    private static final int PATH_EDGE_SPACING = config.AgentTuning.intValue("server.agents.capabilities.navigation.AgentNavigationDebugOverlay.PATH_EDGE_SPACING");
 
     private static final Map<Integer, OverlayState> overlaysByViewerId = new ConcurrentHashMap<>();
 

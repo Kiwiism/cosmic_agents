@@ -211,7 +211,7 @@ public final class MapleIslandCohortTelemetryService {
     }
 
     private static int configuredRetainedRuns() {
-        int configured = YamlConfig.config.server.AGENT_MAPLE_ISLAND_COHORT_TELEMETRY_RETAINED_RUNS;
+        int configured = config.AgentYamlConfig.config.agent.AGENT_MAPLE_ISLAND_COHORT_TELEMETRY_RETAINED_RUNS;
         return configured <= 0 ? 20 : configured;
     }
 

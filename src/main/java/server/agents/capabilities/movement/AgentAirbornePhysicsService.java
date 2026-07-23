@@ -22,15 +22,15 @@ import java.awt.Rectangle;
  */
 public final class AgentAirbornePhysicsService {
     private static final Logger log = LoggerFactory.getLogger(AgentAirbornePhysicsService.class);
-    private static final double CLIENT_GROUND_STEP_MS = 8.0;
+    private static final double CLIENT_GROUND_STEP_MS = config.AgentTuning.doubleValue("server.agents.capabilities.movement.AgentAirbornePhysicsService.CLIENT_GROUND_STEP_MS");
     private static final double CLIENT_GROUND_STEP_S = CLIENT_GROUND_STEP_MS / 1000.0;
-    private static final double GROUNDSLIP = 3.0;
-    private static final double FRICTION = 0.3;
-    private static final double SLOPEFACTOR = 0.1;
-    private static final float MAX_FALL_PXS = 670.0f;
-    private static final double AIR_STEER_ACCEL = 0.5;
-    private static final double AIR_STEER_MAX = 1.5;
-    private static final int BELOW_MAP_RECOVERY_MARGIN_PX = 64;
+    private static final double GROUNDSLIP = config.AgentTuning.doubleValue("server.agents.capabilities.movement.AgentAirbornePhysicsService.GROUNDSLIP");
+    private static final double FRICTION = config.AgentTuning.doubleValue("server.agents.capabilities.movement.AgentAirbornePhysicsService.FRICTION");
+    private static final double SLOPEFACTOR = config.AgentTuning.doubleValue("server.agents.capabilities.movement.AgentAirbornePhysicsService.SLOPEFACTOR");
+    private static final float MAX_FALL_PXS = config.AgentTuning.floatValue("server.agents.capabilities.movement.AgentAirbornePhysicsService.MAX_FALL_PXS");
+    private static final double AIR_STEER_ACCEL = config.AgentTuning.doubleValue("server.agents.capabilities.movement.AgentAirbornePhysicsService.AIR_STEER_ACCEL");
+    private static final double AIR_STEER_MAX = config.AgentTuning.doubleValue("server.agents.capabilities.movement.AgentAirbornePhysicsService.AIR_STEER_MAX");
+    private static final int BELOW_MAP_RECOVERY_MARGIN_PX = config.AgentTuning.intValue("server.agents.capabilities.movement.AgentAirbornePhysicsService.BELOW_MAP_RECOVERY_MARGIN_PX");
 
     private AgentAirbornePhysicsService() {
     }

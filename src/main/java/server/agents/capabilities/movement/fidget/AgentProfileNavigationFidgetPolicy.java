@@ -72,7 +72,12 @@ public final class AgentProfileNavigationFidgetPolicy {
             return List.of();
         }
         List<AgentFidgetMode> modes = new ArrayList<>();
-        for (AgentFidgetMode mode : movement.navigationFidgetModes()) {
+        for (AgentBehaviorProfile.NavigationFidget configured : movement.navigationFidgetModes()) {
+            AgentFidgetMode mode = switch (configured) {
+                case WAIT -> AgentFidgetMode.WAIT;
+                case PRONE -> AgentFidgetMode.PRONE;
+                case PRONE_TAP -> AgentFidgetMode.SPAM_PRONE;
+            };
             if (SAFE_STATIONARY_MODES.contains(mode)) {
                 modes.add(mode);
             }

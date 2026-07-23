@@ -20,15 +20,15 @@ import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 public final class AgentScrollReactionService {
-    private static final int REACTION_RADIUS_PX = 600;
-    private static final int EMOTE_CHANCE_PCT = 20;
-    private static final int CHAT_CHANCE_PCT = 15;
-    private static final int FIDGET_CHANCE_PCT = 10;
-    private static final int REACTION_COOLDOWN_MS = 10_000;
-    private static final int LOAD_DECAY_MS = 60_000;
-    private static final int STREAK_WINDOW_MS = 45_000;
-    private static final int PER_BOT_REACTION_JITTER_MAX_MS = 2_000;
-    private static final int STREAK_PRUNE_INTERVAL_MS = 60_000;
+    private static final int REACTION_RADIUS_PX = config.AgentTuning.intValue("server.agents.capabilities.social.AgentScrollReactionService.REACTION_RADIUS_PX");
+    private static final int EMOTE_CHANCE_PCT = config.AgentTuning.intValue("server.agents.capabilities.social.AgentScrollReactionService.EMOTE_CHANCE_PCT");
+    private static final int CHAT_CHANCE_PCT = config.AgentTuning.intValue("server.agents.capabilities.social.AgentScrollReactionService.CHAT_CHANCE_PCT");
+    private static final int FIDGET_CHANCE_PCT = config.AgentTuning.intValue("server.agents.capabilities.social.AgentScrollReactionService.FIDGET_CHANCE_PCT");
+    private static final int REACTION_COOLDOWN_MS = config.AgentTuning.intValue("server.agents.capabilities.social.AgentScrollReactionService.REACTION_COOLDOWN_MS");
+    private static final int LOAD_DECAY_MS = config.AgentTuning.intValue("server.agents.capabilities.social.AgentScrollReactionService.LOAD_DECAY_MS");
+    private static final int STREAK_WINDOW_MS = config.AgentTuning.intValue("server.agents.capabilities.social.AgentScrollReactionService.STREAK_WINDOW_MS");
+    private static final int PER_BOT_REACTION_JITTER_MAX_MS = config.AgentTuning.intValue("server.agents.capabilities.social.AgentScrollReactionService.PER_BOT_REACTION_JITTER_MAX_MS");
+    private static final int STREAK_PRUNE_INTERVAL_MS = config.AgentTuning.intValue("server.agents.capabilities.social.AgentScrollReactionService.STREAK_PRUNE_INTERVAL_MS");
     private static final List<String> SCROLL_SUCCESS_REACTIONS = List.of(
             "nice", "nice!", "nice one", "yay", "yay!",
             "clean", "clean!", "let's go gambling!",

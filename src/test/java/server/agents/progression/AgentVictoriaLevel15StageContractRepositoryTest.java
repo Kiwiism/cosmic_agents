@@ -7,12 +7,13 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class AgentVictoriaLevel15PlanRepositoryTest {
+class AgentVictoriaLevel15StageContractRepositoryTest {
     @Test
     void loadsExecutableOrderedPlanWithEveryStageCapabilityDeclared() {
-        AgentVictoriaLevel15PlanCard plan = AgentVictoriaLevel15PlanRepository.defaultPlan();
+        AgentVictoriaLevel15StageContract plan =
+                AgentVictoriaLevel15StageContractRepository.defaultContract();
 
-        assertEquals("victoria-level15-mvp-v2", plan.planId());
+        assertEquals("victoria-level15-stage-contract-v2", plan.contractId());
         assertEquals(AgentVictoriaLevel15CatalogRepository.defaultRepository().catalog().catalogId(),
                 plan.catalogId());
         assertEquals(List.of(
@@ -22,7 +23,7 @@ class AgentVictoriaLevel15PlanRepositoryTest {
                         "initial-shop-trip", "return-to-instructor", "instructor-training",
                         "home-quest-pack", "post-home-decision", "rotation-quest-pack",
                         "fallback-grind", "final-return"),
-                plan.stages().stream().map(AgentVictoriaLevel15PlanCard.Stage::stageId).toList());
+                plan.stages().stream().map(AgentVictoriaLevel15StageContract.Stage::stageId).toList());
         assertTrue(plan.requiredCapabilityIds().containsAll(List.of(
                 "progression.career-assignment", "progression.ap-build", "progression.sp-build",
                 "equipment.auto-equip",

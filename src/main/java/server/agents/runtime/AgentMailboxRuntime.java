@@ -9,7 +9,7 @@ import server.agents.runtime.mailbox.AgentMailboxSubmission;
 import java.util.concurrent.CompletableFuture;
 
 public final class AgentMailboxRuntime {
-    private static final int DEFAULT_MAX_ACTIONS_PER_TICK = 32;
+    private static final int DEFAULT_MAX_ACTIONS_PER_TICK = config.AgentTuning.intValue("server.agents.runtime.AgentMailboxRuntime.DEFAULT_MAX_ACTIONS_PER_TICK");
 
     private AgentMailboxRuntime() {
     }

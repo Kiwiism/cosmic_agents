@@ -11,7 +11,7 @@ import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentTickCadenceStateRuntime;
 
 public final class AgentTickPreflightRuntime {
-    private static final long HEARTBEAT_INTERVAL_MS = 600_000L;
+    private static final long HEARTBEAT_INTERVAL_MS = config.AgentTuning.longValue("server.agents.runtime.AgentTickPreflightRuntime.HEARTBEAT_INTERVAL_MS");
 
     private AgentTickPreflightRuntime() {
     }

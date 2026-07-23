@@ -13,7 +13,7 @@ import java.util.Map;
 public final class AgentTownLifeDialogueReactionService implements AgentEventListener<AgentEvent> {
     public static final String SOCIAL_INTENT = "townlife.social";
     public static final String SPARRING_INTENT = "townlife.sparring";
-    private static final long AMBIENT_CHAT_COOLDOWN_MS = 75_000L;
+    private static final long AMBIENT_CHAT_COOLDOWN_MS = config.AgentTuning.longValue("server.agents.capabilities.dialogue.AgentTownLifeDialogueReactionService.AMBIENT_CHAT_COOLDOWN_MS");
     private final AgentEventBus eventBus;
 
     public AgentTownLifeDialogueReactionService(AgentEventBus eventBus) {

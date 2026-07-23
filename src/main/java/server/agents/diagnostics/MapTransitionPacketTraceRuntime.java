@@ -29,8 +29,8 @@ import java.util.concurrent.TimeUnit;
 public final class MapTransitionPacketTraceRuntime {
     private static final Logger log = LoggerFactory.getLogger(MapTransitionPacketTraceRuntime.class);
     private static final long CAPTURE_WINDOW_NANOS = TimeUnit.SECONDS.toNanos(15);
-    private static final int MAX_EVENTS = 600;
-    private static final int PREVIEW_BYTES = 512;
+    private static final int MAX_EVENTS = config.AgentTuning.intValue("server.agents.diagnostics.MapTransitionPacketTraceRuntime.MAX_EVENTS");
+    private static final int PREVIEW_BYTES = config.AgentTuning.intValue("server.agents.diagnostics.MapTransitionPacketTraceRuntime.PREVIEW_BYTES");
     private static final Map<Client, TraceSession> sessions = new ConcurrentHashMap<>();
     private static final Map<Integer, String> opcodeNames = opcodeNames();
     private static final DateTimeFormatter filenameTime = DateTimeFormatter
@@ -196,7 +196,7 @@ public final class MapTransitionPacketTraceRuntime {
 
     private static boolean enabled() {
         return YamlConfig.config != null && YamlConfig.config.server != null
-                && YamlConfig.config.server.AGENT_MAP_TRANSITION_PACKET_DIAGNOSTICS;
+                && config.AgentYamlConfig.config.agent.AGENT_MAP_TRANSITION_PACKET_DIAGNOSTICS;
     }
 
     private record TraceEvent(long elapsedMillis, Instant at, String kind, String detail) {

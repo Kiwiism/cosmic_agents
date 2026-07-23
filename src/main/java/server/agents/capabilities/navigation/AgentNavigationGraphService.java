@@ -45,14 +45,20 @@ public final class AgentNavigationGraphService {
     private static final Logger log = LoggerFactory.getLogger(AgentNavigationGraphService.class);
 
     private static final int GRAPH_VERSION = 54;
-    private static final int ENDPOINT_ANCHOR_SPACING_PX = 10;
-    private static final int DOWN_JUMP_PRELAUNCH_WINDOW_PX = 20;
-    private static final int SAME_SOLID_NEST_GAP_PX = 8;
-    private static final int ROPE_ANCHOR_INTERVAL_PX = 30;
-    private static final int JUMP_POST_LANDING_STABILITY_TICKS = 3;
-    private static final int MAX_PROFILED_JUMP_REGIONS = 5;
-    private static final int FAST_WARMUP_MAX_FOOTHOLDS = 200;
-    private static final long DEFAULT_GRAPH_CACHE_MAX_WEIGHT = 1_000_000L;
+    private static final int ENDPOINT_ANCHOR_SPACING_PX = config.AgentTuning.intValue(
+            "server.agents.capabilities.navigation.AgentNavigationGraphService.ENDPOINT_ANCHOR_SPACING_PX");
+    private static final int DOWN_JUMP_PRELAUNCH_WINDOW_PX = config.AgentTuning.intValue(
+            "server.agents.capabilities.navigation.AgentNavigationGraphService.DOWN_JUMP_PRELAUNCH_WINDOW_PX");
+    private static final int SAME_SOLID_NEST_GAP_PX = config.AgentTuning.intValue(
+            "server.agents.capabilities.navigation.AgentNavigationGraphService.SAME_SOLID_NEST_GAP_PX");
+    private static final int ROPE_ANCHOR_INTERVAL_PX = config.AgentTuning.intValue(
+            "server.agents.capabilities.navigation.AgentNavigationGraphService.ROPE_ANCHOR_INTERVAL_PX");
+    private static final int JUMP_POST_LANDING_STABILITY_TICKS = config.AgentTuning.intValue(
+            "server.agents.capabilities.navigation.AgentNavigationGraphService.JUMP_POST_LANDING_STABILITY_TICKS");
+    private static final int MAX_PROFILED_JUMP_REGIONS = config.AgentTuning.intValue(
+            "server.agents.capabilities.navigation.AgentNavigationGraphService.MAX_PROFILED_JUMP_REGIONS");
+    private static final int FAST_WARMUP_MAX_FOOTHOLDS = config.AgentTuning.intValue("server.agents.capabilities.navigation.AgentNavigationGraphService.FAST_WARMUP_MAX_FOOTHOLDS");
+    private static final long DEFAULT_GRAPH_CACHE_MAX_WEIGHT = config.AgentTuning.longValue("server.agents.capabilities.navigation.AgentNavigationGraphService.DEFAULT_GRAPH_CACHE_MAX_WEIGHT");
     private static final Path CACHE_DIR = Path.of(
             System.getProperty("agents.navigation.cacheDir", "cache/bot-nav"),
             "v" + GRAPH_VERSION);

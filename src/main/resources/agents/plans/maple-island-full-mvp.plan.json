@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "planId": "maple-island-full-mvp",
+  "planVersion": "1",
+  "title": "Full Maple Island MVP",
+  "status": "executable",
+  "objective": {
+    "type": "maple-island-progression",
+    "priority": 100,
+    "deadlineMs": 9223372036854775807,
+    "retryBudget": 3,
+    "source": "QUEST_PLAN",
+    "behaviorVersion": "maple-island-objective-v1",
+    "registration": "EXECUTOR"
+  },
+  "entryCriteria": [
+    { "fact": "map.id", "operator": "eq", "value": 10000 },
+    { "fact": "region", "operator": "eq", "value": "maple-island" }
+  ],
+  "steps": [
+    {
+      "stepId": "full-maple-island-route",
+      "operation": "ordered-objective-card",
+      "capabilityIds": ["quest", "navigation", "combat", "loot", "interaction", "recovery"],
+      "parameters": {
+        "variant": "full",
+        "cardPath": "docs/agents/plans/maple-island-full-mvp.plan.json"
+      },
+      "timeoutMs": 0,
+      "retryBudget": 3
+    }
+  ],
+  "exitCriteria": [
+    { "fact": "map.id", "operator": "eq", "value": 2000000 },
+    { "fact": "quest.1046", "operator": "active", "value": true }
+  ],
+  "successors": [
+    {
+      "planId": "southperry-to-lith-harbor",
+      "on": "SUCCEEDED",
+      "activation": "AVAILABLE",
+      "delayMs": 0
+    }
+  ]
+}

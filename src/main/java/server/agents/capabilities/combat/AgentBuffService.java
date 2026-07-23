@@ -36,8 +36,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class AgentBuffService {
 
-    private static final long TICK_MS = 3_000;
-    private static final double ACC_HIT_THRESHOLD = 0.90;
+    private static final long TICK_MS = config.AgentTuning.longValue("server.agents.capabilities.combat.AgentBuffService.TICK_MS");
+    private static final double ACC_HIT_THRESHOLD = config.AgentTuning.doubleValue("server.agents.capabilities.combat.AgentBuffService.ACC_HIT_THRESHOLD");
 
     /** Cheap mode skips WATK/MATK buffs stronger than this; pricier high-tier pots aren't worth it. */
     static final int CHEAP_ATK_CAP = 12;

@@ -13,6 +13,10 @@ import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentMovementBroadcastStateRuntime;
 import server.agents.capabilities.movement.AgentMovementPoseService;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
+import server.agents.capabilities.movement.AgentGroundingService;
+import server.agents.capabilities.navigation.AgentNavigationGraphService;
+import server.agents.capabilities.navigation.AgentRouteOutcome;
+import server.agents.capabilities.navigation.AgentRouteStatus;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentAttackRoute;
 import server.agents.capabilities.combat.AgentCombatObjectiveTargetStateRuntime;
@@ -29,12 +33,14 @@ import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.events.AgentEventPriority;
 import server.agents.progression.events.AgentProgressionEventPublisher;
 import server.agents.progression.events.AgentQuestStateChangedEvent;
+import server.agents.progression.AgentVictoriaRouteRuntime;
 import server.life.Monster;
 import server.life.NPC;
 import server.life.SpawnPoint;
 import server.maps.MapItem;
 import server.maps.MapObject;
 import server.maps.Reactor;
+import server.maps.MapleMap;
 import server.quest.Quest;
 
 import java.awt.Point;
@@ -325,6 +331,52 @@ public enum CosmicPrimitiveCapabilityGateway implements PrimitiveCapabilityGatew
         }
         publishQuestTransition(agent, questId, previousStatus, npcId, null);
         return succeeded;
+    }
+
+    @Override
+    public void stagePosition(AgentRuntimeEntry entry, Character agent, Point position) {
+        if (entry == null || agent == null || position == null) {
+            return;
+        }
+        AgentMovementPoseService.teleportTo(entry, agent, position);
+        AgentMovementBroadcastService.broadcastMovement(entry);
+    }
+
+    @Override
+    public Point groundPoint(MapleMap map, Point candidate) {
+        return map == null || candidate == null ? null
+                : AgentGroundingService.findGroundPoint(
+                map, new Point(candidate.x, candidate.y - 1));
+    }
+
+    @Override
+    public void prepareNavigation(AgentRuntimeEntry entry, Character agent) {
+        if (entry == null || agent == null || agent.getMap() == null) {
+            return;
+        }
+        AgentNavigationGraphService.warmGraphAsync(
+                entry, agent.getMap(), AgentMovementStateRuntime.movementProfile(entry));
+    }
+
+    @Override
+    public AgentRouteOutcome travelTo(AgentRuntimeEntry entry,
+                                      Character agent,
+                                      int destinationMapId,
+                                      long nowMs) {
+        AgentVictoriaRouteRuntime.TravelOutcome outcome =
+                AgentVictoriaRouteRuntime.travelStatus(
+                        entry, agent, destinationMapId, this, nowMs);
+        return new AgentRouteOutcome(
+                switch (outcome.status()) {
+                    case ARRIVED -> AgentRouteStatus.ARRIVED;
+                    case MOVING -> AgentRouteStatus.MOVING;
+                    case NO_ROUTE -> AgentRouteStatus.NO_ROUTE;
+                    case PORTAL_UNAVAILABLE -> AgentRouteStatus.PORTAL_UNAVAILABLE;
+                },
+                outcome.sourceMapId(),
+                outcome.nextMapId(),
+                outcome.destinationMapId(),
+                outcome.edgeBlocked());
     }
 
     @Override

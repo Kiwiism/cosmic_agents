@@ -21,7 +21,7 @@ import server.agents.runtime.async.AgentAsyncWorkKind;
  */
 public final class AgentTransferRuntime {
     private static final String TRANSFER_REQUEST_KEY = "transfer-query";
-    private static final long TRADE_COMMAND_PROFILE_WARN_NS = 50_000_000L;
+    private static final long TRADE_COMMAND_PROFILE_WARN_NS = config.AgentTuning.longValue("server.agents.capabilities.trade.AgentTransferRuntime.TRADE_COMMAND_PROFILE_WARN_NS");
 
     private record TransferCommandResult(boolean hasItems, int count, long completedAtNs) {}
     private record ItemQueryResult(int count, long completedAtNs) {}

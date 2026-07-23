@@ -54,22 +54,23 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public final class AgentShopService {
 
-    private static final int SHOP_MANHATTAN_RADIUS = 200;
-    private static final int SHOP_ARRIVE_DIST = 100;
-    private static final int SHOP_NPC_SEARCH_DIST = 601;
-    private static final int SHOP_APPROACH_DELAY_MAX_MS = 5001;
-    private static final int SHOP_STEP_DELAY_MIN_MS = 2000;
-    private static final int SHOP_STEP_DELAY_MAX_MS = 4001;
-    private static final int SELL_TRASH_STEP_DELAY_MS = 500;
-    private static final long SHOP_VISIT_TIMEOUT_MS = 30_000L;
-    private static final long SHOP_SEQUENCE_TIMEOUT_MS = 45_000L;
-    private static final long SHOP_STUCK_FALLBACK_MS = 1000L;
-    private static final int SHOP_STUCK_MOVE_TOLERANCE_PX = 2;
-    private static final int POT_TRIGGER_THRESHOLD = 4; // 80% of target (5) for early trigger
-    private static final int POT_TARGET_THRESHOLD = 5; // full target when buying at shop
-    private static final int AMMO_TRIGGER_THRESHOLD = 8;
-    private static final int AMMO_TARGET_THRESHOLD = 10; // full target when buying at shop
-    private static final int RECHARGE_MAX_SETS = 10; // cap recharge to the best N own-type stacks
+    private static final int SHOP_MANHATTAN_RADIUS = config.AgentTuning.intValue("server.agents.capabilities.shop.AgentShopService.SHOP_MANHATTAN_RADIUS");
+    private static final int SHOP_ARRIVE_DIST = config.AgentTuning.intValue("server.agents.capabilities.shop.AgentShopService.SHOP_ARRIVE_DIST");
+    private static final int SHOP_NPC_SEARCH_DIST = config.AgentTuning.intValue(
+            "server.agents.capabilities.shop.AgentShopService.SHOP_NPC_SEARCH_DIST");
+    private static final int SHOP_APPROACH_DELAY_MAX_MS = config.AgentTuning.intValue("server.agents.capabilities.shop.AgentShopService.SHOP_APPROACH_DELAY_MAX_MS");
+    private static final int SHOP_STEP_DELAY_MIN_MS = config.AgentTuning.intValue("server.agents.capabilities.shop.AgentShopService.SHOP_STEP_DELAY_MIN_MS");
+    private static final int SHOP_STEP_DELAY_MAX_MS = config.AgentTuning.intValue("server.agents.capabilities.shop.AgentShopService.SHOP_STEP_DELAY_MAX_MS");
+    private static final int SELL_TRASH_STEP_DELAY_MS = config.AgentTuning.intValue("server.agents.capabilities.shop.AgentShopService.SELL_TRASH_STEP_DELAY_MS");
+    private static final long SHOP_VISIT_TIMEOUT_MS = config.AgentTuning.longValue("server.agents.capabilities.shop.AgentShopService.SHOP_VISIT_TIMEOUT_MS");
+    private static final long SHOP_SEQUENCE_TIMEOUT_MS = config.AgentTuning.longValue("server.agents.capabilities.shop.AgentShopService.SHOP_SEQUENCE_TIMEOUT_MS");
+    private static final long SHOP_STUCK_FALLBACK_MS = config.AgentTuning.longValue("server.agents.capabilities.shop.AgentShopService.SHOP_STUCK_FALLBACK_MS");
+    private static final int SHOP_STUCK_MOVE_TOLERANCE_PX = config.AgentTuning.intValue("server.agents.capabilities.shop.AgentShopService.SHOP_STUCK_MOVE_TOLERANCE_PX");
+    private static final int POT_TRIGGER_THRESHOLD = config.AgentTuning.intValue("server.agents.capabilities.shop.AgentShopService.POT_TRIGGER_THRESHOLD"); // 80% of target (5) for early trigger
+    private static final int POT_TARGET_THRESHOLD = config.AgentTuning.intValue("server.agents.capabilities.shop.AgentShopService.POT_TARGET_THRESHOLD"); // full target when buying at shop
+    private static final int AMMO_TRIGGER_THRESHOLD = config.AgentTuning.intValue("server.agents.capabilities.shop.AgentShopService.AMMO_TRIGGER_THRESHOLD");
+    private static final int AMMO_TARGET_THRESHOLD = config.AgentTuning.intValue("server.agents.capabilities.shop.AgentShopService.AMMO_TARGET_THRESHOLD"); // full target when buying at shop
+    private static final int RECHARGE_MAX_SETS = config.AgentTuning.intValue("server.agents.capabilities.shop.AgentShopService.RECHARGE_MAX_SETS"); // cap recharge to the best N own-type stacks
 
     private AgentShopService() {}
 

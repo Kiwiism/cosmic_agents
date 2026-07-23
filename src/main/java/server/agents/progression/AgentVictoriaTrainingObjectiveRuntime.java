@@ -20,8 +20,8 @@ import java.util.Set;
 public final class AgentVictoriaTrainingObjectiveRuntime {
     public static final String OBJECTIVE_TYPE = "progression.victoria-training";
     private static final String OBJECTIVE_PREFIX = "victoria:training:";
-    private static final long NO_SELECTION_RETRY_MS = 15_000L;
-    private static final long DESTINATION_RETRY_MS = 120_000L;
+    private static final long NO_SELECTION_RETRY_MS = config.AgentTuning.longValue("server.agents.progression.AgentVictoriaTrainingObjectiveRuntime.NO_SELECTION_RETRY_MS");
+    private static final long DESTINATION_RETRY_MS = config.AgentTuning.longValue("server.agents.progression.AgentVictoriaTrainingObjectiveRuntime.DESTINATION_RETRY_MS");
 
     private AgentVictoriaTrainingObjectiveRuntime() {
     }

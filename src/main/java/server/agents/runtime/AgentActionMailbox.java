@@ -17,6 +17,12 @@ import java.util.function.LongSupplier;
 
 /** Bounded per-session FIFO for immutable actions entering from external threads. */
 public final class AgentActionMailbox {
+    private static final int MIN_CAPACITY = config.AgentTuning.intValue(
+            "server.agents.runtime.AgentActionMailbox.MIN_CAPACITY");
+    private static final int MAX_CRITICAL_RESERVE = config.AgentTuning.intValue(
+            "server.agents.runtime.AgentActionMailbox.MAX_CRITICAL_RESERVE");
+    private static final int CRITICAL_RESERVE_DIVISOR = config.AgentTuning.intValue(
+            "server.agents.runtime.AgentActionMailbox.CRITICAL_RESERVE_DIVISOR");
     private record Envelope<R>(long sessionGeneration,
                                AgentMailboxAction<R> action,
                                AgentMailboxOptions options,
@@ -35,8 +41,10 @@ public final class AgentActionMailbox {
     }
 
     AgentActionMailbox(int capacity, LongSupplier nowMs) {
-        this.capacity = Math.max(1, capacity);
-        this.criticalReserve = Math.max(1, Math.min(32, this.capacity / 4));
+        this.capacity = Math.max(MIN_CAPACITY, capacity);
+        this.criticalReserve = Math.max(
+                MIN_CAPACITY,
+                Math.min(MAX_CRITICAL_RESERVE, this.capacity / CRITICAL_RESERVE_DIVISOR));
         this.nowMs = nowMs;
     }
 
@@ -96,7 +104,7 @@ public final class AgentActionMailbox {
 
     public int drain(AgentRuntimeEntry entry, int maxActions) {
         int drained = 0;
-        int limit = Math.max(1, maxActions);
+        int limit = Math.max(MIN_CAPACITY, maxActions);
         while (drained < limit) {
             Envelope<?> envelope;
             synchronized (this) {

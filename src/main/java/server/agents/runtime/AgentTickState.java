@@ -3,11 +3,15 @@ package server.agents.runtime;
 import java.util.concurrent.ThreadLocalRandom;
 
 public final class AgentTickState {
+    private static final int INITIAL_SKIP_DELAY_MAX_EXCLUSIVE_MS = config.AgentTuning.intValue(
+            "server.agents.runtime.AgentTickState.INITIAL_SKIP_DELAY_MAX_EXCLUSIVE_MS");
     private boolean lastTickWasAi = false;
     private long lastTickAtMs = 0L;
     private long lastHeartbeatAtMs = 0L;
     private long nextFollowIdleMovementCheckAtMs = 0L;
-    private int skipDelayMs = ThreadLocalRandom.current().nextInt(0, 501);
+    private int skipDelayMs = ThreadLocalRandom.current().nextInt(
+            0,
+            INITIAL_SKIP_DELAY_MAX_EXCLUSIVE_MS);
     private int aiTickAccumulatorMs = 0;
 
     public boolean lastTickWasAi() {

@@ -30,15 +30,15 @@ final class AgentTownLifeMemory {
                                AgentTownLifeEncounterState.Type lastType) {
     }
 
-    private static final int RECENT_ACTIVITY_LIMIT = 3;
-    private static final int RECENT_SOCIAL_LIMIT = 16;
-    private static final int RELATIONSHIP_LIMIT = 24;
-    private static final int DESTINATION_LIMIT = 24;
-    private static final long DESTINATION_COOLDOWN_MS = 60_000L;
-    private static final long FAILED_DESTINATION_COOLDOWN_MS = 120_000L;
-    private static final long COMPLETED_PEER_COOLDOWN_MS = 90_000L;
-    private static final long CANCELLED_PEER_COOLDOWN_MS = 45_000L;
-    private static final long DECLINED_PEER_COOLDOWN_MS = 180_000L;
+    private static final int RECENT_ACTIVITY_LIMIT = config.AgentTuning.intValue("server.agents.capabilities.townlife.AgentTownLifeMemory.RECENT_ACTIVITY_LIMIT");
+    private static final int RECENT_SOCIAL_LIMIT = config.AgentTuning.intValue("server.agents.capabilities.townlife.AgentTownLifeMemory.RECENT_SOCIAL_LIMIT");
+    private static final int RELATIONSHIP_LIMIT = config.AgentTuning.intValue("server.agents.capabilities.townlife.AgentTownLifeMemory.RELATIONSHIP_LIMIT");
+    private static final int DESTINATION_LIMIT = config.AgentTuning.intValue("server.agents.capabilities.townlife.AgentTownLifeMemory.DESTINATION_LIMIT");
+    private static final long DESTINATION_COOLDOWN_MS = config.AgentTuning.longValue("server.agents.capabilities.townlife.AgentTownLifeMemory.DESTINATION_COOLDOWN_MS");
+    private static final long FAILED_DESTINATION_COOLDOWN_MS = config.AgentTuning.longValue("server.agents.capabilities.townlife.AgentTownLifeMemory.FAILED_DESTINATION_COOLDOWN_MS");
+    private static final long COMPLETED_PEER_COOLDOWN_MS = config.AgentTuning.longValue("server.agents.capabilities.townlife.AgentTownLifeMemory.COMPLETED_PEER_COOLDOWN_MS");
+    private static final long CANCELLED_PEER_COOLDOWN_MS = config.AgentTuning.longValue("server.agents.capabilities.townlife.AgentTownLifeMemory.CANCELLED_PEER_COOLDOWN_MS");
+    private static final long DECLINED_PEER_COOLDOWN_MS = config.AgentTuning.longValue("server.agents.capabilities.townlife.AgentTownLifeMemory.DECLINED_PEER_COOLDOWN_MS");
 
     private final ArrayDeque<AgentTownLifeState.Activity> recentActivities = new ArrayDeque<>();
     private final ArrayDeque<SocialMemory> recentSocial = new ArrayDeque<>();

@@ -8,8 +8,8 @@ import java.util.regex.Pattern;
 public final class AgentCommandParser {
     private static final Pattern TRANSFER_PATTERN = Pattern.compile(
             "\\btransfer\\s+(\\S+)(?:\\s+to)?\\s+(\\S+)\\b", Pattern.CASE_INSENSITIVE);
-    private static final int MIN_PREFIX_TARGET_LENGTH = 2;
-    private static final int MAX_NUMERIC_TARGET_SLOT = 5;
+    private static final int MIN_PREFIX_TARGET_LENGTH = config.AgentTuning.intValue("server.agents.commands.AgentCommandParser.MIN_PREFIX_TARGET_LENGTH");
+    private static final int MAX_NUMERIC_TARGET_SLOT = config.AgentTuning.intValue("server.agents.commands.AgentCommandParser.MAX_NUMERIC_TARGET_SLOT");
 
     private AgentCommandParser() {
     }

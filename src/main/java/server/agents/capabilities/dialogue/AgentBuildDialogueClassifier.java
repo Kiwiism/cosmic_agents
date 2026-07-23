@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
 public final class AgentBuildDialogueClassifier {
     public static final String ONE_HANDED_SP_VARIANT = "1h";
     public static final String TWO_HANDED_SP_VARIANT = "2h";
-    private static final int MAX_AP_BUILD_TARGET = 999;
+    private static final int MAX_AP_BUILD_TARGET = config.AgentTuning.intValue("server.agents.capabilities.dialogue.AgentBuildDialogueClassifier.MAX_AP_BUILD_TARGET");
 
     private static final Pattern JOB_SELECT_PATTERN = Pattern.compile(
             "\\b(warrior|fighter|page|spearman|sader|crusader|hero|dk|drk|dark knight|paladin|"

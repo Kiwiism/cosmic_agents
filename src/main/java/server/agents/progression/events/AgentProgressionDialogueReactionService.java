@@ -15,9 +15,9 @@ public final class AgentProgressionDialogueReactionService implements AgentEvent
     public static final String LEVEL_INTENT = "progression.level";
     public static final String JOB_INTENT = "progression.job";
     public static final String QUEST_INTENT = "progression.quest-complete";
-    private static final long LEVEL_COOLDOWN_MS = 15_000L;
-    private static final long JOB_COOLDOWN_MS = 30_000L;
-    private static final long QUEST_COOLDOWN_MS = 10_000L;
+    private static final long LEVEL_COOLDOWN_MS = config.AgentTuning.longValue("server.agents.progression.events.AgentProgressionDialogueReactionService.LEVEL_COOLDOWN_MS");
+    private static final long JOB_COOLDOWN_MS = config.AgentTuning.longValue("server.agents.progression.events.AgentProgressionDialogueReactionService.JOB_COOLDOWN_MS");
+    private static final long QUEST_COOLDOWN_MS = config.AgentTuning.longValue("server.agents.progression.events.AgentProgressionDialogueReactionService.QUEST_COOLDOWN_MS");
 
     private final AgentEventBus bus;
 

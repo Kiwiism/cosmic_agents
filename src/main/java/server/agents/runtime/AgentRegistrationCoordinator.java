@@ -8,6 +8,7 @@ import server.agents.progression.AgentCareerBuildBundle;
 import server.agents.progression.AgentCareerProgressionCheckpointRuntime;
 import server.agents.objectives.AgentObjectiveCheckpointRuntime;
 import server.agents.plans.AgentPlanReattachmentRuntime;
+import server.agents.plans.AgentPlanCheckpointRuntime;
 
 /**
  * Runtime coordinator for Agent registration, scheduling, formation defaults,
@@ -72,6 +73,7 @@ public final class AgentRegistrationCoordinator {
         AgentPersonalityRuntime.restoreOrAssign(entry, false, nowMs);
         AgentObjectiveCheckpointRuntime.restore(entry);
         AgentCareerProgressionCheckpointRuntime.restore(entry, bundle);
+        AgentPlanCheckpointRuntime.restore(entry);
         AgentPlanReattachmentRuntime.reattachIfNeeded(entry, agent, nowMs);
         return entry;
     }

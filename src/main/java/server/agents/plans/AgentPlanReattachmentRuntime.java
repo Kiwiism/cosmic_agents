@@ -22,7 +22,7 @@ import java.util.Map;
 /** Recreates transient plan runners from durable objective identity after relog/restart. */
 public final class AgentPlanReattachmentRuntime {
     private static final Logger log = LoggerFactory.getLogger(AgentPlanReattachmentRuntime.class);
-    private static final long RETRY_DELAY_MS = 10_000L;
+    private static final long RETRY_DELAY_MS = config.AgentTuning.longValue("server.agents.plans.AgentPlanReattachmentRuntime.RETRY_DELAY_MS");
     private static final String MAPLE_OBJECTIVE_TYPE = "maple-island-progression";
     private static final AgentObjectiveHandlerRegistry HANDLERS = new AgentObjectiveHandlerRegistry(Map.of(
             MAPLE_OBJECTIVE_TYPE, AgentPlanReattachmentRuntime::attachMapleIsland,
@@ -37,6 +37,10 @@ public final class AgentPlanReattachmentRuntime {
     public static boolean reattachIfNeeded(AgentRuntimeEntry entry, Character agent, long nowMs) {
         if (entry == null || agent == null) {
             return false;
+        }
+        if (entry.capabilityStates().find(AgentPlanSessionState.STATE_KEY)
+                .map(AgentPlanSessionState::active).orElse(false)) {
+            return AgentUniversalPlanRuntime.reattach(entry, agent, nowMs);
         }
         AgentObjectiveDefinition active = AgentObjectiveKernel.active(entry);
         if (active == null || HANDLERS.handlerFor(active.type()).isEmpty()) {

@@ -38,7 +38,7 @@ import server.maps.Rope;
  * Attach to AgentRuntimeEntry.pathLogger to start recording; call dumpToFile() to write the report.
  */
 public final class AgentPathLogger {
-    private static final int MAX_TICKS = 120; // 6s at 50ms tick
+    private static final int MAX_TICKS = config.AgentTuning.intValue("server.agents.monitoring.AgentPathLogger.MAX_TICKS"); // 6s at 50ms tick
     private static final Path LOG_DIR = Path.of("logs", "bot-nav");
     private static final DateTimeFormatter FILE_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HHmmss");
     private static final DateTimeFormatter HEADER_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");

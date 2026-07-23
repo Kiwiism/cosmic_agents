@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 public final class AmherstPlanProgressService {
-    private static final int MAX_JOURNAL_EVENTS = 512;
+    private static final int MAX_JOURNAL_EVENTS = config.AgentTuning.intValue("server.agents.plans.amherst.AmherstPlanProgressService.MAX_JOURNAL_EVENTS");
 
     public AmherstPlanProgressSnapshot ensureObjectives(AmherstPlanProgressSnapshot snapshot,
                                                         AmherstPlanCard card,

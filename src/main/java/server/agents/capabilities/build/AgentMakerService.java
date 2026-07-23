@@ -33,9 +33,9 @@ import java.util.concurrent.ThreadLocalRandom;
  * {@link AgentScriptTaskStateRuntime#activityEpoch(AgentRuntimeEntry)}.
  */
 public final class AgentMakerService {
-    private static final int LEFTOVERS_PER_CRYSTAL = 100;   // Maker type-3 recipe req count
-    private static final long STEP_INTERVAL_MS = 5000L;     // 5 seconds per operation
-    private static final int LONG_BATCH_THRESHOLD = 10;     // "will take a while" past this many ops
+    private static final int LEFTOVERS_PER_CRYSTAL = config.AgentTuning.intValue("server.agents.capabilities.build.AgentMakerService.LEFTOVERS_PER_CRYSTAL");   // Maker type-3 recipe req count
+    private static final long STEP_INTERVAL_MS = config.AgentTuning.longValue("server.agents.capabilities.build.AgentMakerService.STEP_INTERVAL_MS");     // 5 seconds per operation
+    private static final int LONG_BATCH_THRESHOLD = config.AgentTuning.intValue("server.agents.capabilities.build.AgentMakerService.LONG_BATCH_THRESHOLD");     // "will take a while" past this many ops
     private static final int NO_MORE = Integer.MIN_VALUE;   // batch step sentinel: nothing left to do
     private static final Set<Integer> ACTIVE = ConcurrentHashMap.newKeySet();
 

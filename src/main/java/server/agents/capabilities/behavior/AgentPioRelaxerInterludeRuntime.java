@@ -9,7 +9,7 @@ import server.agents.capabilities.movement.fidget.AgentFidgetService;
 import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
 import server.agents.integration.PrimitiveCapabilityGateway;
 import server.agents.personality.AgentPersonalityState;
-import server.agents.plans.AgentPlanPauseRuntime;
+import server.agents.runtime.AgentForegroundPauseRuntime;
 import server.agents.plans.amherst.MapleIslandRelaxerSpotCatalog;
 import server.agents.plans.amherst.MapleIslandRelaxerSpotReservationRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -19,11 +19,11 @@ import java.awt.Point;
 /** Executes the reserved post-Pio chair interlude ahead of ordinary plan work. */
 public final class AgentPioRelaxerInterludeRuntime {
     public static final String PAUSE_REASON = "pio-relaxer-interlude";
-    private static final long MAX_SPOT_WAIT_MS = 15_000L;
-    private static final int ARRIVAL_X_PX = 24;
-    private static final int ARRIVAL_Y_PX = 45;
-    private static final long TOGGLE_MIN_MS = 900L;
-    private static final long TOGGLE_MAX_MS = 1_800L;
+    private static final long MAX_SPOT_WAIT_MS = config.AgentTuning.longValue("server.agents.capabilities.behavior.AgentPioRelaxerInterludeRuntime.MAX_SPOT_WAIT_MS");
+    private static final int ARRIVAL_X_PX = config.AgentTuning.intValue("server.agents.capabilities.behavior.AgentPioRelaxerInterludeRuntime.ARRIVAL_X_PX");
+    private static final int ARRIVAL_Y_PX = config.AgentTuning.intValue("server.agents.capabilities.behavior.AgentPioRelaxerInterludeRuntime.ARRIVAL_Y_PX");
+    private static final long TOGGLE_MIN_MS = config.AgentTuning.longValue("server.agents.capabilities.behavior.AgentPioRelaxerInterludeRuntime.TOGGLE_MIN_MS");
+    private static final long TOGGLE_MAX_MS = config.AgentTuning.longValue("server.agents.capabilities.behavior.AgentPioRelaxerInterludeRuntime.TOGGLE_MAX_MS");
     private static final long TOGGLE_DOMAIN = 0x50494F2D544F4747L;
 
     private AgentPioRelaxerInterludeRuntime() {
@@ -138,7 +138,7 @@ public final class AgentPioRelaxerInterludeRuntime {
             MapleIslandRelaxerSpotReservationRuntime.release(agent.getId());
         }
         state.clear();
-        AgentPlanPauseRuntime.resume(entry, PAUSE_REASON, nowMs);
+        AgentForegroundPauseRuntime.resume(entry, PAUSE_REASON, nowMs);
     }
 
     private static long mix(long value) {

@@ -18,9 +18,9 @@ class MapTransitionPacketTraceRuntimeTest {
 
     @Test
     void writesBoundedOpcodeTraceWhenClientDropsAfterWarp() throws Exception {
-        boolean previousEnabled = YamlConfig.config.server.AGENT_MAP_TRANSITION_PACKET_DIAGNOSTICS;
+        boolean previousEnabled = config.AgentYamlConfig.config.agent.AGENT_MAP_TRANSITION_PACKET_DIAGNOSTICS;
         String previousDirectory = System.getProperty("agents.map.transition.trace.dir");
-        YamlConfig.config.server.AGENT_MAP_TRANSITION_PACKET_DIAGNOSTICS = true;
+        config.AgentYamlConfig.config.agent.AGENT_MAP_TRANSITION_PACKET_DIAGNOSTICS = true;
         System.setProperty("agents.map.transition.trace.dir", temporaryDirectory.toString());
         Client client = Client.createMock();
 
@@ -44,7 +44,7 @@ class MapTransitionPacketTraceRuntimeTest {
             assertTrue(content.contains("DISCONNECT channel inactive"));
         } finally {
             MapTransitionPacketTraceRuntime.clearForTest();
-            YamlConfig.config.server.AGENT_MAP_TRANSITION_PACKET_DIAGNOSTICS = previousEnabled;
+            config.AgentYamlConfig.config.agent.AGENT_MAP_TRANSITION_PACKET_DIAGNOSTICS = previousEnabled;
             if (previousDirectory == null) {
                 System.clearProperty("agents.map.transition.trace.dir");
             } else {

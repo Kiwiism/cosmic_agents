@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "planId": "southperry-to-lith-harbor",
+  "planVersion": "1",
+  "title": "Southperry to Lith Harbor Transfer",
+  "status": "executable",
+  "objective": {
+    "type": "progression.world-transfer",
+    "priority": 100,
+    "deadlineMs": 9223372036854775807,
+    "retryBudget": 3,
+    "source": "QUEST_PLAN",
+    "behaviorVersion": "southperry-lith-transfer-v1",
+    "registration": "EXECUTOR"
+  },
+  "entryCriteria": [
+    { "fact": "map.id", "operator": "eq", "value": 2000000 },
+    { "fact": "quest.1046", "operator": "active", "value": true }
+  ],
+  "steps": [
+    {
+      "stepId": "walk-to-shanks-and-cross",
+      "operation": "southperry-lith-transfer",
+      "capabilityIds": ["navigation.portal-route", "interaction.npc-script", "recovery.physics"],
+      "parameters": { "npcId": 22000, "destinationMapId": 104000000 },
+      "timeoutMs": 120000,
+      "retryBudget": 3
+    }
+  ],
+  "exitCriteria": [
+    { "fact": "map.id", "operator": "eq", "value": 104000000 },
+    { "fact": "navigation.lithTownSide", "operator": "eq", "value": true }
+  ],
+  "successors": [
+    { "planId": "victoria-warrior-level30", "on": "SUCCEEDED", "activation": "AVAILABLE", "delayMs": 0 },
+    { "planId": "victoria-bowman-level30", "on": "SUCCEEDED", "activation": "AVAILABLE", "delayMs": 0 },
+    { "planId": "victoria-magician-level30", "on": "SUCCEEDED", "activation": "AVAILABLE", "delayMs": 0 },
+    { "planId": "victoria-thief-level30", "on": "SUCCEEDED", "activation": "AVAILABLE", "delayMs": 0 },
+    { "planId": "victoria-pirate-level30", "on": "SUCCEEDED", "activation": "AVAILABLE", "delayMs": 0 }
+  ]
+}

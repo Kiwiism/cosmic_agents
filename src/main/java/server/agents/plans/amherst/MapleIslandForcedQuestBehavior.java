@@ -7,10 +7,10 @@ import server.agents.runtime.AgentRuntimeEntry;
 import java.util.concurrent.ThreadLocalRandom;
 
 final class MapleIslandForcedQuestBehavior {
-    private static final long MIN_CASH_SHOP_VISIT_MS = 2_500L;
-    private static final long MAX_CASH_SHOP_VISIT_MS = 5_000L;
-    private static final long SAFETY_RESTORE_GRACE_MS = 2_000L;
-    private static final long RETURN_LANDING_SETTLE_MS = 3_000L;
+    private static final long MIN_CASH_SHOP_VISIT_MS = config.AgentTuning.longValue("server.agents.plans.amherst.MapleIslandForcedQuestBehavior.MIN_CASH_SHOP_VISIT_MS");
+    private static final long MAX_CASH_SHOP_VISIT_MS = config.AgentTuning.longValue("server.agents.plans.amherst.MapleIslandForcedQuestBehavior.MAX_CASH_SHOP_VISIT_MS");
+    private static final long SAFETY_RESTORE_GRACE_MS = config.AgentTuning.longValue("server.agents.plans.amherst.MapleIslandForcedQuestBehavior.SAFETY_RESTORE_GRACE_MS");
+    private static final long RETURN_LANDING_SETTLE_MS = config.AgentTuning.longValue("server.agents.plans.amherst.MapleIslandForcedQuestBehavior.RETURN_LANDING_SETTLE_MS");
 
     private MapleIslandForcedQuestBehavior() {
     }

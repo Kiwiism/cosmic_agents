@@ -11,7 +11,7 @@ import server.agents.personality.AgentPersonalityAssignment;
 import server.agents.personality.AgentPersonalityProfile;
 import server.agents.personality.AgentPersonalityProfileRepository;
 import server.agents.personality.AgentPersonalityState;
-import server.agents.plans.AgentPlanPauseRuntime;
+import server.agents.runtime.AgentForegroundPauseRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
@@ -37,7 +37,7 @@ class AgentPioRelaxerInterludeRuntimeTest {
         assertFalse(AgentPioRelaxerInterludeRuntime.tick(
                 fixture.entry, fixture.agent, 17_000L, true, fixture.gateway));
         assertFalse(fixture.state.active());
-        assertFalse(AgentPlanPauseRuntime.paused(fixture.entry));
+        assertFalse(AgentForegroundPauseRuntime.paused(fixture.entry));
     }
 
     @Test
@@ -79,7 +79,8 @@ class AgentPioRelaxerInterludeRuntimeTest {
                 .require(AgentPioRelaxerInterludeState.STATE_KEY);
         state.request(mode, durationMs, 1_000L);
         state.assignSpot(new Point(300, 274));
-        AgentPlanPauseRuntime.pause(entry, AgentPioRelaxerInterludeRuntime.PAUSE_REASON, 1_000L);
+        AgentForegroundPauseRuntime.pause(
+                entry, AgentPioRelaxerInterludeRuntime.PAUSE_REASON, 1_000L);
         return new Fixture(entry, agent, gateway, state);
     }
 

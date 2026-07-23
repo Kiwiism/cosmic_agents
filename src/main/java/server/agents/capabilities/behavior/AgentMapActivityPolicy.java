@@ -16,8 +16,8 @@ import server.maps.MapleMap;
 
 /** Stateless fairness scheduler: personality affects rank, a rotating epoch prevents permanent idling. */
 public final class AgentMapActivityPolicy {
-    private static final long ROTATION_MS = 20_000L;
-    private static final long DECISION_CACHE_MS = 500L;
+    private static final long ROTATION_MS = config.AgentTuning.longValue("server.agents.capabilities.behavior.AgentMapActivityPolicy.ROTATION_MS");
+    private static final long DECISION_CACHE_MS = config.AgentTuning.longValue("server.agents.capabilities.behavior.AgentMapActivityPolicy.DECISION_CACHE_MS");
     private static final Map<MapleMap, DecisionWindow> DECISIONS = new ConcurrentHashMap<>();
 
     private AgentMapActivityPolicy() {
@@ -43,10 +43,10 @@ public final class AgentMapActivityPolicy {
                 })
                 .sorted(Comparator.comparingInt(peer -> -priority(peer, nowMs)))
                 .toList();
-        int minimum = Math.max(1, YamlConfig.config.server.AGENT_MAP_CROWD_MIN_AGENTS);
+        int minimum = Math.max(1, config.AgentYamlConfig.config.agent.AGENT_MAP_CROWD_MIN_AGENTS);
         if (peers.size() < minimum) return new DecisionWindow(nowMs, Set.of());
         int activeSlots = Math.max(1, (int) Math.ceil(peers.size()
-                * Math.max(1, Math.min(100, YamlConfig.config.server.AGENT_MAP_MAX_ACTIVE_COMBAT_PERCENT)) / 100.0));
+                * Math.max(1, Math.min(100, config.AgentYamlConfig.config.agent.AGENT_MAP_MAX_ACTIVE_COMBAT_PERCENT)) / 100.0));
         Set<Integer> resting = peers.stream().skip(activeSlots)
                 .filter(peer -> AgentBehaviorRuntime.calibration(peer)
                         .stablePercent("crowd-eligible", nowMs / ROTATION_MS)

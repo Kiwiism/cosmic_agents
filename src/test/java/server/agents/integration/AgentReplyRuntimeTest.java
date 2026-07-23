@@ -24,13 +24,13 @@ class AgentReplyRuntimeTest {
 
     @BeforeEach
     void enableLegacyDialogueForParityTests() {
-        previousLegacyDialogue = YamlConfig.config.server.AGENT_LEGACY_DIALOGUE_ENABLED;
-        YamlConfig.config.server.AGENT_LEGACY_DIALOGUE_ENABLED = true;
+        previousLegacyDialogue = config.AgentYamlConfig.config.agent.AGENT_LEGACY_DIALOGUE_ENABLED;
+        config.AgentYamlConfig.config.agent.AGENT_LEGACY_DIALOGUE_ENABLED = true;
     }
 
     @AfterEach
     void restoreLegacyDialogueFlag() {
-        YamlConfig.config.server.AGENT_LEGACY_DIALOGUE_ENABLED = previousLegacyDialogue;
+        config.AgentYamlConfig.config.agent.AGENT_LEGACY_DIALOGUE_ENABLED = previousLegacyDialogue;
     }
 
     @Test
@@ -102,7 +102,7 @@ class AgentReplyRuntimeTest {
         MapleMap map = mock(MapleMap.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
         when(bot.getMap()).thenReturn(map);
-        YamlConfig.config.server.AGENT_LEGACY_DIALOGUE_ENABLED = false;
+        config.AgentYamlConfig.config.agent.AGENT_LEGACY_DIALOGUE_ENABLED = false;
 
         AgentReplyRuntime.queueSay(entry, "ambient");
         AgentReplyRuntime.visibleSayNow(entry, "ambient");

@@ -27,7 +27,8 @@ The first post-Maple-Island vertical slice is complete only when an Agent can re
 The state machine is now described and content-driven by two versioned resources instead of duplicated content
 switches:
 
-- `src/main/resources/agents/plans/victoria-level15-mvp.plan.json` declares entry/exit criteria, the ordered stages,
+- `src/main/resources/agents/progression/victoria-level15-stage-contract.json` declares the internal
+  level-15 step stages and postconditions used by the universal `victoria-level15-mvp` plan,
   and every capability the slice depends on;
 - `src/main/resources/agents/catalogs/victoria-level15-mvp-catalog.json` owns taxi selections, town/instructor/shop
   locations, Biggs/Olaf handoff quests, three reset variants, each career's Olaf path, native starter-kit items,

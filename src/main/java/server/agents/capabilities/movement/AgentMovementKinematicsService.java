@@ -5,9 +5,9 @@ import server.maps.MapleMap;
 public final class AgentMovementKinematicsService {
     static final double CLIENT_GROUND_STEP_MS = 8.0;
     private static final double CLIENT_GROUND_STEP_S = CLIENT_GROUND_STEP_MS / 1000.0;
-    private static final double GROUNDSLIP = 3.0;
-    private static final double FRICTION = 0.3;
-    private static final double SLOPEFACTOR = 0.1;
+    private static final double GROUNDSLIP = config.AgentTuning.doubleValue("server.agents.capabilities.movement.AgentMovementKinematicsService.GROUNDSLIP");
+    private static final double FRICTION = config.AgentTuning.doubleValue("server.agents.capabilities.movement.AgentMovementKinematicsService.FRICTION");
+    private static final double SLOPEFACTOR = config.AgentTuning.doubleValue("server.agents.capabilities.movement.AgentMovementKinematicsService.SLOPEFACTOR");
 
     private AgentMovementKinematicsService() {
     }

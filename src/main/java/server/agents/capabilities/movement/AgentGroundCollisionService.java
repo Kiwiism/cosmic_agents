@@ -12,7 +12,7 @@ import java.awt.Rectangle;
  * Agent-owned seam for grounded collision and ledge queries.
  */
 public final class AgentGroundCollisionService {
-    private static final int REGION_STITCH_GAP_PX = 2;
+    private static final int REGION_STITCH_GAP_PX = config.AgentTuning.intValue("server.agents.capabilities.movement.AgentGroundCollisionService.REGION_STITCH_GAP_PX");
     private static final int SYNTHETIC_MAP_BOUND_SIZE = 1 << 18;
 
     private AgentGroundCollisionService() {

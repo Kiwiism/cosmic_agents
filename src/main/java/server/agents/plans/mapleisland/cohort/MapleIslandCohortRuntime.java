@@ -34,6 +34,9 @@ import server.agents.plans.amherst.AmherstPlanObservation;
 import server.agents.plans.amherst.AmherstPlanObserver;
 import server.agents.plans.amherst.MapleIslandSouthperryQuestCatalog;
 import server.agents.plans.mapleisland.AgentMapleIslandPlanRuntime;
+import server.agents.plans.AgentOrderedPlanStartOptions;
+import server.agents.plans.AgentPlanStartRequest;
+import server.agents.plans.AgentUniversalPlanRuntime;
 import server.agents.objectives.AgentObjectiveCheckpointRuntime;
 import server.agents.progression.AgentCareerProgressionCheckpointRuntime;
 import server.agents.runtime.AgentInteractionRuntime;
@@ -55,6 +58,7 @@ import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Map;
 
 /** Process-level composition root for the persistent pool and one cohort per world/channel. */
 public final class MapleIslandCohortRuntime {
@@ -77,7 +81,7 @@ public final class MapleIslandCohortRuntime {
         runs = new MapleIslandCohortRunService(liveHooks());
         townLifeTests = new MapleIslandCohortRunService(
                 townLifeHooks(),
-                Math.clamp(YamlConfig.config.server.AGENT_MAPLE_ISLAND_COHORT_MAX_TOTAL,
+                Math.clamp(config.AgentYamlConfig.config.agent.AGENT_MAPLE_ISLAND_COHORT_MAX_TOTAL,
                         1, MapleIslandCohortRunService.ABSOLUTE_MAX_TOTAL),
                 Long.MAX_VALUE / 4,
                 System::currentTimeMillis);
@@ -100,10 +104,10 @@ public final class MapleIslandCohortRuntime {
 
     public MapleIslandCohortRunService.Status start(MapleIslandCohortRunService.StartRequest request)
             throws IOException {
-        if (!YamlConfig.config.server.AGENT_MAPLE_ISLAND_COHORT_ENABLED) {
+        if (!config.AgentYamlConfig.config.agent.AGENT_MAPLE_ISLAND_COHORT_ENABLED) {
             throw new IllegalStateException("Maple Island cohort provisioning and runs are disabled");
         }
-        if (!YamlConfig.config.server.AGENT_MAPLE_ISLAND_SHOWCASE_ENABLED) {
+        if (!config.AgentYamlConfig.config.agent.AGENT_MAPLE_ISLAND_SHOWCASE_ENABLED) {
             throw new IllegalStateException("Maple Island showcase runs are disabled");
         }
         pool.recoverStaleLeases(activeSessionIds());
@@ -131,10 +135,10 @@ public final class MapleIslandCohortRuntime {
 
     public MapleIslandCohortRunService.Status startLithHarborTownLifeTest(
             MapleIslandCohortRunService.StartRequest request) throws IOException {
-        if (!YamlConfig.config.server.AGENT_MAPLE_ISLAND_COHORT_ENABLED) {
+        if (!config.AgentYamlConfig.config.agent.AGENT_MAPLE_ISLAND_COHORT_ENABLED) {
             throw new IllegalStateException("Maple Island cohort provisioning and runs are disabled");
         }
-        if (!YamlConfig.config.server.AGENT_MAPLE_ISLAND_SHOWCASE_ENABLED) {
+        if (!config.AgentYamlConfig.config.agent.AGENT_MAPLE_ISLAND_SHOWCASE_ENABLED) {
             throw new IllegalStateException("Maple Island showcase runs are disabled");
         }
         pool.recoverStaleLeases(activeSessionIds());
@@ -338,6 +342,7 @@ public final class MapleIslandCohortRuntime {
             }
             AmherstPlanCard card = AgentMapleIslandPlanRuntime.fullCard();
             AgentMapleIslandPlanRuntime.defaultStore().delete(card.planId(), agent.getId());
+            AgentUniversalPlanRuntime.clearCheckpoint(entry, agent.getId());
             // CLEAN_LV1_START normally preserves the visible portal-entry fall. A cohort
             // launch instead settles at the resolved foothold before its first intention.
             AgentSpawnPlacementCoordinator.normalizeSpawnedAgentWithoutParty(entry);
@@ -345,8 +350,9 @@ public final class MapleIslandCohortRuntime {
             long initialIntentionDelayMs =
                     MapleIslandCohortRealismService.initialIntentionDelayMs(agentSeed);
             int agentId = agent.getId();
-            AgentMapleIslandPlanRuntime.startFullAuto(entry, agent, System.currentTimeMillis(),
-                    new AmherstPlanObserver() {
+            AgentUniversalPlanRuntime.start(entry, agent, "maple-island-full-mvp",
+                    new AgentPlanStartRequest(Map.of(),
+                            AgentOrderedPlanStartOptions.automatic(new AmherstPlanObserver() {
                         @Override
                         public void publish(String event) {
                             log.debug("Maple Island cohort session={} agent={} {}",
@@ -357,7 +363,7 @@ public final class MapleIslandCohortRuntime {
                         public void observe(AmherstPlanObservation observation) {
                             telemetry.observe(agentId, observation);
                         }
-                    }, initialIntentionDelayMs);
+                    }, initialIntentionDelayMs)), System.currentTimeMillis());
             pool.markActive(pooled.characterId(), context.sessionId(), System.currentTimeMillis());
         } catch (Exception | Error failure) {
             telemetry.startupFailed(context.sessionId(), pooled.name());

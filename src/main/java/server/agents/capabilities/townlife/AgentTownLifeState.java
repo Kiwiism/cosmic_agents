@@ -5,8 +5,8 @@ import server.agents.runtime.state.AgentCapabilityStateKey;
 import java.awt.Point;
 
 public final class AgentTownLifeState {
-    private static final int MIN_INITIAL_RESPONSE_DELAY_MS = 500;
-    private static final int MAX_INITIAL_RESPONSE_DELAY_MS = 10_000;
+    private static final int MIN_INITIAL_RESPONSE_DELAY_MS = config.AgentTuning.intValue("server.agents.capabilities.townlife.AgentTownLifeState.MIN_INITIAL_RESPONSE_DELAY_MS");
+    private static final int MAX_INITIAL_RESPONSE_DELAY_MS = config.AgentTuning.intValue("server.agents.capabilities.townlife.AgentTownLifeState.MAX_INITIAL_RESPONSE_DELAY_MS");
     public static final AgentCapabilityStateKey<AgentTownLifeState> STATE_KEY =
             new AgentCapabilityStateKey<>(
                     "town-life", AgentTownLifeState.class, AgentTownLifeState::new);

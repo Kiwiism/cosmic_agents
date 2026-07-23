@@ -17,7 +17,7 @@ import java.util.List;
  * registry, formation state, and follow capability.
  */
 public final class AgentTargetSnapshotCoordinator {
-    private static final int PLATFORM_EDGE_INSET_PX = 12;
+    private static final int PLATFORM_EDGE_INSET_PX = config.AgentTuning.intValue("server.agents.runtime.AgentTargetSnapshotCoordinator.PLATFORM_EDGE_INSET_PX");
 
     private AgentTargetSnapshotCoordinator() {
     }

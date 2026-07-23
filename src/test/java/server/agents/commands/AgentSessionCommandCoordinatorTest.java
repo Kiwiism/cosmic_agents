@@ -33,14 +33,14 @@ class AgentSessionCommandCoordinatorTest {
     @BeforeEach
     void enableLegacyOwnerCompatibilityForLegacyCommandCoverage() {
         originalLegacyOwnerCompatibility =
-                YamlConfig.config.server.AGENT_LEGACY_OWNER_COMPATIBILITY_ENABLED;
-        YamlConfig.config.server.AGENT_LEGACY_OWNER_COMPATIBILITY_ENABLED = true;
+                config.AgentYamlConfig.config.agent.AGENT_LEGACY_OWNER_COMPATIBILITY_ENABLED;
+        config.AgentYamlConfig.config.agent.AGENT_LEGACY_OWNER_COMPATIBILITY_ENABLED = true;
     }
 
     @AfterEach
     void clearSchedulerMode() {
         System.clearProperty("agents.scheduler.mode");
-        YamlConfig.config.server.AGENT_LEGACY_OWNER_COMPATIBILITY_ENABLED =
+        config.AgentYamlConfig.config.agent.AGENT_LEGACY_OWNER_COMPATIBILITY_ENABLED =
                 originalLegacyOwnerCompatibility;
     }
 

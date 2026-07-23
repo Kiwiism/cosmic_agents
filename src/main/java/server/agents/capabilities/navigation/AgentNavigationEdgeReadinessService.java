@@ -7,8 +7,8 @@ import java.awt.Point;
  * the next navigation edge.
  */
 public final class AgentNavigationEdgeReadinessService {
-    private static final int JUMP_READY_X_TOLERANCE = 10;
-    private static final int EDGE_READY_X_TOLERANCE = 14;
+    private static final int JUMP_READY_X_TOLERANCE = config.AgentTuning.intValue("server.agents.capabilities.navigation.AgentNavigationEdgeReadinessService.JUMP_READY_X_TOLERANCE");
+    private static final int EDGE_READY_X_TOLERANCE = config.AgentTuning.intValue("server.agents.capabilities.navigation.AgentNavigationEdgeReadinessService.EDGE_READY_X_TOLERANCE");
 
     private AgentNavigationEdgeReadinessService() {
     }

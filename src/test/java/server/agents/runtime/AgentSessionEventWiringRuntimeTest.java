@@ -17,13 +17,13 @@ class AgentSessionEventWiringRuntimeTest {
 
     @BeforeEach
     void enableDialogueForExistingWiringExpectations() {
-        previousLegacyDialogue = YamlConfig.config.server.AGENT_LEGACY_DIALOGUE_ENABLED;
-        YamlConfig.config.server.AGENT_LEGACY_DIALOGUE_ENABLED = true;
+        previousLegacyDialogue = config.AgentYamlConfig.config.agent.AGENT_LEGACY_DIALOGUE_ENABLED;
+        config.AgentYamlConfig.config.agent.AGENT_LEGACY_DIALOGUE_ENABLED = true;
     }
 
     @AfterEach
     void clearRolloutProperties() {
-        YamlConfig.config.server.AGENT_LEGACY_DIALOGUE_ENABLED = previousLegacyDialogue;
+        config.AgentYamlConfig.config.agent.AGENT_LEGACY_DIALOGUE_ENABLED = previousLegacyDialogue;
         System.clearProperty("agents.events.reactions.enabled");
         System.clearProperty("agents.events.dialogue.enabled");
         System.clearProperty("agents.events.coordination.enabled");
@@ -35,9 +35,9 @@ class AgentSessionEventWiringRuntimeTest {
     void productionSubscriptionsAreRegisteredOnceAndClosedWithSession() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), null, null);
         AgentEventBus bus = AgentSessionEventRuntime.bus(entry);
-        int personalityListeners = YamlConfig.config.server.AGENT_PERSONALITY_PRESENTATION_ENABLED
+        int personalityListeners = config.AgentYamlConfig.config.agent.AGENT_PERSONALITY_PRESENTATION_ENABLED
                 ? 2 : 0;
-        int behaviorListener = YamlConfig.config.server.AGENT_COMBAT_BEHAVIOR_ENABLED ? 1 : 0;
+        int behaviorListener = config.AgentYamlConfig.config.agent.AGENT_COMBAT_BEHAVIOR_ENABLED ? 1 : 0;
 
         assertEquals(17 + personalityListeners + behaviorListener, bus.snapshot().subscriptions());
         assertEquals(17 + personalityListeners + behaviorListener,
@@ -58,9 +58,9 @@ class AgentSessionEventWiringRuntimeTest {
         System.setProperty("agents.events.llmContext.enabled", "false");
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), null, null);
         AgentEventBus bus = AgentSessionEventRuntime.bus(entry);
-        int personalityListeners = YamlConfig.config.server.AGENT_PERSONALITY_PRESENTATION_ENABLED
+        int personalityListeners = config.AgentYamlConfig.config.agent.AGENT_PERSONALITY_PRESENTATION_ENABLED
                 ? 2 : 0;
-        int behaviorListener = YamlConfig.config.server.AGENT_COMBAT_BEHAVIOR_ENABLED ? 1 : 0;
+        int behaviorListener = config.AgentYamlConfig.config.agent.AGENT_COMBAT_BEHAVIOR_ENABLED ? 1 : 0;
 
         assertEquals(5 + personalityListeners + behaviorListener, bus.snapshot().subscriptions());
 
@@ -69,12 +69,12 @@ class AgentSessionEventWiringRuntimeTest {
 
     @Test
     void legacyDialogueYamlGateAlsoDisablesEventDialogueConsumers() {
-        YamlConfig.config.server.AGENT_LEGACY_DIALOGUE_ENABLED = false;
+        config.AgentYamlConfig.config.agent.AGENT_LEGACY_DIALOGUE_ENABLED = false;
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), null, null);
         AgentEventBus bus = AgentSessionEventRuntime.bus(entry);
-        int personalityListeners = YamlConfig.config.server.AGENT_PERSONALITY_PRESENTATION_ENABLED
+        int personalityListeners = config.AgentYamlConfig.config.agent.AGENT_PERSONALITY_PRESENTATION_ENABLED
                 ? 2 : 0;
-        int behaviorListener = YamlConfig.config.server.AGENT_COMBAT_BEHAVIOR_ENABLED ? 1 : 0;
+        int behaviorListener = config.AgentYamlConfig.config.agent.AGENT_COMBAT_BEHAVIOR_ENABLED ? 1 : 0;
 
         assertEquals(11 + personalityListeners + behaviorListener, bus.snapshot().subscriptions());
 

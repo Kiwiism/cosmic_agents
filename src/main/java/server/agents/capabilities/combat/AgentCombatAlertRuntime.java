@@ -8,7 +8,7 @@ import server.agents.runtime.AgentRuntimeEntry;
  * refresh remains behind the integration gateway.
  */
 public final class AgentCombatAlertRuntime {
-    private static final long ALERT_DURATION_MS = 5000L;
+    private static final long ALERT_DURATION_MS = config.AgentTuning.longValue("server.agents.capabilities.combat.AgentCombatAlertRuntime.ALERT_DURATION_MS");
 
     private AgentCombatAlertRuntime() {
     }

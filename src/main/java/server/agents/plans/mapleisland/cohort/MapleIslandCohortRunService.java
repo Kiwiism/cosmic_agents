@@ -21,8 +21,8 @@ public final class MapleIslandCohortRunService {
     public static final int MAX_BATCH = 10;
     public static final int MIN_INTERVAL_SECONDS = 5;
     public static final int MAX_INTERVAL_SECONDS = 3_600;
-    private static final long MONITOR_INTERVAL_MS = 5_000L;
-    private static final long TERMINAL_FAILURE_GRACE_MS = 30_000L;
+    private static final long MONITOR_INTERVAL_MS = config.AgentTuning.longValue("server.agents.plans.mapleisland.cohort.MapleIslandCohortRunService.MONITOR_INTERVAL_MS");
+    private static final long TERMINAL_FAILURE_GRACE_MS = config.AgentTuning.longValue("server.agents.plans.mapleisland.cohort.MapleIslandCohortRunService.TERMINAL_FAILURE_GRACE_MS");
     private static final long DEFAULT_STALL_TIMEOUT_MS = 30L * 60L * 1_000L;
     private static final long WAVE_JITTER_DOMAIN = 0x574156452D4A4954L;
 
@@ -557,12 +557,12 @@ public final class MapleIslandCohortRunService {
     }
 
     private static int configuredMaxTotal() {
-        int configured = YamlConfig.config.server.AGENT_MAPLE_ISLAND_COHORT_MAX_TOTAL;
+        int configured = config.AgentYamlConfig.config.agent.AGENT_MAPLE_ISLAND_COHORT_MAX_TOTAL;
         return configured <= 0 ? DEFAULT_MAX_TOTAL : configured;
     }
 
     private static long configuredStallTimeoutMs() {
-        int configured = YamlConfig.config.server.AGENT_MAPLE_ISLAND_COHORT_STALL_TIMEOUT_MS;
+        int configured = config.AgentYamlConfig.config.agent.AGENT_MAPLE_ISLAND_COHORT_STALL_TIMEOUT_MS;
         return configured <= 0 ? DEFAULT_STALL_TIMEOUT_MS : configured;
     }
 

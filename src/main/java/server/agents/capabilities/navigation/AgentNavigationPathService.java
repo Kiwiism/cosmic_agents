@@ -21,9 +21,9 @@ import java.util.PriorityQueue;
  */
 public final class AgentNavigationPathService {
     private static final Logger log = LoggerFactory.getLogger(AgentNavigationPathService.class);
-    private static final int NO_MOVEMENT_WALK_TOLERANCE = 4;
-    private static final long PORTAL_USE_COOLDOWN_MS = 250L;
-    private static final long SLOW_PATHFIND_WARN_NS = 50_000_000L;
+    private static final int NO_MOVEMENT_WALK_TOLERANCE = config.AgentTuning.intValue("server.agents.capabilities.navigation.AgentNavigationPathService.NO_MOVEMENT_WALK_TOLERANCE");
+    private static final long PORTAL_USE_COOLDOWN_MS = config.AgentTuning.longValue("server.agents.capabilities.navigation.AgentNavigationPathService.PORTAL_USE_COOLDOWN_MS");
+    private static final long SLOW_PATHFIND_WARN_NS = config.AgentTuning.longValue("server.agents.capabilities.navigation.AgentNavigationPathService.SLOW_PATHFIND_WARN_NS");
     static final int MAX_EDGE_CHECKS = 160_000;
     // Live movement can continue from a closest-frontier route on the next decision pass.
     // Bound only that path so dense town graphs cannot consume several 50 ms movement slots;

@@ -34,7 +34,7 @@ public final class MapleIslandCohortNameCatalog {
             "Boy", "Girl", "Hero", "Pro", "Noob", "FTW", "Pls", "Go", "One", "Two",
             "Kid", "Cat", "Bun", "Puff", "Pop"
     };
-    private static final int ROOT_SPREAD_COLUMNS = 10;
+    private static final int ROOT_SPREAD_COLUMNS = config.AgentTuning.intValue("server.agents.plans.mapleisland.cohort.MapleIslandCohortNameCatalog.ROOT_SPREAD_COLUMNS");
     private static final List<String> CANDIDATES = buildCandidates();
 
     private MapleIslandCohortNameCatalog() {

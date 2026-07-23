@@ -8,8 +8,8 @@ import java.util.Map;
 
 /** Adds a soft route cost for intermediate ground regions occupied by hostile monsters. */
 final class AgentNavigationDangerCostService {
-    private static final int COST_PER_MONSTER_MS = 2_500;
-    private static final int MAX_REGION_COST_MS = 7_500;
+    private static final int COST_PER_MONSTER_MS = config.AgentTuning.intValue("server.agents.capabilities.navigation.AgentNavigationDangerCostService.COST_PER_MONSTER_MS");
+    private static final int MAX_REGION_COST_MS = config.AgentTuning.intValue("server.agents.capabilities.navigation.AgentNavigationDangerCostService.MAX_REGION_COST_MS");
 
     private AgentNavigationDangerCostService() {
     }

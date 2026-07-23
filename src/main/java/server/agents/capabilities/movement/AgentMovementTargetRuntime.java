@@ -15,7 +15,7 @@ import java.util.List;
  * Agent-owned movement target snapshot service.
  */
 public final class AgentMovementTargetRuntime {
-    private static final int PLATFORM_EDGE_INSET_PX = 12;
+    private static final int PLATFORM_EDGE_INSET_PX = config.AgentTuning.intValue("server.agents.capabilities.movement.AgentMovementTargetRuntime.PLATFORM_EDGE_INSET_PX");
 
     private AgentMovementTargetRuntime() {
     }

@@ -8,10 +8,10 @@ import java.util.Map;
 
 /** Restricts creation of new Agent backing accounts without affecting existing Agent spawn. */
 public final class AgentProvisioningPolicy {
-    private static final int DEFAULT_MINIMUM_GM_LEVEL = 6;
-    private static final int DEFAULT_MAX_PER_WINDOW = 3;
+    private static final int DEFAULT_MINIMUM_GM_LEVEL = config.AgentTuning.intValue("server.agents.auth.AgentProvisioningPolicy.DEFAULT_MINIMUM_GM_LEVEL");
+    private static final int DEFAULT_MAX_PER_WINDOW = config.AgentTuning.intValue("server.agents.auth.AgentProvisioningPolicy.DEFAULT_MAX_PER_WINDOW");
     private static final long DEFAULT_WINDOW_MS = 10 * 60 * 1000L;
-    private static final int DEFAULT_MAX_PER_CONTROLLER = 25;
+    private static final int DEFAULT_MAX_PER_CONTROLLER = config.AgentTuning.intValue("server.agents.auth.AgentProvisioningPolicy.DEFAULT_MAX_PER_CONTROLLER");
 
     private final Clock clock;
     private final int minimumGmLevel;

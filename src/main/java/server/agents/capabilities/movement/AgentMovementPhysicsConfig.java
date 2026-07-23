@@ -5,31 +5,31 @@ package server.agents.capabilities.movement;
  * legacy physics runtime while reconstruction continues.
  */
 public final class AgentMovementPhysicsConfig {
-    private static final int MOVEMENT_TICK_MS = 50;
-    private static final int WALK_VEL_PXS = 125;
-    private static final double HFORCE_PXS = 16.667;
-    private static final float GRAVITY_PXS2 = 2000.0f;
-    private static final float JUMP_SPEED_PXS = 555.0f;
-    private static final float DOWN_JUMP_SPEED_PXS = 196.0f;
-    private static final float ROPE_JUMP_SPEED_PXS = 375.0f;
-    private static final float CLIMB_SPEED_PXS = 100.0f;
-    private static final int ROPE_GRAB_X = 8;
-    private static final int MAX_SNAP_DROP = 16;
-    private static final int MAX_SLOPE_UP = 26;
-    private static final int STOP_DIST = 30;
-    private static final int FOLLOW_DIST = 80;
-    private static final int GRIND_EDGE_MARGIN = 40;
-    private static final int MOB_AVOID_LOOKAHEAD_STEPS = 3;
-    private static final int JUMP_Y_THRESHOLD = 30;
-    private static final int TELEPORT_DIST = 4000;
-    private static final int OUT_OF_BOUNDS_TELEPORT_DIST = 600;
-    private static final int FOLLOW_Y_CAP = 200;
-    private static final int DOWN_JUMP_GRACE_MS = 350;
-    private static final int SWIM_ARRIVAL_RADIUS_PX = 8;
-    private static final int SWIM_JUMP_COOLDOWN_MS = 500;
-    private static final int SWIM_LEVEL_BAND_PX = 30;
-    private static final int SWIM_DOWN_BAND_PX = 120;
-    private static final int SWIM_JUMP_TRIGGER_DY_PX = 100;
+    private static final int MOVEMENT_TICK_MS = config.AgentTuning.intValue("server.agents.capabilities.movement.AgentMovementPhysicsConfig.MOVEMENT_TICK_MS");
+    private static final int WALK_VEL_PXS = config.AgentTuning.intValue("server.agents.capabilities.movement.AgentMovementPhysicsConfig.WALK_VEL_PXS");
+    private static final double HFORCE_PXS = config.AgentTuning.doubleValue("server.agents.capabilities.movement.AgentMovementPhysicsConfig.HFORCE_PXS");
+    private static final float GRAVITY_PXS2 = config.AgentTuning.floatValue("server.agents.capabilities.movement.AgentMovementPhysicsConfig.GRAVITY_PXS2");
+    private static final float JUMP_SPEED_PXS = config.AgentTuning.floatValue("server.agents.capabilities.movement.AgentMovementPhysicsConfig.JUMP_SPEED_PXS");
+    private static final float DOWN_JUMP_SPEED_PXS = config.AgentTuning.floatValue("server.agents.capabilities.movement.AgentMovementPhysicsConfig.DOWN_JUMP_SPEED_PXS");
+    private static final float ROPE_JUMP_SPEED_PXS = config.AgentTuning.floatValue("server.agents.capabilities.movement.AgentMovementPhysicsConfig.ROPE_JUMP_SPEED_PXS");
+    private static final float CLIMB_SPEED_PXS = config.AgentTuning.floatValue("server.agents.capabilities.movement.AgentMovementPhysicsConfig.CLIMB_SPEED_PXS");
+    private static final int ROPE_GRAB_X = config.AgentTuning.intValue("server.agents.capabilities.movement.AgentMovementPhysicsConfig.ROPE_GRAB_X");
+    private static final int MAX_SNAP_DROP = config.AgentTuning.intValue("server.agents.capabilities.movement.AgentMovementPhysicsConfig.MAX_SNAP_DROP");
+    private static final int MAX_SLOPE_UP = config.AgentTuning.intValue("server.agents.capabilities.movement.AgentMovementPhysicsConfig.MAX_SLOPE_UP");
+    private static final int STOP_DIST = config.AgentTuning.intValue("server.agents.capabilities.movement.AgentMovementPhysicsConfig.STOP_DIST");
+    private static final int FOLLOW_DIST = config.AgentTuning.intValue("server.agents.capabilities.movement.AgentMovementPhysicsConfig.FOLLOW_DIST");
+    private static final int GRIND_EDGE_MARGIN = config.AgentTuning.intValue("server.agents.capabilities.movement.AgentMovementPhysicsConfig.GRIND_EDGE_MARGIN");
+    private static final int MOB_AVOID_LOOKAHEAD_STEPS = config.AgentTuning.intValue("server.agents.capabilities.movement.AgentMovementPhysicsConfig.MOB_AVOID_LOOKAHEAD_STEPS");
+    private static final int JUMP_Y_THRESHOLD = config.AgentTuning.intValue("server.agents.capabilities.movement.AgentMovementPhysicsConfig.JUMP_Y_THRESHOLD");
+    private static final int TELEPORT_DIST = config.AgentTuning.intValue("server.agents.capabilities.movement.AgentMovementPhysicsConfig.TELEPORT_DIST");
+    private static final int OUT_OF_BOUNDS_TELEPORT_DIST = config.AgentTuning.intValue("server.agents.capabilities.movement.AgentMovementPhysicsConfig.OUT_OF_BOUNDS_TELEPORT_DIST");
+    private static final int FOLLOW_Y_CAP = config.AgentTuning.intValue("server.agents.capabilities.movement.AgentMovementPhysicsConfig.FOLLOW_Y_CAP");
+    private static final int DOWN_JUMP_GRACE_MS = config.AgentTuning.intValue("server.agents.capabilities.movement.AgentMovementPhysicsConfig.DOWN_JUMP_GRACE_MS");
+    private static final int SWIM_ARRIVAL_RADIUS_PX = config.AgentTuning.intValue("server.agents.capabilities.movement.AgentMovementPhysicsConfig.SWIM_ARRIVAL_RADIUS_PX");
+    private static final int SWIM_JUMP_COOLDOWN_MS = config.AgentTuning.intValue("server.agents.capabilities.movement.AgentMovementPhysicsConfig.SWIM_JUMP_COOLDOWN_MS");
+    private static final int SWIM_LEVEL_BAND_PX = config.AgentTuning.intValue("server.agents.capabilities.movement.AgentMovementPhysicsConfig.SWIM_LEVEL_BAND_PX");
+    private static final int SWIM_DOWN_BAND_PX = config.AgentTuning.intValue("server.agents.capabilities.movement.AgentMovementPhysicsConfig.SWIM_DOWN_BAND_PX");
+    private static final int SWIM_JUMP_TRIGGER_DY_PX = config.AgentTuning.intValue("server.agents.capabilities.movement.AgentMovementPhysicsConfig.SWIM_JUMP_TRIGGER_DY_PX");
 
     private AgentMovementPhysicsConfig() {
     }

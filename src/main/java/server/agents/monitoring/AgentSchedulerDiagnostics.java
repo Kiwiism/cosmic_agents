@@ -26,8 +26,8 @@ import java.util.concurrent.TimeUnit;
 
 /** Bounded read-only operator view of centralized Agent scheduler metrics. */
 public final class AgentSchedulerDiagnostics {
-    private static final int MAX_SHARD_LINES = 8;
-    private static final int MAX_ASYNC_QUEUE_LINES = 12;
+    private static final int MAX_SHARD_LINES = config.AgentTuning.intValue("server.agents.monitoring.AgentSchedulerDiagnostics.MAX_SHARD_LINES");
+    private static final int MAX_ASYNC_QUEUE_LINES = config.AgentTuning.intValue("server.agents.monitoring.AgentSchedulerDiagnostics.MAX_ASYNC_QUEUE_LINES");
 
     public record EventRuntimeSnapshot(
             int sessions,

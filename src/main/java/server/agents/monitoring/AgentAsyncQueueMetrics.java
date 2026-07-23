@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.LongAdder;
 
 /** Lightweight saturation and depth metrics for Agent-owned asynchronous queues. */
 public final class AgentAsyncQueueMetrics {
-    private static final int DURATION_WINDOW_CAPACITY = 2048;
+    private static final int DURATION_WINDOW_CAPACITY = config.AgentTuning.intValue("server.agents.monitoring.AgentAsyncQueueMetrics.DURATION_WINDOW_CAPACITY");
 
     public record Snapshot(long submitted,
                            long rejected,

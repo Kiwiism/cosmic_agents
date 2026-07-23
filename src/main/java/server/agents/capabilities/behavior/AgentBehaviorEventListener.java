@@ -19,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Updates live adaptation and projects rare, observer-gated facial reactions. */
 public final class AgentBehaviorEventListener implements AgentEventListener<AgentEvent> {
-    private static final long BUDGET_WINDOW_MS = 10_000L;
+    private static final long BUDGET_WINDOW_MS = config.AgentTuning.longValue("server.agents.capabilities.behavior.AgentBehaviorEventListener.BUDGET_WINDOW_MS");
     private static final Map<Integer, MapBudget> MAP_BUDGETS = new ConcurrentHashMap<>();
 
     private final AgentRuntimeEntry entry;
@@ -79,14 +79,14 @@ public final class AgentBehaviorEventListener implements AgentEventListener<Agen
     }
 
     private boolean canShow(Character agent, long nowMs, String channel, int chance) {
-        if (!YamlConfig.config.server.AGENT_COMBAT_EMOTES_ENABLED || agent == null || agent.getMap() == null
+        if (!config.AgentYamlConfig.config.agent.AGENT_COMBAT_EMOTES_ENABLED || agent == null || agent.getMap() == null
                 || nowMs < nextExpressionAtMs || AgentMovementStateRuntime.inAir(entry)
                 || AgentMovementStateRuntime.climbing(entry)
                 || AgentBehaviorRuntime.calibration(entry).nextPercent(channel) >= chance
                 || agent.getMap().getCharacters().stream().noneMatch(character ->
                 !AgentCharacterGatewayRuntime.characters().isAgentCharacter(character))) return false;
         return MAP_BUDGETS.computeIfAbsent(agent.getMapId(), ignored -> new MapBudget()).tryAcquire(
-                nowMs, Math.max(1, YamlConfig.config.server.AGENT_COMBAT_EMOTE_MAP_BUDGET_PER_10S));
+                nowMs, Math.max(1, config.AgentYamlConfig.config.agent.AGENT_COMBAT_EMOTE_MAP_BUDGET_PER_10S));
     }
 
     private static final class MapBudget {

@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "planId": "victoria-training",
+  "planVersion": "1",
+  "title": "Victoria Island Level Training",
+  "status": "executable",
+  "objective": {
+    "type": "progression.victoria-training",
+    "priority": 80,
+    "deadlineMs": 9223372036854775807,
+    "retryBudget": 5,
+    "source": "PROGRESSION_POLICY",
+    "behaviorVersion": "victoria-training-v1",
+    "registration": "STEP"
+  },
+  "entryCriteria": [
+    { "fact": "character.level", "operator": "gte", "value": 15 },
+    { "fact": "character.firstJob", "operator": "present", "value": true },
+    { "fact": "input.targetLevel", "operator": "between", "value": [16, 30] }
+  ],
+  "steps": [
+    {
+      "stepId": "train-to-target-level",
+      "operation": "victoria-training",
+      "capabilityIds": [
+        "quest.victoria-lt30",
+        "navigation.portal-route",
+        "combat.generic-grind",
+        "loot.combat-drops",
+        "survival.potion-use",
+        "supplies.procurement",
+        "inventory.capacity-management",
+        "recovery.physics"
+      ],
+      "parameters": {
+        "questsEnabled": true
+      },
+      "timeoutMs": 0,
+      "retryBudget": 5
+    }
+  ],
+  "exitCriteria": [
+    { "fact": "character.level", "operator": "gte-input", "value": "targetLevel" }
+  ],
+  "successors": []
+}

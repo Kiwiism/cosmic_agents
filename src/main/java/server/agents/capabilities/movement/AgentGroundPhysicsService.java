@@ -12,11 +12,11 @@ import java.awt.Point;
  * Agent-owned seam for grounded movement physics while internals migrate.
  */
 public final class AgentGroundPhysicsService {
-    private static final double CLIENT_GROUND_STEP_MS = 8.0;
+    private static final double CLIENT_GROUND_STEP_MS = config.AgentTuning.doubleValue("server.agents.capabilities.movement.AgentGroundPhysicsService.CLIENT_GROUND_STEP_MS");
     private static final double CLIENT_GROUND_STEP_S = CLIENT_GROUND_STEP_MS / 1000.0;
-    private static final double GROUNDSLIP = 3.0;
-    private static final double FRICTION = 0.3;
-    private static final double SLOPEFACTOR = 0.1;
+    private static final double GROUNDSLIP = config.AgentTuning.doubleValue("server.agents.capabilities.movement.AgentGroundPhysicsService.GROUNDSLIP");
+    private static final double FRICTION = config.AgentTuning.doubleValue("server.agents.capabilities.movement.AgentGroundPhysicsService.FRICTION");
+    private static final double SLOPEFACTOR = config.AgentTuning.doubleValue("server.agents.capabilities.movement.AgentGroundPhysicsService.SLOPEFACTOR");
 
     private AgentGroundPhysicsService() {
     }

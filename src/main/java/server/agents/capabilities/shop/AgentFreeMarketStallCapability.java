@@ -21,8 +21,8 @@ import java.util.List;
 
 public final class AgentFreeMarketStallCapability
         implements AgentExecutableCapability<AgentFreeMarketStallCapability.Command> {
-    private static final int ARRIVAL_RANGE_PX = 12;
-    private static final long NAVIGATION_TIMEOUT_MS = 30_000L;
+    private static final int ARRIVAL_RANGE_PX = config.AgentTuning.intValue("server.agents.capabilities.shop.AgentFreeMarketStallCapability.ARRIVAL_RANGE_PX");
+    private static final long NAVIGATION_TIMEOUT_MS = config.AgentTuning.longValue("server.agents.capabilities.shop.AgentFreeMarketStallCapability.NAVIGATION_TIMEOUT_MS");
 
     public record Command(
             int mapId,

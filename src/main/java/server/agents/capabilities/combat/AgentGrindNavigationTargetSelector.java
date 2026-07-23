@@ -41,8 +41,8 @@ public final class AgentGrindNavigationTargetSelector {
                                   int jumpYThreshold) {
     }
 
-    private static final int RETREAT_HOLD_MS = 600;
-    private static final int RETREAT_ARRIVAL_TOLERANCE_X = 25;
+    private static final int RETREAT_HOLD_MS = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentGrindNavigationTargetSelector.RETREAT_HOLD_MS");
+    private static final int RETREAT_ARRIVAL_TOLERANCE_X = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentGrindNavigationTargetSelector.RETREAT_ARRIVAL_TOLERANCE_X");
 
     private AgentGrindNavigationTargetSelector() {
     }

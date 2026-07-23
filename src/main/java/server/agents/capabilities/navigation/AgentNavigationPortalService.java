@@ -11,7 +11,7 @@ import server.agents.runtime.AgentRuntimeEntry;
  * Agent-owned portal edge execution for navigation.
  */
 public final class AgentNavigationPortalService {
-    private static final long PORTAL_USE_COOLDOWN_MS = 250L;
+    private static final long PORTAL_USE_COOLDOWN_MS = config.AgentTuning.longValue("server.agents.capabilities.navigation.AgentNavigationPortalService.PORTAL_USE_COOLDOWN_MS");
 
     private AgentNavigationPortalService() {
     }

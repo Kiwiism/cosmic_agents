@@ -16,16 +16,16 @@ import server.agents.behavior.AgentBehaviorRuntime;
 
 /** Applies one deterministic, run-scoped realism preset to a cohort Agent. */
 public final class MapleIslandCohortRealismService {
-    private static final double LIGHT_MAX_ROUTE_STRETCH = 1.08d;
-    private static final double FULL_MAX_ROUTE_STRETCH = 1.15d;
-    private static final double FULL_TRAVEL_HOP_PROBABILITY = 0.04d;
+    private static final double LIGHT_MAX_ROUTE_STRETCH = config.AgentTuning.doubleValue("server.agents.plans.mapleisland.cohort.MapleIslandCohortRealismService.LIGHT_MAX_ROUTE_STRETCH");
+    private static final double FULL_MAX_ROUTE_STRETCH = config.AgentTuning.doubleValue("server.agents.plans.mapleisland.cohort.MapleIslandCohortRealismService.FULL_MAX_ROUTE_STRETCH");
+    private static final double FULL_TRAVEL_HOP_PROBABILITY = config.AgentTuning.doubleValue("server.agents.plans.mapleisland.cohort.MapleIslandCohortRealismService.FULL_TRAVEL_HOP_PROBABILITY");
     private static final AgentBehaviorProfile.DelayRange NO_DELAY =
             new AgentBehaviorProfile.DelayRange(0, 0);
     private static final long HOP_INTERVAL_DOMAIN = 0x484F502D494E5456L;
     private static final long HOP_COOLDOWN_DOMAIN = 0x484F502D434F4F4CL;
     private static final long INITIAL_INTENTION_DELAY_DOMAIN = 0x535041574E2D5741L;
-    private static final long INITIAL_INTENTION_DELAY_MIN_MS = 2_000L;
-    private static final long INITIAL_INTENTION_DELAY_MAX_MS = 5_000L;
+    private static final long INITIAL_INTENTION_DELAY_MIN_MS = config.AgentTuning.longValue("server.agents.plans.mapleisland.cohort.MapleIslandCohortRealismService.INITIAL_INTENTION_DELAY_MIN_MS");
+    private static final long INITIAL_INTENTION_DELAY_MAX_MS = config.AgentTuning.longValue("server.agents.plans.mapleisland.cohort.MapleIslandCohortRealismService.INITIAL_INTENTION_DELAY_MAX_MS");
 
     private MapleIslandCohortRealismService() {
     }
@@ -69,7 +69,7 @@ public final class MapleIslandCohortRealismService {
 
     private static void configureFull(AgentRuntimeEntry entry, long seed) {
         AgentBehaviorPolicyProfile behaviorPolicy = AgentBehaviorRuntime.enabled(entry)
-                && YamlConfig.config.server.AGENT_NAVIGATION_BEHAVIOR_ENABLED
+                && config.AgentYamlConfig.config.agent.AGENT_NAVIGATION_BEHAVIOR_ENABLED
                 ? AgentBehaviorRuntime.policy(entry) : null;
         double routeStretch = behaviorPolicy == null
                 ? FULL_MAX_ROUTE_STRETCH : behaviorPolicy.navigation().maxRouteStretch();
@@ -86,10 +86,10 @@ public final class MapleIslandCohortRealismService {
         AgentCombatVariationRuntime.configure(entry,
                 new AgentCombatVariationSettings(
                         seed, true,
-                        percentProbability(YamlConfig.config.server.AGENT_MAPLE_ISLAND_FULL_MIDDLE_TARGET_PERCENT),
-                        Math.clamp(YamlConfig.config.server.AGENT_MAPLE_ISLAND_FULL_TARGET_SHORTLIST_LIMIT, 1, 64),
+                        percentProbability(config.AgentYamlConfig.config.agent.AGENT_MAPLE_ISLAND_FULL_MIDDLE_TARGET_PERCENT),
+                        Math.clamp(config.AgentYamlConfig.config.agent.AGENT_MAPLE_ISLAND_FULL_TARGET_SHORTLIST_LIMIT, 1, 64),
                         true,
-                        percentProbability(YamlConfig.config.server.AGENT_MAPLE_ISLAND_FULL_PLATFORM_ANCHOR_PERCENT)));
+                        percentProbability(config.AgentYamlConfig.config.agent.AGENT_MAPLE_ISLAND_FULL_PLATFORM_ANCHOR_PERCENT)));
     }
 
     static long agentSeed(AgentRuntimeEntry entry, long runSeed, int ordinal) {

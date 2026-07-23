@@ -15,9 +15,9 @@ import java.util.function.IntUnaryOperator;
  * Agent-owned stuck detection and unstuck trigger used by the movement tick tail.
  */
 public final class AgentStuckDetectionService {
-    private static final int STUCK_DRIFT_RADIUS_PX = 16;
-    private static final int GROUNDED_STUCK_THRESHOLD_MS = 500;
-    private static final int SUSPENDED_STUCK_THRESHOLD_MS = 1_500;
+    private static final int STUCK_DRIFT_RADIUS_PX = config.AgentTuning.intValue("server.agents.capabilities.movement.AgentStuckDetectionService.STUCK_DRIFT_RADIUS_PX");
+    private static final int GROUNDED_STUCK_THRESHOLD_MS = config.AgentTuning.intValue("server.agents.capabilities.movement.AgentStuckDetectionService.GROUNDED_STUCK_THRESHOLD_MS");
+    private static final int SUSPENDED_STUCK_THRESHOLD_MS = config.AgentTuning.intValue("server.agents.capabilities.movement.AgentStuckDetectionService.SUSPENDED_STUCK_THRESHOLD_MS");
 
     @FunctionalInterface
     public interface UnstuckAction {

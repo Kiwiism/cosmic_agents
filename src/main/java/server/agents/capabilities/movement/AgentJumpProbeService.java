@@ -13,8 +13,8 @@ import java.util.Set;
 
 public final class AgentJumpProbeService {
     private static final int SYNTHETIC_MAP_BOUND_SIZE = 1 << 18;
-    private static final float MAX_FALL_PXS = 670.0f;
-    private static final int FALL_SIM_TICK_CAP = 2000;
+    private static final float MAX_FALL_PXS = config.AgentTuning.floatValue("server.agents.capabilities.movement.AgentJumpProbeService.MAX_FALL_PXS");
+    private static final int FALL_SIM_TICK_CAP = config.AgentTuning.intValue("server.agents.capabilities.movement.AgentJumpProbeService.FALL_SIM_TICK_CAP");
 
     private AgentJumpProbeService() {
     }

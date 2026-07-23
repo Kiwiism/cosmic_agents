@@ -18,9 +18,9 @@ import java.util.Set;
 
 final class AgentNavigationGraphCacheFile {
     static final long MAX_CACHE_FILE_BYTES = 64L * 1024L * 1024L;
-    private static final long MAX_GRAPH_REFERENCES = 500_000L;
-    private static final long MAX_GRAPH_ARRAY_LENGTH = 500_000L;
-    private static final long MAX_GRAPH_DEPTH = 64L;
+    private static final long MAX_GRAPH_REFERENCES = config.AgentTuning.longValue("server.agents.capabilities.navigation.AgentNavigationGraphCacheFile.MAX_GRAPH_REFERENCES");
+    private static final long MAX_GRAPH_ARRAY_LENGTH = config.AgentTuning.longValue("server.agents.capabilities.navigation.AgentNavigationGraphCacheFile.MAX_GRAPH_ARRAY_LENGTH");
+    private static final long MAX_GRAPH_DEPTH = config.AgentTuning.longValue("server.agents.capabilities.navigation.AgentNavigationGraphCacheFile.MAX_GRAPH_DEPTH");
     private static final Set<Class<?>> ALLOWED_CLASSES = Set.of(
             AgentNavigationGraph.class,
             AgentNavigationGraph.Region.class,

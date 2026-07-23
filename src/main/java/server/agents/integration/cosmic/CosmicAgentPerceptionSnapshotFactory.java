@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class CosmicAgentPerceptionSnapshotFactory {
-    private static final long CACHE_WINDOW_MS = 50L;
+    private static final long CACHE_WINDOW_MS = config.AgentTuning.longValue("server.agents.integration.cosmic.CosmicAgentPerceptionSnapshotFactory.CACHE_WINDOW_MS");
     private static final Map<MapleMap, AgentPerceptionSnapshot> CACHE = new ConcurrentHashMap<>();
     private CosmicAgentPerceptionSnapshotFactory() {
     }

@@ -12,6 +12,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * Agent-owned map navigation warmup notification throttle.
  */
 public final class AgentNavigationWarmupService {
+    private static final long WARMUP_RETRY_SUPPRESSION_MS = config.AgentTuning.longValue(
+            "server.agents.capabilities.navigation.AgentNavigationWarmupService.WARMUP_RETRY_SUPPRESSION_MS");
     private static final Map<Integer, Map<Integer, Long>> WARMUP_NOTIFIED = new ConcurrentHashMap<>();
 
     private AgentNavigationWarmupService() {
@@ -32,7 +34,7 @@ public final class AgentNavigationWarmupService {
         Map<Integer, Long> byMap = WARMUP_NOTIFIED.get(leaderId);
         if (byMap != null) {
             Long last = byMap.get(mapId);
-            if (last != null && (now - last) < 10_000L) {
+            if (last != null && (now - last) < WARMUP_RETRY_SUPPRESSION_MS) {
                 return;
             }
         }

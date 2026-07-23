@@ -103,13 +103,13 @@ public final class AgentSessionEventWiringRuntime {
                     subscriptions.add(bus.subscribe(AgentTownLifeEncounterEvent.TYPE,
                             new AgentTownLifeDialogueReactionService(bus)));
                 }
-                if (YamlConfig.config.server.AGENT_PERSONALITY_PRESENTATION_ENABLED) {
+                if (config.AgentYamlConfig.config.agent.AGENT_PERSONALITY_PRESENTATION_ENABLED) {
                     subscriptions.add(bus.subscribe("*",
                             new AgentPersonalityPresentationEventListener(entry)));
                     subscriptions.add(bus.subscribe(AgentQuestStateChangedEvent.TYPE,
                             new AgentPioRelaxerInterludeEventListener(entry)));
                 }
-                if (YamlConfig.config.server.AGENT_COMBAT_BEHAVIOR_ENABLED) {
+                if (config.AgentYamlConfig.config.agent.AGENT_COMBAT_BEHAVIOR_ENABLED) {
                     subscriptions.add(bus.subscribe("*", new AgentBehaviorEventListener(entry)));
                 }
                 subscriptions.add(bus.subscribe("*", new AgentDurableEventJournalListener()));

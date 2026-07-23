@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public final class AgentVictoriaTrainingState {
+    private static final long NEXT_SELECTION_DELAY_MS = config.AgentTuning.longValue(
+            "server.agents.progression.AgentVictoriaTrainingState.NEXT_SELECTION_DELAY_MS");
     public static final AgentCapabilityStateKey<AgentVictoriaTrainingState> STATE_KEY =
             new AgentCapabilityStateKey<>("progression.victoria-training",
                     AgentVictoriaTrainingState.class, AgentVictoriaTrainingState::new);
@@ -73,7 +75,7 @@ public final class AgentVictoriaTrainingState {
         selectedMapId = mapId;
         selectedAtLevel = level;
         selectionReason = reason == null ? "" : reason;
-        nextSelectionAtMs = nowMs + 30_000L;
+        nextSelectionAtMs = nowMs + NEXT_SELECTION_DELAY_MS;
     }
 
     public synchronized void retrySelectionAt(long timeMs) {

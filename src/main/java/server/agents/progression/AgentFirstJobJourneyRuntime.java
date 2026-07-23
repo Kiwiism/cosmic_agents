@@ -5,6 +5,7 @@ import client.Job;
 import client.QuestStatus;
 import server.agents.capabilities.build.AgentBuildService;
 import server.agents.capabilities.equipment.AgentEquipmentService;
+import server.agents.capabilities.navigation.AgentLithHarborArrivalRouteRuntime;
 import server.agents.capabilities.shop.AgentShopService;
 import server.agents.capabilities.shop.AgentShopStateRuntime;
 import server.agents.capabilities.shop.AgentShopWorkflowPhase;
@@ -26,8 +27,8 @@ public final class AgentFirstJobJourneyRuntime {
     private static final int SOUTHPERRY_MAP_ID = 2_000_000;
     private static final int SHANKS_NPC_ID = 22_000;
     private static final int LITH_TAXI_NPC_ID = 1_002_000;
-    private static final int INTERACTION_DISTANCE_PX = 100;
-    private static final long INTERACTION_DELAY_MS = 3_000L;
+    private static final int INTERACTION_DISTANCE_PX = config.AgentTuning.intValue("server.agents.progression.AgentFirstJobJourneyRuntime.INTERACTION_DISTANCE_PX");
+    private static final long INTERACTION_DELAY_MS = config.AgentTuning.longValue("server.agents.progression.AgentFirstJobJourneyRuntime.INTERACTION_DELAY_MS");
 
     private AgentFirstJobJourneyRuntime() {
     }
@@ -87,10 +88,15 @@ public final class AgentFirstJobJourneyRuntime {
         if (!state.ready(nowMs)) {
             return true;
         }
+        VictoriaFirstJobNarrator.announce(agent, state, bundle);
         return switch (state.stage()) {
             case WAITING_FOR_MAPLE_ISLAND -> false;
             case TRAVEL_TO_LITH -> approachAndRun(entry, agent, SHANKS_NPC_ID,
-                    () -> gateway.runNpcScript(agent, SHANKS_NPC_ID), gateway);
+                    () -> {
+                        gateway.runNpcScript(agent, SHANKS_NPC_ID);
+                        AgentLithHarborArrivalRouteRuntime.stageAfterShanks(
+                                entry, agent, 31 * agent.getId() + Long.hashCode(nowMs));
+                    }, gateway);
             case COMPLETE_BIGGS_AT_OLAF -> completeBiggsAtOlaf(entry, agent, gateway);
             case COMPLETE_OLAF_LESSON -> completeOlafLesson(entry, agent, state, nowMs, gateway);
             case START_CAREER_PATH -> startCareerPath(entry, agent, bundle, gateway);
@@ -216,6 +222,9 @@ public final class AgentFirstJobJourneyRuntime {
                                                PrimitiveCapabilityGateway gateway) {
         AgentVictoriaLevel15Catalog.IslandHandoff handoff = handoff();
         if (AgentVictoriaRouteRuntime.travel(entry, agent, handoff.lithHarborMapId(), gateway)) {
+            return true;
+        }
+        if (AgentLithHarborArrivalRouteRuntime.travelToTown(entry, agent, gateway)) {
             return true;
         }
         interactQuestAtNpc(entry, agent, handoff.olafNpcId(), handoff.biggsQuestId(), true, gateway);

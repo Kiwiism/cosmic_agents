@@ -17,7 +17,7 @@ final class AgentCareerObjectiveRuntime {
             return;
         }
         String objectiveId = objectiveId(entry);
-        String planId = AgentVictoriaLevel15PlanRepository.defaultPlan().planId();
+        String planId = AgentVictoriaLevel15StageContractRepository.defaultContract().contractId();
         AgentObjectiveKernel.start(entry, new AgentObjectiveDefinition(
                 objectiveId, AgentFirstJobJourneyRuntime.OBJECTIVE_TYPE, 100, Long.MAX_VALUE, 3,
                 AgentObjectiveSource.PROGRESSION_POLICY, planId,
@@ -25,12 +25,19 @@ final class AgentCareerObjectiveRuntime {
     }
 
     static void succeed(AgentRuntimeEntry entry, long nowMs) {
-        AgentObjectiveKernel.transition(entry, objectiveId(entry), AgentObjectiveStatus.SUCCEEDED,
+        AgentObjectiveKernel.transition(entry, activeJourneyObjectiveId(entry), AgentObjectiveStatus.SUCCEEDED,
                 "instructor training complete and level 15 reached", nowMs);
     }
 
     static void block(AgentRuntimeEntry entry, String reason, long nowMs) {
-        AgentObjectiveKernel.transition(entry, objectiveId(entry), AgentObjectiveStatus.BLOCKED, reason, nowMs);
+        AgentObjectiveKernel.transition(entry, activeJourneyObjectiveId(entry),
+                AgentObjectiveStatus.BLOCKED, reason, nowMs);
+    }
+
+    private static String activeJourneyObjectiveId(AgentRuntimeEntry entry) {
+        AgentObjectiveDefinition active = AgentObjectiveKernel.active(entry);
+        return active != null && AgentFirstJobJourneyRuntime.OBJECTIVE_TYPE.equals(active.type())
+                ? active.objectiveId() : objectiveId(entry);
     }
 
     private static String objectiveId(AgentRuntimeEntry entry) {

@@ -33,9 +33,37 @@ import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 public final class AgentFidgetService {
-    private static final int SPAM_BASE_DELAY_MIN_MS = 100;
-    private static final int SPAM_BASE_DELAY_MAX_MS = 250;
-    private static final int SPAM_JITTER_MS = 50;
+    private static final String TUNING_PREFIX =
+            "server.agents.capabilities.movement.fidget.AgentFidgetService.";
+    private static final int SPAM_BASE_DELAY_MIN_MS = config.AgentTuning.intValue("server.agents.capabilities.movement.fidget.AgentFidgetService.SPAM_BASE_DELAY_MIN_MS");
+    private static final int SPAM_BASE_DELAY_MAX_MS = config.AgentTuning.intValue("server.agents.capabilities.movement.fidget.AgentFidgetService.SPAM_BASE_DELAY_MAX_MS");
+    private static final int SPAM_JITTER_MS = config.AgentTuning.intValue("server.agents.capabilities.movement.fidget.AgentFidgetService.SPAM_JITTER_MS");
+    private static final int JUMP_SPAM_AIR_STEER_PERCENT = tuningInt("JUMP_SPAM_AIR_STEER_PERCENT");
+    private static final int MIN_FIDGET_DURATION_MS = tuningInt("MIN_FIDGET_DURATION_MS");
+    private static final int AIR_STEER_CHANGE_MIN_MS = tuningInt("AIR_STEER_CHANGE_MIN_MS");
+    private static final int AIR_STEER_CHANGE_MAX_MS = tuningInt("AIR_STEER_CHANGE_MAX_MS");
+    private static final int JUMP_FIDGET_MIN_MS = tuningInt("JUMP_FIDGET_MIN_MS");
+    private static final int JUMP_FIDGET_MAX_MS = tuningInt("JUMP_FIDGET_MAX_MS");
+    private static final int GREETING_ROLL_PERCENT = tuningInt("GREETING_ROLL_PERCENT");
+    private static final int SOCIAL_DURATION_MIN_MS = tuningInt("SOCIAL_DURATION_MIN_MS");
+    private static final int SOCIAL_DURATION_MAX_MS = tuningInt("SOCIAL_DURATION_MAX_MS");
+    private static final int IDLE_ROLL_MIN_MS = tuningInt("IDLE_ROLL_MIN_MS");
+    private static final int IDLE_ROLL_MAX_MS = tuningInt("IDLE_ROLL_MAX_MS");
+    private static final int IDLE_FIDGET_PERCENT = tuningInt("IDLE_FIDGET_PERCENT");
+    private static final int IDLE_DURATION_MIN_MS = tuningInt("IDLE_DURATION_MIN_MS");
+    private static final int IDLE_DURATION_MAX_MS = tuningInt("IDLE_DURATION_MAX_MS");
+    private static final int AUTO_RETRY_MIN_MS = tuningInt("AUTO_RETRY_MIN_MS");
+    private static final int AUTO_RETRY_MAX_MS = tuningInt("AUTO_RETRY_MAX_MS");
+    private static final int AUTO_FIDGET_PERCENT = tuningInt("AUTO_FIDGET_PERCENT");
+    private static final int AUTO_DURATION_MIN_MS = tuningInt("AUTO_DURATION_MIN_MS");
+    private static final int AUTO_DURATION_MAX_MS = tuningInt("AUTO_DURATION_MAX_MS");
+    private static final int PRONE_TOGGLE_MIN_MS = tuningInt("PRONE_TOGGLE_MIN_MS");
+    private static final int PRONE_TOGGLE_MAX_MS = tuningInt("PRONE_TOGGLE_MAX_MS");
+    private static final int JUMP_REPEAT_MIN_MS = tuningInt("JUMP_REPEAT_MIN_MS");
+    private static final int JUMP_REPEAT_MAX_MS = tuningInt("JUMP_REPEAT_MAX_MS");
+    private static final int PRONE_VISUAL_MIN_MS = tuningInt("PRONE_VISUAL_MIN_MS");
+    private static final int PRONE_VISUAL_MAX_MS = tuningInt("PRONE_VISUAL_MAX_MS");
+    private static final int PRONE_VISUAL_PERCENT = tuningInt("PRONE_VISUAL_PERCENT");
 
     private AgentFidgetService() {
     }
@@ -197,23 +225,24 @@ public final class AgentFidgetService {
 
         Character bot = AgentRuntimeIdentityRuntime.bot(entry);
         int airSteerDir = ThreadLocalRandom.current().nextBoolean() ? 1 : -1;
-        boolean spamAirSteer = isJumpFidget(mode) && ThreadLocalRandom.current().nextInt(100) < 35;
+        boolean spamAirSteer = isJumpFidget(mode)
+                && ThreadLocalRandom.current().nextInt(100) < JUMP_SPAM_AIR_STEER_PERCENT;
         AgentFidgetStateRuntime.start(
                 entry,
                 mode,
                 trigger == null ? AgentFidgetTrigger.AUTO_FOLLOW : trigger,
-                now + Math.max(2000, durationMs),
+                now + Math.max(MIN_FIDGET_DURATION_MS, durationMs),
                 now,
                 airSteerDir,
                 spamAirSteer,
                 randomActionBaseDelayMs(mode, spamAirSteer),
                 bot == null ? null : new Point(bot.getPosition()),
-                now + AgentRandom.randMs(500, 1200),
-                now + AgentRandom.randMs(4000, 8000));
+                now + AgentRandom.randMs(AIR_STEER_CHANGE_MIN_MS, AIR_STEER_CHANGE_MAX_MS),
+                now + AgentRandom.randMs(JUMP_FIDGET_MIN_MS, JUMP_FIDGET_MAX_MS));
     }
 
     public static boolean maybeStartGreetingFidget(AgentRuntimeEntry entry, int roll) {
-        if (roll >= 50) {
+        if (roll >= GREETING_ROLL_PERCENT) {
             return false;
         }
         return maybeStartSocialFidget(entry);
@@ -234,7 +263,11 @@ public final class AgentFidgetService {
             return false;
         }
 
-        startRandomFidget(entry, System.currentTimeMillis(), (int) AgentRandom.randMs(2000, 5000), AgentFidgetTrigger.SOCIAL);
+        startRandomFidget(
+                entry,
+                System.currentTimeMillis(),
+                (int) AgentRandom.randMs(SOCIAL_DURATION_MIN_MS, SOCIAL_DURATION_MAX_MS),
+                AgentFidgetTrigger.SOCIAL);
         return true;
     }
 
@@ -287,19 +320,27 @@ public final class AgentFidgetService {
             return;
         }
         if (AgentFidgetStateRuntime.idleRollNotScheduled(entry)) {
-            AgentFidgetStateRuntime.setNextIdleRollAtMs(entry, now + AgentRandom.randMs(30_000, 60_000));
+            AgentFidgetStateRuntime.setNextIdleRollAtMs(
+                    entry,
+                    now + AgentRandom.randMs(IDLE_ROLL_MIN_MS, IDLE_ROLL_MAX_MS));
             return;
         }
         if (!AgentFidgetStateRuntime.idleRollDue(entry, now)) {
             return;
         }
 
-        AgentFidgetStateRuntime.setNextIdleRollAtMs(entry, now + AgentRandom.randMs(30_000, 60_000));
-        if (ThreadLocalRandom.current().nextInt(100) >= 20) {
+        AgentFidgetStateRuntime.setNextIdleRollAtMs(
+                entry,
+                now + AgentRandom.randMs(IDLE_ROLL_MIN_MS, IDLE_ROLL_MAX_MS));
+        if (ThreadLocalRandom.current().nextInt(100) >= IDLE_FIDGET_PERCENT) {
             return;
         }
 
-        startRandomFidget(entry, now, (int) AgentRandom.randMs(2000, 10_000), AgentFidgetTrigger.IDLE);
+        startRandomFidget(
+                entry,
+                now,
+                (int) AgentRandom.randMs(IDLE_DURATION_MIN_MS, IDLE_DURATION_MAX_MS),
+                AgentFidgetTrigger.IDLE);
     }
 
     private static void maybeStartSpeedMismatchFidget(AgentRuntimeEntry entry, Point botPos, Point targetPos, long now, boolean runAiTick) {
@@ -310,12 +351,18 @@ public final class AgentFidgetService {
             return;
         }
 
-        AgentFidgetStateRuntime.setNextFidgetAtMs(entry, now + AgentRandom.randMs(1500, 3000));
-        if (ThreadLocalRandom.current().nextInt(100) >= 35) {
+        AgentFidgetStateRuntime.setNextFidgetAtMs(
+                entry,
+                now + AgentRandom.randMs(AUTO_RETRY_MIN_MS, AUTO_RETRY_MAX_MS));
+        if (ThreadLocalRandom.current().nextInt(100) >= AUTO_FIDGET_PERCENT) {
             return;
         }
 
-        startRandomFidget(entry, now, (int) AgentRandom.randMs(2000, 4500), AgentFidgetTrigger.AUTO_FOLLOW);
+        startRandomFidget(
+                entry,
+                now,
+                (int) AgentRandom.randMs(AUTO_DURATION_MIN_MS, AUTO_DURATION_MAX_MS),
+                AgentFidgetTrigger.AUTO_FOLLOW);
     }
 
     public static boolean shouldStartSpeedMismatchFidget(AgentRuntimeEntry entry, Point botPos, Point targetPos) {
@@ -413,7 +460,9 @@ public final class AgentFidgetService {
                         AgentMovementPoseService.proneOnGround(entry, bot);
                     }
                     AgentMovementBroadcastService.broadcastMovement(entry);
-                    AgentFidgetStateRuntime.setNextActionAtMs(entry, now + AgentRandom.randMs(120, 350));
+                    AgentFidgetStateRuntime.setNextActionAtMs(
+                            entry,
+                            now + AgentRandom.randMs(PRONE_TOGGLE_MIN_MS, PRONE_TOGGLE_MAX_MS));
                 }
                 maybeBroadcastProneAttackVisual(entry, now);
                 yield true;
@@ -471,7 +520,9 @@ public final class AgentFidgetService {
         }
 
         AgentJumpActionService.initiateJump(entry, bot, jumpDx);
-        AgentFidgetStateRuntime.setNextJumpAtMs(entry, now + AgentRandom.randMs(200, 400));
+        AgentFidgetStateRuntime.setNextJumpAtMs(
+                entry,
+                now + AgentRandom.randMs(JUMP_REPEAT_MIN_MS, JUMP_REPEAT_MAX_MS));
     }
 
     private static int nextDiagonalJumpDir(AgentRuntimeEntry entry, Character bot, Point botPos) {
@@ -570,8 +621,10 @@ public final class AgentFidgetService {
             return;
         }
 
-        AgentFidgetStateRuntime.setNextVisualAtMs(entry, now + AgentRandom.randMs(700, 1600));
-        if (ThreadLocalRandom.current().nextInt(100) >= 35) {
+        AgentFidgetStateRuntime.setNextVisualAtMs(
+                entry,
+                now + AgentRandom.randMs(PRONE_VISUAL_MIN_MS, PRONE_VISUAL_MAX_MS));
+        if (ThreadLocalRandom.current().nextInt(100) >= PRONE_VISUAL_PERCENT) {
             return;
         }
 
@@ -604,4 +657,9 @@ public final class AgentFidgetService {
         }
         return dx <= -bound ? 1 : 0;
     }
+
+    private static int tuningInt(String name) {
+        return config.AgentTuning.intValue(TUNING_PREFIX + name);
+    }
+
 }

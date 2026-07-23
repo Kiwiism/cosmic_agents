@@ -12,7 +12,7 @@ import server.maps.MapleMap;
 import java.awt.Point;
 
 public final class AgentFollowTargetPositionService {
-    private static final int ROPE_SEARCH_MAX_DISTANCE = 400;
+    private static final int ROPE_SEARCH_MAX_DISTANCE = config.AgentTuning.intValue("server.agents.capabilities.follow.AgentFollowTargetPositionService.ROPE_SEARCH_MAX_DISTANCE");
 
     private AgentFollowTargetPositionService() {
     }

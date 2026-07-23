@@ -174,136 +174,136 @@ public final class AgentCombatConfig {
     public static class Config {
         // Physics (combat use only)
         // OpenStory Player::damage sets hspeed = +/-1.5 and vforce -= 3.5 on mob knockback.
-        public float KNOCKBACK_HSPEED = 1.5f;
-        public float KNOCKBACK_VFORCE = 3.5f;
+        public float KNOCKBACK_HSPEED = config.AgentTuning.floatValue("server.agents.capabilities.combat.AgentCombatConfig.KNOCKBACK_HSPEED");
+        public float KNOCKBACK_VFORCE = config.AgentTuning.floatValue("server.agents.capabilities.combat.AgentCombatConfig.KNOCKBACK_VFORCE");
         public AgentMobReactionMode AGENT_MOB_REACTION_MODE = AgentMobReactionMode.parse(
-                YamlConfig.config.server.AGENT_MOB_REACTION_MODE);
+                config.AgentYamlConfig.config.agent.AGENT_MOB_REACTION_MODE);
         public int SYNTHETIC_MOB_KNOCKBACK_DISTANCE_X =
-                YamlConfig.config.server.AGENT_SYNTHETIC_MOB_KNOCKBACK_DISTANCE_X;
+                config.AgentYamlConfig.config.agent.AGENT_SYNTHETIC_MOB_KNOCKBACK_DISTANCE_X;
         public int SYNTHETIC_MOB_KNOCKBACK_DURATION_MS =
-                YamlConfig.config.server.AGENT_SYNTHETIC_MOB_KNOCKBACK_DURATION_MS;
+                config.AgentYamlConfig.config.agent.AGENT_SYNTHETIC_MOB_KNOCKBACK_DURATION_MS;
         public int SYNTHETIC_MOB_CONTROL_HOLD_MS =
-                YamlConfig.config.server.AGENT_SYNTHETIC_MOB_CONTROL_HOLD_MS;
+                config.AgentYamlConfig.config.agent.AGENT_SYNTHETIC_MOB_CONTROL_HOLD_MS;
         public int MOB_PHYSICS_PUBLICATION_INTERVAL_MS =
-                YamlConfig.config.server.AGENT_MOB_PHYSICS_PUBLICATION_INTERVAL_MS;
+                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_PUBLICATION_INTERVAL_MS;
         public int MOB_PHYSICS_MAX_CATCH_UP_STEPS =
-                YamlConfig.config.server.AGENT_MOB_PHYSICS_MAX_CATCH_UP_STEPS;
+                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_MAX_CATCH_UP_STEPS;
         public int MOB_PHYSICS_STOP_DISTANCE_X =
-                YamlConfig.config.server.AGENT_MOB_PHYSICS_STOP_DISTANCE_X;
+                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_STOP_DISTANCE_X;
         public int MOB_PHYSICS_RESUME_DISTANCE_X =
-                YamlConfig.config.server.AGENT_MOB_PHYSICS_RESUME_DISTANCE_X;
+                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_RESUME_DISTANCE_X;
         public int MOB_PHYSICS_FLY_DEAD_ZONE_X =
-                YamlConfig.config.server.AGENT_MOB_PHYSICS_FLY_DEAD_ZONE_X;
+                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_FLY_DEAD_ZONE_X;
         public int MOB_PHYSICS_FLY_DEAD_ZONE_Y =
-                YamlConfig.config.server.AGENT_MOB_PHYSICS_FLY_DEAD_ZONE_Y;
+                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_FLY_DEAD_ZONE_Y;
         public int MOB_PHYSICS_JUMP_COOLDOWN_MS =
-                YamlConfig.config.server.AGENT_MOB_PHYSICS_JUMP_COOLDOWN_MS;
+                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_JUMP_COOLDOWN_MS;
         public int MOB_PHYSICS_JUMP_COOLDOWN_JITTER_MS =
-                YamlConfig.config.server.AGENT_MOB_PHYSICS_JUMP_COOLDOWN_JITTER_MS;
+                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_JUMP_COOLDOWN_JITTER_MS;
         public int MOB_PHYSICS_JUMP_TARGET_HEIGHT =
-                YamlConfig.config.server.AGENT_MOB_PHYSICS_JUMP_TARGET_HEIGHT;
+                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_JUMP_TARGET_HEIGHT;
         public int MOB_PHYSICS_MAX_SAFE_EDGE_PX =
-                YamlConfig.config.server.AGENT_MOB_PHYSICS_MAX_SAFE_EDGE_PX;
+                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_MAX_SAFE_EDGE_PX;
         public int MOB_PHYSICS_LEFT_EDGE_INSET_PX =
-                YamlConfig.config.server.AGENT_MOB_PHYSICS_LEFT_EDGE_INSET_PX;
+                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_LEFT_EDGE_INSET_PX;
         public int MOB_PHYSICS_RIGHT_EDGE_INSET_PX =
-                YamlConfig.config.server.AGENT_MOB_PHYSICS_RIGHT_EDGE_INSET_PX;
+                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_RIGHT_EDGE_INSET_PX;
         public int MOB_PHYSICS_SPEED_PERCENT =
-                YamlConfig.config.server.AGENT_MOB_PHYSICS_SPEED_PERCENT;
+                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_SPEED_PERCENT;
         public int MOB_PHYSICS_BEHAVIOR_JITTER_MS =
-                YamlConfig.config.server.AGENT_MOB_PHYSICS_BEHAVIOR_JITTER_MS;
+                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_BEHAVIOR_JITTER_MS;
         public int MOB_PHYSICS_DIRECTION_REACTION_MAX_MS =
-                YamlConfig.config.server.AGENT_MOB_PHYSICS_DIRECTION_REACTION_MAX_MS;
+                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_DIRECTION_REACTION_MAX_MS;
         public int MOB_PHYSICS_EDGE_RETREAT_CHANCE_PERCENT =
-                YamlConfig.config.server.AGENT_MOB_PHYSICS_EDGE_RETREAT_CHANCE_PERCENT;
+                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_EDGE_RETREAT_CHANCE_PERCENT;
         public int MOB_PHYSICS_EDGE_IDLE_MIN_MS =
-                YamlConfig.config.server.AGENT_MOB_PHYSICS_EDGE_IDLE_MIN_MS;
+                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_EDGE_IDLE_MIN_MS;
         public int MOB_PHYSICS_EDGE_IDLE_MAX_MS =
-                YamlConfig.config.server.AGENT_MOB_PHYSICS_EDGE_IDLE_MAX_MS;
+                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_EDGE_IDLE_MAX_MS;
         public int MOB_PHYSICS_EDGE_RETREAT_MIN_MS =
-                YamlConfig.config.server.AGENT_MOB_PHYSICS_EDGE_RETREAT_MIN_MS;
+                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_EDGE_RETREAT_MIN_MS;
         public int MOB_PHYSICS_EDGE_RETREAT_MAX_MS =
-                YamlConfig.config.server.AGENT_MOB_PHYSICS_EDGE_RETREAT_MAX_MS;
+                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_EDGE_RETREAT_MAX_MS;
         public int MOB_PHYSICS_RETREAT_MIN_DISTANCE_PX =
-                YamlConfig.config.server.AGENT_MOB_PHYSICS_RETREAT_MIN_DISTANCE_PX;
+                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_RETREAT_MIN_DISTANCE_PX;
         public int MOB_PHYSICS_RETREAT_MAX_DISTANCE_PX =
-                YamlConfig.config.server.AGENT_MOB_PHYSICS_RETREAT_MAX_DISTANCE_PX;
+                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_RETREAT_MAX_DISTANCE_PX;
         public int MOB_PHYSICS_STUCK_DETECT_MS =
-                YamlConfig.config.server.AGENT_MOB_PHYSICS_STUCK_DETECT_MS;
+                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_STUCK_DETECT_MS;
         public int MOB_PHYSICS_STUCK_RETREAT_CHANCE_PERCENT =
-                YamlConfig.config.server.AGENT_MOB_PHYSICS_STUCK_RETREAT_CHANCE_PERCENT;
+                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_STUCK_RETREAT_CHANCE_PERCENT;
         public int MOB_PHYSICS_KNOCKBACK_PERCENT =
-                YamlConfig.config.server.AGENT_MOB_PHYSICS_KNOCKBACK_PERCENT;
+                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_KNOCKBACK_PERCENT;
         public int MOB_PHYSICS_FLINCH_RECOVERY_MS =
-                YamlConfig.config.server.AGENT_MOB_PHYSICS_FLINCH_RECOVERY_MS;
+                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_FLINCH_RECOVERY_MS;
         public int MOB_PHYSICS_POST_FLINCH_CHASE_RAMP_MS =
-                YamlConfig.config.server.AGENT_MOB_PHYSICS_POST_FLINCH_CHASE_RAMP_MS;
+                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_POST_FLINCH_CHASE_RAMP_MS;
         public boolean MOB_PHYSICS_HIT1_ENABLED =
-                YamlConfig.config.server.AGENT_MOB_PHYSICS_HIT1_ENABLED;
+                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_HIT1_ENABLED;
         public int MOB_PHYSICS_IMPACT_DELAY_PERCENT =
-                YamlConfig.config.server.AGENT_MOB_PHYSICS_IMPACT_DELAY_PERCENT;
+                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_IMPACT_DELAY_PERCENT;
         public int MOB_PHYSICS_IMPACT_DELAY_OFFSET_MS =
-                YamlConfig.config.server.AGENT_MOB_PHYSICS_IMPACT_DELAY_OFFSET_MS;
+                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_IMPACT_DELAY_OFFSET_MS;
         public boolean MOB_PHYSICS_DIAGNOSTIC_LOGGING =
-                YamlConfig.config.server.AGENT_MOB_PHYSICS_DIAGNOSTIC_LOGGING;
+                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_DIAGNOSTIC_LOGGING;
         public boolean MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS =
-                YamlConfig.config.server.AGENT_MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS;
+                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS;
         public int MOB_PHYSICS_OBSERVER_WARMUP_MS =
-                YamlConfig.config.server.AGENT_MOB_PHYSICS_OBSERVER_WARMUP_MS;
+                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_OBSERVER_WARMUP_MS;
         public int MOB_PHYSICS_AGGRO_TIMEOUT_MS =
-                YamlConfig.config.server.AGENT_MOB_PHYSICS_AGGRO_TIMEOUT_MS;
+                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_AGGRO_TIMEOUT_MS;
 
         // Basic attack fallback when weapon data cannot produce a real normal-attack hit box.
-        public int ATTACK_RANGE_X = 80;
-        public int ATTACK_RANGE_Y = 50;
-        public int ATTACK_DOWN_MAX = 20;
-        public int ATTACK_JUMP_Y = 130;
-        public int ATTACK_JUMP_X_EXTRA = 60;
-        public int RANGED_DEGENERATE_RANGE_X = 50;
-        public int RANGED_DEGENERATE_RANGE_Y = 50;
-        public int RANGED_RETREAT_THRESHOLD_X = 80;
-        public int RANGED_RETREAT_DISTANCE_X = 100;
-        public int BREAKOUT_MAX_MS = 3000;
+        public int ATTACK_RANGE_X = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentCombatConfig.ATTACK_RANGE_X");
+        public int ATTACK_RANGE_Y = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentCombatConfig.ATTACK_RANGE_Y");
+        public int ATTACK_DOWN_MAX = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentCombatConfig.ATTACK_DOWN_MAX");
+        public int ATTACK_JUMP_Y = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentCombatConfig.ATTACK_JUMP_Y");
+        public int ATTACK_JUMP_X_EXTRA = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentCombatConfig.ATTACK_JUMP_X_EXTRA");
+        public int RANGED_DEGENERATE_RANGE_X = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentCombatConfig.RANGED_DEGENERATE_RANGE_X");
+        public int RANGED_DEGENERATE_RANGE_Y = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentCombatConfig.RANGED_DEGENERATE_RANGE_Y");
+        public int RANGED_RETREAT_THRESHOLD_X = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentCombatConfig.RANGED_RETREAT_THRESHOLD_X");
+        public int RANGED_RETREAT_DISTANCE_X = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentCombatConfig.RANGED_RETREAT_DISTANCE_X");
+        public int BREAKOUT_MAX_MS = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentCombatConfig.BREAKOUT_MAX_MS");
 
         // Ammo
-        public int AMMO_LOW_WARN = 500;
+        public int AMMO_LOW_WARN = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentCombatConfig.AMMO_LOW_WARN");
 
         // Grind / AoE
-        public int GRIND_SEEK_RANGE = 800;
-        public int GRIND_RETARGET_INTERVAL_MS = 400;
-        public int AOE_MOB_THRESHOLD = 2;
+        public int GRIND_SEEK_RANGE = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentCombatConfig.GRIND_SEEK_RANGE");
+        public int GRIND_RETARGET_INTERVAL_MS = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentCombatConfig.GRIND_RETARGET_INTERVAL_MS");
+        public int AOE_MOB_THRESHOLD = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentCombatConfig.AOE_MOB_THRESHOLD");
         // AoE repositioning: when the best fire-now plan is single-target but stepping into the
         // cluster centroid would let the AoE skill beat it by this DPS factor, defer the shot and
         // walk in. Bounded by distance/time so the bot never chases scattering mobs.
-        public boolean AOE_REPOSITION_ENABLED = true;
-        public boolean AOE_REPOSITION_DEBUG = false;
-        public double AOE_REPOSITION_DPS_FACTOR = 1.5d;
-        public int AOE_REPOSITION_MAX_DISTANCE_X = 150;
-        public int AOE_REPOSITION_ARRIVAL_X = 20;
-        public long AOE_REPOSITION_MAX_MS = 800L;
-        public int GRIND_REGION_OCCUPANCY_PENALTY = 1200;
-        public int GRIND_REGION_OCCUPANCY_PENALTY_CAP = 3600;
-        public int GRIND_TARGET_OCCUPANCY_PENALTY = 800;
-        public int GRIND_TARGET_OCCUPANCY_PENALTY_CAP = 2400;
+        public boolean AOE_REPOSITION_ENABLED = config.AgentTuning.booleanValue("server.agents.capabilities.combat.AgentCombatConfig.AOE_REPOSITION_ENABLED");
+        public boolean AOE_REPOSITION_DEBUG = config.AgentTuning.booleanValue("server.agents.capabilities.combat.AgentCombatConfig.AOE_REPOSITION_DEBUG");
+        public double AOE_REPOSITION_DPS_FACTOR = config.AgentTuning.doubleValue("server.agents.capabilities.combat.AgentCombatConfig.AOE_REPOSITION_DPS_FACTOR");
+        public int AOE_REPOSITION_MAX_DISTANCE_X = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentCombatConfig.AOE_REPOSITION_MAX_DISTANCE_X");
+        public int AOE_REPOSITION_ARRIVAL_X = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentCombatConfig.AOE_REPOSITION_ARRIVAL_X");
+        public long AOE_REPOSITION_MAX_MS = config.AgentTuning.longValue("server.agents.capabilities.combat.AgentCombatConfig.AOE_REPOSITION_MAX_MS");
+        public int GRIND_REGION_OCCUPANCY_PENALTY = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentCombatConfig.GRIND_REGION_OCCUPANCY_PENALTY");
+        public int GRIND_REGION_OCCUPANCY_PENALTY_CAP = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentCombatConfig.GRIND_REGION_OCCUPANCY_PENALTY_CAP");
+        public int GRIND_TARGET_OCCUPANCY_PENALTY = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentCombatConfig.GRIND_TARGET_OCCUPANCY_PENALTY");
+        public int GRIND_TARGET_OCCUPANCY_PENALTY_CAP = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentCombatConfig.GRIND_TARGET_OCCUPANCY_PENALTY_CAP");
 
         // Mob damage
-        public int MOB_TOUCH_SWEEP_HEIGHT = 50;
-        public int MOB_HIT_COOLDOWN_MS = 1500;
-        public long BOT_DEAD_MS = YamlConfig.config.server.AGENT_DEATH_RESPAWN_DELAY_MS;
-        public int RESPAWN_HP_PERCENT = YamlConfig.config.server.AGENT_DEATH_RESPAWN_HP_PERCENT;
+        public int MOB_TOUCH_SWEEP_HEIGHT = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentCombatConfig.MOB_TOUCH_SWEEP_HEIGHT");
+        public int MOB_HIT_COOLDOWN_MS = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentCombatConfig.MOB_HIT_COOLDOWN_MS");
+        public long BOT_DEAD_MS = config.AgentYamlConfig.config.agent.AGENT_DEATH_RESPAWN_DELAY_MS;
+        public int RESPAWN_HP_PERCENT = config.AgentYamlConfig.config.agent.AGENT_DEATH_RESPAWN_HP_PERCENT;
 
         // Support
-        public int SUPPORT_RANGE = 400;
-        public int SUPPORT_VERTICAL_RANGE = 220;
-        public int SUPPORT_REBUFF_CD_MS = 3_000;
+        public int SUPPORT_RANGE = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentCombatConfig.SUPPORT_RANGE");
+        public int SUPPORT_VERTICAL_RANGE = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentCombatConfig.SUPPORT_VERTICAL_RANGE");
+        public int SUPPORT_REBUFF_CD_MS = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentCombatConfig.SUPPORT_REBUFF_CD_MS");
         // Heal until every member in range (including the cleric itself) is above this HP ratio.
         // Cadence: animation lock (attackCooldownMs) then HEAL_MOVE_WINDOW_MS walk window.
         // Heal is also gated by moveWindowMs > 0, so it cannot fire mid-attack-movement-window.
-        public float SUPPORT_HEAL_TARGET_RATIO = 0.90f;
-        public int HEAL_MOVE_WINDOW_MS = 600;
+        public float SUPPORT_HEAL_TARGET_RATIO = config.AgentTuning.floatValue("server.agents.capabilities.combat.AgentCombatConfig.SUPPORT_HEAL_TARGET_RATIO");
+        public int HEAL_MOVE_WINDOW_MS = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentCombatConfig.HEAL_MOVE_WINDOW_MS");
         // Jump-heal: while following, if the leader is at least this many px ahead horizontally,
         // kick a diagonal jump toward them just before the heal cast so the bot keeps closing
         // distance instead of stopping to plant the heal animation. 0 disables.
-        public int JUMP_HEAL_LEADER_AHEAD_PX = 80;
+        public int JUMP_HEAL_LEADER_AHEAD_PX = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentCombatConfig.JUMP_HEAL_LEADER_AHEAD_PX");
     }
 }

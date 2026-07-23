@@ -15,10 +15,10 @@ import java.awt.Point;
 
 public final class AgentPortalTravelCapability
         implements AgentExecutableCapability<AgentPortalTravelCapability.Command> {
-    private static final int PORTAL_APPROACH_RANGE_PX = 60;
-    private static final long NAVIGATION_TIMEOUT_MS = 60_000L;
-    private static final int NAVIGATION_RETRIES = 2;
-    private static final long DESTINATION_SETTLE_MS = 2_500L;
+    private static final int PORTAL_APPROACH_RANGE_PX = config.AgentTuning.intValue("server.agents.capabilities.primitive.AgentPortalTravelCapability.PORTAL_APPROACH_RANGE_PX");
+    private static final long NAVIGATION_TIMEOUT_MS = config.AgentTuning.longValue("server.agents.capabilities.primitive.AgentPortalTravelCapability.NAVIGATION_TIMEOUT_MS");
+    private static final int NAVIGATION_RETRIES = config.AgentTuning.intValue("server.agents.capabilities.primitive.AgentPortalTravelCapability.NAVIGATION_RETRIES");
+    private static final long DESTINATION_SETTLE_MS = config.AgentTuning.longValue("server.agents.capabilities.primitive.AgentPortalTravelCapability.DESTINATION_SETTLE_MS");
 
     public record Command(int sourceMapId, int portalId, int destinationMapId,
                           boolean requireAmherstScope, AgentPortalRoutePlan routePlan)

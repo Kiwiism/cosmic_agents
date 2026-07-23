@@ -16,7 +16,7 @@ import java.util.Set;
 /** Deterministic home-pack/rotation/grind bridge from instructor training to level 15. */
 final class AgentLevel15CatchUpRuntime {
     private static final Logger log = LoggerFactory.getLogger(AgentLevel15CatchUpRuntime.class);
-    private static final int NPC_DISTANCE_PX = 100;
+    private static final int NPC_DISTANCE_PX = config.AgentTuning.intValue("server.agents.progression.AgentLevel15CatchUpRuntime.NPC_DISTANCE_PX");
 
     private AgentLevel15CatchUpRuntime() {
     }

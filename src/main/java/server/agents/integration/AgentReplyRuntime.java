@@ -109,7 +109,7 @@ public final class AgentReplyRuntime {
     }
 
     private static boolean legacyDialogueEnabled() {
-        return YamlConfig.config.server.AGENT_LEGACY_DIALOGUE_ENABLED;
+        return config.AgentYamlConfig.config.agent.AGENT_LEGACY_DIALOGUE_ENABLED;
     }
 
     private static AgentReplyQueue.State state(AgentRuntimeEntry entry) {

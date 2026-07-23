@@ -1,8 +1,8 @@
 package server.agents.capabilities.combat.data;
 
 public final class AgentAttackTiming {
-    private static final float ATTACK_SPEED_BASE_FACTOR = 1.42f;
-    private static final float ATTACK_SPEED_TIER_FACTOR = 0.07f;
+    private static final float ATTACK_SPEED_BASE_FACTOR = config.AgentTuning.floatValue("server.agents.capabilities.combat.data.AgentAttackTiming.ATTACK_SPEED_BASE_FACTOR");
+    private static final float ATTACK_SPEED_TIER_FACTOR = config.AgentTuning.floatValue("server.agents.capabilities.combat.data.AgentAttackTiming.ATTACK_SPEED_TIER_FACTOR");
 
     private AgentAttackTiming() {
     }

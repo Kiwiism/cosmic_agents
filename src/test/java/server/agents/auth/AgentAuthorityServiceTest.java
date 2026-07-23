@@ -12,11 +12,11 @@ import static org.mockito.Mockito.when;
 class AgentAuthorityServiceTest {
     @Test
     void rolesAreCaseInsensitiveAndHierarchical() {
-        String oldAdmins = YamlConfig.config.server.AGENT_AUTHORITY_ADMINISTRATOR_NAMES;
-        String oldOperators = YamlConfig.config.server.AGENT_AUTHORITY_OPERATOR_NAMES;
+        String oldAdmins = config.AgentYamlConfig.config.agent.AGENT_AUTHORITY_ADMINISTRATOR_NAMES;
+        String oldOperators = config.AgentYamlConfig.config.agent.AGENT_AUTHORITY_OPERATOR_NAMES;
         try {
-            YamlConfig.config.server.AGENT_AUTHORITY_ADMINISTRATOR_NAMES = "  Kiwi ";
-            YamlConfig.config.server.AGENT_AUTHORITY_OPERATOR_NAMES = "Operator";
+            config.AgentYamlConfig.config.agent.AGENT_AUTHORITY_ADMINISTRATOR_NAMES = "  Kiwi ";
+            config.AgentYamlConfig.config.agent.AGENT_AUTHORITY_OPERATOR_NAMES = "Operator";
             Character kiwi = named("kIwI");
             Character operator = named("operator");
             Character stranger = named("stranger");
@@ -27,8 +27,8 @@ class AgentAuthorityServiceTest {
             assertFalse(AgentAuthorityService.mayAdminister(operator));
             assertFalse(AgentAuthorityService.mayObserve(stranger));
         } finally {
-            YamlConfig.config.server.AGENT_AUTHORITY_ADMINISTRATOR_NAMES = oldAdmins;
-            YamlConfig.config.server.AGENT_AUTHORITY_OPERATOR_NAMES = oldOperators;
+            config.AgentYamlConfig.config.agent.AGENT_AUTHORITY_ADMINISTRATOR_NAMES = oldAdmins;
+            config.AgentYamlConfig.config.agent.AGENT_AUTHORITY_OPERATOR_NAMES = oldOperators;
         }
     }
 

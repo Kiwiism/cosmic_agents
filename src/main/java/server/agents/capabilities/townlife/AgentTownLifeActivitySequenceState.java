@@ -4,6 +4,8 @@ import server.agents.runtime.state.AgentCapabilityStateKey;
 
 /** Bounded micro-phases for a selected TownLife activity. */
 public final class AgentTownLifeActivitySequenceState {
+    private static final long MIN_SEQUENCE_DURATION_MS = config.AgentTuning.longValue(
+            "server.agents.capabilities.townlife.AgentTownLifeActivitySequenceState.MIN_SEQUENCE_DURATION_MS");
     public static final AgentCapabilityStateKey<AgentTownLifeActivitySequenceState> STATE_KEY =
             new AgentCapabilityStateKey<>("town-life.activity-sequence",
                     AgentTownLifeActivitySequenceState.class,
@@ -28,7 +30,7 @@ public final class AgentTownLifeActivitySequenceState {
     private boolean performanceStarted;
 
     public synchronized void start(long nowMs, long requestedEndMs) {
-        long duration = Math.max(2_000L, requestedEndMs - nowMs);
+        long duration = Math.max(MIN_SEQUENCE_DURATION_MS, requestedEndMs - nowMs);
         endMs = nowMs + duration;
         long orient = Math.min(700L, Math.max(200L, duration / 12));
         long opening = Math.min(900L, Math.max(250L, duration / 10));

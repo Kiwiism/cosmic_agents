@@ -7,8 +7,8 @@ import server.agents.runtime.AgentRuntimeEntry;
 import java.awt.Point;
 
 public final class AgentVictoriaRouteRuntime {
-    private static final int PORTAL_DISTANCE_PX = 45;
-    private static final long FAILED_EDGE_BLOCK_MS = 120_000L;
+    private static final int PORTAL_DISTANCE_PX = config.AgentTuning.intValue("server.agents.progression.AgentVictoriaRouteRuntime.PORTAL_DISTANCE_PX");
+    private static final long FAILED_EDGE_BLOCK_MS = config.AgentTuning.longValue("server.agents.progression.AgentVictoriaRouteRuntime.FAILED_EDGE_BLOCK_MS");
 
     public enum Status {
         ARRIVED,

@@ -23,9 +23,9 @@ import java.util.concurrent.ThreadLocalRandom;
 public final class AgentKpqStage1 {
 
     public static final int KPQ_STAGE1_MAP = 103000800;
-    private static final int NPC_CLOTO = 9020001;
-    private static final int ITEM_COUPON = 4001007;
-    private static final int ITEM_PASS = 4001008;
+    private static final int NPC_CLOTO_ID = 9_020_001;
+    private static final int ITEM_COUPON_ID = 4_001_007;
+    private static final int ITEM_PASS_ID = 4_001_008;
 
     // Question index (1-9) -> required coupon count; index 0 unused.
     private static final int[] ANSWERS = {0, 8, 10, 10, 10, 15, 20, 25, 25, 35};
@@ -39,9 +39,10 @@ public final class AgentKpqStage1 {
     static final int DELIVERING = 6;
     static final int DONE = 7;
 
-    private static final int NEAR_NPC_PX = 80;
-    private static final int NEAR_OWNER_PX = 80;
-    private static final long WAIT_MS = 1800;
+    private static final int NEAR_NPC_PX = config.AgentTuning.intValue(
+            "server.agents.capabilities.partyquest.kpq.AgentKpqStage1.NEAR_NPC_PX");
+    private static final int NEAR_OWNER_PX = config.AgentTuning.intValue("server.agents.capabilities.partyquest.kpq.AgentKpqStage1.NEAR_OWNER_PX");
+    private static final long WAIT_MS = config.AgentTuning.longValue("server.agents.capabilities.partyquest.kpq.AgentKpqStage1.WAIT_MS");
 
     private static final AgentScript SCRIPT = new AgentScript() {
         private final List<AgentScriptStep> steps = List.of(
@@ -145,11 +146,11 @@ public final class AgentKpqStage1 {
     }
 
     private static void tickCouponGrinding(AgentScriptContext ctx) {
-        int have = ctx.bot().getItemQuantity(ITEM_COUPON, false);
+        int have = ctx.bot().getItemQuantity(ITEM_COUPON_ID, false);
         int need = AgentPqRuntime.kpqCouponTarget(ctx.entry());
 
         if (have > need) {
-            ctx.dropItem(InventoryType.ETC, ITEM_COUPON, (short) (have - need));
+            ctx.dropItem(InventoryType.ETC, ITEM_COUPON_ID, (short) (have - need));
             have = need;
         }
 
@@ -162,7 +163,7 @@ public final class AgentKpqStage1 {
 
     private static boolean hasRequiredCoupons(AgentScriptContext ctx) {
         int need = AgentPqRuntime.kpqCouponTarget(ctx.entry());
-        if (need <= 0 || ctx.bot().getItemQuantity(ITEM_COUPON, false) < need) {
+        if (need <= 0 || ctx.bot().getItemQuantity(ITEM_COUPON_ID, false) < need) {
             return false;
         }
         AgentPqRuntime.queueSay(ctx.entry(), "Got " + need + "!");
@@ -176,11 +177,11 @@ public final class AgentKpqStage1 {
     }
 
     static boolean exchangeCouponsForPass(Character bot, int target, InventoryGateway inventory) {
-        if (bot.getItemQuantity(ITEM_COUPON, false) < target) {
+        if (bot.getItemQuantity(ITEM_COUPON_ID, false) < target) {
             return false;
         }
-        inventory.removeById(bot, InventoryType.ETC, ITEM_COUPON, target, false, false);
-        inventory.addItem(bot, ITEM_PASS, (short) 1);
+        inventory.removeById(bot, InventoryType.ETC, ITEM_COUPON_ID, target, false, false);
+        inventory.addItem(bot, ITEM_PASS_ID, (short) 1);
         EventInstanceManager eim = bot.getEventInstance();
         if (eim != null) eim.gridInsert(bot, 0);
         return true;
@@ -189,8 +190,8 @@ public final class AgentKpqStage1 {
     private static void queuePassDelivery(AgentScriptContext ctx) {
         AgentPqRuntime.setKpqStageState(ctx.entry(), DELIVERING);
         ctx.queueFollowUntilNearOwner(NEAR_OWNER_PX);
-        ctx.queueDrop(InventoryType.ETC, ITEM_COUPON, (short) 0);
-        ctx.queueDrop(InventoryType.ETC, ITEM_PASS, (short) 1);
+        ctx.queueDrop(InventoryType.ETC, ITEM_COUPON_ID, (short) 0);
+        ctx.queueDrop(InventoryType.ETC, ITEM_PASS_ID, (short) 1);
     }
 
     private static void reset(AgentRuntimeEntry entry) {
@@ -198,7 +199,7 @@ public final class AgentKpqStage1 {
     }
 
     private static Point getNpcPos(Character bot) {
-        NPC npc = bot.getMap().getNPCById(NPC_CLOTO);
+        NPC npc = bot.getMap().getNPCById(NPC_CLOTO_ID);
         return (npc != null) ? npc.getPosition() : null;
     }
 

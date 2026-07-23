@@ -6,7 +6,7 @@ import server.agents.personality.AgentPersonalityAssignment;
 import server.agents.personality.AgentPersonalityProfile;
 import server.agents.personality.AgentPersonalityProfileRepository;
 import server.agents.personality.AgentPersonalityState;
-import server.agents.plans.AgentPlanPauseRuntime;
+import server.agents.runtime.AgentForegroundPauseRuntime;
 import server.agents.progression.events.AgentQuestStateChangedEvent;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -26,7 +26,7 @@ class AgentPioRelaxerInterludeEventListenerTest {
                 .require(AgentPioRelaxerInterludeState.STATE_KEY);
         assertEquals(AgentPioRelaxerInterludeState.Mode.REST, state.mode());
         assertTrue(state.durationMs() >= 15_000L && state.durationMs() <= 60_000L);
-        assertTrue(AgentPlanPauseRuntime.paused(entry));
+        assertTrue(AgentForegroundPauseRuntime.paused(entry));
     }
 
     @Test
@@ -39,7 +39,7 @@ class AgentPioRelaxerInterludeEventListenerTest {
                 .require(AgentPioRelaxerInterludeState.STATE_KEY);
         assertEquals(AgentPioRelaxerInterludeState.Mode.PLAYFUL, state.mode());
         assertTrue(state.durationMs() >= 10_000L && state.durationMs() <= 15_000L);
-        assertTrue(AgentPlanPauseRuntime.paused(entry));
+        assertTrue(AgentForegroundPauseRuntime.paused(entry));
     }
 
     @Test
@@ -50,7 +50,7 @@ class AgentPioRelaxerInterludeEventListenerTest {
 
         assertFalse(entry.capabilityStates().require(
                 AgentPioRelaxerInterludeState.STATE_KEY).active());
-        assertFalse(AgentPlanPauseRuntime.paused(entry));
+        assertFalse(AgentForegroundPauseRuntime.paused(entry));
     }
 
     private static AgentRuntimeEntry entry(String profileId, long seed) {

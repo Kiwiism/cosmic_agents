@@ -12,7 +12,7 @@ import java.util.Map;
  * Agent-owned seam for navigation-facing physics helpers while internals migrate.
  */
 public final class AgentNavigationPhysicsService {
-    private static final int WALK_GAP_PX = 12;
+    private static final int WALK_GAP_PX = config.AgentTuning.intValue("server.agents.capabilities.navigation.AgentNavigationPhysicsService.WALK_GAP_PX");
 
     private AgentNavigationPhysicsService() {
     }

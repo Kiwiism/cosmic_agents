@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 
 /** Read-only operational view of TownLife state, authored profiles, and safety counters. */
 public final class AgentTownLifeDiagnostics {
-    private static final int MAX_LINES = 40;
+    private static final int MAX_LINES = config.AgentTuning.intValue("server.agents.capabilities.townlife.AgentTownLifeDiagnostics.MAX_LINES");
 
     private AgentTownLifeDiagnostics() {
     }

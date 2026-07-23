@@ -11,7 +11,11 @@ import java.util.concurrent.ThreadLocalRandom;
  * until chat handling is fully reconstructed under Agent modules.
  */
 public final class AgentReplyQueue {
-    private static final long QUEUED_MESSAGE_SPACING_ESTIMATE_MS = 5_200L;
+    private static final int DRAIN_DELAY_MIN_MS = config.AgentTuning.intValue(
+            "server.agents.commands.AgentReplyQueue.DRAIN_DELAY_MIN_MS");
+    private static final int DRAIN_DELAY_MAX_EXCLUSIVE_MS = config.AgentTuning.intValue(
+            "server.agents.commands.AgentReplyQueue.DRAIN_DELAY_MAX_EXCLUSIVE_MS");
+    private static final long QUEUED_MESSAGE_SPACING_ESTIMATE_MS = config.AgentTuning.longValue("server.agents.commands.AgentReplyQueue.QUEUED_MESSAGE_SPACING_ESTIMATE_MS");
     private static final int MAX_PENDING_MESSAGES = AgentBoundedExecutorFactory.positiveIntegerProperty(
             "agents.async.dialogue.queueCapacity", 32);
 
@@ -100,6 +104,8 @@ public final class AgentReplyQueue {
     }
 
     private static int nextDrainDelayMs() {
-        return ThreadLocalRandom.current().nextInt(4_900, 5_101);
+        return ThreadLocalRandom.current().nextInt(
+                DRAIN_DELAY_MIN_MS,
+                DRAIN_DELAY_MAX_EXCLUSIVE_MS);
     }
 }

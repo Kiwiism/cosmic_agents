@@ -13,7 +13,7 @@ import java.awt.Point;
  * Agent-owned committed-edge comparison and retention policy.
  */
 public final class AgentNavigationCommittedEdgeService {
-    private static final int TARGET_REPLAN_DISTANCE_PX = 128;
+    private static final int TARGET_REPLAN_DISTANCE_PX = config.AgentTuning.intValue("server.agents.capabilities.navigation.AgentNavigationCommittedEdgeService.TARGET_REPLAN_DISTANCE_PX");
 
     private AgentNavigationCommittedEdgeService() {
     }

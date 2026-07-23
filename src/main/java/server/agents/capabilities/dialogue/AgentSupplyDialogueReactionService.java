@@ -13,7 +13,7 @@ import java.util.Map;
 /** Turns operational supply facts into optional, observer-gated presentation intents. */
 public final class AgentSupplyDialogueReactionService implements AgentEventListener<AgentEvent> {
     public static final String INTENT_KEY = "supply.threshold";
-    private static final long COOLDOWN_MS = 60_000L;
+    private static final long COOLDOWN_MS = config.AgentTuning.longValue("server.agents.capabilities.dialogue.AgentSupplyDialogueReactionService.COOLDOWN_MS");
 
     private final AgentEventBus bus;
 

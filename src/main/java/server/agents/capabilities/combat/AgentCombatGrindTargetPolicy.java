@@ -15,8 +15,8 @@ import server.life.Monster;
 import server.maps.Foothold;
 
 public final class AgentCombatGrindTargetPolicy {
-    private static final long REGION_CROWD_BONUS_CAP = 3_000L;
-    private static final long REGION_CROWD_BONUS_PER_EXTRA_MOB = 400L;
+    private static final long REGION_CROWD_BONUS_CAP = config.AgentTuning.longValue("server.agents.capabilities.combat.AgentCombatGrindTargetPolicy.REGION_CROWD_BONUS_CAP");
+    private static final long REGION_CROWD_BONUS_PER_EXTRA_MOB = config.AgentTuning.longValue("server.agents.capabilities.combat.AgentCombatGrindTargetPolicy.REGION_CROWD_BONUS_PER_EXTRA_MOB");
 
     private static final Comparator<AgentScoredGrindTarget> LEGACY_TARGET_ORDER = Comparator
             .comparingLong(AgentScoredGrindTarget::graphCost)

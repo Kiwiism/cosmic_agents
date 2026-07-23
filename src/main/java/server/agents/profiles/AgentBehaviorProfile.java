@@ -1,7 +1,5 @@
 package server.agents.profiles;
 
-import server.agents.capabilities.movement.fidget.AgentFidgetMode;
-
 import java.util.Set;
 
 public record AgentBehaviorProfile(
@@ -39,17 +37,23 @@ public record AgentBehaviorProfile(
 
     public record Movement(
             boolean navigationFidgetsEnabled,
-            Set<AgentFidgetMode> navigationFidgetModes,
+            Set<NavigationFidget> navigationFidgetModes,
             DelayRange fidgetCooldownMs,
             DelayRange fidgetDurationMs) {
         public Movement {
             navigationFidgetModes = navigationFidgetModes == null
                     ? Set.of() : Set.copyOf(navigationFidgetModes);
-            if (fidgetCooldownMs == null || fidgetDurationMs == null
-                    || navigationFidgetModes.contains(AgentFidgetMode.NONE)) {
+            if (fidgetCooldownMs == null || fidgetDurationMs == null) {
                 throw new IllegalArgumentException("valid movement presentation settings are required");
             }
         }
+    }
+
+    /** Semantic profile choices; Movement owns their concrete animation implementation. */
+    public enum NavigationFidget {
+        WAIT,
+        PRONE,
+        PRONE_TAP
     }
 
     public record Encounter(String style, int maxEstimatedHits) {

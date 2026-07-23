@@ -1,8 +1,9 @@
 package server.agents.capabilities.townlife;
 
 import client.Character;
+import server.agents.capabilities.navigation.AgentRouteOutcome;
+import server.agents.capabilities.navigation.AgentRouteStatus;
 import server.agents.integration.PrimitiveCapabilityGateway;
-import server.agents.progression.AgentVictoriaRouteRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 final class AgentTownLifeArrivalExtensionRepository {
@@ -15,12 +16,12 @@ final class AgentTownLifeArrivalExtensionRepository {
                                   AgentTownLifeState state,
                                   long nowMs,
                                   PrimitiveCapabilityGateway gateway) {
-            AgentVictoriaRouteRuntime.TravelOutcome outcome = AgentVictoriaRouteRuntime.travelStatus(
-                    entry, agent, state.townMapId(), gateway, nowMs);
-            if (outcome.status() == AgentVictoriaRouteRuntime.Status.ARRIVED) {
+            AgentRouteOutcome outcome = gateway.travelTo(
+                    entry, agent, state.townMapId(), nowMs);
+            if (outcome.status() == AgentRouteStatus.ARRIVED) {
                 state.transition(AgentTownLifeState.Stage.COMPLETE_ARRIVAL, nowMs);
             }
-            return outcome.status() != AgentVictoriaRouteRuntime.Status.MOVING;
+            return outcome.status() != AgentRouteStatus.MOVING;
         }
 
         @Override

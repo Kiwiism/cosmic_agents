@@ -12,9 +12,7 @@ class AgentProfileNavigationFidgetPolicyTest {
     void navigationUsesOnlyExistingStationaryFidgetsUntilMovingModesAreCapabilitySafe() {
         AgentBehaviorProfile.Movement movement = new AgentBehaviorProfile.Movement(
                 true,
-                EnumSet.allOf(AgentFidgetMode.class).stream()
-                        .filter(mode -> mode != AgentFidgetMode.NONE)
-                        .collect(java.util.stream.Collectors.toSet()),
+                EnumSet.allOf(AgentBehaviorProfile.NavigationFidget.class),
                 new AgentBehaviorProfile.DelayRange(1000, 2000),
                 new AgentBehaviorProfile.DelayRange(2000, 3000));
 

@@ -6,6 +6,7 @@ import server.agents.capabilities.townlife.AgentTownLifeRuntime;
 import server.agents.capabilities.townlife.AgentTownLifeState;
 import server.agents.capabilities.townlife.LithHarborTownLifeCatalog;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentClientGatewayRuntime;
 import server.agents.plans.amherst.MapleIslandSouthperryQuestCatalog;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
@@ -87,9 +88,10 @@ public final class MapleIslandTownLifeCommandService {
         return issuer != null
                 && agent != null
                 && issuer.getWorld() == agent.getWorld()
-                && issuer.getClient() != null
-                && agent.getClient() != null
-                && issuer.getClient().getChannel() == agent.getClient().getChannel();
+                && AgentClientGatewayRuntime.clients().hasClient(issuer)
+                && AgentClientGatewayRuntime.clients().hasClient(agent)
+                && AgentClientGatewayRuntime.clients().channel(issuer)
+                == AgentClientGatewayRuntime.clients().channel(agent);
     }
 
     public record Result(int started, int alreadyActive, int notEligible) {

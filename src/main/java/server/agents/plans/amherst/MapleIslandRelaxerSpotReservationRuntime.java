@@ -9,8 +9,8 @@ import java.awt.Point;
 import java.util.Optional;
 
 public final class MapleIslandRelaxerSpotReservationRuntime {
-    private static final int PIO_INTERLUDE_FOOTPRINT_SLOTS = 2;
-    private static final int PIO_INTERLUDE_OCCUPANT_CLEARANCE_PX = 55;
+    private static final int PIO_INTERLUDE_FOOTPRINT_SLOTS = config.AgentTuning.intValue("server.agents.plans.amherst.MapleIslandRelaxerSpotReservationRuntime.PIO_INTERLUDE_FOOTPRINT_SLOTS");
+    private static final int PIO_INTERLUDE_OCCUPANT_CLEARANCE_PX = config.AgentTuning.intValue("server.agents.plans.amherst.MapleIslandRelaxerSpotReservationRuntime.PIO_INTERLUDE_OCCUPANT_CLEARANCE_PX");
 
     private MapleIslandRelaxerSpotReservationRuntime() {
     }

@@ -12,7 +12,7 @@ import java.util.Map;
 /** Converts visible life-state transitions into observer-gated dialogue intents. */
 public final class AgentOperationalDialogueReactionService implements AgentEventListener<AgentEvent> {
     public static final String LIFE_STATE_INTENT = "operations.life-state";
-    private static final long COOLDOWN_MS = 5_000L;
+    private static final long COOLDOWN_MS = config.AgentTuning.longValue("server.agents.operations.events.AgentOperationalDialogueReactionService.COOLDOWN_MS");
     private final AgentEventBus bus;
 
     public AgentOperationalDialogueReactionService(AgentEventBus bus) {

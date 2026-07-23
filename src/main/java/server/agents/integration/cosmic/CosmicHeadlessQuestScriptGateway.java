@@ -6,7 +6,7 @@ import client.Client;
 import scripting.quest.QuestScriptManager;
 
 final class CosmicHeadlessQuestScriptGateway {
-    private static final int MAX_SCRIPT_ADVANCES = 32;
+    private static final int MAX_SCRIPT_ADVANCES = config.AgentTuning.intValue("server.agents.integration.cosmic.CosmicHeadlessQuestScriptGateway.MAX_SCRIPT_ADVANCES");
 
     private CosmicHeadlessQuestScriptGateway() {
     }
