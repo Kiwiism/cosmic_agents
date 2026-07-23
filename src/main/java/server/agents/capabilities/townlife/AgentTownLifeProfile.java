@@ -17,6 +17,7 @@ public record AgentTownLifeProfile(
         List<PointSpec> roamFallbackSpots,
         List<NpcSpot> npcSpots,
         List<Integer> shopMapIds,
+        List<TrafficZone> trafficZones,
         List<Venue> venues) {
 
     public AgentTownLifeProfile {
@@ -31,6 +32,7 @@ public record AgentTownLifeProfile(
         roamFallbackSpots = List.copyOf(roamFallbackSpots == null ? List.of() : roamFallbackSpots);
         npcSpots = List.copyOf(npcSpots == null ? List.of() : npcSpots);
         shopMapIds = List.copyOf(shopMapIds == null ? List.of() : shopMapIds);
+        trafficZones = List.copyOf(trafficZones == null ? List.of() : trafficZones);
         venues = List.copyOf(venues == null ? List.of() : venues);
         long uniqueVenueIds = venues.stream().map(Venue::id).distinct().count();
         if (uniqueVenueIds != venues.size()) {
@@ -91,6 +93,11 @@ public record AgentTownLifeProfile(
         return affordance == null ? List.of() : venues.stream()
                 .filter(venue -> venue.affordances().contains(affordance))
                 .toList();
+    }
+
+    public boolean allowsOccupancy(Point point) {
+        return point != null && trafficZones.stream()
+                .noneMatch(zone -> zone.excludesOccupancy() && zone.contains(point));
     }
 
     public int shopMapId(int index) {
@@ -157,6 +164,33 @@ public record AgentTownLifeProfile(
     }
 
     public record NpcSpot(int npcId, int offsetX) {
+    }
+
+    public enum TrafficZoneType {
+        PORTAL,
+        DOOR,
+        LADDER,
+        NPC_LANE
+    }
+
+    /** Authored rectangle kept clear for transit and NPC interaction. */
+    public record TrafficZone(String id,
+                              TrafficZoneType type,
+                              int minX,
+                              int minY,
+                              int maxX,
+                              int maxY,
+                              boolean excludesOccupancy) {
+        public TrafficZone {
+            if (id == null || id.isBlank() || type == null || minX > maxX || minY > maxY) {
+                throw new IllegalArgumentException("town-life traffic zone is invalid");
+            }
+        }
+
+        public boolean contains(Point point) {
+            return point != null && point.x >= minX && point.x <= maxX
+                    && point.y >= minY && point.y <= maxY;
+        }
     }
 
     public record ArrivalPortal(String name, int weight) {

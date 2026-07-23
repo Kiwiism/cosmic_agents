@@ -90,14 +90,23 @@ public final class AgentTownLifeControllerRuntime {
         AgentTownLifeDecisionContext.EncounterView encounterView = encounter.active()
                 ? new AgentTownLifeDecisionContext.EncounterView(
                 true, encounter.type().name(), encounter.phase().name(),
-                encounter.peerAgentId(), encounter.turnOwnerAgentId())
+                encounter.peerAgentId(), encounter.turnOwnerAgentId(),
+                encounter.participantAgentIds())
                 : AgentTownLifeDecisionContext.EncounterView.none();
         return new AgentTownLifeDecisionContext(
-                agent.getId(), state.townMapId(), profile.profileId(), state.stage(), state.activity(),
+                agent.getId(), state.townMapId(), profile.profileId(), state.stage(),
+                state.visitPhase(), state.visitPurpose(), state.visitReason(),
+                state.fidelity(), state.activity(),
                 state.venueId(), state.role(),
                 state.homeDistrict(), state.platformPreference(), population,
                 agent.getMap() != null && AgentMapGatewayRuntime.map().isObservedByPlayer(agent.getMap()),
                 personality, state.memory().recentActivitiesSnapshot(), encounterView,
+                profile.trafficZones().stream()
+                        .filter(AgentTownLifeProfile.TrafficZone::excludesOccupancy)
+                        .map(zone -> new AgentTownLifeDecisionContext.TrafficZoneView(
+                                zone.id(), zone.type(), zone.minX(), zone.minY(),
+                                zone.maxX(), zone.maxY()))
+                        .toList(),
                 profile.venues().stream().map(venue -> new AgentTownLifeDecisionContext.VenueView(
                         venue.id(), venue.label(), venue.district(), venue.platformKind(),
                         venue.capacity(), venueOccupancy(townEntries, venue.id()), venue.affordances())).toList(),
@@ -108,10 +117,6 @@ public final class AgentTownLifeControllerRuntime {
                                                        AgentTownLifeState state,
                                                        AgentTownLifeProfile profile,
                                                        AgentTownLifeState.Activity activity) {
-        if (activity == AgentTownLifeState.Activity.SOCIAL
-                || activity == AgentTownLifeState.Activity.WEAPON_FLOURISH) {
-            return AgentTownLifeDecision.deterministic(activity);
-        }
         var venues = profile.venuesFor(activity);
         if (venues.isEmpty()) {
             return AgentTownLifeDecision.deterministic(activity);
@@ -175,12 +180,7 @@ public final class AgentTownLifeControllerRuntime {
                 || !AgentTownLifeRuntime.active(targetEntry)) {
             return false;
         }
-        if (proposal.venueId().isBlank()) {
-            return true;
-        }
-        AgentTownLifeProfile.Venue venue = profile.venue(proposal.venueId()).orElseThrow();
-        return venue.spots().stream().anyMatch(spot ->
-                spot.point().distanceSq(target.getPosition()) <= 220L * 220L);
+        return true;
     }
 
     private static boolean validEncounterType(AgentTownLifeDirective proposal) {

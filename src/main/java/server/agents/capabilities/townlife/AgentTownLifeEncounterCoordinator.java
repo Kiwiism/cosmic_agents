@@ -2,15 +2,29 @@ package server.agents.capabilities.townlife;
 
 import client.Character;
 import server.agents.capabilities.dialogue.AgentEmote;
+import server.agents.capabilities.movement.AgentChairService;
+import server.agents.capabilities.movement.fidget.AgentFidgetService;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.PrimitiveCapabilityGateway;
+import server.agents.personality.AgentPersonalityState;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
 
 import java.awt.Point;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 
-/** Coordinates bounded pair encounters without using visible chat for Agent-to-Agent control. */
+/** Coordinates accepted, capacity-bounded TownLife encounters. */
 final class AgentTownLifeEncounterCoordinator {
+    enum Activation {
+        NONE,
+        WAITING,
+        ACTIVE,
+        CANCELLED
+    }
+
     private static final Object LOCK = new Object();
     private static final long ENCOUNTER_TIMEOUT_MS = 45_000L;
     private static final int PRESENTATION_DISTANCE_PX = 150;
@@ -23,120 +37,176 @@ final class AgentTownLifeEncounterCoordinator {
                 .map(AgentTownLifeEncounterState::active).orElse(false);
     }
 
-    static void begin(AgentRuntimeEntry initiatorEntry,
-                      Character initiator,
-                      AgentTownLifeState townState,
-                      AgentTownLifeEncounterState.Type requestedType,
-                      long nowMs) {
-        if (initiatorEntry == null || initiator == null || townState.targetCharacterId() <= 0
+    static boolean begin(AgentRuntimeEntry initiatorEntry,
+                         Character initiator,
+                         AgentTownLifeState townState,
+                         AgentTownLifeEncounterState.Type requestedType,
+                         PrimitiveCapabilityGateway gateway,
+                         long nowMs) {
+        if (initiatorEntry == null || initiator == null || gateway == null
+                || townState.targetCharacterId() <= 0 || townState.venueId().isBlank()
                 || (townState.activity() != AgentTownLifeState.Activity.SOCIAL
                 && townState.activity() != AgentTownLifeState.Activity.WEAPON_FLOURISH)) {
-            return;
-        }
-        AgentRuntimeEntry responderEntry = AgentRuntimeRegistry.findByAgentCharacterId(
-                townState.targetCharacterId());
-        Character responder = AgentRuntimeIdentityRuntime.bot(responderEntry);
-        if (responder == null || responder.getMapId() != initiator.getMapId()
-                || !AgentTownLifeRuntime.active(responderEntry)) {
-            return;
-        }
-        synchronized (LOCK) {
-            AgentTownLifeEncounterState initiatorEncounter = initiatorEntry.capabilityStates()
-                    .require(AgentTownLifeEncounterState.STATE_KEY);
-            AgentTownLifeEncounterState responderEncounter = responderEntry.capabilityStates()
-                    .require(AgentTownLifeEncounterState.STATE_KEY);
-            if (initiatorEncounter.active() || responderEncounter.active()) {
-                return;
-            }
-            String id = "town-encounter:" + Math.min(initiator.getId(), responder.getId()) + ':'
-                    + Math.max(initiator.getId(), responder.getId()) + ':' + townState.sequence();
-            String correlation = townState.decisionCorrelationId().isBlank()
-                    ? id : townState.decisionCorrelationId();
-            AgentTownLifeEncounterState.Type type = requestedType != null ? requestedType
-                    : townState.activity() == AgentTownLifeState.Activity.WEAPON_FLOURISH
-                    ? AgentTownLifeEncounterState.Type.PLAYFUL_SPARRING
-                    : AgentTownLifeEncounterState.Type.SOCIAL_CHAT;
-            long expiresAt = nowMs + ENCOUNTER_TIMEOUT_MS;
-            initiatorEncounter.begin(id, type, AgentTownLifeEncounterState.Role.INITIATOR,
-                    AgentTownLifeEncounterState.Phase.APPROACHING, responder.getId(),
-                    initiator.getId(), townState.venueId(), correlation, expiresAt);
-            responderEncounter.begin(id, type, AgentTownLifeEncounterState.Role.RESPONDER,
-                    AgentTownLifeEncounterState.Phase.INVITED, initiator.getId(),
-                    initiator.getId(), townState.venueId(), correlation, expiresAt);
-            AgentTownLifeEventPublisher.encounter(
-                    initiatorEntry, initiator, initiatorEncounter.snapshot(), nowMs);
-            AgentTownLifeEventPublisher.encounter(
-                    responderEntry, responder, responderEncounter.snapshot(), nowMs);
-        }
-    }
-
-    static boolean activate(AgentRuntimeEntry initiatorEntry, Character initiator, long nowMs) {
-        AgentTownLifeEncounterState.Snapshot snapshot = snapshot(initiatorEntry);
-        if (snapshot == null) {
-            return true;
-        }
-        AgentRuntimeEntry peerEntry = AgentRuntimeRegistry.findByAgentCharacterId(snapshot.peerAgentId());
-        Character peer = AgentRuntimeIdentityRuntime.bot(peerEntry);
-        if (peer == null || initiator == null || peer.getMapId() != initiator.getMapId()
-                || peer.getPosition().distanceSq(initiator.getPosition())
-                > (long) PRESENTATION_DISTANCE_PX * PRESENTATION_DISTANCE_PX) {
-            finish(initiatorEntry, initiator, false, nowMs);
             return false;
         }
-        transitionPair(initiatorEntry, initiator, AgentTownLifeEncounterState.Phase.ACTIVE,
-                initiator.getId(), nowMs);
-        return true;
+        AgentTownLifeProfile profile = AgentTownLifeProfileRepository.defaultRepository()
+                .require(townState.townMapId());
+        AgentTownLifeProfile.Venue venue = profile.venue(townState.venueId()).orElse(null);
+        AgentTownLifeEncounterState.Type type = requestedType != null ? requestedType
+                : townState.activity() == AgentTownLifeState.Activity.WEAPON_FLOURISH
+                ? AgentTownLifeEncounterState.Type.PLAYFUL_SPARRING
+                : AgentTownLifeEncounterState.Type.SOCIAL_CHAT;
+        if (venue == null || !venue.supports(townState.activity())) {
+            return false;
+        }
+        synchronized (LOCK) {
+            if (active(initiatorEntry)) {
+                return false;
+            }
+            List<Character> participants = acceptedParticipants(
+                    initiator, townState, type, venue.capacity());
+            if (participants.size() < 2) {
+                return false;
+            }
+            Map<Integer, Point> spots = AgentTownLifeVenueReservationService.reserveGroup(
+                    participants, venue, townState.sequence());
+            if (spots.size() != participants.size()) {
+                return false;
+            }
+            String id = "town-encounter:" + initiator.getId() + ':' + townState.sequence();
+            String correlation = townState.decisionCorrelationId().isBlank()
+                    ? id : townState.decisionCorrelationId();
+            long expiresAt = nowMs + ENCOUNTER_TIMEOUT_MS;
+            List<Integer> participantIds = participants.stream().map(Character::getId).toList();
+            for (int index = 0; index < participants.size(); index++) {
+                Character participant = participants.get(index);
+                AgentRuntimeEntry participantEntry = AgentRuntimeRegistry.findByCharacterInstance(participant);
+                AgentTownLifeState participantTownState = participantEntry.capabilityStates()
+                        .require(AgentTownLifeState.STATE_KEY);
+                int peerId = index == 0 ? participants.get(1).getId() : initiator.getId();
+                String destinationKey = "encounter:" + id + ':' + participant.getId();
+                if (index == 0) {
+                    participantTownState.retarget(
+                            spots.get(participant.getId()), peerId, destinationKey, venue.id());
+                } else {
+                    gateway.stop(participantEntry);
+                    AgentFidgetService.clear(participantEntry);
+                    if (participant.getChair() >= 0) {
+                        AgentChairService.stand(participantEntry, participant);
+                    }
+                    participantTownState.select(townState.activity(), spots.get(participant.getId()),
+                            peerId, 0, destinationKey, venue.id(),
+                            "encounter:" + townState.decisionSource(), correlation, nowMs);
+                    participantTownState.memory().remember(
+                            townState.activity(), destinationKey, nowMs);
+                    participantEntry.capabilityStates()
+                            .require(AgentTownLifeActivitySequenceState.STATE_KEY).clear();
+                    AgentTownLifeEventPublisher.activity(
+                            participantEntry, participant, participantTownState,
+                            AgentTownLifeActivityEvent.Phase.SELECTED, nowMs);
+                }
+                AgentTownLifeEncounterState encounter = participantEntry.capabilityStates()
+                        .require(AgentTownLifeEncounterState.STATE_KEY);
+                encounter.begin(id, type,
+                        index == 0 ? AgentTownLifeEncounterState.Role.INITIATOR
+                                : AgentTownLifeEncounterState.Role.RESPONDER,
+                        index == 0 ? AgentTownLifeEncounterState.Phase.APPROACHING
+                                : AgentTownLifeEncounterState.Phase.INVITED,
+                        peerId, initiator.getId(), participantIds, venue.id(),
+                        correlation, expiresAt);
+                AgentTownLifeEventPublisher.encounter(
+                        participantEntry, participant, encounter.snapshot(), nowMs);
+                if (index > 0) {
+                    encounter.transition(
+                            AgentTownLifeEncounterState.Phase.ACCEPTED, initiator.getId());
+                    AgentTownLifeEventPublisher.encounter(
+                            participantEntry, participant, encounter.snapshot(), nowMs);
+                }
+            }
+            return true;
+        }
     }
 
-    static void requestReaction(AgentRuntimeEntry initiatorEntry, Character initiator, long nowMs) {
-        AgentTownLifeEncounterState.Snapshot snapshot = snapshot(initiatorEntry);
-        if (snapshot == null || snapshot.role() != AgentTownLifeEncounterState.Role.INITIATOR) {
-            return;
+    static Activation activate(AgentRuntimeEntry entry, Character agent, long nowMs) {
+        AgentTownLifeEncounterState.Snapshot snapshot = snapshot(entry);
+        if (snapshot == null) {
+            return Activation.NONE;
         }
-        transitionPair(initiatorEntry, initiator, AgentTownLifeEncounterState.Phase.REACTING,
-                snapshot.peerAgentId(), nowMs);
+        if (nowMs >= snapshot.expiresAtMs()) {
+            finish(entry, agent, false, nowMs);
+            return Activation.CANCELLED;
+        }
+        for (int participantId : snapshot.participantAgentIds()) {
+            AgentRuntimeEntry participantEntry =
+                    AgentRuntimeRegistry.findByAgentCharacterId(participantId);
+            Character participant = AgentRuntimeIdentityRuntime.bot(participantEntry);
+            AgentTownLifeState participantTownState = participantEntry == null ? null
+                    : participantEntry.capabilityStates()
+                    .find(AgentTownLifeState.STATE_KEY).orElse(null);
+            Point target = participantTownState == null ? null : participantTownState.target();
+            if (participant == null || target == null || agent == null
+                    || participant.getMapId() != agent.getMapId()) {
+                finish(entry, agent, false, nowMs);
+                return Activation.CANCELLED;
+            }
+            if (participant.getPosition().distanceSq(target)
+                    > (long) PRESENTATION_DISTANCE_PX * PRESENTATION_DISTANCE_PX) {
+                transitionParticipant(participantEntry, participant,
+                        AgentTownLifeEncounterState.Phase.APPROACHING,
+                        snapshot.turnOwnerAgentId(), nowMs);
+                return Activation.WAITING;
+            }
+        }
+        transitionGroup(entry, AgentTownLifeEncounterState.Phase.ACTIVE,
+                snapshot.turnOwnerAgentId(), nowMs);
+        return Activation.ACTIVE;
+    }
+
+    static void requestReaction(AgentRuntimeEntry entry, Character agent, long nowMs) {
+        AgentTownLifeEncounterState.Snapshot snapshot = snapshot(entry);
+        if (snapshot != null && snapshot.role() == AgentTownLifeEncounterState.Role.INITIATOR) {
+            transitionGroup(entry, AgentTownLifeEncounterState.Phase.REACTING,
+                    snapshot.peerAgentId(), nowMs);
+        }
     }
 
     static void beginClosing(AgentRuntimeEntry entry, Character agent, long nowMs) {
         AgentTownLifeEncounterState.Snapshot snapshot = snapshot(entry);
         if (snapshot != null && snapshot.role() == AgentTownLifeEncounterState.Role.INITIATOR) {
-            transitionPair(entry, agent, AgentTownLifeEncounterState.Phase.CLOSING,
+            transitionGroup(entry, AgentTownLifeEncounterState.Phase.CLOSING,
                     snapshot.turnOwnerAgentId(), nowMs);
         }
     }
 
     static void finish(AgentRuntimeEntry entry, Character agent, boolean completed, long nowMs) {
-        if (entry == null) {
+        AgentTownLifeEncounterState.Snapshot snapshot = snapshot(entry);
+        if (snapshot == null
+                || (completed && snapshot.role() == AgentTownLifeEncounterState.Role.RESPONDER)) {
             return;
         }
         synchronized (LOCK) {
-            AgentTownLifeEncounterState own = entry.capabilityStates()
-                    .require(AgentTownLifeEncounterState.STATE_KEY);
-            AgentTownLifeEncounterState.Snapshot ownSnapshot = own.snapshot();
-            if (!ownSnapshot.active()) {
-                return;
-            }
-            if (completed && ownSnapshot.role() == AgentTownLifeEncounterState.Role.RESPONDER) {
-                return;
-            }
-            AgentRuntimeEntry peerEntry = AgentRuntimeRegistry.findByAgentCharacterId(
-                    ownSnapshot.peerAgentId());
-            Character peer = AgentRuntimeIdentityRuntime.bot(peerEntry);
             AgentTownLifeEncounterState.Phase terminal = completed
                     ? AgentTownLifeEncounterState.Phase.COMPLETED
                     : AgentTownLifeEncounterState.Phase.CANCELLED;
-            own.transition(terminal, ownSnapshot.turnOwnerAgentId());
-            AgentTownLifeEventPublisher.encounter(entry, agent, own.snapshot(), nowMs);
-            if (peerEntry != null) {
-                AgentTownLifeEncounterState peerState = peerEntry.capabilityStates()
+            for (int participantId : snapshot.participantAgentIds()) {
+                AgentRuntimeEntry participantEntry =
+                        AgentRuntimeRegistry.findByAgentCharacterId(participantId);
+                Character participant = AgentRuntimeIdentityRuntime.bot(participantEntry);
+                if (participantEntry == null) {
+                    continue;
+                }
+                AgentTownLifeEncounterState participantState = participantEntry.capabilityStates()
                         .require(AgentTownLifeEncounterState.STATE_KEY);
-                if (peerState.active() && ownSnapshot.encounterId().equals(peerState.snapshot().encounterId())) {
-                    peerState.transition(terminal, ownSnapshot.turnOwnerAgentId());
-                    AgentTownLifeEventPublisher.encounter(peerEntry, peer, peerState.snapshot(), nowMs);
-                    peerState.clear();
+                AgentTownLifeEncounterState.Snapshot participantSnapshot = participantState.snapshot();
+                if (participantSnapshot.active()
+                        && snapshot.encounterId().equals(participantSnapshot.encounterId())) {
+                    participantState.transition(terminal, snapshot.turnOwnerAgentId());
+                    AgentTownLifeEventPublisher.encounter(
+                            participantEntry, participant, participantState.snapshot(), nowMs);
+                    participantState.clear();
                 }
             }
-            own.clear();
+            AgentTownLifeVenueReservationService.releaseGroup(snapshot.participantAgentIds());
         }
     }
 
@@ -160,16 +230,16 @@ final class AgentTownLifeEncounterCoordinator {
                 || townState.stage() == AgentTownLifeState.Stage.RETURN_FROM_SHOP) {
             return;
         }
-        AgentRuntimeEntry peerEntry = AgentRuntimeRegistry.findByAgentCharacterId(snapshot.peerAgentId());
-        Character peer = AgentRuntimeIdentityRuntime.bot(peerEntry);
+        Character peer = AgentRuntimeIdentityRuntime.bot(
+                AgentRuntimeRegistry.findByAgentCharacterId(snapshot.peerAgentId()));
         if (peer == null || peer.getMapId() != agent.getMapId()
                 || peer.getPosition().distanceSq(agent.getPosition())
                 > (long) PRESENTATION_DISTANCE_PX * PRESENTATION_DISTANCE_PX) {
             return;
         }
-        Point peerPosition = new Point(peer.getPosition());
-        gateway.facePosition(agent, peerPosition);
+        gateway.facePosition(agent, new Point(peer.getPosition()));
         if (snapshot.phase() == AgentTownLifeEncounterState.Phase.REACTING
+                && encounter.reactionReady(nowMs)
                 && !encounter.reactionShown()) {
             int expression = snapshot.type() == AgentTownLifeEncounterState.Type.PLAYFUL_SPARRING
                     ? AgentEmote.ANNOYED.getValue() : AgentEmote.HAPPY.getValue();
@@ -178,34 +248,111 @@ final class AgentTownLifeEncounterCoordinator {
         }
     }
 
-    private static void transitionPair(AgentRuntimeEntry entry,
-                                       Character agent,
-                                       AgentTownLifeEncounterState.Phase phase,
-                                       int turnOwnerAgentId,
-                                       long nowMs) {
-        if (entry == null || agent == null || turnOwnerAgentId <= 0) {
+    private static List<Character> acceptedParticipants(Character initiator,
+                                                        AgentTownLifeState townState,
+                                                        AgentTownLifeEncounterState.Type type,
+                                                        int venueCapacity) {
+        int desired = type == AgentTownLifeEncounterState.Type.SOCIAL_CHAT
+                ? 2 + AgentTownLifeRolePolicy.variation(
+                initiator.getId(), townState.sequence(), 3, 419) : 2;
+        desired = Math.min(desired, Math.min(4, venueCapacity));
+        List<Character> candidates = AgentRuntimeRegistry.activeEntriesSnapshot().stream()
+                .filter(AgentTownLifeRuntime::active)
+                .filter(entry -> !active(entry))
+                .map(AgentRuntimeIdentityRuntime::bot)
+                .filter(candidate -> eligible(candidate, initiator))
+                .sorted(Comparator.comparingInt(Character::getId))
+                .toList();
+        List<Character> participants = new ArrayList<>();
+        participants.add(initiator);
+        Character requested = candidates.stream()
+                .filter(candidate -> candidate.getId() == townState.targetCharacterId())
+                .findFirst().orElse(null);
+        if (requested != null && accepts(requested, initiator, townState.sequence(), type)) {
+            participants.add(requested);
+        }
+        for (Character candidate : candidates) {
+            if (participants.size() >= desired) {
+                break;
+            }
+            if (!participants.contains(candidate)
+                    && accepts(candidate, initiator, townState.sequence(), type)) {
+                participants.add(candidate);
+            }
+        }
+        return participants;
+    }
+
+    private static boolean eligible(Character candidate, Character initiator) {
+        if (candidate == null || candidate == initiator
+                || candidate.getMapId() != initiator.getMapId()) {
+            return false;
+        }
+        AgentRuntimeEntry entry = AgentRuntimeRegistry.findByCharacterInstance(candidate);
+        AgentTownLifeState state = entry == null ? null
+                : entry.capabilityStates().find(AgentTownLifeState.STATE_KEY).orElse(null);
+        return state != null && state.enabled()
+                && state.stage() != AgentTownLifeState.Stage.TRAVEL_TO_TOWN
+                && state.stage() != AgentTownLifeState.Stage.COMPLETE_ARRIVAL
+                && state.stage() != AgentTownLifeState.Stage.VISIT_SHOP
+                && state.stage() != AgentTownLifeState.Stage.RETURN_FROM_SHOP;
+    }
+
+    private static boolean accepts(Character candidate,
+                                   Character initiator,
+                                   int sequence,
+                                   AgentTownLifeEncounterState.Type type) {
+        AgentRuntimeEntry entry = AgentRuntimeRegistry.findByCharacterInstance(candidate);
+        int sociability = entry == null ? 50 : entry.capabilityStates()
+                .find(AgentPersonalityState.STATE_KEY)
+                .map(AgentPersonalityState::profile)
+                .map(profile -> profile.traits().sociability())
+                .orElse(50);
+        int threshold = type == AgentTownLifeEncounterState.Type.SOCIAL_CHAT
+                ? 40 + sociability / 2 : 35 + sociability / 3;
+        int roll = AgentTownLifeRolePolicy.variation(
+                candidate.getId() ^ initiator.getId(), sequence, 100, 431);
+        return roll < threshold;
+    }
+
+    private static void transitionGroup(AgentRuntimeEntry entry,
+                                        AgentTownLifeEncounterState.Phase phase,
+                                        int turnOwnerAgentId,
+                                        long nowMs) {
+        AgentTownLifeEncounterState.Snapshot snapshot = snapshot(entry);
+        if (snapshot == null) {
             return;
         }
         synchronized (LOCK) {
-            AgentTownLifeEncounterState own = entry.capabilityStates()
-                    .require(AgentTownLifeEncounterState.STATE_KEY);
-            AgentTownLifeEncounterState.Snapshot snapshot = own.snapshot();
-            if (!snapshot.active()) {
-                return;
-            }
-            own.transition(phase, turnOwnerAgentId);
-            AgentTownLifeEventPublisher.encounter(entry, agent, own.snapshot(), nowMs);
-            AgentRuntimeEntry peerEntry = AgentRuntimeRegistry.findByAgentCharacterId(snapshot.peerAgentId());
-            Character peer = AgentRuntimeIdentityRuntime.bot(peerEntry);
-            if (peerEntry != null) {
-                AgentTownLifeEncounterState peerState = peerEntry.capabilityStates()
-                        .require(AgentTownLifeEncounterState.STATE_KEY);
-                if (peerState.active() && snapshot.encounterId().equals(peerState.snapshot().encounterId())) {
-                    peerState.transition(phase, turnOwnerAgentId);
-                    AgentTownLifeEventPublisher.encounter(peerEntry, peer, peerState.snapshot(), nowMs);
-                }
+            for (int participantId : snapshot.participantAgentIds()) {
+                AgentRuntimeEntry participantEntry =
+                        AgentRuntimeRegistry.findByAgentCharacterId(participantId);
+                Character participant = AgentRuntimeIdentityRuntime.bot(participantEntry);
+                transitionParticipant(participantEntry, participant, phase, turnOwnerAgentId, nowMs);
             }
         }
+    }
+
+    private static void transitionParticipant(AgentRuntimeEntry entry,
+                                              Character agent,
+                                              AgentTownLifeEncounterState.Phase phase,
+                                              int turnOwnerAgentId,
+                                              long nowMs) {
+        if (entry == null) {
+            return;
+        }
+        AgentTownLifeEncounterState state = entry.capabilityStates()
+                .require(AgentTownLifeEncounterState.STATE_KEY);
+        if (!state.active() || state.snapshot().phase() == phase) {
+            return;
+        }
+        long reactionAtMs = phase == AgentTownLifeEncounterState.Phase.REACTING
+                ? nowMs + AgentTownLifeRolePolicy.variation(
+                agent == null ? 0 : agent.getId(),
+                state.snapshot().participantAgentIds().size(), 1_201, 443)
+                : 0L;
+        state.transition(phase, turnOwnerAgentId, reactionAtMs);
+        AgentTownLifeEventPublisher.encounter(entry, agent, state.snapshot(), nowMs);
     }
 
     private static AgentTownLifeEncounterState.Snapshot snapshot(AgentRuntimeEntry entry) {

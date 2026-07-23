@@ -40,11 +40,18 @@ public final class AgentTownLifeRuntime {
                              int townMapId,
                              long nowMs,
                              int identitySeed) {
-        if (entry == null) {
+        request(entry, AgentTownLifeVisitRequest.leisure(townMapId), nowMs, identitySeed);
+    }
+
+    public static void request(AgentRuntimeEntry entry,
+                               AgentTownLifeVisitRequest request,
+                               long nowMs,
+                               int identitySeed) {
+        if (entry == null || request == null) {
             return;
         }
         entry.capabilityStates().require(AgentTownLifeState.STATE_KEY)
-                .start(nowMs, identitySeed, townMapId);
+                .start(nowMs, identitySeed, request);
         AgentPlanPauseRuntime.pause(entry, PLAN_PAUSE_REASON, nowMs);
         AgentTravelVariationRuntime.configure(entry,
                 new AgentTravelVariationSettings(
@@ -71,7 +78,24 @@ public final class AgentTownLifeRuntime {
         if (!state.enabled()) {
             return false;
         }
-        AgentTownLifeEncounterCoordinator.tickPassive(entry, agent, state, gateway, nowMs);
+        AgentTownLifeFidelity previousFidelity = state.fidelity();
+        AgentTownLifeFidelity fidelity = AgentTownLifeFidelityPolicy.resolve(entry, agent);
+        if (state.updateFidelity(fidelity)
+                && fidelity == AgentTownLifeFidelity.PRESENTATION
+                && previousFidelity == AgentTownLifeFidelity.BACKGROUND_ABSTRACT
+                && (state.stage() == AgentTownLifeState.Stage.MOVE_TO_ACTIVITY
+                || state.stage() == AgentTownLifeState.Stage.DWELL)) {
+            abandonDestination(entry, agent, state, nowMs, gateway);
+            return true;
+        }
+        if (state.freeTimeExpired(nowMs)
+                && !AgentTownLifeEncounterCoordinator.active(entry)) {
+            stop(entry, agent);
+            return true;
+        }
+        if (AgentTownLifeFidelityPolicy.rendersAmbientActions(fidelity)) {
+            AgentTownLifeEncounterCoordinator.tickPassive(entry, agent, state, gateway, nowMs);
+        }
         AgentTownLifeArrivalExtension arrival =
                 AgentTownLifeArrivalExtensionRepository.forTown(state.townMapId());
         if (state.stage() == AgentTownLifeState.Stage.TRAVEL_TO_TOWN) {
@@ -125,7 +149,9 @@ public final class AgentTownLifeRuntime {
         if (nowMs < state.nextActionAtMs()) {
             return true;
         }
-        agent.changeFaceExpression(AgentEmote.HAPPY.getValue());
+        if (AgentTownLifeFidelityPolicy.rendersAmbientActions(state.fidelity())) {
+            agent.changeFaceExpression(AgentEmote.HAPPY.getValue());
+        }
         state.transition(AgentTownLifeState.Stage.CHOOSE_ACTIVITY,
                 nowMs + delay(agent, state, 900, 2_501));
         return true;
@@ -145,6 +171,11 @@ public final class AgentTownLifeRuntime {
         AgentFidgetService.clear(entry);
         AgentTownLifeRolePolicy.resolve(entry, agent, state, nowMs);
         AgentTownLifeDecision decision = AgentTownLifeControllerRuntime.choose(entry, agent, state, nowMs);
+        if (!AgentTownLifeFidelityPolicy.createsEncounters(state.fidelity())
+                && (decision.activity() == AgentTownLifeState.Activity.SOCIAL
+                || decision.activity() == AgentTownLifeState.Activity.WEAPON_FLOURISH)) {
+            decision = AgentTownLifeDecision.deterministic(AgentTownLifeState.Activity.ROAM);
+        }
         AgentTownLifeDestinationService.Destination destination =
                 AgentTownLifeDestinationService.select(
                         entry, agent, state, decision, nowMs, gateway);
@@ -160,7 +191,22 @@ public final class AgentTownLifeRuntime {
         entry.capabilityStates().require(AgentTownLifeActivitySequenceState.STATE_KEY).clear();
         AgentTownLifeEventPublisher.activity(
                 entry, agent, state, AgentTownLifeActivityEvent.Phase.SELECTED, nowMs);
-        AgentTownLifeEncounterCoordinator.begin(entry, agent, state, decision.encounterType(), nowMs);
+        if ((destination.activity() == AgentTownLifeState.Activity.SOCIAL
+                || destination.activity() == AgentTownLifeState.Activity.WEAPON_FLOURISH)
+                && !AgentTownLifeEncounterCoordinator.begin(
+                entry, agent, state, decision.encounterType(), gateway, nowMs)) {
+            abandonDestination(entry, agent, state, nowMs, gateway);
+            return true;
+        }
+        if (!AgentTownLifeFidelityPolicy.usesPhysicalNavigation(state.fidelity())) {
+            AgentTownLifeEventPublisher.activity(
+                    entry, agent, state, AgentTownLifeActivityEvent.Phase.ARRIVED, nowMs);
+            state.beginDwell(nowMs + dwellDuration(agent, state));
+            entry.capabilityStates().require(AgentTownLifeActivitySequenceState.STATE_KEY)
+                    .start(nowMs, state.nextActionAtMs());
+            AgentTownLifeEventPublisher.activity(
+                    entry, agent, state, AgentTownLifeActivityEvent.Phase.ORIENTING, nowMs);
+        }
         return true;
     }
 
@@ -199,19 +245,16 @@ public final class AgentTownLifeRuntime {
         gateway.facePosition(agent, facing == null ? target : facing);
         AgentTownLifeEventPublisher.activity(
                 entry, agent, state, AgentTownLifeActivityEvent.Phase.ARRIVED, nowMs);
-        if (!AgentTownLifeEncounterCoordinator.activate(entry, agent, nowMs)) {
+        AgentTownLifeEncounterCoordinator.Activation activation =
+                AgentTownLifeEncounterCoordinator.activate(entry, agent, nowMs);
+        if (activation == AgentTownLifeEncounterCoordinator.Activation.WAITING) {
+            return true;
+        }
+        if (activation == AgentTownLifeEncounterCoordinator.Activation.CANCELLED) {
             abandonDestination(entry, agent, state, nowMs, gateway);
             return true;
         }
-        long dwellMs = switch (state.activity()) {
-            case REST -> delay(agent, state, 12_000, 36_001);
-            case SOCIAL -> delay(agent, state, 5_000, 13_001);
-            case NPC_PAUSE -> delay(agent, state, 4_000, 11_001);
-            case ROAM -> delay(agent, state, 3_000, 9_001);
-            case WEAPON_FLOURISH -> delay(agent, state, 3_000, 7_001);
-            default -> 4_000L;
-        };
-        state.beginDwell(nowMs + dwellMs);
+        state.beginDwell(nowMs + dwellDuration(agent, state));
         entry.capabilityStates().require(AgentTownLifeActivitySequenceState.STATE_KEY)
                 .start(nowMs, state.nextActionAtMs());
         AgentTownLifeEventPublisher.activity(
@@ -224,6 +267,13 @@ public final class AgentTownLifeRuntime {
                                      AgentTownLifeState state,
                                      long nowMs,
                                      PrimitiveCapabilityGateway gateway) {
+        AgentTownLifeEncounterState.Snapshot encounter = entry.capabilityStates()
+                .require(AgentTownLifeEncounterState.STATE_KEY).snapshot();
+        if (nowMs >= state.nextActionAtMs() && encounter.active()
+                && encounter.role() == AgentTownLifeEncounterState.Role.RESPONDER) {
+            state.beginDwell(nowMs + 1_000L);
+            return true;
+        }
         if (nowMs >= state.nextActionAtMs()) {
             AgentTownLifeEventPublisher.activity(
                     entry, agent, state, AgentTownLifeActivityEvent.Phase.COMPLETED, nowMs);
@@ -258,13 +308,18 @@ public final class AgentTownLifeRuntime {
                 AgentTownLifeEncounterCoordinator.beginClosing(entry, agent, nowMs);
             }
         }
-        if (phase.ordinal() >= AgentTownLifeActivitySequenceState.Phase.OPENING.ordinal()
+        boolean render = AgentTownLifeFidelityPolicy.rendersAmbientActions(state.fidelity());
+        if (render
+                && phase.ordinal() >= AgentTownLifeActivitySequenceState.Phase.OPENING.ordinal()
                 && !state.expressionShown()) {
             agent.changeFaceExpression(expressionFor(agent, state));
             state.markExpressionShown();
         }
         if (state.activity() == AgentTownLifeState.Activity.REST) {
             AgentFidgetService.clear(entry);
+            if (!render) {
+                return true;
+            }
             if (phase.ordinal() < AgentTownLifeActivitySequenceState.Phase.OPENING.ordinal()) {
                 return true;
             }
@@ -282,19 +337,21 @@ public final class AgentTownLifeRuntime {
         if (facing == null) {
             facing = state.target() == null ? agent.getPosition() : state.target();
         }
-        gateway.facePosition(agent, facing);
-        if (phase == AgentTownLifeActivitySequenceState.Phase.PERFORMING
+        if (render) {
+            gateway.facePosition(agent, facing);
+        }
+        if (render && phase == AgentTownLifeActivitySequenceState.Phase.PERFORMING
                 && state.activity() == AgentTownLifeState.Activity.WEAPON_FLOURISH
                 && !state.flourishShown()) {
             AgentTownLifeVisualService.flourish(agent, facing);
             state.markFlourishShown();
         }
-        if (phase == AgentTownLifeActivitySequenceState.Phase.PERFORMING
+        if (render && phase == AgentTownLifeActivitySequenceState.Phase.PERFORMING
                 && !sequence.performanceStarted()) {
             beginDwellMotion(entry, agent, state, nowMs);
             sequence.markPerformanceStarted();
         }
-        if (phase == AgentTownLifeActivitySequenceState.Phase.PERFORMING
+        if (render && phase == AgentTownLifeActivitySequenceState.Phase.PERFORMING
                 && AgentFidgetStateRuntime.active(entry)) {
             AgentFidgetService.tryHandleTownLifeTick(entry, facing, nowMs);
         }
@@ -345,6 +402,19 @@ public final class AgentTownLifeRuntime {
             int duration = (int) Math.max(2_000L, state.nextActionAtMs() - nowMs);
             AgentFidgetService.startFidget(entry, mode, nowMs, duration, AgentFidgetTrigger.TOWN_LIFE);
         }
+    }
+
+    private static long dwellDuration(Character agent, AgentTownLifeState state) {
+        long duration = switch (state.activity()) {
+            case REST -> delay(agent, state, 12_000, 36_001);
+            case SOCIAL -> delay(agent, state, 5_000, 13_001);
+            case NPC_PAUSE -> delay(agent, state, 4_000, 11_001);
+            case ROAM -> delay(agent, state, 3_000, 9_001);
+            case WEAPON_FLOURISH -> delay(agent, state, 3_000, 7_001);
+            default -> 4_000L;
+        };
+        return state.fidelity() == AgentTownLifeFidelity.PRESENTATION
+                ? duration : Math.min(90_000L, duration * 2L);
     }
 
     private static void abandonDestination(AgentRuntimeEntry entry,

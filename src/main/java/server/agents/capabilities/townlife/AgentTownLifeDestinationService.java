@@ -210,8 +210,11 @@ final class AgentTownLifeDestinationService {
         }
         List<CharacterSpace> spaces = new ArrayList<>();
         for (int index = 0; index < venue.spots().size(); index++) {
-            spaces.add(space("town-venue-" + venue.id(), agent.getMapId(),
-                    venue.spots().get(index).point(), index + 1));
+            Point point = venue.spots().get(index).point();
+            if (profile.allowsOccupancy(point)) {
+                spaces.add(space("town-venue-" + venue.id(), agent.getMapId(),
+                        point, index + 1));
+            }
         }
         spaces = AgentTownLifeSpotSampler.orderAuthoredSpaces(agent, state, spaces, seed);
         Destination reserved = reservedDestination(

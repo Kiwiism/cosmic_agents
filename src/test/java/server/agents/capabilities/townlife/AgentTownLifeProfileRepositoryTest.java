@@ -19,10 +19,22 @@ class AgentTownLifeProfileRepositoryTest {
         assertEquals(8, profile.npcSpots().size());
         assertEquals(3, profile.shopMapIds().size());
         assertEquals(9, profile.venues().size());
+        assertEquals(4, profile.trafficZones().size());
         assertEquals(0, profile.mapSeatId(profile.restSpots().get(2).point()));
         assertEquals("lith-harbor", profile.extensions().arrival());
         assertInstanceOf(LithHarborTownLifeArrivalExtension.class,
                 AgentTownLifeArrivalExtensionRepository.forTown(profile.mapId()));
+    }
+
+    @Test
+    void trafficZonesKeepTransitPointsOutOfAmbientOccupancy() {
+        AgentTownLifeProfile profile = AgentTownLifeProfileRepository.defaultRepository()
+                .require(LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID);
+
+        assertTrue(profile.trafficZones().stream()
+                .anyMatch(zone -> zone.type() == AgentTownLifeProfile.TrafficZoneType.LADDER));
+        assertTrue(!profile.allowsOccupancy(new java.awt.Point(1470, 500)));
+        assertTrue(profile.allowsOccupancy(new java.awt.Point(1575, 641)));
     }
 
     @Test

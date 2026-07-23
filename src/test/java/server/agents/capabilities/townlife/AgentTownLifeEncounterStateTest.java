@@ -2,6 +2,8 @@ package server.agents.capabilities.townlife;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -25,5 +27,17 @@ class AgentTownLifeEncounterStateTest {
         assertEquals(11, state.snapshot().turnOwnerAgentId());
         assertFalse(state.expired(9_999L));
         assertTrue(state.expired(10_000L));
+    }
+
+    @Test
+    void carriesBoundedGroupMembershipWithoutLiveCharacterReferences() {
+        AgentTownLifeEncounterState state = new AgentTownLifeEncounterState();
+        state.begin("group-1", AgentTownLifeEncounterState.Type.SOCIAL_CHAT,
+                AgentTownLifeEncounterState.Role.INITIATOR,
+                AgentTownLifeEncounterState.Phase.APPROACHING,
+                12, 11, List.of(11, 12, 13, 14),
+                "central-benches", "group-decision", 20_000L);
+
+        assertEquals(List.of(11, 12, 13, 14), state.snapshot().participantAgentIds());
     }
 }

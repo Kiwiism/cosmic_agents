@@ -15,9 +15,14 @@ activity inside TownLife; it is not the name of the subsystem.
   encounter type. It cannot provide coordinates or perform mutations.
 - `AgentTownLifeActivitySequenceState` turns a selected activity into bounded `ORIENT`, `OPENING`,
   `PERFORMING`, `REACTION`, and `CLOSING` phases.
-- `AgentTownLifeEncounterCoordinator` gives both participants typed encounter identity, role, phase,
-  turn ownership, expiry, and peer identity. Agent-to-Agent coordination is structured state, not
+- `AgentTownLifeEncounterCoordinator` invites personality-filtered participants, reserves two to
+  four venue slots, moves every accepted participant behind a ready barrier, and owns typed role,
+  phase, turn, expiry, and group identity. Agent-to-Agent coordination is structured state, not
   visible Maple chat.
+- `AgentTownLifeVenueReservationService` claims and releases every slot in an encounter as one
+  bounded group operation.
+- `AgentTownLifeFidelityPolicy` keeps one state machine across observed presentation,
+  background-active, and background-abstract execution.
 - `AgentTownLifePlatformCatalog` converts the cached navigation graph into categorized reservation
   slots. It owns platform capacity, not movement.
 - `AgentTownLifeSpotSampler` ranks catalog slots for an Agent's stable district/platform preference.
@@ -42,6 +47,7 @@ in `index.json`. A profile controls:
 - authored rest/map-seat points, fallback roam points, NPC pause offsets, and enterable shops.
 - named semantic venues, their capacities, district/platform classification, concrete spots, and
   supported affordances such as rest, social, roam, shop, waiting, and sightseeing.
+- traffic exclusion rectangles for portals, doors, ladders, and NPC lanes.
 
 The engine catalogs every reachable non-rope navigation region at runtime, so a WZ foothold change
 automatically creates a new set of platform slots. Authored points remain explicit because native
@@ -56,10 +62,12 @@ Olaf crossroads, east street, upper overlook, and the three shop interiors.
 `AgentTownLifeDecisionContext` is the only view exposed to a future decision plugin. It contains:
 
 - immutable Agent/town/profile identity;
-- current TownLife stage, activity, role, venue, district, and platform preference;
+- current TownLife stage, visit phase, fidelity, activity, role, venue, district, and platform
+  preference;
 - personality traits and recent activities;
 - town Agent count and real-observer presence;
-- bounded encounter state;
+- bounded encounter state and participant IDs;
+- traffic exclusion zones;
 - venue IDs, labels, affordances, capacities, and current occupancy;
 - decision time and sequence.
 
@@ -110,24 +118,30 @@ Town perception/profile/venues
   -> optional LLM dialogue renderer later
 ```
 
+## Implemented TownLife lifecycle and fidelity
+
+Each visit records `ARRIVING`, `ERRAND`, `FREE_TIME`, or `DEPARTING` independently from the
+lower-level movement stage. Progression and town-specific arrival extensions can therefore expose
+why an Agent is in town without owning ambient behavior.
+
+Observed maps use `PRESENTATION` fidelity. Unobserved maps keep physical navigation in
+`BACKGROUND_ACTIVE`; `BACKGROUND_ABSTRACT` advances selections, dwell phases, memory, and events
+without cosmetic actions or unnecessary walking. Promotion from abstract to presentation safely
+replans the current activity instead of materializing a fake interaction.
+
+Social encounters use deterministic accept/decline decisions influenced by responder sociability.
+Accepted participants receive distinct authored venue slots and do not activate the encounter
+until everyone reaches their slot. Social conversations may include two to four Agents; playful
+sparring remains paired.
+
 ## Remaining TownLife completion work
 
 Recommended order after this slice:
 
-1. Reserve coordinated two-person venue slots and let responders explicitly accept or decline an
-   invitation before either participant moves.
-2. Generalize encounters from pairs to bounded groups of three or four with one turn owner and
-   staggered reactions.
-3. Add traffic affordances and exclusion areas for doors, portals, ladders, and NPC interaction
-   lanes so large populations do not obstruct traversal.
-4. Add a visit lifecycle (`ARRIVING`, `ERRAND`, `FREE_TIME`, `DEPARTING`) and let progression,
-   Supplies, and Shopping request TownLife time without TownLife owning those capabilities.
-5. Add observer-aware foreground/background fidelity: preserve session state and decisions while
-   coalescing movement and cosmetic phases when no real client can observe them.
-6. Add short-term social memory and relationship summaries so Agents vary peers and remember recent
+1. Add short-term social memory and relationship summaries so Agents vary peers and remember recent
    encounters without storing live server objects.
-7. Add profile validation tooling and seed equivalent venue data for each supported Victoria town.
-8. Add population/venue/encounter metrics and debug commands before large-cohort tuning.
+2. Add profile validation tooling and seed equivalent venue data for each supported Victoria town.
+3. Add population/venue/encounter metrics and debug commands before large-cohort tuning.
 
 After those items, TownLife itself is feature-complete enough for broad deployment. LLM work should
 then extract a provider-neutral language-model SPI, replace the existing live `Character`/`MapleMap`

@@ -42,6 +42,9 @@ final class AgentTownLifeSpotSampler {
         for (AgentTownLifePlatformCatalog.PlatformSpot spot :
                 AgentTownLifePlatformCatalog.reachable(graph, townProfile, originComponent)) {
             CharacterSpace space = spot.space();
+            if (!townProfile.allowsOccupancy(space.position())) {
+                continue;
+            }
             int anchorBonus = activityAnchors.stream()
                     .mapToInt(anchor -> anchor.distanceSq(space.position()) <= 220L * 220L ? 180 : 0)
                     .sum();
@@ -65,7 +68,10 @@ final class AgentTownLifeSpotSampler {
         }
         AgentTownLifeMapExtension extension =
                 AgentTownLifeMapExtensionRepository.forMap(agent.getMapId());
+        AgentTownLifeProfile profile = AgentTownLifeProfileRepository.defaultRepository()
+                .require(agent.getMapId());
         return spaces.stream()
+                .filter(space -> profile.allowsOccupancy(space.position()))
                 .map(space -> {
                     AgentTownLifeState.District district = extension.classify(space.position());
                     int weight = 100 + preferenceBonus(

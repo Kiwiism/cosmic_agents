@@ -60,6 +60,44 @@
     { "npcId": 1002101, "offsetX": 70 }
   ],
   "shopMapIds": [104000001, 104000002, 104000003],
+  "trafficZones": [
+    {
+      "id": "ship-arrival-portal",
+      "type": "PORTAL",
+      "minX": 250,
+      "minY": 220,
+      "maxX": 330,
+      "maxY": 350,
+      "excludesOccupancy": true
+    },
+    {
+      "id": "world-tour-ladder",
+      "type": "LADDER",
+      "minX": 1420,
+      "minY": 300,
+      "maxX": 1520,
+      "maxY": 690,
+      "excludesOccupancy": true
+    },
+    {
+      "id": "olaf-npc-lane",
+      "type": "NPC_LANE",
+      "minX": 2700,
+      "minY": 470,
+      "maxX": 2760,
+      "maxY": 560,
+      "excludesOccupancy": true
+    },
+    {
+      "id": "east-shop-doors",
+      "type": "DOOR",
+      "minX": 3650,
+      "minY": 430,
+      "maxX": 4200,
+      "maxY": 560,
+      "excludesOccupancy": true
+    }
+  ],
   "venues": [
     {
       "id": "ship-upper-deck",
