@@ -49,11 +49,14 @@ public enum CosmicAgentClientGateway implements AgentClientGateway {
 
     @Override
     public int world(Character character) {
-        return character.getClient().getWorld();
+        return character == null || character.getClient() == null
+                ? (character == null ? 0 : character.getWorld())
+                : character.getClient().getWorld();
     }
 
     @Override
     public int channel(Character character) {
-        return character.getClient().getChannel();
+        return character == null || character.getClient() == null
+                ? 0 : character.getClient().getChannel();
     }
 }

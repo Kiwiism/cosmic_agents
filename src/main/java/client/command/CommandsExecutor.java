@@ -221,6 +221,7 @@ import client.command.commands.gm6.SetGmLevelCommand;
 import client.command.commands.gm6.ShutdownCommand;
 import client.command.commands.gm6.SpawnAllPNpcsCommand;
 import client.command.commands.gm6.SupplyRateCouponCommand;
+import client.command.commands.gm6.TownLifeCommand;
 import client.command.commands.gm6.WarpWorldCommand;
 import constants.id.MapId;
 import org.slf4j.Logger;
@@ -601,6 +602,7 @@ public class CommandsExecutor {
         addCommand("devtest", 6, DevtestCommand.class);
         addCommand("agentpop", 6, AgentPopCommand.class);
         addCommand("agentscheduler", 6, AgentSchedulerCommand.class);
+        addCommand("townlife", 6, TownLifeCommand.class);
         addCommand("amherst", 6, AmherstCommand.class);
         addCommand("victoria", 6, VictoriaCommand.class);
         addCommand("mapleisland", 6, MapleIslandCommand.class);

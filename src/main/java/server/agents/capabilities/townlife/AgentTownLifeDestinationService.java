@@ -2,7 +2,10 @@ package server.agents.capabilities.townlife;
 
 import client.Character;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentClientGatewayRuntime;
 import server.agents.integration.PrimitiveCapabilityGateway;
+import server.agents.personality.AgentPersonalityProfile;
+import server.agents.personality.AgentPersonalityState;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.maps.reservation.CharacterSpace;
@@ -68,7 +71,7 @@ final class AgentTownLifeDestinationService {
         }
         if (requested == AgentTownLifeState.Activity.SOCIAL
                 || requested == AgentTownLifeState.Activity.WEAPON_FLOURISH) {
-            Character peer = choosePeer(agent, state, seed, decision.targetAgentId());
+            Character peer = choosePeer(agent, state, seed, decision.targetAgentId(), nowMs);
             if (peer != null) {
                 int side = AgentTownLifeRolePolicy.variation(seed, state.sequence(), 2, 73) == 0 ? -1 : 1;
                 Point target = new Point(peer.getPosition().x + side * 52, peer.getPosition().y);
@@ -167,12 +170,17 @@ final class AgentTownLifeDestinationService {
         }
         Optional<CharacterSpaceReservation> reservation = CharacterSpaceReservationRuntime.reserveExact(
                 scope(agent), CharacterSpaceOwner.character(agent.getId()), spaces, candidate, 1);
+        AgentTownLifeMetrics.reservationAttempt(reservation.isPresent());
         return reservation.map(CharacterSpaceReservation::position).orElse(null);
     }
 
     private static CharacterSpaceScope scope(Character agent) {
-        int channel = agent.getClient() == null ? 0 : Math.max(0, agent.getClient().getChannel());
-        return new CharacterSpaceScope(Math.max(0, agent.getWorld()), channel, agent.getMapId());
+        boolean hasClient = AgentClientGatewayRuntime.clients().hasClient(agent);
+        int world = Math.max(0, hasClient
+                ? AgentClientGatewayRuntime.clients().world(agent) : agent.getWorld());
+        int channel = Math.max(0, hasClient
+                ? AgentClientGatewayRuntime.clients().channel(agent) : 0);
+        return new CharacterSpaceScope(world, channel, agent.getMapId());
     }
 
     private static List<CharacterSpace> spaces(String catalogId, int mapId, List<Point> points) {
@@ -226,7 +234,7 @@ final class AgentTownLifeDestinationService {
         if ((decision.activity() == AgentTownLifeState.Activity.SOCIAL
                 || decision.activity() == AgentTownLifeState.Activity.WEAPON_FLOURISH)
                 && targetId <= 0) {
-            Character peer = choosePeer(agent, state, seed, 0);
+            Character peer = choosePeer(agent, state, seed, 0, nowMs);
             targetId = peer == null ? 0 : peer.getId();
         }
         return new Destination(reserved.activity(), reserved.point(), targetId,
@@ -248,7 +256,8 @@ final class AgentTownLifeDestinationService {
     private static Character choosePeer(Character agent,
                                         AgentTownLifeState state,
                                         long seed,
-                                        int requestedAgentId) {
+                                        int requestedAgentId,
+                                        long nowMs) {
         List<Character> peers = AgentRuntimeRegistry.activeEntriesSnapshot().stream()
                 .map(AgentRuntimeIdentityRuntime::bot)
                 .filter(peer -> peer != null && peer != agent)
@@ -265,6 +274,21 @@ final class AgentTownLifeDestinationService {
         if (requestedAgentId > 0) {
             return peers.stream().filter(peer -> peer.getId() == requestedAgentId).findFirst().orElse(null);
         }
-        return peers.get(AgentTownLifeRolePolicy.variation(seed, state.sequence(), peers.size(), 149));
+        List<Character> available = peers.stream()
+                .filter(peer -> state.memory().peerAvailable(peer.getId(), nowMs))
+                .toList();
+        List<Character> candidates = available.isEmpty() ? peers : available;
+        AgentRuntimeEntry entry = AgentRuntimeRegistry.findByCharacterInstance(agent);
+        AgentPersonalityProfile.Traits traits = entry == null ? null : entry.capabilityStates()
+                .find(AgentPersonalityState.STATE_KEY)
+                .map(AgentPersonalityState::profile)
+                .map(AgentPersonalityProfile::traits)
+                .orElse(null);
+        return candidates.stream()
+                .max(Comparator.comparingInt(peer ->
+                        state.memory().peerPreferenceScore(peer.getId(), traits, nowMs)
+                                + AgentTownLifeRolePolicy.variation(
+                                seed ^ peer.getId(), state.sequence(), 20, 149)))
+                .orElse(null);
     }
 }

@@ -65,6 +65,7 @@ Olaf crossroads, east street, upper overlook, and the three shop interiors.
 - current TownLife stage, visit phase, fidelity, activity, role, venue, district, and platform
   preference;
 - personality traits and recent activities;
+- bounded relationship summaries (encounter/completion/decline counts and last interaction type);
 - town Agent count and real-observer presence;
 - bounded encounter state and participant IDs;
 - traffic exclusion zones;
@@ -132,21 +133,41 @@ replans the current activity instead of materializing a fake interaction.
 Social encounters use deterministic accept/decline decisions influenced by responder sociability.
 Accepted participants receive distinct authored venue slots and do not activate the encounter
 until everyone reaches their slot. Social conversations may include two to four Agents; playful
-sparring remains paired.
+sparring remains paired. Completed, cancelled, and declined encounters update bounded per-Agent
+social memory. Immediate repeat pairings are cooled down; high-routine personalities bias familiar
+peers while low-routine personalities bias novel peers. Memory stores IDs and summaries only, never
+live `Character` references.
 
-## Remaining TownLife completion work
+## Diagnostics and profile validation
 
-Recommended order after this slice:
+The GM6 read-only command is:
 
-1. Add short-term social memory and relationship summaries so Agents vary peers and remember recent
-   encounters without storing live server objects.
-2. Add profile validation tooling and seed equivalent venue data for each supported Victoria town.
-3. Add population/venue/encounter metrics and debug commands before large-cohort tuning.
+- `!townlife status`
+- `!townlife agent <ign>`
+- `!townlife venues [mapId]`
+- `!townlife encounters`
+- `!townlife fidelity`
+- `!townlife metrics`
+- `!townlife validate`
 
-After those items, TownLife itself is feature-complete enough for broad deployment. LLM work should
-then extract a provider-neutral language-model SPI, replace the existing live `Character`/`MapleMap`
-prompt inputs with immutable request DTOs, add an asynchronous expiring proposal cache, and validate
-all model output through the same Dialogue and TownLife directive contracts.
+Metrics are process-local safety counters and never feed policy. They cover activity and encounter
+phases, venue selections, reservation failures, navigation abandonment, group sizes, and fidelity
+transitions. Profile validation runs during repository construction and rejects traffic-zone
+overlaps, malformed social/shop venues, and duplicate authored identities before the server starts.
+
+Lith Harbor remains the feature-rich reference profile. Henesys is the second, generic-arrival
+pilot and uses WZ-backed native seat IDs, portal names, NPC IDs, shop destination, and coordinates.
+It deliberately has no Java extension, proving that the shared engine can deploy a town from data.
+
+## Remaining expansion
+
+TownLife is now complete enough for broader town-profile deployment. New behavior should first be
+expressed as a generic affordance, event, or controller directive; add a town-specific extension
+only for a genuine local ceremony or mechanic.
+
+LLM work should next extract a provider-neutral language-model SPI, keep live `Character`/`MapleMap`
+objects out of prompts, add an asynchronous expiring proposal cache, and validate all model output
+through the same Dialogue and TownLife directive contracts.
 
 ## Adding a town
 

@@ -8,7 +8,9 @@ import server.agents.personality.AgentPersonalityState;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
 
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Validates optional high-level policy proposals and falls back to deterministic
@@ -85,6 +87,15 @@ public final class AgentTownLifeControllerRuntime {
                 .filter(candidate -> candidate != null && candidate.getMapId() == agent.getMapId())
                 .toList();
         int population = townEntries.size();
+        Map<String, Long> venueOccupancy = townEntries.stream()
+                .map(AgentRuntimeRegistry::findByCharacterInstance)
+                .filter(java.util.Objects::nonNull)
+                .map(candidate -> candidate.capabilityStates()
+                        .find(AgentTownLifeState.STATE_KEY).orElse(null))
+                .filter(java.util.Objects::nonNull)
+                .map(AgentTownLifeState::venueId)
+                .filter(venueId -> venueId != null && !venueId.isBlank())
+                .collect(Collectors.groupingBy(venueId -> venueId, Collectors.counting()));
         AgentTownLifeEncounterState.Snapshot encounter = entry.capabilityStates()
                 .require(AgentTownLifeEncounterState.STATE_KEY).snapshot();
         AgentTownLifeDecisionContext.EncounterView encounterView = encounter.active()
@@ -100,7 +111,16 @@ public final class AgentTownLifeControllerRuntime {
                 state.venueId(), state.role(),
                 state.homeDistrict(), state.platformPreference(), population,
                 agent.getMap() != null && AgentMapGatewayRuntime.map().isObservedByPlayer(agent.getMap()),
-                personality, state.memory().recentActivitiesSnapshot(), encounterView,
+                personality, state.memory().recentActivitiesSnapshot(),
+                state.memory().relationshipSummariesSnapshot().stream()
+                        .map(relationship -> new AgentTownLifeDecisionContext.RelationshipView(
+                                relationship.peerAgentId(), relationship.encounters(),
+                                relationship.completed(), relationship.declined(),
+                                relationship.lastEncounterAtMs(),
+                                relationship.lastType() == null ? ""
+                                        : relationship.lastType().name()))
+                        .toList(),
+                encounterView,
                 profile.trafficZones().stream()
                         .filter(AgentTownLifeProfile.TrafficZone::excludesOccupancy)
                         .map(zone -> new AgentTownLifeDecisionContext.TrafficZoneView(
@@ -109,7 +129,8 @@ public final class AgentTownLifeControllerRuntime {
                         .toList(),
                 profile.venues().stream().map(venue -> new AgentTownLifeDecisionContext.VenueView(
                         venue.id(), venue.label(), venue.district(), venue.platformKind(),
-                        venue.capacity(), venueOccupancy(townEntries, venue.id()), venue.affordances())).toList(),
+                        venue.capacity(), Math.toIntExact(venueOccupancy.getOrDefault(venue.id(), 0L)),
+                        venue.affordances())).toList(),
                 nowMs, state.sequence());
     }
 
@@ -129,16 +150,6 @@ public final class AgentTownLifeControllerRuntime {
         int index = AgentTownLifeRolePolicy.variation(
                 agent.getId(), state.sequence(), candidates.size(), 313);
         return AgentTownLifeDecision.deterministic(activity, candidates.get(index).id());
-    }
-
-    private static int venueOccupancy(java.util.List<Character> townAgents, String venueId) {
-        return (int) townAgents.stream()
-                .map(AgentRuntimeRegistry::findByCharacterInstance)
-                .filter(java.util.Objects::nonNull)
-                .map(candidate -> candidate.capabilityStates().find(AgentTownLifeState.STATE_KEY).orElse(null))
-                .filter(java.util.Objects::nonNull)
-                .filter(candidate -> venueId.equals(candidate.venueId()))
-                .count();
     }
 
     private static AgentTownLifeDecisionContext.PersonalityView personalityView(
@@ -177,7 +188,8 @@ public final class AgentTownLifeControllerRuntime {
         Character target = AgentRuntimeIdentityRuntime.bot(targetEntry);
         if (!validEncounterType(proposal)
                 || target == null || target == agent || target.getMapId() != agent.getMapId()
-                || !AgentTownLifeRuntime.active(targetEntry)) {
+                || !AgentTownLifeRuntime.active(targetEntry)
+                || AgentTownLifeEncounterCoordinator.active(targetEntry)) {
             return false;
         }
         return true;

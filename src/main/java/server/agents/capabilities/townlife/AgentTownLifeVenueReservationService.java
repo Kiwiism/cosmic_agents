@@ -1,6 +1,7 @@
 package server.agents.capabilities.townlife;
 
 import client.Character;
+import server.agents.integration.AgentClientGatewayRuntime;
 import server.maps.reservation.CharacterSpace;
 import server.maps.reservation.CharacterSpaceOwner;
 import server.maps.reservation.CharacterSpaceReservationRuntime;
@@ -33,6 +34,7 @@ final class AgentTownLifeVenueReservationService {
                 .filter(space -> profile.allowsOccupancy(space.position()))
                 .toList();
         if (spaces.size() < participants.size()) {
+            AgentTownLifeMetrics.reservationAttempt(false);
             return Map.of();
         }
         CharacterSpaceScope scope = scope(leader);
@@ -48,11 +50,13 @@ final class AgentTownLifeVenueReservationService {
                         scope, CharacterSpaceOwner.character(participant.getId()),
                         spaces, candidate, 1);
                 if (reservation.isEmpty()) {
+                    AgentTownLifeMetrics.reservationAttempt(false);
                     participants.forEach(AgentTownLifeDestinationService::release);
                     return Map.of();
                 }
                 reserved.put(participant.getId(), reservation.orElseThrow().position());
             }
+            AgentTownLifeMetrics.reservationAttempt(true);
             return Map.copyOf(reserved);
         }
     }
@@ -79,7 +83,11 @@ final class AgentTownLifeVenueReservationService {
     }
 
     private static CharacterSpaceScope scope(Character agent) {
-        int channel = agent.getClient() == null ? 0 : Math.max(0, agent.getClient().getChannel());
-        return new CharacterSpaceScope(Math.max(0, agent.getWorld()), channel, agent.getMapId());
+        boolean hasClient = AgentClientGatewayRuntime.clients().hasClient(agent);
+        int world = Math.max(0, hasClient
+                ? AgentClientGatewayRuntime.clients().world(agent) : agent.getWorld());
+        int channel = Math.max(0, hasClient
+                ? AgentClientGatewayRuntime.clients().channel(agent) : 0);
+        return new CharacterSpaceScope(world, channel, agent.getMapId());
     }
 }

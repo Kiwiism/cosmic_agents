@@ -6,6 +6,7 @@ import server.agents.capabilities.movement.AgentChairService;
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.PrimitiveCapabilityGateway;
+import server.agents.personality.AgentPersonalityProfile;
 import server.agents.personality.AgentPersonalityState;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
@@ -64,7 +65,7 @@ final class AgentTownLifeEncounterCoordinator {
                 return false;
             }
             List<Character> participants = acceptedParticipants(
-                    initiator, townState, type, venue.capacity());
+                    initiator, townState, type, venue.capacity(), nowMs);
             if (participants.size() < 2) {
                 return false;
             }
@@ -73,6 +74,7 @@ final class AgentTownLifeEncounterCoordinator {
             if (spots.size() != participants.size()) {
                 return false;
             }
+            AgentTownLifeMetrics.encounterGroup(participants.size());
             String id = "town-encounter:" + initiator.getId() + ':' + townState.sequence();
             String correlation = townState.decisionCorrelationId().isBlank()
                     ? id : townState.decisionCorrelationId();
@@ -207,6 +209,7 @@ final class AgentTownLifeEncounterCoordinator {
                 }
             }
             AgentTownLifeVenueReservationService.releaseGroup(snapshot.participantAgentIds());
+            rememberEncounter(snapshot, completed, nowMs);
         }
     }
 
@@ -251,17 +254,26 @@ final class AgentTownLifeEncounterCoordinator {
     private static List<Character> acceptedParticipants(Character initiator,
                                                         AgentTownLifeState townState,
                                                         AgentTownLifeEncounterState.Type type,
-                                                        int venueCapacity) {
+                                                        int venueCapacity,
+                                                        long nowMs) {
         int desired = type == AgentTownLifeEncounterState.Type.SOCIAL_CHAT
                 ? 2 + AgentTownLifeRolePolicy.variation(
                 initiator.getId(), townState.sequence(), 3, 419) : 2;
         desired = Math.min(desired, Math.min(4, venueCapacity));
-        List<Character> candidates = AgentRuntimeRegistry.activeEntriesSnapshot().stream()
+        List<Character> eligible = AgentRuntimeRegistry.activeEntriesSnapshot().stream()
                 .filter(AgentTownLifeRuntime::active)
                 .filter(entry -> !active(entry))
                 .map(AgentRuntimeIdentityRuntime::bot)
                 .filter(candidate -> eligible(candidate, initiator))
-                .sorted(Comparator.comparingInt(Character::getId))
+                .toList();
+        List<Character> available = eligible.stream()
+                .filter(candidate -> mutuallyAvailable(initiator, candidate, townState, nowMs))
+                .toList();
+        List<Character> candidates = (available.isEmpty() ? eligible : available).stream()
+                .sorted(Comparator.<Character>comparingInt(candidate ->
+                        -townState.memory().peerPreferenceScore(
+                                candidate.getId(), traits(initiator), nowMs))
+                        .thenComparingInt(Character::getId))
                 .toList();
         List<Character> participants = new ArrayList<>();
         participants.add(initiator);
@@ -270,6 +282,9 @@ final class AgentTownLifeEncounterCoordinator {
                 .findFirst().orElse(null);
         if (requested != null && accepts(requested, initiator, townState.sequence(), type)) {
             participants.add(requested);
+        } else if (requested != null) {
+            rememberPair(initiator, requested, type, townState.venueId(),
+                    AgentTownLifeMemory.SocialOutcome.DECLINED, nowMs);
         }
         for (Character candidate : candidates) {
             if (participants.size() >= desired) {
@@ -283,6 +298,74 @@ final class AgentTownLifeEncounterCoordinator {
         return participants;
     }
 
+    private static boolean mutuallyAvailable(Character initiator,
+                                             Character candidate,
+                                             AgentTownLifeState initiatorState,
+                                             long nowMs) {
+        AgentRuntimeEntry candidateEntry = AgentRuntimeRegistry.findByCharacterInstance(candidate);
+        AgentTownLifeState candidateState = candidateEntry == null ? null
+                : candidateEntry.capabilityStates().find(AgentTownLifeState.STATE_KEY).orElse(null);
+        return initiatorState.memory().peerAvailable(candidate.getId(), nowMs)
+                && candidateState != null
+                && candidateState.memory().peerAvailable(initiator.getId(), nowMs);
+    }
+
+    private static AgentPersonalityProfile.Traits traits(Character agent) {
+        AgentRuntimeEntry entry = AgentRuntimeRegistry.findByCharacterInstance(agent);
+        return entry == null ? null : entry.capabilityStates()
+                .find(AgentPersonalityState.STATE_KEY)
+                .map(AgentPersonalityState::profile)
+                .map(AgentPersonalityProfile::traits)
+                .orElse(null);
+    }
+
+    private static void rememberEncounter(AgentTownLifeEncounterState.Snapshot snapshot,
+                                          boolean completed,
+                                          long nowMs) {
+        AgentTownLifeMemory.SocialOutcome outcome = completed
+                ? AgentTownLifeMemory.SocialOutcome.COMPLETED
+                : AgentTownLifeMemory.SocialOutcome.CANCELLED;
+        for (int participantId : snapshot.participantAgentIds()) {
+            AgentRuntimeEntry participantEntry =
+                    AgentRuntimeRegistry.findByAgentCharacterId(participantId);
+            AgentTownLifeState townState = participantEntry == null ? null
+                    : participantEntry.capabilityStates()
+                    .find(AgentTownLifeState.STATE_KEY).orElse(null);
+            if (townState == null) {
+                continue;
+            }
+            for (int peerId : snapshot.participantAgentIds()) {
+                if (peerId != participantId) {
+                    townState.memory().rememberSocial(
+                            peerId, snapshot.type(), snapshot.venueId(), outcome, nowMs);
+                }
+            }
+        }
+    }
+
+    private static void rememberPair(Character first,
+                                     Character second,
+                                     AgentTownLifeEncounterState.Type type,
+                                     String venueId,
+                                     AgentTownLifeMemory.SocialOutcome outcome,
+                                     long nowMs) {
+        rememberPeer(first, second.getId(), type, venueId, outcome, nowMs);
+        rememberPeer(second, first.getId(), type, venueId, outcome, nowMs);
+    }
+
+    private static void rememberPeer(Character owner,
+                                     int peerId,
+                                     AgentTownLifeEncounterState.Type type,
+                                     String venueId,
+                                     AgentTownLifeMemory.SocialOutcome outcome,
+                                     long nowMs) {
+        AgentRuntimeEntry entry = AgentRuntimeRegistry.findByCharacterInstance(owner);
+        if (entry != null) {
+            entry.capabilityStates().find(AgentTownLifeState.STATE_KEY).ifPresent(state ->
+                    state.memory().rememberSocial(peerId, type, venueId, outcome, nowMs));
+        }
+    }
+
     private static boolean eligible(Character candidate, Character initiator) {
         if (candidate == null || candidate == initiator
                 || candidate.getMapId() != initiator.getMapId()) {
@@ -292,10 +375,8 @@ final class AgentTownLifeEncounterCoordinator {
         AgentTownLifeState state = entry == null ? null
                 : entry.capabilityStates().find(AgentTownLifeState.STATE_KEY).orElse(null);
         return state != null && state.enabled()
-                && state.stage() != AgentTownLifeState.Stage.TRAVEL_TO_TOWN
-                && state.stage() != AgentTownLifeState.Stage.COMPLETE_ARRIVAL
-                && state.stage() != AgentTownLifeState.Stage.VISIT_SHOP
-                && state.stage() != AgentTownLifeState.Stage.RETURN_FROM_SHOP;
+                && (state.stage() == AgentTownLifeState.Stage.CHOOSE_ACTIVITY
+                || state.stage() == AgentTownLifeState.Stage.DWELL);
     }
 
     private static boolean accepts(Character candidate,

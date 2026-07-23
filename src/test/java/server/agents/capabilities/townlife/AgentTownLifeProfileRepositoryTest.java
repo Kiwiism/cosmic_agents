@@ -78,4 +78,19 @@ class AgentTownLifeProfileRepositoryTest {
 
         assertEquals(100, upper);
     }
+
+    @Test
+    void loadsValidatedWzBackedHenesysPilot() {
+        AgentTownLifeProfile profile = AgentTownLifeProfileRepository.defaultRepository()
+                .require(100000000);
+        AgentTownLifeProfileValidator.Validation validation =
+                AgentTownLifeProfileValidator.validate(profile);
+
+        assertEquals("henesys", profile.profileId());
+        assertEquals(29, profile.restSpots().size());
+        assertEquals(7, profile.venues().size());
+        assertEquals(100000100, profile.venue("henesys-market")
+                .orElseThrow().destinationMapId());
+        assertTrue(validation.valid(), () -> validation.errors().toString());
+    }
 }

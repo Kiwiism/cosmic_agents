@@ -21,6 +21,7 @@ public record AgentTownLifeDecisionContext(
         boolean realObserverPresent,
         PersonalityView personality,
         List<AgentTownLifeState.Activity> recentActivities,
+        List<RelationshipView> relationships,
         EncounterView encounter,
         List<TrafficZoneView> trafficZones,
         List<VenueView> venues,
@@ -34,13 +35,26 @@ public record AgentTownLifeDecisionContext(
                 || currentActivity == null || currentVenueId == null
                 || role == null || homeDistrict == null || platformPreference == null
                 || townAgentCount < 0 || personality == null || venues == null
-                || recentActivities == null || encounter == null || trafficZones == null
+                || recentActivities == null || relationships == null
+                || encounter == null || trafficZones == null
                 || nowMs < 0 || decisionSequence < 0) {
             throw new IllegalArgumentException("valid immutable TownLife decision context is required");
         }
         venues = List.copyOf(venues);
         recentActivities = List.copyOf(recentActivities);
+        relationships = List.copyOf(relationships);
         trafficZones = List.copyOf(trafficZones);
+    }
+
+    public record RelationshipView(int peerAgentId,
+                                   int encounters,
+                                   int completed,
+                                   int declined,
+                                   long lastEncounterAtMs,
+                                   String lastType) {
+        public RelationshipView {
+            lastType = lastType == null ? "" : lastType;
+        }
     }
 
     public record TrafficZoneView(String id,

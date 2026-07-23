@@ -19,6 +19,7 @@ public final class AgentTownLifeProfileRepository {
     AgentTownLifeProfileRepository(List<AgentTownLifeProfile> profiles) {
         Map<Integer, AgentTownLifeProfile> index = new LinkedHashMap<>();
         for (AgentTownLifeProfile profile : profiles) {
+            AgentTownLifeProfileValidator.requireValid(profile);
             if (index.putIfAbsent(profile.mapId(), profile) != null) {
                 throw new IllegalArgumentException("duplicate town-life map " + profile.mapId());
             }
@@ -37,6 +38,10 @@ public final class AgentTownLifeProfileRepository {
     public AgentTownLifeProfile require(int mapId) {
         return find(mapId).orElseThrow(() ->
                 new IllegalArgumentException("no town-life profile for map " + mapId));
+    }
+
+    public List<AgentTownLifeProfile> profiles() {
+        return List.copyOf(byMapId.values());
     }
 
     private static AgentTownLifeProfileRepository load() {

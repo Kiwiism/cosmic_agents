@@ -126,7 +126,7 @@ public final class AgentTownLifeState {
         visitReason = request.reason();
         freeTimeBudgetMs = request.freeTimeBudgetMs();
         freeTimeUntilMs = 0L;
-        memory.clear();
+        memory.clearVisit();
         progressWatchdog.clear();
     }
 
@@ -158,7 +158,7 @@ public final class AgentTownLifeState {
         decisionCorrelationId = "";
         visitPhase = VisitPhase.DEPARTING;
         freeTimeUntilMs = 0L;
-        memory.clear();
+        memory.clearVisit();
         progressWatchdog.clear();
     }
 

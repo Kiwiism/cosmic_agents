@@ -80,7 +80,11 @@ public final class AgentTownLifeRuntime {
         }
         AgentTownLifeFidelity previousFidelity = state.fidelity();
         AgentTownLifeFidelity fidelity = AgentTownLifeFidelityPolicy.resolve(entry, agent);
-        if (state.updateFidelity(fidelity)
+        boolean fidelityChanged = state.updateFidelity(fidelity);
+        if (fidelityChanged) {
+            AgentTownLifeMetrics.fidelityTransition();
+        }
+        if (fidelityChanged
                 && fidelity == AgentTownLifeFidelity.PRESENTATION
                 && previousFidelity == AgentTownLifeFidelity.BACKGROUND_ABSTRACT
                 && (state.stage() == AgentTownLifeState.Stage.MOVE_TO_ACTIVITY
@@ -231,6 +235,7 @@ public final class AgentTownLifeRuntime {
             AgentTownLifeProgressWatchdog.Result progress =
                     state.progressWatchdog().observe(agent.getPosition(), nowMs);
             if (progress != AgentTownLifeProgressWatchdog.Result.PROGRESSING) {
+                AgentTownLifeMetrics.navigationAbandon();
                 abandonDestination(entry, agent, state, nowMs, gateway);
                 return true;
             }

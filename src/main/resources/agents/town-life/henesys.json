@@ -1,0 +1,228 @@
+{
+  "profileId": "henesys",
+  "mapId": 100000000,
+  "geometry": {
+    "upperMaxY": 0,
+    "middleMaxY": 280,
+    "miniPlatformMaxWidth": 320,
+    "minimumPlatformWidth": 48,
+    "edgeInsetPx": 28,
+    "slotSpacingPx": 76,
+    "maxSlotsPerPlatform": 9
+  },
+  "distribution": {
+    "upperWeight": 25,
+    "middleWeight": 30,
+    "lowerWeight": 35,
+    "anyWeight": 10,
+    "miniPlatformPercent": 30,
+    "crossDistrictEveryActivities": 5
+  },
+  "extensions": {
+    "arrival": "generic"
+  },
+  "arrivalPortals": [
+    { "name": "west00", "weight": 50 },
+    { "name": "east00", "weight": 50 }
+  ],
+  "restSpots": [
+    { "x": 220, "y": 273, "seatId": 23 },
+    { "x": 242, "y": 273, "seatId": 24 },
+    { "x": 264, "y": 273, "seatId": 25 },
+    { "x": 2525, "y": 333, "seatId": 26 },
+    { "x": 2547, "y": 333, "seatId": 27 },
+    { "x": 2569, "y": 333, "seatId": 28 },
+    { "x": 3594, "y": 123, "seatId": 20 },
+    { "x": 3616, "y": 123, "seatId": 21 },
+    { "x": 3638, "y": 123, "seatId": 22 },
+    { "x": 4015, "y": 123, "seatId": 17 },
+    { "x": 4037, "y": 123, "seatId": 18 },
+    { "x": 4059, "y": 123, "seatId": 19 },
+    { "x": 4909, "y": -120, "seatId": 0 },
+    { "x": 4976, "y": -120, "seatId": 1 },
+    { "x": 5422, "y": 453, "seatId": 2 },
+    { "x": 5462, "y": 453, "seatId": 3 },
+    { "x": 5502, "y": 453, "seatId": 4 },
+    { "x": 5542, "y": 453, "seatId": 5 },
+    { "x": 5582, "y": 453, "seatId": 6 },
+    { "x": 5622, "y": 453, "seatId": 7 },
+    { "x": 5662, "y": 453, "seatId": 8 },
+    { "x": 5702, "y": 453, "seatId": 9 },
+    { "x": 5743, "y": 453, "seatId": 10 },
+    { "x": 5812, "y": -177, "seatId": 11 },
+    { "x": 5838, "y": -177, "seatId": 12 },
+    { "x": 5864, "y": -177, "seatId": 13 },
+    { "x": 5890, "y": -177, "seatId": 14 },
+    { "x": 5916, "y": -177, "seatId": 15 },
+    { "x": 5943, "y": -177, "seatId": 16 }
+  ],
+  "roamFallbackSpots": [
+    { "x": 112, "y": 197 },
+    { "x": 1473, "y": 260 },
+    { "x": 2741, "y": 259 },
+    { "x": 3827, "y": 368 },
+    { "x": 4690, "y": 300 },
+    { "x": 5634, "y": 402 }
+  ],
+  "npcSpots": [
+    { "npcId": 1012000, "offsetX": 65 },
+    { "npcId": 1010100, "offsetX": -65 },
+    { "npcId": 1012109, "offsetX": 65 },
+    { "npcId": 1012003, "offsetX": -65 },
+    { "npcId": 1012106, "offsetX": 65 },
+    { "npcId": 1012108, "offsetX": -65 }
+  ],
+  "shopMapIds": [100000100],
+  "trafficZones": [
+    {
+      "id": "west-field-portal",
+      "type": "PORTAL",
+      "minX": -980,
+      "minY": 215,
+      "maxX": -850,
+      "maxY": 340,
+      "excludesOccupancy": true
+    },
+    {
+      "id": "market-door",
+      "type": "DOOR",
+      "minX": 2970,
+      "minY": 280,
+      "maxX": 3080,
+      "maxY": 390,
+      "excludesOccupancy": true
+    },
+    {
+      "id": "park-door",
+      "type": "DOOR",
+      "minX": 3790,
+      "minY": 65,
+      "maxX": 3900,
+      "maxY": 185,
+      "excludesOccupancy": true
+    },
+    {
+      "id": "townstreet-door",
+      "type": "DOOR",
+      "minX": 5070,
+      "minY": 390,
+      "maxX": 5200,
+      "maxY": 510,
+      "excludesOccupancy": true
+    },
+    {
+      "id": "east-field-portal",
+      "type": "PORTAL",
+      "minX": 5840,
+      "minY": 395,
+      "maxX": 5980,
+      "maxY": 520,
+      "excludesOccupancy": true
+    }
+  ],
+  "venues": [
+    {
+      "id": "west-park-benches",
+      "label": "West Henesys benches",
+      "district": "MIDDLE",
+      "platformKind": "MAIN",
+      "capacity": 3,
+      "affordances": ["REST", "SOCIAL", "WAIT"],
+      "spots": [
+        { "x": 220, "y": 273, "seatId": 23 },
+        { "x": 242, "y": 273, "seatId": 24 },
+        { "x": 264, "y": 273, "seatId": 25 }
+      ],
+      "destinationMapId": 0
+    },
+    {
+      "id": "central-square",
+      "label": "Henesys central square",
+      "district": "LOWER",
+      "platformKind": "MAIN",
+      "capacity": 3,
+      "affordances": ["REST", "SOCIAL", "NPC_PAUSE", "ROAM", "WAIT"],
+      "spots": [
+        { "x": 2525, "y": 333, "seatId": 26 },
+        { "x": 2547, "y": 333, "seatId": 27 },
+        { "x": 2569, "y": 333, "seatId": 28 }
+      ],
+      "destinationMapId": 0
+    },
+    {
+      "id": "market-rooftop-benches",
+      "label": "Market rooftop benches",
+      "district": "MIDDLE",
+      "platformKind": "MINI",
+      "capacity": 3,
+      "affordances": ["REST", "SOCIAL", "WAIT", "SIGHTSEE"],
+      "spots": [
+        { "x": 3594, "y": 123, "seatId": 20 },
+        { "x": 3616, "y": 123, "seatId": 21 },
+        { "x": 3638, "y": 123, "seatId": 22 }
+      ],
+      "destinationMapId": 0
+    },
+    {
+      "id": "park-overlook",
+      "label": "Henesys park overlook",
+      "district": "MIDDLE",
+      "platformKind": "MINI",
+      "capacity": 3,
+      "affordances": ["REST", "SOCIAL", "WEAPON_FLOURISH", "SIGHTSEE"],
+      "spots": [
+        { "x": 4015, "y": 123, "seatId": 17 },
+        { "x": 4037, "y": 123, "seatId": 18 },
+        { "x": 4059, "y": 123, "seatId": 19 }
+      ],
+      "destinationMapId": 0
+    },
+    {
+      "id": "east-town-benches",
+      "label": "East Henesys benches",
+      "district": "LOWER",
+      "platformKind": "MAIN",
+      "capacity": 9,
+      "affordances": ["REST", "SOCIAL", "WAIT", "ROAM"],
+      "spots": [
+        { "x": 5422, "y": 453, "seatId": 2 },
+        { "x": 5462, "y": 453, "seatId": 3 },
+        { "x": 5502, "y": 453, "seatId": 4 },
+        { "x": 5542, "y": 453, "seatId": 5 },
+        { "x": 5582, "y": 453, "seatId": 6 },
+        { "x": 5622, "y": 453, "seatId": 7 },
+        { "x": 5662, "y": 453, "seatId": 8 },
+        { "x": 5702, "y": 453, "seatId": 9 },
+        { "x": 5743, "y": 453, "seatId": 10 }
+      ],
+      "destinationMapId": 0
+    },
+    {
+      "id": "upper-east-benches",
+      "label": "Upper east lookout",
+      "district": "UPPER",
+      "platformKind": "MINI",
+      "capacity": 6,
+      "affordances": ["REST", "SOCIAL", "WAIT", "SIGHTSEE"],
+      "spots": [
+        { "x": 5812, "y": -177, "seatId": 11 },
+        { "x": 5838, "y": -177, "seatId": 12 },
+        { "x": 5864, "y": -177, "seatId": 13 },
+        { "x": 5890, "y": -177, "seatId": 14 },
+        { "x": 5916, "y": -177, "seatId": 15 },
+        { "x": 5943, "y": -177, "seatId": 16 }
+      ],
+      "destinationMapId": 0
+    },
+    {
+      "id": "henesys-market",
+      "label": "Henesys Market",
+      "district": "LOWER",
+      "platformKind": "MAIN",
+      "capacity": 6,
+      "affordances": ["SHOP_VISIT"],
+      "spots": [],
+      "destinationMapId": 100000100
+    }
+  ]
+}

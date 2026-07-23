@@ -26,6 +26,7 @@ final class AgentTownLifeEventPublisher {
                 agent.getId(), nowMs, state.townMapId(), profile.profileId(), state.activity(),
                 phase, state.venueId(), state.targetCharacterId(), state.decisionSource(), correlation),
                 AgentEventPriority.AMBIENT);
+        AgentTownLifeMetrics.activity(phase, state.venueId());
     }
 
     static void encounter(AgentRuntimeEntry entry,
@@ -41,5 +42,6 @@ final class AgentTownLifeEventPublisher {
                 encounter.role(), encounter.phase(), encounter.peerAgentId(),
                 encounter.turnOwnerAgentId(), encounter.venueId(), encounter.correlationId()),
                 AgentEventPriority.AMBIENT);
+        AgentTownLifeMetrics.encounter(encounter.phase());
     }
 }
