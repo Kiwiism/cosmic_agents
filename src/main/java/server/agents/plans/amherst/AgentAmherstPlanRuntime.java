@@ -57,6 +57,17 @@ public final class AgentAmherstPlanRuntime {
         return FileAmherstPlanProgressStore.runtimeDefault();
     }
 
+    /** Compatibility activity for active pre-universal Maple Island sessions. */
+    public static boolean active(AgentRuntimeEntry entry) {
+        if (entry == null) {
+            return false;
+        }
+        AmherstPlanExecutionState state = entry.amherstPlanExecutionState();
+        synchronized (state) {
+            return state.runner != null || state.completed();
+        }
+    }
+
     public static boolean tickGate(AgentRuntimeEntry entry, Character agent, long nowMs) {
         long planNowMs = AgentForegroundPauseRuntime.effectiveNow(entry, nowMs);
         AmherstPlanExecutionState state = entry.amherstPlanExecutionState();

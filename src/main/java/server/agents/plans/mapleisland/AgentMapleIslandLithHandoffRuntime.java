@@ -72,6 +72,20 @@ public final class AgentMapleIslandLithHandoffRuntime {
      * Advances only the handoff boundary. Returning true means a transfer or
      * TownLife session was started and the current tick is consumed.
      */
+    public static boolean active(AgentRuntimeEntry entry) {
+        if (entry == null) {
+            return false;
+        }
+        AgentMapleIslandLithHandoffState state = entry.capabilityStates()
+                .find(AgentMapleIslandLithHandoffState.STATE_KEY).orElse(null);
+        if (state != null && state.requested()) {
+            return true;
+        }
+        AgentPlanSessionState plan = entry.capabilityStates()
+                .find(AgentPlanSessionState.STATE_KEY).orElse(null);
+        return plan != null && TRANSFER_PLAN_ID.equals(plan.deferredSuccessorPlanId());
+    }
+
     public static boolean tick(AgentRuntimeEntry entry, Character agent, long nowMs) {
         if (entry == null || agent == null) {
             return false;
