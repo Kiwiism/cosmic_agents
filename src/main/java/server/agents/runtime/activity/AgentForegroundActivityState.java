@@ -13,28 +13,29 @@ public final class AgentForegroundActivityState {
     private long enteredAtMs;
     private long transitionCount;
 
-    public synchronized void select(String nextActivityId, long nowMs) {
+    public synchronized boolean select(String nextActivityId, long nowMs) {
         if (nextActivityId == null || nextActivityId.isBlank()) {
-            clear(nowMs);
-            return;
+            return clear(nowMs);
         }
         if (nextActivityId.equals(activityId)) {
-            return;
+            return false;
         }
         previousActivityId = activityId;
         activityId = nextActivityId;
         enteredAtMs = nowMs;
         transitionCount++;
+        return true;
     }
 
-    public synchronized void clear(long nowMs) {
+    public synchronized boolean clear(long nowMs) {
         if (activityId == null) {
-            return;
+            return false;
         }
         previousActivityId = activityId;
         activityId = null;
         enteredAtMs = nowMs;
         transitionCount++;
+        return true;
     }
 
     public synchronized String activityId() {

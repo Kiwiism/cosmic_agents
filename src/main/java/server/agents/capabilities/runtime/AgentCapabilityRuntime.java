@@ -69,7 +69,15 @@ public final class AgentCapabilityRuntime {
             }
 
             AgentCapabilityFrame frame = state.frames.peek();
-            startIfNeeded(state, frame, nowMs);
+            if (!startIfNeeded(entry, state, frame, nowMs)) {
+                if (hasExpiredFrame(state, nowMs)) {
+                    abortStack(state, entry, agent, nowMs, new AgentCapabilityResult(
+                            AgentCapabilityStatus.TIMED_OUT,
+                            AgentCapabilityReasonCode.DEADLINE_EXCEEDED,
+                            "capability timed out waiting for resource locks"));
+                }
+                return true;
+            }
             if (hasExpiredFrame(state, nowMs)) {
                 abortStack(state, entry, agent, nowMs, new AgentCapabilityResult(
                         AgentCapabilityStatus.TIMED_OUT,
@@ -121,15 +129,25 @@ public final class AgentCapabilityRuntime {
         }
     }
 
-    private static void startIfNeeded(AgentCapabilityRuntimeState state,
-                                      AgentCapabilityFrame frame,
-                                      long nowMs) {
+    private static boolean startIfNeeded(AgentRuntimeEntry entry,
+                                         AgentCapabilityRuntimeState state,
+                                         AgentCapabilityFrame frame,
+                                         long nowMs) {
         if (frame.state != AgentCapabilityFrameState.STARTING) {
-            return;
+            return true;
         }
+        if (frame.deadlineMs == 0L) {
+            frame.startedAtMs = nowMs;
+            frame.deadlineMs = saturatedAdd(nowMs, frame.invocation.timeoutMs());
+        }
+        AgentCapabilityResourceLockState locks = entry.capabilityStates()
+                .require(AgentCapabilityResourceLockState.STATE_KEY);
+        if (!locks.acquire(frame.lockOwnerId, frame.requiredResources,
+                nowMs, frame.deadlineMs)) {
+            return false;
+        }
+        frame.locksAcquired = true;
         frame.state = AgentCapabilityFrameState.RUNNING;
-        frame.startedAtMs = nowMs;
-        frame.deadlineMs = saturatedAdd(nowMs, frame.invocation.timeoutMs());
         journal(state, nowMs, state.frames.size() > 1
                         ? AgentCapabilityJournalEventType.CHILD_STARTED
                         : AgentCapabilityJournalEventType.STARTED,
@@ -137,6 +155,7 @@ public final class AgentCapabilityRuntime {
                 new AgentCapabilityResult(AgentCapabilityStatus.RUNNING,
                         AgentCapabilityReasonCode.IN_PROGRESS,
                         "capability started"));
+        return true;
     }
 
     private static void handoff(AgentCapabilityRuntimeState state,
@@ -147,7 +166,7 @@ public final class AgentCapabilityRuntime {
         parent.state = AgentCapabilityFrameState.WAITING_CHILD;
         parent.childResult = null;
         journal(state, nowMs, AgentCapabilityJournalEventType.HANDOFF_REQUESTED, parent, result);
-        state.frames.push(new AgentCapabilityFrame(child));
+        state.frames.push(new AgentCapabilityFrame(child, parent.lockOwnerId));
     }
 
     private static void retry(AgentCapabilityRuntimeState state,
@@ -172,6 +191,7 @@ public final class AgentCapabilityRuntime {
                                     long nowMs,
                                     AgentCapabilityResult result) {
         AgentCapabilityFrame completed = state.frames.pop();
+        releaseLocks(entry, completed);
         completed.state = terminalFrameState(result);
         notifyTerminal(completed, entry, agent, nowMs, result);
         journal(state, nowMs, terminalEvent(result), completed, result);
@@ -189,7 +209,7 @@ public final class AgentCapabilityRuntime {
 
     private static boolean hasExpiredFrame(AgentCapabilityRuntimeState state, long nowMs) {
         return state.frames.stream()
-                .filter(frame -> frame.state != AgentCapabilityFrameState.STARTING)
+                .filter(frame -> frame.deadlineMs > 0L)
                 .anyMatch(frame -> nowMs >= frame.deadlineMs);
     }
 
@@ -200,6 +220,7 @@ public final class AgentCapabilityRuntime {
                                    AgentCapabilityResult result) {
         while (!state.frames.isEmpty()) {
             AgentCapabilityFrame frame = state.frames.pop();
+            releaseLocks(entry, frame);
             frame.state = terminalFrameState(result);
             notifyTerminal(frame, entry, agent, nowMs, result);
             journal(state, nowMs, terminalEvent(result), frame, result);
@@ -236,6 +257,15 @@ public final class AgentCapabilityRuntime {
                         frame.invocation.capabilityId(), frame.invocation.commandType(), result.status(), failure);
             }
         }
+    }
+
+    private static void releaseLocks(AgentRuntimeEntry entry, AgentCapabilityFrame frame) {
+        if (!frame.locksAcquired) {
+            return;
+        }
+        entry.capabilityStates().require(AgentCapabilityResourceLockState.STATE_KEY)
+                .release(frame.lockOwnerId, frame.requiredResources);
+        frame.locksAcquired = false;
     }
 
     private static AgentCapabilityJournalEventType terminalEvent(AgentCapabilityResult result) {

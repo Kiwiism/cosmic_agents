@@ -8,6 +8,7 @@ import server.agents.objectives.AgentObjectiveKernel;
 import server.agents.objectives.AgentObjectiveStatus;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentForegroundPauseRuntime;
+import server.agents.runtime.activity.AgentForegroundActivityDefaults;
 
 import java.util.List;
 
@@ -52,6 +53,8 @@ public final class AgentPlanExecutor implements AgentPlanRunner {
         if (session.active()) {
             cancel(entry, agent, "superseded by " + planId, nowMs);
         }
+        AgentForegroundActivityDefaults.coordinator().prepareExclusive(
+                "universal-plan", entry, agent, "replaced by plan " + planId, nowMs);
         AgentPlanStartRequest effectiveRequest =
                 request == null ? AgentPlanStartRequest.EMPTY : request;
         String chainId = existingChainId == null || existingChainId.isBlank()

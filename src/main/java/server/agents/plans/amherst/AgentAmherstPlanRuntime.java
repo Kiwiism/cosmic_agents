@@ -64,7 +64,7 @@ public final class AgentAmherstPlanRuntime {
         }
         AmherstPlanExecutionState state = entry.amherstPlanExecutionState();
         synchronized (state) {
-            return state.runner != null || state.completed();
+            return state.active() || state.completed();
         }
     }
 

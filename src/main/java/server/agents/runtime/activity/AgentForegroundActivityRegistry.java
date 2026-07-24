@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Optional;
 
 /** Immutable, priority-ordered foreground activity registry. */
 public final class AgentForegroundActivityRegistry {
@@ -31,5 +32,9 @@ public final class AgentForegroundActivityRegistry {
 
     public List<AgentForegroundActivity> activities() {
         return activities;
+    }
+
+    public Optional<AgentForegroundActivity> find(String id) {
+        return activities.stream().filter(activity -> activity.id().equals(id)).findFirst();
     }
 }

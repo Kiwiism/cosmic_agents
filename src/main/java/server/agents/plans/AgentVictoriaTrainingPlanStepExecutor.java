@@ -1,6 +1,5 @@
 package server.agents.plans;
 
-import server.agents.progression.AgentVictoriaPlanSessionRuntime;
 import server.agents.progression.AgentVictoriaTrainingObjectiveRuntime;
 import server.agents.progression.AgentVictoriaTrainingState;
 
@@ -45,7 +44,6 @@ public final class AgentVictoriaTrainingPlanStepExecutor implements AgentPlanSte
             return AgentPlanStepExecution.terminal(AgentPlanExecutionStatus.BLOCKED,
                     "Victoria training could not start for target level " + targetLevel);
         }
-        AgentVictoriaPlanSessionRuntime.startTraining(context.entry(), context.agent());
         return AgentPlanStepExecution.active(true);
     }
 
@@ -56,7 +54,6 @@ public final class AgentVictoriaTrainingPlanStepExecutor implements AgentPlanSte
         AgentVictoriaTrainingState state = context.entry().capabilityStates()
                 .require(AgentVictoriaTrainingState.STATE_KEY);
         if (!state.active()) {
-            AgentVictoriaPlanSessionRuntime.stop(context.entry());
             return AgentPlanStepExecution.terminal(AgentPlanExecutionStatus.SUCCEEDED,
                     "Victoria training target reached");
         }
@@ -66,7 +63,6 @@ public final class AgentVictoriaTrainingPlanStepExecutor implements AgentPlanSte
     @Override
     public void cancel(AgentPlanExecutionContext context) {
         AgentVictoriaTrainingObjectiveRuntime.cancel(context.entry(), context.nowMs());
-        AgentVictoriaPlanSessionRuntime.stop(context.entry());
     }
 
     private static int intParameter(AgentPlanExecutionContext context, String key, int fallback) {

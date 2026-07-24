@@ -1416,6 +1416,18 @@ tuning:
     # Purpose: Controls how frequently terminal failure log interval updates. Lower values make Agents react more quickly and smoothly but use more server work; higher values react more slowly and reduce load.
     # Technical: the "capability runtime" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled. Paired minimum/maximum values define an inclusive random or validation range and must not be inverted.
     server.agents.capabilities.runtime.AgentCapabilityRuntime.TERMINAL_FAILURE_LOG_INTERVAL_MS: '60000'
+    # Values: a positive integer. Recommended: 128-512; 256 preserves enough recent decisions for diagnostics without allowing per-Agent memory to grow without a bound.
+    # Purpose: Limits how many recent policy and activity choices each Agent remembers for debugging, deterministic replay, and future LLM context. Higher values retain more history and use more memory; lower values forget older decisions sooner.
+    # Technical: the decision provenance journal consumes this as a bounded entry count and evicts the oldest record first.
+    server.agents.runtime.decision.AgentDecisionProvenanceState.MAX_RECORDS: '256'
+    # Values: a positive integer. Recommended: 1000-10000; 4096 supports large test cohorts while preventing abandoned social and transaction sessions from growing without a bound.
+    # Purpose: Limits how many live or recently terminal interaction sessions the Agent engine retains across trade, party, buddy, guild, town encounter, expedition, and market protocols. Higher values support more simultaneous interactions and use more memory.
+    # Technical: the shared interaction-session registry consumes this as a process-wide bounded session count.
+    server.agents.coordination.session.AgentInteractionSessionRegistry.MAX_SESSIONS: '4096'
+    # Values: a positive integer. Recommended: 32-256 per memory kind; 128 keeps useful recent context without making every Agent carry an unbounded history.
+    # Purpose: Limits how many working, episodic, social, and economic memories each Agent keeps in each category. Higher values let decisions and future LLM dialogue recall more facts; lower values evict old facts sooner and reduce memory use.
+    # Technical: the session memory repository consumes this per Agent and per memory category, evicting expired entries and then the oldest entry.
+    server.agents.memory.AgentMemoryState.MAX_PER_KIND: '128'
     # Values: a finite non-negative integer; unit: map pixels. Recommended: 6-24 around the tested baseline 12; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls the distance or margin used for arrival range. Higher values allow action from farther away or leave more space; lower values require closer, more precise positioning.
     # Technical: the "free market stall capability" component consumes this as an integer. Unit: MapleStory map pixels; horizontal and vertical values use the server map coordinate system.

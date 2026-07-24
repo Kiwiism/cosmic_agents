@@ -48,14 +48,14 @@ class AgentMovementBroadcastServiceTest {
     }
 
     @Test
-    void lithHarborBackgroundLadderKeepsGroundFootholdLayer() {
+    void lithHarborBackgroundLadderUsesCapturedRopeRenderLayer() {
         Character agent = mock(Character.class);
         when(agent.getMapId()).thenReturn(104_000_000);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
         AgentMovementPhysicsStateRuntime.setLastGroundFhId(entry, 12345);
         AgentClimbStateRuntime.setClimbingOnRope(entry, new Rope(2_151, 499, 645, true));
 
-        assertEquals(12345, AgentMovementBroadcastService.resolveBroadcastFhId(entry, agent));
+        assertEquals(-2, AgentMovementBroadcastService.resolveBroadcastFhId(entry, agent));
     }
 
     @Test

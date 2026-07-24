@@ -1,5 +1,7 @@
 package server.agents.capabilities.runtime;
 
+import java.util.Set;
+
 public final class AgentCapabilityInvocation<C extends AgentCapabilityCommand> {
     private final AgentExecutableCapability<C> capability;
     private final C command;
@@ -51,6 +53,11 @@ public final class AgentCapabilityInvocation<C extends AgentCapabilityCommand> {
 
     public AgentCapabilityInvocationMetadata metadata() {
         return metadata;
+    }
+
+    public Set<AgentCapabilityResource> requiredResources() {
+        Set<AgentCapabilityResource> resources = capability.requiredResources(command);
+        return resources == null ? Set.of() : Set.copyOf(resources);
     }
 
     AgentCapabilityStep tick(AgentCapabilityContext context) {

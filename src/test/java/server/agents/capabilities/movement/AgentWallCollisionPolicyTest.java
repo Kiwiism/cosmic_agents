@@ -1,6 +1,7 @@
 package server.agents.capabilities.movement;
 
 import org.junit.jupiter.api.Test;
+import server.agents.physics.AgentWallCollisionPolicy;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationWalkRegionLookupService;
 import server.maps.Foothold;

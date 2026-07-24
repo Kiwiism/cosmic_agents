@@ -1,5 +1,6 @@
 package server.agents.capabilities.movement;
 
+import server.agents.physics.AgentWallCollisionPolicy;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationPhysicsService;
 import server.maps.Foothold;

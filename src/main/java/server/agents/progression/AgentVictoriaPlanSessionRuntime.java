@@ -6,12 +6,13 @@ import server.agents.runtime.AgentForegroundPauseRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**
- * Foreground owner for explicitly activated Victoria progression.
+ * Compatibility foreground owner for Victoria sessions created before the
+ * universal plan executor became the sole progression-plan lifecycle.
  *
- * <p>The underlying first-job plan remains reusable by test commands and the future Maple Island
- * handoff. Persisted career state alone never activates this runtime, preserving ordinary follow
- * behavior for unrelated Agent sessions.</p>
+ * <p>New assignments must use {@code AgentUniversalPlanRuntime}. This runtime
+ * remains only so an old in-memory/checkpoint session can finish safely.</p>
  */
+@Deprecated
 public final class AgentVictoriaPlanSessionRuntime {
     private AgentVictoriaPlanSessionRuntime() {
     }

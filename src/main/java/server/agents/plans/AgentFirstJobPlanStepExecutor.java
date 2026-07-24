@@ -7,7 +7,6 @@ import server.agents.objectives.AgentObjectiveKernel;
 import server.agents.objectives.AgentObjectiveStatus;
 import server.agents.progression.AgentCareerProgressionState;
 import server.agents.progression.AgentFirstJobJourneyRuntime;
-import server.agents.progression.AgentVictoriaPlanSessionRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
 
 import java.util.List;
@@ -52,7 +51,6 @@ public final class AgentFirstJobPlanStepExecutor implements AgentPlanStepExecuto
                     "career bundle " + career.bundle().bundleId()
                             + " is not eligible for " + context.plan().planId());
         }
-        AgentVictoriaPlanSessionRuntime.startFirstJob(context.entry(), context.agent());
         return AgentPlanStepExecution.active(true);
     }
 
@@ -63,12 +61,10 @@ public final class AgentFirstJobPlanStepExecutor implements AgentPlanStepExecuto
         AgentCareerProgressionState career = context.entry().capabilityStates()
                 .require(AgentCareerProgressionState.STATE_KEY);
         if (career.stage() == AgentCareerProgressionState.Stage.COMPLETE) {
-            AgentVictoriaPlanSessionRuntime.stop(context.entry());
             return AgentPlanStepExecution.terminal(AgentPlanExecutionStatus.SUCCEEDED,
                     "first-job level-15 journey completed");
         }
         if (career.stage() == AgentCareerProgressionState.Stage.BLOCKED) {
-            AgentVictoriaPlanSessionRuntime.stop(context.entry());
             return AgentPlanStepExecution.terminal(AgentPlanExecutionStatus.BLOCKED,
                     career.blockReason());
         }
@@ -82,7 +78,6 @@ public final class AgentFirstJobPlanStepExecutor implements AgentPlanStepExecuto
 
     @Override
     public void cancel(AgentPlanExecutionContext context) {
-        AgentVictoriaPlanSessionRuntime.stop(context.entry());
         AgentObjectiveDefinition active = AgentObjectiveKernel.active(context.entry());
         if (active != null) {
             AgentObjectiveKernel.transition(context.entry(), active.objectiveId(),

@@ -7,7 +7,7 @@ import server.agents.capabilities.movement.AgentWalkOffLanding;
 import server.agents.capabilities.movement.AgentClimbStateRuntime;
 import server.agents.capabilities.movement.AgentMovementPhysicsStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
-import server.agents.capabilities.movement.AgentWallCollisionPolicy;
+import server.agents.physics.AgentWallCollisionPolicy;
 import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;

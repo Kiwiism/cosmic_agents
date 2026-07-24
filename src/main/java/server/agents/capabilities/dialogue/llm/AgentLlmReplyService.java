@@ -11,6 +11,7 @@ import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.runtime.async.AgentAsyncExecutorRegistry;
 import server.agents.runtime.async.AgentAsyncTaskGateway;
 import server.agents.runtime.async.AgentAsyncWorkKind;
+import server.agents.capabilities.dialogue.llm.gateway.AgentReadOnlyLlmGateway;
 
 import java.util.List;
 import java.util.Locale;
@@ -193,7 +194,7 @@ public final class AgentLlmReplyService {
                     AgentLlmConfig.numCtx, AgentLlmConfig.maxPredictTokens, prompt);
         }
 
-        Optional<String> raw = OllamaClient.generate(prompt, system);
+        Optional<String> raw = AgentReadOnlyLlmGateway.generateDialogue(prompt, system);
         long elapsed = System.currentTimeMillis() - t0;
 
         if (raw.isEmpty()) {

@@ -1,5 +1,7 @@
-package server.agents.capabilities.movement;
+package server.agents.physics;
 
+import server.agents.capabilities.movement.AgentGroundingService;
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationWalkRegionLookupService;
 import server.maps.Foothold;

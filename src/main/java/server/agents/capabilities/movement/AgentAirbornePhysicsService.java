@@ -1,5 +1,6 @@
 package server.agents.capabilities.movement;
 
+import server.agents.physics.AgentWallCollisionPolicy;
 import client.Character;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

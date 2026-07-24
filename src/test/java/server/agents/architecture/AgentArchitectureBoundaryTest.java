@@ -77,6 +77,50 @@ class AgentArchitectureBoundaryTest {
     }
 
     @Test
+    void orchestrationAndLlmGatewayDoNotPerformCosmicMutations() throws IOException {
+        List<Path> roots = List.of(
+                AGENTS.resolve("plans"),
+                AGENTS.resolve("policy"),
+                AGENTS.resolve("personality"),
+                AGENTS.resolve("runtime").resolve("decision"),
+                AGENTS.resolve("memory"),
+                AGENTS.resolve("coordination").resolve("session"),
+                AGENTS.resolve("capabilities").resolve("dialogue").resolve("llm")
+                        .resolve("gateway"));
+        List<String> directMutations = List.of(
+                ".setPosition(",
+                ".changeMap(",
+                ".gainItem(",
+                ".setHp(",
+                ".setMp(",
+                ".setJob(",
+                ".setLevel(",
+                ".addItem(",
+                ".removeItem(",
+                ".updateSingleStat(");
+        for (Path root : roots) {
+            if (Files.exists(root)) {
+                assertTreeExcludes(root, directMutations,
+                        "orchestration must issue capability commands instead of mutating Cosmic state");
+            }
+        }
+    }
+
+    @Test
+    void readOnlyLlmGatewayCannotSeeMutableRuntimeTypes() throws IOException {
+        assertTreeExcludes(
+                AGENTS.resolve("capabilities").resolve("dialogue").resolve("llm")
+                        .resolve("gateway"),
+                List.of(
+                        "import client.",
+                        "import server.maps.",
+                        "import server.life.",
+                        "import server.agents.runtime.AgentRuntimeEntry",
+                        "import server.agents.capabilities.runtime.AgentCapabilityRuntime"),
+                "dialogue-only model providers receive immutable text, never mutation handles");
+    }
+
+    @Test
     void highestRiskConcreteCapabilityDependenciesCannotIncrease() throws IOException {
         Map<String, Integer> ceilings = Map.ofEntries(
                 Map.entry("navigation->movement", 74),

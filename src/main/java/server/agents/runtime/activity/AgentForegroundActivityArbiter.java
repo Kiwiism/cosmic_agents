@@ -2,6 +2,9 @@ package server.agents.runtime.activity;
 
 import client.Character;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.decision.AgentDecisionProvenanceState;
+
+import java.util.List;
 
 /**
  * Selects one foreground owner without coupling the scheduler to concrete
@@ -33,11 +36,27 @@ public final class AgentForegroundActivityArbiter {
                         "Foreground activity returned no outcome: " + activity.id());
             }
             if (outcome.ownsForeground()) {
-                state.select(activity.id(), nowMs);
+                if (state.select(activity.id(), nowMs)) {
+                    entry.capabilityStates().require(AgentDecisionProvenanceState.STATE_KEY).record(
+                            nowMs,
+                            "foreground-activity",
+                            activity.id(),
+                            "foreground-arbiter",
+                            "foreground-arbiter-v1",
+                            "highest-priority active owner",
+                            "",
+                            registry.activities().stream()
+                                    .map(AgentForegroundActivity::id).toList());
+                }
                 return outcome.consumedTick();
             }
         }
-        state.clear(nowMs);
+        if (state.clear(nowMs)) {
+            entry.capabilityStates().require(AgentDecisionProvenanceState.STATE_KEY).record(
+                    nowMs, "foreground-activity", "none", "foreground-arbiter",
+                    "foreground-arbiter-v1", "no foreground activity remained active",
+                    "", List.of());
+        }
         return false;
     }
 }

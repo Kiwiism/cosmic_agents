@@ -7,7 +7,7 @@ import server.agents.capabilities.movement.AgentPostLandingJump;
 import server.agents.capabilities.movement.AgentGroundCollisionService;
 import server.agents.capabilities.movement.AgentGroundingService;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
-import server.agents.capabilities.movement.AgentWallCollisionPolicy;
+import server.agents.physics.AgentWallCollisionPolicy;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;

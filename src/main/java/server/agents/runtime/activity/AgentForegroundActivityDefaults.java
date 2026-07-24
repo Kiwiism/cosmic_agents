@@ -17,13 +17,24 @@ import java.util.List;
  */
 public final class AgentForegroundActivityDefaults {
     private static final AgentForegroundActivityArbiter ARBITER =
-            new AgentForegroundActivityArbiter(new AgentForegroundActivityRegistry(List.of(
+            new AgentForegroundActivityArbiter(registry());
+    private static final AgentForegroundActivityCoordinator COORDINATOR =
+            new AgentForegroundActivityCoordinator(registry());
+
+    private static AgentForegroundActivityRegistry registry() {
+        return Holder.REGISTRY;
+    }
+
+    private static final class Holder {
+        private static final AgentForegroundActivityRegistry REGISTRY =
+                new AgentForegroundActivityRegistry(List.of(
                     handoff(),
                     townLife(),
                     universalPlan(),
                     legacyVictoria(),
                     legacyAmherst(),
-                    capability())));
+                    capability()));
+    }
 
     private AgentForegroundActivityDefaults() {
     }
@@ -32,61 +43,79 @@ public final class AgentForegroundActivityDefaults {
         return ARBITER;
     }
 
+    public static AgentForegroundActivityCoordinator coordinator() {
+        return COORDINATOR;
+    }
+
     private static AgentForegroundActivity handoff() {
         return activity("maple-island-lith-handoff", 600,
                 (entry, agent) -> AgentMapleIslandLithHandoffRuntime.active(entry),
                 (entry, agent, nowMs) -> AgentMapleIslandLithHandoffRuntime.tick(
                         entry, agent, nowMs)
                         ? AgentForegroundActivityTick.CONSUMED
-                        : AgentForegroundActivityTick.PASS);
+                        : AgentForegroundActivityTick.PASS,
+                false, ActivityDeactivator.NONE);
     }
 
     private static AgentForegroundActivity townLife() {
         return blockingBooleanActivity("town-life", 500,
                 (entry, agent) -> AgentTownLifeRuntime.active(entry),
-                AgentTownLifeRuntime::tick);
+                AgentTownLifeRuntime::tick,
+                (entry, agent, reason, nowMs) -> AgentTownLifeRuntime.stop(entry, agent));
     }
 
     private static AgentForegroundActivity universalPlan() {
         return blockingBooleanActivity("universal-plan", 400,
                 (entry, agent) -> AgentUniversalPlanRuntime.active(entry),
-                AgentUniversalPlanRuntime::tick);
+                AgentUniversalPlanRuntime::tick,
+                (entry, agent, reason, nowMs) ->
+                        AgentUniversalPlanRuntime.cancel(entry, agent, reason, nowMs));
     }
 
     private static AgentForegroundActivity legacyVictoria() {
-        return blockingBooleanActivity("legacy-victoria-plan", 300,
+        return blockingBooleanActivity("legacy-checkpoint-victoria", 300,
                 (entry, agent) -> AgentVictoriaPlanSessionRuntime.active(entry),
-                AgentVictoriaPlanSessionRuntime::tick);
+                AgentVictoriaPlanSessionRuntime::tick,
+                (entry, agent, reason, nowMs) ->
+                        AgentVictoriaPlanSessionRuntime.stop(entry));
     }
 
     private static AgentForegroundActivity legacyAmherst() {
-        return blockingBooleanActivity("legacy-amherst-plan", 200,
+        return blockingBooleanActivity("legacy-checkpoint-amherst", 200,
                 (entry, agent) -> AgentAmherstPlanRuntime.active(entry),
-                AgentAmherstPlanRuntime::tickGate);
+                AgentAmherstPlanRuntime::tickGate,
+                (entry, agent, reason, nowMs) ->
+                        AgentAmherstPlanRuntime.cancel(entry));
     }
 
     private static AgentForegroundActivity capability() {
         return blockingBooleanActivity("capability", 100,
                 (entry, agent) -> entry.capabilityRuntimeState().hasActiveCapability(),
-                AgentCapabilityRuntime::tick);
+                AgentCapabilityRuntime::tick,
+                (entry, agent, reason, nowMs) ->
+                        AgentCapabilityRuntime.cancelNow(entry, agent, nowMs));
     }
 
     private static AgentForegroundActivity blockingBooleanActivity(
             String id,
             int priority,
             ActivityPredicate predicate,
-            ActivityTick tick) {
+            ActivityTick tick,
+            ActivityDeactivator deactivator) {
         return activity(id, priority, predicate,
                 (entry, agent, nowMs) -> tick.tick(entry, agent, nowMs)
                         ? AgentForegroundActivityTick.CONSUMED
-                        : AgentForegroundActivityTick.IDLE);
+                        : AgentForegroundActivityTick.IDLE,
+                true, deactivator);
     }
 
     private static AgentForegroundActivity activity(
             String id,
             int priority,
             ActivityPredicate predicate,
-            ActivityOutcomeTick tick) {
+            ActivityOutcomeTick tick,
+            boolean exclusive,
+            ActivityDeactivator deactivator) {
         return new AgentForegroundActivity() {
             @Override
             public String id() {
@@ -108,6 +137,20 @@ public final class AgentForegroundActivityDefaults {
                     AgentRuntimeEntry entry, Character agent, long nowMs) {
                 return tick.tick(entry, agent, nowMs);
             }
+
+            @Override
+            public boolean exclusive() {
+                return exclusive;
+            }
+
+            @Override
+            public void deactivate(
+                    AgentRuntimeEntry entry,
+                    Character agent,
+                    String reason,
+                    long nowMs) {
+                deactivator.deactivate(entry, agent, reason, nowMs);
+            }
         };
     }
 
@@ -124,5 +167,13 @@ public final class AgentForegroundActivityDefaults {
     @FunctionalInterface
     private interface ActivityOutcomeTick {
         AgentForegroundActivityTick tick(AgentRuntimeEntry entry, Character agent, long nowMs);
+    }
+
+    @FunctionalInterface
+    private interface ActivityDeactivator {
+        ActivityDeactivator NONE = (entry, agent, reason, nowMs) -> { };
+
+        void deactivate(
+                AgentRuntimeEntry entry, Character agent, String reason, long nowMs);
     }
 }
