@@ -27,6 +27,7 @@ import constants.id.ItemId;
 import constants.inventory.ItemConstants;
 import net.AbstractPacketHandler;
 import net.packet.InPacket;
+import server.agents.observer.AgentObserverRuntime;
 
 public final class FaceExpressionHandler extends AbstractPacketHandler {
     @Override
@@ -47,6 +48,9 @@ public final class FaceExpressionHandler extends AbstractPacketHandler {
             try {   // expecting players never intends to wear the emote 0 (default face, that changes back after 5sec timeout)
                 if (chr.isLoggedinWorld()) {
                     chr.changeFaceExpression(emote);
+                    if (emote == 1) {
+                        AgentObserverRuntime.signalF1(chr, System.currentTimeMillis());
+                    }
                 }
             } finally {
                 c.releaseClient();
