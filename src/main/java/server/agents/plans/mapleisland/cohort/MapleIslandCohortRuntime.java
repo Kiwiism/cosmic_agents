@@ -306,6 +306,7 @@ public final class MapleIslandCohortRuntime {
         // race the reset and give the stale career runtime priority over this plan.
         AgentObjectiveCheckpointRuntime.delete(pooled.characterId());
         AgentCareerProgressionCheckpointRuntime.delete(pooled.characterId());
+        AgentUniversalPlanRuntime.clearCheckpoint(null, pooled.characterId());
 
         MapleMap startMap = AgentMapGatewayRuntime.map().resolveMap(
                 context.world(), context.channel(), AmherstQuestCatalog.START_MAP_ID);
@@ -387,6 +388,7 @@ public final class MapleIslandCohortRuntime {
 
         AgentObjectiveCheckpointRuntime.delete(pooled.characterId());
         AgentCareerProgressionCheckpointRuntime.delete(pooled.characterId());
+        AgentUniversalPlanRuntime.clearCheckpoint(null, pooled.characterId());
         MapleMap lithHarbor = AgentMapGatewayRuntime.map().resolveMap(
                 context.world(), context.channel(), LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID);
         // Build one usable graph before releasing a load-test wave. The exact per-Agent profile

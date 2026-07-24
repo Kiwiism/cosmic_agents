@@ -40,12 +40,9 @@ public final class AgentSouthperryLithTransferStepExecutor implements AgentPlanS
         Character agent = context.agent();
         PrimitiveCapabilityGateway gateway = AgentPrimitiveCapabilityGatewayRuntime.gateway();
         if (agent.getMapId() == AgentLithHarborArrivalRouteRuntime.LITH_HARBOR_MAP_ID) {
-            if (AgentLithHarborArrivalRouteRuntime.travelToTown(context.entry(), agent, gateway)) {
-                return AgentPlanStepExecution.active(true);
-            }
             gateway.stop(context.entry());
             return AgentPlanStepExecution.terminal(AgentPlanExecutionStatus.SUCCEEDED,
-                    "arrived on the connected Lith Harbor town side");
+                    "arrived on the Lith Harbor ship");
         }
         if (agent.getMapId() != MapleIslandSouthperryQuestCatalog.FINAL_MAP_ID) {
             return AgentPlanStepExecution.terminal(AgentPlanExecutionStatus.BLOCKED,
@@ -66,7 +63,7 @@ public final class AgentSouthperryLithTransferStepExecutor implements AgentPlanS
                 || agent.getPosition().distanceSq(shanks)
                 > INTERACTION_DISTANCE_PX * INTERACTION_DISTANCE_PX) {
             gateway.navigate(context.entry(), shanks, true);
-            return AgentPlanStepExecution.active(true);
+            return AgentPlanStepExecution.active(false);
         }
         gateway.stop(context.entry());
         gateway.facePosition(agent, shanks);

@@ -39,6 +39,21 @@ class AgentTownLifeControllerRuntimeTest {
     }
 
     @Test
+    void initialRoamUsesReachablePlatformCatalogInsteadOfAuthoredVenue() {
+        Character agent = agent(84);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        AgentTownLifeState state = entry.capabilityStates().require(AgentTownLifeState.STATE_KEY);
+        state.start(0L, agent.getId(), LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID);
+        state.transition(AgentTownLifeState.Stage.CHOOSE_ACTIVITY, 0L);
+
+        AgentTownLifeDecision decision =
+                AgentTownLifeControllerRuntime.choose(entry, agent, state, 5_000L);
+
+        assertEquals(AgentTownLifeState.Activity.ROAM, decision.activity());
+        assertTrue(decision.venueId().isBlank());
+    }
+
+    @Test
     void decisionModeExposesImmutableContextAndAcceptsAValidatedVenueDirective() {
         Character agent = agent(82);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
@@ -59,7 +74,7 @@ class AgentTownLifeControllerRuntimeTest {
         assertEquals("central-benches", decision.venueId());
         assertEquals("external:test-controller", decision.source());
         assertEquals("decision-1", decision.correlationId());
-        assertEquals(9, seen.get().venues().size());
+        assertEquals(10, seen.get().venues().size());
         assertEquals(AgentTownLifeDecisionContext.PersonalityView.neutral(), seen.get().personality());
         assertTrue(seen.get().venues().stream().noneMatch(venue -> venue.currentOccupancy() < 0));
     }

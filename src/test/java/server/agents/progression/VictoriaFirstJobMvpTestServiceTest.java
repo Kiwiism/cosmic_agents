@@ -56,7 +56,7 @@ class VictoriaFirstJobMvpTestServiceTest {
     }
 
     @Test
-    void distributesStartsAcrossNavigableShipPlatforms() {
+    void distributesStartsAcrossTheUpperShipArrivalDeck() {
         MapleMap map = mock(MapleMap.class);
         when(map.getPointBelow(any(Point.class))).thenAnswer(invocation -> {
             Point point = invocation.getArgument(0);
@@ -68,12 +68,15 @@ class VictoriaFirstJobMvpTestServiceTest {
         Point thirdShipStart = VictoriaFirstJobMvpTestService.lithHarborArrivalPosition(map, 802);
         Point fourthShipStart = VictoriaFirstJobMvpTestService.lithHarborArrivalPosition(map, 803);
 
-        assertEquals(new Point(2_800, -223), startOfMainDeck);
+        assertEquals(new Point(4_050, -223), startOfMainDeck);
         assertNotEquals(startOfMainDeck, anotherShipStart);
         assertNotEquals(anotherShipStart, thirdShipStart);
         assertNotEquals(thirdShipStart, fourthShipStart);
-        assertTrue(thirdShipStart.x >= 2_800);
-        assertTrue(fourthShipStart.x >= 2_800);
+        for (Point start : java.util.List.of(
+                startOfMainDeck, anotherShipStart, thirdShipStart, fourthShipStart)) {
+            assertTrue(start.x >= 4_050 && start.x <= 4_325);
+            assertEquals(-223, start.y);
+        }
     }
 
     @Test

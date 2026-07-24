@@ -224,11 +224,13 @@ public final class AgentFirstJobJourneyRuntime {
         if (AgentVictoriaRouteRuntime.travel(entry, agent, handoff.lithHarborMapId(), gateway)) {
             return true;
         }
-        if (AgentLithHarborArrivalRouteRuntime.travelToTown(entry, agent, gateway)) {
-            return true;
+        AgentLithHarborArrivalRouteRuntime.TravelProgress arrival =
+                AgentLithHarborArrivalRouteRuntime.advanceToTown(entry, agent, gateway);
+        if (arrival != AgentLithHarborArrivalRouteRuntime.TravelProgress.ARRIVED) {
+            return arrival == AgentLithHarborArrivalRouteRuntime.TravelProgress.ACTION_CONSUMED;
         }
-        interactQuestAtNpc(entry, agent, handoff.olafNpcId(), handoff.biggsQuestId(), true, gateway);
-        return true;
+        return interactQuestAtNpc(
+                entry, agent, handoff.olafNpcId(), handoff.biggsQuestId(), true, gateway);
     }
 
     private static boolean completeOlafLesson(AgentRuntimeEntry entry,
@@ -258,9 +260,8 @@ public final class AgentFirstJobJourneyRuntime {
         if (AgentVictoriaRouteRuntime.travel(entry, agent, handoff.lithHarborMapId(), gateway)) {
             return true;
         }
-        interactQuestAtNpc(entry, agent, handoff.olafNpcId(), career(bundle).olafPathQuestId(),
-                false, gateway);
-        return true;
+        return interactQuestAtNpc(entry, agent, handoff.olafNpcId(),
+                career(bundle).olafPathQuestId(), false, gateway);
     }
 
     private static boolean travelToPreJobGrind(AgentRuntimeEntry entry,
@@ -440,7 +441,7 @@ public final class AgentFirstJobJourneyRuntime {
         if (!gateway.grounded(agent)
                 || agent.getPosition().distanceSq(npc) > INTERACTION_DISTANCE_PX * INTERACTION_DISTANCE_PX) {
             gateway.navigate(entry, npc, true);
-            return true;
+            return false;
         }
         gateway.facePosition(agent, npc);
         interaction.run();

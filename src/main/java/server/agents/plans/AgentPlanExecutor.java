@@ -152,6 +152,9 @@ public final class AgentPlanExecutor implements AgentPlanRunner {
             if (!session.stepStartedValue()) {
                 session.stepStarted(nowMs);
                 result = executor.start(context);
+                if (result.status() == AgentPlanExecutionStatus.ACTIVE) {
+                    markCurrentStepAttached(entry, session);
+                }
             } else {
                 result = executor.tick(context);
             }
@@ -166,7 +169,11 @@ public final class AgentPlanExecutor implements AgentPlanRunner {
             } else if (result.status() != AgentPlanExecutionStatus.ACTIVE) {
                 terminal(entry, session, plan, result.status(), result.reason(), nowMs);
             }
-            return result.consumed() || session.active();
+            // ACTIVE describes the durable plan lifecycle, not ownership of the
+            // remainder of this Agent tick. Objective steps deliberately yield
+            // with consumed=false after handing work to the shared capability
+            // runtime (navigation, NPC interaction, combat, etc.).
+            return result.consumed();
         } catch (Exception failure) {
             log.warn("Agent plan step failed agent={} plan={} step={}",
                     agent.getName(), plan.planId(), step.stepId(), failure);
@@ -237,7 +244,7 @@ public final class AgentPlanExecutor implements AgentPlanRunner {
             AgentPlanStepExecution result = stepExecutors.require(step.operation()).reattach(
                     context(entry, agent, session, plan, step, nowMs));
             if (result.status() == AgentPlanExecutionStatus.ACTIVE) {
-                // The capability-specific runner is attached to the restored universal cursor.
+                markCurrentStepAttached(entry, session);
             } else if (result.status() == AgentPlanExecutionStatus.SUCCEEDED) {
                 session.stepSucceeded();
             } else {
@@ -363,5 +370,14 @@ public final class AgentPlanExecutor implements AgentPlanRunner {
 
     private static String chainId(Character agent, long nowMs) {
         return "chain:" + agent.getId() + ':' + nowMs;
+    }
+
+    private static void markCurrentStepAttached(
+            AgentRuntimeEntry entry, AgentPlanSessionState session) {
+        String attachmentKey = AgentPlanAttachmentKey.current(session);
+        if (!attachmentKey.isBlank()) {
+            entry.capabilityStates().require(AgentPlanAttachmentState.STATE_KEY)
+                    .attached(attachmentKey);
+        }
     }
 }

@@ -3,7 +3,10 @@ package server.agents.capabilities.behavior;
 import client.Character;
 import config.YamlConfig;
 import server.agents.behavior.AgentBehaviorRuntime;
+import server.agents.integration.cosmic.CosmicAgentPerceptionSnapshotFactory;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.perception.AgentPerceptionSnapshot;
+import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
 
@@ -12,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import server.maps.MapleMap;
 
 /** Stateless fairness scheduler: personality affects rank, a rotating epoch prevents permanent idling. */
@@ -39,14 +43,37 @@ public final class AgentMapActivityPolicy {
                 .filter(peer -> {
                     Character bot = AgentRuntimeIdentityRuntime.bot(peer);
                     return bot != null && bot.getMap() == map && bot.getHp() > 0
-                            && AgentBehaviorRuntime.enabled(peer);
+                            && AgentBehaviorRuntime.enabled(peer)
+                            && AgentModeStateRuntime.grinding(peer);
                 })
                 .sorted(Comparator.comparingInt(peer -> -priority(peer, nowMs)))
                 .toList();
         int minimum = Math.max(1, config.AgentYamlConfig.config.agent.AGENT_MAP_CROWD_MIN_AGENTS);
         if (peers.size() < minimum) return new DecisionWindow(nowMs, Set.of());
-        int activeSlots = Math.max(1, (int) Math.ceil(peers.size()
+        Character sample = AgentRuntimeIdentityRuntime.bot(peers.getFirst());
+        AgentPerceptionSnapshot perception =
+                CosmicAgentPerceptionSnapshotFactory.capture(sample, nowMs);
+        Set<Integer> aliveMobIds = perception.mobs().stream()
+                .filter(mob -> mob.alive() && mob.hp() > 0)
+                .map(mob -> mob.objectId())
+                .collect(Collectors.toUnmodifiableSet());
+        Set<Integer> claimedMobIds = perception.agentPeers().stream()
+                .filter(peer -> peer.grinding() && aliveMobIds.contains(peer.targetObjectId()))
+                .map(peer -> peer.targetObjectId())
+                .collect(Collectors.toUnmodifiableSet());
+        int untargetedAgents = (int) perception.agentPeers().stream()
+                .filter(peer -> peer.grinding() && peer.targetObjectId() < 0)
+                .count();
+        int unclaimedMobs = Math.max(0, aliveMobIds.size() - claimedMobIds.size());
+        if (!shouldAllocateRest(
+                peers.size(), aliveMobIds.size(), claimedMobIds.size(),
+                untargetedAgents, unclaimedMobs)) {
+            return new DecisionWindow(nowMs, Set.of());
+        }
+        int percentageSlots = Math.max(1, (int) Math.ceil(peers.size()
                 * Math.max(1, Math.min(100, config.AgentYamlConfig.config.agent.AGENT_MAP_MAX_ACTIVE_COMBAT_PERCENT)) / 100.0));
+        int activeSlots = Math.min(
+                percentageSlots, Math.max(1, aliveMobIds.size()));
         Set<Integer> resting = peers.stream().skip(activeSlots)
                 .filter(peer -> AgentBehaviorRuntime.calibration(peer)
                         .stablePercent("crowd-eligible", nowMs / ROTATION_MS)
@@ -56,6 +83,21 @@ public final class AgentMapActivityPolicy {
                 .map(Character::getId)
                 .collect(java.util.stream.Collectors.toUnmodifiableSet());
         return new DecisionWindow(nowMs, resting);
+    }
+
+    static boolean shouldAllocateRest(
+            int agentCount,
+            int aliveMobCount,
+            int claimedMobCount,
+            int untargetedAgentCount,
+            int unclaimedMobCount) {
+        if (agentCount <= 1 || agentCount <= aliveMobCount) {
+            return false;
+        }
+        if (aliveMobCount > 0 && claimedMobCount <= 0) {
+            return false;
+        }
+        return unclaimedMobCount < Math.max(0, untargetedAgentCount);
     }
 
     private static int priority(AgentRuntimeEntry entry, long nowMs) {

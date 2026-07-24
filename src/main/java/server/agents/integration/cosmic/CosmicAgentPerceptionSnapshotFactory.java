@@ -3,6 +3,7 @@ package server.agents.integration.cosmic;
 import client.Character;
 import server.agents.model.AgentPosition;
 import server.agents.perception.AgentDropPerception;
+import server.agents.perception.AgentCharacterPerception;
 import server.agents.perception.AgentMapPerception;
 import server.agents.perception.AgentMobPerception;
 import server.agents.perception.AgentPerceptionSnapshot;
@@ -47,15 +48,20 @@ public final class CosmicAgentPerceptionSnapshotFactory {
         List<AgentDropPerception> drops = AgentMapPerception.items(map).stream()
                 .map(CosmicAgentPerceptionSnapshotFactory::drop)
                 .toList();
-        int realPlayers = (int) map.getCharacters().stream()
-                .filter(character -> !AgentCharacterGatewayRuntime.characters().isAgentCharacter(character))
+        List<AgentCharacterPerception> characters = map.getCharacters().stream()
+                .filter(character -> character.getPosition() != null && character.getId() > 0)
+                .map(character -> character(character,
+                        AgentCharacterGatewayRuntime.characters().isAgentCharacter(character)))
+                .toList();
+        int realPlayers = (int) characters.stream()
+                .filter(character -> !character.agent())
                 .count();
         List<AgentPeerPerception> peers = AgentRuntimeRegistry.activeEntriesSnapshot().stream()
                 .map(entry -> peer(entry, map))
                 .filter(java.util.Objects::nonNull)
                 .toList();
         AgentPerceptionSnapshot captured = new AgentPerceptionSnapshot(map.getId(), nowMs, mobs, drops,
-                realPlayers, peers);
+                realPlayers, peers, characters);
         CACHE.put(map, captured);
         return captured;
     }
@@ -79,5 +85,11 @@ public final class CosmicAgentPerceptionSnapshotFactory {
         Point position = drop.getPosition();
         return new AgentDropPerception(drop.getObjectId(), drop.getItemId(), drop.getMeso(),
                 drop.getOwnerId(), new AgentPosition(position.x, position.y));
+    }
+
+    private static AgentCharacterPerception character(Character character, boolean agent) {
+        Point position = character.getPosition();
+        return new AgentCharacterPerception(character.getId(),
+                new AgentPosition(position.x, position.y), agent);
     }
 }

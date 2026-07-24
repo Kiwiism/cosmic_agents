@@ -1,11 +1,14 @@
 package server.agents.plans;
 
+import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
+import server.agents.capabilities.shop.AgentShopStateRuntime;
 import server.agents.objectives.AgentObjectiveDefinition;
 import server.agents.objectives.AgentObjectiveKernel;
 import server.agents.objectives.AgentObjectiveStatus;
 import server.agents.progression.AgentCareerProgressionState;
 import server.agents.progression.AgentFirstJobJourneyRuntime;
 import server.agents.progression.AgentVictoriaPlanSessionRuntime;
+import server.agents.runtime.AgentModeStateRuntime;
 
 import java.util.List;
 
@@ -68,6 +71,11 @@ public final class AgentFirstJobPlanStepExecutor implements AgentPlanStepExecuto
             AgentVictoriaPlanSessionRuntime.stop(context.entry());
             return AgentPlanStepExecution.terminal(AgentPlanExecutionStatus.BLOCKED,
                     career.blockReason());
+        }
+        if (AgentMoveTargetStateRuntime.hasMoveTarget(context.entry())
+                || AgentModeStateRuntime.grinding(context.entry())
+                || AgentShopStateRuntime.shopVisitPending(context.entry())) {
+            consumed = false;
         }
         return AgentPlanStepExecution.active(consumed);
     }

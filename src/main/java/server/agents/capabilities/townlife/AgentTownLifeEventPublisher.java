@@ -9,6 +9,20 @@ final class AgentTownLifeEventPublisher {
     private AgentTownLifeEventPublisher() {
     }
 
+    static void arrival(AgentRuntimeEntry entry,
+                        Character agent,
+                        AgentTownLifeState state,
+                        long nowMs) {
+        if (entry == null || agent == null || state == null) {
+            return;
+        }
+        AgentTownLifeProfile profile = AgentTownLifeProfileRepository.defaultRepository()
+                .require(state.townMapId());
+        AgentSessionEventRuntime.bus(entry).publish(new AgentTownLifeArrivalEvent(
+                agent.getId(), nowMs, state.townMapId(), profile.profileId(),
+                state.visitPurpose(), state.visitReason()), AgentEventPriority.AMBIENT);
+    }
+
     static void activity(AgentRuntimeEntry entry,
                          Character agent,
                          AgentTownLifeState state,

@@ -74,6 +74,16 @@ final class AgentTownLifeSpotSampler {
         return weighted.stream().map(WeightedSpace::space).toList();
     }
 
+    static boolean graphAvailable(AgentRuntimeEntry entry, Character agent) {
+        MapleMap map = agent == null ? null : agent.getMap();
+        if (map == null) {
+            return false;
+        }
+        AgentMovementProfile movementProfile =
+                AgentMovementStateRuntime.movementProfileOrCharacter(entry, agent);
+        return AgentNavigationGraphService.peekBestGraph(map, movementProfile) != null;
+    }
+
     static List<CharacterSpace> orderAuthoredSpaces(Character agent,
                                                      AgentTownLifeState state,
                                                      List<CharacterSpace> spaces,

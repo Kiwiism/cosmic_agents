@@ -41,6 +41,13 @@ public final class AgentJumpProbeService {
         return simulateLanding(map, from, 0f, stepX, 0L);
     }
 
+    public static AgentJumpLanding simulateFallLanding(MapleMap map,
+                                                       Point from,
+                                                       int stepX,
+                                                       int moverZMass) {
+        return simulateLanding(map, from, 0f, stepX, 0L, moverZMass);
+    }
+
     public static AgentJumpLanding simulateDownJumpLanding(MapleMap map, Point from) {
         if (!AgentGroundCollisionService.canStartDownJump(map, from)) {
             return null;
@@ -61,6 +68,15 @@ public final class AgentJumpProbeService {
                                                                    Point from,
                                                                    int desiredDir,
                                                                    AgentMovementProfile profile) {
+        return walkOffLandingVariants(
+                map, from, desiredDir, profile, AgentWallCollisionPolicy.moverZMassAt(map, from));
+    }
+
+    public static List<AgentWalkOffLanding> walkOffLandingVariants(MapleMap map,
+                                                                   Point from,
+                                                                   int desiredDir,
+                                                                   AgentMovementProfile profile,
+                                                                   int moverZMass) {
         List<AgentWalkOffLanding> outcomes = new java.util.ArrayList<>();
         double terminalHSpeed = AgentMovementKinematicsService.maxHorizontalSpeedPerClientStep(profile) * desiredDir;
         double[] physicsXPhases = {0.0, -0.4, 0.4};
@@ -70,7 +86,8 @@ public final class AgentJumpProbeService {
             for (double carryMs : carryPhases) {
                 for (double horizontalSpeed : launchSpeeds) {
                     outcomes.add(simulateWalkOffLanding(map, from, desiredDir,
-                            new AgentGroundTravelState(from.x + phase, horizontalSpeed, carryMs), profile));
+                            new AgentGroundTravelState(from.x + phase, horizontalSpeed, carryMs),
+                            profile, moverZMass));
                 }
             }
         }
@@ -82,6 +99,17 @@ public final class AgentJumpProbeService {
                                                              int desiredDir,
                                                              AgentGroundTravelState initialState,
                                                              AgentMovementProfile profile) {
+        return simulateWalkOffLanding(
+                map, from, desiredDir, initialState, profile,
+                AgentWallCollisionPolicy.moverZMassAt(map, from));
+    }
+
+    public static AgentWalkOffLanding simulateWalkOffLanding(MapleMap map,
+                                                             Point from,
+                                                             int desiredDir,
+                                                             AgentGroundTravelState initialState,
+                                                             AgentMovementProfile profile,
+                                                             int moverZMass) {
         if (map == null || from == null || desiredDir == 0 || initialState == null) {
             return null;
         }
@@ -105,7 +133,8 @@ public final class AgentJumpProbeService {
                 if (step.stepX() == 0) {
                     return null;
                 }
-                AgentJumpLanding landing = simulateFallLanding(map, step.point(), step.stepX());
+                AgentJumpLanding landing = simulateFallLanding(
+                        map, step.point(), step.stepX(), moverZMass);
                 if (landing == null) {
                     return null;
                 }
@@ -336,6 +365,15 @@ public final class AgentJumpProbeService {
                                                     float initialVelocityY,
                                                     int stepX,
                                                     long landingGraceMs) {
+        return simulateLanding(map, from, initialVelocityY, stepX, landingGraceMs, null);
+    }
+
+    private static AgentJumpLanding simulateLanding(MapleMap map,
+                                                    Point from,
+                                                    float initialVelocityY,
+                                                    int stepX,
+                                                    long landingGraceMs,
+                                                    Integer moverZMass) {
         float velocityY = initialVelocityY;
         double physicsX = from.x;
         double physicsY = from.y;
@@ -363,7 +401,9 @@ public final class AgentJumpProbeService {
             int intY = (int) Math.round(physicsY);
             Point previousPoint = new Point((int) Math.round(physicsX - stepX), previousIntY);
             Point nextPoint = new Point(x, intY);
-            AirCollision collision = resolveAirCollision(map, previousPoint, nextPoint);
+            AirCollision collision = moverZMass == null
+                    ? resolveAirCollision(map, previousPoint, nextPoint)
+                    : resolveAirCollision(map, previousPoint, nextPoint, moverZMass);
             if (collision.type() == AirCollisionType.WALL) {
                 physicsX = collision.point().x;
                 physicsY = collision.point().y;

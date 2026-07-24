@@ -10,6 +10,7 @@ import java.awt.Point;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -17,6 +18,38 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class AgentFirstJobJourneyRuntimeTest {
+    @Test
+    void yieldsToMovementWhileDescendingFromTheLithHarborShip() {
+        Character agent = beginner("ShipArrival", 9, 104000000);
+        when(agent.getPosition()).thenReturn(new Point(3_200, -223));
+        AgentRuntimeEntry entry = entry(agent, "warrior-standard-v1",
+                AgentCareerProgressionState.Stage.COMPLETE_BIGGS_AT_OLAF);
+        PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
+        when(gateway.grounded(agent)).thenReturn(true);
+
+        assertFalse(AgentFirstJobJourneyRuntime.tick(entry, agent, 100L, gateway));
+
+        verify(gateway).navigate(org.mockito.ArgumentMatchers.eq(entry),
+                org.mockito.ArgumentMatchers.any(Point.class),
+                org.mockito.ArgumentMatchers.eq(true));
+    }
+
+    @Test
+    void yieldsToMovementWhenOlafIsNotYetInInteractionRange() {
+        Character agent = beginner("WalkToOlaf", 9, 104000000);
+        when(agent.getPosition()).thenReturn(new Point(0, 0));
+        AgentRuntimeEntry entry = entry(agent, "warrior-standard-v1",
+                AgentCareerProgressionState.Stage.COMPLETE_BIGGS_AT_OLAF);
+        PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
+        Point olaf = new Point(1_000, 0);
+        when(gateway.grounded(agent)).thenReturn(true);
+        when(gateway.npcPosition(agent, 1002101)).thenReturn(olaf);
+
+        assertFalse(AgentFirstJobJourneyRuntime.tick(entry, agent, 100L, gateway));
+
+        verify(gateway).navigate(entry, olaf, true);
+    }
+
     @Test
     void completesSeededBiggsQuestAtOlafBeforeAnyTaxiTravel() {
         Character agent = beginner("BiggsReady", 9, 104000000);

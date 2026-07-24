@@ -67,9 +67,29 @@ public final class AgentUniversalPlanRuntime {
                 .map(AgentPlanSessionState::availableSuccessorPlanIds).orElse(List.of());
     }
 
+    public static boolean deferSuccessor(AgentRuntimeEntry entry, String planId) {
+        if (entry == null || planId == null || planId.isBlank()) {
+            return false;
+        }
+        AgentPlanRepository.defaultRepository().require(planId);
+        entry.capabilityStates().require(AgentPlanSessionState.STATE_KEY).deferSuccessor(planId);
+        return true;
+    }
+
+    public static void clearDeferredSuccessor(
+            AgentRuntimeEntry entry, String planId, long nowMs) {
+        if (entry == null) {
+            return;
+        }
+        entry.capabilityStates().require(AgentPlanSessionState.STATE_KEY)
+                .clearDeferredSuccessor(planId);
+        AgentPlanCheckpointRuntime.persistIfDirty(entry, nowMs);
+    }
+
     public static void clearCheckpoint(AgentRuntimeEntry entry, int characterId) throws IOException {
         if (entry != null) {
             entry.capabilityStates().remove(AgentPlanSessionState.STATE_KEY);
+            entry.capabilityStates().remove(AgentPlanAttachmentState.STATE_KEY);
         }
         if (characterId > 0) {
             AgentPlanCheckpointRuntime.delete(characterId);

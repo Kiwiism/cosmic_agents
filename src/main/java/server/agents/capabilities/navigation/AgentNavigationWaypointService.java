@@ -7,6 +7,7 @@ import server.agents.capabilities.movement.AgentWalkOffLanding;
 import server.agents.capabilities.movement.AgentClimbStateRuntime;
 import server.agents.capabilities.movement.AgentMovementPhysicsStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
+import server.agents.capabilities.movement.AgentWallCollisionPolicy;
 import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -99,7 +100,9 @@ public final class AgentNavigationWaypointService {
         AgentWalkOffLanding liveOutcome = AgentJumpProbeService.simulateWalkOffLanding(
                 AgentRuntimeIdentityRuntime.botMap(entry), botPos, Integer.signum(edge.launchStepX),
                 AgentMovementPhysicsStateRuntime.groundTravelState(entry),
-                AgentMovementStateRuntime.movementProfile(entry));
+                AgentMovementStateRuntime.movementProfile(entry),
+                AgentWallCollisionPolicy.moverZMassForRegion(
+                        AgentRuntimeIdentityRuntime.botMap(entry), edge.fromRegionId));
         if (matchesDirectionalDrop(edge, graph, liveOutcome)) {
             // Like rope top step-offs, once the continuous-control exit is naturally executable
             // we stop targeting an intermediate anchor and just keep feeding the authored

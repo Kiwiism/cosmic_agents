@@ -3,6 +3,7 @@ package server.agents.plans;
 import client.Character;
 import server.agents.capabilities.townlife.AgentTownLifeRuntime;
 import server.agents.plans.amherst.AgentAmherstPlanRuntime;
+import server.agents.plans.mapleisland.AgentMapleIslandLithHandoffRuntime;
 import server.agents.progression.AgentVictoriaPlanSessionRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -15,6 +16,9 @@ public final class AgentForegroundPlanRuntime {
     }
 
     public static boolean tick(AgentRuntimeEntry entry, Character agent, long wallNowMs) {
+        if (AgentMapleIslandLithHandoffRuntime.tick(entry, agent, wallNowMs)) {
+            return true;
+        }
         if (AgentTownLifeRuntime.active(entry)) {
             return AgentTownLifeRuntime.tick(entry, agent, wallNowMs);
         }

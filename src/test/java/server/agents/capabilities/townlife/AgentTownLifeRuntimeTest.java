@@ -85,12 +85,38 @@ class AgentTownLifeRuntimeTest {
         assertTrue(AgentTownLifeRuntime.tick(entry, agent, state.nextActionAtMs(), gateway));
 
         verify(gateway).runNpcScript(agent, MapleIslandSouthperryQuestCatalog.SHANKS_NPC_ID);
+        assertEquals(AgentTownLifeState.Stage.TRAVEL_TO_TOWN, state.stage());
+
+        assertTrue(AgentTownLifeRuntime.tick(entry, agent, state.nextActionAtMs(), gateway));
+
         assertEquals(AgentTownLifeState.Stage.COMPLETE_ARRIVAL, state.stage());
 
         assertTrue(AgentTownLifeRuntime.tick(entry, agent, state.nextActionAtMs(), gateway));
 
         assertEquals(AgentTownLifeState.Stage.SETTLING, state.stage());
         assertTrue(state.nextActionAtMs() > 1L);
+    }
+
+    @Test
+    void holdsOnTheArrivalShipUntilThePerAgentResponseDelayExpires() {
+        Character agent = mock(Character.class);
+        when(agent.getId()).thenReturn(19);
+        when(agent.getMapId()).thenReturn(LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID);
+        when(agent.getPosition()).thenReturn(new Point(4_188, -223));
+        when(agent.getChair()).thenReturn(-1);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, agent, null);
+        AgentTownLifeState state = entry.capabilityStates().require(AgentTownLifeState.STATE_KEY);
+        state.start(1_000L, agent.getId(), LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID);
+        PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
+
+        assertTrue(AgentTownLifeRuntime.tick(entry, agent, 1_000L, gateway));
+
+        assertEquals(AgentTownLifeState.Stage.TRAVEL_TO_TOWN, state.stage());
+        verify(gateway).stop(entry);
+        verify(gateway, never()).navigate(
+                org.mockito.ArgumentMatchers.eq(entry),
+                org.mockito.ArgumentMatchers.any(Point.class),
+                org.mockito.ArgumentMatchers.anyBoolean());
     }
 
     @Test

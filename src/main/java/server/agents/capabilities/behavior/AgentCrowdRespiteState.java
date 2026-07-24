@@ -15,6 +15,7 @@ public final class AgentCrowdRespiteState {
     private Point safeSpot;
     private boolean chairPreferred;
     private boolean settledEventSent;
+    private long nextEligibleAtMs;
 
     public synchronized void start(long nowMs, long resumeAtMs, Point safeSpot, boolean chairPreferred) {
         active = true;
@@ -32,9 +33,21 @@ public final class AgentCrowdRespiteState {
         safeSpot = null;
         chairPreferred = false;
         settledEventSent = false;
+        nextEligibleAtMs = 0L;
+    }
+
+    public synchronized void finish(long nextEligibleAtMs) {
+        active = false;
+        startedAtMs = 0L;
+        resumeAtMs = 0L;
+        safeSpot = null;
+        chairPreferred = false;
+        settledEventSent = false;
+        this.nextEligibleAtMs = Math.max(0L, nextEligibleAtMs);
     }
 
     public synchronized boolean active() { return active; }
+    public synchronized boolean eligible(long nowMs) { return nowMs >= nextEligibleAtMs; }
     public synchronized long resumeAtMs() { return resumeAtMs; }
     public synchronized Point safeSpot() { return safeSpot == null ? null : new Point(safeSpot); }
     public synchronized boolean chairPreferred() { return chairPreferred; }

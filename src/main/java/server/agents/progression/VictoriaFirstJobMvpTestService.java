@@ -151,8 +151,7 @@ public final class VictoriaFirstJobMvpTestService {
         var clients = AgentClientGatewayRuntime.clients();
         var map = maps.resolveMap(
                 clients.world(agent), clients.channel(agent), LITH_HARBOR_MAP_ID);
-        Point spawn = lithHarborArrivalPosition(map,
-                31 * agent.getId() + Long.hashCode(nowMs));
+        Point spawn = lithHarborArrivalPosition(map, agent.getName().hashCode());
         if (agent.getMapId() != LITH_HARBOR_MAP_ID) {
             maps.changeMap(agent, map, spawn);
         } else {

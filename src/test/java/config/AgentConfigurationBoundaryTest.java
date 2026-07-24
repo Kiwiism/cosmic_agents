@@ -69,7 +69,7 @@ class AgentConfigurationBoundaryTest {
     }
 
     @Test
-    void everyAgentConfigurationValueHasLaymanAndTechnicalDocumentation() throws Exception {
+    void everyAgentConfigurationValueHasPurposeTechnicalAndValueGuidance() throws Exception {
         var lines = Files.readAllLines(Path.of(AgentYamlConfig.CONFIG_FILE_NAME));
         int documentedValues = 0;
         for (int index = 0; index < lines.size(); index++) {
@@ -81,9 +81,12 @@ class AgentConfigurationBoundaryTest {
             }
 
             documentedValues++;
-            assertTrue(index >= 2, () -> "missing configuration documentation before " + trimmed);
+            assertTrue(index >= 3, () -> "missing configuration documentation before " + trimmed);
+            String values = lines.get(index - 3).trim();
             String purpose = lines.get(index - 2).trim();
             String technical = lines.get(index - 1).trim();
+            assertTrue(values.startsWith("# Values: ") && values.contains("Recommended: "),
+                    () -> "missing possible values or recommended range before " + trimmed);
             assertTrue(purpose.startsWith("# Purpose: ") && purpose.length() >= 60,
                     () -> "missing useful purpose description before " + trimmed);
             assertTrue(technical.startsWith("# Technical: ") && technical.length() >= 100,

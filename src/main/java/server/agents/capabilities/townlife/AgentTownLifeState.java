@@ -73,6 +73,7 @@ public final class AgentTownLifeState {
     private District homeDistrict = District.ANY;
     private PlatformKind platformPreference = PlatformKind.ANY;
     private boolean initialPlacementComplete;
+    private boolean arrivalIntentionPublished;
     private long roleUntilMs;
     private String destinationKey;
     private String venueId = "";
@@ -115,6 +116,7 @@ public final class AgentTownLifeState {
         platformPreference = AgentTownLifeDistributionPolicy.platformPreference(
                 initialSequence, profile.distribution());
         initialPlacementComplete = false;
+        arrivalIntentionPublished = false;
         roleUntilMs = 0L;
         destinationKey = null;
         venueId = "";
@@ -236,6 +238,14 @@ public final class AgentTownLifeState {
 
     public synchronized void markInitialPlacementComplete() {
         initialPlacementComplete = true;
+    }
+
+    public synchronized boolean markArrivalIntentionPublished() {
+        if (arrivalIntentionPublished) {
+            return false;
+        }
+        arrivalIntentionPublished = true;
+        return true;
     }
 
     public synchronized String destinationKey() {

@@ -3,6 +3,8 @@ package server.agents.capabilities.dialogue;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.townlife.AgentTownLifeEncounterEvent;
 import server.agents.capabilities.townlife.AgentTownLifeEncounterState;
+import server.agents.capabilities.townlife.AgentTownLifeArrivalEvent;
+import server.agents.capabilities.townlife.AgentTownLifeVisitRequest;
 import server.agents.events.AgentEvent;
 import server.agents.events.BoundedAgentEventBus;
 
@@ -13,6 +15,25 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class AgentTownLifeDialogueReactionServiceTest {
+    @Test
+    void arrivalProducesOneObserverGatedTownIntention() {
+        BoundedAgentEventBus bus = new BoundedAgentEventBus();
+        AgentTownLifeDialogueReactionService listener = new AgentTownLifeDialogueReactionService(bus);
+        List<AgentEvent> intents = new ArrayList<>();
+        bus.subscribe(AgentDialogueIntentEvent.TYPE, intents::add);
+
+        listener.onAgentEvent(new AgentTownLifeArrivalEvent(
+                11, 1_000L, 104000000, "lith-harbor",
+                AgentTownLifeVisitRequest.Purpose.LEISURE, "Shanks transfer"));
+        bus.drain(10);
+
+        assertEquals(1, intents.size());
+        AgentDialogueIntentEvent intent = (AgentDialogueIntentEvent) intents.getFirst();
+        assertEquals(AgentTownLifeDialogueReactionService.ARRIVAL_INTENT, intent.intentKey());
+        assertEquals(AgentDialogueAudience.NEARBY_REAL_PLAYER, intent.audience());
+        assertEquals("townlife-arrival", intent.dedupeKey());
+    }
+
     @Test
     void onlyAStableSubsetOfInitiatorsProduceObserverGatedDialogueIntents() {
         BoundedAgentEventBus bus = new BoundedAgentEventBus();

@@ -18,6 +18,7 @@ public record AgentPlanCheckpoint(
         Map<String, Object> inputs,
         String pendingSuccessorPlanId,
         List<String> availableSuccessorPlanIds,
+        String deferredSuccessorPlanId,
         long nextActionAtMs,
         String reason,
         long stateRevision,
@@ -39,6 +40,8 @@ public record AgentPlanCheckpoint(
                 pendingSuccessorPlanId == null ? "" : pendingSuccessorPlanId.trim();
         availableSuccessorPlanIds =
                 availableSuccessorPlanIds == null ? List.of() : List.copyOf(availableSuccessorPlanIds);
+        deferredSuccessorPlanId =
+                deferredSuccessorPlanId == null ? "" : deferredSuccessorPlanId.trim();
         reason = reason == null ? "" : reason;
     }
 }

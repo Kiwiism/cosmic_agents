@@ -25,12 +25,52 @@
 	Description: 		Brings you to Victoria Island
 */
 var status = 0;
+var adminMenu = false;
 
 function start() {
-    cm.sendYesNo("Take this ship and you'll head off to a bigger continent. For #e150 mesos#n, I'll take you to #bVictoria Island#k. The thing is, once you leave this place, you can't ever come back. What do you think? Do you want to go to Victoria Island?");
+    const AgentAuthorityService = Java.type('server.agents.auth.AgentAuthorityService');
+    if (AgentAuthorityService.mayOperate(cm.getPlayer())) {
+        adminMenu = true;
+        cm.sendSimple("Take this ship and you'll head off to a bigger continent. What would you like to do?"
+            + "\r\n\r\n#L0##bTravel to Victoria Island.#l"
+            + "\r\n#L1##r[Agent administration] Send every Agent on Maple Island to Lith Harbor "
+            + "after its current plan is complete, then begin Lith Harbor TownLife.#l");
+        return;
+    }
+    sendTravelPrompt();
 }
 
 function action(mode, type, selection) {
+    if (adminMenu) {
+        if (mode != 1) {
+            cm.dispose();
+            return;
+        }
+        adminMenu = false;
+        if (selection == 1) {
+            const HandoffRuntime = Java.type(
+                'server.agents.plans.mapleisland.AgentMapleIslandLithHandoffRuntime');
+            const System = Java.type('java.lang.System');
+            var result = HandoffRuntime.requestAll(cm.getPlayer(), System.currentTimeMillis());
+            if (!result.authorized()) {
+                cm.sendOk("You are not authorized to assign Agent plans.");
+            } else {
+                cm.sendOk("The Lith Harbor handoff was assigned to #b" + result.assigned()
+                    + "#k Maple Island Agents on this channel.\r\n\r\n"
+                    + "#b" + result.startedNow() + "#k can begin the Southperry transfer now.\r\n"
+                    + "#b" + result.waitingForCurrentPlan()
+                    + "#k will finish their current Maple Island plan first.\r\n"
+                    + "#b" + result.alreadyQueued() + "#k were already queued.\r\n"
+                    + "#b" + result.alreadyInTownLife()
+                    + "#k were already running TownLife.");
+            }
+            cm.dispose();
+            return;
+        }
+        status = 0;
+        sendTravelPrompt();
+        return;
+    }
     status++;
     if (mode != 1) {
         if (mode == 0 && type != 1) {
@@ -72,4 +112,8 @@ function action(mode, type, selection) {
         cm.warp(104000000, 0);
         cm.dispose();
     }
+}
+
+function sendTravelPrompt() {
+    cm.sendYesNo("Take this ship and you'll head off to a bigger continent. For #e150 mesos#n, I'll take you to #bVictoria Island#k. The thing is, once you leave this place, you can't ever come back. What do you think? Do you want to go to Victoria Island?");
 }

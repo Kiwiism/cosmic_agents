@@ -16,6 +16,14 @@ public final class AgentPioRelaxerInterludeEventListener implements AgentEventLi
     private static final long REST_MAX_MS = config.AgentTuning.longValue("server.agents.capabilities.behavior.AgentPioRelaxerInterludeEventListener.REST_MAX_MS");
     private static final long PLAYFUL_MIN_MS = config.AgentTuning.longValue("server.agents.capabilities.behavior.AgentPioRelaxerInterludeEventListener.PLAYFUL_MIN_MS");
     private static final long PLAYFUL_MAX_MS = config.AgentTuning.longValue("server.agents.capabilities.behavior.AgentPioRelaxerInterludeEventListener.PLAYFUL_MAX_MS");
+    private static final int PLAYFUL_ACTIVITY_MIN = config.AgentTuning.intValue(
+            "server.agents.capabilities.behavior.AgentPioRelaxerInterludeEventListener.PLAYFUL_ACTIVITY_MIN");
+    private static final int PLAYFUL_EXPRESSIVENESS_MIN = config.AgentTuning.intValue(
+            "server.agents.capabilities.behavior.AgentPioRelaxerInterludeEventListener.PLAYFUL_EXPRESSIVENESS_MIN");
+    private static final int REST_PATIENCE_MIN = config.AgentTuning.intValue(
+            "server.agents.capabilities.behavior.AgentPioRelaxerInterludeEventListener.REST_PATIENCE_MIN");
+    private static final int REST_ACTIVITY_MAX = config.AgentTuning.intValue(
+            "server.agents.capabilities.behavior.AgentPioRelaxerInterludeEventListener.REST_ACTIVITY_MAX");
     private static final long DURATION_DOMAIN = 0x50494F2D43484149L;
 
     private final AgentRuntimeEntry entry;
@@ -53,10 +61,12 @@ public final class AgentPioRelaxerInterludeEventListener implements AgentEventLi
             return AgentPioRelaxerInterludeState.Mode.NONE;
         }
         AgentPersonalityProfile.Traits traits = profile.traits();
-        if (traits.activity() >= 80 && traits.expressiveness() >= 70) {
+        if (traits.activity() >= PLAYFUL_ACTIVITY_MIN
+                && traits.expressiveness() >= PLAYFUL_EXPRESSIVENESS_MIN) {
             return AgentPioRelaxerInterludeState.Mode.PLAYFUL;
         }
-        if (traits.patience() >= 75 && traits.activity() <= 50) {
+        if (traits.patience() >= REST_PATIENCE_MIN
+                && traits.activity() <= REST_ACTIVITY_MAX) {
             return AgentPioRelaxerInterludeState.Mode.REST;
         }
         return AgentPioRelaxerInterludeState.Mode.NONE;

@@ -38,7 +38,13 @@
     { "x": 2650, "y": 525, "seatId": 5 },
     { "x": 2880, "y": 520, "seatId": -1 },
     { "x": 3240, "y": 518, "seatId": -1 },
-    { "x": 4570, "y": 75, "seatId": -1 }
+    { "x": 2800, "y": -223, "seatId": -1 },
+    { "x": 3600, "y": -223, "seatId": -1 },
+    { "x": 4450, "y": -223, "seatId": -1 },
+    { "x": 2385, "y": 47, "seatId": -1 },
+    { "x": 2835, "y": 47, "seatId": -1 },
+    { "x": 2205, "y": 107, "seatId": -1 },
+    { "x": 2745, "y": 107, "seatId": -1 }
   ],
   "roamFallbackSpots": [
     { "x": 360, "y": 278 },
@@ -176,15 +182,37 @@
     },
     {
       "id": "upper-town-overlook",
-      "label": "Upper town overlook",
+      "label": "Upper sky platforms",
       "district": "UPPER",
       "platformKind": "MINI",
-      "capacity": 3,
+      "capacity": 8,
       "affordances": ["REST", "ROAM", "SOCIAL", "SIGHTSEE"],
       "spots": [
-        { "x": 4360, "y": 433, "seatId": -1 },
-        { "x": 4570, "y": 75, "seatId": -1 },
-        { "x": 4930, "y": 431, "seatId": -1 }
+        { "x": 2385, "y": 47, "seatId": -1 },
+        { "x": 2565, "y": 47, "seatId": -1 },
+        { "x": 2835, "y": 47, "seatId": -1 },
+        { "x": 3105, "y": 47, "seatId": -1 },
+        { "x": 2205, "y": 107, "seatId": -1 },
+        { "x": 2475, "y": 107, "seatId": -1 },
+        { "x": 2745, "y": 107, "seatId": -1 },
+        { "x": 3015, "y": 107, "seatId": -1 }
+      ],
+      "destinationMapId": 0
+    },
+    {
+      "id": "upper-town-street",
+      "label": "Upper taxi street",
+      "district": "UPPER",
+      "platformKind": "MAIN",
+      "capacity": 6,
+      "affordances": ["REST", "ROAM", "SOCIAL", "WAIT", "SIGHTSEE"],
+      "spots": [
+        { "x": 2700, "y": -223, "seatId": -1 },
+        { "x": 3050, "y": -223, "seatId": -1 },
+        { "x": 3450, "y": -223, "seatId": -1 },
+        { "x": 3850, "y": -223, "seatId": -1 },
+        { "x": 4250, "y": -223, "seatId": -1 },
+        { "x": 4650, "y": -223, "seatId": -1 }
       ],
       "destinationMapId": 0
     },

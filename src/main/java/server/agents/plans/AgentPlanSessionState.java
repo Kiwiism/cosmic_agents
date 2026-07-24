@@ -23,6 +23,7 @@ public final class AgentPlanSessionState {
     private Object transientAttachment;
     private String pendingSuccessorPlanId = "";
     private List<String> availableSuccessorPlanIds = List.of();
+    private String deferredSuccessorPlanId = "";
     private long nextActionAtMs;
     private String reason = "";
     private long revision;
@@ -97,6 +98,21 @@ public final class AgentPlanSessionState {
         changed();
     }
 
+    public synchronized void deferSuccessor(String planId) {
+        String normalized = planId == null ? "" : planId.trim();
+        if (!deferredSuccessorPlanId.equals(normalized)) {
+            deferredSuccessorPlanId = normalized;
+            changed();
+        }
+    }
+
+    public synchronized void clearDeferredSuccessor(String planId) {
+        if (planId != null && deferredSuccessorPlanId.equals(planId.trim())) {
+            deferredSuccessorPlanId = "";
+            changed();
+        }
+    }
+
     public synchronized void clear() {
         planId = "";
         planVersion = "";
@@ -110,6 +126,7 @@ public final class AgentPlanSessionState {
         transientAttachment = null;
         pendingSuccessorPlanId = "";
         availableSuccessorPlanIds = List.of();
+        deferredSuccessorPlanId = "";
         nextActionAtMs = 0L;
         reason = "";
         changed();
@@ -123,7 +140,7 @@ public final class AgentPlanSessionState {
                 1, characterId, planId, planVersion, chainId, stepIndex, stepStarted,
                 stepAttempt, stepStartedAtMs,
                 status, inputs, pendingSuccessorPlanId, availableSuccessorPlanIds,
-                nextActionAtMs, reason, revision, nowMs);
+                deferredSuccessorPlanId, nextActionAtMs, reason, revision, nowMs);
     }
 
     public synchronized void restore(AgentPlanCheckpoint checkpoint) {
@@ -139,6 +156,7 @@ public final class AgentPlanSessionState {
         transientAttachment = null;
         pendingSuccessorPlanId = checkpoint.pendingSuccessorPlanId();
         availableSuccessorPlanIds = checkpoint.availableSuccessorPlanIds();
+        deferredSuccessorPlanId = checkpoint.deferredSuccessorPlanId();
         nextActionAtMs = checkpoint.nextActionAtMs();
         reason = checkpoint.reason();
         revision = checkpoint.stateRevision();
@@ -165,6 +183,7 @@ public final class AgentPlanSessionState {
     public synchronized Object transientAttachment() { return transientAttachment; }
     public synchronized String pendingSuccessorPlanId() { return pendingSuccessorPlanId; }
     public synchronized List<String> availableSuccessorPlanIds() { return availableSuccessorPlanIds; }
+    public synchronized String deferredSuccessorPlanId() { return deferredSuccessorPlanId; }
     public synchronized long nextActionAtMs() { return nextActionAtMs; }
     public synchronized String reason() { return reason; }
     public synchronized boolean active() {

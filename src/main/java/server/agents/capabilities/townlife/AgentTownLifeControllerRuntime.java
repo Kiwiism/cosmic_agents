@@ -138,18 +138,44 @@ public final class AgentTownLifeControllerRuntime {
                                                        AgentTownLifeState state,
                                                        AgentTownLifeProfile profile,
                                                        AgentTownLifeState.Activity activity) {
+        // Roaming is physical-map driven. Leaving the venue blank lets the destination service
+        // distribute Agents across every reachable platform instead of pinning them to the small
+        // authored venue list.
+        if (activity == AgentTownLifeState.Activity.ROAM) {
+            return AgentTownLifeDecision.deterministic(activity);
+        }
         var venues = profile.venuesFor(activity);
         if (venues.isEmpty()) {
             return AgentTownLifeDecision.deterministic(activity);
         }
-        var preferred = venues.stream()
-                .filter(venue -> state.preferredDistrict() == AgentTownLifeState.District.ANY
-                        || venue.district() == state.preferredDistrict())
+        var exact = venues.stream()
+                .filter(venue -> districtMatches(state, venue))
+                .filter(venue -> platformMatches(state, venue))
                 .toList();
-        var candidates = preferred.isEmpty() ? venues : preferred;
+        var district = venues.stream()
+                .filter(venue -> districtMatches(state, venue))
+                .toList();
+        var platform = venues.stream()
+                .filter(venue -> platformMatches(state, venue))
+                .toList();
+        var candidates = !exact.isEmpty() ? exact
+                : !district.isEmpty() ? district
+                : !platform.isEmpty() ? platform : venues;
         int index = AgentTownLifeRolePolicy.variation(
                 agent.getId(), state.sequence(), candidates.size(), 313);
         return AgentTownLifeDecision.deterministic(activity, candidates.get(index).id());
+    }
+
+    private static boolean districtMatches(AgentTownLifeState state,
+                                           AgentTownLifeProfile.Venue venue) {
+        return state.preferredDistrict() == AgentTownLifeState.District.ANY
+                || venue.district() == state.preferredDistrict();
+    }
+
+    private static boolean platformMatches(AgentTownLifeState state,
+                                           AgentTownLifeProfile.Venue venue) {
+        return state.platformPreference() == AgentTownLifeState.PlatformKind.ANY
+                || venue.platformKind() == state.platformPreference();
     }
 
     private static AgentTownLifeDecisionContext.PersonalityView personalityView(

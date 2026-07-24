@@ -41,6 +41,7 @@ public final class AgentPlanCheckpointRuntime {
                 return false;
             }
             entry.capabilityStates().require(AgentPlanSessionState.STATE_KEY).restore(checkpoint);
+            entry.capabilityStates().remove(AgentPlanAttachmentState.STATE_KEY);
             return true;
         } catch (IOException | RuntimeException failure) {
             log.warn("Could not restore universal plan checkpoint for {} ({})",

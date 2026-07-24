@@ -36,16 +36,28 @@ public final class AgentCombatVariationRuntime {
                 .orElse(AgentCombatVariationSettings.disabled());
     }
 
-    public static int selectTargetIndex(AgentRuntimeEntry entry, int candidateCount) {
-        int behaviorIndex = AgentCombatBehaviorRuntime.selectTargetIndex(entry, candidateCount);
+    public static int selectTargetIndex(
+            AgentRuntimeEntry entry, Character agent, int candidateCount) {
+        int behaviorIndex =
+                AgentCombatBehaviorRuntime.selectTargetIndex(entry, agent, candidateCount);
         if (behaviorIndex >= 0) {
             return behaviorIndex;
         }
         return entry == null ? 0 : state(entry).selectTargetIndex(candidateCount);
     }
 
+    public static int selectTargetIndex(AgentRuntimeEntry entry, int candidateCount) {
+        return selectTargetIndex(entry, null, candidateCount);
+    }
+
     public static boolean isPlatformAnchorRole(AgentRuntimeEntry entry) {
-        return entry != null && (AgentCombatBehaviorRuntime.anchorRole(entry)
+        return entry != null
+                && !server.agents.behavior.AgentBehaviorRuntime.enabled(entry)
+                && state(entry).platformAnchorRole();
+    }
+
+    public static boolean isPlatformAnchorRole(AgentRuntimeEntry entry, Character agent) {
+        return entry != null && (AgentCombatBehaviorRuntime.anchorRole(entry, agent)
                 || (!server.agents.behavior.AgentBehaviorRuntime.enabled(entry)
                 && state(entry).platformAnchorRole()));
     }
@@ -57,7 +69,7 @@ public final class AgentCombatVariationRuntime {
         if (entry == null || agent == null || agent.getMap() == null || target == null
                 || targetRegionId < 0 || AgentPatrolStateRuntime.hasPatrolRegion(entry)
                 || !MapId.isMapleIsland(agent.getMapId())
-                || !isPlatformAnchorRole(entry)) {
+                || !isPlatformAnchorRole(entry, agent)) {
             return;
         }
         if (AgentCombatObjectiveTargetStateRuntime.hasPreferredTargets(entry)

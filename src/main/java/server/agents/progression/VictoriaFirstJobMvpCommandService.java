@@ -127,7 +127,8 @@ public final class VictoriaFirstJobMvpCommandService {
         var startMap = AgentMapGatewayRuntime.map().resolveMap(
                 player.getWorld(), AgentClientGatewayRuntime.clients().channel(player),
                 VictoriaFirstJobMvpTestService.LITH_HARBOR_MAP_ID);
-        Point startPosition = VictoriaFirstJobMvpTestService.lithHarborArrivalPosition(startMap);
+        Point startPosition = VictoriaFirstJobMvpTestService.lithHarborArrivalPosition(
+                startMap, agentName.hashCode());
         AgentLifecycleService.AgentSpawnResult spawn = AgentInteractionRuntime.spawnStationaryAgentForLeaderAt(
                 player, agentName, startMap, startPosition);
         if (!spawn.success()) {

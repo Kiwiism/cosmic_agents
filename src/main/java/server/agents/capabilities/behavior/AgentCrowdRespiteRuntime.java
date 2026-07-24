@@ -12,6 +12,7 @@ import server.agents.capabilities.movement.fidget.AgentFidgetService;
 import server.agents.capabilities.movement.fidget.AgentFidgetStateRuntime;
 import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
 import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
+import server.agents.integration.cosmic.CosmicAgentPerceptionSnapshotFactory;
 import server.agents.runtime.AgentForegroundPauseRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -31,6 +32,8 @@ public final class AgentCrowdRespiteRuntime {
             "server.agents.capabilities.behavior.AgentCrowdRespiteRuntime.WAIT_FIDGET_PERCENT");
     private static final int FIDGET_DURATION_MS = config.AgentTuning.intValue(
             "server.agents.capabilities.behavior.AgentCrowdRespiteRuntime.FIDGET_DURATION_MS");
+    private static final int REST_REENTRY_COOLDOWN_MS = config.AgentTuning.intValue(
+            "server.agents.capabilities.behavior.AgentCrowdRespiteRuntime.REST_REENTRY_COOLDOWN_MS");
 
     private AgentCrowdRespiteRuntime() {
     }
@@ -45,17 +48,24 @@ public final class AgentCrowdRespiteRuntime {
             return false;
         }
         if (!state.active()) {
+            if (!state.eligible(nowMs)) return false;
             if (!AgentMapActivityPolicy.shouldRest(entry, agent, nowMs)) return false;
             AgentBehaviorPolicyProfile.Crowd policy = AgentBehaviorRuntime.policy(entry).crowd();
-            int duration = policy.minRestMs() + AgentBehaviorRuntime.calibration(entry)
-                    .nextPercent("crowd-duration") * Math.max(1, policy.maxRestMs() - policy.minRestMs()) / 100;
+            int profileDuration = policy.minRestMs() + AgentBehaviorRuntime.calibration(entry)
+                    .nextPercent("crowd-duration")
+                    * Math.max(1, policy.maxRestMs() - policy.minRestMs()) / 100;
+            int characterCount = AgentCrowdScalingPolicy.totalCharacters(
+                    CosmicAgentPerceptionSnapshotFactory.capture(agent, nowMs));
+            int duration = AgentCrowdScalingPolicy.restDurationMs(
+                    profileDuration, characterCount);
             boolean chair = AgentBehaviorRuntime.calibration(entry).nextPercent("crowd-chair") < policy.chairPercent();
             state.start(nowMs, nowMs + duration, AgentSafeSpotSelector.select(entry, agent), chair);
             AgentForegroundPauseRuntime.pause(entry, PAUSE_REASON, nowMs);
             AgentBehaviorTelemetry.crowdRestStarted();
             publish(entry, agent, nowMs, AgentCrowdRespiteEvent.Stage.STARTED);
         }
-        if (nowMs >= state.resumeAtMs() && !AgentMapActivityPolicy.shouldRest(entry, agent, nowMs)) {
+        if (nowMs >= state.resumeAtMs()
+                || !AgentMapActivityPolicy.shouldRest(entry, agent, nowMs)) {
             finish(entry, agent, state, nowMs);
             return false;
         }
@@ -95,7 +105,7 @@ public final class AgentCrowdRespiteRuntime {
                                AgentCrowdRespiteState state, long nowMs) {
         if (agent != null && agent.getChair() > 0) AgentChairService.stand(entry, agent);
         AgentFidgetService.clear(entry);
-        state.clear();
+        state.finish(nowMs + REST_REENTRY_COOLDOWN_MS);
         AgentForegroundPauseRuntime.resume(entry, PAUSE_REASON, nowMs);
         AgentBehaviorTelemetry.crowdRestResumed();
         publish(entry, agent, nowMs, AgentCrowdRespiteEvent.Stage.RESUMED);

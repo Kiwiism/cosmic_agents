@@ -102,6 +102,13 @@ public final class AgentDialogueProjectionRuntime {
                     "that was close!",
                     "okay, one more swing."));
         }
+        if (AgentTownLifeDialogueReactionService.ARRIVAL_INTENT.equals(intent.intentKey())) {
+            return variant(intent, List.of(
+                    "I've reached Lith Harbor. I'll look around town for a while.",
+                    "Made it to Victoria Island. Time to explore Lith Harbor.",
+                    "I'm going to finish my errand, then spend some time around town.",
+                    "The ship made it! I'll head into Lith Harbor and see what's happening."));
+        }
         if (!AgentSupplyDialogueReactionService.INTENT_KEY.equals(intent.intentKey())) {
             return "";
         }

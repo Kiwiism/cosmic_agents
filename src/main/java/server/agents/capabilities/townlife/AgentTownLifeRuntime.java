@@ -156,6 +156,10 @@ public final class AgentTownLifeRuntime {
         AgentTownLifeArrivalExtension arrival =
                 AgentTownLifeArrivalExtensionRepository.forTown(state.townMapId());
         if (state.stage() == AgentTownLifeState.Stage.TRAVEL_TO_TOWN) {
+            if (agent.getMapId() == state.townMapId()
+                    && state.markArrivalIntentionPublished()) {
+                AgentTownLifeEventPublisher.arrival(entry, agent, state, nowMs);
+            }
             return arrival.tickTravel(entry, agent, state, nowMs, gateway);
         }
         if (agent.getMapId() != state.townMapId()

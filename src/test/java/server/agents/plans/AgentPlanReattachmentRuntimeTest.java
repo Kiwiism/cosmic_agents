@@ -2,6 +2,7 @@ package server.agents.plans;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
 import server.agents.objectives.AgentObjectiveDefinition;
 import server.agents.objectives.AgentObjectiveKernel;
 import server.agents.objectives.AgentObjectiveSource;
@@ -19,9 +20,52 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 
 class AgentPlanReattachmentRuntimeTest {
+    @Test
+    void activeUniversalStepReattachesOnceThenAllowsNormalTicks() {
+        Character agent = mock(Character.class);
+        when(agent.getId()).thenReturn(70);
+        when(agent.getName()).thenReturn("UniversalRelog");
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        AgentPlanSessionState session =
+                entry.capabilityStates().require(AgentPlanSessionState.STATE_KEY);
+        session.start(AgentPlanRepository.defaultRepository().require("maple-island-full-mvp"),
+                "chain:70:1", AgentPlanStartRequest.EMPTY, 10L);
+        session.stepStarted(11L);
+
+        try (MockedStatic<AgentUniversalPlanRuntime> universal =
+                     mockStatic(AgentUniversalPlanRuntime.class)) {
+            universal.when(() -> AgentUniversalPlanRuntime.reattach(entry, agent, 20L))
+                    .thenReturn(true);
+
+            assertTrue(AgentPlanReattachmentRuntime.reattachIfNeeded(entry, agent, 20L));
+            assertFalse(AgentPlanReattachmentRuntime.reattachIfNeeded(entry, agent, 21L));
+
+            universal.verify(
+                    () -> AgentUniversalPlanRuntime.reattach(entry, agent, 20L), times(1));
+        }
+    }
+
+    @Test
+    void unstartedUniversalStepUsesNormalExecutorStartInsteadOfReattachment() {
+        Character agent = mock(Character.class);
+        when(agent.getId()).thenReturn(69);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        entry.capabilityStates().require(AgentPlanSessionState.STATE_KEY).start(
+                AgentPlanRepository.defaultRepository().require("maple-island-full-mvp"),
+                "chain:69:1", AgentPlanStartRequest.EMPTY, 10L);
+
+        try (MockedStatic<AgentUniversalPlanRuntime> universal =
+                     mockStatic(AgentUniversalPlanRuntime.class)) {
+            assertFalse(AgentPlanReattachmentRuntime.reattachIfNeeded(entry, agent, 20L));
+            universal.verifyNoInteractions();
+        }
+    }
+
     @Test
     void resolvesEveryDurableMapleIslandPlanIdentity() {
         assertEquals(AgentPlanReattachmentRuntime.ResumeKind.AMHERST,

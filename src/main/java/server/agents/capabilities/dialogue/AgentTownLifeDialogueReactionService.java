@@ -2,6 +2,7 @@ package server.agents.capabilities.dialogue;
 
 import server.agents.capabilities.townlife.AgentTownLifeEncounterEvent;
 import server.agents.capabilities.townlife.AgentTownLifeEncounterState;
+import server.agents.capabilities.townlife.AgentTownLifeArrivalEvent;
 import server.agents.events.AgentEvent;
 import server.agents.events.AgentEventBus;
 import server.agents.events.AgentEventListener;
@@ -13,6 +14,7 @@ import java.util.Map;
 public final class AgentTownLifeDialogueReactionService implements AgentEventListener<AgentEvent> {
     public static final String SOCIAL_INTENT = "townlife.social";
     public static final String SPARRING_INTENT = "townlife.sparring";
+    public static final String ARRIVAL_INTENT = "townlife.arrival";
     private static final long AMBIENT_CHAT_COOLDOWN_MS = config.AgentTuning.longValue("server.agents.capabilities.dialogue.AgentTownLifeDialogueReactionService.AMBIENT_CHAT_COOLDOWN_MS");
     private final AgentEventBus eventBus;
 
@@ -22,6 +24,21 @@ public final class AgentTownLifeDialogueReactionService implements AgentEventLis
 
     @Override
     public void onAgentEvent(AgentEvent event) {
+        if (event instanceof AgentTownLifeArrivalEvent arrival) {
+            int variant = Math.floorMod(
+                    31 * arrival.agentId() + arrival.profileId().hashCode(), 4);
+            eventBus.publish(new AgentDialogueIntentEvent(
+                    arrival.agentId(), arrival.occurredAtMs(), ARRIVAL_INTENT,
+                    AgentDialogueAudience.NEARBY_REAL_PLAYER,
+                    "townlife-arrival", AMBIENT_CHAT_COOLDOWN_MS,
+                    Map.of(
+                            "mapId", String.valueOf(arrival.mapId()),
+                            "purpose", arrival.purpose().name(),
+                            "reason", arrival.reason(),
+                            "variant", String.valueOf(variant))),
+                    AgentEventPriority.AMBIENT);
+            return;
+        }
         if (!(event instanceof AgentTownLifeEncounterEvent encounter)
                 || encounter.phase() != AgentTownLifeEncounterState.Phase.ACTIVE
                 || encounter.participantRole() != AgentTownLifeEncounterState.Role.INITIATOR

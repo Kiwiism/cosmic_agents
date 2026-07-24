@@ -48,7 +48,8 @@ public final class AgentCombatTargetRuntime {
 
             Map<Monster, Integer> targetOccupancy = grindTargetOccupancy(entry, bot);
             candidates = AgentCombatBehaviorRuntime.respectClaims(entry, candidates, targetOccupancy);
-            if (!AgentCombatBehaviorRuntime.responseReady(entry, candidates, System.currentTimeMillis())) {
+            if (!AgentCombatBehaviorRuntime.responseReady(
+                    entry, bot, candidates, System.currentTimeMillis())) {
                 return null;
             }
             List<AgentScoredGrindTarget> scoredTargets = scoreGrindTargets(
@@ -57,7 +58,8 @@ public final class AgentCombatTargetRuntime {
                 return null;
             }
 
-            RankedTargetSelection rankedSelection = selectVariedReachableTarget(entry, scoredTargets);
+            RankedTargetSelection rankedSelection =
+                    selectVariedReachableTarget(entry, bot, scoredTargets);
             Monster selected = rankedSelection.target();
             if (!rankedSelection.variationDecisionConsumed()) {
                 selected = selectVariedTargetWithinWinningRegion(
@@ -255,12 +257,14 @@ public final class AgentCombatTargetRuntime {
         List<AgentScoredGrindTarget> localScores = scoreLocalTargets(
                 entry, bot, botPos, botFoothold, sameReachableRegion, targetOccupancy, config);
         AgentCombatGrindTargetPolicy.sortByLegacyTargetOrder(localScores);
-        int index = AgentCombatVariationRuntime.selectTargetIndex(entry, localScores.size());
+        int index = AgentCombatVariationRuntime.selectTargetIndex(
+                entry, bot, localScores.size());
         return localScores.get(Math.min(index, localScores.size() - 1)).monster();
     }
 
     private static RankedTargetSelection selectVariedReachableTarget(
             AgentRuntimeEntry entry,
+            Character bot,
             List<AgentScoredGrindTarget> scoredTargets) {
         Monster best = AgentCombatGrindTargetPolicy.pickReachableOrBestTarget(
                 scoredTargets, UNREACHABLE_GRAPH_COST);
@@ -274,7 +278,8 @@ public final class AgentCombatTargetRuntime {
         if (reachableTargets.size() < 3) {
             return new RankedTargetSelection(best, false);
         }
-        int index = AgentCombatVariationRuntime.selectTargetIndex(entry, reachableTargets.size());
+        int index = AgentCombatVariationRuntime.selectTargetIndex(
+                entry, bot, reachableTargets.size());
         return new RankedTargetSelection(
                 reachableTargets.get(Math.min(index, reachableTargets.size() - 1)).monster(), true);
     }

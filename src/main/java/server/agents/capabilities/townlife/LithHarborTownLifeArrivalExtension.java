@@ -35,8 +35,15 @@ final class LithHarborTownLifeArrivalExtension implements AgentTownLifeArrivalEx
                               long nowMs,
                               PrimitiveCapabilityGateway gateway) {
         if (agent.getMapId() == state.townMapId()) {
-            if (AgentLithHarborArrivalRouteRuntime.travelToTown(entry, agent, gateway)) {
+            if (nowMs < state.nextActionAtMs()) {
+                gateway.stop(entry);
                 return true;
+            }
+            AgentLithHarborArrivalRouteRuntime.TravelProgress progress =
+                    AgentLithHarborArrivalRouteRuntime.advanceToTown(entry, agent, gateway);
+            if (progress != AgentLithHarborArrivalRouteRuntime.TravelProgress.ARRIVED) {
+                return progress
+                        == AgentLithHarborArrivalRouteRuntime.TravelProgress.ACTION_CONSUMED;
             }
             gateway.stop(entry);
             state.transition(AgentTownLifeState.Stage.COMPLETE_ARRIVAL,

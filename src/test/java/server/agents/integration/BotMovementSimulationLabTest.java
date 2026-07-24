@@ -178,6 +178,24 @@ class BotMovementSimulationLabTest {
     }
 
     @Test
+    void shouldLeaveThievesHideoutAfterFirstJobAdvancement() {
+        MapleMap map = AgentNavigationMapLoader.loadMapGeometry(103000003);
+        AgentNavigationGraphService.rebuildGraph(map);
+        BotMovementSimulationLab lab = BotMovementSimulationLab.fromMap(map);
+        lab.spawnBot("ROGUE", 35, map, new Point(113, 128));
+        lab.setMoveTarget("ROGUE", new Point(201, -266), true);
+        lab.setAiAccumulator("ROGUE", 50);
+
+        lab.step(1_200);
+
+        Point finalPosition = lab.position("ROGUE");
+        assertTrue(finalPosition.distanceSq(new Point(201, -266)) <= 45 * 45,
+                () -> "Rogue should navigate from Dark Lord to the hideout exit, but stopped at "
+                        + finalPosition + ":\n"
+                        + String.join("\n", lab.formatRecentTrace("ROGUE", 80)));
+    }
+
+    @Test
     void shouldCommitJohnSecondJumpOnTheNextAiTickAfterLanding() {
         MapleMap map = AgentNavigationMapLoader.loadMapGeometry(101020001);
         AgentNavigationGraphService.rebuildGraph(map);

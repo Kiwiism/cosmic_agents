@@ -24,11 +24,13 @@ public final class AgentNavigationPathService {
     private static final int NO_MOVEMENT_WALK_TOLERANCE = config.AgentTuning.intValue("server.agents.capabilities.navigation.AgentNavigationPathService.NO_MOVEMENT_WALK_TOLERANCE");
     private static final long PORTAL_USE_COOLDOWN_MS = config.AgentTuning.longValue("server.agents.capabilities.navigation.AgentNavigationPathService.PORTAL_USE_COOLDOWN_MS");
     private static final long SLOW_PATHFIND_WARN_NS = config.AgentTuning.longValue("server.agents.capabilities.navigation.AgentNavigationPathService.SLOW_PATHFIND_WARN_NS");
-    static final int MAX_EDGE_CHECKS = 160_000;
+    static final int MAX_EDGE_CHECKS = config.AgentTuning.intValue(
+            "server.agents.capabilities.navigation.AgentNavigationPathService.MAX_EDGE_CHECKS");
     // Live movement can continue from a closest-frontier route on the next decision pass.
     // Bound only that path so dense town graphs cannot consume several 50 ms movement slots;
     // scoring and diagnostic searches retain their existing accuracy budget.
-    static final int MOVEMENT_MAX_EDGE_CHECKS = 2_000;
+    static final int MOVEMENT_MAX_EDGE_CHECKS = config.AgentTuning.intValue(
+            "server.agents.capabilities.navigation.AgentNavigationPathService.MOVEMENT_MAX_EDGE_CHECKS");
 
     static boolean useAdmissibleHeuristic = true;
 

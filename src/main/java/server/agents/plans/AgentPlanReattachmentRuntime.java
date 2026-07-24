@@ -38,9 +38,32 @@ public final class AgentPlanReattachmentRuntime {
         if (entry == null || agent == null) {
             return false;
         }
-        if (entry.capabilityStates().find(AgentPlanSessionState.STATE_KEY)
-                .map(AgentPlanSessionState::active).orElse(false)) {
-            return AgentUniversalPlanRuntime.reattach(entry, agent, nowMs);
+        AgentPlanSessionState session = entry.capabilityStates()
+                .find(AgentPlanSessionState.STATE_KEY).orElse(null);
+        if (session != null && session.active()) {
+            String attachmentKey = AgentPlanAttachmentKey.current(session);
+            if (attachmentKey.isBlank()) {
+                return false;
+            }
+            AgentPlanAttachmentState state =
+                    entry.capabilityStates().require(AgentPlanAttachmentState.STATE_KEY);
+            if (!state.ready(attachmentKey, nowMs)) {
+                return false;
+            }
+            try {
+                boolean attached = AgentUniversalPlanRuntime.reattach(entry, agent, nowMs);
+                if (attached) {
+                    state.attached(attachmentKey);
+                } else {
+                    state.failed(attachmentKey, nowMs + RETRY_DELAY_MS);
+                }
+                return attached;
+            } catch (RuntimeException failure) {
+                state.failed(attachmentKey, nowMs + RETRY_DELAY_MS);
+                log.warn("Could not reattach Agent '{}' to universal plan step {}",
+                        agent.getName(), attachmentKey, failure);
+                return true;
+            }
         }
         AgentObjectiveDefinition active = AgentObjectiveKernel.active(entry);
         if (active == null || HANDLERS.handlerFor(active.type()).isEmpty()) {

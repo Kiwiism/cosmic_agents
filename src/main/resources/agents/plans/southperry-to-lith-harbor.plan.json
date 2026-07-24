@@ -28,8 +28,7 @@
     }
   ],
   "exitCriteria": [
-    { "fact": "map.id", "operator": "eq", "value": 104000000 },
-    { "fact": "navigation.lithTownSide", "operator": "eq", "value": true }
+    { "fact": "map.id", "operator": "eq", "value": 104000000 }
   ],
   "successors": [
     { "planId": "victoria-warrior-level30", "on": "SUCCEEDED", "activation": "AVAILABLE", "delayMs": 0 },

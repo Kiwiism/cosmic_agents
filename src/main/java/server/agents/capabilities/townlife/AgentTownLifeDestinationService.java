@@ -117,6 +117,11 @@ final class AgentTownLifeDestinationService {
         }
         List<CharacterSpace> dynamic = AgentTownLifeSpotSampler.reachableSpaces(
                 entry, agent, state, anchors, seed);
+        if (dynamic.isEmpty()
+                && AgentTownLifeFidelityPolicy.usesPhysicalNavigation(state.fidelity())
+                && !AgentTownLifeSpotSampler.graphAvailable(entry, agent)) {
+            return null;
+        }
         if (dynamic.isEmpty()) {
             dynamic = spaces("town-roam", agent.getMapId(), profile.roamFallbackPoints());
         }

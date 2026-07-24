@@ -25,7 +25,7 @@ class AgentPioRelaxerInterludeEventListenerTest {
         AgentPioRelaxerInterludeState state = entry.capabilityStates()
                 .require(AgentPioRelaxerInterludeState.STATE_KEY);
         assertEquals(AgentPioRelaxerInterludeState.Mode.REST, state.mode());
-        assertTrue(state.durationMs() >= 15_000L && state.durationMs() <= 60_000L);
+        assertTrue(state.durationMs() >= 15_000L && state.durationMs() <= 30_000L);
         assertTrue(AgentForegroundPauseRuntime.paused(entry));
     }
 
@@ -38,7 +38,7 @@ class AgentPioRelaxerInterludeEventListenerTest {
         AgentPioRelaxerInterludeState state = entry.capabilityStates()
                 .require(AgentPioRelaxerInterludeState.STATE_KEY);
         assertEquals(AgentPioRelaxerInterludeState.Mode.PLAYFUL, state.mode());
-        assertTrue(state.durationMs() >= 10_000L && state.durationMs() <= 15_000L);
+        assertTrue(state.durationMs() >= 2_000L && state.durationMs() <= 10_000L);
         assertTrue(AgentForegroundPauseRuntime.paused(entry));
     }
 
@@ -51,6 +51,17 @@ class AgentPioRelaxerInterludeEventListenerTest {
         assertFalse(entry.capabilityStates().require(
                 AgentPioRelaxerInterludeState.STATE_KEY).active());
         assertFalse(AgentForegroundPauseRuntime.paused(entry));
+    }
+
+    @Test
+    void explorerPersonalityUsesThePlayfulRelaxerSequence() {
+        AgentRuntimeEntry entry = entry("explorer-v1", 168L);
+
+        new AgentPioRelaxerInterludeEventListener(entry).onAgentEvent(pioCompleted());
+
+        assertEquals(AgentPioRelaxerInterludeState.Mode.PLAYFUL,
+                entry.capabilityStates().require(
+                        AgentPioRelaxerInterludeState.STATE_KEY).mode());
     }
 
     private static AgentRuntimeEntry entry(String profileId, long seed) {

@@ -95,6 +95,34 @@ class AgentPlanExecutorTest {
         assertEquals(1, steps.reattachments.get());
         assertTrue(restored.capabilityStates()
                 .require(AgentPlanSessionState.STATE_KEY).active());
+        assertTrue(executor.tick(restored, agent, 1_004L));
+        assertEquals(1, steps.ticks.get());
+        assertEquals(1, steps.reattachments.get());
+    }
+
+    @Test
+    void normalUniversalStepStartIsMarkedAttachedAndContinuesTicking() {
+        ActiveStepExecutor steps = new ActiveStepExecutor();
+        AgentPlanDefinition durable = plan("live", List.of(step("active", 0)), List.of());
+        AgentPlanExecutor executor = new AgentPlanExecutor(
+                new AgentPlanRepository(List.of(durable)),
+                new AgentPlanStepExecutorRegistry(List.of(steps)));
+        Character agent = agent(75);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+
+        assertTrue(executor.start(entry, agent, "live", AgentPlanStartRequest.EMPTY, 1_000L));
+        assertTrue(executor.tick(entry, agent, 1_001L));
+        AgentPlanSessionState session =
+                entry.capabilityStates().require(AgentPlanSessionState.STATE_KEY);
+        String attachmentKey = AgentPlanAttachmentKey.current(session);
+
+        assertFalse(entry.capabilityStates().require(AgentPlanAttachmentState.STATE_KEY)
+                .ready(attachmentKey, Long.MAX_VALUE));
+        assertTrue(executor.tick(entry, agent, 1_002L));
+        assertTrue(executor.tick(entry, agent, 1_003L));
+        assertEquals(1, steps.starts.get());
+        assertEquals(2, steps.ticks.get());
+        assertEquals(0, steps.reattachments.get());
     }
 
     @Test
@@ -117,6 +145,23 @@ class AgentPlanExecutorTest {
         assertTrue(executor.tick(entry, agent, 501L));
         assertEquals(1, steps.ticks.get());
         assertEquals(111L, steps.lastTickNowMs);
+    }
+
+    @Test
+    void activeUniversalStepYieldsToItsChildCapability() {
+        YieldingStepExecutor steps = new YieldingStepExecutor();
+        AgentPlanDefinition durable = plan("yielding", List.of(step("active", 0)), List.of());
+        AgentPlanExecutor executor = new AgentPlanExecutor(
+                new AgentPlanRepository(List.of(durable)),
+                new AgentPlanStepExecutorRegistry(List.of(steps)));
+        Character agent = agent(76);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+
+        assertTrue(executor.start(entry, agent, "yielding", AgentPlanStartRequest.EMPTY, 100L));
+        assertTrue(executor.tick(entry, agent, 101L));
+        assertFalse(executor.tick(entry, agent, 102L));
+        assertTrue(entry.capabilityStates()
+                .require(AgentPlanSessionState.STATE_KEY).active());
     }
 
     private static AgentPlanDefinition plan(
@@ -209,6 +254,19 @@ class AgentPlanExecutorTest {
         public AgentPlanStepExecution reattach(AgentPlanExecutionContext context) {
             reattachments.incrementAndGet();
             return AgentPlanStepExecution.active(true);
+        }
+    }
+
+    private static final class YieldingStepExecutor extends CompletingStepExecutor {
+        @Override
+        public AgentPlanStepExecution start(AgentPlanExecutionContext context) {
+            super.starts.incrementAndGet();
+            return AgentPlanStepExecution.active(true);
+        }
+
+        @Override
+        public AgentPlanStepExecution tick(AgentPlanExecutionContext context) {
+            return AgentPlanStepExecution.active(false);
         }
     }
 }

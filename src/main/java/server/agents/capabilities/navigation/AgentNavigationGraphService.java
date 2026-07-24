@@ -44,7 +44,7 @@ import java.util.concurrent.TimeUnit;
 public final class AgentNavigationGraphService {
     private static final Logger log = LoggerFactory.getLogger(AgentNavigationGraphService.class);
 
-    private static final int GRAPH_VERSION = 54;
+    private static final int GRAPH_VERSION = 55;
     private static final int ENDPOINT_ANCHOR_SPACING_PX = config.AgentTuning.intValue(
             "server.agents.capabilities.navigation.AgentNavigationGraphService.ENDPOINT_ANCHOR_SPACING_PX");
     private static final int DOWN_JUMP_PRELAUNCH_WINDOW_PX = config.AgentTuning.intValue(
@@ -1180,8 +1180,9 @@ public final class AgentNavigationGraphService {
 
         // Ballistic fall from ledge at max walk velocity — single simulation call.
         int stepX = AgentMovementKinematicsService.walkStep(map, movementProfile) * direction;
+        int moverZMass = AgentWallCollisionPolicy.moverZMassForRegion(map, from.id);
         List<AgentWalkOffLanding> walkOffVariants = AgentJumpProbeService.walkOffLandingVariants(
-                map, startPoint, direction, movementProfile);
+                map, startPoint, direction, movementProfile, moverZMass);
         AgentWalkOffLanding walkOff = walkOffVariants.isEmpty() ? null : walkOffVariants.get(0);
         if (walkOff == null || walkOff.landing() == null || walkOff.landing().foothold() == null) {
             return;
