@@ -79,6 +79,22 @@ final class AgentObserverPolicy {
                 ThreadLocalRandom.current().nextInt(ISOLATED_TRAINING_MAPS.size()));
     }
 
+    static boolean watchedReachedRoamingRoute(int mapId) {
+        return APPROACH_ROUTE.contains(mapId)
+                || ROAM_CYCLE.contains(mapId)
+                || mapId == 1_020_000
+                || mapId == SOUTHPERRY_MAP_ID
+                || ISOLATED_TRAINING_MAP_SET.contains(mapId);
+    }
+
+    static int approachIndex(int mapId) {
+        return APPROACH_ROUTE.indexOf(mapId);
+    }
+
+    static int cycleIndex(int mapId) {
+        return ROAM_CYCLE.indexOf(mapId);
+    }
+
     static Integer nextHop(int sourceMapId, int destinationMapId) {
         if (sourceMapId == destinationMapId) {
             return sourceMapId;
@@ -111,7 +127,7 @@ final class AgentObserverPolicy {
         connect(mutable, MUSHROOM_TOWN_MAP_ID, STATION_MAP_ID);
         connect(mutable, STATION_MAP_ID, 30_000);
         connect(mutable, 30_000, 30_001);
-        connect(mutable, 30_001, 40_000);
+        connect(mutable, 30_000, 40_000);
         connect(mutable, 40_000, GREEN_SNAIL_MAP_ID);
         connect(mutable, GREEN_SNAIL_MAP_ID, AMHERST_MAP_ID);
         connect(mutable, AMHERST_MAP_ID, MAI_MAP_ID);

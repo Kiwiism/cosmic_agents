@@ -4,10 +4,12 @@ import client.Character;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
+import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentMovementPoseService;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
 import server.agents.integration.AgentMapGatewayRuntime;
 import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.MapGateway;
 import server.agents.integration.PrimitiveCapabilityGateway;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -111,6 +113,11 @@ final class AgentObserverMovementController {
 
     void stop(AgentObserverSession session) {
         AgentMovementCommandRuntime.stop(session.movementEntry);
+        Character observer = AgentRuntimeIdentityRuntime.bot(session.movementEntry);
+        if (observer != null && capability.grounded(observer)) {
+            AgentMovementPoseService.idleOnGround(session.movementEntry, observer);
+            AgentMovementBroadcastService.broadcastMovement(session.movementEntry);
+        }
     }
 
     private static void synchronizePose(AgentRuntimeEntry entry, Character observer) {

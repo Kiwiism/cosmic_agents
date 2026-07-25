@@ -46,12 +46,12 @@ class VictoriaFirstJobMvpTestServiceTest {
         MapleMap map = mock(MapleMap.class);
         Portal shipArrival = mock(Portal.class);
         Portal townSpawn = mock(Portal.class);
-        when(shipArrival.getPosition()).thenReturn(new Point(4_188, -224));
+        when(shipArrival.getPosition()).thenReturn(new Point(84, 12));
         when(townSpawn.getPosition()).thenReturn(new Point(-495, -110));
-        when(map.getPortal("in03")).thenReturn(shipArrival);
+        when(map.getPortal("maple00")).thenReturn(shipArrival);
         when(map.getPortal(0)).thenReturn(townSpawn);
 
-        assertEquals(new Point(4_188, -224),
+        assertEquals(new Point(84, 12),
                 VictoriaFirstJobMvpTestService.lithHarborArrivalPosition(map));
     }
 
@@ -68,14 +68,14 @@ class VictoriaFirstJobMvpTestServiceTest {
         Point thirdShipStart = VictoriaFirstJobMvpTestService.lithHarborArrivalPosition(map, 802);
         Point fourthShipStart = VictoriaFirstJobMvpTestService.lithHarborArrivalPosition(map, 803);
 
-        assertEquals(new Point(4_050, -223), startOfMainDeck);
+        assertEquals(new Point(40, 27), startOfMainDeck);
         assertNotEquals(startOfMainDeck, anotherShipStart);
         assertNotEquals(anotherShipStart, thirdShipStart);
         assertNotEquals(thirdShipStart, fourthShipStart);
         for (Point start : java.util.List.of(
                 startOfMainDeck, anotherShipStart, thirdShipStart, fourthShipStart)) {
-            assertTrue(start.x >= 4_050 && start.x <= 4_325);
-            assertEquals(-223, start.y);
+            assertTrue(start.x >= 40 && start.x <= 145);
+            assertEquals(27, start.y);
         }
     }
 
@@ -86,7 +86,7 @@ class VictoriaFirstJobMvpTestServiceTest {
         when(townSpawn.getPosition()).thenReturn(new Point(-495, -110));
         when(map.getPortal(0)).thenReturn(townSpawn);
 
-        assertEquals(new Point(4_188, -224),
+        assertEquals(new Point(84, 27),
                 VictoriaFirstJobMvpTestService.lithHarborArrivalPosition(map, 0));
     }
 

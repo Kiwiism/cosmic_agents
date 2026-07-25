@@ -34,7 +34,11 @@ public final class AgentInstructorTrainingRuntime {
         int index = reconcileCompleted(state, gateway, agent, steps);
         if (index >= steps.size()) {
             state.questPackIndex(0);
-            state.stage(AgentCareerProgressionState.Stage.HOME_QUEST_PACK, nowMs);
+            AgentCareerProgressionState.Stage next =
+                    state.runMode() == AgentCareerProgressionState.RunMode.LEVEL15_WITH_INITIAL_SHOP
+                            ? AgentCareerProgressionState.Stage.TRAVEL_TO_INITIAL_SHOP
+                            : AgentCareerProgressionState.Stage.HOME_QUEST_PACK;
+            state.stage(next, nowMs);
             return true;
         }
 
@@ -66,6 +70,28 @@ public final class AgentInstructorTrainingRuntime {
             if (gateway.completeQuest(agent, step.questId(), bundle.instructorNpcId())) {
                 state.trainingQuestIndex(index + 1);
                 state.stage(AgentCareerProgressionState.Stage.INSTRUCTOR_TRAINING, nowMs + NPC_DELAY_MS);
+            }
+            return true;
+        }
+        AgentVictoriaLevel15Catalog.TrainingGround trainingGround = step.trainingGround();
+        if (trainingGround != null) {
+            if (trainingGround.instanceMapIds().contains(agent.getMapId())) {
+                gateway.grind(entry, step.mobIds());
+                return true;
+            }
+            if (AgentVictoriaRouteRuntime.travel(
+                    entry, agent, trainingGround.entranceMapId(), gateway)) {
+                return true;
+            }
+            if (!approachNpc(entry, agent, trainingGround.entranceNpcId(), gateway)) {
+                return true;
+            }
+            int instanceSelection = Math.floorMod(
+                    agent.getId() + (int) (nowMs / Math.max(1L, NPC_DELAY_MS)),
+                    trainingGround.instanceMapIds().size());
+            if (!gateway.runNpcScript(agent, trainingGround.entranceNpcId(), instanceSelection)) {
+                state.stage(AgentCareerProgressionState.Stage.INSTRUCTOR_TRAINING,
+                        nowMs + NPC_DELAY_MS);
             }
             return true;
         }

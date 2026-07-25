@@ -8,8 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.behavior.AgentBehaviorRuntime;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
-import server.agents.capabilities.movement.AgentMovementProfile;
-import server.agents.capabilities.navigation.AgentNavigationGraphService;
+import server.agents.capabilities.navigation.AgentLithHarborArrivalRouteRuntime;
 import server.agents.capabilities.party.AgentPartyLifecycleService;
 import server.agents.capabilities.quest.AmherstTestResetMode;
 import server.agents.capabilities.quest.AmherstTestResetRequest;
@@ -18,9 +17,6 @@ import server.agents.capabilities.quest.AmherstTestResetService;
 import server.agents.plans.amherst.AmherstQuestCatalog;
 import server.agents.capabilities.quest.AmherstTestRuntimeResetService;
 import server.agents.capabilities.townlife.AgentTownLifeRuntime;
-import server.agents.capabilities.townlife.AgentTownLifeArrivalStagingService;
-import server.agents.capabilities.townlife.AgentTownLifeProfile;
-import server.agents.capabilities.townlife.AgentTownLifeProfileRepository;
 import server.agents.capabilities.townlife.LithHarborTownLifeCatalog;
 import server.agents.integration.AgentMapGatewayRuntime;
 import server.agents.integration.AgentCharacterGatewayRuntime;
@@ -391,15 +387,10 @@ public final class MapleIslandCohortRuntime {
         AgentUniversalPlanRuntime.clearCheckpoint(null, pooled.characterId());
         MapleMap lithHarbor = AgentMapGatewayRuntime.map().resolveMap(
                 context.world(), context.channel(), LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID);
-        // Build one usable graph before releasing a load-test wave. The exact per-Agent profile
-        // may warm asynchronously later, but this shared base graph prevents raw-coordinate
-        // steering from a ship marker while no topology is available.
-        var navigationGraph = AgentNavigationGraphService.getGraph(
-                lithHarbor, AgentMovementProfile.base());
-        AgentTownLifeProfile townProfile = AgentTownLifeProfileRepository.defaultRepository()
-                .require(LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID);
-        Point shipArrival = AgentTownLifeArrivalStagingService.select(
-                townProfile, lithHarbor, navigationGraph, context.ordinal());
+        // Use the same strict, graph-grounded Maple Island arrival marker as a live
+        // Shanks crossing; never fall back to an unrelated random town spawn.
+        Point shipArrival = AgentLithHarborArrivalRouteRuntime.victoriaArrivalPosition(
+                lithHarbor, context.ordinal());
         Character agent = null;
         try {
             agent = CosmicAgentOfflineLoader.loadOfflineAgent(

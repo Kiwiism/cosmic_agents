@@ -311,7 +311,7 @@ agent:
     # Purpose: Controls how long Agents remain in or wait for objective nudge. Higher values make that pause or state last longer; lower values make them continue sooner.
     # Technical: the Agent engine deployment configuration consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled.
     AGENT_OBJECTIVE_NUDGE_MS: 5000
-    # Values: a finite non-negative integer; unit: milliseconds. Recommended: 7500-30000 around the tested baseline 15000; benchmark or observe behavior before moving outside this band.
+    # Values: a finite non-negative integer; unit: milliseconds. Recommended: 15000-30000 around the tested baseline 15000; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how long Agents remain in or wait for objective stall recovery. Higher values make that pause or state last longer; lower values make them continue sooner.
     # Technical: the Agent engine deployment configuration consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled. It participates in bounded failure handling and should remain long enough for the normal operation to complete.
     AGENT_OBJECTIVE_STALL_RECOVERY_MS: 15000
@@ -525,12 +525,12 @@ tuning:
     # Purpose: Defines which personality response value represents 100% of the live crowd ceiling. Current profiles use 2500ms as their most relaxed response.
     # Technical: A profile's stable response value is divided by this reference and multiplied by the live response ceiling. Unit: milliseconds and must be greater than zero.
     server.agents.capabilities.behavior.AgentCrowdScalingPolicy.RESPONSE_PROFILE_REFERENCE_MS: '2500'
-    # Values: a finite non-negative integer. Recommended: 4-7 around the tested baseline 5; benchmark or observe behavior before moving outside this band.
+    # Values: a finite non-negative integer. Recommended: 7-12 around the tested baseline 10; benchmark or observe behavior before moving outside this band.
     # Purpose: Defines the quiet-map population where Agents prioritize immediate kills, nearest targets, and uninterrupted plan progress.
     # Technical: Response growth uses only characters above this inclusive threshold; respite duration is zero at or below it, and target/anchor diversity has its own matching start threshold.
-    server.agents.capabilities.behavior.AgentCrowdScalingPolicy.QUIET_CHARACTER_THRESHOLD: '5'
+    server.agents.capabilities.behavior.AgentCrowdScalingPolicy.QUIET_CHARACTER_THRESHOLD: '10'
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 250-1000 around the tested baseline 500; benchmark or observe behavior before moving outside this band.
-    # Purpose: Supplies the fixed part of crowd respite after the quiet-map allowance. With defaults, respite is disabled through 5 characters and its ceiling is about 1.9s at 10, 9.9s at 20, and 24.9s at 30.
+    # Purpose: Supplies the fixed part of crowd respite after the quiet-map allowance. With defaults, respite is disabled through 10 characters and its ceiling is about 5s at 20 and 16.5s at 30.
     # Technical: AgentCrowdScalingPolicy applies REST_BASE_MS + excess * REST_PER_CHARACTER_MS + excess squared * REST_PER_CHARACTER_SQUARED_MS, where excess is the number of characters above QUIET_CHARACTER_THRESHOLD, then clamps to REST_MAX_MS.
     server.agents.capabilities.behavior.AgentCrowdScalingPolicy.REST_BASE_MS: '500'
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 50-200 around the tested baseline 100; benchmark or observe behavior before moving outside this band.
@@ -557,10 +557,10 @@ tuning:
     # Purpose: Defines the nearby area in which other characters cause an Agent to prefer a more distant target and spread out.
     # Technical: Radius around the Agent used against immutable character positions in the shared perception snapshot. Unit: MapleStory map pixels.
     server.agents.capabilities.behavior.AgentCrowdScalingPolicy.LOCAL_CROWD_RADIUS_PX: '350'
-    # Values: a finite non-negative integer. Recommended: 4-7 around the tested baseline 5; benchmark or observe behavior before moving outside this band.
+    # Values: a finite non-negative integer. Recommended: 8-11 around the tested baseline 10; benchmark or observe behavior before moving outside this band.
     # Purpose: Keeps target choice strictly best/nearest while no more than this many characters are nearby.
     # Technical: Local character count at or below this value produces zero target-distance variation and keeps nearest-target selection deterministic in quiet maps.
-    server.agents.capabilities.behavior.AgentCrowdScalingPolicy.TARGET_VARIATION_START_CHARACTERS: '5'
+    server.agents.capabilities.behavior.AgentCrowdScalingPolicy.TARGET_VARIATION_START_CHARACTERS: '10'
     # Values: a finite non-negative integer. Recommended: 8-20 around the tested baseline 12; benchmark or observe behavior before moving outside this band.
     # Purpose: Applies the personality profile's full near/middle target weights once this many characters are nearby; intermediate crowds interpolate smoothly.
     # Technical: Must be greater than TARGET_VARIATION_START_CHARACTERS. It maps the local character count to a 0-100% variation strength.
@@ -1265,10 +1265,6 @@ tuning:
     # Purpose: Controls random timing variation for spam. Higher values make Agents less synchronized; lower values make their timing more uniform.
     # Technical: the "fidget service" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled.
     server.agents.capabilities.movement.fidget.AgentFidgetService.SPAM_JITTER_MS: '50'
-    # Values: a finite non-negative integer; unit: milliseconds. Recommended: 6000-24000 around the tested baseline 12000; benchmark or observe behavior before moving outside this band.
-    # Purpose: Sets how long an Agent may try its identity-stable physical ship descent before using Lith Harbor's hidden-portal recovery route.
-    # Technical: the Lith Harbor arrival route compares the movement stuck timer against this duration. Unit: milliseconds.
-    server.agents.capabilities.navigation.AgentLithHarborArrivalRouteRuntime.DESCENT_FALLBACK_STUCK_MS: '12000'
     # Values: a finite non-negative integer. Recommended: 1750-7000 around the tested baseline 3500; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls the horizontal leeway for lower left exit maximum horizontal. Higher values let Agents drift farther left or right before correcting; lower values make them correct sooner.
     # Technical: the "lith harbor arrival route runtime" component consumes this as an integer. Domain: non-negative count, capacity, or threshold unless the owning component documents a sentinel.
@@ -1441,6 +1437,18 @@ tuning:
     # Purpose: Controls the positional leeway for meaningful approach. Higher values tolerate more separation before Agents correct course; lower values make them align sooner.
     # Technical: the "objective progress watchdog" component consumes this as an integer. Unit: MapleStory map pixels; horizontal and vertical values use the server map coordinate system.
     server.agents.capabilities.objective.AgentObjectiveProgressWatchdog.MEANINGFUL_APPROACH_PX: '12'
+    # Values: a finite non-negative integer; unit: milliseconds. Recommended: 30000-45000 around the tested baseline 30000.
+    # Purpose: Gives combat objectives at least this long to make progress before automatic recovery clears and rebuilds their combat plan. A longer value tolerates spawn competition; a shorter value recovers genuine stalls sooner.
+    # Technical: Minimum kill-objective recovery timeout before crowd extension. Unit: milliseconds; it does not change the earlier navigation nudge timer.
+    server.agents.capabilities.objective.AgentObjectiveRecoveryPolicy.COMBAT_STALL_RECOVERY_MIN_MS: '30000'
+    # Values: a finite non-negative integer; unit: milliseconds per character above the quiet threshold. Recommended: 500-2000 around the tested baseline 1000.
+    # Purpose: Adds extra patience when a combat map is crowded, preserving useful combat targets while other characters compete for the same monsters.
+    # Technical: Added once per character above AgentCrowdScalingPolicy.QUIET_CHARACTER_THRESHOLD before the combat recovery timeout is capped.
+    server.agents.capabilities.objective.AgentObjectiveRecoveryPolicy.COMBAT_STALL_RECOVERY_PER_CROWD_CHARACTER_MS: '1000'
+    # Values: a finite non-negative integer; unit: milliseconds. Recommended: 45000-90000 around the tested baseline 60000; 0 disables the cap.
+    # Purpose: Prevents crowded combat objectives from waiting indefinitely when they are genuinely stuck.
+    # Technical: Upper bound for the crowd-adjusted kill-objective recovery timeout. Unit: milliseconds.
+    server.agents.capabilities.objective.AgentObjectiveRecoveryPolicy.COMBAT_STALL_RECOVERY_MAX_MS: '60000'
     # Values: a finite non-negative integer; unit: map pixels. Recommended: 40-160 around the tested baseline 80; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls the positional leeway for near NPC. Higher values tolerate more separation before Agents correct course; lower values make them align sooner.
     # Technical: the "kpq stage1" component consumes this as an integer. Unit: MapleStory map pixels; horizontal and vertical values use the server map coordinate system.

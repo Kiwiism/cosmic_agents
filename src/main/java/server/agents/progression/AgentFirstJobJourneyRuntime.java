@@ -94,8 +94,7 @@ public final class AgentFirstJobJourneyRuntime {
             case TRAVEL_TO_LITH -> approachAndRun(entry, agent, SHANKS_NPC_ID,
                     () -> {
                         gateway.runNpcScript(agent, SHANKS_NPC_ID);
-                        AgentLithHarborArrivalRouteRuntime.stageAfterShanks(
-                                entry, agent, 31 * agent.getId() + Long.hashCode(nowMs));
+                        AgentLithHarborArrivalRouteRuntime.prepareNavigation(entry, agent);
                     }, gateway);
             case COMPLETE_BIGGS_AT_OLAF -> completeBiggsAtOlaf(entry, agent, gateway);
             case COMPLETE_OLAF_LESSON -> completeOlafLesson(entry, agent, state, nowMs, gateway);
@@ -130,17 +129,16 @@ public final class AgentFirstJobJourneyRuntime {
                 || state.stage() == AgentCareerProgressionState.Stage.GRIND_TO_MILESTONE)
                 && agent.getLevel() >= bundle.milestoneLevel()
                 && agent.getJob().getId() == bundle.firstJobId()
-                && state.trainingQuestIndex() >= bundle.instructorTrainingQuestIds().size()) {
+                && state.trainingQuestIndex() >= bundle.instructorTrainingQuestIds().size()
+                && (state.stage() != AgentCareerProgressionState.Stage.INSTRUCTOR_TRAINING
+                || state.runMode() != AgentCareerProgressionState.RunMode.LEVEL15_WITH_INITIAL_SHOP)) {
             transitionIfNeeded(state, AgentCareerProgressionState.Stage.FINAL_RETURN_TO_INSTRUCTOR, nowMs);
             return;
         }
         if (agent.getJob().getId() == bundle.firstJobId()) {
             if (preAdvancementStage(state.stage())) {
-                AgentCareerProgressionState.Stage next =
-                        state.runMode() == AgentCareerProgressionState.RunMode.LEVEL15_WITH_INITIAL_SHOP
-                                ? AgentCareerProgressionState.Stage.TRAVEL_TO_INITIAL_SHOP
-                                : AgentCareerProgressionState.Stage.INSTRUCTOR_TRAINING;
-                state.stage(next, nowMs + INTERACTION_DELAY_MS);
+                state.stage(AgentCareerProgressionState.Stage.INSTRUCTOR_TRAINING,
+                        nowMs + INTERACTION_DELAY_MS);
             }
             return;
         }
@@ -393,8 +391,11 @@ public final class AgentFirstJobJourneyRuntime {
         if (AgentVictoriaRouteRuntime.travel(entry, agent, bundle.instructorMapId(), gateway)) {
             return true;
         }
-        state.stage(AgentCareerProgressionState.Stage.INSTRUCTOR_TRAINING,
-                nowMs + INTERACTION_DELAY_MS);
+        AgentCareerProgressionState.Stage next =
+                state.trainingQuestIndex() >= bundle.instructorTrainingQuestIds().size()
+                        ? AgentCareerProgressionState.Stage.HOME_QUEST_PACK
+                        : AgentCareerProgressionState.Stage.INSTRUCTOR_TRAINING;
+        state.stage(next, nowMs + INTERACTION_DELAY_MS);
         return true;
     }
 

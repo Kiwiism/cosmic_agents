@@ -50,6 +50,17 @@ public final class AmherstObjectiveReconciler {
                 : "authoritative live state requires objective execution");
     }
 
+    Map<Integer, Integer> killProgress(AmherstPlanObjective objective, Character agent) {
+        if (objective == null || objective.kind() != AmherstPlanObjectiveKind.KILL_MOBS
+                || objective.questId() == null) {
+            return Map.of();
+        }
+        Map<Integer, Integer> progress = new LinkedHashMap<>();
+        objective.mobIds().forEach(mobId ->
+                progress.put(mobId, gateway.questProgress(agent, objective.questId(), mobId)));
+        return Map.copyOf(progress);
+    }
+
     private boolean optionalQuestSatisfied(Character agent, int questId) {
         int status = gateway.questStatus(agent, questId);
         if (status == 2) {

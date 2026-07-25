@@ -85,6 +85,15 @@ class AgentVictoriaLevel15WzCatalogTest {
                             + career.instructorMapId());
             assertTrue(lifeIds(career.shopMapId(), "n").contains(career.shopNpcId()),
                     () -> "shop NPC " + career.shopNpcId() + " is missing from " + career.shopMapId());
+            if (career.trainingGround() != null) {
+                assertTrue(lifeIds(career.trainingGround().entranceMapId(), "n")
+                                .contains(career.trainingGround().entranceNpcId()),
+                        () -> "training entrance NPC " + career.trainingGround().entranceNpcId()
+                                + " is missing from " + career.trainingGround().entranceMapId());
+                for (int mapId : career.trainingGround().instanceMapIds()) {
+                    map(mapId);
+                }
+            }
         }
     }
 

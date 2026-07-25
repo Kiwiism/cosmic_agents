@@ -2,6 +2,7 @@ package server.agents.plans.amherst;
 
 import client.Character;
 import server.agents.capabilities.AgentCapabilityStatus;
+import server.agents.capabilities.behavior.AgentCrowdScalingPolicy;
 import server.agents.capabilities.runtime.AgentCapabilityJournalEvent;
 import server.agents.capabilities.runtime.AgentCapabilityJournalEventType;
 import server.agents.capabilities.runtime.AgentCapabilityReasonCode;
@@ -12,6 +13,7 @@ import server.agents.capabilities.objective.AgentObjectiveProgressWatchdog;
 import server.agents.capabilities.objective.AgentObjectiveRecoveryPolicy;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentSchedulerRuntime;
+import server.agents.integration.cosmic.CosmicAgentPerceptionSnapshotFactory;
 import server.agents.objectives.AgentObjectiveDefinition;
 import server.agents.objectives.AgentObjectiveKernel;
 import server.agents.objectives.AgentObjectiveStatus;
@@ -149,6 +151,7 @@ public final class AmherstPlanRuntimeRunner {
             state.nextObjectiveAtMs = firstObjectiveAtMs;
             state.objectiveWatchdog.reset();
             state.deferredObjectiveIds.clear();
+            state.silentRecoveryNarrationObjectiveIds.clear();
             state.objectiveDeferralStages.clear();
             state.observer = observer == null ? AmherstPlanObserver.NONE : observer;
             state.lastError = "";
@@ -241,6 +244,7 @@ public final class AmherstPlanRuntimeRunner {
             state.nextObjectiveAtMs = firstObjectiveAtMs;
             state.objectiveWatchdog.reset();
             state.deferredObjectiveIds.clear();
+            state.silentRecoveryNarrationObjectiveIds.clear();
             state.objectiveDeferralStages.clear();
             state.observer = observer == null ? AmherstPlanObserver.NONE : observer;
             state.lastError = "";
@@ -335,7 +339,10 @@ public final class AmherstPlanRuntimeRunner {
                 state.objectiveStartLevel = agent.getLevel();
                 state.objectiveStartExp = agent.getExp();
                 AgentObjectiveProgressWatchdog.start(
-                        state.objectiveWatchdog, entry, agent, nowMs);
+                        state.objectiveWatchdog, entry, agent,
+                        reconciler.killProgress(next, agent), nowMs);
+                boolean silentRecoveryNarration =
+                        state.silentRecoveryNarrationObjectiveIds.remove(next.objectiveId());
                 state.advanceRequested = false;
                 state.waitingForAdvance = false;
                 saveIfChanged(entry, state, before, state.progress);
@@ -344,7 +351,9 @@ public final class AmherstPlanRuntimeRunner {
                 observe(state, new AmherstPlanObservation(
                         AmherstPlanObservation.Type.OBJECTIVE_STARTED, nowMs,
                         next.objectiveId(), next.kind(), null, null, next.reason()));
-                AmherstPlanNarrator.announce(agent, next);
+                if (!silentRecoveryNarration) {
+                    AmherstPlanNarrator.announce(agent, next);
+                }
                 return true;
             } catch (IOException | RuntimeException failure) {
                 state.lastError = failure.getClass().getSimpleName() + ": " + failure.getMessage();
@@ -492,9 +501,12 @@ public final class AmherstPlanRuntimeRunner {
         if (state.assignedObjectiveId == null) {
             return false;
         }
+        AmherstPlanObjective assignedObjective = objective(state.assignedObjectiveId);
         AgentObjectiveProgressWatchdog.Evaluation evaluation =
                 AgentObjectiveProgressWatchdog.evaluate(
-                        state.objectiveWatchdog, entry, agent, nowMs, recoveryPolicy);
+                        state.objectiveWatchdog, entry, agent,
+                        reconciler.killProgress(assignedObjective, agent),
+                        nowMs, recoveryPolicyFor(assignedObjective, agent, nowMs));
         if (evaluation.action() == AgentObjectiveProgressWatchdog.Action.RECOVER) {
             String objectiveId = state.assignedObjectiveId;
             AgentCapabilityRuntime.cancelNow(entry, agent, nowMs);
@@ -548,6 +560,7 @@ public final class AmherstPlanRuntimeRunner {
             publish(state, "Automatic recovery limit reached for " + objective.objectiveId() + ".");
             return false;
         }
+        state.silentRecoveryNarrationObjectiveIds.add(objective.objectiveId());
         AgentMovementRecoveryService.nudgeForObjectiveReplan(entry);
         if (dependencySafeDeferral || declaredEmptyStage) {
             state.objectiveDeferralStages.put(objective.objectiveId(), nextDeferralStage);
@@ -584,6 +597,18 @@ public final class AmherstPlanRuntimeRunner {
                 agent.getName(), agent.getMapId(), objective.objectiveId(), attempts,
                 result.reasonCode(), retryDelayMs, worldResourceWait, dependencySafeDeferral);
         return true;
+    }
+
+    private AgentObjectiveRecoveryPolicy recoveryPolicyFor(AmherstPlanObjective objective,
+                                                           Character agent,
+                                                           long nowMs) {
+        if (objective.kind() != AmherstPlanObjectiveKind.KILL_MOBS) {
+            return recoveryPolicy;
+        }
+        int totalCharacters = AgentCrowdScalingPolicy.totalCharacters(
+                CosmicAgentPerceptionSnapshotFactory.capture(agent, nowMs));
+        return recoveryPolicy.forCombatCrowd(
+                AgentCrowdScalingPolicy.charactersAboveQuietThreshold(totalCharacters));
     }
 
     private static boolean canWaitForWorldResource(AmherstPlanObjective objective,

@@ -144,11 +144,16 @@
         "thief-dagger-standard-v1": 1332063
       },
       "verifiedShopItemIds": [2000000, 2000001, 2070000],
+      "trainingGround": {
+        "entranceMapId": 103010000,
+        "entranceNpcId": 1052114,
+        "instanceMapIds": [910310000, 910310001, 910310002, 910310003, 910310004]
+      },
       "trainingSteps": [
-        { "questId": 2140, "huntingMapId": 102020000, "mobIds": [130100], "requiredCounts": [20], "rewardExp": 590 },
-        { "questId": 2141, "huntingMapId": 102020000, "mobIds": [130100], "requiredCounts": [50], "rewardExp": 610 },
-        { "questId": 2142, "huntingMapId": 102020000, "mobIds": [130100], "requiredCounts": [80], "rewardExp": 645 },
-        { "questId": 2143, "huntingMapId": 103010000, "mobIds": [1120100], "requiredCounts": [10], "rewardExp": 840 }
+        { "questId": 2140, "huntingMapId": 910310000, "mobIds": [130100], "requiredCounts": [20], "rewardExp": 590 },
+        { "questId": 2141, "huntingMapId": 910310000, "mobIds": [130100], "requiredCounts": [50], "rewardExp": 610 },
+        { "questId": 2142, "huntingMapId": 910310000, "mobIds": [130100], "requiredCounts": [80], "rewardExp": 645 },
+        { "questId": 2143, "huntingMapId": 910310000, "mobIds": [1120100], "requiredCounts": [10], "rewardExp": 840 }
       ],
       "milestoneGrind": { "huntingMapId": 103010000, "mobIds": [210100, 1120100] },
       "catchUpPlan": {

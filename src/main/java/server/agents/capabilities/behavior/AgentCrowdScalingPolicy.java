@@ -53,6 +53,10 @@ public final class AgentCrowdScalingPolicy {
         return Math.max(1, snapshot.realPlayerObservers() + snapshot.agentPeers().size());
     }
 
+    public static int charactersAboveQuietThreshold(int totalCharacters) {
+        return Math.max(0, totalCharacters - QUIET_CHARACTER_THRESHOLD);
+    }
+
     public static int localCharacters(AgentPerceptionSnapshot snapshot, AgentPosition center) {
         if (snapshot == null || center == null) {
             return 1;
@@ -151,7 +155,7 @@ public final class AgentCrowdScalingPolicy {
     }
 
     private static int crowdCharacters(int totalCharacters) {
-        return Math.max(0, totalCharacters - QUIET_CHARACTER_THRESHOLD);
+        return charactersAboveQuietThreshold(totalCharacters);
     }
 
     private static int scaledDuration(

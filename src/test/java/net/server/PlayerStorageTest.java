@@ -71,6 +71,20 @@ class PlayerStorageTest {
         assertEquals(java.util.List.of(second), storage.getAllCharacters());
     }
 
+    @Test
+    void clientTypeChangeBeforeRemovalDoesNotCorruptPopulationSnapshot() {
+        PlayerStorage storage = new PlayerStorage();
+        Character agent = character(1, "agent", mock(BotClient.class));
+        storage.addPlayer(agent);
+
+        when(agent.getClient()).thenReturn(null);
+        storage.removePlayer(agent.getId());
+
+        assertEquals(0, storage.getRealPlayerCount());
+        assertEquals(0, storage.getAgentCount());
+        assertEquals(java.util.List.of(), storage.getAllCharacters());
+    }
+
     private static Character character(int id, String name, Client client) {
         Character character = mock(Character.class);
         when(character.getId()).thenReturn(id);

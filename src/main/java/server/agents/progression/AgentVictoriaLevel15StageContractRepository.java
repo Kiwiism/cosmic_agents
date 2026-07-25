@@ -19,7 +19,7 @@ public final class AgentVictoriaLevel15StageContractRepository {
             "complete-biggs-at-olaf", "complete-olaf-lesson", "start-career-path",
             "pre-job-level-grind", "take-taxi", "enter-instructor", "complete-career-path",
             "advance-first-job", "allocate-initial-ap-sp",
-            "initial-shop-trip", "return-to-instructor", "instructor-training",
+            "instructor-training", "initial-shop-trip", "return-to-instructor",
             "home-quest-pack", "post-home-decision", "rotation-quest-pack",
             "fallback-grind", "final-return");
     private static final AgentVictoriaLevel15StageContract DEFAULT = loadResource(DEFAULT_RESOURCE);

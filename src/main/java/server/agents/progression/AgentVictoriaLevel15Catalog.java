@@ -142,6 +142,7 @@ public record AgentVictoriaLevel15Catalog(
             List<Integer> starterKitItemIds,
             Map<String, Integer> preferredStarterWeaponByBundleId,
             List<Integer> verifiedShopItemIds,
+            TrainingGround trainingGround,
             List<TrainingStep> trainingSteps,
             MilestoneGrind milestoneGrind,
             CatchUpPlan catchUpPlan) {
@@ -172,6 +173,27 @@ public record AgentVictoriaLevel15Catalog(
             preferredStarterWeaponByBundleId = Map.copyOf(preferredStarterWeaponByBundleId);
             verifiedShopItemIds = List.copyOf(verifiedShopItemIds);
             trainingSteps = List.copyOf(trainingSteps);
+        }
+    }
+
+    /**
+     * Optional authentic access point for a career's instructor training maps.
+     * A null value means its training quests use their ordinary hunting maps.
+     */
+    public record TrainingGround(
+            int entranceMapId,
+            int entranceNpcId,
+            List<Integer> instanceMapIds) {
+
+        public TrainingGround {
+            if (entranceMapId <= 0 || entranceNpcId <= 0
+                    || instanceMapIds == null || instanceMapIds.isEmpty()
+                    || instanceMapIds.stream().anyMatch(mapId -> mapId == null || mapId <= 0)
+                    || Set.copyOf(instanceMapIds).size() != instanceMapIds.size()) {
+                throw new IllegalArgumentException(
+                        "a training ground requires an entrance NPC and unique instance maps");
+            }
+            instanceMapIds = List.copyOf(instanceMapIds);
         }
     }
 

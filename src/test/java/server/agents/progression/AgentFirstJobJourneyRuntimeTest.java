@@ -19,25 +19,24 @@ import static org.mockito.Mockito.when;
 
 class AgentFirstJobJourneyRuntimeTest {
     @Test
-    void yieldsToMovementWhileDescendingFromTheLithHarborShip() {
+    void yieldsToMovementWhileWalkingToTheLithHarborShipExit() {
         Character agent = beginner("ShipArrival", 9, 104000000);
         when(agent.getPosition()).thenReturn(new Point(3_200, -223));
         AgentRuntimeEntry entry = entry(agent, "warrior-standard-v1",
                 AgentCareerProgressionState.Stage.COMPLETE_BIGGS_AT_OLAF);
         PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
         when(gateway.grounded(agent)).thenReturn(true);
+        when(gateway.portalPosition(agent, 31)).thenReturn(new Point(3_800, -223));
 
         assertFalse(AgentFirstJobJourneyRuntime.tick(entry, agent, 100L, gateway));
 
-        verify(gateway).navigate(org.mockito.ArgumentMatchers.eq(entry),
-                org.mockito.ArgumentMatchers.any(Point.class),
-                org.mockito.ArgumentMatchers.eq(true));
+        verify(gateway).navigate(entry, new Point(3_800, -223), true);
     }
 
     @Test
     void yieldsToMovementWhenOlafIsNotYetInInteractionRange() {
         Character agent = beginner("WalkToOlaf", 9, 104000000);
-        when(agent.getPosition()).thenReturn(new Point(0, 0));
+        when(agent.getPosition()).thenReturn(new Point(2_894, 423));
         AgentRuntimeEntry entry = entry(agent, "warrior-standard-v1",
                 AgentCareerProgressionState.Stage.COMPLETE_BIGGS_AT_OLAF);
         PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
@@ -53,10 +52,12 @@ class AgentFirstJobJourneyRuntimeTest {
     @Test
     void completesSeededBiggsQuestAtOlafBeforeAnyTaxiTravel() {
         Character agent = beginner("BiggsReady", 9, 104000000);
+        when(agent.getPosition()).thenReturn(new Point(3_392, 518));
         when(agent.getQuestStatus(1046)).thenReturn((byte) 1);
         AgentRuntimeEntry entry = entry(agent, "warrior-standard-v1",
                 AgentCareerProgressionState.Stage.COMPLETE_BIGGS_AT_OLAF);
         PrimitiveCapabilityGateway gateway = npcGateway(agent, 1002101);
+        when(gateway.npcPosition(agent, 1002101)).thenReturn(new Point(3_392, 518));
         when(gateway.canCompleteQuest(agent, 1046, 1002101)).thenReturn(true);
         when(gateway.completeQuest(agent, 1046, 1002101)).thenReturn(true);
 
@@ -147,7 +148,7 @@ class AgentFirstJobJourneyRuntimeTest {
     }
 
     @Test
-    void resetFixtureSchedulesInitialShopBeforeInstructorTraining() {
+    void resetFixtureStartsInstructorTrainingBeforePlannedShop() {
         Character agent = mock(Character.class);
         when(agent.getId()).thenReturn(42);
         when(agent.getName()).thenReturn("PotionTrip");
@@ -163,7 +164,7 @@ class AgentFirstJobJourneyRuntimeTest {
                 AgentCareerProgressionState.Stage.ADVANCE_FIRST_JOB, 0L);
 
         assertTrue(AgentFirstJobJourneyRuntime.tick(entry, agent, 100L, mock(PrimitiveCapabilityGateway.class)));
-        assertEquals(AgentCareerProgressionState.Stage.TRAVEL_TO_INITIAL_SHOP, state.stage());
+        assertEquals(AgentCareerProgressionState.Stage.INSTRUCTOR_TRAINING, state.stage());
     }
 
     @Test
@@ -189,12 +190,12 @@ class AgentFirstJobJourneyRuntimeTest {
     }
 
     @Test
-    void completedInstructorChainHandsOffToCareerHomeQuestPack() {
+    void completedInstructorChainSchedulesThePlannedShopBeforeCatchUpQuests() {
         Character agent = mock(Character.class);
         when(agent.getId()).thenReturn(44);
         when(agent.getName()).thenReturn("HomePackNext");
         when(agent.getJob()).thenReturn(Job.THIEF);
-        when(agent.getLevel()).thenReturn(14);
+        when(agent.getLevel()).thenReturn(15);
         when(agent.getMapId()).thenReturn(103000003);
         AgentRuntimeEntry entry = entry(agent, "thief-claw-standard-v1",
                 AgentCareerProgressionState.Stage.INSTRUCTOR_TRAINING);
@@ -208,7 +209,70 @@ class AgentFirstJobJourneyRuntimeTest {
         AgentCareerProgressionState state = entry.capabilityStates().require(
                 AgentCareerProgressionState.STATE_KEY);
         assertEquals(4, state.trainingQuestIndex());
+        assertEquals(AgentCareerProgressionState.Stage.TRAVEL_TO_INITIAL_SHOP, state.stage());
+    }
+
+    @Test
+    void returningFromPostTrainingShopHandsOffToCareerHomeQuestPack() {
+        Character agent = mock(Character.class);
+        when(agent.getId()).thenReturn(47);
+        when(agent.getName()).thenReturn("ShoppingDone");
+        when(agent.getJob()).thenReturn(Job.THIEF);
+        when(agent.getLevel()).thenReturn(14);
+        when(agent.getMapId()).thenReturn(103000003);
+        AgentRuntimeEntry entry = entry(agent, "thief-claw-standard-v1",
+                AgentCareerProgressionState.Stage.RETURN_TO_INSTRUCTOR);
+        AgentCareerProgressionState state = entry.capabilityStates().require(
+                AgentCareerProgressionState.STATE_KEY);
+        state.trainingQuestIndex(4);
+
+        assertTrue(AgentFirstJobJourneyRuntime.tick(
+                entry, agent, 100L, mock(PrimitiveCapabilityGateway.class)));
+
         assertEquals(AgentCareerProgressionState.Stage.HOME_QUEST_PACK, state.stage());
+    }
+
+    @Test
+    void activeThiefTrainingQuestEntersTrainingCenterThroughPowerBFore() {
+        Character agent = mock(Character.class);
+        when(agent.getId()).thenReturn(41);
+        when(agent.getName()).thenReturn("TrainingDoor");
+        when(agent.getJob()).thenReturn(Job.THIEF);
+        when(agent.getLevel()).thenReturn(10);
+        when(agent.getMapId()).thenReturn(103010000);
+        when(agent.getPosition()).thenReturn(new Point(1_051, 124));
+        AgentRuntimeEntry entry = entry(agent, "thief-dagger-standard-v1",
+                AgentCareerProgressionState.Stage.INSTRUCTOR_TRAINING);
+        PrimitiveCapabilityGateway gateway = npcGateway(agent, 1052114);
+        when(gateway.questStatus(agent, 2140)).thenReturn(1);
+        when(gateway.npcPosition(agent, 1052114)).thenReturn(new Point(1_051, 124));
+        when(gateway.runNpcScript(agent, 1052114, 1)).thenReturn(true);
+
+        assertTrue(AgentFirstJobJourneyRuntime.tick(entry, agent, 100L, gateway));
+
+        verify(gateway).runNpcScript(agent, 1052114, 1);
+        verify(gateway, never()).grind(entry, Set.of(130100));
+    }
+
+    @Test
+    void activeThiefOctopusQuestGrindsInsideAnyTrainingCenterInstance() {
+        Character agent = mock(Character.class);
+        when(agent.getId()).thenReturn(48);
+        when(agent.getName()).thenReturn("TrainingOctopus");
+        when(agent.getJob()).thenReturn(Job.THIEF);
+        when(agent.getLevel()).thenReturn(13);
+        when(agent.getMapId()).thenReturn(910310004);
+        AgentRuntimeEntry entry = entry(agent, "thief-claw-standard-v1",
+                AgentCareerProgressionState.Stage.INSTRUCTOR_TRAINING);
+        AgentCareerProgressionState state = entry.capabilityStates().require(
+                AgentCareerProgressionState.STATE_KEY);
+        state.trainingQuestIndex(3);
+        PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
+        when(gateway.questStatus(agent, 2143)).thenReturn(1);
+
+        assertTrue(AgentFirstJobJourneyRuntime.tick(entry, agent, 100L, gateway));
+
+        verify(gateway).grind(entry, Set.of(1120100));
     }
 
     @Test

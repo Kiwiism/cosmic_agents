@@ -12,7 +12,7 @@ public final class AgentObserverCommandService {
             return;
         }
         if (params == null || params.length == 0) {
-            issuer.dropMessage(5, "Usage: !observer start <watched IGN> | status | stop");
+            issuer.dropMessage(5, "Usage: !observer start <observer IGN> | status | stop");
             return;
         }
         switch (params[0].toLowerCase()) {
@@ -23,13 +23,13 @@ public final class AgentObserverCommandService {
                             ? "Observer showcase stopped."
                             : "No observer showcase was active.");
             default -> issuer.dropMessage(5,
-                    "Usage: !observer start <watched IGN> | status | stop");
+                    "Usage: !observer start <observer IGN> | status | stop");
         }
     }
 
     private static void start(Character issuer, String[] params) {
         if (params.length < 2 || params[1].isBlank()) {
-            issuer.dropMessage(5, "Usage: !observer start <watched IGN>");
+            issuer.dropMessage(5, "Usage: !observer start <observer IGN>");
             return;
         }
         AgentObserverRuntime.StartResult result =

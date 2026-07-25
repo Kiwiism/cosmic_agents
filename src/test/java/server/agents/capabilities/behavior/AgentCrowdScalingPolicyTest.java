@@ -14,24 +14,24 @@ class AgentCrowdScalingPolicyTest {
     @Test
     void responseCeilingGrowsFromResponsiveSmallMapToWideCrowdVariation() {
         assertEquals(500, AgentCrowdScalingPolicy.responseCeilingMs(5));
-        assertEquals(1_500, AgentCrowdScalingPolicy.responseCeilingMs(10));
-        assertEquals(5_000, AgentCrowdScalingPolicy.responseCeilingMs(20));
-        assertEquals(10_500, AgentCrowdScalingPolicy.responseCeilingMs(30));
+        assertEquals(500, AgentCrowdScalingPolicy.responseCeilingMs(10));
+        assertEquals(3_000, AgentCrowdScalingPolicy.responseCeilingMs(20));
+        assertEquals(7_500, AgentCrowdScalingPolicy.responseCeilingMs(30));
 
         assertEquals(500, AgentCrowdScalingPolicy.responseDelayMs(2_500, 19, 5));
-        assertEquals(10_500, AgentCrowdScalingPolicy.responseDelayMs(2_500, 19, 30));
+        assertEquals(7_500, AgentCrowdScalingPolicy.responseDelayMs(2_500, 19, 30));
         assertTrue(AgentCrowdScalingPolicy.responseDelayMs(650, 0, 5) < 150);
     }
 
     @Test
     void respiteCeilingOnlyBecomesLongWhenTheMapIsCrowded() {
         assertEquals(0, AgentCrowdScalingPolicy.restCeilingMs(5));
-        assertEquals(1_875, AgentCrowdScalingPolicy.restCeilingMs(10));
-        assertEquals(9_875, AgentCrowdScalingPolicy.restCeilingMs(20));
-        assertEquals(24_875, AgentCrowdScalingPolicy.restCeilingMs(30));
+        assertEquals(0, AgentCrowdScalingPolicy.restCeilingMs(10));
+        assertEquals(5_000, AgentCrowdScalingPolicy.restCeilingMs(20));
+        assertEquals(16_500, AgentCrowdScalingPolicy.restCeilingMs(30));
 
         assertEquals(0, AgentCrowdScalingPolicy.restDurationMs(35_000, 5));
-        assertEquals(24_875, AgentCrowdScalingPolicy.restDurationMs(35_000, 30));
+        assertEquals(16_500, AgentCrowdScalingPolicy.restDurationMs(35_000, 30));
     }
 
     @Test
@@ -55,7 +55,8 @@ class AgentCrowdScalingPolicyTest {
                 snapshot, new AgentPosition(0, 0)));
         assertEquals(0, AgentCrowdScalingPolicy.targetVariationPercent(4));
         assertEquals(0, AgentCrowdScalingPolicy.targetVariationPercent(5));
-        assertEquals(28, AgentCrowdScalingPolicy.targetVariationPercent(7));
+        assertEquals(0, AgentCrowdScalingPolicy.targetVariationPercent(10));
+        assertEquals(50, AgentCrowdScalingPolicy.targetVariationPercent(11));
         assertEquals(100, AgentCrowdScalingPolicy.targetVariationPercent(12));
         assertEquals(0, AgentCrowdScalingPolicy.anchorPercent(60, 5));
         assertEquals(60, AgentCrowdScalingPolicy.anchorPercent(60, 12));

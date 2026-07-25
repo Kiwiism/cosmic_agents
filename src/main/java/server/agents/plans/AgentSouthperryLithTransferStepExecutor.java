@@ -32,6 +32,9 @@ public final class AgentSouthperryLithTransferStepExecutor implements AgentPlanS
 
     @Override
     public AgentPlanStepExecution start(AgentPlanExecutionContext context) {
+        context.entry().capabilityStates()
+                .require(AgentSouthperryLithTransferState.STATE_KEY)
+                .crossing();
         return AgentPlanStepExecution.active(true);
     }
 
@@ -39,10 +42,22 @@ public final class AgentSouthperryLithTransferStepExecutor implements AgentPlanS
     public AgentPlanStepExecution tick(AgentPlanExecutionContext context) {
         Character agent = context.agent();
         PrimitiveCapabilityGateway gateway = AgentPrimitiveCapabilityGatewayRuntime.gateway();
+        AgentSouthperryLithTransferState state = context.entry().capabilityStates()
+                .require(AgentSouthperryLithTransferState.STATE_KEY);
         if (agent.getMapId() == AgentLithHarborArrivalRouteRuntime.LITH_HARBOR_MAP_ID) {
+            if (state.stage() == AgentSouthperryLithTransferState.Stage.CROSSING) {
+                /*
+                 * Shanks' script has already selected and broadcast the real Lith Harbor
+                 * arrival point. Preserve it: TownLife owns all movement from that point.
+                 */
+                AgentLithHarborArrivalRouteRuntime.prepareNavigation(context.entry(), agent);
+                state.arrivedInLith();
+                return AgentPlanStepExecution.active(true);
+            }
             gateway.stop(context.entry());
+            state.townLifeReady();
             return AgentPlanStepExecution.terminal(AgentPlanExecutionStatus.SUCCEEDED,
-                    "arrived on the Lith Harbor ship");
+                    "arrived in Lith Harbor for TownLife navigation");
         }
         if (agent.getMapId() != MapleIslandSouthperryQuestCatalog.FINAL_MAP_ID) {
             return AgentPlanStepExecution.terminal(AgentPlanExecutionStatus.BLOCKED,
@@ -67,17 +82,15 @@ public final class AgentSouthperryLithTransferStepExecutor implements AgentPlanS
         }
         gateway.stop(context.entry());
         gateway.facePosition(agent, shanks);
-        if (gateway.runNpcScript(agent, npcId)
-                && agent.getMapId() == AgentLithHarborArrivalRouteRuntime.LITH_HARBOR_MAP_ID) {
-            AgentLithHarborArrivalRouteRuntime.stageAfterShanks(
-                    context.entry(), agent, 31 * agent.getId() + Long.hashCode(context.nowMs()));
-        }
+        gateway.runNpcScript(agent, npcId);
         return AgentPlanStepExecution.active(true);
     }
 
     @Override
     public void cancel(AgentPlanExecutionContext context) {
         AgentPrimitiveCapabilityGatewayRuntime.gateway().stop(context.entry());
+        context.entry().capabilityStates()
+                .remove(AgentSouthperryLithTransferState.STATE_KEY);
     }
 
     private static int intParameter(AgentPlanDefinition.Step step, String key, int fallback) {

@@ -78,6 +78,12 @@ class AgentVictoriaLevel15CatalogRepositoryTest {
         AgentVictoriaLevel15Catalog.Career thief = repository.careerForFirstJob(400);
         assertEquals(1472061, thief.preferredStarterWeaponByBundleId().get("thief-claw-standard-v1"));
         assertEquals(1332063, thief.preferredStarterWeaponByBundleId().get("thief-dagger-standard-v1"));
+        assertEquals(103010000, thief.trainingGround().entranceMapId());
+        assertEquals(1052114, thief.trainingGround().entranceNpcId());
+        assertEquals(List.of(910310000, 910310001, 910310002, 910310003, 910310004),
+                thief.trainingGround().instanceMapIds());
+        assertTrue(thief.trainingSteps().stream()
+                .allMatch(step -> step.huntingMapId() == 910310000));
     }
 
     @Test

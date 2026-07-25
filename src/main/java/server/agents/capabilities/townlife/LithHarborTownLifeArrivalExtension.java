@@ -83,8 +83,11 @@ final class LithHarborTownLifeArrivalExtension implements AgentTownLifeArrivalEx
         gateway.facePosition(agent, shanks);
         boolean entered = gateway.runNpcScript(agent, MapleIslandSouthperryQuestCatalog.SHANKS_NPC_ID);
         if (entered && agent.getMapId() == state.townMapId()) {
-            AgentLithHarborArrivalRouteRuntime.stageAfterShanks(
-                    entry, agent, 31 * agent.getId() + Long.hashCode(nowMs));
+            /*
+             * The NPC script owns the one and only arrival placement. Warming navigation is
+             * read-only; the next tick walks from that visible spawn toward a ship exit.
+             */
+            AgentLithHarborArrivalRouteRuntime.prepareNavigation(entry, agent);
             state.transition(AgentTownLifeState.Stage.TRAVEL_TO_TOWN, nowMs);
         } else {
             state.transition(

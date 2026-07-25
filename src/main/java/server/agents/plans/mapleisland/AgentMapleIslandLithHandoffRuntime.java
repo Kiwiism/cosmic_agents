@@ -10,6 +10,7 @@ import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.plans.AgentPlanExecutionStatus;
 import server.agents.plans.AgentPlanSessionState;
 import server.agents.plans.AgentPlanStartRequest;
+import server.agents.plans.AgentSouthperryLithTransferState;
 import server.agents.plans.AgentUniversalPlanRuntime;
 import server.agents.plans.amherst.MapleIslandSouthperryQuestCatalog;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -113,6 +114,7 @@ public final class AgentMapleIslandLithHandoffRuntime {
             if (plan.status() == AgentPlanExecutionStatus.SUCCEEDED) {
                 AgentTownLifeRuntime.start(entry, LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID,
                         nowMs, agent.getId());
+                entry.capabilityStates().remove(AgentSouthperryLithTransferState.STATE_KEY);
                 state.complete();
                 AgentUniversalPlanRuntime.clearDeferredSuccessor(
                         entry, TRANSFER_PLAN_ID, nowMs);

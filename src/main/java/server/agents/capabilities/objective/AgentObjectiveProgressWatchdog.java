@@ -5,6 +5,7 @@ import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
+import java.util.Map;
 
 public final class AgentObjectiveProgressWatchdog {
     private static final int MEANINGFUL_APPROACH_PX = config.AgentTuning.intValue("server.agents.capabilities.objective.AgentObjectiveProgressWatchdog.MEANINGFUL_APPROACH_PX");
@@ -32,6 +33,7 @@ public final class AgentObjectiveProgressWatchdog {
         private double bestNavigationDistanceSq;
         private int level;
         private int exp;
+        private Map<Integer, Integer> objectiveCounters = Map.of();
 
         public void reset() {
             initialized = false;
@@ -45,6 +47,7 @@ public final class AgentObjectiveProgressWatchdog {
             bestNavigationDistanceSq = Double.MAX_VALUE;
             level = 0;
             exp = 0;
+            objectiveCounters = Map.of();
         }
 
         public long lastNudgeAtMs() {
@@ -56,7 +59,15 @@ public final class AgentObjectiveProgressWatchdog {
                              AgentRuntimeEntry entry,
                              Character agent,
                              long nowMs) {
-        recordProgress(state, entry, agent, nowMs);
+        start(state, entry, agent, Map.of(), nowMs);
+    }
+
+    public static void start(State state,
+                             AgentRuntimeEntry entry,
+                             Character agent,
+                             Map<Integer, Integer> objectiveCounters,
+                             long nowMs) {
+        recordProgress(state, entry, agent, objectiveCounters, nowMs);
     }
 
     public static Evaluation evaluate(State state,
@@ -64,10 +75,21 @@ public final class AgentObjectiveProgressWatchdog {
                                       Character agent,
                                       long nowMs,
                                       AgentObjectiveRecoveryPolicy policy) {
-        if (madeProgress(state, entry, agent)) {
-            recordProgress(state, entry, agent, nowMs);
+        return evaluate(state, entry, agent, Map.of(), nowMs, policy);
+    }
+
+    public static Evaluation evaluate(State state,
+                                      AgentRuntimeEntry entry,
+                                      Character agent,
+                                      Map<Integer, Integer> objectiveCounters,
+                                      long nowMs,
+                                      AgentObjectiveRecoveryPolicy policy) {
+        Map<Integer, Integer> counters = copyCounters(objectiveCounters);
+        if (madeProgress(state, entry, agent, counters)) {
+            recordProgress(state, entry, agent, counters, nowMs);
             return new Evaluation(Action.NONE, 0L);
         }
+        state.objectiveCounters = counters;
         long stalledMs = Math.max(0L, nowMs - state.progressAtMs);
         if (policy.recoverAfterMs() > 0L && stalledMs >= policy.recoverAfterMs()) {
             return new Evaluation(Action.RECOVER, stalledMs);
@@ -84,12 +106,14 @@ public final class AgentObjectiveProgressWatchdog {
 
     private static boolean madeProgress(State state,
                                         AgentRuntimeEntry entry,
-                                        Character agent) {
+                                        Character agent,
+                                        Map<Integer, Integer> objectiveCounters) {
         if (!state.initialized
                 || state.journalSequence != entry.capabilityRuntimeState().journalSequence()
                 || state.mapId != agent.getMapId()
                 || state.level != agent.getLevel()
-                || state.exp != agent.getExp()) {
+                || state.exp != agent.getExp()
+                || counterAdvanced(state.objectiveCounters, objectiveCounters)) {
             return true;
         }
         Point target = navigationTarget(entry);
@@ -116,6 +140,7 @@ public final class AgentObjectiveProgressWatchdog {
     private static void recordProgress(State state,
                                        AgentRuntimeEntry entry,
                                        Character agent,
+                                       Map<Integer, Integer> objectiveCounters,
                                        long nowMs) {
         Point position = agent.getPosition();
         Point target = navigationTarget(entry);
@@ -133,6 +158,7 @@ public final class AgentObjectiveProgressWatchdog {
                 ? Double.MAX_VALUE : position.distanceSq(target);
         state.level = agent.getLevel();
         state.exp = agent.getExp();
+        state.objectiveCounters = copyCounters(objectiveCounters);
     }
 
     private static Point navigationTarget(AgentRuntimeEntry entry) {
@@ -142,5 +168,18 @@ public final class AgentObjectiveProgressWatchdog {
 
     private static Point copy(Point point) {
         return point == null ? null : new Point(point);
+    }
+
+    private static boolean counterAdvanced(Map<Integer, Integer> previous,
+                                           Map<Integer, Integer> current) {
+        if (current == null || current.isEmpty()) {
+            return false;
+        }
+        return current.entrySet().stream().anyMatch(counter ->
+                counter.getValue() > previous.getOrDefault(counter.getKey(), 0));
+    }
+
+    private static Map<Integer, Integer> copyCounters(Map<Integer, Integer> counters) {
+        return counters == null || counters.isEmpty() ? Map.of() : Map.copyOf(counters);
     }
 }

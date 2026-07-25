@@ -17,6 +17,7 @@ public final class AmherstPlanExecutionState {
     final AgentObjectiveProgressWatchdog.State objectiveWatchdog =
             new AgentObjectiveProgressWatchdog.State();
     final Set<String> deferredObjectiveIds = new HashSet<>();
+    final Set<String> silentRecoveryNarrationObjectiveIds = new HashSet<>();
     final Map<String, Integer> objectiveDeferralStages = new HashMap<>();
     boolean active;
     boolean loading;
@@ -65,6 +66,7 @@ public final class AmherstPlanExecutionState {
         syncedCapabilityJournalCount = 0;
         objectiveWatchdog.reset();
         deferredObjectiveIds.clear();
+        silentRecoveryNarrationObjectiveIds.clear();
         objectiveDeferralStages.clear();
         active = false;
         loading = false;

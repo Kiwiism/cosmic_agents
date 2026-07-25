@@ -278,6 +278,21 @@ public class PlayerController {
         return after;
     }
 
+    @PatchMapping("/characters/{characterId}/meso")
+    @Transactional("gameTransactionManager")
+    Map<String, Object> updateCharacterMeso(@PathVariable int characterId, @Valid @RequestBody CharacterMesoPatch body,
+                                            Principal principal, HttpServletRequest request) {
+        lockCharacter(characterId);
+        Map<String, Object> before = character(characterId);
+        requireOffline(((Number) before.get("accountid")).intValue());
+        game.update("UPDATE characters SET meso = :meso WHERE id = :id",
+                new MapSqlParameterSource().addValue("id", characterId).addValue("meso", body.meso()));
+        Map<String, Object> after = character(characterId);
+        audit.record(principal, "CHARACTER_MESO_UPDATE", "CHARACTER", characterId, body.reason(), before, after,
+                "SAVED_OFFLINE", request);
+        return after;
+    }
+
     @PatchMapping("/characters/{characterId}/appearance")
     @Transactional("gameTransactionManager")
     Map<String, Object> updateAppearance(@PathVariable int characterId, @Valid @RequestBody AppearancePatch body,
@@ -2205,6 +2220,8 @@ public class PlayerController {
             @PositiveOrZero int hp, @PositiveOrZero int mp, @PositiveOrZero int maxHp,
             @PositiveOrZero int maxMp, @PositiveOrZero int ap, String sp, @PositiveOrZero int meso,
             int fame, @PositiveOrZero int map, @NotBlank String reason) {}
+
+    public record CharacterMesoPatch(@PositiveOrZero int meso, @NotBlank String reason) {}
 
     public record AppearancePatch(@PositiveOrZero int hair, @PositiveOrZero int face,
                                   @PositiveOrZero int skincolor, @PositiveOrZero int gender,

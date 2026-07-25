@@ -37,9 +37,12 @@ public final class VictoriaFirstJobNarrator {
             case TAKE_TAXI -> "I'm going to ask Phil for a ride to " + destinationName(bundle) + ".";
             case ENTER_INSTRUCTOR_ROOM, COMPLETE_CAREER_PATH, ADVANCE_FIRST_JOB ->
                     "I'm going to meet my job instructor and become a " + careerName(bundle) + ".";
-            case TRAVEL_TO_INITIAL_SHOP, INITIAL_SHOPPING -> "I'm buying a few supplies before training.";
-            case RETURN_TO_INSTRUCTOR, INSTRUCTOR_TRAINING ->
-                    "I'm going back to my instructor to start the training quests.";
+            case TRAVEL_TO_INITIAL_SHOP, INITIAL_SHOPPING ->
+                    "I finished my instructor quests, so I'm buying a few supplies.";
+            case RETURN_TO_INSTRUCTOR ->
+                    "I'm returning to my instructor after my shopping trip.";
+            case INSTRUCTOR_TRAINING ->
+                    "I'm working through my instructor's training quests.";
             case HOME_QUEST_PACK, POST_HOME_DECISION, ROTATION_QUEST_PACK,
                     GRIND_TO_MILESTONE, FINAL_RETURN_TO_INSTRUCTOR ->
                     "I'm continuing my Victoria Island training toward level 15.";

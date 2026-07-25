@@ -13,10 +13,10 @@ import java.util.List;
 /**
  * Shared Lith Harbor arrival policy for Shanks travel and Victoria test runs.
  *
- * <p>The ordinary spawn portal (portal 0) is intentionally excluded: it lies in a region that
- * cannot safely reach Olaf until the navigation graph has finished loading. Arrival is instead
- * placed on navigable ship platforms. Hidden portals provide the fallback route while the graph
- * warms; ordinary navigation takes over once the Agent reaches connected town ground.</p>
+ * <p>Shanks owns the Agent's real arrival placement. This policy warms navigation at that exact
+ * position, walks toward a reachable ship exit, and uses hidden portals only as the authored
+ * connection into town. Synthetic Victoria resets may separately ask for a stable ship point
+ * before the character is exposed to observers.</p>
  */
 public final class AgentLithHarborArrivalRouteRuntime {
     public static final int LITH_HARBOR_MAP_ID = 104_000_000;
@@ -27,32 +27,11 @@ public final class AgentLithHarborArrivalRouteRuntime {
     private static final int LOWER_LEFT_EXIT_MAX_X = config.AgentTuning.intValue("server.agents.capabilities.navigation.AgentLithHarborArrivalRouteRuntime.LOWER_LEFT_EXIT_MAX_X");
     private static final int UPPER_SHIP_MAX_X = config.AgentTuning.intValue("server.agents.capabilities.navigation.AgentLithHarborArrivalRouteRuntime.UPPER_SHIP_MAX_X");
     private static final int PORTAL_DISTANCE_PX = config.AgentTuning.intValue("server.agents.capabilities.navigation.AgentLithHarborArrivalRouteRuntime.PORTAL_DISTANCE_PX");
-    private static final int DESCENT_FALLBACK_STUCK_MS = config.AgentTuning.intValue(
-            "server.agents.capabilities.navigation.AgentLithHarborArrivalRouteRuntime.DESCENT_FALLBACK_STUCK_MS");
-    private static final Point SAFE_SHIP_FALLBACK = new Point(4_188, -224);
+    private static final int MAPLE_ISLAND_SHIP_MAX_X = 720;
+    private static final String MAPLE_ISLAND_ARRIVAL_PORTAL = "maple00";
+    private static final Point SAFE_SHIP_FALLBACK = new Point(84, 27);
     private static final List<ShipPlatform> SHIP_ARRIVAL_PLATFORMS = List.of(
-            new ShipPlatform(4_050, 4_325, -223));
-    /*
-     * Authored from Lith Harbor's footholds. Each lane describes a supported landing surface,
-     * not a behavior-tuning constant. A stable per-Agent x within the lane avoids both portal
-     * convergence and repeated random replanning while the Agent crosses the upper ship deck.
-     */
-    private static final List<DescentLane> UPPER_SHIP_DESCENT_LANES = List.of(
-            new DescentLane(2_770, 2_810, 107),
-            new DescentLane(2_855, 2_905, 47),
-            new DescentLane(2_950, 3_070, 107),
-            new DescentLane(3_040, 3_080, 47),
-            new DescentLane(3_270, 3_350, 424),
-            new DescentLane(3_390, 3_490, 453),
-            new DescentLane(3_550, 3_600, 452),
-            new DescentLane(3_670, 3_790, 227),
-            new DescentLane(3_842, 3_858, 428),
-            new DescentLane(3_990, 4_090, 437),
-            new DescentLane(4_110, 4_250, 437),
-            new DescentLane(4_290, 4_430, 437),
-            new DescentLane(4_470, 4_610, 437),
-            new DescentLane(4_650, 4_790, 437));
-
+            new ShipPlatform(40, 145, 27));
     private AgentLithHarborArrivalRouteRuntime() {
     }
 
@@ -62,23 +41,9 @@ public final class AgentLithHarborArrivalRouteRuntime {
         ACTION_CONSUMED
     }
 
-    /**
-     * Selects a varied Victoria test arrival on one of the navigable ship platforms.
-     */
+    /** Selects a stable, varied point on the Maple Island arrival ship deck. */
     public static Point victoriaArrivalPosition(MapleMap map, int selector) {
         return shipArrivalPosition(map, selector);
-    }
-
-    /** Stages every Shanks arrival on the same navigable ship platform used by Victoria tests. */
-    public static void stageAfterShanks(AgentRuntimeEntry entry, Character agent, int selector) {
-        if (entry == null || agent == null || agent.getMapId() != LITH_HARBOR_MAP_ID
-                || agent.getMap() == null) {
-            return;
-        }
-        Point position = shipArrivalPosition(agent.getMap(), selector);
-        AgentPrimitiveCapabilityGatewayRuntime.gateway()
-                .stagePosition(entry, agent, position);
-        prepareNavigation(entry, agent);
     }
 
     /**
@@ -90,11 +55,6 @@ public final class AgentLithHarborArrivalRouteRuntime {
                                                PrimitiveCapabilityGateway gateway) {
         prepareNavigation(entry, agent);
         if (!gateway.grounded(agent)) {
-            return TravelProgress.YIELD_TO_MOVEMENT;
-        }
-        Point descentTarget = upperShipDescentTarget(agent);
-        if (descentTarget != null && gateway.stuckDurationMs(entry) < DESCENT_FALLBACK_STUCK_MS) {
-            gateway.navigate(entry, descentTarget, true);
             return TravelProgress.YIELD_TO_MOVEMENT;
         }
         Integer portalId = nextPortalId(agent);
@@ -125,7 +85,7 @@ public final class AgentLithHarborArrivalRouteRuntime {
             return null;
         }
         Point position = agent.getPosition();
-        if (position.x < 0) {
+        if (position.x <= MAPLE_ISLAND_SHIP_MAX_X) {
             return LOWER_LEFT_ENTRY_PORTAL_ID;
         }
         if (position.x <= TOWN_SIDE_MAX_X
@@ -137,47 +97,16 @@ public final class AgentLithHarborArrivalRouteRuntime {
                 : LOWER_SHIP_EXIT_PORTAL_ID;
     }
 
-    private static Point upperShipDescentTarget(Character agent) {
-        if (agent == null || agent.getMapId() != LITH_HARBOR_MAP_ID) {
-            return null;
-        }
-        Point position = agent.getPosition();
-        if (position == null || position.y >= 0
-                || position.x <= TOWN_SIDE_MAX_X || position.x >= UPPER_SHIP_MAX_X) {
-            return null;
-        }
-        return descentWaypoint(agent.getId());
-    }
-
-    static Point descentWaypoint(int selector) {
-        int mixed = mix(selector);
-        return descentWaypointForLane(
-                Math.floorMod(mixed, UPPER_SHIP_DESCENT_LANES.size()), mixed);
-    }
-
-    static Point descentWaypointForLane(int laneIndex, int selector) {
-        DescentLane lane = UPPER_SHIP_DESCENT_LANES.get(
-                Math.floorMod(laneIndex, UPPER_SHIP_DESCENT_LANES.size()));
-        int x = lane.minX() + Math.floorMod(mix(selector), lane.width());
-        return new Point(x, lane.y());
-    }
-
-    static int descentLaneCount() {
-        return UPPER_SHIP_DESCENT_LANES.size();
-    }
-
     private static Point shipArrivalPosition(MapleMap map, int selector) {
         Point candidate = selectShipSpawn(selector);
-        Point ground = ground(map, candidate);
+        Point ground = AgentPrimitiveCapabilityGatewayRuntime.gateway()
+                .groundPoint(map, candidate);
         if (ground != null) {
             return ground;
         }
-        Portal arrival = map.getPortal("in03");
-        return arrival != null ? new Point(arrival.getPosition()) : new Point(SAFE_SHIP_FALLBACK);
-    }
-
-    private static Point ground(MapleMap map, Point candidate) {
-        return AgentPrimitiveCapabilityGatewayRuntime.gateway().groundPoint(map, candidate);
+        Portal arrival = map.getPortal(MAPLE_ISLAND_ARRIVAL_PORTAL);
+        return arrival != null
+                ? new Point(arrival.getPosition()) : new Point(SAFE_SHIP_FALLBACK);
     }
 
     private static Point selectShipSpawn(int selector) {
@@ -200,12 +129,6 @@ public final class AgentLithHarborArrivalRouteRuntime {
     }
 
     private record ShipPlatform(int minX, int maxX, int y) {
-        private int width() {
-            return maxX - minX + 1;
-        }
-    }
-
-    private record DescentLane(int minX, int maxX, int y) {
         private int width() {
             return maxX - minX + 1;
         }

@@ -40,8 +40,6 @@ public class PlayerStorage {
     private final Lock rlock;
     private final Lock wlock;
     private volatile Snapshot snapshot = Snapshot.EMPTY;
-    private int realPlayerCount;
-    private int agentCount;
 
     public PlayerStorage() {
         ReadWriteLock readWriteLock = new ReentrantReadWriteLock(true);
@@ -55,10 +53,8 @@ public class PlayerStorage {
             Character previous = storage.put(chr.getId(), chr);
             if (previous != null) {
                 nameStorage.remove(previous.getName().toLowerCase());
-                decrementPopulation(previous);
             }
             nameStorage.put(chr.getName().toLowerCase(), chr);
-            incrementPopulation(chr);
             snapshot = null;
         } finally {
             wlock.unlock();
@@ -71,7 +67,6 @@ public class PlayerStorage {
             Character mc = storage.remove(chr);
             if (mc != null) {
                 nameStorage.remove(mc.getName().toLowerCase());
-                decrementPopulation(mc);
                 snapshot = null;
             }
 
@@ -129,8 +124,6 @@ public class PlayerStorage {
         try {
             storage.clear();
             nameStorage.clear();
-            realPlayerCount = 0;
-            agentCount = 0;
             snapshot = Snapshot.EMPTY;
         } finally {
             wlock.unlock();
@@ -147,37 +140,11 @@ public class PlayerStorage {
     }
 
     public int getRealPlayerCount() {
-        rlock.lock();
-        try {
-            return realPlayerCount;
-        } finally {
-            rlock.unlock();
-        }
+        return currentSnapshot().realPlayers().size();
     }
 
     public int getAgentCount() {
-        rlock.lock();
-        try {
-            return agentCount;
-        } finally {
-            rlock.unlock();
-        }
-    }
-
-    private void incrementPopulation(Character character) {
-        if (character.getClient() instanceof BotClient) {
-            agentCount++;
-        } else {
-            realPlayerCount++;
-        }
-    }
-
-    private void decrementPopulation(Character character) {
-        if (character.getClient() instanceof BotClient) {
-            agentCount--;
-        } else {
-            realPlayerCount--;
-        }
+        return currentSnapshot().agents().size();
     }
 
     private Snapshot currentSnapshot() {
@@ -191,9 +158,9 @@ public class PlayerStorage {
             current = snapshot;
             if (current == null) {
                 List<Character> allCharacters = List.copyOf(storage.values());
-                List<Character> realPlayers = new ArrayList<>(realPlayerCount);
-                List<Character> networkRecipients = new ArrayList<>(realPlayerCount);
-                List<Character> agents = new ArrayList<>(agentCount);
+                List<Character> realPlayers = new ArrayList<>(allCharacters.size());
+                List<Character> networkRecipients = new ArrayList<>(allCharacters.size());
+                List<Character> agents = new ArrayList<>(allCharacters.size());
                 for (Character character : allCharacters) {
                     if (character.getClient() instanceof BotClient) {
                         agents.add(character);

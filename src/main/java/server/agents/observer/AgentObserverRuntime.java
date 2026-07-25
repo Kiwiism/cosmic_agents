@@ -8,11 +8,18 @@ import server.agents.capabilities.townlife.AgentTownLifeProfile;
 import server.agents.capabilities.townlife.AgentTownLifeProfileRepository;
 import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.integration.AgentClientGatewayRuntime;
+import server.agents.integration.AgentMapGatewayRuntime;
+import server.agents.integration.AgentPersistenceGatewayRuntime;
+import server.agents.integration.cosmic.CosmicAgentOfflineLoader;
 import server.agents.plans.mapleisland.AgentMapleIslandLithHandoffRuntime;
+import server.agents.registry.AgentResolvedCharacter;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentSchedulerRuntime;
+import server.maps.MapleMap;
+import server.maps.Portal;
 
 import java.awt.Point;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ScheduledFuture;
@@ -39,35 +46,78 @@ public final class AgentObserverRuntime {
     private AgentObserverRuntime() {
     }
 
-    public static StartResult start(Character observer, String watchedName, long nowMs) {
-        if (observer == null || watchedName == null || watchedName.isBlank()) {
+    public static StartResult start(Character watched, String observerName, long nowMs) {
+        if (watched == null || observerName == null || observerName.isBlank()) {
             return new StartResult(false, "Observer and watched character are required.");
         }
-        Character watched = AgentCharacterGatewayRuntime.characters()
-                .findOnlineCharacterByName(watchedName.trim());
-        if (watched == null) {
-            return new StartResult(false, "Watched character '" + watchedName.trim()
-                    + "' is not online.");
+        String requestedObserverName = observerName.trim();
+        AgentResolvedCharacter resolvedObserver;
+        try {
+            resolvedObserver = AgentPersistenceGatewayRuntime.persistence()
+                    .findCharacterByName(requestedObserverName);
+        } catch (SQLException failure) {
+            log.warn("Could not resolve observer character '{}'", requestedObserverName, failure);
+            return new StartResult(false, "Could not load observer character '"
+                    + requestedObserverName + "'.");
         }
-        int world = AgentClientGatewayRuntime.clients().world(observer);
-        int channel = AgentClientGatewayRuntime.clients().channel(observer);
-        if (world != AgentClientGatewayRuntime.clients().world(watched)
-                || channel != AgentClientGatewayRuntime.clients().channel(watched)) {
+        if (resolvedObserver == null) {
+            return new StartResult(false, "Observer character '" + requestedObserverName
+                    + "' does not exist.");
+        }
+        if (resolvedObserver.id() == watched.getId()) {
             return new StartResult(false,
-                    "Observer and watched character must be in the same world and channel.");
+                    "The observer must be different from the controlled character.");
         }
+        int world = AgentClientGatewayRuntime.clients().world(watched);
+        int channel = AgentClientGatewayRuntime.clients().channel(watched);
         synchronized (LOCK) {
-            stopLocked();
-            AgentRuntimeEntry movementEntry = new AgentRuntimeEntry(observer, null, null);
-            active = new AgentObserverSession(
-                    observer.getId(), watched.getId(), world, channel, movementEntry);
-            MOVEMENT.warp(active, observer, AgentObserverPolicy.STATION_MAP_ID);
-            active.lastObservedMapId = observer.getMapId();
-            schedule = AgentSchedulerRuntime.register(AgentObserverRuntime::guardedTick, TICK_MS);
-            log.info("Started observer showcase observer={} watched={} stationMap={}",
-                    observer.getName(), watched.getName(), AgentObserverPolicy.STATION_MAP_ID);
+            if (active != null && active.observerId == resolvedObserver.id()) {
+                stopLocked();
+            }
+            Character onlineObserver = online(resolvedObserver.id());
+            if (onlineObserver != null) {
+                return new StartResult(false, "Observer character '" + onlineObserver.getName()
+                        + "' is already online. Log it out before starting the showcase.");
+            }
+
+            Character observer = null;
+            try {
+                MapleMap stationMap = AgentMapGatewayRuntime.map()
+                        .resolveMap(world, channel, AgentObserverPolicy.STATION_MAP_ID);
+                if (stationMap == null) {
+                    return new StartResult(false, "Observer station map "
+                            + AgentObserverPolicy.STATION_MAP_ID + " is unavailable.");
+                }
+                Portal stationPortal = stationMap.getPortal(0);
+                Point stationPosition = stationPortal == null
+                        ? null : new Point(stationPortal.getPosition());
+                observer = CosmicAgentOfflineLoader.loadOfflineAgent(
+                        resolvedObserver.id(), world, channel, stationMap, stationPosition);
+
+                stopLocked();
+                AgentRuntimeEntry movementEntry = new AgentRuntimeEntry(observer, null, null);
+                active = new AgentObserverSession(
+                        observer.getId(), watched.getId(), world, channel, movementEntry);
+                active.lastObservedMapId = observer.getMapId();
+                schedule = AgentSchedulerRuntime.register(
+                        AgentObserverRuntime::guardedTick, TICK_MS);
+                log.info("Started observer showcase observer={} watched={} stationMap={}",
+                        observer.getName(), watched.getName(), AgentObserverPolicy.STATION_MAP_ID);
+            } catch (SQLException | RuntimeException failure) {
+                log.warn("Could not start observer showcase observer={} watched={}",
+                        requestedObserverName, watched.getName(), failure);
+                if (observer != null && active != null
+                        && active.observerId == observer.getId()) {
+                    stopLocked();
+                } else {
+                    disconnectLoadedObserver(observer);
+                }
+                return new StartResult(false, "Could not load observer character '"
+                        + requestedObserverName + "'.");
+            }
         }
-        return new StartResult(true, "Kiwi observer stationed in Snail Garden. Roaming begins "
+        return new StartResult(true, requestedObserverName
+                + " was loaded as the observer and stationed in Snail Garden. Roaming begins "
                 + "when " + watched.getName() + " enters that map; F1 requests an investigation.");
     }
 
@@ -137,7 +187,7 @@ public final class AgentObserverRuntime {
         observeMilestones(session, observer, watched, nowMs);
         if (session.investigationRequestedAtMs > 0
                 && session.stage != AgentObserverSession.Stage.INVESTIGATING) {
-            beginInvestigation(session, observer, nowMs);
+            beginInvestigation(session, observer, watched, nowMs);
         }
 
         switch (session.stage) {
@@ -202,12 +252,8 @@ public final class AgentObserverRuntime {
             MOVEMENT.warp(session, observer, AgentObserverPolicy.STATION_MAP_ID);
         }
         MOVEMENT.stop(session);
-        if (watched.getMapId() == AgentObserverPolicy.STATION_MAP_ID) {
-            session.stage = AgentObserverSession.Stage.APPROACH_ROAM;
-            session.approachIndex = 0;
-            session.destinationMapId = AgentObserverPolicy.STATION_MAP_ID;
-            session.destinationPoint = MOVEMENT.casualPoint(observer);
-            session.nextDecisionAtMs = nowMs + AgentObserverPolicy.idleDelayMs();
+        if (AgentObserverPolicy.watchedReachedRoamingRoute(watched.getMapId())) {
+            session.beginApproachRoute();
         }
     }
 
@@ -268,8 +314,12 @@ public final class AgentObserverRuntime {
 
     private static void beginInvestigation(AgentObserverSession session,
                                            Character observer,
+                                           Character watched,
                                            long nowMs) {
-        session.resumeStage = session.stage;
+        session.resumeStage = session.stage == AgentObserverSession.Stage.STATIONED
+                && AgentObserverPolicy.watchedReachedRoamingRoute(watched.getMapId())
+                ? AgentObserverSession.Stage.APPROACH_ROAM
+                : session.stage;
         session.resumeMapId = observer.getMapId();
         session.stage = AgentObserverSession.Stage.INVESTIGATING;
         session.investigationStartedAtMs = nowMs;
@@ -326,12 +376,43 @@ public final class AgentObserverRuntime {
             session.nextDecisionAtMs = nowMs + AgentObserverPolicy.lithIdleDelayMs();
             return;
         }
+        if (!session.bariCompleted
+                && session.resumeStage == AgentObserverSession.Stage.APPROACH_ROAM
+                && resumeApproachFromCurrentMap(session, observer, nowMs)) {
+            return;
+        }
         if (AgentObserverPolicy.ISOLATED_TRAINING_MAP_SET.contains(observer.getMapId())) {
             MOVEMENT.warp(session, observer, session.resumeMapId);
         }
         session.destinationMapId = session.resumeMapId;
         session.destinationPoint = null;
         session.nextDecisionAtMs = nowMs + AgentObserverPolicy.idleDelayMs();
+    }
+
+    private static boolean resumeApproachFromCurrentMap(AgentObserverSession session,
+                                                        Character observer,
+                                                        long nowMs) {
+        int approachIndex = AgentObserverPolicy.approachIndex(observer.getMapId());
+        if (approachIndex >= 0) {
+            if (observer.getMapId() == AgentObserverPolicy.GREEN_SNAIL_MAP_ID) {
+                session.stage = AgentObserverSession.Stage.MAPLE_CYCLE;
+                session.cycleIndex = 0;
+            } else {
+                session.stage = AgentObserverSession.Stage.APPROACH_ROAM;
+                session.approachIndex = approachIndex;
+            }
+        } else {
+            int cycleIndex = AgentObserverPolicy.cycleIndex(observer.getMapId());
+            if (cycleIndex < 0) {
+                return false;
+            }
+            session.stage = AgentObserverSession.Stage.MAPLE_CYCLE;
+            session.cycleIndex = cycleIndex;
+        }
+        session.destinationMapId = observer.getMapId();
+        session.destinationPoint = MOVEMENT.casualPoint(observer);
+        session.nextDecisionAtMs = nowMs + AgentObserverPolicy.idleDelayMs();
+        return true;
     }
 
     private static void tickShadowing(AgentObserverSession session,
@@ -409,8 +490,17 @@ public final class AgentObserverRuntime {
             schedule = null;
         }
         if (active != null) {
-            MOVEMENT.stop(active);
+            AgentObserverSession stopped = active;
+            Character observer = online(stopped.observerId);
+            MOVEMENT.stop(stopped);
             active = null;
+            disconnectLoadedObserver(observer);
+        }
+    }
+
+    private static void disconnectLoadedObserver(Character observer) {
+        if (observer != null && observer.getClient() != null) {
+            observer.getClient().forceDisconnect();
         }
     }
 

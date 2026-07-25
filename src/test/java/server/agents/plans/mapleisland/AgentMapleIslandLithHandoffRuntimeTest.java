@@ -7,6 +7,7 @@ import server.agents.plans.AgentPlanExecutionStatus;
 import server.agents.plans.AgentPlanRepository;
 import server.agents.plans.AgentPlanSessionState;
 import server.agents.plans.AgentPlanStartRequest;
+import server.agents.plans.AgentSouthperryLithTransferState;
 import server.agents.plans.AgentUniversalPlanRuntime;
 import server.agents.plans.amherst.MapleIslandSouthperryQuestCatalog;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -35,6 +36,8 @@ class AgentMapleIslandLithHandoffRuntimeTest {
         AgentMapleIslandLithHandoffState handoff = entry.capabilityStates()
                 .require(AgentMapleIslandLithHandoffState.STATE_KEY);
         handoff.request(1_500L);
+        entry.capabilityStates().require(AgentSouthperryLithTransferState.STATE_KEY)
+                .townLifeReady();
 
         assertTrue(AgentMapleIslandLithHandoffRuntime.tick(entry, agent, 2_000L));
 
@@ -42,6 +45,8 @@ class AgentMapleIslandLithHandoffRuntimeTest {
         assertEquals(AgentTownLifeState.Stage.TRAVEL_TO_TOWN,
                 entry.capabilityStates().require(AgentTownLifeState.STATE_KEY).stage());
         assertEquals(AgentMapleIslandLithHandoffState.Stage.COMPLETE, handoff.stage());
+        assertTrue(entry.capabilityStates()
+                .find(AgentSouthperryLithTransferState.STATE_KEY).isEmpty());
     }
 
     @Test

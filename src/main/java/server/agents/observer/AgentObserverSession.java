@@ -62,4 +62,10 @@ final class AgentObserverSession {
         destinationPoint = null;
         nextDecisionAtMs = 0;
     }
+
+    void beginApproachRoute() {
+        stage = Stage.APPROACH_ROAM;
+        approachIndex = Math.min(1, AgentObserverPolicy.APPROACH_ROUTE.size() - 1);
+        setDestination(AgentObserverPolicy.APPROACH_ROUTE.get(approachIndex));
+    }
 }

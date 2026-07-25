@@ -182,12 +182,16 @@ class AmherstPlanRuntimeRunnerTest {
         assertTrue(fixture.entry.amherstPlanExecutionState().active());
         assertNull(fixture.entry.amherstPlanExecutionState().assignedObjectiveId());
         assertFalse(fixture.entry.capabilityRuntimeState().hasActiveCapability());
+        assertTrue(fixture.entry.amherstPlanExecutionState()
+                .silentRecoveryNarrationObjectiveIds.contains("q1031"));
         assertEquals(AmherstObjectiveProgressStatus.FAILED,
                 fixture.entry.amherstPlanExecutionState().progress()
                         .objectives().get("q1031").status());
 
         assertTrue(runner.tick(fixture.entry, fixture.agent, 15_502L));
         assertEquals("q1031", fixture.entry.amherstPlanExecutionState().assignedObjectiveId());
+        assertFalse(fixture.entry.amherstPlanExecutionState()
+                .silentRecoveryNarrationObjectiveIds.contains("q1031"));
         assertEquals(2, fixture.entry.amherstPlanExecutionState().progress()
                 .objectives().get("q1031").attempts());
     }
@@ -210,23 +214,23 @@ class AmherstPlanRuntimeRunnerTest {
         assertEquals("wait-for-orange-mushroom",
                 fixture.entry.amherstPlanExecutionState().assignedObjectiveId());
 
-        assertTrue(runner.tick(fixture.entry, fixture.agent, 15_002L));
+        assertTrue(runner.tick(fixture.entry, fixture.agent, 30_002L));
         assertTrue(fixture.entry.amherstPlanExecutionState().active());
         assertNull(fixture.entry.amherstPlanExecutionState().assignedObjectiveId());
-        assertEquals(30_002L, fixture.entry.amherstPlanExecutionState().nextObjectiveAtMs);
+        assertEquals(45_002L, fixture.entry.amherstPlanExecutionState().nextObjectiveAtMs);
         assertTrue(fixture.entry.amherstPlanExecutionState().progress().journal().stream()
                 .anyMatch(event -> event.type() == AmherstPlanJournalEventType.RETRY
                         && event.message().contains("world-resource recheck")));
 
-        assertTrue(runner.tick(fixture.entry, fixture.agent, 30_001L));
+        assertTrue(runner.tick(fixture.entry, fixture.agent, 45_001L));
         assertNull(fixture.entry.amherstPlanExecutionState().assignedObjectiveId());
-        assertTrue(runner.tick(fixture.entry, fixture.agent, 30_002L));
+        assertTrue(runner.tick(fixture.entry, fixture.agent, 45_002L));
         assertEquals("wait-for-orange-mushroom",
                 fixture.entry.amherstPlanExecutionState().assignedObjectiveId());
 
-        assertTrue(runner.tick(fixture.entry, fixture.agent, 45_002L));
+        assertTrue(runner.tick(fixture.entry, fixture.agent, 75_002L));
         assertTrue(fixture.entry.amherstPlanExecutionState().active());
-        assertEquals(60_002L, fixture.entry.amherstPlanExecutionState().nextObjectiveAtMs);
+        assertEquals(90_002L, fixture.entry.amherstPlanExecutionState().nextObjectiveAtMs);
     }
 
     @Test
@@ -260,11 +264,11 @@ class AmherstPlanRuntimeRunnerTest {
         runner.start(fixture.entry, fixture.agent, 1L);
 
         assertTrue(runner.tick(fixture.entry, fixture.agent, 2L));
-        assertTrue(runner.tick(fixture.entry, fixture.agent, 15_002L));
+        assertTrue(runner.tick(fixture.entry, fixture.agent, 30_002L));
 
         assertTrue(fixture.entry.amherstPlanExecutionState().active());
         assertNull(fixture.entry.amherstPlanExecutionState().assignedObjectiveId());
-        assertEquals(30_002L, fixture.entry.amherstPlanExecutionState().nextObjectiveAtMs);
+        assertEquals(45_002L, fixture.entry.amherstPlanExecutionState().nextObjectiveAtMs);
         assertTrue(fixture.entry.amherstPlanExecutionState().progress().journal().stream()
                 .anyMatch(event -> event.message().contains("world-resource recheck")));
     }
@@ -308,9 +312,9 @@ class AmherstPlanRuntimeRunnerTest {
         runner.start(fixture.entry, fixture.agent, 1L);
 
         assertTrue(runner.tick(fixture.entry, fixture.agent, 2L));
-        assertTrue(runner.tick(fixture.entry, fixture.agent, 15_002L));
+        assertTrue(runner.tick(fixture.entry, fixture.agent, 30_002L));
         assertNull(fixture.entry.amherstPlanExecutionState().assignedObjectiveId());
-        assertTrue(runner.tick(fixture.entry, fixture.agent, 15_502L));
+        assertTrue(runner.tick(fixture.entry, fixture.agent, 30_502L));
 
         assertEquals("independent-quest",
                 fixture.entry.amherstPlanExecutionState().assignedObjectiveId());
