@@ -297,6 +297,28 @@ class AgentNavigationPathServiceTest {
     }
 
     @Test
+    void movementSearchRetriesWhenBoundedSearchCannotMoveCloserFirst() {
+        AgentNavigationGraph.Edge awayFromTarget = edge(
+                1, 2, AgentNavigationGraph.EdgeType.JUMP,
+                new Point(100, 100), new Point(200, 100), 10);
+        AgentNavigationGraph.Edge backTowardTarget = edge(
+                2, 3, AgentNavigationGraph.EdgeType.JUMP,
+                new Point(200, 100), new Point(0, 100), 10);
+        AgentNavigationGraph graph = graphWithRegionsAndEdges(
+                List.of(
+                        groundRegion(1, 50, 150, 100),
+                        groundRegion(2, 150, 250, 100),
+                        groundRegion(3, -50, 50, 100)),
+                Map.of(1, List.of(awayFromTarget), 2, List.of(backTowardTarget)));
+
+        List<AgentNavigationGraph.Edge> path = AgentNavigationPathService.movementPath(
+                graph, null, new Point(100, 100), 1, 3, new Point(0, 100),
+                null, 1, 10, false);
+
+        assertEquals(List.of(awayFromTarget, backTowardTarget), path);
+    }
+
+    @Test
     void disconnectedComponentsExitWithoutSearch() {
         AgentNavigationGraph graph = graphWithRegionsAndEdges(
                 List.of(groundRegion(1, 0, 100, 100), groundRegion(2, 200, 300, 100)),

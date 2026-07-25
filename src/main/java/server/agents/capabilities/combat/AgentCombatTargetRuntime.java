@@ -43,7 +43,10 @@ public final class AgentCombatTargetRuntime {
             Foothold botFoothold = AgentCombatGroundRuntime.findGroundFoothold(botPos, bot);
             List<Monster> candidates = AgentCombatTargetSelector.aliveMonstersInRange(bot, botPos, rangeSq);
             candidates.removeIf(monster -> !AgentCombatObjectiveTargetStateRuntime.allows(entry, monster.getId()));
-            if (candidates.isEmpty()) return null;
+            if (candidates.isEmpty()) {
+                AgentCombatBehaviorRuntime.noCandidateOpportunity(entry);
+                return null;
+            }
             candidates = preferRequiredTargets(entry, candidates);
 
             Map<Monster, Integer> targetOccupancy = grindTargetOccupancy(entry, bot);
@@ -86,6 +89,8 @@ public final class AgentCombatTargetRuntime {
             List<Monster> candidates = AgentCombatTargetSelector.aliveMonstersInRange(bot, botPos, rangeSq);
             candidates.removeIf(monster -> !AgentCombatObjectiveTargetStateRuntime.allows(entry, monster.getId()));
             if (candidates.isEmpty()) {
+                AgentCombatBehaviorRuntime.noCandidateOpportunity(entry);
+                releaseEmptyAutomaticAnchor(entry);
                 return null;
             }
             GrindGraphContext graphContext = GrindGraphContext.resolve(entry, bot, botPos);
@@ -105,7 +110,8 @@ public final class AgentCombatTargetRuntime {
             }
             if (filtered.isEmpty()) {
                 if (AgentCombatVariationRuntime.isAutomaticPlatformAnchor(entry)) {
-                    return null;
+                    AgentCombatVariationRuntime.clearAutomaticAnchor(entry);
+                    return findGrindTarget(entry, bot, config);
                 }
                 for (Monster m : candidates) {
                     int mId = graph.findRegionId(map, m.getPosition());
@@ -224,6 +230,12 @@ public final class AgentCombatTargetRuntime {
                 () -> scoreLocalTargets(entry, bot, botPos, botFoothold, candidates, targetOccupancy, config),
                 () -> scoreTargetRegions(entry, graphContext, bot, botPos, botFoothold,
                         candidates, targetOccupancy, config));
+    }
+
+    private static void releaseEmptyAutomaticAnchor(AgentRuntimeEntry entry) {
+        if (AgentCombatVariationRuntime.isAutomaticPlatformAnchor(entry)) {
+            AgentCombatVariationRuntime.clearAutomaticAnchor(entry);
+        }
     }
 
     private static Monster selectVariedTargetWithinWinningRegion(AgentRuntimeEntry entry,

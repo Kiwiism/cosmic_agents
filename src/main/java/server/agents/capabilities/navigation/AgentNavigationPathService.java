@@ -152,20 +152,8 @@ public final class AgentNavigationPathService {
                                                          int targetRegionId,
                                                          Point targetPos) {
         MapleMap map = bot.getMap();
-        List<AgentNavigationGraph.Edge> path = runSearch(
-                graph,
-                map,
-                bot.getPosition(),
-                startRegionId,
-                targetRegionId,
-                targetPos,
-                "committed",
-                useAdmissibleHeuristic,
-                true,
-                MOVEMENT_MAX_EDGE_CHECKS,
-                null,
-                AgentNavigationDangerCostService.intermediateRegionCosts(
-                        graph, map, startRegionId, targetRegionId)).path();
+        List<AgentNavigationGraph.Edge> path = movementPath(
+                graph, map, bot.getPosition(), startRegionId, targetRegionId, targetPos, null);
         if (path.isEmpty()) {
             return null;
         }
@@ -192,37 +180,58 @@ public final class AgentNavigationPathService {
             Point targetPos,
             AgentTravelVariationRuntime.RouteVariation variation) {
         if (variation == null || variation.maxRouteStretch() <= 1.0d) {
-            List<AgentNavigationGraph.Edge> path = runSearch(
-                    graph,
-                    map,
-                    startPos,
-                    startRegionId,
-                    targetRegionId,
-                    targetPos,
-                    "committed",
-                    useAdmissibleHeuristic,
-                    true,
-                    MOVEMENT_MAX_EDGE_CHECKS,
-                    null,
-                    AgentNavigationDangerCostService.intermediateRegionCosts(
-                            graph, map, startRegionId, targetRegionId)).path();
+            List<AgentNavigationGraph.Edge> path = movementPath(
+                    graph, map, startPos, startRegionId, targetRegionId, targetPos, null);
             return path.isEmpty() ? null : collapseLeadingWalkEdges(path);
         }
-        List<AgentNavigationGraph.Edge> path = runSearch(
-                graph,
-                map,
-                startPos,
-                startRegionId,
-                targetRegionId,
-                targetPos,
-                "maple-island-varied",
-                useAdmissibleHeuristic,
-                true,
-                MOVEMENT_MAX_EDGE_CHECKS,
-                variation,
-                AgentNavigationDangerCostService.intermediateRegionCosts(
-                        graph, map, startRegionId, targetRegionId)).path();
+        List<AgentNavigationGraph.Edge> path = movementPath(
+                graph, map, startPos, startRegionId, targetRegionId, targetPos, variation);
         return path.isEmpty() ? null : collapseLeadingWalkEdges(path);
+    }
+
+    private static List<AgentNavigationGraph.Edge> movementPath(
+            AgentNavigationGraph graph,
+            MapleMap map,
+            Point startPos,
+            int startRegionId,
+            int targetRegionId,
+            Point targetPos,
+            AgentTravelVariationRuntime.RouteVariation variation) {
+        return movementPath(graph, map, startPos, startRegionId, targetRegionId, targetPos,
+                variation, MOVEMENT_MAX_EDGE_CHECKS, MAX_EDGE_CHECKS, true);
+    }
+
+    static List<AgentNavigationGraph.Edge> movementPath(
+            AgentNavigationGraph graph,
+            MapleMap map,
+            Point startPos,
+            int startRegionId,
+            int targetRegionId,
+            Point targetPos,
+            AgentTravelVariationRuntime.RouteVariation variation,
+            int movementBudget,
+            int recoveryBudget,
+            boolean instrument) {
+        String caller = variation == null ? "committed" : "maple-island-varied";
+        Map<Integer, Integer> dangerCosts = AgentNavigationDangerCostService.intermediateRegionCosts(
+                graph, map, startRegionId, targetRegionId);
+        SearchOutcome bounded = runSearch(
+                graph, map, startPos, startRegionId, targetRegionId, targetPos,
+                caller, useAdmissibleHeuristic, instrument, movementBudget,
+                variation, dangerCosts);
+        if (!bounded.path().isEmpty() || !bounded.capped()
+                || movementBudget >= recoveryBudget) {
+            return bounded.path();
+        }
+
+        // A closest-frontier route is not always possible: some valid routes must initially move
+        // away from the destination. Dense training maps can therefore exhaust the live budget
+        // without producing even one executable edge. Retry only that dead-end case with the
+        // accuracy budget; ordinary movement remains bounded by MOVEMENT_MAX_EDGE_CHECKS.
+        return runSearch(
+                graph, map, startPos, startRegionId, targetRegionId, targetPos,
+                caller + "-recovery", useAdmissibleHeuristic, instrument, recoveryBudget,
+                variation, dangerCosts).path();
     }
 
     public static List<AgentNavigationGraph.Edge> findPath(AgentNavigationGraph graph,

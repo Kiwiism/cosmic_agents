@@ -11,6 +11,7 @@ public final class AgentCombatBehaviorState {
     private long stimulus;
     private long readyAtMs;
     private boolean responseDeferred;
+    private boolean candidateOpportunity;
 
     public synchronized boolean ready(long newStimulus, long nowMs, int delayMs) {
         if (newStimulus != stimulus) {
@@ -25,7 +26,10 @@ public final class AgentCombatBehaviorState {
         stimulus = 0L;
         readyAtMs = 0L;
         responseDeferred = false;
+        candidateOpportunity = false;
     }
 
+    public synchronized void markCandidateOpportunity() { candidateOpportunity = true; }
     public synchronized boolean responseDeferred() { return responseDeferred; }
+    public synchronized boolean candidateOpportunity() { return candidateOpportunity; }
 }

@@ -14,11 +14,14 @@ import server.agents.integration.MapGateway;
 import server.agents.integration.PrimitiveCapabilityGateway;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentMovementOnlyTickCoordinator;
+import server.maps.Foothold;
 import server.maps.MapleMap;
 import server.maps.Portal;
 
 import java.awt.Point;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 /** Mechanics adapter used by observer policy; it never registers a normal Agent lifecycle. */
 final class AgentObserverMovementController {
@@ -27,7 +30,8 @@ final class AgentObserverMovementController {
     private static final Logger log = LoggerFactory.getLogger(AgentObserverMovementController.class);
     private static final int PORTAL_DISTANCE_PX = tuningInt("PORTAL_DISTANCE_PX");
     private static final int ARRIVAL_DISTANCE_PX = tuningInt("ARRIVAL_DISTANCE_PX");
-    private static final int CASUAL_OFFSET_PX = tuningInt("CASUAL_OFFSET_PX");
+    private static final int OBSERVATION_CLEARANCE_PX =
+            tuningInt("OBSERVATION_CLEARANCE_PX");
 
     private final PrimitiveCapabilityGateway capability =
             AgentPrimitiveCapabilityGatewayRuntime.gateway();
@@ -93,15 +97,27 @@ final class AgentObserverMovementController {
         return false;
     }
 
-    Point casualPoint(Character observer) {
-        int direction = ThreadLocalRandom.current().nextBoolean() ? 1 : -1;
-        int offset = ThreadLocalRandom.current().nextInt(
-                Math.max(1, CASUAL_OFFSET_PX / 2), CASUAL_OFFSET_PX + 1);
-        Point candidate = new Point(
-                observer.getPosition().x + direction * offset,
-                observer.getPosition().y - 20);
-        Point ground = AgentMapGatewayRuntime.map().pointBelow(observer.getMap(), candidate);
-        return ground == null ? new Point(observer.getPosition()) : ground;
+    Point observationPoint(Character observer, int visit) {
+        MapleMap map = observer.getMap();
+        if (map == null || map.getFootholds() == null) {
+            return new Point(observer.getPosition());
+        }
+        List<Point> spots = new ArrayList<>();
+        for (Foothold foothold : map.getFootholds().getAllFootholds()) {
+            if (foothold.isWall()) {
+                continue;
+            }
+            Point spot = footholdMidpoint(foothold);
+            if (farFromPortals(map, spot) && farFromArrival(observer, spot)) {
+                spots.add(spot);
+            }
+        }
+        if (spots.isEmpty()) {
+            return new Point(observer.getPosition());
+        }
+        spots.sort(Comparator.comparingInt((Point point) -> point.x)
+                .thenComparingInt(point -> point.y));
+        return new Point(spots.get(observationIndex(visit, spots.size())));
     }
 
     Point beside(Character target, int distancePx) {
@@ -125,6 +141,51 @@ final class AgentObserverMovementController {
     private static void synchronizePose(AgentRuntimeEntry entry, Character observer) {
         AgentMovementPoseService.teleportTo(entry, observer, new Point(observer.getPosition()));
         AgentMovementStateResetService.resetEntryStateAfterTeleport(entry);
+    }
+
+    private static Point footholdMidpoint(Foothold foothold) {
+        int x = foothold.getX1() + ((foothold.getX2() - foothold.getX1()) / 2);
+        double progress = (double) (x - foothold.getX1())
+                / (foothold.getX2() - foothold.getX1());
+        int y = (int) Math.round(foothold.getY1()
+                + (progress * (foothold.getY2() - foothold.getY1())));
+        return new Point(x, y);
+    }
+
+    private static boolean farFromPortals(MapleMap map, Point spot) {
+        long clearanceSq =
+                (long) OBSERVATION_CLEARANCE_PX * OBSERVATION_CLEARANCE_PX;
+        return map.getPortals().stream()
+                .map(Portal::getPosition)
+                .noneMatch(position -> position != null && position.distanceSq(spot) < clearanceSq);
+    }
+
+    private static boolean farFromArrival(Character observer, Point spot) {
+        long clearanceSq =
+                (long) OBSERVATION_CLEARANCE_PX * OBSERVATION_CLEARANCE_PX;
+        return observer.getPosition().distanceSq(spot) >= clearanceSq;
+    }
+
+    static int observationIndex(int visit, int spotCount) {
+        if (spotCount <= 1) {
+            return 0;
+        }
+        int step = Math.max(1, spotCount / 2);
+        while (greatestCommonDivisor(step, spotCount) != 1) {
+            step--;
+        }
+        return Math.floorMod((spotCount / 2) + (visit * step), spotCount);
+    }
+
+    private static int greatestCommonDivisor(int left, int right) {
+        int a = left;
+        int b = right;
+        while (b != 0) {
+            int remainder = a % b;
+            a = b;
+            b = remainder;
+        }
+        return a;
     }
 
     private static int tuningInt(String key) {

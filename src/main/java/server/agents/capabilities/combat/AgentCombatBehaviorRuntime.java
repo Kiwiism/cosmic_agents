@@ -19,6 +19,9 @@ import server.agents.capabilities.behavior.AgentBehaviorTelemetry;
 
 /** Combat adapter for response latency, claim tolerance, and profile target diversity. */
 public final class AgentCombatBehaviorRuntime {
+    private static final int AVAILABLE_MOB_RESPONSE_MAX_MS = config.AgentTuning.intValue(
+            "server.agents.capabilities.combat.AgentCombatBehaviorRuntime.AVAILABLE_MOB_RESPONSE_MAX_MS");
+
     private AgentCombatBehaviorRuntime() {
     }
 
@@ -29,6 +32,7 @@ public final class AgentCombatBehaviorRuntime {
             entry.capabilityStates().require(AgentCombatBehaviorState.STATE_KEY).clearStimulus();
             return false;
         }
+        entry.capabilityStates().require(AgentCombatBehaviorState.STATE_KEY).markCandidateOpportunity();
         long stimulus = candidates.stream().mapToLong(Monster::getObjectId).sorted()
                 .reduce(candidates.size(), (left, right) -> left * 31L + right);
         AgentBehaviorCalibrationState calibration = AgentBehaviorRuntime.calibration(entry);
@@ -39,6 +43,7 @@ public final class AgentCombatBehaviorRuntime {
                 calibration.responseBaselineMs(),
                 jitterPercent,
                 AgentCrowdScalingPolicy.totalCharacters(perception));
+        responseDelayMs = Math.min(responseDelayMs, AVAILABLE_MOB_RESPONSE_MAX_MS);
         boolean ready = entry.capabilityStates().require(AgentCombatBehaviorState.STATE_KEY)
                 .ready(stimulus, nowMs, responseDelayMs);
         if (!ready) AgentBehaviorTelemetry.responseDeferred();
@@ -56,7 +61,9 @@ public final class AgentCombatBehaviorRuntime {
         List<Monster> available = candidates.stream()
                 .filter(candidate -> occupancy.getOrDefault(candidate, 0) < tolerance)
                 .toList();
-        if (!available.isEmpty() && available.size() < candidates.size()) {
+        if (!available.isEmpty() && available.size() < candidates.size()
+                && AgentBehaviorRuntime.calibration(entry).nextPercent("claim-avoid")
+                < policy.targeting().claimAvoidPercent()) {
             AgentBehaviorTelemetry.claimAlternative();
             return new ArrayList<>(available);
         }
@@ -110,6 +117,16 @@ public final class AgentCombatBehaviorRuntime {
     public static boolean waitingForResponse(AgentRuntimeEntry entry) {
         return entry != null && entry.capabilityStates().find(AgentCombatBehaviorState.STATE_KEY)
                 .map(AgentCombatBehaviorState::responseDeferred).orElse(false);
+    }
+
+    public static boolean candidateOpportunity(AgentRuntimeEntry entry) {
+        return entry != null && entry.capabilityStates().find(AgentCombatBehaviorState.STATE_KEY)
+                .map(AgentCombatBehaviorState::candidateOpportunity).orElse(false);
+    }
+
+    public static void noCandidateOpportunity(AgentRuntimeEntry entry) {
+        if (entry != null) entry.capabilityStates().find(AgentCombatBehaviorState.STATE_KEY)
+                .ifPresent(AgentCombatBehaviorState::clearStimulus);
     }
 
     public static void targetAcquired(AgentRuntimeEntry entry) {

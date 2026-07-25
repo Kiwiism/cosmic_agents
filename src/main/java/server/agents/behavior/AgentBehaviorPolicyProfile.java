@@ -26,11 +26,12 @@ public record AgentBehaviorPolicyProfile(
     }
 
     public record Targeting(int bestWeight, int nearWeight, int middleWeight,
-                            int claimTolerance, int anchorPercent) {
+                            int claimTolerance, int claimAvoidPercent, int anchorPercent) {
         public Targeting {
             if (bestWeight < 0 || nearWeight < 0 || middleWeight < 0
                     || bestWeight + nearWeight + middleWeight <= 0
-                    || claimTolerance < 1 || anchorPercent < 0 || anchorPercent > 100) {
+                    || claimTolerance < 1 || claimAvoidPercent < 0 || claimAvoidPercent > 100
+                    || anchorPercent < 0 || anchorPercent > 100) {
                 throw new IllegalArgumentException("invalid target policy");
             }
         }

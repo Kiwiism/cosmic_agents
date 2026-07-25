@@ -19,4 +19,15 @@ class AgentObserverSessionTest {
         assertEquals(30_000, session.destinationMapId);
         assertEquals(0, session.nextDecisionAtMs);
     }
+
+    @Test
+    void observationVisitsAdvanceIndependentlyForEachMap() {
+        AgentObserverSession session = new AgentObserverSession(
+                1, 2, 0, 1, mock(AgentRuntimeEntry.class));
+
+        assertEquals(0, session.nextObservationVisit(20_000));
+        assertEquals(1, session.nextObservationVisit(20_000));
+        assertEquals(0, session.nextObservationVisit(50_000));
+        assertEquals(2, session.nextObservationVisit(20_000));
+    }
 }

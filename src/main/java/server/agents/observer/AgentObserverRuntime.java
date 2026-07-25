@@ -253,10 +253,14 @@ public final class AgentObserverRuntime {
         if (observer.getMapId() != AgentObserverPolicy.STATION_MAP_ID) {
             MOVEMENT.warp(session, observer, AgentObserverPolicy.STATION_MAP_ID);
         }
-        MOVEMENT.stop(session);
         if (AgentObserverPolicy.watchedReachedRoamingRoute(watched.getMapId())) {
             session.beginApproachRoute();
+            return;
         }
+        if (session.destinationPoint == null) {
+            session.destinationPoint = observationPoint(session, observer);
+        }
+        MOVEMENT.approach(session, observer, session.destinationPoint, nowMs);
     }
 
     private static void tickApproachRoam(AgentObserverSession session,
@@ -293,7 +297,8 @@ public final class AgentObserverRuntime {
             session.stage = AgentObserverSession.Stage.EXCURSION;
             session.destinationMapId = AgentObserverPolicy.randomTrainingMap();
             MOVEMENT.warp(session, observer, session.destinationMapId);
-            session.nextDecisionAtMs = nowMs + AgentObserverPolicy.excursionDelayMs();
+            session.destinationPoint = observationPoint(session, observer);
+            session.nextDecisionAtMs = 0;
             return;
         }
         session.cycleIndex = (session.cycleIndex + 1) % AgentObserverPolicy.ROAM_CYCLE.size();
@@ -303,15 +308,21 @@ public final class AgentObserverRuntime {
     private static void tickExcursion(AgentObserverSession session,
                                       Character observer,
                                       long nowMs) {
-        MOVEMENT.stop(session);
+        if (session.destinationPoint != null) {
+            if (!MOVEMENT.approach(session, observer, session.destinationPoint, nowMs)) {
+                return;
+            }
+            session.destinationPoint = null;
+            session.nextDecisionAtMs = nowMs + AgentObserverPolicy.excursionDelayMs();
+        }
         if (nowMs < session.nextDecisionAtMs) {
             return;
         }
         MOVEMENT.warp(session, observer, session.resumeMapId);
         session.stage = AgentObserverSession.Stage.MAPLE_CYCLE;
         session.destinationMapId = session.resumeMapId;
-        session.destinationPoint = MOVEMENT.casualPoint(observer);
-        session.nextDecisionAtMs = nowMs + AgentObserverPolicy.idleDelayMs();
+        session.destinationPoint = observationPoint(session, observer);
+        session.nextDecisionAtMs = 0;
     }
 
     private static void beginInvestigation(AgentObserverSession session,
@@ -412,8 +423,8 @@ public final class AgentObserverRuntime {
             session.cycleIndex = cycleIndex;
         }
         session.destinationMapId = observer.getMapId();
-        session.destinationPoint = MOVEMENT.casualPoint(observer);
-        session.nextDecisionAtMs = nowMs + AgentObserverPolicy.idleDelayMs();
+        session.destinationPoint = observationPoint(session, observer);
+        session.nextDecisionAtMs = 0;
         return true;
     }
 
@@ -458,7 +469,7 @@ public final class AgentObserverRuntime {
             return false;
         }
         if (session.destinationPoint == null && session.nextDecisionAtMs == 0) {
-            session.destinationPoint = MOVEMENT.casualPoint(observer);
+            session.destinationPoint = observationPoint(session, observer);
         }
         if (session.destinationPoint != null) {
             if (!MOVEMENT.approach(session, observer, session.destinationPoint, nowMs)) {
@@ -468,6 +479,11 @@ public final class AgentObserverRuntime {
             session.nextDecisionAtMs = nowMs + idleDelayMs;
         }
         return true;
+    }
+
+    private static Point observationPoint(AgentObserverSession session, Character observer) {
+        return MOVEMENT.observationPoint(
+                observer, session.nextObservationVisit(observer.getMapId()));
     }
 
     private static Point randomLithHarborSpot() {

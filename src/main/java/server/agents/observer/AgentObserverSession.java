@@ -3,6 +3,8 @@ package server.agents.observer;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
+import java.util.HashMap;
+import java.util.Map;
 
 /** Mutable state owned only by the dedicated observer scheduler. */
 final class AgentObserverSession {
@@ -36,6 +38,7 @@ final class AgentObserverSession {
     int lastObservedMapId = -1;
     boolean bariCompleted;
     boolean handoffTriggered;
+    private final Map<Integer, Integer> observationVisits = new HashMap<>();
 
     AgentObserverSession(int observerId,
                          int watchedId,
@@ -61,6 +64,12 @@ final class AgentObserverSession {
         destinationMapId = mapId;
         destinationPoint = null;
         nextDecisionAtMs = 0;
+    }
+
+    int nextObservationVisit(int mapId) {
+        int visit = observationVisits.getOrDefault(mapId, 0);
+        observationVisits.put(mapId, visit + 1);
+        return visit;
     }
 
     void beginApproachRoute() {

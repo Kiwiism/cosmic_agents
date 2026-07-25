@@ -409,10 +409,10 @@ tuning:
     # Purpose: Controls when Kiwi considers a within-map walk complete.
     # Technical: Map-pixel radius whose squared value is compared with the observer-to-destination distance before ordinary walking is considered complete.
     server.agents.observer.AgentObserverMovementController.ARRIVAL_DISTANCE_PX: '50'
-    # Values: 80-350 map pixels. Recommended: 190. Higher values make Kiwi wander farther within each map before idling.
-    # Purpose: Controls the size of Kiwi's casual within-map movement before the next map transition.
-    # Technical: Maximum absolute horizontal map-pixel offset sampled from the observer's current grounded position when policy asks for a casual local idle destination.
-    server.agents.observer.AgentObserverMovementController.CASUAL_OFFSET_PX: '190'
+    # Values: 80-350 map pixels. Recommended: 190. Higher values keep Kiwi's observation spots farther away from portals and the map entry point; lower values allow closer observation spots.
+    # Purpose: Keeps Kiwi from stopping beside the portal after entering a map. Kiwi rotates through grounded foothold spots across the map on later visits.
+    # Technical: Minimum straight-line map-pixel clearance used when filtering foothold midpoints against every portal and the observer's arrival position.
+    server.agents.observer.AgentObserverMovementController.OBSERVATION_CLEARANCE_PX: '190'
     # Values: a finite non-negative integer. Recommended: 12-50 around the tested baseline 25; benchmark or observe behavior before moving outside this band.
     # Purpose: Limits how many maximum per controller can be handled in one pass or kept at once. Higher values let more Agent work progress together; lower values spread the work out and reduce peak load.
     # Technical: the "provisioning policy" component consumes this as an integer. Domain: non-negative count, capacity, or threshold unless the owning component documents a sentinel.
@@ -589,10 +589,18 @@ tuning:
     # Purpose: Controls how long Agents remain in or wait for decision cache. Higher values make that pause or state last longer; lower values make them continue sooner.
     # Technical: the "map activity policy" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled.
     server.agents.capabilities.behavior.AgentMapActivityPolicy.DECISION_CACHE_MS: '500'
+    # Values: integer from 0 to 100 inclusive. Recommended: 75-100 around the tested baseline 100; reduce only if personalities should retain more crowd avoidance while free mobs remain.
+    # Purpose: Makes available mobs reduce crowd avoidance. At 100, avoidance falls in direct proportion to the share of untargeted Agents that can still be matched with an unclaimed mob; at 0, mob availability does not soften personality avoidance.
+    # Technical: Multiplies the shortage ratio used to scale each profile's crowd avoidance before the map activity scheduler elects respite candidates.
+    server.agents.capabilities.behavior.AgentMapActivityPolicy.MOB_SCARCITY_WEIGHT_PERCENT: '100'
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 10000-40000 around the tested baseline 20000; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how long Agents remain in or wait for rotation. Higher values make that pause or state last longer; lower values make them continue sooner.
     # Technical: the "map activity policy" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled.
     server.agents.capabilities.behavior.AgentMapActivityPolicy.ROTATION_MS: '20000'
+    # Values: a finite non-negative integer; unit: milliseconds. Recommended: 250-750 around the tested baseline 500; raise only if visible hesitation is preferred even while a valid combat target is present.
+    # Purpose: Caps how long an Agent may hesitate after it can see an allowed mob. This keeps personality timing visible without letting crowd-scaled response latency leave quest mobs standing unused.
+    # Technical: Upper bound applied to the crowd-scaled acquisition delay whenever the combat target search has at least one alive, allowed candidate.
+    server.agents.capabilities.combat.AgentCombatBehaviorRuntime.AVAILABLE_MOB_RESPONSE_MAX_MS: '500'
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 5000-15000 around the tested baseline 10000; benchmark or observe behavior before moving outside this band. Keep it greater than or equal to server.agents.capabilities.behavior.AgentPioRelaxerInterludeEventListener.PLAYFUL_MIN_MS.
     # Purpose: Caps the playful post-Pio sit/stand sequence so it is noticeable without delaying the next quest objective for too long.
     # Technical: AgentPioRelaxerInterludeEventListener samples an inclusive duration between PLAYFUL_MIN_MS and PLAYFUL_MAX_MS once when quest 1008 completes. Unit: milliseconds.
