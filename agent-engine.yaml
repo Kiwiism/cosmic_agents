@@ -351,67 +351,67 @@ tuning:
     # Independent Kiwi observer showcase
     # Values: 25-100 milliseconds. Recommended: 50. Lower values make Kiwi's server-driven walking smoother; higher values reduce work but can make motion look stepped.
     # Purpose: Sets how often only the independent observer controller updates. This does not change normal Agent plan, combat, or TownLife scheduling.
-    # Technical: Dedicated fixed-rate observer scheduler cadence in milliseconds.
+    # Technical: Dedicated fixed-rate observer scheduler cadence in milliseconds; it bounds how often observer policy and movement are evaluated without changing the normal Agent scheduler cadence.
     server.agents.observer.AgentObserverRuntime.TICK_MS: '50'
     # Values: 70-180 map pixels. Recommended: 110. Higher values make Kiwi observe from farther away; lower values make Kiwi stand closer to the watched character.
     # Purpose: Controls Kiwi's normal following distance after Bari's Test is complete.
-    # Technical: Horizontal target offset used by the SHADOWING stage.
+    # Technical: Horizontal map-pixel offset used by the SHADOWING stage when the observer movement controller derives a grounded destination beside the watched character.
     server.agents.observer.AgentObserverRuntime.SHADOW_DISTANCE_PX: '110'
     # Values: 25-90 map pixels. Recommended: 55. Higher values keep more space during an F1 investigation; lower values make Kiwi approach more closely.
     # Purpose: Controls how close Kiwi gets before showing the suspicious F3 expression.
-    # Technical: Horizontal target offset used only by the INVESTIGATING stage.
+    # Technical: Horizontal map-pixel offset used only by the INVESTIGATING stage when deriving the observer's grounded inspection destination beside the watched character.
     server.agents.observer.AgentObserverRuntime.INVESTIGATION_DISTANCE_PX: '55'
     # Values: 6000-30000 milliseconds. Recommended: 12000. Higher values make Kiwi linger longer in each Maple Island map; lower values make the patrol advance sooner.
     # Purpose: Sets the shortest casual idle between ordinary roaming-map transitions.
-    # Technical: Inclusive lower bound for observer map-idle randomization.
+    # Technical: Inclusive millisecond lower bound sampled by observer policy whenever the ordinary roaming state schedules its next map transition.
     server.agents.observer.AgentObserverPolicy.IDLE_MIN_MS: '12000'
     # Values: 12000-60000 milliseconds. Recommended: 30000 and no lower than IDLE_MIN_MS. Higher values produce a slower, more patient patrol.
     # Purpose: Sets the longest casual idle between ordinary roaming-map transitions.
-    # Technical: Inclusive upper bound for observer map-idle randomization.
+    # Technical: Inclusive millisecond upper bound sampled by observer policy whenever the ordinary roaming state schedules its next map transition.
     server.agents.observer.AgentObserverPolicy.IDLE_MAX_MS: '30000'
     # Values: 2000-8000 milliseconds. Recommended: 3500. Higher values make training-map spot checks last longer.
     # Purpose: Sets the shortest time Kiwi briefly observes an isolated Mai training map before returning to the three-map cycle.
-    # Technical: Inclusive lower bound for isolated excursion dwell time.
+    # Technical: Inclusive millisecond lower bound sampled after the observer enters an isolated training-map excursion before it resumes the normal roaming route.
     server.agents.observer.AgentObserverPolicy.EXCURSION_MIN_MS: '3500'
     # Values: 4000-15000 milliseconds. Recommended: 7000 and no lower than EXCURSION_MIN_MS. Higher values make isolated training-map spot checks more noticeable.
     # Purpose: Sets the longest time Kiwi remains in an isolated Mai training map.
-    # Technical: Inclusive upper bound for isolated excursion dwell time.
+    # Technical: Inclusive millisecond upper bound sampled after the observer enters an isolated training-map excursion before it resumes the normal roaming route.
     server.agents.observer.AgentObserverPolicy.EXCURSION_MAX_MS: '7000'
     # Values: 0-100 percent. Recommended: 15. Higher values make Kiwi interrupt the normal Dangerous Forest-Amherst-Mai cycle with isolated-map checks more often.
     # Purpose: Controls how often a completed cycle-map idle becomes a brief training-map observation.
-    # Technical: Independent percentage roll at each cycle decision boundary.
+    # Technical: Integer percentage threshold applied to one independent random roll at each eligible observer roaming-cycle decision boundary.
     server.agents.observer.AgentObserverPolicy.EXCURSION_CHANCE_PERCENT: '15'
     # Values: 2000-10000 milliseconds. Recommended: 5000. Higher values make Kiwi glare suspiciously for longer after reaching the F1 caller.
     # Purpose: Controls the visible pause at the end of an F1 investigation.
-    # Technical: Hold time after expression 3 is broadcast.
+    # Technical: Millisecond dwell scheduled after expression 3 is broadcast and the observer has reached its inspection destination, before normal roaming resumes.
     server.agents.observer.AgentObserverPolicy.INVESTIGATION_HOLD_MS: '5000'
     # Values: 10000-60000 milliseconds. Recommended: 30000. Higher values give Kiwi more time to navigate across several maps before abandoning an unreachable F1 investigation.
     # Purpose: Bounds a failed or obstructed investigation so the normal roaming cycle always resumes.
-    # Technical: Hard deadline from the start of INVESTIGATING.
+    # Technical: Millisecond hard deadline measured from entry into the INVESTIGATING stage; expiry releases a failed or unreachable inspection and restores normal roaming.
     server.agents.observer.AgentObserverPolicy.INVESTIGATION_TIMEOUT_MS: '30000'
     # Values: 5000-30000 milliseconds. Recommended: 15000. Higher values make Kiwi change Lith Harbor idle spots less often.
     # Purpose: Sets the shortest idle between Kiwi's Lith Harbor spot changes after Shanks administration.
-    # Technical: Inclusive lower bound for Lith Harbor idle randomization.
+    # Technical: Inclusive millisecond lower bound sampled for each observer idle period after the showcase has transitioned into its terminal Lith Harbor phase.
     server.agents.observer.AgentObserverPolicy.LITH_IDLE_MIN_MS: '15000'
     # Values: 15000-60000 milliseconds. Recommended: 35000 and no lower than LITH_IDLE_MIN_MS. Higher values make Kiwi settle at each Lith Harbor spot longer.
     # Purpose: Sets the longest idle between Kiwi's Lith Harbor spot changes.
-    # Technical: Inclusive upper bound for Lith Harbor idle randomization.
+    # Technical: Inclusive millisecond upper bound sampled for each observer idle period after the showcase has transitioned into its terminal Lith Harbor phase.
     server.agents.observer.AgentObserverPolicy.LITH_IDLE_MAX_MS: '35000'
     # Values: 1000-10000 milliseconds. Recommended: 2500. Higher values ignore rapid repeated F1 presses for longer; lower values allow more frequent investigations.
     # Purpose: Prevents accidental F1 key spam from repeatedly restarting Kiwi's investigation state.
-    # Technical: Per-active-session debounce applied only to the watched character's emote 1 packets.
+    # Technical: Per-active-session millisecond debounce applied only to emote 1 packets sent by the watched character before a new investigation request can be accepted.
     server.agents.observer.AgentObserverPolicy.F1_COOLDOWN_MS: '2500'
     # Values: 25-90 map pixels. Recommended: 55. Higher values enter portals sooner; lower values require more exact positioning.
     # Purpose: Controls how close Kiwi must walk to a normal portal before using it.
-    # Technical: Squared-distance threshold in the observer movement adapter.
+    # Technical: Map-pixel radius whose squared value is compared with the observer-to-portal distance before the movement adapter requests authored portal entry.
     server.agents.observer.AgentObserverMovementController.PORTAL_DISTANCE_PX: '55'
     # Values: 25-90 map pixels. Recommended: 50. Higher values let Kiwi stop farther from an idle or investigation spot.
     # Purpose: Controls when Kiwi considers a within-map walk complete.
-    # Technical: Squared-distance threshold in the observer movement adapter.
+    # Technical: Map-pixel radius whose squared value is compared with the observer-to-destination distance before ordinary walking is considered complete.
     server.agents.observer.AgentObserverMovementController.ARRIVAL_DISTANCE_PX: '50'
     # Values: 80-350 map pixels. Recommended: 190. Higher values make Kiwi wander farther within each map before idling.
     # Purpose: Controls the size of Kiwi's casual within-map movement before the next map transition.
-    # Technical: Maximum horizontal offset sampled from Kiwi's current grounded position.
+    # Technical: Maximum absolute horizontal map-pixel offset sampled from the observer's current grounded position when policy asks for a casual local idle destination.
     server.agents.observer.AgentObserverMovementController.CASUAL_OFFSET_PX: '190'
     # Values: a finite non-negative integer. Recommended: 12-50 around the tested baseline 25; benchmark or observe behavior before moving outside this band.
     # Purpose: Limits how many maximum per controller can be handled in one pass or kept at once. Higher values let more Agent work progress together; lower values spread the work out and reduce peak load.
@@ -1273,6 +1273,10 @@ tuning:
     # Purpose: Controls the distance or margin used for portal distance. Higher values allow action from farther away or leave more space; lower values require closer, more precise positioning.
     # Technical: the "lith harbor arrival route runtime" component consumes this as an integer. Unit: MapleStory map pixels; horizontal and vertical values use the server map coordinate system.
     server.agents.capabilities.navigation.AgentLithHarborArrivalRouteRuntime.PORTAL_DISTANCE_PX: '45'
+    # Values: 500-900 map pixels. Recommended: 720. Higher values classify more of the left side as the Maple Island arrival ship; lower values hand control to the ordinary town route sooner.
+    # Purpose: Separates the isolated Maple Island arrival ship from Lith Harbor town so arriving Agents walk through the authored ship exit instead of being treated as already in town.
+    # Technical: Horizontal map-coordinate threshold used only by the Lith Harbor arrival route classifier before portal selection; changing it does not move or teleport an Agent.
+    server.agents.capabilities.navigation.AgentLithHarborArrivalRouteRuntime.MAPLE_ISLAND_SHIP_MAX_X: '720'
     # Values: a finite non-negative integer. Recommended: 1350-5400 around the tested baseline 2700; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls the horizontal leeway for town side maximum horizontal. Higher values let Agents drift farther left or right before correcting; lower values make them correct sooner.
     # Technical: the "lith harbor arrival route runtime" component consumes this as an integer. Domain: non-negative count, capacity, or threshold unless the owning component documents a sentinel.
@@ -1493,11 +1497,9 @@ tuning:
     # Purpose: Limits how many recent policy and activity choices each Agent remembers for debugging, deterministic replay, and future LLM context. Higher values retain more history and use more memory; lower values forget older decisions sooner.
     # Technical: the decision provenance journal consumes this as a bounded entry count and evicts the oldest record first.
     server.agents.runtime.decision.AgentDecisionProvenanceState.MAX_RECORDS: '256'
-    # Values: a positive integer. Recommended: 64-256; 128 retains enough recent universal-plan commands for
-    # troubleshooting and replay without allowing per-Agent decision history to grow without a bound.
-    # Purpose: Limits how many complete snapshot -> goal -> plan -> command -> result cycles each Agent remembers.
-    # Higher values preserve more progression history and use more memory; lower values discard older explanations.
-    # Technical: the deterministic autonomy kernel evicts the oldest completed or active cycle first at this bound.
+    # Values: a positive integer. Recommended: 64-256; 128 retains enough recent universal-plan commands for troubleshooting and replay without allowing per-Agent decision history to grow without a bound.
+    # Purpose: Limits how many complete snapshot -> goal -> plan -> command -> result cycles each Agent remembers. Higher values preserve more history and use more memory.
+    # Technical: The deterministic autonomy kernel applies this as a per-Agent deque capacity and evicts the oldest completed or active cycle before appending beyond the bound.
     server.agents.runtime.autonomy.AgentAutonomyCycleState.MAX_RECORDS: '128'
     # Values: a positive integer. Recommended: 1000-10000; 4096 supports large test cohorts while preventing abandoned social and transaction sessions from growing without a bound.
     # Purpose: Limits how many live or recently terminal interaction sessions the Agent engine retains across trade, party, buddy, guild, town encounter, expedition, and market protocols. Higher values support more simultaneous interactions and use more memory.

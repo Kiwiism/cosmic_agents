@@ -11,6 +11,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -64,10 +65,11 @@ class AgentTownLifeRuntimeTest {
     @Test
     void successfulShanksInteractionSettlesInLithBeforeChoosingActivities() {
         AtomicInteger mapId = new AtomicInteger(MapleIslandSouthperryQuestCatalog.FINAL_MAP_ID);
+        AtomicReference<Point> position = new AtomicReference<>(new Point(0, 0));
         Character agent = mock(Character.class);
         when(agent.getId()).thenReturn(18);
         when(agent.getMapId()).thenAnswer(ignored -> mapId.get());
-        when(agent.getPosition()).thenReturn(new Point(0, 0));
+        when(agent.getPosition()).thenAnswer(ignored -> position.get());
         when(agent.getChair()).thenReturn(-1);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, agent, null);
         AgentTownLifeState state = entry.capabilityStates().require(AgentTownLifeState.STATE_KEY);
@@ -79,6 +81,7 @@ class AgentTownLifeRuntimeTest {
         when(gateway.grounded(agent)).thenReturn(true);
         doAnswer(ignored -> {
             mapId.set(LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID);
+            position.set(new Point(1_000, 0));
             return true;
         }).when(gateway).runNpcScript(agent, MapleIslandSouthperryQuestCatalog.SHANKS_NPC_ID);
 

@@ -20,6 +20,8 @@ class AgentArchitectureBoundaryTest {
     private static final Path AGENTS = Path.of("src", "main", "java", "server", "agents");
     private static final Pattern CAPABILITY_IMPORT = Pattern.compile(
             "^import server\\.agents\\.capabilities\\.([^.]+)\\.", Pattern.MULTILINE);
+    private static final Pattern PLAN_IMPORT = Pattern.compile(
+            "^import server\\.agents\\.plans\\.", Pattern.MULTILINE);
 
     @Test
     void pureContractsDoNotDependOnCosmicRuntimeObjects() throws IOException {
@@ -170,6 +172,23 @@ class AgentArchitectureBoundaryTest {
         Map<String, Integer> actual = dependencyCounts();
         ceilings.forEach((edge, ceiling) -> assertTrue(actual.getOrDefault(edge, 0) <= ceiling,
                 () -> edge + " concrete imports increased above migration ceiling " + ceiling));
+    }
+
+    @Test
+    void capabilityToPlanCompatibilityDependenciesCannotIncrease() throws IOException {
+        int[] imports = {0};
+        Path capabilities = AGENTS.resolve("capabilities");
+        try (var files = Files.walk(capabilities)) {
+            for (Path file : files.filter(path -> path.toString().endsWith(".java")).toList()) {
+                Matcher matcher = PLAN_IMPORT.matcher(Files.readString(file));
+                while (matcher.find()) {
+                    imports[0]++;
+                }
+            }
+        }
+        assertTrue(imports[0] <= 19,
+                () -> "capabilities must not acquire new dependencies on plan implementations; "
+                        + "current compatibility import count is " + imports[0]);
     }
 
     private static Map<String, Integer> dependencyCounts() throws IOException {

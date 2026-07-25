@@ -192,9 +192,6 @@ public final class AgentPlanExecutor implements AgentPlanRunner {
         } catch (Exception failure) {
             log.warn("Agent plan step failed agent={} plan={} step={}",
                     agent.getName(), plan.planId(), step.stepId(), failure);
-            AgentAutonomyKernel.beginPlanStep(
-                    entry, () -> CosmicAgentAutonomySnapshotFactory.capture(entry, agent, nowMs),
-                    session, plan, step, nowMs);
             AgentAutonomyKernel.completePlanStep(
                     entry, session, plan, step, AgentPlanExecutionStatus.FAILED,
                     failure.getClass().getSimpleName() + ": " + failure.getMessage(), nowMs);
@@ -284,9 +281,6 @@ public final class AgentPlanExecutor implements AgentPlanRunner {
             AgentPlanCheckpointRuntime.persistIfDirty(entry, nowMs);
             return true;
         } catch (Exception failure) {
-            AgentAutonomyKernel.beginPlanStep(
-                    entry, () -> CosmicAgentAutonomySnapshotFactory.capture(entry, agent, nowMs),
-                    session, plan, step, nowMs);
             AgentAutonomyKernel.completePlanStep(
                     entry, session, plan, step, AgentPlanExecutionStatus.FAILED,
                     "reattach failed: " + failure.getMessage(), nowMs);

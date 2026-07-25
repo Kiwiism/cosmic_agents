@@ -22,6 +22,8 @@ import java.util.concurrent.ThreadLocalRandom;
 
 /** Mechanics adapter used by observer policy; it never registers a normal Agent lifecycle. */
 final class AgentObserverMovementController {
+    private static final String TUNING_PREFIX =
+            "server.agents.observer.AgentObserverMovementController.";
     private static final Logger log = LoggerFactory.getLogger(AgentObserverMovementController.class);
     private static final int PORTAL_DISTANCE_PX = tuningInt("PORTAL_DISTANCE_PX");
     private static final int ARRIVAL_DISTANCE_PX = tuningInt("ARRIVAL_DISTANCE_PX");
@@ -126,7 +128,6 @@ final class AgentObserverMovementController {
     }
 
     private static int tuningInt(String key) {
-        return config.AgentTuning.intValue(
-                "server.agents.observer.AgentObserverMovementController." + key);
+        return config.AgentTuning.intValue(TUNING_PREFIX + key);
     }
 }

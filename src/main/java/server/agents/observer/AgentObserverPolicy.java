@@ -11,6 +11,8 @@ import java.util.concurrent.ThreadLocalRandom;
 
 /** Route and timing policy for the independent Maple Island observer showcase. */
 final class AgentObserverPolicy {
+    private static final String TUNING_PREFIX =
+            "server.agents.observer.AgentObserverPolicy.";
     static final int MUSHROOM_TOWN_MAP_ID = 10_000;
     static final int STATION_MAP_ID = 20_000;
     static final int GREEN_SNAIL_MAP_ID = 50_000;
@@ -151,7 +153,6 @@ final class AgentObserverPolicy {
     }
 
     private static int tuningInt(String key) {
-        return config.AgentTuning.intValue(
-                "server.agents.observer.AgentObserverPolicy." + key);
+        return config.AgentTuning.intValue(TUNING_PREFIX + key);
     }
 }

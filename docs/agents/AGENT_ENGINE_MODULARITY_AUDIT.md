@@ -1,5 +1,74 @@
 # Agent engine modularity audit
 
+## 2026-07-25 audit snapshot
+
+This audit scanned the complete `server.agents` production tree, its Agent tests, configuration
+references, architecture guards, compatibility annotations, reverse imports, and common temporary
+file patterns. It also ran the architecture/configuration boundary suite, focused tests for every
+changed runtime, and a clean compile. A complete-suite attempt produced 3,832 test results
+before exceeding the execution window; its one reported TownLife failure was an outdated mocked
+arrival position, corrected and verified separately. The assembly archive step could not read a
+compiled class held by the live Windows server/build environment, so it was not treated as a code
+failure or silently worked around by deleting the active build tree.
+
+Current scale:
+
+| Measure | Result | Interpretation |
+|---|---:|---|
+| Production Java files | 1,501 | Broad capability coverage, but costly to navigate |
+| Agent test files | 839 | Strong unit and contract coverage |
+| Files at or below 25 lines | 436 | Mostly records, ports, commands, and package markers; do not merge these indiscriminately |
+| Capability imports of plan implementations | 19 | Known reverse-dependency migration debt; now prevented from increasing |
+| Feature-specific top-level objective authorities | 5 files | Frozen by an architecture allowlist pending universal-executor migration |
+| Source-tree temporary artifacts | 0 | No `.orig`, `.rej`, `.bak`, editor backup, or temporary files found |
+
+The audit removed two redundant autonomy-cycle starts from executor exception paths. A plan step
+already opens its cycle before invoking a step executor; reopening it in the catch block repeated
+work and obscured the single-authority lifecycle. Completion remains idempotent if snapshot capture
+itself fails.
+
+The audit also restored configuration traceability for the independent observer controller and
+moved the remaining Lith Harbor arrival threshold into `agent-engine.yaml`. These changes do not
+alter the owning capability boundaries.
+
+### Complexity that is justified
+
+- Small immutable records and narrow gateway ports keep mutable Cosmic objects out of policy and
+  orchestration. Their size alone is not evidence that they should be merged.
+- Revalidation around delayed NPC, shop, trade, and inventory mutations is necessary because the
+  live world may change between scheduled steps.
+- Compatibility adapters remain while commands, tests, persisted checkpoints, or plan cards still
+  reference them. Deleting an adapter before migrating its consumers would increase regression
+  risk.
+- Strict YAML parity and documentation checks intentionally enforce the project requirement that
+  Agent policy numbers remain tunable and documented.
+
+### Simplification priorities
+
+1. Replace the five allowlisted feature-specific objective registrations with goal proposals
+   consumed by the universal executor.
+2. Move the 19 capability-to-plan imports behind neutral contracts or content catalogs, lowering
+   the ratchet after each migration.
+3. Retire deprecated Amherst, Southperry, movement, and ownership facades only after their test,
+   command, checkpoint, and documentation consumers have moved.
+4. Organize the 1,501-file tree through package registries and ownership documentation; merge only
+   proven pass-through types with a single consumer, rather than applying a file-count target.
+5. Keep capability-local validation, but remove duplicate orchestration checks when the same
+   invariant is already guaranteed synchronously by the caller and covered by a contract test.
+
+### Ratings
+
+| Category | Rating | Basis |
+|---|---:|---|
+| Boundary clarity | 8/10 | Pure contracts, profiles, autonomy, TownLife, and Cosmic mutation boundaries are guarded |
+| Modularity | 8/10 | Capabilities are well separated; 19 reverse plan imports remain |
+| Maintainability | 7/10 | Strong naming/docs/tests, offset by 1,501 production files and compatibility breadth |
+| Testability | 9/10 | 839 Agent tests plus schema, checkpoint, configuration, and architecture guards |
+| Extensibility | 8/10 | Universal plans, typed capabilities, immutable snapshots, and LLM-safe gateways are in place |
+| Regression resistance | 8/10 | Strong ratchets and focused tests; parallel legacy authorities remain the largest risk |
+| Runtime scalability readiness | 7/10 | Central scheduling and simulation tiers exist; release-scale soak evidence remains incomplete |
+| Overall | **7.9/10** | Sound foundation with bounded, explicit migration debt |
+
 ## Outcome
 
 The supported progression, behavior, combat, TownLife, navigation, and interruption paths use

@@ -32,6 +32,8 @@ import java.util.concurrent.ThreadLocalRandom;
  * the Agent registry, plan executor, foreground arbiter, and TownLife runtime.</p>
  */
 public final class AgentObserverRuntime {
+    private static final String TUNING_PREFIX =
+            "server.agents.observer.AgentObserverRuntime.";
     private static final Logger log = LoggerFactory.getLogger(AgentObserverRuntime.class);
     private static final Object LOCK = new Object();
     private static final AgentObserverMovementController MOVEMENT =
@@ -505,8 +507,7 @@ public final class AgentObserverRuntime {
     }
 
     private static int tuningInt(String key) {
-        return config.AgentTuning.intValue(
-                "server.agents.observer.AgentObserverRuntime." + key);
+        return config.AgentTuning.intValue(TUNING_PREFIX + key);
     }
 
     public record StartResult(boolean started, String message) {

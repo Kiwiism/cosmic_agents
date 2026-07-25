@@ -27,7 +27,7 @@ public final class AgentLithHarborArrivalRouteRuntime {
     private static final int LOWER_LEFT_EXIT_MAX_X = config.AgentTuning.intValue("server.agents.capabilities.navigation.AgentLithHarborArrivalRouteRuntime.LOWER_LEFT_EXIT_MAX_X");
     private static final int UPPER_SHIP_MAX_X = config.AgentTuning.intValue("server.agents.capabilities.navigation.AgentLithHarborArrivalRouteRuntime.UPPER_SHIP_MAX_X");
     private static final int PORTAL_DISTANCE_PX = config.AgentTuning.intValue("server.agents.capabilities.navigation.AgentLithHarborArrivalRouteRuntime.PORTAL_DISTANCE_PX");
-    private static final int MAPLE_ISLAND_SHIP_MAX_X = 720;
+    private static final int MAPLE_ISLAND_SHIP_MAX_X = config.AgentTuning.intValue("server.agents.capabilities.navigation.AgentLithHarborArrivalRouteRuntime.MAPLE_ISLAND_SHIP_MAX_X");
     private static final String MAPLE_ISLAND_ARRIVAL_PORTAL = "maple00";
     private static final Point SAFE_SHIP_FALLBACK = new Point(84, 27);
     private static final List<ShipPlatform> SHIP_ARRIVAL_PLATFORMS = List.of(
