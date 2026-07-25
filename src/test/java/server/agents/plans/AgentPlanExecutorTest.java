@@ -5,6 +5,9 @@ import org.junit.jupiter.api.Test;
 import server.agents.objectives.AgentObjectiveSource;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentForegroundPauseRuntime;
+import server.agents.runtime.autonomy.AgentAutonomyCycleRecord;
+import server.agents.runtime.autonomy.AgentAutonomyCycleState;
+import server.agents.runtime.decision.AgentDecisionProvenanceState;
 
 import java.util.List;
 import java.util.Map;
@@ -162,6 +165,37 @@ class AgentPlanExecutorTest {
         assertFalse(executor.tick(entry, agent, 102L));
         assertTrue(entry.capabilityStates()
                 .require(AgentPlanSessionState.STATE_KEY).active());
+    }
+
+    @Test
+    void recordsOneExplainableSnapshotToResultCyclePerUniversalStep() {
+        CompletingStepExecutor steps = new CompletingStepExecutor();
+        AgentPlanDefinition plan = plan(
+                "traceable", List.of(step("talk", 0)), List.of());
+        AgentPlanExecutor executor = new AgentPlanExecutor(
+                new AgentPlanRepository(List.of(plan)),
+                new AgentPlanStepExecutorRegistry(List.of(steps)));
+        Character agent = agent(77);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+
+        assertTrue(executor.start(
+                entry, agent, "traceable", AgentPlanStartRequest.EMPTY, 1_000L));
+        assertTrue(executor.tick(entry, agent, 1_001L));
+
+        AgentAutonomyCycleRecord cycle = entry.capabilityStates()
+                .require(AgentAutonomyCycleState.STATE_KEY).latest();
+        assertEquals("test", cycle.goalType());
+        assertEquals("traceable", cycle.planId());
+        assertEquals("talk", cycle.stepId());
+        assertEquals("test-operation", cycle.commandType());
+        assertEquals(AgentPlanExecutionStatus.SUCCEEDED, cycle.resultStatus());
+        assertEquals(1_001L, cycle.snapshot().capturedAtMs());
+
+        assertEquals(
+                List.of("autonomy-goal", "autonomy-plan",
+                        "autonomy-command", "autonomy-result"),
+                entry.capabilityStates().require(AgentDecisionProvenanceState.STATE_KEY)
+                        .snapshot().stream().map(record -> record.domain()).toList());
     }
 
     private static AgentPlanDefinition plan(

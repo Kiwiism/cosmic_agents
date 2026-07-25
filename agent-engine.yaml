@@ -1493,6 +1493,12 @@ tuning:
     # Purpose: Limits how many recent policy and activity choices each Agent remembers for debugging, deterministic replay, and future LLM context. Higher values retain more history and use more memory; lower values forget older decisions sooner.
     # Technical: the decision provenance journal consumes this as a bounded entry count and evicts the oldest record first.
     server.agents.runtime.decision.AgentDecisionProvenanceState.MAX_RECORDS: '256'
+    # Values: a positive integer. Recommended: 64-256; 128 retains enough recent universal-plan commands for
+    # troubleshooting and replay without allowing per-Agent decision history to grow without a bound.
+    # Purpose: Limits how many complete snapshot -> goal -> plan -> command -> result cycles each Agent remembers.
+    # Higher values preserve more progression history and use more memory; lower values discard older explanations.
+    # Technical: the deterministic autonomy kernel evicts the oldest completed or active cycle first at this bound.
+    server.agents.runtime.autonomy.AgentAutonomyCycleState.MAX_RECORDS: '128'
     # Values: a positive integer. Recommended: 1000-10000; 4096 supports large test cohorts while preventing abandoned social and transaction sessions from growing without a bound.
     # Purpose: Limits how many live or recently terminal interaction sessions the Agent engine retains across trade, party, buddy, guild, town encounter, expedition, and market protocols. Higher values support more simultaneous interactions and use more memory.
     # Technical: the shared interaction-session registry consumes this as a process-wide bounded session count.

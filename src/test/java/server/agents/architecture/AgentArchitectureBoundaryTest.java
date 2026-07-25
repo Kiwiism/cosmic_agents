@@ -5,9 +5,11 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -83,6 +85,7 @@ class AgentArchitectureBoundaryTest {
                 AGENTS.resolve("policy"),
                 AGENTS.resolve("personality"),
                 AGENTS.resolve("runtime").resolve("decision"),
+                AGENTS.resolve("runtime").resolve("autonomy"),
                 AGENTS.resolve("memory"),
                 AGENTS.resolve("coordination").resolve("session"),
                 AGENTS.resolve("capabilities").resolve("dialogue").resolve("llm")
@@ -104,6 +107,39 @@ class AgentArchitectureBoundaryTest {
                         "orchestration must issue capability commands instead of mutating Cosmic state");
             }
         }
+    }
+
+    @Test
+    void autonomyKernelCannotCaptureOrMutateCosmicStateDirectly() throws IOException {
+        assertTreeExcludes(
+                AGENTS.resolve("runtime").resolve("autonomy"),
+                List.of(
+                        "import client.",
+                        "import server.maps.",
+                        "import server.life.",
+                        "import server.agents.integration.cosmic."),
+                "the autonomy kernel consumes immutable snapshots captured by the Cosmic adapter");
+    }
+
+    @Test
+    void featureSpecificTopLevelObjectiveAuthoritiesCannotIncrease() throws IOException {
+        Set<String> migrationAllowlist = Set.of(
+                "src/main/java/server/agents/plans/AgentPlanExecutor.java",
+                "src/main/java/server/agents/plans/mapleisland/AgentMapleIslandPlanRuntime.java",
+                "src/main/java/server/agents/progression/AgentCareerObjectiveRuntime.java",
+                "src/main/java/server/agents/progression/AgentVictoriaTrainingObjectiveRuntime.java",
+                "src/main/java/server/agents/capabilities/supplies/AgentSupplyProcurementRuntime.java");
+        Set<String> actual = new HashSet<>();
+        try (var files = Files.walk(AGENTS)) {
+            for (Path file : files.filter(path -> path.toString().endsWith(".java")).toList()) {
+                if (Files.readString(file).contains("AgentObjectiveKernel.start(")) {
+                    actual.add(file.toString().replace('\\', '/'));
+                }
+            }
+        }
+        assertTrue(migrationAllowlist.containsAll(actual),
+                () -> "new top-level objective authority bypasses the autonomy migration: "
+                        + actual.stream().filter(path -> !migrationAllowlist.contains(path)).toList());
     }
 
     @Test

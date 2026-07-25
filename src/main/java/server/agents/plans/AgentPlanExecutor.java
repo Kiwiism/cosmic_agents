@@ -9,6 +9,8 @@ import server.agents.objectives.AgentObjectiveStatus;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentForegroundPauseRuntime;
 import server.agents.runtime.activity.AgentForegroundActivityDefaults;
+import server.agents.runtime.autonomy.AgentAutonomyKernel;
+import server.agents.integration.cosmic.CosmicAgentAutonomySnapshotFactory;
 
 import java.util.List;
 
@@ -148,19 +150,29 @@ public final class AgentPlanExecutor implements AgentPlanRunner {
             if (session.stepStartedValue() && step.timeoutMs() > 0L
                     && nowMs - session.stepStartedAtMs() >= step.timeoutMs()) {
                 executor.cancel(context);
+                AgentAutonomyKernel.completePlanStep(
+                        entry, session, plan, step, AgentPlanExecutionStatus.FAILED,
+                        "step timed out after " + step.timeoutMs() + "ms", nowMs);
                 return retryOrTerminate(entry, session, plan, step,
                         "step timed out after " + step.timeoutMs() + "ms", nowMs);
             }
             AgentPlanStepExecution result;
             if (!session.stepStartedValue()) {
                 session.stepStarted(nowMs);
+                AgentAutonomyKernel.beginPlanStep(
+                        entry, () -> CosmicAgentAutonomySnapshotFactory.capture(entry, agent, nowMs),
+                        session, plan, step, nowMs);
                 result = executor.start(context);
                 if (result.status() == AgentPlanExecutionStatus.ACTIVE) {
                     markCurrentStepAttached(entry, session);
                 }
             } else {
+                AgentAutonomyKernel.beginPlanStep(
+                        entry, () -> CosmicAgentAutonomySnapshotFactory.capture(entry, agent, nowMs),
+                        session, plan, step, nowMs);
                 result = executor.tick(context);
             }
+            completeDecisionCycleIfTerminal(entry, session, plan, step, result, nowMs);
             if (result.status() == AgentPlanExecutionStatus.SUCCEEDED) {
                 session.stepSucceeded();
                 if (session.stepIndex() >= plan.steps().size()) {
@@ -180,6 +192,12 @@ public final class AgentPlanExecutor implements AgentPlanRunner {
         } catch (Exception failure) {
             log.warn("Agent plan step failed agent={} plan={} step={}",
                     agent.getName(), plan.planId(), step.stepId(), failure);
+            AgentAutonomyKernel.beginPlanStep(
+                    entry, () -> CosmicAgentAutonomySnapshotFactory.capture(entry, agent, nowMs),
+                    session, plan, step, nowMs);
+            AgentAutonomyKernel.completePlanStep(
+                    entry, session, plan, step, AgentPlanExecutionStatus.FAILED,
+                    failure.getClass().getSimpleName() + ": " + failure.getMessage(), nowMs);
             try {
                 executor.cancel(context);
             } catch (RuntimeException cancelFailure) {
@@ -202,8 +220,14 @@ public final class AgentPlanExecutor implements AgentPlanRunner {
         AgentPlanDefinition plan = repository.require(session.planId());
         if (session.stepIndex() < plan.steps().size()) {
             AgentPlanDefinition.Step step = plan.steps().get(session.stepIndex());
+            AgentAutonomyKernel.beginPlanStep(
+                    entry, () -> CosmicAgentAutonomySnapshotFactory.capture(entry, agent, nowMs),
+                    session, plan, step, nowMs);
             stepExecutors.require(step.operation()).cancel(
                     context(entry, agent, session, plan, step, nowMs));
+            AgentAutonomyKernel.completePlanStep(
+                    entry, session, plan, step, AgentPlanExecutionStatus.CANCELLED,
+                    reason, nowMs);
         }
         terminal(entry, session, plan, AgentPlanExecutionStatus.CANCELLED, reason, nowMs);
         AgentPlanCheckpointRuntime.persistIfDirty(entry, nowMs);
@@ -244,8 +268,12 @@ public final class AgentPlanExecutor implements AgentPlanRunner {
             if (!session.stepStartedValue()) {
                 session.stepStarted(nowMs);
             }
+            AgentAutonomyKernel.beginPlanStep(
+                    entry, () -> CosmicAgentAutonomySnapshotFactory.capture(entry, agent, nowMs),
+                    session, plan, step, nowMs);
             AgentPlanStepExecution result = stepExecutors.require(step.operation()).reattach(
                     context(entry, agent, session, plan, step, nowMs));
+            completeDecisionCycleIfTerminal(entry, session, plan, step, result, nowMs);
             if (result.status() == AgentPlanExecutionStatus.ACTIVE) {
                 markCurrentStepAttached(entry, session);
             } else if (result.status() == AgentPlanExecutionStatus.SUCCEEDED) {
@@ -256,6 +284,12 @@ public final class AgentPlanExecutor implements AgentPlanRunner {
             AgentPlanCheckpointRuntime.persistIfDirty(entry, nowMs);
             return true;
         } catch (Exception failure) {
+            AgentAutonomyKernel.beginPlanStep(
+                    entry, () -> CosmicAgentAutonomySnapshotFactory.capture(entry, agent, nowMs),
+                    session, plan, step, nowMs);
+            AgentAutonomyKernel.completePlanStep(
+                    entry, session, plan, step, AgentPlanExecutionStatus.FAILED,
+                    "reattach failed: " + failure.getMessage(), nowMs);
             terminal(entry, session, plan, AgentPlanExecutionStatus.FAILED,
                     "reattach failed: " + failure.getMessage(), nowMs);
             AgentPlanCheckpointRuntime.persistIfDirty(entry, nowMs);
@@ -381,6 +415,19 @@ public final class AgentPlanExecutor implements AgentPlanRunner {
         if (!attachmentKey.isBlank()) {
             entry.capabilityStates().require(AgentPlanAttachmentState.STATE_KEY)
                     .attached(attachmentKey);
+        }
+    }
+
+    private static void completeDecisionCycleIfTerminal(
+            AgentRuntimeEntry entry,
+            AgentPlanSessionState session,
+            AgentPlanDefinition plan,
+            AgentPlanDefinition.Step step,
+            AgentPlanStepExecution result,
+            long nowMs) {
+        if (result.status() != AgentPlanExecutionStatus.ACTIVE) {
+            AgentAutonomyKernel.completePlanStep(
+                    entry, session, plan, step, result.status(), result.reason(), nowMs);
         }
     }
 }
