@@ -32,6 +32,22 @@ class FileAgentObjectiveCheckpointStoreTest {
         assertTrue(store.load(77).isEmpty());
     }
 
+    @Test
+    void replacesAnExistingCheckpoint() throws Exception {
+        FileAgentObjectiveCheckpointStore store = new FileAgentObjectiveCheckpointStore(temp);
+        AgentObjectiveCheckpoint first = new AgentObjectiveCheckpoint(
+                1, 77, 500L, objective("first", "maintenance.resupply"),
+                List.of(), List.of());
+        AgentObjectiveCheckpoint replacement = new AgentObjectiveCheckpoint(
+                1, 77, 600L, objective("replacement", "progression.victoria-training"),
+                List.of(), List.of());
+
+        store.save(first);
+        store.save(replacement);
+
+        assertEquals(replacement, store.load(77).orElseThrow());
+    }
+
     private static AgentObjectiveDefinition objective(String id, String type) {
         return new AgentObjectiveDefinition(id, type, 10, 10_000L, 2,
                 AgentObjectiveSource.PROGRESSION_POLICY, "v1", "run-77");

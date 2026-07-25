@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
 import java.io.IOException;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,6 +12,9 @@ import java.nio.file.StandardCopyOption;
 import java.util.Optional;
 
 public final class FileAgentObjectiveCheckpointStore implements AgentObjectiveCheckpointStore {
+    private static final int REPLACE_ATTEMPTS = 3;
+    private static final long REPLACE_RETRY_DELAY_MS = 10L;
+
     private final Path directory;
     private final ObjectMapper mapper;
 
@@ -50,8 +54,8 @@ public final class FileAgentObjectiveCheckpointStore implements AgentObjectiveCh
             mapper.writeValue(temp.toFile(), checkpoint);
             try {
                 Files.move(temp, path, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
-            } catch (AtomicMoveNotSupportedException ignored) {
-                Files.move(temp, path, StandardCopyOption.REPLACE_EXISTING);
+            } catch (AtomicMoveNotSupportedException | AccessDeniedException atomicFailure) {
+                replaceNonAtomically(temp, path, atomicFailure);
             }
         } finally {
             Files.deleteIfExists(temp);
@@ -68,5 +72,27 @@ public final class FileAgentObjectiveCheckpointStore implements AgentObjectiveCh
             throw new IllegalArgumentException("positive character id is required");
         }
         return directory.resolve(characterId + ".json");
+    }
+
+    private static void replaceNonAtomically(Path source, Path target, IOException atomicFailure)
+            throws IOException {
+        for (int attempt = 1; attempt <= REPLACE_ATTEMPTS; attempt++) {
+            try {
+                Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
+                return;
+            } catch (AccessDeniedException accessDenied) {
+                accessDenied.addSuppressed(atomicFailure);
+                if (attempt == REPLACE_ATTEMPTS) {
+                    throw accessDenied;
+                }
+                try {
+                    Thread.sleep(REPLACE_RETRY_DELAY_MS * attempt);
+                } catch (InterruptedException interrupted) {
+                    Thread.currentThread().interrupt();
+                    accessDenied.addSuppressed(interrupted);
+                    throw accessDenied;
+                }
+            }
+        }
     }
 }
