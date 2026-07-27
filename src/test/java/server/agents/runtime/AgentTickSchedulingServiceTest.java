@@ -23,13 +23,14 @@ import static org.mockito.Mockito.when;
 class AgentTickSchedulingServiceTest {
     @AfterEach
     void clearFlag() {
+        System.clearProperty("agents.scheduler.mode");
         System.clearProperty("agents.scheduler.central.enabled");
         AgentRuntimeRegistry.clear();
     }
 
     @Test
     void disabledCentralSchedulerPreservesLegacyRegistrationPath() {
-        System.clearProperty("agents.scheduler.central.enabled");
+        System.setProperty("agents.scheduler.mode", "legacy");
         AgentRuntimeEntry entry = activeEntry(101);
         ScheduledFuture<?> expected = mock(ScheduledFuture.class);
         AtomicBoolean legacyCalled = new AtomicBoolean();
@@ -50,7 +51,7 @@ class AgentTickSchedulingServiceTest {
 
     @Test
     void legacyRegistrationUsesTheSameQuiescenceGuard() {
-        System.clearProperty("agents.scheduler.central.enabled");
+        System.setProperty("agents.scheduler.mode", "legacy");
         AgentRuntimeEntry entry = activeEntry(101);
         ScheduledFuture<?> expected = mock(ScheduledFuture.class);
         AtomicReference<Runnable> scheduledTick = new AtomicReference<>();

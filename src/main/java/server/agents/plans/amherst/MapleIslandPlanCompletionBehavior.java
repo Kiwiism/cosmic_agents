@@ -79,6 +79,11 @@ public final class MapleIslandPlanCompletionBehavior implements AgentPlanComplet
             AgentCapabilityStep approach = approachRestSpot(context, mode);
             if (approach != null) return approach;
             faceRestDirection(context);
+            if (context.memory().booleanValue("restStandingFallback", false)) {
+                gateway.stop(context.entry());
+                return success(objectiveId, reason
+                        + " Agent is resting while standing nearby because the Relaxer spots are occupied.");
+            }
             if (!context.memory().booleanValue("restSettleStarted", false)) {
                 context.memory().putBoolean("restSettleStarted", true);
                 context.memory().putLong("restSettleReadyAtMs", context.nowMs() + REST_SETTLE_DELAY_MS);
@@ -109,12 +114,17 @@ public final class MapleIslandPlanCompletionBehavior implements AgentPlanComplet
             int mapId = gateway.mapId(context.agent());
             MapleIslandRelaxerSpotCatalog.Pool selectedPool = policy.selectRestSpotPool(
                     context.entry(), mapId, mode, restSpotPool);
+            MapleIslandRelaxerSpotCatalog.Pool fallbackPool = selectedPool;
             Optional<MapleIslandRelaxerSpotCatalog.Spot> reserved = reserveRestSpot(
                     context, selectedPool, mapId);
             if (reserved.isEmpty() && selectedPool != restSpotPool) {
                 reserved = reserveRestSpot(context, restSpotPool, mapId);
+                fallbackPool = restSpotPool;
             }
-            if (reserved.isEmpty()) return AgentCapabilityStep.retry("No unoccupied Relaxer spot is available");
+            if (reserved.isEmpty()) {
+                reserved = selectStandingFallback(context, fallbackPool, mapId);
+                context.memory().putBoolean("restStandingFallback", true);
+            }
             var spot = reserved.get();
             context.memory().putInt("restTargetX", spot.x());
             context.memory().putInt("restTargetY", spot.y());
@@ -145,6 +155,20 @@ public final class MapleIslandPlanCompletionBehavior implements AgentPlanComplet
                 ? MapleIslandRelaxerSpotReservationRuntime.reserveFromIndex(
                 context.agent(), pool, selected.getAsInt())
                 : MapleIslandRelaxerSpotReservationRuntime.reserveRandom(context.agent(), pool);
+    }
+
+    private Optional<MapleIslandRelaxerSpotCatalog.Spot> selectStandingFallback(
+            AgentCapabilityContext context,
+            MapleIslandRelaxerSpotCatalog.Pool pool,
+            int mapId) {
+        var candidates = MapleIslandRelaxerSpotCatalog.spots(pool);
+        if (candidates.isEmpty()) {
+            Point current = gateway.position(context.agent());
+            return Optional.of(new MapleIslandRelaxerSpotCatalog.Spot(mapId, current.x, current.y));
+        }
+        int selectedIndex = policy.selectRestSpotIndex(context.entry(), mapId, candidates.size())
+                .orElseGet(() -> ThreadLocalRandom.current().nextInt(candidates.size()));
+        return Optional.of(candidates.get(Math.floorMod(selectedIndex, candidates.size())));
     }
 
     private void faceRestDirection(AgentCapabilityContext context) {

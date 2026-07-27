@@ -37,6 +37,14 @@ import static org.mockito.Mockito.when;
 
 class AgentShopServiceTest {
     @Test
+    void affordableQuantityNeverSpendsTheReservedTaxiMesos() {
+        assertEquals(40, AgentShopService.affordableQuantity(5_000, 1_000, 100, 50, 100));
+        assertEquals(10, AgentShopService.affordableQuantity(5_000, 1_000, 100, 50, 10));
+        assertEquals(0, AgentShopService.affordableQuantity(1_000, 1_000, 100, 50, 100));
+        assertEquals(0, AgentShopService.affordableQuantity(5_000, 1_000, 0, 50, 100));
+    }
+
+    @Test
     void sellTrashNoItemsReplyUsesAgentReplyAdapter() {
         Character bot = mock(Character.class);
         MapleMap map = mock(MapleMap.class);

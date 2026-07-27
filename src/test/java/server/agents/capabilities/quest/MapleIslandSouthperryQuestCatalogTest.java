@@ -13,18 +13,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class MapleIslandSouthperryQuestCatalogTest {
     @Test
     void catalogMatchesVerifiedModernPostAmherstQuestSequence() {
-        assertEquals(Set.of(1039, 1040, 1041, 1042, 1043, 1044, 1045, 1046,
-                        8020, 8021, 8022, 8023, 8024, 8025),
+        assertEquals(Set.of(1039, 1040, 1041, 1042, 1043, 1044, 1045, 1046),
                 MapleIslandSouthperryQuestCatalog.requiredQuestIdSet());
-        assertEquals(Set.of(1039, 1040, 1041, 1042, 1043, 1044, 1045,
-                        8020, 8021, 8022, 8023, 8024, 8025),
+        assertEquals(Set.of(1039, 1040, 1041, 1042, 1043, 1044, 1045),
                 MapleIslandSouthperryQuestCatalog.completedQuestIdSet());
-        assertEquals("Yoona's Quiz on Shopping : Start",
-                MapleIslandSouthperryQuestCatalog.find(8020).orElseThrow().questName());
         assertEquals("Biggs's Story on Victoria Island.",
                 MapleIslandSouthperryQuestCatalog.find(1046).orElseThrow().questName());
-        assertEquals("Yoona's Quiz on Shopping 5",
-                MapleIslandSouthperryQuestCatalog.find(8025).orElseThrow().questName());
+        assertTrue(MapleIslandSouthperryQuestCatalog.find(8020).isEmpty());
+        assertTrue(MapleIslandSouthperryQuestCatalog.find(8025).isEmpty());
         assertEquals(20002,
                 MapleIslandSouthperryQuestCatalog.find(1046).orElseThrow().startNpc().id());
     }
@@ -62,7 +58,7 @@ class MapleIslandSouthperryQuestCatalogTest {
 
         assertEquals(1, quest.getStartItemAmountNeeded(1042003));
         assertEquals(1, quest.getCompleteItemAmountNeeded(4031180));
-        assertTrue(MapleIslandSouthperryQuestCatalog.isRequiredQuest(8020));
+        assertFalse(MapleIslandSouthperryQuestCatalog.isRequiredQuest(8020));
     }
 
     @Test

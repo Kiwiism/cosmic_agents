@@ -40,8 +40,7 @@
     "requiredQuestIds": [
       1008, 1009, 1010, 1011, 1012, 1013, 1014, 1015, 1020, 1021,
       1031, 1032, 1033, 1034, 1035, 1036, 1037, 1038, 1039, 1040,
-      1041, 1042, 1043, 1044, 1045, 1046, 8020, 8021, 8022, 8023,
-      8024, 8025
+      1041, 1042, 1043, 1044, 1045, 1046
     ],
     "excludedQuestIds": [
       1000, 1001, 1003, 1004, 1005, 1006, 1007, 1016, 1017, 1018,
@@ -138,12 +137,6 @@
       "mapId": 1010000,
       "label": "Entrance to Adventurer Training Center",
       "objectives": [
-        { "kind": "force-complete-quest", "questId": 8020, "npcId": 20100 },
-        { "kind": "force-complete-quest", "questId": 8021, "npcId": 20100 },
-        { "kind": "force-complete-quest", "questId": 8022, "npcId": 20100 },
-        { "kind": "force-complete-quest", "questId": 8023, "npcId": 20100 },
-        { "kind": "force-complete-quest", "questId": 8024, "npcId": 20100 },
-        { "kind": "force-complete-quest", "questId": 8025, "npcId": 20100 },
         { "kind": "quest-start", "questId": 1039, "npcId": 20100 },
         { "kind": "kill-mobs", "forQuestId": 1039, "mobIds": [100101, 120100], "counts": [10, 10] },
         { "kind": "quest-complete", "questId": 1039, "npcId": 20100 },

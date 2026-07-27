@@ -33,12 +33,16 @@ class AgentSchedulerConfigTest {
     }
 
     @Test
-    void defaultsToLegacyAndSupportsOldCentralFlag() {
-        assertEquals(AgentSchedulerMode.LEGACY_PER_AGENT, AgentSchedulerConfig.fromSystemProperties().mode());
+    void defaultsToCentralShardedAndSupportsOldCentralFlag() {
+        assertEquals(AgentSchedulerMode.CENTRAL_SHARDED, AgentSchedulerConfig.fromSystemProperties().mode());
 
         System.setProperty("agents.scheduler.central.enabled", "true");
 
         assertEquals(AgentSchedulerMode.CENTRAL_SEQUENTIAL, AgentSchedulerConfig.fromSystemProperties().mode());
+
+        System.setProperty("agents.scheduler.central.enabled", "false");
+
+        assertEquals(AgentSchedulerMode.LEGACY_PER_AGENT, AgentSchedulerConfig.fromSystemProperties().mode());
     }
 
     @Test

@@ -9702,8 +9702,14 @@ public class Character extends AbstractCharacterObject {
 
     /** Test-fixture mutation for the level-9 and level-10 Lith Harbor entry variants. */
     public synchronized void resetVictoriaFirstJobTestBaseline(int firstJobId, int startLevel, int startExp) {
+        resetVictoriaFirstJobTestBaseline(firstJobId, startLevel, startExp, 5_000);
+    }
+
+    /** Test-fixture mutation with the starting mesos supplied by the active progression contract. */
+    public synchronized void resetVictoriaFirstJobTestBaseline(
+            int firstJobId, int startLevel, int startExp, int startingMesos) {
         if (startLevel < 8 || startLevel > 10 || startExp < 0
-                || startExp >= ExpTable.getExpNeededForLevel(startLevel)) {
+                || startExp >= ExpTable.getExpNeededForLevel(startLevel) || startingMesos < 0) {
             throw new IllegalArgumentException("Victoria test start must be level 8-10 with valid EXP");
         }
         int requiredStr = firstJobId == 100 ? 35 : 4;
@@ -9743,7 +9749,7 @@ public class Character extends AbstractCharacterObject {
             maxmp = 50 - ((10 - startLevel) * 11);
             hp = maxhp;
             mp = maxmp;
-            meso.set(1_000);
+            meso.set(startingMesos);
             skills.clear();
             removeAllCooldownsExcept(-1, false);
 

@@ -9,7 +9,6 @@ import server.agents.capabilities.navigation.AgentLithHarborArrivalRouteRuntime;
 import server.agents.capabilities.shop.AgentShopService;
 import server.agents.capabilities.shop.AgentShopStateRuntime;
 import server.agents.capabilities.shop.AgentShopWorkflowPhase;
-import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
 import server.agents.integration.PrimitiveCapabilityGateway;
 import server.agents.objectives.AgentObjectiveAttachment;
@@ -349,11 +348,13 @@ public final class AgentFirstJobJourneyRuntime {
             block(entry, state, "configured potion-shop NPC " + stop.npcId() + " is missing", nowMs);
             return false;
         }
+        int minimumMesoReserve = AgentVictoriaLevel15StageContractRepository.defaultContract()
+                .entryCriteria()
+                .shoppingMesoReserve();
+        AgentShopStateRuntime.ensureMinimumMesoReserve(entry, minimumMesoReserve);
         if (!AgentShopStateRuntime.shopVisitPending(entry)) {
-            AgentShopService.onMapChange(entry, agent, AgentInventoryGatewayRuntime.inventory());
-        }
-        if (!AgentShopStateRuntime.shopVisitPending(entry)) {
-            AgentShopService.requestVisitAtNpc(entry, agent, stop.npcId());
+            AgentShopService.requestVisitAtNpc(
+                    entry, agent, stop.npcId(), minimumMesoReserve);
         }
         if (!AgentShopStateRuntime.shopVisitPending(entry)) {
             block(entry, state, "configured potion shop could not start its planned visit", nowMs);

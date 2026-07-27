@@ -7,8 +7,8 @@ and remaining validation gates are specified in
 
 ## Current mode
 
-The legacy one-repeating-task-per-Agent path remains the default. Mode is now
-selected through the explicit JVM property:
+The central-sharded scheduler is the default when no scheduler property is
+provided. Mode can still be selected explicitly through the JVM property:
 
 ```text
 -Dagents.scheduler.mode=legacy
@@ -16,17 +16,17 @@ selected through the explicit JVM property:
 -Dagents.scheduler.mode=central-sharded
 ```
 
-`central-sharded` is implemented as an explicit opt-in. It creates a fixed
-stable-hash owner set and is guarded by the closed Cosmic gateway-affinity
-catalog. It is not production-approved or the default. The old compatibility
-property still selects central-sequential when no explicit mode is present:
+`central-sharded` creates a fixed stable-hash owner set and is guarded by the
+closed Cosmic gateway-affinity catalog. The old compatibility property still
+selects central-sequential when no explicit mode is present:
 
 ```text
 -Dagents.scheduler.central.enabled=true
 ```
 
-This flag enables the current sequential parity dispatcher, not the planned
-full sharded scheduler. Do not treat it as the production 2000-Agent mode.
+Setting the compatibility property to `false` selects legacy mode. This flag
+enables the sequential parity dispatcher when true, not the full sharded
+scheduler.
 
 When enabled, one lazily started repeating task drains bounded registration
 ingress and dispatches due live Agent sessions from an indexed minimum heap.
@@ -38,8 +38,7 @@ The same `AgentTickRuntime` and guarded
 ## Configuration
 
 ```text
-agents.scheduler.central.enabled=false
-agents.scheduler.mode=legacy
+agents.scheduler.mode=central-sharded
 agents.scheduler.baseTickMs=50
 agents.scheduler.logSlowTicks=true
 agents.scheduler.slowTickMs=250
@@ -282,13 +281,13 @@ capability ranking uses the existing opt-in bounded performance monitor. No
 per-tick diagnostic history or Agent reference is added.
 
 Enable slow-tick logging during soak validation, then compare movement, combat,
-loot, dialogue, and lifecycle
-parity against legacy mode before considering central scheduling as the default.
+loot, dialogue, and lifecycle parity against legacy mode. Legacy remains the
+explicit rollback mode if a live regression is found.
 
 Automated validation includes callback-cadence parity and a deterministic
 500-session, 20-cadence dispatcher soak (10,000 isolated updates). This validates
-dispatcher mechanics only; live-client movement/combat parity and a sustained
-server soak remain required before changing the default mode.
+dispatcher mechanics only; live-client movement/combat parity and sustained
+server soaks remain operational validation requirements.
 
 ## Full Scheduler Readiness
 

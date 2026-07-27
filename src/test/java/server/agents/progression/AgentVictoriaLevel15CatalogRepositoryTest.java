@@ -1,6 +1,7 @@
 package server.agents.progression;
 
 import org.junit.jupiter.api.Test;
+import server.quest.Quest;
 
 import java.util.List;
 import java.util.Set;
@@ -67,6 +68,13 @@ class AgentVictoriaLevel15CatalogRepositoryTest {
         assertCareer(repository, 500, 4, 120000000, 1090000, 120000101, 1091002, 120000200,
                 List.of(2193, 2194, 2195, 2196), List.of(11, 26, 43, 10), 2685);
 
+        assertEquals(1302077, repository.careerForFirstJob(100)
+                .preferredStarterWeaponByBundleId().get("warrior-standard-v1"));
+        assertEquals(1372043, repository.careerForFirstJob(200)
+                .preferredStarterWeaponByBundleId().get("magician-standard-v1"));
+        assertEquals(1452051, repository.careerForFirstJob(300)
+                .preferredStarterWeaponByBundleId().get("bowman-standard-v1"));
+        assertTrue(repository.careerForFirstJob(300).starterKitItemIds().contains(2060000));
         AgentVictoriaLevel15Catalog.Career pirate = repository.careerForFirstJob(500);
         AgentVictoriaLevel15Catalog.TrainingStep fourth = pirate.trainingSteps().get(3);
         assertEquals(100040003, fourth.huntingMapId());
@@ -87,6 +95,22 @@ class AgentVictoriaLevel15CatalogRepositoryTest {
     }
 
     @Test
+    void everyInstructorKillRequirementMatchesTheLoadedQuestData() {
+        for (AgentVictoriaLevel15Catalog.Career career
+                : AgentVictoriaLevel15CatalogRepository.defaultRepository().catalog().careers()) {
+            for (AgentVictoriaLevel15Catalog.TrainingStep step : career.trainingSteps()) {
+                Quest quest = Quest.getInstance(step.questId());
+                for (int i = 0; i < step.mobIds().size(); i++) {
+                    int mobId = step.mobIds().get(i);
+                    assertEquals(step.requiredCounts().get(i),
+                            quest.getMobAmountNeeded(mobId),
+                            () -> "quest " + step.questId() + " mob " + mobId);
+                }
+            }
+        }
+    }
+
+    @Test
     void catalogsHomeRotationAndFallbackForEveryCareer() {
         AgentVictoriaLevel15CatalogRepository repository =
                 AgentVictoriaLevel15CatalogRepository.defaultRepository();
@@ -97,11 +121,12 @@ class AgentVictoriaLevel15CatalogRepositoryTest {
                         .map(AgentVictoriaLevel15Catalog.QuestPack::packId).collect(java.util.stream.Collectors.toSet()));
         assertEquals("ellinia-pre15", repository.careerForFirstJob(100).catchUpPlan().rotationPackId());
         assertEquals("nautilus-pre15", repository.careerForFirstJob(200).catchUpPlan().rotationPackId());
-        assertEquals(AgentVictoriaLevel15Catalog.AfterHomeStrategy.LOCAL_GRIND,
-                repository.careerForFirstJob(300).catchUpPlan().afterHomeStrategy());
+        assertEquals("kerning-pre15", repository.careerForFirstJob(300).catchUpPlan().rotationPackId());
         assertEquals("perion-pre15", repository.careerForFirstJob(400).catchUpPlan().rotationPackId());
-        assertEquals(AgentVictoriaLevel15Catalog.AfterHomeStrategy.LOCAL_GRIND,
-                repository.careerForFirstJob(500).catchUpPlan().afterHomeStrategy());
+        assertEquals("henesys-pre15", repository.careerForFirstJob(500).catchUpPlan().rotationPackId());
+        assertTrue(repository.catalog().careers().stream().allMatch(career ->
+                career.catchUpPlan().afterHomeStrategy()
+                        == AgentVictoriaLevel15Catalog.AfterHomeStrategy.ROTATION_PACK));
         assertEquals(1052106, repository.interactionQuest(2090).orElseThrow().startNpcId());
     }
 

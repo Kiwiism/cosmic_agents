@@ -35,6 +35,7 @@ import server.agents.plans.AgentPlanStartRequest;
 import server.agents.plans.AgentUniversalPlanRuntime;
 import server.agents.objectives.AgentObjectiveCheckpointRuntime;
 import server.agents.progression.AgentCareerProgressionCheckpointRuntime;
+import server.agents.progression.AgentVictoriaLevel15StageContractRepository;
 import server.agents.runtime.AgentInteractionRuntime;
 import server.agents.runtime.AgentRuntimeCleanupService;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -407,7 +408,9 @@ public final class MapleIslandCohortRuntime {
             int[] firstJobs = {100, 300, 200, 400, 500};
             int firstJobId = firstJobs[Math.floorMod(context.ordinal() - 1, firstJobs.length)];
             int startLevel = ((context.runSeed() + context.ordinal()) & 1L) == 0L ? 9 : 10;
-            agent.resetVictoriaFirstJobTestBaseline(firstJobId, startLevel, 0);
+            int startingMesos = AgentVictoriaLevel15StageContractRepository.defaultContract()
+                    .entryCriteria().mesos();
+            agent.resetVictoriaFirstJobTestBaseline(firstJobId, startLevel, 0, startingMesos);
             int characterTemplateOrdinal = java.util.Objects.requireNonNull(
                     pooled.characterTemplateOrdinal(), "Pooled Agent has no character template");
             CosmicMapleIslandCohortIdentity.apply(agent,

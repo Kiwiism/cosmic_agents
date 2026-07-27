@@ -185,9 +185,13 @@ public record AgentSchedulerConfig(
         if (explicitMode != null && !explicitMode.isBlank()) {
             return parseMode(explicitMode);
         }
-        return Boolean.getBoolean("agents.scheduler.central.enabled")
-                ? AgentSchedulerMode.CENTRAL_SEQUENTIAL
-                : AgentSchedulerMode.LEGACY_PER_AGENT;
+        String compatibilityFlag = System.getProperty("agents.scheduler.central.enabled");
+        if (compatibilityFlag != null) {
+            return Boolean.parseBoolean(compatibilityFlag)
+                    ? AgentSchedulerMode.CENTRAL_SEQUENTIAL
+                    : AgentSchedulerMode.LEGACY_PER_AGENT;
+        }
+        return AgentSchedulerMode.CENTRAL_SHARDED;
     }
 
     static AgentSchedulerMode parseMode(String value) {

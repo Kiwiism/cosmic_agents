@@ -9,6 +9,9 @@ import server.agents.runtime.AgentRuntimeEntry;
 import java.awt.Point;
 
 /** Narrow cross-capability boundary for combat-triggered presentation fidgets. */
+@AgentGatewayAffinity(
+        value = AgentGatewayThreadAffinity.SHARD_SAFE_DIRECT,
+        rationale = "Combat fidgets mutate only the owning Agent's shard-serialized runtime and presentation state.")
 public final class AgentFidgetGateway {
     public enum Action {
         WAIT,

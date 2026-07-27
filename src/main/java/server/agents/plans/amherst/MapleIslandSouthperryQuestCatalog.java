@@ -22,13 +22,6 @@ public final class MapleIslandSouthperryQuestCatalog {
     public static final int BIGGS_COLLECTION_QUEST_ID = 1007;
     public static final int FORBIDDEN_SHANKS_QUEST_ID = 1028;
     public static final int START_ONLY_BIGGS_STORY_QUEST_ID = 1046;
-    public static final int YOONA_SHOPPING_GUIDE_QUEST_ID = 8020;
-    public static final int YOONA_QUIZ_1_QUEST_ID = 8021;
-    public static final int YOONA_QUIZ_2_QUEST_ID = 8022;
-    public static final int YOONA_QUIZ_3_QUEST_ID = 8023;
-    public static final int YOONA_QUIZ_4_QUEST_ID = 8024;
-    public static final int YOONA_QUIZ_5_QUEST_ID = 8025;
-
     private static final AmherstNpcRef LUCAS = new AmherstNpcRef(12000, "Lucas");
     private static final AmherstNpcRef MAI = new AmherstNpcRef(12100, "Mai");
     private static final AmherstNpcRef YOONA = new AmherstNpcRef(20100, "Yoona");
@@ -39,24 +32,6 @@ public final class MapleIslandSouthperryQuestCatalog {
             AmherstQuestDefinition.npc(1039, "Helping Out Yoona", YOONA, YOONA,
                     AmherstQuestSegment.TRAINING_CENTER, AmherstQuestPattern.KILL_AND_REPORT,
                     AmherstQuestFlag.KILL_OBJECTIVE),
-            AmherstQuestDefinition.npc(YOONA_SHOPPING_GUIDE_QUEST_ID,
-                    "Yoona's Quiz on Shopping : Start", YOONA, YOONA,
-                    AmherstQuestSegment.TRAINING_CENTER, AmherstQuestPattern.NPC_DELIVERY),
-            AmherstQuestDefinition.npc(YOONA_QUIZ_1_QUEST_ID,
-                    "Yoona's Quiz on Shopping 1", YOONA, YOONA,
-                    AmherstQuestSegment.TRAINING_CENTER, AmherstQuestPattern.NPC_DELIVERY),
-            AmherstQuestDefinition.npc(YOONA_QUIZ_2_QUEST_ID,
-                    "Yoona's Quiz on Shopping 2", YOONA, YOONA,
-                    AmherstQuestSegment.TRAINING_CENTER, AmherstQuestPattern.NPC_DELIVERY),
-            AmherstQuestDefinition.npc(YOONA_QUIZ_3_QUEST_ID,
-                    "Yoona's Quiz on Shopping 3", YOONA, YOONA,
-                    AmherstQuestSegment.TRAINING_CENTER, AmherstQuestPattern.NPC_DELIVERY),
-            AmherstQuestDefinition.npc(YOONA_QUIZ_4_QUEST_ID,
-                    "Yoona's Quiz on Shopping 4", YOONA, YOONA,
-                    AmherstQuestSegment.TRAINING_CENTER, AmherstQuestPattern.NPC_DELIVERY),
-            AmherstQuestDefinition.npc(YOONA_QUIZ_5_QUEST_ID,
-                    "Yoona's Quiz on Shopping 5", YOONA, YOONA,
-                    AmherstQuestSegment.TRAINING_CENTER, AmherstQuestPattern.NPC_DELIVERY),
             AmherstQuestDefinition.npc(1040, "Chief's Introduction", LUCAS, LUCAS,
                     AmherstQuestSegment.AMHERST, AmherstQuestPattern.NPC_DELIVERY),
             AmherstQuestDefinition.npc(1041, "Mai's First Training", MAI, MAI,
@@ -100,10 +75,7 @@ public final class MapleIslandSouthperryQuestCatalog {
     }
 
     public static Set<Integer> completedQuestIdSet() {
-        return Set.of(1039, 1040, 1041, 1042, 1043, 1044, 1045,
-                YOONA_SHOPPING_GUIDE_QUEST_ID, YOONA_QUIZ_1_QUEST_ID,
-                YOONA_QUIZ_2_QUEST_ID, YOONA_QUIZ_3_QUEST_ID,
-                YOONA_QUIZ_4_QUEST_ID, YOONA_QUIZ_5_QUEST_ID);
+        return Set.of(1039, 1040, 1041, 1042, 1043, 1044, 1045);
     }
 
     public static Optional<String> npcName(int npcId) {

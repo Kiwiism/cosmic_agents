@@ -60,7 +60,11 @@ public final class AgentInstructorTrainingRuntime {
             }
             return true;
         }
-        if (gateway.canCompleteQuest(agent, step.questId(), bundle.instructorNpcId())) {
+        boolean killRequirementsMet = step.requiredKills().entrySet().stream()
+                .allMatch(requirement -> gateway.questProgress(
+                        agent, step.questId(), requirement.getKey()) >= requirement.getValue());
+        if (gateway.canCompleteQuest(agent, step.questId(), bundle.instructorNpcId())
+                || killRequirementsMet) {
             if (AgentVictoriaRouteRuntime.travel(entry, agent, bundle.instructorMapId(), gateway)) {
                 return true;
             }
@@ -68,6 +72,13 @@ public final class AgentInstructorTrainingRuntime {
                 return true;
             }
             if (gateway.completeQuest(agent, step.questId(), bundle.instructorNpcId())) {
+                state.trainingQuestIndex(index + 1);
+                state.stage(AgentCareerProgressionState.Stage.INSTRUCTOR_TRAINING, nowMs + NPC_DELAY_MS);
+            } else if (killRequirementsMet
+                    && gateway.forceCompleteQuest(agent, step.questId(), bundle.instructorNpcId())) {
+                // Every cataloged instructor step is WZ-audited as NPC + mob-count only.
+                // This recovers old quest states whose counters are complete but whose generic
+                // canComplete check does not transition, without requiring additional kills.
                 state.trainingQuestIndex(index + 1);
                 state.stage(AgentCareerProgressionState.Stage.INSTRUCTOR_TRAINING, nowMs + NPC_DELAY_MS);
             }

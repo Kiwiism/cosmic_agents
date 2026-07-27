@@ -38,4 +38,13 @@ class AgentVictoriaTrainingRouteCatalogTest {
     void generalGraphConnectsTheLevel15SliceToTheRestOfVictoria() {
         assertNotNull(AgentVictoriaTrainingRouteCatalog.nextHop(104000000, 102010000));
     }
+
+    @Test
+    void everyThiefTrainingInstanceCanExitTowardTheInstructor() {
+        for (int instanceMapId : AgentVictoriaLevel15CatalogRepository.defaultRepository()
+                .careerForFirstJob(400).trainingGround().instanceMapIds()) {
+            assertEquals(103010000,
+                    AgentVictoriaTrainingRouteCatalog.nextHop(instanceMapId, 103000003));
+        }
+    }
 }

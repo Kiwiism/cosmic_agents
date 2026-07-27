@@ -19,6 +19,7 @@ class AgentMailboxRuntimeTest {
 
     @Test
     void legacyModeKeepsMailboxOwnershipDisabledByDefault() {
+        System.setProperty("agents.scheduler.mode", "legacy");
         assertFalse(AgentMailboxRuntime.enabled());
     }
 
@@ -33,6 +34,7 @@ class AgentMailboxRuntimeTest {
 
     @Test
     void legacyModeCanOptIntoMailboxOwnership() {
+        System.setProperty("agents.scheduler.mode", "legacy");
         System.setProperty("agents.mailbox.enabled", "true");
         assertTrue(AgentMailboxRuntime.enabled());
     }

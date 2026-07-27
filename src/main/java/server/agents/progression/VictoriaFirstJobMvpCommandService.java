@@ -147,7 +147,7 @@ public final class VictoriaFirstJobMvpCommandService {
                 AgentCareerBuildBundle bundle = VictoriaFirstJobMvpTestService.resetAndStart(
                         entry, career, startVariant.variantId(), System.currentTimeMillis());
                 player.yellowMessage(agent.getName() + " reset to Lv" + startVariant.level()
-                        + " Beginner at the Lith Harbor arrival with Biggs 1046 active and 1,000 mesos; "
+                        + " Beginner at the Lith Harbor arrival with Biggs 1046 active and 5,000 mesos; "
                         + bundle.bundleId() + " / " + startVariant.variantId()
                         + " starts in 3 seconds.");
             } catch (IOException | RuntimeException failure) {

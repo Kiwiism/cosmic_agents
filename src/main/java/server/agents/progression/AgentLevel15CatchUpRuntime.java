@@ -39,7 +39,7 @@ final class AgentLevel15CatchUpRuntime {
             case HOME_QUEST_PACK -> runPack(entry, agent, state,
                     repository.questPack(plan.homePackId()),
                     AgentCareerProgressionState.Stage.POST_HOME_DECISION, nowMs, gateway);
-            case POST_HOME_DECISION -> afterHome(state, plan, nowMs);
+            case POST_HOME_DECISION -> afterHome(agent, state, bundle, plan, nowMs);
             case ROTATION_QUEST_PACK -> runPack(entry, agent, state,
                     repository.questPack(plan.rotationPackId()),
                     agent.getLevel() >= bundle.milestoneLevel()
@@ -69,16 +69,28 @@ final class AgentLevel15CatchUpRuntime {
         return result != AgentVictoriaQuestPackRuntime.Result.BLOCKED;
     }
 
-    private static boolean afterHome(AgentCareerProgressionState state,
+    private static boolean afterHome(Character agent,
+                                     AgentCareerProgressionState state,
+                                     AgentCareerBuildBundle bundle,
                                      AgentVictoriaLevel15Catalog.CatchUpPlan plan,
                                      long nowMs) {
-        AgentCareerProgressionState.Stage next =
-                plan.afterHomeStrategy() == AgentVictoriaLevel15Catalog.AfterHomeStrategy.ROTATION_PACK
-                        ? AgentCareerProgressionState.Stage.ROTATION_QUEST_PACK
-                        : AgentCareerProgressionState.Stage.GRIND_TO_MILESTONE;
+        AgentCareerProgressionState.Stage next = stageAfterHome(
+                agent.getLevel(), bundle.milestoneLevel(), plan.afterHomeStrategy());
         state.questPackIndex(0);
         state.stage(next, nowMs);
         return true;
+    }
+
+    static AgentCareerProgressionState.Stage stageAfterHome(
+            int currentLevel,
+            int milestoneLevel,
+            AgentVictoriaLevel15Catalog.AfterHomeStrategy strategy) {
+        if (currentLevel >= milestoneLevel - 1) {
+            return AgentCareerProgressionState.Stage.GRIND_TO_MILESTONE;
+        }
+        return strategy == AgentVictoriaLevel15Catalog.AfterHomeStrategy.ROTATION_PACK
+                ? AgentCareerProgressionState.Stage.ROTATION_QUEST_PACK
+                : AgentCareerProgressionState.Stage.GRIND_TO_MILESTONE;
     }
 
     private static boolean grind(AgentRuntimeEntry entry,

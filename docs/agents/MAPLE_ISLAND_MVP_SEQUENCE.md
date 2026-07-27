@@ -23,8 +23,6 @@ using Shanks to leave the island.
 | `1008` Pio's Collecting Recycled Goods | Required items come from reactor boxes; Agent needs reactor-box interaction. |
 | `1021` Roger's Apple | Agent must use apple item `2010007` before completing. |
 | `1030` Maria's Map Reading | No complete NPC; treat as auto-complete after requirements. |
-| `8020` Yoona's Quiz on Shopping : Start | Grant/spawn Cash Shop shopping guide item `4031180` for Agent. |
-| `8023` Yoona's Quiz on Shopping 3 | No complete NPC; treat as auto-complete after requirements. |
 | `1046` Biggs's Story on Victoria Island | Start only; leave active/incomplete at MVP exit. |
 
 ## Excluded Or Review

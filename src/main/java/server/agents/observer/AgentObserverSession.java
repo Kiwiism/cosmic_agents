@@ -15,6 +15,7 @@ final class AgentObserverSession {
         EXCURSION,
         INVESTIGATING,
         SHADOWING,
+        APPROACH_SHANKS,
         LITH_HARBOR_IDLE
     }
 
@@ -37,6 +38,8 @@ final class AgentObserverSession {
     int resumeMapId = AgentObserverPolicy.STATION_MAP_ID;
     int lastObservedMapId = -1;
     boolean bariCompleted;
+    boolean handoffRequested;
+    boolean handoffActivationAttempted;
     boolean handoffTriggered;
     private final Map<Integer, Integer> observationVisits = new HashMap<>();
 
@@ -58,6 +61,21 @@ final class AgentObserverSession {
         }
         lastInvestigationRequestAtMs = nowMs;
         investigationRequestedAtMs = nowMs;
+    }
+
+    boolean requestHandoff(int sourceId, int sourceMapId) {
+        if (sourceId != watchedId
+                || sourceMapId != AgentObserverPolicy.SOUTHPERRY_MAP_ID
+                || handoffRequested
+                || handoffActivationAttempted
+                || handoffTriggered) {
+            return false;
+        }
+        handoffRequested = true;
+        investigationRequestedAtMs = 0;
+        stage = Stage.APPROACH_SHANKS;
+        setDestination(AgentObserverPolicy.SOUTHPERRY_MAP_ID);
+        return true;
     }
 
     void setDestination(int mapId) {

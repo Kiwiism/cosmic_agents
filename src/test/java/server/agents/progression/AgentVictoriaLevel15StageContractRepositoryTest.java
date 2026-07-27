@@ -36,6 +36,8 @@ class AgentVictoriaLevel15StageContractRepositoryTest {
         assertEquals(104000000, plan.entryCriteria().mapId());
         assertEquals(9, plan.entryCriteria().minimumLevel());
         assertEquals(10, plan.entryCriteria().maximumLevel());
+        assertEquals(5_000, plan.entryCriteria().mesos());
+        assertEquals(1_000, plan.entryCriteria().shoppingMesoReserve());
         assertEquals(List.of("lv10", "lv9-olaf", "lv9-grind"),
                 plan.entryCriteria().startVariantIds());
         assertEquals(15, plan.exitCriteria().minimumLevel());

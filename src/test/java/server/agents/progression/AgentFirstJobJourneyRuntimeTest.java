@@ -276,6 +276,77 @@ class AgentFirstJobJourneyRuntimeTest {
     }
 
     @Test
+    void completedInstructorKillCounterReturnsAndCompletesInsteadOfGrindingForever() {
+        Character agent = mock(Character.class);
+        when(agent.getId()).thenReturn(49);
+        when(agent.getName()).thenReturn("TrainingComplete");
+        when(agent.getJob()).thenReturn(Job.THIEF);
+        when(agent.getLevel()).thenReturn(12);
+        when(agent.getMapId()).thenReturn(103000003);
+        when(agent.getPosition()).thenReturn(new Point(0, 0));
+        AgentRuntimeEntry entry = entry(agent, "thief-dagger-standard-v1",
+                AgentCareerProgressionState.Stage.INSTRUCTOR_TRAINING);
+        AgentCareerProgressionState state = entry.capabilityStates().require(
+                AgentCareerProgressionState.STATE_KEY);
+        PrimitiveCapabilityGateway gateway = npcGateway(agent, 1052001);
+        when(gateway.questStatus(agent, 2140)).thenReturn(1);
+        when(gateway.questProgress(agent, 2140, 130100)).thenReturn(20);
+        when(gateway.completeQuest(agent, 2140, 1052001)).thenReturn(false);
+        when(gateway.forceCompleteQuest(agent, 2140, 1052001)).thenReturn(true);
+
+        assertTrue(AgentFirstJobJourneyRuntime.tick(entry, agent, 100L, gateway));
+
+        verify(gateway, never()).grind(entry, Set.of(130100));
+        verify(gateway).completeQuest(agent, 2140, 1052001);
+        verify(gateway).forceCompleteQuest(agent, 2140, 1052001);
+        assertEquals(1, state.trainingQuestIndex());
+    }
+
+    @Test
+    void completedThiefCounterLeavesTheTrainingInstanceBeforeReturningToInstructor() {
+        Character agent = mock(Character.class);
+        when(agent.getId()).thenReturn(51);
+        when(agent.getName()).thenReturn("TrainingExit");
+        when(agent.getJob()).thenReturn(Job.THIEF);
+        when(agent.getLevel()).thenReturn(12);
+        when(agent.getMapId()).thenReturn(910310004);
+        when(agent.getPosition()).thenReturn(new Point(0, 0));
+        AgentRuntimeEntry entry = entry(agent, "thief-dagger-standard-v1",
+                AgentCareerProgressionState.Stage.INSTRUCTOR_TRAINING);
+        PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
+        Point exit = new Point(100, 0);
+        when(gateway.questStatus(agent, 2140)).thenReturn(1);
+        when(gateway.questProgress(agent, 2140, 130100)).thenReturn(20);
+        when(gateway.directPortalIdTo(agent, 103010000)).thenReturn(1);
+        when(gateway.portalPosition(agent, 1)).thenReturn(exit);
+
+        assertTrue(AgentFirstJobJourneyRuntime.tick(entry, agent, 100L, gateway));
+
+        verify(gateway).navigate(entry, exit, true);
+        verify(gateway, never()).grind(entry, Set.of(130100));
+    }
+
+    @Test
+    void incompleteInstructorKillCounterContinuesHunting() {
+        Character agent = mock(Character.class);
+        when(agent.getId()).thenReturn(50);
+        when(agent.getName()).thenReturn("TrainingActive");
+        when(agent.getJob()).thenReturn(Job.THIEF);
+        when(agent.getLevel()).thenReturn(10);
+        when(agent.getMapId()).thenReturn(910310004);
+        AgentRuntimeEntry entry = entry(agent, "thief-dagger-standard-v1",
+                AgentCareerProgressionState.Stage.INSTRUCTOR_TRAINING);
+        PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
+        when(gateway.questStatus(agent, 2140)).thenReturn(1);
+        when(gateway.questProgress(agent, 2140, 130100)).thenReturn(19);
+
+        assertTrue(AgentFirstJobJourneyRuntime.tick(entry, agent, 100L, gateway));
+
+        verify(gateway).grind(entry, Set.of(130100));
+        verify(gateway, never()).completeQuest(agent, 2140, 1052001);
+    }
+
+    @Test
     void reachingLevel15DoesNotSkipAnInProgressRequiredHomePack() {
         Character agent = mock(Character.class);
         when(agent.getId()).thenReturn(45);

@@ -14,7 +14,7 @@ class AgentApBuildProfileServiceTest {
 
     @Test
     void catalogContainsAllIndependentLevelThirtyProfiles() {
-        assertEquals(10, profiles.size());
+        assertEquals(11, profiles.size());
     }
 
     @Test
@@ -41,6 +41,7 @@ class AgentApBuildProfileServiceTest {
         assertEquals(33, profile("magician-luk33-int-lv30-v1").targetAtLevel(30));
         assertEquals(4, profile("magician-luk4-int-lv30-v1").targetAtLevel(30));
         assertEquals(30, profile("pirate-str30-dex-lv30-v1").targetAtLevel(30));
+        assertEquals(20, profile("pirate-str20-dex-lv30-v1").targetAtLevel(30));
         assertEquals(30, profile("pirate-dex30-str-lv30-v1").targetAtLevel(30));
     }
 

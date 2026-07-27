@@ -124,7 +124,6 @@ Candidate Maple Island quest ids from `QuestInfo.img.xml`:
 1043 Mai's Third Training
 1044 Mai's Last Training
 1046 Biggs's Story on Victoria Island
-8020-8025 Yoona's Quiz on Shopping
 8031 Protect Lucas's Farm
 8142 Todd's How-to-Hunt
 ```

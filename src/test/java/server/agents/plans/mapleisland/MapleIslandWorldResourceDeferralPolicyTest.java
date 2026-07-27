@@ -59,8 +59,7 @@ class MapleIslandWorldResourceDeferralPolicyTest {
         List<AmherstPlanObjective> secondStage =
                 MapleIslandWorldResourceDeferralPolicy.INSTANCE.independentAlternatives(
                         card, pioReactor, progress, 2);
-        assertEquals(List.of(8020, 8021, 8022, 8023, 8024, 8025,
-                        1039, 1041, 1042, 1043, 1044, 1040), secondStage.stream()
+        assertEquals(List.of(1039, 1041, 1042, 1043, 1044, 1040), secondStage.stream()
                 .flatMap(objective -> objective.allQuestIds().stream())
                 .distinct()
                 .toList());

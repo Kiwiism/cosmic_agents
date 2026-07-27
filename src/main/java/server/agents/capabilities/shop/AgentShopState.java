@@ -15,6 +15,7 @@ public final class AgentShopState {
     private long visitStartedAtMs = 0L;
     private long sequenceStartedAtMs = 0L;
     private boolean sellTrashPending = false;
+    private int minimumMesoReserve = 0;
     private Point stuckCheckPosition = null;
     private long stuckCheckAtMs = 0L;
 
@@ -67,6 +68,14 @@ public final class AgentShopState {
         return sellTrashPending;
     }
 
+    public int minimumMesoReserve() {
+        return minimumMesoReserve;
+    }
+
+    public void ensureMinimumMesoReserve(int mesos) {
+        minimumMesoReserve = Math.max(minimumMesoReserve, Math.max(0, mesos));
+    }
+
     public void setSellTrashPending(boolean pending) {
         sellTrashPending = pending;
     }
@@ -84,6 +93,14 @@ public final class AgentShopState {
     }
 
     public void startVisit(Point npcPosition, Point targetPosition, int approachDelayMs, long startedAtMs) {
+        startVisit(npcPosition, targetPosition, approachDelayMs, 0, startedAtMs);
+    }
+
+    public void startVisit(Point npcPosition,
+                           Point targetPosition,
+                           int approachDelayMs,
+                           int minimumMesoReserve,
+                           long startedAtMs) {
         if (workflow.phase() == AgentShopWorkflowPhase.IDLE || workflow.phase().terminal()) {
             workflow.start("shop:" + startedAtMs, 0, startedAtMs);
             workflow.transition(AgentShopWorkflowPhase.APPROACHING, "travelling to shop NPC", startedAtMs);
@@ -92,6 +109,7 @@ public final class AgentShopState {
         this.npcPosition = npcPosition == null ? null : new Point(npcPosition);
         this.targetPosition = targetPosition == null ? null : new Point(targetPosition);
         setApproachDelayMs(approachDelayMs);
+        this.minimumMesoReserve = Math.max(0, minimumMesoReserve);
         visitStartedAtMs = startedAtMs;
         sequenceStartedAtMs = 0L;
     }
@@ -145,6 +163,7 @@ public final class AgentShopState {
         visitStartedAtMs = 0L;
         sequenceStartedAtMs = 0L;
         sellTrashPending = false;
+        minimumMesoReserve = 0;
         stuckCheckPosition = null;
         stuckCheckAtMs = 0L;
     }

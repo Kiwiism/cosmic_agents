@@ -15,12 +15,6 @@ public final class MapleIslandSouthperryQuestCatalog {
     public static final int BIGGS_COLLECTION_QUEST_ID = server.agents.plans.amherst.MapleIslandSouthperryQuestCatalog.BIGGS_COLLECTION_QUEST_ID;
     public static final int FORBIDDEN_SHANKS_QUEST_ID = server.agents.plans.amherst.MapleIslandSouthperryQuestCatalog.FORBIDDEN_SHANKS_QUEST_ID;
     public static final int START_ONLY_BIGGS_STORY_QUEST_ID = server.agents.plans.amherst.MapleIslandSouthperryQuestCatalog.START_ONLY_BIGGS_STORY_QUEST_ID;
-    public static final int YOONA_SHOPPING_GUIDE_QUEST_ID = server.agents.plans.amherst.MapleIslandSouthperryQuestCatalog.YOONA_SHOPPING_GUIDE_QUEST_ID;
-    public static final int YOONA_QUIZ_1_QUEST_ID = server.agents.plans.amherst.MapleIslandSouthperryQuestCatalog.YOONA_QUIZ_1_QUEST_ID;
-    public static final int YOONA_QUIZ_2_QUEST_ID = server.agents.plans.amherst.MapleIslandSouthperryQuestCatalog.YOONA_QUIZ_2_QUEST_ID;
-    public static final int YOONA_QUIZ_3_QUEST_ID = server.agents.plans.amherst.MapleIslandSouthperryQuestCatalog.YOONA_QUIZ_3_QUEST_ID;
-    public static final int YOONA_QUIZ_4_QUEST_ID = server.agents.plans.amherst.MapleIslandSouthperryQuestCatalog.YOONA_QUIZ_4_QUEST_ID;
-    public static final int YOONA_QUIZ_5_QUEST_ID = server.agents.plans.amherst.MapleIslandSouthperryQuestCatalog.YOONA_QUIZ_5_QUEST_ID;
     private MapleIslandSouthperryQuestCatalog() {}
     public static List<AmherstQuestDefinition> allRequiredQuests() { return server.agents.plans.amherst.MapleIslandSouthperryQuestCatalog.allRequiredQuests(); }
     public static Optional<AmherstQuestDefinition> find(int id) { return server.agents.plans.amherst.MapleIslandSouthperryQuestCatalog.find(id); }

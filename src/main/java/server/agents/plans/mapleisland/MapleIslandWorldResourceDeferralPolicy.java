@@ -84,8 +84,7 @@ final class MapleIslandWorldResourceDeferralPolicy implements AmherstPlanObjecti
 
     private static boolean isYoonaMaiAndLucasCompletion(AmherstPlanObjective objective) {
         boolean yoonaOrMai = objective.allQuestIds().stream().anyMatch(questId ->
-                questId >= 8020 && questId <= 8025
-                        || questId == 1039
+                questId == 1039
                         || questId >= 1041 && questId <= 1044);
         boolean lucasCompletion = objective.kind() == AmherstPlanObjectiveKind.QUEST_COMPLETE
                 && objective.allQuestIds().contains(1040);

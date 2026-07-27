@@ -15,6 +15,7 @@ import server.agents.plans.mapleisland.AgentMapleIslandLithHandoffRuntime;
 import server.agents.registry.AgentResolvedCharacter;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentSchedulerRuntime;
+import server.life.NPC;
 import server.maps.MapleMap;
 import server.maps.Portal;
 
@@ -120,7 +121,8 @@ public final class AgentObserverRuntime {
         }
         return new StartResult(true, requestedObserverName
                 + " was loaded as the observer and stationed in Snail Garden. Roaming begins "
-                + "when " + watched.getName() + " enters that map; F1 requests an investigation.");
+                + "when " + watched.getName() + " enters that map; F1 requests an investigation "
+                + "and F2 in Southperry requests the one-time Shanks administration.");
     }
 
     public static String status() {
@@ -135,6 +137,8 @@ public final class AgentObserverRuntime {
                     + ", watched=" + characterStatus(watched)
                     + ", destinationMap=" + active.destinationMapId
                     + ", BariComplete=" + active.bariCompleted
+                    + ", handoffRequested=" + active.handoffRequested
+                    + ", handoffAttempted=" + active.handoffActivationAttempted
                     + ", handoffTriggered=" + active.handoffTriggered + ".";
         }
     }
@@ -153,8 +157,24 @@ public final class AgentObserverRuntime {
             return;
         }
         synchronized (LOCK) {
-            if (active != null && active.watchedId == source.getId()) {
+            if (active != null
+                    && active.watchedId == source.getId()
+                    && !active.handoffRequested
+                    && !active.handoffTriggered) {
                 active.requestInvestigation(nowMs);
+            }
+        }
+    }
+
+    /** Called only after the live client successfully submits F2/emote 2. */
+    public static void signalF2(Character source) {
+        if (source == null) {
+            return;
+        }
+        synchronized (LOCK) {
+            if (active != null && active.requestHandoff(source.getId(), source.getMapId())) {
+                log.info("Southperry F2 requested one-time Shanks administration watched={}",
+                        source.getName());
             }
         }
     }
@@ -188,6 +208,7 @@ public final class AgentObserverRuntime {
 
         observeMilestones(session, observer, watched, nowMs);
         if (session.investigationRequestedAtMs > 0
+                && !session.handoffRequested
                 && session.stage != AgentObserverSession.Stage.INVESTIGATING) {
             beginInvestigation(session, observer, watched, nowMs);
         }
@@ -199,6 +220,8 @@ public final class AgentObserverRuntime {
             case EXCURSION -> tickExcursion(session, observer, nowMs);
             case INVESTIGATING -> tickInvestigation(session, observer, watched, nowMs);
             case SHADOWING -> tickShadowing(session, observer, watched, nowMs);
+            case APPROACH_SHANKS -> tickApproachShanks(
+                    session, observer, watched, nowMs);
             case LITH_HARBOR_IDLE -> tickLithHarborIdle(session, observer, nowMs);
         }
         session.lastObservedMapId = observer.getMapId();
@@ -215,34 +238,14 @@ public final class AgentObserverRuntime {
             if (AgentObserverPolicy.ISOLATED_TRAINING_MAP_SET.contains(observer.getMapId())) {
                 MOVEMENT.warp(session, observer, AgentObserverPolicy.MAI_MAP_ID);
             }
-            if (session.stage == AgentObserverSession.Stage.INVESTIGATING) {
+            if (session.stage == AgentObserverSession.Stage.INVESTIGATING
+                    && !session.handoffRequested) {
                 session.resumeStage = AgentObserverSession.Stage.SHADOWING;
-            } else {
+            } else if (!session.handoffRequested) {
                 session.stage = AgentObserverSession.Stage.SHADOWING;
                 session.setDestination(watched.getMapId());
             }
             log.info("Observer began Bari-to-Southperry shadowing watched={}", watched.getName());
-        }
-        boolean readyForHandoff = session.bariCompleted
-                && watched.getMapId() == AgentObserverPolicy.SOUTHPERRY_MAP_ID
-                && watched.getQuestStatus(AgentObserverPolicy.BIGGS_QUEST_ID)
-                == QuestStatus.Status.STARTED.getId()
-                && watched.getChair() == AgentObserverPolicy.RELAXER_ITEM_ID;
-        if (!session.handoffTriggered && readyForHandoff) {
-            AgentMapleIslandLithHandoffRuntime.AssignmentResult result =
-                    AgentMapleIslandLithHandoffRuntime.requestAll(observer, nowMs);
-            if (!result.authorized()) {
-                log.warn("Observer Relaxer trigger could not run Shanks administration; "
-                        + "observer {} lacks Agent authority", observer.getName());
-                return;
-            }
-            session.handoffTriggered = true;
-            session.stage = AgentObserverSession.Stage.LITH_HARBOR_IDLE;
-            session.setDestination(AgentObserverPolicy.LITH_HARBOR_MAP_ID);
-            MOVEMENT.warp(session, observer, AgentObserverPolicy.LITH_HARBOR_MAP_ID);
-            session.nextDecisionAtMs = nowMs + AgentObserverPolicy.lithIdleDelayMs();
-            log.info("Relaxer triggered Shanks administration assigned={} queued={} observer={}",
-                    result.assigned(), result.alreadyQueued(), observer.getName());
         }
     }
 
@@ -440,6 +443,60 @@ public final class AgentObserverRuntime {
         }
         Point shadowPoint = MOVEMENT.beside(watched, SHADOW_DISTANCE_PX);
         MOVEMENT.approach(session, observer, shadowPoint, nowMs);
+    }
+
+    private static void tickApproachShanks(AgentObserverSession session,
+                                           Character observer,
+                                           Character watched,
+                                           long nowMs) {
+        if (observer.getMapId() != AgentObserverPolicy.SOUTHPERRY_MAP_ID) {
+            if (AgentObserverPolicy.ISOLATED_TRAINING_MAP_SET.contains(observer.getMapId())) {
+                MOVEMENT.warp(session, observer, AgentObserverPolicy.MAI_MAP_ID);
+            }
+            MOVEMENT.travelNormally(
+                    session, observer, AgentObserverPolicy.SOUTHPERRY_MAP_ID, nowMs);
+            return;
+        }
+        NPC shanks = observer.getMap() == null
+                ? null : observer.getMap().getNPCById(AgentObserverPolicy.SHANKS_NPC_ID);
+        if (shanks == null) {
+            if (nowMs >= session.nextDecisionAtMs) {
+                log.warn("Observer could not find Shanks in Southperry; retrying observer={}",
+                        observer.getName());
+                session.nextDecisionAtMs = nowMs + 5_000L;
+            }
+            return;
+        }
+        if (!MOVEMENT.approach(
+                session, observer, new Point(shanks.getPosition()), nowMs)) {
+            return;
+        }
+        if (session.handoffActivationAttempted) {
+            return;
+        }
+        session.handoffActivationAttempted = true;
+        // The watched character supplies the manual F2 signal, but Kiwi is the
+        // administrator performing the showcase action.  Authorizing the watched
+        // character made the trigger silently fail whenever the player was
+        // intentionally controlling an ordinary, non-authority character.
+        AgentMapleIslandLithHandoffRuntime.AssignmentResult result =
+                AgentMapleIslandLithHandoffRuntime.requestAll(observer, nowMs);
+        if (!result.authorized()) {
+            session.handoffRequested = false;
+            session.stage = AgentObserverSession.Stage.SHADOWING;
+            session.setDestination(watched.getMapId());
+            log.warn("Southperry F2 could not run Shanks administration; observer {} "
+                    + "lacks Agent operator authority", observer.getName());
+            return;
+        }
+        session.handoffTriggered = true;
+        session.stage = AgentObserverSession.Stage.LITH_HARBOR_IDLE;
+        session.setDestination(AgentObserverPolicy.LITH_HARBOR_MAP_ID);
+        MOVEMENT.warp(session, observer, AgentObserverPolicy.LITH_HARBOR_MAP_ID);
+        session.nextDecisionAtMs = nowMs + AgentObserverPolicy.lithIdleDelayMs();
+        log.info("Southperry F2 activated Shanks administration assigned={} queued={} "
+                        + "observer={} operator={}",
+                result.assigned(), result.alreadyQueued(), observer.getName(), observer.getName());
     }
 
     private static void tickLithHarborIdle(AgentObserverSession session,

@@ -9,7 +9,8 @@
     "jobId": 0,
     "minimumLevel": 9,
     "maximumLevel": 10,
-    "mesos": 1000,
+    "mesos": 5000,
+    "shoppingMesoReserve": 1000,
     "careerBundleRequired": true,
     "startVariantIds": ["lv10", "lv9-olaf", "lv9-grind"]
   },

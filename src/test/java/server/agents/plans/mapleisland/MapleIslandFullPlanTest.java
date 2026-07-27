@@ -60,14 +60,9 @@ class MapleIslandFullPlanTest {
                 .filter(objective -> objective.npcId() != null && objective.npcId() == 12101)
                 .map(objective -> objective.questIds().getFirst())
                 .toList());
-        assertTrue(index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8020)
-                < index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8021));
-        assertTrue(index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8022)
-                < index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8023));
-        assertTrue(index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8023)
-                < index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8024));
-        assertTrue(index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8025)
-                < index(card, AmherstPlanObjectiveKind.QUEST_START, 1039));
+        assertTrue(card.objectives().stream()
+                .flatMap(objective -> objective.allQuestIds().stream())
+                .noneMatch(questId -> questId >= 8020 && questId <= 8025));
         assertTrue(index(card, AmherstPlanObjectiveKind.QUEST_COMPLETE, 1039)
                 < index(card, AmherstPlanObjectiveKind.QUEST_START, 1041));
         assertEquals("southperry-right-relaxer", card.objectives().getLast().mode());

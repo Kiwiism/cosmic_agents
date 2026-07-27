@@ -1,6 +1,8 @@
 package server.agents.progression;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 final class AgentInstructorTrainingCatalog {
@@ -11,13 +13,19 @@ final class AgentInstructorTrainingCatalog {
         AgentVictoriaLevel15Catalog.Career career = career(bundle);
         return career.trainingSteps().stream()
                 .map(step -> step(step.questId(), step.huntingMapId(), step.mobIds(),
+                        step.requiredCounts(),
                         career.trainingGround()))
                 .toList();
     }
 
     static AgentInstructorTrainingStep milestoneGrind(AgentCareerBuildBundle bundle) {
         AgentVictoriaLevel15Catalog.MilestoneGrind grind = career(bundle).milestoneGrind();
-        return step(1, grind.huntingMapId(), grind.mobIds(), null);
+        Map<Integer, Integer> requirements = new LinkedHashMap<>();
+        for (int mobId : grind.mobIds()) {
+            requirements.put(mobId, Integer.MAX_VALUE);
+        }
+        return new AgentInstructorTrainingStep(
+                1, grind.huntingMapId(), Set.copyOf(grind.mobIds()), requirements, null);
     }
 
     private static AgentVictoriaLevel15Catalog.Career career(AgentCareerBuildBundle bundle) {
@@ -28,8 +36,13 @@ final class AgentInstructorTrainingCatalog {
             int questId,
             int mapId,
             List<Integer> mobIds,
+            List<Integer> requiredCounts,
             AgentVictoriaLevel15Catalog.TrainingGround trainingGround) {
+        Map<Integer, Integer> requirements = new LinkedHashMap<>();
+        for (int i = 0; i < mobIds.size(); i++) {
+            requirements.put(mobIds.get(i), requiredCounts.get(i));
+        }
         return new AgentInstructorTrainingStep(
-                questId, mapId, Set.copyOf(mobIds), trainingGround);
+                questId, mapId, Set.copyOf(mobIds), requirements, trainingGround);
     }
 }

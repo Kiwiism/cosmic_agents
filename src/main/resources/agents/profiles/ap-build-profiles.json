@@ -110,6 +110,18 @@
       "supportedThroughLevel": 30
     },
     {
+      "profileId": "pirate-str20-dex-lv30-v1",
+      "profileVersion": 1,
+      "jobFamily": "PIRATE",
+      "primaryStat": "DEX",
+      "targetStat": "STR",
+      "progressionStartLevel": 10,
+      "targetAtStartLevel": 4,
+      "targetGainPerLevel": 1,
+      "targetCap": 20,
+      "supportedThroughLevel": 30
+    },
+    {
       "profileId": "pirate-dex30-str-lv30-v1",
       "profileVersion": 1,
       "jobFamily": "PIRATE",

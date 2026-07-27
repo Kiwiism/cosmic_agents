@@ -51,6 +51,14 @@ public final class AgentShopStateRuntime {
         entry.shopState().setSellTrashPending(pending);
     }
 
+    public static int minimumMesoReserve(AgentRuntimeEntry entry) {
+        return entry.shopState().minimumMesoReserve();
+    }
+
+    public static void ensureMinimumMesoReserve(AgentRuntimeEntry entry, int mesos) {
+        entry.shopState().ensureMinimumMesoReserve(mesos);
+    }
+
     public static boolean hasShopNpcPosition(AgentRuntimeEntry entry) {
         return entry.shopState().hasNpcPosition();
     }
@@ -66,6 +74,16 @@ public final class AgentShopStateRuntime {
     public static void startShopVisit(AgentRuntimeEntry entry, Point npcPosition, Point targetPosition, int approachDelayMs,
                                       long startedAtMs) {
         entry.shopState().startVisit(npcPosition, targetPosition, approachDelayMs, startedAtMs);
+    }
+
+    public static void startShopVisit(AgentRuntimeEntry entry,
+                                      Point npcPosition,
+                                      Point targetPosition,
+                                      int approachDelayMs,
+                                      int minimumMesoReserve,
+                                      long startedAtMs) {
+        entry.shopState().startVisit(
+                npcPosition, targetPosition, approachDelayMs, minimumMesoReserve, startedAtMs);
     }
 
     public static Point shopTargetOrNpcPosition(AgentRuntimeEntry entry) {

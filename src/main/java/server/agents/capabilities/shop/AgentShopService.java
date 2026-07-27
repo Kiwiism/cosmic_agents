@@ -110,6 +110,14 @@ public final class AgentShopService {
 
     /** Starts the planned MVP shop visit even when current supplies already satisfy restock thresholds. */
     public static boolean requestVisitAtNpc(AgentRuntimeEntry entry, Character bot, int npcId) {
+        return requestVisitAtNpc(entry, bot, npcId, 0);
+    }
+
+    /**
+     * Starts a planned shop visit while preserving the supplied meso floor for later journey costs.
+     */
+    public static boolean requestVisitAtNpc(
+            AgentRuntimeEntry entry, Character bot, int npcId, int minimumMesoReserve) {
         if (entry == null || bot == null || bot.getMap() == null) {
             return false;
         }
@@ -117,7 +125,7 @@ public final class AgentShopService {
         if (match == null) {
             return false;
         }
-        startShopVisit(entry, bot, match);
+        startShopVisit(entry, bot, match, minimumMesoReserve);
         return true;
     }
 
@@ -147,11 +155,17 @@ public final class AgentShopService {
     }
 
     private static void startShopVisit(AgentRuntimeEntry entry, Character bot, NpcShopMatch match) {
+        startShopVisit(entry, bot, match, 0);
+    }
+
+    private static void startShopVisit(
+            AgentRuntimeEntry entry, Character bot, NpcShopMatch match, int minimumMesoReserve) {
         AgentShopStateRuntime.startShopVisit(
                 entry,
                 match.npcPos,
                 pickShopApproachPoint(match.npcPos, entry, bot),
                 (int) AgentRandom.randMs(0, SHOP_APPROACH_DELAY_MAX_MS),
+                minimumMesoReserve,
                 System.currentTimeMillis());
     }
 
@@ -269,9 +283,10 @@ public final class AgentShopService {
         }
 
         WeaponType wt = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
+        int minimumMesoReserve = AgentShopStateRuntime.minimumMesoReserve(entry);
         List<AgentShopPurchaseAction<AgentRuntimeEntry>> actions = new ArrayList<>();
 
-        if (shouldRechargeWhileShopping(bot, wt, inventory)) {
+        if (minimumMesoReserve == 0 && shouldRechargeWhileShopping(bot, wt, inventory)) {
             actions.add((sequence, shop) -> {
                 AgentShopBuyReport recharge = doRecharge(bot, shop, wt, sequence.inventory());
                 if (recharge.quantity() > 0) {
@@ -284,19 +299,22 @@ public final class AgentShopService {
             });
         }
         if (shouldBuyFixedAmmoWhileShopping(bot, wt)) {
-            actions.add((sequence, shop) -> appendBuyReport(sequence, buyAmmo(bot, shop, wt), "ammo"));
+            actions.add((sequence, shop) -> appendBuyReport(
+                    sequence, buyAmmo(bot, shop, wt, minimumMesoReserve), "ammo"));
         }
         actions.add((sequence, shop) -> {
             int[] pots = AgentPotionService.countPotions(bot);
             if (pots[0] < AgentRuntimeConfig.cfg.POT_LOW_WARN * 5) {
-                return appendBuyReport(sequence, buyPotions(bot, shop, true), "HP pots");
+                return appendBuyReport(
+                        sequence, buyPotions(bot, shop, true, minimumMesoReserve), "HP pots");
             }
             return sequence;
         });
         actions.add((sequence, shop) -> {
             int[] pots = AgentPotionService.countPotions(bot);
             if (pots[1] < AgentRuntimeConfig.cfg.POT_LOW_WARN * 5) {
-                return appendBuyReport(sequence, buyPotions(bot, shop, false), "MP pots");
+                return appendBuyReport(
+                        sequence, buyPotions(bot, shop, false, minimumMesoReserve), "MP pots");
             }
             return sequence;
         });
@@ -531,7 +549,8 @@ public final class AgentShopService {
         return best;
     }
 
-    private static AgentShopBuyReport buyAmmo(Character bot, Shop shop, WeaponType wt) {
+    private static AgentShopBuyReport buyAmmo(
+            Character bot, Shop shop, WeaponType wt, int minimumMesoReserve) {
         ShopSlotItem ammo = findAmmoItem(shop, wt);
         if (ammo == null) {
             return new AgentShopBuyReport(0, 0, 0, AgentShopShortfallReason.NONE);
@@ -539,7 +558,8 @@ public final class AgentShopService {
 
         int target = ammoTargetThreshold();
         int current = AgentCombatAmmoCounter.countAmmo(bot, wt);
-        return buyFixedCostItem(bot, shop, ammo, Math.max(0, target - current), 1000);
+        return buyFixedCostItem(
+                bot, shop, ammo, Math.max(0, target - current), 1000, minimumMesoReserve);
     }
 
     private static boolean matchesRechargeWeapon(int itemId, WeaponType wt) {
@@ -601,7 +621,8 @@ public final class AgentShopService {
         return selected == null ? null : new ShopSlotItem(selected.slot(), selected.shopItem());
     }
 
-    private static AgentShopBuyReport buyPotions(Character bot, Shop shop, boolean forHp) {
+    private static AgentShopBuyReport buyPotions(
+            Character bot, Shop shop, boolean forHp, int minimumMesoReserve) {
         ShopSlotItem pot = findPotionItem(shop, bot, forHp);
         if (pot == null) {
             return new AgentShopBuyReport(0, 0, 0, AgentShopShortfallReason.NONE);
@@ -610,10 +631,17 @@ public final class AgentShopService {
         int target = AgentRuntimeConfig.cfg.POT_LOW_WARN * POT_TARGET_THRESHOLD;
         int[] pots = AgentPotionService.countPotions(bot);
         int current = forHp ? pots[0] : pots[1];
-        return buyFixedCostItem(bot, shop, pot, Math.max(0, target - current), 100);
+        return buyFixedCostItem(
+                bot, shop, pot, Math.max(0, target - current), 100, minimumMesoReserve);
     }
 
-    private static AgentShopBuyReport buyFixedCostItem(Character bot, Shop shop, ShopSlotItem item, int desiredQuantity, int batchSize) {
+    private static AgentShopBuyReport buyFixedCostItem(
+            Character bot,
+            Shop shop,
+            ShopSlotItem item,
+            int desiredQuantity,
+            int batchSize,
+            int minimumMesoReserve) {
         if (item == null || desiredQuantity <= 0) {
             return new AgentShopBuyReport(0, 0, 0, AgentShopShortfallReason.NONE);
         }
@@ -624,7 +652,13 @@ public final class AgentShopService {
 
         while (totalBought < desiredQuantity) {
             int remaining = desiredQuantity - totalBought;
-            short qty = (short) Math.min(remaining, batchSize);
+            int affordable = affordableQuantity(
+                    bot.getMeso(), minimumMesoReserve, price, remaining, batchSize);
+            if (affordable <= 0) {
+                reason = AgentShopShortfallReason.NO_MESO;
+                break;
+            }
+            short qty = (short) affordable;
             Shop.TransactionResult result = AgentShopGatewayRuntime.shop()
                     .buy(bot, shop, item.slot, item.shopItem.getItemId(), qty);
             if (result == Shop.TransactionResult.SUCCESS) {
@@ -633,16 +667,6 @@ public final class AgentShopService {
             }
             if (result == Shop.TransactionResult.NOT_ENOUGH_MESO) {
                 reason = AgentShopShortfallReason.NO_MESO;
-                int affordable = price > 0 ? Math.min(remaining, bot.getMeso() / price) : 0;
-                if (affordable > 0) {
-                    Shop.TransactionResult partial = AgentShopGatewayRuntime.shop()
-                            .buy(bot, shop, item.slot, item.shopItem.getItemId(), (short) affordable);
-                    if (partial == Shop.TransactionResult.SUCCESS) {
-                        totalBought += affordable;
-                    } else if (partial == Shop.TransactionResult.NO_SPACE) {
-                        reason = AgentShopShortfallReason.NO_SPACE;
-                    }
-                }
             } else if (result == Shop.TransactionResult.NO_SPACE) {
                 reason = AgentShopShortfallReason.NO_SPACE;
             } else {
@@ -652,6 +676,15 @@ public final class AgentShopService {
         }
 
         return new AgentShopBuyReport(item.shopItem.getItemId(), totalBought, desiredQuantity, reason);
+    }
+
+    static int affordableQuantity(
+            int mesos, int minimumMesoReserve, int price, int remaining, int batchSize) {
+        if (price <= 0 || remaining <= 0 || batchSize <= 0) {
+            return 0;
+        }
+        int spendableMesos = Math.max(0, mesos - Math.max(0, minimumMesoReserve));
+        return Math.min(Math.min(remaining, batchSize), spendableMesos / price);
     }
 
     private static String buildShortfallMessage(AgentShopBuyReport report, InventoryGateway inventory) {

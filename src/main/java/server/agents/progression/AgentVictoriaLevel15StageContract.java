@@ -31,11 +31,13 @@ public record AgentVictoriaLevel15StageContract(
             int minimumLevel,
             int maximumLevel,
             int mesos,
+            int shoppingMesoReserve,
             boolean careerBundleRequired,
             List<String> startVariantIds) {
         public EntryCriteria {
             if (mapId <= 0 || jobId < 0 || minimumLevel <= 0 || maximumLevel < minimumLevel
-                    || mesos < 0 || startVariantIds == null || startVariantIds.isEmpty()
+                    || mesos < 0 || shoppingMesoReserve < 0 || shoppingMesoReserve > mesos
+                    || startVariantIds == null || startVariantIds.isEmpty()
                     || startVariantIds.stream().anyMatch(AgentVictoriaLevel15StageContract::blank)) {
                 throw new IllegalArgumentException("valid Victoria entry criteria are required");
             }

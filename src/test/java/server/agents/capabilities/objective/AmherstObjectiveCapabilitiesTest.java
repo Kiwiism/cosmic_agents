@@ -576,6 +576,46 @@ class AmherstObjectiveCapabilitiesTest {
     }
 
     @Test
+    void planStopFallsBackToStandingWhenEveryRelaxerSpotIsReserved() {
+        var fixture = new MutablePrimitiveGatewayFixture();
+        fixture.mapId.set(1000000);
+        fixture.items.put(3010000, 1);
+        fixture.position = new Point(100_000, 100_000);
+        var pool = MapleIslandRelaxerSpotCatalog.Pool.AMHERST;
+        List<Integer> reservationOwners = new java.util.ArrayList<>();
+        try {
+            for (int index = 0; index < MapleIslandRelaxerSpotCatalog.spots(pool).size(); index++) {
+                int ownerId = 10_000 + index;
+                assertTrue(MapleIslandRelaxerSpotReservationRuntime.reserveRandom(ownerId, pool).isPresent());
+                reservationOwners.add(ownerId);
+            }
+            AgentCapabilityMemory memory = new AgentCapabilityMemory();
+            var behavior = new MapleIslandPlanCompletionBehavior(fixture.gateway, 3010000, pool);
+
+            AgentCapabilityStep navigating = behavior.tick(new AgentCapabilityContext(
+                    fixture.entry, fixture.agent, 1L, 0L, 0, null, memory),
+                    "stop", "stop in Amherst");
+
+            assertEquals(AgentCapabilityStatus.WAITING_CHILD, navigating.status());
+            assertTrue(memory.booleanValue("restStandingFallback", false));
+            fixture.position = new Point(memory.intValue("restTargetX", 0),
+                    memory.intValue("restTargetY", 0));
+
+            AgentCapabilityStep completed = behavior.tick(new AgentCapabilityContext(
+                    fixture.entry, fixture.agent, 2L, 0L, 0, null, memory),
+                    "stop", "stop in Amherst");
+
+            assertEquals(AgentCapabilityStatus.SUCCESS, completed.status());
+            assertTrue(completed.result().message().contains("resting while standing nearby"));
+            assertTrue(MapleIslandRelaxerSpotReservationRuntime.reservedSpot(77).isEmpty());
+            verify(fixture.gateway).stop(fixture.entry);
+            verify(fixture.gateway, never()).sitChair(any(), anyInt());
+        } finally {
+            reservationOwners.forEach(MapleIslandRelaxerSpotReservationRuntime::release);
+        }
+    }
+
+    @Test
     void cohortSouthperryIdleEndingFacesRandomDirectionWithoutSitting() {
         var fixture = new MutablePrimitiveGatewayFixture();
         fixture.mapId.set(2000000);

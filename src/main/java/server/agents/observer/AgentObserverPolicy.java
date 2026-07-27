@@ -20,9 +20,8 @@ final class AgentObserverPolicy {
     static final int MAI_MAP_ID = 1_010_000;
     static final int SOUTHPERRY_MAP_ID = 2_000_000;
     static final int LITH_HARBOR_MAP_ID = 104_000_000;
+    static final int SHANKS_NPC_ID = 22_000;
     static final int BARI_TEST_QUEST_ID = 1_045;
-    static final int BIGGS_QUEST_ID = 1_046;
-    static final int RELAXER_ITEM_ID = 3_010_000;
 
     static final List<Integer> APPROACH_ROUTE =
             List.of(STATION_MAP_ID, 30_000, 30_001, 40_000, GREEN_SNAIL_MAP_ID);

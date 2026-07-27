@@ -2,6 +2,7 @@ package server.agents.plans.mapleisland;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import server.agents.capabilities.objective.AmherstNpcInteractionDelay;
@@ -54,10 +55,22 @@ class MapleIslandSouthperryPlanTest {
 
     @TempDir
     Path tempDir;
+    private String previousSchedulerMode;
+
+    @BeforeEach
+    void useSynchronousPlanPersistence() {
+        previousSchedulerMode = System.getProperty("agents.scheduler.mode");
+        System.setProperty("agents.scheduler.mode", "legacy-per-agent");
+    }
 
     @AfterEach
-    void releaseRelaxerSpot() {
+    void restoreRuntimeState() {
         AgentRelaxerSpotReservationRuntime.release(77);
+        if (previousSchedulerMode == null) {
+            System.clearProperty("agents.scheduler.mode");
+        } else {
+            System.setProperty("agents.scheduler.mode", previousSchedulerMode);
+        }
     }
 
     @Test
@@ -67,17 +80,11 @@ class MapleIslandSouthperryPlanTest {
         assertEquals("maple-island-southperry-mvp", card.planId());
         assertEquals(2000000, card.exitCriteria().finalMapId());
         assertEquals(Set.of(1046), card.exitCriteria().startOnlyQuestIds());
-        assertEquals(Set.of(1039, 1040, 1041, 1042, 1043, 1044, 1045, 1046,
-                        8020, 8021, 8022, 8023, 8024, 8025),
+        assertEquals(Set.of(1039, 1040, 1041, 1042, 1043, 1044, 1045, 1046),
                 card.requiredQuestIds());
-        assertTrue(index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8020)
-                < index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8021));
-        assertTrue(index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8022)
-                < index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8023));
-        assertTrue(index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8023)
-                < index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8024));
-        assertTrue(index(card, AmherstPlanObjectiveKind.FORCE_COMPLETE_QUEST, 8025)
-                < index(card, AmherstPlanObjectiveKind.QUEST_START, 1039));
+        assertTrue(card.objectives().stream()
+                .flatMap(objective -> objective.allQuestIds().stream())
+                .noneMatch(questId -> questId >= 8020 && questId <= 8025));
         assertTrue(index(card, AmherstPlanObjectiveKind.QUEST_COMPLETE, 1039)
                 < index(card, AmherstPlanObjectiveKind.QUEST_START, 1041));
         assertTrue(index(card, AmherstPlanObjectiveKind.QUEST_START, 1040)

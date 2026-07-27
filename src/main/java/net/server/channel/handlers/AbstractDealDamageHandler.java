@@ -175,7 +175,7 @@ public abstract class AbstractDealDamageHandler extends AbstractPacketHandler {
      * client value can never make an ordinary line look critical to other players.
      */
     static int normalizeClientDamage(int wireDamage) {
-        return wireDamage & Integer.MAX_VALUE;
+        return wireDamage < 0 ? wireDamage + Integer.MAX_VALUE : wireDamage;
     }
 
     static boolean shouldBroadcastCritical(int skill, boolean canCrit, long damage, long nonCriticalMaximum) {

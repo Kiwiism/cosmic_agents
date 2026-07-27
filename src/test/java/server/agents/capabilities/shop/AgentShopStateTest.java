@@ -38,6 +38,7 @@ class AgentShopStateTest {
         assertNull(state.npcPosition());
         assertNull(state.targetPosition());
         assertEquals(0, state.approachDelayMs());
+        assertEquals(0, state.minimumMesoReserve());
     }
 
     @Test
@@ -74,5 +75,23 @@ class AgentShopStateTest {
 
         assertTrue(state.sequenceValid(new Point(125, 100), npc, 100));
         assertFalse(state.sequenceValid(new Point(400, 400), npc, 100));
+    }
+
+    @Test
+    void preservesTheLargestRequiredMesoReserveForAVisit() {
+        AgentShopState state = new AgentShopState();
+
+        state.startVisit(new Point(10, 20), null, 0, 1_000, 1_000L);
+        state.ensureMinimumMesoReserve(500);
+        assertEquals(1_000, state.minimumMesoReserve());
+
+        state.ensureMinimumMesoReserve(1_500);
+        assertEquals(1_500, state.minimumMesoReserve());
+
+        state.startVisit(new Point(30, 40), null, 0, 0, 2_000L);
+        assertEquals(0, state.minimumMesoReserve());
+
+        state.clear();
+        assertEquals(0, state.minimumMesoReserve());
     }
 }

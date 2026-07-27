@@ -5,6 +5,8 @@ import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import client.Character;
 import client.BotClient;
 import client.Client;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.auth.AgentAuthorizationResult;
@@ -40,6 +42,16 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class AgentLifecycleServiceTest {
+    @BeforeEach
+    void useLegacySchedulerForInjectedSchedulerTests() {
+        System.setProperty("agents.scheduler.mode", "legacy");
+    }
+
+    @AfterEach
+    void clearSchedulerMode() {
+        System.clearProperty("agents.scheduler.mode");
+    }
+
     @Test
     void registersAgentWithScheduledTickAndSpawnStatusCheck() {
         Character leader = character(100, "Leader");

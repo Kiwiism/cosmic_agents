@@ -27,7 +27,9 @@ public final class AmherstScopePolicy {
     private static final Set<Integer> LEGACY_EXCLUDED_QUEST_IDS = Set.of(
             1000, 1001, 1003, 1004, 1005, 1006, 1018, 1025, 1029, 1030, 8031);
     private static final Set<Integer> LATER_MAP_QUEST_IDS = Set.of(1007, 1016, 1017, 1019, 1022, 1026, 1027, 1028,
-            1039, 1040, 1041, 1042, 1043, 1044, 1045, 1046, 8020, 8021, 8022, 8023, 8024, 8025, 8142);
+            1039, 1040, 1041, 1042, 1043, 1044, 1045, 1046, 8142);
+    private static final Set<Integer> LEGACY_OPTIONAL_SOUTHPERRY_QUEST_IDS = Set.of(
+            8020, 8021, 8022, 8023, 8024, 8025);
     private static final Map<Integer, Set<Integer>> AMHERST_ROUTE_EDGES = Map.of(
             10000, Set.of(20000),
             20000, Set.of(30000),
@@ -82,7 +84,8 @@ public final class AmherstScopePolicy {
     public AmherstScopeDecision checkQuest(int questId) {
         if (profile == Profile.FULL_MAPLE_ISLAND) {
             if (AmherstQuestCatalog.isRequiredQuest(questId)
-                    || MapleIslandSouthperryQuestCatalog.isRequiredQuest(questId)) {
+                    || MapleIslandSouthperryQuestCatalog.isRequiredQuest(questId)
+                    || LEGACY_OPTIONAL_SOUTHPERRY_QUEST_IDS.contains(questId)) {
                 return AmherstScopeDecision.allow();
             }
             if (questId == MapleIslandSouthperryQuestCatalog.FORBIDDEN_SHANKS_QUEST_ID) {
@@ -93,7 +96,8 @@ public final class AmherstScopePolicy {
                     "quest is not part of the combined Maple Island MVP catalog");
         }
         if (profile == Profile.SOUTHPERRY) {
-            if (MapleIslandSouthperryQuestCatalog.isRequiredQuest(questId)) {
+            if (MapleIslandSouthperryQuestCatalog.isRequiredQuest(questId)
+                    || LEGACY_OPTIONAL_SOUTHPERRY_QUEST_IDS.contains(questId)) {
                 return AmherstScopeDecision.allow();
             }
             if (questId == MapleIslandSouthperryQuestCatalog.FORBIDDEN_SHANKS_QUEST_ID) {

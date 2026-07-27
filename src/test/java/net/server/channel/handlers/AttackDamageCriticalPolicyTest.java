@@ -16,7 +16,7 @@ class AttackDamageCriticalPolicyTest {
     void normalizesMagnitudeWithoutTreatingWireSignAsCriticalState() {
         assertEquals(1234, AbstractDealDamageHandler.normalizeClientDamage(1234));
         assertEquals(1234,
-                AbstractDealDamageHandler.normalizeClientDamage(1234 | Integer.MIN_VALUE));
+                AbstractDealDamageHandler.normalizeClientDamage(1234 - Integer.MAX_VALUE));
     }
 
     @Test

@@ -81,6 +81,16 @@ final class AgentVictoriaTrainingRouteCatalog {
             mutable.computeIfAbsent(edge.fromMapId(), ignored -> new java.util.LinkedHashSet<>())
                     .add(edge.toMapId());
         }
+        for (AgentVictoriaLevel15Catalog.Career career : catalog().careers()) {
+            AgentVictoriaLevel15Catalog.TrainingGround trainingGround = career.trainingGround();
+            if (trainingGround == null) {
+                continue;
+            }
+            for (int instanceMapId : trainingGround.instanceMapIds()) {
+                mutable.computeIfAbsent(instanceMapId, ignored -> new java.util.LinkedHashSet<>())
+                        .add(trainingGround.entranceMapId());
+            }
+        }
         Map<Integer, Set<Integer>> result = new LinkedHashMap<>();
         mutable.forEach((mapId, adjacent) -> result.put(mapId,
                 Collections.unmodifiableSet(new java.util.LinkedHashSet<>(adjacent))));

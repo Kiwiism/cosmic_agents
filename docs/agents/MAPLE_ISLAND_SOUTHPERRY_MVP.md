@@ -24,10 +24,6 @@ portals.
 | Quest | NPC | Required result | Live requirement |
 | --- | --- | --- | --- |
 | `1039 Helping Out Yoona` | Yoona `20100` | Complete | 10 Blue Snails and 10 Shrooms |
-| `8020 Yoona's Quiz on Shopping : Start` | Yoona `20100` | Complete | Simulated Cash Shop visit obtains the Shopping Guide |
-| `8021`-`8022 Yoona's Quiz on Shopping 1-2` | Yoona `20100` | Complete | Ordered server completion bypasses legacy top `1042003` |
-| `8023 Yoona's Quiz on Shopping 3` | Yoona `20100` | Complete | Also has no WZ completion NPC |
-| `8024`-`8025 Yoona's Quiz on Shopping 4-5` | Yoona `20100` | Complete | Ordered server completion bypasses legacy top `1042003` |
 | `1040 Chief's Introduction` | Lucas `12000` | Complete | Amherst quest 1038, then quests 1041-1044 |
 | `1041 Mai's First Training` | Mai `12100` | Complete | 5 Stumps and 3 Tree Branches |
 | `1042 Mai's Second Training` | Mai `12100` | Complete | 5 Red Snails |

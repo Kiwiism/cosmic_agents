@@ -41,8 +41,7 @@
       1009, 1010, 1011, 1012, 1013, 1014, 1015, 1016,
       1017, 1019, 1020, 1021, 1022, 1025, 1026, 1027,
       1029, 1030, 1031, 1032, 1033, 1034, 1037, 1038,
-      1039, 1040, 1041, 1042, 1043, 1044, 8020, 8021,
-      8022, 8023, 8024, 8025, 8031
+      1039, 1040, 1041, 1042, 1043, 1044, 8031
     ],
     "startOnlyQuestIds": [1046],
     "excludedQuestIds": [1028, 8142],
@@ -121,8 +120,7 @@
       "mapId": 1010000,
       "label": "Entrance to Adventurer Training Center",
       "objectives": [
-        { "kind": "quest-chain", "questIds": [1039, 8020, 8021, 8022, 8023, 8024, 8025], "npcId": 20100 },
-        { "kind": "grant-scripted-item", "forQuestId": 8020, "itemId": 4031180 },
+        { "kind": "quest-chain", "questIds": [1039], "npcId": 20100 },
         { "kind": "quest-chain", "questIds": [1016, 1017, 1027, 1041, 1042, 1043, 1044], "npcId": 12100 }
       ]
     },

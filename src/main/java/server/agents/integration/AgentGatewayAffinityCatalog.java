@@ -27,6 +27,7 @@ public final class AgentGatewayAffinityCatalog {
             SkillGateway.class,
             TradeGateway.class,
             AgentCombatStanceGateway.class,
+            AgentFidgetGateway.class,
             AgentTradeInviteGateway.class);
     private static final boolean MULTI_SHARD_READY = calculateMultiShardReady();
 

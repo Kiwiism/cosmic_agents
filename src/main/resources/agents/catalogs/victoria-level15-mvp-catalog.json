@@ -123,9 +123,9 @@
       "milestoneGrind": { "huntingMapId": 100040000, "mobIds": [210100, 1110101] },
       "catchUpPlan": {
         "homePackId": "henesys-pre15",
-        "afterHomeStrategy": "LOCAL_GRIND",
-        "rotationPackId": "",
-        "fallbackGrind": { "huntingMapId": 100040000, "mobIds": [210100, 1110101] }
+        "afterHomeStrategy": "ROTATION_PACK",
+        "rotationPackId": "kerning-pre15",
+        "fallbackGrind": { "huntingMapId": 103010000, "mobIds": [210100, 1120100] }
       }
     },
     {
@@ -188,9 +188,9 @@
       "milestoneGrind": { "huntingMapId": 120010000, "mobIds": [1210100] },
       "catchUpPlan": {
         "homePackId": "nautilus-pre15",
-        "afterHomeStrategy": "LOCAL_GRIND",
-        "rotationPackId": "",
-        "fallbackGrind": { "huntingMapId": 120010000, "mobIds": [1210100] }
+        "afterHomeStrategy": "ROTATION_PACK",
+        "rotationPackId": "henesys-pre15",
+        "fallbackGrind": { "huntingMapId": 100040000, "mobIds": [210100, 1110101] }
       }
     }
   ]

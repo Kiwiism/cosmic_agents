@@ -93,7 +93,7 @@ explicitly added to the slice.
 
 | Quest | Name | Reason |
 | --- | --- | --- |
-| `8020`-`8025` | Yoona's Quiz on Shopping chain | Yoona is beyond Amherst. |
+| `8020`-`8025` | Yoona's Quiz on Shopping chain | Legacy content is not normally accessible, so Agent plans do not select it. |
 | `1016`, `1017`, `1041`-`1044` | Mai training quests | Mai is beyond Amherst. |
 | `1007` | Bigg's Collection of Items | Southperry quest. |
 | `1046` | Biggs's Story on Victoria Island. | Southperry start-only full-MVP marker. |

@@ -77,8 +77,7 @@ a sustained race/soak run.
 
 ## Rollout Decision
 
-`CENTRAL_SHARDED` is implemented as an explicit opt-in. It is not the default
-and is not production-approved. Keep `agents.scheduler.mode=legacy` for normal
-operation until live-client parity, same-map capability stress, shutdown,
-rollback, and staged 500/1000/1500/2000-Agent soak gates pass.
+`CENTRAL_SHARDED` is the no-property default. The closed gateway-affinity audit
+guards registration, while `agents.scheduler.mode=legacy` remains the explicit
+restart rollback for live-client parity, same-map stress, or soak regressions.
 

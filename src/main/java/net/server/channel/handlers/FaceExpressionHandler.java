@@ -50,6 +50,8 @@ public final class FaceExpressionHandler extends AbstractPacketHandler {
                     chr.changeFaceExpression(emote);
                     if (emote == 1) {
                         AgentObserverRuntime.signalF1(chr, System.currentTimeMillis());
+                    } else if (emote == 2) {
+                        AgentObserverRuntime.signalF2(chr);
                     }
                 }
             } finally {

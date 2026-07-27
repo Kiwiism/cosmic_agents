@@ -56,7 +56,8 @@ public final class VictoriaFirstJobMvpTestService {
         if (agent == null) {
             throw new IllegalArgumentException("a spawned Agent is required");
         }
-        AgentVictoriaLevel15StageContractRepository.defaultContract();
+        AgentVictoriaLevel15StageContract stageContract =
+                AgentVictoriaLevel15StageContractRepository.defaultContract();
         AgentCareerBuildBundle bundle = resolveBundle(requestedCareer);
         AgentVictoriaLevel15CatalogRepository catalogRepository =
                 AgentVictoriaLevel15CatalogRepository.defaultRepository();
@@ -82,7 +83,8 @@ public final class VictoriaFirstJobMvpTestService {
         AgentUniversalPlanRuntime.clearCheckpoint(entry, agent.getId());
 
         agent.resetVictoriaFirstJobTestBaseline(
-                bundle.firstJobId(), startVariant.level(), startVariant.exp());
+                bundle.firstJobId(), startVariant.level(), startVariant.exp(),
+                stageContract.entryCriteria().mesos());
         applyVictoriaShowcaseEquipment(agent);
         AgentVictoriaLevel15Catalog catalog = catalogRepository.catalog();
         Quest.getInstance(catalog.islandHandoff().biggsQuestId()).reset(agent);
