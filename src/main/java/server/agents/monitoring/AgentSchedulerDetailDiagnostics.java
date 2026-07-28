@@ -13,6 +13,7 @@ import server.agents.runtime.scheduler.AgentSessionId;
 import server.agents.runtime.scheduler.AgentShardedTickScheduler;
 import server.agents.runtime.scheduler.AgentTickScheduler;
 import server.agents.runtime.scheduler.AgentWorkClass;
+import server.agents.runtime.simulation.AgentBackgroundOutcomeLedger;
 import server.agents.runtime.simulation.AgentSimulationMode;
 
 import java.util.ArrayList;
@@ -353,7 +354,20 @@ final class AgentSchedulerDetailDiagnostics {
             return List.of("No active Agent matches '" + query + "'.");
         }
         AgentSchedulerRegistrationSnapshot registration = registrationsBySession(registrations).get(match.sessionId());
-        return List.of(formatAgent(match, registration, nowMs));
+        List<String> lines = new ArrayList<>();
+        lines.add(formatAgent(match, registration, nowMs));
+        AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(match.agentId());
+        if (entry != null) {
+            AgentBackgroundOutcomeLedger.Snapshot outcomes =
+                    entry.simulationState().backgroundOutcomes().snapshot();
+            lines.add("  simulationScope=" + entry.simulationState().abstractExecutionScope()
+                    + " ledgerActive=" + outcomes.active()
+                    + " ledgerScope=" + outcomes.scope()
+                    + " heartbeats=" + outcomes.heartbeatCount()
+                    + " reconciliations=" + outcomes.reconciliationCount()
+                    + " blocked=" + (outcomes.unsupportedOutcome() != null));
+        }
+        return List.copyOf(lines);
     }
 
     private static List<String> map(

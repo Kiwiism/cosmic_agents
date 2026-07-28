@@ -5,6 +5,7 @@ import server.agents.capabilities.presentation.AgentPersonalityPresentationPolic
 import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
 import server.agents.integration.cosmic.CosmicAgentPerceptionSnapshotFactory;
 import server.agents.personality.AgentPersonalityState;
+import server.agents.runtime.simulation.AgentSimulationMode;
 
 import java.awt.Point;
 
@@ -18,6 +19,9 @@ public final class AgentPresentationTickRuntime {
                                Point targetPosition,
                                long nowMs) {
         if (entry == null || agent == null || entry.capabilityStates() == null) {
+            return false;
+        }
+        if (entry.simulationState().mode() != AgentSimulationMode.PRESENTATION) {
             return false;
         }
         AgentPersonalityState personality = entry.capabilityStates().require(

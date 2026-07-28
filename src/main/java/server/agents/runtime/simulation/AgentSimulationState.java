@@ -2,9 +2,13 @@ package server.agents.runtime.simulation;
 
 public final class AgentSimulationState {
     private volatile AgentSimulationMode mode = AgentSimulationMode.PRESENTATION;
+    private volatile AgentAbstractExecutionScope abstractExecutionScope =
+            AgentAbstractExecutionScope.NONE;
     private volatile long modeSinceMs;
     private volatile long transitionCount;
     private volatile AgentSimulationTransitionEvidence lastTransitionEvidence;
+    private final AgentBackgroundOutcomeLedger backgroundOutcomes =
+            new AgentBackgroundOutcomeLedger();
 
     public AgentSimulationMode mode() {
         return mode;
@@ -20,6 +24,27 @@ public final class AgentSimulationState {
 
     public AgentSimulationTransitionEvidence lastTransitionEvidence() {
         return lastTransitionEvidence;
+    }
+
+    public AgentAbstractExecutionScope abstractExecutionScope() {
+        return abstractExecutionScope;
+    }
+
+    public AgentBackgroundOutcomeLedger backgroundOutcomes() {
+        return backgroundOutcomes;
+    }
+
+    public void allowAbstractExecution(AgentAbstractExecutionScope scope) {
+        if (scope == null || scope == AgentAbstractExecutionScope.NONE) {
+            throw new IllegalArgumentException("An abstract execution scope is required");
+        }
+        abstractExecutionScope = scope;
+    }
+
+    public void clearAbstractExecution(AgentAbstractExecutionScope scope) {
+        if (scope != null && abstractExecutionScope == scope) {
+            abstractExecutionScope = AgentAbstractExecutionScope.NONE;
+        }
     }
 
     public boolean transitionTo(AgentSimulationMode nextMode, long nowMs) {

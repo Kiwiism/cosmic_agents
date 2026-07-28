@@ -18,6 +18,7 @@ import server.agents.integration.PrimitiveCapabilityGateway;
 import server.agents.runtime.AgentForegroundPauseRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
+import server.agents.runtime.simulation.AgentAbstractExecutionScope;
 
 import java.awt.Point;
 
@@ -105,6 +106,7 @@ public final class AgentTownLifeRuntime {
         }
         entry.capabilityStates().require(AgentTownLifeState.STATE_KEY)
                 .start(nowMs, identitySeed, request);
+        entry.simulationState().allowAbstractExecution(AgentAbstractExecutionScope.TOWN_LIFE);
         AgentForegroundPauseRuntime.pause(entry, PLAN_PAUSE_REASON, nowMs);
         AgentTravelVariationRuntime.configure(entry,
                 new AgentTravelVariationSettings(
@@ -189,6 +191,7 @@ public final class AgentTownLifeRuntime {
             return;
         }
         AgentTownLifeState state = entry.capabilityStates().require(AgentTownLifeState.STATE_KEY);
+        entry.simulationState().clearAbstractExecution(AgentAbstractExecutionScope.TOWN_LIFE);
         AgentTownLifeEncounterCoordinator.finish(entry, agent, false, System.currentTimeMillis());
         entry.capabilityStates().require(AgentTownLifeActivitySequenceState.STATE_KEY).clear();
         state.stop();

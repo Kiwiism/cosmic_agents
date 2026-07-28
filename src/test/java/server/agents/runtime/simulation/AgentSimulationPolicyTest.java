@@ -51,6 +51,19 @@ class AgentSimulationPolicyTest {
         assertEquals(AgentSimulationMode.BACKGROUND_ABSTRACT, permitted.selectMode(entry));
     }
 
+    @Test
+    void productionAllowlistOnlyApprovesDeclaredAbstractWork() {
+        MapleMap map = mock(MapleMap.class);
+        AgentRuntimeEntry entry = entryWithMap(map);
+        AgentBackgroundExecutionPolicy policy = AgentBackgroundExecutionPolicy.allowlisted();
+
+        assertEquals(false, policy.permitsAbstractExecution(entry, map));
+
+        entry.simulationState().allowAbstractExecution(AgentAbstractExecutionScope.TOWN_LIFE);
+
+        assertEquals(true, policy.permitsAbstractExecution(entry, map));
+    }
+
     private static AgentRuntimeEntry entryWithMap(MapleMap map) {
         Character agent = mock(Character.class);
         when(agent.getMap()).thenReturn(map);

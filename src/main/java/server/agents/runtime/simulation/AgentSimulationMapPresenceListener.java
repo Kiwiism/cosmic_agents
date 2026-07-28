@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.scheduler.AgentScheduler;
+import server.agents.runtime.scheduler.AgentSchedulerConfig;
 import server.maps.MapleMap;
 
 import java.util.function.BooleanSupplier;
@@ -44,7 +45,7 @@ public final class AgentSimulationMapPresenceListener {
 
     public static AgentSimulationMapPresenceListener production() {
         return new AgentSimulationMapPresenceListener(
-                () -> Boolean.getBoolean("agents.scheduler.simulation.enabled"),
+                AgentSchedulerConfig::configuredSimulationEnabled,
                 AgentScheduler::wake);
     }
 }

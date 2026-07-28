@@ -148,9 +148,7 @@ public record AgentSchedulerConfig(
                         "agents.scheduler.starvationPromotionMs",
                         tuningLong("DEFAULT_STARVATION_PROMOTION_MS")),
                 intProperty("agents.scheduler.shardCount", defaultShardCount()),
-                Boolean.parseBoolean(System.getProperty(
-                        "agents.scheduler.simulation.enabled",
-                        Boolean.toString(tuningBoolean("DEFAULT_SIMULATION_ENABLED")))),
+                configuredSimulationEnabled(),
                 Boolean.parseBoolean(System.getProperty(
                         "agents.scheduler.simulation.backgroundAbstract.enabled",
                         Boolean.toString(tuningBoolean("DEFAULT_BACKGROUND_ABSTRACT_ENABLED")))),
@@ -233,6 +231,12 @@ public record AgentSchedulerConfig(
         } catch (NumberFormatException failure) {
             throw new IllegalArgumentException("Invalid integer Agent scheduler property " + name + ": " + value, failure);
         }
+    }
+
+    public static boolean configuredSimulationEnabled() {
+        return Boolean.parseBoolean(System.getProperty(
+                "agents.scheduler.simulation.enabled",
+                Boolean.toString(tuningBoolean("DEFAULT_SIMULATION_ENABLED"))));
     }
 
     private static int tuningInt(String name) {

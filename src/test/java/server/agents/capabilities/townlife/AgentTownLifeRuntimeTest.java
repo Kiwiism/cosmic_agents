@@ -8,6 +8,7 @@ import server.agents.integration.PrimitiveCapabilityGateway;
 import server.agents.plans.amherst.MapleIslandSouthperryQuestCatalog;
 import server.agents.runtime.AgentForegroundPauseRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.simulation.AgentAbstractExecutionScope;
 
 import java.awt.Point;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -34,10 +35,14 @@ class AgentTownLifeRuntimeTest {
                 1_000L, agent.getId());
 
         assertTrue(AgentForegroundPauseRuntime.paused(entry));
+        assertEquals(AgentAbstractExecutionScope.TOWN_LIFE,
+                entry.simulationState().abstractExecutionScope());
 
         AgentTownLifeRuntime.stop(entry, agent);
 
         assertFalse(AgentForegroundPauseRuntime.paused(entry));
+        assertEquals(AgentAbstractExecutionScope.NONE,
+                entry.simulationState().abstractExecutionScope());
     }
 
     @Test

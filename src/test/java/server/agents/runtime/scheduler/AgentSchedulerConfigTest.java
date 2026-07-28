@@ -66,10 +66,11 @@ class AgentSchedulerConfigTest {
     }
 
     @Test
-    void simulationCadenceDefaultsOffAndValidatesOrdering() {
+    void simulationCadenceDefaultsOnAndValidatesOrdering() {
         AgentSchedulerConfig defaults = AgentSchedulerConfig.fromSystemProperties();
-        assertEquals(false, defaults.simulationEnabled());
-        assertEquals(false, defaults.backgroundAbstractEnabled());
+        assertEquals(true, defaults.simulationEnabled());
+        assertEquals(true, defaults.backgroundAbstractEnabled());
+        assertEquals(true, AgentSchedulerConfig.configuredSimulationEnabled());
         assertEquals(250L, defaults.backgroundActiveTickMs());
         assertEquals(5_000L, defaults.backgroundAbstractHeartbeatMs());
         assertEquals(32, defaults.backgroundMaxWorkPerMapPerCycle());
@@ -81,6 +82,7 @@ class AgentSchedulerConfigTest {
 
         System.setProperty("agents.scheduler.baseTickMs", "50");
         System.setProperty("agents.scheduler.simulation.enabled", "true");
+        assertEquals(true, AgentSchedulerConfig.configuredSimulationEnabled());
         System.setProperty("agents.scheduler.simulation.backgroundActiveTickMs", "49");
         assertThrows(IllegalArgumentException.class, AgentSchedulerConfig::fromSystemProperties);
 

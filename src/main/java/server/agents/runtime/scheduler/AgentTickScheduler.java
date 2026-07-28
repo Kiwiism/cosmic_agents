@@ -703,10 +703,10 @@ public final class AgentTickScheduler {
                         config.simulationEnabled(),
                         config.backgroundAbstractEnabled(),
                         AgentMapGatewayRuntime.map(),
-                        AgentBackgroundExecutionPolicy.denyAll()),
+                        AgentBackgroundExecutionPolicy.allowlisted()),
                 new AgentSimulationTransitionService(
                         AgentMaterializationService.validating(),
-                        AgentBackgroundOutcomeReconciler.noPendingOutcomes()));
+                        AgentBackgroundOutcomeReconciler.ledgerBacked()));
     }
 
     private static final class Registration implements AgentScheduleHandle {

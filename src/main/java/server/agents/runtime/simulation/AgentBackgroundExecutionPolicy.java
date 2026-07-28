@@ -10,4 +10,11 @@ public interface AgentBackgroundExecutionPolicy {
     static AgentBackgroundExecutionPolicy denyAll() {
         return (entry, map) -> false;
     }
+
+    static AgentBackgroundExecutionPolicy allowlisted() {
+        return (entry, map) -> entry != null
+                && map != null
+                && entry.simulationState().abstractExecutionScope()
+                != AgentAbstractExecutionScope.NONE;
+    }
 }

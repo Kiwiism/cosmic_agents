@@ -23,6 +23,11 @@ public final class AgentSimulationTransitionService {
         }
         AgentSimulationMode currentMode = entry.simulationState().mode();
         if (currentMode == requestedMode) {
+            if (currentMode == AgentSimulationMode.BACKGROUND_ABSTRACT) {
+                entry.simulationState().backgroundOutcomes().begin(
+                        entry.simulationState().abstractExecutionScope(),
+                        nowMs);
+            }
             entry.simulationState().recordTransitionAttempt(
                     currentMode,
                     requestedMode,
@@ -30,8 +35,8 @@ public final class AgentSimulationTransitionService {
                     nowMs);
             return currentMode;
         }
-        if (requestedMode == AgentSimulationMode.PRESENTATION
-                && currentMode == AgentSimulationMode.BACKGROUND_ABSTRACT
+        if (currentMode == AgentSimulationMode.BACKGROUND_ABSTRACT
+                && requestedMode != AgentSimulationMode.BACKGROUND_ABSTRACT
                 && !outcomeReconciler.reconcile(entry)) {
             entry.simulationState().recordTransitionAttempt(
                     currentMode,
@@ -40,8 +45,8 @@ public final class AgentSimulationTransitionService {
                     nowMs);
             return currentMode;
         }
-        if (requestedMode == AgentSimulationMode.PRESENTATION
-                && currentMode != AgentSimulationMode.PRESENTATION
+        if (currentMode != AgentSimulationMode.PRESENTATION
+                && requestedMode != AgentSimulationMode.BACKGROUND_ABSTRACT
                 && !materializationService.materialize(entry)) {
             entry.simulationState().recordTransitionAttempt(
                     currentMode,
@@ -51,6 +56,11 @@ public final class AgentSimulationTransitionService {
             return currentMode;
         }
         entry.simulationState().transitionTo(requestedMode, nowMs);
+        if (requestedMode == AgentSimulationMode.BACKGROUND_ABSTRACT) {
+            entry.simulationState().backgroundOutcomes().begin(
+                    entry.simulationState().abstractExecutionScope(),
+                    nowMs);
+        }
         entry.simulationState().recordTransitionAttempt(
                 currentMode,
                 requestedMode,

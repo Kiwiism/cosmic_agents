@@ -2705,10 +2705,10 @@ tuning:
     # Purpose: Sets when minimum positive double becomes available. Higher values make Agents wait for more of the condition; lower values let the behavior begin sooner.
     # Technical: the "load shedding config" component consumes this as a decimal number. Domain: non-negative count, capacity, or threshold unless the owning component documents a sentinel.
     server.agents.runtime.scheduler.AgentLoadSheddingConfig.MIN_POSITIVE_DOUBLE: '0.1'
-    # Values: true or false. Recommended: retain the tested baseline false unless deliberately enabling or disabling this isolated capability.
-    # Purpose: When enabled, Agents use background abstract. When disabled, they skip it while their other capabilities continue normally.
-    # Technical: the "scheduler config" component consumes this as a boolean. Domain: true or false. The disabled path must bypass only this feature and preserve the generic Agent lifecycle.
-    server.agents.runtime.scheduler.AgentSchedulerConfig.DEFAULT_BACKGROUND_ABSTRACT_ENABLED: 'false'
+    # Values: true or false. Recommended: true; abstract execution is additionally restricted by a capability allowlist.
+    # Purpose: Lets unobserved Agents doing safe, non-combat TownLife update only on a slow heartbeat instead of physically performing every movement and ambient action. Combat, quests, shopping, inventory mutations, and other non-allowlisted work remain fully simulated.
+    # Technical: Enables BACKGROUND_ABSTRACT selection only when the active capability explicitly declares a safe abstract scope. The transition ledger blocks rematerialization if an unsupported mutable outcome is ever recorded.
+    server.agents.runtime.scheduler.AgentSchedulerConfig.DEFAULT_BACKGROUND_ABSTRACT_ENABLED: 'true'
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 2500-10000 around the tested baseline 5000; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how long Agents remain in or wait for background abstract heartbeat. Higher values make that pause or state last longer; lower values make them continue sooner.
     # Technical: the "scheduler config" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled.
@@ -2761,10 +2761,10 @@ tuning:
     # Purpose: Controls how strongly shard processor divisor is scaled down. A larger divisor softens the trait or score adjustment; a smaller divisor makes it more sensitive.
     # Technical: the "scheduler config" component consumes this as an integer. Domain: component-specific policy value; startup validation rejects missing, blank, or malformed values. The owning score calculation divides by this value, so it must remain greater than zero.
     server.agents.runtime.scheduler.AgentSchedulerConfig.DEFAULT_SHARD_PROCESSOR_DIVISOR: '2'
-    # Values: true or false. Recommended: false for routine production; use true only for a bounded diagnostic or load-test session (tested baseline false).
-    # Purpose: When enabled, Agents use simulation. When disabled, they skip it while their other capabilities continue normally.
-    # Technical: the "scheduler config" component consumes this as a boolean. Domain: true or false. The disabled path must bypass only this feature and preserve the generic Agent lifecycle.
-    server.agents.runtime.scheduler.AgentSchedulerConfig.DEFAULT_SIMULATION_ENABLED: 'false'
+    # Values: true or false. Recommended: true. Set false only to force every Agent back to the original presentation cadence for comparison or rollback.
+    # Purpose: Makes observed Agents remain smooth and fully presented while unobserved Agents update less often. This reduces work without changing combat, quest, shop, inventory, or plan outcomes.
+    # Technical: Enables observation-aware scheduler modes. Unobserved exact gameplay uses BACKGROUND_ACTIVE; only explicitly allowlisted mutation-safe work may use BACKGROUND_ABSTRACT.
+    server.agents.runtime.scheduler.AgentSchedulerConfig.DEFAULT_SIMULATION_ENABLED: 'true'
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 125-500 around the tested baseline 250; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how frequently slow tick updates. Lower values make Agents react more quickly and smoothly but use more server work; higher values react more slowly and reduce load.
     # Technical: the "scheduler config" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled. It governs recurring work, so lowering it increases invocation frequency and operational load.
