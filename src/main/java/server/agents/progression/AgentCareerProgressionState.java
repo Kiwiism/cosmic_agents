@@ -49,6 +49,7 @@ public final class AgentCareerProgressionState {
     private long nextActionAtMs;
     private String blockReason = "";
     private final EnumSet<Stage> announcedStages = EnumSet.noneOf(Stage.class);
+    private String announcedObjectiveKey = "";
     private long revision;
     private long persistedRevision = -1L;
 
@@ -88,6 +89,7 @@ public final class AgentCareerProgressionState {
         this.nextActionAtMs = Math.max(0L, nextActionAtMs);
         this.blockReason = "";
         this.announcedStages.clear();
+        this.announcedObjectiveKey = "";
         revision++;
     }
 
@@ -155,6 +157,14 @@ public final class AgentCareerProgressionState {
         return stage != null && announcedStages.add(stage);
     }
 
+    public synchronized boolean markObjectiveAnnounced(String objectiveKey) {
+        if (objectiveKey == null || objectiveKey.isBlank() || objectiveKey.equals(announcedObjectiveKey)) {
+            return false;
+        }
+        announcedObjectiveKey = objectiveKey;
+        return true;
+    }
+
     synchronized AgentCareerProgressionCheckpoint pendingCheckpoint(int characterId, long nowMs) {
         if (bundle == null || revision == persistedRevision) {
             return null;
@@ -179,6 +189,7 @@ public final class AgentCareerProgressionState {
         this.nextActionAtMs = checkpoint.nextActionAtMs();
         this.blockReason = checkpoint.blockReason();
         this.announcedStages.clear();
+        this.announcedObjectiveKey = "";
         this.revision = checkpoint.stateRevision();
         this.persistedRevision = checkpoint.stateRevision();
     }

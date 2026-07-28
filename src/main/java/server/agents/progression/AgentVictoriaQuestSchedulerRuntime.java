@@ -7,9 +7,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 import java.util.Comparator;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /** Conservative generic quest compiler for local, hunting-only Victoria quests. */
@@ -150,7 +148,11 @@ final class AgentVictoriaQuestSchedulerRuntime {
                 .findFirst().orElse(null);
         if (huntMap == null) {
             state.huntMapId(0);
-            huntMap = selectHuntMap(entry, agent, objective.huntMaps());
+            huntMap = AgentAdaptiveQuestHuntSelector.defaultSelector()
+                    .select(entry, agent, quest.questId(), objective.objectiveId(),
+                            objective.huntMaps(), false)
+                    .map(AgentAdaptiveQuestHuntSelector.Selection::map)
+                    .orElse(null);
             if (huntMap == null) {
                 state.failAndDefer(agent.getLevel());
                 return false;
@@ -168,27 +170,6 @@ final class AgentVictoriaQuestSchedulerRuntime {
         }
         gateway.grind(entry, Set.copyOf(huntMap.targetMobIds()));
         return true;
-    }
-
-    private static AgentVictoriaQuestRuntimeCatalog.HuntMap selectHuntMap(
-            AgentRuntimeEntry entry,
-            Character agent,
-            List<AgentVictoriaQuestRuntimeCatalog.HuntMap> candidates) {
-        Set<Integer> eligibleIds = new LinkedHashSet<>();
-        for (AgentVictoriaQuestRuntimeCatalog.HuntMap map : candidates) {
-            if (AgentVictoriaTrainingRouteCatalog.canRoute(agent.getMapId(), map.mapId())) {
-                eligibleIds.add(map.mapId());
-            }
-        }
-        Map<Integer, Integer> occupancy = AgentVictoriaTrainingPopulation.snapshot(agent, eligibleIds);
-        AgentProgressionProfile profile = AgentProgressionProfileRuntime.profile(entry);
-        return candidates.stream()
-                .filter(map -> eligibleIds.contains(map.mapId()))
-                .filter(map -> occupancy.getOrDefault(map.mapId(), 0) < map.maximumAgents())
-                .max(Comparator.comparingLong(map -> AgentProgressionDecisionPolicy.huntMapScore(
-                        profile, agent.getId(), agent.getLevel(), agent.getMapId(), map,
-                        occupancy.getOrDefault(map.mapId(), 0))))
-                .orElse(null);
     }
 
     private static boolean complete(Character agent,

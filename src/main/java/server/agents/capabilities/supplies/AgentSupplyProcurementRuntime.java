@@ -20,8 +20,13 @@ import server.agents.progression.AgentCareerBuildBundle;
 import server.agents.progression.AgentCareerProgressionState;
 import server.agents.progression.AgentCareerShopCatalog;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.maintenance.AgentRemediationCoordinator;
+import server.agents.runtime.maintenance.AgentRemediationFrame;
+import server.agents.runtime.maintenance.AgentRemediationKind;
+import server.agents.runtime.maintenance.AgentRemediationState;
 
 import java.util.Comparator;
+import java.util.Map;
 
 /** Executes urgent supply requests as route-aware maintenance without destroying foreground intent. */
 public final class AgentSupplyProcurementRuntime {
@@ -114,11 +119,21 @@ public final class AgentSupplyProcurementRuntime {
                 AgentObjectiveSource.RECOVERY_POLICY, "supply-procurement-v2",
                 request.objectiveId().isBlank() ? maintenanceId : request.objectiveId());
         AgentObjectiveDefinition foreground = AgentObjectiveKernel.active(entry);
-        if (foreground == null) {
-            AgentObjectiveKernel.start(entry, maintenance, nowMs);
-        } else if (!foreground.objectiveId().equals(maintenanceId)) {
-            AgentObjectiveKernel.suspendFor(entry, maintenance,
-                    request.category() + " is " + request.urgency(), nowMs);
+        String parentCorrelationId = foreground == null ? request.objectiveId()
+                : foreground.correlationId();
+        AgentRemediationFrame remediation = new AgentRemediationFrame(
+                "resupply:" + request.requestId(),
+                AgentRemediationKind.LOW_SUPPLIES,
+                maintenanceId,
+                parentCorrelationId == null ? "" : parentCorrelationId,
+                1,
+                nowMs,
+                request.expiresAtMs(),
+                Map.of("resourceCategory", request.category().name(),
+                        "targetQuantity", Integer.toString(request.quantity())));
+        if (!AgentRemediationCoordinator.begin(entry, remediation, maintenance,
+                request.category() + " is " + request.urgency(), nowMs)) {
+            return false;
         }
         execution.start(request.requestId(), maintenanceId, request.category(), supplierMapId,
                 supplierNpcId, agent.getMapId(), phase);
@@ -208,7 +223,8 @@ public final class AgentSupplyProcurementRuntime {
                                AgentObjectiveStatus status,
                                String reason,
                                long nowMs) {
-        String objectiveId = execution.objectiveId();
+        String requestId = execution.requestId();
+        String maintenanceObjectiveId = execution.objectiveId();
         var category = execution.category();
         execution.clear();
         if (category != null) {
@@ -216,6 +232,15 @@ public final class AgentSupplyProcurementRuntime {
             entry.capabilityStates().require(AgentSupplyMaintenanceEvaluationState.STATE_KEY)
                     .resolve(category);
         }
-        AgentObjectiveKernel.finishAndResume(entry, objectiveId, status, reason, nowMs);
+        String frameId = "resupply:" + requestId;
+        if (entry.capabilityStates().require(AgentRemediationState.STATE_KEY).active() == null) {
+            AgentObjectiveDefinition active = AgentObjectiveKernel.active(entry);
+            String parentCorrelation = active == null ? "" : active.correlationId();
+            AgentRemediationCoordinator.reattach(entry, new AgentRemediationFrame(
+                    frameId, AgentRemediationKind.LOW_SUPPLIES, maintenanceObjectiveId,
+                    parentCorrelation, 1, nowMs, Long.MAX_VALUE,
+                    category == null ? Map.of() : Map.of("resourceCategory", category.name())));
+        }
+        AgentRemediationCoordinator.finish(entry, frameId, status, reason, nowMs);
     }
 }

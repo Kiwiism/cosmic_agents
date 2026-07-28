@@ -20,6 +20,11 @@ class AgentTownLifeProfileRepositoryTest {
         assertEquals(3, profile.shopMapIds().size());
         assertEquals(10, profile.venues().size());
         assertEquals(4, profile.trafficZones().size());
+        assertEquals(1, profile.platformPolicies().size());
+        assertEquals(6, profile.platformPolicies().getFirst().capacity());
+        assertEquals("duey-truck-roof",
+                profile.platformPolicy(new java.awt.Point(3890, 425)).orElseThrow().id());
+        assertTrue(profile.platformPolicy(new java.awt.Point(3890, 527)).isEmpty());
         assertEquals(0, profile.mapSeatId(profile.restSpots().get(2).point()));
         assertEquals("lith-harbor", profile.extensions().arrival());
         assertInstanceOf(LithHarborTownLifeArrivalExtension.class,

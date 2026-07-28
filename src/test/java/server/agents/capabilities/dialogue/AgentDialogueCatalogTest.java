@@ -61,6 +61,11 @@ class AgentDialogueCatalogTest {
         assertEquals("took too long at the shop, giving up", AgentDialogueCatalog.shopSequenceTimeoutReply());
         assertEquals("couldn't get to the shopkeeper, never mind", AgentDialogueCatalog.shopKeeperUnreachableReply());
         assertEquals("couldn't stay at the shop to buy, never mind", AgentDialogueCatalog.shopBuyInterruptedReply());
+        assertEquals("I'm buying 20 White Potions for HP.",
+                AgentDialogueCatalog.shopPurchaseIntent(20, "White Potions", "HP"));
+        assertEquals("I'm buying 1 Kerning City Return Scroll.",
+                AgentDialogueCatalog.shopPurchaseIntent(
+                        1, "Kerning City Return Scroll", null));
         assertEquals("the shopkeeper's gone, can't buy", AgentDialogueCatalog.shopKeeperGoneBuyReply());
         assertEquals("this shop's closed, can't buy", AgentDialogueCatalog.shopClosedBuyReply());
         assertEquals("couldn't finish up at the shop", AgentDialogueCatalog.shopFinishFailedReply());

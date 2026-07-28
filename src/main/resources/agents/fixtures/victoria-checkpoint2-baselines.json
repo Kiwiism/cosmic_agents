@@ -1,0 +1,247 @@
+{
+  "schemaVersion": 1,
+  "baselines": {
+    "warrior-standard-v1": {
+      "provenance": "PREDICTED",
+      "sourceCharacterName": "",
+      "recordedAt": "2026-07-28T00:00:00+08:00",
+      "note": "Temporary post-instructor/post-shop estimate. Replace after the warrior checkpoint-1 run is captured.",
+      "character": {
+        "mapId": 102000002, "level": 12, "exp": 1332, "jobId": 100,
+        "str": 66, "dex": 6, "intelligence": 4, "luk": 4,
+        "hp": 420, "mp": 100, "maxHp": 420, "maxMp": 100,
+        "mesos": 500, "remainingAp": 0,
+        "remainingSp": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      },
+      "items": [
+        { "itemId": 1302077, "inventoryType": "EQUIPPED", "position": -11, "quantity": 1 },
+        { "itemId": 1072005, "inventoryType": "EQUIPPED", "position": -7, "quantity": 1 },
+        { "itemId": 1061008, "inventoryType": "EQUIPPED", "position": -6, "quantity": 1 },
+        { "itemId": 1041010, "inventoryType": "EQUIPPED", "position": -5, "quantity": 1 },
+        { "itemId": 1002068, "inventoryType": "EQUIPPED", "position": -1, "quantity": 1 },
+        { "itemId": 2000000, "inventoryType": "USE", "position": 1, "quantity": 30 },
+        { "itemId": 2000001, "inventoryType": "USE", "position": 2, "quantity": 30 },
+        { "itemId": 2030000, "inventoryType": "USE", "position": 3, "quantity": 10 },
+        { "itemId": 4000003, "inventoryType": "ETC", "position": 1, "quantity": 80 },
+        { "itemId": 4000005, "inventoryType": "ETC", "position": 2, "quantity": 8 }
+      ],
+      "skills": [
+        { "skillId": 1001004, "level": 1, "masterLevel": 20 },
+        { "skillId": 1000000, "level": 5, "masterLevel": 16 },
+        { "skillId": 1000001, "level": 1, "masterLevel": 10 }
+      ],
+      "completedQuestIds": [1046, 2077, 2081, 2128, 2129, 2130, 2131],
+      "resetQuestIds": [2082, 2089, 2090, 2091, 28267, 28268, 28269, 28270, 28271, 28272, 28273, 28274, 28276, 28277, 28278, 28279, 28280, 28281]
+    },
+    "magician-standard-v1": {
+      "provenance": "PREDICTED",
+      "sourceCharacterName": "",
+      "recordedAt": "2026-07-28T00:00:00+08:00",
+      "note": "Temporary post-instructor/post-shop estimate. Replace after the magician checkpoint-1 run is captured.",
+      "character": {
+        "mapId": 101000002, "level": 11, "exp": 996, "jobId": 200,
+        "str": 4, "dex": 4, "intelligence": 63, "luk": 4,
+        "hp": 210, "mp": 310, "maxHp": 210, "maxMp": 310,
+        "mesos": 500, "remainingAp": 0,
+        "remainingSp": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      },
+      "items": [
+        { "itemId": 1372043, "inventoryType": "EQUIPPED", "position": -11, "quantity": 1 },
+        { "itemId": 1072005, "inventoryType": "EQUIPPED", "position": -7, "quantity": 1 },
+        { "itemId": 1061008, "inventoryType": "EQUIPPED", "position": -6, "quantity": 1 },
+        { "itemId": 1041010, "inventoryType": "EQUIPPED", "position": -5, "quantity": 1 },
+        { "itemId": 1002068, "inventoryType": "EQUIPPED", "position": -1, "quantity": 1 },
+        { "itemId": 2000000, "inventoryType": "USE", "position": 1, "quantity": 30 },
+        { "itemId": 2000001, "inventoryType": "USE", "position": 2, "quantity": 50 },
+        { "itemId": 2030000, "inventoryType": "USE", "position": 3, "quantity": 10 },
+        { "itemId": 2030004, "inventoryType": "USE", "position": 4, "quantity": 1 },
+        { "itemId": 4000004, "inventoryType": "ETC", "position": 1, "quantity": 35 },
+        { "itemId": 4000005, "inventoryType": "ETC", "position": 2, "quantity": 5 }
+      ],
+      "skills": [
+        { "skillId": 2001004, "level": 1, "masterLevel": 20 },
+        { "skillId": 2000000, "level": 5, "masterLevel": 16 },
+        { "skillId": 2000001, "level": 4, "masterLevel": 10 }
+      ],
+      "completedQuestIds": [1046, 2080, 2081, 2132, 2133, 2134, 2135],
+      "resetQuestIds": [2082, 2089, 2090, 2091, 28267, 28268, 28269, 28270, 28271, 28272, 28273, 28274, 28276, 28277, 28278, 28279, 28280, 28281]
+    },
+    "bowman-standard-v1": {
+      "provenance": "PREDICTED",
+      "sourceCharacterName": "",
+      "recordedAt": "2026-07-28T00:00:00+08:00",
+      "note": "Temporary post-instructor/post-shop estimate. Replace after the bowman checkpoint-1 run is captured.",
+      "character": {
+        "mapId": 100000102, "level": 12, "exp": 1380, "jobId": 300,
+        "str": 4, "dex": 68, "intelligence": 4, "luk": 4,
+        "hp": 300, "mp": 150, "maxHp": 300, "maxMp": 150,
+        "mesos": 500, "remainingAp": 0,
+        "remainingSp": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      },
+      "items": [
+        { "itemId": 1452051, "inventoryType": "EQUIPPED", "position": -11, "quantity": 1 },
+        { "itemId": 1072005, "inventoryType": "EQUIPPED", "position": -7, "quantity": 1 },
+        { "itemId": 1061008, "inventoryType": "EQUIPPED", "position": -6, "quantity": 1 },
+        { "itemId": 1041010, "inventoryType": "EQUIPPED", "position": -5, "quantity": 1 },
+        { "itemId": 1002068, "inventoryType": "EQUIPPED", "position": -1, "quantity": 1 },
+        { "itemId": 2000000, "inventoryType": "USE", "position": 1, "quantity": 30 },
+        { "itemId": 2000001, "inventoryType": "USE", "position": 2, "quantity": 30 },
+        { "itemId": 2060000, "inventoryType": "USE", "position": 3, "quantity": 500 },
+        { "itemId": 2030000, "inventoryType": "USE", "position": 4, "quantity": 10 },
+        { "itemId": 4000004, "inventoryType": "ETC", "position": 1, "quantity": 65 },
+        { "itemId": 4000002, "inventoryType": "ETC", "position": 2, "quantity": 8 }
+      ],
+      "skills": [
+        { "skillId": 3001004, "level": 1, "masterLevel": 20 },
+        { "skillId": 3000000, "level": 3, "masterLevel": 16 },
+        { "skillId": 3000002, "level": 3, "masterLevel": 8 }
+      ],
+      "completedQuestIds": [1046, 2078, 2081, 2136, 2137, 2138, 2139],
+      "resetQuestIds": [2082, 2089, 2090, 2091, 28267, 28268, 28269, 28270, 28271, 28272, 28273, 28274, 28276, 28277, 28278, 28279, 28280, 28281]
+    },
+    "thief-claw-standard-v1": {
+      "provenance": "PREDICTED",
+      "sourceCharacterName": "",
+      "recordedAt": "2026-07-28T00:00:00+08:00",
+      "note": "Temporary post-instructor/post-shop estimate. Replace after the thief-claw checkpoint-1 run is captured.",
+      "character": {
+        "mapId": 103000002, "level": 12, "exp": 1610, "jobId": 400,
+        "str": 4, "dex": 25, "intelligence": 4, "luk": 47,
+        "hp": 303, "mp": 131, "maxHp": 303, "maxMp": 131,
+        "mesos": 514, "remainingAp": 0,
+        "remainingSp": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      },
+      "items": [
+        { "itemId": 1472061, "inventoryType": "EQUIPPED", "position": -11, "quantity": 1 },
+        { "itemId": 1072005, "inventoryType": "EQUIPPED", "position": -7, "quantity": 1 },
+        { "itemId": 1061008, "inventoryType": "EQUIPPED", "position": -6, "quantity": 1 },
+        { "itemId": 1041010, "inventoryType": "EQUIPPED", "position": -5, "quantity": 1 },
+        { "itemId": 1002068, "inventoryType": "EQUIPPED", "position": -1, "quantity": 1 },
+        { "itemId": 2000000, "inventoryType": "USE", "position": 1, "quantity": 31 },
+        { "itemId": 2000001, "inventoryType": "USE", "position": 2, "quantity": 30 },
+        { "itemId": 2070015, "inventoryType": "USE", "position": 3, "quantity": 500 },
+        { "itemId": 2030000, "inventoryType": "USE", "position": 4, "quantity": 10 },
+        { "itemId": 2030005, "inventoryType": "USE", "position": 5, "quantity": 1 },
+        { "itemId": 4000003, "inventoryType": "ETC", "position": 1, "quantity": 92 }
+      ],
+      "skills": [
+        { "skillId": 4001344, "level": 1, "masterLevel": 20 },
+        { "skillId": 4000000, "level": 3, "masterLevel": 20 },
+        { "skillId": 4000001, "level": 3, "masterLevel": 8 }
+      ],
+      "completedQuestIds": [1046, 2079, 2081, 2140, 2141, 2142, 2143],
+      "resetQuestIds": [2082, 2089, 2090, 2091, 28267, 28268, 28269, 28270, 28271, 28272, 28273, 28274, 28276, 28277, 28278, 28279, 28280, 28281]
+    },
+    "thief-dagger-standard-v1": {
+      "provenance": "CAPTURED",
+      "sourceCharacterName": "KiwiAgent",
+      "recordedAt": "2026-07-28T00:00:00+08:00",
+      "note": "Captured after the validated thief-dagger instructor and initial shopping run.",
+      "character": {
+        "mapId": 103000002, "level": 12, "exp": 1610, "jobId": 400,
+        "str": 4, "dex": 25, "intelligence": 4, "luk": 47,
+        "hp": 224, "mp": 131, "maxHp": 303, "maxMp": 131,
+        "mesos": 514, "remainingAp": 0,
+        "remainingSp": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      },
+      "items": [
+        { "itemId": 1332063, "inventoryType": "EQUIPPED", "position": -11, "quantity": 1 },
+        { "itemId": 1072005, "inventoryType": "EQUIPPED", "position": -7, "quantity": 1 },
+        { "itemId": 1061008, "inventoryType": "EQUIPPED", "position": -6, "quantity": 1 },
+        { "itemId": 1041010, "inventoryType": "EQUIPPED", "position": -5, "quantity": 1 },
+        { "itemId": 1002068, "inventoryType": "EQUIPPED", "position": -1, "quantity": 1 },
+        { "itemId": 1472061, "inventoryType": "EQUIP", "position": 1, "quantity": 1 },
+        { "itemId": 1332005, "inventoryType": "EQUIP", "position": 2, "quantity": 1 },
+        { "itemId": 1041002, "inventoryType": "EQUIP", "position": 3, "quantity": 1 },
+        { "itemId": 1332000, "inventoryType": "EQUIP", "position": 4, "quantity": 1 },
+        { "itemId": 2000014, "inventoryType": "USE", "position": 1, "quantity": 82 },
+        { "itemId": 2000013, "inventoryType": "USE", "position": 2, "quantity": 64 },
+        { "itemId": 2070015, "inventoryType": "USE", "position": 3, "quantity": 500 },
+        { "itemId": 2061000, "inventoryType": "USE", "position": 4, "quantity": 11 },
+        { "itemId": 2000000, "inventoryType": "USE", "position": 5, "quantity": 31 },
+        { "itemId": 2000003, "inventoryType": "USE", "position": 6, "quantity": 100 },
+        { "itemId": 2000001, "inventoryType": "USE", "position": 7, "quantity": 30 },
+        { "itemId": 2060000, "inventoryType": "USE", "position": 8, "quantity": 18 },
+        { "itemId": 2000002, "inventoryType": "USE", "position": 9, "quantity": 80 },
+        { "itemId": 2000003, "inventoryType": "USE", "position": 10, "quantity": 61 },
+        { "itemId": 2030000, "inventoryType": "USE", "position": 11, "quantity": 10 },
+        { "itemId": 2030005, "inventoryType": "USE", "position": 12, "quantity": 1 },
+        { "itemId": 2010000, "inventoryType": "USE", "position": 13, "quantity": 99 },
+        { "itemId": 2010000, "inventoryType": "USE", "position": 14, "quantity": 64 },
+        { "itemId": 4000003, "inventoryType": "ETC", "position": 1, "quantity": 92 },
+        { "itemId": 4020003, "inventoryType": "ETC", "position": 2, "quantity": 4 },
+        { "itemId": 4030009, "inventoryType": "ETC", "position": 3, "quantity": 4 },
+        { "itemId": 4010003, "inventoryType": "ETC", "position": 4, "quantity": 1 },
+        { "itemId": 4030012, "inventoryType": "ETC", "position": 5, "quantity": 4 },
+        { "itemId": 4030010, "inventoryType": "ETC", "position": 6, "quantity": 1 },
+        { "itemId": 4000006, "inventoryType": "ETC", "position": 7, "quantity": 4 }
+      ],
+      "skills": [
+        { "skillId": 4001334, "level": 7, "masterLevel": 20 }
+      ],
+      "completedQuestIds": [1046, 2079, 2081, 2140, 2141, 2142, 2143],
+      "resetQuestIds": [2082, 2089, 2090, 2091, 28267, 28268, 28269, 28270, 28271, 28272, 28273, 28274, 28276, 28277, 28278, 28279, 28280, 28281]
+    },
+    "pirate-gun-standard-v1": {
+      "provenance": "PREDICTED",
+      "sourceCharacterName": "",
+      "recordedAt": "2026-07-28T00:00:00+08:00",
+      "note": "Temporary post-instructor/post-shop estimate. Replace after the pirate-gun checkpoint-1 run is captured.",
+      "character": {
+        "mapId": 120000200, "level": 12, "exp": 1330, "jobId": 500,
+        "str": 6, "dex": 66, "intelligence": 4, "luk": 4,
+        "hp": 330, "mp": 140, "maxHp": 330, "maxMp": 140,
+        "mesos": 500, "remainingAp": 0,
+        "remainingSp": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      },
+      "items": [
+        { "itemId": 1492000, "inventoryType": "EQUIPPED", "position": -11, "quantity": 1 },
+        { "itemId": 1072005, "inventoryType": "EQUIPPED", "position": -7, "quantity": 1 },
+        { "itemId": 1061008, "inventoryType": "EQUIPPED", "position": -6, "quantity": 1 },
+        { "itemId": 1041010, "inventoryType": "EQUIPPED", "position": -5, "quantity": 1 },
+        { "itemId": 1002068, "inventoryType": "EQUIPPED", "position": -1, "quantity": 1 },
+        { "itemId": 2000000, "inventoryType": "USE", "position": 1, "quantity": 30 },
+        { "itemId": 2000001, "inventoryType": "USE", "position": 2, "quantity": 30 },
+        { "itemId": 2330000, "inventoryType": "USE", "position": 3, "quantity": 500 },
+        { "itemId": 2030000, "inventoryType": "USE", "position": 4, "quantity": 10 },
+        { "itemId": 4000002, "inventoryType": "ETC", "position": 1, "quantity": 20 },
+        { "itemId": 4000011, "inventoryType": "ETC", "position": 2, "quantity": 5 }
+      ],
+      "skills": [
+        { "skillId": 5001003, "level": 7, "masterLevel": 20 }
+      ],
+      "completedQuestIds": [1046, 2081, 2193, 2194, 2195, 2196, 2212],
+      "resetQuestIds": [2082, 2089, 2090, 2091, 28267, 28268, 28269, 28270, 28271, 28272, 28273, 28274, 28276, 28277, 28278, 28279, 28280, 28281]
+    },
+    "pirate-knuckle-standard-v1": {
+      "provenance": "PREDICTED",
+      "sourceCharacterName": "",
+      "recordedAt": "2026-07-28T00:00:00+08:00",
+      "note": "Temporary post-instructor/post-shop estimate. Replace after the pirate-knuckle checkpoint-1 run is captured.",
+      "character": {
+        "mapId": 120000200, "level": 12, "exp": 1330, "jobId": 500,
+        "str": 52, "dex": 20, "intelligence": 4, "luk": 4,
+        "hp": 330, "mp": 140, "maxHp": 330, "maxMp": 140,
+        "mesos": 500, "remainingAp": 0,
+        "remainingSp": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      },
+      "items": [
+        { "itemId": 1482000, "inventoryType": "EQUIPPED", "position": -11, "quantity": 1 },
+        { "itemId": 1072005, "inventoryType": "EQUIPPED", "position": -7, "quantity": 1 },
+        { "itemId": 1061008, "inventoryType": "EQUIPPED", "position": -6, "quantity": 1 },
+        { "itemId": 1041010, "inventoryType": "EQUIPPED", "position": -5, "quantity": 1 },
+        { "itemId": 1002068, "inventoryType": "EQUIPPED", "position": -1, "quantity": 1 },
+        { "itemId": 2000000, "inventoryType": "USE", "position": 1, "quantity": 30 },
+        { "itemId": 2000001, "inventoryType": "USE", "position": 2, "quantity": 30 },
+        { "itemId": 2030000, "inventoryType": "USE", "position": 3, "quantity": 10 },
+        { "itemId": 4000002, "inventoryType": "ETC", "position": 1, "quantity": 20 },
+        { "itemId": 4000011, "inventoryType": "ETC", "position": 2, "quantity": 5 }
+      ],
+      "skills": [
+        { "skillId": 5001002, "level": 7, "masterLevel": 20 }
+      ],
+      "completedQuestIds": [1046, 2081, 2193, 2194, 2195, 2196, 2212],
+      "resetQuestIds": [2082, 2089, 2090, 2091, 28267, 28268, 28269, 28270, 28271, 28272, 28273, 28274, 28276, 28277, 28278, 28279, 28280, 28281]
+    }
+  }
+}

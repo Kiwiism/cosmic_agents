@@ -37,6 +37,23 @@ class AgentTownLifePlatformCatalogTest {
         assertEquals(8, spots.stream().filter(spot -> spot.space().rowId() == 1).count());
     }
 
+    @Test
+    void boundedPlatformPolicyControlsDynamicCapacity() {
+        AgentNavigationGraph.Region truck = region(10, 154, 3798, 469, 3971, 417);
+        AgentNavigationGraph graph = new AgentNavigationGraph(
+                LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID, 1, List.of(truck),
+                Map.of(10, truck), Map.of(), Map.of(), Set.of());
+        AgentTownLifeProfile profile = AgentTownLifeProfileRepository.defaultRepository()
+                .require(LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID);
+
+        List<AgentTownLifePlatformCatalog.PlatformSpot> spots =
+                AgentTownLifePlatformCatalog.reachable(graph, profile, -1);
+
+        assertEquals(6, spots.size());
+        assertTrue(spots.stream().allMatch(spot ->
+                spot.space().catalogId().contains("duey-truck-roof")));
+    }
+
     private static AgentNavigationGraph.Region region(int regionId,
                                                        int footholdId,
                                                        int x1,

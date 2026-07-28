@@ -32,4 +32,15 @@ class AgentTownLifeProgressWatchdogTest {
         assertEquals(AgentTownLifeProgressWatchdog.Result.TIMED_OUT,
                 watchdog.observe(new Point(20, 0), 60_000L));
     }
+
+    @Test
+    void platformTimeoutCanBoundMovingLoopsEarlier() {
+        AgentTownLifeProgressWatchdog watchdog = new AgentTownLifeProgressWatchdog();
+        watchdog.begin(new Point(1_000, 0), 0L);
+
+        assertEquals(AgentTownLifeProgressWatchdog.Result.PROGRESSING,
+                watchdog.observe(new Point(0, 0), 1L, 12_000L));
+        assertEquals(AgentTownLifeProgressWatchdog.Result.TIMED_OUT,
+                watchdog.observe(new Point(20, 0), 12_000L, 12_000L));
+    }
 }

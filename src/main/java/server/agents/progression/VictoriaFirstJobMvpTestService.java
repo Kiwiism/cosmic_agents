@@ -1,15 +1,15 @@
 package server.agents.progression;
 
 import client.Character;
+import client.QuestStatus;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import server.ItemInformationProvider;
-import server.agents.capabilities.movement.AgentGroundingService;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
 import server.agents.capabilities.movement.AgentMovementPoseService;
-import server.agents.capabilities.movement.AgentSpawnFallService;
+import server.agents.capabilities.movement.AgentMovementStateResetService;
 import server.agents.capabilities.navigation.AgentLithHarborArrivalRouteRuntime;
 import server.agents.capabilities.quest.AmherstTestRuntimeResetService;
 import server.agents.capabilities.shop.AgentShopService;
@@ -42,6 +42,12 @@ public final class VictoriaFirstJobMvpTestService {
     private VictoriaFirstJobMvpTestService() {
     }
 
+    public enum Checkpoint {
+        CHECKPOINT_1,
+        CHECKPOINT_2,
+        CHECKPOINT_3
+    }
+
     public static AgentCareerBuildBundle resetAndStart(AgentRuntimeEntry entry,
                                                        String requestedCareer,
                                                        long nowMs) throws IOException {
@@ -51,6 +57,14 @@ public final class VictoriaFirstJobMvpTestService {
     public static AgentCareerBuildBundle resetAndStart(AgentRuntimeEntry entry,
                                                        String requestedCareer,
                                                        String requestedVariant,
+                                                       long nowMs) throws IOException {
+        return resetAndStart(entry, requestedCareer, requestedVariant, Checkpoint.CHECKPOINT_1, nowMs);
+    }
+
+    public static AgentCareerBuildBundle resetAndStart(AgentRuntimeEntry entry,
+                                                       String requestedCareer,
+                                                       String requestedVariant,
+                                                       Checkpoint checkpoint,
                                                        long nowMs) throws IOException {
         Character agent = entry == null ? null : entry.bot();
         if (agent == null) {
@@ -63,6 +77,11 @@ public final class VictoriaFirstJobMvpTestService {
                 AgentVictoriaLevel15CatalogRepository.defaultRepository();
         catalogRepository.careerFor(bundle);
         AgentVictoriaLevel15Catalog.StartVariant startVariant = resolveStartVariant(requestedVariant);
+        Checkpoint requestedCheckpoint = checkpoint == null ? Checkpoint.CHECKPOINT_1 : checkpoint;
+        if (requestedCheckpoint == Checkpoint.CHECKPOINT_3) {
+            throw new IllegalArgumentException(
+                    "checkpoint 3 reset is reserved until checkpoint 2 EXP/inventory is captured");
+        }
 
         AmherstTestRuntimeResetService.reset(entry, agent, nowMs);
         if (AgentTownLifeRuntime.active(entry)) {
@@ -82,44 +101,60 @@ public final class VictoriaFirstJobMvpTestService {
         entry.capabilityStates().remove(AgentVictoriaPlanSessionState.STATE_KEY);
         AgentUniversalPlanRuntime.clearCheckpoint(entry, agent.getId());
 
-        agent.resetVictoriaFirstJobTestBaseline(
-                bundle.firstJobId(), startVariant.level(), startVariant.exp(),
-                stageContract.entryCriteria().mesos());
-        applyVictoriaShowcaseEquipment(agent);
         AgentVictoriaLevel15Catalog catalog = catalogRepository.catalog();
-        Quest.getInstance(catalog.islandHandoff().biggsQuestId()).reset(agent);
-        Quest.getInstance(catalog.islandHandoff().olafLessonQuestId()).reset(agent);
-        for (AgentVictoriaLevel15Catalog.Career career : catalog.careers()) {
-            Quest.getInstance(career.olafPathQuestId()).reset(agent);
-        }
-        for (int questId : bundle.instructorTrainingQuestIds()) {
-            Quest.getInstance(questId).reset(agent);
-        }
-        for (AgentVictoriaLevel15Catalog.QuestPack pack : catalog.questPacks()) {
-            for (int questId : pack.questIds()) {
-                Quest.getInstance(questId).reset(agent);
-            }
+        AgentCareerProgressionState.Stage initialStage;
+        if (requestedCheckpoint == Checkpoint.CHECKPOINT_2) {
+            VictoriaCheckpointBaseline.Snapshot baseline =
+                    VictoriaCheckpointBaseline.require(bundle.bundleId());
+            agent.resetVictoriaCheckpoint2Baseline(bundle.bundleId());
+            applyCheckpointQuestState(agent, baseline);
+            initialStage = AgentCareerProgressionState.Stage.HOME_QUEST_PACK;
+        } else {
+            agent.resetVictoriaFirstJobTestBaseline(
+                    bundle.firstJobId(), startVariant.level(), startVariant.exp(),
+                    stageContract.entryCriteria().mesos());
+            applyVictoriaShowcaseEquipment(agent);
+            resetJourneyQuests(agent, bundle, catalog);
+            Quest.getInstance(catalog.islandHandoff().biggsQuestId())
+                    .forceStart(agent, catalog.islandHandoff().biggsNpcId());
+            initialStage = AgentCareerProgressionState.Stage.COMPLETE_BIGGS_AT_OLAF;
         }
         AgentVictoriaProgressionDiagnostics.deleteMilestones(agent.getId());
-        Quest.getInstance(catalog.islandHandoff().biggsQuestId())
-                .forceStart(agent, catalog.islandHandoff().biggsNpcId());
         bundle = AgentCareerBuildBundleService.assignForTest(entry, bundle.bundleId(), nowMs);
-        moveToLithHarbor(entry, agent, nowMs);
+        if (requestedCheckpoint == Checkpoint.CHECKPOINT_2) {
+            moveToMap(entry, agent,
+                    VictoriaCheckpointBaseline.require(bundle.bundleId()).character().mapId());
+        } else {
+            moveToLithHarbor(entry, agent);
+        }
         entry.capabilityStates().require(AgentCareerProgressionState.STATE_KEY).reset(
                 bundle,
                 AgentCareerProgressionState.RunMode.LEVEL15_WITH_INITIAL_SHOP,
-                startVariant.variantId(),
-                AgentCareerProgressionState.Stage.COMPLETE_BIGGS_AT_OLAF,
+                requestedCheckpoint == Checkpoint.CHECKPOINT_1
+                        ? startVariant.variantId() : "checkpoint2",
+                initialStage,
                 nowMs + START_DELAY_MS);
         if (!AgentUniversalPlanRuntime.start(entry, agent, "victoria-level15-mvp",
                 AgentPlanStartRequest.EMPTY, nowMs)) {
-            throw new IllegalStateException("universal Victoria level-15 plan rejected the reset state");
+            throw new IllegalStateException("universal Victoria plan rejected the reset state");
         }
         AgentUniversalPlanRuntime.tick(entry, agent, nowMs);
         AgentCareerProgressionCheckpointRuntime.persistIfDirty(entry, nowMs);
         agent.equipChanged();
         AgentCharacterGatewayRuntime.characters().save(agent, false);
         return bundle;
+    }
+
+    public static Checkpoint resolveCheckpoint(String requestedCheckpoint) {
+        String alias = requestedCheckpoint == null
+                ? "" : requestedCheckpoint.trim().toLowerCase(Locale.ROOT);
+        return switch (alias) {
+            case "", "checkpoint1", "checkpoint-1", "cp1" -> Checkpoint.CHECKPOINT_1;
+            case "checkpoint2", "checkpoint-2", "cp2" -> Checkpoint.CHECKPOINT_2;
+            case "checkpoint3", "checkpoint-3", "cp3" -> Checkpoint.CHECKPOINT_3;
+            default -> throw new IllegalArgumentException(
+                    "unknown checkpoint '" + requestedCheckpoint + "'");
+        };
     }
 
     public static AgentCareerBuildBundle resolveBundle(String requestedCareer) {
@@ -148,26 +183,72 @@ public final class VictoriaFirstJobMvpTestService {
         return AgentVictoriaLevel15CatalogRepository.defaultRepository().startVariant(variantId);
     }
 
-    private static void moveToLithHarbor(AgentRuntimeEntry entry, Character agent, long nowMs) {
+    private static void moveToLithHarbor(AgentRuntimeEntry entry, Character agent) {
         var maps = AgentMapGatewayRuntime.map();
         var clients = AgentClientGatewayRuntime.clients();
         var map = maps.resolveMap(
                 clients.world(agent), clients.channel(agent), LITH_HARBOR_MAP_ID);
-        Point spawn = lithHarborArrivalPosition(map, agent.getName().hashCode());
+        Point spawn = lithHarborArrivalPosition(map, agent.getName());
+        boolean placementChanged = false;
         if (agent.getMapId() != LITH_HARBOR_MAP_ID) {
             maps.changeMap(agent, map, spawn);
-        } else {
+            placementChanged = true;
+        } else if (!AgentLithHarborArrivalRouteRuntime.isVictoriaArrivalPosition(agent)) {
             AgentMovementPoseService.teleportTo(entry, agent, spawn);
+            placementChanged = true;
         }
-        Point ground = AgentGroundingService.findGroundPoint(map,
-                new Point(agent.getPosition().x, agent.getPosition().y - 1));
-        if (ground == null || AgentSpawnFallService.shouldFall(agent.getPosition(), ground)) {
-            AgentSpawnFallService.beginFall(entry, agent);
-        } else {
-            AgentMovementPoseService.teleportTo(entry, agent, ground);
+        if (placementChanged) {
+            AgentMovementStateResetService.resetEntryState(entry);
+            AgentMovementBroadcastService.broadcastMovement(entry);
         }
-        AgentMovementBroadcastService.broadcastMovement(entry);
         AgentLithHarborArrivalRouteRuntime.prepareNavigation(entry, agent);
+    }
+
+    private static void moveToMap(AgentRuntimeEntry entry, Character agent, int mapId) {
+        var maps = AgentMapGatewayRuntime.map();
+        var clients = AgentClientGatewayRuntime.clients();
+        var map = maps.resolveMap(clients.world(agent), clients.channel(agent), mapId);
+        Point position = map.getPortal(0) == null
+                ? new Point(0, 0) : new Point(map.getPortal(0).getPosition());
+        maps.changeMap(agent, map, position);
+        AgentMovementStateResetService.resetEntryState(entry);
+        AgentMovementBroadcastService.broadcastMovement(entry);
+    }
+
+    private static void resetJourneyQuests(
+            Character agent,
+            AgentCareerBuildBundle bundle,
+            AgentVictoriaLevel15Catalog catalog) {
+        Quest.getInstance(catalog.islandHandoff().biggsQuestId()).reset(agent);
+        Quest.getInstance(catalog.islandHandoff().olafLessonQuestId()).reset(agent);
+        for (AgentVictoriaLevel15Catalog.Career career : catalog.careers()) {
+            Quest.getInstance(career.olafPathQuestId()).reset(agent);
+        }
+        for (int questId : bundle.instructorTrainingQuestIds()) {
+            Quest.getInstance(questId).reset(agent);
+        }
+        for (AgentVictoriaLevel15Catalog.QuestPack pack : catalog.questPacks()) {
+            for (int questId : pack.questIds()) {
+                Quest.getInstance(questId).reset(agent);
+            }
+        }
+    }
+
+    private static void applyCheckpointQuestState(
+            Character agent,
+            VictoriaCheckpointBaseline.Snapshot baseline) {
+        for (int questId : baseline.resetQuestIds()) {
+            Quest.getInstance(questId).reset(agent);
+        }
+        for (int questId : baseline.completedQuestIds()) {
+            agent.updateQuestStatus(new QuestStatus(
+                    Quest.getInstance(questId), QuestStatus.Status.COMPLETED));
+        }
+    }
+
+    public static String checkpoint2Provenance(String requestedCareer) {
+        AgentCareerBuildBundle bundle = resolveBundle(requestedCareer);
+        return VictoriaCheckpointBaseline.require(bundle.bundleId()).provenance();
     }
 
     static Point lithHarborArrivalPosition(server.maps.MapleMap map) {
@@ -176,6 +257,10 @@ public final class VictoriaFirstJobMvpTestService {
 
     static Point lithHarborArrivalPosition(server.maps.MapleMap map, int selector) {
         return AgentLithHarborArrivalRouteRuntime.victoriaArrivalPosition(map, selector);
+    }
+
+    static Point lithHarborArrivalPosition(server.maps.MapleMap map, String characterName) {
+        return AgentLithHarborArrivalRouteRuntime.victoriaArrivalPosition(map, characterName);
     }
 
     private static void applyVictoriaShowcaseEquipment(Character agent) {

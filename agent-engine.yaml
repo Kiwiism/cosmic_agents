@@ -1533,14 +1533,62 @@ tuning:
     # Purpose: Controls how long Agents wait or remain in ammo trigger threshold. Higher values make the pause or activity last longer; lower values make them move on sooner.
     # Technical: the "shop service" component consumes this as an integer. Domain: non-negative count, capacity, or threshold unless the owning component documents a sentinel.
     server.agents.capabilities.shop.AgentShopService.AMMO_TRIGGER_THRESHOLD: '8'
-    # Values: a finite non-negative integer. Recommended: 2-10 around the tested baseline 5; benchmark or observe behavior before moving outside this band.
-    # Purpose: Controls how long Agents wait or remain in pot target threshold. Higher values make the pause or activity last longer; lower values make them move on sooner.
-    # Technical: the "shop service" component consumes this as an integer. Domain: non-negative count, capacity, or threshold unless the owning component documents a sentinel.
-    server.agents.capabilities.shop.AgentShopService.POT_TARGET_THRESHOLD: '5'
-    # Values: a finite non-negative integer. Recommended: 2-8 around the tested baseline 4; benchmark or observe behavior before moving outside this band.
-    # Purpose: Controls how long Agents wait or remain in pot trigger threshold. Higher values make the pause or activity last longer; lower values make them move on sooner.
-    # Technical: the "shop service" component consumes this as an integer. Domain: non-negative count, capacity, or threshold unless the owning component documents a sentinel.
-    server.agents.capabilities.shop.AgentShopService.POT_TRIGGER_THRESHOLD: '4'
+    # Values: an integer from 5000 to 9000 basis points. Recommended: 6500-8000 around the baseline 7000.
+    # Purpose: Sets the smallest useful recovery for an Agent's automatic potion use; higher values preserve small potions but can waste more recovery, while lower values consume weaker potions sooner.
+    # Technical: The deficit-aware autopot selector treats recovery at or above this fraction of the current missing stat as an ideal match; 10000 basis points equals the full deficit.
+    server.agents.capabilities.supplies.AgentAutopotPolicy.IDEAL_MIN_COVERAGE_BPS: '7000'
+    # Values: an integer from 10000 to 16000 basis points. Recommended: 10500-12500 around the baseline 11000.
+    # Purpose: Limits how much an Agent prefers to over-heal or over-restore with one automatic potion; higher values favor stronger potions, while lower values reduce wasted recovery.
+    # Technical: The deficit-aware autopot selector keeps candidates up to this fraction of the current missing stat in its ideal band before preferring an under-sized fallback.
+    server.agents.capabilities.supplies.AgentAutopotPolicy.IDEAL_MAX_COVERAGE_BPS: '11000'
+    # Values: an integer from 0 to 10000 basis points. Recommended: 1500-4000 around the baseline 2500.
+    # Purpose: Controls how much extra HP or MP from a mixed potion matters when comparing value; higher values make mixed potions more attractive, while lower values favor dedicated potions.
+    # Technical: Shopping efficiency adds this fraction of a mixed potion's secondary recovery to its primary recovery before comparing meso cost per useful recovery.
+    server.agents.capabilities.supplies.AgentPotionRecoveryPolicy.MIXED_SECONDARY_VALUE_BPS: '2500'
+    # Values: an integer from 5000 to 10000 basis points. Recommended: 6500-8500 around the baseline 7500.
+    # Purpose: Sets the weakest potion size an Agent considers a comfortable purchase for its expected HP or MP deficit; higher values buy stronger potions and lower values favor cheaper weak ones.
+    # Technical: Shop selection normalizes flat and percentage recovery, then treats candidates at or above this fraction of the expected autopot deficit as an ideal purchase match.
+    server.agents.capabilities.shop.AgentShopPotionPolicy.IDEAL_MIN_COVERAGE_BPS: '7500'
+    # Values: an integer from 10000 to 18000 basis points. Recommended: 11000-14000 around the baseline 12500.
+    # Purpose: Sets how much recovery above the expected deficit remains an acceptable shop choice; higher values allow stronger potions, while lower values avoid paying for likely waste.
+    # Technical: Shop selection keeps candidates up to this fraction of the expected autopot deficit in its ideal band, after which it falls back to the least excessive option.
+    server.agents.capabilities.shop.AgentShopPotionPolicy.IDEAL_MAX_COVERAGE_BPS: '12500'
+    # Values: a non-negative decimal number of full HP bars. Recommended: 2-5 around the baseline 3.
+    # Purpose: Makes an Agent seek a shop when its carried HP recovery falls below this many complete health bars; higher values restock sooner and lower values tolerate leaner supplies.
+    # Technical: The shop trigger compares total normalized HP recovery across all carried flat, percentage, and mixed potions against maximum HP multiplied by this value.
+    server.agents.capabilities.shop.AgentPotionPurchasePolicy.HP_TRIGGER_RESERVE_BARS: '3.0'
+    # Values: a non-negative decimal number of full MP bars. Recommended: 3-6 around the baseline 4.
+    # Purpose: Makes an Agent seek a shop when its carried MP recovery falls below this many complete mana bars; higher values restock sooner and lower values tolerate leaner supplies.
+    # Technical: The shop trigger compares total normalized MP recovery across all carried flat, percentage, and mixed potions against maximum MP multiplied by this value.
+    server.agents.capabilities.shop.AgentPotionPurchasePolicy.MP_TRIGGER_RESERVE_BARS: '4.0'
+    # Values: a non-negative decimal number of full HP bars. Recommended: 0.5-2 around the baseline 1.
+    # Purpose: Reserves the first affordable potion purchases for immediate HP survival before the Agent spends its remaining budget on comfortable stock levels.
+    # Technical: The ordered shop transaction first raises normalized carried HP recovery to maximum HP multiplied by this value, before normal HP and MP target extension.
+    server.agents.capabilities.shop.AgentPotionPurchasePolicy.HP_CRITICAL_RESERVE_BARS: '1.0'
+    # Values: a non-negative decimal number of full MP bars. Recommended: 0.5-3 around the baseline 1.5.
+    # Purpose: Reserves early purchases for enough MP to keep using skills before the Agent spends its remaining budget on larger convenience reserves.
+    # Technical: The ordered shop transaction raises normalized carried MP recovery to maximum MP multiplied by this value after critical HP and before normal target extension.
+    server.agents.capabilities.shop.AgentPotionPurchasePolicy.MP_CRITICAL_RESERVE_BARS: '1.5'
+    # Values: a non-negative decimal number of full HP bars. Recommended: 6-15 around the baseline 10.
+    # Purpose: Sets the comfortable HP recovery stock an Agent aims to leave a shop with; higher values mean fewer shopping trips but more mesos and inventory space held in potions.
+    # Technical: Purchase quantity is the ceiling of the normalized recovery shortfall to maximum HP multiplied by this value, bounded by visit and carried-quantity limits.
+    server.agents.capabilities.shop.AgentPotionPurchasePolicy.HP_TARGET_RESERVE_BARS: '10.0'
+    # Values: a non-negative decimal number of full MP bars. Recommended: 8-18 around the baseline 12.
+    # Purpose: Sets the comfortable MP recovery stock an Agent aims to leave a shop with; higher values support longer skill use but commit more mesos and inventory space.
+    # Technical: Purchase quantity is the ceiling of the normalized recovery shortfall to maximum MP multiplied by this value, bounded by visit and carried-quantity limits.
+    server.agents.capabilities.shop.AgentPotionPurchasePolicy.MP_TARGET_RESERVE_BARS: '12.0'
+    # Values: a positive whole-item count. Recommended: 5-20 around the baseline 10.
+    # Purpose: Avoids repeated trips for one or two potions by making each normal restock buy at least this many when space and budget allow.
+    # Technical: Applied only while extending normal HP or MP reserves; critical survival top-ups remain exact and all purchases are still capped by carry and visit limits.
+    server.agents.capabilities.shop.AgentPotionPurchasePolicy.MIN_PURCHASE_QUANTITY: '10'
+    # Values: a positive whole-item count. Recommended: 100-300 around the baseline 200.
+    # Purpose: Prevents an Agent from filling its Use inventory with excessive recovery stock; higher values support longer trips while lower values leave more room for drops.
+    # Technical: Quantity planning subtracts the current count of potions that restore the requested resource from this cap before scheduling additional shop purchases.
+    server.agents.capabilities.shop.AgentPotionPurchasePolicy.MAX_CARRIED_QUANTITY: '200'
+    # Values: a positive whole-item count. Recommended: 50-200 around the baseline 100.
+    # Purpose: Limits how many HP or MP potions one shopping visit can add, smoothing meso spending and avoiding a single large restock after a long shortage.
+    # Technical: Critical and normal purchase stages share this per-resource visit allowance, and every shop transaction remains bounded by the server shop batch size.
+    server.agents.capabilities.shop.AgentPotionPurchasePolicy.MAX_PURCHASE_QUANTITY_PER_VISIT: '100'
     # Values: a finite non-negative integer. Recommended: 5-20 around the tested baseline 10; benchmark or observe behavior before moving outside this band.
     # Purpose: Limits how many recharge maximum sets can be handled in one pass or kept at once. Higher values let more Agent work progress together; lower values spread the work out and reduce peak load.
     # Technical: the "shop service" component consumes this as an integer. Domain: non-negative count, capacity, or threshold unless the owning component documents a sentinel.
@@ -2329,6 +2377,14 @@ tuning:
     # Purpose: Controls the distance or margin used for NPC distance. Higher values allow action from farther away or leave more space; lower values require closer, more precise positioning.
     # Technical: the "instructor training runtime" component consumes this as an integer. Unit: MapleStory map pixels; horizontal and vertical values use the server map coordinate system.
     server.agents.progression.AgentInstructorTrainingRuntime.NPC_DISTANCE_PX: '100'
+    # Values: a finite non-negative integer; unit: map pixels. Recommended: 90-180 around the tested baseline 140.
+    # Purpose: Sets how close any Victoria quest-pack Agent must stand to quest NPCs, taxis, and portals before interacting. Lower values demand tighter positioning; higher values tolerate a wider stopping point.
+    # Technical: Used as the squared interaction-distance threshold by the shared Victoria quest-pack runtime.
+    server.agents.progression.AgentVictoriaSharedQuestPackRuntime.NPC_DISTANCE_PX: '140'
+    # Values: a finite non-negative integer; unit: milliseconds. Recommended: 400-1500 around the tested baseline 750.
+    # Purpose: Adds a short pause after each checkpoint action so quest starts, completions, scrolls, and portal transitions remain readable without making the run feel sluggish.
+    # Technical: Applied between successive ordered checkpoint steps; 0 removes the deliberate pacing delay.
+    server.agents.progression.AgentVictoriaSharedQuestPackRuntime.STEP_DELAY_MS: '750'
     # Values: a finite non-negative integer; unit: map pixels. Recommended: 50-200 around the tested baseline 100; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls the distance or margin used for NPC distance. Higher values allow action from farther away or leave more space; lower values require closer, more precise positioning.
     # Technical: the "level15 catch up runtime" component consumes this as an integer. Unit: MapleStory map pixels; horizontal and vertical values use the server map coordinate system.
@@ -2733,6 +2789,14 @@ tuning:
     # Purpose: Limits how many maximum shard count can be handled in one pass or kept at once. Higher values let more Agent work progress together; lower values spread the work out and reduce peak load.
     # Technical: the "scheduler config" component consumes this as an integer. Domain: non-negative count, capacity, or threshold unless the owning component documents a sentinel.
     server.agents.runtime.scheduler.AgentSchedulerConfig.MAX_SHARD_COUNT: '64'
+    # Values: 0 disables quest-aware ETC sale proposals, 1 records shadow proposals without selling, and 2 permits validated surplus sales. Recommended: keep 1 while reviewing logs, then use 2 only after no reserved-item violations are observed.
+    # Purpose: Controls whether Agents merely report or actually sell extra ETC items after protecting everything needed by active, committed, and eligible future quests. Higher modes move from observation to real shop sales; unknown or reserved items remain protected.
+    # Technical: The inventory demand policy reads this integer at shop time. Enforced mode still recalculates the live unreserved quantity immediately before each sale, while disabled and shadow modes never mutate ETC inventory.
+    server.agents.capabilities.inventory.demand.AgentQuestItemSellMode.MODE: '1'
+    # Values: a finite non-negative integer. Recommended: 700-900 around the tested baseline 800, above ordinary convenience reservations but below any emergency invariant that must always win.
+    # Purpose: Sets how strongly active and committed quest-item needs are protected when another Agent capability wants to consume, transfer, drop, or sell the same ETC item. Higher values make quest demand win more reservation conflicts.
+    # Technical: The quest-item demand adapter writes this integer into the shared typed reservation ledger. It is a relative arbitration priority rather than an item quantity and does not alter quest requirements.
+    server.agents.capabilities.inventory.demand.AgentQuestItemDemandRuntime.RESERVATION_PRIORITY: '800'
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 2500-10000 around the tested baseline 5000; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how long Agents may remain in quiescence timeout before recovery begins. Higher values wait longer; lower values retry, recover, or abandon it sooner.
     # Technical: the "scheduler" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled. It participates in bounded failure handling and should remain long enough for the normal operation to complete.

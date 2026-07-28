@@ -130,7 +130,8 @@ class AgentArchitectureBoundaryTest {
                 "src/main/java/server/agents/plans/mapleisland/AgentMapleIslandPlanRuntime.java",
                 "src/main/java/server/agents/progression/AgentCareerObjectiveRuntime.java",
                 "src/main/java/server/agents/progression/AgentVictoriaTrainingObjectiveRuntime.java",
-                "src/main/java/server/agents/capabilities/supplies/AgentSupplyProcurementRuntime.java");
+                "src/main/java/server/agents/capabilities/supplies/AgentSupplyProcurementRuntime.java",
+                "src/main/java/server/agents/runtime/maintenance/AgentRemediationCoordinator.java");
         Set<String> actual = new HashSet<>();
         try (var files = Files.walk(AGENTS)) {
             for (Path file : files.filter(path -> path.toString().endsWith(".java")).toList()) {

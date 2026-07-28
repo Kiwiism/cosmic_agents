@@ -65,6 +65,12 @@ public final class AgentTownLifeProfileValidator {
                 errors.add("duplicate traffic-zone id " + zone.id());
             }
         }
+        Set<String> platformPolicyIds = new HashSet<>();
+        for (AgentTownLifeProfile.PlatformPolicy policy : profile.platformPolicies()) {
+            if (!platformPolicyIds.add(policy.id())) {
+                errors.add("duplicate platform-policy id " + policy.id());
+            }
+        }
         if (profile.venues().isEmpty()) {
             warnings.add("profile has no semantic venues");
         }

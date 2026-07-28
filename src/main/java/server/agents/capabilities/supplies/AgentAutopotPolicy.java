@@ -2,69 +2,75 @@ package server.agents.capabilities.supplies;
 
 import client.inventory.Item;
 import server.StatEffect;
+import server.agents.capabilities.supplies.AgentPotionRecoveryPolicy.Recovery;
 
 import java.util.Collection;
 import java.util.function.Function;
 
+/**
+ * Chooses the potion whose normalized recovery best matches the deficit at
+ * the moment it will be consumed.
+ */
 public final class AgentAutopotPolicy {
+    private static final int IDEAL_MIN_COVERAGE_BPS = config.AgentTuning.intValue(
+            "server.agents.capabilities.supplies.AgentAutopotPolicy.IDEAL_MIN_COVERAGE_BPS");
+    private static final int IDEAL_MAX_COVERAGE_BPS = config.AgentTuning.intValue(
+            "server.agents.capabilities.supplies.AgentAutopotPolicy.IDEAL_MAX_COVERAGE_BPS");
+
     private AgentAutopotPolicy() {
     }
 
-    public enum PotionTier {
-        FLAT_SINGLE,
-        FLAT_MIXED,
-        RATE_SINGLE,
-        RATE_MIXED
+    public record PotionRanking(
+            int coverageBand,
+            int primaryRecovery,
+            int secondaryRecovery,
+            int coverageBasisPoints,
+            boolean mixed,
+            boolean percentageBased) {
     }
 
-    public record PotionRanking(PotionTier tier, double value) {
-        public boolean betterThan(PotionRanking other) {
-            if (other == null) {
-                return true;
-            }
-            int tierComparison = Integer.compare(this.tier.ordinal(), other.tier.ordinal());
-            if (tierComparison != 0) {
-                return tierComparison < 0;
-            }
-            return this.value < other.value;
+    public record AutopotItemChoice(int itemId, short position, PotionRanking ranking) {
+    }
+
+    public record AutopotChoice(AutopotItemChoice hp, AutopotItemChoice mp) {
+        public int hpItemId() {
+            return hp == null ? -1 : hp.itemId();
+        }
+
+        public int mpItemId() {
+            return mp == null ? -1 : mp.itemId();
+        }
+
+        public PotionRanking hpRank() {
+            return hp == null ? null : hp.ranking();
+        }
+
+        public PotionRanking mpRank() {
+            return mp == null ? null : mp.ranking();
         }
     }
 
-    public record AutopotChoice(int hpItemId, PotionRanking hpRank, int mpItemId, PotionRanking mpRank) {
+    public static AutopotChoice computeChoice(
+            Collection<Item> items,
+            Function<Integer, StatEffect> effectLookup,
+            int maxHp,
+            int maxMp,
+            int hpDeficit,
+            int mpDeficit) {
+        return new AutopotChoice(
+                select(items, effectLookup, maxHp, maxMp, hpDeficit, true),
+                select(items, effectLookup, maxHp, maxMp, mpDeficit, false));
     }
 
-    public static PotionRanking classifyForSlot(StatEffect effect, boolean hpSlot) {
-        if (effect == null) {
-            return null;
-        }
-        int flatPrimary = Math.max(0, hpSlot ? effect.getHp() : effect.getMp());
-        int flatOther = Math.max(0, hpSlot ? effect.getMp() : effect.getHp());
-        double ratePrimary = Math.max(0.0, hpSlot ? effect.getHpRate() : effect.getMpRate());
-        double rateOther = Math.max(0.0, hpSlot ? effect.getMpRate() : effect.getHpRate());
-
-        if (flatPrimary == 0 && ratePrimary == 0.0) {
-            return null;
-        }
-
-        boolean hasFlat = flatPrimary > 0 || flatOther > 0;
-        boolean hasRate = ratePrimary > 0 || rateOther > 0;
-
-        if (hasFlat && !hasRate) {
-            boolean mixed = flatPrimary > 0 && flatOther > 0;
-            return new PotionRanking(mixed ? PotionTier.FLAT_MIXED : PotionTier.FLAT_SINGLE, flatPrimary);
-        }
-        if (hasRate && !hasFlat) {
-            boolean mixed = ratePrimary > 0 && rateOther > 0;
-            return new PotionRanking(mixed ? PotionTier.RATE_MIXED : PotionTier.RATE_SINGLE, ratePrimary);
-        }
-        return new PotionRanking(PotionTier.RATE_MIXED, ratePrimary > 0 ? ratePrimary : flatPrimary);
-    }
-
-    public static AutopotChoice computeChoice(Collection<Item> items, Function<Integer, StatEffect> effectLookup) {
-        int hpItemId = -1;
-        int mpItemId = -1;
-        PotionRanking bestHp = null;
-        PotionRanking bestMp = null;
+    public static AutopotItemChoice select(
+            Collection<Item> items,
+            Function<Integer, StatEffect> effectLookup,
+            int maxHp,
+            int maxMp,
+            int deficit,
+            boolean forHp) {
+        AutopotItemChoice best = null;
+        int target = Math.max(1, deficit);
         for (Item item : items) {
             if (item.getQuantity() <= 0) {
                 continue;
@@ -73,17 +79,63 @@ public final class AgentAutopotPolicy {
             if (effect == null || !effect.getStatups().isEmpty()) {
                 continue;
             }
-            PotionRanking hpRank = classifyForSlot(effect, true);
-            if (hpRank != null && hpRank.betterThan(bestHp)) {
-                bestHp = hpRank;
-                hpItemId = item.getItemId();
+            Recovery recovery =
+                    AgentPotionRecoveryPolicy.recovery(effect, maxHp, maxMp, forHp);
+            if (recovery == null) {
+                continue;
             }
-            PotionRanking mpRank = classifyForSlot(effect, false);
-            if (mpRank != null && mpRank.betterThan(bestMp)) {
-                bestMp = mpRank;
-                mpItemId = item.getItemId();
+            int coverage = AgentPotionRecoveryPolicy.coverageBasisPoints(
+                    recovery.primary(), target);
+            PotionRanking ranking = new PotionRanking(
+                    band(coverage),
+                    recovery.primary(),
+                    recovery.secondary(),
+                    coverage,
+                    recovery.mixed(),
+                    recovery.percentageBased());
+            AutopotItemChoice candidate =
+                    new AutopotItemChoice(item.getItemId(), item.getPosition(), ranking);
+            if (better(candidate, best, target)) {
+                best = candidate;
             }
         }
-        return new AutopotChoice(hpItemId, bestHp, mpItemId, bestMp);
+        return best;
+    }
+
+    private static boolean better(
+            AutopotItemChoice candidate, AutopotItemChoice current, int targetDeficit) {
+        if (current == null) {
+            return true;
+        }
+        PotionRanking left = candidate.ranking();
+        PotionRanking right = current.ranking();
+        if (left.coverageBand() != right.coverageBand()) {
+            return left.coverageBand() < right.coverageBand();
+        }
+        if (left.mixed() != right.mixed()) {
+            return !left.mixed();
+        }
+        if (left.coverageBand() == 1
+                && left.primaryRecovery() != right.primaryRecovery()) {
+            return left.primaryRecovery() > right.primaryRecovery();
+        }
+        if (left.coverageBand() == 2
+                && left.primaryRecovery() != right.primaryRecovery()) {
+            return left.primaryRecovery() < right.primaryRecovery();
+        }
+        int leftWaste = Math.abs(left.primaryRecovery() - targetDeficit);
+        int rightWaste = Math.abs(right.primaryRecovery() - targetDeficit);
+        if (leftWaste != rightWaste) {
+            return leftWaste < rightWaste;
+        }
+        return candidate.itemId() < current.itemId();
+    }
+
+    private static int band(int coverageBasisPoints) {
+        if (coverageBasisPoints >= IDEAL_MIN_COVERAGE_BPS
+                && coverageBasisPoints <= IDEAL_MAX_COVERAGE_BPS) {
+            return 0;
+        }
+        return coverageBasisPoints < IDEAL_MIN_COVERAGE_BPS ? 1 : 2;
     }
 }

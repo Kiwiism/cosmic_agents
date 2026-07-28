@@ -38,8 +38,13 @@ public final class AgentTownLifePlatformCatalog {
                     && graph.connectedComponentId(region.id) != originComponent)) {
                 continue;
             }
-            int count = Math.min(geometry.maxSlotsPerPlatform(),
-                    Math.max(1, region.width() / geometry.slotSpacingPx()));
+            Point midpoint = region.pointAt(region.minX + region.width() / 2);
+            AgentTownLifeProfile.PlatformPolicy policy =
+                    profile.platformPolicy(midpoint).orElse(null);
+            int count = policy == null
+                    ? Math.min(geometry.maxSlotsPerPlatform(),
+                    Math.max(1, region.width() / geometry.slotSpacingPx()))
+                    : policy.capacity();
             int inset = Math.min(geometry.edgeInsetPx(), Math.max(8, region.width() / 8));
             for (int slot = 0; slot < count; slot++) {
                 int usableWidth = Math.max(0, region.width() - inset * 2);
@@ -48,9 +53,11 @@ public final class AgentTownLifePlatformCatalog {
                 AgentTownLifeState.District district = extension.classify(point);
                 AgentTownLifeState.PlatformKind platformKind =
                         extension.classifyPlatform(region.width());
-                String catalogId = "town-nav-" + profile.mapId() + '-'
+                String catalogId = policy == null
+                        ? "town-nav-" + profile.mapId() + '-'
                         + district.name().toLowerCase() + '-'
-                        + platformKind.name().toLowerCase();
+                        + platformKind.name().toLowerCase()
+                        : "town-policy-" + profile.mapId() + '-' + policy.id();
                 int spotNumber = nextSpotNumber.merge(catalogId, 1, Integer::sum);
                 CharacterSpace space = new CharacterSpace(
                         catalogId, spotNumber, profile.mapId(),

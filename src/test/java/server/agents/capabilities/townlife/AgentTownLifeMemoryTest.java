@@ -24,6 +24,19 @@ class AgentTownLifeMemoryTest {
     }
 
     @Test
+    void destinationCooldownAcceptsPolicySpecificDurations() {
+        AgentTownLifeMemory memory = new AgentTownLifeMemory();
+
+        memory.rememberSuccess("platform:duey-truck-roof", 1_000L, 20_000L);
+        assertFalse(memory.destinationAvailable("platform:duey-truck-roof", 20_999L));
+        assertTrue(memory.destinationAvailable("platform:duey-truck-roof", 21_000L));
+
+        memory.rememberFailure("platform:duey-truck-roof", 30_000L, 45_000L);
+        assertFalse(memory.destinationAvailable("platform:duey-truck-roof", 74_999L));
+        assertTrue(memory.destinationAvailable("platform:duey-truck-roof", 75_000L));
+    }
+
+    @Test
     void socialMemorySurvivesVisitResetAndAppliesBoundedPeerCooldown() {
         AgentTownLifeMemory memory = new AgentTownLifeMemory();
         memory.rememberSocial(22, AgentTownLifeEncounterState.Type.SOCIAL_CHAT,

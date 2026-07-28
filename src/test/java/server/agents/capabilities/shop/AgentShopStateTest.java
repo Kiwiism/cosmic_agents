@@ -11,6 +11,19 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentShopStateTest {
     @Test
+    void plannedVisitCarriesMandatoryTravelItem() {
+        AgentShopState state = new AgentShopState();
+
+        state.startVisit(new java.awt.Point(10, 20), new java.awt.Point(15, 20),
+                0, 100, 2_030_005, 1, 1L);
+
+        assertEquals(2_030_005, state.requiredItemId());
+        assertEquals(1, state.requiredItemCount());
+        state.clear();
+        assertEquals(0, state.requiredItemId());
+        assertEquals(0, state.requiredItemCount());
+    }
+    @Test
     void tracksShopVisitLifecycleAndClearing() {
         AgentShopState state = new AgentShopState();
 

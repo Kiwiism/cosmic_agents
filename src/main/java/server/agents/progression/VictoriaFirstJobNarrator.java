@@ -25,6 +25,19 @@ public final class VictoriaFirstJobNarrator {
                 agent, AgentChatTextSanitizer.sanitize(message), false, 0);
     }
 
+    public static void announceObjective(Character agent,
+                                         AgentCareerProgressionState state,
+                                         String objectiveKey,
+                                         String message) {
+        if (agent == null || state == null || message == null || message.isBlank()
+                || !config.AgentYamlConfig.config.agent.AGENT_VICTORIA_INTENTION_CHAT_ENABLED
+                || !state.markObjectiveAnnounced(objectiveKey)) {
+            return;
+        }
+        AgentPacketGatewayRuntime.packets().broadcastChatText(
+                agent, AgentChatTextSanitizer.sanitize(message), false, 0);
+    }
+
     static String message(AgentCareerProgressionState.Stage stage,
                           AgentCareerBuildBundle bundle) {
         return switch (stage) {

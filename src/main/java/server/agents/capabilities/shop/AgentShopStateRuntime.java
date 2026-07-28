@@ -55,6 +55,14 @@ public final class AgentShopStateRuntime {
         return entry.shopState().minimumMesoReserve();
     }
 
+    public static int requiredItemId(AgentRuntimeEntry entry) {
+        return entry.shopState().requiredItemId();
+    }
+
+    public static int requiredItemCount(AgentRuntimeEntry entry) {
+        return entry.shopState().requiredItemCount();
+    }
+
     public static void ensureMinimumMesoReserve(AgentRuntimeEntry entry, int mesos) {
         entry.shopState().ensureMinimumMesoReserve(mesos);
     }
@@ -84,6 +92,19 @@ public final class AgentShopStateRuntime {
                                       long startedAtMs) {
         entry.shopState().startVisit(
                 npcPosition, targetPosition, approachDelayMs, minimumMesoReserve, startedAtMs);
+    }
+
+    public static void startShopVisit(AgentRuntimeEntry entry,
+                                      Point npcPosition,
+                                      Point targetPosition,
+                                      int approachDelayMs,
+                                      int minimumMesoReserve,
+                                      int requiredItemId,
+                                      int requiredItemCount,
+                                      long startedAtMs) {
+        entry.shopState().startVisit(
+                npcPosition, targetPosition, approachDelayMs, minimumMesoReserve,
+                requiredItemId, requiredItemCount, startedAtMs);
     }
 
     public static Point shopTargetOrNpcPosition(AgentRuntimeEntry entry) {

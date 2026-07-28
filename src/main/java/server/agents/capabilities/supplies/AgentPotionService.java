@@ -20,6 +20,7 @@ import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.agents.capabilities.movement.AgentMovementPoseService;
 import server.agents.capabilities.trade.AgentSupplyShareTradeService;
 import server.agents.capabilities.supplies.AgentAutopotPolicy.AutopotChoice;
+import server.agents.capabilities.supplies.AgentAutopotPolicy.AutopotItemChoice;
 import server.agents.capabilities.supplies.AgentAutopotPolicy.PotionRanking;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
@@ -77,7 +78,7 @@ public final class AgentPotionService {
 
     public static int[] countPotions(Character bot) {
         long startedAt = AgentPerformanceMonitor.start();
-        int[] counts = AgentPotionInventoryPolicy.countPureRecoveryPotions(
+        int[] counts = AgentPotionInventoryPolicy.countRecoveryPotions(
                 bot.getInventory(InventoryType.USE).list(),
                 AgentUseItemClassificationPolicy::itemEffect);
         AgentPerformanceMonitor.recordSince("potion-recovery-scan", startedAt);
@@ -86,46 +87,48 @@ public final class AgentPotionService {
 
     public static int[] countPotions(List<Item> items, Function<Integer, StatEffect> effectLookup) {
         long startedAt = AgentPerformanceMonitor.start();
-        int hp = 0;
-        int mp = 0;
-        for (Item item : items) {
-            StatEffect effect = effectLookup.apply(item.getItemId());
-            if (effect == null) {
-                continue;
-            }
-            int quantity = item.getQuantity();
-            if (effect.getHp() > 0 || effect.getHpRate() > 0) {
-                hp += quantity;
-            }
-            if (effect.getMp() > 0 || effect.getMpRate() > 0) {
-                mp += quantity;
-            }
-        }
+        int[] counts = AgentPotionInventoryPolicy.countRecoveryPotions(items, effectLookup);
         AgentPerformanceMonitor.recordSince("potion-recovery-count", startedAt);
-        return new int[]{hp, mp};
+        return counts;
     }
 
-    /**
-     * Autopot selection priority, best (lowest ordinal) → worst:
-     *   1. FLAT_SINGLE — e.g. 50 HP only
-     *   2. FLAT_MIXED  — e.g. 50 HP + 50 MP
-     *   3. RATE_SINGLE — e.g. 20% HP only
-     *   4. RATE_MIXED  — e.g. 20% HP + 20% MP
-     * Within the same tier, the smaller recovery value wins (burn cheap pots first;
-     * preserve big pots for emergencies). Buff potions (statups present) are excluded.
-     */
-    public static PotionRanking classifyForSlot(StatEffect fx, boolean hpSlot) {
-        return AgentAutopotPolicy.classifyForSlot(fx, hpSlot);
-    }
-
-    /** Shared selection used by both keybind setup and the debug report. */
+    /** Shared deficit-aware selection used by keybind setup and the debug report. */
     public static AutopotChoice computeAutopotChoice(Character bot) {
         long startedAt = AgentPerformanceMonitor.start();
+        int maxHp = bot.getCurrentMaxHp();
+        int maxMp = bot.getCurrentMaxMp();
+        int hpDeficit = Math.max(
+                1,
+                Math.round(maxHp * (1.0f - AgentRuntimeConfig.cfg.AUTOPOT_HP_THRESH)));
+        int mpDeficit = Math.max(
+                1,
+                Math.round(maxMp * (1.0f - AgentRuntimeConfig.cfg.AUTOPOT_MP_THRESH)));
         AutopotChoice choice = AgentAutopotPolicy.computeChoice(
                 bot.getInventory(InventoryType.USE).list(),
-                AgentUseItemClassificationPolicy::itemEffect);
+                AgentUseItemClassificationPolicy::itemEffect,
+                maxHp,
+                maxMp,
+                hpDeficit,
+                mpDeficit);
         AgentPerformanceMonitor.recordSince("potion-recovery-scan", startedAt);
         return choice;
+    }
+
+    /** Selects against the live missing HP/MP so consumption matches purchasing. */
+    public static AutopotItemChoice selectAutopotForCurrentDeficit(
+            Character bot, boolean forHp) {
+        int maxHp = bot.getCurrentMaxHp();
+        int maxMp = bot.getCurrentMaxMp();
+        int deficit = forHp
+                ? Math.max(1, maxHp - bot.getHp())
+                : Math.max(1, maxMp - bot.getMp());
+        return AgentAutopotPolicy.select(
+                bot.getInventory(InventoryType.USE).list(),
+                AgentUseItemClassificationPolicy::itemEffect,
+                maxHp,
+                maxMp,
+                deficit,
+                forHp);
     }
 
     public static void setupAutopotForBot(Character bot) {
@@ -165,7 +168,13 @@ public final class AgentPotionService {
         }
         String name = inventory.getItemName(itemId);
         if (name == null) name = String.valueOf(itemId);
-        return AgentSupplyDialogueReporter.autopotChoice(name, itemId, rank.tier().name(), rank.value());
+        return AgentSupplyDialogueReporter.autopotChoice(
+                name,
+                itemId,
+                rank.primaryRecovery(),
+                rank.coverageBasisPoints(),
+                rank.mixed(),
+                rank.percentageBased());
     }
 
     public static String grindStartMessage(Character bot) {

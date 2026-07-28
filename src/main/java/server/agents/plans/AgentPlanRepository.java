@@ -5,10 +5,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /** Strict classpath repository for every executable Agent plan. */
 public final class AgentPlanRepository implements AgentPlanLibrary {
@@ -61,17 +63,45 @@ public final class AgentPlanRepository implements AgentPlanLibrary {
                 throw new IllegalStateException("missing Agent plan index " + INDEX_RESOURCE);
             }
             PlanIndex index = mapper.readValue(input, PlanIndex.class);
-            if (index.schemaVersion() != AgentPlanSchemaValidator.CURRENT_SCHEMA_VERSION
-                    || index.resources() == null || index.resources().isEmpty()) {
-                throw new AgentPlanValidationException("invalid Agent plan index");
-            }
-            List<AgentPlanDefinition> plans = index.resources().stream()
-                    .map(resource -> load(mapper, resource))
+            List<String> resources = validateIndex(index);
+            List<AgentPlanDefinition> plans = resources.stream()
+                    .map(resource -> loadCanonical(mapper, resource))
                     .toList();
             return new AgentPlanRepository(plans);
         } catch (IOException failure) {
             throw new IllegalStateException("could not load Agent plan index", failure);
         }
+    }
+
+    private static List<String> validateIndex(PlanIndex index) {
+        if (index == null
+                || index.schemaVersion() != AgentPlanSchemaValidator.CURRENT_SCHEMA_VERSION
+                || index.resources() == null || index.resources().isEmpty()) {
+            throw new AgentPlanValidationException("invalid Agent plan index");
+        }
+        Set<String> unique = new HashSet<>();
+        for (String resource : index.resources()) {
+            if (resource == null || !resource.matches("[a-z0-9][a-z0-9-]*\\.plan\\.json")) {
+                throw new AgentPlanValidationException(
+                        "plan resources must use the canonical <planId>.plan.json name: " + resource);
+            }
+            if (!unique.add(resource)) {
+                throw new AgentPlanValidationException(
+                        "duplicate Agent plan resource " + resource);
+            }
+        }
+        return List.copyOf(index.resources());
+    }
+
+    private static AgentPlanDefinition loadCanonical(ObjectMapper mapper, String resource) {
+        AgentPlanDefinition plan = load(mapper, resource);
+        String expected = plan.planId() + ".plan.json";
+        if (!expected.equals(resource)) {
+            throw new AgentPlanValidationException(
+                    "plan resource " + resource + " must match planId " + plan.planId()
+                            + " (expected " + expected + ")");
+        }
+        return plan;
     }
 
     private static AgentPlanDefinition load(ObjectMapper mapper, String resource) {

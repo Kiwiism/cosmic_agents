@@ -24,6 +24,35 @@ public final class AgentAutonomyKernel {
     private AgentAutonomyKernel() {
     }
 
+    public static void recordGoalSelection(
+            AgentRuntimeEntry entry,
+            AgentAutonomySnapshot snapshot,
+            AgentGoalSelection selection,
+            String correlationId,
+            long nowMs) {
+        if (entry == null || snapshot == null || selection == null
+                || correlationId == null || correlationId.isBlank()) {
+            throw new IllegalArgumentException("Goal-selection evidence is required");
+        }
+        AgentDecisionProvenanceState decisions =
+                entry.capabilityStates().require(AgentDecisionProvenanceState.STATE_KEY);
+        if (!selection.selected()) {
+            decisions.record(nowMs, "autonomy-goal", "NO_OP", SOURCE,
+                    VERSION, selection.reason(), correlationId,
+                    selection.rejections().stream()
+                            .map(AgentGoalSelection.Rejection::proposalId).toList());
+            return;
+        }
+        decisions.record(nowMs, "autonomy-goal", selection.accepted().goalType(),
+                selection.accepted().source(), selection.accepted().policyVersion(),
+                selection.reason(), correlationId,
+                List.of(selection.accepted().proposalId()));
+        decisions.record(nowMs, "autonomy-plan", selection.plan().planId(), SOURCE,
+                VERSION, "goal resolved to versioned universal plan "
+                        + selection.plan().planVersion(), correlationId,
+                List.of(selection.plan().planId()));
+    }
+
     public static String beginPlanStep(
             AgentRuntimeEntry entry,
             Supplier<AgentAutonomySnapshot> snapshotCapture,
@@ -53,12 +82,6 @@ public final class AgentAutonomyKernel {
 
         AgentDecisionProvenanceState decisions =
                 entry.capabilityStates().require(AgentDecisionProvenanceState.STATE_KEY);
-        decisions.record(nowMs, "autonomy-goal", plan.objective().type(), SOURCE,
-                VERSION, "selected from authoritative snapshot " + snapshot.sequence(),
-                correlationId, List.of(plan.objective().type()));
-        decisions.record(nowMs, "autonomy-plan", plan.planId(), SOURCE,
-                VERSION, "universal plan owns selected goal", correlationId,
-                List.of(plan.planId()));
         decisions.record(nowMs, "autonomy-command", step.operation(), SOURCE,
                 VERSION, "plan step issued capability command", correlationId,
                 step.capabilityIds());

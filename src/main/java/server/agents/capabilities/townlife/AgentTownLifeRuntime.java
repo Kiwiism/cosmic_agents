@@ -292,7 +292,8 @@ public final class AgentTownLifeRuntime {
                 || Math.abs(agent.getPosition().y - target.y) > ACTIVITY_ARRIVAL_VERTICAL_DISTANCE_PX
                 || agent.getPosition().distanceSq(target) > arrivalDistance * arrivalDistance) {
             AgentTownLifeProgressWatchdog.Result progress =
-                    state.progressWatchdog().observe(agent.getPosition(), nowMs);
+                    state.progressWatchdog().observe(
+                            agent.getPosition(), nowMs, navigationTimeoutMs(state));
             if (progress != AgentTownLifeProgressWatchdog.Result.PROGRESSING) {
                 AgentTownLifeMetrics.navigationAbandon();
                 abandonDestination(entry, agent, state, nowMs, gateway);
@@ -345,6 +346,7 @@ public final class AgentTownLifeRuntime {
             entry.capabilityStates().require(AgentTownLifeActivitySequenceState.STATE_KEY).clear();
             AgentFidgetService.clear(entry);
             AgentTownLifeDestinationService.release(agent);
+            rememberSuccessfulPlatformVisit(state, nowMs);
             if (agent.getChair() >= 0) {
                 AgentChairService.stand(entry, agent);
             }
@@ -479,6 +481,11 @@ public final class AgentTownLifeRuntime {
     }
 
     private static long dwellDuration(Character agent, AgentTownLifeState state) {
+        AgentTownLifeProfile.PlatformPolicy platformPolicy = platformPolicy(state);
+        if (platformPolicy != null) {
+            return delay(agent, state, platformPolicy.dwellMinMs(),
+                    platformPolicy.dwellMaxExclusiveMs());
+        }
         long duration = switch (state.activity()) {
             case REST -> delay(agent, state, REST_DWELL_MIN_MS, REST_DWELL_MAX_EXCLUSIVE_MS);
             case SOCIAL -> delay(
@@ -502,7 +509,13 @@ public final class AgentTownLifeRuntime {
         gateway.stop(entry);
         AgentFidgetService.clear(entry);
         AgentTownLifeDestinationService.release(agent);
-        state.memory().rememberFailure(state.destinationKey(), nowMs);
+        AgentTownLifeProfile.PlatformPolicy platformPolicy = platformPolicy(state);
+        if (platformPolicy == null) {
+            state.memory().rememberFailure(state.destinationKey(), nowMs);
+        } else {
+            state.memory().rememberFailure(
+                    platformPolicy.destinationKey(), nowMs, platformPolicy.failureCooldownMs());
+        }
         AgentTownLifeEventPublisher.activity(
                 entry, agent, state, AgentTownLifeActivityEvent.Phase.ABANDONED, nowMs);
         AgentTownLifeEncounterCoordinator.finish(entry, agent, false, nowMs);
@@ -514,6 +527,25 @@ public final class AgentTownLifeRuntime {
                         state,
                         ABANDON_RETRY_DELAY_MIN_MS,
                         ABANDON_RETRY_DELAY_MAX_EXCLUSIVE_MS));
+    }
+
+    private static long navigationTimeoutMs(AgentTownLifeState state) {
+        AgentTownLifeProfile.PlatformPolicy policy = platformPolicy(state);
+        return policy == null ? Long.MAX_VALUE : policy.navigationTimeoutMs();
+    }
+
+    private static void rememberSuccessfulPlatformVisit(AgentTownLifeState state, long nowMs) {
+        AgentTownLifeProfile.PlatformPolicy policy = platformPolicy(state);
+        if (policy != null) {
+            state.memory().rememberSuccess(
+                    policy.destinationKey(), nowMs, policy.successCooldownMs());
+        }
+    }
+
+    private static AgentTownLifeProfile.PlatformPolicy platformPolicy(
+            AgentTownLifeState state) {
+        Point target = state == null ? null : state.target();
+        return target == null ? null : townProfile(state).platformPolicy(target).orElse(null);
     }
 
     private static int expressionFor(Character agent, AgentTownLifeState state) {

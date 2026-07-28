@@ -7,6 +7,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /** Runs the four normal instructor quests before handing off to the level-15 catch-up plan. */
 public final class AgentInstructorTrainingRuntime {
@@ -43,6 +44,9 @@ public final class AgentInstructorTrainingRuntime {
         }
 
         AgentInstructorTrainingStep step = steps.get(index);
+        String objectiveKey = "instructor:" + index + ":" + gateway.questStatus(agent, step.questId());
+        VictoriaFirstJobNarrator.announceObjective(agent, state, objectiveKey,
+                instructorIntention(step, gateway.questStatus(agent, step.questId())));
         if (state.stage() != AgentCareerProgressionState.Stage.INSTRUCTOR_TRAINING) {
             state.stage(AgentCareerProgressionState.Stage.INSTRUCTOR_TRAINING, nowMs);
         }
@@ -65,6 +69,10 @@ public final class AgentInstructorTrainingRuntime {
                         agent, step.questId(), requirement.getKey()) >= requirement.getValue());
         if (gateway.canCompleteQuest(agent, step.questId(), bundle.instructorNpcId())
                 || killRequirementsMet) {
+            VictoriaFirstJobNarrator.announceObjective(agent, state,
+                    "instructor:" + index + ":return",
+                    "I'm done with " + server.quest.Quest.getInstance(step.questId()).getName()
+                            + " and returning to my instructor.");
             if (AgentVictoriaRouteRuntime.travel(entry, agent, bundle.instructorMapId(), gateway)) {
                 return true;
             }
@@ -111,6 +119,31 @@ public final class AgentInstructorTrainingRuntime {
         }
         gateway.grind(entry, step.mobIds());
         return true;
+    }
+
+    private static String instructorIntention(AgentInstructorTrainingStep step, int questStatus) {
+        if (questStatus == 0) {
+            return "I'm going to ask my instructor about "
+                    + server.quest.Quest.getInstance(step.questId()).getName() + ".";
+        }
+        String requirements = step.requiredKills().entrySet().stream()
+                .map(requirement -> requirement.getValue() + " "
+                        + mobName(requirement.getKey()))
+                .collect(Collectors.joining(" and "));
+        return "I'm going to defeat " + requirements + " for "
+                + server.quest.Quest.getInstance(step.questId()).getName() + ".";
+    }
+
+    private static String mobName(int mobId) {
+        return switch (mobId) {
+            case 100_100 -> "Snails";
+            case 100_101 -> "Blue Snails";
+            case 120_100 -> "Shrooms";
+            case 130_100 -> "Stumps";
+            case 210_100 -> "Slimes";
+            case 1_120_100 -> "Octopuses";
+            default -> "target monsters";
+        };
     }
 
     private static int reconcileCompleted(AgentCareerProgressionState state,

@@ -114,11 +114,25 @@ public final class VictoriaFirstJobMvpCommandService {
         }
         String agentName = params[1];
         String career = params[2];
-        String variant = params.length >= 4 ? params[3] : "lv10";
+        String variant = "lv10";
+        String checkpointText = "checkpoint1";
+        if (params.length >= 4) {
+            if (params[3].toLowerCase().startsWith("checkpoint")
+                    || params[3].toLowerCase().startsWith("cp")) {
+                checkpointText = params[3];
+            } else {
+                variant = params[3];
+            }
+        }
+        if (params.length >= 5) {
+            checkpointText = params[4];
+        }
         AgentVictoriaLevel15Catalog.StartVariant startVariant;
+        VictoriaFirstJobMvpTestService.Checkpoint checkpoint;
         try {
             VictoriaFirstJobMvpTestService.resolveBundle(career);
             startVariant = VictoriaFirstJobMvpTestService.resolveStartVariant(variant);
+            checkpoint = VictoriaFirstJobMvpTestService.resolveCheckpoint(checkpointText);
         } catch (IllegalArgumentException failure) {
             player.yellowMessage("Victoria MVP reset failed: " + failure.getMessage());
             return;
@@ -128,7 +142,7 @@ public final class VictoriaFirstJobMvpCommandService {
                 player.getWorld(), AgentClientGatewayRuntime.clients().channel(player),
                 VictoriaFirstJobMvpTestService.LITH_HARBOR_MAP_ID);
         Point startPosition = VictoriaFirstJobMvpTestService.lithHarborArrivalPosition(
-                startMap, agentName.hashCode());
+                startMap, agentName);
         AgentLifecycleService.AgentSpawnResult spawn = AgentInteractionRuntime.spawnStationaryAgentForLeaderAt(
                 player, agentName, startMap, startPosition);
         if (!spawn.success()) {
@@ -145,11 +159,13 @@ public final class VictoriaFirstJobMvpCommandService {
         AgentMailboxRuntime.dispatch(entry, ignored -> {
             try {
                 AgentCareerBuildBundle bundle = VictoriaFirstJobMvpTestService.resetAndStart(
-                        entry, career, startVariant.variantId(), System.currentTimeMillis());
-                player.yellowMessage(agent.getName() + " reset to Lv" + startVariant.level()
-                        + " Beginner at the Lith Harbor arrival with Biggs 1046 active and 5,000 mesos; "
-                        + bundle.bundleId() + " / " + startVariant.variantId()
-                        + " starts in 3 seconds.");
+                        entry, career, startVariant.variantId(), checkpoint, System.currentTimeMillis());
+                String fixture = checkpoint == VictoriaFirstJobMvpTestService.Checkpoint.CHECKPOINT_2
+                        ? " / " + VictoriaFirstJobMvpTestService.checkpoint2Provenance(career)
+                        + " checkpoint fixture" : "";
+                player.yellowMessage(agent.getName() + " reset for " + checkpoint
+                        + "; " + bundle.bundleId() + " / " + startVariant.variantId()
+                        + fixture + " starts in 3 seconds.");
             } catch (IOException | RuntimeException failure) {
                 player.yellowMessage("Victoria MVP reset failed: " + failure.getMessage());
             }
@@ -200,7 +216,7 @@ public final class VictoriaFirstJobMvpCommandService {
             return;
         }
         player.yellowMessage("Usage: !victoria run <AgentIGN> <warrior|bowman|magician|thief|pirate> "
-                + "[lv10|lv9-olaf|lv9-grind]");
+                + "[lv10|lv9-olaf|lv9-grind] [checkpoint1|checkpoint2|checkpoint3]");
         player.yellowMessage("Reset is an alias for run. Builds: thief-dagger, pirate-knuckle. "
                 + "Train: !victoria train <AgentIGN> [16-30] [mixed|grind]. "
                 + "Stop: !victoria stop <AgentIGN>. "

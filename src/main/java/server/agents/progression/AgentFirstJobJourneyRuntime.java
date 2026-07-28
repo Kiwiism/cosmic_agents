@@ -109,7 +109,7 @@ public final class AgentFirstJobJourneyRuntime {
             case ADVANCE_FIRST_JOB -> approachAndRun(entry, agent, bundle.instructorNpcId(),
                     () -> advanceAtInstructor(entry, agent, bundle, nowMs, gateway), gateway);
             case TRAVEL_TO_INITIAL_SHOP -> travelToInitialShop(entry, agent, state, bundle, nowMs, gateway);
-            case INITIAL_SHOPPING -> waitForInitialShopping(entry, state, nowMs);
+            case INITIAL_SHOPPING -> waitForInitialShopping(entry, agent, state, nowMs, gateway);
             case RETURN_TO_INSTRUCTOR -> returnToInstructor(entry, agent, state, bundle, nowMs, gateway);
             case INSTRUCTOR_TRAINING ->
                     AgentInstructorTrainingRuntime.tick(entry, agent, nowMs, gateway);
@@ -353,8 +353,11 @@ public final class AgentFirstJobJourneyRuntime {
                 .shoppingMesoReserve();
         AgentShopStateRuntime.ensureMinimumMesoReserve(entry, minimumMesoReserve);
         if (!AgentShopStateRuntime.shopVisitPending(entry)) {
+            int requiredItemId = career(bundle).initialShopRequiredItemId();
+            int requiredItemCount = career(bundle).initialShopRequiredItemCount();
             AgentShopService.requestVisitAtNpc(
-                    entry, agent, stop.npcId(), minimumMesoReserve);
+                    entry, agent, stop.npcId(), minimumMesoReserve,
+                    requiredItemId, requiredItemCount);
         }
         if (!AgentShopStateRuntime.shopVisitPending(entry)) {
             block(entry, state, "configured potion shop could not start its planned visit", nowMs);
@@ -365,14 +368,32 @@ public final class AgentFirstJobJourneyRuntime {
     }
 
     private static boolean waitForInitialShopping(AgentRuntimeEntry entry,
+                                                  Character agent,
                                                   AgentCareerProgressionState state,
-                                                  long nowMs) {
+                                                  long nowMs,
+                                                  PrimitiveCapabilityGateway gateway) {
         if (AgentShopStateRuntime.shopVisitPending(entry)) {
             return true;
         }
         AgentShopWorkflowPhase phase = AgentShopStateRuntime.workflow(entry).phase();
         if (phase == AgentShopWorkflowPhase.COMPLETED) {
-            state.stage(AgentCareerProgressionState.Stage.RETURN_TO_INSTRUCTOR,
+            AgentCareerBuildBundle bundle = state.bundle();
+            AgentVictoriaLevel15Catalog.Career career = career(bundle);
+            if (career.initialShopRequiredItemId() > 0
+                    && gateway.itemCount(agent, career.initialShopRequiredItemId())
+                    < career.initialShopRequiredItemCount()) {
+                block(entry, state,
+                        "checkpoint 1 supply visit completed without required return scroll "
+                                + career.initialShopRequiredItemId(),
+                        nowMs);
+                return false;
+            }
+            boolean checkpointOneComplete =
+                    state.trainingQuestIndex() >= bundle.instructorTrainingQuestIds().size();
+            state.questPackIndex(0);
+            state.stage(checkpointOneComplete
+                            ? AgentCareerProgressionState.Stage.HOME_QUEST_PACK
+                            : AgentCareerProgressionState.Stage.RETURN_TO_INSTRUCTOR,
                     nowMs + INTERACTION_DELAY_MS);
             return true;
         }

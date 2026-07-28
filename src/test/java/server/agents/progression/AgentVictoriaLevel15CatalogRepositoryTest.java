@@ -77,7 +77,7 @@ class AgentVictoriaLevel15CatalogRepositoryTest {
         assertTrue(repository.careerForFirstJob(300).starterKitItemIds().contains(2060000));
         AgentVictoriaLevel15Catalog.Career pirate = repository.careerForFirstJob(500);
         AgentVictoriaLevel15Catalog.TrainingStep fourth = pirate.trainingSteps().get(3);
-        assertEquals(100040003, fourth.huntingMapId());
+        assertEquals(912030000, fourth.huntingMapId());
         assertEquals(List.of(1110100), fourth.mobIds());
         assertTrue(pirate.starterKitItemIds().contains(2330000));
         assertTrue(pirate.verifiedShopItemIds().contains(2330000));

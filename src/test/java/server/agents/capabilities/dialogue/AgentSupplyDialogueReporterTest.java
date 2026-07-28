@@ -31,20 +31,24 @@ class AgentSupplyDialogueReporterTest {
     }
 
     @Test
-    void shouldFormatAutopotDebugReportLikeLegacyChat() {
+    void shouldFormatDeficitAwareAutopotDebugReport() {
         assertEquals(
-                "pots: 12 hp / 8 mp | hp slot: Red Potion (FLAT_SINGLE/50) | mp slot: Blue Potion (RATE_SINGLE/30%)",
+                "pots: 12 hp / 8 mp | hp slot: Red Potion (50 recovery/100% coverage/single) | mp slot: Blue Potion (150 recovery/100% coverage/single/percentage)",
                 AgentSupplyDialogueReporter.autopotDebugReport(
                         12,
                         8,
-                        AgentSupplyDialogueReporter.autopotChoice("Red Potion", 2000000, "FLAT_SINGLE", 50.0d),
-                        AgentSupplyDialogueReporter.autopotChoice("Blue Potion", 2000003, "RATE_SINGLE", 0.30d)));
+                        AgentSupplyDialogueReporter.autopotChoice(
+                                "Red Potion", 2000000, 50, 10_000, false, false),
+                        AgentSupplyDialogueReporter.autopotChoice(
+                                "Blue Potion", 2000003, 150, 10_000, false, true)));
     }
 
     @Test
     void shouldFormatMissingAutopotChoiceAsNone() {
-        assertEquals("none", AgentSupplyDialogueReporter.autopotChoice(null, 0, null, 0));
-        assertEquals("2000000 (FLAT_MIXED/100)",
-                AgentSupplyDialogueReporter.autopotChoice(null, 2000000, "FLAT_MIXED", 100.0d));
+        assertEquals("none",
+                AgentSupplyDialogueReporter.autopotChoice(null, 0, 0, 0, false, false));
+        assertEquals("2000000 (100 recovery/80% coverage/mixed)",
+                AgentSupplyDialogueReporter.autopotChoice(
+                        null, 2000000, 100, 8_000, true, false));
     }
 }

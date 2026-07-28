@@ -29,19 +29,32 @@ public final class AgentPlanSchemaValidator {
             require(text(step.operation()), "operation is required for " + step.stepId());
             require(step.timeoutMs() >= 0L, "timeoutMs must be non-negative for " + step.stepId());
             require(step.retryBudget() >= 0, "retryBudget must be non-negative for " + step.stepId());
+            require(!step.capabilityIds().isEmpty(),
+                    "at least one capabilityId is required for " + step.stepId());
             require(step.capabilityIds().stream().allMatch(AgentPlanSchemaValidator::text),
                     "capabilityIds must be non-blank for " + step.stepId());
+            require(new HashSet<>(step.capabilityIds()).size() == step.capabilityIds().size(),
+                    "capabilityIds must be unique for " + step.stepId());
         }
         plan.entryCriteria().forEach(condition -> validateCondition(plan, condition));
         plan.exitCriteria().forEach(condition -> validateCondition(plan, condition));
+        Set<String> successorIds = new HashSet<>();
+        int automaticSuccessors = 0;
         for (AgentPlanDefinition.Successor successor : plan.successors()) {
             require(successor != null && text(successor.planId()),
                     "successor planId is required for " + id(plan));
             require(!successor.planId().equals(plan.planId()),
                     "plan cannot succeed itself: " + id(plan));
+            require(successorIds.add(successor.planId()),
+                    "duplicate successor " + successor.planId() + " in " + id(plan));
             require(successor.on() != null && successor.activation() != null && successor.delayMs() >= 0L,
                     "valid successor policy is required for " + id(plan));
+            if (successor.activation() == AgentPlanDefinition.Activation.AUTOMATIC) {
+                automaticSuccessors++;
+            }
         }
+        require(automaticSuccessors <= 1,
+                "plan may define at most one automatic successor: " + id(plan));
     }
 
     private static void validateObjective(AgentPlanDefinition plan) {

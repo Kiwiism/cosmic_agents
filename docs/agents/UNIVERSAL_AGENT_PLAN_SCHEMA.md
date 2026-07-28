@@ -23,6 +23,12 @@ This is a normative compatibility rule for all future progression work:
    same change. Plans that do not use an optional field must receive an explicit, documented
    default rather than silently retaining old behavior.
 7. A schema version is not considered supported until every indexed plan validates against it.
+8. Executable plan resources must live under `src/main/resources/agents/plans`, use the canonical
+   `<planId>.plan.json` filename, and appear exactly once in `index.json`.
+9. The repository conformance test compares the complete set of executable `*.plan.json` files
+   with the index. Adding an unindexed plan or indexing a missing/duplicate plan fails the build.
+10. Every step must declare at least one unique capability ID. Successor IDs must be unique, and a
+    plan may expose at most one automatic successor for a given completion path.
 
 No plan is allowed to solve an immediate special case by creating a second progression schema.
 
@@ -76,7 +82,14 @@ Every progression plan contains:
 
 The repository uses strict JSON deserialization. Unknown fields fail startup, duplicate IDs fail
 validation, missing successor references fail validation, and every step operation must be present
-in the shared executor registry.
+in the shared executor registry. Resource names are also validated against their `planId`.
+
+Only files under `src/main/resources/agents/plans` are executable progression plans. The historical
+JSON files under `docs/agents/plans` are ordered-objective cards consumed by the
+`ordered-objective-card` step adapter. They may describe quest order, NPCs, and route details, but
+they do not own a plan cursor, retry policy, checkpoint, successor, or foreground lifecycle.
+Future domain data should be named and documented as a card, catalog, or stage contract rather than
+presented as another executable plan format.
 
 ## Shared step contract
 
@@ -100,6 +113,12 @@ Adding a capability-specific step requires:
 3. express all generic lifecycle behavior through existing schema fields;
 4. add a common schema field only when the new behavior applies consistently to every plan;
 5. add repository and executor tests.
+
+An operation may retain a specialized internal state machine when that state is intrinsic to the
+capability—for example quest ordering or first-job stages. That state machine must remain behind
+its `AgentPlanStepExecutor`: it cannot advance the universal plan cursor, choose a successor, or
+claim the top-level foreground lifecycle. This adapter boundary lets the proven Maple Island and
+Victoria mechanics coexist while `AgentPlanExecutor` remains the sole progression-plan executor.
 
 Do not dispatch on a plan ID inside the universal executor. Plan-specific behavior belongs behind a
 registered operation.

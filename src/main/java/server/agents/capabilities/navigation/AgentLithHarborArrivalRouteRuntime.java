@@ -9,6 +9,7 @@ import server.maps.Portal;
 
 import java.awt.Point;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Shared Lith Harbor arrival policy for Shanks travel and Victoria test runs.
@@ -44,6 +45,29 @@ public final class AgentLithHarborArrivalRouteRuntime {
     /** Selects a stable, varied point on the Maple Island arrival ship deck. */
     public static Point victoriaArrivalPosition(MapleMap map, int selector) {
         return shipArrivalPosition(map, selector);
+    }
+
+    /** Selects the same stable arrival point regardless of caller-supplied IGN casing. */
+    public static Point victoriaArrivalPosition(MapleMap map, String characterName) {
+        String normalizedName = characterName == null
+                ? "" : characterName.trim().toLowerCase(Locale.ROOT);
+        return shipArrivalPosition(map, normalizedName.hashCode());
+    }
+
+    /**
+     * Returns whether the Agent is already standing on a valid synthetic Victoria arrival deck.
+     * This is the placement handoff proof used to prevent reset code from moving a character
+     * after the spawn coordinator has already exposed it to observing clients.
+     */
+    public static boolean isVictoriaArrivalPosition(Character agent) {
+        if (agent == null || agent.getMapId() != LITH_HARBOR_MAP_ID || agent.getPosition() == null) {
+            return false;
+        }
+        Point position = agent.getPosition();
+        return SHIP_ARRIVAL_PLATFORMS.stream().anyMatch(platform ->
+                position.x >= platform.minX()
+                        && position.x <= platform.maxX()
+                        && Math.abs(position.y - platform.y()) <= 32);
     }
 
     /**

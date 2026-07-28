@@ -139,6 +139,8 @@ public record AgentVictoriaLevel15Catalog(
             int instructorMapId,
             int shopNpcId,
             int shopMapId,
+            int initialShopRequiredItemId,
+            int initialShopRequiredItemCount,
             List<Integer> starterKitItemIds,
             Map<String, Integer> preferredStarterWeaponByBundleId,
             List<Integer> verifiedShopItemIds,
@@ -156,6 +158,8 @@ public record AgentVictoriaLevel15Catalog(
                     || supportedBundleIds.stream().anyMatch(AgentVictoriaLevel15Catalog::blank)
                     || olafPathQuestId <= 0 || taxiSelection < 0 || townMapId <= 0 || instructorNpcId <= 0
                     || instructorMapId <= 0 || shopNpcId <= 0 || shopMapId <= 0
+                    || initialShopRequiredItemId < 0 || initialShopRequiredItemCount < 0
+                    || (initialShopRequiredItemId == 0) != (initialShopRequiredItemCount == 0)
                     || starterKitItemIds == null || starterKitItemIds.isEmpty()
                     || starterKitItemIds.stream().anyMatch(itemId -> itemId == null || itemId <= 0)
                     || preferredStarterWeaponByBundleId == null

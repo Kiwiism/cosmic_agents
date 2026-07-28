@@ -494,9 +494,10 @@ class BotManagerTest {
 
     @Test
     void shouldCommitToBreakoutDirectionWhenSurroundedDespiteTargetSwap() {
-        MapleMap map = spy(createEmptyTestMap(910000063));
-        map.getFootholds().insert(new Foothold(new Point(-500, 100), new Point(500, 100), 1));
-        AgentNavigationGraphService.rebuildGraph(map);
+        MapleMap sourceMap = createEmptyTestMap(910000063);
+        sourceMap.getFootholds().insert(new Foothold(new Point(-500, 100), new Point(500, 100), 1));
+        AgentNavigationGraphService.rebuildGraph(sourceMap);
+        MapleMap map = spy(sourceMap);
         Character bot = mock(Character.class);
         Point botPos = new Point(100, 100);
         when(bot.getMap()).thenReturn(map);

@@ -359,7 +359,7 @@ class AgentFirstJobJourneyRuntimeTest {
                 AgentCareerProgressionState.Stage.HOME_QUEST_PACK);
         AgentCareerProgressionState state = entry.capabilityStates().require(
                 AgentCareerProgressionState.STATE_KEY);
-        state.trainingQuestIndex(4);
+        state.questPackIndex(10);
         PrimitiveCapabilityGateway gateway = npcGateway(agent, 1052103);
         when(gateway.questStatus(agent, 28270)).thenReturn(0);
         when(gateway.canStartQuest(agent, 28270, 1052103)).thenReturn(true);
@@ -382,8 +382,10 @@ class AgentFirstJobJourneyRuntimeTest {
         when(agent.getPosition()).thenReturn(new Point(0, 0));
         AgentRuntimeEntry entry = entry(agent, "thief-claw-standard-v1",
                 AgentCareerProgressionState.Stage.HOME_QUEST_PACK);
+        AgentCareerProgressionState state = entry.capabilityStates().require(
+                AgentCareerProgressionState.STATE_KEY);
+        state.questPackIndex(3);
         PrimitiveCapabilityGateway gateway = npcGateway(agent, 1052106);
-        when(gateway.questStatus(agent, 28270)).thenReturn(2);
         when(gateway.questStatus(agent, 2090)).thenReturn(0);
         when(gateway.canStartQuest(agent, 2090, 1052106)).thenReturn(true);
         when(gateway.startQuest(agent, 2090, 1052106)).thenReturn(true);
@@ -391,8 +393,7 @@ class AgentFirstJobJourneyRuntimeTest {
         assertTrue(AgentFirstJobJourneyRuntime.tick(entry, agent, 100L, gateway));
 
         verify(gateway).startQuest(agent, 2090, 1052106);
-        assertEquals(1, entry.capabilityStates().require(
-                AgentCareerProgressionState.STATE_KEY).questPackIndex());
+        assertEquals(4, state.questPackIndex());
     }
 
     private static Character beginner(String name, int level, int mapId) {

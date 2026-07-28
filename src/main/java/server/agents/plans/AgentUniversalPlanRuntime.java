@@ -3,18 +3,14 @@ package server.agents.plans;
 import client.Character;
 import server.agents.runtime.AgentRuntimeEntry;
 
-import java.util.List;
 import java.io.IOException;
+import java.util.List;
 
 /** Session-facing facade for the one universal plan executor. */
 public final class AgentUniversalPlanRuntime {
     private static final AgentPlanExecutor EXECUTOR = new AgentPlanExecutor(
             AgentPlanRepository.defaultRepository(),
-            new AgentPlanStepExecutorRegistry(List.of(
-                    new AgentOrderedObjectivePlanStepExecutor(),
-                    new AgentSouthperryLithTransferStepExecutor(),
-                    new AgentFirstJobPlanStepExecutor(),
-                    new AgentVictoriaTrainingPlanStepExecutor())));
+            AgentPlanStepExecutorRegistry.defaultRegistry());
 
     private AgentUniversalPlanRuntime() {
     }

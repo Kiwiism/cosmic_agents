@@ -54,6 +54,31 @@ class AgentPlanExecutorTest {
     }
 
     @Test
+    void automaticSuccessorPassesThroughTheSameGoalSelectionBoundary() {
+        CompletingStepExecutor steps = new CompletingStepExecutor();
+        AgentPlanDefinition first = plan("first-auto", List.of(step("one", 0)),
+                List.of(new AgentPlanDefinition.Successor(
+                        "second-auto", AgentPlanDefinition.Outcome.SUCCEEDED,
+                        AgentPlanDefinition.Activation.AUTOMATIC, 0L)));
+        AgentPlanDefinition second = plan("second-auto", List.of(step("two", 0)), List.of());
+        AgentPlanExecutor executor = new AgentPlanExecutor(
+                new AgentPlanRepository(List.of(first, second)),
+                new AgentPlanStepExecutorRegistry(List.of(steps)));
+        Character agent = agent(78);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+
+        assertTrue(executor.start(entry, agent, first.planId(), AgentPlanStartRequest.EMPTY, 1_000L));
+        assertTrue(executor.tick(entry, agent, 1_001L));
+        assertTrue(executor.tick(entry, agent, 1_002L));
+        assertEquals(second.planId(), entry.capabilityStates()
+                .require(AgentPlanSessionState.STATE_KEY).planId());
+        assertEquals(2L, entry.capabilityStates()
+                .require(AgentDecisionProvenanceState.STATE_KEY).snapshot().stream()
+                .filter(record -> record.domain().equals("autonomy-goal"))
+                .count());
+    }
+
+    @Test
     void appliesSharedRetryBudgetBeforeSucceeding() {
         RetryStepExecutor steps = new RetryStepExecutor(2);
         AgentPlanDefinition retrying = plan("retrying", List.of(step("retry", 2)), List.of());

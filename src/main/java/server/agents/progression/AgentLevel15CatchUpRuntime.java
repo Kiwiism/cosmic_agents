@@ -37,11 +37,11 @@ final class AgentLevel15CatchUpRuntime {
         AgentVictoriaLevel15Catalog.CatchUpPlan plan = career.catchUpPlan();
         return switch (state.stage()) {
             case HOME_QUEST_PACK -> runPack(entry, agent, state,
-                    repository.questPack(plan.homePackId()),
+                    plan.homePackId(),
                     AgentCareerProgressionState.Stage.POST_HOME_DECISION, nowMs, gateway);
             case POST_HOME_DECISION -> afterHome(agent, state, bundle, plan, nowMs);
             case ROTATION_QUEST_PACK -> runPack(entry, agent, state,
-                    repository.questPack(plan.rotationPackId()),
+                    plan.rotationPackId(),
                     agent.getLevel() >= bundle.milestoneLevel()
                             ? AgentCareerProgressionState.Stage.FINAL_RETURN_TO_INSTRUCTOR
                             : AgentCareerProgressionState.Stage.GRIND_TO_MILESTONE,
@@ -55,18 +55,19 @@ final class AgentLevel15CatchUpRuntime {
     private static boolean runPack(AgentRuntimeEntry entry,
                                    Character agent,
                                    AgentCareerProgressionState state,
-                                   AgentVictoriaLevel15Catalog.QuestPack pack,
+                                   String packId,
                                    AgentCareerProgressionState.Stage completedStage,
                                    long nowMs,
                                    PrimitiveCapabilityGateway gateway) {
-        AgentVictoriaQuestPackRuntime.Result result = AgentVictoriaQuestPackRuntime.tick(
-                entry, agent, pack, nowMs, gateway);
-        if (result == AgentVictoriaQuestPackRuntime.Result.COMPLETE) {
+        AgentVictoriaSharedQuestPackRuntime.Result result =
+                AgentVictoriaSharedQuestPackRuntime.tick(
+                        entry, agent, state, packId, nowMs, gateway);
+        if (result == AgentVictoriaSharedQuestPackRuntime.Result.COMPLETE) {
             state.questPackIndex(0);
             state.stage(completedStage, nowMs + AgentVictoriaProgressionPolicy.defaultPolicy()
-                    .interactionDelayMs(agent.getId(), pack.packId().hashCode(), 3));
+                    .interactionDelayMs(agent.getId(), packId.hashCode(), 3));
         }
-        return result != AgentVictoriaQuestPackRuntime.Result.BLOCKED;
+        return result != AgentVictoriaSharedQuestPackRuntime.Result.BLOCKED;
     }
 
     private static boolean afterHome(Character agent,
@@ -85,9 +86,6 @@ final class AgentLevel15CatchUpRuntime {
             int currentLevel,
             int milestoneLevel,
             AgentVictoriaLevel15Catalog.AfterHomeStrategy strategy) {
-        if (currentLevel >= milestoneLevel - 1) {
-            return AgentCareerProgressionState.Stage.GRIND_TO_MILESTONE;
-        }
         return strategy == AgentVictoriaLevel15Catalog.AfterHomeStrategy.ROTATION_PACK
                 ? AgentCareerProgressionState.Stage.ROTATION_QUEST_PACK
                 : AgentCareerProgressionState.Stage.GRIND_TO_MILESTONE;

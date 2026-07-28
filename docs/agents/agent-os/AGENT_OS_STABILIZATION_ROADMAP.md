@@ -34,10 +34,36 @@ The bounded record lives in `AgentAutonomyCycleState`; the four decision stages
 also enter `AgentDecisionProvenanceState`. Snapshot capture remains in the
 Cosmic integration adapter. The kernel cannot import mutable Cosmic types.
 
-This is the first migration slice, not the final selector. Commands and tests
-may still assign a plan explicitly. The next kernel slice must introduce a
-policy-owned `GoalProposal -> PlanSelection` boundary and route automatic
-progression through it.
+Explicit plan starts and automatic successor transitions now cross the same
+policy-owned `GoalProposal -> PlanSelection` boundary. Selection validates the
+immutable snapshot, proposal eligibility/expiry, registered plan version, and
+stable priority/source/proposal tie-breakers. The selected goal and rejected
+alternatives are recorded before the plan is activated.
+
+This is still a migration slice rather than the final autonomy policy. Commands
+may submit explicit proposals, and some compatibility runtimes still own
+feature-specific objective registration. They must migrate behind typed plan
+steps before the universal executor can become the sole foreground authority.
+
+The remediation supervisor also has its first typed adapter. Supply
+procurement now suspends and resumes a parent objective through a bounded
+`AgentRemediationFrame`; death, inventory, equipment, mesos, and blocked-route
+handlers remain to be implemented.
+
+## Implementation status
+
+| Milestone | Current evidence | Remaining gate |
+|---|---|---|
+| Deterministic authority chain | Explicit starts and automatic successors share immutable proposals, deterministic selection, repository resolution, and provenance tests | Convert remaining feature-specific objective registrations to typed executor steps |
+| Five-job level-30 progression | Five career plans are indexed and schema/operation validation covers the complete plan repository | Repeated production-path runs and injected-failure evidence for every career |
+| Remediation supervisor | Typed remediation frames and supply suspend/resume tests | Death, inventory, equipment, mesos, and blocked-navigation handlers plus mutation receipts |
+| Navigation hardening | Persistent graph warmup exists; pure coverage analysis reports missing regions, directed route gaps, components, and edge types | Bind required catalog routes, portal-arrival evidence, oscillation classes, and M1-A fixtures |
+| Resource unification | Typed supply needs/procurement and one inventory reservation ledger exist | One cross-capability need contract, meso/slot locks, alternatives, receipts, and fulfillment evidence |
+| Persistence | Universal objective checkpoints and plan provenance exist | Versioned remediation/capability/receipt persistence and migration/reconciliation evidence |
+| Simulation tiers | Presentation, active-background, and abstract modes exist; every transition attempt now records applied/refused evidence | State-parity snapshots and repeated dematerialize/rematerialize proof |
+| Population allocation | Shared deterministic soft/hard map-capacity allocator is used by Victoria training selection | World/channel admission, fair leases, cohort/party placement, and backpressure |
+| Release validation | Focused contract suites cover the new kernel boundaries | Resolve the pre-existing full-suite navigation-probe hang, then run progression, packet, cohort, and soak gates |
+| Legacy retirement | Architecture tests prevent new top-level authorities | Remove each allowlisted compatibility authority only after its parity and rollback gate |
 
 ## Known compatibility authorities to remove
 
@@ -60,14 +86,16 @@ or presentation adapter.
 
 ### 1. Finish the deterministic autonomy kernel
 
+Completed foundation:
+
+1. Immutable goal proposals carry source, priority, eligibility, expiry,
+   policy version, and evidence references.
+2. Arbitration is deterministic and records rejection reasons.
+3. Explicit starts and automatic successors resolve a winning proposal to a
+   registered plan/version through the repository.
+
 Next slices:
 
-1. Add immutable goal proposals with source, priority, eligibility, expiry,
-   policy version, and evidence references.
-2. Add deterministic arbitration with stable tie-breaking and rejection
-   reasons.
-3. Map the winning proposal to a versioned plan through a repository, never a
-   feature runner.
 4. Make plan-step executors submit typed capability invocations rather than
    directly coordinating feature runtimes.
 5. Persist autonomy-cycle summaries and expose them through diagnostics.
@@ -124,7 +152,9 @@ or advancement.
 
 Add:
 
-- graph/portal/foothold route-coverage reports;
+- graph/portal/foothold route-coverage reports (the pure graph analyzer is now
+  available; catalog-required route declarations and generated evidence files
+  remain);
 - deterministic graph warmup with readiness evidence;
 - expected versus observed portal-arrival evidence;
 - oscillation categories and counters;
@@ -172,14 +202,18 @@ older records.
 Prove `OBSERVED_FULL <-> BACKGROUND_ACTIVE <-> BACKGROUND_ABSTRACT`
 transitions. Rematerialization must preserve legal position, HP/MP, inventory,
 equipment, mesos, quest counters, cooldowns, objective progress, and decision
-correlation.
+correlation. Every attempted transition records its previous, requested, and
+resulting mode plus a bounded outcome; this evidence does not yet prove state
+parity.
 
 ### 9. Add population allocation
 
 Introduce world/channel/map capacity, fair admission, region leases,
 party/cohort placement, alternative-map ranking, and backpressure. Allocation
 produces a proposal/lease consumed by navigation; it does not teleport or
-mutate Agents directly.
+mutate Agents directly. A shared deterministic map-capacity allocator now
+provides ranked soft/hard-capacity selection and is used by the Victoria
+training-map selector; channel admission and leases remain.
 
 ### 10. Establish release-grade validation
 

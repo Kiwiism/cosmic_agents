@@ -104,6 +104,14 @@ final class AgentTownLifeMemory {
         coolDown(destinationKey, nowMs + FAILED_DESTINATION_COOLDOWN_MS);
     }
 
+    synchronized void rememberSuccess(String destinationKey, long nowMs, long cooldownMs) {
+        coolDown(destinationKey, nowMs + Math.max(0L, cooldownMs));
+    }
+
+    synchronized void rememberFailure(String destinationKey, long nowMs, long cooldownMs) {
+        coolDown(destinationKey, nowMs + Math.max(0L, cooldownMs));
+    }
+
     synchronized void rememberSocial(int peerAgentId,
                                      AgentTownLifeEncounterState.Type type,
                                      String venueId,

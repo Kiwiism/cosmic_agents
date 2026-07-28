@@ -28,6 +28,10 @@ final class AgentTownLifeProgressWatchdog {
     }
 
     synchronized Result observe(Point position, long nowMs) {
+        return observe(position, nowMs, TOTAL_TIMEOUT_MS);
+    }
+
+    synchronized Result observe(Point position, long nowMs, long totalTimeoutMs) {
         if (target == null || position == null) {
             return Result.PROGRESSING;
         }
@@ -41,7 +45,7 @@ final class AgentTownLifeProgressWatchdog {
             bestDistanceSq = Math.min(bestDistanceSq, distanceSq);
             lastProgressAtMs = nowMs;
         }
-        if (nowMs - startedAtMs >= TOTAL_TIMEOUT_MS) {
+        if (nowMs - startedAtMs >= Math.min(TOTAL_TIMEOUT_MS, totalTimeoutMs)) {
             return Result.TIMED_OUT;
         }
         return nowMs - lastProgressAtMs >= STALL_TIMEOUT_MS ? Result.STALLED : Result.PROGRESSING;

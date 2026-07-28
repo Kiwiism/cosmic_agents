@@ -18,6 +18,7 @@ public record AgentTownLifeProfile(
         List<NpcSpot> npcSpots,
         List<Integer> shopMapIds,
         List<TrafficZone> trafficZones,
+        List<PlatformPolicy> platformPolicies,
         List<Venue> venues) {
 
     public AgentTownLifeProfile {
@@ -33,6 +34,7 @@ public record AgentTownLifeProfile(
         npcSpots = List.copyOf(npcSpots == null ? List.of() : npcSpots);
         shopMapIds = List.copyOf(shopMapIds == null ? List.of() : shopMapIds);
         trafficZones = List.copyOf(trafficZones == null ? List.of() : trafficZones);
+        platformPolicies = List.copyOf(platformPolicies == null ? List.of() : platformPolicies);
         venues = List.copyOf(venues == null ? List.of() : venues);
         long uniqueVenueIds = venues.stream().map(Venue::id).distinct().count();
         if (uniqueVenueIds != venues.size()) {
@@ -98,6 +100,13 @@ public record AgentTownLifeProfile(
     public boolean allowsOccupancy(Point point) {
         return point != null && trafficZones.stream()
                 .noneMatch(zone -> zone.excludesOccupancy() && zone.contains(point));
+    }
+
+    public Optional<PlatformPolicy> platformPolicy(Point point) {
+        if (point == null) {
+            return Optional.empty();
+        }
+        return platformPolicies.stream().filter(policy -> policy.contains(point)).findFirst();
     }
 
     public int shopMapId(int index) {
@@ -198,6 +207,41 @@ public record AgentTownLifeProfile(
             if (name == null || name.isBlank() || weight <= 0) {
                 throw new IllegalArgumentException("town-life arrival portal is invalid");
             }
+        }
+    }
+
+    /**
+     * Bounded policy for an unusual but valid platform. It controls capacity, travel time,
+     * dwell duration, and per-Agent revisit cooldown without special-casing a town in code.
+     */
+    public record PlatformPolicy(String id,
+                                 int minX,
+                                 int minY,
+                                 int maxX,
+                                 int maxY,
+                                 int capacity,
+                                 long navigationTimeoutMs,
+                                 int dwellMinMs,
+                                 int dwellMaxExclusiveMs,
+                                 long successCooldownMs,
+                                 long failureCooldownMs) {
+        public PlatformPolicy {
+            if (id == null || id.isBlank() || minX > maxX || minY > maxY
+                    || capacity <= 0 || navigationTimeoutMs <= 0L
+                    || dwellMinMs < 0 || dwellMaxExclusiveMs <= dwellMinMs
+                    || successCooldownMs < 0L || failureCooldownMs < 0L) {
+                throw new IllegalArgumentException("town-life platform policy is invalid");
+            }
+            id = id.trim();
+        }
+
+        public boolean contains(Point point) {
+            return point != null && point.x >= minX && point.x <= maxX
+                    && point.y >= minY && point.y <= maxY;
+        }
+
+        public String destinationKey() {
+            return "platform:" + id;
         }
     }
 

@@ -62,6 +62,7 @@ class AgentPotionCheckRequestServiceTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
         int oldDelay = AgentRuntimeConfig.cfg.POT_CHECK_RETRY_SOON_MS;
 
+        System.setProperty("agents.scheduler.mode", "legacy");
         when(leader.getId()).thenReturn(77);
         when(agent.getId()).thenReturn(88);
         when(agent.getClient()).thenReturn(new BotClient(0, 0));
@@ -74,6 +75,7 @@ class AgentPotionCheckRequestServiceTest {
 
             assertEquals(123, AgentPotionStateRuntime.potCheckTimerMs(entry));
         } finally {
+            System.clearProperty("agents.scheduler.mode");
             AgentRuntimeConfig.cfg.POT_CHECK_RETRY_SOON_MS = oldDelay;
             AgentRuntimeRegistry.clear();
         }

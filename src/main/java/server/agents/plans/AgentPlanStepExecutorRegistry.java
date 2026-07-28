@@ -8,6 +8,14 @@ import java.util.Optional;
 public final class AgentPlanStepExecutorRegistry {
     private final Map<String, AgentPlanStepExecutor> executors;
 
+    public static AgentPlanStepExecutorRegistry defaultRegistry() {
+        return new AgentPlanStepExecutorRegistry(List.of(
+                new AgentOrderedObjectivePlanStepExecutor(),
+                new AgentSouthperryLithTransferStepExecutor(),
+                new AgentFirstJobPlanStepExecutor(),
+                new AgentVictoriaTrainingPlanStepExecutor()));
+    }
+
     public AgentPlanStepExecutorRegistry(List<AgentPlanStepExecutor> executors) {
         Map<String, AgentPlanStepExecutor> indexed = new LinkedHashMap<>();
         for (AgentPlanStepExecutor executor : executors) {

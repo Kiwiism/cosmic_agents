@@ -38,14 +38,21 @@ public final class AgentSupplyDialogueReporter {
                 + " | mp slot: " + mpSlot;
     }
 
-    public static String autopotChoice(String itemName, int itemId, String tierName, double value) {
-        if (itemId <= 0 || tierName == null) {
+    public static String autopotChoice(
+            String itemName,
+            int itemId,
+            int primaryRecovery,
+            int coverageBasisPoints,
+            boolean mixed,
+            boolean percentageBased) {
+        if (itemId <= 0 || primaryRecovery <= 0) {
             return "none";
         }
         String name = itemName == null ? String.valueOf(itemId) : itemName;
-        String formattedValue = tierName.startsWith("FLAT_")
-                ? String.valueOf((int) value)
-                : String.format("%.0f%%", value * 100);
-        return name + " (" + tierName + "/" + formattedValue + ")";
+        return name + " (" + primaryRecovery + " recovery/"
+                + Math.round(coverageBasisPoints / 100.0) + "% coverage"
+                + (mixed ? "/mixed" : "/single")
+                + (percentageBased ? "/percentage" : "")
+                + ")";
     }
 }

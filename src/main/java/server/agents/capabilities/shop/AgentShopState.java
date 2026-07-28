@@ -16,6 +16,8 @@ public final class AgentShopState {
     private long sequenceStartedAtMs = 0L;
     private boolean sellTrashPending = false;
     private int minimumMesoReserve = 0;
+    private int requiredItemId = 0;
+    private int requiredItemCount = 0;
     private Point stuckCheckPosition = null;
     private long stuckCheckAtMs = 0L;
 
@@ -76,6 +78,14 @@ public final class AgentShopState {
         minimumMesoReserve = Math.max(minimumMesoReserve, Math.max(0, mesos));
     }
 
+    public int requiredItemId() {
+        return requiredItemId;
+    }
+
+    public int requiredItemCount() {
+        return requiredItemCount;
+    }
+
     public void setSellTrashPending(boolean pending) {
         sellTrashPending = pending;
     }
@@ -101,6 +111,16 @@ public final class AgentShopState {
                            int approachDelayMs,
                            int minimumMesoReserve,
                            long startedAtMs) {
+        startVisit(npcPosition, targetPosition, approachDelayMs, minimumMesoReserve, 0, 0, startedAtMs);
+    }
+
+    public void startVisit(Point npcPosition,
+                           Point targetPosition,
+                           int approachDelayMs,
+                           int minimumMesoReserve,
+                           int requiredItemId,
+                           int requiredItemCount,
+                           long startedAtMs) {
         if (workflow.phase() == AgentShopWorkflowPhase.IDLE || workflow.phase().terminal()) {
             workflow.start("shop:" + startedAtMs, 0, startedAtMs);
             workflow.transition(AgentShopWorkflowPhase.APPROACHING, "travelling to shop NPC", startedAtMs);
@@ -110,6 +130,8 @@ public final class AgentShopState {
         this.targetPosition = targetPosition == null ? null : new Point(targetPosition);
         setApproachDelayMs(approachDelayMs);
         this.minimumMesoReserve = Math.max(0, minimumMesoReserve);
+        this.requiredItemId = Math.max(0, requiredItemId);
+        this.requiredItemCount = Math.max(0, requiredItemCount);
         visitStartedAtMs = startedAtMs;
         sequenceStartedAtMs = 0L;
     }
@@ -164,6 +186,8 @@ public final class AgentShopState {
         sequenceStartedAtMs = 0L;
         sellTrashPending = false;
         minimumMesoReserve = 0;
+        requiredItemId = 0;
+        requiredItemCount = 0;
         stuckCheckPosition = null;
         stuckCheckAtMs = 0L;
     }

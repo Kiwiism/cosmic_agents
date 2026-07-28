@@ -2,31 +2,33 @@ package server.agents.capabilities.shop;
 
 import server.ShopItem;
 import server.StatEffect;
+import server.agents.capabilities.supplies.AgentPotionRecoveryPolicy;
+import server.agents.capabilities.supplies.AgentPotionRecoveryPolicy.Recovery;
 
 import java.util.List;
 import java.util.function.IntFunction;
 import java.util.function.IntPredicate;
 
 public final class AgentShopPotionPolicy {
+    private static final int IDEAL_MIN_COVERAGE_BPS = config.AgentTuning.intValue(
+            "server.agents.capabilities.shop.AgentShopPotionPolicy.IDEAL_MIN_COVERAGE_BPS");
+    private static final int IDEAL_MAX_COVERAGE_BPS = config.AgentTuning.intValue(
+            "server.agents.capabilities.shop.AgentShopPotionPolicy.IDEAL_MAX_COVERAGE_BPS");
+
     private AgentShopPotionPolicy() {
     }
 
-    public record PotionShopSlot(short slot, ShopItem shopItem) {
+    public record PotionShopSlot(short slot, ShopItem shopItem, Recovery recovery) {
     }
 
     public static PotionShopSlot selectPotionItem(List<ShopItem> items,
-                                                  int maxStat,
+                                                  int maxHp,
+                                                  int maxMp,
+                                                  int targetDeficit,
                                                   boolean forHp,
                                                   IntPredicate recoveryPotion,
                                                   IntFunction<StatEffect> effectLookup) {
-        int minRecover = (int) (maxStat * 0.10);
-        int maxRecover = (int) (maxStat * 0.50);
-
-        PotionShopSlot inBand = null;
-        PotionShopSlot bestTooLow = null;
-        int bestTooLowRecover = -1;
-        PotionShopSlot bestTooHigh = null;
-        int bestTooHighRecover = Integer.MAX_VALUE;
+        PotionShopSlot best = null;
         for (int i = 0; i < items.size(); i++) {
             ShopItem item = items.get(i);
             if (item.getPrice() <= 0) {
@@ -41,37 +43,60 @@ public final class AgentShopPotionPolicy {
             if (effect == null) {
                 continue;
             }
-            if (forHp && effect.getHpRate() > 0) {
+            Recovery recovery =
+                    AgentPotionRecoveryPolicy.recovery(effect, maxHp, maxMp, forHp);
+            if (recovery == null) {
                 continue;
             }
-            if (!forHp && effect.getMpRate() > 0) {
-                continue;
-            }
-
-            int recover = forHp ? effect.getHp() : effect.getMp();
-            if (recover <= 0) {
-                continue;
-            }
-
-            PotionShopSlot slot = new PotionShopSlot((short) i, item);
-            if (recover < minRecover) {
-                if (recover > bestTooLowRecover) {
-                    bestTooLowRecover = recover;
-                    bestTooLow = slot;
-                }
-            } else if (recover > maxRecover) {
-                if (recover < bestTooHighRecover) {
-                    bestTooHighRecover = recover;
-                    bestTooHigh = slot;
-                }
-            } else if (inBand == null || item.getPrice() < inBand.shopItem.getPrice()) {
-                inBand = slot;
+            PotionShopSlot candidate = new PotionShopSlot((short) i, item, recovery);
+            if (better(candidate, best, targetDeficit)) {
+                best = candidate;
             }
         }
+        return best;
+    }
 
-        if (inBand != null) {
-            return inBand;
+    private static boolean better(
+            PotionShopSlot candidate, PotionShopSlot current, int targetDeficit) {
+        if (current == null) {
+            return true;
         }
-        return bestTooLow != null ? bestTooLow : bestTooHigh;
+        int candidateBand = band(candidate.recovery.primary(), targetDeficit);
+        int currentBand = band(current.recovery.primary(), targetDeficit);
+        if (candidateBand != currentBand) {
+            return candidateBand < currentBand;
+        }
+        if (candidate.recovery.mixed() != current.recovery.mixed()) {
+            return !candidate.recovery.mixed();
+        }
+        if (candidateBand == 1
+                && candidate.recovery.primary() != current.recovery.primary()) {
+            return candidate.recovery.primary() > current.recovery.primary();
+        }
+        if (candidateBand == 2
+                && candidate.recovery.primary() != current.recovery.primary()) {
+            return candidate.recovery.primary() < current.recovery.primary();
+        }
+        long candidateCost = (long) candidate.shopItem.getPrice()
+                * Math.max(1, current.recovery.weightedRecovery());
+        long currentCost = (long) current.shopItem.getPrice()
+                * Math.max(1, candidate.recovery.weightedRecovery());
+        if (candidateCost != currentCost) {
+            return candidateCost < currentCost;
+        }
+        int candidateDistance = Math.abs(candidate.recovery.primary() - targetDeficit);
+        int currentDistance = Math.abs(current.recovery.primary() - targetDeficit);
+        if (candidateDistance != currentDistance) {
+            return candidateDistance < currentDistance;
+        }
+        return candidate.shopItem.getItemId() < current.shopItem.getItemId();
+    }
+
+    private static int band(int recovery, int targetDeficit) {
+        int coverage = AgentPotionRecoveryPolicy.coverageBasisPoints(recovery, targetDeficit);
+        if (coverage >= IDEAL_MIN_COVERAGE_BPS && coverage <= IDEAL_MAX_COVERAGE_BPS) {
+            return 0;
+        }
+        return coverage < IDEAL_MIN_COVERAGE_BPS ? 1 : 2;
     }
 }

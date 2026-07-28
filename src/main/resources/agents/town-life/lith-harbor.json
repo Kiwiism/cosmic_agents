@@ -104,6 +104,21 @@
       "excludesOccupancy": true
     }
   ],
+  "platformPolicies": [
+    {
+      "id": "duey-truck-roof",
+      "minX": 3798,
+      "minY": 410,
+      "maxX": 3971,
+      "maxY": 475,
+      "capacity": 6,
+      "navigationTimeoutMs": 12000,
+      "dwellMinMs": 5000,
+      "dwellMaxExclusiveMs": 20001,
+      "successCooldownMs": 1200000,
+      "failureCooldownMs": 2700000
+    }
+  ],
   "venues": [
     {
       "id": "ship-upper-deck",

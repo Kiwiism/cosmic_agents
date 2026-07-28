@@ -42,6 +42,7 @@ class AgentShopServiceTest {
         assertEquals(10, AgentShopService.affordableQuantity(5_000, 1_000, 100, 50, 10));
         assertEquals(0, AgentShopService.affordableQuantity(1_000, 1_000, 100, 50, 100));
         assertEquals(0, AgentShopService.affordableQuantity(5_000, 1_000, 0, 50, 100));
+        assertEquals(25, AgentShopService.affordableQuantity(5_000, 1_000, 10, 100, 100, 250));
     }
 
     @Test

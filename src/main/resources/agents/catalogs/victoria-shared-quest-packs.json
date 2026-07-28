@@ -1,0 +1,184 @@
+{
+  "schemaVersion": 1,
+  "catalogId": "victoria-shared-quest-packs-v1",
+  "towns": [
+    { "mapId": 100000000, "taxiNpcId": 1012000, "destinations": [
+      { "mapId": 102000000, "selection": 1 }, { "mapId": 101000000, "selection": 2 },
+      { "mapId": 103000000, "selection": 3 }, { "mapId": 120000000, "selection": 4 }
+    ] },
+    { "mapId": 101000000, "taxiNpcId": 1032000, "destinations": [
+      { "mapId": 102000000, "selection": 1 }, { "mapId": 100000000, "selection": 2 },
+      { "mapId": 103000000, "selection": 3 }, { "mapId": 120000000, "selection": 4 }
+    ] },
+    { "mapId": 102000000, "taxiNpcId": 1022001, "destinations": [
+      { "mapId": 100000000, "selection": 1 }, { "mapId": 101000000, "selection": 2 },
+      { "mapId": 103000000, "selection": 3 }, { "mapId": 120000000, "selection": 4 }
+    ] },
+    { "mapId": 103000000, "taxiNpcId": 1052016, "destinations": [
+      { "mapId": 102000000, "selection": 1 }, { "mapId": 100000000, "selection": 2 },
+      { "mapId": 101000000, "selection": 3 }, { "mapId": 120000000, "selection": 4 }
+    ] },
+    { "mapId": 120000000, "taxiNpcId": 1092014, "destinations": [
+      { "mapId": 102000000, "selection": 1 }, { "mapId": 100000000, "selection": 2 },
+      { "mapId": 101000000, "selection": 3 }, { "mapId": 103000000, "selection": 4 }
+    ] }
+  ],
+  "packs": [
+    {
+      "packId": "perion-pre15",
+      "homeTownMapId": 102000000,
+      "steps": [
+        { "type": "TAXI", "intention": "I'm taking the taxi to Perion for the Perion quest pack.", "mapId": 102000000, "destinationMapId": 102000000 },
+        { "type": "QUEST", "intention": "I'm taking Sweep the Snails: defeat 10 Blue Snails and 10 Red Snails.", "npcId": 1022007, "questId": 28280, "mapId": 102000000 },
+        { "type": "QUEST", "intention": "I'm taking The Stump Horror Story: defeat 50 Stumps.", "npcId": 1022007, "questId": 2082, "mapId": 102000000 },
+        { "type": "HUNT", "intention": "I'm going to Perion Street Corner to defeat 10 Blue Snails, 10 Red Snails and 50 Stumps.", "mapId": 101040000,
+          "preferredMobIds": [100101, 130101, 130100], "incidentalMobIds": [1110101],
+          "conditions": [
+            { "type": "QUEST_KILL", "questId": 28280, "targetId": 100101, "count": 10 },
+            { "type": "QUEST_KILL", "questId": 28280, "targetId": 130101, "count": 10 },
+            { "type": "QUEST_KILL", "questId": 2082, "targetId": 130100, "count": 50 }
+          ] },
+        { "type": "TRAVEL", "intention": "I finished the snail and Stump hunt and I'm returning to Perion.", "destinationMapId": 102000000 },
+        { "type": "QUEST", "intention": "I defeated the Blue and Red Snails and I'm returning to Ayan.", "npcId": 1022007, "questId": 28280, "complete": true, "mapId": 102000000 },
+        { "type": "QUEST", "intention": "I defeated 50 Stumps and I'm returning to Ayan.", "npcId": 1022007, "questId": 2082, "complete": true, "mapId": 102000000 },
+        { "type": "LEVEL_GRIND", "intention": "I'm training at Perion Street Corner until Blackbull's ceremony request is available.", "requiredLevel": 12, "mapId": 101040000,
+          "preferredMobIds": [130100, 1110101, 100101, 130101], "incidentalMobIds": [] },
+        { "type": "QUEST", "intention": "I'm taking Preparations for the Traditional Ceremony: collect 20 Leaves.", "npcId": 1020000, "questId": 28281, "requiredLevel": 12, "mapId": 102000000 },
+        { "type": "HUNT", "intention": "I'm heading to Rocky Road II, fighting Dark Stumps for 20 Leaves and anything blocking my route.", "mapId": 101030200,
+          "preferredMobIds": [1110101], "incidentalMobIds": [130100],
+          "conditions": [{ "type": "ITEM", "targetId": 4000005, "count": 20 }] },
+        { "type": "USE_SCROLL", "intention": "I collected 20 Leaves and I'm returning to Perion.", "itemId": 2030003, "destinationMapId": 102000000 },
+        { "type": "QUEST", "intention": "I collected 20 Leaves and I'm returning to Blackbull.", "npcId": 1020000, "questId": 28281, "complete": true, "requiredLevel": 12, "mapId": 102000000 }
+      ]
+    },
+    {
+      "packId": "ellinia-pre15",
+      "homeTownMapId": 101000000,
+      "steps": [
+        { "type": "TAXI", "intention": "I'm taking the taxi to Ellinia for the Ellinia quest pack.", "mapId": 101000000, "destinationMapId": 101000000 },
+        { "type": "QUEST", "intention": "I'm helping Wing with Eww, It's Slimy: collect 20 Squishy Liquids.", "npcId": 1032106, "questId": 28273, "mapId": 101000000 },
+        { "type": "QUEST", "intention": "I'm helping Wing with homework: collect 10 Slime Bubbles, 30 Tree Branches and 30 Squishy Liquids.", "npcId": 1032106, "questId": 2089, "mapId": 101000000 },
+        { "type": "HUNT", "intention": "I'm hunting Slimes and Stumps south of Ellinia for 50 Squishy Liquids, 10 Slime Bubbles and 30 Tree Branches.", "mapId": 100050000,
+          "preferredMobIds": [210100, 130100], "incidentalMobIds": [],
+          "conditions": [
+            { "type": "ITEM", "targetId": 4000004, "count": 50 },
+            { "type": "ITEM", "targetId": 4000010, "count": 10 },
+            { "type": "ITEM", "targetId": 4000003, "count": 30 }
+          ] },
+        { "type": "TRAVEL", "intention": "I have Wing's materials and I'm returning to Ellinia.", "destinationMapId": 101000000 },
+        { "type": "QUEST", "intention": "I collected 20 Squishy Liquids and I'm returning to Wing.", "npcId": 1032106, "questId": 28273, "complete": true, "mapId": 101000000 },
+        { "type": "QUEST", "intention": "I collected Wing's homework materials and I'm returning to her.", "npcId": 1032106, "questId": 2089, "complete": true, "mapId": 101000000 },
+        { "type": "LEVEL_GRIND", "intention": "I'm training nearby until Rowen's Dark Stump request is available.", "requiredLevel": 12, "mapId": 100050000,
+          "preferredMobIds": [210100, 130100], "incidentalMobIds": [] },
+        { "type": "QUEST", "intention": "I'm taking Why Are Dark Stumps So Dark: defeat 40 Dark Stumps.", "npcId": 1032101, "questId": 28274, "requiredLevel": 12, "mapId": 101000000 },
+        { "type": "HUNT", "intention": "I'm going to The Tree That Grew II to defeat 40 Dark Stumps, with Slimes as extra targets.", "mapId": 101010101,
+          "preferredMobIds": [1110101], "incidentalMobIds": [210100],
+          "conditions": [{ "type": "QUEST_KILL", "questId": 28274, "targetId": 1110101, "count": 40 }] },
+        { "type": "USE_SCROLL", "intention": "I defeated 40 Dark Stumps and I'm returning to Ellinia.", "itemId": 2030004, "destinationMapId": 101000000 },
+        { "type": "QUEST", "intention": "I defeated 40 Dark Stumps and I'm returning to Rowen.", "npcId": 1032101, "questId": 28274, "complete": true, "requiredLevel": 12, "mapId": 101000000 }
+      ]
+    },
+    {
+      "packId": "henesys-pre15",
+      "homeTownMapId": 100000000,
+      "steps": [
+        { "type": "TAXI", "intention": "I'm taking the taxi to Henesys for the Henesys quest pack.", "mapId": 100000000, "destinationMapId": 100000000 },
+        { "type": "QUEST", "intention": "I'm helping Bruce collect 40 Orange Mushroom Caps and 10 Mushroom Spores.", "npcId": 1012111, "questId": 2088, "mapId": 100000000 },
+        { "type": "LEVEL_GRIND", "intention": "I'm training east of Henesys until the remaining town requests are available.", "requiredLevel": 14, "mapId": 100010000,
+          "preferredMobIds": [1210102, 1110100, 1210100, 1210101], "incidentalMobIds": [100100] },
+        { "type": "QUEST", "intention": "I'm helping Rina collect 20 Green Mushroom Caps.", "npcId": 1010100, "questId": 28267, "requiredLevel": 14, "mapId": 100000000 },
+        { "type": "QUEST", "intention": "I'm helping Jay defeat 40 Ribbon Pigs.", "npcId": 1012109, "questId": 28269, "requiredLevel": 12, "mapId": 100000000 },
+        { "type": "QUEST", "intention": "I'm helping Camila defeat 30 Pigs.", "npcId": 1012108, "questId": 28268, "mapId": 100000000 },
+        { "type": "HUNT", "intention": "I'm hunting mushrooms east of Henesys for 10 Spores and 20 Green Mushroom Caps, while defeating Pigs on sight.", "mapId": 100010000,
+          "preferredMobIds": [1210102, 1110100, 1210100, 1210101], "incidentalMobIds": [100100],
+          "conditions": [
+            { "type": "ITEM", "targetId": 4000011, "count": 10 },
+            { "type": "ITEM", "targetId": 4000012, "count": 20 }
+          ] },
+        { "type": "HUNT", "intention": "I'm hunting Orange Mushrooms east of Henesys for 40 Caps, while defeating Pigs and Ribbon Pigs on sight.", "mapId": 100030000,
+          "preferredMobIds": [1210102, 1210100, 1210101], "incidentalMobIds": [210100, 1110100],
+          "conditions": [{ "type": "ITEM", "targetId": 4000001, "count": 40 }] },
+        { "type": "MINI_DUNGEON_HUNT", "intention": "I'm going to the Henesys Pig Farm if either Pig objective still needs work.", "destinationMapId": 100020000,
+          "portalId": 8, "exitPortalId": 4, "mapId": 100020100, "instanceMapIdMin": 100020100, "instanceMapIdMax": 100020129,
+          "preferredMobIds": [1210100, 1210101], "incidentalMobIds": [],
+          "conditions": [
+            { "type": "QUEST_KILL", "questId": 28268, "targetId": 1210100, "count": 30 },
+            { "type": "QUEST_KILL", "questId": 28269, "targetId": 1210101, "count": 40 }
+          ] },
+        { "type": "TRAVEL", "intention": "I completed the Henesys hunt and I'm returning to town.", "destinationMapId": 100000000 },
+        { "type": "QUEST", "intention": "I collected Bruce's mushroom materials and I'm returning to him.", "npcId": 1012111, "questId": 2088, "complete": true, "mapId": 100000000 },
+        { "type": "QUEST", "intention": "I collected 20 Green Mushroom Caps and I'm returning to Rina.", "npcId": 1010100, "questId": 28267, "complete": true, "requiredLevel": 14, "mapId": 100000000 },
+        { "type": "QUEST", "intention": "I defeated 40 Ribbon Pigs and I'm returning to Jay.", "npcId": 1012109, "questId": 28269, "complete": true, "requiredLevel": 12, "mapId": 100000000 },
+        { "type": "QUEST", "intention": "I defeated 30 Pigs and I'm returning to Camila.", "npcId": 1012108, "questId": 28268, "complete": true, "mapId": 100000000 }
+      ]
+    },
+    {
+      "packId": "kerning-pre15",
+      "homeTownMapId": 103000000,
+      "steps": [
+        { "type": "TAXI", "intention": "I'm taking the taxi to Kerning City for the Kerning quest pack.", "mapId": 103000000, "destinationMapId": 103000000 },
+        { "type": "LEVEL_GRIND", "intention": "I'm training near Kerning until Icarus and Alex's requests are available.", "requiredLevel": 12, "mapId": 102040000,
+          "preferredMobIds": [1120100, 210100, 130100], "incidentalMobIds": [1210102] },
+        { "type": "QUEST", "intention": "I'm asking Icarus about Intimidating Octopuses.", "npcId": 1052106, "questId": 28272, "requiredLevel": 12, "mapId": 103000000 },
+        { "type": "QUEST", "intention": "I'm helping Icarus with I'm Bored 1.", "npcId": 1052106, "questId": 2090, "mapId": 103000000 },
+        { "type": "QUEST", "intention": "I finished I'm Bored 1 and I'm returning to Icarus.", "npcId": 1052106, "questId": 2090, "complete": true, "mapId": 103000000 },
+        { "type": "QUEST", "intention": "I'm collecting 40 Tree Branches and 40 Squishy Liquids for I'm Bored 2.", "npcId": 1052106, "questId": 2091, "mapId": 103000000 },
+        { "type": "HUNT", "intention": "I'm defeating 30 Octopuses and collecting 40 Tree Branches and 40 Squishy Liquids at Construction Site North.", "mapId": 102040000,
+          "preferredMobIds": [1120100, 210100, 130100], "incidentalMobIds": [1210102],
+          "conditions": [
+            { "type": "QUEST_KILL", "questId": 28272, "targetId": 1120100, "count": 30 },
+            { "type": "ITEM", "targetId": 4000003, "count": 40 },
+            { "type": "ITEM", "targetId": 4000004, "count": 40 }
+          ] },
+        { "type": "USE_SCROLL", "intention": "I finished the Construction Site hunt and I'm returning to Kerning City.", "itemId": 2030000, "destinationMapId": 103000000 },
+        { "type": "QUEST", "intention": "I defeated 30 Octopuses and I'm returning to Icarus.", "npcId": 1052106, "questId": 28272, "complete": true, "requiredLevel": 12, "mapId": 103000000 },
+        { "type": "QUEST", "intention": "I collected the Branches and Squishy Liquids and I'm returning to Icarus.", "npcId": 1052106, "questId": 2091, "complete": true, "mapId": 103000000 },
+        { "type": "QUEST", "intention": "I'm asking Nella about Pigs at the Corner.", "npcId": 1052103, "questId": 28270, "mapId": 103000000 },
+        { "type": "QUEST", "intention": "I'm asking Alex about That Red Isn't For Everyone.", "npcId": 1052000, "questId": 28271, "requiredLevel": 12, "mapId": 103000000 },
+        { "type": "SHOP_ITEM", "intention": "I'm buying one Kerning City return scroll before the Pig Farm trip.", "npcId": 1051002, "mapId": 103000002, "itemId": 2030005, "itemCount": 1 },
+        { "type": "TAXI", "intention": "I'm taking the taxi to Henesys to hunt Pigs and Ribbon Pigs.", "mapId": 103000000, "destinationMapId": 100000000 },
+        { "type": "MINI_DUNGEON_HUNT", "intention": "I'm heading to the Henesys Pig Farm to defeat everything until both Pig objectives are complete.", "destinationMapId": 100020000,
+          "portalId": 8, "exitPortalId": 4, "mapId": 100020100, "instanceMapIdMin": 100020100, "instanceMapIdMax": 100020129,
+          "preferredMobIds": [1210100, 1210101], "incidentalMobIds": [],
+          "conditions": [
+            { "type": "QUEST_KILL", "questId": 28270, "targetId": 1210100, "count": 30 },
+            { "type": "QUEST_KILL", "questId": 28271, "targetId": 1210101, "count": 30 }
+          ] },
+        { "type": "USE_SCROLL", "intention": "I'm using my Kerning City return scroll to report back.", "itemId": 2030005, "destinationMapId": 103000000 },
+        { "type": "QUEST", "intention": "I defeated 30 Pigs and I'm returning to Nella.", "npcId": 1052103, "questId": 28270, "complete": true, "mapId": 103000000 },
+        { "type": "QUEST", "intention": "I defeated 30 Ribbon Pigs and I'm returning to Alex.", "npcId": 1052000, "questId": 28271, "complete": true, "requiredLevel": 12, "mapId": 103000000 }
+      ]
+    },
+    {
+      "packId": "nautilus-pre15",
+      "homeTownMapId": 120000000,
+      "steps": [
+        { "type": "TAXI", "intention": "I'm taking the taxi to Nautilus Harbor for the Nautilus quest pack.", "mapId": 120000000, "destinationMapId": 120000000 },
+        { "type": "SHOP_ITEM", "intention": "I'm buying one Nautilus Harbor return scroll.", "npcId": 1091002, "mapId": 120000200, "itemId": 2030019, "itemCount": 1 },
+        { "type": "QUEST", "intention": "I'm helping Bonnie defeat 30 Pigs.", "npcId": 1092001, "questId": 28278, "mapId": 120000300 },
+        { "type": "LEVEL_GRIND", "intention": "I'm training near Nautilus until Rolonay's request is available.", "requiredLevel": 12, "mapId": 100030000,
+          "preferredMobIds": [1210100, 1210101, 1210102], "incidentalMobIds": [210100] },
+        { "type": "QUEST", "intention": "I'm helping Rolonay collect 20 Pig's Ribbons.", "npcId": 1092012, "questId": 28279, "requiredLevel": 12, "mapId": 120000200 },
+        { "type": "QUEST", "intention": "I'm helping Calico defeat 30 Orange Mushrooms.", "npcId": 1092004, "questId": 28276, "mapId": 120000200 },
+        { "type": "QUEST", "intention": "I'm helping Bartol defeat 30 Slimes.", "npcId": 1092011, "questId": 28277, "mapId": 120000200 },
+        { "type": "HUNT", "intention": "I'm hunting Orange Mushrooms, Pigs and Ribbon Pigs east of Henesys.", "mapId": 100030000,
+          "preferredMobIds": [1210102, 1210100, 1210101], "incidentalMobIds": [210100],
+          "conditions": [
+            { "type": "QUEST_KILL", "questId": 28276, "targetId": 1210102, "count": 30 },
+            { "type": "QUEST_KILL", "questId": 28278, "targetId": 1210100, "count": 30 },
+            { "type": "ITEM", "targetId": 4000002, "count": 20 }
+          ] },
+        { "type": "OPTIONAL_SCROLL", "intention": "I'm using an Ellinia return scroll if I still have one.", "itemId": 2030004, "destinationMapId": 101000000 },
+        { "type": "TAXI", "intention": "I'm going through Henesys and taking the taxi to Ellinia if needed.", "mapId": 100000000, "destinationMapId": 101000000 },
+        { "type": "HUNT", "intention": "I'm hunting 30 Slimes in The Field Up North of Ellinia.", "mapId": 101010000,
+          "preferredMobIds": [210100], "incidentalMobIds": [],
+          "conditions": [{ "type": "QUEST_KILL", "questId": 28277, "targetId": 210100, "count": 30 }] },
+        { "type": "USE_SCROLL", "intention": "I completed the hunts and I'm using my Nautilus Harbor return scroll.", "itemId": 2030019, "destinationMapId": 120000000 },
+        { "type": "QUEST", "intention": "I defeated 30 Pigs and I'm returning to Bonnie.", "npcId": 1092001, "questId": 28278, "complete": true, "mapId": 120000300 },
+        { "type": "QUEST", "intention": "I collected 20 Pig's Ribbons and I'm returning to Rolonay.", "npcId": 1092012, "questId": 28279, "complete": true, "requiredLevel": 12, "mapId": 120000200 },
+        { "type": "QUEST", "intention": "I defeated 30 Orange Mushrooms and I'm returning to Calico.", "npcId": 1092004, "questId": 28276, "complete": true, "mapId": 120000200 },
+        { "type": "QUEST", "intention": "I defeated 30 Slimes and I'm returning to Bartol.", "npcId": 1092011, "questId": 28277, "complete": true, "mapId": 120000200 }
+      ]
+    }
+  ]
+}

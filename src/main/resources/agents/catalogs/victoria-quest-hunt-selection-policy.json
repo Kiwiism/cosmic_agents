@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "policyId": "victoria-quest-hunt-selection-v1",
+  "shadowModeEnabled": true,
+  "adaptiveFallbackEnabled": true,
+  "mvpDefaultMode": "PREFERRED_ADAPTIVE",
+  "nonMvpDefaultMode": "PREFERRED_ADAPTIVE",
+  "questPolicies": []
+}

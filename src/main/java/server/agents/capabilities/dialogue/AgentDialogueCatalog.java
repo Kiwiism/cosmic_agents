@@ -141,6 +141,7 @@ public final class AgentDialogueCatalog {
     private static final String SHOP_SEQUENCE_TIMEOUT_REPLY = "took too long at the shop, giving up";
     private static final String SHOP_KEEPER_UNREACHABLE_REPLY = "couldn't get to the shopkeeper, never mind";
     private static final String SHOP_BUY_INTERRUPTED_REPLY = "couldn't stay at the shop to buy, never mind";
+    private static final String SHOP_PURCHASE_INTENT = "I'm buying %d %s%s.";
     private static final String SHOP_KEEPER_GONE_BUY_REPLY = "the shopkeeper's gone, can't buy";
     private static final String SHOP_CLOSED_BUY_REPLY = "this shop's closed, can't buy";
     private static final String SHOP_FINISH_FAILED_REPLY = "couldn't finish up at the shop";
@@ -521,6 +522,18 @@ public final class AgentDialogueCatalog {
 
     public static String shopBuyInterruptedReply() {
         return SHOP_BUY_INTERRUPTED_REPLY;
+    }
+
+    public static String shopPurchaseIntent(
+            int quantity, String itemName, String resourceName) {
+        String purpose = resourceName == null || resourceName.isBlank()
+                ? ""
+                : " for " + resourceName;
+        return String.format(
+                SHOP_PURCHASE_INTENT,
+                Math.max(0, quantity),
+                itemName == null || itemName.isBlank() ? "items" : itemName,
+                purpose);
     }
 
     public static String shopKeeperGoneBuyReply() {

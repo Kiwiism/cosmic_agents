@@ -3,6 +3,7 @@ package server.agents.integration.cosmic;
 import client.Character;
 import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.capabilities.supplies.AgentPotionCheckRequestService;
+import server.agents.capabilities.supplies.AgentPotionService;
 import server.agents.capabilities.supplies.AgentPotionStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
@@ -10,11 +11,25 @@ import server.agents.runtime.AgentMailboxRuntime;
 import server.agents.runtime.mailbox.AgentMailboxOptions;
 
 public final class CosmicAgentPotionCheckRequestBridge {
+    public record AutopotSelection(short position, int itemId) {
+    }
+
     private CosmicAgentPotionCheckRequestBridge() {
     }
 
     public static void requestPotionCheckSoon(Character agent) {
         AgentPotionCheckRequestService.requestPotionCheckSoon(agent, hooks());
+    }
+
+    public static AutopotSelection selectAutopotForCurrentDeficit(
+            Character agent, boolean forHp) {
+        if (!AgentCharacterGatewayRuntime.characters().isAgentCharacter(agent)) {
+            return null;
+        }
+        var choice = AgentPotionService.selectAutopotForCurrentDeficit(agent, forHp);
+        return choice == null
+                ? null
+                : new AutopotSelection(choice.position(), choice.itemId());
     }
 
     private static AgentPotionCheckRequestService.Hooks<AgentRuntimeEntry> hooks() {
@@ -30,9 +45,6 @@ public final class CosmicAgentPotionCheckRequestBridge {
     }
 
     private static AgentRuntimeEntry resolveAgentEntry(Character agent) {
-        if (!AgentCharacterGatewayRuntime.characters().isAgentCharacter(agent)) {
-            return null;
-        }
         Character leader = AgentRuntimeRegistry.activeLeaderByAgentCharacterId(
                 AgentRuntimeRegistry.entriesByLeaderId(), agent.getId());
         if (leader == null) {

@@ -23,19 +23,39 @@ public final class AgentSimulationTransitionService {
         }
         AgentSimulationMode currentMode = entry.simulationState().mode();
         if (currentMode == requestedMode) {
+            entry.simulationState().recordTransitionAttempt(
+                    currentMode,
+                    requestedMode,
+                    AgentSimulationTransitionEvidence.Outcome.ALREADY_IN_MODE,
+                    nowMs);
             return currentMode;
         }
         if (requestedMode == AgentSimulationMode.PRESENTATION
                 && currentMode == AgentSimulationMode.BACKGROUND_ABSTRACT
                 && !outcomeReconciler.reconcile(entry)) {
+            entry.simulationState().recordTransitionAttempt(
+                    currentMode,
+                    requestedMode,
+                    AgentSimulationTransitionEvidence.Outcome.OUTCOME_RECONCILIATION_FAILED,
+                    nowMs);
             return currentMode;
         }
         if (requestedMode == AgentSimulationMode.PRESENTATION
                 && currentMode != AgentSimulationMode.PRESENTATION
                 && !materializationService.materialize(entry)) {
+            entry.simulationState().recordTransitionAttempt(
+                    currentMode,
+                    requestedMode,
+                    AgentSimulationTransitionEvidence.Outcome.MATERIALIZATION_FAILED,
+                    nowMs);
             return currentMode;
         }
         entry.simulationState().transitionTo(requestedMode, nowMs);
+        entry.simulationState().recordTransitionAttempt(
+                currentMode,
+                requestedMode,
+                AgentSimulationTransitionEvidence.Outcome.APPLIED,
+                nowMs);
         return requestedMode;
     }
 }

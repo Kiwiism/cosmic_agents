@@ -1,15 +1,47 @@
 package server.agents.plans;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentPlanRepositoryTest {
+    @Test
+    void indexContainsEveryExecutablePlanResourceExactlyOnce() throws Exception {
+        Path planDirectory = Path.of("src/main/resources/agents/plans");
+        Set<String> planFiles;
+        try (var files = Files.list(planDirectory)) {
+            planFiles = files
+                    .map(path -> path.getFileName().toString())
+                    .filter(name -> name.endsWith(".plan.json"))
+                    .collect(Collectors.toSet());
+        }
+
+        JsonNode index = new ObjectMapper().readTree(
+                planDirectory.resolve("index.json").toFile());
+        List<String> indexedResources = new java.util.ArrayList<>();
+        index.path("resources").forEach(node -> indexedResources.add(node.asText()));
+
+        Set<String> indexedResourceSet = new java.util.HashSet<>(indexedResources);
+        assertEquals(indexedResources.size(), indexedResourceSet.size(),
+                "plan index must not contain duplicate resources");
+        assertEquals(planFiles, indexedResourceSet,
+                "every executable *.plan.json resource must be indexed");
+        for (AgentPlanDefinition plan : AgentPlanRepository.defaultRepository().all()) {
+            assertTrue(planFiles.contains(plan.planId() + ".plan.json"),
+                    "plan filename must match its planId");
+        }
+    }
+
     @Test
     void catalogUsesOneStrictSchemaAndContainsTheIntendedProgressionChain() {
         AgentPlanRepository repository = AgentPlanRepository.defaultRepository();
@@ -44,11 +76,8 @@ class AgentPlanRepositoryTest {
 
     @Test
     void everyOperationHasOneRegisteredExecutor() {
-        AgentPlanStepExecutorRegistry registry = new AgentPlanStepExecutorRegistry(List.of(
-                new AgentOrderedObjectivePlanStepExecutor(),
-                new AgentSouthperryLithTransferStepExecutor(),
-                new AgentFirstJobPlanStepExecutor(),
-                new AgentVictoriaTrainingPlanStepExecutor()));
+        AgentPlanStepExecutorRegistry registry =
+                AgentPlanStepExecutorRegistry.defaultRegistry();
 
         for (AgentPlanDefinition plan : AgentPlanRepository.defaultRepository().all()) {
             for (AgentPlanDefinition.Step step : plan.steps()) {

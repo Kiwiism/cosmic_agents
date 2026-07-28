@@ -10,6 +10,10 @@ import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentForegroundPauseRuntime;
 import server.agents.runtime.activity.AgentForegroundActivityDefaults;
 import server.agents.runtime.autonomy.AgentAutonomyKernel;
+import server.agents.runtime.autonomy.AgentAutonomySnapshot;
+import server.agents.runtime.autonomy.AgentGoalProposal;
+import server.agents.runtime.autonomy.AgentGoalSelection;
+import server.agents.runtime.autonomy.AgentGoalSelector;
 import server.agents.integration.cosmic.CosmicAgentAutonomySnapshotFactory;
 
 import java.util.List;
@@ -50,7 +54,17 @@ public final class AgentPlanExecutor implements AgentPlanRunner {
         if (entry == null || agent == null) {
             return false;
         }
-        AgentPlanDefinition plan = repository.require(planId);
+        String selectionCorrelationId =
+                (existingChainId == null || existingChainId.isBlank()
+                        ? "selection:" + agent.getId() + ':' + nowMs
+                        : existingChainId + ":selection")
+                        + ':' + planId;
+        AgentGoalSelection selection = selectPlan(
+                entry, agent, planId, "explicit-plan-request", selectionCorrelationId, nowMs);
+        if (!selection.selected()) {
+            return false;
+        }
+        AgentPlanDefinition plan = selection.plan();
         AgentPlanSessionState session = entry.capabilityStates().require(AgentPlanSessionState.STATE_KEY);
         if (session.active()) {
             cancel(entry, agent, "superseded by " + planId, nowMs);
@@ -120,7 +134,16 @@ public final class AgentPlanExecutor implements AgentPlanRunner {
             }
             String successor = session.pendingSuccessorPlanId();
             String chainId = session.chainId();
-            AgentPlanDefinition next = repository.require(successor);
+            AgentGoalSelection selection = selectPlan(
+                    entry, agent, successor, "automatic-plan-successor",
+                    chainId + ":selection:" + successor, nowMs);
+            if (!selection.selected()) {
+                terminal(entry, session, repository.require(session.planId()),
+                        AgentPlanExecutionStatus.BLOCKED,
+                        "automatic successor was rejected: " + selection.reason(), nowMs);
+                return true;
+            }
+            AgentPlanDefinition next = selection.plan();
             session.start(next, chainId, AgentPlanStartRequest.EMPTY, nowMs);
             AgentPlanConditionEvaluator.Evaluation entryCheck =
                     AgentPlanConditionEvaluator.evaluateAll(
@@ -401,6 +424,32 @@ public final class AgentPlanExecutor implements AgentPlanRunner {
 
     private static String chainId(Character agent, long nowMs) {
         return "chain:" + agent.getId() + ':' + nowMs;
+    }
+
+    private AgentGoalSelection selectPlan(AgentRuntimeEntry entry,
+                                          Character agent,
+                                          String planId,
+                                          String evidence,
+                                          String correlationId,
+                                          long nowMs) {
+        AgentPlanDefinition requestedPlan = repository.require(planId);
+        AgentAutonomySnapshot snapshot =
+                CosmicAgentAutonomySnapshotFactory.capture(entry, agent, nowMs);
+        AgentGoalSelection selection = AgentGoalSelector.select(
+                snapshot,
+                List.of(AgentGoalProposal.explicitPlan(
+                        requestedPlan.planId(),
+                        requestedPlan.objective().type(),
+                        requestedPlan.objective().priority(),
+                        requestedPlan.objective().source().name(),
+                        requestedPlan.objective().behaviorVersion(),
+                        nowMs,
+                        List.of(evidence))),
+                repository,
+                nowMs);
+        AgentAutonomyKernel.recordGoalSelection(
+                entry, snapshot, selection, correlationId, nowMs);
+        return selection;
     }
 
     private static void markCurrentStepAttached(

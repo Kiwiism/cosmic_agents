@@ -6,8 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class AgentLevel15CatchUpRuntimeTest {
     @Test
-    void oneLevelBelowMilestoneGrindsLocallyInsteadOfStartingTownRotation() {
-        assertEquals(AgentCareerProgressionState.Stage.GRIND_TO_MILESTONE,
+    void oneLevelBelowMilestoneStillRunsTheConfiguredRotationPack() {
+        assertEquals(AgentCareerProgressionState.Stage.ROTATION_QUEST_PACK,
                 AgentLevel15CatchUpRuntime.stageAfterHome(
                         14, 15, AgentVictoriaLevel15Catalog.AfterHomeStrategy.ROTATION_PACK));
     }

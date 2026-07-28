@@ -4,11 +4,10 @@ import client.Character;
 import client.QuestStatus;
 import server.agents.integration.PrimitiveCapabilityGateway;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.capabilities.inventory.demand.AgentQuestItemDemandRuntime;
 
 import java.awt.Point;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /** Executes one configured quest pack in order and reconciles progress from live quest truth. */
@@ -32,6 +31,13 @@ final class AgentVictoriaQuestPackRuntime {
         AgentCareerProgressionState state = entry.capabilityStates().require(
                 AgentCareerProgressionState.STATE_KEY);
         int index = reconcileCompleted(state, agent, pack, gateway);
+        Set<Integer> committedQuestIds = Set.copyOf(
+                pack.questIds().subList(Math.min(index, pack.questIds().size()),
+                        pack.questIds().size()));
+        Set<Integer> plannedJobs = state.bundle() == null
+                ? Set.of() : Set.of(state.bundle().firstJobId());
+        AgentQuestItemDemandRuntime.refreshReservations(
+                entry, agent, committedQuestIds, plannedJobs, nowMs);
         if (index >= pack.questIds().size()) {
             return Result.COMPLETE;
         }
@@ -75,7 +81,12 @@ final class AgentVictoriaQuestPackRuntime {
             gateway.stop(entry);
             return Result.RUNNING;
         }
-        AgentVictoriaQuestRuntimeCatalog.HuntMap huntMap = selectHuntMap(agent, objective.huntMaps());
+        AgentVictoriaQuestRuntimeCatalog.HuntMap huntMap =
+                AgentAdaptiveQuestHuntSelector.defaultSelector()
+                        .select(entry, agent, quest.questId(), objective.objectiveId(),
+                                objective.huntMaps(), true)
+                        .map(AgentAdaptiveQuestHuntSelector.Selection::map)
+                        .orElse(null);
         if (huntMap == null) {
             return block(entry, state, "quest " + quest.questId()
                     + " has no reachable hunt map", nowMs);
@@ -138,27 +149,6 @@ final class AgentVictoriaQuestPackRuntime {
             return gateway.itemCount(agent, objective.targetId()) >= objective.requiredCount();
         }
         return gateway.questProgress(agent, questId, objective.targetId()) >= objective.requiredCount();
-    }
-
-    private static AgentVictoriaQuestRuntimeCatalog.HuntMap selectHuntMap(
-            Character agent,
-            List<AgentVictoriaQuestRuntimeCatalog.HuntMap> candidates) {
-        Set<Integer> eligibleIds = new LinkedHashSet<>();
-        for (AgentVictoriaQuestRuntimeCatalog.HuntMap map : candidates) {
-            if (AgentVictoriaTrainingRouteCatalog.canRoute(agent.getMapId(), map.mapId())) {
-                eligibleIds.add(map.mapId());
-            }
-        }
-        Map<Integer, Integer> occupancy = AgentVictoriaTrainingPopulation.snapshot(agent, eligibleIds);
-        return candidates.stream()
-                .filter(map -> eligibleIds.contains(map.mapId()))
-                .filter(map -> occupancy.getOrDefault(map.mapId(), 0) < map.recommendedAgents())
-                .findFirst()
-                .or(() -> candidates.stream()
-                        .filter(map -> eligibleIds.contains(map.mapId()))
-                        .filter(map -> occupancy.getOrDefault(map.mapId(), 0) < map.maximumAgents())
-                        .findFirst())
-                .orElse(null);
     }
 
     private static boolean travel(AgentRuntimeEntry entry,

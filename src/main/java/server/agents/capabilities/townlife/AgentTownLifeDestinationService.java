@@ -147,7 +147,11 @@ final class AgentTownLifeDestinationService {
                 : AgentTownLifeRolePolicy.variation(seed, state.sequence(), spaces.size(), 257);
         for (int offset = 0; offset < spaces.size(); offset++) {
             CharacterSpace space = spaces.get((start + offset) % spaces.size());
-            String key = space.catalogId() + ':' + space.spotNumber();
+            String key = AgentTownLifeProfileRepository.defaultRepository()
+                    .require(agent.getMapId())
+                    .platformPolicy(space.position())
+                    .map(AgentTownLifeProfile.PlatformPolicy::destinationKey)
+                    .orElseGet(() -> space.catalogId() + ':' + space.spotNumber());
             Point reserved = reserveFirst(agent, state, nowMs, spaces, key, space);
             if (reserved != null) {
                 return new Destination(activity, reserved, 0, 0, key, "");

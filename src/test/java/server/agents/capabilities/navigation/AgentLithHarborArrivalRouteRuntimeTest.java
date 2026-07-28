@@ -11,7 +11,9 @@ import server.maps.Portal;
 import java.awt.Point;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -80,6 +82,33 @@ class AgentLithHarborArrivalRouteRuntimeTest {
                 AgentLithHarborArrivalRouteRuntime.advanceToTown(entry, agent, gateway));
 
         verify(gateway).navigate(entry, new Point(-572, 191), true);
+    }
+
+    @Test
+    void recognizesOnlyAnExistingSyntheticArrivalDeckPlacement() {
+        Character agent = mock(Character.class);
+        when(agent.getMapId()).thenReturn(104_000_000);
+        when(agent.getPosition()).thenReturn(new Point(84, 27));
+        assertTrue(AgentLithHarborArrivalRouteRuntime.isVictoriaArrivalPosition(agent));
+
+        when(agent.getPosition()).thenReturn(new Point(1_400, 27));
+        assertFalse(AgentLithHarborArrivalRouteRuntime.isVictoriaArrivalPosition(agent));
+    }
+
+    @Test
+    void characterNameSelectionIsCaseInsensitive() {
+        MapleMap map = mock(MapleMap.class);
+        PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
+        when(gateway.groundPoint(eq(map), any(Point.class))).thenAnswer(invocation -> invocation.getArgument(1));
+
+        try (var gatewayRuntime = mockStatic(AgentPrimitiveCapabilityGatewayRuntime.class)) {
+            gatewayRuntime.when(AgentPrimitiveCapabilityGatewayRuntime::gateway)
+                    .thenReturn(gateway);
+
+            assertEquals(
+                    AgentLithHarborArrivalRouteRuntime.victoriaArrivalPosition(map, "kiwiagent"),
+                    AgentLithHarborArrivalRouteRuntime.victoriaArrivalPosition(map, "KiwiAgent"));
+        }
     }
 
     private static Integer portalAt(Point position) {

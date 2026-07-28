@@ -22,6 +22,8 @@ class AgentSimulationTransitionServiceTest {
                 AgentSimulationMode.BACKGROUND_ACTIVE,
                 transitions.transition(entry, AgentSimulationMode.PRESENTATION, 20L));
         assertEquals(AgentSimulationMode.BACKGROUND_ACTIVE, entry.simulationState().mode());
+        assertEquals(AgentSimulationTransitionEvidence.Outcome.MATERIALIZATION_FAILED,
+                entry.simulationState().lastTransitionEvidence().outcome());
     }
 
     @Test
@@ -40,6 +42,8 @@ class AgentSimulationTransitionServiceTest {
                 AgentSimulationMode.BACKGROUND_ABSTRACT,
                 transitions.transition(entry, AgentSimulationMode.PRESENTATION, 20L));
         assertEquals(0, materializations.get());
+        assertEquals(AgentSimulationTransitionEvidence.Outcome.OUTCOME_RECONCILIATION_FAILED,
+                entry.simulationState().lastTransitionEvidence().outcome());
     }
 
     @Test
@@ -56,6 +60,8 @@ class AgentSimulationTransitionServiceTest {
         assertEquals(AgentSimulationMode.PRESENTATION, entry.simulationState().mode());
         assertEquals(20L, entry.simulationState().modeSinceMs());
         assertEquals(2L, entry.simulationState().transitionCount());
+        assertEquals(AgentSimulationTransitionEvidence.Outcome.APPLIED,
+                entry.simulationState().lastTransitionEvidence().outcome());
     }
 
     private static AgentRuntimeEntry entry() {

@@ -10,12 +10,13 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class AgentPotionInventoryPolicyTest {
     @Test
-    void shouldCountPureHpMpAndDualRecoveryPotionStacks() {
+    void shouldCountHpMpAndMixedRecoveryPotionStacks() {
         Item hpPotion = item(2000002, 10);
         Item mpPotion = item(2000003, 7);
         Item dualPotion = item(2000004, 4);
@@ -30,9 +31,21 @@ class AgentPotionInventoryPolicyTest {
                 2001002, effect(100, 100, 0, 0, true),
                 2000000, effect(50, 0, 0, 0, false));
 
-        assertArrayEquals(new int[]{14, 11}, AgentPotionInventoryPolicy.countPureRecoveryPotions(
+        assertArrayEquals(new int[]{14, 11}, AgentPotionInventoryPolicy.countRecoveryPotions(
                 List.of(hpPotion, mpPotion, dualPotion, buffPotion, emptyPotion, unknown),
                 effects::get));
+        assertEquals(5_000L, AgentPotionInventoryPolicy.recoveryCapacity(
+                List.of(hpPotion, mpPotion, dualPotion, buffPotion, emptyPotion, unknown),
+                effects::get,
+                1_000,
+                500,
+                true));
+        assertEquals(1_700L, AgentPotionInventoryPolicy.recoveryCapacity(
+                List.of(hpPotion, mpPotion, dualPotion, buffPotion, emptyPotion, unknown),
+                effects::get,
+                1_000,
+                500,
+                false));
     }
 
     private static Item item(int itemId, int quantity) {

@@ -101,6 +101,7 @@ import scripting.event.EventInstanceManager;
 import scripting.item.ItemScriptManager;
 import server.agents.capabilities.quest.AgentPartyQuestSyncService;
 import server.agents.capabilities.quest.MapleIslandSouthperryBaseline;
+import server.agents.progression.VictoriaCheckpointBaseline;
 import server.agents.capabilities.trade.AgentOwnerItemNotificationService;
 import server.agents.integration.cosmic.CosmicAgentPotionCheckRequestBridge;
 import server.agents.diagnostics.MapTransitionPacketTraceRuntime;
@@ -9575,10 +9576,18 @@ public class Character extends AbstractCharacterObject {
                 int autohpItemid = autohpPot.getAction();
                 float autohpAlert = this.getAutopotHpAlert();
                 if (((float) this.getHp()) / this.getCurrentMaxHp() <= autohpAlert) {
-                    Item autohpItem = this.getInventory(InventoryType.USE).findById(autohpItemid);
-                    if (autohpItem != null) {
+                    boolean agent = this.client instanceof BotClient;
+                    var agentChoice = agent
+                            ? CosmicAgentPotionCheckRequestBridge.selectAutopotForCurrentDeficit(this, true)
+                            : null;
+                    Item autohpItem = !agent
+                            ? this.getInventory(InventoryType.USE).findById(autohpItemid)
+                            : null;
+                    if (agentChoice != null) {
+                        runAutopotAction(agentChoice.position(), agentChoice.itemId());
+                    } else if (autohpItem != null) {
                         runAutopotAction(autohpItem.getPosition(), autohpItemid);
-                    } else if (this.client instanceof BotClient) {
+                    } else if (agent) {
                         CosmicAgentPotionCheckRequestBridge.requestPotionCheckSoon(this);
                     }
                 }
@@ -9591,11 +9600,19 @@ public class Character extends AbstractCharacterObject {
                 int autompItemid = autompPot.getAction();
                 float autompAlert = this.getAutopotMpAlert();
                 if (((float) this.getMp()) / this.getCurrentMaxMp() <= autompAlert) {
-                    Item autompItem = this.getInventory(InventoryType.USE).findById(autompItemid);
-                    if (autompItem != null) {
+                    boolean agent = this.client instanceof BotClient;
+                    var agentChoice = agent
+                            ? CosmicAgentPotionCheckRequestBridge.selectAutopotForCurrentDeficit(this, false)
+                            : null;
+                    Item autompItem = !agent
+                            ? this.getInventory(InventoryType.USE).findById(autompItemid)
+                            : null;
+                    if (agentChoice != null) {
+                        runAutopotAction(agentChoice.position(), agentChoice.itemId());
+                    } else if (autompItem != null) {
                         this.setAutopotMpAlert(0.9f * autompAlert); // autoMP would stick to using pots at every depletion in some cases... thanks Rohenn
                         runAutopotAction(autompItem.getPosition(), autompItemid);
-                    } else if (this.client instanceof BotClient) {
+                    } else if (agent) {
                         CosmicAgentPotionCheckRequestBridge.requestPotionCheckSoon(this);
                     }
                 }
@@ -9759,6 +9776,77 @@ public class Character extends AbstractCharacterObject {
                 }
                 Inventory current = getInventory(type);
                 setInventory(type, new Inventory(this, type, current.getSlotLimit()));
+            }
+
+            recalcLocalStats();
+            markPersistenceDirty(PersistenceSection.STATS);
+            markPersistenceDirty(PersistenceSection.SKILLS);
+            markPersistenceDirty(PersistenceSection.INVENTORY);
+        } finally {
+            statWlock.unlock();
+            effLock.unlock();
+        }
+    }
+
+    /** Restores a captured or explicitly predicted post-instructor/post-shopping checkpoint-2 fixture. */
+    public synchronized void resetVictoriaCheckpoint2Baseline(String bundleId) {
+        VictoriaCheckpointBaseline.Snapshot baseline =
+                VictoriaCheckpointBaseline.require(bundleId);
+        VictoriaCheckpointBaseline.CharacterState state = baseline.character();
+        sitChair(-1);
+        cancelAllBuffs(false);
+        dispelDebuffs();
+        effLock.lock();
+        statWlock.lock();
+        try {
+            job = Job.getById(state.jobId());
+            level = state.level();
+            exp.set(state.exp());
+            allowExpGain = true;
+            gachaexp.set(0);
+            str = state.str();
+            dex = state.dex();
+            int_ = state.intelligence();
+            luk = state.luk();
+            remainingAp = state.remainingAp();
+            Arrays.fill(remainingSp, 0);
+            int[] baselineSp = state.remainingSp();
+            System.arraycopy(baselineSp, 0, remainingSp, 0,
+                    Math.min(baselineSp.length, remainingSp.length));
+            hpMpApUsed = 0;
+            maxhp = state.maxHp();
+            maxmp = state.maxMp();
+            hp = state.hp();
+            mp = state.mp();
+            meso.set(state.mesos());
+            skills.clear();
+            removeAllCooldownsExcept(-1, false);
+
+            for (InventoryType type : InventoryType.values()) {
+                if (type == InventoryType.UNDEFINED || type == InventoryType.CANHOLD) {
+                    continue;
+                }
+                Inventory current = getInventory(type);
+                setInventory(type, new Inventory(this, type, current.getSlotLimit()));
+            }
+            for (VictoriaCheckpointBaseline.ItemState itemState : baseline.items()) {
+                InventoryType inventoryType = InventoryType.valueOf(itemState.inventoryType());
+                Item item;
+                if (ItemConstants.isEquipment(itemState.itemId())) {
+                    item = ItemInformationProvider.getInstance().getEquipById(itemState.itemId());
+                    if (item == null) {
+                        throw new IllegalStateException("missing Victoria checkpoint equipment "
+                                + itemState.itemId());
+                    }
+                    item.setPosition(itemState.position());
+                } else {
+                    item = new Item(itemState.itemId(), itemState.position(), itemState.quantity());
+                }
+                getInventory(inventoryType).addItemFromDB(item);
+            }
+            for (VictoriaCheckpointBaseline.SkillState skillState : baseline.skills()) {
+                Skill skill = SkillFactory.getSkill(skillState.skillId());
+                changeSkillLevel(skill, (byte) skillState.level(), skillState.masterLevel(), -1);
             }
 
             recalcLocalStats();
