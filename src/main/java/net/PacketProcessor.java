@@ -452,5 +452,7 @@ public final class PacketProcessor {
         registerHandler(RecvOpcode.USE_ITEMUI, new RaiseIncExpHandler());
         registerHandler(RecvOpcode.CHANGE_QUICKSLOT, new QuickslotKeyMappedModifiedHandler());
         registerHandler(RecvOpcode.BOT_EQUIP, new net.server.channel.handlers.AgentEquipHandler());
+        registerHandler(RecvOpcode.OBSERVER_CHARACTERS,
+                new net.server.channel.handlers.ObserverCharactersHandler());
     }
 }

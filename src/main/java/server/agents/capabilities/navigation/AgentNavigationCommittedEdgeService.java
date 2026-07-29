@@ -174,7 +174,8 @@ public final class AgentNavigationCommittedEdgeService {
         // edge until landing when the bot is in a region consistent with this arc.
         if (AgentMovementStateRuntime.inAir(entry) && (startRegionId < 0 || startRegionId == edge.toRegionId)
                 && (edge.type == AgentNavigationGraph.EdgeType.DROP
-                    || edge.type == AgentNavigationGraph.EdgeType.JUMP)) {
+                    || edge.type == AgentNavigationGraph.EdgeType.JUMP
+                    || edge.type == AgentNavigationGraph.EdgeType.FLASH_JUMP)) {
             return edge;
         }
         if (AgentMovementStateRuntime.inAir(entry) && edge.type == AgentNavigationGraph.EdgeType.CLIMB && edge.launchStepX != 0) {

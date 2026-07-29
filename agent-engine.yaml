@@ -1053,6 +1053,62 @@ tuning:
     # Purpose: Controls the positional leeway for out of bounds teleport dist. Higher values tolerate more separation before Agents correct course; lower values make them align sooner.
     # Technical: the "movement physics config" component consumes this as an integer. Domain: component-specific policy value; startup validation rejects missing, blank, or malformed values.
     server.agents.capabilities.movement.AgentMovementPhysicsConfig.OUT_OF_BOUNDS_TELEPORT_DIST: '600'
+    # Values: true or false. Recommended: true while validating or using Magician Teleport navigation.
+    # Purpose: When enabled, navigation graphs include possible Teleport shortcuts, but this setting alone never makes an Agent cast the skill.
+    # Technical: The movement-skill graph builder consumes this boolean and authors eligible Teleport edges into versioned navigation caches; live route selection remains independently gated by TELEPORT_EXECUTION_ENABLED.
+    server.agents.capabilities.movement.AgentMovementSkillConfig.TELEPORT_GRAPH_EDGES_ENABLED: 'true'
+    # Values: true or false. Recommended: true while validating or using Thief Flash Jump navigation.
+    # Purpose: When enabled, navigation graphs include possible Flash Jump shortcuts, but this setting alone never changes an Agent's movement.
+    # Technical: The movement-skill graph builder consumes this boolean and authors simulated Flash Jump edges into versioned navigation caches; live route selection remains independently gated by FLASH_JUMP_EXECUTION_ENABLED.
+    server.agents.capabilities.movement.AgentMovementSkillConfig.FLASH_JUMP_GRAPH_EDGES_ENABLED: 'true'
+    # Values: true or false. Recommended: false until two-client packet and representative-map validation is complete.
+    # Purpose: When enabled, eligible Agents with learned Teleport may spend MP and use Teleport shortcuts during real navigation.
+    # Technical: The active route filter and Teleport executor consume this boolean together with learned-skill, field-limit, cooldown, and MP-reserve checks; false leaves ordinary navigation unchanged.
+    server.agents.capabilities.movement.AgentMovementSkillConfig.TELEPORT_EXECUTION_ENABLED: 'false'
+    # Values: true or false. Recommended: false until two-client packet and representative-map validation is complete.
+    # Purpose: When enabled, eligible Agents with learned Flash Jump may spend MP and use Flash Jump shortcuts during real navigation.
+    # Technical: The active route filter and Flash Jump executor consume this boolean together with learned-skill, field-limit, cooldown, and MP-reserve checks; false leaves ordinary navigation unchanged.
+    server.agents.capabilities.movement.AgentMovementSkillConfig.FLASH_JUMP_EXECUTION_ENABLED: 'false'
+    # Values: true or false. Recommended: true while either movement-skill execution setting is false.
+    # Purpose: When enabled, eligible Agents compare normal routes with skill-aware routes and log useful shortcuts without casting the skill.
+    # Technical: The read-only shadow diagnostic performs a rate-limited skill-aware path search for Agents that know Teleport or Flash Jump; it does not reserve MP, alter the committed edge, or mutate movement.
+    server.agents.capabilities.movement.AgentMovementSkillConfig.SHADOW_DIAGNOSTICS_ENABLED: 'true'
+    # Values: an integer from 0 to 100 percent. Recommended: 30-50, with 40 as the conservative baseline.
+    # Purpose: Higher values preserve more MP for combat and recovery; lower values let Agents use movement skills more aggressively.
+    # Technical: Active route eligibility and execution require current MP minus the learned skill's WZ MP cost to remain at or above this percentage of maximum MP; shadow routes deliberately ignore it.
+    server.agents.capabilities.movement.AgentMovementSkillConfig.MIN_MP_RESERVE_PERCENT: '40'
+    # Values: a non-negative integer in milliseconds. Recommended: 300-1500, with 500 as the v83 baseline.
+    # Purpose: Higher values make movement-skill use more restrained; lower values let Agents chain available movement skills more frequently.
+    # Technical: The per-Agent movement-skill state records the last successful Teleport or Flash Jump cast and rejects subsequent execution until this shared cooldown has elapsed.
+    server.agents.capabilities.movement.AgentMovementSkillConfig.CAST_COOLDOWN_MS: '500'
+    # Values: a positive integer in map pixels. Recommended: 100-200, with 150 as the v83 compatibility baseline.
+    # Purpose: Higher values let Magicians cross wider gaps with Teleport; lower values restrict Teleport to closer platforms.
+    # Technical: The graph landing resolver projects horizontal and vertical Teleport candidates by this distance before grounding them against map footholds; changing it invalidates the intended route geometry.
+    server.agents.capabilities.movement.AgentMovementSkillConfig.TELEPORT_RANGE_PX: '150'
+    # Values: a non-negative integer in map pixels. Recommended: 40-100, with 75 as the conservative baseline.
+    # Purpose: Higher values accept platforms farther from the projected Teleport point; lower values demand more precise vertical alignment.
+    # Technical: The Teleport landing resolver rejects footholds whose grounded Y coordinate differs from the projected destination by more than this tolerance, limiting unintended snaps between distant platform levels.
+    server.agents.capabilities.movement.AgentMovementSkillConfig.TELEPORT_Y_SNAP_PX: '75'
+    # Values: a non-negative integer in milliseconds. Recommended: 100-500, with 150 as the initial route-cost baseline.
+    # Purpose: Higher values make Agents prefer walking more often; lower values make eligible Agents favor Teleport shortcuts more strongly.
+    # Technical: Skill-aware pathfinding adds this cost to each Teleport edge when comparing it with walk, jump, climb, drop, and portal alternatives; it is a planning weight rather than an execution delay.
+    server.agents.capabilities.movement.AgentMovementSkillConfig.TELEPORT_EDGE_COST_MS: '150'
+    # Values: a positive decimal in map pixels per second. Recommended: 350-700, with 550 as the v83 baseline.
+    # Purpose: Higher values carry Thieves farther during Flash Jump; lower values produce shorter and easier-to-control airborne travel.
+    # Technical: Both graph simulation and live airborne physics convert this speed into a per-tick horizontal impulse when Flash Jump fires at the ordinary jump apex, keeping authored and executed arcs aligned.
+    server.agents.capabilities.movement.AgentMovementSkillConfig.FLASH_JUMP_HORIZONTAL_SPEED_PXS: '550'
+    # Values: a positive decimal in map pixels per second. Recommended: 150-500, with 350 as the v83 baseline.
+    # Purpose: Higher values give Flash Jump more upward lift and airtime; lower values produce a flatter and shorter airborne arc.
+    # Technical: Both graph simulation and live airborne physics convert this positive magnitude into a negative-Y per-tick impulse at the jump apex, matching the server map coordinate system without negative YAML values.
+    server.agents.capabilities.movement.AgentMovementSkillConfig.FLASH_JUMP_UPWARD_SPEED_PXS: '350'
+    # Values: a positive integer sample count. Recommended: 1-7, with 3 for the left, middle, and right of each region.
+    # Purpose: Higher values discover more movement-skill routes but slow graph warmup; lower values build faster with less route coverage.
+    # Technical: The graph builder selects at most this many evenly distributed anchors from each ground region before resolving Teleport landings and simulating Flash Jump arcs, bounding cache construction cost.
+    server.agents.capabilities.movement.AgentMovementSkillConfig.MAX_GRAPH_ANCHORS_PER_REGION: '3'
+    # Values: a non-negative integer in milliseconds. Recommended: 5000-120000, with 30000 for routine validation.
+    # Purpose: Higher values reduce repeated diagnostic logs; lower values provide faster feedback while tuning movement-skill routes.
+    # Technical: Each Agent's movement-skill state stores the last shadow comparison time and suppresses another skill-aware route log until this interval expires; live routing and execution are unaffected.
+    server.agents.capabilities.movement.AgentMovementSkillConfig.SHADOW_LOG_INTERVAL_MS: '30000'
     # Values: a finite non-negative integer. Recommended: 4-16 around the tested baseline 8; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls the horizontal leeway for rope grab horizontal. Higher values let Agents drift farther left or right before correcting; lower values make them correct sooner.
     # Technical: the "movement physics config" component consumes this as an integer. Domain: component-specific policy value; startup validation rejects missing, blank, or malformed values.

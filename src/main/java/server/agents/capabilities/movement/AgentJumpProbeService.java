@@ -31,6 +31,25 @@ public final class AgentJumpProbeService {
         return simulateLanding(map, from, -AgentMovementKinematicsService.jumpForcePerTick(profile), stepX, 0L);
     }
 
+    public static AgentJumpLanding simulateFlashJumpLanding(MapleMap map,
+                                                            Point from,
+                                                            int direction,
+                                                            AgentMovementProfile profile) {
+        if (direction == 0) {
+            return null;
+        }
+        int initialStepX = Integer.signum(direction)
+                * AgentMovementKinematicsService.walkStep(map, profile);
+        double tickSeconds = AgentMovementPhysicsConfig.configuredMovementTickMs() / 1000.0;
+        FlashImpulse impulse = new FlashImpulse(
+                (int) Math.round(Integer.signum(direction)
+                        * AgentMovementSkillConfig.FLASH_JUMP_HORIZONTAL_SPEED_PXS * tickSeconds),
+                -AgentMovementSkillConfig.FLASH_JUMP_UPWARD_SPEED_PXS * (float) tickSeconds);
+        return simulateLanding(map, from,
+                -AgentMovementKinematicsService.jumpForcePerTick(profile),
+                initialStepX, 0L, null, impulse);
+    }
+
     public static AgentJumpLanding simulateRopeJumpLanding(MapleMap map,
                                                            Point from,
                                                            int stepX,
@@ -375,10 +394,21 @@ public final class AgentJumpProbeService {
                                                     int stepX,
                                                     long landingGraceMs,
                                                     Integer moverZMass) {
+        return simulateLanding(map, from, initialVelocityY, stepX, landingGraceMs, moverZMass, null);
+    }
+
+    private static AgentJumpLanding simulateLanding(MapleMap map,
+                                                    Point from,
+                                                    float initialVelocityY,
+                                                    int stepX,
+                                                    long landingGraceMs,
+                                                    Integer moverZMass,
+                                                    FlashImpulse flashImpulse) {
         float velocityY = initialVelocityY;
         double physicsX = from.x;
         double physicsY = from.y;
         int previousIntY = from.y;
+        boolean flashFired = false;
         long remainingLandingGraceMs = Math.max(0L, landingGraceMs);
         float gravity = AgentMovementKinematicsService.gravityPerTick();
         float maxFall = maxFallPerTick();
@@ -392,6 +422,12 @@ public final class AgentJumpProbeService {
             if (remainingLandingGraceMs > 0L) {
                 remainingLandingGraceMs = Math.max(0L,
                         remainingLandingGraceMs - AgentMovementPhysicsConfig.configuredMovementTickMs());
+            }
+
+            if (!flashFired && flashImpulse != null && velocityY >= 0f) {
+                stepX = flashImpulse.stepX();
+                velocityY = flashImpulse.velocityY();
+                flashFired = true;
             }
 
             physicsX += stepX;
@@ -432,6 +468,9 @@ public final class AgentJumpProbeService {
         }
 
         return null;
+    }
+
+    private record FlashImpulse(int stepX, float velocityY) {
     }
 
     private static int mapFloorY(MapleMap map) {

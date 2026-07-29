@@ -40,7 +40,9 @@ public final class AgentNavigationCoverageAnalyzer {
             for (AgentNavigationGraph.Edge edge : graph.getOutgoing(region.id)) {
                 edgeCount++;
                 edgesByType.merge(edge.type, 1, Integer::sum);
-                directed.get(region.id).add(edge.toRegionId);
+                if (!AgentMovementSkillPolicy.isSkillEdge(edge)) {
+                    directed.get(region.id).add(edge.toRegionId);
+                }
             }
         }
 

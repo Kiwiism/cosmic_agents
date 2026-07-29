@@ -41,6 +41,7 @@ public final class AgentAirbornePhysicsService {
             applyAirSteering(entry, AgentMovementStateRuntime.moveDirection(entry));
         }
 
+        applyPendingFlashJump(entry);
         Point previousPosition = roundedAirPosition(entry);
         Point nextPosition = advanceAirbornePosition(entry);
         int moverZMass = AgentWallCollisionPolicy.moverZMassForRegion(
@@ -76,6 +77,31 @@ public final class AgentAirbornePhysicsService {
         }
         applyAirbornePosition(entry, agent, nextPosition);
         return AgentAirborneStepResult.CONTINUE;
+    }
+
+    private static void applyPendingFlashJump(AgentRuntimeEntry entry) {
+        AgentMovementSkillState skillState = entry.capabilityStates()
+                .find(AgentMovementSkillState.STATE_KEY)
+                .orElse(null);
+        if (skillState == null
+                || !skillState.flashJumpPending()
+                || AgentMovementPhysicsStateRuntime.verticalVelocity(entry) < 0f) {
+            return;
+        }
+        int direction = Integer.signum(AgentMovementPhysicsStateRuntime.airVelocityX(entry));
+        if (direction == 0) {
+            direction = AgentMovementStateRuntime.facingDirectionSign(entry);
+        }
+        float tickSeconds = AgentMovementPhysicsConfig.configuredMovementTickMs() / 1000f;
+        AgentMovementPhysicsStateRuntime.setAirVelocityX(entry,
+                Math.round(direction * AgentMovementSkillConfig.FLASH_JUMP_HORIZONTAL_SPEED_PXS
+                        * tickSeconds));
+        AgentMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
+        AgentMovementPhysicsStateRuntime.setVerticalVelocity(entry,
+                -AgentMovementSkillConfig.FLASH_JUMP_UPWARD_SPEED_PXS * tickSeconds);
+        AgentMovementPhysicsStateRuntime.setFixedAirArc(entry, true);
+        skillState.setFlashJumpPending(false);
+        skillState.setFlashJumpFired(true);
     }
 
     static Point belowMapRecoveryPoint(MapleMap map, Point position) {

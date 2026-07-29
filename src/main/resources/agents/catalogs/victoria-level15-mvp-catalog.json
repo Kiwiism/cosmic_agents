@@ -91,7 +91,7 @@
       "instructorMapId": 101000003,
       "shopNpcId": 1031100,
       "shopMapId": 101000002,
-      "initialShopRequiredItemId": 2030004,
+      "initialShopRequiredItemId": 2030002,
       "initialShopRequiredItemCount": 1,
       "starterKitItemIds": [1372043],
       "preferredStarterWeaponByBundleId": { "magician-standard-v1": 1372043 },

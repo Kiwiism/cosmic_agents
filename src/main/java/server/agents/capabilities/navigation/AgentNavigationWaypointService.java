@@ -138,7 +138,9 @@ public final class AgentNavigationWaypointService {
     public static int selectJumpLaunchX(AgentRuntimeEntry entry,
                                         AgentNavigationGraph graph,
                                         AgentNavigationGraph.Edge edge) {
-        if (entry == null || graph == null || edge == null || edge.type != AgentNavigationGraph.EdgeType.JUMP) {
+        if (entry == null || graph == null || edge == null
+                || (edge.type != AgentNavigationGraph.EdgeType.JUMP
+                && edge.type != AgentNavigationGraph.EdgeType.FLASH_JUMP)) {
             return edge != null ? edge.startPoint.x : 0;
         }
         AgentNavigationGraph.Region fromRegion = graph.getRegion(edge.fromRegionId);

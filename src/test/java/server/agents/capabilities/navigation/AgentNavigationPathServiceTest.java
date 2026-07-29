@@ -1,6 +1,7 @@
 package server.agents.capabilities.navigation;
 
 import client.Character;
+import constants.skills.Hermit;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementProfile;
@@ -353,6 +354,31 @@ class AgentNavigationPathServiceTest {
         assertFalse(outcome.reached());
         assertFalse(outcome.capped());
         assertEquals(0, outcome.expandedNodes());
+    }
+
+    @Test
+    void movementSkillEdgesAreInvisibleToBaseRoutingAndVisibleToEligibleShadowRouting() {
+        AgentNavigationGraph.Edge flashJump = edge(
+                1, 2, AgentNavigationGraph.EdgeType.FLASH_JUMP,
+                new Point(50, 100), new Point(250, 100), 150);
+        AgentNavigationGraph graph = graphWithRegionsAndEdges(
+                List.of(groundRegion(1, 0, 100, 100), groundRegion(2, 200, 300, 100)),
+                Map.of(1, List.of(flashJump)));
+        MapleMap map = mock(MapleMap.class);
+
+        List<AgentNavigationGraph.Edge> basePath = AgentNavigationPathService.movementPath(
+                graph, map, new Point(50, 100), 1, 2, new Point(250, 100),
+                null, 100, 100, false);
+
+        Character hermit = mock(Character.class);
+        when(hermit.getMap()).thenReturn(map);
+        when(hermit.getSkillLevel(Hermit.FLASH_JUMP)).thenReturn(1);
+        List<AgentNavigationGraph.Edge> shadowPath =
+                AgentNavigationPathService.findShadowSkillPath(
+                        graph, hermit, new Point(50, 100), 1, 2, new Point(250, 100));
+
+        assertTrue(basePath.isEmpty());
+        assertEquals(List.of(flashJump), shadowPath);
     }
 
     @Test

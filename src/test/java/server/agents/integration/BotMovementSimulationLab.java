@@ -417,8 +417,12 @@ final class BotMovementSimulationLab {
             return switch (edge.type) {
                 case WALK -> String.format("WALK r%d->r%d %s->%s",
                         edge.fromRegionId, edge.toRegionId, formatPoint(edge.startPoint), formatPoint(edge.endPoint));
-                case JUMP -> String.format("JUMP r%d->r%d %s->%s stepX=%d",
-                        edge.fromRegionId, edge.toRegionId, formatPoint(edge.startPoint), formatPoint(edge.endPoint), edge.launchStepX);
+                case JUMP, FLASH_JUMP -> String.format("%s r%d->r%d %s->%s stepX=%d",
+                        edge.type, edge.fromRegionId, edge.toRegionId,
+                        formatPoint(edge.startPoint), formatPoint(edge.endPoint), edge.launchStepX);
+                case TELEPORT -> String.format("TELEPORT r%d->r%d %s->%s",
+                        edge.fromRegionId, edge.toRegionId,
+                        formatPoint(edge.startPoint), formatPoint(edge.endPoint));
                 case DROP -> String.format("DROP r%d->r%d %s->%s stepX=%d",
                         edge.fromRegionId, edge.toRegionId, formatPoint(edge.startPoint), formatPoint(edge.endPoint), edge.launchStepX);
                 case CLIMB -> String.format("CLIMB r%d->r%d %s->%s stepX=%d",

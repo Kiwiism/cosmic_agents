@@ -7554,4 +7554,16 @@ public class PacketCreator {
         return p;
     }
 
+    public static Packet observerCharacters(List<Character> characters) {
+        OutPacket p = OutPacket.create(SendOpcode.OBSERVER_CHARACTERS);
+        p.writeShort(characters.size());
+        for (Character character : characters) {
+            p.writeInt(character.getId());
+            p.writeInt(character.getMapId());
+            p.writeByte(character.getClient().getChannel());
+            p.writeString(character.getName());
+        }
+        return p;
+    }
+
 }

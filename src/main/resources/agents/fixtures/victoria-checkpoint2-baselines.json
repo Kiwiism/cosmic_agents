@@ -54,7 +54,7 @@
         { "itemId": 2000000, "inventoryType": "USE", "position": 1, "quantity": 30 },
         { "itemId": 2000001, "inventoryType": "USE", "position": 2, "quantity": 50 },
         { "itemId": 2030000, "inventoryType": "USE", "position": 3, "quantity": 10 },
-        { "itemId": 2030004, "inventoryType": "USE", "position": 4, "quantity": 1 },
+        { "itemId": 2030002, "inventoryType": "USE", "position": 4, "quantity": 1 },
         { "itemId": 4000004, "inventoryType": "ETC", "position": 1, "quantity": 35 },
         { "itemId": 4000005, "inventoryType": "ETC", "position": 2, "quantity": 5 }
       ],

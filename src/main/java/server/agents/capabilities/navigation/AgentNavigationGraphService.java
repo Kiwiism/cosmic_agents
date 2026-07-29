@@ -44,7 +44,7 @@ import java.util.concurrent.TimeUnit;
 public final class AgentNavigationGraphService {
     private static final Logger log = LoggerFactory.getLogger(AgentNavigationGraphService.class);
 
-    private static final int GRAPH_VERSION = 55;
+    private static final int GRAPH_VERSION = 57;
     private static final int ENDPOINT_ANCHOR_SPACING_PX = config.AgentTuning.intValue(
             "server.agents.capabilities.navigation.AgentNavigationGraphService.ENDPOINT_ANCHOR_SPACING_PX");
     private static final int DOWN_JUMP_PRELAUNCH_WINDOW_PX = config.AgentTuning.intValue(
@@ -228,7 +228,7 @@ public final class AgentNavigationGraphService {
             totalEdgeCount++;
             switch (type) {
                 case WALK -> walkEdgeCount++;
-                case JUMP -> jumpEdgeCount++;
+                case JUMP, FLASH_JUMP, TELEPORT -> jumpEdgeCount++;
                 case DROP -> dropEdgeCount++;
                 case CLIMB -> climbEdgeCount++;
                 case PORTAL -> portalEdgeCount++;
@@ -721,6 +721,11 @@ public final class AgentNavigationGraphService {
                         anchorsByRegionId.getOrDefault(region.id, List.of()), outgoing, edgeKeys, jumpLandingCache, movementProfile);
             }
             buildProfile.buildJumpEdgesNs = System.nanoTime() - phaseStartedAt;
+
+            phaseStartedAt = System.nanoTime();
+            addMovementSkillEdges(map, groundRegions, regionsById, regionIdByFootholdId,
+                    anchorsByRegionId, outgoing, edgeKeys, movementProfile);
+            buildProfile.buildJumpEdgesNs += System.nanoTime() - phaseStartedAt;
 
             phaseStartedAt = System.nanoTime();
             for (AgentNavigationGraph.Region region : ropeRegions) {
@@ -1290,6 +1295,111 @@ public final class AgentNavigationGraphService {
                     stats.cacheHits,
                     stats.cacheMisses,
                     System.nanoTime() - startedAt));
+        }
+    }
+
+    private static void addMovementSkillEdges(
+            MapleMap map,
+            List<AgentNavigationGraph.Region> groundRegions,
+            Map<Integer, AgentNavigationGraph.Region> regionsById,
+            Map<Integer, Integer> regionIdByFootholdId,
+            Map<Integer, List<Point>> anchorsByRegionId,
+            Map<Integer, List<AgentNavigationGraph.Edge>> outgoing,
+            Set<String> edgeKeys,
+        AgentMovementProfile movementProfile) {
+        for (AgentNavigationGraph.Region from : groundRegions) {
+            List<Point> anchors = representativeSkillAnchors(
+                    anchorsByRegionId.getOrDefault(from.id, List.of()));
+            for (Point anchor : anchors) {
+                throwIfBuildInterrupted();
+                if (server.agents.capabilities.movement.AgentMovementSkillConfig.TELEPORT_GRAPH_EDGES_ENABLED) {
+                    addTeleportEdges(map, from, regionsById, regionIdByFootholdId,
+                            anchor, outgoing, edgeKeys);
+                }
+                if (server.agents.capabilities.movement.AgentMovementSkillConfig.FLASH_JUMP_GRAPH_EDGES_ENABLED) {
+                    addFlashJumpEdges(map, from, regionsById, regionIdByFootholdId,
+                            anchor, outgoing, edgeKeys, movementProfile);
+                }
+            }
+        }
+    }
+
+    private static List<Point> representativeSkillAnchors(List<Point> anchors) {
+        int size = anchors.size();
+        int limit = server.agents.capabilities.movement.AgentMovementSkillConfig.MAX_GRAPH_ANCHORS_PER_REGION;
+        if (size == 0 || limit <= 0) {
+            return List.of();
+        }
+        if (limit == 1) {
+            return List.of(anchors.get(size / 2));
+        }
+        if (size <= limit) {
+            return anchors;
+        }
+        List<Point> selected = new ArrayList<>(limit);
+        for (int index = 0; index < limit; index++) {
+            int sourceIndex = Math.round(index * (size - 1f) / (limit - 1f));
+            Point candidate = anchors.get(sourceIndex);
+            if (selected.isEmpty() || !selected.getLast().equals(candidate)) {
+                selected.add(candidate);
+            }
+        }
+        return selected;
+    }
+
+    private static void addTeleportEdges(
+            MapleMap map,
+            AgentNavigationGraph.Region from,
+            Map<Integer, AgentNavigationGraph.Region> regionsById,
+            Map<Integer, Integer> regionIdByFootholdId,
+            Point anchor,
+            Map<Integer, List<AgentNavigationGraph.Edge>> outgoing,
+            Set<String> edgeKeys) {
+        for (int[] direction : new int[][]{{-1, 0}, {1, 0}, {0, -1}, {0, 1}}) {
+            AgentMovementSkillLandingService.Landing landing =
+                    AgentMovementSkillLandingService.resolveTeleportLanding(
+                            map, anchor, direction[0], direction[1]);
+            if (landing == null) {
+                continue;
+            }
+            int toRegionId = regionIdByFootholdId.getOrDefault(landing.footholdId(), -1);
+            AgentNavigationGraph.Region to = regionsById.get(toRegionId);
+            if (to == null || to.id == from.id
+                    || isPhantomSharedGroundLanding(from, landing.point())) {
+                continue;
+            }
+            addEdge(from.id, to.id, AgentNavigationGraph.EdgeType.TELEPORT,
+                    anchor, landing.point(), direction[0], 0,
+                    server.agents.capabilities.movement.AgentMovementSkillConfig.TELEPORT_EDGE_COST_MS,
+                    outgoing, edgeKeys);
+        }
+    }
+
+    private static void addFlashJumpEdges(
+            MapleMap map,
+            AgentNavigationGraph.Region from,
+            Map<Integer, AgentNavigationGraph.Region> regionsById,
+            Map<Integer, Integer> regionIdByFootholdId,
+            Point anchor,
+            Map<Integer, List<AgentNavigationGraph.Edge>> outgoing,
+            Set<String> edgeKeys,
+            AgentMovementProfile movementProfile) {
+        int jumpStep = AgentMovementKinematicsService.walkStep(map, movementProfile);
+        for (int direction : new int[]{-1, 1}) {
+            AgentJumpLanding landing = AgentJumpProbeService.simulateFlashJumpLanding(
+                    map, anchor, direction, movementProfile);
+            if (landing == null) {
+                continue;
+            }
+            int toRegionId = regionIdByFootholdId.getOrDefault(landing.foothold().getId(), -1);
+            AgentNavigationGraph.Region to = regionsById.get(toRegionId);
+            if (to == null || to.id == from.id
+                    || isPhantomSharedGroundLanding(from, landing.point())) {
+                continue;
+            }
+            addEdge(from.id, to.id, AgentNavigationGraph.EdgeType.FLASH_JUMP,
+                    anchor, landing.point(), direction * jumpStep, 0, landing.timeMs(),
+                    outgoing, edgeKeys);
         }
     }
 

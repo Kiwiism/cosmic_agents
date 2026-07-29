@@ -31,6 +31,12 @@ public final class AgentNavigationEdgeExecutor {
         return switch (edge.type) {
             case JUMP -> AgentNavigationJumpExecutionService.tryExecuteJump(graph, entry, agent, edge)
                     ? new NavigationDirective(rawTargetPos, true) : null;
+            case FLASH_JUMP -> AgentNavigationFlashJumpExecutionService.tryExecuteFlashJump(
+                    graph, entry, agent, edge)
+                    ? new NavigationDirective(rawTargetPos, true) : null;
+            case TELEPORT -> AgentNavigationTeleportExecutionService.tryExecuteTeleport(
+                    entry, agent, agentPos, edge)
+                    ? new NavigationDirective(rawTargetPos, true) : null;
             case DROP -> AgentNavigationDropExecutionService.tryExecuteDrop(graph, entry, agent, agentPos, edge)
                     ? new NavigationDirective(rawTargetPos, true) : null;
             case CLIMB -> tryExecuteClimb(graph, entry, agent, agentPos, rawTargetPos, edge);

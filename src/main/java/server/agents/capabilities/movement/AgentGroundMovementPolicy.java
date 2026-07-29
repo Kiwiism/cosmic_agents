@@ -32,7 +32,8 @@ public final class AgentGroundMovementPolicy {
      */
     public static int preciseNavStopDist(AgentNavigationGraph.Edge navEdge) {
         if (navEdge != null
-                && (navEdge.type == AgentNavigationGraph.EdgeType.JUMP
+                && ((navEdge.type == AgentNavigationGraph.EdgeType.JUMP
+                || navEdge.type == AgentNavigationGraph.EdgeType.FLASH_JUMP)
                 || (navEdge.type == AgentNavigationGraph.EdgeType.DROP && navEdge.launchStepX == 0))) {
             return 0;
         }

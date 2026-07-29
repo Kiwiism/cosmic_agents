@@ -32,7 +32,8 @@ public final class AgentNavigationPreciseTargetService {
         }
         return switch (edge.type) {
             case WALK -> AgentNavigationPathService.shouldUsePreciseWalkTarget(edge);
-            case JUMP -> !readiness.canExecuteSelectedJump(graph, entry, botPos, edge);
+            case JUMP, FLASH_JUMP -> !readiness.canExecuteSelectedJump(graph, entry, botPos, edge);
+            case TELEPORT -> !AgentNavigationEdgeReadinessService.isReadyForEdge(botPos, edge);
             case DROP -> edge.launchStepX == 0 && !readiness.canExecuteDrop(graph, entry, botPos, edge);
             case CLIMB -> AgentClimbStateRuntime.climbing(entry)
                     ? edge.launchStepX != 0 && !readiness.canExecuteClimbExit(graph, entry, botPos, edge)

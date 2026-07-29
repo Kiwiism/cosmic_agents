@@ -32,6 +32,8 @@ public final class AgentNavigationGraph implements Serializable {
     public enum EdgeType {
         WALK,
         JUMP,
+        FLASH_JUMP,
+        TELEPORT,
         DROP,
         CLIMB,
         PORTAL
@@ -407,6 +409,9 @@ public final class AgentNavigationGraph implements Serializable {
         }
         for (List<Edge> outgoing : outgoingByRegionId.values()) {
             for (Edge edge : outgoing) {
+                if (isMovementSkillEdge(edge)) {
+                    continue;
+                }
                 neighbors.computeIfAbsent(edge.fromRegionId, ignored -> new HashSet<>()).add(edge.toRegionId);
                 neighbors.computeIfAbsent(edge.toRegionId, ignored -> new HashSet<>()).add(edge.fromRegionId);
             }
@@ -452,6 +457,9 @@ public final class AgentNavigationGraph implements Serializable {
         Map<Integer, List<int[]>> reverseEdges = new HashMap<>();
         for (List<Edge> edges : outgoingByRegionId.values()) {
             for (Edge edge : edges) {
+                if (isMovementSkillEdge(edge)) {
+                    continue;
+                }
                 reverseEdges.computeIfAbsent(edge.toRegionId, ignored -> new ArrayList<>())
                         .add(new int[]{edge.fromRegionId, Math.max(0, edge.cost)});
             }
@@ -481,9 +489,16 @@ public final class AgentNavigationGraph implements Serializable {
         return Map.copyOf(distances);
     }
 
+    private static boolean isMovementSkillEdge(Edge edge) {
+        return edge != null
+                && (edge.type == EdgeType.FLASH_JUMP || edge.type == EdgeType.TELEPORT);
+    }
+
     public boolean hasInterRegionEdge(int fromRegionId, int toRegionId) {
         for (Edge edge : getOutgoing(fromRegionId)) {
-            if (edge.fromRegionId != edge.toRegionId && edge.toRegionId == toRegionId) {
+            if (!isMovementSkillEdge(edge)
+                    && edge.fromRegionId != edge.toRegionId
+                    && edge.toRegionId == toRegionId) {
                 return true;
             }
         }
@@ -493,7 +508,7 @@ public final class AgentNavigationGraph implements Serializable {
     public Set<Integer> getMutualAdjacentRegionIds(int regionId) {
         Set<Integer> adjacent = new HashSet<>();
         for (Edge edge : getOutgoing(regionId)) {
-            if (edge.fromRegionId == edge.toRegionId) {
+            if (isMovementSkillEdge(edge) || edge.fromRegionId == edge.toRegionId) {
                 continue;
             }
             if (hasInterRegionEdge(edge.toRegionId, regionId)) {

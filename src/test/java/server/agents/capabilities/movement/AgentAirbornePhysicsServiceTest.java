@@ -100,4 +100,41 @@ class AgentAirbornePhysicsServiceTest {
                 AgentAirbornePhysicsService.belowMapRecoveryPoint(
                         map, new Point(26, 565), 4));
     }
+
+    @Test
+    void pendingFlashJumpFiresAtTheApex() {
+        Character agent = mock(Character.class);
+        when(agent.getPosition()).thenReturn(new Point(10, 20));
+        when(agent.getHp()).thenReturn(1);
+        when(agent.getMap()).thenReturn(null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        AgentMovementStateRuntime.setInAir(entry, true);
+        AgentMovementPhysicsStateRuntime.setPhysicsPosition(entry, new Point(10, 20));
+        AgentMovementPhysicsStateRuntime.setAirVelocityX(entry, 1);
+        AgentMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0);
+        AgentMovementSkillStateRuntime.state(entry).setFlashJumpPending(true);
+
+        AgentAirbornePhysicsService.stepAirborne(entry, agent);
+
+        AgentMovementSkillState skillState = AgentMovementSkillStateRuntime.state(entry);
+        assertFalse(skillState.flashJumpPending());
+        assertTrue(skillState.flashJumpFired());
+        assertTrue(AgentMovementPhysicsStateRuntime.airVelocityX(entry) > 1);
+        assertTrue(AgentMovementPhysicsStateRuntime.verticalVelocity(entry) < 0);
+    }
+
+    @Test
+    void ordinaryAirborneStepDoesNotAllocateMovementSkillState() {
+        Character agent = mock(Character.class);
+        when(agent.getPosition()).thenReturn(new Point(10, 20));
+        when(agent.getHp()).thenReturn(1);
+        when(agent.getMap()).thenReturn(null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        AgentMovementStateRuntime.setInAir(entry, true);
+        AgentMovementPhysicsStateRuntime.setPhysicsPosition(entry, new Point(10, 20));
+
+        AgentAirbornePhysicsService.stepAirborne(entry, agent);
+
+        assertTrue(entry.capabilityStates().find(AgentMovementSkillState.STATE_KEY).isEmpty());
+    }
 }

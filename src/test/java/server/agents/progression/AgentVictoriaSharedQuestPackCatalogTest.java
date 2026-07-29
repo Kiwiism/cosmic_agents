@@ -2,8 +2,14 @@ package server.agents.progression;
 
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -12,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentVictoriaSharedQuestPackCatalogTest {
+    private static final int NEAREST_TOWN_SCROLL = 2030000;
     private static final Set<String> EXPECTED_PACKS = Set.of(
             "perion-pre15", "ellinia-pre15", "henesys-pre15",
             "kerning-pre15", "nautilus-pre15");
@@ -79,6 +86,89 @@ class AgentVictoriaSharedQuestPackCatalogTest {
                         && item.inventoryType().equals("EQUIPPED")
                         && item.position() == -5));
         assertFalse(snapshot.items().stream().anyMatch(item -> item.itemId() == 1041002));
+    }
+
+    @Test
+    void authoredScrollsReachTheirDeclaredTownAndRequiredScrollsArePurchased()
+            throws IOException {
+        for (String packId : EXPECTED_PACKS) {
+            AgentVictoriaSharedQuestPackCatalog.Pack pack =
+                    AgentVictoriaSharedQuestPackCatalog.require(packId);
+            Set<Integer> purchasedItems = new HashSet<>();
+            int lastOperationalMapId = 0;
+
+            for (AgentVictoriaSharedQuestPackCatalog.Step step : pack.steps()) {
+                if (step.mapId() > 0 && !"SHOP_ITEM".equals(step.type())) {
+                    lastOperationalMapId = step.mapId();
+                }
+                if ("SHOP_ITEM".equals(step.type())) {
+                    assertShopSells(step.npcId(), step.itemId());
+                    purchasedItems.add(step.itemId());
+                    continue;
+                }
+                if (!"USE_SCROLL".equals(step.type())
+                        && !"OPTIONAL_SCROLL".equals(step.type())) {
+                    continue;
+                }
+
+                if (step.itemId() == NEAREST_TOWN_SCROLL) {
+                    assertEquals(step.destinationMapId(), returnMap(lastOperationalMapId),
+                            "nearest-town scroll would return to the wrong town in " + packId);
+                } else {
+                    assertEquals(step.destinationMapId(), fixedScrollDestination(step.itemId()),
+                            "fixed return-scroll destination drift in " + packId);
+                }
+                if ("USE_SCROLL".equals(step.type())
+                        && step.itemId() != NEAREST_TOWN_SCROLL) {
+                    assertTrue(purchasedItems.contains(step.itemId()),
+                            "required town scroll is not purchased before use in " + packId);
+                }
+            }
+        }
+    }
+
+    @Test
+    void initialCareerShopScrollsMatchTheCareerTown() throws IOException {
+        for (AgentVictoriaLevel15Catalog.Career career
+                : AgentVictoriaLevel15CatalogRepository.defaultRepository().catalog().careers()) {
+            if (career.initialShopRequiredItemId() == 0) {
+                continue;
+            }
+            assertEquals(career.townMapId(),
+                    fixedScrollDestination(career.initialShopRequiredItemId()),
+                    "initial return-scroll destination drift for job " + career.firstJobId());
+            assertShopSells(career.shopNpcId(), career.initialShopRequiredItemId());
+        }
+    }
+
+    private static int fixedScrollDestination(int itemId) throws IOException {
+        String consume = Files.readString(
+                Path.of("wz", "Item.wz", "Consume", "0203.img.xml"));
+        String nodeName = String.format("%08d", itemId);
+        Pattern item = Pattern.compile("<imgdir name=\"" + nodeName
+                + "\">.*?<imgdir name=\"spec\">.*?<int name=\"moveTo\" value=\"(\\d+)\"",
+                Pattern.DOTALL);
+        Matcher matcher = item.matcher(consume);
+        assertTrue(matcher.find(), "missing moveTo for scroll " + itemId);
+        return Integer.parseInt(matcher.group(1));
+    }
+
+    private static int returnMap(int mapId) throws IOException {
+        String map = Files.readString(Path.of("wz", "Map.wz", "Map", "Map1",
+                mapId + ".img.xml"));
+        Matcher matcher = Pattern.compile("<int name=\"returnMap\" value=\"(\\d+)\"")
+                .matcher(map);
+        assertTrue(matcher.find(), "missing returnMap for " + mapId);
+        return Integer.parseInt(matcher.group(1));
+    }
+
+    private static void assertShopSells(int npcId, int itemId) throws IOException {
+        String shops = Files.readString(
+                Path.of("src", "main", "resources", "db", "data", "102-shopitems-data.sql"));
+        Pattern listing = Pattern.compile("\\(\\s*" + npcId + "\\s*,\\s*"
+                + itemId + "\\s*,");
+        assertTrue(listing.matcher(shops).find(),
+                "shop NPC " + npcId + " does not sell required item " + itemId);
     }
 
     private static void assertPacks(

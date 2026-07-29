@@ -307,8 +307,11 @@ public final class AgentNavigationTargetService {
                                                            Point targetPos) {
         AgentTravelVariationRuntime.RouteVariation variation = scriptedRouteVariation(
                 entry, graph.mapId, targetRegionId, targetPos);
-        return AgentNavigationPathService.findNextEdgeVaried(
-                graph, bot.getMap(), startPosition, startRegionId, targetRegionId, targetPos, variation);
+        AgentNavigationGraph.Edge selected = AgentNavigationPathService.findNextEdgeVaried(
+                graph, bot, startPosition, startRegionId, targetRegionId, targetPos, variation);
+        AgentMovementSkillShadowDiagnostics.compare(graph, entry, bot, startPosition,
+                startRegionId, targetRegionId, targetPos, selected);
+        return selected;
     }
 
     static Point safeFallbackTarget(Point botPos,
@@ -413,7 +416,8 @@ public final class AgentNavigationTargetService {
                                         Point botPos,
                                         AgentNavigationGraph.Edge edge) {
         if (!AgentMovementStateRuntime.inAir(entry) && !AgentClimbStateRuntime.climbing(entry)) {
-            if (edge.type == AgentNavigationGraph.EdgeType.JUMP
+            if ((edge.type == AgentNavigationGraph.EdgeType.JUMP
+                    || edge.type == AgentNavigationGraph.EdgeType.FLASH_JUMP)
                     || edge.type == AgentNavigationGraph.EdgeType.CLIMB
                     || edge.type == AgentNavigationGraph.EdgeType.DROP) {
                 Point detour = AgentFootholdDetourService.waypoint(entry, graph, botPos, edge);
@@ -429,8 +433,9 @@ public final class AgentNavigationTargetService {
         return switch (edge.type) {
             case WALK -> new Point(edge.endPoint);
             case CLIMB -> AgentNavigationWaypointService.selectClimbWaypoint(graph, entry, botPos, edge);
-            case JUMP -> AgentMovementStateRuntime.inAir(entry)
+            case JUMP, FLASH_JUMP -> AgentMovementStateRuntime.inAir(entry)
                     ? new Point(edge.endPoint) : selectJumpWaypoint(graph, entry, botPos, edge);
+            case TELEPORT -> new Point(edge.startPoint);
             case DROP -> AgentNavigationWaypointService.selectDropWaypoint(entry, graph, botPos, edge);
             case PORTAL -> AgentMovementStateRuntime.inAir(entry)
                     ? new Point(edge.endPoint) : new Point(edge.startPoint);

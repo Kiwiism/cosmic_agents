@@ -29,6 +29,7 @@
       "homeTownMapId": 102000000,
       "steps": [
         { "type": "TAXI", "intention": "I'm taking the taxi to Perion for the Perion quest pack.", "mapId": 102000000, "destinationMapId": 102000000 },
+        { "type": "SHOP_ITEM", "intention": "I'm buying one Perion return scroll for the ceremony-material trip.", "npcId": 1021100, "mapId": 102000002, "itemId": 2030003, "itemCount": 1 },
         { "type": "QUEST", "intention": "I'm taking Sweep the Snails: defeat 10 Blue Snails and 10 Red Snails.", "npcId": 1022007, "questId": 28280, "mapId": 102000000 },
         { "type": "QUEST", "intention": "I'm taking The Stump Horror Story: defeat 50 Stumps.", "npcId": 1022007, "questId": 2082, "mapId": 102000000 },
         { "type": "HUNT", "intention": "I'm going to Perion Street Corner to defeat 10 Blue Snails, 10 Red Snails and 50 Stumps.", "mapId": 101040000,
@@ -56,6 +57,7 @@
       "homeTownMapId": 101000000,
       "steps": [
         { "type": "TAXI", "intention": "I'm taking the taxi to Ellinia for the Ellinia quest pack.", "mapId": 101000000, "destinationMapId": 101000000 },
+        { "type": "SHOP_ITEM", "intention": "I'm buying one Ellinia return scroll for the Dark Stump trip.", "npcId": 1031100, "mapId": 101000002, "itemId": 2030002, "itemCount": 1 },
         { "type": "QUEST", "intention": "I'm helping Wing with Eww, It's Slimy: collect 20 Squishy Liquids.", "npcId": 1032106, "questId": 28273, "mapId": 101000000 },
         { "type": "QUEST", "intention": "I'm helping Wing with homework: collect 10 Slime Bubbles, 30 Tree Branches and 30 Squishy Liquids.", "npcId": 1032106, "questId": 2089, "mapId": 101000000 },
         { "type": "HUNT", "intention": "I'm hunting Slimes and Stumps south of Ellinia for 50 Squishy Liquids, 10 Slime Bubbles and 30 Tree Branches.", "mapId": 100050000,
@@ -74,7 +76,7 @@
         { "type": "HUNT", "intention": "I'm going to The Tree That Grew II to defeat 40 Dark Stumps, with Slimes as extra targets.", "mapId": 101010101,
           "preferredMobIds": [1110101], "incidentalMobIds": [210100],
           "conditions": [{ "type": "QUEST_KILL", "questId": 28274, "targetId": 1110101, "count": 40 }] },
-        { "type": "USE_SCROLL", "intention": "I defeated 40 Dark Stumps and I'm returning to Ellinia.", "itemId": 2030004, "destinationMapId": 101000000 },
+        { "type": "USE_SCROLL", "intention": "I defeated 40 Dark Stumps and I'm returning to Ellinia.", "itemId": 2030002, "destinationMapId": 101000000 },
         { "type": "QUEST", "intention": "I defeated 40 Dark Stumps and I'm returning to Rowen.", "npcId": 1032101, "questId": 28274, "complete": true, "requiredLevel": 12, "mapId": 101000000 }
       ]
     },
@@ -168,7 +170,7 @@
             { "type": "QUEST_KILL", "questId": 28278, "targetId": 1210100, "count": 30 },
             { "type": "ITEM", "targetId": 4000002, "count": 20 }
           ] },
-        { "type": "OPTIONAL_SCROLL", "intention": "I'm using an Ellinia return scroll if I still have one.", "itemId": 2030004, "destinationMapId": 101000000 },
+        { "type": "OPTIONAL_SCROLL", "intention": "I'm using an Ellinia return scroll if I still have one.", "itemId": 2030002, "destinationMapId": 101000000 },
         { "type": "TAXI", "intention": "I'm going through Henesys and taking the taxi to Ellinia if needed.", "mapId": 100000000, "destinationMapId": 101000000 },
         { "type": "HUNT", "intention": "I'm hunting 30 Slimes in The Field Up North of Ellinia.", "mapId": 101010000,
           "preferredMobIds": [210100], "incidentalMobIds": [],

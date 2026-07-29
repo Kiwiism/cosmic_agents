@@ -19,7 +19,8 @@ public final class AgentNavigationLaunchWindowService {
                                                    Point botPos,
                                                    AgentNavigationGraph.Edge edge,
                                                    int minimumAcceptanceSpanPx) {
-        if (botPos == null || edge.type != AgentNavigationGraph.EdgeType.JUMP) {
+        if (botPos == null || (edge.type != AgentNavigationGraph.EdgeType.JUMP
+                && edge.type != AgentNavigationGraph.EdgeType.FLASH_JUMP)) {
             return false;
         }
         int tolerance = Math.max(0,

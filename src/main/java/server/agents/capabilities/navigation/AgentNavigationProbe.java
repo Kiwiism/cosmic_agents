@@ -244,26 +244,29 @@ public final class AgentNavigationProbe {
         int climbEdges = 0;
         int portalEdges = 0;
         int walkEdges = 0;
+        int flashJumpEdges = 0;
+        int teleportEdges = 0;
         for (AgentNavigationGraph.Region region : graph.regions) {
             for (AgentNavigationGraph.Edge edge : graph.getOutgoing(region.id)) {
                 switch (edge.type) {
                     case WALK -> walkEdges++;
                     case JUMP -> jumpEdges++;
+                    case FLASH_JUMP -> flashJumpEdges++;
+                    case TELEPORT -> teleportEdges++;
                     case DROP -> dropEdges++;
                     case CLIMB -> climbEdges++;
                     case PORTAL -> portalEdges++;
-                    default -> {
-                    }
                 }
             }
         }
 
-        System.out.printf("Map %d  speed=%d jump=%d walkStep=%d  regions=%d  edges walk=%d jump=%d drop=%d climb=%d portal=%d%n",
+        System.out.printf("Map %d  speed=%d jump=%d walkStep=%d  regions=%d  edges walk=%d jump=%d flashJump=%d teleport=%d drop=%d climb=%d portal=%d%n",
                 map.getId(),
                 graph.movementProfile.totalSpeedStat(),
                 graph.movementProfile.totalJumpStat(),
                 AgentMovementKinematicsService.walkStep(map, graph.movementProfile),
-                graph.regions.size(), walkEdges, jumpEdges, dropEdges, climbEdges, portalEdges);
+                graph.regions.size(), walkEdges, jumpEdges, flashJumpEdges, teleportEdges,
+                dropEdges, climbEdges, portalEdges);
     }
 
     private static List<String> formatBuildReport(AgentNavigationGraph graph,

@@ -36,30 +36,49 @@ public final class AgentAirborneMovementService {
             }
 
             AgentAirborneStepResult result = AgentAirbornePhysicsService.stepAirborne(entry, agent);
+            boolean flashJumpFired = entry.capabilityStates()
+                    .find(AgentMovementSkillState.STATE_KEY)
+                    .map(AgentMovementSkillState::flashJumpFired)
+                    .orElse(false);
             if (result == AgentAirborneStepResult.WALL) {
                 if (successfullyGrabbedRope(entry, agent, agent.getPosition())) {
                     return;
                 }
-                AgentMovementBroadcastService.broadcastMovement(entry);
+                broadcastAirborneStep(entry, agentPosition, flashJumpFired);
                 return;
             }
             if (result == AgentAirborneStepResult.CEILING) {
-                AgentMovementBroadcastService.broadcastMovement(entry);
+                broadcastAirborneStep(entry, agentPosition, flashJumpFired);
                 return;
             }
             if (result == AgentAirborneStepResult.LANDED) {
                 AgentMovementPhysicsStateRuntime.clearJumpCooldown(entry);
-                AgentMovementBroadcastService.broadcastMovement(entry);
+                broadcastAirborneStep(entry, agentPosition, flashJumpFired);
                 return;
             }
 
             if (successfullyGrabbedRope(entry, agent, agent.getPosition())) {
                 return;
             }
-            AgentMovementBroadcastService.broadcastMovement(entry);
+            broadcastAirborneStep(entry, agentPosition, flashJumpFired);
         } finally {
             AgentPerformanceMonitor.record("move-air", System.nanoTime() - startedAt);
         }
+    }
+
+    private static void broadcastAirborneStep(AgentRuntimeEntry entry,
+                                              Point previousPosition,
+                                              boolean flashJumpFired) {
+        if (!flashJumpFired) {
+            AgentMovementBroadcastService.broadcastMovement(entry);
+            return;
+        }
+        Point position = AgentRuntimeIdentityRuntime.bot(entry).getPosition();
+        AgentMovementBroadcastService.broadcastFlashJump(
+                entry, position.x - previousPosition.x, position.y - previousPosition.y);
+        entry.capabilityStates()
+                .find(AgentMovementSkillState.STATE_KEY)
+                .ifPresent(state -> state.setFlashJumpFired(false));
     }
 
     static boolean successfullyGrabbedRope(AgentRuntimeEntry entry, Character agent, Point agentPosition) {
@@ -78,6 +97,7 @@ public final class AgentAirborneMovementService {
                 continue;
             }
 
+            AgentMovementSkillStateRuntime.clearAirborneCast(entry);
             AgentRopeMovementService.attachToRope(entry, agent, rope, agentPosition.y);
             AgentMovementBroadcastService.broadcastMovement(entry);
             return true;
@@ -98,6 +118,7 @@ public final class AgentAirborneMovementService {
             return true;
         }
         return navEdge.type != AgentNavigationGraph.EdgeType.JUMP
+                && navEdge.type != AgentNavigationGraph.EdgeType.FLASH_JUMP
                 && navEdge.type != AgentNavigationGraph.EdgeType.DROP
                 && !(navEdge.type == AgentNavigationGraph.EdgeType.CLIMB
                 && navEdge.launchStepX != 0);

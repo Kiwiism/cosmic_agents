@@ -47,6 +47,7 @@ public final class AgentMovementPoseService {
         AgentMovementPhysicsStateRuntime.setPhysicsPosition(entry, position);
         AgentMovementPhysicsStateRuntime.setHorizontalSpeed(entry, 0.0);
         AgentMovementStateRuntime.setMovementVelocity(entry, 0, 0);
+        AgentMovementSkillStateRuntime.clearAirborneCast(entry);
         syncCharacterState(entry);
     }
 
@@ -141,5 +142,6 @@ public final class AgentMovementPoseService {
         AgentMovementStateRuntime.setDownJumpGracePeriodMs(entry, 0L);
         AgentClimbStateRuntime.clearRopeEntry(entry);
         AgentMovementStateRuntime.setMovementVelocity(entry, 0, 0);
+        AgentMovementSkillStateRuntime.clearAirborneCast(entry);
     }
 }

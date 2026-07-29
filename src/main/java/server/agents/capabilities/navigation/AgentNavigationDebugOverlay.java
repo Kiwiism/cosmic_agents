@@ -276,7 +276,7 @@ public final class AgentNavigationDebugOverlay {
     private static OverlayType overlayTypeForEdge(AgentNavigationGraph.EdgeType edgeType) {
         return switch (edgeType) {
             case DROP, PORTAL -> OverlayType.TRANSITION;
-            case JUMP, CLIMB -> OverlayType.PATH;
+            case JUMP, FLASH_JUMP, TELEPORT, CLIMB -> OverlayType.PATH;
             case WALK -> OverlayType.REGION;
         };
     }

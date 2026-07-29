@@ -25,6 +25,7 @@ public final class AgentAirborneLaunchService {
         AgentMovementPhysicsStateRuntime.setAirVelocityX(entry, airVelocityX);
         AgentMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
         AgentMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
+        AgentMovementSkillStateRuntime.clearAirborneCast(entry);
         AgentMovementStateRuntime.setDownJumpPending(entry, false);
         AgentMovementStateRuntime.clearMoveDirection(entry);
         AgentMovementStateRuntime.setMovementVelocity(entry,

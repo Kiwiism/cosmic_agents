@@ -153,7 +153,7 @@ public final class AgentNavigationPathService {
                                                          Point targetPos) {
         MapleMap map = bot.getMap();
         List<AgentNavigationGraph.Edge> path = movementPath(
-                graph, map, bot.getPosition(), startRegionId, targetRegionId, targetPos, null);
+                graph, bot, bot.getPosition(), startRegionId, targetRegionId, targetPos, null);
         if (path.isEmpty()) {
             return null;
         }
@@ -167,8 +167,21 @@ public final class AgentNavigationPathService {
             int targetRegionId,
             Point targetPos,
             AgentTravelVariationRuntime.RouteVariation variation) {
-        return findNextEdgeVaried(
-                graph, bot.getMap(), bot.getPosition(), startRegionId, targetRegionId, targetPos, variation);
+        return findNextEdgeVaried(graph, bot, bot.getPosition(), startRegionId,
+                targetRegionId, targetPos, variation);
+    }
+
+    public static AgentNavigationGraph.Edge findNextEdgeVaried(
+            AgentNavigationGraph graph,
+            Character bot,
+            Point startPosition,
+            int startRegionId,
+            int targetRegionId,
+            Point targetPos,
+            AgentTravelVariationRuntime.RouteVariation variation) {
+        List<AgentNavigationGraph.Edge> path = movementPath(
+                graph, bot, startPosition, startRegionId, targetRegionId, targetPos, variation);
+        return path.isEmpty() ? null : collapseLeadingWalkEdges(path);
     }
 
     public static AgentNavigationGraph.Edge findNextEdgeVaried(
@@ -201,6 +214,18 @@ public final class AgentNavigationPathService {
                 variation, MOVEMENT_MAX_EDGE_CHECKS, MAX_EDGE_CHECKS, true);
     }
 
+    private static List<AgentNavigationGraph.Edge> movementPath(
+            AgentNavigationGraph graph,
+            Character bot,
+            Point startPos,
+            int startRegionId,
+            int targetRegionId,
+            Point targetPos,
+            AgentTravelVariationRuntime.RouteVariation variation) {
+        return movementPath(graph, bot.getMap(), startPos, startRegionId, targetRegionId, targetPos,
+                variation, MOVEMENT_MAX_EDGE_CHECKS, MAX_EDGE_CHECKS, true, bot);
+    }
+
     static List<AgentNavigationGraph.Edge> movementPath(
             AgentNavigationGraph graph,
             MapleMap map,
@@ -212,13 +237,29 @@ public final class AgentNavigationPathService {
             int movementBudget,
             int recoveryBudget,
             boolean instrument) {
+        return movementPath(graph, map, startPos, startRegionId, targetRegionId, targetPos,
+                variation, movementBudget, recoveryBudget, instrument, null);
+    }
+
+    private static List<AgentNavigationGraph.Edge> movementPath(
+            AgentNavigationGraph graph,
+            MapleMap map,
+            Point startPos,
+            int startRegionId,
+            int targetRegionId,
+            Point targetPos,
+            AgentTravelVariationRuntime.RouteVariation variation,
+            int movementBudget,
+            int recoveryBudget,
+            boolean instrument,
+            Character skillAgent) {
         String caller = variation == null ? "committed" : "maple-island-varied";
         Map<Integer, Integer> dangerCosts = AgentNavigationDangerCostService.intermediateRegionCosts(
                 graph, map, startRegionId, targetRegionId);
         SearchOutcome bounded = runSearch(
                 graph, map, startPos, startRegionId, targetRegionId, targetPos,
                 caller, USE_ZERO_HEURISTIC, instrument, movementBudget,
-                variation, dangerCosts);
+                variation, dangerCosts, skillAgent, false);
         if (!bounded.path().isEmpty() || !bounded.capped()
                 || movementBudget >= recoveryBudget) {
             return bounded.path();
@@ -231,7 +272,7 @@ public final class AgentNavigationPathService {
         return runSearch(
                 graph, map, startPos, startRegionId, targetRegionId, targetPos,
                 caller + "-recovery", USE_ZERO_HEURISTIC, instrument, recoveryBudget,
-                variation, dangerCosts).path();
+                variation, dangerCosts, skillAgent, false).path();
     }
 
     public static List<AgentNavigationGraph.Edge> findPath(AgentNavigationGraph graph,
@@ -312,14 +353,38 @@ public final class AgentNavigationPathService {
                                    int edgeCheckBudget,
                                    AgentTravelVariationRuntime.RouteVariation routeVariation,
                                    Map<Integer, Integer> regionEntryCosts) {
+        return runSearch(graph, map, startPos, startRegionId, targetRegionId, targetPos,
+                pathfindCaller, zeroHeuristic, instrument, edgeCheckBudget, routeVariation,
+                regionEntryCosts, null, false);
+    }
+
+    private static SearchOutcome runSearch(AgentNavigationGraph graph,
+                                   MapleMap map,
+                                   Point startPos,
+                                   int startRegionId,
+                                   int targetRegionId,
+                                   Point targetPos,
+                                   String pathfindCaller,
+                                   boolean zeroHeuristic,
+                                   boolean instrument,
+                                   int edgeCheckBudget,
+                                   AgentTravelVariationRuntime.RouteVariation routeVariation,
+                                   Map<Integer, Integer> regionEntryCosts,
+                                   Character skillAgent,
+                                   boolean shadowSkillEdges) {
         long startedAt = System.nanoTime();
         PathfindProfile profile = null;
         try {
-            int startComponent = graph.connectedComponentId(startRegionId);
-            int targetComponent = graph.connectedComponentId(targetRegionId);
-            if (startComponent < 0 || targetComponent < 0 || startComponent != targetComponent) {
-                return new SearchOutcome(List.of(), Integer.MAX_VALUE, 0, false,
-                        false, false, false, startRegionId);
+            boolean skillRoute = skillAgent != null && (shadowSkillEdges
+                    ? AgentMovementSkillPolicy.canUseAnyShadowMovementSkill(skillAgent)
+                    : AgentMovementSkillPolicy.canUseAnyActiveMovementSkill(skillAgent));
+            if (!skillRoute) {
+                int startComponent = graph.connectedComponentId(startRegionId);
+                int targetComponent = graph.connectedComponentId(targetRegionId);
+                if (startComponent < 0 || targetComponent < 0 || startComponent != targetComponent) {
+                    return new SearchOutcome(List.of(), Integer.MAX_VALUE, 0, false,
+                            false, false, false, startRegionId);
+                }
             }
 
             PriorityQueue<SearchNode> open = new PriorityQueue<>(Comparator.comparingInt(node -> node.score));
@@ -338,7 +403,9 @@ public final class AgentNavigationPathService {
             int relaxations = 0;
             int openPeak = 1;
             boolean capped = false;
-            Map<Integer, Integer> costToGoal = zeroHeuristic ? Map.of() : graph.costToGoal(targetRegionId);
+            Map<Integer, Integer> costToGoal = zeroHeuristic || skillRoute
+                    ? Map.of()
+                    : graph.costToGoal(targetRegionId);
 
             gScore.put(startState, 0);
             open.add(new SearchNode(startState, 0,
@@ -364,13 +431,13 @@ public final class AgentNavigationPathService {
                 }
 
                 for (AgentNavigationGraph.Edge edge : graph.getOutgoing(current.state.regionId)) {
+                    if (!isEdgeUsable(graph, map, skillAgent, edge, shadowSkillEdges)) {
+                        continue;
+                    }
                     edgeChecks++;
                     if (edgeChecks > Math.max(1, edgeCheckBudget)) {
                         capped = true;
                         break;
-                    }
-                    if (!isEdgeUsable(graph, map, edge)) {
-                        continue;
                     }
                     usableEdges++;
 
@@ -566,17 +633,41 @@ public final class AgentNavigationPathService {
     }
 
     public static boolean isEdgeUsable(AgentNavigationGraph graph, Character bot, AgentNavigationGraph.Edge edge) {
-        return isEdgeUsable(graph, bot.getMap(), edge);
+        return isEdgeUsable(graph, bot.getMap(), bot, edge, false);
     }
 
     public static boolean isEdgeUsable(AgentNavigationGraph graph, MapleMap map, AgentNavigationGraph.Edge edge) {
+        return isEdgeUsable(graph, map, null, edge, false);
+    }
+
+    private static boolean isEdgeUsable(AgentNavigationGraph graph,
+                                        MapleMap map,
+                                        Character skillAgent,
+                                        AgentNavigationGraph.Edge edge,
+                                        boolean shadowSkillEdges) {
         return switch (edge.type) {
             case WALK, JUMP, DROP, CLIMB -> true;
+            case FLASH_JUMP, TELEPORT -> skillAgent != null
+                    && (shadowSkillEdges
+                    ? AgentMovementSkillPolicy.canUseShadowPath(skillAgent, edge)
+                    : AgentMovementSkillPolicy.canUseActivePath(skillAgent, edge));
             case PORTAL -> {
                 Portal portal = map.getPortal(edge.portalId);
                 yield portal != null && portal.getPortalStatus();
             }
         };
+    }
+
+    public static List<AgentNavigationGraph.Edge> findShadowSkillPath(
+            AgentNavigationGraph graph,
+            Character bot,
+            Point startPos,
+            int startRegionId,
+            int targetRegionId,
+            Point targetPos) {
+        return runSearch(graph, bot.getMap(), startPos, startRegionId, targetRegionId, targetPos,
+                "movement-skill-shadow", USE_ZERO_HEURISTIC, false, MOVEMENT_MAX_EDGE_CHECKS,
+                null, Map.of(), bot, true).path();
     }
 
     private static boolean isNoMovementWalk(Point start, Point end) {

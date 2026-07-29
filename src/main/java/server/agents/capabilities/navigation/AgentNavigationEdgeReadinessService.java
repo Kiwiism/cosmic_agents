@@ -18,7 +18,9 @@ public final class AgentNavigationEdgeReadinessService {
         int dy = Math.abs(botPos.y - edge.startPoint.y);
 
         return switch (edge.type) {
-            case JUMP -> dx <= JUMP_READY_X_TOLERANCE
+            case JUMP, FLASH_JUMP -> dx <= JUMP_READY_X_TOLERANCE
+                    && dy <= AgentNavigationPhysicsService.jumpYThreshold();
+            case TELEPORT -> dx <= EDGE_READY_X_TOLERANCE
                     && dy <= AgentNavigationPhysicsService.jumpYThreshold();
             case DROP, CLIMB, PORTAL -> dx <= EDGE_READY_X_TOLERANCE
                     && dy <= AgentNavigationPhysicsService.jumpYThreshold() * 2;
@@ -30,7 +32,8 @@ public final class AgentNavigationEdgeReadinessService {
     public static boolean canExecuteJumpFromCurrentPosition(AgentNavigationGraph graph,
                                                             Point botPos,
                                                             AgentNavigationGraph.Edge edge) {
-        if (edge.type != AgentNavigationGraph.EdgeType.JUMP) {
+        if (edge.type != AgentNavigationGraph.EdgeType.JUMP
+                && edge.type != AgentNavigationGraph.EdgeType.FLASH_JUMP) {
             return false;
         }
         return AgentNavigationLaunchWindowService.isWithinJumpLaunchWindow(graph, botPos, edge);
@@ -41,7 +44,8 @@ public final class AgentNavigationEdgeReadinessService {
                                                                     AgentNavigationGraph.Edge edge,
                                                                     int selectedLaunchX,
                                                                     int tolerance) {
-        if (edge.type != AgentNavigationGraph.EdgeType.JUMP
+        if ((edge.type != AgentNavigationGraph.EdgeType.JUMP
+                && edge.type != AgentNavigationGraph.EdgeType.FLASH_JUMP)
                 || !AgentNavigationLaunchWindowService.isWithinJumpLaunchWindow(
                         graph, botPos, edge, Math.max(1, tolerance))) {
             return false;
