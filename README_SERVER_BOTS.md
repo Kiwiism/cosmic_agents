@@ -205,6 +205,26 @@ Verbs: `trade [me] <type/name>`, `give [me] <type/name>`, `drop <type/name>`, `p
 | `!botperfdebug` | Toggle console spam on bot performance |
 | `!botnav`                  | Navigation debug command |
 
+### Map Graph Viewer
+
+With the server running, open:
+
+`http://127.0.0.1:8790/mapgraph?id=103000000`
+
+The viewer draws the cached Agent navigation graph over map-space coordinates.
+Drag to pan, use the mouse wheel to zoom, and click a region for its foothold
+and connection report. Edge-type switches can hide jump, drop, climb, or portal
+connections.
+
+Select **Test route**, then click a source and destination region. **Normal**
+uses the live Agent search budget. **Exhaustive** removes that diagnostic cap
+so the two results can be compared. Route testing is read-only and does not
+move a character. An uncached speed/jump profile returns a warming status until
+its graph is ready.
+
+The viewer binds to localhost only. Set `COSMIC_AGENT_MAPGRAPH_ENABLED=false`
+to disable it or `COSMIC_AGENT_MAPGRAPH_PORT` to use another local port.
+
 ## Notes
 - Bot characters can be logged into as normal accounts (user = bot name, password = `botbot`) to manually equip or manage inventory.
 

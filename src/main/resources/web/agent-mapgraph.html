@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Agent Map Graph</title>
+<style>
+  :root{color-scheme:dark;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+  *{box-sizing:border-box}
+  html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#0c1322;color:#dce6f3}
+  body{display:flex;flex-direction:column}
+  #toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:7px 12px;padding:8px 11px;
+    background:#151e2f;border-bottom:1px solid #2a3850;z-index:2}
+  #toolbar strong{color:#f3f7fc;white-space:nowrap}
+  .group{display:flex;align-items:center;gap:7px;padding-left:12px;border-left:1px solid #33435d;
+    white-space:nowrap}
+  label{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#aebcd0}
+  input[type=number],select,button{height:29px;border:1px solid #3a4b67;border-radius:5px;
+    background:#202b40;color:#e6edf7;padding:3px 8px}
+  input[type=number]{width:112px}
+  button{cursor:pointer}
+  button:hover{background:#2a3953}
+  button.active{background:#315ba6;border-color:#6190e2;color:white}
+  #stats{font-size:12px;color:#8595ad;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #stageWrap{position:relative;flex:1;min-height:0}
+  #graph{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+  #graph.dragging{cursor:grabbing}
+  #status{position:absolute;left:10px;bottom:9px;max-width:calc(100% - 340px);padding:5px 8px;
+    border-radius:5px;background:rgba(8,13,24,.86);color:#9fb0c8;font-size:12px;pointer-events:none}
+  #info{position:absolute;right:10px;top:10px;width:310px;max-height:calc(100% - 20px);overflow:auto;
+    display:none;padding:10px 12px;border:1px solid #3b4d6b;border-radius:7px;background:rgba(10,16,29,.94);
+    box-shadow:0 5px 22px rgba(0,0,0,.38);font:12px/1.55 ui-monospace,Consolas,monospace;white-space:pre-wrap}
+  #infoHeader{display:flex;justify-content:space-between;gap:10px;margin-bottom:6px;color:#f1f5fb;
+    font:600 13px system-ui,-apple-system,"Segoe UI",sans-serif}
+  #closeInfo{border:0;background:transparent;height:auto;padding:0;color:#9aabc2}
+  .legend{display:flex;gap:8px;align-items:center}
+  .swatch{width:12px;height:4px;border-radius:2px;display:inline-block}
+  @media(max-width:850px){
+    #toolbar{gap:6px 8px}
+    .group{padding-left:8px}
+    #stats{display:none}
+    #info{left:8px;right:8px;width:auto;max-height:45%}
+    #status{max-width:calc(100% - 20px)}
+  }
+</style>
+</head>
+<body>
+<div id="toolbar">
+  <strong id="title">Agent Map Graph</strong>
+  <span class="group">
+    <label>Map <input id="mapId" type="number" min="0" step="1" value="103000000"></label>
+    <button id="load">Load</button>
+    <button id="fit">Fit</button>
+  </span>
+  <span class="group">
+    <label>Profile <select id="profile"></select></label>
+  </span>
+  <span class="group">
+    <button id="route">Test route</button>
+    <label>Mode
+      <select id="mode"><option value="normal">Normal</option><option value="exhaustive">Exhaustive</option></select>
+    </label>
+    <button id="clearRoute">Clear</button>
+  </span>
+  <span class="group legend">
+    <label><input class="edgeToggle" type="checkbox" value="WALK" checked>
+      <i class="swatch" style="background:#aab8ca"></i>Walk</label>
+    <label><input class="edgeToggle" type="checkbox" value="JUMP" checked>
+      <i class="swatch" style="background:#e66bf0"></i>Jump</label>
+    <label><input class="edgeToggle" type="checkbox" value="DROP">
+      <i class="swatch" style="background:#ff9f43"></i>Drop</label>
+    <label><input class="edgeToggle" type="checkbox" value="CLIMB" checked>
+      <i class="swatch" style="background:#51d68b"></i>Climb</label>
+    <label><input class="edgeToggle" type="checkbox" value="PORTAL" checked>
+      <i class="swatch" style="background:#35c9ff"></i>Portal</label>
+  </span>
+  <span id="stats"></span>
+</div>
+<div id="stageWrap">
+  <canvas id="graph" aria-label="Interactive Agent navigation graph"></canvas>
+  <div id="status">Loading…</div>
+  <aside id="info">
+    <div id="infoHeader"><span id="infoTitle">Region</span><button id="closeInfo">×</button></div>
+    <div id="infoBody"></div>
+  </aside>
+</div>
+<script>
+(() => {
+  const canvas = document.getElementById("graph");
+  const wrap = document.getElementById("stageWrap");
+  const ctx = canvas.getContext("2d");
+  const mapInput = document.getElementById("mapId");
+  const profileSelect = document.getElementById("profile");
+  const statusEl = document.getElementById("status");
+  const info = document.getElementById("info");
+  const infoTitle = document.getElementById("infoTitle");
+  const infoBody = document.getElementById("infoBody");
+  const routeButton = document.getElementById("route");
+  const colors = {
+    WALK:"#aab8ca", JUMP:"#e66bf0", DROP:"#ff9f43", CLIMB:"#51d68b", PORTAL:"#35c9ff"
+  };
+  let graph = null;
+  let routePath = [];
+  let routeMode = false;
+  let routeFrom = null;
+  let routeTo = null;
+  let selectedRegion = null;
+  let scale = 1;
+  let offsetX = 0;
+  let offsetY = 0;
+  let pointerDown = null;
+  let lastPointer = null;
+  let moved = false;
+  let warmingTimer = null;
+
+  const params = new URLSearchParams(location.search);
+  if (params.has("id")) mapInput.value = params.get("id");
+
+  function setStatus(message){ statusEl.textContent = message; }
+
+  function resize(){
+    const ratio = window.devicePixelRatio || 1;
+    const rect = wrap.getBoundingClientRect();
+    canvas.width = Math.max(1, Math.round(rect.width * ratio));
+    canvas.height = Math.max(1, Math.round(rect.height * ratio));
+    canvas.style.width = rect.width + "px";
+    canvas.style.height = rect.height + "px";
+    draw();
+  }
+
+  function profileQuery(){
+    const value = profileSelect.value;
+    if (!value) return "";
+    const [speed,jump] = value.split(":");
+    return `&speed=${encodeURIComponent(speed)}&jump=${encodeURIComponent(jump)}`;
+  }
+
+  async function loadGraph(preserveProfile=false){
+    clearTimeout(warmingTimer);
+    const mapId = Number(mapInput.value);
+    if (!Number.isInteger(mapId) || mapId < 0){
+      setStatus("Enter a valid map ID.");
+      return;
+    }
+    setStatus(`Loading map ${mapId}…`);
+    try{
+      const response = await fetch(`/api/mapgraph?id=${mapId}${preserveProfile ? profileQuery() : ""}`, {cache:"no-store"});
+      const data = await response.json();
+      if (response.status === 202){
+        setStatus(`Warming navigation graph for map ${mapId}…`);
+        warmingTimer = setTimeout(() => loadGraph(preserveProfile), 900);
+        return;
+      }
+      if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+      graph = data;
+      routePath = [];
+      routeFrom = null;
+      routeTo = null;
+      selectedRegion = null;
+      populateProfiles(data);
+      document.getElementById("title").textContent = `${data.name} · ${data.mapId}`;
+      document.getElementById("stats").textContent =
+        `${data.regions.length} regions · ${data.edges.length} collapsed edges · cache v${data.version}`;
+      history.replaceState(null, "", `/mapgraph?id=${data.mapId}`);
+      fit();
+      setStatus("Drag to pan, wheel to zoom, or select Test route and click two regions.");
+    }catch(error){
+      setStatus(`Unable to load graph: ${error.message}`);
+    }
+  }
+
+  function populateProfiles(data){
+    const active = `${data.activeProfile.speed}:${data.activeProfile.jump}`;
+    profileSelect.replaceChildren();
+    for (const profile of data.profiles){
+      const option = document.createElement("option");
+      option.value = `${profile.speed}:${profile.jump}`;
+      option.textContent = `speed ${profile.speed} / jump ${profile.jump}`;
+      option.selected = option.value === active;
+      profileSelect.append(option);
+    }
+  }
+
+  function fit(){
+    if (!graph) return;
+    const rect = wrap.getBoundingClientRect();
+    const bounds = graph.bounds;
+    const width = Math.max(1, bounds.maxX - bounds.minX);
+    const height = Math.max(1, bounds.maxY - bounds.minY);
+    scale = Math.min((rect.width - 90) / width, (rect.height - 90) / height);
+    scale = Math.max(.02, scale);
+    offsetX = (rect.width - width * scale) / 2 - bounds.minX * scale;
+    offsetY = (rect.height - height * scale) / 2 - bounds.minY * scale;
+    draw();
+  }
+
+  function worldToScreen(x,y){ return {x:x*scale+offsetX,y:y*scale+offsetY}; }
+
+  function draw(){
+    const ratio = window.devicePixelRatio || 1;
+    const rect = wrap.getBoundingClientRect();
+    ctx.setTransform(ratio,0,0,ratio,0,0);
+    ctx.clearRect(0,0,rect.width,rect.height);
+    ctx.fillStyle="#0c1322";
+    ctx.fillRect(0,0,rect.width,rect.height);
+    if (!graph) return;
+
+    const visible = new Set([...document.querySelectorAll(".edgeToggle:checked")].map(input => input.value));
+    ctx.lineCap="round";
+    ctx.lineJoin="round";
+    for (const edge of graph.edges){
+      if (!visible.has(edge.type)) continue;
+      drawEdge(edge, colors[edge.type] || "#9aabc2", edge.type === "PORTAL" ? 2.3 : 1.25, .68);
+    }
+
+    for (const region of graph.regions){
+      const emphasized = region.id === routeFrom || region.id === routeTo || region.id === selectedRegion;
+      ctx.strokeStyle = emphasized ? (region.id === routeFrom ? "#6dd5ff" : "#ffd166") :
+        (region.kind === "rope" ? "#6cc6ff" : "#43d17c");
+      ctx.lineWidth = emphasized ? 4 : 2;
+      if (region.kind === "rope"){
+        const a=worldToScreen(region.minX,region.minY), b=worldToScreen(region.maxX,region.maxY);
+        ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+      }else{
+        for (const segment of region.segments){
+          const a=worldToScreen(segment[0],segment[1]), b=worldToScreen(segment[2],segment[3]);
+          ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+        }
+      }
+      const center=worldToScreen(region.centerX,region.centerY);
+      ctx.fillStyle=emphasized ? "#fff3bf" : "#dbe6f4";
+      ctx.beginPath();ctx.arc(center.x,center.y,emphasized?4.8:3,0,Math.PI*2);ctx.fill();
+      if (scale > .42){
+        ctx.fillStyle="#b8c5d8";ctx.font="10px ui-monospace,Consolas,monospace";
+        ctx.fillText(String(region.id),center.x+6,center.y-5);
+      }
+    }
+
+    for (const portal of graph.portals){
+      const p=worldToScreen(portal.x,portal.y);
+      ctx.fillStyle=portal.kind==="in-map"?"#ffd54a":portal.kind==="cross-map"?"#ffffff":"#9aa9bd";
+      ctx.beginPath();ctx.arc(p.x,p.y,portal.kind==="cross-map"?5:4,0,Math.PI*2);ctx.fill();
+    }
+    for (const npc of graph.npcs){
+      const p=worldToScreen(npc.x,npc.y);
+      ctx.strokeStyle="#ffd54a";ctx.lineWidth=1.5;ctx.strokeRect(p.x-4,p.y-8,8,8);
+    }
+    for (const character of graph.characters){
+      const p=worldToScreen(character.x,character.y);
+      ctx.fillStyle=character.agent?"#ff8a65":"#ff4d6d";
+      ctx.beginPath();ctx.arc(p.x,p.y,5,0,Math.PI*2);ctx.fill();
+    }
+
+    for (const edge of routePath) drawEdge(edge,"#ffe066",5,.96);
+  }
+
+  function drawEdge(edge,color,width,alpha){
+    const a=worldToScreen(edge.fromX,edge.fromY), b=worldToScreen(edge.toX,edge.toY);
+    ctx.save();ctx.globalAlpha=alpha;ctx.strokeStyle=color;ctx.lineWidth=width;
+    ctx.beginPath();ctx.moveTo(a.x,a.y);
+    if (edge.type==="JUMP"){
+      const lift=Math.max(18,Math.min(95,Math.abs(b.x-a.x)*.24));
+      ctx.quadraticCurveTo((a.x+b.x)/2,Math.min(a.y,b.y)-lift,b.x,b.y);
+    }else ctx.lineTo(b.x,b.y);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function regionAt(screenX,screenY){
+    if (!graph) return null;
+    let best=null,bestDistance=18;
+    for (const region of graph.regions){
+      const lines = region.kind==="rope"
+        ? [[region.minX,region.minY,region.maxX,region.maxY]]
+        : region.segments;
+      for (const line of lines){
+        const a=worldToScreen(line[0],line[1]), b=worldToScreen(line[2],line[3]);
+        const distance=pointSegmentDistance(screenX,screenY,a.x,a.y,b.x,b.y);
+        if (distance<bestDistance){bestDistance=distance;best=region;}
+      }
+    }
+    return best;
+  }
+
+  function pointSegmentDistance(px,py,x1,y1,x2,y2){
+    const dx=x2-x1,dy=y2-y1;
+    if (!dx&&!dy) return Math.hypot(px-x1,py-y1);
+    const t=Math.max(0,Math.min(1,((px-x1)*dx+(py-y1)*dy)/(dx*dx+dy*dy)));
+    return Math.hypot(px-(x1+t*dx),py-(y1+t*dy));
+  }
+
+  function selectRegion(region){
+    if (!region) return;
+    selectedRegion=region.id;
+    if (!routeMode){
+      infoTitle.textContent=`Region ${region.id}`;
+      infoBody.textContent=region.report.join("\n");
+      info.style.display="block";
+      draw();
+      return;
+    }
+    if (routeFrom===null || routeTo!==null){
+      routeFrom=region.id;routeTo=null;routePath=[];
+      setStatus(`Source R${region.id} selected. Click a target region.`);
+      draw();
+      return;
+    }
+    routeTo=region.id;
+    testRoute();
+  }
+
+  async function testRoute(){
+    const mode=document.getElementById("mode").value;
+    setStatus(`Testing ${mode} route R${routeFrom} → R${routeTo}…`);
+    try{
+      const url=`/api/pathfind?id=${graph.mapId}&from=${routeFrom}&to=${routeTo}&mode=${mode}${profileQuery()}`;
+      const response=await fetch(url,{cache:"no-store"});
+      const data=await response.json();
+      if (response.status===202){
+        setStatus("Graph profile is warming. Try the route again shortly.");
+        return;
+      }
+      if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+      routePath=data.path;
+      const verdict=data.reached?"reached":data.bestEffort?"best effort":"unreachable";
+      setStatus(`${verdict}: ${data.path.length} edges, ${data.expandedNodes} regions expanded, ${data.elapsedMs.toFixed(2)} ms${data.capped?" (budget capped)":""}`);
+      infoTitle.textContent=`Route R${routeFrom} → R${routeTo}`;
+      infoBody.textContent=[
+        `Mode: ${data.mode}`,
+        `Verdict: ${verdict}`,
+        `Final region: ${data.finalRegion}`,
+        `Cost: ${data.cost===null?"n/a":data.cost}`,
+        `Expanded: ${data.expandedNodes}`,
+        `Elapsed: ${data.elapsedMs.toFixed(2)} ms`,
+        "",
+        ...data.path.map((edge,index)=>`${index+1}. ${edge.type} R${edge.fromRegion} → R${edge.toRegion}`)
+      ].join("\n");
+      info.style.display="block";
+      draw();
+    }catch(error){
+      setStatus(`Route test failed: ${error.message}`);
+    }
+  }
+
+  canvas.addEventListener("pointerdown",event=>{
+    canvas.setPointerCapture(event.pointerId);
+    pointerDown={x:event.clientX,y:event.clientY};
+    lastPointer={...pointerDown};moved=false;
+    canvas.classList.add("dragging");
+  });
+  canvas.addEventListener("pointermove",event=>{
+    if (!lastPointer) return;
+    const dx=event.clientX-lastPointer.x,dy=event.clientY-lastPointer.y;
+    if (Math.hypot(event.clientX-pointerDown.x,event.clientY-pointerDown.y)>4) moved=true;
+    if (moved){offsetX+=dx;offsetY+=dy;draw();}
+    lastPointer={x:event.clientX,y:event.clientY};
+  });
+  canvas.addEventListener("pointerup",event=>{
+    if (!moved){
+      const rect=canvas.getBoundingClientRect();
+      selectRegion(regionAt(event.clientX-rect.left,event.clientY-rect.top));
+    }
+    pointerDown=null;lastPointer=null;canvas.classList.remove("dragging");
+  });
+  canvas.addEventListener("wheel",event=>{
+    event.preventDefault();
+    const rect=canvas.getBoundingClientRect();
+    const x=event.clientX-rect.left,y=event.clientY-rect.top;
+    const worldX=(x-offsetX)/scale,worldY=(y-offsetY)/scale;
+    const factor=Math.exp(-event.deltaY*.0012);
+    scale=Math.max(.015,Math.min(8,scale*factor));
+    offsetX=x-worldX*scale;offsetY=y-worldY*scale;draw();
+  },{passive:false});
+
+  document.getElementById("load").addEventListener("click",()=>loadGraph(false));
+  document.getElementById("fit").addEventListener("click",fit);
+  profileSelect.addEventListener("change",()=>loadGraph(true));
+  document.querySelectorAll(".edgeToggle").forEach(input=>input.addEventListener("change",draw));
+  routeButton.addEventListener("click",()=>{
+    routeMode=!routeMode;routeButton.classList.toggle("active",routeMode);
+    routeFrom=null;routeTo=null;routePath=[];
+    setStatus(routeMode?"Click a source region, then a target region.":"Route selection disabled.");
+    draw();
+  });
+  document.getElementById("clearRoute").addEventListener("click",()=>{
+    routeFrom=null;routeTo=null;routePath=[];selectedRegion=null;info.style.display="none";
+    setStatus(routeMode?"Click a source region, then a target region.":"Route cleared.");draw();
+  });
+  document.getElementById("closeInfo").addEventListener("click",()=>info.style.display="none");
+  window.addEventListener("resize",resize);
+  resize();
+  loadGraph(false);
+})();
+</script>
+</body>
+</html>

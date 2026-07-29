@@ -390,6 +390,17 @@ public final class AgentNavigationGraphService {
         return exact != null ? exact : peekClosestGraph(map, movementProfile);
     }
 
+    public static List<AgentMovementProfile> cachedMovementProfiles(int mapId) {
+        return GRAPHS.snapshotEntries().stream()
+                .filter(entry -> entry.getKey().mapId() == mapId)
+                .map(entry -> entry.getValue().movementProfile)
+                .distinct()
+                .sorted(Comparator
+                        .comparingInt(AgentMovementProfile::totalSpeedStat)
+                        .thenComparingInt(AgentMovementProfile::totalJumpStat))
+                .toList();
+    }
+
     public static void warmGraphAsync(MapleMap map, AgentMovementProfile movementProfile) {
         if (map == null || !acceptingAsyncWarmups) {
             return;

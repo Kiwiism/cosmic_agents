@@ -73,6 +73,7 @@ import server.SkillbookInformationProvider;
 import server.ThreadManager;
 import server.TimerManager;
 import server.agents.catalog.decision.AgentDecisionCatalogRuntime;
+import server.agents.capabilities.navigation.AgentMapGraphWebServer;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.population.AgentPopulationRuntime;
 import server.agents.runtime.AgentRuntimeShutdownCoordinator;
@@ -152,6 +153,7 @@ public class Server {
 
     private LoginServer loginServer;
     private DatabaseConsoleBridgeServer databaseConsoleBridgeServer;
+    private AgentMapGraphWebServer agentMapGraphWebServer;
     private final List<Map<Integer, String>> channels = new LinkedList<>();
     private final List<World> worlds = new ArrayList<>();
     private final Properties subnetInfo = new Properties();
@@ -1000,6 +1002,7 @@ public class Server {
 
         AgentPopulationRuntime.start();
         startDatabaseConsoleBridge();
+        startAgentMapGraphViewer();
     }
 
     private void startDatabaseConsoleBridge() {
@@ -1023,6 +1026,21 @@ public class Server {
             return true;
         }
         return !("false".equalsIgnoreCase(value) || "0".equals(value) || "no".equalsIgnoreCase(value));
+    }
+
+    private void startAgentMapGraphViewer() {
+        if (!AgentMapGraphWebServer.enabled()) {
+            log.info("Agent map-graph viewer disabled. Set {}=true to enable it.",
+                    AgentMapGraphWebServer.ENABLED_ENV);
+            return;
+        }
+
+        try {
+            agentMapGraphWebServer = new AgentMapGraphWebServer();
+            agentMapGraphWebServer.start();
+        } catch (IOException e) {
+            log.warn("Agent map-graph viewer did not start", e);
+        }
     }
 
     private ChannelDependencies registerChannelDependencies() {
@@ -2237,6 +2255,10 @@ public class Server {
         if (databaseConsoleBridgeServer != null) {
             databaseConsoleBridgeServer.stop();
             databaseConsoleBridgeServer = null;
+        }
+        if (agentMapGraphWebServer != null) {
+            agentMapGraphWebServer.stop();
+            agentMapGraphWebServer = null;
         }
 
         resetServerWorlds();
