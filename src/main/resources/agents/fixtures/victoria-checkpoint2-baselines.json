@@ -152,7 +152,6 @@
         { "itemId": 1002068, "inventoryType": "EQUIPPED", "position": -1, "quantity": 1 },
         { "itemId": 1472061, "inventoryType": "EQUIP", "position": 1, "quantity": 1 },
         { "itemId": 1332005, "inventoryType": "EQUIP", "position": 2, "quantity": 1 },
-        { "itemId": 1041002, "inventoryType": "EQUIP", "position": 3, "quantity": 1 },
         { "itemId": 1332000, "inventoryType": "EQUIP", "position": 4, "quantity": 1 },
         { "itemId": 2000014, "inventoryType": "USE", "position": 1, "quantity": 82 },
         { "itemId": 2000013, "inventoryType": "USE", "position": 2, "quantity": 64 },

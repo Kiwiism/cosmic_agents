@@ -69,6 +69,18 @@ class AgentVictoriaSharedQuestPackCatalogTest {
         }
     }
 
+    @Test
+    void thiefDaggerCheckpointKeepsTheGreenBeginnerTopEquipped() {
+        VictoriaCheckpointBaseline.Snapshot snapshot =
+                VictoriaCheckpointBaseline.require("thief-dagger-standard-v1");
+
+        assertTrue(snapshot.items().stream().anyMatch(item ->
+                item.itemId() == 1041010
+                        && item.inventoryType().equals("EQUIPPED")
+                        && item.position() == -5));
+        assertFalse(snapshot.items().stream().anyMatch(item -> item.itemId() == 1041002));
+    }
+
     private static void assertPacks(
             AgentVictoriaLevel15CatalogRepository repository,
             String bundleId,

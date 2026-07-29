@@ -32,7 +32,7 @@ public final class AgentNavigationPathService {
     static final int MOVEMENT_MAX_EDGE_CHECKS = config.AgentTuning.intValue(
             "server.agents.capabilities.navigation.AgentNavigationPathService.MOVEMENT_MAX_EDGE_CHECKS");
 
-    static boolean useAdmissibleHeuristic = true;
+    private static final boolean USE_ZERO_HEURISTIC = false;
 
     private AgentNavigationPathService() {
     }
@@ -103,7 +103,7 @@ public final class AgentNavigationPathService {
                                                            Point targetPos) {
         MapleMap map = bot.getMap();
         return runSearch(graph, map, bot.getPosition(), startRegionId, targetRegionId, targetPos,
-                null, useAdmissibleHeuristic, true, MAX_EDGE_CHECKS, null,
+                null, USE_ZERO_HEURISTIC, true, MAX_EDGE_CHECKS, null,
                 AgentNavigationDangerCostService.intermediateRegionCosts(
                         graph, map, startRegionId, targetRegionId)).path();
     }
@@ -217,7 +217,7 @@ public final class AgentNavigationPathService {
                 graph, map, startRegionId, targetRegionId);
         SearchOutcome bounded = runSearch(
                 graph, map, startPos, startRegionId, targetRegionId, targetPos,
-                caller, useAdmissibleHeuristic, instrument, movementBudget,
+                caller, USE_ZERO_HEURISTIC, instrument, movementBudget,
                 variation, dangerCosts);
         if (!bounded.path().isEmpty() || !bounded.capped()
                 || movementBudget >= recoveryBudget) {
@@ -230,7 +230,7 @@ public final class AgentNavigationPathService {
         // accuracy budget; ordinary movement remains bounded by MOVEMENT_MAX_EDGE_CHECKS.
         return runSearch(
                 graph, map, startPos, startRegionId, targetRegionId, targetPos,
-                caller + "-recovery", useAdmissibleHeuristic, instrument, recoveryBudget,
+                caller + "-recovery", USE_ZERO_HEURISTIC, instrument, recoveryBudget,
                 variation, dangerCosts).path();
     }
 
@@ -242,7 +242,7 @@ public final class AgentNavigationPathService {
                                                            Point targetPos,
                                                            String pathfindCaller) {
         return runSearch(graph, map, startPos, startRegionId, targetRegionId, targetPos,
-                pathfindCaller, useAdmissibleHeuristic, true).path();
+                pathfindCaller, USE_ZERO_HEURISTIC, true).path();
     }
 
     public static List<AgentNavigationGraph.Edge> findPath(AgentNavigationGraph graph,

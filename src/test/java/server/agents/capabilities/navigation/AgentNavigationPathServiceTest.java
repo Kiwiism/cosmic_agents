@@ -319,6 +319,28 @@ class AgentNavigationPathServiceTest {
     }
 
     @Test
+    void kerningRightPlatformCanReachUpperEastPortalWithoutEmptyRecoveryLoop() {
+        MapleMap map = AgentNavigationMapLoader.loadMapGeometry(103000000);
+        AgentNavigationGraph graph = AgentNavigationGraphService.getGraph(map);
+        Point start = new Point(2490, 99);
+        Point target = new Point(2512, -204);
+        int startRegionId = graph.findRegionId(map, start);
+        int targetRegionId = graph.findRegionId(map, target);
+
+        List<AgentNavigationGraph.Edge> path = AgentNavigationPathService.movementPath(
+                graph, map, start, startRegionId, targetRegionId, target,
+                null, AgentNavigationPathService.MOVEMENT_MAX_EDGE_CHECKS,
+                AgentNavigationPathService.MAX_EDGE_CHECKS, false);
+
+        assertFalse(path.isEmpty());
+        AgentNavigationGraph.Edge first = path.getFirst();
+        assertEquals(AgentNavigationGraph.EdgeType.JUMP, first.type);
+        assertEquals(-6, first.launchStepX);
+        assertEquals(new Point(2413, 126), first.endPoint);
+        assertEquals(targetRegionId, path.getLast().toRegionId);
+    }
+
+    @Test
     void disconnectedComponentsExitWithoutSearch() {
         AgentNavigationGraph graph = graphWithRegionsAndEdges(
                 List.of(groundRegion(1, 0, 100, 100), groundRegion(2, 200, 300, 100)),

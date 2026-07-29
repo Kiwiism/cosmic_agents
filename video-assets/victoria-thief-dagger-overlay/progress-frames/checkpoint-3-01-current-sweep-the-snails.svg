@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="460" height="515" viewBox="0 0 460 515">
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000814" flood-opacity=".46"/>
+    </filter>
+    <style>
+      .sans { font-family: "Segoe UI", Arial, sans-serif; }
+      .label { font-size: 14px; font-weight: 800; letter-spacing: 1.8px; fill: #142335; }
+      .title { font-size: 24px; font-weight: 800; fill: #fff8e7; }
+      .section { font-size: 14px; font-weight: 800; letter-spacing: 1.4px; fill: #f6c85f; }
+      .item { font-size: 18px; font-weight: 700; fill: #ffffff; }
+      .detail { font-size: 15px; font-weight: 500; fill: #b9c8d9; }
+      .box { fill: #0d1a29; stroke: #d9bd77; stroke-width: 2; }
+      .rule { stroke: #36516b; stroke-width: 1; opacity: .72; }
+    </style>
+  </defs>
+  <rect x="12" y="12" width="436" height="491" rx="22" fill="#142335" fill-opacity=".95"
+        stroke="#d9bd77" stroke-width="2" filter="url(#shadow)"/>
+  <path d="M34 12h392a22 22 0 0 1 22 22v51H12V34a22 22 0 0 1 22-22z" fill="#f6c85f"/>
+  <text class="sans label" x="34" y="43">CHECKPOINT 3 / 3</text>
+  <text class="sans title" x="34" y="72">Perion Quests</text>
+  <text class="sans section" x="34" y="116">QUEST OBJECTIVES</text>
+
+  <rect class="box" x="34" y="139" width="22" height="22" rx="4"/>
+  <text class="sans item" x="70" y="157">Sweep the Snails!</text>
+  <text class="sans detail" x="70" y="181">Defeat 10 Blue Snails</text>
+  <text class="sans detail" x="70" y="204">Defeat 10 Red Snails</text>
+  <line class="rule" x1="34" y1="223" x2="426" y2="223"/>
+
+  <rect class="box" x="34" y="241" width="22" height="22" rx="4"/>
+  <text class="sans item" x="70" y="259">The Stump Horror Story</text>
+  <text class="sans detail" x="70" y="283">Defeat 50 Stumps</text>
+  <line class="rule" x1="34" y1="302" x2="426" y2="302"/>
+
+  <rect class="box" x="34" y="320" width="22" height="22" rx="4"/>
+  <text class="sans item" x="70" y="338">Preparations for the</text>
+  <text class="sans item" x="70" y="360">Traditional Ceremony</text>
+  <text class="sans detail" x="70" y="384">Collect 20 Leaves</text>
+
+  <rect x="28" y="409" width="404" height="1" fill="#d9bd77" opacity=".55"/>
+  <text class="sans section" x="34" y="439">FINAL GOAL</text>
+  <rect class="box" x="34" y="459" width="22" height="22" rx="4"/>
+  <text class="sans item" x="70" y="477">Reach Level 15</text>
+
+  <g aria-label="current objective" transform="translate(45 150)">
+    <circle r="14" fill="#f6c85f" stroke="#fff8e7" stroke-width="2"/>
+    <path d="M-3.5-6.5L7 0-3.5 6.5z" fill="#142335"/>
+  </g>
+</svg>
