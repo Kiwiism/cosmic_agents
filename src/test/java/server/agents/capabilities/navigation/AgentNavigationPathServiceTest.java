@@ -342,6 +342,48 @@ class AgentNavigationPathServiceTest {
     }
 
     @Test
+    void kerningMainPlatformUsesEastExitCorridorWithoutRegion143Loop() {
+        MapleMap map = AgentNavigationMapLoader.loadMapGeometry(103000000);
+        AgentNavigationGraph graph = AgentNavigationGraphService.getGraph(map);
+        Point start = new Point(2490, 156);
+        Point target = new Point(2512, -204);
+        int startRegionId = graph.findRegionId(map, start);
+        int targetRegionId = graph.findRegionId(map, target);
+
+        List<AgentNavigationGraph.Edge> path = AgentNavigationPathService.movementPath(
+                graph, map, start, startRegionId, targetRegionId, target,
+                null, AgentNavigationPathService.MOVEMENT_MAX_EDGE_CHECKS,
+                AgentNavigationPathService.MAX_EDGE_CHECKS, false);
+
+        assertEquals(148, startRegionId);
+        assertEquals(104, targetRegionId);
+        assertEquals(List.of(127, 122, 109, 104),
+                path.stream().map(edge -> edge.toRegionId).toList());
+        assertTrue(path.stream().noneMatch(edge -> edge.toRegionId == 143));
+    }
+
+    @Test
+    void kerningNellaPlatformUsesUpperCorridorToReachAlex() {
+        MapleMap map = AgentNavigationMapLoader.loadMapGeometry(103000000);
+        AgentNavigationGraph graph = AgentNavigationGraphService.getGraph(map);
+        Point start = new Point(71, -60);
+        Point target = new Point(1005, -511);
+        int startRegionId = graph.findRegionId(map, start);
+        int targetRegionId = graph.findRegionId(map, target);
+
+        List<AgentNavigationGraph.Edge> path = AgentNavigationPathService.movementPath(
+                graph, map, start, startRegionId, targetRegionId, target,
+                null, AgentNavigationPathService.MOVEMENT_MAX_EDGE_CHECKS,
+                AgentNavigationPathService.MAX_EDGE_CHECKS, false);
+
+        assertEquals(126, startRegionId);
+        assertEquals(39, targetRegionId);
+        assertEquals(List.of(132, 118, 107, 98, 91, 74, 46, 39),
+                path.stream().map(edge -> edge.toRegionId).toList());
+        assertTrue(path.stream().noneMatch(edge -> edge.toRegionId == 111));
+    }
+
+    @Test
     void disconnectedComponentsExitWithoutSearch() {
         AgentNavigationGraph graph = graphWithRegionsAndEdges(
                 List.of(groundRegion(1, 0, 100, 100), groundRegion(2, 200, 300, 100)),

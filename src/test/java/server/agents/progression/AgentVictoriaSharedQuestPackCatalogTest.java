@@ -89,6 +89,22 @@ class AgentVictoriaSharedQuestPackCatalogTest {
     }
 
     @Test
+    void capturedPostNellaResumeStartsAtSharedAlexStep() {
+        VictoriaResumeCheckpointBaseline.ResumeCheckpoint checkpoint =
+                VictoriaResumeCheckpointBaseline.require(
+                        "thief-dagger-standard-v1", "checkpoint2-nella");
+        AgentVictoriaSharedQuestPackCatalog.Pack pack =
+                AgentVictoriaSharedQuestPackCatalog.require(checkpoint.questPackId());
+
+        assertEquals("CAPTURED", checkpoint.snapshot().provenance());
+        assertEquals(11, checkpoint.questPackIndex());
+        assertEquals(1052000, pack.steps().get(checkpoint.questPackIndex()).npcId());
+        assertEquals(28271, pack.steps().get(checkpoint.questPackIndex()).questId());
+        assertTrue(checkpoint.activeQuests().stream().anyMatch(
+                quest -> quest.questId() == 28270 && quest.npcId() == 1052103));
+    }
+
+    @Test
     void authoredScrollsReachTheirDeclaredTownAndRequiredScrollsArePurchased()
             throws IOException {
         for (String packId : EXPECTED_PACKS) {

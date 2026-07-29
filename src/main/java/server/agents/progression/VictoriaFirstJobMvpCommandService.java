@@ -160,9 +160,12 @@ public final class VictoriaFirstJobMvpCommandService {
             try {
                 AgentCareerBuildBundle bundle = VictoriaFirstJobMvpTestService.resetAndStart(
                         entry, career, startVariant.variantId(), checkpoint, System.currentTimeMillis());
-                String fixture = checkpoint == VictoriaFirstJobMvpTestService.Checkpoint.CHECKPOINT_2
-                        ? " / " + VictoriaFirstJobMvpTestService.checkpoint2Provenance(career)
-                        + " checkpoint fixture" : "";
+                String fixture =
+                        checkpoint == VictoriaFirstJobMvpTestService.Checkpoint.CHECKPOINT_2
+                                ? " / " + VictoriaFirstJobMvpTestService.checkpoint2Provenance(career)
+                                + " checkpoint fixture"
+                                : checkpoint == VictoriaFirstJobMvpTestService.Checkpoint.CHECKPOINT_2_NELLA
+                                ? " / CAPTURED post-Nella checkpoint fixture" : "";
                 player.yellowMessage(agent.getName() + " reset for " + checkpoint
                         + "; " + bundle.bundleId() + " / " + startVariant.variantId()
                         + fixture + " starts in 3 seconds.");
@@ -216,7 +219,8 @@ public final class VictoriaFirstJobMvpCommandService {
             return;
         }
         player.yellowMessage("Usage: !victoria run <AgentIGN> <warrior|bowman|magician|thief|pirate> "
-                + "[lv10|lv9-olaf|lv9-grind] [checkpoint1|checkpoint2|checkpoint3]");
+                + "[lv10|lv9-olaf|lv9-grind] "
+                + "[checkpoint1|checkpoint2|checkpoint2-nella|checkpoint3]");
         player.yellowMessage("Reset is an alias for run. Builds: thief-dagger, pirate-knuckle. "
                 + "Train: !victoria train <AgentIGN> [16-30] [mixed|grind]. "
                 + "Stop: !victoria stop <AgentIGN>. "

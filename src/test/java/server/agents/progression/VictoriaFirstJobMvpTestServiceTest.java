@@ -42,6 +42,14 @@ class VictoriaFirstJobMvpTestServiceTest {
     }
 
     @Test
+    void resolvesCapturedPostNellaResumeCheckpoint() {
+        assertEquals(VictoriaFirstJobMvpTestService.Checkpoint.CHECKPOINT_2_NELLA,
+                VictoriaFirstJobMvpTestService.resolveCheckpoint("checkpoint2-nella"));
+        assertEquals(VictoriaFirstJobMvpTestService.Checkpoint.CHECKPOINT_2_NELLA,
+                VictoriaFirstJobMvpTestService.resolveCheckpoint("cp2-nella"));
+    }
+
+    @Test
     void usesLithHarborShipArrivalInsteadOfOrdinaryTownSpawn() {
         MapleMap map = mock(MapleMap.class);
         Portal shipArrival = mock(Portal.class);

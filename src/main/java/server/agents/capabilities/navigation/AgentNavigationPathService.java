@@ -431,6 +431,9 @@ public final class AgentNavigationPathService {
                 }
 
                 for (AgentNavigationGraph.Edge edge : graph.getOutgoing(current.state.regionId)) {
+                    if (!AgentNavigationRouteOverlayPolicy.allows(graph, targetRegionId, edge)) {
+                        continue;
+                    }
                     if (!isEdgeUsable(graph, map, skillAgent, edge, shadowSkillEdges)) {
                         continue;
                     }

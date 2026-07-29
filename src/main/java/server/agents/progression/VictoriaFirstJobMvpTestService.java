@@ -45,6 +45,7 @@ public final class VictoriaFirstJobMvpTestService {
     public enum Checkpoint {
         CHECKPOINT_1,
         CHECKPOINT_2,
+        CHECKPOINT_2_NELLA,
         CHECKPOINT_3
     }
 
@@ -103,7 +104,17 @@ public final class VictoriaFirstJobMvpTestService {
 
         AgentVictoriaLevel15Catalog catalog = catalogRepository.catalog();
         AgentCareerProgressionState.Stage initialStage;
-        if (requestedCheckpoint == Checkpoint.CHECKPOINT_2) {
+        VictoriaResumeCheckpointBaseline.ResumeCheckpoint resumeCheckpoint =
+                requestedCheckpoint == Checkpoint.CHECKPOINT_2_NELLA
+                        ? VictoriaResumeCheckpointBaseline.require(
+                        bundle.bundleId(), "checkpoint2-nella")
+                        : null;
+        if (resumeCheckpoint != null) {
+            agent.resetVictoriaCheckpointBaseline(resumeCheckpoint.snapshot());
+            applyCheckpointQuestState(agent, resumeCheckpoint.snapshot());
+            applyActiveQuestState(agent, resumeCheckpoint);
+            initialStage = AgentCareerProgressionState.Stage.HOME_QUEST_PACK;
+        } else if (requestedCheckpoint == Checkpoint.CHECKPOINT_2) {
             VictoriaCheckpointBaseline.Snapshot baseline =
                     VictoriaCheckpointBaseline.require(bundle.bundleId());
             agent.resetVictoriaCheckpoint2Baseline(bundle.bundleId());
@@ -121,19 +132,29 @@ public final class VictoriaFirstJobMvpTestService {
         }
         AgentVictoriaProgressionDiagnostics.deleteMilestones(agent.getId());
         bundle = AgentCareerBuildBundleService.assignForTest(entry, bundle.bundleId(), nowMs);
-        if (requestedCheckpoint == Checkpoint.CHECKPOINT_2) {
+        if (resumeCheckpoint != null) {
+            moveToMap(entry, agent, resumeCheckpoint.snapshot().character().mapId(),
+                    new Point(resumeCheckpoint.position().x(), resumeCheckpoint.position().y()));
+        } else if (requestedCheckpoint == Checkpoint.CHECKPOINT_2) {
             moveToMap(entry, agent,
                     VictoriaCheckpointBaseline.require(bundle.bundleId()).character().mapId());
         } else {
             moveToLithHarbor(entry, agent);
         }
-        entry.capabilityStates().require(AgentCareerProgressionState.STATE_KEY).reset(
+        AgentCareerProgressionState progressionState =
+                entry.capabilityStates().require(AgentCareerProgressionState.STATE_KEY);
+        progressionState.reset(
                 bundle,
                 AgentCareerProgressionState.RunMode.LEVEL15_WITH_INITIAL_SHOP,
                 requestedCheckpoint == Checkpoint.CHECKPOINT_1
-                        ? startVariant.variantId() : "checkpoint2",
+                        ? startVariant.variantId()
+                        : requestedCheckpoint == Checkpoint.CHECKPOINT_2_NELLA
+                        ? "checkpoint2-nella" : "checkpoint2",
                 initialStage,
                 nowMs + START_DELAY_MS);
+        if (resumeCheckpoint != null) {
+            progressionState.questPackIndex(resumeCheckpoint.questPackIndex());
+        }
         if (!AgentUniversalPlanRuntime.start(entry, agent, "victoria-level15-mvp",
                 AgentPlanStartRequest.EMPTY, nowMs)) {
             throw new IllegalStateException("universal Victoria plan rejected the reset state");
@@ -151,6 +172,8 @@ public final class VictoriaFirstJobMvpTestService {
         return switch (alias) {
             case "", "checkpoint1", "checkpoint-1", "cp1" -> Checkpoint.CHECKPOINT_1;
             case "checkpoint2", "checkpoint-2", "cp2" -> Checkpoint.CHECKPOINT_2;
+            case "checkpoint2-nella", "checkpoint-2-nella", "cp2-nella" ->
+                    Checkpoint.CHECKPOINT_2_NELLA;
             case "checkpoint3", "checkpoint-3", "cp3" -> Checkpoint.CHECKPOINT_3;
             default -> throw new IllegalArgumentException(
                     "unknown checkpoint '" + requestedCheckpoint + "'");
@@ -210,6 +233,14 @@ public final class VictoriaFirstJobMvpTestService {
         var map = maps.resolveMap(clients.world(agent), clients.channel(agent), mapId);
         Point position = map.getPortal(0) == null
                 ? new Point(0, 0) : new Point(map.getPortal(0).getPosition());
+        moveToMap(entry, agent, mapId, position);
+    }
+
+    private static void moveToMap(
+            AgentRuntimeEntry entry, Character agent, int mapId, Point position) {
+        var maps = AgentMapGatewayRuntime.map();
+        var clients = AgentClientGatewayRuntime.clients();
+        var map = maps.resolveMap(clients.world(agent), clients.channel(agent), mapId);
         maps.changeMap(agent, map, position);
         AgentMovementStateResetService.resetEntryState(entry);
         AgentMovementBroadcastService.broadcastMovement(entry);
@@ -231,6 +262,19 @@ public final class VictoriaFirstJobMvpTestService {
             for (int questId : pack.questIds()) {
                 Quest.getInstance(questId).reset(agent);
             }
+        }
+    }
+
+    private static void applyActiveQuestState(
+            Character agent,
+            VictoriaResumeCheckpointBaseline.ResumeCheckpoint checkpoint) {
+        for (VictoriaResumeCheckpointBaseline.ActiveQuest activeQuest
+                : checkpoint.activeQuests()) {
+            Quest quest = Quest.getInstance(activeQuest.questId());
+            quest.reset(agent);
+            quest.forceStart(agent, activeQuest.npcId());
+            QuestStatus status = agent.getQuest(quest);
+            activeQuest.progress().forEach(status::setProgress);
         }
     }
 

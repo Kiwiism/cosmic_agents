@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "routes": [
+    {
+      "mapId": 103000000,
+      "graphVersion": 57,
+      "targetRegionId": 104,
+      "regionPath": [148, 127, 122, 109, 104],
+      "rationale": "Reach Kerning City's east exit without entering the dead-end 148-to-143 jump loop."
+    },
+    {
+      "mapId": 103000000,
+      "graphVersion": 57,
+      "targetRegionId": 39,
+      "regionPath": [126, 132, 118, 107, 98, 91, 74, 46, 39],
+      "rationale": "Reach Alex from Nella's platform without entering the 126-to-111 recovery loop."
+    }
+  ]
+}

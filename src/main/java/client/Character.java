@@ -9790,8 +9790,12 @@ public class Character extends AbstractCharacterObject {
 
     /** Restores a captured or explicitly predicted post-instructor/post-shopping checkpoint-2 fixture. */
     public synchronized void resetVictoriaCheckpoint2Baseline(String bundleId) {
-        VictoriaCheckpointBaseline.Snapshot baseline =
-                VictoriaCheckpointBaseline.require(bundleId);
+        resetVictoriaCheckpointBaseline(VictoriaCheckpointBaseline.require(bundleId));
+    }
+
+    /** Restores an explicit captured or predicted Victoria progression fixture. */
+    public synchronized void resetVictoriaCheckpointBaseline(
+            VictoriaCheckpointBaseline.Snapshot baseline) {
         VictoriaCheckpointBaseline.CharacterState state = baseline.character();
         sitChair(-1);
         cancelAllBuffs(false);
