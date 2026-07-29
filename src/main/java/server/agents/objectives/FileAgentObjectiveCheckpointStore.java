@@ -52,7 +52,7 @@ public final class FileAgentObjectiveCheckpointStore implements AgentObjectiveCh
             try {
                 Files.move(temp, path, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
             } catch (AtomicMoveNotSupportedException | AccessDeniedException atomicFailure) {
-                replaceNonAtomically(temp, path, atomicFailure);
+                Files.move(temp, path, StandardCopyOption.REPLACE_EXISTING);
             }
         } finally {
             Files.deleteIfExists(temp);
@@ -71,29 +71,4 @@ public final class FileAgentObjectiveCheckpointStore implements AgentObjectiveCh
         return directory.resolve(characterId + ".json");
     }
 
-    private static void replaceNonAtomically(Path source, Path target, IOException atomicFailure)
-            throws IOException {
-        int replaceAttempts = config.AgentTuning.intValue(
-                "server.agents.objectives.FileAgentObjectiveCheckpointStore.REPLACE_ATTEMPTS");
-        long retryDelayMs = config.AgentTuning.longValue(
-                "server.agents.objectives.FileAgentObjectiveCheckpointStore.REPLACE_RETRY_DELAY_MS");
-        for (int attempt = 1; attempt <= replaceAttempts; attempt++) {
-            try {
-                Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
-                return;
-            } catch (AccessDeniedException accessDenied) {
-                accessDenied.addSuppressed(atomicFailure);
-                if (attempt == replaceAttempts) {
-                    throw accessDenied;
-                }
-                try {
-                    Thread.sleep(retryDelayMs * attempt);
-                } catch (InterruptedException interrupted) {
-                    Thread.currentThread().interrupt();
-                    accessDenied.addSuppressed(interrupted);
-                    throw accessDenied;
-                }
-            }
-        }
-    }
 }

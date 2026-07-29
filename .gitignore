@@ -49,3 +49,9 @@ models/
 bots/llm-memory/
 
 nul
+
+# Local diagnostics, generated graph renders, and .NET helper build products.
+/docker-wsl-feature-status.txt
+/exports/
+/tools/WzToNxBatch/bin/
+/tools/WzToNxBatch/obj/

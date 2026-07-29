@@ -574,8 +574,8 @@ public final class AgentObserverRuntime {
     }
 
     private static void disconnectLoadedObserver(Character observer) {
-        if (observer != null && observer.getClient() != null) {
-            observer.getClient().forceDisconnect();
+        if (observer != null) {
+            AgentCharacterGatewayRuntime.characters().disconnect(observer, false, false);
         }
     }
 

@@ -2270,12 +2270,12 @@ tuning:
     # Technical: the "scheduler metrics" component consumes this as an integer. Domain: non-negative count, capacity, or threshold unless the owning component documents a sentinel.
     server.agents.monitoring.AgentSchedulerMetrics.ROLLING_WINDOW_CAPACITY: '2048'
     # Values: a positive integer. Recommended: 2-5 around the tested baseline 3; raise only if Windows file replacement remains transiently busy.
-    # Purpose: Sets how many times an Agent retries replacing a durable objective checkpoint when Windows briefly locks the existing file. Higher values improve recovery from short locks but delay a final failure.
-    # Technical: the "file Agent objective checkpoint store" consumes this as an integer attempt count for the non-atomic replacement fallback after an atomic move is denied.
+    # Purpose: Sets how many times an Agent retries saving a durable objective checkpoint when Windows briefly locks the existing file. Higher values improve recovery from short locks without pausing Agent gameplay.
+    # Technical: the objective checkpoint runtime consumes this as an asynchronous persistence-attempt limit after an access-denied result.
     server.agents.objectives.FileAgentObjectiveCheckpointStore.REPLACE_ATTEMPTS: '3'
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 5-25 around the tested baseline 10; keep this short because each later attempt applies a linear multiplier.
-    # Purpose: Controls the base pause between checkpoint replacement retries after Windows reports a temporary file lock. Higher values wait longer for the lock to clear; lower values retry sooner.
-    # Technical: the "file Agent objective checkpoint store" consumes this as the millisecond base for linear retry backoff during its non-atomic replacement fallback.
+    # Purpose: Controls the delay between checkpoint save retries after Windows reports a temporary file lock. Higher values give the lock longer to clear while the Agent continues running.
+    # Technical: the objective checkpoint runtime consumes this as the millisecond base for non-blocking linear retry backoff.
     server.agents.objectives.FileAgentObjectiveCheckpointStore.REPLACE_RETRY_DELAY_MS: '10'
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 2500-10000 around the tested baseline 5000; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how long Agents remain in or wait for cooldown. Higher values make that pause or state last longer; lower values make them continue sooner.
