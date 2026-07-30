@@ -46,7 +46,8 @@ public final class AgentGrindModeTickService {
         target = searchResult.target();
         attackPlan = searchResult.attackPlan();
 
-        AgentGrindLootTargetService.refreshGrindLootTarget(entry, agent, runAiTick, hooks.lootRadius());
+        AgentGrindLootTargetService.refreshGrindLootTarget(
+                entry, agent, runAiTick, hooks.lootRadius(), target != null);
         if (target == null) {
             AgentGrindNoTargetFallbackService.Result result =
                     AgentGrindNoTargetFallbackService.handleNoTarget(

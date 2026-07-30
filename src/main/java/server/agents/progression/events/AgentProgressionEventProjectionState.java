@@ -15,6 +15,7 @@ public final class AgentProgressionEventProjectionState {
     private long apAssigned;
     private long spAssigned;
     private long questTransitions;
+    private long questProgressMilestones;
     private long checkpoints;
     private long revision;
     private AgentEvent lastEvent;
@@ -30,6 +31,8 @@ public final class AgentProgressionEventProjectionState {
             spAssigned += skill.skillLevel() - skill.previousSkillLevel();
         } else if (event instanceof AgentQuestStateChangedEvent) {
             questTransitions++;
+        } else if (event instanceof AgentQuestProgressMilestoneEvent) {
+            questProgressMilestones++;
         } else if (event instanceof AgentProgressionCheckpointEvent) {
             checkpoints++;
         } else {
@@ -41,7 +44,7 @@ public final class AgentProgressionEventProjectionState {
 
     public synchronized Snapshot snapshot() {
         return new Snapshot(levelTransitions, jobAdvancements, apAssigned, spAssigned,
-                questTransitions, checkpoints, revision, lastEvent);
+                questTransitions, questProgressMilestones, checkpoints, revision, lastEvent);
     }
 
     public record Snapshot(long levelTransitions,
@@ -49,6 +52,7 @@ public final class AgentProgressionEventProjectionState {
                            long apAssigned,
                            long spAssigned,
                            long questTransitions,
+                           long questProgressMilestones,
                            long checkpoints,
                            long revision,
                            AgentEvent lastEvent) {

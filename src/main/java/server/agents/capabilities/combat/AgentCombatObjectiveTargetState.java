@@ -50,6 +50,14 @@ public final class AgentCombatObjectiveTargetState {
         return !preferredMobIds.isEmpty();
     }
 
+    public synchronized Set<Integer> preferredMobIds() {
+        return Set.copyOf(preferredMobIds);
+    }
+
+    public synchronized Set<Integer> fallbackMobIds() {
+        return Set.copyOf(fallbackMobIds);
+    }
+
     public synchronized boolean restricted() {
         return !preferredMobIds.isEmpty() || !fallbackMobIds.isEmpty();
     }

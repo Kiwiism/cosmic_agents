@@ -6,11 +6,16 @@ import server.agents.capabilities.shop.AgentShopService;
 import server.agents.capabilities.shop.AgentShopStateRuntime;
 import server.agents.capabilities.shop.AgentShopWorkflowPhase;
 import server.agents.capabilities.inventory.demand.AgentQuestItemDemandRuntime;
+import server.agents.capabilities.looting.AgentPreExitLootRuntime;
 import server.agents.integration.PrimitiveCapabilityGateway;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -48,7 +53,7 @@ final class AgentVictoriaSharedQuestPackRuntime {
         return switch (step.type()) {
             case "TAXI" -> taxi(entry, agent, state, step, nowMs, gateway);
             case "QUEST" -> quest(entry, agent, state, step, nowMs, gateway);
-            case "HUNT" -> hunt(entry, agent, state, step, nowMs, gateway);
+            case "HUNT" -> hunt(entry, agent, state, packId, pack, step, nowMs, gateway);
             case "TRAVEL" -> travel(entry, agent, state, step, nowMs, gateway);
             case "PORTAL" -> portal(entry, agent, state, step, nowMs, gateway);
             case "USE_SCROLL" -> useScroll(entry, agent, state, step, nowMs, gateway);
@@ -117,7 +122,8 @@ final class AgentVictoriaSharedQuestPackRuntime {
         }
         gateway.facePosition(agent, taxi);
         gateway.stop(entry);
-        gateway.runNpcScript(agent, town.taxiNpcId(), 0, 1, selection, 0);
+        gateway.runNpcScript(agent, town.taxiNpcId(),
+                AgentTaxiDialogueSequence.regularTownCab(selection));
         return Result.RUNNING;
     }
 
@@ -167,23 +173,83 @@ final class AgentVictoriaSharedQuestPackRuntime {
     private static Result hunt(AgentRuntimeEntry entry,
                                Character agent,
                                AgentCareerProgressionState state,
+                               String packId,
+                               AgentVictoriaSharedQuestPackCatalog.Pack pack,
                                AgentVictoriaSharedQuestPackCatalog.Step step,
                                long nowMs,
                                PrimitiveCapabilityGateway gateway) {
+        String selectionId = packId + ":" + state.questPackIndex();
         if (conditionsMet(agent, step, gateway)) {
+            if (AgentPreExitLootRuntime.drain(entry, agent, nowMs)) {
+                return Result.RUNNING;
+            }
             gateway.stop(entry);
+            AgentPreExitLootRuntime.clear(entry);
+            AgentAdaptiveQuestHuntSelector.defaultSelector()
+                    .clearCombinedSelection(agent.getId(), selectionId);
             advance(state, nowMs);
             return Result.RUNNING;
         }
-        if (!inMap(step, agent.getMapId())) {
-            if (AgentVictoriaRouteRuntime.travel(entry, agent, step.mapId(), gateway)) {
+
+        List<AgentVictoriaQuestHuntIndexRepository.ObjectiveReference> objectives =
+                unresolvedObjectives(agent, state, pack, step, gateway);
+        AgentAdaptiveQuestHuntSelector.Selection selection =
+                AgentAdaptiveQuestHuntSelector.defaultSelector()
+                        .selectCombined(entry, agent, selectionId, step.mapId(),
+                                step.preferredMobIds(), objectives, nowMs)
+                        .orElse(null);
+        int huntMapId = selection == null ? step.mapId() : selection.map().mapId();
+        if (agent.getMapId() != huntMapId) {
+            if (AgentVictoriaRouteRuntime.travel(entry, agent, huntMapId, gateway)) {
                 return Result.RUNNING;
             }
         }
-        Set<Integer> preferred = new HashSet<>(step.preferredMobIds());
-        Set<Integer> incidental = new HashSet<>(step.incidentalMobIds());
+        Set<Integer> preferred = selection == null
+                ? new HashSet<>(step.preferredMobIds())
+                : new HashSet<>(selection.map().targetMobIds());
+        Set<Integer> incidental = huntMapId == step.mapId()
+                ? new HashSet<>(step.incidentalMobIds()) : Set.of();
         gateway.grind(entry, preferred, incidental);
         return Result.RUNNING;
+    }
+
+    private static List<AgentVictoriaQuestHuntIndexRepository.ObjectiveReference>
+    unresolvedObjectives(
+            Character agent,
+            AgentCareerProgressionState state,
+            AgentVictoriaSharedQuestPackCatalog.Pack pack,
+            AgentVictoriaSharedQuestPackCatalog.Step step,
+            PrimitiveCapabilityGateway gateway) {
+        Set<Integer> activeQuestIds = pack.steps().stream()
+                .limit(state.questPackIndex() + 1L)
+                .filter(candidate -> "QUEST".equals(candidate.type())
+                        && !candidate.complete() && candidate.questId() > 0)
+                .map(AgentVictoriaSharedQuestPackCatalog.Step::questId)
+                .filter(questId -> gateway.questStatus(agent, questId)
+                        == QuestStatus.Status.STARTED.getId())
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        Map<String, AgentVictoriaQuestHuntIndexRepository.ObjectiveReference> result =
+                new LinkedHashMap<>();
+        AgentVictoriaQuestHuntIndexRepository repository =
+                AgentVictoriaQuestHuntIndexRepository.defaultRepository();
+        for (AgentVictoriaSharedQuestPackCatalog.Condition condition : step.conditions()) {
+            if (conditionMet(agent, condition, gateway)) {
+                continue;
+            }
+            Set<Integer> questIds = condition.questId() > 0
+                    ? Set.of(condition.questId()) : activeQuestIds;
+            for (AgentVictoriaQuestHuntIndexRepository.ObjectiveReference reference
+                    : repository.findObjectivesForTarget(questIds, condition.targetId())) {
+                boolean expectedType = "QUEST_KILL".equals(condition.type())
+                        ? reference.objective().type().contains("kill")
+                        : reference.objective().type().contains("collect");
+                if (expectedType) {
+                    result.putIfAbsent(reference.questId() + ":"
+                            + reference.objective().objectiveId(), reference);
+                }
+            }
+        }
+        return List.copyOf(result.values());
     }
 
     private static Result miniDungeonHunt(
@@ -195,8 +261,12 @@ final class AgentVictoriaSharedQuestPackRuntime {
             PrimitiveCapabilityGateway gateway) {
         boolean inside = inMap(step, agent.getMapId());
         if (conditionsMet(agent, step, gateway)) {
+            if (inside && AgentPreExitLootRuntime.drain(entry, agent, nowMs)) {
+                return Result.RUNNING;
+            }
             if (!inside) {
                 gateway.stop(entry);
+                AgentPreExitLootRuntime.clear(entry);
                 advance(state, nowMs);
                 return Result.RUNNING;
             }
@@ -235,18 +305,25 @@ final class AgentVictoriaSharedQuestPackRuntime {
                                          AgentVictoriaSharedQuestPackCatalog.Step step,
                                          PrimitiveCapabilityGateway gateway) {
         for (AgentVictoriaSharedQuestPackCatalog.Condition condition : step.conditions()) {
-            int current = switch (condition.type()) {
-                case "QUEST_KILL" -> gateway.questProgress(
-                        agent, condition.questId(), condition.targetId());
-                case "ITEM" -> gateway.itemCount(agent, condition.targetId());
-                default -> throw new IllegalStateException(
-                        "unsupported shared quest-pack condition " + condition.type());
-            };
-            if (current < condition.count()) {
+            if (!conditionMet(agent, condition, gateway)) {
                 return false;
             }
         }
         return true;
+    }
+
+    private static boolean conditionMet(
+            Character agent,
+            AgentVictoriaSharedQuestPackCatalog.Condition condition,
+            PrimitiveCapabilityGateway gateway) {
+        int current = switch (condition.type()) {
+            case "QUEST_KILL" -> gateway.questProgress(
+                    agent, condition.questId(), condition.targetId());
+            case "ITEM" -> gateway.itemCount(agent, condition.targetId());
+            default -> throw new IllegalStateException(
+                    "unsupported shared quest-pack condition " + condition.type());
+        };
+        return current >= condition.count();
     }
 
     private static Result travel(AgentRuntimeEntry entry,

@@ -8,6 +8,7 @@ import server.life.Monster;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -51,5 +52,30 @@ class AgentCombatObjectiveTargetStateTest {
 
         AgentCombatObjectiveTargetStateRuntime.clear(entry);
         assertTrue(AgentCombatObjectiveTargetStateRuntime.allows(entry, 9300012));
+    }
+
+    @Test
+    void repeatingSamePreferencesDoesNotEraseTacticalProgress() {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(
+                mock(Character.class), mock(Character.class), null);
+        Set<Integer> required = Set.of(100100);
+        Set<Integer> incidental = Set.of(1210102);
+
+        AgentCombatObjectiveTargetStateRuntime.setTargetPreferences(entry, required, incidental);
+        AgentCombatDirectiveRuntime.state(entry).selected(
+                100000002,
+                7,
+                1210102,
+                AgentCombatCandidateClass.INCIDENTAL,
+                AgentCombatDecisionReason.INCIDENTAL_PLATFORM_SWEEP,
+                1000L);
+
+        AgentCombatObjectiveTargetStateRuntime.setTargetPreferences(entry, required, incidental);
+
+        AgentCombatTacticalState.Snapshot snapshot =
+                AgentCombatDirectiveRuntime.tacticalSnapshot(entry);
+        assertEquals(1210102, snapshot.lastSelectedMobId());
+        assertEquals(AgentCombatDecisionReason.INCIDENTAL_PLATFORM_SWEEP,
+                snapshot.lastDecision());
     }
 }

@@ -16,6 +16,7 @@ import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationPathService;
 import server.agents.capabilities.navigation.AgentNavigationRegionService;
 import server.agents.capabilities.movement.AgentPatrolStateRuntime;
+import server.agents.capabilities.looting.AgentPreExitLootRuntime;
 import server.life.Monster;
 import server.maps.Foothold;
 import server.maps.MapleMap;
@@ -38,6 +39,9 @@ public final class AgentCombatTargetRuntime {
     public static Monster findGrindTarget(AgentRuntimeEntry entry, Character bot, AgentCombatConfig.Config config) {
         long startedAt = System.nanoTime();
         try {
+            if (AgentPreExitLootRuntime.active(entry, System.currentTimeMillis())) {
+                return null;
+            }
             Point botPos = bot.getPosition();
             double rangeSq = (double) config.GRIND_SEEK_RANGE * config.GRIND_SEEK_RANGE;
             Foothold botFoothold = AgentCombatGroundRuntime.findGroundFoothold(botPos, bot);
@@ -47,7 +51,9 @@ public final class AgentCombatTargetRuntime {
                 AgentCombatBehaviorRuntime.noCandidateOpportunity(entry);
                 return null;
             }
-            candidates = preferRequiredTargets(entry, candidates);
+            PolicySelection policySelection = applyObjectivePolicy(
+                    entry, bot, botPos, botFoothold, candidates);
+            candidates = policySelection.candidates();
 
             Map<Monster, Integer> targetOccupancy = grindTargetOccupancy(entry, bot);
             candidates = AgentCombatBehaviorRuntime.respectClaims(entry, candidates, targetOccupancy);
@@ -70,6 +76,7 @@ public final class AgentCombatTargetRuntime {
             }
             AgentCombatVariationRuntime.maybeAnchorAtTarget(
                     entry, bot, selected, targetRegionId(entry, bot, botPos, selected));
+            recordPolicySelection(entry, bot, selected, policySelection);
             AgentCombatBehaviorRuntime.targetAcquired(entry);
             return selected;
         } finally {
@@ -81,6 +88,9 @@ public final class AgentCombatTargetRuntime {
         long startedAt = System.nanoTime();
         try {
             if (entry == null || bot == null || !AgentPatrolStateRuntime.hasPatrolRegion(entry)) {
+                return null;
+            }
+            if (AgentPreExitLootRuntime.active(entry, System.currentTimeMillis())) {
                 return null;
             }
             Point botPos = bot.getPosition();
@@ -123,7 +133,9 @@ public final class AgentCombatTargetRuntime {
             if (filtered.isEmpty()) {
                 return null;
             }
-            filtered = preferRequiredTargets(entry, filtered);
+            PolicySelection policySelection = applyObjectivePolicy(
+                    entry, bot, botPos, botFoothold, filtered);
+            filtered = policySelection.candidates();
 
             List<AgentScoredGrindTarget> scored = scoreGrindTargets(
                     entry,
@@ -136,7 +148,10 @@ public final class AgentCombatTargetRuntime {
             if (scored.isEmpty()) {
                 return null;
             }
-            return AgentCombatGrindTargetPolicy.pickReachableOrBestTarget(scored, UNREACHABLE_GRAPH_COST);
+            Monster selected = AgentCombatGrindTargetPolicy.pickReachableOrBestTarget(
+                    scored, UNREACHABLE_GRAPH_COST);
+            recordPolicySelection(entry, bot, selected, policySelection);
+            return selected;
         } finally {
             AgentPerformanceMonitor.record("combat-target-search", System.nanoTime() - startedAt);
         }
@@ -230,6 +245,72 @@ public final class AgentCombatTargetRuntime {
                 () -> scoreLocalTargets(entry, bot, botPos, botFoothold, candidates, targetOccupancy, config),
                 () -> scoreTargetRegions(entry, graphContext, bot, botPos, botFoothold,
                         candidates, targetOccupancy, config));
+    }
+
+    public static Monster findRouteBlockerTarget(AgentRuntimeEntry entry,
+                                                 Character bot,
+                                                 Point movementTarget,
+                                                 AgentCombatConfig.Config config) {
+        if (entry == null || bot == null || movementTarget == null) {
+            return null;
+        }
+        Point botPos = bot.getPosition();
+        double range = Math.max(
+                AgentProjectileHitbox.CLIENT_PROJECTILE_BASE_RANGE
+                        + AgentProjectileHitbox.passiveProjectileRangeBonus(bot),
+                config.ATTACK_RANGE_X + config.ATTACK_JUMP_X_EXTRA);
+        List<Monster> candidates = AgentCombatTargetSelector.aliveMonstersInRange(
+                bot, botPos, range * range);
+        candidates.removeIf(monster -> !insideRouteCorridor(
+                botPos, movementTarget, monster.getPosition(),
+                AgentCombatPolicyConfig.routeBlockerCorridorWidth()));
+        AgentRouteBlockerState blockerState =
+                entry.capabilityStates().require(AgentRouteBlockerState.STATE_KEY);
+        if (candidates.isEmpty()) {
+            blockerState.clear();
+            return null;
+        }
+        long nowMs = System.currentTimeMillis();
+        if (!blockerState.canInterrupt(movementTarget, nowMs)) {
+            AgentCombatDirectiveRuntime.state(entry).selected(
+                    bot.getMapId(), -1, 0, AgentCombatCandidateClass.UNRELATED,
+                    AgentCombatDecisionReason.EVADE_BLOCKER, nowMs);
+            return null;
+        }
+        Monster selected = candidates.stream()
+                .min(java.util.Comparator.comparingDouble(
+                        monster -> monster.getPosition().distanceSq(botPos)))
+                .orElse(null);
+        if (selected != null) {
+            AgentCombatDirectiveRuntime.state(entry).selected(
+                    bot.getMapId(), -1, selected.getId(),
+                    AgentCombatCandidateClass.INCIDENTAL,
+                    AgentCombatDecisionReason.ROUTE_BLOCKER,
+                    nowMs);
+        }
+        return selected;
+    }
+
+    static boolean insideRouteCorridor(Point start, Point end, Point candidate, int halfWidth) {
+        if (start == null || end == null || candidate == null || halfWidth < 0) {
+            return false;
+        }
+        double dx = end.x - start.x;
+        double dy = end.y - start.y;
+        double lengthSq = dx * dx + dy * dy;
+        if (lengthSq <= 1.0) {
+            return candidate.distanceSq(start) <= (double) halfWidth * halfWidth;
+        }
+        double projection = ((candidate.x - start.x) * dx + (candidate.y - start.y) * dy)
+                / lengthSq;
+        if (projection < 0.0 || projection > 1.0) {
+            return false;
+        }
+        double closestX = start.x + projection * dx;
+        double closestY = start.y + projection * dy;
+        double offX = candidate.x - closestX;
+        double offY = candidate.y - closestY;
+        return offX * offX + offY * offY <= (double) halfWidth * halfWidth;
     }
 
     private static void releaseEmptyAutomaticAnchor(AgentRuntimeEntry entry) {
@@ -440,16 +521,72 @@ public final class AgentCombatTargetRuntime {
         return occupancy;
     }
 
-    private static List<Monster> preferRequiredTargets(
-            AgentRuntimeEntry entry,
-            List<Monster> candidates) {
-        if (!AgentCombatObjectiveTargetStateRuntime.hasPreferredTargets(entry)) {
-            return candidates;
+    private static PolicySelection applyObjectivePolicy(AgentRuntimeEntry entry,
+                                                        Character bot,
+                                                        Point botPos,
+                                                        Foothold botFoothold,
+                                                        List<Monster> candidates) {
+        AgentCombatDirective directive = AgentCombatDirectiveRuntime.directive(entry);
+        if (directive == null || directive.incidentalPolicy()
+                != AgentIncidentalMobPolicy.KILL_FOR_SPAWN_PRESSURE) {
+            return legacyPolicySelection(entry, candidates);
         }
-        List<Monster> preferred = candidates.stream()
-                .filter(monster -> AgentCombatObjectiveTargetStateRuntime.prefers(entry, monster.getId()))
-                .toList();
-        return preferred.isEmpty() ? candidates : new ArrayList<>(preferred);
+
+        GrindGraphContext context = GrindGraphContext.resolve(entry, bot, botPos);
+        int currentRegionId = context.available() ? context.startRegionId() : -1;
+        long nowMs = System.currentTimeMillis();
+        boolean allowSweep = AgentCombatDirectiveRuntime.state(entry)
+                .canSweep(bot.getMapId(), currentRegionId, nowMs);
+        AgentQuestLocalClearTargetPolicy.Selection<Monster> selected =
+                AgentQuestLocalClearTargetPolicy.select(
+                        candidates,
+                        monster -> directive.requiredMobIds().contains(monster.getId()),
+                        monster -> isLocalCombatTarget(context, bot, botFoothold, monster),
+                        allowSweep);
+        if (AgentCombatPolicyConfig.questLocalClearShadowEnabled()) {
+            AgentCombatDirectiveRuntime.state(entry)
+                    .shadowEvaluated(selected.reason(), selected.candidates().size());
+        }
+        if (!AgentCombatPolicyConfig.questLocalClearEnforced()) {
+            return legacyPolicySelection(entry, candidates);
+        }
+        return new PolicySelection(new ArrayList<>(selected.candidates()),
+                selected.candidateClass(), selected.reason(), currentRegionId);
+    }
+
+    private static PolicySelection legacyPolicySelection(
+            AgentRuntimeEntry entry, List<Monster> candidates) {
+        List<Monster> preferred = candidates;
+        if (AgentCombatObjectiveTargetStateRuntime.hasPreferredTargets(entry)) {
+            List<Monster> required = candidates.stream()
+                    .filter(monster -> AgentCombatObjectiveTargetStateRuntime.prefers(
+                            entry, monster.getId()))
+                    .toList();
+            if (!required.isEmpty()) {
+                preferred = new ArrayList<>(required);
+            }
+        }
+        return new PolicySelection(preferred, AgentCombatCandidateClass.REQUIRED,
+                AgentCombatDecisionReason.LEGACY_CLOSEST, -1);
+    }
+
+    private static void recordPolicySelection(AgentRuntimeEntry entry,
+                                              Character bot,
+                                              Monster selected,
+                                              PolicySelection policySelection) {
+        if (entry == null || bot == null || selected == null || policySelection == null) {
+            return;
+        }
+        AgentCombatDirectiveRuntime.state(entry).selected(
+                bot.getMapId(), policySelection.regionId(), selected.getId(),
+                policySelection.candidateClass(), policySelection.reason(),
+                System.currentTimeMillis());
+    }
+
+    private record PolicySelection(List<Monster> candidates,
+                                   AgentCombatCandidateClass candidateClass,
+                                   AgentCombatDecisionReason reason,
+                                   int regionId) {
     }
 
     private static long grindRegionOccupancyPenalty(GrindGraphContext context, Character bot, int targetRegionId,

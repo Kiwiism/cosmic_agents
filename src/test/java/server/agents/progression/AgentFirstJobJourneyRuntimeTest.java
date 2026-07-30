@@ -359,7 +359,14 @@ class AgentFirstJobJourneyRuntimeTest {
                 AgentCareerProgressionState.Stage.HOME_QUEST_PACK);
         AgentCareerProgressionState state = entry.capabilityStates().require(
                 AgentCareerProgressionState.STATE_KEY);
-        state.questPackIndex(10);
+        AgentVictoriaSharedQuestPackCatalog.Pack pack =
+                AgentVictoriaSharedQuestPackCatalog.require("kerning-pre15");
+        int nellaStepIndex = java.util.stream.IntStream.range(0, pack.steps().size())
+                .filter(index -> pack.steps().get(index).questId() == 28270
+                        && !pack.steps().get(index).complete())
+                .findFirst()
+                .orElseThrow();
+        state.questPackIndex(nellaStepIndex);
         PrimitiveCapabilityGateway gateway = npcGateway(agent, 1052103);
         when(gateway.questStatus(agent, 28270)).thenReturn(0);
         when(gateway.canStartQuest(agent, 28270, 1052103)).thenReturn(true);

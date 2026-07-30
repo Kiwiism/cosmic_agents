@@ -3,7 +3,7 @@
   "checkpoints": {
     "thief-dagger-standard-v1:checkpoint2-nella": {
       "questPackId": "kerning-pre15",
-      "questPackIndex": 11,
+      "questPackIndex": 12,
       "position": { "x": 71, "y": -60 },
       "snapshot": {
         "provenance": "CAPTURED",

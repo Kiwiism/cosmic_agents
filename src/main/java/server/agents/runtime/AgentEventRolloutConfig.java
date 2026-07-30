@@ -13,9 +13,13 @@ public record AgentEventRolloutConfig(
         return new AgentEventRolloutConfig(
                 enabled("agents.events.reactions.enabled"),
                 config.AgentYamlConfig.config.agent.AGENT_LEGACY_DIALOGUE_ENABLED
-                        && enabled("agents.events.dialogue.enabled"),
+                        && dialogueTransportEnabled(),
                 enabled("agents.events.coordination.enabled"),
                 enabled("agents.events.llmContext.enabled"));
+    }
+
+    static boolean dialogueTransportEnabled() {
+        return enabled("agents.events.dialogue.enabled");
     }
 
     private static boolean enabled(String property) {

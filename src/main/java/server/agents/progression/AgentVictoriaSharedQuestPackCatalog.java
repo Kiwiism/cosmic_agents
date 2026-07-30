@@ -135,15 +135,30 @@ final class AgentVictoriaSharedQuestPackCatalog {
                 throw new IllegalStateException("invalid or duplicate shared quest pack");
             }
             for (Step step : pack.steps()) {
-                validate(step, pack.packId());
+                validate(step, pack.packId(), content.towns());
             }
         }
     }
 
-    private static void validate(Step step, String packId) {
+    private static void validate(Step step, String packId, List<Town> towns) {
         if (step.type() == null || step.type().isBlank()
                 || step.intention() == null || step.intention().isBlank()) {
             throw new IllegalStateException("invalid step in shared quest pack " + packId);
+        }
+        if ("TAXI".equals(step.type())) {
+            Town source = towns.stream()
+                    .filter(town -> town.mapId() == step.mapId())
+                    .findFirst()
+                    .orElse(null);
+            boolean knownDestination = towns.stream()
+                    .anyMatch(town -> town.mapId() == step.destinationMapId());
+            if (source == null || !knownDestination
+                    || (step.mapId() != step.destinationMapId()
+                    && source.selectionFor(step.destinationMapId()) < 0)) {
+                throw new IllegalStateException(
+                        "invalid taxi route in shared quest pack " + packId
+                                + ": " + step.mapId() + " -> " + step.destinationMapId());
+            }
         }
         for (Condition condition : step.conditions()) {
             if ((!"QUEST_KILL".equals(condition.type()) && !"ITEM".equals(condition.type()))

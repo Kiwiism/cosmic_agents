@@ -2,6 +2,7 @@ package server.agents.capabilities.dialogue;
 
 import org.junit.jupiter.api.Test;
 import server.agents.progression.events.AgentProgressionDialogueReactionService;
+import server.agents.progression.events.AgentQuestProgressDialogueReactionService;
 import server.agents.resources.events.AgentResourceDialogueReactionService;
 import server.agents.operations.events.AgentOperationalDialogueReactionService;
 
@@ -53,6 +54,25 @@ class AgentDialogueProjectionRuntimeTest {
 
         assertTrue(AgentDialogueProjectionRuntime.render(level).contains("15"));
         assertEquals("quest complete!", AgentDialogueProjectionRuntime.render(quest));
+    }
+
+    @Test
+    void rendersQuestProgressMilestonesWithCounts() {
+        AgentDialogueIntentEvent halfway = new AgentDialogueIntentEvent(
+                1, 100L, AgentQuestProgressDialogueReactionService.INTENT_KEY,
+                AgentDialogueAudience.NEARBY_REAL_PLAYER, "quest-progress", 1_000L,
+                Map.of("targetId", "1210100", "currentCount", "15",
+                        "requiredCount", "30", "milestonePercent", "50"));
+        AgentDialogueIntentEvent nearlyDone = new AgentDialogueIntentEvent(
+                1, 100L, AgentQuestProgressDialogueReactionService.INTENT_KEY,
+                AgentDialogueAudience.NEARBY_REAL_PLAYER, "quest-progress", 1_000L,
+                Map.of("targetId", "1210100", "currentCount", "27",
+                        "requiredCount", "30", "milestonePercent", "90"));
+
+        assertEquals("Quest progress: 15/30 - halfway there.",
+                AgentDialogueProjectionRuntime.render(halfway));
+        assertEquals("Quest progress: 27/30 - almost done.",
+                AgentDialogueProjectionRuntime.render(nearlyDone));
     }
 
     @Test

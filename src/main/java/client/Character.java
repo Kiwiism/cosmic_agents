@@ -101,6 +101,7 @@ import scripting.event.EventInstanceManager;
 import scripting.item.ItemScriptManager;
 import server.agents.capabilities.quest.AgentPartyQuestSyncService;
 import server.agents.capabilities.quest.MapleIslandSouthperryBaseline;
+import server.agents.progression.events.AgentQuestProgressMilestonePublisher;
 import server.agents.progression.VictoriaCheckpointBaseline;
 import server.agents.capabilities.trade.AgentOwnerItemNotificationService;
 import server.agents.integration.cosmic.CosmicAgentPotionCheckRequestBridge;
@@ -7724,7 +7725,16 @@ public class Character extends AbstractCharacterObject {
                         continue;
                     }
 
+                    String previousProgressText = qs.getProgress(id);
+                    if (previousProgressText == null || previousProgressText.isBlank()) {
+                        continue;
+                    }
+                    int previousProgress = Integer.parseInt(previousProgressText);
                     if (qs.progress(id)) {
+                        int currentProgress = Integer.parseInt(qs.getProgress(id));
+                        AgentQuestProgressMilestonePublisher.publishMobProgress(
+                                this, qs.getQuest().getId(), id, previousProgress,
+                                currentProgress, qs.getQuest().getMobAmountNeeded(id));
                         announceUpdateQuest(DelayedQuestUpdate.UPDATE, qs, false);
                         if (qs.getInfoNumber() > 0) {
                             announceUpdateQuest(DelayedQuestUpdate.UPDATE, qs, true);

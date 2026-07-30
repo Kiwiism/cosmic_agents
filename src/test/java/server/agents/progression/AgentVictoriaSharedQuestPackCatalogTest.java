@@ -97,7 +97,7 @@ class AgentVictoriaSharedQuestPackCatalogTest {
                 AgentVictoriaSharedQuestPackCatalog.require(checkpoint.questPackId());
 
         assertEquals("CAPTURED", checkpoint.snapshot().provenance());
-        assertEquals(11, checkpoint.questPackIndex());
+        assertEquals(12, checkpoint.questPackIndex());
         assertEquals(1052000, pack.steps().get(checkpoint.questPackIndex()).npcId());
         assertEquals(28271, pack.steps().get(checkpoint.questPackIndex()).questId());
         assertTrue(checkpoint.activeQuests().stream().anyMatch(

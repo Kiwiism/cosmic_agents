@@ -20,6 +20,8 @@ import server.agents.events.journal.AgentDurableEventJournalListener;
 import server.agents.progression.events.AgentProgressionCheckpointProjectionService;
 import server.agents.progression.events.AgentProgressionDialogueReactionService;
 import server.agents.progression.events.AgentProgressionMonitoringProjectionService;
+import server.agents.progression.events.AgentQuestProgressDialogueReactionService;
+import server.agents.progression.events.AgentQuestProgressMilestoneEvent;
 import server.agents.resources.events.AgentInventoryMaintenanceEventListener;
 import server.agents.resources.events.AgentResourceDialogueReactionService;
 import server.agents.resources.events.AgentResourceMonitoringProjectionService;
@@ -28,6 +30,8 @@ import server.agents.operations.events.AgentOperationalEvaluationListener;
 import server.agents.operations.events.AgentOperationalMonitoringProjectionService;
 import server.agents.capabilities.behavior.AgentBehaviorEventListener;
 import server.agents.capabilities.behavior.AgentPioRelaxerInterludeEventListener;
+import server.agents.capabilities.combat.AgentCombatTacticalEventListener;
+import server.agents.capabilities.looting.AgentPostKillLootEventListener;
 import server.agents.progression.events.AgentQuestStateChangedEvent;
 
 import java.util.ArrayList;
@@ -47,6 +51,10 @@ public final class AgentSessionEventWiringRuntime {
             }
             List<AgentEventSubscription> subscriptions = new ArrayList<>();
             AgentEventRolloutConfig rollout = AgentEventRolloutConfig.fromSystemProperties();
+            boolean questProgressDialogueEnabled =
+                    AgentEventRolloutConfig.dialogueTransportEnabled()
+                            && (config.AgentYamlConfig.config.agent.AGENT_AMHERST_INTENTION_CHAT_ENABLED
+                            || config.AgentYamlConfig.config.agent.AGENT_VICTORIA_INTENTION_CHAT_ENABLED);
             try {
                 if (rollout.reactionsEnabled()) {
                     subscriptions.add(bus.subscribe(AgentSupplyThresholdChangedEvent.TYPE,
@@ -62,7 +70,7 @@ public final class AgentSessionEventWiringRuntime {
                 }
                 subscriptions.add(bus.subscribe(AgentSupplyThresholdChangedEvent.TYPE,
                         new AgentSupplyMonitoringProjectionService(entry)));
-                if (rollout.dialogueEnabled()) {
+                if (rollout.dialogueEnabled() || questProgressDialogueEnabled) {
                     subscriptions.add(bus.subscribe(AgentDialogueIntentEvent.TYPE,
                             new AgentDialogueProjectionService(
                                     (agentId, audience) -> AgentDialogueProjectionRuntime.hasAudience(
@@ -78,6 +86,10 @@ public final class AgentSessionEventWiringRuntime {
                 subscriptions.add(bus.subscribe("*", progressionMonitoring));
                 if (rollout.dialogueEnabled()) {
                     subscriptions.add(bus.subscribe("*", progressionDialogue));
+                }
+                if (questProgressDialogueEnabled) {
+                    subscriptions.add(bus.subscribe(AgentQuestProgressMilestoneEvent.TYPE,
+                            new AgentQuestProgressDialogueReactionService(bus)));
                 }
                 if (rollout.reactionsEnabled()) {
                     subscriptions.add(bus.subscribe("*", progressionCheckpoint));
@@ -117,6 +129,12 @@ public final class AgentSessionEventWiringRuntime {
                 if (config.AgentYamlConfig.config.agent.AGENT_COMBAT_BEHAVIOR_ENABLED) {
                     subscriptions.add(bus.subscribe("*", new AgentBehaviorEventListener(entry)));
                 }
+                subscriptions.add(bus.subscribe(
+                        server.agents.operations.events.AgentMobKilledEvent.TYPE,
+                        new AgentCombatTacticalEventListener(entry)));
+                subscriptions.add(bus.subscribe(
+                        server.agents.operations.events.AgentMobKilledEvent.TYPE,
+                        new AgentPostKillLootEventListener(entry)));
                 subscriptions.add(bus.subscribe("*", new AgentDurableEventJournalListener()));
                 if (rollout.llmContextEnabled()) {
                     subscriptions.add(bus.subscribe("*", new AgentLlmContextProjectionService(entry)));

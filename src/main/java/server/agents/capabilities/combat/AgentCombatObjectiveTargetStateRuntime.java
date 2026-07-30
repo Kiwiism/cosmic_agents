@@ -14,6 +14,7 @@ public final class AgentCombatObjectiveTargetStateRuntime {
         if (entry.combatObjectiveTargetState().setAllowedMobIds(mobIds)) {
             clearDisallowedTarget(entry);
         }
+        AgentCombatDirectiveRuntime.assignAllowed(entry, mobIds);
     }
 
     public static void setTargetPreferences(AgentRuntimeEntry entry,
@@ -22,10 +23,12 @@ public final class AgentCombatObjectiveTargetStateRuntime {
         if (entry.combatObjectiveTargetState().setTargetPreferences(preferredMobIds, fallbackMobIds)) {
             clearDisallowedTarget(entry);
         }
+        AgentCombatDirectiveRuntime.assignPreferences(entry, preferredMobIds, fallbackMobIds);
     }
 
     public static void clear(AgentRuntimeEntry entry) {
         entry.combatObjectiveTargetState().clear();
+        AgentCombatDirectiveRuntime.clear(entry);
         AgentGrindTargetStateRuntime.clear(entry);
     }
 

@@ -103,7 +103,8 @@ public final class AgentFirstJobJourneyRuntime {
             case RETURN_TO_LITH_FOR_TAXI -> returnToLith(entry, agent, state, nowMs, gateway);
             case TAKE_TAXI -> approachAndRun(entry, agent, LITH_TAXI_NPC_ID,
                     () -> gateway.runNpcScript(agent, LITH_TAXI_NPC_ID,
-                            0, 1, taxiSelection(bundle), 0), gateway);
+                            AgentTaxiDialogueSequence.lithHarborPhil(
+                                    taxiSelection(bundle))), gateway);
             case ENTER_INSTRUCTOR_ROOM -> enterInstructorRoom(entry, agent, bundle, gateway);
             case COMPLETE_CAREER_PATH -> completeCareerPath(entry, agent, bundle, gateway);
             case ADVANCE_FIRST_JOB -> approachAndRun(entry, agent, bundle.instructorNpcId(),

@@ -1,21 +1,28 @@
 package server.agents.progression;
 
+import client.Character;
+import client.Job;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.inventory.demand.AgentQuestItemDemandIndex;
 import server.agents.capabilities.inventory.demand.AgentQuestItemDemandIndexRepository;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class AgentVictoriaAdaptiveQuestCatalogTest {
     @Test
@@ -121,5 +128,62 @@ class AgentVictoriaAdaptiveQuestCatalogTest {
         }
 
         assertEquals(expected, generated);
+    }
+
+    @Test
+    void combinedFallbackKeepsAllKerningMaterialObjectivesOnOneMap() {
+        AgentVictoriaQuestHuntIndexRepository index =
+                AgentVictoriaQuestHuntIndexRepository.defaultRepository();
+        List<AgentVictoriaQuestHuntIndexRepository.ObjectiveReference> objectives =
+                new ArrayList<>();
+        objectives.addAll(index.findObjectivesForTarget(Set.of(2091), 4000003));
+        objectives.addAll(index.findObjectivesForTarget(Set.of(2091), 4000004));
+
+        Character agent = mock(Character.class);
+        when(agent.getId()).thenReturn(93);
+        when(agent.getName()).thenReturn("AdaptiveKerning");
+        when(agent.getJob()).thenReturn(Job.THIEF);
+        when(agent.getLevel()).thenReturn(14);
+        when(agent.getMapId()).thenReturn(103000000);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+
+        AgentAdaptiveQuestHuntSelector.Selection selection =
+                AgentAdaptiveQuestHuntSelector.defaultSelector()
+                        .selectCombined(entry, agent, "kerning-material-test",
+                                999999999, List.of(130100, 210100), objectives, 100L)
+                        .orElseThrow();
+
+        assertEquals(100050000, selection.map().mapId());
+        assertEquals(Set.of(130100, 210100),
+                Set.copyOf(selection.map().targetMobIds()));
+        assertEquals(AgentAdaptiveQuestHuntSelector.Source.ADAPTIVE_FALLBACK,
+                selection.source());
+    }
+
+    @Test
+    void combinedFallbackDecomposesOnlyWhenNoMapCoversEveryObjective() {
+        AgentVictoriaQuestHuntIndexRepository index =
+                AgentVictoriaQuestHuntIndexRepository.defaultRepository();
+        List<AgentVictoriaQuestHuntIndexRepository.ObjectiveReference> objectives =
+                new ArrayList<>();
+        objectives.addAll(index.findObjectivesForTarget(Set.of(28272), 1120100));
+        objectives.addAll(index.findObjectivesForTarget(Set.of(28281), 4000005));
+
+        Character agent = mock(Character.class);
+        when(agent.getId()).thenReturn(94);
+        when(agent.getName()).thenReturn("AdaptiveSplit");
+        when(agent.getJob()).thenReturn(Job.THIEF);
+        when(agent.getLevel()).thenReturn(14);
+        when(agent.getMapId()).thenReturn(103000000);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+
+        AgentAdaptiveQuestHuntSelector.Selection selection =
+                AgentAdaptiveQuestHuntSelector.defaultSelector()
+                        .selectCombined(entry, agent, "decomposed-test",
+                                999999999, List.of(1120100), objectives, 100L)
+                        .orElseThrow();
+
+        assertEquals(AgentAdaptiveQuestHuntSelector.Source.ADAPTIVE_DECOMPOSED_FALLBACK,
+                selection.source());
     }
 }

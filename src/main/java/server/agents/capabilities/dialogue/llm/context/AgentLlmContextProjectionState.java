@@ -11,6 +11,7 @@ import server.agents.operations.events.AgentRecoveryPerformedEvent;
 import server.agents.progression.events.AgentJobAdvancedEvent;
 import server.agents.progression.events.AgentLevelChangedEvent;
 import server.agents.progression.events.AgentQuestStateChangedEvent;
+import server.agents.progression.events.AgentQuestProgressMilestoneEvent;
 import server.agents.progression.events.AgentSkillLearnedEvent;
 import server.agents.resources.events.AgentEquipmentLoadoutChangedEvent;
 import server.agents.resources.events.AgentInventoryThresholdChangedEvent;
@@ -70,6 +71,13 @@ public final class AgentLlmContextProjectionState {
             if (quest.status() == 2) {
                 milestone(quest, "questId=" + quest.questId() + ",status=completed");
             }
+        } else if (event instanceof AgentQuestProgressMilestoneEvent progress) {
+            put("progression.questProgress", "questId=" + progress.questId()
+                    + ",targetId=" + progress.targetId()
+                    + ",count=" + progress.currentCount() + "/" + progress.requiredCount()
+                    + ",milestone=" + progress.milestonePercent());
+            context(progress);
+            milestone(progress, facts.get("progression.questProgress"));
         } else if (event instanceof AgentSkillLearnedEvent skill) {
             context(skill);
             milestone(skill, "skillId=" + skill.skillId() + ",level=" + skill.skillLevel());

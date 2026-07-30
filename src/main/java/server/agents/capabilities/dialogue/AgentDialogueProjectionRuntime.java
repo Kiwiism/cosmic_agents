@@ -10,6 +10,7 @@ import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.progression.events.AgentProgressionDialogueReactionService;
+import server.agents.progression.events.AgentQuestProgressDialogueReactionService;
 import server.agents.resources.events.AgentResourceDialogueReactionService;
 import server.agents.operations.events.AgentOperationalDialogueReactionService;
 import client.Job;
@@ -68,6 +69,14 @@ public final class AgentDialogueProjectionRuntime {
         }
         if (AgentProgressionDialogueReactionService.QUEST_INTENT.equals(intent.intentKey())) {
             return "quest complete!";
+        }
+        if (AgentQuestProgressDialogueReactionService.INTENT_KEY.equals(intent.intentKey())) {
+            String current = intent.parameters().getOrDefault("currentCount", "");
+            String required = intent.parameters().getOrDefault("requiredCount", "");
+            String progress = "Quest progress: " + current + "/" + required;
+            return "50".equals(intent.parameters().getOrDefault("milestonePercent", ""))
+                    ? progress + " - halfway there."
+                    : progress + " - almost done.";
         }
         if (AgentResourceDialogueReactionService.INVENTORY_FULL_INTENT.equals(intent.intentKey())) {
             String inventoryType = intent.parameters().getOrDefault("inventoryType", "").toLowerCase();

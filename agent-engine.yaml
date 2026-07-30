@@ -2441,6 +2441,18 @@ tuning:
     # Purpose: Adds a short pause after each checkpoint action so quest starts, completions, scrolls, and portal transitions remain readable without making the run feel sluggish.
     # Technical: Applied between successive ordered checkpoint steps; 0 removes the deliberate pacing delay.
     server.agents.progression.AgentVictoriaSharedQuestPackRuntime.STEP_DELAY_MS: '750'
+    # Values: a finite non-negative integer; unit: milliseconds. Recommended: 15000-60000 around the tested baseline 30000.
+    # Purpose: Keeps an Agent on the same selected quest-hunt map long enough to avoid bouncing between maps when crowd counts fluctuate. The Agent can leave sooner if that map reaches its hard capacity or the objective finishes.
+    # Technical: AgentAdaptiveQuestHuntSelector retains a per-Agent, per-hunt-step selection until this lease expires. Unit: milliseconds; 0 disables selection stickiness.
+    server.agents.progression.AgentAdaptiveQuestHuntSelector.SHARED_SELECTION_LEASE_MS: '30000'
+    # Values: a positive integer. Recommended: 1-3 around the tested baseline 2.
+    # Purpose: Supplies the comfortable population target for an authored hunt map when generated capacity evidence is unavailable.
+    # Technical: AgentAdaptiveQuestHuntSelector uses this only as a conservative fallback capacity for fixed maps missing from the generated hunt index.
+    server.agents.progression.AgentAdaptiveQuestHuntSelector.DEFAULT_RECOMMENDED_AGENTS: '2'
+    # Values: a positive integer at least as large as DEFAULT_RECOMMENDED_AGENTS. Recommended: 3-6 around the tested baseline 4.
+    # Purpose: Sets the hard population limit for an authored hunt map when generated capacity evidence is unavailable; once reached, an Agent may choose an adaptive alternative.
+    # Technical: AgentAdaptiveQuestHuntSelector uses this only as a fallback maximum for fixed maps missing from the generated hunt index.
+    server.agents.progression.AgentAdaptiveQuestHuntSelector.DEFAULT_MAXIMUM_AGENTS: '4'
     # Values: a finite non-negative integer; unit: map pixels. Recommended: 50-200 around the tested baseline 100; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls the distance or margin used for NPC distance. Higher values allow action from farther away or leave more space; lower values require closer, more precise positioning.
     # Technical: the "level15 catch up runtime" component consumes this as an integer. Unit: MapleStory map pixels; horizontal and vertical values use the server map coordinate system.
@@ -2581,6 +2593,74 @@ tuning:
     # Purpose: Controls how long Agents must wait before repeating quest. Higher values make repeats less frequent; lower values let them repeat sooner.
     # Technical: the "progression dialogue reaction service" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled.
     server.agents.progression.events.AgentProgressionDialogueReactionService.QUEST_COOLDOWN_MS: '10000'
+    # Values: 1-99 percent. Recommended: 50. The Agent announces that a kill objective is halfway complete when its live quest counter first reaches this percentage.
+    # Purpose: Lower values make Agents comment earlier in a hunt; higher values delay the first progress comment.
+    # Technical: Applied with ceiling rounding against authoritative quest counters, so a 5-kill objective reaches 50% at 3/5 and publishes only once per objective milestone.
+    server.agents.progression.events.AgentQuestProgressMilestonePublisher.HALF_PERCENT: '50'
+    # Values: 1-99 percent and greater than HALF_PERCENT. Recommended: 90. The Agent announces that a kill objective is nearly complete when its live quest counter first reaches this percentage.
+    # Purpose: Lower values announce "almost done" sooner; higher values reserve it for the final kills.
+    # Technical: Requirements of 10 or more use ceiling rounding (30 reaches this at 27/30). Requirements below 10 announce when one target remains (5 reaches this at 4/5).
+    server.agents.progression.events.AgentQuestProgressMilestonePublisher.NEARLY_COMPLETE_PERCENT: '90'
+    # Values: 0-10 kills. Recommended: 2. Higher values let an Agent clear more non-objective monsters from its current platform before returning to a required target elsewhere; 0 disables incidental platform clearing.
+    # Purpose: Prevents endless killing of convenient incidental monsters while still allowing short, natural platform sweeps that free spawn slots and reduce backtracking.
+    # Technical: Maximum consecutive incidental kills selected by the quest-local-clear combat policy before required-target debt wins and the selector must return to a required candidate.
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.MAX_CONSECUTIVE_INCIDENTAL_KILLS: '2'
+    # Values: 0-20 kills. Recommended: 3. Higher values make a platform sweep more thorough; lower values make the Agent leave sooner for its actual quest target.
+    # Purpose: Bounds how many non-objective monsters an Agent clears during one stay on a platform.
+    # Technical: Separate from the consecutive-kill limit so a required kill can reset the streak without creating an unlimited platform loop inside the same navigation-region lease.
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.MAX_INCIDENTAL_KILLS_PER_PLATFORM_LEASE: '3'
+    # Values: 1000-20000 milliseconds. Recommended: 6500. Higher values make Agents remain locally focused longer; lower values make them reconsider other platforms more often.
+    # Purpose: Gives each Agent a short-lived platform focus so it clears nearby work before repeatedly climbing up and down.
+    # Technical: Resets when map or navigation region changes and bounds the incidental-kill counter for that region without changing the underlying navigation graph or attack execution.
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.PLATFORM_LEASE_MS: '6500'
+    # Values: 30-160 map pixels. Recommended: 80. Higher values treat monsters farther from a travel line as blockers; lower values limit attacks to monsters almost directly in the way.
+    # Purpose: Lets a travelling Agent attack genuine route obstructions without abandoning its destination to chase unrelated monsters.
+    # Technical: Half-width of the line corridor used by the route-blocker target policy to classify monsters between the current position and an already-authoritative movement target.
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.ROUTE_BLOCKER_CORRIDOR_WIDTH: '80'
+    # Values: 500-5000 milliseconds. Recommended: 2500. Higher values allow longer fights while travelling; lower values make the Agent resume navigation sooner.
+    # Purpose: Stops local-opportunity combat from turning a trip to a portal or NPC into an unbounded grind.
+    # Technical: Time budget for one route-blocker interruption; expiry records an evade decision and returns control to the unchanged scripted navigation destination.
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.ROUTE_BLOCKER_TIMEOUT_MS: '2500'
+    # Values: 0-5 kills. Recommended: 2. Higher values allow more clearing while travelling; 0 makes the Agent always evade instead of attacking.
+    # Purpose: Caps route-blocker kills so navigation remains the authoritative objective.
+    # Technical: Kill budget for one route interruption before the saved movement target is resumed; authoritative kill events, rather than attack attempts, consume this allowance.
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.ROUTE_BLOCKER_MAX_KILLS: '2'
+    # Values: true or false. Recommended: true. True lets an Agent briefly clear useful nearby monsters before travelling to a farther required target; false keeps the former strict preferred-target selection.
+    # Purpose: Reduces repeated up/down travel while ensuring required quest monsters regain priority after the bounded local sweep.
+    # Technical: Makes the quest-local-clear policy authoritative while still respecting the objective's required and incidental mob allow-list and leaving concrete target scoring unchanged.
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.QUEST_LOCAL_CLEAR_ENFORCED: 'true'
+    # Values: true or false. Recommended: false during normal play and true only while comparing policy decisions. This does not change what the Agent attacks.
+    # Purpose: Lets operators inspect how the new selector would differ before making it authoritative.
+    # Technical: Evaluates and records the quest-local-clear result while the compatibility selector continues to control combat, without changing targets, movement, attacks, or quest counters.
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.QUEST_LOCAL_CLEAR_SHADOW_ENABLED: 'false'
+    # Values: 100-260 map pixels. Recommended: 180. Higher values make melee Agents collect more immediately; lower values keep them attacking longer before walking to drops.
+    # Purpose: Encourages melee Agents to pick up nearby drops from their latest kill without crossing an entire platform after every attack.
+    # Technical: Maximum seek distance for the melee-immediate branch of the post-kill loot policy; the existing passive pickup radius remains a separate inner exclusion boundary.
+    server.agents.capabilities.looting.AgentLootCollectionPolicyConfig.MELEE_IMMEDIATE_RADIUS: '180'
+    # Values: 2-6 kills. Recommended: 3. Higher values keep ranged Agents firing from position longer; lower values make them collect more often.
+    # Purpose: Prevents bow, claw, gun, wand and staff users from walking forward after every kill.
+    # Technical: Recent authoritative kill-event count that opens a ranged loot-collection batch without changing pickup eligibility, ownership, inventory capacity, or combat packets.
+    server.agents.capabilities.looting.AgentLootCollectionPolicyConfig.RANGED_BATCH_KILLS: '3'
+    # Values: 2500-8000 milliseconds. Recommended: 4500. Higher values favor uninterrupted attacks; lower values make ranged Agents retrieve drops sooner.
+    # Purpose: Prevents small ranged batches from being postponed forever when the kill-count threshold is not reached.
+    # Technical: Maximum age of the oldest tracked ranged kill before collection becomes eligible; the bounded timer only schedules collection and never grants or moves an item directly.
+    server.agents.capabilities.looting.AgentLootCollectionPolicyConfig.RANGED_BATCH_MAX_WAIT_MS: '4500'
+    # Values: 4-16 kills. Recommended: 8. Higher values remember more possible drops; lower values keep less tactical history.
+    # Purpose: Bounds recent-kill memory so loot selection remains predictable under long combat sessions.
+    # Technical: Maximum number of killed monster object IDs retained per Agent in capability-owned ephemeral state, with oldest entries removed first when the bound is exceeded.
+    server.agents.capabilities.looting.AgentLootCollectionPolicyConfig.MAX_TRACKED_KILLS: '8'
+    # Values: 10000-30000 milliseconds. Recommended: 20000. Higher values keep ownership priority longer; lower values forget old combat drops sooner.
+    # Purpose: Stops old kills from affecting current loot routing after their drops are likely gone or no longer useful.
+    # Technical: Time-to-live for entries in the bounded recent-kill set; expiry only removes tactical priority and does not alter map drops, ownership, or inventory state.
+    server.agents.capabilities.looting.AgentLootCollectionPolicyConfig.TRACKED_KILL_LIFETIME_MS: '20000'
+    # Values: 2000-6000 milliseconds. Recommended: 4000. Higher values collect more nearby drops before leaving; lower values transition to the next objective faster.
+    # Purpose: Gives an Agent a short final collection window after a hunt completes.
+    # Technical: Hard deadline for the pre-exit loot drain; completion occurs earlier when no eligible recent drop remains, and the universal plan retains ownership of the next objective.
+    server.agents.capabilities.looting.AgentLootCollectionPolicyConfig.PRE_EXIT_MAX_WAIT_MS: '4000'
+    # Values: 250-700 map pixels. Recommended: 450. Higher values let the Agent cross farther for final drops; lower values keep the exit transition local.
+    # Purpose: Prevents the final loot pass from turning into another full-map navigation objective.
+    # Technical: Maximum seek radius used only during the bounded pre-exit collection window while ordinary drop eligibility, passive pickup distance, and inventory capacity checks remain authoritative.
+    server.agents.capabilities.looting.AgentLootCollectionPolicyConfig.PRE_EXIT_LOOT_RADIUS: '450'
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 1500-6000 around the tested baseline 3000; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how long Agents remain in or wait for start delay. Higher values make that pause or state last longer; lower values make them continue sooner.
     # Technical: the "victoria first job mvp test service" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled.

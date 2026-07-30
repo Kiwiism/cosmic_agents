@@ -6,8 +6,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 final class AgentVictoriaQuestHuntIndexRepository {
     private static final String RESOURCE =
@@ -46,6 +48,27 @@ final class AgentVictoriaQuestHuntIndexRepository {
         return entry.objectives().stream()
                 .filter(objective -> objective.objectiveId().equals(objectiveId))
                 .findFirst();
+    }
+
+    List<ObjectiveReference> findObjectivesForTarget(
+            Set<Integer> questIds,
+            int targetId) {
+        if (questIds == null || questIds.isEmpty() || targetId <= 0) {
+            return List.of();
+        }
+        return questIds.stream()
+                .sorted()
+                .map(byQuestId::get)
+                .filter(java.util.Objects::nonNull)
+                .flatMap(entry -> entry.objectives().stream()
+                        .filter(objective -> objective.targetId() == targetId)
+                        .map(objective -> new ObjectiveReference(entry.questId(), objective)))
+                .toList();
+    }
+
+    record ObjectiveReference(
+            int questId,
+            AgentVictoriaQuestHuntIndex.Objective objective) {
     }
 
     private static AgentVictoriaQuestHuntIndexRepository load() {

@@ -4,6 +4,7 @@ import client.Character;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import server.agents.capabilities.combat.AgentCombatConfig;
+import server.agents.capabilities.inventory.AgentInventoryReservationRuntime;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
@@ -33,15 +34,50 @@ public final class AgentLootTargetService {
                                                      Character agent,
                                                      int passiveLootRadius,
                                                      GrindLootRetrySuppression retrySuppression) {
+        return findBestGrindLootTarget(entry, agent, passiveLootRadius,
+                retrySuppression, Set.of(), -1);
+    }
+
+    /**
+     * Chooses loot using stable priorities: active quest drops, drops from the
+     * Agent's recent kills, same-region drops, then travel distance.
+     */
+    public static MapItem findBestGrindLootTarget(AgentRuntimeEntry entry,
+                                                  Character agent,
+                                                  int passiveLootRadius,
+                                                  GrindLootRetrySuppression retrySuppression,
+                                                  Set<Integer> recentKillObjectIds,
+                                                  int preferredRegionId) {
+        return findBestGrindLootTarget(entry, agent, passiveLootRadius,
+                retrySuppression, recentKillObjectIds, preferredRegionId,
+                AgentCombatConfig.cfg.GRIND_SEEK_RANGE);
+    }
+
+    public static MapItem findBestGrindLootTarget(AgentRuntimeEntry entry,
+                                                  Character agent,
+                                                  int passiveLootRadius,
+                                                  GrindLootRetrySuppression retrySuppression,
+                                                  Set<Integer> recentKillObjectIds,
+                                                  int preferredRegionId,
+                                                  int maximumSeekRadius) {
         if (agent == null || hasAnyInventoryFull(agent)) return null;
         MapleMap map = agent.getMap();
         if (map == null) return null;
 
         long now = System.currentTimeMillis();
         Point agentPos = agent.getPosition();
-        double seekRangeSq = (double) AgentCombatConfig.cfg.GRIND_SEEK_RANGE * AgentCombatConfig.cfg.GRIND_SEEK_RANGE;
-        MapItem nearest = null;
-        double nearestDistSq = Double.MAX_VALUE;
+        int seekRange = Math.min(AgentCombatConfig.cfg.GRIND_SEEK_RANGE,
+                Math.max(passiveLootRadius, maximumSeekRadius));
+        double seekRangeSq = (double) seekRange * seekRange;
+        AgentNavigationGraph graph = preferredRegionId < 0
+                ? null
+                : AgentNavigationGraphService.peekBestGraph(
+                map, AgentMovementStateRuntime.movementProfile(entry));
+        Set<Integer> recentKills = recentKillObjectIds == null
+                ? Set.of()
+                : recentKillObjectIds;
+        MapItem best = null;
+        LootScore bestScore = null;
 
         for (MapItem drop : map.getDroppedItems()) {
             if (!AgentLootEligibility.canBotTargetLoot(entry, agent, map, drop, now)) continue;
@@ -52,11 +88,26 @@ public final class AgentLootTargetService {
                 continue;
             }
             double distSq = dropPos.distanceSq(agentPos);
-            if (distSq > seekRangeSq || distSq >= nearestDistSq) continue;
-            nearestDistSq = distSq;
-            nearest = drop;
+            if (distSq > seekRangeSq) continue;
+            boolean questDrop = drop.getQuest() > 0
+                    || (drop.getMeso() <= 0
+                    && AgentInventoryReservationRuntime.isReserved(entry, drop.getItemId(), now));
+            boolean recentKillDrop = drop.getDropper() != null
+                    && recentKills.contains(drop.getDropper().getObjectId());
+            boolean sameRegion = graph != null
+                    && graph.findRegionId(map, dropPos) == preferredRegionId;
+            LootScore score = new LootScore(
+                    questDrop ? 0 : 1,
+                    recentKillDrop ? 0 : 1,
+                    sameRegion ? 0 : 1,
+                    distSq,
+                    drop.getObjectId());
+            if (bestScore == null || score.compareTo(bestScore) < 0) {
+                bestScore = score;
+                best = drop;
+            }
         }
-        return nearest;
+        return best;
     }
 
     public static boolean hasAnyInventoryFull(Character agent) {
@@ -67,6 +118,25 @@ public final class AgentLootTargetService {
             if (inventory != null && inventory.isFull()) return true;
         }
         return false;
+    }
+
+    private record LootScore(int questRank,
+                             int recentKillRank,
+                             int regionRank,
+                             double distanceSq,
+                             int objectId) implements Comparable<LootScore> {
+        @Override
+        public int compareTo(LootScore other) {
+            int result = Integer.compare(questRank, other.questRank);
+            if (result != 0) return result;
+            result = Integer.compare(recentKillRank, other.recentKillRank);
+            if (result != 0) return result;
+            result = Integer.compare(regionRank, other.regionRank);
+            if (result != 0) return result;
+            result = Double.compare(distanceSq, other.distanceSq);
+            if (result != 0) return result;
+            return Integer.compare(objectId, other.objectId);
+        }
     }
 
     /**

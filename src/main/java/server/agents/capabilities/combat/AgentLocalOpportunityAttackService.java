@@ -58,7 +58,10 @@ public final class AgentLocalOpportunityAttackService {
             return new Result(false, targetPos);
         }
 
-        Monster localTarget = AgentCombatTargetRuntime.findFollowAttackTarget(entry, agent, AgentCombatConfig.cfg);
+        Monster localTarget = movementTargetPos == null
+                ? AgentCombatTargetRuntime.findFollowAttackTarget(entry, agent, AgentCombatConfig.cfg)
+                : AgentCombatTargetRuntime.findRouteBlockerTarget(
+                        entry, agent, movementTargetPos, AgentCombatConfig.cfg);
         if (localTarget == null) {
             return new Result(false, targetPos);
         }

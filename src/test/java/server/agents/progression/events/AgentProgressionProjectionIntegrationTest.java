@@ -40,15 +40,20 @@ class AgentProgressionProjectionIntegrationTest {
             bus.publish(new AgentJobAdvancedEvent(
                     200, 1_001L, 0, 100, 10, 102000003, "career:200"),
                     AgentEventPriority.IMPORTANT);
+            bus.publish(new AgentQuestProgressMilestoneEvent(
+                    200, 1_002L, 1001, 1210100, 15, 30, 50,
+                    100020100, "quest:1001"),
+                    AgentEventPriority.NORMAL);
 
-            assertEquals(4, AgentEventDispatchRuntime.drain(entry));
+            assertEquals(6, AgentEventDispatchRuntime.drain(entry));
             AgentProgressionEventProjectionState.Snapshot snapshot = entry.capabilityStates()
                     .require(AgentProgressionEventProjectionState.STATE_KEY).snapshot();
             assertEquals(1, snapshot.levelTransitions());
             assertEquals(1, snapshot.jobAdvancements());
-            assertEquals(2, snapshot.revision());
+            assertEquals(1, snapshot.questProgressMilestones());
+            assertEquals(3, snapshot.revision());
             assertEquals(1, entry.actionMailbox().size());
-            assertEquals(2, intents.size());
+            assertEquals(3, intents.size());
         } finally {
             intentSubscription.close();
             AgentSessionEventRuntime.close(entry);
