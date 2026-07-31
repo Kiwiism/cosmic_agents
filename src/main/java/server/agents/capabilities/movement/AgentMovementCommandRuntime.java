@@ -4,7 +4,7 @@ import client.Character;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.shop.AgentShopService;
-import server.agents.integration.AgentReplyRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
 import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.commands.AgentCommandModeService;
@@ -81,7 +81,7 @@ public final class AgentMovementCommandRuntime {
                 map, AgentMovementStateRuntime.movementProfile(entry));
         int regionId = graph != null ? graph.findRegionId(map, ownerPos) : -1;
         if (regionId < 0) {
-            AgentReplyRuntime.replyNow(entry, "can't find a patrol region here");
+            AgentDialogueTransportRuntime.replyNow(entry, "can't find a patrol region here");
             return;
         }
         AgentCommandModeService.runPreparedModeCommand(

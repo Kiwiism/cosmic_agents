@@ -33,9 +33,9 @@ class AgentSupplyEventIntegrationTest {
         when(map.isObservedByPlayer()).thenReturn(false);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
         AgentRelationshipRuntime.setCohortId(entry, 100L);
-        boolean previousLegacyDialogue =
-                config.AgentYamlConfig.config.agent.AGENT_LEGACY_DIALOGUE_ENABLED;
-        config.AgentYamlConfig.config.agent.AGENT_LEGACY_DIALOGUE_ENABLED = true;
+        boolean previousDialogueTransport =
+                config.AgentYamlConfig.config.agent.AGENT_DIALOGUE_TRANSPORT_ENABLED;
+        config.AgentYamlConfig.config.agent.AGENT_DIALOGUE_TRANSPORT_ENABLED = true;
         AgentEventBus bus = AgentSessionEventRuntime.bus(entry);
         AtomicReference<AgentSupplyNeedMessage> coordination = new AtomicReference<>();
 
@@ -76,8 +76,8 @@ class AgentSupplyEventIntegrationTest {
                     .require(AgentSupplyMaintenanceEvaluationState.STATE_KEY).next());
         } finally {
             AgentSessionEventRuntime.close(entry);
-            config.AgentYamlConfig.config.agent.AGENT_LEGACY_DIALOGUE_ENABLED =
-                    previousLegacyDialogue;
+            config.AgentYamlConfig.config.agent.AGENT_DIALOGUE_TRANSPORT_ENABLED =
+                    previousDialogueTransport;
         }
     }
 }

@@ -9,7 +9,7 @@ import client.Character;
 import server.agents.capabilities.combat.AgentBuffService;
 import server.agents.capabilities.build.AgentBuildService;
 import server.agents.capabilities.dialogue.AgentChatReportOperationsRuntime;
-import server.agents.integration.AgentReplyRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -28,7 +28,7 @@ public final class AgentControlRuntime {
             public void setSupport(boolean enabled) {
                 AgentSchedulerRuntime.afterRandomDelay(entry, 500, 700, () -> {
                     AgentCombatBuffStateRuntime.setSkillBuffsEnabled(entry, enabled);
-                    AgentReplyRuntime.replyNow(entry, AgentChatToggleFlow.supportReply(enabled));
+                    AgentDialogueTransportRuntime.replyNow(entry, AgentChatToggleFlow.supportReply(enabled));
                 });
             }
 
@@ -36,7 +36,7 @@ public final class AgentControlRuntime {
             public void setHeals(boolean enabled) {
                 AgentSchedulerRuntime.afterRandomDelay(entry, 500, 700, () -> {
                     AgentCombatBuffStateRuntime.setSupportHealsEnabled(entry, enabled);
-                    AgentReplyRuntime.replyNow(entry, AgentChatToggleFlow.healsReply(enabled));
+                    AgentDialogueTransportRuntime.replyNow(entry, AgentChatToggleFlow.healsReply(enabled));
                 });
             }
 
@@ -45,7 +45,7 @@ public final class AgentControlRuntime {
                 AgentSchedulerRuntime.afterRandomDelay(entry, 500, 700, () -> {
                     AgentBuffStateRuntime.setEnabled(entry, enabled);
                     AgentBuffStateRuntime.resetScan(entry);
-                    AgentReplyRuntime.replyNow(entry, AgentChatToggleFlow.buffConsumablesReply(
+                    AgentDialogueTransportRuntime.replyNow(entry, AgentChatToggleFlow.buffConsumablesReply(
                             enabled, AgentBuffStateRuntime.cheapMode(entry)));
                 });
             }
@@ -55,7 +55,7 @@ public final class AgentControlRuntime {
                 AgentSchedulerRuntime.afterRandomDelay(entry, 500, 700, () -> {
                     AgentBuffStateRuntime.setCheapMode(entry, cheapMode);
                     AgentBuffStateRuntime.resetScan(entry);
-                    AgentReplyRuntime.replyNow(entry, AgentChatToggleFlow.buffConsumablesModeReply(cheapMode));
+                    AgentDialogueTransportRuntime.replyNow(entry, AgentChatToggleFlow.buffConsumablesModeReply(cheapMode));
                 });
             }
 
@@ -63,7 +63,7 @@ public final class AgentControlRuntime {
             public void setProactiveOffers(boolean enabled) {
                 AgentSchedulerRuntime.afterRandomDelay(entry, 500, 700, () -> {
                     entry.upgradeOfferState().setProactiveUpgradeOffers(enabled);
-                    AgentReplyRuntime.replyNow(entry, AgentChatToggleFlow.proactiveOffersReply(enabled));
+                    AgentDialogueTransportRuntime.replyNow(entry, AgentChatToggleFlow.proactiveOffersReply(enabled));
                 });
             }
         };
@@ -79,7 +79,7 @@ public final class AgentControlRuntime {
                             AgentBuffStateRuntime.cheapMode(entry),
                             bot(entry),
                             AgentInventoryGatewayRuntime.inventory());
-                    AgentReplyRuntime.replyNow(entry, summary);
+                    AgentDialogueTransportRuntime.replyNow(entry, summary);
                 });
             }
 
@@ -102,13 +102,13 @@ public final class AgentControlRuntime {
             @Override
             public void respecAp() {
                 AgentSchedulerRuntime.afterRandomDelay(entry, 500, 700, () ->
-                        AgentReplyRuntime.replyNow(entry, AgentBuildService.respecAp(entry, bot(entry))));
+                        AgentDialogueTransportRuntime.replyNow(entry, AgentBuildService.respecAp(entry, bot(entry))));
             }
 
             @Override
             public void respecSp() {
                 AgentSchedulerRuntime.afterRandomDelay(entry, 500, 700, () ->
-                        AgentReplyRuntime.replyNow(entry, AgentBuildService.respecSp(entry, bot(entry))));
+                        AgentDialogueTransportRuntime.replyNow(entry, AgentBuildService.respecSp(entry, bot(entry))));
             }
         };
     }

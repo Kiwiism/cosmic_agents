@@ -1,6 +1,6 @@
 package server.agents.capabilities.build;
 
-import server.agents.integration.AgentReplyRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
 import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -10,7 +10,7 @@ public final class AgentMakerRuntime {
     }
 
     public static void replyNow(AgentRuntimeEntry entry, String message) {
-        AgentReplyRuntime.replyNow(entry, message);
+        AgentDialogueTransportRuntime.replyNow(entry, message);
     }
 
     public static void afterDelay(AgentRuntimeEntry entry, long delayMs, Runnable action) {

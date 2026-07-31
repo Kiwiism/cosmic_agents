@@ -3,7 +3,7 @@ package server.agents.commands;
 import client.Character;
 import server.agents.capabilities.movement.AgentFormationCommandService;
 import server.agents.capabilities.movement.AgentFormationService;
-import server.agents.integration.AgentReplyRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
 
 public final class AgentFormationCommandCoordinator {
     private AgentFormationCommandCoordinator() {
@@ -26,7 +26,7 @@ public final class AgentFormationCommandCoordinator {
                                 fallbackFormation),
                         AgentFormationService.formationsByLeaderId()::put,
                         AgentFormationService::applyOffsets,
-                        AgentReplyRuntime::queueReply,
+                        AgentDialogueTransportRuntime::queueReply,
                         Character::yellowMessage,
                         defaultFormation,
                         defaultFollowStaggerPx,

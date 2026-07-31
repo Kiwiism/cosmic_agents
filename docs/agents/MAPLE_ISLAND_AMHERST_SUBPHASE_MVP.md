@@ -208,7 +208,7 @@ guarded live-client smoke and the complete 25-objective, 18-quest Amherst
 route. In-scope multi-hop travel is expanded through adjacent portals, and
 portal entry still requires the Agent to navigate into the portal first.
 
-`server.AGENT_LEGACY_DIALOGUE_ENABLED` controls the old NuTNNuT-derived Agent
+`server.AGENT_DIALOGUE_TRANSPORT_ENABLED` controls the old NuTNNuT-derived Agent
 chatter. It is `false` for the Amherst test run. The Amherst plan narrator is a
 separate intentional channel: before each objective, the Agent states the
 destination map, NPC, quest, combat/loot target, or reactor action using catalog

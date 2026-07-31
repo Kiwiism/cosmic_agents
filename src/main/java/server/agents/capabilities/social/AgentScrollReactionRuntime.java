@@ -1,6 +1,6 @@
 package server.agents.capabilities.social;
 
-import server.agents.integration.AgentReplyRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
 import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -10,7 +10,7 @@ public final class AgentScrollReactionRuntime {
     }
 
     public static void queueSay(AgentRuntimeEntry entry, String message) {
-        AgentReplyRuntime.queueSay(entry, message);
+        AgentDialogueTransportRuntime.queueSay(entry, message);
     }
 
     public static void afterDelay(AgentRuntimeEntry entry, long delayMs, Runnable action) {

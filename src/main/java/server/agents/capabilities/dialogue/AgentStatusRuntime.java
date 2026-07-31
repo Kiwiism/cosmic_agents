@@ -2,7 +2,7 @@ package server.agents.capabilities.dialogue;
 
 
 import server.agents.runtime.AgentSchedulerRuntime;
-import server.agents.integration.AgentReplyRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import client.Character;
@@ -40,7 +40,7 @@ public final class AgentStatusRuntime {
 
             @Override
             public void sayParty(String text) {
-                AgentReplyRuntime.sayPartyNow(bot, text);
+                AgentDialogueTransportRuntime.sayPartyNow(bot, text);
             }
         };
     }
@@ -64,7 +64,7 @@ public final class AgentStatusRuntime {
 
             @Override
             public void reply(String text) {
-                AgentReplyRuntime.replyNow(entry, text);
+                AgentDialogueTransportRuntime.replyNow(entry, text);
             }
         };
     }

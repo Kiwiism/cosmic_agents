@@ -2,7 +2,7 @@ package server.agents.capabilities.supplies;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.integration.AgentReplyRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
 import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -16,7 +16,7 @@ class AgentAmmoRuntimeTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Runnable action = mock(Runnable.class);
 
-        try (MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class);
+        try (MockedStatic<AgentDialogueTransportRuntime> replies = mockStatic(AgentDialogueTransportRuntime.class);
              MockedStatic<AgentSchedulerRuntime> scheduler = mockStatic(AgentSchedulerRuntime.class)) {
             scheduler.when(() -> AgentSchedulerRuntime.randomDelayMs(900, 1400)).thenReturn(999L);
 
@@ -25,7 +25,7 @@ class AgentAmmoRuntimeTest {
             AgentAmmoRuntime.afterRandomDelay(entry, 900, 1100, action);
             long delay = AgentAmmoRuntime.randomDelayMs(900, 1400);
 
-            replies.verify(() -> AgentReplyRuntime.sayMapNow(null, "ammo"));
+            replies.verify(() -> AgentDialogueTransportRuntime.sayMapNow(null, "ammo"));
             scheduler.verify(() -> AgentSchedulerRuntime.afterDelay(entry, 500L, action));
             scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(entry, 900, 1100, action));
             scheduler.verify(() -> AgentSchedulerRuntime.randomDelayMs(900, 1400));

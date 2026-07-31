@@ -18,7 +18,7 @@ import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
 
 
-import server.agents.integration.AgentReplyRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
 import client.Character;
 import client.Job;
 import client.inventory.Inventory;
@@ -54,17 +54,17 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class AgentChatRuntimeParityTest {
-    private boolean previousLegacyDialogue;
+    private boolean previousDialogueTransport;
 
     @BeforeEach
-    void enableLegacyDialogueForParityTests() {
-        previousLegacyDialogue = config.AgentYamlConfig.config.agent.AGENT_LEGACY_DIALOGUE_ENABLED;
-        config.AgentYamlConfig.config.agent.AGENT_LEGACY_DIALOGUE_ENABLED = true;
+    void enableDialogueTransportForParityTests() {
+        previousDialogueTransport = config.AgentYamlConfig.config.agent.AGENT_DIALOGUE_TRANSPORT_ENABLED;
+        config.AgentYamlConfig.config.agent.AGENT_DIALOGUE_TRANSPORT_ENABLED = true;
     }
 
     @AfterEach
-    void restoreLegacyDialogueFlag() {
-        config.AgentYamlConfig.config.agent.AGENT_LEGACY_DIALOGUE_ENABLED = previousLegacyDialogue;
+    void restoreDialogueTransportFlag() {
+        config.AgentYamlConfig.config.agent.AGENT_DIALOGUE_TRANSPORT_ENABLED = previousDialogueTransport;
     }
     @Test
     void shouldParseTradeMesosAsAllWhenNoAmountIsSpecified() {
@@ -417,8 +417,8 @@ class AgentChatRuntimeParityTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         AgentMessageQueueStateRuntime.setSending(entry, true);
 
-        AgentReplyRuntime.queueReply(entry, "owner reply");
-        AgentReplyRuntime.queueSay(entry, "party chatter");
+        AgentDialogueTransportRuntime.queueReply(entry, "owner reply");
+        AgentDialogueTransportRuntime.queueSay(entry, "party chatter");
 
         AgentQueuedMessage first = AgentMessageQueueStateRuntime.poll(entry);
         AgentQueuedMessage second = AgentMessageQueueStateRuntime.poll(entry);

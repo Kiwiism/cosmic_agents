@@ -4,7 +4,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.integration.AgentReplyRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
 import server.agents.runtime.AgentSchedulerRuntime;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -66,10 +66,10 @@ class AgentControlRuntimeTest {
     void broadReplyRuntimeStillSupportsControlReplies() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
 
-        try (MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
-            AgentReplyRuntime.replyNow(entry, "ok");
+        try (MockedStatic<AgentDialogueTransportRuntime> replies = mockStatic(AgentDialogueTransportRuntime.class)) {
+            AgentDialogueTransportRuntime.replyNow(entry, "ok");
 
-            replies.verify(() -> AgentReplyRuntime.replyNow(entry, "ok"));
+            replies.verify(() -> AgentDialogueTransportRuntime.replyNow(entry, "ok"));
         }
     }
 

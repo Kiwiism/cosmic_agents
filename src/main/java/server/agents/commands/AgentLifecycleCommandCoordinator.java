@@ -4,7 +4,7 @@ import server.agents.capabilities.trade.AgentTransferCommandService;
 import server.agents.capabilities.trade.AgentTransferService;
 import server.agents.auth.AgentControlService;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
-import server.agents.integration.AgentReplyRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentRandom;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -64,7 +64,7 @@ public final class AgentLifecycleCommandCoordinator {
                         stopAgent,
                         AgentSchedulerRuntime::afterDelay,
                         () -> AgentRandom.randMs(400, 600),
-                        AgentReplyRuntime::replyNow,
+                        AgentDialogueTransportRuntime::replyNow,
                         () -> AgentDialogueSelector.randomReply(FAREWELL_MESSAGES)));
     }
 

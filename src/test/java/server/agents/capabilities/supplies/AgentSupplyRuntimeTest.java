@@ -11,7 +11,7 @@ import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.dialogue.AgentChatSupplyRequestFlow;
 import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.commands.AgentMessageQueueStateRuntime;
-import server.agents.integration.AgentReplyRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
 import server.agents.integration.InventoryGateway;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentSchedulerRuntime;
@@ -24,17 +24,17 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
 
 class AgentSupplyRuntimeTest {
-    private boolean previousLegacyDialogue;
+    private boolean previousDialogueTransport;
 
     @BeforeEach
-    void enableLegacyDialogueForQueueBehaviorTests() {
-        previousLegacyDialogue = config.AgentYamlConfig.config.agent.AGENT_LEGACY_DIALOGUE_ENABLED;
-        config.AgentYamlConfig.config.agent.AGENT_LEGACY_DIALOGUE_ENABLED = true;
+    void enableDialogueTransportForQueueBehaviorTests() {
+        previousDialogueTransport = config.AgentYamlConfig.config.agent.AGENT_DIALOGUE_TRANSPORT_ENABLED;
+        config.AgentYamlConfig.config.agent.AGENT_DIALOGUE_TRANSPORT_ENABLED = true;
     }
 
     @AfterEach
-    void restoreLegacyDialogueSetting() {
-        config.AgentYamlConfig.config.agent.AGENT_LEGACY_DIALOGUE_ENABLED = previousLegacyDialogue;
+    void restoreDialogueTransportSetting() {
+        config.AgentYamlConfig.config.agent.AGENT_DIALOGUE_TRANSPORT_ENABLED = previousDialogueTransport;
     }
 
     @Test
@@ -76,13 +76,13 @@ class AgentSupplyRuntimeTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
 
         try (MockedStatic<AgentPotionService> potions = mockStatic(AgentPotionService.class);
-             MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
+             MockedStatic<AgentDialogueTransportRuntime> replies = mockStatic(AgentDialogueTransportRuntime.class)) {
             potions.when(() -> AgentPotionService.offerPotShareToOwner(entry, true))
                     .thenReturn(AgentPotionService.OwnerPotShareResult.NO_DONOR);
 
             AgentSupplyRuntime.handleNeedPotionCommand(entry, true);
 
-            replies.verify(() -> AgentReplyRuntime.queueReply(eq(entry), any(String.class)));
+            replies.verify(() -> AgentDialogueTransportRuntime.queueReply(eq(entry), any(String.class)));
         }
     }
 
@@ -109,13 +109,13 @@ class AgentSupplyRuntimeTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, owner, null);
 
         try (MockedStatic<AgentAttackExecutionProvider> attacks = mockStatic(AgentAttackExecutionProvider.class);
-             MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
+             MockedStatic<AgentDialogueTransportRuntime> replies = mockStatic(AgentDialogueTransportRuntime.class)) {
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(owner))
                     .thenReturn(WeaponType.SWORD1H);
 
             AgentSupplyRuntime.handleNeedAmmoCommand(entry);
 
-            replies.verify(() -> AgentReplyRuntime.queueReply(eq(entry), any(String.class)));
+            replies.verify(() -> AgentDialogueTransportRuntime.queueReply(eq(entry), any(String.class)));
         }
     }
 

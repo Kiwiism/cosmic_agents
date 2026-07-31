@@ -7,7 +7,7 @@ import server.agents.capabilities.dialogue.AgentChatPendingAction;
 import server.agents.capabilities.dialogue.AgentChatTransferFlow;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
-import server.agents.integration.AgentReplyRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.capabilities.dialogue.AgentPendingActionStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -42,7 +42,7 @@ public final class AgentTransferRuntime {
                                              String message) {
         String category = transferCommand.category();
         if (AgentChatTransferFlow.shouldReplyWithWeirdTransfer(transferCommand, message)) {
-            AgentReplyRuntime.replyNow(entry, AgentChatTransferFlow.weirdTransferReply());
+            AgentDialogueTransportRuntime.replyNow(entry, AgentChatTransferFlow.weirdTransferReply());
         }
         if (transferCommand.mode() == AgentChatTransferFlow.TransferMode.TRADE
                 && AgentInventoryTradePolicy.isMesoCategory(category)) {
@@ -166,12 +166,12 @@ public final class AgentTransferRuntime {
                                                     String category,
                                                     AgentChatTransferFlow.TransferResultDecision decision) {
         switch (decision.action()) {
-            case REPLY -> AgentReplyRuntime.replyNow(entry, decision.reply());
+            case REPLY -> AgentDialogueTransportRuntime.replyNow(entry, decision.reply());
             case START_TRADE -> AgentInventoryTransferService.startTradeTransfer(category, entry, bot);
             case PROMPT_ITEM_CHOICE -> {
                 AgentPendingActionStateRuntime.setPendingAction(entry, AgentChatPendingAction.ITEM_CHOICE);
                 AgentPendingActionStateRuntime.setPendingDropCategory(entry, decision.category());
-                AgentReplyRuntime.replyNow(entry, decision.reply());
+                AgentDialogueTransportRuntime.replyNow(entry, decision.reply());
             }
         }
     }

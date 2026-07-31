@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
-import server.agents.integration.AgentReplyRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -97,13 +97,13 @@ class AgentMovementCommandRuntimeTest {
         Point patrolPos = new Point(30, 40);
 
         try (MockedStatic<AgentNavigationGraphService> graphs = mockStatic(AgentNavigationGraphService.class);
-             MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
+             MockedStatic<AgentDialogueTransportRuntime> replies = mockStatic(AgentDialogueTransportRuntime.class)) {
             graphs.when(() -> AgentNavigationGraphService.peekBestGraph(map, AgentMovementStateRuntime.movementProfile(entry)))
                     .thenReturn(null);
 
             AgentMovementCommandRuntime.patrol(entry, patrolPos);
 
-            replies.verify(() -> AgentReplyRuntime.replyNow(entry, "can't find a patrol region here"));
+            replies.verify(() -> AgentDialogueTransportRuntime.replyNow(entry, "can't find a patrol region here"));
             assertFalse(AgentPatrolStateRuntime.hasPatrolRegion(entry));
         }
     }

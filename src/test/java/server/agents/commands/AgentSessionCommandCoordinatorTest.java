@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatPendingAction;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
-import server.agents.integration.AgentReplyRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentSchedulerRuntime;
 
@@ -24,7 +24,7 @@ class AgentSessionCommandCoordinatorTest {
 
         try (MockedStatic<AgentSchedulerRuntime> scheduler = mockStatic(AgentSchedulerRuntime.class);
              MockedStatic<AgentMovementCommandRuntime> movementCommands = mockStatic(AgentMovementCommandRuntime.class);
-             MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
+             MockedStatic<AgentDialogueTransportRuntime> replies = mockStatic(AgentDialogueTransportRuntime.class)) {
             scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(entry), eq(900), eq(1100), any(Runnable.class)))
                     .thenAnswer(invocation -> {
                         invocation.<Runnable>getArgument(3).run();
@@ -35,7 +35,7 @@ class AgentSessionCommandCoordinatorTest {
 
             assertEquals(AgentChatPendingAction.RELOG, AgentPendingActionStateRuntime.pendingAction(entry));
             movementCommands.verify(() -> AgentMovementCommandRuntime.stop((AgentRuntimeEntry) entry));
-            replies.verify(() -> AgentReplyRuntime.replyNow(eq(entry), anyString()));
+            replies.verify(() -> AgentDialogueTransportRuntime.replyNow(eq(entry), anyString()));
         }
     }
 
@@ -43,10 +43,10 @@ class AgentSessionCommandCoordinatorTest {
     void broadReplyRuntimeStillSupportsSessionReplies() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), null, null);
 
-        try (MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
-            AgentReplyRuntime.replyNow(entry, "reply");
+        try (MockedStatic<AgentDialogueTransportRuntime> replies = mockStatic(AgentDialogueTransportRuntime.class)) {
+            AgentDialogueTransportRuntime.replyNow(entry, "reply");
 
-            replies.verify(() -> AgentReplyRuntime.replyNow(entry, "reply"));
+            replies.verify(() -> AgentDialogueTransportRuntime.replyNow(entry, "reply"));
         }
     }
 

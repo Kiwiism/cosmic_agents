@@ -6,7 +6,7 @@ import client.Character;
 import server.agents.capabilities.dialogue.AgentChatReportRuntime;
 import server.agents.commands.AgentReplyChannel;
 import server.agents.capabilities.dialogue.AgentChatStatusOrchestrator;
-import server.agents.integration.AgentReplyRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**
@@ -22,23 +22,23 @@ public final class AgentOfferRuntime {
     }
 
     public static void replyNow(AgentRuntimeEntry entry, String message) {
-        AgentReplyRuntime.replyNow(entry, message);
+        AgentDialogueTransportRuntime.replyNow(entry, message);
     }
 
     public static void queueSay(AgentRuntimeEntry entry, String message) {
-        AgentReplyRuntime.queueSay(entry, message);
+        AgentDialogueTransportRuntime.queueSay(entry, message);
     }
 
     public static void sayMapNow(Character bot, String message) {
-        AgentReplyRuntime.sayMapNow(bot, message);
+        AgentDialogueTransportRuntime.sayMapNow(bot, message);
     }
 
     public static void sayNow(Character bot, AgentReplyChannel channel, String message) {
-        AgentReplyRuntime.sayNow(bot, channel, message);
+        AgentDialogueTransportRuntime.sayNow(bot, channel, message);
     }
 
     public static long queueSayWithEstimatedDelay(AgentRuntimeEntry entry, String message) {
-        return AgentReplyRuntime.queueSayWithEstimatedDelay(entry, message);
+        return AgentDialogueTransportRuntime.queueSayWithEstimatedDelay(entry, message);
     }
 
     public static void afterDelay(AgentRuntimeEntry entry, long delayMs, Runnable action) {
@@ -86,7 +86,7 @@ public final class AgentOfferRuntime {
 
             @Override
             public void queueReply(String line) {
-                AgentReplyRuntime.queueReply(entry, line);
+                AgentDialogueTransportRuntime.queueReply(entry, line);
             }
         };
     }

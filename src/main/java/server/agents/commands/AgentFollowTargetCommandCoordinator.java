@@ -7,7 +7,7 @@ import server.agents.capabilities.follow.AgentFollowTargetResolutionService;
 import client.Character;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.supplies.AgentPotionService;
-import server.agents.integration.AgentReplyRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
 import server.agents.runtime.AgentRandom;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
@@ -50,7 +50,7 @@ public final class AgentFollowTargetCommandCoordinator {
                 new AgentFollowTargetCommandService.Hooks(
                         AgentFollowTargetCommandCoordinator::resolveFollowTarget,
                         AgentFollowTargetCommandCoordinator::followTargetReply,
-                        AgentReplyRuntime::queueReply,
+                        AgentDialogueTransportRuntime::queueReply,
                         () -> AgentRandom.randMs(250, 750),
                         AgentSchedulerRuntime::afterDelay,
                         AgentFollowTargetCommandCoordinator::autoEquipForFollow,
@@ -71,7 +71,7 @@ public final class AgentFollowTargetCommandCoordinator {
         return new AgentFollowTargetCommandService.Hooks(
                 AgentFollowTargetCommandCoordinator::resolveFollowTarget,
                 AgentFollowTargetCommandCoordinator::followTargetReply,
-                AgentReplyRuntime::queueReply,
+                AgentDialogueTransportRuntime::queueReply,
                 () -> AgentRandom.randMs(250, 750),
                 AgentSchedulerRuntime::afterDelay,
                 AgentFollowTargetCommandCoordinator::autoEquipForFollow,

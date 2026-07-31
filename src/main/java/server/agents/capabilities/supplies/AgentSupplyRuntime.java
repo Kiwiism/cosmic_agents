@@ -8,7 +8,7 @@ import client.Character;
 import client.inventory.WeaponType;
 import server.agents.capabilities.dialogue.AgentChatSupplyRequestFlow;
 import server.agents.capabilities.dialogue.AgentSupplyRequestOutcomeFlow;
-import server.agents.integration.AgentReplyRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.integration.AgentInventoryGatewayRuntime;
@@ -69,7 +69,7 @@ public final class AgentSupplyRuntime {
                 result == AgentPotionService.OwnerPotShareResult.NO_DONOR,
                 forHp);
         if (reply != null) {
-            AgentReplyRuntime.queueReply(entry, reply);
+            AgentDialogueTransportRuntime.queueReply(entry, reply);
         }
     }
 
@@ -80,7 +80,7 @@ public final class AgentSupplyRuntime {
         }
         WeaponType weaponType = AgentAttackExecutionProvider.getEquippedWeaponType(owner);
         if (weaponType != WeaponType.BOW && weaponType != WeaponType.CROSSBOW) {
-            AgentReplyRuntime.queueReply(entry, AgentSupplyRequestOutcomeFlow.ammoNotNeededReply());
+            AgentDialogueTransportRuntime.queueReply(entry, AgentSupplyRequestOutcomeFlow.ammoNotNeededReply());
             return;
         }
         AgentAmmoService.OwnerAmmoShareResult result = AgentAmmoService.offerAmmoShareToOwner(
@@ -90,7 +90,7 @@ public final class AgentSupplyRuntime {
         String reply = AgentSupplyRequestOutcomeFlow.ammoShareReply(
                 result == AgentAmmoService.OwnerAmmoShareResult.NO_DONOR);
         if (reply != null) {
-            AgentReplyRuntime.queueReply(entry, reply);
+            AgentDialogueTransportRuntime.queueReply(entry, reply);
         }
     }
 

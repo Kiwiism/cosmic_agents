@@ -177,10 +177,10 @@ agent:
     # Purpose: Controls the visible strength or frequency of death respawn health. Higher values make the effect stronger or more common; lower values make it weaker or rarer.
     # Technical: the Agent engine deployment configuration consumes this as an integer. Domain: percentage from 0 to 100 inclusive.
     AGENT_DEATH_RESPAWN_HP_PERCENT: 0
-    # Values: true or false. Recommended: retain the tested baseline false unless deliberately enabling or disabling this isolated capability.
-    # Purpose: When enabled, Agents use legacy dialogue. When disabled, they skip it while their other capabilities continue normally.
-    # Technical: the Agent engine deployment configuration consumes this as a boolean. Domain: true or false. The disabled path must bypass only this feature and preserve the generic Agent lifecycle.
-    AGENT_LEGACY_DIALOGUE_ENABLED: false
+    # Values: true or false. Recommended: false until direct command replies are intentionally enabled alongside event-driven dialogue.
+    # Purpose: Enables direct and queued Agent chat transport for commands, status reports, trades, and social replies. It does not control intention chat.
+    # Technical: Gates the bounded dialogue-to-Cosmic packet adapter; semantic dialogue events retain their own audience and cooldown policy.
+    AGENT_DIALOGUE_TRANSPORT_ENABLED: false
     # Values: true or false. Recommended: false for routine production; use true only for a bounded diagnostic or load-test session (tested baseline false).
     # Purpose: When enabled, Agents use amherst debug messages. When disabled, they skip it while their other capabilities continue normally.
     # Technical: the Agent engine deployment configuration consumes this as a boolean. Domain: true or false. The disabled path must bypass only this feature and preserve the generic Agent lifecycle.

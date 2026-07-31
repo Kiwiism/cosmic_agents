@@ -20,7 +20,7 @@ import static org.mockito.Mockito.when;
 
 class AgentLlmReplyServiceTest {
     @Test
-    void deliverReplyPartsRoutesImmediateAndFollowUpsThroughAgentReplyRuntime() throws Exception {
+    void deliverReplyPartsRoutesImmediateAndFollowUpsThroughAgentDialogueTransportRuntime() throws Exception {
         AgentRuntimeEntry entry = newAgentEntry();
         int oldDelay = AgentLlmConfig.multiMessageDelayMs;
         AgentLlmConfig.multiMessageDelayMs = 250;

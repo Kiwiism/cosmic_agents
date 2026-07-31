@@ -13,17 +13,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 class AgentSessionEventWiringRuntimeTest {
-    private boolean previousLegacyDialogue;
+    private boolean previousTransportEnabled;
 
     @BeforeEach
     void enableDialogueForExistingWiringExpectations() {
-        previousLegacyDialogue = config.AgentYamlConfig.config.agent.AGENT_LEGACY_DIALOGUE_ENABLED;
-        config.AgentYamlConfig.config.agent.AGENT_LEGACY_DIALOGUE_ENABLED = true;
+        previousTransportEnabled = config.AgentYamlConfig.config.agent.AGENT_DIALOGUE_TRANSPORT_ENABLED;
+        config.AgentYamlConfig.config.agent.AGENT_DIALOGUE_TRANSPORT_ENABLED = true;
     }
 
     @AfterEach
     void clearRolloutProperties() {
-        config.AgentYamlConfig.config.agent.AGENT_LEGACY_DIALOGUE_ENABLED = previousLegacyDialogue;
+        config.AgentYamlConfig.config.agent.AGENT_DIALOGUE_TRANSPORT_ENABLED = previousTransportEnabled;
         System.clearProperty("agents.events.reactions.enabled");
         System.clearProperty("agents.events.dialogue.enabled");
         System.clearProperty("agents.events.coordination.enabled");
@@ -39,8 +39,8 @@ class AgentSessionEventWiringRuntimeTest {
                 ? 2 : 0;
         int behaviorListener = config.AgentYamlConfig.config.agent.AGENT_COMBAT_BEHAVIOR_ENABLED ? 1 : 0;
 
-        assertEquals(19 + personalityListeners + behaviorListener, bus.snapshot().subscriptions());
-        assertEquals(19 + personalityListeners + behaviorListener,
+        assertEquals(22 + personalityListeners + behaviorListener, bus.snapshot().subscriptions());
+        assertEquals(22 + personalityListeners + behaviorListener,
                 AgentSessionEventRuntime.bus(entry).snapshot().subscriptions());
 
         AgentSessionEventRuntime.close(entry);
@@ -62,21 +62,21 @@ class AgentSessionEventWiringRuntimeTest {
                 ? 2 : 0;
         int behaviorListener = config.AgentYamlConfig.config.agent.AGENT_COMBAT_BEHAVIOR_ENABLED ? 1 : 0;
 
-        assertEquals(5 + personalityListeners + behaviorListener, bus.snapshot().subscriptions());
+        assertEquals(8 + personalityListeners + behaviorListener, bus.snapshot().subscriptions());
 
         AgentSessionEventRuntime.close(entry);
     }
 
     @Test
-    void legacyDialogueYamlGateLeavesIntentionProgressDialogueAvailable() {
-        config.AgentYamlConfig.config.agent.AGENT_LEGACY_DIALOGUE_ENABLED = false;
+    void disabledDialogueTransportLeavesIntentionProgressDialogueAvailable() {
+        config.AgentYamlConfig.config.agent.AGENT_DIALOGUE_TRANSPORT_ENABLED = false;
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), null, null);
         AgentEventBus bus = AgentSessionEventRuntime.bus(entry);
         int personalityListeners = config.AgentYamlConfig.config.agent.AGENT_PERSONALITY_PRESENTATION_ENABLED
                 ? 2 : 0;
         int behaviorListener = config.AgentYamlConfig.config.agent.AGENT_COMBAT_BEHAVIOR_ENABLED ? 1 : 0;
 
-        assertEquals(13 + personalityListeners + behaviorListener, bus.snapshot().subscriptions());
+        assertEquals(16 + personalityListeners + behaviorListener, bus.snapshot().subscriptions());
 
         AgentSessionEventRuntime.close(entry);
     }

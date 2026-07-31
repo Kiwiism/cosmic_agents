@@ -4,7 +4,7 @@ import server.agents.capabilities.equipment.AgentEquipRecommendation;
 
 import client.Character;
 import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
-import server.agents.integration.AgentReplyRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.capabilities.dialogue.AgentPendingActionStateRuntime;
@@ -47,7 +47,7 @@ public final class AgentBuildStatusRuntime {
 
             @Override
             public void queueReply(String message) {
-                AgentReplyRuntime.queueReply(entry, message);
+                AgentDialogueTransportRuntime.queueReply(entry, message);
             }
 
             @Override

@@ -5,7 +5,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.commands.AgentReplyChannel;
-import server.agents.integration.AgentReplyRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
 import server.agents.runtime.AgentSchedulerRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -64,10 +64,10 @@ class AgentOfferRuntimeTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Runnable action = mock(Runnable.class);
 
-        try (MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class);
+        try (MockedStatic<AgentDialogueTransportRuntime> replies = mockStatic(AgentDialogueTransportRuntime.class);
              MockedStatic<AgentSchedulerRuntime> scheduler = mockStatic(AgentSchedulerRuntime.class)) {
             scheduler.when(() -> AgentSchedulerRuntime.randomDelayMs(1800, 2200)).thenReturn(1900L);
-            replies.when(() -> AgentReplyRuntime.queueSayWithEstimatedDelay(entry, "queued")).thenReturn(1200L);
+            replies.when(() -> AgentDialogueTransportRuntime.queueSayWithEstimatedDelay(entry, "queued")).thenReturn(1200L);
 
             AgentOfferRuntime.replyNow(entry, "reply");
             AgentOfferRuntime.queueSay(entry, "say");
@@ -78,11 +78,11 @@ class AgentOfferRuntimeTest {
             AgentOfferRuntime.afterRandomDelay(entry, 400, 600, action);
             long randomDelay = AgentOfferRuntime.randomDelayMs(1800, 2200);
 
-            replies.verify(() -> AgentReplyRuntime.replyNow(entry, "reply"));
-            replies.verify(() -> AgentReplyRuntime.queueSay(entry, "say"));
-            replies.verify(() -> AgentReplyRuntime.sayMapNow(null, "map"));
-            replies.verify(() -> AgentReplyRuntime.sayNow(null, AgentReplyChannel.PARTY, "party"));
-            replies.verify(() -> AgentReplyRuntime.queueSayWithEstimatedDelay(entry, "queued"));
+            replies.verify(() -> AgentDialogueTransportRuntime.replyNow(entry, "reply"));
+            replies.verify(() -> AgentDialogueTransportRuntime.queueSay(entry, "say"));
+            replies.verify(() -> AgentDialogueTransportRuntime.sayMapNow(null, "map"));
+            replies.verify(() -> AgentDialogueTransportRuntime.sayNow(null, AgentReplyChannel.PARTY, "party"));
+            replies.verify(() -> AgentDialogueTransportRuntime.queueSayWithEstimatedDelay(entry, "queued"));
             scheduler.verify(() -> AgentSchedulerRuntime.afterDelay(entry, 500L, action));
             scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(entry, 400, 600, action));
             scheduler.verify(() -> AgentSchedulerRuntime.randomDelayMs(1800, 2200));

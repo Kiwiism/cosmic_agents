@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.follow.AgentActivityStateRuntime;
 import server.agents.capabilities.trade.AgentOfferStateRuntime;
-import server.agents.integration.AgentReplyRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
 import server.agents.runtime.AgentSchedulerRuntime;
 
 import java.awt.Point;
@@ -118,8 +118,8 @@ class AgentStatusRuntimeTest {
 
         try (MockedStatic<AgentSchedulerRuntime> scheduler =
                      mockStatic(AgentSchedulerRuntime.class);
-             MockedStatic<AgentReplyRuntime> replies =
-                     mockStatic(AgentReplyRuntime.class)) {
+             MockedStatic<AgentDialogueTransportRuntime> replies =
+                     mockStatic(AgentDialogueTransportRuntime.class)) {
             AgentChatStatusRuntime.OfflineReturnActions actions =
                     AgentStatusRuntime.offlineReturnActions(entry);
 
@@ -127,7 +127,7 @@ class AgentStatusRuntimeTest {
             actions.sayParty("wb");
 
             scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(entry, 900, 1100, action));
-            replies.verify(() -> AgentReplyRuntime.sayPartyNow(bot, "wb"));
+            replies.verify(() -> AgentDialogueTransportRuntime.sayPartyNow(bot, "wb"));
         }
     }
 
@@ -139,15 +139,15 @@ class AgentStatusRuntimeTest {
 
         try (MockedStatic<AgentSchedulerRuntime> scheduler =
                      mockStatic(AgentSchedulerRuntime.class);
-             MockedStatic<AgentReplyRuntime> replies =
-                     mockStatic(AgentReplyRuntime.class)) {
+             MockedStatic<AgentDialogueTransportRuntime> replies =
+                     mockStatic(AgentDialogueTransportRuntime.class)) {
             AgentChatStatusRuntime.AfkReturnActions actions = AgentStatusRuntime.afkReturnActions(entry);
 
             actions.afterRandomDelay(700, 900, action);
             actions.reply("back");
 
             scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(entry, 700, 900, action));
-            replies.verify(() -> AgentReplyRuntime.replyNow(entry, "back"));
+            replies.verify(() -> AgentDialogueTransportRuntime.replyNow(entry, "back"));
         }
     }
 }

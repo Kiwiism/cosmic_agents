@@ -12,7 +12,7 @@ public record AgentEventRolloutConfig(
     public static AgentEventRolloutConfig fromSystemProperties() {
         return new AgentEventRolloutConfig(
                 enabled("agents.events.reactions.enabled"),
-                config.AgentYamlConfig.config.agent.AGENT_LEGACY_DIALOGUE_ENABLED
+                config.AgentYamlConfig.config.agent.AGENT_DIALOGUE_TRANSPORT_ENABLED
                         && dialogueTransportEnabled(),
                 enabled("agents.events.coordination.enabled"),
                 enabled("agents.events.llmContext.enabled"));

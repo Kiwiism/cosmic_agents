@@ -4,7 +4,7 @@ import server.agents.capabilities.movement.AgentFormationService;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.integration.AgentReplyRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
@@ -78,7 +78,7 @@ class AgentFormationCommandCoordinatorTest {
         Character leader = leader(904);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), leader, null);
 
-        try (MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
+        try (MockedStatic<AgentDialogueTransportRuntime> replies = mockStatic(AgentDialogueTransportRuntime.class)) {
             boolean handled = AgentFormationCommandCoordinator.handleFormationCommand(
                     leader,
                     "formation",
@@ -88,7 +88,7 @@ class AgentFormationCommandCoordinatorTest {
                     120);
 
             assertTrue(handled);
-            replies.verify(() -> AgentReplyRuntime.queueReply(
+            replies.verify(() -> AgentDialogueTransportRuntime.queueReply(
                     eq(entry),
                     eq("formations: stagger/split/random/spread/left/right <px>, stack, tight, loose | snap <px/on/off>")));
         }

@@ -6,7 +6,7 @@ import client.Character;
 import server.agents.capabilities.dialogue.AgentChatSocialFlow;
 import server.agents.capabilities.dialogue.AgentFameDialogueFlow;
 import server.agents.capabilities.dialogue.AgentSocialDialogueClassifier;
-import server.agents.integration.AgentReplyRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -73,7 +73,7 @@ public final class AgentSocialRuntime {
 
             @Override
             public void reply(String message) {
-                AgentReplyRuntime.replyNow(entry, message);
+                AgentDialogueTransportRuntime.replyNow(entry, message);
             }
         });
     }

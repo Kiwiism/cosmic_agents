@@ -4,7 +4,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.integration.AgentReplyRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
 import server.agents.runtime.AgentSchedulerRuntime;
 
 import static org.mockito.Mockito.mock;
@@ -16,14 +16,14 @@ class AgentInventoryRuntimeTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Runnable action = mock(Runnable.class);
 
-        try (MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class);
+        try (MockedStatic<AgentDialogueTransportRuntime> replies = mockStatic(AgentDialogueTransportRuntime.class);
              MockedStatic<AgentSchedulerRuntime> scheduler = mockStatic(AgentSchedulerRuntime.class)) {
             AgentInventoryRuntime.replyNow(entry, "hello");
             AgentInventoryRuntime.visibleSayNow(entry, "visible");
             AgentInventoryRuntime.afterDelay(entry, 123L, action);
 
-            replies.verify(() -> AgentReplyRuntime.replyNow(entry, "hello"));
-            replies.verify(() -> AgentReplyRuntime.visibleSayNow(entry, "visible"));
+            replies.verify(() -> AgentDialogueTransportRuntime.replyNow(entry, "hello"));
+            replies.verify(() -> AgentDialogueTransportRuntime.visibleSayNow(entry, "visible"));
             scheduler.verify(() -> AgentSchedulerRuntime.afterDelay(entry, 123L, action));
         }
     }

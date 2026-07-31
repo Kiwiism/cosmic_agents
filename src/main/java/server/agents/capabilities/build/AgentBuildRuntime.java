@@ -8,7 +8,7 @@ import server.agents.capabilities.dialogue.AgentApBuildDialogueResolver;
 import server.agents.capabilities.dialogue.AgentBuildDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentChatBuildFlow;
 import server.agents.capabilities.dialogue.AgentChatJobAdvancementFlow;
-import server.agents.integration.AgentReplyRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -24,14 +24,14 @@ public final class AgentBuildRuntime {
             @Override
             public void oneHanded() {
                 AgentBuildStateRuntime.setSpVariant(entry, AgentBuildDialogueClassifier.ONE_HANDED_SP_VARIANT);
-                AgentReplyRuntime.replyNow(entry, AgentChatBuildFlow.oneHandedSpVariantReply());
+                AgentDialogueTransportRuntime.replyNow(entry, AgentChatBuildFlow.oneHandedSpVariantReply());
                 AgentBuildService.autoAssignSp(entry, bot(entry));
             }
 
             @Override
             public void twoHanded() {
                 AgentBuildStateRuntime.setSpVariant(entry, AgentBuildDialogueClassifier.TWO_HANDED_SP_VARIANT);
-                AgentReplyRuntime.replyNow(entry, AgentChatBuildFlow.twoHandedSpVariantReply());
+                AgentDialogueTransportRuntime.replyNow(entry, AgentChatBuildFlow.twoHandedSpVariantReply());
                 AgentBuildService.autoAssignSp(entry, bot(entry));
             }
         };
@@ -44,7 +44,7 @@ public final class AgentBuildRuntime {
                 AgentBuildStateRuntime.clearApBuildPromptState(entry);
                 String prompt = AgentBuildService.requestApBuildPrompt(entry, bot(entry));
                 if (prompt != null) {
-                    AgentReplyRuntime.replyNow(entry, prompt);
+                    AgentDialogueTransportRuntime.replyNow(entry, prompt);
                 }
             }
 
@@ -58,14 +58,14 @@ public final class AgentBuildRuntime {
     public static AgentChatJobAdvancementFlow.JobAdvancementCallbacks jobAdvancementCallbacks(AgentRuntimeEntry entry) {
         return advJob -> {
             String reply = AgentChatJobAdvancementFlow.jobChangeReply(advJob);
-            AgentReplyRuntime.replyNow(entry, reply);
+            AgentDialogueTransportRuntime.replyNow(entry, reply);
             AgentSchedulerRuntime.afterRandomDelay(entry, 900, 1100,
                     () -> AgentStarterKitService.advanceJob(entry, advJob));
         };
     }
 
     public static void confirmApBuild(AgentRuntimeEntry entry, String confirmMsg) {
-        AgentReplyRuntime.replyNow(entry, confirmMsg);
+        AgentDialogueTransportRuntime.replyNow(entry, confirmMsg);
     }
 
     private static void handleApBuildSelection(AgentRuntimeEntry entry, String message) {
@@ -100,7 +100,7 @@ public final class AgentBuildRuntime {
             String confirmMsg,
             String alreadyMsg) {
         if (sameApBuild(AgentBuildStateRuntime.apBuild(entry), build)) {
-            AgentReplyRuntime.replyNow(entry, alreadyMsg);
+            AgentDialogueTransportRuntime.replyNow(entry, alreadyMsg);
             return;
         }
         AgentBuildService.setApBuild(entry, build, confirmMsg);

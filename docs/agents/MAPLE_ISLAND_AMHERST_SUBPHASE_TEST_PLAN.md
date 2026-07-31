@@ -287,7 +287,7 @@ The owning player receives messages for:
 - satisfied-objective total and next objective;
 - cancellation, plan error, and final completion.
 
-With `server.AGENT_LEGACY_DIALOGUE_ENABLED: false`, NuTNNuT-derived ambient,
+With `server.AGENT_DIALOGUE_TRANSPORT_ENABLED: false`, NuTNNuT-derived ambient,
 status, combat, supply, trade, and welcome-back lines are suppressed. The
 `server.AGENT_AMHERST_DEBUG_MESSAGES_ENABLED` flag controls detailed yellow
 runner output. `server.AGENT_AMHERST_INTENTION_CHAT_ENABLED` independently

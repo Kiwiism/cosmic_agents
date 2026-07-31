@@ -1,6 +1,6 @@
 package server.agents.capabilities.inventory;
 
-import server.agents.integration.AgentReplyRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
 import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -10,11 +10,11 @@ public final class AgentInventoryRuntime {
     }
 
     public static void replyNow(AgentRuntimeEntry entry, String message) {
-        AgentReplyRuntime.replyNow(entry, message);
+        AgentDialogueTransportRuntime.replyNow(entry, message);
     }
 
     public static void visibleSayNow(AgentRuntimeEntry entry, String message) {
-        AgentReplyRuntime.visibleSayNow(entry, message);
+        AgentDialogueTransportRuntime.visibleSayNow(entry, message);
     }
 
     public static void afterDelay(AgentRuntimeEntry entry, long delayMs, Runnable action) {

@@ -11,7 +11,7 @@ import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatMovementFlow;
 import server.agents.capabilities.dialogue.AgentActiveModeRuntime;
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
-import server.agents.integration.AgentReplyRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
 import server.agents.integration.InventoryGateway;
 import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -41,7 +41,7 @@ class AgentMovementRuntimeTest {
         try (MockedStatic<AgentSchedulerRuntime> scheduler =
                      mockStatic(AgentSchedulerRuntime.class);
              MockedStatic<AgentMovementStatusRuntime> status = mockStatic(AgentMovementStatusRuntime.class);
-             MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class);
+             MockedStatic<AgentDialogueTransportRuntime> replies = mockStatic(AgentDialogueTransportRuntime.class);
              MockedStatic<AgentMovementCommandRuntime> movementCommands =
                      mockStatic(AgentMovementCommandRuntime.class)) {
             scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(entry), eq(1000), eq(1500), any(Runnable.class)))
@@ -57,7 +57,7 @@ class AgentMovementRuntimeTest {
                     (AgentRuntimeEntry) eq(entry),
                     pointCaptor.capture()));
             assertEquals(new Point(10, 20), pointCaptor.getValue());
-            replies.verify(() -> AgentReplyRuntime.replyNow(eq(entry), anyString()));
+            replies.verify(() -> AgentDialogueTransportRuntime.replyNow(eq(entry), anyString()));
         }
     }
 
@@ -81,7 +81,7 @@ class AgentMovementRuntimeTest {
         try (MockedStatic<AgentSchedulerRuntime> scheduler =
                      mockStatic(AgentSchedulerRuntime.class);
              MockedStatic<AgentActiveModeRuntime> activeMode = mockStatic(AgentActiveModeRuntime.class);
-             MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class);
+             MockedStatic<AgentDialogueTransportRuntime> replies = mockStatic(AgentDialogueTransportRuntime.class);
              MockedStatic<AgentPotionService> potions = mockStatic(AgentPotionService.class);
              MockedStatic<AgentMovementCommandRuntime> movementCommands =
                      mockStatic(AgentMovementCommandRuntime.class)) {
@@ -99,7 +99,7 @@ class AgentMovementRuntimeTest {
             AgentMovementRuntime.movementCallbacks(entry).follow();
 
             activeMode.verify(() -> AgentActiveModeRuntime.autoEquipAndSuggestGearToSiblings(entry));
-            replies.verify(() -> AgentReplyRuntime.replyNow(eq(entry), anyString()));
+            replies.verify(() -> AgentDialogueTransportRuntime.replyNow(eq(entry), anyString()));
             potions.verify(() -> AgentPotionService.checkPotShareOnModeStart(
                     (AgentRuntimeEntry) eq(entry),
                     eq(bot),
@@ -116,7 +116,7 @@ class AgentMovementRuntimeTest {
         try (MockedStatic<AgentSchedulerRuntime> scheduler =
                      mockStatic(AgentSchedulerRuntime.class);
              MockedStatic<AgentFidgetService> fidgets = mockStatic(AgentFidgetService.class);
-             MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class);
+             MockedStatic<AgentDialogueTransportRuntime> replies = mockStatic(AgentDialogueTransportRuntime.class);
              MockedStatic<AgentMovementStatusRuntime> status = mockStatic(AgentMovementStatusRuntime.class)) {
             scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(entry), eq(900), eq(1100), any(Runnable.class)))
                     .thenAnswer(invocation -> {
@@ -128,7 +128,7 @@ class AgentMovementRuntimeTest {
 
             verify(bot).changeFaceExpression(AgentEmote.HAPPY.getValue());
             fidgets.verify(() -> AgentFidgetService.maybeStartGreetingFidget(eq(entry), anyInt()));
-            replies.verify(() -> AgentReplyRuntime.queueReply(eq(entry), anyString()));
+            replies.verify(() -> AgentDialogueTransportRuntime.queueReply(eq(entry), anyString()));
             status.verify(() -> AgentMovementStatusRuntime.checkMovementStatus(entry, bot));
         }
     }

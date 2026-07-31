@@ -5,7 +5,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.integration.AgentReplyRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
 import server.agents.runtime.AgentSchedulerRuntime;
 import server.maps.MapleMap;
 
@@ -37,13 +37,13 @@ class AgentSocialRuntimeTest {
         MapleMap map = mock(MapleMap.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
 
-        try (MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
+        try (MockedStatic<AgentDialogueTransportRuntime> replies = mockStatic(AgentDialogueTransportRuntime.class)) {
             when(bot.getMap()).thenReturn(map);
             when(map.getCharacters()).thenReturn(List.of());
 
             AgentSocialRuntime.handleFameCommand(entry, "Alice");
 
-            replies.verify(() -> AgentReplyRuntime.replyNow(eq(entry), contains("Alice")));
+            replies.verify(() -> AgentDialogueTransportRuntime.replyNow(eq(entry), contains("Alice")));
         }
     }
 }

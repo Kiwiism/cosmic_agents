@@ -2,7 +2,7 @@ package server.agents.capabilities.shop;
 
 
 import client.Character;
-import server.agents.integration.AgentReplyRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentSchedulerRuntime;
 
@@ -15,11 +15,11 @@ public final class AgentShopRuntime {
     }
 
     public static void replyNow(AgentRuntimeEntry entry, String message) {
-        AgentReplyRuntime.replyNow(entry, message);
+        AgentDialogueTransportRuntime.replyNow(entry, message);
     }
 
     public static void sayMapNow(Character bot, String message) {
-        AgentReplyRuntime.sayMapNow(bot, message);
+        AgentDialogueTransportRuntime.sayMapNow(bot, message);
     }
 
     public static void afterDelay(AgentRuntimeEntry entry, long delayMs, Runnable action) {

@@ -8,7 +8,7 @@ import server.agents.capabilities.dialogue.AgentEmote;
 
 import server.agents.capabilities.dialogue.AgentChatMovementFlow;
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
-import server.agents.integration.AgentReplyRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.integration.AgentInventoryGatewayRuntime;
@@ -38,7 +38,7 @@ public final class AgentMovementRuntime {
                 AgentSchedulerRuntime.afterRandomDelay(entry, 1000, 1500, () -> {
                     AgentMovementStatusRuntime.prepareMovementActiveMode(entry);
                     AgentMovementCommandRuntime.farmHere(entry, dest);
-                    AgentReplyRuntime.replyNow(entry, AgentChatMovementFlow.moveHereReply());
+                    AgentDialogueTransportRuntime.replyNow(entry, AgentChatMovementFlow.moveHereReply());
                 });
                 return true;
             }
@@ -53,7 +53,7 @@ public final class AgentMovementRuntime {
                 AgentSchedulerRuntime.afterRandomDelay(entry, 1000, 1500, () -> {
                     AgentMovementStatusRuntime.prepareMovementActiveMode(entry);
                     AgentMovementCommandRuntime.patrol(entry, ownerPos);
-                    AgentReplyRuntime.replyNow(entry, AgentChatMovementFlow.moveHereReply());
+                    AgentDialogueTransportRuntime.replyNow(entry, AgentChatMovementFlow.moveHereReply());
                 });
                 return true;
             }
@@ -67,7 +67,7 @@ public final class AgentMovementRuntime {
                 }
                 AgentSchedulerRuntime.afterRandomDelay(entry, 1000, 1500, () -> {
                     AgentMovementCommandRuntime.moveTo(entry, dest, true);
-                    AgentReplyRuntime.replyNow(entry, AgentChatMovementFlow.moveHereReply());
+                    AgentDialogueTransportRuntime.replyNow(entry, AgentChatMovementFlow.moveHereReply());
                 });
                 return true;
             }
@@ -76,7 +76,7 @@ public final class AgentMovementRuntime {
             public void follow() {
                 AgentSchedulerRuntime.afterRandomDelay(entry, 1500, 2000, () -> {
                     AgentActiveModeRuntime.autoEquipAndSuggestGearToSiblings(entry);
-                    AgentReplyRuntime.replyNow(entry, AgentChatMovementFlow.followReply());
+                    AgentDialogueTransportRuntime.replyNow(entry, AgentChatMovementFlow.followReply());
                     AgentPotionService.checkPotShareOnModeStart(
                             entry,
                             bot(entry),
@@ -90,7 +90,7 @@ public final class AgentMovementRuntime {
             public void grind() {
                 AgentSchedulerRuntime.afterRandomDelay(entry, 1500, 2000, () -> {
                     AgentMovementStatusRuntime.prepareMovementActiveMode(entry);
-                    AgentReplyRuntime.replyNow(entry, AgentPotionService.grindStartMessage(bot(entry)));
+                    AgentDialogueTransportRuntime.replyNow(entry, AgentPotionService.grindStartMessage(bot(entry)));
                     AgentSchedulerRuntime.afterRandomDelay(entry, 250, 750, () -> {
                         AgentMovementCommandRuntime.grind(entry);
                         AgentMovementStatusRuntime.checkMovementStatus(entry, bot(entry));
@@ -104,7 +104,7 @@ public final class AgentMovementRuntime {
                     AgentMovementCommandRuntime.stop(entry);
                     AgentActiveModeRuntime.autoEquipAndSuggestGearToSiblings(entry);
                     AgentSchedulerRuntime.afterRandomDelay(entry, 1400, 1600, () ->
-                            AgentReplyRuntime.replyNow(entry, AgentChatMovementFlow.stopReply()));
+                            AgentDialogueTransportRuntime.replyNow(entry, AgentChatMovementFlow.stopReply()));
                 });
             }
 
@@ -121,7 +121,7 @@ public final class AgentMovementRuntime {
                 AgentSchedulerRuntime.afterRandomDelay(entry, 900, 1100, () -> {
                     bot(entry).changeFaceExpression(AgentEmote.HAPPY.getValue());
                     AgentFidgetService.maybeStartGreetingFidget(entry, ThreadLocalRandom.current().nextInt(100));
-                    AgentReplyRuntime.queueReply(entry, AgentChatMovementFlow.greetingReply());
+                    AgentDialogueTransportRuntime.queueReply(entry, AgentChatMovementFlow.greetingReply());
                     AgentMovementStatusRuntime.checkMovementStatus(entry, bot(entry));
                 });
             }

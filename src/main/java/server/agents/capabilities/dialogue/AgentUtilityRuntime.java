@@ -5,7 +5,7 @@ import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.capabilities.trade.AgentPendingTradeStateRuntime;
 
 import client.Character;
-import server.agents.integration.AgentReplyRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.integration.AgentTradeInviteGateway;
@@ -31,7 +31,7 @@ public final class AgentUtilityRuntime {
                 if (owner != null && bot.getTrade() == null && owner.getTrade() == null
                         && AgentPendingTradeStateRuntime.isIdle(entry)) {
                     AgentSchedulerRuntime.afterRandomDelay(entry, 600, 1000, () -> {
-                        AgentReplyRuntime.replyNow(entry, AgentChatUtilityFlow.tradeInviteReply());
+                        AgentDialogueTransportRuntime.replyNow(entry, AgentChatUtilityFlow.tradeInviteReply());
                         AgentSchedulerRuntime.afterRandomDelay(entry, 800, 1200, () -> {
                             AgentTradeInviteGateway.startAndInvite(bot, owner);
                         });

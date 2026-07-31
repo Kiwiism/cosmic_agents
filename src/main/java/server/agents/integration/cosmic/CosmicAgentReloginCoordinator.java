@@ -3,7 +3,7 @@ package server.agents.integration.cosmic;
 import client.Character;
 import org.slf4j.Logger;
 import server.agents.integration.AgentCharacterGatewayRuntime;
-import server.agents.integration.AgentReplyRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentReloginRequest;
 import server.agents.runtime.AgentRandom;
@@ -39,7 +39,7 @@ public final class CosmicAgentReloginCoordinator {
                         registerSpawnedAgent,
                         AgentSchedulerRuntime::afterDelay,
                         () -> AgentRandom.randMs(900, 1100),
-                        AgentReplyRuntime::sayMapNow),
+                        AgentDialogueTransportRuntime::sayMapNow),
                 (failedAgentCharId, e) -> log.warn(
                         "reloginAgent: failed to reload charId={}", failedAgentCharId, e));
     }
@@ -85,7 +85,7 @@ public final class CosmicAgentReloginCoordinator {
                         registerSpawnedAgent,
                         AgentSchedulerRuntime::afterDelay,
                         () -> AgentRandom.randMs(900, 1100),
-                        AgentReplyRuntime::sayMapNow),
+                        AgentDialogueTransportRuntime::sayMapNow),
                 (failedAgentCharId, e) -> log.warn("reloginBot: failed to reload charId={}", failedAgentCharId, e));
     }
 

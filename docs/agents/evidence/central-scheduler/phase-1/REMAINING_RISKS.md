@@ -12,7 +12,7 @@
   default-mode change.
 - The repository-wide Maven suite is not a clean phase gate yet. Its latest
   attempt reported dialogue tests that assume chatter while
-  `AGENT_LEGACY_DIALOGUE_ENABLED=false`, one Amherst quest-policy assertion,
+  `AGENT_DIALOGUE_TRANSPORT_ENABLED=false`, one Amherst quest-policy assertion,
   missing generated catalog fixtures under `tmp/game-catalog`, and a movement
   randomness assertion; the Surefire child then exited without releasing the
   Maven wrapper. None of those paths is changed by Phase 1.

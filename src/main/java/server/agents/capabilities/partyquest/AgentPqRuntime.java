@@ -1,7 +1,7 @@
 package server.agents.capabilities.partyquest;
 
 import server.agents.capabilities.partyquest.kpq.AgentKpqState;
-import server.agents.integration.AgentReplyRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
 import server.agents.plans.AgentScriptTaskStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -11,7 +11,7 @@ public final class AgentPqRuntime {
     }
 
     public static void queueSay(AgentRuntimeEntry entry, String message) {
-        AgentReplyRuntime.queueSay(entry, message);
+        AgentDialogueTransportRuntime.queueSay(entry, message);
     }
 
     public static void resetKpqStage5Claimed(AgentRuntimeEntry entry) {

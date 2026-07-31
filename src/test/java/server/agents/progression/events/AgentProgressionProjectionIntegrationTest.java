@@ -25,9 +25,9 @@ class AgentProgressionProjectionIntegrationTest {
         when(agent.getId()).thenReturn(200);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
         entry.capabilityStates().require(AgentCareerProgressionState.STATE_KEY);
-        boolean previousLegacyDialogue =
-                config.AgentYamlConfig.config.agent.AGENT_LEGACY_DIALOGUE_ENABLED;
-        config.AgentYamlConfig.config.agent.AGENT_LEGACY_DIALOGUE_ENABLED = true;
+        boolean previousDialogueTransport =
+                config.AgentYamlConfig.config.agent.AGENT_DIALOGUE_TRANSPORT_ENABLED;
+        config.AgentYamlConfig.config.agent.AGENT_DIALOGUE_TRANSPORT_ENABLED = true;
         AgentEventBus bus = AgentSessionEventRuntime.bus(entry);
         List<AgentDialogueIntentEvent> intents = new ArrayList<>();
         var intentSubscription = bus.subscribe(AgentDialogueIntentEvent.TYPE,
@@ -57,8 +57,8 @@ class AgentProgressionProjectionIntegrationTest {
         } finally {
             intentSubscription.close();
             AgentSessionEventRuntime.close(entry);
-            config.AgentYamlConfig.config.agent.AGENT_LEGACY_DIALOGUE_ENABLED =
-                    previousLegacyDialogue;
+            config.AgentYamlConfig.config.agent.AGENT_DIALOGUE_TRANSPORT_ENABLED =
+                    previousDialogueTransport;
         }
     }
 }

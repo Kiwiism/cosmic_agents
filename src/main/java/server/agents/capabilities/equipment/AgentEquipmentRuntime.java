@@ -5,7 +5,7 @@ import server.agents.runtime.AgentSchedulerRuntime;
 import client.Character;
 import server.agents.capabilities.dialogue.AgentChatEquipmentFlow;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
-import server.agents.integration.AgentReplyRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.trade.AgentOfferStateRuntime;
@@ -21,7 +21,7 @@ public final class AgentEquipmentRuntime {
     }
 
     public static void sayMapNow(Character bot, String message) {
-        AgentReplyRuntime.sayMapNow(bot, message);
+        AgentDialogueTransportRuntime.sayMapNow(bot, message);
     }
 
     public static AgentChatEquipmentFlow.EquipmentCallbacks equipmentCallbacks(AgentRuntimeEntry entry) {
@@ -33,7 +33,7 @@ public final class AgentEquipmentRuntime {
                     return false;
                 }
                 AgentSchedulerRuntime.afterRandomDelay(entry, 500, 700, () ->
-                        AgentReplyRuntime.replyNow(entry, AgentEquipmentService.unequipSlot(bot(entry), slots)));
+                        AgentDialogueTransportRuntime.replyNow(entry, AgentEquipmentService.unequipSlot(bot(entry), slots)));
                 return true;
             }
 
@@ -41,7 +41,7 @@ public final class AgentEquipmentRuntime {
             public void unequipAll() {
                 AgentSchedulerRuntime.afterRandomDelay(entry, 500, 700, () -> {
                     AgentMovementCommandRuntime.stop(entry);
-                    AgentReplyRuntime.replyNow(entry, AgentEquipmentService.unequipAll(bot(entry)));
+                    AgentDialogueTransportRuntime.replyNow(entry, AgentEquipmentService.unequipAll(bot(entry)));
                 });
             }
 
@@ -50,7 +50,7 @@ public final class AgentEquipmentRuntime {
                 AgentSchedulerRuntime.afterRandomDelay(entry, 400, 600, () -> {
                     List<String> lines = AgentEquipmentService.autoEquipDebug(bot(entry));
                     for (String line : lines) {
-                        AgentReplyRuntime.replyNow(entry, line);
+                        AgentDialogueTransportRuntime.replyNow(entry, line);
                     }
                 });
             }
@@ -63,7 +63,7 @@ public final class AgentEquipmentRuntime {
                             null,
                             AgentOfferStateRuntime.pendingLootOfferItem(entry),
                             true);
-                    AgentReplyRuntime.replyNow(entry, AgentChatEquipmentFlow.gearOptimizedReply());
+                    AgentDialogueTransportRuntime.replyNow(entry, AgentChatEquipmentFlow.gearOptimizedReply());
                 });
             }
         };

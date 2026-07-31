@@ -1,56 +1,57 @@
-package server.agents.integration;
+package server.agents.capabilities.dialogue;
 
-
-import config.YamlConfig;
 import server.agents.runtime.AgentSchedulerRuntime;
 import client.Character;
-import server.agents.capabilities.dialogue.AgentChatReplyRuntime;
-import server.agents.capabilities.dialogue.AgentChatTextSanitizer;
 import server.agents.commands.AgentQueuedMessage;
 import server.agents.commands.AgentReplyQueue;
 import server.agents.commands.AgentReplyChannel;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.commands.AgentMessageQueueStateRuntime;
 import server.agents.commands.AgentReplyChannelStateRuntime;
+import server.agents.integration.AgentClientGatewayRuntime;
+import server.agents.integration.AgentPacketGatewayRuntime;
+import server.agents.integration.AgentPartyGatewayRuntime;
+import server.agents.integration.AgentRelationshipRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 
 /**
  * Boundary adapter from Agent reply queues to Cosmic chat, whisper, party, and
  * packet delivery.
  */
-public final class AgentReplyRuntime {
-    private AgentReplyRuntime() {
+public final class AgentDialogueTransportRuntime {
+    private AgentDialogueTransportRuntime() {
     }
 
     public static void queueSay(AgentRuntimeEntry entry, String message) {
-        if (!legacyDialogueEnabled()) {
+        if (!transportEnabled()) {
             return;
         }
         AgentChatReplyRuntime.queueSay(state(entry), message, dispatcher(entry));
     }
 
     public static void queueReply(AgentRuntimeEntry entry, String message) {
-        if (!legacyDialogueEnabled()) {
+        if (!transportEnabled()) {
             return;
         }
         AgentChatReplyRuntime.queueReply(state(entry), message, dispatcher(entry));
     }
 
     public static long queueSayWithEstimatedDelay(AgentRuntimeEntry entry, String message) {
-        if (!legacyDialogueEnabled()) {
+        if (!transportEnabled()) {
             return 0L;
         }
         return AgentChatReplyRuntime.queueSayWithEstimatedDelay(state(entry), message, dispatcher(entry));
     }
 
     public static long queueReplyWithEstimatedDelay(AgentRuntimeEntry entry, String message) {
-        if (!legacyDialogueEnabled()) {
+        if (!transportEnabled()) {
             return 0L;
         }
         return AgentChatReplyRuntime.queueReplyWithEstimatedDelay(state(entry), message, dispatcher(entry));
     }
 
     public static void replyNow(AgentRuntimeEntry entry, String message) {
-        if (!legacyDialogueEnabled()) {
+        if (!transportEnabled()) {
             return;
         }
         switch (AgentReplyChannelStateRuntime.replyChannel(entry)) {
@@ -72,14 +73,14 @@ public final class AgentReplyRuntime {
     }
 
     public static void visibleSayNow(AgentRuntimeEntry entry, String message) {
-        if (!legacyDialogueEnabled()) {
+        if (!transportEnabled()) {
             return;
         }
         sayNow(AgentRuntimeIdentityRuntime.bot(entry), AgentReplyChannelStateRuntime.replyChannel(entry), message);
     }
 
     public static void sayNow(Character bot, AgentReplyChannel channel, String message) {
-        if (!legacyDialogueEnabled()) {
+        if (!transportEnabled()) {
             return;
         }
         switch (channel) {
@@ -89,7 +90,7 @@ public final class AgentReplyRuntime {
     }
 
     public static void sayMapNow(Character bot, String message) {
-        if (!legacyDialogueEnabled()) {
+        if (!transportEnabled()) {
             return;
         }
         AgentPacketGatewayRuntime.packets().broadcastChatText(
@@ -100,7 +101,7 @@ public final class AgentReplyRuntime {
     }
 
     public static void sayPartyNow(Character bot, String message) {
-        if (!legacyDialogueEnabled()) {
+        if (!transportEnabled()) {
             return;
         }
         if (!AgentPartyGatewayRuntime.party().sendPartyChat(bot, AgentChatTextSanitizer.sanitize(message))) {
@@ -108,8 +109,8 @@ public final class AgentReplyRuntime {
         }
     }
 
-    private static boolean legacyDialogueEnabled() {
-        return config.AgentYamlConfig.config.agent.AGENT_LEGACY_DIALOGUE_ENABLED;
+    private static boolean transportEnabled() {
+        return config.AgentYamlConfig.config.agent.AGENT_DIALOGUE_TRANSPORT_ENABLED;
     }
 
     private static AgentReplyQueue.State state(AgentRuntimeEntry entry) {

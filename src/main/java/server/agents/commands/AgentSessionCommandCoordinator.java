@@ -8,7 +8,7 @@ import server.agents.capabilities.dialogue.AgentChatSessionRequestFlow;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
 import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.integration.AgentClientGatewayRuntime;
-import server.agents.integration.AgentReplyRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.runtime.AgentLifecyclePhase;
@@ -33,7 +33,7 @@ public final class AgentSessionCommandCoordinator {
                 AgentSchedulerRuntime.afterRandomDelay(entry, 900, 1100, () -> {
                     AgentPendingActionStateRuntime.setPendingAction(entry, AgentChatPendingAction.RELOG);
                     AgentMovementCommandRuntime.stop(entry);
-                    AgentReplyRuntime.replyNow(entry, AgentChatSessionRequestFlow.relogConfirmPrompt());
+                    AgentDialogueTransportRuntime.replyNow(entry, AgentChatSessionRequestFlow.relogConfirmPrompt());
                 });
             }
 
@@ -42,7 +42,7 @@ public final class AgentSessionCommandCoordinator {
                 AgentSchedulerRuntime.afterRandomDelay(entry, 900, 1100, () -> {
                     AgentPendingActionStateRuntime.setPendingAction(entry, AgentChatPendingAction.LOGOUT);
                     AgentMovementCommandRuntime.stop(entry);
-                    AgentReplyRuntime.replyNow(entry, AgentChatSessionRequestFlow.logoutConfirmPrompt());
+                    AgentDialogueTransportRuntime.replyNow(entry, AgentChatSessionRequestFlow.logoutConfirmPrompt());
                 });
             }
 
@@ -51,7 +51,7 @@ public final class AgentSessionCommandCoordinator {
 
     public static void scheduleRelogConfirm(AgentRuntimeEntry entry) {
         AgentSchedulerRuntime.afterRandomDelay(entry, 900, 1100, () -> {
-            AgentReplyRuntime.replyNow(entry, AgentChatSessionRequestFlow.relogConfirmedReply());
+            AgentDialogueTransportRuntime.replyNow(entry, AgentChatSessionRequestFlow.relogConfirmedReply());
             Character bot = bot(entry);
             AgentReloginRequest request = reloginRequest(entry, bot);
             AgentSchedulerRuntime.afterRandomDelay(entry, 1800, 2200, () -> {
@@ -83,7 +83,7 @@ public final class AgentSessionCommandCoordinator {
 
     public static void scheduleLogoutConfirm(AgentRuntimeEntry entry) {
         AgentSchedulerRuntime.afterRandomDelay(entry, 900, 1100, () -> {
-            AgentReplyRuntime.replyNow(entry, AgentChatSessionRequestFlow.logoutConfirmedReply());
+            AgentDialogueTransportRuntime.replyNow(entry, AgentChatSessionRequestFlow.logoutConfirmedReply());
             AgentSchedulerRuntime.afterRandomDelay(entry, 1800, 2200, () -> {
                 AgentLifecycleStateRuntime.transition(entry, AgentLifecyclePhase.STOPPING, "requested logout");
                 Character logoutBot = bot(entry);

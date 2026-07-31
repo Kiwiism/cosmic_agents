@@ -17,7 +17,7 @@ class AgentPartyGatewayBoundaryTest {
         String gateway = Files.readString(Path.of(
                 "src/main/java/server/agents/integration/cosmic/CosmicPartyGateway.java"));
         String replies = Files.readString(Path.of(
-                "src/main/java/server/agents/integration/AgentReplyRuntime.java"));
+                "src/main/java/server/agents/integration/AgentDialogueTransportRuntime.java"));
         String relation = Files.readString(Path.of(
                 "src/main/java/server/agents/capabilities/dialogue/llm/AgentSenderRelation.java"));
         String situation = Files.readString(Path.of(

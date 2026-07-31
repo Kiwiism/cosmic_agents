@@ -20,7 +20,7 @@ import server.agents.capabilities.supplies.AgentSupplyRuntime;
 import server.agents.capabilities.supplies.AgentPotionService;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 import server.agents.integration.AgentInventoryGatewayRuntime;
-import server.agents.integration.AgentReplyRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -212,7 +212,7 @@ public final class AgentChatReportOperationsRuntime {
     }
 
     public static void reportHelp(AgentRuntimeEntry entry) {
-        AgentChatReportRuntime.reportHelp(line -> AgentReplyRuntime.queueReply(entry, line));
+        AgentChatReportRuntime.reportHelp(line -> AgentDialogueTransportRuntime.queueReply(entry, line));
     }
 
     public static void reportRecommendedGear(AgentRuntimeEntry entry, Character bot) {
@@ -224,10 +224,10 @@ public final class AgentChatReportOperationsRuntime {
     }
 
     private static void reportLine(AgentRuntimeEntry entry, String line) {
-        AgentChatReportRuntime.reportLine(line, replyLine -> AgentReplyRuntime.queueReply(entry, replyLine));
+        AgentChatReportRuntime.reportLine(line, replyLine -> AgentDialogueTransportRuntime.queueReply(entry, replyLine));
     }
 
     private static void reportLines(AgentRuntimeEntry entry, Iterable<String> lines) {
-        AgentChatReportRuntime.reportLines(lines, line -> AgentReplyRuntime.queueReply(entry, line));
+        AgentChatReportRuntime.reportLines(lines, line -> AgentDialogueTransportRuntime.queueReply(entry, line));
     }
 }

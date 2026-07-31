@@ -1,4 +1,4 @@
-package server.agents.integration;
+package server.agents.capabilities.dialogue;
 
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -10,7 +10,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import config.YamlConfig;
 import server.agents.commands.AgentReplyChannelStateRuntime;
-import server.agents.integration.AgentReplyRuntime;
 import server.maps.MapleMap;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -19,18 +18,18 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-class AgentReplyRuntimeTest {
-    private boolean previousLegacyDialogue;
+class AgentDialogueTransportRuntimeTest {
+    private boolean previousTransportEnabled;
 
     @BeforeEach
-    void enableLegacyDialogueForParityTests() {
-        previousLegacyDialogue = config.AgentYamlConfig.config.agent.AGENT_LEGACY_DIALOGUE_ENABLED;
-        config.AgentYamlConfig.config.agent.AGENT_LEGACY_DIALOGUE_ENABLED = true;
+    void enableDialogueTransportForParityTests() {
+        previousTransportEnabled = config.AgentYamlConfig.config.agent.AGENT_DIALOGUE_TRANSPORT_ENABLED;
+        config.AgentYamlConfig.config.agent.AGENT_DIALOGUE_TRANSPORT_ENABLED = true;
     }
 
     @AfterEach
-    void restoreLegacyDialogueFlag() {
-        config.AgentYamlConfig.config.agent.AGENT_LEGACY_DIALOGUE_ENABLED = previousLegacyDialogue;
+    void restoreDialogueTransportFlag() {
+        config.AgentYamlConfig.config.agent.AGENT_DIALOGUE_TRANSPORT_ENABLED = previousTransportEnabled;
     }
 
     @Test
@@ -44,7 +43,7 @@ class AgentReplyRuntimeTest {
         when(bot.getId()).thenReturn(7);
         when(map.isObservedByPlayer()).thenReturn(true);
 
-        AgentReplyRuntime.visibleSayNow(entry, "hello");
+        AgentDialogueTransportRuntime.visibleSayNow(entry, "hello");
 
         verify(map).broadcastMessage(any(Packet.class));
     }
@@ -63,7 +62,7 @@ class AgentReplyRuntimeTest {
         when(botClient.getChannel()).thenReturn(1);
         when(owner.getClient()).thenReturn(ownerClient);
 
-        AgentReplyRuntime.replyNow(entry, "ok");
+        AgentDialogueTransportRuntime.replyNow(entry, "ok");
 
         verify(owner).sendPacket(any(Packet.class));
     }
@@ -78,7 +77,7 @@ class AgentReplyRuntimeTest {
         when(bot.getId()).thenReturn(7);
         when(map.isObservedByPlayer()).thenReturn(true);
 
-        AgentReplyRuntime.sayPartyNow(bot, "party");
+        AgentDialogueTransportRuntime.sayPartyNow(bot, "party");
 
         verify(map).broadcastMessage(any(Packet.class));
     }
@@ -91,21 +90,21 @@ class AgentReplyRuntimeTest {
 
         when(bot.getMap()).thenReturn(map);
 
-        AgentReplyRuntime.visibleSayNow(entry, "hello");
+        AgentDialogueTransportRuntime.visibleSayNow(entry, "hello");
 
         verify(map, never()).broadcastMessage(any(Packet.class));
     }
 
     @Test
-    void legacyDialogueFlagSuppressesNuTNNuTReplies() {
+    void disabledTransportSuppressesDirectReplies() {
         Character bot = mock(Character.class);
         MapleMap map = mock(MapleMap.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
         when(bot.getMap()).thenReturn(map);
-        config.AgentYamlConfig.config.agent.AGENT_LEGACY_DIALOGUE_ENABLED = false;
+        config.AgentYamlConfig.config.agent.AGENT_DIALOGUE_TRANSPORT_ENABLED = false;
 
-        AgentReplyRuntime.queueSay(entry, "ambient");
-        AgentReplyRuntime.visibleSayNow(entry, "ambient");
+        AgentDialogueTransportRuntime.queueSay(entry, "ambient");
+        AgentDialogueTransportRuntime.visibleSayNow(entry, "ambient");
 
         verify(map, never()).broadcastMessage(any(Packet.class));
         org.junit.jupiter.api.Assertions.assertEquals(

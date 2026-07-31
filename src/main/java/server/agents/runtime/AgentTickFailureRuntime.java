@@ -5,7 +5,7 @@ import server.agents.capabilities.movement.AgentMovementStateResetService;
 import client.Character;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import server.agents.integration.AgentReplyRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 
@@ -71,7 +71,7 @@ public final class AgentTickFailureRuntime {
     private static void forceIdleAfterTickFailure(AgentRuntimeEntry entry, Logger log, Consumer<AgentRuntimeEntry> stopAgent) {
         stopAgent.accept(entry);
         try {
-            AgentReplyRuntime.replyNow(entry, "unrecoverable error caught, idling");
+            AgentDialogueTransportRuntime.replyNow(entry, "unrecoverable error caught, idling");
         } catch (Throwable chatError) {
             Character agent = AgentRuntimeIdentityRuntime.bot(entry);
             log.warn("Failed to send bot failure idle message for '{}'",

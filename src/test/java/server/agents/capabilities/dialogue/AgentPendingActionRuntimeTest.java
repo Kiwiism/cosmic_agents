@@ -7,7 +7,7 @@ import config.YamlConfig;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.trade.AgentInventoryTransferService;
 import server.agents.commands.AgentMessageQueueStateRuntime;
-import server.agents.integration.AgentReplyRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentSchedulerRuntime;
 
@@ -20,17 +20,17 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockStatic;
 
 class AgentPendingActionRuntimeTest {
-    private boolean previousLegacyDialogue;
+    private boolean previousDialogueTransport;
 
     @BeforeEach
-    void enableLegacyDialogueForQueueBehaviorTests() {
-        previousLegacyDialogue = config.AgentYamlConfig.config.agent.AGENT_LEGACY_DIALOGUE_ENABLED;
-        config.AgentYamlConfig.config.agent.AGENT_LEGACY_DIALOGUE_ENABLED = true;
+    void enableDialogueTransportForQueueBehaviorTests() {
+        previousDialogueTransport = config.AgentYamlConfig.config.agent.AGENT_DIALOGUE_TRANSPORT_ENABLED;
+        config.AgentYamlConfig.config.agent.AGENT_DIALOGUE_TRANSPORT_ENABLED = true;
     }
 
     @AfterEach
-    void restoreLegacyDialogueSetting() {
-        config.AgentYamlConfig.config.agent.AGENT_LEGACY_DIALOGUE_ENABLED = previousLegacyDialogue;
+    void restoreDialogueTransportSetting() {
+        config.AgentYamlConfig.config.agent.AGENT_DIALOGUE_TRANSPORT_ENABLED = previousDialogueTransport;
     }
 
     @Test
@@ -79,8 +79,8 @@ class AgentPendingActionRuntimeTest {
 
         try (MockedStatic<AgentSchedulerRuntime> scheduler =
                      mockStatic(AgentSchedulerRuntime.class);
-             MockedStatic<AgentReplyRuntime> replies =
-                     mockStatic(AgentReplyRuntime.class)) {
+             MockedStatic<AgentDialogueTransportRuntime> replies =
+                     mockStatic(AgentDialogueTransportRuntime.class)) {
             scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(entry), eq(400), eq(600), any(Runnable.class)))
                     .thenAnswer(invocation -> {
                         invocation.<Runnable>getArgument(3).run();
@@ -89,7 +89,7 @@ class AgentPendingActionRuntimeTest {
 
             AgentPendingActionRuntime.pendingActionCallbacks(entry).cancelItemChoice();
 
-            replies.verify(() -> AgentReplyRuntime.replyNow(
+            replies.verify(() -> AgentDialogueTransportRuntime.replyNow(
                     entry,
                     AgentPendingChatActionFlow.keepDropChoiceReply()));
         }
@@ -112,12 +112,12 @@ class AgentPendingActionRuntimeTest {
     void broadReplyRuntimeStillSupportsPendingActionReplies() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
 
-        try (MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
-            AgentReplyRuntime.replyNow(entry, "now");
-            AgentReplyRuntime.queueReply(entry, "queued");
+        try (MockedStatic<AgentDialogueTransportRuntime> replies = mockStatic(AgentDialogueTransportRuntime.class)) {
+            AgentDialogueTransportRuntime.replyNow(entry, "now");
+            AgentDialogueTransportRuntime.queueReply(entry, "queued");
 
-            replies.verify(() -> AgentReplyRuntime.replyNow(entry, "now"));
-            replies.verify(() -> AgentReplyRuntime.queueReply(entry, "queued"));
+            replies.verify(() -> AgentDialogueTransportRuntime.replyNow(entry, "now"));
+            replies.verify(() -> AgentDialogueTransportRuntime.queueReply(entry, "queued"));
         }
     }
 

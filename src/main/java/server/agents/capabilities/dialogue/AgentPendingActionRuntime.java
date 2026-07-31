@@ -3,7 +3,7 @@ package server.agents.capabilities.dialogue;
 
 import server.agents.runtime.AgentSchedulerRuntime;
 import client.Character;
-import server.agents.integration.AgentReplyRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.commands.AgentSessionCommandCoordinator;
 import server.agents.capabilities.trade.AgentInventoryTransferService;
@@ -56,7 +56,7 @@ public final class AgentPendingActionRuntime {
             @Override
             public void cancelItemChoice() {
                 AgentSchedulerRuntime.afterRandomDelay(entry, 400, 600,
-                        () -> AgentReplyRuntime.replyNow(
+                        () -> AgentDialogueTransportRuntime.replyNow(
                                 entry,
                                 AgentPendingChatActionFlow.keepDropChoiceReply()));
             }
@@ -81,7 +81,7 @@ public final class AgentPendingActionRuntime {
             public void cancelPendingAction(boolean dropAction) {
                 String cancelMsg = AgentPendingChatActionFlow.pendingActionCancelReply(dropAction);
                 AgentSchedulerRuntime.afterRandomDelay(entry, 700, 900,
-                        () -> AgentReplyRuntime.replyNow(entry, cancelMsg));
+                        () -> AgentDialogueTransportRuntime.replyNow(entry, cancelMsg));
             }
         };
     }
@@ -100,7 +100,7 @@ public final class AgentPendingActionRuntime {
             AgentPendingActionStateRuntime.setPendingAction(entry, AgentChatPendingAction.SKILL_TREE_CHOICE);
         }
         for (String line : decision.replies()) {
-            AgentReplyRuntime.queueReply(entry, line);
+            AgentDialogueTransportRuntime.queueReply(entry, line);
         }
     }
 }

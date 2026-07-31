@@ -5,7 +5,7 @@ import server.agents.capabilities.trade.AgentTransferService;
 import client.Character;
 import server.agents.auth.AgentAuthorizationResult;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
-import server.agents.integration.AgentReplyRuntime;
+import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
 import server.agents.runtime.AgentRandom;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
@@ -43,7 +43,7 @@ public final class AgentLeaderTransferCoordinator {
                         registrar,
                         AgentSchedulerRuntime::afterDelay,
                         () -> AgentRandom.randMs(700, 900),
-                        AgentReplyRuntime::sayMapNow,
+                        AgentDialogueTransportRuntime::sayMapNow,
                         () -> AgentDialogueSelector.randomReply(List.of(
                                 "ok!",
                                 "sure!",
