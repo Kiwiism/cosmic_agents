@@ -4,7 +4,8 @@ import client.Character;
 import client.Client;
 import net.AbstractPacketHandler;
 import net.packet.InPacket;
-import server.agents.auth.AgentAuthorityService;
+import server.agents.observer.ObserverAuthorizationService;
+import server.agents.observer.ObserverFeature;
 import server.agents.observer.SpectatorInterestService;
 import server.agents.observer.SpectatorAgentSignalService;
 import tools.PacketCreator;
@@ -20,8 +21,9 @@ public final class ObserverInterestHandler extends AbstractPacketHandler {
     @Override
     public void handlePacket(InPacket packet, Client client) {
         Character observer = client.getPlayer();
-        if (observer == null
-                || (client.getGMLevel() < 2 && !AgentAuthorityService.mayObserve(observer))
+        if (!ObserverFeature.enabled()
+                || observer == null
+                || !ObserverAuthorizationService.mayUse(client)
                 || packet.available() < 9
                 || (packet.readByte() & 0xFF) != VERSION) {
             return;

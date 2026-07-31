@@ -4,11 +4,12 @@ import client.Character;
 import client.Client;
 import net.AbstractPacketHandler;
 import net.packet.InPacket;
-import server.agents.auth.AgentAuthorityService;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.navigation.AgentMapGraphService;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
+import server.agents.observer.ObserverAuthorizationService;
+import server.agents.observer.ObserverFeature;
 import server.agents.observer.SpectatorInterestService;
 import server.agents.observer.protocol.ObserverNavGraphProtocol;
 import server.maps.MapleMap;
@@ -26,8 +27,9 @@ public final class ObserverNavGraphHandler extends AbstractPacketHandler {
     @Override
     public void handlePacket(InPacket packet, Client client) {
         Character observer = client.getPlayer();
-        if (observer == null
-                || (client.getGMLevel() < 2 && !AgentAuthorityService.mayObserve(observer))
+        if (!ObserverFeature.enabled()
+                || observer == null
+                || !ObserverAuthorizationService.mayUse(client)
                 || packet.available() < REQUEST_BYTES) {
             return;
         }

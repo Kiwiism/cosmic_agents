@@ -4,7 +4,7 @@ import client.Character;
 import client.Client;
 import net.AbstractPacketHandler;
 import net.packet.InPacket;
-import server.agents.auth.AgentAuthorityService;
+import server.agents.observer.ObserverAuthorizationService;
 import server.agents.observer.ObserverFeature;
 import server.agents.observer.ObserverWarpService;
 import server.agents.observer.protocol.ObserverActionProtocol;
@@ -23,7 +23,7 @@ public final class ObserverActionHandler extends AbstractPacketHandler {
         Character observer = client.getPlayer();
         if (!ObserverFeature.enabled()
                 || observer == null
-                || (client.getGMLevel() < 2 && !AgentAuthorityService.mayObserve(observer))
+                || !ObserverAuthorizationService.mayUse(client)
                 || packet.available() < REQUEST_BYTES) {
             return;
         }
