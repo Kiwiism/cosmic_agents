@@ -6,7 +6,7 @@ import client.Character;
 import server.agents.capabilities.dialogue.AgentChatReportRuntime;
 import server.agents.commands.AgentReplyChannel;
 import server.agents.capabilities.dialogue.AgentChatStatusOrchestrator;
-import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
+import server.agents.integration.AgentDialogueTransportRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**

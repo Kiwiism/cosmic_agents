@@ -3,7 +3,7 @@ package server.agents.commands;
 import client.Character;
 import server.agents.capabilities.movement.AgentFormationCommandService;
 import server.agents.capabilities.movement.AgentFormationService;
-import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
+import server.agents.integration.AgentDialogueTransportRuntime;
 
 public final class AgentFormationCommandCoordinator {
     private AgentFormationCommandCoordinator() {

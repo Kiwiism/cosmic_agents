@@ -5,7 +5,7 @@ import server.agents.capabilities.trade.AgentTransferService;
 import client.Character;
 import server.agents.auth.AgentAuthorizationResult;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
-import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
+import server.agents.integration.AgentDialogueTransportRuntime;
 import server.agents.runtime.AgentRandom;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;

@@ -20,7 +20,7 @@ import server.agents.capabilities.supplies.AgentSupplyRuntime;
 import server.agents.capabilities.supplies.AgentPotionService;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 import server.agents.integration.AgentInventoryGatewayRuntime;
-import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
+import server.agents.integration.AgentDialogueTransportRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.runtime.AgentRuntimeEntry;

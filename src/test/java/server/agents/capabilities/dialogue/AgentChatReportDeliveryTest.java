@@ -8,7 +8,7 @@ import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatReportFlow;
 import server.agents.capabilities.dialogue.AgentChatReportOperationsRuntime;
 import server.agents.capabilities.trade.AgentOfferRuntime;
-import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
+import server.agents.integration.AgentDialogueTransportRuntime;
 
 import java.util.ArrayList;
 import java.util.List;

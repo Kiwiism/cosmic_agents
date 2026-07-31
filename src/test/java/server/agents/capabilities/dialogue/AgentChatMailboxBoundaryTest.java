@@ -16,12 +16,17 @@ class AgentChatMailboxBoundaryTest {
     @AfterEach
     void clearFlag() {
         System.clearProperty("agents.mailbox.enabled");
+        System.clearProperty("agents.scheduler.mode");
     }
 
     @Test
-    void mailboxIsDisabledByDefault() {
+    void mailboxFollowsTheSchedulerModeAndMayBeEnabledExplicitly() {
         System.clearProperty("agents.mailbox.enabled");
+        assertTrue(AgentMailboxRuntime.enabled());
+
+        System.setProperty("agents.scheduler.mode", "legacy");
         assertFalse(AgentMailboxRuntime.enabled());
+
         System.setProperty("agents.mailbox.enabled", "true");
         assertTrue(AgentMailboxRuntime.enabled());
     }

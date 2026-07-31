@@ -5,7 +5,7 @@ import server.agents.runtime.AgentSchedulerRuntime;
 import client.Character;
 import server.agents.capabilities.dialogue.AgentChatEquipmentFlow;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
-import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
+import server.agents.integration.AgentDialogueTransportRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.trade.AgentOfferStateRuntime;

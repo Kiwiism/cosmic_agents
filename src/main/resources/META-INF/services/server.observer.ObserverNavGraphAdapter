@@ -1,1 +1,1 @@
-server.agents.observer.adapter.AgentObserverNavGraphAdapter
+server.agents.integration.cosmic.AgentObserverNavGraphAdapter

@@ -3,7 +3,7 @@ package server.agents.capabilities.dialogue;
 
 import server.agents.runtime.AgentSchedulerRuntime;
 import client.Character;
-import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
+import server.agents.integration.AgentDialogueTransportRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.commands.AgentSessionCommandCoordinator;
 import server.agents.capabilities.trade.AgentInventoryTransferService;

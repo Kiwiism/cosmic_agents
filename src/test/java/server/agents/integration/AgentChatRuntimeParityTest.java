@@ -18,7 +18,7 @@ import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
 
 
-import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
+import server.agents.integration.AgentDialogueTransportRuntime;
 import client.Character;
 import client.Job;
 import client.inventory.Inventory;

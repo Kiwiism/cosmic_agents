@@ -7,7 +7,7 @@ import config.YamlConfig;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.trade.AgentInventoryTransferService;
 import server.agents.commands.AgentMessageQueueStateRuntime;
-import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
+import server.agents.integration.AgentDialogueTransportRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentSchedulerRuntime;
 

@@ -8,7 +8,7 @@ import client.Character;
 import client.inventory.WeaponType;
 import server.agents.capabilities.dialogue.AgentChatSupplyRequestFlow;
 import server.agents.capabilities.dialogue.AgentSupplyRequestOutcomeFlow;
-import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
+import server.agents.integration.AgentDialogueTransportRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.integration.AgentInventoryGatewayRuntime;

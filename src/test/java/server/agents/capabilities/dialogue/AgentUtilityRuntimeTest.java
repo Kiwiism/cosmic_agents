@@ -5,7 +5,7 @@ import server.agents.capabilities.shop.AgentShopService;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
+import server.agents.integration.AgentDialogueTransportRuntime;
 import server.agents.integration.AgentTradeInviteGateway;
 import server.agents.integration.InventoryGateway;
 import server.agents.runtime.AgentSchedulerRuntime;

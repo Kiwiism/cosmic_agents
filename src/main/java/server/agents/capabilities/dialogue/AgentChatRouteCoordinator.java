@@ -20,7 +20,7 @@ import server.agents.commands.AgentCommandTypoSuggester;
 import server.agents.commands.AgentReplyChannel;
 import server.agents.capabilities.follow.AgentActivityStateRuntime;
 import server.agents.commands.AgentCommandTargetResolver;
-import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
+import server.agents.integration.AgentDialogueTransportRuntime;
 import server.agents.commands.AgentReplyChannelStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.commands.AgentFollowTargetCommandCoordinator;

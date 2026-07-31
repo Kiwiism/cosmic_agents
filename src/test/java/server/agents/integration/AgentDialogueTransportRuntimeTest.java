@@ -1,4 +1,4 @@
-package server.agents.capabilities.dialogue;
+package server.agents.integration;
 
 import server.agents.runtime.AgentRuntimeEntry;
 

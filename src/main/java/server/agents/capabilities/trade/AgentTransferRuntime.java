@@ -7,7 +7,7 @@ import server.agents.capabilities.dialogue.AgentChatPendingAction;
 import server.agents.capabilities.dialogue.AgentChatTransferFlow;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
-import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
+import server.agents.integration.AgentDialogueTransportRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.capabilities.dialogue.AgentPendingActionStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;

@@ -1,6 +1,6 @@
 package server.agents.capabilities.llm;
 
-import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
+import server.agents.integration.AgentDialogueTransportRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /** Connects LLM capability output to the shared Agent reply service. */

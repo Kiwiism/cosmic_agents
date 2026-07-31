@@ -1,1 +1,1 @@
-server.agents.observer.adapter.AgentObserverInterestAdapter
+server.agents.integration.cosmic.AgentObserverInterestAdapter

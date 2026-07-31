@@ -2,7 +2,7 @@ package server.agents.capabilities.shop;
 
 
 import client.Character;
-import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
+import server.agents.integration.AgentDialogueTransportRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentSchedulerRuntime;
 

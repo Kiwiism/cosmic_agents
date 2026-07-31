@@ -4,7 +4,7 @@ import server.agents.capabilities.equipment.AgentEquipRecommendation;
 
 import client.Character;
 import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
-import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
+import server.agents.integration.AgentDialogueTransportRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.capabilities.dialogue.AgentPendingActionStateRuntime;

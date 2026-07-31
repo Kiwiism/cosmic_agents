@@ -11,7 +11,7 @@ import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.dialogue.AgentChatSupplyRequestFlow;
 import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.commands.AgentMessageQueueStateRuntime;
-import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
+import server.agents.integration.AgentDialogueTransportRuntime;
 import server.agents.integration.InventoryGateway;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentSchedulerRuntime;

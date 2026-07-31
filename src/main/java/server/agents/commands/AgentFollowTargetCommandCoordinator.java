@@ -7,7 +7,7 @@ import server.agents.capabilities.follow.AgentFollowTargetResolutionService;
 import client.Character;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.supplies.AgentPotionService;
-import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
+import server.agents.integration.AgentDialogueTransportRuntime;
 import server.agents.runtime.AgentRandom;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;

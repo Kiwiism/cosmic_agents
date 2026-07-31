@@ -1,5 +1,7 @@
-package server.agents.capabilities.dialogue;
+package server.agents.integration;
 
+import server.agents.capabilities.dialogue.AgentChatReplyRuntime;
+import server.agents.capabilities.dialogue.AgentChatTextSanitizer;
 import server.agents.runtime.AgentSchedulerRuntime;
 import client.Character;
 import server.agents.commands.AgentQueuedMessage;
@@ -8,11 +10,6 @@ import server.agents.commands.AgentReplyChannel;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.commands.AgentMessageQueueStateRuntime;
 import server.agents.commands.AgentReplyChannelStateRuntime;
-import server.agents.integration.AgentClientGatewayRuntime;
-import server.agents.integration.AgentPacketGatewayRuntime;
-import server.agents.integration.AgentPartyGatewayRuntime;
-import server.agents.integration.AgentRelationshipRuntime;
-import server.agents.integration.AgentRuntimeIdentityRuntime;
 
 /**
  * Boundary adapter from Agent reply queues to Cosmic chat, whisper, party, and

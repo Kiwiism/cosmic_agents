@@ -4,7 +4,7 @@ import server.agents.capabilities.trade.AgentTransferCommandService;
 import server.agents.capabilities.trade.AgentTransferService;
 import server.agents.auth.AgentControlService;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
-import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
+import server.agents.integration.AgentDialogueTransportRuntime;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentRandom;
 import server.agents.runtime.AgentRuntimeEntry;

@@ -11,7 +11,7 @@ import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatMovementFlow;
 import server.agents.capabilities.dialogue.AgentActiveModeRuntime;
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
-import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
+import server.agents.integration.AgentDialogueTransportRuntime;
 import server.agents.integration.InventoryGateway;
 import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.runtime.AgentRuntimeEntry;

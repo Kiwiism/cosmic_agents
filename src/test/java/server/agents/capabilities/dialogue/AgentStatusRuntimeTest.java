@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.follow.AgentActivityStateRuntime;
 import server.agents.capabilities.trade.AgentOfferStateRuntime;
-import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
+import server.agents.integration.AgentDialogueTransportRuntime;
 import server.agents.runtime.AgentSchedulerRuntime;
 
 import java.awt.Point;

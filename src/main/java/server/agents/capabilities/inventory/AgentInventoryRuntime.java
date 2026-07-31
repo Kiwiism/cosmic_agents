@@ -1,6 +1,6 @@
 package server.agents.capabilities.inventory;
 
-import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
+import server.agents.integration.AgentDialogueTransportRuntime;
 import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 

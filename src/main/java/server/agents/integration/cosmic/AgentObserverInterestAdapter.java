@@ -1,4 +1,4 @@
-package server.agents.observer.adapter;
+package server.agents.integration.cosmic;
 
 import server.agents.observer.SpectatorAgentSignalService;
 import server.observer.ObserverInterestAdapter;

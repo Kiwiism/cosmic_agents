@@ -1,4 +1,4 @@
-package server.agents.observer.adapter;
+package server.agents.integration.cosmic;
 
 import client.Character;
 import client.Client;

@@ -3,7 +3,7 @@ package server.agents.integration.cosmic;
 import client.Character;
 import org.slf4j.Logger;
 import server.agents.integration.AgentCharacterGatewayRuntime;
-import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
+import server.agents.integration.AgentDialogueTransportRuntime;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentReloginRequest;
 import server.agents.runtime.AgentRandom;

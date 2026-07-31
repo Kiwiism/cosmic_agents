@@ -8,7 +8,7 @@ import server.agents.capabilities.dialogue.AgentApBuildDialogueResolver;
 import server.agents.capabilities.dialogue.AgentBuildDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentChatBuildFlow;
 import server.agents.capabilities.dialogue.AgentChatJobAdvancementFlow;
-import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
+import server.agents.integration.AgentDialogueTransportRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 

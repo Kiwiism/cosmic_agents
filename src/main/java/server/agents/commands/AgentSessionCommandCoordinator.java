@@ -8,7 +8,7 @@ import server.agents.capabilities.dialogue.AgentChatSessionRequestFlow;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
 import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.integration.AgentClientGatewayRuntime;
-import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
+import server.agents.integration.AgentDialogueTransportRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.runtime.AgentLifecyclePhase;

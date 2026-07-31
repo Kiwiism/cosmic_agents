@@ -64,13 +64,13 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
-class BotNavigationManagerTest {
+class AgentNavigationIntegrationTest {
     private static volatile MapleMap kerningCached;
 
     private static MapleMap kerning() {
         MapleMap v = kerningCached;
         if (v != null) return v;
-        synchronized (BotNavigationManagerTest.class) {
+        synchronized (AgentNavigationIntegrationTest.class) {
             if (kerningCached == null) {
                 kerningCached = AgentNavigationMapLoader.loadMapGeometry(103000000);
             }

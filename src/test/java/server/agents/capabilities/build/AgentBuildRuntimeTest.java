@@ -9,7 +9,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentBuildDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentChatBuildFlow;
-import server.agents.capabilities.dialogue.AgentDialogueTransportRuntime;
+import server.agents.integration.AgentDialogueTransportRuntime;
 import server.agents.runtime.AgentSchedulerRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
