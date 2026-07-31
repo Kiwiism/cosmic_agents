@@ -6,6 +6,7 @@ import net.AbstractPacketHandler;
 import net.packet.InPacket;
 import server.agents.auth.AgentAuthorityService;
 import server.agents.observer.SpectatorInterestService;
+import server.agents.observer.SpectatorAgentSignalService;
 import tools.PacketCreator;
 
 import java.util.Map;
@@ -29,6 +30,7 @@ public final class ObserverInterestHandler extends AbstractPacketHandler {
         if (rateLimited(client)) {
             return;
         }
+        SpectatorAgentSignalService.sampleWorld(observer.getWorld());
         client.sendPacket(PacketCreator.observerInterestEvents(
                 SpectatorInterestService.latestSequence(observer.getWorld()),
                 SpectatorInterestService.eventsSince(
