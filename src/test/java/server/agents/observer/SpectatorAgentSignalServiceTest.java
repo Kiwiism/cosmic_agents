@@ -26,10 +26,13 @@ class SpectatorAgentSignalServiceTest {
                         sample(10, 100, 200, true, true, 18, "jump-edge"),
                         startedAt + SpectatorAgentSignalService.UPCOMING_COOLDOWN_MS);
 
-        assertEquals(1, signals.size());
-        assertEquals(SpectatorInterestService.Type.UPCOMING,
-                signals.getFirst().type());
-        assertTrue(signals.getFirst().detail().contains("jump-edge"));
+        assertEquals(2, signals.size());
+        assertTrue(signals.stream().anyMatch(signal ->
+                signal.type() == SpectatorInterestService.Type.UPCOMING
+                        && signal.detail().contains("jump-edge")));
+        assertTrue(signals.stream().anyMatch(signal ->
+                signal.type() == SpectatorInterestService.Type.ROUTE
+                        && signal.detail().contains("jump-edge")));
     }
 
     @Test

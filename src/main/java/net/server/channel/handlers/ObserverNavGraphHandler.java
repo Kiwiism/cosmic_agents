@@ -9,6 +9,7 @@ import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.navigation.AgentMapGraphService;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
+import server.agents.observer.SpectatorInterestService;
 import server.agents.observer.protocol.ObserverNavGraphProtocol;
 import server.maps.MapleMap;
 import tools.PacketCreator;
@@ -108,6 +109,11 @@ public final class ObserverNavGraphHandler extends AbstractPacketHandler {
                                   int toRegion) {
         AgentMapGraphService.RouteView route = AgentMapGraphService.testRoute(
                 map, graph, fromRegion, toRegion, false);
+        SpectatorInterestService.publish(
+                client.getPlayer(),
+                SpectatorInterestService.Type.ROUTE,
+                20,
+                routeDetail(route));
         byte[] payload = ObserverNavGraphProtocol.encodeRoute(route);
         List<byte[]> chunks = ObserverNavGraphProtocol.chunks(payload);
         int checksum = ObserverNavGraphProtocol.checksum(payload);
@@ -125,6 +131,16 @@ public final class ObserverNavGraphHandler extends AbstractPacketHandler {
                     checksum,
                     chunks.get(index)));
         }
+    }
+
+    private static String routeDetail(AgentMapGraphService.RouteView route) {
+        String result = route.reached()
+                ? "reached"
+                : route.bestEffort() ? "best effort" : "unreached";
+        return "Route " + route.fromRegion() + " -> " + route.toRegion()
+                + ": " + result
+                + ", " + route.path().size() + " step(s), "
+                + route.expandedNodes() + " expanded";
     }
 
     private static boolean rateLimited(Client client) {

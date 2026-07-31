@@ -87,7 +87,7 @@ public final class SpectatorAgentSignalService {
             State state = STATES.computeIfAbsent(
                     sample.characterId(),
                     ignored -> new State(sample, now));
-            List<Signal> signals = new ArrayList<>(2);
+            List<Signal> signals = new ArrayList<>(3);
 
             boolean progressed = sample.mapId() != state.mapId
                     || distanceSquared(sample.x(), sample.y(), state.x, state.y)
@@ -106,6 +106,10 @@ public final class SpectatorAgentSignalService {
                         SpectatorInterestService.Type.UPCOMING,
                         65,
                         upcomingDetail(sample)));
+                signals.add(new Signal(
+                        SpectatorInterestService.Type.ROUTE,
+                        25,
+                        routeDetail(sample)));
                 state.upcomingSignature = signature;
                 state.lastUpcomingAt = now;
             }
@@ -163,6 +167,16 @@ public final class SpectatorAgentSignalService {
         return sample.targetRegion() >= 0
                 ? "navigating to region " + sample.targetRegion()
                 : "moving toward an objective";
+    }
+
+    private static String routeDetail(Sample sample) {
+        String decision = safeDecision(sample.decision());
+        if (!decision.isBlank()) {
+            return "Route intent: " + decision;
+        }
+        return sample.targetRegion() >= 0
+                ? "Route intent: region " + sample.targetRegion()
+                : "Route intent updated";
     }
 
     private static String safeDecision(String decision) {
