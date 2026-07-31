@@ -7594,4 +7594,24 @@ public class PacketCreator {
         return p;
     }
 
+    public static Packet observerInterestEvents(
+            long latestSequence,
+            List<server.agents.observer.SpectatorInterestService.Event> events) {
+        OutPacket p = OutPacket.create(SendOpcode.OBSERVER_INTEREST);
+        p.writeByte(1);
+        p.writeLong(latestSequence);
+        p.writeShort(events.size());
+        for (server.agents.observer.SpectatorInterestService.Event event : events) {
+            p.writeLong(event.sequence());
+            p.writeLong(event.timestamp());
+            p.writeInt(event.characterId());
+            p.writeInt(event.mapId());
+            p.writeByte(event.type().code());
+            p.writeShort(event.score());
+            p.writeString(event.characterName());
+            p.writeString(event.detail());
+        }
+        return p;
+    }
+
 }

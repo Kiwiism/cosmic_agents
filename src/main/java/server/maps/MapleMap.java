@@ -1539,6 +1539,13 @@ public class MapleMap {
             }
 
             Character dropOwner = monster.killBy(chr);
+            if (monster.hasBossHPBar()) {
+                server.agents.observer.SpectatorInterestService.publish(
+                        chr,
+                        server.agents.observer.SpectatorInterestService.Type.BOSS_DEFEAT,
+                        100,
+                        "Defeated " + monster.getName());
+            }
             AgentOperationalEventPublisher.publishFor(chr,
                     objectiveId -> new AgentMobKilledEvent(
                             chr.getId(), System.currentTimeMillis(), getId(), monster.getId(),
