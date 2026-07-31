@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agent-journey-snapshot-v1",
+  "title": "Agent Journey Snapshot v1",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "capturedAtMs",
+    "agentId",
+    "agentName",
+    "level",
+    "experience",
+    "jobId",
+    "mapId",
+    "x",
+    "y",
+    "hp",
+    "mp",
+    "mesos",
+    "planId",
+    "planStatus",
+    "planStepIndex",
+    "planStepAttempt",
+    "objectiveId",
+    "objectiveType",
+    "careerStage",
+    "inventory",
+    "activeQuestProgress",
+    "completedQuestIds"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "capturedAtMs": { "type": "integer", "minimum": 0 },
+    "agentId": { "type": "integer", "minimum": 1 },
+    "agentName": { "type": "string" },
+    "level": { "type": "integer", "minimum": 1 },
+    "experience": { "type": "integer", "minimum": 0 },
+    "jobId": { "type": "integer", "minimum": 0 },
+    "mapId": { "type": "integer" },
+    "x": { "type": "integer" },
+    "y": { "type": "integer" },
+    "hp": { "type": "integer", "minimum": 0 },
+    "mp": { "type": "integer", "minimum": 0 },
+    "mesos": { "type": "integer", "minimum": 0 },
+    "planId": { "type": "string" },
+    "planStatus": { "type": "string" },
+    "planStepIndex": { "type": "integer", "minimum": 0 },
+    "planStepAttempt": { "type": "integer", "minimum": 0 },
+    "objectiveId": { "type": "string" },
+    "objectiveType": { "type": "string" },
+    "careerStage": { "type": "string" },
+    "inventory": {
+      "type": "object",
+      "additionalProperties": { "type": "integer", "minimum": 0 }
+    },
+    "activeQuestProgress": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": { "type": "string" }
+      }
+    },
+    "completedQuestIds": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "integer", "minimum": 0 }
+    }
+  }
+}

@@ -24,6 +24,12 @@ public final class AgentPostKillLootPolicy {
                 >= AgentLootCollectionPolicyConfig.rangedBatchMaxWaitMs();
     }
 
+    static long targetLootAgeMs(WeaponType weaponType, boolean recentKillDrop) {
+        return recentKillDrop && !isRanged(weaponType)
+                ? AgentLootCollectionPolicyConfig.meleeRecentKillTargetAgeMs()
+                : AgentLootEligibility.MIN_TARGET_LOOT_AGE_MS;
+    }
+
     static boolean isRanged(WeaponType weaponType) {
         return AgentCombatAmmoCounter.isRangedAmmoWeapon(weaponType)
                 || weaponType == WeaponType.WAND

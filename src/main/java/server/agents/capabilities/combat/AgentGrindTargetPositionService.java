@@ -2,7 +2,7 @@ package server.agents.capabilities.combat;
 
 import server.agents.capabilities.movement.AgentPositionService;
 import client.Character;
-import server.agents.capabilities.looting.AgentLootEligibility;
+import server.agents.capabilities.looting.AgentGrindLootTargetService;
 import server.agents.capabilities.looting.AgentLootTargetService;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
@@ -167,7 +167,8 @@ public final class AgentGrindTargetPositionService {
             AgentGrindLootStateRuntime.clearGrindLootTarget(entry);
             return null;
         }
-        if (!AgentLootEligibility.canBotTargetLoot(entry, agent, agent.getMap(), loot, System.currentTimeMillis())) {
+        if (!AgentGrindLootTargetService.canTargetCachedGrindLoot(
+                entry, agent, loot, System.currentTimeMillis())) {
             AgentGrindLootStateRuntime.clearGrindLootTarget(entry);
             return null;
         }

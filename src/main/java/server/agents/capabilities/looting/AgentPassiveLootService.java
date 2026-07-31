@@ -4,8 +4,10 @@ import client.Character;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
+import client.inventory.WeaponType;
 import constants.id.ItemId;
 import constants.inventory.ItemConstants;
+import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapItem;
 import server.agents.events.AgentEventPriority;
@@ -36,6 +38,13 @@ public final class AgentPassiveLootService {
         callbacks.tickInventoryFullWarnCooldown();
         Point agentPos = agent.getPosition();
         long now = callbacks.nowMs();
+        AgentPostKillLootState postKillState =
+                entry.capabilityStates().require(AgentPostKillLootState.STATE_KEY);
+        AgentPostKillLootState.Snapshot postKill = postKillState.snapshot(now);
+        Inventory equipped = agent.getInventory(InventoryType.EQUIPPED);
+        WeaponType weaponType = equipped == null
+                ? null
+                : AgentAttackExecutionProvider.getEquippedWeaponType(agent);
         for (MapItem drop : agent.getMap().getDroppedItems()) {
             if (!AgentLootEligibility.isPresent(agent.getMap(), drop)) {
                 callbacks.cleanupGhostDrop(agent, drop);
@@ -48,7 +57,14 @@ public final class AgentPassiveLootService {
                 continue;
             }
 
-            if (!AgentLootEligibility.canBotTargetLoot(entry, agent, agent.getMap(), drop, now)) {
+            int dropperObjectId = drop.getDropper() == null
+                    ? -1
+                    : drop.getDropper().getObjectId();
+            boolean recentKillDrop = postKill.killedObjectIds().contains(dropperObjectId);
+            long targetAgeMs = AgentPostKillLootPolicy.targetLootAgeMs(
+                    weaponType, recentKillDrop);
+            if (!AgentLootEligibility.canBotTargetLoot(
+                    entry, agent, agent.getMap(), drop, now, targetAgeMs)) {
                 if (AgentLootEligibility.canBotLoot(entry, agent, drop)) {
                     continue;
                 }
@@ -69,6 +85,8 @@ public final class AgentPassiveLootService {
             int pickedItemId = drop.getItemId();
             callbacks.pickup(agent, drop);
             if (drop.isPickedUp()) {
+                resolveRecentKillIfDrained(
+                        postKillState, agent.getMap(), dropperObjectId);
                 int itemId = pickedItem == null ? 0 : pickedItem.getItemId();
                 int quantity = pickedItem == null ? 0 : Math.max(0, pickedItem.getQuantity());
                 AgentResourceEventPublisher.publishFor(agent,
@@ -89,6 +107,21 @@ public final class AgentPassiveLootService {
                     callbacks.scheduleLootOfferPrompt(entry, agent, pickedItem, 5_000L);
                 }
             }
+        }
+    }
+
+    private static void resolveRecentKillIfDrained(AgentPostKillLootState postKillState,
+                                                   server.maps.MapleMap map,
+                                                   int dropperObjectId) {
+        if (postKillState == null || map == null || dropperObjectId <= 0) {
+            return;
+        }
+        boolean hasRemainingDrop = map.getDroppedItems().stream()
+                .anyMatch(drop -> !drop.isPickedUp()
+                        && drop.getDropper() != null
+                        && drop.getDropper().getObjectId() == dropperObjectId);
+        if (!hasRemainingDrop) {
+            postKillState.resolveKill(dropperObjectId);
         }
     }
 

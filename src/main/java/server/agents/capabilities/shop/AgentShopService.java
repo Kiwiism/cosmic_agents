@@ -311,7 +311,8 @@ public final class AgentShopService {
 
         int requiredItemId = AgentShopStateRuntime.requiredItemId(entry);
         int requiredItemCount = AgentShopStateRuntime.requiredItemCount(entry);
-        if (requiredItemId > 0 && requiredItemCount > 0) {
+        boolean itemOnlyVisit = requiredItemId > 0 && requiredItemCount > 0;
+        if (itemOnlyVisit) {
             actions.add((sequence, shop) -> {
                 int missing = Math.max(0, requiredItemCount
                         - bot.getInventory(ItemConstants.getInventoryType(requiredItemId))
@@ -331,7 +332,9 @@ public final class AgentShopService {
             });
         }
 
-        if (minimumMesoReserve == 0 && shouldRechargeWhileShopping(bot, wt, inventory)) {
+        if (!itemOnlyVisit
+                && minimumMesoReserve == 0
+                && shouldRechargeWhileShopping(bot, wt, inventory)) {
             actions.add((sequence, shop) -> {
                 AgentShopBuyReport recharge = doRecharge(bot, shop, wt, sequence.inventory());
                 if (recharge.quantity() > 0) {
@@ -343,12 +346,14 @@ public final class AgentShopService {
                 return sequence.withFirstShortfall(recharge);
             });
         }
-        if (shouldBuyFixedAmmoWhileShopping(bot, wt)) {
+        if (!itemOnlyVisit && shouldBuyFixedAmmoWhileShopping(bot, wt)) {
             actions.add((sequence, shop) -> appendBuyReport(
                     sequence, buyAmmo(bot, shop, wt, minimumMesoReserve), "ammo"));
         }
-        actions.add((sequence, shop) ->
-                buyPotionStock(sequence, shop, minimumMesoReserve));
+        if (!itemOnlyVisit) {
+            actions.add((sequence, shop) ->
+                    buyPotionStock(sequence, shop, minimumMesoReserve));
+        }
 
         runPurchaseStep(new AgentShopPurchaseSequence<>(entry, bot, inventory, npcPos, actions, new ArrayList<>(), null), 0);
     }

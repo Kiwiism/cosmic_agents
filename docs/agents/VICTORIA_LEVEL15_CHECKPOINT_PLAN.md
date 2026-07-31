@@ -11,12 +11,14 @@ A correction to a shared pack therefore applies to every career that uses it.
 ```text
 !victoria run <IGN> <career> <lv10|lv9-olaf|lv9-grind> checkpoint1
 !victoria run <IGN> <career> checkpoint2
+!victoria run KiwiAgent thief-dagger checkpoint3
 ```
 
 `checkpoint1`, `checkpoint2`, `checkpoint3`, `cp1`, `cp2`, and `cp3` are
-recognized. Checkpoint 3 intentionally rejects reset attempts until the
-preceding pack has been run and its exact level, EXP, inventory, quest state,
-AP/SP, equipment, and mesos are captured.
+recognized. Checkpoint 3 currently has a captured thief-dagger fixture. It
+restores KiwiAgent's post-Kerning level, EXP, inventory, quest state, AP/SP,
+equipment, and mesos; spawns beside the Perion taxi; and starts the shared
+Perion rotation pack at its first step.
 
 Checkpoint-2 reset data is stored in
 `src/main/resources/agents/fixtures/victoria-checkpoint2-baselines.json`.
@@ -26,19 +28,23 @@ quest EXP, expected minimum kills, build profile, starter kit, supplies, and
 conservative expected drops. Each predicted entry must be replaced with a
 capture after its checkpoint-1 test.
 
+Captured mid-plan reset data, including checkpoint 3, is stored in
+`src/main/resources/agents/fixtures/victoria-resume-checkpoints.json`.
+
 ## Shared execution order
 
 | Career bundle | Checkpoint 1 | Checkpoint 2 home pack | Checkpoint 3 rotation pack |
 |---|---|---|---|
 | Warrior | Power B. Fore entrance, Warrior Training Center, supplies | Perion | Ellinia |
-| Magician | Power B. Fore entrance, Magician Training Center, supplies plus one Ellinia scroll | Ellinia | Nautilus |
+| Magician | Power B. Fore entrance, Magician Training Center, class supplies | Ellinia | Nautilus |
 | Bowman | Power B. Fore entrance, Bowman Training Center, supplies | Henesys | Kerning |
-| Thief claw/dagger | Power B. Fore entrance, Thief Training Center, supplies plus one Kerning scroll | Kerning | Perion |
+| Thief claw/dagger | Power B. Fore entrance, Thief Training Center, class supplies | Kerning | Perion |
 | Pirate gun/knuckle | Power B. Fore entrance, Pirate Training Center, supplies | Nautilus | Henesys |
 
 Checkpoint 1 always finishes instructor training before the initial shop. The
 plan then advances directly into its home pack. It does not return to the job
-instructor after shopping.
+instructor after shopping. Return scrolls are bought by the shared quest pack
+that consumes them rather than by checkpoint 1.
 
 ## Perion pack
 
@@ -98,17 +104,19 @@ instructor after shopping.
 
 ## Nautilus pack
 
-1. Buy one Nautilus return scroll.
-2. Take Bonnie's **Destructively Strong Pigs**.
-3. Reach level 12 if needed, then take Rolonay's **Red Ribbons Around the
+1. A Magician arriving from Ellinia buys one Ellinia return scroll before
+   leaving for Nautilus. Pirate bundles skip this bundle-scoped step.
+2. Travel to Nautilus and buy one Nautilus return scroll.
+3. Take Bonnie's **Destructively Strong Pigs**.
+4. Reach level 12 if needed, then take Rolonay's **Red Ribbons Around the
    Pig's Neck**, Calico's **Drowsiness from the Orange Mushrooms?**, and
    Bartol's **Camouflaging Slimes**.
-4. At The Forest East of Henesys, defeat 30 Orange Mushrooms and 30 Pigs and
+5. At The Forest East of Henesys, defeat 30 Orange Mushrooms and 30 Pigs and
    kill Ribbon Pigs until 20 Pig's Ribbons are held.
-5. Use an Ellinia scroll when present. Otherwise travel to Henesys and take the
+6. Use an Ellinia scroll when present. Otherwise travel to Henesys and take the
    taxi to Ellinia.
-6. At The Field Up North of Ellinia, defeat 30 Slimes.
-7. Use the reserved Nautilus scroll and complete all four quests.
+7. At The Field Up North of Ellinia, defeat 30 Slimes.
+8. Use the reserved Nautilus scroll and complete all four quests.
 
 ## Runtime and recovery contract
 

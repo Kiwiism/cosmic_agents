@@ -157,6 +157,7 @@
       "packId": "nautilus-pre15",
       "homeTownMapId": 120000000,
       "steps": [
+        { "type": "SHOP_ITEM", "intention": "I'm buying one Ellinia return scroll before leaving for the Nautilus quests.", "npcId": 1031100, "mapId": 101000002, "itemId": 2030002, "itemCount": 1, "bundleIds": ["magician-standard-v1"] },
         { "type": "TAXI", "intention": "I'm taking the taxi to Nautilus Harbor for the Nautilus quest pack.", "mapId": 120000000, "destinationMapId": 120000000 },
         { "type": "SHOP_ITEM", "intention": "I'm buying one Nautilus Harbor return scroll.", "npcId": 1091002, "mapId": 120000200, "itemId": 2030019, "itemCount": 1 },
         { "type": "QUEST", "intention": "I'm helping Bonnie defeat 30 Pigs.", "npcId": 1092001, "questId": 28278, "mapId": 120000300 },

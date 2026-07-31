@@ -48,7 +48,13 @@ public final class AgentGrindModeTickService {
 
         AgentGrindLootTargetService.refreshGrindLootTarget(
                 entry, agent, runAiTick, hooks.lootRadius(), target != null);
+        Point immediateMeleeLootPosition =
+                AgentGrindLootTargetService.immediateMeleeLootPosition(
+                        entry, agent, agentPosition, hooks.lootRadius(), now);
         if (target == null) {
+            if (immediateMeleeLootPosition != null) {
+                return new Result(false, immediateMeleeLootPosition);
+            }
             AgentGrindNoTargetFallbackService.Result result =
                     AgentGrindNoTargetFallbackService.handleNoTarget(
                             entry, agent, agentPosition, currentTargetPos, runAiTick,
@@ -89,6 +95,9 @@ public final class AgentGrindModeTickService {
                 aoeRepositionPos,
                 shouldRetreatForRangedSpacing,
                 hooks.navigationTailHooks());
+        if (immediateMeleeLootPosition != null) {
+            targetPos = immediateMeleeLootPosition;
+        }
         return new Result(false, targetPos);
     }
 }

@@ -6,6 +6,10 @@ reads catalogs and live observations, proposes actions, and records learning.
 It never mutates inventory, mesos, shops, trades, quests, or market state
 directly. Execution always goes through validated Agent capabilities.
 
+The canonical design for personal item goals, wishlist behavior, build/AP
+projection, inventory disposition, and acquisition proposals is:
+`docs/agents/llm-autonomy/AGENT_DEMAND_PORTFOLIO_SPECIFICATION.md`.
+
 ## Goals
 
 - Keep mesos useful and relatively valuable.
@@ -446,7 +450,11 @@ Each agent has imperfect local beliefs:
 - preferred FM rooms.
 - favorite farming maps.
 - price confidence by item.
-- personal item goals.
+- personal demand-portfolio history and outcomes.
+
+Personal item goals are not stored as an untyped wishlist. Candidate and
+committed needs use the Demand Portfolio contract, including quantities,
+substitutes, level horizon, build/AP evidence, and acquisition methods.
 
 Profile fields:
 
@@ -465,20 +473,27 @@ Profile fields:
 Personal acceptable buy price:
 
 ```text
-acceptableBuyPrice =
-  fairValue
-  * urgencyMultiplier
-  * personalityMultiplier
-  * wealthMultiplier
-  * confidenceAdjustment
+acceptableBuyPrice = min(
+  budgetCap,
+  fairMarketUpperBound * urgencyMultiplier,
+  progressionValueInMesos - expectedAlternativeCost
+)
 ```
 
 Personal minimum sell price:
 
 ```text
-minimumSellPrice =
-  max(vendorValue, fairValue * minimumMargin)
+minimumSellPrice = max(
+  vendorValue,
+  replacementCostIfProtected,
+  expectedMarketNetValue,
+  committedTradeValue
+)
 ```
+
+Personality and imperfect belief adjust inputs within global bounds; they do
+not override supply reserves, inventory reservations, manipulation controls, or
+capability validation.
 
 Agent examples:
 
@@ -787,4 +802,3 @@ LLM cannot:
 - Keeps all execution behind validators and plan cards.
 - Supports volatility through behavior, events, class growth, scarcity, and
   imperfect information instead of random price noise alone.
-

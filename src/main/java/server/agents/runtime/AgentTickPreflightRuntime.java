@@ -8,6 +8,7 @@ import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.capabilities.social.airshow.AgentAirshowStateRuntime;
 import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.journey.AgentJourneyRuntime;
 import server.agents.runtime.AgentTickCadenceStateRuntime;
 
 public final class AgentTickPreflightRuntime {
@@ -22,11 +23,15 @@ public final class AgentTickPreflightRuntime {
         if (entry != null && !AgentLifecycleStateRuntime.active(entry)) {
             return new AgentTickPreflightService.Result(true, AgentRuntimeIdentityRuntime.bot(entry), false);
         }
-        return AgentTickPreflightService.runPreflight(
+        AgentTickPreflightService.Result result = AgentTickPreflightService.runPreflight(
                 entry,
                 agentCharId,
                 nowMs,
                 hooks());
+        if (result.agent() != null) {
+            AgentJourneyRuntime.tick(entry, result.agent(), nowMs);
+        }
+        return result;
     }
 
     private static AgentTickPreflightService.Hooks hooks() {

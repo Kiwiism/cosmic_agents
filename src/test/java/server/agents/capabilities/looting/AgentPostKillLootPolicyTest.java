@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentPostKillLootPolicyTest {
@@ -48,5 +49,18 @@ class AgentPostKillLootPolicyTest {
                 new AgentPostKillLootState.Snapshot(Set.of(), 0, 0L),
                 false,
                 10_000L));
+    }
+
+    @Test
+    void onlyRecentMeleeDropsUseTheShortTargetAge() {
+        assertEquals(
+                AgentLootCollectionPolicyConfig.meleeRecentKillTargetAgeMs(),
+                AgentPostKillLootPolicy.targetLootAgeMs(WeaponType.DAGGER_THIEVES, true));
+        assertEquals(
+                AgentLootEligibility.MIN_TARGET_LOOT_AGE_MS,
+                AgentPostKillLootPolicy.targetLootAgeMs(WeaponType.DAGGER_THIEVES, false));
+        assertEquals(
+                AgentLootEligibility.MIN_TARGET_LOOT_AGE_MS,
+                AgentPostKillLootPolicy.targetLootAgeMs(WeaponType.BOW, true));
     }
 }

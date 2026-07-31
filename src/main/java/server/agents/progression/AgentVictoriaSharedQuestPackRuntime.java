@@ -4,7 +4,6 @@ import client.Character;
 import client.QuestStatus;
 import server.agents.capabilities.shop.AgentShopService;
 import server.agents.capabilities.shop.AgentShopStateRuntime;
-import server.agents.capabilities.shop.AgentShopWorkflowPhase;
 import server.agents.capabilities.inventory.demand.AgentQuestItemDemandRuntime;
 import server.agents.capabilities.looting.AgentPreExitLootRuntime;
 import server.agents.integration.PrimitiveCapabilityGateway;
@@ -49,6 +48,10 @@ final class AgentVictoriaSharedQuestPackRuntime {
         }
         AgentVictoriaSharedQuestPackCatalog.Step step =
                 pack.steps().get(state.questPackIndex());
+        if (!appliesToBundle(step, state.bundle())) {
+            advance(state, nowMs);
+            return Result.RUNNING;
+        }
         announce(agent, state, packId, step.intention());
         return switch (step.type()) {
             case "TAXI" -> taxi(entry, agent, state, step, nowMs, gateway);
@@ -65,6 +68,13 @@ final class AgentVictoriaSharedQuestPackRuntime {
             default -> throw new IllegalStateException(
                     "unsupported shared quest-pack step type " + step.type());
         };
+    }
+
+    private static boolean appliesToBundle(
+            AgentVictoriaSharedQuestPackCatalog.Step step,
+            AgentCareerBuildBundle bundle) {
+        return step.bundleIds().isEmpty()
+                || (bundle != null && step.bundleIds().contains(bundle.bundleId()));
     }
 
     private static void refreshQuestItemReservations(
@@ -416,12 +426,18 @@ final class AgentVictoriaSharedQuestPackRuntime {
         if (AgentShopStateRuntime.shopVisitPending(entry)) {
             return Result.RUNNING;
         }
-        AgentShopWorkflowPhase phase = AgentShopStateRuntime.workflow(entry).phase();
-        if (phase == AgentShopWorkflowPhase.BLOCKED || phase == AgentShopWorkflowPhase.CANCELLED) {
+        if (AgentShopStateRuntime.lastVisitRequestedItem(
+                entry, step.itemId(), step.itemCount())) {
+            // Quest-pack return scrolls are an optimization. A completed, timed-out, or
+            // unaffordable visit falls back to ordinary route travel instead of
+            // reopening the same shop forever.
+            advance(state, nowMs);
+            return Result.RUNNING;
+        }
+        if (!AgentShopService.requestVisitAtNpc(entry, agent, step.npcId(), 0,
+                step.itemId(), step.itemCount())) {
             return Result.BLOCKED;
         }
-        AgentShopService.requestVisitAtNpc(entry, agent, step.npcId(), 0,
-                step.itemId(), step.itemCount());
         return Result.RUNNING;
     }
 

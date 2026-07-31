@@ -50,7 +50,8 @@ public final class AgentLootTargetService {
                                                   int preferredRegionId) {
         return findBestGrindLootTarget(entry, agent, passiveLootRadius,
                 retrySuppression, recentKillObjectIds, preferredRegionId,
-                AgentCombatConfig.cfg.GRIND_SEEK_RANGE);
+                AgentCombatConfig.cfg.GRIND_SEEK_RANGE,
+                AgentLootEligibility.MIN_TARGET_LOOT_AGE_MS);
     }
 
     public static MapItem findBestGrindLootTarget(AgentRuntimeEntry entry,
@@ -60,6 +61,19 @@ public final class AgentLootTargetService {
                                                   Set<Integer> recentKillObjectIds,
                                                   int preferredRegionId,
                                                   int maximumSeekRadius) {
+        return findBestGrindLootTarget(entry, agent, passiveLootRadius,
+                retrySuppression, recentKillObjectIds, preferredRegionId,
+                maximumSeekRadius, AgentLootEligibility.MIN_TARGET_LOOT_AGE_MS);
+    }
+
+    public static MapItem findBestGrindLootTarget(AgentRuntimeEntry entry,
+                                                  Character agent,
+                                                  int passiveLootRadius,
+                                                  GrindLootRetrySuppression retrySuppression,
+                                                  Set<Integer> recentKillObjectIds,
+                                                  int preferredRegionId,
+                                                  int maximumSeekRadius,
+                                                  long recentKillTargetAgeMs) {
         if (agent == null || hasAnyInventoryFull(agent)) return null;
         MapleMap map = agent.getMap();
         if (map == null) return null;
@@ -80,7 +94,13 @@ public final class AgentLootTargetService {
         LootScore bestScore = null;
 
         for (MapItem drop : map.getDroppedItems()) {
-            if (!AgentLootEligibility.canBotTargetLoot(entry, agent, map, drop, now)) continue;
+            boolean recentKillDrop = drop.getDropper() != null
+                    && recentKills.contains(drop.getDropper().getObjectId());
+            long targetAgeMs = recentKillDrop
+                    ? recentKillTargetAgeMs
+                    : AgentLootEligibility.MIN_TARGET_LOOT_AGE_MS;
+            if (!AgentLootEligibility.canBotTargetLoot(
+                    entry, agent, map, drop, now, targetAgeMs)) continue;
             if (retrySuppression != null && retrySuppression.isSuppressed(entry, drop, now)) continue;
             Point dropPos = drop.getPosition();
             if (Math.abs(dropPos.x - agentPos.x) <= passiveLootRadius
@@ -92,8 +112,6 @@ public final class AgentLootTargetService {
             boolean questDrop = drop.getQuest() > 0
                     || (drop.getMeso() <= 0
                     && AgentInventoryReservationRuntime.isReserved(entry, drop.getItemId(), now));
-            boolean recentKillDrop = drop.getDropper() != null
-                    && recentKills.contains(drop.getDropper().getObjectId());
             boolean sameRegion = graph != null
                     && graph.findRegionId(map, dropPos) == preferredRegionId;
             LootScore score = new LootScore(

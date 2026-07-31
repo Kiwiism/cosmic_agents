@@ -7,6 +7,10 @@ stay relevant, and how the system avoids manipulation.
 Technical implementation details live in:
 `docs/agents/llm-autonomy/ECONOMY_TECHNICAL_IMPLEMENTATION_SPECIFICATION.md`.
 
+Personal item goals, wishlist behavior, build/AP-derived equipment demand,
+inventory disposition, and acquisition planning are specified in:
+`docs/agents/llm-autonomy/AGENT_DEMAND_PORTFOLIO_SPECIFICATION.md`.
+
 Architecture reference:
 `docs/agents/llm-autonomy/ADAPTIVE_ECONOMY_SYSTEM_PLAN.md`.
 
@@ -621,4 +625,3 @@ Validators protect:
 - Agent-originated trades do not define player market truth.
 - Economy actions produce decision journal entries.
 - LLM can explain and propose but cannot execute unsafe actions.
-

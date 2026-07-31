@@ -211,6 +211,7 @@ import client.command.commands.gm6.EraseAllPNpcsCommand;
 import client.command.commands.gm6.FreeMarketSpotsCommand;
 import client.command.commands.gm6.GetAccCommand;
 import client.command.commands.gm6.HeapDumpCommand;
+import client.command.commands.gm6.JourneyCommand;
 import client.command.commands.gm6.MapPlayersCommand;
 import client.command.commands.gm6.SaveAllCommand;
 import client.command.commands.gm6.ServerAddChannelCommand;
@@ -606,6 +607,7 @@ public class CommandsExecutor {
         addCommand("townlife", 6, TownLifeCommand.class);
         addCommand("amherst", 6, AmherstCommand.class);
         addCommand("victoria", 6, VictoriaCommand.class);
+        addCommand("journey", 6, JourneyCommand.class);
         addCommand("mapleisland", 6, MapleIslandCommand.class);
         addCommand("observer", 6, ObserverCommand.class);
         addCommand("southperry", 6, SouthperryCommand.class);

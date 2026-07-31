@@ -15,6 +15,7 @@ public final class AgentLootEligibility {
     public static final int KPQ_COUPON = 4001007;
     public static final int KPQ_PASS = 4001008;
     public static final int HPQ_RICE_CAKE = 4001101;
+    public static final long SERVER_PICKUP_MIN_AGE_MS = 400L;
     public static final long MIN_TARGET_LOOT_AGE_MS = 3_000L;
     public static final long BOT_INVENTORY_DROP_TARGET_LOOT_AGE_MS = 15_000L;
 
@@ -57,19 +58,32 @@ public final class AgentLootEligibility {
     }
 
     public static boolean canBotTargetLoot(AgentRuntimeEntry entry, Character bot, MapleMap map, MapItem drop, long now) {
+        return canBotTargetLoot(entry, bot, map, drop, now, MIN_TARGET_LOOT_AGE_MS);
+    }
+
+    public static boolean canBotTargetLoot(AgentRuntimeEntry entry,
+                                           Character bot,
+                                           MapleMap map,
+                                           MapItem drop,
+                                           long now,
+                                           long minimumTargetAgeMs) {
         return isPresent(map, drop)
                 && canBotLoot(entry, bot, drop)
-                && now - drop.getDropTime() >= requiredTargetLootAgeMs(bot, drop);
+                && now - drop.getDropTime() >= requiredTargetLootAgeMs(bot, drop, minimumTargetAgeMs);
     }
 
     static long requiredTargetLootAgeMs(Character bot, MapItem drop) {
+        return requiredTargetLootAgeMs(bot, drop, MIN_TARGET_LOOT_AGE_MS);
+    }
+
+    static long requiredTargetLootAgeMs(Character bot, MapItem drop, long minimumTargetAgeMs) {
         if (bot == null || drop == null) {
             return MIN_TARGET_LOOT_AGE_MS;
         }
         if (isBotInventoryDrop(drop)) {
             return BOT_INVENTORY_DROP_TARGET_LOOT_AGE_MS;
         }
-        return MIN_TARGET_LOOT_AGE_MS;
+        return Math.max(SERVER_PICKUP_MIN_AGE_MS, minimumTargetAgeMs);
     }
 
     private static boolean isBotInventoryDrop(MapItem drop) {

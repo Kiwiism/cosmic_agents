@@ -79,10 +79,6 @@ public final class VictoriaFirstJobMvpTestService {
         catalogRepository.careerFor(bundle);
         AgentVictoriaLevel15Catalog.StartVariant startVariant = resolveStartVariant(requestedVariant);
         Checkpoint requestedCheckpoint = checkpoint == null ? Checkpoint.CHECKPOINT_1 : checkpoint;
-        if (requestedCheckpoint == Checkpoint.CHECKPOINT_3) {
-            throw new IllegalArgumentException(
-                    "checkpoint 3 reset is reserved until checkpoint 2 EXP/inventory is captured");
-        }
 
         AmherstTestRuntimeResetService.reset(entry, agent, nowMs);
         if (AgentTownLifeRuntime.active(entry)) {
@@ -104,16 +100,21 @@ public final class VictoriaFirstJobMvpTestService {
 
         AgentVictoriaLevel15Catalog catalog = catalogRepository.catalog();
         AgentCareerProgressionState.Stage initialStage;
-        VictoriaResumeCheckpointBaseline.ResumeCheckpoint resumeCheckpoint =
-                requestedCheckpoint == Checkpoint.CHECKPOINT_2_NELLA
-                        ? VictoriaResumeCheckpointBaseline.require(
-                        bundle.bundleId(), "checkpoint2-nella")
-                        : null;
+        VictoriaResumeCheckpointBaseline.ResumeCheckpoint resumeCheckpoint = switch (
+                requestedCheckpoint) {
+            case CHECKPOINT_2_NELLA -> VictoriaResumeCheckpointBaseline.require(
+                    bundle.bundleId(), "checkpoint2-nella");
+            case CHECKPOINT_3 -> VictoriaResumeCheckpointBaseline.require(
+                    bundle.bundleId(), "checkpoint3");
+            default -> null;
+        };
         if (resumeCheckpoint != null) {
             agent.resetVictoriaCheckpointBaseline(resumeCheckpoint.snapshot());
             applyCheckpointQuestState(agent, resumeCheckpoint.snapshot());
             applyActiveQuestState(agent, resumeCheckpoint);
-            initialStage = AgentCareerProgressionState.Stage.HOME_QUEST_PACK;
+            initialStage = requestedCheckpoint == Checkpoint.CHECKPOINT_3
+                    ? AgentCareerProgressionState.Stage.ROTATION_QUEST_PACK
+                    : AgentCareerProgressionState.Stage.HOME_QUEST_PACK;
         } else if (requestedCheckpoint == Checkpoint.CHECKPOINT_2) {
             VictoriaCheckpointBaseline.Snapshot baseline =
                     VictoriaCheckpointBaseline.require(bundle.bundleId());
@@ -149,7 +150,9 @@ public final class VictoriaFirstJobMvpTestService {
                 requestedCheckpoint == Checkpoint.CHECKPOINT_1
                         ? startVariant.variantId()
                         : requestedCheckpoint == Checkpoint.CHECKPOINT_2_NELLA
-                        ? "checkpoint2-nella" : "checkpoint2",
+                        ? "checkpoint2-nella"
+                        : requestedCheckpoint == Checkpoint.CHECKPOINT_3
+                        ? "checkpoint3" : "checkpoint2",
                 initialStage,
                 nowMs + START_DELAY_MS);
         if (resumeCheckpoint != null) {

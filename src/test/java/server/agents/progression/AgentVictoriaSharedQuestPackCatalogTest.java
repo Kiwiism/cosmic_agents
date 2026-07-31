@@ -58,6 +58,20 @@ class AgentVictoriaSharedQuestPackCatalogTest {
     }
 
     @Test
+    void nautilusPackMovesTheElliniaScrollPurchaseIntoTheMagicianQuestPlan() {
+        AgentVictoriaSharedQuestPackCatalog.Pack pack =
+                AgentVictoriaSharedQuestPackCatalog.require("nautilus-pre15");
+
+        AgentVictoriaSharedQuestPackCatalog.Step purchase = pack.steps().stream()
+                .filter(step -> "SHOP_ITEM".equals(step.type()) && step.itemId() == 2030002)
+                .findFirst()
+                .orElseThrow();
+
+        assertEquals(101000002, purchase.mapId());
+        assertEquals(List.of("magician-standard-v1"), purchase.bundleIds());
+    }
+
+    @Test
     void checkpoint2ExistsForEveryBundleAndOnlyThiefDaggerIsCaptured() {
         Set<String> bundleIds = AgentCareerBuildBundleRepository.defaultRepository()
                 .all().stream()
@@ -105,6 +119,30 @@ class AgentVictoriaSharedQuestPackCatalogTest {
     }
 
     @Test
+    void capturedCheckpoint3StartsTheSharedPerionPackBesideTheTaxi() {
+        VictoriaResumeCheckpointBaseline.ResumeCheckpoint checkpoint =
+                VictoriaResumeCheckpointBaseline.require(
+                        "thief-dagger-standard-v1", "checkpoint3");
+        AgentVictoriaSharedQuestPackCatalog.Pack pack =
+                AgentVictoriaSharedQuestPackCatalog.require(checkpoint.questPackId());
+
+        assertEquals("CAPTURED", checkpoint.snapshot().provenance());
+        assertEquals("perion-pre15", pack.packId());
+        assertEquals(0, checkpoint.questPackIndex());
+        assertEquals(102000000, checkpoint.snapshot().character().mapId());
+        assertEquals(700, checkpoint.position().x());
+        assertEquals(1875, checkpoint.position().y());
+        assertEquals(14, checkpoint.snapshot().character().level());
+        assertEquals(3127, checkpoint.snapshot().character().exp());
+        assertEquals(93, checkpoint.snapshot().character().mesos());
+        assertTrue(checkpoint.snapshot().completedQuestIds().containsAll(
+                Set.of(28270, 28271, 28272)));
+        assertTrue(checkpoint.snapshot().resetQuestIds().containsAll(
+                Set.of(2082, 28280, 28281)));
+        assertTrue(checkpoint.activeQuests().isEmpty());
+    }
+
+    @Test
     void authoredScrollsReachTheirDeclaredTownAndRequiredScrollsArePurchased()
             throws IOException {
         for (String packId : EXPECTED_PACKS) {
@@ -140,20 +178,6 @@ class AgentVictoriaSharedQuestPackCatalogTest {
                             "required town scroll is not purchased before use in " + packId);
                 }
             }
-        }
-    }
-
-    @Test
-    void initialCareerShopScrollsMatchTheCareerTown() throws IOException {
-        for (AgentVictoriaLevel15Catalog.Career career
-                : AgentVictoriaLevel15CatalogRepository.defaultRepository().catalog().careers()) {
-            if (career.initialShopRequiredItemId() == 0) {
-                continue;
-            }
-            assertEquals(career.townMapId(),
-                    fixedScrollDestination(career.initialShopRequiredItemId()),
-                    "initial return-scroll destination drift for job " + career.firstJobId());
-            assertShopSells(career.shopNpcId(), career.initialShopRequiredItemId());
         }
     }
 

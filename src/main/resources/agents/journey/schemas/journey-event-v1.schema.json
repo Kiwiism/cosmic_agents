@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agent-journey-event-v1",
+  "title": "Agent Journey Event v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "runId",
+    "sequence",
+    "occurredAtMs",
+    "agentId",
+    "agentName",
+    "category",
+    "eventType",
+    "objectiveId",
+    "mapId",
+    "critical",
+    "attributes"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "runId": { "type": "string", "minLength": 1 },
+    "sequence": { "type": "integer", "minimum": 1 },
+    "occurredAtMs": { "type": "integer", "minimum": 0 },
+    "agentId": { "type": "integer", "minimum": 1 },
+    "agentName": { "type": "string" },
+    "category": { "type": "string", "minLength": 1 },
+    "eventType": { "type": "string", "minLength": 1 },
+    "objectiveId": { "type": "string" },
+    "mapId": { "type": "integer" },
+    "critical": { "type": "boolean" },
+    "attributes": { "type": "object" }
+  }
+}

@@ -1,6 +1,8 @@
 package server.agents.capabilities.looting;
 
 import client.Character;
+import client.inventory.Inventory;
+import client.inventory.InventoryType;
 import client.inventory.WeaponType;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
@@ -10,6 +12,10 @@ import server.agents.capabilities.movement.AgentPatrolStateRuntime;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapItem;
+import server.maps.MapleMap;
+
+import java.awt.Point;
+import java.util.Set;
 
 public final class AgentGrindLootTargetService {
     private AgentGrindLootTargetService() {
@@ -23,6 +29,7 @@ public final class AgentGrindLootTargetService {
         MapItem loot = AgentGrindLootStateRuntime.grindLootTarget(entry);
         if (loot.isPickedUp() || agent.getMap().getMapObject(loot.getObjectId()) != loot) {
             AgentGrindLootStateRuntime.clearGrindLootTarget(entry);
+            resolveRecentKillIfDrained(entry, agent.getMap(), dropperObjectId(loot));
         }
     }
 
@@ -46,7 +53,7 @@ public final class AgentGrindLootTargetService {
         AgentPostKillLootState postKillState =
                 entry.capabilityStates().require(AgentPostKillLootState.STATE_KEY);
         AgentPostKillLootState.Snapshot postKill = postKillState.snapshot(nowMs);
-        WeaponType weaponType = AgentAttackExecutionProvider.getEquippedWeaponType(agent);
+        WeaponType weaponType = equippedWeaponType(agent);
         boolean ranged = AgentPostKillLootPolicy.isRanged(weaponType);
         if (!AgentPostKillLootPolicy.shouldCollect(
                 weaponType, postKill, hasCombatTarget, nowMs)) {
@@ -63,11 +70,9 @@ public final class AgentGrindLootTargetService {
                 AgentGrindLootStateRuntime::isRetrySuppressed,
                 postKill.killedObjectIds(),
                 currentRegionId(entry, agent),
-                maximumSeekRadius);
+                maximumSeekRadius,
+                AgentPostKillLootPolicy.targetLootAgeMs(weaponType, true));
         AgentGrindLootStateRuntime.setGrindLootTarget(entry, selected);
-        if (selected != null) {
-            postKillState.batchScheduled();
-        }
     }
 
     public static void refreshPreExitLootTarget(AgentRuntimeEntry entry,
@@ -81,6 +86,7 @@ public final class AgentGrindLootTargetService {
         long nowMs = System.currentTimeMillis();
         AgentPostKillLootState postKillState =
                 entry.capabilityStates().require(AgentPostKillLootState.STATE_KEY);
+        WeaponType weaponType = equippedWeaponType(agent);
         MapItem selected = AgentLootTargetService.findBestGrindLootTarget(
                 entry,
                 agent,
@@ -88,11 +94,89 @@ public final class AgentGrindLootTargetService {
                 AgentGrindLootStateRuntime::isRetrySuppressed,
                 postKillState.snapshot(nowMs).killedObjectIds(),
                 currentRegionId(entry, agent),
-                maximumSeekRadius);
+                maximumSeekRadius,
+                AgentPostKillLootPolicy.targetLootAgeMs(weaponType, true));
         AgentGrindLootStateRuntime.setGrindLootTarget(entry, selected);
-        if (selected != null) {
-            postKillState.batchScheduled();
+    }
+
+    public static Point immediateMeleeLootPosition(AgentRuntimeEntry entry,
+                                                   Character agent,
+                                                   Point agentPosition,
+                                                   int passiveLootRadius,
+                                                   long nowMs) {
+        if (entry == null || agent == null || agentPosition == null || agent.getMap() == null) {
+            return null;
         }
+        WeaponType weaponType = equippedWeaponType(agent);
+        if (AgentPostKillLootPolicy.isRanged(weaponType)) {
+            return null;
+        }
+        Set<Integer> recentKills = entry.capabilityStates()
+                .require(AgentPostKillLootState.STATE_KEY)
+                .snapshot(nowMs)
+                .killedObjectIds();
+        if (recentKills.isEmpty()) {
+            return null;
+        }
+
+        MapleMap map = agent.getMap();
+        int immediateRadius = AgentLootCollectionPolicyConfig.meleeImmediateRadius();
+        MapItem nearest = null;
+        double nearestDistanceSq = Double.MAX_VALUE;
+        for (MapItem drop : map.getDroppedItems()) {
+            int dropperObjectId = dropperObjectId(drop);
+            if (!recentKills.contains(dropperObjectId)
+                    || !AgentLootEligibility.isPresent(map, drop)
+                    || !AgentLootEligibility.canBotLoot(entry, agent, drop)) {
+                continue;
+            }
+            Point dropPosition = drop.getPosition();
+            if (Math.abs(dropPosition.x - agentPosition.x) > immediateRadius
+                    || Math.abs(dropPosition.y - agentPosition.y) > immediateRadius) {
+                continue;
+            }
+            double distanceSq = dropPosition.distanceSq(agentPosition);
+            if (distanceSq < nearestDistanceSq) {
+                nearest = drop;
+                nearestDistanceSq = distanceSq;
+            }
+        }
+        if (nearest == null) {
+            return null;
+        }
+
+        long targetAgeMs = AgentPostKillLootPolicy.targetLootAgeMs(weaponType, true);
+        if (nowMs - nearest.getDropTime() < targetAgeMs) {
+            return new Point(agentPosition);
+        }
+        Point lootPosition = nearest.getPosition();
+        if (Math.abs(lootPosition.x - agentPosition.x) <= passiveLootRadius
+                && Math.abs(lootPosition.y - agentPosition.y) <= passiveLootRadius) {
+            return new Point(agentPosition);
+        }
+        return lootPosition;
+    }
+
+    public static boolean canTargetCachedGrindLoot(AgentRuntimeEntry entry,
+                                                   Character agent,
+                                                   MapItem loot,
+                                                   long nowMs) {
+        if (entry == null || agent == null || agent.getMap() == null || loot == null) {
+            return false;
+        }
+        Set<Integer> recentKills = entry.capabilityStates()
+                .require(AgentPostKillLootState.STATE_KEY)
+                .snapshot(nowMs)
+                .killedObjectIds();
+        WeaponType weaponType = equippedWeaponType(agent);
+        boolean recentKillDrop = recentKills.contains(dropperObjectId(loot));
+        return AgentLootEligibility.canBotTargetLoot(
+                entry,
+                agent,
+                agent.getMap(),
+                loot,
+                nowMs,
+                AgentPostKillLootPolicy.targetLootAgeMs(weaponType, recentKillDrop));
     }
 
     private static int currentRegionId(AgentRuntimeEntry entry, Character agent) {
@@ -102,5 +186,36 @@ public final class AgentGrindLootTargetService {
         AgentNavigationGraph graph = AgentNavigationGraphService.peekBestGraph(
                 agent.getMap(), AgentMovementStateRuntime.movementProfile(entry));
         return graph == null ? -1 : graph.findRegionId(agent.getMap(), agent.getPosition());
+    }
+
+    private static WeaponType equippedWeaponType(Character agent) {
+        Inventory equipped = agent == null
+                ? null
+                : agent.getInventory(InventoryType.EQUIPPED);
+        return equipped == null
+                ? null
+                : AgentAttackExecutionProvider.getEquippedWeaponType(agent);
+    }
+
+    private static int dropperObjectId(MapItem drop) {
+        return drop != null && drop.getDropper() != null
+                ? drop.getDropper().getObjectId()
+                : -1;
+    }
+
+    private static void resolveRecentKillIfDrained(AgentRuntimeEntry entry,
+                                                   MapleMap map,
+                                                   int dropperObjectId) {
+        if (entry == null || map == null || dropperObjectId <= 0) {
+            return;
+        }
+        boolean hasRemainingDrop = map.getDroppedItems().stream()
+                .anyMatch(drop -> !drop.isPickedUp()
+                        && dropperObjectId(drop) == dropperObjectId);
+        if (!hasRemainingDrop) {
+            entry.capabilityStates()
+                    .require(AgentPostKillLootState.STATE_KEY)
+                    .resolveKill(dropperObjectId);
+        }
     }
 }

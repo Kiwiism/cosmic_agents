@@ -33,6 +33,7 @@ import server.agents.capabilities.behavior.AgentPioRelaxerInterludeEventListener
 import server.agents.capabilities.combat.AgentCombatTacticalEventListener;
 import server.agents.capabilities.looting.AgentPostKillLootEventListener;
 import server.agents.progression.events.AgentQuestStateChangedEvent;
+import server.agents.journey.AgentJourneyEventListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -136,6 +137,7 @@ public final class AgentSessionEventWiringRuntime {
                         server.agents.operations.events.AgentMobKilledEvent.TYPE,
                         new AgentPostKillLootEventListener(entry)));
                 subscriptions.add(bus.subscribe("*", new AgentDurableEventJournalListener()));
+                subscriptions.add(bus.subscribe("*", new AgentJourneyEventListener()));
                 if (rollout.llmContextEnabled()) {
                     subscriptions.add(bus.subscribe("*", new AgentLlmContextProjectionService(entry)));
                 }

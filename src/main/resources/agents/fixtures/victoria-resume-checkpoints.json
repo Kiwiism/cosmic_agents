@@ -66,6 +66,77 @@
           "progress": { "1210100": "000" }
         }
       ]
+    },
+    "thief-dagger-standard-v1:checkpoint3": {
+      "questPackId": "perion-pre15",
+      "questPackIndex": 0,
+      "position": { "x": 700, "y": 1875 },
+      "snapshot": {
+        "provenance": "CAPTURED",
+        "sourceCharacterName": "KiwiAgent",
+        "recordedAt": "2026-07-31T09:00:46+08:00",
+        "note": "Captured after completing the Kerning home pack, at the start of the Perion rotation pack. Reset placement is beside the Perion taxi.",
+        "character": {
+          "mapId": 102000000, "level": 14, "exp": 3127, "jobId": 400,
+          "str": 4, "dex": 28, "intelligence": 4, "luk": 54,
+          "hp": 350, "mp": 162, "maxHp": 350, "maxMp": 162,
+          "mesos": 93, "remainingAp": 0,
+          "remainingSp": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        },
+        "items": [
+          { "itemId": 1332063, "inventoryType": "EQUIPPED", "position": -11, "quantity": 1 },
+          { "itemId": 1072005, "inventoryType": "EQUIPPED", "position": -7, "quantity": 1 },
+          { "itemId": 1061008, "inventoryType": "EQUIPPED", "position": -6, "quantity": 1 },
+          { "itemId": 1041010, "inventoryType": "EQUIPPED", "position": -5, "quantity": 1 },
+          { "itemId": 1002068, "inventoryType": "EQUIPPED", "position": -1, "quantity": 1 },
+          { "itemId": 1472061, "inventoryType": "EQUIP", "position": 1, "quantity": 1 },
+          { "itemId": 1332005, "inventoryType": "EQUIP", "position": 2, "quantity": 1 },
+          { "itemId": 1332000, "inventoryType": "EQUIP", "position": 4, "quantity": 1 },
+          { "itemId": 2000014, "inventoryType": "USE", "position": 1, "quantity": 54 },
+          { "itemId": 2000013, "inventoryType": "USE", "position": 2, "quantity": 64 },
+          { "itemId": 2070015, "inventoryType": "USE", "position": 3, "quantity": 500 },
+          { "itemId": 2061000, "inventoryType": "USE", "position": 4, "quantity": 139 },
+          { "itemId": 2000000, "inventoryType": "USE", "position": 5, "quantity": 34 },
+          { "itemId": 2000003, "inventoryType": "USE", "position": 6, "quantity": 97 },
+          { "itemId": 2000001, "inventoryType": "USE", "position": 7, "quantity": 27 },
+          { "itemId": 2060000, "inventoryType": "USE", "position": 8, "quantity": 60 },
+          { "itemId": 2000002, "inventoryType": "USE", "position": 9, "quantity": 80 },
+          { "itemId": 2000003, "inventoryType": "USE", "position": 10, "quantity": 78 },
+          { "itemId": 2030000, "inventoryType": "USE", "position": 11, "quantity": 9 },
+          { "itemId": 2010000, "inventoryType": "USE", "position": 13, "quantity": 99 },
+          { "itemId": 2010000, "inventoryType": "USE", "position": 14, "quantity": 64 },
+          { "itemId": 2010009, "inventoryType": "USE", "position": 15, "quantity": 1 },
+          { "itemId": 4000003, "inventoryType": "ETC", "position": 1, "quantity": 52 },
+          { "itemId": 4020003, "inventoryType": "ETC", "position": 2, "quantity": 4 },
+          { "itemId": 4030009, "inventoryType": "ETC", "position": 3, "quantity": 4 },
+          { "itemId": 4010003, "inventoryType": "ETC", "position": 4, "quantity": 1 },
+          { "itemId": 4030012, "inventoryType": "ETC", "position": 5, "quantity": 11 },
+          { "itemId": 4030010, "inventoryType": "ETC", "position": 6, "quantity": 4 },
+          { "itemId": 4000006, "inventoryType": "ETC", "position": 7, "quantity": 23 },
+          { "itemId": 4000010, "inventoryType": "ETC", "position": 8, "quantity": 44 },
+          { "itemId": 4000002, "inventoryType": "ETC", "position": 9, "quantity": 20 },
+          { "itemId": 4000001, "inventoryType": "ETC", "position": 10, "quantity": 9 },
+          { "itemId": 4020002, "inventoryType": "ETC", "position": 11, "quantity": 1 },
+          { "itemId": 4030000, "inventoryType": "ETC", "position": 12, "quantity": 1 },
+          { "itemId": 4003004, "inventoryType": "ETC", "position": 13, "quantity": 7 },
+          { "itemId": 4000021, "inventoryType": "ETC", "position": 14, "quantity": 3 },
+          { "itemId": 4030011, "inventoryType": "ETC", "position": 15, "quantity": 2 },
+          { "itemId": 4001343, "inventoryType": "ETC", "position": 16, "quantity": 5 },
+          { "itemId": 4000017, "inventoryType": "ETC", "position": 17, "quantity": 1 }
+        ],
+        "skills": [
+          { "skillId": 4001334, "level": 13, "masterLevel": 20 }
+        ],
+        "completedQuestIds": [
+          1046, 2079, 2081, 2090, 2091, 2140, 2141, 2142, 2143, 2230,
+          28270, 28271, 28272
+        ],
+        "resetQuestIds": [
+          2082, 2089, 28267, 28268, 28269, 28273, 28274, 28276, 28277,
+          28278, 28279, 28280, 28281
+        ]
+      },
+      "activeQuests": []
     }
   }
 }

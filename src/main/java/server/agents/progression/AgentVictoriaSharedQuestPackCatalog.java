@@ -97,11 +97,13 @@ final class AgentVictoriaSharedQuestPackCatalog {
             int itemCount,
             List<Integer> preferredMobIds,
             List<Integer> incidentalMobIds,
-            List<Condition> conditions) {
+            List<Condition> conditions,
+            List<String> bundleIds) {
         Step {
             preferredMobIds = preferredMobIds == null ? List.of() : List.copyOf(preferredMobIds);
             incidentalMobIds = incidentalMobIds == null ? List.of() : List.copyOf(incidentalMobIds);
             conditions = conditions == null ? List.of() : List.copyOf(conditions);
+            bundleIds = bundleIds == null ? List.of() : List.copyOf(bundleIds);
         }
     }
 
@@ -144,6 +146,11 @@ final class AgentVictoriaSharedQuestPackCatalog {
         if (step.type() == null || step.type().isBlank()
                 || step.intention() == null || step.intention().isBlank()) {
             throw new IllegalStateException("invalid step in shared quest pack " + packId);
+        }
+        if (step.bundleIds().stream().anyMatch(bundleId ->
+                bundleId == null || bundleId.isBlank())) {
+            throw new IllegalStateException(
+                    "invalid bundle restriction in shared quest pack " + packId);
         }
         if ("TAXI".equals(step.type())) {
             Town source = towns.stream()

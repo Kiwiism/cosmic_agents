@@ -12,6 +12,8 @@ Reader-friendly overview:
 Design specification: `docs/agents/llm-autonomy/ECONOMY_DESIGN_SPECIFICATION.md`.
 Technical specification:
 `docs/agents/llm-autonomy/ECONOMY_TECHNICAL_IMPLEMENTATION_SPECIFICATION.md`.
+Agent demand/wishlist specification:
+`docs/agents/llm-autonomy/AGENT_DEMAND_PORTFOLIO_SPECIFICATION.md`.
 
 ## Current State
 
@@ -24,8 +26,41 @@ Available preparation:
 - Derived resupply catalog.
 - Economy schema notes.
 - Plan card system design.
+- Durable career/build bundles and AP profiles.
+- Equipment optimizer and owned-equipment reserve policy.
+- Quest-item demand forecast and disposition proposals.
+- Shared inventory reservation ledger.
+- Validated supply purchasing and trade mechanics.
+- Real Free Market stall opening from explicit listings.
+- Universal suspendable/resumable plan execution.
 
 Missing runtime pieces are listed below.
+
+## 0A. Agent Demand Portfolio
+
+- [x] Document the Agent Demand Portfolio architecture.
+- [x] Define wishlist as a presentation term rather than the runtime model.
+- [x] Define demand purposes, lifecycle, evidence, and disposition precedence.
+- [x] Define build/AP-derived equipment and loadout-bundle goals.
+- [x] Define bounded aggregate demand and anti-circular-demand safeguards.
+- [x] Define acquisition proposals and universal-plan execution boundary.
+- [x] Define LLM read/proposal boundary.
+- [ ] Implement portable `AgentDemandPortfolio`.
+- [ ] Implement `DemandEntry`, `ItemSelector`, purpose, status, and evidence
+  contracts.
+- [ ] Implement career/AP milestone projection.
+- [ ] Implement equipment candidate generation using the existing equipment
+  optimizer.
+- [ ] Implement `LoadoutBundleGoal` dependency evaluation.
+- [ ] Publish committed demand quantities to the shared reservation ledger.
+- [ ] Merge equipment, supply, quest, and confirmed external demand into one
+  disposition proposal.
+- [ ] Add read-only personal utility and reservation-price calculation.
+- [ ] Add read-only acquisition proposal ranking.
+- [ ] Add candidate/commitment persistence and idempotent reconciliation.
+- [ ] Add shadow-mode disposition and acquisition journals.
+- [ ] Add anonymized bounded portfolio-demand aggregation.
+- [ ] Prove zero protected-item violations before enabling new sell behavior.
 
 ## 0. Adaptive Economy Architecture
 
@@ -530,18 +565,21 @@ scarcity = demandScore / max(supplyScore, 1)
 
 ## Recommended Build Order
 
-1. Inventory valuation model.
-2. Item source and shop query API.
-3. Protected-item and reserve policy.
-4. Basic buy/sell/hold policy.
-5. Sell-trash policy objective.
-6. Resupply plan card.
-7. Price observation storage.
-8. FM scan read-only behavior.
-9. Dynamic price summaries.
-10. Economy signal engine.
-11. Population and event demand models.
-12. Merchant listing policy.
-13. LLM economy tools.
-14. Anti-abuse policy expansion.
-15. Full autonomous economy plans.
+1. Portable Demand Portfolio contracts.
+2. Career/AP equipment candidate generation.
+3. Loadout-bundle goals and shared reservation integration.
+4. Unified inventory valuation and disposition shadow mode.
+5. Item source and shop query API.
+6. Read-only acquisition proposal ranking.
+7. Safe universal-plan acquisition methods.
+8. Basic buy/sell/hold policy.
+9. Sell-trash policy objective.
+10. Resupply plan card.
+11. Price observation storage.
+12. FM scan read-only behavior.
+13. Dynamic price summaries.
+14. Bounded portfolio, population, event, and observed-player demand signals.
+15. Merchant listing and lifecycle policy.
+16. Anti-abuse policy expansion.
+17. LLM read-only and proposal tools.
+18. Full autonomous economy plans.

@@ -43,6 +43,12 @@ It should answer questions like:
 The economy engine is not a shop bot by itself. It is a market brain and
 decision service.
 
+The internal replacement for a simple item wishlist is the **Agent Demand
+Portfolio**. It describes why an Agent wants an item, how many are needed, what
+substitutes are acceptable, when it is needed, and what the Agent may reasonably
+pay. The full design is in:
+`docs/agents/llm-autonomy/AGENT_DEMAND_PORTFOLIO_SPECIFICATION.md`.
+
 ## What It Preserves
 
 The design preserves important MapleStory economy principles:
@@ -506,6 +512,28 @@ becoming irrelevant.
 
 Agents should make economy decisions through their profile and plan context.
 
+### Demand Portfolio
+
+An Agent-facing wishlist is represented internally as a demand portfolio.
+
+It combines:
+
+- active and committed quest requirements.
+- survival and supply reserves.
+- equipment goals derived from job, AP profile, and projected stats.
+- multi-item loadout dependencies, such as stat gear needed to equip a weapon.
+- upgrade bases and scroll/material needs.
+- confirmed demand from other Agents.
+- bounded market-stock opportunities.
+
+Candidates do not automatically protect inventory or create market demand.
+Only committed shortfalls create shared inventory reservations. Market pricing
+uses portfolio demand as a bounded leading indicator, never as direct price
+truth.
+
+The portfolio produces read-only disposition and acquisition proposals.
+Universal plans and validated capabilities remain responsible for execution.
+
 Examples:
 
 ### Sell Trash Plan
@@ -610,10 +638,17 @@ Not allowed:
 
 ## What This Does Not Do Yet
 
-The current state is planning and catalog preparation.
+The current state includes more than catalog preparation. Existing foundations
+include career/AP profiles, equipment optimization, equipment reserve policy,
+quest-item demand forecasting, shared inventory reservations, supply
+purchasing, validated trade mechanics, a real Free Market stall capability,
+and universal plan execution.
 
 It does not yet implement:
 
+- Agent Demand Portfolio runtime.
+- AP/build-derived equipment demand generation.
+- loadout bundle goals and personal reservation prices.
 - runtime market observation store.
 - confirmed sale tracking.
 - live Free Market scanner.

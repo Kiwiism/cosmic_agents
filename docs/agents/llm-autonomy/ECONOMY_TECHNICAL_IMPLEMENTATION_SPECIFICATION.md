@@ -11,6 +11,9 @@ Design behavior lives in:
 Architecture reference:
 `docs/agents/llm-autonomy/ADAPTIVE_ECONOMY_SYSTEM_PLAN.md`.
 
+Demand portfolio reference:
+`docs/agents/llm-autonomy/AGENT_DEMAND_PORTFOLIO_SPECIFICATION.md`.
+
 ## Package Layout
 
 Recommended portable package:
@@ -24,6 +27,11 @@ server/agents/economy/
   pricing/
   valuation/
   demand/
+    portfolio/
+    equipment/
+    aggregation/
+  disposition/
+  acquisition/
   decision/
   memory/
   validation/
@@ -40,6 +48,11 @@ server/agents/integration/cosmic/economy/
 
 Portable code must not depend directly on Cosmic concrete classes unless it is
 inside the integration package.
+
+The demand package owns personal needs and aggregate demand evidence. It does
+not own inventory mutation, equipment mutation, market execution, or universal
+plan scheduling. `disposition` proposes what to do with owned quantities;
+`acquisition` proposes how to satisfy committed shortfalls.
 
 ## External Inputs
 
@@ -101,9 +114,31 @@ Portable JSON contracts:
 - `docs/agents/llm-autonomy/economy-market-observation.schema.json`
 - `docs/agents/llm-autonomy/economy-market-item-state.schema.json`
 - `docs/agents/llm-autonomy/economy-decision.schema.json`
+- future `economy-demand-entry.schema.json`.
+- future `economy-acquisition-proposal.schema.json`.
 
 Runtime implementation can add storage indexes and compaction jobs, but these
 wire envelopes should remain portable and free of Cosmic object references.
+
+### AgentDemandPortfolio
+
+The portable portfolio contains quantified `DemandEntry` records. Entries use
+an exact item or predicate-based `ItemSelector`, a purpose, desired/owned/
+reserved/shortfall quantities, status, priority, level horizon, allowed
+acquisition methods, personal reservation price, evidence, and catalog/build
+revisions.
+
+Candidate entries are rebuildable and do not reserve inventory. Committed and
+acquiring entries are durable and publish their protected quantities into the
+shared inventory reservation ledger through an adapter.
+
+The portfolio must support `LoadoutBundleGoal` so stat-providing equipment,
+target equipment, and upgrade inputs can be evaluated as one dependency graph.
+This avoids treating an otherwise unusable weapon as an isolated goal.
+
+The canonical fields, lifecycle, precedence, persistence, and acceptance
+criteria are defined in
+`AGENT_DEMAND_PORTFOLIO_SPECIFICATION.md`.
 
 ### ItemValuationKey
 

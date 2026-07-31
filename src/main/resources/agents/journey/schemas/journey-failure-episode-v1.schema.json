@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agent-journey-failure-episode-v1",
+  "title": "Agent Journey Failure Episode Line v1",
+  "description": "Validates each line in a failure-episode JSONL stream. The stream ends with a journey.stuck-detected record.",
+  "$ref": "journey-event-v1.schema.json"
+}

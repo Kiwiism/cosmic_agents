@@ -30,8 +30,8 @@ public final class AgentPostKillLootState {
                 killedObjectIds.size(), oldestAtMs);
     }
 
-    public synchronized void batchScheduled() {
-        killedObjectIds.clear();
+    public synchronized void resolveKill(int mobObjectId) {
+        killedObjectIds.remove(mobObjectId);
     }
 
     public synchronized void clear() {

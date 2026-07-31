@@ -128,6 +128,11 @@ public final class AgentShopStateRuntime {
         return entry.shopState().visitPending();
     }
 
+    public static boolean lastVisitRequestedItem(
+            AgentRuntimeEntry entry, int itemId, int itemCount) {
+        return entry.shopState().lastVisitRequestedItem(itemId, itemCount);
+    }
+
     public static void clearShopState(AgentRuntimeEntry entry) {
         entry.shopState().clear();
     }

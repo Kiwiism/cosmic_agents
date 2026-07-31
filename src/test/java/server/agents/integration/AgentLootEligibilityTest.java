@@ -117,6 +117,25 @@ class AgentLootEligibilityTest {
     }
 
     @Test
+    void recentMeleeKillCanUseShorterTargetDelayWithoutBypassingPickupFloor() {
+        long now = System.currentTimeMillis();
+        MapleMap map = mock(MapleMap.class);
+        Character bot = mock(Character.class);
+        MapItem eligibleDrop = mockLoot(1, 77, false, now - 800L);
+        MapItem tooFreshDrop = mockLoot(2, 77, false, now - 300L);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, mock(Character.class), null);
+
+        doReturn(eligibleDrop).when(map).getMapObject(1);
+        doReturn(tooFreshDrop).when(map).getMapObject(2);
+
+        assertFalse(AgentLootEligibility.canBotTargetLoot(entry, bot, map, eligibleDrop, now));
+        assertTrue(AgentLootEligibility.canBotTargetLoot(
+                entry, bot, map, eligibleDrop, now, 750L));
+        assertFalse(AgentLootEligibility.canBotTargetLoot(
+                entry, bot, map, tooFreshDrop, now, 100L));
+    }
+
+    @Test
     void shouldRejectMobLootWhenBasePickupEligibilityRejectsIt() {
         MapleMap map = mock(MapleMap.class);
         Character bot = mock(Character.class);

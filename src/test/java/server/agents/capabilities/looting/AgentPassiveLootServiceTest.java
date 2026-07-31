@@ -10,6 +10,7 @@ import org.mockito.MockedStatic;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapItem;
 import server.maps.MapleMap;
+import server.maps.MapObject;
 
 import java.awt.Point;
 import java.util.List;
@@ -106,6 +107,36 @@ class AgentPassiveLootServiceTest {
         assertSame(agent, callbacks.pickupCharacter.get());
     }
 
+    @Test
+    void recentMeleeDropIsPickedBeforeTheGeneralThreeSecondDelayAndResolvesKill() {
+        long now = System.currentTimeMillis();
+        Character agent = agentOnMap();
+        MapleMap map = agent.getMap();
+        Inventory equipped = mock(Inventory.class);
+        when(agent.getInventory(InventoryType.EQUIPPED)).thenReturn(equipped);
+        MapObject dropper = mock(MapObject.class);
+        when(dropper.getObjectId()).thenReturn(42);
+        MapItem drop = itemDrop(0, 1, true);
+        when(drop.getDropper()).thenReturn(dropper);
+        when(drop.getMeso()).thenReturn(1);
+        when(drop.getDropTime()).thenReturn(
+                now - AgentLootCollectionPolicyConfig.meleeRecentKillTargetAgeMs());
+        when(map.getDroppedItems()).thenReturn(List.of(drop));
+        when(map.getMapObject(1)).thenReturn(drop);
+        AgentRuntimeEntry entry = entry(agent);
+        AgentPostKillLootState state =
+                entry.capabilityStates().require(AgentPostKillLootState.STATE_KEY);
+        state.recordKill(42, now);
+        TraceCallbacks callbacks = new TraceCallbacks();
+        callbacks.now = now;
+        callbacks.markDropPickedUp = true;
+
+        AgentPassiveLootService.tickPassiveLoot(entry, agent, callbacks);
+
+        assertTrue(callbacks.pickedUp.get());
+        assertFalse(state.snapshot(now).killedObjectIds().contains(42));
+    }
+
     private static AgentRuntimeEntry entry(Character agent) {
         return new AgentRuntimeEntry(agent, null, null);
     }
@@ -136,6 +167,8 @@ class AgentPassiveLootServiceTest {
         boolean activeSequence;
         boolean warnAllowed;
         boolean hasItem;
+        boolean markDropPickedUp;
+        long now = System.currentTimeMillis();
         int delayCooldown;
         final AtomicBoolean lootInhibitTicked = new AtomicBoolean();
         final AtomicBoolean inventoryCooldownTicked = new AtomicBoolean();
@@ -154,7 +187,7 @@ class AgentPassiveLootServiceTest {
         @Override public void tickLootInhibit() { lootInhibitTicked.set(true); }
         @Override public boolean hasActiveTradeSequence() { return activeSequence; }
         @Override public void tickInventoryFullWarnCooldown() { inventoryCooldownTicked.set(true); }
-        @Override public long nowMs() { return System.currentTimeMillis(); }
+        @Override public long nowMs() { return now; }
         @Override public int lootRadius() { return 100; }
         @Override public boolean canWarnInventoryFull() { return warnAllowed; }
         @Override public int delayInventoryFullWarnCooldown() { return delayCooldown; }
@@ -175,6 +208,9 @@ class AgentPassiveLootServiceTest {
         @Override public void pickup(Character character, MapItem drop) {
             pickedUp.set(true);
             pickupCharacter.set(character);
+            if (markDropPickedUp) {
+                when(drop.isPickedUp()).thenReturn(true);
+            }
         }
     }
 }

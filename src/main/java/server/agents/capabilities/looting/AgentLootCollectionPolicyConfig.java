@@ -14,6 +14,10 @@ public final class AgentLootCollectionPolicyConfig {
         return tuningInt("MELEE_IMMEDIATE_RADIUS");
     }
 
+    public static long meleeRecentKillTargetAgeMs() {
+        return tuningLong("MELEE_RECENT_KILL_TARGET_AGE_MS");
+    }
+
     public static int rangedBatchKills() {
         return tuningInt("RANGED_BATCH_KILLS");
     }

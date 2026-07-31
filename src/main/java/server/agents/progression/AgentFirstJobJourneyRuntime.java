@@ -354,11 +354,7 @@ public final class AgentFirstJobJourneyRuntime {
                 .shoppingMesoReserve();
         AgentShopStateRuntime.ensureMinimumMesoReserve(entry, minimumMesoReserve);
         if (!AgentShopStateRuntime.shopVisitPending(entry)) {
-            int requiredItemId = career(bundle).initialShopRequiredItemId();
-            int requiredItemCount = career(bundle).initialShopRequiredItemCount();
-            AgentShopService.requestVisitAtNpc(
-                    entry, agent, stop.npcId(), minimumMesoReserve,
-                    requiredItemId, requiredItemCount);
+            AgentShopService.requestVisitAtNpc(entry, agent, stop.npcId(), minimumMesoReserve);
         }
         if (!AgentShopStateRuntime.shopVisitPending(entry)) {
             block(entry, state, "configured potion shop could not start its planned visit", nowMs);
@@ -378,19 +374,8 @@ public final class AgentFirstJobJourneyRuntime {
         }
         AgentShopWorkflowPhase phase = AgentShopStateRuntime.workflow(entry).phase();
         if (phase == AgentShopWorkflowPhase.COMPLETED) {
-            AgentCareerBuildBundle bundle = state.bundle();
-            AgentVictoriaLevel15Catalog.Career career = career(bundle);
-            if (career.initialShopRequiredItemId() > 0
-                    && gateway.itemCount(agent, career.initialShopRequiredItemId())
-                    < career.initialShopRequiredItemCount()) {
-                block(entry, state,
-                        "checkpoint 1 supply visit completed without required return scroll "
-                                + career.initialShopRequiredItemId(),
-                        nowMs);
-                return false;
-            }
             boolean checkpointOneComplete =
-                    state.trainingQuestIndex() >= bundle.instructorTrainingQuestIds().size();
+                    state.trainingQuestIndex() >= state.bundle().instructorTrainingQuestIds().size();
             state.questPackIndex(0);
             state.stage(checkpointOneComplete
                             ? AgentCareerProgressionState.Stage.HOME_QUEST_PACK

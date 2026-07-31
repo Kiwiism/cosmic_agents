@@ -18,6 +18,8 @@ public final class AgentShopState {
     private int minimumMesoReserve = 0;
     private int requiredItemId = 0;
     private int requiredItemCount = 0;
+    private int lastRequiredItemId = 0;
+    private int lastRequiredItemCount = 0;
     private Point stuckCheckPosition = null;
     private long stuckCheckAtMs = 0L;
 
@@ -132,6 +134,8 @@ public final class AgentShopState {
         this.minimumMesoReserve = Math.max(0, minimumMesoReserve);
         this.requiredItemId = Math.max(0, requiredItemId);
         this.requiredItemCount = Math.max(0, requiredItemCount);
+        lastRequiredItemId = 0;
+        lastRequiredItemCount = 0;
         visitStartedAtMs = startedAtMs;
         sequenceStartedAtMs = 0L;
     }
@@ -173,6 +177,8 @@ public final class AgentShopState {
     }
 
     public void clear() {
+        lastRequiredItemId = requiredItemId;
+        lastRequiredItemCount = requiredItemCount;
         if (!workflow.phase().terminal() && workflow.phase() != AgentShopWorkflowPhase.IDLE) {
             workflow.transition(AgentShopWorkflowPhase.CANCELLED, "legacy shop state cleared",
                     Math.max(System.currentTimeMillis(), workflow.updatedAtMs()));
@@ -190,6 +196,13 @@ public final class AgentShopState {
         requiredItemCount = 0;
         stuckCheckPosition = null;
         stuckCheckAtMs = 0L;
+    }
+
+    public boolean lastVisitRequestedItem(int itemId, int itemCount) {
+        return itemId > 0
+                && itemCount > 0
+                && lastRequiredItemId == itemId
+                && lastRequiredItemCount == itemCount;
     }
 
     public void complete(String reason, long nowMs) {

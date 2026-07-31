@@ -2637,6 +2637,10 @@ tuning:
     # Purpose: Encourages melee Agents to pick up nearby drops from their latest kill without crossing an entire platform after every attack.
     # Technical: Maximum seek distance for the melee-immediate branch of the post-kill loot policy; the existing passive pickup radius remains a separate inner exclusion boundary.
     server.agents.capabilities.looting.AgentLootCollectionPolicyConfig.MELEE_IMMEDIATE_RADIUS: '180'
+    # Values: 400-1500 milliseconds. Recommended: 750. Higher values wait longer for the drop animation before collecting; lower values react sooner but must remain at least 400 for the normal pickup path.
+    # Purpose: Lets melee Agents collect a nearby drop shortly after their kill instead of walking away and returning several seconds later.
+    # Technical: Minimum target age for drops tied to a recent melee kill only; ranged batching, player inventory-drop protection, ownership, capacity and Character.pickupItem remain authoritative.
+    server.agents.capabilities.looting.AgentLootCollectionPolicyConfig.MELEE_RECENT_KILL_TARGET_AGE_MS: '750'
     # Values: 2-6 kills. Recommended: 3. Higher values keep ranged Agents firing from position longer; lower values make them collect more often.
     # Purpose: Prevents bow, claw, gun, wand and staff users from walking forward after every kill.
     # Technical: Recent authoritative kill-event count that opens a ranged loot-collection batch without changing pickup eligibility, ownership, inventory capacity, or combat packets.
@@ -2941,3 +2945,35 @@ tuning:
     # Purpose: Controls how frequently minimum base tick updates. Lower values make Agents react more quickly and smoothly but use more server work; higher values react more slowly and reduce load.
     # Technical: the "scheduler config" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled. Paired minimum/maximum values define an inclusive random or validation range and must not be inverted.
     server.agents.runtime.scheduler.AgentSchedulerConfig.MIN_BASE_TICK_MS: '10'
+    # Values: true or false. Recommended: true while running bounded autonomous progression experiments; false disables the Journey commands and all Journey evidence collection.
+    # Purpose: Turns the Journey Observatory on or off. When enabled, only Agents explicitly enrolled through !journey are recorded; ordinary Agents are unaffected.
+    # Technical: Gates run creation and projection work. The event listener remains passive for Agents without an active Journey binding.
+    server.agents.journey.AgentJourneyConfig.ENABLED: 'true'
+    # Values: a positive integer. Recommended: 4096-32768; 8192 supports about 100 detailed Agents without letting slow disks create unbounded memory growth.
+    # Purpose: Controls how much Journey evidence may wait for disk writing. Larger values tolerate longer disk stalls; smaller values shed non-critical snapshots sooner while retaining failure evidence.
+    # Technical: Capacity of the single bounded asynchronous write queue. Critical lifecycle and failure records may evict an older non-critical sample when the queue is full.
+    server.agents.journey.AgentJourneyConfig.QUEUE_CAPACITY: '8192'
+    # Values: a positive integer in milliseconds. Recommended: 2000-10000; 5000 gives useful progression/resource trends with modest overhead.
+    # Purpose: Controls how often an enrolled Agent receives a full reconciliation snapshot. Lower values reveal shorter stalls and resource changes; higher values reduce CPU, allocation, and log volume.
+    # Technical: Minimum wall-clock interval between read-only Character/plan/inventory/quest snapshots for each enrolled Agent.
+    server.agents.journey.AgentJourneyConfig.SAMPLE_INTERVAL_MS: '5000'
+    # Values: a positive integer in milliseconds. Recommended: 30000-90000; 45000 detects meaningful stalls without treating ordinary travel or combat contention as immediate failure.
+    # Purpose: Sets how long an Agent may make no semantic progress before the report raises a suspected stall. Semantic progress includes kills, quest counters, plan steps, map transitions, levels, or inventory changes.
+    # Technical: Detection threshold only; the Journey Observatory records evidence and never performs recovery or changes the universal plan.
+    server.agents.journey.AgentJourneyConfig.SUSPICION_AFTER_MS: '45000'
+    # Values: a positive integer in milliseconds. Recommended: 180000-600000; 300000 flags unusually long map stays while allowing normal hunt objectives.
+    # Purpose: Marks an Agent that remains in one map for a long time while also failing to make objective progress. Increase it for long grind maps; decrease it for short quest validation runs.
+    # Technical: MAP_DWELL requires both this elapsed map time and the semantic-progress stall condition, avoiding alerts for productive grinding.
+    server.agents.journey.AgentJourneyConfig.MAP_DWELL_AFTER_MS: '300000'
+    # Values: a positive integer in milliseconds. Recommended: 30000-180000; 60000 retains enough context to explain most portal, navigation, and recovery loops.
+    # Purpose: Controls how much recent per-Agent evidence is copied into a failure episode when a new stuck condition appears.
+    # Technical: Time window retained in memory per enrolled Agent before being flushed to failures/<agent>-<episode>.jsonl.
+    server.agents.journey.AgentJourneyConfig.FLIGHT_RECORDER_WINDOW_MS: '60000'
+    # Values: an even integer of at least 4. Recommended: 6-12; 8 detects repeated A-B portal loops without reacting to one normal backtrack.
+    # Purpose: Sets how many recent map transitions must alternate between the same two maps before a navigation-loop episode is recorded.
+    # Technical: Size of the bounded transition history and minimum alternating sequence used by the NAVIGATION_LOOP classifier.
+    server.agents.journey.AgentJourneyConfig.LOOP_TRANSITION_COUNT: '8'
+    # Values: a positive integer. Recommended: 10-100 for detailed runs; 100 is the safe initial ceiling before validating larger evidence volumes.
+    # Purpose: Limits how many Agents a single detailed Journey run can enroll, even if a command requests more. Raise it only after checking disk throughput and report size.
+    # Technical: Hard per-run enrollment bound; it does not limit the total Agent population or normal scheduler capacity.
+    server.agents.journey.AgentJourneyConfig.MAX_DETAILED_AGENTS: '100'

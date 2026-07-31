@@ -127,10 +127,11 @@ public final class VictoriaFirstJobMvpCommandService {
         if (params.length >= 5) {
             checkpointText = params[4];
         }
+        AgentCareerBuildBundle requestedBundle;
         AgentVictoriaLevel15Catalog.StartVariant startVariant;
         VictoriaFirstJobMvpTestService.Checkpoint checkpoint;
         try {
-            VictoriaFirstJobMvpTestService.resolveBundle(career);
+            requestedBundle = VictoriaFirstJobMvpTestService.resolveBundle(career);
             startVariant = VictoriaFirstJobMvpTestService.resolveStartVariant(variant);
             checkpoint = VictoriaFirstJobMvpTestService.resolveCheckpoint(checkpointText);
         } catch (IllegalArgumentException failure) {
@@ -138,11 +139,28 @@ public final class VictoriaFirstJobMvpCommandService {
             return;
         }
 
+        int startMapId = VictoriaFirstJobMvpTestService.LITH_HARBOR_MAP_ID;
+        Point startPosition;
+        if (checkpoint == VictoriaFirstJobMvpTestService.Checkpoint.CHECKPOINT_3) {
+            try {
+                VictoriaResumeCheckpointBaseline.ResumeCheckpoint resume =
+                        VictoriaResumeCheckpointBaseline.require(
+                                requestedBundle.bundleId(), "checkpoint3");
+                startMapId = resume.snapshot().character().mapId();
+                startPosition = new Point(resume.position().x(), resume.position().y());
+            } catch (IllegalArgumentException failure) {
+                player.yellowMessage("Victoria MVP reset failed: " + failure.getMessage());
+                return;
+            }
+        } else {
+            startPosition = null;
+        }
         var startMap = AgentMapGatewayRuntime.map().resolveMap(
-                player.getWorld(), AgentClientGatewayRuntime.clients().channel(player),
-                VictoriaFirstJobMvpTestService.LITH_HARBOR_MAP_ID);
-        Point startPosition = VictoriaFirstJobMvpTestService.lithHarborArrivalPosition(
-                startMap, agentName);
+                player.getWorld(), AgentClientGatewayRuntime.clients().channel(player), startMapId);
+        if (startPosition == null) {
+            startPosition = VictoriaFirstJobMvpTestService.lithHarborArrivalPosition(
+                    startMap, agentName);
+        }
         AgentLifecycleService.AgentSpawnResult spawn = AgentInteractionRuntime.spawnStationaryAgentForLeaderAt(
                 player, agentName, startMap, startPosition);
         if (!spawn.success()) {
@@ -165,7 +183,9 @@ public final class VictoriaFirstJobMvpCommandService {
                                 ? " / " + VictoriaFirstJobMvpTestService.checkpoint2Provenance(career)
                                 + " checkpoint fixture"
                                 : checkpoint == VictoriaFirstJobMvpTestService.Checkpoint.CHECKPOINT_2_NELLA
-                                ? " / CAPTURED post-Nella checkpoint fixture" : "";
+                                ? " / CAPTURED post-Nella checkpoint fixture"
+                                : checkpoint == VictoriaFirstJobMvpTestService.Checkpoint.CHECKPOINT_3
+                                ? " / CAPTURED Perion checkpoint fixture" : "";
                 player.yellowMessage(agent.getName() + " reset for " + checkpoint
                         + "; " + bundle.bundleId() + " / " + startVariant.variantId()
                         + fixture + " starts in 3 seconds.");

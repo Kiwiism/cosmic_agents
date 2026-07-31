@@ -62,6 +62,9 @@ class AgentShopStateRuntimeTest {
                 new Point(10, 20),
                 new Point(30, 40),
                 350,
+                0,
+                2030003,
+                1,
                 1_000L);
         AgentShopStateRuntime.setShopSellTrashPending(entry, true);
 
@@ -86,6 +89,24 @@ class AgentShopStateRuntimeTest {
         assertNull(AgentShopStateRuntime.shopNpcPosition(entry));
         assertNull(AgentShopStateRuntime.shopTargetPosition(entry));
         assertEquals(0, AgentShopStateRuntime.shopApproachDelayMs(entry));
+        assertTrue(AgentShopStateRuntime.lastVisitRequestedItem(entry, 2030003, 1));
+        assertFalse(AgentShopStateRuntime.lastVisitRequestedItem(entry, 2030005, 1));
+
+        AgentShopStateRuntime.startShopVisit(
+                entry,
+                new Point(10, 20),
+                new Point(30, 40),
+                350,
+                0,
+                2030005,
+                2,
+                50_000L);
+
+        assertFalse(AgentShopStateRuntime.lastVisitRequestedItem(entry, 2030003, 1));
+
+        AgentShopStateRuntime.clearShopState(entry);
+
+        assertTrue(AgentShopStateRuntime.lastVisitRequestedItem(entry, 2030005, 2));
     }
 
     @Test
