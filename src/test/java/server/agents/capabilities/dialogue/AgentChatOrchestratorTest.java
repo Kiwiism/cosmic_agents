@@ -154,11 +154,6 @@ class AgentChatOrchestratorTest {
         public AgentPendingChatActionFlow.PendingActionCallbacks pendingActionCallbacks() {
             return new AgentPendingChatActionFlow.PendingActionCallbacks() {
                 @Override
-                public void handleOwnerAwayChoice(String message) {
-                    events.add("away-choice:" + message);
-                }
-
-                @Override
                 public void executeItemChoice(String category, boolean trade) {
                     events.add("choice:" + category + ":" + trade);
                 }
@@ -201,11 +196,6 @@ class AgentChatOrchestratorTest {
                 @Override
                 public void requestLogout() {
                     events.add("logout");
-                }
-
-                @Override
-                public void requestAway() {
-                    events.add("away");
                 }
             };
         }

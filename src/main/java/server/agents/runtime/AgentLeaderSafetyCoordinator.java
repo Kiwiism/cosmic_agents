@@ -71,22 +71,6 @@ public final class AgentLeaderSafetyCoordinator {
         return AgentLeaderSafetyService.shouldTownWarpForInactiveLeader(currentMap);
     }
 
-    public static void issueInactiveSafeModeForLeader(int leaderCharId, boolean town) {
-        AgentLeaderSafetyService.issueInactiveSafeModeForLeader(
-                AgentRuntimeRegistry.agentEntriesForLeader(leaderCharId),
-                town,
-                AgentRuntimeIdentityRuntime::botHasMap,
-                AgentLeaderSafetyCoordinator::shouldTownWarpForInactiveEntry,
-                (entry, shouldTown) -> AgentMailboxRuntime.dispatch(entry, ignored -> {
-                    enterInactiveSafeMode(
-                            entry,
-                            AgentRuntimeIdentityRuntime.bot(entry),
-                            leaderCharId,
-                            shouldTown);
-                    return null;
-                }));
-    }
-
     private static boolean enterInactiveSafeMode(AgentRuntimeEntry entry, Character agent, int leaderCharId, boolean town) {
         return AgentLeaderSafetyService.enterInactiveSafeMode(
                 () -> prepareInactiveIdle(entry),

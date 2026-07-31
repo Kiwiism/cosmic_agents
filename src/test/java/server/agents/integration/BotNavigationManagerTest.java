@@ -264,19 +264,13 @@ class BotNavigationManagerTest {
         when(graph.findRopeRegionId(siblingPosition)).thenReturn(77);
 
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, null);
-        AgentRuntimeEntry siblingEntry = new AgentRuntimeEntry(sibling, owner, null);
         AgentModeStateRuntime.setFollowing(entry, true);
         AgentModeStateRuntime.setFollowTargetId(entry, sibling.getId());
+        AgentRelationshipRuntime.setFollowTarget(entry, sibling);
 
-        try (MockedStatic<AgentSessionLifecycleRuntime> lifecycle =
-                     mockStatic(AgentSessionLifecycleRuntime.class)) {
-            lifecycle.when(() -> AgentSessionLifecycleRuntime.getBotEntries(owner.getId()))
-                    .thenReturn(List.of(siblingEntry));
+        int regionId = AgentNavigationRegionService.resolveTargetRegionId(graph, entry, map, siblingPosition);
 
-            int regionId = AgentNavigationRegionService.resolveTargetRegionId(graph, entry, map, siblingPosition);
-
-            assertEquals(77, regionId);
-        }
+        assertEquals(77, regionId);
     }
 
     @Test

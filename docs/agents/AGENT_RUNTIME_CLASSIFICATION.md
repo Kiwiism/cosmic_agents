@@ -33,7 +33,6 @@ Classifications:
 | `AgentLeaderSessionResolver` | `RUNTIME_SERVICE` | Resolves the current live leader for a scheduled Agent tick. |
 | `AgentLeaderSessionService` | `RUNTIME_SERVICE` | Implements leader-session selection rules independently of server lookup. |
 | `AgentLeaderStateRuntime` | `RUNTIME_ADAPTER` | Adapts live entry identity storage to leader read/write operations. |
-| `AgentLegacyOwnerCompatibility` | `RUNTIME_SERVICE` | Temporary feature gate for owner-shaped command aliases during owner-removal migration. |
 | `AgentLifecyclePhase` | `RUNTIME_STATE` | Enumerates owner-free live session lifecycle phases. |
 | `AgentLifecycleService` | `RUNTIME_SERVICE` | Owns spawn, registration, relogin, dismissal, and removal sequencing through hooks. |
 | `AgentLifecycleState` | `RUNTIME_STATE` | Stores the current lifecycle phase and transition reason for one Agent session. |

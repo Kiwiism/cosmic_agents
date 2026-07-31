@@ -5,7 +5,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.agents.runtime.AgentSessionLifecycleRuntime;
+import server.agents.runtime.AgentRuntimeRegistry;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -26,15 +26,15 @@ class AgentAirshowServiceTest {
         Character owner = mock(Character.class);
         when(owner.getId()).thenReturn(123);
 
-        try (MockedStatic<AgentSessionLifecycleRuntime> lifecycle =
-                     mockStatic(AgentSessionLifecycleRuntime.class)) {
-            lifecycle.when(() -> AgentSessionLifecycleRuntime.getAgentEntry(123, "alpha"))
+        try (MockedStatic<AgentRuntimeRegistry> registry =
+                     mockStatic(AgentRuntimeRegistry.class)) {
+            registry.when(() -> AgentRuntimeRegistry.findByName(123, "alpha"))
                     .thenReturn(null);
 
             String result = AgentAirshowService.startAsync(owner, "alpha").join();
 
             assertEquals("No active owned bot named 'alpha'.", result);
-            lifecycle.verify(() -> AgentSessionLifecycleRuntime.getAgentEntry(123, "alpha"));
+            registry.verify(() -> AgentRuntimeRegistry.findByName(123, "alpha"));
         }
     }
 
@@ -46,9 +46,9 @@ class AgentAirshowServiceTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, owner, null);
         when(owner.getId()).thenReturn(123);
 
-        try (MockedStatic<AgentSessionLifecycleRuntime> lifecycle =
-                     mockStatic(AgentSessionLifecycleRuntime.class)) {
-            lifecycle.when(() -> AgentSessionLifecycleRuntime.getAgentEntry(123, "alpha"))
+        try (MockedStatic<AgentRuntimeRegistry> registry =
+                     mockStatic(AgentRuntimeRegistry.class)) {
+            registry.when(() -> AgentRuntimeRegistry.findByName(123, "alpha"))
                     .thenReturn(entry);
 
             CompletableFuture<String> result = AgentAirshowService.startAsync(owner, "alpha");

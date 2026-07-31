@@ -14,8 +14,8 @@ import server.agents.runtime.AgentMailboxRuntime;
 import server.agents.integration.AgentLifeGatewayRuntime;
 import server.agents.integration.AgentPacketGatewayRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.runtime.AgentSessionLifecycleRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.AgentRuntimeRegistry;
 import server.maps.MapleMap;
 
 import java.awt.*;
@@ -42,7 +42,7 @@ public final class AgentAirshowService {
             return CompletableFuture.completedFuture("Syntax: !airshow <botname>");
         }
 
-        AgentRuntimeEntry entry = AgentSessionLifecycleRuntime.getAgentEntry(owner.getId(), botName);
+        AgentRuntimeEntry entry = AgentRuntimeRegistry.findByName(owner.getId(), botName);
         if (entry == null) {
             return CompletableFuture.completedFuture("No active owned bot named '" + botName + "'.");
         }

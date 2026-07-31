@@ -12,7 +12,6 @@ class AgentChatPendingActionTest {
         assertEquals("skill_tree_choice", AgentChatPendingAction.SKILL_TREE_CHOICE);
         assertEquals("relog", AgentChatPendingAction.RELOG);
         assertEquals("logout", AgentChatPendingAction.LOGOUT);
-        assertEquals("owner_away", AgentChatPendingAction.OWNER_AWAY);
         assertEquals("item_choice", AgentChatPendingAction.ITEM_CHOICE);
     }
 
@@ -20,7 +19,6 @@ class AgentChatPendingActionTest {
     void shouldClassifyPendingActions() {
         assertTrue(AgentChatPendingAction.isSkillTreeChoice("skill_tree_choice"));
         assertTrue(AgentChatPendingAction.isRelog("relog"));
-        assertTrue(AgentChatPendingAction.isOwnerAway("owner_away"));
         assertTrue(AgentChatPendingAction.isItemChoice("item_choice"));
         assertTrue(AgentChatPendingAction.isDropAction("drop"));
         assertTrue(AgentChatPendingAction.isDropAction("drop_scrolls"));

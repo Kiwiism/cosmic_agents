@@ -26,15 +26,6 @@ class AgentChatSessionRequestFlowTest {
     }
 
     @Test
-    void shouldDispatchAwayRequests() {
-        TestCallbacks callbacks = new TestCallbacks();
-
-        assertTrue(AgentChatSessionRequestFlow.handle("brb", callbacks));
-
-        assertEquals("away;", callbacks.events);
-    }
-
-    @Test
     void shouldIgnoreNonSessionRequests() {
         TestCallbacks callbacks = new TestCallbacks();
 
@@ -62,11 +53,6 @@ class AgentChatSessionRequestFlowTest {
         @Override
         public void requestLogout() {
             events += "logout;";
-        }
-
-        @Override
-        public void requestAway() {
-            events += "away;";
         }
     }
 }

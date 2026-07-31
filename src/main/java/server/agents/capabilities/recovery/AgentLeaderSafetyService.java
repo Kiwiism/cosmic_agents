@@ -20,12 +20,10 @@ import java.awt.Rectangle;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public final class AgentLeaderSafetyService {
@@ -280,16 +278,4 @@ public final class AgentLeaderSafetyService {
         return true;
     }
 
-    public static void issueInactiveSafeModeForLeader(List<? extends AgentRuntimeEntry> entries,
-                                                      boolean town,
-                                                      Predicate<AgentRuntimeEntry> hasMap,
-                                                      Predicate<AgentRuntimeEntry> shouldTownWarp,
-                                                      BiConsumer<AgentRuntimeEntry, Boolean> enterSafeMode) {
-        for (AgentRuntimeEntry entry : entries) {
-            if (!hasMap.test(entry)) {
-                continue;
-            }
-            enterSafeMode.accept(entry, town && shouldTownWarp.test(entry));
-        }
-    }
 }

@@ -341,11 +341,6 @@ agent:
     # Purpose: Lists the character names used for trusted trade player names. Separate multiple names with commas; an empty value grants the role to nobody.
     # Technical: the Agent engine deployment configuration consumes this as a text. Domain: component-specific policy value; startup validation rejects missing, blank, or malformed values.
     AGENT_TRUSTED_TRADE_PLAYER_NAMES: Kiwi
-    # Values: true or false. Recommended: retain the tested baseline false unless deliberately enabling or disabling this isolated capability.
-    # Purpose: When enabled, Agents use legacy owner compatibility. When disabled, they skip it while their other capabilities continue normally.
-    # Technical: the Agent engine deployment configuration consumes this as a boolean. Domain: true or false. The disabled path must bypass only this feature and preserve the generic Agent lifecycle.
-    AGENT_LEGACY_OWNER_COMPATIBILITY_ENABLED: false
-
 # Strict runtime/algorithm tuning. Keys mirror declaring classes for traceability.
 tuning:
     # Independent Kiwi observer showcase

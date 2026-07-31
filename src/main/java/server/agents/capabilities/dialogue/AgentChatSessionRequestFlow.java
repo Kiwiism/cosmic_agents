@@ -18,11 +18,6 @@ public final class AgentChatSessionRequestFlow {
             return true;
         }
 
-        if (AgentChatCommandClassifier.isAwayRequest(message)) {
-            callbacks.requestAway();
-            return true;
-        }
-
         return false;
     }
 
@@ -51,6 +46,5 @@ public final class AgentChatSessionRequestFlow {
 
         void requestLogout();
 
-        void requestAway();
     }
 }

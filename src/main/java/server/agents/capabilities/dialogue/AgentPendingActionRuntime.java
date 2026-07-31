@@ -47,11 +47,6 @@ public final class AgentPendingActionRuntime {
     public static AgentPendingChatActionFlow.PendingActionCallbacks pendingActionCallbacks(AgentRuntimeEntry entry) {
         return new AgentPendingChatActionFlow.PendingActionCallbacks() {
             @Override
-            public void handleOwnerAwayChoice(String message) {
-                AgentSessionCommandCoordinator.handleOwnerAwayChoice(entry, message);
-            }
-
-            @Override
             public void executeItemChoice(String category, boolean trade) {
                 AgentSchedulerRuntime.afterRandomDelay(entry, 400, 600,
                         () -> AgentInventoryTransferService.executeChoice(

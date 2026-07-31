@@ -308,14 +308,6 @@ public final class AgentDialogueCatalog {
             "brb!", "relogging~", "one sec, relogging");
     private static final List<String> LOGOUT_CONFIRMED_REPLIES = List.of(
             "ok! saving and logging off~", "cya!!", "ok bye!!");
-    private static final String AWAY_TOWN_OR_LOGOUT_PROMPT =
-            "ok, want us to wait at nearest town or logout? say yes/town or logout";
-    private static final String AWAY_STAY_OR_LOGOUT_PROMPT =
-            "ok, want us to stay safe here or logout? say yes/stay or logout";
-    private static final String AWAY_LOGOUT_CONFIRM_REPLY = "ok, logging us out";
-    private static final String AWAY_TOWN_CONFIRM_REPLY = "ok, heading to town and waiting";
-    private static final String AWAY_STAY_CONFIRM_REPLY = "ok, staying safe here";
-    private static final String AWAY_CANCEL_REPLY = "ok nvm, staying with you";
     private static final String SUPPORT_OFF_REPLY = "ok, skill buffs off";
     private static final String SUPPORT_ON_REPLY = "ok, skill buffs on";
     private static final String HEALS_OFF_REPLY = "ok, no heals";
@@ -775,30 +767,6 @@ public final class AgentDialogueCatalog {
 
     public static List<String> logoutConfirmedReplies() {
         return LOGOUT_CONFIRMED_REPLIES;
-    }
-
-    public static String awayTownOrLogoutPrompt() {
-        return AWAY_TOWN_OR_LOGOUT_PROMPT;
-    }
-
-    public static String awayStayOrLogoutPrompt() {
-        return AWAY_STAY_OR_LOGOUT_PROMPT;
-    }
-
-    public static String awayLogoutConfirmReply() {
-        return AWAY_LOGOUT_CONFIRM_REPLY;
-    }
-
-    public static String awayTownConfirmReply() {
-        return AWAY_TOWN_CONFIRM_REPLY;
-    }
-
-    public static String awayStayConfirmReply() {
-        return AWAY_STAY_CONFIRM_REPLY;
-    }
-
-    public static String awayCancelReply() {
-        return AWAY_CANCEL_REPLY;
     }
 
     public static String supportOffReply() {

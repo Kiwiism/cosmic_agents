@@ -7,9 +7,9 @@ Agent identity and lifecycle no longer depend on a human owner or on the
 interaction, party membership, cohort membership, and formation membership are
 separate relationships and may all differ or be absent.
 
-The migration deliberately keeps deprecated owner/leader-shaped Java aliases
-for one compatibility window. They delegate to explicit interaction/cohort
-state and are not backed by ownership persistence. New code must not use them.
+The disabled owner-away dialogue compatibility path and its configuration gate
+have been removed. Remaining `leader` terminology identifies an explicit
+follow or interaction relationship and is not backed by ownership persistence.
 
 ## Implemented removal order
 
@@ -40,9 +40,8 @@ state and are not backed by ownership persistence. New code must not use them.
 7. **Commands use authority.** Spawn, plan, chat/whisper control, equipment
    debug actions, and trusted human trade ingress use authority/trust lists.
    Agent lifecycle registration itself has no owner write.
-8. **Legacy behavior gate.** `AGENT_LEGACY_OWNER_COMPATIBILITY_ENABLED` is
-   `false` by default. It can temporarily restore the old owner-away dialogue
-   flow without restoring database ownership.
+8. **Legacy behavior retired.** The owner-away dialogue, group logout, pending
+   action, parser, configuration gate, and compatibility facades are removed.
 9. **Verification.** Automated boundaries cover authority hierarchy,
    agent/cohort registry behavior, owner-free relog, typed coordination events,
    lifecycle failure isolation, follow/session compatibility, and supply
@@ -62,7 +61,6 @@ AGENT_AUTHORITY_ADMINISTRATOR_NAMES: Kiwi
 AGENT_AUTHORITY_OPERATOR_NAMES: ""
 AGENT_AUTHORITY_OBSERVER_NAMES: ""
 AGENT_TRUSTED_TRADE_PLAYER_NAMES: Kiwi
-AGENT_LEGACY_OWNER_COMPATIBILITY_ENABLED: false
 ```
 
 - Administrator includes operator and observer permissions.
@@ -89,7 +87,7 @@ AGENT_LEGACY_OWNER_COMPATIBILITY_ENABLED: false
 
 ## Manual soak gates
 
-Run with `AGENT_LEGACY_OWNER_COMPATIBILITY_ENABLED: false`:
+Run with the owner compatibility code absent:
 
 1. Complete the full Maple Island cohort run with no human follow target.
 2. Assign and clear a follow target while questing; autonomy must resume after
@@ -105,9 +103,17 @@ Run with `AGENT_LEGACY_OWNER_COMPATIBILITY_ENABLED: false`:
 8. Restart the server and confirm Liquibase validates history and
    `bot_owners` is absent.
 
-The rollback switch restores only owner-era dialogue behavior. If an issue
-requires the removed ownership table or service, roll back the whole migration
-commit instead of reconstructing partial ownership state.
+There is no runtime rollback switch. If an issue requires the removed owner-era
+dialogue or ownership service, roll back the whole migration commit instead of
+reconstructing partial ownership state.
+
+## Ownership table migration policy
+
+Liquibase changeset 25 and `db/tables/025-bot-ownership.sql` are immutable
+historical migration inputs and must remain in the repository so existing
+checksums and fresh-database replay remain valid. Forward changeset
+`26-remove-bot-owners` is the authoritative removal and leaves `bot_owners`
+absent after migration. Application code must not query or recreate the table.
 
 ## Physics branch integration
 

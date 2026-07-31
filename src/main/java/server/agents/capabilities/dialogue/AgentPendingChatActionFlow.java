@@ -10,11 +10,6 @@ public final class AgentPendingChatActionFlow {
             return false;
         }
 
-        if (AgentChatPendingAction.isOwnerAway(action)) {
-            callbacks.handleOwnerAwayChoice(message);
-            return true;
-        }
-
         if (AgentChatPendingAction.isItemChoice(action)) {
             handleItemChoice(state, message, callbacks);
             return true;
@@ -78,8 +73,6 @@ public final class AgentPendingChatActionFlow {
     }
 
     public interface PendingActionCallbacks {
-        void handleOwnerAwayChoice(String message);
-
         void executeItemChoice(String category, boolean trade);
 
         void cancelItemChoice();

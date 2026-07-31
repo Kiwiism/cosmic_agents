@@ -18,17 +18,6 @@ class AgentPendingChatActionFlowTest {
     }
 
     @Test
-    void shouldDispatchOwnerAwayChoiceWithoutClearingState() {
-        TestState state = new TestState(AgentChatPendingAction.OWNER_AWAY, null);
-        TestCallbacks callbacks = new TestCallbacks();
-
-        assertTrue(AgentPendingChatActionFlow.handle(state, "town", callbacks));
-
-        assertEquals("owner:town;", callbacks.events);
-        assertEquals(AgentChatPendingAction.OWNER_AWAY, state.pendingAction());
-    }
-
-    @Test
     void shouldDispatchSkillTreeChoiceWithoutClearingState() {
         TestState state = new TestState(AgentChatPendingAction.SKILL_TREE_CHOICE, null);
         TestCallbacks callbacks = new TestCallbacks();
@@ -151,11 +140,6 @@ class AgentPendingChatActionFlowTest {
 
     private static final class TestCallbacks implements AgentPendingChatActionFlow.PendingActionCallbacks {
         private String events = "";
-
-        @Override
-        public void handleOwnerAwayChoice(String message) {
-            events += "owner:" + message + ";";
-        }
 
         @Override
         public void executeItemChoice(String category, boolean trade) {

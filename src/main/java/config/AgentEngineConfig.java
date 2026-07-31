@@ -89,5 +89,4 @@ public class AgentEngineConfig {
     public String AGENT_AUTHORITY_OPERATOR_NAMES;
     public String AGENT_AUTHORITY_OBSERVER_NAMES;
     public String AGENT_TRUSTED_TRADE_PLAYER_NAMES;
-    public boolean AGENT_LEGACY_OWNER_COMPATIBILITY_ENABLED;
 }

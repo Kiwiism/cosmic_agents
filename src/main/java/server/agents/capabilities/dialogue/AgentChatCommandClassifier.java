@@ -204,26 +204,8 @@ public final class AgentChatCommandClassifier {
             "(?:(?:i\\s+)?(?:(?:have|got|need)\\s+to|gotta)\\s+)?"
             + "(?:relog|save\\s+and\\s+relog|reconnect|log\\s+back\\s+in)",
             Pattern.CASE_INSENSITIVE);
-    private static final Pattern AWAY_PATTERN = Pattern.compile(
-            "(?:(?:gtg|g2g)"
-            + "|(?:i\\s+)?(?:(?:have|got|need)\\s+to|gotta)\\s+go"
-            + "|(?:i\\s+)?(?:(?:have|got|gotta|need)\\s+to\\s+)?(?:leave|bounce)"
-            + "|(?:(?:i\\s+am|i['’]?m|im)\\s+)?(?:brb|afk)"
-            + "|(?:be\\s+right\\s+back|back\\s+in\\s+(?:a\\s+)?(?:bit|sec|minute|min))"
-            + "|(?:(?:i\\s+am|i['’]?m|im)\\s+)?(?:off|logging\\s+out\\s+soon)"
-            + "|(?:i\\s+)?(?:have|got|gotta)\\s+to\\s+(?:head\\s+out|run))",
-            Pattern.CASE_INSENSITIVE);
     private static final Pattern LOGOUT_CONFIRM_PATTERN = Pattern.compile(
             "\\b(yes|yep|yeah|yea|y|ok|sure|confirm|do\\s+it|go\\s+(ahead|for\\s+it))\\b",
-            Pattern.CASE_INSENSITIVE);
-    private static final Pattern AWAY_TOWN_CONFIRM_PATTERN = Pattern.compile(
-            "^(?:yes|yep|yeah|yea|y|ok|sure|confirm|town|nearest\\s+town|go\\s+town|go\\s+to\\s+town)$",
-            Pattern.CASE_INSENSITIVE);
-    private static final Pattern AWAY_STAY_CONFIRM_PATTERN = Pattern.compile(
-            "^(?:stay|stay\\s+here|here|idle|wait\\s+here)$",
-            Pattern.CASE_INSENSITIVE);
-    private static final Pattern AWAY_LOGOUT_CONFIRM_PATTERN = Pattern.compile(
-            "^(?:logout|log\\s*out|log\\s*off|disconnect|save\\s+and\\s+log\\s*(?:out|off))$",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern NEGATIVE_CONFIRM_PATTERN = Pattern.compile(
             "\\b(no|nope|nah|nvm|never\\s*mind|dont|don't|not\\s+now|skip)\\b",
@@ -437,24 +419,8 @@ public final class AgentChatCommandClassifier {
         return matchesWholeCommand(LOGOUT_PATTERN, message);
     }
 
-    public static boolean isAwayRequest(String message) {
-        return matchesWholeCommand(AWAY_PATTERN, message);
-    }
-
     public static boolean isLogoutConfirm(String message) {
         return LOGOUT_CONFIRM_PATTERN.matcher(message).find();
-    }
-
-    public static boolean isAwayTownConfirm(String message) {
-        return AWAY_TOWN_CONFIRM_PATTERN.matcher(message).matches();
-    }
-
-    public static boolean isAwayStayConfirm(String message) {
-        return AWAY_STAY_CONFIRM_PATTERN.matcher(message).matches();
-    }
-
-    public static boolean isAwayLogoutConfirm(String message) {
-        return AWAY_LOGOUT_CONFIRM_PATTERN.matcher(message).matches();
     }
 
     public static boolean isNegativeConfirm(String message) {
