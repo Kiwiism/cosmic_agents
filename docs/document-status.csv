@@ -1,0 +1,21 @@
+path,status,replacement,reason
+docs/agents/AGENT_CAPABILITY_MIGRATION_AND_DYNAMIC_ENGINE_ROADMAP.md,current,,Capability-boundary and strangler-migration authority.
+docs/agents/AGENT_FIX_TODO.md,current,,Reviewed engineering backlog that still contains open work.
+docs/agents/agent-os/AGENT_OS_STABILIZATION_ROADMAP.md,current,,Authoritative stabilization gates for the Agent OS.
+docs/agents/catalog-platform/PORTABLE_PLATFORM_TODO.md,current,,Active portable catalog and platform backlog.
+docs/agents/TIER_1_INDEPENDENT_AGENT_PROGRESSION_IMPLEMENTATION_PLAN.md,current,,Authoritative M1-A and M1-B autonomy delivery plan.
+docs/agents/VICTORIA_LEVEL15_MVP_IMPLEMENTATION_PLAN.md,current,,Active five-job Victoria level-15 validation plan.
+docs/SERVER_PLAYER_SCALE_IMPLEMENTATION_PLAN.md,current,,Active server-side player scaling guidance.
+docs/SERVER_SCALE_TODO.md,current,,Active uptime and population scaling backlog.
+docs/agents/AMHERST_MVP_PHASED_IMPLEMENTATION_PLAN.md,completed,,Delivered primitive capability and Amherst MVP foundation.
+docs/agents/MAPLE_ISLAND_MVP_IMPLEMENTATION_PLAN.md,completed,,Delivered Maple Island plan foundation retained as acceptance history.
+docs/agents/AGENT_FULL_CENTRALIZED_SCHEDULER_IMPLEMENTATION_PLAN.md,historical,docs/current/AGENT_SCHEDULER_PARITY_DECISION.md,Implementation history contains outdated rollout defaults; current safety decision is separate.
+docs/agents/MAPLE_ISLAND_AMHERST_SUBPHASE_TEST_PLAN.md,historical,docs/agents/AMHERST_MVP_PHASED_IMPLEMENTATION_PLAN.md,Original harness plan is retained as test history.
+docs/COSMIC_PR_APPLICABILITY_TODO.md,historical,,Time-bound upstream PR review snapshot whose accepted work has been handled separately.
+docs/agents/CHARACTER_PROFILE_RUNTIME_REFACTOR_ROADMAP.md,deferred,,Explicit later-review design behind current autonomy stabilization.
+docs/agents/llm-autonomy/ECONOMY_ENGINE_TODO.md,deferred,docs/agents/agent-os/AGENT_OS_STABILIZATION_ROADMAP.md,Economy work follows deterministic autonomous progression.
+docs/agents/llm-autonomy/IMPLEMENTATION_ROADMAP.md,deferred,docs/agents/agent-os/AGENT_OS_STABILIZATION_ROADMAP.md,LLM autonomy follows deterministic capability and policy gates.
+docs/agents/AGENT_OBJECTIVE_INTERRUPTION_AND_RESUME_IMPLEMENTATION_PLAN.md,deferred,docs/agents/agent-os/AGENT_OS_STABILIZATION_ROADMAP.md,Remaining remediation handlers are governed by the stabilization roadmap.
+docs/agents/POLISHED_COMBAT_CAPABILITY_IMPLEMENTATION_PLAN.md,deferred,docs/agents/agent-os/AGENT_OS_STABILIZATION_ROADMAP.md,Proposed combat polish remains gated behind progression parity.
+docs/MAP_VR_BOUNDARY_GENERATION_TODO.md,deferred,,Documentation-only map asset work remains explicitly postponed.
+docs/agents/POST_MAPLE_ISLAND_VICTORIA_PROGRESSION_ROADMAP.md,superseded,docs/agents/TIER_1_INDEPENDENT_AGENT_PROGRESSION_IMPLEMENTATION_PLAN.md,Sequencing was replaced by Tier 1 progression and the level-15 MVP plan.
