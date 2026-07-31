@@ -1,9 +1,5 @@
 package server.agents.capabilities.navigation;
 
-import client.Character;
-import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
-import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.monitoring.AgentPathLogger;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
@@ -11,27 +7,6 @@ import java.awt.Point;
 /** Provides navigation capabilities with typed access to live navigation and path-log state. */
 public final class AgentNavigationDebugStateRuntime {
     private AgentNavigationDebugStateRuntime() {
-    }
-
-    public static boolean isPathLogging(AgentRuntimeEntry entry) {
-        return entry != null && entry.navigationDebugState().pathLogger() != null;
-    }
-
-    public static void startPathLogging(AgentRuntimeEntry entry) {
-        Character bot = AgentRuntimeIdentityRuntime.bot(entry);
-        entry.navigationDebugState().setPathLogger(new AgentPathLogger(bot.getName(), bot.getMapId()));
-    }
-
-    public static String dumpPathLog(AgentRuntimeEntry entry, AgentMovementTargetSnapshot targetSnapshot, String note) {
-        AgentPathLogger logger = entry.navigationDebugState().pathLogger();
-        entry.navigationDebugState().clearPathLogger();
-        return logger.dumpToFile(entry, targetSnapshot, note);
-    }
-
-    public static void clearPathLogging(AgentRuntimeEntry entry) {
-        if (entry != null) {
-            entry.navigationDebugState().clearPathLogger();
-        }
     }
 
     public static String lastDecision(AgentRuntimeEntry entry) {
@@ -170,14 +145,4 @@ public final class AgentNavigationDebugStateRuntime {
         rememberNavJumpLaunch(entry, null, Integer.MIN_VALUE);
     }
 
-    public static void recordPathLog(AgentRuntimeEntry entry,
-                                     AgentMovementTargetSnapshot targetSnapshot,
-                                     int botRegionId,
-                                     boolean consumedTick,
-                                     boolean aiTick) {
-        AgentPathLogger logger = entry == null ? null : entry.navigationDebugState().pathLogger();
-        if (logger != null) {
-            logger.record(entry, targetSnapshot, botRegionId, consumedTick, aiTick);
-        }
-    }
 }

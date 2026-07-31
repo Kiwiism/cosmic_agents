@@ -35,7 +35,6 @@ class AgentSchedulerBlockingBoundaryTest {
             for (Path file : files.filter(path -> path.toString().endsWith(".java")).toList()) {
                 String name = file.getFileName().toString();
                 if (name.equals("AgentNavigationGraphService.java")
-                        || name.equals("AgentNavigationDebugOverlay.java")
                         || name.equals("AgentNavigationProbe.java")) {
                     continue;
                 }

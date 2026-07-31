@@ -2,9 +2,7 @@ package server.agents.commands;
 
 import server.agents.monitoring.AgentPerformanceMonitor;
 
-import client.Character;
 import server.agents.capabilities.combat.AgentCombatConfig;
-import server.agents.capabilities.navigation.AgentNavigationDebugOverlay;
 import server.agents.capabilities.dialogue.llm.AgentLlmConfig;
 
 import java.util.List;
@@ -37,22 +35,6 @@ public final class AgentLegacyCommandBridge {
     public static void setLlm(boolean enabled, boolean debugLog) {
         AgentLlmConfig.enabled = enabled;
         AgentLlmConfig.debugLog = debugLog;
-    }
-
-    public static String showNavigationGraph(Character player) {
-        return AgentNavigationDebugOverlay.showGraph(player);
-    }
-
-    public static String showNavigationPath(Character player, String agentName) {
-        return AgentNavigationDebugOverlay.showPath(player, agentName);
-    }
-
-    public static String writeNavigationPathLog(Character player, String agentName, String note) {
-        return AgentNavigationDebugOverlay.pathLog(player, agentName, note);
-    }
-
-    public static String clearNavigationOverlay(Character player) {
-        return AgentNavigationDebugOverlay.clear(player);
     }
 
     public static boolean togglePerformanceMonitor() {

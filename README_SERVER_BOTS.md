@@ -203,7 +203,6 @@ Verbs: `trade [me] <type/name>`, `give [me] <type/name>`, `drop <type/name>`, `p
 | Say                                       | Effect                  |
 |-------------------------------------------|-------------------------|
 | `!botperfdebug` | Toggle console spam on bot performance |
-| `!botnav`                  | Navigation debug command |
 
 ### Map Graph Viewer
 

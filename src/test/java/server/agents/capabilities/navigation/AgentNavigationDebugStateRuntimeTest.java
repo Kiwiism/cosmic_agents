@@ -6,49 +6,14 @@ import server.agents.capabilities.navigation.AgentNavigationGraph;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
-
 import java.awt.Point;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 class AgentNavigationDebugStateRuntimeTest {
-    @Test
-    void startsAndClearsPathLoggerState() {
-        Character bot = mock(Character.class);
-        when(bot.getName()).thenReturn("agent123");
-        when(bot.getMapId()).thenReturn(100000000);
-        when(bot.getPosition()).thenReturn(new Point(10, 20));
-        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-
-        assertFalse(AgentNavigationDebugStateRuntime.isPathLogging(entry));
-
-        AgentNavigationDebugStateRuntime.startPathLogging(entry);
-
-        assertTrue(AgentNavigationDebugStateRuntime.isPathLogging(entry));
-        assertNotNull(entry.navigationDebugState().pathLogger());
-
-        AgentNavigationDebugStateRuntime.clearPathLogging(entry);
-
-        assertFalse(AgentNavigationDebugStateRuntime.isPathLogging(entry));
-    }
-
-    @Test
-    void recordPathLogNoopsWithoutActiveLogger() {
-        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
-        AgentMovementTargetSnapshot snapshot = snapshot();
-
-        AgentNavigationDebugStateRuntime.recordPathLog(entry, snapshot, -1, false, false);
-
-        assertFalse(AgentNavigationDebugStateRuntime.isPathLogging(entry));
-    }
-
     @Test
     void adaptsLastDecisionAndBlockReasonState() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
@@ -177,22 +142,4 @@ class AgentNavigationDebugStateRuntimeTest {
         assertNull(AgentNavigationDebugStateRuntime.activeNavigationEdge(entry));
     }
 
-    private static AgentMovementTargetSnapshot snapshot() {
-        return new AgentMovementTargetSnapshot(
-                "line",
-                60,
-                30,
-                new Point(0, 0),
-                new Point(0, 0),
-                "owner",
-                new Point(0, 0),
-                new Point(0, 0),
-                null,
-                null,
-                null,
-                new Point(0, 0),
-                "owner",
-                new Point(0, 0),
-                "owner");
-    }
 }

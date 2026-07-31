@@ -6,7 +6,6 @@ import server.agents.capabilities.movement.AgentMovementKinematicsService;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
 import server.agents.capabilities.movement.AgentClimbStateRuntime;
-import server.agents.capabilities.movement.AgentMovementTargetRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
@@ -66,9 +65,6 @@ public final class AgentNavigationTargetService {
                 // transfer portal. Hold horizontal position and let ordinary gravity settle the
                 // Agent; the next AI pass retries once the graph is available.
                 Point fallbackTarget = bot.getPosition();
-                AgentNavigationDebugStateRuntime.recordPathLog(entry,
-                        AgentMovementTargetRuntime.captureTargetSnapshot(entry, rawTargetPos),
-                        -1, false, runAiTick);
                 return new NavigationDirective(fallbackTarget, false);
             }
             if (AgentNavigationGraphService.peekGraph(bot.getMap(), AgentMovementStateRuntime.movementProfile(entry)) == null) {
@@ -105,9 +101,6 @@ public final class AgentNavigationTargetService {
                 AgentNavigationDebugStateRuntime.setNavTargetRegionId(entry, traversal.targetRegionId());
                 AgentNavigationDebugStateRuntime.setNavWaypoint(entry, traversal.targetPosition(), false);
                 AgentNavigationDebugStateRuntime.setLastDecision(entry, "vertical-settle");
-                AgentNavigationDebugStateRuntime.recordPathLog(entry,
-                        AgentMovementTargetRuntime.captureTargetSnapshot(entry, rawTargetPos),
-                        startRegionId, false, runAiTick);
                 return new NavigationDirective(traversal.targetPosition(), false);
             }
             if (traversalWasActive && traversal == null) {
@@ -178,9 +171,6 @@ public final class AgentNavigationTargetService {
                             AgentEventPriority.IMPORTANT);
                 }
                 AgentMovementStateResetService.clearNavigationState(entry);
-                AgentNavigationDebugStateRuntime.recordPathLog(entry,
-                        AgentMovementTargetRuntime.captureTargetSnapshot(entry, rawTargetPos),
-                        startRegionId, false, runAiTick);
                 return new NavigationDirective(
                         safeFallbackTarget(botPos, rawTargetPos, startRegionId, targetRegionId),
                         false);
@@ -189,9 +179,6 @@ public final class AgentNavigationTargetService {
             NavigationDirective executionDirective = tryExecuteEdge(graph, entry, bot, botPos, rawTargetPos, edge, runAiTick);
             if (executionDirective != null) {
                 AgentNavigationDebugStateRuntime.setLastDecision(entry, "exec");
-                AgentNavigationDebugStateRuntime.recordPathLog(entry,
-                        AgentMovementTargetRuntime.captureTargetSnapshot(entry, rawTargetPos),
-                        startRegionId, true, runAiTick);
                 return executionDirective;
             }
 
@@ -200,9 +187,6 @@ public final class AgentNavigationTargetService {
                     entry,
                     selectWaypoint(entry, graph, botPos, edge),
                     shouldUsePreciseTarget(graph, entry, botPos, edge));
-            AgentNavigationDebugStateRuntime.recordPathLog(entry,
-                    AgentMovementTargetRuntime.captureTargetSnapshot(entry, rawTargetPos),
-                    startRegionId, false, runAiTick);
             return new NavigationDirective(AgentNavigationDebugStateRuntime.navTargetPosition(entry), false);
         } finally {
             AgentPerformanceMonitor.record("nav-resolve", System.nanoTime() - startedAt);

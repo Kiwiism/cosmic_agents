@@ -269,8 +269,7 @@ public final class AgentEquipmentAutoEquipService {
     }
 
     /**
-     * Writes a comprehensive autoEquip decision dump to {@code logs/bot-equip/}, mirroring the
-     * format of {@link server.agents.monitoring.AgentPathLogger}. Captures everything the optimizer saw: mob profile,
+     * Writes a comprehensive autoEquip decision dump to {@code logs/bot-equip/}. Captures everything the optimizer saw: mob profile,
      * naked stats, currently-equipped items with stats/reqs, candidate inventory items with
      * stats/reqs, and per-weapon-branch DP results with chosen picks. Returns absolute path.
      */
