@@ -1,6 +1,8 @@
 package server.agents.observer;
 
 import client.Character;
+import config.YamlConfig;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import server.maps.MapleMap;
@@ -13,9 +15,18 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class SpectatorInterestServiceTest {
+    private boolean observerPreviouslyEnabled;
+
     @BeforeEach
     void reset() {
+        observerPreviouslyEnabled = YamlConfig.config.server.observer.enabled;
+        YamlConfig.config.server.observer.enabled = true;
         SpectatorInterestService.resetForTests();
+    }
+
+    @AfterEach
+    void restoreObserverSetting() {
+        YamlConfig.config.server.observer.enabled = observerPreviouslyEnabled;
     }
 
     @Test
@@ -69,6 +80,19 @@ class SpectatorInterestServiceTest {
         assertEquals(32, event.characterName().length());
         assertEquals(160, event.detail().length());
         assertTrue(event.sequence() > 0);
+    }
+
+    @Test
+    void disabledObserverDoesNotCollectEvents() {
+        YamlConfig.config.server.observer.enabled = false;
+
+        SpectatorInterestService.publish(
+                character(44, 0, 100000000, "Disabled"),
+                SpectatorInterestService.Type.LEVEL_UP,
+                90,
+                "This event should not be retained");
+
+        assertTrue(SpectatorInterestService.eventsSince(0, 0).isEmpty());
     }
 
     private static Character character(

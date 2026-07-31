@@ -56,6 +56,7 @@ public class ServerConfig {
     public boolean SHUTDOWNHOOK;
 
     //Server Flags
+    public ObserverConfig observer = new ObserverConfig();
     public boolean USE_CUSTOM_KEYSET;
     public boolean USE_DEBUG;
     public boolean USE_DEBUG_SHOW_INFO_EQPEXP;

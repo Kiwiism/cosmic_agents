@@ -219,6 +219,8 @@ server:
     SHUTDOWNHOOK: true
 
     # Server Flags
+    observer:
+        enabled: false                                      # Enables browser observer packets, event collection, navgraph inspection, and camera director feeds.
     USE_CUSTOM_KEYSET: false                                # Enables auto-setup of the HeavenMS's custom keybindings when creating characters.
     USE_DEBUG: false                                        # Will enable some text prints on the client, oriented for debugging purposes.
     USE_DEBUG_SHOW_INFO_EQPEXP: false                       # Prints on the cmd all equip exp gain info.

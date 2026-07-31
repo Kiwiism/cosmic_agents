@@ -23,6 +23,7 @@ package net;
 
 import net.netty.LoginServer;
 import net.opcodes.RecvOpcode;
+import server.agents.observer.ObserverFeature;
 import net.server.channel.handlers.AcceptFamilyHandler;
 import net.server.channel.handlers.AdminChatHandler;
 import net.server.channel.handlers.AdminCommandHandler;
@@ -452,11 +453,13 @@ public final class PacketProcessor {
         registerHandler(RecvOpcode.USE_ITEMUI, new RaiseIncExpHandler());
         registerHandler(RecvOpcode.CHANGE_QUICKSLOT, new QuickslotKeyMappedModifiedHandler());
         registerHandler(RecvOpcode.BOT_EQUIP, new net.server.channel.handlers.AgentEquipHandler());
-        registerHandler(RecvOpcode.OBSERVER_CHARACTERS,
-                new net.server.channel.handlers.ObserverCharactersHandler());
-        registerHandler(RecvOpcode.OBSERVER_NAV_GRAPH,
-                new net.server.channel.handlers.ObserverNavGraphHandler());
-        registerHandler(RecvOpcode.OBSERVER_INTEREST,
-                new net.server.channel.handlers.ObserverInterestHandler());
+        if (ObserverFeature.enabled()) {
+            registerHandler(RecvOpcode.OBSERVER_CHARACTERS,
+                    new net.server.channel.handlers.ObserverCharactersHandler());
+            registerHandler(RecvOpcode.OBSERVER_NAV_GRAPH,
+                    new net.server.channel.handlers.ObserverNavGraphHandler());
+            registerHandler(RecvOpcode.OBSERVER_INTEREST,
+                    new net.server.channel.handlers.ObserverInterestHandler());
+        }
     }
 }

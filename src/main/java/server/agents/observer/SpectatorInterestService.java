@@ -54,7 +54,10 @@ public final class SpectatorInterestService {
                                Type type,
                                int score,
                                String detail) {
-        if (character == null || type == null || character.getMap() == null) {
+        if (!ObserverFeature.enabled()
+                || character == null
+                || type == null
+                || character.getMap() == null) {
             return;
         }
         long now = System.currentTimeMillis();
