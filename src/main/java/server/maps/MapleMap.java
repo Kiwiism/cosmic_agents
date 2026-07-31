@@ -1540,9 +1540,9 @@ public class MapleMap {
 
             Character dropOwner = monster.killBy(chr);
             if (monster.hasBossHPBar()) {
-                server.agents.observer.SpectatorInterestService.publish(
+                server.observer.ObserverInterestService.publish(
                         chr,
-                        server.agents.observer.SpectatorInterestService.Type.BOSS_DEFEAT,
+                        server.observer.ObserverInterestService.Type.BOSS_DEFEAT,
                         100,
                         "Defeated " + monster.getName());
             }

@@ -1,4 +1,4 @@
-package server.agents.observer.protocol;
+package server.observer.protocol;
 
 public final class ObserverActionProtocol {
     public static final int VERSION = 1;

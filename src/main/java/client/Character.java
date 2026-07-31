@@ -1415,9 +1415,9 @@ public class Character extends AbstractCharacterObject {
                 broadcastAcquaintances(6, "[" + GameConstants.ordinal(GameConstants.getJobBranch(newJob)) + " Job] " + name + " has just become a " + GameConstants.getJobName(this.job.getId()) + ".");    // thanks Vcoc for noticing job name appearing in uppercase here
             }
         }
-        server.agents.observer.SpectatorInterestService.publish(
+        server.observer.ObserverInterestService.publish(
                 this,
-                server.agents.observer.SpectatorInterestService.Type.JOB_ADVANCE,
+                server.observer.ObserverInterestService.Type.JOB_ADVANCE,
                 95,
                 "Advanced to " + GameConstants.getJobName(newJob.getId()));
     }
@@ -6723,9 +6723,9 @@ public class Character extends AbstractCharacterObject {
         }
 
         getMap().broadcastMessage(this, PacketCreator.showForeignEffect(getId(), 0), false);
-        server.agents.observer.SpectatorInterestService.publish(
+        server.observer.ObserverInterestService.publish(
                 this,
-                server.agents.observer.SpectatorInterestService.Type.LEVEL_UP,
+                server.observer.ObserverInterestService.Type.LEVEL_UP,
                 90,
                 "Reached level " + level);
         setMPC(new PartyCharacter(this));

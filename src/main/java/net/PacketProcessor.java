@@ -23,7 +23,7 @@ package net;
 
 import net.netty.LoginServer;
 import net.opcodes.RecvOpcode;
-import server.agents.observer.ObserverFeature;
+import server.observer.ObserverFeature;
 import net.server.channel.handlers.AcceptFamilyHandler;
 import net.server.channel.handlers.AdminChatHandler;
 import net.server.channel.handlers.AdminCommandHandler;

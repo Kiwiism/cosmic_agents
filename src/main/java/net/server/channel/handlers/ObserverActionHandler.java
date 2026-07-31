@@ -4,10 +4,10 @@ import client.Character;
 import client.Client;
 import net.AbstractPacketHandler;
 import net.packet.InPacket;
-import server.agents.observer.ObserverAuthorizationService;
-import server.agents.observer.ObserverFeature;
-import server.agents.observer.ObserverWarpService;
-import server.agents.observer.protocol.ObserverActionProtocol;
+import server.observer.ObserverAuthorizationService;
+import server.observer.ObserverFeature;
+import server.observer.ObserverWarpService;
+import server.observer.protocol.ObserverActionProtocol;
 import tools.PacketCreator;
 
 import java.util.Map;

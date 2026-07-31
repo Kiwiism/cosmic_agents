@@ -439,9 +439,9 @@ public class Quest {
 
         chr.sendPacket(PacketCreator.showSpecialEffect(9)); // Quest completion
         chr.getMap().broadcastMessage(chr, PacketCreator.showForeignEffect(chr.getId(), 9), false); //use 9 instead of 12 for both
-        server.agents.observer.SpectatorInterestService.publish(
+        server.observer.ObserverInterestService.publish(
                 chr,
-                server.agents.observer.SpectatorInterestService.Type.QUEST_COMPLETE,
+                server.observer.ObserverInterestService.Type.QUEST_COMPLETE,
                 75,
                 "Completed quest " + id);
         if (syncPartyBots) {

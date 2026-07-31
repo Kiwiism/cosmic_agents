@@ -1,4 +1,4 @@
-package server.agents.observer;
+package server.observer;
 
 import client.Character;
 import client.Client;

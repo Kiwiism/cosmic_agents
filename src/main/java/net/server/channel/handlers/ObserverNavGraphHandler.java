@@ -8,9 +8,9 @@ import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.navigation.AgentMapGraphService;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
-import server.agents.observer.ObserverAuthorizationService;
-import server.agents.observer.ObserverFeature;
-import server.agents.observer.SpectatorInterestService;
+import server.observer.ObserverAuthorizationService;
+import server.observer.ObserverFeature;
+import server.observer.ObserverInterestService;
 import server.agents.observer.protocol.ObserverNavGraphProtocol;
 import server.maps.MapleMap;
 import tools.PacketCreator;
@@ -113,9 +113,9 @@ public final class ObserverNavGraphHandler extends AbstractPacketHandler {
                                   int toRegion) {
         AgentMapGraphService.RouteView route = AgentMapGraphService.testRoute(
                 map, graph, fromRegion, toRegion, false);
-        SpectatorInterestService.publish(
+        ObserverInterestService.publish(
                 client.getPlayer(),
-                SpectatorInterestService.Type.ROUTE,
+                ObserverInterestService.Type.ROUTE,
                 20,
                 routeDetail(route));
         byte[] payload = ObserverNavGraphProtocol.encodeRoute(route);

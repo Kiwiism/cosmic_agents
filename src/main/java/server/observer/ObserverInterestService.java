@@ -1,4 +1,4 @@
-package server.agents.observer;
+package server.observer;
 
 import client.Character;
 
@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
-public final class SpectatorInterestService {
+public final class ObserverInterestService {
     public enum Type {
         LEVEL_UP(0),
         QUEST_COMPLETE(1),
@@ -47,7 +47,7 @@ public final class SpectatorInterestService {
     private static final AtomicLong NEXT_SEQUENCE = new AtomicLong();
     private static final Map<Integer, ArrayDeque<Event>> EVENTS_BY_WORLD = new HashMap<>();
 
-    private SpectatorInterestService() {
+    private ObserverInterestService() {
     }
 
     public static void publish(Character character,

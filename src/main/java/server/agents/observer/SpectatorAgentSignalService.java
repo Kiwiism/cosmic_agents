@@ -7,6 +7,7 @@ import server.agents.runtime.AgentLifecycleStateRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
+import server.observer.ObserverInterestService;
 
 import java.awt.Point;
 import java.util.ArrayList;
@@ -38,7 +39,7 @@ public final class SpectatorAgentSignalService {
                   String decision) {
     }
 
-    record Signal(SpectatorInterestService.Type type, int score, String detail) {
+    record Signal(ObserverInterestService.Type type, int score, String detail) {
     }
 
     private SpectatorAgentSignalService() {
@@ -77,7 +78,7 @@ public final class SpectatorAgentSignalService {
                     AgentNavigationDebugStateRuntime.navTargetRegionId(entry),
                     AgentNavigationDebugStateRuntime.decisionWithBlockReason(entry));
             for (Signal signal : evaluate(sample, now)) {
-                SpectatorInterestService.publish(
+                ObserverInterestService.publish(
                         agent, signal.type(), signal.score(), signal.detail());
             }
         }
@@ -108,11 +109,11 @@ public final class SpectatorAgentSignalService {
                     && !signature.equals(state.upcomingSignature)
                     && now - state.lastUpcomingAt >= UPCOMING_COOLDOWN_MS) {
                 signals.add(new Signal(
-                        SpectatorInterestService.Type.UPCOMING,
+                        ObserverInterestService.Type.UPCOMING,
                         65,
                         upcomingDetail(sample)));
                 signals.add(new Signal(
-                        SpectatorInterestService.Type.ROUTE,
+                        ObserverInterestService.Type.ROUTE,
                         25,
                         routeDetail(sample)));
                 state.upcomingSignature = signature;
@@ -124,7 +125,7 @@ public final class SpectatorAgentSignalService {
                     && now - state.lastProgressAt >= STUCK_AFTER_MS
                     && now - state.lastStuckAt >= STUCK_REPEAT_MS) {
                 signals.add(new Signal(
-                        SpectatorInterestService.Type.STUCK,
+                        ObserverInterestService.Type.STUCK,
                         92,
                         "May be stuck while " + activity(sample)));
                 state.lastStuckAt = now;

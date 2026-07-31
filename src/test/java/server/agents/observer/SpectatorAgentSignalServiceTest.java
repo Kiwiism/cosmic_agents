@@ -2,6 +2,7 @@ package server.agents.observer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import server.observer.ObserverInterestService;
 
 import java.util.List;
 
@@ -29,10 +30,10 @@ class SpectatorAgentSignalServiceTest {
 
         assertEquals(2, signals.size());
         assertTrue(signals.stream().anyMatch(signal ->
-                signal.type() == SpectatorInterestService.Type.UPCOMING
+                signal.type() == ObserverInterestService.Type.UPCOMING
                         && signal.detail().contains("jump-edge")));
         assertTrue(signals.stream().anyMatch(signal ->
-                signal.type() == SpectatorInterestService.Type.ROUTE
+                signal.type() == ObserverInterestService.Type.ROUTE
                         && signal.detail().contains("jump-edge")));
     }
 
@@ -49,7 +50,7 @@ class SpectatorAgentSignalServiceTest {
                         startedAt + SpectatorAgentSignalService.STUCK_AFTER_MS);
 
         assertTrue(signals.stream().anyMatch(signal ->
-                signal.type() == SpectatorInterestService.Type.STUCK));
+                signal.type() == ObserverInterestService.Type.STUCK));
 
         SpectatorAgentSignalService.Sample idle =
                 sample(21, 50, 75, true, false, -1, "");
@@ -75,7 +76,7 @@ class SpectatorAgentSignalServiceTest {
                         sample(30, 20, 0, true, true, 9, "walk"),
                         startedAt + SpectatorAgentSignalService.STUCK_AFTER_MS);
         assertTrue(signals.stream().noneMatch(signal ->
-                signal.type() == SpectatorInterestService.Type.STUCK));
+                signal.type() == ObserverInterestService.Type.STUCK));
     }
 
     @Test

@@ -1,4 +1,4 @@
-package server.agents.observer;
+package server.observer;
 
 import config.ObserverConfig;
 import config.ServerConfig;

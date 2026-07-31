@@ -1,4 +1,4 @@
-package server.agents.observer.protocol;
+package server.observer.protocol;
 
 import org.junit.jupiter.api.Test;
 

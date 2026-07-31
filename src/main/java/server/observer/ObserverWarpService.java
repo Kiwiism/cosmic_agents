@@ -1,8 +1,8 @@
-package server.agents.observer;
+package server.observer;
 
 import client.Character;
 import client.Client;
-import server.agents.observer.protocol.ObserverActionProtocol;
+import server.observer.protocol.ObserverActionProtocol;
 import server.maps.MapleMap;
 
 public final class ObserverWarpService {

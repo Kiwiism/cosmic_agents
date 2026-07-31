@@ -7596,12 +7596,12 @@ public class PacketCreator {
 
     public static Packet observerInterestEvents(
             long latestSequence,
-            List<server.agents.observer.SpectatorInterestService.Event> events) {
+            List<server.observer.ObserverInterestService.Event> events) {
         OutPacket p = OutPacket.create(SendOpcode.OBSERVER_INTEREST);
         p.writeByte(1);
         p.writeLong(latestSequence);
         p.writeShort(events.size());
-        for (server.agents.observer.SpectatorInterestService.Event event : events) {
+        for (server.observer.ObserverInterestService.Event event : events) {
             p.writeLong(event.sequence());
             p.writeLong(event.timestamp());
             p.writeInt(event.characterId());
@@ -7617,9 +7617,9 @@ public class PacketCreator {
     public static Packet observerActionResult(
             int action,
             int requestId,
-            server.agents.observer.ObserverWarpService.Result result) {
+            server.observer.ObserverWarpService.Result result) {
         OutPacket p = OutPacket.create(SendOpcode.OBSERVER_ACTION_RESULT);
-        p.writeByte(server.agents.observer.protocol.ObserverActionProtocol.VERSION);
+        p.writeByte(server.observer.protocol.ObserverActionProtocol.VERSION);
         p.writeByte(action);
         p.writeInt(requestId);
         p.writeByte(result.status());

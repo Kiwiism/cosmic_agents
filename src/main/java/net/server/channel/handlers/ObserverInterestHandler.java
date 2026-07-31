@@ -4,10 +4,10 @@ import client.Character;
 import client.Client;
 import net.AbstractPacketHandler;
 import net.packet.InPacket;
-import server.agents.observer.ObserverAuthorizationService;
-import server.agents.observer.ObserverFeature;
-import server.agents.observer.SpectatorInterestService;
 import server.agents.observer.SpectatorAgentSignalService;
+import server.observer.ObserverAuthorizationService;
+import server.observer.ObserverFeature;
+import server.observer.ObserverInterestService;
 import tools.PacketCreator;
 
 import java.util.Map;
@@ -34,8 +34,8 @@ public final class ObserverInterestHandler extends AbstractPacketHandler {
         }
         SpectatorAgentSignalService.sampleWorld(observer.getWorld());
         client.sendPacket(PacketCreator.observerInterestEvents(
-                SpectatorInterestService.latestSequence(observer.getWorld()),
-                SpectatorInterestService.eventsSince(
+                ObserverInterestService.latestSequence(observer.getWorld()),
+                ObserverInterestService.eventsSince(
                         observer.getWorld(), afterSequence)));
     }
 
