@@ -6,13 +6,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import server.agents.capabilities.objective.AmherstNpcInteractionDelay;
-import server.agents.capabilities.movement.AgentRelaxerSpotCatalog;
-import server.agents.capabilities.movement.AgentRelaxerSpotReservationRuntime;
-import server.agents.capabilities.quest.AmherstQuestCatalog;
 import server.agents.capabilities.quest.AmherstScopePolicy;
-import server.agents.capabilities.quest.MapleIslandSouthperryQuestCatalog;
 import server.agents.capabilities.runtime.AgentCapabilityRuntime;
 import server.agents.plans.amherst.AmherstObjectiveDelay;
+import server.agents.plans.amherst.AmherstQuestCatalog;
 import server.agents.plans.amherst.AmherstObjectiveHandlerRegistry;
 import server.agents.plans.amherst.AmherstObjectiveProgressStatus;
 import server.agents.plans.amherst.AmherstObjectiveReconciler;
@@ -23,6 +20,9 @@ import server.agents.plans.amherst.AmherstPlanObjectiveKind;
 import server.agents.plans.amherst.AmherstPlanProgressService;
 import server.agents.plans.amherst.AmherstPlanRuntimeRunner;
 import server.agents.plans.amherst.AmherstPlanValidationCode;
+import server.agents.plans.amherst.MapleIslandRelaxerSpotCatalog;
+import server.agents.plans.amherst.MapleIslandRelaxerSpotReservationRuntime;
+import server.agents.plans.amherst.MapleIslandSouthperryQuestCatalog;
 import server.agents.plans.amherst.AmherstPlanValidationException;
 import server.agents.plans.amherst.AmherstPlanValidator;
 import server.agents.plans.amherst.FileAmherstPlanProgressStore;
@@ -65,7 +65,7 @@ class MapleIslandSouthperryPlanTest {
 
     @AfterEach
     void restoreRuntimeState() {
-        AgentRelaxerSpotReservationRuntime.release(77);
+        MapleIslandRelaxerSpotReservationRuntime.release(77);
         if (previousSchedulerMode == null) {
             System.clearProperty("agents.scheduler.mode");
         } else {
@@ -185,7 +185,7 @@ class MapleIslandSouthperryPlanTest {
         assertTrue(AmherstQuestCatalog.requiredQuestIdSet().stream()
                 .noneMatch(fixture.questCompletions::containsKey));
         assertTrue(portalAttempts.get() > 1);
-        assertTrue(AgentRelaxerSpotCatalog.spots(AgentRelaxerSpotCatalog.Pool.SOUTHPERRY_RIGHT).stream()
+        assertTrue(MapleIslandRelaxerSpotCatalog.spots(MapleIslandRelaxerSpotCatalog.Pool.SOUTHPERRY_RIGHT).stream()
                 .anyMatch(spot -> spot.x() == fixture.position.x && spot.y() == fixture.position.y),
                 () -> "unexpected Southperry rest position=" + fixture.position);
         verify(fixture.gateway).sitChair(fixture.agent, 3010000);

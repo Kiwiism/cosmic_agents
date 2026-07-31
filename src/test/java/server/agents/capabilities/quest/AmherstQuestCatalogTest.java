@@ -27,8 +27,8 @@ class AmherstQuestCatalogTest {
 
     @Test
     void catalogContainsCoveredAmherstQuests() {
-        assertEquals(REQUIRED_QUEST_IDS, AmherstQuestCatalog.requiredQuestIdSet());
-        assertEquals(REQUIRED_QUEST_IDS.size(), AmherstQuestCatalog.allRequiredQuests().size());
+        assertEquals(REQUIRED_QUEST_IDS, server.agents.plans.amherst.AmherstQuestCatalog.requiredQuestIdSet());
+        assertEquals(REQUIRED_QUEST_IDS.size(), server.agents.plans.amherst.AmherstQuestCatalog.allRequiredQuests().size());
     }
 
     @Test
@@ -42,7 +42,7 @@ class AmherstQuestCatalogTest {
         assertNpc(1038, "Maria's Letter", "Maria", "Lucas");
         assertNpc(1008, "Pio's Collecting Recycled Goods", "Pio", "Pio");
 
-        AmherstQuestDefinition quiz = AmherstQuestCatalog.find(1009).orElseThrow();
+        AmherstQuestDefinition quiz = server.agents.plans.amherst.AmherstQuestCatalog.find(1009).orElseThrow();
         assertEquals("Rain", quiz.startNpc().name());
         assertTrue(quiz.flags().contains(AmherstQuestFlag.QUIZ));
 
@@ -88,7 +88,7 @@ class AmherstQuestCatalogTest {
         assertEquals(AgentCapabilityStatus.BLOCKED_FORBIDDEN_MAP, policy.checkMap(1010000).status());
         assertEquals(AgentCapabilityStatus.BLOCKED_FORBIDDEN_MAP, policy.checkMap(2000000).status());
         assertEquals(AgentCapabilityStatus.BLOCKED_FORBIDDEN_NPC,
-                policy.checkNpcTravel(AmherstQuestCatalog.SHANKS_NPC_ID).status());
+                policy.checkNpcTravel(server.agents.plans.amherst.AmherstQuestCatalog.SHANKS_NPC_ID).status());
         assertEquals(30000, policy.nextHopMap(30001, 50000));
         assertEquals(40000, policy.nextHopMap(30000, 50000));
         assertEquals(50000, policy.nextHopMap(40000, 1000000));
@@ -157,7 +157,7 @@ class AmherstQuestCatalogTest {
 
         for (Integer questId : extractAllQuestReferences(plan)) {
             if (REQUIRED_QUEST_IDS.contains(questId)) {
-                assertTrue(AmherstQuestCatalog.isRequiredQuest(questId));
+                assertTrue(server.agents.plans.amherst.AmherstQuestCatalog.isRequiredQuest(questId));
             }
         }
 
@@ -171,7 +171,7 @@ class AmherstQuestCatalogTest {
     }
 
     private static void assertNpc(int questId, String name, String startNpc, String completeNpc) {
-        AmherstQuestDefinition definition = AmherstQuestCatalog.find(questId).orElse(null);
+        AmherstQuestDefinition definition = server.agents.plans.amherst.AmherstQuestCatalog.find(questId).orElse(null);
         assertNotNull(definition);
         assertEquals(name, definition.questName());
         assertEquals(startNpc, definition.startNpc().name());

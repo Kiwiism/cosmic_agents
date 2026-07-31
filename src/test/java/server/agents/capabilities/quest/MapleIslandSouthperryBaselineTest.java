@@ -52,7 +52,8 @@ class MapleIslandSouthperryBaselineTest {
                 1008, 1009, 1010, 1011, 1012, 1013, 1014, 1015, 1020,
                 1021, 1031, 1032, 1033, 1034, 1035, 1036, 1037, 1038),
                 snapshot.completedQuestIds());
-        assertTrue(snapshot.completedQuestIds().containsAll(AmherstQuestCatalog.requiredQuestIdSet()));
+        assertTrue(snapshot.completedQuestIds().containsAll(
+                server.agents.plans.amherst.AmherstQuestCatalog.requiredQuestIdSet()));
         assertTrue(snapshot.resetQuestIds().contains(1046));
         assertTrue(snapshot.resetQuestIds().contains(1045));
         assertTrue(snapshot.resetQuestIds().contains(1028));

@@ -3,14 +3,14 @@ package server.agents.plans.mapleisland;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.objective.AmherstNpcInteractionDelay;
-import server.agents.capabilities.quest.AmherstQuestCatalog;
 import server.agents.capabilities.quest.AmherstScopePolicy;
-import server.agents.capabilities.quest.MapleIslandSouthperryQuestCatalog;
+import server.agents.plans.amherst.AmherstQuestCatalog;
 import server.agents.plans.amherst.AmherstObjectiveHandlerRegistry;
 import server.agents.plans.amherst.AmherstPlanCard;
 import server.agents.plans.amherst.AmherstPlanCardLoader;
 import server.agents.plans.amherst.AmherstPlanObjectiveKind;
 import server.agents.plans.amherst.AmherstPlanValidator;
+import server.agents.plans.amherst.MapleIslandSouthperryQuestCatalog;
 import server.agents.testing.MutablePrimitiveGatewayFixture;
 
 import java.nio.file.Path;

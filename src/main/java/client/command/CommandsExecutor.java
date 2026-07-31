@@ -202,7 +202,6 @@ import client.command.commands.gm6.VictoriaCommand;
 import client.command.commands.gm6.MapleIslandCommand;
 import client.command.commands.gm6.ObserverCommand;
 import client.command.commands.gm6.SouthperryCommand;
-import client.command.commands.gm6.BotPopCommand;
 import client.command.commands.gm6.ClearQuestCommand;
 import client.command.commands.gm6.DCAllCommand;
 import client.command.commands.gm6.DevtestCommand;
@@ -610,7 +609,6 @@ public class CommandsExecutor {
         addCommand("observer", 6, ObserverCommand.class);
         addCommand("southperry", 6, SouthperryCommand.class);
         addCommand("fmspots", 6, FreeMarketSpotsCommand.class);
-        addCommand("botpop", 6, BotPopCommand.class);
 
         commandsNameDesc.add(levelCommandsCursor);
     }

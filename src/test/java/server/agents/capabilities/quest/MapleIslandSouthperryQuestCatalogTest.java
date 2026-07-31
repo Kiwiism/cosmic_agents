@@ -14,15 +14,15 @@ class MapleIslandSouthperryQuestCatalogTest {
     @Test
     void catalogMatchesVerifiedModernPostAmherstQuestSequence() {
         assertEquals(Set.of(1039, 1040, 1041, 1042, 1043, 1044, 1045, 1046),
-                MapleIslandSouthperryQuestCatalog.requiredQuestIdSet());
+                server.agents.plans.amherst.MapleIslandSouthperryQuestCatalog.requiredQuestIdSet());
         assertEquals(Set.of(1039, 1040, 1041, 1042, 1043, 1044, 1045),
-                MapleIslandSouthperryQuestCatalog.completedQuestIdSet());
+                server.agents.plans.amherst.MapleIslandSouthperryQuestCatalog.completedQuestIdSet());
         assertEquals("Biggs's Story on Victoria Island.",
-                MapleIslandSouthperryQuestCatalog.find(1046).orElseThrow().questName());
-        assertTrue(MapleIslandSouthperryQuestCatalog.find(8020).isEmpty());
-        assertTrue(MapleIslandSouthperryQuestCatalog.find(8025).isEmpty());
+                server.agents.plans.amherst.MapleIslandSouthperryQuestCatalog.find(1046).orElseThrow().questName());
+        assertTrue(server.agents.plans.amherst.MapleIslandSouthperryQuestCatalog.find(8020).isEmpty());
+        assertTrue(server.agents.plans.amherst.MapleIslandSouthperryQuestCatalog.find(8025).isEmpty());
         assertEquals(20002,
-                MapleIslandSouthperryQuestCatalog.find(1046).orElseThrow().startNpc().id());
+                server.agents.plans.amherst.MapleIslandSouthperryQuestCatalog.find(1046).orElseThrow().startNpc().id());
     }
 
     @Test
@@ -58,7 +58,7 @@ class MapleIslandSouthperryQuestCatalogTest {
 
         assertEquals(1, quest.getStartItemAmountNeeded(1042003));
         assertEquals(1, quest.getCompleteItemAmountNeeded(4031180));
-        assertFalse(MapleIslandSouthperryQuestCatalog.isRequiredQuest(8020));
+        assertFalse(server.agents.plans.amherst.MapleIslandSouthperryQuestCatalog.isRequiredQuest(8020));
     }
 
     @Test
