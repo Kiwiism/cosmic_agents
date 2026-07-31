@@ -20,9 +20,11 @@ public final class SpectatorAgentSignalService {
     static final long STUCK_AFTER_MS = 15_000L;
     static final long STUCK_REPEAT_MS = 30_000L;
     static final long UPCOMING_COOLDOWN_MS = 3_000L;
+    static final long SAMPLE_INTERVAL_MS = 250L;
     private static final int PROGRESS_DISTANCE_SQUARED = 64;
     private static final int TARGET_DISTANCE_SQUARED = 32 * 32;
     private static final Map<Integer, State> STATES = new HashMap<>();
+    private static final Map<Integer, Long> LAST_SAMPLE_BY_WORLD = new HashMap<>();
 
     record Sample(int characterId,
                   int world,
@@ -44,6 +46,9 @@ public final class SpectatorAgentSignalService {
 
     public static void sampleWorld(int world) {
         long now = System.currentTimeMillis();
+        if (!shouldSampleWorld(world, now)) {
+            return;
+        }
         Set<Integer> seen = new HashSet<>();
         for (AgentRuntimeEntry entry : AgentRuntimeRegistry.activeEntriesSnapshot()) {
             Character agent = AgentRuntimeIdentityRuntime.bot(entry);
@@ -136,6 +141,18 @@ public final class SpectatorAgentSignalService {
     static void resetForTests() {
         synchronized (STATES) {
             STATES.clear();
+            LAST_SAMPLE_BY_WORLD.clear();
+        }
+    }
+
+    static boolean shouldSampleWorld(int world, long now) {
+        synchronized (STATES) {
+            long previous = LAST_SAMPLE_BY_WORLD.getOrDefault(world, Long.MIN_VALUE);
+            if (previous != Long.MIN_VALUE && now - previous < SAMPLE_INTERVAL_MS) {
+                return false;
+            }
+            LAST_SAMPLE_BY_WORLD.put(world, now);
+            return true;
         }
     }
 

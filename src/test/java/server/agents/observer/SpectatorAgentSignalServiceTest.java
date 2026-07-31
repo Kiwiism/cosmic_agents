@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SpectatorAgentSignalServiceTest {
@@ -75,6 +76,18 @@ class SpectatorAgentSignalServiceTest {
                         startedAt + SpectatorAgentSignalService.STUCK_AFTER_MS);
         assertTrue(signals.stream().noneMatch(signal ->
                 signal.type() == SpectatorInterestService.Type.STUCK));
+    }
+
+    @Test
+    void samplesEachWorldAtMostOncePerInterval() {
+        assertTrue(SpectatorAgentSignalService.shouldSampleWorld(0, 1_000L));
+        assertFalse(SpectatorAgentSignalService.shouldSampleWorld(
+                0,
+                1_000L + SpectatorAgentSignalService.SAMPLE_INTERVAL_MS - 1));
+        assertTrue(SpectatorAgentSignalService.shouldSampleWorld(
+                0,
+                1_000L + SpectatorAgentSignalService.SAMPLE_INTERVAL_MS));
+        assertTrue(SpectatorAgentSignalService.shouldSampleWorld(1, 1_001L));
     }
 
     private static SpectatorAgentSignalService.Sample sample(

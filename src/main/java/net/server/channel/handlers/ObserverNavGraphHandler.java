@@ -38,8 +38,7 @@ public final class ObserverNavGraphHandler extends AbstractPacketHandler {
         if (version != ObserverNavGraphProtocol.VERSION
                 || (action != ObserverNavGraphProtocol.ACTION_SNAPSHOT
                     && action != ObserverNavGraphProtocol.ACTION_ROUTE)
-                || requestId <= 0
-                || rateLimited(client)) {
+                || requestId <= 0) {
             return;
         }
         if (action == ObserverNavGraphProtocol.ACTION_ROUTE && packet.available() < 8) {
@@ -51,6 +50,9 @@ public final class ObserverNavGraphHandler extends AbstractPacketHandler {
         int toRegion = action == ObserverNavGraphProtocol.ACTION_ROUTE
                 ? packet.readInt()
                 : 0;
+        if (rateLimited(client)) {
+            return;
+        }
 
         MapleMap map = observer.getMap();
         if (map == null) {
