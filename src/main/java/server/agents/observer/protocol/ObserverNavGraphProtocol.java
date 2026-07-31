@@ -12,9 +12,12 @@ import java.util.List;
 public final class ObserverNavGraphProtocol {
     public static final int VERSION = 1;
     public static final int ACTION_SNAPSHOT = 0;
+    public static final int ACTION_ROUTE = 1;
     public static final int STATUS_READY = 0;
     public static final int STATUS_WARMING = 1;
     public static final int STATUS_TOO_LARGE = 2;
+    public static final int STATUS_ROUTE = 3;
+    public static final int STATUS_INVALID_ROUTE = 4;
     public static final int CHUNK_BYTES = 24 * 1024;
     public static final int MAX_PAYLOAD_BYTES = 2 * 1024 * 1024;
 
@@ -69,16 +72,7 @@ public final class ObserverNavGraphProtocol {
 
         writer.writeInt(view.edges().size());
         for (AgentMapGraphService.EdgeView edge : view.edges()) {
-            writer.writeByte(AgentNavigationGraph.EdgeType.valueOf(edge.type()).ordinal());
-            writer.writeInt(edge.fromRegion());
-            writer.writeInt(edge.toRegion());
-            writer.writeInt(edge.cost());
-            writer.writeInt(edge.launchStepX());
-            writer.writeInt(edge.parallelCount());
-            writer.writeInt(edge.fromX());
-            writer.writeInt(edge.fromY());
-            writer.writeInt(edge.toX());
-            writer.writeInt(edge.toY());
+            writeEdge(writer, edge);
         }
 
         writer.writeShort(view.npcs().size());
@@ -102,6 +96,27 @@ public final class ObserverNavGraphProtocol {
             throw new IllegalArgumentException("Navigation graph payload exceeds limit");
         }
         return payload;
+    }
+
+    public static byte[] encodeRoute(AgentMapGraphService.RouteView route) {
+        requireCount("route edges", route.path().size(), MAX_EDGES);
+        Writer writer = new Writer();
+        writer.writeInt(0x3152564E);
+        writer.writeInt(route.fromRegion());
+        writer.writeInt(route.toRegion());
+        writer.writeByte("exhaustive".equals(route.mode()) ? 1 : 0);
+        writer.writeByte(route.reached() ? 1 : 0);
+        writer.writeByte(route.bestEffort() ? 1 : 0);
+        writer.writeByte(route.capped() ? 1 : 0);
+        writer.writeInt(route.finalRegion());
+        writer.writeInt(route.cost() == null ? -1 : route.cost());
+        writer.writeInt(route.expandedNodes());
+        writer.writeInt((int) Math.min(
+                Integer.MAX_VALUE,
+                Math.round(route.elapsedMs() * 1_000.0d)));
+        writer.writeInt(route.path().size());
+        route.path().forEach(edge -> writeEdge(writer, edge));
+        return writer.toByteArray();
     }
 
     public static List<byte[]> chunks(byte[] payload) {
@@ -142,6 +157,19 @@ public final class ObserverNavGraphProtocol {
             case "collision" -> 3;
             default -> 0;
         };
+    }
+
+    private static void writeEdge(Writer writer, AgentMapGraphService.EdgeView edge) {
+        writer.writeByte(AgentNavigationGraph.EdgeType.valueOf(edge.type()).ordinal());
+        writer.writeInt(edge.fromRegion());
+        writer.writeInt(edge.toRegion());
+        writer.writeInt(edge.cost());
+        writer.writeInt(edge.launchStepX());
+        writer.writeInt(edge.parallelCount());
+        writer.writeInt(edge.fromX());
+        writer.writeInt(edge.fromY());
+        writer.writeInt(edge.toX());
+        writer.writeInt(edge.toY());
     }
 
     private static void requireCount(String name, int value, int maximum) {

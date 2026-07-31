@@ -35,11 +35,21 @@ public final class ObserverNavGraphHandler extends AbstractPacketHandler {
         int action = packet.readByte() & 0xFF;
         int requestId = packet.readInt();
         if (version != ObserverNavGraphProtocol.VERSION
-                || action != ObserverNavGraphProtocol.ACTION_SNAPSHOT
+                || (action != ObserverNavGraphProtocol.ACTION_SNAPSHOT
+                    && action != ObserverNavGraphProtocol.ACTION_ROUTE)
                 || requestId <= 0
                 || rateLimited(client)) {
             return;
         }
+        if (action == ObserverNavGraphProtocol.ACTION_ROUTE && packet.available() < 8) {
+            return;
+        }
+        int fromRegion = action == ObserverNavGraphProtocol.ACTION_ROUTE
+                ? packet.readInt()
+                : 0;
+        int toRegion = action == ObserverNavGraphProtocol.ACTION_ROUTE
+                ? packet.readInt()
+                : 0;
 
         MapleMap map = observer.getMap();
         if (map == null) {
@@ -56,6 +66,10 @@ public final class ObserverNavGraphHandler extends AbstractPacketHandler {
         }
 
         try {
+            if (action == ObserverNavGraphProtocol.ACTION_ROUTE) {
+                sendRoute(client, requestId, map, graph, profile, fromRegion, toRegion);
+                return;
+            }
             AgentMapGraphService.MapGraphView view = AgentMapGraphService.graphView(
                     map,
                     graph,
@@ -78,8 +92,38 @@ public final class ObserverNavGraphHandler extends AbstractPacketHandler {
                         chunks.get(index)));
             }
         } catch (IllegalArgumentException ignored) {
-            sendStatus(client, ObserverNavGraphProtocol.STATUS_TOO_LARGE,
-                    requestId, map.getId(), graph.version, profile);
+            int status = action == ObserverNavGraphProtocol.ACTION_ROUTE
+                    ? ObserverNavGraphProtocol.STATUS_INVALID_ROUTE
+                    : ObserverNavGraphProtocol.STATUS_TOO_LARGE;
+            sendStatus(client, status, requestId, map.getId(), graph.version, profile);
+        }
+    }
+
+    private static void sendRoute(Client client,
+                                  int requestId,
+                                  MapleMap map,
+                                  AgentNavigationGraph graph,
+                                  AgentMovementProfile profile,
+                                  int fromRegion,
+                                  int toRegion) {
+        AgentMapGraphService.RouteView route = AgentMapGraphService.testRoute(
+                map, graph, fromRegion, toRegion, false);
+        byte[] payload = ObserverNavGraphProtocol.encodeRoute(route);
+        List<byte[]> chunks = ObserverNavGraphProtocol.chunks(payload);
+        int checksum = ObserverNavGraphProtocol.checksum(payload);
+        for (int index = 0; index < chunks.size(); index++) {
+            client.sendPacket(PacketCreator.observerNavGraphChunk(
+                    ObserverNavGraphProtocol.STATUS_ROUTE,
+                    requestId,
+                    map.getId(),
+                    graph.version,
+                    profile.totalSpeedStat(),
+                    profile.totalJumpStat(),
+                    index,
+                    chunks.size(),
+                    payload.length,
+                    checksum,
+                    chunks.get(index)));
         }
     }
 

@@ -70,6 +70,43 @@ class ObserverNavGraphProtocolTest {
     }
 
     @Test
+    void encodesRouteResultAndPath() {
+        AgentMapGraphService.RouteView route = new AgentMapGraphService.RouteView(
+                103000000,
+                12,
+                18,
+                "normal",
+                true,
+                false,
+                false,
+                18,
+                450,
+                7,
+                1.25d,
+                List.of(new AgentMapGraphService.EdgeView(
+                        "JUMP", 12, 18, 450, 3, 1,
+                        20, 30, 80, 10)));
+
+        ByteBuffer input = ByteBuffer.wrap(
+                ObserverNavGraphProtocol.encodeRoute(route)
+        ).order(ByteOrder.LITTLE_ENDIAN);
+
+        assertEquals(0x3152564E, input.getInt());
+        assertEquals(12, input.getInt());
+        assertEquals(18, input.getInt());
+        assertEquals(0, input.get() & 0xFF);
+        assertEquals(1, input.get() & 0xFF);
+        assertEquals(0, input.get() & 0xFF);
+        assertEquals(0, input.get() & 0xFF);
+        assertEquals(18, input.getInt());
+        assertEquals(450, input.getInt());
+        assertEquals(7, input.getInt());
+        assertEquals(1_250, input.getInt());
+        assertEquals(1, input.getInt());
+        assertEquals(1, input.get() & 0xFF);
+    }
+
+    @Test
     void rejectsOversizedPayload() {
         byte[] payload = new byte[ObserverNavGraphProtocol.MAX_PAYLOAD_BYTES + 1];
         assertThrows(IllegalArgumentException.class,
