@@ -355,7 +355,8 @@ public enum SendOpcode {
     VICIOUS_HAMMER(0x162),
     VEGA_SCROLL(0x166),
     BOT_EQUIP(0x175),               // Android/bot equip window (Kaentake client LP_BotEquip)
-    OBSERVER_CHARACTERS(0x176);
+    OBSERVER_CHARACTERS(0x176),
+    OBSERVER_NAV_GRAPH(0x177);
     private int code = -2;
 
     SendOpcode(int code) {

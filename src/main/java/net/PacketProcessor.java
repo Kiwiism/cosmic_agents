@@ -454,5 +454,7 @@ public final class PacketProcessor {
         registerHandler(RecvOpcode.BOT_EQUIP, new net.server.channel.handlers.AgentEquipHandler());
         registerHandler(RecvOpcode.OBSERVER_CHARACTERS,
                 new net.server.channel.handlers.ObserverCharactersHandler());
+        registerHandler(RecvOpcode.OBSERVER_NAV_GRAPH,
+                new net.server.channel.handlers.ObserverNavGraphHandler());
     }
 }

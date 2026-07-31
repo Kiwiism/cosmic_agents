@@ -7566,4 +7566,32 @@ public class PacketCreator {
         return p;
     }
 
+    public static Packet observerNavGraphChunk(int status,
+                                               int requestId,
+                                               int mapId,
+                                               int graphVersion,
+                                               int speed,
+                                               int jump,
+                                               int chunkIndex,
+                                               int chunkCount,
+                                               int totalLength,
+                                               int checksum,
+                                               byte[] payload) {
+        OutPacket p = OutPacket.create(SendOpcode.OBSERVER_NAV_GRAPH);
+        p.writeByte(server.agents.observer.protocol.ObserverNavGraphProtocol.VERSION);
+        p.writeByte(status);
+        p.writeInt(requestId);
+        p.writeInt(mapId);
+        p.writeInt(graphVersion);
+        p.writeShort(speed);
+        p.writeShort(jump);
+        p.writeShort(chunkIndex);
+        p.writeShort(chunkCount);
+        p.writeInt(totalLength);
+        p.writeInt(checksum);
+        p.writeShort(payload.length);
+        p.writeBytes(payload);
+        return p;
+    }
+
 }
