@@ -11,9 +11,9 @@ import server.agents.memory.AgentMemoryEntry;
 import server.agents.memory.AgentMemoryKind;
 import server.agents.memory.AgentMemoryRepository;
 import server.agents.memory.AgentSessionMemoryRepository;
+import server.agents.policy.behavior.AgentBehaviorCapability;
+import server.agents.runtime.AgentBehaviorRoutingRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.agents.runtime.decision.AgentBehaviorRouteMode;
-import server.agents.runtime.decision.AgentBehaviorVersionRouter;
 import server.agents.runtime.decision.AgentDecisionProvenanceState;
 import server.agents.runtime.decision.AgentDecisionReplay;
 
@@ -46,8 +46,8 @@ class AgentStabilizationScaleGateTest {
             AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
             entries.add(entry);
 
-            AgentBehaviorVersionRouter.route(entry, "combat-targeting", "v1", "v2",
-                    AgentBehaviorRouteMode.CANARY, 10, id, "soak:" + id);
+            AgentBehaviorRoutingRuntime.assignStableCanary(
+                    entry, AgentBehaviorCapability.COMBAT, "v1", "v2", 10);
             AgentMemoryRepository memories = new AgentSessionMemoryRepository(entry);
             memories.remember(new AgentMemoryEntry(
                     AgentMemoryKind.WORKING, "objective", "maple-island",
