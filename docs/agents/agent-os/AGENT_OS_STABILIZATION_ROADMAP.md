@@ -72,7 +72,7 @@ handlers remain to be implemented.
 | `AgentUniversalPlanRuntime` | Versioned plan lifecycle | Retain as the sole plan executor |
 | `AgentMapleIslandLithHandoffRuntime` | Deferred Southperry transfer activation | Express activation as a universal successor/goal proposal |
 | `AgentAmherstPlanRuntime` | Legacy Amherst checkpoint adapter | Remove after Maple Island parity and checkpoint migration |
-| `AgentVictoriaPlanSessionRuntime` | Legacy Victoria checkpoint adapter | Remove after all five Explorer paths use universal plans |
+| `AgentVictoriaPlanSessionRuntime` | Removed legacy Victoria checkpoint adapter | Completed: Victoria reset, training, stop and status now use universal plans |
 | `AgentMapleIslandPlanRuntime` | Compatibility objective registration | Move registration to universal executor/goal selector |
 | `AgentVictoriaTrainingObjectiveRuntime` | Compatibility training objective registration | Move to universal plan objective ownership |
 | `AgentCareerObjectiveRuntime` | Career objective registration | Convert career selection to a goal proposal |

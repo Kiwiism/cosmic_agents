@@ -78,14 +78,12 @@ public final class VictoriaFirstJobMvpCommandService {
                 });
             }
             case "stop" -> AgentMailboxRuntime.dispatch(entry, ignored -> {
-                boolean sessionActive = AgentUniversalPlanRuntime.active(entry)
-                        || AgentVictoriaPlanSessionRuntime.active(entry);
+                boolean sessionActive = AgentUniversalPlanRuntime.active(entry);
                 boolean cancelled = AgentUniversalPlanRuntime.cancel(
                         entry, agent, "stopped by Victoria command", System.currentTimeMillis());
                 if (!cancelled) {
                     cancelled = AgentVictoriaTrainingObjectiveRuntime.cancel(
                             entry, System.currentTimeMillis());
-                    AgentVictoriaPlanSessionRuntime.stop(entry);
                 }
                 player.yellowMessage(cancelled || sessionActive
                         ? agent.getName() + " stopped its Victoria progression session."
@@ -204,7 +202,6 @@ public final class VictoriaFirstJobMvpCommandService {
                 + " job=" + agent.getJob().getId() + " map=" + agent.getMapId()
                 + " mesos=" + agent.getMeso() + " variant=" + state.startVariantId()
                 + " stage=" + state.stage()
-                + " session=" + AgentVictoriaPlanSessionRuntime.plan(entry)
                 + " universal=" + AgentUniversalPlanRuntime.status(entry) + ".");
         player.yellowMessage("Plan=victoria-level15-mvp stageContract="
                 + AgentVictoriaLevel15StageContractRepository.defaultContract().contractId()

@@ -95,7 +95,6 @@ public final class VictoriaFirstJobMvpTestService {
         entry.capabilityStates().remove(AgentCareerProgressionState.STATE_KEY);
         entry.capabilityStates().remove(AgentVictoriaQuestSchedulerState.STATE_KEY);
         entry.capabilityStates().remove(AgentVictoriaTrainingState.STATE_KEY);
-        entry.capabilityStates().remove(AgentVictoriaPlanSessionState.STATE_KEY);
         AgentUniversalPlanRuntime.clearCheckpoint(entry, agent.getId());
 
         AgentVictoriaLevel15Catalog catalog = catalogRepository.catalog();

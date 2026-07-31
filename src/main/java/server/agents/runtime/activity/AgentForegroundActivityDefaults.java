@@ -6,7 +6,6 @@ import server.agents.capabilities.townlife.AgentTownLifeRuntime;
 import server.agents.plans.AgentUniversalPlanRuntime;
 import server.agents.plans.amherst.AgentAmherstPlanRuntime;
 import server.agents.plans.mapleisland.AgentMapleIslandLithHandoffRuntime;
-import server.agents.progression.AgentVictoriaPlanSessionRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
@@ -31,7 +30,6 @@ public final class AgentForegroundActivityDefaults {
                     handoff(),
                     townLife(),
                     universalPlan(),
-                    legacyVictoria(),
                     legacyAmherst(),
                     capability()));
     }
@@ -70,14 +68,6 @@ public final class AgentForegroundActivityDefaults {
                 AgentUniversalPlanRuntime::tick,
                 (entry, agent, reason, nowMs) ->
                         AgentUniversalPlanRuntime.cancel(entry, agent, reason, nowMs));
-    }
-
-    private static AgentForegroundActivity legacyVictoria() {
-        return blockingBooleanActivity("legacy-checkpoint-victoria", 300,
-                (entry, agent) -> AgentVictoriaPlanSessionRuntime.active(entry),
-                AgentVictoriaPlanSessionRuntime::tick,
-                (entry, agent, reason, nowMs) ->
-                        AgentVictoriaPlanSessionRuntime.stop(entry));
     }
 
     private static AgentForegroundActivity legacyAmherst() {
