@@ -357,7 +357,8 @@ public enum SendOpcode {
     BOT_EQUIP(0x175),               // Android/bot equip window (Kaentake client LP_BotEquip)
     OBSERVER_CHARACTERS(0x176),
     OBSERVER_NAV_GRAPH(0x177),
-    OBSERVER_INTEREST(0x178);
+    OBSERVER_INTEREST(0x178),
+    OBSERVER_ACTION_RESULT(0x179);
     private int code = -2;
 
     SendOpcode(int code) {

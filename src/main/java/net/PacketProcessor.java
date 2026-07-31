@@ -460,6 +460,8 @@ public final class PacketProcessor {
                     new net.server.channel.handlers.ObserverNavGraphHandler());
             registerHandler(RecvOpcode.OBSERVER_INTEREST,
                     new net.server.channel.handlers.ObserverInterestHandler());
+            registerHandler(RecvOpcode.OBSERVER_ACTION,
+                    new net.server.channel.handlers.ObserverActionHandler());
         }
     }
 }

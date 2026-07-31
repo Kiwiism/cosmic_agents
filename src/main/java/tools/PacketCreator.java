@@ -7614,4 +7614,19 @@ public class PacketCreator {
         return p;
     }
 
+    public static Packet observerActionResult(
+            int action,
+            int requestId,
+            server.agents.observer.ObserverWarpService.Result result) {
+        OutPacket p = OutPacket.create(SendOpcode.OBSERVER_ACTION_RESULT);
+        p.writeByte(server.agents.observer.protocol.ObserverActionProtocol.VERSION);
+        p.writeByte(action);
+        p.writeInt(requestId);
+        p.writeByte(result.status());
+        p.writeInt(result.mapId());
+        p.writeInt(result.characterId());
+        p.writeString(result.message());
+        return p;
+    }
+
 }

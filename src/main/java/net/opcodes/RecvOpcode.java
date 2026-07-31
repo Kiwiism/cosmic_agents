@@ -206,7 +206,8 @@ public enum RecvOpcode {
     BOT_EQUIP(0x112),               // Android/bot equip window (Kaentake client CP_BotEquip)
     OBSERVER_CHARACTERS(0x113),
     OBSERVER_NAV_GRAPH(0x114),
-    OBSERVER_INTEREST(0x115);
+    OBSERVER_INTEREST(0x115),
+    OBSERVER_ACTION(0x116);
 
     private int code = -2;
 
