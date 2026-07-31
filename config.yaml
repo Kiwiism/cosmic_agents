@@ -221,6 +221,8 @@ server:
     # Server Flags
     observer:
         enabled: false                                      # Enables browser observer packets, event collection, navgraph inspection, and camera director feeds.
+        navgraph_enabled: false                             # Enables the optional agent navigation graph adapter for browser observers.
+        agent_signals_enabled: false                        # Enables optional upcoming/route/stuck signals sampled from agent runtimes.
         minimum_gm_level: 2                                 # GM accounts at this level or above may use Observer packets.
         allowed_character_names: []                         # Additional non-GM Observer character names; matching is case-insensitive.
     USE_CUSTOM_KEYSET: false                                # Enables auto-setup of the HeavenMS's custom keybindings when creating characters.

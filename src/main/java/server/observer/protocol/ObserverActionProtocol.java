@@ -1,7 +1,7 @@
 package server.observer.protocol;
 
 public final class ObserverActionProtocol {
-    public static final int VERSION = 1;
+    public static final int VERSION = ObserverProtocol.VERSION;
 
     public static final int ACTION_WARP_MAP = 1;
     public static final int ACTION_WARP_CHARACTER = 2;

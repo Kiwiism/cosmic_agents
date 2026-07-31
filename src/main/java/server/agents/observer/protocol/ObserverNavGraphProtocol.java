@@ -2,6 +2,7 @@ package server.agents.observer.protocol;
 
 import server.agents.capabilities.navigation.AgentMapGraphService;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
+import server.observer.protocol.ObserverProtocol;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
@@ -10,7 +11,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public final class ObserverNavGraphProtocol {
-    public static final int VERSION = 1;
+    public static final int VERSION = ObserverProtocol.VERSION;
     public static final int ACTION_SNAPSHOT = 0;
     public static final int ACTION_ROUTE = 1;
     public static final int STATUS_READY = 0;

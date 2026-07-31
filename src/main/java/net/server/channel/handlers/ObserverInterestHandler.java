@@ -4,7 +4,7 @@ import client.Character;
 import client.Client;
 import net.AbstractPacketHandler;
 import net.packet.InPacket;
-import server.agents.observer.SpectatorAgentSignalService;
+import server.observer.ObserverAdapters;
 import server.observer.ObserverAuthorizationService;
 import server.observer.ObserverFeature;
 import server.observer.ObserverInterestService;
@@ -32,7 +32,8 @@ public final class ObserverInterestHandler extends AbstractPacketHandler {
         if (rateLimited(client)) {
             return;
         }
-        SpectatorAgentSignalService.sampleWorld(observer.getWorld());
+        ObserverAdapters.interest().ifPresent(
+                adapter -> adapter.sampleWorld(observer.getWorld()));
         client.sendPacket(PacketCreator.observerInterestEvents(
                 ObserverInterestService.latestSequence(observer.getWorld()),
                 ObserverInterestService.eventsSince(

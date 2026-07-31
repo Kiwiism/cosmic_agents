@@ -456,8 +456,10 @@ public final class PacketProcessor {
         if (ObserverFeature.enabled()) {
             registerHandler(RecvOpcode.OBSERVER_CHARACTERS,
                     new net.server.channel.handlers.ObserverCharactersHandler());
-            registerHandler(RecvOpcode.OBSERVER_NAV_GRAPH,
-                    new net.server.channel.handlers.ObserverNavGraphHandler());
+            if (ObserverFeature.navGraphEnabled()) {
+                registerHandler(RecvOpcode.OBSERVER_NAV_GRAPH,
+                        new net.server.channel.handlers.ObserverNavGraphHandler());
+            }
             registerHandler(RecvOpcode.OBSERVER_INTEREST,
                     new net.server.channel.handlers.ObserverInterestHandler());
             registerHandler(RecvOpcode.OBSERVER_ACTION,

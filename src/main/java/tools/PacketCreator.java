@@ -7578,7 +7578,7 @@ public class PacketCreator {
                                                int checksum,
                                                byte[] payload) {
         OutPacket p = OutPacket.create(SendOpcode.OBSERVER_NAV_GRAPH);
-        p.writeByte(server.agents.observer.protocol.ObserverNavGraphProtocol.VERSION);
+        p.writeByte(server.observer.protocol.ObserverProtocol.VERSION);
         p.writeByte(status);
         p.writeInt(requestId);
         p.writeInt(mapId);
