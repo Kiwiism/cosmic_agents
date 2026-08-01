@@ -62,4 +62,27 @@ class MapleMapLifecycleTest {
         assertEquals(2, reloaded.getEnvironment().get("load-generation"));
         assertEquals(1, manager.unloadedMapCount());
     }
+
+    @Test
+    void pendingCharacterWorkPreventsUnload() {
+        MapleMap map = new MapleMap(1, 0, 1, 1, 1.0f);
+        map.registerCharacterStatUpdate(10, () -> { });
+
+        assertFalse(map.isSafeToUnload(0));
+    }
+
+    @Test
+    void staleMapReferenceCannotEvictItsReplacement() {
+        AtomicInteger loads = new AtomicInteger();
+        MapManager manager = new MapManager(null, 0, 1, (mapId, world, channel, event) -> {
+            loads.incrementAndGet();
+            return new MapleMap(mapId, world, channel, 1, 1.0f);
+        });
+        MapleMap first = manager.getMap(100000000);
+        MapleMap replacement = manager.resetMap(100000000);
+
+        assertFalse(manager.unloadIfStillIdle(first, 0));
+        assertEquals(replacement, manager.getLoadedMap(100000000));
+        assertEquals(2, loads.get());
+    }
 }

@@ -41,7 +41,7 @@ public class MapManager {
     private static final long IDLE_MAP_DIAGNOSTIC_MS = 30 * 60 * 1000L;
     private static final long DORMANT_UPDATE_SKIP_MS = configuredLong("cosmic.maps.dormantSkipMillis", 60_000L);
     private static final long IDLE_MAP_UNLOAD_MS = configuredLong("cosmic.maps.idleUnloadMillis", 30 * 60 * 1000L);
-    private static final boolean IDLE_MAP_UNLOAD_ENABLED = configuredBoolean("cosmic.maps.idleUnloadEnabled", false);
+    private static final boolean IDLE_MAP_UNLOAD_ENABLED = configuredBoolean("cosmic.maps.idleUnloadEnabled", true);
     private static final int HIGH_WATER_OBJECT_WARN = 500;
     private static final int HIGH_WATER_DROP_WARN = 200;
     private static final int HIGH_WATER_REACTOR_WARN = 100;
@@ -122,16 +122,18 @@ public class MapManager {
     }
 
     public MapleMap getMap(int mapid) {
-        MapleMap map;
-
         mapsRLock.lock();
         try {
-            map = maps.get(mapid);
+            MapleMap map = maps.get(mapid);
+            if (map != null) {
+                map.markAccessed();
+                return map;
+            }
         } finally {
             mapsRLock.unlock();
         }
 
-        MapleMap result = (map != null) ? map : loadMapFromWz(mapid, true);
+        MapleMap result = loadMapFromWz(mapid, true);
         if (result != null) {
             result.markAccessed();
         }
