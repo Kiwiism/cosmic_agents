@@ -215,6 +215,7 @@ import client.command.commands.gm6.SaveAllCommand;
 import client.command.commands.gm6.ServerAddChannelCommand;
 import client.command.commands.gm6.ServerAddWorldCommand;
 import client.command.commands.gm6.ServerHealthCommand;
+import client.command.commands.gm6.SecurityEventsCommand;
 import client.command.commands.gm6.ServerRemoveChannelCommand;
 import client.command.commands.gm6.ServerRemoveWorldCommand;
 import client.command.commands.gm6.SetGmLevelCommand;
@@ -599,6 +600,7 @@ public class CommandsExecutor {
         addCommand("removechannel", 6, ServerRemoveChannelCommand.class);
         addCommand("removeworld", 6, ServerRemoveWorldCommand.class);
         addCommand("devtest", 6, DevtestCommand.class);
+        addCommand("securityevents", 6, SecurityEventsCommand.class);
         addCommand("agentpop", 6, AgentPopCommand.class);
         addCommand("agentscheduler", 6, AgentSchedulerCommand.class);
         addCommand("townlife", 6, TownLifeCommand.class);

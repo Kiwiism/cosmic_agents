@@ -550,4 +550,8 @@ public class Storage {
         }
     }
 
+    public boolean isOpen() {
+        return currentNpcid > 0;
+    }
+
 }

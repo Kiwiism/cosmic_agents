@@ -266,4 +266,35 @@
         </createIndex>
     </changeSet>
 
+    <changeSet id="31-economy-idempotency" author="Codex">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="economy_transaction_journal"/>
+            <not><columnExists tableName="economy_transaction_journal" columnName="idempotency_key"/></not>
+        </preConditions>
+        <addColumn tableName="economy_transaction_journal">
+            <column name="idempotency_key" type="VARCHAR(128)"/>
+        </addColumn>
+        <update tableName="economy_transaction_journal">
+            <column name="idempotency_key" valueComputed="transaction_id"/>
+        </update>
+        <addNotNullConstraint tableName="economy_transaction_journal" columnName="idempotency_key"
+                              columnDataType="VARCHAR(128)"/>
+        <addUniqueConstraint tableName="economy_transaction_journal" columnNames="idempotency_key"
+                             constraintName="uk_economy_journal_idempotency"/>
+    </changeSet>
+
+    <changeSet id="32-security-event-review-indexes" author="Codex">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="security_event"/>
+        </preConditions>
+        <createIndex tableName="security_event" indexName="idx_security_event_open">
+            <column name="review_status"/>
+            <column name="occurred_at"/>
+        </createIndex>
+        <createIndex tableName="security_event" indexName="idx_security_event_retention">
+            <column name="review_status"/>
+            <column name="reviewed_at"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>

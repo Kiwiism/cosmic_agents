@@ -4,7 +4,13 @@ import client.Character;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
+import client.inventory.ItemFactory;
+import tools.Pair;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.Map;
 
@@ -47,6 +53,25 @@ final class EconomyParticipantSnapshot {
         if (mesoDelta != 0) {
             participant.gainMeso(mesoDelta, false, false, false);
         }
+    }
+
+    void persist(Connection connection) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(
+                "UPDATE characters SET meso = ? WHERE id = ?")) {
+            statement.setInt(1, mesos);
+            statement.setInt(2, participant.getId());
+            if (statement.executeUpdate() != 1) {
+                throw new SQLException("Economy participant no longer exists: " + participant.getId());
+            }
+        }
+
+        ArrayList<Pair<Item, InventoryType>> items = new ArrayList<>();
+        for (Map.Entry<InventoryType, Inventory> entry : inventories.entrySet()) {
+            for (Item item : entry.getValue().list()) {
+                items.add(new Pair<>(item.copy(), entry.getKey()));
+            }
+        }
+        ItemFactory.INVENTORY.saveItems(items, participant.getId(), connection);
     }
 
     void disconnectNetworkSession() {

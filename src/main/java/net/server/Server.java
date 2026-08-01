@@ -40,6 +40,7 @@ import constants.net.ServerConstants;
 import database.DatabaseMigrations;
 import server.economy.EconomyTransactionCoordinator;
 import server.security.SecurityEventRuntime;
+import server.security.SecurityEventReviewService;
 import database.note.NoteDao;
 import net.ChannelDependencies;
 import net.PacketProcessor;
@@ -1148,6 +1149,11 @@ public class Server {
         DiskSpaceMonitor.checkNow();
         tMan.register(TimerManager.SchedulerLane.LOW_PRIORITY, DiskSpaceMonitor::checkNow,
                 MINUTES.toMillis(5), MINUTES.toMillis(5));
+        tMan.register(TimerManager.SchedulerLane.LOW_PRIORITY,
+                () -> SecurityEventReviewService.applyRetention(
+                        java.time.Duration.ofDays(Math.max(1,
+                                YamlConfig.config.server.SECURITY_EVENT_RETENTION_DAYS))),
+                DAYS.toMillis(1), getTimeLeftForNextDay());
 
         timeLeft = getTimeLeftForNextDay();
         ExpeditionBossLog.resetBossLogTable();

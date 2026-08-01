@@ -45,6 +45,7 @@ class JdbcEconomyTransactionJournalIntegrationTest {
             statement.execute("""
                     CREATE TABLE IF NOT EXISTS economy_transaction_journal (
                       transaction_id VARCHAR(36) NOT NULL PRIMARY KEY,
+                      idempotency_key VARCHAR(128) NOT NULL UNIQUE,
                       operation_kind VARCHAR(32) NOT NULL,
                       status VARCHAR(32) NOT NULL,
                       primary_character_id INT NOT NULL,
@@ -78,7 +79,7 @@ class JdbcEconomyTransactionJournalIntegrationTest {
     }
 
     @Test
-    void concurrentOperationsCommitExactlyOnceAndRejectDuplicatePrepare() throws Exception {
+    void concurrentOperationsCommitExactlyOnceAndAcceptCommittedRetry() throws Exception {
         JdbcEconomyTransactionJournal journal = new JdbcEconomyTransactionJournal(
                 JdbcEconomyTransactionJournalIntegrationTest::open);
         List<EconomyOperation> operations = new ArrayList<>();
@@ -94,7 +95,7 @@ class JdbcEconomyTransactionJournalIntegrationTest {
             for (EconomyOperation operation : operations) {
                 writes.add(executor.submit(() -> {
                     journal.prepare(operation);
-                    journal.transition(operation, EconomyJournalStatus.COMMITTED, null);
+                    journal.commit(operation, EconomyDurableState.forTesting(connection -> { }));
                 }));
             }
             for (Future<?> write : writes) {
@@ -103,12 +104,32 @@ class JdbcEconomyTransactionJournalIntegrationTest {
         }
 
         assertEquals(64, countStatus("COMMITTED"));
-        assertThrows(EconomyTransactionException.class, () -> journal.prepare(operations.getFirst()));
+        assertEquals(EconomyPrepareResult.ALREADY_COMMITTED, journal.prepare(operations.getFirst()));
         assertEquals(64, countStatus("COMMITTED"));
     }
 
     @Test
-    void startupReconciliationMarksAnInterruptedPreparedOperationForReview() throws Exception {
+    void rolledBackIdempotentOperationCanBeRetried() throws Exception {
+        JdbcEconomyTransactionJournal journal = new JdbcEconomyTransactionJournal(
+                JdbcEconomyTransactionJournalIntegrationTest::open);
+        String idempotencyKey = "mysql-retry-" + UUID.randomUUID();
+        EconomyOperation first = EconomyOperation.create(idempotencyKey,
+                EconomyOperationKind.SHOP_BUY, 2_200_001, null, "first-attempt");
+        transactionIds.add(first.transactionId());
+        assertEquals(EconomyPrepareResult.EXECUTE, journal.prepare(first));
+        journal.transition(first, EconomyJournalStatus.ROLLED_BACK, "injected endpoint failure");
+
+        EconomyOperation retry = EconomyOperation.create(idempotencyKey,
+                EconomyOperationKind.SHOP_BUY, 2_200_001, null, "retry-attempt");
+        transactionIds.add(retry.transactionId());
+        assertEquals(EconomyPrepareResult.EXECUTE, journal.prepare(retry));
+        journal.commit(retry, EconomyDurableState.forTesting(connection -> { }));
+
+        assertEquals("COMMITTED", status(retry.transactionId()));
+    }
+
+    @Test
+    void startupReconciliationRollsBackAnInterruptedPreparedOperation() throws Exception {
         JdbcEconomyTransactionJournal journal = new JdbcEconomyTransactionJournal(
                 JdbcEconomyTransactionJournalIntegrationTest::open);
         EconomyOperation interrupted = EconomyOperation.create(
@@ -123,8 +144,31 @@ class JdbcEconomyTransactionJournalIntegrationTest {
             statement.executeUpdate();
         }
 
-        assertEquals(1, journal.markStalePreparedForReview(Duration.ofMinutes(2)));
-        assertEquals("REVIEW_REQUIRED", status(interrupted.transactionId()));
+        assertEquals(1, journal.reconcileStalePrepared(Duration.ofMinutes(2)));
+        assertEquals("ROLLED_BACK", status(interrupted.transactionId()));
+    }
+
+    @Test
+    void endpointCrashBetweenStateWriteAndJournalCommitRollsBackBoth() throws Exception {
+        EconomyOperation interrupted = EconomyOperation.create(
+                EconomyOperationKind.SHOP_BUY, 2_100_001, null, "mysql-endpoint-crash-gate");
+        transactionIds.add(interrupted.transactionId());
+        JdbcEconomyTransactionJournal journal = new JdbcEconomyTransactionJournal(
+                JdbcEconomyTransactionJournalIntegrationTest::open,
+                () -> { throw new SQLException("injected endpoint crash"); });
+        journal.prepare(interrupted);
+
+        assertThrows(EconomyTransactionException.class, () -> journal.commit(interrupted,
+                EconomyDurableState.forTesting(connection -> {
+                    try (PreparedStatement statement = connection.prepareStatement(
+                            "UPDATE economy_transaction_journal SET summary = 'partial-write' WHERE transaction_id = ?")) {
+                        statement.setString(1, interrupted.transactionId().toString());
+                        statement.executeUpdate();
+                    }
+                })));
+
+        assertEquals("PREPARED", status(interrupted.transactionId()));
+        assertEquals("mysql-endpoint-crash-gate", summary(interrupted.transactionId()));
     }
 
     private static Connection open() throws SQLException {
@@ -152,6 +196,18 @@ class JdbcEconomyTransactionJournalIntegrationTest {
         try (Connection connection = open();
              PreparedStatement statement = connection.prepareStatement(
                      "SELECT status FROM economy_transaction_journal WHERE transaction_id = ?")) {
+            statement.setString(1, transactionId.toString());
+            try (ResultSet result = statement.executeQuery()) {
+                result.next();
+                return result.getString(1);
+            }
+        }
+    }
+
+    private static String summary(UUID transactionId) throws Exception {
+        try (Connection connection = open();
+             PreparedStatement statement = connection.prepareStatement(
+                     "SELECT summary FROM economy_transaction_journal WHERE transaction_id = ?")) {
             statement.setString(1, transactionId.toString());
             try (ResultSet result = statement.executeQuery()) {
                 result.next();

@@ -28,8 +28,22 @@ class EconomyTransactionCoordinatorTest {
                 "item=2000000 quantity=10 mesos=500", mutations::incrementAndGet);
 
         assertEquals(1, mutations.get());
-        assertEquals(0, journal.markStalePreparedForReview(java.time.Duration.ZERO),
+        assertEquals(0, journal.reconcileStalePrepared(java.time.Duration.ZERO),
                 "committed entries must not be reclassified");
+    }
+
+    @Test
+    void committedIdempotencyKeyDoesNotRepeatMutation() {
+        EconomyTransactionCoordinator.installJournalForTesting(new InMemoryEconomyTransactionJournal());
+        Character participant = character(44);
+        AtomicInteger mutations = new AtomicInteger();
+
+        EconomyTransactionCoordinator.execute("shop-request-44", participant, null,
+                EconomyOperationKind.SHOP_BUY, "idempotent-shop-request", mutations::incrementAndGet);
+        EconomyTransactionCoordinator.execute("shop-request-44", participant, null,
+                EconomyOperationKind.SHOP_BUY, "idempotent-shop-request", mutations::incrementAndGet);
+
+        assertEquals(1, mutations.get());
     }
 
     @Test
@@ -42,7 +56,19 @@ class EconomyTransactionCoordinatorTest {
                 EconomyOperationKind.SHOP_SELL, "item=4000000 quantity=1 mesos=5",
                 () -> { throw new IllegalStateException("inventory mutation failed"); }));
 
-        assertEquals(EconomyJournalStatus.ROLLED_BACK, journal.lastStatus);
+        assertEquals(EconomyJournalStatus.ROLLED_BACK, journal.lastStatus());
+    }
+
+    @Test
+    void rollsBackWhenAtomicDurableCommitFails() {
+        FailingCommitJournal journal = new FailingCommitJournal();
+        EconomyTransactionCoordinator.installJournalForTesting(journal);
+        Character participant = character(43);
+
+        assertThrows(EconomyTransactionException.class, () -> EconomyTransactionCoordinator.execute(
+                participant, null, EconomyOperationKind.SHOP_BUY, "endpoint-crash-injection", () -> { }));
+
+        assertEquals(EconomyJournalStatus.ROLLED_BACK, journal.lastStatus());
     }
 
     private static Character character(int id) {
@@ -51,12 +77,13 @@ class EconomyTransactionCoordinatorTest {
         return character;
     }
 
-    private static final class TrackingJournal implements EconomyTransactionJournal {
+    private static class TrackingJournal implements EconomyTransactionJournal {
         private EconomyJournalStatus lastStatus;
 
         @Override
-        public void prepare(EconomyOperation operation) {
+        public EconomyPrepareResult prepare(EconomyOperation operation) {
             lastStatus = EconomyJournalStatus.PREPARED;
+            return EconomyPrepareResult.EXECUTE;
         }
 
         @Override
@@ -65,8 +92,24 @@ class EconomyTransactionCoordinatorTest {
         }
 
         @Override
-        public int markStalePreparedForReview(java.time.Duration age) {
+        public void commit(EconomyOperation operation, EconomyDurableState durableState) {
+            lastStatus = EconomyJournalStatus.COMMITTED;
+        }
+
+        @Override
+        public int reconcileStalePrepared(java.time.Duration age) {
             return 0;
+        }
+
+        protected final EconomyJournalStatus lastStatus() {
+            return lastStatus;
+        }
+    }
+
+    private static final class FailingCommitJournal extends TrackingJournal {
+        @Override
+        public void commit(EconomyOperation operation, EconomyDurableState durableState) {
+            throw new EconomyTransactionException("injected failure after endpoint mutation");
         }
     }
 }

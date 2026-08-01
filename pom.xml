@@ -70,6 +70,7 @@
         <jackson.version>2.19.0</jackson.version> <!-- JSON for internal admin bridge -->
         <junit.version>5.13.1</junit.version> <!-- Unit test -->
         <mockito.version>5.18.0</mockito.version> <!-- Unit test -->
+        <argLine></argLine>
     </properties>
 
     <dependencies>
@@ -221,6 +222,8 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${maven-surefire-plugin.version}</version>
                 <configuration>
+                    <!-- Mockito's inline mock maker must be attached explicitly on modern JDKs. -->
+                    <argLine>@{argLine} -javaagent:&quot;${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar&quot;</argLine>
                     <systemPropertyVariables>
                         <agents.navigation.cacheDir>${project.build.directory}/agent-nav-test-cache</agents.navigation.cacheDir>
                     </systemPropertyVariables>

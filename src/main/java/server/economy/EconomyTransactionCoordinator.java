@@ -23,19 +23,26 @@ public final class EconomyTransactionCoordinator {
 
     public static void initializePersistentJournal() {
         journal = new JdbcEconomyTransactionJournal();
-        int reviewRequired = journal.markStalePreparedForReview(Duration.ofMinutes(2));
-        if (reviewRequired > 0) {
-            log.warn("Marked {} incomplete economy transactions for operator review", reviewRequired);
+        int reconciled = journal.reconcileStalePrepared(Duration.ofMinutes(2));
+        if (reconciled > 0) {
+            log.warn("Reconciled {} interrupted economy transactions as rolled back", reconciled);
         }
     }
 
     public static void execute(Character primary, Character secondary, EconomyOperationKind kind,
                                String summary, Runnable mutation) {
+        execute(null, primary, secondary, kind, summary, mutation);
+    }
+
+    public static void execute(String idempotencyKey, Character primary, Character secondary,
+                               EconomyOperationKind kind, String summary, Runnable mutation) {
         if (primary == null || mutation == null) {
             throw new IllegalArgumentException("Economy transaction requires a primary participant and mutation");
         }
-        EconomyOperation operation = EconomyOperation.create(kind, primary.getId(),
-                secondary == null ? null : secondary.getId(), summary);
+        EconomyOperation operation = idempotencyKey == null
+                ? EconomyOperation.create(kind, primary.getId(), secondary == null ? null : secondary.getId(), summary)
+                : EconomyOperation.create(idempotencyKey, kind, primary.getId(),
+                        secondary == null ? null : secondary.getId(), summary);
         int firstId = secondary == null ? primary.getId() : Math.min(primary.getId(), secondary.getId());
         int secondId = secondary == null ? -1 : Math.max(primary.getId(), secondary.getId());
         ReentrantLock first = participantLocks.computeIfAbsent(firstId, ignored -> new ReentrantLock());
@@ -50,10 +57,15 @@ public final class EconomyTransactionCoordinator {
             EconomyParticipantSnapshot primaryBefore = EconomyParticipantSnapshot.capture(primary);
             EconomyParticipantSnapshot secondaryBefore = secondary == null
                     ? null : EconomyParticipantSnapshot.capture(secondary);
-            journal.prepare(operation);
+            if (journal.prepare(operation) == EconomyPrepareResult.ALREADY_COMMITTED) {
+                return;
+            }
             try {
                 mutation.run();
-                journal.transition(operation, EconomyJournalStatus.COMMITTED, null);
+                EconomyParticipantSnapshot primaryAfter = EconomyParticipantSnapshot.capture(primary);
+                EconomyParticipantSnapshot secondaryAfter = secondary == null
+                        ? null : EconomyParticipantSnapshot.capture(secondary);
+                journal.commit(operation, EconomyDurableState.capture(primaryAfter, secondaryAfter));
             } catch (RuntimeException failure) {
                 rollbackOrMarkForReview(primaryBefore, secondaryBefore, operation, failure);
                 throw failure;

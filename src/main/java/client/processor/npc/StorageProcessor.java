@@ -38,6 +38,11 @@ import org.slf4j.LoggerFactory;
 import server.ItemInformationProvider;
 import server.Storage;
 import tools.PacketCreator;
+import server.security.SecurityEventRuntime;
+import server.security.SecurityEventType;
+import server.security.SecuritySeverity;
+
+import java.util.Map;
 
 /**
  * @author Matze
@@ -54,6 +59,11 @@ public class StorageProcessor {
 
         byte mode = p.readByte();
 
+        if (!StorageRequestValidator.isKnownAction(mode) || !storage.isOpen()) {
+            reject(c, mode, storage.isOpen() ? "unknown-action" : "no-active-storage");
+            return;
+        }
+
         if (chr.getLevel() < 15) {
             chr.dropMessage(1, "You may only use the storage once you have reached level 15.");
             c.sendPacket(PacketCreator.enableActions());
@@ -66,7 +76,7 @@ public class StorageProcessor {
                 case 4: { // Take out
                     byte type = p.readByte();
                     byte slot = p.readByte();
-                    if (slot < 0 || slot > storage.getSlots()) { // removal starts at zero
+                    if (!StorageRequestValidator.isValidTakeout(type, slot, storage.getSlots())) {
                         AutobanFactory.PACKET_EDIT.alert(c.getPlayer(), c.getPlayer().getName() + " tried to packet edit with storage.");
                         log.warn("Chr {} tried to work with storage slot {}", c.getPlayer().getName(), slot);
                         c.disconnect(true, false);
@@ -124,7 +134,7 @@ public class StorageProcessor {
                     short quantity = p.readShort();
                     InventoryType invType = ItemConstants.getInventoryType(itemId);
                     Inventory inv = chr.getInventory(invType);
-                    if (slot < 1 || slot > inv.getSlotLimit()) { // player inv starts at one
+                    if (!StorageRequestValidator.isValidInventorySlot(slot, inv.getSlotLimit())) {
                         AutobanFactory.PACKET_EDIT.alert(c.getPlayer(),
                                 c.getPlayer().getName() + " tried to packet edit with storage.");
                         log.warn("Chr {} tried to store item at slot {}", c.getPlayer().getName(), slot);
@@ -238,6 +248,9 @@ public class StorageProcessor {
                 case 8: // Close (unless the player decides to enter cash shop)
                     storage.close();
                     break;
+                default:
+                    reject(c, mode, "unknown-action");
+                    break;
                 }
             } finally {
                 c.releaseClient();
@@ -247,5 +260,11 @@ public class StorageProcessor {
 
     private static boolean hasGMRestrictions(Character character) {
         return character.isGM() && character.gmLevel() < YamlConfig.config.server.MINIMUM_GM_LEVEL_TO_USE_STORAGE;
+    }
+
+    private static void reject(Client client, byte mode, String reason) {
+        SecurityEventRuntime.record(client, SecurityEventType.MALFORMED_PACKET, SecuritySeverity.WARNING,
+                Map.of("packetFamily", "STORAGE", "mode", Byte.toString(mode), "reason", reason));
+        client.sendPacket(PacketCreator.enableActions());
     }
 }

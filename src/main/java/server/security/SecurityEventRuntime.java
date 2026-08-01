@@ -19,10 +19,16 @@ import java.util.UUID;
 
 public final class SecurityEventRuntime {
     private static final Logger log = LoggerFactory.getLogger("SECURITY");
+    private static final Logger alertLog = LoggerFactory.getLogger("SECURITY_ALERT");
+    private static final SecurityAlertSink DEFAULT_ALERT_SINK = event -> alertLog.warn(
+            "securityAlert eventId={} type={} accountId={} characterId={} remote={} evidence={}",
+            event.eventId(), event.type(), event.accountId(), event.characterId(),
+            event.remoteFingerprint(), event.evidence());
     private static final int RETAINED_EVENTS = 10_000;
     private static final AtomicLong sequence = new AtomicLong();
     private static final ArrayDeque<SecurityEvent> recent = new ArrayDeque<>(RETAINED_EVENTS);
     private static volatile SecurityEventStore persistentStore;
+    private static volatile SecurityAlertSink alertSink = DEFAULT_ALERT_SINK;
 
     private SecurityEventRuntime() {
     }
@@ -76,6 +82,9 @@ public final class SecurityEventRuntime {
                     event.sequence(), type, severity, accountId, characterId, remote, event.evidence());
         }
         persist(event);
+        if (severity == SecuritySeverity.CRITICAL) {
+            deliverAlert(event);
+        }
         return event;
     }
 
@@ -85,6 +94,35 @@ public final class SecurityEventRuntime {
             throw new IllegalStateException("Security event persistence is not initialized");
         }
         return store.markReviewed(eventId, reviewer, note);
+    }
+
+    static List<SecurityEventReviewRecord> findOpen(int limit) {
+        SecurityEventStore store = requireStore();
+        return store.findOpen(limit);
+    }
+
+    static int deleteReviewedBefore(Instant cutoff) {
+        return requireStore().deleteReviewedBefore(cutoff);
+    }
+
+    public static void installAlertSink(SecurityAlertSink sink) {
+        alertSink = java.util.Objects.requireNonNull(sink);
+    }
+
+    private static SecurityEventStore requireStore() {
+        SecurityEventStore store = persistentStore;
+        if (store == null) {
+            throw new IllegalStateException("Security event persistence is not initialized");
+        }
+        return store;
+    }
+
+    private static void deliverAlert(SecurityEvent event) {
+        try {
+            alertSink.deliver(event);
+        } catch (RuntimeException failure) {
+            log.error("Security alert delivery failed for {}", event.eventId(), failure);
+        }
     }
 
     private static void persist(SecurityEvent event) {
@@ -115,6 +153,11 @@ public final class SecurityEventRuntime {
             recent.clear();
         }
         persistentStore = null;
+        alertSink = DEFAULT_ALERT_SINK;
+    }
+
+    static void installStoreForTesting(SecurityEventStore store) {
+        persistentStore = store;
     }
 
     private static String fingerprint(String remoteAddress) {

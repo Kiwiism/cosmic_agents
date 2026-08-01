@@ -27,6 +27,12 @@ import config.YamlConfig;
 import net.AbstractPacketHandler;
 import net.packet.InPacket;
 import tools.PacketCreator;
+import server.security.MutationReplayGuard;
+import server.security.SecurityEventRuntime;
+import server.security.SecurityEventType;
+import server.security.SecuritySeverity;
+
+import java.util.Map;
 
 public final class DueyHandler extends AbstractPacketHandler {
 
@@ -38,6 +44,10 @@ public final class DueyHandler extends AbstractPacketHandler {
         }
 
         byte operation = p.readByte();
+        if (!DueyRequestValidator.hasValidEnvelope(operation, p.available())) {
+            reject(c, operation, "invalid-envelope");
+            return;
+        }
         if (operation == DueyProcessor.Actions.TOSERVER_RECV_ITEM.getCode()) { // on click 'O' Button, thanks inhyuk
             DueyProcessor.dueySendTalk(c, false);
         } else if (operation == DueyProcessor.Actions.TOSERVER_SEND_ITEM.getCode()) {
@@ -52,14 +62,27 @@ public final class DueyHandler extends AbstractPacketHandler {
             DueyProcessor.dueySendItem(c, inventId, itemPos, amount, mesos, message, recipient, quick);
         } else if (operation == DueyProcessor.Actions.TOSERVER_REMOVE_PACKAGE.getCode()) {
             int packageid = p.readInt();
-
+            if (!MutationReplayGuard.acquire(c.getPlayer().getId(), "DUEY_REMOVE", packageid)) {
+                reject(c, operation, "duplicate-resource-mutation");
+                return;
+            }
             DueyProcessor.dueyRemovePackage(c, packageid, true);
         } else if (operation == DueyProcessor.Actions.TOSERVER_CLAIM_PACKAGE.getCode()) {
             int packageid = p.readInt();
-
+            if (!MutationReplayGuard.acquire(c.getPlayer().getId(), "DUEY_CLAIM", packageid)) {
+                reject(c, operation, "duplicate-resource-mutation");
+                return;
+            }
             DueyProcessor.dueyClaimPackage(c, packageid);
-        } else if (operation == DueyProcessor.Actions.TOSERVER_CLAIM_PACKAGE.getCode()) {
-            DueyProcessor.dueySendTalk(c, false);
         }
+    }
+
+    private static void reject(Client client, byte operation, String reason) {
+        SecurityEventType type = "duplicate-resource-mutation".equals(reason)
+                ? SecurityEventType.MUTATION_REPLAY : SecurityEventType.MALFORMED_PACKET;
+        SecurityEventRuntime.record(client, type, SecuritySeverity.WARNING,
+                Map.of("packetFamily", "DUEY", "operation", Byte.toString(operation), "reason", reason));
+        client.sendPacket(PacketCreator.sendDueyMSG(
+                DueyProcessor.Actions.TOCLIENT_RECV_UNKNOWN_ERROR.getCode()));
     }
 }

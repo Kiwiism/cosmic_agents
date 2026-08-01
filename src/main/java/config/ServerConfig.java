@@ -354,6 +354,9 @@ public class ServerConfig {
     public int MINIMUM_GM_LEVEL_TO_DROP;
     public boolean GM_NO_FAME_COOLDOWN;
 
+    // Security evidence retention
+    public int SECURITY_EVENT_RETENTION_DAYS = 90;
+
     //Custom NPC overrides. List of NPC IDs.
     public Map<String, String> NPCS_SCRIPTABLE = new HashMap<>();
 }

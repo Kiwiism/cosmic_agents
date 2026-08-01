@@ -45,6 +45,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.StringJoiner;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -83,6 +84,7 @@ public class Trade {
     private final Character chr;
     private final byte number;
     private boolean fullTrade = false;
+    private String settlementId = "trade:" + UUID.randomUUID();
 
     public Trade(byte number, Character chr) {
         this.chr = chr;
@@ -240,6 +242,11 @@ public class Trade {
             return;
         }
         this.partner = partner;
+        if (number == 1) {
+            settlementId = partner.settlementId;
+        } else {
+            partner.settlementId = settlementId;
+        }
     }
 
     public Character getChr() {
@@ -366,7 +373,7 @@ public class Trade {
             String summary = "firstMesos=" + local.getExchangeMesos() + " secondMesos="
                     + partner.getExchangeMesos() + " firstItems=" + local.exchangeItems.size()
                     + " secondItems=" + partner.exchangeItems.size();
-            EconomyTransactionCoordinator.execute(local.getChr(), partner.getChr(),
+            EconomyTransactionCoordinator.execute(local.settlementId, local.getChr(), partner.getChr(),
                     EconomyOperationKind.PLAYER_TRADE, summary, () -> {
                         local.completeTrade();
                         partner.completeTrade();
