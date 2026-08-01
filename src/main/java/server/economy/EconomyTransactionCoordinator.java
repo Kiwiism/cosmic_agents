@@ -47,12 +47,15 @@ public final class EconomyTransactionCoordinator {
             second.lock();
         }
         try {
+            EconomyParticipantSnapshot primaryBefore = EconomyParticipantSnapshot.capture(primary);
+            EconomyParticipantSnapshot secondaryBefore = secondary == null
+                    ? null : EconomyParticipantSnapshot.capture(secondary);
             journal.prepare(operation);
             try {
                 mutation.run();
                 journal.transition(operation, EconomyJournalStatus.COMMITTED, null);
             } catch (RuntimeException failure) {
-                markForReview(primary, operation, failure);
+                rollbackOrMarkForReview(primaryBefore, secondaryBefore, operation, failure);
                 throw failure;
             }
         } finally {
@@ -65,13 +68,34 @@ public final class EconomyTransactionCoordinator {
         }
     }
 
-    private static void markForReview(Character primary, EconomyOperation operation, RuntimeException failure) {
+    private static void rollbackOrMarkForReview(EconomyParticipantSnapshot primaryBefore,
+                                                EconomyParticipantSnapshot secondaryBefore,
+                                                EconomyOperation operation, RuntimeException failure) {
+        try {
+            primaryBefore.restore();
+            if (secondaryBefore != null) {
+                secondaryBefore.restore();
+            }
+            journal.transition(operation, EconomyJournalStatus.ROLLED_BACK, failure.toString());
+            primaryBefore.disconnectNetworkSession();
+            if (secondaryBefore != null) {
+                secondaryBefore.disconnectNetworkSession();
+            }
+        } catch (RuntimeException rollbackFailure) {
+            failure.addSuppressed(rollbackFailure);
+            markForReview(primaryBefore, operation, failure);
+        }
+    }
+
+    private static void markForReview(EconomyParticipantSnapshot primaryBefore, EconomyOperation operation,
+                                      RuntimeException failure) {
         try {
             journal.transition(operation, EconomyJournalStatus.REVIEW_REQUIRED, failure.toString());
         } catch (RuntimeException journalFailure) {
             failure.addSuppressed(journalFailure);
         }
-        SecurityEventRuntime.record(primary, SecurityEventType.ECONOMY_INVARIANT, SecuritySeverity.CRITICAL,
+        SecurityEventRuntime.record(operation.primaryCharacterId(), SecurityEventType.ECONOMY_INVARIANT,
+                SecuritySeverity.CRITICAL,
                 Map.of("transactionId", operation.transactionId().toString(),
                         "operation", operation.kind().name(),
                         "failure", failure.getClass().getSimpleName()));

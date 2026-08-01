@@ -37,6 +37,11 @@ public final class SecurityEventRuntime {
         return record(chr == null ? null : chr.getClient(), type, severity, evidence);
     }
 
+    public static SecurityEvent record(int characterId, SecurityEventType type, SecuritySeverity severity,
+                                       Map<String, String> evidence) {
+        return record(type, severity, -1, characterId, "internal", evidence);
+    }
+
     public static SecurityEvent recordExternal(SecurityEventType type, SecuritySeverity severity,
                                                String remoteAddress, Map<String, String> evidence) {
         return record(type, severity, -1, -1, fingerprint(remoteAddress), evidence);

@@ -33,7 +33,7 @@ class EconomyTransactionCoordinatorTest {
     }
 
     @Test
-    void marksMutationFailureForReview() {
+    void rollsBackMutationFailure() {
         TrackingJournal journal = new TrackingJournal();
         EconomyTransactionCoordinator.installJournalForTesting(journal);
         Character participant = character(42);
@@ -42,7 +42,7 @@ class EconomyTransactionCoordinatorTest {
                 EconomyOperationKind.SHOP_SELL, "item=4000000 quantity=1 mesos=5",
                 () -> { throw new IllegalStateException("inventory mutation failed"); }));
 
-        assertEquals(EconomyJournalStatus.REVIEW_REQUIRED, journal.lastStatus);
+        assertEquals(EconomyJournalStatus.ROLLED_BACK, journal.lastStatus);
     }
 
     private static Character character(int id) {
