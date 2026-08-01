@@ -50,7 +50,7 @@
         <mainClass>net.server.Server</mainClass>
 
         <!-- Maven plugins -->
-        <maven-surefire-plugin.version>3.5.3</maven-surefire-plugin.version> <!-- For running unit tests -->
+        <maven-surefire-plugin.version>3.5.6</maven-surefire-plugin.version> <!-- For running unit tests -->
         <maven-jar-plugin.version>3.4.2</maven-jar-plugin.version> <!-- Disabled. (for building thin jar) -->
         <maven-assembly-plugin.version>3.7.1
         </maven-assembly-plugin.version> <!-- For packaging the executable fat jar -->
