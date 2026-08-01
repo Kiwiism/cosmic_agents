@@ -11,6 +11,7 @@ import java.sql.SQLException;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -69,6 +70,25 @@ class StoragePersistenceDirtyTest {
         assertEquals(2000000, restored.getItems().getFirst().getItemId());
         assertEquals(2, restored.getItems().getFirst().getPosition());
         assertEquals(17, restored.getItems().getFirst().getQuantity());
+    }
+
+    @Test
+    void storageRejectsItemsBeyondItsSlotCapacity() throws Exception {
+        Storage storage = newStorage();
+        for (short position = 1; position <= 4; position++) {
+            assertTrue(storage.store(new Item(2000000 + position, position, (short) 1)));
+        }
+
+        assertFalse(storage.store(new Item(2000010, (short) 5, (short) 1)));
+        assertEquals(4, storage.getItems().size());
+    }
+
+    @Test
+    void storageRejectsNegativeMesoState() throws Exception {
+        Storage storage = newStorage();
+
+        assertThrows(RuntimeException.class, () -> storage.setMeso(-1));
+        assertEquals(0, storage.getMeso());
     }
 
     private static Storage newStorage() throws Exception {

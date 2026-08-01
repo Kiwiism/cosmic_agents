@@ -105,13 +105,10 @@ public final class MTSHandler extends AbstractPacketHandler {
                 if (itemtype == 1) {
                     quantity = 1;
                 }
-                if (quantity <= 0 || price < 110 || c.getPlayer().getItemQuantity(itemid, false) < quantity) {
-                    return;
-                }
                 InventoryType invType = ItemConstants.getInventoryType(itemid);
                 Item inventoryItem = c.getPlayer().getInventory(invType).getItem(slot);
-                if (inventoryItem == null || inventoryItem.getItemId() != itemid
-                        || inventoryItem.getQuantity() < quantity) {
+                if (!isValidListingRequest(itemid, quantity, price,
+                        c.getPlayer().getItemQuantity(itemid, false), inventoryItem)) {
                     return;
                 }
                 Item i = inventoryItem.copy();
@@ -546,6 +543,16 @@ public final class MTSHandler extends AbstractPacketHandler {
             monitoring.RuntimeFailureLogger.log(e);
         }
         return items;
+    }
+
+    static boolean isValidListingRequest(int itemId, short quantity, int price,
+            int totalQuantity, Item inventoryItem) {
+        return quantity > 0
+                && price >= 110
+                && totalQuantity >= quantity
+                && inventoryItem != null
+                && inventoryItem.getItemId() == itemId
+                && inventoryItem.getQuantity() >= quantity;
     }
 
     private void creditMtsSeller(Connection con, int sellerId, int price) throws SQLException {
