@@ -83,12 +83,11 @@ public final class EconomyTransactionCoordinator {
             }
         } catch (RuntimeException rollbackFailure) {
             failure.addSuppressed(rollbackFailure);
-            markForReview(primaryBefore, operation, failure);
+            markForReview(operation, failure);
         }
     }
 
-    private static void markForReview(EconomyParticipantSnapshot primaryBefore, EconomyOperation operation,
-                                      RuntimeException failure) {
+    private static void markForReview(EconomyOperation operation, RuntimeException failure) {
         try {
             journal.transition(operation, EconomyJournalStatus.REVIEW_REQUIRED, failure.toString());
         } catch (RuntimeException journalFailure) {

@@ -9,6 +9,9 @@ import server.agents.capabilities.combat.AgentCombatConfig;
 import server.life.Monster;
 import server.life.MonsterStats;
 
+import java.lang.reflect.Field;
+import java.util.Collection;
+
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -73,5 +76,27 @@ class MapleMapMobPhysicsBroadcastTest {
         assertTrue(map.reconcileTransitionMonsterVisibility(character) == 1);
         verify(client, times(2)).sendPacket(any(Packet.class));
         verify(character).removeVisibleMapObject(ghost);
+    }
+
+    @Test
+    void ordinaryBroadcastSendsTheSamePacketToBothReadyNetworkClients() throws Exception {
+        MapleMap map = new MapleMap(1010100, 0, 1, 100000000, 1.0f);
+        Character first = mock(Character.class);
+        Character second = mock(Character.class);
+        when(first.getClient()).thenReturn(mock(Client.class));
+        when(second.getClient()).thenReturn(mock(Client.class));
+        Packet packet = mock(Packet.class);
+
+        Field recipientsField = MapleMap.class.getDeclaredField("networkRecipients");
+        recipientsField.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        Collection<Character> recipients = (Collection<Character>) recipientsField.get(map);
+        recipients.add(first);
+        recipients.add(second);
+
+        map.broadcastMessage(packet);
+
+        verify(first).sendPacket(packet);
+        verify(second).sendPacket(packet);
     }
 }
