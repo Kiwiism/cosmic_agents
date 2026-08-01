@@ -51,8 +51,8 @@ public final class ThreadManager {
         submit(Workload.BLOCKING, task);
     }
 
-    public void newDatabaseTask(Runnable task) {
-        submit(Workload.DATABASE, task);
+    public boolean newDatabaseTask(Runnable task) {
+        return submit(Workload.DATABASE, task);
     }
 
     /**

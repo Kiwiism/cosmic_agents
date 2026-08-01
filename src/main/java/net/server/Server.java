@@ -39,6 +39,7 @@ import constants.net.OpcodeConstants;
 import constants.net.ServerConstants;
 import database.DatabaseMigrations;
 import server.economy.EconomyTransactionCoordinator;
+import server.security.SecurityEventRuntime;
 import database.note.NoteDao;
 import net.ChannelDependencies;
 import net.PacketProcessor;
@@ -953,6 +954,7 @@ public class Server {
         }
 
         ThreadManager.getInstance().start();
+        SecurityEventRuntime.initializePersistentStore();
         initializeTimelyTasks(channelDependencies);    // aggregated method for timely tasks thanks to lxconan
 
         try {
