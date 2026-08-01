@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -50,8 +51,38 @@ class AgentQuestProgressMilestonePublisherTest {
                     AgentQuestProgressMilestoneEvent.class, events.get(1));
             assertEquals(50, halfway.milestonePercent());
             assertEquals(15, halfway.currentCount());
+            assertFalse(halfway.targetName().isBlank());
             assertEquals(90, nearlyDone.milestonePercent());
             assertEquals(27, nearlyDone.currentCount());
+        } finally {
+            subscription.close();
+            AgentSessionEventRuntime.close(entry);
+            AgentRuntimeRegistry.unregisterEntry(entry);
+        }
+    }
+
+    @Test
+    void publishesItemMilestonesWithAnItemLabel() {
+        Character agent = mock(Character.class);
+        when(agent.getId()).thenReturn(195);
+        when(agent.getMapId()).thenReturn(103000000);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        AgentRuntimeRegistry.registerEntry(entry);
+        List<AgentEvent> events = new ArrayList<>();
+        var subscription = AgentSessionEventRuntime.bus(entry).subscribe(
+                AgentQuestProgressMilestoneEvent.TYPE, events::add);
+
+        try {
+            AgentQuestProgressMilestonePublisher.publishItemProgress(
+                    agent, 2091, 4000004, 19, 20, 40);
+
+            AgentEventDispatchRuntime.drain(entry);
+            assertEquals(1, events.size());
+            AgentQuestProgressMilestoneEvent halfway = assertInstanceOf(
+                    AgentQuestProgressMilestoneEvent.class, events.getFirst());
+            assertEquals(20, halfway.currentCount());
+            assertEquals(40, halfway.requiredCount());
+            assertFalse(halfway.targetName().isBlank());
         } finally {
             subscription.close();
             AgentSessionEventRuntime.close(entry);

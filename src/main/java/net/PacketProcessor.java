@@ -271,6 +271,8 @@ public final class PacketProcessor {
             registerLoginHandlers();
         } else {
             registerChannelHandlers();
+            log.info("[observer] protocol handlers registered channel={} enabled={} navgraphEnabled={}",
+                    channel, ObserverFeature.enabled(), ObserverFeature.navGraphEnabled());
         }
     }
 
@@ -453,17 +455,19 @@ public final class PacketProcessor {
         registerHandler(RecvOpcode.USE_ITEMUI, new RaiseIncExpHandler());
         registerHandler(RecvOpcode.CHANGE_QUICKSLOT, new QuickslotKeyMappedModifiedHandler());
         registerHandler(RecvOpcode.BOT_EQUIP, new net.server.channel.handlers.AgentEquipHandler());
-        if (ObserverFeature.enabled()) {
-            registerHandler(RecvOpcode.OBSERVER_CHARACTERS,
-                    new net.server.channel.handlers.ObserverCharactersHandler());
-            if (ObserverFeature.navGraphEnabled()) {
-                registerHandler(RecvOpcode.OBSERVER_NAV_GRAPH,
-                        new net.server.channel.handlers.ObserverNavGraphHandler());
-            }
-            registerHandler(RecvOpcode.OBSERVER_INTEREST,
-                    new net.server.channel.handlers.ObserverInterestHandler());
-            registerHandler(RecvOpcode.OBSERVER_ACTION,
-                    new net.server.channel.handlers.ObserverActionHandler());
-        }
+        // Keep the protocol surface registered regardless of configuration.
+        // Each observer handler performs its own feature and authorization
+        // checks, so a disabled observer suite remains inert. Registering the
+        // handlers here unconditionally also avoids constructing a channel
+        // packet processor before the observer configuration is available and
+        // then silently dropping every observer opcode for that channel.
+        registerHandler(RecvOpcode.OBSERVER_CHARACTERS,
+                new net.server.channel.handlers.ObserverCharactersHandler());
+        registerHandler(RecvOpcode.OBSERVER_NAV_GRAPH,
+                new net.server.channel.handlers.ObserverNavGraphHandler());
+        registerHandler(RecvOpcode.OBSERVER_INTEREST,
+                new net.server.channel.handlers.ObserverInterestHandler());
+        registerHandler(RecvOpcode.OBSERVER_ACTION,
+                new net.server.channel.handlers.ObserverActionHandler());
     }
 }

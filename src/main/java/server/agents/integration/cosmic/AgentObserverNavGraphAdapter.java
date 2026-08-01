@@ -3,6 +3,8 @@ package server.agents.integration.cosmic;
 import client.Character;
 import client.Client;
 import net.packet.InPacket;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.navigation.AgentMapGraphService;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
@@ -18,6 +20,7 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 public final class AgentObserverNavGraphAdapter implements ObserverNavGraphAdapter {
+    private static final Logger log = LoggerFactory.getLogger(AgentObserverNavGraphAdapter.class);
     private static final int REQUEST_BYTES = 6;
     private static final long MIN_REQUEST_INTERVAL_NANOS = 500_000_000L;
     private static final Map<Client, Long> LAST_REQUEST_NANOS = new WeakHashMap<>();
@@ -47,7 +50,15 @@ public final class AgentObserverNavGraphAdapter implements ObserverNavGraphAdapt
         int toRegion = action == ObserverNavGraphProtocol.ACTION_ROUTE
                 ? packet.readInt()
                 : 0;
+        int requestedSpeed = packet.available() >= 4
+                ? packet.readShort() & 0xFFFF
+                : 0;
+        int requestedJump = packet.available() >= 2
+                ? packet.readShort() & 0xFFFF
+                : 0;
         if (rateLimited(client)) {
+            log.info("[observer] navgraph request rate-limited observer={} requestId={}",
+                    observer.getName(), requestId);
             return;
         }
 
@@ -56,10 +67,15 @@ public final class AgentObserverNavGraphAdapter implements ObserverNavGraphAdapt
             return;
         }
 
-        AgentMovementProfile profile = AgentMovementProfile.fromCharacter(observer);
+        AgentMovementProfile profile = requestedSpeed > 0 && requestedJump > 0
+                ? new AgentMovementProfile(requestedSpeed, requestedJump)
+                : AgentMovementProfile.fromCharacter(observer);
         AgentNavigationGraph graph = AgentNavigationGraphService.peekGraph(map, profile);
         if (graph == null) {
             AgentNavigationGraphService.warmGraphAsync(map, profile);
+            log.info("[observer] navgraph warming observer={} requestId={} mapId={} speed={} jump={}",
+                    observer.getName(), requestId, map.getId(),
+                    profile.totalSpeedStat(), profile.totalJumpStat());
             sendStatus(client, ObserverNavGraphProtocol.STATUS_WARMING,
                     requestId, map.getId(), 0, profile);
             return;
@@ -77,6 +93,9 @@ public final class AgentObserverNavGraphAdapter implements ObserverNavGraphAdapt
             byte[] payload = ObserverNavGraphProtocol.encode(view);
             List<byte[]> chunks = ObserverNavGraphProtocol.chunks(payload);
             int checksum = ObserverNavGraphProtocol.checksum(payload);
+            log.info("[observer] navgraph ready observer={} requestId={} mapId={} regions={} edges={} bytes={} chunks={}",
+                    observer.getName(), requestId, view.mapId(), view.regions().size(),
+                    view.edges().size(), payload.length, chunks.size());
             for (int index = 0; index < chunks.size(); index++) {
                 client.sendPacket(PacketCreator.observerNavGraphChunk(
                         ObserverNavGraphProtocol.STATUS_READY,

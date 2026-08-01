@@ -43,20 +43,19 @@ public final class ObserverWarpService {
             return blocked("The observer cannot warp while dead.");
         }
 
-        Character target = client.getWorldServer().getPlayerStorage()
-                .getCharacterById(characterId);
-        if (target == null
-                || !target.isLoggedin()
-                || target.getClient() == null
-                || target.getMap() == null) {
+        Character target = ObserverCharacterDirectory.find(client, characterId);
+        if (target == null || target.getMap() == null) {
             return notFound("The target character is not online.");
         }
-        if (target.getClient().getChannel() != client.getChannel()) {
+        int targetChannel = target.getClient() == null
+                ? target.getMap().getChannelServer().getId()
+                : target.getClient().getChannel();
+        if (targetChannel != client.getChannel()) {
             return new Result(
                     ObserverActionProtocol.STATUS_WRONG_CHANNEL,
                     target.getMapId(),
                     target.getId(),
-                    "Target is on channel " + target.getClient().getChannel() + ".");
+                    "Target is on channel " + targetChannel + ".");
         }
 
         MapleMap map = target.getMap();

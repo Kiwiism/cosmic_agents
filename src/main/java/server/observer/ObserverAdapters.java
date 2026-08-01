@@ -19,6 +19,12 @@ public final class ObserverAdapters {
                 : Optional.empty();
     }
 
+    public static Optional<ObserverCharacterDirectoryAdapter> characterDirectory() {
+        return ObserverFeature.enabled()
+                ? CharacterDirectoryHolder.ADAPTER
+                : Optional.empty();
+    }
+
     private static <T> Optional<T> first(Class<T> type) {
         return ServiceLoader.load(type).findFirst();
     }
@@ -31,5 +37,10 @@ public final class ObserverAdapters {
     private static final class InterestHolder {
         private static final Optional<ObserverInterestAdapter> ADAPTER =
                 first(ObserverInterestAdapter.class);
+    }
+
+    private static final class CharacterDirectoryHolder {
+        private static final Optional<ObserverCharacterDirectoryAdapter> ADAPTER =
+                first(ObserverCharacterDirectoryAdapter.class);
     }
 }

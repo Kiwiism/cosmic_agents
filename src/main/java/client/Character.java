@@ -2163,6 +2163,7 @@ public class Character extends AbstractCharacterObject {
                 final Packet pickupPacket = PacketCreator.removeItemFromMap(mapitem.getObjectId(), (isPet) ? 5 : 2, this.getId(), isPet, petIndex);
 
                 Item mItem = mapitem.getItem();
+                int previousItemQuantity = mItem == null ? 0 : countItem(mItem.getItemId());
                 boolean hasSpaceInventory = true;
                 ItemInformationProvider ii = ItemInformationProvider.getInstance();
                 if (ItemId.isNxCard(mapitem.getItemId()) || mapitem.getMeso() > 0 || ii.isConsumeOnPickup(mapitem.getItemId()) || (hasSpaceInventory = InventoryManipulator.checkSpace(client, mapitem.getItemId(), mItem.getQuantity(), mItem.getOwner()))) {
@@ -2194,6 +2195,7 @@ public class Character extends AbstractCharacterObject {
 
                                 this.getMap().pickItemDrop(pickupPacket, mapitem);
                             } else if (InventoryManipulator.addFromDrop(client, mItem, true)) {
+                                publishQuestItemProgress(mItem.getItemId(), previousItemQuantity);
                                 this.getMap().pickItemDrop(pickupPacket, mapitem);
                             } else {
                                 sendPacket(PacketCreator.enableActions());
@@ -2234,6 +2236,7 @@ public class Character extends AbstractCharacterObject {
                                 sendPacket(PacketCreator.enableActions());
                                 return;
                             }
+                            publishQuestItemProgress(mItem.getItemId(), previousItemQuantity);
                         }
                     } else if (ItemId.isNxCard(mapitem.getItemId())) {
                         // Add NX to account, show effect and make item disappear
@@ -2245,6 +2248,7 @@ public class Character extends AbstractCharacterObject {
                         }
                     } else if (applyConsumeOnPickup(mItem.getItemId())) {
                     } else if (InventoryManipulator.addFromDrop(client, mItem, true)) {
+                        publishQuestItemProgress(mItem.getItemId(), previousItemQuantity);
                         if (mItem.getItemId() == ItemId.ARPQ_SPIRIT_JEWEL) {
                             updateAriantScore();
                         }
@@ -2273,6 +2277,23 @@ public class Character extends AbstractCharacterObject {
             }
         }
         sendPacket(PacketCreator.enableActions());
+    }
+
+    private void publishQuestItemProgress(int itemId, int previousCount) {
+        int currentCount = countItem(itemId);
+        synchronized (quests) {
+            for (QuestStatus status : getQuests()) {
+                if (status.getStatus() != QuestStatus.Status.STARTED) {
+                    continue;
+                }
+                int requiredCount = status.getQuest().getCompleteItemAmountNeeded(itemId);
+                if (requiredCount > 0 && requiredCount != Integer.MAX_VALUE) {
+                    AgentQuestProgressMilestonePublisher.publishItemProgress(
+                            this, status.getQuest().getId(), itemId, previousCount,
+                            currentCount, requiredCount);
+                }
+            }
+        }
     }
 
     public int countItem(int itemid) {

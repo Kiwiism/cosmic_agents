@@ -2,6 +2,8 @@ package server.agents.progression.events;
 
 import client.Character;
 import server.agents.events.AgentEventPriority;
+import server.agents.integration.AgentInventoryGatewayRuntime;
+import server.life.MonsterInformationProvider;
 
 /** Detects configured quest progress threshold crossings at the authoritative mutation boundary. */
 public final class AgentQuestProgressMilestonePublisher {
@@ -33,9 +35,29 @@ public final class AgentQuestProgressMilestonePublisher {
                 || currentCount <= previousCount || requiredCount <= 0) {
             return;
         }
-        publishIfCrossed(agent, questId, targetId, previousCount, currentCount,
+        String targetName = mobName(targetId);
+        publishIfCrossed(agent, questId, targetId, targetName, previousCount, currentCount,
                 requiredCount, HALF_PERCENT);
-        publishIfCrossed(agent, questId, targetId, previousCount, currentCount,
+        publishIfCrossed(agent, questId, targetId, targetName, previousCount, currentCount,
+                requiredCount, NEARLY_COMPLETE_PERCENT);
+    }
+
+    /** Publishes collection milestones for an active quest that requires the acquired item. */
+    public static void publishItemProgress(
+            Character agent,
+            int questId,
+            int itemId,
+            int previousCount,
+            int currentCount,
+            int requiredCount) {
+        if (agent == null || questId <= 0 || itemId <= 0 || previousCount < 0
+                || currentCount <= previousCount || requiredCount <= 0) {
+            return;
+        }
+        String itemName = itemName(itemId);
+        publishIfCrossed(agent, questId, itemId, itemName, previousCount, currentCount,
+                requiredCount, HALF_PERCENT);
+        publishIfCrossed(agent, questId, itemId, itemName, previousCount, currentCount,
                 requiredCount, NEARLY_COMPLETE_PERCENT);
     }
 
@@ -43,6 +65,7 @@ public final class AgentQuestProgressMilestonePublisher {
             Character agent,
             int questId,
             int targetId,
+            String targetName,
             int previousCount,
             int currentCount,
             int requiredCount,
@@ -54,7 +77,7 @@ public final class AgentQuestProgressMilestonePublisher {
         int boundedCurrent = Math.min(currentCount, requiredCount);
         AgentProgressionEventPublisher.publishFor(agent,
                 (entry, objectiveId) -> new AgentQuestProgressMilestoneEvent(
-                        agent.getId(), System.currentTimeMillis(), questId, targetId,
+                        agent.getId(), System.currentTimeMillis(), questId, targetId, targetName,
                         boundedCurrent, requiredCount, milestonePercent, agent.getMapId(),
                         objectiveId),
                 AgentEventPriority.NORMAL);
@@ -69,5 +92,23 @@ public final class AgentQuestProgressMilestonePublisher {
 
     private static int divideRoundingUp(long value, int divisor) {
         return Math.toIntExact((value + divisor - 1L) / divisor);
+    }
+
+    private static String mobName(int mobId) {
+        try {
+            String name = MonsterInformationProvider.getInstance().getMobNameFromId(mobId);
+            return name == null || name.isBlank() ? "monster" : name.trim();
+        } catch (RuntimeException | LinkageError ignored) {
+            return "monster";
+        }
+    }
+
+    private static String itemName(int itemId) {
+        try {
+            String name = AgentInventoryGatewayRuntime.inventory().getItemName(itemId);
+            return name == null || name.isBlank() ? "item" : name.trim();
+        } catch (RuntimeException | LinkageError ignored) {
+            return "item";
+        }
     }
 }

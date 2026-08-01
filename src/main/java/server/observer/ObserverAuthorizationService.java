@@ -20,6 +20,13 @@ public final class ObserverAuthorizationService {
         if (client.getGMLevel() >= Math.max(0, observer.minimum_gm_level)) {
             return true;
         }
+        String accountName = normalized(client.getAccountName());
+        if (observer.allowed_account_names != null
+                && observer.allowed_account_names.stream()
+                .map(ObserverAuthorizationService::normalized)
+                .anyMatch(accountName::equals)) {
+            return true;
+        }
         String name = normalized(character.getName());
         return observer.allowed_character_names != null
                 && observer.allowed_character_names.stream()

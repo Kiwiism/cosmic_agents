@@ -37,6 +37,7 @@ class ObserverAdaptersTest {
     void discoversOptionalAgentAdapters() {
         assertTrue(ObserverAdapters.navGraph().isPresent());
         assertTrue(ObserverAdapters.interest().isPresent());
+        assertTrue(ObserverAdapters.characterDirectory().isPresent());
     }
 
     @Test
@@ -47,5 +48,12 @@ class ObserverAdaptersTest {
 
         assertFalse(ObserverAdapters.navGraph().isPresent());
         assertFalse(ObserverAdapters.interest().isPresent());
+    }
+
+    @Test
+    void hidesCharacterDirectoryWhenObserverIsOff() {
+        YamlConfig.config.server.observer.enabled = false;
+
+        assertFalse(ObserverAdapters.characterDirectory().isPresent());
     }
 }

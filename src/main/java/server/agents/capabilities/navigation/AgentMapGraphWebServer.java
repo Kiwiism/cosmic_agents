@@ -249,6 +249,11 @@ public final class AgentMapGraphWebServer {
     private void send(HttpExchange exchange, int status, String contentType, byte[] body) throws IOException {
         exchange.getResponseHeaders().set("Content-Type", contentType);
         exchange.getResponseHeaders().set("Cache-Control", "no-store");
+        String origin = exchange.getRequestHeaders().getFirst("Origin");
+        if ("http://localhost:8000".equals(origin)
+                || "http://127.0.0.1:8000".equals(origin)) {
+            exchange.getResponseHeaders().set("Access-Control-Allow-Origin", origin);
+        }
         exchange.getResponseHeaders().set("X-Content-Type-Options", "nosniff");
         exchange.getResponseHeaders().set(
                 "Content-Security-Policy",

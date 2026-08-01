@@ -41,7 +41,7 @@ class AgentProgressionProjectionIntegrationTest {
                     200, 1_001L, 0, 100, 10, 102000003, "career:200"),
                     AgentEventPriority.IMPORTANT);
             bus.publish(new AgentQuestProgressMilestoneEvent(
-                    200, 1_002L, 1001, 1210100, 15, 30, 50,
+                    200, 1_002L, 1001, 1210100, "Ribbon Pig", 15, 30, 50,
                     100020100, "quest:1001"),
                     AgentEventPriority.NORMAL);
 

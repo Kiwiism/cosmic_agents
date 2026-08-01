@@ -110,6 +110,8 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 public class Client extends ChannelInboundHandlerAdapter {
     private static final Logger log = LoggerFactory.getLogger(Client.class);
     private static final int PACKET_PREVIEW_BYTES = 256;
+    private static final short OBSERVER_OPCODE_FIRST = 0x113;
+    private static final short OBSERVER_OPCODE_LAST = 0x116;
 
     public static final int LOGIN_NOTLOGGEDIN = 0;
     public static final int LOGIN_SERVER_TRANSITION = 1;
@@ -135,6 +137,7 @@ public class Client extends ChannelInboundHandlerAdapter {
     private volatile long lastPong;
     private int gmlevel;
     private Set<String> macs = new HashSet<>();
+    private final Set<Short> observedObserverOpcodes = new HashSet<>();
     private Map<String, ScriptEngine> engines = new HashMap<>();
     private byte characterSlots = 3;
     private byte loginattempt = 0;
@@ -228,6 +231,18 @@ public class Client extends ChannelInboundHandlerAdapter {
             return;
         }
         final PacketHandler handler = packetProcessor.getHandler(opcode);
+
+        if (opcode >= OBSERVER_OPCODE_FIRST
+                && opcode <= OBSERVER_OPCODE_LAST
+                && observedObserverOpcodes.add(opcode)) {
+            log.info("[observer] first inbound opcode={} payloadBytes={} handler={} loggedIn={} account={} player={}",
+                    opcode,
+                    packet.available(),
+                    handler == null ? "none" : handler.getClass().getSimpleName(),
+                    isLoggedIn(),
+                    getAccountName(),
+                    player == null ? "?" : player.getName());
+        }
 
         if (YamlConfig.config.server.USE_DEBUG_SHOW_RCVD_PACKET && !LoggingUtil.isIgnoredRecvPacket(opcode)) {
             log.debug("Received packet id {}", opcode);

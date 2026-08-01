@@ -73,7 +73,9 @@ public final class AgentDialogueProjectionRuntime {
         if (AgentQuestProgressDialogueReactionService.INTENT_KEY.equals(intent.intentKey())) {
             String current = intent.parameters().getOrDefault("currentCount", "");
             String required = intent.parameters().getOrDefault("requiredCount", "");
-            String progress = "Quest progress: " + current + "/" + required;
+            String targetName = intent.parameters().getOrDefault("targetName", "").trim();
+            String progress = "Quest progress: " + current + "/" + required
+                    + (targetName.isBlank() ? "" : " " + targetName);
             return "50".equals(intent.parameters().getOrDefault("milestonePercent", ""))
                     ? progress + " - halfway there."
                     : progress + " - almost done.";

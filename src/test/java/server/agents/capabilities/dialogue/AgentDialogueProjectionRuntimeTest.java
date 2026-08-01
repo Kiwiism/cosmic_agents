@@ -62,16 +62,18 @@ class AgentDialogueProjectionRuntimeTest {
                 1, 100L, AgentQuestProgressDialogueReactionService.INTENT_KEY,
                 AgentDialogueAudience.NEARBY_REAL_PLAYER, "quest-progress", 1_000L,
                 Map.of("targetId", "1210100", "currentCount", "15",
-                        "requiredCount", "30", "milestonePercent", "50"));
+                        "targetName", "Ribbon Pig", "requiredCount", "30",
+                        "milestonePercent", "50"));
         AgentDialogueIntentEvent nearlyDone = new AgentDialogueIntentEvent(
                 1, 100L, AgentQuestProgressDialogueReactionService.INTENT_KEY,
                 AgentDialogueAudience.NEARBY_REAL_PLAYER, "quest-progress", 1_000L,
-                Map.of("targetId", "1210100", "currentCount", "27",
-                        "requiredCount", "30", "milestonePercent", "90"));
+                Map.of("targetId", "4000004", "currentCount", "27",
+                        "targetName", "Squishy Liquid", "requiredCount", "30",
+                        "milestonePercent", "90"));
 
-        assertEquals("Quest progress: 15/30 - halfway there.",
+        assertEquals("Quest progress: 15/30 Ribbon Pig - halfway there.",
                 AgentDialogueProjectionRuntime.render(halfway));
-        assertEquals("Quest progress: 27/30 - almost done.",
+        assertEquals("Quest progress: 27/30 Squishy Liquid - almost done.",
                 AgentDialogueProjectionRuntime.render(nearlyDone));
     }
 

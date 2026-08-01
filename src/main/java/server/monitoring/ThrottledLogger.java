@@ -49,6 +49,9 @@ public final class ThrottledLogger {
     }
 
     private static Object[] appendCause(Object[] args, Throwable cause) {
+        if (cause == null) {
+            return args;
+        }
         Object[] withCause = new Object[args.length + 1];
         System.arraycopy(args, 0, withCause, 0, args.length);
         withCause[args.length] = cause;

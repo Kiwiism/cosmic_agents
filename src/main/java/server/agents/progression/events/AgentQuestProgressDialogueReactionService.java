@@ -43,6 +43,7 @@ public final class AgentQuestProgressDialogueReactionService
                         Map.of(
                                 "questId", String.valueOf(progress.questId()),
                                 "targetId", String.valueOf(progress.targetId()),
+                                "targetName", progress.targetName(),
                                 "currentCount", String.valueOf(progress.currentCount()),
                                 "requiredCount", String.valueOf(progress.requiredCount()),
                                 "milestonePercent", String.valueOf(progress.milestonePercent()))),

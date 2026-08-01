@@ -2,12 +2,13 @@ package server.agents.progression.events;
 
 import server.agents.events.AgentContextualEvent;
 
-/** Authoritative quest kill progress crossing emitted after the live counter changes. */
+/** Authoritative quest requirement progress crossing emitted after the live counter changes. */
 public record AgentQuestProgressMilestoneEvent(
         int agentId,
         long occurredAtMs,
         int questId,
         int targetId,
+        String targetName,
         int currentCount,
         int requiredCount,
         int milestonePercent,
@@ -21,6 +22,7 @@ public record AgentQuestProgressMilestoneEvent(
                 || milestonePercent <= 0 || milestonePercent >= 100 || mapId < -1) {
             throw new IllegalArgumentException("Valid quest progress milestone context is required");
         }
+        targetName = targetName == null ? "" : targetName.trim();
         objectiveId = objectiveId == null ? "" : objectiveId;
     }
 
