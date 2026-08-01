@@ -9,3 +9,4 @@ New roadmap-like documents must be added to `docs/document-status.csv`; the gene
 Operational deployment guidance:
 
 - [Privacy, retention, and AGPL deployment baseline](PRIVACY_RETENTION_AND_AGPL_DEPLOYMENT.md)
+- [Hardening implementation status and remaining proof gates](HARDENING_IMPLEMENTATION_STATUS.md)
