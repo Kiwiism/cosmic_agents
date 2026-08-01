@@ -19,6 +19,9 @@ import server.Storage;
 import server.life.MonsterInformationProvider;
 import server.monitoring.CharacterSaveDiagnostics.SaveReason;
 import server.monitoring.ServerMetricsSnapshot;
+import server.security.SecurityEventRuntime;
+import server.security.SecurityEventType;
+import server.security.SecuritySeverity;
 import tools.PacketCreator;
 
 import java.io.IOException;
@@ -63,6 +66,9 @@ public class DatabaseConsoleBridgeServer {
     private void handle(HttpExchange exchange) throws IOException {
         try {
             if (!authorized(exchange)) {
+                SecurityEventRuntime.recordExternal(SecurityEventType.ADMIN_BRIDGE_REJECTION,
+                        SecuritySeverity.WARNING, exchange.getRemoteAddress().toString(),
+                        Map.of("method", exchange.getRequestMethod(), "path", exchange.getRequestURI().getPath()));
                 send(exchange, 401, Map.of("status", "UNAUTHORIZED"));
                 return;
             }

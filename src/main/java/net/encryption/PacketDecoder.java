@@ -3,7 +3,9 @@ package net.encryption;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.CorruptedFrameException;
 import io.netty.handler.codec.ReplayingDecoder;
+import config.YamlConfig;
 import net.netty.InvalidPacketHeaderException;
 import net.packet.ByteBufInPacket;
 
@@ -25,6 +27,12 @@ public class PacketDecoder extends ReplayingDecoder<Void> {
         }
 
         final int packetLength = decodePacketLength(header);
+        int configuredMax = YamlConfig.config.server.PACKET_MAX_FRAME_BYTES;
+        int maxFrameBytes = configuredMax > 0 ? configuredMax : 32 * 1024;
+        if (packetLength < Short.BYTES || packetLength > maxFrameBytes) {
+            throw new CorruptedFrameException(
+                    "Inbound packet length " + packetLength + " is outside 2.." + maxFrameBytes);
+        }
         byte[] packet = new byte[packetLength];
         in.readBytes(packet);
         receiveCypher.crypt(packet);

@@ -85,6 +85,15 @@ public class ServerConfig {
     public boolean USE_STARTING_AP_4;
     public boolean USE_AUTOBAN;
     public boolean USE_AUTOBAN_LOG;
+    public int PACKET_MAX_FRAME_BYTES;
+    public int PACKET_GLOBAL_RATE_PER_SECOND;
+    public int PACKET_GLOBAL_BURST;
+    public int PACKET_MOVEMENT_RATE_PER_SECOND;
+    public int PACKET_COMBAT_RATE_PER_SECOND;
+    public int PACKET_CHAT_RATE_PER_SECOND;
+    public int PACKET_ECONOMY_RATE_PER_SECOND;
+    public int PACKET_OTHER_RATE_PER_SECOND;
+    public int PACKET_RATE_LIMIT_VIOLATIONS_BEFORE_DISCONNECT;
     public boolean USE_EXP_GAIN_LOG;
     public boolean USE_AUTOSAVE;
     public boolean USE_SERVER_AUTOASSIGNER;

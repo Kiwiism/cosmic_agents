@@ -254,6 +254,15 @@ server:
     USE_STARTING_AP_4: false                                # Use early-GMS 4/4/4/4 starting stats. To overcome AP shortage, this gives 4AP/5AP at 1st/2nd job advancements.
     USE_AUTOBAN: false                                      # Commands the server to detect infractors automatically.
     USE_AUTOBAN_LOG: false                                  # Log autoban related messages. Still logs even with USE_AUTOBAN disabled.
+    PACKET_MAX_FRAME_BYTES: 32768                            # Reject inbound frames larger than this before allocating their payload. Recommended: 16384-65535.
+    PACKET_GLOBAL_RATE_PER_SECOND: 300                       # Sustained packet allowance per connection across all packet families. Recommended: 200-500.
+    PACKET_GLOBAL_BURST: 600                                 # One-second burst allowance before packets are dropped. Recommended: 2x the global rate.
+    PACKET_MOVEMENT_RATE_PER_SECOND: 120                     # Movement updates allowed per second. Recommended: 60-180.
+    PACKET_COMBAT_RATE_PER_SECOND: 120                       # Attacks, skills and damage updates allowed per second. Recommended: 60-180.
+    PACKET_CHAT_RATE_PER_SECOND: 20                          # Chat-family packets allowed per second. Recommended: 8-30.
+    PACKET_ECONOMY_RATE_PER_SECOND: 30                       # Shop, trade, storage, MTS and Duey actions allowed per second. Recommended: 15-60.
+    PACKET_OTHER_RATE_PER_SECOND: 200                        # Remaining packet families allowed per second. Recommended: 100-300.
+    PACKET_RATE_LIMIT_VIOLATIONS_BEFORE_DISCONNECT: 20       # Dropped packets in ten seconds before closing the connection. Recommended: 10-50.
     USE_EXP_GAIN_LOG: false                                 # Logs characters exp gains; logs world rate & coupon exp, total gained exp, and current exp, level can be calculated from "ExpTable".
     USE_AUTOSAVE: true                                      # Enables server autosaving feature (saves characters to DB each 1 hour).
     USE_SERVER_AUTOASSIGNER: false                          # HeavenMS-builtin autoassigner, uses algorithm based on distributing AP accordingly with required secondary stat on equipments.

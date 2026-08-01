@@ -34,6 +34,7 @@ import net.netty.InvalidPacketHeaderException;
 import net.packet.InPacket;
 import net.packet.MalformedPacketTracker;
 import net.packet.Packet;
+import net.packet.PacketRateLimiter;
 import net.packet.logging.LoggingUtil;
 import net.packet.logging.MonitoredChrLogger;
 import net.server.Server;
@@ -72,6 +73,9 @@ import server.maps.MiniDungeonInfo;
 import server.monitoring.CharacterSaveDiagnostics.SaveReason;
 import server.monitoring.SlowOperationLogger;
 import server.monitoring.ThrottledLogger;
+import server.security.SecurityEventRuntime;
+import server.security.SecurityEventType;
+import server.security.SecuritySeverity;
 import tools.BCrypt;
 import tools.DatabaseConnection;
 import tools.HexTool;
@@ -160,6 +164,7 @@ public class Client extends ChannelInboundHandlerAdapter {
     private long lastNpcClick;
     private long lastPacket = System.currentTimeMillis();
     private final MalformedPacketTracker malformedPacketTracker = new MalformedPacketTracker();
+    private final PacketRateLimiter packetRateLimiter;
     private int lang = 0;
 
     public enum Type {
@@ -172,6 +177,7 @@ public class Client extends ChannelInboundHandlerAdapter {
         this.sessionId = sessionId;
         this.remoteAddress = remoteAddress;
         this.packetProcessor = packetProcessor;
+        this.packetRateLimiter = PacketRateLimiter.fromConfig();
         this.world = world;
         this.channel = channel;
     }
@@ -228,6 +234,21 @@ public class Client extends ChannelInboundHandlerAdapter {
         short opcode = packet.readShort();
         if (!packetProcessor.isPacketIdInRange(opcode)) {
             handleMalformedPacket("invalid-opcode", opcode, packet, null);
+            return;
+        }
+        PacketRateLimiter.Decision rateDecision = packetRateLimiter.allow(opcode, System.currentTimeMillis());
+        if (!rateDecision.allowed()) {
+            SecurityEventRuntime.record(this, SecurityEventType.PACKET_RATE_LIMIT,
+                    rateDecision.disconnect() ? SecuritySeverity.CRITICAL : SecuritySeverity.WARNING,
+                    Map.of(
+                            "opcode", Short.toUnsignedInt(opcode) + "",
+                            "family", rateDecision.family().name(),
+                            "globalCount", rateDecision.globalCount() + "",
+                            "familyCount", rateDecision.familyCount() + "",
+                            "familyLimit", rateDecision.familyLimit() + ""));
+            if (rateDecision.disconnect()) {
+                SessionCoordinator.getInstance().closeSession(this, true);
+            }
             return;
         }
         final PacketHandler handler = packetProcessor.getHandler(opcode);
@@ -304,6 +325,8 @@ public class Client extends ChannelInboundHandlerAdapter {
         ThrottledLogger.warn("packet:" + reason, log,
                 "Malformed packet reason={} opcode={} length={} preview={} context={}", cause,
                 reason, opcode, length, preview, context);
+        SecurityEventRuntime.record(this, SecurityEventType.MALFORMED_PACKET, SecuritySeverity.WARNING,
+                Map.of("reason", reason, "opcode", Short.toUnsignedInt(opcode) + "", "length", length + ""));
         if (malformedPacketTracker.record(System.currentTimeMillis())) {
             SessionCoordinator.getInstance().closeSession(this, true);
         }

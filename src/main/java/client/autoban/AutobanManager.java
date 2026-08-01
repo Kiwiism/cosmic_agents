@@ -10,6 +10,9 @@ import config.YamlConfig;
 import net.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import server.security.SecurityEventRuntime;
+import server.security.SecurityEventType;
+import server.security.SecuritySeverity;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -35,30 +38,29 @@ public class AutobanManager {
         this.chr = chr;
     }
 
-    public void addPoint(AutobanFactory fac, String reason) {
-        if (YamlConfig.config.server.USE_AUTOBAN) {
-            if (chr.isGM() || chr.isBanned()) {
-                return;
-            }
+    public synchronized void addPoint(AutobanFactory fac, String reason) {
+        long now = Server.getInstance().getCurrentTime();
+        Integer current = points.get(fac);
+        if (current != null && fac.getExpire() != -1
+                && lastTime.getOrDefault(fac, 0L) < now - fac.getExpire()) {
+            current /= 2;
+        }
+        int updated = (current == null ? 0 : current) + 1;
+        points.put(fac, updated);
+        if (fac.getExpire() != -1) {
+            lastTime.put(fac, now);
+        }
+        SecurityEventRuntime.record(chr, SecurityEventType.AUTOBAN_SIGNAL,
+                updated >= fac.getMaximum() ? SecuritySeverity.CRITICAL : SecuritySeverity.WARNING,
+                Map.of(
+                        "signal", fac.name(),
+                        "points", updated + "",
+                        "threshold", fac.getMaximum() + "",
+                        "reason", reason));
 
-            if (lastTime.containsKey(fac)) {
-                if (lastTime.get(fac) < (Server.getInstance().getCurrentTime() - fac.getExpire())) {
-                    points.put(fac, points.get(fac) / 2); //So the points are not completely gone.
-                }
-            }
-            if (fac.getExpire() != -1) {
-                lastTime.put(fac, Server.getInstance().getCurrentTime());
-            }
-
-            if (points.containsKey(fac)) {
-                points.put(fac, points.get(fac) + 1);
-            } else {
-                points.put(fac, 1);
-            }
-
-            if (points.get(fac) >= fac.getMaximum()) {
-                chr.autoban(reason);
-            }
+        if (YamlConfig.config.server.USE_AUTOBAN && !chr.isGM() && !chr.isBanned()
+                && updated >= fac.getMaximum()) {
+            chr.autoban(reason);
         }
         if (YamlConfig.config.server.USE_AUTOBAN_LOG) {
             // Lets log every single point too.
@@ -114,10 +116,12 @@ public class AutobanManager {
      * @param type type
      * @return Timestamp checker
      */
-    public void setTimestamp(int type, int time, int times) {
+    public synchronized void setTimestamp(int type, int time, int times) {
         if (this.timestamp[type] == time) {
             this.timestampcounter[type]++;
             if (this.timestampcounter[type] >= times) {
+                SecurityEventRuntime.record(chr, SecurityEventType.AUTOBAN_SIGNAL, SecuritySeverity.CRITICAL,
+                        Map.of("signal", "TIMESTAMP_SPAM", "type", type + "", "count", times + ""));
                 if (YamlConfig.config.server.USE_AUTOBAN) {
                     chr.getClient().disconnect(false, false);
                 }
