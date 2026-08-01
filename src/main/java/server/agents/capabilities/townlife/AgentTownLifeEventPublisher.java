@@ -4,6 +4,7 @@ import client.Character;
 import server.agents.events.AgentEventPriority;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentSessionEventRuntime;
+import server.agents.runtime.simulation.AgentSimulationMode;
 
 final class AgentTownLifeEventPublisher {
     private AgentTownLifeEventPublisher() {
@@ -13,7 +14,8 @@ final class AgentTownLifeEventPublisher {
                         Character agent,
                         AgentTownLifeState state,
                         long nowMs) {
-        if (entry == null || agent == null || state == null) {
+        if (entry == null || agent == null || state == null
+                || state.fidelity() == AgentTownLifeFidelity.BACKGROUND_ABSTRACT) {
             return;
         }
         AgentTownLifeProfile profile = AgentTownLifeProfileRepository.defaultRepository()
@@ -28,7 +30,8 @@ final class AgentTownLifeEventPublisher {
                          AgentTownLifeState state,
                          AgentTownLifeActivityEvent.Phase phase,
                          long nowMs) {
-        if (entry == null || agent == null || state == null || phase == null) {
+        if (entry == null || agent == null || state == null || phase == null
+                || state.fidelity() == AgentTownLifeFidelity.BACKGROUND_ABSTRACT) {
             return;
         }
         String correlation = state.decisionCorrelationId().isBlank()
@@ -48,6 +51,7 @@ final class AgentTownLifeEventPublisher {
                           AgentTownLifeEncounterState.Snapshot encounter,
                           long nowMs) {
         if (entry == null || agent == null || encounter == null
+                || entry.simulationState().mode() == AgentSimulationMode.BACKGROUND_ABSTRACT
                 || encounter.encounterId() == null || encounter.encounterId().isBlank()) {
             return;
         }

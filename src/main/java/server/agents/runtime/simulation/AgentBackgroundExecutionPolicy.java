@@ -12,9 +12,6 @@ public interface AgentBackgroundExecutionPolicy {
     }
 
     static AgentBackgroundExecutionPolicy allowlisted() {
-        return (entry, map) -> entry != null
-                && map != null
-                && entry.simulationState().abstractExecutionScope()
-                != AgentAbstractExecutionScope.NONE;
+        return AgentAbstractTickRuntime::permits;
     }
 }

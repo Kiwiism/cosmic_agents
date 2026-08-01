@@ -1,5 +1,6 @@
 package server.agents.runtime.simulation;
 
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 @FunctionalInterface
@@ -12,6 +13,7 @@ public interface AgentBackgroundOutcomeReconciler {
 
     static AgentBackgroundOutcomeReconciler ledgerBacked() {
         return entry -> entry != null
-                && entry.simulationState().backgroundOutcomes().reconcile();
+                && entry.simulationState().backgroundOutcomes().reconcile(
+                AgentMaterializedStateFingerprint.capture(AgentRuntimeIdentityRuntime.bot(entry)));
     }
 }

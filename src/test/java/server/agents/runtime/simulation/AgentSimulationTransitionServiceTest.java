@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class AgentSimulationTransitionServiceTest {
     @Test
@@ -98,6 +99,27 @@ class AgentSimulationTransitionServiceTest {
         assertEquals(
                 AgentSimulationMode.BACKGROUND_ABSTRACT,
                 transitions.transition(entry, AgentSimulationMode.BACKGROUND_ACTIVE, 20L));
+        assertEquals(AgentSimulationTransitionEvidence.Outcome.OUTCOME_RECONCILIATION_FAILED,
+                entry.simulationState().lastTransitionEvidence().outcome());
+    }
+
+    @Test
+    void materializedMutationFailsClosed() {
+        Character agent = mock(Character.class);
+        when(agent.getPosition()).thenReturn(new java.awt.Point(10, 20));
+        when(agent.getMapId()).thenReturn(104000000);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        entry.simulationState().allowAbstractExecution(AgentAbstractExecutionScope.TOWN_LIFE);
+        AgentSimulationTransitionService transitions = new AgentSimulationTransitionService(
+                runtime -> true,
+                AgentBackgroundOutcomeReconciler.ledgerBacked());
+
+        transitions.transition(entry, AgentSimulationMode.BACKGROUND_ABSTRACT, 10L);
+        when(agent.getPosition()).thenReturn(new java.awt.Point(11, 20));
+
+        assertEquals(
+                AgentSimulationMode.BACKGROUND_ABSTRACT,
+                transitions.transition(entry, AgentSimulationMode.PRESENTATION, 20L));
         assertEquals(AgentSimulationTransitionEvidence.Outcome.OUTCOME_RECONCILIATION_FAILED,
                 entry.simulationState().lastTransitionEvidence().outcome());
     }

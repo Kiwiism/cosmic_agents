@@ -3,7 +3,9 @@ package server.agents.runtime.simulation;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.MapGateway;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.capabilities.townlife.AgentTownLifeState;
 import server.maps.MapleMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -60,6 +62,14 @@ class AgentSimulationPolicyTest {
         assertEquals(false, policy.permitsAbstractExecution(entry, map));
 
         entry.simulationState().allowAbstractExecution(AgentAbstractExecutionScope.TOWN_LIFE);
+
+        assertEquals(false, policy.permitsAbstractExecution(entry, map));
+
+        Character agent = AgentRuntimeIdentityRuntime.bot(entry);
+        when(agent.getMapId()).thenReturn(104000000);
+        AgentTownLifeState townLife = entry.capabilityStates().require(AgentTownLifeState.STATE_KEY);
+        townLife.start(0L, 1, 104000000);
+        townLife.transition(AgentTownLifeState.Stage.SETTLING, 0L);
 
         assertEquals(true, policy.permitsAbstractExecution(entry, map));
     }

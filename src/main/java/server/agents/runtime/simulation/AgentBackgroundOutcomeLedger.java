@@ -15,8 +15,15 @@ public final class AgentBackgroundOutcomeLedger {
     private long heartbeatCount;
     private String unsupportedOutcome;
     private long reconciliationCount;
+    private AgentMaterializedStateFingerprint materializedBaseline;
 
     public synchronized void begin(AgentAbstractExecutionScope nextScope, long nowMs) {
+        begin(nextScope, nowMs, null);
+    }
+
+    public synchronized void begin(AgentAbstractExecutionScope nextScope,
+                                   long nowMs,
+                                   AgentMaterializedStateFingerprint baseline) {
         if (nextScope == null || nextScope == AgentAbstractExecutionScope.NONE) {
             throw new IllegalArgumentException("An abstract execution scope is required");
         }
@@ -30,6 +37,7 @@ public final class AgentBackgroundOutcomeLedger {
         lastHeartbeatAtMs = startedAtMs;
         heartbeatCount = 0L;
         unsupportedOutcome = null;
+        materializedBaseline = baseline;
     }
 
     public synchronized void heartbeat(long nowMs) {
@@ -50,14 +58,20 @@ public final class AgentBackgroundOutcomeLedger {
     }
 
     public synchronized boolean reconcile() {
+        return reconcile(materializedBaseline);
+    }
+
+    public synchronized boolean reconcile(AgentMaterializedStateFingerprint currentState) {
         if (!active) {
             return true;
         }
-        if (unsupportedOutcome != null) {
+        if (unsupportedOutcome != null
+                || materializedBaseline != null && !materializedBaseline.equals(currentState)) {
             return false;
         }
         active = false;
         scope = AgentAbstractExecutionScope.NONE;
+        materializedBaseline = null;
         reconciliationCount++;
         return true;
     }
@@ -70,7 +84,8 @@ public final class AgentBackgroundOutcomeLedger {
                 lastHeartbeatAtMs,
                 heartbeatCount,
                 unsupportedOutcome,
-                reconciliationCount);
+                reconciliationCount,
+                materializedBaseline);
     }
 
     public record Snapshot(
@@ -80,6 +95,7 @@ public final class AgentBackgroundOutcomeLedger {
             long lastHeartbeatAtMs,
             long heartbeatCount,
             String unsupportedOutcome,
-            long reconciliationCount) {
+            long reconciliationCount,
+            AgentMaterializedStateFingerprint materializedBaseline) {
     }
 }

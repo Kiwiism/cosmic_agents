@@ -1,35 +1,30 @@
 package server.agents.runtime;
 
+import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
+import server.agents.runtime.simulation.AgentAbstractTickRuntime;
+import server.agents.runtime.simulation.AgentSimulationMode;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 
 class AgentTickRuntimeTest {
     @Test
-    void tickUsesGuardedAgentTickOrchestrator() {
-        AgentRuntimeEntry entry = mock(AgentRuntimeEntry.class);
+    void abstractModeBypassesFullTickPipeline() {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), null, null);
+        entry.simulationState().transitionTo(AgentSimulationMode.BACKGROUND_ABSTRACT, 1L);
 
-        try (MockedStatic<AgentTickOrchestrator> orchestrator = mockStatic(AgentTickOrchestrator.class)) {
-            orchestrator.when(() -> AgentTickOrchestrator.runGuardedTick(
-                            eq(entry),
-                            eq(7),
-                            eq(9),
-                            any(AgentTickOrchestrator.TickCore.class),
-                            any(AgentTickOrchestrator.TickFailureHandler.class)))
-                    .thenAnswer(invocation -> null);
+        try (MockedStatic<AgentAbstractTickRuntime> abstractTicks =
+                     mockStatic(AgentAbstractTickRuntime.class);
+             MockedStatic<AgentTickCoreRuntime> liveTicks =
+                     mockStatic(AgentTickCoreRuntime.class)) {
+            AgentTickRuntime.tick(entry, 1, 2, ignored -> { }, ignored -> { });
 
-            AgentTickRuntime.tick(entry, 7, 9, tickEntry -> { }, tickEntry -> { });
-
-            orchestrator.verify(() -> AgentTickOrchestrator.runGuardedTick(
-                    eq(entry),
-                    eq(7),
-                    eq(9),
-                    any(AgentTickOrchestrator.TickCore.class),
-                    any(AgentTickOrchestrator.TickFailureHandler.class)));
+            abstractTicks.verify(() -> AgentAbstractTickRuntime.tick(
+                    org.mockito.ArgumentMatchers.eq(entry), anyLong()));
+            liveTicks.verifyNoInteractions();
         }
     }
 }

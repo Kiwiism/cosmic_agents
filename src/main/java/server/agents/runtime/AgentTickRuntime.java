@@ -1,5 +1,8 @@
 package server.agents.runtime;
 
+import server.agents.runtime.simulation.AgentAbstractTickRuntime;
+import server.agents.runtime.simulation.AgentSimulationMode;
+
 import java.util.function.Consumer;
 
 public final class AgentTickRuntime {
@@ -11,6 +14,17 @@ public final class AgentTickRuntime {
                             int agentCharId,
                             Consumer<AgentRuntimeEntry> issueGrind,
                             Consumer<AgentRuntimeEntry> issueFollow) {
+        if (entry.simulationState().mode() == AgentSimulationMode.BACKGROUND_ABSTRACT) {
+            entry.tickSliceState().clear();
+            try {
+                AgentAbstractTickRuntime.tick(entry, System.currentTimeMillis());
+                AgentTickFailurePolicy.resetFailures(entry);
+            } catch (Throwable failure) {
+                AgentTickFailureRuntime.handleFailure(
+                        entry, leaderCharId, agentCharId, failure);
+            }
+            return;
+        }
         AgentTickSliceState tickSliceState = entry.tickSliceState();
         if (tickSliceState != null && tickSliceState.enabled()) {
             AgentTickSliceRuntime.tick(

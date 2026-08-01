@@ -1,5 +1,6 @@
 package server.agents.runtime.simulation;
 
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 public final class AgentSimulationTransitionService {
@@ -26,7 +27,9 @@ public final class AgentSimulationTransitionService {
             if (currentMode == AgentSimulationMode.BACKGROUND_ABSTRACT) {
                 entry.simulationState().backgroundOutcomes().begin(
                         entry.simulationState().abstractExecutionScope(),
-                        nowMs);
+                        nowMs,
+                        AgentMaterializedStateFingerprint.capture(
+                                AgentRuntimeIdentityRuntime.bot(entry)));
             }
             entry.simulationState().recordTransitionAttempt(
                     currentMode,
@@ -59,7 +62,9 @@ public final class AgentSimulationTransitionService {
         if (requestedMode == AgentSimulationMode.BACKGROUND_ABSTRACT) {
             entry.simulationState().backgroundOutcomes().begin(
                     entry.simulationState().abstractExecutionScope(),
-                    nowMs);
+                    nowMs,
+                    AgentMaterializedStateFingerprint.capture(
+                            AgentRuntimeIdentityRuntime.bot(entry)));
         }
         entry.simulationState().recordTransitionAttempt(
                 currentMode,

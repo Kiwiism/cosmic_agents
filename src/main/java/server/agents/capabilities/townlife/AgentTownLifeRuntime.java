@@ -90,6 +90,22 @@ public final class AgentTownLifeRuntime {
                 .orElse(false);
     }
 
+    public static boolean abstractEligible(AgentRuntimeEntry entry, Character agent) {
+        if (entry == null || agent == null || AgentTownLifeEncounterCoordinator.active(entry)) {
+            return false;
+        }
+        AgentTownLifeState state = entry.capabilityStates()
+                .find(AgentTownLifeState.STATE_KEY)
+                .orElse(null);
+        if (state == null || !state.enabled() || agent.getMapId() != state.townMapId()) {
+            return false;
+        }
+        return switch (state.stage()) {
+            case SETTLING, CHOOSE_ACTIVITY, MOVE_TO_ACTIVITY, DWELL -> true;
+            case DISABLED, TRAVEL_TO_TOWN, COMPLETE_ARRIVAL, VISIT_SHOP, RETURN_FROM_SHOP -> false;
+        };
+    }
+
     public static void start(AgentRuntimeEntry entry,
                              int townMapId,
                              long nowMs,
@@ -147,6 +163,11 @@ public final class AgentTownLifeRuntime {
             abandonDestination(entry, agent, state, nowMs, gateway);
             return true;
         }
+        if (fidelityChanged
+                && fidelity == AgentTownLifeFidelity.BACKGROUND_ABSTRACT
+                && state.stage() == AgentTownLifeState.Stage.MOVE_TO_ACTIVITY) {
+            state.beginDwell(nowMs + dwellDuration(agent, state));
+        }
         if (state.freeTimeExpired(nowMs)
                 && !AgentTownLifeEncounterCoordinator.active(entry)) {
             stop(entry, agent);
@@ -201,7 +222,10 @@ public final class AgentTownLifeRuntime {
         if (agent != null && agent.getChair() >= 0) {
             AgentChairService.stand(entry, agent);
         }
-        AgentPrimitiveCapabilityGatewayRuntime.gateway().stop(entry);
+        if (entry.simulationState().mode()
+                != server.agents.runtime.simulation.AgentSimulationMode.BACKGROUND_ABSTRACT) {
+            AgentPrimitiveCapabilityGatewayRuntime.gateway().stop(entry);
+        }
     }
 
     private static boolean tickSettling(AgentRuntimeEntry entry,
@@ -209,7 +233,9 @@ public final class AgentTownLifeRuntime {
                                         AgentTownLifeState state,
                                         long nowMs,
                                         PrimitiveCapabilityGateway gateway) {
-        gateway.stop(entry);
+        if (AgentTownLifeFidelityPolicy.usesPhysicalNavigation(state.fidelity())) {
+            gateway.stop(entry);
+        }
         if (nowMs < state.nextActionAtMs()) {
             return true;
         }
@@ -230,7 +256,8 @@ public final class AgentTownLifeRuntime {
         if (nowMs < state.nextActionAtMs()) {
             return true;
         }
-        if (agent.getChair() >= 0) {
+        if (AgentTownLifeFidelityPolicy.rendersAmbientActions(state.fidelity())
+                && agent.getChair() >= 0) {
             AgentChairService.stand(entry, agent);
         }
         AgentFidgetService.clear(entry);
@@ -350,7 +377,8 @@ public final class AgentTownLifeRuntime {
             AgentFidgetService.clear(entry);
             AgentTownLifeDestinationService.release(agent);
             rememberSuccessfulPlatformVisit(state, nowMs);
-            if (agent.getChair() >= 0) {
+            if (AgentTownLifeFidelityPolicy.rendersAmbientActions(state.fidelity())
+                    && agent.getChair() >= 0) {
                 AgentChairService.stand(entry, agent);
             }
             if (state.activity() == AgentTownLifeState.Activity.SHOP_VISIT
