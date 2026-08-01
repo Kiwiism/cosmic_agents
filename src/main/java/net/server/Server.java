@@ -1023,7 +1023,7 @@ public class Server {
     private boolean isDatabaseConsoleBridgeEnabled() {
         String value = System.getenv(DATABASE_CONSOLE_BRIDGE_ENABLED_ENV);
         if (value == null || value.isBlank()) {
-            return true;
+            return false;
         }
         return !("false".equalsIgnoreCase(value) || "0".equals(value) || "no".equalsIgnoreCase(value));
     }
@@ -1099,18 +1099,14 @@ public class Server {
     }
 
     private void validateDeploymentSecurityProfile() {
-        String profile = YamlConfig.config.server.DEPLOYMENT_PROFILE;
-        if ("local".equalsIgnoreCase(profile)) {
-            return;
-        }
-        if (!"production".equalsIgnoreCase(profile)) {
-            throw new IllegalStateException("DEPLOYMENT_PROFILE must be either local or production");
-        }
-        if ((!YamlConfig.config.server.ENABLE_PIN || !YamlConfig.config.server.ENABLE_PIC)
-                && !YamlConfig.config.server.ALLOW_INSECURE_PRODUCTION_AUTH) {
-            throw new IllegalStateException(
-                    "Production requires ENABLE_PIN and ENABLE_PIC, or an explicit ALLOW_INSECURE_PRODUCTION_AUTH override");
-        }
+        DeploymentSecurityPolicy.validate(
+                YamlConfig.config.server.DEPLOYMENT_PROFILE,
+                YamlConfig.config.server.ENABLE_PIN,
+                YamlConfig.config.server.ENABLE_PIC,
+                YamlConfig.config.server.ALLOW_INSECURE_PRODUCTION_AUTH,
+                YamlConfig.config.server.AUTOMATIC_REGISTER,
+                DatabaseConnection.configuredUsername(),
+                DatabaseConnection.configuredPassword());
     }
 
     private static void setAllLoggedOut(Connection con) throws SQLException {

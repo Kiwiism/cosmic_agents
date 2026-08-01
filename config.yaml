@@ -172,8 +172,8 @@ server:
     # Database Configuration
     DB_URL_FORMAT: "jdbc:mysql://%s:3306/cosmic"            # If the docker ENV for DB_HOST is anything but "db", this string format should be changed from 3306 to 3307 (or whichever port it was changed to in docker)
     DB_HOST: "localhost"
-    DB_USER: "root"
-    DB_PASS: "root"
+    DB_USER: "cosmic"                                       # Dedicated local database account; override with DB_USER in deployments.
+    DB_PASS: "change-me-local-only"                         # Local bootstrap placeholder; production must supply DB_PASSWORD.
     INIT_CONNECTION_POOL_TIMEOUT: 90                        # Seconds
 
     # Login Configuration

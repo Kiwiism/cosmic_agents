@@ -32,6 +32,7 @@ database-console/*.log
 # Database
 database/docker-db-data
 database/docker-pg-db-data
+.env
 
 # macOS files
 .DS_Store

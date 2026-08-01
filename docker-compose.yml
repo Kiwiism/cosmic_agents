@@ -21,14 +21,17 @@ services:
       - ./logs:/opt/server/logs
     environment:
       DB_HOST: "db" ## Remember if this is present it will OVERRIDE the host in the config.yaml, if you put here anything other than db, you'll need to change the config.yaml jdbc string to port 3307, and not port 3306
+      DB_USER: "cosmic"
+      DB_PASSWORD: "${COSMIC_DB_PASSWORD:?Set COSMIC_DB_PASSWORD in .env}"
     
   db:
     image: mysql:8.4.0
     environment:
       MYSQL_DATABASE: "cosmic"
-      MYSQL_ROOT_PASSWORD: ""
-      MYSQL_ALLOW_EMPTY_PASSWORD: yes
+      MYSQL_USER: "cosmic"
+      MYSQL_PASSWORD: "${COSMIC_DB_PASSWORD:?Set COSMIC_DB_PASSWORD in .env}"
+      MYSQL_ROOT_PASSWORD: "${COSMIC_DB_ROOT_PASSWORD:?Set COSMIC_DB_ROOT_PASSWORD in .env}"
     ports:
-      - "3307:3306"
+      - "127.0.0.1:3307:3306"
     volumes:
       - ./database/docker-db-data:/var/lib/mysql

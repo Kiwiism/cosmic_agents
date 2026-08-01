@@ -64,12 +64,20 @@ public class DatabaseConnection {
         return dbUrl;
     }
 
+    public static String configuredUsername() {
+        return setting("DB_USER", YamlConfig.config.server.DB_USER);
+    }
+
+    public static String configuredPassword() {
+        return setting("DB_PASSWORD", YamlConfig.config.server.DB_PASS);
+    }
+
     private static HikariConfig getConfig() {
         HikariConfig config = new HikariConfig();
 
         config.setJdbcUrl(getDbUrl());
-        config.setUsername(YamlConfig.config.server.DB_USER);
-        config.setPassword(YamlConfig.config.server.DB_PASS);
+        config.setUsername(configuredUsername());
+        config.setPassword(configuredPassword());
 
         final int initFailTimeoutSeconds = YamlConfig.config.server.INIT_CONNECTION_POOL_TIMEOUT;
         config.setInitializationFailTimeout(SECONDS.toMillis(initFailTimeoutSeconds));
@@ -81,6 +89,11 @@ public class DatabaseConnection {
         config.addDataSourceProperty("prepStmtCacheSqlLimit", 2048);
 
         return config;
+    }
+
+    private static String setting(String environmentName, String fallback) {
+        String value = System.getenv(environmentName);
+        return value == null || value.isBlank() ? fallback : value;
     }
 
     private static int intSetting(String propertyName, String environmentName, int defaultValue) {

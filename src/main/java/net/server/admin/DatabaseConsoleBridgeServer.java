@@ -28,11 +28,12 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class DatabaseConsoleBridgeServer {
     private static final int DEFAULT_PORT = 8787;
-    private static final String DEFAULT_TOKEN = "development-only-change-me";
 
     private final ObjectMapper json = new ObjectMapper();
     private final HttpServer server;
@@ -40,13 +41,14 @@ public class DatabaseConsoleBridgeServer {
 
     public DatabaseConsoleBridgeServer() throws IOException {
         int port = intEnv("COSMIC_BRIDGE_PORT", DEFAULT_PORT);
-        this.token = stringEnv("COSMIC_BRIDGE_TOKEN", DEFAULT_TOKEN);
+        this.token = DatabaseConsoleBridgeSecurity.requireStrongToken(System.getenv("COSMIC_BRIDGE_TOKEN"));
         this.server = HttpServer.create(new InetSocketAddress("127.0.0.1", port), 0);
-        this.server.setExecutor(Executors.newSingleThreadExecutor(r -> {
+        this.server.setExecutor(new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue<>(32), r -> {
             Thread thread = new Thread(r, "database-console-bridge");
             thread.setDaemon(true);
             return thread;
-        }));
+        }, new ThreadPoolExecutor.AbortPolicy()));
         this.server.createContext("/internal/admin", this::handle);
     }
 
@@ -404,11 +406,15 @@ public class DatabaseConsoleBridgeServer {
 
     private boolean authorized(HttpExchange exchange) {
         List<String> values = exchange.getRequestHeaders().getOrDefault("Authorization", new ArrayList<>());
-        return values.stream().anyMatch(value -> value.equals("Bearer " + token));
+        return values.stream().anyMatch(value -> DatabaseConsoleBridgeSecurity.matchesBearer(value, token));
     }
 
     private JsonNode readBody(HttpExchange exchange) throws IOException {
-        return json.readTree(exchange.getRequestBody());
+        String contentType = exchange.getRequestHeaders().getFirst("Content-Type");
+        if (contentType == null || !contentType.toLowerCase().startsWith("application/json")) {
+            throw new IllegalArgumentException("Content-Type must be application/json");
+        }
+        return json.readTree(DatabaseConsoleBridgeSecurity.readBounded(exchange.getRequestBody()));
     }
 
     private int requiredInt(JsonNode body, String field) {
@@ -427,15 +433,12 @@ public class DatabaseConsoleBridgeServer {
     private void send(HttpExchange exchange, int status, Object body) throws IOException {
         byte[] payload = json.writeValueAsBytes(body);
         exchange.getResponseHeaders().set("Content-Type", "application/json");
+        exchange.getResponseHeaders().set("Cache-Control", "no-store");
+        exchange.getResponseHeaders().set("X-Content-Type-Options", "nosniff");
         exchange.sendResponseHeaders(status, payload.length);
         try (OutputStream response = exchange.getResponseBody()) {
             response.write(payload);
         }
-    }
-
-    private static String stringEnv(String name, String fallback) {
-        String value = System.getenv(name);
-        return value == null || value.isBlank() ? fallback : value;
     }
 
     private static int intEnv(String name, int fallback) {
