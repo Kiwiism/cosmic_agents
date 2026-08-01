@@ -68,9 +68,10 @@ public final class AgentMapGraphWebServer {
 
     public static boolean enabled() {
         String value = System.getenv(ENABLED_ENV);
-        return value == null
-                || value.isBlank()
-                || !("false".equalsIgnoreCase(value)
+        if (value == null || value.isBlank()) {
+            return false;
+        }
+        return !("false".equalsIgnoreCase(value)
                 || "0".equals(value)
                 || "no".equalsIgnoreCase(value));
     }
