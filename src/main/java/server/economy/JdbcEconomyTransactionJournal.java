@@ -9,13 +9,28 @@ import java.time.Duration;
 import java.util.Objects;
 
 public final class JdbcEconomyTransactionJournal implements EconomyTransactionJournal {
+    @FunctionalInterface
+    interface ConnectionProvider {
+        Connection open() throws SQLException;
+    }
+
+    private final ConnectionProvider connections;
+
+    public JdbcEconomyTransactionJournal() {
+        this(DatabaseConnection::getConnection);
+    }
+
+    JdbcEconomyTransactionJournal(ConnectionProvider connections) {
+        this.connections = Objects.requireNonNull(connections);
+    }
+
     @Override
     public void prepare(EconomyOperation operation) {
         Objects.requireNonNull(operation);
         String sql = "INSERT INTO economy_transaction_journal "
                 + "(transaction_id, operation_kind, status, primary_character_id, secondary_character_id, summary) "
                 + "VALUES (?, ?, ?, ?, ?, ?)";
-        try (Connection connection = DatabaseConnection.getConnection();
+        try (Connection connection = connections.open();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, operation.transactionId().toString());
             statement.setString(2, operation.kind().name());
@@ -37,7 +52,7 @@ public final class JdbcEconomyTransactionJournal implements EconomyTransactionJo
     public void transition(EconomyOperation operation, EconomyJournalStatus status, String failureReason) {
         String sql = "UPDATE economy_transaction_journal SET status = ?, failure_reason = ?, updated_at = CURRENT_TIMESTAMP "
                 + "WHERE transaction_id = ? AND status = 'PREPARED'";
-        try (Connection connection = DatabaseConnection.getConnection();
+        try (Connection connection = connections.open();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, status.name());
             statement.setString(2, truncate(failureReason));
@@ -57,7 +72,7 @@ public final class JdbcEconomyTransactionJournal implements EconomyTransactionJo
                 + "failure_reason = 'Server restarted before transaction outcome was durably recorded', "
                 + "updated_at = CURRENT_TIMESTAMP WHERE status = 'PREPARED' "
                 + "AND updated_at < TIMESTAMPADD(SECOND, ?, CURRENT_TIMESTAMP)";
-        try (Connection connection = DatabaseConnection.getConnection();
+        try (Connection connection = connections.open();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setLong(1, -seconds);
             return statement.executeUpdate();
