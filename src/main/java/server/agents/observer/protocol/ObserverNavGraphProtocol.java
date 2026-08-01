@@ -23,12 +23,18 @@ public final class ObserverNavGraphProtocol {
     public static final int MAX_PAYLOAD_BYTES = 2 * 1024 * 1024;
 
     private static final int PAYLOAD_MAGIC = 0x3147564E;
-    private static final int MAX_REGIONS = 4_096;
-    private static final int MAX_SEGMENTS = 8_192;
-    private static final int MAX_EDGES = 16_384;
-    private static final int MAX_NPCS = 1_024;
-    private static final int MAX_PORTALS = 1_024;
-    private static final int MAX_STRING_BYTES = 1_024;
+    private static final int MAX_REGIONS = config.AgentTuning.intValue(
+            "server.agents.observer.protocol.ObserverNavGraphProtocol.MAX_REGIONS");
+    private static final int MAX_SEGMENTS = config.AgentTuning.intValue(
+            "server.agents.observer.protocol.ObserverNavGraphProtocol.MAX_SEGMENTS");
+    private static final int MAX_EDGES = config.AgentTuning.intValue(
+            "server.agents.observer.protocol.ObserverNavGraphProtocol.MAX_EDGES");
+    private static final int MAX_NPCS = config.AgentTuning.intValue(
+            "server.agents.observer.protocol.ObserverNavGraphProtocol.MAX_NPCS");
+    private static final int MAX_PORTALS = config.AgentTuning.intValue(
+            "server.agents.observer.protocol.ObserverNavGraphProtocol.MAX_PORTALS");
+    private static final int MAX_STRING_BYTES = config.AgentTuning.intValue(
+            "server.agents.observer.protocol.ObserverNavGraphProtocol.MAX_STRING_BYTES");
 
     private ObserverNavGraphProtocol() {
     }

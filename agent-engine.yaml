@@ -408,6 +408,10 @@ tuning:
     # Purpose: Keeps Kiwi from stopping beside the portal after entering a map. Kiwi rotates through grounded foothold spots across the map on later visits.
     # Technical: Minimum straight-line map-pixel clearance used when filtering foothold midpoints against every portal and the observer's arrival position.
     server.agents.observer.AgentObserverMovementController.OBSERVATION_CLEARANCE_PX: '190'
+    # Values: a positive squared map-pixel distance. Recommended: 36-144; 64 requires roughly eight pixels of movement before an Agent is considered to have made observable progress.
+    # Purpose: Sets how far an Agent must move before observer diagnostics count the movement as progress. Higher values ignore more tiny position jitter; lower values report smaller movements.
+    # Technical: Spectator Agent sampling compares squared positions against this threshold, avoiding a square root on every sample. Keep it below ordinary walking displacement while above packet and foothold jitter.
+    server.agents.observer.SpectatorAgentSignalService.PROGRESS_DISTANCE_SQUARED: '64'
     # Values: a finite non-negative integer. Recommended: 12-50 around the tested baseline 25; benchmark or observe behavior before moving outside this band.
     # Purpose: Limits how many maximum per controller can be handled in one pass or kept at once. Higher values let more Agent work progress together; lower values spread the work out and reduce peak load.
     # Technical: the "provisioning policy" component consumes this as an integer. Domain: non-negative count, capacity, or threshold unless the owning component documents a sentinel.
@@ -2180,6 +2184,34 @@ tuning:
     # Purpose: Controls how many cohort account character slots can be processed, kept, or arranged together. Higher values handle more at once; lower values reduce peak work and memory use.
     # Technical: the "cosmic maple island cohort provisioning" component consumes this as an integer. Domain: non-negative count, capacity, or threshold unless the owning component documents a sentinel.
     server.agents.integration.cosmic.CosmicMapleIslandCohortProvisioning.COHORT_ACCOUNT_CHARACTER_SLOTS: '15'
+    # Values: a positive duration in nanoseconds. Recommended: 250000000-2000000000; 500000000 permits at most two observer navigation-graph requests per second per client.
+    # Purpose: Limits how quickly an observer can repeatedly request navigation graphs. Higher values reduce diagnostic CPU and bandwidth use; lower values make the inspection UI refresh faster.
+    # Technical: The observer adapter compares System.nanoTime values per weakly referenced Client. This is a packet-family abuse boundary and must remain high enough to prevent graph serialization from becoming a denial-of-service path.
+    server.agents.integration.cosmic.AgentObserverNavGraphAdapter.MIN_REQUEST_INTERVAL_NANOS: '500000000'
+    # Values: a positive count. Recommended: 2048-8192; 4096 accommodates large normal maps while bounding observer graph allocation and serialization.
+    # Purpose: Limits the number of navigation regions returned to an observer. Higher values allow more complex maps; lower values reject unusually large graphs sooner to protect the server.
+    # Technical: Observer graph encoding rejects a snapshot before allocating its output when the region count exceeds this cap. Tune only with payload-size, edge, segment, and client decoder limits considered together.
+    server.agents.observer.protocol.ObserverNavGraphProtocol.MAX_REGIONS: '4096'
+    # Values: a positive count. Recommended: 4096-16384; 8192 accommodates segmented footholds in large normal maps without allowing unbounded payload growth.
+    # Purpose: Limits how many geometry segments an observer graph may contain. Higher values expose more detailed map geometry; lower values reject complex maps earlier and reduce serialization work.
+    # Technical: The encoder sums every region segment before writing the payload and fails closed above this cap. Keep it consistent with region capacity and the two-megabyte overall payload limit.
+    server.agents.observer.protocol.ObserverNavGraphProtocol.MAX_SEGMENTS: '8192'
+    # Values: a positive count. Recommended: 8192-32768; 16384 supports dense normal route graphs while bounding route and snapshot output.
+    # Purpose: Limits the number of navigation connections encoded for observer tools. Higher values support denser graphs; lower values reduce diagnostic payload and path-display costs.
+    # Technical: Both full graph snapshots and requested route paths use this cap. Oversized data is rejected before packet chunking, so the limit protects server memory, encoding time, and client parsing together.
+    server.agents.observer.protocol.ObserverNavGraphProtocol.MAX_EDGES: '16384'
+    # Values: a positive count. Recommended: 512-2048; 1024 is comfortably above ordinary map NPC populations while preventing hostile or malformed catalogs from producing unbounded output.
+    # Purpose: Limits how many NPC markers an observer graph can expose. Higher values support unusually populated maps; lower values reduce packet size and reject abnormal data sooner.
+    # Technical: The graph encoder validates the NPC collection before writing it and uses a two-byte count on the wire. Keep this operational cap well below the wire maximum and overall payload boundary.
+    server.agents.observer.protocol.ObserverNavGraphProtocol.MAX_NPCS: '1024'
+    # Values: a positive count. Recommended: 512-2048; 1024 is comfortably above ordinary portal counts while preventing malformed map data from inflating observer output.
+    # Purpose: Limits how many portal markers an observer graph can expose. Higher values support unusually connected maps; lower values make abnormal graph data fail faster.
+    # Technical: The graph encoder validates the portal collection before serialization and uses a two-byte count on the wire. Keep this cap aligned with normal map topology and the overall payload limit.
+    server.agents.observer.protocol.ObserverNavGraphProtocol.MAX_PORTALS: '1024'
+    # Values: a positive byte count. Recommended: 256-2048; 1024 preserves useful map, NPC, and portal labels while bounding individual UTF-8 fields.
+    # Purpose: Limits the encoded length of each observer graph label. Higher values allow longer names; lower values reject oversized or malformed text sooner and reduce diagnostic payload size.
+    # Technical: Every UTF-8 string is checked before its two-byte length and bytes are written. This cap protects encoder memory and client parsing and must remain below the unsigned-short wire limit.
+    server.agents.observer.protocol.ObserverNavGraphProtocol.MAX_STRING_BYTES: '1024'
     # Values: a finite non-negative integer. Recommended: 1024-4096 around the tested baseline 2048; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how long Agents wait or remain in duration window capacity. Higher values make the pause or activity last longer; lower values make them move on sooner.
     # Technical: the "async queue metrics" component consumes this as an integer. Domain: decimal ratio; 0.0 means none and 1.0 means the full reference amount unless the owning policy documents a wider range.

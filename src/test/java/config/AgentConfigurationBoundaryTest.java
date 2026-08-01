@@ -38,7 +38,7 @@ class AgentConfigurationBoundaryTest {
             "(?:^serialVersionUID$|_ID$|_IDS$|_MAP$|_MAP_ID$|"
                     + "_NPC_ID$|_NPC_IDS$|_ITEM_ID$|_ITEM_IDS$|_QUEST_ID$|_QUEST_IDS$|"
                     + "_SKILL_ID$|_SKILL_IDS$|_JOB_ID$|_JOB_IDS$|_PORTAL_ID$|"
-                    + "_DOMAIN$|_VERSION$|OPCODE|"
+                    + "_DOMAIN$|_VERSION$|OPCODE|^REQUEST_BYTES$|"
                     + "MOVEMENT_OFFSET|FACING_|STAND_|NO_DESTINATION_MAP_ID|"
                     + "VISUAL_DIVERSITY_STRIDE)");
 

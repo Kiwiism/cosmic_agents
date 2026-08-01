@@ -22,7 +22,8 @@ public final class SpectatorAgentSignalService {
     static final long STUCK_REPEAT_MS = 30_000L;
     static final long UPCOMING_COOLDOWN_MS = 3_000L;
     static final long SAMPLE_INTERVAL_MS = 250L;
-    private static final int PROGRESS_DISTANCE_SQUARED = 64;
+    private static final int PROGRESS_DISTANCE_SQUARED = config.AgentTuning.intValue(
+            "server.agents.observer.SpectatorAgentSignalService.PROGRESS_DISTANCE_SQUARED");
     private static final int TARGET_DISTANCE_SQUARED = 32 * 32;
     private static final Map<Integer, State> STATES = new HashMap<>();
     private static final Map<Integer, Long> LAST_SAMPLE_BY_WORLD = new HashMap<>();

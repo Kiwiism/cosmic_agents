@@ -22,7 +22,8 @@ import java.util.WeakHashMap;
 public final class AgentObserverNavGraphAdapter implements ObserverNavGraphAdapter {
     private static final Logger log = LoggerFactory.getLogger(AgentObserverNavGraphAdapter.class);
     private static final int REQUEST_BYTES = 6;
-    private static final long MIN_REQUEST_INTERVAL_NANOS = 500_000_000L;
+    private static final long MIN_REQUEST_INTERVAL_NANOS = config.AgentTuning.longValue(
+            "server.agents.integration.cosmic.AgentObserverNavGraphAdapter.MIN_REQUEST_INTERVAL_NANOS");
     private static final Map<Client, Long> LAST_REQUEST_NANOS = new WeakHashMap<>();
 
     @Override
