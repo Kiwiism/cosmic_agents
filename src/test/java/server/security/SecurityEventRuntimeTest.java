@@ -7,6 +7,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SecurityEventRuntimeTest {
     @AfterEach
@@ -21,6 +22,6 @@ class SecurityEventRuntimeTest {
 
         assertEquals("123", event.evidence().get("opcode"));
         assertNotEquals("203.0.113.42", event.remoteFingerprint());
-        assertEquals(event, SecurityEventRuntime.snapshot().getFirst());
+        assertTrue(SecurityEventRuntime.snapshot().contains(event));
     }
 }

@@ -176,4 +176,45 @@
         <dropTable tableName="server_cms_users" cascadeConstraints="true"/>
     </changeSet>
 
+    <changeSet id="29-economy-transaction-journal" author="Codex">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="economy_transaction_journal"/>
+            </not>
+        </preConditions>
+        <createTable tableName="economy_transaction_journal">
+            <column name="transaction_id" type="VARCHAR(36)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="operation_kind" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(24)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="primary_character_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="secondary_character_id" type="INT"/>
+            <column name="summary" type="VARCHAR(1024)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="failure_reason" type="VARCHAR(1024)"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex tableName="economy_transaction_journal" indexName="idx_economy_journal_status_updated">
+            <column name="status"/>
+            <column name="updated_at"/>
+        </createIndex>
+        <createIndex tableName="economy_transaction_journal" indexName="idx_economy_journal_primary_created">
+            <column name="primary_character_id"/>
+            <column name="created_at"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>

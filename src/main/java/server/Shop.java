@@ -30,6 +30,8 @@ import constants.inventory.ItemConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.capabilities.trade.AgentOwnerItemNotificationService;
+import server.economy.EconomyOperationKind;
+import server.economy.EconomyTransactionCoordinator;
 import tools.DatabaseConnection;
 import tools.PacketCreator;
 
@@ -111,8 +113,12 @@ public class Shop {
             if (!InventoryManipulator.checkSpace(c, itemId, quantity, "")) {
                 return TransactionResult.NO_SPACE;
             }
-            InventoryManipulator.addById(c, itemId, quantity, "", -1);
-            player.gainMeso(-amount, false);
+            short purchased = quantity;
+            EconomyTransactionCoordinator.execute(player, null, EconomyOperationKind.SHOP_BUY,
+                    shopSummary("buy", itemId, purchased, amount), () -> {
+                        InventoryManipulator.addById(c, itemId, purchased, "", -1);
+                        player.gainMeso(-amount, false);
+                    });
         } else {
             short slotMax = ii.getSlotMax(c, item.getItemId());
             if (player.getMeso() < item.getPrice()) {
@@ -121,8 +127,11 @@ public class Shop {
             if (!InventoryManipulator.checkSpace(c, itemId, slotMax, "")) {
                 return TransactionResult.NO_SPACE;
             }
-            InventoryManipulator.addById(c, itemId, slotMax, "", -1);
-            player.gainMeso(-item.getPrice(), false);
+            EconomyTransactionCoordinator.execute(player, null, EconomyOperationKind.SHOP_BUY,
+                    shopSummary("buy", itemId, slotMax, item.getPrice()), () -> {
+                        InventoryManipulator.addById(c, itemId, slotMax, "", -1);
+                        player.gainMeso(-item.getPrice(), false);
+                    });
         }
         return TransactionResult.SUCCESS;
     }
@@ -145,9 +154,12 @@ public class Shop {
         if (player.getMeso() < price) {
             return TransactionResult.NOT_ENOUGH_MESO;
         }
-        item.setQuantity(slotMax);
-        player.forceUpdateItem(item);
-        player.gainMeso(-price, false, true, false);
+        EconomyTransactionCoordinator.execute(player, null, EconomyOperationKind.SHOP_RECHARGE,
+                shopSummary("recharge", item.getItemId(), (short) (slotMax - item.getQuantity()), price), () -> {
+                    item.setQuantity(slotMax);
+                    player.forceUpdateItem(item);
+                    player.gainMeso(-price, false, true, false);
+                });
         return TransactionResult.SUCCESS;
     }
 
@@ -176,15 +188,14 @@ public class Shop {
             }
             if (c.getPlayer().getMeso() >= amount) {
                 if (InventoryManipulator.checkSpace(c, itemId, quantity, "")) {
-                    if (!ItemConstants.isRechargeable(itemId)) { //Pets can't be bought from shops
-                        InventoryManipulator.addById(c, itemId, quantity, "", -1);
-                        c.getPlayer().gainMeso(-amount, false);
-                    } else {
-                        short slotMax = ii.getSlotMax(c, item.getItemId());
-                        quantity = slotMax;
-                        InventoryManipulator.addById(c, itemId, quantity, "", -1);
-                        c.getPlayer().gainMeso(-item.getPrice(), false);
-                    }
+                    short purchased = ItemConstants.isRechargeable(itemId)
+                            ? ii.getSlotMax(c, item.getItemId()) : quantity;
+                    int charged = ItemConstants.isRechargeable(itemId) ? item.getPrice() : amount;
+                    EconomyTransactionCoordinator.execute(c.getPlayer(), null, EconomyOperationKind.SHOP_BUY,
+                            shopSummary("buy", itemId, purchased, charged), () -> {
+                                InventoryManipulator.addById(c, itemId, purchased, "", -1);
+                                c.getPlayer().gainMeso(-charged, false);
+                            });
                     notifyBotIfEquipBought(c, itemId);
                     c.sendPacket(PacketCreator.shopTransaction((byte) 0));
                 } else {
@@ -204,15 +215,15 @@ public class Shop {
 
             if (c.getPlayer().getInventory(InventoryType.ETC).countById(ItemId.PERFECT_PITCH) >= amount) {
                 if (InventoryManipulator.checkSpace(c, itemId, quantity, "")) {
-                    if (!ItemConstants.isRechargeable(itemId)) {
-                        InventoryManipulator.addById(c, itemId, quantity, "", -1);
-                        InventoryManipulator.removeById(c, InventoryType.ETC, ItemId.PERFECT_PITCH, amount, false, false);
-                    } else {
-                        short slotMax = ii.getSlotMax(c, item.getItemId());
-                        quantity = slotMax;
-                        InventoryManipulator.addById(c, itemId, quantity, "", -1);
-                        InventoryManipulator.removeById(c, InventoryType.ETC, ItemId.PERFECT_PITCH, amount, false, false);
-                    }
+                    short purchased = ItemConstants.isRechargeable(itemId)
+                            ? ii.getSlotMax(c, item.getItemId()) : quantity;
+                    EconomyTransactionCoordinator.execute(c.getPlayer(), null, EconomyOperationKind.SHOP_BUY,
+                            "shop=" + id + " action=buy-pitch item=" + itemId + " quantity=" + purchased
+                                    + " pitch=" + amount, () -> {
+                                InventoryManipulator.addById(c, itemId, purchased, "", -1);
+                                InventoryManipulator.removeById(c, InventoryType.ETC, ItemId.PERFECT_PITCH,
+                                        amount, false, false);
+                            });
                     notifyBotIfEquipBought(c, itemId);
                     c.sendPacket(PacketCreator.shopTransaction((byte) 0));
                 } else {
@@ -295,10 +306,14 @@ public class Shop {
                 return;
             }
 
-            InventoryManipulator.removeFromSlot(c, type, (byte) slot, quantity, false);
-            if (recvMesos > 0) {
-                c.getPlayer().gainMeso(recvMesos, false);
-            }
+            short sold = quantity;
+            EconomyTransactionCoordinator.execute(c.getPlayer(), null, EconomyOperationKind.SHOP_SELL,
+                    shopSummary("sell", item.getItemId(), sold, recvMesos), () -> {
+                        InventoryManipulator.removeFromSlot(c, type, (byte) slot, sold, false);
+                        if (recvMesos > 0) {
+                            c.getPlayer().gainMeso(recvMesos, false);
+                        }
+                    });
             c.sendPacket(PacketCreator.shopTransaction((byte) 0x8));
         } else {
             c.sendPacket(PacketCreator.shopTransaction((byte) 0x5));
@@ -318,9 +333,13 @@ public class Shop {
         if (item.getQuantity() < slotMax) {
             int price = (int) Math.ceil(ii.getUnitPrice(item.getItemId()) * (slotMax - item.getQuantity()));
             if (c.getPlayer().getMeso() >= price) {
-                item.setQuantity(slotMax);
-                c.getPlayer().forceUpdateItem(item);
-                c.getPlayer().gainMeso(-price, false, true, false);
+                EconomyTransactionCoordinator.execute(c.getPlayer(), null, EconomyOperationKind.SHOP_RECHARGE,
+                        shopSummary("recharge", item.getItemId(),
+                                (short) (slotMax - item.getQuantity()), price), () -> {
+                            item.setQuantity(slotMax);
+                            c.getPlayer().forceUpdateItem(item);
+                            c.getPlayer().gainMeso(-price, false, true, false);
+                        });
                 c.sendPacket(PacketCreator.shopTransaction((byte) 0x8));
             } else {
                 c.sendPacket(PacketCreator.shopTransaction((byte) 0x2));
@@ -333,6 +352,11 @@ public class Shop {
             return null;
         }
         return items.get(slot);
+    }
+
+    private String shopSummary(String action, int itemId, short quantity, int mesos) {
+        return "shop=" + id + " npc=" + npcId + " action=" + action + " item=" + itemId
+                + " quantity=" + quantity + " mesos=" + mesos;
     }
 
     public static Shop createFromDB(int id, boolean isShopId) {

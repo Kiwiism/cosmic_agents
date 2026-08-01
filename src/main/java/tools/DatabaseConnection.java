@@ -35,6 +35,10 @@ public class DatabaseConnection {
         return dataSource.getConnection();
     }
 
+    public static boolean isInitialized() {
+        return dataSource != null;
+    }
+
     public static String poolStats() {
         if (dataSource == null || dataSource.getHikariPoolMXBean() == null) {
             return "dbPool=uninitialized";
