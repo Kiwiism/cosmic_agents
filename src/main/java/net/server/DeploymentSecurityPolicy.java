@@ -12,7 +12,7 @@ final class DeploymentSecurityPolicy {
 
     static void validate(String profile, boolean pinEnabled, boolean picEnabled,
                          boolean allowInsecureAuth, boolean automaticRegister,
-                         String databaseUser, String databasePassword) {
+                         String databaseUser, String databasePassword, boolean mtsEnabled) {
         if ("local".equalsIgnoreCase(profile)) {
             return;
         }
@@ -25,6 +25,10 @@ final class DeploymentSecurityPolicy {
         }
         if (automaticRegister) {
             throw new IllegalStateException("Production must disable AUTOMATIC_REGISTER");
+        }
+        if (mtsEnabled) {
+            throw new IllegalStateException(
+                    "Production must disable USE_MTS until its legacy multi-step economy mutations are transactional");
         }
         if (databaseUser == null || "root".equalsIgnoreCase(databaseUser.trim())) {
             throw new IllegalStateException("Production must use a dedicated non-root database user");

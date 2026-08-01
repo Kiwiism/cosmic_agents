@@ -1108,7 +1108,8 @@ public class Server {
                 YamlConfig.config.server.ALLOW_INSECURE_PRODUCTION_AUTH,
                 YamlConfig.config.server.AUTOMATIC_REGISTER,
                 DatabaseConnection.configuredUsername(),
-                DatabaseConnection.configuredPassword());
+                DatabaseConnection.configuredPassword(),
+                YamlConfig.config.server.USE_MTS);
     }
 
     private static void setAllLoggedOut(Connection con) throws SQLException {

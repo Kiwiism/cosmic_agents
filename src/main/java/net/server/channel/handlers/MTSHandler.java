@@ -105,18 +105,23 @@ public final class MTSHandler extends AbstractPacketHandler {
                 if (itemtype == 1) {
                     quantity = 1;
                 }
-                if (quantity < 0 || price < 110 || c.getPlayer().getItemQuantity(itemid, false) < quantity) {
+                if (quantity <= 0 || price < 110 || c.getPlayer().getItemQuantity(itemid, false) < quantity) {
                     return;
                 }
                 InventoryType invType = ItemConstants.getInventoryType(itemid);
-                Item i = c.getPlayer().getInventory(invType).getItem(slot).copy();
-                if (i != null && c.getPlayer().getMeso() >= 5000) {
+                Item inventoryItem = c.getPlayer().getInventory(invType).getItem(slot);
+                if (inventoryItem == null || inventoryItem.getItemId() != itemid
+                        || inventoryItem.getQuantity() < quantity) {
+                    return;
+                }
+                Item i = inventoryItem.copy();
+                if (c.getPlayer().getMeso() >= 5000) {
                     try (Connection con = DatabaseConnection.getConnection();
                             PreparedStatement ps = con.prepareStatement("SELECT COUNT(*) FROM mts_items WHERE seller = ?");) {
                         ps.setInt(1, c.getPlayer().getId());
                         ResultSet rs = ps.executeQuery();
                         if (rs.next()) {
-                            if (rs.getInt(1) > 10) { // They have more than 10 items up for sale already!
+                            if (rs.getInt(1) >= 10) {
                                 c.getPlayer().dropMessage(1, "You already have 10 items up for auction!");
                                 c.sendPacket(getMTS(1, 0, 0));
                                 c.sendPacket(PacketCreator.transferInventory(getTransfer(c.getPlayer().getId())));
@@ -398,38 +403,27 @@ public final class MTSHandler extends AbstractPacketHandler {
             case 16: { //buy
                 int id = p.readInt(); // id of the item
                 try (Connection con = DatabaseConnection.getConnection();
-                        PreparedStatement ps = con.prepareStatement("SELECT * FROM mts_items WHERE id = ? ORDER BY id DESC")) {
+                        PreparedStatement ps = con.prepareStatement(
+                                "SELECT * FROM mts_items WHERE id = ? AND transfer = 0 AND seller <> ?")) {
                     ps.setInt(1, id);
+                    ps.setInt(2, c.getPlayer().getId());
                     ResultSet rs = ps.executeQuery();
                     if (rs.next()) {
                         int price = rs.getInt("price") + 100 + (int) (rs.getInt("price") * 0.1); // taxes
                         if (c.getPlayer().getCashShop().getCash(CashShop.NX_PREPAID) >= price) { // FIX
-                            boolean alwaysnull = true;
-                            for (Channel cserv : Server.getInstance().getAllChannels()) {
-                                Character victim = cserv.getPlayerStorage().getCharacterById(rs.getInt("seller"));
-                                if (victim != null) {
-                                    victim.getCashShop().gainCash(4, rs.getInt("price"));
-                                    alwaysnull = false;
-                                }
-                            }
-                            if (alwaysnull) {
-                                try (PreparedStatement pse = con.prepareStatement("SELECT accountid FROM characters WHERE id = ?")) {
-                                    pse.setInt(1, rs.getInt("seller"));
-                                    ResultSet rse = pse.executeQuery();
-                                    if (rse.next()) {
-                                        try (PreparedStatement psee = con.prepareStatement("UPDATE accounts SET nxPrepaid = nxPrepaid + ? WHERE id = ?")) {
-                                            psee.setInt(1, rs.getInt("price"));
-                                            psee.setInt(2, rse.getInt("accountid"));
-                                            psee.executeUpdate();
-                                        }
-                                    }
-                                }
-                            }
-                            try (PreparedStatement pse = con.prepareStatement("UPDATE mts_items SET seller = ?, transfer = 1 WHERE id = ?")) {
+                            int sellerId = rs.getInt("seller");
+                            try (PreparedStatement pse = con.prepareStatement(
+                                    "UPDATE mts_items SET seller = ?, transfer = 1 "
+                                            + "WHERE id = ? AND seller = ? AND transfer = 0")) {
                                 pse.setInt(1, c.getPlayer().getId());
                                 pse.setInt(2, id);
-                                pse.executeUpdate();
+                                pse.setInt(3, sellerId);
+                                if (pse.executeUpdate() != 1) {
+                                    c.sendPacket(PacketCreator.MTSFailBuy());
+                                    break;
+                                }
                             }
+                            creditMtsSeller(con, sellerId, rs.getInt("price"));
                             try (PreparedStatement pse = con.prepareStatement("DELETE FROM mts_cart WHERE itemid = ?")) {
                                 pse.setInt(1, id);
                                 pse.executeUpdate();
@@ -455,35 +449,27 @@ public final class MTSHandler extends AbstractPacketHandler {
             case 17: { //buy from cart
                 int id = p.readInt(); // id of the item
                 try (Connection con = DatabaseConnection.getConnection();
-                        PreparedStatement ps = con.prepareStatement("SELECT * FROM mts_items WHERE id = ? ORDER BY id DESC")) {
+                        PreparedStatement ps = con.prepareStatement(
+                                "SELECT * FROM mts_items WHERE id = ? AND transfer = 0 AND seller <> ?")) {
                     ps.setInt(1, id);
+                    ps.setInt(2, c.getPlayer().getId());
                     ResultSet rs = ps.executeQuery();
                     if (rs.next()) {
                         int price = rs.getInt("price") + 100 + (int) (rs.getInt("price") * 0.1);
                         if (c.getPlayer().getCashShop().getCash(CashShop.NX_PREPAID) >= price) {
-                            for (Channel cserv : Server.getInstance().getAllChannels()) {
-                                Character victim = cserv.getPlayerStorage().getCharacterById(rs.getInt("seller"));
-                                if (victim != null) {
-                                    victim.getCashShop().gainCash(CashShop.NX_PREPAID, rs.getInt("price"));
-                                } else {
-                                    try (PreparedStatement pse = con.prepareStatement("SELECT accountid FROM characters WHERE id = ?")) {
-                                        pse.setInt(1, rs.getInt("seller"));
-                                        ResultSet rse = pse.executeQuery();
-                                        if (rse.next()) {
-                                            try (PreparedStatement psee = con.prepareStatement("UPDATE accounts SET nxPrepaid = nxPrepaid + ? WHERE id = ?")) {
-                                                psee.setInt(1, rs.getInt("price"));
-                                                psee.setInt(2, rse.getInt("accountid"));
-                                                psee.executeUpdate();
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            try (PreparedStatement pse = con.prepareStatement("UPDATE mts_items SET seller = ?, transfer = 1 WHERE id = ?")) {
+                            int sellerId = rs.getInt("seller");
+                            try (PreparedStatement pse = con.prepareStatement(
+                                    "UPDATE mts_items SET seller = ?, transfer = 1 "
+                                            + "WHERE id = ? AND seller = ? AND transfer = 0")) {
                                 pse.setInt(1, c.getPlayer().getId());
                                 pse.setInt(2, id);
-                                pse.executeUpdate();
+                                pse.setInt(3, sellerId);
+                                if (pse.executeUpdate() != 1) {
+                                    c.sendPacket(PacketCreator.MTSFailBuy());
+                                    break;
+                                }
                             }
+                            creditMtsSeller(con, sellerId, rs.getInt("price"));
                             try (PreparedStatement pse = con.prepareStatement("DELETE FROM mts_cart WHERE itemid = ?")) {
                                 pse.setInt(1, id);
                                 pse.executeUpdate();
@@ -560,6 +546,33 @@ public final class MTSHandler extends AbstractPacketHandler {
             monitoring.RuntimeFailureLogger.log(e);
         }
         return items;
+    }
+
+    private void creditMtsSeller(Connection con, int sellerId, int price) throws SQLException {
+        for (Channel channel : Server.getInstance().getAllChannels()) {
+            Character seller = channel.getPlayerStorage().getCharacterById(sellerId);
+            if (seller != null) {
+                seller.getCashShop().gainCash(CashShop.NX_PREPAID, price);
+                return;
+            }
+        }
+
+        try (PreparedStatement account = con.prepareStatement("SELECT accountid FROM characters WHERE id = ?")) {
+            account.setInt(1, sellerId);
+            try (ResultSet result = account.executeQuery()) {
+                if (!result.next()) {
+                    throw new SQLException("MTS seller character does not exist: " + sellerId);
+                }
+                try (PreparedStatement credit = con.prepareStatement(
+                        "UPDATE accounts SET nxPrepaid = nxPrepaid + ? WHERE id = ?")) {
+                    credit.setInt(1, price);
+                    credit.setInt(2, result.getInt("accountid"));
+                    if (credit.executeUpdate() != 1) {
+                        throw new SQLException("MTS seller account credit failed for character: " + sellerId);
+                    }
+                }
+            }
+        }
     }
 
     public Packet getCart(int cid) {
@@ -757,7 +770,12 @@ public final class MTSHandler extends AbstractPacketHandler {
     public Packet getMTSSearch(int tab, int type, int cOi, String search, int page) {
         List<MTSItemInfo> items = new ArrayList<>();
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
+        search = search == null ? "" : search;
+        if (search.length() > 64) {
+            return PacketCreator.sendMTS(items, tab, type, page, 0);
+        }
         String listaitems = "";
+        boolean sellerSearch = cOi == 0;
         if (cOi != 0) {
             List<String> retItems = new ArrayList<>();
             for (Pair<Integer, String> itemPair : ii.getAllItems()) {
@@ -773,7 +791,7 @@ public final class MTSHandler extends AbstractPacketHandler {
                 listaitems += " itemid=0 )";
             }
         } else {
-            listaitems = " AND sellername LIKE CONCAT('%','" + search + "', '%')";
+            listaitems = " AND sellername LIKE ?";
         }
         int pages = 0;
         try (Connection con = DatabaseConnection.getConnection()){
@@ -784,13 +802,15 @@ public final class MTSHandler extends AbstractPacketHandler {
                 sql = "SELECT * FROM mts_items WHERE tab = ? " + listaitems + " AND transfer = 0 ORDER BY id DESC LIMIT ?, 16";
             }
             try (PreparedStatement ps = con.prepareStatement(sql)) {
-                ps.setInt(1, tab);
-                if (type != 0) {
-                    ps.setInt(2, type);
-                    ps.setInt(3, page * 16);
-                } else {
-                    ps.setInt(2, page * 16);
+                int parameter = 1;
+                ps.setInt(parameter++, tab);
+                if (sellerSearch) {
+                    ps.setString(parameter++, "%" + search + "%");
                 }
+                if (type != 0) {
+                    ps.setInt(parameter++, type);
+                }
+                ps.setInt(parameter, page * 16);
                 ResultSet rs = ps.executeQuery();
                 while (rs.next()) {
                     if (rs.getInt("type") != 1) {
@@ -832,8 +852,8 @@ public final class MTSHandler extends AbstractPacketHandler {
             if (type == 0) {
                 try (PreparedStatement ps = con.prepareStatement("SELECT COUNT(*) FROM mts_items WHERE tab = ? " + listaitems + " AND transfer = 0")) {
                     ps.setInt(1, tab);
-                    if (type != 0) {
-                        ps.setInt(2, type);
+                    if (sellerSearch) {
+                        ps.setString(2, "%" + search + "%");
                     }
                     ResultSet rs = ps.executeQuery();
                     if (rs.next()) {
