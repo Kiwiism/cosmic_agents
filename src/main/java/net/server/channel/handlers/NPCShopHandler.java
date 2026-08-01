@@ -23,11 +23,21 @@ package net.server.channel.handlers;
 
 import client.Client;
 import client.autoban.AutobanFactory;
+import client.inventory.Inventory;
+import client.inventory.InventoryType;
+import client.inventory.Item;
 import constants.inventory.ItemConstants;
 import net.AbstractPacketHandler;
 import net.packet.InPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import server.Shop;
+import server.security.SecurityEventRuntime;
+import server.security.SecurityEventType;
+import server.security.SecuritySeverity;
+import tools.PacketCreator;
+
+import java.util.Map;
 
 /**
  * @author Matze
@@ -38,6 +48,11 @@ public final class NPCShopHandler extends AbstractPacketHandler {
     @Override
     public void handlePacket(InPacket p, Client c) {
         byte bmode = p.readByte();
+        Shop shop = c.getPlayer().getShop();
+        if (bmode != 3 && shop == null) {
+            reject(c, bmode, "no-active-shop");
+            return;
+        }
         switch (bmode) {
         case 0: { // mode 0 = buy :)
             short slot = p.readShort();// slot
@@ -50,26 +65,45 @@ public final class NPCShopHandler extends AbstractPacketHandler {
                 c.disconnect(true, false);
                 return;
             }
-            c.getPlayer().getShop().buy(c, slot, itemId, quantity);
+            shop.buy(c, slot, itemId, quantity);
             break;
         }
         case 1: { // sell ;)
             short slot = p.readShort();
             int itemId = p.readInt();
             short quantity = p.readShort();
-            c.getPlayer().getShop().sell(c, ItemConstants.getInventoryType(itemId), slot, quantity);
+            InventoryType type = ItemConstants.getInventoryType(itemId);
+            Inventory inventory = type == InventoryType.UNDEFINED ? null : c.getPlayer().getInventory(type);
+            Item item = inventory == null ? null : inventory.getItem(slot);
+            if (quantity < 1 || item == null || item.getItemId() != itemId) {
+                reject(c, bmode, "sale-item-mismatch");
+                return;
+            }
+            shop.sell(c, type, slot, quantity);
             break;
         }
         case 2: { // recharge ;)
-
-            byte slot = (byte) p.readShort();
-            c.getPlayer().getShop().recharge(c, slot);
+            short slot = p.readShort();
+            if (slot < 1 || slot > Byte.MAX_VALUE) {
+                reject(c, bmode, "invalid-recharge-slot");
+                return;
+            }
+            shop.recharge(c, slot);
             break;
         }
         case 3: // leaving :(
             c.getPlayer().setShop(null);
             break;
+        default:
+            reject(c, bmode, "unknown-shop-action");
+            break;
         }
 
+    }
+
+    private static void reject(Client client, byte mode, String reason) {
+        SecurityEventRuntime.record(client, SecurityEventType.MALFORMED_PACKET, SecuritySeverity.WARNING,
+                Map.of("packetFamily", "NPC_SHOP", "mode", Byte.toString(mode), "reason", reason));
+        client.sendPacket(PacketCreator.enableActions());
     }
 }
