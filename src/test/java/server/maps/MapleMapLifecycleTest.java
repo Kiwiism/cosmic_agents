@@ -85,4 +85,24 @@ class MapleMapLifecycleTest {
         assertEquals(replacement, manager.getLoadedMap(100000000));
         assertEquals(2, loads.get());
     }
+
+    @Test
+    void repeatedUnloadAndReloadDoesNotRetainStaleMaps() {
+        AtomicInteger loads = new AtomicInteger();
+        MapManager manager = new MapManager(null, 0, 1, (mapId, world, channel, event) -> {
+            loads.incrementAndGet();
+            return new MapleMap(mapId, world, channel, 1, 1.0f);
+        });
+
+        for (int cycle = 0; cycle < 1_000; cycle++) {
+            int mapId = 100000000 + cycle % 25;
+            MapleMap loaded = manager.getMap(mapId);
+            assertTrue(manager.unloadIfStillIdle(loaded, 0));
+            assertFalse(manager.isMapLoaded(mapId));
+        }
+
+        assertEquals(1_000, loads.get());
+        assertEquals(1_000, manager.unloadedMapCount());
+        assertEquals(0, manager.loadedMapCount());
+    }
 }
