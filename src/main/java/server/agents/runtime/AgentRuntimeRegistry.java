@@ -5,6 +5,8 @@ import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.scheduler.AgentAdmissionDecision;
+import server.agents.runtime.scheduler.AgentScheduleHandle;
+import server.agents.runtime.scheduler.AgentSchedulerMode;
 import server.agents.runtime.scheduler.AgentLoadSheddingRuntime;
 
 import java.util.ArrayList;
@@ -13,6 +15,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ScheduledFuture;
 import java.util.function.BiFunction;
 
 /**
@@ -36,6 +39,16 @@ public final class AgentRuntimeRegistry {
     /** Compatibility access for read-only leader-grouped callers. */
     public static Map<Integer, List<AgentRuntimeEntry>> entriesByLeaderId() {
         return entriesByLeaderId;
+    }
+
+    /** Immutable, bounded view for diagnostics; callers never retain live Agent entries. */
+    public record DiagnosticEntry(int agentId,
+                                  long generation,
+                                  String name,
+                                  int mapId,
+                                  int mailboxDepth,
+                                  int recentFailures,
+                                  AgentSchedulerMode scheduleMode) {
     }
 
     public static Map<Long, List<AgentRuntimeEntry>> entriesByCohortId() {
@@ -368,6 +381,12 @@ public final class AgentRuntimeRegistry {
                 .toList();
     }
 
+    public static List<DiagnosticEntry> diagnosticEntriesSnapshot() {
+        return activeEntriesSnapshot().stream()
+                .map(AgentRuntimeRegistry::diagnosticEntry)
+                .toList();
+    }
+
     public static List<Character> activeAgentCharactersForLeader(int leaderCharId) {
         List<AgentRuntimeEntry> entries = entriesByLeaderId.get(leaderCharId);
         if (entries == null || entries.isEmpty()) {
@@ -408,6 +427,19 @@ public final class AgentRuntimeRegistry {
         if (entries.isEmpty()) {
             entriesByLeaderId.remove(leaderCharId, entries);
         }
+    }
+
+    private static DiagnosticEntry diagnosticEntry(AgentRuntimeEntry entry) {
+        ScheduledFuture<?> task = entry.scheduledTaskState().task();
+        AgentSchedulerMode scheduleMode = task instanceof AgentScheduleHandle handle ? handle.mode() : null;
+        return new DiagnosticEntry(
+                AgentRuntimeIdentityRuntime.botId(entry),
+                entry.sessionGeneration(),
+                AgentRuntimeIdentityRuntime.botName(entry),
+                AgentRuntimeIdentityRuntime.botMapId(entry),
+                entry.actionMailbox().size(),
+                AgentTickFailureStateRuntime.failureCount(entry),
+                scheduleMode);
     }
 
     private static void removeFromCohortView(long cohortId, AgentRuntimeEntry entry) {

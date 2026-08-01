@@ -1,12 +1,9 @@
 package server.agents.monitoring;
 
-import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
-import server.agents.runtime.AgentTickFailureStateRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentTickSliceKind;
 import server.agents.runtime.scheduler.AgentPriorityClass;
-import server.agents.runtime.scheduler.AgentScheduleHandle;
 import server.agents.runtime.scheduler.AgentSchedulerConfig;
 import server.agents.runtime.scheduler.AgentSchedulerMode;
 import server.agents.runtime.scheduler.AgentSessionId;
@@ -23,7 +20,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /** Bounded detail views for live scheduler diagnosis without retaining tick history. */
@@ -170,23 +166,21 @@ final class AgentSchedulerDetailDiagnostics {
     }
 
     private static List<AgentView> captureAgents() {
-        return AgentRuntimeRegistry.activeEntriesSnapshot().stream()
+        return AgentRuntimeRegistry.diagnosticEntriesSnapshot().stream()
                 .map(AgentSchedulerDetailDiagnostics::agentView)
                 .sorted(Comparator.comparingInt(AgentView::agentId))
                 .toList();
     }
 
-    private static AgentView agentView(AgentRuntimeEntry entry) {
-        ScheduledFuture<?> task = entry.scheduledTaskState().task();
-        AgentSchedulerMode scheduleMode = task instanceof AgentScheduleHandle handle ? handle.mode() : null;
+    private static AgentView agentView(AgentRuntimeRegistry.DiagnosticEntry entry) {
         return new AgentView(
-                AgentRuntimeIdentityRuntime.botId(entry),
-                entry.sessionGeneration(),
-                AgentRuntimeIdentityRuntime.botName(entry),
-                AgentRuntimeIdentityRuntime.botMapId(entry),
-                entry.actionMailbox().size(),
-                AgentTickFailureStateRuntime.failureCount(entry),
-                scheduleMode);
+                entry.agentId(),
+                entry.generation(),
+                entry.name(),
+                entry.mapId(),
+                entry.mailboxDepth(),
+                entry.recentFailures(),
+                entry.scheduleMode());
     }
 
     static List<AgentSchedulerRegistrationSnapshot> captureRegistrations(AgentSchedulerMode mode) {

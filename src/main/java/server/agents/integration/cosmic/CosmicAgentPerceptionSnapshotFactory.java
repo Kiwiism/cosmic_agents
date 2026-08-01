@@ -19,13 +19,15 @@ import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.capabilities.combat.AgentGrindTargetStateRuntime;
 
 import java.awt.Point;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.WeakHashMap;
 
 public final class CosmicAgentPerceptionSnapshotFactory {
     private static final long CACHE_WINDOW_MS = config.AgentTuning.longValue("server.agents.integration.cosmic.CosmicAgentPerceptionSnapshotFactory.CACHE_WINDOW_MS");
-    private static final Map<MapleMap, AgentPerceptionSnapshot> CACHE = new ConcurrentHashMap<>();
+    private static final Map<MapleMap, AgentPerceptionSnapshot> CACHE =
+            Collections.synchronizedMap(new WeakHashMap<>());
     private CosmicAgentPerceptionSnapshotFactory() {
     }
 
@@ -33,9 +35,6 @@ public final class CosmicAgentPerceptionSnapshotFactory {
         MapleMap map = agent == null ? null : agent.getMap();
         if (map == null) {
             return AgentPerceptionSnapshot.unavailable();
-        }
-        if (CACHE.size() > 512) {
-            CACHE.entrySet().removeIf(entry -> nowMs - entry.getValue().observedAtMs() > 5_000L);
         }
         AgentPerceptionSnapshot cached = CACHE.get(map);
         if (cached != null && nowMs - cached.observedAtMs() >= 0
@@ -48,16 +47,18 @@ public final class CosmicAgentPerceptionSnapshotFactory {
         List<AgentDropPerception> drops = AgentMapPerception.items(map).stream()
                 .map(CosmicAgentPerceptionSnapshotFactory::drop)
                 .toList();
-        List<AgentCharacterPerception> characters = map.getCharacters().stream()
+        List<Character> liveCharacters = map.getCharacters().stream()
                 .filter(character -> character.getPosition() != null && character.getId() > 0)
+                .toList();
+        List<AgentCharacterPerception> characters = liveCharacters.stream()
                 .map(character -> character(character,
                         AgentCharacterGatewayRuntime.characters().isAgentCharacter(character)))
                 .toList();
         int realPlayers = (int) characters.stream()
                 .filter(character -> !character.agent())
                 .count();
-        List<AgentPeerPerception> peers = AgentRuntimeRegistry.activeEntriesSnapshot().stream()
-                .map(entry -> peer(entry, map))
+        List<AgentPeerPerception> peers = liveCharacters.stream()
+                .map(character -> peer(character, AgentRuntimeRegistry.findByAgentCharacterId(character.getId())))
                 .filter(java.util.Objects::nonNull)
                 .toList();
         AgentPerceptionSnapshot captured = new AgentPerceptionSnapshot(map.getId(), nowMs, mobs, drops,
@@ -66,9 +67,11 @@ public final class CosmicAgentPerceptionSnapshotFactory {
         return captured;
     }
 
-    private static AgentPeerPerception peer(AgentRuntimeEntry entry, MapleMap map) {
-        Character peer = AgentRuntimeIdentityRuntime.bot(entry);
-        if (peer == null || peer.getMap() != map || peer.getPosition() == null || peer.getHp() <= 0) return null;
+    private static AgentPeerPerception peer(Character peer, AgentRuntimeEntry entry) {
+        if (entry == null || AgentRuntimeIdentityRuntime.bot(entry) != peer
+                || peer.getPosition() == null || peer.getHp() <= 0) {
+            return null;
+        }
         Monster target = AgentGrindTargetStateRuntime.target(entry);
         return new AgentPeerPerception(peer.getId(),
                 new AgentPosition(peer.getPosition().x, peer.getPosition().y),
