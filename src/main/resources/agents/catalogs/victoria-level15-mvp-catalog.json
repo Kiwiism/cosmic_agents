@@ -33,7 +33,15 @@
   ],
   "scriptedPortals": [
     { "sourceMapId": 101000000, "destinationMapId": 101000003, "portalId": 26 },
+    { "sourceMapId": 101000003, "destinationMapId": 101000000, "portalId": 8 },
     { "sourceMapId": 100000200, "destinationMapId": 100000201, "portalId": 9 }
+  ],
+  "returnScrolls": [
+    { "townMapId": 100000000, "itemId": 2030001, "shopNpcId": 1001100, "shopMapId": 100000102, "unitPrice": 500 },
+    { "townMapId": 101000000, "itemId": 2030002, "shopNpcId": 1031100, "shopMapId": 101000002, "unitPrice": 500 },
+    { "townMapId": 102000000, "itemId": 2030003, "shopNpcId": 1021100, "shopMapId": 102000002, "unitPrice": 500 },
+    { "townMapId": 103000000, "itemId": 2030005, "shopNpcId": 1051002, "shopMapId": 103000002, "unitPrice": 500 },
+    { "townMapId": 120000000, "itemId": 2030019, "shopNpcId": 1091002, "shopMapId": 120000200, "unitPrice": 500 }
   ],
   "questPacks": [
     { "packId": "perion-pre15", "questIds": [28280, 2082, 28281] },

@@ -54,6 +54,12 @@ class AgentVerticalTraversalServiceTest {
         assertTrue(resolve(fixture, entry, bot, 3, false).holdGroundedExit());
         assertNull(resolve(fixture, entry, bot, 3, true));
         assertFalse(AgentVerticalTraversalStateRuntime.active(entry));
+        assertTrue(AgentVerticalTraversalService.blocksRecentInverseEntry(
+                fixture.graph, entry, fixture.inverseEntryEdge, System.currentTimeMillis()));
+        assertEquals(new Point(132, 100), AgentVerticalTraversalService.recentExitNudgeTarget(
+                fixture.graph, entry, 3, System.currentTimeMillis()));
+        assertFalse(AgentVerticalTraversalService.blocksRecentInverseEntry(
+                fixture.graph, entry, fixture.unrelatedEntryEdge, System.currentTimeMillis()));
     }
 
     @Test
@@ -88,6 +94,8 @@ class AgentVerticalTraversalServiceTest {
                 new AgentNavigationGraph.Segment(new Foothold(new Point(0, 100), new Point(200, 100), 2))));
         AgentNavigationGraph.Edge entryEdge = edge(1, 2, new Point(100, 300), new Point(100, 300));
         AgentNavigationGraph.Edge exitEdge = edge(2, 3, new Point(100, 100), new Point(120, 100));
+        AgentNavigationGraph.Edge inverseEntryEdge = edge(3, 2, new Point(100, 100), new Point(100, 100));
+        AgentNavigationGraph.Edge unrelatedEntryEdge = edge(1, 2, new Point(100, 300), new Point(100, 300));
         AgentNavigationGraph graph = new AgentNavigationGraph(
                 910000300, 1,
                 List.of(lower, rope, upper),
@@ -95,7 +103,7 @@ class AgentVerticalTraversalServiceTest {
                 Map.of(),
                 Map.of(1, List.of(entryEdge), 2, List.of(exitEdge)),
                 Set.of());
-        return new Fixture(graph, entryEdge, exitEdge);
+        return new Fixture(graph, entryEdge, exitEdge, inverseEntryEdge, unrelatedEntryEdge);
     }
 
     private static AgentNavigationGraph.Edge edge(int fromRegionId,
@@ -109,6 +117,8 @@ class AgentVerticalTraversalServiceTest {
 
     private record Fixture(AgentNavigationGraph graph,
                            AgentNavigationGraph.Edge entryEdge,
-                           AgentNavigationGraph.Edge exitEdge) {
+                           AgentNavigationGraph.Edge exitEdge,
+                           AgentNavigationGraph.Edge inverseEntryEdge,
+                           AgentNavigationGraph.Edge unrelatedEntryEdge) {
     }
 }

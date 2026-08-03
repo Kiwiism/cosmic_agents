@@ -69,6 +69,21 @@ class AgentOfferServiceTest {
     }
 
     @Test
+    void recommendedGearOfferDefersForReleasedInteractionTargetInventory() {
+        Character bot = mock(Character.class);
+        Character owner = mock(Character.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, null);
+        when(bot.hasInventoryState()).thenReturn(true);
+        when(owner.hasInventoryState()).thenReturn(false);
+
+        try (MockedStatic<AgentEquipmentService> equipment = mockStatic(AgentEquipmentService.class)) {
+            assertFalse(AgentOfferService.offerBestRecommendedGear(entry, bot, owner));
+
+            equipment.verifyNoInteractions();
+        }
+    }
+
+    @Test
     void positiveOwnerUpgradeResponseSchedulesAgentReplyAdapter() {
         Character bot = mock(Character.class);
         Character owner = mock(Character.class);

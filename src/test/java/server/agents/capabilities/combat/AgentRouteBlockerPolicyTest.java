@@ -53,4 +53,40 @@ class AgentRouteBlockerPolicyTest {
                 1, 1_002L, 1, 200, 2_002, 1, ""));
         assertEquals(1, blocker.snapshot(1_002L).kills());
     }
+
+    @Test
+    void killBudgetSurvivesWaypointsThenRequiresTravelCooldown() {
+        AgentRouteBlockerState blocker = new AgentRouteBlockerState();
+        long lastKillAt = 1_000L;
+
+        for (int index = 0; index < AgentCombatPolicyConfig.routeBlockerMaxKills(); index++) {
+            Point waypoint = new Point(100 + index * 50, 0);
+            assertTrue(blocker.canInterrupt(waypoint, lastKillAt));
+            blocker.killed(lastKillAt++);
+        }
+
+        Point nextMapWaypoint = new Point(20, 0);
+        assertFalse(blocker.canInterrupt(nextMapWaypoint, lastKillAt));
+        assertFalse(blocker.canInterrupt(nextMapWaypoint,
+                lastKillAt + AgentCombatPolicyConfig.routeBlockerTravelCooldownMs() - 2));
+        assertTrue(blocker.canInterrupt(nextMapWaypoint,
+                lastKillAt + AgentCombatPolicyConfig.routeBlockerTravelCooldownMs()));
+        assertEquals(0, blocker.snapshot(
+                lastKillAt + AgentCombatPolicyConfig.routeBlockerTravelCooldownMs()).kills());
+    }
+
+    @Test
+    void clearCorridorRestartsInterruptionTimerWithoutRestoringKillBudget() {
+        AgentRouteBlockerState blocker = new AgentRouteBlockerState();
+        Point waypoint = new Point(100, 0);
+
+        assertTrue(blocker.canInterrupt(waypoint, 1_000L));
+        blocker.killed(1_001L);
+        blocker.resumeTravel();
+
+        assertTrue(blocker.canInterrupt(waypoint,
+                1_000L + AgentCombatPolicyConfig.routeBlockerTimeoutMs() + 1));
+        assertEquals(1, blocker.snapshot(
+                1_000L + AgentCombatPolicyConfig.routeBlockerTimeoutMs() + 1).kills());
+    }
 }

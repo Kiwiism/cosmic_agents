@@ -19,11 +19,26 @@ public final class AgentLiveTickGateService {
     public record Hooks(CommonTickSystems commonTickSystems,
                         PlanExecutionGateTick planExecutionGateTick,
                         ObjectiveSupervisionTick objectiveSupervisionTick,
+                        ForegroundTravelCombatTick foregroundTravelCombatTick,
                         ActiveCapabilityTick activeCapabilityTick,
                         TradeWindowTick tradeWindowTick,
                         IdleModeTick idleModeTick,
                         RecoveryTick recoveryTick,
                         TrackedMapChangeTick trackedMapChangeTick) {
+        public Hooks(CommonTickSystems commonTickSystems,
+                     PlanExecutionGateTick planExecutionGateTick,
+                     ObjectiveSupervisionTick objectiveSupervisionTick,
+                     ActiveCapabilityTick activeCapabilityTick,
+                     TradeWindowTick tradeWindowTick,
+                     IdleModeTick idleModeTick,
+                     RecoveryTick recoveryTick,
+                     TrackedMapChangeTick trackedMapChangeTick) {
+            this(commonTickSystems, planExecutionGateTick, objectiveSupervisionTick,
+                    (entry, agent, targetPosition, runAiTick) -> false,
+                    activeCapabilityTick, tradeWindowTick, idleModeTick, recoveryTick,
+                    trackedMapChangeTick);
+        }
+
         public Hooks(CommonTickSystems commonTickSystems,
                      ObjectiveSupervisionTick objectiveSupervisionTick,
                      ActiveCapabilityTick activeCapabilityTick,
@@ -32,6 +47,7 @@ public final class AgentLiveTickGateService {
                      RecoveryTick recoveryTick,
                      TrackedMapChangeTick trackedMapChangeTick) {
             this(commonTickSystems, (entry, agent, runAiTick) -> false, objectiveSupervisionTick,
+                    (entry, agent, targetPosition, runAiTick) -> false,
                     activeCapabilityTick, tradeWindowTick, idleModeTick, recoveryTick, trackedMapChangeTick);
         }
     }
@@ -49,6 +65,14 @@ public final class AgentLiveTickGateService {
     @FunctionalInterface
     public interface ObjectiveSupervisionTick {
         boolean tick(AgentRuntimeEntry entry, Character agent);
+    }
+
+    @FunctionalInterface
+    public interface ForegroundTravelCombatTick {
+        boolean tick(AgentRuntimeEntry entry,
+                     Character agent,
+                     Point targetPosition,
+                     boolean runAiTick);
     }
 
     @FunctionalInterface
@@ -98,6 +122,10 @@ public final class AgentLiveTickGateService {
             return true;
         }
         if (hooks.planExecutionGateTick().tick(context.entry(), context.agent(), context.runAiTick())) {
+            return true;
+        }
+        if (hooks.foregroundTravelCombatTick().tick(
+                context.entry(), context.agent(), context.targetPosition(), context.runAiTick())) {
             return true;
         }
         if (hooks.activeCapabilityTick().tick(context.entry(), context.agent())) {

@@ -10,7 +10,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
-/** Conservative generic quest compiler for local, hunting-only Victoria quests. */
+/** Conservative generic quest compiler for local Victoria hunting and interaction quests. */
 final class AgentVictoriaQuestSchedulerRuntime {
     private static final int INTERACTION_DISTANCE_PX = config.AgentTuning.intValue("server.agents.progression.AgentVictoriaQuestSchedulerRuntime.INTERACTION_DISTANCE_PX");
 
@@ -40,6 +40,7 @@ final class AgentVictoriaQuestSchedulerRuntime {
         }
         int status = gateway.questStatus(agent, quest.questId());
         if (status == QuestStatus.Status.COMPLETED.getId()) {
+            AgentQuestReturnScrollPolicy.clear(entry);
             state.completeAndDefer(agent.getLevel());
             return false;
         }
@@ -55,7 +56,8 @@ final class AgentVictoriaQuestSchedulerRuntime {
                     () -> gateway.startQuest(agent, quest.questId(), quest.startNpcId()),
                     () -> state.stage(AgentVictoriaQuestSchedulerState.Stage.HUNT), state, 1);
             case HUNT -> hunt(entry, agent, quest, state, gateway, nowMs);
-            case TRAVEL_TO_COMPLETE -> travel(entry, agent, state.completeMapId(), gateway, nowMs,
+            case TRAVEL_TO_COMPLETE -> returnToComplete(
+                    entry, agent, state.completeMapId(), gateway, nowMs,
                     () -> state.stage(AgentVictoriaQuestSchedulerState.Stage.COMPLETE), state);
             case COMPLETE -> interact(entry, agent, quest.completeNpcId(), nowMs, gateway,
                     () -> gateway.completeQuest(agent, quest.questId(), quest.completeNpcId()),
@@ -159,6 +161,14 @@ final class AgentVictoriaQuestSchedulerRuntime {
             }
             state.huntMapId(huntMap.mapId());
         }
+        if (agent.getMapId() != huntMap.mapId()
+                && AgentQuestReturnScrollPolicy.prepare(
+                entry, agent, "scheduler:quest:" + quest.questId()
+                        + ":objective:" + objective.objectiveId(),
+                huntMap.mapId(), state.completeMapId(), nowMs, gateway)
+                == AgentQuestReturnScrollPolicy.Preparation.WAITING) {
+            return true;
+        }
         AgentVictoriaRouteRuntime.TravelOutcome outcome = AgentVictoriaRouteRuntime.travelStatus(
                 entry, agent, huntMap.mapId(), gateway, nowMs);
         if (outcome.status() == AgentVictoriaRouteRuntime.Status.NO_ROUTE) {
@@ -198,6 +208,19 @@ final class AgentVictoriaQuestSchedulerRuntime {
             return false;
         }
         return true;
+    }
+
+    private static boolean returnToComplete(AgentRuntimeEntry entry,
+                                            Character agent,
+                                            int destinationMapId,
+                                            PrimitiveCapabilityGateway gateway,
+                                            long nowMs,
+                                            Runnable arrived,
+                                            AgentVictoriaQuestSchedulerState state) {
+        if (AgentQuestReturnScrollPolicy.useForReturn(entry, agent, destinationMapId, gateway)) {
+            return true;
+        }
+        return travel(entry, agent, destinationMapId, gateway, nowMs, arrived, state);
     }
 
     private static boolean interact(AgentRuntimeEntry entry,

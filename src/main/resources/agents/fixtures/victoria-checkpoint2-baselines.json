@@ -34,15 +34,15 @@
       "resetQuestIds": [2082, 2089, 2090, 2091, 28267, 28268, 28269, 28270, 28271, 28272, 28273, 28274, 28276, 28277, 28278, 28279, 28280, 28281]
     },
     "magician-standard-v1": {
-      "provenance": "PREDICTED",
-      "sourceCharacterName": "",
-      "recordedAt": "2026-07-28T00:00:00+08:00",
-      "note": "Temporary post-instructor/post-shop estimate. Replace after the magician checkpoint-1 run is captured.",
+      "provenance": "CAPTURED",
+      "sourceCharacterName": "KiwiAgent",
+      "recordedAt": "2026-08-03T16:41:51+08:00",
+      "note": "Captured after all magician instructor quests, at the interrupted initial Ellinia Department Store visit.",
       "character": {
-        "mapId": 101000002, "level": 11, "exp": 996, "jobId": 200,
+        "mapId": 101000002, "level": 11, "exp": 1386, "jobId": 200,
         "str": 4, "dex": 4, "intelligence": 63, "luk": 4,
-        "hp": 210, "mp": 310, "maxHp": 210, "maxMp": 310,
-        "mesos": 500, "remainingAp": 0,
+        "hp": 154, "mp": 215, "maxHp": 154, "maxMp": 215,
+        "mesos": 5457, "remainingAp": 0,
         "remainingSp": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
       },
       "items": [
@@ -51,17 +51,30 @@
         { "itemId": 1061008, "inventoryType": "EQUIPPED", "position": -6, "quantity": 1 },
         { "itemId": 1041010, "inventoryType": "EQUIPPED", "position": -5, "quantity": 1 },
         { "itemId": 1002068, "inventoryType": "EQUIPPED", "position": -1, "quantity": 1 },
-        { "itemId": 2000000, "inventoryType": "USE", "position": 1, "quantity": 30 },
-        { "itemId": 2000001, "inventoryType": "USE", "position": 2, "quantity": 50 },
-        { "itemId": 2030000, "inventoryType": "USE", "position": 3, "quantity": 10 },
-        { "itemId": 2030002, "inventoryType": "USE", "position": 4, "quantity": 1 },
-        { "itemId": 4000004, "inventoryType": "ETC", "position": 1, "quantity": 35 },
-        { "itemId": 4000005, "inventoryType": "ETC", "position": 2, "quantity": 5 }
+        { "itemId": 1332005, "inventoryType": "EQUIP", "position": 1, "quantity": 1 },
+        { "itemId": 2000014, "inventoryType": "USE", "position": 1, "quantity": 98 },
+        { "itemId": 2000013, "inventoryType": "USE", "position": 2, "quantity": 100 },
+        { "itemId": 2000000, "inventoryType": "USE", "position": 3, "quantity": 16 },
+        { "itemId": 2000003, "inventoryType": "USE", "position": 4, "quantity": 100 },
+        { "itemId": 2061000, "inventoryType": "USE", "position": 5, "quantity": 31 },
+        { "itemId": 2000001, "inventoryType": "USE", "position": 6, "quantity": 30 },
+        { "itemId": 2010009, "inventoryType": "USE", "position": 7, "quantity": 1 },
+        { "itemId": 2060000, "inventoryType": "USE", "position": 8, "quantity": 9 },
+        { "itemId": 2000002, "inventoryType": "USE", "position": 9, "quantity": 80 },
+        { "itemId": 2000003, "inventoryType": "USE", "position": 10, "quantity": 54 },
+        { "itemId": 2030000, "inventoryType": "USE", "position": 11, "quantity": 10 },
+        { "itemId": 4000004, "inventoryType": "ETC", "position": 1, "quantity": 36 },
+        { "itemId": 4000010, "inventoryType": "ETC", "position": 2, "quantity": 31 },
+        { "itemId": 4010005, "inventoryType": "ETC", "position": 3, "quantity": 1 },
+        { "itemId": 4020005, "inventoryType": "ETC", "position": 4, "quantity": 1 },
+        { "itemId": 4001356, "inventoryType": "ETC", "position": 5, "quantity": 1 },
+        { "itemId": 4000005, "inventoryType": "ETC", "position": 6, "quantity": 3 },
+        { "itemId": 4030009, "inventoryType": "ETC", "position": 7, "quantity": 2 }
       ],
       "skills": [
-        { "skillId": 2001004, "level": 1, "masterLevel": 20 },
-        { "skillId": 2000000, "level": 5, "masterLevel": 16 },
-        { "skillId": 2000001, "level": 4, "masterLevel": 10 }
+        { "skillId": 2000000, "level": 5, "masterLevel": 0 },
+        { "skillId": 2000001, "level": 4, "masterLevel": 0 },
+        { "skillId": 2001004, "level": 1, "masterLevel": 0 }
       ],
       "completedQuestIds": [1046, 2080, 2081, 2132, 2133, 2134, 2135],
       "resetQuestIds": [2082, 2089, 2090, 2091, 28267, 28268, 28269, 28270, 28271, 28272, 28273, 28274, 28276, 28277, 28278, 28279, 28280, 28281]

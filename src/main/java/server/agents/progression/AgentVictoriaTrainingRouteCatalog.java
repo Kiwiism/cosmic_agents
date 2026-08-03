@@ -52,6 +52,30 @@ final class AgentVictoriaTrainingRouteCatalog {
         return source == destination || nextHop(source, destination) != null;
     }
 
+    static int distance(int source, int destination) {
+        if (source == destination) {
+            return 0;
+        }
+        ArrayDeque<Integer> queue = new ArrayDeque<>();
+        Map<Integer, Integer> distances = new HashMap<>();
+        queue.add(source);
+        distances.put(source, 0);
+        while (!queue.isEmpty()) {
+            int current = queue.removeFirst();
+            int nextDistance = distances.get(current) + 1;
+            for (int next : EDGES.getOrDefault(current, Set.of())) {
+                if (distances.putIfAbsent(next, nextDistance) != null) {
+                    continue;
+                }
+                if (next == destination) {
+                    return nextDistance;
+                }
+                queue.addLast(next);
+            }
+        }
+        return -1;
+    }
+
     static long edgeKey(int source, int destination) {
         return ((long) source << 32) ^ (destination & 0xffffffffL);
     }

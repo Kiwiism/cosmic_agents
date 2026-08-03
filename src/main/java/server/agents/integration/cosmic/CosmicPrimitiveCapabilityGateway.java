@@ -82,6 +82,11 @@ public enum CosmicPrimitiveCapabilityGateway implements PrimitiveCapabilityGatew
     }
 
     @Override
+    public boolean observedByPlayer(Character agent) {
+        return agent != null && agent.getMap() != null && agent.getMap().isObservedByPlayer();
+    }
+
+    @Override
     public AgentCharacterStateSnapshot characterState(Character agent) {
         return new AgentCharacterStateSnapshot(
                 agent.getJob().getId(),

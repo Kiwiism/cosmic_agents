@@ -1042,6 +1042,31 @@ class BotCombatManagerTest {
     }
 
     @Test
+    void shouldRouteMagicSkillsThroughMagicPacketWithoutDependingOnWeapon() {
+        Character bot = mockBot(new Point(100, 200), mock(MapleMap.class), 20_000, null);
+
+        try (MockedStatic<AgentAttackExecutionProvider> attacks =
+                     Mockito.mockStatic(AgentAttackExecutionProvider.class, Mockito.CALLS_REAL_METHODS)) {
+            attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(null);
+            assertEquals(AgentAttackRoute.MAGIC,
+                    AgentAttackExecutionProvider.determineSkillRoute(bot, Magician.ENERGY_BOLT));
+
+            attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.DAGGER_THIEVES);
+            assertEquals(AgentAttackRoute.MAGIC,
+                    AgentAttackExecutionProvider.determineSkillRoute(bot, Magician.MAGIC_CLAW));
+        }
+    }
+
+    @Test
+    void shouldUseMagicCastingActionWhenMagicSkillHasNoExplicitAction() {
+        Skill energyBolt = new Skill(Magician.ENERGY_BOLT);
+
+        String action = AgentAttackExecutionProvider.resolveSkillAttackAction(null, energyBolt, 1, null);
+
+        assertTrue(List.of("wand1", "wand2").contains(action));
+    }
+
+    @Test
     void shouldUseDpsInsteadOfRawDamageForSlowDragonRoar() {
         MapleMap map = mock(MapleMap.class);
         Character bot = mockBot(new Point(100, 200), map, 20_000, null);

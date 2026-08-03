@@ -3,7 +3,9 @@ package server.agents.progression;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentVictoriaTrainingRouteCatalogTest {
     @Test
@@ -37,6 +39,26 @@ class AgentVictoriaTrainingRouteCatalogTest {
     @Test
     void generalGraphConnectsTheLevel15SliceToTheRestOfVictoria() {
         assertNotNull(AgentVictoriaTrainingRouteCatalog.nextHop(104000000, 102010000));
+    }
+
+    @Test
+    void measuresQuestReturnDistanceInMapTransitions() {
+        assertEquals(2, AgentVictoriaTrainingRouteCatalog.distance(102040000, 103000000));
+        assertTrue(AgentVictoriaTrainingRouteCatalog.distance(100050000, 103000000) > 2);
+        assertTrue(AgentQuestReturnScrollPolicy.qualifies(100050000, 103000000));
+        assertFalse(AgentQuestReturnScrollPolicy.qualifies(102040000, 103000000));
+    }
+
+    @Test
+    void selectsAUsefulTownScrollForQuestNpcsOutsideTown() {
+        int huntMapId = 102040000;
+        int completionMapId = 100050000;
+        AgentVictoriaLevel15Catalog.ReturnScroll scroll =
+                AgentQuestReturnScrollPolicy.selectScroll(huntMapId, completionMapId);
+
+        assertNotNull(scroll);
+        assertTrue(AgentVictoriaTrainingRouteCatalog.distance(scroll.townMapId(), completionMapId)
+                < AgentVictoriaTrainingRouteCatalog.distance(huntMapId, completionMapId));
     }
 
     @Test

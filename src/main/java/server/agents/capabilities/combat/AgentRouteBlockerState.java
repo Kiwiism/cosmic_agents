@@ -13,28 +13,46 @@ public final class AgentRouteBlockerState {
     private Point routeTarget;
     private long startedAtMs;
     private int kills;
+    private long travelCooldownUntilMs;
 
     public synchronized boolean canInterrupt(Point target, long nowMs) {
         if (target == null) {
-            clear();
             return false;
+        }
+        if (travelCooldownUntilMs > nowMs) {
+            return false;
+        }
+        if (travelCooldownUntilMs != 0L) {
+            kills = 0;
+            travelCooldownUntilMs = 0L;
         }
         if (routeTarget == null || routeTarget.distanceSq(target) > 16.0) {
             routeTarget = new Point(target);
             startedAtMs = nowMs;
-            kills = 0;
         }
         return nowMs - startedAtMs < AgentCombatPolicyConfig.routeBlockerTimeoutMs()
                 && kills < AgentCombatPolicyConfig.routeBlockerMaxKills();
     }
 
-    public synchronized void killed() {
+    public synchronized void killed(long nowMs) {
         kills++;
+        if (kills >= AgentCombatPolicyConfig.routeBlockerMaxKills()) {
+            routeTarget = null;
+            startedAtMs = 0L;
+            travelCooldownUntilMs = nowMs
+                    + AgentCombatPolicyConfig.routeBlockerTravelCooldownMs();
+        }
+    }
+
+    public synchronized void resumeTravel() {
+        routeTarget = null;
+        startedAtMs = 0L;
     }
 
     public synchronized Snapshot snapshot(long nowMs) {
         return new Snapshot(routeTarget == null ? null : new Point(routeTarget),
-                startedAtMs, kills, routeTarget != null
+                startedAtMs, kills, travelCooldownUntilMs, routeTarget != null
+                && travelCooldownUntilMs <= nowMs
                 && nowMs - startedAtMs < AgentCombatPolicyConfig.routeBlockerTimeoutMs()
                 && kills < AgentCombatPolicyConfig.routeBlockerMaxKills());
     }
@@ -43,8 +61,13 @@ public final class AgentRouteBlockerState {
         routeTarget = null;
         startedAtMs = 0L;
         kills = 0;
+        travelCooldownUntilMs = 0L;
     }
 
-    public record Snapshot(Point routeTarget, long startedAtMs, int kills, boolean budgetAvailable) {
+    public record Snapshot(Point routeTarget,
+                           long startedAtMs,
+                           int kills,
+                           long travelCooldownUntilMs,
+                           boolean budgetAvailable) {
     }
 }

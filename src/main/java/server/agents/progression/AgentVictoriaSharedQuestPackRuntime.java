@@ -210,6 +210,13 @@ final class AgentVictoriaSharedQuestPackRuntime {
                         .orElse(null);
         int huntMapId = selection == null ? step.mapId() : selection.map().mapId();
         if (agent.getMapId() != huntMapId) {
+            int returnPreparationMapId = returnPreparationMapId(pack, state.questPackIndex());
+            if (AgentQuestReturnScrollPolicy.prepare(
+                    entry, agent, "shared:" + packId + ":" + state.questPackIndex(),
+                    returnPreparationMapId, pack.homeTownMapId(), nowMs, gateway)
+                    == AgentQuestReturnScrollPolicy.Preparation.WAITING) {
+                return Result.RUNNING;
+            }
             if (AgentVictoriaRouteRuntime.travel(entry, agent, huntMapId, gateway)) {
                 return Result.RUNNING;
             }
@@ -221,6 +228,27 @@ final class AgentVictoriaSharedQuestPackRuntime {
                 ? new HashSet<>(step.incidentalMobIds()) : Set.of();
         gateway.grind(entry, preferred, incidental);
         return Result.RUNNING;
+    }
+
+    static int returnPreparationMapId(
+            AgentVictoriaSharedQuestPackCatalog.Pack pack,
+            int currentIndex) {
+        int selectedMapId = pack.steps().get(currentIndex).mapId();
+        int selectedDistance = AgentVictoriaTrainingRouteCatalog.distance(
+                selectedMapId, pack.homeTownMapId());
+        for (int index = currentIndex + 1; index < pack.steps().size(); index++) {
+            AgentVictoriaSharedQuestPackCatalog.Step candidate = pack.steps().get(index);
+            if (!"HUNT".equals(candidate.type())) {
+                break;
+            }
+            int distance = AgentVictoriaTrainingRouteCatalog.distance(
+                    candidate.mapId(), pack.homeTownMapId());
+            if (distance > selectedDistance) {
+                selectedMapId = candidate.mapId();
+                selectedDistance = distance;
+            }
+        }
+        return selectedMapId;
     }
 
     private static List<AgentVictoriaQuestHuntIndexRepository.ObjectiveReference>
@@ -342,7 +370,12 @@ final class AgentVictoriaSharedQuestPackRuntime {
                                  AgentVictoriaSharedQuestPackCatalog.Step step,
                                  long nowMs,
                                  PrimitiveCapabilityGateway gateway) {
+        if (AgentQuestReturnScrollPolicy.useForReturn(
+                entry, agent, step.destinationMapId(), gateway)) {
+            return Result.RUNNING;
+        }
         if (!AgentVictoriaRouteRuntime.travel(entry, agent, step.destinationMapId(), gateway)) {
+            AgentQuestReturnScrollPolicy.clear(entry);
             advance(state, nowMs);
         }
         return Result.RUNNING;
@@ -380,13 +413,16 @@ final class AgentVictoriaSharedQuestPackRuntime {
                                     long nowMs,
                                     PrimitiveCapabilityGateway gateway) {
         if (agent.getMapId() == step.destinationMapId()) {
+            AgentQuestReturnScrollPolicy.clear(entry);
             advance(state, nowMs);
             return Result.RUNNING;
         }
         if (gateway.itemCount(agent, step.itemId()) > 0 && gateway.useItem(agent, step.itemId())) {
+            AgentQuestReturnScrollPolicy.clear(entry);
             return Result.RUNNING;
         }
         if (!AgentVictoriaRouteRuntime.travel(entry, agent, step.destinationMapId(), gateway)) {
+            AgentQuestReturnScrollPolicy.clear(entry);
             advance(state, nowMs);
         }
         return Result.RUNNING;
@@ -399,13 +435,17 @@ final class AgentVictoriaSharedQuestPackRuntime {
                                          long nowMs,
                                          PrimitiveCapabilityGateway gateway) {
         if (agent.getMapId() == step.destinationMapId()) {
+            AgentQuestReturnScrollPolicy.clear(entry);
             advance(state, nowMs);
             return Result.RUNNING;
         }
         if (gateway.itemCount(agent, step.itemId()) > 0) {
-            gateway.useItem(agent, step.itemId());
+            if (gateway.useItem(agent, step.itemId())) {
+                AgentQuestReturnScrollPolicy.clear(entry);
+            }
             return Result.RUNNING;
         }
+        AgentQuestReturnScrollPolicy.clear(entry);
         advance(state, nowMs);
         return Result.RUNNING;
     }
@@ -416,6 +456,10 @@ final class AgentVictoriaSharedQuestPackRuntime {
                                    AgentVictoriaSharedQuestPackCatalog.Step step,
                                    long nowMs,
                                    PrimitiveCapabilityGateway gateway) {
+        AgentQuestReturnScrollState purchaseState = entry.capabilityStates().require(
+                AgentQuestReturnScrollState.STATE_KEY);
+        purchaseState.begin("shared:" + state.stage() + ":" + state.questPackIndex()
+                + ":" + step.itemId());
         if (gateway.itemCount(agent, step.itemId()) >= step.itemCount()) {
             advance(state, nowMs);
             return Result.RUNNING;
@@ -426,17 +470,17 @@ final class AgentVictoriaSharedQuestPackRuntime {
         if (AgentShopStateRuntime.shopVisitPending(entry)) {
             return Result.RUNNING;
         }
-        if (AgentShopStateRuntime.lastVisitRequestedItem(
-                entry, step.itemId(), step.itemCount())) {
+        if (purchaseState.purchaseAttempted()) {
             // Quest-pack return scrolls are an optimization. A completed, timed-out, or
             // unaffordable visit falls back to ordinary route travel instead of
             // reopening the same shop forever.
             advance(state, nowMs);
             return Result.RUNNING;
         }
+        purchaseState.markPurchaseAttempted();
         if (!AgentShopService.requestVisitAtNpc(entry, agent, step.npcId(), 0,
                 step.itemId(), step.itemCount())) {
-            return Result.BLOCKED;
+            advance(state, nowMs);
         }
         return Result.RUNNING;
     }

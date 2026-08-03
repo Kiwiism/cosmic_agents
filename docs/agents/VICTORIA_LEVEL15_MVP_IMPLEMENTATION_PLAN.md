@@ -260,8 +260,9 @@ silently treats its menu default as Agent policy. Fixed per-quest overrides can 
 `progression.victoria-training` now drives levels 15-30. It selects ranked maps using live player plus Agent occupancy,
 ignores cataloged hazard mobs as combat targets, and replans around temporarily failed route edges. `mixed` mode uses
 the Agent's durable progression profile to choose quests versus grinding and to rank both ordinary training maps and
-quest hunt maps; `grind` mode disables quest scheduling. The conservative runnable quest catalog contains 71 quests
-whose acquisition requirements are fully supported by current combat/loot execution.
+quest hunt maps; `grind` mode disables quest scheduling. The conservative runnable quest catalog contains 71 hunting
+quests whose acquisition requirements are fully supported by current combat/loot execution, plus the interaction-only
+`I'm Bored 1` bridge needed to make every skipped rotation-pack quest independently selectable later.
 
 Five versioned profiles live in `agents/profiles/progression-profiles.json`: balanced, quester, grinder, explorer, and
 hunter. They independently weight quest/grind preference, efficiency, exploration, crowd avoidance, travel tolerance,

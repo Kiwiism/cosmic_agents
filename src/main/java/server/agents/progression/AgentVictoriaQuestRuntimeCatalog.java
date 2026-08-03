@@ -26,8 +26,8 @@ record AgentVictoriaQuestRuntimeCatalog(
             if (questId <= 0 || startNpcId <= 0 || completeNpcId <= 0
                     || startMapIds == null || startMapIds.isEmpty()
                     || completeMapIds == null || completeMapIds.isEmpty()
-                    || huntingObjectives == null || huntingObjectives.isEmpty()) {
-                throw new IllegalArgumentException("a runnable hunting quest requires NPCs, maps, and objectives");
+                    || huntingObjectives == null) {
+                throw new IllegalArgumentException("a runnable quest requires NPCs, maps, and an objective list");
             }
             questName = questName == null ? "" : questName;
             startMapIds = List.copyOf(startMapIds);

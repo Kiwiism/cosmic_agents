@@ -224,14 +224,10 @@ public final class AgentAttackExecutionProvider {
         if (skill != null && FORCED_CLOSE_RANGE_SKILL_IDS.contains(skill.getId())) {
             return sampleDegenerateCloseRangeAction(bot, weaponType);
         }
-        if (skill != null && isMagicAttackSkill(skill.getId()) && isWandMagicWeapon(weaponType)) {
+        if (skill != null && isMagicAttackSkill(skill.getId())) {
             return sampleAttackAction(WAND_MAGIC_CAST_ACTIONS, WAND_MAGIC_CAST_ACTIONS.get(0));
         }
         return sampleWeaponAttackAction(bot, weaponType);
-    }
-
-    private static boolean isWandMagicWeapon(WeaponType weaponType) {
-        return weaponType == WeaponType.WAND || weaponType == WeaponType.STAFF;
     }
 
     private static String sampleDegenerateCloseRangeAction(Character bot, WeaponType weaponType) {
@@ -290,14 +286,11 @@ public final class AgentAttackExecutionProvider {
         if (isRangedSkill(skillId)) {
             return AgentAttackRoute.RANGED;
         }
-
-        WeaponType weaponType = getEquippedWeaponType(bot);
-        if (weaponType == WeaponType.WAND || weaponType == WeaponType.STAFF) {
-            return isMagicAttackSkill(skillId)
-                    ? AgentAttackRoute.MAGIC
-                    : AgentAttackRoute.CLOSE;
+        if (isMagicAttackSkill(skillId)) {
+            return AgentAttackRoute.MAGIC;
         }
 
+        WeaponType weaponType = getEquippedWeaponType(bot);
         return determineWeaponRoute(weaponType);
     }
 

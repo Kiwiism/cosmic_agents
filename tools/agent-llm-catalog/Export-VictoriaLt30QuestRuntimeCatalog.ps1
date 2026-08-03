@@ -1,6 +1,8 @@
 param(
     [string]$InputPath = "tmp/agent-llm-catalog/generated_victoria_lt30_quest_hunting_catalog.json",
-    [string]$OutputPath = "src/main/resources/agents/catalogs/victoria-lt30-quest-runtime-catalog.json"
+    [string]$OutputPath = "src/main/resources/agents/catalogs/victoria-lt30-quest-runtime-catalog.json",
+    # Curated zero-objective bridges whose completion unlocks a supported hunting quest.
+    [int[]]$InteractionOnlyQuestIds = @(2090)
 )
 
 $ErrorActionPreference = "Stop"
@@ -12,7 +14,7 @@ $source = Get-Content -Raw -LiteralPath $InputPath | ConvertFrom-Json
 $entries = @($source.entries |
     Where-Object {
         $_.autonomousStartAllowed -and
-        @($_.huntingObjectives).Count -gt 0 -and
+        (@($_.huntingObjectives).Count -gt 0 -or $_.questId -in $InteractionOnlyQuestIds) -and
         @($_.nonHuntingAcquisitionObjectives).Count -eq 0 -and
         @($_.startVictoriaMapIds).Count -gt 0 -and
         @($_.completeVictoriaMapIds).Count -gt 0 -and

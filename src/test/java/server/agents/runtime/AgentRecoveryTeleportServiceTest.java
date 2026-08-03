@@ -38,6 +38,36 @@ class AgentRecoveryTeleportServiceTest {
     }
 
     @Test
+    void doesNotTeleportAcrossLargeMapWhileFollowingExplicitRoute() {
+        MapleMap map = map(new Rectangle(-5000, -5000, 10000, 10000));
+        Character agent = character(map, new Point(0, 0));
+        AgentRuntimeEntry entry = entry(agent);
+        AgentMoveTargetStateRuntime.setMoveTarget(entry, new Point(3000, -2000), false);
+        Counters counters = new Counters(null);
+
+        boolean recovered = AgentRecoveryTeleportService.recoverTeleportDistance(
+                entry, agent, new Point(3000, -2000), 4000, 600, hooks(counters));
+
+        assertFalse(recovered);
+        counters.assertNoSideEffects();
+    }
+
+    @Test
+    void explicitRouteStillRecoversWhenAgentIsOutsideKnownMapBounds() {
+        MapleMap map = map(new Rectangle(0, 0, 100, 100));
+        Character agent = character(map, new Point(500, 500));
+        AgentRuntimeEntry entry = entry(agent);
+        AgentMoveTargetStateRuntime.setMoveTarget(entry, new Point(50, 50), false);
+        Counters counters = new Counters(null);
+
+        boolean recovered = AgentRecoveryTeleportService.recoverTeleportDistance(
+                entry, agent, new Point(50, 50), 4000, 600, hooks(counters));
+
+        assertTrue(recovered);
+        counters.assertRecoverySideEffects();
+    }
+
+    @Test
     void recoversWhenOutOfBoundsPastOutOfBoundsDistance() {
         MapleMap map = map(new Rectangle(0, 0, 100, 100));
         Character agent = character(map, new Point(150, 10));

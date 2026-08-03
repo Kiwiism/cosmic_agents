@@ -8,13 +8,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentVictoriaQuestRuntimeCatalogRepositoryTest {
     @Test
-    void loadsOnlyConservativeLocalHuntingEntries() {
+    void loadsConservativeLocalHuntingEntriesAndCuratedInteractionBridges() {
         AgentVictoriaQuestRuntimeCatalog catalog =
                 AgentVictoriaQuestRuntimeCatalogRepository.defaultRepository().catalog();
 
-        assertEquals(71, catalog.entries().size());
+        assertEquals(72, catalog.entries().size());
         assertFalse(catalog.sourceRevision().isBlank());
-        assertTrue(catalog.entries().stream().allMatch(entry -> !entry.huntingObjectives().isEmpty()));
+        assertEquals(1, catalog.entries().stream().filter(entry -> entry.huntingObjectives().isEmpty()).count());
+        assertTrue(catalog.entries().stream().anyMatch(entry ->
+                entry.questId() == 2090 && entry.huntingObjectives().isEmpty()));
         assertTrue(catalog.entries().stream().flatMap(entry -> entry.huntingObjectives().stream())
                 .allMatch(objective -> !objective.huntMaps().isEmpty()));
     }

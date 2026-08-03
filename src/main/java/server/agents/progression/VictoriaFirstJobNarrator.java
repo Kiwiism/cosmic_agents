@@ -56,9 +56,11 @@ public final class VictoriaFirstJobNarrator {
                     "I'm returning to my instructor after my shopping trip.";
             case INSTRUCTOR_TRAINING ->
                     "I'm working through my instructor's training quests.";
-            case HOME_QUEST_PACK, POST_HOME_DECISION, ROTATION_QUEST_PACK,
-                    GRIND_TO_MILESTONE, FINAL_RETURN_TO_INSTRUCTOR ->
+            case HOME_QUEST_PACK, POST_HOME_DECISION, HOME_GRIND_TO_MILESTONE, ROTATION_QUEST_PACK,
+                    GRIND_TO_MILESTONE ->
                     "I'm continuing my Victoria Island training toward level 15.";
+            case FINALIZE_AT_NEAREST_TOWN, FINAL_RETURN_TO_INSTRUCTOR ->
+                    "I'm already level 15, so I'm done.";
             case COMPLETE -> "I finished my level 15 Victoria Island training run.";
             case WAITING_FOR_MAPLE_ISLAND, TRAVEL_TO_LITH, BLOCKED -> null;
         };

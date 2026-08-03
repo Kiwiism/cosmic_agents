@@ -12,6 +12,7 @@ public record AgentVictoriaLevel15Catalog(
         List<StartVariant> startVariants,
         List<RouteCorridor> routeCorridors,
         List<ScriptedPortal> scriptedPortals,
+        List<ReturnScroll> returnScrolls,
         List<QuestPack> questPacks,
         List<InteractionQuest> interactionQuests,
         List<Career> careers) {
@@ -20,13 +21,15 @@ public record AgentVictoriaLevel15Catalog(
         if (schemaVersion <= 0 || blank(catalogId) || islandHandoff == null
                 || startVariants == null || startVariants.isEmpty()
                 || routeCorridors == null || routeCorridors.isEmpty()
-                || scriptedPortals == null || questPacks == null || questPacks.isEmpty()
+                || scriptedPortals == null || returnScrolls == null || returnScrolls.isEmpty()
+                || questPacks == null || questPacks.isEmpty()
                 || interactionQuests == null || careers == null || careers.isEmpty()) {
             throw new IllegalArgumentException("a versioned Victoria level-15 catalog is required");
         }
         startVariants = List.copyOf(startVariants);
         routeCorridors = List.copyOf(routeCorridors);
         scriptedPortals = List.copyOf(scriptedPortals);
+        returnScrolls = List.copyOf(returnScrolls);
         questPacks = List.copyOf(questPacks);
         interactionQuests = List.copyOf(interactionQuests);
         careers = List.copyOf(careers);
@@ -77,6 +80,20 @@ public record AgentVictoriaLevel15Catalog(
         public ScriptedPortal {
             if (sourceMapId <= 0 || destinationMapId <= 0 || portalId < 0) {
                 throw new IllegalArgumentException("valid scripted portal fields are required");
+            }
+        }
+    }
+
+    /** Best-effort town-return consumable and the NPC shop that sells it. */
+    public record ReturnScroll(
+            int townMapId,
+            int itemId,
+            int shopNpcId,
+            int shopMapId,
+            int unitPrice) {
+        public ReturnScroll {
+            if (townMapId <= 0 || itemId <= 0 || shopNpcId <= 0 || shopMapId <= 0 || unitPrice <= 0) {
+                throw new IllegalArgumentException("complete Victoria return-scroll content is required");
             }
         }
     }

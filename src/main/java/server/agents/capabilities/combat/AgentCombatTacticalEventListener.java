@@ -23,7 +23,8 @@ public final class AgentCombatTacticalEventListener implements AgentEventListene
         if (previous != null
                 && previous.lastDecision() == AgentCombatDecisionReason.ROUTE_BLOCKER
                 && previous.lastSelectedMobId() == killed.mobId()) {
-            entry.capabilityStates().require(AgentRouteBlockerState.STATE_KEY).killed();
+            entry.capabilityStates().require(AgentRouteBlockerState.STATE_KEY)
+                    .killed(killed.occurredAtMs());
         }
         AgentCombatDirective directive = AgentCombatDirectiveRuntime.directive(entry);
         if (directive == null) {

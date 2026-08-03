@@ -2,6 +2,7 @@ package server.agents.observer.protocol;
 
 import server.agents.capabilities.navigation.AgentMapGraphService;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
+import server.agents.capabilities.navigation.AgentNavigationTraceSnapshot;
 import server.observer.protocol.ObserverProtocol;
 
 import java.io.ByteArrayOutputStream;
@@ -14,11 +15,15 @@ public final class ObserverNavGraphProtocol {
     public static final int VERSION = ObserverProtocol.VERSION;
     public static final int ACTION_SNAPSHOT = 0;
     public static final int ACTION_ROUTE = 1;
+    public static final int ACTION_AGENT_TRACE = 2;
     public static final int STATUS_READY = 0;
     public static final int STATUS_WARMING = 1;
     public static final int STATUS_TOO_LARGE = 2;
     public static final int STATUS_ROUTE = 3;
     public static final int STATUS_INVALID_ROUTE = 4;
+    public static final int STATUS_AGENT_TRACE = 5;
+    public static final int STATUS_AGENT_UNAVAILABLE = 6;
+    public static final int STATUS_AGENT_DISABLED = 7;
     public static final int CHUNK_BYTES = 24 * 1024;
     public static final int MAX_PAYLOAD_BYTES = 2 * 1024 * 1024;
 
@@ -126,6 +131,64 @@ public final class ObserverNavGraphProtocol {
         return writer.toByteArray();
     }
 
+    public static byte[] encodeAgentTrace(AgentNavigationTraceSnapshot trace,
+                                          boolean includePath) {
+        requireCount("agent route edges", trace.path().size(), MAX_EDGES);
+        if (trace.transitions().size() > 64) {
+            throw new IllegalArgumentException("Navigation trace history exceeds limit");
+        }
+        Writer writer = new Writer();
+        writer.writeInt(0x3154564E);
+        writer.writeInt(trace.characterId());
+        writer.writeString(trace.characterName());
+        writer.writeLong(trace.sampledAtMs());
+        writer.writeLong(trace.routeRevision());
+        writer.writeLong(trace.plannedAtMs());
+        writer.writeString(trace.routeSource());
+        writer.writeString(trace.routeReason());
+        writer.writeString(trace.objectiveId());
+        writePosition(writer, trace.agentPosition());
+        writer.writeInt(trace.currentRegionId());
+        writer.writeInt(trace.targetRegionId());
+        writePosition(writer, trace.targetPosition());
+        writePosition(writer, trace.waypoint());
+        writer.writeByte(trace.preciseWaypoint() ? 1 : 0);
+        writer.writeString(trace.decision());
+        writer.writeString(trace.blockReason());
+        writer.writeInt(trace.activeEdgeIndex());
+        writer.writeInt(trace.routeCost());
+        writer.writeInt(trace.expandedNodes());
+        writer.writeLong(trace.elapsedMicroseconds());
+        writer.writeByte(trace.reached() ? 1 : 0);
+        writer.writeByte(trace.bestEffort() ? 1 : 0);
+        writer.writeByte(trace.capped() ? 1 : 0);
+        writer.writeInt(trace.stuckMs());
+        writer.writeInt(trace.recoveryCooldownMs());
+        writer.writeLong(trace.lastProgressAtMs());
+        writer.writeString(trace.loopKind());
+        writer.writeByte(trace.suppressedEdge() == null ? 0 : 1);
+        if (trace.suppressedEdge() != null) {
+            writeTraceEdge(writer, trace.suppressedEdge());
+        }
+        writer.writeLong(trace.suppressedUntilMs());
+        writer.writeInt(trace.recoveryCount());
+        writer.writeLong(trace.lastRecoveryAtMs());
+        writer.writeString(trace.lastRecoveryType());
+        writer.writeString(trace.verticalStage());
+        writer.writeShort(trace.transitions().size());
+        for (AgentNavigationTraceSnapshot.Transition transition : trace.transitions()) {
+            writer.writeInt(transition.fromRegionId());
+            writer.writeInt(transition.toRegionId());
+            writer.writeLong(transition.timestampMs());
+        }
+        writer.writeByte(includePath ? 1 : 0);
+        if (includePath) {
+            writer.writeInt(trace.path().size());
+            trace.path().forEach(edge -> writeTraceEdge(writer, edge));
+        }
+        return writer.toByteArray();
+    }
+
     public static List<byte[]> chunks(byte[] payload) {
         if (payload.length > MAX_PAYLOAD_BYTES) {
             throw new IllegalArgumentException("Navigation graph payload exceeds limit");
@@ -179,6 +242,34 @@ public final class ObserverNavGraphProtocol {
         writer.writeInt(edge.toY());
     }
 
+    private static void writePosition(Writer writer,
+                                      AgentNavigationTraceSnapshot.Position position) {
+        writer.writeByte(position.present() ? 1 : 0);
+        if (position.present()) {
+            writer.writeInt(position.x());
+            writer.writeInt(position.y());
+        }
+    }
+
+    private static void writeTraceEdge(Writer writer,
+                                       AgentNavigationTraceSnapshot.Edge edge) {
+        writer.writeByte(edge.type().ordinal());
+        writer.writeInt(edge.fromRegionId());
+        writer.writeInt(edge.toRegionId());
+        writer.writeInt(edge.startX());
+        writer.writeInt(edge.startY());
+        writer.writeInt(edge.endX());
+        writer.writeInt(edge.endY());
+        writer.writeInt(edge.launchMinX());
+        writer.writeInt(edge.launchMaxX());
+        writer.writeInt(edge.launchStepX());
+        writer.writeInt(edge.portalId());
+        writer.writeInt(edge.ropeX());
+        writer.writeInt(edge.ropeTopY());
+        writer.writeInt(edge.ropeBottomY());
+        writer.writeInt(edge.cost());
+    }
+
     private static void requireCount(String name, int value, int maximum) {
         if (value < 0 || value > maximum) {
             throw new IllegalArgumentException(
@@ -203,6 +294,11 @@ public final class ObserverNavGraphProtocol {
             output.write(value >>> 8);
             output.write(value >>> 16);
             output.write(value >>> 24);
+        }
+
+        void writeLong(long value) {
+            writeInt((int) value);
+            writeInt((int) (value >>> 32));
         }
 
         void writeString(String value) {

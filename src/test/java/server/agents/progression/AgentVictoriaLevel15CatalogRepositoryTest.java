@@ -53,6 +53,18 @@ class AgentVictoriaLevel15CatalogRepositoryTest {
     }
 
     @Test
+    void recordsOneBestEffortReturnScrollShopForEveryVictoriaTown() {
+        AgentVictoriaLevel15CatalogRepository repository =
+                AgentVictoriaLevel15CatalogRepository.defaultRepository();
+
+        assertReturnScroll(repository, 100000000, 2030001, 1001100, 100000102);
+        assertReturnScroll(repository, 101000000, 2030002, 1031100, 101000002);
+        assertReturnScroll(repository, 102000000, 2030003, 1021100, 102000002);
+        assertReturnScroll(repository, 103000000, 2030005, 1051002, 103000002);
+        assertReturnScroll(repository, 120000000, 2030019, 1091002, 120000200);
+    }
+
+    @Test
     void recordsAllVerifiedQuestRequirementsRewardsShopsAndTaxiSelections() {
         AgentVictoriaLevel15CatalogRepository repository =
                 AgentVictoriaLevel15CatalogRepository.defaultRepository();
@@ -130,6 +142,24 @@ class AgentVictoriaLevel15CatalogRepositoryTest {
         assertEquals(1052106, repository.interactionQuest(2090).orElseThrow().startNpcId());
     }
 
+    @Test
+    void everyRotationPackQuestRemainsSelectableFromTheGenericQuestPool() {
+        AgentVictoriaLevel15CatalogRepository repository =
+                AgentVictoriaLevel15CatalogRepository.defaultRepository();
+        AgentVictoriaQuestRuntimeCatalogRepository questPool =
+                AgentVictoriaQuestRuntimeCatalogRepository.defaultRepository();
+
+        for (AgentVictoriaLevel15Catalog.Career career : repository.catalog().careers()) {
+            AgentVictoriaLevel15Catalog.QuestPack rotation =
+                    repository.questPack(career.catchUpPlan().rotationPackId());
+            for (int questId : rotation.questIds()) {
+                assertTrue(questPool.find(questId).isPresent(),
+                        () -> rotation.packId() + " quest " + questId + " is missing from the generic quest pool");
+            }
+        }
+        assertTrue(questPool.find(2090).orElseThrow().huntingObjectives().isEmpty());
+    }
+
     private static void assertCareer(AgentVictoriaLevel15CatalogRepository repository,
                                      int jobId,
                                      int taxiSelection,
@@ -156,5 +186,19 @@ class AgentVictoriaLevel15CatalogRepositoryTest {
                 .mapToInt(AgentVictoriaLevel15Catalog.TrainingStep::rewardExp).sum());
         assertEquals(Set.copyOf(career.starterKitItemIds()).size(), career.starterKitItemIds().size());
         assertEquals(Set.copyOf(career.verifiedShopItemIds()).size(), career.verifiedShopItemIds().size());
+    }
+
+    private static void assertReturnScroll(
+            AgentVictoriaLevel15CatalogRepository repository,
+            int townMapId,
+            int itemId,
+            int shopNpcId,
+            int shopMapId) {
+        AgentVictoriaLevel15Catalog.ReturnScroll scroll =
+                repository.returnScrollForTown(townMapId).orElseThrow();
+        assertEquals(itemId, scroll.itemId());
+        assertEquals(shopNpcId, scroll.shopNpcId());
+        assertEquals(shopMapId, scroll.shopMapId());
+        assertEquals(500, scroll.unitPrice());
     }
 }

@@ -23,6 +23,11 @@ public final class ObserverFeature {
         return enabled() && observer.agent_signals_enabled;
     }
 
+    public static boolean agentNavigationEnabled() {
+        ObserverConfig observer = config();
+        return navGraphEnabled() && observer.agent_navigation_enabled;
+    }
+
     private static ObserverConfig config() {
         ServerConfig server = YamlConfig.config.server;
         return server == null ? null : server.observer;

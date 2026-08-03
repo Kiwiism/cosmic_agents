@@ -5403,6 +5403,18 @@ public class Character extends AbstractCharacterObject {
         return inventory[type.ordinal()];
     }
 
+    /**
+     * Returns whether this character still owns its live inventory state.
+     *
+     * <p>Disconnected characters release their inventories after the bounded
+     * logout grace period. Optional observers and Agent presentation features
+     * may retain a character reference across that boundary and must defer
+     * inventory reads until the relationship is rebound to a live character.</p>
+     */
+    public boolean hasInventoryState() {
+        return inventory != null;
+    }
+
     public int getItemEffect() {
         return itemEffect;
     }

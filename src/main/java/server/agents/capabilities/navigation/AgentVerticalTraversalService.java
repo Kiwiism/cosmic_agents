@@ -11,6 +11,11 @@ import java.awt.Point;
  * Generic policy for committing a complete vertical crossing rather than unrelated rope edges.
  */
 public final class AgentVerticalTraversalService {
+    private static final long POST_EXIT_REENTRY_BLOCK_MS = config.AgentTuning.longValue(
+            "server.agents.capabilities.navigation.AgentVerticalTraversalService.POST_EXIT_REENTRY_BLOCK_MS");
+    private static final int POST_EXIT_NUDGE_PX = config.AgentTuning.intValue(
+            "server.agents.capabilities.navigation.AgentVerticalTraversalService.POST_EXIT_NUDGE_PX");
+
     private AgentVerticalTraversalService() {
     }
 
@@ -117,7 +122,7 @@ public final class AgentVerticalTraversalService {
             if (!runAiTick) {
                 return directive(state, null, true);
             }
-            state.clear();
+            state.complete(System.currentTimeMillis(), POST_EXIT_REENTRY_BLOCK_MS, POST_EXIT_NUDGE_PX);
             return null;
         } else {
             state.clear();
@@ -136,6 +141,25 @@ public final class AgentVerticalTraversalService {
             return 0;
         }
         return Integer.compare(entry.verticalTraversalState().exitEdge().startPoint.y, entryY);
+    }
+
+    public static boolean blocksRecentInverseEntry(AgentNavigationGraph graph,
+                                                   AgentRuntimeEntry entry,
+                                                   AgentNavigationGraph.Edge edge,
+                                                   long nowMs) {
+        return entry != null
+                && entry.verticalTraversalState().blocksRecentInverseEntry(graph, edge, nowMs);
+    }
+
+    public static Point recentExitNudgeTarget(AgentNavigationGraph graph,
+                                              AgentRuntimeEntry entry,
+                                              int currentRegionId,
+                                              long nowMs) {
+        if (entry == null
+                || !entry.verticalTraversalState().hasRecentExitGuard(graph, currentRegionId, nowMs)) {
+            return null;
+        }
+        return entry.verticalTraversalState().recentExitNudgeTarget();
     }
 
     private static TraversalDirective directive(AgentVerticalTraversalState state,

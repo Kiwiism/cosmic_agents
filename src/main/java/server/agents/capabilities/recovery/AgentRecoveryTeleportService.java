@@ -42,14 +42,16 @@ public final class AgentRecoveryTeleportService {
                                                   RecoveryHooks hooks) {
         Point agentPosition = agent.getPosition();
         int manhattan = Math.abs(agentPosition.x - targetPosition.x) + Math.abs(agentPosition.y - targetPosition.y);
-        if (manhattan > teleportDistance) {
-            return executeRecoveryTeleport(entry, agent, targetPosition, hooks);
-        }
-
         Rectangle area = agent.getMap() == null ? null : agent.getMap().getMapArea();
         if (hasKnownMapBounds(area)
                 && !area.contains(agentPosition)
                 && manhattan > outOfBoundsTeleportDistance) {
+            return executeRecoveryTeleport(entry, agent, targetPosition, hooks);
+        }
+        // A live move target is an intentional route, not a recovery target. Large vertical maps such as
+        // Ellinia legitimately exceed the generic distance threshold; teleporting here makes the Agent fly
+        // directly to NPCs and portals instead of traversing the navigation graph.
+        if (!AgentMoveTargetStateRuntime.hasMoveTarget(entry) && manhattan > teleportDistance) {
             return executeRecoveryTeleport(entry, agent, targetPosition, hooks);
         }
         return false;

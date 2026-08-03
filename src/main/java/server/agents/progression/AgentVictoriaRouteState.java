@@ -20,6 +20,13 @@ final class AgentVictoriaRouteState {
     private long lastFailureAtMs;
     private int lastObservedMapId;
     private long lastMapProgressAtMs;
+    private int activeTravelMapId = -1;
+    private int activeDestinationMapId = -1;
+    private int arrivalSettleMapId = -1;
+    private long arrivalSettleUntilMs;
+    private long arrivalObserverGraceUntilMs;
+    private long arrivalVisibleSettleDurationMs;
+    private boolean arrivalAwaitingObserver;
 
     synchronized Set<Long> blockedEdges(long nowMs) {
         blockedEdgesUntilMs.entrySet().removeIf(entry -> entry.getValue() <= nowMs);
@@ -59,14 +66,83 @@ final class AgentVictoriaRouteState {
         return true;
     }
 
-    synchronized void recordPortalSuccess(long nowMs) {
+    synchronized void recordPortalSuccess(int destinationMapId, long nowMs, long settleDurationMs) {
+        recordPortalSuccess(destinationMapId, nowMs, settleDurationMs, false, 0L);
+    }
+
+    synchronized void recordPortalSuccess(int destinationMapId,
+                                          long nowMs,
+                                          long settleDurationMs,
+                                          boolean awaitObserver,
+                                          long observerGraceMs) {
         lastMapProgressAtMs = nowMs;
+        clearActiveTravel();
+        arrivalSettleMapId = destinationMapId;
+        arrivalVisibleSettleDurationMs = Math.max(0L, settleDurationMs);
+        arrivalSettleUntilMs = nowMs + arrivalVisibleSettleDurationMs;
+        arrivalAwaitingObserver = awaitObserver;
+        arrivalObserverGraceUntilMs = awaitObserver
+                ? nowMs + Math.max(arrivalVisibleSettleDurationMs, observerGraceMs)
+                : 0L;
         failingEdge = 0L;
         consecutiveFailures = 0;
         lastFailureAtMs = 0L;
     }
 
+    synchronized boolean settlingAt(int mapId, long nowMs) {
+        return settlingAt(mapId, nowMs, false);
+    }
+
+    synchronized boolean settlingAt(int mapId, long nowMs, boolean observedByPlayer) {
+        if (arrivalSettleMapId < 0) {
+            return false;
+        }
+        if (arrivalSettleMapId != mapId) {
+            clearArrivalSettle();
+            return false;
+        }
+        if (nowMs < arrivalSettleUntilMs) {
+            return true;
+        }
+        if (arrivalAwaitingObserver) {
+            if (observedByPlayer) {
+                arrivalAwaitingObserver = false;
+                arrivalObserverGraceUntilMs = 0L;
+                arrivalSettleUntilMs = nowMs + arrivalVisibleSettleDurationMs;
+                return arrivalVisibleSettleDurationMs > 0L;
+            }
+            if (nowMs < arrivalObserverGraceUntilMs) {
+                return true;
+            }
+        }
+        clearArrivalSettle();
+        return false;
+    }
+
+    private void clearArrivalSettle() {
+        arrivalSettleMapId = -1;
+        arrivalSettleUntilMs = 0L;
+        arrivalObserverGraceUntilMs = 0L;
+        arrivalVisibleSettleDurationMs = 0L;
+        arrivalAwaitingObserver = false;
+    }
+
     synchronized long lastMapProgressAtMs() {
         return lastMapProgressAtMs;
+    }
+
+    synchronized void markActiveTravel(int sourceMapId, int destinationMapId) {
+        activeTravelMapId = sourceMapId;
+        activeDestinationMapId = destinationMapId;
+    }
+
+    synchronized boolean activeTravelIn(int mapId) {
+        return activeTravelMapId == mapId && activeDestinationMapId >= 0
+                && activeDestinationMapId != mapId;
+    }
+
+    synchronized void clearActiveTravel() {
+        activeTravelMapId = -1;
+        activeDestinationMapId = -1;
     }
 }

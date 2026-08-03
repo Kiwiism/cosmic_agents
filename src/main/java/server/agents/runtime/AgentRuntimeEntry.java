@@ -5,6 +5,7 @@ import server.agents.capabilities.navigation.AgentNavigationContinuityState;
 import server.agents.capabilities.navigation.AgentNavigationDebugState;
 import server.agents.capabilities.navigation.AgentNavigationEdgeState;
 import server.agents.capabilities.navigation.AgentNavigationTargetState;
+import server.agents.capabilities.navigation.AgentNavigationRouteTraceState;
 import server.agents.capabilities.navigation.AgentPortalCooldownState;
 import server.agents.capabilities.navigation.AgentTravelVariationState;
 import server.agents.capabilities.navigation.AgentVerticalTraversalState;
@@ -440,6 +441,8 @@ public class AgentRuntimeEntry implements AgentRuntimeHandle {
     private final AgentNavigationContinuityState navigationContinuityState = new AgentNavigationContinuityState();
     private final AgentNavigationEdgeState navigationEdgeState = new AgentNavigationEdgeState();
     private final AgentNavigationTargetState navigationTargetState = new AgentNavigationTargetState();
+    private final AgentNavigationRouteTraceState navigationRouteTraceState =
+            new AgentNavigationRouteTraceState();
     private final AgentVerticalTraversalState verticalTraversalState = new AgentVerticalTraversalState();
     private final AgentTravelVariationState travelVariationState = new AgentTravelVariationState();
     private final AgentFarmAnchorState farmAnchorState = new AgentFarmAnchorState();
@@ -473,6 +476,10 @@ public class AgentRuntimeEntry implements AgentRuntimeHandle {
 
     public AgentNavigationTargetState navigationTargetState() {
         return navigationTargetState;
+    }
+
+    public AgentNavigationRouteTraceState navigationRouteTraceState() {
+        return navigationRouteTraceState;
     }
 
     public AgentVerticalTraversalState verticalTraversalState() {

@@ -80,7 +80,7 @@ public final class AgentFirstJobJourneyRuntime {
                 && agent.getMapId() < 100_000_000) {
             return false;
         }
-        reconcile(state, agent, bundle, nowMs);
+        reconcile(entry, state, agent, bundle, nowMs, gateway);
         if (state.stage() != AgentCareerProgressionState.Stage.WAITING_FOR_MAPLE_ISLAND) {
             AgentCareerObjectiveRuntime.ensureStarted(entry, bundle, nowMs);
         }
@@ -101,10 +101,7 @@ public final class AgentFirstJobJourneyRuntime {
             case TRAVEL_TO_PRE_JOB_GRIND -> travelToPreJobGrind(entry, agent, gateway);
             case GRIND_TO_JOB_LEVEL -> grindToJobLevel(entry, agent, state, nowMs, gateway);
             case RETURN_TO_LITH_FOR_TAXI -> returnToLith(entry, agent, state, nowMs, gateway);
-            case TAKE_TAXI -> approachAndRun(entry, agent, LITH_TAXI_NPC_ID,
-                    () -> gateway.runNpcScript(agent, LITH_TAXI_NPC_ID,
-                            AgentTaxiDialogueSequence.lithHarborPhil(
-                                    taxiSelection(bundle))), gateway);
+            case TAKE_TAXI -> takeTaxi(entry, agent, state, bundle, nowMs, gateway);
             case ENTER_INSTRUCTOR_ROOM -> enterInstructorRoom(entry, agent, bundle, gateway);
             case COMPLETE_CAREER_PATH -> completeCareerPath(entry, agent, bundle, gateway);
             case ADVANCE_FIRST_JOB -> approachAndRun(entry, agent, bundle.instructorNpcId(),
@@ -114,25 +111,28 @@ public final class AgentFirstJobJourneyRuntime {
             case RETURN_TO_INSTRUCTOR -> returnToInstructor(entry, agent, state, bundle, nowMs, gateway);
             case INSTRUCTOR_TRAINING ->
                     AgentInstructorTrainingRuntime.tick(entry, agent, nowMs, gateway);
-            case HOME_QUEST_PACK, POST_HOME_DECISION, ROTATION_QUEST_PACK,
-                    GRIND_TO_MILESTONE, FINAL_RETURN_TO_INSTRUCTOR ->
+            case HOME_QUEST_PACK, POST_HOME_DECISION, HOME_GRIND_TO_MILESTONE, ROTATION_QUEST_PACK,
+                    GRIND_TO_MILESTONE, FINALIZE_AT_NEAREST_TOWN, FINAL_RETURN_TO_INSTRUCTOR ->
                     AgentLevel15CatchUpRuntime.tick(entry, agent, nowMs, gateway);
             case COMPLETE, BLOCKED -> false;
         };
     }
 
-    private static void reconcile(AgentCareerProgressionState state,
+    private static void reconcile(AgentRuntimeEntry entry,
+                                  AgentCareerProgressionState state,
                                   Character agent,
                                   AgentCareerBuildBundle bundle,
-                                  long nowMs) {
+                                  long nowMs,
+                                  PrimitiveCapabilityGateway gateway) {
         if ((state.stage() == AgentCareerProgressionState.Stage.INSTRUCTOR_TRAINING
+                || state.stage() == AgentCareerProgressionState.Stage.HOME_GRIND_TO_MILESTONE
                 || state.stage() == AgentCareerProgressionState.Stage.GRIND_TO_MILESTONE)
                 && agent.getLevel() >= bundle.milestoneLevel()
                 && agent.getJob().getId() == bundle.firstJobId()
                 && state.trainingQuestIndex() >= bundle.instructorTrainingQuestIds().size()
                 && (state.stage() != AgentCareerProgressionState.Stage.INSTRUCTOR_TRAINING
                 || state.runMode() != AgentCareerProgressionState.RunMode.LEVEL15_WITH_INITIAL_SHOP)) {
-            transitionIfNeeded(state, AgentCareerProgressionState.Stage.FINAL_RETURN_TO_INSTRUCTOR, nowMs);
+            transitionIfNeeded(state, AgentCareerProgressionState.Stage.FINALIZE_AT_NEAREST_TOWN, nowMs);
             return;
         }
         if (agent.getJob().getId() == bundle.firstJobId()) {
@@ -178,6 +178,11 @@ public final class AgentFirstJobJourneyRuntime {
             return;
         }
         if (agent.getMapId() == bundle.instructorMapId()) {
+            if (state.stage() == AgentCareerProgressionState.Stage.ENTER_INSTRUCTOR_ROOM
+                    && AgentVictoriaRouteRuntime.settlingAfterPortalArrival(
+                    entry, agent, gateway, nowMs)) {
+                return;
+            }
             AgentCareerProgressionState.Stage next = pathStatus == QuestStatus.Status.COMPLETED.getId()
                     ? AgentCareerProgressionState.Stage.ADVANCE_FIRST_JOB
                     : AgentCareerProgressionState.Stage.COMPLETE_CAREER_PATH;
@@ -455,6 +460,27 @@ public final class AgentFirstJobJourneyRuntime {
         gateway.facePosition(agent, npc);
         interaction.run();
         return true;
+    }
+
+    private static boolean takeTaxi(AgentRuntimeEntry entry,
+                                    Character agent,
+                                    AgentCareerProgressionState state,
+                                    AgentCareerBuildBundle bundle,
+                                    long nowMs,
+                                    PrimitiveCapabilityGateway gateway) {
+        return approachAndRun(entry, agent, LITH_TAXI_NPC_ID, () -> {
+            if (!gateway.runNpcScript(agent, LITH_TAXI_NPC_ID,
+                    AgentTaxiDialogueSequence.lithHarborPhil(taxiSelection(bundle)))) {
+                return;
+            }
+            // NPC scripts change maps synchronously. Stop any old navigation intent and
+            // preserve an observable town arrival before routing to the instructor room.
+            if (agent.getMapId() == destinationTownMap(bundle)) {
+                gateway.stop(entry);
+                state.stage(AgentCareerProgressionState.Stage.ENTER_INSTRUCTOR_ROOM,
+                        nowMs + INTERACTION_DELAY_MS);
+            }
+        }, gateway);
     }
 
     private static int taxiSelection(AgentCareerBuildBundle bundle) {

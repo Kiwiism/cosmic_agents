@@ -100,7 +100,8 @@ public final class AgentOfferService {
     }
 
     public static boolean offerBestRecommendedGear(AgentRuntimeEntry entry, Character bot, Character owner) {
-        if (owner == null) {
+        if (bot == null || owner == null || !bot.hasInventoryState() || !owner.hasInventoryState()
+                || !owner.isLoggedinWorld()) {
             return false;
         }
 

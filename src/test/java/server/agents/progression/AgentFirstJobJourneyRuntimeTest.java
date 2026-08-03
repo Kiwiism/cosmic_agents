@@ -8,6 +8,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -18,6 +19,52 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class AgentFirstJobJourneyRuntimeTest {
+    @Test
+    void taxiArrivalWaitsInElliniaBeforeStartingTheLibraryRoute() {
+        Character agent = beginner("VisibleEllinia", 10, 104000000);
+        AtomicInteger mapId = new AtomicInteger(104000000);
+        when(agent.getMapId()).thenAnswer(ignored -> mapId.get());
+        when(agent.getQuestStatus(org.mockito.ArgumentMatchers.anyInt())).thenReturn((byte) 2);
+        AgentRuntimeEntry entry = entry(agent, "magician-standard-v1",
+                AgentCareerProgressionState.Stage.TAKE_TAXI);
+        AgentCareerProgressionState state = entry.capabilityStates().require(
+                AgentCareerProgressionState.STATE_KEY);
+        PrimitiveCapabilityGateway gateway = npcGateway(agent, 1002000);
+        when(gateway.runNpcScript(agent, 1002000,
+                AgentTaxiDialogueSequence.lithHarborPhil(2))).thenAnswer(ignored -> {
+                    mapId.set(101000000);
+                    return true;
+                });
+
+        assertTrue(AgentFirstJobJourneyRuntime.tick(entry, agent, 100L, gateway));
+
+        assertEquals(101000000, agent.getMapId());
+        assertEquals(AgentCareerProgressionState.Stage.ENTER_INSTRUCTOR_ROOM, state.stage());
+        assertFalse(state.ready(100L));
+        verify(gateway).stop(entry);
+        verify(gateway, never()).enterPortal(agent, 26);
+    }
+
+    @Test
+    void libraryArrivalPauseCannotBeSkippedByCareerReconciliation() {
+        Character agent = beginner("LibraryDoor", 10, 101000003);
+        when(agent.getQuestStatus(org.mockito.ArgumentMatchers.anyInt())).thenReturn((byte) 2);
+        AgentRuntimeEntry entry = entry(agent, "magician-standard-v1",
+                AgentCareerProgressionState.Stage.ENTER_INSTRUCTOR_ROOM);
+        AgentCareerProgressionState state = entry.capabilityStates().require(
+                AgentCareerProgressionState.STATE_KEY);
+        long nowMs = System.currentTimeMillis();
+        entry.capabilityStates().require(AgentVictoriaRouteState.STATE_KEY)
+                .recordPortalSuccess(101000003, nowMs, 1_500L);
+        PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
+
+        assertTrue(AgentFirstJobJourneyRuntime.tick(entry, agent, nowMs + 500L, gateway));
+
+        assertEquals(AgentCareerProgressionState.Stage.ENTER_INSTRUCTOR_ROOM, state.stage());
+        verify(gateway).stop(entry);
+        verify(gateway, never()).navigate(entry, new Point(0, 0), true);
+    }
+
     @Test
     void yieldsToMovementWhileWalkingToTheLithHarborShipExit() {
         Character agent = beginner("ShipArrival", 9, 104000000);
@@ -168,7 +215,7 @@ class AgentFirstJobJourneyRuntimeTest {
     }
 
     @Test
-    void completedMilestoneReturnsToInstructorBeforeCompleting() {
+    void completedMilestoneFinishesAtNearestTownInsteadOfReturningToInstructor() {
         Character agent = mock(Character.class);
         when(agent.getId()).thenReturn(43);
         when(agent.getName()).thenReturn("ReturnHome");
@@ -185,8 +232,8 @@ class AgentFirstJobJourneyRuntimeTest {
                 AgentCareerProgressionState.Stage.GRIND_TO_MILESTONE, 0L);
         state.trainingQuestIndex(4);
 
-        assertTrue(AgentFirstJobJourneyRuntime.tick(entry, agent, 100L, mock(PrimitiveCapabilityGateway.class)));
-        assertEquals(AgentCareerProgressionState.Stage.FINAL_RETURN_TO_INSTRUCTOR, state.stage());
+        assertFalse(AgentFirstJobJourneyRuntime.tick(entry, agent, 100L, mock(PrimitiveCapabilityGateway.class)));
+        assertEquals(AgentCareerProgressionState.Stage.COMPLETE, state.stage());
     }
 
     @Test

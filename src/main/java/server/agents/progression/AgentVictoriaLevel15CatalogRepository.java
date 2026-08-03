@@ -25,6 +25,7 @@ public final class AgentVictoriaLevel15CatalogRepository {
     private final Map<String, AgentVictoriaLevel15Catalog.StartVariant> startVariantsById;
     private final Map<String, AgentVictoriaLevel15Catalog.QuestPack> questPacksById;
     private final Map<Integer, AgentVictoriaLevel15Catalog.InteractionQuest> interactionQuestsById;
+    private final Map<Integer, AgentVictoriaLevel15Catalog.ReturnScroll> returnScrollsByTownMapId;
 
     AgentVictoriaLevel15CatalogRepository(AgentVictoriaLevel15Catalog catalog,
                                            AgentCareerBuildBundleRepository bundles) {
@@ -34,6 +35,7 @@ public final class AgentVictoriaLevel15CatalogRepository {
         Map<String, AgentVictoriaLevel15Catalog.StartVariant> variantIndex = new LinkedHashMap<>();
         Map<String, AgentVictoriaLevel15Catalog.QuestPack> packIndex = new LinkedHashMap<>();
         Map<Integer, AgentVictoriaLevel15Catalog.InteractionQuest> interactionQuestIndex = new LinkedHashMap<>();
+        Map<Integer, AgentVictoriaLevel15Catalog.ReturnScroll> returnScrollIndex = new LinkedHashMap<>();
         for (AgentVictoriaLevel15Catalog.StartVariant variant : catalog.startVariants()) {
             if (variantIndex.putIfAbsent(variant.variantId(), variant) != null) {
                 throw new IllegalArgumentException("duplicate Victoria start variant: " + variant.variantId());
@@ -48,6 +50,11 @@ public final class AgentVictoriaLevel15CatalogRepository {
         for (AgentVictoriaLevel15Catalog.InteractionQuest quest : catalog.interactionQuests()) {
             if (interactionQuestIndex.putIfAbsent(quest.questId(), quest) != null) {
                 throw new IllegalArgumentException("duplicate Victoria interaction quest: " + quest.questId());
+            }
+        }
+        for (AgentVictoriaLevel15Catalog.ReturnScroll scroll : catalog.returnScrolls()) {
+            if (returnScrollIndex.putIfAbsent(scroll.townMapId(), scroll) != null) {
+                throw new IllegalArgumentException("duplicate Victoria return scroll town: " + scroll.townMapId());
             }
         }
         AgentVictoriaQuestRuntimeCatalogRepository questRepository =
@@ -89,6 +96,7 @@ public final class AgentVictoriaLevel15CatalogRepository {
         startVariantsById = Map.copyOf(variantIndex);
         questPacksById = Map.copyOf(packIndex);
         interactionQuestsById = Map.copyOf(interactionQuestIndex);
+        returnScrollsByTownMapId = Map.copyOf(returnScrollIndex);
     }
 
     public static AgentVictoriaLevel15CatalogRepository defaultRepository() {
@@ -124,6 +132,10 @@ public final class AgentVictoriaLevel15CatalogRepository {
 
     public Optional<AgentVictoriaLevel15Catalog.InteractionQuest> interactionQuest(int questId) {
         return Optional.ofNullable(interactionQuestsById.get(questId));
+    }
+
+    public Optional<AgentVictoriaLevel15Catalog.ReturnScroll> returnScrollForTown(int townMapId) {
+        return Optional.ofNullable(returnScrollsByTownMapId.get(townMapId));
     }
 
     private static void validateCareer(AgentCareerBuildBundle bundle,

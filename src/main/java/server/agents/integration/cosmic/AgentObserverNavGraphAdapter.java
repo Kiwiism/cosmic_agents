@@ -9,10 +9,16 @@ import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.navigation.AgentMapGraphService;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
+import server.agents.capabilities.navigation.AgentNavigationTraceRuntime;
+import server.agents.capabilities.navigation.AgentNavigationTraceSnapshot;
+import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.AgentRuntimeRegistry;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.observer.ObserverInterestService;
 import server.agents.observer.protocol.ObserverNavGraphProtocol;
 import server.maps.MapleMap;
 import server.observer.ObserverNavGraphAdapter;
+import server.observer.ObserverFeature;
 import tools.PacketCreator;
 
 import java.util.List;
@@ -38,8 +44,21 @@ public final class AgentObserverNavGraphAdapter implements ObserverNavGraphAdapt
         int requestId = packet.readInt();
         if (version != ObserverNavGraphProtocol.VERSION
                 || (action != ObserverNavGraphProtocol.ACTION_SNAPSHOT
-                    && action != ObserverNavGraphProtocol.ACTION_ROUTE)
+                    && action != ObserverNavGraphProtocol.ACTION_ROUTE
+                    && action != ObserverNavGraphProtocol.ACTION_AGENT_TRACE)
                 || requestId <= 0) {
+            return;
+        }
+        if (action == ObserverNavGraphProtocol.ACTION_AGENT_TRACE) {
+            if (packet.available() < 12) {
+                return;
+            }
+            int characterId = packet.readInt();
+            long knownRevision = packet.readLong();
+            if (rateLimited(client)) {
+                return;
+            }
+            sendAgentTrace(client, requestId, characterId, knownRevision);
             return;
         }
         if (action == ObserverNavGraphProtocol.ACTION_ROUTE && packet.available() < 8) {
@@ -160,6 +179,49 @@ public final class AgentObserverNavGraphAdapter implements ObserverNavGraphAdapt
                 + ": " + result
                 + ", " + route.path().size() + " step(s), "
                 + route.expandedNodes() + " expanded";
+    }
+
+    private static void sendAgentTrace(Client client,
+                                       int requestId,
+                                       int characterId,
+                                       long knownRevision) {
+        Character observer = client.getPlayer();
+        AgentMovementProfile fallbackProfile = AgentMovementProfile.fromCharacter(observer);
+        if (!ObserverFeature.agentNavigationEnabled()) {
+            sendStatus(client, ObserverNavGraphProtocol.STATUS_AGENT_DISABLED,
+                    requestId, observer.getMapId(), 0, fallbackProfile);
+            return;
+        }
+        AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(characterId);
+        AgentNavigationTraceSnapshot trace = AgentNavigationTraceRuntime.snapshot(
+                entry, System.currentTimeMillis());
+        if (trace == null
+                || entry == null
+                || !AgentRuntimeIdentityRuntime.hasBot(entry)
+                || AgentRuntimeIdentityRuntime.bot(entry).getWorld() != observer.getWorld()) {
+            sendStatus(client, ObserverNavGraphProtocol.STATUS_AGENT_UNAVAILABLE,
+                    requestId, observer.getMapId(), 0, fallbackProfile);
+            return;
+        }
+
+        boolean includePath = knownRevision != trace.routeRevision();
+        byte[] payload = ObserverNavGraphProtocol.encodeAgentTrace(trace, includePath);
+        List<byte[]> chunks = ObserverNavGraphProtocol.chunks(payload);
+        int checksum = ObserverNavGraphProtocol.checksum(payload);
+        for (int index = 0; index < chunks.size(); index++) {
+            client.sendPacket(PacketCreator.observerNavGraphChunk(
+                    ObserverNavGraphProtocol.STATUS_AGENT_TRACE,
+                    requestId,
+                    trace.mapId(),
+                    trace.graphVersion(),
+                    trace.speed(),
+                    trace.jump(),
+                    index,
+                    chunks.size(),
+                    payload.length,
+                    checksum,
+                    chunks.get(index)));
+        }
     }
 
     private static boolean rateLimited(Client client) {

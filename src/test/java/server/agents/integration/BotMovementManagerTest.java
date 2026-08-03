@@ -978,6 +978,25 @@ class BotMovementManagerTest {
     }
 
     @Test
+    void shouldNudgeAwayFromCurrentNavigationWaypoint() {
+        MapleMap map = new MapleMap(910000038, 0, 0, 910000038, 1.0f);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(300, 100), 1));
+        map.setFootholds(footholds);
+
+        Character bot = mockBot(new Point(100, 100), map);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
+        AgentNavigationDebugStateRuntime.setNavTargetPosition(entry, new Point(200, 100));
+
+        AgentMovementRecoveryService.tickUnstuck(entry);
+
+        assertTrue(AgentMovementPhysicsStateRuntime.airVelocityX(entry) < 0,
+                "a failed route to the right should be escaped with a leftward nudge");
+        assertFalse(AgentNavigationDebugStateRuntime.hasNavTargetPosition(entry),
+                "recovery must invalidate the failed waypoint so navigation replans");
+    }
+
+    @Test
     void shouldNotApplyAirSteeringDuringCommittedNavJump() {
         MapleMap map = new MapleMap(910000009, 0, 0, 910000009, 1.0f);
         server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));

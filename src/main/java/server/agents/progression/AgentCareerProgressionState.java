@@ -24,8 +24,12 @@ public final class AgentCareerProgressionState {
         INSTRUCTOR_TRAINING,
         HOME_QUEST_PACK,
         POST_HOME_DECISION,
+        /** Optional local catch-up when the home pack leaves the Agent close to level 15. */
+        HOME_GRIND_TO_MILESTONE,
         ROTATION_QUEST_PACK,
         GRIND_TO_MILESTONE,
+        FINALIZE_AT_NEAREST_TOWN,
+        /** Restored checkpoints from before milestone runs stopped in the nearest town. */
         FINAL_RETURN_TO_INSTRUCTOR,
         COMPLETE,
         BLOCKED

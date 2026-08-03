@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -72,11 +73,44 @@ class AgentVictoriaSharedQuestPackCatalogTest {
     }
 
     @Test
-    void checkpoint2ExistsForEveryBundleAndOnlyThiefDaggerIsCaptured() {
+    void perionPackVerifiesItsReturnScrollImmediatelyBeforeTheLeavesTrip() {
+        AgentVictoriaSharedQuestPackCatalog.Pack pack =
+                AgentVictoriaSharedQuestPackCatalog.require("perion-pre15");
+
+        int purchaseIndex = indexOf(pack, step ->
+                "SHOP_ITEM".equals(step.type()) && step.itemId() == 2030003);
+        int huntIndex = indexOf(pack, step ->
+                "HUNT".equals(step.type()) && step.mapId() == 101030200);
+        int useIndex = indexOf(pack, step ->
+                "USE_SCROLL".equals(step.type()) && step.itemId() == 2030003);
+
+        assertEquals(huntIndex - 1, purchaseIndex);
+        assertEquals(huntIndex + 1, useIndex);
+    }
+
+    @Test
+    void kerningPackPreparesForItsLongMaterialReturnBeforeTheFirstGroupedHunt() {
+        AgentVictoriaSharedQuestPackCatalog.Pack pack =
+                AgentVictoriaSharedQuestPackCatalog.require("kerning-pre15");
+        int octopusHuntIndex = indexOf(pack, step ->
+                "HUNT".equals(step.type()) && step.mapId() == 102040000);
+
+        assertEquals(100050000,
+                AgentVictoriaSharedQuestPackRuntime.returnPreparationMapId(
+                        pack, octopusHuntIndex));
+        assertTrue(AgentQuestReturnScrollPolicy.qualifies(
+                100050000, pack.homeTownMapId()));
+    }
+
+    @Test
+    void checkpoint2ExistsForEveryBundleAndRecordsValidatedCaptures() {
         Set<String> bundleIds = AgentCareerBuildBundleRepository.defaultRepository()
                 .all().stream()
                 .map(AgentCareerBuildBundle::bundleId)
                 .collect(Collectors.toSet());
+        Set<String> capturedBundleIds = Set.of(
+                "magician-standard-v1",
+                "thief-dagger-standard-v1");
 
         assertEquals(bundleIds, VictoriaCheckpointBaseline.bundleIds());
         for (String bundleId : bundleIds) {
@@ -86,8 +120,25 @@ class AgentVictoriaSharedQuestPackCatalogTest {
             assertFalse(snapshot.completedQuestIds().isEmpty());
             assertTrue(snapshot.resetQuestIds().containsAll(
                     Set.of(2082, 2089, 2090, 2091)));
-            assertEquals("thief-dagger-standard-v1".equals(bundleId), snapshot.captured());
+            assertEquals(capturedBundleIds.contains(bundleId), snapshot.captured());
         }
+    }
+
+    @Test
+    void magicianCheckpointCapturesCurrentPostInstructorState() {
+        VictoriaCheckpointBaseline.Snapshot snapshot =
+                VictoriaCheckpointBaseline.require("magician-standard-v1");
+
+        assertEquals("KiwiAgent", snapshot.sourceCharacterName());
+        assertEquals(101000002, snapshot.character().mapId());
+        assertEquals(11, snapshot.character().level());
+        assertEquals(1386, snapshot.character().exp());
+        assertEquals(63, snapshot.character().intelligence());
+        assertEquals(5457, snapshot.character().mesos());
+        assertTrue(snapshot.items().stream().anyMatch(item ->
+                item.itemId() == 2030000 && item.quantity() == 10));
+        assertTrue(snapshot.skills().stream().anyMatch(skill ->
+                skill.skillId() == 2001004 && skill.level() == 1));
     }
 
     @Test
@@ -209,6 +260,17 @@ class AgentVictoriaSharedQuestPackCatalogTest {
                 + itemId + "\\s*,");
         assertTrue(listing.matcher(shops).find(),
                 "shop NPC " + npcId + " does not sell required item " + itemId);
+    }
+
+    private static int indexOf(
+            AgentVictoriaSharedQuestPackCatalog.Pack pack,
+            Predicate<AgentVictoriaSharedQuestPackCatalog.Step> predicate) {
+        for (int index = 0; index < pack.steps().size(); index++) {
+            if (predicate.test(pack.steps().get(index))) {
+                return index;
+            }
+        }
+        throw new AssertionError("expected quest-pack step was not found in " + pack.packId());
     }
 
     private static void assertPacks(

@@ -34,6 +34,10 @@ public final class AgentCombatPolicyConfig {
         return tuningInt("ROUTE_BLOCKER_MAX_KILLS");
     }
 
+    public static long routeBlockerTravelCooldownMs() {
+        return tuningLong("ROUTE_BLOCKER_TRAVEL_COOLDOWN_MS");
+    }
+
     public static boolean questLocalClearEnforced() {
         return tuningBoolean("QUEST_LOCAL_CLEAR_ENFORCED");
     }

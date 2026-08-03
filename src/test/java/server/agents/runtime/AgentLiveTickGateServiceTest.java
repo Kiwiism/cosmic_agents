@@ -211,6 +211,46 @@ class AgentLiveTickGateServiceTest {
     }
 
     @Test
+    void foregroundRouteCombatCanConsumeBeforeUniversalPlanMovement() {
+        Character agent = mock(Character.class);
+        when(agent.getChair()).thenReturn(-1);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        List<String> calls = new ArrayList<>();
+
+        boolean consumed = AgentLiveTickGateService.tickLiveGates(
+                new AgentLiveTickGateService.Context(
+                        entry, agent, null, null, new Point(250, 10), true),
+                new AgentLiveTickGateService.Hooks(
+                        (commonEntry, commonAgent, commonLeader, runAiTick) -> {
+                            calls.add("common");
+                            return false;
+                        },
+                        (gateEntry, gateAgent, runAiTick) -> {
+                            calls.add("planGate");
+                            return false;
+                        },
+                        (supervisionEntry, supervisionAgent) -> {
+                            calls.add("supervision");
+                            return false;
+                        },
+                        (travelEntry, travelAgent, targetPosition, runAiTick) -> {
+                            calls.add("routeCombat");
+                            return true;
+                        },
+                        (capabilityEntry, capabilityAgent) -> false,
+                        (tradeEntry, tradeAgent) -> false,
+                        (idleEntry, idleAgent) -> false,
+                        (recoveryEntry, recoveryAgent, anchor, target) -> false,
+                        (mapEntry, mapAgent) -> {
+                            calls.add("mapChange");
+                            return false;
+                        }));
+
+        assertTrue(consumed);
+        assertEquals(List.of("mapChange", "supervision", "common", "planGate", "routeCombat"), calls);
+    }
+
+    @Test
     void mapChangeIsGroundedBeforeCapabilityOrPhysicsWork() {
         Character agent = mock(Character.class);
         when(agent.getChair()).thenReturn(-1);

@@ -30,9 +30,11 @@ final class AgentNavigationRouteOverlayPolicy {
     }
 
     private final Map<RouteKey, Map<Integer, Integer>> nextRegionByRoute;
+    private final Map<RouteKey, String> rationaleByRoute;
 
     private AgentNavigationRouteOverlayPolicy(Catalog catalog) {
         Map<RouteKey, Map<Integer, Integer>> routes = new HashMap<>();
+        Map<RouteKey, String> rationales = new HashMap<>();
         for (Route route : catalog.routes()) {
             if (route.regionPath() == null || route.regionPath().size() < 2) {
                 throw new IllegalArgumentException("navigation route overlay requires at least two regions");
@@ -49,8 +51,10 @@ final class AgentNavigationRouteOverlayPolicy {
             if (routes.put(key, Map.copyOf(nextByRegion)) != null) {
                 throw new IllegalArgumentException("duplicate navigation route overlay " + key);
             }
+            rationales.put(key, route.rationale() == null ? "" : route.rationale());
         }
         nextRegionByRoute = Map.copyOf(routes);
+        rationaleByRoute = Map.copyOf(rationales);
     }
 
     static boolean allows(AgentNavigationGraph graph,
@@ -66,6 +70,19 @@ final class AgentNavigationRouteOverlayPolicy {
         }
         Integer requiredNextRegion = nextByRegion.get(edge.fromRegionId);
         return requiredNextRegion == null || requiredNextRegion == edge.toRegionId;
+    }
+
+    static boolean applies(AgentNavigationGraph graph, int targetRegionId) {
+        return graph != null && DEFAULT.nextRegionByRoute.containsKey(
+                new RouteKey(graph.mapId, graph.version, targetRegionId));
+    }
+
+    static String rationale(AgentNavigationGraph graph, int targetRegionId) {
+        if (graph == null) {
+            return "";
+        }
+        return DEFAULT.rationaleByRoute.getOrDefault(
+                new RouteKey(graph.mapId, graph.version, targetRegionId), "");
     }
 
     private static AgentNavigationRouteOverlayPolicy load() {

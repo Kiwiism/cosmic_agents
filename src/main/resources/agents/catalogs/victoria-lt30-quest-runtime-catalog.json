@@ -6237,6 +6237,23 @@
                                               ]
                     },
                     {
+                        "questId":  2090,
+                        "questName":  "I\u0027m Bored 1",
+                        "minLevel":  10,
+                        "maxLevel":  null,
+                        "startNpcId":  1052106,
+                        "startMapIds":  [
+                                            103000000
+                                        ],
+                        "completeNpcId":  1052106,
+                        "completeMapIds":  [
+                                               103000000
+                                           ],
+                        "huntingObjectives":  [
+
+                                              ]
+                    },
+                    {
                         "questId":  2091,
                         "questName":  "I\u0027m Bored 2",
                         "minLevel":  10,

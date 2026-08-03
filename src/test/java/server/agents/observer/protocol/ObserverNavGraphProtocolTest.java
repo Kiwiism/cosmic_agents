@@ -2,6 +2,8 @@ package server.agents.observer.protocol;
 
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.navigation.AgentMapGraphService;
+import server.agents.capabilities.navigation.AgentNavigationGraph;
+import server.agents.capabilities.navigation.AgentNavigationTraceSnapshot;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -111,6 +113,39 @@ class ObserverNavGraphProtocolTest {
         byte[] payload = new byte[ObserverNavGraphProtocol.MAX_PAYLOAD_BYTES + 1];
         assertThrows(IllegalArgumentException.class,
                 () -> ObserverNavGraphProtocol.chunks(payload));
+    }
+
+    @Test
+    void encodesLiveAgentTraceWithOptionalPathDelta() {
+        AgentNavigationTraceSnapshot.Edge edge =
+                new AgentNavigationTraceSnapshot.Edge(
+                        12, 18, AgentNavigationGraph.EdgeType.JUMP,
+                        20, 30, 80, 10,
+                        15, 25, 3, -1, 0, 0, 0, 450);
+        AgentNavigationTraceSnapshot trace = new AgentNavigationTraceSnapshot(
+                77, "BluePanda", 103000000, 2_000L,
+                7, 100, 100, 4L, 1_900L,
+                "NORMAL", "objective-route", "quest:1000",
+                new AgentNavigationTraceSnapshot.Position(true, 20, 30),
+                12, 18,
+                new AgentNavigationTraceSnapshot.Position(true, 80, 10),
+                new AgentNavigationTraceSnapshot.Position(true, 25, 25),
+                true, "MOVE", "", List.of(edge), 0,
+                450, 7, 1_250L, true, false, false,
+                0, 0, 1_850L, "", null, 0L,
+                1, 1_700L, "REROUTE", "",
+                List.of(new AgentNavigationTraceSnapshot.Transition(
+                        11, 12, 1_800L)));
+
+        ByteBuffer full = ByteBuffer.wrap(
+                ObserverNavGraphProtocol.encodeAgentTrace(trace, true)
+        ).order(ByteOrder.LITTLE_ENDIAN);
+        assertEquals(0x3154564E, full.getInt());
+        assertEquals(77, full.getInt());
+        assertEquals("BluePanda", readString(full));
+
+        byte[] unchanged = ObserverNavGraphProtocol.encodeAgentTrace(trace, false);
+        assertEquals(0, unchanged[unchanged.length - 1]);
     }
 
     private static String readString(ByteBuffer input) {

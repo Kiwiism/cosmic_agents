@@ -26,6 +26,11 @@ public interface PrimitiveCapabilityGateway {
         return true;
     }
 
+    /** True when at least one real player can currently observe the Agent's map. */
+    default boolean observedByPlayer(Character agent) {
+        return false;
+    }
+
     AgentCharacterStateSnapshot characterState(Character agent);
 
     int stuckDurationMs(AgentRuntimeEntry entry);

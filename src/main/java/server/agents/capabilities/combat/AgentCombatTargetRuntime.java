@@ -267,7 +267,7 @@ public final class AgentCombatTargetRuntime {
         AgentRouteBlockerState blockerState =
                 entry.capabilityStates().require(AgentRouteBlockerState.STATE_KEY);
         if (candidates.isEmpty()) {
-            blockerState.clear();
+            blockerState.resumeTravel();
             return null;
         }
         long nowMs = System.currentTimeMillis();

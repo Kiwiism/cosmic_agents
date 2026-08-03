@@ -97,9 +97,10 @@ Items without a quest-valid Victoria mob source are separated as `nonHuntingAcqu
 
 Only quests marked runnable by the status catalog may be started automatically. Quests leaving Victoria stay cataloged but have `autonomousStartAllowed: false`. The Manji boundary is explicit: `2122` may run locally, but automatic continuation into `2123` or `2127` is blocked; `To the Desert...` remains deferred until world-travel policy exists.
 
-The executable subset is generated into `victoria-lt30-quest-runtime-catalog.json`. It currently contains 71
-conservative entries: each has at least one supported hunting objective, no unsupported non-hunting acquisition, both
-NPC endpoints on Victoria, and no scripted world transfer. `AgentVictoriaQuestSchedulerRuntime` resumes an already
+The executable subset is generated into `victoria-lt30-quest-runtime-catalog.json`. It currently contains 72
+conservative entries: 71 have at least one supported hunting objective, while the curated interaction-only
+`I'm Bored 1` bridge keeps the Kerning rotation chain selectable after its fixed pack is skipped. Every entry has no
+unsupported acquisition, both NPC endpoints on Victoria, and no scripted world transfer. `AgentVictoriaQuestSchedulerRuntime` resumes an already
 started catalog quest first; otherwise `victoria-progression-policy.json` makes one deterministic quest-versus-grind
 decision per Agent and level. NPC interaction waits use a deterministic two-to-six-second delay.
 

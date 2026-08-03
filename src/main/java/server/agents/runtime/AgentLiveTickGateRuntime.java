@@ -13,8 +13,12 @@ import server.agents.plans.AgentForegroundPlanRuntime;
 import server.agents.runtime.maintenance.AgentMaintenanceSupervisor;
 import server.agents.capabilities.behavior.AgentCrowdRespiteRuntime;
 import server.agents.capabilities.behavior.AgentPioRelaxerInterludeRuntime;
+import server.agents.capabilities.combat.AgentLocalOpportunityAttackCoordinator;
+import server.agents.capabilities.combat.AgentLocalOpportunityAttackService;
+import server.agents.progression.AgentVictoriaRouteRuntime;
 
 import client.Character;
+import java.awt.Point;
 import java.util.function.Consumer;
 
 public final class AgentLiveTickGateRuntime {
@@ -57,6 +61,7 @@ public final class AgentLiveTickGateRuntime {
                             || AgentCrowdRespiteRuntime.tick(entry, agent, nowMs, runAiTick);
                 },
                 (entry, agent) -> tickObjectiveSupervision(entry, agent, System.currentTimeMillis()),
+                AgentLiveTickGateRuntime::tickForegroundTravelCombat,
                 (entry, agent) -> AgentForegroundPlanRuntime.tick(
                         entry, agent, System.currentTimeMillis()),
                 (tradeEntry, tradeAgent) -> AgentTradeWindowTickService.tickIfTradeWindowOpen(
@@ -93,6 +98,27 @@ public final class AgentLiveTickGateRuntime {
                         mapAgent,
                         new AgentTrackedMapChangeTickService.Hooks((trackedEntry, trackedAgent) ->
                                 tickTrackedMapChange(trackedEntry, trackedAgent, issueGrind, issueFollow, perf))));
+    }
+
+    private static boolean tickForegroundTravelCombat(AgentRuntimeEntry entry,
+                                                      Character agent,
+                                                      Point targetPosition,
+                                                      boolean runAiTick) {
+        if (!runAiTick || targetPosition == null
+                || !AgentVictoriaRouteRuntime.activeInterMapTravel(entry, agent.getMapId())) {
+            return false;
+        }
+        Point agentPosition = agent.getPosition();
+        AgentLocalOpportunityAttackService.Result result =
+                AgentLocalOpportunityAttackCoordinator.tryLocalOpportunityAttack(
+                        entry,
+                        agent,
+                        agentPosition,
+                        targetPosition,
+                        targetPosition,
+                        true,
+                        true);
+        return result.consumedTick();
     }
 
     static boolean tickObjectiveSupervision(AgentRuntimeEntry entry, Character agent, long nowMs) {

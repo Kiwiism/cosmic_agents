@@ -1432,6 +1432,26 @@ tuning:
     # Purpose: Sets when slow pathfind warn ns triggers. Higher values let more pressure build before Agents or safeguards react; lower values make them react sooner.
     # Technical: the "navigation path service" component consumes this as an integer. Unit: nanoseconds; this is normally a profiling threshold rather than a gameplay duration.
     server.agents.capabilities.navigation.AgentNavigationPathService.SLOW_PATHFIND_WARN_NS: '50000000'
+    # Values: 16-128 map pixels. Recommended: 64; raise it only when a moving objective legitimately shifts its anchor while the Agent is following the same route.
+    # Purpose: Treats nearby destination updates as the same journey, allowing the Agent to recognize that it is repeating the same platform loop instead of restarting its memory every tick.
+    # Technical: Targets farther apart than this radius start a new route-progress scope and clear old transition history and temporary edge suppression.
+    server.agents.capabilities.navigation.AgentNavigationProgressState.TARGET_SCOPE_RADIUS_PX: '64'
+    # Values: 5000-30000 milliseconds. Recommended: 15000; longer values avoid a bad edge more persistently, while shorter values retry it sooner if the map changed.
+    # Purpose: Controls how long an Agent avoids a jump, drop, climb, or portal edge after detecting that it is alternating back and forth through the same two regions.
+    # Technical: Suppression belongs only to the current map and destination scope; pathfinding remains free to select another valid edge and the suppressed edge automatically becomes eligible again afterward.
+    server.agents.capabilities.navigation.AgentNavigationProgressState.EDGE_SUPPRESSION_MS: '15000'
+    # Values: 500-5000 milliseconds. Recommended: 2000; longer values make Agents commit more visibly to the platform they just reached, while shorter values let them reverse the same ladder sooner.
+    # Purpose: Prevents an Agent from immediately climbing back onto the same ladder after stepping off, which otherwise looks like jitter when combat retargeting switches between platforms.
+    # Technical: Only the inverse entry edge of the ladder just completed is blocked. Other walk, jump, drop, portal, and ladder routes remain available during this short guard.
+    server.agents.capabilities.navigation.AgentVerticalTraversalService.POST_EXIT_REENTRY_BLOCK_MS: '2000'
+    # Values: 8-64 map pixels. Recommended: 32; use enough distance to visibly leave the ladder attachment point without making the Agent walk far from the destination platform.
+    # Purpose: Gives an Agent a stable place to step after leaving a ladder so it does not repeatedly attach and detach on the same pixel.
+    # Technical: The waypoint is clamped to the destination foothold region and is reached through ordinary movement; it never teleports or changes the map position directly.
+    server.agents.capabilities.navigation.AgentVerticalTraversalService.POST_EXIT_NUDGE_PX: '32'
+    # Values: 8-64 map pixels. Recommended: 32; enough to leave the failed launch point without looking like a teleport.
+    # Purpose: Sets the short walking nudge used when a repeated route edge is blocked and no alternate path can immediately be found.
+    # Technical: The nudge is an ordinary movement target, not a position mutation, and therefore still obeys footholds, collision, and movement broadcasting.
+    server.agents.capabilities.navigation.AgentNavigationTargetService.OSCILLATION_NUDGE_PX: '32'
     # Values: a finite non-negative integer; unit: map pixels. Recommended: 6-24 around the tested baseline 12; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls the positional leeway for walk gap. Higher values tolerate more separation before Agents correct course; lower values make them align sooner.
     # Technical: the "navigation physics service" component consumes this as an integer. Unit: MapleStory map pixels; horizontal and vertical values use the server map coordinate system.
@@ -2408,6 +2428,10 @@ tuning:
     # Purpose: Controls the distance or margin used for interaction distance. Higher values allow action from farther away or leave more space; lower values require closer, more precise positioning.
     # Technical: the "first job journey runtime" component consumes this as an integer. Unit: MapleStory map pixels; horizontal and vertical values use the server map coordinate system.
     server.agents.progression.AgentFirstJobJourneyRuntime.INTERACTION_DISTANCE_PX: '100'
+    # Values: 0-100 percent. Recommended: 20-40 around the default 30; 0 nearly always keeps the rotation pack, while 100 lets every level-14 Agent grind locally after its home pack.
+    # Purpose: When a level-14 Agent finishes its home-town quest pack with this percentage or less of the level remaining, it skips the mandatory rotation-town pack and trains near its home town to level 15. The untouched rotation quests stay available for later selection from the normal quest pool.
+    # Technical: Compares remaining EXP with the current level's authoritative EXP requirement. It applies only one level below the configured milestone; lower-level Agents still follow their authored rotation strategy.
+    server.agents.progression.AgentLevel15CatchUpRuntime.HOME_GRIND_MAX_REMAINING_PERCENT: '30'
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 1500-6000 around the tested baseline 3000; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how long Agents remain in or wait for NPC delay. Higher values make that pause or state last longer; lower values make them continue sooner.
     # Technical: the "instructor training runtime" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled.
@@ -2436,10 +2460,6 @@ tuning:
     # Purpose: Sets the hard population limit for an authored hunt map when generated capacity evidence is unavailable; once reached, an Agent may choose an adaptive alternative.
     # Technical: AgentAdaptiveQuestHuntSelector uses this only as a fallback maximum for fixed maps missing from the generated hunt index.
     server.agents.progression.AgentAdaptiveQuestHuntSelector.DEFAULT_MAXIMUM_AGENTS: '4'
-    # Values: a finite non-negative integer; unit: map pixels. Recommended: 50-200 around the tested baseline 100; benchmark or observe behavior before moving outside this band.
-    # Purpose: Controls the distance or margin used for NPC distance. Higher values allow action from farther away or leave more space; lower values require closer, more precise positioning.
-    # Technical: the "level15 catch up runtime" component consumes this as an integer. Unit: MapleStory map pixels; horizontal and vertical values use the server map coordinate system.
-    server.agents.progression.AgentLevel15CatchUpRuntime.NPC_DISTANCE_PX: '100'
     # Values: a finite non-negative integer. Recommended: 20-80 around the tested baseline 40; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how strongly hunt efficiency affects Agent behavior. Higher values make the effect more noticeable; lower values soften it.
     # Technical: the "progression decision policy" component consumes this as an integer. Domain: non-negative policy coefficient; it is meaningful relative to the other coefficients used by the same decision.
@@ -2536,6 +2556,10 @@ tuning:
     # Purpose: Controls the distance or margin used for interaction distance. Higher values allow action from farther away or leave more space; lower values require closer, more precise positioning.
     # Technical: the "victoria quest pack runtime" component consumes this as an integer. Unit: MapleStory map pixels; horizontal and vertical values use the server map coordinate system.
     server.agents.progression.AgentVictoriaQuestPackRuntime.INTERACTION_DISTANCE_PX: '100'
+    # Values: an integer of at least 1; unit: map transitions. Recommended: 3, so one- and two-map return trips remain ordinary walking routes.
+    # Purpose: Makes Agents buy the destination town's return scroll before a quest hunt only when the hunt finishes more than two maps from the turn-in NPC. Lower values favor scrolls more often; higher values favor walking.
+    # Technical: Compared with the shortest catalog route from the hunt map to the quest completion map. Shopping is best-effort: insufficient mesos, an unavailable shop, or a missing route keeps normal walking as the fallback.
+    server.agents.progression.AgentQuestReturnScrollPolicy.MIN_ROUTE_EDGES: '3'
     # Values: a finite non-negative integer; unit: map pixels. Recommended: 50-200 around the tested baseline 100; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls the distance or margin used for interaction distance. Higher values allow action from farther away or leave more space; lower values require closer, more precise positioning.
     # Technical: the "victoria quest scheduler runtime" component consumes this as an integer. Unit: MapleStory map pixels; horizontal and vertical values use the server map coordinate system.
@@ -2548,6 +2572,14 @@ tuning:
     # Purpose: Controls the distance or margin used for portal distance. Higher values allow action from farther away or leave more space; lower values require closer, more precise positioning.
     # Technical: the "victoria route runtime" component consumes this as an integer. Unit: MapleStory map pixels; horizontal and vertical values use the server map coordinate system.
     server.agents.progression.AgentVictoriaRouteRuntime.PORTAL_DISTANCE_PX: '45'
+    # Values: a finite non-negative integer; unit: milliseconds. Recommended: 800-2500 around the tested baseline 1500.
+    # Purpose: Keeps an Agent visibly grounded at the portal where it entered a Victoria Island map before it begins the next route leg. Higher values make arrivals easier to observe; lower values make multi-map travel faster. Set 0 to remove this presentation pause.
+    # Technical: Applied after every successful Victoria route portal transition. During the pause the prior movement intent is stopped, while the plan and route checkpoint remain active.
+    server.agents.progression.AgentVictoriaRouteRuntime.PORTAL_ARRIVAL_SETTLE_MS: '1500'
+    # Values: 0-15000 milliseconds. Recommended: 10000 for scripted job-room entrances; 0 disables the observer grace while retaining the normal arrival settle above.
+    # Purpose: When an Agent enters or leaves a scripted interior while nobody is watching, it waits at the real destination portal for this bounded time. If a player follows, they see the Agent arrive at the portal and then use the physical route instead of first seeing it halfway across the map.
+    # Technical: Applies only to authored scripted-portal contracts, not ordinary outdoor map travel. The wait ends after the grace window even if no observer arrives, so background progression cannot remain blocked indefinitely.
+    server.agents.progression.AgentVictoriaRouteRuntime.SCRIPTED_PORTAL_OBSERVER_GRACE_MS: '10000'
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 1000-4000 around the tested baseline 2000; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how long Agents remain in or wait for edge failure memory. Higher values make that pause or state last longer; lower values make them continue sooner.
     # Technical: the "victoria route state" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled.
@@ -2604,10 +2636,14 @@ tuning:
     # Purpose: Stops local-opportunity combat from turning a trip to a portal or NPC into an unbounded grind.
     # Technical: Time budget for one route-blocker interruption; expiry records an evade decision and returns control to the unchanged scripted navigation destination.
     server.agents.capabilities.combat.AgentCombatPolicyConfig.ROUTE_BLOCKER_TIMEOUT_MS: '2500'
-    # Values: 0-5 kills. Recommended: 2. Higher values allow more clearing while travelling; 0 makes the Agent always evade instead of attacking.
-    # Purpose: Caps route-blocker kills so navigation remains the authoritative objective.
-    # Technical: Kill budget for one route interruption before the saved movement target is resumed; authoritative kill events, rather than attack attempts, consume this allowance.
-    server.agents.capabilities.combat.AgentCombatPolicyConfig.ROUTE_BLOCKER_MAX_KILLS: '2'
+    # Values: 0-5 kills. Recommended: 5. Higher values allow more clearing while travelling; 0 makes the Agent always evade instead of attacking.
+    # Purpose: Lets an Agent clear up to five monsters physically blocking a quest journey, including monsters encountered on intermediate maps, without turning travel into an unrelated grind session.
+    # Technical: Journey-level blocker-kill budget; waypoint and map changes preserve the count, and only authoritative route-blocker kill events consume it.
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.ROUTE_BLOCKER_MAX_KILLS: '5'
+    # Values: 3000-15000 milliseconds. Recommended: 7000. Higher values make Agents travel farther between blocker-clearing bursts; lower values let combat interrupt travel more frequently.
+    # Purpose: After clearing the blocker-kill budget, makes the Agent concentrate on travelling for this long before it may attack another set of blockers.
+    # Technical: Cooldown begins on the fifth authoritative route-blocker kill and survives waypoint and intermediate-map changes within the active objective.
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.ROUTE_BLOCKER_TRAVEL_COOLDOWN_MS: '7000'
     # Values: true or false. Recommended: true. True lets an Agent briefly clear useful nearby monsters before travelling to a farther required target; false keeps the former strict preferred-target selection.
     # Purpose: Reduces repeated up/down travel while ensuring required quest monsters regain priority after the bounded local sweep.
     # Technical: Makes the quest-local-clear policy authoritative while still respecting the objective's required and incidental mob allow-list and leaving concrete target scoring unchanged.
@@ -2704,10 +2740,10 @@ tuning:
     # Purpose: Sets an Agent's starting base mana recovery before current conditions adjust it. Higher values make that tendency stronger from the start; lower values make it weaker.
     # Technical: the "runtime config" component consumes this as an integer. Domain: component-specific policy value; startup validation rejects missing, blank, or malformed values. It participates in bounded failure handling and should remain long enough for the normal operation to complete.
     server.agents.runtime.AgentRuntimeConfig.BASE_MP_RECOVERY: '3'
-    # Values: true or false. Recommended: retain the tested baseline false unless deliberately enabling or disabling this isolated capability.
-    # Purpose: When enabled, stuck Agents may use the automatic unstuck recovery path. When disabled, they must recover through other movement and plan-recovery behavior.
+    # Values: true or false. Recommended: true for normal operation; use false only when deliberately preserving a navigation failure for diagnosis.
+    # Purpose: When enabled, an Agent that stops making movement progress clears its failed route and jumps away from the current waypoint before replanning. When disabled, the Agent can remain visibly stuck until a plan-level timeout recovers it.
     # Technical: the "runtime config" component consumes this as a boolean. Domain: true or false; it gates automatic unstuck recovery without disabling the Agent runtime.
-    server.agents.runtime.AgentRuntimeConfig.ENABLE_UNSTUCK: 'false'
+    server.agents.runtime.AgentRuntimeConfig.ENABLE_UNSTUCK: 'true'
     # Values: a finite non-negative integer. Recommended: 30-120 around the tested baseline 60; benchmark or observe behavior before moving outside this band.
     # Purpose: Sets the separation applied to follow stagger so multiple Agents do not begin or repeat the same action in lockstep.
     # Technical: the "runtime config" component consumes this as an integer. Domain: component-specific policy value; startup validation rejects missing, blank, or malformed values.

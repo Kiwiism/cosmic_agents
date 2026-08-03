@@ -25,6 +25,10 @@ final class AgentVictoriaSharedQuestPackCatalog {
                         "unknown shared Victoria quest pack " + packId));
     }
 
+    static List<Pack> packs() {
+        return CONTENT.packs();
+    }
+
     static Town town(int mapId) {
         return CONTENT.towns().stream()
                 .filter(town -> town.mapId() == mapId)

@@ -34,4 +34,14 @@ class VictoriaFirstJobNarratorTest {
         assertEquals(false, state.markStageAnnounced(
                 AgentCareerProgressionState.Stage.COMPLETE_BIGGS_AT_OLAF));
     }
+
+    @Test
+    void completedMilestoneSaysItIsDone() {
+        AgentCareerBuildBundle bundle = AgentCareerBuildBundleRepository.defaultRepository()
+                .find("thief-dagger-standard-v1").orElseThrow();
+
+        assertEquals("I'm already level 15, so I'm done.",
+                VictoriaFirstJobNarrator.message(
+                        AgentCareerProgressionState.Stage.FINALIZE_AT_NEAREST_TOWN, bundle));
+    }
 }

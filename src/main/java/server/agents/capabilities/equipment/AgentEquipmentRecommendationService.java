@@ -49,9 +49,15 @@ public final class AgentEquipmentRecommendationService {
     private static List<AgentEquipRecommendation> findRecommendedEquips(Character receiver,
                                                                         Character holder,
                                                                         RecommendationScope scope) {
+        if (!canInspectInventories(receiver, holder)) {
+            return List.of();
+        }
         InventoryGateway inventory = inventory();
         RecommendationHooks hooks = AgentEquipmentRecommendationPolicy.RecommendationHooks.from(inventory);
         Inventory holderEquipInv = holder.getInventory(InventoryType.EQUIP);
+        if (holderEquipInv == null) {
+            return List.of();
+        }
 
         Set<Equip> holderItems = Collections.newSetFromMap(new IdentityHashMap<>());
         for (Item item : holderEquipInv.list()) {
@@ -79,7 +85,13 @@ public final class AgentEquipmentRecommendationService {
     private static List<AgentEquipRecommendation> buildRecommendations(Character receiver,
                                                                        Collection<Equip> holderItems,
                                                                        RecommendationScope scope) {
+        if (receiver == null || !receiver.hasInventoryState() || holderItems == null || holderItems.isEmpty()) {
+            return List.of();
+        }
         Inventory receiverEquippedInv = receiver.getInventory(InventoryType.EQUIPPED);
+        if (receiverEquippedInv == null) {
+            return List.of();
+        }
         List<AgentEquipRecommendation> recommendations = new ArrayList<>();
         AgentEquipmentOptimizerResult opt = AgentEquipmentOptimizationService.runOptimizerWithExtras(receiver, holderItems, scope);
         if (opt.weapon() != null && holderItems.contains(opt.weapon())) {
@@ -117,7 +129,7 @@ public final class AgentEquipmentRecommendationService {
                                                                       Character holder,
                                                                       Item holderItem,
                                                                       RecommendationScope scope) {
-        if (!(holderItem instanceof Equip candidate)) return null;
+        if (!(holderItem instanceof Equip candidate) || !canInspectInventories(receiver, holder)) return null;
 
         InventoryGateway inventory = inventory();
         RecommendationHooks hooks = AgentEquipmentRecommendationPolicy.RecommendationHooks.from(inventory);
@@ -143,6 +155,7 @@ public final class AgentEquipmentRecommendationService {
         }
 
         Inventory receiverEquippedInv = receiver.getInventory(InventoryType.EQUIPPED);
+        if (receiverEquippedInv == null) return null;
         AgentEquipmentOptimizerResult opt = AgentEquipmentOptimizationService.runOptimizerWithExtras(receiver, List.of(candidate), scope);
         if (opt.weapon() == candidate) {
             Equip cur = (Equip) receiverEquippedInv.getItem((short) -11);
@@ -167,6 +180,13 @@ public final class AgentEquipmentRecommendationService {
 
     private static InventoryGateway inventory() {
         return AgentInventoryGatewayRuntime.inventory();
+    }
+
+    private static boolean canInspectInventories(Character receiver, Character holder) {
+        return receiver != null
+                && holder != null
+                && receiver.hasInventoryState()
+                && holder.hasInventoryState();
     }
 
     static String formatRecommendationSummary(List<AgentEquipRecommendation> recommendations,

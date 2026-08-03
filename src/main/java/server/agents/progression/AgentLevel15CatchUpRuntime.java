@@ -1,6 +1,7 @@
 package server.agents.progression;
 
 import client.Character;
+import constants.game.ExpTable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.capabilities.build.AgentBuildService;
@@ -8,15 +9,16 @@ import server.agents.capabilities.build.profiles.AgentApBuildProfileService;
 import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.integration.PrimitiveCapabilityGateway;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.maps.MapleMap;
 
-import java.awt.Point;
 import java.io.IOException;
 import java.util.Set;
 
 /** Deterministic home-pack/rotation/grind bridge from instructor training to level 15. */
 final class AgentLevel15CatchUpRuntime {
     private static final Logger log = LoggerFactory.getLogger(AgentLevel15CatchUpRuntime.class);
-    private static final int NPC_DISTANCE_PX = config.AgentTuning.intValue("server.agents.progression.AgentLevel15CatchUpRuntime.NPC_DISTANCE_PX");
+    private static final int HOME_GRIND_MAX_REMAINING_PERCENT = Math.clamp(config.AgentTuning.intValue(
+            "server.agents.progression.AgentLevel15CatchUpRuntime.HOME_GRIND_MAX_REMAINING_PERCENT"), 0, 100);
 
     private AgentLevel15CatchUpRuntime() {
     }
@@ -40,14 +42,13 @@ final class AgentLevel15CatchUpRuntime {
                     plan.homePackId(),
                     AgentCareerProgressionState.Stage.POST_HOME_DECISION, nowMs, gateway);
             case POST_HOME_DECISION -> afterHome(agent, state, bundle, plan, nowMs);
-            case ROTATION_QUEST_PACK -> runPack(entry, agent, state,
-                    plan.rotationPackId(),
-                    agent.getLevel() >= bundle.milestoneLevel()
-                            ? AgentCareerProgressionState.Stage.FINAL_RETURN_TO_INSTRUCTOR
-                            : AgentCareerProgressionState.Stage.GRIND_TO_MILESTONE,
-                    nowMs, gateway);
+            case HOME_GRIND_TO_MILESTONE ->
+                    grind(entry, agent, state, bundle, career.milestoneGrind(), nowMs, gateway);
+            case ROTATION_QUEST_PACK -> runRotationPack(
+                    entry, agent, state, plan.rotationPackId(), bundle.milestoneLevel(), nowMs, gateway);
             case GRIND_TO_MILESTONE -> grind(entry, agent, state, bundle, plan.fallbackGrind(), nowMs, gateway);
-            case FINAL_RETURN_TO_INSTRUCTOR -> finish(entry, agent, state, bundle, nowMs, gateway);
+            case FINALIZE_AT_NEAREST_TOWN, FINAL_RETURN_TO_INSTRUCTOR ->
+                    finishAtNearestTown(entry, agent, state, nowMs, gateway);
             default -> false;
         };
     }
@@ -70,13 +71,32 @@ final class AgentLevel15CatchUpRuntime {
         return result != AgentVictoriaSharedQuestPackRuntime.Result.BLOCKED;
     }
 
+    private static boolean runRotationPack(AgentRuntimeEntry entry,
+                                           Character agent,
+                                           AgentCareerProgressionState state,
+                                           String packId,
+                                           int milestoneLevel,
+                                           long nowMs,
+                                           PrimitiveCapabilityGateway gateway) {
+        AgentVictoriaSharedQuestPackRuntime.Result result =
+                AgentVictoriaSharedQuestPackRuntime.tick(
+                        entry, agent, state, packId, nowMs, gateway);
+        if (result == AgentVictoriaSharedQuestPackRuntime.Result.COMPLETE) {
+            state.questPackIndex(0);
+            state.stage(stageAfterRotation(agent.getLevel(), milestoneLevel),
+                    nowMs + AgentVictoriaProgressionPolicy.defaultPolicy()
+                            .interactionDelayMs(agent.getId(), packId.hashCode(), 3));
+        }
+        return result != AgentVictoriaSharedQuestPackRuntime.Result.BLOCKED;
+    }
+
     private static boolean afterHome(Character agent,
                                      AgentCareerProgressionState state,
                                      AgentCareerBuildBundle bundle,
                                      AgentVictoriaLevel15Catalog.CatchUpPlan plan,
                                      long nowMs) {
         AgentCareerProgressionState.Stage next = stageAfterHome(
-                agent.getLevel(), bundle.milestoneLevel(), plan.afterHomeStrategy());
+                agent.getLevel(), agent.getExp(), bundle.milestoneLevel(), plan.afterHomeStrategy());
         state.questPackIndex(0);
         state.stage(next, nowMs);
         return true;
@@ -84,10 +104,33 @@ final class AgentLevel15CatchUpRuntime {
 
     static AgentCareerProgressionState.Stage stageAfterHome(
             int currentLevel,
+            int currentExp,
             int milestoneLevel,
             AgentVictoriaLevel15Catalog.AfterHomeStrategy strategy) {
-        return strategy == AgentVictoriaLevel15Catalog.AfterHomeStrategy.ROTATION_PACK
-                ? AgentCareerProgressionState.Stage.ROTATION_QUEST_PACK
+        if (currentLevel >= milestoneLevel) {
+            return AgentCareerProgressionState.Stage.FINALIZE_AT_NEAREST_TOWN;
+        }
+        if (strategy == AgentVictoriaLevel15Catalog.AfterHomeStrategy.LOCAL_GRIND
+                || closeEnoughForHomeGrind(currentLevel, currentExp, milestoneLevel)) {
+            return AgentCareerProgressionState.Stage.HOME_GRIND_TO_MILESTONE;
+        }
+        return AgentCareerProgressionState.Stage.ROTATION_QUEST_PACK;
+    }
+
+    private static boolean closeEnoughForHomeGrind(
+            int currentLevel, int currentExp, int milestoneLevel) {
+        if (currentLevel != milestoneLevel - 1 || currentLevel <= 0) {
+            return false;
+        }
+        int requiredExp = ExpTable.getExpNeededForLevel(currentLevel);
+        int boundedExp = Math.max(0, Math.min(currentExp, requiredExp));
+        long remainingExp = requiredExp - (long) boundedExp;
+        return remainingExp * 100L <= requiredExp * (long) HOME_GRIND_MAX_REMAINING_PERCENT;
+    }
+
+    static AgentCareerProgressionState.Stage stageAfterRotation(int currentLevel, int milestoneLevel) {
+        return currentLevel >= milestoneLevel
+                ? AgentCareerProgressionState.Stage.FINALIZE_AT_NEAREST_TOWN
                 : AgentCareerProgressionState.Stage.GRIND_TO_MILESTONE;
     }
 
@@ -100,7 +143,7 @@ final class AgentLevel15CatchUpRuntime {
                                  PrimitiveCapabilityGateway gateway) {
         if (agent.getLevel() >= bundle.milestoneLevel()) {
             gateway.stop(entry);
-            state.stage(AgentCareerProgressionState.Stage.FINAL_RETURN_TO_INSTRUCTOR, nowMs);
+            state.stage(AgentCareerProgressionState.Stage.FINALIZE_AT_NEAREST_TOWN, nowMs);
             return true;
         }
         if (AgentVictoriaRouteRuntime.travel(entry, agent, grind.huntingMapId(), gateway)) {
@@ -110,29 +153,17 @@ final class AgentLevel15CatchUpRuntime {
         return true;
     }
 
-    private static boolean finish(AgentRuntimeEntry entry,
-                                  Character agent,
-                                  AgentCareerProgressionState state,
-                                  AgentCareerBuildBundle bundle,
-                                  long nowMs,
-                                  PrimitiveCapabilityGateway gateway) {
-        if (AgentVictoriaRouteRuntime.travel(entry, agent, bundle.instructorMapId(), gateway)) {
+    private static boolean finishAtNearestTown(AgentRuntimeEntry entry,
+                                               Character agent,
+                                               AgentCareerProgressionState state,
+                                               long nowMs,
+                                               PrimitiveCapabilityGateway gateway) {
+        MapleMap currentMap = agent.getMap();
+        MapleMap nearestTown = currentMap == null ? null : currentMap.getReturnMap();
+        if (nearestTown != null && nearestTown.getId() != agent.getMapId()
+                && AgentVictoriaRouteRuntime.travel(entry, agent, nearestTown.getId(), gateway)) {
             return true;
         }
-        Point npc = gateway.npcPosition(agent, bundle.instructorNpcId());
-        if (npc == null) {
-            String reason = "job instructor " + bundle.instructorNpcId()
-                    + " is missing from checkpoint map " + bundle.instructorMapId();
-            state.block(reason);
-            AgentCareerObjectiveRuntime.block(entry, reason, nowMs);
-            return false;
-        }
-        if (!gateway.grounded(agent)
-                || agent.getPosition().distanceSq(npc) > NPC_DISTANCE_PX * NPC_DISTANCE_PX) {
-            gateway.navigate(entry, npc, true);
-            return true;
-        }
-        gateway.facePosition(agent, npc);
         gateway.stop(entry);
         if (!AgentApBuildProfileService.autoAssign(entry, agent)) {
             AgentBuildService.autoAssignAp(entry, agent);

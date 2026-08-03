@@ -172,8 +172,8 @@ server:
     # Database Configuration
     DB_URL_FORMAT: "jdbc:mysql://%s:3306/cosmic"            # If the docker ENV for DB_HOST is anything but "db", this string format should be changed from 3306 to 3307 (or whichever port it was changed to in docker)
     DB_HOST: "localhost"
-    DB_USER: "cosmic"                                       # Dedicated local database account; override with DB_USER in deployments.
-    DB_PASS: "change-me-local-only"                         # Local bootstrap placeholder; production must supply DB_PASSWORD.
+    DB_USER: "root"                                       # Dedicated local database account; override with DB_USER in deployments.
+    DB_PASS: "root"                         # Local bootstrap placeholder; production must supply DB_PASSWORD.
     INIT_CONNECTION_POOL_TIMEOUT: 90                        # Seconds
 
     # Login Configuration
@@ -222,6 +222,7 @@ server:
     observer:
         enabled: true                                       # Enables browser observer packets, event collection, navgraph inspection, and camera director feeds.
         navgraph_enabled: true                              # Enables the optional agent navigation graph adapter for browser observers.
+        agent_navigation_enabled: true                      # Enables selected-agent live route tracing for authorized browser observers.
         agent_signals_enabled: true                         # Enables optional upcoming/route/stuck signals sampled from agent runtimes.
         minimum_gm_level: 2                                 # GM accounts at this level or above may use Observer packets.
         allowed_account_names: [admin]                      # Non-GM accounts allowed to use Observer packets; matching is case-insensitive.

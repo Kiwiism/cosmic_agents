@@ -235,6 +235,30 @@ class AgentNavigationPathServiceTest {
     }
 
     @Test
+    void edgeFilterSelectsAlternateReachableRoute() {
+        AgentNavigationGraph.Edge direct = edge(1, 3, AgentNavigationGraph.EdgeType.JUMP,
+                new Point(0, 100), new Point(200, 100), 10);
+        AgentNavigationGraph.Edge alternateFirst = edge(1, 2, AgentNavigationGraph.EdgeType.DROP,
+                new Point(0, 100), new Point(100, 200), 20);
+        AgentNavigationGraph.Edge alternateSecond = edge(2, 3, AgentNavigationGraph.EdgeType.JUMP,
+                new Point(100, 200), new Point(200, 100), 20);
+        AgentNavigationGraph graph = graphWithRegionsAndEdges(
+                List.of(
+                        groundRegion(1, 0, 100, 100),
+                        groundRegion(2, 100, 200, 200),
+                        groundRegion(3, 200, 300, 100)),
+                Map.of(1, List.of(direct, alternateFirst), 2, List.of(alternateSecond)));
+        Character bot = mock(Character.class);
+        when(bot.getMap()).thenReturn(null);
+
+        AgentNavigationGraph.Edge selected = AgentNavigationPathService.findNextEdgeVaried(
+                graph, bot, new Point(0, 100), 1, 3, new Point(200, 100), null,
+                edge -> edge != direct);
+
+        assertEquals(alternateFirst, selected);
+    }
+
+    @Test
     void measureOptimalityRunsAgentOwnedSearch() {
         AgentNavigationGraph graph = graphWithRegionsAndEdges(
                 List.of(
@@ -317,6 +341,28 @@ class AgentNavigationPathServiceTest {
                 null, 1, 10, false);
 
         assertEquals(List.of(awayFromTarget, backTowardTarget), path);
+    }
+
+    @Test
+    void movementSearchRetriesWhenBoundedSearchReturnsOnlyACloserFragment() {
+        AgentNavigationGraph.Edge first = edge(
+                1, 2, AgentNavigationGraph.EdgeType.WALK,
+                new Point(0, 100), new Point(100, 100), 10);
+        AgentNavigationGraph.Edge second = edge(
+                2, 3, AgentNavigationGraph.EdgeType.WALK,
+                new Point(100, 100), new Point(200, 100), 10);
+        AgentNavigationGraph graph = graphWithRegionsAndEdges(
+                List.of(
+                        groundRegion(1, -50, 50, 100),
+                        groundRegion(2, 50, 150, 100),
+                        groundRegion(3, 150, 250, 100)),
+                Map.of(1, List.of(first), 2, List.of(second)));
+
+        List<AgentNavigationGraph.Edge> path = AgentNavigationPathService.movementPath(
+                graph, null, new Point(0, 100), 1, 3, new Point(200, 100),
+                null, 1, 10, false);
+
+        assertEquals(List.of(first, second), path);
     }
 
     @Test

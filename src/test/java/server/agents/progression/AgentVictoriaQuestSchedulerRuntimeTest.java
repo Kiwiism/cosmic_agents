@@ -10,12 +10,34 @@ import server.agents.runtime.AgentRuntimeEntry;
 import java.awt.Point;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class AgentVictoriaQuestSchedulerRuntimeTest {
+    @Test
+    void interactionOnlyBridgeAdvancesDirectlyToCompletion() {
+        AgentVictoriaQuestRuntimeCatalog.Entry quest =
+                AgentVictoriaQuestRuntimeCatalogRepository.defaultRepository().find(2090).orElseThrow();
+        Character agent = mock(Character.class);
+        when(agent.getLevel()).thenReturn(14);
+        when(agent.getMapId()).thenReturn(103000000);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        entry.capabilityStates().require(AgentVictoriaTrainingState.STATE_KEY).start(15, true, 0L);
+        AgentVictoriaQuestSchedulerState state = entry.capabilityStates().require(
+                AgentVictoriaQuestSchedulerState.STATE_KEY);
+        state.begin(quest.questId(), 103000000, 103000000, true);
+        PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
+        when(gateway.questStatus(agent, quest.questId())).thenReturn(QuestStatus.Status.STARTED.getId());
+        when(gateway.canCompleteQuest(agent, quest.questId(), quest.completeNpcId())).thenReturn(false);
+
+        assertTrue(AgentVictoriaQuestSchedulerRuntime.tick(entry, agent, 100L, gateway));
+
+        assertEquals(AgentVictoriaQuestSchedulerState.Stage.TRAVEL_TO_COMPLETE, state.stage());
+    }
+
     @Test
     void resumesAnIncompleteHuntingObjectiveWithoutReplayingQuestStart() {
         AgentVictoriaQuestRuntimeCatalog.Entry quest =

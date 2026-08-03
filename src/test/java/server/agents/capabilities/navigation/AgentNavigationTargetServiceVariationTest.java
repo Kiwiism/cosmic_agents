@@ -8,8 +8,10 @@ import server.agents.runtime.AgentRuntimeEntry;
 import java.awt.Point;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -45,5 +47,24 @@ class AgentNavigationTargetServiceVariationTest {
                 entry, 1010000, 4, scriptedTarget));
         assertNull(AgentNavigationTargetService.scriptedRouteVariation(
                 entry, 1010000, 4, new Point(500, 100)));
+    }
+
+    @Test
+    void rejectsEdgeThatLeavesAlreadyResolvedTargetRegion() {
+        AgentNavigationGraph.Edge leaving = new AgentNavigationGraph.Edge(
+                86, 83, AgentNavigationGraph.EdgeType.JUMP,
+                new Point(253, 292), new Point(297, 223),
+                0, 0, 0, 0, 0, 100);
+
+        assertTrue(AgentNavigationTargetService.leavesResolvedTargetRegion(leaving, 86, 86));
+        assertFalse(AgentNavigationTargetService.leavesResolvedTargetRegion(leaving, 86, 83));
+    }
+
+    @Test
+    void oscillationRecoveryUsesDestinationDirectlyWithinSameRegion() {
+        Point destination = new Point(-1012, 298);
+
+        assertEquals(destination, AgentNavigationTargetService.oscillationRecoveryTarget(
+                new Point(299, 286), destination, 86, 86, -1));
     }
 }

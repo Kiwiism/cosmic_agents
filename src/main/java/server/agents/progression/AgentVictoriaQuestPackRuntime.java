@@ -48,6 +48,7 @@ final class AgentVictoriaQuestPackRuntime {
         }
         int status = gateway.questStatus(agent, quest.questId());
         if (status == QuestStatus.Status.NOT_STARTED.getId()) {
+            AgentQuestReturnScrollPolicy.clear(entry);
             if (!travel(entry, agent, quest.startMapId(), state, nowMs, gateway)) {
                 return state.stage() == AgentCareerProgressionState.Stage.BLOCKED
                         ? Result.BLOCKED : Result.RUNNING;
@@ -59,6 +60,10 @@ final class AgentVictoriaQuestPackRuntime {
                     state, "start quest " + quest.questId());
         }
         if (gateway.canCompleteQuest(agent, quest.questId(), quest.completeNpcId())) {
+            if (AgentQuestReturnScrollPolicy.useForReturn(
+                    entry, agent, quest.completeMapId(), gateway)) {
+                return Result.RUNNING;
+            }
             if (!travel(entry, agent, quest.completeMapId(), state, nowMs, gateway)) {
                 return state.stage() == AgentCareerProgressionState.Stage.BLOCKED
                         ? Result.BLOCKED : Result.RUNNING;
@@ -66,6 +71,7 @@ final class AgentVictoriaQuestPackRuntime {
             return interact(entry, agent, quest.completeNpcId(), nowMs, gateway,
                     () -> gateway.completeQuest(agent, quest.questId(), quest.completeNpcId()),
                     () -> {
+                        AgentQuestReturnScrollPolicy.clear(entry);
                         state.questPackIndex(index + 1);
                         state.stage(state.stage(), nextInteractionAt(agent, quest.questId(), 2, nowMs));
                     }, state, "complete quest " + quest.questId());
@@ -90,6 +96,14 @@ final class AgentVictoriaQuestPackRuntime {
         if (huntMap == null) {
             return block(entry, state, "quest " + quest.questId()
                     + " has no reachable hunt map", nowMs);
+        }
+        if (agent.getMapId() != huntMap.mapId()
+                && AgentQuestReturnScrollPolicy.prepare(
+                entry, agent, "pack:" + pack.packId() + ":quest:" + quest.questId()
+                        + ":objective:" + objective.objectiveId(),
+                huntMap.mapId(), quest.completeMapId(), nowMs, gateway)
+                == AgentQuestReturnScrollPolicy.Preparation.WAITING) {
+            return Result.RUNNING;
         }
         if (!travel(entry, agent, huntMap.mapId(), state, nowMs, gateway)) {
             return state.stage() == AgentCareerProgressionState.Stage.BLOCKED

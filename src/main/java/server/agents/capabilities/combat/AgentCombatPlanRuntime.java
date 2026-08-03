@@ -29,14 +29,24 @@ public final class AgentCombatPlanRuntime {
                 }
             }
 
-            AgentAttackPlan basicAttack = AgentBasicAttackPlanRuntime.planBasicAttack(bot, target);
-            basicAttack = AgentCombatObjectiveTargetStateRuntime.restrictAttackPlan(entry, basicAttack);
-            if (basicAttack != null) {
-                candidates.add(basicAttack);
+            // A wand swing is the emergency fallback for a magician, not a competing damage plan. Allowing
+            // it into the score alongside a usable spell can select an invisible-looking basic hit at melee
+            // range instead of broadcasting the magic-skill packet.
+            if (!hasUsableMagicSkill(candidates)) {
+                AgentAttackPlan basicAttack = AgentBasicAttackPlanRuntime.planBasicAttack(bot, target);
+                basicAttack = AgentCombatObjectiveTargetStateRuntime.restrictAttackPlan(entry, basicAttack);
+                if (basicAttack != null) {
+                    candidates.add(basicAttack);
+                }
             }
             return AgentAttackPlanScoringPolicy.selectBestAttackPlan(bot, candidates);
         } finally {
             AgentPerformanceMonitor.record("combat-plan", System.nanoTime() - startedAt);
         }
+    }
+
+    static boolean hasUsableMagicSkill(List<AgentAttackPlan> candidates) {
+        return candidates.stream().anyMatch(candidate -> candidate.skillId > 0
+                && candidate.route == AgentAttackRoute.MAGIC);
     }
 }
