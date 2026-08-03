@@ -7,6 +7,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -30,8 +31,12 @@ class AgentRecoveryTeleportCoordinatorTest {
                             any(AgentRecoveryTeleportService.RecoveryHooks.class)))
                     .thenReturn(true);
 
+            assertFalse(AgentRecoveryTeleportCoordinator.recoverTeleportDistance(
+                    entry, agent, target, 4000, 600, 0L));
+            assertFalse(AgentRecoveryTeleportCoordinator.recoverTeleportDistance(
+                    entry, agent, target, 4000, 600, 800L));
             assertTrue(AgentRecoveryTeleportCoordinator.recoverTeleportDistance(
-                    entry, agent, target, 4000, 600));
+                    entry, agent, target, 4000, 600, 1_600L));
 
             service.verify(() -> AgentRecoveryTeleportService.recoverTeleportDistance(
                     eq(entry),

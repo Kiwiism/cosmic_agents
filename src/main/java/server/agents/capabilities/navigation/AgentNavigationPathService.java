@@ -86,6 +86,19 @@ public final class AgentNavigationPathService {
         public MovementPathSelection {
             path = List.copyOf(path);
         }
+
+        public RouteCompleteness completeness() {
+            if (outcome.reached()) {
+                return RouteCompleteness.COMPLETE;
+            }
+            return path.isEmpty() ? RouteCompleteness.EMPTY : RouteCompleteness.PARTIAL;
+        }
+    }
+
+    public enum RouteCompleteness {
+        COMPLETE,
+        PARTIAL,
+        EMPTY
     }
 
     public record PathOptimality(int currentCost, int optimalCost, boolean currentUsesPortal,

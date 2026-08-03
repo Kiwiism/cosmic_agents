@@ -2,6 +2,7 @@ package server.agents.capabilities.objective;
 
 import client.Character;
 import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
+import server.agents.capabilities.recovery.AgentNavigationRecoveryRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
@@ -87,9 +88,14 @@ public final class AgentObjectiveProgressWatchdog {
         Map<Integer, Integer> counters = copyCounters(objectiveCounters);
         if (madeProgress(state, entry, agent, counters)) {
             recordProgress(state, entry, agent, counters, nowMs);
+            AgentNavigationRecoveryRuntime.recordProgress(entry);
             return new Evaluation(Action.NONE, 0L);
         }
         state.objectiveCounters = counters;
+        if (AgentNavigationRecoveryRuntime.active(entry, nowMs)) {
+            state.progressAtMs = nowMs;
+            return new Evaluation(Action.NONE, 0L);
+        }
         long stalledMs = Math.max(0L, nowMs - state.progressAtMs);
         if (policy.recoverAfterMs() > 0L && stalledMs >= policy.recoverAfterMs()) {
             return new Evaluation(Action.RECOVER, stalledMs);

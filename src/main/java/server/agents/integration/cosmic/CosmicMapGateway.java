@@ -3,6 +3,7 @@ package server.agents.integration.cosmic;
 import client.Character;
 import server.agents.capabilities.movement.AgentMovementPoseService;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
+import server.agents.capabilities.movement.AgentMapTransitionReceiptRuntime;
 import server.agents.integration.MapGateway;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
@@ -48,6 +49,7 @@ public enum CosmicMapGateway implements MapGateway {
         }
         int previousMapId = agent.getMapId();
         agent.changeMap(map, position);
+        recordTransition(agent, previousMapId, -1, -1);
         publishTransition(agent, previousMapId, -1, "change-map");
     }
 
@@ -59,6 +61,7 @@ public enum CosmicMapGateway implements MapGateway {
         int previousMapId = agent.getMapId();
         Portal portal = map.findClosestPortal(position);
         agent.forceChangeMap(map, portal);
+        recordTransition(agent, previousMapId, -1, portal == null ? -1 : portal.getId());
         publishTransition(agent, previousMapId, portal == null ? -1 : portal.getId(), "change-map-near");
     }
 
@@ -74,6 +77,7 @@ public enum CosmicMapGateway implements MapGateway {
 
         int oldMapId = agent.getMapId();
         Point oldPos = new Point(agent.getPosition());
+        String destinationPortalName = portal.getTarget();
         portal.enterPortal(agent.getClient());
         boolean transitioned = agent.getMapId() != oldMapId || !agent.getPosition().equals(oldPos);
         if (transitioned) {
@@ -82,12 +86,27 @@ public enum CosmicMapGateway implements MapGateway {
             // cannot restore the source-map X coordinate on the destination map.
             AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(agent.getId());
             if (entry != null) {
+                Portal destinationPortal = agent.getMap() == null || destinationPortalName == null
+                        ? null : agent.getMap().getPortal(destinationPortalName);
+                AgentMapTransitionReceiptRuntime.record(entry, oldMapId, portalId, agent.getMapId(),
+                        destinationPortal == null ? -1 : destinationPortal.getId(), System.currentTimeMillis());
                 AgentMovementPoseService.teleportTo(entry, agent, new Point(agent.getPosition()));
                 AgentMovementStateResetService.resetEntryStateAfterTeleport(entry);
             }
             publishTransition(agent, oldMapId, portalId, "portal");
         }
         return transitioned;
+    }
+
+    private static void recordTransition(Character agent,
+                                         int sourceMapId,
+                                         int sourcePortalId,
+                                         int destinationPortalId) {
+        AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(agent.getId());
+        if (entry != null) {
+            AgentMapTransitionReceiptRuntime.record(entry, sourceMapId, sourcePortalId,
+                    agent.getMapId(), destinationPortalId, System.currentTimeMillis());
+        }
     }
 
     private static void publishTransition(Character agent,

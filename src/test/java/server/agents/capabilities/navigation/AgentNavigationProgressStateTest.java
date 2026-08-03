@@ -49,6 +49,46 @@ class AgentNavigationProgressStateTest {
                 edge(3, 4, new Point(300, 100), new Point(400, 100)), 2_000L));
     }
 
+    @Test
+    void suppressesNextEdgeAfterThreeRegionCycleCloses() {
+        AgentNavigationProgressState state = new AgentNavigationProgressState();
+        Point target = new Point(500, 100);
+
+        state.observe(1, target, 1, 0L);
+        state.observe(1, target, 2, 1_000L);
+        state.observe(1, target, 3, 2_000L);
+        state.observe(1, target, 1, 3_000L);
+
+        assertTrue(state.suppressIfRepeatedCycle(
+                edge(1, 2, new Point(100, 100), new Point(200, 100)), 3_000L));
+    }
+
+    @Test
+    void suppressesNextEdgeAfterFourRegionCycleCloses() {
+        AgentNavigationProgressState state = new AgentNavigationProgressState();
+        Point target = new Point(500, 100);
+
+        state.observe(1, target, 1, 0L);
+        state.observe(1, target, 2, 1_000L);
+        state.observe(1, target, 3, 2_000L);
+        state.observe(1, target, 4, 3_000L);
+        state.observe(1, target, 1, 4_000L);
+
+        assertTrue(state.suppressIfRepeatedCycle(
+                edge(1, 2, new Point(100, 100), new Point(200, 100)), 4_000L));
+    }
+
+    @Test
+    void permitsOnePartialRouteReuseThenSuppressesItsFrontierEdge() {
+        AgentNavigationProgressState state = new AgentNavigationProgressState();
+        AgentNavigationGraph.Edge edge = edge(1, 2, new Point(100, 100), new Point(200, 100));
+
+        assertTrue(state.allowsPartialReuse(edge, 1_000L));
+        assertTrue(state.allowsPartialReuse(edge, 2_000L));
+        assertFalse(state.allowsPartialReuse(edge, 3_000L));
+        assertFalse(state.allows(edge, 3_001L));
+    }
+
     private static AgentNavigationGraph.Edge edge(int from, int to, Point start, Point end) {
         return new AgentNavigationGraph.Edge(
                 from, to, AgentNavigationGraph.EdgeType.JUMP,

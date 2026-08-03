@@ -9,7 +9,7 @@ import server.maps.Portal;
 
 import java.awt.Point;
 
-/** Emulates the v83 client's intent-independent collision-portal check for headless Agents. */
+/** Enters collision portals only while the active navigation route explicitly targets them. */
 public final class AgentCollisionPortalService {
     private static final int NO_DESTINATION_MAP_ID = 999_999_999;
 
@@ -29,8 +29,14 @@ public final class AgentCollisionPortalService {
         if (map == null || position == null) {
             return false;
         }
+        Object active = AgentNavigationDebugStateRuntime.activeNavigationEdge(entry);
+        if (!(active instanceof AgentNavigationGraph.Edge edge)
+                || edge.type != AgentNavigationGraph.EdgeType.PORTAL) {
+            return false;
+        }
         for (Portal portal : map.getPortals()) {
-            if (!isAutomaticTouchWarp(portal) || !portal.getPortalStatus()) {
+            if (!isAutomaticTouchWarp(portal) || !portal.getPortalStatus()
+                    || portal.getId() != edge.portalId) {
                 continue;
             }
             Point portalPosition = portal.getPosition();

@@ -50,9 +50,9 @@ public final class AgentGroundActionPlanner {
                 return AgentGroundAction.walk(stepX);
             }
             if (blockedByWall && navEdge != null) {
-                AgentMovementStateResetService.clearNavigationState(entry);
+                AgentMovementStateResetService.clearNavigationStep(entry);
             } else if (navEdge != null && navEdge.type == AgentNavigationGraph.EdgeType.WALK) {
-                AgentMovementStateResetService.clearNavigationState(entry);
+                AgentMovementStateResetService.clearNavigationStep(entry);
             }
             return AgentGroundAction.idle();
         }

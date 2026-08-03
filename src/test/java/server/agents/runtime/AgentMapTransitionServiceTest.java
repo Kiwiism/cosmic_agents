@@ -1,6 +1,7 @@
 package server.agents.runtime;
 
 import server.agents.capabilities.movement.AgentMapStateRuntime;
+import server.agents.capabilities.movement.AgentMapTransitionReceiptRuntime;
 import server.agents.capabilities.movement.AgentMapTransitionService;
 import client.Character;
 import org.junit.jupiter.api.Test;
@@ -82,6 +83,19 @@ class AgentMapTransitionServiceTest {
         assertTrue(grounded);
         assertEquals(current, counters.teleportPoint.get());
         assertEquals(1, counters.spawnFalls.get());
+    }
+
+    @Test
+    void usesAuthoritativeDestinationPortalFromTransitionReceipt() {
+        MapleMap map = map(100000008);
+        Character agent = character(200, map, map.getId(), new Point(30, 40));
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
+        AgentMapTransitionReceiptRuntime.record(entry, 100000007, 3, map.getId(), 17, 1_234L);
+
+        assertTrue(AgentMapTransitionService.groundAfterMapChange(
+                entry, agent, hooks(new Counters(), new Point(30, 40))));
+
+        assertEquals(17, AgentMapStateRuntime.entryPortalId(entry));
     }
 
     @Test

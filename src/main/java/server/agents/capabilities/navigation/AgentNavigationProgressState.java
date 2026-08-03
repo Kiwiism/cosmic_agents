@@ -19,15 +19,13 @@ final class AgentNavigationProgressState {
             "server.agents.capabilities.navigation.AgentNavigationProgressState.TARGET_SCOPE_RADIUS_PX");
     private static final long EDGE_SUPPRESSION_MS = config.AgentTuning.longValue(
             "server.agents.capabilities.navigation.AgentNavigationProgressState.EDGE_SUPPRESSION_MS");
-    private static final int MAX_TRANSITIONS = 24;
+    private static final int MAX_TRANSITIONS = config.AgentTuning.intValue(
+            "server.agents.capabilities.navigation.AgentNavigationProgressState.MAX_TRANSITIONS");
 
     private int mapId = Integer.MIN_VALUE;
     private Point target;
     private int observedRegionId = -1;
-    private int previousFromRegionId = -1;
-    private int previousToRegionId = -1;
-    private int lastFromRegionId = -1;
-    private int lastToRegionId = -1;
+    private int detectedCycleLength;
     private EdgeSignature suppressedEdge;
     private long suppressedUntilMs;
     private boolean recoveryPending;
@@ -35,6 +33,8 @@ final class AgentNavigationProgressState {
             new ArrayDeque<>();
     private long lastProgressAtMs;
     private String loopKind = "";
+    private EdgeSignature partialEdge;
+    private int partialSelections;
 
     synchronized void observe(int currentMapId, Point currentTarget, int currentRegionId, long nowMs) {
         if (!sameScope(currentMapId, currentTarget)) {
@@ -53,31 +53,64 @@ final class AgentNavigationProgressState {
             return;
         }
 
-        previousFromRegionId = lastFromRegionId;
-        previousToRegionId = lastToRegionId;
-        lastFromRegionId = observedRegionId;
-        lastToRegionId = currentRegionId;
+        int fromRegionId = observedRegionId;
         observedRegionId = currentRegionId;
         transitions.addLast(new AgentNavigationTraceSnapshot.Transition(
-                lastFromRegionId, lastToRegionId, nowMs));
+                fromRegionId, currentRegionId, nowMs));
         while (transitions.size() > MAX_TRANSITIONS) {
             transitions.removeFirst();
         }
         lastProgressAtMs = nowMs;
-        loopKind = detectLoop();
+        LoopDetection loop = detectLoop();
+        loopKind = loop.kind();
+        detectedCycleLength = loop.length();
     }
 
     synchronized boolean suppressIfAlternatingCycle(AgentNavigationGraph.Edge candidate, long nowMs) {
+        return suppressIfRepeatedCycle(candidate, nowMs);
+    }
+
+    synchronized boolean suppressIfRepeatedCycle(AgentNavigationGraph.Edge candidate, long nowMs) {
         expireSuppression(nowMs);
-        if (candidate == null
-                || previousFromRegionId != candidate.fromRegionId
-                || previousToRegionId != candidate.toRegionId
-                || lastFromRegionId != candidate.toRegionId
-                || lastToRegionId != candidate.fromRegionId) {
+        if (candidate == null || detectedCycleLength < 2
+                || transitions.size() < detectedCycleLength) {
+            return false;
+        }
+        List<AgentNavigationTraceSnapshot.Transition> recent = new ArrayList<>(transitions);
+        int start = recent.size() - detectedCycleLength;
+        boolean repeatsCycleEdge = recent.subList(start, recent.size()).stream()
+                .anyMatch(transition -> transition.fromRegionId() == candidate.fromRegionId
+                        && transition.toRegionId() == candidate.toRegionId);
+        if (!repeatsCycleEdge) {
             return false;
         }
         suppress(candidate, nowMs);
         return true;
+    }
+
+    synchronized boolean allowsPartialReuse(AgentNavigationGraph.Edge edge, long nowMs) {
+        expireSuppression(nowMs);
+        if (edge == null) {
+            return false;
+        }
+        EdgeSignature signature = EdgeSignature.of(edge);
+        if (!signature.equals(partialEdge)) {
+            partialEdge = signature;
+            partialSelections = 1;
+            return true;
+        }
+        partialSelections++;
+        if (partialSelections <= 2) {
+            return true;
+        }
+        suppress(edge, nowMs);
+        loopKind = "partial-route reuse exhausted";
+        return false;
+    }
+
+    synchronized void clearPartialReuse() {
+        partialEdge = null;
+        partialSelections = 0;
     }
 
     synchronized void suppress(AgentNavigationGraph.Edge edge, long nowMs) {
@@ -139,16 +172,14 @@ final class AgentNavigationProgressState {
         mapId = currentMapId;
         target = currentTarget == null ? null : new Point(currentTarget);
         observedRegionId = currentRegionId;
-        previousFromRegionId = -1;
-        previousToRegionId = -1;
-        lastFromRegionId = -1;
-        lastToRegionId = -1;
+        detectedCycleLength = 0;
         suppressedEdge = null;
         suppressedUntilMs = 0L;
         recoveryPending = false;
         transitions.clear();
         lastProgressAtMs = nowMs;
         loopKind = "";
+        clearPartialReuse();
     }
 
     private void expireSuppression(long nowMs) {
@@ -158,33 +189,31 @@ final class AgentNavigationProgressState {
         }
     }
 
-    private String detectLoop() {
+    private LoopDetection detectLoop() {
         List<AgentNavigationTraceSnapshot.Transition> recent = new ArrayList<>(transitions);
-        if (recent.size() < 3) {
-            return "";
+        if (recent.size() < 2) {
+            return LoopDetection.NONE;
         }
         List<Integer> regions = new ArrayList<>();
         regions.add(recent.getFirst().fromRegionId());
         recent.forEach(transition -> regions.add(transition.toRegionId()));
         for (int cycleLength = 2; cycleLength <= 4; cycleLength++) {
-            int required = cycleLength * 2;
+            int required = cycleLength + 1;
             if (regions.size() < required) {
                 continue;
             }
-            int start = regions.size() - required;
-            boolean repeated = true;
-            for (int index = 0; index < cycleLength; index++) {
-                if (!regions.get(start + index).equals(
-                        regions.get(start + cycleLength + index))) {
-                    repeated = false;
-                    break;
-                }
-            }
-            if (repeated) {
-                return cycleLength == 2 ? "A/B oscillation" : cycleLength + "-region cycle";
+            int cycleStart = regions.size() - required;
+            if (regions.get(cycleStart).equals(regions.getLast())) {
+                return new LoopDetection(
+                        cycleLength == 2 ? "A/B oscillation" : cycleLength + "-region cycle",
+                        cycleLength);
             }
         }
-        return "";
+        return LoopDetection.NONE;
+    }
+
+    private record LoopDetection(String kind, int length) {
+        private static final LoopDetection NONE = new LoopDetection("", 0);
     }
 
     record Snapshot(int currentRegionId,

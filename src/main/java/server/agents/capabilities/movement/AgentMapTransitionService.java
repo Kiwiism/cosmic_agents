@@ -2,9 +2,9 @@ package server.agents.capabilities.movement;
 
 import client.Character;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.capabilities.recovery.AgentNavigationRecoveryRuntime;
 import server.maps.Foothold;
 import server.maps.MapleMap;
-import server.maps.Portal;
 
 import java.awt.Point;
 import java.util.Map;
@@ -55,8 +55,11 @@ public final class AgentMapTransitionService {
         MapleMap map = agent.getMap();
         AgentMapStateRuntime.setMapTracking(entry, agent.getMapId(), hooks.footholdIndexBuilder().apply(map));
         Point current = agent.getPosition();
-        Portal entryPortal = map.findClosestPortal(current);
-        AgentMapStateRuntime.setEntryPortalId(entry, entryPortal == null ? -1 : entryPortal.getId());
+        AgentMapTransitionReceiptRuntime.Receipt receipt =
+                AgentMapTransitionReceiptRuntime.consumeForDestination(entry, agent.getMapId());
+        AgentMapStateRuntime.setEntryPortalId(entry, receipt == null ? -1 : receipt.destinationPortalId());
+        AgentNavigationRecoveryRuntime.recordTransition(entry,
+                receipt == null ? System.currentTimeMillis() : receipt.transitionedAtMs());
         Point ground = hooks.groundPointFinder().apply(map, new Point(current.x, current.y - 1));
         boolean spawnFall = AgentSpawnFallService.shouldFall(current, ground);
         hooks.teleporter().teleport(entry, agent, spawnFall || ground == null ? current : ground);

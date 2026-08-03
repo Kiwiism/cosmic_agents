@@ -21,13 +21,32 @@ public final class AgentRecoveryTeleportCoordinator {
                                                   Point targetPosition,
                                                   int teleportDistance,
                                                   int outOfBoundsTeleportDistance) {
-        return AgentRecoveryTeleportService.recoverTeleportDistance(
+        return recoverTeleportDistance(entry, agent, targetPosition, teleportDistance,
+                outOfBoundsTeleportDistance, System.currentTimeMillis());
+    }
+
+    static boolean recoverTeleportDistance(AgentRuntimeEntry entry,
+                                           Character agent,
+                                           Point targetPosition,
+                                           int teleportDistance,
+                                           int outOfBoundsTeleportDistance,
+                                           long nowMs) {
+        if (!AgentRecoveryTeleportService.isOutsideKnownMapBounds(agent)
+                && (!AgentNavigationRecoveryRuntime.tryAcquire(entry, "distance-teleport", nowMs)
+                || !AgentNavigationRecoveryRuntime.teleportEscalationReady(entry, nowMs))) {
+            return false;
+        }
+        boolean recovered = AgentRecoveryTeleportService.recoverTeleportDistance(
                 entry,
                 agent,
                 targetPosition,
                 teleportDistance,
                 outOfBoundsTeleportDistance,
                 hooks());
+        if (recovered) {
+            AgentNavigationRecoveryRuntime.recordProgress(entry);
+        }
+        return recovered;
     }
 
     public static boolean recoverGrindPartyTeleportDistance(AgentRuntimeEntry entry,
@@ -36,7 +55,13 @@ public final class AgentRecoveryTeleportCoordinator {
                                                             int teleportDistance,
                                                             int outOfBoundsTeleportDistance,
                                                             int multiplier) {
-        return AgentRecoveryTeleportService.recoverGrindPartyTeleportDistance(
+        long nowMs = System.currentTimeMillis();
+        if (!AgentRecoveryTeleportService.isOutsideKnownMapBounds(agent)
+                && (!AgentNavigationRecoveryRuntime.tryAcquire(entry, "party-teleport", nowMs)
+                || !AgentNavigationRecoveryRuntime.teleportEscalationReady(entry, nowMs))) {
+            return false;
+        }
+        boolean recovered = AgentRecoveryTeleportService.recoverGrindPartyTeleportDistance(
                 entry,
                 agent,
                 partyAnchor,
@@ -44,6 +69,10 @@ public final class AgentRecoveryTeleportCoordinator {
                 outOfBoundsTeleportDistance,
                 multiplier,
                 hooks());
+        if (recovered) {
+            AgentNavigationRecoveryRuntime.recordProgress(entry);
+        }
+        return recovered;
     }
 
     private static AgentRecoveryTeleportService.RecoveryHooks hooks() {

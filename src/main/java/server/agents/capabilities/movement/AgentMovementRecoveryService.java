@@ -3,6 +3,7 @@ package server.agents.capabilities.movement;
 import client.Character;
 import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
 import server.agents.capabilities.navigation.AgentNavigationTraceRuntime;
+import server.agents.capabilities.recovery.AgentNavigationRecoveryRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.diagnostics.AgentRunObservationRuntime;
@@ -24,6 +25,10 @@ public final class AgentMovementRecoveryService {
      * Clears the nav edge so A* replans on the next AI tick.
      */
     public static void tickUnstuck(AgentRuntimeEntry entry) {
+        long nowMs = System.currentTimeMillis();
+        if (!AgentNavigationRecoveryRuntime.tryAcquire(entry, "movement-unstuck", nowMs)) {
+            return;
+        }
         Character agent = AgentRuntimeIdentityRuntime.bot(entry);
         Point from = new Point(agent.getPosition());
         Point currentWaypoint = AgentNavigationDebugStateRuntime.navTargetPosition(entry);
@@ -36,13 +41,13 @@ public final class AgentMovementRecoveryService {
             int recoveryDirection = recoveryDirection(from, currentWaypoint, plannedTarget);
             AgentRopeMovementService.beginGroundJump(entry, agent, recoveryDirection * walkStep);
         }
-        AgentMovementStateResetService.clearNavigationState(entry);
+        AgentMovementStateResetService.clearNavigationStep(entry);
         AgentMovementStuckStateRuntime.setUnstuckCooldownMs(
                 entry,
                 AgentMovementTimers.delayAfterCurrentTick(UNSTUCK_COOLDOWN_MS));
         AgentMovementBroadcastService.broadcastMovement(entry);
-        AgentRunObservationRuntime.recovery(entry, agent, "movement-unstuck", System.currentTimeMillis());
-        AgentNavigationTraceRuntime.recovered(entry, "movement-unstuck", System.currentTimeMillis());
+        AgentRunObservationRuntime.recovery(entry, agent, "movement-unstuck", nowMs);
+        AgentNavigationTraceRuntime.recovered(entry, "movement-unstuck", nowMs);
         publishRecovery(entry, agent, "movement-unstuck", from, agent.getPosition());
     }
 
@@ -59,16 +64,20 @@ public final class AgentMovementRecoveryService {
      * This intentionally does not move or teleport a grounded Agent.
      */
     public static void nudgeForObjectiveReplan(AgentRuntimeEntry entry) {
+        long nowMs = System.currentTimeMillis();
+        if (!AgentNavigationRecoveryRuntime.tryAcquire(entry, "objective-navigation-nudge", nowMs)) {
+            return;
+        }
         Character agent = AgentRuntimeIdentityRuntime.bot(entry);
         Point from = new Point(agent.getPosition());
         if (AgentMovementStateRuntime.inAir(entry) || AgentMovementStateRuntime.climbing(entry)) {
             AgentAirborneLaunchService.launchAirborne(entry, agent.getPosition(), 0f, 0, false);
         }
-        AgentMovementStateResetService.clearNavigationState(entry);
+        AgentMovementStateResetService.clearNavigationStep(entry);
         AgentRunObservationRuntime.recovery(
-                entry, agent, "objective-navigation-nudge", System.currentTimeMillis());
+                entry, agent, "objective-navigation-nudge", nowMs);
         AgentNavigationTraceRuntime.recovered(
-                entry, "objective-navigation-nudge", System.currentTimeMillis());
+                entry, "objective-navigation-nudge", nowMs);
         publishRecovery(entry, agent, "objective-navigation-nudge", from, agent.getPosition());
     }
 

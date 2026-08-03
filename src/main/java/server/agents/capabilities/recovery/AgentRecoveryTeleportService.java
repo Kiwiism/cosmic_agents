@@ -57,6 +57,14 @@ public final class AgentRecoveryTeleportService {
         return false;
     }
 
+    public static boolean isOutsideKnownMapBounds(Character agent) {
+        if (agent == null || agent.getPosition() == null || agent.getMap() == null) {
+            return false;
+        }
+        Rectangle area = agent.getMap().getMapArea();
+        return hasKnownMapBounds(area) && !area.contains(agent.getPosition());
+    }
+
     public static boolean recoverGrindPartyTeleportDistance(AgentRuntimeEntry entry,
                                                             Character agent,
                                                             Character partyAnchor,

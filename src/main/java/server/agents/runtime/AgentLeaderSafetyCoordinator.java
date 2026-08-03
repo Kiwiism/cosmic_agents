@@ -16,6 +16,7 @@ import server.agents.capabilities.shop.AgentShopService;
 import server.agents.capabilities.dialogue.AgentChatStatusOrchestrator;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentRelationshipRuntime;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -51,6 +52,10 @@ public final class AgentLeaderSafetyCoordinator {
                                                    long nowMs,
                                                    int leaderCharId,
                                                    long inactiveTownReturnMs) {
+        if (entry == null || agent == null
+                || (AgentRelationshipRuntime.followTarget(entry) == null && agent.getParty() == null)) {
+            return false;
+        }
         return AgentLeaderSafetyService.handleInactiveLeaderTick(
                 entry,
                 leader,

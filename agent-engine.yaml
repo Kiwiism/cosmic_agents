@@ -1168,6 +1168,10 @@ tuning:
     # Purpose: Controls how long Agents remain in or wait for suspended stuck threshold. Higher values make that pause or state last longer; lower values make them continue sooner.
     # Technical: the "stuck detection service" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled.
     server.agents.capabilities.movement.AgentStuckDetectionService.SUSPENDED_STUCK_THRESHOLD_MS: '1500'
+    # Values: 2000-15000 milliseconds. Recommended: 5000; graph construction may move an Agent slowly, but it must not exempt the Agent from recovery forever.
+    # Purpose: Gives fallback walking extra time while a map graph warms, then treats a stationary Agent as stuck and starts normal recovery.
+    # Technical: This replaces the former unlimited graph-warmup exemption and feeds the same accumulated stationary-duration evidence used by ordinary stuck recovery. Unit: milliseconds.
+    server.agents.capabilities.movement.AgentStuckDetectionService.GRAPH_WARMUP_STUCK_THRESHOLD_MS: '5000'
     # Values: a finite non-negative integer; unit: map pixels. Recommended: 300-1200 around the tested baseline 600; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how strongly swim accel pxs2 changes visible movement. Higher values make its effect more noticeable; lower values make movement gentler or less pronounced.
     # Technical: the "swim physics service" component consumes this as a decimal number. Unit: MapleStory map pixels per second squared.
@@ -1440,6 +1444,22 @@ tuning:
     # Purpose: Controls how long an Agent avoids a jump, drop, climb, or portal edge after detecting that it is alternating back and forth through the same two regions.
     # Technical: Suppression belongs only to the current map and destination scope; pathfinding remains free to select another valid edge and the suppressed edge automatically becomes eligible again afterward.
     server.agents.capabilities.navigation.AgentNavigationProgressState.EDGE_SUPPRESSION_MS: '15000'
+    # Values: 8-64 transitions. Recommended: 24; retain enough recent movement to recognize four-region cycles without keeping unbounded per-Agent route history.
+    # Purpose: Limits how much recent region-transition history each Agent retains while detecting repeated two-, three-, and four-region navigation loops.
+    # Technical: The oldest transition is discarded when this bounded deque exceeds the limit; increasing it costs a small fixed amount of memory per actively navigating Agent.
+    server.agents.capabilities.navigation.AgentNavigationProgressState.MAX_TRANSITIONS: '24'
+    # Values: 250-2000 milliseconds. Recommended: 750; only one navigation recovery owner may act during this interval.
+    # Purpose: Prevents multiple recovery systems from nudging, replanning, or teleporting the same Agent at once.
+    # Technical: A successful acquisition owns the per-Agent recovery lease for this duration, preventing watchdog, nudge, replan, and teleport recovery actions from overlapping. Unit: milliseconds.
+    server.agents.capabilities.recovery.AgentNavigationRecoveryRuntime.RECOVERY_LEASE_MS: '750'
+    # Values: 2000-10000 milliseconds. Recommended: 5000; higher values make portal arrivals settle longer before any non-physical correction is allowed.
+    # Purpose: Stops an Agent from visibly sliding or flying immediately after entering a map while its route and foothold state settle.
+    # Technical: An authoritative map-transition receipt resets recovery escalation, and this minimum elapsed duration must pass before a non-physical recovery teleport becomes eligible. Unit: milliseconds.
+    server.agents.capabilities.recovery.AgentNavigationRecoveryRuntime.POST_TRANSITION_GRACE_MS: '5000'
+    # Values: 2-6 attempts. Recommended: 3; higher values favor visible physical recovery, while lower values reach teleport fallback sooner.
+    # Purpose: Requires repeated failed physical recovery attempts before a bounded recovery teleport can occur.
+    # Technical: Counts successful recovery-lease acquisitions since the last authoritative transition or meaningful movement progress; the counter resets whenever either event is recorded.
+    server.agents.capabilities.recovery.AgentNavigationRecoveryRuntime.TELEPORT_ATTEMPTS_REQUIRED: '3'
     # Values: 500-5000 milliseconds. Recommended: 2000; longer values make Agents commit more visibly to the platform they just reached, while shorter values let them reverse the same ladder sooner.
     # Purpose: Prevents an Agent from immediately climbing back onto the same ladder after stepping off, which otherwise looks like jitter when combat retargeting switches between platforms.
     # Technical: Only the inverse entry edge of the ladder just completed is blocked. Other walk, jump, drop, portal, and ladder routes remain available during this short guard.

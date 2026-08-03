@@ -48,6 +48,16 @@ class AgentCollisionPortalServiceTest {
         verify(fixture.maps(), never()).enterPortal(fixture.agent(), 12);
     }
 
+    @Test
+    void ignoresTouchPortalWithoutMatchingNavigationIntent() {
+        Fixture fixture = fixture(9, "undodraco", 999_999_999, new Point(0, 0), new Point(0, 0));
+        AgentNavigationDebugStateRuntime.setActiveNavigationEdge(fixture.entry(), null);
+
+        assertFalse(AgentCollisionPortalService.tick(
+                fixture.entry(), fixture.agent(), fixture.maps()));
+        verify(fixture.maps(), never()).enterPortal(fixture.agent(), 12);
+    }
+
     private static Fixture fixture(int portalType,
                                    String script,
                                    int targetMapId,
@@ -67,7 +77,11 @@ class AgentCollisionPortalServiceTest {
         when(portal.getPortalStatus()).thenReturn(true);
         when(portal.getPosition()).thenReturn(portalPosition);
         when(maps.enterPortal(agent, 12)).thenReturn(true);
-        return new Fixture(new AgentRuntimeEntry(agent, null, null), agent, maps);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
+                1, 2, AgentNavigationGraph.EdgeType.PORTAL,
+                portalPosition, portalPosition, 0, 12, 0, 0, 0, 100));
+        return new Fixture(entry, agent, maps);
     }
 
     private record Fixture(AgentRuntimeEntry entry, Character agent, MapGateway maps) {

@@ -18,6 +18,7 @@ public final class AgentStuckDetectionService {
     private static final int STUCK_DRIFT_RADIUS_PX = config.AgentTuning.intValue("server.agents.capabilities.movement.AgentStuckDetectionService.STUCK_DRIFT_RADIUS_PX");
     private static final int GROUNDED_STUCK_THRESHOLD_MS = config.AgentTuning.intValue("server.agents.capabilities.movement.AgentStuckDetectionService.GROUNDED_STUCK_THRESHOLD_MS");
     private static final int SUSPENDED_STUCK_THRESHOLD_MS = config.AgentTuning.intValue("server.agents.capabilities.movement.AgentStuckDetectionService.SUSPENDED_STUCK_THRESHOLD_MS");
+    private static final int GRAPH_WARMUP_STUCK_THRESHOLD_MS = config.AgentTuning.intValue("server.agents.capabilities.movement.AgentStuckDetectionService.GRAPH_WARMUP_STUCK_THRESHOLD_MS");
 
     @FunctionalInterface
     public interface UnstuckAction {
@@ -64,8 +65,7 @@ public final class AgentStuckDetectionService {
 
         boolean suspended = AgentMovementStateRuntime.inAir(entry)
                 || AgentMovementStateRuntime.climbing(entry);
-        if (AgentNavigationDebugStateRuntime.graphWarmupFallback(entry)
-                || (!AgentNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)
+        if ((!AgentNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)
                         && !AgentMoveTargetStateRuntime.hasMoveTarget(entry))) {
             AgentMovementStuckStateRuntime.resetStuckProgress(entry);
             return;
@@ -86,7 +86,9 @@ public final class AgentStuckDetectionService {
             AgentMovementStuckStateRuntime.addStuckMs(entry, hooks.movementTickMs());
         }
 
-        int thresholdMs = suspended ? SUSPENDED_STUCK_THRESHOLD_MS : GROUNDED_STUCK_THRESHOLD_MS;
+        int thresholdMs = AgentNavigationDebugStateRuntime.graphWarmupFallback(entry)
+                ? GRAPH_WARMUP_STUCK_THRESHOLD_MS
+                : suspended ? SUSPENDED_STUCK_THRESHOLD_MS : GROUNDED_STUCK_THRESHOLD_MS;
         if (hooks.enableUnstuck()
                 && AgentMovementStuckStateRuntime.stuckForAtLeast(entry, thresholdMs)
                 && !AgentMovementStuckStateRuntime.hasUnstuckCooldown(entry)) {

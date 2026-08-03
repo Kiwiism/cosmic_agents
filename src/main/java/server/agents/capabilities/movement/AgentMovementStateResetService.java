@@ -39,9 +39,14 @@ public final class AgentMovementStateResetService {
     }
 
     public static void clearNavigationState(AgentRuntimeEntry entry) {
+        clearNavigationStep(entry);
+        AgentNavigationDebugStateRuntime.clearNavTarget(entry);
+    }
+
+    /** Invalidates only the current traversal step while preserving the requested destination. */
+    public static void clearNavigationStep(AgentRuntimeEntry entry) {
         AgentVerticalTraversalStateRuntime.clear(entry);
         AgentNavigationDebugStateRuntime.clearActiveNavigationEdge(entry);
         AgentNavigationDebugStateRuntime.clearNavJumpLaunch(entry);
-        AgentNavigationDebugStateRuntime.clearNavTarget(entry);
     }
 }

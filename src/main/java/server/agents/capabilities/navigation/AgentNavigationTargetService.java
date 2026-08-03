@@ -350,7 +350,7 @@ public final class AgentNavigationTargetService {
             AgentNavigationTraceRuntime.rejected(entry, graph, startRegionId,
                     targetRegionId, targetPos, "EDGE_SUPPRESSED",
                     "candidate leaves resolved target region", nowMs);
-        } else if (progressState.suppressIfAlternatingCycle(selected, nowMs)) {
+        } else if (progressState.suppressIfRepeatedCycle(selected, nowMs)) {
             selection = AgentNavigationPathService.findNextEdgeSelectionVaried(
                     graph, bot, startPosition, startRegionId, targetRegionId, targetPos, variation,
                     edge -> progressState.allows(edge, nowMs)
@@ -358,10 +358,25 @@ public final class AgentNavigationTargetService {
                                     graph, entry, edge, nowMs));
             selected = selection.activeEdge();
             routeSource = "RECOVERY";
-            routeReason = "alternating region cycle; suppressed inverse edge";
+            routeReason = "repeated region cycle; suppressed cycle edge";
             if (selected != null) {
                 progressState.clearRecoveryPending();
             }
+        } else if (selection.completeness() == AgentNavigationPathService.RouteCompleteness.PARTIAL
+                && !progressState.allowsPartialReuse(selected, nowMs)) {
+            selection = AgentNavigationPathService.findNextEdgeSelectionVaried(
+                    graph, bot, startPosition, startRegionId, targetRegionId, targetPos, variation,
+                    edge -> progressState.allows(edge, nowMs)
+                            && !AgentVerticalTraversalService.blocksRecentInverseEntry(
+                                    graph, entry, edge, nowMs));
+            selected = selection.activeEdge();
+            routeSource = "RECOVERY";
+            routeReason = "partial closest-frontier edge reuse exhausted";
+            if (selected != null) {
+                progressState.clearRecoveryPending();
+            }
+        } else if (selection.completeness() == AgentNavigationPathService.RouteCompleteness.COMPLETE) {
+            progressState.clearPartialReuse();
         }
         if (!leavesResolvedTargetRegion) {
             if (selected == null && !selection.outcome().reached()) {
