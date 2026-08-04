@@ -45,6 +45,7 @@ import server.quest.Quest;
 
 import java.awt.Point;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -239,15 +240,34 @@ public enum CosmicPrimitiveCapabilityGateway implements PrimitiveCapabilityGatew
     }
 
     @Override
-    public Set<Integer> configuredMonsterSpawnIds(Character agent) {
+    public Map<Integer, Integer> liveMonsterCounts(Character agent) {
         if (agent == null || agent.getMap() == null) {
-            return Set.of();
+            return Map.of();
         }
-        Set<Integer> spawnIds = new LinkedHashSet<>();
+        Map<Integer, Integer> counts = new LinkedHashMap<>();
+        for (Monster monster : server.agents.perception.AgentMapPerception.monsters(agent.getMap())) {
+            if (monster.isAlive()) {
+                counts.merge(monster.getId(), 1, Integer::sum);
+            }
+        }
+        return Map.copyOf(counts);
+    }
+
+    @Override
+    public Set<Integer> configuredMonsterSpawnIds(Character agent) {
+        return configuredMonsterSpawnCounts(agent).keySet();
+    }
+
+    @Override
+    public Map<Integer, Integer> configuredMonsterSpawnCounts(Character agent) {
+        if (agent == null || agent.getMap() == null) {
+            return Map.of();
+        }
+        Map<Integer, Integer> counts = new LinkedHashMap<>();
         for (SpawnPoint spawnPoint : agent.getMap().getMonsterSpawn()) {
-            spawnIds.add(spawnPoint.getMonsterId());
+            counts.merge(spawnPoint.getMonsterId(), 1, Integer::sum);
         }
-        return Set.copyOf(spawnIds);
+        return Map.copyOf(counts);
     }
 
     @Override

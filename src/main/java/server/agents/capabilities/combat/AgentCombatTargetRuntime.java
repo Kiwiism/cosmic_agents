@@ -47,6 +47,7 @@ public final class AgentCombatTargetRuntime {
             Foothold botFoothold = AgentCombatGroundRuntime.findGroundFoothold(botPos, bot);
             List<Monster> candidates = AgentCombatTargetSelector.aliveMonstersInRange(bot, botPos, rangeSq);
             candidates.removeIf(monster -> !AgentCombatObjectiveTargetStateRuntime.allows(entry, monster.getId()));
+            candidates = promoteMapWidePreferredTargets(entry, bot, candidates);
             if (candidates.isEmpty()) {
                 AgentCombatBehaviorRuntime.noCandidateOpportunity(entry);
                 return null;
@@ -98,6 +99,10 @@ public final class AgentCombatTargetRuntime {
             Foothold botFoothold = AgentCombatGroundRuntime.findGroundFoothold(botPos, bot);
             List<Monster> candidates = AgentCombatTargetSelector.aliveMonstersInRange(bot, botPos, rangeSq);
             candidates.removeIf(monster -> !AgentCombatObjectiveTargetStateRuntime.allows(entry, monster.getId()));
+            if (shouldEscalateToMapWidePreferredTarget(entry, bot, candidates)) {
+                AgentCombatVariationRuntime.clearAutomaticAnchor(entry);
+                return findGrindTarget(entry, bot, config);
+            }
             if (candidates.isEmpty()) {
                 AgentCombatBehaviorRuntime.noCandidateOpportunity(entry);
                 releaseEmptyAutomaticAnchor(entry);
@@ -245,6 +250,46 @@ public final class AgentCombatTargetRuntime {
                 () -> scoreLocalTargets(entry, bot, botPos, botFoothold, candidates, targetOccupancy, config),
                 () -> scoreTargetRegions(entry, graphContext, bot, botPos, botFoothold,
                         candidates, targetOccupancy, config));
+    }
+
+    private static List<Monster> promoteMapWidePreferredTargets(
+            AgentRuntimeEntry entry,
+            Character bot,
+            List<Monster> localCandidates) {
+        if (!shouldEscalateToMapWidePreferredTarget(entry, bot, localCandidates)) {
+            return localCandidates;
+        }
+        List<Monster> mapWidePreferred = mapWidePreferredTargets(entry, bot);
+        if (mapWidePreferred.isEmpty()) {
+            return localCandidates;
+        }
+        // A local platform lease must not pin an Agent below the only remaining
+        // species that can advance its objective.
+        AgentCombatVariationRuntime.clearAutomaticAnchor(entry);
+        return mapWidePreferred;
+    }
+
+    private static boolean shouldEscalateToMapWidePreferredTarget(
+            AgentRuntimeEntry entry,
+            Character bot,
+            List<Monster> localCandidates) {
+        return AgentCombatObjectiveTargetStateRuntime.hasPreferredTargets(entry)
+                && localCandidates.stream().noneMatch(monster ->
+                AgentCombatObjectiveTargetStateRuntime.prefers(entry, monster.getId()))
+                && !mapWidePreferredTargets(entry, bot).isEmpty();
+    }
+
+    private static List<Monster> mapWidePreferredTargets(
+            AgentRuntimeEntry entry,
+            Character bot) {
+        if (entry == null || bot == null || bot.getMap() == null) {
+            return List.of();
+        }
+        return AgentMapPerception.monsters(bot.getMap()).stream()
+                .filter(AgentCombatTargetEligibilityPolicy::isHostileLivingMonster)
+                .filter(monster -> AgentCombatObjectiveTargetStateRuntime.allows(entry, monster.getId()))
+                .filter(monster -> AgentCombatObjectiveTargetStateRuntime.prefers(entry, monster.getId()))
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     public static Monster findRouteBlockerTarget(AgentRuntimeEntry entry,

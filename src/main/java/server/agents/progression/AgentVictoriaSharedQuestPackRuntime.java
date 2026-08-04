@@ -4,6 +4,8 @@ import client.Character;
 import client.QuestStatus;
 import server.agents.capabilities.shop.AgentShopService;
 import server.agents.capabilities.shop.AgentShopStateRuntime;
+import server.agents.capabilities.combat.AgentCombatPolicyConfig;
+import server.agents.capabilities.combat.AgentSpawnPressurePolicy;
 import server.agents.capabilities.inventory.demand.AgentQuestItemDemandRuntime;
 import server.agents.capabilities.looting.AgentPreExitLootRuntime;
 import server.agents.integration.PrimitiveCapabilityGateway;
@@ -221,13 +223,54 @@ final class AgentVictoriaSharedQuestPackRuntime {
                 return Result.RUNNING;
             }
         }
-        Set<Integer> preferred = selection == null
-                ? new HashSet<>(step.preferredMobIds())
-                : new HashSet<>(selection.map().targetMobIds());
-        Set<Integer> incidental = huntMapId == step.mapId()
+        Set<Integer> preferred = unresolvedTargetMobIds(
+                agent, step, objectives, huntMapId, gateway);
+        if (preferred.isEmpty()) {
+            preferred = selection == null
+                    ? new HashSet<>(step.preferredMobIds())
+                    : new HashSet<>(selection.map().targetMobIds());
+        }
+        Set<Integer> incidentalCandidates = huntMapId == step.mapId()
                 ? new HashSet<>(step.incidentalMobIds()) : Set.of();
+        Set<Integer> incidental = AgentSpawnPressurePolicy.selectFallbackMobIds(
+                gateway.configuredMonsterSpawnCounts(agent),
+                gateway.liveMonsterCounts(agent),
+                preferred,
+                incidentalCandidates,
+                AgentCombatPolicyConfig.spawnPressureMinTargetSharePercent());
         gateway.grind(entry, preferred, incidental);
         return Result.RUNNING;
+    }
+
+    private static Set<Integer> unresolvedTargetMobIds(
+            Character agent,
+            AgentVictoriaSharedQuestPackCatalog.Step step,
+            List<AgentVictoriaQuestHuntIndexRepository.ObjectiveReference> objectives,
+            int huntMapId,
+            PrimitiveCapabilityGateway gateway) {
+        Set<Integer> preferred = new LinkedHashSet<>();
+        for (AgentVictoriaSharedQuestPackCatalog.Condition condition : step.conditions()) {
+            if (conditionMet(agent, condition, gateway)) {
+                continue;
+            }
+            if ("QUEST_KILL".equals(condition.type())) {
+                preferred.add(condition.targetId());
+                continue;
+            }
+            if (!"ITEM".equals(condition.type())) {
+                continue;
+            }
+            for (AgentVictoriaQuestHuntIndexRepository.ObjectiveReference reference : objectives) {
+                if (reference.objective().targetId() != condition.targetId()) {
+                    continue;
+                }
+                reference.objective().candidates().stream()
+                        .filter(candidate -> candidate.mapId() == huntMapId)
+                        .flatMap(candidate -> candidate.targetMobIds().stream())
+                        .forEach(preferred::add);
+            }
+        }
+        return Set.copyOf(preferred);
     }
 
     static int returnPreparationMapId(

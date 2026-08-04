@@ -14,6 +14,10 @@ public final class AgentCombatPolicyConfig {
         return tuningInt("MAX_CONSECUTIVE_INCIDENTAL_KILLS");
     }
 
+    public static int spawnPressureMinTargetSharePercent() {
+        return tuningInt("SPAWN_PRESSURE_MIN_TARGET_SHARE_PERCENT");
+    }
+
     public static int maxIncidentalKillsPerPlatformLease() {
         return tuningInt("MAX_INCIDENTAL_KILLS_PER_PLATFORM_LEASE");
     }

@@ -10,6 +10,7 @@ import server.maps.MapleMap;
 import java.awt.Point;
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 
 @AgentGatewayAffinity(
@@ -92,8 +93,16 @@ public interface PrimitiveCapabilityGateway {
 
     int liveMonsterCount(Character agent, Set<Integer> mobIds);
 
+    default Map<Integer, Integer> liveMonsterCounts(Character agent) {
+        return Map.of();
+    }
+
     default Set<Integer> configuredMonsterSpawnIds(Character agent) {
         return Set.of();
+    }
+
+    default Map<Integer, Integer> configuredMonsterSpawnCounts(Character agent) {
+        return Map.of();
     }
 
     void navigate(AgentRuntimeEntry entry, Point destination, boolean precise);

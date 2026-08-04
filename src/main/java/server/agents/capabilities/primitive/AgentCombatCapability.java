@@ -10,6 +10,8 @@ import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
 import server.agents.integration.PrimitiveCapabilityGateway;
 import server.agents.capabilities.contracts.AgentDisposition;
 import server.agents.capabilities.inventory.AgentInventoryReservationRuntime;
+import server.agents.capabilities.combat.AgentCombatPolicyConfig;
+import server.agents.capabilities.combat.AgentSpawnPressurePolicy;
 
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -127,13 +129,19 @@ public final class AgentCombatCapability
     private Set<Integer> spawnPressureMobIds(AgentCapabilityContext context,
                                              Command command,
                                              Set<Integer> requiredMobIds) {
-        Set<Integer> configuredSpawnIds = gateway.configuredMonsterSpawnIds(context.agent());
-        if (!configuredSpawnIds.containsAll(requiredMobIds)) {
+        Map<Integer, Integer> configuredSpawnCounts =
+                gateway.configuredMonsterSpawnCounts(context.agent());
+        if (!configuredSpawnCounts.keySet().containsAll(requiredMobIds)) {
             return Set.of();
         }
-        Set<Integer> fallback = new LinkedHashSet<>(configuredSpawnIds);
+        Set<Integer> fallback = new LinkedHashSet<>(configuredSpawnCounts.keySet());
         fallback.removeAll(command.requiredKillCounts().keySet());
-        return Set.copyOf(fallback);
+        return AgentSpawnPressurePolicy.selectFallbackMobIds(
+                configuredSpawnCounts,
+                gateway.liveMonsterCounts(context.agent()),
+                requiredMobIds,
+                fallback,
+                AgentCombatPolicyConfig.spawnPressureMinTargetSharePercent());
     }
 
     @Override

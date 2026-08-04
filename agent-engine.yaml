@@ -2636,6 +2636,10 @@ tuning:
     # Purpose: Lower values announce "almost done" sooner; higher values reserve it for the final kills.
     # Technical: Requirements of 10 or more use ceiling rounding (30 reaches this at 27/30). Requirements below 10 announce when one target remains (5 reaches this at 4/5).
     server.agents.progression.events.AgentQuestProgressMilestonePublisher.NEARLY_COMPLETE_PERCENT: '90'
+    # Values: 50-100 percent. Recommended: 80. Higher values make Agents clear overrepresented non-objective monsters sooner; lower values tolerate a larger temporary shortage of the quest target.
+    # Purpose: Keeps required quest monsters near their intended share of a mixed-spawn map, so common monsters cannot occupy nearly every available spawn slot.
+    # Technical: Spawn-pressure clearing becomes eligible when the live preferred-monster share falls below this percentage of its authored spawn-point share; only overrepresented fallback species may then be selected.
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.SPAWN_PRESSURE_MIN_TARGET_SHARE_PERCENT: '80'
     # Values: 0-10 kills. Recommended: 2. Higher values let an Agent clear more non-objective monsters from its current platform before returning to a required target elsewhere; 0 disables incidental platform clearing.
     # Purpose: Prevents endless killing of convenient incidental monsters while still allowing short, natural platform sweeps that free spawn slots and reduce backtracking.
     # Technical: Maximum consecutive incidental kills selected by the quest-local-clear combat policy before required-target debt wins and the selector must return to a required candidate.
