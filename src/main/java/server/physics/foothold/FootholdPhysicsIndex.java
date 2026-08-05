@@ -86,6 +86,24 @@ public final class FootholdPhysicsIndex implements PhysicsTerrain {
     }
 
     @Override
+    public Iterable<FootholdSegment> footholdsNear(double x, double radius) {
+        double boundedRadius = Math.max(0.0, radius);
+        int first = bucket(x - boundedRadius);
+        int last = bucket(x + boundedRadius);
+        Map<Integer, FootholdSegment> nearby = new HashMap<>();
+        for (int bucket = first; bucket <= last; bucket++) {
+            for (FootholdSegment segment : horizontalBuckets.getOrDefault(bucket, List.of())) {
+                if (segment.right() >= x - boundedRadius && segment.left() <= x + boundedRadius) {
+                    nearby.putIfAbsent(segment.id(), segment);
+                }
+            }
+        }
+        return nearby.values().stream()
+                .sorted((left, right) -> Integer.compare(left.id(), right.id()))
+                .toList();
+    }
+
+    @Override
     public double wallBoundary(int footholdId, boolean left, double y) {
         FootholdSegment current = foothold(footholdId);
         if (current == null) {

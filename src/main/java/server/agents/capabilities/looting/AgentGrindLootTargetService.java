@@ -55,8 +55,14 @@ public final class AgentGrindLootTargetService {
         AgentPostKillLootState.Snapshot postKill = postKillState.snapshot(nowMs);
         WeaponType weaponType = equippedWeaponType(agent);
         boolean ranged = AgentPostKillLootPolicy.isRanged(weaponType);
+        AgentLootDecisionTraceState.Mode traceMode = ranged
+                ? AgentLootDecisionTraceState.Mode.POST_KILL_RANGED
+                : AgentLootDecisionTraceState.Mode.POST_KILL_MELEE;
         if (!AgentPostKillLootPolicy.shouldCollect(
                 weaponType, postKill, hasCombatTarget, nowMs)) {
+            recordLootDecision(entry, traceMode,
+                    AgentLootDecisionTraceState.Outcome.POLICY_DEFERRED,
+                    nowMs, postKill.killCount(), hasCombatTarget, null, 0L);
             return;
         }
         int maximumSeekRadius = !ranged && hasCombatTarget && postKill.hasKills()
@@ -73,6 +79,12 @@ public final class AgentGrindLootTargetService {
                 maximumSeekRadius,
                 AgentPostKillLootPolicy.targetLootAgeMs(weaponType, true));
         AgentGrindLootStateRuntime.setGrindLootTarget(entry, selected);
+        recordLootDecision(entry, traceMode,
+                selected == null
+                        ? AgentLootDecisionTraceState.Outcome.NO_ELIGIBLE_DROP
+                        : AgentLootDecisionTraceState.Outcome.TARGET_SELECTED,
+                nowMs, postKill.killCount(), hasCombatTarget, selected,
+                AgentPostKillLootPolicy.targetLootAgeMs(weaponType, true));
     }
 
     public static void refreshPreExitLootTarget(AgentRuntimeEntry entry,
@@ -87,16 +99,23 @@ public final class AgentGrindLootTargetService {
         AgentPostKillLootState postKillState =
                 entry.capabilityStates().require(AgentPostKillLootState.STATE_KEY);
         WeaponType weaponType = equippedWeaponType(agent);
+        AgentPostKillLootState.Snapshot postKill = postKillState.snapshot(nowMs);
         MapItem selected = AgentLootTargetService.findBestGrindLootTarget(
                 entry,
                 agent,
                 passiveLootRadius,
                 AgentGrindLootStateRuntime::isRetrySuppressed,
-                postKillState.snapshot(nowMs).killedObjectIds(),
+                postKill.killedObjectIds(),
                 currentRegionId(entry, agent),
                 maximumSeekRadius,
                 AgentPostKillLootPolicy.targetLootAgeMs(weaponType, true));
         AgentGrindLootStateRuntime.setGrindLootTarget(entry, selected);
+        recordLootDecision(entry, AgentLootDecisionTraceState.Mode.PRE_EXIT,
+                selected == null
+                        ? AgentLootDecisionTraceState.Outcome.NO_ELIGIBLE_DROP
+                        : AgentLootDecisionTraceState.Outcome.TARGET_SELECTED,
+                nowMs, postKill.killCount(), false, selected,
+                AgentPostKillLootPolicy.targetLootAgeMs(weaponType, true));
     }
 
     public static Point immediateMeleeLootPosition(AgentRuntimeEntry entry,
@@ -111,10 +130,10 @@ public final class AgentGrindLootTargetService {
         if (AgentPostKillLootPolicy.isRanged(weaponType)) {
             return null;
         }
-        Set<Integer> recentKills = entry.capabilityStates()
+        AgentPostKillLootState.Snapshot postKill = entry.capabilityStates()
                 .require(AgentPostKillLootState.STATE_KEY)
-                .snapshot(nowMs)
-                .killedObjectIds();
+                .snapshot(nowMs);
+        Set<Integer> recentKills = postKill.killedObjectIds();
         if (recentKills.isEmpty()) {
             return null;
         }
@@ -142,13 +161,23 @@ public final class AgentGrindLootTargetService {
             }
         }
         if (nearest == null) {
+            recordLootDecision(entry, AgentLootDecisionTraceState.Mode.POST_KILL_MELEE,
+                    AgentLootDecisionTraceState.Outcome.NO_ELIGIBLE_DROP,
+                    nowMs, postKill.killCount(), true, null,
+                    AgentPostKillLootPolicy.targetLootAgeMs(weaponType, true));
             return null;
         }
 
         long targetAgeMs = AgentPostKillLootPolicy.targetLootAgeMs(weaponType, true);
         if (nowMs - nearest.getDropTime() < targetAgeMs) {
+            recordLootDecision(entry, AgentLootDecisionTraceState.Mode.POST_KILL_MELEE,
+                    AgentLootDecisionTraceState.Outcome.WAITING_FOR_DROP,
+                    nowMs, postKill.killCount(), true, nearest, targetAgeMs);
             return new Point(agentPosition);
         }
+        recordLootDecision(entry, AgentLootDecisionTraceState.Mode.POST_KILL_MELEE,
+                AgentLootDecisionTraceState.Outcome.TARGET_SELECTED,
+                nowMs, postKill.killCount(), true, nearest, targetAgeMs);
         Point lootPosition = nearest.getPosition();
         if (Math.abs(lootPosition.x - agentPosition.x) <= passiveLootRadius
                 && Math.abs(lootPosition.y - agentPosition.y) <= passiveLootRadius) {
@@ -217,5 +246,27 @@ public final class AgentGrindLootTargetService {
                     .require(AgentPostKillLootState.STATE_KEY)
                     .resolveKill(dropperObjectId);
         }
+    }
+
+    private static void recordLootDecision(AgentRuntimeEntry entry,
+                                           AgentLootDecisionTraceState.Mode mode,
+                                           AgentLootDecisionTraceState.Outcome outcome,
+                                           long nowMs,
+                                           int recentKillCount,
+                                           boolean hasCombatTarget,
+                                           MapItem target,
+                                           long requiredDropAgeMs) {
+        if (entry == null) {
+            return;
+        }
+        entry.capabilityStates().require(AgentLootDecisionTraceState.STATE_KEY).record(
+                mode,
+                outcome,
+                nowMs,
+                recentKillCount,
+                hasCombatTarget,
+                target == null ? 0 : target.getObjectId(),
+                requiredDropAgeMs,
+                target == null ? 0L : Math.max(0L, nowMs - target.getDropTime()));
     }
 }

@@ -1448,6 +1448,10 @@ tuning:
     # Purpose: Limits how much recent region-transition history each Agent retains while detecting repeated two-, three-, and four-region navigation loops.
     # Technical: The oldest transition is discarded when this bounded deque exceeds the limit; increasing it costs a small fixed amount of memory per actively navigating Agent.
     server.agents.capabilities.navigation.AgentNavigationProgressState.MAX_TRANSITIONS: '24'
+    # Values: 0=off, 1=observe-only, 2=conservative, 3=legacy-aggressive. Recommended: 1 while validating established routes; use 2 only after recovery parity tests pass, and 3 only to compare old behavior.
+    # Purpose: Chooses whether Agents ignore optional navigation recovery, only record problems, avoid one repeatedly failing ordinary ground edge, or restore the old jump/nudge/soft-teleport recovery behavior.
+    # Technical: Modes 0-2 never inject movement or soft teleports. Authored route overlays, committed rope or ladder traversal, and portal edges remain authoritative. Death and out-of-bounds safety are independent and remain enabled in every mode.
+    server.agents.capabilities.recovery.AgentNavigationRecoveryPolicy.MODE: '1'
     # Values: 250-2000 milliseconds. Recommended: 750; only one navigation recovery owner may act during this interval.
     # Purpose: Prevents multiple recovery systems from nudging, replanning, or teleporting the same Agent at once.
     # Technical: A successful acquisition owns the per-Agent recovery lease for this duration, preventing watchdog, nudge, replan, and teleport recovery actions from overlapping. Unit: milliseconds.
@@ -1468,10 +1472,6 @@ tuning:
     # Purpose: Gives an Agent a stable place to step after leaving a ladder so it does not repeatedly attach and detach on the same pixel.
     # Technical: The waypoint is clamped to the destination foothold region and is reached through ordinary movement; it never teleports or changes the map position directly.
     server.agents.capabilities.navigation.AgentVerticalTraversalService.POST_EXIT_NUDGE_PX: '32'
-    # Values: 8-64 map pixels. Recommended: 32; enough to leave the failed launch point without looking like a teleport.
-    # Purpose: Sets the short walking nudge used when a repeated route edge is blocked and no alternate path can immediately be found.
-    # Technical: The nudge is an ordinary movement target, not a position mutation, and therefore still obeys footholds, collision, and movement broadcasting.
-    server.agents.capabilities.navigation.AgentNavigationTargetService.OSCILLATION_NUDGE_PX: '32'
     # Values: a finite non-negative integer; unit: map pixels. Recommended: 6-24 around the tested baseline 12; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls the positional leeway for walk gap. Higher values tolerate more separation before Agents correct course; lower values make them align sooner.
     # Technical: the "navigation physics service" component consumes this as an integer. Unit: MapleStory map pixels; horizontal and vertical values use the server map coordinate system.
@@ -2676,14 +2676,54 @@ tuning:
     # Purpose: Lets operators inspect how the new selector would differ before making it authoritative.
     # Technical: Evaluates and records the quest-local-clear result while the compatibility selector continues to control combat, without changing targets, movement, attacks, or quest counters.
     server.agents.capabilities.combat.AgentCombatPolicyConfig.QUEST_LOCAL_CLEAR_SHADOW_ENABLED: 'false'
+    # Values: 80-260 map pixels. Recommended: 150. Higher values treat a wider group as one AoE cluster; lower values require monsters to stand closer together before favoring an AoE attack.
+    # Purpose: Controls how tightly monsters must group before the Agent values a multi-target skill over a single-target attack.
+    # Technical: Radius used by the combat scoring and AoE reposition policies; this changes target valuation only and does not alter a skill's server hit box or packet target list.
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.AOE_CLUSTER_RADIUS_PX: '150'
+    # Values: 0-1000 score points per nearby monster. Recommended: 200. Higher values make Agents favor clustered enemies more strongly; 0 removes the cluster preference while retaining normal AoE planning.
+    # Purpose: Makes groups of monsters more attractive to Agents that currently have a usable multi-target attack.
+    # Technical: Additive score benefit per eligible neighbor, capped by the selected skill's mob count; the current target scoring behavior uses 200.
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.AOE_CLUSTER_BONUS_PER_MOB: '200'
+    # Values: 0-20 milliseconds per vertical map pixel. Recommended: 4. Higher values make vertical travel look more expensive than horizontal walking; 0 ignores height in the local travel estimate.
+    # Purpose: Discourages an Agent from repeatedly crossing several platforms for a target that is only slightly closer horizontally.
+    # Technical: Added to the walk-velocity travel estimate before graph reachability and policy filters are considered; the current behavior uses 4.
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.LOCAL_TRAVEL_VERTICAL_COST_PER_PX: '4'
+    # Values: 0-30 score points per vertical map pixel. Recommended: 8. Higher values prefer targets on a similar height; lower values make vertical separation matter less.
+    # Purpose: Helps the Agent finish nearby platform work before climbing or dropping to another level.
+    # Technical: Additive target-ranking cost applied to absolute vertical distance; the lowest reachable score still wins.
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.LOCAL_TARGET_VERTICAL_WEIGHT: '8'
+    # Values: 0-3000 score points. Recommended: 600. Higher values strongly prefer monsters inside the current attack-height band; 0 removes this extra same-level preference.
+    # Purpose: Reduces attempts to attack monsters that are horizontally close but vertically outside the current attack range.
+    # Technical: Added when vertical distance exceeds the active attack range; graph reachability remains authoritative.
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.LOCAL_TARGET_OFF_LEVEL_PENALTY: '600'
+    # Values: 0-5000 score points. Recommended: 1200. Higher values favor the current foothold more strongly; 0 ranks different footholds only by distance and graph cost.
+    # Purpose: Encourages short platform sweeps and reduces unnecessary up/down movement between consecutive kills.
+    # Technical: Added when the monster is not on the Agent's current foothold; objective filters and spawn-pressure policy can still require another platform.
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.LOCAL_TARGET_OTHER_FOOTHOLD_PENALTY: '1200'
+    # Values: 0-160 map pixels. Recommended: 60. Higher values tolerate targets slightly farther above before applying the large upward-platform penalty.
+    # Purpose: Avoids over-penalizing small slopes and steps while still making substantial climbs less attractive.
+    # Technical: Upward vertical distance at or below this threshold receives no additional upward-only penalty.
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.UPWARD_PLATFORM_TOLERANCE_PX: '60'
+    # Values: 0-10000 score points. Recommended: 2500. Higher values make a significant climb a stronger last choice; 0 leaves only the per-pixel upward penalty.
+    # Purpose: Prevents Agents from abandoning useful targets on their current or lower platforms for a marginally closer monster high above.
+    # Technical: One-time additive cost once upward separation exceeds the configured tolerance; the current behavior uses 2500.
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.UPWARD_PLATFORM_BASE_PENALTY: '2500'
+    # Values: 0-30 score points per map pixel. Recommended: 6. Higher values increasingly discourage taller climbs; 0 makes every climb above the tolerance receive only the base penalty.
+    # Purpose: Distinguishes a small platform change from travelling several levels upward.
+    # Technical: Applied only to upward distance beyond UPWARD_PLATFORM_TOLERANCE_PX; the current behavior uses 6.
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.UPWARD_PLATFORM_PENALTY_PER_PX: '6'
+    # Values: 1-10000 score points. Recommended: 100. Higher values give even weak single-target attacks a larger comparison floor against AoE attacks.
+    # Purpose: Stops zero or tiny estimated damage from making every available AoE appear automatically superior.
+    # Technical: Lower bound for the single-target damage score used only by attack-plan comparison; the current behavior uses 100.
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.MINIMUM_SINGLE_TARGET_SCORE: '100'
     # Values: 100-260 map pixels. Recommended: 180. Higher values make melee Agents collect more immediately; lower values keep them attacking longer before walking to drops.
     # Purpose: Encourages melee Agents to pick up nearby drops from their latest kill without crossing an entire platform after every attack.
     # Technical: Maximum seek distance for the melee-immediate branch of the post-kill loot policy; the existing passive pickup radius remains a separate inner exclusion boundary.
     server.agents.capabilities.looting.AgentLootCollectionPolicyConfig.MELEE_IMMEDIATE_RADIUS: '180'
-    # Values: 400-1500 milliseconds. Recommended: 750. Higher values wait longer for the drop animation before collecting; lower values react sooner but must remain at least 400 for the normal pickup path.
+    # Values: 400-1500 milliseconds. Recommended: 1000. Higher values let the drop visibly settle longer before collecting; lower values react sooner but must remain at least 400 for the normal pickup path.
     # Purpose: Lets melee Agents collect a nearby drop shortly after their kill instead of walking away and returning several seconds later.
     # Technical: Minimum target age for drops tied to a recent melee kill only; ranged batching, player inventory-drop protection, ownership, capacity and Character.pickupItem remain authoritative.
-    server.agents.capabilities.looting.AgentLootCollectionPolicyConfig.MELEE_RECENT_KILL_TARGET_AGE_MS: '750'
+    server.agents.capabilities.looting.AgentLootCollectionPolicyConfig.MELEE_RECENT_KILL_TARGET_AGE_MS: '1000'
     # Values: 2-6 kills. Recommended: 3. Higher values keep ranged Agents firing from position longer; lower values make them collect more often.
     # Purpose: Prevents bow, claw, gun, wand and staff users from walking forward after every kill.
     # Technical: Recent authoritative kill-event count that opens a ranged loot-collection batch without changing pickup eligibility, ownership, inventory capacity, or combat packets.
@@ -2764,10 +2804,6 @@ tuning:
     # Purpose: Sets an Agent's starting base mana recovery before current conditions adjust it. Higher values make that tendency stronger from the start; lower values make it weaker.
     # Technical: the "runtime config" component consumes this as an integer. Domain: component-specific policy value; startup validation rejects missing, blank, or malformed values. It participates in bounded failure handling and should remain long enough for the normal operation to complete.
     server.agents.runtime.AgentRuntimeConfig.BASE_MP_RECOVERY: '3'
-    # Values: true or false. Recommended: true for normal operation; use false only when deliberately preserving a navigation failure for diagnosis.
-    # Purpose: When enabled, an Agent that stops making movement progress clears its failed route and jumps away from the current waypoint before replanning. When disabled, the Agent can remain visibly stuck until a plan-level timeout recovers it.
-    # Technical: the "runtime config" component consumes this as a boolean. Domain: true or false; it gates automatic unstuck recovery without disabling the Agent runtime.
-    server.agents.runtime.AgentRuntimeConfig.ENABLE_UNSTUCK: 'true'
     # Values: a finite non-negative integer. Recommended: 30-120 around the tested baseline 60; benchmark or observe behavior before moving outside this band.
     # Purpose: Sets the separation applied to follow stagger so multiple Agents do not begin or repeat the same action in lockstep.
     # Technical: the "runtime config" component consumes this as an integer. Domain: component-specific policy value; startup validation rejects missing, blank, or malformed values.

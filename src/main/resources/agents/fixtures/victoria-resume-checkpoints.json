@@ -137,6 +137,173 @@
         ]
       },
       "activeQuests": []
+    },
+    "magician-standard-v1:checkpoint3": {
+      "questPackId": "nautilus-pre15",
+      "questPackIndex": 2,
+      "position": { "x": 2156, "y": -406 },
+      "snapshot": {
+        "provenance": "CAPTURED",
+        "sourceCharacterName": "KiwiAgent",
+        "recordedAt": "2026-08-04T09:40:54+08:00",
+        "note": "Captured after the Ellinia home pack at level 14. Reset placement rewinds the Nautilus rotation quests and uses the normal Nautilus taxi arrival before taking the pack.",
+        "character": {
+          "mapId": 120000000, "level": 14, "exp": 257, "jobId": 200,
+          "str": 4, "dex": 4, "intelligence": 78, "luk": 4,
+          "hp": 181, "mp": 301, "maxHp": 181, "maxMp": 301,
+          "mesos": 4866, "remainingAp": 0,
+          "remainingSp": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        },
+        "items": [
+          { "itemId": 1372043, "inventoryType": "EQUIPPED", "position": -11, "quantity": 1 },
+          { "itemId": 1072005, "inventoryType": "EQUIPPED", "position": -7, "quantity": 1 },
+          { "itemId": 1061008, "inventoryType": "EQUIPPED", "position": -6, "quantity": 1 },
+          { "itemId": 1041010, "inventoryType": "EQUIPPED", "position": -5, "quantity": 1 },
+          { "itemId": 1002068, "inventoryType": "EQUIPPED", "position": -1, "quantity": 1 },
+          { "itemId": 1332005, "inventoryType": "EQUIP", "position": 1, "quantity": 1 },
+          { "itemId": 1482000, "inventoryType": "EQUIP", "position": 2, "quantity": 1 },
+          { "itemId": 1092003, "inventoryType": "EQUIP", "position": 3, "quantity": 1 },
+          { "itemId": 1412012, "inventoryType": "EQUIP", "position": 4, "quantity": 1 },
+          { "itemId": 1482000, "inventoryType": "EQUIP", "position": 5, "quantity": 1 },
+          { "itemId": 1412002, "inventoryType": "EQUIP", "position": 6, "quantity": 1 },
+          { "itemId": 1041018, "inventoryType": "EQUIP", "position": 7, "quantity": 1 },
+          { "itemId": 1002019, "inventoryType": "EQUIP", "position": 8, "quantity": 1 },
+          { "itemId": 2000014, "inventoryType": "USE", "position": 1, "quantity": 98 },
+          { "itemId": 2000013, "inventoryType": "USE", "position": 2, "quantity": 99 },
+          { "itemId": 2061000, "inventoryType": "USE", "position": 3, "quantity": 93 },
+          { "itemId": 2000000, "inventoryType": "USE", "position": 4, "quantity": 1 },
+          { "itemId": 2000003, "inventoryType": "USE", "position": 5, "quantity": 84 },
+          { "itemId": 2000001, "inventoryType": "USE", "position": 6, "quantity": 34 },
+          { "itemId": 2000002, "inventoryType": "USE", "position": 7, "quantity": 80 },
+          { "itemId": 2000003, "inventoryType": "USE", "position": 8, "quantity": 76 },
+          { "itemId": 2030000, "inventoryType": "USE", "position": 9, "quantity": 10 },
+          { "itemId": 2030002, "inventoryType": "USE", "position": 10, "quantity": 1 },
+          { "itemId": 2060000, "inventoryType": "USE", "position": 11, "quantity": 70 },
+          { "itemId": 2010009, "inventoryType": "USE", "position": 12, "quantity": 4 },
+          { "itemId": 2030019, "inventoryType": "USE", "position": 13, "quantity": 1 },
+          { "itemId": 4010005, "inventoryType": "ETC", "position": 1, "quantity": 1 },
+          { "itemId": 4000010, "inventoryType": "ETC", "position": 2, "quantity": 134 },
+          { "itemId": 4000004, "inventoryType": "ETC", "position": 3, "quantity": 90 },
+          { "itemId": 4020005, "inventoryType": "ETC", "position": 4, "quantity": 3 },
+          { "itemId": 4000005, "inventoryType": "ETC", "position": 5, "quantity": 31 },
+          { "itemId": 4001356, "inventoryType": "ETC", "position": 6, "quantity": 5 },
+          { "itemId": 4020000, "inventoryType": "ETC", "position": 7, "quantity": 1 },
+          { "itemId": 4001344, "inventoryType": "ETC", "position": 8, "quantity": 4 },
+          { "itemId": 4000003, "inventoryType": "ETC", "position": 9, "quantity": 2 },
+          { "itemId": 4020003, "inventoryType": "ETC", "position": 10, "quantity": 1 },
+          { "itemId": 4030000, "inventoryType": "ETC", "position": 11, "quantity": 3 },
+          { "itemId": 4010001, "inventoryType": "ETC", "position": 12, "quantity": 1 },
+          { "itemId": 4030009, "inventoryType": "ETC", "position": 13, "quantity": 2 }
+        ],
+        "skills": [
+          { "skillId": 2000000, "level": 8, "masterLevel": 0 },
+          { "skillId": 2000001, "level": 10, "masterLevel": 0 },
+          { "skillId": 2001004, "level": 1, "masterLevel": 0 }
+        ],
+        "completedQuestIds": [
+          1046, 2080, 2081, 2089, 2132, 2133, 2134, 2135, 2140, 2141,
+          2142, 2143, 2230, 28273, 28274
+        ],
+        "resetQuestIds": [
+          2082, 2090, 2091, 28267, 28268, 28269, 28270, 28271, 28272,
+          28276, 28277, 28278, 28279, 28280, 28281
+        ]
+      },
+      "activeQuests": []
+    },
+    "magician-standard-v1:checkpoint3-hunt": {
+      "questPackId": "nautilus-pre15",
+      "questPackIndex": 8,
+      "position": { "x": 2156, "y": -406 },
+      "snapshot": {
+        "provenance": "CAPTURED",
+        "sourceCharacterName": "KiwiAgent",
+        "recordedAt": "2026-08-05T04:53:28+08:00",
+        "note": "Captured after accepting all four Nautilus rotation quests. Reset begins at the safe taxi-arrival foothold and immediately heads out for the shared hunt objectives.",
+        "character": {
+          "mapId": 120000000, "level": 14, "exp": 257, "jobId": 200,
+          "str": 4, "dex": 4, "intelligence": 78, "luk": 4,
+          "hp": 181, "mp": 301, "maxHp": 181, "maxMp": 301,
+          "mesos": 4866, "remainingAp": 0,
+          "remainingSp": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        },
+        "items": [
+          { "itemId": 1372043, "inventoryType": "EQUIPPED", "position": -11, "quantity": 1 },
+          { "itemId": 1072005, "inventoryType": "EQUIPPED", "position": -7, "quantity": 1 },
+          { "itemId": 1061008, "inventoryType": "EQUIPPED", "position": -6, "quantity": 1 },
+          { "itemId": 1041010, "inventoryType": "EQUIPPED", "position": -5, "quantity": 1 },
+          { "itemId": 1002068, "inventoryType": "EQUIPPED", "position": -1, "quantity": 1 },
+          { "itemId": 1332005, "inventoryType": "EQUIP", "position": 1, "quantity": 1 },
+          { "itemId": 1482000, "inventoryType": "EQUIP", "position": 2, "quantity": 1 },
+          { "itemId": 1092003, "inventoryType": "EQUIP", "position": 3, "quantity": 1 },
+          { "itemId": 1412012, "inventoryType": "EQUIP", "position": 4, "quantity": 1 },
+          { "itemId": 1482000, "inventoryType": "EQUIP", "position": 5, "quantity": 1 },
+          { "itemId": 1412002, "inventoryType": "EQUIP", "position": 6, "quantity": 1 },
+          { "itemId": 1041018, "inventoryType": "EQUIP", "position": 7, "quantity": 1 },
+          { "itemId": 1002019, "inventoryType": "EQUIP", "position": 8, "quantity": 1 },
+          { "itemId": 2000014, "inventoryType": "USE", "position": 1, "quantity": 98 },
+          { "itemId": 2000013, "inventoryType": "USE", "position": 2, "quantity": 99 },
+          { "itemId": 2061000, "inventoryType": "USE", "position": 3, "quantity": 93 },
+          { "itemId": 2000000, "inventoryType": "USE", "position": 4, "quantity": 1 },
+          { "itemId": 2000003, "inventoryType": "USE", "position": 5, "quantity": 84 },
+          { "itemId": 2000001, "inventoryType": "USE", "position": 6, "quantity": 34 },
+          { "itemId": 2000002, "inventoryType": "USE", "position": 7, "quantity": 80 },
+          { "itemId": 2000003, "inventoryType": "USE", "position": 8, "quantity": 76 },
+          { "itemId": 2030000, "inventoryType": "USE", "position": 9, "quantity": 10 },
+          { "itemId": 2030002, "inventoryType": "USE", "position": 10, "quantity": 1 },
+          { "itemId": 2060000, "inventoryType": "USE", "position": 11, "quantity": 70 },
+          { "itemId": 2010009, "inventoryType": "USE", "position": 12, "quantity": 4 },
+          { "itemId": 2030019, "inventoryType": "USE", "position": 13, "quantity": 1 },
+          { "itemId": 4010005, "inventoryType": "ETC", "position": 1, "quantity": 1 },
+          { "itemId": 4000010, "inventoryType": "ETC", "position": 2, "quantity": 134 },
+          { "itemId": 4000004, "inventoryType": "ETC", "position": 3, "quantity": 90 },
+          { "itemId": 4020005, "inventoryType": "ETC", "position": 4, "quantity": 3 },
+          { "itemId": 4000005, "inventoryType": "ETC", "position": 5, "quantity": 31 },
+          { "itemId": 4001356, "inventoryType": "ETC", "position": 6, "quantity": 5 },
+          { "itemId": 4020000, "inventoryType": "ETC", "position": 7, "quantity": 1 },
+          { "itemId": 4001344, "inventoryType": "ETC", "position": 8, "quantity": 4 },
+          { "itemId": 4000003, "inventoryType": "ETC", "position": 9, "quantity": 2 },
+          { "itemId": 4020003, "inventoryType": "ETC", "position": 10, "quantity": 1 },
+          { "itemId": 4030000, "inventoryType": "ETC", "position": 11, "quantity": 3 },
+          { "itemId": 4010001, "inventoryType": "ETC", "position": 12, "quantity": 1 },
+          { "itemId": 4030009, "inventoryType": "ETC", "position": 13, "quantity": 2 }
+        ],
+        "skills": [
+          { "skillId": 2000000, "level": 8, "masterLevel": 0 },
+          { "skillId": 2000001, "level": 10, "masterLevel": 0 },
+          { "skillId": 2001004, "level": 1, "masterLevel": 0 }
+        ],
+        "completedQuestIds": [
+          1046, 2080, 2081, 2089, 2132, 2133, 2134, 2135, 2140, 2141,
+          2142, 2143, 2230, 28273, 28274
+        ],
+        "resetQuestIds": [
+          2082, 2090, 2091, 28267, 28268, 28269, 28270, 28271, 28272,
+          28276, 28277, 28278, 28279, 28280, 28281
+        ]
+      },
+      "activeQuests": [
+        {
+          "questId": 28276,
+          "npcId": 1092004,
+          "progress": { "1210102": "000" }
+        },
+        {
+          "questId": 28277,
+          "npcId": 1092011,
+          "progress": { "210100": "000" }
+        },
+        {
+          "questId": 28278,
+          "npcId": 1092001,
+          "progress": { "1210100": "000" }
+        },
+        {
+          "questId": 28279,
+          "npcId": 1092012,
+          "progress": {}
+        }
+      ]
     }
   }
 }

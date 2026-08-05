@@ -3,6 +3,7 @@ package server.agents.capabilities.movement;
 import client.Character;
 import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
 import server.agents.capabilities.navigation.AgentNavigationTraceRuntime;
+import server.agents.capabilities.recovery.AgentNavigationRecoveryPolicy;
 import server.agents.capabilities.recovery.AgentNavigationRecoveryRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
@@ -25,6 +26,13 @@ public final class AgentMovementRecoveryService {
      * Clears the nav edge so A* replans on the next AI tick.
      */
     public static void tickUnstuck(AgentRuntimeEntry entry) {
+        tickUnstuck(entry, AgentNavigationRecoveryPolicy.mayPerformMovementRecovery());
+    }
+
+    public static void tickUnstuck(AgentRuntimeEntry entry, boolean recoveryEnabled) {
+        if (!recoveryEnabled) {
+            return;
+        }
         long nowMs = System.currentTimeMillis();
         if (!AgentNavigationRecoveryRuntime.tryAcquire(entry, "movement-unstuck", nowMs)) {
             return;
@@ -64,6 +72,9 @@ public final class AgentMovementRecoveryService {
      * This intentionally does not move or teleport a grounded Agent.
      */
     public static void nudgeForObjectiveReplan(AgentRuntimeEntry entry) {
+        if (!AgentNavigationRecoveryPolicy.mayPerformMovementRecovery()) {
+            return;
+        }
         long nowMs = System.currentTimeMillis();
         if (!AgentNavigationRecoveryRuntime.tryAcquire(entry, "objective-navigation-nudge", nowMs)) {
             return;

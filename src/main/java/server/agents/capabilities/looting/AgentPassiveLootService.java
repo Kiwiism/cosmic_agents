@@ -28,10 +28,14 @@ public final class AgentPassiveLootService {
 
     public static void tickPassiveLoot(AgentRuntimeEntry entry, Character agent, PassiveLootCallbacks callbacks) {
         if (callbacks.hasLootInhibit()) {
+            recordLootDecision(entry, AgentLootDecisionTraceState.Outcome.INHIBITED,
+                    callbacks.nowMs(), 0, null, 0L);
             callbacks.tickLootInhibit();
             return;
         }
         if (callbacks.hasActiveTradeSequence()) {
+            recordLootDecision(entry, AgentLootDecisionTraceState.Outcome.TRADE_ACTIVE,
+                    callbacks.nowMs(), 0, null, 0L);
             return;
         }
 
@@ -66,8 +70,15 @@ public final class AgentPassiveLootService {
             if (!AgentLootEligibility.canBotTargetLoot(
                     entry, agent, agent.getMap(), drop, now, targetAgeMs)) {
                 if (AgentLootEligibility.canBotLoot(entry, agent, drop)) {
+                    recordLootDecision(entry, AgentLootDecisionTraceState.Outcome.WAITING_FOR_DROP,
+                            now, postKill.killCount(), drop, targetAgeMs);
                     continue;
                 }
+                recordLootDecision(entry,
+                        AgentLootEligibility.isInventoryFull(agent, drop)
+                                ? AgentLootDecisionTraceState.Outcome.INVENTORY_FULL
+                                : AgentLootDecisionTraceState.Outcome.INELIGIBLE,
+                        now, postKill.killCount(), drop, targetAgeMs);
                 warnInventoryFullIfNeeded(entry, agent, drop, callbacks);
                 continue;
             }
@@ -76,6 +87,8 @@ public final class AgentPassiveLootService {
                 InventoryType type = ItemConstants.getInventoryType(drop.getItemId());
                 Inventory inventory = agent.getInventory(type);
                 if (inventory != null && inventory.isFull()) {
+                    recordLootDecision(entry, AgentLootDecisionTraceState.Outcome.INVENTORY_FULL,
+                            now, postKill.killCount(), drop, targetAgeMs);
                     warnInventoryFull(entry, agent, type, inventory, callbacks);
                     continue;
                 }
@@ -85,6 +98,8 @@ public final class AgentPassiveLootService {
             int pickedItemId = drop.getItemId();
             callbacks.pickup(agent, drop);
             if (drop.isPickedUp()) {
+                recordLootDecision(entry, AgentLootDecisionTraceState.Outcome.PICKED_UP,
+                        now, postKill.killCount(), drop, targetAgeMs);
                 resolveRecentKillIfDrained(
                         postKillState, agent.getMap(), dropperObjectId);
                 int itemId = pickedItem == null ? 0 : pickedItem.getItemId();
@@ -108,6 +123,26 @@ public final class AgentPassiveLootService {
                 }
             }
         }
+    }
+
+    private static void recordLootDecision(AgentRuntimeEntry entry,
+                                           AgentLootDecisionTraceState.Outcome outcome,
+                                           long nowMs,
+                                           int recentKillCount,
+                                           MapItem drop,
+                                           long requiredDropAgeMs) {
+        if (entry == null) {
+            return;
+        }
+        entry.capabilityStates().require(AgentLootDecisionTraceState.STATE_KEY).record(
+                AgentLootDecisionTraceState.Mode.PASSIVE,
+                outcome,
+                nowMs,
+                recentKillCount,
+                false,
+                drop == null ? 0 : drop.getObjectId(),
+                requiredDropAgeMs,
+                drop == null ? 0L : nowMs - drop.getDropTime());
     }
 
     private static void resolveRecentKillIfDrained(AgentPostKillLootState postKillState,

@@ -8,6 +8,7 @@ import server.agents.capabilities.combat.AgentCombatPolicyConfig;
 import server.agents.capabilities.combat.AgentSpawnPressurePolicy;
 import server.agents.capabilities.inventory.demand.AgentQuestItemDemandRuntime;
 import server.agents.capabilities.looting.AgentPreExitLootRuntime;
+import server.agents.capabilities.objective.AgentNpcInteractionSpreadService;
 import server.agents.integration.PrimitiveCapabilityGateway;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -166,7 +167,9 @@ final class AgentVictoriaSharedQuestPackRuntime {
         }
         if (!gateway.grounded(agent)
                 || agent.getPosition().distanceSq(npc) > (long) NPC_DISTANCE_PX * NPC_DISTANCE_PX) {
-            gateway.navigate(entry, npc, true);
+            Point approach = AgentNpcInteractionSpreadService.preferredGroundedApproach(
+                    agent, agent.getPosition(), npc, NPC_DISTANCE_PX);
+            gateway.navigate(entry, approach, true);
             return Result.RUNNING;
         }
         gateway.facePosition(agent, npc);

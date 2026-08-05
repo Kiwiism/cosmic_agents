@@ -11,6 +11,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentPostKillLootPolicyTest {
     @Test
+    void meleeDropSettleDelayUsesCurrentOneSecondDefault() {
+        assertEquals(1_000L, AgentLootCollectionPolicyConfig.meleeRecentKillTargetAgeMs());
+    }
+
+    @Test
     void meleeCollectsAfterFirstKill() {
         assertTrue(AgentPostKillLootPolicy.shouldCollect(
                 WeaponType.DAGGER_THIEVES,

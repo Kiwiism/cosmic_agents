@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="460" height="615" viewBox="0 0 460 615">
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000814" flood-opacity=".46"/>
+    </filter>
+    <style>
+      .sans { font-family: "Segoe UI", Arial, sans-serif; }
+      .label { font-size: 14px; font-weight: 800; letter-spacing: 1.8px; fill: #10243a; }
+      .title { font-size: 23px; font-weight: 800; fill: #10243a; }
+      .section { font-size: 14px; font-weight: 800; letter-spacing: 1.4px; fill: #8ed6ff; }
+      .item { font-size: 18px; font-weight: 700; fill: #ffffff; }
+      .detail { font-size: 15px; font-weight: 500; fill: #c7e7f7; }
+      .box { fill: #0a1a2a; stroke: #8ed6ff; stroke-width: 2; }
+      .rule { stroke: #3f6c8e; stroke-width: 1; opacity: .78; }
+    </style>
+  </defs>
+  <rect x="12" y="12" width="436" height="591" rx="22" fill="#10243a" fill-opacity=".95"
+        stroke="#8ed6ff" stroke-width="2" filter="url(#shadow)"/>
+  <path d="M34 12h392a22 22 0 0 1 22 22v51H12V34a22 22 0 0 1 22-22z" fill="#9edcff"/>
+  <text class="sans label" x="34" y="43">CHECKPOINT 1 / 3</text>
+  <text class="sans title" x="34" y="72">Job Advancement &amp; Training</text>
+
+  <text class="sans section" x="34" y="116">TRAINING WITH JOB INSTRUCTOR</text>
+
+  <rect class="box" x="34" y="139" width="22" height="22" rx="4"/>
+  <text class="sans item" x="70" y="157">Advance to Magician</text>
+  <line class="rule" x1="34" y1="178" x2="426" y2="178"/>
+
+  <rect class="box" x="34" y="196" width="22" height="22" rx="4"/>
+  <text class="sans item" x="70" y="214">First Training Session</text>
+  <text class="sans detail" x="70" y="238">Defeat 8 Slimes</text>
+  <line class="rule" x1="34" y1="257" x2="426" y2="257"/>
+
+  <rect class="box" x="34" y="275" width="22" height="22" rx="4"/>
+  <text class="sans item" x="70" y="293">Second Training Session</text>
+  <text class="sans detail" x="70" y="317">Defeat 20 Slimes</text>
+  <line class="rule" x1="34" y1="336" x2="426" y2="336"/>
+
+  <rect class="box" x="34" y="354" width="22" height="22" rx="4"/>
+  <text class="sans item" x="70" y="372">Third Training Session</text>
+  <text class="sans detail" x="70" y="396">Defeat 35 Slimes</text>
+  <line class="rule" x1="34" y1="415" x2="426" y2="415"/>
+
+  <rect class="box" x="34" y="433" width="22" height="22" rx="4"/>
+  <text class="sans item" x="70" y="451">Last Training Session</text>
+  <text class="sans detail" x="70" y="475">Defeat 10 Dark Stumps</text>
+
+  <rect x="28" y="500" width="404" height="1" fill="#8ed6ff" opacity=".62"/>
+  <text class="sans section" x="34" y="530">STOCK UP</text>
+  <rect class="box" x="34" y="550" width="22" height="22" rx="4"/>
+  <text class="sans item" x="70" y="568">Buy potions and supplies</text>
+
+  <g aria-label="completed" transform="translate(45 150)">
+    <circle r="14" fill="#43c77b" stroke="#e8fff1" stroke-width="2"/>
+    <path d="M-7 .2l4.3 4.4L7.5-5.6" fill="none" stroke="#ffffff"
+          stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <g aria-label="current objective" transform="translate(45 207)">
+    <circle r="14" fill="#7dd3fc" stroke="#eaf8ff" stroke-width="2"/>
+    <path d="M-3.5-6.5L7 0-3.5 6.5z" fill="#10243a"/>
+  </g>
+</svg>

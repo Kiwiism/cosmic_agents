@@ -22,7 +22,8 @@ public final class AgentRecoveryTeleportCoordinator {
                                                   int teleportDistance,
                                                   int outOfBoundsTeleportDistance) {
         return recoverTeleportDistance(entry, agent, targetPosition, teleportDistance,
-                outOfBoundsTeleportDistance, System.currentTimeMillis());
+                outOfBoundsTeleportDistance, System.currentTimeMillis(),
+                AgentNavigationRecoveryPolicy.mayPerformSoftTeleport());
     }
 
     static boolean recoverTeleportDistance(AgentRuntimeEntry entry,
@@ -31,8 +32,21 @@ public final class AgentRecoveryTeleportCoordinator {
                                            int teleportDistance,
                                            int outOfBoundsTeleportDistance,
                                            long nowMs) {
+        return recoverTeleportDistance(entry, agent, targetPosition, teleportDistance,
+                outOfBoundsTeleportDistance, nowMs,
+                AgentNavigationRecoveryPolicy.mayPerformSoftTeleport());
+    }
+
+    static boolean recoverTeleportDistance(AgentRuntimeEntry entry,
+                                           Character agent,
+                                           Point targetPosition,
+                                           int teleportDistance,
+                                           int outOfBoundsTeleportDistance,
+                                           long nowMs,
+                                           boolean softTeleportEnabled) {
         if (!AgentRecoveryTeleportService.isOutsideKnownMapBounds(agent)
-                && (!AgentNavigationRecoveryRuntime.tryAcquire(entry, "distance-teleport", nowMs)
+                && (!softTeleportEnabled
+                || !AgentNavigationRecoveryRuntime.tryAcquire(entry, "distance-teleport", nowMs)
                 || !AgentNavigationRecoveryRuntime.teleportEscalationReady(entry, nowMs))) {
             return false;
         }
@@ -57,7 +71,8 @@ public final class AgentRecoveryTeleportCoordinator {
                                                             int multiplier) {
         long nowMs = System.currentTimeMillis();
         if (!AgentRecoveryTeleportService.isOutsideKnownMapBounds(agent)
-                && (!AgentNavigationRecoveryRuntime.tryAcquire(entry, "party-teleport", nowMs)
+                && (!AgentNavigationRecoveryPolicy.mayPerformSoftTeleport()
+                || !AgentNavigationRecoveryRuntime.tryAcquire(entry, "party-teleport", nowMs)
                 || !AgentNavigationRecoveryRuntime.teleportEscalationReady(entry, nowMs))) {
             return false;
         }

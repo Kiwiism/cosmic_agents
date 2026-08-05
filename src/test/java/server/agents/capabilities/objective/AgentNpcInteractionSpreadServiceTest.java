@@ -86,4 +86,15 @@ class AgentNpcInteractionSpreadServiceTest {
         assertTrue(candidates.stream().allMatch(point -> point.y > 20 && point.y < 280));
     }
 
+    @Test
+    void prefersSameElevationWalkwayOverRaisedNpcFoothold() {
+        Point raisedNpcFoothold = new Point(3_192, 52);
+        Point lowerWalkway = new Point(3_192, 150);
+
+        Point selected = AgentNpcInteractionSpreadService.preferredCandidate(
+                List.of(raisedNpcFoothold, lowerWalkway), new Point(3_600, 150));
+
+        assertEquals(lowerWalkway, selected);
+    }
+
 }

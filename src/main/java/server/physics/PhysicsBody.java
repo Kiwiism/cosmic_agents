@@ -13,6 +13,7 @@ public final class PhysicsBody {
     private int footholdLayer;
     private double groundBelow;
     private boolean grounded;
+    private boolean groundedSupportLocked;
     private boolean jumpDownEnabled;
     private PhysicsMode mode;
     private int flags;
@@ -37,6 +38,7 @@ public final class PhysicsBody {
     public int footholdLayer() { return footholdLayer; }
     public double groundBelow() { return groundBelow; }
     public boolean grounded() { return grounded; }
+    public boolean groundedSupportLocked() { return groundedSupportLocked; }
     public boolean jumpDownEnabled() { return jumpDownEnabled; }
     public PhysicsMode mode() { return mode; }
     public int flags() { return flags; }
@@ -63,6 +65,10 @@ public final class PhysicsBody {
     }
 
     public void setGrounded(boolean grounded) { this.grounded = grounded; }
+    public void lockGroundedSupport() {
+        groundedSupportLocked = grounded && footholdId > 0;
+    }
+    public void clearGroundedSupportLock() { groundedSupportLocked = false; }
     public void setGroundBelow(double groundBelow) { this.groundBelow = groundBelow; }
     public void setJumpDownEnabled(boolean enabled) { this.jumpDownEnabled = enabled; }
     public void setMode(PhysicsMode mode) { this.mode = mode; }

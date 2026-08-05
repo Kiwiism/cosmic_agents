@@ -971,7 +971,7 @@ class BotMovementManagerTest {
         Character bot = mockBot(new Point(100, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
 
-        AgentMovementRecoveryService.tickUnstuck(entry);
+        AgentMovementRecoveryService.tickUnstuck(entry, true);
 
         assertFalse(AgentMovementStateRuntime.downJumpPending(entry), "unstuck recovery should only use lateral jumps");
         assertTrue(AgentMovementStateRuntime.inAir(entry), "unstuck recovery should launch the bot instead of crouching in place");
@@ -988,12 +988,12 @@ class BotMovementManagerTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
         AgentNavigationDebugStateRuntime.setNavTargetPosition(entry, new Point(200, 100));
 
-        AgentMovementRecoveryService.tickUnstuck(entry);
+        AgentMovementRecoveryService.tickUnstuck(entry, true);
 
         assertTrue(AgentMovementPhysicsStateRuntime.airVelocityX(entry) < 0,
                 "a failed route to the right should be escaped with a leftward nudge");
-        assertFalse(AgentNavigationDebugStateRuntime.hasNavTargetPosition(entry),
-                "recovery must invalidate the failed waypoint so navigation replans");
+        assertEquals(new Point(200, 100), AgentNavigationDebugStateRuntime.navTargetPosition(entry),
+                "recovery may clear the failed traversal step, but must preserve the requested destination");
     }
 
     @Test

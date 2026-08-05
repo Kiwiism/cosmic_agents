@@ -14,6 +14,13 @@
       "targetRegionId": 39,
       "regionPath": [126, 132, 118, 107, 98, 91, 74, 46, 39],
       "rationale": "Reach Alex from Nella's platform without entering the 126-to-111 recovery loop."
+    },
+    {
+      "mapId": 120000000,
+      "graphVersion": 57,
+      "targetRegionId": 191,
+      "regionPath": [216, 254, 212, 200, 193, 253, 252, 191],
+      "rationale": "Climb from the lowest Nautilus platform and reach the left exit through the rope route."
     }
   ]
 }

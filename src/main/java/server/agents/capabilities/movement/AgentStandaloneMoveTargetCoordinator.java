@@ -1,7 +1,7 @@
 package server.agents.capabilities.movement;
 
 import client.Character;
-import server.agents.runtime.AgentRuntimeConfig;
+import server.agents.capabilities.recovery.AgentNavigationRecoveryPolicy;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**
@@ -18,7 +18,7 @@ public final class AgentStandaloneMoveTargetCoordinator {
                 entry,
                 agent,
                 runAiTick,
-                AgentRuntimeConfig.cfg.ENABLE_UNSTUCK,
+                AgentNavigationRecoveryPolicy.mayPerformMovementRecovery(),
                 AgentMovementPhysicsConfig.configuredStopDist());
     }
 

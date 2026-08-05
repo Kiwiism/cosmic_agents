@@ -2,6 +2,7 @@ package server.agents.capabilities.combat;
 
 import server.agents.capabilities.looting.AgentPostKillLootState;
 import server.agents.capabilities.looting.AgentPreExitLootRuntime;
+import server.agents.capabilities.looting.AgentLootDecisionTraceState;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.Set;
@@ -24,6 +25,14 @@ public final class AgentCombatPolicyDiagnostics {
                 .find(AgentRouteBlockerState.STATE_KEY)
                 .map(state -> state.snapshot(nowMs))
                 .orElse(null);
+        AgentCombatDecisionTraceState.Snapshot combatDecision = entry.capabilityStates()
+                .find(AgentCombatDecisionTraceState.STATE_KEY)
+                .map(AgentCombatDecisionTraceState::snapshot)
+                .orElse(null);
+        AgentLootDecisionTraceState.Snapshot lootDecision = entry.capabilityStates()
+                .find(AgentLootDecisionTraceState.STATE_KEY)
+                .map(AgentLootDecisionTraceState::snapshot)
+                .orElse(null);
         return new Snapshot(
                 directive == null ? "" : directive.directiveId(),
                 directive == null ? "" : directive.objectiveId(),
@@ -33,6 +42,8 @@ public final class AgentCombatPolicyDiagnostics {
                 loot,
                 AgentPreExitLootRuntime.active(entry, nowMs),
                 route,
+                combatDecision,
+                lootDecision,
                 AgentCombatPolicyConfig.questLocalClearEnforced(),
                 AgentCombatPolicyConfig.questLocalClearShadowEnabled());
     }
@@ -45,11 +56,13 @@ public final class AgentCombatPolicyDiagnostics {
                            AgentPostKillLootState.Snapshot postKillLoot,
                            boolean preExitLootActive,
                            AgentRouteBlockerState.Snapshot routeBlocker,
+                           AgentCombatDecisionTraceState.Snapshot combatDecision,
+                           AgentLootDecisionTraceState.Snapshot lootDecision,
                            boolean localClearEnforced,
                            boolean shadowEnabled) {
         private static Snapshot empty() {
             return new Snapshot("", "", Set.of(), AgentIncidentalMobPolicy.IGNORE,
-                    null, null, false, null, false, false);
+                    null, null, false, null, null, null, false, false);
         }
     }
 }

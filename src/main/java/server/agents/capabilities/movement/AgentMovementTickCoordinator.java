@@ -2,7 +2,7 @@ package server.agents.capabilities.movement;
 
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
 import server.agents.capabilities.navigation.AgentNavigationTargetService;
-import server.agents.runtime.AgentRuntimeConfig;
+import server.agents.capabilities.recovery.AgentNavigationRecoveryPolicy;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
@@ -21,7 +21,7 @@ public final class AgentMovementTickCoordinator {
                 entry,
                 targetPosition,
                 runAiTick,
-                AgentRuntimeConfig.cfg.ENABLE_UNSTUCK,
+                AgentNavigationRecoveryPolicy.mayPerformMovementRecovery(),
                 AgentMovementPhysicsConfig.configuredStopDist());
     }
 

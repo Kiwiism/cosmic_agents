@@ -60,11 +60,4 @@ class AgentNavigationTargetServiceVariationTest {
         assertFalse(AgentNavigationTargetService.leavesResolvedTargetRegion(leaving, 86, 83));
     }
 
-    @Test
-    void oscillationRecoveryUsesDestinationDirectlyWithinSameRegion() {
-        Point destination = new Point(-1012, 298);
-
-        assertEquals(destination, AgentNavigationTargetService.oscillationRecoveryTarget(
-                new Point(299, 286), destination, 86, 86, -1));
-    }
 }

@@ -68,6 +68,9 @@ final class AgentNavigationRouteOverlayPolicy {
         if (nextByRegion == null) {
             return true;
         }
+        if (edge.fromRegionId == targetRegionId) {
+            return false;
+        }
         Integer requiredNextRegion = nextByRegion.get(edge.fromRegionId);
         return requiredNextRegion == null || requiredNextRegion == edge.toRegionId;
     }

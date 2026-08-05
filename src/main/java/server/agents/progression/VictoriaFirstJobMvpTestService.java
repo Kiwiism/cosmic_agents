@@ -46,7 +46,8 @@ public final class VictoriaFirstJobMvpTestService {
         CHECKPOINT_1,
         CHECKPOINT_2,
         CHECKPOINT_2_NELLA,
-        CHECKPOINT_3
+        CHECKPOINT_3,
+        CHECKPOINT_3_HUNT
     }
 
     public static AgentCareerBuildBundle resetAndStart(AgentRuntimeEntry entry,
@@ -105,6 +106,8 @@ public final class VictoriaFirstJobMvpTestService {
                     bundle.bundleId(), "checkpoint2-nella");
             case CHECKPOINT_3 -> VictoriaResumeCheckpointBaseline.require(
                     bundle.bundleId(), "checkpoint3");
+            case CHECKPOINT_3_HUNT -> VictoriaResumeCheckpointBaseline.require(
+                    bundle.bundleId(), "checkpoint3-hunt");
             default -> null;
         };
         if (resumeCheckpoint != null) {
@@ -112,6 +115,7 @@ public final class VictoriaFirstJobMvpTestService {
             applyCheckpointQuestState(agent, resumeCheckpoint.snapshot());
             applyActiveQuestState(agent, resumeCheckpoint);
             initialStage = requestedCheckpoint == Checkpoint.CHECKPOINT_3
+                    || requestedCheckpoint == Checkpoint.CHECKPOINT_3_HUNT
                     ? AgentCareerProgressionState.Stage.ROTATION_QUEST_PACK
                     : AgentCareerProgressionState.Stage.HOME_QUEST_PACK;
         } else if (requestedCheckpoint == Checkpoint.CHECKPOINT_2) {
@@ -151,7 +155,9 @@ public final class VictoriaFirstJobMvpTestService {
                         : requestedCheckpoint == Checkpoint.CHECKPOINT_2_NELLA
                         ? "checkpoint2-nella"
                         : requestedCheckpoint == Checkpoint.CHECKPOINT_3
-                        ? "checkpoint3" : "checkpoint2",
+                        ? "checkpoint3"
+                        : requestedCheckpoint == Checkpoint.CHECKPOINT_3_HUNT
+                        ? "checkpoint3-hunt" : "checkpoint2",
                 initialStage,
                 nowMs + START_DELAY_MS);
         if (resumeCheckpoint != null) {
@@ -177,6 +183,8 @@ public final class VictoriaFirstJobMvpTestService {
             case "checkpoint2-nella", "checkpoint-2-nella", "cp2-nella" ->
                     Checkpoint.CHECKPOINT_2_NELLA;
             case "checkpoint3", "checkpoint-3", "cp3" -> Checkpoint.CHECKPOINT_3;
+            case "checkpoint3-hunt", "checkpoint-3-hunt", "cp3-hunt" ->
+                    Checkpoint.CHECKPOINT_3_HUNT;
             default -> throw new IllegalArgumentException(
                     "unknown checkpoint '" + requestedCheckpoint + "'");
         };

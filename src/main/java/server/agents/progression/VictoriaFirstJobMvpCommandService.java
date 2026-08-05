@@ -139,11 +139,15 @@ public final class VictoriaFirstJobMvpCommandService {
 
         int startMapId = VictoriaFirstJobMvpTestService.LITH_HARBOR_MAP_ID;
         Point startPosition;
-        if (checkpoint == VictoriaFirstJobMvpTestService.Checkpoint.CHECKPOINT_3) {
+        if (checkpoint == VictoriaFirstJobMvpTestService.Checkpoint.CHECKPOINT_3
+                || checkpoint == VictoriaFirstJobMvpTestService.Checkpoint.CHECKPOINT_3_HUNT) {
             try {
+                String checkpointId = checkpoint
+                        == VictoriaFirstJobMvpTestService.Checkpoint.CHECKPOINT_3_HUNT
+                        ? "checkpoint3-hunt" : "checkpoint3";
                 VictoriaResumeCheckpointBaseline.ResumeCheckpoint resume =
                         VictoriaResumeCheckpointBaseline.require(
-                                requestedBundle.bundleId(), "checkpoint3");
+                                requestedBundle.bundleId(), checkpointId);
                 startMapId = resume.snapshot().character().mapId();
                 startPosition = new Point(resume.position().x(), resume.position().y());
             } catch (IllegalArgumentException failure) {
@@ -183,7 +187,10 @@ public final class VictoriaFirstJobMvpCommandService {
                                 : checkpoint == VictoriaFirstJobMvpTestService.Checkpoint.CHECKPOINT_2_NELLA
                                 ? " / CAPTURED post-Nella checkpoint fixture"
                                 : checkpoint == VictoriaFirstJobMvpTestService.Checkpoint.CHECKPOINT_3
-                                ? " / CAPTURED Perion checkpoint fixture" : "";
+                                ? " / CAPTURED rotation checkpoint fixture" : "";
+                if (checkpoint == VictoriaFirstJobMvpTestService.Checkpoint.CHECKPOINT_3_HUNT) {
+                    fixture = " / CAPTURED post-Nautilus-accept checkpoint fixture";
+                }
                 player.yellowMessage(agent.getName() + " reset for " + checkpoint
                         + "; " + bundle.bundleId() + " / " + startVariant.variantId()
                         + fixture + " starts in 3 seconds.");
@@ -237,7 +244,7 @@ public final class VictoriaFirstJobMvpCommandService {
         }
         player.yellowMessage("Usage: !victoria run <AgentIGN> <warrior|bowman|magician|thief|pirate> "
                 + "[lv10|lv9-olaf|lv9-grind] "
-                + "[checkpoint1|checkpoint2|checkpoint2-nella|checkpoint3]");
+                + "[checkpoint1|checkpoint2|checkpoint2-nella|checkpoint3|checkpoint3-hunt]");
         player.yellowMessage("Reset is an alias for run. Builds: thief-dagger, pirate-knuckle. "
                 + "Train: !victoria train <AgentIGN> [16-30] [mixed|grind]. "
                 + "Stop: !victoria stop <AgentIGN>. "

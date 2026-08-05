@@ -50,6 +50,46 @@ public final class AgentCombatPolicyConfig {
         return tuningBoolean("QUEST_LOCAL_CLEAR_SHADOW_ENABLED");
     }
 
+    public static int aoeClusterRadiusPx() {
+        return tuningInt("AOE_CLUSTER_RADIUS_PX");
+    }
+
+    public static long aoeClusterBonusPerMob() {
+        return tuningLong("AOE_CLUSTER_BONUS_PER_MOB");
+    }
+
+    public static long localTravelVerticalCostPerPx() {
+        return tuningLong("LOCAL_TRAVEL_VERTICAL_COST_PER_PX");
+    }
+
+    public static long localTargetVerticalWeight() {
+        return tuningLong("LOCAL_TARGET_VERTICAL_WEIGHT");
+    }
+
+    public static long localTargetOffLevelPenalty() {
+        return tuningLong("LOCAL_TARGET_OFF_LEVEL_PENALTY");
+    }
+
+    public static long localTargetOtherFootholdPenalty() {
+        return tuningLong("LOCAL_TARGET_OTHER_FOOTHOLD_PENALTY");
+    }
+
+    public static int upwardPlatformTolerancePx() {
+        return tuningInt("UPWARD_PLATFORM_TOLERANCE_PX");
+    }
+
+    public static long upwardPlatformBasePenalty() {
+        return tuningLong("UPWARD_PLATFORM_BASE_PENALTY");
+    }
+
+    public static long upwardPlatformPenaltyPerPx() {
+        return tuningLong("UPWARD_PLATFORM_PENALTY_PER_PX");
+    }
+
+    public static long minimumSingleTargetScore() {
+        return tuningLong("MINIMUM_SINGLE_TARGET_SCORE");
+    }
+
     private static int tuningInt(String suffix) {
         return AgentTuning.intValue(TUNING_PREFIX + suffix);
     }

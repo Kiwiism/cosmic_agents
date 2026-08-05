@@ -43,8 +43,5 @@ public final class AgentRuntimeConfig {
         public float GRIND_LOOT_CONVENIENCE_RATIO = config.AgentTuning.floatValue("server.agents.runtime.AgentRuntimeConfig.GRIND_LOOT_CONVENIENCE_RATIO");
         public int GRIND_LOOT_RETRY_SUPPRESS_MS = config.AgentTuning.intValue("server.agents.runtime.AgentRuntimeConfig.GRIND_LOOT_RETRY_SUPPRESS_MS");
 
-        // Debug aid: keep stuck detection/logging active, but disable automatic recovery jumps
-        // so pathing failures remain visible in logs and at runtime.
-        public boolean ENABLE_UNSTUCK = config.AgentTuning.booleanValue("server.agents.runtime.AgentRuntimeConfig.ENABLE_UNSTUCK");
     }
 }

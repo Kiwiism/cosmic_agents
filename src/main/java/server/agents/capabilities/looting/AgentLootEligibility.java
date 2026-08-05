@@ -72,6 +72,14 @@ public final class AgentLootEligibility {
                 && now - drop.getDropTime() >= requiredTargetLootAgeMs(bot, drop, minimumTargetAgeMs);
     }
 
+    static boolean isInventoryFull(Character bot, MapItem drop) {
+        if (bot == null || drop == null || drop.getMeso() > 0 || drop.getItemId() <= 0) {
+            return false;
+        }
+        Inventory inventory = bot.getInventory(ItemConstants.getInventoryType(drop.getItemId()));
+        return inventory != null && inventory.isFull();
+    }
+
     static long requiredTargetLootAgeMs(Character bot, MapItem drop) {
         return requiredTargetLootAgeMs(bot, drop, MIN_TARGET_LOOT_AGE_MS);
     }

@@ -20,6 +20,16 @@ public final class MobPhysicsSimulator {
 
     private final MaplePhysicsIntegrator integrator = new MaplePhysicsIntegrator();
 
+    void beginGroundedKnockbackSupport(MobSimulationSession session) {
+        if (!session.profile().flying()) {
+            integrator.beginGroundedKnockbackSupport(session.body());
+        }
+    }
+
+    void endGroundedKnockbackSupport(MobSimulationSession session) {
+        integrator.endGroundedKnockbackSupport(session.body(), session.terrain());
+    }
+
     public PhysicsStepResult step(MobSimulationSession session,
                                   MobPhysicsTuningSnapshot tuning) {
         PhysicsBody body = session.body();

@@ -7,12 +7,6 @@ import server.agents.capabilities.movement.AgentMovementProfile;
 import server.life.Monster;
 
 public final class AgentCombatScoringPolicy {
-    public static final int LEGACY_AOE_CLUSTER_RADIUS_PX = 150;
-    public static final long LEGACY_AOE_CLUSTER_BONUS_PER_MOB = 200L;
-    static final int UPWARD_PLATFORM_TOLERANCE_PX = 60;
-    static final long UPWARD_PLATFORM_BASE_PENALTY = 2_500L;
-    static final long UPWARD_PLATFORM_PENALTY_PER_PX = 6L;
-
     private AgentCombatScoringPolicy() {
     }
 
@@ -27,7 +21,8 @@ public final class AgentCombatScoringPolicy {
         int dx = Math.abs(to.x - from.x);
         int dy = Math.abs(to.y - from.y);
         double walkVelocity = Math.max(1.0, profile.walkVelocityPxs());
-        return Math.round(dx * 1000.0 / walkVelocity) + dy * 4L;
+        return Math.round(dx * 1000.0 / walkVelocity)
+                + dy * AgentCombatPolicyConfig.localTravelVerticalCostPerPx();
     }
 
     public static long localTargetScore(Point botPos,
@@ -39,12 +34,12 @@ public final class AgentCombatScoringPolicy {
         boolean nearSameLevel = dy <= attackRangeY;
 
         long score = dx;
-        score += (long) dy * 8L;
+        score += (long) dy * AgentCombatPolicyConfig.localTargetVerticalWeight();
         if (!nearSameLevel) {
-            score += 600L;
+            score += AgentCombatPolicyConfig.localTargetOffLevelPenalty();
         }
         if (!sameFoothold) {
-            score += 1200L;
+            score += AgentCombatPolicyConfig.localTargetOtherFootholdPenalty();
         }
         return score + upwardPlatformPenalty(botPos, targetPos);
     }
@@ -54,12 +49,13 @@ public final class AgentCombatScoringPolicy {
             return 0L;
         }
         int upwardDistance = botPos.y - targetPos.y;
-        if (upwardDistance <= UPWARD_PLATFORM_TOLERANCE_PX) {
+        int tolerancePx = AgentCombatPolicyConfig.upwardPlatformTolerancePx();
+        if (upwardDistance <= tolerancePx) {
             return 0L;
         }
-        return UPWARD_PLATFORM_BASE_PENALTY
-                + (long) (upwardDistance - UPWARD_PLATFORM_TOLERANCE_PX)
-                * UPWARD_PLATFORM_PENALTY_PER_PX;
+        return AgentCombatPolicyConfig.upwardPlatformBasePenalty()
+                + (long) (upwardDistance - tolerancePx)
+                * AgentCombatPolicyConfig.upwardPlatformPenaltyPerPx();
     }
 
     public static long addReachableGraphPenalty(long graphCost,
@@ -112,7 +108,8 @@ public final class AgentCombatScoringPolicy {
                                              boolean hasMultiMobAoeSkill,
                                              int aoeMobCount) {
         return aoeClusterBonus(target, candidates, hasMultiMobAoeSkill, aoeMobCount,
-                LEGACY_AOE_CLUSTER_RADIUS_PX, LEGACY_AOE_CLUSTER_BONUS_PER_MOB);
+                AgentCombatPolicyConfig.aoeClusterRadiusPx(),
+                AgentCombatPolicyConfig.aoeClusterBonusPerMob());
     }
 
     public static boolean isAoeSingleTargeting(int planSkillId,
@@ -142,7 +139,7 @@ public final class AgentCombatScoringPolicy {
                                                  boolean hasMultiMobAoeSkill,
                                                  int aoeMobCount) {
         return cappedAoeClusterSize(anchor, candidates, hasMultiMobAoeSkill, aoeMobCount,
-                LEGACY_AOE_CLUSTER_RADIUS_PX);
+                AgentCombatPolicyConfig.aoeClusterRadiusPx());
     }
 
     public static boolean aoeBeatsSingleTargetScore(int aoeDamage,
@@ -155,7 +152,8 @@ public final class AgentCombatScoringPolicy {
     }
 
     public static long bestSingleTargetScore(int bestSingleTargetDamage, int bestSingleTargetHitCount) {
-        return Math.max(100L, (long) Math.max(0, bestSingleTargetDamage)
+        return Math.max(AgentCombatPolicyConfig.minimumSingleTargetScore(),
+                (long) Math.max(0, bestSingleTargetDamage)
                 * Math.max(1, bestSingleTargetHitCount));
     }
 
@@ -194,7 +192,7 @@ public final class AgentCombatScoringPolicy {
 
     public static List<Monster> legacyClusterMonsters(Monster primaryTarget,
                                                       Iterable<Monster> candidates) {
-        return clusterMonsters(primaryTarget, candidates, LEGACY_AOE_CLUSTER_RADIUS_PX);
+        return clusterMonsters(primaryTarget, candidates, AgentCombatPolicyConfig.aoeClusterRadiusPx());
     }
 
     public static Monster nearestMonster(List<Monster> monsters, int x, int y) {

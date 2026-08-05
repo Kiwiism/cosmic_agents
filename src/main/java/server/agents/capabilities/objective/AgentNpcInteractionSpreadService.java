@@ -111,6 +111,44 @@ public final class AgentNpcInteractionSpreadService {
                 && anchor.y <= rope.bottomY() - EDGE_INSET_PX);
     }
 
+    /**
+     * Chooses a reachable-looking interaction point without treating an NPC's
+     * sprite origin as a movement destination. Prefer a grounded point at the
+     * Agent's current elevation so an NPC on a small raised foothold can still
+     * be approached from a continuous walkway inside the interaction radius.
+     */
+    public static Point preferredGroundedApproach(Character agent,
+                                                  Point currentPosition,
+                                                  Point npcPosition,
+                                                  int interactionRangePx) {
+        List<Point> allCandidates = candidates(
+                agent, currentPosition, npcPosition, interactionRangePx);
+        List<Point> groundedCandidates = allCandidates.stream()
+                .filter(candidate -> !isClimbableAnchor(agent, candidate))
+                .toList();
+        Point selected = preferredCandidate(
+                groundedCandidates.isEmpty() ? allCandidates : groundedCandidates,
+                currentPosition);
+        return selected == null ? npcPosition : selected;
+    }
+
+    static Point preferredCandidate(List<Point> candidates, Point currentPosition) {
+        if (candidates == null || candidates.isEmpty()) {
+            return null;
+        }
+        if (currentPosition == null) {
+            return candidates.getFirst();
+        }
+        return candidates.stream()
+                .min(Comparator
+                        .comparingLong((Point candidate) ->
+                                Math.abs((long) candidate.y - currentPosition.y))
+                        .thenComparingDouble(currentPosition::distanceSq)
+                        .thenComparingInt(candidate -> candidate.x)
+                        .thenComparingInt(candidate -> candidate.y))
+                .orElse(null);
+    }
+
     private static void addClimbableCandidate(Set<Point> candidates,
                                                int x,
                                                int y,

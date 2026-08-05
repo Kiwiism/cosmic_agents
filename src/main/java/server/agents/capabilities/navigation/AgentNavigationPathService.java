@@ -513,6 +513,7 @@ public final class AgentNavigationPathService {
                         bestGoalCost = goalCost;
                         bestGoalState = current.state;
                     }
+                    continue;
                 }
 
                 for (AgentNavigationGraph.Edge edge : graph.getOutgoing(current.state.regionId)) {

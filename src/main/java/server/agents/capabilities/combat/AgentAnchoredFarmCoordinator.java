@@ -6,7 +6,7 @@ import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementPoseService;
 import server.agents.capabilities.movement.AgentMovementTickCoordinator;
-import server.agents.runtime.AgentRuntimeConfig;
+import server.agents.capabilities.recovery.AgentNavigationRecoveryPolicy;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
@@ -27,7 +27,7 @@ public final class AgentAnchoredFarmCoordinator {
                 agent,
                 agentPosition,
                 runAiTick,
-                AgentRuntimeConfig.cfg.ENABLE_UNSTUCK,
+                AgentNavigationRecoveryPolicy.mayPerformMovementRecovery(),
                 AgentMovementPhysicsConfig.configuredStopDist());
     }
 

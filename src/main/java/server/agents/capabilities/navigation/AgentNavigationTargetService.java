@@ -6,6 +6,7 @@ import server.agents.capabilities.movement.AgentMovementKinematicsService;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
 import server.agents.capabilities.movement.AgentClimbStateRuntime;
+import server.agents.capabilities.recovery.AgentNavigationRecoveryPolicy;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
@@ -19,14 +20,12 @@ import server.maps.MapleMap;
 import server.maps.Rope;
 
 import java.awt.Point;
+import java.util.function.Predicate;
 
 /**
  * Agent-owned live navigation target resolver.
  */
 public final class AgentNavigationTargetService {
-    private static final int OSCILLATION_NUDGE_PX = config.AgentTuning.intValue(
-            "server.agents.capabilities.navigation.AgentNavigationTargetService.OSCILLATION_NUDGE_PX");
-
     private AgentNavigationTargetService() {
     }
 
@@ -83,7 +82,11 @@ public final class AgentNavigationTargetService {
             long nowMs = System.currentTimeMillis();
             AgentNavigationProgressState progressState =
                     entry.capabilityStates().require(AgentNavigationProgressState.STATE_KEY);
-            progressState.observe(bot.getMapId(), pathTargetPos, startRegionId, nowMs);
+            if (AgentNavigationRecoveryPolicy.recordsRouteProgress()) {
+                progressState.observe(bot.getMapId(), pathTargetPos, startRegionId, nowMs);
+            }
+            boolean routeRecoveryEnabled = AgentNavigationRecoveryPolicy.mayRejectRouteEdge(
+                    AgentNavigationRouteOverlayPolicy.applies(graph, targetRegionId));
             if (runAiTick && rawTargetPos != null) {
                 AgentDecisionCatalogRuntime.observeNavigation(
                         entry,
@@ -121,6 +124,8 @@ public final class AgentNavigationTargetService {
             AgentNavigationGraph.Edge edge;
             boolean edgeReused;
             if (traversal != null) {
+                // A committed rope/ladder traversal owns movement until it settles. Generic
+                // ground-cycle recovery must not cancel or blacklist one of its structural edges.
                 edge = traversal.edge();
                 pathTargetPos = traversal.targetPosition();
                 targetRegionId = traversal.targetRegionId();
@@ -131,7 +136,11 @@ public final class AgentNavigationTargetService {
             } else {
                 edge = reuseCommittedEdge(graph, entry, startRegionId, targetRegionId, pathTargetPos);
                 edgeReused = edge != null;
-                if (edge != null && (!progressState.allows(edge, nowMs)
+                // Search-time overlays are not enough: a previously committed edge can survive
+                // into this tick without running A* again. Reject it here when an authored route
+                // redirects the current branch.
+                if (edge != null && ((!AgentNavigationRouteOverlayPolicy.allows(graph, targetRegionId, edge))
+                        || (routeRecoveryEnabled && !progressState.allows(edge, nowMs))
                         || AgentVerticalTraversalService.blocksRecentInverseEntry(
                                 graph, entry, edge, nowMs))) {
                     AgentNavigationDebugStateRuntime.clearActiveNavigationEdge(entry);
@@ -195,16 +204,6 @@ public final class AgentNavigationTargetService {
                             AgentEventPriority.IMPORTANT);
                 }
                 AgentMovementStateResetService.clearNavigationState(entry);
-                if (progressState.consumeRecoveryPending()) {
-                    AgentNavigationDebugStateRuntime.setLastDecision(entry, "oscillation-nudge");
-                    AgentNavigationTraceRuntime.recovered(
-                            entry, "oscillation-nudge", System.currentTimeMillis());
-                    return new NavigationDirective(
-                            oscillationRecoveryTarget(
-                                    botPos, rawTargetPos, startRegionId, targetRegionId,
-                                    progressState.recoveryDirection(botPos, rawTargetPos)),
-                            false);
-                }
                 return new NavigationDirective(
                         safeFallbackTarget(botPos, rawTargetPos, startRegionId, targetRegionId),
                         false);
@@ -328,53 +327,53 @@ public final class AgentNavigationTargetService {
         long nowMs = System.currentTimeMillis();
         AgentNavigationProgressState progressState =
                 entry.capabilityStates().require(AgentNavigationProgressState.STATE_KEY);
+        boolean authoredRouteOverlay = AgentNavigationRouteOverlayPolicy.applies(graph, targetRegionId);
+        boolean routeRecoveryEnabled = AgentNavigationRecoveryPolicy.mayRejectRouteEdge(authoredRouteOverlay);
+        if (!routeRecoveryEnabled) {
+            progressState.clearPartialReuse();
+        }
+        Predicate<AgentNavigationGraph.Edge> edgeFilter = edge ->
+                (!routeRecoveryEnabled || progressState.allows(edge, nowMs))
+                        && !AgentVerticalTraversalService.blocksRecentInverseEntry(
+                                graph, entry, edge, nowMs);
         AgentNavigationPathService.MovementPathSelection selection =
                 AgentNavigationPathService.findNextEdgeSelectionVaried(
                 graph, bot, startPosition, startRegionId, targetRegionId, targetPos, variation,
-                edge -> progressState.allows(edge, nowMs)
-                        && !AgentVerticalTraversalService.blocksRecentInverseEntry(
-                                graph, entry, edge, nowMs));
+                edgeFilter);
         AgentNavigationGraph.Edge selected = selection.activeEdge();
         String routeSource = selection.recoverySearch() ? "RECOVERY_SEARCH"
-                : AgentNavigationRouteOverlayPolicy.applies(graph, targetRegionId)
+                : authoredRouteOverlay
                 ? "MAP_OVERLAY"
                 : variation != null ? "VARIED" : "NORMAL";
-        String routeReason = AgentNavigationRouteOverlayPolicy.applies(graph, targetRegionId)
+        String routeReason = authoredRouteOverlay
                 ? AgentNavigationRouteOverlayPolicy.rationale(graph, targetRegionId)
                 : selection.recoverySearch() ? "bounded search required recovery budget" : "";
         boolean leavesResolvedTargetRegion = leavesResolvedTargetRegion(
                 selected, startRegionId, targetRegionId);
         if (leavesResolvedTargetRegion) {
-            progressState.suppress(selected, nowMs);
+            if (routeRecoveryEnabled) {
+                progressState.suppress(selected, nowMs);
+            }
             selected = null;
             AgentNavigationTraceRuntime.rejected(entry, graph, startRegionId,
                     targetRegionId, targetPos, "EDGE_SUPPRESSED",
                     "candidate leaves resolved target region", nowMs);
-        } else if (progressState.suppressIfRepeatedCycle(selected, nowMs)) {
+        } else if (routeRecoveryEnabled && progressState.suppressIfRepeatedCycle(selected, nowMs)) {
             selection = AgentNavigationPathService.findNextEdgeSelectionVaried(
                     graph, bot, startPosition, startRegionId, targetRegionId, targetPos, variation,
-                    edge -> progressState.allows(edge, nowMs)
-                            && !AgentVerticalTraversalService.blocksRecentInverseEntry(
-                                    graph, entry, edge, nowMs));
+                    edgeFilter);
             selected = selection.activeEdge();
             routeSource = "RECOVERY";
             routeReason = "repeated region cycle; suppressed cycle edge";
-            if (selected != null) {
-                progressState.clearRecoveryPending();
-            }
         } else if (selection.completeness() == AgentNavigationPathService.RouteCompleteness.PARTIAL
+                && routeRecoveryEnabled
                 && !progressState.allowsPartialReuse(selected, nowMs)) {
             selection = AgentNavigationPathService.findNextEdgeSelectionVaried(
                     graph, bot, startPosition, startRegionId, targetRegionId, targetPos, variation,
-                    edge -> progressState.allows(edge, nowMs)
-                            && !AgentVerticalTraversalService.blocksRecentInverseEntry(
-                                    graph, entry, edge, nowMs));
+                    edgeFilter);
             selected = selection.activeEdge();
             routeSource = "RECOVERY";
             routeReason = "partial closest-frontier edge reuse exhausted";
-            if (selected != null) {
-                progressState.clearRecoveryPending();
-            }
         } else if (selection.completeness() == AgentNavigationPathService.RouteCompleteness.COMPLETE) {
             progressState.clearPartialReuse();
         }
@@ -413,18 +412,6 @@ public final class AgentNavigationTargetService {
                 && startRegionId == targetRegionId
                 && edge.fromRegionId == startRegionId
                 && edge.toRegionId != startRegionId;
-    }
-
-    static Point oscillationRecoveryTarget(Point botPos,
-                                           Point rawTargetPos,
-                                           int startRegionId,
-                                           int targetRegionId,
-                                           int direction) {
-        if (startRegionId >= 0 && startRegionId == targetRegionId && rawTargetPos != null) {
-            return new Point(rawTargetPos);
-        }
-        int normalizedDirection = direction < 0 ? -1 : 1;
-        return new Point(botPos.x + normalizedDirection * Math.max(1, OSCILLATION_NUDGE_PX), botPos.y);
     }
 
     static AgentTravelVariationRuntime.RouteVariation scriptedRouteVariation(

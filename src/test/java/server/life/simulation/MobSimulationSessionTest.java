@@ -456,6 +456,39 @@ class MobSimulationSessionTest {
         }
     }
 
+    @Test
+    void observedPublicationDoesNotChangeKnockbackTrajectory() {
+        int originalImpactDelay = AgentCombatConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_PERCENT;
+        try {
+            AgentCombatConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_PERCENT = 0;
+            MobPhysicsProfile profile = new MobPhysicsProfile(0.08, 0.05, 100,
+                    true, false, false, false);
+            Fixture observed = fixture(profile, 7, 50, -1000, 1000);
+            Fixture unobserved = fixture(profile, 7, 50, -1000, 1000);
+            observed.session.acceptHit(observed.agent, 10, 0, 1, 0L);
+            unobserved.session.acceptHit(unobserved.agent, 10, 0, 1, 0L);
+
+            for (int step = 1; step <= 40; step++) {
+                long nowNanos = step * 8_000_000L;
+                observed.session.advance(nowNanos);
+                observed.session.rawActivityForPublication(
+                        observed.session.body().velocityX() < 0.0 ? -1 : 1,
+                        nowNanos);
+                unobserved.session.advance(nowNanos);
+
+                assertEquals(observed.session.body().x(), unobserved.session.body().x(), 1.0e-12);
+                assertEquals(observed.session.body().y(), unobserved.session.body().y(), 1.0e-12);
+                assertEquals(observed.session.body().velocityX(), unobserved.session.body().velocityX(), 1.0e-12);
+                assertEquals(observed.session.body().velocityY(), unobserved.session.body().velocityY(), 1.0e-12);
+                assertEquals(observed.session.body().footholdId(), unobserved.session.body().footholdId());
+                assertEquals(observed.session.body().grounded(), unobserved.session.body().grounded());
+                assertEquals(observed.session.motion(), unobserved.session.motion());
+            }
+        } finally {
+            AgentCombatConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_PERCENT = originalImpactDelay;
+        }
+    }
+
     private static Fixture fixture(MobPhysicsProfile profile) {
         return fixture(profile, 7, 50, -1000, 1000);
     }

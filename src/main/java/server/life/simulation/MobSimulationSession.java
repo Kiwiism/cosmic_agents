@@ -198,6 +198,7 @@ public final class MobSimulationSession {
             return;
         }
         if (pendingDamage >= profile.pushed() && profile.mode() != PhysicsMode.FIXED) {
+            SIMULATOR.beginGroundedKnockbackSupport(this);
             body.setVelocity(0.0, body.grounded() || profile.flying()
                     ? 0.0 : body.velocityY());
             motion = MobMotionState.KNOCKBACK;
@@ -213,6 +214,7 @@ public final class MobSimulationSession {
     void afterStep(PhysicsStepResult result) {
         lastHitWall = result.hitWall();
         if (motion == MobMotionState.KNOCKBACK && --knockbackStepsRemaining <= 0) {
+            SIMULATOR.endGroundedKnockbackSupport(this);
             body.setVelocity(0.0, body.grounded() || profile.flying()
                     ? 0.0 : body.velocityY());
             int recoveryMs = Math.max(0,

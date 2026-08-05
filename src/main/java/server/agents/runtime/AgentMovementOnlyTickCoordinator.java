@@ -4,6 +4,7 @@ import server.agents.capabilities.follow.AgentFollowMotionObservationService;
 import server.agents.capabilities.follow.AgentOwnerMotionStateRuntime;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentTargetSnapshot;
+import server.agents.capabilities.recovery.AgentNavigationRecoveryPolicy;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 
 import java.awt.Point;
@@ -66,7 +67,7 @@ public final class AgentMovementOnlyTickCoordinator {
                 AgentRuntimeConfig.cfg.GRIND_PARTY_TELEPORT_DIST_MULTIPLIER,
                 AgentMovementPhysicsConfig.configuredFollowDist(),
                 AgentMovementPhysicsConfig.configuredStopDist(),
-                AgentRuntimeConfig.cfg.ENABLE_UNSTUCK);
+                AgentNavigationRecoveryPolicy.mayPerformMovementRecovery());
     }
 
     public record TickConfig(int tickMs,

@@ -8,6 +8,8 @@ public interface PhysicsTerrain {
 
     FootholdSegment findBelow(double x, double y);
 
+    Iterable<FootholdSegment> footholdsNear(double x, double radius);
+
     double wallBoundary(int footholdId, boolean left, double y);
 
     double edgeBoundary(int footholdId, boolean left);

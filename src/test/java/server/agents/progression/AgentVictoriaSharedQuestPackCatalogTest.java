@@ -194,6 +194,55 @@ class AgentVictoriaSharedQuestPackCatalogTest {
     }
 
     @Test
+    void capturedMagicianCheckpoint3StartsTheNautilusPackAtTaxiArrival() {
+        VictoriaResumeCheckpointBaseline.ResumeCheckpoint checkpoint =
+                VictoriaResumeCheckpointBaseline.require(
+                        "magician-standard-v1", "checkpoint3");
+        AgentVictoriaSharedQuestPackCatalog.Pack pack =
+                AgentVictoriaSharedQuestPackCatalog.require(checkpoint.questPackId());
+
+        assertEquals("CAPTURED", checkpoint.snapshot().provenance());
+        assertEquals("nautilus-pre15", pack.packId());
+        assertEquals(2, checkpoint.questPackIndex());
+        assertEquals(120000000, checkpoint.snapshot().character().mapId());
+        assertEquals(2156, checkpoint.position().x());
+        assertEquals(-406, checkpoint.position().y());
+        assertEquals(14, checkpoint.snapshot().character().level());
+        assertEquals(257, checkpoint.snapshot().character().exp());
+        assertEquals(200, checkpoint.snapshot().character().jobId());
+        assertEquals(78, checkpoint.snapshot().character().intelligence());
+        assertEquals(4866, checkpoint.snapshot().character().mesos());
+        assertTrue(checkpoint.snapshot().items().stream().anyMatch(item ->
+                item.itemId() == 2030019 && item.quantity() == 1));
+        assertTrue(checkpoint.snapshot().completedQuestIds().containsAll(
+                Set.of(28273, 28274)));
+        assertTrue(checkpoint.snapshot().resetQuestIds().containsAll(
+                Set.of(28276, 28277, 28278, 28279)));
+        assertTrue(checkpoint.activeQuests().isEmpty());
+    }
+
+    @Test
+    void capturedMagicianCheckpoint3HuntResumesAfterAllNautilusQuestsAreAccepted() {
+        VictoriaResumeCheckpointBaseline.ResumeCheckpoint checkpoint =
+                VictoriaResumeCheckpointBaseline.require(
+                        "magician-standard-v1", "checkpoint3-hunt");
+
+        assertEquals("nautilus-pre15", checkpoint.questPackId());
+        assertEquals(8, checkpoint.questPackIndex());
+        assertEquals(120000000, checkpoint.snapshot().character().mapId());
+        assertEquals(2156, checkpoint.position().x());
+        assertEquals(-406, checkpoint.position().y());
+        assertEquals(14, checkpoint.snapshot().character().level());
+        assertEquals(257, checkpoint.snapshot().character().exp());
+        assertEquals(200, checkpoint.snapshot().character().jobId());
+        assertEquals(4866, checkpoint.snapshot().character().mesos());
+        assertEquals(Set.of(28276, 28277, 28278, 28279),
+                checkpoint.activeQuests().stream()
+                        .map(VictoriaResumeCheckpointBaseline.ActiveQuest::questId)
+                        .collect(java.util.stream.Collectors.toSet()));
+    }
+
+    @Test
     void authoredScrollsReachTheirDeclaredTownAndRequiredScrollsArePurchased()
             throws IOException {
         for (String packId : EXPECTED_PACKS) {

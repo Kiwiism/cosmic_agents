@@ -9,6 +9,37 @@ import server.physics.foothold.FootholdSegment;
  */
 public final class MaplePhysicsIntegrator {
     private static final double POSITION_EPSILON = 1.0e-7;
+    private static final double SUPPORT_SWEEP_STEP_PX = 1.0;
+    private static final double SEAM_X_TOLERANCE_PX = 2.0;
+    private static final double SEAM_Y_TOLERANCE_PX = 3.0;
+    private static final double RECONCILE_Y_TOLERANCE_PX = 4.0;
+
+    public void beginGroundedKnockbackSupport(PhysicsBody body) {
+        if (body == null) {
+            throw new IllegalArgumentException("body is required");
+        }
+        body.lockGroundedSupport();
+    }
+
+    public void endGroundedKnockbackSupport(PhysicsBody body, PhysicsTerrain terrain) {
+        if (body == null || terrain == null) {
+            throw new IllegalArgumentException("body and terrain are required");
+        }
+        if (!body.groundedSupportLocked()) {
+            return;
+        }
+        FootholdSegment current = terrain.foothold(body.footholdId());
+        GroundSupport support = strictReconciliationSupport(body, terrain, current);
+        body.clearGroundedSupportLock();
+        if (support == null) {
+            body.setGrounded(false);
+            return;
+        }
+        body.setPosition(body.x(), support.groundY());
+        body.setFoothold(support.foothold().id(), support.foothold().slope(),
+                support.foothold().layer());
+        body.setGrounded(true);
+    }
 
     public PhysicsStepResult step(PhysicsBody body, PhysicsInput input, PhysicsTerrain terrain) {
         if (body == null || input == null || terrain == null) {
@@ -154,7 +185,21 @@ public final class MaplePhysicsIntegrator {
         }
 
         velocityX = body.velocityX();
-        if (body.grounded() && body.velocityY() == 0.0 && velocityX != 0.0) {
+        if (body.grounded() && body.velocityY() == 0.0 && velocityX != 0.0
+                && body.groundedSupportLocked()) {
+            GroundSupport support = sweepLockedGround(body, terrain, velocityX);
+            if (support != null) {
+                body.setPosition(body.x(), support.groundY());
+                body.setFoothold(support.foothold().id(), support.foothold().slope(),
+                        support.foothold().layer());
+            } else {
+                // This is a genuine edge, not a broken seam. End the constraint immediately so
+                // the next fixed step applies normal airborne gravity. The current step does not
+                // perform another foothold lookup, so clearing here cannot snap to a floor below.
+                body.clearGroundedSupportLock();
+                body.setGrounded(false);
+            }
+        } else if (body.grounded() && body.velocityY() == 0.0 && velocityX != 0.0) {
             double destinationX = body.x() + velocityX;
             FootholdSegment foothold = connectedGroundAt(
                     terrain, body.footholdId(), destinationX, velocityX);
@@ -215,11 +260,169 @@ public final class MaplePhysicsIntegrator {
         return null;
     }
 
+    private static GroundSupport sweepLockedGround(PhysicsBody body,
+                                                   PhysicsTerrain terrain,
+                                                   double velocityX) {
+        FootholdSegment current = terrain.foothold(body.footholdId());
+        if (current == null || current.wall()) {
+            return null;
+        }
+        double startX = body.x();
+        int steps = Math.max(1, (int) Math.ceil(Math.abs(velocityX) / SUPPORT_SWEEP_STEP_PX));
+        GroundSupport support = new GroundSupport(current, current.groundY(
+                Math.max(current.left(), Math.min(current.right(), startX))));
+        for (int step = 1; step <= steps; step++) {
+            double sampleX = startX + velocityX * step / steps;
+            support = lockedSupportAt(terrain, support.foothold(), sampleX, velocityX);
+            if (support == null) {
+                return null;
+            }
+        }
+        return support;
+    }
+
+    private static GroundSupport lockedSupportAt(PhysicsTerrain terrain,
+                                                  FootholdSegment current,
+                                                  double x,
+                                                  double direction) {
+        for (int remaining = 64; remaining > 0 && current != null && !current.wall(); remaining--) {
+            if (current.containsX(x)) {
+                return new GroundSupport(current, current.groundY(x));
+            }
+            boolean left = direction < 0.0;
+            FootholdSegment adjacent = directOrSeamAdjacent(terrain, current, left);
+            if (adjacent == null) {
+                return null;
+            }
+            if (inStrictSeamGap(current, adjacent, x, left)) {
+                double fromX = left ? current.left() : current.right();
+                double toX = left ? adjacent.right() : adjacent.left();
+                double fromY = current.groundY(fromX);
+                double toY = adjacent.groundY(toX);
+                double span = toX - fromX;
+                double ratio = Math.abs(span) <= POSITION_EPSILON ? 1.0 : (x - fromX) / span;
+                return new GroundSupport(current, fromY + (toY - fromY) * ratio);
+            }
+            current = adjacent;
+        }
+        return null;
+    }
+
+    private static FootholdSegment directOrSeamAdjacent(PhysicsTerrain terrain,
+                                                         FootholdSegment current,
+                                                         boolean left) {
+        int adjacentId = left ? current.previousId() : current.nextId();
+        if (adjacentId != 0 && adjacentId != current.id()) {
+            FootholdSegment linked = terrain.foothold(adjacentId);
+            if (linked != null && !linked.wall()) {
+                return linked;
+            }
+        }
+        double endpointX = left ? current.left() : current.right();
+        double endpointY = current.groundY(endpointX);
+        FootholdSegment best = null;
+        double bestXGap = Double.POSITIVE_INFINITY;
+        double bestYGap = Double.POSITIVE_INFINITY;
+        for (FootholdSegment candidate : terrain.footholdsNear(endpointX, SEAM_X_TOLERANCE_PX)) {
+            if (!strictSeamCandidate(current, candidate, left, endpointX, endpointY)) {
+                continue;
+            }
+            double candidateX = left ? candidate.right() : candidate.left();
+            double candidateY = candidate.groundY(candidateX);
+            double xGap = Math.abs(candidateX - endpointX);
+            double yGap = Math.abs(candidateY - endpointY);
+            if (xGap < bestXGap || (xGap == bestXGap && (yGap < bestYGap
+                    || (yGap == bestYGap && (best == null || candidate.id() < best.id()))))) {
+                best = candidate;
+                bestXGap = xGap;
+                bestYGap = yGap;
+            }
+        }
+        return best;
+    }
+
+    private static boolean strictSeamCandidate(FootholdSegment current,
+                                                FootholdSegment candidate,
+                                                boolean left,
+                                                double endpointX,
+                                                double endpointY) {
+        if (candidate == null || candidate.wall() || candidate.id() == current.id()
+                || candidate.layer() != current.layer()) {
+            return false;
+        }
+        double candidateX = left ? candidate.right() : candidate.left();
+        if (Math.abs(candidateX - endpointX) > SEAM_X_TOLERANCE_PX
+                || Math.abs(candidate.groundY(candidateX) - endpointY) > SEAM_Y_TOLERANCE_PX) {
+            return false;
+        }
+        return left ? candidate.left() < current.left() && candidateX <= endpointX + POSITION_EPSILON
+                : candidate.right() > current.right() && candidateX >= endpointX - POSITION_EPSILON;
+    }
+
+    private static boolean inStrictSeamGap(FootholdSegment current,
+                                           FootholdSegment adjacent,
+                                           double x,
+                                           boolean left) {
+        double from = left ? current.left() : current.right();
+        double to = left ? adjacent.right() : adjacent.left();
+        if (Math.abs(to - from) > SEAM_X_TOLERANCE_PX) {
+            return false;
+        }
+        return left ? x <= from && x >= to : x >= from && x <= to;
+    }
+
+    private static GroundSupport strictReconciliationSupport(PhysicsBody body,
+                                                              PhysicsTerrain terrain,
+                                                              FootholdSegment current) {
+        if (current == null || current.wall()) {
+            return null;
+        }
+        if (current.containsX(body.x())) {
+            double ground = current.groundY(body.x());
+            if (Math.abs(body.y() - ground) <= RECONCILE_Y_TOLERANCE_PX) {
+                return new GroundSupport(current, ground);
+            }
+        }
+        GroundSupport best = null;
+        double bestDelta = Double.POSITIVE_INFINITY;
+        for (boolean left : new boolean[]{true, false}) {
+            FootholdSegment adjacent = directOrSeamAdjacent(terrain, current, left);
+            if (adjacent == null || adjacent.layer() != current.layer()
+                    || !adjacent.containsX(body.x())) {
+                continue;
+            }
+            double ground = adjacent.groundY(body.x());
+            double delta = Math.abs(body.y() - ground);
+            if (delta <= RECONCILE_Y_TOLERANCE_PX && delta < bestDelta) {
+                best = new GroundSupport(adjacent, ground);
+                bestDelta = delta;
+            }
+        }
+        return best;
+    }
+
     private static boolean updateFoothold(PhysicsBody body, PhysicsTerrain terrain) {
         if (body.mode() == PhysicsMode.FIXED && body.footholdId() > 0) {
             return false;
         }
         FootholdSegment previous = terrain.foothold(body.footholdId());
+        if (body.groundedSupportLocked()) {
+            double direction = body.velocityX();
+            if (direction == 0.0 && previous != null) {
+                direction = body.x() < previous.left() ? -1.0 : 1.0;
+            }
+            GroundSupport support = lockedSupportAt(terrain, previous, body.x(), direction);
+            if (support != null) {
+                body.setPosition(body.x(), support.groundY());
+                body.setFoothold(support.foothold().id(), support.foothold().slope(),
+                        support.foothold().layer());
+                body.setGrounded(true);
+            } else {
+                body.clearGroundedSupportLock();
+                body.setGrounded(false);
+            }
+            return false;
+        }
         int nextId = body.footholdId();
         boolean checkSlope = false;
         if (body.grounded()) {
@@ -292,6 +495,7 @@ public final class MaplePhysicsIntegrator {
 
     private static void recoverToPrevious(PhysicsBody body, FootholdSegment previous,
                                           PhysicsBounds bounds) {
+        body.clearGroundedSupportLock();
         if (previous != null && !previous.wall()) {
             double x = Math.max(previous.left(), Math.min(previous.right(),
                     Double.isFinite(body.x()) ? body.x() : previous.x1()));
@@ -324,5 +528,8 @@ public final class MaplePhysicsIntegrator {
     }
 
     private record Collision(boolean hitWall, boolean reachedEdge) {
+    }
+
+    private record GroundSupport(FootholdSegment foothold, double groundY) {
     }
 }

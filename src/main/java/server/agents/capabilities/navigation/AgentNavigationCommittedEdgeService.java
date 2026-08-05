@@ -116,10 +116,18 @@ public final class AgentNavigationCommittedEdgeService {
         }
         boolean committedClimb = AgentClimbStateRuntime.climbing(entry)
                 && edge.type == AgentNavigationGraph.EdgeType.CLIMB;
+        int previousTargetRegionId = AgentNavigationDebugStateRuntime.navTargetRegionId(entry);
         if (targetRegionId < 0 && !committedClimb) {
+            AgentNavigationDebugStateRuntime.clearActiveNavigationEdge(entry);
             return null;
         }
-        int previousTargetRegionId = AgentNavigationDebugStateRuntime.navTargetRegionId(entry);
+        int overlayTargetRegionId = committedClimb && previousTargetRegionId >= 0
+                ? previousTargetRegionId
+                : targetRegionId;
+        if (!AgentNavigationRouteOverlayPolicy.allows(graph, overlayTargetRegionId, edge)) {
+            AgentNavigationDebugStateRuntime.clearActiveNavigationEdge(entry);
+            return null;
+        }
         if (!committedClimb && !plannedTargetStillMatches(entry, targetPos)) {
             return null;
         }
@@ -221,9 +229,9 @@ public final class AgentNavigationCommittedEdgeService {
             return false;
         }
         // Equivalent first exits into the same downstream region can trade off a few pixels of
-        // approach cost as the bot shuffles on the source platform. Replacing the committed edge
-        // every AI tick creates oscillation loops like the John 2026-05-01 down-jump trace,
-        // where nav flips between a straight DROP and a nearby JUMP before either can execute.
+        // approach cost as the bot shuffles on the source platform. Do not retain an edge toward
+        // another region: a route overlay or a newly resolved path must be able to redirect the
+        // bot at a branch point.
         return current.type != AgentNavigationGraph.EdgeType.WALK
                 && replacement.type != AgentNavigationGraph.EdgeType.WALK;
     }

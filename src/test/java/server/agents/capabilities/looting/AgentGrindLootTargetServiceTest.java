@@ -100,9 +100,13 @@ class AgentGrindLootTargetServiceTest {
                 AgentGrindLootTargetService.immediateMeleeLootPosition(
                         entry, agent, agent.getPosition(), 100, now));
         assertEquals(
-                new Point(120, 0),
+                new Point(0, 0),
                 AgentGrindLootTargetService.immediateMeleeLootPosition(
                         entry, agent, agent.getPosition(), 100, now + 300L));
+        assertEquals(
+                new Point(120, 0),
+                AgentGrindLootTargetService.immediateMeleeLootPosition(
+                        entry, agent, agent.getPosition(), 100, now + 500L));
     }
 
     @Test

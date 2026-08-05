@@ -28,7 +28,6 @@ final class AgentNavigationProgressState {
     private int detectedCycleLength;
     private EdgeSignature suppressedEdge;
     private long suppressedUntilMs;
-    private boolean recoveryPending;
     private final ArrayDeque<AgentNavigationTraceSnapshot.Transition> transitions =
             new ArrayDeque<>();
     private long lastProgressAtMs;
@@ -73,7 +72,8 @@ final class AgentNavigationProgressState {
     synchronized boolean suppressIfRepeatedCycle(AgentNavigationGraph.Edge candidate, long nowMs) {
         expireSuppression(nowMs);
         if (candidate == null || detectedCycleLength < 2
-                || transitions.size() < detectedCycleLength) {
+                || transitions.size() < detectedCycleLength
+                || isStructuralTraversal(candidate)) {
             return false;
         }
         List<AgentNavigationTraceSnapshot.Transition> recent = new ArrayList<>(transitions);
@@ -114,12 +114,11 @@ final class AgentNavigationProgressState {
     }
 
     synchronized void suppress(AgentNavigationGraph.Edge edge, long nowMs) {
-        if (edge == null) {
+        if (edge == null || isStructuralTraversal(edge)) {
             return;
         }
         suppressedEdge = EdgeSignature.of(edge);
         suppressedUntilMs = nowMs + Math.max(1L, EDGE_SUPPRESSION_MS);
-        recoveryPending = true;
         if (loopKind.isBlank()) {
             loopKind = "edge-oscillation";
         }
@@ -127,37 +126,16 @@ final class AgentNavigationProgressState {
 
     synchronized boolean allows(AgentNavigationGraph.Edge edge, long nowMs) {
         expireSuppression(nowMs);
-        return suppressedEdge == null || !suppressedEdge.matches(edge);
-    }
-
-    synchronized boolean consumeRecoveryPending() {
-        boolean pending = recoveryPending;
-        recoveryPending = false;
-        return pending;
-    }
-
-    synchronized void clearRecoveryPending() {
-        recoveryPending = false;
-    }
-
-    synchronized int recoveryDirection(Point currentPosition, Point targetPosition) {
-        if (currentPosition == null) {
-            return 0;
-        }
-        if (suppressedEdge != null && suppressedEdge.startPoint.x != currentPosition.x) {
-            return suppressedEdge.startPoint.x > currentPosition.x ? -1 : 1;
-        }
-        if (targetPosition != null && targetPosition.x != currentPosition.x) {
-            return targetPosition.x > currentPosition.x ? 1 : -1;
-        }
-        return 1;
+        return isStructuralTraversal(edge)
+                || suppressedEdge == null
+                || !suppressedEdge.matches(edge);
     }
 
     synchronized Snapshot snapshot(long nowMs) {
         expireSuppression(nowMs);
         return new Snapshot(observedRegionId, lastProgressAtMs, loopKind,
                 suppressedEdge == null ? null : suppressedEdge.snapshot(),
-                suppressedUntilMs, recoveryPending, List.copyOf(transitions));
+                suppressedUntilMs, List.copyOf(transitions));
     }
 
     private boolean sameScope(int currentMapId, Point currentTarget) {
@@ -175,7 +153,6 @@ final class AgentNavigationProgressState {
         detectedCycleLength = 0;
         suppressedEdge = null;
         suppressedUntilMs = 0L;
-        recoveryPending = false;
         transitions.clear();
         lastProgressAtMs = nowMs;
         loopKind = "";
@@ -187,6 +164,11 @@ final class AgentNavigationProgressState {
             suppressedEdge = null;
             suppressedUntilMs = 0L;
         }
+    }
+
+    private static boolean isStructuralTraversal(AgentNavigationGraph.Edge edge) {
+        return edge != null && (edge.type == AgentNavigationGraph.EdgeType.CLIMB
+                || edge.type == AgentNavigationGraph.EdgeType.PORTAL);
     }
 
     private LoopDetection detectLoop() {
@@ -221,7 +203,6 @@ final class AgentNavigationProgressState {
                     String loopKind,
                     AgentNavigationTraceSnapshot.Edge suppressedEdge,
                     long suppressedUntilMs,
-                    boolean recoveryPending,
                     List<AgentNavigationTraceSnapshot.Transition> transitions) {
     }
 

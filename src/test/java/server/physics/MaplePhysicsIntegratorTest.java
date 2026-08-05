@@ -225,6 +225,94 @@ class MaplePhysicsIntegratorTest {
         assertEquals(1, body.footholdId());
     }
 
+    @Test
+    void groundedKnockbackFollowsLinkedUphillAndDownhillFootholds() {
+        FootholdSegment uphill = segment(1, 0, 2, 0, 100, 10, 96);
+        FootholdSegment downhill = segment(2, 1, 0, 10, 96, 20, 101);
+        PhysicsTerrain terrain = new FootholdPhysicsIndex(List.of(uphill, downhill));
+        PhysicsBody body = groundedBody(8.0, uphill.groundY(8.0), 1);
+        body.setFoothold(1, uphill.slope(), uphill.layer());
+        body.setVelocity(5.0, 0.0);
+        integrator.beginGroundedKnockbackSupport(body);
+
+        integrator.step(body, PhysicsInput.NONE, terrain);
+
+        assertTrue(body.grounded());
+        assertTrue(body.groundedSupportLocked());
+        assertEquals(2, body.footholdId());
+        assertEquals(downhill.groundY(body.x()), body.y(), EPSILON);
+    }
+
+    @Test
+    void groundedKnockbackSweepsAcrossChainsOfShortCurvedFootholds() {
+        FootholdSegment first = segment(1, 0, 2, 0, 100, 4, 98);
+        FootholdSegment second = segment(2, 1, 3, 4, 98, 8, 97);
+        FootholdSegment third = segment(3, 2, 4, 8, 97, 12, 99);
+        FootholdSegment fourth = segment(4, 3, 0, 12, 99, 18, 100);
+        PhysicsTerrain terrain = new FootholdPhysicsIndex(List.of(first, second, third, fourth));
+        PhysicsBody body = groundedBody(1.0, first.groundY(1.0), 1);
+        body.setFoothold(1, first.slope(), first.layer());
+        body.setVelocity(14.0, 0.0);
+        integrator.beginGroundedKnockbackSupport(body);
+
+        integrator.step(body, PhysicsInput.NONE, terrain);
+
+        assertTrue(body.grounded());
+        assertEquals(4, body.footholdId());
+        assertEquals(fourth.groundY(body.x()), body.y(), EPSILON);
+    }
+
+    @Test
+    void groundedKnockbackBridgesOnlyTinyCompatibleUnlinkedSeams() {
+        FootholdSegment first = segment(1, 0, 0, 0, 100, 10, 98);
+        FootholdSegment second = segment(2, 0, 0, 11.5, 99, 20, 101);
+        PhysicsTerrain terrain = new FootholdPhysicsIndex(List.of(first, second));
+        PhysicsBody body = groundedBody(9.0, first.groundY(9.0), 1);
+        body.setFoothold(1, first.slope(), first.layer());
+        body.setVelocity(4.0, 0.0);
+        integrator.beginGroundedKnockbackSupport(body);
+
+        integrator.step(body, PhysicsInput.NONE, terrain);
+
+        assertTrue(body.grounded());
+        assertEquals(2, body.footholdId());
+        assertEquals(second.groundY(body.x()), body.y(), EPSILON);
+    }
+
+    @Test
+    void groundedKnockbackAllowsRealLedgeFallsWithoutCapturingStackedPlatforms() {
+        FootholdSegment ledge = segment(1, 0, 0, 0, 100, 10, 100);
+        FootholdSegment lower = segmentWithLayer(2, 0, 0, 10, 112, 30, 112, 1);
+        FootholdSegment upper = segmentWithLayer(3, 0, 0, 10, 94, 30, 94, 2);
+        PhysicsTerrain terrain = new FootholdPhysicsIndex(List.of(ledge, lower, upper));
+        PhysicsBody body = groundedBody(9.0, 100.0, 1);
+        body.setVelocity(4.0, 0.0);
+        integrator.beginGroundedKnockbackSupport(body);
+
+        integrator.step(body, PhysicsInput.NONE, terrain);
+
+        assertFalse(body.grounded());
+        assertFalse(body.groundedSupportLocked());
+        assertEquals(1, body.footholdId(),
+                "leaving the locked chain must not snap to a nearby stacked platform");
+    }
+
+    @Test
+    void knockbackEndReconcilesOnlyCurrentOrDirectAdjacentSameLayerFoothold() {
+        FootholdSegment first = segment(1, 0, 2, 0, 100, 10, 100);
+        FootholdSegment adjacent = segment(2, 1, 0, 10, 100, 20, 98);
+        FootholdSegment stacked = segmentWithLayer(3, 0, 0, 10, 96, 20, 96, 2);
+        PhysicsTerrain terrain = new FootholdPhysicsIndex(List.of(first, adjacent, stacked));
+        PhysicsBody body = groundedBody(12.0, adjacent.groundY(12.0) + 2.0, 1);
+        integrator.beginGroundedKnockbackSupport(body);
+
+        integrator.endGroundedKnockbackSupport(body, terrain);
+
+        assertTrue(body.grounded());
+        assertEquals(2, body.footholdId());
+        assertEquals(adjacent.groundY(body.x()), body.y(), EPSILON);
+    }
+
     private static PhysicsBody groundedBody(double x, double y, int footholdId) {
         PhysicsBody body = new PhysicsBody(x, y, PhysicsMode.NORMAL);
         body.setFoothold(footholdId, 0.0, 1);
@@ -238,7 +326,13 @@ class MaplePhysicsIntegratorTest {
 
     private static FootholdSegment segment(int id, int previous, int next,
                                            double x1, double y1, double x2, double y2) {
-        return new FootholdSegment(id, previous, next, 1, 0,
+        return segmentWithLayer(id, previous, next, x1, y1, x2, y2, 1);
+    }
+
+    private static FootholdSegment segmentWithLayer(int id, int previous, int next,
+                                                    double x1, double y1, double x2, double y2,
+                                                    int layer) {
+        return new FootholdSegment(id, previous, next, layer, 0,
                 false, x1, y1, x2, y2);
     }
 }
