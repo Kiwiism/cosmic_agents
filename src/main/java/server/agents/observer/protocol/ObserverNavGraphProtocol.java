@@ -3,6 +3,7 @@ package server.agents.observer.protocol;
 import server.agents.capabilities.navigation.AgentMapGraphService;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationTraceSnapshot;
+import server.agents.capabilities.combat.AgentCombatTargetTraceSnapshot;
 import server.observer.protocol.ObserverProtocol;
 
 import java.io.ByteArrayOutputStream;
@@ -16,6 +17,7 @@ public final class ObserverNavGraphProtocol {
     public static final int ACTION_SNAPSHOT = 0;
     public static final int ACTION_ROUTE = 1;
     public static final int ACTION_AGENT_TRACE = 2;
+    public static final int ACTION_AGENT_TARGET = 3;
     public static final int STATUS_READY = 0;
     public static final int STATUS_WARMING = 1;
     public static final int STATUS_TOO_LARGE = 2;
@@ -24,6 +26,9 @@ public final class ObserverNavGraphProtocol {
     public static final int STATUS_AGENT_TRACE = 5;
     public static final int STATUS_AGENT_UNAVAILABLE = 6;
     public static final int STATUS_AGENT_DISABLED = 7;
+    public static final int STATUS_AGENT_TARGET = 8;
+    public static final int STATUS_AGENT_TARGET_UNAVAILABLE = 9;
+    public static final int STATUS_AGENT_TARGET_DISABLED = 10;
     public static final int CHUNK_BYTES = 24 * 1024;
     public static final int MAX_PAYLOAD_BYTES = 2 * 1024 * 1024;
 
@@ -189,6 +194,31 @@ public final class ObserverNavGraphProtocol {
         return writer.toByteArray();
     }
 
+    public static byte[] encodeAgentTarget(AgentCombatTargetTraceSnapshot trace) {
+        Writer writer = new Writer();
+        writer.writeInt(0x31544754);
+        writer.writeInt(trace.characterId());
+        writer.writeString(trace.characterName());
+        writer.writeLong(trace.sampledAtMs());
+        writePosition(writer, trace.agentPosition());
+        writer.writeByte(trace.hasTarget() ? 1 : 0);
+        if (trace.hasTarget()) {
+            writer.writeInt(trace.targetObjectId());
+            writer.writeInt(trace.targetMobId());
+            writer.writeString(trace.targetName());
+            writePosition(writer, trace.targetPosition());
+            writer.writeByte(trace.targetHpPercent());
+            writer.writeString(trace.action());
+            writer.writeString(trace.reasonCode());
+            writer.writeString(trace.reasonText());
+            writer.writeString(trace.objectiveId());
+            writer.writeString(trace.candidateClass());
+            writer.writeLong(trace.selectedAtMs());
+            writer.writeInt(trace.targetSwitchCount());
+        }
+        return writer.toByteArray();
+    }
+
     public static List<byte[]> chunks(byte[] payload) {
         if (payload.length > MAX_PAYLOAD_BYTES) {
             throw new IllegalArgumentException("Navigation graph payload exceeds limit");
@@ -244,6 +274,15 @@ public final class ObserverNavGraphProtocol {
 
     private static void writePosition(Writer writer,
                                       AgentNavigationTraceSnapshot.Position position) {
+        writer.writeByte(position.present() ? 1 : 0);
+        if (position.present()) {
+            writer.writeInt(position.x());
+            writer.writeInt(position.y());
+        }
+    }
+
+    private static void writePosition(Writer writer,
+                                      AgentCombatTargetTraceSnapshot.Position position) {
         writer.writeByte(position.present() ? 1 : 0);
         if (position.present()) {
             writer.writeInt(position.x());

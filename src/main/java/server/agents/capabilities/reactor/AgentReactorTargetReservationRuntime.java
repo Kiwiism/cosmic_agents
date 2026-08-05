@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
 
 /** Prevents a cohort of Agents from all walking to the same live reactor. */
 public final class AgentReactorTargetReservationRuntime {
@@ -53,6 +54,15 @@ public final class AgentReactorTargetReservationRuntime {
         if (reservation != null) {
             OWNER_BY_TARGET.remove(reservation.key(), agentId);
         }
+    }
+
+    public static synchronized OptionalInt reservedObjectId(int agentId, Object mapScope) {
+        removeExpired(System.currentTimeMillis());
+        Reservation reservation = BY_AGENT.get(agentId);
+        if (reservation == null || !reservation.key().mapScope().equals(mapScope)) {
+            return OptionalInt.empty();
+        }
+        return OptionalInt.of(reservation.key().objectId());
     }
 
     static synchronized void clear() {

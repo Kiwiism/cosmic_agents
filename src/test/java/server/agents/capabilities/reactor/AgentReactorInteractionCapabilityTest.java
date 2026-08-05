@@ -79,6 +79,23 @@ class AgentReactorInteractionCapabilityTest {
     }
 
     @Test
+    void exposesTheReservedReactorForReadOnlyObserverDiagnostics() {
+        AgentReactorTargetSelector selector = new AgentReactorTargetSelector();
+        Reactor reactor = reactor(10, 1002000, "box", new Point(10, 0), true, true);
+        AgentReactorInteractionRequest request = new AgentReactorInteractionRequest(
+                1000000, 1008, AgentReactorInteractionMode.HIT,
+                1002000, "box", null, new Point(0, 0), 100);
+        Object mapScope = new Object();
+
+        selector.selectReserved(List.of(reactor), request, 1, mapScope).orElseThrow();
+
+        assertEquals(10, AgentReactorTargetReservationRuntime
+                .reservedObjectId(1, mapScope).orElseThrow());
+        assertTrue(AgentReactorTargetReservationRuntime
+                .reservedObjectId(1, new Object()).isEmpty());
+    }
+
+    @Test
     void selectorHonorsObjectIdNameAndRangeFilters() {
         AgentReactorTargetSelector selector = new AgentReactorTargetSelector();
         Reactor matching = reactor(10, 1002000, "questBox", new Point(20, 0), true, true);

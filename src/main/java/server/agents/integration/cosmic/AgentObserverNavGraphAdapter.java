@@ -6,6 +6,8 @@ import net.packet.InPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.capabilities.movement.AgentMovementProfile;
+import server.agents.capabilities.combat.AgentCombatTargetTraceRuntime;
+import server.agents.capabilities.combat.AgentCombatTargetTraceSnapshot;
 import server.agents.capabilities.navigation.AgentMapGraphService;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
@@ -31,6 +33,7 @@ public final class AgentObserverNavGraphAdapter implements ObserverNavGraphAdapt
     private static final long MIN_REQUEST_INTERVAL_NANOS = config.AgentTuning.longValue(
             "server.agents.integration.cosmic.AgentObserverNavGraphAdapter.MIN_REQUEST_INTERVAL_NANOS");
     private static final Map<Client, Long> LAST_REQUEST_NANOS = new WeakHashMap<>();
+    private static final Map<Client, Long> LAST_TARGET_REQUEST_NANOS = new WeakHashMap<>();
 
     @Override
     public void handle(InPacket packet, Client client) {
@@ -45,8 +48,19 @@ public final class AgentObserverNavGraphAdapter implements ObserverNavGraphAdapt
         if (version != ObserverNavGraphProtocol.VERSION
                 || (action != ObserverNavGraphProtocol.ACTION_SNAPSHOT
                     && action != ObserverNavGraphProtocol.ACTION_ROUTE
-                    && action != ObserverNavGraphProtocol.ACTION_AGENT_TRACE)
+                    && action != ObserverNavGraphProtocol.ACTION_AGENT_TRACE
+                    && action != ObserverNavGraphProtocol.ACTION_AGENT_TARGET)
                 || requestId <= 0) {
+            return;
+        }
+        if (action == ObserverNavGraphProtocol.ACTION_AGENT_TARGET) {
+            if (packet.available() < 4) {
+                return;
+            }
+            int characterId = packet.readInt();
+            if (!targetRateLimited(client)) {
+                sendAgentTarget(client, requestId, characterId);
+            }
             return;
         }
         if (action == ObserverNavGraphProtocol.ACTION_AGENT_TRACE) {
@@ -224,6 +238,39 @@ public final class AgentObserverNavGraphAdapter implements ObserverNavGraphAdapt
         }
     }
 
+    private static void sendAgentTarget(Client client,
+                                        int requestId,
+                                        int characterId) {
+        Character observer = client.getPlayer();
+        AgentMovementProfile fallbackProfile = AgentMovementProfile.fromCharacter(observer);
+        if (!ObserverFeature.agentNavigationEnabled()) {
+            sendStatus(client, ObserverNavGraphProtocol.STATUS_AGENT_TARGET_DISABLED,
+                    requestId, observer.getMapId(), 0, fallbackProfile);
+            return;
+        }
+        AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(characterId);
+        AgentCombatTargetTraceSnapshot trace = AgentCombatTargetTraceRuntime.snapshot(
+                entry, System.currentTimeMillis());
+        if (trace == null
+                || entry == null
+                || !AgentRuntimeIdentityRuntime.hasBot(entry)
+                || AgentRuntimeIdentityRuntime.bot(entry).getWorld() != observer.getWorld()) {
+            sendStatus(client, ObserverNavGraphProtocol.STATUS_AGENT_TARGET_UNAVAILABLE,
+                    requestId, observer.getMapId(), 0, fallbackProfile);
+            return;
+        }
+        byte[] payload = ObserverNavGraphProtocol.encodeAgentTarget(trace);
+        List<byte[]> chunks = ObserverNavGraphProtocol.chunks(payload);
+        int checksum = ObserverNavGraphProtocol.checksum(payload);
+        for (int index = 0; index < chunks.size(); index++) {
+            client.sendPacket(PacketCreator.observerNavGraphChunk(
+                    ObserverNavGraphProtocol.STATUS_AGENT_TARGET,
+                    requestId, trace.mapId(), 0,
+                    fallbackProfile.totalSpeedStat(), fallbackProfile.totalJumpStat(),
+                    index, chunks.size(), payload.length, checksum, chunks.get(index)));
+        }
+    }
+
     private static boolean rateLimited(Client client) {
         long now = System.nanoTime();
         synchronized (LAST_REQUEST_NANOS) {
@@ -232,6 +279,18 @@ public final class AgentObserverNavGraphAdapter implements ObserverNavGraphAdapt
                 return true;
             }
             LAST_REQUEST_NANOS.put(client, now);
+            return false;
+        }
+    }
+
+    private static boolean targetRateLimited(Client client) {
+        long now = System.nanoTime();
+        synchronized (LAST_TARGET_REQUEST_NANOS) {
+            long previous = LAST_TARGET_REQUEST_NANOS.getOrDefault(client, 0L);
+            if (now - previous < MIN_REQUEST_INTERVAL_NANOS) {
+                return true;
+            }
+            LAST_TARGET_REQUEST_NANOS.put(client, now);
             return false;
         }
     }

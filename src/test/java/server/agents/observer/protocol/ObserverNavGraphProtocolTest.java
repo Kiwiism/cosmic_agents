@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import server.agents.capabilities.navigation.AgentMapGraphService;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationTraceSnapshot;
+import server.agents.capabilities.combat.AgentCombatTargetTraceSnapshot;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -146,6 +147,34 @@ class ObserverNavGraphProtocolTest {
 
         byte[] unchanged = ObserverNavGraphProtocol.encodeAgentTrace(trace, false);
         assertEquals(0, unchanged[unchanged.length - 1]);
+    }
+
+    @Test
+    void encodesAgentCombatTargetIntent() {
+        AgentCombatTargetTraceSnapshot trace = new AgentCombatTargetTraceSnapshot(
+                77, "BluePanda", 103000000, 2_000L,
+                new AgentCombatTargetTraceSnapshot.Position(true, 20, 30),
+                true, 9001, 100100, "Blue Snail",
+                new AgentCombatTargetTraceSnapshot.Position(true, 80, 10),
+                75, "engage", "REQUIRED_LOCAL",
+                "Required objective target on this platform", "quest:1000",
+                "REQUIRED", 1_900L, 2);
+
+        ByteBuffer input = ByteBuffer.wrap(
+                ObserverNavGraphProtocol.encodeAgentTarget(trace)
+        ).order(ByteOrder.LITTLE_ENDIAN);
+
+        assertEquals(0x31544754, input.getInt());
+        assertEquals(77, input.getInt());
+        assertEquals("BluePanda", readString(input));
+        assertEquals(2_000L, input.getLong());
+        assertEquals(1, input.get() & 0xFF);
+        assertEquals(20, input.getInt());
+        assertEquals(30, input.getInt());
+        assertEquals(1, input.get() & 0xFF);
+        assertEquals(9001, input.getInt());
+        assertEquals(100100, input.getInt());
+        assertEquals("Blue Snail", readString(input));
     }
 
     private static String readString(ByteBuffer input) {

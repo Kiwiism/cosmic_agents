@@ -40,31 +40,63 @@ public final class AgentCombatTargetRuntime {
         long startedAt = System.nanoTime();
         try {
             if (AgentPreExitLootRuntime.active(entry, System.currentTimeMillis())) {
+                recordDecision(entry, AgentCombatDecisionTraceState.Mode.GRIND,
+                        AgentCombatDecisionTraceState.Outcome.PRE_EXIT_LOOT,
+                        0, 0, 0, 0, 0, false, false, null);
                 return null;
             }
             Point botPos = bot.getPosition();
             double rangeSq = (double) config.GRIND_SEEK_RANGE * config.GRIND_SEEK_RANGE;
             Foothold botFoothold = AgentCombatGroundRuntime.findGroundFoothold(botPos, bot);
             List<Monster> candidates = AgentCombatTargetSelector.aliveMonstersInRange(bot, botPos, rangeSq);
+            int baseCandidateCount = candidates.size();
             candidates.removeIf(monster -> !AgentCombatObjectiveTargetStateRuntime.allows(entry, monster.getId()));
+            int objectiveCandidateCount = candidates.size();
+            List<Monster> localCandidates = candidates;
             candidates = promoteMapWidePreferredTargets(entry, bot, candidates);
+            boolean mapWidePreferredEscalation = candidates != localCandidates;
+            if (mapWidePreferredEscalation) {
+                objectiveCandidateCount = candidates.size();
+            }
             if (candidates.isEmpty()) {
                 AgentCombatBehaviorRuntime.noCandidateOpportunity(entry);
+                recordDecision(entry, AgentCombatDecisionTraceState.Mode.GRIND,
+                        baseCandidateCount > 0
+                                ? AgentCombatDecisionTraceState.Outcome.OBJECTIVE_FILTERED
+                                : AgentCombatDecisionTraceState.Outcome.NO_CANDIDATES,
+                        baseCandidateCount, objectiveCandidateCount, 0, 0, 0,
+                        mapWidePreferredEscalation, false, null);
                 return null;
             }
             PolicySelection policySelection = applyObjectivePolicy(
                     entry, bot, botPos, botFoothold, candidates);
             candidates = policySelection.candidates();
+            int policyCandidateCount = candidates.size();
 
             Map<Monster, Integer> targetOccupancy = grindTargetOccupancy(entry, bot);
             candidates = AgentCombatBehaviorRuntime.respectClaims(entry, candidates, targetOccupancy);
+            int claimCandidateCount = candidates.size();
             if (!AgentCombatBehaviorRuntime.responseReady(
                     entry, bot, candidates, System.currentTimeMillis())) {
+                recordDecision(entry, AgentCombatDecisionTraceState.Mode.GRIND,
+                        claimCandidateCount == 0
+                                ? (policyCandidateCount == 0
+                                ? AgentCombatDecisionTraceState.Outcome.POLICY_FILTERED
+                                : AgentCombatDecisionTraceState.Outcome.CLAIMS_FILTERED)
+                                : AgentCombatDecisionTraceState.Outcome.RESPONSE_DEFERRED,
+                        baseCandidateCount, objectiveCandidateCount, policyCandidateCount,
+                        claimCandidateCount, 0, mapWidePreferredEscalation, false, null);
                 return null;
             }
             List<AgentScoredGrindTarget> scoredTargets = scoreGrindTargets(
                     entry, bot, botPos, botFoothold, candidates, targetOccupancy, config);
             if (scoredTargets.isEmpty()) {
+                recordDecision(entry, AgentCombatDecisionTraceState.Mode.GRIND,
+                        claimCandidateCount == 0
+                                ? AgentCombatDecisionTraceState.Outcome.CLAIMS_FILTERED
+                                : AgentCombatDecisionTraceState.Outcome.UNREACHABLE,
+                        baseCandidateCount, objectiveCandidateCount, policyCandidateCount,
+                        claimCandidateCount, 0, mapWidePreferredEscalation, false, null);
                 return null;
             }
 
@@ -79,6 +111,11 @@ public final class AgentCombatTargetRuntime {
                     entry, bot, selected, targetRegionId(entry, bot, botPos, selected));
             recordPolicySelection(entry, bot, selected, policySelection);
             AgentCombatBehaviorRuntime.targetAcquired(entry);
+            recordDecision(entry, AgentCombatDecisionTraceState.Mode.GRIND,
+                    AgentCombatDecisionTraceState.Outcome.SELECTED,
+                    baseCandidateCount, objectiveCandidateCount, policyCandidateCount,
+                    claimCandidateCount, scoredTargets.size(), mapWidePreferredEscalation,
+                    rankedSelection.variationDecisionConsumed(), selected);
             return selected;
         } finally {
             AgentPerformanceMonitor.record("combat-target-search", System.nanoTime() - startedAt);
@@ -92,13 +129,18 @@ public final class AgentCombatTargetRuntime {
                 return null;
             }
             if (AgentPreExitLootRuntime.active(entry, System.currentTimeMillis())) {
+                recordDecision(entry, AgentCombatDecisionTraceState.Mode.PATROL,
+                        AgentCombatDecisionTraceState.Outcome.PRE_EXIT_LOOT,
+                        0, 0, 0, 0, 0, false, false, null);
                 return null;
             }
             Point botPos = bot.getPosition();
             double rangeSq = (double) config.GRIND_SEEK_RANGE * config.GRIND_SEEK_RANGE;
             Foothold botFoothold = AgentCombatGroundRuntime.findGroundFoothold(botPos, bot);
             List<Monster> candidates = AgentCombatTargetSelector.aliveMonstersInRange(bot, botPos, rangeSq);
+            int baseCandidateCount = candidates.size();
             candidates.removeIf(monster -> !AgentCombatObjectiveTargetStateRuntime.allows(entry, monster.getId()));
+            int objectiveCandidateCount = candidates.size();
             if (shouldEscalateToMapWidePreferredTarget(entry, bot, candidates)) {
                 AgentCombatVariationRuntime.clearAutomaticAnchor(entry);
                 return findGrindTarget(entry, bot, config);
@@ -106,10 +148,20 @@ public final class AgentCombatTargetRuntime {
             if (candidates.isEmpty()) {
                 AgentCombatBehaviorRuntime.noCandidateOpportunity(entry);
                 releaseEmptyAutomaticAnchor(entry);
+                recordDecision(entry, AgentCombatDecisionTraceState.Mode.PATROL,
+                        baseCandidateCount > 0
+                                ? AgentCombatDecisionTraceState.Outcome.OBJECTIVE_FILTERED
+                                : AgentCombatDecisionTraceState.Outcome.NO_CANDIDATES,
+                        baseCandidateCount, objectiveCandidateCount, 0, 0, 0,
+                        false, false, null);
                 return null;
             }
             GrindGraphContext graphContext = GrindGraphContext.resolve(entry, bot, botPos);
             if (!graphContext.available()) {
+                recordDecision(entry, AgentCombatDecisionTraceState.Mode.PATROL,
+                        AgentCombatDecisionTraceState.Outcome.GRAPH_UNAVAILABLE,
+                        baseCandidateCount, objectiveCandidateCount, 0, 0, 0,
+                        false, false, null);
                 return null;
             }
             AgentNavigationGraph graph = graphContext.graph();
@@ -136,11 +188,16 @@ public final class AgentCombatTargetRuntime {
                 }
             }
             if (filtered.isEmpty()) {
+                recordDecision(entry, AgentCombatDecisionTraceState.Mode.PATROL,
+                        AgentCombatDecisionTraceState.Outcome.POLICY_FILTERED,
+                        baseCandidateCount, objectiveCandidateCount, 0, 0, 0,
+                        false, false, null);
                 return null;
             }
             PolicySelection policySelection = applyObjectivePolicy(
                     entry, bot, botPos, botFoothold, filtered);
             filtered = policySelection.candidates();
+            int policyCandidateCount = filtered.size();
 
             List<AgentScoredGrindTarget> scored = scoreGrindTargets(
                     entry,
@@ -151,11 +208,21 @@ public final class AgentCombatTargetRuntime {
                     grindTargetOccupancy(entry, bot),
                     config);
             if (scored.isEmpty()) {
+                recordDecision(entry, AgentCombatDecisionTraceState.Mode.PATROL,
+                        policyCandidateCount == 0
+                                ? AgentCombatDecisionTraceState.Outcome.POLICY_FILTERED
+                                : AgentCombatDecisionTraceState.Outcome.UNREACHABLE,
+                        baseCandidateCount, objectiveCandidateCount, policyCandidateCount,
+                        policyCandidateCount, 0, false, false, null);
                 return null;
             }
             Monster selected = AgentCombatGrindTargetPolicy.pickReachableOrBestTarget(
                     scored, UNREACHABLE_GRAPH_COST);
             recordPolicySelection(entry, bot, selected, policySelection);
+            recordDecision(entry, AgentCombatDecisionTraceState.Mode.PATROL,
+                    AgentCombatDecisionTraceState.Outcome.SELECTED,
+                    baseCandidateCount, objectiveCandidateCount, policyCandidateCount,
+                    policyCandidateCount, scored.size(), false, false, selected);
             return selected;
         } finally {
             AgentPerformanceMonitor.record("combat-target-search", System.nanoTime() - startedAt);
@@ -172,6 +239,9 @@ public final class AgentCombatTargetRuntime {
                     config.ATTACK_RANGE_X + config.ATTACK_JUMP_X_EXTRA);
             List<Monster> candidates = AgentCombatTargetSelector.aliveMonstersInRange(bot, botPos, range * range);
             if (candidates.isEmpty()) {
+                recordDecision(entry, AgentCombatDecisionTraceState.Mode.FOLLOW,
+                        AgentCombatDecisionTraceState.Outcome.NO_CANDIDATES,
+                        0, 0, 0, 0, 0, false, false, null);
                 return null;
             }
 
@@ -193,7 +263,14 @@ public final class AgentCombatTargetRuntime {
                             candidates,
                             entry != null && AgentCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
                             entry == null ? 0 : AgentCombatSkillCacheStateRuntime.aoeSkillMobs(entry)));
-            return AgentCombatGrindTargetPolicy.pickFromBestTargets(localTargets);
+            Monster selected = AgentCombatGrindTargetPolicy.pickFromBestTargets(localTargets);
+            recordDecision(entry, AgentCombatDecisionTraceState.Mode.FOLLOW,
+                    selected == null
+                            ? AgentCombatDecisionTraceState.Outcome.UNREACHABLE
+                            : AgentCombatDecisionTraceState.Outcome.SELECTED,
+                    candidates.size(), candidates.size(), candidates.size(), candidates.size(),
+                    localTargets.size(), false, false, selected);
+            return selected;
         } finally {
             AgentPerformanceMonitor.record("combat-target-search", System.nanoTime() - startedAt);
         }
@@ -313,6 +390,9 @@ public final class AgentCombatTargetRuntime {
                 entry.capabilityStates().require(AgentRouteBlockerState.STATE_KEY);
         if (candidates.isEmpty()) {
             blockerState.resumeTravel();
+            recordDecision(entry, AgentCombatDecisionTraceState.Mode.ROUTE_BLOCKER,
+                    AgentCombatDecisionTraceState.Outcome.NO_CANDIDATES,
+                    0, 0, 0, 0, 0, false, false, null);
             return null;
         }
         long nowMs = System.currentTimeMillis();
@@ -320,6 +400,10 @@ public final class AgentCombatTargetRuntime {
             AgentCombatDirectiveRuntime.state(entry).selected(
                     bot.getMapId(), -1, 0, AgentCombatCandidateClass.UNRELATED,
                     AgentCombatDecisionReason.EVADE_BLOCKER, nowMs);
+            recordDecision(entry, AgentCombatDecisionTraceState.Mode.ROUTE_BLOCKER,
+                    AgentCombatDecisionTraceState.Outcome.RESPONSE_DEFERRED,
+                    candidates.size(), candidates.size(), candidates.size(), candidates.size(),
+                    0, false, false, null);
             return null;
         }
         Monster selected = candidates.stream()
@@ -333,7 +417,42 @@ public final class AgentCombatTargetRuntime {
                     AgentCombatDecisionReason.ROUTE_BLOCKER,
                     nowMs);
         }
+        recordDecision(entry, AgentCombatDecisionTraceState.Mode.ROUTE_BLOCKER,
+                selected == null
+                        ? AgentCombatDecisionTraceState.Outcome.NO_CANDIDATES
+                        : AgentCombatDecisionTraceState.Outcome.SELECTED,
+                candidates.size(), candidates.size(), candidates.size(), candidates.size(),
+                selected == null ? 0 : candidates.size(), false, false, selected);
         return selected;
+    }
+
+    private static void recordDecision(AgentRuntimeEntry entry,
+                                       AgentCombatDecisionTraceState.Mode mode,
+                                       AgentCombatDecisionTraceState.Outcome outcome,
+                                       int baseCandidates,
+                                       int objectiveCandidates,
+                                       int policyCandidates,
+                                       int claimCandidates,
+                                       int scoredCandidates,
+                                       boolean mapWidePreferredEscalation,
+                                       boolean rankedVariationConsumed,
+                                       Monster selected) {
+        if (entry == null) {
+            return;
+        }
+        entry.capabilityStates().require(AgentCombatDecisionTraceState.STATE_KEY).record(
+                mode,
+                outcome,
+                System.currentTimeMillis(),
+                baseCandidates,
+                objectiveCandidates,
+                policyCandidates,
+                claimCandidates,
+                scoredCandidates,
+                mapWidePreferredEscalation,
+                rankedVariationConsumed,
+                selected == null ? 0 : selected.getObjectId(),
+                selected == null ? 0 : selected.getId());
     }
 
     static boolean insideRouteCorridor(Point start, Point end, Point candidate, int halfWidth) {
