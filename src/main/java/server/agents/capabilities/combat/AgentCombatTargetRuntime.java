@@ -758,15 +758,16 @@ public final class AgentCombatTargetRuntime {
                                                         Foothold botFoothold,
                                                         List<Monster> candidates) {
         AgentCombatDirective directive = AgentCombatDirectiveRuntime.directive(entry);
-        if (directive == null || directive.incidentalPolicy()
-                != AgentIncidentalMobPolicy.KILL_FOR_SPAWN_PRESSURE) {
+        if (directive == null) {
             return legacyPolicySelection(entry, candidates);
         }
 
         GrindGraphContext context = GrindGraphContext.resolve(entry, bot, botPos);
         int currentRegionId = context.available() ? context.startRegionId() : -1;
         long nowMs = System.currentTimeMillis();
-        boolean allowSweep = AgentCombatDirectiveRuntime.state(entry)
+        boolean allowSweep = directive.incidentalPolicy()
+                == AgentIncidentalMobPolicy.KILL_FOR_SPAWN_PRESSURE
+                && AgentCombatDirectiveRuntime.state(entry)
                 .canSweep(bot.getMapId(), currentRegionId, nowMs);
         AgentQuestLocalClearTargetPolicy.Selection<Monster> selected =
                 AgentQuestLocalClearTargetPolicy.select(
