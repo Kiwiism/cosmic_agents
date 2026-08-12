@@ -303,6 +303,35 @@ class BotMovementSimulationLabTest {
                 "bot should land in the destination region after walking off the ledge");
     }
 
+    @Test
+    void shouldCommitForestEastRegion38DirectionalDrop() {
+        MapleMap map = AgentNavigationMapLoader.loadMapGeometry(100030000);
+        AgentNavigationGraph graph = AgentNavigationGraphService.rebuildGraph(map);
+        AgentNavigationGraph.Edge edge = graph.getOutgoing(38).stream()
+                .filter(candidate -> candidate.type == AgentNavigationGraph.EdgeType.DROP
+                        && candidate.toRegionId == 42
+                        && candidate.launchStepX > 0)
+                .findFirst()
+                .orElseThrow();
+
+        BotMovementSimulationLab lab = BotMovementSimulationLab.fromMap(map);
+        AgentRuntimeEntry entry = lab.spawnBot("KIWI", 61, map, edge.startPoint);
+        lab.setMoveTarget("KIWI", edge.endPoint, true);
+        lab.setNavState("KIWI", edge, edge.toRegionId, false);
+        lab.setAiAccumulator("KIWI", 50);
+
+        lab.step(200);
+
+        List<String> trace = lab.formatRecentTrace("KIWI", 200);
+        assertTrue(trace.stream().anyMatch(line -> line.contains("phys=AIR")),
+                () -> "Forest East region 38 directional drop must leave its ledge:\n"
+                        + String.join("\n", trace));
+        assertEquals(edge.toRegionId, graph.findRegionId(map, lab.position("KIWI")),
+                () -> "Forest East region 38 directional drop must land in region 42:\n"
+                        + String.join("\n", trace));
+        assertFalse(AgentMovementStateRuntime.inAir(entry));
+    }
+
     private static MapleMap createFlatMap(int mapId, int x1, int x2, int y) {
         MapleMap map = new MapleMap(mapId, 0, 0, mapId, 1.0f);
         server.maps.FootholdTree footholds = new server.maps.FootholdTree(

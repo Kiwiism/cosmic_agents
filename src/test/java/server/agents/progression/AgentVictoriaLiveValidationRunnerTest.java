@@ -62,6 +62,7 @@ class AgentVictoriaLiveValidationRunnerTest {
                 ribbonStatus,
                 slimeStatus,
                 null,
-                null);
+                null,
+                "test");
     }
 }

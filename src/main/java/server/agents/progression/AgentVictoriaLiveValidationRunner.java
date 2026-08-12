@@ -9,6 +9,10 @@ import server.agents.capabilities.combat.AgentCombatTargetTraceRuntime;
 import server.agents.capabilities.combat.AgentCombatTargetTraceSnapshot;
 import server.agents.capabilities.navigation.AgentNavigationTraceRuntime;
 import server.agents.capabilities.navigation.AgentNavigationTraceSnapshot;
+import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
+import server.agents.capabilities.navigation.AgentNavigationGraph;
+import server.agents.capabilities.movement.AgentMovementPhysicsStateRuntime;
+import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.integration.AgentPersistenceGatewayRuntime;
 import server.agents.integration.cosmic.CosmicAgentOfflineLoader;
 import server.agents.plans.AgentPlanExecutionStatus;
@@ -157,7 +161,23 @@ public final class AgentVictoriaLiveValidationRunner {
                 questStatus(agent, RIBBON_QUEST_ID),
                 questStatus(agent, SLIME_QUEST_ID),
                 navigation,
-                combat);
+                combat,
+                movementDiagnostics(entry));
+    }
+
+    private static String movementDiagnostics(AgentRuntimeEntry entry) {
+        Object active = AgentNavigationDebugStateRuntime.activeNavigationEdge(entry);
+        String edge = active instanceof AgentNavigationGraph.Edge navEdge
+                ? navEdge.type + ":" + navEdge.fromRegionId + ">" + navEdge.toRegionId
+                + ":step=" + navEdge.launchStepX
+                : "none";
+        Point waypoint = AgentNavigationDebugStateRuntime.navTargetPosition(entry);
+        return "edge=" + edge
+                + ",waypoint=" + (waypoint == null ? "none" : waypoint.x + ":" + waypoint.y)
+                + ",air=" + AgentMovementStateRuntime.inAir(entry)
+                + ",dir=" + AgentMovementStateRuntime.moveDirection(entry)
+                + ",physX=" + Math.round(AgentMovementPhysicsStateRuntime.physicsX(entry) * 10.0) / 10.0
+                + ",hSpeed=" + Math.round(AgentMovementPhysicsStateRuntime.horizontalSpeed(entry) * 100.0) / 100.0;
     }
 
     private static int questProgress(Character agent, int questId, int targetId) {
@@ -196,7 +216,8 @@ public final class AgentVictoriaLiveValidationRunner {
                   int ribbonQuestStatus,
                   int slimeQuestStatus,
                   AgentNavigationTraceSnapshot navigation,
-                  AgentCombatTargetTraceSnapshot combat) {
+                  AgentCombatTargetTraceSnapshot combat,
+                  String movementDiagnostics) {
         private static final int COMPLETED = QuestStatus.Status.COMPLETED.getId();
 
         Sample {
@@ -248,7 +269,8 @@ public final class AgentVictoriaLiveValidationRunner {
                     + " orange=" + orangeKills + " pigs=" + pigKills
                     + " ribbons=" + pigRibbons + " slimes=" + slimeKills
                     + " questStatus=" + orangeQuestStatus + "," + pigQuestStatus + ","
-                    + ribbonQuestStatus + "," + slimeQuestStatus + " " + nav + " " + target;
+                    + ribbonQuestStatus + "," + slimeQuestStatus + " " + nav + " " + target
+                    + " movement={" + movementDiagnostics + "}";
         }
 
         private static String compactPath(List<AgentNavigationTraceSnapshot.Edge> path) {
