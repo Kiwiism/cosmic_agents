@@ -64,6 +64,15 @@ public final class AgentNavigationRopeEdgeService {
         return from != null && to != null && !from.isRopeRegion && to.isRopeRegion;
     }
 
+    public static boolean isRopeExitEdge(AgentNavigationGraph graph, AgentNavigationGraph.Edge edge) {
+        if (graph == null || edge == null || edge.type != AgentNavigationGraph.EdgeType.CLIMB) {
+            return false;
+        }
+
+        AgentNavigationGraph.Region from = graph.getRegion(edge.fromRegionId);
+        return from != null && from.isRopeRegion;
+    }
+
     public static boolean isTopStepOffExit(Rope rope, Point botPos, AgentNavigationGraph.Edge edge) {
         if (rope == null || botPos == null || edge == null || edge.launchStepX != 0) {
             return false;

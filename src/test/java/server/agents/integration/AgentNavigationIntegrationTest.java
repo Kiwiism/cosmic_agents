@@ -814,6 +814,39 @@ class AgentNavigationIntegrationTest {
     }
 
     @Test
+    void shouldConvergeOnCommittedMidRopeExitWithoutVerticalTransaction() {
+        MapleMap map = new MapleMap(910000206, 0, 0, 910000206, 1.0f);
+        FootholdTree footholds = new FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(200, 100), 1));
+        map.setFootholds(footholds);
+        Rope rope = new Rope(100, 0, 300, false);
+        map.addRope(rope);
+        AgentNavigationGraph graph = AgentNavigationGraphService.rebuildGraph(map);
+        int ropeRegionId = graph.findRopeRegionId(new Point(100, 120));
+        assertTrue(ropeRegionId >= 0);
+
+        Character bot = mockBot(new Point(100, 80), map);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
+        AgentMovementStateRuntime.setMovementProfile(entry, AgentMovementProfile.base());
+        AgentModeStateRuntime.setGrinding(entry, true);
+        AgentRopeMovementService.attachToRope(entry, bot, rope, 80, -1);
+        AgentNavigationGraph.Edge exit = new AgentNavigationGraph.Edge(
+                ropeRegionId, 1, AgentNavigationGraph.EdgeType.CLIMB,
+                new Point(100, 140), new Point(150, 100),
+                6, 0, rope.x(), rope.topY(), rope.bottomY(), 300);
+        AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, exit);
+
+        for (int i = 0; i < 10 && bot.getPosition().y != exit.startPoint.y; i++) {
+            AgentClimbMovementService.tickClimbing(entry, new Point(150, 100), true);
+        }
+
+        assertFalse(AgentVerticalTraversalStateRuntime.active(entry));
+        assertTrue(AgentClimbStateRuntime.climbing(entry));
+        assertEquals(exit.startPoint, bot.getPosition(),
+                "the committed exit edge must retain its exact launch height after transaction loss");
+    }
+
+    @Test
     void shouldCommitCompleteRopeCrossingBeforeAcceptingOppositeLiveTarget() {
         MapleMap map = new MapleMap(910000205, 0, 0, 910000205, 1.0f);
         FootholdTree footholds = new FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));

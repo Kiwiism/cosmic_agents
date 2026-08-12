@@ -4,6 +4,9 @@ import client.Character;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
+import server.agents.capabilities.navigation.AgentNavigationGraph;
+import server.agents.capabilities.navigation.AgentNavigationGraphService;
+import server.agents.capabilities.navigation.AgentNavigationRopeEdgeService;
 import server.agents.capabilities.navigation.AgentVerticalTraversalService;
 import server.agents.capabilities.navigation.AgentVerticalTraversalStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
@@ -43,6 +46,18 @@ public final class AgentClimbMovementService {
                 } else {
                     AgentRopeMovementService.holdClimb(entry, agent);
                 }
+                AgentMovementBroadcastService.broadcastMovement(entry);
+                return;
+            }
+
+            // The wider vertical transaction can be invalidated while an Agent is entering a
+            // rope (for example, when an unrelated action state is reset). The committed graph
+            // edge still owns an exact rope-exit launch height. Honor that structural edge before
+            // falling back to the entry direction, otherwise a mid-rope exit such as Forest East
+            // 81 -> 44 is climbed past repeatedly.
+            Point committedEdgeExit = committedClimbExitPosition(entry, agent, climbRope);
+            if (committedEdgeExit != null) {
+                AgentRopeMovementService.advanceClimbToward(entry, agent, committedEdgeExit.y);
                 AgentMovementBroadcastService.broadcastMovement(entry);
                 return;
             }
@@ -92,6 +107,27 @@ public final class AgentClimbMovementService {
         } finally {
             AgentPerformanceMonitor.record("move-climb", System.nanoTime() - startedAt);
         }
+    }
+
+    private static Point committedClimbExitPosition(AgentRuntimeEntry entry,
+                                                     Character agent,
+                                                     Rope climbRope) {
+        if (entry == null || agent == null || climbRope == null) {
+            return null;
+        }
+        Object active = AgentNavigationDebugStateRuntime.activeNavigationEdge(entry);
+        if (!(active instanceof AgentNavigationGraph.Edge edge)) {
+            return null;
+        }
+        AgentNavigationGraph graph = AgentNavigationGraphService.peekBestGraph(
+                agent.getMap(), AgentMovementStateRuntime.movementProfile(entry));
+        if (!AgentNavigationRopeEdgeService.isRopeExitEdge(graph, edge)
+                || edge.ropeX != climbRope.x()
+                || edge.ropeTopY != climbRope.topY()
+                || edge.ropeBottomY != climbRope.bottomY()) {
+            return null;
+        }
+        return new Point(edge.startPoint);
     }
 
     public static void jumpOffRope(AgentRuntimeEntry entry, Character agent, int dx) {
