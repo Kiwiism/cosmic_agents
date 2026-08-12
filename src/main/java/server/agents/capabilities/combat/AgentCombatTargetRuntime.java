@@ -388,18 +388,29 @@ public final class AgentCombatTargetRuntime {
             }
             AgentCombatLocalTargetLeaseRuntime.cancelTravel(entry);
         }
-        if (!shouldEscalateToMapWidePreferredTarget(entry, bot, localCandidates)) {
+        boolean preferredEscalation = shouldEscalateToMapWidePreferredTarget(
+                entry, bot, localCandidates);
+        boolean spawnPressureEscalation = localCandidates.isEmpty()
+                && allowsMapWideSpawnPressure(entry, bot, nowMs);
+        if (!preferredEscalation && !spawnPressureEscalation) {
             return new TargetPromotion(localCandidates, false);
         }
         List<Monster> mapWidePreferred = mapWidePreferredTargets(entry, bot);
         mapWidePreferred.removeIf(target -> !remoteRouteAccepted.test(target));
-        if (mapWidePreferred.isEmpty()) {
+        List<Monster> mapWideTargets = mapWidePreferred;
+        if (mapWideTargets.isEmpty()
+                && localCandidates.isEmpty()
+                && allowsMapWideSpawnPressure(entry, bot, nowMs)) {
+            mapWideTargets = mapWideSpawnPressureTargets(entry, bot);
+            mapWideTargets.removeIf(target -> !remoteRouteAccepted.test(target));
+        }
+        if (mapWideTargets.isEmpty()) {
             return new TargetPromotion(localCandidates, false);
         }
         // A local platform lease must not pin an Agent below the only remaining
-        // species that can advance its objective.
+        // objective species or prevent bounded remote spawn-pressure cleanup.
         AgentCombatVariationRuntime.clearAutomaticAnchor(entry);
-        return new TargetPromotion(mapWidePreferred, true);
+        return new TargetPromotion(mapWideTargets, true);
     }
 
     private static boolean hasCompleteRemoteCombatRoute(AgentRuntimeEntry entry,
@@ -448,6 +459,37 @@ public final class AgentCombatTargetRuntime {
                 .filter(AgentCombatTargetEligibilityPolicy::isHostileLivingMonster)
                 .filter(monster -> AgentCombatObjectiveTargetStateRuntime.allows(entry, monster.getId()))
                 .filter(monster -> AgentCombatObjectiveTargetStateRuntime.prefers(entry, monster.getId()))
+                .collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    private static boolean allowsMapWideSpawnPressure(
+            AgentRuntimeEntry entry,
+            Character bot,
+            long nowMs) {
+        AgentCombatDirective directive = AgentCombatDirectiveRuntime.directive(entry);
+        if (directive == null
+                || directive.incidentalPolicy()
+                != AgentIncidentalMobPolicy.KILL_FOR_SPAWN_PRESSURE) {
+            return false;
+        }
+        GrindGraphContext context = GrindGraphContext.resolve(entry, bot, bot.getPosition());
+        int currentRegionId = context.available() ? context.startRegionId() : -1;
+        return AgentCombatDirectiveRuntime.state(entry)
+                .canSweep(bot.getMapId(), currentRegionId, nowMs);
+    }
+
+    private static List<Monster> mapWideSpawnPressureTargets(
+            AgentRuntimeEntry entry,
+            Character bot) {
+        if (entry == null || bot == null || bot.getMap() == null) {
+            return List.of();
+        }
+        return AgentMapPerception.monsters(bot.getMap()).stream()
+                .filter(AgentCombatTargetEligibilityPolicy::isHostileLivingMonster)
+                .filter(monster -> AgentCombatObjectiveTargetStateRuntime.allows(
+                        entry, monster.getId()))
+                .filter(monster -> !AgentCombatObjectiveTargetStateRuntime.prefers(
+                        entry, monster.getId()))
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 

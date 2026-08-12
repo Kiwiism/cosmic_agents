@@ -102,6 +102,18 @@ class AgentCombatLocalTargetLeasePolicyTest {
                 state.snapshot(2_000).phase());
     }
 
+    @Test
+    void emptyMapWidePreferredPopulationPromotesSpawnPressureFallback() {
+        Fixture fixture = fixture();
+        AgentCombatDirectiveRuntime.assignPreferences(
+                fixture.entry, Set.of(1), Set.of(2));
+        when(fixture.agent.getMap().getAllMonsters())
+                .thenReturn(List.of(fixture.localFallback));
+
+        assertEquals(List.of(fixture.localFallback),
+                promote(fixture, List.of(), 1_000));
+    }
+
     private static Fixture fixture() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         AgentCombatObjectiveTargetStateRuntime.setTargetPreferences(entry, Set.of(1), Set.of(2));
