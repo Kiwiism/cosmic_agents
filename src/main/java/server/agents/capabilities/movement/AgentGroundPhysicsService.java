@@ -66,7 +66,12 @@ public final class AgentGroundPhysicsService {
         AgentMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
         AgentMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
         AgentMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
-        AgentMovementPhysicsStateRuntime.setPhysicsPosition(entry, position);
+        // Keep the continuous X accumulator even when the rendered integer position has not
+        // changed yet. Replacing it with position.x here discards every subpixel ground step;
+        // low-force slopes can then sit forever at a foothold endpoint with non-zero velocity
+        // but never accumulate enough displacement to start the authored walk-off.
+        AgentMovementPhysicsStateRuntime.setPhysicsPosition(
+                entry, step.state().physX(), position.y);
         AgentMovementPhysicsStateRuntime.setHorizontalSpeed(entry, step.state().hspeed());
         AgentMovementPhysicsStateRuntime.setGroundPhysicsCarryMs(entry, step.state().carryMs());
         AgentMovementStateRuntime.setDownJumpPending(entry, false);

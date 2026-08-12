@@ -60,6 +60,26 @@ class AgentGroundPhysicsServiceTest {
     }
 
     @Test
+    void applyGroundMotionRetainsSubpixelDisplacementUntilRenderedXAdvances() {
+        MapleMap map = createEmptyTestMap(910000303);
+        map.setFootholdSpeed(0.17f);
+        Foothold foothold = new Foothold(new Point(0, 100), new Point(400, 100), 1);
+        map.getFootholds().insert(foothold);
+        Character agent = mockAgent(new Point(100, 100), map);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        AgentMovementPhysicsStateRuntime.setPhysicsX(entry, 100.0);
+        AgentMovementStateRuntime.setMoveDirection(entry, 1);
+
+        AgentGroundMotion motion = AgentGroundPhysicsService.applyGroundMotion(
+                entry, agent, foothold);
+
+        assertEquals(0, motion.stepX(), "one low-force client step remains subpixel");
+        assertEquals(100, agent.getPosition().x, "rendered position should remain integral");
+        assertTrue(AgentMovementPhysicsStateRuntime.physicsX(entry) > 100.0,
+                "continuous ground displacement must survive to the next movement tick");
+    }
+
+    @Test
     void syncAndDetectGroundStartsFallWhenNoGroundExists() {
         MapleMap map = createEmptyTestMap(910000302);
         Character agent = mockAgent(new Point(100, 100), map);
