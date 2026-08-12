@@ -8,6 +8,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -16,6 +17,20 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class AgentVictoriaSharedQuestPackRuntimeTest {
+    @Test
+    void completedCombinedHuntSpeciesBecomeSpawnPressureCandidates() {
+        AgentVictoriaSharedQuestPackCatalog.Step hunt =
+                AgentVictoriaSharedQuestPackCatalog.require("nautilus-pre15").steps().stream()
+                        .filter(step -> step.mapId() == 100030000
+                                && "HUNT".equals(step.type()))
+                        .findFirst()
+                        .orElseThrow();
+
+        assertEquals(Set.of(1210102, 1210100, 210100),
+                AgentVictoriaSharedQuestPackRuntime.spawnPressureCandidates(
+                        hunt, Set.of(1210101)));
+    }
+
     @Test
     void fixedHuntMapsCoverGreenCapsAndKerningMaterials() {
         AgentVictoriaSharedQuestPackCatalog.Pack henesys =

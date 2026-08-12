@@ -234,7 +234,7 @@ final class AgentVictoriaSharedQuestPackRuntime {
                     : new HashSet<>(selection.map().targetMobIds());
         }
         Set<Integer> incidentalCandidates = huntMapId == step.mapId()
-                ? new HashSet<>(step.incidentalMobIds()) : Set.of();
+                ? spawnPressureCandidates(step, preferred) : Set.of();
         Set<Integer> incidental = AgentSpawnPressurePolicy.selectFallbackMobIds(
                 gateway.configuredMonsterSpawnCounts(agent),
                 gateway.liveMonsterCounts(agent),
@@ -243,6 +243,21 @@ final class AgentVictoriaSharedQuestPackRuntime {
                 AgentCombatPolicyConfig.spawnPressureMinTargetSharePercent());
         gateway.grind(entry, preferred, incidental);
         return Result.RUNNING;
+    }
+
+    /**
+     * Once one objective in a combined hunt is complete, its monsters may still
+     * need to be cleared to release shared spawn slots for unfinished species.
+     * Keep them out of the required set, but make them eligible for the same
+     * conservative spawn-pressure policy as authored incidental monsters.
+     */
+    static Set<Integer> spawnPressureCandidates(
+            AgentVictoriaSharedQuestPackCatalog.Step step,
+            Set<Integer> unresolvedMobIds) {
+        Set<Integer> candidates = new LinkedHashSet<>(step.incidentalMobIds());
+        candidates.addAll(step.preferredMobIds());
+        candidates.removeAll(unresolvedMobIds);
+        return Set.copyOf(candidates);
     }
 
     private static Set<Integer> unresolvedTargetMobIds(
