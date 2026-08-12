@@ -3,6 +3,7 @@ package server.agents.capabilities.combat;
 import client.Character;
 import client.inventory.WeaponType;
 import server.agents.capabilities.looting.AgentGrindLootTargetService;
+import server.agents.capabilities.looting.AgentGrindLootStateRuntime;
 import server.agents.capabilities.combat.AgentGrindTargetStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
@@ -41,6 +42,17 @@ public final class AgentGrindModeTickService {
                 : AgentCombatPlanRuntime.planAttack(entry, agent, target, AgentCombatConfig.cfg);
 
         AgentGrindLootTargetService.validateCachedGrindLootTarget(entry, agent);
+        if (target == null && AgentGrindLootTargetService.preparePostKillLootBeforeTargetSearch(
+                entry, agent, runAiTick, hooks.lootRadius(), now)) {
+            if (!AgentGrindLootStateRuntime.hasGrindLootTarget(entry)) {
+                return new Result(true, agentPosition);
+            }
+            AgentGrindNoTargetFallbackService.Result result =
+                    AgentGrindNoTargetFallbackService.handleNoTarget(
+                            entry, agent, agentPosition, currentTargetPos, runAiTick,
+                            hooks.noTargetFallbackHooks());
+            return new Result(result.consumedTick(), result.targetPos());
+        }
         AgentGrindTargetSearchService.SearchResult searchResult =
                 AgentGrindTargetSearchService.searchIfDue(
                         entry, agent, target, attackPlan, runAiTick, now, hooks.targetSearchHooks());

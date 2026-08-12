@@ -87,6 +87,34 @@ public final class AgentGrindLootTargetService {
                 AgentPostKillLootPolicy.targetLootAgeMs(weaponType, true));
     }
 
+    /**
+     * Gives a just-finished combat target a bounded handoff to loot before target search may
+     * acquire another, potentially remote, mob. This is intentionally limited to recorded
+     * kills: ordinary map drops never block combat acquisition.
+     */
+    public static boolean preparePostKillLootBeforeTargetSearch(AgentRuntimeEntry entry,
+                                                                Character agent,
+                                                                boolean runAiTick,
+                                                                int lootRadius,
+                                                                long nowMs) {
+        if (entry == null || agent == null || AgentPatrolStateRuntime.hasPatrolRegion(entry)) {
+            return false;
+        }
+        AgentPostKillLootState.Snapshot postKill = entry.capabilityStates()
+                .require(AgentPostKillLootState.STATE_KEY)
+                .snapshot(nowMs);
+        if (!postKill.hasKills()) {
+            return false;
+        }
+        refreshGrindLootTarget(entry, agent, runAiTick, lootRadius, false);
+        if (AgentGrindLootStateRuntime.hasGrindLootTarget(entry)) {
+            return true;
+        }
+        WeaponType weaponType = equippedWeaponType(agent);
+        long settleAgeMs = AgentPostKillLootPolicy.targetLootAgeMs(weaponType, true);
+        return nowMs - postKill.oldestKillAtMs() < settleAgeMs;
+    }
+
     public static void refreshPreExitLootTarget(AgentRuntimeEntry entry,
                                                 Character agent,
                                                 boolean runAiTick,

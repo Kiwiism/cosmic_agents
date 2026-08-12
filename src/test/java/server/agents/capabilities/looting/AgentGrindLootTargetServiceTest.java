@@ -143,6 +143,53 @@ class AgentGrindLootTargetServiceTest {
         assertTrue(state.snapshot(now).killedObjectIds().contains(42));
     }
 
+    @Test
+    void recentKillWaitsForDropToSettleBeforeAnotherTargetSearch() {
+        long now = System.currentTimeMillis();
+        MapleMap map = mock(MapleMap.class);
+        Character agent = mock(Character.class);
+        when(agent.getMap()).thenReturn(map);
+        when(agent.getPosition()).thenReturn(new Point(0, 0));
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
+        entry.capabilityStates().require(AgentPostKillLootState.STATE_KEY).recordKill(42, now);
+        when(map.getDroppedItems()).thenReturn(List.of());
+
+        assertTrue(AgentGrindLootTargetService.preparePostKillLootBeforeTargetSearch(
+                entry, agent, true, 100, now));
+        assertNull(AgentGrindLootStateRuntime.grindLootTarget(entry));
+    }
+
+    @Test
+    void recentKillSelectsDropBeyondImmediateMeleeRadiusBeforeRemoteCombat() {
+        long now = System.currentTimeMillis();
+        MapleMap map = mock(MapleMap.class);
+        Character agent = mock(Character.class);
+        Inventory emptyInventory = mock(Inventory.class);
+        when(agent.getMap()).thenReturn(map);
+        when(agent.getPosition()).thenReturn(new Point(0, 0));
+        for (InventoryType type : InventoryType.values()) {
+            when(agent.getInventory(type)).thenReturn(emptyInventory);
+        }
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
+        entry.capabilityStates().require(AgentPostKillLootState.STATE_KEY)
+                .recordKill(42, now - 2_000L);
+
+        MapObject dropper = mock(MapObject.class);
+        when(dropper.getObjectId()).thenReturn(42);
+        MapItem drop = mockLoot(11, false);
+        when(drop.getDropper()).thenReturn(dropper);
+        when(drop.getPosition()).thenReturn(new Point(400, 0));
+        when(drop.getDropTime()).thenReturn(now - 2_000L);
+        when(drop.canBePickedBy(any(Character.class))).thenReturn(true);
+        when(drop.getMeso()).thenReturn(1);
+        when(map.getDroppedItems()).thenReturn(List.of(drop));
+        when(map.getMapObject(11)).thenReturn(drop);
+
+        assertTrue(AgentGrindLootTargetService.preparePostKillLootBeforeTargetSearch(
+                entry, agent, true, 100, now));
+        assertSame(drop, AgentGrindLootStateRuntime.grindLootTarget(entry));
+    }
+
     private static MapItem mockLoot(int objectId, boolean pickedUp) {
         MapItem loot = mock(MapItem.class);
         when(loot.getObjectId()).thenReturn(objectId);
