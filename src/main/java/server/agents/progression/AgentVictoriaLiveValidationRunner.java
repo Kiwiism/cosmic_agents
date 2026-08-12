@@ -10,14 +10,13 @@ import server.agents.capabilities.combat.AgentCombatTargetTraceSnapshot;
 import server.agents.capabilities.navigation.AgentNavigationTraceRuntime;
 import server.agents.capabilities.navigation.AgentNavigationTraceSnapshot;
 import server.agents.integration.AgentPersistenceGatewayRuntime;
+import server.agents.integration.cosmic.CosmicAgentOfflineLoader;
 import server.agents.plans.AgentPlanExecutionStatus;
 import server.agents.plans.AgentUniversalPlanRuntime;
-import server.agents.population.AgentPopulationAdminService;
-import server.agents.population.AgentPopulationRuntime;
 import server.agents.registry.AgentResolvedCharacter;
+import server.agents.runtime.AgentInteractionRuntime;
 import server.agents.runtime.AgentMailboxRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.agents.runtime.AgentRuntimeRegistry;
 
 import java.awt.Point;
 import java.io.IOException;
@@ -40,7 +39,6 @@ public final class AgentVictoriaLiveValidationRunner {
     private static final int SLIME_MOB_ID = 210_100;
     private static final int PIG_MOB_ID = 1_210_100;
     private static final int PIG_RIBBON_ITEM_ID = 4_000_002;
-    private static final long SPAWN_TIMEOUT_MS = Duration.ofMinutes(2).toMillis();
     private static final long SAMPLE_INTERVAL_MS = Duration.ofSeconds(5).toMillis();
     private static final long OBJECTIVE_STALL_WARNING_MS = Duration.ofSeconds(30).toMillis();
 
@@ -48,6 +46,10 @@ public final class AgentVictoriaLiveValidationRunner {
     }
 
     public static void main(String[] args) throws Exception {
+        if (!Boolean.getBoolean("agents.victoria.liveValidation.enabled")) {
+            throw new IllegalStateException(
+                    "Set -Dagents.victoria.liveValidation.enabled=true for this developer runner");
+        }
         String agentName = argument(args, 0, "KiwiAgent");
         String career = argument(args, 1, "magician");
         String checkpointText = argument(args, 2, "checkpoint3-hunt");
@@ -63,11 +65,9 @@ public final class AgentVictoriaLiveValidationRunner {
             throw new IllegalArgumentException("No character named '" + agentName + "' exists");
         }
 
-        AgentPopulationAdminService population = AgentPopulationRuntime.admin();
-        population.add(agentName);
-        population.setMultiplier(1.0d);
-        population.setEnabled(true);
-        AgentRuntimeEntry entry = awaitLiveAgent(population, resolved.id());
+        Character loadedAgent = CosmicAgentOfflineLoader.loadOfflineAgent(
+                resolved.id(), 0, 1, null, null);
+        AgentRuntimeEntry entry = AgentInteractionRuntime.registerSelfDirectedAgent(loadedAgent);
 
         AgentMailboxRuntime.dispatch(entry, ignored -> {
             try {
@@ -81,25 +81,10 @@ public final class AgentVictoriaLiveValidationRunner {
 
         log.info("VICTORIA_LIVE_STARTED agent={} characterId={} career={} checkpoint={}",
                 agentName, resolved.id(), career, checkpointText);
-        monitor(entry, population);
+        monitor(entry);
     }
 
-    private static AgentRuntimeEntry awaitLiveAgent(
-            AgentPopulationAdminService population, int characterId) throws Exception {
-        long deadline = System.currentTimeMillis() + SPAWN_TIMEOUT_MS;
-        while (System.currentTimeMillis() < deadline) {
-            population.sweep();
-            AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(characterId);
-            if (entry != null) {
-                return entry;
-            }
-            Thread.sleep(1_000L);
-        }
-        throw new IllegalStateException("Agent population did not load character " + characterId);
-    }
-
-    private static void monitor(
-            AgentRuntimeEntry entry, AgentPopulationAdminService population) throws Exception {
+    private static void monitor(AgentRuntimeEntry entry) throws Exception {
         long startedAtMs = System.currentTimeMillis();
         long lastObjectiveProgressAtMs = startedAtMs;
         long lastStallWarningAtMs = 0L;
@@ -127,7 +112,6 @@ public final class AgentVictoriaLiveValidationRunner {
                         nowMs - startedAtMs, sample.orangeKills(), sample.pigKills(), sample.pigRibbons());
             }
             if (sample.nautilusPackComplete()) {
-                population.setEnabled(false);
                 log.info("VICTORIA_NAUTILUS_PACK_COMPLETE elapsedMs={} level={} map={} plan={} stage={}",
                         nowMs - startedAtMs, agent.getLevel(), agent.getMapId(),
                         sample.planStatus(), sample.stage());
