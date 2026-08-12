@@ -2,7 +2,10 @@ package server.agents.runtime.async;
 
 /** Workload lanes kept separate so one slow external system cannot starve another. */
 public enum AgentAsyncWorkKind {
-    NAVIGATION_GRAPH("navigation", "bot-nav-graph-warmup", 1, 64, Thread.MIN_PRIORITY,
+    // Large maps can require sustained jump-edge simulation. MIN_PRIORITY is
+    // starved for many minutes by the live scheduler on Windows, leaving an
+    // Agent permanently in graph-warmup despite otherwise idle CPU capacity.
+    NAVIGATION_GRAPH("navigation", "bot-nav-graph-warmup", 1, 64, Thread.NORM_PRIORITY - 1,
             "agents.async.navigation.threads", "agents.async.navigation.queueCapacity"),
     NAVIGATION_GRAPH_FAST("navigation-fast", "bot-nav-graph-warmup-fast", 1, 64, Thread.MIN_PRIORITY,
             "agents.async.navigation.fastThreads", "agents.async.navigation.fastQueueCapacity"),
