@@ -34,4 +34,17 @@ class AgentGrindTargetStateTest {
         assertFalse(state.committedTo(target, 1_000L));
         assertEquals(0L, state.nextSearchAtMs());
     }
+
+    @Test
+    void renewsCommitmentWhileTheSameTargetRemainsValid() {
+        AgentGrindTargetState state = new AgentGrindTargetState();
+        Monster target = mock(Monster.class);
+
+        state.commitTarget(target, 2_000L);
+        state.commitTarget(target, 4_500L);
+
+        assertTrue(state.committedTo(target, 4_499L));
+        assertFalse(state.committedTo(target, 4_500L));
+        assertEquals(0, state.targetSwitchCount());
+    }
 }

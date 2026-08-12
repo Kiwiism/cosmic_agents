@@ -26,6 +26,15 @@ public final class AgentGrindTargetState {
             }
             this.target = target;
             this.targetCommittedUntilMs = committedUntilMs;
+        } else if (target != null) {
+            // A commitment is a renewable target lease, not a one-shot grace period measured
+            // from first sight. The grind loop calls this while the target remains alive and
+            // reachable; renewing here prevents two distant, equally scored quest mobs from
+            // replacing each other every search interval. Reachability, objective eligibility,
+            // death, map changes, and seek range are validated before this point and still
+            // release the target immediately.
+            this.targetCommittedUntilMs = Math.max(
+                    this.targetCommittedUntilMs, committedUntilMs);
         }
     }
 

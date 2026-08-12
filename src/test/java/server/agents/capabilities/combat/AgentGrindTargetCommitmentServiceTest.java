@@ -123,6 +123,25 @@ class AgentGrindTargetCommitmentServiceTest {
     }
 
     @Test
+    void repeatedTicksRenewTheSameReachableTargetLease() {
+        Character agent = mock(Character.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
+        Monster target = monsterAt(500, 100);
+
+        AgentGrindTargetCommitmentService.commitTarget(
+                entry, agent, new Point(), target, null, 1_000L, hooks(null, null));
+        AgentGrindTargetCommitmentService.commitTarget(
+                entry, agent, new Point(), target, null, 3_000L, hooks(null, null));
+
+        org.junit.jupiter.api.Assertions.assertTrue(
+                AgentGrindTargetStateRuntime.committedTo(entry, target, 5_499L));
+        org.junit.jupiter.api.Assertions.assertFalse(
+                AgentGrindTargetStateRuntime.committedTo(entry, target, 5_500L));
+        org.junit.jupiter.api.Assertions.assertEquals(0,
+                AgentGrindTargetStateRuntime.targetSwitchCount(entry));
+    }
+
+    @Test
     void progressivelyLengthensCommitmentAfterRepeatedTargetSwitches() {
         Character agent = mock(Character.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
