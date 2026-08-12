@@ -713,6 +713,11 @@ class AgentNavigationIntegrationTest {
                 .orElseThrow();
 
         assertEquals(new Point(100, 100), topExit.endPoint);
+        assertTrue(graph.getOutgoing(startRegionId).stream()
+                        .filter(edge -> edge.type == AgentNavigationGraph.EdgeType.CLIMB)
+                        .filter(edge -> edge.launchStepX == 0)
+                        .allMatch(edge -> edge.startPoint.equals(ropeTop)),
+                "Zero-horizontal rope exits must only be executable top step-offs");
     }
 
     @Test
@@ -836,7 +841,7 @@ class AgentNavigationIntegrationTest {
                 6, 0, rope.x(), rope.topY(), rope.bottomY(), 300);
         AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, exit);
 
-        for (int i = 0; i < 10 && bot.getPosition().y != exit.startPoint.y; i++) {
+        for (int i = 0; i < 20 && bot.getPosition().y != exit.startPoint.y; i++) {
             AgentClimbMovementService.tickClimbing(entry, new Point(150, 100), true);
         }
 

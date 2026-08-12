@@ -1024,14 +1024,14 @@ tuning:
     # Purpose: Controls the positional leeway for out of bounds teleport dist. Higher values tolerate more separation before Agents correct course; lower values make them align sooner.
     # Technical: the "movement physics config" component consumes this as an integer. Domain: component-specific policy value; startup validation rejects missing, blank, or malformed values.
     server.agents.capabilities.movement.AgentMovementPhysicsConfig.OUT_OF_BOUNDS_TELEPORT_DIST: '600'
-    # Values: OFF, SHADOW, or ACTIVE. Recommended: SHADOW until representative-map and two-client packet validation is complete.
+    # Values: OFF, SHADOW, or ACTIVE. Recommended: OFF for normal play; use SHADOW only for explicit representative-map diagnostics.
     # Purpose: Controls whether learned Magician Teleport edges are ignored, compared read-only, or used during live navigation.
-    # Technical: Graphs always contain capability edges; ACTIVE additionally requires learned skill, field permission, MP reserve, and cooldown eligibility.
-    server.agents.capabilities.movement.AgentMovementSkillConfig.TELEPORT_MODE: 'SHADOW'
-    # Values: OFF, SHADOW, or ACTIVE. Recommended: SHADOW until representative-map and two-client packet validation is complete.
+    # Technical: SHADOW and ACTIVE add capability edges during graph construction; ACTIVE additionally requires learned skill, field permission, MP reserve, and cooldown eligibility.
+    server.agents.capabilities.movement.AgentMovementSkillConfig.TELEPORT_MODE: 'OFF'
+    # Values: OFF, SHADOW, or ACTIVE. Recommended: OFF for normal play; use SHADOW only for explicit representative-map diagnostics.
     # Purpose: Controls whether learned Thief Flash Jump edges are ignored, compared read-only, or used during live navigation.
-    # Technical: Graphs always contain capability edges; ACTIVE additionally requires learned skill, field permission, MP reserve, and cooldown eligibility.
-    server.agents.capabilities.movement.AgentMovementSkillConfig.FLASH_JUMP_MODE: 'SHADOW'
+    # Technical: SHADOW and ACTIVE add capability edges during graph construction; ACTIVE additionally requires learned skill, field permission, MP reserve, and cooldown eligibility.
+    server.agents.capabilities.movement.AgentMovementSkillConfig.FLASH_JUMP_MODE: 'OFF'
     # Values: an integer from 0 to 100 percent. Recommended: 30-50, with 40 as the conservative baseline.
     # Purpose: Higher values preserve more MP for combat and recovery; lower values let Agents use movement skills more aggressively.
     # Technical: Active route eligibility and execution require current MP minus the learned skill's WZ MP cost to remain at or above this percentage of maximum MP; shadow routes deliberately ignore it.

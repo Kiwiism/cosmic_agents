@@ -44,7 +44,7 @@ import java.util.concurrent.TimeUnit;
 public final class AgentNavigationGraphService {
     private static final Logger log = LoggerFactory.getLogger(AgentNavigationGraphService.class);
 
-    private static final int GRAPH_VERSION = 58;
+    private static final int GRAPH_VERSION = 59;
     private static final int ENDPOINT_ANCHOR_SPACING_PX = config.AgentTuning.intValue(
             "server.agents.capabilities.navigation.AgentNavigationGraphService.ENDPOINT_ANCHOR_SPACING_PX");
     private static final int DOWN_JUMP_PRELAUNCH_WINDOW_PX = config.AgentTuning.intValue(
@@ -1974,10 +1974,14 @@ public final class AgentNavigationGraphService {
         // Direct step-off at the top of the rope
         addTopStepOffEdge(ropeRegion, rope, map, regionsById, regionIdByFootholdId, outgoing, edgeKeys);
 
-        // Jump-off / step-off to ground at various heights along the rope
+        // Jump-off to ground at various heights along the rope. A zero-horizontal
+        // launch is intentionally excluded here: the live climb-exit executor only
+        // supports launchStepX == 0 for the dedicated top step-off edge above. Adding
+        // a straight-up simulated landing from a mid-rope anchor makes pathfinding
+        // select an edge that the executor can never start.
         for (int anchorY : ropeAnchorYs(rope)) {
             Point ropePoint = new Point(ropeX, anchorY);
-            for (int stepX : new int[]{-jumpStep, 0, jumpStep}) {
+            for (int stepX : new int[]{-jumpStep, jumpStep}) {
                 AgentJumpLanding landing = AgentJumpProbeService.simulateRopeJumpLanding(map, ropePoint, stepX, movementProfile);
                 if (landing == null) {
                     continue;
