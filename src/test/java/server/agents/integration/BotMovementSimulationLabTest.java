@@ -332,6 +332,25 @@ class BotMovementSimulationLabTest {
         assertFalse(AgentMovementStateRuntime.inAir(entry));
     }
 
+    @Test
+    void shouldNotOscillateBetweenForestEastRegion39BranchEdges() {
+        MapleMap map = AgentNavigationMapLoader.loadMapGeometry(100030000);
+        AgentNavigationGraph graph = AgentNavigationGraphService.rebuildGraph(map);
+        Point target = new Point(-3368, -506);
+
+        BotMovementSimulationLab lab = BotMovementSimulationLab.fromMap(map);
+        lab.spawnBot("KIWI", 62, map, new Point(-3869, -265));
+        lab.setMoveTarget("KIWI", target, true);
+        lab.setAiAccumulator("KIWI", 50);
+
+        lab.step(800);
+
+        List<String> trace = lab.formatRecentTrace("KIWI", 800);
+        assertEquals(30, graph.findRegionId(map, lab.position("KIWI")),
+                () -> "Forest East route from region 39 must commit one branch and reach region 30:\n"
+                        + String.join("\n", trace));
+    }
+
     private static MapleMap createFlatMap(int mapId, int x1, int x2, int y) {
         MapleMap map = new MapleMap(mapId, 0, 0, mapId, 1.0f);
         server.maps.FootholdTree footholds = new server.maps.FootholdTree(

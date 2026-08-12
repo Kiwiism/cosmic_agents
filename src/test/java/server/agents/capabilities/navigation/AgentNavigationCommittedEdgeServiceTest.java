@@ -37,7 +37,7 @@ class AgentNavigationCommittedEdgeServiceTest {
     }
 
     @Test
-    void retainCommittedGroundEdgeOnlyForSameStructuralTransition() {
+    void retainCommittedGroundEdgeAcrossStructuralBranchAlternatives() {
         AgentNavigationGraph.Edge committedDrop = edge(80, 83, AgentNavigationGraph.EdgeType.DROP,
                 new Point(7, -34), new Point(-84, 99), 7, 7, 0, 0, 0, 0, 0);
         AgentNavigationGraph.Edge replacementJump = edge(80, 83, AgentNavigationGraph.EdgeType.JUMP,
@@ -48,7 +48,7 @@ class AgentNavigationCommittedEdgeServiceTest {
                 new Point(5, -34), new Point(-99, 95), 0, 0, 0, 0, 0, 0, 0);
 
         assertTrue(AgentNavigationCommittedEdgeService.shouldRetainCommittedGroundEdge(committedDrop, replacementJump));
-        assertFalse(AgentNavigationCommittedEdgeService.shouldRetainCommittedGroundEdge(committedDrop, replacementOtherRegion));
+        assertTrue(AgentNavigationCommittedEdgeService.shouldRetainCommittedGroundEdge(committedDrop, replacementOtherRegion));
         assertFalse(AgentNavigationCommittedEdgeService.shouldRetainCommittedGroundEdge(committedDrop, replacementWalk));
 
         AgentNavigationGraph.Edge replacementOtherSource = edge(79, 84, AgentNavigationGraph.EdgeType.JUMP,

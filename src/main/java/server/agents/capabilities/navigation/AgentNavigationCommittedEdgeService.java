@@ -224,14 +224,17 @@ public final class AgentNavigationCommittedEdgeService {
         if (current == null || replacement == null) {
             return false;
         }
-        if (current.fromRegionId != replacement.fromRegionId
-                || current.toRegionId != replacement.toRegionId) {
+        if (current.fromRegionId != replacement.fromRegionId) {
             return false;
         }
-        // Equivalent first exits into the same downstream region can trade off a few pixels of
-        // approach cost as the bot shuffles on the source platform. Do not retain an edge toward
-        // another region: a route overlay or a newly resolved path must be able to redirect the
-        // bot at a branch point.
+        // A* includes the live approach distance in its cost. Near a branch point, moving a few
+        // pixels toward the committed exit can therefore make another first edge look cheaper on
+        // the next AI tick, even though the target has not changed. Replacing one structural edge
+        // with another in that situation reverses movement and can oscillate forever. Target
+        // movement beyond the target lease, route overlays, reliability suppression, and edge
+        // timeouts invalidate the committed edge before this refresh hook, so a usable non-WALK
+        // transition should own movement until it executes or one of those explicit conditions
+        // rejects it.
         return current.type != AgentNavigationGraph.EdgeType.WALK
                 && replacement.type != AgentNavigationGraph.EdgeType.WALK;
     }

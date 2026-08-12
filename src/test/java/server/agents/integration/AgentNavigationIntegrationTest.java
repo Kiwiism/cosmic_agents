@@ -481,7 +481,7 @@ class AgentNavigationIntegrationTest {
     }
 
     @Test
-    void shouldNotRetainCommittedGroundEdgeWhenAlternativeChangesDestinationRegion() {
+    void shouldRetainCommittedGroundEdgeWhenAlternativeChangesDestinationRegion() {
         AgentNavigationGraph.Edge committedDrop = new AgentNavigationGraph.Edge(
                 1, 2, AgentNavigationGraph.EdgeType.DROP,
                 new Point(10, 0), new Point(10, 100),
@@ -493,8 +493,8 @@ class AgentNavigationIntegrationTest {
                 40, 40, 0, 0, 0, 300
         );
 
-        assertFalse(AgentNavigationCommittedEdgeService.shouldRetainCommittedGroundEdge(committedDrop, replacementDrop),
-                "grounded replans must still refresh when the better first edge changes destination region");
+        assertTrue(AgentNavigationCommittedEdgeService.shouldRetainCommittedGroundEdge(committedDrop, replacementDrop),
+                "a stable target must not reverse the committed first edge as approach costs fluctuate");
     }
 
     @Test
