@@ -97,12 +97,22 @@ public final class AgentNavigationWaypointService {
             return new Point(edge.endPoint);
         }
 
+        MapleMap map = AgentRuntimeIdentityRuntime.botMap(entry);
+        if (hasCrossedDirectionalDropAnchor(graph, map, botPos, edge)) {
+            // The graph's start point is the beginning of an already-validated runway. Once the
+            // Agent crosses that point on the authored source region, keep walking toward the
+            // landing side. Re-simulating from each live acceleration/fidget phase can briefly
+            // disagree with the build-time variants and send the Agent back to the anchor,
+            // producing a permanent few-pixel oscillation instead of a walk-off.
+            return new Point(edge.endPoint);
+        }
+
         AgentWalkOffLanding liveOutcome = AgentJumpProbeService.simulateWalkOffLanding(
-                AgentRuntimeIdentityRuntime.botMap(entry), botPos, Integer.signum(edge.launchStepX),
+                map, botPos, Integer.signum(edge.launchStepX),
                 AgentMovementPhysicsStateRuntime.groundTravelState(entry),
                 AgentMovementStateRuntime.movementProfile(entry),
                 AgentWallCollisionPolicy.moverZMassForRegion(
-                        AgentRuntimeIdentityRuntime.botMap(entry), edge.fromRegionId));
+                        map, edge.fromRegionId));
         if (matchesDirectionalDrop(edge, graph, liveOutcome)) {
             // Like rope top step-offs, once the continuous-control exit is naturally executable
             // we stop targeting an intermediate anchor and just keep feeding the authored
@@ -110,6 +120,21 @@ public final class AgentNavigationWaypointService {
             return new Point(edge.endPoint);
         }
         return new Point(edge.startPoint);
+    }
+
+    private static boolean hasCrossedDirectionalDropAnchor(AgentNavigationGraph graph,
+                                                            MapleMap map,
+                                                            Point botPos,
+                                                            AgentNavigationGraph.Edge edge) {
+        if (graph == null || map == null || botPos == null || edge == null
+                || edge.type != AgentNavigationGraph.EdgeType.DROP
+                || edge.launchStepX == 0
+                || graph.findRegionId(map, botPos) != edge.fromRegionId) {
+            return false;
+        }
+        return edge.launchStepX < 0
+                ? botPos.x <= edge.startPoint.x
+                : botPos.x >= edge.startPoint.x;
     }
 
     private static boolean matchesDirectionalDrop(AgentNavigationGraph.Edge edge,

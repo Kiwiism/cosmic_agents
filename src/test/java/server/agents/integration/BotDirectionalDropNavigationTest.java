@@ -44,6 +44,22 @@ class BotDirectionalDropNavigationTest {
     }
 
     @Test
+    void shouldKeepDirectionalDropCommittedAfterCrossingAnchorWithStalePhysicsPhase() {
+        DropTestFixture fixture = createDirectionalDropFixture(910000045);
+        Character bot = mockBot(new Point(fixture.edge.startPoint.x + 2, fixture.edge.startPoint.y), fixture.map);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
+        AgentMovementPhysicsStateRuntime.setPhysicsX(entry, fixture.edge.startPoint.x - 500);
+        AgentMovementPhysicsStateRuntime.setPhysicsY(entry, bot.getPosition().y);
+        AgentMovementPhysicsStateRuntime.setHorizontalSpeed(entry, -20.0);
+
+        Point waypoint = AgentNavigationWaypointService.selectDropWaypoint(
+                entry, fixture.graph, bot.getPosition(), fixture.edge);
+
+        assertEquals(fixture.edge.endPoint, waypoint,
+                "crossing a validated runway anchor must be monotonic despite stale live acceleration state");
+    }
+
+    @Test
     void shouldKeepDirectionalDropLandingTargetWhenNaturalWalkOffAlreadyMatchesEdge() {
         DropTestFixture fixture = createDirectionalDropFixture(910000041);
         Character bot = mockBot(new Point(fixture.edge.startPoint), fixture.map);
