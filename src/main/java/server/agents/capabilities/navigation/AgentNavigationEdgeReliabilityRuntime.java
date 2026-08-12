@@ -13,7 +13,7 @@ public final class AgentNavigationEdgeReliabilityRuntime {
 
     public static Predicate<AgentNavigationGraph.Edge> edgeFilter(
             AgentRuntimeEntry entry, int mapId, long nowMs) {
-        if (!AgentNavigationReliabilityConfig.edgeSuppressionEnabled() || entry == null) {
+        if (!AgentNavigationReliabilityConfig.influencesRouting() || entry == null) {
             return edge -> true;
         }
         AgentNavigationEdgeReliabilityState.RoutingView view = state(entry).routingView(
@@ -25,7 +25,7 @@ public final class AgentNavigationEdgeReliabilityRuntime {
 
     public static ToIntFunction<AgentNavigationGraph.Edge> edgePenalty(
             AgentRuntimeEntry entry, int mapId, long nowMs) {
-        if (!AgentNavigationReliabilityConfig.routePenaltiesEnabled() || entry == null) {
+        if (!AgentNavigationReliabilityConfig.influencesRouting() || entry == null) {
             return edge -> 0;
         }
         AgentNavigationEdgeReliabilityState.RoutingView view = state(entry).routingView(
@@ -37,7 +37,7 @@ public final class AgentNavigationEdgeReliabilityRuntime {
 
     public static boolean suppressed(AgentRuntimeEntry entry, int mapId,
                                      AgentNavigationGraph.Edge edge, long nowMs) {
-        return AgentNavigationReliabilityConfig.edgeSuppressionEnabled() && entry != null
+        return AgentNavigationReliabilityConfig.influencesRouting() && entry != null
                 && state(entry).isSuppressed(mapId, edge, nowMs,
                 AgentNavigationReliabilityConfig.failureRetentionMs());
     }

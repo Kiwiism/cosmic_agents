@@ -5,6 +5,7 @@ import config.YamlConfig;
 import server.agents.behavior.AgentBehaviorCalibrationState;
 import server.agents.behavior.AgentBehaviorPolicyProfile;
 import server.agents.behavior.AgentBehaviorRuntime;
+import server.agents.behavior.AgentBehaviorFeatureProfile;
 import server.agents.capabilities.behavior.AgentCrowdScalingPolicy;
 import server.agents.integration.cosmic.CosmicAgentPerceptionSnapshotFactory;
 import server.agents.model.AgentPosition;
@@ -27,7 +28,7 @@ public final class AgentCombatBehaviorRuntime {
 
     public static boolean responseReady(
             AgentRuntimeEntry entry, Character agent, List<Monster> candidates, long nowMs) {
-        if (!AgentBehaviorRuntime.enabled(entry) || !config.AgentYamlConfig.config.agent.AGENT_RESPONSE_LATENCY_ENABLED) return true;
+        if (!AgentBehaviorRuntime.enabled(entry) || !AgentBehaviorFeatureProfile.current().enabled()) return true;
         if (candidates == null || candidates.isEmpty()) {
             entry.capabilityStates().require(AgentCombatBehaviorState.STATE_KEY).clearStimulus();
             return false;
@@ -53,7 +54,7 @@ public final class AgentCombatBehaviorRuntime {
     public static List<Monster> respectClaims(AgentRuntimeEntry entry,
                                                List<Monster> candidates,
                                                Map<Monster, Integer> occupancy) {
-        if (!AgentBehaviorRuntime.enabled(entry) || !config.AgentYamlConfig.config.agent.AGENT_TARGET_CLAIM_POLICY_ENABLED
+        if (!AgentBehaviorRuntime.enabled(entry) || !AgentBehaviorFeatureProfile.current().enabled()
                 || candidates.size() < 2) return candidates;
         AgentBehaviorPolicyProfile policy = AgentBehaviorRuntime.policy(entry);
         int driveBonus = AgentBehaviorRuntime.adaptation(entry).combatDrive() >= 75 ? 1 : 0;
@@ -72,7 +73,7 @@ public final class AgentCombatBehaviorRuntime {
 
     public static int selectTargetIndex(
             AgentRuntimeEntry entry, Character agent, int candidateCount) {
-        if (!AgentBehaviorRuntime.enabled(entry) || !config.AgentYamlConfig.config.agent.AGENT_TARGET_VARIATION_ENABLED
+        if (!AgentBehaviorRuntime.enabled(entry) || !AgentBehaviorFeatureProfile.current().enabled()
                 || candidateCount < 2) return -1;
         AgentPerceptionSnapshot perception =
                 CosmicAgentPerceptionSnapshotFactory.capture(agent, System.currentTimeMillis());
@@ -100,7 +101,7 @@ public final class AgentCombatBehaviorRuntime {
 
     public static boolean anchorRole(AgentRuntimeEntry entry, Character agent) {
         if (!AgentBehaviorRuntime.enabled(entry)
-                || !config.AgentYamlConfig.config.agent.AGENT_PLATFORM_ANCHOR_BEHAVIOR_ENABLED) {
+                || !AgentBehaviorFeatureProfile.current().enabled()) {
             return false;
         }
         AgentPerceptionSnapshot perception =

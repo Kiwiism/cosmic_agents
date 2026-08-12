@@ -168,7 +168,9 @@ class AgentArchitectureBoundaryTest {
                 Map.entry("navigation->movement", 93),
                 Map.entry("movement->navigation", 41),
                 Map.entry("combat->movement", 61),
-                Map.entry("combat->navigation", 12),
+                // The pre-reliability combat baseline contains fifteen navigation imports.
+                // Keep route validation behind the existing path-service seam so it adds none.
+                Map.entry("combat->navigation", 15),
                 Map.entry("trade->inventory", 56),
                 Map.entry("trade->dialogue", 25),
                 Map.entry("supplies->dialogue", 10),

@@ -14,6 +14,8 @@ import server.agents.capabilities.supplies.AgentSupplyMaintenanceEventListener;
 import server.agents.capabilities.supplies.AgentSupplyMonitoringProjectionService;
 import server.agents.capabilities.supplies.AgentSupplyThresholdChangedEvent;
 import server.agents.capabilities.presentation.AgentPersonalityPresentationEventListener;
+import server.agents.capabilities.presentation.AgentPresentationProfile;
+import server.agents.behavior.AgentBehaviorFeatureProfile;
 import server.agents.events.AgentEventSubscription;
 import server.agents.events.BoundedAgentEventBus;
 import server.agents.events.journal.AgentDurableEventJournalListener;
@@ -121,13 +123,13 @@ public final class AgentSessionEventWiringRuntime {
                     subscriptions.add(bus.subscribe(AgentTownLifeArrivalEvent.TYPE,
                             townLifeDialogue));
                 }
-                if (config.AgentYamlConfig.config.agent.AGENT_PERSONALITY_PRESENTATION_ENABLED) {
+                if (AgentPresentationProfile.current().enabled()) {
                     subscriptions.add(bus.subscribe("*",
                             new AgentPersonalityPresentationEventListener(entry)));
                     subscriptions.add(bus.subscribe(AgentQuestStateChangedEvent.TYPE,
                             new AgentPioRelaxerInterludeEventListener(entry)));
                 }
-                if (config.AgentYamlConfig.config.agent.AGENT_COMBAT_BEHAVIOR_ENABLED) {
+                if (AgentBehaviorFeatureProfile.current().enabled()) {
                     subscriptions.add(bus.subscribe("*", new AgentBehaviorEventListener(entry)));
                 }
                 subscriptions.add(bus.subscribe(

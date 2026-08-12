@@ -56,8 +56,7 @@ public final class AgentCombatTargetRuntime {
             int objectiveCandidateCount = candidates.size();
             TargetPromotion promotion = promoteMapWidePreferredTargetsResult(
                     entry, bot, candidates, nowMs,
-                    target -> !AgentCombatPolicyConfig.strictCombatRouteValidationEnabled()
-                            || hasCompleteRemoteCombatRoute(entry, bot, target));
+                    target -> hasCompleteRemoteCombatRoute(entry, bot, target));
             candidates = promotion.candidates();
             boolean mapWidePreferredEscalation = promotion.mapWide();
             if (mapWidePreferredEscalation) {
@@ -95,8 +94,7 @@ public final class AgentCombatTargetRuntime {
             }
             List<AgentScoredGrindTarget> scoredTargets = scoreGrindTargets(
                     entry, bot, botPos, botFoothold, candidates, targetOccupancy, config,
-                    mapWidePreferredEscalation
-                            && AgentCombatPolicyConfig.strictCombatRouteValidationEnabled());
+                    mapWidePreferredEscalation);
             if (scoredTargets.isEmpty()) {
                 recordDecision(entry, AgentCombatDecisionTraceState.Mode.GRIND,
                         claimCandidateCount == 0
@@ -307,14 +305,16 @@ public final class AgentCombatTargetRuntime {
             int targetRegionId = AgentNavigationRegionService.resolveTargetRegionId(
                     graphContext.graph(), graphContext.entry(), graphContext.map(), targetPos);
             if (targetRegionId >= 0) {
-                targetCost = AgentCombatRouteService.pathCost(
+                targetCost = AgentNavigationPathService.reliableRouteCost(
                         graphContext.graph(),
                         graphContext.map(),
                         graphContext.startPos(),
                         graphContext.startRegionId(),
                         targetPos,
                         targetRegionId,
-                        graphContext.profile(),
+                        AgentCombatScoringPolicy.estimateLocalTravelCostMs(
+                                graphContext.startPos(), targetPos,
+                                graphContext.profile().walkVelocityPxs()),
                         entry,
                         bot,
                         UNREACHABLE_GRAPH_COST);
@@ -354,8 +354,7 @@ public final class AgentCombatTargetRuntime {
             List<Monster> localCandidates,
             long nowMs) {
         return promoteMapWidePreferredTargetsResult(entry, bot, localCandidates, nowMs,
-                target -> !AgentCombatPolicyConfig.strictCombatRouteValidationEnabled()
-                        || hasCompleteRemoteCombatRoute(entry, bot, target)).candidates();
+                target -> hasCompleteRemoteCombatRoute(entry, bot, target)).candidates();
     }
 
     static List<Monster> promoteMapWidePreferredTargets(
@@ -384,8 +383,7 @@ public final class AgentCombatTargetRuntime {
             if (retainedTravelTarget == null) {
                 return new TargetPromotion(localCandidates, false);
             }
-            if (!AgentCombatPolicyConfig.strictCombatRouteValidationEnabled()
-                    || remoteRouteAccepted.test(retainedTravelTarget)) {
+            if (remoteRouteAccepted.test(retainedTravelTarget)) {
                 return new TargetPromotion(List.of(retainedTravelTarget), true);
             }
             AgentCombatLocalTargetLeaseRuntime.cancelTravel(entry);
@@ -420,9 +418,13 @@ public final class AgentCombatTargetRuntime {
             return false;
         }
         return targetRegionId == context.startRegionId()
-                || AgentCombatRouteService.pathCost(context.graph(), context.map(), context.startPos(),
-                        context.startRegionId(), target.getPosition(), targetRegionId,
-                        context.profile(), entry, bot, UNREACHABLE_GRAPH_COST)
+                || AgentNavigationPathService.reliableRouteCost(
+                        context.graph(), context.map(), context.startPos(), context.startRegionId(),
+                        target.getPosition(), targetRegionId,
+                        AgentCombatScoringPolicy.estimateLocalTravelCostMs(
+                                context.startPos(), target.getPosition(),
+                                context.profile().walkVelocityPxs()),
+                        entry, bot, UNREACHABLE_GRAPH_COST)
                         < UNREACHABLE_GRAPH_COST;
     }
 
@@ -694,9 +696,12 @@ public final class AgentCombatTargetRuntime {
                         entry != null && AgentCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
                         entry == null ? 0 : AgentCombatSkillCacheStateRuntime.aoeSkillMobs(entry)),
                 group -> AgentCombatScoringPolicy.addReachableGraphPenalty(
-                        AgentCombatRouteService.pathCost(
+                        AgentNavigationPathService.reliableRouteCost(
                                 context.graph(), context.map(), context.startPos(), context.startRegionId(),
-                                group.bestMonster().getPosition(), group.regionId(), context.profile(),
+                                group.bestMonster().getPosition(), group.regionId(),
+                                AgentCombatScoringPolicy.estimateLocalTravelCostMs(
+                                        context.startPos(), group.bestMonster().getPosition(),
+                                        context.profile().walkVelocityPxs()),
                                 entry, bot, UNREACHABLE_GRAPH_COST),
                         AgentCombatScoringPolicy.upwardPlatformPenalty(
                                 botPos, group.bestMonster().getPosition()),
@@ -707,7 +712,7 @@ public final class AgentCombatTargetRuntime {
 
     static long combatRouteCost(AgentNavigationPathService.SearchOutcome outcome,
                                 long unreachableCost) {
-        return AgentCombatRouteService.completeRouteCost(outcome, unreachableCost);
+        return AgentNavigationPathService.completeRouteCost(outcome, unreachableCost);
     }
 
     private static long grindTargetScore(Character bot,
@@ -769,13 +774,6 @@ public final class AgentCombatTargetRuntime {
                         monster -> directive.requiredMobIds().contains(monster.getId()),
                         monster -> isLocalCombatTarget(context, bot, botFoothold, monster),
                         allowSweep);
-        if (AgentCombatPolicyConfig.questLocalClearShadowEnabled()) {
-            AgentCombatDirectiveRuntime.state(entry)
-                    .shadowEvaluated(selected.reason(), selected.candidates().size());
-        }
-        if (!AgentCombatPolicyConfig.questLocalClearEnforced()) {
-            return legacyPolicySelection(entry, candidates);
-        }
         return new PolicySelection(new ArrayList<>(selected.candidates()),
                 selected.candidateClass(), selected.reason(), currentRegionId);
     }

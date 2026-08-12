@@ -3,6 +3,7 @@ package server.agents.capabilities.behavior;
 import client.Character;
 import config.YamlConfig;
 import server.agents.behavior.AgentBehaviorRuntime;
+import server.agents.capabilities.presentation.AgentPresentationProfile;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.events.AgentEvent;
 import server.agents.events.AgentEventListener;
@@ -79,7 +80,7 @@ public final class AgentBehaviorEventListener implements AgentEventListener<Agen
     }
 
     private boolean canShow(Character agent, long nowMs, String channel, int chance) {
-        if (!config.AgentYamlConfig.config.agent.AGENT_COMBAT_EMOTES_ENABLED || agent == null || agent.getMap() == null
+        if (!AgentPresentationProfile.current().enabled() || agent == null || agent.getMap() == null
                 || nowMs < nextExpressionAtMs || AgentMovementStateRuntime.inAir(entry)
                 || AgentMovementStateRuntime.climbing(entry)
                 || AgentBehaviorRuntime.calibration(entry).nextPercent(channel) >= chance

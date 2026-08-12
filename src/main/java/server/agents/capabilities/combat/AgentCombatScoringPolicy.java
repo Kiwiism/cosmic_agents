@@ -3,7 +3,6 @@ package server.agents.capabilities.combat;
 import java.awt.Point;
 import java.util.ArrayList;
 import java.util.List;
-import server.agents.capabilities.movement.AgentMovementProfile;
 import server.life.Monster;
 
 public final class AgentCombatScoringPolicy {
@@ -17,10 +16,10 @@ public final class AgentCombatScoringPolicy {
         return Math.min(expectedDamage, currentHp);
     }
 
-    public static long estimateLocalTravelCostMs(Point from, Point to, AgentMovementProfile profile) {
+    public static long estimateLocalTravelCostMs(Point from, Point to, double walkVelocityPxs) {
         int dx = Math.abs(to.x - from.x);
         int dy = Math.abs(to.y - from.y);
-        double walkVelocity = Math.max(1.0, profile.walkVelocityPxs());
+        double walkVelocity = Math.max(1.0, walkVelocityPxs);
         return Math.round(dx * 1000.0 / walkVelocity)
                 + dy * AgentCombatPolicyConfig.localTravelVerticalCostPerPx();
     }

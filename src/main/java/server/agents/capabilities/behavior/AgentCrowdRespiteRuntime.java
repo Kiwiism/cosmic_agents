@@ -5,6 +5,7 @@ import config.YamlConfig;
 import constants.id.ItemId;
 import server.agents.behavior.AgentBehaviorPolicyProfile;
 import server.agents.behavior.AgentBehaviorRuntime;
+import server.agents.behavior.AgentBehaviorFeatureProfile;
 import server.agents.capabilities.movement.AgentChairService;
 import server.agents.capabilities.movement.AgentMovementTickCoordinator;
 import server.agents.capabilities.movement.fidget.AgentFidgetMode;
@@ -41,7 +42,7 @@ public final class AgentCrowdRespiteRuntime {
     public static boolean tick(AgentRuntimeEntry entry, Character agent, long nowMs, boolean runAiTick) {
         AgentCrowdRespiteState state = entry.capabilityStates().require(AgentCrowdRespiteState.STATE_KEY);
         boolean eligible = AgentBehaviorRuntime.enabled(entry)
-                && config.AgentYamlConfig.config.agent.AGENT_MAP_CROWD_RESPITE_ENABLED
+                && AgentBehaviorFeatureProfile.current().enabled()
                 && AgentModeStateRuntime.grinding(entry) && agent.getHp() > 0;
         if (!eligible) {
             if (state.active()) finish(entry, agent, state, nowMs);

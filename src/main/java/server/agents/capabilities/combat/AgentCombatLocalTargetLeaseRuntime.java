@@ -11,14 +11,13 @@ import server.life.Monster;
 
 import java.awt.Point;
 
-/** Integration boundary for the optional local-target lease policy. */
+/** Integration boundary for the local-target lease policy. */
 final class AgentCombatLocalTargetLeaseRuntime {
     private AgentCombatLocalTargetLeaseRuntime() {
     }
 
     static void observePosition(AgentRuntimeEntry entry, Character agent, Point position, long nowMs) {
-        if (!AgentCombatPolicyConfig.localTargetLeaseEnabled()
-                || entry == null || agent == null || agent.getMap() == null || position == null) {
+        if (entry == null || agent == null || agent.getMap() == null || position == null) {
             return;
         }
         AgentNavigationGraph graph = AgentNavigationGraphService.peekBestGraph(
@@ -34,7 +33,7 @@ final class AgentCombatLocalTargetLeaseRuntime {
                                           Character agent,
                                           boolean hasSuitableLocalObjective,
                                           long nowMs) {
-        if (!AgentCombatPolicyConfig.localTargetLeaseEnabled() || entry == null || agent == null) {
+        if (entry == null || agent == null) {
             return true;
         }
         observePosition(entry, agent, agent.getPosition(), nowMs);
@@ -51,7 +50,7 @@ final class AgentCombatLocalTargetLeaseRuntime {
     }
 
     static void beganMapWideTravel(AgentRuntimeEntry entry, Character agent, int targetRegionId) {
-        if (AgentCombatPolicyConfig.localTargetLeaseEnabled() && entry != null && agent != null) {
+        if (entry != null && agent != null) {
             state(entry).beginMapWideTravel(
                     agent.getMapId(), objectiveId(entry), targetRegionId,
                     System.currentTimeMillis(), AgentCombatPolicyConfig.localTargetLeaseMs());
@@ -59,7 +58,7 @@ final class AgentCombatLocalTargetLeaseRuntime {
     }
 
     static Monster retainedTravelTarget(AgentRuntimeEntry entry, Character agent, long nowMs) {
-        if (!AgentCombatPolicyConfig.localTargetLeaseEnabled() || entry == null || agent == null) {
+        if (entry == null || agent == null) {
             return null;
         }
         AgentCombatLocalTargetLeaseState.Snapshot snapshot = state(entry).snapshot(nowMs);
@@ -76,7 +75,7 @@ final class AgentCombatLocalTargetLeaseRuntime {
 
     static void recordKill(AgentRuntimeEntry entry, int mapId, String objectiveId,
                            boolean eligibleLocalKill, long nowMs) {
-        if (AgentCombatPolicyConfig.localTargetLeaseEnabled() && entry != null && eligibleLocalKill) {
+        if (entry != null && eligibleLocalKill) {
             state(entry).recordLocalKill(mapId, objectiveId, nowMs);
         }
     }

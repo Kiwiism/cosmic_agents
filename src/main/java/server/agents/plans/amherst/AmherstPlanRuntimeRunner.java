@@ -8,7 +8,6 @@ import server.agents.capabilities.runtime.AgentCapabilityJournalEventType;
 import server.agents.capabilities.runtime.AgentCapabilityReasonCode;
 import server.agents.capabilities.runtime.AgentCapabilityResult;
 import server.agents.capabilities.runtime.AgentCapabilityRuntime;
-import server.agents.capabilities.movement.AgentMovementRecoveryService;
 import server.agents.capabilities.objective.AgentObjectiveProgressWatchdog;
 import server.agents.capabilities.objective.AgentObjectiveRecoveryPolicy;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -519,10 +518,9 @@ public final class AmherstPlanRuntimeRunner {
                     agent.getName(), agent.getMapId(), objectiveId, evaluation.stalledMs());
             return true;
         }
-        if (evaluation.action() == AgentObjectiveProgressWatchdog.Action.NUDGE) {
-            AgentMovementRecoveryService.nudgeForObjectiveReplan(entry);
+        if (evaluation.action() == AgentObjectiveProgressWatchdog.Action.STALLED) {
             publish(state, "No objective progress for " + evaluation.stalledMs()
-                    + " ms; cleared stale movement so navigation can replan.");
+                    + " ms; waiting for bounded objective recovery.");
         }
         return false;
     }
@@ -561,7 +559,6 @@ public final class AmherstPlanRuntimeRunner {
             return false;
         }
         state.silentRecoveryNarrationObjectiveIds.add(objective.objectiveId());
-        AgentMovementRecoveryService.nudgeForObjectiveReplan(entry);
         if (dependencySafeDeferral || declaredEmptyStage) {
             state.objectiveDeferralStages.put(objective.objectiveId(), nextDeferralStage);
         }

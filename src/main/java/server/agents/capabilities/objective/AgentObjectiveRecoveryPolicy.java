@@ -3,7 +3,7 @@ package server.agents.capabilities.objective;
 import config.YamlConfig;
 
 public record AgentObjectiveRecoveryPolicy(
-        long nudgeAfterMs,
+        long stallNoticeAfterMs,
         long recoverAfterMs,
         int maxAutomaticRecoveries,
         long recoveryDelayMs) {
@@ -15,16 +15,16 @@ public record AgentObjectiveRecoveryPolicy(
             "server.agents.capabilities.objective.AgentObjectiveRecoveryPolicy.COMBAT_STALL_RECOVERY_MAX_MS");
 
     public AgentObjectiveRecoveryPolicy {
-        nudgeAfterMs = Math.max(0L, nudgeAfterMs);
+        stallNoticeAfterMs = Math.max(0L, stallNoticeAfterMs);
         recoverAfterMs = recoverAfterMs <= 0L
-                ? 0L : Math.max(nudgeAfterMs, recoverAfterMs);
+                ? 0L : Math.max(stallNoticeAfterMs, recoverAfterMs);
         maxAutomaticRecoveries = Math.max(0, maxAutomaticRecoveries);
         recoveryDelayMs = Math.max(0L, recoveryDelayMs);
     }
 
     public static AgentObjectiveRecoveryPolicy configured() {
         return new AgentObjectiveRecoveryPolicy(
-                config.AgentYamlConfig.config.agent.AGENT_OBJECTIVE_NUDGE_MS,
+                config.AgentYamlConfig.config.agent.AGENT_OBJECTIVE_STALL_NOTICE_MS,
                 config.AgentYamlConfig.config.agent.AGENT_OBJECTIVE_STALL_RECOVERY_MS,
                 config.AgentYamlConfig.config.agent.AGENT_OBJECTIVE_AUTO_RECOVERY_ATTEMPTS,
                 config.AgentYamlConfig.config.agent.AGENT_OBJECTIVE_RECOVERY_DELAY_MS);
@@ -40,6 +40,6 @@ public record AgentObjectiveRecoveryPolicy(
         }
         long combatRecoveryMs = Math.max(recoverAfterMs, crowdAdjustedRecoveryMs);
         return new AgentObjectiveRecoveryPolicy(
-                nudgeAfterMs, combatRecoveryMs, maxAutomaticRecoveries, recoveryDelayMs);
+                stallNoticeAfterMs, combatRecoveryMs, maxAutomaticRecoveries, recoveryDelayMs);
     }
 }

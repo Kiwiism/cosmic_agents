@@ -23,7 +23,7 @@ public final class AgentCombatAoeRepositionRuntime {
         int aoeSkillId = entry == null ? 0 : AgentCombatSkillCacheStateRuntime.aoeSkillId(entry);
         int aoeSkillMobs = entry == null ? 0 : AgentCombatSkillCacheStateRuntime.aoeSkillMobs(entry);
         if (!AgentCombatScoringPolicy.shouldConsiderAoeReposition(
-                config.AOE_REPOSITION_ENABLED,
+                config.AOE_REPOSITION_MODE.enabled(),
                 entry != null && bot != null,
                 primaryTarget != null,
                 hasMultiMobAoeSkill,

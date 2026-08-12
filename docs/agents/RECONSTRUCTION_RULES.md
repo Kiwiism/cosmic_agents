@@ -763,7 +763,7 @@ Recent reconstruction notes:
 - Movement execution compatibility wrappers were removed from
   `BotMovementManager`. Movement and navigation tests now call
   `AgentAirborneMovementService`, `AgentClimbMovementService`,
-  `AgentGroundMovementRuntimeService`, and `AgentMovementRecoveryService`
+  `AgentGroundMovementRuntimeService`, and `AgentStuckDetectionService`
   directly; `BotMovementManager` remains only as a temporary physics-config
   binding shell until `BotPhysicsEngine` config ownership is migrated.
 - The temporary `BotMovementManager` physics-config shell was deleted after
@@ -4578,10 +4578,9 @@ Recent reconstruction notes:
   move-target runtime uses `AgentMovementProfileService` for profile refresh.
   These paths no longer depend on `BotMovementManager` for config/profile
   access.
-- Stuck recovery jump action now lives in `AgentMovementRecoveryService`; stuck
-  detection runtime no longer imports `BotMovementManager`. The same random
-  left/right ground jump, navigation-state clear, five-second cooldown, and
-  movement broadcast are preserved.
+- The former stuck recovery jump was later retired. `AgentStuckDetectionService`
+  now records and publishes bounded stall evidence without injecting random
+  movement or clearing navigation state.
 - Swim phase runtime now enters `AgentSwimMovementService`; the Agent service
   owns swim timer ticking, swim intent calculation, swim physics dispatch, and
   movement broadcast. `BotMovementManager.tickSwimming` remains a temporary
@@ -6060,9 +6059,8 @@ Current physics correction:
   refresh, move-target lookup, unstuck config, and stop-distance behavior remain
   unchanged.
 - Stuck detection runtime now accepts `AgentRuntimeEntry`; movement timers,
-  stuck progress checks, cooldown updates, and recovery jump behavior remain
-  unchanged while the temporary recovery cast is isolated in
-  `AgentMovementRecoveryService`.
+  stuck progress checks and cooldown updates remain Agent-owned; recovery jumps
+  and their temporary compatibility cast were later removed.
 - Recovery teleport runtime now accepts `AgentRuntimeEntry`; ground lookup,
   teleport pose, reset-after-teleport, movement broadcast, teleport distance,
   out-of-bounds distance, and grind-party multiplier behavior remain unchanged.

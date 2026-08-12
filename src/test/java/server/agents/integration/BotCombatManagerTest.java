@@ -61,6 +61,7 @@ import org.mockito.ArgumentCaptor;
 import server.StatEffect;
 import server.agents.capabilities.combat.AgentCombatActionStateRuntime;
 import server.agents.capabilities.combat.AgentCombatAoeRepositionRuntime;
+import server.agents.capabilities.combat.AgentCombatAoeRepositionMode;
 import server.agents.capabilities.combat.AgentCombatAttackRuntime;
 import server.agents.capabilities.combat.AgentCombatBuffStateRuntime;
 import server.agents.capabilities.combat.AgentCombatBuffRuntime;
@@ -875,8 +876,8 @@ class BotCombatManagerTest {
         AgentCombatSkillCacheStateRuntime.setAoeSkill(entry, slashBlast.getId(), AgentCombatSkillCacheStateRuntime.aoeSkillMobs(entry));
         AgentCombatSkillCacheStateRuntime.setAoeSkill(entry, AgentCombatSkillCacheStateRuntime.aoeSkillId(entry), 6);
 
-        boolean original = AgentCombatConfig.cfg.AOE_REPOSITION_ENABLED;
-        AgentCombatConfig.cfg.AOE_REPOSITION_ENABLED = false;
+        AgentCombatAoeRepositionMode original = AgentCombatConfig.cfg.AOE_REPOSITION_MODE;
+        AgentCombatConfig.cfg.AOE_REPOSITION_MODE = AgentCombatAoeRepositionMode.OFF;
         try (MockedStatic<SkillFactory> skillFactory = Mockito.mockStatic(SkillFactory.class)) {
             skillFactory.when(() -> SkillFactory.getSkill(powerStrike.getId())).thenReturn(powerStrike);
             skillFactory.when(() -> SkillFactory.getSkill(slashBlast.getId())).thenReturn(slashBlast);
@@ -884,7 +885,7 @@ class BotCombatManagerTest {
             AgentAttackPlan fireNow = AgentCombatPlanRuntime.planAttack(entry, bot, primary, AgentCombatConfig.cfg);
             assertNull(AgentCombatAoeRepositionRuntime.aoeRepositionTarget(entry, bot, primary, fireNow, AgentCombatConfig.cfg));
         } finally {
-            AgentCombatConfig.cfg.AOE_REPOSITION_ENABLED = original;
+            AgentCombatConfig.cfg.AOE_REPOSITION_MODE = original;
         }
     }
 
@@ -1300,13 +1301,13 @@ class BotCombatManagerTest {
                 0, 0, 1, new Rectangle(100, 150, 80, 70),
                 List.of(target), AgentAttackRoute.CLOSE,
                 4, 1, 1, 0, 4, 300, 600, null);
-        boolean original = AgentCombatConfig.cfg.AOE_REPOSITION_ENABLED;
-        AgentCombatConfig.cfg.AOE_REPOSITION_ENABLED = false;
+        AgentCombatAoeRepositionMode original = AgentCombatConfig.cfg.AOE_REPOSITION_MODE;
+        AgentCombatConfig.cfg.AOE_REPOSITION_MODE = AgentCombatAoeRepositionMode.OFF;
         try {
             assertNull(AgentCombatAoeRepositionRuntime.aoeRepositionTarget(
                     entry, bot, target, fireNow, AgentCombatConfig.cfg));
         } finally {
-            AgentCombatConfig.cfg.AOE_REPOSITION_ENABLED = original;
+            AgentCombatConfig.cfg.AOE_REPOSITION_MODE = original;
         }
     }
 

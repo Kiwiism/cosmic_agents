@@ -54,12 +54,12 @@ class AgentCombatRouteCompletenessTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Character agent = mock(Character.class);
 
-        assertFalse(AgentCombatRouteService.firstEdgeExecutable(
+        assertFalse(AgentNavigationPathService.firstEdgeExecutable(
                 graph(invalid), entry, agent,
                 1, new Point(0, 100), complete(invalid), 1_000));
-        assertEquals(UNREACHABLE, AgentCombatRouteService.pathCost(
+        assertEquals(UNREACHABLE, AgentNavigationPathService.reliableRouteCost(
                 graph(invalid), null, new Point(0, 100), 1,
-                new Point(200, 100), 2, AgentMovementProfile.base(),
+                new Point(200, 100), 2, 0L,
                 entry, agent, UNREACHABLE));
     }
 
@@ -73,12 +73,12 @@ class AgentCombatRouteCompletenessTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Character agent = mock(Character.class);
 
-        assertTrue(AgentCombatRouteService.firstEdgeExecutable(
+        assertTrue(AgentNavigationPathService.firstEdgeExecutable(
                 graph(valid), entry, agent,
                 1, new Point(0, 100), complete(valid), 1_000));
-        assertTrue(AgentCombatRouteService.pathCost(
+        assertTrue(AgentNavigationPathService.reliableRouteCost(
                 graph(valid), null, new Point(0, 100), 1,
-                new Point(200, 100), 2, AgentMovementProfile.base(),
+                new Point(200, 100), 2, 0L,
                 entry, agent, UNREACHABLE) < UNREACHABLE);
     }
 

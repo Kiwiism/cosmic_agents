@@ -13,6 +13,7 @@ import server.agents.profiles.AgentBehaviorProfile;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.behavior.AgentBehaviorPolicyProfile;
 import server.agents.behavior.AgentBehaviorRuntime;
+import server.agents.behavior.AgentBehaviorFeatureProfile;
 
 /** Applies one deterministic, run-scoped realism preset to a cohort Agent. */
 public final class MapleIslandCohortRealismService {
@@ -69,7 +70,7 @@ public final class MapleIslandCohortRealismService {
 
     private static void configureFull(AgentRuntimeEntry entry, long seed) {
         AgentBehaviorPolicyProfile behaviorPolicy = AgentBehaviorRuntime.enabled(entry)
-                && config.AgentYamlConfig.config.agent.AGENT_NAVIGATION_BEHAVIOR_ENABLED
+                && AgentBehaviorFeatureProfile.current().enabled()
                 ? AgentBehaviorRuntime.policy(entry) : null;
         double routeStretch = behaviorPolicy == null
                 ? FULL_MAX_ROUTE_STRETCH : behaviorPolicy.navigation().maxRouteStretch();

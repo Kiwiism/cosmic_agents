@@ -1,35 +1,43 @@
 package server.agents.capabilities.navigation;
 
-import config.AgentTuning;
-
-/** Configuration for optional per-Agent edge validation, suppression, and route costs. */
+/** Configuration for per-Agent edge observation and reliability-aware routing. */
 public final class AgentNavigationReliabilityConfig {
-    private static final String PREFIX =
+    private static final String TUNING_PREFIX =
             "server.agents.capabilities.navigation.AgentNavigationReliabilityConfig.";
+    private static final AgentNavigationReliabilityMode ROUTING_MODE =
+            AgentNavigationReliabilityMode.parse(
+                    config.AgentTuning.stringValue(
+                            "server.agents.capabilities.navigation.AgentNavigationReliabilityConfig.ROUTING_MODE"));
 
     private AgentNavigationReliabilityConfig() {
     }
 
-    public static boolean edgeValidationEnabled() { return bool("EDGE_VALIDATION_ENABLED"); }
-    public static boolean edgeSuppressionEnabled() { return bool("EDGE_SUPPRESSION_ENABLED"); }
-    public static boolean routePenaltiesEnabled() { return bool("ROUTE_PENALTIES_ENABLED"); }
-    public static int failureThreshold() { return integer("FAILURE_THRESHOLD"); }
-    public static long suppressionMs() { return longValue("SUPPRESSION_MS"); }
-    public static long failureRetentionMs() { return longValue("FAILURE_RETENTION_MS"); }
-    public static int failurePenaltyMs() { return integer("FAILURE_PENALTY_MS"); }
-    public static int maxEdgePenaltyMs() { return integer("MAX_EDGE_PENALTY_MS"); }
-    public static int maxTrackedEdges() { return integer("MAX_TRACKED_EDGES"); }
-    public static long attemptTimeoutMs() { return longValue("ATTEMPT_TIMEOUT_MS"); }
-    public static int progressTolerancePx() { return integer("PROGRESS_TOLERANCE_PX"); }
-    public static int launchTolerancePx() { return integer("LAUNCH_TOLERANCE_PX"); }
-    public static int landingTolerancePx() { return integer("LANDING_TOLERANCE_PX"); }
-    public static int attachmentTolerancePx() { return integer("ATTACHMENT_TOLERANCE_PX"); }
+    public static AgentNavigationReliabilityMode routingMode() { return ROUTING_MODE; }
+    public static int failureThreshold() { return tuningInt("FAILURE_THRESHOLD"); }
+    public static long suppressionMs() { return tuningLong("SUPPRESSION_MS"); }
+    public static long failureRetentionMs() { return tuningLong("FAILURE_RETENTION_MS"); }
+    public static int failurePenaltyMs() { return tuningInt("FAILURE_PENALTY_MS"); }
+    public static int maxEdgePenaltyMs() { return tuningInt("MAX_EDGE_PENALTY_MS"); }
+    public static int maxTrackedEdges() { return tuningInt("MAX_TRACKED_EDGES"); }
+    public static long attemptTimeoutMs() { return tuningLong("ATTEMPT_TIMEOUT_MS"); }
+    public static int progressTolerancePx() { return tuningInt("PROGRESS_TOLERANCE_PX"); }
+    public static int launchTolerancePx() { return tuningInt("LAUNCH_TOLERANCE_PX"); }
+    public static int landingTolerancePx() { return tuningInt("LANDING_TOLERANCE_PX"); }
+    public static int attachmentTolerancePx() { return tuningInt("ATTACHMENT_TOLERANCE_PX"); }
 
     public static boolean tracksReliability() {
-        return edgeSuppressionEnabled() || routePenaltiesEnabled();
+        return true;
     }
 
-    private static boolean bool(String key) { return AgentTuning.booleanValue(PREFIX + key); }
-    private static int integer(String key) { return AgentTuning.intValue(PREFIX + key); }
-    private static long longValue(String key) { return AgentTuning.longValue(PREFIX + key); }
+    public static boolean influencesRouting() {
+        return ROUTING_MODE == AgentNavigationReliabilityMode.ACTIVE;
+    }
+
+    private static int tuningInt(String key) {
+        return config.AgentTuning.intValue(TUNING_PREFIX + key);
+    }
+
+    private static long tuningLong(String key) {
+        return config.AgentTuning.longValue(TUNING_PREFIX + key);
+    }
 }

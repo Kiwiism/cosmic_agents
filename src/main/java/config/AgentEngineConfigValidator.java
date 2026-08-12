@@ -68,6 +68,9 @@ final class AgentEngineConfigValidator {
             if ("true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value)) {
                 continue;
             }
+            if (validEnumTuning(key, value)) {
+                continue;
+            }
             final double numeric;
             try {
                 numeric = Double.parseDouble(value);
@@ -97,6 +100,22 @@ final class AgentEngineConfigValidator {
                                 + " exceeds " + maxKey);
             }
         }
+    }
+
+    private static boolean validEnumTuning(String key, String value) {
+        if (key.endsWith("AgentNavigationReliabilityConfig.ROUTING_MODE")) {
+            return "OBSERVE".equalsIgnoreCase(value) || "ACTIVE".equalsIgnoreCase(value);
+        }
+        if (key.endsWith("AgentMovementSkillConfig.TELEPORT_MODE")
+                || key.endsWith("AgentMovementSkillConfig.FLASH_JUMP_MODE")) {
+            return "OFF".equalsIgnoreCase(value)
+                    || "SHADOW".equalsIgnoreCase(value)
+                    || "ACTIVE".equalsIgnoreCase(value);
+        }
+        if (key.endsWith("AgentCombatConfig.AOE_REPOSITION_MODE")) {
+            return "OFF".equalsIgnoreCase(value) || "ACTIVE".equalsIgnoreCase(value);
+        }
+        return false;
     }
 
     private static String pairedMaximumKey(String key) {

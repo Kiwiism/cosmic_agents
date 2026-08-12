@@ -5,6 +5,8 @@ import java.util.Locale;
 /** The single authoritative Agent-to-monster reaction mode. */
 public enum AgentMobReactionMode {
     OFF,
+    /** @deprecated Compatibility-only reaction path; use PHYSICS. */
+    @Deprecated(forRemoval = true)
     SYNTHETIC,
     PHYSICS;
 

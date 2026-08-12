@@ -136,7 +136,6 @@ Default behavior tuning:
 | `MOB_PHYSICS_KNOCKBACK_PERCENT` | 40 | Scale for the translated hit force. |
 | `MOB_PHYSICS_FLINCH_RECOVERY_MS` | 250 | Stationary recovery after knockback. Hits cannot add, restart, or reverse knockback until recovery finishes. |
 | `MOB_PHYSICS_POST_FLINCH_CHASE_RAMP_MS` | 0 | Disabled after worsening pull-in interpolation. Nonzero values linearly restore chase force after recovery. |
-| `MOB_PHYSICS_HIT1_ENABLED` | false | Sends one experimental `hit1` activity at flinch entry; disabled because v83 did not render it in testing. |
 | `MOB_PHYSICS_IMPACT_DELAY_PERCENT` | 100 | Retains the full WZ attack-frame hit delay. |
 | `MOB_PHYSICS_IMPACT_DELAY_OFFSET_MS` | 0 | Signed adjustment after scaling the hit delay. |
 

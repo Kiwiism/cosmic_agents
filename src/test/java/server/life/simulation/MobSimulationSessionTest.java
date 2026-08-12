@@ -58,45 +58,12 @@ class MobSimulationSessionTest {
     }
 
     @Test
-    void optionalHit1IsOneShotAndWalkRestartsAfterRecovery() {
-        int originalRecovery = AgentCombatConfig.cfg.MOB_PHYSICS_FLINCH_RECOVERY_MS;
-        boolean originalHit1 = AgentCombatConfig.cfg.MOB_PHYSICS_HIT1_ENABLED;
-        try {
-            AgentCombatConfig.cfg.MOB_PHYSICS_FLINCH_RECOVERY_MS = 8;
-            AgentCombatConfig.cfg.MOB_PHYSICS_HIT1_ENABLED = true;
-            Fixture fixture = fixture(new MobPhysicsProfile(0.08, 0.05, 1,
-                    true, false, false, false));
-            fixture.session.acceptHit(fixture.agent, 10, 0, 1, 0L);
-
-            fixture.session.advance(8_000_000L);
-            assertEquals(0, fixture.session.rawActivityForPublication(0, 8_000_000L));
-            for (int step = 2; step <= 31; step++) {
-                fixture.session.advance(step * 8_000_000L);
-            }
-
-            assertEquals(MobMotionState.FLINCH, fixture.session.motion());
-            assertEquals(8, fixture.session.rawActivityForPublication(0, 248_000_000L));
-            assertEquals(-1, fixture.session.rawActivityForPublication(0, 249_000_000L));
-
-            fixture.session.advance(256_000_000L);
-            assertEquals(MobMotionState.CHASE, fixture.session.motion());
-            assertEquals(0, fixture.session.rawActivityForPublication(0, 256_000_000L),
-                    "walk activity must restart immediately after experimental hit1");
-        } finally {
-            AgentCombatConfig.cfg.MOB_PHYSICS_FLINCH_RECOVERY_MS = originalRecovery;
-            AgentCombatConfig.cfg.MOB_PHYSICS_HIT1_ENABLED = originalHit1;
-        }
-    }
-
-    @Test
     void chaseForceRampsUpAfterFlinchRecovery() {
         int originalRecovery = AgentCombatConfig.cfg.MOB_PHYSICS_FLINCH_RECOVERY_MS;
         int originalRamp = AgentCombatConfig.cfg.MOB_PHYSICS_POST_FLINCH_CHASE_RAMP_MS;
-        boolean originalHit1 = AgentCombatConfig.cfg.MOB_PHYSICS_HIT1_ENABLED;
         try {
             AgentCombatConfig.cfg.MOB_PHYSICS_FLINCH_RECOVERY_MS = 8;
             AgentCombatConfig.cfg.MOB_PHYSICS_POST_FLINCH_CHASE_RAMP_MS = 24;
-            AgentCombatConfig.cfg.MOB_PHYSICS_HIT1_ENABLED = false;
             Fixture fixture = fixture(new MobPhysicsProfile(0.08, 0.05, 1,
                     true, false, false, false));
             fixture.session.acceptHit(fixture.agent, 10, 0, 1, 0L);
@@ -112,7 +79,6 @@ class MobSimulationSessionTest {
         } finally {
             AgentCombatConfig.cfg.MOB_PHYSICS_FLINCH_RECOVERY_MS = originalRecovery;
             AgentCombatConfig.cfg.MOB_PHYSICS_POST_FLINCH_CHASE_RAMP_MS = originalRamp;
-            AgentCombatConfig.cfg.MOB_PHYSICS_HIT1_ENABLED = originalHit1;
         }
     }
 

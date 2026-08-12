@@ -25,7 +25,8 @@ class AgentCombatScoringPolicyTest {
         long expected = Math.round(100 * 1000.0 / AgentMovementProfile.base().walkVelocityPxs()) + 20 * 4L;
 
         assertEquals(expected, AgentCombatScoringPolicy.estimateLocalTravelCostMs(
-                new Point(100, 100), new Point(200, 120), AgentMovementProfile.base()));
+                new Point(100, 100), new Point(200, 120),
+                AgentMovementProfile.base().walkVelocityPxs()));
     }
 
     @Test

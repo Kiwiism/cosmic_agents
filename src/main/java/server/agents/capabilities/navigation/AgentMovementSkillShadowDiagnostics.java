@@ -26,11 +26,10 @@ public final class AgentMovementSkillShadowDiagnostics {
                                int targetRegionId,
                                Point targetPosition,
                                AgentNavigationGraph.Edge liveEdge) {
-        if (!AgentMovementSkillConfig.SHADOW_DIAGNOSTICS_ENABLED
-                || graph == null || entry == null || agent == null
+        if (graph == null || entry == null || agent == null
                 || startPosition == null || targetPosition == null
                 || startRegionId < 0 || targetRegionId < 0
-                || (!hasTeleport(agent) && !hasFlashJump(agent))) {
+                || !AgentMovementSkillPolicy.shouldCompareShadowMovementSkill(agent)) {
             return;
         }
 
@@ -58,13 +57,5 @@ public final class AgentMovementSkillShadowDiagnostics {
                 liveEdge != null ? liveEdge.type : "none",
                 firstSkillEdge.type, firstSkillEdge.fromRegionId, firstSkillEdge.toRegionId,
                 shadowPath.size());
-    }
-
-    private static boolean hasTeleport(Character agent) {
-        return AgentMovementSkillPolicy.skillId(agent, AgentNavigationGraph.EdgeType.TELEPORT) != 0;
-    }
-
-    private static boolean hasFlashJump(Character agent) {
-        return AgentMovementSkillPolicy.skillId(agent, AgentNavigationGraph.EdgeType.FLASH_JUMP) != 0;
     }
 }

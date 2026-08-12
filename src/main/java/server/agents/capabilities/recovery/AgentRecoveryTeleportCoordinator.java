@@ -21,46 +21,16 @@ public final class AgentRecoveryTeleportCoordinator {
                                                   Point targetPosition,
                                                   int teleportDistance,
                                                   int outOfBoundsTeleportDistance) {
-        return recoverTeleportDistance(entry, agent, targetPosition, teleportDistance,
-                outOfBoundsTeleportDistance, System.currentTimeMillis(),
-                AgentNavigationRecoveryPolicy.mayPerformSoftTeleport());
-    }
-
-    static boolean recoverTeleportDistance(AgentRuntimeEntry entry,
-                                           Character agent,
-                                           Point targetPosition,
-                                           int teleportDistance,
-                                           int outOfBoundsTeleportDistance,
-                                           long nowMs) {
-        return recoverTeleportDistance(entry, agent, targetPosition, teleportDistance,
-                outOfBoundsTeleportDistance, nowMs,
-                AgentNavigationRecoveryPolicy.mayPerformSoftTeleport());
-    }
-
-    static boolean recoverTeleportDistance(AgentRuntimeEntry entry,
-                                           Character agent,
-                                           Point targetPosition,
-                                           int teleportDistance,
-                                           int outOfBoundsTeleportDistance,
-                                           long nowMs,
-                                           boolean softTeleportEnabled) {
-        if (!AgentRecoveryTeleportService.isOutsideKnownMapBounds(agent)
-                && (!softTeleportEnabled
-                || !AgentNavigationRecoveryRuntime.tryAcquire(entry, "distance-teleport", nowMs)
-                || !AgentNavigationRecoveryRuntime.teleportEscalationReady(entry, nowMs))) {
+        if (!AgentRecoveryTeleportService.isOutsideKnownMapBounds(agent)) {
             return false;
         }
-        boolean recovered = AgentRecoveryTeleportService.recoverTeleportDistance(
+        return AgentRecoveryTeleportService.recoverTeleportDistance(
                 entry,
                 agent,
                 targetPosition,
                 teleportDistance,
                 outOfBoundsTeleportDistance,
                 hooks());
-        if (recovered) {
-            AgentNavigationRecoveryRuntime.recordProgress(entry);
-        }
-        return recovered;
     }
 
     public static boolean recoverGrindPartyTeleportDistance(AgentRuntimeEntry entry,
@@ -69,14 +39,10 @@ public final class AgentRecoveryTeleportCoordinator {
                                                             int teleportDistance,
                                                             int outOfBoundsTeleportDistance,
                                                             int multiplier) {
-        long nowMs = System.currentTimeMillis();
-        if (!AgentRecoveryTeleportService.isOutsideKnownMapBounds(agent)
-                && (!AgentNavigationRecoveryPolicy.mayPerformSoftTeleport()
-                || !AgentNavigationRecoveryRuntime.tryAcquire(entry, "party-teleport", nowMs)
-                || !AgentNavigationRecoveryRuntime.teleportEscalationReady(entry, nowMs))) {
+        if (!AgentRecoveryTeleportService.isOutsideKnownMapBounds(agent)) {
             return false;
         }
-        boolean recovered = AgentRecoveryTeleportService.recoverGrindPartyTeleportDistance(
+        return AgentRecoveryTeleportService.recoverGrindPartyTeleportDistance(
                 entry,
                 agent,
                 partyAnchor,
@@ -84,10 +50,6 @@ public final class AgentRecoveryTeleportCoordinator {
                 outOfBoundsTeleportDistance,
                 multiplier,
                 hooks());
-        if (recovered) {
-            AgentNavigationRecoveryRuntime.recordProgress(entry);
-        }
-        return recovered;
     }
 
     private static AgentRecoveryTeleportService.RecoveryHooks hooks() {

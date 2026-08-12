@@ -1,7 +1,6 @@
 package server.agents.capabilities.movement;
 
 import client.Character;
-import server.agents.capabilities.recovery.AgentNavigationRecoveryPolicy;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**
@@ -14,18 +13,13 @@ public final class AgentStandaloneMoveTargetCoordinator {
     public static void tickStandaloneMoveTarget(AgentRuntimeEntry entry,
                                                 Character agent,
                                                 boolean runAiTick) {
-        tickStandaloneMoveTarget(
-                entry,
-                agent,
-                runAiTick,
-                AgentNavigationRecoveryPolicy.mayPerformMovementRecovery(),
+        tickStandaloneMoveTarget(entry, agent, runAiTick,
                 AgentMovementPhysicsConfig.configuredStopDist());
     }
 
     public static void tickStandaloneMoveTarget(AgentRuntimeEntry entry,
                                                 Character agent,
                                                 boolean runAiTick,
-                                                boolean enableUnstuck,
                                                 int stopDistance) {
         AgentStandaloneMoveTargetTickService.tickStandaloneMoveTarget(
                 entry,
@@ -38,7 +32,6 @@ public final class AgentStandaloneMoveTargetCoordinator {
                                 moveEntry,
                                 targetPosition,
                                 moveRunAiTick,
-                                enableUnstuck,
                                 stopDistance)));
     }
 }

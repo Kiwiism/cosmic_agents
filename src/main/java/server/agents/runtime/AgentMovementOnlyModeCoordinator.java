@@ -80,7 +80,6 @@ public final class AgentMovementOnlyModeCoordinator {
                         entry,
                         target,
                         coreRunAiTick,
-                        config.enableUnstuck(),
                         config.stopDistance()));
     }
 
@@ -103,7 +102,6 @@ public final class AgentMovementOnlyModeCoordinator {
                              int outOfBoundsTeleportDistance,
                              int grindPartyTeleportDistanceMultiplier,
                              int followDistance,
-                             int stopDistance,
-                             boolean enableUnstuck) {
+                             int stopDistance) {
     }
 }

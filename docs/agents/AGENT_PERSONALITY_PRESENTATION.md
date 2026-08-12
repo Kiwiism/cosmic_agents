@@ -87,14 +87,14 @@ separate policy without coupling the durable identity to packets or movement.
 
 ## Configuration and testing
 
-The server flag is:
+The server profile is:
 
 ```yaml
-AGENT_PERSONALITY_PRESENTATION_ENABLED: true
+AGENT_PRESENTATION_PROFILE: STANDARD
 ```
 
-Both the flag and cohort realism mode `full` are required. `off` and `light`
-remain unchanged control modes. Disable the flag to retain the prior `full`
+Both the profile and cohort realism mode `full` are required. `off` and `light`
+remain unchanged control modes. Set the profile to `OFF` to retain the prior `full`
 cohort behavior without deleting durable assignments.
 
 Recommended comparison:

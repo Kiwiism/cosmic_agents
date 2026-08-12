@@ -1312,11 +1312,13 @@ public final class AgentNavigationGraphService {
                     anchorsByRegionId.getOrDefault(from.id, List.of()));
             for (Point anchor : anchors) {
                 throwIfBuildInterrupted();
-                if (server.agents.capabilities.movement.AgentMovementSkillConfig.TELEPORT_GRAPH_EDGES_ENABLED) {
+                if (server.agents.capabilities.movement.AgentMovementSkillConfig
+                        .TELEPORT_MODE.visibleToShadowRouting()) {
                     addTeleportEdges(map, from, regionsById, regionIdByFootholdId,
                             anchor, outgoing, edgeKeys);
                 }
-                if (server.agents.capabilities.movement.AgentMovementSkillConfig.FLASH_JUMP_GRAPH_EDGES_ENABLED) {
+                if (server.agents.capabilities.movement.AgentMovementSkillConfig
+                        .FLASH_JUMP_MODE.visibleToShadowRouting()) {
                     addFlashJumpEdges(map, from, regionsById, regionIdByFootholdId,
                             anchor, outgoing, edgeKeys, movementProfile);
                 }

@@ -6,7 +6,6 @@ import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementPoseService;
 import server.agents.capabilities.movement.AgentMovementTickCoordinator;
-import server.agents.capabilities.recovery.AgentNavigationRecoveryPolicy;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
@@ -22,12 +21,7 @@ public final class AgentAnchoredFarmCoordinator {
                                         Character agent,
                                         Point agentPosition,
                                         boolean runAiTick) {
-        tickAnchoredFarm(
-                entry,
-                agent,
-                agentPosition,
-                runAiTick,
-                AgentNavigationRecoveryPolicy.mayPerformMovementRecovery(),
+        tickAnchoredFarm(entry, agent, agentPosition, runAiTick,
                 AgentMovementPhysicsConfig.configuredStopDist());
     }
 
@@ -35,18 +29,16 @@ public final class AgentAnchoredFarmCoordinator {
                                         Character agent,
                                         Point agentPosition,
                                         boolean runAiTick,
-                                        boolean enableUnstuck,
                                         int stopDistance) {
         AgentAnchoredFarmTickService.tickAnchoredFarm(
                 entry,
                 agent,
                 agentPosition,
                 runAiTick,
-                hooks(enableUnstuck, stopDistance));
+                hooks(stopDistance));
     }
 
-    private static AgentAnchoredFarmTickService.AnchoredFarmHooks hooks(boolean enableUnstuck,
-                                                                        int stopDistance) {
+    private static AgentAnchoredFarmTickService.AnchoredFarmHooks hooks(int stopDistance) {
         return new AgentAnchoredFarmTickService.AnchoredFarmHooks(
                 (entry, agent, agentPosition, movementTargetPosition, moveWindowReferencePosition,
                  allowCombatMovement, allowJumpTowardTarget) -> {
@@ -71,7 +63,6 @@ public final class AgentAnchoredFarmCoordinator {
                         entry,
                         targetPosition,
                         runAiTick,
-                        enableUnstuck,
                         stopDistance));
     }
 }

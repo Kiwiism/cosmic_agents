@@ -21,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /** Supplies the mob hit reaction a headless Agent cannot produce through MOVE_LIFE. */
+@Deprecated(forRemoval = true)
 public final class AgentSyntheticMobReactionService {
     private static final int MAX_GROUND_Y_DELTA = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentSyntheticMobReactionService.MAX_GROUND_Y_DELTA");
     private static final int MOVEMENT_SETTLE_MS = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentSyntheticMobReactionService.MOVEMENT_SETTLE_MS");

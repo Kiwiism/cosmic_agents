@@ -273,8 +273,10 @@ class AgentPrimitiveCapabilityTest {
         when(fixture.gateway.alive(fixture.agent)).thenReturn(true);
         when(fixture.gateway.questProgress(fixture.agent, 1022, 1210102)).thenReturn(0);
         when(fixture.gateway.liveMonsterCount(fixture.agent, Set.of(1210102))).thenReturn(0);
-        when(fixture.gateway.configuredMonsterSpawnIds(fixture.agent))
-                .thenReturn(Set.of(100101, 120100, 1210102));
+        when(fixture.gateway.configuredMonsterSpawnCounts(fixture.agent))
+                .thenReturn(Map.of(100101, 5, 120100, 5, 1210102, 2));
+        when(fixture.gateway.liveMonsterCounts(fixture.agent))
+                .thenReturn(Map.of(100101, 6, 120100, 6, 1210102, 0));
         when(fixture.gateway.liveMonsterCount(fixture.agent, Set.of(100101, 120100))).thenReturn(12);
         AgentCombatCapability capability = new AgentCombatCapability(fixture.gateway);
 
@@ -293,8 +295,8 @@ class AgentPrimitiveCapabilityTest {
         when(fixture.gateway.alive(fixture.agent)).thenReturn(true);
         when(fixture.gateway.questProgress(fixture.agent, 1022, 1210102)).thenReturn(0);
         when(fixture.gateway.liveMonsterCount(fixture.agent, Set.of(1210102))).thenReturn(0);
-        when(fixture.gateway.configuredMonsterSpawnIds(fixture.agent))
-                .thenReturn(Set.of(100101, 120100));
+        when(fixture.gateway.configuredMonsterSpawnCounts(fixture.agent))
+                .thenReturn(Map.of(100101, 6, 120100, 6));
         AgentCombatCapability capability = new AgentCombatCapability(fixture.gateway);
 
         AgentCapabilityStep step = capability.tick(fixture.context(),

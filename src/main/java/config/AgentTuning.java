@@ -58,6 +58,10 @@ public final class AgentTuning {
                 "Agent tuning key '" + key + "' must be a valid boolean");
     }
 
+    public static String stringValue(String key) {
+        return required(key);
+    }
+
     public static Map<String, String> snapshot() {
         return Map.copyOf(AgentYamlConfig.config.tuning);
     }

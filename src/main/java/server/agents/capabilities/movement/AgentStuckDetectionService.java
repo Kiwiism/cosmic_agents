@@ -12,36 +12,30 @@ import java.awt.Point;
 import java.util.function.IntUnaryOperator;
 
 /**
- * Agent-owned stuck detection and unstuck trigger used by the movement tick tail.
+ * Agent-owned stuck observation used by the movement tick tail. It emits diagnostics only;
+ * navigation policy decides whether to replan or suppress an unreliable edge.
  */
 public final class AgentStuckDetectionService {
     private static final int STUCK_DRIFT_RADIUS_PX = config.AgentTuning.intValue("server.agents.capabilities.movement.AgentStuckDetectionService.STUCK_DRIFT_RADIUS_PX");
     private static final int GROUNDED_STUCK_THRESHOLD_MS = config.AgentTuning.intValue("server.agents.capabilities.movement.AgentStuckDetectionService.GROUNDED_STUCK_THRESHOLD_MS");
     private static final int SUSPENDED_STUCK_THRESHOLD_MS = config.AgentTuning.intValue("server.agents.capabilities.movement.AgentStuckDetectionService.SUSPENDED_STUCK_THRESHOLD_MS");
     private static final int GRAPH_WARMUP_STUCK_THRESHOLD_MS = config.AgentTuning.intValue("server.agents.capabilities.movement.AgentStuckDetectionService.GRAPH_WARMUP_STUCK_THRESHOLD_MS");
-
-    @FunctionalInterface
-    public interface UnstuckAction {
-        void tick(AgentRuntimeEntry entry);
-    }
+    private static final int STUCK_EVENT_COOLDOWN_MS = config.AgentTuning.intValue(
+            "server.agents.capabilities.movement.AgentStuckDetectionService.STUCK_EVENT_COOLDOWN_MS");
 
     public record StuckDetectionHooks(IntUnaryOperator tickDown,
-                                      UnstuckAction unstuckAction,
-                                      int movementTickMs,
-                                      boolean enableUnstuck) {
+                                      int movementTickMs) {
     }
 
     private AgentStuckDetectionService() {
     }
 
-    public static void tickStuckDetection(AgentRuntimeEntry entry, boolean enableUnstuck) {
+    public static void tickStuckDetection(AgentRuntimeEntry entry) {
         tickStuckDetection(
                 entry,
                 new StuckDetectionHooks(
                         AgentMovementTimers::tickDown,
-                        AgentMovementRecoveryService::tickUnstuck,
-                        AgentMovementPhysicsConfig.configuredMovementTickMs(),
-                        enableUnstuck));
+                        AgentMovementPhysicsConfig.configuredMovementTickMs()));
     }
 
     public static void tickStuckDetection(AgentRuntimeEntry entry, StuckDetectionHooks hooks) {
@@ -89,8 +83,7 @@ public final class AgentStuckDetectionService {
         int thresholdMs = AgentNavigationDebugStateRuntime.graphWarmupFallback(entry)
                 ? GRAPH_WARMUP_STUCK_THRESHOLD_MS
                 : suspended ? SUSPENDED_STUCK_THRESHOLD_MS : GROUNDED_STUCK_THRESHOLD_MS;
-        if (hooks.enableUnstuck()
-                && AgentMovementStuckStateRuntime.stuckForAtLeast(entry, thresholdMs)
+        if (AgentMovementStuckStateRuntime.stuckForAtLeast(entry, thresholdMs)
                 && !AgentMovementStuckStateRuntime.hasUnstuckCooldown(entry)) {
             int stuckMs = AgentMovementStuckStateRuntime.stuckMs(entry);
             AgentOperationalEventPublisher.publish(entry,
@@ -99,7 +92,7 @@ public final class AgentStuckDetectionService {
                             agentPosition.x, agentPosition.y, stuckMs, suspended, objectiveId),
                     AgentEventPriority.IMPORTANT);
             AgentMovementStuckStateRuntime.resetStuckProgress(entry);
-            hooks.unstuckAction().tick(entry);
+            AgentMovementStuckStateRuntime.setUnstuckCooldownMs(entry, STUCK_EVENT_COOLDOWN_MS);
         }
     }
 }

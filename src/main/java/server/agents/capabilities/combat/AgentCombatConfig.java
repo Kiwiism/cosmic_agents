@@ -103,6 +103,13 @@ public final class AgentCombatConfig {
                 throw new NumberFormatException(invalid.getMessage());
             }
         }
+        if (type == AgentCombatAoeRepositionMode.class) {
+            try {
+                return AgentCombatAoeRepositionMode.parse(v);
+            } catch (IllegalArgumentException invalid) {
+                throw new NumberFormatException(invalid.getMessage());
+            }
+        }
         throw new NumberFormatException(v);
     }
 
@@ -238,8 +245,6 @@ public final class AgentCombatConfig {
                 config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_FLINCH_RECOVERY_MS;
         public int MOB_PHYSICS_POST_FLINCH_CHASE_RAMP_MS =
                 config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_POST_FLINCH_CHASE_RAMP_MS;
-        public boolean MOB_PHYSICS_HIT1_ENABLED =
-                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_HIT1_ENABLED;
         public int MOB_PHYSICS_IMPACT_DELAY_PERCENT =
                 config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_IMPACT_DELAY_PERCENT;
         public int MOB_PHYSICS_IMPACT_DELAY_OFFSET_MS =
@@ -275,7 +280,9 @@ public final class AgentCombatConfig {
         // AoE repositioning: when the best fire-now plan is single-target but stepping into the
         // cluster centroid would let the AoE skill beat it by this DPS factor, defer the shot and
         // walk in. Bounded by distance/time so the bot never chases scattering mobs.
-        public boolean AOE_REPOSITION_ENABLED = config.AgentTuning.booleanValue("server.agents.capabilities.combat.AgentCombatConfig.AOE_REPOSITION_ENABLED");
+        public AgentCombatAoeRepositionMode AOE_REPOSITION_MODE = AgentCombatAoeRepositionMode.parse(
+                config.AgentTuning.stringValue(
+                        "server.agents.capabilities.combat.AgentCombatConfig.AOE_REPOSITION_MODE"));
         public boolean AOE_REPOSITION_DEBUG = config.AgentTuning.booleanValue("server.agents.capabilities.combat.AgentCombatConfig.AOE_REPOSITION_DEBUG");
         public double AOE_REPOSITION_DPS_FACTOR = config.AgentTuning.doubleValue("server.agents.capabilities.combat.AgentCombatConfig.AOE_REPOSITION_DPS_FACTOR");
         public int AOE_REPOSITION_MAX_DISTANCE_X = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentCombatConfig.AOE_REPOSITION_MAX_DISTANCE_X");

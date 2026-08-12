@@ -11,7 +11,7 @@
 # scheduler limits, and dependent coefficients must still be changed together and soak-tested.
 agent:
     # Mob reaction and server-side mob physics
-    # Values: OFF, SYNTHETIC, or PHYSICS. Recommended: PHYSICS for realistic observed maps; use SYNTHETIC only for compatibility testing and OFF only to disable Agent-driven mob reactions.
+    # Values: OFF, SYNTHETIC, or PHYSICS. Recommended: PHYSICS; SYNTHETIC is deprecated compatibility-only behavior pending removal.
     # Purpose: Chooses how monsters react to Agent attacks: PHYSICS uses full movement simulation, SYNTHETIC uses simplified reactions, and OFF disables Agent-driven monster reactions.
     # Technical: the Agent engine deployment configuration consumes this as a text. Domain: component-specific policy value; startup validation rejects missing, blank, or malformed values.
     AGENT_MOB_REACTION_MODE: PHYSICS
@@ -143,10 +143,6 @@ agent:
     # Purpose: Controls how long Agents remain in or wait for monster physics post flinch chase ramp. Higher values make that pause or state last longer; lower values make them continue sooner.
     # Technical: the Agent engine deployment configuration consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled.
     AGENT_MOB_PHYSICS_POST_FLINCH_CHASE_RAMP_MS: 0
-    # Values: true or false. Recommended: retain the tested baseline false unless deliberately enabling or disabling this isolated capability.
-    # Purpose: When enabled, Agents use monster physics hit1. When disabled, they skip it while their other capabilities continue normally.
-    # Technical: the Agent engine deployment configuration consumes this as a boolean. Domain: true or false. The disabled path must bypass only this feature and preserve the generic Agent lifecycle.
-    AGENT_MOB_PHYSICS_HIT1_ENABLED: false
     # Values: integer from 0 to 100 inclusive. Recommended: 75-100 for initial tuning around the tested baseline 100; change gradually and observe crowd/load effects.
     # Purpose: Controls how long Agents wait or remain in monster physics impact delay. Higher values make the pause or activity last longer; lower values make them move on sooner.
     # Technical: the Agent engine deployment configuration consumes this as an integer. Domain: percentage from 0 to 100 inclusive.
@@ -225,46 +221,14 @@ agent:
     AGENT_SOUTHPERRY_SHOWCASE_AGENT_NAME: AmherstRun
 
     # Personality and bounded combat/presentation variation
-    # Values: true or false. Recommended: retain the tested baseline true unless deliberately enabling or disabling this isolated capability.
-    # Purpose: When enabled, Agents use personality presentation. When disabled, they skip it while their other capabilities continue normally.
-    # Technical: the Agent engine deployment configuration consumes this as a boolean. Domain: true or false. The disabled path must bypass only this feature and preserve the generic Agent lifecycle.
-    AGENT_PERSONALITY_PRESENTATION_ENABLED: true
-    # Values: true or false. Recommended: retain the tested baseline true unless deliberately enabling or disabling this isolated capability.
-    # Purpose: When enabled, Agents use combat behavior. When disabled, they skip it while their other capabilities continue normally.
-    # Technical: the Agent engine deployment configuration consumes this as a boolean. Domain: true or false. The disabled path must bypass only this feature and preserve the generic Agent lifecycle.
-    AGENT_COMBAT_BEHAVIOR_ENABLED: true
-    # Values: true or false. Recommended: retain the tested baseline true unless deliberately enabling or disabling this isolated capability.
-    # Purpose: When enabled, Agents use response latency. When disabled, they skip it while their other capabilities continue normally.
-    # Technical: the Agent engine deployment configuration consumes this as a boolean. Domain: true or false. The disabled path must bypass only this feature and preserve the generic Agent lifecycle.
-    AGENT_RESPONSE_LATENCY_ENABLED: true
-    # Values: true or false. Recommended: retain the tested baseline true unless deliberately enabling or disabling this isolated capability.
-    # Purpose: When enabled, Agents use map crowd respite. When disabled, they skip it while their other capabilities continue normally.
-    # Technical: the Agent engine deployment configuration consumes this as a boolean. Domain: true or false. The disabled path must bypass only this feature and preserve the generic Agent lifecycle.
-    AGENT_MAP_CROWD_RESPITE_ENABLED: true
-    # Values: true or false. Recommended: retain the tested baseline true unless deliberately enabling or disabling this isolated capability.
-    # Purpose: When enabled, Agents use target claim policy. When disabled, they skip it while their other capabilities continue normally.
-    # Technical: the Agent engine deployment configuration consumes this as a boolean. Domain: true or false. The disabled path must bypass only this feature and preserve the generic Agent lifecycle.
-    AGENT_TARGET_CLAIM_POLICY_ENABLED: true
-    # Values: true or false. Recommended: retain the tested baseline true unless deliberately enabling or disabling this isolated capability.
-    # Purpose: When enabled, Agents use target variation. When disabled, they skip it while their other capabilities continue normally.
-    # Technical: the Agent engine deployment configuration consumes this as a boolean. Domain: true or false. The disabled path must bypass only this feature and preserve the generic Agent lifecycle.
-    AGENT_TARGET_VARIATION_ENABLED: true
-    # Values: true or false. Recommended: retain the tested baseline true unless deliberately enabling or disabling this isolated capability.
-    # Purpose: When enabled, Agents use platform anchor behavior. When disabled, they skip it while their other capabilities continue normally.
-    # Technical: the Agent engine deployment configuration consumes this as a boolean. Domain: true or false. The disabled path must bypass only this feature and preserve the generic Agent lifecycle.
-    AGENT_PLATFORM_ANCHOR_BEHAVIOR_ENABLED: true
-    # Values: true or false. Recommended: retain the tested baseline true unless deliberately enabling or disabling this isolated capability.
-    # Purpose: When enabled, Agents use navigation behavior. When disabled, they skip it while their other capabilities continue normally.
-    # Technical: the Agent engine deployment configuration consumes this as a boolean. Domain: true or false. The disabled path must bypass only this feature and preserve the generic Agent lifecycle.
-    AGENT_NAVIGATION_BEHAVIOR_ENABLED: true
-    # Values: true or false. Recommended: retain the tested baseline true unless deliberately enabling or disabling this isolated capability.
-    # Purpose: When enabled, Agents use idle combat presentation. When disabled, they skip it while their other capabilities continue normally.
-    # Technical: the Agent engine deployment configuration consumes this as a boolean. Domain: true or false. The disabled path must bypass only this feature and preserve the generic Agent lifecycle.
-    AGENT_IDLE_COMBAT_PRESENTATION_ENABLED: true
-    # Values: true or false. Recommended: retain the tested baseline true unless deliberately enabling or disabling this isolated capability.
-    # Purpose: When enabled, Agents use combat emotes. When disabled, they skip it while their other capabilities continue normally.
-    # Technical: the Agent engine deployment configuration consumes this as a boolean. Domain: true or false. The disabled path must bypass only this feature and preserve the generic Agent lifecycle.
-    AGENT_COMBAT_EMOTES_ENABLED: true
+    # Values: OFF or STANDARD. Recommended: STANDARD for personality-driven response timing, claim avoidance, target variation, platform anchoring, route variation, and crowd respite.
+    # Purpose: Enables or disables the complete optional behavior-variation layer without changing combat or navigation correctness.
+    # Technical: Cohort realism still decides which Agents receive behavior state; this profile controls whether the optional adapters are wired and consulted.
+    AGENT_BEHAVIOR_PROFILE: STANDARD
+    # Values: OFF or STANDARD. Recommended: STANDARD for personality presentation, idle combat presentation, and bounded combat emotes.
+    # Purpose: Keeps visual presentation independent from target selection, route validation, and attack execution.
+    # Technical: OFF removes optional presentation listeners and idle actions while preserving the Agent lifecycle and behavior policy.
+    AGENT_PRESENTATION_PROFILE: STANDARD
     # Values: integer from 0 to 100 inclusive. Recommended: 50-90 for initial tuning around the tested baseline 70; change gradually and observe crowd/load effects.
     # Purpose: Controls the visible strength or frequency of map maximum active combat. Higher values make the effect stronger or more common; lower values make it weaker or rarer.
     # Technical: the Agent engine deployment configuration consumes this as an integer. Domain: percentage from 0 to 100 inclusive.
@@ -308,9 +272,9 @@ agent:
     # Technical: the Agent engine deployment configuration consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled. It participates in bounded failure handling and should remain long enough for the normal operation to complete.
     AGENT_MAPLE_ISLAND_COHORT_OBJECTIVE_TIMEOUT_MS: 900000
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 2500-10000 around the tested baseline 5000; benchmark or observe behavior before moving outside this band.
-    # Purpose: Controls how long Agents remain in or wait for objective nudge. Higher values make that pause or state last longer; lower values make them continue sooner.
-    # Technical: the Agent engine deployment configuration consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled.
-    AGENT_OBJECTIVE_NUDGE_MS: 5000
+    # Purpose: Controls how long an objective may show no measurable progress before the Agent publishes a stall notice; this threshold never injects movement.
+    # Technical: The objective watchdog consumes this integer in milliseconds and emits one observation before bounded objective recovery; 0 disables the notice without changing navigation.
+    AGENT_OBJECTIVE_STALL_NOTICE_MS: 5000
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 15000-30000 around the tested baseline 15000; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how long Agents remain in or wait for objective stall recovery. Higher values make that pause or state last longer; lower values make them continue sooner.
     # Technical: the Agent engine deployment configuration consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled. It participates in bounded failure handling and should remain long enough for the normal operation to complete.
@@ -700,10 +664,10 @@ tuning:
     # Purpose: Controls how strongly area-of-effect reposition damage-per-second affects Agent behavior. Higher values make the effect more noticeable; lower values soften it.
     # Technical: the "combat config" component consumes this as a decimal number. Domain: non-negative policy coefficient; it is meaningful relative to the other coefficients used by the same decision.
     server.agents.capabilities.combat.AgentCombatConfig.AOE_REPOSITION_DPS_FACTOR: '1.5'
-    # Values: true or false. Recommended: retain the tested baseline true unless deliberately enabling or disabling this isolated capability.
-    # Purpose: When enabled, Agents use area-of-effect reposition. When disabled, they skip it while their other capabilities continue normally.
-    # Technical: the "combat config" component consumes this as a boolean. Domain: true or false. The disabled path must bypass only this feature and preserve the generic Agent lifecycle.
-    server.agents.capabilities.combat.AgentCombatConfig.AOE_REPOSITION_ENABLED: 'true'
+    # Values: OFF or ACTIVE. Recommended: ACTIVE for the existing bounded tactic; OFF disables reposition without affecting target selection or attacks.
+    # Purpose: Makes AoE reposition an explicit combat tactic instead of a hidden recovery-style feature flag.
+    # Technical: ACTIVE still requires a better multi-target plan, the configured DPS factor, and the bounded distance/time limits below.
+    server.agents.capabilities.combat.AgentCombatConfig.AOE_REPOSITION_MODE: 'ACTIVE'
     # Values: a finite non-negative integer; unit: map pixels. Recommended: 75-300 around the tested baseline 150; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls the distance or margin used for area-of-effect reposition maximum distance horizontal. Higher values allow action from farther away or leave more space; lower values require closer, more precise positioning.
     # Technical: the "combat config" component consumes this as an integer. Unit: MapleStory map pixels; horizontal and vertical values use the server map coordinate system.
@@ -1052,26 +1016,14 @@ tuning:
     # Purpose: Controls the positional leeway for out of bounds teleport dist. Higher values tolerate more separation before Agents correct course; lower values make them align sooner.
     # Technical: the "movement physics config" component consumes this as an integer. Domain: component-specific policy value; startup validation rejects missing, blank, or malformed values.
     server.agents.capabilities.movement.AgentMovementPhysicsConfig.OUT_OF_BOUNDS_TELEPORT_DIST: '600'
-    # Values: true or false. Recommended: true while validating or using Magician Teleport navigation.
-    # Purpose: When enabled, navigation graphs include possible Teleport shortcuts, but this setting alone never makes an Agent cast the skill.
-    # Technical: The movement-skill graph builder consumes this boolean and authors eligible Teleport edges into versioned navigation caches; live route selection remains independently gated by TELEPORT_EXECUTION_ENABLED.
-    server.agents.capabilities.movement.AgentMovementSkillConfig.TELEPORT_GRAPH_EDGES_ENABLED: 'true'
-    # Values: true or false. Recommended: true while validating or using Thief Flash Jump navigation.
-    # Purpose: When enabled, navigation graphs include possible Flash Jump shortcuts, but this setting alone never changes an Agent's movement.
-    # Technical: The movement-skill graph builder consumes this boolean and authors simulated Flash Jump edges into versioned navigation caches; live route selection remains independently gated by FLASH_JUMP_EXECUTION_ENABLED.
-    server.agents.capabilities.movement.AgentMovementSkillConfig.FLASH_JUMP_GRAPH_EDGES_ENABLED: 'true'
-    # Values: true or false. Recommended: false until two-client packet and representative-map validation is complete.
-    # Purpose: When enabled, eligible Agents with learned Teleport may spend MP and use Teleport shortcuts during real navigation.
-    # Technical: The active route filter and Teleport executor consume this boolean together with learned-skill, field-limit, cooldown, and MP-reserve checks; false leaves ordinary navigation unchanged.
-    server.agents.capabilities.movement.AgentMovementSkillConfig.TELEPORT_EXECUTION_ENABLED: 'false'
-    # Values: true or false. Recommended: false until two-client packet and representative-map validation is complete.
-    # Purpose: When enabled, eligible Agents with learned Flash Jump may spend MP and use Flash Jump shortcuts during real navigation.
-    # Technical: The active route filter and Flash Jump executor consume this boolean together with learned-skill, field-limit, cooldown, and MP-reserve checks; false leaves ordinary navigation unchanged.
-    server.agents.capabilities.movement.AgentMovementSkillConfig.FLASH_JUMP_EXECUTION_ENABLED: 'false'
-    # Values: true or false. Recommended: true while either movement-skill execution setting is false.
-    # Purpose: When enabled, eligible Agents compare normal routes with skill-aware routes and log useful shortcuts without casting the skill.
-    # Technical: The read-only shadow diagnostic performs a rate-limited skill-aware path search for Agents that know Teleport or Flash Jump; it does not reserve MP, alter the committed edge, or mutate movement.
-    server.agents.capabilities.movement.AgentMovementSkillConfig.SHADOW_DIAGNOSTICS_ENABLED: 'true'
+    # Values: OFF, SHADOW, or ACTIVE. Recommended: SHADOW until representative-map and two-client packet validation is complete.
+    # Purpose: Controls whether learned Magician Teleport edges are ignored, compared read-only, or used during live navigation.
+    # Technical: Graphs always contain capability edges; ACTIVE additionally requires learned skill, field permission, MP reserve, and cooldown eligibility.
+    server.agents.capabilities.movement.AgentMovementSkillConfig.TELEPORT_MODE: 'SHADOW'
+    # Values: OFF, SHADOW, or ACTIVE. Recommended: SHADOW until representative-map and two-client packet validation is complete.
+    # Purpose: Controls whether learned Thief Flash Jump edges are ignored, compared read-only, or used during live navigation.
+    # Technical: Graphs always contain capability edges; ACTIVE additionally requires learned skill, field permission, MP reserve, and cooldown eligibility.
+    server.agents.capabilities.movement.AgentMovementSkillConfig.FLASH_JUMP_MODE: 'SHADOW'
     # Values: an integer from 0 to 100 percent. Recommended: 30-50, with 40 as the conservative baseline.
     # Purpose: Higher values preserve more MP for combat and recovery; lower values let Agents use movement skills more aggressively.
     # Technical: Active route eligibility and execution require current MP minus the learned skill's WZ MP cost to remain at or above this percentage of maximum MP; shadow routes deliberately ignore it.
@@ -1148,10 +1100,6 @@ tuning:
     # Purpose: Controls how strongly walk vel pxs changes visible movement. Higher values make its effect more noticeable; lower values make movement gentler or less pronounced.
     # Technical: the "movement physics config" component consumes this as an integer. Unit: MapleStory map pixels per second.
     server.agents.capabilities.movement.AgentMovementPhysicsConfig.WALK_VEL_PXS: '125'
-    # Values: a finite non-negative integer; unit: milliseconds. Recommended: 2500-10000 around the tested baseline 5000; benchmark or observe behavior before moving outside this band.
-    # Purpose: Controls how long Agents must wait before repeating unstuck. Higher values make repeats less frequent; lower values let them repeat sooner.
-    # Technical: the "movement recovery service" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled.
-    server.agents.capabilities.movement.AgentMovementRecoveryService.UNSTUCK_COOLDOWN_MS: '5000'
     # Values: a finite non-negative integer; unit: map pixels. Recommended: 6-24 around the tested baseline 12; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls the distance or margin used for platform edge inset. Higher values allow action from farther away or leave more space; lower values require closer, more precise positioning.
     # Technical: the "movement target runtime" component consumes this as an integer. Unit: MapleStory map pixels; horizontal and vertical values use the server map coordinate system.
@@ -1172,6 +1120,10 @@ tuning:
     # Purpose: Gives fallback walking extra time while a map graph warms, then treats a stationary Agent as stuck and starts normal recovery.
     # Technical: This replaces the former unlimited graph-warmup exemption and feeds the same accumulated stationary-duration evidence used by ordinary stuck recovery. Unit: milliseconds.
     server.agents.capabilities.movement.AgentStuckDetectionService.GRAPH_WARMUP_STUCK_THRESHOLD_MS: '5000'
+    # Values: 1000-30000 milliseconds. Recommended: 5000; increase it to reduce repeated diagnostic events for one continuous stall.
+    # Purpose: Rate-limits stuck observations without injecting movement, clearing navigation, or teleporting the Agent.
+    # Technical: The movement observer resets its local evidence after publishing and waits this long before publishing another event for the same continuing stall.
+    server.agents.capabilities.movement.AgentStuckDetectionService.STUCK_EVENT_COOLDOWN_MS: '5000'
     # Values: a finite non-negative integer; unit: map pixels. Recommended: 300-1200 around the tested baseline 600; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how strongly swim accel pxs2 changes visible movement. Higher values make its effect more noticeable; lower values make movement gentler or less pronounced.
     # Technical: the "swim physics service" component consumes this as a decimal number. Unit: MapleStory map pixels per second squared.
@@ -1436,18 +1388,10 @@ tuning:
     # Purpose: Sets when slow pathfind warn ns triggers. Higher values let more pressure build before Agents or safeguards react; lower values make them react sooner.
     # Technical: the "navigation path service" component consumes this as an integer. Unit: nanoseconds; this is normally a profiling threshold rather than a gameplay duration.
     server.agents.capabilities.navigation.AgentNavigationPathService.SLOW_PATHFIND_WARN_NS: '50000000'
-    # Values: true or false. Recommended: true; false restores the prior edge-execution path while leaving suppression and penalties independently configurable.
-    # Purpose: Validates risky jump, drop, rope, and ladder edges against the live source region, movement state, and authored anchors before execution.
-    # Technical: Uses existing readiness predicates and rejects only structurally invalid attempts; ordinary approach movement is not counted as a failure.
-    server.agents.capabilities.navigation.AgentNavigationReliabilityConfig.EDGE_VALIDATION_ENABLED: 'true'
-    # Values: true or false. Recommended: true; disable independently when observing failure counts without excluding edges.
-    # Purpose: Lets one Agent temporarily route around an edge that repeatedly fails without changing the shared navigation graph or other Agents.
-    # Technical: Exclusion is scoped to the Agent and current map, starts at FAILURE_THRESHOLD, and expires after SUPPRESSION_MS.
-    server.agents.capabilities.navigation.AgentNavigationReliabilityConfig.EDGE_SUPPRESSION_ENABLED: 'true'
-    # Values: true or false. Recommended: true; false removes all reliability-derived additive route costs.
-    # Purpose: Makes a longer reliable route beat a mechanically short edge that this Agent has repeatedly failed.
-    # Technical: Adds a temporary per-Agent edge cost during A*; it never edits cached graph edges or authored route overlays.
-    server.agents.capabilities.navigation.AgentNavigationReliabilityConfig.ROUTE_PENALTIES_ENABLED: 'true'
+    # Values: OBSERVE or ACTIVE. Recommended: ACTIVE; use OBSERVE only to compare route selection while retaining validation and failure telemetry.
+    # Purpose: Controls whether repeated per-Agent edge failures add route cost and temporary suppression.
+    # Technical: Structural validation is always authoritative. OBSERVE records failures without changing A* costs; ACTIVE applies the bounded settings below.
+    server.agents.capabilities.navigation.AgentNavigationReliabilityConfig.ROUTING_MODE: 'ACTIVE'
     # Values: 2-3 failures. Recommended: 3; lower values reroute sooner but are less tolerant of one-off execution noise.
     # Purpose: Requires repeated evidence before an edge becomes temporarily unavailable to this Agent.
     # Technical: Counts failures for an exact map/from/to/type/anchor signature; successful traversal clears that signature.
@@ -1458,7 +1402,7 @@ tuning:
     server.agents.capabilities.navigation.AgentNavigationReliabilityConfig.SUPPRESSION_MS: '30000'
     # Values: 30000-180000 milliseconds. Recommended: 60000; retain enough history to penalize repeated failures without making costs permanent.
     # Purpose: Removes stale failure and penalty records after a bounded quiet period.
-    # Technical: A record is discarded once this age and any active suppression have both expired.
+    # Technical: A record is discarded once this age and any active suppression have both expired, keeping the per-Agent ledger bounded during long sessions.
     server.agents.capabilities.navigation.AgentNavigationReliabilityConfig.FAILURE_RETENTION_MS: '60000'
     # Values: 500-5000 milliseconds per failure. Recommended: 2000; higher values prefer alternatives more aggressively.
     # Purpose: Converts each recent risky-edge failure into an additive route cost for this Agent.
@@ -1470,7 +1414,7 @@ tuning:
     server.agents.capabilities.navigation.AgentNavigationReliabilityConfig.MAX_EDGE_PENALTY_MS: '10000'
     # Values: 8-128 edges. Recommended: 32; increase only for maps with many independently failing mechanics.
     # Purpose: Caps reliability memory retained per active Agent.
-    # Technical: Uses least-recently-accessed eviction and resets completely on map change.
+    # Technical: Uses least-recently-accessed eviction, resets completely on map change, and never mutates the shared cached navigation graph.
     server.agents.capabilities.navigation.AgentNavigationReliabilityConfig.MAX_TRACKED_EDGES: '32'
     # Values: 1500-10000 milliseconds. Recommended: 3500; allow a traversal to begin while rejecting a motionless climb or jump promptly.
     # Purpose: Classifies an executed risky edge as failed when neither position nor navigation region progresses for this duration.
@@ -1478,7 +1422,7 @@ tuning:
     server.agents.capabilities.navigation.AgentNavigationReliabilityConfig.ATTEMPT_TIMEOUT_MS: '3500'
     # Values: 1-20 map pixels. Recommended: 6; values below normal movement jitter can prevent timeout detection.
     # Purpose: Defines meaningful physical progress while a risky edge is being executed.
-    # Technical: Either region change or movement beyond this radius refreshes the attempt timer.
+    # Technical: Either a navigation-region change or physical movement beyond this radius refreshes the active risky-edge attempt timer.
     server.agents.capabilities.navigation.AgentNavigationReliabilityConfig.PROGRESS_TOLERANCE_PX: '6'
     # Values: 4-32 map pixels. Recommended: 12. Controls structural leeway for jump/drop launch anchors and launch windows.
     # Purpose: Rejects graph edges whose required launch lies outside the expected source region while tolerating normal graph rounding.
@@ -1494,32 +1438,12 @@ tuning:
     server.agents.capabilities.navigation.AgentNavigationReliabilityConfig.ATTACHMENT_TOLERANCE_PX: '12'
     # Values: 16-128 map pixels. Recommended: 64; raise it only when a moving objective legitimately shifts its anchor while the Agent is following the same route.
     # Purpose: Treats nearby destination updates as the same journey, allowing the Agent to recognize that it is repeating the same platform loop instead of restarting its memory every tick.
-    # Technical: Targets farther apart than this radius start a new route-progress scope and clear old transition history and temporary edge suppression.
+    # Technical: Targets farther apart than this radius start a new route-progress scope and clear old transition history.
     server.agents.capabilities.navigation.AgentNavigationProgressState.TARGET_SCOPE_RADIUS_PX: '64'
-    # Values: 5000-30000 milliseconds. Recommended: 15000; longer values avoid a bad edge more persistently, while shorter values retry it sooner if the map changed.
-    # Purpose: Controls how long an Agent avoids a jump, drop, climb, or portal edge after detecting that it is alternating back and forth through the same two regions.
-    # Technical: Suppression belongs only to the current map and destination scope; pathfinding remains free to select another valid edge and the suppressed edge automatically becomes eligible again afterward.
-    server.agents.capabilities.navigation.AgentNavigationProgressState.EDGE_SUPPRESSION_MS: '15000'
     # Values: 8-64 transitions. Recommended: 24; retain enough recent movement to recognize four-region cycles without keeping unbounded per-Agent route history.
     # Purpose: Limits how much recent region-transition history each Agent retains while detecting repeated two-, three-, and four-region navigation loops.
     # Technical: The oldest transition is discarded when this bounded deque exceeds the limit; increasing it costs a small fixed amount of memory per actively navigating Agent.
     server.agents.capabilities.navigation.AgentNavigationProgressState.MAX_TRANSITIONS: '24'
-    # Values: 0=off, 1=observe-only, 2=conservative, 3=legacy-aggressive. Recommended: 1 while validating established routes; use 2 only after recovery parity tests pass, and 3 only to compare old behavior.
-    # Purpose: Chooses whether Agents ignore optional navigation recovery, only record problems, avoid one repeatedly failing ordinary ground edge, or restore the old jump/nudge/soft-teleport recovery behavior.
-    # Technical: Modes 0-2 never inject movement or soft teleports. Authored route overlays, committed rope or ladder traversal, and portal edges remain authoritative. Death and out-of-bounds safety are independent and remain enabled in every mode.
-    server.agents.capabilities.recovery.AgentNavigationRecoveryPolicy.MODE: '1'
-    # Values: 250-2000 milliseconds. Recommended: 750; only one navigation recovery owner may act during this interval.
-    # Purpose: Prevents multiple recovery systems from nudging, replanning, or teleporting the same Agent at once.
-    # Technical: A successful acquisition owns the per-Agent recovery lease for this duration, preventing watchdog, nudge, replan, and teleport recovery actions from overlapping. Unit: milliseconds.
-    server.agents.capabilities.recovery.AgentNavigationRecoveryRuntime.RECOVERY_LEASE_MS: '750'
-    # Values: 2000-10000 milliseconds. Recommended: 5000; higher values make portal arrivals settle longer before any non-physical correction is allowed.
-    # Purpose: Stops an Agent from visibly sliding or flying immediately after entering a map while its route and foothold state settle.
-    # Technical: An authoritative map-transition receipt resets recovery escalation, and this minimum elapsed duration must pass before a non-physical recovery teleport becomes eligible. Unit: milliseconds.
-    server.agents.capabilities.recovery.AgentNavigationRecoveryRuntime.POST_TRANSITION_GRACE_MS: '5000'
-    # Values: 2-6 attempts. Recommended: 3; higher values favor visible physical recovery, while lower values reach teleport fallback sooner.
-    # Purpose: Requires repeated failed physical recovery attempts before a bounded recovery teleport can occur.
-    # Technical: Counts successful recovery-lease acquisitions since the last authoritative transition or meaningful movement progress; the counter resets whenever either event is recorded.
-    server.agents.capabilities.recovery.AgentNavigationRecoveryRuntime.TELEPORT_ATTEMPTS_REQUIRED: '3'
     # Values: 500-5000 milliseconds. Recommended: 2000; longer values make Agents commit more visibly to the platform they just reached, while shorter values let them reverse the same ladder sooner.
     # Purpose: Prevents an Agent from immediately climbing back onto the same ladder after stepping off, which otherwise looks like jitter when combat retargeting switches between platforms.
     # Technical: Only the inverse entry edge of the ladder just completed is blocked. Other walk, jump, drop, portal, and ladder routes remain available during this short guard.
@@ -2696,26 +2620,18 @@ tuning:
     # Purpose: Keeps required quest monsters near their intended share of a mixed-spawn map, so common monsters cannot occupy nearly every available spawn slot.
     # Technical: Spawn-pressure clearing becomes eligible when the live preferred-monster share falls below this percentage of its authored spawn-point share; only overrepresented fallback species may then be selected.
     server.agents.capabilities.combat.AgentCombatPolicyConfig.SPAWN_PRESSURE_MIN_TARGET_SHARE_PERCENT: '80'
-    # Values: true or false. Recommended: true; false restores immediate repeated map-wide preferred-target promotion.
-    # Purpose: Treats map-wide combat search as an escape from an empty area, then keeps the Agent fighting locally after arrival.
-    # Technical: State is per Agent and resets on map or objective change; it does not alter objective eligibility or attack execution.
-    server.agents.capabilities.combat.AgentCombatPolicyConfig.LOCAL_TARGET_LEASE_ENABLED: 'true'
     # Values: 20000-30000 milliseconds. Recommended: 25000. Higher values finish more local work; lower values reconsider remote objective areas sooner.
     # Purpose: Bounds how long local eligible targets retain priority after a map-wide destination is reached.
     # Technical: The lease also ends when its kill quota is consumed or its consecutive empty-scan threshold is reached.
     server.agents.capabilities.combat.AgentCombatPolicyConfig.LOCAL_TARGET_LEASE_MS: '25000'
-    # Values: 2-4 local objective kills. Recommended: 3. Higher values make the Agent clear more of the reached area before searching map-wide again.
+    # Values: 2-4 local objective kills. Recommended: 2. Higher values make the Agent clear more of the reached area before searching map-wide again.
     # Purpose: Provides a deterministic work quota alongside the time bound.
     # Technical: Authoritative kills of objective-eligible preferred or fallback mobs decrement the active lease; unrelated or disallowed kills do not.
-    server.agents.capabilities.combat.AgentCombatPolicyConfig.LOCAL_TARGET_LEASE_KILLS: '3'
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.LOCAL_TARGET_LEASE_KILLS: '2'
     # Values: 2-3 consecutive scans. Recommended: 3. Lower values leave an exhausted area sooner; higher values tolerate short spawn gaps.
     # Purpose: Releases the lease early only when no suitable local objective target remains across repeated scans.
     # Technical: Finding any nearby preferred objective mob resets the counter; eligible nearby incidental mobs remain selectable and cannot be hidden by the lease.
     server.agents.capabilities.combat.AgentCombatPolicyConfig.LOCAL_TARGET_LEASE_EMPTY_SCANS: '3'
-    # Values: true or false. Recommended: true; false restores legacy acceptance based on a non-empty path list.
-    # Purpose: Prevents combat from selecting a remote mob when A* produced only a capped closest-frontier fragment.
-    # Technical: Remote targets require COMPLETE route status; same-region targeting remains valid and non-combat movement may still consume PARTIAL results.
-    server.agents.capabilities.combat.AgentCombatPolicyConfig.STRICT_COMBAT_ROUTE_VALIDATION_ENABLED: 'true'
     # Values: 0-10 kills. Recommended: 2. Higher values let an Agent clear more non-objective monsters from its current platform before returning to a required target elsewhere; 0 disables incidental platform clearing.
     # Purpose: Prevents endless killing of convenient incidental monsters while still allowing short, natural platform sweeps that free spawn slots and reduce backtracking.
     # Technical: Maximum consecutive incidental kills selected by the quest-local-clear combat policy before required-target debt wins and the selector must return to a required candidate.
@@ -2744,14 +2660,6 @@ tuning:
     # Purpose: After clearing the blocker-kill budget, makes the Agent concentrate on travelling for this long before it may attack another set of blockers.
     # Technical: Cooldown begins on the fifth authoritative route-blocker kill and survives waypoint and intermediate-map changes within the active objective.
     server.agents.capabilities.combat.AgentCombatPolicyConfig.ROUTE_BLOCKER_TRAVEL_COOLDOWN_MS: '7000'
-    # Values: true or false. Recommended: true. True lets an Agent briefly clear useful nearby monsters before travelling to a farther required target; false keeps the former strict preferred-target selection.
-    # Purpose: Reduces repeated up/down travel while ensuring required quest monsters regain priority after the bounded local sweep.
-    # Technical: Makes the quest-local-clear policy authoritative while still respecting the objective's required and incidental mob allow-list and leaving concrete target scoring unchanged.
-    server.agents.capabilities.combat.AgentCombatPolicyConfig.QUEST_LOCAL_CLEAR_ENFORCED: 'true'
-    # Values: true or false. Recommended: false during normal play and true only while comparing policy decisions. This does not change what the Agent attacks.
-    # Purpose: Lets operators inspect how the new selector would differ before making it authoritative.
-    # Technical: Evaluates and records the quest-local-clear result while the compatibility selector continues to control combat, without changing targets, movement, attacks, or quest counters.
-    server.agents.capabilities.combat.AgentCombatPolicyConfig.QUEST_LOCAL_CLEAR_SHADOW_ENABLED: 'false'
     # Values: 80-260 map pixels. Recommended: 150. Higher values treat a wider group as one AoE cluster; lower values require monsters to stand closer together before favoring an AoE attack.
     # Purpose: Controls how tightly monsters must group before the Agent values a multi-target skill over a single-target attack.
     # Technical: Radius used by the combat scoring and AoE reposition policies; this changes target valuation only and does not alter a skill's server hit box or packet target list.

@@ -25,7 +25,6 @@ class AgentCombatConfigTest {
     void setsConfigFieldsUsingLegacyParsingRules() {
         int originalRange = AgentCombatConfig.cfg.ATTACK_RANGE_X;
         boolean originalDebug = AgentCombatConfig.cfg.AOE_REPOSITION_DEBUG;
-        boolean originalHit1 = AgentCombatConfig.cfg.MOB_PHYSICS_HIT1_ENABLED;
         boolean originalVirtualObserverStress =
                 AgentCombatConfig.cfg.MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS;
         try {
@@ -36,10 +35,6 @@ class AgentCombatConfigTest {
             assertEquals("OK: AOE_REPOSITION_DEBUG = true",
                     AgentCombatConfig.setConfigField("AOE_REPOSITION_DEBUG", "on"));
             assertTrue(AgentCombatConfig.cfg.AOE_REPOSITION_DEBUG);
-
-            assertEquals("OK: MOB_PHYSICS_HIT1_ENABLED = false",
-                    AgentCombatConfig.setConfigField("MOB_PHYSICS_HIT1_ENABLED", "off"));
-            assertEquals(false, AgentCombatConfig.cfg.MOB_PHYSICS_HIT1_ENABLED);
 
             assertEquals("OK: MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS = true",
                     AgentCombatConfig.setConfigField(
@@ -55,7 +50,6 @@ class AgentCombatConfigTest {
         } finally {
             AgentCombatConfig.cfg.ATTACK_RANGE_X = originalRange;
             AgentCombatConfig.cfg.AOE_REPOSITION_DEBUG = originalDebug;
-            AgentCombatConfig.cfg.MOB_PHYSICS_HIT1_ENABLED = originalHit1;
             AgentCombatConfig.cfg.MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS =
                     originalVirtualObserverStress;
         }

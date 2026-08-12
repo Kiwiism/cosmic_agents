@@ -3,21 +3,18 @@ package server.agents.capabilities.movement;
 /**
  * Tuning owned by navigation-level movement skills.
  *
- * <p>Graph authoring, live execution, and shadow comparison are deliberately
- * independent. This lets the server validate new routes without silently
- * changing the movement of existing Agents.</p>
+ * <p>Graphs always describe possible skill movement. Each skill mode decides
+ * whether those edges are ignored, compared in shadow, or actively executed.</p>
  */
 public final class AgentMovementSkillConfig {
-    public static final boolean TELEPORT_GRAPH_EDGES_ENABLED = config.AgentTuning.booleanValue(
-            "server.agents.capabilities.movement.AgentMovementSkillConfig.TELEPORT_GRAPH_EDGES_ENABLED");
-    public static final boolean FLASH_JUMP_GRAPH_EDGES_ENABLED = config.AgentTuning.booleanValue(
-            "server.agents.capabilities.movement.AgentMovementSkillConfig.FLASH_JUMP_GRAPH_EDGES_ENABLED");
-    public static final boolean TELEPORT_EXECUTION_ENABLED = config.AgentTuning.booleanValue(
-            "server.agents.capabilities.movement.AgentMovementSkillConfig.TELEPORT_EXECUTION_ENABLED");
-    public static final boolean FLASH_JUMP_EXECUTION_ENABLED = config.AgentTuning.booleanValue(
-            "server.agents.capabilities.movement.AgentMovementSkillConfig.FLASH_JUMP_EXECUTION_ENABLED");
-    public static final boolean SHADOW_DIAGNOSTICS_ENABLED = config.AgentTuning.booleanValue(
-            "server.agents.capabilities.movement.AgentMovementSkillConfig.SHADOW_DIAGNOSTICS_ENABLED");
+    public static final AgentMovementSkillMode TELEPORT_MODE = AgentMovementSkillMode.parse(
+            config.AgentTuning.stringValue(
+                    "server.agents.capabilities.movement.AgentMovementSkillConfig.TELEPORT_MODE"),
+            "TELEPORT_MODE");
+    public static final AgentMovementSkillMode FLASH_JUMP_MODE = AgentMovementSkillMode.parse(
+            config.AgentTuning.stringValue(
+                    "server.agents.capabilities.movement.AgentMovementSkillConfig.FLASH_JUMP_MODE"),
+            "FLASH_JUMP_MODE");
     public static final int MIN_MP_RESERVE_PERCENT = config.AgentTuning.intValue(
             "server.agents.capabilities.movement.AgentMovementSkillConfig.MIN_MP_RESERVE_PERCENT");
     public static final long CAST_COOLDOWN_MS = config.AgentTuning.longValue(

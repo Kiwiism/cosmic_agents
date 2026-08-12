@@ -14,10 +14,6 @@ public final class AgentCombatPolicyConfig {
         return tuningInt("MAX_CONSECUTIVE_INCIDENTAL_KILLS");
     }
 
-    public static boolean localTargetLeaseEnabled() {
-        return tuningBoolean("LOCAL_TARGET_LEASE_ENABLED");
-    }
-
     public static long localTargetLeaseMs() {
         return tuningLong("LOCAL_TARGET_LEASE_MS");
     }
@@ -28,10 +24,6 @@ public final class AgentCombatPolicyConfig {
 
     public static int localTargetLeaseEmptyScans() {
         return tuningInt("LOCAL_TARGET_LEASE_EMPTY_SCANS");
-    }
-
-    public static boolean strictCombatRouteValidationEnabled() {
-        return tuningBoolean("STRICT_COMBAT_ROUTE_VALIDATION_ENABLED");
     }
 
     public static int spawnPressureMinTargetSharePercent() {
@@ -60,14 +52,6 @@ public final class AgentCombatPolicyConfig {
 
     public static long routeBlockerTravelCooldownMs() {
         return tuningLong("ROUTE_BLOCKER_TRAVEL_COOLDOWN_MS");
-    }
-
-    public static boolean questLocalClearEnforced() {
-        return tuningBoolean("QUEST_LOCAL_CLEAR_ENFORCED");
-    }
-
-    public static boolean questLocalClearShadowEnabled() {
-        return tuningBoolean("QUEST_LOCAL_CLEAR_SHADOW_ENABLED");
     }
 
     public static int aoeClusterRadiusPx() {

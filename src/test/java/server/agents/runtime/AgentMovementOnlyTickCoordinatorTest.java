@@ -104,7 +104,7 @@ class AgentMovementOnlyTickCoordinatorTest {
     }
 
     private static AgentMovementOnlyTickCoordinator.TickConfig config() {
-        return new AgentMovementOnlyTickCoordinator.TickConfig(50, 100, 800, 1200, 2, 150, 35, true);
+        return new AgentMovementOnlyTickCoordinator.TickConfig(50, 100, 800, 1200, 2, 150, 35);
     }
 
     private static Character character(int id, String name, Point position) {

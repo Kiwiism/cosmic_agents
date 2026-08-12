@@ -21,7 +21,7 @@ class AgentConfigurationBoundaryTest {
     private static final Path AGENT_SOURCES =
             Path.of("src", "main", "java", "server", "agents");
     private static final Pattern TUNING_REFERENCE = Pattern.compile(
-            "config\\.AgentTuning\\.(?:intValue|longValue|doubleValue|floatValue|booleanValue)"
+            "config\\.AgentTuning\\.(?:intValue|longValue|doubleValue|floatValue|booleanValue|stringValue)"
                     + "\\(\\s*\\\"([^\\\"]+)\\\"\\)");
     private static final Pattern LOCAL_TUNING_PREFIX = Pattern.compile(
             "TUNING_PREFIX\\s*=\\s*\\\"([^\\\"]+)\\\"");

@@ -75,7 +75,7 @@ class AgentStuckDetectionServiceTest {
     }
 
     @Test
-    void stationaryNavigationTriggersUnstuckWhenEnabledAndPastThreshold() {
+    void stationaryNavigationPublishesObservationAndStartsCooldown() {
         AgentRuntimeEntry entry = entryAt(new Point(10, 20));
         AgentMoveTargetStateRuntime.setMoveTarget(entry, new Point(100, 20), false);
         AgentMovementStuckStateRuntime.rememberStuckCheckPosition(entry, new Point(10, 20));
@@ -85,7 +85,7 @@ class AgentStuckDetectionServiceTest {
 
         assertEquals(0, AgentMovementStuckStateRuntime.stuckMs(entry));
         assertFalse(AgentMovementStuckStateRuntime.hasStuckCheckPosition(entry));
-        assertEquals(1, unstucks.get());
+        assertTrue(AgentMovementStuckStateRuntime.hasUnstuckCooldown(entry));
     }
 
     @Test
@@ -103,7 +103,7 @@ class AgentStuckDetectionServiceTest {
     }
 
     @Test
-    void stationaryAirborneNavigationTriggersRecoveryAfterLongerThreshold() {
+    void stationaryAirborneNavigationUsesLongerObservationThreshold() {
         AgentRuntimeEntry entry = entryAt(new Point(10, 20));
         AgentMoveTargetStateRuntime.setMoveTarget(entry, new Point(100, 20), false);
         AgentMovementStateRuntime.setInAir(entry, true);
@@ -115,7 +115,7 @@ class AgentStuckDetectionServiceTest {
 
         assertEquals(0, AgentMovementStuckStateRuntime.stuckMs(entry));
         assertFalse(AgentMovementStuckStateRuntime.hasStuckCheckPosition(entry));
-        assertEquals(1, unstucks.get());
+        assertTrue(AgentMovementStuckStateRuntime.hasUnstuckCooldown(entry));
     }
 
     @Test
@@ -138,9 +138,7 @@ class AgentStuckDetectionServiceTest {
                                                                        java.util.function.IntUnaryOperator tickDown) {
         return new AgentStuckDetectionService.StuckDetectionHooks(
                 tickDown,
-                entry -> unstucks.incrementAndGet(),
-                movementTickMs,
-                enableUnstuck);
+                movementTickMs);
     }
 
     private static AgentRuntimeEntry entryAt(Point position) {

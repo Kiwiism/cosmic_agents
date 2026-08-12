@@ -3,7 +3,6 @@ package server.agents.capabilities.objective;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
-import server.agents.capabilities.recovery.AgentNavigationRecoveryRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
@@ -33,7 +32,7 @@ class AgentObjectiveProgressWatchdogTest {
         assertEquals(AgentObjectiveProgressWatchdog.Action.NONE,
                 AgentObjectiveProgressWatchdog.evaluate(
                         state, entry, agent, 5_999L, policy).action());
-        assertEquals(AgentObjectiveProgressWatchdog.Action.NUDGE,
+        assertEquals(AgentObjectiveProgressWatchdog.Action.STALLED,
                 AgentObjectiveProgressWatchdog.evaluate(
                         state, entry, agent, 6_000L, policy).action());
 
@@ -41,7 +40,7 @@ class AgentObjectiveProgressWatchdogTest {
         assertEquals(AgentObjectiveProgressWatchdog.Action.NONE,
                 AgentObjectiveProgressWatchdog.evaluate(
                         state, entry, agent, 10_000L, policy).action());
-        assertEquals(AgentObjectiveProgressWatchdog.Action.NUDGE,
+        assertEquals(AgentObjectiveProgressWatchdog.Action.STALLED,
                 AgentObjectiveProgressWatchdog.evaluate(
                         state, entry, agent, 15_000L, policy).action());
         assertEquals(AgentObjectiveProgressWatchdog.Action.RECOVER,
@@ -72,7 +71,7 @@ class AgentObjectiveProgressWatchdogTest {
 
         AgentNavigationDebugStateRuntime.setPlannedNavigationTargetPosition(
                 entry, new Point(100, 20));
-        assertEquals(AgentObjectiveProgressWatchdog.Action.NUDGE,
+        assertEquals(AgentObjectiveProgressWatchdog.Action.STALLED,
                 AgentObjectiveProgressWatchdog.evaluate(
                         state, entry, agent, 7_000L, policy).action());
         assertEquals(AgentObjectiveProgressWatchdog.Action.RECOVER,
@@ -99,7 +98,7 @@ class AgentObjectiveProgressWatchdogTest {
                 AgentObjectiveProgressWatchdog.evaluate(
                         state, entry, agent, Map.of(100101, 1, 120100, 0),
                         15_000L, policy).action());
-        assertEquals(AgentObjectiveProgressWatchdog.Action.NUDGE,
+        assertEquals(AgentObjectiveProgressWatchdog.Action.STALLED,
                 AgentObjectiveProgressWatchdog.evaluate(
                         state, entry, agent, Map.of(100101, 1, 120100, 0),
                         20_000L, policy).action());
@@ -117,25 +116,7 @@ class AgentObjectiveProgressWatchdogTest {
         assertEquals(30_000L, policy.forCombatCrowd(0).recoverAfterMs());
         assertEquals(40_000L, policy.forCombatCrowd(10).recoverAfterMs());
         assertEquals(60_000L, policy.forCombatCrowd(100).recoverAfterMs());
-        assertEquals(5_000L, policy.forCombatCrowd(10).nudgeAfterMs());
+        assertEquals(5_000L, policy.forCombatCrowd(10).stallNoticeAfterMs());
     }
 
-    @Test
-    void activeNavigationRecoveryDefersObjectiveWatchdog() {
-        Character agent = mock(Character.class);
-        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
-        AgentObjectiveProgressWatchdog.State state = new AgentObjectiveProgressWatchdog.State();
-        AgentObjectiveRecoveryPolicy policy =
-                new AgentObjectiveRecoveryPolicy(5_000L, 15_000L, 3, 500L);
-        when(agent.getMapId()).thenReturn(30_000);
-        when(agent.getLevel()).thenReturn(1);
-        when(agent.getExp()).thenReturn(0);
-        when(agent.getPosition()).thenReturn(new Point(10, 20));
-        AgentObjectiveProgressWatchdog.start(state, entry, agent, 1_000L);
-        AgentNavigationRecoveryRuntime.tryAcquire(entry, "test-recovery", 6_000L);
-
-        assertEquals(AgentObjectiveProgressWatchdog.Action.NONE,
-                AgentObjectiveProgressWatchdog.evaluate(
-                        state, entry, agent, 6_000L, policy).action());
-    }
 }

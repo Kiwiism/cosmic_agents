@@ -65,9 +65,7 @@ The derived combat drive can add one claim-tolerance slot. It cannot bypass obje
 
 ## Configuration and rollback
 
-The master switch is `AGENT_COMBAT_BEHAVIOR_ENABLED`. Independent rollout switches cover response latency, map crowd respite, target claims, target-rank variation, platform anchoring, navigation variation, idle presentation, and combat emotes. Crowd active percentage, minimum population, and expression map budget are global safety limits. Profile-level weights remain in the JSON catalog.
-
-Turning the master switch off restores the previous full-mode target variation and anchor settings. Turning an individual switch off restores only that generic subsystem's prior behavior.
+`AGENT_BEHAVIOR_PROFILE` is `OFF` or `STANDARD` and owns response latency, map crowd respite, target claims, target-rank variation, platform anchoring, and navigation variation. `AGENT_PRESENTATION_PROFILE` independently controls idle presentation, personality projections, and combat emotes. Crowd active percentage, minimum population, and expression map budget remain global safety limits. Profile-level weights remain in the JSON catalog.
 
 ## Uptime constraints
 

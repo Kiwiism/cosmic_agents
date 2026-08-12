@@ -4,7 +4,6 @@ import server.agents.capabilities.follow.AgentFollowMotionObservationService;
 import server.agents.capabilities.follow.AgentOwnerMotionStateRuntime;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentTargetSnapshot;
-import server.agents.capabilities.recovery.AgentNavigationRecoveryPolicy;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 
 import java.awt.Point;
@@ -66,8 +65,7 @@ public final class AgentMovementOnlyTickCoordinator {
                 AgentMovementPhysicsConfig.configuredOutOfBoundsTeleportDist(),
                 AgentRuntimeConfig.cfg.GRIND_PARTY_TELEPORT_DIST_MULTIPLIER,
                 AgentMovementPhysicsConfig.configuredFollowDist(),
-                AgentMovementPhysicsConfig.configuredStopDist(),
-                AgentNavigationRecoveryPolicy.mayPerformMovementRecovery());
+                AgentMovementPhysicsConfig.configuredStopDist());
     }
 
     public record TickConfig(int tickMs,
@@ -76,16 +74,14 @@ public final class AgentMovementOnlyTickCoordinator {
                              int outOfBoundsTeleportDistance,
                              int grindPartyTeleportDistanceMultiplier,
                              int followDistance,
-                             int stopDistance,
-                             boolean enableUnstuck) {
+                             int stopDistance) {
         private AgentMovementOnlyModeCoordinator.ModeConfig modeConfig() {
             return new AgentMovementOnlyModeCoordinator.ModeConfig(
                     teleportDistance,
                     outOfBoundsTeleportDistance,
                     grindPartyTeleportDistanceMultiplier,
                     followDistance,
-                    stopDistance,
-                    enableUnstuck);
+                    stopDistance);
         }
     }
 }

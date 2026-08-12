@@ -292,10 +292,9 @@ Recent map updates:
   directly to Agent movement pose/reset/broadcast services. Live tick gates and
   movement-only recovery call it without BotEntry casts, preserving the same
   teleport-distance recovery thresholds.
-- `AgentStuckDetectionRuntime` now accepts `AgentRuntimeEntry` and uses the
-  Agent entry overload on `AgentMovementRecoveryService`; the temporary recovery
-  cast is isolated inside movement recovery while stuck timers, cooldowns, and
-  recovery jumps remain unchanged.
+- `AgentStuckDetectionRuntime` was migrated to `AgentRuntimeEntry`; the later
+  reliability cleanup retired recovery jumps and retained observation-only
+  stuck evidence with bounded event publication.
 - `AgentStandaloneMoveTargetRuntime` now uses AgentRuntimeEntry all the way to
   movement-core dispatch. `AgentMovementTickRuntime` gained an Agent entry
   overload that isolates the temporary BotEntry cast while lower movement
@@ -442,8 +441,8 @@ Recent map updates:
   `BotEntry` casts were removed from script execution and tick failure; the
   interaction facade still returns `BotEntry` until registration/lifecycle
   return types are migrated.
-- `BotMovementManager.java#movement-helper-dispatch` is migrated through
-  `AgentMovementRecoveryService`, `AgentMovementPhaseDispatchService`, and
+- `BotMovementManager.java#movement-helper-dispatch` was migrated through
+  Agent movement services including `AgentMovementPhaseDispatchService` and
   `AgentGroundActionPlanner`. Unstuck recovery, airborne dispatch, ground-step
   planning, ledge fallback, and mob-avoidance decisions now use
   `AgentRuntimeEntry` directly with unchanged movement behavior.

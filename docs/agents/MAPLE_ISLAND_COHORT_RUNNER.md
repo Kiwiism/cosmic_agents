@@ -90,7 +90,7 @@ Recommended runs:
 
 Every mode keeps required graph jumps, rope/ladder movement, portal behavior,
 quest/combat correctness, and the cash-shop return grounding guard unchanged.
-Set `AGENT_PERSONALITY_PRESENTATION_ENABLED: false` to disable only the new
+Set `AGENT_PRESENTATION_PROFILE: OFF` to disable only the optional
 personality layer. See `docs/agents/AGENT_PERSONALITY_PRESENTATION.md` for its
 catalog, persistence, observer gate, and safety model.
 

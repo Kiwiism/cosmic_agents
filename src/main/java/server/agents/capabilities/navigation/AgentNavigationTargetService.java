@@ -6,7 +6,6 @@ import server.agents.capabilities.movement.AgentMovementKinematicsService;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
 import server.agents.capabilities.movement.AgentClimbStateRuntime;
-import server.agents.capabilities.recovery.AgentNavigationRecoveryPolicy;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
@@ -83,9 +82,7 @@ public final class AgentNavigationTargetService {
             long nowMs = System.currentTimeMillis();
             AgentNavigationProgressState progressState =
                     entry.capabilityStates().require(AgentNavigationProgressState.STATE_KEY);
-            if (AgentNavigationRecoveryPolicy.recordsRouteProgress()) {
-                progressState.observe(bot.getMapId(), pathTargetPos, startRegionId, nowMs);
-            }
+            progressState.observe(bot.getMapId(), pathTargetPos, startRegionId, nowMs);
             AgentNavigationGraph.Edge timedOutEdge = runAiTick
                     ? AgentNavigationEdgeReliabilityRuntime.observeAttempt(
                             entry, bot.getMapId(), startRegionId, botPos, nowMs)
@@ -96,8 +93,6 @@ public final class AgentNavigationTargetService {
                 AgentMovementStateResetService.clearNavigationStep(entry);
                 AgentNavigationDebugStateRuntime.setLastDecision(entry, "edge-timeout-replan");
             }
-            boolean routeRecoveryEnabled = AgentNavigationRecoveryPolicy.mayRejectRouteEdge(
-                    AgentNavigationRouteOverlayPolicy.applies(graph, targetRegionId));
             if (runAiTick && rawTargetPos != null) {
                 AgentDecisionCatalogRuntime.observeNavigation(
                         entry,
@@ -153,7 +148,6 @@ public final class AgentNavigationTargetService {
                 // into this tick without running A* again. Reject it here when an authored route
                 // redirects the current branch.
                 if (edge != null && ((!AgentNavigationRouteOverlayPolicy.allows(graph, targetRegionId, edge))
-                        || (routeRecoveryEnabled && !progressState.allows(edge, nowMs))
                         || AgentNavigationEdgeReliabilityRuntime.suppressed(
                                 entry, bot.getMapId(), edge, nowMs)
                         || AgentVerticalTraversalService.blocksRecentInverseEntry(
@@ -389,18 +383,11 @@ public final class AgentNavigationTargetService {
         AgentTravelVariationRuntime.RouteVariation variation = scriptedRouteVariation(
                 entry, graph.mapId, targetRegionId, targetPos);
         long nowMs = System.currentTimeMillis();
-        AgentNavigationProgressState progressState =
-                entry.capabilityStates().require(AgentNavigationProgressState.STATE_KEY);
         boolean authoredRouteOverlay = AgentNavigationRouteOverlayPolicy.applies(graph, targetRegionId);
-        boolean routeRecoveryEnabled = AgentNavigationRecoveryPolicy.mayRejectRouteEdge(authoredRouteOverlay);
-        if (!routeRecoveryEnabled) {
-            progressState.clearPartialReuse();
-        }
         Predicate<AgentNavigationGraph.Edge> reliabilityFilter =
                 AgentNavigationEdgeReliabilityRuntime.edgeFilter(entry, graph.mapId, nowMs);
         Predicate<AgentNavigationGraph.Edge> edgeFilter = edge ->
-                (!routeRecoveryEnabled || progressState.allows(edge, nowMs))
-                        && reliabilityFilter.test(edge)
+                reliabilityFilter.test(edge)
                         && !AgentVerticalTraversalService.blocksRecentInverseEntry(
                                 graph, entry, edge, nowMs);
         ToIntFunction<AgentNavigationGraph.Edge> edgePenalty =
@@ -420,31 +407,10 @@ public final class AgentNavigationTargetService {
         boolean leavesResolvedTargetRegion = leavesResolvedTargetRegion(
                 selected, startRegionId, targetRegionId);
         if (leavesResolvedTargetRegion) {
-            if (routeRecoveryEnabled) {
-                progressState.suppress(selected, nowMs);
-            }
             selected = null;
             AgentNavigationTraceRuntime.rejected(entry, graph, startRegionId,
-                    targetRegionId, targetPos, "EDGE_SUPPRESSED",
+                    targetRegionId, targetPos, "EDGE_REJECTED",
                     "candidate leaves resolved target region", nowMs);
-        } else if (routeRecoveryEnabled && progressState.suppressIfRepeatedCycle(selected, nowMs)) {
-            selection = AgentNavigationPathService.findNextEdgeSelectionVaried(
-                    graph, bot, startPosition, startRegionId, targetRegionId, targetPos, variation,
-                    edgeFilter, edgePenalty);
-            selected = selection.activeEdge();
-            routeSource = "RECOVERY";
-            routeReason = "repeated region cycle; suppressed cycle edge";
-        } else if (selection.completeness() == AgentNavigationPathService.RouteCompleteness.PARTIAL
-                && routeRecoveryEnabled
-                && !progressState.allowsPartialReuse(selected, nowMs)) {
-            selection = AgentNavigationPathService.findNextEdgeSelectionVaried(
-                    graph, bot, startPosition, startRegionId, targetRegionId, targetPos, variation,
-                    edgeFilter, edgePenalty);
-            selected = selection.activeEdge();
-            routeSource = "RECOVERY";
-            routeReason = "partial closest-frontier edge reuse exhausted";
-        } else if (selection.completeness() == AgentNavigationPathService.RouteCompleteness.COMPLETE) {
-            progressState.clearPartialReuse();
         }
         if (!leavesResolvedTargetRegion) {
             if (selected == null && !selection.outcome().reached()) {

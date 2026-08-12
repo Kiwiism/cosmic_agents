@@ -36,9 +36,8 @@ public final class AgentNavigationEdgeValidationService {
         if (AgentNavigationEdgeReliabilityRuntime.suppressed(entry, mapId, edge, nowMs)) {
             return new Result(Status.REJECTED, "edge-suppressed");
         }
-        if (!AgentNavigationReliabilityConfig.edgeValidationEnabled()
-                || !AgentNavigationEdgeReliabilityState.isRisky(edge)) {
-            return new Result(Status.READY, "validation-disabled-or-non-risky");
+        if (!AgentNavigationEdgeReliabilityState.isRisky(edge)) {
+            return new Result(Status.READY, "non-risky-edge");
         }
         boolean climbing = AgentClimbStateRuntime.climbing(entry);
         boolean airborne = AgentMovementStateRuntime.inAir(entry);

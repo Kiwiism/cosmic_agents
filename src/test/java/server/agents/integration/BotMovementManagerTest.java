@@ -24,7 +24,6 @@ import server.agents.capabilities.movement.AgentMovementKinematicsService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementPoseService;
 import server.agents.capabilities.movement.AgentMovementProfileService;
-import server.agents.capabilities.movement.AgentMovementRecoveryService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 
@@ -959,41 +958,6 @@ class BotMovementManagerTest {
         assertEquals(new Point(130, 100), AgentMoveTargetStateRuntime.moveTarget(entry),
                 "idle fidget cleanup should return to its own recorded origin");
         assertTrue(AgentMoveTargetStateRuntime.isPrecise(entry));
-    }
-
-    @Test
-    void shouldNotUseDownJumpForUnstuckRecovery() {
-        MapleMap map = new MapleMap(910000037, 0, 0, 910000037, 1.0f);
-        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
-        footholds.insert(new Foothold(new Point(0, 100), new Point(300, 100), 1));
-        map.setFootholds(footholds);
-
-        Character bot = mockBot(new Point(100, 100), map);
-        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-
-        AgentMovementRecoveryService.tickUnstuck(entry, true);
-
-        assertFalse(AgentMovementStateRuntime.downJumpPending(entry), "unstuck recovery should only use lateral jumps");
-        assertTrue(AgentMovementStateRuntime.inAir(entry), "unstuck recovery should launch the bot instead of crouching in place");
-    }
-
-    @Test
-    void shouldNudgeAwayFromCurrentNavigationWaypoint() {
-        MapleMap map = new MapleMap(910000038, 0, 0, 910000038, 1.0f);
-        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
-        footholds.insert(new Foothold(new Point(0, 100), new Point(300, 100), 1));
-        map.setFootholds(footholds);
-
-        Character bot = mockBot(new Point(100, 100), map);
-        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentNavigationDebugStateRuntime.setNavTargetPosition(entry, new Point(200, 100));
-
-        AgentMovementRecoveryService.tickUnstuck(entry, true);
-
-        assertTrue(AgentMovementPhysicsStateRuntime.airVelocityX(entry) < 0,
-                "a failed route to the right should be escaped with a leftward nudge");
-        assertEquals(new Point(200, 100), AgentNavigationDebugStateRuntime.navTargetPosition(entry),
-                "recovery may clear the failed traversal step, but must preserve the requested destination");
     }
 
     @Test

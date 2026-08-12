@@ -50,14 +50,14 @@ The local lease releases when its duration expires, its local-objective kill quo
 
 1. Resolve the live source and target navigation regions.
 2. Observe any active risky-edge attempt. Reaching its destination clears prior failure evidence; physical or region progress refreshes its timeout.
-3. Reuse a committed edge only if route overlays, existing cycle recovery and per-Agent suppression all allow it.
+3. Reuse a committed edge only if route overlays, structural validation and per-Agent reliability suppression allow it.
 4. Otherwise run A* with suppressed edges filtered out and bounded reliability penalties added to edge cost. The cached graph remains immutable.
 5. Immediately before jump, drop, rope or ladder execution, validate the expected source region, compatible grounded/airborne/climbing state and launch/landing/attachment anchors.
 6. Approach a valid but not-yet-ready anchor through normal movement. A structural rejection or motionless attempt timeout records one failure and invalidates only the current navigation step.
 7. At the configured threshold, suppress only that exact Agent/map/edge signature. The next search retains the combat target and objective while choosing an alternative route.
 8. Successful arrival clears that edge's failures. Suppression and unused failure records also expire automatically, and the bounded ledger resets on map change.
 
-This flow adds no random movement, nudge or teleport recovery. Existing route-loop recovery remains independently controlled by `AgentNavigationRecoveryPolicy.MODE`.
+This flow adds no random movement, nudge or in-bounds recovery teleport. Route-cycle observation is diagnostic only; exact edge failures own all reliability penalties and suppression. Out-of-bounds teleport remains an independent safety invariant.
 
 Patrol, follow-combat and route-blocker modes reuse the same base scoring helpers but have narrower candidate gates appropriate to their mode.
 
@@ -126,21 +126,17 @@ All values live in `agent-engine.yaml`. The values below are the behavior-preser
 | `MAX_CONSECUTIVE_INCIDENTAL_KILLS` | 2 | Limits consecutive non-objective kills |
 | `MAX_INCIDENTAL_KILLS_PER_PLATFORM_LEASE` | 3 | Limits incidental clearing during one platform lease |
 | `PLATFORM_LEASE_MS` | 6500 | Retains local platform focus for this duration |
-| `QUEST_LOCAL_CLEAR_ENFORCED` | true | Applies local platform clearing before distant preferred targets |
-| `QUEST_LOCAL_CLEAR_SHADOW_ENABLED` | false | Computes local-clear evidence without enforcing it when enabled alone |
-| `LOCAL_TARGET_LEASE_ENABLED` | true | Enables the post-map-wide per-Agent locality policy |
 | `LOCAL_TARGET_LEASE_MS` | 25000 | Time bound after reaching the promoted region |
-| `LOCAL_TARGET_LEASE_KILLS` | 3 | Objective-eligible local kills before release |
+| `LOCAL_TARGET_LEASE_KILLS` | 2 | Objective-eligible local kills before release |
 | `LOCAL_TARGET_LEASE_EMPTY_SCANS` | 3 | Consecutive empty preferred-local scans before early release |
-| `STRICT_COMBAT_ROUTE_VALIDATION_ENABLED` | true | Requires remote combat routes to report `COMPLETE` |
+
+Local clearing, the local-target lease, complete remote routes and first-edge structural validation are correctness policy and are therefore always active.
 
 ### Navigation reliability
 
 | Setting | Default | Effect |
 |---|---:|---|
-| `EDGE_VALIDATION_ENABLED` | true | Enables live risky-edge contract checks before execution |
-| `EDGE_SUPPRESSION_ENABLED` | true | Excludes repeatedly failing edges for this Agent/map |
-| `ROUTE_PENALTIES_ENABLED` | true | Adds temporary failure-derived A* costs |
+| `ROUTING_MODE` | ACTIVE | `OBSERVE` records failures; `ACTIVE` also applies bounded penalties and suppression |
 | `FAILURE_THRESHOLD` | 3 | Failures before hard suppression |
 | `SUPPRESSION_MS` | 30000 | Duration of hard suppression |
 | `FAILURE_RETENTION_MS` | 60000 | Quiet lifetime of failure/penalty evidence |
@@ -181,9 +177,7 @@ The five feature switches are independent. With local leasing disabled, map-wide
 
 ### Personality and crowd extensions
 
-The following switches independently enable the already-existing behavior layers: `AGENT_COMBAT_BEHAVIOR_ENABLED`, `AGENT_RESPONSE_LATENCY_ENABLED`, `AGENT_MAP_CROWD_RESPITE_ENABLED`, `AGENT_TARGET_CLAIM_POLICY_ENABLED`, `AGENT_TARGET_VARIATION_ENABLED`, `AGENT_PLATFORM_ANCHOR_BEHAVIOR_ENABLED`, `AGENT_IDLE_COMBAT_PRESENTATION_ENABLED` and `AGENT_COMBAT_EMOTES_ENABLED`.
-
-Their profile-specific weights and timing remain in the personality/combat sections of `agent-engine.yaml`; disabling a switch removes that extension while leaving the combat kernel intact.
+`AGENT_BEHAVIOR_PROFILE` controls response timing, crowd respite, claim avoidance, target and route variation, and platform anchoring. `AGENT_PRESENTATION_PROFILE` independently controls personality presentation, idle combat presentation, and combat emotes. Both accept `OFF` or `STANDARD`; neither changes combat or navigation correctness.
 
 ### Loot policy
 

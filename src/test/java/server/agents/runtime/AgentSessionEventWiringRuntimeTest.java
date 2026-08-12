@@ -6,6 +6,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import server.agents.events.AgentEventBus;
+import server.agents.behavior.AgentBehaviorFeatureProfile;
+import server.agents.capabilities.presentation.AgentPresentationProfile;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -35,9 +37,9 @@ class AgentSessionEventWiringRuntimeTest {
     void productionSubscriptionsAreRegisteredOnceAndClosedWithSession() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), null, null);
         AgentEventBus bus = AgentSessionEventRuntime.bus(entry);
-        int personalityListeners = config.AgentYamlConfig.config.agent.AGENT_PERSONALITY_PRESENTATION_ENABLED
+        int personalityListeners = AgentPresentationProfile.current().enabled()
                 ? 2 : 0;
-        int behaviorListener = config.AgentYamlConfig.config.agent.AGENT_COMBAT_BEHAVIOR_ENABLED ? 1 : 0;
+        int behaviorListener = AgentBehaviorFeatureProfile.current().enabled() ? 1 : 0;
 
         assertEquals(22 + personalityListeners + behaviorListener, bus.snapshot().subscriptions());
         assertEquals(22 + personalityListeners + behaviorListener,
@@ -58,9 +60,9 @@ class AgentSessionEventWiringRuntimeTest {
         System.setProperty("agents.events.llmContext.enabled", "false");
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), null, null);
         AgentEventBus bus = AgentSessionEventRuntime.bus(entry);
-        int personalityListeners = config.AgentYamlConfig.config.agent.AGENT_PERSONALITY_PRESENTATION_ENABLED
+        int personalityListeners = AgentPresentationProfile.current().enabled()
                 ? 2 : 0;
-        int behaviorListener = config.AgentYamlConfig.config.agent.AGENT_COMBAT_BEHAVIOR_ENABLED ? 1 : 0;
+        int behaviorListener = AgentBehaviorFeatureProfile.current().enabled() ? 1 : 0;
 
         assertEquals(8 + personalityListeners + behaviorListener, bus.snapshot().subscriptions());
 
@@ -72,9 +74,9 @@ class AgentSessionEventWiringRuntimeTest {
         config.AgentYamlConfig.config.agent.AGENT_DIALOGUE_TRANSPORT_ENABLED = false;
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), null, null);
         AgentEventBus bus = AgentSessionEventRuntime.bus(entry);
-        int personalityListeners = config.AgentYamlConfig.config.agent.AGENT_PERSONALITY_PRESENTATION_ENABLED
+        int personalityListeners = AgentPresentationProfile.current().enabled()
                 ? 2 : 0;
-        int behaviorListener = config.AgentYamlConfig.config.agent.AGENT_COMBAT_BEHAVIOR_ENABLED ? 1 : 0;
+        int behaviorListener = AgentBehaviorFeatureProfile.current().enabled() ? 1 : 0;
 
         assertEquals(16 + personalityListeners + behaviorListener, bus.snapshot().subscriptions());
 

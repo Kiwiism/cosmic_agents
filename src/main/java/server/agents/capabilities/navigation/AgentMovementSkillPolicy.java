@@ -44,10 +44,10 @@ public final class AgentMovementSkillPolicy {
 
     public static boolean canUseActivePath(Character agent, AgentNavigationGraph.Edge edge) {
         return switch (edge.type) {
-            case TELEPORT -> AgentMovementSkillConfig.TELEPORT_EXECUTION_ENABLED
+            case TELEPORT -> AgentMovementSkillConfig.TELEPORT_MODE.active()
                     && baseEligibility(agent, edge)
                     && affordableWithReserve(agent, edge);
-            case FLASH_JUMP -> AgentMovementSkillConfig.FLASH_JUMP_EXECUTION_ENABLED
+            case FLASH_JUMP -> AgentMovementSkillConfig.FLASH_JUMP_MODE.active()
                     && baseEligibility(agent, edge)
                     && affordableWithReserve(agent, edge);
             default -> true;
@@ -55,19 +55,29 @@ public final class AgentMovementSkillPolicy {
     }
 
     public static boolean canUseShadowPath(Character agent, AgentNavigationGraph.Edge edge) {
-        return !isSkillEdge(edge) || baseEligibility(agent, edge);
+        return !isSkillEdge(edge) || (mode(edge.type).visibleToShadowRouting()
+                && baseEligibility(agent, edge));
     }
 
     public static boolean canUseAnyActiveMovementSkill(Character agent) {
-        return (AgentMovementSkillConfig.TELEPORT_EXECUTION_ENABLED
+        return (AgentMovementSkillConfig.TELEPORT_MODE.active()
                 && activeEligibility(agent, AgentNavigationGraph.EdgeType.TELEPORT))
-                || (AgentMovementSkillConfig.FLASH_JUMP_EXECUTION_ENABLED
+                || (AgentMovementSkillConfig.FLASH_JUMP_MODE.active()
                 && activeEligibility(agent, AgentNavigationGraph.EdgeType.FLASH_JUMP));
     }
 
     public static boolean canUseAnyShadowMovementSkill(Character agent) {
-        return baseEligibility(agent, AgentNavigationGraph.EdgeType.TELEPORT)
-                || baseEligibility(agent, AgentNavigationGraph.EdgeType.FLASH_JUMP);
+        return (AgentMovementSkillConfig.TELEPORT_MODE.visibleToShadowRouting()
+                && baseEligibility(agent, AgentNavigationGraph.EdgeType.TELEPORT))
+                || (AgentMovementSkillConfig.FLASH_JUMP_MODE.visibleToShadowRouting()
+                && baseEligibility(agent, AgentNavigationGraph.EdgeType.FLASH_JUMP));
+    }
+
+    public static boolean shouldCompareShadowMovementSkill(Character agent) {
+        return (AgentMovementSkillConfig.TELEPORT_MODE.shadowOnly()
+                && baseEligibility(agent, AgentNavigationGraph.EdgeType.TELEPORT))
+                || (AgentMovementSkillConfig.FLASH_JUMP_MODE.shadowOnly()
+                && baseEligibility(agent, AgentNavigationGraph.EdgeType.FLASH_JUMP));
     }
 
     public static boolean canExecute(AgentRuntimeEntry entry,
@@ -108,6 +118,15 @@ public final class AgentMovementSkillPolicy {
 
     private static boolean baseEligibility(Character agent, AgentNavigationGraph.Edge edge) {
         return baseEligibility(agent, edge.type);
+    }
+
+    private static server.agents.capabilities.movement.AgentMovementSkillMode mode(
+            AgentNavigationGraph.EdgeType edgeType) {
+        return switch (edgeType) {
+            case TELEPORT -> AgentMovementSkillConfig.TELEPORT_MODE;
+            case FLASH_JUMP -> AgentMovementSkillConfig.FLASH_JUMP_MODE;
+            default -> throw new IllegalArgumentException("Not a movement-skill edge: " + edgeType);
+        };
     }
 
     private static boolean baseEligibility(Character agent, AgentNavigationGraph.EdgeType edgeType) {

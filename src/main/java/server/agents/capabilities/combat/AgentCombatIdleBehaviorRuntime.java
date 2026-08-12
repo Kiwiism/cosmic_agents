@@ -5,6 +5,7 @@ import config.YamlConfig;
 import server.agents.behavior.AgentBehaviorPolicyProfile;
 import server.agents.behavior.AgentBehaviorRuntime;
 import server.agents.capabilities.presentation.AgentWeaponFlourishService;
+import server.agents.capabilities.presentation.AgentPresentationProfile;
 import server.agents.integration.AgentFidgetGateway;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -18,7 +19,7 @@ public final class AgentCombatIdleBehaviorRuntime {
 
     public static boolean tick(AgentRuntimeEntry entry, Character agent, Point position, long nowMs) {
         if (!AgentBehaviorRuntime.enabled(entry)
-                || !config.AgentYamlConfig.config.agent.AGENT_IDLE_COMBAT_PRESENTATION_ENABLED) return false;
+                || !AgentPresentationProfile.current().enabled()) return false;
         if (AgentCombatBehaviorRuntime.candidateOpportunity(entry)) return false;
         if (AgentFidgetGateway.combatIdleActive(entry)) {
             return AgentFidgetGateway.tickCombatIdle(entry, position, nowMs);

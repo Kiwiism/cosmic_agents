@@ -2,7 +2,6 @@ package server.agents.capabilities.objective;
 
 import client.Character;
 import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
-import server.agents.capabilities.recovery.AgentNavigationRecoveryRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
@@ -15,7 +14,7 @@ public final class AgentObjectiveProgressWatchdog {
 
     public enum Action {
         NONE,
-        NUDGE,
+        STALLED,
         RECOVER
     }
 
@@ -24,9 +23,9 @@ public final class AgentObjectiveProgressWatchdog {
 
     public static final class State {
         private boolean initialized;
-        private boolean nudgeIssued;
+        private boolean stallNoticeIssued;
         private long progressAtMs;
-        private long lastNudgeAtMs;
+        private long lastStallNoticeAtMs;
         private long journalSequence;
         private int mapId;
         private Point navigationTarget;
@@ -38,9 +37,9 @@ public final class AgentObjectiveProgressWatchdog {
 
         public void reset() {
             initialized = false;
-            nudgeIssued = false;
+            stallNoticeIssued = false;
             progressAtMs = 0L;
-            lastNudgeAtMs = 0L;
+            lastStallNoticeAtMs = 0L;
             journalSequence = 0L;
             mapId = 0;
             navigationTarget = null;
@@ -51,8 +50,8 @@ public final class AgentObjectiveProgressWatchdog {
             objectiveCounters = Map.of();
         }
 
-        public long lastNudgeAtMs() {
-            return lastNudgeAtMs;
+        public long lastStallNoticeAtMs() {
+            return lastStallNoticeAtMs;
         }
     }
 
@@ -88,24 +87,19 @@ public final class AgentObjectiveProgressWatchdog {
         Map<Integer, Integer> counters = copyCounters(objectiveCounters);
         if (madeProgress(state, entry, agent, counters)) {
             recordProgress(state, entry, agent, counters, nowMs);
-            AgentNavigationRecoveryRuntime.recordProgress(entry);
             return new Evaluation(Action.NONE, 0L);
         }
         state.objectiveCounters = counters;
-        if (AgentNavigationRecoveryRuntime.active(entry, nowMs)) {
-            state.progressAtMs = nowMs;
-            return new Evaluation(Action.NONE, 0L);
-        }
         long stalledMs = Math.max(0L, nowMs - state.progressAtMs);
         if (policy.recoverAfterMs() > 0L && stalledMs >= policy.recoverAfterMs()) {
             return new Evaluation(Action.RECOVER, stalledMs);
         }
-        if (policy.nudgeAfterMs() > 0L
-                && stalledMs >= policy.nudgeAfterMs()
-                && !state.nudgeIssued) {
-            state.nudgeIssued = true;
-            state.lastNudgeAtMs = nowMs;
-            return new Evaluation(Action.NUDGE, stalledMs);
+        if (policy.stallNoticeAfterMs() > 0L
+                && stalledMs >= policy.stallNoticeAfterMs()
+                && !state.stallNoticeIssued) {
+            state.stallNoticeIssued = true;
+            state.lastStallNoticeAtMs = nowMs;
+            return new Evaluation(Action.STALLED, stalledMs);
         }
         return new Evaluation(Action.NONE, stalledMs);
     }
@@ -151,9 +145,9 @@ public final class AgentObjectiveProgressWatchdog {
         Point position = agent.getPosition();
         Point target = navigationTarget(entry);
         state.initialized = true;
-        state.nudgeIssued = false;
+        state.stallNoticeIssued = false;
         state.progressAtMs = nowMs;
-        state.lastNudgeAtMs = 0L;
+        state.lastStallNoticeAtMs = 0L;
         state.journalSequence = entry.capabilityRuntimeState().journalSequence();
         state.mapId = agent.getMapId();
         if (target != null && !target.equals(state.navigationTarget)) {

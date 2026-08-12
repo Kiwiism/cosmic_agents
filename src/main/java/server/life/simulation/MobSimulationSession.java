@@ -42,8 +42,6 @@ public final class MobSimulationSession {
     private volatile boolean impactFacingLeft;
     private int knockbackStepsRemaining;
     private int recoveryStepsRemaining;
-    private boolean hit1ActivityPending;
-    private boolean hit1ActivityPublished;
     private int chaseRampStepsTotal;
     private int chaseRampStepsRemaining;
     private double targetX;
@@ -129,8 +127,6 @@ public final class MobSimulationSession {
                 ? 0.0 : body.velocityY());
         knockbackStepsRemaining = 0;
         recoveryStepsRemaining = 0;
-        hit1ActivityPending = false;
-        hit1ActivityPublished = false;
         chaseRampStepsTotal = 0;
         chaseRampStepsRemaining = 0;
         temporaryBehaviorUntilNanos = 0L;
@@ -223,8 +219,6 @@ public final class MobSimulationSession {
                     / MaplePhysicsConstants.STEP_MS;
             if (recoveryStepsRemaining > 0) {
                 motion = MobMotionState.FLINCH;
-                hit1ActivityPending = AgentCombatConfig.cfg.MOB_PHYSICS_HIT1_ENABLED;
-                hit1ActivityPublished = false;
             } else {
                 motion = MobMotionState.CHASE;
             }
@@ -232,12 +226,6 @@ public final class MobSimulationSession {
         } else if (motion == MobMotionState.FLINCH && --recoveryStepsRemaining <= 0) {
             motion = MobMotionState.CHASE;
             beginPostFlinchChaseRamp();
-            if (hit1ActivityPublished) {
-                lastPublishedMoveActivity = -1;
-                lastPublishedMoveActivityNanos = 0L;
-            }
-            hit1ActivityPending = false;
-            hit1ActivityPublished = false;
             immediatePublication = true;
         } else if (motion == MobMotionState.JUMPING && result.landed()) {
             motion = MobMotionState.CHASE;
@@ -309,16 +297,6 @@ public final class MobSimulationSession {
      * move cycle expires. Repeating it on every position packet restarts slow animations at frame zero.
      */
     public synchronized int rawActivityForPublication(int stance, long nowNanos) {
-        if (motion == MobMotionState.FLINCH && hit1ActivityPending) {
-            hit1ActivityPending = false;
-            if (AgentCombatConfig.cfg.MOB_PHYSICS_HIT1_ENABLED) {
-                hit1ActivityPublished = true;
-                return impactFacingLeft ? 9 : 8;
-            }
-        }
-        if (motion == MobMotionState.FLINCH && hit1ActivityPublished) {
-            return -1;
-        }
         boolean moveAnimationActive = motion == MobMotionState.CHASE
                 || motion == MobMotionState.KNOCKBACK
                 || motion == MobMotionState.FLINCH;

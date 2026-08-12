@@ -176,7 +176,7 @@ class AmherstPlanRuntimeRunnerTest {
         assertTrue(fixture.entry.amherstPlanExecutionState().active());
         assertEquals("q1031", fixture.entry.amherstPlanExecutionState().assignedObjectiveId());
         assertEquals(5_002L, fixture.entry.amherstPlanExecutionState()
-                .objectiveWatchdog.lastNudgeAtMs());
+                .objectiveWatchdog.lastStallNoticeAtMs());
 
         assertTrue(runner.tick(fixture.entry, fixture.agent, 15_002L));
         assertTrue(fixture.entry.amherstPlanExecutionState().active());
