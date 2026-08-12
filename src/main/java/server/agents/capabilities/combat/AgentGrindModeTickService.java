@@ -34,8 +34,8 @@ public final class AgentGrindModeTickService {
         double seekRangeSq = (double) hooks.seekRange() * hooks.seekRange();
         long now = System.currentTimeMillis();
         AgentCombatLocalTargetLeaseRuntime.observePosition(entry, agent, agentPosition, now);
-        Monster target = AgentGrindTargetStateRuntime.targetInSeekRange(
-                entry, agent, agentPosition, seekRangeSq);
+        Monster target = AgentGrindTargetStateRuntime.targetInSeekRangeOrCommitted(
+                entry, agent, agentPosition, seekRangeSq, now);
         AgentAttackPlan attackPlan = target == null
                 ? null
                 : AgentCombatPlanRuntime.planAttack(entry, agent, target, AgentCombatConfig.cfg);

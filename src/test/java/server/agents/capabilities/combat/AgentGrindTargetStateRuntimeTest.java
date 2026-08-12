@@ -71,6 +71,25 @@ class AgentGrindTargetStateRuntimeTest {
     }
 
     @Test
+    void retainsCommittedMapWideTargetOutsideOrdinarySeekRange() {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
+        Character bot = mock(Character.class);
+        MapleMap map = mock(MapleMap.class);
+        Monster target = mock(Monster.class);
+        when(bot.getMap()).thenReturn(map);
+        when(target.isAlive()).thenReturn(true);
+        when(target.getMap()).thenReturn(map);
+        when(target.getPosition()).thenReturn(new Point(1_000, 100));
+
+        AgentGrindTargetStateRuntime.commitTarget(entry, target, 1_000L, 4_000L);
+
+        assertSame(target, AgentGrindTargetStateRuntime.targetInSeekRangeOrCommitted(
+                entry, bot, new Point(100, 100), 800L * 800L, 4_999L));
+        assertNull(AgentGrindTargetStateRuntime.targetInSeekRangeOrCommitted(
+                entry, bot, new Point(100, 100), 800L * 800L, 5_000L));
+    }
+
+    @Test
     void countsTargetSwitchesAndResetsThemWithTargetState() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Monster first = mock(Monster.class);

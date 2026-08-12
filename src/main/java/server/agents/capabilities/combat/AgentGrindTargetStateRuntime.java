@@ -39,6 +39,28 @@ public final class AgentGrindTargetStateRuntime {
         return target;
     }
 
+    /**
+     * Resolves the target that the grind loop may continue pursuing. The seek radius limits
+     * ordinary acquisition, but it must not immediately discard a live target that was
+     * deliberately acquired by map-wide objective search. The renewable commitment remains
+     * bounded by the normal death, map, objective, route, and commitment checks.
+     */
+    public static Monster targetInSeekRangeOrCommitted(AgentRuntimeEntry entry,
+                                                       Character bot,
+                                                       Point botPos,
+                                                       double seekRangeSq,
+                                                       long nowMs) {
+        Monster target = targetInSeekRange(entry, bot, botPos, seekRangeSq);
+        if (target != null) {
+            return target;
+        }
+        target = bot == null ? null : activeTargetInMap(entry, bot.getMap());
+        if (target == null || !AgentCombatObjectiveTargetStateRuntime.allows(entry, target.getId())) {
+            return null;
+        }
+        return committedTo(entry, target, nowMs) ? target : null;
+    }
+
     public static void setTarget(AgentRuntimeEntry entry, Monster target) {
         Monster previous = entry.grindTargetState().target();
         entry.grindTargetState().setTarget(target);
