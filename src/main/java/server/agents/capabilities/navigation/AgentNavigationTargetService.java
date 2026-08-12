@@ -21,6 +21,7 @@ import server.maps.Rope;
 
 import java.awt.Point;
 import java.util.function.Predicate;
+import java.util.function.ToIntFunction;
 
 /**
  * Agent-owned live navigation target resolver.
@@ -85,6 +86,16 @@ public final class AgentNavigationTargetService {
             if (AgentNavigationRecoveryPolicy.recordsRouteProgress()) {
                 progressState.observe(bot.getMapId(), pathTargetPos, startRegionId, nowMs);
             }
+            AgentNavigationGraph.Edge timedOutEdge = runAiTick
+                    ? AgentNavigationEdgeReliabilityRuntime.observeAttempt(
+                            entry, bot.getMapId(), startRegionId, botPos, nowMs)
+                    : null;
+            if (timedOutEdge != null) {
+                // Invalidate only the live step. The local pathTarget is replanned below while
+                // combat target, objective and unrelated capability state stay intact.
+                AgentMovementStateResetService.clearNavigationStep(entry);
+                AgentNavigationDebugStateRuntime.setLastDecision(entry, "edge-timeout-replan");
+            }
             boolean routeRecoveryEnabled = AgentNavigationRecoveryPolicy.mayRejectRouteEdge(
                     AgentNavigationRouteOverlayPolicy.applies(graph, targetRegionId));
             if (runAiTick && rawTargetPos != null) {
@@ -123,6 +134,8 @@ public final class AgentNavigationTargetService {
 
             AgentNavigationGraph.Edge edge;
             boolean edgeReused;
+            AgentNavigationGraph.Edge previouslyCommittedEdge =
+                    (AgentNavigationGraph.Edge) AgentNavigationDebugStateRuntime.activeNavigationEdge(entry);
             if (traversal != null) {
                 // A committed rope/ladder traversal owns movement until it settles. Generic
                 // ground-cycle recovery must not cancel or blacklist one of its structural edges.
@@ -141,6 +154,8 @@ public final class AgentNavigationTargetService {
                 // redirects the current branch.
                 if (edge != null && ((!AgentNavigationRouteOverlayPolicy.allows(graph, targetRegionId, edge))
                         || (routeRecoveryEnabled && !progressState.allows(edge, nowMs))
+                        || AgentNavigationEdgeReliabilityRuntime.suppressed(
+                                entry, bot.getMapId(), edge, nowMs)
                         || AgentVerticalTraversalService.blocksRecentInverseEntry(
                                 graph, entry, edge, nowMs))) {
                     AgentNavigationDebugStateRuntime.clearActiveNavigationEdge(entry);
@@ -204,12 +219,55 @@ public final class AgentNavigationTargetService {
                             AgentEventPriority.IMPORTANT);
                 }
                 AgentMovementStateResetService.clearNavigationState(entry);
+                if (!runAiTick && rawTargetPos != null
+                        && AgentClimbStateRuntime.climbing(entry)
+                        && previouslyCommittedEdge != null
+                        && AgentNavigationRopeEdgeService.isRopeEntryEdge(
+                                graph, previouslyCommittedEdge)) {
+                    // Observation-only resolution must discard the stale entry edge without
+                    // replacing its caller-owned target by the one-pixel rope attachment pose.
+                    return new NavigationDirective(new Point(rawTargetPos), false);
+                }
                 return new NavigationDirective(
                         safeFallbackTarget(botPos, rawTargetPos, startRegionId, targetRegionId),
                         false);
             }
 
-            NavigationDirective executionDirective = tryExecuteEdge(graph, entry, bot, botPos, rawTargetPos, edge, runAiTick);
+            EdgeExecution execution = tryExecuteEdge(
+                    graph, entry, bot, botPos, rawTargetPos, startRegionId, edge, runAiTick);
+            if (execution.rejected()) {
+                AgentMovementStateResetService.clearNavigationStep(entry);
+                AgentNavigationDebugStateRuntime.setLastDecision(entry, "edge-rejected-replan");
+                if (startRegionId >= 0 && targetRegionId >= 0
+                        && AgentNavigationEdgeReliabilityRuntime.suppressed(
+                                entry, bot.getMapId(), edge, System.currentTimeMillis())) {
+                    AgentNavigationGraph.Edge alternative = findNextEdge(
+                            graph, entry, bot, startRegionId, targetRegionId, pathTargetPos);
+                    if (alternative != null) {
+                        Point replanTargetPos = pathTargetPos;
+                        int replanTargetRegionId = targetRegionId;
+                        AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, alternative);
+                        AgentNavigationDebugStateRuntime.setPlannedNavigationTargetPosition(
+                                entry, replanTargetPos);
+                        AgentNavigationDebugStateRuntime.setNavTargetRegionId(
+                                entry, replanTargetRegionId);
+                        AgentVerticalTraversalService.beginIfRopeEntry(
+                                graph, entry, bot, alternative,
+                                replanTargetRegionId, replanTargetPos,
+                                (activeGraph, activeBot, activeStartPosition, activeStartRegionId,
+                                 activeTargetRegionId, activeTargetPos) -> findNextEdge(
+                                        activeGraph, entry, activeBot, activeStartPosition,
+                                        activeStartRegionId, activeTargetRegionId, activeTargetPos));
+                        AgentNavigationDebugStateRuntime.setNavWaypoint(
+                                entry, selectWaypoint(entry, graph, botPos, alternative),
+                                shouldUsePreciseTarget(graph, entry, botPos, alternative));
+                        return new NavigationDirective(
+                                AgentNavigationDebugStateRuntime.navTargetPosition(entry), false);
+                    }
+                }
+                return new NavigationDirective(new Point(botPos), false);
+            }
+            NavigationDirective executionDirective = execution.directive();
             if (executionDirective != null) {
                 AgentNavigationDebugStateRuntime.setLastDecision(entry, "exec");
                 return executionDirective;
@@ -270,8 +328,14 @@ public final class AgentNavigationTargetService {
             return false;
         }
 
-        NavigationDirective directive = tryExecuteEdge(
-                graph, entry, AgentRuntimeIdentityRuntime.bot(entry), botPos, rawTargetPos, edge, true);
+        EdgeExecution execution = tryExecuteEdge(
+                graph, entry, AgentRuntimeIdentityRuntime.bot(entry), botPos,
+                rawTargetPos, startRegionId, edge, true);
+        if (execution.rejected()) {
+            AgentMovementStateResetService.clearNavigationStep(entry);
+            return false;
+        }
+        NavigationDirective directive = execution.directive();
         if (directive == null || !directive.consumedTick) {
             return false;
         }
@@ -332,14 +396,19 @@ public final class AgentNavigationTargetService {
         if (!routeRecoveryEnabled) {
             progressState.clearPartialReuse();
         }
+        Predicate<AgentNavigationGraph.Edge> reliabilityFilter =
+                AgentNavigationEdgeReliabilityRuntime.edgeFilter(entry, graph.mapId, nowMs);
         Predicate<AgentNavigationGraph.Edge> edgeFilter = edge ->
                 (!routeRecoveryEnabled || progressState.allows(edge, nowMs))
+                        && reliabilityFilter.test(edge)
                         && !AgentVerticalTraversalService.blocksRecentInverseEntry(
                                 graph, entry, edge, nowMs);
+        ToIntFunction<AgentNavigationGraph.Edge> edgePenalty =
+                AgentNavigationEdgeReliabilityRuntime.edgePenalty(entry, graph.mapId, nowMs);
         AgentNavigationPathService.MovementPathSelection selection =
                 AgentNavigationPathService.findNextEdgeSelectionVaried(
                 graph, bot, startPosition, startRegionId, targetRegionId, targetPos, variation,
-                edgeFilter);
+                edgeFilter, edgePenalty);
         AgentNavigationGraph.Edge selected = selection.activeEdge();
         String routeSource = selection.recoverySearch() ? "RECOVERY_SEARCH"
                 : authoredRouteOverlay
@@ -361,7 +430,7 @@ public final class AgentNavigationTargetService {
         } else if (routeRecoveryEnabled && progressState.suppressIfRepeatedCycle(selected, nowMs)) {
             selection = AgentNavigationPathService.findNextEdgeSelectionVaried(
                     graph, bot, startPosition, startRegionId, targetRegionId, targetPos, variation,
-                    edgeFilter);
+                    edgeFilter, edgePenalty);
             selected = selection.activeEdge();
             routeSource = "RECOVERY";
             routeReason = "repeated region cycle; suppressed cycle edge";
@@ -370,7 +439,7 @@ public final class AgentNavigationTargetService {
                 && !progressState.allowsPartialReuse(selected, nowMs)) {
             selection = AgentNavigationPathService.findNextEdgeSelectionVaried(
                     graph, bot, startPosition, startRegionId, targetRegionId, targetPos, variation,
-                    edgeFilter);
+                    edgeFilter, edgePenalty);
             selected = selection.activeEdge();
             routeSource = "RECOVERY";
             routeReason = "partial closest-frontier edge reuse exhausted";
@@ -426,19 +495,46 @@ public final class AgentNavigationTargetService {
                 : null;
     }
 
-    private static NavigationDirective tryExecuteEdge(AgentNavigationGraph graph,
-                                                      AgentRuntimeEntry entry,
-                                                      Character bot,
-                                                      Point botPos,
-                                                      Point rawTargetPos,
-                                                      AgentNavigationGraph.Edge edge,
-                                                      boolean runAiTick) {
+    private static EdgeExecution tryExecuteEdge(AgentNavigationGraph graph,
+                                                AgentRuntimeEntry entry,
+                                                Character bot,
+                                                Point botPos,
+                                                Point rawTargetPos,
+                                                int currentRegionId,
+                                                AgentNavigationGraph.Edge edge,
+                                                boolean runAiTick) {
+        if (!runAiTick) {
+            return new EdgeExecution(null, false);
+        }
+        long nowMs = System.currentTimeMillis();
+        AgentNavigationEdgeValidationService.Result validation =
+                AgentNavigationEdgeValidationService.validate(
+                        graph, entry, bot, bot.getMapId(), currentRegionId, botPos, edge, nowMs);
+        if (validation.rejected()) {
+            if (!"edge-suppressed".equals(validation.reason())) {
+                AgentNavigationEdgeReliabilityRuntime.failed(
+                        entry, bot.getMapId(), edge, nowMs);
+            }
+            return new EdgeExecution(null, true);
+        }
+        if (!validation.ready()) {
+            return new EdgeExecution(null, false);
+        }
+        // A READY edge that the live executor still cannot start is a graph/executor contract
+        // failure. Start the same progress timeout so it is counted without penalizing a normal
+        // approach tick or treating one transient refusal as an immediate hard failure.
+        AgentNavigationEdgeReliabilityRuntime.beganAttempt(
+                entry, bot.getMapId(), edge, currentRegionId, botPos, nowMs);
         AgentNavigationEdgeExecutor.NavigationDirective directive = AgentNavigationEdgeExecutor.tryExecuteEdge(
                 graph, entry, bot, botPos, rawTargetPos, edge, runAiTick);
         if (directive == null) {
-            return null;
+            return new EdgeExecution(null, false);
         }
-        return new NavigationDirective(directive.targetPos(), directive.consumedTick());
+        return new EdgeExecution(
+                new NavigationDirective(directive.targetPos(), directive.consumedTick()), false);
+    }
+
+    private record EdgeExecution(NavigationDirective directive, boolean rejected) {
     }
 
     private static boolean shouldUsePreciseTarget(AgentNavigationGraph graph,

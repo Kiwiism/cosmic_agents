@@ -18,6 +18,10 @@ public final class AgentCombatTacticalEventListener implements AgentEventListene
         if (!(event instanceof AgentMobKilledEvent killed)) {
             return;
         }
+        AgentCombatLocalTargetLeaseRuntime.recordKill(
+                entry, killed.mapId(), killed.objectiveId(),
+                AgentCombatObjectiveTargetStateRuntime.allows(entry, killed.mobId()),
+                killed.occurredAtMs());
         AgentCombatTacticalState.Snapshot previous =
                 AgentCombatDirectiveRuntime.tacticalSnapshot(entry);
         if (previous != null

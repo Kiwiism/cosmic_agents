@@ -5,6 +5,7 @@ import constants.skills.Hermit;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementProfile;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 import server.maps.MapleMap;
 import server.maps.Foothold;
@@ -295,6 +296,8 @@ class AgentNavigationPathServiceTest {
         assertTrue(outcome.capped());
         assertTrue(outcome.bestEffort());
         assertFalse(outcome.reached());
+        assertEquals(AgentNavigationPathService.RouteCompleteness.PARTIAL,
+                outcome.completeness());
         assertEquals(1, outcome.path().size());
         assertEquals(2, outcome.finalRegionId());
     }
@@ -319,6 +322,103 @@ class AgentNavigationPathServiceTest {
         assertTrue(outcome.capped());
         assertFalse(outcome.bestEffort());
         assertTrue(outcome.path().isEmpty());
+        assertEquals(AgentNavigationPathService.RouteCompleteness.UNREACHABLE,
+                outcome.completeness());
+    }
+
+    @Test
+    void completeAndSameRegionSearchesExposeCompleteContract() {
+        AgentNavigationGraph graph = graphWithRegionsAndEdges(
+                List.of(groundRegion(1, 0, 100, 100), groundRegion(2, 100, 200, 100)),
+                Map.of(1, List.of(edge(1, 2, AgentNavigationGraph.EdgeType.WALK,
+                        new Point(0, 100), new Point(100, 100), 10))));
+
+        AgentNavigationPathService.SearchOutcome remote = AgentNavigationPathService.runSearch(
+                graph, null, new Point(0, 100), 1, 2, new Point(150, 100),
+                "target-score", true, false);
+        AgentNavigationPathService.SearchOutcome sameRegion = AgentNavigationPathService.runSearch(
+                graph, null, new Point(0, 100), 1, 1, new Point(50, 100),
+                "target-score", true, false);
+
+        assertEquals(AgentNavigationPathService.RouteCompleteness.COMPLETE,
+                remote.completeness());
+        assertEquals(AgentNavigationPathService.RouteCompleteness.COMPLETE,
+                sameRegion.completeness());
+        assertTrue(sameRegion.path().isEmpty());
+    }
+
+    @Test
+    void perAgentEdgePenaltyCanFavorLongerReliableRoute() {
+        AgentNavigationGraph.Edge riskyDirect = edge(1, 3, AgentNavigationGraph.EdgeType.JUMP,
+                new Point(0, 100), new Point(200, 100), 10);
+        AgentNavigationGraph.Edge reliableFirst = edge(1, 2, AgentNavigationGraph.EdgeType.WALK,
+                new Point(0, 100), new Point(100, 100), 30);
+        AgentNavigationGraph.Edge reliableSecond = edge(2, 3, AgentNavigationGraph.EdgeType.WALK,
+                new Point(100, 100), new Point(200, 100), 30);
+        AgentNavigationGraph graph = graphWithRegionsAndEdges(
+                List.of(groundRegion(1, 0, 100, 100),
+                        groundRegion(2, 100, 200, 100),
+                        groundRegion(3, 200, 300, 100)),
+                Map.of(1, List.of(riskyDirect, reliableFirst),
+                        2, List.of(reliableSecond)));
+        Character bot = mock(Character.class);
+        when(bot.getMap()).thenReturn(null);
+
+        AgentNavigationPathService.MovementPathSelection selection =
+                AgentNavigationPathService.findNextEdgeSelectionVaried(
+                        graph, bot, new Point(0, 100), 1, 3,
+                        new Point(200, 100), null, edge -> true,
+                        edge -> edge == riskyDirect ? 1_000 : 0);
+
+        assertEquals(reliableFirst, selection.activeEdge());
+        assertEquals(AgentNavigationPathService.RouteCompleteness.COMPLETE,
+                selection.completeness());
+    }
+
+    @Test
+    void perAgentSuppressionSelectsAlternativeWithoutChangingSharedGraph() {
+        AgentNavigationGraph.Edge direct = edge(1, 3, AgentNavigationGraph.EdgeType.JUMP,
+                new Point(0, 100), new Point(200, 100), 10);
+        AgentNavigationGraph.Edge alternateFirst = edge(1, 2, AgentNavigationGraph.EdgeType.DROP,
+                new Point(0, 100), new Point(100, 200), 20);
+        AgentNavigationGraph.Edge alternateSecond = edge(2, 3, AgentNavigationGraph.EdgeType.JUMP,
+                new Point(100, 200), new Point(200, 100), 20);
+        AgentNavigationGraph graph = graphWithRegionsAndEdges(
+                List.of(groundRegion(1, 0, 100, 100),
+                        groundRegion(2, 100, 200, 200),
+                        groundRegion(3, 200, 300, 100)),
+                Map.of(1, List.of(direct, alternateFirst), 2, List.of(alternateSecond)));
+        Character bot = mock(Character.class);
+        when(bot.getMap()).thenReturn(null);
+        AgentRuntimeEntry affected = new AgentRuntimeEntry(null, null, null);
+        AgentRuntimeEntry unaffected = new AgentRuntimeEntry(null, null, null);
+        AgentNavigationEdgeReliabilityState reliability = affected.capabilityStates()
+                .require(AgentNavigationEdgeReliabilityState.STATE_KEY);
+        for (int failure = 0; failure < AgentNavigationReliabilityConfig.failureThreshold(); failure++) {
+            reliability.recordFailure(graph.mapId, direct, 1_000 + failure,
+                    AgentNavigationReliabilityConfig.failureThreshold(),
+                    AgentNavigationReliabilityConfig.suppressionMs(),
+                    AgentNavigationReliabilityConfig.failureRetentionMs(),
+                    AgentNavigationReliabilityConfig.maxTrackedEdges());
+        }
+
+        AgentNavigationPathService.MovementPathSelection rerouted =
+                AgentNavigationPathService.findNextEdgeSelectionVaried(
+                        graph, bot, new Point(0, 100), 1, 3,
+                        new Point(200, 100), null,
+                        AgentNavigationEdgeReliabilityRuntime.edgeFilter(
+                                affected, graph.mapId, 2_000), edge -> 0);
+        AgentNavigationPathService.MovementPathSelection normal =
+                AgentNavigationPathService.findNextEdgeSelectionVaried(
+                        graph, bot, new Point(0, 100), 1, 3,
+                        new Point(200, 100), null,
+                        AgentNavigationEdgeReliabilityRuntime.edgeFilter(
+                                unaffected, graph.mapId, 2_000), edge -> 0);
+
+        assertEquals(alternateFirst, rerouted.activeEdge());
+        assertEquals(direct, normal.activeEdge());
+        assertTrue(graph.getOutgoing(1).contains(direct),
+                "per-Agent suppression must not mutate shared graph topology");
     }
 
     @Test

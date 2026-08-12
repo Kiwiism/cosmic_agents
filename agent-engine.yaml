@@ -1436,6 +1436,62 @@ tuning:
     # Purpose: Sets when slow pathfind warn ns triggers. Higher values let more pressure build before Agents or safeguards react; lower values make them react sooner.
     # Technical: the "navigation path service" component consumes this as an integer. Unit: nanoseconds; this is normally a profiling threshold rather than a gameplay duration.
     server.agents.capabilities.navigation.AgentNavigationPathService.SLOW_PATHFIND_WARN_NS: '50000000'
+    # Values: true or false. Recommended: true; false restores the prior edge-execution path while leaving suppression and penalties independently configurable.
+    # Purpose: Validates risky jump, drop, rope, and ladder edges against the live source region, movement state, and authored anchors before execution.
+    # Technical: Uses existing readiness predicates and rejects only structurally invalid attempts; ordinary approach movement is not counted as a failure.
+    server.agents.capabilities.navigation.AgentNavigationReliabilityConfig.EDGE_VALIDATION_ENABLED: 'true'
+    # Values: true or false. Recommended: true; disable independently when observing failure counts without excluding edges.
+    # Purpose: Lets one Agent temporarily route around an edge that repeatedly fails without changing the shared navigation graph or other Agents.
+    # Technical: Exclusion is scoped to the Agent and current map, starts at FAILURE_THRESHOLD, and expires after SUPPRESSION_MS.
+    server.agents.capabilities.navigation.AgentNavigationReliabilityConfig.EDGE_SUPPRESSION_ENABLED: 'true'
+    # Values: true or false. Recommended: true; false removes all reliability-derived additive route costs.
+    # Purpose: Makes a longer reliable route beat a mechanically short edge that this Agent has repeatedly failed.
+    # Technical: Adds a temporary per-Agent edge cost during A*; it never edits cached graph edges or authored route overlays.
+    server.agents.capabilities.navigation.AgentNavigationReliabilityConfig.ROUTE_PENALTIES_ENABLED: 'true'
+    # Values: 2-3 failures. Recommended: 3; lower values reroute sooner but are less tolerant of one-off execution noise.
+    # Purpose: Requires repeated evidence before an edge becomes temporarily unavailable to this Agent.
+    # Technical: Counts failures for an exact map/from/to/type/anchor signature; successful traversal clears that signature.
+    server.agents.capabilities.navigation.AgentNavigationReliabilityConfig.FAILURE_THRESHOLD: '3'
+    # Values: 10000-60000 milliseconds. Recommended: 30000; longer periods avoid a bad mechanic longer, while shorter periods probe recovery sooner.
+    # Purpose: Bounds how long a repeatedly failing edge is excluded for one Agent on one map.
+    # Technical: Expiry is lazy and deterministic on the next validation or path search; map changes clear the ledger immediately.
+    server.agents.capabilities.navigation.AgentNavigationReliabilityConfig.SUPPRESSION_MS: '30000'
+    # Values: 30000-180000 milliseconds. Recommended: 60000; retain enough history to penalize repeated failures without making costs permanent.
+    # Purpose: Removes stale failure and penalty records after a bounded quiet period.
+    # Technical: A record is discarded once this age and any active suppression have both expired.
+    server.agents.capabilities.navigation.AgentNavigationReliabilityConfig.FAILURE_RETENTION_MS: '60000'
+    # Values: 500-5000 milliseconds per failure. Recommended: 2000; higher values prefer alternatives more aggressively.
+    # Purpose: Converts each recent risky-edge failure into an additive route cost for this Agent.
+    # Technical: Applied after ordinary edge, route-variation, and region-danger costs and capped by MAX_EDGE_PENALTY_MS.
+    server.agents.capabilities.navigation.AgentNavigationReliabilityConfig.FAILURE_PENALTY_MS: '2000'
+    # Values: 2000-20000 milliseconds. Recommended: 10000; keep the penalty strong but finite so no route becomes permanently impossible.
+    # Purpose: Bounds the influence of accumulated failures on route choice.
+    # Technical: This is an additive A* cost only; suppression remains a separate independently enabled hard filter.
+    server.agents.capabilities.navigation.AgentNavigationReliabilityConfig.MAX_EDGE_PENALTY_MS: '10000'
+    # Values: 8-128 edges. Recommended: 32; increase only for maps with many independently failing mechanics.
+    # Purpose: Caps reliability memory retained per active Agent.
+    # Technical: Uses least-recently-accessed eviction and resets completely on map change.
+    server.agents.capabilities.navigation.AgentNavigationReliabilityConfig.MAX_TRACKED_EDGES: '32'
+    # Values: 1500-10000 milliseconds. Recommended: 3500; allow a traversal to begin while rejecting a motionless climb or jump promptly.
+    # Purpose: Classifies an executed risky edge as failed when neither position nor navigation region progresses for this duration.
+    # Technical: Progress refreshes the timer; timeout invalidates only the current navigation step and preserves combat/objective state.
+    server.agents.capabilities.navigation.AgentNavigationReliabilityConfig.ATTEMPT_TIMEOUT_MS: '3500'
+    # Values: 1-20 map pixels. Recommended: 6; values below normal movement jitter can prevent timeout detection.
+    # Purpose: Defines meaningful physical progress while a risky edge is being executed.
+    # Technical: Either region change or movement beyond this radius refreshes the attempt timer.
+    server.agents.capabilities.navigation.AgentNavigationReliabilityConfig.PROGRESS_TOLERANCE_PX: '6'
+    # Values: 4-32 map pixels. Recommended: 12. Controls structural leeway for jump/drop launch anchors and launch windows.
+    # Purpose: Rejects graph edges whose required launch lies outside the expected source region while tolerating normal graph rounding.
+    # Technical: Execution readiness remains owned by AgentNavigationEdgeReadinessService; this tolerance validates graph/executor compatibility.
+    server.agents.capabilities.navigation.AgentNavigationReliabilityConfig.LAUNCH_TOLERANCE_PX: '12'
+    # Values: 8-48 map pixels. Recommended: 20. Controls structural leeway for a risky edge's destination anchor.
+    # Purpose: Rejects edges whose predicted landing is not on or near the destination navigation region.
+    # Technical: This does not snap or teleport the Agent; it only accepts or rejects the edge contract.
+    server.agents.capabilities.navigation.AgentNavigationReliabilityConfig.LANDING_TOLERANCE_PX: '20'
+    # Values: 4-24 map pixels. Recommended: 12. Controls structural leeway between climb edges and their rope or ladder region.
+    # Purpose: Prevents execution of climb edges whose attachment anchor no longer matches the live graph region.
+    # Technical: Existing rope-grab physics remains authoritative once the structural validation succeeds.
+    server.agents.capabilities.navigation.AgentNavigationReliabilityConfig.ATTACHMENT_TOLERANCE_PX: '12'
     # Values: 16-128 map pixels. Recommended: 64; raise it only when a moving objective legitimately shifts its anchor while the Agent is following the same route.
     # Purpose: Treats nearby destination updates as the same journey, allowing the Agent to recognize that it is repeating the same platform loop instead of restarting its memory every tick.
     # Technical: Targets farther apart than this radius start a new route-progress scope and clear old transition history and temporary edge suppression.
@@ -2640,6 +2696,26 @@ tuning:
     # Purpose: Keeps required quest monsters near their intended share of a mixed-spawn map, so common monsters cannot occupy nearly every available spawn slot.
     # Technical: Spawn-pressure clearing becomes eligible when the live preferred-monster share falls below this percentage of its authored spawn-point share; only overrepresented fallback species may then be selected.
     server.agents.capabilities.combat.AgentCombatPolicyConfig.SPAWN_PRESSURE_MIN_TARGET_SHARE_PERCENT: '80'
+    # Values: true or false. Recommended: true; false restores immediate repeated map-wide preferred-target promotion.
+    # Purpose: Treats map-wide combat search as an escape from an empty area, then keeps the Agent fighting locally after arrival.
+    # Technical: State is per Agent and resets on map or objective change; it does not alter objective eligibility or attack execution.
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.LOCAL_TARGET_LEASE_ENABLED: 'true'
+    # Values: 20000-30000 milliseconds. Recommended: 25000. Higher values finish more local work; lower values reconsider remote objective areas sooner.
+    # Purpose: Bounds how long local eligible targets retain priority after a map-wide destination is reached.
+    # Technical: The lease also ends when its kill quota is consumed or its consecutive empty-scan threshold is reached.
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.LOCAL_TARGET_LEASE_MS: '25000'
+    # Values: 2-4 local objective kills. Recommended: 3. Higher values make the Agent clear more of the reached area before searching map-wide again.
+    # Purpose: Provides a deterministic work quota alongside the time bound.
+    # Technical: Authoritative kills of objective-eligible preferred or fallback mobs decrement the active lease; unrelated or disallowed kills do not.
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.LOCAL_TARGET_LEASE_KILLS: '3'
+    # Values: 2-3 consecutive scans. Recommended: 3. Lower values leave an exhausted area sooner; higher values tolerate short spawn gaps.
+    # Purpose: Releases the lease early only when no suitable local objective target remains across repeated scans.
+    # Technical: Finding any nearby preferred objective mob resets the counter; eligible nearby incidental mobs remain selectable and cannot be hidden by the lease.
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.LOCAL_TARGET_LEASE_EMPTY_SCANS: '3'
+    # Values: true or false. Recommended: true; false restores legacy acceptance based on a non-empty path list.
+    # Purpose: Prevents combat from selecting a remote mob when A* produced only a capped closest-frontier fragment.
+    # Technical: Remote targets require COMPLETE route status; same-region targeting remains valid and non-combat movement may still consume PARTIAL results.
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.STRICT_COMBAT_ROUTE_VALIDATION_ENABLED: 'true'
     # Values: 0-10 kills. Recommended: 2. Higher values let an Agent clear more non-objective monsters from its current platform before returning to a required target elsewhere; 0 disables incidental platform clearing.
     # Purpose: Prevents endless killing of convenient incidental monsters while still allowing short, natural platform sweeps that free spawn slots and reduce backtracking.
     # Technical: Maximum consecutive incidental kills selected by the quest-local-clear combat policy before required-target debt wins and the selector must return to a required candidate.

@@ -4,7 +4,7 @@
 
 This document defines the separation between the Agent combat kernel and the policy layers that modify its choices. The separation makes each decision observable and tuneable without changing the shared Cosmic player-combat handlers or packet formats.
 
-The current policy order and default values preserve the existing combat behavior. The only intentional behavior adjustment in this refactor is the melee post-kill drop-settle delay, increased from 750 ms to 1,000 ms so a nearby drop is visible briefly before pickup.
+The policy order keeps attack, quest and inventory mutation boundaries unchanged. Optional locality and navigation-reliability layers now prevent repeated remote retargeting and reject combat destinations that do not have a complete executable route.
 
 ## Responsibility boundary
 
@@ -13,6 +13,7 @@ The current policy order and default values preserve the existing combat behavio
 | Combat kernel | Discover alive candidates, score reachability and distance, choose a target, build an attack plan, execute the attack | Quest progression, personality, crowd policy, loot ownership |
 | Objective policy | Restrict or prefer mobs required by the active objective; permit bounded incidental clearing | Attack packets, movement physics |
 | Map-pressure policy | Keep a target species spawning by clearing overrepresented incidental species | Quest mutation, inventory mutation |
+| Local-target lease | Turn one map-wide objective promotion into a bounded local work lease after arrival | Pathfinding, attack execution, quest counters |
 | Crowd and claims policy | Delay reactions in crowds, avoid excessive multi-Agent claims, spread target choices | Base target discovery, damage calculation |
 | Personality/presentation policy | Variation, anchoring, response cadence, idle presentation and emotes | Objective correctness, packet validation |
 | Route-blocker policy | Temporarily attack or evade mobs obstructing active travel | Changing the travel objective |
@@ -20,6 +21,10 @@ The current policy order and default values preserve the existing combat behavio
 | Post-kill loot policy | Decide when combat may yield to pickup and how far the Agent may move | Item ownership, inventory rules, quest eligibility |
 | Loot eligibility/pickup | Enforce ownership, age, quest/PQ rules, inventory capacity and perform pickup | Target selection or combat scoring |
 | Diagnostics | Record the last decision and policy counts | Changing any decision |
+| Navigation path result | Report `COMPLETE`, `PARTIAL` or `UNREACHABLE`; retain partial frontier movement for non-combat callers | Deciding which combat objective is preferred |
+| Edge validation | Verify live source region, movement state and graph anchors immediately before risky-edge execution | Rebuilding graph topology or injecting recovery movement |
+| Edge reliability | Retain bounded per-Agent/map failure evidence, suppression and additive route penalties | Mutating graph edges, route overlays, combat targets or objectives |
+| Route-loop recovery | Detect repeated region cycles under its existing mode gate | Mechanical edge-failure accounting or broad combat decisions |
 
 ## Combat target decision flow
 
@@ -28,14 +33,31 @@ The grind target path executes in this order:
 1. Yield while pre-exit loot collection is active.
 2. Discover alive monsters inside `GRIND_SEEK_RANGE`.
 3. Apply the active objective allow-list.
-4. Escalate to map-wide preferred targets when required mobs exist outside the local search window.
-5. Apply quest preference, local-clear and spawn-pressure policy.
-6. Apply target claims and crowd competition policy.
-7. Apply crowd/personality response timing.
-8. Score remaining candidates using local distance, foothold, vertical travel, reachability, objective priority, occupancy and AoE density.
-9. Choose a reachable best target, with bounded personality target variation.
-10. Optionally establish or retain an anchor-farming platform.
-11. Record the selected objective-policy reason and the passive decision trace.
+4. If no nearby preferred objective mob exists, permit one map-wide promotion unless a local-target lease is active.
+5. Require a `COMPLETE` route to each remote combat region when strict combat-route validation is enabled; same-region targets remain valid.
+6. Record the promoted destination. Arrival activates the time/kill lease; preferred local sightings reset its empty-scan counter.
+7. Apply quest preference, local-clear and spawn-pressure policy to the resulting local or promoted candidate set.
+8. Apply target claims and crowd competition policy.
+9. Apply crowd/personality response timing.
+10. Score remaining candidates using local distance, foothold, vertical travel, reachability, objective priority, occupancy, AoE density and optional per-Agent reliability costs.
+11. Choose a reachable best target, with bounded personality target variation.
+12. Optionally establish or retain an anchor-farming platform.
+13. Record the selected objective-policy reason and the passive decision trace.
+
+The local lease releases when its duration expires, its local-objective kill quota is consumed, or the configured number of consecutive scans finds no nearby preferred objective mob. Eligible nearby fallback mobs remain in the ordinary candidate set, so the lease itself cannot create idle time. A map or objective change resets the state.
+
+## Navigation edge execution flow
+
+1. Resolve the live source and target navigation regions.
+2. Observe any active risky-edge attempt. Reaching its destination clears prior failure evidence; physical or region progress refreshes its timeout.
+3. Reuse a committed edge only if route overlays, existing cycle recovery and per-Agent suppression all allow it.
+4. Otherwise run A* with suppressed edges filtered out and bounded reliability penalties added to edge cost. The cached graph remains immutable.
+5. Immediately before jump, drop, rope or ladder execution, validate the expected source region, compatible grounded/airborne/climbing state and launch/landing/attachment anchors.
+6. Approach a valid but not-yet-ready anchor through normal movement. A structural rejection or motionless attempt timeout records one failure and invalidates only the current navigation step.
+7. At the configured threshold, suppress only that exact Agent/map/edge signature. The next search retains the combat target and objective while choosing an alternative route.
+8. Successful arrival clears that edge's failures. Suppression and unused failure records also expire automatically, and the bounded ledger resets on map change.
+
+This flow adds no random movement, nudge or teleport recovery. Existing route-loop recovery remains independently controlled by `AgentNavigationRecoveryPolicy.MODE`.
 
 Patrol, follow-combat and route-blocker modes reuse the same base scoring helpers but have narrower candidate gates appropriate to their mode.
 
@@ -102,6 +124,32 @@ All values live in `agent-engine.yaml`. The values below are the behavior-preser
 | `PLATFORM_LEASE_MS` | 6500 | Retains local platform focus for this duration |
 | `QUEST_LOCAL_CLEAR_ENFORCED` | true | Applies local platform clearing before distant preferred targets |
 | `QUEST_LOCAL_CLEAR_SHADOW_ENABLED` | false | Computes local-clear evidence without enforcing it when enabled alone |
+| `LOCAL_TARGET_LEASE_ENABLED` | true | Enables the post-map-wide per-Agent locality policy |
+| `LOCAL_TARGET_LEASE_MS` | 25000 | Time bound after reaching the promoted region |
+| `LOCAL_TARGET_LEASE_KILLS` | 3 | Objective-eligible local kills before release |
+| `LOCAL_TARGET_LEASE_EMPTY_SCANS` | 3 | Consecutive empty preferred-local scans before early release |
+| `STRICT_COMBAT_ROUTE_VALIDATION_ENABLED` | true | Requires remote combat routes to report `COMPLETE` |
+
+### Navigation reliability
+
+| Setting | Default | Effect |
+|---|---:|---|
+| `EDGE_VALIDATION_ENABLED` | true | Enables live risky-edge contract checks before execution |
+| `EDGE_SUPPRESSION_ENABLED` | true | Excludes repeatedly failing edges for this Agent/map |
+| `ROUTE_PENALTIES_ENABLED` | true | Adds temporary failure-derived A* costs |
+| `FAILURE_THRESHOLD` | 3 | Failures before hard suppression |
+| `SUPPRESSION_MS` | 30000 | Duration of hard suppression |
+| `FAILURE_RETENTION_MS` | 60000 | Quiet lifetime of failure/penalty evidence |
+| `FAILURE_PENALTY_MS` | 2000 | Additive cost per retained failure |
+| `MAX_EDGE_PENALTY_MS` | 10000 | Maximum additive cost for one edge |
+| `MAX_TRACKED_EDGES` | 32 | Per-Agent reliability ledger bound |
+| `ATTEMPT_TIMEOUT_MS` | 3500 | Motionless executed-edge timeout |
+| `PROGRESS_TOLERANCE_PX` | 6 | Minimum movement that refreshes an attempt |
+| `LAUNCH_TOLERANCE_PX` | 12 | Structural source/launch-anchor tolerance |
+| `LANDING_TOLERANCE_PX` | 20 | Structural destination-anchor tolerance |
+| `ATTACHMENT_TOLERANCE_PX` | 12 | Rope/ladder anchor tolerance |
+
+The five feature switches are independent. With local leasing disabled, map-wide promotion behaves as before. With strict combat routes disabled and both reliability routing features disabled, combat uses the former target-score path and edge-cost calculation. With all three navigation reliability switches disabled, live edge selection and execution follow the former path unchanged.
 
 ### Route blocker policy
 

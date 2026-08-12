@@ -14,6 +14,26 @@ public final class AgentCombatPolicyConfig {
         return tuningInt("MAX_CONSECUTIVE_INCIDENTAL_KILLS");
     }
 
+    public static boolean localTargetLeaseEnabled() {
+        return tuningBoolean("LOCAL_TARGET_LEASE_ENABLED");
+    }
+
+    public static long localTargetLeaseMs() {
+        return tuningLong("LOCAL_TARGET_LEASE_MS");
+    }
+
+    public static int localTargetLeaseKills() {
+        return tuningInt("LOCAL_TARGET_LEASE_KILLS");
+    }
+
+    public static int localTargetLeaseEmptyScans() {
+        return tuningInt("LOCAL_TARGET_LEASE_EMPTY_SCANS");
+    }
+
+    public static boolean strictCombatRouteValidationEnabled() {
+        return tuningBoolean("STRICT_COMBAT_ROUTE_VALIDATION_ENABLED");
+    }
+
     public static int spawnPressureMinTargetSharePercent() {
         return tuningInt("SPAWN_PRESSURE_MIN_TARGET_SHARE_PERCENT");
     }
