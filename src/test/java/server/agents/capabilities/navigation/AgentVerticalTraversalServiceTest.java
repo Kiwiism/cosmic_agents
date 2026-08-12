@@ -37,6 +37,8 @@ class AgentVerticalTraversalServiceTest {
         assertSame(fixture.entryEdge, approach.edge());
         assertEquals(originalTarget, approach.targetPosition());
         assertEquals(-1, AgentVerticalTraversalService.committedClimbDirection(entry, 300));
+        assertEquals(fixture.exitEdge.startPoint,
+                AgentVerticalTraversalService.committedClimbExitPosition(entry));
 
         AgentClimbStateRuntime.setClimbingOnRope(entry, mock(Rope.class));
         AgentVerticalTraversalService.TraversalDirective climbing = resolve(fixture, entry, bot, 2, true);
@@ -54,6 +56,7 @@ class AgentVerticalTraversalServiceTest {
         assertTrue(resolve(fixture, entry, bot, 3, false).holdGroundedExit());
         assertNull(resolve(fixture, entry, bot, 3, true));
         assertFalse(AgentVerticalTraversalStateRuntime.active(entry));
+        assertNull(AgentVerticalTraversalService.committedClimbExitPosition(entry));
         assertTrue(AgentVerticalTraversalService.blocksRecentInverseEntry(
                 fixture.graph, entry, fixture.inverseEntryEdge, System.currentTimeMillis()));
         assertEquals(new Point(132, 100), AgentVerticalTraversalService.recentExitNudgeTarget(

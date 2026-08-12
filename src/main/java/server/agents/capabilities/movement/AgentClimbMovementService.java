@@ -4,6 +4,7 @@ import client.Character;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
+import server.agents.capabilities.navigation.AgentVerticalTraversalService;
 import server.agents.capabilities.navigation.AgentVerticalTraversalStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.monitoring.AgentPerformanceMonitor;
@@ -32,10 +33,23 @@ public final class AgentClimbMovementService {
             Rope climbRope = AgentClimbStateRuntime.climbRope(entry);
             int dxOwner = targetPos.x - climbRope.x();
 
-            // A vertical transaction keeps integrating the direction selected at entry until its
-            // authored exit. The grind condition remains a compatibility fallback for Agents
-            // attached before a transaction could be formed (for example, restored runtime state).
-            if ((AgentVerticalTraversalStateRuntime.active(entry) || AgentModeStateRuntime.grinding(entry))
+            // A vertical transaction owns an exact authored exit, which can be partway along a
+            // rope. Converge on that waypoint instead of blindly integrating the entry direction;
+            // the latter can step across a mid-rope launch height and continue to the rope head.
+            if (AgentVerticalTraversalStateRuntime.active(entry)) {
+                Point committedExit = AgentVerticalTraversalService.committedClimbExitPosition(entry);
+                if (committedExit != null) {
+                    AgentRopeMovementService.advanceClimbToward(entry, agent, committedExit.y);
+                } else {
+                    AgentRopeMovementService.holdClimb(entry, agent);
+                }
+                AgentMovementBroadcastService.broadcastMovement(entry);
+                return;
+            }
+
+            // Grinding remains a compatibility fallback for Agents attached before a transaction
+            // could be formed (for example, restored runtime state).
+            if (AgentModeStateRuntime.grinding(entry)
                     && AgentClimbStateRuntime.hasClimbVerticalDirection(entry)) {
                 AgentRopeMovementService.advanceClimb(entry, agent);
                 AgentMovementBroadcastService.broadcastMovement(entry);

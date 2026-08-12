@@ -22,6 +22,7 @@ class AgentGrindTargetSearchPolicyTest {
         Monster target = mock(Monster.class);
         when(target.getPosition()).thenReturn(new Point(300, 0));
         AgentAttackPlan plan = basicPlan(target);
+        AgentGrindTargetStateRuntime.commitTarget(entry, target, 1_000L, 2_500L);
 
         assertFalse(AgentGrindTargetSearchPolicy.shouldSearchForGrindTarget(
                 entry, agent, target, plan, 1_000L, true));
@@ -31,10 +32,14 @@ class AgentGrindTargetSearchPolicyTest {
                 entry, agent, target, plan, 1_000L, false));
         assertTrue(AgentGrindTargetSearchPolicy.shouldSearchForGrindTarget(
                 entry, agent, target, null, 1_000L, false));
+        assertTrue(AgentGrindTargetSearchPolicy.shouldSearchForGrindTarget(
+                entry, agent, target, plan, 3_500L, true));
+        assertTrue(AgentGrindTargetSearchPolicy.shouldSearchForGrindTarget(
+                entry, agent, target, null, 3_500L, true));
     }
 
     @Test
-    void ignoresTransientRopeUnreachabilityDuringTargetCommitment() {
+    void unreachableTargetBypassesCommitmentImmediately() {
         Character agent = mock(Character.class);
         when(agent.getPosition()).thenReturn(new Point(0, 0));
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
@@ -42,7 +47,7 @@ class AgentGrindTargetSearchPolicyTest {
         when(target.getPosition()).thenReturn(new Point(0, -200));
         AgentGrindTargetStateRuntime.commitTarget(entry, target, 1_000L, 4_000L);
 
-        assertFalse(AgentGrindTargetSearchPolicy.shouldSearchForGrindTarget(
+        assertTrue(AgentGrindTargetSearchPolicy.shouldSearchForGrindTarget(
                 entry, agent, target, null, 2_000L, false));
         assertTrue(AgentGrindTargetSearchPolicy.shouldSearchForGrindTarget(
                 entry, agent, target, null, 5_000L, false));

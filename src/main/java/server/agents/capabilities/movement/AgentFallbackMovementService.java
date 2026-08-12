@@ -36,7 +36,8 @@ public final class AgentFallbackMovementService {
         if (rope != null) {
             if (canDirectlyAttachToRope(botPos, rope)) {
                 int attachY = Math.max(rope.topY(), Math.min(botPos.y, rope.bottomY()));
-                AgentRopeMovementService.attachToRope(entry, bot, rope, attachY);
+                AgentRopeMovementService.attachToRope(
+                        entry, bot, rope, attachY, Integer.compare(targetPos.y, botPos.y));
                 AgentMovementBroadcastService.broadcastMovement(entry);
                 return true;
             }
@@ -128,6 +129,9 @@ public final class AgentFallbackMovementService {
         Rope best = null;
         int bestScore = Integer.MAX_VALUE;
         for (Rope rope : map.getRopes()) {
+            if (AgentClimbMovementPolicy.sameRope(AgentClimbStateRuntime.blockedRopeGrab(entry), rope)) {
+                continue;
+            }
             int dx = Math.abs(rope.x() - botPos.x);
             if (dx > searchX) {
                 continue;
@@ -141,6 +145,9 @@ public final class AgentFallbackMovementService {
                     continue;
                 }
                 if (rope.topY() > targetPos.y + AgentMovementPhysicsConfig.configuredFollowYCap()) {
+                    continue;
+                }
+                if (!AgentRopeMovementService.hasTopLanding(map, rope)) {
                     continue;
                 }
             } else {

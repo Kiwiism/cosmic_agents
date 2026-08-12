@@ -69,6 +69,70 @@ class AgentRopeMovementServiceTest {
     }
 
     @Test
+    void navigationClimbStopsExactlyAtMidRopeExitWithoutOvershooting() {
+        int step = AgentMovementKinematicsService.climbStepPerTick();
+        Character agent = mock(Character.class);
+        when(agent.getPosition()).thenReturn(new Point(100, 30));
+        when(agent.getHp()).thenReturn(1);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        Rope rope = new Rope(100, 0, 80, false);
+        AgentRopeMovementService.attachToRope(entry, agent, rope, 30, -1);
+
+        AgentRopeMovementService.advanceClimbToward(entry, agent, 30 - step + 1);
+
+        verify(agent).setPosition(new Point(100, 30 - step + 1));
+        assertEquals(-1, AgentClimbStateRuntime.climbVerticalDirection(entry));
+        assertTrue(AgentClimbStateRuntime.climbing(entry));
+    }
+
+    @Test
+    void navigationClimbReturnsToAuthoredExitAfterItWasOvershot() {
+        int step = AgentMovementKinematicsService.climbStepPerTick();
+        Character agent = mock(Character.class);
+        when(agent.getPosition()).thenReturn(new Point(100, 30));
+        when(agent.getHp()).thenReturn(1);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        Rope rope = new Rope(100, 0, 80, false);
+        AgentRopeMovementService.attachToRope(entry, agent, rope, 30, -1);
+
+        AgentRopeMovementService.advanceClimbToward(entry, agent, 30 + step - 1);
+
+        verify(agent).setPosition(new Point(100, 30 + step - 1));
+        assertEquals(1, AgentClimbStateRuntime.climbVerticalDirection(entry));
+        assertTrue(AgentClimbStateRuntime.climbing(entry));
+    }
+
+    @Test
+    void missingTopLandingReleasesRopeInsteadOfHoldingForever() {
+        MapleMap map = mock(MapleMap.class);
+        when(map.getPointBelow(new Point(100, -3))).thenReturn(null);
+        Character agent = mock(Character.class);
+        when(agent.getMap()).thenReturn(map);
+        when(agent.getPosition()).thenReturn(new Point(100, 1));
+        when(agent.getHp()).thenReturn(1);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        Rope rope = new Rope(100, 0, 80, false);
+        AgentRopeMovementService.attachToRope(entry, agent, rope, 1, -1);
+
+        AgentRopeMovementService.advanceClimb(entry, agent);
+
+        assertTrue(AgentMovementStateRuntime.inAir(entry));
+        assertFalse(AgentClimbStateRuntime.climbing(entry));
+        assertSame(rope, AgentClimbStateRuntime.blockedRopeGrab(entry));
+    }
+
+    @Test
+    void fallbackTopExitRequiresNearbyGround() {
+        MapleMap map = mock(MapleMap.class);
+        Rope rope = new Rope(100, 20, 80, false);
+        when(map.getPointBelow(new Point(100, 17))).thenReturn(null);
+        assertFalse(AgentRopeMovementService.hasTopLanding(map, rope));
+
+        when(map.getPointBelow(new Point(100, 17))).thenReturn(new Point(100, 20));
+        assertTrue(AgentRopeMovementService.hasTopLanding(map, rope));
+    }
+
+    @Test
     void beginGroundJumpStartsAirborneWithLegacyJumpImpulse() {
         Character agent = mock(Character.class);
         when(agent.getPosition()).thenReturn(new Point(10, 20));

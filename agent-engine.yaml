@@ -716,6 +716,14 @@ tuning:
     # Purpose: Controls the distance or margin used for grind seek range. Higher values allow action from farther away or leave more space; lower values require closer, more precise positioning.
     # Technical: the "combat config" component consumes this as an integer. Unit: MapleStory map pixels; horizontal and vertical values use the server map coordinate system.
     server.agents.capabilities.combat.AgentCombatConfig.GRIND_SEEK_RANGE: '800'
+    # Values: 500-10000 milliseconds. Recommended: 2500. This is a short anti-thrashing lease, not permission to ignore a closer or newly reachable objective target indefinitely.
+    # Purpose: Keeps an Agent on a newly selected grind target long enough to make visible progress before periodically reconsidering nearby required mobs.
+    # Technical: The commitment is bypassed immediately when the current target route becomes unreachable. Repeated live target switches scale this duration up to the configured maximum.
+    server.agents.capabilities.combat.AgentGrindTargetCommitmentService.BASE_TARGET_COMMITMENT_MS: '2500'
+    # Values: 2500-30000 milliseconds. Recommended: 10000. Must be greater than or equal to the base commitment.
+    # Purpose: Caps anti-thrashing backoff so a reachable but distant target cannot monopolize combat while other required mobs appear nearby.
+    # Technical: The current backoff doubles the base for at most two switch levels and clamps at this value.
+    server.agents.capabilities.combat.AgentGrindTargetCommitmentService.MAX_TARGET_COMMITMENT_MS: '10000'
     # Values: a finite non-negative integer. Recommended: 400-1600 around the tested baseline 800; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how strongly grind target occupancy penalty is discouraged. A larger penalty makes the associated choice less attractive.
     # Technical: the "combat config" component consumes this as an integer. Domain: non-negative policy coefficient; it is meaningful relative to the other coefficients used by the same decision. The value participates in ranking or weighted selection and is not an absolute probability by itself.

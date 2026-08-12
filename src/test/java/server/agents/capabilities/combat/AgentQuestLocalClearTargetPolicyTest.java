@@ -21,6 +21,20 @@ class AgentQuestLocalClearTargetPolicyTest {
     }
 
     @Test
+    void allRequiredMobKindsOnCurrentPlatformRemainEqualCandidates() {
+        AgentQuestLocalClearTargetPolicy.Selection<Integer> selection =
+                AgentQuestLocalClearTargetPolicy.select(
+                        List.of(11, 22, 33),
+                        Set.of(11, 22, 33)::contains,
+                        Set.of(11, 22)::contains,
+                        true);
+
+        assertEquals(List.of(11, 22), selection.candidates());
+        assertEquals(AgentCombatCandidateClass.REQUIRED, selection.candidateClass());
+        assertEquals(AgentCombatDecisionReason.REQUIRED_LOCAL, selection.reason());
+    }
+
+    @Test
     void localIncidentalMobWinsBeforeRemoteRequiredMob() {
         AgentQuestLocalClearTargetPolicy.Selection<Integer> selection =
                 AgentQuestLocalClearTargetPolicy.select(

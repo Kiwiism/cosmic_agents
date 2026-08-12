@@ -143,6 +143,14 @@ public final class AgentVerticalTraversalService {
         return Integer.compare(entry.verticalTraversalState().exitEdge().startPoint.y, entryY);
     }
 
+    /** Returns the authored rope-exit anchor owned by the active vertical transaction. */
+    public static Point committedClimbExitPosition(AgentRuntimeEntry entry) {
+        if (entry == null || !entry.verticalTraversalState().active()) {
+            return null;
+        }
+        return new Point(entry.verticalTraversalState().exitEdge().startPoint);
+    }
+
     public static boolean blocksRecentInverseEntry(AgentNavigationGraph graph,
                                                    AgentRuntimeEntry entry,
                                                    AgentNavigationGraph.Edge edge,

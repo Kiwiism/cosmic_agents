@@ -3,24 +3,31 @@
   "routes": [
     {
       "mapId": 103000000,
-      "graphVersion": 57,
+      "graphVersion": 58,
       "targetRegionId": 104,
       "regionPath": [148, 127, 122, 109, 104],
       "rationale": "Reach Kerning City's east exit without entering the dead-end 148-to-143 jump loop."
     },
     {
       "mapId": 103000000,
-      "graphVersion": 57,
+      "graphVersion": 58,
       "targetRegionId": 39,
       "regionPath": [126, 132, 118, 107, 98, 91, 74, 46, 39],
       "rationale": "Reach Alex from Nella's platform without entering the 126-to-111 recovery loop."
     },
     {
       "mapId": 120000000,
-      "graphVersion": 57,
+      "graphVersion": 58,
       "targetRegionId": 191,
       "regionPath": [216, 254, 212, 200, 193, 253, 252, 191],
       "rationale": "Climb from the lowest Nautilus platform and reach the left exit through the rope route."
+    },
+    {
+      "mapId": 100030000,
+      "graphVersion": 58,
+      "targetRegionId": 3,
+      "regionPath": [62, 79, 20, 87, 15, 12, 9, 6, 8, 91, 2, 1, 4, 3],
+      "rationale": "Reach the upper-left Pig and Ribbon Pig habitat without exploring dense irrelevant drop frontiers."
     }
   ]
 }

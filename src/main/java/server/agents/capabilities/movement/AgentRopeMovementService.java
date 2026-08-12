@@ -67,6 +67,41 @@ public final class AgentRopeMovementService {
         setClimbPosition(entry, agent, rope, nextY);
     }
 
+    /**
+     * Advances a navigation-owned climb toward its authored exit height without passing it.
+     *
+     * <p>Ordinary climb input is directional, but a graph exit can sit partway along a rope.
+     * Reapplying the direction selected at rope entry can step across that exact launch pixel and
+     * leave the Agent climbing toward the rope head forever. Navigation supplies the exit Y; this
+     * movement primitive owns only the continuous integration needed to reach it.</p>
+     */
+    public static void advanceClimbToward(AgentRuntimeEntry entry, Character agent, int targetY) {
+        Rope rope = AgentClimbStateRuntime.climbRope(entry);
+        if (rope == null) {
+            beginFall(entry, agent, 0);
+            return;
+        }
+
+        int currentY = agent.getPosition().y;
+        int climbDirection = Integer.compare(targetY, currentY);
+        AgentClimbStateRuntime.setClimbVerticalDirection(entry, climbDirection);
+        if (climbDirection == 0) {
+            holdClimb(entry, agent);
+            return;
+        }
+
+        int climbStep = AgentMovementKinematicsService.climbStepPerTick();
+        int distance = Math.abs(targetY - currentY);
+        int nextY = distance <= climbStep
+                ? targetY
+                : currentY + climbDirection * climbStep;
+        if (resolveClimbBoundary(entry, agent, rope, nextY)) {
+            return;
+        }
+
+        setClimbPosition(entry, agent, rope, nextY);
+    }
+
     public static void beginGroundJump(AgentRuntimeEntry entry, Character agent, int airVelocityX) {
         AgentClimbStateRuntime.clearBlockedRopeGrab(entry);
         if (agent.getMap() != null && agent.getMap().isSwim()) {
@@ -159,7 +194,13 @@ public final class AgentRopeMovementService {
             if (landing != null) {
                 landOnTopGround(entry, agent, landing);
             } else {
-                setClimbPosition(entry, agent, rope, AgentNavigationPhysicsService.firstClimbableY(rope));
+                // A graph edge or warm-up fallback can occasionally attach to a rope whose head
+                // has no executable ground exit. Holding at firstClimbableY makes the climbing
+                // movement phase own the Agent forever, so navigation never gets another chance
+                // to reject or suppress that route. Treat the missing landing as an execution
+                // failure: block the same rope for the airborne arc and return to normal physics.
+                AgentClimbStateRuntime.setBlockedRopeGrab(entry, rope);
+                beginFallPreservingBlockedRope(entry, agent, 0);
             }
             return true;
         }
@@ -189,8 +230,27 @@ public final class AgentRopeMovementService {
         return below;
     }
 
+    static boolean hasTopLanding(MapleMap map, Rope rope) {
+        if (map == null || rope == null) {
+            return false;
+        }
+        int probeY = rope.topY() - 3;
+        Point below = map.getPointBelow(new Point(rope.x(), probeY));
+        if (below == null) {
+            return false;
+        }
+        int maxDrop = AgentMovementPhysicsConfig.configuredMaxSnapDrop()
+                + AgentMovementPhysicsConfig.configuredMaxSlopeUp();
+        return below.y - probeY <= maxDrop;
+    }
+
     private static void beginFall(AgentRuntimeEntry entry, Character agent, int airVelocityX) {
         AgentClimbStateRuntime.clearBlockedRopeGrab(entry);
+        beginFallPreservingBlockedRope(entry, agent, airVelocityX);
+    }
+
+    private static void beginFallPreservingBlockedRope(
+            AgentRuntimeEntry entry, Character agent, int airVelocityX) {
         Point position = agent.getPosition();
         agent.setPosition(new Point(position));
         AgentAirborneLaunchService.launchAirborne(entry, position, 0f, airVelocityX, false);

@@ -14,6 +14,7 @@ import server.agents.capabilities.movement.AgentRopeMovementService;
 import server.agents.capabilities.navigation.AgentNavigationEdgeReadinessService;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationTargetService;
+import server.agents.capabilities.navigation.AgentVerticalTraversalService;
 import server.agents.capabilities.navigation.AgentVerticalTraversalStateRuntime;
 import server.agents.capabilities.navigation.AgentNavigationLaunchWindowService;
 import server.agents.capabilities.navigation.AgentNavigationPhysicsService;
@@ -647,7 +648,9 @@ class AgentNavigationIntegrationTest {
 
         assertFalse(directive.consumedTick());
         assertFalse(AgentMovementStateRuntime.inAir(entry));
-        assertEquals("climb-pos", AgentNavigationDebugStateRuntime.lastEdgeBlockReason(entry));
+        assertEquals(ropeEntry.startPoint, directive.targetPos());
+        assertTrue(AgentNavigationDebugStateRuntime.navPreciseTarget(entry),
+                "an executable rope edge outside its launch window should approach the authored anchor");
     }
 
     @Test
@@ -846,11 +849,32 @@ class AgentNavigationIntegrationTest {
         assertEquals(graph.findRegionId(map, upperTarget), committedExit.toRegionId);
         assertEquals(upperTarget, AgentNavigationDebugStateRuntime.plannedNavigationTargetPosition(entry));
         assertEquals(-1, AgentClimbStateRuntime.climbVerticalDirection(entry));
+        assertEquals(committedExit.startPoint,
+                AgentVerticalTraversalService.committedClimbExitPosition(entry));
+        assertEquals(new Point(100, 130),
+                AgentVerticalTraversalService.committedClimbExitPosition(entry));
 
+        // Simulate an attachment that has already passed the authored jump-off height. The
+        // committed crossing must return to y=130 instead of continuing toward the live target
+        // below or blindly climbing through the rope head above.
         AgentRopeMovementService.attachToRope(entry, bot, rope, 101, -1);
-        AgentClimbMovementService.tickClimbing(entry, new Point(50, 300), true);
+        for (int i = 0; i < 10 && bot.getPosition().y != committedExit.startPoint.y; i++) {
+            AgentClimbMovementService.tickClimbing(entry, new Point(50, 300), true);
+        }
+        assertTrue(AgentClimbStateRuntime.climbing(entry));
+        assertEquals(committedExit.startPoint, bot.getPosition(),
+                "climb integration must converge on the authored exit anchor for navigation to execute");
+
+        AgentNavigationTargetService.NavigationDirective exitDirective =
+                AgentNavigationTargetService.resolveTarget(entry, new Point(50, 300), true);
+        assertTrue(exitDirective.consumedTick());
         assertFalse(AgentClimbStateRuntime.climbing(entry));
-        assertEquals(new Point(100, 100), bot.getPosition());
+        assertTrue(AgentMovementStateRuntime.inAir(entry));
+
+        // Complete the simulated exit landing so the transaction can exercise its grounded
+        // hand-off without coupling this navigation test to the airborne integrator.
+        bot.setPosition(new Point(100, 100));
+        AgentMovementStateRuntime.setInAir(entry, false);
 
         assertFalse(AgentNavigationTargetService.tryExecuteCommittedEdgeAfterGroundMovement(
                 entry, new Point(50, 300)));

@@ -43,9 +43,9 @@ class AgentGrindTargetCommitmentServiceTest {
         assertNull(result.rangedPriorityTarget());
         assertSame(target, AgentGrindTargetStateRuntime.target(entry));
         org.junit.jupiter.api.Assertions.assertTrue(
-                AgentGrindTargetStateRuntime.committedTo(entry, target, 12_999L));
+                AgentGrindTargetStateRuntime.committedTo(entry, target, 3_499L));
         org.junit.jupiter.api.Assertions.assertFalse(
-                AgentGrindTargetStateRuntime.committedTo(entry, target, 13_000L));
+                AgentGrindTargetStateRuntime.committedTo(entry, target, 3_500L));
     }
 
     @Test
@@ -134,22 +134,34 @@ class AgentGrindTargetCommitmentServiceTest {
         AgentGrindTargetCommitmentService.commitTarget(
                 entry, agent, new Point(), first, null, 0L, hooks(null, null));
         AgentGrindTargetCommitmentService.commitTarget(
-                entry, agent, new Point(), second, null, 12_000L, hooks(null, null));
+                entry, agent, new Point(), second, null, 2_500L, hooks(null, null));
         assertSame(second, AgentGrindTargetStateRuntime.target(entry));
         org.junit.jupiter.api.Assertions.assertTrue(
-                AgentGrindTargetStateRuntime.committedTo(entry, second, 31_999L));
+                AgentGrindTargetStateRuntime.committedTo(entry, second, 7_499L));
 
         AgentGrindTargetCommitmentService.commitTarget(
-                entry, agent, new Point(), third, null, 32_000L, hooks(null, null));
+                entry, agent, new Point(), third, null, 7_500L, hooks(null, null));
         org.junit.jupiter.api.Assertions.assertTrue(
-                AgentGrindTargetStateRuntime.committedTo(entry, third, 66_999L));
+                AgentGrindTargetStateRuntime.committedTo(entry, third, 17_499L));
 
         AgentGrindTargetCommitmentService.commitTarget(
-                entry, agent, new Point(), fourth, null, 67_000L, hooks(null, null));
+                entry, agent, new Point(), fourth, null, 17_500L, hooks(null, null));
         org.junit.jupiter.api.Assertions.assertTrue(
-                AgentGrindTargetStateRuntime.committedTo(entry, fourth, 126_999L));
+                AgentGrindTargetStateRuntime.committedTo(entry, fourth, 27_499L));
         org.junit.jupiter.api.Assertions.assertEquals(3,
                 AgentGrindTargetStateRuntime.targetSwitchCount(entry));
+    }
+
+    @Test
+    void commitmentBackoffIsShortAndBounded() {
+        org.junit.jupiter.api.Assertions.assertEquals(2_500L,
+                AgentGrindTargetCommitmentService.commitmentDurationMs(0));
+        org.junit.jupiter.api.Assertions.assertEquals(5_000L,
+                AgentGrindTargetCommitmentService.commitmentDurationMs(1));
+        org.junit.jupiter.api.Assertions.assertEquals(10_000L,
+                AgentGrindTargetCommitmentService.commitmentDurationMs(2));
+        org.junit.jupiter.api.Assertions.assertEquals(10_000L,
+                AgentGrindTargetCommitmentService.commitmentDurationMs(20));
     }
 
     @Test

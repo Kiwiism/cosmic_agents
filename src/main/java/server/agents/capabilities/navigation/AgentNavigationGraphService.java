@@ -44,7 +44,7 @@ import java.util.concurrent.TimeUnit;
 public final class AgentNavigationGraphService {
     private static final Logger log = LoggerFactory.getLogger(AgentNavigationGraphService.class);
 
-    private static final int GRAPH_VERSION = 57;
+    private static final int GRAPH_VERSION = 58;
     private static final int ENDPOINT_ANCHOR_SPACING_PX = config.AgentTuning.intValue(
             "server.agents.capabilities.navigation.AgentNavigationGraphService.ENDPOINT_ANCHOR_SPACING_PX");
     private static final int DOWN_JUMP_PRELAUNCH_WINDOW_PX = config.AgentTuning.intValue(
@@ -1911,14 +1911,17 @@ public final class AgentNavigationGraphService {
 
                 if (canGrab) {
                     Point ropePoint = new Point(ropeX, Math.max(firstClimbableY, Math.min(anchor.y, rope.bottomY())));
-                    addEdge(ground.id, ropeRegion.id, AgentNavigationGraph.EdgeType.CLIMB,
-                            anchor, ropePoint, 0, 0, AgentMovementPhysicsConfig.configuredMovementTickMs(), outgoing, edgeKeys);
+                    addRopeEdge(ground.id, ropeRegion.id,
+                            anchor, ropePoint, 0, AgentMovementPhysicsConfig.configuredMovementTickMs(),
+                            rope, outgoing, edgeKeys);
                     continue;
                 }
 
                 if (canTopGrab) {
-                    addEdge(ground.id, ropeRegion.id, AgentNavigationGraph.EdgeType.CLIMB,
-                            anchor, new Point(ropeX, firstClimbableY), 0, 0, AgentMovementPhysicsConfig.configuredMovementTickMs(), outgoing, edgeKeys);
+                    addRopeEdge(ground.id, ropeRegion.id,
+                            anchor, new Point(ropeX, firstClimbableY), 0,
+                            AgentMovementPhysicsConfig.configuredMovementTickMs(),
+                            rope, outgoing, edgeKeys);
                     continue;
                 }
 
@@ -1926,8 +1929,8 @@ public final class AgentNavigationGraphService {
                     Point ropeGrab = AgentJumpProbeService.simulateDownJumpRopeGrab(map, anchor, rope);
                     if (ropeGrab != null) {
                         int cost = AgentJumpProbeService.estimateDownJumpRopeGrabTimeMs(map, anchor, rope);
-                        addEdge(ground.id, ropeRegion.id, AgentNavigationGraph.EdgeType.CLIMB,
-                                anchor, ropeGrab, 0, 0, cost, outgoing, edgeKeys);
+                        addRopeEdge(ground.id, ropeRegion.id,
+                                anchor, ropeGrab, 0, cost, rope, outgoing, edgeKeys);
                     }
                 }
 
@@ -1938,10 +1941,10 @@ public final class AgentNavigationGraphService {
                         if (launchWindow == null) {
                             continue;
                         }
-                        addEdge(ground.id, ropeRegion.id, AgentNavigationGraph.EdgeType.CLIMB,
+                        addRopeEdge(ground.id, ropeRegion.id,
                                 launchWindow.startPoint(), launchWindow.endPoint(),
-                                launchWindow.minX(), launchWindow.maxX(),
-                                jumpStep, 0, launchWindow.landingTimeMs(), outgoing, edgeKeys);
+                                launchWindow.minX(), launchWindow.maxX(), jumpStep,
+                                launchWindow.landingTimeMs(), rope, outgoing, edgeKeys);
                     }
                 }
             }
@@ -1987,8 +1990,8 @@ public final class AgentNavigationGraphService {
                 }
 
                 int cost = AgentJumpProbeService.estimateRopeJumpLandingTimeMs(map, ropePoint, stepX, movementProfile);
-                addEdge(ropeRegion.id, toRegion.id, AgentNavigationGraph.EdgeType.CLIMB,
-                        ropePoint, landing.point(), stepX, 0, cost, outgoing, edgeKeys);
+                addRopeEdge(ropeRegion.id, toRegion.id,
+                        ropePoint, landing.point(), stepX, cost, rope, outgoing, edgeKeys);
             }
         }
 
@@ -2017,8 +2020,8 @@ public final class AgentNavigationGraphService {
                 }
 
                 int cost = AgentJumpProbeService.estimateRopeJumpGrabTimeMs(map, ropePoint, launchDir, targetRope, movementProfile);
-                addEdge(ropeRegion.id, otherRope.id, AgentNavigationGraph.EdgeType.CLIMB,
-                        ropePoint, ropeGrab, launchDir, 0, cost, outgoing, edgeKeys);
+                addRopeEdge(ropeRegion.id, otherRope.id,
+                        ropePoint, ropeGrab, launchDir, cost, rope, outgoing, edgeKeys);
             }
         }
     }
@@ -2047,8 +2050,9 @@ public final class AgentNavigationGraphService {
         }
 
         Point ropePoint = new Point(rope.x(), rope.topY());
-        addEdge(ropeRegion.id, ground.id, AgentNavigationGraph.EdgeType.CLIMB,
-                ropePoint, landPoint, 0, 0, AgentMovementPhysicsConfig.configuredMovementTickMs(), outgoing, edgeKeys);
+        addRopeEdge(ropeRegion.id, ground.id,
+                ropePoint, landPoint, 0, AgentMovementPhysicsConfig.configuredMovementTickMs(),
+                rope, outgoing, edgeKeys);
     }
     private static List<Integer> ropeAnchorYs(Rope rope) {
         List<Integer> ys = new ArrayList<>();
@@ -2348,6 +2352,35 @@ public final class AgentNavigationGraphService {
                                 Set<String> edgeKeys) {
         addEdge(fromRegionId, toRegionId, type, startPoint, endPoint, launchMinX, launchMaxX, launchStepX, portalId,
                 0, 0, 0, cost, outgoing, edgeKeys);
+    }
+
+    private static void addRopeEdge(int fromRegionId,
+                                    int toRegionId,
+                                    Point startPoint,
+                                    Point endPoint,
+                                    int launchStepX,
+                                    int cost,
+                                    Rope rope,
+                                    Map<Integer, List<AgentNavigationGraph.Edge>> outgoing,
+                                    Set<String> edgeKeys) {
+        addRopeEdge(fromRegionId, toRegionId, startPoint, endPoint,
+                startPoint.x, startPoint.x, launchStepX, cost, rope, outgoing, edgeKeys);
+    }
+
+    private static void addRopeEdge(int fromRegionId,
+                                    int toRegionId,
+                                    Point startPoint,
+                                    Point endPoint,
+                                    int launchMinX,
+                                    int launchMaxX,
+                                    int launchStepX,
+                                    int cost,
+                                    Rope rope,
+                                    Map<Integer, List<AgentNavigationGraph.Edge>> outgoing,
+                                    Set<String> edgeKeys) {
+        addEdge(fromRegionId, toRegionId, AgentNavigationGraph.EdgeType.CLIMB,
+                startPoint, endPoint, launchMinX, launchMaxX, launchStepX, 0,
+                rope.x(), rope.topY(), rope.bottomY(), cost, outgoing, edgeKeys);
     }
 
     private static void addEdge(int fromRegionId,

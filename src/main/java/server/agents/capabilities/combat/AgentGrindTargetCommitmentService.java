@@ -9,7 +9,10 @@ import server.life.Monster;
 import java.awt.Point;
 
 public final class AgentGrindTargetCommitmentService {
-    static final long[] TARGET_COMMITMENT_MS = {12_000L, 20_000L, 35_000L, 60_000L};
+    private static final long BASE_TARGET_COMMITMENT_MS = config.AgentTuning.longValue(
+            "server.agents.capabilities.combat.AgentGrindTargetCommitmentService.BASE_TARGET_COMMITMENT_MS");
+    private static final long MAX_TARGET_COMMITMENT_MS = config.AgentTuning.longValue(
+            "server.agents.capabilities.combat.AgentGrindTargetCommitmentService.MAX_TARGET_COMMITMENT_MS");
 
     private AgentGrindTargetCommitmentService() {
     }
@@ -75,7 +78,13 @@ public final class AgentGrindTargetCommitmentService {
         if (previous != null && previous != target) {
             switchCount = previous.isAlive() ? switchCount + 1 : 0;
         }
-        long durationMs = TARGET_COMMITMENT_MS[Math.min(switchCount, TARGET_COMMITMENT_MS.length - 1)];
+        long durationMs = commitmentDurationMs(switchCount);
         AgentGrindTargetStateRuntime.commitTarget(entry, target, nowMs, durationMs);
+    }
+
+    static long commitmentDurationMs(int switchCount) {
+        int boundedSwitchCount = Math.clamp(switchCount, 0, 2);
+        long scaled = BASE_TARGET_COMMITMENT_MS << boundedSwitchCount;
+        return Math.min(MAX_TARGET_COMMITMENT_MS, scaled);
     }
 }

@@ -16,7 +16,7 @@ class AgentNavigationRouteOverlayPolicyTest {
     void nautilusExitUsesAuthoredUpperRopeRoute() {
         AgentNavigationGraph graph = new AgentNavigationGraph(
                 120000000,
-                57,
+                58,
                 AgentMovementProfile.base(),
                 List.of(),
                 Map.of(),
@@ -40,13 +40,31 @@ class AgentNavigationRouteOverlayPolicyTest {
 
     @Test
     void nautilusOverlayDoesNotAffectOtherDestinationsOrGraphVersions() {
-        AgentNavigationGraph currentGraph = graph(57);
-        AgentNavigationGraph otherVersion = graph(58);
+        AgentNavigationGraph currentGraph = graph(58);
+        AgentNavigationGraph otherVersion = graph(57);
 
         assertFalse(AgentNavigationRouteOverlayPolicy.applies(currentGraph, 200));
         assertTrue(AgentNavigationRouteOverlayPolicy.allows(currentGraph, 200, edge(213, 214)));
         assertFalse(AgentNavigationRouteOverlayPolicy.applies(otherVersion, 191));
         assertTrue(AgentNavigationRouteOverlayPolicy.allows(otherVersion, 191, edge(213, 214)));
+    }
+
+    @Test
+    void forestEastUpperLeftHabitatAvoidsIrrelevantDropFrontiers() {
+        AgentNavigationGraph graph = new AgentNavigationGraph(
+                100030000,
+                58,
+                AgentMovementProfile.base(),
+                List.of(),
+                Map.of(),
+                Map.of(),
+                Map.of(),
+                Set.of());
+
+        assertTrue(AgentNavigationRouteOverlayPolicy.applies(graph, 3));
+        assertTrue(AgentNavigationRouteOverlayPolicy.allows(graph, 3, edge(62, 79)));
+        assertFalse(AgentNavigationRouteOverlayPolicy.allows(graph, 3, edge(62, 17)));
+        assertTrue(AgentNavigationRouteOverlayPolicy.allows(graph, 3, edge(4, 3)));
     }
 
     private static AgentNavigationGraph graph(int version) {

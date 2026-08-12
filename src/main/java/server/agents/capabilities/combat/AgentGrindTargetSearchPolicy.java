@@ -16,8 +16,15 @@ public final class AgentGrindTargetSearchPolicy {
                                                      Monster currentTarget,
                                                      AgentAttackPlan currentAttackPlan,
                                                      long now) {
-        boolean currentTargetReachable = agent != null && currentTarget != null
-                && AgentCombatTargetRuntime.isReachableGrindTarget(entry, agent, currentTarget);
+        // An already attackable target is reachable by definition. Do not let a cold/missing
+        // navigation graph turn a valid in-range combat decision into an unnecessary retarget.
+        boolean currentTargetAttackable = agent != null && currentTarget != null
+                && currentAttackPlan != null
+                && AgentCombatRangePolicy.isTargetInAttackRange(
+                        currentAttackPlan, agent, currentTarget);
+        boolean currentTargetReachable = currentTargetAttackable
+                || (agent != null && currentTarget != null
+                && AgentCombatTargetRuntime.isReachableGrindTarget(entry, agent, currentTarget));
         return shouldSearchForGrindTarget(
                 entry, agent, currentTarget, currentAttackPlan, now, currentTargetReachable);
     }
@@ -40,17 +47,17 @@ public final class AgentGrindTargetSearchPolicy {
         if (agent == null) {
             return true;
         }
+        // Reachability is a correctness gate, not a target-preference signal. A commitment may
+        // damp ordinary target churn, but it must never retain a target whose live route has
+        // become unavailable or suppressed.
+        if (!currentTargetReachable) {
+            return true;
+        }
         if (currentAttackPlan == null) {
-            if (AgentGrindTargetStateRuntime.committedTo(entry, currentTarget, now)) {
-                return false;
-            }
-            return !currentTargetReachable;
+            return !AgentGrindTargetStateRuntime.committedTo(entry, currentTarget, now);
         }
         if (!AgentCombatRangePolicy.isTargetInAttackRange(currentAttackPlan, agent, currentTarget)) {
-            if (AgentGrindTargetStateRuntime.committedTo(entry, currentTarget, now)) {
-                return false;
-            }
-            return !currentTargetReachable;
+            return !AgentGrindTargetStateRuntime.committedTo(entry, currentTarget, now);
         }
         // In range we normally stay committed (avoids flip-flop). Exception: an AoE bot stuck
         // single-targeting keeps scanning for a better cluster; the switch itself is gated by
