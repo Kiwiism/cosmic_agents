@@ -552,7 +552,8 @@ public final class AgentNavigationPathService {
                         bestGoalCost = goalCost;
                         bestGoalState = current.state;
                     }
-                    continue;
+                    // Keep expanding this state: a self-loop portal, or a route that briefly
+                    // leaves and re-enters the region, can still beat a long direct walk.
                 }
 
                 for (AgentNavigationGraph.Edge edge : graph.getOutgoing(current.state.regionId)) {

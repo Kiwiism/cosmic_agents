@@ -3,6 +3,7 @@ package server.agents.capabilities.navigation;
 import server.agents.runtime.state.AgentCapabilityStateKey;
 
 import java.awt.Point;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -44,7 +45,8 @@ public final class AgentNavigationEdgeReliabilityState {
         EdgeSignature signature = EdgeSignature.of(edge);
         Failure previous = failures.get(signature);
         int count = previous == null ? 1 : previous.count + 1;
-        long suppressedUntil = count == Math.max(1, threshold)
+        boolean suppressionActive = previous != null && previous.suppressedUntilMs > nowMs;
+        long suppressedUntil = count >= Math.max(1, threshold) && !suppressionActive
                 ? nowMs + Math.max(1L, suppressionMs)
                 : previous == null ? 0L : previous.suppressedUntilMs;
         failures.put(signature, new Failure(count, nowMs, suppressedUntil));
@@ -163,6 +165,26 @@ public final class AgentNavigationEdgeReliabilityState {
         return new RoutingView(java.util.Set.copyOf(suppressed), Map.copyOf(penalties));
     }
 
+    public synchronized Snapshot snapshot(long nowMs,
+                                          long retentionMs,
+                                          int perFailure,
+                                          int maximumPenalty) {
+        expire(nowMs, retentionMs);
+        java.util.List<EdgeFailure> edges = new ArrayList<>(failures.size());
+        for (Map.Entry<EdgeSignature, Failure> entry : failures.entrySet()) {
+            EdgeSignature edge = entry.getKey();
+            Failure failure = entry.getValue();
+            long rawPenalty = (long) Math.max(0, perFailure) * failure.count;
+            edges.add(new EdgeFailure(
+                    edge.toRegionId, edge.type,
+                    edge.startX, edge.startY, edge.endX, edge.endY,
+                    failure.count,
+                    (int) Math.min(Math.max(0, maximumPenalty), rawPenalty),
+                    failure.suppressedUntilMs));
+        }
+        return new Snapshot(mapId, java.util.List.copyOf(edges));
+    }
+
     private void expire(long nowMs, long retentionMs) {
         long boundedRetention = Math.max(1L, retentionMs);
         Iterator<Map.Entry<EdgeSignature, Failure>> iterator = failures.entrySet().iterator();
@@ -210,6 +232,27 @@ public final class AgentNavigationEdgeReliabilityState {
         public int penalty(AgentNavigationGraph.Edge edge) {
             return edge == null ? 0 : penalties.getOrDefault(EdgeSignature.of(edge), 0);
         }
+    }
+
+    public record Snapshot(int mapId, java.util.List<EdgeFailure> edges) {
+        public Snapshot {
+            edges = edges == null ? java.util.List.of() : java.util.List.copyOf(edges);
+        }
+
+        public int trackedEdgeCount() {
+            return edges.size();
+        }
+    }
+
+    public record EdgeFailure(int toRegionId,
+                              AgentNavigationGraph.EdgeType type,
+                              int startX,
+                              int startY,
+                              int endX,
+                              int endY,
+                              int failureCount,
+                              int penaltyMs,
+                              long suppressedUntilMs) {
     }
 
     private record Attempt(EdgeSignature edge,

@@ -54,6 +54,18 @@ class AgentNavigationEdgeReliabilityStateTest {
     }
 
     @Test
+    void failureAfterSuppressionExpiryStartsAnotherFixedWindow() {
+        AgentNavigationEdgeReliabilityState state = new AgentNavigationEdgeReliabilityState();
+        AgentNavigationGraph.Edge edge = edge(1, 2, 0);
+        failThree(state, edge);
+
+        state.recordFailure(100, edge, 31_201, 3, 30_000, 60_000, 32);
+
+        assertTrue(state.isSuppressed(100, edge, 31_202, 60_000));
+        assertFalse(state.isSuppressed(100, edge, 61_201, 60_000));
+    }
+
+    @Test
     void retainedStateAndPenaltyAreBounded() {
         AgentNavigationEdgeReliabilityState state = new AgentNavigationEdgeReliabilityState();
         for (int index = 0; index < 20; index++) {

@@ -80,6 +80,22 @@ public final class AgentNavigationEdgeReliabilityRuntime {
         return timedOut;
     }
 
+    public static AgentNavigationEdgeReliabilityState.Snapshot snapshot(
+            AgentRuntimeEntry entry, long nowMs) {
+        if (entry == null) {
+            return new AgentNavigationEdgeReliabilityState.Snapshot(
+                    Integer.MIN_VALUE, java.util.List.of());
+        }
+        return entry.capabilityStates().find(AgentNavigationEdgeReliabilityState.STATE_KEY)
+                .map(state -> state.snapshot(
+                        nowMs,
+                        AgentNavigationReliabilityConfig.failureRetentionMs(),
+                        AgentNavigationReliabilityConfig.failurePenaltyMs(),
+                        AgentNavigationReliabilityConfig.maxEdgePenaltyMs()))
+                .orElseGet(() -> new AgentNavigationEdgeReliabilityState.Snapshot(
+                        Integer.MIN_VALUE, java.util.List.of()));
+    }
+
     private static AgentNavigationEdgeReliabilityState state(AgentRuntimeEntry entry) {
         return entry.capabilityStates().require(AgentNavigationEdgeReliabilityState.STATE_KEY);
     }

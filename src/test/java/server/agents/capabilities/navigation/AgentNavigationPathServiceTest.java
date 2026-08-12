@@ -10,6 +10,7 @@ import server.life.Monster;
 import server.maps.MapleMap;
 import server.maps.Foothold;
 import server.maps.FootholdTree;
+import server.maps.Portal;
 
 import java.awt.Point;
 import java.util.List;
@@ -345,6 +346,32 @@ class AgentNavigationPathServiceTest {
         assertEquals(AgentNavigationPathService.RouteCompleteness.COMPLETE,
                 sameRegion.completeness());
         assertTrue(sameRegion.path().isEmpty());
+    }
+
+    @Test
+    void sameRegionSearchCanPreferSelfLoopPortalOverDirectWalk() {
+        AgentNavigationGraph.Edge portalEdge = new AgentNavigationGraph.Edge(
+                1, 1, AgentNavigationGraph.EdgeType.PORTAL,
+                new Point(10, 100), new Point(190, 100),
+                0, 0, 0, 7, 0, 0, 0, 0);
+        AgentNavigationGraph graph = graphWithRegionsAndEdges(
+                List.of(groundRegion(1, 0, 200, 100)),
+                Map.of(1, List.of(portalEdge)));
+        MapleMap map = mock(MapleMap.class);
+        Portal portal = mock(Portal.class);
+        when(map.getPortal(7)).thenReturn(portal);
+        when(portal.getPortalStatus()).thenReturn(true);
+
+        AgentNavigationPathService.SearchOutcome outcome = AgentNavigationPathService.runSearch(
+                graph, map, new Point(0, 100), 1, 1, new Point(200, 100),
+                "target-score", true, false);
+
+        assertEquals(AgentNavigationPathService.RouteCompleteness.COMPLETE,
+                outcome.completeness());
+        assertEquals(List.of(portalEdge), outcome.path());
+        assertTrue(outcome.cost()
+                < AgentNavigationPathService.intraRegionTravelCost(
+                graph, 1, new Point(0, 100), new Point(200, 100)));
     }
 
     @Test

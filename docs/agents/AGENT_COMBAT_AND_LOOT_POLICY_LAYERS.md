@@ -34,7 +34,7 @@ The grind target path executes in this order:
 2. Discover alive monsters inside `GRIND_SEEK_RANGE`.
 3. Apply the active objective allow-list.
 4. If no nearby preferred objective mob exists, permit one map-wide promotion unless a local-target lease is active.
-5. Require a `COMPLETE` route to each remote combat region when strict combat-route validation is enabled; same-region targets remain valid.
+5. Require a `COMPLETE` route to each remote combat region and reject a structurally invalid first actionable edge when strict combat-route validation is enabled; same-region targets remain valid.
 6. Record the promoted destination. Arrival activates the time/kill lease; preferred local sightings reset its empty-scan counter.
 7. Apply quest preference, local-clear and spawn-pressure policy to the resulting local or promoted candidate set.
 8. Apply target claims and crowd competition policy.
@@ -107,6 +107,10 @@ Combat policy does not directly mutate quest counters, inventory, drops or playe
 - pickup completed;
 - inventory full or otherwise ineligible;
 - required and observed drop age.
+
+`AgentCombatPolicyDiagnostics` also exposes the local-target lease phase, destination,
+expiry, remaining kills and empty-scan count, plus each retained navigation reliability
+edge's failure count, additive penalty and suppression expiry.
 
 These records are ephemeral diagnostic evidence. They do not participate in selection or mutation and are exposed through `AgentCombatPolicyDiagnostics`.
 
