@@ -50,6 +50,22 @@ public final class AgentCombatPolicyConfig {
         return tuningLong("PLATFORM_LEASE_MS");
     }
 
+    public static int platformBatchMaxKills() {
+        return tuningInt("PLATFORM_BATCH_MAX_KILLS");
+    }
+
+    public static int platformBatchRadiusPx() {
+        return tuningInt("PLATFORM_BATCH_RADIUS_PX");
+    }
+
+    public static int platformBatchYTolerancePx() {
+        return tuningInt("PLATFORM_BATCH_Y_TOLERANCE_PX");
+    }
+
+    public static long platformBatchLeaseMs() {
+        return tuningLong("PLATFORM_BATCH_LEASE_MS");
+    }
+
     public static int routeBlockerCorridorWidth() {
         return tuningInt("ROUTE_BLOCKER_CORRIDOR_WIDTH");
     }
@@ -62,8 +78,8 @@ public final class AgentCombatPolicyConfig {
         return tuningInt("ROUTE_BLOCKER_MAX_KILLS");
     }
 
-    public static long routeBlockerTravelCooldownMs() {
-        return tuningLong("ROUTE_BLOCKER_TRAVEL_COOLDOWN_MS");
+    public static long routeBlockerRefillIntervalMs() {
+        return tuningLong("ROUTE_BLOCKER_REFILL_INTERVAL_MS");
     }
 
     public static int aoeClusterRadiusPx() {

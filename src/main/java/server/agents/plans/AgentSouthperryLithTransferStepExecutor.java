@@ -3,6 +3,7 @@ package server.agents.plans;
 import client.Character;
 import server.agents.capabilities.movement.AgentChairService;
 import server.agents.capabilities.navigation.AgentLithHarborArrivalRouteRuntime;
+import server.agents.capabilities.objective.AgentNpcInteractionReachabilityService;
 import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
 import server.agents.integration.PrimitiveCapabilityGateway;
 import server.agents.plans.amherst.MapleIslandSouthperryQuestCatalog;
@@ -75,8 +76,8 @@ public final class AgentSouthperryLithTransferStepExecutor implements AgentPlanS
                     "Shanks is unavailable in Southperry");
         }
         if (!gateway.grounded(agent)
-                || agent.getPosition().distanceSq(shanks)
-                > INTERACTION_DISTANCE_PX * INTERACTION_DISTANCE_PX) {
+                || !AgentNpcInteractionReachabilityService.canInteract(
+                context.entry(), agent, shanks, INTERACTION_DISTANCE_PX)) {
             gateway.navigate(context.entry(), shanks, true);
             return AgentPlanStepExecution.active(false);
         }

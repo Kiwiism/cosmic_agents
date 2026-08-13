@@ -174,8 +174,9 @@ final class AmherstObjectiveCapabilitySupport {
                             climbableAnchor)),
                     "objective requests navigation to safe NPC interaction anchor");
         }
-        if (currentPosition.distanceSq(npcPosition)
-                <= (long) interactionRangePx * interactionRangePx) {
+        if (AgentNpcInteractionReachabilityService.canInteract(
+                context.entry(), context.agent(), currentPosition,
+                npcPosition, interactionRangePx)) {
             boolean grounded = gateway.grounded(context.agent());
             boolean atClimbingAnchor = matchesClimbingAnchor(
                     context, interactionAnchor, climbableAnchor);

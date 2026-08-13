@@ -47,32 +47,34 @@ class AgentRouteBlockerPolicyTest {
 
         listener.onAgentEvent(new AgentMobKilledEvent(
                 1, 1_001L, 1, 201, 2_001, 1, ""));
-        assertEquals(0, blocker.snapshot(1_001L).kills());
+        assertEquals(AgentCombatPolicyConfig.routeBlockerMaxKills(),
+                blocker.snapshot(1_001L).availableKills());
 
         listener.onAgentEvent(new AgentMobKilledEvent(
                 1, 1_002L, 1, 200, 2_002, 1, ""));
-        assertEquals(1, blocker.snapshot(1_002L).kills());
+        assertEquals(AgentCombatPolicyConfig.routeBlockerMaxKills() - 1,
+                blocker.snapshot(1_002L).availableKills());
     }
 
     @Test
-    void killBudgetSurvivesWaypointsThenRequiresTravelCooldown() {
+    void killBudgetRefillsOneTokenAtATimeWhileTravelContinues() {
         AgentRouteBlockerState blocker = new AgentRouteBlockerState();
-        long lastKillAt = 1_000L;
+        long startedAt = 1_000L;
 
         for (int index = 0; index < AgentCombatPolicyConfig.routeBlockerMaxKills(); index++) {
             Point waypoint = new Point(100 + index * 50, 0);
-            assertTrue(blocker.canInterrupt(waypoint, lastKillAt));
-            blocker.killed(lastKillAt++);
+            assertTrue(blocker.canInterrupt(waypoint, startedAt));
+            blocker.killed(startedAt);
         }
 
         Point nextMapWaypoint = new Point(20, 0);
-        assertFalse(blocker.canInterrupt(nextMapWaypoint, lastKillAt));
+        assertFalse(blocker.canInterrupt(nextMapWaypoint, startedAt));
         assertFalse(blocker.canInterrupt(nextMapWaypoint,
-                lastKillAt + AgentCombatPolicyConfig.routeBlockerTravelCooldownMs() - 2));
+                startedAt + AgentCombatPolicyConfig.routeBlockerRefillIntervalMs() - 1));
         assertTrue(blocker.canInterrupt(nextMapWaypoint,
-                lastKillAt + AgentCombatPolicyConfig.routeBlockerTravelCooldownMs()));
-        assertEquals(0, blocker.snapshot(
-                lastKillAt + AgentCombatPolicyConfig.routeBlockerTravelCooldownMs()).kills());
+                startedAt + AgentCombatPolicyConfig.routeBlockerRefillIntervalMs()));
+        assertEquals(1, blocker.snapshot(
+                startedAt + AgentCombatPolicyConfig.routeBlockerRefillIntervalMs()).availableKills());
     }
 
     @Test
@@ -86,7 +88,7 @@ class AgentRouteBlockerPolicyTest {
 
         assertTrue(blocker.canInterrupt(waypoint,
                 1_000L + AgentCombatPolicyConfig.routeBlockerTimeoutMs() + 1));
-        assertEquals(1, blocker.snapshot(
-                1_000L + AgentCombatPolicyConfig.routeBlockerTimeoutMs() + 1).kills());
+        assertEquals(AgentCombatPolicyConfig.routeBlockerMaxKills() - 1, blocker.snapshot(
+                1_000L + AgentCombatPolicyConfig.routeBlockerTimeoutMs() + 1).availableKills());
     }
 }

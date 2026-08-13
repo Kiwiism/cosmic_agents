@@ -59,7 +59,12 @@ public final class AgentCombatTargetRuntime {
             int localPreferredCandidateCount = (int) candidates.stream()
                     .filter(monster -> AgentCombatObjectiveTargetStateRuntime.prefers(entry, monster.getId()))
                     .count();
-            TargetPromotion promotion = promoteMapWidePreferredTargetsResult(
+            PlatformBatchSelection platformBatch = retainPlatformBatchCandidates(
+                    entry, bot, candidates, nowMs);
+            candidates = platformBatch.candidates();
+            TargetPromotion promotion = platformBatch.retained()
+                    ? new TargetPromotion(candidates, false)
+                    : promoteMapWidePreferredTargetsResult(
                     entry, bot, candidates, nowMs,
                     target -> hasCompleteRemoteCombatRoute(entry, bot, target));
             candidates = promotion.candidates();
@@ -134,6 +139,9 @@ public final class AgentCombatTargetRuntime {
                             "travelling to a reachable required population",
                             selectedRegionId, nowMs);
                 }
+            }
+            if (!mapWidePreferredEscalation && selected != null) {
+                beginPlatformBatch(entry, bot, selected, nowMs);
             }
             recordPolicySelection(entry, bot, selected, policySelection);
             AgentCombatBehaviorRuntime.targetAcquired(entry);
@@ -974,6 +982,99 @@ public final class AgentCombatTargetRuntime {
                 selected.candidateClass(), selected.reason(), currentRegionId);
     }
 
+    private static PlatformBatchSelection retainPlatformBatchCandidates(
+            AgentRuntimeEntry entry,
+            Character bot,
+            List<Monster> candidates,
+            long nowMs) {
+        if (entry == null || bot == null) {
+            return new PlatformBatchSelection(candidates, false);
+        }
+        String objectiveId = AgentProgressionEventPublisher.objectiveId(entry);
+        AgentCombatPlatformBatchState state = entry.capabilityStates()
+                .require(AgentCombatPlatformBatchState.STATE_KEY);
+        if (!state.active(bot.getMapId(), objectiveId, nowMs)) {
+            return new PlatformBatchSelection(candidates, false);
+        }
+        GrindGraphContext context = GrindGraphContext.resolve(entry, bot, bot.getPosition());
+        List<Monster> retained = candidates.stream()
+                .filter(monster -> state.includes(
+                        bot.getMapId(), objectiveId,
+                        context.available()
+                                ? AgentNavigationRegionService.resolveTargetRegionId(
+                                context.graph(), context.entry(), context.map(), monster.getPosition())
+                                : -1,
+                        monster.getPosition(), nowMs,
+                        AgentCombatPolicyConfig.platformBatchRadiusPx(),
+                        AgentCombatPolicyConfig.platformBatchYTolerancePx()))
+                .toList();
+        if (retained.isEmpty()) {
+            state.release();
+            return new PlatformBatchSelection(candidates, false);
+        }
+        AgentCombatTargetSearchModeState searchMode = searchModeState(entry, bot, nowMs);
+        if (searchMode != null) {
+            searchMode.enter(AgentCombatTargetSearchMode.REGION_HARVEST,
+                    "clearing a bounded same-platform combat batch",
+                    state.snapshot(nowMs).regionId(), nowMs);
+        }
+        return new PlatformBatchSelection(new ArrayList<>(retained), true);
+    }
+
+    private static void beginPlatformBatch(AgentRuntimeEntry entry,
+                                           Character bot,
+                                           Monster selected,
+                                           long nowMs) {
+        if (entry == null || bot == null || bot.getMap() == null
+                || selected == null || selected.getPosition() == null) {
+            return;
+        }
+        String objectiveId = AgentProgressionEventPublisher.objectiveId(entry);
+        AgentCombatPlatformBatchState state = entry.capabilityStates()
+                .require(AgentCombatPlatformBatchState.STATE_KEY);
+        if (state.active(bot.getMapId(), objectiveId, nowMs)) {
+            return;
+        }
+        Point anchor = selected.getPosition();
+        GrindGraphContext context = GrindGraphContext.resolve(entry, bot, bot.getPosition());
+        int selectedRegionId = context.available()
+                ? AgentNavigationRegionService.resolveTargetRegionId(
+                context.graph(), context.entry(), context.map(), anchor)
+                : -1;
+        long radiusSquared = (long) AgentCombatPolicyConfig.platformBatchRadiusPx()
+                * AgentCombatPolicyConfig.platformBatchRadiusPx();
+        int clusterSize = (int) AgentMapPerception.monsters(bot.getMap()).stream()
+                .filter(AgentCombatTargetEligibilityPolicy::isHostileLivingMonster)
+                .filter(monster -> AgentCombatObjectiveTargetStateRuntime.allows(
+                        entry, monster.getId()))
+                .filter(monster -> monster.getPosition() != null)
+                .filter(monster -> anchor.distanceSq(monster.getPosition()) <= radiusSquared)
+                .filter(monster -> {
+                    int candidateRegionId = context.available()
+                            ? AgentNavigationRegionService.resolveTargetRegionId(
+                            context.graph(), context.entry(), context.map(), monster.getPosition())
+                            : -1;
+                    return selectedRegionId >= 0 && candidateRegionId >= 0
+                            ? selectedRegionId == candidateRegionId
+                            : Math.abs(anchor.y - monster.getPosition().y)
+                            <= AgentCombatPolicyConfig.platformBatchYTolerancePx();
+                })
+                .limit(AgentCombatPolicyConfig.platformBatchMaxKills())
+                .count();
+        if (clusterSize < 2) {
+            return;
+        }
+        state.begin(bot.getMapId(), objectiveId, selectedRegionId, anchor,
+                Math.min(clusterSize, AgentCombatPolicyConfig.platformBatchMaxKills()),
+                nowMs, AgentCombatPolicyConfig.platformBatchLeaseMs());
+        AgentCombatTargetSearchModeState searchMode = searchModeState(entry, bot, nowMs);
+        if (searchMode != null) {
+            searchMode.enter(AgentCombatTargetSearchMode.REGION_HARVEST,
+                    "queued " + clusterSize + " eligible mobs on the selected platform",
+                    selectedRegionId, nowMs);
+        }
+    }
+
     private static PolicySelection legacyPolicySelection(
             AgentRuntimeEntry entry, List<Monster> candidates) {
         List<Monster> preferred = candidates;
@@ -1065,6 +1166,9 @@ public final class AgentCombatTargetRuntime {
     }
 
     private record TargetPromotion(List<Monster> candidates, boolean mapWide) {
+    }
+
+    private record PlatformBatchSelection(List<Monster> candidates, boolean retained) {
     }
 
     private static long grindRegionOccupancyPenalty(GrindGraphContext context, Character bot, int targetRegionId,

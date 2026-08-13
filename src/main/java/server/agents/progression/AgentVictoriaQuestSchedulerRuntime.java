@@ -2,6 +2,7 @@ package server.agents.progression;
 
 import client.Character;
 import client.QuestStatus;
+import server.agents.capabilities.objective.AgentNpcInteractionReachabilityService;
 import server.agents.integration.PrimitiveCapabilityGateway;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -238,7 +239,8 @@ final class AgentVictoriaQuestSchedulerRuntime {
             return false;
         }
         if (!gateway.grounded(agent)
-                || agent.getPosition().distanceSq(npc) > INTERACTION_DISTANCE_PX * INTERACTION_DISTANCE_PX) {
+                || !AgentNpcInteractionReachabilityService.canInteract(
+                entry, agent, npc, INTERACTION_DISTANCE_PX)) {
             gateway.navigate(entry, npc, true);
             state.nextActionAtMs(0L);
             return true;

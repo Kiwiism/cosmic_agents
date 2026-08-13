@@ -6,6 +6,7 @@ import client.QuestStatus;
 import server.agents.capabilities.build.AgentBuildService;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 import server.agents.capabilities.navigation.AgentLithHarborArrivalRouteRuntime;
+import server.agents.capabilities.objective.AgentNpcInteractionReachabilityService;
 import server.agents.capabilities.shop.AgentShopService;
 import server.agents.capabilities.shop.AgentShopStateRuntime;
 import server.agents.capabilities.shop.AgentShopWorkflowPhase;
@@ -327,7 +328,8 @@ public final class AgentFirstJobJourneyRuntime {
             return false;
         }
         if (!gateway.grounded(agent)
-                || agent.getPosition().distanceSq(npc) > INTERACTION_DISTANCE_PX * INTERACTION_DISTANCE_PX) {
+                || !AgentNpcInteractionReachabilityService.canInteract(
+                entry, agent, npc, INTERACTION_DISTANCE_PX)) {
             gateway.navigate(entry, npc, true);
             return false;
         }
@@ -453,7 +455,8 @@ public final class AgentFirstJobJourneyRuntime {
             return true;
         }
         if (!gateway.grounded(agent)
-                || agent.getPosition().distanceSq(npc) > INTERACTION_DISTANCE_PX * INTERACTION_DISTANCE_PX) {
+                || !AgentNpcInteractionReachabilityService.canInteract(
+                entry, agent, npc, INTERACTION_DISTANCE_PX)) {
             gateway.navigate(entry, npc, true);
             return false;
         }

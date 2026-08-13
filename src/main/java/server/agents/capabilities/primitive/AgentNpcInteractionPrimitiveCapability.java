@@ -2,6 +2,7 @@ package server.agents.capabilities.primitive;
 
 import server.agents.capabilities.npc.AgentNpcInteractionType;
 import server.agents.capabilities.npc.AgentNpcInteractionPolicy;
+import server.agents.capabilities.objective.AgentNpcInteractionReachabilityService;
 import server.agents.capabilities.quest.AmherstScopePolicy;
 import server.agents.capabilities.runtime.AgentCapabilityCommand;
 import server.agents.capabilities.runtime.AgentCapabilityContext;
@@ -81,8 +82,9 @@ public final class AgentNpcInteractionPrimitiveCapability
         if (npcPosition == null) {
             return AgentPrimitiveResults.missing("NPC is not present on the map");
         }
-        if (gateway.position(context.agent()).distanceSq(npcPosition)
-                > (long) command.maxRangePx() * command.maxRangePx()) {
+        if (!AgentNpcInteractionReachabilityService.canInteract(
+                context.entry(), context.agent(), gateway.position(context.agent()),
+                npcPosition, command.maxRangePx())) {
             return AgentPrimitiveResults.missing("agent is outside NPC interaction range");
         }
         gateway.facePosition(context.agent(), npcPosition);

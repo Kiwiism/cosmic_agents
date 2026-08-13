@@ -1488,6 +1488,10 @@ tuning:
     # Purpose: Controls the positional leeway for slot spacing. Higher values tolerate more separation before Agents correct course; lower values make them align sooner.
     # Technical: the "npc interaction spread service" component consumes this as an integer. Unit: MapleStory map pixels; horizontal and vertical values use the server map coordinate system.
     server.agents.capabilities.objective.AgentNpcInteractionSpreadService.SLOT_SPACING_PX: '24'
+    # Values: 400-800 map pixels. Recommended: 800 as a hard fallback ceiling.
+    # Purpose: Lets headless Agents interact with an NPC whose sprite origin is nearby but absent from, or disconnected in, the navigation graph.
+    # Technical: Used only after the ordinary NPC radius fails and a cached graph proves the NPC target region or complete route is unavailable; reachable NPCs still require normal navigation.
+    server.agents.capabilities.objective.AgentNpcInteractionReachabilityService.UNREACHABLE_GRAPH_INTERACTION_DISTANCE_PX: '800'
     # Values: a finite non-negative integer; unit: map pixels. Recommended: 6-24 around the tested baseline 12; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls the positional leeway for meaningful approach. Higher values tolerate more separation before Agents correct course; lower values make them align sooner.
     # Technical: the "objective progress watchdog" component consumes this as an integer. Unit: MapleStory map pixels; horizontal and vertical values use the server map coordinate system.
@@ -2664,6 +2668,22 @@ tuning:
     # Purpose: Gives each Agent a short-lived platform focus so it clears nearby work before repeatedly climbing up and down.
     # Technical: Resets when map or navigation region changes and bounds the incidental-kill counter for that region without changing the underlying navigation graph or attack execution.
     server.agents.capabilities.combat.AgentCombatPolicyConfig.PLATFORM_LEASE_MS: '6500'
+    # Values: 2-10 kills. Recommended: 7. Higher values clear denser platforms before routing elsewhere; lower values reconsider other platforms sooner.
+    # Purpose: Bounds the soft queue of eligible monsters retained around a selected quest-combat platform.
+    # Technical: The batch is revalidated on every search and releases immediately when no eligible nearby monster remains; it does not retain Monster objects or override reachability.
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.PLATFORM_BATCH_MAX_KILLS: '7'
+    # Values: 300-900 map pixels. Recommended: 650. Higher values treat a longer platform as one batch; lower values keep clearing near the original engagement point.
+    # Purpose: Keeps a same-platform batch local instead of sweeping an entire large map region.
+    # Technical: Euclidean radius around the first selected monster; navigation-region equality remains the primary platform boundary when a graph is available.
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.PLATFORM_BATCH_RADIUS_PX: '650'
+    # Values: 30-120 map pixels. Recommended: 70. Higher values tolerate sloped footholds when the graph is unavailable; lower values require a flatter fallback band.
+    # Purpose: Provides a conservative same-height fallback for platform batching while navigation graph data is unavailable.
+    # Technical: Used only when either the anchor or candidate lacks a graph region; known graph regions must match exactly.
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.PLATFORM_BATCH_Y_TOLERANCE_PX: '70'
+    # Values: 10000-60000 milliseconds. Recommended: 30000. Higher values preserve slow low-level fights longer; lower values re-evaluate the map sooner.
+    # Purpose: Prevents a partially cleared platform batch from surviving indefinitely through movement or spawn changes.
+    # Technical: Hard expiry for the soft batch; kill quota and empty-candidate release usually end it earlier.
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.PLATFORM_BATCH_LEASE_MS: '30000'
     # Values: 30-160 map pixels. Recommended: 80. Higher values treat monsters farther from a travel line as blockers; lower values limit attacks to monsters almost directly in the way.
     # Purpose: Lets a travelling Agent attack genuine route obstructions without abandoning its destination to chase unrelated monsters.
     # Technical: Half-width of the line corridor used by the route-blocker target policy to classify monsters between the current position and an already-authoritative movement target.
@@ -2676,10 +2696,10 @@ tuning:
     # Purpose: Lets an Agent clear up to five monsters physically blocking a quest journey, including monsters encountered on intermediate maps, without turning travel into an unrelated grind session.
     # Technical: Journey-level blocker-kill budget; waypoint and map changes preserve the count, and only authoritative route-blocker kill events consume it.
     server.agents.capabilities.combat.AgentCombatPolicyConfig.ROUTE_BLOCKER_MAX_KILLS: '5'
-    # Values: 3000-15000 milliseconds. Recommended: 7000. Higher values make Agents travel farther between blocker-clearing bursts; lower values let combat interrupt travel more frequently.
-    # Purpose: After clearing the blocker-kill budget, makes the Agent concentrate on travelling for this long before it may attack another set of blockers.
-    # Technical: Cooldown begins on the fifth authoritative route-blocker kill and survives waypoint and intermediate-map changes within the active objective.
-    server.agents.capabilities.combat.AgentCombatPolicyConfig.ROUTE_BLOCKER_TRAVEL_COOLDOWN_MS: '7000'
+    # Values: 2000-10000 milliseconds. Recommended: 5000. Higher values restore blocker capacity more slowly; lower values allow sustained clearing on heavily obstructed routes.
+    # Purpose: Replenishes one consumed route-blocker kill at a time instead of imposing an all-or-nothing cooldown after five kills.
+    # Technical: Token-bucket refill interval with capacity ROUTE_BLOCKER_MAX_KILLS; each authoritative selected-blocker kill consumes one token.
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.ROUTE_BLOCKER_REFILL_INTERVAL_MS: '5000'
     # Values: 80-260 map pixels. Recommended: 150. Higher values treat a wider group as one AoE cluster; lower values require monsters to stand closer together before favoring an AoE attack.
     # Purpose: Controls how tightly monsters must group before the Agent values a multi-target skill over a single-target attack.
     # Technical: Radius used by the combat scoring and AoE reposition policies; this changes target valuation only and does not alter a skill's server hit box or packet target list.

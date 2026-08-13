@@ -114,18 +114,18 @@ class AgentVictoriaSharedQuestPackCatalogTest {
                 .toList());
         assertFalse(pack.steps().stream().anyMatch(step -> "LEVEL_GRIND".equals(step.type())));
 
-        AgentVictoriaSharedQuestPackCatalog.Step spores = pack.steps().get(4);
-        assertEquals("HUNT", spores.type());
+        AgentVictoriaSharedQuestPackCatalog.Step caps = pack.steps().get(4);
+        assertEquals("HUNT", caps.type());
+        assertEquals(100000002, caps.mapId());
+        assertTrue(caps.skipReturnScrollPreparation());
+        assertEquals(List.of(1210102), caps.preferredMobIds());
+        assertEquals(List.of(1110100), caps.incidentalMobIds());
+
+        AgentVictoriaSharedQuestPackCatalog.Step spores = pack.steps().get(5);
         assertEquals(100010000, spores.mapId());
         assertTrue(spores.skipReturnScrollPreparation());
         assertEquals(List.of(120100), spores.preferredMobIds());
         assertEquals(Set.of(100101, 130101, 1210100), Set.copyOf(spores.incidentalMobIds()));
-
-        AgentVictoriaSharedQuestPackCatalog.Step caps = pack.steps().get(5);
-        assertEquals(100030000, caps.mapId());
-        assertTrue(caps.skipReturnScrollPreparation());
-        assertEquals(List.of(1210102), caps.preferredMobIds());
-        assertEquals(Set.of(1210100, 1210101), Set.copyOf(caps.incidentalMobIds()));
 
         int rinaStart = indexOf(pack, step -> step.questId() == 28267 && !step.complete());
         int camilaComplete = indexOf(pack, step -> step.questId() == 28268 && step.complete());
@@ -226,7 +226,7 @@ class AgentVictoriaSharedQuestPackCatalogTest {
 
         assertEquals("CAPTURED", checkpoint.snapshot().provenance());
         assertEquals(4, checkpoint.questPackIndex());
-        assertEquals(100010000, pack.steps().get(checkpoint.questPackIndex()).mapId());
+        assertEquals(100000002, pack.steps().get(checkpoint.questPackIndex()).mapId());
         assertEquals(100000000, checkpoint.snapshot().character().mapId());
         assertEquals(5870, checkpoint.position().x());
         assertEquals(Set.of(2088, 28268, 28269), checkpoint.activeQuests().stream()

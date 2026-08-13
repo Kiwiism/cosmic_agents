@@ -22,6 +22,9 @@ public final class AgentCombatTacticalEventListener implements AgentEventListene
                 entry, killed.mapId(), killed.objectiveId(),
                 AgentCombatObjectiveTargetStateRuntime.allows(entry, killed.mobId()),
                 killed.occurredAtMs());
+        entry.capabilityStates().find(AgentCombatPlatformBatchState.STATE_KEY)
+                .ifPresent(state -> state.killed(
+                        killed.mapId(), killed.objectiveId(), killed.occurredAtMs()));
         AgentCombatTacticalState.Snapshot previous =
                 AgentCombatDirectiveRuntime.tacticalSnapshot(entry);
         if (previous != null

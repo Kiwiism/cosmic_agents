@@ -3,8 +3,12 @@ package server.agents.progression;
 import client.Character;
 import client.Job;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import server.agents.capabilities.navigation.AgentNavigationGraph;
+import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.integration.PrimitiveCapabilityGateway;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.maps.MapleMap;
 
 import java.awt.Point;
 import java.util.Set;
@@ -14,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -299,6 +304,41 @@ class AgentFirstJobJourneyRuntimeTest {
 
         verify(gateway).runNpcScript(agent, 1052114, 1);
         verify(gateway, never()).grind(entry, Set.of(130100));
+    }
+
+    @Test
+    void activePirateTrainingQuestUsesUnreachableEntranceNpcFromLowerPlatform() {
+        Character agent = mock(Character.class);
+        when(agent.getId()).thenReturn(50);
+        when(agent.getName()).thenReturn("PirateTrainingDoor");
+        when(agent.getJob()).thenReturn(Job.PIRATE);
+        when(agent.getLevel()).thenReturn(10);
+        when(agent.getMapId()).thenReturn(120010000);
+        when(agent.getPosition()).thenReturn(new Point(516, 122));
+        MapleMap map = mock(MapleMap.class);
+        when(agent.getMap()).thenReturn(map);
+        AgentRuntimeEntry entry = entry(agent, "pirate-gun-standard-v1",
+                AgentCareerProgressionState.Stage.INSTRUCTOR_TRAINING);
+        PrimitiveCapabilityGateway gateway = npcGateway(agent, 1095002);
+        when(gateway.questStatus(agent, 2193)).thenReturn(1);
+        Point npcPosition = new Point(133, -86);
+        when(gateway.npcPosition(agent, 1095002)).thenReturn(npcPosition);
+        when(gateway.runNpcScript(agent, 1095002, 0)).thenReturn(true);
+        AgentNavigationGraph graph = mock(AgentNavigationGraph.class);
+        when(graph.findRegionId(map, agent.getPosition())).thenReturn(8);
+        when(graph.findRegionId(map, npcPosition)).thenReturn(-1);
+
+        try (MockedStatic<AgentNavigationGraphService> graphs =
+                     mockStatic(AgentNavigationGraphService.class)) {
+            graphs.when(() -> AgentNavigationGraphService.peekBestGraph(
+                    org.mockito.ArgumentMatchers.eq(map), org.mockito.ArgumentMatchers.any()))
+                    .thenReturn(graph);
+
+            assertTrue(AgentFirstJobJourneyRuntime.tick(entry, agent, 100L, gateway));
+        }
+
+        verify(gateway).runNpcScript(agent, 1095002, 0);
+        verify(gateway, never()).navigate(entry, npcPosition, true);
     }
 
     @Test

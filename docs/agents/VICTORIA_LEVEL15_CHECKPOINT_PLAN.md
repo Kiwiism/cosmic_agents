@@ -75,18 +75,17 @@ that consumes them rather than by checkpoint 1.
 
 ## Henesys pack
 
-1. Take Bruce's **The Reason Behind the Mushroom Studies**.
-2. Reach level 14 before taking level-gated requests from Rina; this guard
-   prevents a low-level Agent from repeatedly attempting an unavailable quest.
-3. Take Rina's **I Need an Umbrella!**, Jay's **The Terrorizing Red Ribbon
-   Pigs**, and Camila's **The Pigs Are Ruining the Produce!**
-4. At The Hill East of Henesys, hunt for 10 Mushroom Spores and 20 Green
-   Mushroom Caps while counting Pigs and Ribbon Pigs encountered.
-5. At The Forest East of Henesys, collect 40 Orange Mushroom Caps and continue
-   counting Pigs and Ribbon Pigs.
-6. Enter Henesys Pig Farm only if either kill objective remains. Inside, kill
+1. Take Bruce's **The Reason Behind the Mushroom Studies**, Jay's **The
+   Terrorizing Red Ribbon Pigs**, and Camila's **The Pigs Are Ruining the
+   Produce!**
+2. At An Empty House, collect 40 Orange Mushroom Caps. Green Mushrooms are
+   eligible only when Orange Mushrooms are underrepresented in the live spawn.
+3. At The Hill East of Henesys, hunt Shrooms for 10 Mushroom Spores.
+4. Enter Henesys Pig Farm only if either kill objective remains. Inside, kill
    everything until 30 Pigs and 40 Ribbon Pigs are complete.
-7. Leave the mini-dungeon, return to Henesys, and complete all four quests.
+5. Return to Henesys and complete Bruce, Jay, and Camila's quests.
+6. Once level 14, take Rina's **I Need an Umbrella!**, return to An Empty
+   House for any remaining 20 Green Mushroom Caps, and complete the quest.
 
 ## Kerning pack
 

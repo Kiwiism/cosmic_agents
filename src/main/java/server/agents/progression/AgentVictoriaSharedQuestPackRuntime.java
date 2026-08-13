@@ -2,6 +2,7 @@ package server.agents.progression;
 
 import client.Character;
 import client.QuestStatus;
+import server.agents.capabilities.objective.AgentNpcInteractionReachabilityService;
 import server.agents.capabilities.shop.AgentShopService;
 import server.agents.capabilities.shop.AgentShopStateRuntime;
 import server.agents.capabilities.combat.AgentCombatPolicyConfig;
@@ -129,7 +130,8 @@ final class AgentVictoriaSharedQuestPackRuntime {
             return Result.BLOCKED;
         }
         if (!gateway.grounded(agent)
-                || agent.getPosition().distanceSq(taxi) > (long) NPC_DISTANCE_PX * NPC_DISTANCE_PX) {
+                || !AgentNpcInteractionReachabilityService.canInteract(
+                entry, agent, taxi, NPC_DISTANCE_PX)) {
             gateway.navigate(entry, taxi, true);
             return Result.RUNNING;
         }
@@ -166,7 +168,8 @@ final class AgentVictoriaSharedQuestPackRuntime {
             return Result.BLOCKED;
         }
         if (!gateway.grounded(agent)
-                || agent.getPosition().distanceSq(npc) > (long) NPC_DISTANCE_PX * NPC_DISTANCE_PX) {
+                || !AgentNpcInteractionReachabilityService.canInteract(
+                entry, agent, npc, NPC_DISTANCE_PX)) {
             Point approach = AgentNpcInteractionSpreadService.preferredGroundedApproach(
                     agent, agent.getPosition(), npc, NPC_DISTANCE_PX);
             gateway.navigate(entry, approach, true);

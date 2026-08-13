@@ -12,35 +12,33 @@ public final class AgentRouteBlockerState {
 
     private Point routeTarget;
     private long startedAtMs;
-    private int kills;
-    private long travelCooldownUntilMs;
+    private int availableKills = AgentCombatPolicyConfig.routeBlockerMaxKills();
+    private long lastRefillAtMs;
 
     public synchronized boolean canInterrupt(Point target, long nowMs) {
         if (target == null) {
             return false;
         }
-        if (travelCooldownUntilMs > nowMs) {
+        refill(nowMs);
+        if (availableKills <= 0) {
+            resumeTravel();
             return false;
-        }
-        if (travelCooldownUntilMs != 0L) {
-            kills = 0;
-            travelCooldownUntilMs = 0L;
         }
         if (routeTarget == null || routeTarget.distanceSq(target) > 16.0) {
             routeTarget = new Point(target);
             startedAtMs = nowMs;
         }
-        return nowMs - startedAtMs < AgentCombatPolicyConfig.routeBlockerTimeoutMs()
-                && kills < AgentCombatPolicyConfig.routeBlockerMaxKills();
+        return nowMs - startedAtMs < AgentCombatPolicyConfig.routeBlockerTimeoutMs();
     }
 
     public synchronized void killed(long nowMs) {
-        kills++;
-        if (kills >= AgentCombatPolicyConfig.routeBlockerMaxKills()) {
+        refill(nowMs);
+        if (availableKills > 0) {
+            availableKills--;
+        }
+        if (availableKills <= 0) {
             routeTarget = null;
             startedAtMs = 0L;
-            travelCooldownUntilMs = nowMs
-                    + AgentCombatPolicyConfig.routeBlockerTravelCooldownMs();
         }
     }
 
@@ -50,24 +48,52 @@ public final class AgentRouteBlockerState {
     }
 
     public synchronized Snapshot snapshot(long nowMs) {
+        refill(nowMs);
         return new Snapshot(routeTarget == null ? null : new Point(routeTarget),
-                startedAtMs, kills, travelCooldownUntilMs, routeTarget != null
-                && travelCooldownUntilMs <= nowMs
+                startedAtMs, availableKills, nextRefillAtMs(), routeTarget != null
                 && nowMs - startedAtMs < AgentCombatPolicyConfig.routeBlockerTimeoutMs()
-                && kills < AgentCombatPolicyConfig.routeBlockerMaxKills());
+                && availableKills > 0);
     }
 
     public synchronized void clear() {
         routeTarget = null;
         startedAtMs = 0L;
-        kills = 0;
-        travelCooldownUntilMs = 0L;
+        availableKills = AgentCombatPolicyConfig.routeBlockerMaxKills();
+        lastRefillAtMs = 0L;
+    }
+
+    private void refill(long nowMs) {
+        int maximum = AgentCombatPolicyConfig.routeBlockerMaxKills();
+        if (maximum <= 0) {
+            availableKills = 0;
+            lastRefillAtMs = nowMs;
+            return;
+        }
+        if (lastRefillAtMs == 0L) {
+            availableKills = maximum;
+            lastRefillAtMs = nowMs;
+            return;
+        }
+        long intervalMs = Math.max(1L, AgentCombatPolicyConfig.routeBlockerRefillIntervalMs());
+        long elapsedIntervals = Math.max(0L, nowMs - lastRefillAtMs) / intervalMs;
+        if (elapsedIntervals <= 0L) {
+            return;
+        }
+        availableKills = (int) Math.min(maximum, availableKills + elapsedIntervals);
+        lastRefillAtMs += elapsedIntervals * intervalMs;
+    }
+
+    private long nextRefillAtMs() {
+        return availableKills >= AgentCombatPolicyConfig.routeBlockerMaxKills()
+                || lastRefillAtMs == 0L
+                ? 0L
+                : lastRefillAtMs + AgentCombatPolicyConfig.routeBlockerRefillIntervalMs();
     }
 
     public record Snapshot(Point routeTarget,
                            long startedAtMs,
-                           int kills,
-                           long travelCooldownUntilMs,
+                           int availableKills,
+                           long nextRefillAtMs,
                            boolean budgetAvailable) {
     }
 }

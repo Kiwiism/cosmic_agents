@@ -46,6 +46,8 @@ public final class AgentCombatDirectiveRuntime {
                 .ifPresent(AgentCombatTacticalState::clear);
         entry.capabilityStates().remove(AgentRouteBlockerState.STATE_KEY)
                 .ifPresent(AgentRouteBlockerState::clear);
+        entry.capabilityStates().remove(AgentCombatPlatformBatchState.STATE_KEY)
+                .ifPresent(AgentCombatPlatformBatchState::clear);
     }
 
     public static boolean required(AgentRuntimeEntry entry, int mobId) {
@@ -79,6 +81,7 @@ public final class AgentCombatDirectiveRuntime {
                 .assign(directive);
         if (changed) {
             state(entry).clear();
+            entry.capabilityStates().require(AgentCombatPlatformBatchState.STATE_KEY).clear();
         }
     }
 }

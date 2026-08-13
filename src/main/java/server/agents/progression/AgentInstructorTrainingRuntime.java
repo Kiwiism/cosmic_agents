@@ -1,6 +1,7 @@
 package server.agents.progression;
 
 import client.Character;
+import server.agents.capabilities.objective.AgentNpcInteractionReachabilityService;
 import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
 import server.agents.integration.PrimitiveCapabilityGateway;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -167,7 +168,8 @@ public final class AgentInstructorTrainingRuntime {
             return false;
         }
         if (!gateway.grounded(agent)
-                || agent.getPosition().distanceSq(npc) > NPC_DISTANCE_PX * NPC_DISTANCE_PX) {
+                || !AgentNpcInteractionReachabilityService.canInteract(
+                entry, agent, npc, NPC_DISTANCE_PX)) {
             gateway.navigate(entry, npc, true);
             return false;
         }

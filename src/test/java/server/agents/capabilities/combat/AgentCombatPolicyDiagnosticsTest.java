@@ -23,4 +23,19 @@ class AgentCombatPolicyDiagnosticsTest {
                 snapshot.localTargetLease().phase());
         assertEquals(3, snapshot.localTargetLease().killsRemaining());
     }
+
+    @Test
+    void snapshotExposesRemainingPlatformBatchKills() {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
+        entry.capabilityStates().require(AgentCombatPlatformBatchState.STATE_KEY)
+                .begin(100, "quest", 44, new java.awt.Point(200, 300),
+                        7, 1_000L, 30_000L);
+
+        AgentCombatPolicyDiagnostics.Snapshot snapshot =
+                AgentCombatPolicyDiagnostics.snapshot(entry, 2_000L);
+
+        assertNotNull(snapshot.platformBatch());
+        assertEquals(7, snapshot.platformBatch().killsRemaining());
+        assertEquals(44, snapshot.platformBatch().regionId());
+    }
 }

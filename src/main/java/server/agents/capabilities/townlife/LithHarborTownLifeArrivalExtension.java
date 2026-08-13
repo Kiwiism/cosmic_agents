@@ -6,6 +6,7 @@ import server.agents.capabilities.movement.AgentChairService;
 import server.agents.capabilities.navigation.AgentLithHarborArrivalRouteRuntime;
 import server.agents.capabilities.navigation.AgentRouteOutcome;
 import server.agents.capabilities.navigation.AgentRouteStatus;
+import server.agents.capabilities.objective.AgentNpcInteractionReachabilityService;
 import server.agents.integration.PrimitiveCapabilityGateway;
 import server.agents.plans.amherst.MapleIslandSouthperryQuestCatalog;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -74,8 +75,8 @@ final class LithHarborTownLifeArrivalExtension implements AgentTownLifeArrivalEx
             return true;
         }
         if (!gateway.grounded(agent)
-                || agent.getPosition().distanceSq(shanks)
-                > INTERACTION_DISTANCE_PX * INTERACTION_DISTANCE_PX) {
+                || !AgentNpcInteractionReachabilityService.canInteract(
+                entry, agent, shanks, INTERACTION_DISTANCE_PX)) {
             gateway.navigate(entry, shanks, true);
             return false;
         }
@@ -123,8 +124,8 @@ final class LithHarborTownLifeArrivalExtension implements AgentTownLifeArrivalEx
             return true;
         }
         if (!gateway.grounded(agent)
-                || agent.getPosition().distanceSq(npc)
-                > INTERACTION_DISTANCE_PX * INTERACTION_DISTANCE_PX) {
+                || !AgentNpcInteractionReachabilityService.canInteract(
+                entry, agent, npc, INTERACTION_DISTANCE_PX)) {
             gateway.navigate(entry, npc, true);
             return false;
         }
