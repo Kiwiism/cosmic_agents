@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -44,7 +45,7 @@ class AgentGrindRangedEngagementServiceTest {
     }
 
     @Test
-    void jumpsTowardJumpableNonBowTargetWhenNotInRange() {
+    void jumpsTowardJumpableMeleeTargetWhenNotInRange() {
         Character agent = mock(Character.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         Monster target = monsterAt(220, 80);
@@ -60,7 +61,7 @@ class AgentGrindRangedEngagementServiceTest {
                 target.getPosition(),
                 plan,
                 null,
-                hooks(counters, false, false, true));
+                hooks(counters, false, false, true, WeaponType.SWORD1H, false));
 
         assertTrue(result.consumedTick());
         assertEquals(1, counters.jump.get());
@@ -68,20 +69,49 @@ class AgentGrindRangedEngagementServiceTest {
         assertEquals(0, counters.idleOnGround.get());
     }
 
+    @Test
+    void doesNotJumpTowardTargetForRangedAmmoWeapon() {
+        Character agent = mock(Character.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
+        Monster target = monsterAt(220, 80);
+        AgentAttackPlan plan = plan(target, AgentAttackRoute.CLOSE);
+        Counters counters = new Counters();
+
+        AgentGrindRangedEngagementService.Result result = AgentGrindRangedEngagementService.engage(
+                entry, agent, new Point(100, 100), new Point(150, 100), target,
+                target.getPosition(), plan, null,
+                hooks(counters, false, false, true, WeaponType.GUN, true));
+
+        assertFalse(result.consumedTick());
+        assertEquals(0, counters.jump.get());
+    }
+
     private static AgentGrindRangedEngagementService.Hooks hooks(Counters counters,
                                                                 boolean inRange,
                                                                 boolean canUseAttack,
                                                                 boolean jumpable) {
+        return hooks(counters, inRange, canUseAttack, jumpable, WeaponType.CLAW, true);
+    }
+
+    private static AgentGrindRangedEngagementService.Hooks hooks(Counters counters,
+                                                                boolean inRange,
+                                                                boolean canUseAttack,
+                                                                boolean jumpable,
+                                                                WeaponType resolvedWeaponType,
+                                                                boolean rangedAmmoWeapon) {
         return new AgentGrindRangedEngagementService.Hooks(
-                agent -> WeaponType.CLAW,
+                agent -> resolvedWeaponType,
                 (weaponType, agentPosition, targetPosition) -> false,
                 (weaponType, agentPosition, targetPosition) -> false,
                 (entry, agentPosition, targetPosition) -> null,
                 (attackPlan, agent, target) -> inRange,
                 (entry, agent, target, attackPlan, agentPosition) -> null,
                 (grounded, weaponType, route) -> canUseAttack,
-                (entry, agent, attackPlan) -> counters.attack.incrementAndGet(),
-                weaponType -> true,
+                (entry, agent, attackPlan) -> {
+                    counters.attack.incrementAndGet();
+                    AgentCombatCooldownStateRuntime.maxAttackCooldown(entry, 100);
+                },
+                ignored -> rangedAmmoWeapon,
                 (movementProfile, closeRangeRoute, agentPosition, targetPosition, maxJumpHeight) -> jumpable,
                 movementProfile -> 100.0f,
                 (entry, agent, dx) -> {

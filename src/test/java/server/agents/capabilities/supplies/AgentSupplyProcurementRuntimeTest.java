@@ -67,7 +67,7 @@ class AgentSupplyProcurementRuntimeTest {
     }
 
     @Test
-    void returningFromSupplierResumesExactSuspendedObjective() {
+    void refreshedSameCategoryRequestDoesNotStarveActiveReturnTrip() {
         Character agent = mock(Character.class);
         when(agent.getId()).thenReturn(91);
         when(agent.getMapId()).thenReturn(101010101);
@@ -88,12 +88,12 @@ class AgentSupplyProcurementRuntimeTest {
         AgentSupplyNeed need = new AgentSupplyNeed(AgentResourceCategory.HP_POTION,
                 0, 20, AgentSupplyUrgency.EMPTY, training.objectiveId(), 100L);
         AgentProcurementRequest request = new AgentProcurementRequest(
-                "supply:HP_POTION:100", AgentResourceCategory.HP_POTION, 20, 10_000L,
+                "supply:HP_POTION:refreshed", AgentResourceCategory.HP_POTION, 20, 10_000L,
                 List.of(AgentProcurementMethod.NPC_SHOP), AgentSupplyUrgency.EMPTY,
                 training.objectiveId(), 10_000L);
         planning.update(need, request);
         entry.capabilityStates().require(AgentSupplyProcurementState.STATE_KEY).start(
-                request.requestId(), maintenance.objectiveId(), request.category(),
+                "supply:HP_POTION:100", maintenance.objectiveId(), request.category(),
                 101000002, 1032102, 101010101, AgentSupplyProcurementState.Phase.RETURNING);
 
         assertFalse(AgentSupplyProcurementRuntime.tick(entry, agent, 200L));

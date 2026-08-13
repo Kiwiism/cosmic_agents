@@ -119,7 +119,7 @@ class AgentLiveTickGateServiceTest {
                         }));
 
         assertFalse(consumed);
-        assertEquals(List.of("mapChange", "supervision", "common", "capability", "trade", "idle", "recovery"), calls);
+        assertEquals(List.of("mapChange", "common", "supervision", "capability", "trade", "idle", "recovery"), calls);
     }
 
     @Test
@@ -169,7 +169,7 @@ class AgentLiveTickGateServiceTest {
                         }));
 
         assertTrue(consumed);
-        assertEquals(List.of("mapChange", "supervision", "common", "capability", "trade"), calls);
+        assertEquals(List.of("mapChange", "common", "supervision", "capability", "trade"), calls);
     }
 
     @Test
@@ -207,7 +207,38 @@ class AgentLiveTickGateServiceTest {
                         }));
 
         assertTrue(consumed);
-        assertEquals(List.of("mapChange", "supervision", "common", "capability"), calls);
+        assertEquals(List.of("mapChange", "common", "supervision", "capability"), calls);
+    }
+
+    @Test
+    void maintenanceSuppressesForegroundPlanButAllowsNormalMovementPhase() {
+        Character agent = mock(Character.class);
+        when(agent.getChair()).thenReturn(-1);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        List<String> calls = new ArrayList<>();
+
+        boolean consumed = AgentLiveTickGateService.tickLiveGates(
+                new AgentLiveTickGateService.Context(entry, agent, null, null, new Point(), true),
+                new AgentLiveTickGateService.Hooks(
+                        (commonEntry, commonAgent, commonLeader, runAiTick) -> {
+                            calls.add("common");
+                            return false;
+                        },
+                        (supervisionEntry, supervisionAgent) -> {
+                            calls.add("maintenance");
+                            return true;
+                        },
+                        (capabilityEntry, capabilityAgent) -> {
+                            calls.add("capability");
+                            return true;
+                        },
+                        (tradeEntry, tradeAgent) -> { calls.add("trade"); return false; },
+                        (idleEntry, idleAgent) -> { calls.add("idle"); return false; },
+                        (recoveryEntry, recoveryAgent, anchor, target) -> false,
+                        (mapEntry, mapAgent) -> { calls.add("mapChange"); return false; }));
+
+        assertFalse(consumed);
+        assertEquals(List.of("mapChange", "common", "maintenance"), calls);
     }
 
     @Test
@@ -247,7 +278,7 @@ class AgentLiveTickGateServiceTest {
                         }));
 
         assertTrue(consumed);
-        assertEquals(List.of("mapChange", "supervision", "common", "planGate", "routeCombat"), calls);
+        assertEquals(List.of("mapChange", "common", "supervision", "planGate", "routeCombat"), calls);
     }
 
     @Test

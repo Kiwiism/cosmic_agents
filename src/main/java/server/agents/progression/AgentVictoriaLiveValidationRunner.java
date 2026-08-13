@@ -7,6 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.capabilities.combat.AgentCombatTargetTraceRuntime;
 import server.agents.capabilities.combat.AgentCombatTargetTraceSnapshot;
+import server.agents.capabilities.combat.AgentCombatCooldownStateRuntime;
+import server.agents.capabilities.combat.AgentDegenerateAttackStateRuntime;
 import server.agents.capabilities.navigation.AgentNavigationTraceRuntime;
 import server.agents.capabilities.navigation.AgentNavigationTraceSnapshot;
 import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
@@ -14,9 +16,12 @@ import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.movement.AgentMovementPhysicsStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
+import server.agents.capabilities.shop.AgentShopStateRuntime;
+import server.agents.capabilities.supplies.AgentSupplyProcurementState;
 import server.agents.integration.AgentPersistenceGatewayRuntime;
 import server.agents.integration.cosmic.CosmicAgentOfflineLoader;
 import server.agents.plans.AgentPlanExecutionStatus;
+import server.agents.plans.AgentPlanStartRequest;
 import server.agents.plans.AgentUniversalPlanRuntime;
 import server.agents.registry.AgentResolvedCharacter;
 import server.agents.runtime.AgentInteractionRuntime;
@@ -67,8 +72,14 @@ public final class AgentVictoriaLiveValidationRunner {
         String agentName = argument(args, 0, "KiwiAgent");
         String career = argument(args, 1, "magician");
         String checkpointText = argument(args, 2, "checkpoint3-hunt");
-        VictoriaFirstJobMvpTestService.Checkpoint checkpoint =
-                VictoriaFirstJobMvpTestService.resolveCheckpoint(checkpointText);
+        String startVariantText = argument(args, 3, "lv10");
+        boolean resumeCurrent = checkpointText.equalsIgnoreCase("resume")
+                || checkpointText.equalsIgnoreCase("current");
+        VictoriaFirstJobMvpTestService.Checkpoint checkpoint = resumeCurrent
+                ? null : VictoriaFirstJobMvpTestService.resolveCheckpoint(checkpointText);
+        if (!resumeCurrent) {
+            VictoriaFirstJobMvpTestService.resolveStartVariant(startVariantText);
+        }
 
         System.setProperty("polyglot.engine.WarnInterpreterOnly", "false");
         Server.getInstance().init();
@@ -83,18 +94,29 @@ public final class AgentVictoriaLiveValidationRunner {
                 resolved.id(), 0, 1, null, null);
         AgentRuntimeEntry entry = AgentInteractionRuntime.registerSelfDirectedAgent(loadedAgent);
 
-        AgentMailboxRuntime.dispatch(entry, ignored -> {
-            try {
-                VictoriaFirstJobMvpTestService.resetAndStart(
-                        entry, career, "lv10", checkpoint, System.currentTimeMillis());
-            } catch (IOException failure) {
-                throw new UncheckedIOException(failure);
-            }
-            return null;
-        }).get(60, TimeUnit.SECONDS);
+        if (!resumeCurrent) {
+            AgentMailboxRuntime.dispatch(entry, ignored -> {
+                try {
+                    VictoriaFirstJobMvpTestService.resetAndStart(
+                            entry, career, startVariantText, checkpoint, System.currentTimeMillis());
+                } catch (IOException failure) {
+                    throw new UncheckedIOException(failure);
+                }
+                return null;
+            }).get(60, TimeUnit.SECONDS);
+        } else if (!AgentUniversalPlanRuntime.active(entry)) {
+            AgentMailboxRuntime.dispatch(entry, ignored -> {
+                if (!AgentUniversalPlanRuntime.start(
+                        entry, loadedAgent, "victoria-level15-mvp",
+                        AgentPlanStartRequest.EMPTY, System.currentTimeMillis())) {
+                    throw new IllegalStateException("could not reattach the Victoria plan cursor");
+                }
+                return null;
+            }).get(60, TimeUnit.SECONDS);
+        }
 
-        log.info("VICTORIA_LIVE_STARTED agent={} characterId={} career={} checkpoint={}",
-                agentName, resolved.id(), career, checkpointText);
+        log.info("VICTORIA_LIVE_STARTED agent={} characterId={} career={} checkpoint={} variant={}",
+                agentName, resolved.id(), career, checkpointText, startVariantText);
         monitor(entry, validationTarget(career));
     }
 
@@ -196,7 +218,20 @@ public final class AgentVictoriaLiveValidationRunner {
                 questProgress(agent, JAY_QUEST_ID, JAY_RIBBON_PIG_MOB_ID),
                 navigation,
                 combat,
-                movementDiagnostics(entry));
+                movementDiagnostics(entry) + ",level=" + agent.getLevel()
+                        + ",exp=" + agent.getExp()
+                        + ",training=" + trainingDiagnostics(agent, progression));
+    }
+
+    private static String trainingDiagnostics(Character agent, AgentCareerProgressionState progression) {
+        AgentCareerBuildBundle bundle = progression.bundle();
+        int index = progression.trainingQuestIndex();
+        if (bundle == null || index < 0 || index >= bundle.instructorTrainingQuestIds().size()) {
+            return index + "/" + (bundle == null ? 0 : bundle.instructorTrainingQuestIds().size());
+        }
+        int questId = bundle.instructorTrainingQuestIds().get(index);
+        return index + "/" + bundle.instructorTrainingQuestIds().size()
+                + ":q" + questId + agent.getQuest(questId).getProgress();
     }
 
     private static String movementDiagnostics(AgentRuntimeEntry entry) {
@@ -207,13 +242,24 @@ public final class AgentVictoriaLiveValidationRunner {
                 : "none";
         Point waypoint = AgentNavigationDebugStateRuntime.navTargetPosition(entry);
         Point goal = AgentMoveTargetStateRuntime.moveTarget(entry);
+        AgentSupplyProcurementState supplies = entry.capabilityStates().require(
+                AgentSupplyProcurementState.STATE_KEY);
         return "edge=" + edge
                 + ",waypoint=" + (waypoint == null ? "none" : waypoint.x + ":" + waypoint.y)
                 + ",goal=" + (goal == null ? "none" : goal.x + ":" + goal.y)
                 + ",air=" + AgentMovementStateRuntime.inAir(entry)
+                + ",climb=" + AgentMovementStateRuntime.climbing(entry)
                 + ",dir=" + AgentMovementStateRuntime.moveDirection(entry)
+                + ",degen=" + AgentDegenerateAttackStateRuntime.degenAttackDone(entry)
+                + ",attackCd=" + AgentCombatCooldownStateRuntime.attackCooldownMs(entry)
+                + ",moveWindow=" + AgentCombatCooldownStateRuntime.moveWindowMs(entry)
                 + ",physX=" + Math.round(AgentMovementPhysicsStateRuntime.physicsX(entry) * 10.0) / 10.0
-                + ",hSpeed=" + Math.round(AgentMovementPhysicsStateRuntime.horizontalSpeed(entry) * 100.0) / 100.0;
+                + ",physY=" + Math.round(AgentMovementPhysicsStateRuntime.physicsY(entry) * 10.0) / 10.0
+                + ",vSpeed=" + Math.round(AgentMovementPhysicsStateRuntime.verticalVelocity(entry) * 100.0) / 100.0
+                + ",hSpeed=" + Math.round(AgentMovementPhysicsStateRuntime.horizontalSpeed(entry) * 100.0) / 100.0
+                + ",supply=" + supplies.phase() + ":" + supplies.category()
+                + ",shop=" + AgentShopStateRuntime.workflow(entry).phase()
+                + ":pending=" + AgentShopStateRuntime.shopVisitPending(entry);
     }
 
     private static int questProgress(Character agent, int questId, int targetId) {

@@ -1,6 +1,8 @@
 package server.agents.capabilities.supplies;
 
 import client.Character;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import server.agents.capabilities.contracts.AgentProcurementMethod;
 import server.agents.capabilities.contracts.AgentProcurementRequest;
 import server.agents.capabilities.contracts.AgentResourceCategory;
@@ -30,6 +32,7 @@ import java.util.Map;
 
 /** Executes urgent supply requests as route-aware maintenance without destroying foreground intent. */
 public final class AgentSupplyProcurementRuntime {
+    private static final Logger log = LoggerFactory.getLogger(AgentSupplyProcurementRuntime.class);
     private static final String OBJECTIVE_PREFIX = "maintenance:resupply:";
 
     private AgentSupplyProcurementRuntime() {
@@ -42,14 +45,23 @@ public final class AgentSupplyProcurementRuntime {
                 AgentSupplyProcurementState.STATE_KEY);
         AgentSupplyMaintenanceEvaluationState evaluations = entry.capabilityStates().require(
                 AgentSupplyMaintenanceEvaluationState.STATE_KEY);
-        AgentSupplyThresholdChangedEvent signal = execution.isActive() ? null : evaluations.next();
-        AgentProcurementRequest request = signal == null
-                ? null : selectRequest(planning, nowMs, signal.category());
-        if (signal != null && request == null) {
-            evaluations.resolve(signal.category());
-        }
-        if (request == null) {
-            request = selectRequest(planning, nowMs, null);
+        AgentSupplyThresholdChangedEvent signal = null;
+        AgentProcurementRequest request;
+        if (execution.isActive()) {
+            request = planning.procurement(execution.category());
+            if (request != null && request.expiresAtMs() < nowMs) {
+                request = null;
+            }
+        } else {
+            signal = evaluations.next();
+            request = signal == null
+                    ? null : selectRequest(planning, nowMs, signal.category());
+            if (signal != null && request == null) {
+                evaluations.resolve(signal.category());
+            }
+            if (request == null) {
+                request = selectRequest(planning, nowMs, null);
+            }
         }
 
         if (request == null) {
@@ -66,8 +78,6 @@ public final class AgentSupplyProcurementRuntime {
                 return false;
             }
             evaluations.resolve(request.category());
-        } else if (!execution.requestId().equals(request.requestId())) {
-            return true;
         }
 
         return switch (execution.phase()) {
@@ -105,7 +115,8 @@ public final class AgentSupplyProcurementRuntime {
             if (bundle == null) {
                 return false;
             }
-            AgentCareerShopCatalog.ShopStop stop = AgentCareerShopCatalog.forBundle(bundle);
+            AgentCareerShopCatalog.ShopStop stop = AgentCareerShopCatalog.forSupply(
+                    bundle, request.category(), agent.getMapId());
             supplierMapId = stop.mapId();
             supplierNpcId = stop.npcId();
             phase = supplierMapId == agent.getMapId()
@@ -137,6 +148,9 @@ public final class AgentSupplyProcurementRuntime {
         }
         execution.start(request.requestId(), maintenanceId, request.category(), supplierMapId,
                 supplierNpcId, agent.getMapId(), phase);
+        log.info("Agent '{}' suspended foreground work for {} resupply: phase={} sourceMap={} supplierMap={} supplierNpc={} existingShopVisit={}",
+                agent.getName(), request.category(), phase, agent.getMapId(), supplierMapId,
+                supplierNpcId, AgentShopStateRuntime.shopVisitPending(entry));
         if (AgentShopStateRuntime.shopVisitPending(entry)) {
             execution.markShopRequested();
         }

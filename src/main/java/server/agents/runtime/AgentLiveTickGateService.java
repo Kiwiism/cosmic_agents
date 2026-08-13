@@ -115,11 +115,14 @@ public final class AgentLiveTickGateService {
             hooks.activeCapabilityTick().tick(context.entry(), context.agent());
             return true;
         }
-        if (hooks.objectiveSupervisionTick().tick(context.entry(), context.agent())) {
-            return true;
-        }
         if (hooks.commonTickSystems().run(context.entry(), context.agent(), context.leader(), context.runAiTick())) {
             return true;
+        }
+        if (hooks.objectiveSupervisionTick().tick(context.entry(), context.agent())) {
+            // Maintenance can replace the foreground mode with route-aware movement (for
+            // example, an emergency shop visit). Skip the suspended plan and later gates,
+            // but let the caller run the normal capability/movement phase for that mode.
+            return false;
         }
         if (hooks.planExecutionGateTick().tick(context.entry(), context.agent(), context.runAiTick())) {
             return true;

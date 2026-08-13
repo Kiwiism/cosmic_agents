@@ -45,9 +45,17 @@ public final class AgentGrindNavigationTailService {
                 : hooks.navigationTargetSelector().select(
                         entry, agentPosition, mobPosition, shouldRetreatForRangedSpacing);
 
-        if (AgentDegenerateAttackStateRuntime.degenAttackDone(entry)
-                && !hooks.retreatPolicy().shouldRetreat(weaponType, agentPosition, mobPosition)) {
+        boolean degenerateAttackDone = AgentDegenerateAttackStateRuntime.degenAttackDone(entry);
+        boolean noUsableRetreat = degenerateAttackDone
+                && hooks.retreatPolicy().shouldRetreat(weaponType, agentPosition, mobPosition)
+                && targetPos.equals(mobPosition);
+        if (degenerateAttackDone
+                && (!hooks.retreatPolicy().shouldRetreat(weaponType, agentPosition, mobPosition)
+                || noUsableRetreat)) {
             AgentDegenerateAttackStateRuntime.clear(entry);
+            if (noUsableRetreat) {
+                targetPos = agentPosition;
+            }
         }
 
         if (crossRegionRetreatPos == null && !shouldRetreatForRangedSpacing

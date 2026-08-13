@@ -732,7 +732,7 @@ tuning:
     # Purpose: Controls how strongly grind target occupancy penalty cap is discouraged. A larger penalty makes the associated choice less attractive.
     # Technical: the "combat config" component consumes this as an integer. Domain: non-negative policy coefficient; it is meaningful relative to the other coefficients used by the same decision. The value participates in ranking or weighted selection and is not an absolute probability by itself.
     server.agents.capabilities.combat.AgentCombatConfig.GRIND_TARGET_OCCUPANCY_PENALTY_CAP: '2400'
-    # Values: a finite non-negative integer; unit: milliseconds. Recommended: 300-1200 around the tested baseline 600; benchmark or observe behavior before moving outside this band.
+    # Values: a finite non-negative integer; unit: milliseconds. Recommended: 1500-5000 around the tested baseline 3000; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how long Agents remain in or wait for heal move window. Higher values make that pause or state last longer; lower values make them continue sooner.
     # Technical: the "combat config" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled.
     server.agents.capabilities.combat.AgentCombatConfig.HEAL_MOVE_WINDOW_MS: '600'
@@ -803,7 +803,7 @@ tuning:
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 300-1200 around the tested baseline 600; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how long Agents remain in or wait for retreat hold. Higher values make that pause or state last longer; lower values make them continue sooner.
     # Technical: the "grind navigation target selector" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled.
-    server.agents.capabilities.combat.AgentGrindNavigationTargetSelector.RETREAT_HOLD_MS: '600'
+    server.agents.capabilities.combat.AgentGrindNavigationTargetSelector.RETREAT_HOLD_MS: '3000'
     # Values: a finite non-negative integer. Recommended: 25-100 around the tested baseline 50; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls the positional leeway for client projectile bottom. Higher values tolerate more separation before Agents correct course; lower values make them align sooner.
     # Technical: the "projectile hitbox" component consumes this as an integer. Domain: component-specific policy value; startup validation rejects missing, blank, or malformed values.

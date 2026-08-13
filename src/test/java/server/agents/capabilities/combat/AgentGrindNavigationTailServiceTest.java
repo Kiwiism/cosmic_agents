@@ -89,6 +89,29 @@ class AgentGrindNavigationTailServiceTest {
         assertFalse(AgentDegenerateAttackStateRuntime.degenAttackDone(entry));
     }
 
+    @Test
+    void clearsDegenerateLatchWhenNoRetreatPositionIsReachable() {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
+        AgentDegenerateAttackStateRuntime.markDegenAttackDone(entry);
+        Point mobPosition = new Point(200, 100);
+
+        Point result = AgentGrindNavigationTailService.resolveNavigationTarget(
+                entry,
+                new Point(165, 100),
+                mobPosition,
+                WeaponType.GUN,
+                null,
+                null,
+                true,
+                new AgentGrindNavigationTailService.Hooks(
+                        (ignoredEntry, ignoredAgent, target, ignoredRetreatChecked) -> target,
+                        (ignoredWeapon, ignoredAgent, ignoredTarget) -> true,
+                        (ignoredEntry, ignoredAgent, ignoredMob) -> null));
+
+        assertEquals(new Point(165, 100), result);
+        assertFalse(AgentDegenerateAttackStateRuntime.degenAttackDone(entry));
+    }
+
     private static AgentGrindNavigationTailService.Hooks hooks(AtomicInteger navigationCalls,
                                                               Point convenientLoot,
                                                               boolean stillRetreating) {

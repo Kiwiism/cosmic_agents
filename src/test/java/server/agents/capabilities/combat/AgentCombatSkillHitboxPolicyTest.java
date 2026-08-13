@@ -87,7 +87,21 @@ class AgentCombatSkillHitboxPolicyTest {
         Rectangle hitBox = AgentCombatSkillHitboxPolicy.fallbackSkillHitBox(
                 effect, agent, false, AgentAttackRoute.MAGIC, 0, null);
 
-        assertEquals(new Rectangle(105, 150, 595, 100), hitBox);
+        assertEquals(new Rectangle(105, 150, 145, 100), hitBox);
+    }
+
+    @Test
+    void treatsWzProjectileRangeAsAbsolutePixels() {
+        Character agent = mock(Character.class);
+        when(agent.getPosition()).thenReturn(new Point(100, 200));
+        when(agent.getSkills()).thenReturn(java.util.Map.of());
+        StatEffect effect = mock(StatEffect.class);
+        when(effect.getRange()).thenReturn(215);
+
+        Rectangle hitBox = AgentCombatSkillHitboxPolicy.fallbackSkillHitBox(
+                effect, agent, false, AgentAttackRoute.RANGED, 0, null);
+
+        assertEquals(new Rectangle(105, 150, 210, 100), hitBox);
     }
 
     @Test
@@ -103,7 +117,7 @@ class AgentCombatSkillHitboxPolicyTest {
         Rectangle avenger = AgentCombatSkillHitboxPolicy.fallbackSkillHitBox(
                 effect, agent, false, AgentAttackRoute.RANGED, Hermit.AVENGER, null);
 
-        assertEquals(new Rectangle(105, 168, 395, 4), ironArrow);
-        assertEquals(new Rectangle(105, 140, 395, 60), avenger);
+        assertEquals(new Rectangle(105, 168, 95, 4), ironArrow);
+        assertEquals(new Rectangle(105, 140, 95, 60), avenger);
     }
 }

@@ -70,7 +70,13 @@ public final class AgentProjectileHitbox {
     }
 
     public static float projectileRangeScale(StatEffect effect) {
-        return effect != null && effect.getRange() > 0 ? effect.getRange() / 100.0f : 1.0f;
+        // WZ attack-skill `range` is an absolute pixel reach (for example,
+        // Pirate Double Shot starts at 215), not a percentage of the client's
+        // 400 px basic-projectile range. Treating 215 as 215% produced an
+        // 860 px hit box and server-side distance-hack alerts.
+        return effect != null && effect.getRange() > 0
+                ? effect.getRange() / (float) CLIENT_PROJECTILE_BASE_RANGE
+                : 1.0f;
     }
 
     public static int passiveProjectileRangeBonus(Character agent) {

@@ -166,6 +166,7 @@ public final class AgentGrindRangedEngagementService {
                     agentPosition,
                     targetPosition,
                     hooks.jumpHeightCalculator().calculate(AgentMovementStateRuntime.movementProfile(entry)))
+                    && !hooks.rangedAmmoWeaponPolicy().isRangedAmmoWeapon(weaponType)
                     && weaponType != WeaponType.BOW && weaponType != WeaponType.CROSSBOW
                     && weaponType != WeaponType.WAND && weaponType != WeaponType.STAFF) {
                 hooks.jumpInitiator().initiate(entry, agent, targetPosition.x - agentPosition.x);
