@@ -26,6 +26,18 @@ public final class AgentCombatPolicyConfig {
         return tuningInt("LOCAL_TARGET_LEASE_EMPTY_SCANS");
     }
 
+    public static int mapWideRecoveryEmptyScans() {
+        return tuningInt("MAP_WIDE_RECOVERY_EMPTY_SCANS");
+    }
+
+    public static long localOpportunityRouteCostMs() {
+        return tuningLong("LOCAL_OPPORTUNITY_ROUTE_COST_MS");
+    }
+
+    public static long spawnPressureRouteCostWindowMs() {
+        return tuningLong("SPAWN_PRESSURE_ROUTE_COST_WINDOW_MS");
+    }
+
     public static int spawnPressureMinTargetSharePercent() {
         return tuningInt("SPAWN_PRESSURE_MIN_TARGET_SHARE_PERCENT");
     }

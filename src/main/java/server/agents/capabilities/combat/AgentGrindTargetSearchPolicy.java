@@ -53,6 +53,12 @@ public final class AgentGrindTargetSearchPolicy {
         if (!currentTargetReachable) {
             return true;
         }
+        // A commitment suppresses equivalent remote-target churn, but a genuinely local
+        // required opportunity is a different class of decision and may preempt immediately.
+        if (AgentCombatTargetRuntime.hasBetterLocalPreferredOpportunity(
+                entry, agent, currentTarget)) {
+            return true;
+        }
         if (currentAttackPlan == null) {
             return !AgentGrindTargetStateRuntime.committedTo(entry, currentTarget, now);
         }
@@ -103,5 +109,12 @@ public final class AgentGrindTargetSearchPolicy {
                         AgentCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
                         AgentCombatSkillCacheStateRuntime.aoeSkillMobs(entry));
         return searchedClusterSize > currentClusterSize;
+    }
+
+    static boolean shouldPreemptCommittedTarget(boolean currentPreferred,
+                                                int currentLocalityClass,
+                                                int candidateLocalityClass) {
+        return candidateLocalityClass < currentLocalityClass
+                || (!currentPreferred && candidateLocalityClass <= 1);
     }
 }

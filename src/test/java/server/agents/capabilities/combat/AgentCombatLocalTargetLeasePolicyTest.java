@@ -19,8 +19,11 @@ class AgentCombatLocalTargetLeasePolicyTest {
     void emptyLocalAreaPromotesMapWidePreferredTarget() {
         Fixture fixture = fixture();
 
-        List<Monster> selected = promote(
-                fixture, List.of(fixture.localFallback), 1_000);
+        assertEquals(List.of(fixture.localFallback),
+                promote(fixture, List.of(fixture.localFallback), 1_000));
+        assertEquals(List.of(fixture.localFallback),
+                promote(fixture, List.of(fixture.localFallback), 1_400));
+        List<Monster> selected = promote(fixture, List.of(fixture.localFallback), 1_800);
 
         assertEquals(List.of(fixture.remotePreferred), selected);
     }

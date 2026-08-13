@@ -36,6 +36,10 @@ public final class AgentCombatTargetTraceRuntime {
                 .find(AgentCombatDecisionTraceState.STATE_KEY)
                 .map(AgentCombatDecisionTraceState::snapshot)
                 .orElse(null);
+        AgentCombatTargetSearchModeState.Snapshot searchMode = entry.capabilityStates()
+                .find(AgentCombatTargetSearchModeState.STATE_KEY)
+                .map(AgentCombatTargetSearchModeState::snapshot)
+                .orElse(null);
         boolean exactDecision = target != null && decision != null
                 && decision.selectedObjectId() == target.getObjectId();
         AgentCombatDecisionReason reason = exactDecision && tactical != null
@@ -72,8 +76,8 @@ public final class AgentCombatTargetTraceRuntime {
                 target == null ? 0 : target.getId(),
                 target == null ? "" : target.getName(),
                 position(target == null ? null : target.getPosition()),
-                hpPercent(target), action(target, decision, exactDecision),
-                reason.name(), reasonText(reason),
+                hpPercent(target), action(target, decision, exactDecision, searchMode),
+                reason.name(), reasonText(reason, searchMode),
                 AgentProgressionEventPublisher.objectiveId(entry),
                 candidateClass.name(), selectedAtMs,
                 AgentGrindTargetStateRuntime.targetSwitchCount(entry));
@@ -81,15 +85,29 @@ public final class AgentCombatTargetTraceRuntime {
 
     private static String action(Monster target,
                                  AgentCombatDecisionTraceState.Snapshot decision,
-                                 boolean exactDecision) {
+                                 boolean exactDecision,
+                                 AgentCombatTargetSearchModeState.Snapshot searchMode) {
         if (target == null) {
             return "idle";
         }
         if (!exactDecision) {
-            return "engage";
+            return "engage" + searchModeSuffix(searchMode);
         }
         return decision.mode().name().toLowerCase() + " / "
-                + decision.outcome().name().toLowerCase().replace('_', ' ');
+                + decision.outcome().name().toLowerCase().replace('_', ' ')
+                + searchModeSuffix(searchMode);
+    }
+
+    private static String searchModeSuffix(AgentCombatTargetSearchModeState.Snapshot searchMode) {
+        return searchMode == null ? "" : " / " + searchMode.mode().name().toLowerCase();
+    }
+
+    private static String reasonText(AgentCombatDecisionReason reason,
+                                     AgentCombatTargetSearchModeState.Snapshot searchMode) {
+        String base = reasonText(reason);
+        return searchMode == null || searchMode.transitionReason().isBlank()
+                ? base
+                : base + "; " + searchMode.mode().name() + ": " + searchMode.transitionReason();
     }
 
     static String reasonText(AgentCombatDecisionReason reason) {

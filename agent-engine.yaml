@@ -2640,6 +2640,18 @@ tuning:
     # Purpose: Releases the lease early only when no suitable local objective target remains across repeated scans.
     # Technical: Finding any nearby preferred objective mob resets the counter; eligible nearby incidental mobs remain selectable and cannot be hidden by the lease.
     server.agents.capabilities.combat.AgentCombatPolicyConfig.LOCAL_TARGET_LEASE_EMPTY_SCANS: '3'
+    # Values: 2-8 consecutive scans. Recommended: 3. Higher values tolerate short local spawn gaps before crossing the map; lower values recover toward a remote required population sooner.
+    # Purpose: Keeps ordinary quest hunting in LOCAL_CLEAR until repeated scans confirm that no required target is available in the local seek area.
+    # Technical: This threshold applies before MAP_WIDE_RECOVERY and is separate from the REGION_HARVEST lease release threshold.
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.MAP_WIDE_RECOVERY_EMPTY_SCANS: '3'
+    # Values: 1000-8000 milliseconds. Recommended: 3500. Higher values allow a wider reachable neighborhood to interrupt remote travel; lower values restrict preemption to the current platform and immediate approaches.
+    # Purpose: Lets a newly nearby required mob replace a committed distant target without reintroducing remote-target thrashing.
+    # Technical: A preferred candidate preempts only when its reliable route cost falls within this budget and is a better locality class than the current target.
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.LOCAL_OPPORTUNITY_ROUTE_COST_MS: '3500'
+    # Values: 500-10000 milliseconds. Recommended: 2500. Higher values offer more incidental destinations; lower values concentrate spawn-pressure work around the cheapest reachable region.
+    # Purpose: Bounds SPAWN_PRESSURE expansion instead of allowing all incidental mobs on a large map to compete equally.
+    # Technical: Retains incidental regions whose reliable route score is within this amount of the cheapest reachable incidental region.
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.SPAWN_PRESSURE_ROUTE_COST_WINDOW_MS: '2500'
     # Values: 0-10 kills. Recommended: 2. Higher values let an Agent clear more non-objective monsters from its current platform before returning to a required target elsewhere; 0 disables incidental platform clearing.
     # Purpose: Prevents endless killing of convenient incidental monsters while still allowing short, natural platform sweeps that free spawn slots and reduce backtracking.
     # Technical: Maximum consecutive incidental kills selected by the quest-local-clear combat policy before required-target debt wins and the selector must return to a required candidate.

@@ -37,6 +37,10 @@ public final class AgentCombatPolicyDiagnostics {
                 .find(AgentCombatLocalTargetLeaseState.STATE_KEY)
                 .map(state -> state.snapshot(nowMs))
                 .orElse(null);
+        AgentCombatTargetSearchModeState.Snapshot targetSearchMode = entry.capabilityStates()
+                .find(AgentCombatTargetSearchModeState.STATE_KEY)
+                .map(AgentCombatTargetSearchModeState::snapshot)
+                .orElse(null);
         return new Snapshot(
                 directive == null ? "" : directive.directiveId(),
                 directive == null ? "" : directive.objectiveId(),
@@ -48,7 +52,8 @@ public final class AgentCombatPolicyDiagnostics {
                 route,
                 combatDecision,
                 lootDecision,
-                localTargetLease);
+                localTargetLease,
+                targetSearchMode);
     }
 
     public record Snapshot(String directiveId,
@@ -61,10 +66,11 @@ public final class AgentCombatPolicyDiagnostics {
                            AgentRouteBlockerState.Snapshot routeBlocker,
                            AgentCombatDecisionTraceState.Snapshot combatDecision,
                            AgentLootDecisionTraceState.Snapshot lootDecision,
-                           AgentCombatLocalTargetLeaseState.Snapshot localTargetLease) {
+                           AgentCombatLocalTargetLeaseState.Snapshot localTargetLease,
+                           AgentCombatTargetSearchModeState.Snapshot targetSearchMode) {
         private static Snapshot empty() {
             return new Snapshot("", "", Set.of(), AgentIncidentalMobPolicy.IGNORE,
-                    null, null, false, null, null, null, null);
+                    null, null, false, null, null, null, null, null);
         }
     }
 }

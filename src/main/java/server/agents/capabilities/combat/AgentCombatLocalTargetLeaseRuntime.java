@@ -24,9 +24,17 @@ final class AgentCombatLocalTargetLeaseRuntime {
                 agent.getMap(), AgentMovementStateRuntime.movementProfile(entry));
         int regionId = graph == null ? -1 : AgentNavigationRegionService.resolveCurrentRegionId(
                 graph, entry, agent.getMap(), position);
-        state(entry).observeRegion(agent.getMapId(), objectiveId(entry), regionId, nowMs,
+        AgentCombatLocalTargetLeaseState lease = state(entry);
+        lease.observeRegion(agent.getMapId(), objectiveId(entry), regionId, nowMs,
                 AgentCombatPolicyConfig.localTargetLeaseMs(),
                 AgentCombatPolicyConfig.localTargetLeaseKills());
+        AgentCombatLocalTargetLeaseState.Snapshot snapshot = lease.snapshot(nowMs);
+        if (snapshot.phase() == AgentCombatLocalTargetLeaseState.Phase.ACTIVE) {
+            entry.capabilityStates().require(AgentCombatTargetSearchModeState.STATE_KEY)
+                    .enter(AgentCombatTargetSearchMode.REGION_HARVEST,
+                            "reached map-wide destination; harvesting local population",
+                            snapshot.destinationRegionId(), nowMs);
+        }
     }
 
     static boolean allowsMapWidePromotion(AgentRuntimeEntry entry,
