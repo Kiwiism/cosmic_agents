@@ -13,6 +13,7 @@ import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.movement.AgentMovementPhysicsStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
+import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.integration.AgentPersistenceGatewayRuntime;
 import server.agents.integration.cosmic.CosmicAgentOfflineLoader;
 import server.agents.plans.AgentPlanExecutionStatus;
@@ -39,10 +40,19 @@ public final class AgentVictoriaLiveValidationRunner {
     private static final int SLIME_QUEST_ID = 28_277;
     private static final int PIG_QUEST_ID = 28_278;
     private static final int RIBBON_QUEST_ID = 28_279;
+    private static final int BRUCE_QUEST_ID = 2_088;
+    private static final int RINA_QUEST_ID = 28_267;
+    private static final int CAMILA_QUEST_ID = 28_268;
+    private static final int JAY_QUEST_ID = 28_269;
+    private static final int CAMILA_PIG_MOB_ID = 1_210_100;
+    private static final int JAY_RIBBON_PIG_MOB_ID = 1_210_101;
     private static final int ORANGE_MOB_ID = 1_210_102;
     private static final int SLIME_MOB_ID = 210_100;
     private static final int PIG_MOB_ID = 1_210_100;
     private static final int PIG_RIBBON_ITEM_ID = 4_000_002;
+    private static final int ORANGE_MUSHROOM_CAP_ITEM_ID = 4_000_001;
+    private static final int MUSHROOM_SPORE_ITEM_ID = 4_000_011;
+    private static final int GREEN_MUSHROOM_CAP_ITEM_ID = 4_000_012;
     private static final long SAMPLE_INTERVAL_MS = Duration.ofSeconds(5).toMillis();
     private static final long OBJECTIVE_STALL_WARNING_MS = Duration.ofSeconds(30).toMillis();
 
@@ -85,10 +95,18 @@ public final class AgentVictoriaLiveValidationRunner {
 
         log.info("VICTORIA_LIVE_STARTED agent={} characterId={} career={} checkpoint={}",
                 agentName, resolved.id(), career, checkpointText);
-        monitor(entry);
+        monitor(entry, validationTarget(career));
     }
 
-    private static void monitor(AgentRuntimeEntry entry) throws Exception {
+    private static ValidationTarget validationTarget(String career) {
+        AgentCareerBuildBundle bundle = VictoriaFirstJobMvpTestService.resolveBundle(career);
+        String homePackId = AgentVictoriaLevel15CatalogRepository.defaultRepository()
+                .careerFor(bundle).catchUpPlan().homePackId();
+        return "henesys-pre15".equals(homePackId)
+                ? ValidationTarget.HENESYS_HOME_PACK : ValidationTarget.NAUTILUS_ROTATION_PACK;
+    }
+
+    private static void monitor(AgentRuntimeEntry entry, ValidationTarget target) throws Exception {
         long startedAtMs = System.currentTimeMillis();
         long lastObjectiveProgressAtMs = startedAtMs;
         long lastStallWarningAtMs = 0L;
@@ -115,11 +133,18 @@ public final class AgentVictoriaLiveValidationRunner {
                 log.info("VICTORIA_FOREST_HUNT_COMPLETE elapsedMs={} orange={} pigs={} ribbons={}",
                         nowMs - startedAtMs, sample.orangeKills(), sample.pigKills(), sample.pigRibbons());
             }
-            if (sample.nautilusPackComplete()) {
-                log.info("VICTORIA_NAUTILUS_PACK_COMPLETE elapsedMs={} level={} map={} plan={} stage={}",
+            if (sample.validationComplete(target)) {
+                log.info("VICTORIA_{}_COMPLETE elapsedMs={} level={} map={} plan={} stage={}",
+                        target.logLabel(),
                         nowMs - startedAtMs, agent.getLevel(), agent.getMapId(),
                         sample.planStatus(), sample.stage());
                 return;
+            }
+            if (target == ValidationTarget.HENESYS_HOME_PACK
+                    && sample.stage() != AgentCareerProgressionState.Stage.HOME_QUEST_PACK) {
+                throw new IllegalStateException(
+                        "Henesys validation advanced before all four quests completed: "
+                                + sample.summary(startedAtMs));
             }
             if (sample.planStatus() == AgentPlanExecutionStatus.BLOCKED
                     || sample.planStatus() == AgentPlanExecutionStatus.FAILED
@@ -160,6 +185,15 @@ public final class AgentVictoriaLiveValidationRunner {
                 questStatus(agent, PIG_QUEST_ID),
                 questStatus(agent, RIBBON_QUEST_ID),
                 questStatus(agent, SLIME_QUEST_ID),
+                agent.countItem(ORANGE_MUSHROOM_CAP_ITEM_ID),
+                agent.countItem(MUSHROOM_SPORE_ITEM_ID),
+                agent.countItem(GREEN_MUSHROOM_CAP_ITEM_ID),
+                questStatus(agent, BRUCE_QUEST_ID),
+                questStatus(agent, RINA_QUEST_ID),
+                questStatus(agent, CAMILA_QUEST_ID),
+                questStatus(agent, JAY_QUEST_ID),
+                questProgress(agent, CAMILA_QUEST_ID, CAMILA_PIG_MOB_ID),
+                questProgress(agent, JAY_QUEST_ID, JAY_RIBBON_PIG_MOB_ID),
                 navigation,
                 combat,
                 movementDiagnostics(entry));
@@ -172,8 +206,10 @@ public final class AgentVictoriaLiveValidationRunner {
                 + ":step=" + navEdge.launchStepX
                 : "none";
         Point waypoint = AgentNavigationDebugStateRuntime.navTargetPosition(entry);
+        Point goal = AgentMoveTargetStateRuntime.moveTarget(entry);
         return "edge=" + edge
                 + ",waypoint=" + (waypoint == null ? "none" : waypoint.x + ":" + waypoint.y)
+                + ",goal=" + (goal == null ? "none" : goal.x + ":" + goal.y)
                 + ",air=" + AgentMovementStateRuntime.inAir(entry)
                 + ",dir=" + AgentMovementStateRuntime.moveDirection(entry)
                 + ",physX=" + Math.round(AgentMovementPhysicsStateRuntime.physicsX(entry) * 10.0) / 10.0
@@ -215,6 +251,15 @@ public final class AgentVictoriaLiveValidationRunner {
                   int pigQuestStatus,
                   int ribbonQuestStatus,
                   int slimeQuestStatus,
+                  int orangeMushroomCaps,
+                  int mushroomSpores,
+                  int greenMushroomCaps,
+                  int bruceQuestStatus,
+                  int rinaQuestStatus,
+                  int camilaQuestStatus,
+                  int jayQuestStatus,
+                  int camilaPigKills,
+                  int jayRibbonPigKills,
                   AgentNavigationTraceSnapshot navigation,
                   AgentCombatTargetTraceSnapshot combat,
                   String movementDiagnostics) {
@@ -240,6 +285,16 @@ public final class AgentVictoriaLiveValidationRunner {
                     .stream().allMatch(status -> status == COMPLETED);
         }
 
+        boolean henesysPackComplete() {
+            return List.of(bruceQuestStatus, rinaQuestStatus, camilaQuestStatus, jayQuestStatus)
+                    .stream().allMatch(status -> status == COMPLETED);
+        }
+
+        boolean validationComplete(ValidationTarget target) {
+            return target == ValidationTarget.HENESYS_HOME_PACK
+                    ? henesysPackComplete() : nautilusPackComplete();
+        }
+
         int navigationStuckMs() {
             return navigation == null ? 0 : navigation.stuckMs();
         }
@@ -248,7 +303,11 @@ public final class AgentVictoriaLiveValidationRunner {
             return mapId + ":" + stage + ":" + questPackIndex + ":" + orangeKills + ":"
                     + pigKills + ":" + pigRibbons + ":" + slimeKills + ":"
                     + orangeQuestStatus + ":" + pigQuestStatus + ":"
-                    + ribbonQuestStatus + ":" + slimeQuestStatus;
+                    + ribbonQuestStatus + ":" + slimeQuestStatus + ":"
+                    + orangeMushroomCaps + ":" + mushroomSpores + ":" + greenMushroomCaps + ":"
+                    + bruceQuestStatus + ":" + rinaQuestStatus + ":"
+                    + camilaQuestStatus + ":" + jayQuestStatus + ":"
+                    + camilaPigKills + ":" + jayRibbonPigKills;
         }
 
         String summary(long startedAtMs) {
@@ -269,7 +328,12 @@ public final class AgentVictoriaLiveValidationRunner {
                     + " orange=" + orangeKills + " pigs=" + pigKills
                     + " ribbons=" + pigRibbons + " slimes=" + slimeKills
                     + " questStatus=" + orangeQuestStatus + "," + pigQuestStatus + ","
-                    + ribbonQuestStatus + "," + slimeQuestStatus + " " + nav + " " + target
+                    + ribbonQuestStatus + "," + slimeQuestStatus
+                    + " henesysItems=" + orangeMushroomCaps + "," + mushroomSpores + ","
+                    + greenMushroomCaps + " henesysStatus=" + bruceQuestStatus + ","
+                    + rinaQuestStatus + "," + camilaQuestStatus + "," + jayQuestStatus
+                    + " henesysKills=" + camilaPigKills + "," + jayRibbonPigKills
+                    + " " + nav + " " + target
                     + " movement={" + movementDiagnostics + "}";
         }
 
@@ -282,6 +346,21 @@ public final class AgentVictoriaLiveValidationRunner {
                 result.append('>').append(edge.toRegionId());
             }
             return result.append(']').toString();
+        }
+    }
+
+    private enum ValidationTarget {
+        HENESYS_HOME_PACK("HENESYS_PACK"),
+        NAUTILUS_ROTATION_PACK("NAUTILUS_PACK");
+
+        private final String logLabel;
+
+        ValidationTarget(String logLabel) {
+            this.logLabel = logLabel;
+        }
+
+        String logLabel() {
+            return logLabel;
         }
     }
 }

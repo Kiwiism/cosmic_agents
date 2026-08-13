@@ -37,6 +37,18 @@ class AgentVictoriaLiveValidationRunnerTest {
         assertFalse(sample.nautilusPackComplete());
     }
 
+    @Test
+    void henesysPackRequiresBruceRinaCamilaAndJayToBeTurnedIn() {
+        int completed = QuestStatus.Status.COMPLETED.getId();
+        var incomplete = sample(0, 0, 0, 0, 1, 1, 1, 1,
+                40, 10, 20, completed, completed, completed, 1);
+        var complete = sample(0, 0, 0, 0, 1, 1, 1, 1,
+                0, 0, 0, completed, completed, completed, completed);
+
+        assertFalse(incomplete.henesysPackComplete());
+        assertTrue(complete.henesysPackComplete());
+    }
+
     private static AgentVictoriaLiveValidationRunner.Sample sample(
             int orangeKills,
             int pigKills,
@@ -46,6 +58,27 @@ class AgentVictoriaLiveValidationRunnerTest {
             int pigStatus,
             int ribbonStatus,
             int slimeStatus) {
+        return sample(orangeKills, pigKills, ribbons, slimeKills,
+                orangeStatus, pigStatus, ribbonStatus, slimeStatus,
+                0, 0, 0, 0, 0, 0, 0);
+    }
+
+    private static AgentVictoriaLiveValidationRunner.Sample sample(
+            int orangeKills,
+            int pigKills,
+            int ribbons,
+            int slimeKills,
+            int orangeStatus,
+            int pigStatus,
+            int ribbonStatus,
+            int slimeStatus,
+            int orangeCaps,
+            int spores,
+            int greenCaps,
+            int bruceStatus,
+            int rinaStatus,
+            int camilaStatus,
+            int jayStatus) {
         return new AgentVictoriaLiveValidationRunner.Sample(
                 1_000L,
                 100030000,
@@ -61,6 +94,15 @@ class AgentVictoriaLiveValidationRunnerTest {
                 pigStatus,
                 ribbonStatus,
                 slimeStatus,
+                orangeCaps,
+                spores,
+                greenCaps,
+                bruceStatus,
+                rinaStatus,
+                camilaStatus,
+                jayStatus,
+                0,
+                0,
                 null,
                 null,
                 "test");

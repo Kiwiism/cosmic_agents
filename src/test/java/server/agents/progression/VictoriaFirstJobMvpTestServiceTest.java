@@ -50,6 +50,14 @@ class VictoriaFirstJobMvpTestServiceTest {
     }
 
     @Test
+    void resolvesCapturedPostHenesysAcceptResumeCheckpoint() {
+        assertEquals(VictoriaFirstJobMvpTestService.Checkpoint.CHECKPOINT_2_HENESYS_HUNT,
+                VictoriaFirstJobMvpTestService.resolveCheckpoint("checkpoint2-hunt"));
+        assertEquals(VictoriaFirstJobMvpTestService.Checkpoint.CHECKPOINT_2_HENESYS_HUNT,
+                VictoriaFirstJobMvpTestService.resolveCheckpoint("cp2-hunt"));
+    }
+
+    @Test
     void resolvesCapturedPostNautilusAcceptResumeCheckpoint() {
         assertEquals(VictoriaFirstJobMvpTestService.Checkpoint.CHECKPOINT_3_HUNT,
                 VictoriaFirstJobMvpTestService.resolveCheckpoint("checkpoint3-hunt"));

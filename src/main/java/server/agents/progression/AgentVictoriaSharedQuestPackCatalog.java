@@ -99,6 +99,7 @@ final class AgentVictoriaSharedQuestPackCatalog {
             int instanceMapIdMax,
             int itemId,
             int itemCount,
+            boolean skipReturnScrollPreparation,
             List<Integer> preferredMobIds,
             List<Integer> incidentalMobIds,
             List<Condition> conditions,

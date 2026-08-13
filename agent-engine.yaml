@@ -2728,10 +2728,10 @@ tuning:
     # Purpose: Lets melee Agents collect a nearby drop shortly after their kill instead of walking away and returning several seconds later.
     # Technical: Minimum target age for drops tied to a recent melee kill only; ranged batching, player inventory-drop protection, ownership, capacity and Character.pickupItem remain authoritative.
     server.agents.capabilities.looting.AgentLootCollectionPolicyConfig.MELEE_RECENT_KILL_TARGET_AGE_MS: '1000'
-    # Values: 2-6 kills. Recommended: 3. Higher values keep ranged Agents firing from position longer; lower values make them collect more often.
+    # Values: 2-6 kills. Recommended: 5. Higher values keep ranged Agents firing from position longer; lower values make them collect more often.
     # Purpose: Prevents bow, claw, gun, wand and staff users from walking forward after every kill.
     # Technical: Recent authoritative kill-event count that opens a ranged loot-collection batch without changing pickup eligibility, ownership, inventory capacity, or combat packets.
-    server.agents.capabilities.looting.AgentLootCollectionPolicyConfig.RANGED_BATCH_KILLS: '3'
+    server.agents.capabilities.looting.AgentLootCollectionPolicyConfig.RANGED_BATCH_KILLS: '5'
     # Values: 2500-8000 milliseconds. Recommended: 4500. Higher values favor uninterrupted attacks; lower values make ranged Agents retrieve drops sooner.
     # Purpose: Prevents small ranged batches from being postponed forever when the kill-count threshold is not reached.
     # Technical: Maximum age of the oldest tracked ranged kill before collection becomes eligible; the bounded timer only schedules collection and never grants or moves an item directly.

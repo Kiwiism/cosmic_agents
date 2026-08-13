@@ -29,6 +29,8 @@ class AgentPostKillLootPolicyTest {
         int threshold = AgentLootCollectionPolicyConfig.rangedBatchKills();
         long now = 10_000L;
 
+        assertEquals(5, threshold);
+
         assertFalse(AgentPostKillLootPolicy.shouldCollect(
                 WeaponType.BOW,
                 new AgentPostKillLootState.Snapshot(Set.of(1), threshold - 1, now - 100L),

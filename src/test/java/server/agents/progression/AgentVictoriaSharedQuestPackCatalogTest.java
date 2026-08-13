@@ -103,12 +103,43 @@ class AgentVictoriaSharedQuestPackCatalogTest {
     }
 
     @Test
+    void henesysPackAcceptsThreeAvailableQuestsBeforeItsAuthoredHunts() {
+        AgentVictoriaSharedQuestPackCatalog.Pack pack =
+                AgentVictoriaSharedQuestPackCatalog.require("henesys-pre15");
+
+        assertEquals(List.of(2088, 28269, 28268), pack.steps().stream()
+                .filter(step -> "QUEST".equals(step.type()) && !step.complete())
+                .limit(3)
+                .map(AgentVictoriaSharedQuestPackCatalog.Step::questId)
+                .toList());
+        assertFalse(pack.steps().stream().anyMatch(step -> "LEVEL_GRIND".equals(step.type())));
+
+        AgentVictoriaSharedQuestPackCatalog.Step spores = pack.steps().get(4);
+        assertEquals("HUNT", spores.type());
+        assertEquals(100010000, spores.mapId());
+        assertTrue(spores.skipReturnScrollPreparation());
+        assertEquals(List.of(120100), spores.preferredMobIds());
+        assertEquals(Set.of(100101, 130101, 1210100), Set.copyOf(spores.incidentalMobIds()));
+
+        AgentVictoriaSharedQuestPackCatalog.Step caps = pack.steps().get(5);
+        assertEquals(100030000, caps.mapId());
+        assertTrue(caps.skipReturnScrollPreparation());
+        assertEquals(List.of(1210102), caps.preferredMobIds());
+        assertEquals(Set.of(1210100, 1210101), Set.copyOf(caps.incidentalMobIds()));
+
+        int rinaStart = indexOf(pack, step -> step.questId() == 28267 && !step.complete());
+        int camilaComplete = indexOf(pack, step -> step.questId() == 28268 && step.complete());
+        assertEquals(camilaComplete + 1, rinaStart);
+    }
+
+    @Test
     void checkpoint2ExistsForEveryBundleAndRecordsValidatedCaptures() {
         Set<String> bundleIds = AgentCareerBuildBundleRepository.defaultRepository()
                 .all().stream()
                 .map(AgentCareerBuildBundle::bundleId)
                 .collect(Collectors.toSet());
         Set<String> capturedBundleIds = Set.of(
+                "bowman-standard-v1",
                 "magician-standard-v1",
                 "thief-dagger-standard-v1");
 
@@ -142,6 +173,22 @@ class AgentVictoriaSharedQuestPackCatalogTest {
     }
 
     @Test
+    void bowmanCheckpointCapturesTheLevelThirteenSnapshotAtHenesys() {
+        VictoriaCheckpointBaseline.Snapshot snapshot =
+                VictoriaCheckpointBaseline.require("bowman-standard-v1");
+
+        assertEquals("KiwiAgent", snapshot.sourceCharacterName());
+        assertEquals(100000000, snapshot.character().mapId());
+        assertEquals(13, snapshot.character().level());
+        assertEquals(296, snapshot.character().exp());
+        assertEquals(73, snapshot.character().dex());
+        assertEquals(1502, snapshot.character().mesos());
+        assertTrue(snapshot.resetQuestIds().containsAll(Set.of(2088, 28268, 28269)));
+        assertTrue(snapshot.skills().stream().anyMatch(skill ->
+                skill.skillId() == 3000002 && skill.level() == 6));
+    }
+
+    @Test
     void thiefDaggerCheckpointKeepsTheGreenBeginnerTopEquipped() {
         VictoriaCheckpointBaseline.Snapshot snapshot =
                 VictoriaCheckpointBaseline.require("thief-dagger-standard-v1");
@@ -167,6 +214,24 @@ class AgentVictoriaSharedQuestPackCatalogTest {
         assertEquals(28271, pack.steps().get(checkpoint.questPackIndex()).questId());
         assertTrue(checkpoint.activeQuests().stream().anyMatch(
                 quest -> quest.questId() == 28270 && quest.npcId() == 1052103));
+    }
+
+    @Test
+    void capturedBowmanHuntCheckpointStartsAfterAllThreeHenesysAccepts() {
+        VictoriaResumeCheckpointBaseline.ResumeCheckpoint checkpoint =
+                VictoriaResumeCheckpointBaseline.require(
+                        "bowman-standard-v1", "checkpoint2-henesys-hunt");
+        AgentVictoriaSharedQuestPackCatalog.Pack pack =
+                AgentVictoriaSharedQuestPackCatalog.require(checkpoint.questPackId());
+
+        assertEquals("CAPTURED", checkpoint.snapshot().provenance());
+        assertEquals(4, checkpoint.questPackIndex());
+        assertEquals(100010000, pack.steps().get(checkpoint.questPackIndex()).mapId());
+        assertEquals(100000000, checkpoint.snapshot().character().mapId());
+        assertEquals(5870, checkpoint.position().x());
+        assertEquals(Set.of(2088, 28268, 28269), checkpoint.activeQuests().stream()
+                .map(VictoriaResumeCheckpointBaseline.ActiveQuest::questId)
+                .collect(Collectors.toSet()));
     }
 
     @Test

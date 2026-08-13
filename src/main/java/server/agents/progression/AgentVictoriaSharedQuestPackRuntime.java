@@ -215,12 +215,16 @@ final class AgentVictoriaSharedQuestPackRuntime {
                         .orElse(null);
         int huntMapId = selection == null ? step.mapId() : selection.map().mapId();
         if (agent.getMapId() != huntMapId) {
-            int returnPreparationMapId = returnPreparationMapId(pack, state.questPackIndex());
-            if (AgentQuestReturnScrollPolicy.prepare(
-                    entry, agent, "shared:" + packId + ":" + state.questPackIndex(),
-                    returnPreparationMapId, pack.homeTownMapId(), nowMs, gateway)
-                    == AgentQuestReturnScrollPolicy.Preparation.WAITING) {
-                return Result.RUNNING;
+            if (step.skipReturnScrollPreparation()) {
+                AgentQuestReturnScrollPolicy.clear(entry);
+            } else {
+                int returnPreparationMapId = returnPreparationMapId(pack, state.questPackIndex());
+                if (AgentQuestReturnScrollPolicy.prepare(
+                        entry, agent, "shared:" + packId + ":" + state.questPackIndex(),
+                        returnPreparationMapId, pack.homeTownMapId(), nowMs, gateway)
+                        == AgentQuestReturnScrollPolicy.Preparation.WAITING) {
+                    return Result.RUNNING;
+                }
             }
             if (AgentVictoriaRouteRuntime.travel(entry, agent, huntMapId, gateway)) {
                 return Result.RUNNING;

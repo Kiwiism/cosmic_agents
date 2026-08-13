@@ -1,6 +1,77 @@
 {
   "schemaVersion": 1,
   "checkpoints": {
+    "bowman-standard-v1:checkpoint2-henesys-hunt": {
+      "questPackId": "henesys-pre15",
+      "questPackIndex": 4,
+      "position": { "x": 5870, "y": 455 },
+      "snapshot": {
+        "provenance": "CAPTURED",
+        "sourceCharacterName": "KiwiAgent",
+        "recordedAt": "2026-08-13T15:21:20+08:00",
+        "note": "Captured level-13 Bowman state with Bruce, Jay and Camila started. Reset placement is beside the east Henesys exit and immediately begins the revised mushroom-spore hunt.",
+        "character": {
+          "mapId": 100000000, "level": 13, "exp": 296, "jobId": 300,
+          "str": 4, "dex": 73, "intelligence": 4, "luk": 4,
+          "hp": 354, "mp": 118, "maxHp": 354, "maxMp": 118,
+          "mesos": 1502, "remainingAp": 0,
+          "remainingSp": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        },
+        "items": [
+          { "itemId": 1452051, "inventoryType": "EQUIPPED", "position": -11, "quantity": 1 },
+          { "itemId": 1072005, "inventoryType": "EQUIPPED", "position": -7, "quantity": 1 },
+          { "itemId": 1061008, "inventoryType": "EQUIPPED", "position": -6, "quantity": 1 },
+          { "itemId": 1041010, "inventoryType": "EQUIPPED", "position": -5, "quantity": 1 },
+          { "itemId": 1002068, "inventoryType": "EQUIPPED", "position": -1, "quantity": 1 },
+          { "itemId": 1332005, "inventoryType": "EQUIP", "position": 1, "quantity": 1 },
+          { "itemId": 1402018, "inventoryType": "EQUIP", "position": 2, "quantity": 1 },
+          { "itemId": 2000014, "inventoryType": "USE", "position": 1, "quantity": 81 },
+          { "itemId": 2000013, "inventoryType": "USE", "position": 2, "quantity": 74 },
+          { "itemId": 2060000, "inventoryType": "USE", "position": 3, "quantity": 1990 },
+          { "itemId": 2030000, "inventoryType": "USE", "position": 4, "quantity": 10 },
+          { "itemId": 2000003, "inventoryType": "USE", "position": 5, "quantity": 100 },
+          { "itemId": 2061000, "inventoryType": "USE", "position": 6, "quantity": 35 },
+          { "itemId": 2000001, "inventoryType": "USE", "position": 7, "quantity": 29 },
+          { "itemId": 2040600, "inventoryType": "USE", "position": 8, "quantity": 1 },
+          { "itemId": 2060000, "inventoryType": "USE", "position": 9, "quantity": 2000 },
+          { "itemId": 2000002, "inventoryType": "USE", "position": 10, "quantity": 80 },
+          { "itemId": 2000003, "inventoryType": "USE", "position": 11, "quantity": 60 },
+          { "itemId": 2060000, "inventoryType": "USE", "position": 12, "quantity": 1005 },
+          { "itemId": 4000010, "inventoryType": "ETC", "position": 1, "quantity": 82 },
+          { "itemId": 4000004, "inventoryType": "ETC", "position": 2, "quantity": 65 },
+          { "itemId": 4010005, "inventoryType": "ETC", "position": 3, "quantity": 1 },
+          { "itemId": 4003004, "inventoryType": "ETC", "position": 4, "quantity": 2 },
+          { "itemId": 4000002, "inventoryType": "ETC", "position": 5, "quantity": 11 },
+          { "itemId": 4030012, "inventoryType": "ETC", "position": 6, "quantity": 5 },
+          { "itemId": 4001343, "inventoryType": "ETC", "position": 7, "quantity": 1 },
+          { "itemId": 4000021, "inventoryType": "ETC", "position": 8, "quantity": 2 }
+        ],
+        "skills": [
+          { "skillId": 3000000, "level": 3, "masterLevel": 0 },
+          { "skillId": 3000002, "level": 6, "masterLevel": 0 },
+          { "skillId": 3001004, "level": 1, "masterLevel": 0 }
+        ],
+        "completedQuestIds": [1046, 2078, 2081, 2136, 2137, 2138, 2139],
+        "resetQuestIds": [2082, 2088, 2089, 2090, 2091, 28267, 28268, 28269, 28270, 28271, 28272, 28273, 28274, 28276, 28277, 28278, 28279, 28280, 28281]
+      },
+      "activeQuests": [
+        {
+          "questId": 2088,
+          "npcId": 1012111,
+          "progress": {}
+        },
+        {
+          "questId": 28269,
+          "npcId": 1012109,
+          "progress": { "1210101": "000" }
+        },
+        {
+          "questId": 28268,
+          "npcId": 1012108,
+          "progress": { "1210100": "000" }
+        }
+      ]
+    },
     "thief-dagger-standard-v1:checkpoint2-nella": {
       "questPackId": "kerning-pre15",
       "questPackIndex": 12,

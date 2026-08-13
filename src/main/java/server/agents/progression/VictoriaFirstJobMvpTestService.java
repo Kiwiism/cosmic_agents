@@ -45,6 +45,7 @@ public final class VictoriaFirstJobMvpTestService {
     public enum Checkpoint {
         CHECKPOINT_1,
         CHECKPOINT_2,
+        CHECKPOINT_2_HENESYS_HUNT,
         CHECKPOINT_2_NELLA,
         CHECKPOINT_3,
         CHECKPOINT_3_HUNT
@@ -102,6 +103,8 @@ public final class VictoriaFirstJobMvpTestService {
         AgentCareerProgressionState.Stage initialStage;
         VictoriaResumeCheckpointBaseline.ResumeCheckpoint resumeCheckpoint = switch (
                 requestedCheckpoint) {
+            case CHECKPOINT_2_HENESYS_HUNT -> VictoriaResumeCheckpointBaseline.require(
+                    bundle.bundleId(), "checkpoint2-henesys-hunt");
             case CHECKPOINT_2_NELLA -> VictoriaResumeCheckpointBaseline.require(
                     bundle.bundleId(), "checkpoint2-nella");
             case CHECKPOINT_3 -> VictoriaResumeCheckpointBaseline.require(
@@ -152,6 +155,8 @@ public final class VictoriaFirstJobMvpTestService {
                 AgentCareerProgressionState.RunMode.LEVEL15_WITH_INITIAL_SHOP,
                 requestedCheckpoint == Checkpoint.CHECKPOINT_1
                         ? startVariant.variantId()
+                        : requestedCheckpoint == Checkpoint.CHECKPOINT_2_HENESYS_HUNT
+                        ? "checkpoint2-henesys-hunt"
                         : requestedCheckpoint == Checkpoint.CHECKPOINT_2_NELLA
                         ? "checkpoint2-nella"
                         : requestedCheckpoint == Checkpoint.CHECKPOINT_3
@@ -180,6 +185,9 @@ public final class VictoriaFirstJobMvpTestService {
         return switch (alias) {
             case "", "checkpoint1", "checkpoint-1", "cp1" -> Checkpoint.CHECKPOINT_1;
             case "checkpoint2", "checkpoint-2", "cp2" -> Checkpoint.CHECKPOINT_2;
+            case "checkpoint2-henesys-hunt", "checkpoint-2-henesys-hunt",
+                    "checkpoint2-hunt", "checkpoint-2-hunt", "cp2-hunt" ->
+                    Checkpoint.CHECKPOINT_2_HENESYS_HUNT;
             case "checkpoint2-nella", "checkpoint-2-nella", "cp2-nella" ->
                     Checkpoint.CHECKPOINT_2_NELLA;
             case "checkpoint3", "checkpoint-3", "cp3" -> Checkpoint.CHECKPOINT_3;

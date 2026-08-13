@@ -185,7 +185,7 @@ The five feature switches are independent. With local leasing disabled, map-wide
 |---|---:|---|
 | `MELEE_IMMEDIATE_RADIUS` | 180 | Maximum local radius for immediate melee post-kill loot |
 | `MELEE_RECENT_KILL_TARGET_AGE_MS` | 1000 | Time a melee drop settles before it can be targeted/picked up |
-| `RANGED_BATCH_KILLS` | 3 | Ranged kills accumulated before returning to loot |
+| `RANGED_BATCH_KILLS` | 5 | Ranged kills accumulated before returning to loot |
 | `RANGED_BATCH_MAX_WAIT_MS` | 4500 | Maximum ranged batching time |
 | `MAX_TRACKED_KILLS` | 8 | Bound on recent killed map objects retained per Agent |
 | `TRACKED_KILL_LIFETIME_MS` | 20000 | Lifetime of recent kill evidence |

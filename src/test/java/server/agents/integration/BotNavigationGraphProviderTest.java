@@ -129,6 +129,21 @@ class AgentNavigationGraphServiceTest {
     }
 
     @Test
+    void shouldRouteHenesysEastPortalWithoutUsingTownTeleport() {
+        Point target = new Point(5907, 455);
+        Point lowerStreet = new Point(5700, 455);
+        int targetRegionId = henesysGraph().findRegionId(henesys(), target);
+        assertEquals(targetRegionId, henesysGraph().findRegionId(henesys(), lowerStreet));
+        assertTrue(findPath(henesysGraph(), henesys(), lowerStreet, target).isEmpty());
+
+        List<AgentNavigationGraph.Edge> path = findPath(
+                henesysGraph(), henesys(), new Point(5036, -116), target);
+        assertFalse(path.isEmpty());
+        assertEquals(targetRegionId, path.getLast().toRegionId);
+        assertTrue(path.stream().noneMatch(edge -> edge.type == AgentNavigationGraph.EdgeType.PORTAL));
+    }
+
+    @Test
     void shouldGenerateDirectHenesysJumpEdgeFromBelowToFoothold315() {
         Point start = new Point(1080, 334);
         Point target = new Point(1275, 275);
