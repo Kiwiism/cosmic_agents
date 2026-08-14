@@ -65,6 +65,6 @@ a completed price or imputing a meso price to barter.
   as agents, do not receive agent-only tax metadata, and are absent from the default scenario.
 - Quest demand currently requires a quest already accepted in live Cosmic state. Autonomous logical
   quest acceptance and exact turn-in rewards are not inferred or generated.
-- Scroll utility is exact enough to create an observed project and reserve one purchased scroll, but
-  the economy runtime does not yet apply that scroll. This cap prevents fake repeat buying while the
-  reusable deterministic Cosmic scroll transaction is unfinished.
+- Owned scroll projects use the same authoritative Cosmic mutation as player packets. The transaction
+  consumes the real scroll, applies success/failure/curse with a named deterministic RNG stream, and
+  records the input equipment lot and transformed or destroyed result in the economy outbox.

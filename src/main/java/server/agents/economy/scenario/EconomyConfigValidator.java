@@ -98,6 +98,10 @@ public final class EconomyConfigValidator {
         require(config.chairs.enabled && config.chairs.requireOwnedChair
                         && config.chairs.allowListing && config.chairs.allowDirectTrade,
                 "chair activity and trade must preserve real ownership and configured market access");
+        require(config.scrolling.enabled && config.scrolling.requireOwnedEquipment
+                        && config.scrolling.requireRemainingSlots
+                        && config.scrolling.preserveRealSuccessAndDestructionRates,
+                "scroll projects must use owned equipment, real slots, and Cosmic outcome rates");
         require("POSTGRESQL".equals(config.persistence.provider),
                 "persistence.provider must be POSTGRESQL");
         requireText(config.persistence.database, "persistence.database");

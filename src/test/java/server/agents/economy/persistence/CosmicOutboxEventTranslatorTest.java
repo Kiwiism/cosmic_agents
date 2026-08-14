@@ -95,6 +95,33 @@ class CosmicOutboxEventTranslatorTest {
                 && p.asset().equals(AssetKey.item(4000000)) && p.quantity() == -3));
     }
 
+    @Test
+    void scrollApplicationConsumesOwnedScrollAndTransformsExactEquipmentLot() {
+        CosmicOutboxEventTranslator translator = translator((run, account, item, fingerprint, quantity) ->
+                List.of(new CosmicOutboxEventTranslator.LotSlice(fingerprint + ":lot", quantity)));
+        var delta = participant(10, 1_000, 1_000, List.of(
+                item(2041000, "USE", "scroll-stack", 1, 0),
+                item(1102053, "EQUIP", "cape-before", 1, 0),
+                item(1102053, "EQUIP", "cape-after", 0, 1)));
+        CosmicOutboxRecord receipt = receipt("SCROLL_APPLY", null,
+                "scroll=2041000 equipment=1102053", payloadWithEvidence(
+                        Map.of("scrollApplication", Map.of("scrollItemId", 2041000,
+                                "equipmentItemId", 1102053, "outcome", "SUCCESS",
+                                "whiteScroll", false, "rngStream", "agent.agent-10.scroll")), delta));
+
+        CosmicOutboxEventTranslator.IngestionPlan plan = translator.translate(receipt);
+
+        assertEquals(EconomicEventKind.SCROLL_APPLIED, plan.event().kind());
+        assertEquals(1, plan.createdLots().size());
+        assertEquals("TRANSFORMATION", plan.createdLots().getFirst().sourceKind());
+        assertEquals("cape-after", plan.createdLots().getFirst().attributes().get("fingerprint"));
+        assertEquals(0, balance(plan.event(), AssetKey.item(2041000)));
+        assertEquals(0, balance(plan.event(), AssetKey.item(1102053)));
+        assertTrue(plan.event().postings().stream().anyMatch(posting ->
+                posting.account().equals(LedgerAccount.sink("SCROLL_CONSUMPTION"))
+                        && posting.quantity() == 1));
+    }
+
     private static CosmicOutboxEventTranslator translator(CosmicOutboxEventTranslator.LotResolver lots) {
         return new CosmicOutboxEventTranslator((run, character, agent) -> {
             String id = agent ? "agent-" + character : "character-" + character;

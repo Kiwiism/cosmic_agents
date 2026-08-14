@@ -10,7 +10,7 @@ This ledger follows the attached master goal without redefining completion aroun
 | 3 | Scenario, population, logical clock, RNG, checkpoints | Baseline code complete for fixed growth and max-throughput: named streams, monotonic fast-forward, resume state |
 | 4 | Remote real-NPC commerce and full disposition | Baseline code complete: exact buy/sell/recharge with source NPC/map evidence |
 | 5 | Rule-exact offscreen production and calibration | Baseline complete: WZ drops, operational live-session calibration capture, and exact resource runway; death/downtime remains fail-closed |
-| 6 | Needs, quests, complements, valuation, beliefs | Partial: resource reserves and accepted live quests are exact; autonomous quest acceptance/turn-in and economy-owned scroll application remain pending |
+| 6 | Needs, quests, complements, valuation, beliefs | Partial: resource reserves, accepted live quests, and owned scroll projects are exact; autonomous quest acceptance/turn-in remains pending |
 | 7 | Physical FM seller lifecycle | Baseline code complete: physical room, spot, escrow, one-stall, evidence-driven repricing and closure |
 | 8 | Physical FM buyer lifecycle | Baseline code complete: walking, private observations, exact listing identity, real purchases |
 | 9 | Public chat and direct negotiation | Baseline code complete: public transcript, meso and reciprocal item barter, real Trade settlement |
@@ -33,9 +33,6 @@ item with current code, tests, migrations, configuration, and runtime evidence.
 - Run the real Cosmic quest start/turn-in path under logical offscreen progression so level-driven
   quest waves consume requirements and create exact rewards. Current demand intentionally recognizes
   only quests already accepted in live character state.
-- Apply owned scrolls through a reusable Cosmic scrolling transaction with deterministic RNG and
-  outbox evidence. Until then, each observed scroll project reserves at most one owned scroll, which
-  prevents an artificial accumulation loop but does not model scroll consumption.
 - Implement exact death/downtime consequences before enabling offscreen death. The validator rejects
   that setting rather than estimating penalties.
 - Complete a 50-to-200 live-agent soak, restart/recovery exercise, and paired multi-seed scenarios.

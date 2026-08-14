@@ -32,6 +32,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
     private final ResourceProcurement procurement;
     private final AmbientBehavior ambient;
     private final NegotiationBehavior negotiation;
+    private final ScrollBehavior scrolling;
     private final ObservedPurchasePolicy purchasePolicy = new ObservedPurchasePolicy();
     private final RoomVisitPlanner roomPlanner = new RoomVisitPlanner();
     private final Duration actionPoll;
@@ -53,6 +54,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
         this(runId, configHash, catalogVersion, config, random, physical, needs,
                 (agent, profile, observations, base, at) -> base, journal, sellerPlans, seller,
                 procurement, AmbientBehavior.disabled(), NegotiationBehavior.disabled(),
+                ScrollBehavior.disabled(),
                 actionPoll, postTripDelay, maximumStallDuration, npcServiceDelay);
     }
 
@@ -66,6 +68,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
                                         ResourceProcurement procurement,
                                         AmbientBehavior ambient,
                                         NegotiationBehavior negotiation,
+                                        ScrollBehavior scrolling,
                                         Duration actionPoll, Duration postTripDelay,
                                         Duration maximumStallDuration, Duration npcServiceDelay) {
         this.runId = Objects.requireNonNull(runId); this.configHash = Objects.requireNonNull(configHash);
@@ -77,6 +80,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
         this.procurement = Objects.requireNonNull(procurement);
         this.ambient = Objects.requireNonNull(ambient);
         this.negotiation = Objects.requireNonNull(negotiation);
+        this.scrolling = Objects.requireNonNull(scrolling);
         if (actionPoll.isNegative() || actionPoll.isZero() || postTripDelay.isNegative()
                 || maximumStallDuration.isNegative() || maximumStallDuration.isZero())
             throw new IllegalArgumentException("market timing must be non-negative and polling positive");
@@ -117,6 +121,16 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
             if (step.status() == PhysicalMarketTrip.Status.COMPLETE) {
                 List<AgentNeed> currentNeeds = observedNeeds.augment(agent, profile,
                         state.knowledge.snapshot(), needs.read(agent, profile, logicalAt), logicalAt);
+                ScrollBehavior.Result scrolled = scrolling.applyNext(agent, profile, currentNeeds, logicalAt);
+                if (scrolled.attempted()) {
+                    appendDecision(profile, logicalAt, "SCROLL_PROJECT",
+                            Map.of("success", scrolled.success(), "outcome", scrolled.outcome(),
+                                    "scrollItemId", scrolled.scrollItemId(),
+                                    "equipmentItemId", scrolled.equipmentItemId()),
+                            List.of(), scrolled.evidence(),
+                            Map.of("reason", "SCROLL_UPGRADE"), Map.of());
+                    return revisit(logicalAt, !scrolled.success());
+                }
                 NegotiationBehavior.Result negotiated = negotiation.attempt(agent, profile,
                         currentNeeds, state.knowledge.snapshot(), logicalAt);
                 if (negotiated.attempted()) appendDecision(profile, logicalAt, "PUBLIC_NEGOTIATION",
@@ -412,6 +426,16 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
                       int itemId, long offeredMesos, Map<String, Object> evidence) {
             public Result { evidence = evidence == null ? Map.of() : Map.copyOf(evidence); }
             public static Result none() { return new Result(false, false, "", "NONE", 0, 0, Map.of()); }
+        }
+    }
+    @FunctionalInterface public interface ScrollBehavior {
+        Result applyNext(Character agent, EconomyAgentProfile profile,
+                         List<AgentNeed> needs, Instant logicalAt);
+        static ScrollBehavior disabled() { return (agent, profile, needs, at) -> Result.none(); }
+        record Result(boolean attempted, boolean success, int scrollItemId,
+                      int equipmentItemId, String outcome, Map<String, Object> evidence) {
+            public Result { evidence = evidence == null ? Map.of() : Map.copyOf(evidence); }
+            public static Result none() { return new Result(false, false, 0, 0, "NONE", Map.of()); }
         }
     }
     private EconomyWorldPort.MarketDirective revisit(Instant at, boolean externalPending) {

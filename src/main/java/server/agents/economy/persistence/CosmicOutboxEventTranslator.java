@@ -55,6 +55,7 @@ public final class CosmicOutboxEventTranslator {
             case "PLAYER_TRADE" -> directTrade(builder, primary, primaryDelta,
                     requireSecondary(secondary), requireSecondary(secondaryDelta));
             case "OFFSCREEN_FARM_SETTLEMENT" -> farm(builder, primary, primaryDelta);
+            case "SCROLL_APPLY" -> scrollApply(builder, primary, primaryDelta);
             default -> throw new EvidenceMismatchException("unsupported operation " + receipt.operationKind());
         }
         return builder.build();
@@ -217,6 +218,48 @@ public final class CosmicOutboxEventTranslator {
         builder.kind = EconomicEventKind.FARM_RESULT;
     }
 
+    @SuppressWarnings("unchecked")
+    private void scrollApply(Builder builder, Participant agent, ParticipantDelta delta) {
+        require(delta.mesoDelta() == 0, "scroll application changed mesos");
+        Object raw = builder.evidence.get("scrollApplication");
+        require(raw instanceof Map<?, ?>, "scroll application evidence is missing");
+        Map<String, Object> application = (Map<String, Object>) raw;
+        int scrollId = number(application, "scrollItemId");
+        int equipmentId = number(application, "equipmentItemId");
+        String outcome = Objects.toString(application.get("outcome"), "");
+        require(Set.of("SUCCESS", "FAIL", "CURSE").contains(outcome), "invalid scroll outcome");
+        long consumedScrolls = 0;
+        for (ItemDelta item : negative(delta.itemDeltas())) {
+            long quantity = -(long) item.quantityDelta();
+            if (item.itemId() == scrollId) {
+                consumedScrolls += quantity;
+                builder.withdrawAndTransfer(agent.account(), LedgerAccount.sink("SCROLL_CONSUMPTION"),
+                        item, quantity);
+            } else {
+                require(item.itemId() == equipmentId, "scroll removed an unrelated item");
+                builder.withdrawAndTransfer(agent.account(), LedgerAccount.sink("SCROLL_INPUT"),
+                        item, quantity);
+            }
+        }
+        require(consumedScrolls == 1, "scroll application must consume exactly one project scroll");
+        for (ItemDelta item : positive(delta.itemDeltas())) {
+            require(item.itemId() == equipmentId && "EQUIP".equals(item.inventoryType()),
+                    "scroll introduced an unrelated item");
+            for (CreatedLot lot : builder.createLots("TRANSFORMATION",
+                    "SCROLL:" + scrollId + ':' + outcome, item))
+                builder.transfer(LedgerAccount.source("SCROLL_TRANSFORMATION:" + scrollId),
+                        agent.account(), AssetKey.item(equipmentId), lot.quantity(), lot.lotId());
+        }
+        builder.kind = EconomicEventKind.SCROLL_APPLIED;
+    }
+
+    private static int number(Map<String, Object> values, String key) {
+        Object value = values.get(key);
+        if (!(value instanceof Number number))
+            throw new EvidenceMismatchException("scroll evidence missing numeric " + key);
+        return number.intValue();
+    }
+
     private static List<ItemDelta> positive(List<ItemDelta> values) {
         return values.stream().filter(v -> v.quantityDelta() > 0).toList();
     }
@@ -287,6 +330,9 @@ public final class CosmicOutboxEventTranslator {
             catch (NumberFormatException failure) { throw new EvidenceMismatchException("invalid summary " + key, failure); }
         }
         private List<CreatedLot> createLots(String source, ItemDelta item) {
+            return createLots("NPC", source, item);
+        }
+        private List<CreatedLot> createLots(String sourceKind, String source, ItemDelta item) {
             List<CreatedLot> result = new ArrayList<>();
             if ("EQUIP".equals(item.inventoryType())) {
                 for (int i = 0; i < item.quantityDelta(); i++) {
@@ -295,14 +341,14 @@ public final class CosmicOutboxEventTranslator {
                             item.attributes(), actors.getFirst().id(), "INVENTORY");
                     Map<String, Object> attributes = new LinkedHashMap<>(item.attributes());
                     attributes.put("fingerprint", item.fingerprint());
-                    result.add(new CreatedLot(id, item.itemId(), 1, "NPC", source,
+                    result.add(new CreatedLot(id, item.itemId(), 1, sourceKind, source,
                             attributes, List.of(instance)));
                 }
             } else {
                 String id = receipt.outboxId() + ":" + item.itemId() + ":" + item.fingerprint();
                 Map<String, Object> attributes = new LinkedHashMap<>(item.attributes());
                 attributes.put("fingerprint", item.fingerprint());
-                result.add(new CreatedLot(id, item.itemId(), item.quantityDelta(), "NPC", source,
+                result.add(new CreatedLot(id, item.itemId(), item.quantityDelta(), sourceKind, source,
                         attributes, List.of()));
             }
             createdLots.addAll(result);

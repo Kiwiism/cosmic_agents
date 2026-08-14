@@ -65,7 +65,8 @@ public final class EconomyRuntimeFactory {
                 new CosmicObservedOfferNeedAugmenter(config.demand, config.scrolling, config.chairs),
                 evidenceJournal, sellerPlans, seller, new CosmicNpcResourceProcurement(needReader, npc),
                 config.ambient.enabled ? ambient : AutonomousFreeMarketBehavior.AmbientBehavior.disabled(),
-                negotiation, duration(config.market.actionPoll), duration(config.market.postTripDelay),
+                negotiation, new CosmicScrollProjectService(runId, marketRandom),
+                duration(config.market.actionPoll), duration(config.market.postTripDelay),
                 duration(config.market.maximumListingDuration), duration(config.npcCommerce.logicalServiceDelay));
         CalibratedCosmicActivityPlanner activity = new CalibratedCosmicActivityPlanner(config.activity,
                 new JdbcActivityCalibrationRepository(economyDataSource),

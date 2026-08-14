@@ -102,6 +102,18 @@ class EconomyConfigLoaderTest {
         assertTrue(failure.getMessage().contains("npcCommerce.accessMode"));
     }
 
+    @Test
+    void rejectsSyntheticScrollOutcomeRates() {
+        String source = javaResource("economy-engine.yaml")
+                .replace("preserveRealSuccessAndDestructionRates: true",
+                        "preserveRealSuccessAndDestructionRates: false");
+
+        EconomyConfigException failure = assertThrows(
+                EconomyConfigException.class, () -> loader.load(source));
+
+        assertTrue(failure.getMessage().contains("Cosmic outcome rates"));
+    }
+
     private static String javaResource(String path) {
         try {
             return java.nio.file.Files.readString(Path.of(path));

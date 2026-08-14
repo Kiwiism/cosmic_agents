@@ -648,7 +648,7 @@ public class ItemInformationProvider {
 
     public static boolean rollSuccessChance(double propPercent) {
         double actualChance = testYourLuck(propPercent / 100.0, YamlConfig.config.server.SCROLL_CHANCE_ROLLS);
-        return Math.random() >= actualChance;
+        return Randomizer.nextDouble() >= actualChance;
     }
 
     private static short getMaximumShortMaxIfOverflow(int value1, int value2) {

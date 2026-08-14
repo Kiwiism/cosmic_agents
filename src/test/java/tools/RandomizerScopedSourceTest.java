@@ -17,4 +17,10 @@ class RandomizerScopedSourceTest {
         assertEquals(first, replay);
         assertDoesNotThrow(Randomizer::nextLong);
     }
+
+    @Test
+    void drivesFloatingPointProbabilityRollsFromTheScopedStream() {
+        assertEquals(0.0, Randomizer.withLongSource(() -> 0L, Randomizer::nextDouble));
+        assertTrue(Randomizer.withLongSource(() -> -1L, Randomizer::nextDouble) > 0.999);
+    }
 }

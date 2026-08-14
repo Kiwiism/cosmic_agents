@@ -253,13 +253,15 @@ public final class JdbcCosmicEconomicEventIngestor {
     }
 
     private static void updateInstances(Connection connection, EconomicEvent event) throws SQLException {
-        String sql = "UPDATE item_instance SET current_owner_id = ?, current_location = ? "
+        String sql = "UPDATE item_instance SET current_owner_id = ?, current_location = ?, "
+                + "destroyed_event_id = CASE WHEN ? = 'SINK' THEN ? ELSE destroyed_event_id END "
                 + "WHERE run_id = ? AND lot_id = ?";
         try (PreparedStatement s = connection.prepareStatement(sql)) {
             for (LedgerPosting p : event.postings()) {
                 if (p.quantity() <= 0 || p.asset().type() != AssetType.ITEM || p.lotId().isBlank()) continue;
                 s.setString(1, p.account().ownerId()); s.setString(2, p.account().type());
-                s.setObject(3, event.runId()); s.setString(4, p.lotId()); s.addBatch();
+                s.setString(3, p.account().type()); s.setObject(4, event.eventId());
+                s.setObject(5, event.runId()); s.setString(6, p.lotId()); s.addBatch();
             }
             s.executeBatch();
         }
