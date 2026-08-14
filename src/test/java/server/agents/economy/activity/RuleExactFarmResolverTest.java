@@ -63,6 +63,25 @@ class RuleExactFarmResolverTest {
         assertTrue(outcome.itemDrops().stream().allMatch(drop -> drop.quantity() == 1));
     }
 
+    @Test
+    void calibratedDeathEndsWorkAndAddsConfiguredRespawnDowntime() {
+        FarmSessionPlan plan = new FarmSessionPlan("fatal-farm", "observed:death", "agent-1",
+                100000001, Instant.EPOCH, Duration.ofHours(2), 1, 1d, Duration.ofSeconds(10),
+                List.of(new FarmSessionPlan.MonsterWork(100100, 120, 3)), Set.of(),
+                List.of(new FarmSessionPlan.ItemConsumption(2000000, 120, "pot-lot")));
+
+        FarmSessionOutcome outcome = new RuleExactFarmResolver(new StubCatalog(List.of()))
+                .resolve(plan, new NamedRandomStreams(17));
+
+        assertTrue(outcome.death().died());
+        assertEquals(10_000, outcome.death().downtimeMillis());
+        assertEquals(outcome.death().occurredAt().plusSeconds(10), outcome.completedAt());
+        assertTrue(outcome.killCounts().get(100100) < 120);
+        assertTrue(outcome.consumedItems().isEmpty()
+                || outcome.consumedItems().getFirst().quantity() < 120);
+        assertEquals(outcome.killCounts().get(100100) * 3L, outcome.experience());
+    }
+
     private static class StubCatalog implements EconomyCatalog {
         private final List<MonsterDropFact> drops;
         private StubCatalog(List<MonsterDropFact> drops) { this.drops = drops; }

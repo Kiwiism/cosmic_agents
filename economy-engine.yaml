@@ -98,7 +98,10 @@ activity:
   consumeMpPotions: true
   consumeAmmunition: true
   enforceInventoryCapacity: true
-  allowDeath: false
+  allowDeath: true
+  deathOccurrenceSource: LIVE_ACTIVITY_CALIBRATION
+  deathPenaltySource: COSMIC_V83_RULES
+  deathDowntimeSource: AGENT_RESPAWN_CONFIGURATION
 
 market:
   venue: PLAYER_SHOP

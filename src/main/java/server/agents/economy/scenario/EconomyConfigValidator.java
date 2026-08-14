@@ -79,8 +79,14 @@ public final class EconomyConfigValidator {
                 "maximumSessionMinutes must not be below the median");
         require(!config.activity.visibleWhileActive,
                 "Offscreen activity agents cannot remain visible in the Free Market");
-        require(!config.activity.allowDeath,
-                "offscreen death must remain disabled until exact Cosmic death penalties are implemented");
+        if (config.activity.allowDeath) {
+            require("LIVE_ACTIVITY_CALIBRATION".equals(config.activity.deathOccurrenceSource),
+                    "death occurrence must come from matching live activity calibration");
+            require("COSMIC_V83_RULES".equals(config.activity.deathPenaltySource),
+                    "death penalties must use the shared Cosmic v83 rule");
+            require("AGENT_RESPAWN_CONFIGURATION".equals(config.activity.deathDowntimeSource),
+                    "death downtime must use the ordinary Agent respawn configuration");
+        }
         require(!config.activity.congestionAware,
                 "offscreen congestion must remain disabled until active-session occupancy is journaled");
         require(config.activity.consumeHpPotions && config.activity.consumeMpPotions

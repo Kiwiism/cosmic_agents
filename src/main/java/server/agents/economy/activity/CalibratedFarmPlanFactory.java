@@ -22,7 +22,7 @@ public final class CalibratedFarmPlanFactory {
                 minutes, calibration.itemUsePerMinute(), consumableLots);
         return new FarmSessionPlan(sessionId, calibration.calibrationId(), agentId,
                 calibration.mapId(), start, duration,
-                dropRateMultiplier, monsters, activeQuestIds, consumption);
+                dropRateMultiplier, 0d, Duration.ZERO, monsters, activeQuestIds, consumption);
     }
 
     private List<FarmSessionPlan.MonsterWork> allocateKills(int total, Map<Integer, Double> shares) {

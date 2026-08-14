@@ -184,6 +184,9 @@ public final class CosmicOutboxEventTranslator {
         Map<Integer, Long> expectedNet = new HashMap<>();
         for (FarmDrop drop : farm.drops()) expectedNet.merge(drop.itemId(), (long) drop.quantity(), Long::sum);
         for (FarmConsumption use : farm.consumed()) expectedNet.merge(use.itemId(), -(long) use.quantity(), Long::sum);
+        Map<String, Object> death = deathEvidence(builder.evidence);
+        int consumedCharm = death.isEmpty() ? 0 : optionalNumber(death, "consumedCharmItemId");
+        if (consumedCharm > 0) expectedNet.merge(consumedCharm, -1L, Long::sum);
         Map<Integer, Long> actualNet = new HashMap<>();
         for (ItemDelta item : delta.itemDeltas()) actualNet.merge(item.itemId(), (long) item.quantityDelta(), Long::sum);
         expectedNet.entrySet().removeIf(e -> e.getValue() == 0); actualNet.entrySet().removeIf(e -> e.getValue() == 0);
@@ -193,6 +196,14 @@ public final class CosmicOutboxEventTranslator {
                 AssetKey.MESO, farm.mesos(), "");
         if (farm.experience() > 0) builder.transfer(LedgerAccount.source("MOB_EXPERIENCE"), agent.account(),
                 new AssetKey(AssetType.EXPERIENCE, "EXP"), farm.experience(), "");
+        long experienceLost = death.isEmpty() ? 0 : optionalLong(death, "experienceLost");
+        boolean died = Boolean.TRUE.equals(death.get("died"));
+        require(died || (experienceLost == 0 && consumedCharm == 0),
+                "surviving activity cannot apply a death consequence");
+        require(consumedCharm == 0 || experienceLost == 0,
+                "a consumed safety charm must prevent the experience penalty");
+        if (experienceLost > 0) builder.transfer(agent.account(), LedgerAccount.sink("DEATH_EXP_PENALTY"),
+                new AssetKey(AssetType.EXPERIENCE, "EXP"), experienceLost, "");
         Map<Integer, Deque<ItemDelta>> gainedFacts = new HashMap<>();
         for (ItemDelta item : positive(delta.itemDeltas()))
             gainedFacts.computeIfAbsent(item.itemId(), ignored -> new ArrayDeque<>()).add(item);
@@ -218,7 +229,32 @@ public final class CosmicOutboxEventTranslator {
             builder.withdrawAndTransfer(agent.account(), LedgerAccount.sink("FARM_CONSUMPTION"),
                     fact, use.quantity());
         }
+        if (consumedCharm > 0) {
+            ItemDelta charm = delta.itemDeltas().stream()
+                    .filter(item -> item.itemId() == consumedCharm && item.quantityDelta() == -1)
+                    .findFirst().orElseThrow(() -> new EvidenceMismatchException(
+                            "death safety charm mutation is missing"));
+            builder.withdrawAndTransfer(agent.account(), LedgerAccount.sink("DEATH_SAFETY_CHARM"), charm, 1);
+        }
         builder.kind = EconomicEventKind.FARM_RESULT;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> deathEvidence(Map<String, Object> evidence) {
+        Object value = evidence.get("death");
+        if (value == null) return Map.of();
+        if (!(value instanceof Map<?, ?>)) throw new EvidenceMismatchException("invalid death evidence");
+        return (Map<String, Object>) value;
+    }
+
+    private static int optionalNumber(Map<String, Object> values, String key) {
+        Object value = values.get(key);
+        return value instanceof Number number ? number.intValue() : 0;
+    }
+
+    private static long optionalLong(Map<String, Object> values, String key) {
+        Object value = values.get(key);
+        return value instanceof Number number ? number.longValue() : 0L;
     }
 
     @SuppressWarnings("unchecked")

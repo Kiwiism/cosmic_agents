@@ -150,6 +150,63 @@ class CosmicOutboxEventTranslatorTest {
                         && posting.quantity() == 100));
     }
 
+    @Test
+    void farmDeathJournalsGrossExperienceAndExactPenaltySink() {
+        CosmicOutboxEventTranslator translator = new CosmicOutboxEventTranslator(
+                (run, character, agent) -> new CosmicOutboxEventTranslator.Participant(
+                        "agent-" + character, LedgerAccount.agent("agent-" + character)),
+                (run, account, item, fingerprint, quantity) -> List.of(),
+                (run, activity) -> new CosmicOutboxEventTranslator.FarmEvidence(
+                        1_000, 0, List.of(), List.of()));
+        var delta = new CosmicOutboxEventTranslator.ParticipantDelta(10, 1_000, 1_000, 0,
+                20, 20, 500, 1_300, List.of());
+        Map<String, Object> death = Map.of("died", true, "experienceLost", 200,
+                "consumedCharmItemId", 0, "downtimeMillis", 10_000);
+        CosmicOutboxRecord receipt = new CosmicOutboxRecord(UUID.randomUUID(), "farm-death",
+                "OFFSCREEN_FARM_SETTLEMENT", 10, null,
+                "activity=farm-1 map=100000001 exp=1000 mesos=0 drops=0 died=true downtimeMs=10000",
+                payloadWithEvidence(Map.of("death", death), delta), RUN, Instant.EPOCH,
+                "decision", "farm-1", "c".repeat(64), "catalog", "farm", true, false, Instant.EPOCH);
+
+        EconomicEvent event = translator.translate(receipt).event();
+
+        assertEquals(EconomicEventKind.FARM_RESULT, event.kind());
+        assertEquals(0, balance(event, new AssetKey(AssetType.EXPERIENCE, "EXP")));
+        assertTrue(event.postings().stream().anyMatch(posting ->
+                posting.account().equals(LedgerAccount.sink("DEATH_EXP_PENALTY"))
+                        && posting.quantity() == 200));
+    }
+
+    @Test
+    void farmDeathConsumesOwnedSafetyCharmInsteadOfExperience() {
+        CosmicOutboxEventTranslator translator = new CosmicOutboxEventTranslator(
+                (run, character, agent) -> new CosmicOutboxEventTranslator.Participant(
+                        "agent-" + character, LedgerAccount.agent("agent-" + character)),
+                (run, account, item, fingerprint, quantity) ->
+                        List.of(new CosmicOutboxEventTranslator.LotSlice("charm-lot", quantity)),
+                (run, activity) -> new CosmicOutboxEventTranslator.FarmEvidence(
+                        1_000, 0, List.of(), List.of()));
+        var delta = new CosmicOutboxEventTranslator.ParticipantDelta(10, 1_000, 1_000, 0,
+                20, 20, 500, 1_500,
+                List.of(item(5130000, "CASH", "safety-charm", 1, 0)));
+        Map<String, Object> death = Map.of("died", true, "experienceLost", 0,
+                "consumedCharmItemId", 5130000, "downtimeMillis", 10_000);
+        CosmicOutboxRecord receipt = new CosmicOutboxRecord(UUID.randomUUID(), "farm-charm",
+                "OFFSCREEN_FARM_SETTLEMENT", 10, null,
+                "activity=farm-2 map=100000001 exp=1000 mesos=0 drops=0 died=true downtimeMs=10000",
+                payloadWithEvidence(Map.of("death", death), delta), RUN, Instant.EPOCH,
+                "decision", "farm-2", "c".repeat(64), "catalog", "farm", true, false, Instant.EPOCH);
+
+        EconomicEvent event = translator.translate(receipt).event();
+
+        assertEquals(0, balance(event, AssetKey.item(5130000)));
+        assertTrue(event.postings().stream().anyMatch(posting ->
+                posting.account().equals(LedgerAccount.sink("DEATH_SAFETY_CHARM"))
+                        && posting.quantity() == 1));
+        assertFalse(event.postings().stream().anyMatch(posting ->
+                posting.account().equals(LedgerAccount.sink("DEATH_EXP_PENALTY"))));
+    }
+
     private static CosmicOutboxEventTranslator translator(CosmicOutboxEventTranslator.LotResolver lots) {
         return new CosmicOutboxEventTranslator((run, character, agent) -> {
             String id = agent ? "agent-" + character : "character-" + character;

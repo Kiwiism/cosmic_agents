@@ -2,6 +2,7 @@ package server.agents.economy.integration.cosmic;
 
 import client.Character;
 import client.QuestStatus;
+import config.AgentYamlConfig;
 import constants.inventory.ItemConstants;
 import server.agents.economy.activity.ActivityCalibration;
 import server.agents.economy.activity.ActivityCalibrationRepository;
@@ -53,7 +54,11 @@ public final class CalibratedCosmicActivityPlanner implements CosmicEconomyWorld
         String raw = profile.agentId() + ':' + logicalAt + ':' + calibration.calibrationId();
         String sessionId = UUID.nameUUIDFromBytes(raw.getBytes(StandardCharsets.UTF_8)).toString();
         return new FarmSessionPlan(sessionId, calibration.calibrationId(), profile.agentId(),
-                calibration.mapId(), logicalAt, duration, 1, work, quests, consumed);
+                calibration.mapId(), logicalAt, duration, 1,
+                config.allowDeath ? calibration.deathProbabilityPerHour() : 0d,
+                config.allowDeath ? Duration.ofMillis(AgentYamlConfig.config.agent.AGENT_DEATH_RESPAWN_DELAY_MS)
+                        : Duration.ZERO,
+                work, quests, consumed);
     }
 
     private List<FarmSessionPlan.MonsterWork> allocateKills(ActivityCalibration calibration, int total) {

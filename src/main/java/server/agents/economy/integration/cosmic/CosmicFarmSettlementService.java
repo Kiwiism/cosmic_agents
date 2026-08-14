@@ -10,6 +10,10 @@ import constants.inventory.ItemConstants;
 import server.agents.economy.activity.FarmSessionOutcome;
 import server.economy.EconomyOperationKind;
 import server.economy.EconomyTransactionCoordinator;
+import server.DeathPenaltyService;
+import server.maps.MapleMap;
+import server.agents.capabilities.combat.AgentCombatConfig;
+import server.agents.capabilities.recovery.AgentRespawnHealthPolicy;
 import tools.Randomizer;
 import tools.StringUtil;
 
@@ -27,16 +31,18 @@ public final class CosmicFarmSettlementService {
             throw new IllegalStateException("farm settlement exceeds Character limits");
         String summary = "activity=" + outcome.sessionId() + " map=" + outcome.mapId()
                 + " exp=" + outcome.experience() + " mesos=" + outcome.mesos()
-                + " drops=" + outcome.itemDrops().size();
+                + " drops=" + outcome.itemDrops().size() + " died=" + outcome.death().died()
+                + " downtimeMs=" + outcome.death().downtimeMillis();
         EconomyTransactionCoordinator.execute("offscreen-farm:" + outcome.sessionId(), agent, null,
                 EconomyOperationKind.OFFSCREEN_FARM_SETTLEMENT, summary, context -> {
-                    Map<String, Object> questProgress = Randomizer.withLongSource(gameplayRandom,
+                    MutationEvidence evidence = Randomizer.withLongSource(gameplayRandom,
                             () -> mutate(agent, outcome));
-                    context.recordEvidence("questKillProgress", questProgress);
+                    context.recordEvidence("questKillProgress", evidence.questProgress());
+                    context.recordEvidence("death", evidence.death());
                 });
     }
 
-    private static Map<String, Object> mutate(Character agent, FarmSessionOutcome outcome) {
+    private static MutationEvidence mutate(Character agent, FarmSessionOutcome outcome) {
         for (var consumed : outcome.consumedItems()) {
             InventoryType type = ItemConstants.getInventoryType(consumed.itemId());
             if (agent.getInventory(type).countById(consumed.itemId()) < consumed.quantity())
@@ -57,7 +63,36 @@ public final class CosmicFarmSettlementService {
             agent.gainMeso((int) outcome.mesos(), false);
         }
         if (outcome.experience() > 0) agent.gainExp((int) outcome.experience(), false, false);
-        return advanceQuestKills(agent, outcome.killCounts());
+        Map<String, Object> questProgress = advanceQuestKills(agent, outcome.killCounts());
+        Map<String, Object> death = applyDeath(agent, outcome);
+        return new MutationEvidence(questProgress, death);
+    }
+
+    private static Map<String, Object> applyDeath(Character agent, FarmSessionOutcome outcome) {
+        Map<String, Object> evidence = new LinkedHashMap<>();
+        evidence.put("died", outcome.death().died());
+        evidence.put("calibratedProbabilityPerHour", outcome.death().calibratedProbabilityPerHour());
+        evidence.put("downtimeMillis", outcome.death().downtimeMillis());
+        evidence.put("mapId", outcome.mapId());
+        if (!outcome.death().died()) return Map.copyOf(evidence);
+        MapleMap deathMap = agent.getClient().getChannelServer().getMapFactory().getMap(outcome.mapId());
+        if (deathMap == null) throw new IllegalStateException("calibrated death map is unavailable: " + outcome.mapId());
+        int hpBefore = agent.getHp();
+        DeathPenaltyService.Result result = agent.applyLogicalDeathConsequences(
+                deathMap, outcome.death().occurredAt().toEpochMilli());
+        int restoredHp = AgentRespawnHealthPolicy.restoredHp(agent.getMaxHp(),
+                AgentCombatConfig.cfg.RESPAWN_HP_PERCENT);
+        agent.updateHp(restoredHp);
+        evidence.put("occurredAt", outcome.death().occurredAt().toString());
+        evidence.put("experienceLost", result.experienceLost());
+        evidence.put("consumedCharmItemId", result.consumedCharmItemId());
+        evidence.put("prevented", result.prevented());
+        evidence.put("reason", result.reason().name());
+        evidence.put("town", deathMap.isTown());
+        evidence.put("fieldLimit", deathMap.getFieldLimit());
+        evidence.put("hpBefore", hpBefore);
+        evidence.put("respawnHp", restoredHp);
+        return Map.copyOf(evidence);
     }
 
     private static Map<String, Object> advanceQuestKills(Character agent, Map<Integer, Integer> kills) {
@@ -106,4 +141,6 @@ public final class CosmicFarmSettlementService {
     private static short value(Map<String, Integer> stats, String key) {
         return (short) stats.getOrDefault(key, 0).intValue();
     }
+
+    private record MutationEvidence(Map<String, Object> questProgress, Map<String, Object> death) { }
 }

@@ -108,6 +108,7 @@ import server.agents.integration.cosmic.CosmicAgentPotionCheckRequestBridge;
 import server.agents.diagnostics.MapTransitionPacketTraceRuntime;
 import server.agents.runtime.AgentRuntimeCleanupService;
 import server.CashShop;
+import server.DeathPenaltyService;
 import server.ExpLogger;
 import server.ExpLogger.ExpLogRecord;
 import server.ItemInformationProvider;
@@ -7815,49 +7816,31 @@ public class Character extends AbstractCharacterObject {
             return;
         }
 
+        applyStandardDeathConsequences(getMap(), Server.getInstance().getCurrentTime(), true);
+    }
+
+    /** Applies the ordinary non-CPQ death state using an explicit logical activity map. */
+    public DeathPenaltyService.Result applyLogicalDeathConsequences(MapleMap deathMap, long occurredAtMs) {
+        if (deathMap == null || deathMap.isCPQMap())
+            throw new IllegalArgumentException("logical death requires a non-CPQ map");
+        return applyStandardDeathConsequences(deathMap, occurredAtMs, false);
+    }
+
+    private DeathPenaltyService.Result applyStandardDeathConsequences(
+            MapleMap deathMap, long occurredAtMs, boolean notifyEventInstance) {
+
         cancelAllBuffs(false);
         dispelDebuffs();
-        lastDeathtime = Server.getInstance().getCurrentTime();
+        lastDeathtime = occurredAtMs;
 
-        EventInstanceManager eim = getEventInstance();
+        EventInstanceManager eim = notifyEventInstance ? getEventInstance() : null;
         if (eim != null) {
             eim.playerKilled(this);
         }
-        int[] charmID = {ItemId.SAFETY_CHARM, ItemId.EASTER_BASKET, ItemId.EASTER_CHARM};
-        int possesed = 0;
-        int i;
-        for (i = 0; i < charmID.length; i++) {
-            int quantity = getItemQuantity(charmID[i], false);
-            if (possesed == 0 && quantity > 0) {
-                possesed = quantity;
-                break;
-            }
-        }
-        if (possesed > 0 && !MapId.isDojo(getMapId())) {
+        DeathPenaltyService.Result deathPenalty = DeathPenaltyService.apply(this, deathMap);
+        if (deathPenalty.prevented()) {
             message("You have used a safety charm, so your EXP points have not been decreased.");
-            InventoryManipulator.removeById(client, ItemConstants.getInventoryType(charmID[i]), charmID[i], 1, true, false);
             usedSafetyCharm = true;
-        } else if (getJob() != Job.BEGINNER) { //Hmm...
-            if (!FieldLimit.NO_EXP_DECREASE.check(getMap().getFieldLimit())) {  // thanks Conrad for noticing missing FieldLimit check
-                int XPdummy = ExpTable.getExpNeededForLevel(getLevel());
-
-                if (getMap().isTown()) {    // thanks MindLove, SIayerMonkey, HaItsNotOver for noting players only lose 1% on town maps
-                    XPdummy /= 100;
-                } else {
-                    if (getLuk() < 50) {    // thanks Taiketo, Quit, Fishanelli for noting player EXP loss are fixed, 50-LUK threshold
-                        XPdummy /= 10;
-                    } else {
-                        XPdummy /= 20;
-                    }
-                }
-
-                int curExp = getExp();
-                if (curExp > XPdummy) {
-                    loseExp(XPdummy, false, false);
-                } else {
-                    loseExp(curExp, false, false);
-                }
-            }
         }
 
         if (getBuffedValue(BuffStat.MORPH) != null) {
@@ -7870,6 +7853,7 @@ public class Character extends AbstractCharacterObject {
 
         unsitChairInternal();
         sendPacket(PacketCreator.enableActions());
+        return deathPenalty;
     }
 
     private void unsitChairInternal() {

@@ -11,6 +11,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.time.Duration;
+import java.time.Instant;
 
 /** Replays Cosmic's one-million-denominator drop rule over explicit calibrated kill counts. */
 public final class RuleExactFarmResolver {
@@ -23,16 +25,18 @@ public final class RuleExactFarmResolver {
 
     public FarmSessionOutcome resolve(FarmSessionPlan plan, NamedRandomStreams random) {
         NamedRandomStreams.Stream loot = random.stream("activity.loot");
+        DeathResolution death = resolveDeath(plan, random.stream("activity.death"));
         List<FarmSessionOutcome.ItemDrop> itemDrops = new ArrayList<>();
         Map<Integer, Integer> kills = new LinkedHashMap<>();
         long experience = 0;
         long mesos = 0;
         for (FarmSessionPlan.MonsterWork work : plan.monsters()) {
-            kills.merge(work.monsterId(), work.kills(), Math::addExact);
+            int effectiveKills = proportional(work.kills(), death.activeMillis(), plan.duration().toMillis());
+            kills.merge(work.monsterId(), effectiveKills, Math::addExact);
             experience = Math.addExact(experience,
-                    Math.multiplyExact((long) work.kills(), work.experiencePerKill()));
+                    Math.multiplyExact((long) effectiveKills, work.experiencePerKill()));
             List<MonsterDropFact> table = catalog.monsterDrops(work.monsterId());
-            for (int kill = 1; kill <= work.kills(); kill++) {
+            for (int kill = 1; kill <= effectiveKills; kill++) {
                 for (MonsterDropFact drop : table) {
                     if (drop.questId() > 0 && !plan.activeQuestIds().contains(drop.questId())) continue;
                     int effectiveChance = (int) Math.min((long) drop.chance() * plan.dropRateMultiplier(),
@@ -56,10 +60,49 @@ public final class RuleExactFarmResolver {
                 }
             }
         }
+        List<FarmSessionPlan.ItemConsumption> consumed = new ArrayList<>();
+        for (FarmSessionPlan.ItemConsumption item : plan.consumedItems()) {
+            int quantity = proportional(item.quantity(), death.activeMillis(), plan.duration().toMillis());
+            if (quantity > 0) consumed.add(new FarmSessionPlan.ItemConsumption(
+                    item.itemId(), quantity, item.lotId()));
+        }
+        Instant completedAt = plan.startedAt().plusMillis(death.activeMillis() + death.downtimeMillis());
+        FarmSessionOutcome.DeathOutcome deathOutcome = death.died()
+                ? new FarmSessionOutcome.DeathOutcome(true,
+                plan.startedAt().plusMillis(death.activeMillis()), death.downtimeMillis(),
+                plan.deathProbabilityPerHour())
+                : new FarmSessionOutcome.DeathOutcome(false, null, 0, plan.deathProbabilityPerHour());
         return new FarmSessionOutcome(plan.sessionId(), plan.calibrationId(), plan.agentId(), plan.mapId(),
-                plan.startedAt().plus(plan.duration()), experience, mesos, itemDrops,
-                plan.consumedItems(), kills);
+                completedAt, experience, mesos, itemDrops, consumed, kills, deathOutcome);
     }
+
+    private static DeathResolution resolveDeath(FarmSessionPlan plan, NamedRandomStreams.Stream random) {
+        long plannedMillis = plan.duration().toMillis();
+        if (plan.deathProbabilityPerHour() <= 0d)
+            return new DeathResolution(false, plannedMillis, 0);
+        double minuteProbability = plan.deathProbabilityPerHour() >= 1d ? 1d
+                : 1d - Math.pow(1d - plan.deathProbabilityPerHour(), 1d / 60d);
+        long elapsed = 0;
+        while (elapsed < plannedMillis) {
+            long interval = Math.min(Duration.ofMinutes(1).toMillis(), plannedMillis - elapsed);
+            double intervalProbability = interval == Duration.ofMinutes(1).toMillis()
+                    ? minuteProbability
+                    : 1d - Math.pow(1d - plan.deathProbabilityPerHour(), interval / 3_600_000d);
+            if (random.nextDouble() < intervalProbability) {
+                long within = Math.max(1, Math.round(random.nextDouble() * interval));
+                return new DeathResolution(true, elapsed + within, plan.respawnDowntime().toMillis());
+            }
+            elapsed += interval;
+        }
+        return new DeathResolution(false, plannedMillis, 0);
+    }
+
+    private static int proportional(int total, long activeMillis, long plannedMillis) {
+        if (activeMillis >= plannedMillis) return total;
+        return (int) Math.floor(total * (activeMillis / (double) plannedMillis));
+    }
+
+    private record DeathResolution(boolean died, long activeMillis, long downtimeMillis) { }
 
     private void appendDrop(List<FarmSessionOutcome.ItemDrop> result, FarmSessionPlan plan,
                             FarmSessionPlan.MonsterWork work, int kill, int itemId, int quantity,

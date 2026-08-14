@@ -9,7 +9,7 @@ This ledger follows the attached master goal without redefining completion aroun
 | 2 | Economic event, outbox, and ledger foundation | Baseline code complete: atomic Cosmic outbox, exact receipt ingestion, lot ledger; live recovery soak pending |
 | 3 | Scenario, population, logical clock, RNG, checkpoints | Baseline code complete for fixed growth and max-throughput: named streams, monotonic fast-forward, resume state |
 | 4 | Remote real-NPC commerce and full disposition | Baseline code complete: exact buy/sell/recharge with source NPC/map evidence |
-| 5 | Rule-exact offscreen production and calibration | Baseline complete: WZ drops, operational live-session calibration capture, and exact resource runway; death/downtime remains fail-closed |
+| 5 | Rule-exact offscreen production and calibration | Baseline complete: WZ drops, operational live-session calibration capture, exact resource runway, calibrated trip-ending death, shared Cosmic penalty rules, and logical respawn downtime |
 | 6 | Needs, quests, complements, valuation, beliefs | Baseline complete: heterogeneous logical quest acceptance, exact Cosmic start/turn-in, kill/item objectives, reward selection, accepted-demand waves, and owned scroll projects |
 | 7 | Physical FM seller lifecycle | Baseline code complete: physical room, spot, escrow, one-stall, evidence-driven repricing and closure |
 | 8 | Physical FM buyer lifecycle | Baseline code complete: walking, private observations, exact listing identity, real purchases |
@@ -30,6 +30,4 @@ item with current code, tests, migrations, configuration, and runtime evidence.
 
 ## Remaining release blockers
 
-- Implement exact death/downtime consequences before enabling offscreen death. The validator rejects
-  that setting rather than estimating penalties.
 - Complete a 50-to-200 live-agent soak, restart/recovery exercise, and paired multi-seed scenarios.

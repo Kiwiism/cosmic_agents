@@ -118,6 +118,8 @@ public final class JdbcEconomyLifecycleJournal implements EconomyLifecycleJourna
 
     private static Map<String, Object> planEvidence(FarmSessionPlan plan) {
         return Map.of("duration", plan.duration().toString(), "dropRateMultiplier", plan.dropRateMultiplier(),
+                "deathProbabilityPerHour", plan.deathProbabilityPerHour(),
+                "respawnDowntime", plan.respawnDowntime().toString(),
                 "monsters", plan.monsters(), "activeQuestIds", plan.activeQuestIds(),
                 "consumedItems", plan.consumedItems());
     }
@@ -125,7 +127,8 @@ public final class JdbcEconomyLifecycleJournal implements EconomyLifecycleJourna
     private static Map<String, Object> outcomeEvidence(FarmSessionOutcome outcome) {
         return Map.of("calibrationId", outcome.calibrationId(), "experience", outcome.experience(),
                 "mesos", outcome.mesos(), "itemDrops", outcome.itemDrops(),
-                "consumedItems", outcome.consumedItems(), "killCounts", outcome.killCounts());
+                "consumedItems", outcome.consumedItems(), "killCounts", outcome.killCounts(),
+                "death", outcome.death());
     }
 
     private static String json(Object value) {

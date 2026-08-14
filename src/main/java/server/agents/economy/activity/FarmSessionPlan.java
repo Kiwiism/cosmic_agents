@@ -14,6 +14,8 @@ public record FarmSessionPlan(
         Instant startedAt,
         Duration duration,
         int dropRateMultiplier,
+        double deathProbabilityPerHour,
+        Duration respawnDowntime,
         List<MonsterWork> monsters,
         Set<Integer> activeQuestIds,
         List<ItemConsumption> consumedItems
@@ -22,7 +24,16 @@ public record FarmSessionPlan(
                            Duration duration, int dropRateMultiplier, List<MonsterWork> monsters,
                            Set<Integer> activeQuestIds, List<ItemConsumption> consumedItems) {
         this(sessionId, "explicit-work", agentId, mapId, startedAt, duration, dropRateMultiplier,
+                0d, Duration.ZERO,
                 monsters, activeQuestIds, consumedItems);
+    }
+
+    public FarmSessionPlan(String sessionId, String calibrationId, String agentId, int mapId,
+                           Instant startedAt, Duration duration, int dropRateMultiplier,
+                           List<MonsterWork> monsters, Set<Integer> activeQuestIds,
+                           List<ItemConsumption> consumedItems) {
+        this(sessionId, calibrationId, agentId, mapId, startedAt, duration, dropRateMultiplier,
+                0d, Duration.ZERO, monsters, activeQuestIds, consumedItems);
     }
 
     public FarmSessionPlan {
@@ -30,7 +41,9 @@ public record FarmSessionPlan(
                 || agentId == null || agentId.isBlank())
             throw new IllegalArgumentException("session and agent are required");
         if (mapId <= 0 || startedAt == null || duration == null || duration.isNegative()
-                || duration.isZero() || dropRateMultiplier <= 0)
+                || duration.isZero() || dropRateMultiplier <= 0
+                || deathProbabilityPerHour < 0d || deathProbabilityPerHour > 1d
+                || respawnDowntime == null || respawnDowntime.isNegative())
             throw new IllegalArgumentException("invalid farm session bounds");
         monsters = monsters == null ? List.of() : List.copyOf(monsters);
         activeQuestIds = activeQuestIds == null ? Set.of() : Set.copyOf(activeQuestIds);

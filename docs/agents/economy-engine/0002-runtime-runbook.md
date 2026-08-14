@@ -16,7 +16,9 @@
    `!economy calibration stop <agent-character-id> [died]`. The event bus records actual kills and
    explicit item consumption; the stop command writes the sample to the separate PostgreSQL database.
    `!economy calibration status <agent-character-id>` inspects an active capture. No matching
-   calibration means no farm simulation.
+   calibration means no farm simulation. When `activity.allowDeath` is enabled, only the observed
+   cohort death rate can end a logical trip; a death ends that trip rather than permitting synthetic
+   repeated-death loops.
 6. Ensure intended stall owners legitimately possess the configured real PlayerShop permit. In v83
    this is a Cash Shop item and is neither a mob drop nor normal NPC stock.
 7. Run `!economy start`, then `!economy advance 0` to process initial admissions. Use
@@ -46,6 +48,11 @@ tradeoff for later swapping calibrated activity with fully live agents under the
 - `item_market_daily`, `meso_flow_daily`, `agent_state_projection`: rebuildable dashboard read models.
 - `economy_invariant_violation`: durable accounting and lifecycle failures.
 
+Completed activity evidence includes the calibrated death exposure, exact occurrence time, farm
+map and field limit, ordinary Agent respawn delay, EXP lost or safety charm consumed, penalty reason,
+and restored HP. Gross mob EXP and the death loss are separate balanced ledger flows, so a dashboard
+can distinguish weak farming from death leakage.
+
 `economy-database/queries/item_market_explanation.sql` is the item drill-down contract. It links
 transactions, observations, lots, listing exposure, and decision reasons without treating an ask as
 a completed price or imputing a meso price to barter.
@@ -54,8 +61,10 @@ a completed price or imputing a meso price to barter.
 
 - Seasonal overlays are typed but cannot be enabled until each mob-item relation is catalog-checked
   and the rule-exact resolver applies it.
-- Offscreen death and farm congestion remain disabled until exact Cosmic death penalties and
-  journaled active-map occupancy exist.
+- Farm congestion remains disabled until active-map occupancy is journaled. Offscreen death is
+  enabled only with matching live-session calibration. It shares the same Cosmic v83
+  beginner/LUK/town/field-limit/safety-charm rule as live deaths, truncates unperformed kills and
+  consumable use, cancels ordinary death state, and uses the configured Agent respawn delay.
 - Direct negotiation excludes equipment because the real Trade selector is item-id based; rolled
   equipment remains safely tradable through fingerprinted PlayerShop escrow.
 - A zero-NPC-floor collectible receives no invented cold-start meso value. It can be retained or

@@ -51,7 +51,7 @@ public final class EconomyRunCoordinator {
 
     private void admit(ScheduledEconomyEvent event) {
         EconomyAgentProfile profile = profile(event);
-        if (agents.putIfAbsent(profile.agentId(), new AgentState(profile, Status.IN_FREE_MARKET, null)) != null)
+        if (agents.putIfAbsent(profile.agentId(), new AgentState(profile, Status.IN_FREE_MARKET, null, null)) != null)
             throw new IllegalStateException("agent admitted twice: " + profile.agentId());
         world.admit(profile, event.dueAt());
         recordPresence(profile, "ADMITTED", event.dueAt());
@@ -79,13 +79,14 @@ public final class EconomyRunCoordinator {
             throw new IllegalStateException("activity plan is not for the scheduled agent/time");
         if ("explicit-work".equals(plan.calibrationId()))
             throw new IllegalStateException("production runs require live calibration evidence");
+        FarmSessionOutcome outcome = resolver.resolve(plan, engine.randomStreams());
         world.leaveFreeMarket(state.profile, plan, event.dueAt());
         recordPresence(state.profile, "OFFSCREEN_ACTIVITY_STARTED", event.dueAt());
         journal.activityStarted(engine.runId(), plan);
         journal.stateChanged(engine.runId(), event.subjectId(), Status.OFFSCREEN_ACTIVITY,
                 plan.sessionId(), event.dueAt());
-        agents.put(event.subjectId(), new AgentState(state.profile, Status.OFFSCREEN_ACTIVITY, plan));
-        engine.schedule(plan.startedAt().plus(plan.duration()), COMPLETE_ACTIVITY,
+        agents.put(event.subjectId(), new AgentState(state.profile, Status.OFFSCREEN_ACTIVITY, plan, outcome));
+        engine.schedule(outcome.completedAt(), COMPLETE_ACTIVITY,
                 event.subjectId(), Map.of("sessionId", plan.sessionId()));
     }
 
@@ -93,13 +94,16 @@ public final class EconomyRunCoordinator {
         AgentState state = require(event.subjectId(), Status.OFFSCREEN_ACTIVITY);
         if (!state.pendingActivity.sessionId().equals(event.parameters().get("sessionId")))
             throw new IllegalStateException("activity completion does not match pending session");
-        FarmSessionOutcome outcome = resolver.resolve(state.pendingActivity, engine.randomStreams());
+        FarmSessionOutcome outcome = state.pendingOutcome == null
+                ? resolver.resolve(state.pendingActivity, engine.randomStreams()) : state.pendingOutcome;
+        if (!outcome.completedAt().equals(event.dueAt()))
+            throw new IllegalStateException("activity completion event does not match resolved downtime");
         world.settleOffscreenActivity(state.profile, outcome, event.dueAt(),
                 engine.randomStreams().stream("agent." + event.subjectId() + ".progression")::nextLong);
         journal.activityCompleted(engine.runId(), outcome);
         journal.stateChanged(engine.runId(), event.subjectId(), Status.RETURNING_TO_FM,
                 null, event.dueAt());
-        agents.put(event.subjectId(), new AgentState(state.profile, Status.RETURNING_TO_FM, null));
+        agents.put(event.subjectId(), new AgentState(state.profile, Status.RETURNING_TO_FM, null, null));
         engine.schedule(event.dueAt(), RETURN_TO_FM, event.subjectId(), Map.of());
     }
 
@@ -108,7 +112,7 @@ public final class EconomyRunCoordinator {
         world.returnThroughFreeMarketEntrance(state.profile, event.dueAt());
         recordPresence(state.profile, "RETURNED_TO_FREE_MARKET", event.dueAt());
         journal.stateChanged(engine.runId(), event.subjectId(), Status.IN_FREE_MARKET, null, event.dueAt());
-        agents.put(event.subjectId(), new AgentState(state.profile, Status.IN_FREE_MARKET, null));
+        agents.put(event.subjectId(), new AgentState(state.profile, Status.IN_FREE_MARKET, null, null));
         engine.schedule(event.dueAt(), MARKET_CYCLE, event.subjectId(), Map.of());
     }
 
@@ -150,7 +154,8 @@ public final class EconomyRunCoordinator {
         agents.forEach((id, state) -> agentState.put(id, Map.of(
                 "profile", profileMap(state.profile),
                 "status", state.status.name(),
-                "pendingActivity", state.pendingActivity == null ? Map.of() : planMap(state.pendingActivity))));
+                "pendingActivity", state.pendingActivity == null ? Map.of() : planMap(state.pendingActivity),
+                "pendingOutcome", state.pendingOutcome == null ? Map.of() : outcomeMap(state.pendingOutcome))));
         return Map.of("schemaVersion", 2, "agents", Map.copyOf(agentState),
                 "world", world.snapshotState());
     }
@@ -175,9 +180,14 @@ public final class EconomyRunCoordinator {
             Status status = Status.valueOf(row.get("status").toString());
             Map<String, Object> pending = (Map<String, Object>) row.get("pendingActivity");
             FarmSessionPlan plan = pending == null || pending.isEmpty() ? null : planFrom(pending);
+            Map<String, Object> pendingResult = (Map<String, Object>) row.get("pendingOutcome");
+            FarmSessionOutcome outcome = pendingResult == null || pendingResult.isEmpty()
+                    ? null : outcomeFrom(pendingResult);
             if ((status == Status.OFFSCREEN_ACTIVITY) != (plan != null))
                 throw new IllegalStateException("checkpoint activity state is inconsistent for " + id);
-            agents.put(id, new AgentState(profile, status, plan));
+            if (status != Status.OFFSCREEN_ACTIVITY && outcome != null)
+                throw new IllegalStateException("checkpoint outcome state is inconsistent for " + id);
+            agents.put(id, new AgentState(profile, status, plan, outcome));
         });
         world.restoreState(worldState == null ? Map.of() : worldState);
     }
@@ -209,11 +219,40 @@ public final class EconomyRunCoordinator {
         value.put("agentId", p.agentId()); value.put("mapId", p.mapId());
         value.put("startedAt", p.startedAt().toString()); value.put("duration", p.duration().toString());
         value.put("dropRateMultiplier", p.dropRateMultiplier());
+        value.put("deathProbabilityPerHour", p.deathProbabilityPerHour());
+        value.put("respawnDowntime", p.respawnDowntime().toString());
         value.put("monsters", p.monsters().stream().map(work -> Map.of("monsterId", work.monsterId(),
                 "kills", work.kills(), "experiencePerKill", work.experiencePerKill())).toList());
         value.put("activeQuestIds", new ArrayList<>(p.activeQuestIds()));
         value.put("consumedItems", p.consumedItems().stream().map(item -> Map.of("itemId", item.itemId(),
                 "quantity", item.quantity(), "lotId", item.lotId())).toList());
+        return value;
+    }
+
+    private static Map<String, Object> outcomeMap(FarmSessionOutcome o) {
+        Map<String, Object> value = new LinkedHashMap<>();
+        value.put("sessionId", o.sessionId()); value.put("calibrationId", o.calibrationId());
+        value.put("agentId", o.agentId()); value.put("mapId", o.mapId());
+        value.put("completedAt", o.completedAt().toString()); value.put("experience", o.experience());
+        value.put("mesos", o.mesos());
+        value.put("itemDrops", o.itemDrops().stream().map(drop -> {
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("lotId", drop.lotId()); row.put("monsterId", drop.monsterId());
+            row.put("killOrdinal", drop.killOrdinal()); row.put("itemId", drop.itemId());
+            row.put("quantity", drop.quantity()); row.put("questId", drop.questId());
+            row.put("baseChance", drop.baseChance()); row.put("effectiveChance", drop.effectiveChance());
+            row.put("equipmentStats", drop.equipmentStats());
+            return row;
+        }).toList());
+        value.put("consumedItems", o.consumedItems().stream().map(item -> Map.of(
+                "itemId", item.itemId(), "quantity", item.quantity(), "lotId", item.lotId())).toList());
+        Map<String, Object> kills = new LinkedHashMap<>();
+        o.killCounts().forEach((id, quantity) -> kills.put(Integer.toString(id), quantity));
+        value.put("killCounts", kills);
+        value.put("death", Map.of("died", o.death().died(),
+                "occurredAt", o.death().occurredAt() == null ? "" : o.death().occurredAt().toString(),
+                "downtimeMillis", o.death().downtimeMillis(),
+                "calibratedProbabilityPerHour", o.death().calibratedProbabilityPerHour()));
         return value;
     }
 
@@ -229,7 +268,38 @@ public final class EconomyRunCoordinator {
                         integer(row, "quantity"), text(row, "lotId"))).toList();
         return new FarmSessionPlan(text(p, "sessionId"), text(p, "calibrationId"), text(p, "agentId"),
                 integer(p, "mapId"), Instant.parse(text(p, "startedAt")), Duration.parse(text(p, "duration")),
-                integer(p, "dropRateMultiplier"), monsters, quests, consumed);
+                integer(p, "dropRateMultiplier"), p.containsKey("deathProbabilityPerHour")
+                ? decimal(p, "deathProbabilityPerHour") : 0d,
+                p.containsKey("respawnDowntime") ? Duration.parse(text(p, "respawnDowntime")) : Duration.ZERO,
+                monsters, quests, consumed);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static FarmSessionOutcome outcomeFrom(Map<String, Object> p) {
+        List<FarmSessionOutcome.ItemDrop> drops = ((List<Map<String, Object>>) p.get("itemDrops")).stream()
+                .map(row -> new FarmSessionOutcome.ItemDrop(text(row, "lotId"), integer(row, "monsterId"),
+                        integer(row, "killOrdinal"), integer(row, "itemId"), integer(row, "quantity"),
+                        integer(row, "questId"), integer(row, "baseChance"), integer(row, "effectiveChance"),
+                        ((Map<String, Number>) row.getOrDefault("equipmentStats", Map.of())).entrySet().stream()
+                                .collect(java.util.stream.Collectors.toMap(Map.Entry::getKey,
+                                        entry -> entry.getValue().intValue())))).toList();
+        List<FarmSessionPlan.ItemConsumption> consumed = ((List<Map<String, Object>>) p.get("consumedItems"))
+                .stream().map(row -> new FarmSessionPlan.ItemConsumption(integer(row, "itemId"),
+                        integer(row, "quantity"), text(row, "lotId"))).toList();
+        Map<Integer, Integer> kills = new LinkedHashMap<>();
+        ((Map<?, ?>) p.get("killCounts")).forEach((key, value) ->
+                kills.put(Integer.parseInt(key.toString()), ((Number) value).intValue()));
+        Map<String, Object> death = (Map<String, Object>) p.getOrDefault("death", Map.of());
+        boolean died = Boolean.TRUE.equals(death.get("died"));
+        String occurredAt = Objects.toString(death.get("occurredAt"), "");
+        FarmSessionOutcome.DeathOutcome deathOutcome = new FarmSessionOutcome.DeathOutcome(died,
+                occurredAt.isBlank() ? null : Instant.parse(occurredAt),
+                ((Number) death.getOrDefault("downtimeMillis", 0)).longValue(),
+                ((Number) death.getOrDefault("calibratedProbabilityPerHour", 0d)).doubleValue());
+        return new FarmSessionOutcome(text(p, "sessionId"), text(p, "calibrationId"), text(p, "agentId"),
+                integer(p, "mapId"), Instant.parse(text(p, "completedAt")),
+                ((Number) p.get("experience")).longValue(), ((Number) p.get("mesos")).longValue(),
+                drops, consumed, kills, deathOutcome);
     }
 
     private static String text(Map<String, Object> values, String key) { return values.get(key).toString(); }
@@ -239,5 +309,5 @@ public final class EconomyRunCoordinator {
     public enum Status { IN_FREE_MARKET, OFFSCREEN_ACTIVITY, RETURNING_TO_FM }
     public record AgentView(EconomyAgentProfile profile, Status status, String pendingSessionId) { }
     private record AgentState(EconomyAgentProfile profile, Status status,
-                              FarmSessionPlan pendingActivity) { }
+                              FarmSessionPlan pendingActivity, FarmSessionOutcome pendingOutcome) { }
 }

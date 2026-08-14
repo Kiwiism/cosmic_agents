@@ -115,6 +115,9 @@ public final class EconomyEngineConfig {
         public boolean consumeAmmunition;
         public boolean enforceInventoryCapacity;
         public boolean allowDeath;
+        public String deathOccurrenceSource;
+        public String deathPenaltySource;
+        public String deathDowntimeSource;
     }
 
     public static final class Market {
