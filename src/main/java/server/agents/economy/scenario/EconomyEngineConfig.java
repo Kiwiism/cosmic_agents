@@ -18,6 +18,7 @@ public final class EconomyEngineConfig {
     public Tax tax;
     public SeasonalRules seasonalRules;
     public Quests quests;
+    public Demand demand;
     public Scrolling scrolling;
     public Chairs chairs;
     public Ambient ambient;
@@ -152,6 +153,20 @@ public final class EconomyEngineConfig {
         public boolean demandRequiresRemainingObjective;
         public boolean allowTradeAcquisition;
         public boolean allowNpcAcquisitionOnlyWhenGameSupportsIt;
+    }
+
+    public static final class Demand {
+        public double questMaximumWalletFraction;
+        public List<ResourceTarget> resourceTargets;
+    }
+
+    public static final class ResourceTarget {
+        public int itemId;
+        public int npcId;
+        public int targetQuantity;
+        public int purchaseLot;
+        public List<String> jobs;
+        public double urgency;
     }
 
     public static final class Scrolling {

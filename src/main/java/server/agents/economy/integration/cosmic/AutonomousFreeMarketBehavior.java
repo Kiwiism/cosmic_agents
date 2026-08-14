@@ -26,6 +26,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
     private final EconomyEvidenceJournal journal;
     private final CosmicMarketSellerPlanReader sellerPlans;
     private final CosmicMarketSellerGateway seller;
+    private final ResourceProcurement procurement;
     private final ObservedPurchasePolicy purchasePolicy = new ObservedPurchasePolicy();
     private final RoomVisitPlanner roomPlanner = new RoomVisitPlanner();
     private final Duration actionPoll;
@@ -39,6 +40,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
                                         EconomyEvidenceJournal journal,
                                         CosmicMarketSellerPlanReader sellerPlans,
                                         CosmicMarketSellerGateway seller,
+                                        ResourceProcurement procurement,
                                         Duration actionPoll, Duration postTripDelay,
                                         Duration maximumStallDuration) {
         this.runId = Objects.requireNonNull(runId); this.configHash = Objects.requireNonNull(configHash);
@@ -46,6 +48,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
         this.random = Objects.requireNonNull(random); this.physical = Objects.requireNonNull(physical);
         this.needs = Objects.requireNonNull(needs); this.journal = Objects.requireNonNull(journal);
         this.sellerPlans = Objects.requireNonNull(sellerPlans); this.seller = Objects.requireNonNull(seller);
+        this.procurement = Objects.requireNonNull(procurement);
         if (actionPoll.isNegative() || actionPoll.isZero() || postTripDelay.isNegative()
                 || maximumStallDuration.isNegative() || maximumStallDuration.isZero())
             throw new IllegalArgumentException("market timing must be non-negative and polling positive");
@@ -59,6 +62,22 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
         State state = states.computeIfAbsent(profile.agentId(), ignored -> new State(
                 new PrivateMarketKnowledge(), new PhysicalMarketTrip(roomPlanner.plan(
                 config.minimumRoomsPerTrip, config.maximumRoomsPerTrip, random))));
+        if (state.phase == Phase.PROCURING) {
+            Optional<ResourceProcurement.Result> purchase = procurement.buyNext(
+                    agent, profile, state.attemptedResourceItems);
+            if (purchase.isPresent()) {
+                ResourceProcurement.Result result = purchase.orElseThrow();
+                state.attemptedResourceItems.add(result.itemId());
+                appendDecision(profile, logicalAt, "NPC_RESOURCE_PROCUREMENT",
+                        Map.of("itemId", result.itemId(), "quantity", result.quantity(),
+                                "npcId", result.npcId(), "result", result.result()), List.of(),
+                        Map.of("sourceMap", result.sourceMapId()),
+                        Map.of("reason", "CONFIGURED_RESOURCE_TARGET"),
+                        Map.of("mesoDelta", (double) result.mesoDelta()));
+                return revisit(logicalAt, false);
+            }
+            state.phase = Phase.BROWSING;
+        }
         if (state.phase == Phase.BROWSING) {
             PhysicalMarketTrip.Step step = state.trip.tick(agent, profile.agentId(), logicalAt,
                     state.knowledge, physical);
@@ -179,11 +198,17 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
         states.remove(agentId);
         return new EconomyWorldPort.MarketDirective(Optional.of(at.plus(postTripDelay)), Optional.empty());
     }
-    private enum Phase { BROWSING, DISPOSING, OPENING_STALL, OWNING_STALL }
+    @FunctionalInterface public interface ResourceProcurement {
+        Optional<Result> buyNext(Character agent, EconomyAgentProfile profile, Set<Integer> attemptedItemIds);
+        record Result(int itemId, int quantity, int npcId, boolean success, String result,
+                      int mesoDelta, int sourceMapId) { }
+    }
+    private enum Phase { PROCURING, BROWSING, DISPOSING, OPENING_STALL, OWNING_STALL }
     private static final class State {
         private final PrivateMarketKnowledge knowledge;
         private final PhysicalMarketTrip trip;
-        private Phase phase = Phase.BROWSING;
+        private Phase phase = Phase.PROCURING;
+        private final Set<Integer> attemptedResourceItems = new HashSet<>();
         private MarketSellerPlan sellerPlan;
         private int npcSaleIndex;
         private int openAttempts;

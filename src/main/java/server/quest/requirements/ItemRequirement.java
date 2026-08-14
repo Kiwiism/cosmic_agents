@@ -103,4 +103,9 @@ public class ItemRequirement extends AbstractQuestRequirement {
             return complete ? Integer.MAX_VALUE : Integer.MIN_VALUE;
         }
     }
+
+    /** Immutable view of the exact item counts encoded in Quest.wz. */
+    public Map<Integer, Integer> getRequiredItems() {
+        return Map.copyOf(items);
+    }
 }

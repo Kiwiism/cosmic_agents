@@ -135,6 +135,16 @@ quests:
   allowTradeAcquisition: true
   allowNpcAcquisitionOnlyWhenGameSupportsIt: true
 
+demand:
+  questMaximumWalletFraction: 0.35
+  resourceTargets:
+    - { itemId: 2000000, npcId: 1001100, targetQuantity: 100, purchaseLot: 20, jobs: [], urgency: 0.75 }
+    - { itemId: 2000001, npcId: 1001100, targetQuantity: 100, purchaseLot: 20, jobs: [magician], urgency: 0.85 }
+    - { itemId: 2060000, npcId: 1001100, targetQuantity: 1000, purchaseLot: 500, jobs: [bowman], urgency: 0.90 }
+    - { itemId: 2061000, npcId: 1001100, targetQuantity: 1000, purchaseLot: 500, jobs: [bowman], urgency: 0.90 }
+    - { itemId: 2070000, npcId: 1001100, targetQuantity: 500, purchaseLot: 500, jobs: [thief], urgency: 0.90 }
+    - { itemId: 2330000, npcId: 1001100, targetQuantity: 600, purchaseLot: 600, jobs: [pirate], urgency: 0.90 }
+
 scrolling:
   enabled: true
   requireOwnedEquipment: true

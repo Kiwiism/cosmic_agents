@@ -81,6 +81,7 @@ public final class EconomyConfigValidator {
         validateMarket(config.market);
         validateTax(config.tax);
         validateAmbient(config.ambient);
+        validateDemand(config.demand);
         requireText(config.persistence.provider, "persistence.provider");
         requireText(config.persistence.database, "persistence.database");
         require(config.persistence.retainMovementDebugDays >= 0,
@@ -90,7 +91,7 @@ public final class EconomyConfigValidator {
     private static void requireSections(EconomyEngineConfig config) {
         require(config.scenario != null && config.clock != null && config.catalog != null
                         && config.world != null
-                        && config.population != null && config.npcCommerce != null
+                        && config.population != null && config.npcCommerce != null && config.demand != null
                         && config.bootstrap != null
                         && config.activity != null && config.market != null && config.tax != null
                         && config.seasonalRules != null && config.quests != null
@@ -98,6 +99,20 @@ public final class EconomyConfigValidator {
                         && config.ambient != null && config.persistence != null
                         && config.humanReadiness != null,
                 "Every top-level economy configuration section is required");
+    }
+
+    private static void validateDemand(EconomyEngineConfig.Demand demand) {
+        require(demand.questMaximumWalletFraction >= 0 && demand.questMaximumWalletFraction <= 1,
+                "demand.questMaximumWalletFraction must be within zero and one");
+        require(demand.resourceTargets != null, "demand.resourceTargets is required");
+        for (EconomyEngineConfig.ResourceTarget target : demand.resourceTargets) {
+            require(target.itemId > 0 && target.npcId > 0 && target.targetQuantity > 0
+                            && target.purchaseLot > 0 && target.purchaseLot <= target.targetQuantity,
+                    "demand resource targets require real ids and positive bounded quantities");
+            require(target.jobs != null, "demand resource target jobs are required");
+            require(target.urgency >= 0 && target.urgency <= 1,
+                    "demand resource urgency must be within zero and one");
+        }
     }
 
     private static void validateBootstrap(EconomyEngineConfig.Bootstrap bootstrap) {

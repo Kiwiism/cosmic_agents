@@ -495,6 +495,15 @@ public class Quest {
         return ireq.getItemAmountNeeded(itemid, true);
     }
 
+    /** Exact completion item requirements from Quest.wz, without a level-limited derived catalog. */
+    public Map<Integer, Integer> getCompleteItemRequirements() {
+        AbstractQuestRequirement req = completeReqs.get(QuestRequirementType.ITEM);
+        if (req == null) {
+            return Map.of();
+        }
+        return ((ItemRequirement) req).getRequiredItems();
+    }
+
     public int getMobAmountNeeded(int mid) {
         AbstractQuestRequirement req = completeReqs.get(QuestRequirementType.MOB);
         if (req == null) {
