@@ -79,23 +79,40 @@ public final class EconomicEventFactory {
                 reasonEvidence(reason, npcId, sourceMapId, itemId, quantity, totalMesos), postings);
     }
 
+    public EconomicEvent stallListed(String key, Instant time, String sellerId, String escrowId,
+                                     int roomMapId, String listingId, int itemId, int quantity,
+                                     String lotId, EconomicReason reason) {
+        List<LedgerPosting> postings = new ArrayList<>();
+        transfer(postings, LedgerAccount.agent(sellerId), LedgerAccount.escrow(escrowId),
+                AssetKey.item(itemId), quantity, lotId);
+        return event(key, time, EconomicEventKind.STALL_LISTED, List.of(sellerId),
+                Map.of("reason", reason.name(), "roomMapId", Integer.toString(roomMapId),
+                        "listingId", listingId, "escrowId", escrowId,
+                        "itemId", Integer.toString(itemId), "quantity", Integer.toString(quantity)), postings);
+    }
+
     public EconomicEvent stallSale(String key, Instant time, String buyerId, String sellerId,
-                                   int roomMapId, String listingId, int itemId, int quantity,
-                                   long grossMesos, long taxMesos, String lotId, EconomicReason reason) {
-        if (buyerId.equals(sellerId) || taxMesos < 0 || taxMesos > grossMesos)
+                                   String escrowId, int roomMapId, String listingId, int itemId,
+                                   int quantity, long grossMesos, long buyerTaxMesos,
+                                   long sellerTaxMesos, String lotId, EconomicReason reason) {
+        if (buyerId.equals(sellerId) || buyerTaxMesos < 0 || sellerTaxMesos < 0
+                || sellerTaxMesos > grossMesos)
             throw new IllegalArgumentException("invalid stall transaction");
         List<LedgerPosting> postings = new ArrayList<>();
-        transfer(postings, LedgerAccount.agent(sellerId), LedgerAccount.agent(buyerId),
+        transfer(postings, LedgerAccount.escrow(escrowId), LedgerAccount.agent(buyerId),
                 AssetKey.item(itemId), quantity, lotId);
         transfer(postings, LedgerAccount.agent(buyerId), LedgerAccount.agent(sellerId),
-                AssetKey.MESO, grossMesos - taxMesos, "");
-        if (taxMesos > 0) transfer(postings, LedgerAccount.agent(buyerId),
-                LedgerAccount.sink("MARKET_TAX"), AssetKey.MESO, taxMesos, "");
+                AssetKey.MESO, grossMesos - sellerTaxMesos, "");
+        long totalTax = Math.addExact(buyerTaxMesos, sellerTaxMesos);
+        if (totalTax > 0) transfer(postings, LedgerAccount.agent(buyerId),
+                LedgerAccount.sink("MARKET_TAX"), AssetKey.MESO, totalTax, "");
         return event(key, time, EconomicEventKind.STALL_SALE, List.of(buyerId, sellerId),
                 Map.of("reason", reason.name(), "roomMapId", Integer.toString(roomMapId),
-                        "listingId", listingId, "itemId", Integer.toString(itemId),
+                        "listingId", listingId, "escrowId", escrowId,
+                        "itemId", Integer.toString(itemId),
                         "quantity", Integer.toString(quantity), "grossMesos", Long.toString(grossMesos),
-                        "taxMesos", Long.toString(taxMesos)), postings);
+                        "buyerTaxMesos", Long.toString(buyerTaxMesos),
+                        "sellerTaxMesos", Long.toString(sellerTaxMesos)), postings);
     }
 
     private EconomicEvent event(String key, Instant time, EconomicEventKind kind, List<String> actors,

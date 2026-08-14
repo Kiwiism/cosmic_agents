@@ -17,9 +17,12 @@ class EconomicEventFactoryTest {
         ledger.apply(factory.initialEndowment("buyer-start", Instant.EPOCH, "buyer", 10_000, Map.of()));
         ledger.apply(factory.initialEndowment("seller-start", Instant.EPOCH, "seller", 0,
                 Map.of(4000000, 10)));
+        ledger.apply(factory.stallListed("listing-1", Instant.EPOCH.plusMillis(500), "seller",
+                "escrow-1", 910000001, "listing", 4000000, 10,
+                "seller-start:4000000", EconomicReason.QUEST_REQUIREMENT));
         EconomicEvent trade = factory.stallSale("sale-1", Instant.EPOCH.plusSeconds(1),
-                "buyer", "seller", 910000001, "listing", 4000000, 10,
-                1_000, 30, "seller-start:4000000", EconomicReason.QUEST_REQUIREMENT);
+                "buyer", "seller", "escrow-1", 910000001, "listing", 4000000, 10,
+                1_000, 0, 30, "seller-start:4000000", EconomicReason.QUEST_REQUIREMENT);
         ledger.apply(trade);
 
         assertEquals(9_000, ledger.balance(LedgerAccount.agent("buyer"), AssetKey.MESO, ""));
@@ -33,7 +36,7 @@ class EconomicEventFactoryTest {
     void rejectsSelfTradeAndOverTax() {
         EconomicEventFactory factory = new EconomicEventFactory(UUID.randomUUID(), "config", "catalog");
         assertThrows(IllegalArgumentException.class, () -> factory.stallSale("bad", Instant.EPOCH,
-                "same", "same", 910000001, "l", 1, 1, 10, 11, "lot",
+                "same", "same", "escrow", 910000001, "l", 1, 1, 10, 0, 11, "lot",
                 EconomicReason.SPECULATIVE_RESALE));
     }
 }

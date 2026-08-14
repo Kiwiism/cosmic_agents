@@ -3,6 +3,7 @@ package server.agents.economy.integration.cosmic;
 import client.Character;
 import server.agents.economy.activity.FarmSessionOutcome;
 import server.agents.economy.activity.FarmSessionPlan;
+import server.agents.economy.persistence.EconomyParticipantBindingStore;
 import server.agents.economy.scenario.EconomyAgentProfile;
 import server.agents.economy.scenario.EconomyWorldPort;
 import server.economy.EconomyOperationContext;
@@ -28,6 +29,7 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort {
     private final OffscreenPresence presence;
     private final CosmicFarmSettlementService settlement;
     private final TaxPolicy taxPolicy;
+    private final EconomyParticipantBindingStore participantBindings;
     private final Map<String, Character> bindings = new ConcurrentHashMap<>();
     private final java.util.Set<String> offscreen = ConcurrentHashMap.newKeySet();
 
@@ -35,7 +37,7 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort {
                                      String catalogRevision, AgentDirectory agents,
                                      MarketBehavior market, ActivityPlanner activity,
                                      OffscreenPresence presence, CosmicFarmSettlementService settlement,
-                                     TaxPolicy taxPolicy) {
+                                     TaxPolicy taxPolicy, EconomyParticipantBindingStore participantBindings) {
         this.runId = Objects.requireNonNull(runId); this.channelId = channelId;
         this.configRevision = Objects.requireNonNull(configRevision);
         this.catalogRevision = Objects.requireNonNull(catalogRevision);
@@ -43,6 +45,7 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort {
         this.activity = Objects.requireNonNull(activity); this.presence = Objects.requireNonNull(presence);
         this.settlement = Objects.requireNonNull(settlement);
         this.taxPolicy = Objects.requireNonNull(taxPolicy);
+        this.participantBindings = Objects.requireNonNull(participantBindings);
     }
 
     @Override
@@ -51,6 +54,12 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort {
         requireLiveFm(agent, true);
         if (bindings.putIfAbsent(profile.agentId(), agent) != null)
             throw new IllegalStateException("economy agent already bound: " + profile.agentId());
+        try {
+            participantBindings.bind(runId, profile.agentId(), agent.getId(), logicalAt);
+        } catch (RuntimeException failure) {
+            bindings.remove(profile.agentId(), agent);
+            throw failure;
+        }
     }
 
     @Override
@@ -121,7 +130,7 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort {
                                                String reason, String activityId) {
         String decision = runId + ":" + profile.agentId() + ":" + logicalAt + ":" + reason;
         return new EconomyOperationMetadata(runId, logicalAt, decision, activityId, configRevision,
-                catalogRevision, reason, true, false, taxPolicy.at(logicalAt));
+                catalogRevision, reason, true, "MARKET_CYCLE".equals(reason), taxPolicy.at(logicalAt));
     }
 
     @FunctionalInterface public interface AgentDirectory { Character resolve(String logicalAgentId); }
