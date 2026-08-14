@@ -177,12 +177,9 @@ ambient:
     sit:
       enabled: true
       weight: 15
-    browse:
+    fidget:
       enabled: true
       weight: 25
-    publicChat:
-      enabled: true
-      weight: 10
 
 persistence:
   provider: POSTGRESQL

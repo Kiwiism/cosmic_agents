@@ -198,12 +198,15 @@ public final class EconomyConfigValidator {
     }
 
     private static void validateAmbient(EconomyEngineConfig.Ambient ambient) {
+        Set<String> supportedModules = Set.of("idle", "walk", "sit", "fidget");
         require(ambient.maximumConsecutiveActions >= 0,
                 "maximumConsecutiveActions must be non-negative");
         require(ambient.modules != null && !ambient.modules.isEmpty(),
                 "ambient modules are required");
         for (Map.Entry<String, EconomyEngineConfig.AmbientModule> entry : ambient.modules.entrySet()) {
             requireText(entry.getKey(), "ambient module name");
+            require(supportedModules.contains(entry.getKey()),
+                    "unsupported ambient module: " + entry.getKey());
             require(entry.getValue() != null && entry.getValue().weight >= 0,
                     "ambient module weights must be non-negative");
         }

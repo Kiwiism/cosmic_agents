@@ -30,6 +30,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
     private final CosmicMarketSellerPlanReader sellerPlans;
     private final CosmicMarketSellerGateway seller;
     private final ResourceProcurement procurement;
+    private final AmbientBehavior ambient;
     private final ObservedPurchasePolicy purchasePolicy = new ObservedPurchasePolicy();
     private final RoomVisitPlanner roomPlanner = new RoomVisitPlanner();
     private final Duration actionPoll;
@@ -48,7 +49,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
                                         Duration maximumStallDuration) {
         this(runId, configHash, catalogVersion, config, random, physical, needs,
                 (agent, profile, observations, base, at) -> base, journal, sellerPlans, seller,
-                procurement, actionPoll, postTripDelay, maximumStallDuration);
+                procurement, AmbientBehavior.disabled(), actionPoll, postTripDelay, maximumStallDuration);
     }
 
     public AutonomousFreeMarketBehavior(UUID runId, String configHash, String catalogVersion,
@@ -59,6 +60,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
                                         CosmicMarketSellerPlanReader sellerPlans,
                                         CosmicMarketSellerGateway seller,
                                         ResourceProcurement procurement,
+                                        AmbientBehavior ambient,
                                         Duration actionPoll, Duration postTripDelay,
                                         Duration maximumStallDuration) {
         this.runId = Objects.requireNonNull(runId); this.configHash = Objects.requireNonNull(configHash);
@@ -68,6 +70,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
         this.journal = Objects.requireNonNull(journal);
         this.sellerPlans = Objects.requireNonNull(sellerPlans); this.seller = Objects.requireNonNull(seller);
         this.procurement = Objects.requireNonNull(procurement);
+        this.ambient = Objects.requireNonNull(ambient);
         if (actionPoll.isNegative() || actionPoll.isZero() || postTripDelay.isNegative()
                 || maximumStallDuration.isNegative() || maximumStallDuration.isZero())
             throw new IllegalArgumentException("market timing must be non-negative and polling positive");
@@ -155,8 +158,20 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
             if (agent.getPlayerShop() == null || !agent.getPlayerShop().isOpen())
                 return finish(profile.agentId(), logicalAt);
             if (logicalAt.isBefore(state.stallOpenedAt.plus(maximumStallDuration))) {
+                AmbientBehavior.Result result = ambient.perform(agent, profile, logicalAt,
+                        true, false, state.consecutiveAmbientActions);
+                if (result.attempted()) {
+                    state.consecutiveAmbientActions = result.success()
+                            ? state.consecutiveAmbientActions + 1 : 0;
+                    appendDecision(profile, logicalAt, "AMBIENT_MARKET_ACTION",
+                            Map.of("action", result.action(), "success", result.success()), List.of(),
+                            result.evidence(), Map.of("reason", result.reason(),
+                                    "chairItemId", result.chairItemId() == null ? 0 : result.chairItemId()), Map.of());
+                } else state.consecutiveAmbientActions = 0;
+                Instant next = logicalAt.plus(actionPoll);
+                Instant closeAt = state.stallOpenedAt.plus(maximumStallDuration);
                 return new EconomyWorldPort.MarketDirective(Optional.empty(),
-                        Optional.of(state.stallOpenedAt.plus(maximumStallDuration)), false);
+                        Optional.of(next.isBefore(closeAt) ? next : closeAt), false);
             }
             boolean closed = seller.close(agent, "MAXIMUM_LISTING_DURATION");
             appendDecision(profile, logicalAt, "STALL_CLOSED", Map.of("closed", closed),
@@ -200,6 +215,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
         value.put("attemptedResourceItems", state.attemptedResourceItems.stream().sorted().toList());
         value.put("sellerPlan", state.sellerPlan == null ? Map.of() : sellerPlanMap(state.sellerPlan));
         value.put("npcSaleIndex", state.npcSaleIndex); value.put("openAttempts", state.openAttempts);
+        value.put("consecutiveAmbientActions", state.consecutiveAmbientActions);
         if (state.stallOpenedAt != null) value.put("stallOpenedAt", state.stallOpenedAt.toString());
         return value;
     }
@@ -223,6 +239,8 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
         state.sellerPlan = plan == null || plan.isEmpty() ? null : sellerPlanFrom(plan);
         state.npcSaleIndex = integer(value, "npcSaleIndex");
         state.openAttempts = integer(value, "openAttempts");
+        state.consecutiveAmbientActions = value.containsKey("consecutiveAmbientActions")
+                ? integer(value, "consecutiveAmbientActions") : 0;
         if (value.containsKey("stallOpenedAt")) state.stallOpenedAt = Instant.parse(text(value, "stallOpenedAt"));
         if (state.phase.ordinal() >= Phase.DISPOSING.ordinal() && state.sellerPlan == null)
             throw new IllegalStateException("restored market phase requires a seller plan");
@@ -339,6 +357,16 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
                                List<MarketObservation> observations, List<AgentNeed> base,
                                Instant logicalAt);
     }
+    @FunctionalInterface public interface AmbientBehavior {
+        Result perform(Character agent, EconomyAgentProfile profile, Instant logicalAt,
+                       boolean ownsOpenStall, boolean negotiating, int consecutiveActions);
+        static AmbientBehavior disabled() { return (agent, profile, at, stall, negotiating, count) -> Result.none(); }
+        record Result(boolean attempted, boolean success, String action, String reason,
+                      Integer chairItemId, Map<String, Object> evidence) {
+            public Result { evidence = evidence == null ? Map.of() : Map.copyOf(evidence); }
+            public static Result none() { return new Result(false, false, "NONE", "", null, Map.of()); }
+        }
+    }
     private EconomyWorldPort.MarketDirective revisit(Instant at, boolean externalPending) {
         return new EconomyWorldPort.MarketDirective(Optional.empty(), Optional.of(at.plus(actionPoll)),
                 externalPending);
@@ -361,6 +389,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
         private MarketSellerPlan sellerPlan;
         private int npcSaleIndex;
         private int openAttempts;
+        private int consecutiveAmbientActions;
         private Instant stallOpenedAt;
         private State(PrivateMarketKnowledge knowledge, PhysicalMarketTrip trip) {
             this.knowledge = knowledge; this.trip = trip;
