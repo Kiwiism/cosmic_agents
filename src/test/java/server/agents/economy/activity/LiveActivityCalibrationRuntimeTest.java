@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -23,6 +24,7 @@ class LiveActivityCalibrationRuntimeTest {
         when(agent.getLevel()).thenReturn(25);
         when(agent.getJob()).thenReturn(Job.FIGHTER);
         LiveActivityCalibrationRuntime.begin(agent, "build-1", 1_000);
+        assertTrue(LiveActivityCalibrationRuntime.activeCharacterIds().contains(123));
         LiveActivityCalibrationRuntime.observe(new AgentMobKilledEvent(
                 123, 2_000, 100040001, 2230101, 1, 22, "grind"));
         LiveActivityCalibrationRuntime.observe(new AgentItemQuantityChangedEvent(
@@ -35,6 +37,7 @@ class LiveActivityCalibrationRuntimeTest {
         assertEquals(1, sample.consumedItems().get(2000001));
         assertEquals("warrior", sample.jobFamily());
         assertEquals(sample, written.get());
+        assertTrue(LiveActivityCalibrationRuntime.activeCharacterIds().stream().noneMatch(id -> id == 123));
     }
 
     @Test

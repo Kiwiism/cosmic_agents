@@ -20,6 +20,10 @@
    calibration means no farm simulation. When `activity.allowDeath` is enabled, only the observed
    cohort death rate can end a logical trip; a death ends that trip rather than permitting synthetic
    repeated-death loops.
+   For a real multi-agent calibration cohort already farming on one map, use
+   `!economy calibration start-all <map-id>` and `!economy calibration stop-all <map-id> [died]`.
+   These batch commands only observe live autonomous characters on that exact map; they do not move,
+   equip, heal, reward, or otherwise mutate the cohort.
 6. Ensure every configured stall owner legitimately possesses the configured real PlayerShop permit.
    The baseline uses WZ item `5140000`, Regular Store Permit (16 listings). In v83 this is a Cash
    Shop item and is neither a mob drop nor normal NPC stock. `503xxxx` items are Hired Merchants and

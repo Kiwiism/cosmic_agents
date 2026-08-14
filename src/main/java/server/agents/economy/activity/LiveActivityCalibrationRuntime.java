@@ -7,6 +7,7 @@ import server.agents.resources.events.AgentItemQuantityChangedEvent;
 
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -47,6 +48,10 @@ public final class LiveActivityCalibrationRuntime {
         Session session = agent == null ? null : ACTIVE.get(agent.getId());
         return session == null ? null : new Status(session.build, session.mapId, session.level,
                 session.job, Instant.ofEpochMilli(session.startedAt));
+    }
+
+    public static List<Integer> activeCharacterIds() {
+        return ACTIVE.keySet().stream().sorted().toList();
     }
 
     public record Status(String agentBuild, int mapId, int level,

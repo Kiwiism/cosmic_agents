@@ -70,7 +70,8 @@ public final class EconomyCommand extends Command {
                     + "| resume <run-uuid> "
                     + "| advance <non-negative-days> | audit | complete | fail <reason> | status | stop "
                     + "| experiment plan <manifest-path> | experiment next <experiment-id> "
-                    + "| calibration start|stop|status <agent-character-id> [died]");
+                    + "| calibration start|stop|status <agent-character-id> [died] "
+                    + "| calibration start-all|stop-all <map-id> [died]");
         } catch (RuntimeException failure) {
             client.getPlayer().yellowMessage("Economy command failed: "
                     + (failure.getMessage() == null ? failure.getClass().getSimpleName() : failure.getMessage()));
@@ -132,7 +133,17 @@ public final class EconomyCommand extends Command {
     private static void calibration(Client client, String[] params) {
         if (params.length < 3) {
             client.getPlayer().yellowMessage(
-                    "Usage: !economy calibration start|stop|status <agent-character-id> [died]");
+                    "Usage: !economy calibration start|stop|status <agent-character-id> [died] "
+                            + "| start-all|stop-all <map-id> [died]");
+            return;
+        }
+        if ("start-all".equalsIgnoreCase(params[1])) {
+            startAllCalibrations(client, Integer.parseInt(params[2]));
+            return;
+        }
+        if ("stop-all".equalsIgnoreCase(params[1])) {
+            boolean died = params.length > 3 && Boolean.parseBoolean(params[3]);
+            stopAllCalibrations(client, Integer.parseInt(params[2]), died);
             return;
         }
         int characterId = Integer.parseInt(params[2]);
@@ -167,5 +178,48 @@ public final class EconomyCommand extends Command {
             return;
         }
         throw new IllegalArgumentException("calibration action must be start, stop, or status");
+    }
+
+    private static void startAllCalibrations(Client client, int mapId) {
+        var config = new EconomyConfigLoader().load().config();
+        var agents = liveAgentsOnMap(mapId);
+        int started = 0;
+        for (Character agent : agents) {
+            if (LiveActivityCalibrationRuntime.status(agent) != null) continue;
+            LiveActivityCalibrationRuntime.begin(agent, config.activity.agentBuild, System.currentTimeMillis());
+            started++;
+        }
+        client.getPlayer().yellowMessage("Calibration batch started=" + started + " eligible="
+                + agents.size() + " map=" + mapId + " build=" + config.activity.agentBuild);
+    }
+
+    private static void stopAllCalibrations(Client client, int mapId, boolean died) {
+        var config = new EconomyConfigLoader().load().config();
+        var agents = liveAgentsOnMap(mapId).stream()
+                .filter(agent -> LiveActivityCalibrationRuntime.status(agent) != null).toList();
+        int saved = 0;
+        int failed = 0;
+        try (HikariDataSource database = EconomyPostgresDataSource.fromEnvironment()) {
+            new EconomyDatabaseVerifier(database).verify(config.persistence.database);
+            JdbcActivityCalibrationStore store = new JdbcActivityCalibrationStore(database);
+            for (Character agent : agents) {
+                try {
+                    LiveActivityCalibrationRuntime.end(agent, died, System.currentTimeMillis(), store);
+                    saved++;
+                } catch (RuntimeException failure) {
+                    failed++;
+                }
+            }
+        }
+        client.getPlayer().yellowMessage("Calibration batch saved=" + saved + " failed=" + failed
+                + " map=" + mapId + " died=" + died);
+    }
+
+    private static java.util.List<Character> liveAgentsOnMap(int mapId) {
+        if (mapId <= 0) throw new IllegalArgumentException("map-id must be positive");
+        return AgentRuntimeRegistry.activeEntriesSnapshot().stream()
+                .map(AgentRuntimeEntry::bot).filter(java.util.Objects::nonNull)
+                .filter(agent -> agent.getMapId() == mapId)
+                .sorted(java.util.Comparator.comparingInt(Character::getId)).toList();
     }
 }
