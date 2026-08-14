@@ -106,11 +106,13 @@ market:
   maximumStallsPerAgent: 1
   maximumListingsPerStall: 16
   hiredMerchantsEnabled: false
-  barterEnabled: false
+  barterEnabled: true
   sellerMustRemainAtStall: true
   maximumListingDuration: PT4H
   minimumRepriceInterval: PT30M
   maximumReprices: 6
+  coldStartNpcMarkupMinimum: 0.15
+  coldStartNpcMarkupMaximum: 0.75
   actionPoll: PT5S
   postTripDelay: PT15M
   portalTimeout: PT30S

@@ -196,6 +196,11 @@ public final class EconomyConfigValidator {
         require(market.interactionRangePixels > 0 && market.approachRangePixels > 0,
                 "market physical ranges must be positive");
         require(market.maximumReprices >= 0, "maximumReprices must be non-negative");
+        require(Double.isFinite(market.coldStartNpcMarkupMinimum)
+                        && Double.isFinite(market.coldStartNpcMarkupMaximum)
+                        && market.coldStartNpcMarkupMinimum >= 0
+                        && market.coldStartNpcMarkupMaximum >= market.coldStartNpcMarkupMinimum,
+                "cold-start NPC markups must be finite, non-negative, and ordered");
         require(market.useCosmicTransactions,
                 "Live market settlement must use Cosmic transactions");
         require(market.rejectSelfTrade, "Self trading must be rejected");

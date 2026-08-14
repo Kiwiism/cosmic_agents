@@ -23,11 +23,35 @@ public final class CosmicMarketSellerPlanReader {
     private final int maximumListings;
     private final int permitItemId;
     private final ItemDispositionPolicy disposition = new ItemDispositionPolicy();
+    private final double coldStartMarkupMinimum;
+    private final double coldStartMarkupMaximum;
+    private final NpcPriceCatalog npcPrices;
 
     public CosmicMarketSellerPlanReader(EconomyCatalog catalog, int dispositionNpcId,
                                         int maximumListings, int permitItemId) {
+        this(catalog, dispositionNpcId, maximumListings, permitItemId, .15, .75);
+    }
+
+    public CosmicMarketSellerPlanReader(EconomyCatalog catalog, int dispositionNpcId,
+                                        int maximumListings, int permitItemId,
+                                        double coldStartMarkupMinimum, double coldStartMarkupMaximum) {
+        this(catalog, dispositionNpcId, maximumListings, permitItemId, coldStartMarkupMinimum,
+                coldStartMarkupMaximum, (itemId, quantity) -> Math.max(0,
+                        ItemInformationProvider.getInstance().getPrice(itemId, quantity)));
+    }
+
+    CosmicMarketSellerPlanReader(EconomyCatalog catalog, int dispositionNpcId,
+                                 int maximumListings, int permitItemId,
+                                 double coldStartMarkupMinimum, double coldStartMarkupMaximum,
+                                 NpcPriceCatalog npcPrices) {
         this.catalog = Objects.requireNonNull(catalog); this.dispositionNpcId = dispositionNpcId;
         this.maximumListings = maximumListings; this.permitItemId = permitItemId;
+        if (!Double.isFinite(coldStartMarkupMinimum) || !Double.isFinite(coldStartMarkupMaximum)
+                || coldStartMarkupMinimum < 0 || coldStartMarkupMaximum < coldStartMarkupMinimum)
+            throw new IllegalArgumentException("cold-start markups must be finite, non-negative, and ordered");
+        this.coldStartMarkupMinimum = coldStartMarkupMinimum;
+        this.coldStartMarkupMaximum = coldStartMarkupMaximum;
+        this.npcPrices = Objects.requireNonNull(npcPrices);
     }
 
     public MarketSellerPlan read(Character agent, EconomyAgentProfile profile,
@@ -39,21 +63,26 @@ public final class CosmicMarketSellerPlanReader {
         List<MarketSellerPlan.NpcSale> npcSales = new ArrayList<>();
         List<AgentFreeMarketStallService.Listing> listings = new ArrayList<>();
         Duration memory = Duration.ofHours(profile.priceMemoryHours());
-        ItemInformationProvider information = ItemInformationProvider.getInstance();
         for (InventoryType type : List.of(InventoryType.EQUIP, InventoryType.USE,
                 InventoryType.SETUP, InventoryType.ETC)) {
             for (Item item : agent.getInventory(type).list()) {
                 if (item.getQuantity() <= 0 || item.getItemId() == permitItemId
                         || reserved.contains(item.getItemId())) continue;
                 long market = knowledge.observedMedianAsk(item.getItemId(), now, memory);
-                long npc = Math.max(0, information.getPrice(item.getItemId(), 1));
+                long npc = npcPrices.price(item.getItemId(), 1);
                 boolean scarce = catalog.item(item.getItemId()).map(fact -> fact.categories().stream().anyMatch(
                         category -> category == ItemCategory.EQUIPMENT || category == ItemCategory.EQUIP_SCROLL
                                 || category == ItemCategory.CHAIR || category == ItemCategory.QUEST_ITEM)).orElse(false);
-                if (market == 0 && scarce) continue;
+                long coldStartAsk = market == 0 && scarce && npc > 0
+                        ? coldStartAsk(npc, profile) : 0;
+                if (market == 0 && scarce && coldStartAsk == 0) continue;
                 double saleProbability = Math.min(.95,
                         knowledge.recentFor(item.getItemId(), now, memory).size() / 5d);
-                var choice = disposition.decide(new ItemDispositionPolicy.Input(0, npc, market,
+                var choice = coldStartAsk > 0
+                        ? new ItemDispositionPolicy.Decision(ItemDispositionPolicy.Action.LIST_AT_STALL,
+                        coldStartAsk, server.agents.economy.market.EconomicReason.NPC_FLOOR_DISPOSITION,
+                        "coldStartNpcFloor=" + npc + " sellerMarkup=" + (coldStartAsk / (double) npc - 1d))
+                        : disposition.decide(new ItemDispositionPolicy.Input(0, npc, market,
                         0, Math.max(1, npc / 20), saleProbability, false));
                 if (choice.action() == ItemDispositionPolicy.Action.LIST_AT_STALL
                         && listings.size() < maximumListings) {
@@ -74,6 +103,13 @@ public final class CosmicMarketSellerPlanReader {
         return new MarketSellerPlan(npcSales, listings, room, "Selling real finds - " + agent.getName());
     }
 
+    private long coldStartAsk(long npc, EconomyAgentProfile profile) {
+        double disposition = (profile.riskTolerance() + (1d - profile.liquidityPreference())) / 2d;
+        double markup = coldStartMarkupMinimum
+                + (coldStartMarkupMaximum - coldStartMarkupMinimum) * disposition;
+        return Math.max(npc + 1, Math.round(npc * (1d + markup)));
+    }
+
     private static short perBundle(Item item, PrivateMarketKnowledge knowledge,
                                    Instant now, Duration memory) {
         List<Integer> observed = knowledge.recentFor(item.getItemId(), now, memory).stream()
@@ -82,4 +118,6 @@ public final class CosmicMarketSellerPlanReader {
                 : observed.get(observed.size() / 2);
         return (short) Math.max(1, Math.min(item.getQuantity(), desired));
     }
+
+    @FunctionalInterface interface NpcPriceCatalog { long price(int itemId, int quantity); }
 }

@@ -127,6 +127,8 @@ public final class EconomyEngineConfig {
         public String maximumListingDuration;
         public String minimumRepriceInterval;
         public int maximumReprices;
+        public double coldStartNpcMarkupMinimum;
+        public double coldStartNpcMarkupMaximum;
         public String actionPoll;
         public String postTripDelay;
         public String portalTimeout;

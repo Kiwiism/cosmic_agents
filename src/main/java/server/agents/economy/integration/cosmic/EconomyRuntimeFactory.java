@@ -46,11 +46,13 @@ public final class EconomyRuntimeFactory {
                 config.bootstrap.shopPermitItemId, millis(config.market.stallOpenTimeout));
         CosmicMarketSellerPlanReader sellerPlans = new CosmicMarketSellerPlanReader(catalog,
                 config.npcCommerce.dispositionNpcId, config.market.maximumListingsPerStall,
-                config.bootstrap.shopPermitItemId);
+                config.bootstrap.shopPermitItemId, config.market.coldStartNpcMarkupMinimum,
+                config.market.coldStartNpcMarkupMaximum);
         CosmicNegotiatedTradeExecutor tradeExecutor = new CosmicNegotiatedTradeExecutor(
                 participants::admittedCharacter, config.market.interactionRangePixels);
         CosmicPublicTradeNegotiator negotiation = new CosmicPublicTradeNegotiator(runId, participants,
                 seller, tradeExecutor, evidenceJournal, new JdbcNegotiationEvidenceStore(economyDataSource),
+                config.market.barterEnabled, needReader::read,
                 duration(config.market.negotiationTimeout), config.market.interactionRangePixels);
         NamedRandomStreams marketRandom = new NamedRandomStreams(config.scenario.seed);
         CosmicMarketAmbientBehavior ambient = new CosmicMarketAmbientBehavior(
