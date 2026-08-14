@@ -30,6 +30,8 @@ import client.inventory.manipulator.InventoryManipulator;
 import client.inventory.manipulator.KarmaManipulator;
 import net.packet.Packet;
 import server.Trade;
+import server.economy.EconomyOperationKind;
+import server.economy.EconomyTransactionCoordinator;
 import tools.PacketCreator;
 import tools.Pair;
 
@@ -223,10 +225,6 @@ public class PlayerShop extends AbstractMapObject {
         items.remove(slot);
     }
 
-    private static boolean canBuy(Client c, Item newItem) {
-        return InventoryManipulator.checkSpace(c, newItem.getItemId(), newItem.getQuantity(), newItem.getOwner()) && InventoryManipulator.addFromDrop(c, newItem, false);
-    }
-
     public void takeItemBack(int slot, Character chr) {
         synchronized (items) {
             PlayerShopItem shopItem = items.get(slot);
@@ -285,12 +283,25 @@ public class PlayerShop extends AbstractMapObject {
                             return false;
                         }
 
-                        if (canBuy(c, newItem)) {
-                            c.getPlayer().gainMeso(-price, false);
-                            price -= Trade.getFee(price);  // thanks BHB for pointing out trade fees not applying here
-                            owner.gainMeso(price, true);
+                        if (InventoryManipulator.checkSpace(c, newItem.getItemId(),
+                                newItem.getQuantity(), newItem.getOwner())) {
+                            int grossPrice = price;
+                            int fee = Trade.getFee(grossPrice);
+                            int sellerProceeds = grossPrice - fee;
+                            String summary = "shop=" + getObjectId() + " item=" + newItem.getItemId()
+                                    + " quantity=" + newItem.getQuantity() + " bundles=" + quantity
+                                    + " gross=" + grossPrice + " fee=" + fee;
+                            EconomyTransactionCoordinator.execute(c.getPlayer(), owner,
+                                    EconomyOperationKind.PLAYER_SHOP_SALE, summary, () -> {
+                                        if (!InventoryManipulator.addFromDrop(c, newItem, false)) {
+                                            throw new IllegalStateException("PlayerShop inventory changed during purchase");
+                                        }
+                                        c.getPlayer().gainMeso(-grossPrice, false);
+                                        owner.gainMeso(sellerProceeds, true);
+                                    });
 
-                            SoldItem soldItem = new SoldItem(c.getPlayer().getName(), pItem.getItem().getItemId(), quantity, price);
+                            SoldItem soldItem = new SoldItem(c.getPlayer().getName(),
+                                    pItem.getItem().getItemId(), quantity, sellerProceeds);
                             owner.sendPacket(PacketCreator.getPlayerShopOwnerUpdate(soldItem, item));
 
                             synchronized (sold) {
@@ -571,6 +582,30 @@ public class PlayerShop extends AbstractMapObject {
         }
         return list;
     }
+
+    public int getOwnerId() {
+        return owner.getId();
+    }
+
+    public String getOwnerName() {
+        return owner.getName();
+    }
+
+    public List<ListingView> listingSnapshot() {
+        synchronized (items) {
+            List<ListingView> result = new ArrayList<>();
+            for (int slot = 0; slot < items.size(); slot++) {
+                PlayerShopItem item = items.get(slot);
+                if (item.isExist() && item.getBundles() > 0) {
+                    result.add(new ListingView(slot, item.getItem().getItemId(),
+                            item.getItem().getQuantity(), item.getBundles(), item.getPrice()));
+                }
+            }
+            return List.copyOf(result);
+        }
+    }
+
+    public record ListingView(int slot, int itemId, short perBundle, short bundles, int bundlePrice) { }
 
     public List<SoldItem> getSold() {
         synchronized (sold) {

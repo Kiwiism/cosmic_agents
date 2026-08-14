@@ -8,6 +8,8 @@ import config.YamlConfig;
 import constants.inventory.ItemConstants;
 import server.ItemInformationProvider;
 import server.ItemRestrictionPolicy;
+import server.economy.EconomyOperationKind;
+import server.economy.EconomyTransactionCoordinator;
 import server.maps.PlayerShop;
 import server.maps.PlayerShopItem;
 import server.maps.reservation.CharacterSpaceReservation;
@@ -76,14 +78,16 @@ public final class AgentFreeMarketStallService {
                 return Result.failed("agent stall capacity was exceeded");
             }
         }
-        for (PreparedListing listing : prepared) {
-            InventoryManipulator.removeFromSlot(
-                    agent.getClient(),
-                    listing.inventoryType(),
-                    listing.slot(),
-                    listing.removalQuantity(),
-                    true);
-        }
+        String summary = "map=" + agent.getMapId() + " listings=" + prepared.size()
+                + " items=" + prepared.stream().map(listing ->
+                listing.shopItem().getItem().getItemId() + "x" + listing.removalQuantity()).toList();
+        EconomyTransactionCoordinator.execute(agent, null, EconomyOperationKind.PLAYER_SHOP_LIST,
+                summary, () -> {
+                    for (PreparedListing listing : prepared) {
+                        InventoryManipulator.removeFromSlot(agent.getClient(), listing.inventoryType(),
+                                listing.slot(), listing.removalQuantity(), true);
+                    }
+                });
 
         agent.setPlayerShop(shop);
         agent.getMap().addMapObject(shop);
