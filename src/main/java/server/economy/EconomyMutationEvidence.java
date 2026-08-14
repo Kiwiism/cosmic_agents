@@ -52,8 +52,12 @@ public record EconomyMutationEvidence(List<ParticipantDelta> participants) {
                         fact.attributes));
             }
         }
+        CharacterProgression oldProgression = progression(before);
+        CharacterProgression newProgression = progression(after);
         return new ParticipantDelta(before.characterId(), before.mesos(), after.mesos(),
-                Math.subtractExact(after.mesos(), before.mesos()), changes);
+                Math.subtractExact(after.mesos(), before.mesos()), oldProgression.level,
+                newProgression.level, oldProgression.experience, newProgression.experience,
+                changes);
     }
 
     private static Map<String, Holding> holdings(EconomyParticipantSnapshot snapshot) {
@@ -102,8 +106,16 @@ public record EconomyMutationEvidence(List<ParticipantDelta> participants) {
         }
     }
 
+    private static CharacterProgression progression(EconomyParticipantSnapshot snapshot) {
+        var value = snapshot.progression();
+        return value == null ? new CharacterProgression(0, 0)
+                : new CharacterProgression(value.level(), value.experience());
+    }
+
     public record ParticipantDelta(int characterId, int mesoBefore, int mesoAfter,
-                                   int mesoDelta, List<ItemDelta> itemDeltas) {
+                                   int mesoDelta, int levelBefore, int levelAfter,
+                                   int experienceBefore, int experienceAfter,
+                                   List<ItemDelta> itemDeltas) {
         public ParticipantDelta { itemDeltas = List.copyOf(itemDeltas); }
     }
     public record ItemDelta(int itemId, String inventoryType, String fingerprint,
@@ -113,4 +125,5 @@ public record EconomyMutationEvidence(List<ParticipantDelta> participants) {
     }
     private record Holding(int itemId, String inventoryType, String fingerprint, int quantity,
                            Map<String, Object> attributes) { }
+    private record CharacterProgression(int level, int experience) { }
 }

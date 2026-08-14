@@ -9373,6 +9373,63 @@ public class Character extends AbstractCharacterObject {
         markPersistenceDirty(PersistenceSection.STATS);
     }
 
+    /** Small complete snapshot of fields mutated by EXP/level-up settlement. */
+    public record EconomyProgressionSnapshot(int level, int experience, int str, int dex, int intelligence,
+                                             int luk, int hp, int mp, int maxHp, int maxMp,
+                                             int remainingAp, int[] remainingSp, long lastExpGainTime) {
+        public EconomyProgressionSnapshot {
+            remainingSp = Arrays.copyOf(remainingSp, remainingSp.length);
+        }
+        @Override public int[] remainingSp() { return Arrays.copyOf(remainingSp, remainingSp.length); }
+    }
+
+    public EconomyProgressionSnapshot captureEconomyProgression() {
+        effLock.lock();
+        statRlock.lock();
+        try {
+            return new EconomyProgressionSnapshot(level, exp.get(), str, dex, int_, luk, hp, mp,
+                    maxhp, maxmp, remainingAp, remainingSp, lastExpGainTime);
+        } finally {
+            statRlock.unlock();
+            effLock.unlock();
+        }
+    }
+
+    public void restoreEconomyProgression(EconomyProgressionSnapshot snapshot) {
+        effLock.lock();
+        statWlock.lock();
+        try {
+            level = snapshot.level(); exp.set(snapshot.experience()); str = snapshot.str();
+            dex = snapshot.dex(); int_ = snapshot.intelligence(); luk = snapshot.luk();
+            hp = snapshot.hp(); mp = snapshot.mp(); maxhp = snapshot.maxHp(); maxmp = snapshot.maxMp();
+            remainingAp = snapshot.remainingAp(); remainingSp = snapshot.remainingSp();
+            lastExpGainTime = snapshot.lastExpGainTime();
+        } finally {
+            statWlock.unlock();
+            effLock.unlock();
+        }
+        recalcLocalStats();
+    }
+
+    public void persistEconomyProgression(Connection connection, EconomyProgressionSnapshot snapshot)
+            throws SQLException {
+        String sql = "UPDATE characters SET level = ?, exp = ?, str = ?, dex = ?, `int` = ?, luk = ?, "
+                + "hp = ?, mp = ?, maxhp = ?, maxmp = ?, ap = ?, sp = ?, lastExpGainTime = ? WHERE id = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, snapshot.level()); statement.setInt(2, snapshot.experience());
+            statement.setInt(3, snapshot.str()); statement.setInt(4, snapshot.dex());
+            statement.setInt(5, snapshot.intelligence()); statement.setInt(6, snapshot.luk());
+            statement.setInt(7, snapshot.hp()); statement.setInt(8, snapshot.mp());
+            statement.setInt(9, snapshot.maxHp()); statement.setInt(10, snapshot.maxMp());
+            statement.setInt(11, snapshot.remainingAp());
+            statement.setString(12, Arrays.stream(snapshot.remainingSp()).mapToObj(Integer::toString)
+                    .collect(Collectors.joining(",")));
+            statement.setTimestamp(13, new Timestamp(snapshot.lastExpGainTime()));
+            statement.setInt(14, id);
+            if (statement.executeUpdate() != 1) throw new SQLException("Economy participant no longer exists: " + id);
+        }
+    }
+
     public void setGachaExp(int amount) {
         this.gachaexp.set(amount);
         markPersistenceDirty(PersistenceSection.STATS);

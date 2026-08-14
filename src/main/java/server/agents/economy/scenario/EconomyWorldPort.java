@@ -5,6 +5,7 @@ import server.agents.economy.activity.FarmSessionPlan;
 
 import java.time.Instant;
 import java.util.Optional;
+import java.util.function.LongSupplier;
 
 /** Replaceable live/headless boundary. Implementations must use real Cosmic rules and holdings. */
 public interface EconomyWorldPort {
@@ -17,7 +18,7 @@ public interface EconomyWorldPort {
     void leaveFreeMarket(EconomyAgentProfile profile, FarmSessionPlan plan, Instant logicalAt);
 
     void settleOffscreenActivity(EconomyAgentProfile profile, FarmSessionOutcome outcome,
-                                 Instant logicalAt);
+                                 Instant logicalAt, LongSupplier deterministicGameplayRandom);
 
     void returnThroughFreeMarketEntrance(EconomyAgentProfile profile, Instant logicalAt);
 

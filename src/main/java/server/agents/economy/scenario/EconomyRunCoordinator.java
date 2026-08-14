@@ -89,7 +89,8 @@ public final class EconomyRunCoordinator {
         if (!state.pendingActivity.sessionId().equals(event.parameters().get("sessionId")))
             throw new IllegalStateException("activity completion does not match pending session");
         FarmSessionOutcome outcome = resolver.resolve(state.pendingActivity, engine.randomStreams());
-        world.settleOffscreenActivity(state.profile, outcome, event.dueAt());
+        world.settleOffscreenActivity(state.profile, outcome, event.dueAt(),
+                engine.randomStreams().stream("agent." + event.subjectId() + ".progression")::nextLong);
         journal.activityCompleted(engine.runId(), outcome);
         journal.stateChanged(engine.runId(), event.subjectId(), Status.RETURNING_TO_FM,
                 null, event.dueAt());

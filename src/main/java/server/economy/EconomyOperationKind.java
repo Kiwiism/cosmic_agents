@@ -6,5 +6,6 @@ public enum EconomyOperationKind {
     SHOP_RECHARGE,
     PLAYER_SHOP_LIST,
     PLAYER_SHOP_SALE,
-    PLAYER_TRADE
+    PLAYER_TRADE,
+    OFFSCREEN_FARM_SETTLEMENT
 }

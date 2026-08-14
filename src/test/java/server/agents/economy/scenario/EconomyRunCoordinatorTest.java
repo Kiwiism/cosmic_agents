@@ -83,7 +83,8 @@ class EconomyRunCoordinatorTest {
         public void leaveFreeMarket(EconomyAgentProfile profile, FarmSessionPlan plan, Instant at) {
             actions.add("leave");
         }
-        public void settleOffscreenActivity(EconomyAgentProfile profile, FarmSessionOutcome value, Instant at) {
+        public void settleOffscreenActivity(EconomyAgentProfile profile, FarmSessionOutcome value, Instant at,
+                                            java.util.function.LongSupplier random) {
             actions.add("settle");
             outcome = value;
         }

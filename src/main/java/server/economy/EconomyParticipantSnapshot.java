@@ -18,12 +18,14 @@ final class EconomyParticipantSnapshot {
     private final Character participant;
     private final int mesos;
     private final Map<InventoryType, Inventory> inventories;
+    private final Character.EconomyProgressionSnapshot progression;
 
     private EconomyParticipantSnapshot(Character participant, int mesos,
                                        Map<InventoryType, Inventory> inventories) {
         this.participant = participant;
         this.mesos = mesos;
         this.inventories = inventories;
+        this.progression = participant.captureEconomyProgression();
     }
 
     static EconomyParticipantSnapshot capture(Character participant) {
@@ -53,6 +55,7 @@ final class EconomyParticipantSnapshot {
         if (mesoDelta != 0) {
             participant.gainMeso(mesoDelta, false, false, false);
         }
+        participant.restoreEconomyProgression(progression);
     }
 
     void persist(Connection connection) throws SQLException {
@@ -72,6 +75,7 @@ final class EconomyParticipantSnapshot {
             }
         }
         ItemFactory.INVENTORY.saveItems(items, participant.getId(), connection);
+        participant.persistEconomyProgression(connection, progression);
     }
 
     void disconnectNetworkSession() {
@@ -83,4 +87,5 @@ final class EconomyParticipantSnapshot {
     int characterId() { return participant.getId(); }
     int mesos() { return mesos; }
     Map<InventoryType, Inventory> inventories() { return inventories; }
+    Character.EconomyProgressionSnapshot progression() { return progression; }
 }
