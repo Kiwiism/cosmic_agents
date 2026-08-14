@@ -84,6 +84,9 @@ npcCommerce:
 
 activity:
   executionMode: RULE_EXACT
+  agentBuild: cosmic-autonomous-v1
+  mapCatalogResource: /agents/catalogs/adaptive/victoria-map-facts.json
+  minimumCalibrationSamples: 5
   visibleWhileActive: false
   returnThroughFreeMarketEntrance: true
   medianSessionMinutes: 90

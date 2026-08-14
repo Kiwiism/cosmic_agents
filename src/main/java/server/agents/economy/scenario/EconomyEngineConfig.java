@@ -99,6 +99,9 @@ public final class EconomyEngineConfig {
 
     public static final class Activity {
         public String executionMode;
+        public String agentBuild;
+        public String mapCatalogResource;
+        public int minimumCalibrationSamples;
         public boolean visibleWhileActive;
         public boolean returnThroughFreeMarketEntrance;
         public int medianSessionMinutes;

@@ -72,6 +72,10 @@ public final class EconomyConfigValidator {
                 "npcCommerce.dispositionNpcId must identify a configured real shop NPC");
 
         requireEnum(config.activity.executionMode, ACTIVITY_MODES, "activity.executionMode");
+        requireText(config.activity.agentBuild, "activity.agentBuild");
+        requireText(config.activity.mapCatalogResource, "activity.mapCatalogResource");
+        require(config.activity.minimumCalibrationSamples > 0,
+                "activity.minimumCalibrationSamples must be positive");
         require(config.activity.medianSessionMinutes > 0,
                 "medianSessionMinutes must be positive");
         require(config.activity.maximumSessionMinutes >= config.activity.medianSessionMinutes,
