@@ -17,6 +17,8 @@ public record DecisionEvidence(UUID decisionId, UUID runId, String agentId, Inst
                 || configHash == null || catalogVersion == null) throw new IllegalArgumentException();
         chosenAction = Map.copyOf(chosenAction);
         alternatives = alternatives == null ? List.of() : List.copyOf(alternatives);
+        if (alternatives.isEmpty())
+            throw new IllegalArgumentException("decision evidence requires at least one rejected alternative");
         beliefsUsed = beliefsUsed == null ? Map.of() : Map.copyOf(beliefsUsed);
         needsUsed = needsUsed == null ? Map.of() : Map.copyOf(needsUsed);
         utilityBreakdown = utilityBreakdown == null ? Map.of() : Map.copyOf(utilityBreakdown);

@@ -107,7 +107,8 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
                 appendDecision(profile, logicalAt, "QUEST_" + quest.action(),
                         Map.of("success", quest.success(), "questId", quest.questId(),
                                 "npcId", quest.npcId(), "selection", quest.selection() == null
-                                        ? -1 : quest.selection()), List.of(), quest.evidence(),
+                                        ? -1 : quest.selection()), alternatives("DEFER_QUEST",
+                                "Preserve current quest capacity and reconsider next market cycle"), quest.evidence(),
                         Map.of("reason", "ELIGIBLE_REAL_COSMIC_QUEST"), Map.of());
                 return revisitAfter(logicalAt, npcServiceDelay, !quest.success());
             }
@@ -121,7 +122,8 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
                 appendDecision(profile, logicalAt, "NPC_RESOURCE_PROCUREMENT",
                         Map.of("itemId", result.itemId(), "quantity", result.quantity(),
                                 "npcId", result.npcId(), "result", result.result(),
-                                "commerceAction", result.commerceAction()), List.of(),
+                                "commerceAction", result.commerceAction()), alternatives("DEFER_RESOURCE_PURCHASE",
+                                "Keep mesos liquid and accept a shorter activity runway"),
                         Map.of("sourceMap", result.sourceMapId()),
                         Map.of("reason", "CONFIGURED_RESOURCE_TARGET"),
                         Map.of("mesoDelta", (double) result.mesoDelta()));
@@ -142,7 +144,8 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
                             Map.of("success", scrolled.success(), "outcome", scrolled.outcome(),
                                     "scrollItemId", scrolled.scrollItemId(),
                                     "equipmentItemId", scrolled.equipmentItemId()),
-                            List.of(), scrolled.evidence(),
+                            alternatives("HOLD_SCROLL_PROJECT",
+                                    "Retain the owned scroll and equipment for a later cycle"), scrolled.evidence(),
                             Map.of("reason", "SCROLL_UPGRADE"), Map.of());
                     return revisit(logicalAt, !scrolled.success());
                 }
@@ -150,7 +153,8 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
                         currentNeeds, state.knowledge.snapshot(), logicalAt);
                 if (negotiated.attempted()) appendDecision(profile, logicalAt, "PUBLIC_NEGOTIATION",
                         Map.of("sessionId", negotiated.sessionId(), "outcome", negotiated.outcome(),
-                                "success", negotiated.success()), List.of(), negotiated.evidence(),
+                                "success", negotiated.success()), alternatives("WALK_AWAY",
+                                "Keep searching observed PlayerShop listings"), negotiated.evidence(),
                         Map.of("itemId", negotiated.itemId()), Map.of("offeredMesos", (double) negotiated.offeredMesos()));
                 state.sellerPlan = sellerPlans.read(agent, profile, state.knowledge, currentNeeds, logicalAt);
                 if (!seller.hasPlayerShopPermit(agent)
@@ -164,7 +168,9 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
             }
             if (step.status() == PhysicalMarketTrip.Status.BLOCKED) {
                 appendDecision(profile, logicalAt, "MARKET_TRIP_BLOCKED", Map.of("room", step.roomMapId()),
-                        List.of(), Map.of(), Map.of(), Map.of("result", 0d));
+                        alternatives("RETRY_NEXT_MARKET_CYCLE",
+                                "Release the blocked physical route and re-plan rooms"),
+                        Map.of(), Map.of(), Map.of("result", 0d));
             }
             return revisit(logicalAt, step.status() == PhysicalMarketTrip.Status.PHYSICAL_ACTION_PENDING);
         }
@@ -174,7 +180,9 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
                 RemoteNpcCommerceService.Receipt receipt = seller.sellNpc(agent, sale);
                 appendDecision(profile, logicalAt, "NPC_DISPOSITION",
                         Map.of("itemId", sale.itemId(), "quantity", sale.quantity(), "npcId", sale.npcId(),
-                                "result", receipt.result()), List.of(), Map.of("sourceMap", receipt.sourceMapId()),
+                                "result", receipt.result()), alternatives("HOLD_OR_LIST_ITEM",
+                                "Retain inventory exposure instead of taking immediate NPC proceeds"),
+                        Map.of("sourceMap", receipt.sourceMapId()),
                         Map.of("reason", sale.reason(), "evidence", sale.evidence()), Map.of());
                 return revisitAfter(logicalAt, npcServiceDelay, false);
             }
@@ -191,10 +199,14 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
                 state.stallOpenedAt = logicalAt; state.phase = Phase.OWNING_STALL;
                 appendDecision(profile, logicalAt, "STALL_OPENED",
                         Map.of("room", agent.getMapId(), "listings", state.sellerPlan.stallListings().size()),
-                        List.of(), Map.of("source", "PRIVATE_OBSERVATIONS"), Map.of(), Map.of());
+                        alternatives("KEEP_ITEMS_OFF_MARKET",
+                                "Preserve seller time and inventory for later use or NPC disposition"),
+                        Map.of("source", "PRIVATE_OBSERVATIONS"), Map.of(), Map.of());
             } else if (opened == FreeMarketPhysicalGateway.ActionStatus.UNAVAILABLE || state.openAttempts >= 3) {
                 appendDecision(profile, logicalAt, "STALL_OPEN_FAILED", Map.of("result", opened.name()),
-                        List.of(), Map.of(), Map.of("permitPolicy", "REQUIRE_OWNED_REAL_ITEM"), Map.of());
+                        alternatives("RETAIN_ESCROW_CANDIDATES",
+                                "Keep owned items and retry after physical or permit constraints clear"),
+                        Map.of(), Map.of("permitPolicy", "REQUIRE_OWNED_REAL_ITEM"), Map.of());
                 return finish(profile.agentId(), logicalAt);
             }
             return revisit(logicalAt, opened == FreeMarketPhysicalGateway.ActionStatus.ASSIGNED
@@ -207,7 +219,9 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
             if (state.repriceCount < config.maximumReprices && !logicalAt.isBefore(repriceAt)) {
                 boolean closed = seller.close(agent, "REPRICE_RESEARCH");
                 appendDecision(profile, logicalAt, "STALL_REPRICE_RESEARCH",
-                        Map.of("closed", closed, "reprice", state.repriceCount + 1), List.of(),
+                        Map.of("closed", closed, "reprice", state.repriceCount + 1),
+                        alternatives("KEEP_CURRENT_ASKS",
+                                "Continue current censored listing exposure without new observations"),
                         Map.of("requiresFreshPhysicalObservations", true),
                         Map.of("reason", "UNSOLD_EXPOSURE"), Map.of());
                 if (closed) {
@@ -223,7 +237,9 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
                     state.consecutiveAmbientActions = result.success()
                             ? state.consecutiveAmbientActions + 1 : 0;
                     appendDecision(profile, logicalAt, "AMBIENT_MARKET_ACTION",
-                            Map.of("action", result.action(), "success", result.success()), List.of(),
+                            Map.of("action", result.action(), "success", result.success()),
+                            alternatives("REMAIN_IDLE",
+                                    "Take no ambient action while continuing to yield to economic work"),
                             result.evidence(), Map.of("reason", result.reason(),
                                     "chairItemId", result.chairItemId() == null ? 0 : result.chairItemId()), Map.of());
                 } else state.consecutiveAmbientActions = 0;
@@ -234,7 +250,9 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
             }
             boolean closed = seller.close(agent, "MAXIMUM_LISTING_DURATION");
             appendDecision(profile, logicalAt, "STALL_CLOSED", Map.of("closed", closed),
-                    List.of(), Map.of(), Map.of("reason", "MAXIMUM_LISTING_DURATION"), Map.of());
+                    alternatives("KEEP_STALL_OPEN",
+                            "Exceed the configured listing-duration labor budget"),
+                    Map.of(), Map.of("reason", "MAXIMUM_LISTING_DURATION"), Map.of());
             if (closed) return finish(profile.agentId(), logicalAt);
         }
         return revisit(logicalAt, false);
@@ -417,6 +435,10 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
                 "observationId", value.observation().observationId(),
                 "itemId", value.observation().itemId(), "bundlePrice", value.observation().bundlePrice(),
                 "bundles", value.observation().bundles())).toList();
+    }
+
+    private static List<Map<String, Object>> alternatives(String action, String rejectionReason) {
+        return List.of(Map.of("action", action, "rejectionReason", rejectionReason));
     }
 
     @FunctionalInterface public interface AgentNeedReader {

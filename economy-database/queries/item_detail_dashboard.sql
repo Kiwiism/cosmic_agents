@@ -9,17 +9,30 @@ WITH postings AS (
     SELECT account_type, account_owner_id, SUM(quantity) AS quantity
     FROM postings GROUP BY account_type, account_owner_id HAVING SUM(quantity) <> 0
 ), transactions AS (
-    SELECT transaction_id, transaction_kind, logical_at, buyer_id, seller_id, quantity,
-           gross_mesos, tax_mesos, human_counterparty, listing_id, evidence
-    FROM economic_transaction WHERE run_id = :run_id AND item_id = :item_id
-    ORDER BY logical_at
+    SELECT t.transaction_id, t.transaction_kind, t.logical_at, t.buyer_id, t.seller_id,
+           GREATEST(
+               COALESCE(SUM(p.quantity) FILTER (WHERE p.account_type IN ('AGENT','HUMAN')
+                                                 AND p.quantity > 0), 0),
+               COALESCE(-SUM(p.quantity) FILTER (WHERE p.account_type IN ('AGENT','HUMAN')
+                                                  AND p.quantity < 0), 0)) AS quantity,
+           t.gross_mesos, t.tax_mesos, t.human_counterparty, t.listing_id, t.evidence,
+           e.actor_ids
+    FROM economic_transaction t
+    JOIN economic_event e ON e.event_id = t.committed_event_id
+    JOIN ledger_posting p ON p.event_id = e.event_id
+      AND p.asset_type = 'ITEM' AND p.asset_identifier = CAST(:item_id AS TEXT)
+    WHERE t.run_id = :run_id
+    GROUP BY t.run_id, t.transaction_id, t.transaction_kind, t.logical_at, t.buyer_id,
+             t.seller_id, t.gross_mesos, t.tax_mesos, t.human_counterparty,
+             t.listing_id, t.evidence, e.actor_ids
+    ORDER BY t.logical_at
 ), asks AS (
     SELECT listing_id, seller_id, room_map_id, quantity_per_bundle, bundles_initial,
            bundles_remaining, bundle_price, opened_at, closed_at, close_reason, reprices
     FROM market_listing WHERE run_id = :run_id AND item_id = :item_id ORDER BY opened_at
 ), observations AS (
     SELECT logical_time, agent_id, room_map_id, listing_id, observed_state, unit_price,
-           quantity, item_fingerprint, item_attributes, evidence
+           quantity, item_fingerprint, item_attributes
     FROM market_observation WHERE run_id = :run_id AND item_id = :item_id
     ORDER BY logical_time
 ), demand AS (

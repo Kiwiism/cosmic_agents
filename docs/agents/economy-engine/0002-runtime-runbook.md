@@ -61,6 +61,11 @@ require identical remaining event order and RNG state.
 - `item_market_daily`, `meso_flow_daily`, `agent_state_projection`: rebuildable dashboard read models.
 - `economy_invariant_violation`: durable accounting and lifecycle failures.
 
+`economy-database/queries/macro_dashboard.sql` returns ending meso supply and velocity, wealth
+distribution/Gini, seller HHI, stall-room utilization, room traffic, disposition channels, item
+creation/burn, price series, search failures, unmet demand, and invariant counts. It is an
+administrator projection and is never an agent price source.
+
 Completed activity evidence includes the calibrated death exposure, exact occurrence time, farm
 map and field limit, ordinary Agent respawn delay, EXP lost or safety charm consumed, penalty reason,
 and restored HP. Gross mob EXP and the death loss are separate balanced ledger flows, so a dashboard

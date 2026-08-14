@@ -11,6 +11,9 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -49,6 +52,14 @@ class EconomyPostgresSchemaIntegrationTest {
                     assertEquals(1, itemFlow(connection, run, 1102053, "transformed_created_quantity"));
                     assertEquals(0, itemFlow(connection, run, 1102053, "consumed_quantity"));
                     assertEquals(1, itemFlow(connection, run, 2041000, "consumed_quantity"));
+                    String runSql = "'" + run + "'::uuid";
+                    assertEquals(true, dashboardQuery(connection, "item_detail_dashboard.sql", Map.of(
+                            ":run_id", runSql, ":item_id", "1102053")).contains("\"itemId\": 1102053"));
+                    assertEquals(true, dashboardQuery(connection, "macro_dashboard.sql", Map.of(
+                            ":run_id", runSql,
+                            ":from_logical_at", "'1970-01-01T00:00:00Z'::timestamptz",
+                            ":to_logical_at", "'2030-01-01T00:00:00Z'::timestamptz"))
+                            .contains("\"moneySupply\""));
                 }
             } finally {
                 try (Connection connection = dataSource.getConnection()) { deleteRun(connection, run); }
@@ -188,6 +199,16 @@ class EconomyPostgresSchemaIntegrationTest {
         try (var statement = connection.createStatement(); var rows = statement.executeQuery(sql)) {
             rows.next();
             return rows.getInt(1);
+        }
+    }
+
+    private static String dashboardQuery(Connection connection, String file,
+                                         Map<String, String> replacements) throws Exception {
+        String sql = Files.readString(Path.of("economy-database", "queries", file));
+        for (Map.Entry<String, String> replacement : replacements.entrySet())
+            sql = sql.replace(replacement.getKey(), replacement.getValue());
+        try (var statement = connection.createStatement(); var rows = statement.executeQuery(sql)) {
+            rows.next(); return rows.getString(1);
         }
     }
 }
