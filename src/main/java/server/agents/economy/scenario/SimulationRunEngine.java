@@ -93,6 +93,14 @@ public final class SimulationRunEngine {
     public Instant now() { return clock.now(); }
     public UUID runId() { return runId; }
     public Instant lastCheckpoint() { return lastCheckpoint; }
+    public EconomyEngineConfig config() { return loadedConfig.config(); }
+    public NamedRandomStreams randomStreams() { return random; }
+
+    public ScheduledEconomyEvent schedule(Instant dueAt, String kind, String subjectId,
+                                           Map<String, String> parameters) {
+        if (dueAt.isBefore(clock.now())) throw new IllegalArgumentException("Cannot schedule in the logical past");
+        return queue.schedule(dueAt, kind, subjectId, parameters);
+    }
 
     private void schedulePopulation() {
         for (PopulationAdmissionPlanner.Admission admission : new PopulationAdmissionPlanner().plan(
@@ -100,6 +108,15 @@ public final class SimulationRunEngine {
             Map<String, String> parameters = new LinkedHashMap<>();
             parameters.put("jobFamily", admission.jobFamily());
             parameters.put("dailyActivityFraction", Double.toString(admission.dailyActivityFraction()));
+            EconomyAgentProfile profile = admission.profile();
+            parameters.put("riskTolerance", Double.toString(profile.riskTolerance()));
+            parameters.put("liquidityPreference", Double.toString(profile.liquidityPreference()));
+            parameters.put("upgradeAggressiveness", Double.toString(profile.upgradeAggressiveness()));
+            parameters.put("shoppingPatience", Double.toString(profile.shoppingPatience()));
+            parameters.put("stallWillingness", Double.toString(profile.stallWillingness()));
+            parameters.put("priceMemoryHours", Integer.toString(profile.priceMemoryHours()));
+            parameters.put("negotiationAggressiveness", Double.toString(profile.negotiationAggressiveness()));
+            parameters.put("chairInterest", Double.toString(profile.chairInterest()));
             queue.schedule(admission.admittedAt(), ADMIT_AGENT, admission.agentId(), parameters);
         }
     }

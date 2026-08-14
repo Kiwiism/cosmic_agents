@@ -23,12 +23,23 @@ public final class PopulationAdmissionPlanner {
                 String job = weightedChoice(config.classDistribution, random.stream("population.class"));
                 double activity = weightedActivity(config.activityDistribution,
                         random.stream("population.activity"));
-                admissions.add(new Admission("agent-" + ordinal, admittedAt, job, activity));
+                NamedRandomStreams.Stream traits = random.stream("population.profile");
+                EconomyAgentProfile profile = new EconomyAgentProfile("agent-" + ordinal, job, activity,
+                        traits.nextDouble(), traits.nextDouble(), traits.nextDouble(), traits.nextDouble(),
+                        sellerWillingness(config, traits), 6 + traits.nextInt(67), traits.nextDouble(),
+                        traits.nextDouble());
+                admissions.add(new Admission(profile, admittedAt));
             }
             population += count;
             day++;
         }
         return List.copyOf(admissions);
+    }
+
+    private static double sellerWillingness(EconomyEngineConfig.Population config,
+                                             NamedRandomStreams.Stream random) {
+        return random.nextDouble() < config.merchantParticipation.willingSellerFraction
+                ? 0.5 + random.nextDouble() * 0.5 : random.nextDouble() * 0.25;
     }
 
     private static Instant admissionTime(EconomyEngineConfig.Population config, Instant runStart,
@@ -60,6 +71,9 @@ public final class PopulationAdmissionPlanner {
         };
     }
 
-    public record Admission(String agentId, Instant admittedAt, String jobFamily,
-                            double dailyActivityFraction) { }
+    public record Admission(EconomyAgentProfile profile, Instant admittedAt) {
+        public String agentId() { return profile.agentId(); }
+        public String jobFamily() { return profile.jobFamily(); }
+        public double dailyActivityFraction() { return profile.dailyActivityFraction(); }
+    }
 }
