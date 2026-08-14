@@ -8,6 +8,7 @@ public final class CatalogQueryService {
     private final QuestCatalogQuery quest;
     private final ReactorCatalogQuery reactor;
     private final MapleIslandMvpCatalogQuery mapleIslandMvp;
+    private final ServerKnowledgeCatalogQuery knowledge;
 
     CatalogQueryService(CatalogBundle bundle) {
         this.npc = new NpcCatalogQuery(bundle);
@@ -17,6 +18,7 @@ public final class CatalogQueryService {
         this.quest = new QuestCatalogQuery(bundle);
         this.reactor = new ReactorCatalogQuery(bundle);
         this.mapleIslandMvp = new MapleIslandMvpCatalogQuery(bundle);
+        this.knowledge = new ServerKnowledgeCatalogQuery(bundle);
     }
 
     public NpcCatalogQuery npc() {
@@ -45,5 +47,9 @@ public final class CatalogQueryService {
 
     public MapleIslandMvpCatalogQuery mapleIslandMvp() {
         return mapleIslandMvp;
+    }
+
+    public ServerKnowledgeCatalogQuery knowledge() {
+        return knowledge;
     }
 }

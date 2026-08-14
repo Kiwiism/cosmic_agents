@@ -168,6 +168,31 @@ class AgentCatalogServiceTest {
     }
 
     @Test
+    void sharedServerKnowledgePrecomputesCrossCatalogPlanningIndexes() {
+        ServerKnowledgeCatalogQuery knowledge = loadCatalog().queries().knowledge();
+
+        ServerKnowledgeCatalogQuery.MapKnowledge map = knowledge.map(50000).orElseThrow();
+        assertTrue(map.mobIds().contains(100100));
+
+        ServerKnowledgeCatalogQuery.MobKnowledge mob = knowledge.mob(100100).orElseThrow();
+        assertTrue(mob.spawnMapIds().contains(50000));
+        assertTrue(mob.dropItemIds().contains(4000019));
+
+        ServerKnowledgeCatalogQuery.ItemKnowledge item = knowledge.item(4000019).orElseThrow();
+        assertTrue(item.mobSources().stream().anyMatch(source -> source.mobId() == 100100));
+        assertTrue(item.sourceMapIds().contains(50000));
+
+        ServerKnowledgeCatalogQuery.QuestKnowledge quest = knowledge.quest(2010).orElseThrow();
+        assertTrue(quest.requiredItemIds().contains(4000015));
+        assertTrue(quest.relevantMapIds().contains(104000000));
+        assertFalse(quest.relevantMapIds().isEmpty());
+        assertTrue(knowledge.mapCount() > 0);
+        assertTrue(knowledge.mobCount() > 0);
+        assertTrue(knowledge.itemCount() > 0);
+        assertTrue(knowledge.questCount() > 0);
+    }
+
+    @Test
     void queryResultsDoNotExposeMutableCollections() {
         CatalogQueryService queries = loadCatalog().queries();
 
@@ -185,6 +210,9 @@ class AgentCatalogServiceTest {
         List<CatalogRecord> reactors = queries.reactor().reactorsInMap(1000000);
         assertFalse(reactors.isEmpty());
         assertThrows(UnsupportedOperationException.class, () -> reactors.add(reactors.getFirst()));
+
+        List<Integer> sourceMaps = queries.knowledge().item(4000019).orElseThrow().sourceMapIds();
+        assertThrows(UnsupportedOperationException.class, () -> sourceMaps.add(1));
     }
 
     private static AgentCatalogService loadCatalog() {

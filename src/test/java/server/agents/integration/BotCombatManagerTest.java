@@ -20,6 +20,7 @@ import server.agents.capabilities.combat.AgentAttackRoute;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentAttackPlan;
 import server.agents.capabilities.combat.AgentBasicAttackPlanRuntime;
+import server.agents.capabilities.combat.AgentAttackTransactionResult;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentCombatWeaponPolicy;
 import server.agents.capabilities.combat.AgentCombatRangePolicy;
@@ -1183,14 +1184,18 @@ class BotCombatManagerTest {
 
     @Test
     void combatAttackRuntimeDispatchesAttackAndUpdatesCombatState() {
-        Character bot = mockBot(new Point(100, 200), mock(MapleMap.class), 20_000, null);
+        MapleMap map = mock(MapleMap.class);
+        Character bot = mockBot(new Point(100, 200), map, 20_000, null);
+        when(map.isMobPhysicsObserverWarmupComplete()).thenReturn(true);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
         Monster target = mockMob(new Point(140, 200), 9300505);
+        when(target.getMap()).thenReturn(map);
         AgentAttackPlan plan = new AgentAttackPlan(
                 0, 0, 1, new Rectangle(100, 150, 80, 70),
                 List.of(target), AgentAttackRoute.CLOSE,
                 4, 1, 1, AgentAttackExecutionProvider.attackPacketStance(true),
                 4, 300, 600, WeaponType.SWORD1H);
+        AgentAttackTransactionResult[] transaction = new AgentAttackTransactionResult[1];
 
         try (MockedStatic<AgentAttackExecutionProvider> attacks =
                      Mockito.mockStatic(AgentAttackExecutionProvider.class, Mockito.CALLS_REAL_METHODS)) {
@@ -1199,12 +1204,14 @@ class BotCombatManagerTest {
                     any(AgentAttackRoute.class), any(AbstractDealDamageHandler.AttackInfo.class), eq(bot)))
                     .thenReturn(true);
 
-            runWithStubbedBotAfter(() -> AgentCombatAttackRuntime.attackMonster(entry, bot, plan));
+            runWithStubbedBotAfter(() -> transaction[0] = AgentCombatAttackRuntime.attackMonster(entry, bot, plan));
 
             attacks.verify(() -> AgentAttackExecutionProvider.applyAttackRoute(
                     eq(AgentAttackRoute.CLOSE), any(AbstractDealDamageHandler.AttackInfo.class), eq(bot)));
         }
 
+        assertEquals(AgentAttackTransactionResult.Status.COMMITTED, transaction[0].status());
+        assertEquals(List.of(9300505), transaction[0].targetObjectIds());
         assertEquals(600, AgentCombatCooldownStateRuntime.attackCooldownMs(entry));
         assertEquals(-1, AgentMovementStateRuntime.facingDirection(entry));
         assertTrue(AgentCombatCooldownStateRuntime.alertedUntilMs(entry) > System.currentTimeMillis());
