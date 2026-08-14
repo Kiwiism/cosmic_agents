@@ -31,6 +31,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
     private final CosmicMarketSellerGateway seller;
     private final ResourceProcurement procurement;
     private final AmbientBehavior ambient;
+    private final NegotiationBehavior negotiation;
     private final ObservedPurchasePolicy purchasePolicy = new ObservedPurchasePolicy();
     private final RoomVisitPlanner roomPlanner = new RoomVisitPlanner();
     private final Duration actionPoll;
@@ -49,7 +50,8 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
                                         Duration maximumStallDuration) {
         this(runId, configHash, catalogVersion, config, random, physical, needs,
                 (agent, profile, observations, base, at) -> base, journal, sellerPlans, seller,
-                procurement, AmbientBehavior.disabled(), actionPoll, postTripDelay, maximumStallDuration);
+                procurement, AmbientBehavior.disabled(), NegotiationBehavior.disabled(),
+                actionPoll, postTripDelay, maximumStallDuration);
     }
 
     public AutonomousFreeMarketBehavior(UUID runId, String configHash, String catalogVersion,
@@ -61,6 +63,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
                                         CosmicMarketSellerGateway seller,
                                         ResourceProcurement procurement,
                                         AmbientBehavior ambient,
+                                        NegotiationBehavior negotiation,
                                         Duration actionPoll, Duration postTripDelay,
                                         Duration maximumStallDuration) {
         this.runId = Objects.requireNonNull(runId); this.configHash = Objects.requireNonNull(configHash);
@@ -71,6 +74,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
         this.sellerPlans = Objects.requireNonNull(sellerPlans); this.seller = Objects.requireNonNull(seller);
         this.procurement = Objects.requireNonNull(procurement);
         this.ambient = Objects.requireNonNull(ambient);
+        this.negotiation = Objects.requireNonNull(negotiation);
         if (actionPoll.isNegative() || actionPoll.isZero() || postTripDelay.isNegative()
                 || maximumStallDuration.isNegative() || maximumStallDuration.isZero())
             throw new IllegalArgumentException("market timing must be non-negative and polling positive");
@@ -107,6 +111,12 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
             if (step.status() == PhysicalMarketTrip.Status.COMPLETE) {
                 List<AgentNeed> currentNeeds = observedNeeds.augment(agent, profile,
                         state.knowledge.snapshot(), needs.read(agent, profile, logicalAt), logicalAt);
+                NegotiationBehavior.Result negotiated = negotiation.attempt(agent, profile,
+                        currentNeeds, state.knowledge.snapshot(), logicalAt);
+                if (negotiated.attempted()) appendDecision(profile, logicalAt, "PUBLIC_NEGOTIATION",
+                        Map.of("sessionId", negotiated.sessionId(), "outcome", negotiated.outcome(),
+                                "success", negotiated.success()), List.of(), negotiated.evidence(),
+                        Map.of("itemId", negotiated.itemId()), Map.of("offeredMesos", (double) negotiated.offeredMesos()));
                 state.sellerPlan = sellerPlans.read(agent, profile, state.knowledge, currentNeeds, logicalAt);
                 if (random.stream("agent." + profile.agentId() + ".stall-participation").nextDouble()
                         > profile.stallWillingness()) {
@@ -365,6 +375,16 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
                       Integer chairItemId, Map<String, Object> evidence) {
             public Result { evidence = evidence == null ? Map.of() : Map.copyOf(evidence); }
             public static Result none() { return new Result(false, false, "NONE", "", null, Map.of()); }
+        }
+    }
+    @FunctionalInterface public interface NegotiationBehavior {
+        Result attempt(Character agent, EconomyAgentProfile profile, List<AgentNeed> needs,
+                       List<MarketObservation> observations, Instant logicalAt);
+        static NegotiationBehavior disabled() { return (agent, profile, needs, observations, at) -> Result.none(); }
+        record Result(boolean attempted, boolean success, String sessionId, String outcome,
+                      int itemId, long offeredMesos, Map<String, Object> evidence) {
+            public Result { evidence = evidence == null ? Map.of() : Map.copyOf(evidence); }
+            public static Result none() { return new Result(false, false, "", "NONE", 0, 0, Map.of()); }
         }
     }
     private EconomyWorldPort.MarketDirective revisit(Instant at, boolean externalPending) {
