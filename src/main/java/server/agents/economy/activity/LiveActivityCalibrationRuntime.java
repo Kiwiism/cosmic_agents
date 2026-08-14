@@ -21,17 +21,18 @@ public final class LiveActivityCalibrationRuntime {
         if (agent == null || agent.getId() <= 0 || agent.getMapId() <= 0)
             throw new IllegalArgumentException("live agent session is required");
         Session session = new Session(UUID.randomUUID().toString(), agent.getId(), agentBuild,
-                agent.getMapId(), agent.getLevel(), agent.getJob().name(), nowMs);
+                agent.getMapId(), agent.getLevel(), jobFamily(agent), nowMs);
         if (ACTIVE.putIfAbsent(agent.getId(), session) != null)
             throw new IllegalStateException("agent calibration session already active");
     }
 
     public static ActivityCalibrationSample end(Character agent, boolean died, long nowMs,
                                                 ActivityCalibrationSink sink) {
-        Session session = agent == null ? null : ACTIVE.remove(agent.getId());
+        Session session = agent == null ? null : ACTIVE.get(agent.getId());
         if (session == null) throw new IllegalStateException("agent calibration session is not active");
-        ActivityCalibrationSample sample = session.complete(died, nowMs);
-        sink.append(sample);
+        ActivityCalibrationSample sample = session.finish(died, nowMs, sink);
+        if (!ACTIVE.remove(agent.getId(), session))
+            throw new IllegalStateException("agent calibration session changed while saving");
         return sample;
     }
 
@@ -41,6 +42,26 @@ public final class LiveActivityCalibrationRuntime {
         Session session = ACTIVE.get(agentId);
         if (session != null) session.observe(event);
     }
+
+    public static Status status(Character agent) {
+        Session session = agent == null ? null : ACTIVE.get(agent.getId());
+        return session == null ? null : new Status(session.build, session.mapId, session.level,
+                session.job, Instant.ofEpochMilli(session.startedAt));
+    }
+
+    private static String jobFamily(Character agent) {
+        return switch (agent.getJob().getJobNiche()) {
+            case 1 -> "warrior";
+            case 2 -> "magician";
+            case 3 -> "bowman";
+            case 4 -> "thief";
+            case 5 -> "pirate";
+            default -> "beginner";
+        };
+    }
+
+    public record Status(String agentBuild, int mapId, int level,
+                         String jobFamily, Instant startedAt) { }
 
     private static final class Session {
         private final String sampleId;
@@ -52,6 +73,7 @@ public final class LiveActivityCalibrationRuntime {
         private final long startedAt;
         private final Map<Integer, Integer> kills = new HashMap<>();
         private final Map<Integer, Integer> consumed = new HashMap<>();
+        private boolean closed;
 
         private Session(String sampleId, int agentId, String build, int mapId, int level,
                         String job, long startedAt) {
@@ -65,6 +87,7 @@ public final class LiveActivityCalibrationRuntime {
         }
 
         private synchronized void observe(AgentEvent event) {
+            if (closed) return;
             if (event instanceof AgentMobKilledEvent killed && killed.mapId() == mapId) {
                 kills.merge(killed.mobId(), 1, Math::addExact);
             } else if (event instanceof AgentItemQuantityChangedEvent changed
@@ -73,10 +96,15 @@ public final class LiveActivityCalibrationRuntime {
             }
         }
 
-        private synchronized ActivityCalibrationSample complete(boolean died, long completedAt) {
-            return new ActivityCalibrationSample(sampleId, agentId, build, mapId, level, job,
+        private synchronized ActivityCalibrationSample finish(boolean died, long completedAt,
+                                                              ActivityCalibrationSink sink) {
+            if (closed) throw new IllegalStateException("agent calibration session is already closed");
+            ActivityCalibrationSample sample = new ActivityCalibrationSample(sampleId, agentId, build, mapId, level, job,
                     Instant.ofEpochMilli(startedAt), Instant.ofEpochMilli(completedAt),
                     kills, consumed, died);
+            sink.append(sample);
+            closed = true;
+            return sample;
         }
     }
 }
