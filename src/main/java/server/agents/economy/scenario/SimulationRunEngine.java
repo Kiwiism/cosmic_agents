@@ -49,6 +49,26 @@ public final class SimulationRunEngine {
         return advanceTo(clock.now().plus(Duration.ofDays(days)));
     }
 
+    public static SimulationRunEngine restore(RunCheckpoint checkpoint,
+                                              LoadedEconomyConfig loadedConfig,
+                                              CatalogBundleDescriptor catalog,
+                                              Consumer<ScheduledEconomyEvent> eventHandler) {
+        Objects.requireNonNull(checkpoint);
+        if (!checkpoint.configHash().equals(loadedConfig.sha256()))
+            throw new IllegalStateException("Checkpoint configuration hash does not match");
+        if (!checkpoint.catalogVersion().equals(catalog.version()))
+            throw new IllegalStateException("Checkpoint catalog version does not match");
+        SimulationRunEngine engine = new SimulationRunEngine(checkpoint.runId(), loadedConfig,
+                catalog, eventHandler);
+        engine.clock.advanceTo(checkpoint.logicalTime());
+        if (checkpoint.queue().stream().anyMatch(event -> event.dueAt().isBefore(checkpoint.logicalTime())))
+            throw new IllegalStateException("Checkpoint contains an event in the logical past");
+        engine.queue.restore(checkpoint.queue());
+        engine.random.restore(checkpoint.randomStates());
+        engine.lastCheckpoint = checkpoint.logicalTime();
+        return engine;
+    }
+
     public AdvanceSummary advanceTo(Instant target) {
         int processed = 0;
         int batches = 0;
