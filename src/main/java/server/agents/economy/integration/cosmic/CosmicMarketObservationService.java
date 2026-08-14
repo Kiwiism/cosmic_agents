@@ -30,7 +30,7 @@ public final class CosmicMarketObservationService {
         List<ObservedOffer> result = new ArrayList<>();
         for (AgentFreeMarketBuyerService.ObservedStall stall : buyer.observeNearby(agent)) {
             for (PlayerShop.ListingView listing : stall.listings()) {
-                String listingId = stall.objectId() + ":" + listing.slot();
+                String listingId = stall.listingNamespace() + ":" + listing.slot();
                 long unitPrice = ((long) listing.bundlePrice() + listing.perBundle() - 1)
                         / listing.perBundle();
                 int totalQuantity = Math.multiplyExact(listing.perBundle(), listing.bundles());
@@ -40,7 +40,8 @@ public final class CosmicMarketObservationService {
                         logicalAgentId, logicalAt, stall.roomMapId(),
                         Integer.toString(stall.ownerCharacterId()), listingId, listing.itemId(),
                         totalQuantity, unitPrice, listing.perBundle(), listing.bundles(),
-                        listing.bundlePrice(), MarketObservation.State.LISTED);
+                        listing.bundlePrice(), listing.fingerprint(), listing.attributes(),
+                        MarketObservation.State.LISTED);
                 knowledge.observe(observation);
                 journal.appendObservation(runId, observation);
                 result.add(new ObservedOffer(stall.objectId(), listing.slot(), observation));
@@ -65,6 +66,7 @@ public final class CosmicMarketObservationService {
                     Integer.toString(purchase.sellerCharacterId()), offer.observation.listingId(),
                     purchase.itemId(), purchase.quantity(), offer.observation.unitPrice(),
                     offer.observation.quantityPerBundle(), bundles, offer.observation.bundlePrice(),
+                    offer.observation.fingerprint(), offer.observation.attributes(),
                     MarketObservation.State.SOLD_TO_OBSERVER);
             knowledge.observe(completed);
             journal.appendObservation(runId, completed);

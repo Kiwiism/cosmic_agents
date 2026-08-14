@@ -157,6 +157,11 @@ public final class EconomyEngineConfig {
 
     public static final class Demand {
         public double questMaximumWalletFraction;
+        public double equipmentMaximumWalletFraction;
+        public double scrollMaximumWalletFraction;
+        public double chairMaximumWalletFraction;
+        public long utilityMesoScale;
+        public double minimumMarginalUtility;
         public List<ResourceTarget> resourceTargets;
     }
 

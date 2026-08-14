@@ -33,6 +33,7 @@ import server.Trade;
 import server.economy.EconomyOperationKind;
 import server.economy.EconomyTransactionCoordinator;
 import server.economy.EconomyOperationContext;
+import server.economy.EconomyItemEvidence;
 import server.economy.EconomyTaxOverride;
 import tools.PacketCreator;
 import tools.Pair;
@@ -677,15 +678,20 @@ public class PlayerShop extends AbstractMapObject {
             for (int slot = 0; slot < items.size(); slot++) {
                 PlayerShopItem item = items.get(slot);
                 if (item.isExist() && item.getBundles() > 0) {
+                    EconomyItemEvidence.Description evidence = EconomyItemEvidence.describe(item.getItem());
                     result.add(new ListingView(slot, item.getItem().getItemId(),
-                            item.getItem().getQuantity(), item.getBundles(), item.getPrice()));
+                            item.getItem().getQuantity(), item.getBundles(), item.getPrice(),
+                            evidence.fingerprint(), evidence.attributes()));
                 }
             }
             return List.copyOf(result);
         }
     }
 
-    public record ListingView(int slot, int itemId, short perBundle, short bundles, int bundlePrice) { }
+    public record ListingView(int slot, int itemId, short perBundle, short bundles, int bundlePrice,
+                              String fingerprint, Map<String, Object> attributes) {
+        public ListingView { attributes = Map.copyOf(attributes); }
+    }
 
     public List<SoldItem> getSold() {
         synchronized (sold) {

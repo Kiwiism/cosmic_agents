@@ -25,6 +25,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
     private final NamedRandomStreams random;
     private final FreeMarketPhysicalGateway physical;
     private final AgentNeedReader needs;
+    private final ObservedNeedAugmenter observedNeeds;
     private final EconomyEvidenceJournal journal;
     private final CosmicMarketSellerPlanReader sellerPlans;
     private final CosmicMarketSellerGateway seller;
@@ -45,10 +46,26 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
                                         ResourceProcurement procurement,
                                         Duration actionPoll, Duration postTripDelay,
                                         Duration maximumStallDuration) {
+        this(runId, configHash, catalogVersion, config, random, physical, needs,
+                (agent, profile, observations, base, at) -> base, journal, sellerPlans, seller,
+                procurement, actionPoll, postTripDelay, maximumStallDuration);
+    }
+
+    public AutonomousFreeMarketBehavior(UUID runId, String configHash, String catalogVersion,
+                                        EconomyEngineConfig.Market config, NamedRandomStreams random,
+                                        FreeMarketPhysicalGateway physical, AgentNeedReader needs,
+                                        ObservedNeedAugmenter observedNeeds,
+                                        EconomyEvidenceJournal journal,
+                                        CosmicMarketSellerPlanReader sellerPlans,
+                                        CosmicMarketSellerGateway seller,
+                                        ResourceProcurement procurement,
+                                        Duration actionPoll, Duration postTripDelay,
+                                        Duration maximumStallDuration) {
         this.runId = Objects.requireNonNull(runId); this.configHash = Objects.requireNonNull(configHash);
         this.catalogVersion = Objects.requireNonNull(catalogVersion); this.config = Objects.requireNonNull(config);
         this.random = Objects.requireNonNull(random); this.physical = Objects.requireNonNull(physical);
-        this.needs = Objects.requireNonNull(needs); this.journal = Objects.requireNonNull(journal);
+        this.needs = Objects.requireNonNull(needs); this.observedNeeds = Objects.requireNonNull(observedNeeds);
+        this.journal = Objects.requireNonNull(journal);
         this.sellerPlans = Objects.requireNonNull(sellerPlans); this.seller = Objects.requireNonNull(seller);
         this.procurement = Objects.requireNonNull(procurement);
         if (actionPoll.isNegative() || actionPoll.isZero() || postTripDelay.isNegative()
@@ -85,7 +102,8 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
                     state.knowledge, physical);
             if (!step.offers().isEmpty()) attemptObservedPurchase(agent, profile, logicalAt, state, step.offers());
             if (step.status() == PhysicalMarketTrip.Status.COMPLETE) {
-                List<AgentNeed> currentNeeds = needs.read(agent, profile, logicalAt);
+                List<AgentNeed> currentNeeds = observedNeeds.augment(agent, profile,
+                        state.knowledge.snapshot(), needs.read(agent, profile, logicalAt), logicalAt);
                 state.sellerPlan = sellerPlans.read(agent, profile, state.knowledge, currentNeeds, logicalAt);
                 if (random.stream("agent." + profile.agentId() + ".stall-participation").nextDouble()
                         > profile.stallWillingness()) {
@@ -222,6 +240,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
         value.put("quantity", observation.quantity()); value.put("unitPrice", observation.unitPrice());
         value.put("quantityPerBundle", observation.quantityPerBundle());
         value.put("bundles", observation.bundles()); value.put("bundlePrice", observation.bundlePrice());
+        value.put("fingerprint", observation.fingerprint()); value.put("attributes", observation.attributes());
         value.put("state", observation.state().name());
         return value;
     }
@@ -232,6 +251,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
                 text(value, "stallOwnerAgentId"), text(value, "listingId"), integer(value, "itemId"),
                 integer(value, "quantity"), number(value, "unitPrice"), integer(value, "quantityPerBundle"),
                 integer(value, "bundles"), number(value, "bundlePrice"),
+                text(value, "fingerprint"), (Map<String, Object>) value.get("attributes"),
                 MarketObservation.State.valueOf(text(value, "state")));
     }
 
@@ -270,7 +290,9 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
 
     private void attemptObservedPurchase(Character agent, EconomyAgentProfile profile, Instant logicalAt,
                                          State state, List<CosmicMarketObservationService.ObservedOffer> offers) {
-        List<AgentNeed> currentNeeds = needs.read(agent, profile, logicalAt);
+        List<AgentNeed> currentNeeds = observedNeeds.augment(agent, profile,
+                offers.stream().map(CosmicMarketObservationService.ObservedOffer::observation).toList(),
+                needs.read(agent, profile, logicalAt), logicalAt);
         Optional<ObservedPurchasePolicy.Decision> decision = purchasePolicy.choose(
                 offers, currentNeeds, profile, agent.getMeso());
         if (decision.isEmpty()) {
@@ -311,6 +333,11 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
 
     @FunctionalInterface public interface AgentNeedReader {
         List<AgentNeed> read(Character agent, EconomyAgentProfile profile, Instant logicalAt);
+    }
+    @FunctionalInterface public interface ObservedNeedAugmenter {
+        List<AgentNeed> augment(Character agent, EconomyAgentProfile profile,
+                               List<MarketObservation> observations, List<AgentNeed> base,
+                               Instant logicalAt);
     }
     private EconomyWorldPort.MarketDirective revisit(Instant at, boolean externalPending) {
         return new EconomyWorldPort.MarketDirective(Optional.empty(), Optional.of(at.plus(actionPoll)),

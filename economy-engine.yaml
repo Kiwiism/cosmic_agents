@@ -137,6 +137,11 @@ quests:
 
 demand:
   questMaximumWalletFraction: 0.35
+  equipmentMaximumWalletFraction: 0.50
+  scrollMaximumWalletFraction: 0.20
+  chairMaximumWalletFraction: 0.10
+  utilityMesoScale: 1000
+  minimumMarginalUtility: 0.01
   resourceTargets:
     - { itemId: 2000000, npcId: 1001100, targetQuantity: 100, purchaseLot: 20, jobs: [], urgency: 0.75 }
     - { itemId: 2000001, npcId: 1001100, targetQuantity: 100, purchaseLot: 20, jobs: [magician], urgency: 0.85 }

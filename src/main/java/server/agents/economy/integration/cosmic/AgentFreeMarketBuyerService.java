@@ -34,7 +34,9 @@ public final class AgentFreeMarketBuyerService {
                 List.of(MapObjectType.SHOP))) {
             if (object instanceof PlayerShop shop && shop.isOpen() && !shop.isOwner(buyer)) {
                 result.add(new ObservedStall(shop.getObjectId(), shop.getOwnerId(), shop.getOwnerName(),
-                        buyer.getMapId(), shop.getPosition().x, shop.listingSnapshot()));
+                        buyer.getMapId(), shop.getPosition().x,
+                        shop.getEscrowId() == null ? "legacy:" + shop.getObjectId() : shop.getEscrowId(),
+                        shop.listingSnapshot()));
             }
         }
         result.sort(Comparator.comparingInt(ObservedStall::objectId));
@@ -76,7 +78,8 @@ public final class AgentFreeMarketBuyerService {
     }
 
     public record ObservedStall(int objectId, int ownerCharacterId, String ownerName,
-                                int roomMapId, int x, List<PlayerShop.ListingView> listings) { }
+                                int roomMapId, int x, String listingNamespace,
+                                List<PlayerShop.ListingView> listings) { }
     public record PurchaseResult(boolean success, String result, int sellerCharacterId,
                                  int itemId, int quantity, int buyerMesoDelta) {
         private static PurchaseResult failed(String reason) {

@@ -7,7 +7,8 @@ WITH trades AS (
       AND p.asset_identifier = CAST(:item_id AS TEXT)
     GROUP BY e.event_id
 ), observations AS (
-    SELECT logical_time, agent_id, room_map_id, unit_price, quantity, observed_state
+    SELECT logical_time, agent_id, room_map_id, unit_price, quantity, observed_state,
+           item_fingerprint, item_attributes, listing_id
     FROM market_observation
     WHERE run_id = :run_id AND item_id = :item_id
 )

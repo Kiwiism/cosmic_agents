@@ -620,6 +620,19 @@ public class ItemInformationProvider {
         return ret;
     }
 
+    /** Shared exact compatibility rule used by both the client handler and autonomous demand planning. */
+    public boolean canApplyScroll(int scrollId, int equipmentItemId) {
+        List<Integer> requirements = getScrollReqs(scrollId);
+        if (!requirements.isEmpty() && !requirements.contains(equipmentItemId)) return false;
+        if (ItemConstants.isChaosScroll(scrollId) || ItemConstants.isCleanSlate(scrollId)) return true;
+        int scrollCategory = scrollId / 100;
+        if (scrollCategory == 20492) {
+            int equipmentCategory = (equipmentItemId / 10000) % 100;
+            return equipmentCategory == 11 || equipmentCategory == 12 || equipmentCategory == 13;
+        }
+        return scrollCategory % 100 == (equipmentItemId / 10000) % 100;
+    }
+
     public WeaponType getWeaponType(int itemId) {
         int cat = (itemId / 10000) % 100;
         WeaponType[] type = {WeaponType.SWORD1H, WeaponType.GENERAL1H_SWING, WeaponType.GENERAL1H_SWING, WeaponType.DAGGER_OTHER, WeaponType.NOT_A_WEAPON, WeaponType.NOT_A_WEAPON, WeaponType.NOT_A_WEAPON, WeaponType.WAND, WeaponType.STAFF, WeaponType.NOT_A_WEAPON, WeaponType.SWORD2H, WeaponType.GENERAL2H_SWING, WeaponType.GENERAL2H_SWING, WeaponType.SPEAR_STAB, WeaponType.POLE_ARM_SWING, WeaponType.BOW, WeaponType.CROSSBOW, WeaponType.CLAW, WeaponType.KNUCKLE, WeaponType.GUN};
@@ -1816,6 +1829,19 @@ public class ItemInformationProvider {
         }
         inv.checked(true);
         return itemz;
+    }
+
+    /** Read-only counterpart to equip validation for autonomous planning and inspection. */
+    public boolean meetsEquipRequirements(Character chr, int itemId) {
+        Map<String, Integer> stats = getEquipStats(itemId);
+        if (stats == null) return false;
+        int dex = chr.getDex(), str = chr.getStr(), int_ = chr.getInt(), luk = chr.getLuk();
+        for (Item item : chr.getInventory(InventoryType.EQUIPPED).list()) {
+            Equip equip = (Equip) item;
+            dex += equip.getDex(); str += equip.getStr(); int_ += equip.getInt(); luk += equip.getLuk();
+        }
+        return EquipRequirementChecker.meetsRequirements(chr.getJob(), stats, chr.getLevel(),
+                getEquipLevelReq(itemId), dex, str, int_, luk, chr.getFame());
     }
 
     public boolean canWearEquipment(Character chr, Equip equip, int dst) {

@@ -104,6 +104,15 @@ public final class EconomyConfigValidator {
     private static void validateDemand(EconomyEngineConfig.Demand demand) {
         require(demand.questMaximumWalletFraction >= 0 && demand.questMaximumWalletFraction <= 1,
                 "demand.questMaximumWalletFraction must be within zero and one");
+        require(demand.equipmentMaximumWalletFraction >= 0 && demand.equipmentMaximumWalletFraction <= 1,
+                "demand.equipmentMaximumWalletFraction must be within zero and one");
+        require(demand.scrollMaximumWalletFraction >= 0 && demand.scrollMaximumWalletFraction <= 1,
+                "demand.scrollMaximumWalletFraction must be within zero and one");
+        require(demand.chairMaximumWalletFraction >= 0 && demand.chairMaximumWalletFraction <= 1,
+                "demand.chairMaximumWalletFraction must be within zero and one");
+        require(demand.utilityMesoScale > 0, "demand.utilityMesoScale must be positive");
+        require(demand.minimumMarginalUtility >= 0,
+                "demand.minimumMarginalUtility must be non-negative");
         require(demand.resourceTargets != null, "demand.resourceTargets is required");
         for (EconomyEngineConfig.ResourceTarget target : demand.resourceTargets) {
             require(target.itemId > 0 && target.npcId > 0 && target.targetQuantity > 0
