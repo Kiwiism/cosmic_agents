@@ -8,6 +8,7 @@ public final class EconomyEngineConfig {
     public int schemaVersion;
     public Scenario scenario;
     public Clock clock;
+    public Catalog catalog;
     public World world;
     public Population population;
     public NpcCommerce npcCommerce;
@@ -35,6 +36,13 @@ public final class EconomyEngineConfig {
         public String mode;
         public String logicalStart;
         public int maximumEventsPerBatch;
+    }
+
+    public static final class Catalog {
+        public String bundleId;
+        public boolean requireMatchingAdaptiveRevision;
+        public List<String> adaptiveResources;
+        public List<String> sqlResources;
     }
 
     public static final class World {
@@ -180,4 +188,3 @@ public final class EconomyEngineConfig {
         public boolean separateHumanAndAgentPriceEvidence;
     }
 }
-

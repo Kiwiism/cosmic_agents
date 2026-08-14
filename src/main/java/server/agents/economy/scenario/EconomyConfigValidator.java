@@ -33,6 +33,11 @@ public final class EconomyConfigValidator {
         parseInstant(config.clock.logicalStart, "clock.logicalStart");
         require(config.clock.maximumEventsPerBatch > 0,
                 "maximumEventsPerBatch must be positive");
+        requireText(config.catalog.bundleId, "catalog.bundleId");
+        require(config.catalog.adaptiveResources != null && !config.catalog.adaptiveResources.isEmpty(),
+                "catalog.adaptiveResources cannot be empty");
+        require(config.catalog.sqlResources != null && !config.catalog.sqlResources.isEmpty(),
+                "catalog.sqlResources cannot be empty");
 
         require(config.world.channelId > 0, "channelId must be positive");
         require(config.world.freeMarketEntranceMapId == 910000000,
@@ -74,7 +79,8 @@ public final class EconomyConfigValidator {
     }
 
     private static void requireSections(EconomyEngineConfig config) {
-        require(config.scenario != null && config.clock != null && config.world != null
+        require(config.scenario != null && config.clock != null && config.catalog != null
+                        && config.world != null
                         && config.population != null && config.npcCommerce != null
                         && config.activity != null && config.market != null && config.tax != null
                         && config.seasonalRules != null && config.quests != null
@@ -207,4 +213,3 @@ public final class EconomyConfigValidator {
         }
     }
 }
-

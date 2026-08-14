@@ -1,0 +1,79 @@
+package server.agents.economy.integration.cosmic;
+
+import constants.id.ItemId;
+import constants.inventory.ItemConstants;
+import server.ItemInformationProvider;
+import server.Shop;
+import server.ShopFactory;
+import server.agents.economy.catalog.EconomyCatalog;
+import server.agents.economy.catalog.ItemCategory;
+import server.agents.economy.catalog.ItemFact;
+import server.agents.economy.catalog.MonsterDropFact;
+import server.agents.economy.catalog.NpcShopFact;
+import server.life.MonsterInformationProvider;
+
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.IntFunction;
+
+/** Live adapter over the same WZ/SQL loaders and predicates used by normal gameplay. */
+public final class CosmicEconomyCatalog implements EconomyCatalog {
+    private final String version;
+    private final ItemInformationProvider items;
+    private final MonsterInformationProvider drops;
+    private final ShopFactory shops;
+    private final IntFunction<Integer> npcSourceMap;
+
+    public CosmicEconomyCatalog(String version, IntFunction<Integer> npcSourceMap) {
+        if (version == null || version.isBlank()) throw new IllegalArgumentException("catalog version is required");
+        this.version = version;
+        this.items = ItemInformationProvider.getInstance();
+        this.drops = MonsterInformationProvider.getInstance();
+        this.shops = ShopFactory.getInstance();
+        this.npcSourceMap = npcSourceMap;
+    }
+
+    @Override
+    public String version() { return version; }
+
+    @Override
+    public Optional<ItemFact> item(int itemId) {
+        String name = items.getName(itemId);
+        if (name == null) return Optional.empty();
+        EnumSet<ItemCategory> categories = EnumSet.noneOf(ItemCategory.class);
+        if (ItemConstants.isEquipment(itemId)) categories.add(ItemCategory.EQUIPMENT);
+        if (ItemConstants.isEquipScroll(itemId)) categories.add(ItemCategory.EQUIP_SCROLL);
+        if (ItemConstants.isPotion(itemId)) categories.add(ItemCategory.POTION);
+        if (ItemConstants.isFood(itemId)) categories.add(ItemCategory.FOOD);
+        if (ItemConstants.isThrowingStar(itemId)) categories.add(ItemCategory.THROWING_STAR);
+        if (ItemConstants.isBullet(itemId)) categories.add(ItemCategory.BULLET);
+        if (ItemConstants.isArrow(itemId)) categories.add(ItemCategory.ARROW);
+        if (ItemId.isChair(itemId)) categories.add(ItemCategory.CHAIR);
+        if (items.isQuestItem(itemId)) categories.add(ItemCategory.QUEST_ITEM);
+        if (items.isCash(itemId)) categories.add(ItemCategory.CASH);
+        if (categories.isEmpty()) categories.add(ItemCategory.OTHER);
+        Integer requiredLevel = ItemConstants.isEquipment(itemId) ? items.getEquipLevelReq(itemId) : null;
+        return Optional.of(new ItemFact(itemId, name, Math.max(0, items.getPrice(itemId, 1)),
+                requiredLevel, items.getBaseSlotMax(itemId), categories));
+    }
+
+    @Override
+    public List<MonsterDropFact> monsterDrops(int monsterId) {
+        return drops.retrieveDrop(monsterId).stream()
+                .map(drop -> new MonsterDropFact(monsterId, drop.itemId, drop.chance,
+                        drop.Minimum, drop.Maximum, drop.questid))
+                .toList();
+    }
+
+    @Override
+    public Optional<NpcShopFact> npcShop(int npcId) {
+        Shop shop = shops.getShopForNPC(npcId);
+        if (shop == null) return Optional.empty();
+        List<NpcShopFact.NpcShopItemFact> stock = shop.getItems().stream()
+                .map(item -> new NpcShopFact.NpcShopItemFact(item.getItemId(), item.getPrice(),
+                        item.getPitch(), item.getBuyable()))
+                .toList();
+        return Optional.of(new NpcShopFact(shop.getId(), npcId, npcSourceMap.apply(npcId), stock));
+    }
+}

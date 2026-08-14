@@ -5,7 +5,7 @@ This ledger follows the attached master goal without redefining completion aroun
 | Phase | Deliverable | Status |
 |---|---|---|
 | 0 | Architecture decisions and invariants | Complete |
-| 1 | Authoritative versioned catalog foundation | Not started |
+| 1 | Authoritative versioned catalog foundation | In progress: hashed bundle and Cosmic adapter implemented |
 | 2 | Economic event, outbox, and ledger foundation | In progress: balanced envelope implemented |
 | 3 | Scenario, population, logical clock, RNG, checkpoints | In progress: kernel and admission plan implemented |
 | 4 | Remote real-NPC commerce and full disposition | Not started |

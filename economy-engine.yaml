@@ -13,6 +13,21 @@ clock:
   logicalStart: 2026-01-01T00:00:00Z
   maximumEventsPerBatch: 5000
 
+catalog:
+  bundleId: victoria-v83-authoritative
+  requireMatchingAdaptiveRevision: true
+  adaptiveResources:
+    - /agents/catalogs/adaptive/victoria-quest-facts.json
+    - /agents/catalogs/adaptive/victoria-mob-drop-facts.json
+    - /agents/catalogs/adaptive/victoria-map-facts.json
+    - /agents/catalogs/adaptive/victoria-quest-hunt-index.json
+    - /agents/catalogs/adaptive/victoria-quest-item-demand-index.json
+  sqlResources:
+    - /db/data/101-shops-data.sql
+    - /db/data/102-shopitems-data.sql
+    - /db/data/151-global-drop-data.sql
+    - /db/data/152-drop-data.sql
+
 world:
   channelId: 1
   freeMarketEntranceMapId: 910000000
@@ -156,4 +171,3 @@ humanReadiness:
   neverAssumeCounterpartyIsAgent: true
   enforceHumanSafeValidation: true
   separateHumanAndAgentPriceEvidence: true
-

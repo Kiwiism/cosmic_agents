@@ -363,9 +363,14 @@ public class ItemInformationProvider {
     }
 
     public short getSlotMax(Client c, int itemId) {
+        return (short) (getBaseSlotMax(itemId) + getExtraSlotMaxFromPlayer(c, itemId));
+    }
+
+    /** WZ/default slot maximum before character skill bonuses. */
+    public short getBaseSlotMax(int itemId) {
         Short slotMax = slotMaxCache.get(itemId);
         if (slotMax != null) {
-            return (short) (slotMax + getExtraSlotMaxFromPlayer(c, itemId));
+            return slotMax;
         }
         short ret = 0;
         Data item = getItemData(itemId);
@@ -383,7 +388,7 @@ public class ItemInformationProvider {
         }
 
         slotMaxCache.put(itemId, ret);
-        return (short) (ret + getExtraSlotMaxFromPlayer(c, itemId));
+        return ret;
     }
 
     public int getMeso(int itemId) {
