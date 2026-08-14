@@ -17,6 +17,8 @@ SELECT 'TRANSACTION' record_type, logical_time, event_kind detail, actor_ids sub
 FROM trades
 UNION ALL
 SELECT 'OBSERVATION', logical_time, observed_state, to_jsonb(ARRAY[agent_id]),
-       jsonb_build_object('roomMapId', room_map_id, 'unitPrice', unit_price), quantity
+       jsonb_build_object('roomMapId', room_map_id, 'unitPrice', unit_price,
+                          'listingId', listing_id, 'itemFingerprint', item_fingerprint,
+                          'itemAttributes', item_attributes), quantity
 FROM observations
 ORDER BY logical_time;

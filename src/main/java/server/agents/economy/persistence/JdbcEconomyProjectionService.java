@@ -55,20 +55,33 @@ public final class JdbcEconomyProjectionService {
     private static final String ITEM_DAILY = """
             INSERT INTO item_market_daily (run_id, logical_date, item_id, completed_quantity,
                 completed_trade_count, meso_volume, vwap, minimum_price, maximum_price,
-                npc_created_quantity, farm_created_quantity, npc_destroyed_quantity, consumed_quantity)
+                npc_created_quantity, farm_created_quantity, quest_created_quantity,
+                transformed_created_quantity, npc_destroyed_quantity, consumed_quantity)
             WITH item_flow AS (
                 SELECT e.run_id, e.logical_time::date logical_date, p.asset_identifier::integer item_id,
                     SUM(CASE WHEN e.event_kind IN ('STALL_SALE','DIRECT_TRADE')
                         AND p.account_type IN ('AGENT','HUMAN') AND p.quantity > 0 THEN p.quantity ELSE 0 END) completed_quantity,
                     COUNT(DISTINCT e.event_id) FILTER (WHERE e.event_kind IN ('STALL_SALE','DIRECT_TRADE')) completed_trade_count,
-                    SUM(CASE WHEN e.event_kind IN ('NPC_PURCHASE','RECHARGE')
-                        AND p.account_type IN ('AGENT','HUMAN') AND p.quantity > 0 THEN p.quantity ELSE 0 END) npc_created_quantity,
-                    SUM(CASE WHEN e.event_kind = 'FARM_RESULT' AND p.account_type = 'AGENT'
-                        AND p.quantity > 0 THEN p.quantity ELSE 0 END) farm_created_quantity,
-                    -SUM(CASE WHEN e.event_kind = 'NPC_SALE' AND p.account_type IN ('AGENT','HUMAN')
-                        AND p.quantity < 0 THEN p.quantity ELSE 0 END) npc_destroyed_quantity,
-                    -SUM(CASE WHEN e.event_kind IN ('CONSUMPTION','SCROLL_APPLIED','QUEST_TURN_IN','FARM_RESULT')
-                        AND p.account_type = 'AGENT' AND p.quantity < 0 THEN p.quantity ELSE 0 END) consumed_quantity
+                    -SUM(CASE WHEN p.account_type = 'SOURCE'
+                        AND (p.account_owner_id LIKE 'NPC_STOCK:%' OR p.account_owner_id LIKE 'NPC_RECHARGE:%')
+                        AND p.quantity < 0 THEN p.quantity ELSE 0 END) npc_created_quantity,
+                    -SUM(CASE WHEN p.account_type = 'SOURCE' AND p.account_owner_id LIKE 'MOB:%'
+                        AND p.quantity < 0 THEN p.quantity ELSE 0 END) farm_created_quantity,
+                    -SUM(CASE WHEN p.account_type = 'SOURCE' AND p.account_owner_id LIKE 'QUEST:%'
+                        AND p.quantity < 0 THEN p.quantity ELSE 0 END) quest_created_quantity,
+                    -SUM(CASE WHEN p.account_type = 'SOURCE'
+                        AND p.account_owner_id LIKE 'SCROLL_TRANSFORMATION:%'
+                        AND p.quantity < 0 THEN p.quantity ELSE 0 END) transformed_created_quantity,
+                    SUM(CASE WHEN p.account_type = 'SINK' AND p.account_owner_id LIKE 'NPC_BUYBACK:%'
+                        AND p.quantity > 0 THEN p.quantity ELSE 0 END) npc_destroyed_quantity,
+                    SUM(CASE WHEN p.account_type = 'SINK' AND p.quantity > 0 AND (
+                            p.account_owner_id = 'FARM_CONSUMPTION'
+                            OR p.account_owner_id = 'SCROLL_CONSUMPTION'
+                            OR p.account_owner_id = 'DEATH_SAFETY_CHARM'
+                            OR p.account_owner_id LIKE 'QUEST_REQUIREMENT:%'
+                            OR (p.account_owner_id = 'SCROLL_INPUT'
+                                AND e.evidence->'scrollApplication'->>'outcome' = 'CURSE'))
+                        THEN p.quantity ELSE 0 END) consumed_quantity
                 FROM economic_event e JOIN ledger_posting p ON p.event_id = e.event_id
                 WHERE e.run_id = ? AND p.asset_type = 'ITEM'
                 GROUP BY e.run_id, e.logical_time::date, p.asset_identifier::integer
@@ -84,7 +97,8 @@ public final class JdbcEconomyProjectionService {
             )
             SELECT f.run_id, f.logical_date, f.item_id, f.completed_quantity, f.completed_trade_count,
                 COALESCE(p.meso_volume, 0), p.vwap, p.minimum_price, p.maximum_price,
-                f.npc_created_quantity, f.farm_created_quantity, f.npc_destroyed_quantity, f.consumed_quantity
+                f.npc_created_quantity, f.farm_created_quantity, f.quest_created_quantity,
+                f.transformed_created_quantity, f.npc_destroyed_quantity, f.consumed_quantity
             FROM item_flow f LEFT JOIN priced p USING (run_id, logical_date, item_id)
             """;
 
@@ -124,7 +138,7 @@ public final class JdbcEconomyProjectionService {
                 AND e.event_kind = 'INITIAL_ENDOWMENT' AND e.actor_ids @> jsonb_build_array(p.agent_id)
                 ORDER BY e.logical_time DESC LIMIT 1) baseline ON true
             LEFT JOIN LATERAL (SELECT e.evidence FROM economic_event e WHERE e.run_id = p.run_id
-                AND e.evidence ? 'levelAfter' AND e.actor_ids @> jsonb_build_array(p.agent_id)
+                AND e.evidence ?? 'levelAfter' AND e.actor_ids @> jsonb_build_array(p.agent_id)
                 ORDER BY e.logical_time DESC LIMIT 1) progress ON true
             LEFT JOIN LATERAL (SELECT pe.map_id FROM agent_presence_event pe WHERE pe.run_id = p.run_id
                 AND pe.agent_id = p.agent_id ORDER BY pe.logical_at DESC LIMIT 1) presence ON true

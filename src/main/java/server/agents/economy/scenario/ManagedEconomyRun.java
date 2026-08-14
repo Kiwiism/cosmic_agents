@@ -20,6 +20,7 @@ public final class ManagedEconomyRun {
         this.runs = Objects.requireNonNull(runs);
         if (batchSize <= 0) throw new IllegalArgumentException("batch size must be positive");
         this.batchSize = batchSize; this.stopOnInvariantViolation = stopOnInvariantViolation;
+        application.onCheckpoint(() -> runs.saveCheckpoint(application.checkpoint()));
     }
 
     public AdvanceResult advanceDays(long days) {

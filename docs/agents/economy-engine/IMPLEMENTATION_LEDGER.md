@@ -7,7 +7,7 @@ This ledger follows the attached master goal without redefining completion aroun
 | 0 | Architecture decisions and invariants | Complete |
 | 1 | Authoritative versioned catalog foundation | Baseline code complete: hashed current-scope bundle, WZ/SQL Cosmic adapter, NPC locations |
 | 2 | Economic event, outbox, and ledger foundation | Baseline code complete: atomic Cosmic outbox, exact receipt ingestion, lot ledger; live recovery soak pending |
-| 3 | Scenario, population, logical clock, RNG, checkpoints | Baseline code complete for fixed growth and max-throughput: named streams, monotonic fast-forward, resume state |
+| 3 | Scenario, population, logical clock, RNG, checkpoints | Complete baseline for fixed growth and max-throughput: named streams, monotonic fast-forward, recurring durable checkpoints, restart-equivalent event/RNG replay, zero-population growth |
 | 4 | Remote real-NPC commerce and full disposition | Baseline code complete: exact buy/sell/recharge with source NPC/map evidence |
 | 5 | Rule-exact offscreen production and calibration | Baseline complete: WZ drops, operational live-session calibration capture, exact resource runway, calibrated trip-ending death, shared Cosmic penalty rules, and logical respawn downtime |
 | 6 | Needs, quests, complements, valuation, beliefs | Baseline complete: heterogeneous logical quest acceptance, exact Cosmic start/turn-in, kill/item objectives, reward selection, accepted-demand waves, and owned scroll projects |
@@ -16,7 +16,7 @@ This ledger follows the attached master goal without redefining completion aroun
 | 9 | Public chat and direct negotiation | Baseline code complete: public transcript, meso and reciprocal item barter, real Trade settlement |
 | 10 | Replaceable ambient behavior | Baseline code complete: owned-chair and constrained fidget policy seam |
 | 11 | Rebuildable data projections and query contracts | Baseline code complete: item/meso/agent read models, explanation query, invariant audit |
-| 12 | Experiments, human readiness, soak and completion audit | PostgreSQL V001-V010 executed and startup verifier passed; live multi-agent soak and counterfactual matrix remain pending |
+| 12 | Experiments, human readiness, soak and completion audit | PostgreSQL V001-V011 clean initialization, startup contract, and balance guard verified; live multi-agent soak and counterfactual matrix remain pending |
 
 ## Deliberate baseline constraint
 

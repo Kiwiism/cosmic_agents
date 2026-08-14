@@ -20,4 +20,22 @@ class PopulationAdmissionPlannerTest {
         assertTrue(admissions.get(199).admittedAt().isBefore(start.plus(java.time.Duration.ofDays(16))));
         assertTrue(admissions.stream().allMatch(a -> a.dailyActivityFraction() > 0));
     }
+
+    @Test
+    void zeroPopulationCanStillGrowAfterTheInitialBoundary() {
+        EconomyEngineConfig config = new EconomyConfigLoader().load().config();
+        config.population.initialAgents = 0;
+        config.population.maximumAgents = 20;
+        config.population.growth.amount = 10;
+        Instant start = Instant.parse(config.clock.logicalStart);
+
+        var admissions = new PopulationAdmissionPlanner().plan(
+                config.population, start, new NamedRandomStreams(config.scenario.seed));
+
+        assertEquals(20, admissions.size());
+        assertTrue(admissions.stream().noneMatch(admission -> admission.admittedAt().equals(start)));
+        assertEquals(10, admissions.stream().filter(admission ->
+                admission.admittedAt().isAfter(start.plus(java.time.Duration.ofDays(1)))
+                        && admission.admittedAt().isBefore(start.plus(java.time.Duration.ofDays(2)))).count());
+    }
 }

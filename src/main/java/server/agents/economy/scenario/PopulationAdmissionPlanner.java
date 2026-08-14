@@ -16,7 +16,10 @@ public final class PopulationAdmissionPlanner {
         while (population < config.maximumAgents) {
             int count = day == 0 ? config.initialAgents
                     : Math.min(config.growth.amount, config.maximumAgents - population);
-            if (count <= 0) break;
+            if (count <= 0) {
+                day++;
+                continue;
+            }
             for (int i = 0; i < count; i++) {
                 Instant admittedAt = admissionTime(config, runStart, day, i, count);
                 int ordinal = population + i + 1;

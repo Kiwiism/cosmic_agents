@@ -29,6 +29,7 @@ public final class SimulationRunEngine {
     private Instant lastCheckpoint;
     private boolean pauseRequested;
     private String pauseReason;
+    private Runnable checkpointHook = () -> { };
 
     public SimulationRunEngine(UUID runId, LoadedEconomyConfig loadedConfig,
                                CatalogBundleDescriptor catalog,
@@ -78,8 +79,13 @@ public final class SimulationRunEngine {
         boolean limited;
         do {
             SimulationKernel.AdvanceResult result = kernel.advanceUntil(target, event -> {
-                if (CHECKPOINT.equals(event.kind())) lastCheckpoint = event.dueAt();
+                boolean checkpoint = CHECKPOINT.equals(event.kind());
+                if (checkpoint) {
+                    lastCheckpoint = event.dueAt();
+                    scheduleNextCheckpoint(event.dueAt());
+                }
                 eventHandler.accept(event);
+                if (checkpoint) checkpointHook.run();
             }, () -> pauseRequested);
             processed = Math.addExact(processed, result.processedEvents());
             batches++;
@@ -99,6 +105,10 @@ public final class SimulationRunEngine {
     public Instant lastCheckpoint() { return lastCheckpoint; }
     public EconomyEngineConfig config() { return loadedConfig.config(); }
     public NamedRandomStreams randomStreams() { return random; }
+
+    public void onCheckpoint(Runnable hook) {
+        checkpointHook = Objects.requireNonNull(hook);
+    }
 
     public void pauseAfterCurrentEvent(String reason) {
         pauseRequested = true;
@@ -131,12 +141,12 @@ public final class SimulationRunEngine {
     }
 
     private void scheduleCheckpoints() {
-        EconomyEngineConfig config = loadedConfig.config();
-        Duration cadence = Duration.ofHours(config.scenario.checkpointEveryLogicalHours);
-        Instant end = clock.now().plus(Duration.ofDays(config.scenario.targetLogicalDays));
-        for (Instant due = clock.now().plus(cadence); !due.isAfter(end); due = due.plus(cadence)) {
-            queue.schedule(due, CHECKPOINT, runId.toString(), Map.of());
-        }
+        scheduleNextCheckpoint(clock.now());
+    }
+
+    private void scheduleNextCheckpoint(Instant after) {
+        Duration cadence = Duration.ofHours(loadedConfig.config().scenario.checkpointEveryLogicalHours);
+        queue.schedule(after.plus(cadence), CHECKPOINT, runId.toString(), Map.of());
     }
 
     public record AdvanceSummary(Instant reachedAt, int processedEvents, int batches, int queuedEvents,

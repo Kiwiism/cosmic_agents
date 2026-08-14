@@ -1,0 +1,181 @@
+package server.agents.economy.persistence;
+
+import com.zaxxer.hikari.HikariDataSource;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+@EnabledIfEnvironmentVariable(named = "ECONOMY_DB_INTEGRATION", matches = "true")
+class EconomyPostgresSchemaIntegrationTest {
+    @Test
+    void cleanSchemaSatisfiesRuntimeContractAndRejectsUnbalancedEvents() throws Exception {
+        try (HikariDataSource dataSource = EconomyPostgresDataSource.fromEnvironment()) {
+            new EconomyDatabaseVerifier(dataSource).verify("cosmic_economy");
+            try (Connection connection = dataSource.getConnection()) {
+                assertEquals(1, scalar(connection, "SELECT COUNT(*) FROM pg_trigger "
+                        + "WHERE tgname = 'ledger_postings_must_balance'"));
+                assertUnbalancedCommitFails(connection);
+            }
+            UUID run = UUID.randomUUID();
+            try {
+                try (Connection connection = dataSource.getConnection()) {
+                    insertRun(connection, run);
+                    insertProjectionFacts(connection, run);
+                }
+                JdbcEconomyProjectionService.Result projection =
+                        new JdbcEconomyProjectionService(dataSource).rebuild(run);
+                assertEquals(2, projection.itemDailyRows());
+                assertEquals(new JdbcEconomyInvariantAuditor.Audit(true, java.util.List.of()),
+                        new JdbcEconomyInvariantAuditor(dataSource).audit(run, Instant.EPOCH));
+                try (Connection connection = dataSource.getConnection()) {
+                    assertEquals(1, itemFlow(connection, run, 1102053, "quest_created_quantity"));
+                    assertEquals(1, itemFlow(connection, run, 1102053, "transformed_created_quantity"));
+                    assertEquals(0, itemFlow(connection, run, 1102053, "consumed_quantity"));
+                    assertEquals(1, itemFlow(connection, run, 2041000, "consumed_quantity"));
+                }
+            } finally {
+                try (Connection connection = dataSource.getConnection()) { deleteRun(connection, run); }
+            }
+        }
+    }
+
+    private static void assertUnbalancedCommitFails(Connection connection) throws Exception {
+        UUID run = UUID.randomUUID();
+        UUID event = UUID.randomUUID();
+        connection.setAutoCommit(false);
+        try {
+            insertRun(connection, run);
+            try (PreparedStatement statement = connection.prepareStatement(
+                    "INSERT INTO economic_event (event_id, run_id, logical_time, event_kind, "
+                            + "idempotency_key, config_hash, catalog_version) VALUES (?, ?, ?, 'AUDIT', ?, ?, 'audit')")) {
+                statement.setObject(1, event); statement.setObject(2, run);
+                statement.setTimestamp(3, Timestamp.from(Instant.EPOCH));
+                statement.setString(4, event.toString()); statement.setString(5, "0".repeat(64));
+                statement.executeUpdate();
+            }
+            try (PreparedStatement statement = connection.prepareStatement(
+                    "INSERT INTO ledger_posting (event_id, posting_index, account_type, "
+                            + "account_owner_id, asset_type, asset_identifier, quantity) "
+                            + "VALUES (?, 0, 'SOURCE', 'audit', 'MESO', 'MESO', -1)")) {
+                statement.setObject(1, event); statement.executeUpdate();
+            }
+            assertThrows(SQLException.class, connection::commit);
+        } finally {
+            connection.rollback();
+            connection.setAutoCommit(true);
+        }
+    }
+
+    private static void insertRun(Connection connection, UUID run) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(
+                "INSERT INTO simulation_run (run_id, scenario_id, status, logical_started_at, "
+                        + "logical_current_at, target_logical_at, seed, config_hash, config_yaml, "
+                        + "catalog_version) VALUES (?, 'schema-audit', 'RUNNING', ?, ?, ?, 1, ?, '', 'audit')")) {
+            statement.setObject(1, run);
+            Timestamp at = Timestamp.from(Instant.EPOCH);
+            statement.setTimestamp(2, at); statement.setTimestamp(3, at); statement.setTimestamp(4, at);
+            statement.setString(5, "0".repeat(64)); statement.executeUpdate();
+        }
+    }
+
+    private static void insertProjectionFacts(Connection connection, UUID run) throws SQLException {
+        boolean autoCommit = connection.getAutoCommit();
+        connection.setAutoCommit(false);
+        try {
+            UUID endowment = insertEvent(connection, run, "INITIAL_ENDOWMENT", "{}");
+            posting(connection, endowment, 0, "SOURCE", "INITIAL_ENDOWMENT", 1102053, -1);
+            posting(connection, endowment, 1, "AGENT", "agent-1", 1102053, 1);
+            posting(connection, endowment, 2, "SOURCE", "INITIAL_ENDOWMENT", 2041000, -1);
+            posting(connection, endowment, 3, "AGENT", "agent-1", 2041000, 1);
+            UUID scroll = insertEvent(connection, run, "SCROLL_APPLIED",
+                    "{\"scrollApplication\":{\"outcome\":\"SUCCESS\"}}");
+            posting(connection, scroll, 0, "AGENT", "agent-1", 1102053, -1);
+            posting(connection, scroll, 1, "SINK", "SCROLL_INPUT", 1102053, 1);
+            posting(connection, scroll, 2, "SOURCE", "SCROLL_TRANSFORMATION:2041000", 1102053, -1);
+            posting(connection, scroll, 3, "AGENT", "agent-1", 1102053, 1);
+            posting(connection, scroll, 4, "AGENT", "agent-1", 2041000, -1);
+            posting(connection, scroll, 5, "SINK", "SCROLL_CONSUMPTION", 2041000, 1);
+            UUID quest = insertEvent(connection, run, "QUEST_TURN_IN", "{}");
+            posting(connection, quest, 0, "SOURCE", "QUEST:2024:TURN_IN", 1102053, -1);
+            posting(connection, quest, 1, "AGENT", "agent-1", 1102053, 1);
+            connection.commit();
+        } catch (SQLException failure) {
+            connection.rollback();
+            throw failure;
+        } finally {
+            connection.setAutoCommit(autoCommit);
+        }
+    }
+
+    private static UUID insertEvent(Connection connection, UUID run, String kind, String evidence)
+            throws SQLException {
+        UUID event = UUID.randomUUID();
+        try (PreparedStatement statement = connection.prepareStatement(
+                "INSERT INTO economic_event (event_id, run_id, logical_time, event_kind, idempotency_key, "
+                        + "config_hash, catalog_version, evidence) VALUES (?, ?, ?, ?, ?, ?, 'audit', CAST(? AS jsonb))")) {
+            statement.setObject(1, event); statement.setObject(2, run);
+            statement.setTimestamp(3, Timestamp.from(Instant.EPOCH)); statement.setString(4, kind);
+            statement.setString(5, event.toString()); statement.setString(6, "0".repeat(64));
+            statement.setString(7, evidence); statement.executeUpdate();
+        }
+        return event;
+    }
+
+    private static void posting(Connection connection, UUID event, int index, String accountType,
+                                String owner, int itemId, long quantity) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(
+                "INSERT INTO ledger_posting (event_id, posting_index, account_type, account_owner_id, "
+                        + "asset_type, asset_identifier, quantity) VALUES (?, ?, ?, ?, 'ITEM', ?, ?)")) {
+            statement.setObject(1, event); statement.setInt(2, index); statement.setString(3, accountType);
+            statement.setString(4, owner); statement.setString(5, Integer.toString(itemId));
+            statement.setLong(6, quantity); statement.executeUpdate();
+        }
+    }
+
+    private static int itemFlow(Connection connection, UUID run, int itemId, String column)
+            throws SQLException {
+        if (!java.util.Set.of("quest_created_quantity", "transformed_created_quantity", "consumed_quantity")
+                .contains(column)) throw new IllegalArgumentException("unsupported audit column");
+        try (PreparedStatement statement = connection.prepareStatement(
+                "SELECT " + column + " FROM item_market_daily WHERE run_id = ? AND item_id = ?")) {
+            statement.setObject(1, run); statement.setInt(2, itemId);
+            try (var rows = statement.executeQuery()) { rows.next(); return rows.getInt(1); }
+        }
+    }
+
+    private static void deleteRun(Connection connection, UUID run) throws SQLException {
+        for (String table : java.util.List.of("item_market_daily", "meso_flow_daily",
+                "agent_state_projection", "listing_exposure", "ledger_posting", "economic_event")) {
+            String predicate = "ledger_posting".equals(table)
+                    ? "event_id IN (SELECT event_id FROM economic_event WHERE run_id = ?)" : "run_id = ?";
+            try (PreparedStatement statement = connection.prepareStatement(
+                    "DELETE FROM " + table + " WHERE " + predicate)) {
+                statement.setObject(1, run); statement.executeUpdate();
+            }
+        }
+        try (PreparedStatement statement = connection.prepareStatement(
+                "DELETE FROM economy_invariant_violation WHERE run_id = ?")) {
+            statement.setObject(1, run); statement.executeUpdate();
+        }
+        try (PreparedStatement statement = connection.prepareStatement(
+                "DELETE FROM simulation_run WHERE run_id = ?")) {
+            statement.setObject(1, run); statement.executeUpdate();
+        }
+    }
+
+    private static int scalar(Connection connection, String sql) throws SQLException {
+        try (var statement = connection.createStatement(); var rows = statement.executeQuery(sql)) {
+            rows.next();
+            return rows.getInt(1);
+        }
+    }
+}

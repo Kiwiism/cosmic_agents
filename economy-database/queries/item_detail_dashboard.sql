@@ -17,6 +17,11 @@ WITH postings AS (
     SELECT listing_id, seller_id, room_map_id, quantity_per_bundle, bundles_initial,
            bundles_remaining, bundle_price, opened_at, closed_at, close_reason, reprices
     FROM market_listing WHERE run_id = :run_id AND item_id = :item_id ORDER BY opened_at
+), observations AS (
+    SELECT logical_time, agent_id, room_map_id, listing_id, observed_state, unit_price,
+           quantity, item_fingerprint, item_attributes, evidence
+    FROM market_observation WHERE run_id = :run_id AND item_id = :item_id
+    ORDER BY logical_time
 ), demand AS (
     SELECT demand_id, agent_id, demand_kind, required_quantity, maximum_willingness_to_pay,
            earliest_at, latest_at, status, evidence
@@ -44,6 +49,7 @@ SELECT jsonb_build_object(
                                 FROM item_lot WHERE run_id = :run_id AND item_id = :item_id), '[]'),
     'transactions', COALESCE((SELECT jsonb_agg(to_jsonb(transactions)) FROM transactions), '[]'),
     'askHistory', COALESCE((SELECT jsonb_agg(to_jsonb(asks)) FROM asks), '[]'),
+    'privateObservations', COALESCE((SELECT jsonb_agg(to_jsonb(observations)) FROM observations), '[]'),
     'listingLotAllocations', COALESCE((SELECT jsonb_agg(to_jsonb(a) ORDER BY a.listing_id, a.lot_id)
         FROM market_listing_lot a JOIN market_listing l USING (run_id, listing_id)
         WHERE a.run_id = :run_id AND l.item_id = :item_id), '[]'),

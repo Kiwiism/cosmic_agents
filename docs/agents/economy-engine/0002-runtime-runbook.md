@@ -36,6 +36,12 @@ This means a 30-day economic run can compress the long offscreen and waiting int
 compress away the real wall-clock work needed to observe a physical market. That is the necessary
 tradeoff for later swapping calibrated activity with fully live agents under the same constraints.
 
+The configured logical checkpoint cadence is recurring rather than preallocated to the default
+reporting horizon. A managed run persists the full event queue, named RNG states, pending resolved
+activity outcomes, coordinator state, and world state at every cadence boundary even during one
+large advance. Checkpoint restore rejects changed configuration/catalog hashes and replay tests
+require identical remaining event order and RNG state.
+
 ## Evidence available to a future dashboard
 
 - `economic_event` and `ledger_posting`: immutable authority and balanced meso/item flows.

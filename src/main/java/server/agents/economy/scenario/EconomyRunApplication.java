@@ -54,4 +54,5 @@ public final class EconomyRunApplication {
     public Map<String, EconomyRunCoordinator.AgentView> agents() { return coordinator.agentViews(); }
     public Instant now() { return engine.now(); }
     public UUID runId() { return engine.runId(); }
+    public void onCheckpoint(Runnable hook) { engine.onCheckpoint(hook); }
 }

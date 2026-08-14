@@ -5,7 +5,7 @@ DELETE FROM meso_flow_daily WHERE run_id = :run_id;
 INSERT INTO item_market_daily (
     run_id, logical_date, item_id, completed_quantity, completed_trade_count, meso_volume,
     vwap, minimum_price, maximum_price, npc_created_quantity, farm_created_quantity,
-    npc_destroyed_quantity, consumed_quantity)
+    quest_created_quantity, transformed_created_quantity, npc_destroyed_quantity, consumed_quantity)
 SELECT e.run_id, e.logical_time::date, p.asset_identifier::integer,
        SUM(CASE WHEN e.event_kind IN ('STALL_SALE','DIRECT_TRADE')
                  AND p.account_type = 'AGENT' AND p.quantity > 0 THEN p.quantity ELSE 0 END),
@@ -22,14 +22,26 @@ SELECT e.run_id, e.logical_time::date, p.asset_identifier::integer,
        MAX((COALESCE((e.evidence->>'grossMesos')::bigint, (e.evidence->>'gross')::bigint)
                / NULLIF((e.evidence->>'quantity')::bigint, 0)))
            FILTER (WHERE e.event_kind IN ('STALL_SALE','DIRECT_TRADE')),
-       SUM(CASE WHEN e.event_kind = 'NPC_PURCHASE' AND p.account_type = 'AGENT' AND p.quantity > 0
-                THEN p.quantity ELSE 0 END),
-       SUM(CASE WHEN e.event_kind = 'FARM_RESULT' AND p.account_type = 'AGENT' AND p.quantity > 0
-                THEN p.quantity ELSE 0 END),
-       -SUM(CASE WHEN e.event_kind = 'NPC_SALE' AND p.account_type = 'AGENT' AND p.quantity < 0
-                 THEN p.quantity ELSE 0 END),
-       -SUM(CASE WHEN e.event_kind IN ('CONSUMPTION','SCROLL_APPLIED','QUEST_TURN_IN')
-                  AND p.account_type = 'AGENT' AND p.quantity < 0 THEN p.quantity ELSE 0 END)
+       -SUM(CASE WHEN p.account_type = 'SOURCE'
+                  AND (p.account_owner_id LIKE 'NPC_STOCK:%' OR p.account_owner_id LIKE 'NPC_RECHARGE:%')
+                  AND p.quantity < 0 THEN p.quantity ELSE 0 END),
+       -SUM(CASE WHEN p.account_type = 'SOURCE' AND p.account_owner_id LIKE 'MOB:%'
+                  AND p.quantity < 0 THEN p.quantity ELSE 0 END),
+       -SUM(CASE WHEN p.account_type = 'SOURCE' AND p.account_owner_id LIKE 'QUEST:%'
+                  AND p.quantity < 0 THEN p.quantity ELSE 0 END),
+       -SUM(CASE WHEN p.account_type = 'SOURCE'
+                  AND p.account_owner_id LIKE 'SCROLL_TRANSFORMATION:%'
+                  AND p.quantity < 0 THEN p.quantity ELSE 0 END),
+       SUM(CASE WHEN p.account_type = 'SINK' AND p.account_owner_id LIKE 'NPC_BUYBACK:%'
+                 AND p.quantity > 0 THEN p.quantity ELSE 0 END),
+       SUM(CASE WHEN p.account_type = 'SINK' AND p.quantity > 0 AND (
+                    p.account_owner_id = 'FARM_CONSUMPTION'
+                    OR p.account_owner_id = 'SCROLL_CONSUMPTION'
+                    OR p.account_owner_id = 'DEATH_SAFETY_CHARM'
+                    OR p.account_owner_id LIKE 'QUEST_REQUIREMENT:%'
+                    OR (p.account_owner_id = 'SCROLL_INPUT'
+                        AND e.evidence->'scrollApplication'->>'outcome' = 'CURSE'))
+                THEN p.quantity ELSE 0 END)
 FROM economic_event e
 JOIN ledger_posting p ON p.event_id = e.event_id AND p.asset_type = 'ITEM'
 WHERE e.run_id = :run_id

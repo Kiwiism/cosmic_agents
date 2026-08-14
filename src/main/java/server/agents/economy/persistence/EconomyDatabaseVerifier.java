@@ -20,6 +20,8 @@ public final class EconomyDatabaseVerifier {
                 new Column("economic_event", "evidence"),
                 new Column("ledger_posting", "lot_id"),
                 new Column("market_observation", "item_attributes"),
+                new Column("item_market_daily", "quest_created_quantity"),
+                new Column("item_market_daily", "transformed_created_quantity"),
                 new Column("market_listing_lot", "lot_id"),
                 new Column("agent_presence_event", "reason"),
                 new Column("negotiation_session", "transcript"));
@@ -33,7 +35,7 @@ public final class EconomyDatabaseVerifier {
                 try (ResultSet result = connection.getMetaData().getColumns(
                         null, "public", column.table(), column.column())) {
                     if (!result.next()) throw new IllegalStateException("economy schema is missing "
-                            + column.table() + '.' + column.column() + "; apply V001 through V010");
+                        + column.table() + '.' + column.column() + "; apply V001 through V011");
                 }
             }
         } catch (SQLException failure) {
