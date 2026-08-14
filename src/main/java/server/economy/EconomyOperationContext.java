@@ -28,4 +28,12 @@ public final class EconomyOperationContext {
     }
 
     public static EconomyOperationMetadata currentMetadata() { return current(); }
+
+    public static <T> T withParticipantFlags(boolean primaryIsAgent, boolean secondaryIsAgent,
+                                             Supplier<T> action) {
+        EconomyOperationMetadata value = current();
+        return with(new EconomyOperationMetadata(value.runId(), value.logicalAt(), value.decisionId(),
+                value.activityId(), value.configRevision(), value.catalogRevision(), value.reasonCode(),
+                primaryIsAgent, secondaryIsAgent, value.taxOverride()), action);
+    }
 }

@@ -22,4 +22,21 @@ class EconomyOperationContextTest {
         assertEquals("QUEST_REQUIREMENT", attributed.metadata().reasonCode());
         assertNull(ordinary.metadata().runId());
     }
+
+    @Test
+    void counterpartClassificationCanBeNarrowedWithoutLosingRunAttribution() {
+        UUID runId = UUID.randomUUID();
+        EconomyOperationMetadata metadata = new EconomyOperationMetadata(runId, Instant.EPOCH,
+                "decision-2", null, "config-1", "catalog-1", "MARKET_CYCLE", true, false);
+
+        EconomyOperation operation = EconomyOperationContext.with(metadata,
+                () -> EconomyOperationContext.withParticipantFlags(true, true,
+                        () -> EconomyOperation.create(EconomyOperationKind.PLAYER_SHOP_SALE,
+                                1, 2, "sale")));
+
+        assertEquals(runId, operation.metadata().runId());
+        assertTrue(operation.metadata().primaryIsAgent());
+        assertTrue(operation.metadata().secondaryIsAgent());
+        assertFalse(EconomyOperationContext.currentMetadata().primaryIsAgent());
+    }
 }

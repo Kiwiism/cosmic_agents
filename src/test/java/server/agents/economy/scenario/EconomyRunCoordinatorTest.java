@@ -53,7 +53,6 @@ class EconomyRunCoordinatorTest {
         RunCheckpointCodec.Encoded encoded = codec.encode(first.checkpoint());
 
         TestWorld afterRestart = new TestWorld();
-        afterRestart.activityScheduled = true;
         EconomyRunApplication restored = EconomyRunApplication.restore(
                 codec.decode(encoded.json(), encoded.sha256()), loaded, bundle, catalog, afterRestart, journal());
         restored.advanceTo(restored.now().plus(Duration.ofHours(1)));
@@ -90,6 +89,12 @@ class EconomyRunCoordinatorTest {
         }
         public void returnThroughFreeMarketEntrance(EconomyAgentProfile profile, Instant at) {
             actions.add("return");
+        }
+        public Map<String, Object> snapshotState() {
+            return Map.of("activityScheduled", activityScheduled);
+        }
+        public void restoreState(Map<String, Object> state) {
+            activityScheduled = Boolean.TRUE.equals(state.get("activityScheduled"));
         }
     }
 

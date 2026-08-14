@@ -32,4 +32,19 @@ class StallAndKnowledgeTest {
         assertEquals(0, knowledge.observedMedianAsk(4000000, Instant.EPOCH.plusSeconds(120),
                 Duration.ofMinutes(1)));
     }
+
+    @Test
+    void privateBeliefsAndPhysicalTripProgressRoundTripWithoutAdministrativeKnowledge() {
+        MarketObservation observation = new MarketObservation("o", "buyer", Instant.EPOCH,
+                910000001, "seller", "listing", 4000000, 2, 200,
+                MarketObservation.State.LISTED);
+        PrivateMarketKnowledge original = new PrivateMarketKnowledge();
+        original.observe(observation);
+        PrivateMarketKnowledge restored = PrivateMarketKnowledge.restore(original.snapshot());
+        assertEquals(List.of(observation), restored.snapshot());
+
+        PhysicalMarketTrip trip = new PhysicalMarketTrip(List.of(910000001, 910000002));
+        PhysicalMarketTrip roundTrip = PhysicalMarketTrip.restore(trip.snapshot());
+        assertEquals(trip.snapshot(), roundTrip.snapshot());
+    }
 }

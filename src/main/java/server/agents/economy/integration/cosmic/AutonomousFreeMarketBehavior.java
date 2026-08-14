@@ -1,6 +1,8 @@
 package server.agents.economy.integration.cosmic;
 
 import client.Character;
+import client.inventory.InventoryType;
+import server.agents.capabilities.shop.AgentFreeMarketStallService;
 import server.agents.economy.decision.AgentNeed;
 import server.agents.economy.decision.ObservedPurchasePolicy;
 import server.agents.economy.market.*;
@@ -57,8 +59,8 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
     }
 
     @Override
-    public EconomyWorldPort.MarketDirective perform(Character agent, EconomyAgentProfile profile,
-                                                     Instant logicalAt) {
+    public synchronized EconomyWorldPort.MarketDirective perform(Character agent, EconomyAgentProfile profile,
+                                                                  Instant logicalAt) {
         State state = states.computeIfAbsent(profile.agentId(), ignored -> new State(
                 new PrivateMarketKnowledge(), new PhysicalMarketTrip(roomPlanner.plan(
                 config.minimumRoomsPerTrip, config.maximumRoomsPerTrip, random))));
@@ -145,6 +147,126 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
         }
         return revisit(logicalAt, false);
     }
+
+    @Override
+    public synchronized Map<String, Object> snapshotState() {
+        Map<String, Object> encodedStates = new TreeMap<>();
+        states.forEach((agentId, state) -> encodedStates.put(agentId, stateMap(state)));
+        return Map.of("schemaVersion", 1, "agents", encodedStates);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public synchronized void restoreState(Map<String, Object> snapshot) {
+        if (snapshot == null || snapshot.isEmpty()) return;
+        if (!states.isEmpty()) throw new IllegalStateException("market behavior state is already initialized");
+        if (integer(snapshot, "schemaVersion") != 1)
+            throw new IllegalStateException("unsupported market behavior checkpoint schema");
+        Map<String, Object> encodedStates = (Map<String, Object>) snapshot.get("agents");
+        encodedStates.forEach((agentId, value) -> states.put(agentId,
+                stateFrom((Map<String, Object>) value)));
+    }
+
+    private static Map<String, Object> stateMap(State state) {
+        Map<String, Object> value = new LinkedHashMap<>();
+        value.put("phase", state.phase.name());
+        value.put("knowledge", state.knowledge.snapshot().stream()
+                .map(AutonomousFreeMarketBehavior::observationMap).toList());
+        PhysicalMarketTrip.Snapshot trip = state.trip.snapshot();
+        Map<String, Object> tripValue = new LinkedHashMap<>();
+        tripValue.put("rooms", trip.rooms()); tripValue.put("inspected", trip.inspected());
+        tripValue.put("roomIndex", trip.roomIndex());
+        if (trip.approachingObjectId() != null)
+            tripValue.put("approachingObjectId", trip.approachingObjectId());
+        value.put("trip", tripValue);
+        value.put("attemptedResourceItems", state.attemptedResourceItems.stream().sorted().toList());
+        value.put("sellerPlan", state.sellerPlan == null ? Map.of() : sellerPlanMap(state.sellerPlan));
+        value.put("npcSaleIndex", state.npcSaleIndex); value.put("openAttempts", state.openAttempts);
+        if (state.stallOpenedAt != null) value.put("stallOpenedAt", state.stallOpenedAt.toString());
+        return value;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static State stateFrom(Map<String, Object> value) {
+        List<MarketObservation> observations = ((List<Map<String, Object>>) value.get("knowledge"))
+                .stream().map(AutonomousFreeMarketBehavior::observationFrom).toList();
+        Map<String, Object> tripValue = (Map<String, Object>) value.get("trip");
+        List<Integer> rooms = ((List<Number>) tripValue.get("rooms")).stream().map(Number::intValue).toList();
+        List<String> inspected = ((List<Object>) tripValue.get("inspected")).stream()
+                .map(Object::toString).toList();
+        Integer approaching = tripValue.containsKey("approachingObjectId")
+                ? integer(tripValue, "approachingObjectId") : null;
+        State state = new State(PrivateMarketKnowledge.restore(observations), PhysicalMarketTrip.restore(
+                new PhysicalMarketTrip.Snapshot(rooms, inspected, integer(tripValue, "roomIndex"), approaching)));
+        state.phase = Phase.valueOf(text(value, "phase"));
+        ((List<Number>) value.get("attemptedResourceItems")).stream().map(Number::intValue)
+                .forEach(state.attemptedResourceItems::add);
+        Map<String, Object> plan = (Map<String, Object>) value.get("sellerPlan");
+        state.sellerPlan = plan == null || plan.isEmpty() ? null : sellerPlanFrom(plan);
+        state.npcSaleIndex = integer(value, "npcSaleIndex");
+        state.openAttempts = integer(value, "openAttempts");
+        if (value.containsKey("stallOpenedAt")) state.stallOpenedAt = Instant.parse(text(value, "stallOpenedAt"));
+        if (state.phase.ordinal() >= Phase.DISPOSING.ordinal() && state.sellerPlan == null)
+            throw new IllegalStateException("restored market phase requires a seller plan");
+        return state;
+    }
+
+    private static Map<String, Object> observationMap(MarketObservation observation) {
+        Map<String, Object> value = new LinkedHashMap<>();
+        value.put("observationId", observation.observationId());
+        value.put("observerAgentId", observation.observerAgentId());
+        value.put("observedAt", observation.observedAt().toString());
+        value.put("roomMapId", observation.roomMapId());
+        value.put("stallOwnerAgentId", observation.stallOwnerAgentId());
+        value.put("listingId", observation.listingId()); value.put("itemId", observation.itemId());
+        value.put("quantity", observation.quantity()); value.put("unitPrice", observation.unitPrice());
+        value.put("quantityPerBundle", observation.quantityPerBundle());
+        value.put("bundles", observation.bundles()); value.put("bundlePrice", observation.bundlePrice());
+        value.put("state", observation.state().name());
+        return value;
+    }
+
+    private static MarketObservation observationFrom(Map<String, Object> value) {
+        return new MarketObservation(text(value, "observationId"), text(value, "observerAgentId"),
+                Instant.parse(text(value, "observedAt")), integer(value, "roomMapId"),
+                text(value, "stallOwnerAgentId"), text(value, "listingId"), integer(value, "itemId"),
+                integer(value, "quantity"), number(value, "unitPrice"), integer(value, "quantityPerBundle"),
+                integer(value, "bundles"), number(value, "bundlePrice"),
+                MarketObservation.State.valueOf(text(value, "state")));
+    }
+
+    private static Map<String, Object> sellerPlanMap(MarketSellerPlan plan) {
+        return Map.of("npcSales", plan.npcSales().stream().map(sale -> Map.<String, Object>of(
+                        "npcId", sale.npcId(), "inventoryType", sale.inventoryType().name(),
+                        "slot", (int) sale.slot(), "quantity", (int) sale.quantity(), "itemId", sale.itemId(),
+                        "reason", sale.reason(), "evidence", sale.evidence())).toList(),
+                "stallListings", plan.stallListings().stream().map(listing -> Map.<String, Object>of(
+                        "inventoryType", listing.inventoryType().name(), "slot", (int) listing.slot(),
+                        "perBundle", (int) listing.perBundle(), "bundles", (int) listing.bundles(),
+                        "price", listing.price())).toList(),
+                "preferredRoomMapId", plan.preferredRoomMapId(), "stallDescription", plan.stallDescription());
+    }
+
+    @SuppressWarnings("unchecked")
+    private static MarketSellerPlan sellerPlanFrom(Map<String, Object> value) {
+        List<MarketSellerPlan.NpcSale> npcSales = ((List<Map<String, Object>>) value.get("npcSales")).stream()
+                .map(row -> new MarketSellerPlan.NpcSale(integer(row, "npcId"),
+                        InventoryType.valueOf(text(row, "inventoryType")), (short) integer(row, "slot"),
+                        (short) integer(row, "quantity"), integer(row, "itemId"), text(row, "reason"),
+                        text(row, "evidence"))).toList();
+        List<AgentFreeMarketStallService.Listing> listings =
+                ((List<Map<String, Object>>) value.get("stallListings")).stream()
+                        .map(row -> new AgentFreeMarketStallService.Listing(
+                                InventoryType.valueOf(text(row, "inventoryType")),
+                                (short) integer(row, "slot"), (short) integer(row, "perBundle"),
+                                (short) integer(row, "bundles"), integer(row, "price"))).toList();
+        return new MarketSellerPlan(npcSales, listings, integer(value, "preferredRoomMapId"),
+                text(value, "stallDescription"));
+    }
+
+    private static String text(Map<String, Object> value, String key) { return value.get(key).toString(); }
+    private static int integer(Map<String, Object> value, String key) { return ((Number) value.get(key)).intValue(); }
+    private static long number(Map<String, Object> value, String key) { return ((Number) value.get(key)).longValue(); }
 
     private void attemptObservedPurchase(Character agent, EconomyAgentProfile profile, Instant logicalAt,
                                          State state, List<CosmicMarketObservationService.ObservedOffer> offers) {

@@ -33,4 +33,16 @@ public final class PrivateMarketKnowledge {
         return prices.size() % 2 == 1 ? prices.get(middle)
                 : Math.addExact(prices.get(middle - 1), prices.get(middle)) / 2;
     }
+
+    public synchronized List<MarketObservation> snapshot() {
+        return observations.values().stream().flatMap(List::stream)
+                .sorted(Comparator.comparing(MarketObservation::observedAt)
+                        .thenComparing(MarketObservation::observationId)).toList();
+    }
+
+    public static PrivateMarketKnowledge restore(List<MarketObservation> observations) {
+        PrivateMarketKnowledge result = new PrivateMarketKnowledge();
+        observations.forEach(result::observe);
+        return result;
+    }
 }

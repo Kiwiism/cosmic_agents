@@ -19,6 +19,25 @@ public final class PhysicalMarketTrip {
         this.rooms = List.copyOf(rooms);
     }
 
+    private PhysicalMarketTrip(List<Integer> rooms, Set<String> inspected,
+                               int roomIndex, Integer approachingObjectId) {
+        this(rooms);
+        if (roomIndex < 0 || roomIndex > rooms.size())
+            throw new IllegalArgumentException("invalid restored room index");
+        this.inspected.addAll(inspected);
+        this.roomIndex = roomIndex;
+        this.approachingObjectId = approachingObjectId;
+    }
+
+    public Snapshot snapshot() {
+        return new Snapshot(rooms, inspected.stream().sorted().toList(), roomIndex, approachingObjectId);
+    }
+
+    public static PhysicalMarketTrip restore(Snapshot snapshot) {
+        return new PhysicalMarketTrip(snapshot.rooms(), Set.copyOf(snapshot.inspected()),
+                snapshot.roomIndex(), snapshot.approachingObjectId());
+    }
+
     public Step tick(Character agent, String logicalAgentId, Instant logicalAt,
                      PrivateMarketKnowledge knowledge, FreeMarketPhysicalGateway gateway) {
         if (complete()) return new Step(Status.COMPLETE, List.of(), null);
@@ -64,6 +83,12 @@ public final class PhysicalMarketTrip {
     }
 
     public enum Status { PHYSICAL_ACTION_PENDING, OBSERVED, ROOM_COMPLETE, COMPLETE, BLOCKED }
+    public record Snapshot(List<Integer> rooms, List<String> inspected, int roomIndex,
+                           Integer approachingObjectId) {
+        public Snapshot {
+            rooms = List.copyOf(rooms); inspected = List.copyOf(inspected);
+        }
+    }
     public record Step(Status status, List<CosmicMarketObservationService.ObservedOffer> offers,
                        Integer roomMapId) {
         public Step { offers = List.copyOf(offers); }

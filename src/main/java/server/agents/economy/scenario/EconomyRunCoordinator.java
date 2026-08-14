@@ -137,18 +137,30 @@ public final class EconomyRunCoordinator {
     }
 
     public Map<String, Object> snapshot() {
-        Map<String, Object> result = new LinkedHashMap<>();
-        agents.forEach((id, state) -> result.put(id, Map.of(
+        Map<String, Object> agentState = new LinkedHashMap<>();
+        agents.forEach((id, state) -> agentState.put(id, Map.of(
                 "profile", profileMap(state.profile),
                 "status", state.status.name(),
                 "pendingActivity", state.pendingActivity == null ? Map.of() : planMap(state.pendingActivity))));
-        return Map.copyOf(result);
+        return Map.of("schemaVersion", 2, "agents", Map.copyOf(agentState),
+                "world", world.snapshotState());
     }
 
     @SuppressWarnings("unchecked")
     public void restore(Map<String, Object> snapshot) {
         if (!agents.isEmpty()) throw new IllegalStateException("coordinator state is already initialized");
-        snapshot.forEach((id, value) -> {
+        Map<String, Object> agentState;
+        Map<String, Object> worldState;
+        if (snapshot.containsKey("schemaVersion")) {
+            if (integer(snapshot, "schemaVersion") != 2)
+                throw new IllegalStateException("unsupported coordinator checkpoint schema");
+            agentState = (Map<String, Object>) snapshot.get("agents");
+            worldState = (Map<String, Object>) snapshot.get("world");
+        } else {
+            agentState = snapshot; // compatibility with checkpoints written before world state existed
+            worldState = Map.of();
+        }
+        agentState.forEach((id, value) -> {
             Map<String, Object> row = (Map<String, Object>) value;
             EconomyAgentProfile profile = profileFrom((Map<String, Object>) row.get("profile"));
             Status status = Status.valueOf(row.get("status").toString());
@@ -158,6 +170,7 @@ public final class EconomyRunCoordinator {
                 throw new IllegalStateException("checkpoint activity state is inconsistent for " + id);
             agents.put(id, new AgentState(profile, status, plan));
         });
+        world.restoreState(worldState == null ? Map.of() : worldState);
     }
 
     private static Map<String, Object> profileMap(EconomyAgentProfile p) {

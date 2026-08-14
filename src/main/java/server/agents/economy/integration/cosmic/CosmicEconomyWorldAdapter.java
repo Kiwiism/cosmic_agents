@@ -118,6 +118,36 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort {
         }
     }
 
+    @Override
+    public Map<String, Object> snapshotState() {
+        return Map.of("schemaVersion", 1, "boundAgentIds", bindings.keySet().stream().sorted().toList(),
+                "offscreenAgentIds", offscreen.stream().sorted().toList(),
+                "market", market.snapshotState());
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public void restoreState(Map<String, Object> state) {
+        if (state == null || state.isEmpty()) return; // older coordinator checkpoints
+        if (((Number) state.get("schemaVersion")).intValue() != 1)
+            throw new IllegalStateException("unsupported Cosmic world checkpoint schema");
+        if (!bindings.isEmpty() || !offscreen.isEmpty())
+            throw new IllegalStateException("Cosmic world state is already initialized");
+        for (Object idValue : (java.util.List<Object>) state.get("boundAgentIds")) {
+            String id = idValue.toString();
+            Character agent = agents.resolve(id);
+            if (agent == null || agent.getClient() == null || agent.getClient().getChannel() != channelId)
+                throw new IllegalStateException("checkpoint agent is not live on the configured channel: " + id);
+            bindings.put(id, agent);
+        }
+        for (Object idValue : (java.util.List<Object>) state.get("offscreenAgentIds")) {
+            String id = idValue.toString();
+            if (!bindings.containsKey(id)) throw new IllegalStateException("offscreen checkpoint agent is unbound: " + id);
+            offscreen.add(id);
+        }
+        market.restoreState((Map<String, Object>) state.get("market"));
+    }
+
     private Character bound(String id) {
         Character value = bindings.get(id);
         if (value == null) throw new IllegalStateException("economy agent is not admitted: " + id);
@@ -136,12 +166,17 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort {
                                                String reason, String activityId) {
         String decision = runId + ":" + profile.agentId() + ":" + logicalAt + ":" + reason;
         return new EconomyOperationMetadata(runId, logicalAt, decision, activityId, configRevision,
-                catalogRevision, reason, true, "MARKET_CYCLE".equals(reason), taxPolicy.at(logicalAt));
+                catalogRevision, reason, true, false, taxPolicy.at(logicalAt));
     }
 
     @FunctionalInterface public interface AgentDirectory { Character resolve(String logicalAgentId); }
-    @FunctionalInterface public interface MarketBehavior {
+    public interface MarketBehavior {
         MarketDirective perform(Character agent, EconomyAgentProfile profile, Instant logicalAt);
+        default Map<String, Object> snapshotState() { return Map.of(); }
+        default void restoreState(Map<String, Object> state) {
+            if (state != null && !state.isEmpty())
+                throw new IllegalStateException("market behavior does not support checkpoint state");
+        }
     }
     @FunctionalInterface public interface ActivityPlanner {
         FarmSessionPlan plan(Character agent, EconomyAgentProfile profile, Instant logicalAt);

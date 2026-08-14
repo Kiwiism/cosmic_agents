@@ -4,6 +4,7 @@ import server.agents.economy.activity.FarmSessionOutcome;
 import server.agents.economy.activity.FarmSessionPlan;
 
 import java.time.Instant;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.LongSupplier;
 
@@ -21,6 +22,15 @@ public interface EconomyWorldPort {
                                  Instant logicalAt, LongSupplier deterministicGameplayRandom);
 
     void returnThroughFreeMarketEntrance(EconomyAgentProfile profile, Instant logicalAt);
+
+    /** Serializable adapter-owned state that must advance atomically with the logical checkpoint. */
+    default Map<String, Object> snapshotState() { return Map.of(); }
+
+    /** Restores adapter-owned state after Cosmic characters and durable stores are available. */
+    default void restoreState(Map<String, Object> state) {
+        if (state != null && !state.isEmpty())
+            throw new IllegalStateException("world adapter does not support checkpoint state");
+    }
 
     record MarketDirective(Optional<Instant> startActivityAt, Optional<Instant> revisitMarketAt,
                            boolean externalActionPending) {

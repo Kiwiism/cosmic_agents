@@ -9,6 +9,7 @@ import constants.inventory.ItemConstants;
 import server.Trade;
 import server.agents.economy.social.TradeExecutionGateway;
 import server.agents.economy.social.TradeOffer;
+import server.economy.EconomyOperationContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +31,12 @@ public final class CosmicNegotiatedTradeExecutor implements TradeExecutionGatewa
     @Override
     public Result execute(String idempotencyKey, String firstAgentId, TradeOffer firstOffer,
                           String secondAgentId, TradeOffer secondOffer) {
+        return EconomyOperationContext.withParticipantFlags(true, true,
+                () -> executeAttributed(idempotencyKey, firstAgentId, firstOffer, secondAgentId, secondOffer));
+    }
+
+    private Result executeAttributed(String idempotencyKey, String firstAgentId, TradeOffer firstOffer,
+                                     String secondAgentId, TradeOffer secondOffer) {
         Character first = characters.apply(firstAgentId);
         Character second = characters.apply(secondAgentId);
         if (!canInteract(first, second)) return new Result(false, "", "counterparties are not physically nearby");

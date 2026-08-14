@@ -4,18 +4,26 @@ import client.Character;
 import server.maps.MapObject;
 import server.maps.MapObjectType;
 import server.maps.PlayerShop;
+import server.economy.EconomyOperationContext;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.IntPredicate;
 
 /** Headless adapter over real PlayerShop visit/buy primitives with physical range checks. */
 public final class AgentFreeMarketBuyerService {
     private final int interactionRangePixels;
+    private final IntPredicate agentCharacterIds;
 
     public AgentFreeMarketBuyerService(int interactionRangePixels) {
+        this(interactionRangePixels, ignored -> false);
+    }
+
+    public AgentFreeMarketBuyerService(int interactionRangePixels, IntPredicate agentCharacterIds) {
         if (interactionRangePixels <= 0) throw new IllegalArgumentException("range must be positive");
         this.interactionRangePixels = interactionRangePixels;
+        this.agentCharacterIds = java.util.Objects.requireNonNull(agentCharacterIds);
     }
 
     public List<ObservedStall> observeNearby(Character buyer) {
@@ -49,7 +57,9 @@ public final class AgentFreeMarketBuyerService {
         int beforeMeso = buyer.getMeso();
         if (!shop.visitShop(buyer)) return PurchaseResult.failed("stall visitor slots are full");
         try {
-            boolean success = shop.buy(buyer.getClient(), listingSlot, bundles);
+            boolean success = EconomyOperationContext.withParticipantFlags(true,
+                    agentCharacterIds.test(shop.getOwnerId()),
+                    () -> shop.buy(buyer.getClient(), listingSlot, bundles));
             return new PurchaseResult(success, success ? "SUCCESS" : "COSMIC_REJECTED",
                     shop.getOwnerId(), listing.itemId(), listing.perBundle() * bundles,
                     buyer.getMeso() - beforeMeso);
