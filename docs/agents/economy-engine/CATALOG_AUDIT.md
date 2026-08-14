@@ -13,3 +13,9 @@ physical map evidence. Two special/unplaced rows do not:
 
 They are intentionally inaccessible to remote simulation commerce. This is preferable to assigning
 a fictional map. `RemoteNpcCommerceService` fails closed whenever source-map evidence is absent.
+
+Accepted quest demand reads remaining item requirements from the live `Quest.wz` objects rather
+than the inherited level-25 adaptive subset. Activity map selection uses the generated Victoria
+map/spawn catalog, but economic production requires a matching real-session calibration for the
+exact agent build, job family, nearby level, and map. Missing calibration is a run-stopping input
+error, not an invitation to estimate kills.
