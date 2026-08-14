@@ -173,10 +173,44 @@ $targetMapSql = if ($Mode -eq "calibration") {
 } else {
     [string] $FreeMarketMapId
 }
+$calibrationSupplySql = if ($Mode -eq "calibration") {
+@"
+CREATE TEMPORARY TABLE economy_test_next_use_slot AS
+SELECT r.character_id, COALESCE(MAX(CASE WHEN i.inventorytype = 2 THEN i.position END), 0) AS base_position
+FROM economy_test_roster_fixture r
+LEFT JOIN inventoryitems i ON i.characterid = r.character_id
+WHERE r.calibration_member = 1
+GROUP BY r.character_id;
+INSERT INTO inventoryitems
+    (type, characterid, accountid, itemid, inventorytype, position, quantity, owner, petid, flag, expiration, giftFrom)
+SELECT 1, s.character_id, NULL, 2000002, 2, s.base_position + 1, 100, '', -1, 0, -1, 'ECONOMY_TEST_FIXTURE'
+FROM economy_test_next_use_slot s;
+INSERT INTO inventoryitems
+    (type, characterid, accountid, itemid, inventorytype, position, quantity, owner, petid, flag, expiration, giftFrom)
+SELECT 1, s.character_id, NULL, 2000003, 2, s.base_position + 2, 100, '', -1, 0, -1, 'ECONOMY_TEST_FIXTURE'
+FROM economy_test_next_use_slot s;
+INSERT INTO inventoryitems
+    (type, characterid, accountid, itemid, inventorytype, position, quantity, owner, petid, flag, expiration, giftFrom)
+SELECT 1, s.character_id, NULL, 2060000, 2, s.base_position + 3, 1000, '', -1, 0, -1, 'ECONOMY_TEST_FIXTURE'
+FROM economy_test_next_use_slot s
+JOIN economy_test_roster_fixture r ON r.character_id = s.character_id AND r.assigned_job = 300;
+INSERT INTO inventoryitems
+    (type, characterid, accountid, itemid, inventorytype, position, quantity, owner, petid, flag, expiration, giftFrom)
+SELECT 1, s.character_id, NULL, 2330000, 2, s.base_position + 3, 600, '', -1, 0, -1, 'ECONOMY_TEST_FIXTURE'
+FROM economy_test_next_use_slot s
+JOIN economy_test_roster_fixture r ON r.character_id = s.character_id AND r.assigned_job = 500;
+DROP TEMPORARY TABLE economy_test_next_use_slot;
+"@
+} else {
+    ""
+}
 
 Invoke-MySql @"
 USE ``$Database``;
 START TRANSACTION;
+DELETE FROM inventoryitems
+WHERE giftFrom = 'ECONOMY_TEST_FIXTURE' AND itemid <> 5140000
+  AND characterid IN (SELECT character_id FROM economy_test_roster_fixture);
 UPDATE characters c
 JOIN economy_test_roster_fixture r ON r.character_id = c.id
 SET c.level = 15, c.exp = 0, c.ap = 0, c.sp = '0,0,0,0,0,0,0,0,0,0', c.meso = 0,
@@ -197,6 +231,7 @@ FROM economy_test_roster_fixture r
 WHERE NOT EXISTS (
     SELECT 1 FROM inventoryitems i WHERE i.characterid = r.character_id AND i.itemid = 5140000
 );
+$calibrationSupplySql
 COMMIT;
 "@
 

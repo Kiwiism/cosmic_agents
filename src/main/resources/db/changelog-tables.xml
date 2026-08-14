@@ -370,10 +370,14 @@
             <not><columnExists tableName="economy_transaction_outbox" columnName="payload_json"/></not>
         </preConditions>
         <addColumn tableName="economy_transaction_outbox">
-            <column name="payload_json" type="LONGTEXT" defaultValue="{}">
-                <constraints nullable="false"/>
-            </column>
+            <column name="payload_json" type="LONGTEXT"/>
         </addColumn>
+        <update tableName="economy_transaction_outbox">
+            <column name="payload_json" value="{}"/>
+            <where>payload_json IS NULL</where>
+        </update>
+        <addNotNullConstraint tableName="economy_transaction_outbox"
+                              columnName="payload_json" columnDataType="LONGTEXT"/>
     </changeSet>
 
     <changeSet id="36-economy-outbox-simulation-attribution" author="Codex">
