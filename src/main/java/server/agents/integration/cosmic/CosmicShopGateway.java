@@ -24,18 +24,19 @@ public final class CosmicShopGateway implements ShopGateway {
     }
 
     @Override
-    public void sell(Character agent, Shop shop, InventoryType type, short slot, short quantity) {
+    public Shop.TransactionResult sell(Character agent, Shop shop, InventoryType type, short slot, short quantity) {
         Inventory inventory = agent.getInventory(type);
         Item item = inventory == null ? null : inventory.getItem(slot);
         int itemId = item == null ? 0 : item.getItemId();
         int beforeQuantity = count(agent, type, itemId);
         int beforeMeso = agent.getMeso();
-        shop.sell(agent.getClient(), type, slot, quantity);
+        Shop.TransactionResult result = shop.sellDirect(agent, type, slot, quantity);
         int currentQuantity = count(agent, type, itemId);
         if (itemId > 0 && currentQuantity < beforeQuantity) {
             publish(agent, shop, "SELL", itemId, beforeQuantity - currentQuantity,
-                    agent.getMeso() - beforeMeso, "SUCCESS");
+                    agent.getMeso() - beforeMeso, result.name());
         }
+        return result;
     }
 
     @Override

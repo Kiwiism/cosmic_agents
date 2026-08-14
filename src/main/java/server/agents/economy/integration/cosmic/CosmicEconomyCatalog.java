@@ -55,7 +55,7 @@ public final class CosmicEconomyCatalog implements EconomyCatalog {
         if (categories.isEmpty()) categories.add(ItemCategory.OTHER);
         Integer requiredLevel = ItemConstants.isEquipment(itemId) ? items.getEquipLevelReq(itemId) : null;
         return Optional.of(new ItemFact(itemId, name, Math.max(0, items.getPrice(itemId, 1)),
-                requiredLevel, items.getBaseSlotMax(itemId), categories));
+                requiredLevel, items.getBaseSlotMax(itemId), categories, items.getEquipStats(itemId)));
     }
 
     @Override
