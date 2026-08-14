@@ -64,6 +64,21 @@ class EconomyConfigLoaderTest {
         assertTrue(failure.getMessage().contains("original NPC and map"));
     }
 
+    @Test
+    void rejectsAdministrativeBootstrapEndowments() {
+        String source = javaResource("economy-engine.yaml")
+                .replace("holdingsMode: IMPORT_EXISTING_COSMIC_CHARACTERS",
+                        "holdingsMode: EXPLICIT_BOOTSTRAP_ENDOWMENT")
+                .replace("shopPermitPolicy: REQUIRE_OWNED_REAL_ITEM",
+                        "shopPermitPolicy: EXPLICIT_BOOTSTRAP_ENDOWMENT")
+                .replace("allowAdministratorEndowment: false", "allowAdministratorEndowment: true");
+
+        EconomyConfigException failure = assertThrows(
+                EconomyConfigException.class, () -> loader.load(source));
+
+        assertTrue(failure.getMessage().contains("bootstrap.holdingsMode"));
+    }
+
     private static String javaResource(String path) {
         try {
             return java.nio.file.Files.readString(Path.of(path));
@@ -72,4 +87,3 @@ class EconomyConfigLoaderTest {
         }
     }
 }
-

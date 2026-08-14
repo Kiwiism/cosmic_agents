@@ -31,14 +31,21 @@ public final class ManagedEconomyRun {
         return finishAdvance(application.advanceTo(logicalAt));
     }
 
-    private AdvanceResult finishAdvance(SimulationRunEngine.AdvanceSummary advance) {
+    public EconomyEvidencePipeline.Result checkpoint(String status) {
+        if (status == null || status.isBlank()) throw new IllegalArgumentException("status is required");
         runs.saveCheckpoint(application.checkpoint());
         EconomyEvidencePipeline.Result processed = evidence.process(application.runId(), application.now(), batchSize);
-        String status = advance.waitingExternalAction() ? "WAITING_PHYSICAL_ACTION" : "RUNNING";
-        if (!processed.audit().clean() && stopOnInvariantViolation) status = "INVARIANT_VIOLATION";
-        runs.updateLogicalTime(application.runId(), application.now(), status);
+        String persistedStatus = processed.audit().clean() ? status : "INVARIANT_VIOLATION";
+        runs.updateLogicalTime(application.runId(), application.now(), persistedStatus);
         if (!processed.audit().clean() && stopOnInvariantViolation)
             throw new IllegalStateException("economy invariant violation: " + processed.audit().violations());
+        return processed;
+    }
+
+    private AdvanceResult finishAdvance(SimulationRunEngine.AdvanceSummary advance) {
+        String status = advance.waitingExternalAction() ? "WAITING_PHYSICAL_ACTION" : "RUNNING";
+        EconomyEvidencePipeline.Result processed = checkpoint(status);
+        if (!processed.audit().clean()) status = "INVARIANT_VIOLATION";
         return new AdvanceResult(advance, processed, status);
     }
 

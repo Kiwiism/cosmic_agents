@@ -63,8 +63,7 @@ population:
     dedicatedMerchantFraction: 0.10
 
 # PlayerShop permits are Cash Shop assets in v83. The strict baseline does not invent or grant one.
-# A run may opt into EXPLICIT_BOOTSTRAP_ENDOWMENT, but that is journaled as an external bootstrap
-# faucet and must never be reported as farm/NPC production.
+# Runs import exact live holdings and never create administrative startup stock.
 bootstrap:
   holdingsMode: IMPORT_EXISTING_COSMIC_CHARACTERS
   shopPermitPolicy: REQUIRE_OWNED_REAL_ITEM

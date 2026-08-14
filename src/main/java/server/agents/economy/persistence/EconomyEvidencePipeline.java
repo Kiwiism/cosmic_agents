@@ -20,11 +20,29 @@ public final class EconomyEvidencePipeline {
 
     public Result process(UUID runId, Instant logicalAt, int batchSize) {
         if (batchSize <= 0) throw new IllegalArgumentException("batch size must be positive");
-        EconomyOutboxRelay.Result relayed = relay.relay(batchSize);
-        JdbcCosmicEconomicEventIngestor.Result ingested = ingestor.ingest(batchSize);
+        int delivered = 0;
+        int relayFailures = 0;
+        while (true) {
+            EconomyOutboxRelay.Result batch = relay.relay(batchSize);
+            delivered = Math.addExact(delivered, batch.delivered());
+            relayFailures = Math.addExact(relayFailures, batch.failed());
+            if (batch.failed() > 0 || batch.delivered() == 0) break;
+        }
+        int ingested = 0;
+        int quarantined = 0;
+        UUID failedOutboxId = null;
+        while (true) {
+            JdbcCosmicEconomicEventIngestor.Result batch = ingestor.ingest(batchSize);
+            ingested = Math.addExact(ingested, batch.ingested());
+            quarantined = Math.addExact(quarantined, batch.quarantined());
+            if (batch.failedOutboxId() != null) failedOutboxId = batch.failedOutboxId();
+            if (batch.quarantined() > 0 || batch.ingested() == 0) break;
+        }
         JdbcEconomyProjectionService.Result projected = projections.rebuild(runId);
         JdbcEconomyInvariantAuditor.Audit audit = auditor.audit(runId, logicalAt);
-        return new Result(relayed, ingested, projected, audit);
+        return new Result(new EconomyOutboxRelay.Result(delivered, relayFailures),
+                new JdbcCosmicEconomicEventIngestor.Result(ingested, quarantined, failedOutboxId),
+                projected, audit);
     }
 
     public record Result(EconomyOutboxRelay.Result relay,

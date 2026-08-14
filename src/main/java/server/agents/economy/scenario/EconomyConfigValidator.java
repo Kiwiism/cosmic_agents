@@ -16,10 +16,8 @@ public final class EconomyConfigValidator {
             "REMOTE_FROM_FREE_MARKET", "PHYSICAL_TRAVEL", "DISABLED");
     private static final Set<String> NPC_ACCESS_SCOPES = Set.of("ALL_GAME", "VICTORIA_ONLY");
     private static final Set<String> ACTIVITY_MODES = Set.of("RULE_EXACT");
-    private static final Set<String> HOLDINGS_MODES = Set.of(
-            "IMPORT_EXISTING_COSMIC_CHARACTERS", "EXPLICIT_BOOTSTRAP_ENDOWMENT");
-    private static final Set<String> SHOP_PERMIT_POLICIES = Set.of(
-            "REQUIRE_OWNED_REAL_ITEM", "EXPLICIT_BOOTSTRAP_ENDOWMENT");
+    private static final Set<String> HOLDINGS_MODES = Set.of("IMPORT_EXISTING_COSMIC_CHARACTERS");
+    private static final Set<String> SHOP_PERMIT_POLICIES = Set.of("REQUIRE_OWNED_REAL_ITEM");
 
     private EconomyConfigValidator() {
     }
@@ -145,13 +143,8 @@ public final class EconomyConfigValidator {
                 "bootstrap.shopPermitPolicy");
         require(bootstrap.shopPermitItemId > 0, "bootstrap.shopPermitItemId must be positive");
         require(bootstrap.journalAllEndowments, "Every bootstrap endowment must be journaled");
-        if ("EXPLICIT_BOOTSTRAP_ENDOWMENT".equals(bootstrap.shopPermitPolicy)) {
-            require(bootstrap.allowAdministratorEndowment,
-                    "Explicit permit endowment requires allowAdministratorEndowment");
-        } else {
-            require(!bootstrap.allowAdministratorEndowment,
-                    "Administrator endowment must stay disabled for require-owned permits");
-        }
+        require(!bootstrap.allowAdministratorEndowment,
+                "Administrator endowment is forbidden in rule-exact economy runs");
     }
 
     private static void validatePopulation(EconomyEngineConfig.Population population) {
