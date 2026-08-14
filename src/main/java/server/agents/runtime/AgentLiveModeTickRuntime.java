@@ -14,6 +14,7 @@ import server.agents.capabilities.shop.AgentShopVisitTickService;
 import client.Character;
 import server.agents.capabilities.shop.AgentShopService;
 import server.agents.integration.AgentInventoryGatewayRuntime;
+import server.agents.field.AgentFieldRuntime;
 
 import java.awt.Point;
 
@@ -166,6 +167,7 @@ public final class AgentLiveModeTickRuntime {
                                         perf,
                                         anchoredFarmTick))),
                 (grindEntry, grindAgent, grindAgentPos, grindTargetPos, grindRunAiTick) -> {
+                    AgentFieldRuntime.refresh(grindEntry, grindAgent, System.currentTimeMillis());
                     AgentGrindModeDispatchService.Result grindDispatch = AgentGrindModeDispatchService.tickIfGrinding(
                             grindEntry,
                             grindAgent,

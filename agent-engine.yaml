@@ -2696,6 +2696,14 @@ tuning:
     # Purpose: Keeps ordinary quest hunting in LOCAL_CLEAR until repeated scans confirm that no required target is available in the local seek area.
     # Technical: This threshold applies before MAP_WIDE_RECOVERY and is separate from the REGION_HARVEST lease release threshold.
     server.agents.capabilities.combat.AgentCombatPolicyConfig.MAP_WIDE_RECOVERY_EMPTY_SCANS: '3'
+    # Values: 1-10 scans. Recommended: 3. Higher values preserve territory longer; lower values borrow sooner when a cell has no target.
+    # Purpose: Prevents an Agent from idling forever in an exhausted assigned farming cell while keeping ordinary assignment behavior locally focused.
+    # Technical: Consecutive target-acquisition scans with no mob in the active region assignment before generic combat temporarily ignores that assignment.
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.REGION_ASSIGNMENT_BORROW_EMPTY_SCANS: '3'
+    # Values: 1000-30000 milliseconds. Recommended: 5000. Higher values permit longer help outside a territory; lower values return sooner.
+    # Purpose: Lets a field participant help a neighboring territory during short spawn droughts without permanently discarding its coordinator-issued lease.
+    # Technical: Duration for which the generic combat selector may consider targets outside an otherwise valid region assignment after its empty-scan threshold.
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.REGION_ASSIGNMENT_BORROW_MS: '5000'
     # Values: 1000-8000 milliseconds. Recommended: 3500. Higher values allow a wider reachable neighborhood to interrupt remote travel; lower values restrict preemption to the current platform and immediate approaches.
     # Purpose: Lets a newly nearby required mob replace a committed distant target without reintroducing remote-target thrashing.
     # Technical: A preferred candidate preempts only when its reliable route cost falls within this budget and is a better locality class than the current target.
@@ -2788,6 +2796,50 @@ tuning:
     # Purpose: Stops zero or tiny estimated damage from making every available AoE appear automatically superior.
     # Technical: Lower bound for the single-target damage score used only by attack-plan comparison; the current behavior uses 100.
     server.agents.capabilities.combat.AgentCombatPolicyConfig.MINIMUM_SINGLE_TARGET_SCORE: '100'
+    # Values: 5000-60000 milliseconds. Recommended: 15000. Higher values reduce churn; lower values rebalance more aggressively.
+    # Purpose: Keeps farming territories stable long enough to finish local combat while still adapting when party membership or crowd conditions change.
+    # Technical: Expiry written into each AgentMapRegionAssignment; structural changes may trigger an earlier revision without bypassing combat ownership.
+    server.agents.field.AgentFieldPolicyConfig.ASSIGNMENT_LEASE_MS: '15000'
+    # Values: 100-5000 milliseconds. Recommended: 1000. Lower values observe crowd changes sooner; higher values reduce graph projection work.
+    # Purpose: Bounds farming-cell and crowd observations so multi-Agent coordination remains responsive without rebuilding projections on every combat tick.
+    # Technical: Minimum interval between coordinator observations while all participants already have unexpired assignments; missing assignments bypass this gate.
+    server.agents.field.AgentFieldPolicyConfig.REFRESH_INTERVAL_MS: '1000'
+    # Values: 30000-600000 milliseconds. Recommended: 120000. Higher values retain exercises longer; lower values clean abandoned sessions sooner.
+    # Purpose: Releases abandoned field sessions and restores participant combat directives when no participant tick or command has refreshed their activity.
+    # Technical: Map-instance session inactivity threshold evaluated by the coordinator; cleanup dispatches through each Agent mailbox before removal.
+    server.agents.field.AgentFieldPolicyConfig.STALE_SESSION_MS: '120000'
+    # Values: 1-6 Agents. Recommended: 6. Lower values impose a stricter exercise cap; values above six are intentionally unsupported.
+    # Purpose: Keeps dynamic farming exercises within the tested party-size range and prevents accidental unbounded coordination work from GM commands.
+    # Technical: Admission bound shared by explicit participants and temporary quest visitors; the deterministic allocator itself never spawns characters.
+    server.agents.field.AgentFieldPolicyConfig.MAXIMUM_PARTICIPANTS: '6'
+    # Values: 1-100 kills per species. Recommended: 10. Higher values create longer observations; lower values make quick smoke exercises.
+    # Purpose: Gives every live mob species an equal target in automatic field exercises so target selection and coverage can be compared without quest bias.
+    # Technical: Initial authoritative kill requirement generated only by the GM harness; normal quest directives retain their own objective counters.
+    server.agents.field.AgentFieldPolicyConfig.TEST_OBJECTIVE_KILLS_PER_MOB: '10'
+    # Values: 0-10000 score points per mob. Recommended: 1000. Higher values favor dense cells; 0 ignores target population size.
+    # Purpose: Directs participants toward farming cells with more currently relevant monsters while allowing distance and stickiness to remain meaningful.
+    # Technical: Additive allocator score for each live mob matching the participant intent; it affects territory choice but never combat target scoring.
+    server.agents.field.AgentFieldPolicyConfig.OBJECTIVE_POPULATION_WEIGHT: '1000'
+    # Values: 0-50000 score points per species. Recommended: 8000. Higher values spread mixed objectives; 0 considers only total population.
+    # Purpose: Rewards cells that cover more distinct required mob species so equal multi-species exercises do not concentrate exclusively on one dense spawn.
+    # Technical: Additive allocator score per distinct required mob ID present in a farming cell, evaluated independently from population weighting.
+    server.agents.field.AgentFieldPolicyConfig.OBJECTIVE_COVERAGE_WEIGHT: '8000'
+    # Values: 0-5000000 score points. Recommended: 1000000. Higher values make leases stickier; 0 allows every observation to choose a new seed.
+    # Purpose: Prevents small position and spawn fluctuations from causing participants to oscillate between farming cells before their assignment lease expires.
+    # Technical: Seed-selection bonus applied only when the previous cell remains under an unexpired assignment; structural rebalance still remains authoritative.
+    server.agents.field.AgentFieldPolicyConfig.RETAINED_SEED_BONUS: '1000000'
+    # Values: 0-250000 score points. Recommended: 50000. Higher values favor compact territories; 0 permits disconnected partitions more readily.
+    # Purpose: Encourages each Agent's assigned farming cells to remain connected, reducing unnecessary cross-map traversal during party-size coverage changes.
+    # Technical: Territory-allocation bonus when a candidate cell is mutually adjacent to a cell already owned by that participant in the runtime nav graph.
+    server.agents.field.AgentFieldPolicyConfig.ADJACENCY_BONUS: '50000'
+    # Values: 0-50000 score points per cell. Recommended: 4000. Higher values balance territory sizes; 0 lets strong seeds absorb most cells.
+    # Purpose: Distributes usable farming cells across participants instead of allowing the objectively strongest seed to accumulate the whole map.
+    # Technical: Linear score penalty for each cell already owned during deterministic remaining-cell allocation and for additional users sharing a seed.
+    server.agents.field.AgentFieldPolicyConfig.TERRITORY_SIZE_PENALTY: '4000'
+    # Values: 0-250000 score points. Recommended: 20000. Higher values avoid real players more strongly; 0 ignores their observed positions.
+    # Purpose: Makes autonomous farming less intrusive by preferring comparable cells that are not already occupied by a nearby human-controlled character.
+    # Technical: Applied once per real player within the allocator's fixed local proximity check around a candidate anchor; it never moves or targets that player.
+    server.agents.field.AgentFieldPolicyConfig.PLAYER_PROXIMITY_PENALTY: '20000'
     # Values: 100-260 map pixels. Recommended: 180. Higher values make melee Agents collect more immediately; lower values keep them attacking longer before walking to drops.
     # Purpose: Encourages melee Agents to pick up nearby drops from their latest kill without crossing an entire platform after every attack.
     # Technical: Maximum seek distance for the melee-immediate branch of the post-kill loot policy; the existing passive pickup radius remains a separate inner exclusion boundary.

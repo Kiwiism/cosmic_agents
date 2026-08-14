@@ -1,5 +1,6 @@
 package server.agents.capabilities.combat;
 
+import server.agents.catalog.AgentMapRegionAssignment;
 import server.agents.progression.events.AgentProgressionEventPublisher;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -48,6 +49,42 @@ public final class AgentCombatDirectiveRuntime {
                 .ifPresent(AgentRouteBlockerState::clear);
         entry.capabilityStates().remove(AgentCombatPlatformBatchState.STATE_KEY)
                 .ifPresent(AgentCombatPlatformBatchState::clear);
+    }
+
+    /** Applies a coordinator-owned soft region lease without changing combat objective policy. */
+    public static void assignRegion(
+            AgentRuntimeEntry entry, AgentMapRegionAssignment regionAssignment) {
+        if (entry == null) {
+            return;
+        }
+        AgentCombatDirective current = directive(entry);
+        if (current == null) {
+            current = new AgentCombatDirective(
+                    "field:runtime", "", Set.of(), Map.of(),
+                    AgentIncidentalMobPolicy.IGNORE, null, Long.MAX_VALUE);
+        }
+        assignExact(entry, new AgentCombatDirective(
+                current.directiveId(), current.objectiveId(), current.requiredMobIds(),
+                current.requiredKills(), current.incidentalPolicy(), regionAssignment,
+                current.deadlineMs()));
+    }
+
+    /** Restores an exact directive captured before a temporary field exercise. */
+    public static void assignExact(AgentRuntimeEntry entry, AgentCombatDirective directive) {
+        if (entry == null) {
+            return;
+        }
+        if (directive == null) {
+            clear(entry);
+            return;
+        }
+        boolean changed = entry.capabilityStates()
+                .require(AgentCombatDirectiveState.STATE_KEY)
+                .assign(directive);
+        if (changed) {
+            state(entry).clear();
+            entry.capabilityStates().require(AgentCombatPlatformBatchState.STATE_KEY).clear();
+        }
     }
 
     public static boolean required(AgentRuntimeEntry entry, int mobId) {

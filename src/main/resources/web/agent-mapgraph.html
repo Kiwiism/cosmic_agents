@@ -73,6 +73,8 @@
       <i class="swatch" style="background:#51d68b"></i>Climb</label>
     <label><input class="edgeToggle" type="checkbox" value="PORTAL" checked>
       <i class="swatch" style="background:#35c9ff"></i>Portal</label>
+    <label><input id="fieldToggle" type="checkbox" checked>
+      <i class="swatch" style="background:#ffd166"></i>Field</label>
   </span>
   <span id="stats"></span>
 </div>
@@ -112,6 +114,8 @@
   let lastPointer = null;
   let moved = false;
   let warmingTimer = null;
+  let fieldSession = null;
+  let fieldTimer = null;
 
   const params = new URLSearchParams(location.search);
   if (params.has("id")) mapInput.value = params.get("id");
@@ -153,6 +157,7 @@
       }
       if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
       graph = data;
+      await loadField();
       routePath = [];
       routeFrom = null;
       routeTo = null;
@@ -166,6 +171,21 @@
       setStatus("Drag to pan, wheel to zoom, or select Test route and click two regions.");
     }catch(error){
       setStatus(`Unable to load graph: ${error.message}`);
+    }
+  }
+
+  async function loadField(){
+    clearTimeout(fieldTimer);
+    if (!graph) return;
+    try{
+      const response = await fetch(`/api/agentfield?id=${graph.mapId}`, {cache:"no-store"});
+      const data = await response.json();
+      fieldSession = response.ok && data.sessions.length ? data.sessions[0] : null;
+      draw();
+    }catch(error){
+      fieldSession = null;
+    }finally{
+      fieldTimer = setTimeout(loadField, 1000);
     }
   }
 
@@ -236,6 +256,8 @@
       }
     }
 
+    drawFieldOverlay();
+
     for (const portal of graph.portals){
       const p=worldToScreen(portal.x,portal.y);
       ctx.fillStyle=portal.kind==="in-map"?"#ffd54a":portal.kind==="cross-map"?"#ffffff":"#9aa9bd";
@@ -252,6 +274,29 @@
     }
 
     for (const edge of routePath) drawEdge(edge,"#ffe066",5,.96);
+  }
+
+  function drawFieldOverlay(){
+    if (!fieldSession || !document.getElementById("fieldToggle").checked) return;
+    const palette=["#ffd166","#6dd5ff","#ff8a65","#b388ff","#7ee081","#ff6fae"];
+    fieldSession.participants.forEach((participant,index)=>{
+      const color=palette[index%palette.length];
+      ctx.save();ctx.strokeStyle=color;ctx.fillStyle=color;ctx.globalAlpha=.72;ctx.lineWidth=7;
+      for (const regionId of participant.regionIds){
+        const region=graph.regions.find(candidate=>candidate.id===regionId);
+        if (!region) continue;
+        const lines=region.kind==="rope"
+          ? [[region.minX,region.minY,region.maxX,region.maxY]] : region.segments;
+        for (const line of lines){
+          const a=worldToScreen(line[0],line[1]),b=worldToScreen(line[2],line[3]);
+          ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+        }
+      }
+      const anchor=worldToScreen(participant.anchorX,participant.anchorY);
+      ctx.globalAlpha=.95;ctx.beginPath();ctx.arc(anchor.x,anchor.y,7,0,Math.PI*2);ctx.fill();
+      ctx.font="600 11px system-ui,-apple-system,'Segoe UI',sans-serif";
+      ctx.fillText(participant.name,anchor.x+10,anchor.y-8);ctx.restore();
+    });
   }
 
   function drawEdge(edge,color,width,alpha){
@@ -376,6 +421,7 @@
   document.getElementById("fit").addEventListener("click",fit);
   profileSelect.addEventListener("change",()=>loadGraph(true));
   document.querySelectorAll(".edgeToggle").forEach(input=>input.addEventListener("change",draw));
+  document.getElementById("fieldToggle").addEventListener("change",draw);
   routeButton.addEventListener("click",()=>{
     routeMode=!routeMode;routeButton.classList.toggle("active",routeMode);
     routeFrom=null;routeTo=null;routePath=[];

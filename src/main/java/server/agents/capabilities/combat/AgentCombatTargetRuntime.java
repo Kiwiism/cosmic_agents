@@ -56,6 +56,18 @@ public final class AgentCombatTargetRuntime {
             int baseCandidateCount = candidates.size();
             candidates.removeIf(monster -> !AgentCombatObjectiveTargetStateRuntime.allows(entry, monster.getId()));
             int objectiveCandidateCount = candidates.size();
+            GrindGraphContext assignmentContext = GrindGraphContext.resolve(entry, bot, botPos);
+            AgentCombatRegionAssignmentPolicy.SearchScope<Monster> assignmentScope =
+                    AgentCombatRegionAssignmentPolicy.begin(
+                            entry, AgentCombatDirectiveRuntime.directive(entry), bot.getMapId(),
+                            candidates,
+                            monster -> assignmentContext.available()
+                                    ? AgentNavigationRegionService.resolveTargetRegionId(
+                                    assignmentContext.graph(), assignmentContext.entry(),
+                                    assignmentContext.map(), monster.getPosition())
+                                    : -1,
+                            nowMs);
+            candidates = new ArrayList<>(assignmentScope.localCandidates());
             int localPreferredCandidateCount = (int) candidates.stream()
                     .filter(monster -> AgentCombatObjectiveTargetStateRuntime.prefers(entry, monster.getId()))
                     .count();
@@ -68,6 +80,12 @@ public final class AgentCombatTargetRuntime {
                     entry, bot, candidates, nowMs,
                     target -> hasCompleteRemoteCombatRoute(entry, bot, target));
             candidates = promotion.candidates();
+            candidates = assignmentScope.apply(candidates,
+                    monster -> assignmentContext.available()
+                            ? AgentNavigationRegionService.resolveTargetRegionId(
+                            assignmentContext.graph(), assignmentContext.entry(),
+                            assignmentContext.map(), monster.getPosition())
+                            : -1);
             boolean mapWidePreferredEscalation = promotion.mapWide();
             if (mapWidePreferredEscalation) {
                 objectiveCandidateCount = candidates.size();

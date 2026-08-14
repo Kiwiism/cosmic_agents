@@ -9,6 +9,8 @@ import net.server.world.World;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.capabilities.movement.AgentMovementProfile;
+import server.agents.field.AgentFieldRuntime;
+import server.agents.field.AgentFieldLadderRuntime;
 import server.maps.MapleMap;
 
 import java.io.IOException;
@@ -49,6 +51,7 @@ public final class AgentMapGraphWebServer {
         this.server.createContext("/mapgraph", this::servePage);
         this.server.createContext("/api/mapgraph", this::serveMapGraph);
         this.server.createContext("/api/pathfind", this::servePathfind);
+        this.server.createContext("/api/agentfield", this::serveAgentField);
         this.server.createContext("/api/health", this::serveHealth);
     }
 
@@ -170,6 +173,29 @@ public final class AgentMapGraphWebServer {
         } catch (RuntimeException exception) {
             log.warn("Agent map-graph pathfind request failed", exception);
             sendJson(exchange, 500, Map.of("error", "Pathfind request failed"));
+        }
+    }
+
+    private void serveAgentField(HttpExchange exchange) throws IOException {
+        if (!requireGet(exchange)) {
+            return;
+        }
+        try {
+            int mapId = requiredInt(query(exchange), "id");
+            Object ladder = AgentFieldLadderRuntime.reportForMapId(mapId);
+            if (ladder == null) {
+                ladder = Map.of();
+            }
+            sendJson(exchange, 200, Map.of(
+                    "mapId", mapId,
+                    "sessions", AgentFieldRuntime.snapshotsForMapId(
+                            mapId, System.currentTimeMillis()),
+                    "ladder", ladder));
+        } catch (IllegalArgumentException exception) {
+            sendJson(exchange, 400, Map.of("error", exception.getMessage()));
+        } catch (RuntimeException exception) {
+            log.warn("Agent field diagnostics request failed", exception);
+            sendJson(exchange, 500, Map.of("error", "Agent field diagnostics request failed"));
         }
     }
 

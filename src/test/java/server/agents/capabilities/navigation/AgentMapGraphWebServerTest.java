@@ -25,11 +25,16 @@ class AgentMapGraphWebServerTest {
             HttpResponse<String> health = client.send(
                     HttpRequest.newBuilder(URI.create(root + "/api/health")).GET().build(),
                     HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> missingFieldMap = client.send(
+                    HttpRequest.newBuilder(URI.create(root + "/api/agentfield")).GET().build(),
+                    HttpResponse.BodyHandlers.ofString());
 
             assertEquals(200, page.statusCode());
             assertTrue(page.body().contains("Agent Map Graph"));
+            assertTrue(page.body().contains("fieldToggle"));
             assertEquals(200, health.statusCode());
             assertTrue(health.body().contains("\"status\":\"UP\""));
+            assertEquals(400, missingFieldMap.statusCode());
         } finally {
             server.stop();
         }

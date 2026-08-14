@@ -1,8 +1,7 @@
 package server.agents.capabilities.movement;
 
 import client.Character;
-import server.agents.capabilities.navigation.AgentNavigationGraph;
-import server.agents.capabilities.navigation.AgentNavigationGraphService;
+import server.agents.capabilities.navigation.AgentNavigationPatrolRegionService;
 import server.agents.capabilities.shop.AgentShopService;
 import server.agents.integration.AgentDialogueTransportRuntime;
 import server.agents.integration.AgentRelationshipRuntime;
@@ -77,9 +76,8 @@ public final class AgentMovementCommandRuntime {
             return;
         }
         MapleMap map = AgentRuntimeIdentityRuntime.botMap(entry);
-        AgentNavigationGraph graph = AgentNavigationGraphService.peekBestGraph(
-                map, AgentMovementStateRuntime.movementProfile(entry));
-        int regionId = graph != null ? graph.findRegionId(map, ownerPos) : -1;
+        int regionId = AgentNavigationPatrolRegionService.resolveRegionId(
+                map, ownerPos, AgentMovementStateRuntime.movementProfile(entry));
         if (regionId < 0) {
             AgentDialogueTransportRuntime.replyNow(entry, "can't find a patrol region here");
             return;

@@ -30,6 +30,14 @@ public final class AgentCombatPolicyConfig {
         return tuningInt("MAP_WIDE_RECOVERY_EMPTY_SCANS");
     }
 
+    public static int regionAssignmentBorrowEmptyScans() {
+        return tuningInt("REGION_ASSIGNMENT_BORROW_EMPTY_SCANS");
+    }
+
+    public static long regionAssignmentBorrowMs() {
+        return tuningLong("REGION_ASSIGNMENT_BORROW_MS");
+    }
+
     public static long localOpportunityRouteCostMs() {
         return tuningLong("LOCAL_OPPORTUNITY_ROUTE_COST_MS");
     }
