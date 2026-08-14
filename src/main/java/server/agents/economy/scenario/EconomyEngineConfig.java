@@ -93,6 +93,7 @@ public final class EconomyEngineConfig {
         public boolean preserveRealRestrictions;
         public String logicalServiceDelay;
         public boolean recordOriginalNpcAndMap;
+        public int dispositionNpcId;
     }
 
     public static final class Activity {

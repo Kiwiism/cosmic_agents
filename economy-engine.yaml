@@ -80,6 +80,7 @@ npcCommerce:
   preserveRealRestrictions: true
   logicalServiceDelay: PT10S
   recordOriginalNpcAndMap: true
+  dispositionNpcId: 1012004
 
 activity:
   executionMode: RULE_EXACT

@@ -22,14 +22,18 @@ public interface EconomyWorldPort {
 
     void returnThroughFreeMarketEntrance(EconomyAgentProfile profile, Instant logicalAt);
 
-    record MarketDirective(Optional<Instant> startActivityAt, Optional<Instant> revisitMarketAt) {
+    record MarketDirective(Optional<Instant> startActivityAt, Optional<Instant> revisitMarketAt,
+                           boolean externalActionPending) {
+        public MarketDirective(Optional<Instant> startActivityAt, Optional<Instant> revisitMarketAt) {
+            this(startActivityAt, revisitMarketAt, false);
+        }
         public MarketDirective {
             startActivityAt = startActivityAt == null ? Optional.empty() : startActivityAt;
             revisitMarketAt = revisitMarketAt == null ? Optional.empty() : revisitMarketAt;
         }
 
         public static MarketDirective idle() {
-            return new MarketDirective(Optional.empty(), Optional.empty());
+            return new MarketDirective(Optional.empty(), Optional.empty(), false);
         }
     }
 }

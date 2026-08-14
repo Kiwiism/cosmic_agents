@@ -67,6 +67,8 @@ public final class EconomyConfigValidator {
             require(config.npcCommerce.recordOriginalNpcAndMap,
                     "Remote NPC access must record the original NPC and map");
         }
+        require(config.npcCommerce.dispositionNpcId > 0,
+                "npcCommerce.dispositionNpcId must identify a configured real shop NPC");
 
         requireEnum(config.activity.executionMode, ACTIVITY_MODES, "activity.executionMode");
         require(config.activity.medianSessionMinutes > 0,

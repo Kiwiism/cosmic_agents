@@ -66,6 +66,8 @@ public final class EconomyRunCoordinator {
                 event.subjectId(), Map.of()));
         directive.revisitMarketAt().ifPresent(at -> engine.schedule(at, MARKET_CYCLE,
                 event.subjectId(), Map.of()));
+        if (directive.externalActionPending())
+            engine.pauseAfterCurrentEvent("physical market capability pending for " + event.subjectId());
     }
 
     private void startActivity(ScheduledEconomyEvent event) {

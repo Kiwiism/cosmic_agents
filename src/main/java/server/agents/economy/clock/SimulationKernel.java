@@ -3,6 +3,7 @@ package server.agents.economy.clock;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.BooleanSupplier;
 
 /** Advances directly between meaningful events, bounded by a per-batch safety limit. */
 public final class SimulationKernel {
@@ -18,10 +19,16 @@ public final class SimulationKernel {
     }
 
     public AdvanceResult advanceUntil(Instant target, Consumer<ScheduledEconomyEvent> handler) {
+        return advanceUntil(target, handler, () -> false);
+    }
+
+    public AdvanceResult advanceUntil(Instant target, Consumer<ScheduledEconomyEvent> handler,
+                                      BooleanSupplier stopRequested) {
         Objects.requireNonNull(target);
         Objects.requireNonNull(handler);
         if (target.isBefore(clock.now())) throw new IllegalArgumentException("Cannot rewind a run");
         int processed = 0;
+        boolean externallyStopped = false;
         while (processed < maxEventsPerBatch) {
             ScheduledEconomyEvent next = queue.peek().orElse(null);
             if (next == null || next.dueAt().isAfter(target)) break;
@@ -29,13 +36,15 @@ public final class SimulationKernel {
             clock.advanceTo(next.dueAt());
             handler.accept(next);
             processed++;
+            if (stopRequested.getAsBoolean()) { externallyStopped = true; break; }
         }
         boolean batchLimitReached = processed == maxEventsPerBatch
                 && queue.peek().map(event -> !event.dueAt().isAfter(target)).orElse(false);
-        if (!batchLimitReached) clock.advanceTo(target);
-        return new AdvanceResult(clock.now(), processed, batchLimitReached, queue.size());
+        if (!batchLimitReached && !externallyStopped) clock.advanceTo(target);
+        return new AdvanceResult(clock.now(), processed, batchLimitReached, externallyStopped, queue.size());
     }
 
     public record AdvanceResult(Instant reachedAt, int processedEvents,
-                                boolean batchLimitReached, int queuedEvents) { }
+                                boolean batchLimitReached, boolean externallyStopped,
+                                int queuedEvents) { }
 }

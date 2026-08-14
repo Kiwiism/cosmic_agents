@@ -27,6 +27,8 @@ public final class SimulationRunEngine {
     private final NamedRandomStreams random;
     private final Consumer<ScheduledEconomyEvent> eventHandler;
     private Instant lastCheckpoint;
+    private boolean pauseRequested;
+    private String pauseReason;
 
     public SimulationRunEngine(UUID runId, LoadedEconomyConfig loadedConfig,
                                CatalogBundleDescriptor catalog,
@@ -70,6 +72,7 @@ public final class SimulationRunEngine {
     }
 
     public AdvanceSummary advanceTo(Instant target) {
+        pauseRequested = false; pauseReason = null;
         int processed = 0;
         int batches = 0;
         boolean limited;
@@ -77,12 +80,13 @@ public final class SimulationRunEngine {
             SimulationKernel.AdvanceResult result = kernel.advanceUntil(target, event -> {
                 if (CHECKPOINT.equals(event.kind())) lastCheckpoint = event.dueAt();
                 eventHandler.accept(event);
-            });
+            }, () -> pauseRequested);
             processed = Math.addExact(processed, result.processedEvents());
             batches++;
             limited = result.batchLimitReached();
+            if (result.externallyStopped()) break;
         } while (limited);
-        return new AdvanceSummary(clock.now(), processed, batches, queue.size());
+        return new AdvanceSummary(clock.now(), processed, batches, queue.size(), pauseRequested, pauseReason);
     }
 
     public RunCheckpoint checkpoint(Map<String, Object> domainState) {
@@ -95,6 +99,11 @@ public final class SimulationRunEngine {
     public Instant lastCheckpoint() { return lastCheckpoint; }
     public EconomyEngineConfig config() { return loadedConfig.config(); }
     public NamedRandomStreams randomStreams() { return random; }
+
+    public void pauseAfterCurrentEvent(String reason) {
+        pauseRequested = true;
+        pauseReason = reason == null || reason.isBlank() ? "external action pending" : reason;
+    }
 
     public ScheduledEconomyEvent schedule(Instant dueAt, String kind, String subjectId,
                                            Map<String, String> parameters) {
@@ -130,7 +139,12 @@ public final class SimulationRunEngine {
         }
     }
 
-    public record AdvanceSummary(Instant reachedAt, int processedEvents, int batches, int queuedEvents) { }
+    public record AdvanceSummary(Instant reachedAt, int processedEvents, int batches, int queuedEvents,
+                                 boolean waitingExternalAction, String waitReason) {
+        public AdvanceSummary(Instant reachedAt, int processedEvents, int batches, int queuedEvents) {
+            this(reachedAt, processedEvents, batches, queuedEvents, false, null);
+        }
+    }
     public record RunCheckpoint(UUID runId, Instant logicalTime, String configHash,
                                 String catalogVersion, java.util.List<ScheduledEconomyEvent> queue,
                                 Map<String, Long> randomStates, Map<String, Object> domainState) { }

@@ -7,6 +7,7 @@ import server.agents.economy.clock.ScheduledEconomyEvent;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 import server.agents.economy.persistence.RunCheckpointCodec;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -41,5 +42,23 @@ class SimulationRunEngineTest {
         assertEquals(engine.now(), restored.now());
         assertThrows(IllegalStateException.class, () -> new RunCheckpointCodec()
                 .decode(encoded.json(), "bad"));
+    }
+
+    @Test
+    void physicalCapabilityStopsLogicalClockUntilCallerResumes() {
+        LoadedEconomyConfig loaded = new EconomyConfigLoader().load();
+        var catalog = new CatalogBundleLoader().load(loaded.config().catalog);
+        AtomicReference<SimulationRunEngine> reference = new AtomicReference<>();
+        SimulationRunEngine engine = new SimulationRunEngine(UUID.randomUUID(), loaded, catalog,
+                event -> reference.get().pauseAfterCurrentEvent("walking through FM portal"));
+        reference.set(engine);
+
+        var result = engine.advanceDays(30);
+
+        assertTrue(result.waitingExternalAction());
+        assertEquals("walking through FM portal", result.waitReason());
+        assertTrue(result.reachedAt().isBefore(Instant.parse(loaded.config().clock.logicalStart)
+                .plusSeconds(30L * 86_400)));
+        assertEquals(1, result.processedEvents());
     }
 }
