@@ -112,7 +112,7 @@ public final class CosmicObservedOfferNeedAugmenter
         if (wtp <= 0) return Optional.empty();
         int owned = count(agent, observation.itemId());
         Set<Integer> complements = target.map(equip -> Set.of(equip.getItemId())).orElse(Set.of());
-        return Optional.of(new AgentNeed(observation.itemId(), owned, owned + 1, urgency(expected),
+        return Optional.of(new AgentNeed(observation.itemId(), owned, 1, urgency(expected),
                 EconomicReason.SCROLL_UPGRADE, at, wtp, Set.of(), complements,
                 "observedListing=" + observation.listingId() + " targetEquipment="
                         + target.map(Equip::getItemId).orElse(0) + " expectedUtility=" + expected));

@@ -12,24 +12,21 @@ public final class AgentDemandPortfolioService {
     public List<AgentNeed> build(AgentEconomicState state, Instant logicalAt) {
         List<AgentNeed> needs = new ArrayList<>();
         for (ResourceRequirement resource : state.resources()) {
-            if (resource.ownedQuantity() < resource.targetQuantity()) {
-                needs.add(need(resource.itemId(), resource.ownedQuantity(), resource.targetQuantity(),
-                        resource.urgency(), resource.ammunition()
-                                ? EconomicReason.AMMUNITION_RESTOCK : EconomicReason.CONSUMABLE_RESTOCK,
-                        logicalAt, resource.maximumWillingnessToPay(), resource.substitutes(), Set.of(),
-                        "actual runway deficit=" + (resource.targetQuantity() - resource.ownedQuantity())));
-            }
+            needs.add(need(resource.itemId(), resource.ownedQuantity(), resource.targetQuantity(),
+                    resource.urgency(), resource.ammunition()
+                            ? EconomicReason.AMMUNITION_RESTOCK : EconomicReason.CONSUMABLE_RESTOCK,
+                    logicalAt, resource.maximumWillingnessToPay(), resource.substitutes(), Set.of(),
+                    "actual runway deficit="
+                            + Math.max(0, resource.targetQuantity() - resource.ownedQuantity())));
         }
         for (QuestObjective objective : state.questObjectives()) {
             if (!objective.accepted() || objective.completed()) continue;
             int ownedCredit = objective.tradeAcquisitionCounts() ? objective.ownedQuantity() : 0;
             int current = Math.max(objective.progress(), ownedCredit);
-            if (current < objective.requiredQuantity()) {
-                needs.add(need(objective.itemId(), current, objective.requiredQuantity(), objective.urgency(),
-                        EconomicReason.QUEST_REQUIREMENT, logicalAt, objective.maximumWillingnessToPay(),
-                        Set.of(), Set.of(), "accepted quest=" + objective.questId()
-                                + " remaining=" + (objective.requiredQuantity() - current)));
-            }
+            needs.add(need(objective.itemId(), current, objective.requiredQuantity(), objective.urgency(),
+                    EconomicReason.QUEST_REQUIREMENT, logicalAt, objective.maximumWillingnessToPay(),
+                    Set.of(), Set.of(), "accepted quest=" + objective.questId()
+                            + " remaining=" + Math.max(0, objective.requiredQuantity() - current)));
         }
         for (EquipmentUpgrade upgrade : state.equipmentUpgrades()) {
             if (upgrade.requiredLevel() <= state.level() && upgrade.marginalUtility() > 0

@@ -36,4 +36,18 @@ class AgentDemandPortfolioServiceTest {
                         false, 5, 0, 5, 12, .6, 100_000, Set.of())), List.of());
         assertTrue(new AgentDemandPortfolioService().build(state, Instant.EPOCH).isEmpty());
     }
+
+    @Test
+    void retainsSatisfiedResourceAndActiveQuestAsZeroDeficitReservations() {
+        var state = new AgentDemandPortfolioService.AgentEconomicState(25,
+                List.of(new AgentDemandPortfolioService.ResourceRequirement(
+                        2000000, 100, 100, .8, 0, false, Set.of())),
+                List.of(new AgentDemandPortfolioService.QuestObjective(2055, 4000030, 100,
+                        0, 100, true, false, true, .9, 0)), List.of(), List.of(), List.of());
+
+        List<AgentNeed> needs = new AgentDemandPortfolioService().build(state, Instant.EPOCH);
+
+        assertEquals(2, needs.size());
+        assertTrue(needs.stream().allMatch(need -> need.deficit() == 0));
+    }
 }

@@ -99,6 +99,22 @@ class CosmicObservedOfferNeedAugmenterTest {
     }
 
     @Test
+    void doesNotAccumulateScrollsWhileAnUnconsumedProjectScrollIsOwned() {
+        int scrollId = 2041000;
+        Equip cape = mock(Equip.class);
+        when(cape.getItemId()).thenReturn(1102053);
+        when(cape.getUpgradeSlots()).thenReturn((byte) 5);
+        when(equipInventory.list()).thenReturn(List.of(cape));
+        when(useInventory.countById(scrollId)).thenReturn(1);
+        when(items.canApplyScroll(scrollId, 1102053)).thenReturn(true);
+        when(items.getEquipStats(scrollId)).thenReturn(Map.of("success", 60, "cursed", 0, "DEX", 2));
+
+        AgentNeed pending = augmenter.augment(agent, profile(.4),
+                List.of(observation(scrollId, 1_000, Map.of())), List.of(), now).getFirst();
+        assertEquals(0, pending.deficit());
+    }
+
+    @Test
     void chairRequiresPreferenceAndAbsenceFromActualInventory() {
         MarketObservation chair = observation(3010000, 500, Map.of());
         assertEquals(EconomicReason.COLLECTIBLE_OR_CHAIR,

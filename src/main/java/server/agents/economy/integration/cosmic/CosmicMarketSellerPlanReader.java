@@ -56,9 +56,14 @@ public final class CosmicMarketSellerPlanReader {
 
     public MarketSellerPlan read(Character agent, EconomyAgentProfile profile,
                                  PrivateMarketKnowledge knowledge, List<AgentNeed> needs, Instant now) {
-        Set<Integer> reserved = new HashSet<>();
-        needs.stream().filter(need -> need.deficit() > 0).forEach(need -> {
-            reserved.add(need.itemId()); reserved.addAll(need.substitutes());
+        Map<Integer, Integer> reserved = new HashMap<>();
+        needs.forEach(need -> {
+            int protectedQuantity = Math.min(need.currentQuantity(), need.targetQuantity());
+            if (protectedQuantity > 0) reserved.merge(need.itemId(), protectedQuantity, Math::addExact);
+            if (need.deficit() > 0) need.substitutes().forEach(itemId -> {
+                int owned = count(agent, itemId);
+                if (owned > 0) reserved.merge(itemId, owned, Math::addExact);
+            });
         });
         List<MarketSellerPlan.NpcSale> npcSales = new ArrayList<>();
         List<AgentFreeMarketStallService.Listing> listings = new ArrayList<>();
@@ -66,8 +71,14 @@ public final class CosmicMarketSellerPlanReader {
         for (InventoryType type : List.of(InventoryType.EQUIP, InventoryType.USE,
                 InventoryType.SETUP, InventoryType.ETC)) {
             for (Item item : agent.getInventory(type).list()) {
-                if (item.getQuantity() <= 0 || item.getItemId() == permitItemId
-                        || reserved.contains(item.getItemId())) continue;
+                if (item.getQuantity() <= 0 || item.getItemId() == permitItemId) continue;
+                int protectedQuantity = Math.min(item.getQuantity(),
+                        reserved.getOrDefault(item.getItemId(), 0));
+                if (protectedQuantity > 0) reserved.compute(item.getItemId(),
+                        (ignored, quantity) -> quantity == null || quantity <= protectedQuantity
+                                ? null : quantity - protectedQuantity);
+                int availableQuantity = item.getQuantity() - protectedQuantity;
+                if (availableQuantity <= 0) continue;
                 long market = knowledge.observedMedianAsk(item.getItemId(), now, memory);
                 long npc = npcPrices.price(item.getItemId(), 1);
                 boolean scarce = catalog.item(item.getItemId()).map(fact -> fact.categories().stream().anyMatch(
@@ -86,8 +97,8 @@ public final class CosmicMarketSellerPlanReader {
                         0, Math.max(1, npc / 20), saleProbability, false));
                 if (choice.action() == ItemDispositionPolicy.Action.LIST_AT_STALL
                         && listings.size() < maximumListings) {
-                    short perBundle = perBundle(item, knowledge, now, memory);
-                    short bundles = (short) Math.min(Short.MAX_VALUE, item.getQuantity() / perBundle);
+                    short perBundle = perBundle(availableQuantity, item.getItemId(), knowledge, now, memory);
+                    short bundles = (short) Math.min(Short.MAX_VALUE, availableQuantity / perBundle);
                     long bundlePrice = Math.multiplyExact(choice.unitPrice(), perBundle);
                     if (bundles > 0 && bundlePrice > 0 && bundlePrice <= Integer.MAX_VALUE) {
                         listings.add(new AgentFreeMarketStallService.Listing(type, item.getPosition(),
@@ -95,7 +106,7 @@ public final class CosmicMarketSellerPlanReader {
                     }
                 } else if (choice.action() == ItemDispositionPolicy.Action.SELL_TO_NPC) {
                     npcSales.add(new MarketSellerPlan.NpcSale(dispositionNpcId, type, item.getPosition(),
-                            item.getQuantity(), item.getItemId(), choice.reason().name(), choice.evidence()));
+                            (short) availableQuantity, item.getItemId(), choice.reason().name(), choice.evidence()));
                 }
             }
         }
@@ -110,13 +121,17 @@ public final class CosmicMarketSellerPlanReader {
         return Math.max(npc + 1, Math.round(npc * (1d + markup)));
     }
 
-    private static short perBundle(Item item, PrivateMarketKnowledge knowledge,
+    private static short perBundle(int availableQuantity, int itemId, PrivateMarketKnowledge knowledge,
                                    Instant now, Duration memory) {
-        List<Integer> observed = knowledge.recentFor(item.getItemId(), now, memory).stream()
+        List<Integer> observed = knowledge.recentFor(itemId, now, memory).stream()
                 .map(observation -> observation.quantityPerBundle()).sorted().toList();
-        int desired = observed.isEmpty() ? (item.getQuantity() >= 10 ? 10 : 1)
+        int desired = observed.isEmpty() ? (availableQuantity >= 10 ? 10 : 1)
                 : observed.get(observed.size() / 2);
-        return (short) Math.max(1, Math.min(item.getQuantity(), desired));
+        return (short) Math.max(1, Math.min(availableQuantity, desired));
+    }
+
+    private static int count(Character agent, int itemId) {
+        return agent.getInventory(constants.inventory.ItemConstants.getInventoryType(itemId)).countById(itemId);
     }
 
     @FunctionalInterface interface NpcPriceCatalog { long price(int itemId, int quantity); }
