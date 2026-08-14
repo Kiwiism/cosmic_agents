@@ -65,6 +65,9 @@ require identical remaining event order and RNG state.
 distribution/Gini, seller HHI, stall-room utilization, room traffic, disposition channels, item
 creation/burn, price series, search failures, unmet demand, and invariant counts. It is an
 administrator projection and is never an agent price source.
+`fixed_basket_price_index.sql` accepts an explicit item/quantity basket and reports price coverage;
+it never imputes an unobserved clearing price. `scenario_comparison.sql` reports baseline/candidate
+ledger deltas and explicitly refuses to label an unpaired difference as causal.
 
 Completed activity evidence includes the calibrated death exposure, exact occurrence time, farm
 map and field limit, ordinary Agent respawn delay, EXP lost or safety charm consumed, penalty reason,

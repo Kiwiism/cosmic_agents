@@ -60,6 +60,18 @@ class EconomyPostgresSchemaIntegrationTest {
                             ":from_logical_at", "'1970-01-01T00:00:00Z'::timestamptz",
                             ":to_logical_at", "'2030-01-01T00:00:00Z'::timestamptz"))
                             .contains("\"moneySupply\""));
+                    assertEquals(true, dashboardQuery(connection, "fixed_basket_price_index.sql", Map.of(
+                            ":run_id", runSql,
+                            ":base_logical_date", "'1970-01-01'::date",
+                            ":from_logical_date", "'1970-01-01'::date",
+                            ":to_logical_date", "'1970-01-02'::date",
+                            ":basket_json", "'[{\"item_id\":1102053,\"quantity\":1}]'"))
+                            .contains("1970-01-01"));
+                    assertEquals(true, dashboardQuery(connection, "scenario_comparison.sql", Map.of(
+                            ":baseline_run_id", runSql, ":candidate_run_id", runSql,
+                            ":from_logical_at", "'1970-01-01T00:00:00Z'::timestamptz",
+                            ":to_logical_at", "'2030-01-01T00:00:00Z'::timestamptz"))
+                            .contains("MEASURED_DIFFERENCE_REQUIRES_PAIRED_DESIGN_FOR_CAUSAL_CLAIM"));
                 }
             } finally {
                 try (Connection connection = dataSource.getConnection()) { deleteRun(connection, run); }

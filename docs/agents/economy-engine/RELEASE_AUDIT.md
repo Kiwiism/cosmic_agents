@@ -44,7 +44,7 @@ logical-scheduler test is never represented as a physical Free Market soak.
 | Item and meso provenance | Automated on controlled settlements, live reconciliation pending | balanced ledger, lots/instances, Cosmic transactional outbox, idempotent ingestion |
 | Decision evidence and alternatives | Automated | the evidence contract rejects empty alternatives; operational paths retain an explicit rejected choice and reason |
 | Reconstruction from journal/checkpoints | Automated on controlled restart | full domain checkpoint, queue/RNG equality, idempotent relay |
-| Dashboard data queryable without live objects | Mostly automated | item, meso, agent, decision, negotiation, provenance, velocity, wealth/Gini, seller HHI, room utilization/traffic, search, burn, and invariant contracts execute in the clean PostgreSQL gate; a configured fixed-basket CPI and scenario-comparison projection remain incomplete |
+| Dashboard data queryable without live objects | Automated | item, meso, agent, decision, negotiation, provenance, velocity, wealth/Gini, seller HHI, room utilization/traffic, search, burn, fixed-basket coverage/index, scenario comparison, and invariant contracts execute in the clean PostgreSQL gate |
 | Ambient behavior cannot perturb loot | Automated | independent named streams and architecture boundary |
 | Adapter replacement does not rewrite domain | Automated | architecture test and `EconomyWorldPort`/Cosmic adapter boundary |
 | Human-safe participation | Schema and settlement flags implemented; live evidence pending | human-counterparty attribution exists, but no human/agent live test has run |
@@ -98,7 +98,6 @@ that user-owned server was outside the authorized scope, so no physical 50-to-20
 3. Run paired multi-seed scenario branches for population/class, tax, NPC access, and quest-wave
    changes. Reports must distinguish programmed reasons, observed association, and paired causal
    differences.
-4. Add a configured fixed-basket price index and cross-run scenario-comparison projection.
-5. Add live human-versus-agent PlayerShop and Trade validation before enabling humans in a run.
+4. Add live human-versus-agent PlayerShop and Trade validation before enabling humans in a run.
 
 Until these gates pass, Phase 12 and the complete-release goal remain open.
