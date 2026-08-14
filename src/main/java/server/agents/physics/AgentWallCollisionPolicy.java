@@ -60,12 +60,6 @@ public final class AgentWallCollisionPolicy {
         if (map == null || map.getFootholds() == null) {
             return UNKNOWN_GROUP;
         }
-        int base = UNKNOWN_GROUP;
-        for (Foothold foothold : map.getFootholds().getAllFootholds()) {
-            if (foothold.getZMass() >= 0 && (base < 0 || foothold.getZMass() < base)) {
-                base = foothold.getZMass();
-            }
-        }
-        return base;
+        return map.getFootholds().getMinimumZMass();
     }
 }
