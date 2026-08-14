@@ -79,6 +79,18 @@ class EconomyPostgresSchemaIntegrationTest {
                             ":from_logical_at", "'1970-01-01T00:00:00Z'::timestamptz",
                             ":to_logical_at", "'2030-01-01T00:00:00Z'::timestamptz"))
                             .contains("MEASURED_DIFFERENCE_REQUIRES_PAIRED_DESIGN_FOR_CAUSAL_CLAIM"));
+                    Map<String, String> runAndItem = Map.of(":run_id", runSql, ":item_id", "1102053");
+                    dashboardQuery(connection, "item_history.sql", runAndItem);
+                    dashboardQuery(connection, "item_market_explanation.sql", runAndItem);
+                    dashboardQuery(connection, "invariant_audit.sql", Map.of(":run_id", runSql));
+                    dashboardQuery(connection, "meso_flow.sql", Map.of(":run_id", runSql));
+                    Map<String, String> trace = Map.of(":run_id", runSql,
+                            ":agent_id", "'agent-1'",
+                            ":from_logical_at", "'1970-01-01T00:00:00Z'::timestamptz",
+                            ":to_logical_at", "'2030-01-01T00:00:00Z'::timestamptz");
+                    dashboardQuery(connection, "agent_journal.sql", trace);
+                    dashboardQuery(connection, "decision_trace.sql", trace);
+                    dashboardQuery(connection, "economy_overview.sql", trace);
                 }
             } finally {
                 try (Connection connection = dataSource.getConnection()) { deleteRun(connection, run); }
@@ -227,7 +239,7 @@ class EconomyPostgresSchemaIntegrationTest {
         for (Map.Entry<String, String> replacement : replacements.entrySet())
             sql = sql.replace(replacement.getKey(), replacement.getValue());
         try (var statement = connection.createStatement(); var rows = statement.executeQuery(sql)) {
-            rows.next(); return rows.getString(1);
+            return rows.next() ? rows.getString(1) : "";
         }
     }
 }
