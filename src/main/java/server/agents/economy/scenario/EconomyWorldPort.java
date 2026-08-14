@@ -32,6 +32,11 @@ public interface EconomyWorldPort {
             throw new IllegalStateException("world adapter does not support checkpoint state");
     }
 
+    /** Restores adapter state with the checkpoint's authoritative admitted profiles. */
+    default void restoreState(Map<String, Object> state, Map<String, EconomyAgentProfile> profiles) {
+        restoreState(state);
+    }
+
     default Optional<Presence> currentPresence(EconomyAgentProfile profile) { return Optional.empty(); }
 
     record Presence(int mapId, int x, int y, boolean visible) { }

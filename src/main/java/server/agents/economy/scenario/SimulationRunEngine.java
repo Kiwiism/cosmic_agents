@@ -101,6 +101,10 @@ public final class SimulationRunEngine {
     }
 
     public Instant now() { return clock.now(); }
+    public Instant targetAt() {
+        return Instant.parse(loadedConfig.config().clock.logicalStart)
+                .plus(Duration.ofDays(loadedConfig.config().scenario.targetLogicalDays));
+    }
     public UUID runId() { return runId; }
     public Instant lastCheckpoint() { return lastCheckpoint; }
     public EconomyEngineConfig config() { return loadedConfig.config(); }

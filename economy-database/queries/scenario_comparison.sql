@@ -3,6 +3,13 @@
 WITH selected_runs AS (
     SELECT 'baseline' label, CAST(:baseline_run_id AS uuid) run_id
     UNION ALL SELECT 'candidate', CAST(:candidate_run_id AS uuid)
+), pairing AS (
+    SELECT p.experiment_id, p.pair_id, p.seed, b.status baseline_status, c.status candidate_status
+    FROM economy_experiment_pair p
+    LEFT JOIN simulation_run b ON b.run_id = p.baseline_run_id
+    LEFT JOIN simulation_run c ON c.run_id = p.candidate_run_id
+    WHERE p.baseline_run_id = CAST(:baseline_run_id AS uuid)
+      AND p.candidate_run_id = CAST(:candidate_run_id AS uuid)
 ), ending_meso AS (
     SELECT r.label, COALESCE(SUM(p.quantity) FILTER (
         WHERE p.account_type IN ('AGENT','HUMAN','ESCROW')), 0)::numeric value
@@ -53,6 +60,9 @@ WITH selected_runs AS (
     FROM metrics
 )
 SELECT jsonb_build_object(
+    'pairDesign', COALESCE((SELECT jsonb_build_object('experimentId', experiment_id,
+        'pairId', pair_id, 'seed', seed, 'baselineStatus', baseline_status,
+        'candidateStatus', candidate_status) FROM pairing), 'null'::jsonb),
     'baseline', baseline,
     'candidate', candidate,
     'absoluteDelta', jsonb_build_object(
@@ -66,6 +76,9 @@ SELECT jsonb_build_object(
         'openDemands', (candidate->>'openDemands')::numeric - (baseline->>'openDemands')::numeric,
         'unresolvedInvariantViolations', (candidate->>'unresolvedInvariantViolations')::numeric
             - (baseline->>'unresolvedInvariantViolations')::numeric),
-    'interpretation', 'MEASURED_DIFFERENCE_REQUIRES_PAIRED_DESIGN_FOR_CAUSAL_CLAIM'
+    'interpretation', CASE WHEN EXISTS (SELECT 1 FROM pairing
+        WHERE baseline_status = 'COMPLETED' AND candidate_status = 'COMPLETED')
+        THEN 'PAIRED_SAME_SEED_DIFFERENCE'
+        ELSE 'MEASURED_DIFFERENCE_REQUIRES_PAIRED_DESIGN_FOR_CAUSAL_CLAIM' END
 ) AS scenario_comparison
 FROM pair;

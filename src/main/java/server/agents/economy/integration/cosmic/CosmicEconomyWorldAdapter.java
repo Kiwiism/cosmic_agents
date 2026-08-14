@@ -146,6 +146,12 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort {
     @Override
     @SuppressWarnings("unchecked")
     public void restoreState(Map<String, Object> state) {
+        restoreState(state, Map.of());
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public void restoreState(Map<String, Object> state, Map<String, EconomyAgentProfile> profiles) {
         if (state == null || state.isEmpty()) return; // older coordinator checkpoints
         if (((Number) state.get("schemaVersion")).intValue() != 1)
             throw new IllegalStateException("unsupported Cosmic world checkpoint schema");
@@ -157,11 +163,18 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort {
             if (agent == null || agent.getClient() == null || agent.getClient().getChannel() != channelId)
                 throw new IllegalStateException("checkpoint agent is not live on the configured channel: " + id);
             bindings.put(id, agent);
+            EconomyAgentProfile profile = profiles.get(id);
+            if (profile == null)
+                throw new IllegalStateException("checkpoint profile is missing for bound agent: " + id);
+            if (!profile.jobFamily().equals(EconomyJobFamily.of(agent)))
+                throw new IllegalStateException("checkpoint profile job does not match live character: " + id);
+            admissionObserver.admitted(profile, agent);
         }
         for (Object idValue : (java.util.List<Object>) state.get("offscreenAgentIds")) {
             String id = idValue.toString();
             if (!bindings.containsKey(id)) throw new IllegalStateException("offscreen checkpoint agent is unbound: " + id);
             offscreen.add(id);
+            presence.restoreDetached(bindings.get(id));
         }
         market.restoreState((Map<String, Object>) state.get("market"));
     }
@@ -214,6 +227,7 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort {
     public interface OffscreenPresence {
         void leaveVisibleFreeMarket(Character agent, Instant logicalAt);
         void enterFreeMarketEntrance(Character agent, Instant logicalAt);
+        default void restoreDetached(Character agent) { }
     }
     @FunctionalInterface public interface TaxPolicy { EconomyTaxOverride at(Instant logicalAt); }
 }

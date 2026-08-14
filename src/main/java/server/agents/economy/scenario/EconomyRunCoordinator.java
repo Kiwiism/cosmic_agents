@@ -189,7 +189,9 @@ public final class EconomyRunCoordinator {
                 throw new IllegalStateException("checkpoint outcome state is inconsistent for " + id);
             agents.put(id, new AgentState(profile, status, plan, outcome));
         });
-        world.restoreState(worldState == null ? Map.of() : worldState);
+        Map<String, EconomyAgentProfile> profiles = new LinkedHashMap<>();
+        agents.forEach((id, value) -> profiles.put(id, value.profile));
+        world.restoreState(worldState == null ? Map.of() : worldState, Map.copyOf(profiles));
     }
 
     private static Map<String, Object> profileMap(EconomyAgentProfile p) {

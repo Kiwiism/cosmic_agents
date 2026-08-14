@@ -3,6 +3,7 @@ package server.agents.economy.persistence;
 import com.zaxxer.hikari.HikariDataSource;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import org.junit.jupiter.api.io.TempDir;
 import server.agents.economy.catalog.CatalogBundleLoader;
 import server.agents.economy.scenario.EconomyConfigLoader;
 
@@ -21,6 +22,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @EnabledIfEnvironmentVariable(named = "ECONOMY_DB_INTEGRATION", matches = "true")
 class EconomyPostgresSchemaIntegrationTest {
+    @TempDir Path temporaryDirectory;
+
     @Test
     void cleanSchemaSatisfiesRuntimeContractAndRejectsUnbalancedEvents() throws Exception {
         try (HikariDataSource dataSource = EconomyPostgresDataSource.fromEnvironment()) {
@@ -41,12 +44,21 @@ class EconomyPostgresSchemaIntegrationTest {
                             + "AND config_schema_version = 1 AND validation_result ->> 'valid' = 'true' "
                             + "AND normalized_config ->> 'schemaVersion' = '1'"));
                     var runs = new JdbcSimulationRunRepository(dataSource);
+                    assertEquals("CREATED", runs.find(run).orElseThrow().status());
+                    var bindings = new JdbcEconomyParticipantBindingStore(dataSource);
+                    bindings.reserve(run, java.util.List.of(
+                            new EconomyParticipantBindingStore.Reservation("agent-1", 101,
+                                    Instant.parse("2026-01-01T00:00:00Z")),
+                            new EconomyParticipantBindingStore.Reservation("agent-2", 102,
+                                    Instant.parse("2026-01-02T00:00:00Z"))));
+                    assertEquals(Map.of("agent-1", 101, "agent-2", 102), bindings.load(run));
                     runs.updateLogicalTime(run, Instant.parse("2026-01-01T00:00:01Z"),
                             "WAITING_PHYSICAL_ACTION");
                     runs.updateLogicalTime(run, Instant.parse("2026-01-01T00:00:02Z"),
                             "INVARIANT_VIOLATION");
                     assertEquals(1, scalar(connection, "SELECT COUNT(*) FROM simulation_run WHERE run_id = '"
                             + run + "' AND status = 'INVARIANT_VIOLATION'"));
+                    verifyExperimentPlanning(dataSource, connection);
                     insertProjectionFacts(connection, run);
                 }
                 JdbcEconomyProjectionService.Result projection =
@@ -95,6 +107,34 @@ class EconomyPostgresSchemaIntegrationTest {
             } finally {
                 try (Connection connection = dataSource.getConnection()) { deleteRun(connection, run); }
             }
+        }
+    }
+
+    private void verifyExperimentPlanning(HikariDataSource dataSource, Connection connection) throws Exception {
+        Path baseline = temporaryDirectory.resolve("baseline.yaml");
+        Path candidate = temporaryDirectory.resolve("candidate.yaml");
+        Files.copy(Path.of("economy-engine.yaml"), baseline);
+        Files.copy(Path.of("economy-engine.yaml"), candidate);
+        String experimentId = "schema-audit-" + UUID.randomUUID();
+        Path manifest = temporaryDirectory.resolve("experiment.yaml");
+        Files.writeString(manifest, "schemaVersion: 1\n"
+                + "experimentId: " + experimentId + "\n"
+                + "description: PostgreSQL contract audit\n"
+                + "design: PAIRED_SAME_SEED\n"
+                + "pairs:\n"
+                + "  - pairId: seed-1\n"
+                + "    seed: 4815162342\n"
+                + "    baselineConfig: baseline.yaml\n"
+                + "    candidateConfig: candidate.yaml\n");
+        var planner = new server.agents.economy.experiment.EconomyExperimentPlanner(dataSource);
+        var plan = planner.plan(manifest);
+        assertEquals(1, plan.pairs().size());
+        assertEquals("BASELINE", planner.next(experimentId).side());
+        assertEquals(1, scalar(connection, "SELECT COUNT(*) FROM economy_experiment_pair WHERE experiment_id = '"
+                + experimentId + "' AND baseline_config_hash = candidate_config_hash"));
+        try (PreparedStatement statement = connection.prepareStatement(
+                "DELETE FROM economy_experiment WHERE experiment_id = ?")) {
+            statement.setString(1, experimentId); statement.executeUpdate();
         }
     }
 
@@ -203,6 +243,10 @@ class EconomyPostgresSchemaIntegrationTest {
     }
 
     private static void deleteRun(Connection connection, UUID run) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(
+                "DELETE FROM agent_character_binding WHERE run_id = ?")) {
+            statement.setObject(1, run); statement.executeUpdate();
+        }
         for (String table : java.util.List.of("item_market_daily", "meso_flow_daily",
                 "agent_state_projection", "listing_exposure", "ledger_posting", "economic_event")) {
             String predicate = "ledger_posting".equals(table)

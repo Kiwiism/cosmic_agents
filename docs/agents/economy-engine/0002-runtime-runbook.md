@@ -5,7 +5,7 @@
 1. Configure `economy-engine.yaml`. YAML contains behavior and scenario policy only; credentials are
    environment variables.
 2. Set distinct `ECONOMY_DB_*` credentials and initialize the separate PostgreSQL database through
-   migrations V001-V010.
+   migrations V001-V014.
 3. Start Cosmic MySQL and the game server normally.
 4. Have at least `population.maximumAgents` live autonomous characters. The runtime deterministically
    binds scenario slots to characters of the same real Cosmic job family; within each eligible pool,

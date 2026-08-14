@@ -22,6 +22,18 @@ public final class EconomyRuntimeFactory {
     public static ManagedEconomyRun start(UUID runId, Path yaml, DataSource cosmicDataSource,
                                           DataSource economyDataSource,
                                           Function<String, Character> liveAgents) {
+        return build(runId, yaml, cosmicDataSource, economyDataSource, liveAgents, false);
+    }
+
+    public static ManagedEconomyRun resume(UUID runId, Path yaml, DataSource cosmicDataSource,
+                                           DataSource economyDataSource,
+                                           Function<String, Character> liveAgents) {
+        return build(runId, yaml, cosmicDataSource, economyDataSource, liveAgents, true);
+    }
+
+    private static ManagedEconomyRun build(UUID runId, Path yaml, DataSource cosmicDataSource,
+                                           DataSource economyDataSource,
+                                           Function<String, Character> liveAgents, boolean resume) {
         Objects.requireNonNull(runId); Objects.requireNonNull(cosmicDataSource);
         Objects.requireNonNull(economyDataSource); Objects.requireNonNull(liveAgents);
         LoadedEconomyConfig loaded = new EconomyConfigLoader().load(yaml);
@@ -80,9 +92,47 @@ public final class EconomyRuntimeFactory {
                 new JdbcEconomyBootstrapStore(economyDataSource), participants::admitted);
 
         JdbcSimulationRunRepository runRepository = new JdbcSimulationRunRepository(economyDataSource);
-        runRepository.create(runId, loaded, bundle);
-        EconomyRunApplication application = EconomyRunApplication.start(runId, loaded, bundle, catalog,
-                world, new JdbcEconomyLifecycleJournal(economyDataSource));
+        JdbcEconomyParticipantBindingStore bindingStore =
+                new JdbcEconomyParticipantBindingStore(economyDataSource);
+        SimulationRunEngine.RunCheckpoint checkpoint = null;
+        String initialStatus = "CREATED";
+        if (resume) {
+            SimulationRunRepository.RunRecord record = runRepository.find(runId)
+                    .orElseThrow(() -> new IllegalStateException("economy run does not exist: " + runId));
+            if (java.util.Set.of("COMPLETED", "FAILED", "INVARIANT_VIOLATION").contains(record.status()))
+                throw new IllegalStateException("economy run cannot be resumed from status " + record.status());
+            if (!record.configHash().equals(loaded.sha256()))
+                throw new IllegalStateException("stored run configuration hash does not match the YAML");
+            if (!record.catalogVersion().equals(bundle.version()))
+                throw new IllegalStateException("stored run catalog version does not match the live catalog");
+            checkpoint = runRepository.latestCheckpoint(runId)
+                    .orElseThrow(() -> new IllegalStateException("economy run has no durable checkpoint: " + runId));
+            initialStatus = "RUNNING";
+        } else {
+            runRepository.create(runId, loaded, bundle);
+            var admissions = new PopulationAdmissionPlanner().plan(config.population,
+                    java.time.Instant.parse(config.clock.logicalStart),
+                    new NamedRandomStreams(config.scenario.seed));
+            try {
+                bindingStore.reserve(runId, admissions.stream().map(admission -> {
+                    Character character = liveAgents.apply(admission.agentId());
+                    if (character == null)
+                        throw new IllegalStateException("reserved live character is missing: " + admission.agentId());
+                    return new EconomyParticipantBindingStore.Reservation(admission.agentId(),
+                            character.getId(), admission.admittedAt());
+                }).toList());
+            } catch (RuntimeException failure) {
+                runRepository.updateStatus(runId, java.time.Instant.parse(config.clock.logicalStart),
+                        "FAILED", "roster reservation failed: " + failure.getClass().getSimpleName());
+                throw failure;
+            }
+        }
+        EconomyRunApplication application = checkpoint == null
+                ? EconomyRunApplication.start(runId, loaded, bundle, catalog, world,
+                        new JdbcEconomyLifecycleJournal(economyDataSource))
+                : EconomyRunApplication.restore(checkpoint, loaded, bundle, catalog, world,
+                        new JdbcEconomyLifecycleJournal(economyDataSource));
+        if (resume) runRepository.updateLogicalTime(runId, checkpoint.logicalTime(), "RUNNING");
         EconomyOutboxRelay relay = new EconomyOutboxRelay(new JdbcCosmicOutboxSource(cosmicDataSource),
                 new JdbcPostgresOutboxSink(economyDataSource));
         EconomyEvidencePipeline pipeline = new EconomyEvidencePipeline(relay,
@@ -90,7 +140,8 @@ public final class EconomyRuntimeFactory {
                 new JdbcEconomyProjectionService(economyDataSource),
                 new JdbcEconomyInvariantAuditor(economyDataSource));
         return new ManagedEconomyRun(application, pipeline, runRepository,
-                config.persistence.evidenceBatchSize, config.scenario.stopOnInvariantViolation);
+                config.persistence.evidenceBatchSize, config.scenario.stopOnInvariantViolation,
+                initialStatus);
     }
 
     private static Duration duration(String value) { return Duration.parse(value); }

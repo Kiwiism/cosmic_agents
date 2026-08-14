@@ -109,6 +109,16 @@ class SimulationRunEngineTest {
     }
 
     @Test
+    void exposesConfiguredLogicalHorizon() {
+        LoadedEconomyConfig loaded = new EconomyConfigLoader().load();
+        var catalog = new CatalogBundleLoader().load(loaded.config().catalog);
+        SimulationRunEngine engine = new SimulationRunEngine(UUID.randomUUID(), loaded, catalog, ignored -> { });
+
+        assertEquals(Instant.parse(loaded.config().clock.logicalStart)
+                .plusSeconds(loaded.config().scenario.targetLogicalDays * 86_400L), engine.targetAt());
+    }
+
+    @Test
     void schedulerScalesToOneThousandProfilesWithoutWallClockTicks() {
         LoadedEconomyConfig loaded = new EconomyConfigLoader().load();
         loaded.config().population.maximumAgents = 1_000;

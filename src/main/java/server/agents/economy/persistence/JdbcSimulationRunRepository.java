@@ -66,14 +66,22 @@ public final class JdbcSimulationRunRepository implements SimulationRunRepositor
 
     @Override
     public void updateLogicalTime(UUID runId, Instant logicalTime, String status) {
+        updateStatus(runId, logicalTime, status, null);
+    }
+
+    @Override
+    public void updateStatus(UUID runId, Instant logicalTime, String status, String failureReason) {
         String sql = "UPDATE simulation_run SET logical_current_at = ?, status = ?, "
-                + "completed_at = CASE WHEN ? = 'COMPLETED' THEN now() ELSE completed_at END WHERE run_id = ?";
+                + "completed_at = CASE WHEN ? IN ('COMPLETED','FAILED') THEN now() ELSE completed_at END, "
+                + "failure_reason = CASE WHEN ? = 'FAILED' THEN ? ELSE failure_reason END WHERE run_id = ?";
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setTimestamp(1, Timestamp.from(logicalTime));
             statement.setString(2, status);
             statement.setString(3, status);
-            statement.setObject(4, runId);
+            statement.setString(4, status);
+            statement.setString(5, failureReason);
+            statement.setObject(6, runId);
             if (statement.executeUpdate() != 1) throw new SQLException("simulation run is missing");
         } catch (SQLException failure) {
             throw new EconomyPersistenceException("Could not update simulation run", failure);
@@ -116,6 +124,27 @@ public final class JdbcSimulationRunRepository implements SimulationRunRepositor
             }
         } catch (SQLException failure) {
             throw new EconomyPersistenceException("Could not load simulation checkpoint", failure);
+        }
+    }
+
+    @Override
+    public Optional<RunRecord> find(UUID runId) {
+        String sql = "SELECT status, logical_started_at, logical_current_at, target_logical_at, "
+                + "config_hash, catalog_version, failure_reason FROM simulation_run WHERE run_id = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setObject(1, runId);
+            try (ResultSet row = statement.executeQuery()) {
+                if (!row.next()) return Optional.empty();
+                return Optional.of(new RunRecord(runId, row.getString("status"),
+                        row.getTimestamp("logical_started_at").toInstant(),
+                        row.getTimestamp("logical_current_at").toInstant(),
+                        row.getTimestamp("target_logical_at").toInstant(),
+                        row.getString("config_hash"), row.getString("catalog_version"),
+                        row.getString("failure_reason")));
+            }
+        } catch (SQLException failure) {
+            throw new EconomyPersistenceException("Could not load simulation run", failure);
         }
     }
 }

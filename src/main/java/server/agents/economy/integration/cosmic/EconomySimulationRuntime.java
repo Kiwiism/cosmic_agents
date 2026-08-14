@@ -5,6 +5,7 @@ import com.zaxxer.hikari.HikariDataSource;
 import server.agents.economy.persistence.EconomyPostgresDataSource;
 import server.agents.economy.persistence.EconomyDatabaseVerifier;
 import server.agents.economy.persistence.JdbcActivityCalibrationRepository;
+import server.agents.economy.persistence.JdbcEconomyParticipantBindingStore;
 import server.agents.economy.scenario.EconomyConfigLoader;
 import server.agents.economy.scenario.LoadedEconomyConfig;
 import server.agents.economy.scenario.ManagedEconomyRun;
@@ -128,18 +129,67 @@ public final class EconomySimulationRuntime {
         }
     }
 
+    public static synchronized Status resume(UUID runId) {
+        return resume(runId, EconomyConfigLoader.DEFAULT_PATH);
+    }
+
+    public static synchronized Status resume(UUID runId, Path configPath) {
+        if (run != null) throw new IllegalStateException("an economy run is already active");
+        LoadedEconomyConfig config = new EconomyConfigLoader().load(configPath);
+        List<Character> agents = activeAgents();
+        HikariDataSource database = EconomyPostgresDataSource.fromEnvironment();
+        try {
+            new EconomyDatabaseVerifier(database).verify(config.config().persistence.database);
+            Map<String, Integer> persisted = new JdbcEconomyParticipantBindingStore(database).load(runId);
+            if (persisted.size() != config.config().population.maximumAgents)
+                throw new IllegalStateException("durable roster reservation is incomplete: "
+                        + persisted.size() + '/' + config.config().population.maximumAgents);
+            Map<Integer, Character> byId = agents.stream().collect(java.util.stream.Collectors.toMap(
+                    Character::getId, java.util.function.Function.identity(), (left, right) -> left));
+            Map<String, Character> mapped = new java.util.LinkedHashMap<>();
+            persisted.forEach((logicalId, characterId) -> {
+                Character character = byId.get(characterId);
+                if (character == null || character.getClient() == null
+                        || character.getClient().getChannel() != config.config().world.channelId)
+                    throw new IllegalStateException("reserved character is not live on channel "
+                            + config.config().world.channelId + ": " + logicalId + " -> " + characterId);
+                mapped.put(logicalId, character);
+            });
+            ManagedEconomyRun resumed = EconomyRuntimeFactory.resume(runId, configPath,
+                    DatabaseConnection.dataSource(), database, mapped::get);
+            economyDatabase = database; directory = Map.copyOf(mapped); run = resumed;
+            return status();
+        } catch (RuntimeException failure) {
+            database.close(); throw failure;
+        }
+    }
+
     public static synchronized ManagedEconomyRun.AdvanceResult advanceDays(long days) {
         requireRun(); return run.advanceDays(days);
     }
 
+    public static synchronized server.agents.economy.persistence.EconomyEvidencePipeline.Result audit() {
+        requireRun(); return run.audit();
+    }
+
+    public static synchronized server.agents.economy.persistence.EconomyEvidencePipeline.Result complete() {
+        requireRun(); return run.complete();
+    }
+
+    public static synchronized server.agents.economy.persistence.EconomyEvidencePipeline.Result fail(String reason) {
+        requireRun(); return run.fail(reason);
+    }
+
     public static synchronized Status status() {
-        if (run == null) return new Status(false, null, null, 0, 0);
+        if (run == null) return new Status(false, null, null, null, null, 0, 0);
         return new Status(true, run.application().runId(), run.application().now(),
+                run.application().targetAt(), run.status(),
                 run.application().agents().size(), directory.size());
     }
 
     public static synchronized void stop() {
-        if (run != null) run.checkpoint("STOPPED");
+        if (run != null && !java.util.Set.of("COMPLETED", "FAILED", "STOPPED").contains(run.status()))
+            run.checkpoint("STOPPED");
         run = null; directory = Map.of();
         if (economyDatabase != null) economyDatabase.close();
         economyDatabase = null;
@@ -149,12 +199,19 @@ public final class EconomySimulationRuntime {
         if (run == null) throw new IllegalStateException("no economy run is active");
     }
 
+    private static List<Character> activeAgents() {
+        return AgentRuntimeRegistry.activeEntriesSnapshot().stream()
+                .map(AgentRuntimeEntry::bot).filter(java.util.Objects::nonNull)
+                .sorted(Comparator.comparingInt(Character::getId)).toList();
+    }
+
     private static String message(RuntimeException failure) {
         return failure.getMessage() == null ? failure.getClass().getSimpleName()
                 : failure.getMessage().replaceAll("\\s+", " ");
     }
 
     public record Status(boolean active, UUID runId, java.time.Instant logicalTime,
+                         java.time.Instant targetLogicalTime, String state,
                          int admittedAgents, int reservedCharacters) { }
     public record Preflight(boolean ready, int liveCharacters, int requiredCharacters,
                             int mappedCharacters, int initialFmReady, int initialAgents,

@@ -35,4 +35,15 @@ public final class CosmicOffscreenPresence implements CosmicEconomyWorldAdapter.
             throw failure;
         }
     }
+
+    @Override
+    public void restoreDetached(Character agent) {
+        if (!detached.add(agent.getId())) return;
+        if (agent.getMap() == null) {
+            detached.remove(agent.getId());
+            throw new IllegalStateException("checkpoint offscreen agent has no live map");
+        }
+        try { agent.getMap().removePlayer(agent); }
+        catch (RuntimeException failure) { detached.remove(agent.getId()); throw failure; }
+    }
 }
