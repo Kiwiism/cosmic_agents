@@ -6,8 +6,8 @@ This ledger follows the attached master goal without redefining completion aroun
 |---|---|---|
 | 0 | Architecture decisions and invariants | Complete |
 | 1 | Authoritative versioned catalog foundation | Not started |
-| 2 | Economic event, outbox, and ledger foundation | Not started |
-| 3 | Scenario, population, logical clock, RNG, checkpoints | Not started |
+| 2 | Economic event, outbox, and ledger foundation | In progress: balanced envelope implemented |
+| 3 | Scenario, population, logical clock, RNG, checkpoints | In progress: kernel and admission plan implemented |
 | 4 | Remote real-NPC commerce and full disposition | Not started |
 | 5 | Rule-exact offscreen production and calibration | Not started |
 | 6 | Needs, quests, complements, valuation, beliefs | Not started |
