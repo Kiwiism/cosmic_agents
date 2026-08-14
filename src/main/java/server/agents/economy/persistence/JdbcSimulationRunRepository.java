@@ -25,18 +25,40 @@ public final class JdbcSimulationRunRepository implements SimulationRunRepositor
         String sql = "INSERT INTO simulation_run (run_id, scenario_id, status, logical_started_at, "
                 + "logical_current_at, target_logical_at, seed, config_hash, config_yaml, catalog_version) "
                 + "VALUES (?, ?, 'CREATED', ?, ?, ?, ?, ?, ?, ?)";
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setObject(1, runId);
-            statement.setString(2, loaded.config().scenario.id);
-            statement.setTimestamp(3, Timestamp.from(start));
-            statement.setTimestamp(4, Timestamp.from(start));
-            statement.setTimestamp(5, Timestamp.from(target));
-            statement.setLong(6, loaded.config().scenario.seed);
-            statement.setString(7, loaded.sha256());
-            statement.setString(8, loaded.rawYaml());
-            statement.setString(9, catalog.version());
-            statement.executeUpdate();
+        try (Connection connection = dataSource.getConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                    statement.setObject(1, runId);
+                    statement.setString(2, loaded.config().scenario.id);
+                    statement.setTimestamp(3, Timestamp.from(start));
+                    statement.setTimestamp(4, Timestamp.from(start));
+                    statement.setTimestamp(5, Timestamp.from(target));
+                    statement.setLong(6, loaded.config().scenario.seed);
+                    statement.setString(7, loaded.sha256());
+                    statement.setString(8, loaded.rawYaml());
+                    statement.setString(9, catalog.version());
+                    statement.executeUpdate();
+                }
+                try (PreparedStatement statement = connection.prepareStatement(
+                        "INSERT INTO economy_config_revision (run_id, revision, effective_logical_at, "
+                                + "config_hash, config_yaml, normalized_config, config_schema_version, "
+                                + "validation_result, reason) VALUES (?, 0, ?, ?, ?, CAST(? AS jsonb), ?, "
+                                + "CAST(? AS jsonb), 'INITIAL_VALIDATED_CONFIGURATION')")) {
+                    statement.setObject(1, runId);
+                    statement.setTimestamp(2, Timestamp.from(start));
+                    statement.setString(3, loaded.sha256());
+                    statement.setString(4, loaded.rawYaml());
+                    statement.setString(5, loaded.normalizedJson());
+                    statement.setInt(6, loaded.config().schemaVersion);
+                    statement.setString(7, "{\"valid\":true,\"validator\":\"EconomyConfigValidator\"}");
+                    statement.executeUpdate();
+                }
+                connection.commit();
+            } catch (SQLException failure) {
+                connection.rollback();
+                throw failure;
+            }
         } catch (SQLException failure) {
             throw new EconomyPersistenceException("Could not create simulation run", failure);
         }

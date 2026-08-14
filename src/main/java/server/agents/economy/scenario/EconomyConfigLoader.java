@@ -1,6 +1,8 @@
 package server.agents.economy.scenario;
 
 import com.esotericsoftware.yamlbeans.YamlReader;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -14,6 +16,8 @@ import java.util.HexFormat;
 /** Reads a run configuration without coupling it to the global Agent YAML singleton. */
 public final class EconomyConfigLoader {
     public static final Path DEFAULT_PATH = Path.of("economy-engine.yaml");
+    private static final ObjectMapper JSON = new ObjectMapper()
+            .configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
 
     public LoadedEconomyConfig load() {
         return load(DEFAULT_PATH);
@@ -36,7 +40,7 @@ public final class EconomyConfigLoader {
             EconomyEngineConfig config = reader.read(EconomyEngineConfig.class);
             reader.close();
             EconomyConfigValidator.validate(config);
-            return new LoadedEconomyConfig(config, yaml, sha256(yaml));
+            return new LoadedEconomyConfig(config, yaml, JSON.writeValueAsString(config), sha256(yaml));
         } catch (IOException failure) {
             throw new EconomyConfigException("Could not parse economy configuration", failure);
         }

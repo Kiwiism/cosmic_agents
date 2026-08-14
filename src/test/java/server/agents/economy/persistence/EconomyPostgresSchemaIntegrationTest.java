@@ -3,6 +3,8 @@ package server.agents.economy.persistence;
 import com.zaxxer.hikari.HikariDataSource;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import server.agents.economy.catalog.CatalogBundleLoader;
+import server.agents.economy.scenario.EconomyConfigLoader;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -28,7 +30,13 @@ class EconomyPostgresSchemaIntegrationTest {
             UUID run = UUID.randomUUID();
             try {
                 try (Connection connection = dataSource.getConnection()) {
-                    insertRun(connection, run);
+                    var loaded = new EconomyConfigLoader().load();
+                    var catalog = new CatalogBundleLoader().load(loaded.config().catalog);
+                    new JdbcSimulationRunRepository(dataSource).create(run, loaded, catalog);
+                    assertEquals(1, scalar(connection, "SELECT COUNT(*) FROM economy_config_revision "
+                            + "WHERE run_id = '" + run + "' AND revision = 0 "
+                            + "AND config_schema_version = 1 AND validation_result ->> 'valid' = 'true' "
+                            + "AND normalized_config ->> 'schemaVersion' = '1'"));
                     insertProjectionFacts(connection, run);
                 }
                 JdbcEconomyProjectionService.Result projection =
@@ -164,6 +172,10 @@ class EconomyPostgresSchemaIntegrationTest {
         }
         try (PreparedStatement statement = connection.prepareStatement(
                 "DELETE FROM economy_invariant_violation WHERE run_id = ?")) {
+            statement.setObject(1, run); statement.executeUpdate();
+        }
+        try (PreparedStatement statement = connection.prepareStatement(
+                "DELETE FROM economy_config_revision WHERE run_id = ?")) {
             statement.setObject(1, run); statement.executeUpdate();
         }
         try (PreparedStatement statement = connection.prepareStatement(

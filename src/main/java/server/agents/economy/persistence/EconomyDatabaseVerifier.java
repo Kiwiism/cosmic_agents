@@ -17,6 +17,8 @@ public final class EconomyDatabaseVerifier {
     public void verify(String expectedDatabase) {
         List<Column> required = List.of(
                 new Column("simulation_run", "config_yaml"),
+                new Column("economy_config_revision", "config_schema_version"),
+                new Column("economy_config_revision", "validation_result"),
                 new Column("economic_event", "evidence"),
                 new Column("ledger_posting", "lot_id"),
                 new Column("market_observation", "item_attributes"),
@@ -35,7 +37,7 @@ public final class EconomyDatabaseVerifier {
                 try (ResultSet result = connection.getMetaData().getColumns(
                         null, "public", column.table(), column.column())) {
                     if (!result.next()) throw new IllegalStateException("economy schema is missing "
-                        + column.table() + '.' + column.column() + "; apply V001 through V011");
+                        + column.table() + '.' + column.column() + "; apply V001 through V012");
                 }
             }
         } catch (SQLException failure) {

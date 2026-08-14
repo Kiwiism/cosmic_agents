@@ -4,13 +4,14 @@ package server.agents.economy.scenario;
 public record LoadedEconomyConfig(
         EconomyEngineConfig config,
         String rawYaml,
+        String normalizedJson,
         String sha256) {
 
     public LoadedEconomyConfig {
         if (config == null || rawYaml == null || rawYaml.isBlank()
+                || normalizedJson == null || normalizedJson.isBlank()
                 || sha256 == null || sha256.length() != 64) {
             throw new IllegalArgumentException("A loaded economy configuration requires source and hash");
         }
     }
 }
-

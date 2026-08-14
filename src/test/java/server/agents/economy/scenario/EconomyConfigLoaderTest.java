@@ -22,6 +22,8 @@ class EconomyConfigLoaderTest {
         assertEquals("REMOTE_FROM_FREE_MARKET", loaded.config().npcCommerce.accessMode);
         assertEquals("cosmic_economy", loaded.config().persistence.database);
         assertEquals(64, loaded.sha256().length());
+        assertTrue(loaded.normalizedJson().contains("\"schemaVersion\":1"));
+        assertTrue(loaded.normalizedJson().contains("\"shopPermitItemId\":5140000"));
     }
 
     @Test
