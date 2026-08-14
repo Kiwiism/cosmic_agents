@@ -3,6 +3,7 @@ package server.agents.economy.scenario;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -80,6 +81,7 @@ public final class EconomyConfigValidator {
 
         validateMarket(config.market);
         validateTax(config.tax);
+        validateSeasonal(config.seasonalRules);
         validateAmbient(config.ambient);
         validateDemand(config.demand);
         requireText(config.persistence.provider, "persistence.provider");
@@ -186,6 +188,8 @@ public final class EconomyConfigValidator {
     }
 
     private static void validateTax(EconomyEngineConfig.Tax tax) {
+        require(Set.of("COSMIC_DEFAULT", "CONFIGURED").contains(tax.policy),
+                "tax.policy must be COSMIC_DEFAULT or CONFIGURED");
         require(tax.maximumRateBasisPoints >= 0 && tax.maximumRateBasisPoints <= 10_000,
                 "maximum tax rate must be between 0 and 10000 basis points");
         require(tax.buyerRateBasisPoints >= 0
@@ -195,6 +199,44 @@ public final class EconomyConfigValidator {
                         && tax.sellerRateBasisPoints <= tax.maximumRateBasisPoints,
                 "seller tax exceeds configured bounds");
         require(tax.scheduledChanges != null, "tax.scheduledChanges is required");
+        if (!tax.enabled || "COSMIC_DEFAULT".equals(tax.policy)) {
+            require(tax.buyerRateBasisPoints == 0 && tax.sellerRateBasisPoints == 0
+                            && tax.scheduledChanges.isEmpty(),
+                    "disabled or COSMIC_DEFAULT tax cannot define simulation overrides");
+        }
+        Instant previous = null;
+        for (EconomyEngineConfig.TaxChange change : tax.scheduledChanges) {
+            require(change != null, "tax scheduled change is required");
+            Instant effective = instant(change.effectiveAt, "tax.scheduledChanges.effectiveAt");
+            require(previous == null || effective.isAfter(previous),
+                    "tax scheduled changes must be strictly chronological");
+            require(change.buyerRateBasisPoints >= 0
+                            && change.buyerRateBasisPoints <= tax.maximumRateBasisPoints,
+                    "scheduled buyer tax exceeds configured bounds");
+            require(change.sellerRateBasisPoints >= 0
+                            && change.sellerRateBasisPoints <= tax.maximumRateBasisPoints,
+                    "scheduled seller tax exceeds configured bounds");
+            previous = effective;
+        }
+    }
+
+    private static void validateSeasonal(EconomyEngineConfig.SeasonalRules seasonal) {
+        require(seasonal.overlays != null, "seasonalRules.overlays is required");
+        Set<String> ids = new HashSet<>();
+        for (EconomyEngineConfig.SeasonalOverlay overlay : seasonal.overlays) {
+            require(overlay != null, "seasonal overlay is required");
+            requireText(overlay.overlayId, "seasonal overlay id");
+            require(ids.add(overlay.overlayId), "seasonal overlay ids must be unique");
+            Instant start = instant(overlay.startsAt, "seasonal overlay startsAt");
+            Instant end = instant(overlay.endsAt, "seasonal overlay endsAt");
+            require(end.isAfter(start), "seasonal overlay end must follow start");
+            require(overlay.mobId > 0 && overlay.itemId > 0,
+                    "seasonal overlay requires exact mob and item ids");
+            require(Double.isFinite(overlay.dropRateMultiplier) && overlay.dropRateMultiplier > 0,
+                    "seasonal overlay multiplier must be positive");
+        }
+        require(!seasonal.enabled,
+                "seasonal rules cannot be enabled until exact catalog validation and resolver support ship");
     }
 
     private static void validateAmbient(EconomyEngineConfig.Ambient ambient) {
@@ -238,9 +280,13 @@ public final class EconomyConfigValidator {
     }
 
     private static void parseInstant(String value, String name) {
+        instant(value, name);
+    }
+
+    private static Instant instant(String value, String name) {
         requireText(value, name);
         try {
-            Instant.parse(value);
+            return Instant.parse(value);
         } catch (DateTimeParseException failure) {
             throw new EconomyConfigException(name + " must be an ISO-8601 instant", failure);
         }

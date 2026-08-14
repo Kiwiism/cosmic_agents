@@ -139,12 +139,27 @@ public final class EconomyEngineConfig {
         public int buyerRateBasisPoints;
         public int sellerRateBasisPoints;
         public int maximumRateBasisPoints;
-        public List<Map<String, Object>> scheduledChanges;
+        public List<TaxChange> scheduledChanges;
+    }
+
+    public static final class TaxChange {
+        public String effectiveAt;
+        public int buyerRateBasisPoints;
+        public int sellerRateBasisPoints;
     }
 
     public static final class SeasonalRules {
         public boolean enabled;
-        public List<Map<String, Object>> overlays;
+        public List<SeasonalOverlay> overlays;
+    }
+
+    public static final class SeasonalOverlay {
+        public String overlayId;
+        public String startsAt;
+        public String endsAt;
+        public int mobId;
+        public int itemId;
+        public double dropRateMultiplier;
     }
 
     public static final class Quests {
