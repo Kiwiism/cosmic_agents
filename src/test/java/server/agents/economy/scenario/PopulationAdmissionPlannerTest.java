@@ -38,4 +38,20 @@ class PopulationAdmissionPlannerTest {
                 admission.admittedAt().isAfter(start.plus(java.time.Duration.ofDays(1)))
                         && admission.admittedAt().isBefore(start.plus(java.time.Duration.ofDays(2)))).count());
     }
+
+    @Test
+    void differentSeedsProduceDifferentProfilesWithoutChangingPopulationBounds() {
+        EconomyEngineConfig config = new EconomyConfigLoader().load().config();
+        Instant start = Instant.parse(config.clock.logicalStart);
+
+        var first = new PopulationAdmissionPlanner().plan(
+                config.population, start, new NamedRandomStreams(config.scenario.seed));
+        var second = new PopulationAdmissionPlanner().plan(
+                config.population, start, new NamedRandomStreams(config.scenario.seed + 1));
+
+        assertEquals(200, first.size());
+        assertEquals(200, second.size());
+        assertNotEquals(first.stream().map(PopulationAdmissionPlanner.Admission::profile).toList(),
+                second.stream().map(PopulationAdmissionPlanner.Admission::profile).toList());
+    }
 }

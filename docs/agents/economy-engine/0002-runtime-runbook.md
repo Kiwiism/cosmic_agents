@@ -72,6 +72,9 @@ a completed price or imputing a meso price to barter.
 
 ## Deliberate fail-closed limits
 
+- `MAX_THROUGHPUT` is the only accepted clock mode in this release. `REALTIME`, `ACCELERATED`, and
+  configuration-driven `REPLAY` are rejected until they have distinct tested runtime semantics;
+  checkpoint restore remains the supported deterministic recovery path.
 - Seasonal overlays are typed but cannot be enabled until each mob-item relation is catalog-checked
   and the rule-exact resolver applies it.
 - Farm congestion remains disabled until active-map occupancy is journaled. Offscreen death is

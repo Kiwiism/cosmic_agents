@@ -107,4 +107,23 @@ class SimulationRunEngineTest {
                 event.kind().equals(SimulationRunEngine.CHECKPOINT)
                         && event.dueAt().equals(engine.now().plusSeconds(6 * 3_600L))));
     }
+
+    @Test
+    void schedulerScalesToOneThousandProfilesWithoutWallClockTicks() {
+        LoadedEconomyConfig loaded = new EconomyConfigLoader().load();
+        loaded.config().population.maximumAgents = 1_000;
+        loaded.config().population.growth.amount = 50;
+        var catalog = new CatalogBundleLoader().load(loaded.config().catalog);
+        var events = new ArrayList<ScheduledEconomyEvent>();
+        SimulationRunEngine engine = new SimulationRunEngine(UUID.randomUUID(), loaded, catalog, events::add);
+
+        var result = assertTimeout(java.time.Duration.ofSeconds(5), () -> engine.advanceDays(90));
+
+        assertEquals(1_000, events.stream().filter(event ->
+                event.kind().equals(SimulationRunEngine.ADMIT_AGENT)).count());
+        assertEquals(360, events.stream().filter(event ->
+                event.kind().equals(SimulationRunEngine.CHECKPOINT)).count());
+        assertEquals(Instant.parse(loaded.config().clock.logicalStart).plusSeconds(90L * 86_400),
+                result.reachedAt());
+    }
 }

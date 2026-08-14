@@ -116,6 +116,25 @@ class EconomyConfigLoaderTest {
     }
 
     @Test
+    void rejectsClockModesThatDoNotYetHaveDistinctRuntimeSemantics() {
+        String source = javaResource("economy-engine.yaml")
+                .replace("mode: MAX_THROUGHPUT", "mode: REALTIME");
+
+        EconomyConfigException failure = assertThrows(
+                EconomyConfigException.class, () -> loader.load(source));
+
+        assertTrue(failure.getMessage().contains("clock.mode"));
+    }
+
+    @Test
+    void rejectsUnknownConfigurationFields() {
+        String source = javaResource("economy-engine.yaml")
+                .replace("schemaVersion: 1", "schemaVersion: 1\nunknownMarketOracle: true");
+
+        assertThrows(EconomyConfigException.class, () -> loader.load(source));
+    }
+
+    @Test
     void rejectsSyntheticScrollOutcomeRates() {
         String source = javaResource("economy-engine.yaml")
                 .replace("preserveRealSuccessAndDestructionRates: true",
