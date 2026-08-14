@@ -185,8 +185,10 @@ public final class EconomyConfigValidator {
                         && market.maximumRoomsPerTrip >= market.minimumRoomsPerTrip
                         && market.maximumRoomsPerTrip <= 22,
                 "Room scan range must be ordered within the 22 FM rooms");
-        parseDuration(market.maximumListingDuration, "market.maximumListingDuration");
-        parseDuration(market.minimumRepriceInterval, "market.minimumRepriceInterval");
+        Duration maximumListingDuration = parsePositiveDuration(
+                market.maximumListingDuration, "market.maximumListingDuration");
+        Duration minimumRepriceInterval = parseDuration(
+                market.minimumRepriceInterval, "market.minimumRepriceInterval");
         parsePositiveDuration(market.actionPoll, "market.actionPoll");
         parseDuration(market.postTripDelay, "market.postTripDelay");
         parsePositiveDuration(market.portalTimeout, "market.portalTimeout");
@@ -196,6 +198,12 @@ public final class EconomyConfigValidator {
         require(market.interactionRangePixels > 0 && market.approachRangePixels > 0,
                 "market physical ranges must be positive");
         require(market.maximumReprices >= 0, "maximumReprices must be non-negative");
+        if (market.maximumReprices > 0) {
+            require(!minimumRepriceInterval.isZero(),
+                    "minimumRepriceInterval must be positive when repricing is enabled");
+            require(minimumRepriceInterval.compareTo(maximumListingDuration) < 0,
+                    "minimumRepriceInterval must be below maximumListingDuration");
+        }
         require(Double.isFinite(market.coldStartNpcMarkupMinimum)
                         && Double.isFinite(market.coldStartNpcMarkupMaximum)
                         && market.coldStartNpcMarkupMinimum >= 0
@@ -311,18 +319,21 @@ public final class EconomyConfigValidator {
         }
     }
 
-    private static void parseDuration(String value, String name) {
+    private static Duration parseDuration(String value, String name) {
         requireText(value, name);
         try {
-            require(!Duration.parse(value).isNegative(), name + " cannot be negative");
+            Duration duration = Duration.parse(value);
+            require(!duration.isNegative(), name + " cannot be negative");
+            return duration;
         } catch (DateTimeParseException failure) {
             throw new EconomyConfigException(name + " must be an ISO-8601 duration", failure);
         }
     }
 
-    private static void parsePositiveDuration(String value, String name) {
-        parseDuration(value, name);
-        require(!Duration.parse(value).isZero(), name + " must be positive");
+    private static Duration parsePositiveDuration(String value, String name) {
+        Duration duration = parseDuration(value, name);
+        require(!duration.isZero(), name + " must be positive");
+        return duration;
     }
 
     private static void requireText(String value, String name) {

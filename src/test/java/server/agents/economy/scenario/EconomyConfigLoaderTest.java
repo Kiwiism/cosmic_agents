@@ -79,6 +79,17 @@ class EconomyConfigLoaderTest {
         assertTrue(failure.getMessage().contains("bootstrap.holdingsMode"));
     }
 
+    @Test
+    void rejectsRepricingWithoutARealObservationWindow() {
+        String source = javaResource("economy-engine.yaml")
+                .replace("minimumRepriceInterval: PT30M", "minimumRepriceInterval: PT0S");
+
+        EconomyConfigException failure = assertThrows(
+                EconomyConfigException.class, () -> loader.load(source));
+
+        assertTrue(failure.getMessage().contains("minimumRepriceInterval"));
+    }
+
     private static String javaResource(String path) {
         try {
             return java.nio.file.Files.readString(Path.of(path));

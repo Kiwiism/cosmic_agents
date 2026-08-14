@@ -37,6 +37,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
     private final Duration actionPoll;
     private final Duration postTripDelay;
     private final Duration maximumStallDuration;
+    private final Duration minimumRepriceInterval;
     private final Map<String, State> states = new ConcurrentHashMap<>();
 
     public AutonomousFreeMarketBehavior(UUID runId, String configHash, String catalogVersion,
@@ -80,6 +81,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
             throw new IllegalArgumentException("market timing must be non-negative and polling positive");
         this.actionPoll = actionPoll; this.postTripDelay = postTripDelay;
         this.maximumStallDuration = maximumStallDuration;
+        this.minimumRepriceInterval = Duration.parse(config.minimumRepriceInterval);
     }
 
     @Override
@@ -168,6 +170,19 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
         if (state.phase == Phase.OWNING_STALL) {
             if (agent.getPlayerShop() == null || !agent.getPlayerShop().isOpen())
                 return finish(profile.agentId(), logicalAt);
+            Instant repriceAt = state.stallOpenedAt.plus(minimumRepriceInterval);
+            if (state.repriceCount < config.maximumReprices && !logicalAt.isBefore(repriceAt)) {
+                boolean closed = seller.close(agent, "REPRICE_RESEARCH");
+                appendDecision(profile, logicalAt, "STALL_REPRICE_RESEARCH",
+                        Map.of("closed", closed, "reprice", state.repriceCount + 1), List.of(),
+                        Map.of("requiresFreshPhysicalObservations", true),
+                        Map.of("reason", "UNSOLD_EXPOSURE"), Map.of());
+                if (closed) {
+                    state.prepareReprice(roomPlanner.plan(config.minimumRoomsPerTrip,
+                            config.maximumRoomsPerTrip, random));
+                    return revisit(logicalAt, false);
+                }
+            }
             if (logicalAt.isBefore(state.stallOpenedAt.plus(maximumStallDuration))) {
                 AmbientBehavior.Result result = ambient.perform(agent, profile, logicalAt,
                         true, false, state.consecutiveAmbientActions);
@@ -232,6 +247,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
         value.put("attemptedResourceItems", state.attemptedResourceItems.stream().sorted().toList());
         value.put("sellerPlan", state.sellerPlan == null ? Map.of() : sellerPlanMap(state.sellerPlan));
         value.put("npcSaleIndex", state.npcSaleIndex); value.put("openAttempts", state.openAttempts);
+        value.put("repriceCount", state.repriceCount);
         value.put("consecutiveAmbientActions", state.consecutiveAmbientActions);
         if (state.stallOpenedAt != null) value.put("stallOpenedAt", state.stallOpenedAt.toString());
         return value;
@@ -256,6 +272,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
         state.sellerPlan = plan == null || plan.isEmpty() ? null : sellerPlanFrom(plan);
         state.npcSaleIndex = integer(value, "npcSaleIndex");
         state.openAttempts = integer(value, "openAttempts");
+        state.repriceCount = value.containsKey("repriceCount") ? integer(value, "repriceCount") : 0;
         state.consecutiveAmbientActions = value.containsKey("consecutiveAmbientActions")
                 ? integer(value, "consecutiveAmbientActions") : 0;
         if (value.containsKey("stallOpenedAt")) state.stallOpenedAt = Instant.parse(text(value, "stallOpenedAt"));
@@ -415,16 +432,27 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
     private enum Phase { PROCURING, BROWSING, DISPOSING, OPENING_STALL, OWNING_STALL }
     private static final class State {
         private final PrivateMarketKnowledge knowledge;
-        private final PhysicalMarketTrip trip;
+        private PhysicalMarketTrip trip;
         private Phase phase = Phase.PROCURING;
         private final Set<Integer> attemptedResourceItems = new HashSet<>();
         private MarketSellerPlan sellerPlan;
         private int npcSaleIndex;
         private int openAttempts;
+        private int repriceCount;
         private int consecutiveAmbientActions;
         private Instant stallOpenedAt;
         private State(PrivateMarketKnowledge knowledge, PhysicalMarketTrip trip) {
             this.knowledge = knowledge; this.trip = trip;
+        }
+        private void prepareReprice(List<Integer> rooms) {
+            phase = Phase.BROWSING;
+            trip = new PhysicalMarketTrip(rooms);
+            sellerPlan = null;
+            npcSaleIndex = 0;
+            openAttempts = 0;
+            consecutiveAmbientActions = 0;
+            stallOpenedAt = null;
+            repriceCount++;
         }
     }
 }
