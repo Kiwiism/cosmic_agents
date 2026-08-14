@@ -180,7 +180,14 @@ public final class EconomyEngineConfig {
         public boolean demandRequiresAcceptedQuest;
         public boolean demandRequiresRemainingObjective;
         public boolean allowTradeAcquisition;
+        public boolean allowRemoteQuestNpcFromFreeMarket;
         public boolean allowNpcAcquisitionOnlyWhenGameSupportsIt;
+        public int maximumConcurrentActive;
+        public double acceptanceProbabilityPerMarketCycle;
+        public String catalogResource;
+        public String victoriaMapCatalogResource;
+        public String selectionDisposition;
+        public String rewardSelectionPolicy;
     }
 
     public static final class Demand {

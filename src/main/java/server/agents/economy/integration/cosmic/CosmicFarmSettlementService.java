@@ -1,6 +1,7 @@
 package server.agents.economy.integration.cosmic;
 
 import client.Character;
+import client.QuestStatus;
 import client.inventory.Equip;
 import client.inventory.InventoryType;
 import client.inventory.Item;
@@ -10,7 +11,9 @@ import server.agents.economy.activity.FarmSessionOutcome;
 import server.economy.EconomyOperationKind;
 import server.economy.EconomyTransactionCoordinator;
 import tools.Randomizer;
+import tools.StringUtil;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.LongSupplier;
@@ -26,11 +29,14 @@ public final class CosmicFarmSettlementService {
                 + " exp=" + outcome.experience() + " mesos=" + outcome.mesos()
                 + " drops=" + outcome.itemDrops().size();
         EconomyTransactionCoordinator.execute("offscreen-farm:" + outcome.sessionId(), agent, null,
-                EconomyOperationKind.OFFSCREEN_FARM_SETTLEMENT, summary, context ->
-                        Randomizer.withLongSource(gameplayRandom, () -> mutate(agent, outcome)));
+                EconomyOperationKind.OFFSCREEN_FARM_SETTLEMENT, summary, context -> {
+                    Map<String, Object> questProgress = Randomizer.withLongSource(gameplayRandom,
+                            () -> mutate(agent, outcome));
+                    context.recordEvidence("questKillProgress", questProgress);
+                });
     }
 
-    private static void mutate(Character agent, FarmSessionOutcome outcome) {
+    private static Map<String, Object> mutate(Character agent, FarmSessionOutcome outcome) {
         for (var consumed : outcome.consumedItems()) {
             InventoryType type = ItemConstants.getInventoryType(consumed.itemId());
             if (agent.getInventory(type).countById(consumed.itemId()) < consumed.quantity())
@@ -51,6 +57,34 @@ public final class CosmicFarmSettlementService {
             agent.gainMeso((int) outcome.mesos(), false);
         }
         if (outcome.experience() > 0) agent.gainExp((int) outcome.experience(), false, false);
+        return advanceQuestKills(agent, outcome.killCounts());
+    }
+
+    private static Map<String, Object> advanceQuestKills(Character agent, Map<Integer, Integer> kills) {
+        Map<String, Object> evidence = new LinkedHashMap<>();
+        for (QuestStatus status : agent.getStartedQuests()) {
+            Map<Integer, Integer> applied = new LinkedHashMap<>();
+            for (Map.Entry<Integer, Integer> kill : kills.entrySet()) {
+                int required = status.getQuest().getMobAmountNeeded(kill.getKey());
+                if (required <= 0) continue;
+                int before = parseProgress(status.getProgress(kill.getKey()));
+                int after = Math.min(required, Math.addExact(before, kill.getValue()));
+                if (after <= before) continue;
+                status.setProgress(kill.getKey(), StringUtil.getLeftPaddedStr(
+                        Integer.toString(after), '0', 3));
+                applied.put(kill.getKey(), after - before);
+            }
+            if (!applied.isEmpty()) evidence.put(Short.toString(status.getQuestID()), applied);
+        }
+        return Map.copyOf(evidence);
+    }
+
+    private static int parseProgress(String progress) {
+        if (progress == null || progress.isBlank()) return 0;
+        try { return Integer.parseInt(progress); }
+        catch (NumberFormatException failure) {
+            throw new IllegalStateException("invalid Cosmic quest kill progress " + progress, failure);
+        }
     }
 
     private static Equip equipment(int itemId, Map<String, Integer> stats) {

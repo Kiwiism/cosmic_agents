@@ -11,12 +11,12 @@ public final class EconomyDurableState {
         void persist(Connection connection) throws SQLException;
     }
 
-    private final List<EconomyParticipantSnapshot> participants;
+    private final List<ParticipantState> participants;
     private final List<EconomyAtomicPersistence> additionalPersistence;
     private final EconomyMutationEvidence evidence;
     private final Persistence testPersistence;
 
-    private EconomyDurableState(List<EconomyParticipantSnapshot> participants,
+    private EconomyDurableState(List<ParticipantState> participants,
                                 List<EconomyAtomicPersistence> additionalPersistence,
                                 EconomyMutationEvidence evidence,
                                 Persistence testPersistence) {
@@ -32,7 +32,10 @@ public final class EconomyDurableState {
                                        EconomyParticipantSnapshot secondaryAfter,
                                        List<EconomyAtomicPersistence> additionalPersistence,
                                        java.util.Map<String, Object> operationEvidence) {
-        return new EconomyDurableState(secondaryAfter == null ? List.of(primaryAfter) : List.of(primaryAfter, secondaryAfter),
+        return new EconomyDurableState(secondaryAfter == null
+                ? List.of(new ParticipantState(primaryBefore, primaryAfter))
+                : List.of(new ParticipantState(primaryBefore, primaryAfter),
+                        new ParticipantState(secondaryBefore, secondaryAfter)),
                 additionalPersistence, EconomyMutationEvidence.between(primaryBefore, primaryAfter,
                 secondaryBefore, secondaryAfter, operationEvidence), null);
     }
@@ -46,8 +49,8 @@ public final class EconomyDurableState {
             testPersistence.persist(connection);
             return;
         }
-        for (EconomyParticipantSnapshot participant : participants) {
-            participant.persist(connection);
+        for (ParticipantState participant : participants) {
+            participant.after().persist(connection, participant.before());
         }
         for (EconomyAtomicPersistence persistence : additionalPersistence) {
             persistence.persist(connection);
@@ -55,4 +58,7 @@ public final class EconomyDurableState {
     }
 
     String evidenceJson() { return evidence.json(); }
+
+    private record ParticipantState(EconomyParticipantSnapshot before,
+                                    EconomyParticipantSnapshot after) { }
 }

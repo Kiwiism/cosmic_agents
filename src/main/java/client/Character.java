@@ -9380,19 +9380,31 @@ public class Character extends AbstractCharacterObject {
     /** Small complete snapshot of fields mutated by EXP/level-up settlement. */
     public record EconomyProgressionSnapshot(int level, int experience, int str, int dex, int intelligence,
                                              int luk, int hp, int mp, int maxHp, int maxMp,
-                                             int remainingAp, int[] remainingSp, long lastExpGainTime) {
+                                             int remainingAp, int[] remainingSp, long lastExpGainTime,
+                                             int fame, int questFame, Map<Integer, SkillEntry> skills) {
         public EconomyProgressionSnapshot {
             remainingSp = Arrays.copyOf(remainingSp, remainingSp.length);
+            Map<Integer, SkillEntry> copy = new LinkedHashMap<>();
+            skills.forEach((id, entry) -> copy.put(id, entry.persistenceCopy()));
+            skills = Collections.unmodifiableMap(copy);
         }
         @Override public int[] remainingSp() { return Arrays.copyOf(remainingSp, remainingSp.length); }
+        @Override public Map<Integer, SkillEntry> skills() {
+            Map<Integer, SkillEntry> copy = new LinkedHashMap<>();
+            skills.forEach((id, entry) -> copy.put(id, entry.persistenceCopy()));
+            return Collections.unmodifiableMap(copy);
+        }
     }
 
     public EconomyProgressionSnapshot captureEconomyProgression() {
         effLock.lock();
         statRlock.lock();
         try {
+            Map<Integer, SkillEntry> skillCopy = new LinkedHashMap<>();
+            skills.forEach((skill, entry) -> skillCopy.put(skill.getId(), entry.persistenceCopy()));
             return new EconomyProgressionSnapshot(level, exp.get(), str, dex, int_, luk, hp, mp,
-                    maxhp, maxmp, remainingAp, remainingSp, lastExpGainTime);
+                    maxhp, maxmp, remainingAp, remainingSp, lastExpGainTime,
+                    fame, quest_fame, skillCopy);
         } finally {
             statRlock.unlock();
             effLock.unlock();
@@ -9408,6 +9420,10 @@ public class Character extends AbstractCharacterObject {
             hp = snapshot.hp(); mp = snapshot.mp(); maxhp = snapshot.maxHp(); maxmp = snapshot.maxMp();
             remainingAp = snapshot.remainingAp(); remainingSp = snapshot.remainingSp();
             lastExpGainTime = snapshot.lastExpGainTime();
+            fame = snapshot.fame(); quest_fame = snapshot.questFame();
+            skills.clear();
+            snapshot.skills().forEach((skillId, entry) ->
+                    skills.put(SkillFactory.getSkill(skillId), entry.persistenceCopy()));
         } finally {
             statWlock.unlock();
             effLock.unlock();
@@ -9417,8 +9433,14 @@ public class Character extends AbstractCharacterObject {
 
     public void persistEconomyProgression(Connection connection, EconomyProgressionSnapshot snapshot)
             throws SQLException {
+        persistEconomyProgression(connection, snapshot, true);
+    }
+
+    public void persistEconomyProgression(Connection connection, EconomyProgressionSnapshot snapshot,
+                                           boolean persistSkills) throws SQLException {
         String sql = "UPDATE characters SET level = ?, exp = ?, str = ?, dex = ?, `int` = ?, luk = ?, "
-                + "hp = ?, mp = ?, maxhp = ?, maxmp = ?, ap = ?, sp = ?, lastExpGainTime = ? WHERE id = ?";
+                + "hp = ?, mp = ?, maxhp = ?, maxmp = ?, ap = ?, sp = ?, lastExpGainTime = ?, "
+                + "fame = ?, fquest = ? WHERE id = ?";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, snapshot.level()); statement.setInt(2, snapshot.experience());
             statement.setInt(3, snapshot.str()); statement.setInt(4, snapshot.dex());
@@ -9429,8 +9451,84 @@ public class Character extends AbstractCharacterObject {
             statement.setString(12, Arrays.stream(snapshot.remainingSp()).mapToObj(Integer::toString)
                     .collect(Collectors.joining(",")));
             statement.setTimestamp(13, new Timestamp(snapshot.lastExpGainTime()));
-            statement.setInt(14, id);
+            statement.setInt(14, snapshot.fame()); statement.setInt(15, snapshot.questFame());
+            statement.setInt(16, id);
             if (statement.executeUpdate() != 1) throw new SQLException("Economy participant no longer exists: " + id);
+        }
+        if (!persistSkills) return;
+        deleteWhereCharacterId(connection, "DELETE FROM skills WHERE characterid = ?");
+        try (PreparedStatement statement = connection.prepareStatement(
+                "INSERT INTO skills (characterid, skillid, skilllevel, masterlevel, expiration) "
+                        + "VALUES (?, ?, ?, ?, ?)")) {
+            for (Map.Entry<Integer, SkillEntry> skill : snapshot.skills().entrySet()) {
+                statement.setInt(1, id); statement.setInt(2, skill.getKey());
+                statement.setInt(3, skill.getValue().skillevel);
+                statement.setInt(4, skill.getValue().masterlevel);
+                statement.setLong(5, skill.getValue().expiration); statement.addBatch();
+            }
+            statement.executeBatch();
+        }
+    }
+
+    public record EconomyQuestSnapshot(List<QuestStatus.PersistenceSnapshot> quests) {
+        public EconomyQuestSnapshot { quests = List.copyOf(quests); }
+    }
+
+    public EconomyQuestSnapshot captureEconomyQuests() {
+        synchronized (quests) {
+            return new EconomyQuestSnapshot(quests.values().stream()
+                    .map(QuestStatus::persistenceSnapshot).toList());
+        }
+    }
+
+    public void restoreEconomyQuests(EconomyQuestSnapshot snapshot) {
+        synchronized (quests) {
+            quests.values().forEach(status -> status.setPersistenceDirtyMarker(() -> { }));
+            quests.clear();
+            for (QuestStatus.PersistenceSnapshot value : snapshot.quests()) {
+                QuestStatus status = QuestStatus.fromPersistenceSnapshot(
+                        Quest.getInstance(value.questId()), value);
+                attachQuestStatus(status);
+                quests.put(value.questId(), status);
+            }
+            questStatusSnapshot = null;
+        }
+        markPersistenceDirty(PersistenceSection.QUESTS);
+    }
+
+    public void persistEconomyQuests(Connection connection, EconomyQuestSnapshot snapshot)
+            throws SQLException {
+        deleteQuestProgressWhereCharacterId(connection, id);
+        try (PreparedStatement status = connection.prepareStatement(
+                "INSERT INTO queststatus (`queststatusid`, `characterid`, `quest`, `status`, `time`, "
+                        + "`expires`, `forfeited`, `completed`) VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?)",
+                Statement.RETURN_GENERATED_KEYS);
+             PreparedStatement progress = connection.prepareStatement(
+                     "INSERT INTO questprogress VALUES (DEFAULT, ?, ?, ?, ?)");
+             PreparedStatement medal = connection.prepareStatement(
+                     "INSERT INTO medalmaps VALUES (DEFAULT, ?, ?, ?)")) {
+            for (QuestStatus.PersistenceSnapshot quest : snapshot.quests()) {
+                if (!quest.shouldPersist()) continue;
+                status.setInt(1, id); status.setInt(2, quest.questId()); status.setInt(3, quest.status());
+                status.setInt(4, (int) (quest.completionTime() / 1000));
+                status.setLong(5, quest.expirationTime()); status.setInt(6, quest.forfeited());
+                status.setInt(7, quest.completed()); status.executeUpdate();
+                try (ResultSet keys = status.getGeneratedKeys()) {
+                    if (!keys.next()) throw new SQLException("quest status key was not generated");
+                    int statusId = keys.getInt(1);
+                    for (Map.Entry<Integer, String> entry : quest.progress().entrySet()) {
+                        progress.setInt(1, id); progress.setInt(2, statusId);
+                        progress.setInt(3, entry.getKey()); progress.setString(4, entry.getValue());
+                        progress.addBatch();
+                    }
+                    progress.executeBatch();
+                    for (Integer mapId : quest.medalMaps()) {
+                        medal.setInt(1, id); medal.setInt(2, statusId); medal.setInt(3, mapId);
+                        medal.addBatch();
+                    }
+                    medal.executeBatch();
+                }
+            }
         }
     }
 
@@ -10328,6 +10426,17 @@ public class Character extends AbstractCharacterObject {
         @Override
         public String toString() {
             return skillevel + ":" + masterlevel;
+        }
+
+        @Override
+        public boolean equals(Object value) {
+            return value instanceof SkillEntry other && skillevel == other.skillevel
+                    && masterlevel == other.masterlevel && expiration == other.expiration;
+        }
+
+        @Override
+        public int hashCode() {
+            return java.util.Objects.hash(skillevel, masterlevel, expiration);
         }
     }
 

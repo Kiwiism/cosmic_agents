@@ -93,8 +93,19 @@ public final class EconomyConfigValidator {
         validateAmbient(config.ambient);
         validateDemand(config.demand);
         require(config.quests.enabled && config.quests.demandRequiresAcceptedQuest
-                        && config.quests.demandRequiresRemainingObjective,
+                        && config.quests.demandRequiresRemainingObjective
+                        && config.quests.allowRemoteQuestNpcFromFreeMarket,
                 "quest demand must remain tied to accepted, unfinished live objectives");
+        require(config.quests.maximumConcurrentActive > 0,
+                "quests.maximumConcurrentActive must be positive");
+        require(config.quests.acceptanceProbabilityPerMarketCycle >= 0
+                        && config.quests.acceptanceProbabilityPerMarketCycle <= 1,
+                "quests.acceptanceProbabilityPerMarketCycle must be within zero and one");
+        requireText(config.quests.catalogResource, "quests.catalogResource");
+        requireText(config.quests.victoriaMapCatalogResource, "quests.victoriaMapCatalogResource");
+        requireText(config.quests.selectionDisposition, "quests.selectionDisposition");
+        require("WEARABLE_THEN_NPC_VALUE".equals(config.quests.rewardSelectionPolicy),
+                "quests.rewardSelectionPolicy must preserve the implemented exact utility policy");
         require(config.chairs.enabled && config.chairs.requireOwnedChair
                         && config.chairs.allowListing && config.chairs.allowDirectTrade,
                 "chair activity and trade must preserve real ownership and configured market access");

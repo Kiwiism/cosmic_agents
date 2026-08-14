@@ -33,6 +33,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
     private final AmbientBehavior ambient;
     private final NegotiationBehavior negotiation;
     private final ScrollBehavior scrolling;
+    private final QuestBehavior quests;
     private final ObservedPurchasePolicy purchasePolicy = new ObservedPurchasePolicy();
     private final RoomVisitPlanner roomPlanner = new RoomVisitPlanner();
     private final Duration actionPoll;
@@ -54,7 +55,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
         this(runId, configHash, catalogVersion, config, random, physical, needs,
                 (agent, profile, observations, base, at) -> base, journal, sellerPlans, seller,
                 procurement, AmbientBehavior.disabled(), NegotiationBehavior.disabled(),
-                ScrollBehavior.disabled(),
+                ScrollBehavior.disabled(), QuestBehavior.disabled(),
                 actionPoll, postTripDelay, maximumStallDuration, npcServiceDelay);
     }
 
@@ -69,6 +70,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
                                         AmbientBehavior ambient,
                                         NegotiationBehavior negotiation,
                                         ScrollBehavior scrolling,
+                                        QuestBehavior quests,
                                         Duration actionPoll, Duration postTripDelay,
                                         Duration maximumStallDuration, Duration npcServiceDelay) {
         this.runId = Objects.requireNonNull(runId); this.configHash = Objects.requireNonNull(configHash);
@@ -81,6 +83,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
         this.ambient = Objects.requireNonNull(ambient);
         this.negotiation = Objects.requireNonNull(negotiation);
         this.scrolling = Objects.requireNonNull(scrolling);
+        this.quests = Objects.requireNonNull(quests);
         if (actionPoll.isNegative() || actionPoll.isZero() || postTripDelay.isNegative()
                 || maximumStallDuration.isNegative() || maximumStallDuration.isZero())
             throw new IllegalArgumentException("market timing must be non-negative and polling positive");
@@ -97,6 +100,18 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
         State state = states.computeIfAbsent(profile.agentId(), ignored -> new State(
                 new PrivateMarketKnowledge(), new PhysicalMarketTrip(roomPlanner.plan(
                 config.minimumRoomsPerTrip, config.maximumRoomsPerTrip, random))));
+        if (!state.questEvaluated) {
+            state.questEvaluated = true;
+            QuestBehavior.Result quest = quests.advance(agent, profile, logicalAt);
+            if (quest.attempted()) {
+                appendDecision(profile, logicalAt, "QUEST_" + quest.action(),
+                        Map.of("success", quest.success(), "questId", quest.questId(),
+                                "npcId", quest.npcId(), "selection", quest.selection() == null
+                                        ? -1 : quest.selection()), List.of(), quest.evidence(),
+                        Map.of("reason", "ELIGIBLE_REAL_COSMIC_QUEST"), Map.of());
+                return revisitAfter(logicalAt, npcServiceDelay, !quest.success());
+            }
+        }
         if (state.phase == Phase.PROCURING) {
             Optional<ResourceProcurement.Result> purchase = procurement.buyNext(
                     agent, profile, state.attemptedResourceItems);
@@ -265,6 +280,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
         value.put("sellerPlan", state.sellerPlan == null ? Map.of() : sellerPlanMap(state.sellerPlan));
         value.put("npcSaleIndex", state.npcSaleIndex); value.put("openAttempts", state.openAttempts);
         value.put("repriceCount", state.repriceCount);
+        value.put("questEvaluated", state.questEvaluated);
         value.put("consecutiveAmbientActions", state.consecutiveAmbientActions);
         if (state.stallOpenedAt != null) value.put("stallOpenedAt", state.stallOpenedAt.toString());
         return value;
@@ -290,6 +306,8 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
         state.npcSaleIndex = integer(value, "npcSaleIndex");
         state.openAttempts = integer(value, "openAttempts");
         state.repriceCount = value.containsKey("repriceCount") ? integer(value, "repriceCount") : 0;
+        state.questEvaluated = value.containsKey("questEvaluated")
+                && Boolean.TRUE.equals(value.get("questEvaluated"));
         state.consecutiveAmbientActions = value.containsKey("consecutiveAmbientActions")
                 ? integer(value, "consecutiveAmbientActions") : 0;
         if (value.containsKey("stallOpenedAt")) state.stallOpenedAt = Instant.parse(text(value, "stallOpenedAt"));
@@ -438,6 +456,17 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
             public static Result none() { return new Result(false, false, 0, 0, "NONE", Map.of()); }
         }
     }
+    @FunctionalInterface public interface QuestBehavior {
+        Result advance(Character agent, EconomyAgentProfile profile, Instant logicalAt);
+        static QuestBehavior disabled() { return (agent, profile, at) -> Result.none(); }
+        record Result(boolean attempted, boolean success, String action, int questId,
+                      int npcId, Integer selection, Map<String, Object> evidence) {
+            public Result { evidence = evidence == null ? Map.of() : Map.copyOf(evidence); }
+            public static Result none() {
+                return new Result(false, false, "NONE", 0, 0, null, Map.of());
+            }
+        }
+    }
     private EconomyWorldPort.MarketDirective revisit(Instant at, boolean externalPending) {
         return revisitAfter(at, actionPoll, externalPending);
     }
@@ -468,6 +497,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
         private int npcSaleIndex;
         private int openAttempts;
         private int repriceCount;
+        private boolean questEvaluated;
         private int consecutiveAmbientActions;
         private Instant stallOpenedAt;
         private State(PrivateMarketKnowledge knowledge, PhysicalMarketTrip trip) {

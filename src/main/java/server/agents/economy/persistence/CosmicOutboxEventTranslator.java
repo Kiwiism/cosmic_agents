@@ -2,6 +2,7 @@ package server.agents.economy.persistence;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import constants.game.ExpTable;
 import server.Trade;
 import server.agents.economy.domain.*;
 
@@ -56,6 +57,8 @@ public final class CosmicOutboxEventTranslator {
                     requireSecondary(secondary), requireSecondary(secondaryDelta));
             case "OFFSCREEN_FARM_SETTLEMENT" -> farm(builder, primary, primaryDelta);
             case "SCROLL_APPLY" -> scrollApply(builder, primary, primaryDelta);
+            case "QUEST_START" -> questLifecycle(builder, primary, primaryDelta, "START");
+            case "QUEST_TURN_IN" -> questLifecycle(builder, primary, primaryDelta, "TURN_IN");
             default -> throw new EvidenceMismatchException("unsupported operation " + receipt.operationKind());
         }
         return builder.build();
@@ -251,6 +254,54 @@ public final class CosmicOutboxEventTranslator {
                         agent.account(), AssetKey.item(equipmentId), lot.quantity(), lot.lotId());
         }
         builder.kind = EconomicEventKind.SCROLL_APPLIED;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void questLifecycle(Builder builder, Participant agent, ParticipantDelta delta,
+                                String expectedAction) {
+        Object raw = builder.evidence.get("questLifecycle");
+        require(raw instanceof Map<?, ?>, "quest lifecycle evidence is missing");
+        Map<String, Object> lifecycle = (Map<String, Object>) raw;
+        int questId = number(lifecycle, "questId");
+        String action = Objects.toString(lifecycle.get("action"), "");
+        require(expectedAction.equals(action), "quest lifecycle action differs from operation");
+        String source = "QUEST:" + questId + ':' + action;
+
+        if (delta.mesoDelta() < 0) builder.transfer(agent.account(),
+                LedgerAccount.sink("QUEST_COST:" + questId), AssetKey.MESO,
+                -(long) delta.mesoDelta(), "");
+        if (delta.mesoDelta() > 0) builder.transfer(LedgerAccount.source(source),
+                agent.account(), AssetKey.MESO, delta.mesoDelta(), "");
+        for (ItemDelta item : negative(delta.itemDeltas()))
+            builder.withdrawAndTransfer(agent.account(),
+                    LedgerAccount.sink("QUEST_REQUIREMENT:" + questId), item,
+                    -(long) item.quantityDelta());
+        for (ItemDelta item : positive(delta.itemDeltas())) {
+            for (CreatedLot lot : builder.createLots("QUEST", source, item))
+                builder.transfer(LedgerAccount.source(source), agent.account(),
+                        AssetKey.item(item.itemId()), lot.quantity(), lot.lotId());
+        }
+        long experience = realizedExperience(delta);
+        if (experience > 0) builder.transfer(LedgerAccount.source(source), agent.account(),
+                new AssetKey(AssetType.EXPERIENCE, "EXP"), experience, "");
+        builder.evidence.put("realizedExperience", Long.toString(experience));
+        builder.evidence.put("levelBefore", Integer.toString(delta.levelBefore()));
+        builder.evidence.put("levelAfter", Integer.toString(delta.levelAfter()));
+        builder.kind = "START".equals(action)
+                ? EconomicEventKind.QUEST_STARTED : EconomicEventKind.QUEST_TURN_IN;
+    }
+
+    private static long realizedExperience(ParticipantDelta delta) {
+        require(delta.levelAfter() >= delta.levelBefore(), "quest action reduced level");
+        if (delta.levelAfter() == delta.levelBefore()) {
+            require(delta.experienceAfter() >= delta.experienceBefore(), "quest action reduced experience");
+            return delta.experienceAfter() - (long) delta.experienceBefore();
+        }
+        long result = ExpTable.getExpNeededForLevel(delta.levelBefore())
+                - (long) delta.experienceBefore();
+        for (int level = delta.levelBefore() + 1; level < delta.levelAfter(); level++)
+            result = Math.addExact(result, ExpTable.getExpNeededForLevel(level));
+        return Math.addExact(result, delta.experienceAfter());
     }
 
     private static int number(Map<String, Object> values, String key) {

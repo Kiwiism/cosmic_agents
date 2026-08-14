@@ -63,8 +63,16 @@ a completed price or imputing a meso price to barter.
   exact NPC opportunity cost and configured seller markup.
 - Humans can later transact through normal Cosmic PlayerShop/Trade validation. They are not marked
   as agents, do not receive agent-only tax metadata, and are absent from the default scenario.
-- Quest demand currently requires a quest already accepted in live Cosmic state. Autonomous logical
-  quest acceptance and exact turn-in rewards are not inferred or generated.
+- Quest acceptance and turn-in use Cosmic's authoritative Quest.wz requirements/actions under the
+  logical clock and a named RNG stream. The reviewed Victoria policy catalog is extended at runtime
+  only with WZ quests whose NPCs and objective sources are proven on generated Victoria maps.
+  Timed, scripted, field-entry, buff, pet, reactor-only, and otherwise unsupported state remains
+  fail-closed. One quest action is considered per physical market cycle and concurrent acceptance is
+  YAML-bounded, preventing synchronized mass acceptance.
+- Farm settlement advances actual Cosmic kill counters from calibrated kill evidence. Quest costs,
+  item rewards, mesos, realized EXP across level boundaries, selection, NPC, and input/output lots
+  are committed through the same outbox transaction as quest status, fame, skill, inventory, and
+  progression persistence.
 - Owned scroll projects use the same authoritative Cosmic mutation as player packets. The transaction
   consumes the real scroll, applies success/failure/curse with a named deterministic RNG stream, and
   records the input equipment lot and transformed or destroyed result in the economy outbox.

@@ -8,5 +8,7 @@ public enum EconomyOperationKind {
     PLAYER_SHOP_SALE,
     PLAYER_TRADE,
     OFFSCREEN_FARM_SETTLEMENT,
-    SCROLL_APPLY
+    SCROLL_APPLY,
+    QUEST_START,
+    QUEST_TURN_IN
 }

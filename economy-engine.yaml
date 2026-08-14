@@ -145,7 +145,14 @@ quests:
   demandRequiresAcceptedQuest: true
   demandRequiresRemainingObjective: true
   allowTradeAcquisition: true
+  allowRemoteQuestNpcFromFreeMarket: true
   allowNpcAcquisitionOnlyWhenGameSupportsIt: true
+  maximumConcurrentActive: 8
+  acceptanceProbabilityPerMarketCycle: 0.45
+  catalogResource: /agents/catalogs/adaptive/victoria-quest-facts.json
+  victoriaMapCatalogResource: /agents/catalogs/adaptive/victoria-map-facts.json
+  selectionDisposition: eligible-now
+  rewardSelectionPolicy: WEARABLE_THEN_NPC_VALUE
 
 demand:
   questMaximumWalletFraction: 0.35

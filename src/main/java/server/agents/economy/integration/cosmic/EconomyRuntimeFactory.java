@@ -66,6 +66,7 @@ public final class EconomyRuntimeFactory {
                 evidenceJournal, sellerPlans, seller, new CosmicNpcResourceProcurement(needReader, npc),
                 config.ambient.enabled ? ambient : AutonomousFreeMarketBehavior.AmbientBehavior.disabled(),
                 negotiation, new CosmicScrollProjectService(runId, marketRandom),
+                new CosmicQuestLifecycleService(runId, config.quests, marketRandom, catalog, npcLocations),
                 duration(config.market.actionPoll), duration(config.market.postTripDelay),
                 duration(config.market.maximumListingDuration), duration(config.npcCommerce.logicalServiceDelay));
         CalibratedCosmicActivityPlanner activity = new CalibratedCosmicActivityPlanner(config.activity,

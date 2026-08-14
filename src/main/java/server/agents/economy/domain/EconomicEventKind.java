@@ -12,6 +12,7 @@ public enum EconomicEventKind {
     STALL_SALE,
     DIRECT_TRADE,
     TAX_PAID,
+    QUEST_STARTED,
     QUEST_TURN_IN,
     SCROLL_APPLIED,
     ITEM_DESTROYED,

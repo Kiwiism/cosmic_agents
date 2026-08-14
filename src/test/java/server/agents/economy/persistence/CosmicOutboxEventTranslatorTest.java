@@ -122,6 +122,34 @@ class CosmicOutboxEventTranslatorTest {
                         && posting.quantity() == 1));
     }
 
+    @Test
+    void questTurnInConsumesRequirementsAndCreatesExactRewards() {
+        CosmicOutboxEventTranslator translator = translator((run, account, item, fingerprint, quantity) ->
+                List.of(new CosmicOutboxEventTranslator.LotSlice(fingerprint + ":lot", quantity)));
+        var delta = new CosmicOutboxEventTranslator.ParticipantDelta(10, 1_000, 2_000, 1_000,
+                25, 25, 100, 450, List.of(
+                item(4000031, "ETC", "dolls", 100, 0),
+                item(1102053, "EQUIP", "ragged-cape", 0, 1)));
+        CosmicOutboxRecord receipt = receipt("QUEST_TURN_IN", null, "quest=2050 npc=1032102",
+                payloadWithEvidence(Map.of("questLifecycle", Map.of(
+                        "questId", 2050, "action", "TURN_IN", "npcId", 1032102,
+                        "selection", -1, "rngStream", "agent.agent-10.quest",
+                        "catalog", "victoria:test")), delta));
+
+        CosmicOutboxEventTranslator.IngestionPlan plan = translator.translate(receipt);
+
+        assertEquals(EconomicEventKind.QUEST_TURN_IN, plan.event().kind());
+        assertEquals("350", plan.event().evidence().get("realizedExperience"));
+        assertEquals("QUEST", plan.createdLots().getFirst().sourceKind());
+        assertEquals(0, balance(plan.event(), AssetKey.MESO));
+        assertEquals(0, balance(plan.event(), AssetKey.item(4000031)));
+        assertEquals(0, balance(plan.event(), AssetKey.item(1102053)));
+        assertEquals(0, balance(plan.event(), new AssetKey(AssetType.EXPERIENCE, "EXP")));
+        assertTrue(plan.event().postings().stream().anyMatch(posting ->
+                posting.account().equals(LedgerAccount.sink("QUEST_REQUIREMENT:2050"))
+                        && posting.quantity() == 100));
+    }
+
     private static CosmicOutboxEventTranslator translator(CosmicOutboxEventTranslator.LotResolver lots) {
         return new CosmicOutboxEventTranslator((run, character, agent) -> {
             String id = agent ? "agent-" + character : "character-" + character;

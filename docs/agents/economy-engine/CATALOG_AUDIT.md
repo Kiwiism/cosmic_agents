@@ -15,7 +15,12 @@ They are intentionally inaccessible to remote simulation commerce. This is prefe
 a fictional map. `RemoteNpcCommerceService` fails closed whenever source-map evidence is absent.
 
 Accepted quest demand reads remaining item requirements from the live `Quest.wz` objects rather
-than the inherited level-25 adaptive subset. Activity map selection uses the generated Victoria
+than the inherited level-25 adaptive subset. Autonomous starts merge the reviewed generated policy
+with capability-safe quests discovered from the complete live WZ: both NPCs must have generated
+Victoria placement, kill targets must exist in Victoria map facts, and required items must have a
+matching ordinary or quest-scoped Victoria mob source. The local WZ audit confirms Cursed Doll
+quests 2024-2028 consume item 4000031 in exact 100/200/400/600/1000 waves.
+Activity map selection uses the generated Victoria
 map/spawn catalog, but economic production requires a matching real-session calibration for the
 exact agent build, job family, nearby level, and map. Missing calibration is a run-stopping input
 error, not an invitation to estimate kills.
