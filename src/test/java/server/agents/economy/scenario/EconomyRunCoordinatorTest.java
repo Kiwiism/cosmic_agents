@@ -104,7 +104,8 @@ class EconomyRunCoordinatorTest {
 
     private static final class StubCatalog implements EconomyCatalog {
         public String version() { return "test"; }
-        public Optional<ItemFact> item(int itemId) { return Optional.empty(); }
+        public Optional<ItemFact> item(int itemId) { return Optional.of(new ItemFact(itemId, "drop", 1,
+                null, 100, Set.of(ItemCategory.OTHER), Map.of())); }
         public List<MonsterDropFact> monsterDrops(int monsterId) {
             return List.of(new MonsterDropFact(monsterId, 4000000, 1_000_000, 1, 1, 0));
         }

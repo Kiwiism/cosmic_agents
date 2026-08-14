@@ -31,5 +31,13 @@ public record FarmSessionOutcome(
     }
 
     public record ItemDrop(String lotId, int monsterId, int killOrdinal, int itemId,
-                           int quantity, int questId, int baseChance, int effectiveChance) { }
+                           int quantity, int questId, int baseChance, int effectiveChance,
+                           Map<String, Integer> equipmentStats) {
+        public ItemDrop(String lotId, int monsterId, int killOrdinal, int itemId,
+                        int quantity, int questId, int baseChance, int effectiveChance) {
+            this(lotId, monsterId, killOrdinal, itemId, quantity, questId, baseChance,
+                    effectiveChance, Map.of());
+        }
+        public ItemDrop { equipmentStats = Map.copyOf(equipmentStats); }
+    }
 }

@@ -35,9 +35,40 @@ class RuleExactFarmResolverTest {
         assertEquals(1, outcome.consumedItems().getFirst().quantity());
     }
 
-    private record StubCatalog(List<MonsterDropFact> drops) implements EconomyCatalog {
+    @Test
+    void appliesRealGlobalRowsWithoutLocalDropMultiplierAndSeparatesEquipmentInstances() {
+        EconomyCatalog catalog = new StubCatalog(List.of(
+                new MonsterDropFact(100100, 1002000, 1_000_000, 2, 2, 0))) {
+            @Override public Optional<ItemFact> item(int itemId) {
+                return Optional.of(new ItemFact(itemId, "equip", 1, 1, 1,
+                        Set.of(ItemCategory.EQUIPMENT), Map.of()));
+            }
+            @Override public List<GlobalDropFact> globalDrops(int mapId) {
+                return List.of(new GlobalDropFact(1002001, 1_000_000, 1, 1, 1, 0));
+            }
+            @Override public Optional<EquipmentRollFact> rollEquipment(
+                    int itemId, java.util.function.DoubleSupplier random) {
+                return Optional.of(new EquipmentRollFact(itemId, Map.of("DEX", 2)));
+            }
+        };
+        FarmSessionPlan plan = new FarmSessionPlan("farm-2", "agent-1", 100000000,
+                Instant.EPOCH, Duration.ofMinutes(1), 3,
+                List.of(new FarmSessionPlan.MonsterWork(100100, 1, 3)), Set.of(), List.of());
+
+        FarmSessionOutcome outcome = new RuleExactFarmResolver(catalog)
+                .resolve(plan, new NamedRandomStreams(9));
+
+        assertEquals(3, outcome.itemDrops().size());
+        assertEquals(2, outcome.itemDrops().stream().filter(drop -> drop.itemId() == 1002000).count());
+        assertTrue(outcome.itemDrops().stream().allMatch(drop -> drop.quantity() == 1));
+    }
+
+    private static class StubCatalog implements EconomyCatalog {
+        private final List<MonsterDropFact> drops;
+        private StubCatalog(List<MonsterDropFact> drops) { this.drops = drops; }
         public String version() { return "test"; }
-        public Optional<ItemFact> item(int itemId) { return Optional.empty(); }
+        public Optional<ItemFact> item(int itemId) { return itemId <= 0 ? Optional.empty() : Optional.of(
+                new ItemFact(itemId, "item", 1, null, 100, Set.of(ItemCategory.OTHER), Map.of())); }
         public List<MonsterDropFact> monsterDrops(int monsterId) { return drops; }
         public Optional<NpcShopFact> npcShop(int npcId) { return Optional.empty(); }
     }

@@ -72,6 +72,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.DoubleSupplier;
 
 /**
  * @author Matze
@@ -1168,11 +1169,15 @@ public class ItemInformationProvider {
     }
 
     private static short getRandStat(short defaultValue, int maxRange) {
+        return getRandStat(defaultValue, maxRange, Randomizer::nextDouble);
+    }
+
+    private static short getRandStat(short defaultValue, int maxRange, DoubleSupplier random) {
         if (defaultValue == 0) {
             return 0;
         }
         int lMaxRange = (int) Math.min(Math.ceil(defaultValue * 0.1), maxRange);
-        return (short) ((defaultValue - lMaxRange) + Math.floor(Randomizer.nextDouble() * (lMaxRange * 2 + 1)));
+        return (short) ((defaultValue - lMaxRange) + Math.floor(random.getAsDouble() * (lMaxRange * 2 + 1)));
     }
 
     public Equip randomizeStats(Equip equip) {
@@ -1180,22 +1185,31 @@ public class ItemInformationProvider {
     }
 
     public Equip randomizeStats(Equip equip, boolean checkGodly) {
-        equip.setStr(getRandStat(equip.getStr(), 5));
-        equip.setDex(getRandStat(equip.getDex(), 5));
-        equip.setInt(getRandStat(equip.getInt(), 5));
-        equip.setLuk(getRandStat(equip.getLuk(), 5));
-        equip.setMatk(getRandStat(equip.getMatk(), 5));
-        equip.setWatk(getRandStat(equip.getWatk(), 5));
-        equip.setAcc(getRandStat(equip.getAcc(), 5));
-        equip.setAvoid(getRandStat(equip.getAvoid(), 5));
-        equip.setJump(getRandStat(equip.getJump(), 5));
-        equip.setSpeed(getRandStat(equip.getSpeed(), 5));
-        equip.setWdef(getRandStat(equip.getWdef(), 10));
-        equip.setMdef(getRandStat(equip.getMdef(), 10));
-        equip.setHp(getRandStat(equip.getHp(), 10));
-        equip.setMp(getRandStat(equip.getMp(), 10));
-        if (checkGodly && YamlConfig.config.server.GODLY_STATS_ENABLED && ItemInformationProvider.rollSuccessChance(YamlConfig.config.server.GODLY_STATS_DROP_CHANCE)) {
-            randomizeGodlyStats(equip);
+        return randomizeStats(equip, checkGodly, Randomizer::nextDouble);
+    }
+
+    public Equip randomizeStats(Equip equip, boolean checkGodly, DoubleSupplier random) {
+        equip.setStr(getRandStat(equip.getStr(), 5, random));
+        equip.setDex(getRandStat(equip.getDex(), 5, random));
+        equip.setInt(getRandStat(equip.getInt(), 5, random));
+        equip.setLuk(getRandStat(equip.getLuk(), 5, random));
+        equip.setMatk(getRandStat(equip.getMatk(), 5, random));
+        equip.setWatk(getRandStat(equip.getWatk(), 5, random));
+        equip.setAcc(getRandStat(equip.getAcc(), 5, random));
+        equip.setAvoid(getRandStat(equip.getAvoid(), 5, random));
+        equip.setJump(getRandStat(equip.getJump(), 5, random));
+        equip.setSpeed(getRandStat(equip.getSpeed(), 5, random));
+        equip.setWdef(getRandStat(equip.getWdef(), 10, random));
+        equip.setMdef(getRandStat(equip.getMdef(), 10, random));
+        equip.setHp(getRandStat(equip.getHp(), 10, random));
+        equip.setMp(getRandStat(equip.getMp(), 10, random));
+        double chance = 1d - Math.pow(1d - YamlConfig.config.server.GODLY_STATS_DROP_CHANCE / 100d,
+                YamlConfig.config.server.SCROLL_CHANCE_ROLLS);
+        if (checkGodly && YamlConfig.config.server.GODLY_STATS_ENABLED && random.getAsDouble() < chance) {
+            randomizeGodlyStats(equip, YamlConfig.config.server.GODLY_STATS_BONUS_SCALING,
+                    YamlConfig.config.server.GODLY_STATS_MIN_BONUS,
+                    YamlConfig.config.server.GODLY_STATS_HPMP_SCALING,
+                    YamlConfig.config.server.GODLY_STATS_MIN_HPMP_BONUS, random);
         }
         return equip;
     }
@@ -1210,32 +1224,42 @@ public class ItemInformationProvider {
 
     public void randomizeGodlyStats(Equip equip, double bonusScaling, int minimumBonus,
                                     double hpMpScaling, int minimumHpMpBonus) {
+        randomizeGodlyStats(equip, bonusScaling, minimumBonus, hpMpScaling, minimumHpMpBonus,
+                Randomizer::nextDouble);
+    }
+
+    private void randomizeGodlyStats(Equip equip, double bonusScaling, int minimumBonus,
+                                     double hpMpScaling, int minimumHpMpBonus, DoubleSupplier random) {
         Map<String, Integer> stats = getEquipStats(equip.getItemId());
         short reqLevel = (short) ((stats == null || stats.get("reqLevel") == null) ? 0 : stats.get("reqLevel"));
         int maxBonus = Math.max(Math.round((float) (reqLevel * bonusScaling)), minimumBonus);
         int maxHPMPBonus = (short) Math.max((int) (reqLevel * hpMpScaling), minimumHpMpBonus);
-        equip.setStr(getRandUpgradedStat(equip.getStr(), maxBonus));
-        equip.setDex(getRandUpgradedStat(equip.getDex(), maxBonus));
-        equip.setInt(getRandUpgradedStat(equip.getInt(), maxBonus));
-        equip.setLuk(getRandUpgradedStat(equip.getLuk(), maxBonus));
-        equip.setMatk(getRandUpgradedStat(equip.getMatk(), maxBonus));
-        equip.setWatk(getRandUpgradedStat(equip.getWatk(), maxBonus));
-        equip.setAcc(getRandUpgradedStat(equip.getAcc(), maxBonus));
-        equip.setAvoid(getRandUpgradedStat(equip.getAvoid(), maxBonus));
-        equip.setJump(getRandUpgradedStat(equip.getJump(), maxBonus));
-        equip.setSpeed(getRandUpgradedStat(equip.getSpeed(), maxBonus));
-        equip.setWdef(getRandUpgradedStat(equip.getWdef(), maxBonus));
-        equip.setMdef(getRandUpgradedStat(equip.getMdef(), maxBonus));
-        equip.setHp(getRandUpgradedStat((short) (equip.getHp() + maxHPMPBonus), maxHPMPBonus));
-        equip.setMp(getRandUpgradedStat((short) (equip.getMp() + maxHPMPBonus), maxHPMPBonus));
+        equip.setStr(getRandUpgradedStat(equip.getStr(), maxBonus, random));
+        equip.setDex(getRandUpgradedStat(equip.getDex(), maxBonus, random));
+        equip.setInt(getRandUpgradedStat(equip.getInt(), maxBonus, random));
+        equip.setLuk(getRandUpgradedStat(equip.getLuk(), maxBonus, random));
+        equip.setMatk(getRandUpgradedStat(equip.getMatk(), maxBonus, random));
+        equip.setWatk(getRandUpgradedStat(equip.getWatk(), maxBonus, random));
+        equip.setAcc(getRandUpgradedStat(equip.getAcc(), maxBonus, random));
+        equip.setAvoid(getRandUpgradedStat(equip.getAvoid(), maxBonus, random));
+        equip.setJump(getRandUpgradedStat(equip.getJump(), maxBonus, random));
+        equip.setSpeed(getRandUpgradedStat(equip.getSpeed(), maxBonus, random));
+        equip.setWdef(getRandUpgradedStat(equip.getWdef(), maxBonus, random));
+        equip.setMdef(getRandUpgradedStat(equip.getMdef(), maxBonus, random));
+        equip.setHp(getRandUpgradedStat((short) (equip.getHp() + maxHPMPBonus), maxHPMPBonus, random));
+        equip.setMp(getRandUpgradedStat((short) (equip.getMp() + maxHPMPBonus), maxHPMPBonus, random));
     }
 
     private static short getRandUpgradedStat(short defaultValue, int maxRange) {
+        return getRandUpgradedStat(defaultValue, maxRange, Randomizer::nextDouble);
+    }
+
+    private static short getRandUpgradedStat(short defaultValue, int maxRange, DoubleSupplier random) {
         if (defaultValue == 0) {
             return 0;
         }
         int lMaxRange = maxRange;
-        return (short) (defaultValue + Math.floor(Randomizer.nextDouble() * (lMaxRange + 1)));
+        return (short) (defaultValue + Math.floor(random.getAsDouble() * (lMaxRange + 1)));
     }
 
     public Equip randomizeUpgradeStats(Equip equip) {
