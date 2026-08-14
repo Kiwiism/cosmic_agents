@@ -29,8 +29,14 @@ class AgentArchitectureBoundaryTest {
                 AGENTS.resolve("model"),
                 AGENTS.resolve("capabilities").resolve("contracts"),
                 AGENTS.resolve("policy").resolve("behavior"),
-                AGENTS.resolve("profiles"));
+                AGENTS.resolve("profiles"),
+                AGENTS.resolve("economy").resolve("domain"),
+                AGENTS.resolve("economy").resolve("clock"),
+                AGENTS.resolve("economy").resolve("scenario"));
         for (Path root : roots) {
+            if (!Files.exists(root)) {
+                continue;
+            }
             try (var files = Files.walk(root)) {
                 for (Path file : files.filter(path -> path.toString().endsWith(".java")).toList()) {
                     String source = Files.readString(file);

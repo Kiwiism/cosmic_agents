@@ -1,0 +1,159 @@
+schemaVersion: 1
+
+scenario:
+  id: victoria-fm-baseline
+  seed: 4815162342
+  description: Fresh one-channel Free Market economy
+  targetLogicalDays: 30
+  checkpointEveryLogicalHours: 6
+  stopOnInvariantViolation: true
+
+clock:
+  mode: MAX_THROUGHPUT
+  logicalStart: 2026-01-01T00:00:00Z
+  maximumEventsPerBatch: 5000
+
+world:
+  channelId: 1
+  freeMarketEntranceMapId: 910000000
+  firstFreeMarketRoomMapId: 910000001
+  lastFreeMarketRoomMapId: 910000022
+  activityRegions:
+    - MAPLE_ISLAND
+    - VICTORIA_ISLAND
+  allowPhysicalActivityOutsideFreeMarket: false
+
+population:
+  initialAgents: 50
+  maximumAgents: 200
+  growth:
+    type: FIXED_INTERVAL
+    amount: 10
+    everyLogicalDays: 1
+    spreadArrivalsAcrossInterval: true
+  classDistribution:
+    warrior: 0.20
+    magician: 0.20
+    bowman: 0.20
+    thief: 0.20
+    pirate: 0.20
+  activityDistribution:
+    casual: 0.30
+    regular: 0.50
+    intensive: 0.20
+  merchantParticipation:
+    willingSellerFraction: 0.65
+    dedicatedMerchantFraction: 0.10
+
+npcCommerce:
+  accessMode: REMOTE_FROM_FREE_MARKET
+  accessScope: ALL_GAME
+  preserveRealNpcStock: true
+  preserveRealPrices: true
+  preserveRealRestrictions: true
+  logicalServiceDelay: PT10S
+  recordOriginalNpcAndMap: true
+
+activity:
+  executionMode: RULE_EXACT
+  visibleWhileActive: false
+  returnThroughFreeMarketEntrance: true
+  medianSessionMinutes: 90
+  maximumSessionMinutes: 240
+  congestionAware: true
+  levelAppropriate: true
+  jobAppropriate: true
+  objectiveAware: true
+  consumeHpPotions: true
+  consumeMpPotions: true
+  consumeAmmunition: true
+  enforceInventoryCapacity: true
+  allowDeath: true
+
+market:
+  venue: PLAYER_SHOP
+  maximumStallsPerAgent: 1
+  maximumListingsPerStall: 16
+  hiredMerchantsEnabled: false
+  barterEnabled: false
+  sellerMustRemainAtStall: true
+  maximumListingDuration: PT4H
+  minimumRepriceInterval: PT30M
+  maximumReprices: 6
+  globalSearchAllowed: false
+  minimumRoomsPerTrip: 1
+  maximumRoomsPerTrip: 6
+  rememberObservedListings: true
+  useCosmicTransactions: true
+  rejectSelfTrade: true
+  detectCircularTrade: true
+
+tax:
+  enabled: true
+  policy: COSMIC_DEFAULT
+  buyerRateBasisPoints: 0
+  sellerRateBasisPoints: 0
+  maximumRateBasisPoints: 10000
+  scheduledChanges: []
+
+seasonalRules:
+  enabled: false
+  overlays: []
+
+quests:
+  enabled: true
+  demandRequiresAcceptedQuest: true
+  demandRequiresRemainingObjective: true
+  allowTradeAcquisition: true
+  allowNpcAcquisitionOnlyWhenGameSupportsIt: true
+
+scrolling:
+  enabled: true
+  requireOwnedEquipment: true
+  requireRemainingSlots: true
+  preserveRealSuccessAndDestructionRates: true
+
+chairs:
+  enabled: true
+  requireOwnedChair: true
+  allowListing: true
+  allowDirectTrade: true
+  collectionPreferenceEnabled: true
+
+ambient:
+  enabled: true
+  maximumConsecutiveActions: 4
+  immediatelyYieldToEconomicWork: true
+  modules:
+    idle:
+      enabled: true
+      weight: 30
+    walk:
+      enabled: true
+      weight: 20
+    sit:
+      enabled: true
+      weight: 15
+    browse:
+      enabled: true
+      weight: 25
+    publicChat:
+      enabled: true
+      weight: 10
+
+persistence:
+  provider: POSTGRESQL
+  database: cosmic_agent_economy
+  eventPartition: RUN_AND_LOGICAL_DAY
+  checkpointCompression: true
+  retainRawEconomicEvents: FOREVER
+  retainDecisionEvents: FOREVER
+  retainChatEvents: FOREVER
+  retainMovementDebugDays: 7
+
+humanReadiness:
+  enabled: true
+  neverAssumeCounterpartyIsAgent: true
+  enforceHumanSafeValidation: true
+  separateHumanAndAgentPriceEvidence: true
+
