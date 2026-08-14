@@ -297,4 +297,41 @@
         </createIndex>
     </changeSet>
 
+    <!-- Minimal transactional outbox. The analytical economy database remains separate. -->
+    <changeSet id="33-economy-transaction-outbox" author="Codex">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="economy_transaction_outbox"/></not>
+        </preConditions>
+        <createTable tableName="economy_transaction_outbox">
+            <column name="outbox_id" type="VARCHAR(36)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="idempotency_key" type="VARCHAR(128)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="operation_kind" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="primary_character_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="secondary_character_id" type="INT"/>
+            <column name="summary" type="VARCHAR(1024)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="published_at" type="TIMESTAMP"/>
+            <column name="delivery_attempts" type="INT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_delivery_error" type="VARCHAR(1024)"/>
+        </createTable>
+        <createIndex tableName="economy_transaction_outbox" indexName="idx_economy_outbox_pending">
+            <column name="published_at"/>
+            <column name="created_at"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>

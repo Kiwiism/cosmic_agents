@@ -82,6 +82,7 @@ public final class JdbcEconomyTransactionJournal implements EconomyTransactionJo
                 }
                 durableState.persist(connection);
                 failureInjector.afterStatePersistence();
+                appendOutbox(connection, operation);
                 transition(connection, operation, EconomyJournalStatus.COMMITTED, null);
                 connection.commit();
             } catch (SQLException failure) {
@@ -221,6 +222,25 @@ public final class JdbcEconomyTransactionJournal implements EconomyTransactionJo
             if (statement.executeUpdate() != 1) {
                 throw new EconomyTransactionException("Economy journal transition was not unique");
             }
+        }
+    }
+
+    private static void appendOutbox(Connection connection, EconomyOperation operation) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(
+                "INSERT INTO economy_transaction_outbox "
+                        + "(outbox_id, idempotency_key, operation_kind, primary_character_id, "
+                        + "secondary_character_id, summary) VALUES (?, ?, ?, ?, ?, ?)")) {
+            statement.setString(1, operation.transactionId().toString());
+            statement.setString(2, operation.idempotencyKey());
+            statement.setString(3, operation.kind().name());
+            statement.setInt(4, operation.primaryCharacterId());
+            if (operation.secondaryCharacterId() == null) {
+                statement.setNull(5, java.sql.Types.INTEGER);
+            } else {
+                statement.setInt(5, operation.secondaryCharacterId());
+            }
+            statement.setString(6, operation.summary());
+            statement.executeUpdate();
         }
     }
 

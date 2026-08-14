@@ -59,6 +59,20 @@ class JdbcEconomyTransactionJournalIntegrationTest {
                       INDEX idx_economy_journal_primary_created (primary_character_id, created_at)
                     )
                     """);
+            statement.execute("""
+                    CREATE TABLE IF NOT EXISTS economy_transaction_outbox (
+                      outbox_id VARCHAR(36) NOT NULL PRIMARY KEY,
+                      idempotency_key VARCHAR(128) NOT NULL UNIQUE,
+                      operation_kind VARCHAR(32) NOT NULL,
+                      primary_character_id INT NOT NULL,
+                      secondary_character_id INT NULL,
+                      summary VARCHAR(1024) NOT NULL,
+                      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                      published_at TIMESTAMP NULL,
+                      delivery_attempts INT NOT NULL DEFAULT 0,
+                      last_delivery_error VARCHAR(1024) NULL
+                    )
+                    """);
         }
     }
 
@@ -68,12 +82,17 @@ class JdbcEconomyTransactionJournalIntegrationTest {
             return;
         }
         try (Connection connection = open();
+             PreparedStatement outbox = connection.prepareStatement(
+                     "DELETE FROM economy_transaction_outbox WHERE outbox_id = ?");
              PreparedStatement statement = connection.prepareStatement(
                      "DELETE FROM economy_transaction_journal WHERE transaction_id = ?")) {
             for (UUID transactionId : transactionIds) {
+                outbox.setString(1, transactionId.toString());
+                outbox.addBatch();
                 statement.setString(1, transactionId.toString());
                 statement.addBatch();
             }
+            outbox.executeBatch();
             statement.executeBatch();
         }
     }
@@ -104,8 +123,24 @@ class JdbcEconomyTransactionJournalIntegrationTest {
         }
 
         assertEquals(64, countStatus("COMMITTED"));
+        assertEquals(64, countOutboxRows());
         assertEquals(EconomyPrepareResult.ALREADY_COMMITTED, journal.prepare(operations.getFirst()));
         assertEquals(64, countStatus("COMMITTED"));
+    }
+
+    private long countOutboxRows() throws Exception {
+        String placeholders = String.join(",", transactionIds.stream().map(ignored -> "?").toList());
+        try (Connection connection = open();
+             PreparedStatement statement = connection.prepareStatement(
+                     "SELECT COUNT(*) FROM economy_transaction_outbox WHERE outbox_id IN (" + placeholders + ")")) {
+            for (int i = 0; i < transactionIds.size(); i++) {
+                statement.setString(i + 1, transactionIds.get(i).toString());
+            }
+            try (ResultSet result = statement.executeQuery()) {
+                result.next();
+                return result.getLong(1);
+            }
+        }
     }
 
     @Test
