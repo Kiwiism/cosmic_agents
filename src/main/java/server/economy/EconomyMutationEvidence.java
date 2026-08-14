@@ -9,19 +9,35 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.*;
 
 /** Exact participant deltas captured at the same boundary as durable settlement. */
-public record EconomyMutationEvidence(List<ParticipantDelta> participants) {
+public record EconomyMutationEvidence(List<ParticipantDelta> participants,
+                                      Map<String, Object> operationEvidence) {
     private static final ObjectMapper JSON = new ObjectMapper();
 
-    public EconomyMutationEvidence { participants = List.copyOf(participants); }
+    public EconomyMutationEvidence {
+        participants = List.copyOf(participants);
+        operationEvidence = operationEvidence == null ? Map.of() : Map.copyOf(operationEvidence);
+    }
+
+    public EconomyMutationEvidence(List<ParticipantDelta> participants) {
+        this(participants, Map.of());
+    }
+
+    static EconomyMutationEvidence between(EconomyParticipantSnapshot primaryBefore,
+                                           EconomyParticipantSnapshot primaryAfter,
+                                           EconomyParticipantSnapshot secondaryBefore,
+                                           EconomyParticipantSnapshot secondaryAfter,
+                                           Map<String, Object> operationEvidence) {
+        List<ParticipantDelta> result = new ArrayList<>();
+        result.add(delta(primaryBefore, primaryAfter));
+        if (secondaryBefore != null) result.add(delta(secondaryBefore, secondaryAfter));
+        return new EconomyMutationEvidence(result, operationEvidence);
+    }
 
     static EconomyMutationEvidence between(EconomyParticipantSnapshot primaryBefore,
                                            EconomyParticipantSnapshot primaryAfter,
                                            EconomyParticipantSnapshot secondaryBefore,
                                            EconomyParticipantSnapshot secondaryAfter) {
-        List<ParticipantDelta> result = new ArrayList<>();
-        result.add(delta(primaryBefore, primaryAfter));
-        if (secondaryBefore != null) result.add(delta(secondaryBefore, secondaryAfter));
-        return new EconomyMutationEvidence(result);
+        return between(primaryBefore, primaryAfter, secondaryBefore, secondaryAfter, Map.of());
     }
 
     public String json() {

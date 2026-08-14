@@ -20,7 +20,7 @@ public record EconomicEvent(
         String configHash,
         String catalogVersion,
         List<String> actorIds,
-        Map<String, String> evidence,
+        Map<String, Object> evidence,
         List<LedgerPosting> postings
 ) {
     public EconomicEvent {

@@ -53,6 +53,7 @@ public final class JdbcCosmicEconomicEventIngestor {
                 insertPostings(connection, plan.event());
                 insertLots(connection, plan);
                 updateInstances(connection, plan.event());
+                materializeMarketLifecycle(connection, receipt, plan.event());
                 insertTransaction(connection, receipt, plan.event());
                 connection.commit();
                 return true;
@@ -281,9 +282,10 @@ public final class JdbcCosmicEconomicEventIngestor {
         } else if (receipt.operationKind().equals("SHOP_BUY") || receipt.operationKind().equals("SHOP_RECHARGE")) {
             buyer = event.actorIds().getFirst();
         } else if (receipt.operationKind().equals("SHOP_SELL")) seller = event.actorIds().getFirst();
+        String listingId = nestedText(event.evidence(), "marketSale", "listingId");
         String sql = "INSERT INTO economic_transaction (run_id, transaction_id, committed_event_id, "
                 + "transaction_kind, buyer_id, seller_id, item_id, quantity, gross_mesos, tax_mesos, "
-                + "human_counterparty, logical_at, evidence) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CAST(? AS jsonb))";
+                + "human_counterparty, logical_at, evidence, listing_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CAST(? AS jsonb), ?)";
         try (PreparedStatement s = connection.prepareStatement(sql)) {
             s.setObject(1, event.runId()); s.setString(2, receipt.outboxId().toString());
             s.setObject(3, event.eventId()); s.setString(4, receipt.operationKind());
@@ -291,9 +293,163 @@ public final class JdbcCosmicEconomicEventIngestor {
             setLong(s, 9, gross); s.setLong(10, tax);
             s.setBoolean(11, !receipt.primaryIsAgent() || (receipt.secondaryCharacterId() != null && !receipt.secondaryIsAgent()));
             s.setTimestamp(12, Timestamp.from(event.logicalTime()));
-            s.setString(13, JSON.writeValueAsString(event.evidence())); s.executeUpdate();
+            s.setString(13, JSON.writeValueAsString(event.evidence())); s.setString(14, listingId);
+            s.executeUpdate();
         }
     }
+
+    @SuppressWarnings("unchecked")
+    private static void materializeMarketLifecycle(Connection connection, CosmicOutboxRecord receipt,
+                                                   EconomicEvent event) throws SQLException {
+        Object opened = event.evidence().get("marketStall");
+        if (opened instanceof Map<?, ?> raw) {
+            Map<String, Object> stall = (Map<String, Object>) raw;
+            insertStall(connection, event, stall);
+            insertListings(connection, event, stall);
+        }
+        Object sale = event.evidence().get("marketSale");
+        if (sale instanceof Map<?, ?> raw) updateListingSale(connection, event, (Map<String, Object>) raw);
+        Object closed = event.evidence().get("marketStallClose");
+        if (closed instanceof Map<?, ?> raw) closeStall(connection, event, (Map<String, Object>) raw);
+    }
+
+    private static void insertStall(Connection connection, EconomicEvent event, Map<String, Object> stall)
+            throws SQLException {
+        try (PreparedStatement s = connection.prepareStatement(
+                "INSERT INTO market_stall (run_id, stall_id, seller_id, room_map_id, spot_x, opened_at) "
+                        + "VALUES (?, ?, ?, ?, ?, ?)")) {
+            s.setObject(1, event.runId()); s.setString(2, text(stall, "stallId"));
+            s.setString(3, event.actorIds().getFirst()); s.setInt(4, number(stall, "roomMapId").intValue());
+            s.setInt(5, number(stall, "spotX").intValue()); s.setTimestamp(6, Timestamp.from(event.logicalTime()));
+            s.executeUpdate();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void insertListings(Connection connection, EconomicEvent event, Map<String, Object> stall)
+            throws SQLException {
+        Map<Integer, Deque<LotQuantity>> available = new HashMap<>();
+        for (LedgerPosting posting : event.postings()) {
+            if (posting.quantity() > 0 && "ESCROW".equals(posting.account().type())
+                    && posting.asset().type() == AssetType.ITEM) {
+                int itemId = Integer.parseInt(posting.asset().identifier());
+                available.computeIfAbsent(itemId, ignored -> new ArrayDeque<>())
+                        .add(new LotQuantity(posting.lotId(), posting.quantity()));
+            }
+        }
+        String listingSql = "INSERT INTO market_listing (run_id, listing_id, stall_id, seller_id, "
+                + "room_map_id, item_id, lot_id, quantity_per_bundle, bundles_initial, bundles_remaining, "
+                + "bundle_price, opened_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String lotSql = "INSERT INTO market_listing_lot (run_id, listing_id, lot_id, quantity_initial) "
+                + "VALUES (?, ?, ?, ?)";
+        try (PreparedStatement listing = connection.prepareStatement(listingSql);
+             PreparedStatement allocation = connection.prepareStatement(lotSql)) {
+            for (Map<String, Object> row : (List<Map<String, Object>>) stall.get("listings")) {
+                int itemId = number(row, "itemId").intValue();
+                long needed = Math.multiplyExact(number(row, "quantityPerBundle").longValue(),
+                        number(row, "bundles").longValue());
+                List<LotQuantity> lots = take(available.get(itemId), needed);
+                String listingId = text(row, "listingId");
+                listing.setObject(1, event.runId()); listing.setString(2, listingId);
+                listing.setString(3, text(stall, "stallId")); listing.setString(4, event.actorIds().getFirst());
+                listing.setInt(5, number(stall, "roomMapId").intValue()); listing.setInt(6, itemId);
+                listing.setString(7, lots.getFirst().lotId());
+                listing.setInt(8, number(row, "quantityPerBundle").intValue());
+                listing.setInt(9, number(row, "bundles").intValue());
+                listing.setInt(10, number(row, "bundles").intValue());
+                listing.setLong(11, number(row, "bundlePrice").longValue());
+                listing.setTimestamp(12, Timestamp.from(event.logicalTime())); listing.addBatch();
+                for (LotQuantity lot : lots) {
+                    allocation.setObject(1, event.runId()); allocation.setString(2, listingId);
+                    allocation.setString(3, lot.lotId()); allocation.setLong(4, lot.quantity());
+                    allocation.addBatch();
+                }
+            }
+            listing.executeBatch(); allocation.executeBatch();
+        }
+        if (available.values().stream().flatMap(Collection::stream).anyMatch(value -> value.quantity() != 0))
+            throw new CosmicOutboxEventTranslator.EvidenceMismatchException(
+                    "stall listing evidence does not consume all escrow postings");
+    }
+
+    private static List<LotQuantity> take(Deque<LotQuantity> available, long requested) {
+        if (available == null) throw new CosmicOutboxEventTranslator.EvidenceMismatchException(
+                "stall listing has no matching escrow posting");
+        List<LotQuantity> result = new ArrayList<>();
+        long remaining = requested;
+        while (remaining > 0 && !available.isEmpty()) {
+            LotQuantity current = available.removeFirst();
+            long quantity = Math.min(remaining, current.quantity());
+            result.add(new LotQuantity(current.lotId(), quantity)); remaining -= quantity;
+            if (current.quantity() > quantity)
+                available.addFirst(new LotQuantity(current.lotId(), current.quantity() - quantity));
+        }
+        if (remaining != 0) throw new CosmicOutboxEventTranslator.EvidenceMismatchException(
+                "stall listing quantity exceeds exact escrow postings");
+        return result;
+    }
+
+    private static void updateListingSale(Connection connection, EconomicEvent event, Map<String, Object> sale)
+            throws SQLException {
+        int purchased = number(sale, "bundlesPurchased").intValue();
+        int remaining = number(sale, "bundlesRemaining").intValue();
+        try (PreparedStatement s = connection.prepareStatement(
+                "UPDATE market_listing SET bundles_remaining = ?, closed_at = CASE WHEN ? = 0 THEN ? ELSE closed_at END, "
+                        + "close_reason = CASE WHEN ? = 0 THEN 'SOLD_OUT' ELSE close_reason END "
+                        + "WHERE run_id = ? AND listing_id = ? AND bundles_remaining = ?")) {
+            s.setInt(1, remaining); s.setInt(2, remaining); s.setTimestamp(3, Timestamp.from(event.logicalTime()));
+            s.setInt(4, remaining); s.setObject(5, event.runId()); s.setString(6, text(sale, "listingId"));
+            s.setInt(7, Math.addExact(remaining, purchased));
+            if (s.executeUpdate() != 1) throw new CosmicOutboxEventTranslator.EvidenceMismatchException(
+                    "stall sale does not match listing state");
+        }
+        try (PreparedStatement s = connection.prepareStatement(
+                "UPDATE market_stall SET closed_at = ?, close_reason = 'SOLD_OUT' WHERE run_id = ? AND stall_id = ? "
+                        + "AND closed_at IS NULL AND NOT EXISTS (SELECT 1 FROM market_listing l WHERE l.run_id = ? "
+                        + "AND l.stall_id = ? AND l.closed_at IS NULL)")) {
+            s.setTimestamp(1, Timestamp.from(event.logicalTime())); s.setObject(2, event.runId());
+            s.setString(3, text(sale, "stallId")); s.setObject(4, event.runId());
+            s.setString(5, text(sale, "stallId")); s.executeUpdate();
+        }
+    }
+
+    private static void closeStall(Connection connection, EconomicEvent event, Map<String, Object> close)
+            throws SQLException {
+        String reason = text(close, "reason");
+        try (PreparedStatement s = connection.prepareStatement(
+                "UPDATE market_listing SET closed_at = COALESCE(closed_at, ?), "
+                        + "close_reason = COALESCE(close_reason, ?) WHERE run_id = ? AND stall_id = ?")) {
+            s.setTimestamp(1, Timestamp.from(event.logicalTime())); s.setString(2, reason);
+            s.setObject(3, event.runId()); s.setString(4, text(close, "stallId")); s.executeUpdate();
+        }
+        try (PreparedStatement s = connection.prepareStatement(
+                "UPDATE market_stall SET closed_at = COALESCE(closed_at, ?), close_reason = COALESCE(close_reason, ?) "
+                        + "WHERE run_id = ? AND stall_id = ?")) {
+            s.setTimestamp(1, Timestamp.from(event.logicalTime())); s.setString(2, reason);
+            s.setObject(3, event.runId()); s.setString(4, text(close, "stallId"));
+            if (s.executeUpdate() != 1) throw new CosmicOutboxEventTranslator.EvidenceMismatchException(
+                    "stall close has no materialized stall");
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static String nestedText(Map<String, Object> evidence, String parent, String key) {
+        Object value = evidence.get(parent);
+        return value instanceof Map<?, ?> ? Objects.toString(((Map<String, Object>) value).get(key), null) : null;
+    }
+
+    private static String text(Map<String, Object> values, String key) {
+        Object value = values.get(key);
+        if (value == null) throw new CosmicOutboxEventTranslator.EvidenceMismatchException("missing " + key);
+        return value.toString();
+    }
+    private static Number number(Map<String, Object> values, String key) {
+        Object value = values.get(key);
+        if (!(value instanceof Number number)) throw new CosmicOutboxEventTranslator.EvidenceMismatchException(
+                "missing numeric " + key);
+        return number;
+    }
+    private record LotQuantity(String lotId, long quantity) { }
 
     private void quarantine(CosmicOutboxRecord receipt, RuntimeException failure) {
         String sql = "INSERT INTO economic_ingestion_failure (outbox_id, run_id, error_class, error_message, receipt) "

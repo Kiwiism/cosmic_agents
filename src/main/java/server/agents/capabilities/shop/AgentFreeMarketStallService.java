@@ -9,6 +9,7 @@ import constants.inventory.ItemConstants;
 import server.ItemInformationProvider;
 import server.ItemRestrictionPolicy;
 import server.economy.EconomyOperationKind;
+import server.economy.EconomyItemEvidence;
 import server.economy.EconomyTransactionCoordinator;
 import server.maps.PlayerShop;
 import server.maps.PlayerShopEscrowSnapshot;
@@ -20,6 +21,7 @@ import tools.PacketCreator;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -97,6 +99,10 @@ public final class AgentFreeMarketStallService {
                                 agent.getClient(), InventoryType.CASH, permitItemId, 1, true, false);
                     }
                     PlayerShopEscrowSnapshot escrow = PlayerShopEscrowSnapshot.capture(shop);
+                    context.recordEvidence("marketStall", Map.of(
+                            "stallId", shop.getEscrowId(), "roomMapId", shop.getMapId(),
+                            "spotX", shop.getPosition().x, "permitItemId", permitItemId,
+                            "description", shop.getDescription(), "listings", listingEvidence(shop)));
                     context.enlist(connection -> PlayerShopEscrowStore.persist(connection, escrow), () -> { });
                 });
 
@@ -126,6 +132,8 @@ public final class AgentFreeMarketStallService {
                     }
                     context.enlist(connection -> PlayerShopEscrowStore.delete(connection,
                             agent.getId(), escrow.escrowId()), () -> { });
+                    context.recordEvidence("marketStallClose", Map.of(
+                            "stallId", escrow.escrowId(), "reason", "RECOVER_INTERRUPTED_ESCROW"));
                 });
         return true;
     }
@@ -166,5 +174,19 @@ public final class AgentFreeMarketStallService {
                     new PlayerShopItem(sellItem, listing.bundles(), price)));
         }
         return prepared;
+    }
+
+    private static List<Map<String, Object>> listingEvidence(PlayerShop shop) {
+        List<Map<String, Object>> result = new ArrayList<>();
+        List<PlayerShopItem> items = shop.getItems();
+        for (int slot = 0; slot < items.size(); slot++) {
+            PlayerShopItem listing = items.get(slot);
+            Item item = listing.getItem();
+            result.add(Map.of("listingId", shop.getEscrowId() + ':' + slot, "slot", slot,
+                    "itemId", item.getItemId(), "quantityPerBundle", (int) item.getQuantity(),
+                    "bundles", (int) listing.getBundles(), "bundlePrice", listing.getPrice(),
+                    "fingerprint", EconomyItemEvidence.describe(item).fingerprint()));
+        }
+        return List.copyOf(result);
     }
 }

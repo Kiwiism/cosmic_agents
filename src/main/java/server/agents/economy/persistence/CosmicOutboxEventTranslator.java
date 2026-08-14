@@ -44,7 +44,7 @@ public final class CosmicOutboxEventTranslator {
         if (deltas.size() != (secondary == null ? 1 : 2))
             throw new EvidenceMismatchException("unexpected mutation participant");
 
-        Builder builder = new Builder(receipt, primary, secondary);
+        Builder builder = new Builder(receipt, primary, secondary, payload.operationEvidence());
         switch (receipt.operationKind()) {
             case "SHOP_BUY" -> npcBuy(builder, primary, primaryDelta, "NPC_STOCK");
             case "SHOP_RECHARGE" -> npcBuy(builder, primary, primaryDelta, "NPC_RECHARGE");
@@ -254,10 +254,11 @@ public final class CosmicOutboxEventTranslator {
         private final Map<String, String> summary;
         private final List<LedgerPosting> postings = new ArrayList<>();
         private final List<CreatedLot> createdLots = new ArrayList<>();
-        private final Map<String, String> evidence = new LinkedHashMap<>();
+        private final Map<String, Object> evidence = new LinkedHashMap<>();
         private EconomicEventKind kind;
 
-        private Builder(CosmicOutboxRecord receipt, Participant primary, Participant secondary) {
+        private Builder(CosmicOutboxRecord receipt, Participant primary, Participant secondary,
+                        Map<String, Object> operationEvidence) {
             this.receipt = receipt;
             this.actors = secondary == null ? List.of(primary) : List.of(primary, secondary);
             this.summary = parseSummary(receipt.summary());
@@ -266,6 +267,8 @@ public final class CosmicOutboxEventTranslator {
             if (receipt.reasonCode() != null) evidence.put("reason", receipt.reasonCode());
             if (receipt.decisionId() != null) evidence.put("decisionId", receipt.decisionId());
             if (receipt.activityId() != null) evidence.put("activityId", receipt.activityId());
+            evidence.putAll(summary);
+            if (operationEvidence != null) evidence.putAll(operationEvidence);
         }
 
         private String required(String key) {
@@ -377,8 +380,13 @@ public final class CosmicOutboxEventTranslator {
         public FarmDrop { attributes = Map.copyOf(attributes); }
     }
     public record FarmConsumption(int itemId, int quantity) { }
-    public record MutationPayload(List<ParticipantDelta> participants) {
-        public MutationPayload { participants = List.copyOf(participants); }
+    public record MutationPayload(List<ParticipantDelta> participants,
+                                  Map<String, Object> operationEvidence) {
+        public MutationPayload {
+            participants = List.copyOf(participants);
+            operationEvidence = operationEvidence == null ? Map.of() : Map.copyOf(operationEvidence);
+        }
+        public MutationPayload(List<ParticipantDelta> participants) { this(participants, Map.of()); }
     }
     public record ParticipantDelta(int characterId, int mesoBefore, int mesoAfter, int mesoDelta,
                                    int levelBefore, int levelAfter, int experienceBefore,

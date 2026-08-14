@@ -5896,6 +5896,10 @@ public class Character extends AbstractCharacterObject {
     }
 
     public void closePlayerShop() {
+        closePlayerShop("CLIENT_CLOSED");
+    }
+
+    public void closePlayerShop(String closeReason) {
         PlayerShop mps = this.getPlayerShop();
         if (mps == null) {
             return;
@@ -5905,7 +5909,7 @@ public class Character extends AbstractCharacterObject {
             mps.setOpen(false);
             getWorldServer().unregisterPlayerShop(mps);
 
-            if (!mps.returnEscrowToOwner(this)) {
+            if (!mps.returnEscrowToOwner(this, closeReason)) {
                 for (PlayerShopItem mpsi : mps.getItems()) {
                     if (mpsi.getBundles() >= 2) {
                         Item iItem = mpsi.getItem().copy();

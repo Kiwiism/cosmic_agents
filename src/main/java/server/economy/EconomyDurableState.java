@@ -30,10 +30,11 @@ public final class EconomyDurableState {
                                        EconomyParticipantSnapshot primaryAfter,
                                        EconomyParticipantSnapshot secondaryBefore,
                                        EconomyParticipantSnapshot secondaryAfter,
-                                       List<EconomyAtomicPersistence> additionalPersistence) {
+                                       List<EconomyAtomicPersistence> additionalPersistence,
+                                       java.util.Map<String, Object> operationEvidence) {
         return new EconomyDurableState(secondaryAfter == null ? List.of(primaryAfter) : List.of(primaryAfter, secondaryAfter),
                 additionalPersistence, EconomyMutationEvidence.between(primaryBefore, primaryAfter,
-                secondaryBefore, secondaryAfter), null);
+                secondaryBefore, secondaryAfter, operationEvidence), null);
     }
 
     static EconomyDurableState forTesting(Persistence persistence) {

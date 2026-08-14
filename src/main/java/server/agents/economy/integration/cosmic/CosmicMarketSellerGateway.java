@@ -45,9 +45,9 @@ public final class CosmicMarketSellerGateway {
                 : FreeMarketPhysicalGateway.ActionStatus.IN_PROGRESS;
     }
 
-    public boolean close(Character agent) {
+    public boolean close(Character agent, String reason) {
         if (agent.getPlayerShop() == null || !agent.getPlayerShop().isOwner(agent)) return false;
-        agent.closePlayerShop();
+        agent.closePlayerShop(reason);
         FreeMarketStorePlacementService.release(agent);
         return agent.getPlayerShop() == null;
     }

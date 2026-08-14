@@ -322,6 +322,12 @@ public class PlayerShop extends AbstractMapObject {
                                         owner.gainMeso(sellerProceeds, true);
                                         pItem.setBundles((short) (pItem.getBundles() - quantity));
                                         if (pItem.getBundles() < 1) pItem.setDoesExist(false);
+                                        context.recordEvidence("marketSale", Map.of(
+                                                "stallId", escrowId == null ? "legacy:" + getObjectId() : escrowId,
+                                                "listingId", (escrowId == null ? "legacy:" + getObjectId() : escrowId)
+                                                        + ':' + item,
+                                                "listingSlot", item, "bundlesPurchased", (int) quantity,
+                                                "bundlesRemaining", (int) pItem.getBundles()));
                                         if (escrowId != null) {
                                             PlayerShopEscrowSnapshot escrow = PlayerShopEscrowSnapshot.capture(this);
                                             context.enlist(connection -> PlayerShopEscrowStore.persist(connection, escrow),
@@ -628,7 +634,12 @@ public class PlayerShop extends AbstractMapObject {
 
     /** Atomically restores all unsold escrow to the owner and clears its durable row. */
     public boolean returnEscrowToOwner(Character chr) {
+        return returnEscrowToOwner(chr, "OWNER_CLOSED");
+    }
+
+    public boolean returnEscrowToOwner(Character chr, String closeReason) {
         if (escrowId == null || !isOwner(chr)) return false;
+        String reason = closeReason == null || closeReason.isBlank() ? "OWNER_CLOSED" : closeReason;
         synchronized (items) {
             List<PlayerShopItem> remaining = items.stream()
                     .filter(item -> item.isExist() && item.getBundles() > 0).toList();
@@ -653,6 +664,8 @@ public class PlayerShop extends AbstractMapObject {
                                         remaining.get(index).setDoesExist(true);
                                     }
                                 });
+                        context.recordEvidence("marketStallClose", Map.of(
+                                "stallId", escrowId, "reason", reason));
                     });
             return true;
         }

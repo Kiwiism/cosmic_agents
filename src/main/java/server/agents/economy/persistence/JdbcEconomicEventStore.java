@@ -122,7 +122,7 @@ public final class JdbcEconomicEventStore implements EconomicEventStore {
             }
         }
         List<String> actors = JSON.readValue(row.getString("actor_ids"), List.class);
-        Map<String, String> evidence = JSON.readValue(row.getString("evidence"), Map.class);
+        Map<String, Object> evidence = JSON.readValue(row.getString("evidence"), Map.class);
         return new EconomicEvent(eventId, row.getObject("run_id", UUID.class),
                 row.getTimestamp("logical_time").toInstant(),
                 EconomicEventKind.valueOf(row.getString("event_kind")),

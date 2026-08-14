@@ -15,6 +15,7 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.LongSupplier;
 
@@ -146,6 +147,15 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort {
             offscreen.add(id);
         }
         market.restoreState((Map<String, Object>) state.get("market"));
+    }
+
+    @Override
+    public Optional<Presence> currentPresence(EconomyAgentProfile profile) {
+        Character agent = bindings.get(profile.agentId());
+        if (agent == null) return Optional.empty();
+        java.awt.Point position = agent.getPosition();
+        return Optional.of(new Presence(agent.getMapId(), position.x, position.y,
+                !offscreen.contains(profile.agentId())));
     }
 
     private Character bound(String id) {

@@ -46,7 +46,7 @@ public final class EconomicEventFactory {
         outcome.consumedItems().forEach(consumed -> transfer(postings, agent,
                 LedgerAccount.sink("FARM_CONSUMPTION"), AssetKey.item(consumed.itemId()),
                 consumed.quantity(), consumed.lotId()));
-        Map<String, String> evidence = new LinkedHashMap<>();
+        Map<String, Object> evidence = new LinkedHashMap<>();
         evidence.put("mapId", Integer.toString(outcome.mapId()));
         evidence.put("calibrationId", outcome.calibrationId());
         evidence.put("kills", outcome.killCounts().toString());
@@ -116,13 +116,13 @@ public final class EconomicEventFactory {
     }
 
     private EconomicEvent event(String key, Instant time, EconomicEventKind kind, List<String> actors,
-                                Map<String, String> evidence, List<LedgerPosting> postings) {
+                                Map<String, Object> evidence, List<LedgerPosting> postings) {
         UUID eventId = UUID.nameUUIDFromBytes((runId + ":" + key).getBytes(java.nio.charset.StandardCharsets.UTF_8));
         return new EconomicEvent(eventId, runId, time, kind, key, "", key, configHash,
                 catalogVersion, actors, evidence, postings);
     }
 
-    private static Map<String, String> reasonEvidence(EconomicReason reason, int npcId, int sourceMapId,
+    private static Map<String, Object> reasonEvidence(EconomicReason reason, int npcId, int sourceMapId,
                                                        int itemId, int quantity, long mesos) {
         return Map.of("reason", reason.name(), "npcId", Integer.toString(npcId),
                 "sourceMapId", Integer.toString(sourceMapId), "itemId", Integer.toString(itemId),

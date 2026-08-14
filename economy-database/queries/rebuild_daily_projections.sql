@@ -11,12 +11,16 @@ SELECT e.run_id, e.logical_time::date, p.asset_identifier::integer,
                  AND p.account_type = 'AGENT' AND p.quantity > 0 THEN p.quantity ELSE 0 END),
        COUNT(DISTINCT e.event_id) FILTER (WHERE e.event_kind IN ('STALL_SALE','DIRECT_TRADE')),
        SUM(CASE WHEN e.event_kind IN ('STALL_SALE','DIRECT_TRADE')
-                THEN COALESCE((e.evidence->>'grossMesos')::bigint, 0) ELSE 0 END),
-       AVG((e.evidence->>'grossMesos')::numeric / NULLIF((e.evidence->>'quantity')::numeric, 0))
+                THEN COALESCE((e.evidence->>'grossMesos')::bigint,
+                              (e.evidence->>'gross')::bigint, 0) ELSE 0 END),
+       AVG(COALESCE((e.evidence->>'grossMesos')::numeric, (e.evidence->>'gross')::numeric)
+               / NULLIF((e.evidence->>'quantity')::numeric, 0))
            FILTER (WHERE e.event_kind IN ('STALL_SALE','DIRECT_TRADE')),
-       MIN(((e.evidence->>'grossMesos')::bigint / NULLIF((e.evidence->>'quantity')::bigint, 0)))
+       MIN((COALESCE((e.evidence->>'grossMesos')::bigint, (e.evidence->>'gross')::bigint)
+               / NULLIF((e.evidence->>'quantity')::bigint, 0)))
            FILTER (WHERE e.event_kind IN ('STALL_SALE','DIRECT_TRADE')),
-       MAX(((e.evidence->>'grossMesos')::bigint / NULLIF((e.evidence->>'quantity')::bigint, 0)))
+       MAX((COALESCE((e.evidence->>'grossMesos')::bigint, (e.evidence->>'gross')::bigint)
+               / NULLIF((e.evidence->>'quantity')::bigint, 0)))
            FILTER (WHERE e.event_kind IN ('STALL_SALE','DIRECT_TRADE')),
        SUM(CASE WHEN e.event_kind = 'NPC_PURCHASE' AND p.account_type = 'AGENT' AND p.quantity > 0
                 THEN p.quantity ELSE 0 END),

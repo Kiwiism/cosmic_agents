@@ -26,10 +26,13 @@ class EconomyMutationEvidenceTest {
         use.getItem((short) 1).setQuantity((short) 7);
         EconomyParticipantSnapshot after = EconomyParticipantSnapshot.capture(agent);
 
-        EconomyMutationEvidence evidence = EconomyMutationEvidence.between(before, after, null, null);
+        EconomyMutationEvidence evidence = EconomyMutationEvidence.between(before, after, null, null,
+                java.util.Map.of("marketSale", java.util.Map.of("listingId", "stall:0")));
 
         assertEquals(-150, evidence.participants().getFirst().mesoDelta());
         assertEquals(-3, evidence.participants().getFirst().itemDeltas().getFirst().quantityDelta());
         assertTrue(evidence.json().contains("\"itemId\":2000000"));
+        assertEquals(java.util.Map.of("listingId", "stall:0"),
+                evidence.operationEvidence().get("marketSale"));
     }
 }

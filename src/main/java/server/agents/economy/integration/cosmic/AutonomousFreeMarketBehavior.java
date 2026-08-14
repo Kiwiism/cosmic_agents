@@ -140,7 +140,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
                 return new EconomyWorldPort.MarketDirective(Optional.empty(),
                         Optional.of(state.stallOpenedAt.plus(maximumStallDuration)), false);
             }
-            boolean closed = seller.close(agent);
+            boolean closed = seller.close(agent, "MAXIMUM_LISTING_DURATION");
             appendDecision(profile, logicalAt, "STALL_CLOSED", Map.of("closed", closed),
                     List.of(), Map.of(), Map.of("reason", "MAXIMUM_LISTING_DURATION"), Map.of());
             if (closed) return finish(profile.agentId(), logicalAt);

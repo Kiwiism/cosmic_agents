@@ -86,6 +86,26 @@ public final class JdbcEconomyLifecycleJournal implements EconomyLifecycleJourna
         }, "Could not journal lifecycle state");
     }
 
+    @Override
+    public void presence(UUID runId, String agentId, server.agents.economy.scenario.EconomyWorldPort.Presence presence,
+                         String reason, Instant logicalAt) {
+        String raw = runId + ":" + agentId + ':' + logicalAt + ':' + reason + ':'
+                + presence.mapId() + ':' + presence.x() + ':' + presence.y() + ':' + presence.visible();
+        UUID id = UUID.nameUUIDFromBytes(raw.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        String sql = "INSERT INTO agent_presence_event (presence_id, run_id, agent_id, logical_at, map_id, "
+                + "x, y, visible, reason) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT DO NOTHING";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setObject(1, id); statement.setObject(2, runId); statement.setString(3, agentId);
+            statement.setTimestamp(4, Timestamp.from(logicalAt)); statement.setInt(5, presence.mapId());
+            statement.setInt(6, presence.x()); statement.setInt(7, presence.y());
+            statement.setBoolean(8, presence.visible()); statement.setString(9, reason);
+            statement.executeUpdate();
+        } catch (SQLException failure) {
+            throw new EconomyPersistenceException("Could not journal agent presence", failure);
+        }
+    }
+
     private void update(String sql, Binder binder, String message) {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {

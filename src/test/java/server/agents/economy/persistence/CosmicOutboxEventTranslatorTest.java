@@ -35,11 +35,15 @@ class CosmicOutboxEventTranslatorTest {
                 List.of(new CosmicOutboxEventTranslator.LotSlice("farm-lot", quantity));
         CosmicOutboxEventTranslator translator = translator(lotResolver);
         var listing = receipt("PLAYER_SHOP_LIST", null,
-                "escrow=esc-1 map=910000001 listings=1", payload(participant(10, 1_000, 1_000,
-                        List.of(item(4000000, "ETC", "stack", 10, 0)))));
+                "escrow=esc-1 map=910000001 listings=1", payloadWithEvidence(
+                        Map.of("marketStall", Map.of("stallId", "esc-1")),
+                        participant(10, 1_000, 1_000,
+                                List.of(item(4000000, "ETC", "stack", 10, 0)))));
         var listed = translator.translate(listing).event();
         assertTrue(listed.postings().stream().anyMatch(p -> p.account().equals(LedgerAccount.escrow("esc-1"))
                 && p.quantity() == 10 && p.lotId().equals("farm-lot")));
+        assertEquals(Map.of("stallId", "esc-1"), listed.evidence().get("marketStall"));
+        assertEquals("910000001", listed.evidence().get("map"));
 
         var sale = new CosmicOutboxRecord(UUID.randomUUID(), UUID.randomUUID().toString(),
                 "PLAYER_SHOP_SALE", 20, 10,
@@ -120,6 +124,13 @@ class CosmicOutboxEventTranslatorTest {
     private static String payload(CosmicOutboxEventTranslator.ParticipantDelta... participants) {
         try { return new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(
                 new CosmicOutboxEventTranslator.MutationPayload(List.of(participants)) ); }
+        catch (com.fasterxml.jackson.core.JsonProcessingException e) { throw new AssertionError(e); }
+    }
+
+    private static String payloadWithEvidence(Map<String, Object> evidence,
+                                              CosmicOutboxEventTranslator.ParticipantDelta... participants) {
+        try { return new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(
+                new CosmicOutboxEventTranslator.MutationPayload(List.of(participants), evidence)); }
         catch (com.fasterxml.jackson.core.JsonProcessingException e) { throw new AssertionError(e); }
     }
 

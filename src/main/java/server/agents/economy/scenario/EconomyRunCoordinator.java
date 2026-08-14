@@ -54,6 +54,7 @@ public final class EconomyRunCoordinator {
         if (agents.putIfAbsent(profile.agentId(), new AgentState(profile, Status.IN_FREE_MARKET, null)) != null)
             throw new IllegalStateException("agent admitted twice: " + profile.agentId());
         world.admit(profile, event.dueAt());
+        recordPresence(profile, "ADMITTED", event.dueAt());
         journal.admitted(engine.runId(), profile, event.dueAt());
         journal.stateChanged(engine.runId(), profile.agentId(), Status.IN_FREE_MARKET, null, event.dueAt());
         engine.schedule(event.dueAt(), MARKET_CYCLE, profile.agentId(), Map.of());
@@ -62,6 +63,7 @@ public final class EconomyRunCoordinator {
     private void market(ScheduledEconomyEvent event) {
         AgentState state = require(event.subjectId(), Status.IN_FREE_MARKET);
         EconomyWorldPort.MarketDirective directive = world.performMarketCycle(state.profile, event.dueAt());
+        recordPresence(state.profile, "MARKET_CYCLE", event.dueAt());
         directive.startActivityAt().ifPresent(at -> engine.schedule(at, START_ACTIVITY,
                 event.subjectId(), Map.of()));
         directive.revisitMarketAt().ifPresent(at -> engine.schedule(at, MARKET_CYCLE,
@@ -78,6 +80,7 @@ public final class EconomyRunCoordinator {
         if ("explicit-work".equals(plan.calibrationId()))
             throw new IllegalStateException("production runs require live calibration evidence");
         world.leaveFreeMarket(state.profile, plan, event.dueAt());
+        recordPresence(state.profile, "OFFSCREEN_ACTIVITY_STARTED", event.dueAt());
         journal.activityStarted(engine.runId(), plan);
         journal.stateChanged(engine.runId(), event.subjectId(), Status.OFFSCREEN_ACTIVITY,
                 plan.sessionId(), event.dueAt());
@@ -103,6 +106,7 @@ public final class EconomyRunCoordinator {
     private void returnToMarket(ScheduledEconomyEvent event) {
         AgentState state = require(event.subjectId(), Status.RETURNING_TO_FM);
         world.returnThroughFreeMarketEntrance(state.profile, event.dueAt());
+        recordPresence(state.profile, "RETURNED_TO_FREE_MARKET", event.dueAt());
         journal.stateChanged(engine.runId(), event.subjectId(), Status.IN_FREE_MARKET, null, event.dueAt());
         agents.put(event.subjectId(), new AgentState(state.profile, Status.IN_FREE_MARKET, null));
         engine.schedule(event.dueAt(), MARKET_CYCLE, event.subjectId(), Map.of());
@@ -113,6 +117,11 @@ public final class EconomyRunCoordinator {
         if (state == null || state.status != expected)
             throw new IllegalStateException(agentId + " must be " + expected);
         return state;
+    }
+
+    private void recordPresence(EconomyAgentProfile profile, String reason, Instant at) {
+        world.currentPresence(profile).ifPresent(value ->
+                journal.presence(engine.runId(), profile.agentId(), value, reason, at));
     }
 
     private static EconomyAgentProfile profile(ScheduledEconomyEvent event) {

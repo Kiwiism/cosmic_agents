@@ -32,6 +32,10 @@ public interface EconomyWorldPort {
             throw new IllegalStateException("world adapter does not support checkpoint state");
     }
 
+    default Optional<Presence> currentPresence(EconomyAgentProfile profile) { return Optional.empty(); }
+
+    record Presence(int mapId, int x, int y, boolean visible) { }
+
     record MarketDirective(Optional<Instant> startActivityAt, Optional<Instant> revisitMarketAt,
                            boolean externalActionPending) {
         public MarketDirective(Optional<Instant> startActivityAt, Optional<Instant> revisitMarketAt) {
