@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Cosmic Economy Observatory</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>[hidden]{display:none!important}</style>
+</head>
+<body>
+  <header>
+    <div><p class="eyebrow">VICTORIA ISLAND · ONE CHANNEL</p><h1>Economy Observatory</h1></div>
+    <div id="runBadge" class="badge">Loading evidence…</div>
+  </header>
+  <section class="controls panel">
+    <label>Evidence file <input id="dataPath" value="data/latest.json"></label>
+    <button id="loadButton">Load</button>
+    <label class="grow">Logical horizon <input id="daySlider" type="range" min="0" max="0" value="0"></label>
+    <output id="dayLabel">All available days</output>
+  </section>
+  <nav id="tabs" aria-label="Report sections"></nav>
+  <main>
+    <section id="overview" class="page"></section>
+    <section id="items" class="page" hidden></section>
+    <section id="transactions" class="page" hidden></section>
+    <section id="agents" class="page" hidden></section>
+    <section id="market" class="page" hidden></section>
+    <section id="decisions" class="page" hidden></section>
+    <section id="validation" class="page" hidden></section>
+  </main>
+  <template id="empty"><div class="empty">No evidence exists for this filter yet.</div></template>
+  <script src="app.js"></script>
+</body>
+</html>

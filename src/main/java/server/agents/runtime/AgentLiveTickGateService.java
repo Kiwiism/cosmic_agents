@@ -101,6 +101,14 @@ public final class AgentLiveTickGateService {
     }
 
     public static boolean tickLiveGates(Context context, Hooks hooks) {
+        if (AgentExclusiveControlRuntime.claimed(context.agent().getId())) {
+            // Economy ownership suppresses every ordinary decision gate, but a
+            // navigation capability deliberately returns a non-consuming tick
+            // after installing its MOVE_TO target. Let that one tick reach the
+            // existing movement phase so the character still walks physically.
+            return AgentExclusiveControlRuntime.withAttribution(context.agent().getId(),
+                    () -> hooks.activeCapabilityTick().tick(context.entry(), context.agent()));
+        }
         if (hooks.trackedMapChangeTick().tick(context.entry(), context.agent())) {
             return true;
         }

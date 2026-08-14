@@ -20,8 +20,17 @@ public final class JdbcCosmicEconomicEventIngestor {
     }
 
     public Result ingest(int limit) {
+        return ingest(null, limit);
+    }
+
+    /**
+     * Ingests evidence for one simulation run. Runtime callers must use this
+     * scoped form so a quarantinable receipt from an older run cannot stop an
+     * otherwise independent scenario.
+     */
+    public Result ingest(UUID runId, int limit) {
         if (limit <= 0) throw new IllegalArgumentException("limit must be positive");
-        List<CosmicOutboxRecord> pending = pending(limit);
+        List<CosmicOutboxRecord> pending = pending(runId, limit);
         int ingested = 0;
         for (CosmicOutboxRecord receipt : pending) {
             try {
@@ -71,15 +80,18 @@ public final class JdbcCosmicEconomicEventIngestor {
         }
     }
 
-    private List<CosmicOutboxRecord> pending(int limit) {
-        String sql = "SELECT r.* FROM cosmic_outbox_receipt r WHERE r.run_id IS NOT NULL "
+    private List<CosmicOutboxRecord> pending(UUID runId, int limit) {
+        String runFilter = runId == null ? "" : "AND r.run_id = ? ";
+        String sql = "SELECT r.* FROM cosmic_outbox_receipt r WHERE r.run_id IS NOT NULL " + runFilter
                 + "AND NOT EXISTS (SELECT 1 FROM economic_event e WHERE e.run_id = r.run_id "
                 + "AND e.idempotency_key = 'cosmic:' || r.outbox_id::text) "
                 + "AND NOT EXISTS (SELECT 1 FROM economic_ingestion_failure f WHERE f.outbox_id = r.outbox_id) "
                 + "ORDER BY r.logical_at, r.cosmic_created_at, r.outbox_id LIMIT ?";
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setInt(1, limit);
+            int parameter = 1;
+            if (runId != null) statement.setObject(parameter++, runId);
+            statement.setInt(parameter, limit);
             List<CosmicOutboxRecord> result = new ArrayList<>();
             try (ResultSet rows = statement.executeQuery()) {
                 while (rows.next()) result.add(receipt(rows));
@@ -339,6 +351,10 @@ public final class JdbcCosmicEconomicEventIngestor {
                         .add(new LotQuantity(posting.lotId(), posting.quantity()));
             }
         }
+        // Opening a real PlayerShop escrows its owned permit alongside the
+        // merchandise. It is lifecycle evidence, not a market listing.
+        int permitItemId = number(stall, "permitItemId").intValue();
+        take(available.get(permitItemId), 1L);
         String listingSql = "INSERT INTO market_listing (run_id, listing_id, stall_id, seller_id, "
                 + "room_map_id, item_id, lot_id, quantity_per_bundle, bundles_initial, bundles_remaining, "
                 + "bundle_price, opened_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -461,7 +477,7 @@ public final class JdbcCosmicEconomicEventIngestor {
         try (Connection connection = dataSource.getConnection(); PreparedStatement s = connection.prepareStatement(sql)) {
             s.setObject(1, receipt.outboxId()); s.setObject(2, receipt.runId());
             s.setString(3, failure.getClass().getName()); s.setString(4, truncate(failure.getMessage()));
-            s.setString(5, JSON.writeValueAsString(receipt)); s.executeUpdate();
+            s.setString(5, quarantineReceiptJson(receipt)); s.executeUpdate();
         } catch (SQLException | JsonProcessingException persistenceFailure) {
             failure.addSuppressed(persistenceFailure);
             throw failure;
@@ -480,6 +496,28 @@ public final class JdbcCosmicEconomicEventIngestor {
     private static String truncate(String value) {
         String text = value == null ? "unknown ingestion failure" : value;
         return text.substring(0, Math.min(2048, text.length()));
+    }
+
+    static String quarantineReceiptJson(CosmicOutboxRecord receipt) throws JsonProcessingException {
+        Map<String, Object> value = new LinkedHashMap<>();
+        value.put("outboxId", receipt.outboxId());
+        value.put("idempotencyKey", receipt.idempotencyKey());
+        value.put("operationKind", receipt.operationKind());
+        value.put("primaryCharacterId", receipt.primaryCharacterId());
+        value.put("secondaryCharacterId", receipt.secondaryCharacterId());
+        value.put("summary", receipt.summary());
+        value.put("payloadJson", receipt.payloadJson());
+        value.put("runId", receipt.runId());
+        value.put("logicalAt", receipt.logicalAt() == null ? null : receipt.logicalAt().toString());
+        value.put("decisionId", receipt.decisionId());
+        value.put("activityId", receipt.activityId());
+        value.put("configRevision", receipt.configRevision());
+        value.put("catalogRevision", receipt.catalogRevision());
+        value.put("reasonCode", receipt.reasonCode());
+        value.put("primaryIsAgent", receipt.primaryIsAgent());
+        value.put("secondaryIsAgent", receipt.secondaryIsAgent());
+        value.put("createdAt", receipt.createdAt() == null ? null : receipt.createdAt().toString());
+        return JSON.writeValueAsString(value);
     }
 
     public record Result(int ingested, int quarantined, UUID failedOutboxId) { }

@@ -32,7 +32,7 @@ public final class EconomyEvidencePipeline {
         int quarantined = 0;
         UUID failedOutboxId = null;
         while (true) {
-            JdbcCosmicEconomicEventIngestor.Result batch = ingestor.ingest(batchSize);
+            JdbcCosmicEconomicEventIngestor.Result batch = ingestor.ingest(runId, batchSize);
             ingested = Math.addExact(ingested, batch.ingested());
             quarantined = Math.addExact(quarantined, batch.quarantined());
             if (batch.failedOutboxId() != null) failedOutboxId = batch.failedOutboxId();

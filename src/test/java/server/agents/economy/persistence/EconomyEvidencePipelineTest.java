@@ -24,7 +24,7 @@ class EconomyEvidencePipelineTest {
 
         when(relay.relay(2)).thenReturn(new EconomyOutboxRelay.Result(2, 0),
                 new EconomyOutboxRelay.Result(1, 0), new EconomyOutboxRelay.Result(0, 0));
-        when(ingestor.ingest(2)).thenReturn(new JdbcCosmicEconomicEventIngestor.Result(2, 0, null),
+        when(ingestor.ingest(runId, 2)).thenReturn(new JdbcCosmicEconomicEventIngestor.Result(2, 0, null),
                 new JdbcCosmicEconomicEventIngestor.Result(1, 0, null),
                 new JdbcCosmicEconomicEventIngestor.Result(0, 0, null));
         JdbcEconomyProjectionService.Result projection =
@@ -40,7 +40,7 @@ class EconomyEvidencePipelineTest {
         assertEquals(3, result.ingestion().ingested());
         assertEquals(projection, result.projections());
         verify(relay, times(3)).relay(2);
-        verify(ingestor, times(3)).ingest(2);
+        verify(ingestor, times(3)).ingest(runId, 2);
         verify(projections).rebuild(runId);
         verify(auditor).audit(runId, logicalAt);
     }

@@ -168,7 +168,8 @@ demand:
   minimumMarginalUtility: 0.01
   resourceTargets:
     - { itemId: 2000000, npcId: 1001100, targetQuantity: 100, purchaseLot: 20, jobs: [], urgency: 0.75 }
-    - { itemId: 2000001, npcId: 1001100, targetQuantity: 100, purchaseLot: 20, jobs: [magician], urgency: 0.85 }
+    # Every first-job family consumes MP during calibrated skill use, not only magicians.
+    - { itemId: 2000003, npcId: 1001100, targetQuantity: 100, purchaseLot: 20, jobs: [], urgency: 0.75 }
     - { itemId: 2060000, npcId: 1001100, targetQuantity: 1000, purchaseLot: 500, jobs: [bowman], urgency: 0.90 }
     - { itemId: 2061000, npcId: 1001100, targetQuantity: 1000, purchaseLot: 500, jobs: [bowman], urgency: 0.90 }
     - { itemId: 2070000, npcId: 1001100, targetQuantity: 500, purchaseLot: 500, jobs: [thief], urgency: 0.90 }

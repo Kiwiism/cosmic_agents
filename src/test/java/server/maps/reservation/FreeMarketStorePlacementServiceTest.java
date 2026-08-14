@@ -49,4 +49,27 @@ class FreeMarketStorePlacementServiceTest {
         assertTrue(FreeMarketStorePlacementService.reservation(character).isEmpty());
         assertEquals(2, CharacterSpaceReservationRuntime.occupiedCount());
     }
+
+    @Test
+    void autonomousReservationCanSelectAValidSpotBeyondPlayerSnapRange() {
+        Character character = mock(Character.class);
+        Client client = mock(Client.class);
+        MapleMap map = mock(MapleMap.class);
+
+        when(character.getClient()).thenReturn(client);
+        when(client.getChannel()).thenReturn(1);
+        when(character.getWorld()).thenReturn(0);
+        when(character.getMapId()).thenReturn(910000001);
+        when(character.getId()).thenReturn(101);
+        when(character.getPosition()).thenReturn(new Point(2_000, 34));
+        when(character.getMap()).thenReturn(map);
+        when(map.findClosestTeleportPortal(any(Point.class))).thenReturn(null);
+        when(map.getMapObjectsInRange(any(Point.class), anyDouble(), any())).thenReturn(List.of());
+
+        var reservation = FreeMarketStorePlacementService.reserveNearestForWalking(character);
+
+        assertTrue(reservation.isPresent());
+        assertTrue(reservation.orElseThrow().position().distance(new Point(2_000, 34))
+                > FreeMarketStorePlacementService.MAXIMUM_SNAP_DISTANCE_PX);
+    }
 }

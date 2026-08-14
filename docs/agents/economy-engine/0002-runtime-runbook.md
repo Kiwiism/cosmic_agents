@@ -32,8 +32,8 @@
    seller permit ownership, initial FM/channel presence, the separate evidence database, and matching
    current-level activity calibration coverage without starting or mutating a run. Later level bands
    remain fail-closed and must be calibrated before agents reach them.
-8. Run `!economy start`, then `!economy advance 0` to process initial admissions. Use
-   `!economy status` to inspect logical time and admitted population.
+8. Run `!economy start`, then `!economy advance N`. Use `!economy status` to inspect logical time
+   and admitted population. One advance request remains active until its target is reached.
 
 `start` reruns the same audit and refuses to create a run when any blocker remains; `preflight` is
 not merely advisory.
@@ -43,8 +43,12 @@ not merely advisory.
 `!economy advance N` advances monotonically by N logical days. Farm duration, population arrivals,
 stall duration, demand changes, and checkpoints skip through logical time. Physical portal travel,
 walking, stall opening, visiting, chat, and trades do not become fake instantaneous actions: the run
-pauses at those boundaries, lets the normal agent capability tick complete them, and resumes on the
-next advance command. Rewinding is rejected.
+pauses at those boundaries, lets the normal agent capability tick complete them, and automatically
+resumes toward the requested target. A second advance command is not required at every physical
+boundary. Rewinding is rejected.
+
+Evidence promotion is scoped to the active run. A quarantined or incomplete receipt belonging to a
+historical run remains visible for diagnosis but cannot block a new scenario.
 
 This means a 30-day economic run can compress the long offscreen and waiting intervals, but cannot
 compress away the real wall-clock work needed to observe a physical market. That is the necessary
@@ -100,7 +104,12 @@ a completed price or imputing a meso price to barter.
   beginner/LUK/town/field-limit/safety-charm rule as live deaths, truncates unperformed kills and
   consumable use, cancels ordinary death state, and uses the configured Agent respawn delay.
 - Direct negotiation excludes equipment because the real Trade selector is item-id based; rolled
-  equipment remains safely tradable through fingerprinted PlayerShop escrow.
+equipment remains safely tradable through fingerprinted PlayerShop escrow.
+
+For a local read-only report, run `tools/economy/Export-EconomyDashboard.ps1` and serve
+`economy-dashboard`. The exporter reads only PostgreSQL and includes raw transaction, listing,
+lot-provenance, decision, social, agent, daily price, meso-flow, and validation evidence for later
+UI filtering.
 - A zero-NPC-floor collectible receives no invented cold-start meso value. It can be retained or
   exchanged through reciprocal-need barter. Positive-floor scarce items can seed an ask from their
   exact NPC opportunity cost and configured seller markup.

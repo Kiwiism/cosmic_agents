@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import server.agents.economy.persistence.EconomyBootstrapStore;
 import server.agents.economy.persistence.EconomyParticipantBindingStore;
 import server.agents.economy.scenario.EconomyAgentProfile;
+import server.agents.economy.scenario.EconomyWorldPort;
 import server.economy.EconomyTaxOverride;
 
 import java.util.List;
@@ -18,6 +19,29 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 class CosmicEconomyWorldAdapterRestoreTest {
+    @Test
+    void admittedAgentCanBeginPhysicalMarketCycleFromEntrance() {
+        Character warrior = character(101, 100);
+        when(warrior.getMapId()).thenReturn(910000000);
+        CosmicEconomyWorldAdapter.MarketBehavior market = mock(CosmicEconomyWorldAdapter.MarketBehavior.class);
+        when(market.perform(any(), any(), any())).thenReturn(EconomyWorldPort.MarketDirective.idle());
+        CosmicEconomyWorldAdapter world = new CosmicEconomyWorldAdapter(UUID.randomUUID(), 1,
+                "config", "catalog", ignored -> warrior, market,
+                mock(CosmicEconomyWorldAdapter.ActivityPlanner.class),
+                mock(CosmicEconomyWorldAdapter.OffscreenPresence.class),
+                mock(CosmicFarmSettlementService.class), ignored -> new EconomyTaxOverride(0, 0),
+                EconomyParticipantBindingStore.NO_OP, EconomyBootstrapStore.NO_OP);
+        EconomyAgentProfile profile = profile("agent-1", "warrior");
+
+        world.restoreState(Map.of("schemaVersion", 1,
+                        "boundAgentIds", List.of("agent-1"),
+                        "offscreenAgentIds", List.of(), "market", Map.of()),
+                Map.of("agent-1", profile));
+        assertEquals(EconomyWorldPort.MarketDirective.idle(),
+                world.performMarketCycle(profile, java.time.Instant.EPOCH));
+        verify(market).perform(warrior, profile, java.time.Instant.EPOCH);
+    }
+
     @Test
     void restoresBindingsParticipantsMarketAndDetachedPresence() {
         Character warrior = character(101, 100);

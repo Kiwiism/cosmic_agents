@@ -9,10 +9,15 @@ $env:COSMIC_TEST_DB_PASSWORD = '<local password>'
 powershell -ExecutionPolicy Bypass -File tools/economy/Prepare-EconomyLiveTestRoster.ps1 -Mode calibration
 ```
 
+The default job counts (`36/37/33/46/48`) match the deterministic roster produced by the checked-in
+scenario seed. If the seed or class weights change, pass the five `*Count` parameters using the exact
+requirements reported by `!economy preflight`; the counts must sum to `RosterSize`.
+
 Calibration mode assigns 25 characters equally across the five first-job families and places those
 characters on the configured real farm map. It gives only that calibration cohort tagged NPC-stock
-potions and job ammunition so ordinary supply maintenance does not abort the measurement. The
-population file targets only those 25. After real
+potions, ammunition, and first-job starter weapons with WZ-authored stats so ordinary supply or
+incompatible inherited equipment does not invalidate the measurement. The population file targets
+only those 25. After real
 calibration sessions are captured, stop Cosmic and switch all 200 to the Free Market:
 
 ```powershell
@@ -20,12 +25,16 @@ powershell -ExecutionPolicy Bypass -File tools/economy/Prepare-EconomyLiveTestRo
 ```
 
 Set `COSMIC_AGENT_POPULATION_FILE` to the reported population path when launching Cosmic. The tool
-backs up every changed character row before the first mutation and tags every inserted permit with
-`giftFrom=ECONOMY_TEST_FIXTURE`. Those permits and the prepared stats are test prerequisites, not
-organic economic supply, and the generated audit manifest says so explicitly. Market mode removes
-all tagged calibration consumables/ammunition before the economy imports holdings.
+backs up every changed character row, skill, inventory row, and equipment extension row before the
+first mutation. Market mode defaults to a clean inventory baseline and then adds only tagged starter
+weapons, pots, ammunition, and PlayerShop permits. These are explicit initial endowments, not organic
+production, and the generated audit manifest says so. Pass `-PreserveInventory` only when a scenario
+deliberately imports existing character possessions as its declared initial endowment.
+The test-only level/job reset also installs deterministic level-appropriate first-job skill builds;
+`economy_test_skill_backup` preserves and restores every original roster skill row.
 
-To restore the changed character fields and remove only tagged fixture permits:
+To restore the changed character fields, skills, and exact pre-fixture inventory (removing all
+test-period holdings first):
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File tools/economy/Prepare-EconomyLiveTestRoster.ps1 -Mode restore

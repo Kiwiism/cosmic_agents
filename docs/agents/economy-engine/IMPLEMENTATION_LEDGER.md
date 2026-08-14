@@ -16,7 +16,7 @@ This ledger follows the attached master goal without redefining completion aroun
 | 9 | Public chat and direct negotiation | Baseline code complete: public transcript, meso and reciprocal item barter, real Trade settlement |
 | 10 | Replaceable ambient behavior | Baseline code complete: owned-chair and constrained fidget policy seam |
 | 11 | Rebuildable data projections and query contracts | Baseline code complete: item/meso/agent read models, explanation query, invariant audit |
-| 12 | Experiments, human readiness, soak and completion audit | PostgreSQL V001-V013 clean initialization, atomic validated configuration revision, physical-wait/invariant run statuses, startup contract, balance guard, deterministic 50-to-200 scheduler soak, and non-mutating live preflight verified; live multi-agent soak and counterfactual matrix remain pending |
+| 12 | Experiments, human readiness, soak and completion audit | PostgreSQL V001-V014 clean initialization, strict 200-agent preflight, live 50-agent FM traversal, calibrated farms, NPC commerce, real attributed PlayerShop opening, retained-failure replay, and interactive report export verified; 30-day sale/negotiation soak and counterfactual matrix remain pending |
 
 ## Deliberate baseline constraint
 
@@ -38,5 +38,6 @@ item with current code, tests, migrations, configuration, and runtime evidence.
 
 ## Remaining release blockers
 
-- Complete a 50-to-200 live-agent soak, restart/recovery exercise, and paired multi-seed scenarios.
+- Complete a 30-day 50-to-200 live-agent soak through shop sales/closures and a mid-stall restart,
+  then run paired multi-seed scenarios.
 - Resolve every partial and pending gate in `RELEASE_AUDIT.md`.

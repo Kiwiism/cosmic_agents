@@ -7,6 +7,7 @@ import server.agents.plans.AgentUniversalPlanRuntime;
 import server.agents.plans.amherst.AgentAmherstPlanRuntime;
 import server.agents.plans.mapleisland.AgentMapleIslandLithHandoffRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.AgentExclusiveControlRuntime;
 
 import java.util.List;
 
@@ -27,6 +28,7 @@ public final class AgentForegroundActivityDefaults {
     private static final class Holder {
         private static final AgentForegroundActivityRegistry REGISTRY =
                 new AgentForegroundActivityRegistry(List.of(
+                    exclusiveControl(),
                     handoff(),
                     townLife(),
                     universalPlan(),
@@ -43,6 +45,21 @@ public final class AgentForegroundActivityDefaults {
 
     public static AgentForegroundActivityCoordinator coordinator() {
         return COORDINATOR;
+    }
+
+    private static AgentForegroundActivity exclusiveControl() {
+        return activity("exclusive-control", 1_000,
+                (entry, agent) -> AgentExclusiveControlRuntime.claimed(agent.getId()),
+                (entry, agent, nowMs) -> {
+                    if (entry.capabilityRuntimeState().hasActiveCapability()) {
+                        return AgentExclusiveControlRuntime.withAttribution(agent.getId(),
+                                () -> AgentCapabilityRuntime.tick(entry, agent, nowMs))
+                                ? AgentForegroundActivityTick.CONSUMED
+                                : AgentForegroundActivityTick.IDLE;
+                    }
+                    return AgentForegroundActivityTick.CONSUMED;
+                },
+                true, ActivityDeactivator.NONE);
     }
 
     private static AgentForegroundActivity handoff() {

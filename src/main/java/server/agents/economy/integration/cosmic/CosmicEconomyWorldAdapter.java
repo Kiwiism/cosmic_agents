@@ -11,6 +11,7 @@ import server.agents.economy.scenario.EconomyWorldPort;
 import server.economy.EconomyOperationContext;
 import server.economy.EconomyOperationMetadata;
 import server.economy.EconomyTaxOverride;
+import server.agents.runtime.AgentExclusiveControlRuntime;
 
 import java.time.Instant;
 import java.util.Map;
@@ -89,9 +90,14 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort {
     @Override
     public MarketDirective performMarketCycle(EconomyAgentProfile profile, Instant logicalAt) {
         Character agent = bound(profile.agentId());
-        requireLiveFm(agent, false);
+        // The entrance is part of the configured venue. A newly admitted or
+        // returning agent must be allowed to begin the physical room-browsing flow here.
+        requireLiveFm(agent, true);
         if (offscreen.contains(profile.agentId())) throw new IllegalStateException("offscreen agent cannot trade");
-        return EconomyOperationContext.with(metadata(profile, logicalAt, "MARKET_CYCLE", null),
+        EconomyOperationMetadata metadata = metadata(profile, logicalAt, "MARKET_CYCLE", null);
+        if (AgentExclusiveControlRuntime.claimed(agent.getId()))
+            AgentExclusiveControlRuntime.attribute(agent.getId(), metadata);
+        return EconomyOperationContext.with(metadata,
                 () -> market.perform(agent, profile, logicalAt));
     }
 
@@ -199,7 +205,8 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort {
             throw new IllegalStateException("agent is not live on the configured channel");
         int map = agent.getMapId();
         boolean valid = map >= 910000001 && map <= 910000022 || entranceAllowed && map == 910000000;
-        if (!valid) throw new IllegalStateException("agent is outside the configured Free Market venue");
+        if (!valid) throw new IllegalStateException("agent is outside the configured Free Market venue: id="
+                + agent.getId() + " map=" + map + " entranceAllowed=" + entranceAllowed);
     }
 
     private EconomyOperationMetadata metadata(EconomyAgentProfile profile, Instant logicalAt,

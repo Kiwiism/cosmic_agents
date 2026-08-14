@@ -2,6 +2,9 @@ package server.agents.economy.integration.cosmic;
 
 import client.Character;
 import com.zaxxer.hikari.HikariDataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import server.TimerManager;
 import server.agents.economy.persistence.EconomyPostgresDataSource;
 import server.agents.economy.persistence.EconomyDatabaseVerifier;
 import server.agents.economy.persistence.JdbcActivityCalibrationRepository;
@@ -13,6 +16,8 @@ import server.agents.economy.scenario.NamedRandomStreams;
 import server.agents.economy.scenario.PopulationAdmissionPlanner;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
+import server.agents.runtime.AgentExclusiveControlRuntime;
+import server.agents.runtime.activity.AgentForegroundActivityDefaults;
 import tools.DatabaseConnection;
 
 import java.nio.file.Path;
@@ -21,12 +26,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.ArrayList;
+import java.time.Instant;
+import java.time.Duration;
+import java.util.concurrent.ScheduledFuture;
 
 /** Process-level operator lifecycle for one economy run. Market actions remain autonomous. */
 public final class EconomySimulationRuntime {
+    private static final Logger log = LoggerFactory.getLogger(EconomySimulationRuntime.class);
+    private static final long AUTO_ADVANCE_POLL_MS = 500L;
+    private static final int AUTO_ADVANCE_BATCH_ACTIONS = 64;
     private static ManagedEconomyRun run;
     private static HikariDataSource economyDatabase;
     private static Map<String, Character> directory = Map.of();
+    private static String controlOwner;
+    private static Instant requestedLogicalTarget;
+    private static Instant physicalBatchLogicalTime;
+    private static ScheduledFuture<?> autoAdvanceTask;
 
     private EconomySimulationRuntime() { }
 
@@ -74,6 +89,7 @@ public final class EconomySimulationRuntime {
             blockers.add("INITIAL_FM_PRESENCE:" + initialReady + '/' + config.population.initialAgents);
 
         int missingCalibrations = 0;
+        Map<String, Integer> missingCalibrationCohorts = new java.util.TreeMap<>();
         boolean databaseReady = false;
         try (HikariDataSource database = EconomyPostgresDataSource.fromEnvironment()) {
             new EconomyDatabaseVerifier(database).verify(config.persistence.database);
@@ -83,17 +99,26 @@ public final class EconomySimulationRuntime {
                     config.activity.mapCatalogResource);
             for (var admission : admissions) {
                 Character character = mapped.get(admission.agentId());
-                if (character == null) { missingCalibrations++; continue; }
+                if (character == null) {
+                    missingCalibrations++;
+                    missingCalibrationCohorts.merge(admission.jobFamily() + "@UNBOUND", 1, Integer::sum);
+                    continue;
+                }
                 boolean present = maps.candidates(character.getLevel()).stream().anyMatch(map ->
                         repository.find(config.activity.agentBuild, map.mapId(), character.getLevel(),
                                 admission.jobFamily(), config.activity.minimumCalibrationSamples).isPresent());
-                if (!present) missingCalibrations++;
+                if (!present) {
+                    missingCalibrations++;
+                    missingCalibrationCohorts.merge(admission.jobFamily() + "@L" + character.getLevel(),
+                            1, Integer::sum);
+                }
             }
         } catch (RuntimeException failure) {
             blockers.add("EVIDENCE_DATABASE:" + message(failure));
         }
         if (databaseReady && missingCalibrations > 0)
-            blockers.add("MISSING_ACTIVITY_CALIBRATIONS:" + missingCalibrations);
+            blockers.add("MISSING_ACTIVITY_CALIBRATIONS:" + missingCalibrations
+                    + ":cohorts=" + missingCalibrationCohorts);
 
         long sellers = admissions.stream().filter(value -> value.profile().stallWillingness() >= .5d).count();
         long permits = mapped.values().stream().filter(character -> character
@@ -110,22 +135,31 @@ public final class EconomySimulationRuntime {
         List<Character> agents = AgentRuntimeRegistry.activeEntriesSnapshot().stream()
                 .map(AgentRuntimeEntry::bot).filter(java.util.Objects::nonNull)
                 .sorted(Comparator.comparingInt(Character::getId)).toList();
-        Preflight readiness = inspect(config, agents);
-        if (!readiness.ready()) throw new IllegalStateException(
-                "economy preflight blocked startup: " + String.join(" | ", readiness.blockers()));
         var admissions = new PopulationAdmissionPlanner().plan(config.config().population,
                 java.time.Instant.parse(config.config().clock.logicalStart),
                 new NamedRandomStreams(config.config().scenario.seed));
         Map<String, Character> mapped = new EconomyAgentRosterBinder().bind(admissions, agents,
                 config.config().bootstrap.shopPermitItemId);
-        HikariDataSource database = EconomyPostgresDataSource.fromEnvironment();
+        String owner = controlOwner(runId);
+        HikariDataSource database = null;
         try {
+            // Acquire control before the database-backed readiness checks. Without this
+            // boundary, an ordinary self-directed tick can move a verified participant
+            // out of the FM between preflight and admission.
+            claim(owner, mapped);
+            Preflight readiness = inspect(config, agents);
+            if (!readiness.ready()) throw new IllegalStateException(
+                    "economy preflight blocked startup: " + String.join(" | ", readiness.blockers()));
+            database = EconomyPostgresDataSource.fromEnvironment();
             ManagedEconomyRun started = EconomyRuntimeFactory.start(runId, configPath,
                     DatabaseConnection.dataSource(), database, mapped::get);
             economyDatabase = database; directory = Map.copyOf(mapped); run = started;
+            controlOwner = owner;
             return status();
         } catch (RuntimeException failure) {
-            database.close(); throw failure;
+            AgentExclusiveControlRuntime.release(owner);
+            if (database != null) database.close();
+            throw failure;
         }
     }
 
@@ -155,17 +189,30 @@ public final class EconomySimulationRuntime {
                             + config.config().world.channelId + ": " + logicalId + " -> " + characterId);
                 mapped.put(logicalId, character);
             });
+            String owner = controlOwner(runId);
+            claim(owner, mapped);
             ManagedEconomyRun resumed = EconomyRuntimeFactory.resume(runId, configPath,
                     DatabaseConnection.dataSource(), database, mapped::get);
             economyDatabase = database; directory = Map.copyOf(mapped); run = resumed;
+            controlOwner = owner;
             return status();
         } catch (RuntimeException failure) {
+            AgentExclusiveControlRuntime.release(controlOwner(runId));
             database.close(); throw failure;
         }
     }
 
     public static synchronized ManagedEconomyRun.AdvanceResult advanceDays(long days) {
-        requireRun(); return run.advanceDays(days);
+        requireRun();
+        if (days < 0) throw new IllegalArgumentException("economy runs cannot move backward");
+        Instant requested = run.application().now().plus(Duration.ofDays(days));
+        if (requested.isAfter(run.application().targetAt())) requested = run.application().targetAt();
+        if (requestedLogicalTarget == null || requested.isAfter(requestedLogicalTarget)) {
+            requestedLogicalTarget = requested;
+        }
+        ManagedEconomyRun.AdvanceResult result = run.advanceTo(requestedLogicalTarget);
+        afterAdvance(result);
+        return result;
     }
 
     public static synchronized server.agents.economy.persistence.EconomyEvidencePipeline.Result audit() {
@@ -173,11 +220,19 @@ public final class EconomySimulationRuntime {
     }
 
     public static synchronized server.agents.economy.persistence.EconomyEvidencePipeline.Result complete() {
-        requireRun(); return run.complete();
+        requireRun();
+        var result = run.complete();
+        cancelAutoAdvance();
+        releaseControl();
+        return result;
     }
 
     public static synchronized server.agents.economy.persistence.EconomyEvidencePipeline.Result fail(String reason) {
-        requireRun(); return run.fail(reason);
+        requireRun();
+        var result = run.fail(reason);
+        cancelAutoAdvance();
+        releaseControl();
+        return result;
     }
 
     public static synchronized Status status() {
@@ -188,11 +243,96 @@ public final class EconomySimulationRuntime {
     }
 
     public static synchronized void stop() {
+        cancelAutoAdvance();
         if (run != null && !java.util.Set.of("COMPLETED", "FAILED", "STOPPED").contains(run.status()))
             run.checkpoint("STOPPED");
         run = null; directory = Map.of();
+        releaseControl();
         if (economyDatabase != null) economyDatabase.close();
         economyDatabase = null;
+    }
+
+    /**
+     * Continues a requested fast-forward without operator commands at every physical boundary.
+     * All events at one logical instant may assign independent real capabilities concurrently;
+     * logical time does not proceed into the next batch until those capabilities have finished.
+     */
+    private static synchronized void autoAdvanceTick() {
+        autoAdvanceTask = null;
+        if (run == null || requestedLogicalTarget == null) return;
+        try {
+            Instant current = run.application().now();
+            int activeCapabilities = activeEconomyCapabilities();
+            if (physicalBatchLogicalTime == null) physicalBatchLogicalTime = current;
+            if (activeCapabilities > 0 && !current.equals(physicalBatchLogicalTime)) {
+                scheduleAutoAdvance();
+                return;
+            }
+            if (activeCapabilities == 0 && !current.equals(physicalBatchLogicalTime)) {
+                physicalBatchLogicalTime = current;
+            }
+
+            for (int action = 0; action < AUTO_ADVANCE_BATCH_ACTIONS; action++) {
+                ManagedEconomyRun.AdvanceResult result = run.advanceTo(requestedLogicalTarget);
+                afterAdvance(result);
+                if (!result.advance().waitingExternalAction() || run == null
+                        || requestedLogicalTarget == null) return;
+                if (!result.advance().reachedAt().equals(physicalBatchLogicalTime)) break;
+                if (activeEconomyCapabilities() >= directory.size()) break;
+            }
+            scheduleAutoAdvance();
+        } catch (RuntimeException failure) {
+            log.error("Automatic economy advancement failed", failure);
+            try {
+                if (run != null && !java.util.Set.of("COMPLETED", "FAILED", "STOPPED").contains(run.status())) {
+                    run.fail("automatic advancement failed: " + message(failure));
+                }
+            } catch (RuntimeException evidenceFailure) {
+                log.error("Could not persist automatic economy advancement failure", evidenceFailure);
+            }
+            cancelAutoAdvance();
+            releaseControl();
+        }
+    }
+
+    private static void afterAdvance(ManagedEconomyRun.AdvanceResult result) {
+        if (result.advance().waitingExternalAction()) {
+            if (physicalBatchLogicalTime == null) {
+                physicalBatchLogicalTime = result.advance().reachedAt();
+            }
+            scheduleAutoAdvance();
+            return;
+        }
+        if ("COMPLETED".equals(result.status())
+                || !run.application().now().isBefore(requestedLogicalTarget)) {
+            requestedLogicalTarget = null;
+            physicalBatchLogicalTime = null;
+            cancelAutoAdvance();
+            if ("COMPLETED".equals(result.status())) releaseControl();
+        }
+    }
+
+    private static int activeEconomyCapabilities() {
+        int active = 0;
+        for (Character character : directory.values()) {
+            AgentRuntimeEntry entry = AgentRuntimeRegistry.findByCharacterInstance(character);
+            if (entry != null && entry.capabilityRuntimeState().hasActiveCapability()) active++;
+        }
+        return active;
+    }
+
+    private static void scheduleAutoAdvance() {
+        if (autoAdvanceTask == null && run != null && requestedLogicalTarget != null) {
+            autoAdvanceTask = TimerManager.getInstance().schedule(
+                    EconomySimulationRuntime::autoAdvanceTick, AUTO_ADVANCE_POLL_MS);
+        }
+    }
+
+    private static void cancelAutoAdvance() {
+        if (autoAdvanceTask != null) autoAdvanceTask.cancel(false);
+        autoAdvanceTask = null;
+        requestedLogicalTarget = null;
+        physicalBatchLogicalTime = null;
     }
 
     private static void requireRun() {
@@ -208,6 +348,34 @@ public final class EconomySimulationRuntime {
     private static String message(RuntimeException failure) {
         return failure.getMessage() == null ? failure.getClass().getSimpleName()
                 : failure.getMessage().replaceAll("\\s+", " ");
+    }
+
+    private static void claim(String owner, Map<String, Character> mapped) {
+        try {
+            for (Character character : mapped.values()) {
+                AgentExclusiveControlRuntime.claim(character.getId(), owner);
+                AgentRuntimeEntry entry = AgentRuntimeRegistry.findByCharacterInstance(character);
+                if (entry == null) {
+                    throw new IllegalStateException("reserved economy character has no runtime entry: "
+                            + character.getId());
+                }
+                AgentForegroundActivityDefaults.coordinator().prepareExclusive(
+                        "exclusive-control", entry, character, "economy run claimed character",
+                        System.currentTimeMillis());
+            }
+        } catch (RuntimeException failure) {
+            AgentExclusiveControlRuntime.release(owner);
+            throw failure;
+        }
+    }
+
+    private static String controlOwner(UUID runId) {
+        return "economy:" + runId;
+    }
+
+    private static void releaseControl() {
+        AgentExclusiveControlRuntime.release(controlOwner);
+        controlOwner = null;
     }
 
     public record Status(boolean active, UUID runId, java.time.Instant logicalTime,

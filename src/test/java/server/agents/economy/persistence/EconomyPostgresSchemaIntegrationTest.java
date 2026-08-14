@@ -45,6 +45,12 @@ class EconomyPostgresSchemaIntegrationTest {
                             + "AND normalized_config ->> 'schemaVersion' = '1'"));
                     var runs = new JdbcSimulationRunRepository(dataSource);
                     assertEquals("CREATED", runs.find(run).orElseThrow().status());
+                    var checkpoint = new server.agents.economy.scenario.SimulationRunEngine.RunCheckpoint(
+                            run, Instant.parse("2026-01-01T00:00:00Z"), loaded.sha256(),
+                            catalog.version(), java.util.List.of(), Map.of("stream", 12L),
+                            Map.of("z", Map.of("second", 2, "first", 1), "a", java.util.List.of(3, 4)));
+                    runs.saveCheckpoint(checkpoint);
+                    assertEquals(checkpoint, runs.latestCheckpoint(run).orElseThrow());
                     var bindings = new JdbcEconomyParticipantBindingStore(dataSource);
                     bindings.reserve(run, java.util.List.of(
                             new EconomyParticipantBindingStore.Reservation("agent-1", 101,
@@ -248,7 +254,8 @@ class EconomyPostgresSchemaIntegrationTest {
             statement.setObject(1, run); statement.executeUpdate();
         }
         for (String table : java.util.List.of("item_market_daily", "meso_flow_daily",
-                "agent_state_projection", "listing_exposure", "ledger_posting", "economic_event")) {
+                "agent_state_projection", "listing_exposure", "simulation_checkpoint",
+                "ledger_posting", "economic_event")) {
             String predicate = "ledger_posting".equals(table)
                     ? "event_id IN (SELECT event_id FROM economic_event WHERE run_id = ?)" : "run_id = ?";
             try (PreparedStatement statement = connection.prepareStatement(

@@ -1,6 +1,6 @@
 # Economy engine release audit
 
-Audit date: 2026-08-14  
+Audit date: 2026-08-15
 Branch: `simulation/economy-engine`
 
 This audit separates implemented behavior, automated evidence, and live evidence. A green unit or
@@ -15,7 +15,7 @@ logical-scheduler test is never represented as a physical Free Market soak.
   wall-clock ticks. This validates queue shape and bounded scheduling only, not live market throughput.
 - Checkpoint/restore produces the same remaining event order and named RNG state as an uninterrupted
   run. Changed configuration and catalog hashes are rejected.
-- Clean PostgreSQL 17 initialization through V013 passes the runtime schema verifier, deferred
+- Clean PostgreSQL 17 initialization through V014 passes the runtime schema verifier, deferred
   double-entry balance trigger, item-flow projections, invariant audit, and atomic revision-0
   configuration persistence (source YAML, normalized JSON, schema version, hash, effective logical
   timestamp, and validation result).
@@ -32,13 +32,13 @@ logical-scheduler test is never represented as a physical Free Market soak.
 |---|---|---|
 | YAML starts at 50 and grows by 10 to 200 | Automated | `PopulationAdmissionPlannerTest`, deterministic roster binding |
 | Forward fast-forward for 30+ days | Automated for logical work | `SimulationRunEngineTest`; physical actions intentionally pause rather than being fabricated |
-| One channel, FM entrance and rooms 1-22 | Implemented, live evidence pending | strict config validation and `CosmicFreeMarketPhysicalGateway` |
+| One channel, FM entrance and rooms 1-22 | Live verified | 50 agents produced 869 presence events across entrance plus rooms 1-22 in run `808c943d-c236-466c-b2ec-46459efb0c06` |
 | Offscreen agents cannot trade or remain visible | Automated | coordinator state machine and `CosmicEconomyWorldAdapter` guards |
-| Farming output uses legitimate sources | Automated at rule boundary, live calibration pending | WZ/SQL catalog, calibrated work, Cosmic drop/equipment mutation, lot ledger |
+| Farming output uses legitimate sources | Live partially verified | 50 calibrated sessions started, 17 completed before the retained failure; 320 mob-drop lots were journaled from authoritative resolution |
 | Return through FM entrance | Automated at adapter boundary, live soak pending | coordinator plus adapter postcondition |
 | Remote real-NPC buy/sell/recharge | Automated | real shop gateway, price/stock/restriction preservation, source NPC/map evidence |
-| Physical browsing and private knowledge | Automated at capability boundary, live soak pending | room travel, range checks, observed-listing memory; no global price feed |
-| At most one real PlayerShop | Automated | runtime registry, real inventory/escrow, PostgreSQL partial unique index |
+| Physical browsing and private knowledge | Live verified for cold-start traversal | physical portal movement and per-agent presence evidence; no global price feed |
+| At most one real PlayerShop | Live verified for opening | attributed real shop, owned permit escrow, one stall and two exact listings; purchase/closure soak pending |
 | Public negotiation and normal Trade settlement | Automated at integration boundary, live soak pending | structured/public transcript and real Cosmic Trade lifecycle |
 | Chairs require legitimate ownership | Automated | owned-chair ambient eligibility and real inventory settlement |
 | Quest and scroll demand follows actual state | Automated and WZ-backed | exact quest start/turn-in/consumption and real deterministic Cosmic scrolling |
@@ -57,11 +57,11 @@ The current seed samples this maximum roster by real job family:
 
 | Job family | Required live characters |
 |---|---:|
-| Warrior | 36 |
-| Magician | 37 |
-| Bowman | 33 |
-| Thief | 46 |
-| Pirate | 48 |
+| Warrior | 37 |
+| Magician | 46 |
+| Bowman | 48 |
+| Thief | 33 |
+| Pirate | 36 |
 | Total | 200 |
 
 It also samples 147 willing sellers, including 38 of the initial 50. Consequently the strict run
@@ -87,17 +87,18 @@ Startup reruns this audit and creates no run while a blocker remains.
 
 ## Current environment result
 
-The server currently running on this workstation loads classes from the original
-`Cosmic Agents` worktree, not this branch, and its launch target names only `agent123` for the
-Amherst reset workflow. No `ECONOMY_DB_*` runtime credentials are present. Restarting or replacing
-that user-owned server was outside the authorized scope, so no physical 50-to-200 soak was run.
+The branch-built server loaded 200 deterministic autonomous characters and passed the strict live
+preflight. Run `808c943d-c236-466c-b2ec-46459efb0c06` admitted 50, reached every FM map, started 50
+calibrated sessions, completed 17, and opened an attributed real PlayerShop. The first listing exposed
+and preserved a permit-escrow materialization defect; the patched ingestor reprocessed that exact
+receipt into one stall and two listings with zero quarantine and zero invariant violations. See the
+run-specific live validation report and dashboard export.
 
 ## Remaining release blockers
 
-1. Provision the exact live roster, legitimate permits, consumables, and level/map/job calibration
-   coverage, then run `!economy preflight` from a server built from this branch.
-2. Run 50-to-200 physical FM activity through at least 30 logical days, including a mid-activity and
-   mid-stall restart, outbox redelivery, escrow reconciliation, and a zero-violation invariant audit.
+1. Run 50-to-200 physical FM activity through at least 30 logical days, including a mid-stall
+   restart, sale/closure, outbox redelivery, escrow reconciliation, and a zero-violation invariant audit.
+2. Complete PlayerShop purchases, public negotiation/barter, and seller closure/repricing live paths.
 3. Run paired multi-seed scenario branches for population/class, tax, NPC access, and quest-wave
    changes. Reports must distinguish programmed reasons, observed association, and paired causal
    differences.
