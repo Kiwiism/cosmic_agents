@@ -83,6 +83,7 @@ Every mapped character must also:
 
 Run `!economy preflight` before mutation. It reproduces the same seeded roster and reports roster,
 permit, initial FM, evidence database, and current-level calibration blockers.
+Startup reruns this audit and creates no run while a blocker remains.
 
 ## Current environment result
 

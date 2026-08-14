@@ -31,6 +31,9 @@
 8. Run `!economy start`, then `!economy advance 0` to process initial admissions. Use
    `!economy status` to inspect logical time and admitted population.
 
+`start` reruns the same audit and refuses to create a run when any blocker remains; `preflight` is
+not merely advisory.
+
 ## Fast-forward semantics
 
 `!economy advance N` advances monotonically by N logical days. Farm duration, population arrivals,

@@ -35,10 +35,14 @@ public final class EconomySimulationRuntime {
 
     public static synchronized Preflight preflight() {
         LoadedEconomyConfig loaded = new EconomyConfigLoader().load();
-        var config = loaded.config();
         List<Character> agents = AgentRuntimeRegistry.activeEntriesSnapshot().stream()
                 .map(AgentRuntimeEntry::bot).filter(java.util.Objects::nonNull)
                 .sorted(Comparator.comparingInt(Character::getId)).toList();
+        return inspect(loaded, agents);
+    }
+
+    private static Preflight inspect(LoadedEconomyConfig loaded, List<Character> agents) {
+        var config = loaded.config();
         List<String> blockers = new ArrayList<>();
         if (run != null) blockers.add("AN_ECONOMY_RUN_IS_ALREADY_ACTIVE");
         if (agents.size() < config.population.maximumAgents)
@@ -105,10 +109,9 @@ public final class EconomySimulationRuntime {
         List<Character> agents = AgentRuntimeRegistry.activeEntriesSnapshot().stream()
                 .map(AgentRuntimeEntry::bot).filter(java.util.Objects::nonNull)
                 .sorted(Comparator.comparingInt(Character::getId)).toList();
-        if (agents.size() < config.config().population.maximumAgents)
-            throw new IllegalStateException("economy scenario requires "
-                    + config.config().population.maximumAgents + " already-live autonomous characters; found "
-                    + agents.size());
+        Preflight readiness = inspect(config, agents);
+        if (!readiness.ready()) throw new IllegalStateException(
+                "economy preflight blocked startup: " + String.join(" | ", readiness.blockers()));
         var admissions = new PopulationAdmissionPlanner().plan(config.config().population,
                 java.time.Instant.parse(config.config().clock.logicalStart),
                 new NamedRandomStreams(config.config().scenario.seed));
