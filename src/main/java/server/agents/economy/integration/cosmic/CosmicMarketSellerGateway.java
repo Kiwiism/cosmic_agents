@@ -27,11 +27,15 @@ public final class CosmicMarketSellerGateway {
         return npc.sell(agent, sale.npcId(), sale.inventoryType(), sale.slot(), sale.quantity());
     }
 
+    public boolean hasPlayerShopPermit(Character agent) {
+        return agent.getInventory(InventoryType.CASH).countById(permitItemId) > 0;
+    }
+
     public FreeMarketPhysicalGateway.ActionStatus requestOpen(Character agent, MarketSellerPlan plan) {
         if (agent.getPlayerShop() != null && agent.getPlayerShop().isOwner(agent)
                 && agent.getPlayerShop().isOpen()) return FreeMarketPhysicalGateway.ActionStatus.ARRIVED;
         if (agent.getMapId() != plan.preferredRoomMapId()) return FreeMarketPhysicalGateway.ActionStatus.UNAVAILABLE;
-        if (agent.getInventory(InventoryType.CASH).countById(permitItemId) < 1)
+        if (!hasPlayerShopPermit(agent))
             return FreeMarketPhysicalGateway.ActionStatus.UNAVAILABLE;
         AgentRuntimeEntry entry = AgentRuntimeRegistry.findByCharacterInstance(agent);
         if (entry == null) return FreeMarketPhysicalGateway.ActionStatus.UNAVAILABLE;

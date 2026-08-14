@@ -81,6 +81,17 @@ class EconomyConfigLoaderTest {
     }
 
     @Test
+    void rejectsHiredMerchantItemAsPlayerShopPermit() {
+        String source = javaResource("economy-engine.yaml")
+                .replace("shopPermitItemId: 5140000", "shopPermitItemId: 5030000");
+
+        EconomyConfigException failure = assertThrows(
+                EconomyConfigException.class, () -> loader.load(source));
+
+        assertTrue(failure.getMessage().contains("PlayerShop permit"));
+    }
+
+    @Test
     void rejectsRepricingWithoutARealObservationWindow() {
         String source = javaResource("economy-engine.yaml")
                 .replace("minimumRepriceInterval: PT30M", "minimumRepriceInterval: PT0S");

@@ -67,7 +67,7 @@ population:
 bootstrap:
   holdingsMode: IMPORT_EXISTING_COSMIC_CHARACTERS
   shopPermitPolicy: REQUIRE_OWNED_REAL_ITEM
-  shopPermitItemId: 5030000
+  shopPermitItemId: 5140000
   allowAdministratorEndowment: false
   journalAllEndowments: true
 

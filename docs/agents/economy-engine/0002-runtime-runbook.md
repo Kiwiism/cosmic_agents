@@ -7,9 +7,10 @@
 2. Set distinct `ECONOMY_DB_*` credentials and initialize the separate PostgreSQL database through
    migrations V001-V010.
 3. Start Cosmic MySQL and the game server normally.
-4. Have at least `population.maximumAgents` live autonomous characters. The runtime maps them by
-   ascending character id to `agent-1`, `agent-2`, and so on. Characters admitted at a future
-   logical date must still be live and in the FM entrance or rooms at admission time.
+4. Have at least `population.maximumAgents` live autonomous characters. The runtime deterministically
+   binds scenario slots to characters of the same real Cosmic job family; within each eligible pool,
+   ascending character id is the stable tie-breaker. Characters admitted at a future logical date
+   must still be live and in the FM entrance or rooms at admission time.
 5. Capture at least `activity.minimumCalibrationSamples` completed real autonomous sessions for every
    build/job/level/map cohort that may farm. Use
    `!economy calibration start <agent-character-id>` while that live agent is on the farm map, then
@@ -19,9 +20,15 @@
    calibration means no farm simulation. When `activity.allowDeath` is enabled, only the observed
    cohort death rate can end a logical trip; a death ends that trip rather than permitting synthetic
    repeated-death loops.
-6. Ensure intended stall owners legitimately possess the configured real PlayerShop permit. In v83
-   this is a Cash Shop item and is neither a mob drop nor normal NPC stock.
-7. Run `!economy start`, then `!economy advance 0` to process initial admissions. Use
+6. Ensure every configured stall owner legitimately possesses the configured real PlayerShop permit.
+   The baseline uses WZ item `5140000`, Regular Store Permit (16 listings). In v83 this is a Cash
+   Shop item and is neither a mob drop nor normal NPC stock. `503xxxx` items are Hired Merchants and
+   are deliberately rejected.
+7. Run `!economy preflight`. It verifies the scenario-sized live roster, exact job-family binding,
+   seller permit ownership, initial FM/channel presence, the separate evidence database, and matching
+   current-level activity calibration coverage without starting or mutating a run. Later level bands
+   remain fail-closed and must be calibrated before agents reach them.
+8. Run `!economy start`, then `!economy advance 0` to process initial admissions. Use
    `!economy status` to inspect logical time and admitted population.
 
 ## Fast-forward semantics

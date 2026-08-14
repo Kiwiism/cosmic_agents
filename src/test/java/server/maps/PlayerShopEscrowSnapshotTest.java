@@ -19,7 +19,7 @@ class PlayerShopEscrowSnapshotTest {
         when(owner.getId()).thenReturn(77);
         when(owner.getMapId()).thenReturn(910000001);
         when(owner.getPosition()).thenReturn(new Point(30, 0));
-        PlayerShop shop = new PlayerShop(owner, "real drops", 5030000);
+        PlayerShop shop = new PlayerShop(owner, "real drops", 5140000);
         shop.enableDurableEscrow("94ad93db-6f57-4662-ac49-60cfc7c21568");
         shop.setPosition(new Point(120, 0));
         Equip equip = Equip.restored(1002001, (short) 1);

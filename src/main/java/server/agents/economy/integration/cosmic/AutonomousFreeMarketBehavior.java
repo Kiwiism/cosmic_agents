@@ -153,7 +153,8 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
                                 "success", negotiated.success()), List.of(), negotiated.evidence(),
                         Map.of("itemId", negotiated.itemId()), Map.of("offeredMesos", (double) negotiated.offeredMesos()));
                 state.sellerPlan = sellerPlans.read(agent, profile, state.knowledge, currentNeeds, logicalAt);
-                if (random.stream("agent." + profile.agentId() + ".stall-participation").nextDouble()
+                if (!seller.hasPlayerShopPermit(agent)
+                        || random.stream("agent." + profile.agentId() + ".stall-participation").nextDouble()
                         > profile.stallWillingness()) {
                     state.sellerPlan = new MarketSellerPlan(state.sellerPlan.npcSales(), List.of(),
                             state.sellerPlan.preferredRoomMapId(), state.sellerPlan.stallDescription());

@@ -1,5 +1,7 @@
 package server.agents.economy.scenario;
 
+import constants.inventory.ItemConstants;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
@@ -169,6 +171,8 @@ public final class EconomyConfigValidator {
         requireEnum(bootstrap.shopPermitPolicy, SHOP_PERMIT_POLICIES,
                 "bootstrap.shopPermitPolicy");
         require(bootstrap.shopPermitItemId > 0, "bootstrap.shopPermitItemId must be positive");
+        require(ItemConstants.isPlayerShop(bootstrap.shopPermitItemId),
+                "bootstrap.shopPermitItemId must be a real Cosmic PlayerShop permit (514xxxx), not a Hired Merchant");
         require(bootstrap.journalAllEndowments, "Every bootstrap endowment must be journaled");
         require(!bootstrap.allowAdministratorEndowment,
                 "Administrator endowment is forbidden in rule-exact economy runs");

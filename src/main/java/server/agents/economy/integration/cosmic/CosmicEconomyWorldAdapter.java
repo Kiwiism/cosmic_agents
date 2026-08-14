@@ -3,6 +3,7 @@ package server.agents.economy.integration.cosmic;
 import client.Character;
 import server.agents.economy.activity.FarmSessionOutcome;
 import server.agents.economy.activity.FarmSessionPlan;
+import server.agents.economy.activity.EconomyJobFamily;
 import server.agents.economy.persistence.EconomyParticipantBindingStore;
 import server.agents.economy.persistence.EconomyBootstrapStore;
 import server.agents.economy.scenario.EconomyAgentProfile;
@@ -69,6 +70,9 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort {
     public void admit(EconomyAgentProfile profile, Instant logicalAt) {
         Character agent = agents.resolve(profile.agentId());
         requireLiveFm(agent, true);
+        if (!profile.jobFamily().equals(EconomyJobFamily.of(agent)))
+            throw new IllegalStateException("economy profile job does not match bound Cosmic character: profile="
+                    + profile.jobFamily() + " character=" + EconomyJobFamily.of(agent));
         if (bindings.putIfAbsent(profile.agentId(), agent) != null)
             throw new IllegalStateException("economy agent already bound: " + profile.agentId());
         try {

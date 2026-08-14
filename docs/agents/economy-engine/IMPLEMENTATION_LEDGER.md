@@ -16,14 +16,22 @@ This ledger follows the attached master goal without redefining completion aroun
 | 9 | Public chat and direct negotiation | Baseline code complete: public transcript, meso and reciprocal item barter, real Trade settlement |
 | 10 | Replaceable ambient behavior | Baseline code complete: owned-chair and constrained fidget policy seam |
 | 11 | Rebuildable data projections and query contracts | Baseline code complete: item/meso/agent read models, explanation query, invariant audit |
-| 12 | Experiments, human readiness, soak and completion audit | PostgreSQL V001-V011 clean initialization, startup contract, and balance guard verified; live multi-agent soak and counterfactual matrix remain pending |
+| 12 | Experiments, human readiness, soak and completion audit | PostgreSQL V001-V011 clean initialization, startup contract, balance guard, deterministic 50-to-200 scheduler soak, and non-mutating live preflight verified; live multi-agent soak and counterfactual matrix remain pending |
 
 ## Deliberate baseline constraint
 
-The v83 PlayerShop permit is a Cash Shop asset. The default scenario uses
+The authoritative v83 WZ identifies `5140000` as the 16-listing Regular Store Permit. The
+`503xxxx` family is Hired Merchant inventory and is rejected by configuration validation. The
+PlayerShop permit is a Cash Shop asset. The default scenario uses
 `REQUIRE_OWNED_REAL_ITEM`; therefore an imported character without a real permit cannot open a
 stall. The strict YAML rejects administrative endowment. A valid stall experiment must provision
 legitimately held permits before the run; the engine never silently grants them.
+
+Before mutation, `!economy preflight` reproduces the seeded scenario roster and verifies maximum
+population capacity, exact real job-family binding, permits reserved for willing sellers, initial
+channel/FM presence, separate PostgreSQL compatibility, and current-level activity calibration.
+Start uses the same deterministic binding. A bound character whose real job family differs from its
+profile is rejected again at admission.
 
 The goal is complete only after the requirement-by-requirement audit proves every definition-of-done
 item with current code, tests, migrations, configuration, and runtime evidence.

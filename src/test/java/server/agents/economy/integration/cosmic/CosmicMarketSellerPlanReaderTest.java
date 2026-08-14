@@ -47,7 +47,7 @@ class CosmicMarketSellerPlanReaderTest {
         when(equip.list()).thenReturn(List.of(sword)); when(agent.getId()).thenReturn(1);
         when(agent.getName()).thenReturn("Seller");
         CosmicMarketSellerPlanReader reader = new CosmicMarketSellerPlanReader(catalog, 1012004,
-                16, 5030000, .15, .75, (id, quantity) -> 100);
+                16, 5140000, .15, .75, (id, quantity) -> 100);
 
         MarketSellerPlan plan = reader.read(agent, profile(), new PrivateMarketKnowledge(),
                 List.of(), Instant.parse("2026-01-01T00:00:00Z"));
@@ -87,7 +87,7 @@ class CosmicMarketSellerPlanReaderTest {
         AgentNeed reserve = new AgentNeed(itemId, 10, 10, .8,
                 EconomicReason.CONSUMABLE_RESTOCK, now, 0, Set.of(), Set.of(), "runway");
         CosmicMarketSellerPlanReader reader = new CosmicMarketSellerPlanReader(catalog, 1012004,
-                16, 5030000, .15, .75, (id, quantity) -> 100);
+                16, 5140000, .15, .75, (id, quantity) -> 100);
 
         MarketSellerPlan plan = reader.read(agent, profile(), knowledge, List.of(reserve), now);
 

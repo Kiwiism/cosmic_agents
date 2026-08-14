@@ -28,6 +28,9 @@ public final class EconomyCommand extends Command {
             if ("start".equalsIgnoreCase(params[0])) {
                 show(client, EconomySimulationRuntime.start()); return;
             }
+            if ("preflight".equalsIgnoreCase(params[0])) {
+                preflight(client, EconomySimulationRuntime.preflight()); return;
+            }
             if ("advance".equalsIgnoreCase(params[0]) && params.length == 2) {
                 long days = Long.parseLong(params[1]);
                 var result = EconomySimulationRuntime.advanceDays(days);
@@ -43,12 +46,22 @@ public final class EconomyCommand extends Command {
             if ("calibration".equalsIgnoreCase(params[0])) {
                 calibration(client, params); return;
             }
-            client.getPlayer().yellowMessage("Usage: !economy start | advance <non-negative-days> | status | stop "
+            client.getPlayer().yellowMessage("Usage: !economy preflight | start | advance <non-negative-days> | status | stop "
                     + "| calibration start|stop|status <agent-character-id> [died]");
         } catch (RuntimeException failure) {
             client.getPlayer().yellowMessage("Economy command failed: "
                     + (failure.getMessage() == null ? failure.getClass().getSimpleName() : failure.getMessage()));
         }
+    }
+
+    private static void preflight(Client client, EconomySimulationRuntime.Preflight value) {
+        client.getPlayer().yellowMessage("Economy preflight " + (value.ready() ? "READY" : "BLOCKED")
+                + ": roster=" + value.mappedCharacters() + '/' + value.requiredCharacters()
+                + " initialFM=" + value.initialFmReady() + '/' + value.initialAgents()
+                + " permits=" + value.realPermits() + '/' + value.configuredSellers()
+                + " calibrationsMissing=" + value.missingCalibrations()
+                + " database=" + (value.databaseReady() ? "READY" : "BLOCKED"));
+        for (String blocker : value.blockers()) client.getPlayer().yellowMessage(" - " + blocker);
     }
 
     private static void show(Client client, EconomySimulationRuntime.Status status) {

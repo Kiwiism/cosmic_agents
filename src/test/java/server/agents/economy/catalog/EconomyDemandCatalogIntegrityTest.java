@@ -1,10 +1,14 @@
 package server.agents.economy.catalog;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Assumptions;
 import server.agents.economy.scenario.EconomyConfigLoader;
+import constants.inventory.ItemConstants;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -12,8 +16,25 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class EconomyDemandCatalogIntegrityTest {
+    @Test
+    void configuredStallPermitIsTheRealRegularPlayerShopPermitInWz() throws Exception {
+        String wzPath = System.getProperty("wz-path");
+        Assumptions.assumeTrue(wzPath != null, "set -Dwz-path for authoritative WZ integration");
+        int permitId = new EconomyConfigLoader().load().config().bootstrap.shopPermitItemId;
+        assertEquals(5_140_000, permitId);
+        assertTrue(ItemConstants.isPlayerShop(permitId));
+        assertTrue(!ItemConstants.isHiredMerchant(permitId));
+
+        String cashNames = Files.readString(Path.of(wzPath, "String.wz", "Cash.img.xml"));
+        assertTrue(cashNames.contains("<imgdir name=\"5140000\"><string name=\"name\" value=\"Regular Store Permit\""));
+        assertTrue(cashNames.contains("Can sell up to 16 items at once."));
+        String cashItems = Files.readString(Path.of(wzPath, "Item.wz", "Cash", "0514.img.xml"));
+        assertTrue(cashItems.contains("<imgdir name=\"05140000\">"));
+    }
+
     @Test
     void everyConfiguredResourceAndDispositionNpcIsBackedByRealSqlAndMapEvidence() throws Exception {
         var config = new EconomyConfigLoader().load().config();
