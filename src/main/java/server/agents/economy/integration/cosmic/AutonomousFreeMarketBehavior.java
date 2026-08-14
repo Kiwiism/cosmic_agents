@@ -38,6 +38,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
     private final Duration postTripDelay;
     private final Duration maximumStallDuration;
     private final Duration minimumRepriceInterval;
+    private final Duration npcServiceDelay;
     private final Map<String, State> states = new ConcurrentHashMap<>();
 
     public AutonomousFreeMarketBehavior(UUID runId, String configHash, String catalogVersion,
@@ -48,11 +49,11 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
                                         CosmicMarketSellerGateway seller,
                                         ResourceProcurement procurement,
                                         Duration actionPoll, Duration postTripDelay,
-                                        Duration maximumStallDuration) {
+                                        Duration maximumStallDuration, Duration npcServiceDelay) {
         this(runId, configHash, catalogVersion, config, random, physical, needs,
                 (agent, profile, observations, base, at) -> base, journal, sellerPlans, seller,
                 procurement, AmbientBehavior.disabled(), NegotiationBehavior.disabled(),
-                actionPoll, postTripDelay, maximumStallDuration);
+                actionPoll, postTripDelay, maximumStallDuration, npcServiceDelay);
     }
 
     public AutonomousFreeMarketBehavior(UUID runId, String configHash, String catalogVersion,
@@ -66,7 +67,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
                                         AmbientBehavior ambient,
                                         NegotiationBehavior negotiation,
                                         Duration actionPoll, Duration postTripDelay,
-                                        Duration maximumStallDuration) {
+                                        Duration maximumStallDuration, Duration npcServiceDelay) {
         this.runId = Objects.requireNonNull(runId); this.configHash = Objects.requireNonNull(configHash);
         this.catalogVersion = Objects.requireNonNull(catalogVersion); this.config = Objects.requireNonNull(config);
         this.random = Objects.requireNonNull(random); this.physical = Objects.requireNonNull(physical);
@@ -82,6 +83,8 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
         this.actionPoll = actionPoll; this.postTripDelay = postTripDelay;
         this.maximumStallDuration = maximumStallDuration;
         this.minimumRepriceInterval = Duration.parse(config.minimumRepriceInterval);
+        if (npcServiceDelay.isNegative()) throw new IllegalArgumentException("NPC service delay cannot be negative");
+        this.npcServiceDelay = npcServiceDelay;
     }
 
     @Override
@@ -103,7 +106,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
                         Map.of("sourceMap", result.sourceMapId()),
                         Map.of("reason", "CONFIGURED_RESOURCE_TARGET"),
                         Map.of("mesoDelta", (double) result.mesoDelta()));
-                return revisit(logicalAt, false);
+                return revisitAfter(logicalAt, npcServiceDelay, false);
             }
             state.phase = Phase.BROWSING;
         }
@@ -143,7 +146,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
                         Map.of("itemId", sale.itemId(), "quantity", sale.quantity(), "npcId", sale.npcId(),
                                 "result", receipt.result()), List.of(), Map.of("sourceMap", receipt.sourceMapId()),
                         Map.of("reason", sale.reason(), "evidence", sale.evidence()), Map.of());
-                return revisit(logicalAt, false);
+                return revisitAfter(logicalAt, npcServiceDelay, false);
             }
             if (state.sellerPlan.stallListings().isEmpty()) return finish(profile.agentId(), logicalAt);
             state.phase = Phase.OPENING_STALL;
@@ -412,8 +415,10 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
         }
     }
     private EconomyWorldPort.MarketDirective revisit(Instant at, boolean externalPending) {
-        return new EconomyWorldPort.MarketDirective(Optional.empty(), Optional.of(at.plus(actionPoll)),
-                externalPending);
+        return revisitAfter(at, actionPoll, externalPending);
+    }
+    private EconomyWorldPort.MarketDirective revisitAfter(Instant at, Duration delay, boolean externalPending) {
+        return new EconomyWorldPort.MarketDirective(Optional.empty(), Optional.of(at.plus(delay)), externalPending);
     }
     private EconomyWorldPort.MarketDirective finish(String agentId, Instant at) {
         states.remove(agentId);

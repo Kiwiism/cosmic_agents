@@ -90,6 +90,17 @@ class EconomyConfigLoaderTest {
         assertTrue(failure.getMessage().contains("minimumRepriceInterval"));
     }
 
+    @Test
+    void rejectsAdvertisedButUnimplementedNpcTravelMode() {
+        String source = javaResource("economy-engine.yaml")
+                .replace("accessMode: REMOTE_FROM_FREE_MARKET", "accessMode: PHYSICAL_TRAVEL");
+
+        EconomyConfigException failure = assertThrows(
+                EconomyConfigException.class, () -> loader.load(source));
+
+        assertTrue(failure.getMessage().contains("npcCommerce.accessMode"));
+    }
+
     private static String javaResource(String path) {
         try {
             return java.nio.file.Files.readString(Path.of(path));

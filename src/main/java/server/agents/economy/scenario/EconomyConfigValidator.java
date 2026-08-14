@@ -12,9 +12,8 @@ public final class EconomyConfigValidator {
     private static final double DISTRIBUTION_TOLERANCE = 0.000_001d;
     private static final Set<String> CLOCK_MODES = Set.of(
             "REALTIME", "ACCELERATED", "MAX_THROUGHPUT", "REPLAY");
-    private static final Set<String> NPC_ACCESS_MODES = Set.of(
-            "REMOTE_FROM_FREE_MARKET", "PHYSICAL_TRAVEL", "DISABLED");
-    private static final Set<String> NPC_ACCESS_SCOPES = Set.of("ALL_GAME", "VICTORIA_ONLY");
+    private static final Set<String> NPC_ACCESS_MODES = Set.of("REMOTE_FROM_FREE_MARKET");
+    private static final Set<String> NPC_ACCESS_SCOPES = Set.of("ALL_GAME");
     private static final Set<String> ACTIVITY_MODES = Set.of("RULE_EXACT");
     private static final Set<String> HOLDINGS_MODES = Set.of("IMPORT_EXISTING_COSMIC_CHARACTERS");
     private static final Set<String> SHOP_PERMIT_POLICIES = Set.of("REQUIRE_OWNED_REAL_ITEM");
@@ -93,6 +92,12 @@ public final class EconomyConfigValidator {
         validateSeasonal(config.seasonalRules);
         validateAmbient(config.ambient);
         validateDemand(config.demand);
+        require(config.quests.enabled && config.quests.demandRequiresAcceptedQuest
+                        && config.quests.demandRequiresRemainingObjective,
+                "quest demand must remain tied to accepted, unfinished live objectives");
+        require(config.chairs.enabled && config.chairs.requireOwnedChair
+                        && config.chairs.allowListing && config.chairs.allowDirectTrade,
+                "chair activity and trade must preserve real ownership and configured market access");
         requireText(config.persistence.provider, "persistence.provider");
         requireText(config.persistence.database, "persistence.database");
         require(config.persistence.retainMovementDebugDays >= 0,
