@@ -71,6 +71,21 @@ class EconomyTransactionCoordinatorTest {
         assertEquals(EconomyJournalStatus.ROLLED_BACK, journal.lastStatus());
     }
 
+    @Test
+    void rollsBackEnlistedInMemoryStateWhenDurableCommitFails() {
+        EconomyTransactionCoordinator.installJournalForTesting(new FailingCommitJournal());
+        Character participant = character(45);
+        AtomicInteger escrowBundles = new AtomicInteger(4);
+
+        assertThrows(EconomyTransactionException.class, () -> EconomyTransactionCoordinator.execute(
+                participant, null, EconomyOperationKind.PLAYER_SHOP_SALE, "escrow rollback", context -> {
+                    escrowBundles.set(3);
+                    context.enlist(connection -> { }, () -> escrowBundles.set(4));
+                }));
+
+        assertEquals(4, escrowBundles.get());
+    }
+
     private static Character character(int id) {
         Character character = mock(Character.class);
         when(character.getId()).thenReturn(id);

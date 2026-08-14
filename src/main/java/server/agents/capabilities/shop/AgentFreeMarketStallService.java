@@ -11,6 +11,8 @@ import server.ItemRestrictionPolicy;
 import server.economy.EconomyOperationKind;
 import server.economy.EconomyTransactionCoordinator;
 import server.maps.PlayerShop;
+import server.maps.PlayerShopEscrowSnapshot;
+import server.maps.PlayerShopEscrowStore;
 import server.maps.PlayerShopItem;
 import server.maps.reservation.CharacterSpaceReservation;
 import tools.PacketCreator;
@@ -19,6 +21,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 public final class AgentFreeMarketStallService {
     public static final int MAX_LISTINGS = 16;
@@ -72,6 +75,7 @@ public final class AgentFreeMarketStallService {
         }
 
         PlayerShop shop = new PlayerShop(agent, description == null ? "" : description, permitItemId);
+        shop.enableDurableEscrow(UUID.randomUUID().toString());
         shop.setPosition(reservation.position());
         for (PreparedListing listing : prepared) {
             if (!shop.addItem(listing.shopItem())) {
@@ -81,12 +85,18 @@ public final class AgentFreeMarketStallService {
         String summary = "map=" + agent.getMapId() + " listings=" + prepared.size()
                 + " items=" + prepared.stream().map(listing ->
                 listing.shopItem().getItem().getItemId() + "x" + listing.removalQuantity()).toList();
-        EconomyTransactionCoordinator.execute(agent, null, EconomyOperationKind.PLAYER_SHOP_LIST,
-                summary, () -> {
+        EconomyTransactionCoordinator.execute("player-shop-open:" + shop.getEscrowId(), agent, null,
+                EconomyOperationKind.PLAYER_SHOP_LIST, summary, context -> {
                     for (PreparedListing listing : prepared) {
                         InventoryManipulator.removeFromSlot(agent.getClient(), listing.inventoryType(),
                                 listing.slot(), listing.removalQuantity(), true);
                     }
+                    if (YamlConfig.config.server.USE_ERASE_PERMIT_ON_OPENSHOP) {
+                        InventoryManipulator.removeById(
+                                agent.getClient(), InventoryType.CASH, permitItemId, 1, true, false);
+                    }
+                    PlayerShopEscrowSnapshot escrow = PlayerShopEscrowSnapshot.capture(shop);
+                    context.enlist(connection -> PlayerShopEscrowStore.persist(connection, escrow), () -> { });
                 });
 
         agent.setPlayerShop(shop);
@@ -94,15 +104,29 @@ public final class AgentFreeMarketStallService {
         agent.getWorldServer().registerPlayerShop(shop);
         shop.setOpen(true);
         agent.getMap().broadcastMessage(PacketCreator.updatePlayerShopBox(shop));
-        if (YamlConfig.config.server.USE_ERASE_PERMIT_ON_OPENSHOP) {
-            try {
-                InventoryManipulator.removeById(
-                        agent.getClient(), InventoryType.CASH, permitItemId, 1, true, false);
-            } catch (RuntimeException ignored) {
-                // The normal packet path also tolerates a permit disappearing during open.
-            }
-        }
         return new Result(true, "agent player shop opened", shop);
+    }
+
+    /** Returns inventory from an interrupted prior stall before any new stall can be opened. */
+    public boolean recoverInterruptedEscrow(Character agent) {
+        var stored = PlayerShopEscrowStore.load(agent.getId());
+        if (stored.isEmpty()) return false;
+        PlayerShopEscrowSnapshot escrow = stored.orElseThrow();
+        EconomyTransactionCoordinator.execute("player-shop-recover:" + escrow.escrowId(), agent, null,
+                EconomyOperationKind.PLAYER_SHOP_LIST, "recover escrow=" + escrow.escrowId(), context -> {
+                    for (PlayerShopEscrowSnapshot.Listing listing : escrow.listings()) {
+                        Item item = listing.item().toItem();
+                        int total = Math.multiplyExact(item.getQuantity(), listing.bundles());
+                        if (total > Short.MAX_VALUE) throw new IllegalStateException("escrow stack exceeds limit");
+                        item.setQuantity((short) total);
+                        if (!InventoryManipulator.addFromDrop(agent.getClient(), item, false)) {
+                            throw new IllegalStateException("inventory has no room for recovered stall escrow");
+                        }
+                    }
+                    context.enlist(connection -> PlayerShopEscrowStore.delete(connection,
+                            agent.getId(), escrow.escrowId()), () -> { });
+                });
+        return true;
     }
 
     private List<PreparedListing> prepare(Character agent, List<Listing> listings) {

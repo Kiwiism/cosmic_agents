@@ -5905,13 +5905,15 @@ public class Character extends AbstractCharacterObject {
             mps.setOpen(false);
             getWorldServer().unregisterPlayerShop(mps);
 
-            for (PlayerShopItem mpsi : mps.getItems()) {
-                if (mpsi.getBundles() >= 2) {
-                    Item iItem = mpsi.getItem().copy();
-                    iItem.setQuantity((short) (mpsi.getBundles() * iItem.getQuantity()));
-                    InventoryManipulator.addFromDrop(this.getClient(), iItem, false);
-                } else if (mpsi.isExist()) {
-                    InventoryManipulator.addFromDrop(this.getClient(), mpsi.getItem(), true);
+            if (!mps.returnEscrowToOwner(this)) {
+                for (PlayerShopItem mpsi : mps.getItems()) {
+                    if (mpsi.getBundles() >= 2) {
+                        Item iItem = mpsi.getItem().copy();
+                        iItem.setQuantity((short) (mpsi.getBundles() * iItem.getQuantity()));
+                        InventoryManipulator.addFromDrop(this.getClient(), iItem, false);
+                    } else if (mpsi.isExist()) {
+                        InventoryManipulator.addFromDrop(this.getClient(), mpsi.getItem(), true);
+                    }
                 }
             }
             mps.closeShop();

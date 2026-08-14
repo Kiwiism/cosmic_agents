@@ -11,6 +11,7 @@ public final class EconomyEngineConfig {
     public Catalog catalog;
     public World world;
     public Population population;
+    public Bootstrap bootstrap;
     public NpcCommerce npcCommerce;
     public Activity activity;
     public Market market;
@@ -74,6 +75,14 @@ public final class EconomyEngineConfig {
     public static final class MerchantParticipation {
         public double willingSellerFraction;
         public double dedicatedMerchantFraction;
+    }
+
+    public static final class Bootstrap {
+        public String holdingsMode;
+        public String shopPermitPolicy;
+        public int shopPermitItemId;
+        public boolean allowAdministratorEndowment;
+        public boolean journalAllEndowments;
     }
 
     public static final class NpcCommerce {

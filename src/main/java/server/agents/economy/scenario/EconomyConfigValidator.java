@@ -15,6 +15,10 @@ public final class EconomyConfigValidator {
             "REMOTE_FROM_FREE_MARKET", "PHYSICAL_TRAVEL", "DISABLED");
     private static final Set<String> NPC_ACCESS_SCOPES = Set.of("ALL_GAME", "VICTORIA_ONLY");
     private static final Set<String> ACTIVITY_MODES = Set.of("RULE_EXACT");
+    private static final Set<String> HOLDINGS_MODES = Set.of(
+            "IMPORT_EXISTING_COSMIC_CHARACTERS", "EXPLICIT_BOOTSTRAP_ENDOWMENT");
+    private static final Set<String> SHOP_PERMIT_POLICIES = Set.of(
+            "REQUIRE_OWNED_REAL_ITEM", "EXPLICIT_BOOTSTRAP_ENDOWMENT");
 
     private EconomyConfigValidator() {
     }
@@ -51,6 +55,7 @@ public final class EconomyConfigValidator {
                 "At least one activity region is required");
 
         validatePopulation(config.population);
+        validateBootstrap(config.bootstrap);
         requireEnum(config.npcCommerce.accessMode, NPC_ACCESS_MODES, "npcCommerce.accessMode");
         requireEnum(config.npcCommerce.accessScope, NPC_ACCESS_SCOPES, "npcCommerce.accessScope");
         parseDuration(config.npcCommerce.logicalServiceDelay, "npcCommerce.logicalServiceDelay");
@@ -84,12 +89,28 @@ public final class EconomyConfigValidator {
         require(config.scenario != null && config.clock != null && config.catalog != null
                         && config.world != null
                         && config.population != null && config.npcCommerce != null
+                        && config.bootstrap != null
                         && config.activity != null && config.market != null && config.tax != null
                         && config.seasonalRules != null && config.quests != null
                         && config.scrolling != null && config.chairs != null
                         && config.ambient != null && config.persistence != null
                         && config.humanReadiness != null,
                 "Every top-level economy configuration section is required");
+    }
+
+    private static void validateBootstrap(EconomyEngineConfig.Bootstrap bootstrap) {
+        requireEnum(bootstrap.holdingsMode, HOLDINGS_MODES, "bootstrap.holdingsMode");
+        requireEnum(bootstrap.shopPermitPolicy, SHOP_PERMIT_POLICIES,
+                "bootstrap.shopPermitPolicy");
+        require(bootstrap.shopPermitItemId > 0, "bootstrap.shopPermitItemId must be positive");
+        require(bootstrap.journalAllEndowments, "Every bootstrap endowment must be journaled");
+        if ("EXPLICIT_BOOTSTRAP_ENDOWMENT".equals(bootstrap.shopPermitPolicy)) {
+            require(bootstrap.allowAdministratorEndowment,
+                    "Explicit permit endowment requires allowAdministratorEndowment");
+        } else {
+            require(!bootstrap.allowAdministratorEndowment,
+                    "Administrator endowment must stay disabled for require-owned permits");
+        }
     }
 
     private static void validatePopulation(EconomyEngineConfig.Population population) {

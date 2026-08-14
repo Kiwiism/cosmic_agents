@@ -31,11 +31,21 @@ public final class EconomyTransactionCoordinator {
 
     public static void execute(Character primary, Character secondary, EconomyOperationKind kind,
                                String summary, Runnable mutation) {
-        execute(null, primary, secondary, kind, summary, mutation);
+        execute(null, primary, secondary, kind, summary, ignored -> mutation.run());
     }
 
     public static void execute(String idempotencyKey, Character primary, Character secondary,
                                EconomyOperationKind kind, String summary, Runnable mutation) {
+        execute(idempotencyKey, primary, secondary, kind, summary, ignored -> mutation.run());
+    }
+
+    public static void execute(Character primary, Character secondary, EconomyOperationKind kind,
+                               String summary, EconomyMutation mutation) {
+        execute(null, primary, secondary, kind, summary, mutation);
+    }
+
+    public static void execute(String idempotencyKey, Character primary, Character secondary,
+                               EconomyOperationKind kind, String summary, EconomyMutation mutation) {
         if (primary == null || mutation == null) {
             throw new IllegalArgumentException("Economy transaction requires a primary participant and mutation");
         }
@@ -60,13 +70,20 @@ public final class EconomyTransactionCoordinator {
             if (journal.prepare(operation) == EconomyPrepareResult.ALREADY_COMMITTED) {
                 return;
             }
+            EconomyTransactionContext context = new EconomyTransactionContext();
             try {
-                mutation.run();
+                mutation.run(context);
                 EconomyParticipantSnapshot primaryAfter = EconomyParticipantSnapshot.capture(primary);
                 EconomyParticipantSnapshot secondaryAfter = secondary == null
                         ? null : EconomyParticipantSnapshot.capture(secondary);
-                journal.commit(operation, EconomyDurableState.capture(primaryAfter, secondaryAfter));
+                journal.commit(operation, EconomyDurableState.capture(primaryAfter, secondaryAfter,
+                        context.persistence()));
             } catch (RuntimeException failure) {
+                try {
+                    context.rollback();
+                } catch (RuntimeException rollbackFailure) {
+                    failure.addSuppressed(rollbackFailure);
+                }
                 rollbackOrMarkForReview(primaryBefore, secondaryBefore, operation, failure);
                 throw failure;
             }

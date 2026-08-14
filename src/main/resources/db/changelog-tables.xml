@@ -334,4 +334,34 @@
         </createIndex>
     </changeSet>
 
+    <!-- Agent PlayerShops are visible runtime objects, but unsold inventory must survive restarts. -->
+    <changeSet id="34-economy-player-shop-escrow" author="Codex">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="economy_player_shop_escrow"/></not>
+        </preConditions>
+        <createTable tableName="economy_player_shop_escrow">
+            <column name="owner_character_id" type="INT">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="escrow_id" type="VARCHAR(36)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="room_map_id" type="INT"><constraints nullable="false"/></column>
+            <column name="spot_x" type="INT"><constraints nullable="false"/></column>
+            <column name="permit_item_id" type="INT"><constraints nullable="false"/></column>
+            <column name="description" type="VARCHAR(255)"><constraints nullable="false"/></column>
+            <column name="listings_json" type="LONGTEXT"><constraints nullable="false"/></column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="economy_player_shop_escrow"
+                                 baseColumnNames="owner_character_id"
+                                 referencedTableName="characters" referencedColumnNames="id"
+                                 constraintName="fk_economy_player_shop_owner" onDelete="CASCADE"/>
+    </changeSet>
+
 </databaseChangeLog>

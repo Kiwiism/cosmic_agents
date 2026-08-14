@@ -18,5 +18,12 @@ This ledger follows the attached master goal without redefining completion aroun
 | 11 | Rebuildable data projections and query contracts | In progress: storage schema and item-history contract implemented |
 | 12 | Experiments, human readiness, soak and completion audit | Not started |
 
+## Deliberate baseline constraint
+
+The v83 PlayerShop permit is a Cash Shop asset. The default scenario uses
+`REQUIRE_OWNED_REAL_ITEM`; therefore an imported character without a real permit cannot open a
+stall. The engine does not silently grant permits. `EXPLICIT_BOOTSTRAP_ENDOWMENT` is available only
+as a visible, journaled external faucet when a scenario intentionally chooses that assumption.
+
 The goal is complete only after the requirement-by-requirement audit proves every definition-of-done
 item with current code, tests, migrations, configuration, and runtime evidence.
