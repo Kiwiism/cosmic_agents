@@ -40,6 +40,13 @@ class EconomyPostgresSchemaIntegrationTest {
                             + "WHERE run_id = '" + run + "' AND revision = 0 "
                             + "AND config_schema_version = 1 AND validation_result ->> 'valid' = 'true' "
                             + "AND normalized_config ->> 'schemaVersion' = '1'"));
+                    var runs = new JdbcSimulationRunRepository(dataSource);
+                    runs.updateLogicalTime(run, Instant.parse("2026-01-01T00:00:01Z"),
+                            "WAITING_PHYSICAL_ACTION");
+                    runs.updateLogicalTime(run, Instant.parse("2026-01-01T00:00:02Z"),
+                            "INVARIANT_VIOLATION");
+                    assertEquals(1, scalar(connection, "SELECT COUNT(*) FROM simulation_run WHERE run_id = '"
+                            + run + "' AND status = 'INVARIANT_VIOLATION'"));
                     insertProjectionFacts(connection, run);
                 }
                 JdbcEconomyProjectionService.Result projection =

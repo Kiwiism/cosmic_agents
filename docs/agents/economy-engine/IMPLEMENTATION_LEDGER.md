@@ -16,7 +16,7 @@ This ledger follows the attached master goal without redefining completion aroun
 | 9 | Public chat and direct negotiation | Baseline code complete: public transcript, meso and reciprocal item barter, real Trade settlement |
 | 10 | Replaceable ambient behavior | Baseline code complete: owned-chair and constrained fidget policy seam |
 | 11 | Rebuildable data projections and query contracts | Baseline code complete: item/meso/agent read models, explanation query, invariant audit |
-| 12 | Experiments, human readiness, soak and completion audit | PostgreSQL V001-V012 clean initialization, atomic validated configuration revision, startup contract, balance guard, deterministic 50-to-200 scheduler soak, and non-mutating live preflight verified; live multi-agent soak and counterfactual matrix remain pending |
+| 12 | Experiments, human readiness, soak and completion audit | PostgreSQL V001-V013 clean initialization, atomic validated configuration revision, physical-wait/invariant run statuses, startup contract, balance guard, deterministic 50-to-200 scheduler soak, and non-mutating live preflight verified; live multi-agent soak and counterfactual matrix remain pending |
 
 ## Deliberate baseline constraint
 

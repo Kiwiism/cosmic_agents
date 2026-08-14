@@ -37,8 +37,15 @@ public final class EconomyDatabaseVerifier {
                 try (ResultSet result = connection.getMetaData().getColumns(
                         null, "public", column.table(), column.column())) {
                     if (!result.next()) throw new IllegalStateException("economy schema is missing "
-                        + column.table() + '.' + column.column() + "; apply V001 through V012");
+                        + column.table() + '.' + column.column() + "; apply V001 through V013");
                 }
+            }
+            try (var statement = connection.createStatement(); var statuses = statement.executeQuery(
+                    "SELECT pg_get_constraintdef(oid) FROM pg_constraint "
+                            + "WHERE conname = 'simulation_run_status_check'")) {
+                if (!statuses.next() || !statuses.getString(1).contains("WAITING_PHYSICAL_ACTION")
+                        || !statuses.getString(1).contains("INVARIANT_VIOLATION"))
+                    throw new IllegalStateException("economy schema is missing V013 runtime run statuses");
             }
         } catch (SQLException failure) {
             throw new EconomyPersistenceException("Could not verify economy database schema", failure);
