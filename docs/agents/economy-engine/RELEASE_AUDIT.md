@@ -23,6 +23,8 @@ logical-scheduler test is never represented as a physical Free Market soak.
   Hired Merchant items (`503xxxx`) are rejected.
 - The selected economy, Cosmic economy-boundary, architecture, death, quest persistence, PlayerShop
   escrow, catalog, and deterministic replay suites pass.
+- Unsupported clock modes, dedicated merchants, circular-trade detection, PostgreSQL partitioning,
+  and checkpoint compression fail closed rather than accepting configuration with no runtime effect.
 
 ## Definition-of-done disposition
 

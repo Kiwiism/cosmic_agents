@@ -127,6 +127,28 @@ class EconomyConfigLoaderTest {
     }
 
     @Test
+    void rejectsAdvertisedCircularDetectionUntilItHasDurableSemantics() {
+        String source = javaResource("economy-engine.yaml")
+                .replace("detectCircularTrade: false", "detectCircularTrade: true");
+
+        EconomyConfigException failure = assertThrows(
+                EconomyConfigException.class, () -> loader.load(source));
+
+        assertTrue(failure.getMessage().contains("detectCircularTrade"));
+    }
+
+    @Test
+    void rejectsAdvertisedCheckpointCompressionWithoutACompressedCodec() {
+        String source = javaResource("economy-engine.yaml")
+                .replace("checkpointCompression: false", "checkpointCompression: true");
+
+        EconomyConfigException failure = assertThrows(
+                EconomyConfigException.class, () -> loader.load(source));
+
+        assertTrue(failure.getMessage().contains("checkpointCompression"));
+    }
+
+    @Test
     void rejectsUnknownConfigurationFields() {
         String source = javaResource("economy-engine.yaml")
                 .replace("schemaVersion: 1", "schemaVersion: 1\nunknownMarketOracle: true");

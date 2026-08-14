@@ -60,7 +60,8 @@ population:
     intensive: 0.20
   merchantParticipation:
     willingSellerFraction: 0.65
-    dedicatedMerchantFraction: 0.10
+    # Dedicated-merchant lifecycle is not implemented; zero prevents a decorative no-op knob.
+    dedicatedMerchantFraction: 0.00
 
 # PlayerShop permits are Cash Shop assets in v83. The strict baseline does not invent or grant one.
 # Runs import exact live holdings and never create administrative startup stock.
@@ -129,7 +130,8 @@ market:
   rememberObservedListings: true
   useCosmicTransactions: true
   rejectSelfTrade: true
-  detectCircularTrade: true
+  # Durable multi-transaction cycle detection is not implemented in the first release.
+  detectCircularTrade: false
 
 tax:
   enabled: true
@@ -206,8 +208,10 @@ ambient:
 persistence:
   provider: POSTGRESQL
   database: cosmic_economy
-  eventPartition: RUN_AND_LOGICAL_DAY
-  checkpointCompression: true
+  # V001-V012 are indexed by run/day but are not declaratively partitioned yet.
+  eventPartition: NONE
+  # Checkpoints remain hashed JSONB; enable only after a verified compressed codec ships.
+  checkpointCompression: false
   retainRawEconomicEvents: FOREVER
   retainDecisionEvents: FOREVER
   retainChatEvents: FOREVER

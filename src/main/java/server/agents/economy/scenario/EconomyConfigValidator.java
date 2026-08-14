@@ -52,6 +52,10 @@ public final class EconomyConfigValidator {
                 "Free Market room range must be 910000001 through 910000022");
         require(config.world.activityRegions != null && !config.world.activityRegions.isEmpty(),
                 "At least one activity region is required");
+        require(Set.copyOf(config.world.activityRegions).equals(Set.of("MAPLE_ISLAND", "VICTORIA_ISLAND")),
+                "The initial activity manifest must be exactly Maple Island and Victoria Island");
+        require(!config.world.allowPhysicalActivityOutsideFreeMarket,
+                "Visible economy activity must remain inside the Free Market");
 
         validatePopulation(config.population);
         validateBootstrap(config.bootstrap);
@@ -80,6 +84,11 @@ public final class EconomyConfigValidator {
                 "maximumSessionMinutes must not be below the median");
         require(!config.activity.visibleWhileActive,
                 "Offscreen activity agents cannot remain visible in the Free Market");
+        require(config.activity.returnThroughFreeMarketEntrance,
+                "Offscreen activity must return through the Free Market entrance");
+        require(config.activity.levelAppropriate && config.activity.jobAppropriate
+                        && config.activity.enforceInventoryCapacity,
+                "Rule-exact activity requires level/job matching and real inventory capacity");
         if (config.activity.allowDeath) {
             require("LIVE_ACTIVITY_CALIBRATION".equals(config.activity.deathOccurrenceSource),
                     "death occurrence must come from matching live activity calibration");
@@ -101,7 +110,9 @@ public final class EconomyConfigValidator {
         validateDemand(config.demand);
         require(config.quests.enabled && config.quests.demandRequiresAcceptedQuest
                         && config.quests.demandRequiresRemainingObjective
-                        && config.quests.allowRemoteQuestNpcFromFreeMarket,
+                        && config.quests.allowRemoteQuestNpcFromFreeMarket
+                        && config.quests.allowTradeAcquisition
+                        && config.quests.allowNpcAcquisitionOnlyWhenGameSupportsIt,
                 "quest demand must remain tied to accepted, unfinished live objectives");
         require(config.quests.maximumConcurrentActive > 0,
                 "quests.maximumConcurrentActive must be positive");
@@ -123,10 +134,22 @@ public final class EconomyConfigValidator {
         require("POSTGRESQL".equals(config.persistence.provider),
                 "persistence.provider must be POSTGRESQL");
         requireText(config.persistence.database, "persistence.database");
+        require("NONE".equals(config.persistence.eventPartition),
+                "eventPartition must remain NONE until PostgreSQL partition migrations ship");
+        require(!config.persistence.checkpointCompression,
+                "checkpointCompression must remain false until a verified compressed codec ships");
+        require("FOREVER".equals(config.persistence.retainRawEconomicEvents)
+                        && "FOREVER".equals(config.persistence.retainDecisionEvents)
+                        && "FOREVER".equals(config.persistence.retainChatEvents),
+                "permanent economy evidence retention is required in the first release");
         require(config.persistence.retainMovementDebugDays >= 0,
                 "retainMovementDebugDays must be non-negative");
         require(config.persistence.evidenceBatchSize > 0,
                 "persistence.evidenceBatchSize must be positive");
+        require(config.humanReadiness.enabled && config.humanReadiness.neverAssumeCounterpartyIsAgent
+                        && config.humanReadiness.enforceHumanSafeValidation
+                        && config.humanReadiness.separateHumanAndAgentPriceEvidence,
+                "human readiness requires safe validation and separate counterparty evidence");
     }
 
     private static void requireSections(EconomyEngineConfig config) {
@@ -198,6 +221,8 @@ public final class EconomyConfigValidator {
         require(population.merchantParticipation.dedicatedMerchantFraction
                         <= population.merchantParticipation.willingSellerFraction,
                 "dedicated merchants must be a subset of willing sellers");
+        require(population.merchantParticipation.dedicatedMerchantFraction == 0,
+                "dedicatedMerchantFraction must remain zero until the dedicated lifecycle ships");
     }
 
     private static void validateMarket(EconomyEngineConfig.Market market) {
@@ -209,8 +234,12 @@ public final class EconomyConfigValidator {
                 "PlayerShop listing capacity must be between 1 and 16");
         require(!market.hiredMerchantsEnabled,
                 "Hired merchants require a separate permit and escrow milestone");
+        require(market.sellerMustRemainAtStall,
+                "PlayerShop owners must remain at their stalls");
         require(!market.globalSearchAllowed,
                 "Agents must physically observe stalls rather than use global search");
+        require(market.rememberObservedListings,
+                "Private observed-listing memory is required");
         require(market.minimumRoomsPerTrip > 0
                         && market.maximumRoomsPerTrip >= market.minimumRoomsPerTrip
                         && market.maximumRoomsPerTrip <= 22,
@@ -242,6 +271,8 @@ public final class EconomyConfigValidator {
         require(market.useCosmicTransactions,
                 "Live market settlement must use Cosmic transactions");
         require(market.rejectSelfTrade, "Self trading must be rejected");
+        require(!market.detectCircularTrade,
+                "detectCircularTrade must remain false until durable multi-transaction cycle detection ships");
     }
 
     private static void validateTax(EconomyEngineConfig.Tax tax) {
