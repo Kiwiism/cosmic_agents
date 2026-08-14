@@ -8,6 +8,7 @@ import java.util.Set;
 /** Explicit calibrated work input. The resolver never fabricates kills or resource costs. */
 public record FarmSessionPlan(
         String sessionId,
+        String calibrationId,
         String agentId,
         int mapId,
         Instant startedAt,
@@ -17,8 +18,16 @@ public record FarmSessionPlan(
         Set<Integer> activeQuestIds,
         List<ItemConsumption> consumedItems
 ) {
+    public FarmSessionPlan(String sessionId, String agentId, int mapId, Instant startedAt,
+                           Duration duration, int dropRateMultiplier, List<MonsterWork> monsters,
+                           Set<Integer> activeQuestIds, List<ItemConsumption> consumedItems) {
+        this(sessionId, "explicit-work", agentId, mapId, startedAt, duration, dropRateMultiplier,
+                monsters, activeQuestIds, consumedItems);
+    }
+
     public FarmSessionPlan {
-        if (sessionId == null || sessionId.isBlank() || agentId == null || agentId.isBlank())
+        if (sessionId == null || sessionId.isBlank() || calibrationId == null || calibrationId.isBlank()
+                || agentId == null || agentId.isBlank())
             throw new IllegalArgumentException("session and agent are required");
         if (mapId <= 0 || startedAt == null || duration == null || duration.isNegative()
                 || duration.isZero() || dropRateMultiplier <= 0)

@@ -6,6 +6,7 @@ import java.util.Map;
 
 public record FarmSessionOutcome(
         String sessionId,
+        String calibrationId,
         String agentId,
         int mapId,
         Instant completedAt,
@@ -15,6 +16,14 @@ public record FarmSessionOutcome(
         List<FarmSessionPlan.ItemConsumption> consumedItems,
         Map<Integer, Integer> killCounts
 ) {
+    public FarmSessionOutcome(String sessionId, String agentId, int mapId, Instant completedAt,
+                              long experience, long mesos, List<ItemDrop> itemDrops,
+                              List<FarmSessionPlan.ItemConsumption> consumedItems,
+                              Map<Integer, Integer> killCounts) {
+        this(sessionId, "explicit-work", agentId, mapId, completedAt, experience, mesos,
+                itemDrops, consumedItems, killCounts);
+    }
+
     public FarmSessionOutcome {
         itemDrops = List.copyOf(itemDrops);
         consumedItems = List.copyOf(consumedItems);

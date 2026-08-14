@@ -8,5 +8,6 @@ public interface EconomyCatalog {
     String version();
     Optional<ItemFact> item(int itemId);
     List<MonsterDropFact> monsterDrops(int monsterId);
+    default Optional<MonsterFact> monster(int monsterId) { return Optional.empty(); }
     Optional<NpcShopFact> npcShop(int npcId);
 }

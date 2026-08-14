@@ -18,5 +18,13 @@ public record ActivityCalibration(String calibrationId, String agentBuild, int m
         }
         monsterKillShare = Map.copyOf(monsterKillShare);
         itemUsePerMinute = Map.copyOf(itemUsePerMinute);
+        if (monsterKillShare.values().stream().anyMatch(value -> value == null || value < 0)
+                || itemUsePerMinute.values().stream().anyMatch(value -> value == null || value < 0)) {
+            throw new IllegalArgumentException("calibration rates cannot be negative");
+        }
+        double shareTotal = monsterKillShare.values().stream().mapToDouble(Double::doubleValue).sum();
+        if (killsPerMinute > 0 && (monsterKillShare.isEmpty() || Math.abs(shareTotal - 1d) > 0.000_001d)) {
+            throw new IllegalArgumentException("monster kill shares must sum to one");
+        }
     }
 }

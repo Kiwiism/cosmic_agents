@@ -48,7 +48,7 @@ public final class RuleExactFarmResolver {
                 }
             }
         }
-        return new FarmSessionOutcome(plan.sessionId(), plan.agentId(), plan.mapId(),
+        return new FarmSessionOutcome(plan.sessionId(), plan.calibrationId(), plan.agentId(), plan.mapId(),
                 plan.startedAt().plus(plan.duration()), experience, mesos, itemDrops,
                 plan.consumedItems(), kills);
     }

@@ -9,8 +9,10 @@ import server.agents.economy.catalog.EconomyCatalog;
 import server.agents.economy.catalog.ItemCategory;
 import server.agents.economy.catalog.ItemFact;
 import server.agents.economy.catalog.MonsterDropFact;
+import server.agents.economy.catalog.MonsterFact;
 import server.agents.economy.catalog.NpcShopFact;
 import server.life.MonsterInformationProvider;
+import server.life.LifeFactory;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -64,6 +66,13 @@ public final class CosmicEconomyCatalog implements EconomyCatalog {
                 .map(drop -> new MonsterDropFact(monsterId, drop.itemId, drop.chance,
                         drop.Minimum, drop.Maximum, drop.questid))
                 .toList();
+    }
+
+    @Override
+    public Optional<MonsterFact> monster(int monsterId) {
+        var monster = LifeFactory.getMonster(monsterId);
+        return monster == null ? Optional.empty()
+                : Optional.of(new MonsterFact(monsterId, monster.getLevel(), monster.getExp()));
     }
 
     @Override

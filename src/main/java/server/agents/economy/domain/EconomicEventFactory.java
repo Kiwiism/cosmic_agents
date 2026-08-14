@@ -48,6 +48,7 @@ public final class EconomicEventFactory {
                 consumed.quantity(), consumed.lotId()));
         Map<String, String> evidence = new LinkedHashMap<>();
         evidence.put("mapId", Integer.toString(outcome.mapId()));
+        evidence.put("calibrationId", outcome.calibrationId());
         evidence.put("kills", outcome.killCounts().toString());
         evidence.put("dropCount", Integer.toString(outcome.itemDrops().size()));
         evidence.put("reason", "rule-exact calibrated farm result");
