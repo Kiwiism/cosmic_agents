@@ -24,11 +24,18 @@ public final class JdbcCosmicOutboxSource implements CosmicOutboxSource {
             try (ResultSet rows = statement.executeQuery()) {
                 while (rows.next()) {
                     Number secondary = (Number) rows.getObject("secondary_character_id");
+                    String runId = rows.getString("run_id");
+                    Timestamp logicalAt = rows.getTimestamp("logical_at");
                     result.add(new CosmicOutboxRecord(UUID.fromString(rows.getString("outbox_id")),
                             rows.getString("idempotency_key"), rows.getString("operation_kind"),
                             rows.getInt("primary_character_id"),
                             secondary == null ? null : secondary.intValue(), rows.getString("summary"),
                             rows.getString("payload_json"),
+                            runId == null ? null : UUID.fromString(runId),
+                            logicalAt == null ? null : logicalAt.toInstant(), rows.getString("decision_id"),
+                            rows.getString("activity_id"), rows.getString("config_revision"),
+                            rows.getString("catalog_revision"), rows.getString("reason_code"),
+                            rows.getBoolean("primary_is_agent"), rows.getBoolean("secondary_is_agent"),
                             rows.getTimestamp("created_at").toInstant()));
                 }
             }

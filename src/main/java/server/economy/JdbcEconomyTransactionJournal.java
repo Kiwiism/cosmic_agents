@@ -230,7 +230,9 @@ public final class JdbcEconomyTransactionJournal implements EconomyTransactionJo
         try (PreparedStatement statement = connection.prepareStatement(
                 "INSERT INTO economy_transaction_outbox "
                         + "(outbox_id, idempotency_key, operation_kind, primary_character_id, "
-                        + "secondary_character_id, summary, payload_json) VALUES (?, ?, ?, ?, ?, ?, ?)")) {
+                        + "secondary_character_id, summary, payload_json, run_id, logical_at, decision_id, "
+                        + "activity_id, config_revision, catalog_revision, reason_code, primary_is_agent, "
+                        + "secondary_is_agent) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
             statement.setString(1, operation.transactionId().toString());
             statement.setString(2, operation.idempotencyKey());
             statement.setString(3, operation.kind().name());
@@ -242,6 +244,13 @@ public final class JdbcEconomyTransactionJournal implements EconomyTransactionJo
             }
             statement.setString(6, operation.summary());
             statement.setString(7, payloadJson);
+            EconomyOperationMetadata metadata = operation.metadata();
+            statement.setString(8, metadata.runId() == null ? null : metadata.runId().toString());
+            statement.setTimestamp(9, metadata.logicalAt() == null ? null : java.sql.Timestamp.from(metadata.logicalAt()));
+            statement.setString(10, metadata.decisionId()); statement.setString(11, metadata.activityId());
+            statement.setString(12, metadata.configRevision()); statement.setString(13, metadata.catalogRevision());
+            statement.setString(14, metadata.reasonCode()); statement.setBoolean(15, metadata.primaryIsAgent());
+            statement.setBoolean(16, metadata.secondaryIsAgent());
             statement.executeUpdate();
         }
     }

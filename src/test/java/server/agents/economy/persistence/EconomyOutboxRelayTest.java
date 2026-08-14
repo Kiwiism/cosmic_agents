@@ -28,7 +28,8 @@ class EconomyOutboxRelayTest {
 
     private static CosmicOutboxRecord record(String key) {
         return new CosmicOutboxRecord(UUID.randomUUID(), key, "SHOP_BUY", 1, null, key,
-                "{\"participants\":[]}", Instant.EPOCH);
+                "{\"participants\":[]}", null, null, null, null, null, null, null,
+                false, false, Instant.EPOCH);
     }
 
     private static final class StubSource implements CosmicOutboxSource {
