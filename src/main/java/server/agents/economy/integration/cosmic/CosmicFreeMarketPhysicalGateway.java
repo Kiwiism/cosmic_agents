@@ -22,18 +22,25 @@ import java.util.Objects;
 
 /** Uses the existing autonomous-agent capability stack; it never teleports between FM maps. */
 public final class CosmicFreeMarketPhysicalGateway implements FreeMarketPhysicalGateway {
-    private static final int ENTRANCE = 910000000;
     private final CosmicMarketObservationService observations;
+    private final int entranceMapId;
+    private final int firstRoomMapId;
+    private final int lastRoomMapId;
     private final long portalTimeoutMs;
     private final long approachTimeoutMs;
     private final int approachRangePixels;
 
     public CosmicFreeMarketPhysicalGateway(CosmicMarketObservationService observations,
+                                           int entranceMapId, int firstRoomMapId, int lastRoomMapId,
                                            long portalTimeoutMs, long approachTimeoutMs,
                                            int approachRangePixels) {
         this.observations = Objects.requireNonNull(observations);
+        if (entranceMapId <= 0 || firstRoomMapId <= entranceMapId || lastRoomMapId < firstRoomMapId)
+            throw new IllegalArgumentException("invalid Free Market map manifest");
         if (portalTimeoutMs <= 0 || approachTimeoutMs <= 0 || approachRangePixels <= 0)
             throw new IllegalArgumentException("physical market action bounds must be positive");
+        this.entranceMapId = entranceMapId; this.firstRoomMapId = firstRoomMapId;
+        this.lastRoomMapId = lastRoomMapId;
         this.portalTimeoutMs = portalTimeoutMs; this.approachTimeoutMs = approachTimeoutMs;
         this.approachRangePixels = approachRangePixels;
     }
@@ -46,7 +53,7 @@ public final class CosmicFreeMarketPhysicalGateway implements FreeMarketPhysical
         AgentRuntimeEntry entry = AgentRuntimeRegistry.findByCharacterInstance(agent);
         if (entry == null) return ActionStatus.UNAVAILABLE;
         if (entry.capabilityRuntimeState().hasActiveCapability()) return ActionStatus.IN_PROGRESS;
-        int nextMap = agent.getMapId() == ENTRANCE ? roomMapId : ENTRANCE;
+        int nextMap = agent.getMapId() == entranceMapId ? roomMapId : entranceMapId;
         Portal portal = agent.getMap().getPortals().stream()
                 .filter(value -> value.getTargetMapId() == nextMap && value.getPortalStatus())
                 .min(Comparator.comparingInt(Portal::getId)).orElse(null);
@@ -106,9 +113,9 @@ public final class CosmicFreeMarketPhysicalGateway implements FreeMarketPhysical
                 result.buyerMesoDelta());
     }
 
-    private static boolean inFreeMarket(int map) { return map == ENTRANCE || isRoom(map); }
-    private static boolean isRoom(int map) { return map >= 910000001 && map <= 910000022; }
-    private static void requireRoom(int map) {
+    private boolean inFreeMarket(int map) { return map == entranceMapId || isRoom(map); }
+    private boolean isRoom(int map) { return map >= firstRoomMapId && map <= lastRoomMapId; }
+    private void requireRoom(int map) {
         if (!isRoom(map)) throw new IllegalArgumentException("target is not a Free Market room");
     }
 }

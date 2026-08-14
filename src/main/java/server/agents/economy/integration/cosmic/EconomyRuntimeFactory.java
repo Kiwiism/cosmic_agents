@@ -40,6 +40,8 @@ public final class EconomyRuntimeFactory {
         CosmicMarketObservationService observations = new CosmicMarketObservationService(
                 runId, buyer, evidenceJournal);
         CosmicFreeMarketPhysicalGateway physical = new CosmicFreeMarketPhysicalGateway(observations,
+                config.world.freeMarketEntranceMapId, config.world.firstFreeMarketRoomMapId,
+                config.world.lastFreeMarketRoomMapId,
                 millis(config.market.portalTimeout), millis(config.market.approachTimeout),
                 config.market.approachRangePixels);
         CosmicMarketSellerGateway seller = new CosmicMarketSellerGateway(npc,
