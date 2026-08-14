@@ -32,8 +32,11 @@ public final class MaplePhysicsIntegrator {
         GroundSupport support = strictReconciliationSupport(body, terrain, current);
         body.clearGroundedSupportLock();
         if (support == null) {
-            body.setGrounded(false);
-            return;
+            support = clampedSupport(current, body.x());
+            if (support == null) {
+                body.setGrounded(false);
+                return;
+            }
         }
         body.setPosition(body.x(), support.groundY());
         body.setFoothold(support.foothold().id(), support.foothold().slope(),
@@ -187,17 +190,31 @@ public final class MaplePhysicsIntegrator {
         velocityX = body.velocityX();
         if (body.grounded() && body.velocityY() == 0.0 && velocityX != 0.0
                 && body.groundedSupportLocked()) {
-            GroundSupport support = sweepLockedGround(body, terrain, velocityX);
-            if (support != null) {
-                body.setPosition(body.x(), support.groundY());
+            GroundSweep sweep = sweepLockedGround(body, terrain, velocityX,
+                    input.leftEdgeInset(), input.rightEdgeInset());
+            if (sweep != null) {
+                GroundSupport support = sweep.support();
+                body.setPosition(sweep.blockedAtEdge() ? sweep.x() : body.x(),
+                        support.groundY());
                 body.setFoothold(support.foothold().id(), support.foothold().slope(),
                         support.foothold().layer());
+                body.setGrounded(true);
+                if (sweep.blockedAtEdge()) {
+                    body.setVelocity(0.0, velocityY);
+                    velocityX = 0.0;
+                    reachedEdge = true;
+                }
             } else {
-                // This is a genuine edge, not a broken seam. End the constraint immediately so
-                // the next fixed step applies normal airborne gravity. The current step does not
-                // perform another foothold lookup, so clearing here cannot snap to a floor below.
-                body.clearGroundedSupportLock();
-                body.setGrounded(false);
+                FootholdSegment current = terrain.foothold(body.footholdId());
+                GroundSupport support = clampedSupport(current, body.x());
+                if (support != null) {
+                    body.setPosition(Math.max(current.left(), Math.min(current.right(), body.x())),
+                            support.groundY());
+                    body.setVelocity(0.0, velocityY);
+                    body.setGrounded(true);
+                    velocityX = 0.0;
+                    reachedEdge = true;
+                }
             }
         } else if (body.grounded() && body.velocityY() == 0.0 && velocityX != 0.0) {
             double destinationX = body.x() + velocityX;
@@ -260,9 +277,11 @@ public final class MaplePhysicsIntegrator {
         return null;
     }
 
-    private static GroundSupport sweepLockedGround(PhysicsBody body,
-                                                   PhysicsTerrain terrain,
-                                                   double velocityX) {
+    private static GroundSweep sweepLockedGround(PhysicsBody body,
+                                                 PhysicsTerrain terrain,
+                                                 double velocityX,
+                                                 double leftEdgeInset,
+                                                 double rightEdgeInset) {
         FootholdSegment current = terrain.foothold(body.footholdId());
         if (current == null || current.wall()) {
             return null;
@@ -273,12 +292,27 @@ public final class MaplePhysicsIntegrator {
                 Math.max(current.left(), Math.min(current.right(), startX))));
         for (int step = 1; step <= steps; step++) {
             double sampleX = startX + velocityX * step / steps;
-            support = lockedSupportAt(terrain, support.foothold(), sampleX, velocityX);
-            if (support == null) {
-                return null;
+            GroundSupport next = lockedSupportAt(terrain, support.foothold(), sampleX, velocityX);
+            if (next == null) {
+                boolean left = velocityX < 0.0;
+                double edge = left ? support.foothold().left() : support.foothold().right();
+                double inset = left ? leftEdgeInset : rightEdgeInset;
+                double insetX = left ? edge + inset : edge - inset;
+                double safeX = left ? Math.min(startX, insetX) : Math.max(startX, insetX);
+                safeX = Math.max(support.foothold().left(),
+                        Math.min(support.foothold().right(), safeX));
+                GroundSupport safe = clampedSupport(support.foothold(), safeX);
+                return new GroundSweep(safe, safeX, true);
             }
+            support = next;
         }
-        return support;
+        return new GroundSweep(support, startX + velocityX, false);
+    }
+
+    private static GroundSupport clampedSupport(FootholdSegment foothold, double x) {
+        if (foothold == null || foothold.wall()) return null;
+        double clampedX = Math.max(foothold.left(), Math.min(foothold.right(), x));
+        return new GroundSupport(foothold, foothold.groundY(clampedX));
     }
 
     private static GroundSupport lockedSupportAt(PhysicsTerrain terrain,
@@ -418,8 +452,14 @@ public final class MaplePhysicsIntegrator {
                         support.foothold().layer());
                 body.setGrounded(true);
             } else {
-                body.clearGroundedSupportLock();
-                body.setGrounded(false);
+                GroundSupport clamped = clampedSupport(previous, body.x());
+                if (clamped != null) {
+                    double x = Math.max(previous.left(), Math.min(previous.right(), body.x()));
+                    body.setPosition(x, clamped.groundY());
+                    body.setFoothold(previous.id(), previous.slope(), previous.layer());
+                    body.setVelocity(0.0, body.velocityY());
+                    body.setGrounded(true);
+                }
             }
             return false;
         }
@@ -531,5 +571,8 @@ public final class MaplePhysicsIntegrator {
     }
 
     private record GroundSupport(FootholdSegment foothold, double groundY) {
+    }
+
+    private record GroundSweep(GroundSupport support, double x, boolean blockedAtEdge) {
     }
 }

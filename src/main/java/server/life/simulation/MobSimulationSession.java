@@ -17,6 +17,10 @@ import java.awt.Point;
 /** Mutable per-monster state. It is stepped only by its channel service. */
 public final class MobSimulationSession {
     private static final double PROGRESS_DISTANCE_PX = 1.0;
+    private static final double GROUNDED_TOLERANCE_PX = 12.0;
+    private static final double INITIAL_SUPPORT_MAX_DISTANCE_PX = 120.0;
+    private static final double MOVEMENT_SNAPSHOT_POSITION_TOLERANCE_PX = 16.0;
+    private static final long MOVEMENT_SNAPSHOT_MAX_AGE_NANOS = 500_000_000L;
     private static final long RANDOM_NONZERO_FALLBACK = 0x9E3779B97F4A7C15L;
     private final MapleMap map;
     private final Monster monster;
@@ -62,6 +66,8 @@ public final class MobSimulationSession {
     private int pendingChaseDirection;
     private long directionChangeAtNanos;
     private boolean edgeJumpOpportunity;
+    private boolean platformConstrainedKnockback;
+    private final boolean initialSupportCorrected;
 
     public MobSimulationSession(MapleMap map, Monster monster, Character agent,
                                 MobPhysicsProfile profile, PhysicsTerrain terrain,
@@ -80,19 +86,28 @@ public final class MobSimulationSession {
         randomState = mix64((((long) monster.getObjectId()) << 32)
                 ^ Integer.toUnsignedLong(map.getId()) ^ RANDOM_NONZERO_FALLBACK);
         if (randomState == 0L) randomState = RANDOM_NONZERO_FALLBACK;
-        FootholdSegment foothold = terrain.foothold(monster.getFh());
-        if (foothold == null) {
-            foothold = terrain.findBelow(position.x, position.y - 1.0);
-        }
+        MobMovementSnapshot movementSnapshot = usableMovementSnapshot(
+                monster.getLastClientMovement(), position, nowNanos);
+        int reportedFootholdId = movementSnapshot != null && movementSnapshot.footholdId() > 0
+                ? movementSnapshot.footholdId() : monster.getFh();
+        FootholdSegment reportedFoothold = terrain.foothold(reportedFootholdId);
+        FootholdSegment foothold = validInitialSupport(reportedFoothold, position)
+                ? reportedFoothold : boundedSupportBelow(terrain, position);
+        initialSupportCorrected = reportedFoothold != foothold;
         if (foothold != null) {
             double ground = foothold.groundY(position.x);
-            boolean grounded = mode == PhysicsMode.NORMAL && Math.abs(ground - position.y) <= 12.0;
+            boolean grounded = mode == PhysicsMode.NORMAL
+                    && Math.abs(ground - position.y) <= GROUNDED_TOLERANCE_PX;
             body.setFoothold(foothold.id(), foothold.slope(), foothold.layer());
             body.setGrounded(grounded);
             body.setGroundBelow(ground);
             if (grounded) {
                 body.setPosition(position.x, ground);
             }
+        }
+        if (movementSnapshot != null) {
+            body.setVelocity(movementSnapshot.velocityX(), body.grounded()
+                    ? 0.0 : movementSnapshot.velocityY());
         }
         lastTickNanos = nowNanos;
         lastAcceptedHitNanos = nowNanos;
@@ -101,6 +116,31 @@ public final class MobSimulationSession {
         nextJumpNanos = nowNanos + randomMillis(
                 Math.max(0, AgentCombatConfig.cfg.MOB_PHYSICS_JUMP_COOLDOWN_JITTER_MS)) * 1_000_000L;
         lastPublishedPosition = new Point((int) Math.round(body.x()), (int) Math.round(body.y()));
+    }
+
+    private static boolean validInitialSupport(FootholdSegment foothold, Point position) {
+        if (foothold == null || foothold.wall() || !foothold.containsX(position.x)) return false;
+        double verticalDistance = foothold.groundY(position.x) - position.y;
+        return verticalDistance >= -GROUNDED_TOLERANCE_PX
+                && verticalDistance <= INITIAL_SUPPORT_MAX_DISTANCE_PX;
+    }
+
+    private static MobMovementSnapshot usableMovementSnapshot(
+            MobMovementSnapshot snapshot, Point position, long nowNanos) {
+        if (snapshot == null || !snapshot.isFresh(nowNanos, MOVEMENT_SNAPSHOT_MAX_AGE_NANOS)
+                || !Double.isFinite(snapshot.x()) || !Double.isFinite(snapshot.y())
+                || !Double.isFinite(snapshot.velocityX())
+                || !Double.isFinite(snapshot.velocityY())) {
+            return null;
+        }
+        return Math.abs(snapshot.x() - position.x) <= MOVEMENT_SNAPSHOT_POSITION_TOLERANCE_PX
+                && Math.abs(snapshot.y() - position.y) <= MOVEMENT_SNAPSHOT_POSITION_TOLERANCE_PX
+                ? snapshot : null;
+    }
+
+    private static FootholdSegment boundedSupportBelow(PhysicsTerrain terrain, Point position) {
+        FootholdSegment below = terrain.findBelow(position.x, position.y - 1.0);
+        return validInitialSupport(below, position) ? below : null;
     }
 
     public synchronized long acceptHit(Character newAgent, int damage, long delayMs,
@@ -115,7 +155,7 @@ public final class MobSimulationSession {
             return generation;
         }
         pendingDamage = Math.max(0, damage);
-        knockbackDirection = direction < 0 ? -1 : 1;
+        knockbackDirection = Integer.compare(direction, 0);
         impactFacingLeft = (monster.getStance() & 1) != 0;
         long scaledDelayMs = Math.max(0L, delayMs)
                 * Math.max(0, AgentCombatConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_PERCENT) / 100L;
@@ -123,8 +163,6 @@ public final class MobSimulationSession {
                 + AgentCombatConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_OFFSET_MS);
         impactAtNanos = nowNanos + scaledDelayMs * 1_000_000L;
         motion = MobMotionState.PENDING_IMPACT;
-        body.setVelocity(0.0, body.grounded() || profile.flying()
-                ? 0.0 : body.velocityY());
         knockbackStepsRemaining = 0;
         recoveryStepsRemaining = 0;
         chaseRampStepsTotal = 0;
@@ -136,7 +174,7 @@ public final class MobSimulationSession {
         return generation;
     }
 
-    private boolean reactionInProgress() {
+    public synchronized boolean reactionInProgress() {
         return generation > 0 && (motion == MobMotionState.PENDING_IMPACT
                 || motion == MobMotionState.KNOCKBACK
                 || motion == MobMotionState.FLINCH);
@@ -175,28 +213,40 @@ public final class MobSimulationSession {
         FixedStepAccumulator.StepBatch batch = accumulator.accumulate(
                 elapsed, tuning.maxCatchUpSteps());
         int recoveries = 0;
+        int edgeClamps = 0;
+        int unexpectedGroundLosses = 0;
         boolean changed = false;
         for (int i = 0; i < batch.steps(); i++) {
             long stepTime = nowNanos - batch.leftoverNanos()
                     - (long) (batch.steps() - i - 1) * MaplePhysicsConstants.STEP_MS * 1_000_000L;
-            beginImpactIfDue(stepTime);
+            beginImpactIfDue(stepTime, tuning);
             double oldX = body.x();
             double oldY = body.y();
+            boolean constrainedBeforeStep = platformConstrainedKnockback;
             PhysicsStepResult step = SIMULATOR.step(this, tuning);
             changed |= oldX != body.x() || oldY != body.y();
             recoveries += step.recovered() ? 1 : 0;
+            if (constrainedBeforeStep && step.reachedEdge()) edgeClamps++;
+            if (constrainedBeforeStep && step.leftGround()) unexpectedGroundLosses++;
         }
-        return new AdvanceResult(batch.steps(), batch.capped(), recoveries, changed);
+        return new AdvanceResult(batch.steps(), batch.capped(), recoveries, changed,
+                edgeClamps, unexpectedGroundLosses);
     }
 
-    private void beginImpactIfDue(long stepTimeNanos) {
+    private void beginImpactIfDue(long stepTimeNanos, MobPhysicsTuningSnapshot tuning) {
         if (motion != MobMotionState.PENDING_IMPACT || stepTimeNanos < impactAtNanos) {
             return;
         }
         if (pendingDamage >= profile.pushed() && profile.mode() != PhysicsMode.FIXED) {
-            SIMULATOR.beginGroundedKnockbackSupport(this);
-            body.setVelocity(0.0, body.grounded() || profile.flying()
-                    ? 0.0 : body.velocityY());
+            platformConstrainedKnockback = body.grounded() && !profile.flying();
+            if (platformConstrainedKnockback) {
+                SIMULATOR.beginGroundedKnockbackSupport(this);
+                body.setVelocity(0.0, 0.0);
+            } else if (!profile.flying()) {
+                body.setVelocity(body.velocityX() + knockbackDirection
+                        * MobPhysicsSimulator.AIR_KNOCKBACK_FORCE
+                        * tuning.knockbackMultiplier(), body.velocityY());
+            }
             motion = MobMotionState.KNOCKBACK;
             knockbackStepsRemaining = MobPhysicsSimulator.KNOCKBACK_STEPS;
         } else {
@@ -209,20 +259,10 @@ public final class MobSimulationSession {
 
     void afterStep(PhysicsStepResult result) {
         lastHitWall = result.hitWall();
-        if (motion == MobMotionState.KNOCKBACK && --knockbackStepsRemaining <= 0) {
-            SIMULATOR.endGroundedKnockbackSupport(this);
-            body.setVelocity(0.0, body.grounded() || profile.flying()
-                    ? 0.0 : body.velocityY());
-            int recoveryMs = Math.max(0,
-                    AgentCombatConfig.cfg.MOB_PHYSICS_FLINCH_RECOVERY_MS);
-            recoveryStepsRemaining = (recoveryMs + MaplePhysicsConstants.STEP_MS - 1)
-                    / MaplePhysicsConstants.STEP_MS;
-            if (recoveryStepsRemaining > 0) {
-                motion = MobMotionState.FLINCH;
-            } else {
-                motion = MobMotionState.CHASE;
-            }
-            immediatePublication = true;
+        if (motion == MobMotionState.KNOCKBACK
+                && ((!platformConstrainedKnockback && result.landed())
+                || --knockbackStepsRemaining <= 0)) {
+            finishKnockback();
         } else if (motion == MobMotionState.FLINCH && --recoveryStepsRemaining <= 0) {
             motion = MobMotionState.CHASE;
             beginPostFlinchChaseRamp();
@@ -247,6 +287,21 @@ public final class MobSimulationSession {
                     AgentCombatConfig.cfg.MOB_PHYSICS_EDGE_RETREAT_MIN_MS,
                     AgentCombatConfig.cfg.MOB_PHYSICS_EDGE_RETREAT_MAX_MS);
         }
+    }
+
+    private void finishKnockback() {
+        if (platformConstrainedKnockback) {
+            SIMULATOR.endGroundedKnockbackSupport(this);
+        }
+        if (body.grounded() && !profile.flying()) {
+            body.setVelocity(0.0, 0.0);
+        }
+        platformConstrainedKnockback = false;
+        int recoveryMs = Math.max(0, AgentCombatConfig.cfg.MOB_PHYSICS_FLINCH_RECOVERY_MS);
+        recoveryStepsRemaining = (recoveryMs + MaplePhysicsConstants.STEP_MS - 1)
+                / MaplePhysicsConstants.STEP_MS;
+        motion = recoveryStepsRemaining > 0 ? MobMotionState.FLINCH : MobMotionState.CHASE;
+        immediatePublication = true;
     }
 
     boolean shouldJump(double dx, double dy, MobPhysicsTuningSnapshot tuning) {
@@ -333,6 +388,8 @@ public final class MobSimulationSession {
     public void setMotion(MobMotionState motion) { this.motion = motion; }
     public int knockbackDirection() { return knockbackDirection; }
     public boolean impactFacingLeft() { return impactFacingLeft; }
+    public boolean platformConstrainedKnockback() { return platformConstrainedKnockback; }
+    public boolean initialSupportCorrected() { return initialSupportCorrected; }
     public double targetX() { return targetX; }
     public double targetY() { return targetY; }
     double consumeChaseRampMultiplier() {
@@ -482,6 +539,7 @@ public final class MobSimulationSession {
     }
 
     public record AdvanceResult(int substeps, boolean catchUpCapped,
-                                int invalidRecoveries, boolean positionChanged) {
+                                int invalidRecoveries, boolean positionChanged,
+                                int edgeClamps, int unexpectedGroundLosses) {
     }
 }

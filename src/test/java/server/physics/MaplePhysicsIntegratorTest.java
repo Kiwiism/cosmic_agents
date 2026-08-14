@@ -280,7 +280,7 @@ class MaplePhysicsIntegratorTest {
     }
 
     @Test
-    void groundedKnockbackAllowsRealLedgeFallsWithoutCapturingStackedPlatforms() {
+    void groundedKnockbackStopsAtRealLedgeWithoutCapturingStackedPlatforms() {
         FootholdSegment ledge = segment(1, 0, 0, 0, 100, 10, 100);
         FootholdSegment lower = segmentWithLayer(2, 0, 0, 10, 112, 30, 112, 1);
         FootholdSegment upper = segmentWithLayer(3, 0, 0, 10, 94, 30, 94, 2);
@@ -291,10 +291,61 @@ class MaplePhysicsIntegratorTest {
 
         integrator.step(body, PhysicsInput.NONE, terrain);
 
-        assertFalse(body.grounded());
-        assertFalse(body.groundedSupportLocked());
+        assertTrue(body.grounded());
+        assertTrue(body.groundedSupportLocked());
         assertEquals(1, body.footholdId(),
                 "leaving the locked chain must not snap to a nearby stacked platform");
+        assertTrue(body.x() <= ledge.right());
+        assertEquals(0.0, body.velocityX(), EPSILON);
+        assertEquals(ledge.groundY(body.x()), body.y(), EPSILON);
+    }
+
+    @Test
+    void groundedKnockbackStopsAtEitherPlatformEdge() {
+        FootholdSegment platform = segment(1, 0, 0, 0, 100, 100, 100);
+        PhysicsTerrain terrain = new FootholdPhysicsIndex(List.of(platform));
+        PhysicsBody left = groundedBody(1.0, 100.0, 1);
+        PhysicsBody right = groundedBody(99.0, 100.0, 1);
+        left.setVelocity(-4.0, 0.0);
+        right.setVelocity(4.0, 0.0);
+        integrator.beginGroundedKnockbackSupport(left);
+        integrator.beginGroundedKnockbackSupport(right);
+
+        PhysicsStepResult leftResult = integrator.step(left, PhysicsInput.NONE, terrain);
+        PhysicsStepResult rightResult = integrator.step(right, PhysicsInput.NONE, terrain);
+
+        assertTrue(leftResult.reachedEdge());
+        assertTrue(rightResult.reachedEdge());
+        assertTrue(left.grounded());
+        assertTrue(right.grounded());
+        assertEquals(0.0, left.velocityX(), EPSILON);
+        assertEquals(0.0, right.velocityX(), EPSILON);
+        assertTrue(left.x() >= platform.left());
+        assertTrue(right.x() <= platform.right());
+    }
+
+    @Test
+    void groundedKnockbackAppliesEdgeInsetWithoutPullingMobBackward() {
+        FootholdSegment platform = segment(1, 0, 0, 0, 100, 100, 100);
+        PhysicsTerrain terrain = new FootholdPhysicsIndex(List.of(platform));
+        PhysicsBody body = groundedBody(85.0, 100.0, 1);
+        body.setVelocity(20.0, 0.0);
+        integrator.beginGroundedKnockbackSupport(body);
+
+        integrator.step(body, new PhysicsInput(0.0, 0.0, false, false, 18.0, 10.0),
+                terrain);
+
+        assertEquals(90.0, body.x(), EPSILON);
+        assertEquals(0.0, body.velocityX(), EPSILON);
+
+        PhysicsBody alreadyInsideInset = groundedBody(95.0, 100.0, 1);
+        alreadyInsideInset.setVelocity(10.0, 0.0);
+        integrator.beginGroundedKnockbackSupport(alreadyInsideInset);
+        integrator.step(alreadyInsideInset,
+                new PhysicsInput(0.0, 0.0, false, false, 18.0, 10.0), terrain);
+
+        assertEquals(95.0, alreadyInsideInset.x(), EPSILON,
+                "edge safety must stop new movement without teleporting an existing mob backward");
     }
 
     @Test

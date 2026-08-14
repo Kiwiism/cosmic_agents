@@ -91,8 +91,8 @@ class MobSimulationSessionTest {
                     true, false, false, false));
             fixture.session.body().setVelocity(-0.75, 0.0);
             fixture.session.acceptHit(fixture.agent, 10, 0, 1, 0L);
-            assertEquals(0.0, fixture.session.body().velocityX(), 1.0e-12,
-                    "accepted hit must stop inward chase momentum immediately");
+            assertEquals(-0.75, fixture.session.body().velocityX(), 1.0e-12,
+                    "scheduling a hit must not mutate motion before impact");
             when(fixture.agent.getPosition()).thenReturn(new Point(-500, 100));
 
             fixture.session.advance(8_000_000L);
@@ -420,6 +420,115 @@ class MobSimulationSessionTest {
             AgentCombatConfig.cfg.MOB_PHYSICS_RETREAT_MIN_DISTANCE_PX = originalMinDistance;
             AgentCombatConfig.cfg.MOB_PHYSICS_RETREAT_MAX_DISTANCE_PX = originalMaxDistance;
         }
+    }
+
+    @Test
+    void pendingImpactPreservesAirborneVelocityAndGravity() {
+        Fixture fixture = fixture(new MobPhysicsProfile(0.08, 0.05, 1,
+                true, false, false, false));
+        fixture.session.body().setPosition(50.0, 80.0);
+        fixture.session.body().setGrounded(false);
+        fixture.session.body().setVelocity(0.75, -2.0);
+
+        fixture.session.acceptHit(fixture.agent, 10, 40, 1, 0L);
+
+        assertEquals(0.75, fixture.session.body().velocityX(), 1.0e-12);
+        assertEquals(-2.0, fixture.session.body().velocityY(), 1.0e-12);
+        fixture.session.advance(8_000_000L);
+        assertTrue(fixture.session.body().x() > 50.0);
+        assertTrue(fixture.session.body().y() < 80.0);
+        assertTrue(fixture.session.body().velocityY() > -2.0,
+                "gravity must continue during the impact delay");
+    }
+
+    @Test
+    void airborneKnockbackAddsHorizontalImpulseWithoutFreezingJumpArc() {
+        Fixture fixture = fixture(new MobPhysicsProfile(0.08, 0.05, 1,
+                true, false, false, false));
+        fixture.session.body().setPosition(50.0, 80.0);
+        fixture.session.body().setGrounded(false);
+        fixture.session.body().setVelocity(0.75, -2.0);
+
+        fixture.session.acceptHit(fixture.agent, 10, 0, 1, 0L);
+        fixture.session.advance(8_000_000L);
+
+        assertEquals(MobMotionState.KNOCKBACK, fixture.session.motion());
+        assertTrue(fixture.session.body().velocityX() > 0.75);
+        assertTrue(fixture.session.body().velocityY() < 0.0,
+                "an upward jump must remain upward when the hit lands");
+    }
+
+    @Test
+    void constructorRejectsStaleExistingFootholdOutsideMobPosition() {
+        MapleMap map = mock(MapleMap.class);
+        Monster monster = mock(Monster.class);
+        Character agent = mock(Character.class);
+        when(map.isSwim()).thenReturn(false);
+        when(map.getId()).thenReturn(100000000);
+        when(monster.getPosition()).thenReturn(new Point(50, 100));
+        when(monster.getFh()).thenReturn(1);
+        when(monster.getObjectId()).thenReturn(7);
+        when(agent.getPosition()).thenReturn(new Point(200, 100));
+        FootholdSegment stale = new FootholdSegment(
+                1, 0, 0, 1, 0, false, 0, 100, 10, 100);
+        FootholdSegment actual = new FootholdSegment(
+                2, 0, 0, 1, 0, false, 40, 100, 100, 100);
+
+        MobSimulationSession session = new MobSimulationSession(
+                map, monster, agent,
+                new MobPhysicsProfile(0.08, 0.05, 1, true, false, false, false),
+                new FootholdPhysicsIndex(List.of(stale, actual)), 0L);
+
+        assertEquals(2, session.body().footholdId());
+        assertTrue(session.body().grounded());
+        assertEquals(100.0, session.body().y(), 1.0e-12);
+    }
+
+    @Test
+    void constructorRestoresFreshClientVelocityDuringAirborneHandoff() {
+        MapleMap map = mock(MapleMap.class);
+        Monster monster = mock(Monster.class);
+        Character agent = mock(Character.class);
+        when(map.isSwim()).thenReturn(false);
+        when(map.getId()).thenReturn(100000000);
+        when(monster.getPosition()).thenReturn(new Point(50, 80));
+        when(monster.getFh()).thenReturn(1);
+        when(monster.getObjectId()).thenReturn(7);
+        when(monster.getLastClientMovement()).thenReturn(new MobMovementSnapshot(
+                50, 80, 0.75, -2.0, 1, 2, 0L));
+        when(agent.getPosition()).thenReturn(new Point(200, 100));
+        FootholdSegment platform = new FootholdSegment(
+                1, 0, 0, 1, 0, false, 0, 100, 100, 100);
+
+        MobSimulationSession session = new MobSimulationSession(
+                map, monster, agent,
+                new MobPhysicsProfile(0.08, 0.05, 1, true, false, false, false),
+                new FootholdPhysicsIndex(List.of(platform)), 0L);
+
+        assertFalse(session.body().grounded());
+        assertEquals(0.75, session.body().velocityX(), 1.0e-12);
+        assertEquals(-2.0, session.body().velocityY(), 1.0e-12);
+    }
+
+    @Test
+    void groundedKnockbackReportsEdgeClampWithoutGroundLoss() {
+        Fixture fixture = fixture(new MobPhysicsProfile(0.08, 0.05, 1,
+                true, false, false, false), 7, 99, 0, 100);
+        fixture.session.acceptHit(fixture.agent, 10, 0, 1, 0L);
+        int edgeClamps = 0;
+        int groundLosses = 0;
+
+        for (int step = 1; step <= MobPhysicsSimulator.KNOCKBACK_STEPS; step++) {
+            MobSimulationSession.AdvanceResult result =
+                    fixture.session.advance(step * 8_000_000L);
+            edgeClamps += result.edgeClamps();
+            groundLosses += result.unexpectedGroundLosses();
+        }
+
+        assertTrue(edgeClamps > 0);
+        assertEquals(0, groundLosses);
+        assertTrue(fixture.session.body().grounded());
+        assertTrue(fixture.session.body().x() <= 100.0);
     }
 
     @Test

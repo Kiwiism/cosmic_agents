@@ -15,6 +15,7 @@ import server.agents.capabilities.combat.AgentMonsterControlService;
 import server.agents.capabilities.mobcontrol.AgentMobReactionMode;
 import server.life.Monster;
 import server.life.MonsterStats;
+import server.integration.MobHitReactionContext;
 import server.life.simulation.MobControlAuthority;
 import server.life.simulation.MobSimulationSession;
 import server.maps.MapleMap;
@@ -331,6 +332,35 @@ class MobPhysicsServiceTest {
         session.setMotion(server.life.simulation.MobMotionState.FLINCH);
         assertEquals(0, MobPhysicsService.stance(session),
                 "stationary flinch must retain the walk-facing stance");
+    }
+
+    @Test
+    void acceptedHitUsesCapturedDirectionEvenWhenLivePositionsSuggestOpposite() {
+        Fixture fixture = fixture(true, 1);
+        MobHitReactionContext firedLeft = new MobHitReactionContext(
+                100, -1, 100, 3001005,
+                MobHitReactionContext.DirectionSource.CAST_FACING);
+
+        assertTrue(service.acceptedHit(
+                fixture.agent, fixture.monster, 10, firedLeft));
+
+        assertEquals(-1, service.sessionForTest(fixture.monster).knockbackDirection());
+    }
+
+    @Test
+    void airborneKnockbackAndFlinchPublishAirborneStance() {
+        Fixture fixture = fixture(true, 1);
+        fixture.monster.setStance(0);
+        assertTrue(service.acceptedHit(fixture.agent, fixture.monster, 10, 0));
+        MobSimulationSession session = service.sessionForTest(fixture.monster);
+        session.body().setPosition(0.0, 80.0);
+        session.body().setGrounded(false);
+        session.body().setVelocity(0.5, -1.0);
+
+        session.setMotion(server.life.simulation.MobMotionState.KNOCKBACK);
+        assertEquals(2, MobPhysicsService.stance(session));
+        session.setMotion(server.life.simulation.MobMotionState.FLINCH);
+        assertEquals(2, MobPhysicsService.stance(session));
     }
 
     @Test

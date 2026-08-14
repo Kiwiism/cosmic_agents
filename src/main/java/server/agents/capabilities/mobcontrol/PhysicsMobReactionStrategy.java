@@ -5,17 +5,19 @@ import net.server.services.task.channel.MobPhysicsService;
 import net.server.services.type.ChannelServices;
 import server.life.Monster;
 import server.maps.MapleMap;
+import server.integration.MobHitReactionContext;
 
 public enum PhysicsMobReactionStrategy implements AgentMobReactionStrategy {
     INSTANCE;
 
     @Override
-    public void acceptedHit(Character attacker, Monster monster, int appliedDamage, long reactionDelayMs) {
+    public void acceptedHit(Character attacker, Monster monster, int appliedDamage,
+                            MobHitReactionContext reactionContext) {
         if (monster == null) return;
         MapleMap map = monster.getMap();
         if (map == null || map.getChannelServer() == null) return;
         MobPhysicsService service = (MobPhysicsService) map.getChannelServer()
                 .getServiceAccess(ChannelServices.MOB_PHYSICS);
-        service.acceptedHit(attacker, monster, appliedDamage, reactionDelayMs);
+        service.acceptedHit(attacker, monster, appliedDamage, reactionContext);
     }
 }

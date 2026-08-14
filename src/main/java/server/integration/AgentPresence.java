@@ -46,11 +46,18 @@ public final class AgentPresence {
 
     public static void mobHitAccepted(Character attacker, Monster monster,
                                       int appliedDamage, long reactionDelayMs) {
+        mobHitAccepted(attacker, monster, appliedDamage,
+                MobHitReactionContext.legacy(reactionDelayMs, attacker, monster));
+    }
+
+    public static void mobHitAccepted(Character attacker, Monster monster,
+                                      int appliedDamage,
+                                      MobHitReactionContext reactionContext) {
         try {
             if (attacker == null || !provider.isAgent(attacker)) {
                 return;
             }
-            provider.mobHitAccepted(attacker, monster, appliedDamage, reactionDelayMs);
+            provider.mobHitAccepted(attacker, monster, appliedDamage, reactionContext);
         } catch (RuntimeException | LinkageError failure) {
             log.warn("Agent accepted-mob-hit hook failed for mob {} attacker {}",
                     monster == null ? -1 : monster.getObjectId(),

@@ -76,6 +76,7 @@ import server.life.NPC;
 import server.life.PlayerNPC;
 import server.life.SpawnPoint;
 import server.integration.AgentPresence;
+import server.integration.MobHitReactionContext;
 import server.monitoring.MapBroadcastDiagnostics;
 import server.maps.reservation.CharacterSpaceOwner;
 import server.maps.reservation.CharacterSpaceReservationRuntime;
@@ -1374,6 +1375,15 @@ public class MapleMap {
      }
 
     public boolean damageMonster(final Character chr, final Monster monster, final int damage, short delay) {
+        return damageMonster(chr, monster, damage,
+                MobHitReactionContext.legacy(delay, chr, monster));
+    }
+
+    public boolean damageMonster(final Character chr, final Monster monster, final int damage,
+                                 MobHitReactionContext reactionContext) {
+        MobHitReactionContext acceptedReaction = reactionContext == null
+                ? MobHitReactionContext.legacy(0L, chr, monster) : reactionContext;
+        short delay = (short) Math.min(Short.MAX_VALUE, acceptedReaction.delayMs());
         if (monster.getId() == MobId.ZAKUM_1) {
             for (MapObject object : chr.getMap().getMapObjects()) {
                 Monster mons = chr.getMap().getMonsterByOid(object.getObjectId());
@@ -1415,7 +1425,7 @@ public class MapleMap {
         if (killed) {
             killMonster(monster, chr, true, delay);
         } else if (appliedDamage > 0 && monster.isAlive()) {
-            AgentPresence.mobHitAccepted(chr, monster, appliedDamage, delay);
+            AgentPresence.mobHitAccepted(chr, monster, appliedDamage, acceptedReaction);
         }
         return true;
     }

@@ -6,6 +6,7 @@ import server.agents.capabilities.combat.AgentMonsterControlService;
 import server.agents.capabilities.mobcontrol.AgentMobReactionRouter;
 import server.agents.runtime.simulation.AgentSimulationMapPresenceListener;
 import server.integration.AgentPresenceProvider;
+import server.integration.MobHitReactionContext;
 import server.life.Monster;
 import server.maps.MapleMap;
 
@@ -36,9 +37,9 @@ public enum CosmicAgentPresenceProvider implements AgentPresenceProvider {
     }
 
     @Override
-    public void mobHitAccepted(Character attacker, Monster monster,
-                               int appliedDamage, long reactionDelayMs) {
+    public void mobHitAccepted(Character attacker, Monster monster, int appliedDamage,
+                               MobHitReactionContext reactionContext) {
         AgentMobReactionRouter.acceptedHit(
-                attacker, monster, appliedDamage, reactionDelayMs);
+                attacker, monster, appliedDamage, reactionContext);
     }
 }

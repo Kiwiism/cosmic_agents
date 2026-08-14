@@ -61,6 +61,7 @@ import server.TimerManager;
 import server.agents.capabilities.quest.AgentQuestKillCreditPolicy;
 import server.integration.AgentPresence;
 import server.life.simulation.MobControlAuthority;
+import server.life.simulation.MobMovementSnapshot;
 import server.loot.LootManager;
 import server.maps.AbstractAnimatedMapObject;
 import server.maps.MapObjectType;
@@ -103,6 +104,7 @@ public class Monster extends AbstractLoadedLife {
     private boolean controllerHasAggro, controllerKnowsAboutAggro, controllerHasPuppet;
     private long controllerAssignmentHoldUntilNanos;
     private volatile MobControlAuthority controlAuthority = MobControlAuthority.NONE;
+    private volatile MobMovementSnapshot lastClientMovement;
     private final Collection<MonsterListener> listeners = new LinkedList<>();
     private final EnumMap<MonsterStatus, MonsterStatusEffect> stati = new EnumMap<>(MonsterStatus.class);
     private final ArrayList<MonsterStatus> alreadyBuffed = new ArrayList<>();
@@ -1050,6 +1052,16 @@ public class Monster extends AbstractLoadedLife {
 
     public MobControlAuthority getControlAuthority() {
         return controlAuthority;
+    }
+
+    public MobMovementSnapshot getLastClientMovement() {
+        return lastClientMovement;
+    }
+
+    public void recordClientMovement(double x, double y, double velocityX, double velocityY,
+                                     int footholdId, int stance, long capturedAtNanos) {
+        lastClientMovement = new MobMovementSnapshot(
+                x, y, velocityX, velocityY, footholdId, stance, capturedAtNanos);
     }
 
     /**

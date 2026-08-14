@@ -10,6 +10,7 @@ import server.TimerManager;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.mobcontrol.AgentMobReactionMode;
 import server.life.Monster;
+import server.integration.MobHitReactionContext;
 import server.life.simulation.MobControlAuthority;
 import server.life.simulation.MobMotionState;
 import server.life.simulation.MobPhysicsProfile;
@@ -62,6 +63,12 @@ public final class MobPhysicsService extends BaseService {
     private final LongAdder invalidRecoveries = new LongAdder();
     private final LongAdder missingFootholds = new LongAdder();
     private final LongAdder handoffs = new LongAdder();
+    private final LongAdder groundedSlides = new LongAdder();
+    private final LongAdder airborneImpulses = new LongAdder();
+    private final LongAdder edgeClamps = new LongAdder();
+    private final LongAdder staleFootholdCorrections = new LongAdder();
+    private final LongAdder directionFallbacks = new LongAdder();
+    private final LongAdder unexpectedGroundLosses = new LongAdder();
     private final LongAdder tickCount = new LongAdder();
     private final LongAdder totalTickNanos = new LongAdder();
     private final AtomicLong maximumTickNanos = new AtomicLong();
@@ -87,23 +94,26 @@ public final class MobPhysicsService extends BaseService {
     }
 
     public boolean acceptedHit(Character attacker, Monster monster, int damage, long delayMs) {
+        return acceptedHit(attacker, monster, damage,
+                MobHitReactionContext.legacy(delayMs, attacker, monster));
+    }
+
+    public boolean acceptedHit(Character attacker, Monster monster, int damage,
+                               MobHitReactionContext reactionContext) {
         if (!eligible(attacker, monster, damage)) {
             return false;
         }
+        MobHitReactionContext acceptedReaction = reactionContext == null
+                ? MobHitReactionContext.legacy(0L, attacker, monster) : reactionContext;
         MapleMap map = monster.getMap();
         PhysicsTerrain terrain = map.getPhysicsTerrain();
         if (terrain == null) {
             missingFootholds.increment();
             return false;
         }
-        Point attackerPosition = attacker.getPosition();
         Point monsterPosition = monster.getPosition();
-        if (attackerPosition == null || monsterPosition == null) {
+        if (monsterPosition == null) {
             return false;
-        }
-        int direction = Integer.compare(monsterPosition.x, attackerPosition.x);
-        if (direction == 0) {
-            direction = attacker.isFacingLeft() ? -1 : 1;
         }
         long now = System.nanoTime();
         monster.lockMonster();
@@ -122,9 +132,27 @@ public final class MobPhysicsService extends BaseService {
                     session = raced;
                 } else {
                     acquisitions.increment();
+                    if (session.initialSupportCorrected()) {
+                        staleFootholdCorrections.increment();
+                    }
                 }
             }
-            session.acceptHit(attacker, damage, delayMs, direction, now);
+            boolean startsReaction = !session.reactionInProgress()
+                    && damage >= session.profile().pushed()
+                    && session.profile().mode() != server.physics.PhysicsMode.FIXED;
+            if (startsReaction) {
+                if (session.body().grounded() && !session.profile().flying()) {
+                    groundedSlides.increment();
+                } else {
+                    airborneImpulses.increment();
+                }
+            }
+            if (acceptedReaction.directionSource()
+                    == MobHitReactionContext.DirectionSource.LEGACY_POSITION) {
+                directionFallbacks.increment();
+            }
+            session.acceptHit(attacker, damage, acceptedReaction.delayMs(),
+                    acceptedReaction.pushDirection(), now);
             impacts.increment();
             ensureScheduled();
             return true;
@@ -241,6 +269,10 @@ public final class MobPhysicsService extends BaseService {
         stats.substeps += advanced.substeps();
         if (advanced.catchUpCapped()) stats.cappedCatchUps++;
         stats.invalidRecoveries += advanced.invalidRecoveries();
+        if (advanced.edgeClamps() != 0) edgeClamps.add(advanced.edgeClamps());
+        if (advanced.unexpectedGroundLosses() != 0) {
+            unexpectedGroundLosses.add(advanced.unexpectedGroundLosses());
+        }
 
         Monster monster = session.monster();
         PhysicsBody body = session.body();
@@ -316,6 +348,14 @@ public final class MobPhysicsService extends BaseService {
     static int stance(MobSimulationSession session) {
         PhysicsBody body = session.body();
         boolean facingLeft;
+        if (!body.grounded() && !session.profile().flying()) {
+            facingLeft = session.motion() == MobMotionState.KNOCKBACK
+                    || session.motion() == MobMotionState.FLINCH
+                    ? session.impactFacingLeft()
+                    : Math.abs(body.velocityX()) >= 0.1
+                    ? body.velocityX() < 0.0 : session.targetX() < body.x();
+            return facingLeft ? 3 : 2;
+        }
         if (session.motion() == MobMotionState.KNOCKBACK) {
             facingLeft = session.impactFacingLeft();
             return facingLeft ? 1 : 0;
@@ -327,9 +367,6 @@ public final class MobPhysicsService extends BaseService {
         facingLeft = Math.abs(body.velocityX()) >= 0.1
                 ? body.velocityX() < 0.0
                 : session.targetX() < body.x();
-        if (!body.grounded() && !session.profile().flying()) {
-            return facingLeft ? 3 : 2;
-        }
         boolean moving = session.motion() == MobMotionState.CHASE
                 || Math.abs(body.velocityX()) >= 0.1
                 || session.profile().flying() && Math.abs(body.velocityY()) >= 0.1;
@@ -548,6 +585,8 @@ public final class MobPhysicsService extends BaseService {
     public static String globalStatus() {
         long active = 0, acquired = 0, impactCount = 0, steps = 0, sent = 0, capped = 0;
         long recovered = 0, missing = 0, handoffCount = 0, ticks = 0, total = 0, max = 0;
+        long slides = 0, airImpulses = 0, clamps = 0, staleSupport = 0;
+        long fallbackDirections = 0, groundLosses = 0;
         long virtualSessions = 0;
         Set<MapleMap> activeMaps = Collections.newSetFromMap(new IdentityHashMap<>());
         Set<MapleMap> virtualMaps = Collections.newSetFromMap(new IdentityHashMap<>());
@@ -568,6 +607,12 @@ public final class MobPhysicsService extends BaseService {
             capped += service.cappedCatchUps.sum(); ticks += service.tickCount.sum();
             recovered += service.invalidRecoveries.sum(); missing += service.missingFootholds.sum();
             handoffCount += service.handoffs.sum();
+            slides += service.groundedSlides.sum();
+            airImpulses += service.airborneImpulses.sum();
+            clamps += service.edgeClamps.sum();
+            staleSupport += service.staleFootholdCorrections.sum();
+            fallbackDirections += service.directionFallbacks.sum();
+            groundLosses += service.unexpectedGroundLosses.sum();
             for (ReleaseReason reason : ReleaseReason.values()) {
                 released.merge(reason, service.releases.get(reason).sum(), Long::sum);
             }
@@ -580,6 +625,10 @@ public final class MobPhysicsService extends BaseService {
                 + " acquisitions=" + acquired + " impacts=" + impactCount
                 + " substeps=" + steps + " publications=" + sent + " capped=" + capped
                 + " recoveries=" + recovered + " missingFootholds=" + missing
+                + " groundedSlides=" + slides + " airborneImpulses=" + airImpulses
+                + " edgeClamps=" + clamps + " staleFootholdCorrections=" + staleSupport
+                + " directionFallbacks=" + fallbackDirections
+                + " unexpectedGroundLosses=" + groundLosses
                 + " handoffs=" + handoffCount + " releases=" + released + " avgTickMs="
                 + String.format(java.util.Locale.ROOT, "%.3f", averageMs)
                 + " maxTickMs=" + String.format(java.util.Locale.ROOT, "%.3f", max / 1_000_000.0);

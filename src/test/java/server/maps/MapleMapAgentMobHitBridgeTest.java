@@ -5,11 +5,13 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import server.integration.AgentPresence;
 import server.integration.AgentPresenceProvider;
+import server.integration.MobHitReactionContext;
 import server.life.Monster;
 import server.life.MonsterStats;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -45,6 +47,33 @@ class MapleMapAgentMobHitBridgeTest {
         assertEquals(1, calls.get());
         assertEquals(80, applied.get());
         assertEquals(125L, delay.get());
+    }
+
+    @Test
+    void preservesAttackTimeReactionContextThroughDamageApplication() {
+        MapleMap map = new MapleMap(100, 0, 1, 100, 1.0f);
+        Character attacker = mock(Character.class);
+        Monster monster = damageableMonster(100, 20, false);
+        MobHitReactionContext expected = new MobHitReactionContext(
+                125, -1, 50, 3001005,
+                MobHitReactionContext.DirectionSource.CAST_FACING);
+        AtomicReference<MobHitReactionContext> captured = new AtomicReference<>();
+        AgentPresence.install(new AgentPresenceProvider() {
+            @Override
+            public boolean isAgent(Character chr) {
+                return true;
+            }
+
+            @Override
+            public void mobHitAccepted(Character source, Monster target, int appliedDamage,
+                                       MobHitReactionContext reactionContext) {
+                captured.set(reactionContext);
+            }
+        });
+
+        assertTrue(map.damageMonster(attacker, monster, 80, expected));
+
+        assertEquals(expected, captured.get());
     }
 
     @Test

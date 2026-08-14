@@ -41,12 +41,13 @@ public final class MobPhysicsSimulator {
 
         if (session.motion() == MobMotionState.KNOCKBACK) {
             horizontal = session.knockbackDirection()
-                    * (body.grounded() && !profile.flying()
+                    * (session.platformConstrainedKnockback()
                     ? GROUND_KNOCKBACK_FORCE : AIR_KNOCKBACK_FORCE)
                     * tuning.knockbackMultiplier();
         } else if (session.motion() == MobMotionState.FLINCH) {
-            body.setVelocity(0.0, body.grounded() || profile.flying()
-                    ? 0.0 : body.velocityY());
+            if (body.grounded() && !profile.flying()) {
+                body.setVelocity(0.0, 0.0);
+            }
         } else if (session.motion() != MobMotionState.PENDING_IMPACT
                 && profile.mode() != PhysicsMode.FIXED) {
             double dx = session.targetX() - body.x();

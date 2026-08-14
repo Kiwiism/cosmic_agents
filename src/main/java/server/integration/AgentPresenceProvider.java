@@ -16,4 +16,10 @@ public interface AgentPresenceProvider {
     default void mobHitAccepted(Character attacker, Monster monster,
                                 int appliedDamage, long reactionDelayMs) {
     }
+
+    default void mobHitAccepted(Character attacker, Monster monster,
+                                int appliedDamage, MobHitReactionContext reactionContext) {
+        mobHitAccepted(attacker, monster, appliedDamage,
+                reactionContext == null ? 0L : reactionContext.delayMs());
+    }
 }

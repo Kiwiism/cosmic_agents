@@ -99,6 +99,7 @@ import server.life.MonsterInformationProvider;
 import server.maps.MapItem;
 import server.maps.MapObject;
 import server.maps.MapleMap;
+import server.integration.MobHitReactionContext;
 import tools.PacketCreator;
 import tools.Randomizer;
 
@@ -561,7 +562,10 @@ public abstract class AbstractDealDamageHandler extends AbstractPacketHandler {
                             map.broadcastMessage(PacketCreator.damageMonster(monster.getObjectId(), totDamageToOneMonster));
                         }
 
-                        map.damageMonster(player, monster, totDamageToOneMonster, target.getValue().delay());
+                        MobHitReactionContext reactionContext = MobHitReactionContext.fromAttack(
+                                target.getValue().delay(), attack.skill, attack.ranged, attack.magic,
+                                attack.stance, player.getPosition(), monster.getPosition());
+                        map.damageMonster(player, monster, totDamageToOneMonster, reactionContext);
                     }
                     if (monster.isBuffed(MonsterStatus.WEAPON_REFLECT) && !attack.magic) {
                         for (MobSkillId msId : monster.getSkills()) {

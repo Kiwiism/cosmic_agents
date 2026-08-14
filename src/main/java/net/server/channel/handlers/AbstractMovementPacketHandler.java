@@ -26,6 +26,7 @@ import net.packet.InPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.maps.AnimatedMapObject;
+import server.life.Monster;
 import server.movement.AbsoluteLifeMovement;
 import server.movement.ChangeEquip;
 import server.movement.JumpDownMovement;
@@ -40,6 +41,7 @@ import java.util.List;
 
 public abstract class AbstractMovementPacketHandler extends AbstractPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(AbstractMovementPacketHandler.class);
+    private static final double CLIENT_VELOCITY_TO_FIXED_STEP = 1.0 / 125.0;
 
     protected List<LifeMovementFragment> parseMovement(InPacket p) throws EmptyMovementException {
         List<LifeMovementFragment> res = new ArrayList<>();
@@ -170,11 +172,15 @@ public abstract class AbstractMovementPacketHandler extends AbstractPacketHandle
                     //Absolute movement - only this is important for the server, other movement can be passed to the client
                     short xpos = p.readShort(); //is signed fine here?
                     short ypos = p.readShort();
-                    target.setPosition(new Point(xpos, ypos + yOffset));
-                    p.skip(6); //xwobble = lea.readShort(); ywobble = lea.readShort(); fh = lea.readShort();
+                    Point position = new Point(xpos, ypos + yOffset);
+                    target.setPosition(position);
+                    short xwobble = p.readShort();
+                    short ywobble = p.readShort();
+                    short fh = p.readShort();
                     byte newstate = p.readByte();
                     target.setStance(newstate);
                     p.readShort(); //duration
+                    recordMobMovement(target, position, xwobble, ywobble, fh, newstate);
                     break;
                 }
                 case 1:
@@ -188,10 +194,13 @@ public abstract class AbstractMovementPacketHandler extends AbstractPacketHandle
                 case 20: // Aran Combat Step
                 case 22: {
                     //Relative movement - server only cares about stance
-                    p.skip(4); //xpos = lea.readShort(); ypos = lea.readShort();
+                    short xpos = p.readShort();
+                    short ypos = p.readShort();
                     byte newstate = p.readByte();
                     target.setStance(newstate);
                     p.readShort(); //duration
+                    recordMobMovement(target, target.getPosition(), xpos, ypos,
+                            target instanceof Monster monster ? monster.getFh() : 0, newstate);
                     break;
                 }
                 case 3:
@@ -247,5 +256,16 @@ public abstract class AbstractMovementPacketHandler extends AbstractPacketHandle
                     throw new EmptyMovementException(p);
             }
         }
+    }
+
+    private static void recordMobMovement(AnimatedMapObject target, Point position,
+                                          int clientVelocityX, int clientVelocityY,
+                                          int footholdId, int stance) {
+        if (!(target instanceof Monster monster) || position == null) return;
+        if (footholdId > 0) monster.setFh(footholdId);
+        monster.recordClientMovement(position.x, position.y,
+                clientVelocityX * CLIENT_VELOCITY_TO_FIXED_STEP,
+                clientVelocityY * CLIENT_VELOCITY_TO_FIXED_STEP,
+                footholdId, stance, System.nanoTime());
     }
 }
