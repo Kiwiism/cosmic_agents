@@ -38,8 +38,11 @@ public final class CalibratedCosmicActivityPlanner implements CosmicEconomyWorld
                 .flatMap(Optional::stream).findFirst()
                 .orElseThrow(() -> new MissingActivityCalibrationException("No real activity calibration for build="
                         + config.agentBuild + " job=" + profile.jobFamily() + " level=" + agent.getLevel()));
-        int minutes = Math.max(1, Math.min(config.maximumSessionMinutes,
+        int desiredMinutes = Math.max(1, Math.min(config.maximumSessionMinutes,
                 (int) Math.round(config.medianSessionMinutes * (.5d + profile.dailyActivityFraction()))));
+        int minutes = resourceBoundMinutes(agent, calibration, desiredMinutes);
+        if (minutes <= 0) throw new InsufficientCalibratedResourcesException(
+                "No calibrated farm minute is supportable by actual consumable holdings for " + profile.agentId());
         Duration duration = Duration.ofMinutes(minutes);
         int totalKills = (int) Math.min(Integer.MAX_VALUE,
                 Math.round(calibration.killsPerMinute() * minutes));
@@ -78,11 +81,22 @@ public final class CalibratedCosmicActivityPlanner implements CosmicEconomyWorld
             if (!allowedConsumption(itemId)) return;
             int planned = (int) Math.min(Integer.MAX_VALUE, Math.round(rate * minutes));
             int owned = agent.getInventory(ItemConstants.getInventoryType(itemId)).countById(itemId);
-            int quantity = Math.min(planned, owned);
+            int quantity = planned;
+            if (quantity > owned) throw new IllegalStateException("resource-bound duration exceeded holdings");
             if (quantity > 0) result.add(new FarmSessionPlan.ItemConsumption(itemId, quantity,
                     "live-holding:" + profile.agentId() + ':' + itemId));
         });
         return List.copyOf(result);
+    }
+
+    private int resourceBoundMinutes(Character agent, ActivityCalibration calibration, int desiredMinutes) {
+        int supported = desiredMinutes;
+        for (Map.Entry<Integer, Double> use : calibration.itemUsePerMinute().entrySet()) {
+            if (!allowedConsumption(use.getKey()) || use.getValue() <= 0) continue;
+            int owned = agent.getInventory(ItemConstants.getInventoryType(use.getKey())).countById(use.getKey());
+            supported = Math.min(supported, (int) Math.floor(owned / use.getValue()));
+        }
+        return supported;
     }
 
     private boolean allowedConsumption(int itemId) {
@@ -103,5 +117,8 @@ public final class CalibratedCosmicActivityPlanner implements CosmicEconomyWorld
 
     public static final class MissingActivityCalibrationException extends IllegalStateException {
         public MissingActivityCalibrationException(String message) { super(message); }
+    }
+    public static final class InsufficientCalibratedResourcesException extends IllegalStateException {
+        public InsufficientCalibratedResourcesException(String message) { super(message); }
     }
 }

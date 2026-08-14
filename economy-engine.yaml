@@ -91,7 +91,7 @@ activity:
   returnThroughFreeMarketEntrance: true
   medianSessionMinutes: 90
   maximumSessionMinutes: 240
-  congestionAware: true
+  congestionAware: false
   levelAppropriate: true
   jobAppropriate: true
   objectiveAware: true
@@ -99,7 +99,7 @@ activity:
   consumeMpPotions: true
   consumeAmmunition: true
   enforceInventoryCapacity: true
-  allowDeath: true
+  allowDeath: false
 
 market:
   venue: PLAYER_SHOP

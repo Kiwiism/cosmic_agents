@@ -82,6 +82,13 @@ public final class EconomyConfigValidator {
                 "maximumSessionMinutes must not be below the median");
         require(!config.activity.visibleWhileActive,
                 "Offscreen activity agents cannot remain visible in the Free Market");
+        require(!config.activity.allowDeath,
+                "offscreen death must remain disabled until exact Cosmic death penalties are implemented");
+        require(!config.activity.congestionAware,
+                "offscreen congestion must remain disabled until active-session occupancy is journaled");
+        require(config.activity.consumeHpPotions && config.activity.consumeMpPotions
+                        && config.activity.consumeAmmunition,
+                "rule-exact activity must preserve calibrated potion and ammunition consumption");
 
         validateMarket(config.market);
         validateTax(config.tax);

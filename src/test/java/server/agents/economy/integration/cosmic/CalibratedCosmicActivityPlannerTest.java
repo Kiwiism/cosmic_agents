@@ -1,6 +1,8 @@
 package server.agents.economy.integration.cosmic;
 
 import client.Character;
+import client.inventory.Inventory;
+import client.inventory.InventoryType;
 import org.junit.jupiter.api.Test;
 import server.agents.economy.activity.ActivityCalibration;
 import server.agents.economy.activity.ActivityCalibrationRepository;
@@ -51,6 +53,27 @@ class CalibratedCosmicActivityPlannerTest {
                 new VictoriaActivityMapCatalog("/agents/catalogs/adaptive/victoria-map-facts.json"), catalog());
         assertThrows(CalibratedCosmicActivityPlanner.MissingActivityCalibrationException.class,
                 () -> planner.plan(agent, profile(), AT));
+    }
+
+    @Test
+    void shortensWorkToActualCalibratedConsumableRunway() {
+        Character agent = mock(Character.class); Inventory use = mock(Inventory.class);
+        when(agent.getLevel()).thenReturn(10); when(agent.getStartedQuests()).thenReturn(List.of());
+        when(agent.getInventory(InventoryType.USE)).thenReturn(use);
+        when(use.countById(2000000)).thenReturn(30);
+        ActivityCalibration calibration = new ActivityCalibration("observed:resource-bound", "build",
+                100010000, 10, "warrior", AT, 8, 2, Map.of(100100, 1d),
+                Map.of(2000000, 1d), .01);
+        CalibratedCosmicActivityPlanner planner = new CalibratedCosmicActivityPlanner(config(),
+                (build, map, level, job, samples) -> map == 100010000
+                        ? Optional.of(calibration) : Optional.empty(),
+                new VictoriaActivityMapCatalog("/agents/catalogs/adaptive/victoria-map-facts.json"), catalog());
+
+        FarmSessionPlan plan = planner.plan(agent, profile(), AT);
+
+        assertEquals(30, plan.duration().toMinutes());
+        assertEquals(60, plan.monsters().getFirst().kills());
+        assertEquals(30, plan.consumedItems().getFirst().quantity());
     }
 
     private static EconomyEngineConfig.Activity config() {
