@@ -127,6 +127,14 @@ public final class EconomyEngineConfig {
         public String maximumListingDuration;
         public String minimumRepriceInterval;
         public int maximumReprices;
+        public String actionPoll;
+        public String postTripDelay;
+        public String portalTimeout;
+        public String approachTimeout;
+        public String stallOpenTimeout;
+        public String negotiationTimeout;
+        public int interactionRangePixels;
+        public int approachRangePixels;
         public boolean globalSearchAllowed;
         public int minimumRoomsPerTrip;
         public int maximumRoomsPerTrip;
@@ -228,6 +236,7 @@ public final class EconomyEngineConfig {
         public String retainDecisionEvents;
         public String retainChatEvents;
         public int retainMovementDebugDays;
+        public int evidenceBatchSize;
     }
 
     public static final class HumanReadiness {

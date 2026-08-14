@@ -111,6 +111,14 @@ market:
   maximumListingDuration: PT4H
   minimumRepriceInterval: PT30M
   maximumReprices: 6
+  actionPoll: PT5S
+  postTripDelay: PT15M
+  portalTimeout: PT30S
+  approachTimeout: PT20S
+  stallOpenTimeout: PT30S
+  negotiationTimeout: PT2M
+  interactionRangePixels: 160
+  approachRangePixels: 120
   globalSearchAllowed: false
   minimumRoomsPerTrip: 1
   maximumRoomsPerTrip: 6
@@ -193,6 +201,7 @@ persistence:
   retainDecisionEvents: FOREVER
   retainChatEvents: FOREVER
   retainMovementDebugDays: 7
+  evidenceBatchSize: 1000
 
 humanReadiness:
   enabled: true

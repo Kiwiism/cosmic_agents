@@ -92,6 +92,8 @@ public final class EconomyConfigValidator {
         requireText(config.persistence.database, "persistence.database");
         require(config.persistence.retainMovementDebugDays >= 0,
                 "retainMovementDebugDays must be non-negative");
+        require(config.persistence.evidenceBatchSize > 0,
+                "persistence.evidenceBatchSize must be positive");
     }
 
     private static void requireSections(EconomyEngineConfig config) {
@@ -185,6 +187,14 @@ public final class EconomyConfigValidator {
                 "Room scan range must be ordered within the 22 FM rooms");
         parseDuration(market.maximumListingDuration, "market.maximumListingDuration");
         parseDuration(market.minimumRepriceInterval, "market.minimumRepriceInterval");
+        parsePositiveDuration(market.actionPoll, "market.actionPoll");
+        parseDuration(market.postTripDelay, "market.postTripDelay");
+        parsePositiveDuration(market.portalTimeout, "market.portalTimeout");
+        parsePositiveDuration(market.approachTimeout, "market.approachTimeout");
+        parsePositiveDuration(market.stallOpenTimeout, "market.stallOpenTimeout");
+        parsePositiveDuration(market.negotiationTimeout, "market.negotiationTimeout");
+        require(market.interactionRangePixels > 0 && market.approachRangePixels > 0,
+                "market physical ranges must be positive");
         require(market.maximumReprices >= 0, "maximumReprices must be non-negative");
         require(market.useCosmicTransactions,
                 "Live market settlement must use Cosmic transactions");
@@ -303,6 +313,11 @@ public final class EconomyConfigValidator {
         } catch (DateTimeParseException failure) {
             throw new EconomyConfigException(name + " must be an ISO-8601 duration", failure);
         }
+    }
+
+    private static void parsePositiveDuration(String value, String name) {
+        parseDuration(value, name);
+        require(!Duration.parse(value).isZero(), name + " must be positive");
     }
 
     private static void requireText(String value, String name) {

@@ -96,7 +96,8 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
                 state.attemptedResourceItems.add(result.itemId());
                 appendDecision(profile, logicalAt, "NPC_RESOURCE_PROCUREMENT",
                         Map.of("itemId", result.itemId(), "quantity", result.quantity(),
-                                "npcId", result.npcId(), "result", result.result()), List.of(),
+                                "npcId", result.npcId(), "result", result.result(),
+                                "commerceAction", result.commerceAction()), List.of(),
                         Map.of("sourceMap", result.sourceMapId()),
                         Map.of("reason", "CONFIGURED_RESOURCE_TARGET"),
                         Map.of("mesoDelta", (double) result.mesoDelta()));
@@ -195,7 +196,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
     public synchronized Map<String, Object> snapshotState() {
         Map<String, Object> encodedStates = new TreeMap<>();
         states.forEach((agentId, state) -> encodedStates.put(agentId, stateMap(state)));
-        return Map.of("schemaVersion", 1, "agents", encodedStates);
+        return Map.of("schemaVersion", 1, "agents", encodedStates, "randomStates", random.snapshot());
     }
 
     @Override
@@ -205,6 +206,12 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
         if (!states.isEmpty()) throw new IllegalStateException("market behavior state is already initialized");
         if (integer(snapshot, "schemaVersion") != 1)
             throw new IllegalStateException("unsupported market behavior checkpoint schema");
+        Object randomState = snapshot.get("randomStates");
+        if (randomState instanceof Map<?, ?> values) {
+            Map<String, Long> restored = new LinkedHashMap<>();
+            values.forEach((key, value) -> restored.put(key.toString(), ((Number) value).longValue()));
+            random.restore(restored);
+        }
         Map<String, Object> encodedStates = (Map<String, Object>) snapshot.get("agents");
         encodedStates.forEach((agentId, value) -> states.put(agentId,
                 stateFrom((Map<String, Object>) value)));
@@ -398,7 +405,12 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
     @FunctionalInterface public interface ResourceProcurement {
         Optional<Result> buyNext(Character agent, EconomyAgentProfile profile, Set<Integer> attemptedItemIds);
         record Result(int itemId, int quantity, int npcId, boolean success, String result,
-                      int mesoDelta, int sourceMapId) { }
+                      int mesoDelta, int sourceMapId, String commerceAction) {
+            public Result(int itemId, int quantity, int npcId, boolean success, String result,
+                          int mesoDelta, int sourceMapId) {
+                this(itemId, quantity, npcId, success, result, mesoDelta, sourceMapId, "BUY");
+            }
+        }
     }
     private enum Phase { PROCURING, BROWSING, DISPOSING, OPENING_STALL, OWNING_STALL }
     private static final class State {
