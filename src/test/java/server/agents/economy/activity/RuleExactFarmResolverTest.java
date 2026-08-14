@@ -22,7 +22,8 @@ class RuleExactFarmResolverTest {
                 new MonsterDropFact(100100, 4030000, 1_000_000, 1, 1, 99)));
         FarmSessionPlan plan = new FarmSessionPlan("farm-1", "agent-1", 100000000,
                 Instant.EPOCH, Duration.ofHours(2), 1,
-                List.of(new FarmSessionPlan.MonsterWork(100100, 2, 3)), Set.of(), Map.of(2000000, 1));
+                List.of(new FarmSessionPlan.MonsterWork(100100, 2, 3)), Set.of(),
+                List.of(new FarmSessionPlan.ItemConsumption(2000000, 1, "pot-lot")));
 
         FarmSessionOutcome outcome = new RuleExactFarmResolver(catalog)
                 .resolve(plan, new NamedRandomStreams(7));
@@ -31,7 +32,7 @@ class RuleExactFarmResolverTest {
         assertEquals(6, outcome.experience());
         assertEquals(2, outcome.itemDrops().size());
         assertTrue(outcome.itemDrops().stream().noneMatch(drop -> drop.itemId() == 4030000));
-        assertEquals(Map.of(2000000, 1), outcome.consumedItems());
+        assertEquals(1, outcome.consumedItems().getFirst().quantity());
     }
 
     private record StubCatalog(List<MonsterDropFact> drops) implements EconomyCatalog {

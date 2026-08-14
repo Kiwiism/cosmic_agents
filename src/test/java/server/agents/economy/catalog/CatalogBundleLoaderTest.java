@@ -15,7 +15,7 @@ class CatalogBundleLoaderTest {
         assertEquals("victoria-v83-authoritative", first.bundleId());
         assertEquals(64, first.adaptiveRevision().length());
         assertEquals(64, first.version().length());
-        assertEquals(9, first.resourceHashes().size());
+        assertEquals(10, first.resourceHashes().size());
         assertEquals(first, second);
     }
 }

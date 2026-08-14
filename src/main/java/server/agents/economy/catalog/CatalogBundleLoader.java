@@ -37,6 +37,11 @@ public final class CatalogBundleLoader {
             hashes.put(resource, sha256(bytes));
             bundle.update(bytes);
         }
+        for (String resource : config.mechanicalResources) {
+            byte[] bytes = read(resource);
+            hashes.put(resource, sha256(bytes));
+            bundle.update(bytes);
+        }
         if (adaptiveRevision == null) throw new EconomyConfigException("No adaptive revision found");
         return new CatalogBundleDescriptor(config.bundleId, adaptiveRevision,
                 HexFormat.of().formatHex(bundle.digest()), hashes);

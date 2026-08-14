@@ -38,6 +38,8 @@ public final class EconomyConfigValidator {
                 "catalog.adaptiveResources cannot be empty");
         require(config.catalog.sqlResources != null && !config.catalog.sqlResources.isEmpty(),
                 "catalog.sqlResources cannot be empty");
+        require(config.catalog.mechanicalResources != null && !config.catalog.mechanicalResources.isEmpty(),
+                "catalog.mechanicalResources cannot be empty");
 
         require(config.world.channelId > 0, "channelId must be positive");
         require(config.world.freeMarketEntranceMapId == 910000000,

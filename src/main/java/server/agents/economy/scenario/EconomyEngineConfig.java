@@ -43,6 +43,7 @@ public final class EconomyEngineConfig {
         public boolean requireMatchingAdaptiveRevision;
         public List<String> adaptiveResources;
         public List<String> sqlResources;
+        public List<String> mechanicalResources;
     }
 
     public static final class World {

@@ -12,12 +12,12 @@ public record FarmSessionOutcome(
         long experience,
         long mesos,
         List<ItemDrop> itemDrops,
-        Map<Integer, Integer> consumedItems,
+        List<FarmSessionPlan.ItemConsumption> consumedItems,
         Map<Integer, Integer> killCounts
 ) {
     public FarmSessionOutcome {
         itemDrops = List.copyOf(itemDrops);
-        consumedItems = Map.copyOf(consumedItems);
+        consumedItems = List.copyOf(consumedItems);
         killCounts = Map.copyOf(killCounts);
     }
 

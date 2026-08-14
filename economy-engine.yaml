@@ -27,6 +27,8 @@ catalog:
     - /db/data/102-shopitems-data.sql
     - /db/data/151-global-drop-data.sql
     - /db/data/152-drop-data.sql
+  mechanicalResources:
+    - /agents/catalogs/economy/npc-locations.json
 
 world:
   channelId: 1

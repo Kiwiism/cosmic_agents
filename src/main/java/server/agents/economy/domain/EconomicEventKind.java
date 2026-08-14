@@ -1,6 +1,7 @@
 package server.agents.economy.domain;
 
 public enum EconomicEventKind {
+    INITIAL_ENDOWMENT,
     AGENT_ADMITTED,
     FARM_RESULT,
     NPC_PURCHASE,
