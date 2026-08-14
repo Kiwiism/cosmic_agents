@@ -16,7 +16,8 @@ class PopulationAdmissionPlannerTest {
 
         assertEquals(200, admissions.size());
         assertEquals(50, admissions.stream().filter(a -> a.admittedAt().equals(start)).count());
-        assertEquals(start.plus(java.time.Duration.ofDays(15)), admissions.get(199).admittedAt());
+        assertTrue(admissions.get(199).admittedAt().isAfter(start.plus(java.time.Duration.ofDays(15))));
+        assertTrue(admissions.get(199).admittedAt().isBefore(start.plus(java.time.Duration.ofDays(16))));
         assertTrue(admissions.stream().allMatch(a -> a.dailyActivityFraction() > 0));
     }
 }

@@ -17,8 +17,8 @@ public final class PopulationAdmissionPlanner {
             int count = day == 0 ? config.initialAgents
                     : Math.min(config.growth.amount, config.maximumAgents - population);
             if (count <= 0) break;
-            Instant admittedAt = runStart.plus(Duration.ofDays((long) day * config.growth.everyLogicalDays));
             for (int i = 0; i < count; i++) {
+                Instant admittedAt = admissionTime(config, runStart, day, i, count);
                 int ordinal = population + i + 1;
                 String job = weightedChoice(config.classDistribution, random.stream("population.class"));
                 double activity = weightedActivity(config.activityDistribution,
@@ -29,6 +29,15 @@ public final class PopulationAdmissionPlanner {
             day++;
         }
         return List.copyOf(admissions);
+    }
+
+    private static Instant admissionTime(EconomyEngineConfig.Population config, Instant runStart,
+                                         int day, int index, int count) {
+        Duration interval = Duration.ofDays(config.growth.everyLogicalDays);
+        Instant boundary = runStart.plus(interval.multipliedBy(day));
+        if (day == 0 || !config.growth.spreadArrivalsAcrossInterval) return boundary;
+        long offsetNanos = Math.multiplyExact(interval.toNanos(), 2L * index + 1) / (2L * count);
+        return boundary.plusNanos(offsetNanos);
     }
 
     private static String weightedChoice(Map<String, Double> weights, NamedRandomStreams.Stream random) {
