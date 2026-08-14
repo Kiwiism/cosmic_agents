@@ -195,7 +195,7 @@ ambient:
 
 persistence:
   provider: POSTGRESQL
-  database: cosmic_agent_economy
+  database: cosmic_economy
   eventPartition: RUN_AND_LOGICAL_DAY
   checkpointCompression: true
   retainRawEconomicEvents: FOREVER

@@ -12,7 +12,9 @@ public final class EconomyDatabaseVerifier {
     private final DataSource dataSource;
     public EconomyDatabaseVerifier(DataSource dataSource) { this.dataSource = Objects.requireNonNull(dataSource); }
 
-    public void verify() {
+    public void verify() { verify(null); }
+
+    public void verify(String expectedDatabase) {
         List<Column> required = List.of(
                 new Column("simulation_run", "config_yaml"),
                 new Column("economic_event", "evidence"),
@@ -24,6 +26,9 @@ public final class EconomyDatabaseVerifier {
         try (Connection connection = dataSource.getConnection()) {
             if (!"PostgreSQL".equalsIgnoreCase(connection.getMetaData().getDatabaseProductName()))
                 throw new IllegalStateException("economy evidence database must be PostgreSQL");
+            if (expectedDatabase != null && !expectedDatabase.equals(connection.getCatalog()))
+                throw new IllegalStateException("economy database mismatch: configured="
+                        + expectedDatabase + " connected=" + connection.getCatalog());
             for (Column column : required) {
                 try (ResultSet result = connection.getMetaData().getColumns(
                         null, "public", column.table(), column.column())) {

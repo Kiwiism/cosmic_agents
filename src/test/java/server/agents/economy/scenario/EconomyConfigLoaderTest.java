@@ -20,6 +20,7 @@ class EconomyConfigLoaderTest {
         assertEquals(50, loaded.config().population.initialAgents);
         assertEquals(200, loaded.config().population.maximumAgents);
         assertEquals("REMOTE_FROM_FREE_MARKET", loaded.config().npcCommerce.accessMode);
+        assertEquals("cosmic_economy", loaded.config().persistence.database);
         assertEquals(64, loaded.sha256().length());
     }
 

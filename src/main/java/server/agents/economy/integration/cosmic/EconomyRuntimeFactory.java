@@ -24,9 +24,9 @@ public final class EconomyRuntimeFactory {
                                           Function<String, Character> liveAgents) {
         Objects.requireNonNull(runId); Objects.requireNonNull(cosmicDataSource);
         Objects.requireNonNull(economyDataSource); Objects.requireNonNull(liveAgents);
-        new EconomyDatabaseVerifier(economyDataSource).verify();
         LoadedEconomyConfig loaded = new EconomyConfigLoader().load(yaml);
         EconomyEngineConfig config = loaded.config();
+        new EconomyDatabaseVerifier(economyDataSource).verify(config.persistence.database);
         CatalogBundleDescriptor bundle = new CatalogBundleLoader().load(config.catalog);
         NpcLocationIndex npcLocations = NpcLocationIndex.loadDefault();
         EconomyCatalog catalog = new CosmicEconomyCatalog(bundle.version(), npcLocations);

@@ -85,8 +85,9 @@ public final class EconomyCommand extends Command {
         }
         if ("stop".equalsIgnoreCase(params[1])) {
             boolean died = params.length > 3 && Boolean.parseBoolean(params[3]);
+            var config = new EconomyConfigLoader().load().config();
             try (HikariDataSource database = EconomyPostgresDataSource.fromEnvironment()) {
-                new EconomyDatabaseVerifier(database).verify();
+                new EconomyDatabaseVerifier(database).verify(config.persistence.database);
                 var sample = LiveActivityCalibrationRuntime.end(agent, died, System.currentTimeMillis(),
                         new JdbcActivityCalibrationStore(database));
                 client.getPlayer().yellowMessage("Calibration saved: " + sample.sampleId()
