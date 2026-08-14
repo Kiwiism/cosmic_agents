@@ -18,6 +18,7 @@ final class AgentVictoriaQuestHuntIndexRepository {
 
     private final AgentVictoriaQuestHuntIndex index;
     private final Map<Integer, AgentVictoriaQuestHuntIndex.Entry> byQuestId;
+    private final Map<Integer, AgentVictoriaQuestHuntIndex.MobEntry> byMobId;
 
     AgentVictoriaQuestHuntIndexRepository(AgentVictoriaQuestHuntIndex index) {
         this.index = index;
@@ -28,6 +29,36 @@ final class AgentVictoriaQuestHuntIndexRepository {
             }
         }
         byQuestId = Map.copyOf(entries);
+        Map<Integer, AgentVictoriaQuestHuntIndex.MobEntry> mobs = new HashMap<>();
+        for (AgentVictoriaQuestHuntIndex.MobEntry entry : index.mobEntries()) {
+            if (mobs.putIfAbsent(entry.mobId(), entry) != null) {
+                throw new IllegalArgumentException("duplicate adaptive hunt mob " + entry.mobId());
+            }
+        }
+        byMobId = Map.copyOf(mobs);
+    }
+
+    List<AgentVictoriaQuestHuntIndex.Candidate> findCandidatesForMobs(
+            Set<Integer> mobIds) {
+        if (mobIds == null || mobIds.isEmpty()) {
+            return List.of();
+        }
+        Map<Integer, AgentVictoriaQuestHuntIndex.Candidate> byMapId = new HashMap<>();
+        for (int mobId : mobIds) {
+            AgentVictoriaQuestHuntIndex.MobEntry entry = byMobId.get(mobId);
+            if (entry == null) {
+                continue;
+            }
+            for (AgentVictoriaQuestHuntIndex.Candidate candidate : entry.candidates()) {
+                byMapId.merge(candidate.mapId(), candidate,
+                        (left, right) -> left.score() >= right.score() ? left : right);
+            }
+        }
+        return byMapId.values().stream()
+                .sorted(java.util.Comparator.comparingLong(
+                        AgentVictoriaQuestHuntIndex.Candidate::score).reversed()
+                        .thenComparingInt(AgentVictoriaQuestHuntIndex.Candidate::mapId))
+                .toList();
     }
 
     static AgentVictoriaQuestHuntIndexRepository defaultRepository() {

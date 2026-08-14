@@ -31,6 +31,20 @@ final class AgentAdaptiveQuestHuntSelector {
             "server.agents.progression.AgentAdaptiveQuestHuntSelector.DEFAULT_RECOMMENDED_AGENTS");
     private static final int DEFAULT_MAXIMUM_AGENTS = config.AgentTuning.intValue(
             "server.agents.progression.AgentAdaptiveQuestHuntSelector.DEFAULT_MAXIMUM_AGENTS");
+    private static final int ROUTE_HOP_COST = config.AgentTuning.intValue(
+            "server.agents.progression.AgentAdaptiveQuestHuntSelector.ROUTE_HOP_COST");
+    private static final int SWEEP_BASE_COST = config.AgentTuning.intValue(
+            "server.agents.progression.AgentAdaptiveQuestHuntSelector.SWEEP_BASE_COST");
+    private static final int TOPOLOGY_COST_PERCENT = config.AgentTuning.intValue(
+            "server.agents.progression.AgentAdaptiveQuestHuntSelector.TOPOLOGY_COST_PERCENT");
+    private static final int OCCUPIED_AGENT_COST = config.AgentTuning.intValue(
+            "server.agents.progression.AgentAdaptiveQuestHuntSelector.OCCUPIED_AGENT_COST");
+    private static final int LEVEL_GAP_COST = config.AgentTuning.intValue(
+            "server.agents.progression.AgentAdaptiveQuestHuntSelector.LEVEL_GAP_COST");
+    private static final int PREFERRED_MAP_CREDIT = config.AgentTuning.intValue(
+            "server.agents.progression.AgentAdaptiveQuestHuntSelector.PREFERRED_MAP_CREDIT");
+    private static final int MISSING_OBJECTIVE_COST = config.AgentTuning.intValue(
+            "server.agents.progression.AgentAdaptiveQuestHuntSelector.MISSING_OBJECTIVE_COST");
 
     private final AgentVictoriaQuestHuntPolicyRepository policyRepository;
     private final AgentVictoriaQuestHuntIndexRepository indexRepository;
@@ -47,6 +61,166 @@ final class AgentAdaptiveQuestHuntSelector {
 
     static AgentAdaptiveQuestHuntSelector defaultSelector() {
         return DEFAULT;
+    }
+
+    Optional<Selection> select(AgentHuntSelectionRequest request) {
+        AgentVictoriaQuestHuntPolicy policy = policyRepository.policy();
+        AgentHuntSelectionRequest.ObjectiveDemand primary = request.objectives().getFirst();
+        AgentQuestHuntSelectionMode mode = policy.modeFor(primary.questId(), request.mvpPlan());
+        Map<Integer, DeficitCandidateBuilder> builders = new HashMap<>();
+        for (AgentHuntSelectionRequest.ObjectiveDemand demand : request.objectives()) {
+            List<AgentVictoriaQuestHuntIndex.Candidate> candidates = indexRepository
+                    .findObjective(demand.questId(), demand.objectiveId())
+                    .map(AgentVictoriaQuestHuntIndex.Objective::candidates)
+                    .orElseGet(() -> indexRepository.findCandidatesForMobs(demand.sourceMobIds()));
+            for (AgentVictoriaQuestHuntIndex.Candidate candidate : candidates) {
+                builders.computeIfAbsent(candidate.mapId(),
+                                ignored -> new DeficitCandidateBuilder(candidate))
+                        .add(demand, candidate);
+            }
+        }
+        for (AgentVictoriaQuestRuntimeCatalog.HuntMap preferred : request.preferredMaps()) {
+            builders.computeIfAbsent(preferred.mapId(),
+                    ignored -> new DeficitCandidateBuilder(preferred));
+        }
+
+        Set<Integer> routeEligibleMapIds = builders.keySet().stream()
+                .filter(mapId -> !request.excludedMapIds().contains(mapId))
+                .filter(mapId -> AgentVictoriaTrainingRouteCatalog.canRoute(
+                        request.agent().getMapId(), mapId))
+                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+        Map<Integer, Integer> occupancy = AgentVictoriaTrainingPopulation.snapshot(
+                request.agent(), routeEligibleMapIds);
+        AgentProgressionProfile profile = AgentProgressionProfileRuntime.profile(request.entry());
+        List<DeficitChoice> choices = builders.values().stream()
+                .map(DeficitCandidateBuilder::build)
+                .filter(choice -> routeEligibleMapIds.contains(choice.map().mapId()))
+                .filter(choice -> occupancy.getOrDefault(choice.map().mapId(), 0)
+                        < choice.map().maximumAgents())
+                .map(choice -> evaluate(request, choice, occupancy, profile))
+                .sorted(Comparator.comparingLong(DeficitChoice::completionCost)
+                        .thenComparingInt(choice -> choice.map().rank())
+                        .thenComparingInt(choice -> choice.map().mapId()))
+                .toList();
+        if (choices.isEmpty()) {
+            return Optional.empty();
+        }
+
+        DeficitChoice preferred = request.preferredMaps().stream()
+                .map(map -> choices.stream()
+                        .filter(choice -> choice.map().mapId() == map.mapId())
+                        .findFirst().orElse(null))
+                .filter(java.util.Objects::nonNull)
+                .findFirst().orElse(null);
+        boolean deficitHasAuthority = request.reason() != AgentHuntSelectionRequest.Reason.NORMAL
+                || !request.mvpPlan() || mode == AgentQuestHuntSelectionMode.ADAPTIVE;
+        String objectiveSignature = request.objectives().stream()
+                .map(demand -> demand.questId() + ":" + demand.objectiveId())
+                .sorted().reduce((left, right) -> left + "|" + right).orElse("");
+        SharedSelectionKey leaseKey = new SharedSelectionKey(
+                request.agent().getId(), request.selectionId());
+        SharedSelectionLease lease = sharedSelectionLeases.get(leaseKey);
+        DeficitChoice leasedChoice = lease == null ? null : choices.stream()
+                .filter(choice -> choice.map().mapId() == lease.mapId())
+                .findFirst().orElse(null);
+        boolean leaseValid = deficitHasAuthority && lease != null
+                && lease.objectiveSignature().equals(objectiveSignature)
+                && lease.expiresAtMs() > request.nowMs() && leasedChoice != null;
+        if (!leaseValid) {
+            sharedSelectionLeases.remove(leaseKey);
+        }
+        DeficitChoice selected = !deficitHasAuthority && preferred != null
+                ? preferred : leaseValid ? leasedChoice : choices.getFirst();
+        remember(leaseKey, selected.map().mapId(), objectiveSignature, request.nowMs());
+        Source source = leaseValid
+                ? Source.STICKY_SELECTION : selected == preferred
+                ? Source.FIXED_PREFERRED
+                : request.reason() == AgentHuntSelectionRequest.Reason.NORMAL
+                ? Source.DEFICIT_AWARE
+                : Source.RECOVERY_FALLBACK;
+        recordDeficitChoice(request, selected, choices, mode, source);
+        return Optional.of(new Selection(selected.map(), mode, source,
+                selected.evidence() == null ? null
+                        : new AdaptiveChoice(selected.map(), selected.evidence(),
+                        -selected.completionCost())));
+    }
+
+    private static DeficitChoice evaluate(
+            AgentHuntSelectionRequest request,
+            DeficitChoice choice,
+            Map<Integer, Integer> occupancy,
+            AgentProgressionProfile profile) {
+        int routeDistance = AgentVictoriaTrainingRouteCatalog.distance(
+                request.agent().getMapId(), choice.map().mapId());
+        long travelCost = Math.max(0, routeDistance) * (long) ROUTE_HOP_COST;
+        long huntCost = 0L;
+        int coveredObjectives = 0;
+        for (AgentHuntSelectionRequest.ObjectiveDemand demand : request.objectives()) {
+            if (demand.remainingCount() <= 0) {
+                continue;
+            }
+            AgentVictoriaQuestHuntIndex.Candidate evidence =
+                    choice.evidenceByObjective().get(objectiveKey(demand));
+            if (evidence == null) {
+                huntCost += MISSING_OBJECTIVE_COST
+                        + demand.remainingCount() * (long) SWEEP_BASE_COST;
+                continue;
+            }
+            coveredObjectives++;
+            long yieldBasisPoints = Math.max(1L,
+                    evidence.expectedUnitsPerSweepBasisPoints());
+            long sweeps = Math.max(1L, divideRoundingUp(
+                    demand.remainingCount() * 10_000L, yieldBasisPoints));
+            long topologyCost = evidence.targetHorizontalSpan() / 4L
+                    + evidence.targetVerticalSpan() / 2L
+                    + Math.max(0, evidence.targetComponentCount() - 1) * 1_200L
+                    + evidence.climbableCount() * 150L
+                    + evidence.scoreEvidence().irrelevantSpawnPenalty() / 10L;
+            long sweepCost = SWEEP_BASE_COST
+                    + topologyCost * TOPOLOGY_COST_PERCENT / 100L;
+            huntCost += sweeps * sweepCost;
+        }
+        int population = occupancy.getOrDefault(choice.map().mapId(), 0);
+        long occupancyCost = population * (long) OCCUPIED_AGENT_COST;
+        int levelGap = choice.evidence() == null ? 0
+                : Math.max(0, choice.evidence().maxMobLevel() - request.agent().getLevel() - 2);
+        long riskCost = levelGap * (long) LEVEL_GAP_COST;
+        boolean preferred = request.preferredMaps().stream()
+                .anyMatch(map -> map.mapId() == choice.map().mapId());
+        long preferredCredit = preferred ? PREFERRED_MAP_CREDIT : 0L;
+        long currentMapCredit = choice.map().mapId() == request.agent().getMapId()
+                ? profile.routinePreference() * 20L : 0L;
+        long completionCost = Math.max(0L, travelCost + huntCost + occupancyCost + riskCost
+                - preferredCredit - currentMapCredit);
+        return choice.withCosts(completionCost, travelCost, huntCost, coveredObjectives);
+    }
+
+    private void recordDeficitChoice(
+            AgentHuntSelectionRequest request,
+            DeficitChoice selected,
+            List<DeficitChoice> choices,
+            AgentQuestHuntSelectionMode mode,
+            Source source) {
+        String alternatives = choices.stream().limit(3)
+                .map(choice -> choice.map().mapId() + ":" + choice.completionCost()
+                        + "(travel=" + choice.travelCost() + ",hunt=" + choice.huntCost()
+                        + ",coverage=" + choice.coveredObjectives() + ")")
+                .reduce((left, right) -> left + "," + right).orElse("none");
+        String remaining = request.objectives().stream()
+                .map(demand -> demand.objectiveId() + "=" + demand.remainingCount())
+                .reduce((left, right) -> left + "," + right).orElse("none");
+        log.info("Agent hunt choice agent={} selection={} reason={} mode={} source={} "
+                        + "remaining={} selectedMap={} completionCost={} alternatives={}",
+                request.agent().getName(), request.selectionId(), request.reason(), mode, source,
+                remaining, selected.map().mapId(), selected.completionCost(), alternatives);
+    }
+
+    private static String objectiveKey(AgentHuntSelectionRequest.ObjectiveDemand demand) {
+        return demand.questId() + ":" + demand.objectiveId();
+    }
+
+    private static long divideRoundingUp(long value, long divisor) {
+        return (value + divisor - 1L) / divisor;
     }
 
     Optional<Selection> select(
@@ -349,7 +523,9 @@ final class AgentAdaptiveQuestHuntSelector {
         ADAPTIVE_DECOMPOSED_FALLBACK,
         ADAPTIVE_PRIMARY,
         FIXED_SAFETY_FALLBACK,
-        STICKY_SELECTION
+        STICKY_SELECTION,
+        DEFICIT_AWARE,
+        RECOVERY_FALLBACK
     }
 
     private record SharedSelectionKey(int agentId, String selectionId) {
@@ -409,6 +585,76 @@ final class AgentAdaptiveQuestHuntSelector {
                             List.copyOf(targetMobIds));
             return new CombinedAdaptiveChoice(
                     map, evidence, coveredObjectives.size(), catalogScore, bestRank);
+        }
+    }
+
+    private record DeficitChoice(
+            AgentVictoriaQuestRuntimeCatalog.HuntMap map,
+            AgentVictoriaQuestHuntIndex.Candidate evidence,
+            Map<String, AgentVictoriaQuestHuntIndex.Candidate> evidenceByObjective,
+            long completionCost,
+            long travelCost,
+            long huntCost,
+            int coveredObjectives) {
+
+        DeficitChoice withCosts(long completionCost, long travelCost, long huntCost,
+                                int coveredObjectives) {
+            return new DeficitChoice(map, evidence, evidenceByObjective, completionCost,
+                    travelCost, huntCost, coveredObjectives);
+        }
+    }
+
+    private static final class DeficitCandidateBuilder {
+        private final int mapId;
+        private final Map<String, AgentVictoriaQuestHuntIndex.Candidate> evidenceByObjective =
+                new HashMap<>();
+        private final Set<Integer> targetMobIds = new LinkedHashSet<>();
+        private AgentVictoriaQuestHuntIndex.Candidate evidence;
+        private int rank = Integer.MAX_VALUE;
+        private int recommendedAgents = Integer.MAX_VALUE;
+        private int maximumAgents = Integer.MAX_VALUE;
+
+        private DeficitCandidateBuilder(AgentVictoriaQuestHuntIndex.Candidate evidence) {
+            this.mapId = evidence.mapId();
+            include(evidence);
+        }
+
+        private DeficitCandidateBuilder(AgentVictoriaQuestRuntimeCatalog.HuntMap map) {
+            this.mapId = map.mapId();
+            rank = map.rank();
+            recommendedAgents = map.recommendedAgents();
+            maximumAgents = map.maximumAgents();
+            targetMobIds.addAll(map.targetMobIds());
+        }
+
+        private void add(AgentHuntSelectionRequest.ObjectiveDemand demand,
+                         AgentVictoriaQuestHuntIndex.Candidate candidate) {
+            include(candidate);
+            evidenceByObjective.put(objectiveKey(demand), candidate);
+        }
+
+        private void include(AgentVictoriaQuestHuntIndex.Candidate candidate) {
+            if (evidence == null || candidate.score() > evidence.score()) {
+                evidence = candidate;
+            }
+            rank = Math.min(rank, candidate.rank());
+            recommendedAgents = Math.min(recommendedAgents, candidate.recommendedAgents());
+            maximumAgents = Math.min(maximumAgents, candidate.maximumAgents());
+            targetMobIds.addAll(candidate.targetMobIds());
+        }
+
+        private DeficitChoice build() {
+            int recommended = recommendedAgents == Integer.MAX_VALUE
+                    ? DEFAULT_RECOMMENDED_AGENTS : recommendedAgents;
+            int maximum = maximumAgents == Integer.MAX_VALUE
+                    ? DEFAULT_MAXIMUM_AGENTS : maximumAgents;
+            AgentVictoriaQuestRuntimeCatalog.HuntMap map =
+                    new AgentVictoriaQuestRuntimeCatalog.HuntMap(
+                            Math.max(1, rank == Integer.MAX_VALUE ? 1 : rank), mapId,
+                            Math.max(1, recommended), Math.max(Math.max(1, recommended), maximum),
+                            List.copyOf(targetMobIds));
+            return new DeficitChoice(map, evidence, Map.copyOf(evidenceByObjective),
+                    Long.MAX_VALUE, 0L, 0L, 0);
         }
     }
 }

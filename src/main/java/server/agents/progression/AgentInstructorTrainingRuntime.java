@@ -7,7 +7,9 @@ import server.agents.integration.PrimitiveCapabilityGateway;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /** Runs the four normal instructor quests before handing off to the level-15 catch-up plan. */
@@ -70,6 +72,7 @@ public final class AgentInstructorTrainingRuntime {
                         agent, step.questId(), requirement.getKey()) >= requirement.getValue());
         if (gateway.canCompleteQuest(agent, step.questId(), bundle.instructorNpcId())
                 || killRequirementsMet) {
+            AgentHuntRecoveryRuntime.clear(entry, instructorObjectiveKey(step));
             VictoriaFirstJobNarrator.announceObjective(agent, state,
                     "instructor:" + index + ":return",
                     "I'm done with " + server.quest.Quest.getInstance(step.questId()).getName()
@@ -95,15 +98,28 @@ public final class AgentInstructorTrainingRuntime {
         }
         AgentVictoriaLevel15Catalog.TrainingGround trainingGround = step.trainingGround();
         if (trainingGround != null) {
+            String huntKey = instructorObjectiveKey(step);
+            int progress = trainingProgress(agent, step, gateway);
+            if (AgentHuntRecoveryRuntime.fallbackActive(entry, huntKey, progress, nowMs)) {
+                return huntOutsideInstance(entry, agent, step, huntKey, progress, gateway, nowMs);
+            }
             if (trainingGround.instanceMapIds().contains(agent.getMapId())) {
-                if (gateway.liveMonsterCount(agent, step.mobIds()) == 0) {
-                    // Training instances can contain fewer authored targets than the quest
-                    // requires and do not all replenish reliably while occupied by a headless
-                    // character. Leave through the normal portal and re-enter a fresh instance
-                    // instead of idling forever after the local population is exhausted.
+                AgentHuntRecoveryRuntime.Observation observation =
+                        AgentHuntRecoveryRuntime.observe(entry, huntKey, agent.getMapId(), progress,
+                                gateway.liveMonsterCount(agent, step.mobIds()), true, nowMs);
+                if (observation == AgentHuntRecoveryRuntime.Observation.REENTER_INSTANCE) {
                     gateway.stop(entry);
                     AgentVictoriaRouteRuntime.travel(
                             entry, agent, trainingGround.entranceMapId(), gateway);
+                    return true;
+                }
+                if (observation == AgentHuntRecoveryRuntime.Observation.RESELECT) {
+                    Set<Integer> failedInstanceFamily = new java.util.LinkedHashSet<>(
+                            trainingGround.instanceMapIds());
+                    failedInstanceFamily.add(trainingGround.entranceMapId());
+                    AgentHuntRecoveryRuntime.failMaps(entry, huntKey, progress,
+                            Set.copyOf(failedInstanceFamily), nowMs);
+                    gateway.stop(entry);
                     return true;
                 }
                 gateway.grind(entry, step.mobIds());
@@ -130,6 +146,71 @@ public final class AgentInstructorTrainingRuntime {
         }
         gateway.grind(entry, step.mobIds());
         return true;
+    }
+
+    private static boolean huntOutsideInstance(
+            AgentRuntimeEntry entry,
+            Character agent,
+            AgentInstructorTrainingStep step,
+            String huntKey,
+            int progress,
+            PrimitiveCapabilityGateway gateway,
+            long nowMs) {
+        List<AgentHuntSelectionRequest.ObjectiveDemand> demands = new ArrayList<>();
+        for (var requirement : step.requiredKills().entrySet()) {
+            int current = gateway.questProgress(agent, step.questId(), requirement.getKey());
+            if (current >= requirement.getValue()) {
+                continue;
+            }
+            demands.add(new AgentHuntSelectionRequest.ObjectiveDemand(
+                    step.questId(), "instructor:" + step.questId() + ":" + requirement.getKey(),
+                    "kill-mob", requirement.getKey(), requirement.getValue(), current,
+                    Set.of(requirement.getKey())));
+        }
+        if (demands.isEmpty()) {
+            return true;
+        }
+        AgentVictoriaQuestRuntimeCatalog.HuntMap huntMap =
+                AgentAdaptiveQuestHuntSelector.defaultSelector()
+                        .select(new AgentHuntSelectionRequest(
+                                entry, agent, huntKey, demands, List.of(),
+                                AgentHuntRecoveryRuntime.failedMaps(
+                                        entry, huntKey, progress, nowMs),
+                                true, AgentHuntSelectionRequest.Reason.EXHAUSTION_FALLBACK, nowMs))
+                        .map(AgentAdaptiveQuestHuntSelector.Selection::map)
+                        .orElse(null);
+        if (huntMap == null) {
+            gateway.stop(entry);
+            return true;
+        }
+        if (AgentVictoriaRouteRuntime.travel(entry, agent, huntMap.mapId(), gateway)) {
+            return true;
+        }
+        AgentHuntRecoveryRuntime.Observation observation = AgentHuntRecoveryRuntime.observe(
+                entry, huntKey, agent.getMapId(), progress,
+                gateway.liveMonsterCount(agent, Set.copyOf(huntMap.targetMobIds())), false, nowMs);
+        if (observation == AgentHuntRecoveryRuntime.Observation.RESELECT) {
+            AgentHuntRecoveryRuntime.failMaps(entry, huntKey, progress,
+                    Set.of(huntMap.mapId()), nowMs);
+            gateway.stop(entry);
+            return true;
+        }
+        gateway.grind(entry, Set.copyOf(huntMap.targetMobIds()));
+        return true;
+    }
+
+    private static String instructorObjectiveKey(AgentInstructorTrainingStep step) {
+        return "instructor:" + step.questId();
+    }
+
+    private static int trainingProgress(
+            Character agent,
+            AgentInstructorTrainingStep step,
+            PrimitiveCapabilityGateway gateway) {
+        return step.requiredKills().entrySet().stream()
+                .mapToInt(requirement -> Math.min(requirement.getValue(),
+                        gateway.questProgress(agent, step.questId(), requirement.getKey())))
+                .sum();
     }
 
     private static String instructorIntention(AgentInstructorTrainingStep step, int questStatus) {

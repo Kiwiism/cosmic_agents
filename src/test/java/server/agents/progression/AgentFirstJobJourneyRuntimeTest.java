@@ -455,10 +455,11 @@ class AgentFirstJobJourneyRuntimeTest {
         when(gateway.portalPosition(agent, 1)).thenReturn(exit);
 
         assertTrue(AgentFirstJobJourneyRuntime.tick(entry, agent, 100L, gateway));
+        assertTrue(AgentFirstJobJourneyRuntime.tick(entry, agent, 16_000L, gateway));
 
         verify(gateway).stop(entry);
         verify(gateway).navigate(entry, exit, true);
-        verify(gateway, never()).grind(entry, Set.of(130100));
+        verify(gateway).grind(entry, Set.of(130100));
     }
 
     @Test

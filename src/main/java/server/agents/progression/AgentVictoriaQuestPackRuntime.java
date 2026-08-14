@@ -82,16 +82,40 @@ final class AgentVictoriaQuestPackRuntime {
             return Result.RUNNING;
         }
         AgentVictoriaQuestRuntimeCatalog.HuntingObjective objective = quest.objectives().stream()
-                .filter(candidate -> !complete(agent, quest.questId(), candidate, gateway))
+                .filter(candidate -> {
+                    boolean completed = complete(agent, quest.questId(), candidate, gateway);
+                    if (completed) {
+                        AgentHuntRecoveryRuntime.clear(entry, "pack:" + pack.packId() + ":"
+                                + quest.questId() + ":" + candidate.objectiveId());
+                    }
+                    return !completed;
+                })
                 .findFirst().orElse(null);
         if (objective == null) {
             gateway.stop(entry);
             return Result.RUNNING;
         }
+        int currentCount = objective.type().contains("collect")
+                ? gateway.itemCount(agent, objective.targetId())
+                : gateway.questProgress(agent, quest.questId(), objective.targetId());
+        String huntKey = "pack:" + pack.packId() + ":" + quest.questId()
+                + ":" + objective.objectiveId();
+        boolean recovering = AgentHuntRecoveryRuntime.fallbackActive(
+                entry, huntKey, currentCount, nowMs);
         AgentVictoriaQuestRuntimeCatalog.HuntMap huntMap =
                 AgentAdaptiveQuestHuntSelector.defaultSelector()
-                        .select(entry, agent, quest.questId(), objective.objectiveId(),
-                                objective.huntMaps(), true)
+                        .select(new AgentHuntSelectionRequest(
+                                entry, agent, huntKey,
+                                List.of(new AgentHuntSelectionRequest.ObjectiveDemand(
+                                        quest.questId(), objective.objectiveId(), objective.type(),
+                                        objective.targetId(), objective.requiredCount(), currentCount,
+                                        Set.copyOf(objective.sourceMobIds()))),
+                                objective.huntMaps(), AgentHuntRecoveryRuntime.failedMaps(
+                                        entry, huntKey, currentCount, nowMs), true,
+                                recovering
+                                        ? AgentHuntSelectionRequest.Reason.EXHAUSTION_FALLBACK
+                                        : AgentHuntSelectionRequest.Reason.NORMAL,
+                                nowMs))
                         .map(AgentAdaptiveQuestHuntSelector.Selection::map)
                         .orElse(null);
         if (huntMap == null) {
@@ -109,6 +133,15 @@ final class AgentVictoriaQuestPackRuntime {
         if (!travel(entry, agent, huntMap.mapId(), state, nowMs, gateway)) {
             return state.stage() == AgentCareerProgressionState.Stage.BLOCKED
                     ? Result.BLOCKED : Result.RUNNING;
+        }
+        AgentHuntRecoveryRuntime.Observation observation = AgentHuntRecoveryRuntime.observe(
+                entry, huntKey, agent.getMapId(), currentCount,
+                gateway.liveMonsterCount(agent, Set.copyOf(huntMap.targetMobIds())), false, nowMs);
+        if (observation == AgentHuntRecoveryRuntime.Observation.RESELECT) {
+            AgentHuntRecoveryRuntime.failMaps(entry, huntKey, currentCount,
+                    Set.of(huntMap.mapId()), nowMs);
+            gateway.stop(entry);
+            return Result.RUNNING;
         }
         gateway.grind(entry, Set.copyOf(huntMap.targetMobIds()));
         return Result.RUNNING;

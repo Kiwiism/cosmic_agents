@@ -60,9 +60,36 @@ Every derived candidate retains the components used to produce its catalog score
 | Climbables and complexity | Penalizes navigation-heavy layouts |
 | Level hazard | Penalizes maps whose strongest mobs substantially exceed the quest level |
 
-Catalog score is static evidence. At runtime it is adjusted by route
-availability, current population, the Agent's progression profile, current map,
-and map capacity.
+Catalog score is static evidence. Schema 2 also publishes a generic candidate
+list per mob plus expected objective units per sweep and target-specific span
+evidence. This lets instructor and recovery objectives use the same evidence
+without borrowing another quest's co-objective score.
+
+Runtime selection uses estimated completion cost rather than allowing the
+static score to dominate. The estimate includes the live remaining objective
+count, route distance, expected sweeps, target-area topology, occupancy, level
+risk, preferred-route credit, and recent map failures. Small remaining deficits
+therefore favor nearby maps with enough spawns, while larger deficits can justify
+travelling to a denser map.
+
+Concentration is generated as a throughput modifier. A one-spawn map with 100%
+target concentration no longer outranks a compact map merely because every spawn
+is relevant.
+
+## Exhaustion recovery
+
+Hunt runtimes share one per-Agent, per-objective recovery state:
+
+1. allow map-arrival and spawn grace periods;
+2. retain the current map while objective progress continues;
+3. refresh an instructor instance once when eligible mobs remain absent;
+4. temporarily suppress the exhausted instance family or ordinary hunt map;
+5. reselect from route-eligible candidates using the live remaining deficit;
+6. clear the recovery frame when the objective completes or a test run resets.
+
+Decision logs begin with `Agent hunt choice`; recovery transitions begin with
+`Agent hunt recovery`. The choice record includes the remaining counts, selected
+map, completion cost, and the three best alternatives with travel and hunt cost.
 
 ## Selection policies
 
@@ -77,8 +104,9 @@ quests. `adaptiveFallbackEnabled` is an independent kill switch for fallback
 while `shadowModeEnabled` controls decision evidence logging.
 
 The current policy deliberately uses `PREFERRED_ADAPTIVE` for both categories.
-This enables adaptive fallback first and does **not** enable fully adaptive
-non-MVP selection prematurely.
+Tested MVP plans retain their preferred map during normal operation. Recovery
+may override a failed preferred map, and non-MVP quest scheduling uses the
+deficit-aware comparison directly. Fully adaptive MVP selection remains opt-in.
 
 ## Shadow evidence
 

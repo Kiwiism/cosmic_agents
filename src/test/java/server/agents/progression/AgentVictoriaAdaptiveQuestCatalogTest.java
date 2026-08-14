@@ -30,9 +30,10 @@ class AgentVictoriaAdaptiveQuestCatalogTest {
         AgentVictoriaQuestHuntIndex index =
                 AgentVictoriaQuestHuntIndexRepository.defaultRepository().index();
 
-        assertEquals(1, index.schemaVersion());
+        assertEquals(2, index.schemaVersion());
         assertFalse(index.revision().isBlank());
         assertEquals(93, index.entries().size());
+        assertTrue(index.mobEntries().size() > 100);
         assertTrue(index.entries().stream()
                 .flatMap(entry -> entry.objectives().stream())
                 .flatMap(objective -> objective.candidates().stream())
@@ -42,6 +43,11 @@ class AgentVictoriaAdaptiveQuestCatalogTest {
                         && candidate.targetSpawnEntries() > 0
                         && candidate.totalSpawnEntries() >= candidate.targetSpawnEntries()
                         && candidate.targetComponentCount() > 0
+                        && candidate.expectedUnitsPerSweepBasisPoints() > 0
+                        && candidate.targetHorizontalSpan() >= 0
+                        && candidate.targetVerticalSpan() >= 0
+                        && candidate.climbableCount() >= 0
+                        && !candidate.entryKind().isBlank()
                         && candidate.scoreEvidence() != null));
     }
 
@@ -74,7 +80,9 @@ class AgentVictoriaAdaptiveQuestCatalogTest {
             try (InputStream input = getClass().getResourceAsStream(resource)) {
                 assertNotNull(input, resource);
                 JsonNode root = mapper.readTree(input);
-                assertEquals(1, root.path("schemaVersion").asInt(), resource);
+                int expectedSchema = resource.endsWith("victoria-quest-hunt-index.json")
+                        ? 2 : 1;
+                assertEquals(expectedSchema, root.path("schemaVersion").asInt(), resource);
                 assertTrue(root.path("entries").size() > 0, resource);
                 if (revision == null) {
                     revision = root.path("revision").asText();
@@ -85,6 +93,33 @@ class AgentVictoriaAdaptiveQuestCatalogTest {
         }
         assertNotNull(revision);
         assertEquals(64, revision.length());
+    }
+
+    @Test
+    void smallPiratePigDeficitPrefersNearbySimpleMapAfterInstanceFailure() {
+        Character agent = mock(Character.class);
+        when(agent.getId()).thenReturn(95);
+        when(agent.getName()).thenReturn("PirateRecovery");
+        when(agent.getJob()).thenReturn(Job.PIRATE);
+        when(agent.getLevel()).thenReturn(10);
+        when(agent.getMapId()).thenReturn(120010000);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+
+        AgentAdaptiveQuestHuntSelector.Selection selection =
+                AgentAdaptiveQuestHuntSelector.defaultSelector()
+                        .select(new AgentHuntSelectionRequest(
+                                entry, agent, "instructor:2195",
+                                List.of(new AgentHuntSelectionRequest.ObjectiveDemand(
+                                        2195, "instructor:2195:1210100", "kill-mob",
+                                        1210100, 43, 35, Set.of(1210100))),
+                                List.of(), Set.of(120010000, 912030000, 912030001,
+                                912030002, 912030003, 912030004), true,
+                                AgentHuntSelectionRequest.Reason.EXHAUSTION_FALLBACK, 100L))
+                        .orElseThrow();
+
+        assertEquals(100020000, selection.map().mapId());
+        assertEquals(AgentAdaptiveQuestHuntSelector.Source.RECOVERY_FALLBACK,
+                selection.source());
     }
 
     @Test

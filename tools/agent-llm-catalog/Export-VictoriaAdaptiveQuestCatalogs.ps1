@@ -119,6 +119,17 @@ function Get-Candidate {
     } | ForEach-Object { [int] $_.componentId } | Sort-Object -Unique)
     $targetComponentCount = $targetComponentIds.Count
     $componentSpreadPenalty = [Math]::Max(0, $targetComponentCount - 1) * 1500
+    $targetPoints = @($facts.spawnPoints | Where-Object {
+        $sourceMobIds -contains [int] $_.mobId
+    })
+    $targetHorizontalSpan = if ($targetPoints.Count -eq 0) { 0 } else {
+        [int] ((@($targetPoints.x | Measure-Object -Maximum).Maximum) `
+            - (@($targetPoints.x | Measure-Object -Minimum).Minimum))
+    }
+    $targetVerticalSpan = if ($targetPoints.Count -eq 0) { 0 } else {
+        [int] ((@($targetPoints.y | Measure-Object -Maximum).Maximum) `
+            - (@($targetPoints.y | Measure-Object -Minimum).Minimum))
+    }
 
     $planningLevel = if ($null -eq $questById[$QuestId].minLevel) {
         1
@@ -133,24 +144,35 @@ function Get-Candidate {
 
     $dropEvidence = @()
     $dropYieldScore = 0
+    $expectedUnitsPerSweepBasisPoints = $targetSpawnEntries * 10000
     if ([string] $Objective.type -eq "collect-item") {
         $dropEvidence = @(Get-DropEvidence $QuestId ([int] $Objective.targetId) $sourceMobIds)
+        $expectedUnitsPerSweepBasisPoints = 0
         foreach ($drop in $dropEvidence) {
             $spawnCount = @($targetRows | Where-Object { [int] $_.mobId -eq [int] $drop.mobId } |
                 Measure-Object spawnEntries -Sum).Sum
             $averageQuantity = ([int] $drop.minimumQuantity + [int] $drop.maximumQuantity) / 2.0
             $dropYieldScore += [int] [Math]::Round(
                 [int] $spawnCount * [int] $drop.chance * $averageQuantity / 1000.0)
+            $expectedUnitsPerSweepBasisPoints += [int] [Math]::Round(
+                [int] $spawnCount * [int] $drop.chance * $averageQuantity / 100.0)
         }
     }
 
+    # Concentration is a throughput modifier, not a flat reward. A one-spawn
+    # 100%-pure map must not outrank a compact map with several target spawns.
+    $concentrationScore = [int] [Math]::Round(
+        $targetSpawnEntries * $targetConcentrationBasisPoints * 0.5)
+    $scarcityPenalty = [Math]::Max(0, 3 - $targetSpawnEntries) * 3000
+
     $scoreEvidence = [ordered]@{
         targetSpawnScore = $targetSpawnEntries * 1000
-        targetConcentrationScore = $targetConcentrationBasisPoints * 5
+        targetConcentrationScore = $concentrationScore
         coObjectiveCoverageScore = $coObjectiveCoverageCount * 5000
         otherRequiredSpawnScore = $otherRequiredSpawnEntries * 500
         expectedDropYieldScore = $dropYieldScore
         irrelevantSpawnPenalty = $irrelevantSpawnEntries * 200
+        scarcityPenalty = $scarcityPenalty
         traversableWidthPenalty = $widthPenalty
         componentSpreadPenalty = $componentSpreadPenalty
         climbablePenalty = $climbPenalty
@@ -163,6 +185,7 @@ function Get-Candidate {
         + $scoreEvidence.otherRequiredSpawnScore `
         + $scoreEvidence.expectedDropYieldScore `
         - $scoreEvidence.irrelevantSpawnPenalty `
+        - $scoreEvidence.scarcityPenalty `
         - $scoreEvidence.traversableWidthPenalty `
         - $scoreEvidence.componentSpreadPenalty `
         - $scoreEvidence.climbablePenalty `
@@ -180,6 +203,16 @@ function Get-Candidate {
         targetConcentrationBasisPoints = $targetConcentrationBasisPoints
         coObjectiveCoverageCount = $coObjectiveCoverageCount
         targetComponentCount = $targetComponentCount
+        expectedUnitsPerSweepBasisPoints = $expectedUnitsPerSweepBasisPoints
+        targetHorizontalSpan = $targetHorizontalSpan
+        targetVerticalSpan = $targetVerticalSpan
+        climbableCount = [int] $facts.topology.climbableCount
+        maxMobLevel = [int] $SpawnMap.maxMobLevel
+        entryKind = if ([string] $SpawnMap.mapName -like "Mini Dungeon:*") {
+            "mini-dungeon"
+        } else {
+            "ordinary"
+        }
         recommendedAgents = $capacity
         maximumAgents = $capacity + 2
         scoreEvidence = $scoreEvidence
@@ -205,6 +238,12 @@ function Rank-Candidates {
             targetConcentrationBasisPoints = [int] $candidate.targetConcentrationBasisPoints
             coObjectiveCoverageCount = [int] $candidate.coObjectiveCoverageCount
             targetComponentCount = [int] $candidate.targetComponentCount
+            expectedUnitsPerSweepBasisPoints = [int] $candidate.expectedUnitsPerSweepBasisPoints
+            targetHorizontalSpan = [int] $candidate.targetHorizontalSpan
+            targetVerticalSpan = [int] $candidate.targetVerticalSpan
+            climbableCount = [int] $candidate.climbableCount
+            maxMobLevel = [int] $candidate.maxMobLevel
+            entryKind = [string] $candidate.entryKind
             recommendedAgents = [int] $candidate.recommendedAgents
             maximumAgents = [int] $candidate.maximumAgents
             scoreEvidence = $candidate.scoreEvidence
@@ -520,6 +559,7 @@ foreach ($quest in @($questHunting.entries | Where-Object {
             type = [string] $objective.type
             targetId = [int] $objective.targetId
             requiredCount = [int] $objective.requiredCount
+            sourceMobIds = @($sourceMobIds)
             candidates = $ranked
         })
     }
@@ -545,6 +585,29 @@ foreach ($quest in @($questHunting.entries | Where-Object {
         questName = [string] $quest.questName
         objectives = @($objectiveIndexes)
         combinedCandidates = @($combinedCandidates)
+    })
+}
+
+$mobIndexEntries = [System.Collections.Generic.List[object]]::new()
+foreach ($mobId in @($victoriaMobIds | Sort-Object)) {
+    $candidateMaps = @($spawnMapsByMob[$mobId] | Where-Object {
+        Test-VictoriaMapId ([int] $_.mapId)
+    })
+    if ($candidateMaps.Count -eq 0) { continue }
+    $genericObjective = [pscustomobject]@{
+        type = "kill-mob"
+        targetId = $mobId
+        sourceMobIds = @($mobId)
+    }
+    $candidates = foreach ($spawnMap in $candidateMaps) {
+        Get-Candidate 0 $genericObjective @() $spawnMap
+    }
+    $ranked = @(Rank-Candidates $candidates $MaximumCandidatesPerObjective)
+    if ($ranked.Count -eq 0) { continue }
+    $mobIndexEntries.Add([ordered]@{
+        mobId = $mobId
+        mobName = [string] $mobById[$mobId].mobName
+        candidates = $ranked
     })
 }
 
@@ -586,16 +649,17 @@ $outputs = [ordered]@{
         entries = @($mapFacts)
     }
     "victoria-quest-hunt-index.json" = [ordered]@{
-        schemaVersion = 1
+        schemaVersion = 2
         catalogId = "victoria-quest-hunt-index-$shortRevision"
         revision = $revision
         generatedAtUtc = $metadata.generatedAtUtc
         sourceHashes = $sourceHashes
         scoringPolicy = [ordered]@{
             purpose = "expected relevant quest progress with topology, concentration, drop, filler, and hazard evidence"
-            runtimeAdjustments = @("route eligibility", "occupancy", "current map", "agent progression profile")
+            runtimeAdjustments = @("remaining objective count", "route distance", "occupancy", "current map", "recent map failures", "agent progression profile")
         }
         entries = @($indexEntries)
+        mobEntries = @($mobIndexEntries)
     }
     "victoria-quest-item-demand-index.json" = [ordered]@{
         schemaVersion = 1
@@ -614,4 +678,4 @@ foreach ($name in $outputs.Keys) {
         Set-Content -Encoding UTF8 -LiteralPath $path
     Write-Output "Wrote $path"
 }
-Write-Output "Adaptive revision ${shortRevision}: $($questFacts.Count) quests, $($mobDropFacts.Count) mobs, $($mapFacts.Count) maps, $($indexEntries.Count) indexed quests"
+Write-Output "Adaptive revision ${shortRevision}: $($questFacts.Count) quests, $($mobDropFacts.Count) mobs, $($mapFacts.Count) maps, $($indexEntries.Count) indexed quests, $($mobIndexEntries.Count) indexed mobs"

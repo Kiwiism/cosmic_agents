@@ -2472,6 +2472,54 @@ tuning:
     # Purpose: Sets the hard population limit for an authored hunt map when generated capacity evidence is unavailable; once reached, an Agent may choose an adaptive alternative.
     # Technical: AgentAdaptiveQuestHuntSelector uses this only as a fallback maximum for fixed maps missing from the generated hunt index.
     server.agents.progression.AgentAdaptiveQuestHuntSelector.DEFAULT_MAXIMUM_AGENTS: '4'
+    # Values: a finite non-negative integer. Recommended: 1000-5000 around the tested baseline 2500.
+    # Purpose: Controls how strongly each Victoria route hop discourages travelling to a more distant hunt map.
+    # Technical: AgentAdaptiveQuestHuntSelector multiplies shortest-route hop count by this cost before comparing estimated objective completion costs.
+    server.agents.progression.AgentAdaptiveQuestHuntSelector.ROUTE_HOP_COST: '2500'
+    # Values: a positive integer. Recommended: 1000-5000 around the tested baseline 2500.
+    # Purpose: Represents the baseline effort of clearing or waiting through one target population sweep on a hunt map.
+    # Technical: AgentAdaptiveQuestHuntSelector multiplies this base by estimated sweeps derived from remaining objective units and catalog yield evidence.
+    server.agents.progression.AgentAdaptiveQuestHuntSelector.SWEEP_BASE_COST: '2500'
+    # Values: a finite non-negative integer interpreted as percent. Recommended: 50-200 around the tested baseline 100.
+    # Purpose: Scales the influence of target span, vertical spread, components, climbables, and irrelevant monsters on hunt selection.
+    # Technical: AgentAdaptiveQuestHuntSelector applies this percentage to the catalog-derived topology portion of every estimated sweep cost.
+    server.agents.progression.AgentAdaptiveQuestHuntSelector.TOPOLOGY_COST_PERCENT: '100'
+    # Values: a finite non-negative integer. Recommended: 500-5000 around the tested baseline 2000.
+    # Purpose: Discourages adding another Agent to a hunt map that already contains active characters when alternatives are viable.
+    # Technical: AgentAdaptiveQuestHuntSelector multiplies the loaded-map occupancy snapshot by this cost during deficit-aware comparison.
+    server.agents.progression.AgentAdaptiveQuestHuntSelector.OCCUPIED_AGENT_COST: '2000'
+    # Values: a finite non-negative integer. Recommended: 500-5000 around the tested baseline 2000.
+    # Purpose: Penalizes hunt maps whose strongest resident monster exceeds the Agent's level by more than a small safety margin.
+    # Technical: AgentAdaptiveQuestHuntSelector multiplies each hazardous level of catalog max-mob evidence by this completion-cost penalty.
+    server.agents.progression.AgentAdaptiveQuestHuntSelector.LEVEL_GAP_COST: '2000'
+    # Values: a finite non-negative integer. Recommended: 500-4000 around the tested baseline 1500.
+    # Purpose: Gives tested or authored preferred maps a modest stability advantage without allowing them to dominate bad runtime evidence.
+    # Technical: AgentAdaptiveQuestHuntSelector subtracts this credit from preferred-map completion cost when deficit-aware authority is enabled.
+    server.agents.progression.AgentAdaptiveQuestHuntSelector.PREFERRED_MAP_CREDIT: '1500'
+    # Values: a positive integer. Recommended: 50000-250000 around the tested baseline 100000.
+    # Purpose: Strongly discourages maps that cannot advance every currently combined objective unless no complete-coverage map is reachable.
+    # Technical: AgentAdaptiveQuestHuntSelector adds this cost for each unresolved demand lacking candidate yield evidence on the evaluated map.
+    server.agents.progression.AgentAdaptiveQuestHuntSelector.MISSING_OBJECTIVE_COST: '100000'
+    # Values: a finite non-negative integer; unit: milliseconds. Recommended: 5000-15000 around the tested baseline 8000.
+    # Purpose: Prevents a newly entered hunt map from being judged before its mobs and navigation state have settled.
+    # Technical: AgentHuntRecoveryRuntime requires this elapsed time after each map transition before zero-target or no-progress evidence may trigger recovery.
+    server.agents.progression.AgentHuntRecoveryRuntime.MAP_ARRIVAL_GRACE_MS: '8000'
+    # Values: a finite non-negative integer; unit: milliseconds. Recommended: 10000-30000 around the tested baseline 15000.
+    # Purpose: Requires a sustained absence of eligible mobs before declaring a hunt map exhausted.
+    # Technical: AgentHuntRecoveryRuntime measures consecutive zero-live-target observations against this interval after the arrival grace has elapsed.
+    server.agents.progression.AgentHuntRecoveryRuntime.ZERO_TARGET_GRACE_MS: '15000'
+    # Values: a finite non-negative integer; unit: milliseconds. Recommended: 30000-90000 around the tested baseline 45000.
+    # Purpose: Reselects when eligible mobs exist but the objective makes no progress for a prolonged interval.
+    # Technical: AgentHuntRecoveryRuntime compares the latest quest or inventory progress timestamp against this interval while eligible targets remain live.
+    server.agents.progression.AgentHuntRecoveryRuntime.NO_PROGRESS_GRACE_MS: '45000'
+    # Values: a finite non-negative integer; unit: milliseconds. Recommended: 120000-600000 around the tested baseline 300000.
+    # Purpose: Keeps a recently exhausted or mechanically failed hunt map out of selection long enough to prevent oscillation.
+    # Technical: AgentHuntRecoveryState stores each failed map with this per-objective expiry and the adaptive selector filters those maps until expiry.
+    server.agents.progression.AgentHuntRecoveryRuntime.FAILED_MAP_COOLDOWN_MS: '300000'
+    # Values: a finite non-negative integer. Recommended: 0-2 around the tested baseline 1.
+    # Purpose: Allows one controlled training-instance refresh before escalating to an ordinary external hunt map.
+    # Technical: AgentHuntRecoveryRuntime increments the objective-local instance retry counter before activating external fallback candidate selection.
+    server.agents.progression.AgentHuntRecoveryRuntime.MAX_INSTANCE_REENTRIES: '1'
     # Values: a finite non-negative integer. Recommended: 20-80 around the tested baseline 40; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how strongly hunt efficiency affects Agent behavior. Higher values make the effect more noticeable; lower values soften it.
     # Technical: the "progression decision policy" component consumes this as an integer. Domain: non-negative policy coefficient; it is meaningful relative to the other coefficients used by the same decision.

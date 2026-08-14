@@ -203,18 +203,34 @@ final class AgentVictoriaSharedQuestPackRuntime {
             }
             gateway.stop(entry);
             AgentPreExitLootRuntime.clear(entry);
+            AgentHuntRecoveryRuntime.clear(entry, "shared:" + selectionId);
             AgentAdaptiveQuestHuntSelector.defaultSelector()
-                    .clearCombinedSelection(agent.getId(), selectionId);
+                    .clearCombinedSelection(agent.getId(), "shared:" + selectionId);
             advance(state, nowMs);
             return Result.RUNNING;
         }
 
         List<AgentVictoriaQuestHuntIndexRepository.ObjectiveReference> objectives =
                 unresolvedObjectives(agent, state, pack, step, gateway);
-        AgentAdaptiveQuestHuntSelector.Selection selection =
-                AgentAdaptiveQuestHuntSelector.defaultSelector()
-                        .selectCombined(entry, agent, selectionId, step.mapId(),
-                                step.preferredMobIds(), objectives, nowMs)
+        List<AgentHuntSelectionRequest.ObjectiveDemand> demands = huntDemands(
+                agent, objectives, gateway);
+        int progress = demands.stream().mapToInt(
+                AgentHuntSelectionRequest.ObjectiveDemand::currentCount).sum();
+        String huntKey = "shared:" + selectionId;
+        boolean recovering = AgentHuntRecoveryRuntime.fallbackActive(
+                entry, huntKey, progress, nowMs);
+        AgentVictoriaQuestRuntimeCatalog.HuntMap preferredMap =
+                new AgentVictoriaQuestRuntimeCatalog.HuntMap(
+                        1, step.mapId(), 2, 4, step.preferredMobIds());
+        AgentAdaptiveQuestHuntSelector.Selection selection = demands.isEmpty() ? null
+                : AgentAdaptiveQuestHuntSelector.defaultSelector()
+                        .select(new AgentHuntSelectionRequest(
+                                entry, agent, huntKey, demands, List.of(preferredMap),
+                                AgentHuntRecoveryRuntime.failedMaps(
+                                        entry, huntKey, progress, nowMs), true,
+                                recovering ? AgentHuntSelectionRequest.Reason.EXHAUSTION_FALLBACK
+                                        : AgentHuntSelectionRequest.Reason.NORMAL,
+                                nowMs))
                         .orElse(null);
         int huntMapId = selection == null ? step.mapId() : selection.map().mapId();
         if (agent.getMapId() != huntMapId) {
@@ -240,6 +256,17 @@ final class AgentVictoriaSharedQuestPackRuntime {
                     ? new HashSet<>(step.preferredMobIds())
                     : new HashSet<>(selection.map().targetMobIds());
         }
+        AgentHuntRecoveryRuntime.Observation observation = AgentHuntRecoveryRuntime.observe(
+                entry, huntKey, agent.getMapId(), progress,
+                gateway.liveMonsterCount(agent, preferred), false, nowMs);
+        if (observation == AgentHuntRecoveryRuntime.Observation.RESELECT) {
+            AgentHuntRecoveryRuntime.failMaps(entry, huntKey, progress,
+                    Set.of(huntMapId), nowMs);
+            AgentAdaptiveQuestHuntSelector.defaultSelector()
+                    .clearCombinedSelection(agent.getId(), huntKey);
+            gateway.stop(entry);
+            return Result.RUNNING;
+        }
         Set<Integer> incidentalCandidates = huntMapId == step.mapId()
                 ? spawnPressureCandidates(step, preferred) : Set.of();
         Set<Integer> incidental = AgentSpawnPressurePolicy.selectFallbackMobIds(
@@ -250,6 +277,26 @@ final class AgentVictoriaSharedQuestPackRuntime {
                 AgentCombatPolicyConfig.spawnPressureMinTargetSharePercent());
         gateway.grind(entry, preferred, incidental);
         return Result.RUNNING;
+    }
+
+    private static List<AgentHuntSelectionRequest.ObjectiveDemand> huntDemands(
+            Character agent,
+            List<AgentVictoriaQuestHuntIndexRepository.ObjectiveReference> objectives,
+            PrimitiveCapabilityGateway gateway) {
+        return objectives.stream().map(reference -> {
+            AgentVictoriaQuestHuntIndex.Objective objective = reference.objective();
+            int current = objective.type().toLowerCase(java.util.Locale.ROOT).contains("collect")
+                    ? gateway.itemCount(agent, objective.targetId())
+                    : gateway.questProgress(agent, reference.questId(), objective.targetId());
+            Set<Integer> sourceMobIds = objective.sourceMobIds().isEmpty()
+                    ? objective.candidates().stream()
+                    .flatMap(candidate -> candidate.targetMobIds().stream())
+                    .collect(Collectors.toSet())
+                    : Set.copyOf(objective.sourceMobIds());
+            return new AgentHuntSelectionRequest.ObjectiveDemand(
+                    reference.questId(), objective.objectiveId(), objective.type(),
+                    objective.targetId(), objective.requiredCount(), current, sourceMobIds);
+        }).toList();
     }
 
     /**
