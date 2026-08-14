@@ -1,7 +1,9 @@
 package server.agents.capabilities.combat;
 
 import client.Character;
+import client.inventory.WeaponType;
 import org.junit.jupiter.api.Test;
+import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.supplies.AgentAmmoStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -10,6 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 class AgentLocalOpportunityAttackServiceTest {
@@ -66,6 +69,22 @@ class AgentLocalOpportunityAttackServiceTest {
         assertFalse(missingPosition.consumedTick());
         assertEquals(new Point(50, 60), missingPosition.targetPos());
         assertEquals(0, hookCalls.get());
+    }
+
+    @Test
+    void meleeRouteBlockerCanBeApproachedByJumpBeforeAHitboxPlanExists() {
+        Point agentPos = new Point(493, 2120);
+        Point blockerPos = new Point(535, 2045);
+
+        assertTrue(AgentLocalOpportunityAttackService.shouldJumpTowardUnplannableCloseTarget(
+                true, false, WeaponType.SWORD1H, AgentMovementProfile.base(),
+                agentPos, blockerPos, 100));
+        assertFalse(AgentLocalOpportunityAttackService.shouldJumpTowardUnplannableCloseTarget(
+                true, false, WeaponType.GUN, AgentMovementProfile.base(),
+                agentPos, blockerPos, 100));
+        assertFalse(AgentLocalOpportunityAttackService.shouldJumpTowardUnplannableCloseTarget(
+                true, true, WeaponType.SWORD1H, AgentMovementProfile.base(),
+                agentPos, blockerPos, 100));
     }
 
     private static AgentLocalOpportunityAttackService.Hooks hooksCounting(AtomicInteger hookCalls) {

@@ -9,6 +9,7 @@ import server.agents.capabilities.combat.AgentCombatTargetTraceRuntime;
 import server.agents.capabilities.combat.AgentCombatTargetTraceSnapshot;
 import server.agents.capabilities.combat.AgentCombatCooldownStateRuntime;
 import server.agents.capabilities.combat.AgentDegenerateAttackStateRuntime;
+import server.agents.capabilities.combat.AgentRouteBlockerState;
 import server.agents.capabilities.navigation.AgentNavigationTraceRuntime;
 import server.agents.capabilities.navigation.AgentNavigationTraceSnapshot;
 import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
@@ -49,6 +50,8 @@ public final class AgentVictoriaLiveValidationRunner {
     private static final int RINA_QUEST_ID = 28_267;
     private static final int CAMILA_QUEST_ID = 28_268;
     private static final int JAY_QUEST_ID = 28_269;
+    private static final List<Integer> WARRIOR_QUEST_IDS = List.of(
+            28_280, 2_082, 28_281, 28_273, 2_089, 28_274);
     private static final int CAMILA_PIG_MOB_ID = 1_210_100;
     private static final int JAY_RIBBON_PIG_MOB_ID = 1_210_101;
     private static final int ORANGE_MOB_ID = 1_210_102;
@@ -124,8 +127,11 @@ public final class AgentVictoriaLiveValidationRunner {
         AgentCareerBuildBundle bundle = VictoriaFirstJobMvpTestService.resolveBundle(career);
         String homePackId = AgentVictoriaLevel15CatalogRepository.defaultRepository()
                 .careerFor(bundle).catchUpPlan().homePackId();
-        return "henesys-pre15".equals(homePackId)
-                ? ValidationTarget.HENESYS_HOME_PACK : ValidationTarget.NAUTILUS_ROTATION_PACK;
+        return switch (homePackId) {
+            case "henesys-pre15" -> ValidationTarget.HENESYS_HOME_PACK;
+            case "perion-pre15" -> ValidationTarget.WARRIOR_PERION_ELLINIA_PACKS;
+            default -> ValidationTarget.NAUTILUS_ROTATION_PACK;
+        };
     }
 
     private static void monitor(AgentRuntimeEntry entry, ValidationTarget target) throws Exception {
@@ -199,6 +205,8 @@ public final class AgentVictoriaLiveValidationRunner {
                 progression.stage(),
                 progression.questPackIndex(),
                 AgentUniversalPlanRuntime.status(entry),
+                agent.getLevel(),
+                agent.getExp(),
                 questProgress(agent, ORANGE_QUEST_ID, ORANGE_MOB_ID),
                 questProgress(agent, PIG_QUEST_ID, PIG_MOB_ID),
                 agent.countItem(PIG_RIBBON_ITEM_ID),
@@ -214,6 +222,7 @@ public final class AgentVictoriaLiveValidationRunner {
                 questStatus(agent, RINA_QUEST_ID),
                 questStatus(agent, CAMILA_QUEST_ID),
                 questStatus(agent, JAY_QUEST_ID),
+                WARRIOR_QUEST_IDS.stream().map(questId -> questStatus(agent, questId)).toList(),
                 questProgress(agent, CAMILA_QUEST_ID, CAMILA_PIG_MOB_ID),
                 questProgress(agent, JAY_QUEST_ID, JAY_RIBBON_PIG_MOB_ID),
                 navigation,
@@ -244,6 +253,9 @@ public final class AgentVictoriaLiveValidationRunner {
         Point goal = AgentMoveTargetStateRuntime.moveTarget(entry);
         AgentSupplyProcurementState supplies = entry.capabilityStates().require(
                 AgentSupplyProcurementState.STATE_KEY);
+        AgentRouteBlockerState.Snapshot routeBlocker = entry.capabilityStates()
+                .require(AgentRouteBlockerState.STATE_KEY)
+                .snapshot(System.currentTimeMillis());
         return "edge=" + edge
                 + ",waypoint=" + (waypoint == null ? "none" : waypoint.x + ":" + waypoint.y)
                 + ",goal=" + (goal == null ? "none" : goal.x + ":" + goal.y)
@@ -258,6 +270,8 @@ public final class AgentVictoriaLiveValidationRunner {
                 + ",vSpeed=" + Math.round(AgentMovementPhysicsStateRuntime.verticalVelocity(entry) * 100.0) / 100.0
                 + ",hSpeed=" + Math.round(AgentMovementPhysicsStateRuntime.horizontalSpeed(entry) * 100.0) / 100.0
                 + ",supply=" + supplies.phase() + ":" + supplies.category()
+                + ",routeBlocker=" + routeBlocker.availableKills()
+                + ":active=" + routeBlocker.budgetAvailable()
                 + ",shop=" + AgentShopStateRuntime.workflow(entry).phase()
                 + ":pending=" + AgentShopStateRuntime.shopVisitPending(entry);
     }
@@ -289,6 +303,8 @@ public final class AgentVictoriaLiveValidationRunner {
                   AgentCareerProgressionState.Stage stage,
                   int questPackIndex,
                   AgentPlanExecutionStatus planStatus,
+                  int level,
+                  int exp,
                   int orangeKills,
                   int pigKills,
                   int pigRibbons,
@@ -304,6 +320,7 @@ public final class AgentVictoriaLiveValidationRunner {
                   int rinaQuestStatus,
                   int camilaQuestStatus,
                   int jayQuestStatus,
+                  List<Integer> warriorQuestStatuses,
                   int camilaPigKills,
                   int jayRibbonPigKills,
                   AgentNavigationTraceSnapshot navigation,
@@ -313,6 +330,8 @@ public final class AgentVictoriaLiveValidationRunner {
 
         Sample {
             position = position == null ? new Point() : new Point(position);
+            warriorQuestStatuses = warriorQuestStatuses == null
+                    ? List.of() : List.copyOf(warriorQuestStatuses);
         }
 
         @Override
@@ -336,9 +355,17 @@ public final class AgentVictoriaLiveValidationRunner {
                     .stream().allMatch(status -> status == COMPLETED);
         }
 
+        boolean warriorPacksComplete() {
+            return warriorQuestStatuses.size() == WARRIOR_QUEST_IDS.size()
+                    && warriorQuestStatuses.stream().allMatch(status -> status == COMPLETED);
+        }
+
         boolean validationComplete(ValidationTarget target) {
-            return target == ValidationTarget.HENESYS_HOME_PACK
-                    ? henesysPackComplete() : nautilusPackComplete();
+            return switch (target) {
+                case HENESYS_HOME_PACK -> henesysPackComplete();
+                case WARRIOR_PERION_ELLINIA_PACKS -> warriorPacksComplete();
+                case NAUTILUS_ROTATION_PACK -> nautilusPackComplete();
+            };
         }
 
         int navigationStuckMs() {
@@ -346,13 +373,15 @@ public final class AgentVictoriaLiveValidationRunner {
         }
 
         String objectiveFingerprint() {
-            return mapId + ":" + stage + ":" + questPackIndex + ":" + orangeKills + ":"
+            return mapId + ":" + stage + ":" + questPackIndex + ":" + level + ":" + exp + ":"
+                    + orangeKills + ":"
                     + pigKills + ":" + pigRibbons + ":" + slimeKills + ":"
                     + orangeQuestStatus + ":" + pigQuestStatus + ":"
                     + ribbonQuestStatus + ":" + slimeQuestStatus + ":"
                     + orangeMushroomCaps + ":" + mushroomSpores + ":" + greenMushroomCaps + ":"
                     + bruceQuestStatus + ":" + rinaQuestStatus + ":"
                     + camilaQuestStatus + ":" + jayQuestStatus + ":"
+                    + warriorQuestStatuses + ":"
                     + camilaPigKills + ":" + jayRibbonPigKills;
         }
 
@@ -378,6 +407,7 @@ public final class AgentVictoriaLiveValidationRunner {
                     + " henesysItems=" + orangeMushroomCaps + "," + mushroomSpores + ","
                     + greenMushroomCaps + " henesysStatus=" + bruceQuestStatus + ","
                     + rinaQuestStatus + "," + camilaQuestStatus + "," + jayQuestStatus
+                    + " warriorStatus=" + warriorQuestStatuses
                     + " henesysKills=" + camilaPigKills + "," + jayRibbonPigKills
                     + " " + nav + " " + target
                     + " movement={" + movementDiagnostics + "}";
@@ -397,6 +427,7 @@ public final class AgentVictoriaLiveValidationRunner {
 
     private enum ValidationTarget {
         HENESYS_HOME_PACK("HENESYS_PACK"),
+        WARRIOR_PERION_ELLINIA_PACKS("WARRIOR_PACKS"),
         NAUTILUS_ROTATION_PACK("NAUTILUS_PACK");
 
         private final String logLabel;

@@ -80,6 +80,22 @@ public final class AgentLocalOpportunityAttackService {
 
         AgentAttackPlan attackPlan = AgentCombatPlanRuntime.planAttack(entry, agent, localTarget, AgentCombatConfig.cfg);
         if (attackPlan == null) {
+            // A close-range blocker can be vertically reachable by a jump before any current
+            // weapon hitbox intersects it. Requiring an attack plan first leaves melee Agents
+            // unable to clear mobs standing on steep ramps: contact knockback repeatedly sends
+            // them back down the same walk region. Let movement close that last vertical gap;
+            // the normal airborne branch will attack once a real plan becomes executable.
+            if (shouldJumpTowardUnplannableCloseTarget(
+                    allowJumpTowardTarget,
+                    AgentMovementStateRuntime.inAir(entry),
+                    weaponType,
+                    movementProfile(entry),
+                    agentPos,
+                    localTargetPos,
+                    hooks.jumpHeightCalculator().calculate(movementProfile(entry)))) {
+                hooks.jumpInitiator().initiate(entry, agent, localTargetPos.x - agentPos.x);
+                return new Result(true, targetPos);
+            }
             return new Result(false, targetPos);
         }
         if (AgentMovementStateRuntime.inAir(entry)) {
@@ -120,6 +136,25 @@ public final class AgentLocalOpportunityAttackService {
         }
 
         return new Result(false, targetPos);
+    }
+
+    static boolean shouldJumpTowardUnplannableCloseTarget(boolean allowJumpTowardTarget,
+                                                           boolean inAir,
+                                                           WeaponType weaponType,
+                                                           AgentMovementProfile movementProfile,
+                                                           Point agentPos,
+                                                           Point targetPos,
+                                                           double maxJumpHeightPx) {
+        return allowJumpTowardTarget
+                && !inAir
+                && AgentAttackExecutionProvider.determineBasicWeaponRoute(weaponType)
+                == AgentAttackRoute.CLOSE
+                && AgentCombatRangePolicy.isTargetJumpable(
+                movementProfile,
+                true,
+                agentPos,
+                targetPos,
+                maxJumpHeightPx);
     }
 
     private static AgentMovementProfile movementProfile(AgentRuntimeEntry entry) {

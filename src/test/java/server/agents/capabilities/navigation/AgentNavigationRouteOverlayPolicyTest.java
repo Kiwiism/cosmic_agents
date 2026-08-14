@@ -16,7 +16,7 @@ class AgentNavigationRouteOverlayPolicyTest {
     void nautilusExitUsesAuthoredUpperRopeRoute() {
         AgentNavigationGraph graph = new AgentNavigationGraph(
                 120000000,
-                58,
+                59,
                 AgentMovementProfile.base(),
                 List.of(),
                 Map.of(),
@@ -40,8 +40,8 @@ class AgentNavigationRouteOverlayPolicyTest {
 
     @Test
     void nautilusOverlayDoesNotAffectOtherDestinationsOrGraphVersions() {
-        AgentNavigationGraph currentGraph = graph(58);
-        AgentNavigationGraph otherVersion = graph(57);
+        AgentNavigationGraph currentGraph = graph(59);
+        AgentNavigationGraph otherVersion = graph(58);
 
         assertFalse(AgentNavigationRouteOverlayPolicy.applies(currentGraph, 200));
         assertTrue(AgentNavigationRouteOverlayPolicy.allows(currentGraph, 200, edge(213, 214)));
@@ -53,7 +53,7 @@ class AgentNavigationRouteOverlayPolicyTest {
     void forestEastUpperLeftHabitatAvoidsIrrelevantDropFrontiers() {
         AgentNavigationGraph graph = new AgentNavigationGraph(
                 100030000,
-                58,
+                59,
                 AgentMovementProfile.base(),
                 List.of(),
                 Map.of(),
@@ -65,6 +65,34 @@ class AgentNavigationRouteOverlayPolicyTest {
         assertTrue(AgentNavigationRouteOverlayPolicy.allows(graph, 3, edge(62, 79)));
         assertFalse(AgentNavigationRouteOverlayPolicy.allows(graph, 3, edge(62, 17)));
         assertTrue(AgentNavigationRouteOverlayPolicy.allows(graph, 3, edge(4, 3)));
+    }
+
+    @Test
+    void forestSouthExitUsesCentralLadderInsteadOfUnreliableJump() {
+        AgentNavigationGraph graph = new AgentNavigationGraph(
+                100040000,
+                59,
+                AgentMovementProfile.base(),
+                List.of(),
+                Map.of(),
+                Map.of(),
+                Map.of(),
+                Set.of());
+
+        assertTrue(AgentNavigationRouteOverlayPolicy.applies(graph, 1));
+        assertTrue(AgentNavigationRouteOverlayPolicy.allows(graph, 1, edge(44, 45)));
+        assertTrue(AgentNavigationRouteOverlayPolicy.allows(graph, 1, edge(41, 51)));
+        assertFalse(AgentNavigationRouteOverlayPolicy.allows(graph, 1, edge(41, 46)));
+        assertTrue(AgentNavigationRouteOverlayPolicy.allows(graph, 1, edge(13, 12)));
+        assertFalse(AgentNavigationRouteOverlayPolicy.allows(graph, 1, edge(13, 11)));
+        assertFalse(AgentNavigationRouteOverlayPolicy.allows(graph, 1, edge(13, 50)));
+        assertTrue(AgentNavigationRouteOverlayPolicy.allows(graph, 1, edge(12, 10)));
+        assertTrue(AgentNavigationRouteOverlayPolicy.allows(graph, 1, edge(10, 9)));
+        assertTrue(AgentNavigationRouteOverlayPolicy.allows(graph, 1, edge(9, 5)));
+        assertTrue(AgentNavigationRouteOverlayPolicy.allows(graph, 1, edge(5, 4)));
+        assertTrue(AgentNavigationRouteOverlayPolicy.allows(graph, 1, edge(4, 2)));
+        assertTrue(AgentNavigationRouteOverlayPolicy.allows(graph, 1, edge(2, 3)));
+        assertTrue(AgentNavigationRouteOverlayPolicy.allows(graph, 1, edge(3, 1)));
     }
 
     private static AgentNavigationGraph graph(int version) {

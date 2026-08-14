@@ -356,6 +356,7 @@ class AgentFirstJobJourneyRuntimeTest {
         state.trainingQuestIndex(3);
         PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
         when(gateway.questStatus(agent, 2143)).thenReturn(1);
+        when(gateway.liveMonsterCount(agent, Set.of(1120100))).thenReturn(1);
 
         assertTrue(AgentFirstJobJourneyRuntime.tick(entry, agent, 100L, gateway));
 
@@ -426,11 +427,38 @@ class AgentFirstJobJourneyRuntimeTest {
         PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
         when(gateway.questStatus(agent, 2140)).thenReturn(1);
         when(gateway.questProgress(agent, 2140, 130100)).thenReturn(19);
+        when(gateway.liveMonsterCount(agent, Set.of(130100))).thenReturn(1);
 
         assertTrue(AgentFirstJobJourneyRuntime.tick(entry, agent, 100L, gateway));
 
         verify(gateway).grind(entry, Set.of(130100));
         verify(gateway, never()).completeQuest(agent, 2140, 1052001);
+    }
+
+    @Test
+    void exhaustedInstructorInstanceLeavesAndReentersInsteadOfIdling() {
+        Character agent = mock(Character.class);
+        when(agent.getId()).thenReturn(52);
+        when(agent.getName()).thenReturn("TrainingExhausted");
+        when(agent.getJob()).thenReturn(Job.THIEF);
+        when(agent.getLevel()).thenReturn(12);
+        when(agent.getMapId()).thenReturn(910310004);
+        when(agent.getPosition()).thenReturn(new Point(0, 0));
+        AgentRuntimeEntry entry = entry(agent, "thief-dagger-standard-v1",
+                AgentCareerProgressionState.Stage.INSTRUCTOR_TRAINING);
+        PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
+        Point exit = new Point(100, 0);
+        when(gateway.questStatus(agent, 2140)).thenReturn(1);
+        when(gateway.questProgress(agent, 2140, 130100)).thenReturn(6);
+        when(gateway.liveMonsterCount(agent, Set.of(130100))).thenReturn(0);
+        when(gateway.directPortalIdTo(agent, 103010000)).thenReturn(1);
+        when(gateway.portalPosition(agent, 1)).thenReturn(exit);
+
+        assertTrue(AgentFirstJobJourneyRuntime.tick(entry, agent, 100L, gateway));
+
+        verify(gateway).stop(entry);
+        verify(gateway).navigate(entry, exit, true);
+        verify(gateway, never()).grind(entry, Set.of(130100));
     }
 
     @Test

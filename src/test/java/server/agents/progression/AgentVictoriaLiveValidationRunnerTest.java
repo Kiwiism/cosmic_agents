@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import server.agents.plans.AgentPlanExecutionStatus;
 
 import java.awt.Point;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -49,6 +50,18 @@ class AgentVictoriaLiveValidationRunnerTest {
         assertTrue(complete.henesysPackComplete());
     }
 
+    @Test
+    void warriorValidationRequiresBothPerionAndElliniaPacks() {
+        int completed = QuestStatus.Status.COMPLETED.getId();
+        var incomplete = sampleWithWarriorStatuses(
+                List.of(completed, completed, completed, completed, completed, 1));
+        var complete = sampleWithWarriorStatuses(
+                List.of(completed, completed, completed, completed, completed, completed));
+
+        assertFalse(incomplete.warriorPacksComplete());
+        assertTrue(complete.warriorPacksComplete());
+    }
+
     private static AgentVictoriaLiveValidationRunner.Sample sample(
             int orangeKills,
             int pigKills,
@@ -86,6 +99,8 @@ class AgentVictoriaLiveValidationRunnerTest {
                 AgentCareerProgressionState.Stage.ROTATION_QUEST_PACK,
                 8,
                 AgentPlanExecutionStatus.ACTIVE,
+                12,
+                1_234,
                 orangeKills,
                 pigKills,
                 ribbons,
@@ -101,10 +116,26 @@ class AgentVictoriaLiveValidationRunnerTest {
                 rinaStatus,
                 camilaStatus,
                 jayStatus,
+                List.of(),
                 0,
                 0,
                 null,
                 null,
                 "test");
+    }
+
+    private static AgentVictoriaLiveValidationRunner.Sample sampleWithWarriorStatuses(
+            List<Integer> statuses) {
+        return new AgentVictoriaLiveValidationRunner.Sample(
+                1_000L, 102000000, new Point(),
+                AgentCareerProgressionState.Stage.ROTATION_QUEST_PACK, 0,
+                AgentPlanExecutionStatus.ACTIVE,
+                12, 1_234,
+                0, 0, 0, 0,
+                0, 0, 0, 0,
+                0, 0, 0,
+                0, 0, 0, 0,
+                statuses,
+                0, 0, null, null, "test");
     }
 }

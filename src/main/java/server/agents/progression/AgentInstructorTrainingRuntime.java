@@ -96,6 +96,16 @@ public final class AgentInstructorTrainingRuntime {
         AgentVictoriaLevel15Catalog.TrainingGround trainingGround = step.trainingGround();
         if (trainingGround != null) {
             if (trainingGround.instanceMapIds().contains(agent.getMapId())) {
+                if (gateway.liveMonsterCount(agent, step.mobIds()) == 0) {
+                    // Training instances can contain fewer authored targets than the quest
+                    // requires and do not all replenish reliably while occupied by a headless
+                    // character. Leave through the normal portal and re-enter a fresh instance
+                    // instead of idling forever after the local population is exhausted.
+                    gateway.stop(entry);
+                    AgentVictoriaRouteRuntime.travel(
+                            entry, agent, trainingGround.entranceMapId(), gateway);
+                    return true;
+                }
                 gateway.grind(entry, step.mobIds());
                 return true;
             }

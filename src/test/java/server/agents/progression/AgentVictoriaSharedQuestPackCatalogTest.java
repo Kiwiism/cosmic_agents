@@ -89,6 +89,21 @@ class AgentVictoriaSharedQuestPackCatalogTest {
     }
 
     @Test
+    void elliniaMaterialHuntsReserveThePurchasedScrollForTheFinalDarkStumpReturn() {
+        AgentVictoriaSharedQuestPackCatalog.Pack pack =
+                AgentVictoriaSharedQuestPackCatalog.require("ellinia-pre15");
+
+        List<AgentVictoriaSharedQuestPackCatalog.Step> hunts = pack.steps().stream()
+                .filter(step -> "HUNT".equals(step.type()))
+                .toList();
+
+        assertEquals(3, hunts.size());
+        assertTrue(hunts.get(0).skipReturnScrollPreparation());
+        assertTrue(hunts.get(1).skipReturnScrollPreparation());
+        assertFalse(hunts.get(2).skipReturnScrollPreparation());
+    }
+
+    @Test
     void kerningPackPreparesForItsLongMaterialReturnBeforeTheFirstGroupedHunt() {
         AgentVictoriaSharedQuestPackCatalog.Pack pack =
                 AgentVictoriaSharedQuestPackCatalog.require("kerning-pre15");
