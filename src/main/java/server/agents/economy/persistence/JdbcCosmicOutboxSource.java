@@ -28,6 +28,7 @@ public final class JdbcCosmicOutboxSource implements CosmicOutboxSource {
                             rows.getString("idempotency_key"), rows.getString("operation_kind"),
                             rows.getInt("primary_character_id"),
                             secondary == null ? null : secondary.intValue(), rows.getString("summary"),
+                            rows.getString("payload_json"),
                             rows.getTimestamp("created_at").toInstant()));
                 }
             }

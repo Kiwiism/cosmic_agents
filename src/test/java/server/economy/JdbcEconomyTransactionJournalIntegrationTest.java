@@ -67,6 +67,7 @@ class JdbcEconomyTransactionJournalIntegrationTest {
                       primary_character_id INT NOT NULL,
                       secondary_character_id INT NULL,
                       summary VARCHAR(1024) NOT NULL,
+                      payload_json LONGTEXT NOT NULL,
                       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                       published_at TIMESTAMP NULL,
                       delivery_attempts INT NOT NULL DEFAULT 0,

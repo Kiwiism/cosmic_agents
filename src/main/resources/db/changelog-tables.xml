@@ -364,4 +364,16 @@
                                  constraintName="fk_economy_player_shop_owner" onDelete="CASCADE"/>
     </changeSet>
 
+    <changeSet id="35-economy-outbox-machine-evidence" author="Codex">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="economy_transaction_outbox"/>
+            <not><columnExists tableName="economy_transaction_outbox" columnName="payload_json"/></not>
+        </preConditions>
+        <addColumn tableName="economy_transaction_outbox">
+            <column name="payload_json" type="LONGTEXT" defaultValue="{}">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

@@ -79,4 +79,8 @@ final class EconomyParticipantSnapshot {
             participant.getClient().disconnectSession();
         }
     }
+
+    int characterId() { return participant.getId(); }
+    int mesos() { return mesos; }
+    Map<InventoryType, Inventory> inventories() { return inventories; }
 }

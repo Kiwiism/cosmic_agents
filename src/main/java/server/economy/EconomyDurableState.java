@@ -13,25 +13,31 @@ public final class EconomyDurableState {
 
     private final List<EconomyParticipantSnapshot> participants;
     private final List<EconomyAtomicPersistence> additionalPersistence;
+    private final EconomyMutationEvidence evidence;
     private final Persistence testPersistence;
 
     private EconomyDurableState(List<EconomyParticipantSnapshot> participants,
                                 List<EconomyAtomicPersistence> additionalPersistence,
+                                EconomyMutationEvidence evidence,
                                 Persistence testPersistence) {
         this.participants = List.copyOf(participants);
         this.additionalPersistence = List.copyOf(additionalPersistence);
+        this.evidence = evidence;
         this.testPersistence = testPersistence;
     }
 
-    static EconomyDurableState capture(EconomyParticipantSnapshot primary,
-                                       EconomyParticipantSnapshot secondary,
+    static EconomyDurableState capture(EconomyParticipantSnapshot primaryBefore,
+                                       EconomyParticipantSnapshot primaryAfter,
+                                       EconomyParticipantSnapshot secondaryBefore,
+                                       EconomyParticipantSnapshot secondaryAfter,
                                        List<EconomyAtomicPersistence> additionalPersistence) {
-        return new EconomyDurableState(secondary == null ? List.of(primary) : List.of(primary, secondary),
-                additionalPersistence, null);
+        return new EconomyDurableState(secondaryAfter == null ? List.of(primaryAfter) : List.of(primaryAfter, secondaryAfter),
+                additionalPersistence, EconomyMutationEvidence.between(primaryBefore, primaryAfter,
+                secondaryBefore, secondaryAfter), null);
     }
 
     static EconomyDurableState forTesting(Persistence persistence) {
-        return new EconomyDurableState(List.of(), List.of(), persistence);
+        return new EconomyDurableState(List.of(), List.of(), new EconomyMutationEvidence(List.of()), persistence);
     }
 
     void persist(Connection connection) throws SQLException {
@@ -46,4 +52,6 @@ public final class EconomyDurableState {
             persistence.persist(connection);
         }
     }
+
+    String evidenceJson() { return evidence.json(); }
 }

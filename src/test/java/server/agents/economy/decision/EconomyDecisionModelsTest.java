@@ -11,14 +11,14 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class EconomyDecisionModelsTest {
     @Test
-    void questDemandAppearsOnlyWhenPopulationReachesEligibility() {
+    void questDemandAppearsOnlyForAcceptedRemainingObjectives() {
         var forecast = new QuestDemandForecaster().forecast(
-                List.of(new QuestDemandForecaster.AgentCohort(24, "warrior", 10),
-                        new QuestDemandForecaster.AgentCohort(25, "thief", 8)),
-                List.of(new QuestDemandForecaster.QuestRequirement(2055, 4000030, 100,
-                        25, 200, Set.of(), 0.9)));
-        assertEquals(800, forecast.getFirst().demandedQuantity());
-        assertTrue(forecast.getFirst().evidence().contains("eligibleAgents=8"));
+                List.of(new QuestDemandForecaster.QuestObjectiveState("agent-1", 2055, 4000030,
+                                100, 20, 25, true, false, 0.9),
+                        new QuestDemandForecaster.QuestObjectiveState("agent-2", 2055, 4000030,
+                                100, 0, 0, false, false, 0.9)));
+        assertEquals(75, forecast.getFirst().demandedQuantity());
+        assertTrue(forecast.getFirst().evidence().contains("acceptedQuest=2055"));
     }
 
     @Test

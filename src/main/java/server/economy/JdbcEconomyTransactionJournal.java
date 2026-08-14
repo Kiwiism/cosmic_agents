@@ -82,7 +82,7 @@ public final class JdbcEconomyTransactionJournal implements EconomyTransactionJo
                 }
                 durableState.persist(connection);
                 failureInjector.afterStatePersistence();
-                appendOutbox(connection, operation);
+                appendOutbox(connection, operation, durableState.evidenceJson());
                 transition(connection, operation, EconomyJournalStatus.COMMITTED, null);
                 connection.commit();
             } catch (SQLException failure) {
@@ -225,11 +225,12 @@ public final class JdbcEconomyTransactionJournal implements EconomyTransactionJo
         }
     }
 
-    private static void appendOutbox(Connection connection, EconomyOperation operation) throws SQLException {
+    private static void appendOutbox(Connection connection, EconomyOperation operation,
+                                     String payloadJson) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement(
                 "INSERT INTO economy_transaction_outbox "
                         + "(outbox_id, idempotency_key, operation_kind, primary_character_id, "
-                        + "secondary_character_id, summary) VALUES (?, ?, ?, ?, ?, ?)")) {
+                        + "secondary_character_id, summary, payload_json) VALUES (?, ?, ?, ?, ?, ?, ?)")) {
             statement.setString(1, operation.transactionId().toString());
             statement.setString(2, operation.idempotencyKey());
             statement.setString(3, operation.kind().name());
@@ -240,6 +241,7 @@ public final class JdbcEconomyTransactionJournal implements EconomyTransactionJo
                 statement.setInt(5, operation.secondaryCharacterId());
             }
             statement.setString(6, operation.summary());
+            statement.setString(7, payloadJson);
             statement.executeUpdate();
         }
     }

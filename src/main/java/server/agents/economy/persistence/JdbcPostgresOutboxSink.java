@@ -15,8 +15,8 @@ public final class JdbcPostgresOutboxSink implements CosmicOutboxSink {
     @Override
     public void accept(CosmicOutboxRecord record) {
         String sql = "INSERT INTO cosmic_outbox_receipt (outbox_id, idempotency_key, operation_kind, "
-                + "primary_character_id, secondary_character_id, summary, cosmic_created_at) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT (outbox_id) DO NOTHING";
+                + "primary_character_id, secondary_character_id, summary, payload, cosmic_created_at) "
+                + "VALUES (?, ?, ?, ?, ?, ?, CAST(? AS jsonb), ?) ON CONFLICT (outbox_id) DO NOTHING";
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setObject(1, record.outboxId());
@@ -26,7 +26,8 @@ public final class JdbcPostgresOutboxSink implements CosmicOutboxSink {
             if (record.secondaryCharacterId() == null) statement.setNull(5, java.sql.Types.INTEGER);
             else statement.setInt(5, record.secondaryCharacterId());
             statement.setString(6, record.summary());
-            statement.setTimestamp(7, Timestamp.from(record.createdAt()));
+            statement.setString(7, record.payloadJson());
+            statement.setTimestamp(8, Timestamp.from(record.createdAt()));
             statement.executeUpdate();
         } catch (SQLException failure) {
             throw new EconomyPersistenceException("Could not receive Cosmic economy outbox row", failure);
