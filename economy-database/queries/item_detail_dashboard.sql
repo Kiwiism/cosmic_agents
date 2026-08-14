@@ -1,0 +1,35 @@
+-- Parameters: :run_id, :item_id
+WITH postings AS (
+    SELECT e.logical_time, e.event_kind, e.event_id, lp.account_type, lp.account_owner_id,
+           lp.quantity, lp.lot_id, e.evidence
+    FROM ledger_posting lp JOIN economic_event e USING (event_id)
+    WHERE e.run_id = :run_id AND lp.asset_type = 'ITEM'
+      AND lp.asset_identifier = CAST(:item_id AS TEXT)
+), holdings AS (
+    SELECT account_type, account_owner_id, SUM(quantity) AS quantity
+    FROM postings GROUP BY account_type, account_owner_id HAVING SUM(quantity) <> 0
+), transactions AS (
+    SELECT transaction_id, transaction_kind, logical_at, buyer_id, seller_id, quantity,
+           gross_mesos, tax_mesos, human_counterparty, evidence
+    FROM economic_transaction WHERE run_id = :run_id AND item_id = :item_id
+    ORDER BY logical_at
+), asks AS (
+    SELECT listing_id, seller_id, room_map_id, quantity_per_bundle, bundles_initial,
+           bundles_remaining, bundle_price, opened_at, closed_at, close_reason, reprices
+    FROM market_listing WHERE run_id = :run_id AND item_id = :item_id ORDER BY opened_at
+), demand AS (
+    SELECT demand_id, agent_id, demand_kind, required_quantity, maximum_willingness_to_pay,
+           earliest_at, latest_at, status, evidence
+    FROM agent_demand WHERE run_id = :run_id AND item_id = :item_id ORDER BY earliest_at
+)
+SELECT jsonb_build_object(
+    'itemId', :item_id,
+    'currentHoldings', COALESCE((SELECT jsonb_agg(to_jsonb(holdings)) FROM holdings), '[]'),
+    'provenanceLots', COALESCE((SELECT jsonb_agg(to_jsonb(item_lot) ORDER BY lot_id)
+                                FROM item_lot WHERE run_id = :run_id AND item_id = :item_id), '[]'),
+    'transactions', COALESCE((SELECT jsonb_agg(to_jsonb(transactions)) FROM transactions), '[]'),
+    'askHistory', COALESCE((SELECT jsonb_agg(to_jsonb(asks)) FROM asks), '[]'),
+    'demand', COALESCE((SELECT jsonb_agg(to_jsonb(demand)) FROM demand), '[]'),
+    'eventTrail', COALESCE((SELECT jsonb_agg(to_jsonb(postings) ORDER BY logical_time, event_id)
+                            FROM postings), '[]')
+) AS item_detail;

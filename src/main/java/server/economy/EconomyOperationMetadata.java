@@ -7,7 +7,15 @@ import java.util.UUID;
 public record EconomyOperationMetadata(UUID runId, Instant logicalAt, String decisionId,
                                        String activityId, String configRevision,
                                        String catalogRevision, String reasonCode,
-                                       boolean primaryIsAgent, boolean secondaryIsAgent) {
+                                       boolean primaryIsAgent, boolean secondaryIsAgent,
+                                       EconomyTaxOverride taxOverride) {
+    public EconomyOperationMetadata(UUID runId, Instant logicalAt, String decisionId,
+                                    String activityId, String configRevision,
+                                    String catalogRevision, String reasonCode,
+                                    boolean primaryIsAgent, boolean secondaryIsAgent) {
+        this(runId, logicalAt, decisionId, activityId, configRevision, catalogRevision,
+                reasonCode, primaryIsAgent, secondaryIsAgent, null);
+    }
     public EconomyOperationMetadata {
         if ((runId == null) != (logicalAt == null))
             throw new IllegalArgumentException("run and logical time must be supplied together");
@@ -17,7 +25,8 @@ public record EconomyOperationMetadata(UUID runId, Instant logicalAt, String dec
     }
 
     public static EconomyOperationMetadata unattributed() {
-        return new EconomyOperationMetadata(null, null, null, null, null, null, null, false, false);
+        return new EconomyOperationMetadata(null, null, null, null, null, null, null,
+                false, false, null);
     }
 
     private static String clean(String value) { return value == null || value.isBlank() ? null : value; }

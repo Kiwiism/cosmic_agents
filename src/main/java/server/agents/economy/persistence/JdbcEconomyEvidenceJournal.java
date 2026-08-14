@@ -50,8 +50,8 @@ public final class JdbcEconomyEvidenceJournal implements EconomyEvidenceJournal 
     @Override
     public void appendObservation(UUID runId, MarketObservation observation) {
         String sql = "INSERT INTO market_observation (observation_id, run_id, agent_id, logical_time, "
-                + "room_map_id, stall_owner_id, item_id, quantity, unit_price, listing_id, observed_state) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                + "room_map_id, stall_owner_id, item_id, quantity, unit_price, listing_id, observed_state, "
+                + "quantity_per_bundle, bundles, bundle_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setObject(1, UUID.fromString(observation.observationId()));
@@ -65,6 +65,9 @@ public final class JdbcEconomyEvidenceJournal implements EconomyEvidenceJournal 
             statement.setLong(9, observation.unitPrice());
             statement.setString(10, observation.listingId());
             statement.setString(11, observation.state().name());
+            statement.setInt(12, observation.quantityPerBundle());
+            statement.setInt(13, observation.bundles());
+            statement.setLong(14, observation.bundlePrice());
             statement.executeUpdate();
         } catch (SQLException failure) {
             throw new EconomyPersistenceException("Could not append market observation", failure);

@@ -82,7 +82,8 @@ public final class AgentFreeMarketStallService {
                 return Result.failed("agent stall capacity was exceeded");
             }
         }
-        String summary = "map=" + agent.getMapId() + " listings=" + prepared.size()
+        String summary = "escrow=" + shop.getEscrowId() + " map=" + agent.getMapId()
+                + " listings=" + prepared.size()
                 + " items=" + prepared.stream().map(listing ->
                 listing.shopItem().getItem().getItemId() + "x" + listing.removalQuantity()).toList();
         EconomyTransactionCoordinator.execute("player-shop-open:" + shop.getEscrowId(), agent, null,

@@ -32,6 +32,8 @@ import net.packet.Packet;
 import server.Trade;
 import server.economy.EconomyOperationKind;
 import server.economy.EconomyTransactionCoordinator;
+import server.economy.EconomyOperationContext;
+import server.economy.EconomyTaxOverride;
 import tools.PacketCreator;
 import tools.Pair;
 
@@ -287,9 +289,14 @@ public class PlayerShop extends AbstractMapObject {
                 visitorLock.lock();
                 try {
                     int price = (int) Math.min((float) pItem.getPrice() * quantity, Integer.MAX_VALUE);
+                    EconomyTaxOverride taxOverride = EconomyOperationContext.currentMetadata().taxOverride();
+                    int buyerTax = taxOverride == null ? 0 : taxOverride.buyerTax(price);
+                    int sellerTax = taxOverride == null ? Trade.getFee(price) : taxOverride.sellerTax(price);
+                    int buyerDebit = (int) Math.min(Integer.MAX_VALUE, (long) price + buyerTax);
+                    int sellerProceeds = price - sellerTax;
 
-                    if (c.getPlayer().getMeso() >= price) {
-                        if (!owner.canHoldMeso(price)) {    // thanks Rohenn for noticing owner hold check misplaced
+                    if (c.getPlayer().getMeso() >= buyerDebit) {
+                        if (!owner.canHoldMeso(sellerProceeds)) {    // thanks Rohenn for noticing owner hold check misplaced
                             c.getPlayer().dropMessage(1, "Transaction failed since the shop owner can't hold any more mesos.");
                             c.sendPacket(PacketCreator.enableActions());
                             return false;
@@ -298,11 +305,12 @@ public class PlayerShop extends AbstractMapObject {
                         if (InventoryManipulator.checkSpace(c, newItem.getItemId(),
                                 newItem.getQuantity(), newItem.getOwner())) {
                             int grossPrice = price;
-                            int fee = Trade.getFee(grossPrice);
-                            int sellerProceeds = grossPrice - fee;
+                            int fee = buyerTax + sellerTax;
                             String summary = "shop=" + getObjectId() + " item=" + newItem.getItemId()
                                     + " quantity=" + newItem.getQuantity() + " bundles=" + quantity
-                                    + " gross=" + grossPrice + " fee=" + fee;
+                                    + " gross=" + grossPrice + " buyerTax=" + buyerTax
+                                    + " sellerTax=" + sellerTax + " fee=" + fee
+                                    + (escrowId == null ? "" : " escrow=" + escrowId);
                             short priorBundles = pItem.getBundles();
                             boolean priorExistence = pItem.isExist();
                             EconomyTransactionCoordinator.execute(c.getPlayer(), owner,
@@ -310,7 +318,7 @@ public class PlayerShop extends AbstractMapObject {
                                         if (!InventoryManipulator.addFromDrop(c, newItem, false)) {
                                             throw new IllegalStateException("PlayerShop inventory changed during purchase");
                                         }
-                                        c.getPlayer().gainMeso(-grossPrice, false);
+                                        c.getPlayer().gainMeso(-buyerDebit, false);
                                         owner.gainMeso(sellerProceeds, true);
                                         pItem.setBundles((short) (pItem.getBundles() - quantity));
                                         if (pItem.getBundles() < 1) pItem.setDoesExist(false);

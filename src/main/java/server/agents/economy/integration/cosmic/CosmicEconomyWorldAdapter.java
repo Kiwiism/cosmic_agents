@@ -7,6 +7,7 @@ import server.agents.economy.scenario.EconomyAgentProfile;
 import server.agents.economy.scenario.EconomyWorldPort;
 import server.economy.EconomyOperationContext;
 import server.economy.EconomyOperationMetadata;
+import server.economy.EconomyTaxOverride;
 
 import java.time.Instant;
 import java.util.Map;
@@ -26,19 +27,22 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort {
     private final ActivityPlanner activity;
     private final OffscreenPresence presence;
     private final CosmicFarmSettlementService settlement;
+    private final TaxPolicy taxPolicy;
     private final Map<String, Character> bindings = new ConcurrentHashMap<>();
     private final java.util.Set<String> offscreen = ConcurrentHashMap.newKeySet();
 
     public CosmicEconomyWorldAdapter(UUID runId, int channelId, String configRevision,
                                      String catalogRevision, AgentDirectory agents,
                                      MarketBehavior market, ActivityPlanner activity,
-                                     OffscreenPresence presence, CosmicFarmSettlementService settlement) {
+                                     OffscreenPresence presence, CosmicFarmSettlementService settlement,
+                                     TaxPolicy taxPolicy) {
         this.runId = Objects.requireNonNull(runId); this.channelId = channelId;
         this.configRevision = Objects.requireNonNull(configRevision);
         this.catalogRevision = Objects.requireNonNull(catalogRevision);
         this.agents = Objects.requireNonNull(agents); this.market = Objects.requireNonNull(market);
         this.activity = Objects.requireNonNull(activity); this.presence = Objects.requireNonNull(presence);
         this.settlement = Objects.requireNonNull(settlement);
+        this.taxPolicy = Objects.requireNonNull(taxPolicy);
     }
 
     @Override
@@ -117,7 +121,7 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort {
                                                String reason, String activityId) {
         String decision = runId + ":" + profile.agentId() + ":" + logicalAt + ":" + reason;
         return new EconomyOperationMetadata(runId, logicalAt, decision, activityId, configRevision,
-                catalogRevision, reason, true, false);
+                catalogRevision, reason, true, false, taxPolicy.at(logicalAt));
     }
 
     @FunctionalInterface public interface AgentDirectory { Character resolve(String logicalAgentId); }
@@ -131,4 +135,5 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort {
         void leaveVisibleFreeMarket(Character agent, Instant logicalAt);
         void enterFreeMarketEntrance(Character agent, Instant logicalAt);
     }
+    @FunctionalInterface public interface TaxPolicy { EconomyTaxOverride at(Instant logicalAt); }
 }

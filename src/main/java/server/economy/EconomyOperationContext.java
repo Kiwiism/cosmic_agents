@@ -26,4 +26,6 @@ public final class EconomyOperationContext {
         EconomyOperationMetadata value = CURRENT.get();
         return value == null ? EconomyOperationMetadata.unattributed() : value;
     }
+
+    public static EconomyOperationMetadata currentMetadata() { return current(); }
 }
