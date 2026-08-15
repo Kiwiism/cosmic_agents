@@ -33,7 +33,9 @@ public final class EconomyDatabaseVerifier {
                 new Column("economic_asset_reservation", "item_fingerprint"),
                 new Column("economic_action_authorization", "status"),
                 new Column("economic_action_guard_event", "allowed"),
-                new Column("stall_offer", "offered_mesos"));
+                new Column("stall_offer", "offered_mesos"),
+                new Column("private_trade_arrangement", "agreed_mesos"),
+                new Column("item_valuation_query", "unit_value_mesos"));
         try (Connection connection = dataSource.getConnection()) {
             if (!"PostgreSQL".equalsIgnoreCase(connection.getMetaData().getDatabaseProductName()))
                 throw new IllegalStateException("economy evidence database must be PostgreSQL");
@@ -44,7 +46,7 @@ public final class EconomyDatabaseVerifier {
                 try (ResultSet result = connection.getMetaData().getColumns(
                         null, "public", column.table(), column.column())) {
                     if (!result.next()) throw new IllegalStateException("economy schema is missing "
-                        + column.table() + '.' + column.column() + "; apply V001 through V016");
+                        + column.table() + '.' + column.column() + "; apply V001 through V018");
                 }
             }
             try (var statement = connection.createStatement(); var statuses = statement.executeQuery(

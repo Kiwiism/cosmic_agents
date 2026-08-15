@@ -15,6 +15,7 @@ public final class EconomyEngineConfig {
     public NpcCommerce npcCommerce;
     public Activity activity;
     public Market market;
+    public Valuation valuation;
     public Tax tax;
     public SeasonalRules seasonalRules;
     public Quests quests;
@@ -138,6 +139,11 @@ public final class EconomyEngineConfig {
         public String approachTimeout;
         public String stallOpenTimeout;
         public String negotiationTimeout;
+        public String stallOfferReviewDelay;
+        public String stallOfferArrangementTimeout;
+        public long minimumPublicOfferIncrementMesos;
+        public int minimumPublicOfferIncrementBasisPoints;
+        public String stallOfferFlavorTemplate;
         public int interactionRangePixels;
         public int approachRangePixels;
         public boolean globalSearchAllowed;
@@ -156,6 +162,19 @@ public final class EconomyEngineConfig {
         public int sellerRateBasisPoints;
         public int maximumRateBasisPoints;
         public List<TaxChange> scheduledChanges;
+    }
+
+    public static final class Valuation {
+        public String observationMemory;
+        public int minimumObservedListings;
+        public int catalogAnchorMarkupBasisPoints;
+        public List<ItemValueOverride> customOverrides;
+    }
+
+    public static final class ItemValueOverride {
+        public int itemId;
+        public long unitValueMesos;
+        public String reason;
     }
 
     public static final class TaxChange {

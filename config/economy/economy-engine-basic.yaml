@@ -123,6 +123,11 @@ market:
   approachTimeout: PT20S
   stallOpenTimeout: PT30S
   negotiationTimeout: PT2M
+  stallOfferReviewDelay: PT30S
+  stallOfferArrangementTimeout: PT10M
+  minimumPublicOfferIncrementMesos: 100
+  minimumPublicOfferIncrementBasisPoints: 100
+  stallOfferFlavorTemplate: "hey i wana offer {offer} meso for {item_stats} {item_name} thanks!"
   interactionRangePixels: 160
   approachRangePixels: 120
   globalSearchAllowed: false
@@ -133,6 +138,12 @@ market:
   rejectSelfTrade: true
   # Durable multi-transaction cycle detection is not implemented in the first release.
   detectCircularTrade: false
+
+valuation:
+  observationMemory: PT168H
+  minimumObservedListings: 1
+  catalogAnchorMarkupBasisPoints: 5000
+  customOverrides: []
 
 tax:
   enabled: true

@@ -37,6 +37,9 @@ public final class CosmicPublicTradeNegotiator implements AutonomousFreeMarketBe
     private final boolean barterEnabled;
     private final CounterpartyNeedReader counterpartyNeeds;
     private final StallOfferStore stallOffers;
+    private final long minimumOfferIncrementMesos;
+    private final int minimumOfferIncrementBasisPoints;
+    private final StallOfferTextRenderer offerText;
 
     public CosmicPublicTradeNegotiator(UUID runId, ParticipantDirectory participants,
                                        CosmicMarketSellerGateway shops, TradeExecutionGateway trades,
@@ -46,7 +49,8 @@ public final class CosmicPublicTradeNegotiator implements AutonomousFreeMarketBe
                 (itemId, quantity) -> Math.max(0, ItemInformationProvider.getInstance().getPrice(itemId, quantity)),
                 (speaker, text) -> AgentPacketGatewayRuntime.packets().broadcastChatText(speaker, text, false, 1),
                 false, (agent, profile, at) -> List.of(), StallOfferStore.noop(), timeout,
-                interactionRangePixels);
+                interactionRangePixels, 100, 100,
+                new StallOfferFlavorRenderer(StallOfferFlavorRenderer.DEFAULT_TEMPLATE));
     }
 
     public CosmicPublicTradeNegotiator(UUID runId, ParticipantDirectory participants,
@@ -70,6 +74,21 @@ public final class CosmicPublicTradeNegotiator implements AutonomousFreeMarketBe
                 (itemId, quantity) -> Math.max(0, ItemInformationProvider.getInstance().getPrice(itemId, quantity)),
                 (speaker, text) -> AgentPacketGatewayRuntime.packets().broadcastChatText(speaker, text, false, 1),
                 barterEnabled, counterpartyNeeds, stallOffers, timeout, interactionRangePixels);
+    }
+
+    public CosmicPublicTradeNegotiator(UUID runId, ParticipantDirectory participants,
+                                       CosmicMarketSellerGateway shops, TradeExecutionGateway trades,
+                                       EconomyEvidenceJournal journal, NegotiationEvidenceStore sessions,
+                                       boolean barterEnabled, CounterpartyNeedReader counterpartyNeeds,
+                                       StallOfferStore stallOffers, Duration timeout,
+                                       int interactionRangePixels, long minimumOfferIncrementMesos,
+                                       int minimumOfferIncrementBasisPoints,
+                                       StallOfferTextRenderer offerText) {
+        this(runId, participants, shops::close, trades, journal, sessions,
+                (itemId, quantity) -> Math.max(0, ItemInformationProvider.getInstance().getPrice(itemId, quantity)),
+                (speaker, text) -> AgentPacketGatewayRuntime.packets().broadcastChatText(speaker, text, false, 1),
+                barterEnabled, counterpartyNeeds, stallOffers, timeout, interactionRangePixels,
+                minimumOfferIncrementMesos, minimumOfferIncrementBasisPoints, offerText);
     }
 
     CosmicPublicTradeNegotiator(UUID runId, ParticipantDirectory participants,
@@ -97,6 +116,19 @@ public final class CosmicPublicTradeNegotiator implements AutonomousFreeMarketBe
                                 NpcValueCatalog npcValues, PublicChatGateway chat,
                                 boolean barterEnabled, CounterpartyNeedReader counterpartyNeeds,
                                 StallOfferStore stallOffers, Duration timeout, int interactionRangePixels) {
+        this(runId, participants, shops, trades, journal, sessions, npcValues, chat, barterEnabled,
+                counterpartyNeeds, stallOffers, timeout, interactionRangePixels, 100, 100,
+                new StallOfferFlavorRenderer(StallOfferFlavorRenderer.DEFAULT_TEMPLATE));
+    }
+
+    CosmicPublicTradeNegotiator(UUID runId, ParticipantDirectory participants,
+                                StallCloser shops, TradeExecutionGateway trades,
+                                EconomyEvidenceJournal journal, NegotiationEvidenceStore sessions,
+                                NpcValueCatalog npcValues, PublicChatGateway chat,
+                                boolean barterEnabled, CounterpartyNeedReader counterpartyNeeds,
+                                StallOfferStore stallOffers, Duration timeout, int interactionRangePixels,
+                                long minimumOfferIncrementMesos, int minimumOfferIncrementBasisPoints,
+                                StallOfferTextRenderer offerText) {
         this.runId = Objects.requireNonNull(runId); this.participants = Objects.requireNonNull(participants);
         this.shops = Objects.requireNonNull(shops); this.trades = Objects.requireNonNull(trades);
         this.journal = Objects.requireNonNull(journal); this.sessions = Objects.requireNonNull(sessions);
@@ -105,9 +137,14 @@ public final class CosmicPublicTradeNegotiator implements AutonomousFreeMarketBe
         this.barterEnabled = barterEnabled;
         this.counterpartyNeeds = Objects.requireNonNull(counterpartyNeeds);
         this.stallOffers = Objects.requireNonNull(stallOffers);
-        if (timeout.isZero() || timeout.isNegative() || interactionRangePixels <= 0)
+        this.offerText = Objects.requireNonNull(offerText);
+        if (timeout.isZero() || timeout.isNegative() || interactionRangePixels <= 0
+                || minimumOfferIncrementMesos <= 0 || minimumOfferIncrementBasisPoints < 0
+                || minimumOfferIncrementBasisPoints > 10_000)
             throw new IllegalArgumentException("negotiation timing and range must be positive");
         this.interactionRangePixels = interactionRangePixels;
+        this.minimumOfferIncrementMesos = minimumOfferIncrementMesos;
+        this.minimumOfferIncrementBasisPoints = minimumOfferIncrementBasisPoints;
     }
 
     @Override
@@ -117,7 +154,7 @@ public final class CosmicPublicTradeNegotiator implements AutonomousFreeMarketBe
                 .filter(o -> o.state() == MarketObservation.State.LISTED && o.quantityPerBundle() > 0)
                 .flatMap(observation -> needs.stream().filter(need -> matches(need, observation.itemId())
                                 && need.deficit() > 0 && need.maximumWillingnessToPay() > 0)
-                        .map(need -> candidate(buyer, observation, need)))
+                        .map(need -> candidate(buyer, buyerProfile, observation, need, logicalAt)))
                 .filter(Objects::nonNull).max(Comparator.comparingDouble(Candidate::surplus));
         if (selected.isEmpty()) return Result.none();
         Candidate candidate = selected.orElseThrow();
@@ -127,10 +164,7 @@ public final class CosmicPublicTradeNegotiator implements AutonomousFreeMarketBe
                 || !seller.character().getPlayerShop().isOpen()) return Result.none();
 
         long ask = candidate.observation().bundlePrice();
-        long offer = Math.min(candidate.need().maximumWillingnessToPay(), Math.max(1,
-                Math.round(ask * (1d - .15d * buyerProfile.negotiationAggressiveness()))));
-        offer = Math.min(offer, Math.max(0, buyer.getMeso()));
-        if (offer <= 0) return Result.none();
+        long offer = candidate.offeredMesos();
         int quantity = Math.min(candidate.observation().quantityPerBundle(), candidate.need().deficit());
         long npcFloor = npcValues.sellValue(candidate.observation().itemId(), quantity);
         long reserve = Math.max(npcFloor, Math.round(ask *
@@ -138,7 +172,7 @@ public final class CosmicPublicTradeNegotiator implements AutonomousFreeMarketBe
         String id = UUID.nameUUIDFromBytes((runId + ":" + buyerProfile.agentId() + ":"
                 + seller.profile().agentId() + ":" + logicalAt + ":" + candidate.observation().listingId())
                 .getBytes(StandardCharsets.UTF_8)).toString();
-        String proposalText = StallOfferFlavorRenderer.render(candidate.observation(), offer);
+        String proposalText = offerText.render(candidate.observation(), offer);
         StallOffer structuredOffer = null;
         if (stallOffers.enabled()) {
             structuredOffer = new StallOffer(UUID.fromString(id), runId, buyerProfile.agentId(),
@@ -156,12 +190,9 @@ public final class CosmicPublicTradeNegotiator implements AutonomousFreeMarketBe
             }
             recordSocial(buyer, buyerProfile.agentId(), seller.profile().agentId(), logicalAt,
                     "STALL_OFFER_LEFT", proposalText, candidate.observation().itemId(),
-                    Map.of("offerId", id, "listingId", candidate.observation().listingId(),
-                            "mesos", offer, "quantity", quantity, "ask", ask,
-                            "itemFingerprint", candidate.observation().fingerprint()));
+                    publicOfferIntent(id, candidate, offer, quantity, ask));
             return new Result(true, false, id, "OFFER_LEFT", candidate.observation().itemId(), offer,
-                    Map.of("ask", ask, "quantity", quantity,
-                            "itemFingerprint", candidate.observation().fingerprint()));
+                    publicOfferEvidence(candidate, ask, offer, quantity));
         }
         PublicNegotiationSession session = new PublicNegotiationSession(id, buyerProfile.agentId(),
                 seller.profile().agentId(), logicalAt, timeout);
@@ -287,13 +318,72 @@ public final class CosmicPublicTradeNegotiator implements AutonomousFreeMarketBe
                 opportunityCost, sellerValue) : null;
     }
 
-    private Candidate candidate(Character buyer, MarketObservation observation, AgentNeed need) {
+    private Candidate candidate(Character buyer, EconomyAgentProfile buyerProfile,
+                                MarketObservation observation, AgentNeed need, Instant logicalAt) {
         if (observation.bundlePrice() <= need.maximumWillingnessToPay()) return null;
         Participant seller = parseSeller(observation);
         if (seller == null || !nearby(buyer, seller.character())) return null;
+        long committed = stallOffers.enabled()
+                ? stallOffers.committedMesosForBuyer(runId, buyerProfile.agentId(), logicalAt) : 0;
+        long availableMesos = Math.max(0, (long) buyer.getMeso() - committed);
+        long cap = Math.min(need.maximumWillingnessToPay(), availableMesos);
+        long offered = Math.min(cap, Math.max(1, Math.round(observation.bundlePrice()
+                * (1d - .15d * buyerProfile.negotiationAggressiveness()))));
+        StallOffer previous = stallOffers.enabled()
+                ? stallOffers.highestPendingForListing(runId, observation.listingId(), logicalAt).orElse(null)
+                : null;
+        if (previous != null) {
+            if (previous.buyerAgentId().equals(buyerProfile.agentId())) return null;
+            long increment = Math.max(minimumOfferIncrementMesos,
+                    percentageIncrement(previous.offeredMesos(), minimumOfferIncrementBasisPoints));
+            offered = Math.max(offered, safeAdd(previous.offeredMesos(), increment));
+        }
+        if (offered <= 0 || offered > cap || offered >= observation.bundlePrice()) return null;
         double surplus = need.urgency() + (need.maximumWillingnessToPay()
                 / (double) Math.max(1, observation.bundlePrice()));
-        return new Candidate(observation, need, surplus);
+        return new Candidate(observation, need, surplus, offered, previous, committed);
+    }
+
+    private static long percentageIncrement(long value, int basisPoints) {
+        if (basisPoints == 0) return 0;
+        try {
+            long scaled = Math.multiplyExact(value, basisPoints);
+            return Math.max(1, Math.addExact(scaled, 9_999) / 10_000);
+        } catch (ArithmeticException overflow) {
+            return Long.MAX_VALUE;
+        }
+    }
+
+    private static long safeAdd(long left, long right) {
+        try { return Math.addExact(left, right); }
+        catch (ArithmeticException overflow) { return Long.MAX_VALUE; }
+    }
+
+    private static Map<String, Object> publicOfferIntent(String id, Candidate candidate,
+                                                         long offer, int quantity, long ask) {
+        var result = new LinkedHashMap<String, Object>();
+        result.put("offerId", id); result.put("listingId", candidate.observation().listingId());
+        result.put("mesos", offer); result.put("quantity", quantity); result.put("ask", ask);
+        result.put("itemFingerprint", candidate.observation().fingerprint());
+        result.put("existingMesoCommitments", candidate.committedMesos());
+        if (candidate.previous() != null) {
+            result.put("outbidsOfferId", candidate.previous().offerId().toString());
+            result.put("previousHighestMesos", candidate.previous().offeredMesos());
+        }
+        return Map.copyOf(result);
+    }
+
+    private static Map<String, Object> publicOfferEvidence(Candidate candidate, long ask,
+                                                           long offer, int quantity) {
+        var result = new LinkedHashMap<String, Object>();
+        result.put("ask", ask); result.put("offeredMesos", offer); result.put("quantity", quantity);
+        result.put("itemFingerprint", candidate.observation().fingerprint());
+        result.put("existingMesoCommitments", candidate.committedMesos());
+        if (candidate.previous() != null) {
+            result.put("outbidsOfferId", candidate.previous().offerId().toString());
+            result.put("previousHighestMesos", candidate.previous().offeredMesos());
+        }
+        return Map.copyOf(result);
     }
 
     private Participant parseSeller(MarketObservation observation) {
@@ -360,7 +450,8 @@ public final class CosmicPublicTradeNegotiator implements AutonomousFreeMarketBe
     @FunctionalInterface public interface CounterpartyNeedReader {
         List<AgentNeed> read(Character character, EconomyAgentProfile profile, Instant logicalAt);
     }
-    private record Candidate(MarketObservation observation, AgentNeed need, double surplus) { }
+    private record Candidate(MarketObservation observation, AgentNeed need, double surplus,
+                             long offeredMesos, StallOffer previous, long committedMesos) { }
     private record Barter(int itemId, int quantity, long mesos, long needValue,
                           long buyerOpportunityCost, long sellerValue) { }
 }

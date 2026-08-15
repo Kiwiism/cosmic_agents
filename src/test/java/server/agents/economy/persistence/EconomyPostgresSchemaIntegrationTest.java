@@ -6,6 +6,8 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.api.io.TempDir;
 import server.agents.economy.catalog.CatalogBundleLoader;
 import server.agents.economy.scenario.EconomyConfigLoader;
+import server.agents.economy.catalog.EconomyCatalog;
+import server.agents.economy.catalog.ItemFact;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -19,6 +21,8 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @EnabledIfEnvironmentVariable(named = "ECONOMY_DB_INTEGRATION", matches = "true")
 class EconomyPostgresSchemaIntegrationTest {
@@ -47,6 +51,7 @@ class EconomyPostgresSchemaIntegrationTest {
                     assertEquals("CREATED", runs.find(run).orElseThrow().status());
                     verifyOwnershipJournal(dataSource, connection, run);
                     verifyStallOfferStore(dataSource, connection, run);
+                    verifyAgentValuationKnowledge(dataSource, connection, run, loaded);
                     var checkpoint = new server.agents.economy.scenario.SimulationRunEngine.RunCheckpoint(
                             run, Instant.parse("2026-01-01T00:00:00Z"), loaded.sha256(),
                             catalog.version(), java.util.List.of(), Map.of("stream", 12L),
@@ -186,25 +191,82 @@ class EconomyPostgresSchemaIntegrationTest {
 
     private static void verifyStallOfferStore(HikariDataSource dataSource, Connection connection,
                                               UUID run) throws Exception {
-        UUID offerId = UUID.randomUUID();
-        var offer = new server.agents.economy.market.StallOffer(offerId, run,
+        UUID lowerId = UUID.randomUUID();
+        var lower = new server.agents.economy.market.StallOffer(lowerId, run,
                 "agent-1", "agent-2", "stall-1", "stall-1:3", 910000001, 1302013,
                 "exact-kfan", Map.of("watk", 50), 1, 400_000, 250_000,
                 "untrusted public flavor", Instant.EPOCH.plusSeconds(10),
                 Instant.EPOCH.plusSeconds(130),
                 server.agents.economy.market.StallOffer.Status.PENDING);
+        UUID winnerId = UUID.randomUUID();
+        var winner = new server.agents.economy.market.StallOffer(winnerId, run,
+                "agent-3", "agent-2", "stall-1", "stall-1:3", 910000001, 1302013,
+                "exact-kfan", Map.of("watk", 50), 1, 400_000, 300_000,
+                "higher public flavor", Instant.EPOCH.plusSeconds(20),
+                Instant.EPOCH.plusSeconds(140),
+                server.agents.economy.market.StallOffer.Status.PENDING);
         var store = new JdbcStallOfferStore(dataSource);
-        store.create(offer);
-        assertEquals(offer, store.pendingForSeller(run, "agent-2",
-                Instant.EPOCH.plusSeconds(20), 10).getFirst());
-        store.resolve(offerId,
-                server.agents.economy.market.StallOffer.Status.ACCEPTED_AWAITING_SETTLEMENT,
-                "accepted", Instant.EPOCH.plusSeconds(30), null);
-        store.resolve(offerId, server.agents.economy.market.StallOffer.Status.EXECUTED,
+        store.create(lower); store.create(winner);
+        assertEquals(300_000L, store.committedMesosForBuyer(run, "agent-3",
+                Instant.EPOCH.plusSeconds(30)));
+        assertEquals(winner, store.highestPendingForListing(run, "stall-1:3",
+                Instant.EPOCH.plusSeconds(30)).orElseThrow());
+        assertEquals(winner, store.pendingForSeller(run, "agent-2",
+                Instant.EPOCH.plusSeconds(30), 10).getFirst());
+        UUID arrangementId = UUID.randomUUID();
+        var arrangement = new server.agents.economy.market.PrivateTradeArrangement(arrangementId,
+                run, winnerId, "agent-3", "agent-2", "stall-1", "stall-1:3", 910000001,
+                1302013, "exact-kfan", 1, 300_000, Instant.EPOCH.plusSeconds(40),
+                Instant.EPOCH.plusSeconds(640),
+                server.agents.economy.market.PrivateTradeArrangement.Status.PENDING_MEETUP);
+        store.acceptForArrangement(winner, arrangement, "accepted", Instant.EPOCH.plusSeconds(40));
+        assertEquals(300_000L, store.committedMesosForBuyer(run, "agent-3",
+                Instant.EPOCH.plusSeconds(41)));
+        store.resolve(winnerId, server.agents.economy.market.StallOffer.Status.EXECUTED,
                 "settled", Instant.EPOCH.plusSeconds(40), "tx-structured-offer");
         assertEquals(1, scalar(connection, "SELECT COUNT(*) FROM stall_offer WHERE offer_id='"
-                + offerId + "' AND status='EXECUTED' AND offered_mesos=250000 "
+                + winnerId + "' AND status='EXECUTED' AND offered_mesos=300000 "
                 + "AND settlement_transaction_id='tx-structured-offer'"));
+        assertEquals(1, scalar(connection, "SELECT COUNT(*) FROM stall_offer WHERE offer_id='"
+                + lowerId + "' AND status='OUTBID'"));
+        assertEquals(1, scalar(connection, "SELECT COUNT(*) FROM private_trade_arrangement WHERE arrangement_id='"
+                + arrangementId + "' AND status='PENDING_MEETUP' AND agreed_mesos=300000"));
+    }
+
+    private static void verifyAgentValuationKnowledge(HikariDataSource dataSource, Connection connection,
+                                                       UUID run,
+                                                       server.agents.economy.scenario.LoadedEconomyConfig loaded) {
+        EconomyCatalog catalog = mock(EconomyCatalog.class);
+        when(catalog.item(1302013)).thenReturn(java.util.Optional.of(new ItemFact(1302013,
+                "Korean Fan", 50_000, 35, 1, java.util.Set.of(), Map.of())));
+        var journal = new JdbcEconomyEvidenceJournal(dataSource);
+        journal.appendObservation(run, new server.agents.economy.market.MarketObservation(
+                UUID.randomUUID().toString(), "agent-1", Instant.EPOCH.plusSeconds(50), 910000001,
+                "agent-2", "stall-1:3", 1302013, 1, 300_000, 1, 1, 300_000,
+                "exact-kfan", Map.of("watk", 50),
+                server.agents.economy.market.MarketObservation.State.LISTED));
+        var service = new JdbcAgentItemValuationService(run, dataSource, catalog,
+                loaded.config().valuation);
+        var observed = service.value("agent-1", 1302013, Instant.EPOCH.plusSeconds(60));
+        assertEquals(server.agents.economy.market.AgentItemValuationService.Valuation.Source
+                .PRIVATE_OBSERVATIONS, observed.source());
+        assertEquals(300_000L, observed.unitValueMesos());
+
+        var custom = new server.agents.economy.scenario.EconomyEngineConfig.ItemValueOverride();
+        custom.itemId = 1302013; custom.unitValueMesos = 425_000; custom.reason = "balance audit";
+        loaded.config().valuation.customOverrides = java.util.List.of(custom);
+        var overridden = new JdbcAgentItemValuationService(run, dataSource, catalog,
+                loaded.config().valuation).value("agent-1", 1302013, Instant.EPOCH.plusSeconds(61));
+        assertEquals(server.agents.economy.market.AgentItemValuationService.Valuation.Source
+                .CUSTOM_OVERRIDE, overridden.source());
+        assertEquals(425_000L, overridden.unitValueMesos());
+        assertEquals(2, scalarUnchecked(connection,
+                "SELECT COUNT(*) FROM item_valuation_query WHERE run_id='" + run + "' AND item_id=1302013"));
+    }
+
+    private static int scalarUnchecked(Connection connection, String sql) {
+        try { return scalar(connection, sql); }
+        catch (SQLException failure) { throw new AssertionError(failure); }
     }
 
     private static void assertUnbalancedCommitFails(Connection connection) throws Exception {
@@ -312,9 +374,12 @@ class EconomyPostgresSchemaIntegrationTest {
     }
 
     private static void deleteRun(Connection connection, UUID run) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement(
-                "DELETE FROM stall_offer WHERE run_id = ?")) {
-            statement.setObject(1, run); statement.executeUpdate();
+        for (String table : java.util.List.of("private_trade_arrangement", "stall_offer",
+                "item_valuation_query", "market_observation")) {
+            try (PreparedStatement statement = connection.prepareStatement(
+                    "DELETE FROM " + table + " WHERE run_id = ?")) {
+                statement.setObject(1, run); statement.executeUpdate();
+            }
         }
         try (PreparedStatement statement = connection.prepareStatement(
                 "DELETE FROM economic_action_guard_event WHERE run_id = ?")) {

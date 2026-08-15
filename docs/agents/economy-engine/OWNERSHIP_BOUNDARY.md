@@ -41,7 +41,29 @@ From an administrator character:
 
 The PostgreSQL tables intended for later dashboard/API reads are `inventory_review`,
 `item_disposition_decision`, `economic_asset_reservation`, `economic_action_authorization`, and
-`economic_action_guard_event`, plus `stall_offer` for the complete offer lifecycle.
+`economic_action_guard_event`, plus `stall_offer` for the public offer lifecycle and
+`private_trade_arrangement` for durable accepted agreements awaiting physical settlement.
+Per-agent valuation queries use only that agent's durable observations, catalog anchors, and explicit
+run configuration overrides; they are journaled in `item_valuation_query` for later explanation.
+
+Agent code calls the stable `CosmicAgentEconomyFacade.valueItem(agentId, itemId, logicalAt)` boundary.
+It does not read projections or administrative market aggregates. To pin a balancing value without
+changing agent code, add an audited entry under `valuation.customOverrides`:
+
+```yaml
+valuation:
+  observationMemory: PT168H
+  minimumObservedListings: 1
+  catalogAnchorMarkupBasisPoints: 5000
+  customOverrides:
+    - itemId: 1302013
+      unitValueMesos: 400000
+      reason: "temporary Korean Fan balance experiment"
+```
+
+Structured intents and numeric fields are authoritative for economic communication. Public chat is
+only a rendering via `StallOfferTextRenderer`; a later template library or LLM renderer can replace it
+without changing offer validation, bidding, or settlement rules.
 `economy-database/queries/inventory_ownership_trace.sql` returns one agent/item trace suitable for an
 inspector view.
 

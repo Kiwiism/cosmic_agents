@@ -3,6 +3,7 @@ package server.agents.economy.integration.cosmic;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.economy.market.StallOffer;
+import server.agents.economy.market.PrivateTradeArrangement;
 import server.agents.economy.persistence.StallOfferStore;
 import server.agents.economy.scenario.EconomyAgentProfile;
 import server.maps.PlayerShop;
@@ -31,8 +32,11 @@ class CosmicStallOfferReviewServiceTest {
         var result = service.reviewNext(seller, profile(.5), now);
 
         assertTrue(result.attempted()); assertTrue(result.accepted());
-        assertEquals("ACCEPTED_AWAITING_SETTLEMENT", result.outcome());
+        assertEquals("ARRANGEMENT_PENDING", result.outcome());
         assertEquals(StallOffer.Status.ACCEPTED_AWAITING_SETTLEMENT, store.resolvedStatus);
+        assertNotNull(store.arrangement);
+        assertEquals(PrivateTradeArrangement.Status.PENDING_MEETUP, store.arrangement.status());
+        assertEquals("exact-kfan", store.arrangement.itemFingerprint());
         assertEquals(380_000L, result.evidence().get("reserveMesos"));
     }
 
@@ -65,6 +69,21 @@ class CosmicStallOfferReviewServiceTest {
         assertEquals(StallOffer.Status.CANCELLED_LISTING_CHANGED, store.resolvedStatus);
     }
 
+    @Test
+    void waitsFullWindowAfterNewestHighestBid() {
+        StallOffer recent = offer(390_000, now.plusSeconds(60), "flavor");
+        RecordingStore store = new RecordingStore(recent);
+        Character seller = sellerWith(new PlayerShop.ListingView(3, 1302013,
+                (short) 1, (short) 1, 400_000, "exact-kfan", Map.of("watk", 50)));
+        CosmicStallOfferReviewService service = new CosmicStallOfferReviewService(runId, store,
+                (itemId, quantity) -> 50_000, (character, text) -> { },
+                java.time.Duration.ofSeconds(31), java.time.Duration.ofMinutes(10));
+
+        var result = service.reviewNext(seller, profile(.5), now);
+
+        assertFalse(result.attempted()); assertNull(store.resolvedStatus);
+    }
+
     private Character sellerWith(PlayerShop.ListingView listing) {
         Character seller = mock(Character.class); PlayerShop shop = mock(PlayerShop.class);
         when(seller.getMapId()).thenReturn(910000001); when(seller.getPlayerShop()).thenReturn(shop);
@@ -86,6 +105,7 @@ class CosmicStallOfferReviewServiceTest {
     private static final class RecordingStore implements StallOfferStore {
         private final StallOffer pending;
         private StallOffer.Status resolvedStatus;
+        private PrivateTradeArrangement arrangement;
         private RecordingStore(StallOffer pending) { this.pending = pending; }
         @Override public void create(StallOffer offer) { }
         @Override public List<StallOffer> pendingForSeller(UUID runId, String sellerAgentId,
@@ -95,6 +115,11 @@ class CosmicStallOfferReviewServiceTest {
         @Override public void resolve(UUID offerId, StallOffer.Status status, String response,
                                       Instant respondedAt, String settlementTransactionId) {
             resolvedStatus = status;
+        }
+        @Override public void acceptForArrangement(StallOffer offer, PrivateTradeArrangement arrangement,
+                                                   String response, Instant respondedAt) {
+            this.arrangement = arrangement;
+            this.resolvedStatus = StallOffer.Status.ACCEPTED_AWAITING_SETTLEMENT;
         }
     }
 }

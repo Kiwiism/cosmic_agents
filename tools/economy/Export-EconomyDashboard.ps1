@@ -63,6 +63,9 @@ SELECT
  (SELECT COUNT(*) FROM market_observation WHERE run_id='$RunId') AS observations,
  (SELECT COUNT(*) FROM stall_offer WHERE run_id='$RunId') AS stall_offers,
  (SELECT COUNT(*) FROM stall_offer WHERE run_id='$RunId' AND status='PENDING') AS pending_stall_offers,
+ (SELECT COUNT(*) FROM private_trade_arrangement WHERE run_id='$RunId') AS private_arrangements,
+ (SELECT COUNT(*) FROM private_trade_arrangement WHERE run_id='$RunId' AND status='PENDING_MEETUP') AS pending_arrangements,
+ (SELECT COUNT(*) FROM item_valuation_query WHERE run_id='$RunId') AS valuation_queries,
  (SELECT COUNT(*) FROM activity_session WHERE run_id='$RunId' AND status='COMPLETED') AS completed_activities,
  (SELECT COUNT(*) FROM inventory_review WHERE run_id='$RunId') AS inventory_reviews,
  (SELECT COUNT(*) FROM economic_action_guard_event WHERE run_id='$RunId' AND allowed) AS authorized_mutations,
@@ -91,6 +94,8 @@ FROM agent_state_projection WHERE run_id='$RunId' ORDER BY agent_id,logical_time
     social = Invoke-EconomyQuery "SELECT social_event_id,logical_time,room_map_id,speaker_agent_id,target_agent_id,event_kind,public_text,structured_intent,related_item_id FROM social_event WHERE run_id='$RunId' ORDER BY logical_time,social_event_id;"
     negotiations = Invoke-EconomyQuery "SELECT negotiation_id,buyer_id,seller_id,item_id,opened_at,closed_at,status,transcript,settlement_transaction_id FROM negotiation_session WHERE run_id='$RunId' ORDER BY opened_at,negotiation_id;"
     stallOffers = Invoke-EconomyQuery "SELECT offer_id,buyer_id,seller_id,stall_id,listing_id,room_map_id,item_id,item_fingerprint,item_attributes,quantity,ask_mesos,offered_mesos,public_text,created_at,expires_at,status,response_text,responded_at,settlement_transaction_id FROM stall_offer WHERE run_id='$RunId' ORDER BY created_at,offer_id;"
+    privateArrangements = Invoke-EconomyQuery "SELECT arrangement_id,offer_id,buyer_id,seller_id,stall_id,listing_id,room_map_id,item_id,item_fingerprint,quantity,agreed_mesos,created_at,expires_at,status,settlement_transaction_id,settled_at FROM private_trade_arrangement WHERE run_id='$RunId' ORDER BY created_at,arrangement_id;"
+    valuations = Invoke-EconomyQuery "SELECT valuation_id,agent_id,logical_time,item_id,unit_value_mesos,source,observed_median_mesos,observation_count,catalog_anchor_mesos,override_reason FROM item_valuation_query WHERE run_id='$RunId' ORDER BY logical_time,valuation_id;"
     inventoryReviews = Invoke-EconomyQuery "SELECT review_id,agent_id,character_id,logical_time,purpose,inventory_revision,snapshot FROM inventory_review WHERE run_id='$RunId' ORDER BY logical_time,review_id;"
     dispositions = Invoke-EconomyQuery "SELECT d.decision_id,d.review_id,r.agent_id,r.logical_time,d.inventory_type,d.inventory_slot,d.item_id,d.quantity,d.disposition,d.reason,d.legacy_action,d.shadow_action,d.shadow_disagreement FROM item_disposition_decision d JOIN inventory_review r USING (review_id) WHERE r.run_id='$RunId' ORDER BY r.logical_time,d.decision_id;"
     reservations = Invoke-EconomyQuery "SELECT reservation_id,review_id,agent_id,inventory_type,inventory_slot,item_id,quantity,action,venue,status,created_at FROM economic_asset_reservation WHERE run_id='$RunId' ORDER BY created_at,reservation_id;"
@@ -104,7 +109,7 @@ FROM agent_state_projection WHERE run_id='$RunId' ORDER BY agent_id,logical_time
 }
 
 $wanted = [System.Collections.Generic.HashSet[int]]::new()
-foreach ($collection in @($data.itemDaily, $data.transactions, $data.lots, $data.listings, $data.observations, $data.social, $data.negotiations, $data.stallOffers, $data.dispositions, $data.reservations, $data.authorizations, $data.guardEvents)) {
+foreach ($collection in @($data.itemDaily, $data.transactions, $data.lots, $data.listings, $data.observations, $data.social, $data.negotiations, $data.stallOffers, $data.privateArrangements, $data.valuations, $data.dispositions, $data.reservations, $data.authorizations, $data.guardEvents)) {
     foreach ($row in $collection) {
         if ($null -ne $row.item_id -and [string] $row.item_id -match '^\d+$') { [void] $wanted.Add([int] $row.item_id) }
         if ($null -ne $row.related_item_id -and [string] $row.related_item_id -match '^\d+$') { [void] $wanted.Add([int] $row.related_item_id) }

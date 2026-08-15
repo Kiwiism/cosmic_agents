@@ -11,7 +11,7 @@ public record StallOffer(UUID offerId, UUID runId, String buyerAgentId, String s
                          int quantity, long askMesos, long offeredMesos, String publicText,
                          Instant createdAt, Instant expiresAt, Status status) {
     public enum Status {
-        PENDING, ACCEPTED_AWAITING_SETTLEMENT, REJECTED, EXPIRED,
+        PENDING, ACCEPTED_AWAITING_SETTLEMENT, OUTBID, REJECTED, EXPIRED,
         CANCELLED_LISTING_CHANGED, EXECUTED, FAILED
     }
 

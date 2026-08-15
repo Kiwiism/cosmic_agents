@@ -5,7 +5,7 @@
 1. Configure `economy-engine.yaml`. YAML contains behavior and scenario policy only; credentials are
    environment variables.
 2. Set distinct `ECONOMY_DB_*` credentials and initialize the separate PostgreSQL database through
-   migrations V001-V016.
+   migrations V001-V018.
 3. Start Cosmic MySQL and the game server normally.
 4. Have at least `population.maximumAgents` live autonomous characters. The runtime deterministically
    binds scenario slots to characters of the same real Cosmic job family; within each eligible pool,
@@ -81,7 +81,12 @@ require identical remaining event order and RNG state.
 - `decision_journal`: alternatives, beliefs, needs, utilities, and reason codes.
 - `social_event` and `negotiation_session`: public dialogue, proposals, counteroffers, and outcomes.
 - `stall_offer`: authoritative numeric offers tied to an exact listing and item fingerprint. Its
+  public pending rows allow physically present interested buyers to make budget-constrained higher bids.
   `public_text` is display-only flavor and is never parsed to make an economic decision.
+- `private_trade_arrangement`: the accepted winning offer and exact-item rendezvous contract. It does
+  not itself transfer holdings; settlement must validate the fingerprint again through Cosmic.
+- `item_valuation_query`: every agent valuation request, its private observation count/median, catalog
+  anchor, selected source, and the audited YAML override reason when an override applies.
 - `agent_presence_event` and lifecycle tables: FM/offscreen state and physical location.
 - `item_market_daily`, `meso_flow_daily`, `agent_state_projection`: rebuildable dashboard read models.
 - `economy_invariant_violation`: durable accounting and lifecycle failures.

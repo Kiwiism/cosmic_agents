@@ -106,6 +106,7 @@ public final class EconomyConfigValidator {
                 "rule-exact activity must preserve calibrated potion and ammunition consumption");
 
         validateMarket(config.market, config.world);
+        validateValuation(config.valuation);
         validateTax(config.tax);
         validateSeasonal(config.seasonalRules);
         validateAmbient(config.ambient);
@@ -257,7 +258,25 @@ public final class EconomyConfigValidator {
         parsePositiveDuration(market.portalTimeout, "market.portalTimeout");
         parsePositiveDuration(market.approachTimeout, "market.approachTimeout");
         parsePositiveDuration(market.stallOpenTimeout, "market.stallOpenTimeout");
-        parsePositiveDuration(market.negotiationTimeout, "market.negotiationTimeout");
+        Duration negotiationTimeout = parsePositiveDuration(
+                market.negotiationTimeout, "market.negotiationTimeout");
+        Duration offerReviewDelay = parseDuration(
+                market.stallOfferReviewDelay, "market.stallOfferReviewDelay");
+        parsePositiveDuration(market.stallOfferArrangementTimeout,
+                "market.stallOfferArrangementTimeout");
+        require(offerReviewDelay.compareTo(negotiationTimeout) < 0,
+                "stallOfferReviewDelay must be below negotiationTimeout");
+        require(market.minimumPublicOfferIncrementMesos >= 1,
+                "minimumPublicOfferIncrementMesos must be positive");
+        require(market.minimumPublicOfferIncrementBasisPoints >= 0
+                        && market.minimumPublicOfferIncrementBasisPoints <= 10_000,
+                "minimumPublicOfferIncrementBasisPoints must be between 0 and 10000");
+        require(market.stallOfferFlavorTemplate != null
+                        && !market.stallOfferFlavorTemplate.isBlank()
+                        && market.stallOfferFlavorTemplate.contains("{offer}")
+                        && market.stallOfferFlavorTemplate.contains("{item_stats}")
+                        && market.stallOfferFlavorTemplate.contains("{item_name}"),
+                "stallOfferFlavorTemplate must contain offer, item_stats, and item_name placeholders");
         require(market.interactionRangePixels > 0 && market.approachRangePixels > 0,
                 "market physical ranges must be positive");
         require(market.maximumReprices >= 0, "maximumReprices must be non-negative");
@@ -309,6 +328,25 @@ public final class EconomyConfigValidator {
                             && change.sellerRateBasisPoints <= tax.maximumRateBasisPoints,
                     "scheduled seller tax exceeds configured bounds");
             previous = effective;
+        }
+    }
+
+    private static void validateValuation(EconomyEngineConfig.Valuation valuation) {
+        require(valuation != null, "valuation configuration is required");
+        parsePositiveDuration(valuation.observationMemory, "valuation.observationMemory");
+        require(valuation.minimumObservedListings > 0,
+                "valuation.minimumObservedListings must be positive");
+        require(valuation.catalogAnchorMarkupBasisPoints >= 0
+                        && valuation.catalogAnchorMarkupBasisPoints <= 100_000,
+                "valuation.catalogAnchorMarkupBasisPoints must be between 0 and 100000");
+        require(valuation.customOverrides != null, "valuation.customOverrides is required");
+        Set<Integer> itemIds = new HashSet<>();
+        for (EconomyEngineConfig.ItemValueOverride override : valuation.customOverrides) {
+            require(override.itemId > 0 && override.unitValueMesos > 0,
+                    "valuation overrides require positive itemId and unitValueMesos");
+            require(override.reason != null && !override.reason.isBlank(),
+                    "valuation overrides require an audit reason");
+            require(itemIds.add(override.itemId), "valuation override itemIds must be unique");
         }
     }
 

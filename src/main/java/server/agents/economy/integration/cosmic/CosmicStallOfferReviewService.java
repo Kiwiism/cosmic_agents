@@ -2,12 +2,15 @@ package server.agents.economy.integration.cosmic;
 
 import client.Character;
 import server.ItemInformationProvider;
+import server.agents.economy.market.PrivateTradeArrangement;
 import server.agents.economy.market.StallOffer;
 import server.agents.economy.persistence.StallOfferStore;
 import server.agents.economy.scenario.EconomyAgentProfile;
 import server.agents.integration.AgentPacketGatewayRuntime;
 import server.maps.PlayerShop;
 
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
@@ -19,12 +22,19 @@ public final class CosmicStallOfferReviewService
     private final StallOfferStore offers;
     private final NpcValueCatalog npcValues;
     private final PublicChatGateway chat;
+    private final Duration reviewDelay;
+    private final Duration arrangementTimeout;
 
     public CosmicStallOfferReviewService(java.util.UUID runId, StallOfferStore offers) {
+        this(runId, offers, Duration.ZERO, Duration.ofMinutes(10));
+    }
+
+    public CosmicStallOfferReviewService(java.util.UUID runId, StallOfferStore offers,
+                                         Duration reviewDelay, Duration arrangementTimeout) {
         this(runId, offers, (itemId, quantity) -> Math.max(0,
                 ItemInformationProvider.getInstance().getPrice(itemId, quantity)),
                 (speaker, text) -> AgentPacketGatewayRuntime.packets()
-                        .broadcastChatText(speaker, text, false, 1));
+                        .broadcastChatText(speaker, text, false, 1), reviewDelay, arrangementTimeout);
     }
 
     CosmicStallOfferReviewService(java.util.UUID runId, StallOfferStore offers,
@@ -34,10 +44,20 @@ public final class CosmicStallOfferReviewService
 
     CosmicStallOfferReviewService(java.util.UUID runId, StallOfferStore offers,
                                   NpcValueCatalog npcValues, PublicChatGateway chat) {
+        this(runId, offers, npcValues, chat, Duration.ZERO, Duration.ofMinutes(10));
+    }
+
+    CosmicStallOfferReviewService(java.util.UUID runId, StallOfferStore offers,
+                                  NpcValueCatalog npcValues, PublicChatGateway chat,
+                                  Duration reviewDelay, Duration arrangementTimeout) {
         this.runId = Objects.requireNonNull(runId);
         this.offers = Objects.requireNonNull(offers);
         this.npcValues = Objects.requireNonNull(npcValues);
         this.chat = Objects.requireNonNull(chat);
+        this.reviewDelay = Objects.requireNonNull(reviewDelay);
+        this.arrangementTimeout = Objects.requireNonNull(arrangementTimeout);
+        if (reviewDelay.isNegative() || arrangementTimeout.isZero() || arrangementTimeout.isNegative())
+            throw new IllegalArgumentException("offer timing is invalid");
     }
 
     @Override
@@ -45,6 +65,8 @@ public final class CosmicStallOfferReviewService
         StallOffer offer = offers.pendingForSeller(runId, profile.agentId(), logicalAt, 1)
                 .stream().findFirst().orElse(null);
         if (offer == null) return Result.none();
+        // Anti-sniping: every new highest bid receives the full public review window.
+        if (offer.createdAt().isAfter(logicalAt.minus(reviewDelay))) return Result.none();
         if (!logicalAt.isBefore(offer.expiresAt())) {
             return resolve(seller, offer, StallOffer.Status.EXPIRED,
                     "sorry, I saw your offer too late.", logicalAt, "EXPIRED");
@@ -66,9 +88,15 @@ public final class CosmicStallOfferReviewService
         }
         String response = "deal at " + mesos(offer.offeredMesos())
                 + "; come back so we can complete the exact-item trade.";
-        return resolve(seller, offer, StallOffer.Status.ACCEPTED_AWAITING_SETTLEMENT,
-                response, logicalAt, "ACCEPTED_AWAITING_SETTLEMENT",
-                Map.of("reserveMesos", reserve, "npcFloorMesos", npcFloor));
+        PrivateTradeArrangement arrangement = arrangement(offer, logicalAt);
+        offers.acceptForArrangement(offer, arrangement, response, logicalAt);
+        chat.broadcast(seller, "@" + offer.buyerAgentId() + " " + response);
+        var details = baseEvidence(offer);
+        details.put("reserveMesos", reserve); details.put("npcFloorMesos", npcFloor);
+        details.put("arrangementId", arrangement.arrangementId().toString());
+        details.put("arrangementExpiresAt", arrangement.expiresAt().toString());
+        return new Result(true, true, offer.offerId().toString(), "ARRANGEMENT_PENDING",
+                offer.itemId(), Map.copyOf(details));
     }
 
     private Result resolve(Character seller, StallOffer offer, StallOffer.Status status,
@@ -80,14 +108,27 @@ public final class CosmicStallOfferReviewService
                            String response, Instant at, String outcome, Map<String, Object> evidence) {
         offers.resolve(offer.offerId(), status, response, at, null);
         chat.broadcast(seller, "@" + offer.buyerAgentId() + " " + response);
-        var details = new java.util.LinkedHashMap<String, Object>(evidence);
-        details.put("offerId", offer.offerId().toString());
-        details.put("listingId", offer.listingId());
-        details.put("itemFingerprint", offer.itemFingerprint());
-        details.put("askMesos", offer.askMesos());
-        details.put("offeredMesos", offer.offeredMesos());
+        var details = baseEvidence(offer);
+        details.putAll(evidence);
         return new Result(true, status == StallOffer.Status.ACCEPTED_AWAITING_SETTLEMENT,
                 offer.offerId().toString(), outcome, offer.itemId(), Map.copyOf(details));
+    }
+
+    private PrivateTradeArrangement arrangement(StallOffer offer, Instant at) {
+        var id = java.util.UUID.nameUUIDFromBytes((offer.offerId() + ":private-arrangement")
+                .getBytes(StandardCharsets.UTF_8));
+        return new PrivateTradeArrangement(id, offer.runId(), offer.offerId(), offer.buyerAgentId(),
+                offer.sellerAgentId(), offer.stallId(), offer.listingId(), offer.roomMapId(),
+                offer.itemId(), offer.itemFingerprint(), offer.quantity(), offer.offeredMesos(), at,
+                at.plus(arrangementTimeout), PrivateTradeArrangement.Status.PENDING_MEETUP);
+    }
+
+    private static java.util.LinkedHashMap<String, Object> baseEvidence(StallOffer offer) {
+        var details = new java.util.LinkedHashMap<String, Object>();
+        details.put("offerId", offer.offerId().toString()); details.put("listingId", offer.listingId());
+        details.put("itemFingerprint", offer.itemFingerprint()); details.put("askMesos", offer.askMesos());
+        details.put("offeredMesos", offer.offeredMesos());
+        return details;
     }
 
     private static PlayerShop.ListingView matchingListing(PlayerShop shop, StallOffer offer) {

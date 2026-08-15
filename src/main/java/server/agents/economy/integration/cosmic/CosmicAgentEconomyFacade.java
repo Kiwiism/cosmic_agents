@@ -3,6 +3,7 @@ package server.agents.economy.integration.cosmic;
 import client.Character;
 import client.inventory.InventoryType;
 import server.agents.economy.ownership.*;
+import server.agents.economy.market.AgentItemValuationService;
 
 import java.time.Instant;
 import java.util.*;
@@ -14,15 +15,28 @@ public final class CosmicAgentEconomyFacade {
     private final EconomyParticipantRegistry participants;
     private final AgentEconomyFacade facade;
     private final CosmicInventorySnapshotReader snapshots;
+    private final AgentItemValuationService valuations;
 
     public CosmicAgentEconomyFacade(EconomyParticipantRegistry participants, AgentEconomyFacade facade) {
-        this(participants, facade, new CosmicInventorySnapshotReader());
+        this(participants, facade, new CosmicInventorySnapshotReader(), AgentItemValuationService.unknown());
+    }
+
+    public CosmicAgentEconomyFacade(EconomyParticipantRegistry participants, AgentEconomyFacade facade,
+                                    AgentItemValuationService valuations) {
+        this(participants, facade, new CosmicInventorySnapshotReader(), valuations);
     }
 
     CosmicAgentEconomyFacade(EconomyParticipantRegistry participants, AgentEconomyFacade facade,
                              CosmicInventorySnapshotReader snapshots) {
+        this(participants, facade, snapshots, AgentItemValuationService.unknown());
+    }
+
+    CosmicAgentEconomyFacade(EconomyParticipantRegistry participants, AgentEconomyFacade facade,
+                             CosmicInventorySnapshotReader snapshots,
+                             AgentItemValuationService valuations) {
         this.participants = Objects.requireNonNull(participants); this.facade = Objects.requireNonNull(facade);
         this.snapshots = Objects.requireNonNull(snapshots);
+        this.valuations = Objects.requireNonNull(valuations);
     }
 
     public void onFreeMarketEntry(Character agent, String agentId, Instant logicalAt) {
@@ -81,4 +95,9 @@ public final class CosmicAgentEconomyFacade {
     }
 
     public boolean isParticipant(Character agent) { return participants.isAdmittedCharacter(agent.getId()); }
+
+    /** Stable external call; implementation may evolve without changing agent code. */
+    public AgentItemValuationService.Valuation valueItem(String agentId, int itemId, Instant logicalAt) {
+        return valuations.value(agentId, itemId, logicalAt);
+    }
 }

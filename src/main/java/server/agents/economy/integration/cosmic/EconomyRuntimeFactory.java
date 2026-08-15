@@ -43,12 +43,14 @@ public final class EconomyRuntimeFactory {
         NpcLocationIndex npcLocations = NpcLocationIndex.loadDefault();
         EconomyCatalog catalog = new CosmicEconomyCatalog(bundle.version(), npcLocations);
         EconomyParticipantRegistry participants = new EconomyParticipantRegistry(liveAgents);
+        JdbcAgentItemValuationService valuations = new JdbcAgentItemValuationService(
+                runId, economyDataSource, catalog, config.valuation);
 
         JdbcEconomyEvidenceJournal evidenceJournal = new JdbcEconomyEvidenceJournal(economyDataSource);
         CosmicAgentEconomyFacade economyFacade = new CosmicAgentEconomyFacade(participants,
                 new server.agents.economy.ownership.DefaultAgentEconomyFacade(runId,
                         new server.agents.economy.ownership.ShadowEconomyEvaluator(catalog),
-                        new JdbcEconomyOwnershipJournal(economyDataSource)));
+                        new JdbcEconomyOwnershipJournal(economyDataSource)), valuations);
         RemoteNpcCommerceService npc = new RemoteNpcCommerceService(catalog, AgentShopGatewayRuntime.shop());
         CosmicAgentNeedReader needReader = new CosmicAgentNeedReader(config.demand, catalog);
         AgentFreeMarketBuyerService buyer = new AgentFreeMarketBuyerService(
@@ -66,14 +68,17 @@ public final class EconomyRuntimeFactory {
                 config.npcCommerce.dispositionNpcId, config.market.maximumListingsPerStall,
                 config.bootstrap.shopPermitItemId, config.market.coldStartNpcMarkupMinimum,
                 config.market.coldStartNpcMarkupMaximum, config.world.firstFreeMarketRoomMapId,
-                config.world.lastFreeMarketRoomMapId);
+                config.world.lastFreeMarketRoomMapId, valuations);
         CosmicNegotiatedTradeExecutor tradeExecutor = new CosmicNegotiatedTradeExecutor(
                 participants::admittedCharacter, config.market.interactionRangePixels);
         JdbcStallOfferStore stallOffers = new JdbcStallOfferStore(economyDataSource);
         CosmicPublicTradeNegotiator negotiation = new CosmicPublicTradeNegotiator(runId, participants,
                 seller, tradeExecutor, evidenceJournal, new JdbcNegotiationEvidenceStore(economyDataSource),
                 config.market.barterEnabled, needReader::read, stallOffers,
-                duration(config.market.negotiationTimeout), config.market.interactionRangePixels);
+                duration(config.market.negotiationTimeout), config.market.interactionRangePixels,
+                config.market.minimumPublicOfferIncrementMesos,
+                config.market.minimumPublicOfferIncrementBasisPoints,
+                new StallOfferFlavorRenderer(config.market.stallOfferFlavorTemplate));
         NamedRandomStreams marketRandom = new NamedRandomStreams(config.scenario.seed);
         CosmicMarketAmbientBehavior ambient = new CosmicMarketAmbientBehavior(
                 new ConstrainedAmbientBehaviorPolicy(config.ambient.maximumConsecutiveActions,
@@ -85,7 +90,9 @@ public final class EconomyRuntimeFactory {
                 new CosmicNpcResourceProcurement(needReader, npc),
                 config.ambient.enabled ? ambient : AutonomousFreeMarketBehavior.AmbientBehavior.disabled(),
                 negotiation, new CosmicScrollProjectService(runId, marketRandom),
-                new CosmicStallOfferReviewService(runId, stallOffers),
+                new CosmicStallOfferReviewService(runId, stallOffers,
+                        duration(config.market.stallOfferReviewDelay),
+                        duration(config.market.stallOfferArrangementTimeout)),
                 new CosmicQuestLifecycleService(runId, config.quests, marketRandom, catalog, npcLocations),
                 config.world.firstFreeMarketRoomMapId, config.world.lastFreeMarketRoomMapId,
                 duration(config.market.actionPoll), duration(config.market.postTripDelay),

@@ -15,3 +15,5 @@ while a simulation is active to refresh its snapshot, then use **Load** in the p
 page exposes entry/appraisal reviews, one-use mutation authorizations, guard outcomes, and legacy
 versus shadow disposition disagreements. The Market page exposes every structured stall offer,
 numeric ask/offer, exact fingerprint, status, public flavor text, and seller response.
+It also exposes accepted private arrangements and valuation queries with private-observation,
+catalog-anchor, or audited YAML-override provenance.

@@ -101,6 +101,77 @@ class CosmicPublicTradeNegotiatorTest {
     }
 
     @Test
+    void publiclyOutbidsObservedOfferWhenIncrementFitsBudgetAndWillingnessToPay() {
+        RecordingOffers offers = new RecordingOffers();
+        offers.highest = existingOffer("other", 800);
+        when(shop.visitShop(buyer)).thenReturn(true);
+        CosmicPublicTradeNegotiator.Participant participant =
+                new CosmicPublicTradeNegotiator.Participant(seller, profile("seller", 1));
+        CosmicPublicTradeNegotiator negotiator = new CosmicPublicTradeNegotiator(runId,
+                characterId -> characterId == 2 ? Optional.of(participant) : Optional.empty(),
+                closer, trades, journal, sessions, (item, quantity) -> 100, chat, false,
+                (character, profile, at) -> List.of(), offers, Duration.ofMinutes(2), 120,
+                100, 100, (listing, mesos) -> "public offer " + mesos);
+
+        var result = negotiator.attempt(buyer, profile("buyer", 0), List.of(need(950)),
+                List.of(observation()), now);
+
+        assertTrue(result.attempted());
+        assertEquals(950L, offers.created.getFirst().offeredMesos());
+        assertEquals(offers.highest.offerId().toString(), result.evidence().get("outbidsOfferId"));
+        verify(shop).chat(any(), eq("public offer 950"));
+    }
+
+    @Test
+    void willNotOutbidWhenRequiredIncrementExceedsBudgetOrWillingnessToPay() {
+        RecordingOffers offers = new RecordingOffers();
+        offers.highest = existingOffer("other", 900);
+        CosmicPublicTradeNegotiator.Participant participant =
+                new CosmicPublicTradeNegotiator.Participant(seller, profile("seller", 1));
+        CosmicPublicTradeNegotiator negotiator = new CosmicPublicTradeNegotiator(runId,
+                characterId -> characterId == 2 ? Optional.of(participant) : Optional.empty(),
+                closer, trades, journal, sessions, (item, quantity) -> 100, chat, false,
+                (character, profile, at) -> List.of(), offers, Duration.ofMinutes(2), 120,
+                100, 100, (listing, mesos) -> "offer");
+
+        var result = negotiator.attempt(buyer, profile("buyer", 0), List.of(need(950)),
+                List.of(observation()), now);
+
+        assertFalse(result.attempted()); assertTrue(offers.created.isEmpty());
+    }
+
+    @Test
+    void doesNotCompeteAgainstOwnPendingOffer() {
+        RecordingOffers offers = new RecordingOffers();
+        offers.highest = existingOffer("buyer", 800);
+        CosmicPublicTradeNegotiator.Participant participant =
+                new CosmicPublicTradeNegotiator.Participant(seller, profile("seller", 1));
+        CosmicPublicTradeNegotiator negotiator = new CosmicPublicTradeNegotiator(runId,
+                characterId -> characterId == 2 ? Optional.of(participant) : Optional.empty(),
+                closer, trades, journal, sessions, (item, quantity) -> 100, chat, false,
+                (character, profile, at) -> List.of(), offers, Duration.ofMinutes(2), 120);
+
+        assertFalse(negotiator.attempt(buyer, profile("buyer", 0), List.of(need(950)),
+                List.of(observation()), now).attempted());
+        assertTrue(offers.created.isEmpty());
+    }
+
+    @Test
+    void subtractsOtherLiveOfferCommitmentsFromAvailableBudget() {
+        RecordingOffers offers = new RecordingOffers(); offers.committedMesos = 10_000;
+        CosmicPublicTradeNegotiator.Participant participant =
+                new CosmicPublicTradeNegotiator.Participant(seller, profile("seller", 1));
+        CosmicPublicTradeNegotiator negotiator = new CosmicPublicTradeNegotiator(runId,
+                characterId -> characterId == 2 ? Optional.of(participant) : Optional.empty(),
+                closer, trades, journal, sessions, (item, quantity) -> 100, chat, false,
+                (character, profile, at) -> List.of(), offers, Duration.ofMinutes(2), 120);
+
+        assertFalse(negotiator.attempt(buyer, profile("buyer", 0), List.of(need(950)),
+                List.of(observation()), now).attempted());
+        assertTrue(offers.created.isEmpty());
+    }
+
+    @Test
     void publiclyAcceptsClosesRealStallAndUsesRealTradeGateway() {
         when(closer.close(seller, "NEGOTIATED_DIRECT_TRADE")).thenReturn(true);
         when(trades.execute(anyString(), eq("buyer"), any(), eq("seller"), any()))
@@ -182,6 +253,12 @@ class CosmicPublicTradeNegotiatorTest {
                 "fp", Map.of(), MarketObservation.State.LISTED);
     }
 
+    private StallOffer existingOffer(String buyerId, long amount) {
+        return new StallOffer(UUID.randomUUID(), runId, buyerId, "seller", "escrow", "escrow:0",
+                910000001, 4000000, "fp", Map.of(), 1, 1000, amount, "flavor",
+                now.minusSeconds(10), now.plusSeconds(60), StallOffer.Status.PENDING);
+    }
+
     private static EconomyAgentProfile profile(String id, double negotiationAggressiveness) {
         return new EconomyAgentProfile(id, "warrior", .5, .5, .5, .5, .5, .5,
                 24, negotiationAggressiveness, .5);
@@ -189,7 +266,16 @@ class CosmicPublicTradeNegotiatorTest {
 
     private static final class RecordingOffers implements StallOfferStore {
         private final java.util.ArrayList<StallOffer> created = new java.util.ArrayList<>();
+        private StallOffer highest;
+        private long committedMesos;
         @Override public void create(StallOffer offer) { created.add(offer); }
+        @Override public Optional<StallOffer> highestPendingForListing(UUID runId, String listingId,
+                                                                       Instant asOf) {
+            return Optional.ofNullable(highest);
+        }
+        @Override public long committedMesosForBuyer(UUID runId, String buyerAgentId, Instant asOf) {
+            return committedMesos;
+        }
         @Override public void resolve(UUID offerId, StallOffer.Status status, String response,
                                       Instant respondedAt, String settlementTransactionId) { }
     }
