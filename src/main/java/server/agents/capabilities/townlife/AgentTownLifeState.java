@@ -94,6 +94,7 @@ public final class AgentTownLifeState {
     private long exitRequestedAtMs;
     private long exitDeadlineMs;
     private AgentTownLifeActivityResult activityResult = AgentTownLifeActivityResult.NONE;
+    private long externalInteractionPausedAtMs;
     private final AgentTownLifeMemory memory = new AgentTownLifeMemory();
     private final AgentTownLifeProgressWatchdog progressWatchdog = new AgentTownLifeProgressWatchdog();
 
@@ -156,6 +157,7 @@ public final class AgentTownLifeState {
         exitRequestedAtMs = 0L;
         exitDeadlineMs = 0L;
         activityResult = AgentTownLifeActivityResult.NONE;
+        externalInteractionPausedAtMs = 0L;
         memory.clearVisit();
         progressWatchdog.clear();
     }
@@ -197,6 +199,7 @@ public final class AgentTownLifeState {
         exitRequestedAtMs = 0L;
         exitDeadlineMs = 0L;
         activityResult = AgentTownLifeActivityResult.NONE;
+        externalInteractionPausedAtMs = 0L;
         memory.clearVisit();
         progressWatchdog.clear();
     }
@@ -400,6 +403,34 @@ public final class AgentTownLifeState {
         return activity != Activity.NONE
                 && (stage == Stage.MOVE_TO_ACTIVITY || stage == Stage.DWELL)
                 && !activityResult.terminal();
+    }
+
+    public synchronized boolean externalInteractionPaused() {
+        return externalInteractionPausedAtMs > 0L;
+    }
+
+    public synchronized void pauseForExternalInteraction(long nowMs) {
+        if (enabled && externalInteractionPausedAtMs <= 0L) {
+            externalInteractionPausedAtMs = Math.max(1L, nowMs);
+        }
+    }
+
+    public synchronized void resumeAfterExternalInteraction(long nowMs) {
+        if (externalInteractionPausedAtMs <= 0L) {
+            return;
+        }
+        long delta = Math.max(0L, nowMs - externalInteractionPausedAtMs);
+        if (nextActionAtMs > 0L) {
+            nextActionAtMs += delta;
+        }
+        if (freeTimeUntilMs > 0L) {
+            freeTimeUntilMs += delta;
+        }
+        if (roleUntilMs > 0L) {
+            roleUntilMs += delta;
+        }
+        progressWatchdog.shiftDeadlines(delta);
+        externalInteractionPausedAtMs = 0L;
     }
 
     public synchronized boolean freeTimeExpired(long nowMs) {

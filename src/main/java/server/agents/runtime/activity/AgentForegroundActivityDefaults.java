@@ -8,6 +8,8 @@ import server.agents.plans.amherst.AgentAmherstPlanRuntime;
 import server.agents.plans.mapleisland.AgentMapleIslandLithHandoffRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.townlife.AgentTownLifeVisitLeaseRuntime;
+import server.agents.runtime.interaction.AgentInteractionLeaseRuntime;
+import server.agents.runtime.townlife.AgentTownLifeTestScenarioRuntime;
 
 import java.util.List;
 
@@ -29,6 +31,8 @@ public final class AgentForegroundActivityDefaults {
         private static final AgentForegroundActivityRegistry REGISTRY =
                 new AgentForegroundActivityRegistry(List.of(
                     handoff(),
+                    townLifeTestScenario(),
+                    interactionLease(),
                     townLifeVisitLease(),
                     townLife(),
                     universalPlan(),
@@ -95,6 +99,25 @@ public final class AgentForegroundActivityDefaults {
                 AgentTownLifeRuntime.forceStop(entry, agent, reason);
             }
         };
+    }
+
+    private static AgentForegroundActivity interactionLease() {
+        return activity("interaction-lease", 575,
+                (entry, agent) -> AgentInteractionLeaseRuntime.active(entry),
+                AgentInteractionLeaseRuntime::tick,
+                false,
+                (entry, agent, reason, nowMs) ->
+                        AgentInteractionLeaseRuntime.cancel(entry, agent, reason, nowMs));
+    }
+
+    private static AgentForegroundActivity townLifeTestScenario() {
+        return activity("town-life-test-scenario", 590,
+                (entry, agent) -> AgentTownLifeTestScenarioRuntime.active(entry),
+                AgentTownLifeTestScenarioRuntime::tick,
+                false,
+                (entry, agent, reason, nowMs) ->
+                        AgentTownLifeTestScenarioRuntime.requestStop(
+                                entry, agent, reason, nowMs));
     }
 
     private static AgentForegroundActivity townLifeVisitLease() {

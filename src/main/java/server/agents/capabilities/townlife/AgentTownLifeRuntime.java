@@ -267,6 +267,36 @@ public final class AgentTownLifeRuntime {
         AgentTownLifeLifecycleRuntime.stop(entry, agent, reason);
     }
 
+    public static void suspendForExternalInteraction(
+            AgentRuntimeEntry entry, Character agent, long nowMs) {
+        if (entry == null || agent == null || !active(entry)) {
+            return;
+        }
+        AgentTownLifeState state = entry.capabilityStates().require(AgentTownLifeState.STATE_KEY);
+        if (AgentTownLifeEncounterCoordinator.active(entry)) {
+            AgentTownLifeEncounterCoordinator.finish(entry, agent, false, nowMs);
+            AgentTownLifeDestinationService.release(agent);
+            state.markActivityResult(AgentTownLifeActivityResult.CANCELLED);
+            AgentTownLifeEventPublisher.activity(
+                    entry, agent, state, AgentTownLifeActivityEvent.Phase.CANCELLED, nowMs);
+            state.transition(AgentTownLifeState.Stage.CHOOSE_ACTIVITY, nowMs);
+        }
+        state.pauseForExternalInteraction(nowMs);
+        entry.capabilityStates().require(AgentTownLifeActivitySequenceState.STATE_KEY).pause(nowMs);
+        AgentFidgetService.clear(entry);
+        AgentPrimitiveCapabilityGatewayRuntime.gateway().stop(entry);
+    }
+
+    public static void resumeAfterExternalInteraction(AgentRuntimeEntry entry, long nowMs) {
+        if (entry == null) {
+            return;
+        }
+        entry.capabilityStates().find(AgentTownLifeState.STATE_KEY)
+                .ifPresent(state -> state.resumeAfterExternalInteraction(nowMs));
+        entry.capabilityStates().find(AgentTownLifeActivitySequenceState.STATE_KEY)
+                .ifPresent(sequence -> sequence.resume(nowMs));
+    }
+
     static void terminateLocal(AgentRuntimeEntry entry,
                                Character agent,
                                AgentTownLifeLifecycleEvent.Phase phase,
@@ -666,7 +696,7 @@ public final class AgentTownLifeRuntime {
 
     private static boolean readyForGracefulExit(
             AgentRuntimeEntry entry, AgentTownLifeState state) {
-        if (state == null || !state.exitRequested()
+        if (state == null || !state.exitRequested() || state.externalInteractionPaused()
                 || AgentTownLifeEncounterCoordinator.active(entry)) {
             return false;
         }

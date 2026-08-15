@@ -76,9 +76,9 @@ public final class AgentRegistrationCoordinator {
         AgentObjectiveCheckpointRuntime.restore(entry);
         AgentCareerProgressionCheckpointRuntime.restore(entry, bundle);
         AgentPlanCheckpointRuntime.restore(entry);
-        AgentPlanReattachmentRuntime.reattachIfNeeded(entry, agent, nowMs);
         AgentTownLifeCheckpointRuntime.restore(entry, agent, nowMs);
         AgentTownLifeVisitLeaseCheckpointRuntime.restore(entry, agent);
+        AgentPlanReattachmentRuntime.reattachIfNeeded(entry, agent, nowMs);
         return entry;
     }
 

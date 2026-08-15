@@ -240,6 +240,15 @@ public enum CosmicPrimitiveCapabilityGateway implements PrimitiveCapabilityGatew
     }
 
     @Override
+    public Point portalPosition(Character agent, String portalName) {
+        if (agent.getMap() == null || portalName == null || portalName.isBlank()) {
+            return null;
+        }
+        var portal = agent.getMap().getPortal(portalName.trim());
+        return portal == null ? null : new Point(portal.getPosition());
+    }
+
+    @Override
     public Map<Integer, Integer> liveMonsterCounts(Character agent) {
         if (agent == null || agent.getMap() == null) {
             return Map.of();

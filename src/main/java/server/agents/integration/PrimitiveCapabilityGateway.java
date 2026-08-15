@@ -54,6 +54,10 @@ public interface PrimitiveCapabilityGateway {
 
     Point portalPosition(Character agent, int portalId);
 
+    default Point portalPosition(Character agent, String portalName) {
+        return null;
+    }
+
     Integer directPortalIdTo(Character agent, int destinationMapId);
 
     Point npcPosition(Character agent, int npcId);

@@ -159,12 +159,26 @@ Lifecycle events `STARTED`, `EXIT_REQUESTED`, `EXITED`, `FORCED`, and `TIMED_OUT
 request, caller, final activity, and terminal activity result. External coordinators can observe these
 events and submit their next objective; TownLife never advances a quest or travel cursor itself.
 
+The registered universal-plan operation `town-life-visit` is the production adapter for this handoff.
+Its required `durationMs` parameter creates a persisted external visit lease; optional `townMapId`,
+`reason`, and `gracefulTimeoutMs` parameters refine the request. The plan cursor remains paused while
+TownLife owns foreground execution and advances exactly once after the matching session reaches its
+terminal boundary. Registration restores TownLife and its lease before reattaching the plan step.
+
+Chat and trade use a bounded nested interaction lease. The TownLife session remains active while the
+interaction owns foreground execution. Activity, sequence, free-time, role, and navigation-watchdog
+clocks are parked. A graceful exit waits for the interaction; completion, timeout, cancellation, or
+loss of the TownLife session releases the lease and resumes or drains TownLife. A trade has priority
+over a concurrent chat. This lease does not give TownLife authority to initiate functional trades.
+
 ## Operational test harness
 
 The GM6 command can run bounded tests in any already-authored town:
 
 - `!townlife test readiness`
 - `!townlife test start <seconds> [agent-count]`
+- `!townlife test cycle <visit-seconds> <outside-seconds> <cycles> [agent-count] [standby]`
+- `!townlife test social <chat|showoff> <agent-count> [venue-id]`
 - `!townlife test status`
 - `!townlife test stop`
 
@@ -172,6 +186,22 @@ The harness validates the current profile and selects only already registered Ag
 operator and present in the exact same live map instance. It creates an external visit lease for each
 accepted Agent and requests graceful exit at the deadline. It deliberately does not spawn Agents,
 move them to town, transact with facilities, edit plans, or synthesize scenic points.
+
+Test sessions opt into observer narration. Agents announce session entry/exit, selected activity,
+venue, committed dwell duration, local failures, standby movement, re-entry, and directed social
+encounter phases. Narration is produced from structured events, is rate-limited, and is disabled for
+ordinary TownLife sessions.
+
+The cyclic harness remains an external non-exclusive coordinator. After each visit drains, it stages
+the Agent at a safe local point, waits outside TownLife, and starts a fresh correlated session. The
+optional standby value is `fallback`, `portal:<name>`, `npc:<id>`, or `facility:<id>`. Portal and NPC
+targets are grounded and offset; excluded portal, door, ladder, and NPC traffic zones are never used
+as occupancy. The harness does not enter a portal or invoke the NPC.
+
+The directed social command selects an exact group from already-active local TownLife Agents.
+`chat` supports two to four participants and `showoff` requires two. It uses the production encounter
+reservations, approach, facing, expressions, fidgets, reaction, closing, timeout, and cleanup. The
+test narrator adds deterministic placeholder lines; it is not a general conversation model.
 
 ## Adding a town
 
@@ -223,6 +253,9 @@ scheduler, Java policy class, combat change, or progression change.
   Global disable, explicit force, or unexpected map exit remains immediate. Cleanup releases all
   destinations and encounters, clears fidgets/chairs/movement and abstract execution, deletes the
   local checkpoint, and resumes the paused foreground clock.
+- A bounded chat or trade can temporarily own foreground execution without ending TownLife. The
+  current local activity is parked, or an incompatible active group encounter is cancelled and
+  replanned. Interaction completion resumes the parked clocks; an already-requested exit then drains.
 - Checkpoints preserve stable correlation identity and drain state but never destinations, peers,
   reservations, extension instances, or live game objects. Restore is accepted only on the same
   supported town map. External visit leases use an independent checkpoint and ownership boundary.

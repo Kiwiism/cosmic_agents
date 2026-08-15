@@ -28,6 +28,7 @@ public final class AgentTownLifeActivitySequenceState {
     private long closingStartMs;
     private long endMs;
     private boolean performanceStarted;
+    private long pausedAtMs;
 
     public synchronized void start(long nowMs, long requestedEndMs) {
         long duration = Math.max(MIN_SEQUENCE_DURATION_MS, requestedEndMs - nowMs);
@@ -69,6 +70,26 @@ public final class AgentTownLifeActivitySequenceState {
         closingStartMs = 0L;
         endMs = 0L;
         performanceStarted = false;
+        pausedAtMs = 0L;
+    }
+
+    public synchronized void pause(long nowMs) {
+        if (phase != Phase.IDLE && pausedAtMs <= 0L) {
+            pausedAtMs = Math.max(1L, nowMs);
+        }
+    }
+
+    public synchronized void resume(long nowMs) {
+        if (pausedAtMs <= 0L) {
+            return;
+        }
+        long delta = Math.max(0L, nowMs - pausedAtMs);
+        orientEndMs += delta;
+        openingEndMs += delta;
+        reactionStartMs += delta;
+        closingStartMs += delta;
+        endMs += delta;
+        pausedAtMs = 0L;
     }
 
     private Phase phaseAt(long nowMs) {

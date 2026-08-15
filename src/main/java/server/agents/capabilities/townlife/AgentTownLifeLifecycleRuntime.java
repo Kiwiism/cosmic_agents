@@ -153,7 +153,8 @@ public final class AgentTownLifeLifecycleRuntime {
                 entry, agent, state, AgentTownLifeLifecycleEvent.Phase.EXIT_REQUESTED,
                 request.reason(), request.requestedAtMs());
         AgentTownLifeCheckpointRuntime.persist(entry, agent, request.requestedAtMs());
-        if (!state.hasCommittedActivity() && !AgentTownLifeEncounterCoordinator.active(entry)) {
+        if (!state.hasCommittedActivity() && !AgentTownLifeEncounterCoordinator.active(entry)
+                && !state.externalInteractionPaused()) {
             AgentTownLifeRuntime.terminateLocal(
                     entry, agent, AgentTownLifeLifecycleEvent.Phase.EXITED,
                     request.reason(), request.requestedAtMs());

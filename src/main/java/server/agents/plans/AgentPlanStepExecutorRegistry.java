@@ -12,6 +12,7 @@ public final class AgentPlanStepExecutorRegistry {
         return new AgentPlanStepExecutorRegistry(List.of(
                 new AgentOrderedObjectivePlanStepExecutor(),
                 new AgentSouthperryLithTransferStepExecutor(),
+                new AgentTownLifeVisitPlanStepExecutor(),
                 new AgentFirstJobPlanStepExecutor(),
                 new AgentVictoriaTrainingPlanStepExecutor()));
     }

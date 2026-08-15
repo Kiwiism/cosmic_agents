@@ -6,8 +6,12 @@ import server.agents.capabilities.dialogue.AgentDialogueProjectionRuntime;
 import server.agents.capabilities.dialogue.AgentDialogueProjectionService;
 import server.agents.capabilities.dialogue.AgentSupplyDialogueReactionService;
 import server.agents.capabilities.dialogue.AgentTownLifeDialogueReactionService;
+import server.agents.capabilities.dialogue.AgentTownLifeTestNarrationService;
 import server.agents.capabilities.townlife.AgentTownLifeEncounterEvent;
 import server.agents.capabilities.townlife.AgentTownLifeArrivalEvent;
+import server.agents.capabilities.townlife.AgentTownLifeActivityEvent;
+import server.agents.capabilities.townlife.AgentTownLifeLifecycleEvent;
+import server.agents.runtime.townlife.AgentTownLifeTestScenarioEvent;
 import server.agents.capabilities.dialogue.llm.context.AgentLlmContextProjectionService;
 import server.agents.capabilities.supplies.AgentSupplyCoordinationProjectionService;
 import server.agents.capabilities.supplies.AgentSupplyMaintenanceEventListener;
@@ -75,13 +79,11 @@ public final class AgentSessionEventWiringRuntime {
                 }
                 subscriptions.add(bus.subscribe(AgentSupplyThresholdChangedEvent.TYPE,
                         new AgentSupplyMonitoringProjectionService(entry)));
-                if (rollout.dialogueEnabled() || questProgressDialogueEnabled) {
-                    subscriptions.add(bus.subscribe(AgentDialogueIntentEvent.TYPE,
-                            new AgentDialogueProjectionService(
-                                    (agentId, audience) -> AgentDialogueProjectionRuntime.hasAudience(
-                                            entry, agentId, audience),
-                                    intent -> AgentDialogueProjectionRuntime.project(entry, intent))));
-                }
+                subscriptions.add(bus.subscribe(AgentDialogueIntentEvent.TYPE,
+                        new AgentDialogueProjectionService(
+                                (agentId, audience) -> AgentDialogueProjectionRuntime.hasAudience(
+                                        entry, agentId, audience),
+                                intent -> AgentDialogueProjectionRuntime.project(entry, intent))));
                 AgentProgressionMonitoringProjectionService progressionMonitoring =
                         new AgentProgressionMonitoringProjectionService(entry);
                 AgentProgressionDialogueReactionService progressionDialogue =
@@ -92,6 +94,16 @@ public final class AgentSessionEventWiringRuntime {
                 if (rollout.dialogueEnabled()) {
                     subscriptions.add(bus.subscribe("*", progressionDialogue));
                 }
+                AgentTownLifeTestNarrationService townLifeTestNarration =
+                        new AgentTownLifeTestNarrationService(entry, bus);
+                subscriptions.add(bus.subscribe(AgentTownLifeActivityEvent.TYPE,
+                        townLifeTestNarration));
+                subscriptions.add(bus.subscribe(AgentTownLifeLifecycleEvent.TYPE,
+                        townLifeTestNarration));
+                subscriptions.add(bus.subscribe(AgentTownLifeEncounterEvent.TYPE,
+                        townLifeTestNarration));
+                subscriptions.add(bus.subscribe(AgentTownLifeTestScenarioEvent.TYPE,
+                        townLifeTestNarration));
                 if (questProgressDialogueEnabled) {
                     subscriptions.add(bus.subscribe(AgentQuestProgressMilestoneEvent.TYPE,
                             new AgentQuestProgressDialogueReactionService(bus)));

@@ -5,6 +5,7 @@ import server.agents.events.AgentEventPriority;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentSessionEventRuntime;
 import server.agents.runtime.simulation.AgentSimulationMode;
+import server.agents.runtime.townlife.AgentTownLifeTerminalState;
 
 final class AgentTownLifeEventPublisher {
     private AgentTownLifeEventPublisher() {
@@ -35,6 +36,8 @@ final class AgentTownLifeEventPublisher {
                 || state.sessionId().isBlank()) {
             return;
         }
+        entry.capabilityStates().require(AgentTownLifeTerminalState.STATE_KEY)
+                .record(state.sessionId(), phase, reason, nowMs);
         AgentSessionEventRuntime.bus(entry).publish(new AgentTownLifeLifecycleEvent(
                 agent.getId(), nowMs, state.townMapId(), state.sessionId(),
                 state.requestId(), state.callerId(), phase, reason,

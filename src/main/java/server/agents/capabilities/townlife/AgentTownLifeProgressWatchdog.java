@@ -58,4 +58,12 @@ final class AgentTownLifeProgressWatchdog {
         startedAtMs = 0L;
         lastProgressAtMs = 0L;
     }
+
+    synchronized void shiftDeadlines(long deltaMs) {
+        if (deltaMs <= 0L || target == null) {
+            return;
+        }
+        startedAtMs += deltaMs;
+        lastProgressAtMs += deltaMs;
+    }
 }

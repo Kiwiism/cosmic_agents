@@ -120,6 +120,60 @@ public final class AgentDialogueProjectionRuntime {
                     "I'm going to finish my errand, then spend some time around town.",
                     "The ship made it! I'll head into Lith Harbor and see what's happening."));
         }
+        if (AgentTownLifeTestNarrationService.ACTIVITY_INTENT.equals(intent.intentKey())) {
+            String activity = friendly(intent.parameters().getOrDefault("activity", "activity"));
+            String venue = intent.parameters().getOrDefault("venue", "a nearby spot");
+            return switch (intent.parameters().getOrDefault("phase", "")) {
+                case "SELECTED" -> "I'm going to " + activity + " at " + venue + ".";
+                case "ORIENTING" -> "I'm " + activity + " here for about "
+                        + intent.parameters().getOrDefault("remainingSeconds", "a few") + " seconds.";
+                case "COMPLETED" -> "I've finished " + activity + ".";
+                case "ABANDONED" -> "I couldn't reach that spot, so I'll choose another activity.";
+                case "TIMED_OUT" -> "That activity took too long, so I'm moving on.";
+                default -> "";
+            };
+        }
+        if (AgentTownLifeTestNarrationService.LIFECYCLE_INTENT.equals(intent.intentKey())) {
+            return switch (intent.parameters().getOrDefault("phase", "")) {
+                case "STARTED" -> "I'm entering TownLife for this test.";
+                case "EXIT_REQUESTED" -> "I'll finish what I'm doing, then leave TownLife.";
+                case "EXITED" -> "I've finished this TownLife visit.";
+                case "FORCED" -> "My TownLife visit was stopped immediately.";
+                case "TIMED_OUT" -> "My TownLife exit timed out, so the visit was closed.";
+                default -> "";
+            };
+        }
+        if (AgentTownLifeTestNarrationService.ENCOUNTER_INTENT.equals(intent.intentKey())) {
+            String peer = intent.parameters().getOrDefault("peerName", "friend");
+            boolean showOff = "PLAYFUL_SPARRING".equals(
+                    intent.parameters().getOrDefault("encounterType", ""));
+            boolean initiator = "INITIATOR".equals(intent.parameters().getOrDefault("role", ""));
+            return switch (intent.parameters().getOrDefault("phase", "")) {
+                case "ACTIVE" -> initiator
+                        ? (showOff ? peer + ", want to practice a little?"
+                        : "Hey " + peer + ", taking a break too?")
+                        : (showOff ? "Sure, show me what you've got!"
+                        : "Yeah, I'll hang around here for a bit.");
+                case "REACTING" -> showOff ? "Nice move!" : "This is a good place to relax.";
+                case "CLOSING" -> "I'll catch you again later, " + peer + ".";
+                default -> "";
+            };
+        }
+        if (AgentTownLifeTestNarrationService.SCENARIO_INTENT.equals(intent.intentKey())) {
+            String detail = intent.parameters().getOrDefault("detail", "");
+            return switch (intent.parameters().getOrDefault("phase", "")) {
+                case "STARTED_VISIT" -> "I'm starting TownLife cycle "
+                        + intent.parameters().getOrDefault("cycle", "") + ".";
+                case "EXITED_VISIT" -> "I've left TownLife and will move to my standby spot.";
+                case "STAGING" -> "I'm going to wait near " + detail + ".";
+                case "OUTSIDE_IDLE" -> "I'm outside TownLife now, waiting near " + detail + ".";
+                case "REENTERING" -> "My wait is over; I'm re-entering TownLife.";
+                case "COMPLETED" -> "The TownLife cycle test is complete.";
+                case "FAILED" -> "The TownLife cycle test stopped: " + detail + ".";
+                case "STOP_REQUESTED" -> "I'll finish this activity and stop the TownLife test.";
+                default -> "";
+            };
+        }
         if (!AgentSupplyDialogueReactionService.INTENT_KEY.equals(intent.intentKey())) {
             return "";
         }
@@ -155,5 +209,9 @@ public final class AgentDialogueProjectionRuntime {
         } catch (NumberFormatException ignored) {
             return lines.getFirst();
         }
+    }
+
+    private static String friendly(String value) {
+        return value == null ? "spending some time" : value.toLowerCase().replace('_', ' ');
     }
 }

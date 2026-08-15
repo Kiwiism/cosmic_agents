@@ -2117,6 +2117,42 @@ tuning:
     # Purpose: Rejects TownLife tests too short to pass settling and visibly exercise at least one local activity under normal timing.
     # Technical: The GM test service validates the requested whole-second duration against this long before session admission and lease persistence.
     server.agents.commands.townlife.AgentTownLifeTestService.MIN_DURATION_MS: '10000'
+
+    # Values: 0-5000 milliseconds. Recommended: 250 milliseconds.
+    # Purpose: Prevents test-only TownLife intention narration from flooding nearby observers while preserving visibly distinct lifecycle phases.
+    # Technical: The dialogue intent transport applies this deduplication cooldown independently per rendered test narration key and Agent identity.
+    server.agents.capabilities.dialogue.AgentTownLifeTestNarrationService.COOLDOWN_MS: '250'
+
+    # Values: 250-5000 milliseconds. Recommended: 1500 milliseconds.
+    # Purpose: Keeps a nested TownLife chat active long enough to be visible before the parked local activity is allowed to resume.
+    # Technical: Interaction reconciliation will not complete a chat lease before this elapsed duration even when the dialogue future finishes immediately.
+    server.agents.runtime.interaction.AgentInteractionLeaseRuntime.CHAT_MIN_HOLD_MS: '1500'
+    # Values: 5000-60000 milliseconds. Recommended: 15000 milliseconds.
+    # Purpose: Bounds an incomplete nested TownLife chat so a failed dialogue transport cannot leave the local activity parked indefinitely.
+    # Technical: The interaction lease tick terminates and resumes the shifted TownLife clocks when this absolute deadline is reached without completion.
+    server.agents.runtime.interaction.AgentInteractionLeaseRuntime.CHAT_TIMEOUT_MS: '15000'
+    # Values: 10000-180000 milliseconds. Recommended: 90000 milliseconds.
+    # Purpose: Bounds a nested manual or Agent trade while allowing enough time for normal offer, confirmation, and inventory transfer steps.
+    # Technical: Trade reconciliation keeps ownership outside the local activity until the trade closes or this hard lease deadline forces resumption.
+    server.agents.runtime.interaction.AgentInteractionLeaseRuntime.TRADE_TIMEOUT_MS: '90000'
+
+    # Values: 20-150 pixels. Recommended: 55 pixels.
+    # Purpose: Defines when the cyclic TownLife test considers an Agent horizontally settled at its requested safe standby location.
+    # Technical: Scenario staging compares the live character X coordinate with the resolved portal, NPC, facility, or fallback ground target.
+    server.agents.runtime.townlife.AgentTownLifeTestScenarioRuntime.STANDBY_ARRIVAL_DISTANCE_PX: '55'
+    # Values: 20-180 pixels. Recommended: 70 pixels.
+    # Purpose: Prevents cyclic TownLife staging from accepting a similarly aligned point on the wrong platform or vertical town layer.
+    # Technical: Scenario arrival requires the absolute live-to-target Y difference to remain within this tolerance alongside horizontal arrival.
+    server.agents.runtime.townlife.AgentTownLifeTestScenarioRuntime.STANDBY_VERTICAL_DISTANCE_PX: '70'
+    # Values: 30-200 pixels. Recommended: 90 pixels.
+    # Purpose: Keeps test Agents beside rather than directly on portal triggers, NPC bodies, and other high-traffic interaction positions.
+    # Technical: Standby target resolution applies this horizontal displacement before ground projection and traffic-exclusion validation.
+    server.agents.runtime.townlife.AgentTownLifeTestScenarioRuntime.SAFE_OFFSET_PX: '90'
+
+    # Values: 5000-120000 milliseconds. Recommended: 30000 milliseconds.
+    # Purpose: Gives a bounded plan-owned TownLife visit time to finish its current activity cleanly after the requested visit duration expires.
+    # Technical: The plan step passes this default to the persisted external lease unless an individual town-life-visit operation overrides it.
+    server.agents.plans.AgentTownLifeVisitPlanStepExecutor.DEFAULT_GRACEFUL_TIMEOUT_MS: '30000'
     # Values: a finite non-negative integer; unit: nanoseconds. Recommended: 25000000-100000000 around the tested baseline 50000000; benchmark or observe behavior before moving outside this band.
     # Purpose: Sets when trade command profile warn ns triggers. Higher values let more pressure build before Agents or safeguards react; lower values make them react sooner.
     # Technical: the "inventory transfer service" component consumes this as an integer. Unit: nanoseconds; this is normally a profiling threshold rather than a gameplay duration.

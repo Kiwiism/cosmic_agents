@@ -1,6 +1,7 @@
 package server.agents.runtime;
 
 import server.agents.monitoring.AgentPerformanceMonitor;
+import server.agents.runtime.interaction.AgentInteractionLeaseRuntime;
 
 import client.Character;
 
@@ -64,6 +65,9 @@ public final class AgentCommonTickService {
         if (perf) startedAt = System.nanoTime();
         hooks.releaseControlledMonsters().accept(agent);
         if (perf) AgentPerformanceMonitor.record("common-release-mob", System.nanoTime() - startedAt);
+
+        AgentInteractionLeaseRuntime.reconcileTrade(
+                entry, agent, System.currentTimeMillis());
 
         if (agent.getTrade() == null) {
             if (perf) startedAt = System.nanoTime();
