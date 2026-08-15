@@ -1,6 +1,7 @@
 package server.agents.capabilities.combat;
 
 import client.Character;
+import client.inventory.WeaponType;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
@@ -16,7 +17,8 @@ import java.awt.Point;
 import java.util.List;
 
 /**
- * Agent-owned grind navigation target selector for ranged retreat, breakout, and cross-region kiting.
+ * Agent-owned grind navigation target selector for safe firing anchors, retreat, breakout,
+ * and cross-region kiting.
  */
 public final class AgentGrindNavigationTargetSelector {
     @FunctionalInterface
@@ -43,6 +45,7 @@ public final class AgentGrindNavigationTargetSelector {
 
     private static final int RETREAT_HOLD_MS = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentGrindNavigationTargetSelector.RETREAT_HOLD_MS");
     private static final int RETREAT_ARRIVAL_TOLERANCE_X = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentGrindNavigationTargetSelector.RETREAT_ARRIVAL_TOLERANCE_X");
+    private static final int RANGED_FIRING_DISTANCE_X = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentGrindNavigationTargetSelector.RANGED_FIRING_DISTANCE_X");
 
     private AgentGrindNavigationTargetSelector() {
     }
@@ -57,8 +60,18 @@ public final class AgentGrindNavigationTargetSelector {
                                                     Point agentPosition,
                                                     Point combatTargetPosition,
                                                     boolean crossRegionRetreatChecked) {
-        return selectGrindNavigationTarget(
-                entry, agentPosition, combatTargetPosition, crossRegionRetreatChecked, defaultHooks());
+        return selectGrindNavigationTarget(entry, agentPosition, combatTargetPosition,
+                null, null, crossRegionRetreatChecked, defaultHooks());
+    }
+
+    public static Point selectGrindNavigationTarget(AgentRuntimeEntry entry,
+                                                    Point agentPosition,
+                                                    Point combatTargetPosition,
+                                                    WeaponType weaponType,
+                                                    AgentAttackRoute attackRoute,
+                                                    boolean crossRegionRetreatChecked) {
+        return selectGrindNavigationTarget(entry, agentPosition, combatTargetPosition,
+                weaponType, attackRoute, crossRegionRetreatChecked, defaultHooks());
     }
 
     public static Point selectCrossRegionRetreatTarget(AgentRuntimeEntry entry,
@@ -88,12 +101,24 @@ public final class AgentGrindNavigationTargetSelector {
                                                     Point agentPosition,
                                                     Point combatTargetPosition,
                                                     NavigationHooks hooks) {
-        return selectGrindNavigationTarget(entry, agentPosition, combatTargetPosition, false, hooks);
+        return selectGrindNavigationTarget(
+                entry, agentPosition, combatTargetPosition, null, null, false, hooks);
     }
 
     public static Point selectGrindNavigationTarget(AgentRuntimeEntry entry,
                                                     Point agentPosition,
                                                     Point combatTargetPosition,
+                                                    boolean crossRegionRetreatChecked,
+                                                    NavigationHooks hooks) {
+        return selectGrindNavigationTarget(entry, agentPosition, combatTargetPosition,
+                null, null, crossRegionRetreatChecked, hooks);
+    }
+
+    public static Point selectGrindNavigationTarget(AgentRuntimeEntry entry,
+                                                    Point agentPosition,
+                                                    Point combatTargetPosition,
+                                                    WeaponType weaponType,
+                                                    AgentAttackRoute attackRoute,
                                                     boolean crossRegionRetreatChecked,
                                                     NavigationHooks hooks) {
         if (entry == null || agentPosition == null || combatTargetPosition == null) {
@@ -105,9 +130,13 @@ public final class AgentGrindNavigationTargetSelector {
             return combatTargetPosition;
         }
 
+        WeaponType resolvedWeaponType = weaponType != null
+                ? weaponType : AgentAttackExecutionProvider.getEquippedWeaponType(agent);
+        AgentAttackRoute resolvedAttackRoute = attackRoute != null
+                ? attackRoute : AgentAttackExecutionProvider.determineBasicWeaponRoute(resolvedWeaponType);
         long now = System.currentTimeMillis();
         boolean retreatNeeded = AgentAttackExecutionProvider.shouldRetreatFromNearbyTarget(
-                AgentAttackExecutionProvider.getEquippedWeaponType(agent), agentPosition, combatTargetPosition);
+                resolvedWeaponType, resolvedAttackRoute, agentPosition, combatTargetPosition);
 
         if (AgentBreakoutStateRuntime.hasBreakoutCommitment(entry)) {
             if (AgentBreakoutStateRuntime.isExpired(entry, now)
@@ -132,14 +161,18 @@ public final class AgentGrindNavigationTargetSelector {
         }
 
         if (!retreatNeeded) {
+            if (!crossRegionRetreatChecked
+                    && AgentCombatRangePolicy.supportsSafeSpotSniping(
+                    resolvedWeaponType, resolvedAttackRoute)) {
+                Point firingPosition = selectCrossRegionRetreatTarget(
+                        entry, agentPosition, combatTargetPosition, hooks);
+                if (firingPosition != null
+                        && Math.abs(firingPosition.x - agentPosition.x) > RETREAT_ARRIVAL_TOLERANCE_X) {
+                    AgentRetreatHoldStateRuntime.setHold(entry, firingPosition, now + RETREAT_HOLD_MS);
+                    return firingPosition;
+                }
+            }
             return combatTargetPosition;
-        }
-
-        Point crossRegionPos = crossRegionRetreatChecked
-                ? null
-                : selectCrossRegionRetreatTarget(entry, agentPosition, combatTargetPosition, hooks);
-        if (crossRegionPos != null) {
-            return crossRegionPos;
         }
 
         if (AgentAttackExecutionProvider.isSurrounded(agent, agentPosition)) {
@@ -148,6 +181,13 @@ public final class AgentGrindNavigationTargetSelector {
                     entry, dir, now + AgentCombatConfig.cfg.BREAKOUT_MAX_MS);
             AgentRetreatHoldStateRuntime.clear(entry);
             return breakoutStep(agentPosition, dir);
+        }
+
+        Point crossRegionPos = crossRegionRetreatChecked
+                ? null
+                : selectCrossRegionRetreatTarget(entry, agentPosition, combatTargetPosition, hooks);
+        if (crossRegionPos != null) {
+            return crossRegionPos;
         }
 
         Point retreatPos = AgentAttackExecutionProvider.retreatTargetPosition(agent, agentPosition, combatTargetPosition);
@@ -232,15 +272,26 @@ public final class AgentGrindNavigationTargetSelector {
         if (agentRegionId < 0) {
             return null;
         }
-        int targetRegionId = hooks.targetRegionResolver().resolve(graph, entry, map, combatTargetPosition);
-
         int projectileRange = AgentProjectileHitbox.CLIENT_PROJECTILE_BASE_RANGE
                 + AgentProjectileHitbox.passiveProjectileRangeBonus(agent);
         int yReachable = AgentCombatConfig.cfg.RANGED_DEGENERATE_RANGE_Y * 2;
+        int idealDistance = idealFiringDistance(projectileRange);
+
+        AgentNavigationGraph.Region currentRegion = graph.getRegion(agentRegionId);
+        if (currentRegion != null && !currentRegion.isRopeRegion) {
+            Point currentRegionRetreat = selectProjectileRetreatPoint(
+                    currentRegion, agentPosition, combatTargetPosition,
+                    projectileRange, yReachable, idealDistance, hooks);
+            if (currentRegionRetreat != null
+                    && Math.abs(currentRegionRetreat.x - agentPosition.x) > RETREAT_ARRIVAL_TOLERANCE_X
+                    && countMobsNearPoint(map, currentRegionRetreat) == 0) {
+                return currentRegionRetreat;
+            }
+        }
 
         Point reachableRetreat = selectReachableProjectileRetreatTarget(
-                graph, map, agentPosition, agentRegionId, targetRegionId,
-                combatTargetPosition, projectileRange, yReachable, hooks);
+                graph, map, agentPosition, agentRegionId,
+                combatTargetPosition, projectileRange, yReachable, idealDistance, hooks);
         if (reachableRetreat != null) {
             return reachableRetreat;
         }
@@ -252,7 +303,7 @@ public final class AgentGrindNavigationTargetSelector {
                 continue;
             }
             int toRegionId = edge.toRegionId;
-            if (toRegionId == agentRegionId || toRegionId == targetRegionId) {
+            if (toRegionId == agentRegionId) {
                 continue;
             }
             AgentNavigationGraph.Region region = graph.getRegion(toRegionId);
@@ -270,7 +321,9 @@ public final class AgentGrindNavigationTargetSelector {
             }
 
             int mobsInRegion = countMobsInRegion(graph, map, region);
-            int score = (mobsInRegion == 0 ? 1000 : 0) - mobsInRegion * 100 - dx / 10;
+            int score = (mobsInRegion == 0 ? 1000 : 0)
+                    - mobsInRegion * 100
+                    - Math.abs(dx - idealDistance) * 10;
             if (score > bestScore) {
                 bestScore = score;
                 bestEdge = edge;
@@ -284,10 +337,10 @@ public final class AgentGrindNavigationTargetSelector {
                                                                 MapleMap map,
                                                                 Point agentPosition,
                                                                 int agentRegionId,
-                                                                int targetRegionId,
                                                                 Point combatTargetPosition,
                                                                 int projectileRange,
                                                                 int yReachable,
+                                                                int idealDistance,
                                                                 NavigationHooks hooks) {
         Point bestPoint = null;
         int bestScore = Integer.MIN_VALUE;
@@ -295,11 +348,13 @@ public final class AgentGrindNavigationTargetSelector {
             if (region == null || region.isRopeRegion) {
                 continue;
             }
-            if (region.id == agentRegionId || region.id == targetRegionId) {
+            if (region.id == agentRegionId) {
                 continue;
             }
 
-            Point candidate = selectProjectileRetreatPoint(region, combatTargetPosition, projectileRange, yReachable, hooks);
+            Point candidate = selectProjectileRetreatPoint(
+                    region, agentPosition, combatTargetPosition,
+                    projectileRange, yReachable, idealDistance, hooks);
             if (candidate == null) {
                 continue;
             }
@@ -313,7 +368,10 @@ public final class AgentGrindNavigationTargetSelector {
             int pathCost = path.stream().mapToInt(pathEdge -> pathEdge.cost).sum();
             int mobsInRegion = countMobsInRegion(graph, map, region);
             int dx = Math.abs(candidate.x - combatTargetPosition.x);
-            int score = (mobsInRegion == 0 ? 1500 : 0) - mobsInRegion * 150 - pathCost / 10 - dx / 10;
+            int score = (mobsInRegion == 0 ? 1500 : 0)
+                    - mobsInRegion * 150
+                    - pathCost / 10
+                    - Math.abs(dx - idealDistance) * 10;
             if (score > bestScore) {
                 bestScore = score;
                 bestPoint = candidate;
@@ -332,9 +390,11 @@ public final class AgentGrindNavigationTargetSelector {
     }
 
     private static Point selectProjectileRetreatPoint(AgentNavigationGraph.Region region,
+                                                      Point agentPosition,
                                                       Point combatTargetPosition,
                                                       int projectileRange,
                                                       int yReachable,
+                                                      int idealDistance,
                                                       NavigationHooks hooks) {
         int edgeMargin = Math.min(hooks.grindEdgeMargin(), Math.max(0, region.width() / 4));
         int minX = Math.max(region.minX + edgeMargin, combatTargetPosition.x - projectileRange);
@@ -353,6 +413,8 @@ public final class AgentGrindNavigationTargetSelector {
         int[] probes = {
                 minX,
                 maxX,
+                combatTargetPosition.x - idealDistance,
+                combatTargetPosition.x + idealDistance,
                 combatTargetPosition.x - minShootDx,
                 combatTargetPosition.x + minShootDx,
                 (minX + maxX) / 2
@@ -365,13 +427,20 @@ public final class AgentGrindNavigationTargetSelector {
             }
             int dx = Math.abs(candidate.x - combatTargetPosition.x);
             int dy = Math.abs(candidate.y - combatTargetPosition.y);
-            int score = -dx * 10 - dy;
+            int travelDx = agentPosition != null ? Math.abs(candidate.x - agentPosition.x) : 0;
+            int score = -Math.abs(dx - idealDistance) * 10 - dy - travelDx;
             if (score > bestScore) {
                 bestScore = score;
                 bestPoint = candidate;
             }
         }
         return bestPoint;
+    }
+
+    private static int idealFiringDistance(int projectileRange) {
+        int minShootDx = AgentCombatConfig.cfg.RANGED_DEGENERATE_RANGE_X + 20;
+        int maximumBufferedRange = Math.max(minShootDx, projectileRange - 30);
+        return Math.max(minShootDx, Math.min(RANGED_FIRING_DISTANCE_X, maximumBufferedRange));
     }
 
     private static Point projectileRetreatCandidate(AgentNavigationGraph.Region region,
@@ -426,6 +495,23 @@ public final class AgentGrindNavigationTargetSelector {
                 continue;
             }
             if (graph.findRegionId(map, mp) == region.id) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private static int countMobsNearPoint(MapleMap map, Point point) {
+        int count = 0;
+        int thresholdX = AgentCombatConfig.cfg.RANGED_RETREAT_THRESHOLD_X;
+        int thresholdY = AgentCombatConfig.cfg.RANGED_DEGENERATE_RANGE_Y;
+        for (server.life.Monster monster : server.agents.perception.AgentMapPerception.monsters(map)) {
+            if (!monster.isAlive() || monster.getPosition() == null) {
+                continue;
+            }
+            Point monsterPosition = monster.getPosition();
+            if (Math.abs(monsterPosition.x - point.x) <= thresholdX
+                    && Math.abs(monsterPosition.y - point.y) <= thresholdY) {
                 count++;
             }
         }

@@ -17,7 +17,12 @@ public final class AgentGrindNavigationTailService {
 
     @FunctionalInterface
     public interface NavigationTargetSelector {
-        Point select(AgentRuntimeEntry entry, Point agentPosition, Point combatTargetPosition, boolean retreatChecked);
+        Point select(AgentRuntimeEntry entry,
+                     Point agentPosition,
+                     Point combatTargetPosition,
+                     WeaponType weaponType,
+                     AgentAttackRoute attackRoute,
+                     boolean retreatChecked);
     }
 
     @FunctionalInterface
@@ -34,16 +39,20 @@ public final class AgentGrindNavigationTailService {
                                                 Point agentPosition,
                                                 Point mobPosition,
                                                 WeaponType weaponType,
+                                                AgentAttackRoute attackRoute,
                                                 Point crossRegionRetreatPos,
                                                 Point aoeRepositionPos,
                                                 boolean shouldRetreatForRangedSpacing,
+                                                boolean attackAttemptedInRange,
                                                 Hooks hooks) {
         Point targetPos = crossRegionRetreatPos != null
                 ? crossRegionRetreatPos
                 : aoeRepositionPos != null
-                ? hooks.navigationTargetSelector().select(entry, agentPosition, aoeRepositionPos, false)
+                ? hooks.navigationTargetSelector().select(
+                        entry, agentPosition, aoeRepositionPos, weaponType, attackRoute, true)
                 : hooks.navigationTargetSelector().select(
-                        entry, agentPosition, mobPosition, shouldRetreatForRangedSpacing);
+                        entry, agentPosition, mobPosition, weaponType, attackRoute,
+                        shouldRetreatForRangedSpacing || attackAttemptedInRange);
 
         boolean degenerateAttackDone = AgentDegenerateAttackStateRuntime.degenAttackDone(entry);
         boolean noUsableRetreat = degenerateAttackDone

@@ -87,4 +87,11 @@ public final class AgentGrindTargetCommitmentService {
         long scaled = BASE_TARGET_COMMITMENT_MS << boundedSwitchCount;
         return Math.min(MAX_TARGET_COMMITMENT_MS, scaled);
     }
+
+    static void recordDamageProgress(AgentRuntimeEntry entry, int mobObjectId, long nowMs) {
+        Monster target = AgentGrindTargetStateRuntime.target(entry);
+        if (target != null && target.isAlive() && target.getObjectId() == mobObjectId) {
+            commitTarget(entry, target, nowMs);
+        }
+    }
 }

@@ -86,6 +86,15 @@ public final class RangedAttackHandler extends AbstractDealDamageHandler {
     }
 
     public static void applyRangedAttackEffects(AttackInfo attack, Character chr, Client c) {
+        applyRangedAttackEffects(attack, chr, c, true);
+    }
+
+    public static void applyAgentRangedAttackEffects(AttackInfo attack, Character chr, Client c) {
+        applyRangedAttackEffects(attack, chr, c, false);
+    }
+
+    private static void applyRangedAttackEffects(
+            AttackInfo attack, Character chr, Client c, boolean rangeLimitedBroadcast) {
         if (attack.skill == Buccaneer.ENERGY_ORB || attack.skill == ThunderBreaker.SPARK || attack.skill == Shadower.TAUNT || attack.skill == NightLord.TAUNT) {
             chr.getMap().broadcastMessage(chr, PacketCreator.rangedAttack(chr, attack.skill, attack.skilllevel,
                     attack.stance, attack.numAttackedAndDamage, 0, attack.targets, attack.speed,
@@ -138,7 +147,8 @@ public final class RangedAttackHandler extends AbstractDealDamageHandler {
             return;
         }
 
-        applyRangedWithProjectile(attack, chr, c, projectileContext.visibleProjectile, projectileContext.bulletCount);
+        applyRangedWithProjectile(attack, chr, c, projectileContext.visibleProjectile,
+                projectileContext.bulletCount, rangeLimitedBroadcast);
     }
 
     private static ProjectileContext resolveProjectileContext(AttackInfo attack, Character chr, Client c, Item weapon, WeaponType type) {
@@ -300,9 +310,10 @@ public final class RangedAttackHandler extends AbstractDealDamageHandler {
     }
 
     private static void applyRangedWithProjectile(AttackInfo attack, Character chr, Client c,
-                                                   int projectile, int bulletCount) {
+                                                   int projectile, int bulletCount,
+                                                   boolean rangeLimitedBroadcast) {
         Packet packet = createAttackPacket(attack, chr, projectile);
-        chr.getMap().broadcastMessage(chr, packet, false, true);
+        chr.getMap().broadcastMessage(chr, packet, false, rangeLimitedBroadcast);
         applyCooldownIfNeeded(attack, chr, c);
         cancelStealthBuffsIfNeeded(attack, chr);
         applyAttack(attack, chr, bulletCount);

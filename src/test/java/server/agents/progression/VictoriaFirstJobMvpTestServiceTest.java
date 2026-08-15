@@ -66,6 +66,14 @@ class VictoriaFirstJobMvpTestServiceTest {
     }
 
     @Test
+    void resolvesCapturedPirateInstructorFourHuntCheckpoint() {
+        assertEquals(VictoriaFirstJobMvpTestService.Checkpoint.CHECKPOINT_INSTRUCTOR_4_HUNT,
+                VictoriaFirstJobMvpTestService.resolveCheckpoint("checkpoint-instructor4-hunt"));
+        assertEquals(VictoriaFirstJobMvpTestService.Checkpoint.CHECKPOINT_INSTRUCTOR_4_HUNT,
+                VictoriaFirstJobMvpTestService.resolveCheckpoint("cp-instructor4"));
+    }
+
+    @Test
     void usesLithHarborShipArrivalInsteadOfOrdinaryTownSpawn() {
         MapleMap map = mock(MapleMap.class);
         Portal shipArrival = mock(Portal.class);

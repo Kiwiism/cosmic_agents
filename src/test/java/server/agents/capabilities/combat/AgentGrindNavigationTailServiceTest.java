@@ -24,9 +24,11 @@ class AgentGrindNavigationTailServiceTest {
                 new Point(100, 100),
                 new Point(200, 100),
                 WeaponType.CLAW,
+                AgentAttackRoute.RANGED,
                 retreat,
                 new Point(300, 100),
                 true,
+                false,
                 hooks(navigationCalls, null, false));
 
         assertEquals(retreat, result);
@@ -34,7 +36,7 @@ class AgentGrindNavigationTailServiceTest {
     }
 
     @Test
-    void aoeRepositionUsesNavigationSelectorWithoutRetreatFlag() {
+    void aoeRepositionSuppressesAnAdditionalSafeSpotSearch() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         AtomicInteger navigationCalls = new AtomicInteger();
         Point aoe = new Point(300, 100);
@@ -44,12 +46,14 @@ class AgentGrindNavigationTailServiceTest {
                 new Point(100, 100),
                 new Point(200, 100),
                 WeaponType.CLAW,
+                AgentAttackRoute.RANGED,
                 null,
                 aoe,
                 false,
+                false,
                 hooks(navigationCalls, null, false));
 
-        assertEquals(new Point(301, 100), result);
+        assertEquals(new Point(302, 100), result);
         assertEquals(1, navigationCalls.get());
     }
 
@@ -63,8 +67,10 @@ class AgentGrindNavigationTailServiceTest {
                 new Point(100, 100),
                 new Point(200, 100),
                 WeaponType.CLAW,
+                AgentAttackRoute.RANGED,
                 null,
                 null,
+                false,
                 false,
                 hooks(new AtomicInteger(), loot, false));
 
@@ -81,8 +87,10 @@ class AgentGrindNavigationTailServiceTest {
                 new Point(100, 100),
                 new Point(200, 100),
                 WeaponType.CLAW,
+                AgentAttackRoute.RANGED,
                 null,
                 null,
+                false,
                 false,
                 hooks(new AtomicInteger(), null, false));
 
@@ -100,11 +108,14 @@ class AgentGrindNavigationTailServiceTest {
                 new Point(165, 100),
                 mobPosition,
                 WeaponType.GUN,
+                AgentAttackRoute.RANGED,
                 null,
                 null,
                 true,
+                false,
                 new AgentGrindNavigationTailService.Hooks(
-                        (ignoredEntry, ignoredAgent, target, ignoredRetreatChecked) -> target,
+                        (ignoredEntry, ignoredAgent, target, ignoredWeapon, ignoredRoute,
+                         ignoredRetreatChecked) -> target,
                         (ignoredWeapon, ignoredAgent, ignoredTarget) -> true,
                         (ignoredEntry, ignoredAgent, ignoredMob) -> null));
 
@@ -116,7 +127,7 @@ class AgentGrindNavigationTailServiceTest {
                                                               Point convenientLoot,
                                                               boolean stillRetreating) {
         return new AgentGrindNavigationTailService.Hooks(
-                (entry, agentPosition, combatTargetPosition, retreatChecked) -> {
+                (entry, agentPosition, combatTargetPosition, weaponType, route, retreatChecked) -> {
                     navigationCalls.incrementAndGet();
                     return new Point(combatTargetPosition.x + (retreatChecked ? 2 : 1), combatTargetPosition.y);
                 },

@@ -54,11 +54,13 @@ final class VictoriaResumeCheckpointBaseline {
     record ResumeCheckpoint(
             String questPackId,
             int questPackIndex,
+            int trainingQuestIndex,
             Position position,
             VictoriaCheckpointBaseline.Snapshot snapshot,
             List<ActiveQuest> activeQuests) {
         ResumeCheckpoint {
             if (questPackId == null || questPackId.isBlank() || questPackIndex < 0
+                    || trainingQuestIndex < 0
                     || position == null || snapshot == null) {
                 throw new IllegalArgumentException(
                         "complete Victoria resume checkpoint state is required");

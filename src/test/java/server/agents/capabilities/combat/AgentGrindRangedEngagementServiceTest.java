@@ -70,11 +70,11 @@ class AgentGrindRangedEngagementServiceTest {
     }
 
     @Test
-    void doesNotJumpTowardTargetForRangedAmmoWeapon() {
+    void initiatesJumpShotForJumpableGunTarget() {
         Character agent = mock(Character.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         Monster target = monsterAt(220, 80);
-        AgentAttackPlan plan = plan(target, AgentAttackRoute.CLOSE);
+        AgentAttackPlan plan = plan(target, AgentAttackRoute.RANGED);
         Counters counters = new Counters();
 
         AgentGrindRangedEngagementService.Result result = AgentGrindRangedEngagementService.engage(
@@ -82,8 +82,9 @@ class AgentGrindRangedEngagementServiceTest {
                 target.getPosition(), plan, null,
                 hooks(counters, false, false, true, WeaponType.GUN, true));
 
-        assertFalse(result.consumedTick());
-        assertEquals(0, counters.jump.get());
+        assertTrue(result.consumedTick());
+        assertEquals(1, counters.jump.get());
+        assertEquals(120, counters.jumpDx);
     }
 
     private static AgentGrindRangedEngagementService.Hooks hooks(Counters counters,
@@ -102,7 +103,7 @@ class AgentGrindRangedEngagementServiceTest {
         return new AgentGrindRangedEngagementService.Hooks(
                 agent -> resolvedWeaponType,
                 (weaponType, agentPosition, targetPosition) -> false,
-                (weaponType, agentPosition, targetPosition) -> false,
+                (weaponType, route, agentPosition, targetPosition) -> false,
                 (entry, agentPosition, targetPosition) -> null,
                 (attackPlan, agent, target) -> inRange,
                 (entry, agent, target, attackPlan, agentPosition) -> null,
@@ -112,7 +113,7 @@ class AgentGrindRangedEngagementServiceTest {
                     AgentCombatCooldownStateRuntime.maxAttackCooldown(entry, 100);
                 },
                 ignored -> rangedAmmoWeapon,
-                (movementProfile, closeRangeRoute, agentPosition, targetPosition, maxJumpHeight) -> jumpable,
+                (movementProfile, weaponType, route, agentPosition, targetPosition, maxJumpHeight) -> jumpable,
                 movementProfile -> 100.0f,
                 (entry, agent, dx) -> {
                     counters.jump.incrementAndGet();

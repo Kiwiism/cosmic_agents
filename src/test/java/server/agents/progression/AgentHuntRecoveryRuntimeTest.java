@@ -35,4 +35,30 @@ class AgentHuntRecoveryRuntimeTest {
         assertTrue(AgentHuntRecoveryRuntime.failedMaps(entry, objective, 35, 40_001L)
                 .containsAll(Set.of(120010000, 912030000, 912030001)));
     }
+
+    @Test
+    void relevantDamageHeartbeatDefersReselectionUntilHardKillDeadline() {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), null, null);
+        String objective = "instructor:2196";
+        int mapId = 103030000;
+
+        assertEquals(AgentHuntRecoveryRuntime.Observation.STAY,
+                AgentHuntRecoveryRuntime.observe(
+                        entry, objective, mapId, 8, 1, false, 1_000L));
+
+        AgentHuntRecoveryRuntime.recordRelevantDamage(entry, mapId, 45_000L);
+        assertEquals(AgentHuntRecoveryRuntime.Observation.STAY,
+                AgentHuntRecoveryRuntime.observe(
+                        entry, objective, mapId, 8, 1, false, 47_000L));
+
+        AgentHuntRecoveryRuntime.recordRelevantDamage(entry, mapId, 134_999L);
+        assertEquals(AgentHuntRecoveryRuntime.Observation.STAY,
+                AgentHuntRecoveryRuntime.observe(
+                        entry, objective, mapId, 8, 1, false, 134_999L));
+
+        AgentHuntRecoveryRuntime.recordRelevantDamage(entry, mapId, 135_000L);
+        assertEquals(AgentHuntRecoveryRuntime.Observation.RESELECT,
+                AgentHuntRecoveryRuntime.observe(
+                        entry, objective, mapId, 8, 1, false, 135_000L));
+    }
 }

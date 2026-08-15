@@ -48,7 +48,8 @@ public final class VictoriaFirstJobMvpTestService {
         CHECKPOINT_2_HENESYS_HUNT,
         CHECKPOINT_2_NELLA,
         CHECKPOINT_3,
-        CHECKPOINT_3_HUNT
+        CHECKPOINT_3_HUNT,
+        CHECKPOINT_INSTRUCTOR_4_HUNT
     }
 
     public static AgentCareerBuildBundle resetAndStart(AgentRuntimeEntry entry,
@@ -112,13 +113,17 @@ public final class VictoriaFirstJobMvpTestService {
                     bundle.bundleId(), "checkpoint3");
             case CHECKPOINT_3_HUNT -> VictoriaResumeCheckpointBaseline.require(
                     bundle.bundleId(), "checkpoint3-hunt");
+            case CHECKPOINT_INSTRUCTOR_4_HUNT -> VictoriaResumeCheckpointBaseline.require(
+                    bundle.bundleId(), "checkpoint-instructor4-hunt");
             default -> null;
         };
         if (resumeCheckpoint != null) {
             agent.resetVictoriaCheckpointBaseline(resumeCheckpoint.snapshot());
             applyCheckpointQuestState(agent, resumeCheckpoint.snapshot());
             applyActiveQuestState(agent, resumeCheckpoint);
-            initialStage = requestedCheckpoint == Checkpoint.CHECKPOINT_3
+            initialStage = requestedCheckpoint == Checkpoint.CHECKPOINT_INSTRUCTOR_4_HUNT
+                    ? AgentCareerProgressionState.Stage.INSTRUCTOR_TRAINING
+                    : requestedCheckpoint == Checkpoint.CHECKPOINT_3
                     || requestedCheckpoint == Checkpoint.CHECKPOINT_3_HUNT
                     ? AgentCareerProgressionState.Stage.ROTATION_QUEST_PACK
                     : AgentCareerProgressionState.Stage.HOME_QUEST_PACK;
@@ -163,11 +168,14 @@ public final class VictoriaFirstJobMvpTestService {
                         : requestedCheckpoint == Checkpoint.CHECKPOINT_3
                         ? "checkpoint3"
                         : requestedCheckpoint == Checkpoint.CHECKPOINT_3_HUNT
-                        ? "checkpoint3-hunt" : "checkpoint2",
+                        ? "checkpoint3-hunt"
+                        : requestedCheckpoint == Checkpoint.CHECKPOINT_INSTRUCTOR_4_HUNT
+                        ? "checkpoint-instructor4-hunt" : "checkpoint2",
                 initialStage,
                 nowMs + START_DELAY_MS);
         if (resumeCheckpoint != null) {
             progressionState.questPackIndex(resumeCheckpoint.questPackIndex());
+            progressionState.trainingQuestIndex(resumeCheckpoint.trainingQuestIndex());
         }
         if (!AgentUniversalPlanRuntime.start(entry, agent, "victoria-level15-mvp",
                 AgentPlanStartRequest.EMPTY, nowMs)) {
@@ -194,6 +202,9 @@ public final class VictoriaFirstJobMvpTestService {
             case "checkpoint3", "checkpoint-3", "cp3" -> Checkpoint.CHECKPOINT_3;
             case "checkpoint3-hunt", "checkpoint-3-hunt", "cp3-hunt" ->
                     Checkpoint.CHECKPOINT_3_HUNT;
+            case "checkpoint-instructor4-hunt", "checkpoint-instructor-4-hunt",
+                    "checkpoint-instructor4", "cp-instructor4", "cp-instructor-4" ->
+                    Checkpoint.CHECKPOINT_INSTRUCTOR_4_HUNT;
             default -> throw new IllegalArgumentException(
                     "unknown checkpoint '" + requestedCheckpoint + "'");
         };

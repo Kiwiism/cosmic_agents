@@ -25,5 +25,7 @@ class AgentCombatGatewayBoundaryTest {
         assertTrue(gateway.contains("CloseRangeDamageHandler"));
         assertTrue(gateway.contains("MagicDamageHandler"));
         assertTrue(gateway.contains("RangedAttackHandler"));
+        assertTrue(gateway.contains("applyAgentMagicAttackEffects"));
+        assertTrue(gateway.contains("applyAgentRangedAttackEffects"));
     }
 }

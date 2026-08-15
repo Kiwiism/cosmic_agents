@@ -69,13 +69,22 @@ public final class MagicDamageHandler extends AbstractDealDamageHandler {
     }
 
     public static void applyMagicAttackEffects(AttackInfo attack, Character chr, Client c) {
+        applyMagicAttackEffects(attack, chr, c, true);
+    }
+
+    public static void applyAgentMagicAttackEffects(AttackInfo attack, Character chr, Client c) {
+        applyMagicAttackEffects(attack, chr, c, false);
+    }
+
+    private static void applyMagicAttackEffects(
+            AttackInfo attack, Character chr, Client c, boolean rangeLimitedBroadcast) {
         int charge = (attack.skill == Evan.FIRE_BREATH || attack.skill == Evan.ICE_BREATH
                 || attack.skill == FPArchMage.BIG_BANG || attack.skill == ILArchMage.BIG_BANG
                 || attack.skill == Bishop.BIG_BANG) ? attack.charge : -1;
         Packet packet = PacketCreator.magicAttack(chr, attack.skill, attack.skilllevel, attack.stance,
                 attack.numAttackedAndDamage, attack.targets, charge, attack.speed, attack.direction, attack.display);
 
-        chr.getMap().broadcastMessage(chr, packet, false, true);
+        chr.getMap().broadcastMessage(chr, packet, false, rangeLimitedBroadcast);
         StatEffect effect = attack.getAttackEffect(chr, null);
         if (effect == null) {
             return;

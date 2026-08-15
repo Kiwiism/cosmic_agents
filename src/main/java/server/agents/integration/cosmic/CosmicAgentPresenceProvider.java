@@ -4,6 +4,9 @@ import client.Character;
 import net.server.services.task.channel.MobPhysicsService;
 import server.agents.capabilities.combat.AgentMonsterControlService;
 import server.agents.capabilities.mobcontrol.AgentMobReactionRouter;
+import server.agents.events.AgentEventPriority;
+import server.agents.operations.events.AgentMobDamagedEvent;
+import server.agents.operations.events.AgentOperationalEventPublisher;
 import server.agents.runtime.simulation.AgentSimulationMapPresenceListener;
 import server.integration.AgentPresenceProvider;
 import server.integration.MobHitReactionContext;
@@ -39,6 +42,11 @@ public enum CosmicAgentPresenceProvider implements AgentPresenceProvider {
     @Override
     public void mobHitAccepted(Character attacker, Monster monster, int appliedDamage,
                                MobHitReactionContext reactionContext) {
+        AgentOperationalEventPublisher.publishFor(attacker,
+                objectiveId -> new AgentMobDamagedEvent(
+                        attacker.getId(), System.currentTimeMillis(), attacker.getMapId(),
+                        monster.getId(), monster.getObjectId(), appliedDamage, objectiveId),
+                AgentEventPriority.NORMAL);
         AgentMobReactionRouter.acceptedHit(
                 attacker, monster, appliedDamage, reactionContext);
     }

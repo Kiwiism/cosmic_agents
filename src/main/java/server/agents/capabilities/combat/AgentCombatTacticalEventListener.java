@@ -3,9 +3,10 @@ package server.agents.capabilities.combat;
 import server.agents.events.AgentEvent;
 import server.agents.events.AgentEventListener;
 import server.agents.operations.events.AgentMobKilledEvent;
+import server.agents.operations.events.AgentMobDamagedEvent;
 import server.agents.runtime.AgentRuntimeEntry;
 
-/** Updates tactical counters from authoritative kill facts. */
+/** Updates tactical state from authoritative damage and kill facts. */
 public final class AgentCombatTacticalEventListener implements AgentEventListener<AgentEvent> {
     private final AgentRuntimeEntry entry;
 
@@ -15,6 +16,10 @@ public final class AgentCombatTacticalEventListener implements AgentEventListene
 
     @Override
     public void onAgentEvent(AgentEvent event) {
+        if (event instanceof AgentMobDamagedEvent damaged) {
+            recordBlockerDamage(damaged);
+            return;
+        }
         if (!(event instanceof AgentMobKilledEvent killed)) {
             return;
         }
@@ -42,5 +47,18 @@ public final class AgentCombatTacticalEventListener implements AgentEventListene
                 directive.requiredMobIds().isEmpty()
                         || directive.requiredMobIds().contains(killed.mobId()),
                 killed.occurredAtMs());
+    }
+
+    private void recordBlockerDamage(AgentMobDamagedEvent damaged) {
+        AgentGrindTargetCommitmentService.recordDamageProgress(
+                entry, damaged.mobObjectId(), damaged.occurredAtMs());
+        AgentCombatTacticalState.Snapshot previous =
+                AgentCombatDirectiveRuntime.tacticalSnapshot(entry);
+        if (previous != null
+                && previous.lastDecision() == AgentCombatDecisionReason.ROUTE_BLOCKER
+                && previous.lastSelectedMobId() == damaged.mobId()) {
+            entry.capabilityStates().require(AgentRouteBlockerState.STATE_KEY)
+                    .damaged(damaged.occurredAtMs());
+        }
     }
 }

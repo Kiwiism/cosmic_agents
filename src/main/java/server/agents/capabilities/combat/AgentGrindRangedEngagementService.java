@@ -50,7 +50,10 @@ public final class AgentGrindRangedEngagementService {
 
     @FunctionalInterface
     public interface RetreatPolicy {
-        boolean shouldRetreat(WeaponType weaponType, Point agentPosition, Point targetPosition);
+        boolean shouldRetreat(WeaponType weaponType,
+                              AgentAttackRoute route,
+                              Point agentPosition,
+                              Point targetPosition);
     }
 
     @FunctionalInterface
@@ -86,7 +89,8 @@ public final class AgentGrindRangedEngagementService {
     @FunctionalInterface
     public interface TargetJumpablePolicy {
         boolean isJumpable(AgentMovementProfile movementProfile,
-                           boolean closeRangeRoute,
+                           WeaponType weaponType,
+                           AgentAttackRoute route,
                            Point agentPosition,
                            Point targetPosition,
                            float maxJumpHeight);
@@ -125,9 +129,10 @@ public final class AgentGrindRangedEngagementService {
         boolean targetInDegenerateBand = hooks.degenerateAttackPolicy().shouldDegenerate(
                 weaponType, agentPosition, targetPosition);
         boolean degenAttackDone = AgentDegenerateAttackStateRuntime.degenAttackDone(entry);
+        AgentAttackRoute attackRoute = attackPlan != null ? attackPlan.route : AgentAttackRoute.CLOSE;
         boolean allowOneDegenerateAttack = targetInDegenerateBand && !degenAttackDone && rangedPriorityTarget == null;
         boolean shouldRetreatForRangedSpacing = degenAttackDone
-                || (hooks.retreatPolicy().shouldRetreat(weaponType, agentPosition, targetPosition)
+                || (hooks.retreatPolicy().shouldRetreat(weaponType, attackRoute, agentPosition, targetPosition)
                 && !allowOneDegenerateAttack);
         boolean canFireWithoutDegen = weaponType == null
                 || !hooks.degenerateAttackPolicy().shouldDegenerate(weaponType, agentPosition, targetPosition);
@@ -162,13 +167,11 @@ public final class AgentGrindRangedEngagementService {
                     && attackPlan != null
                     && hooks.targetJumpablePolicy().isJumpable(
                     AgentMovementStateRuntime.movementProfile(entry),
-                    attackPlan.isCloseRangeRoute(),
+                    weaponType,
+                    attackPlan.route,
                     agentPosition,
                     targetPosition,
-                    hooks.jumpHeightCalculator().calculate(AgentMovementStateRuntime.movementProfile(entry)))
-                    && !hooks.rangedAmmoWeaponPolicy().isRangedAmmoWeapon(weaponType)
-                    && weaponType != WeaponType.BOW && weaponType != WeaponType.CROSSBOW
-                    && weaponType != WeaponType.WAND && weaponType != WeaponType.STAFF) {
+                    hooks.jumpHeightCalculator().calculate(AgentMovementStateRuntime.movementProfile(entry)))) {
                 hooks.jumpInitiator().initiate(entry, agent, targetPosition.x - agentPosition.x);
                 return new Result(true, currentMovementTarget, crossRegionRetreatPos, aoeRepositionPos,
                         shouldRetreatForRangedSpacing, attackAttemptedInRange, weaponType);

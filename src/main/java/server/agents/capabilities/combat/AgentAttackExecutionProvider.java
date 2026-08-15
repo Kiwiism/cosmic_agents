@@ -332,7 +332,16 @@ public final class AgentAttackExecutionProvider {
     }
 
     public static boolean shouldRetreatFromNearbyTarget(WeaponType weaponType, Point botPos, Point targetPos) {
-        if (!isDegenerateCapableRangedWeapon(weaponType) || botPos == null || targetPos == null) {
+        return shouldRetreatFromNearbyTarget(
+                weaponType, determineBasicWeaponRoute(weaponType), botPos, targetPos);
+    }
+
+    public static boolean shouldRetreatFromNearbyTarget(WeaponType weaponType,
+                                                        AgentAttackRoute route,
+                                                        Point botPos,
+                                                        Point targetPos) {
+        if (!AgentCombatRangePolicy.supportsSafeSpotSniping(weaponType, route)
+                || botPos == null || targetPos == null) {
             return false;
         }
 

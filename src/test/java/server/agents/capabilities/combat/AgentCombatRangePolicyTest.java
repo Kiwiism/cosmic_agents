@@ -80,13 +80,55 @@ class AgentCombatRangePolicyTest {
     }
 
     @Test
-    void shouldRejectAirborneRangedAttackPlansForBowCrossbowAndGunOnly() {
+    void shouldAllowAirborneGunAndClawAttacksButKeepBowsGrounded() {
         assertFalse(AgentCombatRangePolicy.canUseAttackPlanNow(false, WeaponType.BOW, AgentAttackRoute.RANGED));
         assertFalse(AgentCombatRangePolicy.canUseAttackPlanNow(false, WeaponType.CROSSBOW, AgentAttackRoute.RANGED));
-        assertFalse(AgentCombatRangePolicy.canUseAttackPlanNow(false, WeaponType.GUN, AgentAttackRoute.RANGED));
+        assertTrue(AgentCombatRangePolicy.canUseAttackPlanNow(false, WeaponType.GUN, AgentAttackRoute.RANGED));
         assertTrue(AgentCombatRangePolicy.canUseAttackPlanNow(false, WeaponType.CLAW, AgentAttackRoute.RANGED));
         assertTrue(AgentCombatRangePolicy.canUseAttackPlanNow(false, WeaponType.BOW, AgentAttackRoute.CLOSE));
         assertTrue(AgentCombatRangePolicy.canUseAttackPlanNow(true, WeaponType.BOW, AgentAttackRoute.RANGED));
+        assertFalse(AgentCombatRangePolicy.canUseAttackPlanNow(false, WeaponType.WAND, AgentAttackRoute.MAGIC));
+        assertFalse(AgentCombatRangePolicy.canUseAttackPlanNow(false, WeaponType.STAFF, AgentAttackRoute.MAGIC));
+    }
+
+    @Test
+    void shouldShareSafeSpotPolicyAcrossProjectileAndMagicWeapons() {
+        assertTrue(AgentCombatRangePolicy.supportsSafeSpotSniping(
+                WeaponType.BOW, AgentAttackRoute.RANGED));
+        assertTrue(AgentCombatRangePolicy.supportsSafeSpotSniping(
+                WeaponType.CROSSBOW, AgentAttackRoute.RANGED));
+        assertTrue(AgentCombatRangePolicy.supportsSafeSpotSniping(
+                WeaponType.CLAW, AgentAttackRoute.RANGED));
+        assertTrue(AgentCombatRangePolicy.supportsSafeSpotSniping(
+                WeaponType.GUN, AgentAttackRoute.RANGED));
+        assertTrue(AgentCombatRangePolicy.supportsSafeSpotSniping(
+                WeaponType.WAND, AgentAttackRoute.MAGIC));
+        assertTrue(AgentCombatRangePolicy.supportsSafeSpotSniping(
+                WeaponType.STAFF, AgentAttackRoute.MAGIC));
+
+        assertFalse(AgentCombatRangePolicy.supportsSafeSpotSniping(
+                WeaponType.WAND, AgentAttackRoute.CLOSE));
+        assertFalse(AgentCombatRangePolicy.supportsSafeSpotSniping(
+                WeaponType.SWORD1H, AgentAttackRoute.CLOSE));
+    }
+
+    @Test
+    void shouldUseJumpShotToReachElevatedTargetsForGunAndClawOnly() {
+        Point agent = new Point(100, 200);
+        Point elevatedTarget = new Point(300, 100);
+
+        assertTrue(AgentCombatRangePolicy.isTargetJumpable(
+                AgentMovementProfile.base(), WeaponType.GUN, AgentAttackRoute.RANGED,
+                agent, elevatedTarget, 80.0));
+        assertTrue(AgentCombatRangePolicy.isTargetJumpable(
+                AgentMovementProfile.base(), WeaponType.CLAW, AgentAttackRoute.RANGED,
+                agent, elevatedTarget, 80.0));
+        assertFalse(AgentCombatRangePolicy.isTargetJumpable(
+                AgentMovementProfile.base(), WeaponType.BOW, AgentAttackRoute.RANGED,
+                agent, elevatedTarget, 80.0));
+        assertFalse(AgentCombatRangePolicy.isTargetJumpable(
+                AgentMovementProfile.base(), WeaponType.GUN, AgentAttackRoute.RANGED,
+                agent, new Point(300, 180), 80.0));
     }
 
     @Test

@@ -23,12 +23,20 @@ final class AgentHuntRecoveryState {
         frames.remove(objectiveKey);
     }
 
+    synchronized void observeRelevantDamage(int mapId, long nowMs) {
+        frames.values().stream()
+                .filter(frame -> frame.mapId() == mapId)
+                .forEach(frame -> frame.observeRelevantDamage(nowMs));
+    }
+
     static final class Frame {
-        private int mapId;
+        private int mapId = -1;
         private int lastProgress;
         private long lastProgressAtMs;
         private long mapEnteredAtMs;
         private long zeroTargetsSinceMs;
+        private long firstRelevantDamageAtMs;
+        private long lastRelevantDamageAtMs;
         private int reentryAttempts;
         private boolean fallbackActive;
         private final Map<Integer, Long> failedMapUntilMs = new HashMap<>();
@@ -47,6 +55,8 @@ final class AgentHuntRecoveryState {
             mapEnteredAtMs = nowMs;
             lastProgressAtMs = nowMs;
             zeroTargetsSinceMs = 0L;
+            firstRelevantDamageAtMs = 0L;
+            lastRelevantDamageAtMs = 0L;
         }
 
         synchronized boolean observeProgress(int progress, long nowMs) {
@@ -56,7 +66,30 @@ final class AgentHuntRecoveryState {
             lastProgress = progress;
             lastProgressAtMs = nowMs;
             zeroTargetsSinceMs = 0L;
+            firstRelevantDamageAtMs = 0L;
+            lastRelevantDamageAtMs = 0L;
             return true;
+        }
+
+        synchronized int mapId() {
+            return mapId;
+        }
+
+        synchronized void observeRelevantDamage(long nowMs) {
+            if (firstRelevantDamageAtMs == 0L) {
+                firstRelevantDamageAtMs = nowMs;
+            }
+            lastRelevantDamageAtMs = Math.max(lastRelevantDamageAtMs, nowMs);
+        }
+
+        synchronized boolean recentRelevantDamage(long nowMs, long graceMs) {
+            return lastRelevantDamageAtMs > 0L
+                    && nowMs - lastRelevantDamageAtMs < graceMs;
+        }
+
+        synchronized boolean hardKillGraceElapsed(long nowMs, long graceMs) {
+            return firstRelevantDamageAtMs > 0L
+                    && nowMs - firstRelevantDamageAtMs >= graceMs;
         }
 
         synchronized void observeTargets(int liveTargets, long nowMs) {

@@ -57,8 +57,10 @@ public enum CosmicCombatGateway implements CombatGateway {
     @Override
     public void applyAttackEffects(AgentAttackRoute route, AbstractDealDamageHandler.AttackInfo attack, Character agent) {
         switch (route) {
-            case RANGED -> RangedAttackHandler.applyRangedAttackEffects(attack, agent, agent.getClient());
-            case MAGIC -> MagicDamageHandler.applyMagicAttackEffects(attack, agent, agent.getClient());
+            case RANGED -> RangedAttackHandler.applyAgentRangedAttackEffects(
+                    attack, agent, agent.getClient());
+            case MAGIC -> MagicDamageHandler.applyAgentMagicAttackEffects(
+                    attack, agent, agent.getClient());
             default -> CloseRangeDamageHandler.applyCloseRangeEffects(attack, agent, agent.getClient());
         }
     }

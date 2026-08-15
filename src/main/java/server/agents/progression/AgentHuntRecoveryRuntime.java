@@ -15,6 +15,10 @@ final class AgentHuntRecoveryRuntime {
             "server.agents.progression.AgentHuntRecoveryRuntime.ZERO_TARGET_GRACE_MS");
     private static final long NO_PROGRESS_GRACE_MS = config.AgentTuning.longValue(
             "server.agents.progression.AgentHuntRecoveryRuntime.NO_PROGRESS_GRACE_MS");
+    private static final long DAMAGE_HEARTBEAT_GRACE_MS = config.AgentTuning.longValue(
+            "server.agents.progression.AgentHuntRecoveryRuntime.DAMAGE_HEARTBEAT_GRACE_MS");
+    private static final long HARD_KILL_GRACE_MS = config.AgentTuning.longValue(
+            "server.agents.progression.AgentHuntRecoveryRuntime.HARD_KILL_GRACE_MS");
     private static final long FAILED_MAP_COOLDOWN_MS = config.AgentTuning.longValue(
             "server.agents.progression.AgentHuntRecoveryRuntime.FAILED_MAP_COOLDOWN_MS");
     private static final int MAX_INSTANCE_REENTRIES = config.AgentTuning.intValue(
@@ -40,7 +44,11 @@ final class AgentHuntRecoveryRuntime {
             return Observation.STAY;
         }
         boolean exhausted = frame.zeroTargetGraceElapsed(nowMs, ZERO_TARGET_GRACE_MS);
-        boolean stalled = liveTargets > 0 && frame.progressGraceElapsed(nowMs, NO_PROGRESS_GRACE_MS);
+        boolean damageHeartbeat = frame.recentRelevantDamage(nowMs, DAMAGE_HEARTBEAT_GRACE_MS);
+        boolean hardKillStalled = frame.hardKillGraceElapsed(nowMs, HARD_KILL_GRACE_MS);
+        boolean stalled = liveTargets > 0
+                && frame.progressGraceElapsed(nowMs, NO_PROGRESS_GRACE_MS)
+                && (!damageHeartbeat || hardKillStalled);
         if (!exhausted && !stalled) {
             return Observation.STAY;
         }
@@ -83,6 +91,11 @@ final class AgentHuntRecoveryRuntime {
     static void clear(AgentRuntimeEntry entry, String objectiveKey) {
         entry.capabilityStates().find(AgentHuntRecoveryState.STATE_KEY)
                 .ifPresent(state -> state.clear(objectiveKey));
+    }
+
+    static void recordRelevantDamage(AgentRuntimeEntry entry, int mapId, long nowMs) {
+        entry.capabilityStates().find(AgentHuntRecoveryState.STATE_KEY)
+                .ifPresent(state -> state.observeRelevantDamage(mapId, nowMs));
     }
 
     enum Observation {

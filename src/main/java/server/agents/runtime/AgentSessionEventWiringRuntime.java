@@ -35,6 +35,7 @@ import server.agents.capabilities.behavior.AgentPioRelaxerInterludeEventListener
 import server.agents.capabilities.combat.AgentCombatTacticalEventListener;
 import server.agents.capabilities.looting.AgentPostKillLootEventListener;
 import server.agents.progression.events.AgentQuestStateChangedEvent;
+import server.agents.progression.AgentHuntRecoveryEventListener;
 import server.agents.journey.AgentJourneyEventListener;
 import server.agents.field.AgentFieldEventListener;
 
@@ -133,9 +134,17 @@ public final class AgentSessionEventWiringRuntime {
                 if (AgentBehaviorFeatureProfile.current().enabled()) {
                     subscriptions.add(bus.subscribe("*", new AgentBehaviorEventListener(entry)));
                 }
+                AgentCombatTacticalEventListener combatTactical =
+                        new AgentCombatTacticalEventListener(entry);
                 subscriptions.add(bus.subscribe(
                         server.agents.operations.events.AgentMobKilledEvent.TYPE,
-                        new AgentCombatTacticalEventListener(entry)));
+                        combatTactical));
+                subscriptions.add(bus.subscribe(
+                        server.agents.operations.events.AgentMobDamagedEvent.TYPE,
+                        combatTactical));
+                subscriptions.add(bus.subscribe(
+                        server.agents.operations.events.AgentMobDamagedEvent.TYPE,
+                        new AgentHuntRecoveryEventListener(entry)));
                 subscriptions.add(bus.subscribe(
                         server.agents.operations.events.AgentMobKilledEvent.TYPE,
                         new AgentPostKillLootEventListener(entry)));

@@ -804,6 +804,9 @@ tuning:
     # Purpose: Controls how long Agents remain in or wait for retreat hold. Higher values make that pause or state last longer; lower values make them continue sooner.
     # Technical: the "grind navigation target selector" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled.
     server.agents.capabilities.combat.AgentGrindNavigationTargetSelector.RETREAT_HOLD_MS: '3000'
+    # Shared preferred horizontal standoff for bow/crossbow, claw, gun, wand, and staff.
+    # Actual attack hitboxes remain authoritative; this only selects a safer firing anchor.
+    server.agents.capabilities.combat.AgentGrindNavigationTargetSelector.RANGED_FIRING_DISTANCE_X: '220'
     # Values: a finite non-negative integer. Recommended: 25-100 around the tested baseline 50; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls the positional leeway for client projectile bottom. Higher values tolerate more separation before Agents correct course; lower values make them align sooner.
     # Technical: the "projectile hitbox" component consumes this as an integer. Domain: component-specific policy value; startup validation rejects missing, blank, or malformed values.
@@ -2512,6 +2515,14 @@ tuning:
     # Purpose: Reselects when eligible mobs exist but the objective makes no progress for a prolonged interval.
     # Technical: AgentHuntRecoveryRuntime compares the latest quest or inventory progress timestamp against this interval while eligible targets remain live.
     server.agents.progression.AgentHuntRecoveryRuntime.NO_PROGRESS_GRACE_MS: '45000'
+    # Values: 3000-15000 milliseconds. Recommended: 6000.
+    # Purpose: Treats recent real damage to an objective-relevant mob as active hunt progress, preventing slow builds from abandoning a map between kills.
+    # Technical: Only a positive HP delta accepted by MapleMap renews this heartbeat; attack attempts, misses, and packet animation alone do not count.
+    server.agents.progression.AgentHuntRecoveryRuntime.DAMAGE_HEARTBEAT_GRACE_MS: '6000'
+    # Values: 60000-180000 milliseconds. Recommended: 90000.
+    # Purpose: Gives low-damage builds enough time to finish a durable objective mob while retaining a bounded escape from pathological engagements.
+    # Technical: Absolute no-objective-progress limit measured from the first relevant damage after entering the map or after the last quest-progress increment.
+    server.agents.progression.AgentHuntRecoveryRuntime.HARD_KILL_GRACE_MS: '90000'
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 120000-600000 around the tested baseline 300000.
     # Purpose: Keeps a recently exhausted or mechanically failed hunt map out of selection long enough to prevent oscillation.
     # Technical: AgentHuntRecoveryState stores each failed map with this per-objective expiry and the adaptive selector filters those maps until expiry.
@@ -2748,6 +2759,10 @@ tuning:
     # Purpose: Stops local-opportunity combat from turning a trip to a portal or NPC into an unbounded grind.
     # Technical: Time budget for one route-blocker interruption; expiry records an evade decision and returns control to the unchanged scripted navigation destination.
     server.agents.capabilities.combat.AgentCombatPolicyConfig.ROUTE_BLOCKER_TIMEOUT_MS: '2500'
+    # Values: 10000-60000 milliseconds. Recommended: 20000. Must be longer than ROUTE_BLOCKER_TIMEOUT_MS.
+    # Purpose: Allows weak builds to finish a blocker while real damage is landing, without letting one durable or mechanically bad target hold scripted travel forever.
+    # Technical: Absolute cap measured from the first interruption; accepted positive HP damage renews only the shorter inactivity timeout above.
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.ROUTE_BLOCKER_HARD_TIMEOUT_MS: '20000'
     # Values: 0-5 kills. Recommended: 5. Higher values allow more clearing while travelling; 0 makes the Agent always evade instead of attacking.
     # Purpose: Lets an Agent clear up to five monsters physically blocking a quest journey, including monsters encountered on intermediate maps, without turning travel into an unrelated grind session.
     # Technical: Journey-level blocker-kill budget; waypoint and map changes preserve the count, and only authoritative route-blocker kill events consume it.

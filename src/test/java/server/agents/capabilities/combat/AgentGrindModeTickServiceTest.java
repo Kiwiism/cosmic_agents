@@ -68,7 +68,7 @@ class AgentGrindModeTickServiceTest {
                 new AgentGrindRangedEngagementService.Hooks(
                         agent -> null,
                         (weaponType, agentPosition, targetPosition) -> false,
-                        (weaponType, agentPosition, targetPosition) -> false,
+                        (weaponType, route, agentPosition, targetPosition) -> false,
                         (entry, agentPosition, targetPosition) -> null,
                         (attackPlan, agent, target) -> false,
                         (entry, agent, target, attackPlan, agentPosition) -> null,
@@ -76,7 +76,7 @@ class AgentGrindModeTickServiceTest {
                         (entry, agent, attackPlan) -> {
                         },
                         weaponType -> false,
-                        (movementProfile, closeRangeRoute, agentPosition, targetPosition, maxJumpHeight) -> false,
+                        (movementProfile, weaponType, route, agentPosition, targetPosition, maxJumpHeight) -> false,
                         movementProfile -> 0.0f,
                         (entry, agent, dx) -> {
                         },
@@ -85,7 +85,8 @@ class AgentGrindModeTickServiceTest {
                         entry -> {
                         }),
                 new AgentGrindNavigationTailService.Hooks(
-                        (entry, agentPosition, combatTargetPosition, retreatChecked) -> combatTargetPosition,
+                        (entry, agentPosition, combatTargetPosition, weaponType, route, retreatChecked) ->
+                                combatTargetPosition,
                         (weaponType, agentPosition, targetPosition) -> false,
                         (entry, agentPosition, mobPosition) -> null),
                 500,

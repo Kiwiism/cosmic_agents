@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="460" height="430" viewBox="0 0 460 430">
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#160606" flood-opacity=".5"/></filter>
+    <style>
+      .sans{font-family:"Segoe UI",Arial,sans-serif}.label{font-size:14px;font-weight:800;letter-spacing:1.8px;fill:#451414}.title{font-size:24px;font-weight:800;fill:#451414}.section{font-size:14px;font-weight:800;letter-spacing:1.4px;fill:#f38b8b}.item{font-size:18px;font-weight:700;fill:#fff}.detail{font-size:15px;font-weight:500;fill:#f2cccc}.box{fill:#260c0c;stroke:#f38b8b;stroke-width:2}.rule{stroke:#814343;stroke-width:1;opacity:.8}
+    </style>
+  </defs>
+  <rect x="12" y="12" width="436" height="406" rx="22" fill="#341010" fill-opacity=".95" stroke="#f38b8b" stroke-width="2" filter="url(#shadow)"/>
+  <path d="M34 12h392a22 22 0 0 1 22 22v51H12V34a22 22 0 0 1 22-22z" fill="#efaaaa"/>
+  <text class="sans label" x="34" y="43">CHECKPOINT 2 / 3</text><text class="sans title" x="34" y="72">Perion Quests</text><text class="sans section" x="34" y="116">QUEST OBJECTIVES</text>
+  <rect class="box" x="34" y="139" width="22" height="22" rx="4"/><text class="sans item" x="70" y="157">Sweep the Snails!</text><text class="sans detail" x="70" y="181">Defeat 10 Blue Snails</text><text class="sans detail" x="70" y="204">Defeat 10 Red Snails</text><line class="rule" x1="34" y1="223" x2="426" y2="223"/>
+  <rect class="box" x="34" y="241" width="22" height="22" rx="4"/><text class="sans item" x="70" y="259">The Stump Horror Story</text><text class="sans detail" x="70" y="283">Defeat 50 Stumps</text><line class="rule" x1="34" y1="302" x2="426" y2="302"/>
+  <rect class="box" x="34" y="320" width="22" height="22" rx="4"/><text class="sans item" x="70" y="338">Preparations for the Traditional Ceremony</text><text class="sans detail" x="70" y="362">Collect 20 Leaves</text>
+</svg>

@@ -232,6 +232,29 @@ class AgentVictoriaSharedQuestPackCatalogTest {
     }
 
     @Test
+    void capturedPirateInstructorFourCheckpointStartsBeforeAcceptanceAtKyrin() {
+        VictoriaResumeCheckpointBaseline.ResumeCheckpoint checkpoint =
+                VictoriaResumeCheckpointBaseline.require(
+                        "pirate-gun-standard-v1", "checkpoint-instructor4-hunt");
+
+        assertEquals("CAPTURED", checkpoint.snapshot().provenance());
+        assertEquals(3, checkpoint.trainingQuestIndex());
+        assertEquals(120000101, checkpoint.snapshot().character().mapId());
+        assertEquals(120, checkpoint.position().x());
+        assertEquals(66, checkpoint.position().y());
+        assertTrue(checkpoint.snapshot().items().stream().anyMatch(item ->
+                item.itemId() == 1492000
+                        && item.inventoryType().equals("EQUIPPED")
+                        && item.position() == -11));
+        assertTrue(checkpoint.snapshot().items().stream().anyMatch(item ->
+                item.itemId() == 2000002
+                        && item.inventoryType().equals("USE")
+                        && item.quantity() >= 80));
+        assertTrue(checkpoint.activeQuests().isEmpty());
+        assertTrue(checkpoint.snapshot().resetQuestIds().contains(2196));
+    }
+
+    @Test
     void capturedBowmanHuntCheckpointStartsAfterAllThreeHenesysAccepts() {
         VictoriaResumeCheckpointBaseline.ResumeCheckpoint checkpoint =
                 VictoriaResumeCheckpointBaseline.require(

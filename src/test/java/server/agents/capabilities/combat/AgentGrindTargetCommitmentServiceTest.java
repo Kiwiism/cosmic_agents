@@ -184,6 +184,22 @@ class AgentGrindTargetCommitmentServiceTest {
     }
 
     @Test
+    void acceptedDamageRenewsCommitmentToTheSameLivingMob() {
+        Character agent = mock(Character.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
+        Monster target = monsterAt(100, 100);
+        when(target.getObjectId()).thenReturn(77);
+        AgentGrindTargetStateRuntime.commitTarget(entry, target, 1_000L, 2_500L);
+
+        AgentGrindTargetCommitmentService.recordDamageProgress(entry, 77, 3_000L);
+
+        org.junit.jupiter.api.Assertions.assertTrue(
+                AgentGrindTargetStateRuntime.committedTo(entry, target, 5_499L));
+        org.junit.jupiter.api.Assertions.assertFalse(
+                AgentGrindTargetStateRuntime.committedTo(entry, target, 5_500L));
+    }
+
+    @Test
     void closerThreatIgnoresMobsOutsideTheActiveObjective() {
         Character agent = mock(Character.class);
         MapleMap map = mock(MapleMap.class);

@@ -28,6 +28,7 @@ import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentGrindTargetSearchPolicy;
 import server.agents.capabilities.combat.AgentGrindNavigationTargetSelector;
 import server.agents.capabilities.combat.AgentRangedPriorityTargetSelector;
+import server.agents.capabilities.combat.AgentRetreatHoldStateRuntime;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
 import server.agents.capabilities.looting.AgentLootTargetService;
 import server.agents.capabilities.dialogue.AgentItemQueryNormalizer;
@@ -377,7 +378,7 @@ class BotManagerTest {
     }
 
     @Test
-    void shouldNotUseLowerPlatformDropAsCrossRegionRetreat() {
+    void shouldPreferSafeFiringPointOnCurrentPlatformOverLowerPlatformDrop() {
         MapleMap map = createEmptyTestMap(910000060);
         FootholdTree footholds = map.getFootholds();
         footholds.insert(new Foothold(new Point(0, 100), new Point(500, 100), 1));
@@ -387,45 +388,74 @@ class BotManagerTest {
         Character bot = mock(Character.class);
         when(bot.getMap()).thenReturn(map);
         when(bot.getPosition()).thenReturn(new Point(250, 100));
+        when(bot.getSkills()).thenReturn(Map.of());
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
 
-        assertNull(AgentGrindNavigationTargetSelector.selectCrossRegionRetreatTarget(
+        Point firingPoint = AgentGrindNavigationTargetSelector.selectCrossRegionRetreatTarget(
                 entry,
                 new Point(250, 100),
                 new Point(300, 100),
-                grindNavigationHooks()));
+                grindNavigationHooks());
+
+        assertNotNull(firingPoint);
+        assertEquals(100, firingPoint.y);
     }
 
     @Test
     void shouldUseJumpReachablePlatformAsCrossRegionRetreat() {
         MapleMap map = createEmptyTestMap(910000061);
         FootholdTree footholds = map.getFootholds();
-        footholds.insert(new Foothold(new Point(0, 100), new Point(200, 100), 1));
-        footholds.insert(new Foothold(new Point(250, 100), new Point(500, 100), 2));
+        footholds.insert(new Foothold(new Point(0, 100), new Point(240, 100), 1));
+        footholds.insert(new Foothold(new Point(290, 100), new Point(370, 100), 2));
         AgentNavigationGraph graph = AgentNavigationGraphService.rebuildGraph(map);
 
         Character bot = mock(Character.class);
         when(bot.getMap()).thenReturn(map);
-        when(bot.getPosition()).thenReturn(new Point(300, 100));
+        when(bot.getPosition()).thenReturn(new Point(330, 100));
         when(bot.getSkills()).thenReturn(Map.of());
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
 
         Point retreat = AgentGrindNavigationTargetSelector.selectCrossRegionRetreatTarget(
                 entry,
-                new Point(300, 100),
+                new Point(330, 100),
                 new Point(330, 100),
                 grindNavigationHooks());
 
         assertNotNull(retreat);
-        assertTrue(retreat.x <= 200);
+        assertTrue(retreat.x <= 240);
         assertTrue(Math.abs(retreat.x - 330) > AgentCombatConfig.cfg.RANGED_DEGENERATE_RANGE_X);
 
-        int startRegionId = AgentNavigationRegionService.resolveCurrentRegionId(graph, entry, map, new Point(300, 100));
+        int startRegionId = AgentNavigationRegionService.resolveCurrentRegionId(graph, entry, map, new Point(330, 100));
         int retreatRegionId = AgentNavigationRegionService.resolveTargetRegionId(graph, entry, map, retreat);
         List<AgentNavigationGraph.Edge> path = AgentNavigationPathService.findPath(
-                graph, map, new Point(300, 100), startRegionId, retreatRegionId, retreat);
+                graph, map, new Point(330, 100), startRegionId, retreatRegionId, retreat);
         assertFalse(path.isEmpty());
         assertEquals(AgentNavigationGraph.EdgeType.JUMP, path.get(0).type);
+    }
+
+    @Test
+    void shouldUseSameProactiveFiringAnchorForBowAndMagicRoutes() {
+        MapleMap map = createEmptyTestMap(910000066);
+        map.getFootholds().insert(new Foothold(new Point(0, 100), new Point(800, 100), 1));
+        AgentNavigationGraphService.rebuildGraph(map);
+
+        Character bot = mock(Character.class);
+        when(bot.getMap()).thenReturn(map);
+        when(bot.getPosition()).thenReturn(new Point(50, 100));
+        when(bot.getSkills()).thenReturn(Map.of());
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
+        Point target = new Point(600, 100);
+
+        Point bowAnchor = AgentGrindNavigationTargetSelector.selectGrindNavigationTarget(
+                entry, new Point(50, 100), target,
+                WeaponType.BOW, AgentAttackRoute.RANGED, false, grindNavigationHooks());
+        AgentRetreatHoldStateRuntime.clear(entry);
+        Point magicAnchor = AgentGrindNavigationTargetSelector.selectGrindNavigationTarget(
+                entry, new Point(50, 100), target,
+                WeaponType.WAND, AgentAttackRoute.MAGIC, false, grindNavigationHooks());
+
+        assertEquals(bowAnchor, magicAnchor);
+        assertEquals(220, Math.abs(target.x - bowAnchor.x));
     }
 
     @Test
@@ -573,7 +603,7 @@ class BotManagerTest {
             Point nav = AgentGrindNavigationTargetSelector.selectGrindNavigationTarget(entry, botPos, rightMob.getPosition(), grindNavigationHooks());
             // Single mob -> ordinary local kiting (retreat away from the mob), no breakout latch.
             assertFalse(AgentBreakoutStateRuntime.hasBreakoutCommitment(entry));
-            assertEquals(AgentAttackExecutionProvider.retreatTargetPosition(bot, botPos, rightMob.getPosition()), nav);
+            assertEquals(new Point(-60, 100), nav);
         }
     }
 

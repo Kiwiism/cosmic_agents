@@ -8,6 +8,9 @@ import server.agents.capabilities.movement.AgentMovementProfile;
 import server.life.Monster;
 
 public final class AgentCombatRangePolicy {
+    private static final int DEFAULT_PROJECTILE_RANGE_X = 400;
+    private static final int DEFAULT_PROJECTILE_RANGE_Y = 50;
+
     private AgentCombatRangePolicy() {
     }
 
@@ -77,7 +80,10 @@ public final class AgentCombatRangePolicy {
         if (grounded) {
             return true;
         }
-        return !isAirborneRangedAttackBlockedWeapon(weaponType) || route != AgentAttackRoute.RANGED;
+        if (route == AgentAttackRoute.RANGED) {
+            return supportsMobileJumpAttack(weaponType);
+        }
+        return route != AgentAttackRoute.MAGIC;
     }
 
     public static boolean isTargetJumpable(AgentMovementProfile movementProfile,
@@ -99,9 +105,45 @@ public final class AgentCombatRangePolicy {
         return dy > AgentCombatConfig.cfg.ATTACK_RANGE_Y && dy <= maxJumpHeight;
     }
 
-    public static boolean isAirborneRangedAttackBlockedWeapon(WeaponType weaponType) {
-        return weaponType == WeaponType.BOW
-                || weaponType == WeaponType.CROSSBOW
-                || weaponType == WeaponType.GUN;
+    public static boolean isTargetJumpable(AgentMovementProfile movementProfile,
+                                           WeaponType weaponType,
+                                           AgentAttackRoute route,
+                                           Point botPos,
+                                           Point targetPos,
+                                           double maxJumpHeightPx) {
+        if (route == AgentAttackRoute.CLOSE) {
+            return isTargetJumpable(
+                    movementProfile, true, botPos, targetPos, maxJumpHeightPx);
+        }
+        if (route != AgentAttackRoute.RANGED || !supportsMobileJumpAttack(weaponType)
+                || botPos == null || targetPos == null) {
+            return false;
+        }
+
+        int dx = Math.abs(targetPos.x - botPos.x);
+        if (dx > DEFAULT_PROJECTILE_RANGE_X) {
+            return false;
+        }
+
+        int dy = botPos.y - targetPos.y;
+        int maxJumpHeight = Math.max(AgentCombatConfig.cfg.ATTACK_JUMP_Y,
+                (int) Math.ceil(maxJumpHeightPx));
+        return dy > DEFAULT_PROJECTILE_RANGE_Y
+                && dy <= DEFAULT_PROJECTILE_RANGE_Y + maxJumpHeight;
+    }
+
+    public static boolean supportsMobileJumpAttack(WeaponType weaponType) {
+        return weaponType == WeaponType.GUN || weaponType == WeaponType.CLAW;
+    }
+
+    public static boolean supportsSafeSpotSniping(WeaponType weaponType, AgentAttackRoute route) {
+        if (route == AgentAttackRoute.RANGED) {
+            return weaponType == WeaponType.BOW
+                    || weaponType == WeaponType.CROSSBOW
+                    || weaponType == WeaponType.CLAW
+                    || weaponType == WeaponType.GUN;
+        }
+        return route == AgentAttackRoute.MAGIC
+                && (weaponType == WeaponType.WAND || weaponType == WeaponType.STAFF);
     }
 }

@@ -141,11 +141,13 @@ public final class VictoriaFirstJobMvpCommandService {
         Point startPosition;
         if (checkpoint == VictoriaFirstJobMvpTestService.Checkpoint.CHECKPOINT_2_HENESYS_HUNT
                 || checkpoint == VictoriaFirstJobMvpTestService.Checkpoint.CHECKPOINT_3
-                || checkpoint == VictoriaFirstJobMvpTestService.Checkpoint.CHECKPOINT_3_HUNT) {
+                || checkpoint == VictoriaFirstJobMvpTestService.Checkpoint.CHECKPOINT_3_HUNT
+                || checkpoint == VictoriaFirstJobMvpTestService.Checkpoint.CHECKPOINT_INSTRUCTOR_4_HUNT) {
             try {
                 String checkpointId = switch (checkpoint) {
                     case CHECKPOINT_2_HENESYS_HUNT -> "checkpoint2-henesys-hunt";
                     case CHECKPOINT_3_HUNT -> "checkpoint3-hunt";
+                    case CHECKPOINT_INSTRUCTOR_4_HUNT -> "checkpoint-instructor4-hunt";
                     default -> "checkpoint3";
                 };
                 VictoriaResumeCheckpointBaseline.ResumeCheckpoint resume =
@@ -193,6 +195,9 @@ public final class VictoriaFirstJobMvpCommandService {
                                 ? " / CAPTURED rotation checkpoint fixture" : "";
                 if (checkpoint == VictoriaFirstJobMvpTestService.Checkpoint.CHECKPOINT_3_HUNT) {
                     fixture = " / CAPTURED post-Nautilus-accept checkpoint fixture";
+                } else if (checkpoint
+                        == VictoriaFirstJobMvpTestService.Checkpoint.CHECKPOINT_INSTRUCTOR_4_HUNT) {
+                    fixture = " / CAPTURED Pirate instructor-4 hunt checkpoint fixture";
                 } else if (checkpoint
                         == VictoriaFirstJobMvpTestService.Checkpoint.CHECKPOINT_2_HENESYS_HUNT) {
                     fixture = " / CAPTURED post-Henesys-accept checkpoint fixture";
@@ -250,7 +255,8 @@ public final class VictoriaFirstJobMvpCommandService {
         }
         player.yellowMessage("Usage: !victoria run <AgentIGN> <warrior|bowman|magician|thief|pirate> "
                 + "[lv10|lv9-olaf|lv9-grind] "
-                + "[checkpoint1|checkpoint2|checkpoint2-hunt|checkpoint2-nella|checkpoint3|checkpoint3-hunt]");
+                + "[checkpoint1|checkpoint2|checkpoint2-hunt|checkpoint2-nella|checkpoint3|"
+                + "checkpoint3-hunt|checkpoint-instructor4-hunt]");
         player.yellowMessage("Reset is an alias for run. Builds: thief-dagger, pirate-knuckle. "
                 + "Train: !victoria train <AgentIGN> [16-30] [mixed|grind]. "
                 + "Stop: !victoria stop <AgentIGN>. "

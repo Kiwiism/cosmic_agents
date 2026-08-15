@@ -82,6 +82,10 @@ public final class AgentCombatPolicyConfig {
         return tuningLong("ROUTE_BLOCKER_TIMEOUT_MS");
     }
 
+    public static long routeBlockerHardTimeoutMs() {
+        return tuningLong("ROUTE_BLOCKER_HARD_TIMEOUT_MS");
+    }
+
     public static int routeBlockerMaxKills() {
         return tuningInt("ROUTE_BLOCKER_MAX_KILLS");
     }

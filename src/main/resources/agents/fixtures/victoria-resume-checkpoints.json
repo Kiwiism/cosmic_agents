@@ -375,6 +375,61 @@
           "progress": {}
         }
       ]
+    },
+    "pirate-gun-standard-v1:checkpoint-instructor4-hunt": {
+      "questPackId": "instructor-training",
+      "questPackIndex": 0,
+      "trainingQuestIndex": 3,
+      "position": { "x": 120, "y": 66 },
+      "snapshot": {
+        "provenance": "CAPTURED",
+        "sourceCharacterName": "KiwiAgent",
+        "recordedAt": "2026-08-14T23:31:15+08:00",
+        "note": "Captured Pirate Gun combat state, reset to the pre-accept boundary for instructor quest 4. Placement is beside Kyrin so quest 2196 starts normally at 0 of 10 Green Mushrooms; White Potions are replenished for a repeatable full hunt.",
+        "character": {
+          "mapId": 120000101, "level": 12, "exp": 873, "jobId": 500,
+          "str": 6, "dex": 66, "intelligence": 4, "luk": 4,
+          "hp": 306, "mp": 122, "maxHp": 306, "maxMp": 122,
+          "mesos": 5552, "remainingAp": 0,
+          "remainingSp": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        },
+        "items": [
+          { "itemId": 1492000, "inventoryType": "EQUIPPED", "position": -11, "quantity": 1 },
+          { "itemId": 1072005, "inventoryType": "EQUIPPED", "position": -7, "quantity": 1 },
+          { "itemId": 1061008, "inventoryType": "EQUIPPED", "position": -6, "quantity": 1 },
+          { "itemId": 1041010, "inventoryType": "EQUIPPED", "position": -5, "quantity": 1 },
+          { "itemId": 1002610, "inventoryType": "EQUIPPED", "position": -1, "quantity": 1 },
+          { "itemId": 1332005, "inventoryType": "EQUIP", "position": 1, "quantity": 1 },
+          { "itemId": 1482000, "inventoryType": "EQUIP", "position": 2, "quantity": 1 },
+          { "itemId": 1002068, "inventoryType": "EQUIP", "position": 3, "quantity": 1 },
+          { "itemId": 1402001, "inventoryType": "EQUIP", "position": 4, "quantity": 1 },
+          { "itemId": 2000014, "inventoryType": "USE", "position": 1, "quantity": 83 },
+          { "itemId": 2010009, "inventoryType": "USE", "position": 2, "quantity": 1 },
+          { "itemId": 2330000, "inventoryType": "USE", "position": 3, "quantity": 555 },
+          { "itemId": 2000002, "inventoryType": "USE", "position": 4, "quantity": 80 },
+          { "itemId": 2000003, "inventoryType": "USE", "position": 5, "quantity": 100 },
+          { "itemId": 2061000, "inventoryType": "USE", "position": 6, "quantity": 21 },
+          { "itemId": 2060000, "inventoryType": "USE", "position": 8, "quantity": 27 },
+          { "itemId": 2000003, "inventoryType": "USE", "position": 9, "quantity": 10 },
+          { "itemId": 4030011, "inventoryType": "ETC", "position": 1, "quantity": 7 },
+          { "itemId": 4030012, "inventoryType": "ETC", "position": 2, "quantity": 13 },
+          { "itemId": 4000021, "inventoryType": "ETC", "position": 3, "quantity": 3 },
+          { "itemId": 4000017, "inventoryType": "ETC", "position": 4, "quantity": 2 },
+          { "itemId": 4010006, "inventoryType": "ETC", "position": 5, "quantity": 1 },
+          { "itemId": 4000012, "inventoryType": "ETC", "position": 6, "quantity": 3 },
+          { "itemId": 4000004, "inventoryType": "ETC", "position": 7, "quantity": 1 },
+          { "itemId": 4000000, "inventoryType": "ETC", "position": 8, "quantity": 7 },
+          { "itemId": 4000016, "inventoryType": "ETC", "position": 9, "quantity": 1 },
+          { "itemId": 4000010, "inventoryType": "ETC", "position": 10, "quantity": 1 },
+          { "itemId": 4000001, "inventoryType": "ETC", "position": 11, "quantity": 1 }
+        ],
+        "skills": [
+          { "skillId": 5001003, "level": 7, "masterLevel": 0 }
+        ],
+        "completedQuestIds": [1046, 2081, 2193, 2194, 2195, 2212],
+        "resetQuestIds": [2196]
+      },
+      "activeQuests": []
     }
   }
 }
