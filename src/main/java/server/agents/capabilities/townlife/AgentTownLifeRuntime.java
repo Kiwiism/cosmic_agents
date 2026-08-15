@@ -69,6 +69,8 @@ public final class AgentTownLifeRuntime {
             "server.agents.capabilities.townlife.AgentTownLifeRuntime.BACKGROUND_DWELL_MAX_MS");
     private static final int BACKGROUND_DWELL_MULTIPLIER = config.AgentTuning.intValue(
             "server.agents.capabilities.townlife.AgentTownLifeRuntime.BACKGROUND_DWELL_MULTIPLIER");
+    private static final long DEFAULT_GRACEFUL_EXIT_TIMEOUT_MS = config.AgentTuning.longValue(
+            "server.agents.capabilities.townlife.AgentTownLifeRuntime.DEFAULT_GRACEFUL_EXIT_TIMEOUT_MS");
 
     private AgentTownLifeRuntime() {
     }
@@ -124,13 +126,25 @@ public final class AgentTownLifeRuntime {
                 entry, agent, request, admissionMode, nowMs, identitySeed);
     }
 
+    public static AgentTownLifeSessionResult requestSession(
+            AgentRuntimeEntry entry,
+            Character agent,
+            AgentTownLifeEntryRequest request,
+            AgentTownLifeAdmissionMode admissionMode,
+            long nowMs,
+            int identitySeed) {
+        return AgentTownLifeLifecycleRuntime.start(
+                entry, agent, request, admissionMode, nowMs, identitySeed);
+    }
+
     static void activateLocal(AgentRuntimeEntry entry,
                               Character agent,
-                              AgentTownLifeVisitRequest request,
+                              AgentTownLifeEntryRequest request,
+                              String sessionId,
                               long nowMs,
                               int identitySeed) {
         entry.capabilityStates().require(AgentTownLifeState.STATE_KEY)
-                .start(nowMs, identitySeed, request);
+                .start(nowMs, identitySeed, request, sessionId);
         entry.simulationState().allowAbstractExecution(AgentAbstractExecutionScope.TOWN_LIFE);
         AgentForegroundPauseRuntime.pause(entry, PLAN_PAUSE_REASON, nowMs);
         AgentTravelVariationRuntime.configure(entry,
@@ -138,6 +152,8 @@ public final class AgentTownLifeRuntime {
                         Integer.toUnsignedLong(identitySeed), true, 1.30d,
                         false, 0.0d, 3_000L, 0L));
         AgentTownLifeState state = entry.capabilityStates().require(AgentTownLifeState.STATE_KEY);
+        AgentTownLifeEventPublisher.lifecycle(
+                entry, agent, state, AgentTownLifeLifecycleEvent.Phase.STARTED, "", nowMs);
         AgentTownLifeEventPublisher.arrival(entry, agent, state, nowMs);
         AgentTownLifeCheckpointRuntime.persist(entry, agent, nowMs);
     }
@@ -180,39 +196,104 @@ public final class AgentTownLifeRuntime {
                 && state.stage() == AgentTownLifeState.Stage.MOVE_TO_ACTIVITY) {
             state.beginDwell(nowMs + dwellDuration(agent, state));
         }
-        if (state.freeTimeExpired(nowMs)
-                && !AgentTownLifeEncounterCoordinator.active(entry)) {
-            stop(entry, agent);
-            return true;
+        if (state.freeTimeExpired(nowMs) && !state.exitRequested()) {
+            requestDefaultGracefulExit(entry, agent, state, "visit budget expired", nowMs);
         }
         if (AgentTownLifeFidelityPolicy.rendersAmbientActions(fidelity)) {
             AgentTownLifeEncounterCoordinator.tickPassive(entry, agent, state, gateway, nowMs);
         }
         if (agent.getMapId() != state.townMapId()) {
-            stop(entry, agent);
+            terminateLocal(entry, agent, AgentTownLifeLifecycleEvent.Phase.FORCED,
+                    "Agent left the TownLife map", nowMs);
             return true;
         }
         if (state.stage() == AgentTownLifeState.Stage.EXITING) {
-            stop(entry, agent);
+            requestDefaultGracefulExit(entry, agent, state, "TownLife entered exiting stage", nowMs);
+        }
+        if (state.exitDeadlineExpired(nowMs)) {
+            if (!state.activityResult().terminal() && state.activity() != AgentTownLifeState.Activity.NONE) {
+                state.markActivityResult(AgentTownLifeActivityResult.TIMED_OUT);
+            }
+            terminateLocal(entry, agent, AgentTownLifeLifecycleEvent.Phase.TIMED_OUT,
+                    state.exitReason(), nowMs);
             return true;
         }
-        return AgentTownLifeActivityRuntime.tick(entry, agent, state, nowMs, gateway);
+        if (readyForGracefulExit(entry, state)) {
+            terminateLocal(entry, agent, AgentTownLifeLifecycleEvent.Phase.EXITED,
+                    state.exitReason(), nowMs);
+            return true;
+        }
+        boolean consumed = AgentTownLifeActivityRuntime.tick(entry, agent, state, nowMs, gateway);
+        if (state.exitRequested() && readyForGracefulExit(entry, state)) {
+            terminateLocal(entry, agent, AgentTownLifeLifecycleEvent.Phase.EXITED,
+                    state.exitReason(), nowMs);
+            return true;
+        }
+        return consumed;
     }
 
     public static void stop(AgentRuntimeEntry entry, Character agent) {
-        AgentTownLifeLifecycleRuntime.stop(entry, agent, "requested");
+        requestGracefulStop(entry, agent, "requested", System.currentTimeMillis());
     }
 
-    static void terminateLocal(AgentRuntimeEntry entry, Character agent) {
+    public static AgentTownLifeExitResult requestGracefulStop(
+            AgentRuntimeEntry entry, Character agent, String reason, long nowMs) {
+        if (entry == null || agent == null) {
+            return new AgentTownLifeExitResult(
+                    AgentTownLifeExitResult.Status.REJECTED_INVALID_REQUEST, "",
+                    "entry and agent are required");
+        }
+        AgentTownLifeState state = entry.capabilityStates().require(AgentTownLifeState.STATE_KEY);
+        if (!state.enabled()) {
+            return new AgentTownLifeExitResult(
+                    AgentTownLifeExitResult.Status.NOT_ACTIVE, "", "TownLife is not active");
+        }
+        AgentTownLifeSessionHandle handle = state.sessionHandle(agent.getId());
+        if (handle == null) {
+            return new AgentTownLifeExitResult(
+                    AgentTownLifeExitResult.Status.REJECTED_INVALID_REQUEST, "",
+                    "active TownLife session has no handle");
+        }
+        return requestExit(entry, agent, AgentTownLifeExitRequest.graceful(
+                handle, reason, nowMs, nowMs + DEFAULT_GRACEFUL_EXIT_TIMEOUT_MS));
+    }
+
+    public static AgentTownLifeExitResult requestExit(
+            AgentRuntimeEntry entry, Character agent, AgentTownLifeExitRequest request) {
+        return AgentTownLifeLifecycleRuntime.requestExit(entry, agent, request);
+    }
+
+    public static void forceStop(AgentRuntimeEntry entry, Character agent, String reason) {
+        AgentTownLifeLifecycleRuntime.stop(entry, agent, reason);
+    }
+
+    static void terminateLocal(AgentRuntimeEntry entry,
+                               Character agent,
+                               AgentTownLifeLifecycleEvent.Phase phase,
+                               String reason,
+                               long nowMs) {
         if (entry == null) {
             return;
         }
         AgentTownLifeState state = entry.capabilityStates().require(AgentTownLifeState.STATE_KEY);
+        if (!state.enabled()) {
+            return;
+        }
+        if (!state.activityResult().terminal()
+                && state.activity() != AgentTownLifeState.Activity.NONE) {
+            state.markActivityResult(phase == AgentTownLifeLifecycleEvent.Phase.TIMED_OUT
+                    ? AgentTownLifeActivityResult.TIMED_OUT
+                    : AgentTownLifeActivityResult.CANCELLED);
+        }
+        AgentTownLifeEventPublisher.lifecycle(entry, agent, state, phase, reason, nowMs);
         entry.simulationState().clearAbstractExecution(AgentAbstractExecutionScope.TOWN_LIFE);
-        AgentTownLifeEncounterCoordinator.finish(entry, agent, false, System.currentTimeMillis());
+        AgentTownLifeEncounterCoordinator.finish(
+                entry, agent, phase == AgentTownLifeLifecycleEvent.Phase.EXITED, nowMs);
+        AgentTownLifeActivityExtensionRuntime.cancel(entry, agent, state, nowMs);
         entry.capabilityStates().require(AgentTownLifeActivitySequenceState.STATE_KEY).clear();
+        AgentTownLifeActivityExtensionRuntime.clear(entry);
         state.stop();
-        AgentForegroundPauseRuntime.resume(entry, PLAN_PAUSE_REASON, System.currentTimeMillis());
+        AgentForegroundPauseRuntime.resume(entry, PLAN_PAUSE_REASON, nowMs);
         AgentTownLifeDestinationService.release(agent);
         AgentFidgetService.clear(entry);
         if (agent != null && agent.getChair() >= 0) {
@@ -279,6 +360,7 @@ public final class AgentTownLifeRuntime {
                 decision.source(), decision.correlationId(), nowMs);
         state.memory().remember(destination.activity(), destination.key(), nowMs);
         entry.capabilityStates().require(AgentTownLifeActivitySequenceState.STATE_KEY).clear();
+        AgentTownLifeActivityExtensionRuntime.clear(entry);
         AgentTownLifeEventPublisher.activity(
                 entry, agent, state, AgentTownLifeActivityEvent.Phase.SELECTED, nowMs);
         if ((destination.activity() == AgentTownLifeState.Activity.SOCIALIZE
@@ -308,6 +390,9 @@ public final class AgentTownLifeRuntime {
         Point target = state.target();
         if (target == null) {
             AgentTownLifeDestinationService.release(agent);
+            state.markActivityResult(AgentTownLifeActivityResult.ABANDONED);
+            AgentTownLifeEventPublisher.activity(
+                    entry, agent, state, AgentTownLifeActivityEvent.Phase.ABANDONED, nowMs);
             state.transition(AgentTownLifeState.Stage.CHOOSE_ACTIVITY, nowMs);
             return true;
         }
@@ -361,30 +446,25 @@ public final class AgentTownLifeRuntime {
                                      PrimitiveCapabilityGateway gateway) {
         AgentTownLifeEncounterState.Snapshot encounter = entry.capabilityStates()
                 .require(AgentTownLifeEncounterState.STATE_KEY).snapshot();
+        if (state.activity() == AgentTownLifeState.Activity.LOCAL_ACTIVITY) {
+            AgentTownLifeActivityResult extensionResult =
+                    AgentTownLifeActivityExtensionRuntime.tick(entry, agent, state, nowMs);
+            if (extensionResult.terminal()) {
+                return finishActivity(
+                        entry, agent, state, gateway, nowMs, extensionResult,
+                        eventPhase(extensionResult));
+            }
+        }
         if (nowMs >= state.nextActionAtMs() && encounter.active()
                 && encounter.role() == AgentTownLifeEncounterState.Role.RESPONDER) {
             state.beginDwell(nowMs + ACTIVITY_TRANSITION_MIN_MS);
             return true;
         }
         if (nowMs >= state.nextActionAtMs()) {
-            AgentTownLifeEventPublisher.activity(
-                    entry, agent, state, AgentTownLifeActivityEvent.Phase.COMPLETED, nowMs);
-            AgentTownLifeEncounterCoordinator.finish(entry, agent, true, nowMs);
-            entry.capabilityStates().require(AgentTownLifeActivitySequenceState.STATE_KEY).clear();
-            AgentFidgetService.clear(entry);
-            AgentTownLifeDestinationService.release(agent);
-            rememberSuccessfulPlatformVisit(state, nowMs);
-            if (AgentTownLifeFidelityPolicy.rendersAmbientActions(state.fidelity())
-                    && agent.getChair() >= 0) {
-                AgentChairService.stand(entry, agent);
-            }
-            state.transition(AgentTownLifeState.Stage.COOLDOWN,
-                    nowMs + delay(
-                            agent,
-                            state,
-                            ACTIVITY_TRANSITION_MIN_MS,
-                            ACTIVITY_TRANSITION_MAX_EXCLUSIVE_MS));
-            return true;
+            return finishActivity(
+                    entry, agent, state, gateway, nowMs,
+                    AgentTownLifeActivityResult.COMPLETED,
+                    AgentTownLifeActivityEvent.Phase.COMPLETED);
         }
         AgentTownLifeActivitySequenceState sequence = entry.capabilityStates()
                 .require(AgentTownLifeActivitySequenceState.STATE_KEY);
@@ -498,6 +578,7 @@ public final class AgentTownLifeRuntime {
                                            PrimitiveCapabilityGateway gateway) {
         gateway.stop(entry);
         AgentFidgetService.clear(entry);
+        AgentTownLifeActivityExtensionRuntime.cancel(entry, agent, state, nowMs);
         AgentTownLifeDestinationService.release(agent);
         AgentTownLifeProfile.PlatformPolicy platformPolicy = platformPolicy(state);
         if (platformPolicy == null) {
@@ -508,6 +589,7 @@ public final class AgentTownLifeRuntime {
         }
         AgentTownLifeEventPublisher.activity(
                 entry, agent, state, AgentTownLifeActivityEvent.Phase.ABANDONED, nowMs);
+        state.markActivityResult(AgentTownLifeActivityResult.ABANDONED);
         AgentTownLifeEncounterCoordinator.finish(entry, agent, false, nowMs);
         entry.capabilityStates().require(AgentTownLifeActivitySequenceState.STATE_KEY).clear();
         state.progressWatchdog().clear();
@@ -517,6 +599,82 @@ public final class AgentTownLifeRuntime {
                         state,
                         ABANDON_RETRY_DELAY_MIN_MS,
                         ABANDON_RETRY_DELAY_MAX_EXCLUSIVE_MS));
+    }
+
+    private static boolean finishActivity(
+            AgentRuntimeEntry entry,
+            Character agent,
+            AgentTownLifeState state,
+            PrimitiveCapabilityGateway gateway,
+            long nowMs,
+            AgentTownLifeActivityResult result,
+            AgentTownLifeActivityEvent.Phase eventPhase) {
+        state.markActivityResult(result);
+        AgentTownLifeEventPublisher.activity(entry, agent, state, eventPhase, nowMs);
+        AgentTownLifeEncounterCoordinator.finish(
+                entry, agent, result == AgentTownLifeActivityResult.COMPLETED, nowMs);
+        AgentTownLifeActivityExtensionRuntime.cancel(entry, agent, state, nowMs);
+        entry.capabilityStates().require(AgentTownLifeActivitySequenceState.STATE_KEY).clear();
+        AgentFidgetService.clear(entry);
+        AgentTownLifeDestinationService.release(agent);
+        gateway.stop(entry);
+        if (result == AgentTownLifeActivityResult.COMPLETED) {
+            rememberSuccessfulPlatformVisit(state, nowMs);
+        }
+        if (AgentTownLifeFidelityPolicy.rendersAmbientActions(state.fidelity())
+                && agent.getChair() >= 0) {
+            AgentChairService.stand(entry, agent);
+        }
+        state.transition(AgentTownLifeState.Stage.COOLDOWN,
+                nowMs + delay(
+                        agent, state,
+                        ACTIVITY_TRANSITION_MIN_MS,
+                        ACTIVITY_TRANSITION_MAX_EXCLUSIVE_MS));
+        return true;
+    }
+
+    private static AgentTownLifeActivityEvent.Phase eventPhase(
+            AgentTownLifeActivityResult result) {
+        return switch (result) {
+            case COMPLETED -> AgentTownLifeActivityEvent.Phase.COMPLETED;
+            case ABANDONED -> AgentTownLifeActivityEvent.Phase.ABANDONED;
+            case TIMED_OUT -> AgentTownLifeActivityEvent.Phase.TIMED_OUT;
+            case CANCELLED -> AgentTownLifeActivityEvent.Phase.CANCELLED;
+            case FAILED -> AgentTownLifeActivityEvent.Phase.FAILED;
+            case NONE, ACTIVE -> AgentTownLifeActivityEvent.Phase.PERFORMING;
+        };
+    }
+
+    private static void requestDefaultGracefulExit(
+            AgentRuntimeEntry entry,
+            Character agent,
+            AgentTownLifeState state,
+            String reason,
+            long nowMs) {
+        if (state == null || !state.enabled() || state.exitRequested()) {
+            return;
+        }
+        AgentTownLifeSessionHandle handle = state.sessionHandle(agent.getId());
+        if (handle == null) {
+            terminateLocal(entry, agent, AgentTownLifeLifecycleEvent.Phase.FORCED, reason, nowMs);
+            return;
+        }
+        AgentTownLifeLifecycleRuntime.requestExit(entry, agent,
+                AgentTownLifeExitRequest.graceful(
+                        handle, reason, nowMs, nowMs + DEFAULT_GRACEFUL_EXIT_TIMEOUT_MS));
+    }
+
+    private static boolean readyForGracefulExit(
+            AgentRuntimeEntry entry, AgentTownLifeState state) {
+        if (state == null || !state.exitRequested()
+                || AgentTownLifeEncounterCoordinator.active(entry)) {
+            return false;
+        }
+        return switch (state.stage()) {
+            case SETTLING, CHOOSE_ACTIVITY, RESERVE_DESTINATION, COOLDOWN, EXITING -> true;
+            case MOVE_TO_ACTIVITY, DWELL -> state.activityResult().terminal();
+            case DISABLED -> false;
+        };
     }
 
     private static long navigationTimeoutMs(AgentTownLifeState state) {

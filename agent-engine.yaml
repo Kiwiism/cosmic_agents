@@ -1940,6 +1940,10 @@ tuning:
     # Purpose: Controls how long Agents remain in or wait for dwell. Higher values make that pause or state last longer; lower values make them continue sooner.
     # Technical: the "town life runtime" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled.
     server.agents.capabilities.townlife.AgentTownLifeRuntime.DEFAULT_DWELL_MS: '4000'
+    # Values: a finite positive integer; unit: milliseconds. Recommended: 15000-60000 around the tested baseline 30000.
+    # Purpose: Bounds how long a graceful TownLife exit may wait for the committed activity to finish before timed cleanup.
+    # Technical: The TownLife lifecycle compares the external drain deadline against this default when legacy callers request a normal stop.
+    server.agents.capabilities.townlife.AgentTownLifeRuntime.DEFAULT_GRACEFUL_EXIT_TIMEOUT_MS: '30000'
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 3500-14002 around the tested baseline 7001; benchmark or observe behavior before moving outside this band.
     # Purpose: Sets the longest flourish dwell time an Agent may receive. Higher values allow longer occurrences; lower values end them sooner.
     # Technical: the "town life runtime" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled. Paired minimum/maximum values define an inclusive random or validation range and must not be inverted.
@@ -2088,6 +2092,31 @@ tuning:
     # Purpose: Controls how long Agents remain in or wait for minimum initial response delay. Higher values make that pause or state last longer; lower values make them continue sooner.
     # Technical: the "town life state" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled. Paired minimum/maximum values define an inclusive random or validation range and must not be inverted.
     server.agents.capabilities.townlife.AgentTownLifeState.MIN_INITIAL_RESPONSE_DELAY_MS: '500'
+
+    # Values: 1-100 Agents. Recommended: 6 for routine visual validation.
+    # Purpose: Sets how many locally registered Agents a TownLife test starts when the operator omits the optional count.
+    # Technical: The GM test service applies this integer only as a bounded selection limit; it never spawns Agents or changes admission policy.
+    server.agents.commands.townlife.AgentTownLifeTestService.DEFAULT_AGENT_LIMIT: '6'
+
+    # Values: 1000-120000 milliseconds. Recommended: 30000 milliseconds.
+    # Purpose: Bounds how long an operator test waits for an Agent's current TownLife activity to finish after its visit deadline.
+    # Technical: The external visit lease uses this long as its graceful-drain deadline offset; TownLife retains local activity ownership throughout.
+    server.agents.commands.townlife.AgentTownLifeTestService.DEFAULT_GRACEFUL_TIMEOUT_MS: '30000'
+
+    # Values: 60000-86400000 milliseconds. Recommended: 3600000 milliseconds.
+    # Purpose: Prevents accidental extremely long TownLife operator tests while allowing meaningful soak observations in a supported town.
+    # Technical: The GM test service validates the requested whole-second duration against this long before creating any external visit leases.
+    server.agents.commands.townlife.AgentTownLifeTestService.MAX_DURATION_MS: '3600000'
+
+    # Values: 1-500 Agents. Recommended: 100 as an explicit operator safety ceiling.
+    # Purpose: Limits how many already registered local Agents one TownLife test command can enroll in a single invocation.
+    # Technical: The GM test service applies this integer before deterministic character-id ordering and does not modify ambient population capacity.
+    server.agents.commands.townlife.AgentTownLifeTestService.MAX_AGENT_LIMIT: '100'
+
+    # Values: 1000-60000 milliseconds. Recommended: 10000 milliseconds.
+    # Purpose: Rejects TownLife tests too short to pass settling and visibly exercise at least one local activity under normal timing.
+    # Technical: The GM test service validates the requested whole-second duration against this long before session admission and lease persistence.
+    server.agents.commands.townlife.AgentTownLifeTestService.MIN_DURATION_MS: '10000'
     # Values: a finite non-negative integer; unit: nanoseconds. Recommended: 25000000-100000000 around the tested baseline 50000000; benchmark or observe behavior before moving outside this band.
     # Purpose: Sets when trade command profile warn ns triggers. Higher values let more pressure build before Agents or safeguards react; lower values make them react sooner.
     # Technical: the "inventory transfer service" component consumes this as an integer. Unit: nanoseconds; this is normally a profiling threshold rather than a gameplay duration.

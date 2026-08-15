@@ -15,6 +15,8 @@ public final class AgentTownLifeMetrics {
             counters(AgentTownLifeActivityEvent.Phase.class);
     private static final Map<AgentTownLifeEncounterState.Phase, LongAdder> ENCOUNTER_PHASES =
             counters(AgentTownLifeEncounterState.Phase.class);
+    private static final Map<AgentTownLifeLifecycleEvent.Phase, LongAdder> LIFECYCLE_PHASES =
+            counters(AgentTownLifeLifecycleEvent.Phase.class);
     private static final ConcurrentHashMap<String, LongAdder> VENUE_SELECTIONS =
             new ConcurrentHashMap<>();
     private static final LongAdder RESERVATION_ATTEMPTS = new LongAdder();
@@ -38,6 +40,10 @@ public final class AgentTownLifeMetrics {
 
     static void encounter(AgentTownLifeEncounterState.Phase phase) {
         ENCOUNTER_PHASES.get(phase).increment();
+    }
+
+    static void lifecycle(AgentTownLifeLifecycleEvent.Phase phase) {
+        LIFECYCLE_PHASES.get(phase).increment();
     }
 
     static void encounterGroup(int participants) {
@@ -65,6 +71,7 @@ public final class AgentTownLifeMetrics {
         return new Snapshot(
                 snapshot(AgentTownLifeActivityEvent.Phase.class, ACTIVITY_PHASES),
                 snapshot(AgentTownLifeEncounterState.Phase.class, ENCOUNTER_PHASES),
+                snapshot(AgentTownLifeLifecycleEvent.Phase.class, LIFECYCLE_PHASES),
                 VENUE_SELECTIONS.entrySet().stream().collect(java.util.stream.Collectors.toUnmodifiableMap(
                         Map.Entry::getKey, entry -> entry.getValue().sum())),
                 RESERVATION_ATTEMPTS.sum(), RESERVATION_FAILURES.sum(),
@@ -91,6 +98,7 @@ public final class AgentTownLifeMetrics {
     public record Snapshot(
             Map<AgentTownLifeActivityEvent.Phase, Long> activityPhases,
             Map<AgentTownLifeEncounterState.Phase, Long> encounterPhases,
+            Map<AgentTownLifeLifecycleEvent.Phase, Long> lifecyclePhases,
             Map<String, Long> venueSelections,
             long reservationAttempts,
             long reservationFailures,

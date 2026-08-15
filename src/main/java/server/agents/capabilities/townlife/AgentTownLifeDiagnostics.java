@@ -4,6 +4,7 @@ import client.Character;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
+import server.agents.runtime.townlife.AgentTownLifeVisitLeaseRuntime;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -65,7 +66,11 @@ public final class AgentTownLifeDiagnostics {
         lines.add("TownLife " + agent.getName() + " id=" + agent.getId()
                 + " map=" + agent.getMapId() + " enabled=" + state.enabled());
         lines.add("stage=" + state.stage() + " activity=" + state.activity()
+                + " result=" + state.activityResult()
                 + " venue=" + state.venueId() + " fidelity=" + state.fidelity());
+        lines.add("session=" + state.sessionId() + " request=" + state.requestId()
+                + " caller=" + state.callerId() + " draining=" + state.exitRequested()
+                + " exitDeadline=" + state.exitDeadlineMs());
         lines.add("role=" + state.role() + " district=" + state.homeDistrict()
                 + " platform=" + state.platformPreference()
                 + " controller=" + AgentTownLifeControllerRuntime.supportLevel(entry));
@@ -75,6 +80,7 @@ public final class AgentTownLifeDiagnostics {
                 + " encounter=" + (encounter.active()
                 ? encounter.type() + "/" + encounter.phase() + "/" + encounter.encounterId()
                 : "none"));
+        lines.add("externalVisitLease=" + AgentTownLifeVisitLeaseRuntime.active(entry));
         return lines;
     }
 
@@ -121,6 +127,7 @@ public final class AgentTownLifeDiagnostics {
         return List.of(
                 "TownLife activity phases=" + metrics.activityPhases(),
                 "encounter phases=" + metrics.encounterPhases(),
+                "lifecycle phases=" + metrics.lifecyclePhases(),
                 "reservations=" + metrics.reservationAttempts()
                         + " failures=" + metrics.reservationFailures()
                         + " navigationAbandons=" + metrics.navigationAbandons(),

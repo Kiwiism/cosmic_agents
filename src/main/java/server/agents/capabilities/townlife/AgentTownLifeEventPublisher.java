@@ -25,6 +25,23 @@ final class AgentTownLifeEventPublisher {
                 state.visitPurpose(), state.visitReason()), AgentEventPriority.AMBIENT);
     }
 
+    static void lifecycle(AgentRuntimeEntry entry,
+                          Character agent,
+                          AgentTownLifeState state,
+                          AgentTownLifeLifecycleEvent.Phase phase,
+                          String reason,
+                          long nowMs) {
+        if (entry == null || agent == null || state == null || phase == null
+                || state.sessionId().isBlank()) {
+            return;
+        }
+        AgentSessionEventRuntime.bus(entry).publish(new AgentTownLifeLifecycleEvent(
+                agent.getId(), nowMs, state.townMapId(), state.sessionId(),
+                state.requestId(), state.callerId(), phase, reason,
+                state.activity(), state.activityResult()), AgentEventPriority.IMPORTANT);
+        AgentTownLifeMetrics.lifecycle(phase);
+    }
+
     static void activity(AgentRuntimeEntry entry,
                          Character agent,
                          AgentTownLifeState state,

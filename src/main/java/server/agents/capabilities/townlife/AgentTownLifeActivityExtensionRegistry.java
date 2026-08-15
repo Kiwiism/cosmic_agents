@@ -8,7 +8,7 @@ import java.util.Set;
 
 /** Validated registry; profile handler ids never become core-runtime switch cases. */
 public final class AgentTownLifeActivityExtensionRegistry {
-    private static final AgentTownLifeActivityExtensionRegistry DEFAULT =
+    private static volatile AgentTownLifeActivityExtensionRegistry defaultRegistry =
             new AgentTownLifeActivityExtensionRegistry(java.util.List.of());
 
     private final Map<String, AgentTownLifeActivityExtension> byId;
@@ -29,7 +29,16 @@ public final class AgentTownLifeActivityExtensionRegistry {
     }
 
     public static AgentTownLifeActivityExtensionRegistry defaultRegistry() {
-        return DEFAULT;
+        return defaultRegistry;
+    }
+
+    public static void installDefault(
+            Collection<? extends AgentTownLifeActivityExtension> extensions) {
+        defaultRegistry = new AgentTownLifeActivityExtensionRegistry(extensions);
+    }
+
+    public static void clearDefault() {
+        defaultRegistry = new AgentTownLifeActivityExtensionRegistry(java.util.List.of());
     }
 
     public Optional<AgentTownLifeActivityExtension> find(String id) {

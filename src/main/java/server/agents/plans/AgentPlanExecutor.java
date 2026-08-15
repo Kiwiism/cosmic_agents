@@ -66,11 +66,13 @@ public final class AgentPlanExecutor implements AgentPlanRunner {
         }
         AgentPlanDefinition plan = selection.plan();
         AgentPlanSessionState session = entry.capabilityStates().require(AgentPlanSessionState.STATE_KEY);
+        if (!AgentForegroundActivityDefaults.coordinator().prepareExclusive(
+                "universal-plan", entry, agent, "replaced by plan " + planId, nowMs)) {
+            return false;
+        }
         if (session.active()) {
             cancel(entry, agent, "superseded by " + planId, nowMs);
         }
-        AgentForegroundActivityDefaults.coordinator().prepareExclusive(
-                "universal-plan", entry, agent, "replaced by plan " + planId, nowMs);
         AgentPlanStartRequest effectiveRequest =
                 request == null ? AgentPlanStartRequest.EMPTY : request;
         String chainId = existingChainId == null || existingChainId.isBlank()

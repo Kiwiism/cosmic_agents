@@ -17,7 +17,33 @@ public final class AgentForegroundActivityCoordinator {
         this.registry = registry;
     }
 
-    public void prepareExclusive(
+    public boolean prepareExclusive(
+            String targetActivityId,
+            AgentRuntimeEntry entry,
+            Character agent,
+            String reason,
+            long nowMs) {
+        if (entry == null || agent == null || targetActivityId == null
+                || targetActivityId.isBlank()) {
+            return false;
+        }
+        registry.find(targetActivityId).orElseThrow(() ->
+                new IllegalArgumentException(
+                        "Unknown foreground activity: " + targetActivityId));
+        for (AgentForegroundActivity activity : registry.activities()) {
+            if (!activity.id().equals(targetActivityId)
+                    && activity.exclusive()
+                    && activity.active(entry, agent)) {
+                if (!activity.requestDeactivate(entry, agent, reason, nowMs)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /** Emergency-only replacement path; ordinary callers use the drain-aware method above. */
+    public void prepareExclusiveNow(
             String targetActivityId,
             AgentRuntimeEntry entry,
             Character agent,

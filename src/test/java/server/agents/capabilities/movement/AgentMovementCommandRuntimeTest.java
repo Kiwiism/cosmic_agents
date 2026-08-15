@@ -6,6 +6,7 @@ import org.mockito.MockedStatic;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.integration.AgentDialogueTransportRuntime;
+import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -22,7 +23,7 @@ import static org.mockito.Mockito.when;
 
 class AgentMovementCommandRuntimeTest {
     @Test
-    void followOwnerUsesAgentModeStateDirectly() {
+    void followConfiguredInteractionTargetUsesTheRelationshipWithoutADuplicateOverrideId() {
         Character owner = character(100, 100000000);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(character(200, 100000000), owner, null);
 
@@ -30,7 +31,8 @@ class AgentMovementCommandRuntimeTest {
 
         assertTrue(AgentModeStateRuntime.following(entry));
         assertFalse(AgentModeStateRuntime.grinding(entry));
-        assertEquals(owner.getId(), AgentModeStateRuntime.followTargetId(entry));
+        assertEquals(owner, AgentRelationshipRuntime.followTarget(entry));
+        assertEquals(0, AgentModeStateRuntime.followTargetId(entry));
     }
 
     @Test

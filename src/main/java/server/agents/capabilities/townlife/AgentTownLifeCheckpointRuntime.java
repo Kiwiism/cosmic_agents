@@ -40,12 +40,36 @@ public final class AgentTownLifeCheckpointRuntime {
                     || checkpoint.townMapId() != agent.getMapId()) {
                 return false;
             }
-            AgentTownLifeVisitRequest request = new AgentTownLifeVisitRequest(
+            AgentTownLifeVisitRequest visit = new AgentTownLifeVisitRequest(
                     checkpoint.townMapId(), checkpoint.purpose(), checkpoint.reason(),
                     checkpoint.remainingFreeTimeMs());
-            return AgentTownLifeLifecycleRuntime.start(
-                    entry, agent, request, AgentTownLifeAdmissionMode.MANUAL_ONLY,
-                    nowMs, agent.getId()).started();
+            String requestId = checkpoint.requestId().isBlank()
+                    ? "checkpoint-" + agent.getId() + '-' + checkpoint.updatedAtMs()
+                    : checkpoint.requestId();
+            String callerId = checkpoint.callerId().isBlank()
+                    ? "checkpoint-runtime" : checkpoint.callerId();
+            AgentTownLifeEntryRequest entryRequest = new AgentTownLifeEntryRequest(
+                    requestId, callerId, visit);
+            String restoredSessionId = checkpoint.sessionId().isBlank()
+                    ? "townlife:" + agent.getId() + ":checkpoint:" + checkpoint.updatedAtMs()
+                    : checkpoint.sessionId();
+            AgentTownLifeSessionResult restored = AgentTownLifeLifecycleRuntime.restore(
+                    entry, agent, entryRequest, nowMs, agent.getId(), restoredSessionId);
+            if (!restored.started()) {
+                return false;
+            }
+            if (checkpoint.exitRequested()) {
+                AgentTownLifeState state = entry.capabilityStates()
+                        .require(AgentTownLifeState.STATE_KEY);
+                state.restoreActivityForDrain(
+                        checkpoint.currentActivity(), checkpoint.activityResult());
+                long deadline = nowMs + Math.max(1L, checkpoint.remainingExitDeadlineMs());
+                AgentTownLifeLifecycleRuntime.requestExit(entry, agent,
+                        new AgentTownLifeExitRequest(
+                                restoredSessionId, callerId, checkpoint.exitReason(),
+                                checkpoint.exitMode(), nowMs, deadline));
+            }
+            return true;
         } catch (IOException | RuntimeException failure) {
             log.warn("Could not restore TownLife checkpoint for {} ({})",
                     agent.getName(), agent.getId(), failure);
@@ -62,8 +86,12 @@ public final class AgentTownLifeCheckpointRuntime {
             return;
         }
         AgentTownLifeCheckpoint checkpoint = new AgentTownLifeCheckpoint(
-                1, agent.getId(), state.townMapId(), state.visitPurpose(), state.visitReason(),
-                state.remainingFreeTimeMs(nowMs), nowMs);
+                2, agent.getId(), state.townMapId(), state.visitPurpose(), state.visitReason(),
+                state.remainingFreeTimeMs(nowMs), nowMs,
+                state.sessionId(), state.requestId(), state.callerId(), state.exitRequested(),
+                state.exitMode(), state.exitReason(),
+                state.exitRequested() ? Math.max(1L, state.exitDeadlineMs() - nowMs) : 0L,
+                state.activity(), state.activityResult());
         try {
             Files.createDirectories(DIRECTORY);
             Path target = path(agent.getId());

@@ -7,6 +7,7 @@ import server.agents.plans.AgentUniversalPlanRuntime;
 import server.agents.plans.amherst.AgentAmherstPlanRuntime;
 import server.agents.plans.mapleisland.AgentMapleIslandLithHandoffRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.townlife.AgentTownLifeVisitLeaseRuntime;
 
 import java.util.List;
 
@@ -28,6 +29,7 @@ public final class AgentForegroundActivityDefaults {
         private static final AgentForegroundActivityRegistry REGISTRY =
                 new AgentForegroundActivityRegistry(List.of(
                     handoff(),
+                    townLifeVisitLease(),
                     townLife(),
                     universalPlan(),
                     legacyAmherst(),
@@ -56,10 +58,53 @@ public final class AgentForegroundActivityDefaults {
     }
 
     private static AgentForegroundActivity townLife() {
-        return blockingBooleanActivity("town-life", 500,
-                (entry, agent) -> AgentTownLifeRuntime.active(entry),
-                AgentTownLifeRuntime::tick,
-                (entry, agent, reason, nowMs) -> AgentTownLifeRuntime.stop(entry, agent));
+        return new AgentForegroundActivity() {
+            @Override
+            public String id() {
+                return "town-life";
+            }
+
+            @Override
+            public int priority() {
+                return 500;
+            }
+
+            @Override
+            public boolean active(AgentRuntimeEntry entry, Character agent) {
+                return AgentTownLifeRuntime.active(entry);
+            }
+
+            @Override
+            public AgentForegroundActivityTick tick(
+                    AgentRuntimeEntry entry, Character agent, long nowMs) {
+                return AgentTownLifeRuntime.tick(entry, agent, nowMs)
+                        ? AgentForegroundActivityTick.CONSUMED
+                        : AgentForegroundActivityTick.IDLE;
+            }
+
+            @Override
+            public boolean requestDeactivate(
+                    AgentRuntimeEntry entry, Character agent, String reason, long nowMs) {
+                AgentTownLifeRuntime.requestGracefulStop(entry, agent, reason, nowMs);
+                return !AgentTownLifeRuntime.active(entry);
+            }
+
+            @Override
+            public void deactivate(
+                    AgentRuntimeEntry entry, Character agent, String reason, long nowMs) {
+                AgentTownLifeRuntime.forceStop(entry, agent, reason);
+            }
+        };
+    }
+
+    private static AgentForegroundActivity townLifeVisitLease() {
+        return activity("town-life-visit-lease", 550,
+                (entry, agent) -> AgentTownLifeVisitLeaseRuntime.active(entry),
+                (entry, agent, nowMs) -> {
+                    AgentTownLifeVisitLeaseRuntime.tick(entry, agent, nowMs);
+                    return AgentForegroundActivityTick.PASS;
+                },
+                false, ActivityDeactivator.NONE);
     }
 
     private static AgentForegroundActivity universalPlan() {

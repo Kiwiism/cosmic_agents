@@ -78,6 +78,9 @@ final class AgentTownLifeActivityPolicy {
             weights.put(AgentTownLifeState.Activity.BROWSE, MOBILE_BROWSE_WEIGHT);
             weights.put(AgentTownLifeState.Activity.SHOW_OFF, MOBILE_SHOW_OFF_WEIGHT);
         }
+        if (context.profileWeights().containsKey(AgentTownLifeState.Activity.LOCAL_ACTIVITY)) {
+            weights.put(AgentTownLifeState.Activity.LOCAL_ACTIVITY, MINIMUM_ACTIVITY_WEIGHT);
+        }
         weights.replaceAll((activity, weight) -> Math.max(
                 MINIMUM_ACTIVITY_WEIGHT,
                 weight * context.profileWeights().getOrDefault(activity, 100) / 100));

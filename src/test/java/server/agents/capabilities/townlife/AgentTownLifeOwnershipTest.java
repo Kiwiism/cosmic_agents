@@ -17,6 +17,39 @@ import static org.mockito.Mockito.when;
 
 class AgentTownLifeOwnershipTest {
     @Test
+    void exitRequiresTheExactSessionAndCaller() {
+        Character agent = mock(Character.class);
+        when(agent.getId()).thenReturn(78);
+        when(agent.getMapId()).thenReturn(100000000);
+        when(agent.getName()).thenReturn("TownOwnershipTest");
+        when(agent.getChair()).thenReturn(-1);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, agent, null);
+        AgentTownLifeSessionResult started = AgentTownLifeRuntime.requestSession(
+                entry, agent,
+                AgentTownLifeEntryRequest.external(
+                        "owned-visit", "owner-a",
+                        AgentTownLifeVisitRequest.leisure(agent.getMapId())),
+                AgentTownLifeAdmissionMode.MANUAL_ONLY, 1_000L, agent.getId());
+
+        try {
+            AgentTownLifeExitResult stale = AgentTownLifeRuntime.requestExit(
+                    entry, agent, new AgentTownLifeExitRequest(
+                            "not-the-session", "owner-a", "stale",
+                            AgentTownLifeExitMode.AFTER_CURRENT_ACTIVITY, 1_100L, 2_000L));
+            AgentTownLifeExitResult foreign = AgentTownLifeRuntime.requestExit(
+                    entry, agent, new AgentTownLifeExitRequest(
+                            started.handle().sessionId(), "owner-b", "foreign",
+                            AgentTownLifeExitMode.AFTER_CURRENT_ACTIVITY, 1_100L, 2_000L));
+
+            assertEquals(AgentTownLifeExitResult.Status.REJECTED_STALE_SESSION, stale.status());
+            assertEquals(AgentTownLifeExitResult.Status.REJECTED_CALLER_MISMATCH, foreign.status());
+            assertTrue(AgentTownLifeRuntime.active(entry));
+        } finally {
+            AgentTownLifeRuntime.forceStop(entry, agent, "test cleanup");
+        }
+    }
+
+    @Test
     void localLifecycleRejectsCrossTownOwnership() {
         Character agent = mock(Character.class);
         when(agent.getId()).thenReturn(77);

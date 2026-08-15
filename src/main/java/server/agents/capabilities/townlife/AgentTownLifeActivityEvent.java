@@ -52,7 +52,10 @@ public record AgentTownLifeActivityEvent(
         REACTING,
         CLOSING,
         COMPLETED,
-        ABANDONED
+        ABANDONED,
+        FAILED,
+        TIMED_OUT,
+        CANCELLED
     }
 
     private static String normalize(String value) {

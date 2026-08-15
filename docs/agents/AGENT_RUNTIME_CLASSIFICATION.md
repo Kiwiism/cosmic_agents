@@ -109,6 +109,11 @@ Classifications:
 | `AgentTickSliceState` | `RUNTIME_STATE` | Stores the resumable frame and continuation count for one session. |
 | `AgentTickSlicingService` | `RUNTIME_SERVICE` | Executes bounded slices while preserving logical tick ordering and continuation limits. |
 | `runtime.scheduler.AgentTickScheduler` | `RUNTIME_SERVICE` | Optional central-sequential due-time dispatcher with stable ordering and isolated Agent updates. |
+| `runtime.townlife.AgentTownLifeVisitLeaseCheckpoint` | `RUNTIME_STATE` | Durable representation of an externally owned TownLife visit deadline. |
+| `runtime.townlife.AgentTownLifeVisitLeaseCheckpointRuntime` | `RUNTIME_SERVICE` | Persists and restores external visit deadlines separately from TownLife local intent. |
+| `runtime.townlife.AgentTownLifeVisitLeaseRequest` | `RUNTIME_STATE` | Immutable external schedule and graceful-exit policy for one local TownLife visit. |
+| `runtime.townlife.AgentTownLifeVisitLeaseRuntime` | `RUNTIME_ADAPTER` | Watches an external visit deadline while TownLife owns foreground execution and requests correlated graceful exit. |
+| `runtime.townlife.AgentTownLifeVisitLeaseState` | `RUNTIME_STATE` | Stores the active external visit lease for one live Agent session. |
 | `AgentTickSchedulingService` | `RUNTIME_SERVICE` | Selects legacy or central tick registration without changing lifecycle callers. |
 | `AgentTickState` | `RUNTIME_STATE` | Stores tick timestamps, heartbeat, follow-idle, and cadence counters. |
 | `AgentTickStateRuntime` | `RUNTIME_ADAPTER` | Exposes tick state held by the live runtime entry. |

@@ -24,7 +24,6 @@ public final class AgentTownLifeState {
 
     public enum VisitPhase {
         ARRIVING,
-        ERRAND,
         FREE_TIME,
         DEPARTING
     }
@@ -85,6 +84,16 @@ public final class AgentTownLifeState {
     private String visitReason = "";
     private long freeTimeBudgetMs;
     private long freeTimeUntilMs;
+    private String sessionId = "";
+    private String requestId = "";
+    private String callerId = "";
+    private long sessionStartedAtMs;
+    private boolean exitRequested;
+    private AgentTownLifeExitMode exitMode = AgentTownLifeExitMode.AFTER_CURRENT_ACTIVITY;
+    private String exitReason = "";
+    private long exitRequestedAtMs;
+    private long exitDeadlineMs;
+    private AgentTownLifeActivityResult activityResult = AgentTownLifeActivityResult.NONE;
     private final AgentTownLifeMemory memory = new AgentTownLifeMemory();
     private final AgentTownLifeProgressWatchdog progressWatchdog = new AgentTownLifeProgressWatchdog();
 
@@ -95,6 +104,17 @@ public final class AgentTownLifeState {
     public synchronized void start(long nowMs,
                                    int initialSequence,
                                    AgentTownLifeVisitRequest request) {
+        AgentTownLifeEntryRequest entryRequest = AgentTownLifeEntryRequest.legacy(
+                0, nowMs, request);
+        start(nowMs, initialSequence, entryRequest,
+                "townlife:legacy:" + Math.max(0L, nowMs));
+    }
+
+    public synchronized void start(long nowMs,
+                                   int initialSequence,
+                                   AgentTownLifeEntryRequest entryRequest,
+                                   String nextSessionId) {
+        AgentTownLifeVisitRequest request = entryRequest.visit();
         int selectedTownMapId = request.townMapId();
         AgentTownLifeProfile profile = AgentTownLifeProfileRepository.defaultRepository()
                 .require(selectedTownMapId);
@@ -126,6 +146,16 @@ public final class AgentTownLifeState {
         visitReason = request.reason();
         freeTimeBudgetMs = request.freeTimeBudgetMs();
         freeTimeUntilMs = 0L;
+        sessionId = nextSessionId;
+        requestId = entryRequest.requestId();
+        callerId = entryRequest.callerId();
+        sessionStartedAtMs = nowMs;
+        exitRequested = false;
+        exitMode = AgentTownLifeExitMode.AFTER_CURRENT_ACTIVITY;
+        exitReason = "";
+        exitRequestedAtMs = 0L;
+        exitDeadlineMs = 0L;
+        activityResult = AgentTownLifeActivityResult.NONE;
         memory.clearVisit();
         progressWatchdog.clear();
     }
@@ -157,6 +187,16 @@ public final class AgentTownLifeState {
         decisionCorrelationId = "";
         visitPhase = VisitPhase.DEPARTING;
         freeTimeUntilMs = 0L;
+        sessionId = "";
+        requestId = "";
+        callerId = "";
+        sessionStartedAtMs = 0L;
+        exitRequested = false;
+        exitMode = AgentTownLifeExitMode.AFTER_CURRENT_ACTIVITY;
+        exitReason = "";
+        exitRequestedAtMs = 0L;
+        exitDeadlineMs = 0L;
+        activityResult = AgentTownLifeActivityResult.NONE;
         memory.clearVisit();
         progressWatchdog.clear();
     }
@@ -273,6 +313,95 @@ public final class AgentTownLifeState {
         return visitReason;
     }
 
+    public synchronized AgentTownLifeSessionHandle sessionHandle(int agentId) {
+        if (!enabled || sessionId.isBlank() || agentId <= 0) {
+            return null;
+        }
+        return new AgentTownLifeSessionHandle(
+                sessionId, requestId, callerId, agentId, townMapId, sessionStartedAtMs);
+    }
+
+    public synchronized String sessionId() {
+        return sessionId;
+    }
+
+    public synchronized String requestId() {
+        return requestId;
+    }
+
+    public synchronized String callerId() {
+        return callerId;
+    }
+
+    public synchronized long sessionStartedAtMs() {
+        return sessionStartedAtMs;
+    }
+
+    public synchronized boolean sameEntryRequest(AgentTownLifeEntryRequest request) {
+        return request != null
+                && requestId.equals(request.requestId())
+                && callerId.equals(request.callerId());
+    }
+
+    public synchronized boolean requestExit(AgentTownLifeExitRequest request) {
+        if (!enabled || request == null || exitRequested) {
+            return false;
+        }
+        exitRequested = true;
+        exitMode = request.mode();
+        exitReason = request.reason();
+        exitRequestedAtMs = request.requestedAtMs();
+        exitDeadlineMs = request.deadlineMs();
+        visitPhase = VisitPhase.DEPARTING;
+        return true;
+    }
+
+    public synchronized boolean exitRequested() {
+        return exitRequested;
+    }
+
+    public synchronized AgentTownLifeExitMode exitMode() {
+        return exitMode;
+    }
+
+    public synchronized String exitReason() {
+        return exitReason;
+    }
+
+    public synchronized long exitRequestedAtMs() {
+        return exitRequestedAtMs;
+    }
+
+    public synchronized long exitDeadlineMs() {
+        return exitDeadlineMs;
+    }
+
+    public synchronized boolean exitDeadlineExpired(long nowMs) {
+        return exitRequested && exitDeadlineMs > 0L && nowMs >= exitDeadlineMs;
+    }
+
+    public synchronized AgentTownLifeActivityResult activityResult() {
+        return activityResult;
+    }
+
+    public synchronized void markActivityResult(AgentTownLifeActivityResult result) {
+        activityResult = result == null ? AgentTownLifeActivityResult.FAILED : result;
+    }
+
+    synchronized void restoreActivityForDrain(
+            Activity restoredActivity, AgentTownLifeActivityResult restoredResult) {
+        activity = restoredActivity == null ? Activity.NONE : restoredActivity;
+        activityResult = restoredResult == null || !restoredResult.terminal()
+                ? AgentTownLifeActivityResult.ABANDONED : restoredResult;
+        stage = Stage.CHOOSE_ACTIVITY;
+    }
+
+    public synchronized boolean hasCommittedActivity() {
+        return activity != Activity.NONE
+                && (stage == Stage.MOVE_TO_ACTIVITY || stage == Stage.DWELL)
+                && !activityResult.terminal();
+    }
+
     public synchronized boolean freeTimeExpired(long nowMs) {
         return visitPhase == VisitPhase.FREE_TIME
                 && freeTimeUntilMs > 0L && nowMs >= freeTimeUntilMs;
@@ -355,6 +484,7 @@ public final class AgentTownLifeState {
         decisionSource = nextDecisionSource == null || nextDecisionSource.isBlank()
                 ? "default-policy" : nextDecisionSource;
         decisionCorrelationId = nextDecisionCorrelationId == null ? "" : nextDecisionCorrelationId;
+        activityResult = AgentTownLifeActivityResult.ACTIVE;
         progressWatchdog.begin(target, dueAtMs);
         sequence++;
     }

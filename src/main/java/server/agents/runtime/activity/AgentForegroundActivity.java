@@ -21,8 +21,18 @@ public interface AgentForegroundActivity {
         return true;
     }
 
-    /** Best-effort terminal cleanup used during explicit foreground replacement. */
+    /** Immediate cleanup reserved for forced replacement or shutdown. */
     default void deactivate(
             AgentRuntimeEntry entry, Character agent, String reason, long nowMs) {
+    }
+
+    /**
+     * Requests ordinary deactivation and reports whether the activity is already terminal.
+     * Activities with a closing sequence override this without weakening the force-cleanup seam.
+     */
+    default boolean requestDeactivate(
+            AgentRuntimeEntry entry, Character agent, String reason, long nowMs) {
+        deactivate(entry, agent, reason, nowMs);
+        return true;
     }
 }
