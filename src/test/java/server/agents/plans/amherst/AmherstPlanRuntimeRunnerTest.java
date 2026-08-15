@@ -1,5 +1,7 @@
 package server.agents.plans.amherst;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import server.agents.capabilities.objective.AgentObjectiveRecoveryPolicy;
@@ -26,6 +28,16 @@ class AmherstPlanRuntimeRunnerTest {
 
     @TempDir
     Path tempDir;
+
+    @BeforeEach
+    void useSynchronousPersistenceForLegacyRunnerContract() {
+        System.setProperty("agents.scheduler.mode", "legacy");
+    }
+
+    @AfterEach
+    void clearSchedulerMode() {
+        System.clearProperty("agents.scheduler.mode");
+    }
 
     @Test
     void minimalPlanExecutesInOrderAndPersistsOnlyAfterLiveVerification() throws Exception {

@@ -8,9 +8,6 @@ import server.agents.capabilities.movement.AgentMovementProfile;
 import server.life.Monster;
 
 public final class AgentCombatRangePolicy {
-    private static final int DEFAULT_PROJECTILE_RANGE_X = 400;
-    private static final int DEFAULT_PROJECTILE_RANGE_Y = 50;
-
     private AgentCombatRangePolicy() {
     }
 
@@ -121,15 +118,16 @@ public final class AgentCombatRangePolicy {
         }
 
         int dx = Math.abs(targetPos.x - botPos.x);
-        if (dx > DEFAULT_PROJECTILE_RANGE_X) {
+        if (dx > AgentProjectileHitbox.CLIENT_PROJECTILE_BASE_RANGE) {
             return false;
         }
 
         int dy = botPos.y - targetPos.y;
         int maxJumpHeight = Math.max(AgentCombatConfig.cfg.ATTACK_JUMP_Y,
                 (int) Math.ceil(maxJumpHeightPx));
-        return dy > DEFAULT_PROJECTILE_RANGE_Y
-                && dy <= DEFAULT_PROJECTILE_RANGE_Y + maxJumpHeight;
+        int projectileTop = AgentProjectileHitbox.clientProjectileTop();
+        return dy > projectileTop
+                && dy <= projectileTop + maxJumpHeight;
     }
 
     public static boolean supportsMobileJumpAttack(WeaponType weaponType) {

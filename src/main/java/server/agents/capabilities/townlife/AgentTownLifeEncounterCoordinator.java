@@ -97,7 +97,7 @@ final class AgentTownLifeEncounterCoordinator {
                         AgentChairService.stand(participantEntry, participant);
                     }
                     participantTownState.select(townState.activity(), spots.get(participant.getId()),
-                            peerId, 0, destinationKey, venue.id(),
+                            peerId, destinationKey, venue.id(),
                             "encounter:" + townState.decisionSource(), correlation, nowMs);
                     participantTownState.memory().remember(
                             townState.activity(), destinationKey, nowMs);

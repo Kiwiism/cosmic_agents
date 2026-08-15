@@ -64,7 +64,6 @@ public final class AgentTownLifeState {
     private Activity activity = Activity.NONE;
     private Point target;
     private int targetCharacterId;
-    private int destinationMapId;
     private long nextActionAtMs;
     private int sequence;
     private boolean expressionShown;
@@ -105,7 +104,6 @@ public final class AgentTownLifeState {
         activity = Activity.NONE;
         target = null;
         targetCharacterId = 0;
-        destinationMapId = 0;
         nextActionAtMs = nowMs + initialResponseDelayMs(initialSequence);
         sequence = Math.max(0, initialSequence);
         expressionShown = false;
@@ -149,7 +147,6 @@ public final class AgentTownLifeState {
         activity = Activity.NONE;
         target = null;
         targetCharacterId = 0;
-        destinationMapId = 0;
         nextActionAtMs = 0L;
         expressionShown = false;
         flourishShown = false;
@@ -186,10 +183,6 @@ public final class AgentTownLifeState {
 
     public synchronized int targetCharacterId() {
         return targetCharacterId;
-    }
-
-    public synchronized int destinationMapId() {
-        return destinationMapId;
     }
 
     public synchronized long nextActionAtMs() {
@@ -329,25 +322,22 @@ public final class AgentTownLifeState {
     public synchronized void select(Activity nextActivity,
                                     Point nextTarget,
                                     int nextTargetCharacterId,
-                                    int nextDestinationMapId,
                                     long dueAtMs) {
-        select(nextActivity, nextTarget, nextTargetCharacterId, nextDestinationMapId, null, dueAtMs);
+        select(nextActivity, nextTarget, nextTargetCharacterId, null, dueAtMs);
     }
 
     public synchronized void select(Activity nextActivity,
                                     Point nextTarget,
                                     int nextTargetCharacterId,
-                                    int nextDestinationMapId,
                                     String nextDestinationKey,
                                     long dueAtMs) {
-        select(nextActivity, nextTarget, nextTargetCharacterId, nextDestinationMapId,
+        select(nextActivity, nextTarget, nextTargetCharacterId,
                 nextDestinationKey, "", "default-policy", "", dueAtMs);
     }
 
     public synchronized void select(Activity nextActivity,
                                     Point nextTarget,
                                     int nextTargetCharacterId,
-                                    int nextDestinationMapId,
                                     String nextDestinationKey,
                                     String nextVenueId,
                                     String nextDecisionSource,
@@ -356,7 +346,6 @@ public final class AgentTownLifeState {
         activity = nextActivity;
         target = nextTarget == null ? null : new Point(nextTarget);
         targetCharacterId = nextTargetCharacterId;
-        destinationMapId = nextDestinationMapId;
         stage = Stage.MOVE_TO_ACTIVITY;
         nextActionAtMs = dueAtMs;
         expressionShown = false;

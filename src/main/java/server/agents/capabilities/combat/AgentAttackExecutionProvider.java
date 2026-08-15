@@ -291,7 +291,10 @@ public final class AgentAttackExecutionProvider {
         }
 
         WeaponType weaponType = getEquippedWeaponType(bot);
-        return determineWeaponRoute(weaponType);
+        // A non-magic skill keeps its own packet family even when a wand or
+        // staff happens to be equipped. Magic skills have already returned
+        // above; the remaining weapon fallback is the basic physical route.
+        return determineBasicWeaponRoute(weaponType);
     }
 
     private static boolean isMagicAttackSkill(int skillId) {

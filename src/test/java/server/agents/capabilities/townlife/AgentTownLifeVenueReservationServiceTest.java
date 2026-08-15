@@ -44,7 +44,7 @@ class AgentTownLifeVenueReservationServiceTest {
                 AgentTownLifeState.PlatformKind.MINI, 2,
                 List.of(AgentTownLifeProfile.Affordance.SOCIALIZE),
                 List.of(new AgentTownLifeProfile.VenueSpot(10, 20, -1),
-                        new AgentTownLifeProfile.VenueSpot(80, 20, -1)), 0);
+                        new AgentTownLifeProfile.VenueSpot(80, 20, -1)));
 
         assertTrue(AgentTownLifeVenueReservationService.reserveGroup(
                 List.of(agent(1), agent(2), agent(3)), venue, 1).isEmpty());

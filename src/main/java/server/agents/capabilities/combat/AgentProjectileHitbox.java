@@ -32,6 +32,10 @@ public final class AgentProjectileHitbox {
     private AgentProjectileHitbox() {
     }
 
+    static int clientProjectileTop() {
+        return CLIENT_PROJECTILE_TOP;
+    }
+
     public static Rectangle clientProjectileHitBox(Character agent, boolean facingLeft, float horizontalScale) {
         return clientProjectileHitBox(agent, facingLeft, horizontalScale,
                 CLIENT_PROJECTILE_TOP, CLIENT_PROJECTILE_BOTTOM);

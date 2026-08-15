@@ -19,6 +19,7 @@ import static org.mockito.Mockito.when;
 class AgentTickSchedulerSoakTest {
     @AfterEach
     void tearDown() {
+        System.clearProperty("agents.scheduler.mode");
         System.clearProperty("agents.scheduler.central.enabled");
         System.clearProperty("agents.scheduler.maxWorkItemsPerCycle");
         System.clearProperty("agents.scheduler.cycleBudgetMs");
@@ -54,6 +55,7 @@ class AgentTickSchedulerSoakTest {
     @ParameterizedTest
     @ValueSource(ints = {50, 100, 250, 500})
     void legacyDispatchesTwentyCadencesAcrossBaselinePopulations(int population) {
+        System.setProperty("agents.scheduler.mode", "legacy");
         List<Runnable> scheduledTicks = new ArrayList<>(population);
         ScheduledFuture<?> future = mock(ScheduledFuture.class);
         AtomicInteger updates = new AtomicInteger();

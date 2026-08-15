@@ -29,7 +29,6 @@
   "extensions": {
     "activityHandlers": []
   },
-  "allowedChildMapIds": [],
   "activityWeights": {
     "REST": 105,
     "SOCIALIZE": 125,
@@ -148,8 +147,7 @@
         { "x": 220, "y": 273, "seatId": 23 },
         { "x": 242, "y": 273, "seatId": 24 },
         { "x": 264, "y": 273, "seatId": 25 }
-      ],
-      "destinationMapId": 0
+      ]
     },
     {
       "id": "central-square",
@@ -162,8 +160,7 @@
         { "x": 2525, "y": 333, "seatId": 26 },
         { "x": 2547, "y": 333, "seatId": 27 },
         { "x": 2569, "y": 333, "seatId": 28 }
-      ],
-      "destinationMapId": 0
+      ]
     },
     {
       "id": "market-rooftop-benches",
@@ -176,8 +173,7 @@
         { "x": 3594, "y": 123, "seatId": 20 },
         { "x": 3616, "y": 123, "seatId": 21 },
         { "x": 3638, "y": 123, "seatId": 22 }
-      ],
-      "destinationMapId": 0
+      ]
     },
     {
       "id": "park-overlook",
@@ -190,8 +186,7 @@
         { "x": 4015, "y": 123, "seatId": 17 },
         { "x": 4037, "y": 123, "seatId": 18 },
         { "x": 4059, "y": 123, "seatId": 19 }
-      ],
-      "destinationMapId": 0
+      ]
     },
     {
       "id": "east-town-benches",
@@ -210,8 +205,7 @@
         { "x": 5662, "y": 453, "seatId": 8 },
         { "x": 5702, "y": 453, "seatId": 9 },
         { "x": 5743, "y": 453, "seatId": 10 }
-      ],
-      "destinationMapId": 0
+      ]
     },
     {
       "id": "upper-east-benches",
@@ -227,8 +221,7 @@
         { "x": 5890, "y": -177, "seatId": 14 },
         { "x": 5916, "y": -177, "seatId": 15 },
         { "x": 5943, "y": -177, "seatId": 16 }
-      ],
-      "destinationMapId": 0
+      ]
     },
     {
       "id": "henesys-market",
@@ -237,8 +230,7 @@
       "platformKind": "MAIN",
       "capacity": 1,
       "affordances": ["BROWSE"],
-      "spots": [{ "x": 2900, "y": 368, "seatId": -1 }],
-      "destinationMapId": 100000100
+      "spots": [{ "x": 2900, "y": 368, "seatId": -1 }]
     }
   ],
   "facilities": [

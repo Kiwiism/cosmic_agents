@@ -87,7 +87,7 @@ class AgentTownLifeRuntimeTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, agent, null);
         AgentTownLifeState state = entry.capabilityStates().require(AgentTownLifeState.STATE_KEY);
         state.start(0L, 0, LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID);
-        state.select(AgentTownLifeState.Activity.REST, new Point(2_404, 525), 0, 0, 0L);
+        state.select(AgentTownLifeState.Activity.REST, new Point(2_404, 525), 0, 0L);
         state.beginDwell(10_000L);
         PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
 
@@ -106,7 +106,7 @@ class AgentTownLifeRuntimeTest {
         AgentTownLifeState state = entry.capabilityStates().require(AgentTownLifeState.STATE_KEY);
         state.start(0L, 0, LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID);
         Point groundRestSpot = new Point(3_240, 518);
-        state.select(AgentTownLifeState.Activity.REST, groundRestSpot, 0, 0, 0L);
+        state.select(AgentTownLifeState.Activity.REST, groundRestSpot, 0, 0L);
         PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
         when(gateway.grounded(agent)).thenReturn(true);
 
@@ -124,7 +124,7 @@ class AgentTownLifeRuntimeTest {
         AgentTownLifeState state = entry.capabilityStates().require(AgentTownLifeState.STATE_KEY);
         state.start(0L, 0, LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID);
         state.select(AgentTownLifeState.Activity.STROLL, new Point(500, 0),
-                0, 0, "wander:test", 0L);
+                0, "wander:test", 0L);
         PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
         when(gateway.grounded(agent)).thenReturn(true);
 

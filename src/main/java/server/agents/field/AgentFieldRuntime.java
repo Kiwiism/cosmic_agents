@@ -5,6 +5,7 @@ import server.agents.capabilities.combat.AgentCombatDirective;
 import server.agents.capabilities.combat.AgentCombatDirectiveRuntime;
 import server.agents.catalog.AgentMapRegionAssignment;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentClientGatewayRuntime;
 import server.agents.integration.cosmic.CosmicAgentPerceptionSnapshotFactory;
 import server.agents.model.AgentPosition;
 import server.agents.operations.events.AgentMobKilledEvent;
@@ -530,11 +531,12 @@ public final class AgentFieldRuntime {
 
     private record FieldKey(int world, int channel, int mapId, int instanceToken) {
         static FieldKey of(Character character) {
-            if (character == null || character.getMap() == null || character.getClient() == null) {
+            var clients = AgentClientGatewayRuntime.clients();
+            if (character == null || character.getMap() == null || !clients.hasClient(character)) {
                 return new FieldKey(-1, -1, -1, 0);
             }
             return new FieldKey(
-                    character.getWorld(), character.getClient().getChannel(), character.getMapId(),
+                    clients.world(character), clients.channel(character), character.getMapId(),
                     System.identityHashCode(character.getMap()));
         }
     }

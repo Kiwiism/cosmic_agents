@@ -572,7 +572,7 @@ class AgentNavigationPathServiceTest {
     }
 
     @Test
-    void movementSkillEdgesAreInvisibleToBaseRoutingAndVisibleToEligibleShadowRouting() {
+    void movementSkillEdgesRemainInvisibleWhileTheMovementSkillRolloutIsOff() {
         AgentNavigationGraph.Edge flashJump = edge(
                 1, 2, AgentNavigationGraph.EdgeType.FLASH_JUMP,
                 new Point(50, 100), new Point(250, 100), 150);
@@ -593,7 +593,7 @@ class AgentNavigationPathServiceTest {
                         graph, hermit, new Point(50, 100), 1, 2, new Point(250, 100));
 
         assertTrue(basePath.isEmpty());
-        assertEquals(List.of(flashJump), shadowPath);
+        assertTrue(shadowPath.isEmpty());
     }
 
     @Test

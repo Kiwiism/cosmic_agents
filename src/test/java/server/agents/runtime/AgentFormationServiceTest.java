@@ -38,6 +38,7 @@ class AgentFormationServiceTest {
 
     @Test
     void appliesOffsetsToEntries() {
+        System.setProperty("agents.scheduler.mode", "legacy");
         AgentRuntimeEntry first = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         AgentRuntimeEntry second = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
 

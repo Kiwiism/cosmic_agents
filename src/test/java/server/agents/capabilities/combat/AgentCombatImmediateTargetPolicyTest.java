@@ -81,7 +81,7 @@ class AgentCombatImmediateTargetPolicyTest {
         when(skill.getEffect(1)).thenReturn(effect);
         when(effect.canPaySkillCost(agent)).thenReturn(true);
         when(effect.hasBoundingBox()).thenReturn(false);
-        when(effect.getRange()).thenReturn(100);
+        when(effect.getRange()).thenReturn(200);
 
         try (MockedStatic<AgentAttackExecutionProvider> attacks =
                      Mockito.mockStatic(AgentAttackExecutionProvider.class, Mockito.CALLS_REAL_METHODS)) {

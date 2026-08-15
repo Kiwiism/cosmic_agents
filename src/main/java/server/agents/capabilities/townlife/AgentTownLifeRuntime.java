@@ -275,7 +275,7 @@ public final class AgentTownLifeRuntime {
             return true;
         }
         state.select(destination.activity(), destination.point(), destination.targetCharacterId(),
-                destination.destinationMapId(), destination.key(), destination.venueId(),
+                destination.key(), destination.venueId(),
                 decision.source(), decision.correlationId(), nowMs);
         state.memory().remember(destination.activity(), destination.key(), nowMs);
         entry.capabilityStates().require(AgentTownLifeActivitySequenceState.STATE_KEY).clear();

@@ -17,11 +17,13 @@ import static org.mockito.Mockito.mock;
 class AgentSchedulerParityTest {
     @AfterEach
     void tearDown() {
+        System.clearProperty("agents.scheduler.mode");
         AgentRuntimeRegistry.clear();
     }
 
     @Test
     void legacyAndCentralPathsInvokeTheSameTickCallbackPerCadence() {
+        System.setProperty("agents.scheduler.mode", "legacy");
         List<Integer> legacy = new ArrayList<>();
         AtomicReference<Runnable> legacyTick = new AtomicReference<>();
         ScheduledFuture<?> future = mock(ScheduledFuture.class);

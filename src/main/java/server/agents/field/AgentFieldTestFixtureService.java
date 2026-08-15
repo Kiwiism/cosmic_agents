@@ -24,8 +24,10 @@ import java.io.IOException;
 
 /** Guarded deterministic level-15 fixture for manual field-scaling exercises. */
 final class AgentFieldTestFixtureService {
-    private static final int TEST_LEVEL = 15;
-    private static final short BENCHMARK_SUPPLY_QUANTITY = 200;
+    private static final int TEST_LEVEL = config.AgentTuning.intValue(
+            "server.agents.field.AgentFieldTestFixtureService.TEST_LEVEL");
+    private static final short BENCHMARK_SUPPLY_QUANTITY = (short) config.AgentTuning.intValue(
+            "server.agents.field.AgentFieldTestFixtureService.BENCHMARK_SUPPLY_QUANTITY");
 
     private AgentFieldTestFixtureService() {
     }

@@ -41,6 +41,13 @@ public final class AmherstPlanNarrator {
             Map.entry(4031802, "Jr. Sentinel Shellpiece"),
             Map.entry(4031161, "Old Wooden Board"),
             Map.entry(4031162, "Old Screw"));
+    private static final Map<Integer, String> YOONA_QUEST_NAMES = Map.of(
+            8020, "Yoona's Shopping Guide",
+            8021, "Yoona's Quiz on Shopping 1",
+            8022, "Yoona's Quiz on Shopping 2",
+            8023, "Yoona's Quiz on Shopping 3",
+            8024, "Yoona's Quiz on Shopping 4",
+            8025, "Yoona's Quiz on Shopping 5");
 
     private AmherstPlanNarrator() {
     }
@@ -89,6 +96,10 @@ public final class AmherstPlanNarrator {
     }
 
     private static String quest(int questId) {
+        String yoonaQuest = YOONA_QUEST_NAMES.get(questId);
+        if (yoonaQuest != null) {
+            return yoonaQuest;
+        }
         return MapleIslandSouthperryQuestCatalog.findAny(questId)
                 .map(definition -> definition.questName())
                 .orElse("quest " + questId);

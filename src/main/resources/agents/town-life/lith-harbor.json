@@ -29,7 +29,6 @@
   "extensions": {
     "activityHandlers": []
   },
-  "allowedChildMapIds": [],
   "activityWeights": {
     "REST": 110,
     "SOCIALIZE": 110,
@@ -147,8 +146,7 @@
         { "x": 360, "y": 278, "seatId": -1 },
         { "x": 650, "y": 338, "seatId": -1 },
         { "x": 1100, "y": 279, "seatId": -1 }
-      ],
-      "destinationMapId": 0
+      ]
     },
     {
       "id": "world-tour-platform",
@@ -160,8 +158,7 @@
       "spots": [
         { "x": 1575, "y": 641, "seatId": -1 },
         { "x": 1650, "y": 641, "seatId": -1 }
-      ],
-      "destinationMapId": 0
+      ]
     },
     {
       "id": "central-benches",
@@ -180,8 +177,7 @@
         { "x": 2606, "y": 525, "seatId": 3 },
         { "x": 2629, "y": 525, "seatId": 4 },
         { "x": 2650, "y": 525, "seatId": 5 }
-      ],
-      "destinationMapId": 0
+      ]
     },
     {
       "id": "olaf-crossroads",
@@ -194,8 +190,7 @@
         { "x": 2800, "y": 520, "seatId": -1 },
         { "x": 2880, "y": 520, "seatId": -1 },
         { "x": 2960, "y": 520, "seatId": -1 }
-      ],
-      "destinationMapId": 0
+      ]
     },
     {
       "id": "east-town-street",
@@ -208,8 +203,7 @@
         { "x": 3240, "y": 518, "seatId": -1 },
         { "x": 3390, "y": 518, "seatId": -1 },
         { "x": 3520, "y": 518, "seatId": -1 }
-      ],
-      "destinationMapId": 0
+      ]
     },
     {
       "id": "upper-town-overlook",
@@ -227,8 +221,7 @@
         { "x": 2475, "y": 107, "seatId": -1 },
         { "x": 2745, "y": 107, "seatId": -1 },
         { "x": 3015, "y": 107, "seatId": -1 }
-      ],
-      "destinationMapId": 0
+      ]
     },
     {
       "id": "upper-town-street",
@@ -244,8 +237,7 @@
         { "x": 3850, "y": -223, "seatId": -1 },
         { "x": 4250, "y": -223, "seatId": -1 },
         { "x": 4650, "y": -223, "seatId": -1 }
-      ],
-      "destinationMapId": 0
+      ]
     },
     {
       "id": "equipment-shop",
@@ -254,8 +246,7 @@
       "platformKind": "MAIN",
       "capacity": 1,
       "affordances": ["BROWSE"],
-      "spots": [{ "x": 3580, "y": 518, "seatId": -1 }],
-      "destinationMapId": 104000001
+      "spots": [{ "x": 3580, "y": 518, "seatId": -1 }]
     },
     {
       "id": "general-store",
@@ -264,8 +255,7 @@
       "platformKind": "MAIN",
       "capacity": 1,
       "affordances": ["BROWSE"],
-      "spots": [{ "x": 4260, "y": 518, "seatId": -1 }],
-      "destinationMapId": 104000002
+      "spots": [{ "x": 4260, "y": 518, "seatId": -1 }]
     },
     {
       "id": "weapon-shop",
@@ -274,8 +264,7 @@
       "platformKind": "MAIN",
       "capacity": 1,
       "affordances": ["BROWSE"],
-      "spots": [{ "x": 4350, "y": 433, "seatId": -1 }],
-      "destinationMapId": 104000003
+      "spots": [{ "x": 4350, "y": 433, "seatId": -1 }]
     }
   ],
   "facilities": [

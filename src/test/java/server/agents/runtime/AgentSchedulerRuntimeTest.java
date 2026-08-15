@@ -59,6 +59,7 @@ class AgentSchedulerRuntimeTest {
 
     @Test
     void scopedScheduleRunsForCurrentSession() {
+        System.setProperty("agents.scheduler.mode", "legacy");
         SchedulerGateway scheduler = mock(SchedulerGateway.class);
         ScheduledFuture<?> scheduled = mock(ScheduledFuture.class);
         ArgumentCaptor<Runnable> callback = ArgumentCaptor.forClass(Runnable.class);
@@ -78,6 +79,7 @@ class AgentSchedulerRuntimeTest {
 
             assertEquals(1, calls.get());
         } finally {
+            System.clearProperty("agents.scheduler.mode");
             AgentRuntimeRegistry.clear();
         }
     }

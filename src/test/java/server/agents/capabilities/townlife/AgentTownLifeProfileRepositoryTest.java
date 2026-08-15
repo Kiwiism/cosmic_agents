@@ -95,8 +95,7 @@ class AgentTownLifeProfileRepositoryTest {
         assertEquals("henesys", profile.profileId());
         assertEquals(29, profile.restSpots().size());
         assertEquals(7, profile.venues().size());
-        assertEquals(100000100, profile.venue("henesys-market")
-                .orElseThrow().destinationMapId());
+        assertEquals(100000100, profile.facilities().getFirst().destinationMapId());
         assertTrue(validation.valid(), () -> validation.errors().toString());
     }
 

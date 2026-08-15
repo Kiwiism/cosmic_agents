@@ -27,7 +27,6 @@
     "crossDistrictEveryActivities": 5
   },
   "extensions": { "activityHandlers": [] },
-  "allowedChildMapIds": [],
   "activityWeights": {
     "REST": 90,
     "SOCIALIZE": 135,
@@ -87,34 +86,34 @@
         { "x": -790, "y": 426, "seatId": -1 }, { "x": -700, "y": 426, "seatId": -1 },
         { "x": -610, "y": 426, "seatId": -1 }, { "x": -520, "y": 426, "seatId": -1 },
         { "x": -430, "y": 426, "seatId": -1 }, { "x": -340, "y": 426, "seatId": -1 }
-      ], "destinationMapId": 0 },
+      ] },
     { "id": "central-street", "label": "Kerning central street", "district": "LOWER",
       "platformKind": "MAIN", "capacity": 4,
       "affordances": ["REST", "SOCIALIZE", "LINGER", "STROLL"],
       "spots": [
         { "x": 120, "y": 426, "seatId": -1 }, { "x": 240, "y": 426, "seatId": -1 },
         { "x": 400, "y": 426, "seatId": -1 }, { "x": 520, "y": 426, "seatId": -1 }
-      ], "destinationMapId": 0 },
+      ] },
     { "id": "east-street", "label": "Kerning east street", "district": "MIDDLE",
       "platformKind": "MAIN", "capacity": 4,
       "affordances": ["SOCIALIZE", "LINGER", "STROLL", "SHOW_OFF"],
       "spots": [
         { "x": 1543, "y": 156, "seatId": -1 }, { "x": 1796, "y": 156, "seatId": -1 },
         { "x": 1991, "y": 156, "seatId": -1 }, { "x": 2196, "y": 366, "seatId": -1 }
-      ], "destinationMapId": 0 },
+      ] },
     { "id": "subway-sidewalk", "label": "Kerning subway sidewalk", "district": "LOWER",
       "platformKind": "MAIN", "capacity": 3,
       "affordances": ["LINGER", "SOCIALIZE", "STROLL"],
       "spots": [
         { "x": 760, "y": 426, "seatId": -1 }, { "x": 844, "y": 426, "seatId": -1 },
         { "x": 930, "y": 426, "seatId": -1 }
-      ], "destinationMapId": 0 },
+      ] },
     { "id": "west-shop-front", "label": "Kerning west shopfront", "district": "MIDDLE",
       "platformKind": "MAIN", "capacity": 1, "affordances": ["BROWSE", "LINGER"],
-      "spots": [{ "x": -1835, "y": 156, "seatId": -1 }], "destinationMapId": 103000001 },
+      "spots": [{ "x": -1835, "y": 156, "seatId": -1 }] },
     { "id": "central-shop-front", "label": "Kerning central shopfront", "district": "MIDDLE",
       "platformKind": "MAIN", "capacity": 1, "affordances": ["BROWSE", "LINGER"],
-      "spots": [{ "x": 60, "y": -54, "seatId": -1 }], "destinationMapId": 103000005 }
+      "spots": [{ "x": 60, "y": -54, "seatId": -1 }] }
   ],
   "facilities": [
     { "id": "kerning-west-shops", "type": "GENERAL_SHOP", "npcId": 0,

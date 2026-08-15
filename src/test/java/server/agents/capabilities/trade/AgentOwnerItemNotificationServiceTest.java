@@ -68,6 +68,7 @@ class AgentOwnerItemNotificationServiceTest {
             timer.when(TimerManager::getInstance).thenReturn(inlineTimer);
 
             AgentOwnerItemNotificationService.notifyOwnerGainedTradeItem(owner, tradedEquip, sourcePlayer);
+            observerEntry.actionMailbox().drain(observerEntry, 1);
 
             offers.verify(() -> AgentOfferService.notifyOwnerGainedEquip(observerEntry, observerAgent, tradedEquip));
             verify(inlineTimer).schedule(any(Runnable.class), anyLong());

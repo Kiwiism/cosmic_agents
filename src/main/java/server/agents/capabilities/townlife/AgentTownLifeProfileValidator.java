@@ -16,6 +16,24 @@ public final class AgentTownLifeProfileValidator {
     public static Validation validate(AgentTownLifeProfile profile) {
         List<String> errors = new ArrayList<>();
         List<String> warnings = new ArrayList<>();
+        if (profile.admission().mode() == AgentTownLifeAdmissionMode.AMBIENT
+                && (profile.admission().maxAmbientAgents() <= 0
+                || profile.admission().minVisitMs() <= 0L
+                || profile.admission().maxVisitMs() <= 0L)) {
+            errors.add("ambient admission requires positive capacity and visit bounds");
+        }
+        for (Map.Entry<AgentTownLifeState.Activity, Integer> weight
+                : profile.activityWeights().entrySet()) {
+            if (weight.getKey() == AgentTownLifeState.Activity.NONE || weight.getValue() <= 0) {
+                errors.add("activity weights must use an executable activity and a positive value");
+            }
+        }
+        Set<String> arrivalPortalNames = new HashSet<>();
+        for (AgentTownLifeProfile.ArrivalPortal portal : profile.arrivalPortals()) {
+            if (!arrivalPortalNames.add(portal.name())) {
+                errors.add("duplicate arrival portal " + portal.name());
+            }
+        }
         Set<String> venueIds = new HashSet<>();
         Set<Integer> seatIds = new HashSet<>();
         Map<Integer, Point> nativeSeats = new HashMap<>();
@@ -33,6 +51,9 @@ public final class AgentTownLifeProfileValidator {
         for (AgentTownLifeProfile.Venue venue : profile.venues()) {
             if (!venueIds.add(venue.id())) {
                 errors.add("duplicate venue id " + venue.id());
+            }
+            if (new HashSet<>(venue.affordances()).size() != venue.affordances().size()) {
+                errors.add("duplicate affordance in venue " + venue.id());
             }
             Set<Point> points = new HashSet<>();
             for (AgentTownLifeProfile.VenueSpot spot : venue.spots()) {
@@ -76,6 +97,9 @@ public final class AgentTownLifeProfileValidator {
             if (!facilityIds.add(facility.id())) {
                 errors.add("duplicate facility id " + facility.id());
             }
+            if (new HashSet<>(facility.services()).size() != facility.services().size()) {
+                errors.add("duplicate service in facility " + facility.id());
+            }
         }
         Set<String> hotspotIds = new HashSet<>();
         for (AgentTownLifeProfile.Hotspot hotspot : profile.hotspots()) {
@@ -85,6 +109,12 @@ public final class AgentTownLifeProfileValidator {
             if (!venueIds.contains(hotspot.venueId())) {
                 errors.add("hotspot " + hotspot.id() + " references unknown venue "
                         + hotspot.venueId());
+            } else {
+                int venueCapacity = profile.venue(hotspot.venueId()).orElseThrow().capacity();
+                if (hotspot.hardCapacity() > venueCapacity) {
+                    errors.add("hotspot " + hotspot.id() + " exceeds venue capacity "
+                            + venueCapacity);
+                }
             }
         }
         Set<String> handlers = AgentTownLifeActivityExtensionRegistry.defaultRegistry().ids();

@@ -25,7 +25,11 @@ public final class AgentModeService {
 
     public static void startFollow(AgentRuntimeEntry entry, Character target) {
         AgentRelationshipRuntime.setFollowTarget(entry, target);
-        AgentModeStateRuntime.setFollowTargetId(entry, target == null ? 0 : target.getId());
+        Character interactionTarget = AgentRelationshipRuntime.interactionTarget(entry);
+        boolean followsInteractionTarget = target != null && interactionTarget != null
+                && target.getId() == interactionTarget.getId();
+        AgentModeStateRuntime.setFollowTargetId(
+                entry, target == null || followsInteractionTarget ? 0 : target.getId());
         AgentModeStateRuntime.setGrinding(entry, false);
         AgentMoveTargetStateRuntime.clearMoveTarget(entry);
         AgentFarmAnchorStateRuntime.clearFarmAnchor(entry);

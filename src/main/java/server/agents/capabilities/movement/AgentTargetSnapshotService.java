@@ -82,7 +82,7 @@ public final class AgentTargetSnapshotService {
             primaryTargetSource = "follow-target";
         } else {
             primaryTargetPos = rawOwnerPos;
-            primaryTargetSource = "self";
+            primaryTargetSource = configuredTarget == null ? "self" : "owner-raw";
         }
         return new AgentTargetSnapshot(
                 formation,

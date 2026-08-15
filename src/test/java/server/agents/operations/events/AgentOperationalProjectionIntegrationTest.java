@@ -2,6 +2,8 @@ package server.agents.operations.events;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import server.agents.capabilities.dialogue.AgentDialogueIntentEvent;
 import server.agents.events.AgentEventBus;
 import server.agents.events.AgentEventPriority;
@@ -18,6 +20,19 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class AgentOperationalProjectionIntegrationTest {
+    private boolean previousDialogueTransport;
+
+    @BeforeEach
+    void enableDialogueProjection() {
+        previousDialogueTransport = config.AgentYamlConfig.config.agent.AGENT_DIALOGUE_TRANSPORT_ENABLED;
+        config.AgentYamlConfig.config.agent.AGENT_DIALOGUE_TRANSPORT_ENABLED = true;
+    }
+
+    @AfterEach
+    void restoreDialogueProjection() {
+        config.AgentYamlConfig.config.agent.AGENT_DIALOGUE_TRANSPORT_ENABLED = previousDialogueTransport;
+    }
+
     @Test
     void operationalFactsUpdateReadModelMaintenanceAndLifeDialogue() {
         Character agent = mock(Character.class);

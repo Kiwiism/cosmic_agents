@@ -14,7 +14,6 @@ public record AgentTownLifeProfile(
         Geometry geometry,
         Distribution distribution,
         Extensions extensions,
-        List<Integer> allowedChildMapIds,
         Map<AgentTownLifeState.Activity, Integer> activityWeights,
         List<ArrivalPortal> arrivalPortals,
         List<RestSpot> restSpots,
@@ -34,7 +33,6 @@ public record AgentTownLifeProfile(
         }
         admission = admission == null ? Admission.manualOnly() : admission;
         extensions = extensions == null ? Extensions.generic() : extensions;
-        allowedChildMapIds = List.copyOf(allowedChildMapIds == null ? List.of() : allowedChildMapIds);
         activityWeights = Map.copyOf(activityWeights == null ? Map.of() : activityWeights);
         arrivalPortals = List.copyOf(arrivalPortals);
         restSpots = List.copyOf(restSpots == null ? List.of() : restSpots);
@@ -311,8 +309,7 @@ public record AgentTownLifeProfile(
                         AgentTownLifeState.PlatformKind platformKind,
                         int capacity,
                         List<Affordance> affordances,
-                        List<VenueSpot> spots,
-                        int destinationMapId) {
+                        List<VenueSpot> spots) {
         public Venue {
             if (id == null || id.isBlank() || capacity <= 0) {
                 throw new IllegalArgumentException("town-life venue identity and capacity are required");
@@ -323,8 +320,7 @@ public record AgentTownLifeProfile(
             platformKind = platformKind == null ? AgentTownLifeState.PlatformKind.ANY : platformKind;
             affordances = List.copyOf(affordances == null ? List.of() : affordances);
             spots = List.copyOf(spots == null ? List.of() : spots);
-            if (affordances.isEmpty() || (spots.isEmpty() && destinationMapId <= 0)
-                    || (!spots.isEmpty() && capacity > spots.size())) {
+            if (affordances.isEmpty() || spots.isEmpty() || capacity > spots.size()) {
                 throw new IllegalArgumentException("town-life venue affordances, spots, and capacity are invalid");
             }
         }

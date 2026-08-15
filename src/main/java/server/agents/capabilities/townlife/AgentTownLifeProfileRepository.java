@@ -18,10 +18,16 @@ public final class AgentTownLifeProfileRepository {
 
     AgentTownLifeProfileRepository(List<AgentTownLifeProfile> profiles) {
         Map<Integer, AgentTownLifeProfile> index = new LinkedHashMap<>();
+        Map<String, Integer> profileIds = new LinkedHashMap<>();
         for (AgentTownLifeProfile profile : profiles) {
             AgentTownLifeProfileValidator.requireValid(profile);
             if (index.putIfAbsent(profile.mapId(), profile) != null) {
                 throw new IllegalArgumentException("duplicate town-life map " + profile.mapId());
+            }
+            Integer previousMap = profileIds.putIfAbsent(profile.profileId(), profile.mapId());
+            if (previousMap != null) {
+                throw new IllegalArgumentException("duplicate town-life profile id "
+                        + profile.profileId() + " for maps " + previousMap + " and " + profile.mapId());
             }
         }
         byMapId = Map.copyOf(index);

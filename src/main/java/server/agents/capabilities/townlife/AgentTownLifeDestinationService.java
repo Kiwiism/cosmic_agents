@@ -24,7 +24,6 @@ final class AgentTownLifeDestinationService {
     record Destination(AgentTownLifeState.Activity activity,
                        Point point,
                        int targetCharacterId,
-                       int destinationMapId,
                        String key,
                        String venueId) {
     }
@@ -77,7 +76,7 @@ final class AgentTownLifeDestinationService {
                 Point reserved = reserveFirst(agent, state, nowMs,
                         List.of(space("town-social", agent.getMapId(), target, socialSpotNumber(target))), key);
                 if (reserved != null) {
-                    return new Destination(requested, reserved, peer.getId(), 0, key, "");
+                    return new Destination(requested, reserved, peer.getId(), key, "");
                 }
             }
             requested = AgentTownLifeState.Activity.STROLL;
@@ -152,7 +151,7 @@ final class AgentTownLifeDestinationService {
                     .orElseGet(() -> space.catalogId() + ':' + space.spotNumber());
             Point reserved = reserveFirst(agent, state, nowMs, spaces, key, space);
             if (reserved != null) {
-                return new Destination(activity, reserved, 0, 0, key, "");
+                return new Destination(activity, reserved, 0, key, "");
             }
         }
         return null;
@@ -247,7 +246,7 @@ final class AgentTownLifeDestinationService {
             targetId = peer == null ? 0 : peer.getId();
         }
         return new Destination(reserved.activity(), reserved.point(), targetId,
-                reserved.destinationMapId(), reserved.key(), venue.id());
+                reserved.key(), venue.id());
     }
 
     private static Destination reservedDestination(Character agent,
@@ -259,7 +258,7 @@ final class AgentTownLifeDestinationService {
                                                    String venueId) {
         Destination result = reservedDestination(agent, state, activity, spaces, nowMs, seed);
         return result == null ? null : new Destination(result.activity(), result.point(),
-                result.targetCharacterId(), result.destinationMapId(), result.key(), venueId);
+                result.targetCharacterId(), result.key(), venueId);
     }
 
     private static Character choosePeer(Character agent,

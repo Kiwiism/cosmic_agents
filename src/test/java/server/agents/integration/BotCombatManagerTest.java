@@ -1569,7 +1569,7 @@ class BotCombatManagerTest {
     }
 
     @Test
-    void shouldRejectAirborneRangedAttackPlansForWeaponsThatCannotJumpShoot() {
+    void shouldAllowAirborneRangedAttackPlansOnlyForMobileJumpAttackWeapons() {
         Character bot = mockBot(new Point(100, 200), mock(MapleMap.class), 20_000, null);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
         AgentMovementStateRuntime.setInAir(entry, true);
@@ -1584,7 +1584,7 @@ class BotCombatManagerTest {
 
         assertFalse(AgentCombatRangePolicy.canUseAttackPlanNow(false, WeaponType.BOW, rangedBowPlan.route));
         assertFalse(AgentCombatRangePolicy.canUseAttackPlanNow(false, WeaponType.CROSSBOW, rangedBowPlan.route));
-        assertFalse(AgentCombatRangePolicy.canUseAttackPlanNow(false, WeaponType.GUN, rangedBowPlan.route));
+        assertTrue(AgentCombatRangePolicy.canUseAttackPlanNow(false, WeaponType.GUN, rangedBowPlan.route));
         assertTrue(AgentCombatRangePolicy.canUseAttackPlanNow(false, WeaponType.CLAW, rangedBowPlan.route));
         assertTrue(AgentCombatRangePolicy.canUseAttackPlanNow(false, WeaponType.BOW, closePlan.route));
     }
@@ -1771,6 +1771,7 @@ class BotCombatManagerTest {
         when(owner.getId()).thenReturn(909052);
         Character bot = mockBot(new Point(50, 100), map, 20_000, null);
         Character siblingBot = mockBot(new Point(220, 100), map, 20_000, null);
+        when(siblingBot.getId()).thenReturn(2);
         Monster occupiedTarget = mockMob(new Point(220, 100), 9300400);
         Monster openTarget = mockMob(new Point(340, 100), 9300401);
         doReturn(perception(List.of(occupiedTarget, openTarget))).when(map).getPerceptionSnapshot();
@@ -1779,6 +1780,7 @@ class BotCombatManagerTest {
         AgentModeStateRuntime.setGrinding(entry, true);
         AgentRuntimeEntry siblingEntry = new AgentRuntimeEntry(siblingBot, owner, null);
         AgentModeStateRuntime.setGrinding(siblingEntry, true);
+        doReturn(List.of(bot, siblingBot)).when(map).getCharacters();
 
         Map<Integer, List<AgentRuntimeEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
         AgentRuntimeRegistry.registerEntry(owner.getId(), entry);
@@ -1915,6 +1917,7 @@ class BotCombatManagerTest {
             return null;
         }).when(bot).addMPHPAndTriggerAutopot(anyInt(), anyInt());
         when(bot.getStance()).thenAnswer(invocation -> stance.get());
+        when(bot.getChair()).thenReturn(-1);
         doAnswer(invocation -> {
             stance.set(invocation.getArgument(0));
             return null;

@@ -601,6 +601,7 @@ class BotMovementManagerTest {
         MapleMap map = new MapleMap(910000032, 0, 0, 910000032, 1.0f);
         server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
         footholds.insert(new Foothold(new Point(0, 120), new Point(200, 120), 1));
+        footholds.insert(new Foothold(new Point(70, 40), new Point(130, 40), 2));
         map.setFootholds(footholds);
         map.addRope(new Rope(100, 40, 120, false));
 

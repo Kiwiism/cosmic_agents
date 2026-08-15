@@ -1,7 +1,6 @@
 package server.agents.observer;
 
 import client.Character;
-import client.Client;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
@@ -35,7 +34,6 @@ class AgentObserverRuntimeTest {
     void loadsNamedOfflineObserverToWatchTheCommandIssuer() throws Exception {
         Character watched = mock(Character.class);
         Character observer = mock(Character.class);
-        Client observerClient = mock(Client.class);
         CharacterGateway characters = mock(CharacterGateway.class);
         AgentClientGateway clients = mock(AgentClientGateway.class);
         AgentPersistenceGateway persistence = mock(AgentPersistenceGateway.class);
@@ -50,7 +48,6 @@ class AgentObserverRuntimeTest {
         when(observer.getId()).thenReturn(20);
         when(observer.getName()).thenReturn("Kiwi");
         when(observer.getMapId()).thenReturn(AgentObserverPolicy.STATION_MAP_ID);
-        when(observer.getClient()).thenReturn(observerClient);
         when(clients.world(watched)).thenReturn(0);
         when(clients.channel(watched)).thenReturn(1);
         when(persistence.findCharacterByName("Kiwi"))
@@ -100,8 +97,7 @@ class AgentObserverRuntimeTest {
             } finally {
                 AgentObserverRuntime.stop();
             }
+            verify(characters).disconnect(observer, false, false);
         }
-
-        verify(observerClient).forceDisconnect();
     }
 }

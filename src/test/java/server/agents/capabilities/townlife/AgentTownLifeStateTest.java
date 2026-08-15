@@ -23,7 +23,7 @@ class AgentTownLifeStateTest {
         assertTrue(state.nextActionAtMs() >= 1_500L);
         assertTrue(state.nextActionAtMs() <= 11_000L);
 
-        state.select(AgentTownLifeState.Activity.SOCIALIZE, new Point(10, 20), 55, 0, 2_000L);
+        state.select(AgentTownLifeState.Activity.SOCIALIZE, new Point(10, 20), 55, 2_000L);
         assertEquals(AgentTownLifeState.Stage.MOVE_TO_ACTIVITY, state.stage());
         assertEquals(new Point(10, 20), state.target());
         assertEquals(55, state.targetCharacterId());

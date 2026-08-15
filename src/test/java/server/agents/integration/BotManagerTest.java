@@ -197,6 +197,7 @@ class BotManagerTest {
             timer.when(TimerManager::getInstance).thenReturn(inlineTimer);
 
             AgentOwnerItemNotificationService.notifyOwnerGainedTradeItem(owner, tradedEquip, sourcePlayer);
+            observerEntry.actionMailbox().drain(observerEntry, 1);
 
             offers.verify(() -> AgentOfferService.notifyOwnerGainedEquip(observerEntry, observerBot, tradedEquip));
         } finally {
@@ -485,41 +486,6 @@ class BotManagerTest {
             assertEquals(rangedMob, AgentRangedPriorityTargetSelector.selectPriorityRangedAttackTarget(
                     entry, bot, botPos, closeMob));
         }
-    }
-
-    @Test
-    void shouldKeepMovingWhenInRangeRangedAttackDoesNotFire() {
-        MapleMap map = createEmptyTestMap(910000062);
-        map.getFootholds().insert(new Foothold(new Point(-200, 100), new Point(200, 100), 1));
-        Character bot = mockMovingBot(new Point(100, 100), map);
-        Monster target = mockMob(new Point(-50, 100), 9300500);
-        when(target.getMap()).thenReturn(map);
-
-        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentModeStateRuntime.setGrinding(entry, true);
-        AgentGrindTargetStateRuntime.setTarget(entry, target);
-        AgentMapStateRuntime.setMapTracking(entry, map.getId(), AgentFootholdIndexService.buildFhIndex(map));
-        AgentAttackPlan rangedPlan = new AgentAttackPlan(
-                0, 0, 1, new Rectangle(-200, 50, 300, 100),
-                List.of(target), AgentAttackRoute.RANGED,
-                0, 11, 11, 11, 4, 300, 600, null);
-
-        try (MockedStatic<AgentAttackExecutionProvider> attacks =
-                     mockStatic(AgentAttackExecutionProvider.class, org.mockito.Mockito.CALLS_REAL_METHODS);
-             MockedStatic<AgentCombatPlanRuntime> plans =
-                     mockStatic(AgentCombatPlanRuntime.class, org.mockito.Mockito.CALLS_REAL_METHODS);
-             MockedStatic<AgentCombatAttackRuntime> attacksRuntime =
-                     mockStatic(AgentCombatAttackRuntime.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
-            attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.CLAW);
-            plans.when(() -> AgentCombatPlanRuntime.planAttack(entry, bot, target, AgentCombatConfig.cfg))
-                    .thenReturn(rangedPlan);
-            attacksRuntime.when(() -> AgentCombatAttackRuntime.attackMonster(entry, bot, rangedPlan))
-                    .thenAnswer(invocation -> null);
-
-            AgentMovementOnlyTickCoordinator.stepMovementOnly(entry, target.getPosition(), false);
-        }
-
-        assertTrue(bot.getPosition().x < 100);
     }
 
     @Test

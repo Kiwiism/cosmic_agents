@@ -64,6 +64,7 @@ class AgentWhisperCommandServiceTest {
 
         try (MockedStatic<AgentChatRuntime> chat = mockStatic(AgentChatRuntime.class)) {
             CosmicAgentWhisperCommandBridge.handleWhisperToAgent(leader, target, "follow me");
+            entry.actionMailbox().drain(entry, 1);
 
             assertEquals(AgentReplyChannel.WHISPER, AgentReplyChannelStateRuntime.replyChannel(entry));
             chat.verify(() -> AgentChatRuntime.handleChat(eq("follow me"), any()));

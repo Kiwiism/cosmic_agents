@@ -47,8 +47,29 @@ class AgentTownLifeOwnershipTest {
                 String source = Files.readString(file);
                 assertFalse(source.contains("import server.agents.progression."), file::toString);
                 assertFalse(source.contains("import server.agents.plans."), file::toString);
+                assertFalse(source.contains("import server.agents.capabilities.combat."), file::toString);
+                assertFalse(source.contains("import server.agents.capabilities.shop."), file::toString);
+                assertFalse(source.contains("import server.agents.capabilities.trade."), file::toString);
+                assertFalse(source.contains(".travelTo("), file::toString);
+                assertFalse(source.contains(".changeMap("), file::toString);
+                assertFalse(source.contains(".gainItem("), file::toString);
             }
         }
+    }
+
+    @Test
+    void localActivityStateAndVenuesCannotCarryCrossMapDestinations() throws Exception {
+        String state = Files.readString(Path.of("src", "main", "java", "server", "agents",
+                "capabilities", "townlife", "AgentTownLifeState.java"));
+        String profile = Files.readString(Path.of("src", "main", "java", "server", "agents",
+                "capabilities", "townlife", "AgentTownLifeProfile.java"));
+
+        assertFalse(state.contains("destinationMapId"));
+        String venueRecord = profile.substring(profile.indexOf("public record Venue("),
+                profile.indexOf("public record VenueSpot("));
+        assertFalse(venueRecord.contains("destinationMapId"));
+        assertTrue(profile.substring(profile.indexOf("public record Facility(")).contains(
+                "destinationMapId"));
     }
 
     @Test
