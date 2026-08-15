@@ -2,6 +2,7 @@ package server.agents.plans;
 
 import client.Character;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.plans.amherst.AgentAmherstPlanRuntime;
 
 import java.io.IOException;
 import java.util.List;
@@ -26,6 +27,33 @@ public final class AgentUniversalPlanRuntime {
     public static boolean active(AgentRuntimeEntry entry) {
         return entry != null && entry.capabilityStates().find(AgentPlanSessionState.STATE_KEY)
                 .map(AgentPlanSessionState::active).orElse(false);
+    }
+
+    /**
+     * Foreground compatibility boundary. Old Amherst checkpoints remain executable, but no
+     * longer register a second competing foreground activity.
+     */
+    public static boolean foregroundActive(AgentRuntimeEntry entry) {
+        return active(entry) || AgentAmherstPlanRuntime.active(entry);
+    }
+
+    public static boolean foregroundTick(
+            AgentRuntimeEntry entry, Character agent, long nowMs) {
+        if (active(entry)) {
+            return tick(entry, agent, nowMs);
+        }
+        return AgentAmherstPlanRuntime.active(entry)
+                && AgentAmherstPlanRuntime.tickGate(entry, agent, nowMs);
+    }
+
+    public static boolean foregroundCancel(
+            AgentRuntimeEntry entry, Character agent, String reason, long nowMs) {
+        boolean cancelled = cancel(entry, agent, reason, nowMs);
+        if (AgentAmherstPlanRuntime.active(entry)) {
+            AgentAmherstPlanRuntime.cancel(entry);
+            cancelled = true;
+        }
+        return cancelled;
     }
 
     public static boolean tick(AgentRuntimeEntry entry, Character agent, long nowMs) {

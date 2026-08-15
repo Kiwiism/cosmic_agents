@@ -4,7 +4,6 @@ import client.Character;
 import server.agents.capabilities.runtime.AgentCapabilityRuntime;
 import server.agents.capabilities.townlife.AgentTownLifeRuntime;
 import server.agents.plans.AgentUniversalPlanRuntime;
-import server.agents.plans.amherst.AgentAmherstPlanRuntime;
 import server.agents.plans.mapleisland.AgentMapleIslandLithHandoffRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.townlife.AgentTownLifeVisitLeaseRuntime;
@@ -36,7 +35,6 @@ public final class AgentForegroundActivityDefaults {
                     townLifeVisitLease(),
                     townLife(),
                     universalPlan(),
-                    legacyAmherst(),
                     capability()));
     }
 
@@ -132,18 +130,11 @@ public final class AgentForegroundActivityDefaults {
 
     private static AgentForegroundActivity universalPlan() {
         return blockingBooleanActivity("universal-plan", 400,
-                (entry, agent) -> AgentUniversalPlanRuntime.active(entry),
-                AgentUniversalPlanRuntime::tick,
+                (entry, agent) -> AgentUniversalPlanRuntime.foregroundActive(entry),
+                AgentUniversalPlanRuntime::foregroundTick,
                 (entry, agent, reason, nowMs) ->
-                        AgentUniversalPlanRuntime.cancel(entry, agent, reason, nowMs));
-    }
-
-    private static AgentForegroundActivity legacyAmherst() {
-        return blockingBooleanActivity("legacy-checkpoint-amherst", 200,
-                (entry, agent) -> AgentAmherstPlanRuntime.active(entry),
-                AgentAmherstPlanRuntime::tickGate,
-                (entry, agent, reason, nowMs) ->
-                        AgentAmherstPlanRuntime.cancel(entry));
+                        AgentUniversalPlanRuntime.foregroundCancel(
+                                entry, agent, reason, nowMs));
     }
 
     private static AgentForegroundActivity capability() {
