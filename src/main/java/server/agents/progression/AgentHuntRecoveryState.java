@@ -29,6 +29,12 @@ final class AgentHuntRecoveryState {
                 .forEach(frame -> frame.observeRelevantDamage(nowMs));
     }
 
+    synchronized void observeRelevantKill(int mapId, long nowMs) {
+        frames.values().stream()
+                .filter(frame -> frame.mapId() == mapId)
+                .forEach(frame -> frame.observeRelevantKill(nowMs));
+    }
+
     static final class Frame {
         private int mapId = -1;
         private int lastProgress;
@@ -37,6 +43,7 @@ final class AgentHuntRecoveryState {
         private long zeroTargetsSinceMs;
         private long firstRelevantDamageAtMs;
         private long lastRelevantDamageAtMs;
+        private long navigationWarmupStartedAtMs;
         private int reentryAttempts;
         private boolean fallbackActive;
         private final Map<Integer, Long> failedMapUntilMs = new HashMap<>();
@@ -57,6 +64,7 @@ final class AgentHuntRecoveryState {
             zeroTargetsSinceMs = 0L;
             firstRelevantDamageAtMs = 0L;
             lastRelevantDamageAtMs = 0L;
+            navigationWarmupStartedAtMs = 0L;
         }
 
         synchronized boolean observeProgress(int progress, long nowMs) {
@@ -82,6 +90,11 @@ final class AgentHuntRecoveryState {
             lastRelevantDamageAtMs = Math.max(lastRelevantDamageAtMs, nowMs);
         }
 
+        synchronized void observeRelevantKill(long nowMs) {
+            firstRelevantDamageAtMs = 0L;
+            lastRelevantDamageAtMs = Math.max(lastRelevantDamageAtMs, nowMs);
+        }
+
         synchronized boolean recentRelevantDamage(long nowMs, long graceMs) {
             return lastRelevantDamageAtMs > 0L
                     && nowMs - lastRelevantDamageAtMs < graceMs;
@@ -98,6 +111,28 @@ final class AgentHuntRecoveryState {
             } else if (zeroTargetsSinceMs == 0L) {
                 zeroTargetsSinceMs = nowMs;
             }
+        }
+
+        synchronized boolean suspendForNavigationWarmup(
+                boolean warmupPending,
+                long nowMs,
+                long maximumPauseMs) {
+            if (!warmupPending) {
+                navigationWarmupStartedAtMs = 0L;
+                return false;
+            }
+            if (navigationWarmupStartedAtMs == 0L) {
+                navigationWarmupStartedAtMs = nowMs;
+            }
+            if (nowMs - navigationWarmupStartedAtMs >= Math.max(0L, maximumPauseMs)) {
+                return false;
+            }
+            mapEnteredAtMs = nowMs;
+            lastProgressAtMs = nowMs;
+            zeroTargetsSinceMs = 0L;
+            firstRelevantDamageAtMs = 0L;
+            lastRelevantDamageAtMs = 0L;
+            return true;
         }
 
         synchronized boolean arrivalGraceElapsed(long nowMs, long graceMs) {

@@ -122,7 +122,7 @@ public final class AgentInstructorTrainingRuntime {
                     gateway.stop(entry);
                     return true;
                 }
-                gateway.grind(entry, step.mobIds());
+                grindWithLocalIncidental(entry, agent, step.mobIds(), gateway);
                 return true;
             }
             if (AgentVictoriaRouteRuntime.travel(
@@ -144,7 +144,7 @@ public final class AgentInstructorTrainingRuntime {
         if (AgentVictoriaRouteRuntime.travel(entry, agent, step.huntingMapId(), gateway)) {
             return true;
         }
-        gateway.grind(entry, step.mobIds());
+        grindWithLocalIncidental(entry, agent, step.mobIds(), gateway);
         return true;
     }
 
@@ -195,8 +195,24 @@ public final class AgentInstructorTrainingRuntime {
             gateway.stop(entry);
             return true;
         }
-        gateway.grind(entry, Set.copyOf(huntMap.targetMobIds()));
+        grindWithLocalIncidental(
+                entry, agent, Set.copyOf(huntMap.targetMobIds()), gateway);
         return true;
+    }
+
+    private static void grindWithLocalIncidental(AgentRuntimeEntry entry,
+                                                  Character agent,
+                                                  Set<Integer> requiredMobIds,
+                                                  PrimitiveCapabilityGateway gateway) {
+        Set<Integer> incidentals = AgentInstructorCombatPolicy.localIncidentalMobIds(
+                requiredMobIds,
+                gateway.configuredMonsterSpawnCounts(agent),
+                gateway.liveMonsterCounts(agent));
+        if (incidentals.isEmpty()) {
+            gateway.grind(entry, requiredMobIds);
+            return;
+        }
+        gateway.grind(entry, requiredMobIds, incidentals);
     }
 
     private static String instructorObjectiveKey(AgentInstructorTrainingStep step) {

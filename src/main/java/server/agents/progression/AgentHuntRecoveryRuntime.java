@@ -2,6 +2,7 @@ package server.agents.progression;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import server.agents.integration.AgentNavigationReadinessRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.LinkedHashSet;
@@ -19,6 +20,8 @@ final class AgentHuntRecoveryRuntime {
             "server.agents.progression.AgentHuntRecoveryRuntime.DAMAGE_HEARTBEAT_GRACE_MS");
     private static final long HARD_KILL_GRACE_MS = config.AgentTuning.longValue(
             "server.agents.progression.AgentHuntRecoveryRuntime.HARD_KILL_GRACE_MS");
+    private static final long NAVIGATION_WARMUP_MAX_PAUSE_MS = config.AgentTuning.longValue(
+            "server.agents.progression.AgentHuntRecoveryRuntime.NAVIGATION_WARMUP_MAX_PAUSE_MS");
     private static final long FAILED_MAP_COOLDOWN_MS = config.AgentTuning.longValue(
             "server.agents.progression.AgentHuntRecoveryRuntime.FAILED_MAP_COOLDOWN_MS");
     private static final int MAX_INSTANCE_REENTRIES = config.AgentTuning.intValue(
@@ -35,11 +38,28 @@ final class AgentHuntRecoveryRuntime {
             int liveTargets,
             boolean instanceMap,
             long nowMs) {
+        return observe(entry, objectiveKey, mapId, progress, liveTargets, instanceMap,
+                AgentNavigationReadinessRuntime.warmupPending(entry, mapId), nowMs);
+    }
+
+    static Observation observe(
+            AgentRuntimeEntry entry,
+            String objectiveKey,
+            int mapId,
+            int progress,
+            int liveTargets,
+            boolean instanceMap,
+            boolean navigationWarmupPending,
+            long nowMs) {
         AgentHuntRecoveryState.Frame frame = entry.capabilityStates()
                 .require(AgentHuntRecoveryState.STATE_KEY).frame(objectiveKey, progress, nowMs);
         frame.enterMap(mapId, nowMs);
         boolean advanced = frame.observeProgress(progress, nowMs);
         frame.observeTargets(liveTargets, nowMs);
+        if (frame.suspendForNavigationWarmup(
+                navigationWarmupPending, nowMs, NAVIGATION_WARMUP_MAX_PAUSE_MS)) {
+            return Observation.STAY;
+        }
         if (advanced || !frame.arrivalGraceElapsed(nowMs, MAP_ARRIVAL_GRACE_MS)) {
             return Observation.STAY;
         }
@@ -96,6 +116,11 @@ final class AgentHuntRecoveryRuntime {
     static void recordRelevantDamage(AgentRuntimeEntry entry, int mapId, long nowMs) {
         entry.capabilityStates().find(AgentHuntRecoveryState.STATE_KEY)
                 .ifPresent(state -> state.observeRelevantDamage(mapId, nowMs));
+    }
+
+    static void recordRelevantKill(AgentRuntimeEntry entry, int mapId, long nowMs) {
+        entry.capabilityStates().find(AgentHuntRecoveryState.STATE_KEY)
+                .ifPresent(state -> state.observeRelevantKill(mapId, nowMs));
     }
 
     enum Observation {

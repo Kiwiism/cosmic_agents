@@ -219,6 +219,8 @@ final class AgentVictoriaSharedQuestPackRuntime {
         String huntKey = "shared:" + selectionId;
         boolean recovering = AgentHuntRecoveryRuntime.fallbackActive(
                 entry, huntKey, progress, nowMs);
+        Set<Integer> failedMaps = AgentHuntRecoveryRuntime.failedMaps(
+                entry, huntKey, progress, nowMs);
         AgentVictoriaQuestRuntimeCatalog.HuntMap preferredMap =
                 new AgentVictoriaQuestRuntimeCatalog.HuntMap(
                         1, step.mapId(), 2, 4, step.preferredMobIds());
@@ -226,13 +228,16 @@ final class AgentVictoriaSharedQuestPackRuntime {
                 : AgentAdaptiveQuestHuntSelector.defaultSelector()
                         .select(new AgentHuntSelectionRequest(
                                 entry, agent, huntKey, demands, List.of(preferredMap),
-                                AgentHuntRecoveryRuntime.failedMaps(
-                                        entry, huntKey, progress, nowMs), true,
+                                failedMaps, true,
                                 recovering ? AgentHuntSelectionRequest.Reason.EXHAUSTION_FALLBACK
                                         : AgentHuntSelectionRequest.Reason.NORMAL,
                                 nowMs))
                         .orElse(null);
-        int huntMapId = selection == null ? step.mapId() : selection.map().mapId();
+        int authoredFallbackMapId = authoredFallbackMapId(
+                step, failedMaps, agent.getMapId());
+        int huntMapId = authoredFallbackMapId > 0
+                ? authoredFallbackMapId
+                : selection == null ? step.mapId() : selection.map().mapId();
         if (agent.getMapId() != huntMapId) {
             if (step.skipReturnScrollPreparation()) {
                 AgentQuestReturnScrollPolicy.clear(entry);
@@ -245,7 +250,18 @@ final class AgentVictoriaSharedQuestPackRuntime {
                     return Result.RUNNING;
                 }
             }
-            if (AgentVictoriaRouteRuntime.travel(entry, agent, huntMapId, gateway)) {
+            AgentVictoriaRouteRuntime.TravelOutcome travel =
+                    AgentVictoriaRouteRuntime.travelStatus(
+                            entry, agent, huntMapId, gateway, nowMs);
+            if (travel.status() == AgentVictoriaRouteRuntime.Status.NO_ROUTE
+                    || travel.edgeBlocked()) {
+                AgentHuntRecoveryRuntime.failMaps(
+                        entry, huntKey, progress, Set.of(huntMapId), nowMs);
+                AgentAdaptiveQuestHuntSelector.defaultSelector()
+                        .clearCombinedSelection(agent.getId(), huntKey);
+                gateway.stop(entry);
+            }
+            if (travel.status() != AgentVictoriaRouteRuntime.Status.ARRIVED) {
                 return Result.RUNNING;
             }
         }
@@ -277,6 +293,20 @@ final class AgentVictoriaSharedQuestPackRuntime {
                 AgentCombatPolicyConfig.spawnPressureMinTargetSharePercent());
         gateway.grind(entry, preferred, incidental);
         return Result.RUNNING;
+    }
+
+    static int authoredFallbackMapId(
+            AgentVictoriaSharedQuestPackCatalog.Step step,
+            Set<Integer> failedMaps,
+            int currentMapId) {
+        if (!failedMaps.contains(step.mapId())) {
+            return -1;
+        }
+        return step.fallbackMapIds().stream()
+                .filter(mapId -> !failedMaps.contains(mapId))
+                .filter(mapId -> AgentVictoriaTrainingRouteCatalog.canRoute(currentMapId, mapId))
+                .findFirst()
+                .orElse(-1);
     }
 
     private static List<AgentHuntSelectionRequest.ObjectiveDemand> huntDemands(

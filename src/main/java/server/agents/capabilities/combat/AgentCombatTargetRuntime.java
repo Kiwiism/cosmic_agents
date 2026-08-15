@@ -103,7 +103,7 @@ public final class AgentCombatTargetRuntime {
                 return null;
             }
             PolicySelection policySelection = applyObjectivePolicy(
-                    entry, bot, botPos, botFoothold, candidates);
+                    entry, bot, botPos, botFoothold, candidates, platformBatch.retained());
             candidates = policySelection.candidates();
             int policyCandidateCount = candidates.size();
 
@@ -247,7 +247,7 @@ public final class AgentCombatTargetRuntime {
                 return null;
             }
             PolicySelection policySelection = applyObjectivePolicy(
-                    entry, bot, botPos, botFoothold, filtered);
+                    entry, bot, botPos, botFoothold, filtered, false);
             filtered = policySelection.candidates();
             int policyCandidateCount = filtered.size();
 
@@ -977,7 +977,8 @@ public final class AgentCombatTargetRuntime {
                                                         Character bot,
                                                         Point botPos,
                                                         Foothold botFoothold,
-                                                        List<Monster> candidates) {
+                                                        List<Monster> candidates,
+                                                        boolean commitLocalPlatformBatch) {
         AgentCombatDirective directive = AgentCombatDirectiveRuntime.directive(entry);
         if (directive == null) {
             return legacyPolicySelection(entry, candidates);
@@ -995,7 +996,8 @@ public final class AgentCombatTargetRuntime {
                         candidates,
                         monster -> directive.requiredMobIds().contains(monster.getId()),
                         monster -> isLocalCombatTarget(context, bot, botFoothold, monster),
-                        allowSweep);
+                        allowSweep,
+                        commitLocalPlatformBatch);
         return new PolicySelection(new ArrayList<>(selected.candidates()),
                 selected.candidateClass(), selected.reason(), currentRegionId);
     }
@@ -1116,14 +1118,23 @@ public final class AgentCombatTargetRuntime {
         if (entry == null || bot == null || selected == null || policySelection == null) {
             return;
         }
+        AgentCombatCandidateClass selectedClass = policySelection.candidateClass();
+        if (policySelection.reason() == AgentCombatDecisionReason.PLATFORM_BATCH_CLEAR) {
+            AgentCombatDirective directive = AgentCombatDirectiveRuntime.directive(entry);
+            selectedClass = directive != null
+                    && !directive.requiredMobIds().isEmpty()
+                    && !directive.requiredMobIds().contains(selected.getId())
+                    ? AgentCombatCandidateClass.INCIDENTAL
+                    : AgentCombatCandidateClass.REQUIRED;
+        }
         AgentCombatDirectiveRuntime.state(entry).selected(
                 bot.getMapId(), policySelection.regionId(), selected.getId(),
-                policySelection.candidateClass(), policySelection.reason(),
+                selectedClass, policySelection.reason(),
                 System.currentTimeMillis());
         AgentCombatTargetSearchModeState searchMode = searchModeState(
                 entry, bot, System.currentTimeMillis());
         if (searchMode != null
-                && policySelection.candidateClass() == AgentCombatCandidateClass.INCIDENTAL
+                && selectedClass == AgentCombatCandidateClass.INCIDENTAL
                 && searchMode.snapshot().mode() != AgentCombatTargetSearchMode.REGION_HARVEST) {
             searchMode.enter(AgentCombatTargetSearchMode.SPAWN_PRESSURE,
                     "clearing local incidental mobs while required population is unavailable",

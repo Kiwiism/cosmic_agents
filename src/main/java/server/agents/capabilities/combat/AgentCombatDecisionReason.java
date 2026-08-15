@@ -4,6 +4,7 @@ package server.agents.capabilities.combat;
 public enum AgentCombatDecisionReason {
     LEGACY_CLOSEST,
     REQUIRED_LOCAL,
+    PLATFORM_BATCH_CLEAR,
     INCIDENTAL_PLATFORM_SWEEP,
     REQUIRED_DEBT,
     INCIDENTAL_NO_REQUIRED_AVAILABLE,

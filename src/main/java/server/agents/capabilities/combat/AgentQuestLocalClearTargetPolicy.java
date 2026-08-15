@@ -23,8 +23,26 @@ public final class AgentQuestLocalClearTargetPolicy {
                                           Predicate<T> required,
                                           Predicate<T> local,
                                           boolean allowLocalSweep) {
+        return select(candidates, required, local, allowLocalSweep, false);
+    }
+
+    public static <T> Selection<T> select(List<T> candidates,
+                                          Predicate<T> required,
+                                          Predicate<T> local,
+                                          boolean allowLocalSweep,
+                                          boolean commitLocalPlatformBatch) {
         List<T> requiredLocal = candidates.stream()
                 .filter(required).filter(local).toList();
+        if (allowLocalSweep && commitLocalPlatformBatch) {
+            List<T> allLocal = candidates.stream().filter(local).toList();
+            if (!allLocal.isEmpty()) {
+                return new Selection<>(allLocal,
+                        requiredLocal.isEmpty()
+                                ? AgentCombatCandidateClass.INCIDENTAL
+                                : AgentCombatCandidateClass.REQUIRED,
+                        AgentCombatDecisionReason.PLATFORM_BATCH_CLEAR);
+            }
+        }
         if (!requiredLocal.isEmpty()) {
             return new Selection<>(requiredLocal, AgentCombatCandidateClass.REQUIRED,
                     AgentCombatDecisionReason.REQUIRED_LOCAL);

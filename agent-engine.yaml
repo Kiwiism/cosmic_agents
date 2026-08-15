@@ -808,6 +808,30 @@ tuning:
     # Purpose: Sets the preferred horizontal firing distance for ranged Agents so they seek a useful safe spot without backing away from every nearby target.
     # Technical: The grind navigation target selector uses this only to choose a same-map firing anchor; the actual attack hitbox remains authoritative for whether a shot may execute.
     server.agents.capabilities.combat.AgentGrindNavigationTargetSelector.RANGED_FIRING_DISTANCE_X: '220'
+    # Values: 1-10 nearby monsters. Recommended: 2. A lower value makes mobile ranged Agents jump more often; a higher value reserves the maneuver for dense packs.
+    # Purpose: Defines how many eligible nearby monsters make a gun or claw Agent prefer a defensive jump-shot over remaining grounded in a crowded melee exchange.
+    # Technical: AgentRangedKitingPolicy counts only living monsters allowed by the current combat directive inside the configured crowd window before physics-probing a landing.
+    server.agents.capabilities.combat.AgentRangedKitingPolicy.CROWD_JUMP_MIN_MOBS: '2'
+    # Values: 50-400 map pixels. Recommended: 180. Increase this to recognize wider packs, or decrease it to react only to monsters already pressing the Agent.
+    # Purpose: Sets the horizontal half-width of the local crowd check used to decide whether gun and claw combat should start a backward jump-shot maneuver.
+    # Technical: The kiting policy applies this around the Agent position before navigation scoring; it does not expand projectile hitboxes or make unrelated monsters valid targets.
+    server.agents.capabilities.combat.AgentRangedKitingPolicy.CROWD_JUMP_RADIUS_X: '180'
+    # Values: 20-160 map pixels. Recommended: 80. Keep this narrow enough that monsters on clearly separate platforms do not trigger same-platform jump kiting.
+    # Purpose: Limits the vertical crowd window so mobile ranged Agents react to immediate platform pressure instead of monsters on platforms above or below them.
+    # Technical: AgentRangedKitingPolicy compares absolute monster and Agent Y positions and still requires every counted monster to pass the active combat objective filter.
+    server.agents.capabilities.combat.AgentRangedKitingPolicy.CROWD_JUMP_RADIUS_Y: '80'
+    # Values: 10-120 map pixels. Recommended: 35. Raise this to reject very short hops, or lower it when testing movement on compact footholds.
+    # Purpose: Prevents a nominal jump-shot from being selected when the physics projection would barely move the Agent and would not create useful firing space.
+    # Technical: The simulated landing displacement must meet this horizontal minimum before the policy verifies navigation-region continuity and distance gain from the target.
+    server.agents.capabilities.combat.AgentRangedKitingPolicy.CROWD_JUMP_MIN_TRAVEL_X: '35'
+    # Values: 0-100 map pixels. Recommended: 20. Higher values demand a stronger retreat result; zero accepts any landing that does not reduce separation.
+    # Purpose: Ensures the chosen backward jump meaningfully increases distance from the current combat target rather than hopping sideways into the same danger band.
+    # Technical: AgentRangedKitingPolicy compares projected landing distance with current horizontal target distance after the server physics probe succeeds.
+    server.agents.capabilities.combat.AgentRangedKitingPolicy.CROWD_JUMP_MIN_DISTANCE_GAIN_X: '20'
+    # Values: 10-100 map pixels. Recommended: 40. This is used only when a warmed navigation graph is unavailable and should remain close to foothold-height tolerance.
+    # Purpose: Provides a conservative fallback definition of the same platform for physics-probed jump landings while the navigation graph is still warming.
+    # Technical: When no graph is ready, the kiting policy requires a source foothold and rejects projected landings whose vertical delta exceeds this value.
+    server.agents.capabilities.combat.AgentRangedKitingPolicy.SAME_PLATFORM_Y_TOLERANCE: '40'
     # Values: a finite non-negative integer. Recommended: 25-100 around the tested baseline 50; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls the positional leeway for client projectile bottom. Higher values tolerate more separation before Agents correct course; lower values make them align sooner.
     # Technical: the "projectile hitbox" component consumes this as an integer. Domain: component-specific policy value; startup validation rejects missing, blank, or malformed values.
@@ -2469,6 +2493,10 @@ tuning:
     # Purpose: When a level-14 Agent finishes its home-town quest pack with this percentage or less of the level remaining, it skips the mandatory rotation-town pack and trains near its home town to level 15. The untouched rotation quests stay available for later selection from the normal quest pool.
     # Technical: Compares remaining EXP with the current level's authoritative EXP requirement. It applies only one level below the configured milestone; lower-level Agents still follow their authored rotation strategy.
     server.agents.progression.AgentLevel15CatchUpRuntime.HOME_GRIND_MAX_REMAINING_PERCENT: '30'
+    # Values: 10000-120000 milliseconds. Recommended: 30000. Higher values keep an unreachable adaptive training destination suppressed longer; lower values retry it sooner.
+    # Purpose: Prevents a level-15 catch-up grind from repeatedly selecting a training map whose live portal route could not currently be completed.
+    # Technical: AgentLevel15CatchUpRuntime applies this per-map cooldown only after adaptive training selection returns a destination but travel reports no complete route.
+    server.agents.progression.AgentLevel15CatchUpRuntime.ADAPTIVE_GRIND_DESTINATION_RETRY_MS: '30000'
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 1500-6000 around the tested baseline 3000; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how long Agents remain in or wait for NPC delay. Higher values make that pause or state last longer; lower values make them continue sooner.
     # Technical: the "instructor training runtime" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled.
@@ -2545,6 +2573,10 @@ tuning:
     # Purpose: Gives low-damage builds enough time to finish a durable objective mob while retaining a bounded escape from pathological engagements.
     # Technical: Absolute no-objective-progress limit measured from the first relevant damage after entering the map or after the last quest-progress increment.
     server.agents.progression.AgentHuntRecoveryRuntime.HARD_KILL_GRACE_MS: '90000'
+    # Values: 60000-300000 milliseconds. Recommended: 180000.
+    # Purpose: Prevents navigation graph generation time from being misclassified as a failed hunt while retaining a bounded escape from a stuck graph build.
+    # Technical: A pending exact-profile graph continually renews hunt arrival and progress grace until this per-map preparation interval expires.
+    server.agents.progression.AgentHuntRecoveryRuntime.NAVIGATION_WARMUP_MAX_PAUSE_MS: '180000'
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 120000-600000 around the tested baseline 300000.
     # Purpose: Keeps a recently exhausted or mechanically failed hunt map out of selection long enough to prevent oscillation.
     # Technical: AgentHuntRecoveryState stores each failed map with this per-objective expiry and the adaptive selector filters those maps until expiry.
@@ -2745,14 +2777,14 @@ tuning:
     # Purpose: Bounds SPAWN_PRESSURE expansion instead of allowing all incidental mobs on a large map to compete equally.
     # Technical: Retains incidental regions whose reliable route score is within this amount of the cheapest reachable incidental region.
     server.agents.capabilities.combat.AgentCombatPolicyConfig.SPAWN_PRESSURE_ROUTE_COST_WINDOW_MS: '2500'
-    # Values: 0-10 kills. Recommended: 2. Higher values let an Agent clear more non-objective monsters from its current platform before returning to a required target elsewhere; 0 disables incidental platform clearing.
+    # Values: 0-10 kills. Recommended: 5. Higher values let an Agent clear more non-objective monsters from its current platform before returning to a required target elsewhere; 0 disables incidental platform clearing.
     # Purpose: Prevents endless killing of convenient incidental monsters while still allowing short, natural platform sweeps that free spawn slots and reduce backtracking.
     # Technical: Maximum consecutive incidental kills selected by the quest-local-clear combat policy before required-target debt wins and the selector must return to a required candidate.
-    server.agents.capabilities.combat.AgentCombatPolicyConfig.MAX_CONSECUTIVE_INCIDENTAL_KILLS: '2'
-    # Values: 0-20 kills. Recommended: 3. Higher values make a platform sweep more thorough; lower values make the Agent leave sooner for its actual quest target.
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.MAX_CONSECUTIVE_INCIDENTAL_KILLS: '5'
+    # Values: 0-20 kills. Recommended: 7. Higher values make a platform sweep more thorough; lower values make the Agent leave sooner for its actual quest target.
     # Purpose: Bounds how many non-objective monsters an Agent clears during one stay on a platform.
     # Technical: Separate from the consecutive-kill limit so a required kill can reset the streak without creating an unlimited platform loop inside the same navigation-region lease.
-    server.agents.capabilities.combat.AgentCombatPolicyConfig.MAX_INCIDENTAL_KILLS_PER_PLATFORM_LEASE: '3'
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.MAX_INCIDENTAL_KILLS_PER_PLATFORM_LEASE: '7'
     # Values: 1000-20000 milliseconds. Recommended: 6500. Higher values make Agents remain locally focused longer; lower values make them reconsider other platforms more often.
     # Purpose: Gives each Agent a short-lived platform focus so it clears nearby work before repeatedly climbing up and down.
     # Technical: Resets when map or navigation region changes and bounds the incidental-kill counter for that region without changing the underlying navigation graph or attack execution.

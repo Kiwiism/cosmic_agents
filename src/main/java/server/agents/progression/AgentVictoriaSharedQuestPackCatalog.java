@@ -102,11 +102,13 @@ final class AgentVictoriaSharedQuestPackCatalog {
             boolean skipReturnScrollPreparation,
             List<Integer> preferredMobIds,
             List<Integer> incidentalMobIds,
+            List<Integer> fallbackMapIds,
             List<Condition> conditions,
             List<String> bundleIds) {
         Step {
             preferredMobIds = preferredMobIds == null ? List.of() : List.copyOf(preferredMobIds);
             incidentalMobIds = incidentalMobIds == null ? List.of() : List.copyOf(incidentalMobIds);
+            fallbackMapIds = fallbackMapIds == null ? List.of() : List.copyOf(fallbackMapIds);
             conditions = conditions == null ? List.of() : List.copyOf(conditions);
             bundleIds = bundleIds == null ? List.of() : List.copyOf(bundleIds);
         }
@@ -156,6 +158,13 @@ final class AgentVictoriaSharedQuestPackCatalog {
                 bundleId == null || bundleId.isBlank())) {
             throw new IllegalStateException(
                     "invalid bundle restriction in shared quest pack " + packId);
+        }
+        if ((!step.fallbackMapIds().isEmpty() && !"HUNT".equals(step.type()))
+                || step.fallbackMapIds().stream().anyMatch(mapId ->
+                mapId == null || mapId <= 0 || mapId == step.mapId())
+                || new HashSet<>(step.fallbackMapIds()).size() != step.fallbackMapIds().size()) {
+            throw new IllegalStateException(
+                    "invalid hunt fallback maps in shared quest pack " + packId);
         }
         if ("TAXI".equals(step.type())) {
             Town source = towns.stream()

@@ -75,6 +75,34 @@ class AgentQuestLocalClearTargetPolicyTest {
                 selection.reason());
     }
 
+    @Test
+    void activePlatformBatchKeepsRequiredAndIncidentalLocalCandidates() {
+        AgentQuestLocalClearTargetPolicy.Selection<Integer> selection =
+                AgentQuestLocalClearTargetPolicy.select(
+                        List.of(3, 2, 1, 4),
+                        REQUIRED::contains,
+                        Set.of(1, 2, 3)::contains,
+                        true,
+                        true);
+
+        assertEquals(List.of(3, 2, 1), selection.candidates());
+        assertEquals(AgentCombatDecisionReason.PLATFORM_BATCH_CLEAR, selection.reason());
+    }
+
+    @Test
+    void exhaustedSweepBudgetEndsMixedPlatformBatch() {
+        AgentQuestLocalClearTargetPolicy.Selection<Integer> selection =
+                AgentQuestLocalClearTargetPolicy.select(
+                        List.of(3, 2, 1),
+                        REQUIRED::contains,
+                        value -> true,
+                        false,
+                        true);
+
+        assertEquals(List.of(1), selection.candidates());
+        assertEquals(AgentCombatDecisionReason.REQUIRED_LOCAL, selection.reason());
+    }
+
     private static AgentQuestLocalClearTargetPolicy.Selection<Integer> select(
             boolean allowSweep) {
         return AgentQuestLocalClearTargetPolicy.select(

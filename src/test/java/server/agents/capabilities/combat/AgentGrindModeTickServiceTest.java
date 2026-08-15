@@ -76,10 +76,14 @@ class AgentGrindModeTickServiceTest {
                         (entry, agent, attackPlan) -> {
                         },
                         weaponType -> false,
+                        (entry, agent, weaponType, agentPosition, targetPosition) -> null,
                         (movementProfile, weaponType, route, agentPosition, targetPosition, maxJumpHeight) -> false,
                         movementProfile -> 0.0f,
                         (entry, agent, dx) -> {
                         },
+                        (entry, agent, dx) -> {
+                        },
+                        (entry, agentPosition, targetPosition) -> null,
                         (entry, agent) -> {
                         },
                         entry -> {

@@ -113,6 +113,7 @@ public final class AgentCombatTargetTraceRuntime {
     static String reasonText(AgentCombatDecisionReason reason) {
         return switch (reason) {
             case REQUIRED_LOCAL -> "Required objective target on this platform";
+            case PLATFORM_BATCH_CLEAR -> "Committed local batch of objective and incidental targets";
             case INCIDENTAL_PLATFORM_SWEEP -> "Incidental target for local spawn pressure";
             case REQUIRED_DEBT -> "Required target after an incidental sweep";
             case INCIDENTAL_NO_REQUIRED_AVAILABLE -> "Incidental target; no required mob is available";

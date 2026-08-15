@@ -3,7 +3,10 @@ package server.agents.capabilities.looting;
 import client.Character;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
+import client.inventory.WeaponType;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.looting.AgentGrindLootStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapItem;
@@ -14,11 +17,13 @@ import java.awt.Point;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 class AgentGrindLootTargetServiceTest {
@@ -156,6 +161,30 @@ class AgentGrindLootTargetServiceTest {
 
         assertTrue(AgentGrindLootTargetService.preparePostKillLootBeforeTargetSearch(
                 entry, agent, true, 100, now));
+        assertNull(AgentGrindLootStateRuntime.grindLootTarget(entry));
+    }
+
+    @Test
+    void rangedKillDoesNotPauseTargetSearchBeforeLootBatchIsDue() {
+        long now = System.currentTimeMillis();
+        MapleMap map = mock(MapleMap.class);
+        Character agent = mock(Character.class);
+        Inventory equipped = mock(Inventory.class);
+        when(agent.getMap()).thenReturn(map);
+        when(agent.getPosition()).thenReturn(new Point(0, 0));
+        when(agent.getInventory(InventoryType.EQUIPPED)).thenReturn(equipped);
+        when(map.getDroppedItems()).thenReturn(List.of());
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
+        entry.capabilityStates().require(AgentPostKillLootState.STATE_KEY).recordKill(42, now);
+
+        try (MockedStatic<AgentAttackExecutionProvider> attacks =
+                     mockStatic(AgentAttackExecutionProvider.class)) {
+            attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(agent))
+                    .thenReturn(WeaponType.GUN);
+
+            assertFalse(AgentGrindLootTargetService.preparePostKillLootBeforeTargetSearch(
+                    entry, agent, true, 100, now));
+        }
         assertNull(AgentGrindLootStateRuntime.grindLootTarget(entry));
     }
 

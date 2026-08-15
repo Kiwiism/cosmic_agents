@@ -61,6 +61,13 @@ public final class AgentGrindModeTickService {
 
         AgentGrindLootTargetService.refreshGrindLootTarget(
                 entry, agent, runAiTick, hooks.lootRadius(), target != null);
+        if (AgentGrindLootStateRuntime.hasGrindLootTarget(entry)) {
+            Point scheduledLootPosition = AgentGrindTargetPositionService.activeGrindLootPosition(
+                    entry, agentPosition);
+            if (scheduledLootPosition != null) {
+                return new Result(false, scheduledLootPosition);
+            }
+        }
         Point immediateMeleeLootPosition =
                 AgentGrindLootTargetService.immediateMeleeLootPosition(
                         entry, agent, agentPosition, hooks.lootRadius(), now);

@@ -31,9 +31,12 @@ public final class AgentGrindRangedEngagementService {
                         AttackPlanUsabilityPolicy attackPlanUsabilityPolicy,
                         AttackExecutor attackExecutor,
                         RangedAmmoWeaponPolicy rangedAmmoWeaponPolicy,
+                        CrowdJumpTargetSelector crowdJumpTargetSelector,
                         TargetJumpablePolicy targetJumpablePolicy,
                         JumpHeightCalculator jumpHeightCalculator,
                         JumpInitiator jumpInitiator,
+                        JumpInitiator fixedArcJumpInitiator,
+                        FiringPositionSelector firingPositionSelector,
                         IdleOnGround idleOnGround,
                         MovementBroadcaster movementBroadcaster) {
     }
@@ -87,6 +90,15 @@ public final class AgentGrindRangedEngagementService {
     }
 
     @FunctionalInterface
+    public interface CrowdJumpTargetSelector {
+        Point select(AgentRuntimeEntry entry,
+                     Character agent,
+                     WeaponType weaponType,
+                     Point agentPosition,
+                     Point targetPosition);
+    }
+
+    @FunctionalInterface
     public interface TargetJumpablePolicy {
         boolean isJumpable(AgentMovementProfile movementProfile,
                            WeaponType weaponType,
@@ -104,6 +116,11 @@ public final class AgentGrindRangedEngagementService {
     @FunctionalInterface
     public interface JumpInitiator {
         void initiate(AgentRuntimeEntry entry, Character agent, int dx);
+    }
+
+    @FunctionalInterface
+    public interface FiringPositionSelector {
+        Point select(AgentRuntimeEntry entry, Point agentPosition, Point targetPosition);
     }
 
     @FunctionalInterface
@@ -145,9 +162,28 @@ public final class AgentGrindRangedEngagementService {
                 ? hooks.aoeRepositionResolver().resolve(entry, agent, target, attackPlan, agentPosition)
                 : null;
 
+        if (!AgentMovementStateRuntime.climbing(entry)
+                && !AgentMovementStateRuntime.inAir(entry)
+                && attackGateOpen
+                && hooks.targetRangePolicy().isInRange(attackPlan, agent, target)) {
+            Point crowdJumpTarget = hooks.crowdJumpTargetSelector().select(
+                    entry, agent, weaponType, agentPosition, targetPosition);
+            if (crowdJumpTarget != null) {
+                hooks.fixedArcJumpInitiator().initiate(
+                        entry, agent, crowdJumpTarget.x - agentPosition.x);
+                return new Result(true, crowdJumpTarget, null, null,
+                        shouldRetreatForRangedSpacing, false, weaponType);
+            }
+        }
+
         boolean attackAttemptedInRange = false;
         if (!AgentMovementStateRuntime.climbing(entry)) {
-            if (aoeRepositionPos == null
+            boolean airborneDegenerateRangedWeapon = AgentMovementStateRuntime.inAir(entry)
+                    && attackPlan != null
+                    && attackPlan.isCloseRangeRoute()
+                    && hooks.rangedAmmoWeaponPolicy().isRangedAmmoWeapon(weaponType);
+            if (!airborneDegenerateRangedWeapon
+                    && aoeRepositionPos == null
                     && attackGateOpen && hooks.targetRangePolicy().isInRange(attackPlan, agent, target)
                     && hooks.attackPlanUsabilityPolicy().canUse(
                     AgentMovementStateRuntime.grounded(entry), weaponType, attackPlan.route)) {
@@ -160,6 +196,14 @@ public final class AgentGrindRangedEngagementService {
                     AgentDegenerateAttackStateRuntime.markDegenAttackDone(entry);
                 }
                 if (attacked && !AgentMovementStateRuntime.inAir(entry) && crossRegionRetreatPos == null) {
+                    if (attackPlan.route == AgentAttackRoute.RANGED) {
+                        Point firingPosition = hooks.firingPositionSelector().select(
+                                entry, agentPosition, targetPosition);
+                        if (firingPosition != null) {
+                            return new Result(false, firingPosition, firingPosition, aoeRepositionPos,
+                                    shouldRetreatForRangedSpacing, false, weaponType);
+                        }
+                    }
                     return new Result(true, currentMovementTarget, crossRegionRetreatPos, aoeRepositionPos,
                             shouldRetreatForRangedSpacing, attackAttemptedInRange, weaponType);
                 }

@@ -59,17 +59,22 @@ class AgentVictoriaSharedQuestPackCatalogTest {
     }
 
     @Test
-    void nautilusPackMovesTheElliniaScrollPurchaseIntoTheMagicianQuestPlan() {
+    void nautilusPackUsesForestOfWisdomWithAuthoredElliniaFallback() {
         AgentVictoriaSharedQuestPackCatalog.Pack pack =
                 AgentVictoriaSharedQuestPackCatalog.require("nautilus-pre15");
 
-        AgentVictoriaSharedQuestPackCatalog.Step purchase = pack.steps().stream()
-                .filter(step -> "SHOP_ITEM".equals(step.type()) && step.itemId() == 2030002)
+        AgentVictoriaSharedQuestPackCatalog.Step slimeHunt = pack.steps().stream()
+                .filter(step -> "HUNT".equals(step.type())
+                        && step.conditions().stream().anyMatch(condition ->
+                        condition.questId() == 28277))
                 .findFirst()
                 .orElseThrow();
 
-        assertEquals(101000002, purchase.mapId());
-        assertEquals(List.of("magician-standard-v1"), purchase.bundleIds());
+        assertEquals(100040100, slimeHunt.mapId());
+        assertEquals(List.of(101010000), slimeHunt.fallbackMapIds());
+        assertFalse(pack.steps().stream().anyMatch(step ->
+                step.itemId() == 2030002 || ("TAXI".equals(step.type())
+                        && step.destinationMapId() == 101000000)));
     }
 
     @Test
@@ -306,7 +311,8 @@ class AgentVictoriaSharedQuestPackCatalogTest {
 
         assertEquals("CAPTURED", checkpoint.snapshot().provenance());
         assertEquals("nautilus-pre15", pack.packId());
-        assertEquals(2, checkpoint.questPackIndex());
+        assertEquals(1, checkpoint.questPackIndex());
+        assertEquals(2030019, pack.steps().get(checkpoint.questPackIndex()).itemId());
         assertEquals(120000000, checkpoint.snapshot().character().mapId());
         assertEquals(2156, checkpoint.position().x());
         assertEquals(-406, checkpoint.position().y());
@@ -331,7 +337,10 @@ class AgentVictoriaSharedQuestPackCatalogTest {
                         "magician-standard-v1", "checkpoint3-hunt");
 
         assertEquals("nautilus-pre15", checkpoint.questPackId());
-        assertEquals(8, checkpoint.questPackIndex());
+        assertEquals(7, checkpoint.questPackIndex());
+        AgentVictoriaSharedQuestPackCatalog.Pack pack =
+                AgentVictoriaSharedQuestPackCatalog.require(checkpoint.questPackId());
+        assertEquals(100030000, pack.steps().get(checkpoint.questPackIndex()).mapId());
         assertEquals(120000000, checkpoint.snapshot().character().mapId());
         assertEquals(2156, checkpoint.position().x());
         assertEquals(-406, checkpoint.position().y());

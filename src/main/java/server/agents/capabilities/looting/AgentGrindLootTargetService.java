@@ -106,11 +106,16 @@ public final class AgentGrindLootTargetService {
         if (!postKill.hasKills()) {
             return false;
         }
+        WeaponType weaponType = equippedWeaponType(agent);
+        if (AgentPostKillLootPolicy.isRanged(weaponType)
+                && !AgentPostKillLootPolicy.shouldCollect(
+                weaponType, postKill, true, nowMs)) {
+            return false;
+        }
         refreshGrindLootTarget(entry, agent, runAiTick, lootRadius, false);
         if (AgentGrindLootStateRuntime.hasGrindLootTarget(entry)) {
             return true;
         }
-        WeaponType weaponType = equippedWeaponType(agent);
         long settleAgeMs = AgentPostKillLootPolicy.targetLootAgeMs(weaponType, true);
         return nowMs - postKill.oldestKillAtMs() < settleAgeMs;
     }

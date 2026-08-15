@@ -211,7 +211,7 @@
     },
     "magician-standard-v1:checkpoint3": {
       "questPackId": "nautilus-pre15",
-      "questPackIndex": 2,
+      "questPackIndex": 1,
       "position": { "x": 2156, "y": -406 },
       "snapshot": {
         "provenance": "CAPTURED",
@@ -284,7 +284,7 @@
     },
     "magician-standard-v1:checkpoint3-hunt": {
       "questPackId": "nautilus-pre15",
-      "questPackIndex": 8,
+      "questPackIndex": 7,
       "position": { "x": 2156, "y": -406 },
       "snapshot": {
         "provenance": "CAPTURED",

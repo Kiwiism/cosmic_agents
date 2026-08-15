@@ -10,10 +10,6 @@ import server.agents.objectives.AgentObjectiveSource;
 import server.agents.objectives.AgentObjectiveStatus;
 import server.agents.runtime.AgentRuntimeEntry;
 
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 /** Occupancy-aware, resumable level 15-30 Victoria grinding objective. */
@@ -140,7 +136,8 @@ public final class AgentVictoriaTrainingObjectiveRuntime {
             if (nowMs < state.nextSelectionAtMs()) {
                 return true;
             }
-            selected = select(entry, agent, state, repository, nowMs).orElse(null);
+            selected = AgentVictoriaTrainingSelectionService.select(
+                    entry, agent, state, repository, agent.getLevel(), nowMs).orElse(null);
             if (selected == null) {
                 gateway.stop(entry);
                 state.retrySelectionAt(nowMs + NO_SELECTION_RETRY_MS);
@@ -159,43 +156,13 @@ public final class AgentVictoriaTrainingObjectiveRuntime {
             return true;
         }
 
-        Set<Integer> targets = new LinkedHashSet<>();
-        for (AgentVictoriaTrainingCatalog.SpawnGroup spawn : selected.spawns()) {
-            if (!"hazard".equalsIgnoreCase(spawn.role())) {
-                targets.add(spawn.mobId());
-            }
-        }
+        Set<Integer> targets = AgentVictoriaTrainingSelectionService.targetMobIds(selected);
         if (targets.isEmpty()) {
             state.markUnavailable(selected.mapId(), nowMs + DESTINATION_RETRY_MS);
             return true;
         }
         gateway.grind(entry, Set.copyOf(targets));
         return true;
-    }
-
-    private static Optional<AgentVictoriaTrainingCatalog.TrainingMap> select(
-            AgentRuntimeEntry entry,
-            Character agent,
-            AgentVictoriaTrainingState state,
-            AgentVictoriaTrainingCatalogRepository repository,
-            long nowMs) {
-        List<AgentVictoriaTrainingCatalog.TrainingChoice> choices =
-                repository.choicesForLevel(agent.getLevel());
-        Set<Integer> eligible = new LinkedHashSet<>();
-        for (AgentVictoriaTrainingCatalog.TrainingChoice choice : choices) {
-            if (state.available(choice.mapId(), nowMs)
-                    && AgentVictoriaTrainingRouteCatalog.canRoute(agent.getMapId(), choice.mapId())) {
-                eligible.add(choice.mapId());
-            }
-        }
-        Map<Integer, Integer> occupancy = AgentVictoriaTrainingPopulation.snapshot(agent, eligible);
-        AgentVictoriaTrainingMapSelector selector = new AgentVictoriaTrainingMapSelector(repository);
-        AgentProgressionProfile profile = AgentProgressionProfileRuntime.profile(entry);
-        Optional<AgentVictoriaTrainingMapSelector.Selection> selection = selector.select(
-                agent.getLevel(), agent.getMapId(), occupancy, eligible, profile, agent.getId());
-        selection.ifPresent(value -> state.selected(value.map().mapId(), agent.getLevel(),
-                value.reason() + "; occupancy=" + value.occupancy(), nowMs));
-        return selection.map(AgentVictoriaTrainingMapSelector.Selection::map);
     }
 
     private static String objectiveId(int characterId, int targetLevel) {

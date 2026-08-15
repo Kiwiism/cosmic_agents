@@ -80,6 +80,21 @@ public final class AgentGrindNavigationTargetSelector {
         return selectCrossRegionRetreatTarget(entry, agentPosition, combatTargetPosition, defaultHooks());
     }
 
+    /** Selects and leases a useful ranged firing point after an authoritative shot. */
+    public static Point selectAndHoldRangedFiringPosition(AgentRuntimeEntry entry,
+                                                          Point agentPosition,
+                                                          Point combatTargetPosition) {
+        Point firingPosition = selectCrossRegionRetreatTarget(
+                entry, agentPosition, combatTargetPosition, defaultHooks());
+        if (firingPosition == null
+                || Math.abs(firingPosition.x - agentPosition.x) <= RETREAT_ARRIVAL_TOLERANCE_X) {
+            return null;
+        }
+        AgentRetreatHoldStateRuntime.setHold(
+                entry, firingPosition, System.currentTimeMillis() + RETREAT_HOLD_MS);
+        return firingPosition;
+    }
+
     public static boolean shouldUseLocalCombatRetreatTarget(AgentRuntimeEntry entry,
                                                             Point agentPosition,
                                                             Point combatTargetPosition,

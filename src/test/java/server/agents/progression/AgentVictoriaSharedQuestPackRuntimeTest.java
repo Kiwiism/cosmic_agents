@@ -32,6 +32,24 @@ class AgentVictoriaSharedQuestPackRuntimeTest {
     }
 
     @Test
+    void failedForestOfWisdomUsesAuthoredFieldNorthFallback() {
+        AgentVictoriaSharedQuestPackCatalog.Step hunt =
+                AgentVictoriaSharedQuestPackCatalog.require("nautilus-pre15").steps().stream()
+                        .filter(step -> "HUNT".equals(step.type())
+                                && step.conditions().stream().anyMatch(condition ->
+                                condition.questId() == 28277))
+                        .findFirst()
+                        .orElseThrow();
+
+        assertEquals(101010000,
+                AgentVictoriaSharedQuestPackRuntime.authoredFallbackMapId(
+                        hunt, Set.of(100040100), 100040100));
+        assertEquals(-1,
+                AgentVictoriaSharedQuestPackRuntime.authoredFallbackMapId(
+                        hunt, Set.of(100040100, 101010000), 100040100));
+    }
+
+    @Test
     void fixedHuntMapsCoverGreenCapsAndKerningMaterials() {
         AgentVictoriaSharedQuestPackCatalog.Pack henesys =
                 AgentVictoriaSharedQuestPackCatalog.require("henesys-pre15");

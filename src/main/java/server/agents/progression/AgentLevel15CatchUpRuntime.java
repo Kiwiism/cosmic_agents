@@ -12,6 +12,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.Set;
 
 /** Deterministic home-pack/rotation/grind bridge from instructor training to level 15. */
@@ -19,6 +20,8 @@ final class AgentLevel15CatchUpRuntime {
     private static final Logger log = LoggerFactory.getLogger(AgentLevel15CatchUpRuntime.class);
     private static final int HOME_GRIND_MAX_REMAINING_PERCENT = Math.clamp(config.AgentTuning.intValue(
             "server.agents.progression.AgentLevel15CatchUpRuntime.HOME_GRIND_MAX_REMAINING_PERCENT"), 0, 100);
+    private static final long ADAPTIVE_GRIND_DESTINATION_RETRY_MS = config.AgentTuning.longValue(
+            "server.agents.progression.AgentLevel15CatchUpRuntime.ADAPTIVE_GRIND_DESTINATION_RETRY_MS");
 
     private AgentLevel15CatchUpRuntime() {
     }
@@ -143,14 +146,66 @@ final class AgentLevel15CatchUpRuntime {
                                  PrimitiveCapabilityGateway gateway) {
         if (agent.getLevel() >= bundle.milestoneLevel()) {
             gateway.stop(entry);
+            entry.capabilityStates().find(AgentVictoriaTrainingState.STATE_KEY)
+                    .ifPresent(AgentVictoriaTrainingState::stop);
             state.stage(AgentCareerProgressionState.Stage.FINALIZE_AT_NEAREST_TOWN, nowMs);
             return true;
         }
-        if (AgentVictoriaRouteRuntime.travel(entry, agent, grind.huntingMapId(), gateway)) {
+
+        GrindDestination destination = adaptiveGrindDestination(
+                entry, agent, bundle.milestoneLevel(), grind, nowMs);
+        AgentVictoriaRouteRuntime.TravelOutcome travel = AgentVictoriaRouteRuntime.travelStatus(
+                entry, agent, destination.mapId(), gateway, nowMs);
+        if (travel.status() == AgentVictoriaRouteRuntime.Status.NO_ROUTE
+                && destination.adaptive()) {
+            entry.capabilityStates().require(AgentVictoriaTrainingState.STATE_KEY)
+                    .markUnavailable(destination.mapId(),
+                            nowMs + ADAPTIVE_GRIND_DESTINATION_RETRY_MS);
+            gateway.stop(entry);
             return true;
         }
-        gateway.grind(entry, Set.copyOf(grind.mobIds()));
+        if (travel.status() != AgentVictoriaRouteRuntime.Status.ARRIVED) {
+            return true;
+        }
+        gateway.grind(entry, destination.mobIds());
         return true;
+    }
+
+    private static GrindDestination adaptiveGrindDestination(
+            AgentRuntimeEntry entry,
+            Character agent,
+            int milestoneLevel,
+            AgentVictoriaLevel15Catalog.MilestoneGrind configuredFallback,
+            long nowMs) {
+        AgentVictoriaTrainingState trainingState = entry.capabilityStates()
+                .require(AgentVictoriaTrainingState.STATE_KEY);
+        if (!trainingState.active()) {
+            trainingState.start(milestoneLevel, false, nowMs);
+        }
+        AgentVictoriaTrainingCatalogRepository repository =
+                AgentVictoriaTrainingCatalogRepository.defaultRepository();
+        AgentVictoriaTrainingCatalog.TrainingMap selected = repository
+                .findMap(trainingState.selectedMapId()).orElse(null);
+        if (selected == null || trainingState.selectedAtLevel() != milestoneLevel
+                || !trainingState.available(selected.mapId(), nowMs)) {
+            Optional<AgentVictoriaTrainingCatalog.TrainingMap> selection =
+                    AgentVictoriaTrainingSelectionService.select(
+                            entry, agent, trainingState, repository, milestoneLevel, nowMs);
+            selected = selection.orElse(null);
+        }
+        Set<Integer> adaptiveTargets =
+                AgentVictoriaTrainingSelectionService.targetMobIds(selected);
+        if (selected != null && !adaptiveTargets.isEmpty()) {
+            return new GrindDestination(selected.mapId(), adaptiveTargets, true);
+        }
+        return new GrindDestination(
+                configuredFallback.huntingMapId(), Set.copyOf(configuredFallback.mobIds()), false);
+    }
+
+    private record GrindDestination(int mapId, Set<Integer> mobIds, boolean adaptive) {
+        private GrindDestination {
+            mobIds = Set.copyOf(mobIds);
+        }
     }
 
     private static boolean finishAtNearestTown(AgentRuntimeEntry entry,

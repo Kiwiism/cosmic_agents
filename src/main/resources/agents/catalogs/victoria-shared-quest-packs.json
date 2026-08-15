@@ -163,7 +163,6 @@
       "packId": "nautilus-pre15",
       "homeTownMapId": 120000000,
       "steps": [
-        { "type": "SHOP_ITEM", "intention": "I'm buying one Ellinia return scroll before leaving for the Nautilus quests.", "npcId": 1031100, "mapId": 101000002, "itemId": 2030002, "itemCount": 1, "bundleIds": ["magician-standard-v1"] },
         { "type": "TAXI", "intention": "I'm taking the taxi to Nautilus Harbor for the Nautilus quest pack.", "mapId": 120000000, "destinationMapId": 120000000 },
         { "type": "SHOP_ITEM", "intention": "I'm buying one Nautilus Harbor return scroll.", "npcId": 1091002, "mapId": 120000200, "itemId": 2030019, "itemCount": 1 },
         { "type": "QUEST", "intention": "I'm helping Bonnie defeat 30 Pigs.", "npcId": 1092001, "questId": 28278, "mapId": 120000300 },
@@ -179,10 +178,9 @@
             { "type": "QUEST_KILL", "questId": 28278, "targetId": 1210100, "count": 30 },
             { "type": "ITEM", "targetId": 4000002, "count": 20 }
           ] },
-        { "type": "OPTIONAL_SCROLL", "intention": "I'm using an Ellinia return scroll if I still have one.", "itemId": 2030002, "destinationMapId": 101000000 },
-        { "type": "TAXI", "intention": "I'm going through Henesys and taking the taxi to Ellinia if needed.", "mapId": 100000000, "destinationMapId": 101000000 },
-        { "type": "HUNT", "intention": "I'm hunting 30 Slimes in The Field Up North of Ellinia.", "mapId": 101010000,
+        { "type": "HUNT", "intention": "I'm hunting 30 Slimes in The Forest of Wisdom.", "mapId": 100040100,
           "preferredMobIds": [210100], "incidentalMobIds": [],
+          "fallbackMapIds": [101010000],
           "conditions": [{ "type": "QUEST_KILL", "questId": 28277, "targetId": 210100, "count": 30 }] },
         { "type": "USE_SCROLL", "intention": "I completed the hunts and I'm using my Nautilus Harbor return scroll.", "itemId": 2030019, "destinationMapId": 120000000 },
         { "type": "QUEST", "intention": "I defeated 30 Pigs and I'm returning to Bonnie.", "npcId": 1092001, "questId": 28278, "complete": true, "mapId": 120000300 },

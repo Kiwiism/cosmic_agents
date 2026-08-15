@@ -61,4 +61,56 @@ class AgentHuntRecoveryRuntimeTest {
                 AgentHuntRecoveryRuntime.observe(
                         entry, objective, mapId, 8, 1, false, 135_000L));
     }
+
+    @Test
+    void relevantKillsRenewCollectionWorkWithoutRequiringAQuestDrop() {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), null, null);
+        String objective = "shared:ribbon-pig-drop";
+        int mapId = 100030000;
+
+        assertEquals(AgentHuntRecoveryRuntime.Observation.STAY,
+                AgentHuntRecoveryRuntime.observe(
+                        entry, objective, mapId, 19, 1, false, 1_000L));
+        AgentHuntRecoveryRuntime.recordRelevantDamage(entry, mapId, 45_000L);
+        AgentHuntRecoveryRuntime.recordRelevantKill(entry, mapId, 60_000L);
+        AgentHuntRecoveryRuntime.recordRelevantDamage(entry, mapId, 134_999L);
+
+        assertEquals(AgentHuntRecoveryRuntime.Observation.STAY,
+                AgentHuntRecoveryRuntime.observe(
+                        entry, objective, mapId, 19, 1, false, 134_999L));
+    }
+
+    @Test
+    void navigationWarmupDoesNotConsumeTheHuntProgressGrace() {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), null, null);
+        String objective = "shared:ribbon-pig-drop";
+        int mapId = 100030000;
+
+        assertEquals(AgentHuntRecoveryRuntime.Observation.STAY,
+                AgentHuntRecoveryRuntime.observe(
+                        entry, objective, mapId, 19, 1, false, false, 1_000L));
+        assertEquals(AgentHuntRecoveryRuntime.Observation.STAY,
+                AgentHuntRecoveryRuntime.observe(
+                        entry, objective, mapId, 19, 1, false, true, 100_000L));
+        assertEquals(AgentHuntRecoveryRuntime.Observation.STAY,
+                AgentHuntRecoveryRuntime.observe(
+                        entry, objective, mapId, 19, 1, false, false, 100_001L));
+        assertEquals(AgentHuntRecoveryRuntime.Observation.RESELECT,
+                AgentHuntRecoveryRuntime.observe(
+                        entry, objective, mapId, 19, 1, false, false, 145_000L));
+    }
+
+    @Test
+    void navigationWarmupPauseRemainsBounded() {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), null, null);
+        String objective = "shared:ribbon-pig-drop";
+        int mapId = 100030000;
+
+        assertEquals(AgentHuntRecoveryRuntime.Observation.STAY,
+                AgentHuntRecoveryRuntime.observe(
+                        entry, objective, mapId, 19, 1, false, true, 1_000L));
+        assertEquals(AgentHuntRecoveryRuntime.Observation.RESELECT,
+                AgentHuntRecoveryRuntime.observe(
+                        entry, objective, mapId, 19, 1, false, true, 181_000L));
+    }
 }

@@ -552,6 +552,12 @@ public final class AgentNavigationGraphService {
         return PENDING_GRAPHS.size();
     }
 
+    /** Returns whether the exact map/profile graph is currently loading or being built. */
+    public static boolean isWarmupPending(MapleMap map, AgentMovementProfile movementProfile) {
+        return map != null && PENDING_GRAPHS.containsKey(
+                GraphCacheKey.from(map.getId(), movementProfile));
+    }
+
     static boolean asyncWarmupsRunning() {
         return acceptingAsyncWarmups
                 && AgentAsyncExecutorRegistry.runtime().isRunning(AgentAsyncWorkKind.NAVIGATION_GRAPH)

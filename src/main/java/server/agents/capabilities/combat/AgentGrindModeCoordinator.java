@@ -108,9 +108,21 @@ public final class AgentGrindModeCoordinator {
                 (entry, agent, attackPlan) ->
                         AgentCombatAttackRuntime.attackMonster(entry, agent, attackPlan),
                 AgentCombatAmmoCounter::isRangedAmmoWeapon,
+                (entry, agent, weaponType, agentPosition, targetPosition) ->
+                        AgentRangedKitingPolicy.selectCrowdJumpTarget(
+                                entry,
+                                agent,
+                                weaponType,
+                                agentPosition,
+                                targetPosition,
+                                new AgentRangedKitingPolicy.Hooks(
+                                        AgentJumpActionService::grounded,
+                                        AgentJumpActionService::probeSameLevelLanding)),
                 AgentCombatRangePolicy::isTargetJumpable,
                 AgentMovementKinematicsService::calculateMaxJumpHeight,
                 AgentJumpActionService::initiateJump,
+                AgentJumpActionService::initiateFixedArcJump,
+                AgentGrindNavigationTargetSelector::selectAndHoldRangedFiringPosition,
                 AgentMovementPoseService::idleOnGround,
                 AgentMovementBroadcastService::broadcastMovement);
     }
