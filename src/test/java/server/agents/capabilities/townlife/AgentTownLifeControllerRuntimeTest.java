@@ -95,6 +95,19 @@ class AgentTownLifeControllerRuntimeTest {
         assertEquals("default-policy", decision.source());
     }
 
+    @Test
+    void townSpecificControllerOverridesFallbackWithoutAffectingOtherTowns() {
+        AgentTownLifeController fallback = context -> Optional.empty();
+        AgentTownLifeController local = context -> Optional.empty();
+        AgentTownLifeControllerRuntime.installExternalController(fallback);
+        AgentTownLifeControllerRuntime.installExternalController(
+                LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID, local);
+
+        assertEquals(local, AgentTownLifeControllerRuntime.controllerForTest(
+                LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID));
+        assertEquals(fallback, AgentTownLifeControllerRuntime.controllerForTest(999_999_999));
+    }
+
     private static Character agent(int id) {
         Character agent = mock(Character.class);
         when(agent.getId()).thenReturn(id);

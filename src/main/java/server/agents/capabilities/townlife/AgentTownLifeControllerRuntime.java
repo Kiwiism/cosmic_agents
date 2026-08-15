@@ -10,7 +10,6 @@ import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
 
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -19,18 +18,30 @@ import java.util.stream.Collectors;
  * asynchronous proposals in a bounded cache rather than call a model here.
  */
 public final class AgentTownLifeControllerRuntime {
-    private static final AgentTownLifeController NO_EXTERNAL_CONTROLLER = context -> Optional.empty();
-    private static volatile AgentTownLifeController externalController = NO_EXTERNAL_CONTROLLER;
+    private static final AgentTownLifeControllerRegistry CONTROLLERS =
+            new AgentTownLifeControllerRegistry();
 
     private AgentTownLifeControllerRuntime() {
     }
 
     public static void installExternalController(AgentTownLifeController controller) {
-        externalController = controller == null ? NO_EXTERNAL_CONTROLLER : controller;
+        CONTROLLERS.installFallback(controller);
+    }
+
+    public static void installExternalController(int townMapId, AgentTownLifeController controller) {
+        CONTROLLERS.install(townMapId, controller);
     }
 
     public static void clearExternalController() {
-        externalController = NO_EXTERNAL_CONTROLLER;
+        CONTROLLERS.clear();
+    }
+
+    public static void clearExternalController(int townMapId) {
+        CONTROLLERS.clear(townMapId);
+    }
+
+    static AgentTownLifeController controllerForTest(int townMapId) {
+        return CONTROLLERS.resolve(townMapId);
     }
 
     public static void setSupportLevel(AgentRuntimeEntry entry, AgentTownLifeSupportLevel level) {
@@ -59,7 +70,7 @@ public final class AgentTownLifeControllerRuntime {
         }
         AgentTownLifeDecisionContext context = context(entry, agent, state, profile, nowMs);
         try {
-            return externalController.propose(context)
+            return CONTROLLERS.resolve(state.townMapId()).propose(context)
                     .filter(proposal -> valid(proposal, agent, profile, nowMs))
                     .map(proposal -> new AgentTownLifeDecision(
                             proposal.activity(), proposal.venueId(), proposal.targetAgentId(),

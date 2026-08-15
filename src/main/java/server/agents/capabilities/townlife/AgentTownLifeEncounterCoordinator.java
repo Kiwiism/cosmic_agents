@@ -26,7 +26,6 @@ final class AgentTownLifeEncounterCoordinator {
         CANCELLED
     }
 
-    private static final Object LOCK = new Object();
     private static final long ENCOUNTER_TIMEOUT_MS = config.AgentTuning.longValue("server.agents.capabilities.townlife.AgentTownLifeEncounterCoordinator.ENCOUNTER_TIMEOUT_MS");
     private static final int PRESENTATION_DISTANCE_PX = config.AgentTuning.intValue("server.agents.capabilities.townlife.AgentTownLifeEncounterCoordinator.PRESENTATION_DISTANCE_PX");
 
@@ -60,7 +59,7 @@ final class AgentTownLifeEncounterCoordinator {
         if (venue == null || !venue.supports(townState.activity())) {
             return false;
         }
-        synchronized (LOCK) {
+        synchronized (scopeLock(initiatorEntry, initiator)) {
             if (active(initiatorEntry)) {
                 return false;
             }
@@ -113,7 +112,7 @@ final class AgentTownLifeEncounterCoordinator {
                 || active(entry))) {
             return false;
         }
-        synchronized (LOCK) {
+        synchronized (scopeLock(entries.getFirst(), initiator)) {
             for (int index = 0; index < entries.size(); index++) {
                 AgentRuntimeEntry entry = entries.get(index);
                 Character participant = participants.get(index);
@@ -282,7 +281,7 @@ final class AgentTownLifeEncounterCoordinator {
                 || (completed && snapshot.role() == AgentTownLifeEncounterState.Role.RESPONDER)) {
             return;
         }
-        synchronized (LOCK) {
+        synchronized (scopeLock(entry, agent)) {
             AgentTownLifeEncounterState.Phase terminal = completed
                     ? AgentTownLifeEncounterState.Phase.COMPLETED
                     : AgentTownLifeEncounterState.Phase.CANCELLED;
@@ -499,7 +498,7 @@ final class AgentTownLifeEncounterCoordinator {
         if (snapshot == null) {
             return;
         }
-        synchronized (LOCK) {
+        synchronized (scopeLock(entry, AgentRuntimeIdentityRuntime.bot(entry))) {
             for (int participantId : snapshot.participantAgentIds()) {
                 AgentRuntimeEntry participantEntry =
                         AgentRuntimeRegistry.findByAgentCharacterId(participantId);
@@ -529,6 +528,14 @@ final class AgentTownLifeEncounterCoordinator {
                 : 0L;
         state.transition(phase, turnOwnerAgentId, reactionAtMs);
         AgentTownLifeEventPublisher.encounter(entry, agent, state.snapshot(), nowMs);
+    }
+
+    private static Object scopeLock(AgentRuntimeEntry entry, Character agent) {
+        int townMapId = entry == null ? 0 : entry.capabilityStates()
+                .find(AgentTownLifeState.STATE_KEY)
+                .map(AgentTownLifeState::townMapId)
+                .orElse(agent == null ? 0 : agent.getMapId());
+        return AgentTownLifeScopeLocks.forTown(townMapId);
     }
 
     private static AgentTownLifeEncounterState.Snapshot snapshot(AgentRuntimeEntry entry) {
