@@ -227,7 +227,7 @@ public final class AgentNavigationTargetService {
                         false);
             }
 
-            EdgeExecution execution = tryExecuteEdge(
+            AgentTraversalResult execution = tryExecuteEdge(
                     graph, entry, bot, botPos, rawTargetPos, startRegionId, edge, runAiTick);
             if (execution.rejected()) {
                 AgentMovementStateResetService.clearNavigationStep(entry);
@@ -261,10 +261,10 @@ public final class AgentNavigationTargetService {
                 }
                 return new NavigationDirective(new Point(botPos), false);
             }
-            NavigationDirective executionDirective = execution.directive();
-            if (executionDirective != null) {
+            if (execution.executed()) {
                 AgentNavigationDebugStateRuntime.setLastDecision(entry, "exec");
-                return executionDirective;
+                return new NavigationDirective(
+                        execution.targetPosition(), execution.consumedTick());
             }
 
             AgentNavigationDebugStateRuntime.setLastDecision(entry, edgeReused ? "reuse" : "new");
@@ -322,15 +322,14 @@ public final class AgentNavigationTargetService {
             return false;
         }
 
-        EdgeExecution execution = tryExecuteEdge(
+        AgentTraversalResult execution = tryExecuteEdge(
                 graph, entry, AgentRuntimeIdentityRuntime.bot(entry), botPos,
                 rawTargetPos, startRegionId, edge, true);
         if (execution.rejected()) {
             AgentMovementStateResetService.clearNavigationStep(entry);
             return false;
         }
-        NavigationDirective directive = execution.directive();
-        if (directive == null || !directive.consumedTick) {
+        if (!execution.executed() || !execution.consumedTick()) {
             return false;
         }
 
@@ -461,7 +460,7 @@ public final class AgentNavigationTargetService {
                 : null;
     }
 
-    private static EdgeExecution tryExecuteEdge(AgentNavigationGraph graph,
+    private static AgentTraversalResult tryExecuteEdge(AgentNavigationGraph graph,
                                                 AgentRuntimeEntry entry,
                                                 Character bot,
                                                 Point botPos,
@@ -470,7 +469,7 @@ public final class AgentNavigationTargetService {
                                                 AgentNavigationGraph.Edge edge,
                                                 boolean runAiTick) {
         if (!runAiTick) {
-            return new EdgeExecution(null, false);
+            return AgentTraversalResult.deferred("observation-only");
         }
         long nowMs = System.currentTimeMillis();
         AgentNavigationEdgeValidationService.Result validation =
@@ -481,26 +480,18 @@ public final class AgentNavigationTargetService {
                 AgentNavigationEdgeReliabilityRuntime.failed(
                         entry, bot.getMapId(), edge, nowMs);
             }
-            return new EdgeExecution(null, true);
+            return AgentTraversalResult.rejected(validation.reason());
         }
         if (!validation.ready()) {
-            return new EdgeExecution(null, false);
+            return AgentTraversalResult.deferred(validation.reason());
         }
         // A READY edge that the live executor still cannot start is a graph/executor contract
         // failure. Start the same progress timeout so it is counted without penalizing a normal
         // approach tick or treating one transient refusal as an immediate hard failure.
         AgentNavigationEdgeReliabilityRuntime.beganAttempt(
                 entry, bot.getMapId(), edge, currentRegionId, botPos, nowMs);
-        AgentNavigationEdgeExecutor.NavigationDirective directive = AgentNavigationEdgeExecutor.tryExecuteEdge(
-                graph, entry, bot, botPos, rawTargetPos, edge, runAiTick);
-        if (directive == null) {
-            return new EdgeExecution(null, false);
-        }
-        return new EdgeExecution(
-                new NavigationDirective(directive.targetPos(), directive.consumedTick()), false);
-    }
-
-    private record EdgeExecution(NavigationDirective directive, boolean rejected) {
+        return AgentNavigationEdgeExecutor.INSTANCE.execute(
+                entry, bot, new AgentTraversalCommand(graph, edge, botPos, rawTargetPos));
     }
 
     private static boolean shouldUsePreciseTarget(AgentNavigationGraph graph,

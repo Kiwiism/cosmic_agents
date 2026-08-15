@@ -10,56 +10,48 @@ import java.awt.Point;
 /**
  * Agent-owned edge execution dispatch for navigation.
  */
-public final class AgentNavigationEdgeExecutor {
+public final class AgentNavigationEdgeExecutor implements AgentTraversalExecutor {
+    public static final AgentNavigationEdgeExecutor INSTANCE = new AgentNavigationEdgeExecutor();
+
     private AgentNavigationEdgeExecutor() {
     }
 
-    public record NavigationDirective(Point targetPos, boolean consumedTick) {
-    }
-
-    public static NavigationDirective tryExecuteEdge(AgentNavigationGraph graph,
-                                                     AgentRuntimeEntry entry,
-                                                     Character agent,
-                                                     Point agentPos,
-                                                     Point rawTargetPos,
-                                                     AgentNavigationGraph.Edge edge,
-                                                     boolean runAiTick) {
-        if (!runAiTick) {
-            return null;
-        }
-
-        return switch (edge.type) {
-            case JUMP -> AgentNavigationJumpExecutionService.tryExecuteJump(graph, entry, agent, edge)
-                    ? new NavigationDirective(rawTargetPos, true) : null;
+    @Override
+    public AgentTraversalResult execute(
+            AgentRuntimeEntry entry, Character agent, AgentTraversalCommand command) {
+        AgentNavigationGraph graph = command.graph();
+        AgentNavigationGraph.Edge edge = command.edge();
+        Point agentPos = command.agentPosition();
+        Point targetPosition = command.requestedTargetPosition();
+        boolean executed = switch (edge.type) {
+            case JUMP -> AgentNavigationJumpExecutionService.tryExecuteJump(graph, entry, agent, edge);
             case FLASH_JUMP -> AgentNavigationFlashJumpExecutionService.tryExecuteFlashJump(
-                    graph, entry, agent, edge)
-                    ? new NavigationDirective(rawTargetPos, true) : null;
+                    graph, entry, agent, edge);
             case TELEPORT -> AgentNavigationTeleportExecutionService.tryExecuteTeleport(
-                    entry, agent, agentPos, edge)
-                    ? new NavigationDirective(rawTargetPos, true) : null;
-            case DROP -> AgentNavigationDropExecutionService.tryExecuteDrop(graph, entry, agent, agentPos, edge)
-                    ? new NavigationDirective(rawTargetPos, true) : null;
-            case CLIMB -> tryExecuteClimb(graph, entry, agent, agentPos, rawTargetPos, edge);
+                    entry, agent, agentPos, edge);
+            case DROP -> AgentNavigationDropExecutionService.tryExecuteDrop(
+                    graph, entry, agent, agentPos, edge);
+            case CLIMB -> tryExecuteClimb(graph, entry, agent, agentPos, edge);
             case PORTAL -> AgentNavigationEdgeReadinessService.isReadyForEdge(agentPos, edge)
-                    && AgentNavigationPortalService.tryExecutePortal(entry, agent, edge.portalId)
-                    ? new NavigationDirective(rawTargetPos, true) : null;
-            default -> null;
+                    && AgentNavigationPortalService.tryExecutePortal(entry, agent, edge.portalId);
+            default -> false;
         };
+        return executed
+                ? AgentTraversalResult.executed(targetPosition, true)
+                : AgentTraversalResult.deferred("executor-not-ready");
     }
 
-    private static NavigationDirective tryExecuteClimb(AgentNavigationGraph graph,
-                                                       AgentRuntimeEntry entry,
-                                                       Character agent,
-                                                       Point agentPos,
-                                                       Point rawTargetPos,
-                                                       AgentNavigationGraph.Edge edge) {
+    private static boolean tryExecuteClimb(AgentNavigationGraph graph,
+                                           AgentRuntimeEntry entry,
+                                           Character agent,
+                                           Point agentPos,
+                                           AgentNavigationGraph.Edge edge) {
         if (AgentMovementStateRuntime.inAir(entry) || AgentMovementStateRuntime.downJumpPending(entry)) {
-            return null;
+            return false;
         }
 
-        boolean executed = AgentClimbStateRuntime.climbing(entry)
+        return AgentClimbStateRuntime.climbing(entry)
                 ? AgentNavigationClimbExitExecutionService.tryExecuteClimbExit(graph, entry, agent, agentPos, edge)
                 : AgentNavigationClimbEntryExecutionService.tryExecuteClimbEntry(graph, entry, agent, agentPos, edge);
-        return executed ? new NavigationDirective(rawTargetPos, true) : null;
     }
 }
