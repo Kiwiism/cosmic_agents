@@ -71,7 +71,8 @@ public final class AgentNavigationGraphService {
     private static final Map<GraphCacheKey, CompletableFuture<AgentNavigationGraph>> PENDING_GRAPHS = new ConcurrentHashMap<>();
     private static final Map<GraphCacheKey, GraphBuildReport> LAST_BUILD_REPORTS = new ConcurrentHashMap<>();
     private static final Map<Integer, Set<Integer>> COLLIDABLE_FROM_BELOW_IDS_BY_MAP_ID = new ConcurrentHashMap<>();
-    private static final ThreadLocal<BuildProfileBuilder> ACTIVE_BUILD_PROFILE = new ThreadLocal<>();
+    private static final ThreadLocal<AgentNavigationGraphBuildProfile> ACTIVE_BUILD_PROFILE =
+            new ThreadLocal<>();
     private static final Object WARMUP_LIFECYCLE_LOCK = new Object();
     private static volatile boolean acceptingAsyncWarmups = true;
 
@@ -184,111 +185,6 @@ public final class AgentNavigationGraphService {
                                     int cacheHits,
                                     int cacheMisses,
                                     long elapsedNs) {
-    }
-
-    private static final class BuildProfileBuilder {
-        private long buildAnchorPointsNs;
-        private final int mapId;
-        private final int totalSpeedStat;
-        private final int totalJumpStat;
-        private final long buildStartedAtNs = System.nanoTime();
-        private int footholdCount;
-        private int walkableFootholdCount;
-        private int ropeCount;
-        private int regionCount;
-        private int totalEdgeCount;
-        private int walkEdgeCount;
-        private int jumpEdgeCount;
-        private int dropEdgeCount;
-        private int climbEdgeCount;
-        private int portalEdgeCount;
-        private long collectFootholdsNs;
-        private long buildRegionsNs;
-        private long addRopeRegionsNs;
-        private long buildFeatureXsNs;
-        private long buildWalkEdgesNs;
-        private long buildDropEdgesNs;
-        private long buildJumpEdgesNs;
-        private long buildRopeEntryEdgesNs;
-        private long buildRopeExitEdgesNs;
-        private long buildPortalEdgesNs;
-        private long jumpSampleCount;
-        private long jumpCacheHitCount;
-        private long jumpCacheMissCount;
-        private long jumpBoundaryRefineProbeCount;
-        private final List<JumpRegionProfile> slowestJumpRegions = new ArrayList<>();
-
-        private BuildProfileBuilder(int mapId, AgentMovementProfile movementProfile) {
-            this.mapId = mapId;
-            this.totalSpeedStat = movementProfile.totalSpeedStat();
-            this.totalJumpStat = movementProfile.totalJumpStat();
-        }
-
-        private void recordEdge(AgentNavigationGraph.EdgeType type) {
-            totalEdgeCount++;
-            switch (type) {
-                case WALK -> walkEdgeCount++;
-                case JUMP, FLASH_JUMP, TELEPORT -> jumpEdgeCount++;
-                case DROP -> dropEdgeCount++;
-                case CLIMB -> climbEdgeCount++;
-                case PORTAL -> portalEdgeCount++;
-            }
-        }
-
-        private void recordJumpSample(boolean cacheHit) {
-            jumpSampleCount++;
-            if (cacheHit) {
-                jumpCacheHitCount++;
-            } else {
-                jumpCacheMissCount++;
-            }
-        }
-
-        private void recordJumpBoundaryRefineProbe() {
-            jumpBoundaryRefineProbeCount++;
-        }
-
-        private void recordJumpRegion(JumpRegionProfile profile) {
-            slowestJumpRegions.add(profile);
-            slowestJumpRegions.sort(Comparator.comparingLong(JumpRegionProfile::elapsedNs).reversed());
-            if (slowestJumpRegions.size() > MAX_PROFILED_JUMP_REGIONS) {
-                slowestJumpRegions.removeLast();
-            }
-        }
-
-        private GraphBuildReport finish() {
-            return new GraphBuildReport(
-                    mapId,
-                    totalSpeedStat,
-                    totalJumpStat,
-                    footholdCount,
-                    walkableFootholdCount,
-                    ropeCount,
-                    regionCount,
-                    totalEdgeCount,
-                    walkEdgeCount,
-                    jumpEdgeCount,
-                    dropEdgeCount,
-                    climbEdgeCount,
-                    portalEdgeCount,
-                    buildAnchorPointsNs,
-                    collectFootholdsNs,
-                    buildRegionsNs,
-                    addRopeRegionsNs,
-                    buildFeatureXsNs,
-                    buildWalkEdgesNs,
-                    buildDropEdgesNs,
-                    buildJumpEdgesNs,
-                    buildRopeEntryEdgesNs,
-                    buildRopeExitEdgesNs,
-                    buildPortalEdgesNs,
-                    System.nanoTime() - buildStartedAtNs,
-                    jumpSampleCount,
-                    jumpCacheHitCount,
-                    jumpCacheMissCount,
-                    jumpBoundaryRefineProbeCount,
-                    slowestJumpRegions);
-        }
     }
 
     private record JumpLaunchWindow(int minX, int maxX, Point startPoint, Point endPoint, int landingTimeMs) {
@@ -642,7 +538,8 @@ public final class AgentNavigationGraphService {
     private static AgentNavigationGraph buildGraph(MapleMap map, AgentMovementProfile movementProfile) {
         throwIfBuildInterrupted();
         movementProfile = movementProfile == null ? AgentMovementProfile.base() : movementProfile;
-        BuildProfileBuilder buildProfile = new BuildProfileBuilder(map.getId(), movementProfile);
+        AgentNavigationGraphBuildProfile buildProfile = new AgentNavigationGraphBuildProfile(
+                map.getId(), movementProfile, MAX_PROFILED_JUMP_REGIONS);
         ACTIVE_BUILD_PROFILE.set(buildProfile);
         try {
             List<Foothold> footholds = map.getFootholds() == null ? List.of() : map.getFootholds().getAllFootholds();
@@ -1291,7 +1188,7 @@ public final class AgentNavigationGraphService {
             }
         }
 
-        BuildProfileBuilder profile = ACTIVE_BUILD_PROFILE.get();
+        AgentNavigationGraphBuildProfile profile = ACTIVE_BUILD_PROFILE.get();
         if (profile != null) {
             profile.recordJumpRegion(new JumpRegionProfile(
                     from.id,
@@ -1476,7 +1373,7 @@ public final class AgentNavigationGraphService {
     }
 
     private static void recordJumpSample(JumpBuildStats stats, boolean cacheHit) {
-        BuildProfileBuilder profile = ACTIVE_BUILD_PROFILE.get();
+        AgentNavigationGraphBuildProfile profile = ACTIVE_BUILD_PROFILE.get();
         if (profile != null) {
             profile.recordJumpSample(cacheHit);
         }
@@ -2436,7 +2333,7 @@ public final class AgentNavigationGraphService {
         outgoing.computeIfAbsent(fromRegionId, ignored -> new ArrayList<>())
                 .add(new AgentNavigationGraph.Edge(fromRegionId, toRegionId, type, startPoint, endPoint,
                         launchMinX, launchMaxX, launchStepX, portalId, ropeX, ropeTopY, ropeBottomY, cost));
-        BuildProfileBuilder profile = ACTIVE_BUILD_PROFILE.get();
+        AgentNavigationGraphBuildProfile profile = ACTIVE_BUILD_PROFILE.get();
         if (profile != null) {
             profile.recordEdge(type);
         }
