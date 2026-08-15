@@ -17,19 +17,17 @@ class AgentTownLifeStateTest {
         state.start(1_000L, 8, LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID);
 
         assertTrue(state.enabled());
-        assertEquals(AgentTownLifeState.Stage.TRAVEL_TO_TOWN, state.stage());
-        assertEquals(AgentTownLifeState.VisitPhase.ARRIVING, state.visitPhase());
+        assertEquals(AgentTownLifeState.Stage.SETTLING, state.stage());
+        assertEquals(AgentTownLifeState.VisitPhase.FREE_TIME, state.visitPhase());
         assertFalse(state.initialPlacementComplete());
         assertTrue(state.nextActionAtMs() >= 1_500L);
         assertTrue(state.nextActionAtMs() <= 11_000L);
 
-        state.select(AgentTownLifeState.Activity.SOCIAL, new Point(10, 20), 55, 0, 2_000L);
+        state.select(AgentTownLifeState.Activity.SOCIALIZE, new Point(10, 20), 55, 0, 2_000L);
         assertEquals(AgentTownLifeState.Stage.MOVE_TO_ACTIVITY, state.stage());
         assertEquals(new Point(10, 20), state.target());
         assertEquals(55, state.targetCharacterId());
 
-        state.transition(AgentTownLifeState.Stage.COMPLETE_ARRIVAL, 2_500L);
-        assertEquals(AgentTownLifeState.VisitPhase.ERRAND, state.visitPhase());
         state.transition(AgentTownLifeState.Stage.SETTLING, 3_000L);
         assertEquals(AgentTownLifeState.VisitPhase.FREE_TIME, state.visitPhase());
 

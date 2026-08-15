@@ -3,6 +3,7 @@ package server.agents.capabilities.townlife;
 import client.Character;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentMapGatewayRuntime;
+import server.agents.integration.AgentClientGatewayRuntime;
 import server.agents.personality.AgentPersonalityProfile;
 import server.agents.personality.AgentPersonalityState;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -81,19 +82,10 @@ public final class AgentTownLifeControllerRuntime {
                 .map(AgentPersonalityState::profile)
                 .map(AgentTownLifeControllerRuntime::personalityView)
                 .orElseGet(AgentTownLifeDecisionContext.PersonalityView::neutral);
-        var townEntries = AgentRuntimeRegistry.activeEntriesSnapshot().stream()
-                .filter(AgentTownLifeRuntime::active)
-                .map(AgentRuntimeIdentityRuntime::bot)
-                .filter(candidate -> candidate != null && candidate.getMapId() == agent.getMapId())
-                .toList();
+        var townEntries = AgentTownLifePopulationRuntime.sameTown(agent);
         int population = townEntries.size();
         Map<String, Long> venueOccupancy = townEntries.stream()
-                .map(AgentRuntimeRegistry::findByCharacterInstance)
-                .filter(java.util.Objects::nonNull)
-                .map(candidate -> candidate.capabilityStates()
-                        .find(AgentTownLifeState.STATE_KEY).orElse(null))
-                .filter(java.util.Objects::nonNull)
-                .map(AgentTownLifeState::venueId)
+                .map(AgentTownLifePopulationPort.AgentView::venueId)
                 .filter(venueId -> venueId != null && !venueId.isBlank())
                 .collect(Collectors.groupingBy(venueId -> venueId, Collectors.counting()));
         AgentTownLifeEncounterState.Snapshot encounter = entry.capabilityStates()
@@ -141,7 +133,7 @@ public final class AgentTownLifeControllerRuntime {
         // Roaming is physical-map driven. Leaving the venue blank lets the destination service
         // distribute Agents across every reachable platform instead of pinning them to the small
         // authored venue list.
-        if (activity == AgentTownLifeState.Activity.ROAM) {
+        if (activity == AgentTownLifeState.Activity.STROLL) {
             return AgentTownLifeDecision.deterministic(activity);
         }
         var venues = profile.venuesFor(activity);
@@ -161,9 +153,47 @@ public final class AgentTownLifeControllerRuntime {
         var candidates = !exact.isEmpty() ? exact
                 : !district.isEmpty() ? district
                 : !platform.isEmpty() ? platform : venues;
-        int index = AgentTownLifeRolePolicy.variation(
-                agent.getId(), state.sequence(), candidates.size(), 313);
-        return AgentTownLifeDecision.deterministic(activity, candidates.get(index).id());
+        Map<String, Long> occupancy = AgentTownLifePopulationRuntime.sameTown(agent).stream()
+                .map(AgentTownLifePopulationPort.AgentView::venueId)
+                .filter(id -> !id.isBlank())
+                .collect(Collectors.groupingBy(id -> id, Collectors.counting()));
+        AgentTownLifeProfile.Venue selected = candidates.stream()
+                .filter(venue -> belowHardCapacity(profile, venue, occupancy))
+                .max(java.util.Comparator.comparingInt(venue -> venueScore(
+                        agent, state, profile, venue, occupancy)))
+                .orElse(candidates.getFirst());
+        return AgentTownLifeDecision.deterministic(activity, selected.id());
+    }
+
+    private static boolean belowHardCapacity(AgentTownLifeProfile profile,
+                                             AgentTownLifeProfile.Venue venue,
+                                             Map<String, Long> occupancy) {
+        int hardCapacity = profile.hotspotForVenue(venue.id())
+                .map(AgentTownLifeProfile.Hotspot::hardCapacity).orElse(venue.capacity());
+        return occupancy.getOrDefault(venue.id(), 0L) < hardCapacity;
+    }
+
+    private static int venueScore(Character agent,
+                                  AgentTownLifeState state,
+                                  AgentTownLifeProfile profile,
+                                  AgentTownLifeProfile.Venue venue,
+                                  Map<String, Long> occupancy) {
+        AgentTownLifeProfile.Hotspot hotspot = profile.hotspotForVenue(venue.id()).orElse(null);
+        int score = hotspot == null ? 100 : hotspot.attractionWeight();
+        long count = occupancy.getOrDefault(venue.id(), 0L);
+        int softCapacity = hotspot == null ? Math.max(1, venue.capacity() / 2)
+                : hotspot.softCapacity();
+        score -= Math.toIntExact(Math.min(100L, count * 12L));
+        if (count >= softCapacity) {
+            score -= 35;
+        }
+        if (!venue.spots().isEmpty() && agent.getPosition() != null) {
+            score -= (int) Math.min(40L,
+                    Math.round(agent.getPosition().distance(venue.spots().getFirst().point()) / 250.0d));
+        }
+        score += AgentTownLifeRolePolicy.variation(
+                agent.getId(), state.sequence(), 17, 313 + venue.id().hashCode());
+        return score;
     }
 
     private static boolean districtMatches(AgentTownLifeState state,
@@ -205,15 +235,15 @@ public final class AgentTownLifeControllerRuntime {
         if (proposal.targetAgentId() <= 0) {
             return validEncounterType(proposal);
         }
-        if (proposal.activity() != AgentTownLifeState.Activity.SOCIAL
-                && proposal.activity() != AgentTownLifeState.Activity.WEAPON_FLOURISH) {
+        if (proposal.activity() != AgentTownLifeState.Activity.SOCIALIZE
+                && proposal.activity() != AgentTownLifeState.Activity.SHOW_OFF) {
             return false;
         }
         AgentRuntimeEntry targetEntry = AgentRuntimeRegistry.findByAgentCharacterId(
                 proposal.targetAgentId());
         Character target = AgentRuntimeIdentityRuntime.bot(targetEntry);
         if (!validEncounterType(proposal)
-                || target == null || target == agent || target.getMapId() != agent.getMapId()
+                || target == null || target == agent || !sameScope(agent, target)
                 || !AgentTownLifeRuntime.active(targetEntry)
                 || AgentTownLifeEncounterCoordinator.active(targetEntry)) {
             return false;
@@ -221,12 +251,22 @@ public final class AgentTownLifeControllerRuntime {
         return true;
     }
 
+    private static boolean sameScope(Character first, Character second) {
+        return first != null && second != null
+                && first.getWorld() == second.getWorld()
+                && first.getMapId() == second.getMapId()
+                && AgentClientGatewayRuntime.clients().hasClient(first)
+                && AgentClientGatewayRuntime.clients().hasClient(second)
+                && AgentClientGatewayRuntime.clients().channel(first)
+                == AgentClientGatewayRuntime.clients().channel(second);
+    }
+
     private static boolean validEncounterType(AgentTownLifeDirective proposal) {
-        if (proposal.activity() == AgentTownLifeState.Activity.SOCIAL) {
+        if (proposal.activity() == AgentTownLifeState.Activity.SOCIALIZE) {
             return proposal.encounterType() == null
                     || proposal.encounterType() == AgentTownLifeEncounterState.Type.SOCIAL_CHAT;
         }
-        if (proposal.activity() == AgentTownLifeState.Activity.WEAPON_FLOURISH) {
+        if (proposal.activity() == AgentTownLifeState.Activity.SHOW_OFF) {
             return proposal.encounterType() == null
                     || proposal.encounterType() == AgentTownLifeEncounterState.Type.PLAYFUL_SPARRING;
         }

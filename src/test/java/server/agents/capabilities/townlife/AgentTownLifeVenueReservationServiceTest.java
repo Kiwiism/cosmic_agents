@@ -42,7 +42,7 @@ class AgentTownLifeVenueReservationServiceTest {
         AgentTownLifeProfile.Venue venue = new AgentTownLifeProfile.Venue(
                 "tiny", "Tiny", AgentTownLifeState.District.LOWER,
                 AgentTownLifeState.PlatformKind.MINI, 2,
-                List.of(AgentTownLifeProfile.Affordance.SOCIAL),
+                List.of(AgentTownLifeProfile.Affordance.SOCIALIZE),
                 List.of(new AgentTownLifeProfile.VenueSpot(10, 20, -1),
                         new AgentTownLifeProfile.VenueSpot(80, 20, -1)), 0);
 

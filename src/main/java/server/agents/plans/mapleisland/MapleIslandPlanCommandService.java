@@ -445,9 +445,9 @@ public final class MapleIslandPlanCommandService {
             MapleIslandTownLifeCommandService.Result result =
                     MapleIslandTownLifeCommandService.startCompletedSouthperryAgents(
                             player, System.currentTimeMillis());
-            message(player, "Lith Harbor town life started for " + result.started()
-                    + " completed Southperry Agents; already active=" + result.alreadyActive()
-                    + ", not eligible=" + result.notEligible() + ".");
+            message(player, "Lith transfer/TownLife queued for " + result.started()
+                    + " eligible Agents; already in TownLife=" + result.alreadyActive()
+                    + ", outside scope=" + result.notEligible() + ".");
             return;
         }
         if (params.length == 2 && params[1].equalsIgnoreCase("stop")) {

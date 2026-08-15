@@ -1,0 +1,136 @@
+{
+  "schemaVersion": 2,
+  "profileId": "kerning-city",
+  "mapId": 103000000,
+  "admission": {
+    "mode": "AMBIENT",
+    "maxAmbientAgents": 30,
+    "minVisitMs": 60000,
+    "maxVisitMs": 900000,
+    "revisitCooldownMs": 120000
+  },
+  "geometry": {
+    "upperMaxY": -500,
+    "middleMaxY": 180,
+    "miniPlatformMaxWidth": 300,
+    "minimumPlatformWidth": 48,
+    "edgeInsetPx": 28,
+    "slotSpacingPx": 76,
+    "maxSlotsPerPlatform": 8
+  },
+  "distribution": {
+    "upperWeight": 20,
+    "middleWeight": 35,
+    "lowerWeight": 35,
+    "anyWeight": 10,
+    "miniPlatformPercent": 30,
+    "crossDistrictEveryActivities": 5
+  },
+  "extensions": { "activityHandlers": [] },
+  "allowedChildMapIds": [],
+  "activityWeights": {
+    "REST": 90,
+    "SOCIALIZE": 135,
+    "LINGER": 120,
+    "STROLL": 105,
+    "BROWSE": 70,
+    "SHOW_OFF": 110
+  },
+  "arrivalPortals": [
+    { "name": "west00", "weight": 50 },
+    { "name": "east00", "weight": 50 }
+  ],
+  "restSpots": [
+    { "x": -720, "y": 426, "seatId": -1 },
+    { "x": -620, "y": 426, "seatId": -1 },
+    { "x": -420, "y": 426, "seatId": -1 },
+    { "x": 180, "y": 426, "seatId": -1 },
+    { "x": 400, "y": 426, "seatId": -1 },
+    { "x": 790, "y": 426, "seatId": -1 }
+  ],
+  "roamFallbackSpots": [
+    { "x": -2050, "y": 263 },
+    { "x": -1767, "y": 156 },
+    { "x": -1129, "y": 156 },
+    { "x": -540, "y": 426 },
+    { "x": 293, "y": 426 },
+    { "x": 844, "y": 426 },
+    { "x": 1543, "y": 156 },
+    { "x": 1991, "y": 156 }
+  ],
+  "npcSpots": [
+    { "npcId": 9020000, "offsetX": -70 },
+    { "npcId": 1052102, "offsetX": 65 },
+    { "npcId": 1052103, "offsetX": -65 },
+    { "npcId": 1052106, "offsetX": 65 },
+    { "npcId": 1052016, "offsetX": -65 },
+    { "npcId": 1052017, "offsetX": 65 }
+  ],
+  "trafficZones": [
+    { "id": "west-field-portal", "type": "PORTAL", "minX": -2345, "minY": 95,
+      "maxX": -2210, "maxY": 285, "excludesOccupancy": true },
+    { "id": "east-field-portal", "type": "PORTAL", "minX": 2440, "minY": -270,
+      "maxX": 2580, "maxY": -130, "excludesOccupancy": true },
+    { "id": "subway-portal", "type": "DOOR", "minX": 600, "minY": 365,
+      "maxX": 705, "maxY": 465, "excludesOccupancy": true },
+    { "id": "west-shop-doors", "type": "DOOR", "minX": -1780, "minY": -310,
+      "maxX": -1350, "maxY": 70, "excludesOccupancy": true },
+    { "id": "central-shop-doors", "type": "DOOR", "minX": 130, "minY": -380,
+      "maxX": 330, "maxY": -40, "excludesOccupancy": true }
+  ],
+  "platformPolicies": [],
+  "venues": [
+    { "id": "pq-plaza", "label": "Kerning Party Quest plaza", "district": "LOWER",
+      "platformKind": "MAIN", "capacity": 6,
+      "affordances": ["REST", "SOCIALIZE", "LINGER", "STROLL", "SHOW_OFF"],
+      "spots": [
+        { "x": -790, "y": 426, "seatId": -1 }, { "x": -700, "y": 426, "seatId": -1 },
+        { "x": -610, "y": 426, "seatId": -1 }, { "x": -520, "y": 426, "seatId": -1 },
+        { "x": -430, "y": 426, "seatId": -1 }, { "x": -340, "y": 426, "seatId": -1 }
+      ], "destinationMapId": 0 },
+    { "id": "central-street", "label": "Kerning central street", "district": "LOWER",
+      "platformKind": "MAIN", "capacity": 4,
+      "affordances": ["REST", "SOCIALIZE", "LINGER", "STROLL"],
+      "spots": [
+        { "x": 120, "y": 426, "seatId": -1 }, { "x": 240, "y": 426, "seatId": -1 },
+        { "x": 400, "y": 426, "seatId": -1 }, { "x": 520, "y": 426, "seatId": -1 }
+      ], "destinationMapId": 0 },
+    { "id": "east-street", "label": "Kerning east street", "district": "MIDDLE",
+      "platformKind": "MAIN", "capacity": 4,
+      "affordances": ["SOCIALIZE", "LINGER", "STROLL", "SHOW_OFF"],
+      "spots": [
+        { "x": 1543, "y": 156, "seatId": -1 }, { "x": 1796, "y": 156, "seatId": -1 },
+        { "x": 1991, "y": 156, "seatId": -1 }, { "x": 2196, "y": 366, "seatId": -1 }
+      ], "destinationMapId": 0 },
+    { "id": "subway-sidewalk", "label": "Kerning subway sidewalk", "district": "LOWER",
+      "platformKind": "MAIN", "capacity": 3,
+      "affordances": ["LINGER", "SOCIALIZE", "STROLL"],
+      "spots": [
+        { "x": 760, "y": 426, "seatId": -1 }, { "x": 844, "y": 426, "seatId": -1 },
+        { "x": 930, "y": 426, "seatId": -1 }
+      ], "destinationMapId": 0 },
+    { "id": "west-shop-front", "label": "Kerning west shopfront", "district": "MIDDLE",
+      "platformKind": "MAIN", "capacity": 1, "affordances": ["BROWSE", "LINGER"],
+      "spots": [{ "x": -1835, "y": 156, "seatId": -1 }], "destinationMapId": 103000001 },
+    { "id": "central-shop-front", "label": "Kerning central shopfront", "district": "MIDDLE",
+      "platformKind": "MAIN", "capacity": 1, "affordances": ["BROWSE", "LINGER"],
+      "spots": [{ "x": 60, "y": -54, "seatId": -1 }], "destinationMapId": 103000005 }
+  ],
+  "facilities": [
+    { "id": "kerning-west-shops", "type": "GENERAL_SHOP", "npcId": 0,
+      "destinationMapId": 103000001, "approachPoints": [{ "x": -1835, "y": 156 }],
+      "services": ["browse", "buy", "sell"] },
+    { "id": "kerning-subway", "type": "OTHER", "npcId": 0,
+      "destinationMapId": 103000100, "approachPoints": [{ "x": 760, "y": 426 }],
+      "services": ["subway-entry"] },
+    { "id": "kerning-pq", "type": "PARTY_QUEST", "npcId": 9020000,
+      "destinationMapId": 0, "approachPoints": [{ "x": -610, "y": 426 }],
+      "services": ["party-quest-recruitment"] }
+  ],
+  "hotspots": [
+    { "id": "kerning-pq-crowd", "venueId": "pq-plaza",
+      "attractionWeight": 170, "softCapacity": 4, "hardCapacity": 6 },
+    { "id": "kerning-central-crowd", "venueId": "central-street",
+      "attractionWeight": 115, "softCapacity": 3, "hardCapacity": 4 }
+  ]
+}

@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 import java.util.EnumSet;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentTownLifeProfileRepositoryTest {
@@ -17,7 +16,6 @@ class AgentTownLifeProfileRepositoryTest {
         assertEquals("lith-harbor", profile.profileId());
         assertEquals(20, profile.restSpots().size());
         assertEquals(8, profile.npcSpots().size());
-        assertEquals(3, profile.shopMapIds().size());
         assertEquals(10, profile.venues().size());
         assertEquals(4, profile.trafficZones().size());
         assertEquals(1, profile.platformPolicies().size());
@@ -26,9 +24,9 @@ class AgentTownLifeProfileRepositoryTest {
                 profile.platformPolicy(new java.awt.Point(3890, 425)).orElseThrow().id());
         assertTrue(profile.platformPolicy(new java.awt.Point(3890, 527)).isEmpty());
         assertEquals(0, profile.mapSeatId(profile.restSpots().get(2).point()));
-        assertEquals("lith-harbor", profile.extensions().arrival());
-        assertInstanceOf(LithHarborTownLifeArrivalExtension.class,
-                AgentTownLifeArrivalExtensionRepository.forTown(profile.mapId()));
+        assertEquals(2, profile.schemaVersion());
+        assertTrue(profile.extensions().activityHandlers().isEmpty());
+        assertEquals(3, profile.facilities().size());
         assertTrue(AgentTownLifeProfileValidator.validate(profile).valid());
     }
 
@@ -51,9 +49,9 @@ class AgentTownLifeProfileRepositoryTest {
 
         assertEquals(9, benches.capacity());
         assertTrue(benches.supports(AgentTownLifeState.Activity.REST));
-        assertTrue(benches.supports(AgentTownLifeState.Activity.SOCIAL));
+        assertTrue(benches.supports(AgentTownLifeState.Activity.SOCIALIZE));
         assertEquals(9, benches.spots().size());
-        assertEquals(3, profile.venuesFor(AgentTownLifeState.Activity.SHOP_VISIT).size());
+        assertEquals(3, profile.venuesFor(AgentTownLifeState.Activity.BROWSE).size());
         assertEquals(8, profile.venue("upper-town-overlook").orElseThrow().spots().size());
         assertEquals(6, profile.venue("upper-town-street").orElseThrow().spots().size());
     }
@@ -99,6 +97,20 @@ class AgentTownLifeProfileRepositoryTest {
         assertEquals(7, profile.venues().size());
         assertEquals(100000100, profile.venue("henesys-market")
                 .orElseThrow().destinationMapId());
+        assertTrue(validation.valid(), () -> validation.errors().toString());
+    }
+
+    @Test
+    void loadsKerningAsADataOnlyThirdTown() {
+        AgentTownLifeProfile profile = AgentTownLifeProfileRepository.defaultRepository()
+                .require(103000000);
+        AgentTownLifeProfileValidator.Validation validation =
+                AgentTownLifeProfileValidator.validate(profile);
+
+        assertEquals("kerning-city", profile.profileId());
+        assertEquals(6, profile.venues().size());
+        assertEquals("pq-plaza", profile.hotspots().getFirst().venueId());
+        assertTrue(profile.extensions().activityHandlers().isEmpty());
         assertTrue(validation.valid(), () -> validation.errors().toString());
     }
 }

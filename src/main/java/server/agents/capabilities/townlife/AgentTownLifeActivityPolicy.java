@@ -12,28 +12,25 @@ final class AgentTownLifeActivityPolicy {
     private static final String TUNING_PREFIX =
             "server.agents.capabilities.townlife.AgentTownLifeActivityPolicy.";
     private static final int STATIONED_REST_WEIGHT = tuningInt("STATIONED_REST_WEIGHT");
-    private static final int STATIONED_SOCIAL_WEIGHT = tuningInt("STATIONED_SOCIAL_WEIGHT");
-    private static final int STATIONED_NPC_PAUSE_WEIGHT = tuningInt("STATIONED_NPC_PAUSE_WEIGHT");
-    private static final int STATIONED_ROAM_WEIGHT = tuningInt("STATIONED_ROAM_WEIGHT");
-    private static final int STATIONED_SHOP_VISIT_WEIGHT = tuningInt("STATIONED_SHOP_VISIT_WEIGHT");
-    private static final int STATIONED_WEAPON_FLOURISH_WEIGHT =
-            tuningInt("STATIONED_WEAPON_FLOURISH_WEIGHT");
+    private static final int STATIONED_SOCIALIZE_WEIGHT = tuningInt("STATIONED_SOCIALIZE_WEIGHT");
+    private static final int STATIONED_LINGER_WEIGHT = tuningInt("STATIONED_LINGER_WEIGHT");
+    private static final int STATIONED_STROLL_WEIGHT = tuningInt("STATIONED_STROLL_WEIGHT");
+    private static final int STATIONED_BROWSE_WEIGHT = tuningInt("STATIONED_BROWSE_WEIGHT");
+    private static final int STATIONED_SHOW_OFF_WEIGHT = tuningInt("STATIONED_SHOW_OFF_WEIGHT");
     private static final int MOBILE_REST_WEIGHT = tuningInt("MOBILE_REST_WEIGHT");
-    private static final int MOBILE_SOCIAL_WEIGHT = tuningInt("MOBILE_SOCIAL_WEIGHT");
-    private static final int MOBILE_NPC_PAUSE_WEIGHT = tuningInt("MOBILE_NPC_PAUSE_WEIGHT");
-    private static final int MOBILE_ROAM_WEIGHT = tuningInt("MOBILE_ROAM_WEIGHT");
-    private static final int MOBILE_SHOP_VISIT_WEIGHT = tuningInt("MOBILE_SHOP_VISIT_WEIGHT");
-    private static final int MOBILE_WEAPON_FLOURISH_WEIGHT =
-            tuningInt("MOBILE_WEAPON_FLOURISH_WEIGHT");
+    private static final int MOBILE_SOCIALIZE_WEIGHT = tuningInt("MOBILE_SOCIALIZE_WEIGHT");
+    private static final int MOBILE_LINGER_WEIGHT = tuningInt("MOBILE_LINGER_WEIGHT");
+    private static final int MOBILE_STROLL_WEIGHT = tuningInt("MOBILE_STROLL_WEIGHT");
+    private static final int MOBILE_BROWSE_WEIGHT = tuningInt("MOBILE_BROWSE_WEIGHT");
+    private static final int MOBILE_SHOW_OFF_WEIGHT = tuningInt("MOBILE_SHOW_OFF_WEIGHT");
     private static final int TRAIT_CENTER = tuningInt("TRAIT_CENTER");
     private static final int REST_TRAIT_CENTER = tuningInt("REST_TRAIT_CENTER");
     private static final int REST_TRAIT_DIVISOR = tuningInt("REST_TRAIT_DIVISOR");
     private static final int SOCIAL_TRAIT_DIVISOR = tuningInt("SOCIAL_TRAIT_DIVISOR");
-    private static final int NPC_PAUSE_TRAIT_DIVISOR = tuningInt("NPC_PAUSE_TRAIT_DIVISOR");
-    private static final int ROAM_TRAIT_DIVISOR = tuningInt("ROAM_TRAIT_DIVISOR");
-    private static final int SHOP_VISIT_TRAIT_DIVISOR = tuningInt("SHOP_VISIT_TRAIT_DIVISOR");
-    private static final int WEAPON_FLOURISH_TRAIT_DIVISOR =
-            tuningInt("WEAPON_FLOURISH_TRAIT_DIVISOR");
+    private static final int LINGER_TRAIT_DIVISOR = tuningInt("LINGER_TRAIT_DIVISOR");
+    private static final int STROLL_TRAIT_DIVISOR = tuningInt("STROLL_TRAIT_DIVISOR");
+    private static final int BROWSE_TRAIT_DIVISOR = tuningInt("BROWSE_TRAIT_DIVISOR");
+    private static final int SHOW_OFF_TRAIT_DIVISOR = tuningInt("SHOW_OFF_TRAIT_DIVISOR");
     private static final int RECENT_ACTIVITY_WEIGHT_DIVISOR =
             tuningInt("RECENT_ACTIVITY_WEIGHT_DIVISOR");
     private static final int MINIMUM_ACTIVITY_WEIGHT = tuningInt("MINIMUM_ACTIVITY_WEIGHT");
@@ -44,52 +41,67 @@ final class AgentTownLifeActivityPolicy {
     static AgentTownLifeState.Activity choose(AgentRuntimeEntry entry,
                                               Character agent,
                                               AgentTownLifeState state) {
-        if (!state.initialPlacementComplete()) {
-            return AgentTownLifeState.Activity.ROAM;
-        }
-        Map<AgentTownLifeState.Activity, Integer> weights = new EnumMap<>(AgentTownLifeState.Activity.class);
-        if (state.role() == AgentTownLifeState.Role.STATIONED) {
-            weights.put(AgentTownLifeState.Activity.REST, STATIONED_REST_WEIGHT);
-            weights.put(AgentTownLifeState.Activity.SOCIAL, STATIONED_SOCIAL_WEIGHT);
-            weights.put(AgentTownLifeState.Activity.NPC_PAUSE, STATIONED_NPC_PAUSE_WEIGHT);
-            weights.put(AgentTownLifeState.Activity.ROAM, STATIONED_ROAM_WEIGHT);
-            weights.put(AgentTownLifeState.Activity.SHOP_VISIT, STATIONED_SHOP_VISIT_WEIGHT);
-            weights.put(
-                    AgentTownLifeState.Activity.WEAPON_FLOURISH,
-                    STATIONED_WEAPON_FLOURISH_WEIGHT);
-        } else {
-            weights.put(AgentTownLifeState.Activity.REST, MOBILE_REST_WEIGHT);
-            weights.put(AgentTownLifeState.Activity.SOCIAL, MOBILE_SOCIAL_WEIGHT);
-            weights.put(AgentTownLifeState.Activity.NPC_PAUSE, MOBILE_NPC_PAUSE_WEIGHT);
-            weights.put(AgentTownLifeState.Activity.ROAM, MOBILE_ROAM_WEIGHT);
-            weights.put(AgentTownLifeState.Activity.SHOP_VISIT, MOBILE_SHOP_VISIT_WEIGHT);
-            weights.put(
-                    AgentTownLifeState.Activity.WEAPON_FLOURISH,
-                    MOBILE_WEAPON_FLOURISH_WEIGHT);
-        }
         AgentPersonalityState personality = entry.capabilityStates()
                 .find(AgentPersonalityState.STATE_KEY).orElse(null);
-        long seed = agent.getId();
-        if (personality != null && personality.profile() != null) {
-            AgentPersonalityProfile.Traits traits = personality.profile().traits();
+        AgentPersonalityProfile.Traits traits = personality == null || personality.profile() == null
+                ? null : personality.profile().traits();
+        AgentTownLifeDecisionContext.PersonalityView personalityView = traits == null
+                ? AgentTownLifeDecisionContext.PersonalityView.neutral()
+                : new AgentTownLifeDecisionContext.PersonalityView(
+                traits.patience(), traits.activity(), traits.curiosity(), traits.sociability(),
+                traits.routinePreference(), traits.expressiveness());
+        AgentTownLifeProfile profile = AgentTownLifeProfileRepository.defaultRepository()
+                .require(state.townMapId());
+        return choose(new AgentTownLifeActivityContext(
+                agent.getId(), personality == null ? agent.getId() : personality.behaviorSeed(),
+                state.initialPlacementComplete(), state.role(), state.sequence(), personalityView,
+                traits != null, profile.activityWeights(), state.memory().recentActivitiesSnapshot()));
+    }
+
+    static AgentTownLifeState.Activity choose(AgentTownLifeActivityContext context) {
+        if (!context.initialPlacementComplete()) {
+            return AgentTownLifeState.Activity.STROLL;
+        }
+        Map<AgentTownLifeState.Activity, Integer> weights = new EnumMap<>(AgentTownLifeState.Activity.class);
+        if (context.role() == AgentTownLifeState.Role.STATIONED) {
+            weights.put(AgentTownLifeState.Activity.REST, STATIONED_REST_WEIGHT);
+            weights.put(AgentTownLifeState.Activity.SOCIALIZE, STATIONED_SOCIALIZE_WEIGHT);
+            weights.put(AgentTownLifeState.Activity.LINGER, STATIONED_LINGER_WEIGHT);
+            weights.put(AgentTownLifeState.Activity.STROLL, STATIONED_STROLL_WEIGHT);
+            weights.put(AgentTownLifeState.Activity.BROWSE, STATIONED_BROWSE_WEIGHT);
+            weights.put(AgentTownLifeState.Activity.SHOW_OFF, STATIONED_SHOW_OFF_WEIGHT);
+        } else {
+            weights.put(AgentTownLifeState.Activity.REST, MOBILE_REST_WEIGHT);
+            weights.put(AgentTownLifeState.Activity.SOCIALIZE, MOBILE_SOCIALIZE_WEIGHT);
+            weights.put(AgentTownLifeState.Activity.LINGER, MOBILE_LINGER_WEIGHT);
+            weights.put(AgentTownLifeState.Activity.STROLL, MOBILE_STROLL_WEIGHT);
+            weights.put(AgentTownLifeState.Activity.BROWSE, MOBILE_BROWSE_WEIGHT);
+            weights.put(AgentTownLifeState.Activity.SHOW_OFF, MOBILE_SHOW_OFF_WEIGHT);
+        }
+        weights.replaceAll((activity, weight) -> Math.max(
+                MINIMUM_ACTIVITY_WEIGHT,
+                weight * context.profileWeights().getOrDefault(activity, 100) / 100));
+        long seed = context.agentId();
+        if (context.personalityAssigned()) {
+            AgentTownLifeDecisionContext.PersonalityView traits = context.personality();
             adjust(weights, AgentTownLifeState.Activity.REST,
                     (traits.patience() + traits.routinePreference() - REST_TRAIT_CENTER)
                             / REST_TRAIT_DIVISOR);
-            adjust(weights, AgentTownLifeState.Activity.SOCIAL,
+            adjust(weights, AgentTownLifeState.Activity.SOCIALIZE,
                     (traits.sociability() - TRAIT_CENTER) / SOCIAL_TRAIT_DIVISOR);
-            adjust(weights, AgentTownLifeState.Activity.NPC_PAUSE,
-                    (traits.curiosity() - TRAIT_CENTER) / NPC_PAUSE_TRAIT_DIVISOR);
-            adjust(weights, AgentTownLifeState.Activity.ROAM,
-                    (traits.activity() - TRAIT_CENTER) / ROAM_TRAIT_DIVISOR);
-            adjust(weights, AgentTownLifeState.Activity.SHOP_VISIT,
-                    (traits.curiosity() - TRAIT_CENTER) / SHOP_VISIT_TRAIT_DIVISOR);
-            adjust(weights, AgentTownLifeState.Activity.WEAPON_FLOURISH,
+            adjust(weights, AgentTownLifeState.Activity.LINGER,
+                    (traits.curiosity() - TRAIT_CENTER) / LINGER_TRAIT_DIVISOR);
+            adjust(weights, AgentTownLifeState.Activity.STROLL,
+                    (traits.activity() - TRAIT_CENTER) / STROLL_TRAIT_DIVISOR);
+            adjust(weights, AgentTownLifeState.Activity.BROWSE,
+                    (traits.curiosity() - TRAIT_CENTER) / BROWSE_TRAIT_DIVISOR);
+            adjust(weights, AgentTownLifeState.Activity.SHOW_OFF,
                     (traits.expressiveness() - TRAIT_CENTER)
-                            / WEAPON_FLOURISH_TRAIT_DIVISOR);
-            seed ^= personality.behaviorSeed();
+                            / SHOW_OFF_TRAIT_DIVISOR);
+            seed ^= context.behaviorSeed();
         }
         for (AgentTownLifeState.Activity activity : weights.keySet()) {
-            if (state.memory().recentlyUsed(activity)) {
+            if (context.recentActivities().contains(activity)) {
                 weights.compute(
                         activity,
                         (ignored, value) -> Math.max(
@@ -98,14 +110,14 @@ final class AgentTownLifeActivityPolicy {
             }
         }
         int total = weights.values().stream().mapToInt(Integer::intValue).sum();
-        int roll = AgentTownLifeRolePolicy.variation(seed, state.sequence(), total, 239);
+        int roll = AgentTownLifeRolePolicy.variation(seed, context.sequence(), total, 239);
         for (Map.Entry<AgentTownLifeState.Activity, Integer> candidate : weights.entrySet()) {
             if (roll < candidate.getValue()) {
                 return candidate.getKey();
             }
             roll -= candidate.getValue();
         }
-        return AgentTownLifeState.Activity.ROAM;
+        return AgentTownLifeState.Activity.STROLL;
     }
 
     private static void adjust(Map<AgentTownLifeState.Activity, Integer> weights,

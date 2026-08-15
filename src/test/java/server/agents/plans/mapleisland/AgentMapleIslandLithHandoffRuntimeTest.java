@@ -25,6 +25,8 @@ class AgentMapleIslandLithHandoffRuntimeTest {
         Character agent = mock(Character.class);
         when(agent.getId()).thenReturn(41);
         when(agent.getMapId()).thenReturn(104_000_000);
+        when(agent.getPosition()).thenReturn(new java.awt.Point(0, 0));
+        when(agent.getChair()).thenReturn(-1);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
         AgentPlanSessionState plan =
                 entry.capabilityStates().require(AgentPlanSessionState.STATE_KEY);
@@ -42,11 +44,12 @@ class AgentMapleIslandLithHandoffRuntimeTest {
         assertTrue(AgentMapleIslandLithHandoffRuntime.tick(entry, agent, 2_000L));
 
         assertTrue(AgentTownLifeRuntime.active(entry));
-        assertEquals(AgentTownLifeState.Stage.TRAVEL_TO_TOWN,
+        assertEquals(AgentTownLifeState.Stage.SETTLING,
                 entry.capabilityStates().require(AgentTownLifeState.STATE_KEY).stage());
         assertEquals(AgentMapleIslandLithHandoffState.Stage.COMPLETE, handoff.stage());
         assertTrue(entry.capabilityStates()
                 .find(AgentSouthperryLithTransferState.STATE_KEY).isEmpty());
+        AgentTownLifeRuntime.stop(entry, agent);
     }
 
     @Test

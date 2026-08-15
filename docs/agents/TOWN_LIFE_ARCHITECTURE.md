@@ -1,187 +1,139 @@
 # Agent TownLife architecture
 
-TownLife is the Agent-owned capability for spending non-progression time in a town. `ROAM` is one
-activity inside TownLife; it is not the name of the subsystem.
+TownLife is a local, non-progression foreground capability. One session belongs to one Agent in one
+town map. It never owns travel to the town, taxi scripts, quests, required shopping, storage,
+combat, or progression recovery.
 
-TownLife deliberately keeps its own town-agnostic activity/directive schema and per-town extension
-profiles. It does not use progression-plan step rows. It shares the foreground lifecycle envelope
-described in `UNIVERSAL_AGENT_PLAN_SCHEMA.md`: explicit activation, suspension/resumption,
-checkpoint ownership, cancellation, and handoff.
+## Ownership model
 
-## Responsibility boundaries
+| Concern | Owner |
+|---|---|
+| Why an Agent should visit a town or facility | autonomy/progression/economy |
+| Foreground priority and pause/resume | foreground runtime |
+| Taxi, portal, ship, and cross-map travel | travel capability |
+| Buying, selling, and storage transactions | shop/storage capabilities |
+| Local admission, session start/stop, and checkpoint | TownLife lifecycle |
+| Local activity selection and bounded execution | TownLife activity runtime |
+| Movement to a local reserved point | navigation |
+| Town geometry, venues, facilities, hotspots, weights | profile JSON |
+| Truly unique local mechanics | bounded extension registry |
 
-- `AgentTownLifeRuntime` owns the resumable stage machine and pauses ordinary Agent objectives while
-  TownLife is active.
-- `AgentForegroundPlanRuntime` is the global interruption seam. It ticks TownLife before delegating
-  to the current concrete plan engine, so TownLife is not tied to Maple Island or Amherst.
-- `AgentTownLifeActivityPolicy` selects an activity from role, memory, and personality traits.
-- `AgentTownLifeControllerRuntime` is the policy seam. Deterministic policy remains the fallback;
-  an optional controller can only propose a validated high-level activity, named venue, peer, and
-  encounter type. It cannot provide coordinates or perform mutations.
-- `AgentTownLifeActivitySequenceState` turns a selected activity into bounded `ORIENT`, `OPENING`,
-  `PERFORMING`, `REACTION`, and `CLOSING` phases.
-- `AgentTownLifeEncounterCoordinator` invites personality-filtered participants, reserves two to
-  four venue slots, moves every accepted participant behind a ready barrier, and owns typed role,
-  phase, turn, expiry, and group identity. Agent-to-Agent coordination is structured state, not
-  visible Maple chat.
-- `AgentTownLifeVenueReservationService` claims and releases every slot in an encounter as one
-  bounded group operation.
-- `AgentTownLifeFidelityPolicy` keeps one state machine across observed presentation,
-  background-active, and background-abstract execution.
-- `AgentTownLifePlatformCatalog` converts the cached navigation graph into categorized reservation
-  slots. It owns platform capacity, not movement.
-- `AgentTownLifeSpotSampler` ranks catalog slots for an Agent's stable district/platform preference.
-- `CharacterSpaceReservationRuntime` prevents two Agents from claiming the same slot.
-- Navigation owns the route to a reserved point. TownLife never interpolates or teleports an Agent
-  to an ordinary activity destination.
-- Movement presentation owns fidgets, chairs, emotes, and weapon flourishes.
-- `AgentTownLifeArrivalExtension` owns optional town-specific entry ceremonies. Lith Harbor uses it
-  for Shanks and the outstanding Biggs/Olaf quest handoff.
+A taxi is an exit boundary. TownLife ends before travel begins. If the destination town admits the
+Agent, it starts a new local session there. A cross-town purpose or correlation ID belongs to the
+outer objective, not either TownLife session.
 
-## Per-town files
-
-Each supported town has one JSON profile under `src/main/resources/agents/town-life/` and one entry
-in `index.json`. A profile controls:
-
-- upper/middle/lower Y boundaries;
-- mini-platform width and generated reservation-slot spacing/capacity;
-- stable population distribution across districts and mini platforms;
-- occasional cross-district visit frequency;
-- graph-validated arrival portal choices and weights;
-- optional named extension handlers for town-specific arrival ceremonies;
-- authored rest/map-seat points, fallback roam points, NPC pause offsets, and enterable shops.
-- named semantic venues, their capacities, district/platform classification, concrete spots, and
-  supported affordances such as rest, social, roam, shop, waiting, and sightseeing.
-- traffic exclusion rectangles for portals, doors, ladders, and NPC lanes.
-
-The engine catalogs every reachable non-rope navigation region at runtime, so a WZ foothold change
-automatically creates a new set of platform slots. Authored points remain explicit because native
-map seats, NPC offsets, shops, and arrival portals are semantic map content rather than geometry.
-
-## Venue and controller contract
-
-A venue describes what a place means; Navigation still decides how to reach it. The currently
-cataloged Lith Harbor venues include the ship arrival deck, World Tour platform, central benches,
-Olaf crossroads, east street, upper overlook, and the three shop interiors.
-
-`AgentTownLifeDecisionContext` is the only view exposed to a future decision plugin. It contains:
-
-- immutable Agent/town/profile identity;
-- current TownLife stage, visit phase, fidelity, activity, role, venue, district, and platform
-  preference;
-- personality traits and recent activities;
-- bounded relationship summaries (encounter/completion/decline counts and last interaction type);
-- town Agent count and real-observer presence;
-- bounded encounter state and participant IDs;
-- traffic exclusion zones;
-- venue IDs, labels, affordances, capacities, and current occupancy;
-- decision time and sequence.
-
-`AgentTownLifeDirective` is the only accepted controller output. It contains an activity, optional
-venue ID, optional peer Agent ID, encounter type, expiry, source, and correlation ID. The runtime
-rejects expired directives, missing or incompatible venues, invalid peers, and peers outside the
-same active TownLife map. Destination resolution, reservation, navigation, animation, event
-publication, and cleanup always remain deterministic.
-
-The controller callback is a non-blocking hot-path interface. A future LLM adapter must perform
-network inference asynchronously and expose only a fresh cached proposal here.
-
-### Per-Agent support levels
-
-| Level | TownLife decisions | Dialogue rendering |
-|---|---|---|
-| `DETERMINISTIC` | Built-in role/personality policy | Deterministic templates/emotes |
-| `DIALOGUE_ONLY` | Built-in role/personality policy | May use an external language renderer later |
-| `DIALOGUE_AND_DECISION` | Valid external proposals with deterministic fallback | May use an external language renderer later |
-
-The support level grants eligibility, not direct mutation authority. Enabling either LLM mode does
-not require TownLife execution code to know which model or provider produced a proposal.
-
-## Events and presentation
-
-TownLife publishes two ambient, session-local event families:
-
-- `townlife.activity`: selection, arrival, phased performance, completion, or abandonment, including
-  venue and controller provenance;
-- `townlife.encounter`: invitation, approach, activation, reaction, closing, completion, or
-  cancellation for each participant.
-
-These events feed the existing bounded bus, durable-policy filter, monitoring, and LLM context
-projection. A deterministic Dialogue listener converts only a stable subset of initiated encounters
-into `AgentDialogueIntentEvent`. Observer presence and cooldown are still enforced by the shared
-Dialogue projection. TownLife does not broadcast chat directly.
-
-## Current LLM-ready flow
+## Runtime shape
 
 ```text
-Town perception/profile/venues
-  -> immutable AgentTownLifeDecisionContext
-  -> deterministic policy OR fresh external AgentTownLifeDirective
-  -> validation and deterministic destination resolution
-  -> reservation/navigation/activity sequence/encounter
-  -> TownLife events
-  -> deterministic presentation today
-  -> optional LLM dialogue renderer later
+outer objective/travel places Agent in town
+  -> AgentTownLifeLifecycleRuntime admission
+  -> foreground pause + durable local intent
+  -> AgentTownLifeRuntime fidelity/session guard
+  -> AgentTownLifeActivityRuntime
+       SETTLING -> CHOOSE_ACTIVITY -> MOVE_TO_ACTIVITY -> DWELL -> COOLDOWN
+  -> stop/map exit/expiry/global disable
+  -> reservations and encounters released
+  -> checkpoint removed + foreground resumed
 ```
 
-## Implemented TownLife lifecycle and fidelity
+`AgentTownLifeRuntime` remains the compatibility facade used by existing foreground and abstract
+execution integrations. Lifecycle and activity execution are separate beneath that facade. All
+Agents remain on the existing central Agent scheduler; TownLife does not create threads or
+per-town schedulers.
 
-Each visit records `ARRIVING`, `ERRAND`, `FREE_TIME`, or `DEPARTING` independently from the
-lower-level movement stage. Progression and town-specific arrival extensions can therefore expose
-why an Agent is in town without owning ambient behavior.
+## Admission and shutdown
 
-Observed maps use `PRESENTATION` fidelity. Unobserved maps keep physical navigation in
-`BACKGROUND_ACTIVE`; `BACKGROUND_ABSTRACT` advances selections, dwell phases, memory, and events
-without cosmetic actions or unnecessary walking. Promotion from abstract to presentation safely
-replans the current activity instead of materializing a fake interaction.
+Each schema-v2 profile declares `DISABLED`, `MANUAL_ONLY`, or `AMBIENT` admission plus an ambient
+population cap and visit/cooldown bounds. `AgentTownLifeControlRuntime` is the process-wide switch.
+Disabling it stops active sessions and resumes their prior foreground work. A start request is
+rejected with a typed result when the town is unsupported, disabled, full, or the Agent has not yet
+been placed in that map.
 
-Social encounters use deterministic accept/decline decisions influenced by responder sociability.
-Accepted participants receive distinct authored venue slots and do not activate the encounter
-until everyone reaches their slot. Social conversations may include two to four Agents; playful
-sparring remains paired. Completed, cancelled, and declined encounters update bounded per-Agent
-social memory. Immediate repeat pairings are cooled down; high-routine personalities bias familiar
-peers while low-routine personalities bias novel peers. Memory stores IDs and summaries only, never
-live `Character` references.
+Unexpected map exit ends the session. TownLife does not navigate back or infer that the Agent is in
+a shop. Functional callers may start a new session after their task or travel completes.
 
-## Diagnostics and profile validation
+## Activities and facilities
 
-The GM6 read-only command is:
+The canonical ambient activities are:
 
-- `!townlife status`
-- `!townlife agent <ign>`
-- `!townlife venues [mapId]`
-- `!townlife encounters`
-- `!townlife fidelity`
-- `!townlife metrics`
-- `!townlife validate`
+- `REST`
+- `SOCIALIZE`
+- `LINGER`
+- `STROLL`
+- `BROWSE`
+- `SHOW_OFF`
+- `LOCAL_ACTIVITY` for a registered bounded extension
 
-Metrics are process-local safety counters and never feed policy. They cover activity and encounter
-phases, venue selections, reservation failures, navigation abandonment, group sizes, and fidelity
-transitions. Profile validation runs during repository construction and rejects traffic-zone
-overlaps, malformed social/shop venues, and duplicate authored identities before the server starts.
+`BROWSE` is cosmetic and local. It can approach a shopfront but cannot enter an interior or buy an
+item. Facilities are discoverable service metadata (`GENERAL_SHOP`, `STORAGE`, `TAXI`,
+`FREE_MARKET`, `PARTY_QUEST`, and related types); the capability named by the outer objective owns
+the actual service transaction.
 
-Lith Harbor remains the feature-rich reference profile. Henesys is the second, generic-arrival
-pilot and uses WZ-backed native seat IDs, portal names, NPC IDs, shop destination, and coordinates.
-It deliberately has no Java extension, proving that the shared engine can deploy a town from data.
+The deterministic policy consumes an immutable activity context. Controller/LLM adapters receive
+the existing immutable decision context. Population and occupancy are scoped by world, channel,
+and map through `AgentTownLifePopulationPort`; policy does not count same-map IDs from another
+channel.
 
-## Remaining expansion
+Candidate selection combines role/personality weights, per-town activity multipliers, recent-use
+penalties, venue attraction, occupancy below soft/hard capacity, approximate local travel cost,
+and deterministic jitter. A selected destination is leased until completion or bounded failure;
+the loop does not reselect every tick.
 
-TownLife is now complete enough for broader town-profile deployment. New behavior should first be
-expressed as a generic affordance, event, or controller directive; add a town-specific extension
-only for a genuine local ceremony or mechanic.
+## Profiles
 
-LLM work should next extract a provider-neutral language-model SPI, keep live `Character`/`MapleMap`
-objects out of prompts, add an asynchronous expiring proposal cache, and validate all model output
-through the same Dialogue and TownLife directive contracts.
+Profiles under `src/main/resources/agents/town-life/` use schema version 2. They contain:
+
+- admission policy;
+- local entry portal names and allowed child-map declarations;
+- navigation-derived geometry and platform policy;
+- activity multipliers;
+- traffic exclusions;
+- authored rest/NPC/fallback points;
+- semantic venues and capacity;
+- facilities, local approach points, and service labels;
+- hotspots with attraction, soft capacity, and hard capacity;
+- registered local activity handler IDs.
+
+Lith Harbor and Henesys were migrated to schema v2. Kerning City is the third-town proof: it uses
+the WZ-backed `103000000` map, actual `west00`/`east00` portals and NPC positions, a PQ-plaza
+hotspot, central/east/subway venues, and no town-specific Java handler.
+
+An ordinary new town is JSON plus an index entry. A Java extension is allowed only for a unique
+local mechanic that cannot be represented as a venue/activity. Profile validation rejects unknown
+handler IDs, duplicate facility/hotspot IDs, missing hotspot venues, invalid capacity, traffic-zone
+overlaps, and browse venues without a local approach spot.
+
+## Extension contract
+
+`AgentTownLifeActivityExtension` receives immutable identity, scope, venue, time, and deadline. It
+returns `ACTIVE`, `SUCCEEDED`, `BLOCKED`, `FAILED`, or `CANCELLED`. It may coordinate local
+navigation, reservations, presentation, and events through injected ports in its adapter, but it
+must not:
+
+- start or stop TownLife;
+- choose another town;
+- execute taxi, quest, shop, storage, or progression logic;
+- teleport or bypass reservations;
+- retain live `Character`/`MapleMap` objects;
+- create a thread or scheduler.
+
+## Persistence and cleanup
+
+TownLife checkpoints store only durable local intent: character ID, town map, visit purpose/reason,
+remaining bounded free time, and update time. Destinations, reservations, encounters, and live game
+objects are transient. Registration restores a checkpoint only when the Agent is already in the
+same supported town. Normal stop removes the checkpoint.
+
+Stop, expiry, global disable, or map exit clears abstract execution, encounter/activity sequence,
+fidgets, chairs, movement, and reservations before resuming the foreground clock.
 
 ## Adding a town
 
-1. Add `<town>.json` and list it in `index.json`.
-2. Verify the arrival portals resolve to non-rope navigation regions.
-3. Add an `AgentTownLifeArrivalExtension` and select its key in the town profile only if the town has
-   a unique entry ceremony; otherwise the generic route-and-settle extension is used.
-4. Add a presentation/activity extension only for behavior unique to that town. Generic movement,
-   reservations, personality selection, and stage handling must remain in the shared engine.
+1. Read the map's WZ portal, foothold, seat, and NPC data.
+2. Add a schema-v2 profile and index entry.
+3. Author traffic exclusions, reachable fallback points, venues, facilities, and hotspots.
+4. Keep `activityHandlers` empty unless the town has a genuine unique mechanic.
+5. Run `AgentTownLife*Test` and `AgentArchitectureBoundaryTest`.
 
-The current identity-derived district preference is a deterministic fallback. A durable personality
-policy can later assign the same fields without changing platform cataloging or reservations.
+The design is complete when ordinary towns remain data-only and changes to combat, progression,
+or cross-map navigation do not require TownLife policy changes.

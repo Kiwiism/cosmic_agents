@@ -27,8 +27,6 @@ public final class AgentTownLifePlatformCatalog {
             return List.of();
         }
         AgentTownLifeProfile.Geometry geometry = profile.geometry();
-        AgentTownLifeMapExtension extension =
-                AgentTownLifeMapExtensionRepository.forMap(profile.mapId());
         List<PlatformSpot> result = new ArrayList<>();
         Map<String, Integer> nextSpotNumber = new HashMap<>();
         for (AgentNavigationGraph.Region region : graph.regions.stream()
@@ -50,9 +48,9 @@ public final class AgentTownLifePlatformCatalog {
                 int usableWidth = Math.max(0, region.width() - inset * 2);
                 int x = region.minX + inset + (slot + 1) * usableWidth / (count + 1);
                 Point point = region.pointAt(x);
-                AgentTownLifeState.District district = extension.classify(point);
+                AgentTownLifeState.District district = profile.classify(point);
                 AgentTownLifeState.PlatformKind platformKind =
-                        extension.classifyPlatform(region.width());
+                        profile.classifyPlatform(region.width());
                 String catalogId = policy == null
                         ? "town-nav-" + profile.mapId() + '-'
                         + district.name().toLowerCase() + '-'

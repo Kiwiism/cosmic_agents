@@ -64,7 +64,7 @@ class AgentTownLifeDestinationServiceTest {
                      mockStatic(AgentNavigationGraphService.class)) {
             AgentTownLifeDestinationService.Destination destination =
                     AgentTownLifeDestinationService.select(
-                            entry, agent, state, AgentTownLifeState.Activity.ROAM, 1L, gateway);
+                            entry, agent, state, AgentTownLifeState.Activity.STROLL, 1L, gateway);
 
             assertNull(destination);
         }

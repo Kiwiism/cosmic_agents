@@ -1,6 +1,7 @@
 {
   "profiles": [
     "lith-harbor.json",
-    "henesys.json"
+    "henesys.json",
+    "kerning-city.json"
   ]
 }

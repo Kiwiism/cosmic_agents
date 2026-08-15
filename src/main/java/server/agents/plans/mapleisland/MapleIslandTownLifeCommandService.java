@@ -4,7 +4,6 @@ import client.Character;
 import client.QuestStatus;
 import server.agents.capabilities.townlife.AgentTownLifeRuntime;
 import server.agents.capabilities.townlife.AgentTownLifeState;
-import server.agents.capabilities.townlife.LithHarborTownLifeCatalog;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentClientGatewayRuntime;
 import server.agents.plans.amherst.MapleIslandSouthperryQuestCatalog;
@@ -17,28 +16,10 @@ public final class MapleIslandTownLifeCommandService {
     }
 
     public static Result startCompletedSouthperryAgents(Character issuer, long nowMs) {
-        int started = 0;
-        int alreadyActive = 0;
-        int notEligible = 0;
-        for (AgentRuntimeEntry entry : AgentRuntimeRegistry.activeEntriesSnapshot()) {
-            Character agent = AgentRuntimeIdentityRuntime.bot(entry);
-            if (!sameChannel(issuer, agent)) {
-                continue;
-            }
-            AgentTownLifeState state = entry.capabilityStates().require(AgentTownLifeState.STATE_KEY);
-            if (state.enabled()) {
-                alreadyActive++;
-                continue;
-            }
-            if (!eligible(entry, agent)) {
-                notEligible++;
-                continue;
-            }
-            AgentTownLifeRuntime.start(entry, LithHarborTownLifeCatalog.LITH_HARBOR_MAP_ID,
-                    nowMs, agent.getId());
-            started++;
-        }
-        return new Result(started, alreadyActive, notEligible);
+        AgentMapleIslandLithHandoffRuntime.AssignmentResult assignment =
+                AgentMapleIslandLithHandoffRuntime.requestAll(issuer, nowMs);
+        return new Result(
+                assignment.assigned(), assignment.alreadyInTownLife(), assignment.outsideScope());
     }
 
     public static int stop(Character issuer) {
@@ -60,16 +41,20 @@ public final class MapleIslandTownLifeCommandService {
         int inShops = 0;
         for (AgentRuntimeEntry entry : AgentRuntimeRegistry.activeEntriesSnapshot()) {
             Character agent = AgentRuntimeIdentityRuntime.bot(entry);
-            if (!sameChannel(issuer, agent) || !AgentTownLifeRuntime.active(entry)) {
+            if (!sameChannel(issuer, agent)) {
+                continue;
+            }
+            if (AgentMapleIslandLithHandoffRuntime.active(entry)
+                    && !AgentTownLifeRuntime.active(entry)) {
+                traveling++;
+                continue;
+            }
+            if (!AgentTownLifeRuntime.active(entry)) {
                 continue;
             }
             AgentTownLifeState state = entry.capabilityStates().require(AgentTownLifeState.STATE_KEY);
-            if (state.stage() == AgentTownLifeState.Stage.TRAVEL_TO_TOWN) {
-                traveling++;
-            } else if (agent.getMapId() == state.townMapId()) {
+            if (agent.getMapId() == state.townMapId()) {
                 inTown++;
-            } else {
-                inShops++;
             }
         }
         return new Status(traveling, inTown, inShops);

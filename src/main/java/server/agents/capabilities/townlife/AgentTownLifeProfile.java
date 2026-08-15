@@ -2,39 +2,48 @@ package server.agents.capabilities.townlife;
 
 import java.awt.Point;
 import java.util.List;
-import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 
 /** Read-only, per-town tuning data consumed by the town-agnostic TownLife engine. */
 public record AgentTownLifeProfile(
+        int schemaVersion,
         String profileId,
         int mapId,
+        Admission admission,
         Geometry geometry,
         Distribution distribution,
         Extensions extensions,
+        List<Integer> allowedChildMapIds,
+        Map<AgentTownLifeState.Activity, Integer> activityWeights,
         List<ArrivalPortal> arrivalPortals,
         List<RestSpot> restSpots,
         List<PointSpec> roamFallbackSpots,
         List<NpcSpot> npcSpots,
-        List<Integer> shopMapIds,
         List<TrafficZone> trafficZones,
         List<PlatformPolicy> platformPolicies,
+        List<Facility> facilities,
+        List<Hotspot> hotspots,
         List<Venue> venues) {
 
     public AgentTownLifeProfile {
-        if (profileId == null || profileId.isBlank() || mapId <= 0
+        if (schemaVersion != 2 || profileId == null || profileId.isBlank() || mapId <= 0
                 || geometry == null || distribution == null
                 || arrivalPortals == null || arrivalPortals.isEmpty()) {
-            throw new IllegalArgumentException("town-life profile identity and geometry are required");
+            throw new IllegalArgumentException("town-life profile schema v2 identity and geometry are required");
         }
+        admission = admission == null ? Admission.manualOnly() : admission;
         extensions = extensions == null ? Extensions.generic() : extensions;
+        allowedChildMapIds = List.copyOf(allowedChildMapIds == null ? List.of() : allowedChildMapIds);
+        activityWeights = Map.copyOf(activityWeights == null ? Map.of() : activityWeights);
         arrivalPortals = List.copyOf(arrivalPortals);
         restSpots = List.copyOf(restSpots == null ? List.of() : restSpots);
         roamFallbackSpots = List.copyOf(roamFallbackSpots == null ? List.of() : roamFallbackSpots);
         npcSpots = List.copyOf(npcSpots == null ? List.of() : npcSpots);
-        shopMapIds = List.copyOf(shopMapIds == null ? List.of() : shopMapIds);
         trafficZones = List.copyOf(trafficZones == null ? List.of() : trafficZones);
         platformPolicies = List.copyOf(platformPolicies == null ? List.of() : platformPolicies);
+        facilities = List.copyOf(facilities == null ? List.of() : facilities);
+        hotspots = List.copyOf(hotspots == null ? List.of() : hotspots);
         venues = List.copyOf(venues == null ? List.of() : venues);
         long uniqueVenueIds = venues.stream().map(Venue::id).distinct().count();
         if (uniqueVenueIds != venues.size()) {
@@ -42,13 +51,31 @@ public record AgentTownLifeProfile(
         }
     }
 
-    public record Extensions(String arrival) {
+    public record Admission(AgentTownLifeAdmissionMode mode,
+                            int maxAmbientAgents,
+                            long minVisitMs,
+                            long maxVisitMs,
+                            long revisitCooldownMs) {
+        public Admission {
+            mode = mode == null ? AgentTownLifeAdmissionMode.MANUAL_ONLY : mode;
+            if (maxAmbientAgents < 0 || minVisitMs < 0L || maxVisitMs < minVisitMs
+                    || revisitCooldownMs < 0L) {
+                throw new IllegalArgumentException("town-life admission policy is invalid");
+            }
+        }
+
+        static Admission manualOnly() {
+            return new Admission(AgentTownLifeAdmissionMode.MANUAL_ONLY, 0, 0L, 0L, 0L);
+        }
+    }
+
+    public record Extensions(List<String> activityHandlers) {
         public Extensions {
-            arrival = arrival == null || arrival.isBlank() ? "generic" : arrival;
+            activityHandlers = List.copyOf(activityHandlers == null ? List.of() : activityHandlers);
         }
 
         static Extensions generic() {
-            return new Extensions("generic");
+            return new Extensions(List.of());
         }
     }
 
@@ -87,6 +114,10 @@ public record AgentTownLifeProfile(
         return venues.stream().filter(candidate -> candidate.id().equals(venueId)).findFirst();
     }
 
+    public Optional<Hotspot> hotspotForVenue(String venueId) {
+        return hotspots.stream().filter(hotspot -> hotspot.venueId().equals(venueId)).findFirst();
+    }
+
     public List<Venue> venuesFor(AgentTownLifeState.Activity activity) {
         if (activity == null || activity == AgentTownLifeState.Activity.NONE) {
             return List.of();
@@ -109,11 +140,20 @@ public record AgentTownLifeProfile(
         return platformPolicies.stream().filter(policy -> policy.contains(point)).findFirst();
     }
 
-    public int shopMapId(int index) {
-        if (shopMapIds.isEmpty()) {
-            return mapId;
+    public AgentTownLifeState.District classify(Point point) {
+        if (point == null) {
+            return AgentTownLifeState.District.ANY;
         }
-        return shopMapIds.get(Math.floorMod(index, shopMapIds.size()));
+        if (point.y <= geometry.upperMaxY()) {
+            return AgentTownLifeState.District.UPPER;
+        }
+        return point.y <= geometry.middleMaxY()
+                ? AgentTownLifeState.District.MIDDLE : AgentTownLifeState.District.LOWER;
+    }
+
+    public AgentTownLifeState.PlatformKind classifyPlatform(int width) {
+        return width <= geometry.miniPlatformMaxWidth()
+                ? AgentTownLifeState.PlatformKind.MINI : AgentTownLifeState.PlatformKind.MAIN;
     }
 
     public String arrivalPortal(int identitySeed) {
@@ -248,17 +288,16 @@ public record AgentTownLifeProfile(
     /** Semantic action supported by a venue. Coordinates remain town profile data. */
     public enum Affordance {
         REST,
-        SOCIAL,
-        NPC_PAUSE,
-        ROAM,
-        SHOP_VISIT,
-        WEAPON_FLOURISH,
-        WAIT,
-        SIGHTSEE;
+        SOCIALIZE,
+        LINGER,
+        STROLL,
+        BROWSE,
+        SHOW_OFF,
+        LOCAL_ACTIVITY;
 
         static Affordance forActivity(AgentTownLifeState.Activity activity) {
             try {
-                return valueOf(activity.name().toUpperCase(Locale.ROOT));
+                return valueOf(activity.name());
             } catch (IllegalArgumentException ignored) {
                 return null;
             }
@@ -299,6 +338,51 @@ public record AgentTownLifeProfile(
     public record VenueSpot(int x, int y, int seatId) {
         public Point point() {
             return new Point(x, y);
+        }
+    }
+
+    public enum FacilityType {
+        GENERAL_SHOP,
+        WEAPON_SHOP,
+        ARMOR_SHOP,
+        POTION_SHOP,
+        STORAGE,
+        TAXI,
+        FREE_MARKET,
+        JOB_INSTRUCTOR,
+        PARTY_QUEST,
+        EVENT,
+        OTHER
+    }
+
+    /** Discoverable local service metadata. TownLife may browse here but never executes the service. */
+    public record Facility(String id,
+                           FacilityType type,
+                           int npcId,
+                           int destinationMapId,
+                           List<PointSpec> approachPoints,
+                           List<String> services) {
+        public Facility {
+            if (id == null || id.isBlank() || type == null) {
+                throw new IllegalArgumentException("town-life facility identity is required");
+            }
+            approachPoints = List.copyOf(approachPoints == null ? List.of() : approachPoints);
+            services = List.copyOf(services == null ? List.of() : services);
+        }
+    }
+
+    /** Occupancy tuning layered over a semantic venue without adding town-specific Java. */
+    public record Hotspot(String id,
+                          String venueId,
+                          int attractionWeight,
+                          int softCapacity,
+                          int hardCapacity) {
+        public Hotspot {
+            if (id == null || id.isBlank() || venueId == null || venueId.isBlank()
+                    || attractionWeight < 0 || softCapacity < 0 || hardCapacity <= 0
+                    || softCapacity > hardCapacity) {
+                throw new IllegalArgumentException("town-life hotspot is invalid");
+            }
         }
     }
 }

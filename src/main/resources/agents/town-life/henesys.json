@@ -1,6 +1,14 @@
 {
+  "schemaVersion": 2,
   "profileId": "henesys",
   "mapId": 100000000,
+  "admission": {
+    "mode": "AMBIENT",
+    "maxAmbientAgents": 36,
+    "minVisitMs": 60000,
+    "maxVisitMs": 900000,
+    "revisitCooldownMs": 120000
+  },
   "geometry": {
     "upperMaxY": 0,
     "middleMaxY": 280,
@@ -19,7 +27,16 @@
     "crossDistrictEveryActivities": 5
   },
   "extensions": {
-    "arrival": "generic"
+    "activityHandlers": []
+  },
+  "allowedChildMapIds": [],
+  "activityWeights": {
+    "REST": 105,
+    "SOCIALIZE": 125,
+    "LINGER": 110,
+    "STROLL": 105,
+    "BROWSE": 70,
+    "SHOW_OFF": 100
   },
   "arrivalPortals": [
     { "name": "west00", "weight": 50 },
@@ -72,7 +89,6 @@
     { "npcId": 1012106, "offsetX": 65 },
     { "npcId": 1012108, "offsetX": -65 }
   ],
-  "shopMapIds": [100000100],
   "trafficZones": [
     {
       "id": "west-field-portal",
@@ -127,7 +143,7 @@
       "district": "MIDDLE",
       "platformKind": "MAIN",
       "capacity": 3,
-      "affordances": ["REST", "SOCIAL", "WAIT"],
+      "affordances": ["REST", "SOCIALIZE", "LINGER"],
       "spots": [
         { "x": 220, "y": 273, "seatId": 23 },
         { "x": 242, "y": 273, "seatId": 24 },
@@ -141,7 +157,7 @@
       "district": "LOWER",
       "platformKind": "MAIN",
       "capacity": 3,
-      "affordances": ["REST", "SOCIAL", "NPC_PAUSE", "ROAM", "WAIT"],
+      "affordances": ["REST", "SOCIALIZE", "LINGER", "STROLL"],
       "spots": [
         { "x": 2525, "y": 333, "seatId": 26 },
         { "x": 2547, "y": 333, "seatId": 27 },
@@ -155,7 +171,7 @@
       "district": "MIDDLE",
       "platformKind": "MINI",
       "capacity": 3,
-      "affordances": ["REST", "SOCIAL", "WAIT", "SIGHTSEE"],
+      "affordances": ["REST", "SOCIALIZE", "LINGER"],
       "spots": [
         { "x": 3594, "y": 123, "seatId": 20 },
         { "x": 3616, "y": 123, "seatId": 21 },
@@ -169,7 +185,7 @@
       "district": "MIDDLE",
       "platformKind": "MINI",
       "capacity": 3,
-      "affordances": ["REST", "SOCIAL", "WEAPON_FLOURISH", "SIGHTSEE"],
+      "affordances": ["REST", "SOCIALIZE", "SHOW_OFF", "LINGER"],
       "spots": [
         { "x": 4015, "y": 123, "seatId": 17 },
         { "x": 4037, "y": 123, "seatId": 18 },
@@ -183,7 +199,7 @@
       "district": "LOWER",
       "platformKind": "MAIN",
       "capacity": 9,
-      "affordances": ["REST", "SOCIAL", "WAIT", "ROAM"],
+      "affordances": ["REST", "SOCIALIZE", "LINGER", "STROLL"],
       "spots": [
         { "x": 5422, "y": 453, "seatId": 2 },
         { "x": 5462, "y": 453, "seatId": 3 },
@@ -203,7 +219,7 @@
       "district": "UPPER",
       "platformKind": "MINI",
       "capacity": 6,
-      "affordances": ["REST", "SOCIAL", "WAIT", "SIGHTSEE"],
+      "affordances": ["REST", "SOCIALIZE", "LINGER"],
       "spots": [
         { "x": 5812, "y": -177, "seatId": 11 },
         { "x": 5838, "y": -177, "seatId": 12 },
@@ -219,10 +235,21 @@
       "label": "Henesys Market",
       "district": "LOWER",
       "platformKind": "MAIN",
-      "capacity": 6,
-      "affordances": ["SHOP_VISIT"],
-      "spots": [],
+      "capacity": 1,
+      "affordances": ["BROWSE"],
+      "spots": [{ "x": 2900, "y": 368, "seatId": -1 }],
       "destinationMapId": 100000100
     }
+  ],
+  "facilities": [
+    { "id": "henesys-market-facility", "type": "GENERAL_SHOP", "npcId": 0,
+      "destinationMapId": 100000100, "approachPoints": [{ "x": 2900, "y": 368 }],
+      "services": ["browse", "buy", "sell", "free-market-access"] }
+  ],
+  "hotspots": [
+    { "id": "henesys-central-crowd", "venueId": "central-square",
+      "attractionWeight": 150, "softCapacity": 2, "hardCapacity": 3 },
+    { "id": "henesys-east-crowd", "venueId": "east-town-benches",
+      "attractionWeight": 120, "softCapacity": 6, "hardCapacity": 9 }
   ]
 }

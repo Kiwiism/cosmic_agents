@@ -1,6 +1,14 @@
 {
+  "schemaVersion": 2,
   "profileId": "lith-harbor",
   "mapId": 104000000,
+  "admission": {
+    "mode": "AMBIENT",
+    "maxAmbientAgents": 24,
+    "minVisitMs": 60000,
+    "maxVisitMs": 900000,
+    "revisitCooldownMs": 120000
+  },
   "geometry": {
     "upperMaxY": 300,
     "middleMaxY": 500,
@@ -19,7 +27,16 @@
     "crossDistrictEveryActivities": 6
   },
   "extensions": {
-    "arrival": "lith-harbor"
+    "activityHandlers": []
+  },
+  "allowedChildMapIds": [],
+  "activityWeights": {
+    "REST": 110,
+    "SOCIALIZE": 110,
+    "LINGER": 100,
+    "STROLL": 100,
+    "BROWSE": 75,
+    "SHOW_OFF": 90
   },
   "arrivalPortals": [
     { "name": "maple00", "weight": 100 }
@@ -65,7 +82,6 @@
     { "npcId": 1002006, "offsetX": -65 },
     { "npcId": 1002101, "offsetX": 70 }
   ],
-  "shopMapIds": [104000001, 104000002, 104000003],
   "trafficZones": [
     {
       "id": "ship-arrival-portal",
@@ -126,7 +142,7 @@
       "district": "UPPER",
       "platformKind": "MAIN",
       "capacity": 3,
-      "affordances": ["ROAM", "SOCIAL", "WAIT", "SIGHTSEE"],
+      "affordances": ["STROLL", "SOCIALIZE", "LINGER"],
       "spots": [
         { "x": 360, "y": 278, "seatId": -1 },
         { "x": 650, "y": 338, "seatId": -1 },
@@ -140,7 +156,7 @@
       "district": "MIDDLE",
       "platformKind": "MINI",
       "capacity": 2,
-      "affordances": ["NPC_PAUSE", "SOCIAL", "WAIT", "SIGHTSEE"],
+      "affordances": ["LINGER", "SOCIALIZE"],
       "spots": [
         { "x": 1575, "y": 641, "seatId": -1 },
         { "x": 1650, "y": 641, "seatId": -1 }
@@ -153,7 +169,7 @@
       "district": "LOWER",
       "platformKind": "MAIN",
       "capacity": 9,
-      "affordances": ["REST", "SOCIAL", "WAIT"],
+      "affordances": ["REST", "SOCIALIZE", "LINGER"],
       "spots": [
         { "x": 2404, "y": 525, "seatId": 0 },
         { "x": 2427, "y": 525, "seatId": 1 },
@@ -173,7 +189,7 @@
       "district": "LOWER",
       "platformKind": "MAIN",
       "capacity": 3,
-      "affordances": ["NPC_PAUSE", "SOCIAL", "WAIT", "ROAM"],
+      "affordances": ["LINGER", "SOCIALIZE", "STROLL"],
       "spots": [
         { "x": 2800, "y": 520, "seatId": -1 },
         { "x": 2880, "y": 520, "seatId": -1 },
@@ -187,7 +203,7 @@
       "district": "LOWER",
       "platformKind": "MAIN",
       "capacity": 3,
-      "affordances": ["ROAM", "SOCIAL", "WEAPON_FLOURISH", "WAIT"],
+      "affordances": ["STROLL", "SOCIALIZE", "SHOW_OFF", "LINGER"],
       "spots": [
         { "x": 3240, "y": 518, "seatId": -1 },
         { "x": 3390, "y": 518, "seatId": -1 },
@@ -201,7 +217,7 @@
       "district": "UPPER",
       "platformKind": "MINI",
       "capacity": 8,
-      "affordances": ["REST", "ROAM", "SOCIAL", "SIGHTSEE"],
+      "affordances": ["REST", "STROLL", "SOCIALIZE", "LINGER"],
       "spots": [
         { "x": 2385, "y": 47, "seatId": -1 },
         { "x": 2565, "y": 47, "seatId": -1 },
@@ -220,7 +236,7 @@
       "district": "UPPER",
       "platformKind": "MAIN",
       "capacity": 6,
-      "affordances": ["REST", "ROAM", "SOCIAL", "WAIT", "SIGHTSEE"],
+      "affordances": ["REST", "STROLL", "SOCIALIZE", "LINGER"],
       "spots": [
         { "x": 2700, "y": -223, "seatId": -1 },
         { "x": 3050, "y": -223, "seatId": -1 },
@@ -236,9 +252,9 @@
       "label": "Equipment shop",
       "district": "LOWER",
       "platformKind": "MAIN",
-      "capacity": 4,
-      "affordances": ["SHOP_VISIT"],
-      "spots": [],
+      "capacity": 1,
+      "affordances": ["BROWSE"],
+      "spots": [{ "x": 3580, "y": 518, "seatId": -1 }],
       "destinationMapId": 104000001
     },
     {
@@ -246,9 +262,9 @@
       "label": "General store",
       "district": "LOWER",
       "platformKind": "MAIN",
-      "capacity": 4,
-      "affordances": ["SHOP_VISIT"],
-      "spots": [],
+      "capacity": 1,
+      "affordances": ["BROWSE"],
+      "spots": [{ "x": 4260, "y": 518, "seatId": -1 }],
       "destinationMapId": 104000002
     },
     {
@@ -256,10 +272,27 @@
       "label": "Weapon shop",
       "district": "LOWER",
       "platformKind": "MAIN",
-      "capacity": 4,
-      "affordances": ["SHOP_VISIT"],
-      "spots": [],
+      "capacity": 1,
+      "affordances": ["BROWSE"],
+      "spots": [{ "x": 4350, "y": 433, "seatId": -1 }],
       "destinationMapId": 104000003
     }
+  ],
+  "facilities": [
+    { "id": "lith-equipment", "type": "ARMOR_SHOP", "npcId": 0,
+      "destinationMapId": 104000001, "approachPoints": [{ "x": 3580, "y": 518 }],
+      "services": ["browse", "buy", "sell"] },
+    { "id": "lith-general", "type": "GENERAL_SHOP", "npcId": 0,
+      "destinationMapId": 104000002, "approachPoints": [{ "x": 4260, "y": 518 }],
+      "services": ["browse", "buy", "sell"] },
+    { "id": "lith-weapon", "type": "WEAPON_SHOP", "npcId": 0,
+      "destinationMapId": 104000003, "approachPoints": [{ "x": 4350, "y": 433 }],
+      "services": ["browse", "buy", "sell"] }
+  ],
+  "hotspots": [
+    { "id": "lith-central-crowd", "venueId": "central-benches",
+      "attractionWeight": 130, "softCapacity": 6, "hardCapacity": 9 },
+    { "id": "lith-arrival-crowd", "venueId": "ship-upper-deck",
+      "attractionWeight": 80, "softCapacity": 2, "hardCapacity": 3 }
   ]
 }

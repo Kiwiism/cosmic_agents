@@ -91,14 +91,12 @@ final class AgentTownLifeSpotSampler {
         if (agent == null || state == null || spaces == null || spaces.size() < 2) {
             return spaces == null ? List.of() : spaces;
         }
-        AgentTownLifeMapExtension extension =
-                AgentTownLifeMapExtensionRepository.forMap(agent.getMapId());
         AgentTownLifeProfile profile = AgentTownLifeProfileRepository.defaultRepository()
                 .require(agent.getMapId());
         return spaces.stream()
                 .filter(space -> profile.allowsOccupancy(space.position()))
                 .map(space -> {
-                    AgentTownLifeState.District district = extension.classify(space.position());
+                    AgentTownLifeState.District district = profile.classify(space.position());
                     int weight = AUTHORED_BASE_WEIGHT + preferenceBonus(
                             state, district, AgentTownLifeState.PlatformKind.ANY);
                     return new WeightedSpace(space, weight,

@@ -49,14 +49,14 @@ public final class AgentTownLifeProfileValidator {
                             + spot.seatId() + " at " + point(spot.point()));
                 }
             }
-            if ((venue.affordances().contains(AgentTownLifeProfile.Affordance.SOCIAL)
-                    || venue.affordances().contains(AgentTownLifeProfile.Affordance.WEAPON_FLOURISH))
+            if ((venue.affordances().contains(AgentTownLifeProfile.Affordance.SOCIALIZE)
+                    || venue.affordances().contains(AgentTownLifeProfile.Affordance.SHOW_OFF))
                     && venue.capacity() < 2) {
                 errors.add("social venue " + venue.id() + " requires capacity >= 2");
             }
-            if (venue.affordances().contains(AgentTownLifeProfile.Affordance.SHOP_VISIT)
-                    && venue.destinationMapId() <= 0) {
-                errors.add("shop venue " + venue.id() + " requires a destination map");
+            if (venue.affordances().contains(AgentTownLifeProfile.Affordance.BROWSE)
+                    && venue.spots().isEmpty()) {
+                errors.add("browse venue " + venue.id() + " requires a local approach spot");
             }
         }
         Set<String> zoneIds = new HashSet<>();
@@ -69,6 +69,28 @@ public final class AgentTownLifeProfileValidator {
         for (AgentTownLifeProfile.PlatformPolicy policy : profile.platformPolicies()) {
             if (!platformPolicyIds.add(policy.id())) {
                 errors.add("duplicate platform-policy id " + policy.id());
+            }
+        }
+        Set<String> facilityIds = new HashSet<>();
+        for (AgentTownLifeProfile.Facility facility : profile.facilities()) {
+            if (!facilityIds.add(facility.id())) {
+                errors.add("duplicate facility id " + facility.id());
+            }
+        }
+        Set<String> hotspotIds = new HashSet<>();
+        for (AgentTownLifeProfile.Hotspot hotspot : profile.hotspots()) {
+            if (!hotspotIds.add(hotspot.id())) {
+                errors.add("duplicate hotspot id " + hotspot.id());
+            }
+            if (!venueIds.contains(hotspot.venueId())) {
+                errors.add("hotspot " + hotspot.id() + " references unknown venue "
+                        + hotspot.venueId());
+            }
+        }
+        Set<String> handlers = AgentTownLifeActivityExtensionRegistry.defaultRegistry().ids();
+        for (String handler : profile.extensions().activityHandlers()) {
+            if (!handlers.contains(handler)) {
+                errors.add("unknown activity extension " + handler);
             }
         }
         if (profile.venues().isEmpty()) {

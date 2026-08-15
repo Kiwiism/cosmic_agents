@@ -13,14 +13,13 @@ public final class AgentTownLifeState {
 
     public enum Stage {
         DISABLED,
-        TRAVEL_TO_TOWN,
-        COMPLETE_ARRIVAL,
         SETTLING,
         CHOOSE_ACTIVITY,
+        RESERVE_DESTINATION,
         MOVE_TO_ACTIVITY,
         DWELL,
-        VISIT_SHOP,
-        RETURN_FROM_SHOP
+        COOLDOWN,
+        EXITING
     }
 
     public enum VisitPhase {
@@ -33,11 +32,12 @@ public final class AgentTownLifeState {
     public enum Activity {
         NONE,
         REST,
-        SOCIAL,
-        NPC_PAUSE,
-        ROAM,
-        SHOP_VISIT,
-        WEAPON_FLOURISH
+        SOCIALIZE,
+        LINGER,
+        STROLL,
+        BROWSE,
+        SHOW_OFF,
+        LOCAL_ACTIVITY
     }
 
     public enum Role {
@@ -101,7 +101,7 @@ public final class AgentTownLifeState {
                 .require(selectedTownMapId);
         enabled = true;
         townMapId = selectedTownMapId;
-        stage = Stage.TRAVEL_TO_TOWN;
+        stage = Stage.SETTLING;
         activity = Activity.NONE;
         target = null;
         targetCharacterId = 0;
@@ -122,7 +122,7 @@ public final class AgentTownLifeState {
         venueId = "";
         decisionSource = "default-policy";
         decisionCorrelationId = "";
-        visitPhase = VisitPhase.ARRIVING;
+        visitPhase = VisitPhase.FREE_TIME;
         fidelity = AgentTownLifeFidelity.PRESENTATION;
         visitPurpose = request.purpose();
         visitReason = request.reason();
@@ -285,6 +285,13 @@ public final class AgentTownLifeState {
                 && freeTimeUntilMs > 0L && nowMs >= freeTimeUntilMs;
     }
 
+    public synchronized long remainingFreeTimeMs(long nowMs) {
+        if (freeTimeBudgetMs <= 0L || freeTimeUntilMs <= 0L) {
+            return 0L;
+        }
+        return Math.max(1L, freeTimeUntilMs - nowMs);
+    }
+
     AgentTownLifeMemory memory() {
         return memory;
     }
@@ -301,10 +308,8 @@ public final class AgentTownLifeState {
     public synchronized void transition(Stage nextStage, long dueAtMs) {
         stage = nextStage;
         nextActionAtMs = dueAtMs;
-        if (nextStage == Stage.COMPLETE_ARRIVAL) {
-            visitPhase = VisitPhase.ERRAND;
-        } else if (nextStage == Stage.SETTLING || nextStage == Stage.CHOOSE_ACTIVITY) {
-            if (visitPhase != VisitPhase.FREE_TIME && freeTimeBudgetMs > 0L) {
+        if (nextStage == Stage.SETTLING || nextStage == Stage.CHOOSE_ACTIVITY) {
+            if (freeTimeUntilMs <= 0L && freeTimeBudgetMs > 0L) {
                 freeTimeUntilMs = dueAtMs + freeTimeBudgetMs;
             }
             visitPhase = VisitPhase.FREE_TIME;
@@ -352,7 +357,7 @@ public final class AgentTownLifeState {
         target = nextTarget == null ? null : new Point(nextTarget);
         targetCharacterId = nextTargetCharacterId;
         destinationMapId = nextDestinationMapId;
-        stage = nextActivity == Activity.SHOP_VISIT ? Stage.VISIT_SHOP : Stage.MOVE_TO_ACTIVITY;
+        stage = Stage.MOVE_TO_ACTIVITY;
         nextActionAtMs = dueAtMs;
         expressionShown = false;
         flourishShown = false;

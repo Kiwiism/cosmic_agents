@@ -11,13 +11,13 @@ final class AgentTownLifeFidgetPolicy {
         int variation = AgentTownLifeRolePolicy.variation(
                 agent.getId(), state.sequence(), 12, 107);
         return switch (state.activity()) {
-            case SOCIAL -> variation < 3 ? AgentFidgetMode.DIAGONAL_JUMP
+            case SOCIALIZE -> variation < 3 ? AgentFidgetMode.DIAGONAL_JUMP
                     : variation < 9 ? AgentFidgetMode.SPAM_PRONE : AgentFidgetMode.WAIT;
-            case NPC_PAUSE -> variation < 3 ? AgentFidgetMode.PRONE : AgentFidgetMode.WAIT;
-            case ROAM -> state.role() == AgentTownLifeState.Role.WANDERER && variation < 3
+            case LINGER -> variation < 3 ? AgentFidgetMode.PRONE : AgentFidgetMode.WAIT;
+            case STROLL -> state.role() == AgentTownLifeState.Role.WANDERER && variation < 3
                     ? AgentFidgetMode.JUMP : variation == 3
                     ? AgentFidgetMode.SPAM_SIDEWAYS : AgentFidgetMode.WAIT;
-            case SHOP_VISIT, WEAPON_FLOURISH -> AgentFidgetMode.WAIT;
+            case BROWSE, SHOW_OFF, LOCAL_ACTIVITY -> AgentFidgetMode.WAIT;
             default -> AgentFidgetMode.NONE;
         };
     }

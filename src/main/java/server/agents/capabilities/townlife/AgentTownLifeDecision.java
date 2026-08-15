@@ -26,10 +26,10 @@ record AgentTownLifeDecision(
 
     private static AgentTownLifeEncounterState.Type defaultEncounter(
             AgentTownLifeState.Activity activity) {
-        if (activity == AgentTownLifeState.Activity.SOCIAL) {
+        if (activity == AgentTownLifeState.Activity.SOCIALIZE) {
             return AgentTownLifeEncounterState.Type.SOCIAL_CHAT;
         }
-        return activity == AgentTownLifeState.Activity.WEAPON_FLOURISH
+        return activity == AgentTownLifeState.Activity.SHOW_OFF
                 ? AgentTownLifeEncounterState.Type.PLAYFUL_SPARRING : null;
     }
 }

@@ -1768,33 +1768,33 @@ tuning:
     # Technical: the "town life activity policy" component consumes this as an integer. Domain: non-negative policy coefficient; it is meaningful relative to the other coefficients used by the same decision. The value participates in ranking or weighted selection and is not an absolute probability by itself.
     server.agents.capabilities.townlife.AgentTownLifeActivityPolicy.MINIMUM_ACTIVITY_WEIGHT: '1'
     # Values: a finite non-negative integer. Recommended: 7-30 around the tested baseline 15; benchmark or observe behavior before moving outside this band.
-    # Purpose: Controls how often Agents choose mobile NPC pause when several valid behaviors are available. Higher values make it more common; lower values make it rarer.
+    # Purpose: Controls how often Agents choose mobile linger when several valid behaviors are available. Higher values make it more common; lower values make it rarer.
     # Technical: the "town life activity policy" component consumes this as an integer. Domain: non-negative policy coefficient; it is meaningful relative to the other coefficients used by the same decision. The value participates in ranking or weighted selection and is not an absolute probability by itself.
-    server.agents.capabilities.townlife.AgentTownLifeActivityPolicy.MOBILE_NPC_PAUSE_WEIGHT: '15'
+    server.agents.capabilities.townlife.AgentTownLifeActivityPolicy.MOBILE_LINGER_WEIGHT: '15'
     # Values: a finite non-negative integer. Recommended: 6-24 around the tested baseline 12; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how often Agents choose mobile rest when several valid behaviors are available. Higher values make it more common; lower values make it rarer.
     # Technical: the "town life activity policy" component consumes this as an integer. Domain: non-negative policy coefficient; it is meaningful relative to the other coefficients used by the same decision. The value participates in ranking or weighted selection and is not an absolute probability by itself.
     server.agents.capabilities.townlife.AgentTownLifeActivityPolicy.MOBILE_REST_WEIGHT: '12'
     # Values: a finite non-negative integer. Recommended: 13-54 around the tested baseline 27; benchmark or observe behavior before moving outside this band.
-    # Purpose: Controls how often Agents choose mobile roam when several valid behaviors are available. Higher values make it more common; lower values make it rarer.
+    # Purpose: Controls how often Agents choose mobile stroll when several valid behaviors are available. Higher values make it more common; lower values make it rarer.
     # Technical: the "town life activity policy" component consumes this as an integer. Domain: non-negative policy coefficient; it is meaningful relative to the other coefficients used by the same decision. The value participates in ranking or weighted selection and is not an absolute probability by itself.
-    server.agents.capabilities.townlife.AgentTownLifeActivityPolicy.MOBILE_ROAM_WEIGHT: '27'
+    server.agents.capabilities.townlife.AgentTownLifeActivityPolicy.MOBILE_STROLL_WEIGHT: '27'
     # Values: a finite non-negative integer. Recommended: 9-36 around the tested baseline 18; benchmark or observe behavior before moving outside this band.
-    # Purpose: Controls how often Agents choose mobile shop visit when several valid behaviors are available. Higher values make it more common; lower values make it rarer.
+    # Purpose: Controls how often Agents choose mobile browse when several valid behaviors are available. Higher values make it more common; lower values make it rarer.
     # Technical: the "town life activity policy" component consumes this as an integer. Domain: non-negative policy coefficient; it is meaningful relative to the other coefficients used by the same decision. The value participates in ranking or weighted selection and is not an absolute probability by itself.
-    server.agents.capabilities.townlife.AgentTownLifeActivityPolicy.MOBILE_SHOP_VISIT_WEIGHT: '18'
+    server.agents.capabilities.townlife.AgentTownLifeActivityPolicy.MOBILE_BROWSE_WEIGHT: '18'
     # Values: a finite non-negative integer. Recommended: 10-40 around the tested baseline 20; benchmark or observe behavior before moving outside this band.
-    # Purpose: Controls how often Agents choose mobile social when several valid behaviors are available. Higher values make it more common; lower values make it rarer.
+    # Purpose: Controls how often Agents choose mobile socialize when several valid behaviors are available. Higher values make it more common; lower values make it rarer.
     # Technical: the "town life activity policy" component consumes this as an integer. Domain: non-negative policy coefficient; it is meaningful relative to the other coefficients used by the same decision. The value participates in ranking or weighted selection and is not an absolute probability by itself.
-    server.agents.capabilities.townlife.AgentTownLifeActivityPolicy.MOBILE_SOCIAL_WEIGHT: '20'
+    server.agents.capabilities.townlife.AgentTownLifeActivityPolicy.MOBILE_SOCIALIZE_WEIGHT: '20'
     # Values: a finite non-negative integer. Recommended: 4-16 around the tested baseline 8; benchmark or observe behavior before moving outside this band.
-    # Purpose: Controls how often Agents choose mobile weapon flourish when several valid behaviors are available. Higher values make it more common; lower values make it rarer.
+    # Purpose: Controls how often Agents choose mobile show-off when several valid behaviors are available. Higher values make it more common; lower values make it rarer.
     # Technical: the "town life activity policy" component consumes this as an integer. Domain: non-negative policy coefficient; it is meaningful relative to the other coefficients used by the same decision. The value participates in ranking or weighted selection and is not an absolute probability by itself.
-    server.agents.capabilities.townlife.AgentTownLifeActivityPolicy.MOBILE_WEAPON_FLOURISH_WEIGHT: '8'
+    server.agents.capabilities.townlife.AgentTownLifeActivityPolicy.MOBILE_SHOW_OFF_WEIGHT: '8'
     # Values: a finite integer greater than 0. Recommended: 4-16 around the tested baseline 8; benchmark or observe behavior before moving outside this band.
-    # Purpose: Controls how strongly NPC pause trait divisor is scaled down. A larger divisor softens the trait or score adjustment; a smaller divisor makes it more sensitive.
+    # Purpose: Controls how strongly linger trait adjustment is scaled down. A larger divisor softens the trait or score adjustment; a smaller divisor makes it more sensitive.
     # Technical: the "town life activity policy" component consumes this as an integer. Domain: component-specific policy value; startup validation rejects missing, blank, or malformed values. The owning score calculation divides by this value, so it must remain greater than zero.
-    server.agents.capabilities.townlife.AgentTownLifeActivityPolicy.NPC_PAUSE_TRAIT_DIVISOR: '8'
+    server.agents.capabilities.townlife.AgentTownLifeActivityPolicy.LINGER_TRAIT_DIVISOR: '8'
     # Values: a finite integer greater than 0. Recommended: 2-8 around the tested baseline 4; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how often Agents choose recent activity divisor when several valid behaviors are available. Higher values make it more common; lower values make it rarer.
     # Technical: the "town life activity policy" component consumes this as an integer. Domain: non-negative policy coefficient; it is meaningful relative to the other coefficients used by the same decision. The owning score calculation divides by this value, so it must remain greater than zero.
@@ -1808,49 +1808,49 @@ tuning:
     # Technical: the "town life activity policy" component consumes this as an integer. Domain: component-specific policy value; startup validation rejects missing, blank, or malformed values. The owning score calculation divides by this value, so it must remain greater than zero.
     server.agents.capabilities.townlife.AgentTownLifeActivityPolicy.REST_TRAIT_DIVISOR: '12'
     # Values: a finite integer greater than 0. Recommended: 3-12 around the tested baseline 6; benchmark or observe behavior before moving outside this band.
-    # Purpose: Controls how strongly roam trait divisor is scaled down. A larger divisor softens the trait or score adjustment; a smaller divisor makes it more sensitive.
+    # Purpose: Controls how strongly stroll trait adjustment is scaled down. A larger divisor softens the trait or score adjustment; a smaller divisor makes it more sensitive.
     # Technical: the "town life activity policy" component consumes this as an integer. Domain: component-specific policy value; startup validation rejects missing, blank, or malformed values. The owning score calculation divides by this value, so it must remain greater than zero.
-    server.agents.capabilities.townlife.AgentTownLifeActivityPolicy.ROAM_TRAIT_DIVISOR: '6'
+    server.agents.capabilities.townlife.AgentTownLifeActivityPolicy.STROLL_TRAIT_DIVISOR: '6'
     # Values: a finite integer greater than 0. Recommended: 5-20 around the tested baseline 10; benchmark or observe behavior before moving outside this band.
-    # Purpose: Controls how strongly shop visit trait divisor is scaled down. A larger divisor softens the trait or score adjustment; a smaller divisor makes it more sensitive.
+    # Purpose: Controls how strongly browse trait adjustment is scaled down. A larger divisor softens the trait or score adjustment; a smaller divisor makes it more sensitive.
     # Technical: the "town life activity policy" component consumes this as an integer. Domain: component-specific policy value; startup validation rejects missing, blank, or malformed values. The owning score calculation divides by this value, so it must remain greater than zero.
-    server.agents.capabilities.townlife.AgentTownLifeActivityPolicy.SHOP_VISIT_TRAIT_DIVISOR: '10'
+    server.agents.capabilities.townlife.AgentTownLifeActivityPolicy.BROWSE_TRAIT_DIVISOR: '10'
     # Values: a finite integer greater than 0. Recommended: 3-12 around the tested baseline 6; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how strongly social trait divisor is scaled down. A larger divisor softens the trait or score adjustment; a smaller divisor makes it more sensitive.
     # Technical: the "town life activity policy" component consumes this as an integer. Domain: component-specific policy value; startup validation rejects missing, blank, or malformed values. The owning score calculation divides by this value, so it must remain greater than zero.
     server.agents.capabilities.townlife.AgentTownLifeActivityPolicy.SOCIAL_TRAIT_DIVISOR: '6'
     # Values: a finite non-negative integer. Recommended: 11-44 around the tested baseline 22; benchmark or observe behavior before moving outside this band.
-    # Purpose: Controls how often Agents choose stationed NPC pause when several valid behaviors are available. Higher values make it more common; lower values make it rarer.
+    # Purpose: Controls how often Agents choose stationed linger when several valid behaviors are available. Higher values make it more common; lower values make it rarer.
     # Technical: the "town life activity policy" component consumes this as an integer. Domain: non-negative policy coefficient; it is meaningful relative to the other coefficients used by the same decision. The value participates in ranking or weighted selection and is not an absolute probability by itself.
-    server.agents.capabilities.townlife.AgentTownLifeActivityPolicy.STATIONED_NPC_PAUSE_WEIGHT: '22'
+    server.agents.capabilities.townlife.AgentTownLifeActivityPolicy.STATIONED_LINGER_WEIGHT: '22'
     # Values: a finite non-negative integer. Recommended: 16-64 around the tested baseline 32; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how often Agents choose stationed rest when several valid behaviors are available. Higher values make it more common; lower values make it rarer.
     # Technical: the "town life activity policy" component consumes this as an integer. Domain: non-negative policy coefficient; it is meaningful relative to the other coefficients used by the same decision. The value participates in ranking or weighted selection and is not an absolute probability by itself.
     server.agents.capabilities.townlife.AgentTownLifeActivityPolicy.STATIONED_REST_WEIGHT: '32'
     # Values: a finite non-negative integer. Recommended: 3-12 around the tested baseline 6; benchmark or observe behavior before moving outside this band.
-    # Purpose: Controls how often Agents choose stationed roam when several valid behaviors are available. Higher values make it more common; lower values make it rarer.
+    # Purpose: Controls how often Agents choose stationed stroll when several valid behaviors are available. Higher values make it more common; lower values make it rarer.
     # Technical: the "town life activity policy" component consumes this as an integer. Domain: non-negative policy coefficient; it is meaningful relative to the other coefficients used by the same decision. The value participates in ranking or weighted selection and is not an absolute probability by itself.
-    server.agents.capabilities.townlife.AgentTownLifeActivityPolicy.STATIONED_ROAM_WEIGHT: '6'
+    server.agents.capabilities.townlife.AgentTownLifeActivityPolicy.STATIONED_STROLL_WEIGHT: '6'
     # Values: a finite non-negative integer. Recommended: 2-10 around the tested baseline 5; benchmark or observe behavior before moving outside this band.
-    # Purpose: Controls how often Agents choose stationed shop visit when several valid behaviors are available. Higher values make it more common; lower values make it rarer.
+    # Purpose: Controls how often Agents choose stationed browse when several valid behaviors are available. Higher values make it more common; lower values make it rarer.
     # Technical: the "town life activity policy" component consumes this as an integer. Domain: non-negative policy coefficient; it is meaningful relative to the other coefficients used by the same decision. The value participates in ranking or weighted selection and is not an absolute probability by itself.
-    server.agents.capabilities.townlife.AgentTownLifeActivityPolicy.STATIONED_SHOP_VISIT_WEIGHT: '5'
+    server.agents.capabilities.townlife.AgentTownLifeActivityPolicy.STATIONED_BROWSE_WEIGHT: '5'
     # Values: a finite non-negative integer. Recommended: 13-54 around the tested baseline 27; benchmark or observe behavior before moving outside this band.
-    # Purpose: Controls how often Agents choose stationed social when several valid behaviors are available. Higher values make it more common; lower values make it rarer.
+    # Purpose: Controls how often Agents choose stationed socialize when several valid behaviors are available. Higher values make it more common; lower values make it rarer.
     # Technical: the "town life activity policy" component consumes this as an integer. Domain: non-negative policy coefficient; it is meaningful relative to the other coefficients used by the same decision. The value participates in ranking or weighted selection and is not an absolute probability by itself.
-    server.agents.capabilities.townlife.AgentTownLifeActivityPolicy.STATIONED_SOCIAL_WEIGHT: '27'
+    server.agents.capabilities.townlife.AgentTownLifeActivityPolicy.STATIONED_SOCIALIZE_WEIGHT: '27'
     # Values: a finite non-negative integer. Recommended: 4-16 around the tested baseline 8; benchmark or observe behavior before moving outside this band.
-    # Purpose: Controls how often Agents choose stationed weapon flourish when several valid behaviors are available. Higher values make it more common; lower values make it rarer.
+    # Purpose: Controls how often Agents choose stationed show-off when several valid behaviors are available. Higher values make it more common; lower values make it rarer.
     # Technical: the "town life activity policy" component consumes this as an integer. Domain: non-negative policy coefficient; it is meaningful relative to the other coefficients used by the same decision. The value participates in ranking or weighted selection and is not an absolute probability by itself.
-    server.agents.capabilities.townlife.AgentTownLifeActivityPolicy.STATIONED_WEAPON_FLOURISH_WEIGHT: '8'
+    server.agents.capabilities.townlife.AgentTownLifeActivityPolicy.STATIONED_SHOW_OFF_WEIGHT: '8'
     # Values: a finite non-negative integer. Recommended: 25-100 around the tested baseline 50; benchmark or observe behavior before moving outside this band.
     # Purpose: Sets an Agent's starting trait center before current conditions adjust it. Higher values make that tendency stronger from the start; lower values make it weaker.
     # Technical: the "town life activity policy" component consumes this as an integer. Domain: component-specific policy value; startup validation rejects missing, blank, or malformed values.
     server.agents.capabilities.townlife.AgentTownLifeActivityPolicy.TRAIT_CENTER: '50'
     # Values: a finite integer greater than 0. Recommended: 4-16 around the tested baseline 8; benchmark or observe behavior before moving outside this band.
-    # Purpose: Controls how strongly weapon flourish trait divisor is scaled down. A larger divisor softens the trait or score adjustment; a smaller divisor makes it more sensitive.
+    # Purpose: Controls how strongly show-off trait adjustment is scaled down. A larger divisor softens the trait or score adjustment; a smaller divisor makes it more sensitive.
     # Technical: the "town life activity policy" component consumes this as an integer. Domain: component-specific policy value; startup validation rejects missing, blank, or malformed values. The owning score calculation divides by this value, so it must remain greater than zero.
-    server.agents.capabilities.townlife.AgentTownLifeActivityPolicy.WEAPON_FLOURISH_TRAIT_DIVISOR: '8'
+    server.agents.capabilities.townlife.AgentTownLifeActivityPolicy.SHOW_OFF_TRAIT_DIVISOR: '8'
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 1000-4000 around the tested baseline 2000; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how long Agents remain in or wait for minimum sequence duration. Higher values make that pause or state last longer; lower values make them continue sooner.
     # Technical: the "town life activity sequence state" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled. Paired minimum/maximum values define an inclusive random or validation range and must not be inverted.
@@ -1942,11 +1942,11 @@ tuning:
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 3500-14002 around the tested baseline 7001; benchmark or observe behavior before moving outside this band.
     # Purpose: Sets the longest flourish dwell time an Agent may receive. Higher values allow longer occurrences; lower values end them sooner.
     # Technical: the "town life runtime" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled. Paired minimum/maximum values define an inclusive random or validation range and must not be inverted.
-    server.agents.capabilities.townlife.AgentTownLifeRuntime.FLOURISH_DWELL_MAX_EXCLUSIVE_MS: '7001'
+    server.agents.capabilities.townlife.AgentTownLifeRuntime.SHOW_OFF_DWELL_MAX_EXCLUSIVE_MS: '7001'
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 1500-6000 around the tested baseline 3000; benchmark or observe behavior before moving outside this band.
     # Purpose: Sets the shortest flourish dwell time an Agent may receive. Higher values make every occurrence last longer; lower values allow shorter occurrences.
     # Technical: the "town life runtime" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled. Paired minimum/maximum values define an inclusive random or validation range and must not be inverted.
-    server.agents.capabilities.townlife.AgentTownLifeRuntime.FLOURISH_DWELL_MIN_MS: '3000'
+    server.agents.capabilities.townlife.AgentTownLifeRuntime.SHOW_OFF_DWELL_MIN_MS: '3000'
     # Values: a finite non-negative integer; unit: map pixels. Recommended: 6-24 around the tested baseline 12; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls the distance or margin used for map seat arrival distance. Higher values allow action from farther away or leave more space; lower values require closer, more precise positioning.
     # Technical: the "town life runtime" component consumes this as an integer. Unit: MapleStory map pixels; horizontal and vertical values use the server map coordinate system.
@@ -1958,11 +1958,11 @@ tuning:
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 5500-22002 around the tested baseline 11001; benchmark or observe behavior before moving outside this band.
     # Purpose: Sets the longest NPC dwell time an Agent may receive. Higher values allow longer occurrences; lower values end them sooner.
     # Technical: the "town life runtime" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled. Paired minimum/maximum values define an inclusive random or validation range and must not be inverted.
-    server.agents.capabilities.townlife.AgentTownLifeRuntime.NPC_DWELL_MAX_EXCLUSIVE_MS: '11001'
+    server.agents.capabilities.townlife.AgentTownLifeRuntime.LINGER_DWELL_MAX_EXCLUSIVE_MS: '11001'
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 2000-8000 around the tested baseline 4000; benchmark or observe behavior before moving outside this band.
     # Purpose: Sets the shortest NPC dwell time an Agent may receive. Higher values make every occurrence last longer; lower values allow shorter occurrences.
     # Technical: the "town life runtime" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled. Paired minimum/maximum values define an inclusive random or validation range and must not be inverted.
-    server.agents.capabilities.townlife.AgentTownLifeRuntime.NPC_DWELL_MIN_MS: '4000'
+    server.agents.capabilities.townlife.AgentTownLifeRuntime.LINGER_DWELL_MIN_MS: '4000'
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 18000-72002 around the tested baseline 36001; benchmark or observe behavior before moving outside this band.
     # Purpose: Sets the longest rest dwell time an Agent may receive. Higher values allow longer occurrences; lower values end them sooner.
     # Technical: the "town life runtime" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled. Paired minimum/maximum values define an inclusive random or validation range and must not be inverted.
@@ -1979,22 +1979,14 @@ tuning:
     # Purpose: Sets the shortest retry delay time an Agent may receive. Higher values make every occurrence last longer; lower values allow shorter occurrences.
     # Technical: the "town life runtime" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled. Paired minimum/maximum values define an inclusive random or validation range and must not be inverted.
     server.agents.capabilities.townlife.AgentTownLifeRuntime.RETRY_DELAY_MIN_MS: '500'
-    # Values: a finite non-negative integer; unit: milliseconds. Recommended: 2250-9002 around the tested baseline 4501; benchmark or observe behavior before moving outside this band.
-    # Purpose: Sets the longest return settle time an Agent may receive. Higher values allow longer occurrences; lower values end them sooner.
-    # Technical: the "town life runtime" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled. Paired minimum/maximum values define an inclusive random or validation range and must not be inverted.
-    server.agents.capabilities.townlife.AgentTownLifeRuntime.RETURN_SETTLE_MAX_EXCLUSIVE_MS: '4501'
-    # Values: a finite non-negative integer; unit: milliseconds. Recommended: 750-3000 around the tested baseline 1500; benchmark or observe behavior before moving outside this band.
-    # Purpose: Sets the shortest return settle time an Agent may receive. Higher values make every occurrence last longer; lower values allow shorter occurrences.
-    # Technical: the "town life runtime" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled. Paired minimum/maximum values define an inclusive random or validation range and must not be inverted.
-    server.agents.capabilities.townlife.AgentTownLifeRuntime.RETURN_SETTLE_MIN_MS: '1500'
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 4500-18002 around the tested baseline 9001; benchmark or observe behavior before moving outside this band.
     # Purpose: Sets the longest roam dwell time an Agent may receive. Higher values allow longer occurrences; lower values end them sooner.
     # Technical: the "town life runtime" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled. Paired minimum/maximum values define an inclusive random or validation range and must not be inverted.
-    server.agents.capabilities.townlife.AgentTownLifeRuntime.ROAM_DWELL_MAX_EXCLUSIVE_MS: '9001'
+    server.agents.capabilities.townlife.AgentTownLifeRuntime.STROLL_DWELL_MAX_EXCLUSIVE_MS: '9001'
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 1500-6000 around the tested baseline 3000; benchmark or observe behavior before moving outside this band.
     # Purpose: Sets the shortest roam dwell time an Agent may receive. Higher values make every occurrence last longer; lower values allow shorter occurrences.
     # Technical: the "town life runtime" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled. Paired minimum/maximum values define an inclusive random or validation range and must not be inverted.
-    server.agents.capabilities.townlife.AgentTownLifeRuntime.ROAM_DWELL_MIN_MS: '3000'
+    server.agents.capabilities.townlife.AgentTownLifeRuntime.STROLL_DWELL_MIN_MS: '3000'
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 1250-5002 around the tested baseline 2501; benchmark or observe behavior before moving outside this band.
     # Purpose: Sets the longest settling delay time an Agent may receive. Higher values allow longer occurrences; lower values end them sooner.
     # Technical: the "town life runtime" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled. Paired minimum/maximum values define an inclusive random or validation range and must not be inverted.
@@ -2003,22 +1995,14 @@ tuning:
     # Purpose: Sets the shortest settling delay time an Agent may receive. Higher values make every occurrence last longer; lower values allow shorter occurrences.
     # Technical: the "town life runtime" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled. Paired minimum/maximum values define an inclusive random or validation range and must not be inverted.
     server.agents.capabilities.townlife.AgentTownLifeRuntime.SETTLING_DELAY_MIN_MS: '900'
-    # Values: a finite non-negative integer; unit: milliseconds. Recommended: 10500-42002 around the tested baseline 21001; benchmark or observe behavior before moving outside this band.
-    # Purpose: Sets the longest shop dwell time an Agent may receive. Higher values allow longer occurrences; lower values end them sooner.
-    # Technical: the "town life runtime" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled. Paired minimum/maximum values define an inclusive random or validation range and must not be inverted.
-    server.agents.capabilities.townlife.AgentTownLifeRuntime.SHOP_DWELL_MAX_EXCLUSIVE_MS: '21001'
-    # Values: a finite non-negative integer; unit: milliseconds. Recommended: 4000-16000 around the tested baseline 8000; benchmark or observe behavior before moving outside this band.
-    # Purpose: Sets the shortest shop dwell time an Agent may receive. Higher values make every occurrence last longer; lower values allow shorter occurrences.
-    # Technical: the "town life runtime" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled. Paired minimum/maximum values define an inclusive random or validation range and must not be inverted.
-    server.agents.capabilities.townlife.AgentTownLifeRuntime.SHOP_DWELL_MIN_MS: '8000'
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 6500-26002 around the tested baseline 13001; benchmark or observe behavior before moving outside this band.
     # Purpose: Sets the longest social dwell time an Agent may receive. Higher values allow longer occurrences; lower values end them sooner.
     # Technical: the "town life runtime" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled. Paired minimum/maximum values define an inclusive random or validation range and must not be inverted.
-    server.agents.capabilities.townlife.AgentTownLifeRuntime.SOCIAL_DWELL_MAX_EXCLUSIVE_MS: '13001'
+    server.agents.capabilities.townlife.AgentTownLifeRuntime.SOCIALIZE_DWELL_MAX_EXCLUSIVE_MS: '13001'
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 2500-10000 around the tested baseline 5000; benchmark or observe behavior before moving outside this band.
     # Purpose: Sets the shortest social dwell time an Agent may receive. Higher values make every occurrence last longer; lower values allow shorter occurrences.
     # Technical: the "town life runtime" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled. Paired minimum/maximum values define an inclusive random or validation range and must not be inverted.
-    server.agents.capabilities.townlife.AgentTownLifeRuntime.SOCIAL_DWELL_MIN_MS: '5000'
+    server.agents.capabilities.townlife.AgentTownLifeRuntime.SOCIALIZE_DWELL_MIN_MS: '5000'
     # Values: a finite non-negative integer. Recommended: 15-60 around the tested baseline 30; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how many heavy crowd count can be processed, kept, or arranged together. Higher values handle more at once; lower values reduce peak work and memory use.
     # Technical: the "town life role policy" component consumes this as an integer. Domain: non-negative count, capacity, or threshold unless the owning component documents a sentinel.
@@ -2103,34 +2087,6 @@ tuning:
     # Purpose: Controls how long Agents remain in or wait for minimum initial response delay. Higher values make that pause or state last longer; lower values make them continue sooner.
     # Technical: the "town life state" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled. Paired minimum/maximum values define an inclusive random or validation range and must not be inverted.
     server.agents.capabilities.townlife.AgentTownLifeState.MIN_INITIAL_RESPONSE_DELAY_MS: '500'
-    # Values: a finite non-negative integer; unit: milliseconds. Recommended: 1750-7002 around the tested baseline 3501; benchmark or observe behavior before moving outside this band.
-    # Purpose: Sets the longest arrival settle time an Agent may receive. Higher values allow longer occurrences; lower values end them sooner.
-    # Technical: the "lith harbor town life arrival extension" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled. Paired minimum/maximum values define an inclusive random or validation range and must not be inverted.
-    server.agents.capabilities.townlife.LithHarborTownLifeArrivalExtension.ARRIVAL_SETTLE_MAX_EXCLUSIVE_MS: '3501'
-    # Values: a finite non-negative integer; unit: milliseconds. Recommended: 750-3000 around the tested baseline 1500; benchmark or observe behavior before moving outside this band.
-    # Purpose: Sets the shortest arrival settle time an Agent may receive. Higher values make every occurrence last longer; lower values allow shorter occurrences.
-    # Technical: the "lith harbor town life arrival extension" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled. Paired minimum/maximum values define an inclusive random or validation range and must not be inverted.
-    server.agents.capabilities.townlife.LithHarborTownLifeArrivalExtension.ARRIVAL_SETTLE_MIN_MS: '1500'
-    # Values: a finite non-negative integer; unit: milliseconds. Recommended: 1500-6000 around the tested baseline 3000; benchmark or observe behavior before moving outside this band.
-    # Purpose: Controls how long Agents remain in or wait for failed interaction retry delay. Higher values make that pause or state last longer; lower values make them continue sooner.
-    # Technical: the "lith harbor town life arrival extension" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled.
-    server.agents.capabilities.townlife.LithHarborTownLifeArrivalExtension.FAILED_INTERACTION_RETRY_DELAY_MS: '3000'
-    # Values: a finite non-negative integer; unit: milliseconds. Recommended: 2500-10002 around the tested baseline 5001; benchmark or observe behavior before moving outside this band.
-    # Purpose: Sets the longest final settle time an Agent may receive. Higher values allow longer occurrences; lower values end them sooner.
-    # Technical: the "lith harbor town life arrival extension" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled. Paired minimum/maximum values define an inclusive random or validation range and must not be inverted.
-    server.agents.capabilities.townlife.LithHarborTownLifeArrivalExtension.FINAL_SETTLE_MAX_EXCLUSIVE_MS: '5001'
-    # Values: a finite non-negative integer; unit: milliseconds. Recommended: 1000-4000 around the tested baseline 2000; benchmark or observe behavior before moving outside this band.
-    # Purpose: Sets the shortest final settle time an Agent may receive. Higher values make every occurrence last longer; lower values allow shorter occurrences.
-    # Technical: the "lith harbor town life arrival extension" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled. Paired minimum/maximum values define an inclusive random or validation range and must not be inverted.
-    server.agents.capabilities.townlife.LithHarborTownLifeArrivalExtension.FINAL_SETTLE_MIN_MS: '2000'
-    # Values: a finite non-negative integer; unit: map pixels. Recommended: 45-180 around the tested baseline 90; benchmark or observe behavior before moving outside this band.
-    # Purpose: Controls the distance or margin used for interaction distance. Higher values allow action from farther away or leave more space; lower values require closer, more precise positioning.
-    # Technical: the "lith harbor town life arrival extension" component consumes this as an integer. Unit: MapleStory map pixels; horizontal and vertical values use the server map coordinate system.
-    server.agents.capabilities.townlife.LithHarborTownLifeArrivalExtension.INTERACTION_DISTANCE_PX: '90'
-    # Values: a finite non-negative integer; unit: milliseconds. Recommended: 1000-4000 around the tested baseline 2000; benchmark or observe behavior before moving outside this band.
-    # Purpose: Controls how long Agents remain in or wait for missing target retry delay. Higher values make that pause or state last longer; lower values make them continue sooner.
-    # Technical: the "lith harbor town life arrival extension" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled.
-    server.agents.capabilities.townlife.LithHarborTownLifeArrivalExtension.MISSING_TARGET_RETRY_DELAY_MS: '2000'
     # Values: a finite non-negative integer; unit: nanoseconds. Recommended: 25000000-100000000 around the tested baseline 50000000; benchmark or observe behavior before moving outside this band.
     # Purpose: Sets when trade command profile warn ns triggers. Higher values let more pressure build before Agents or safeguards react; lower values make them react sooner.
     # Technical: the "inventory transfer service" component consumes this as an integer. Unit: nanoseconds; this is normally a profiling threshold rather than a gameplay duration.

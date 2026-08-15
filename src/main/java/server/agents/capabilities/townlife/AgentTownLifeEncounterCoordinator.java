@@ -46,15 +46,15 @@ final class AgentTownLifeEncounterCoordinator {
                          long nowMs) {
         if (initiatorEntry == null || initiator == null || gateway == null
                 || townState.targetCharacterId() <= 0 || townState.venueId().isBlank()
-                || (townState.activity() != AgentTownLifeState.Activity.SOCIAL
-                && townState.activity() != AgentTownLifeState.Activity.WEAPON_FLOURISH)) {
+                || (townState.activity() != AgentTownLifeState.Activity.SOCIALIZE
+                && townState.activity() != AgentTownLifeState.Activity.SHOW_OFF)) {
             return false;
         }
         AgentTownLifeProfile profile = AgentTownLifeProfileRepository.defaultRepository()
                 .require(townState.townMapId());
         AgentTownLifeProfile.Venue venue = profile.venue(townState.venueId()).orElse(null);
         AgentTownLifeEncounterState.Type type = requestedType != null ? requestedType
-                : townState.activity() == AgentTownLifeState.Activity.WEAPON_FLOURISH
+                : townState.activity() == AgentTownLifeState.Activity.SHOW_OFF
                 ? AgentTownLifeEncounterState.Type.PLAYFUL_SPARRING
                 : AgentTownLifeEncounterState.Type.SOCIAL_CHAT;
         if (venue == null || !venue.supports(townState.activity())) {
@@ -229,8 +229,7 @@ final class AgentTownLifeEncounterCoordinator {
                 || (snapshot.phase() != AgentTownLifeEncounterState.Phase.ACTIVE
                 && snapshot.phase() != AgentTownLifeEncounterState.Phase.REACTING)
                 || townState.stage() == AgentTownLifeState.Stage.MOVE_TO_ACTIVITY
-                || townState.stage() == AgentTownLifeState.Stage.VISIT_SHOP
-                || townState.stage() == AgentTownLifeState.Stage.RETURN_FROM_SHOP) {
+                || townState.stage() == AgentTownLifeState.Stage.EXITING) {
             return;
         }
         Character peer = AgentRuntimeIdentityRuntime.bot(

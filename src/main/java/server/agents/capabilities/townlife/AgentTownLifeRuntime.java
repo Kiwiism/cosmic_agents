@@ -10,8 +10,6 @@ import server.agents.capabilities.movement.fidget.AgentFidgetStateRuntime;
 import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
 import server.agents.capabilities.navigation.AgentTravelVariationRuntime;
 import server.agents.capabilities.navigation.AgentTravelVariationSettings;
-import server.agents.capabilities.navigation.AgentRouteOutcome;
-import server.agents.capabilities.navigation.AgentRouteStatus;
 import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.PrimitiveCapabilityGateway;
@@ -43,36 +41,28 @@ public final class AgentTownLifeRuntime {
             "server.agents.capabilities.townlife.AgentTownLifeRuntime.ACTIVITY_TRANSITION_MIN_MS");
     private static final int ACTIVITY_TRANSITION_MAX_EXCLUSIVE_MS = config.AgentTuning.intValue(
             "server.agents.capabilities.townlife.AgentTownLifeRuntime.ACTIVITY_TRANSITION_MAX_EXCLUSIVE_MS");
-    private static final int SHOP_DWELL_MIN_MS = config.AgentTuning.intValue(
-            "server.agents.capabilities.townlife.AgentTownLifeRuntime.SHOP_DWELL_MIN_MS");
-    private static final int SHOP_DWELL_MAX_EXCLUSIVE_MS = config.AgentTuning.intValue(
-            "server.agents.capabilities.townlife.AgentTownLifeRuntime.SHOP_DWELL_MAX_EXCLUSIVE_MS");
-    private static final int RETURN_SETTLE_MIN_MS = config.AgentTuning.intValue(
-            "server.agents.capabilities.townlife.AgentTownLifeRuntime.RETURN_SETTLE_MIN_MS");
-    private static final int RETURN_SETTLE_MAX_EXCLUSIVE_MS = config.AgentTuning.intValue(
-            "server.agents.capabilities.townlife.AgentTownLifeRuntime.RETURN_SETTLE_MAX_EXCLUSIVE_MS");
     private static final int MIN_FIDGET_DURATION_MS = config.AgentTuning.intValue(
             "server.agents.capabilities.townlife.AgentTownLifeRuntime.MIN_FIDGET_DURATION_MS");
     private static final int REST_DWELL_MIN_MS = config.AgentTuning.intValue(
             "server.agents.capabilities.townlife.AgentTownLifeRuntime.REST_DWELL_MIN_MS");
     private static final int REST_DWELL_MAX_EXCLUSIVE_MS = config.AgentTuning.intValue(
             "server.agents.capabilities.townlife.AgentTownLifeRuntime.REST_DWELL_MAX_EXCLUSIVE_MS");
-    private static final int SOCIAL_DWELL_MIN_MS = config.AgentTuning.intValue(
-            "server.agents.capabilities.townlife.AgentTownLifeRuntime.SOCIAL_DWELL_MIN_MS");
-    private static final int SOCIAL_DWELL_MAX_EXCLUSIVE_MS = config.AgentTuning.intValue(
-            "server.agents.capabilities.townlife.AgentTownLifeRuntime.SOCIAL_DWELL_MAX_EXCLUSIVE_MS");
-    private static final int NPC_DWELL_MIN_MS = config.AgentTuning.intValue(
-            "server.agents.capabilities.townlife.AgentTownLifeRuntime.NPC_DWELL_MIN_MS");
-    private static final int NPC_DWELL_MAX_EXCLUSIVE_MS = config.AgentTuning.intValue(
-            "server.agents.capabilities.townlife.AgentTownLifeRuntime.NPC_DWELL_MAX_EXCLUSIVE_MS");
-    private static final int ROAM_DWELL_MIN_MS = config.AgentTuning.intValue(
-            "server.agents.capabilities.townlife.AgentTownLifeRuntime.ROAM_DWELL_MIN_MS");
-    private static final int ROAM_DWELL_MAX_EXCLUSIVE_MS = config.AgentTuning.intValue(
-            "server.agents.capabilities.townlife.AgentTownLifeRuntime.ROAM_DWELL_MAX_EXCLUSIVE_MS");
-    private static final int FLOURISH_DWELL_MIN_MS = config.AgentTuning.intValue(
-            "server.agents.capabilities.townlife.AgentTownLifeRuntime.FLOURISH_DWELL_MIN_MS");
-    private static final int FLOURISH_DWELL_MAX_EXCLUSIVE_MS = config.AgentTuning.intValue(
-            "server.agents.capabilities.townlife.AgentTownLifeRuntime.FLOURISH_DWELL_MAX_EXCLUSIVE_MS");
+    private static final int SOCIALIZE_DWELL_MIN_MS = config.AgentTuning.intValue(
+            "server.agents.capabilities.townlife.AgentTownLifeRuntime.SOCIALIZE_DWELL_MIN_MS");
+    private static final int SOCIALIZE_DWELL_MAX_EXCLUSIVE_MS = config.AgentTuning.intValue(
+            "server.agents.capabilities.townlife.AgentTownLifeRuntime.SOCIALIZE_DWELL_MAX_EXCLUSIVE_MS");
+    private static final int LINGER_DWELL_MIN_MS = config.AgentTuning.intValue(
+            "server.agents.capabilities.townlife.AgentTownLifeRuntime.LINGER_DWELL_MIN_MS");
+    private static final int LINGER_DWELL_MAX_EXCLUSIVE_MS = config.AgentTuning.intValue(
+            "server.agents.capabilities.townlife.AgentTownLifeRuntime.LINGER_DWELL_MAX_EXCLUSIVE_MS");
+    private static final int STROLL_DWELL_MIN_MS = config.AgentTuning.intValue(
+            "server.agents.capabilities.townlife.AgentTownLifeRuntime.STROLL_DWELL_MIN_MS");
+    private static final int STROLL_DWELL_MAX_EXCLUSIVE_MS = config.AgentTuning.intValue(
+            "server.agents.capabilities.townlife.AgentTownLifeRuntime.STROLL_DWELL_MAX_EXCLUSIVE_MS");
+    private static final int SHOW_OFF_DWELL_MIN_MS = config.AgentTuning.intValue(
+            "server.agents.capabilities.townlife.AgentTownLifeRuntime.SHOW_OFF_DWELL_MIN_MS");
+    private static final int SHOW_OFF_DWELL_MAX_EXCLUSIVE_MS = config.AgentTuning.intValue(
+            "server.agents.capabilities.townlife.AgentTownLifeRuntime.SHOW_OFF_DWELL_MAX_EXCLUSIVE_MS");
     private static final int DEFAULT_DWELL_MS = config.AgentTuning.intValue(
             "server.agents.capabilities.townlife.AgentTownLifeRuntime.DEFAULT_DWELL_MS");
     private static final int BACKGROUND_DWELL_MAX_MS = config.AgentTuning.intValue(
@@ -101,8 +91,9 @@ public final class AgentTownLifeRuntime {
             return false;
         }
         return switch (state.stage()) {
-            case SETTLING, CHOOSE_ACTIVITY, MOVE_TO_ACTIVITY, DWELL -> true;
-            case DISABLED, TRAVEL_TO_TOWN, COMPLETE_ARRIVAL, VISIT_SHOP, RETURN_FROM_SHOP -> false;
+            case SETTLING, CHOOSE_ACTIVITY, RESERVE_DESTINATION,
+                    MOVE_TO_ACTIVITY, DWELL, COOLDOWN -> true;
+            case DISABLED, EXITING -> false;
         };
     }
 
@@ -117,9 +108,27 @@ public final class AgentTownLifeRuntime {
                                AgentTownLifeVisitRequest request,
                                long nowMs,
                                int identitySeed) {
-        if (entry == null || request == null) {
-            return;
-        }
+        Character agent = entry == null ? null : AgentRuntimeIdentityRuntime.bot(entry);
+        AgentTownLifeLifecycleRuntime.start(entry, agent, request,
+                AgentTownLifeAdmissionMode.MANUAL_ONLY, nowMs, identitySeed);
+    }
+
+    public static AgentTownLifeSessionResult requestLocal(
+            AgentRuntimeEntry entry,
+            Character agent,
+            AgentTownLifeVisitRequest request,
+            AgentTownLifeAdmissionMode admissionMode,
+            long nowMs,
+            int identitySeed) {
+        return AgentTownLifeLifecycleRuntime.start(
+                entry, agent, request, admissionMode, nowMs, identitySeed);
+    }
+
+    static void activateLocal(AgentRuntimeEntry entry,
+                              Character agent,
+                              AgentTownLifeVisitRequest request,
+                              long nowMs,
+                              int identitySeed) {
         entry.capabilityStates().require(AgentTownLifeState.STATE_KEY)
                 .start(nowMs, identitySeed, request);
         entry.simulationState().allowAbstractExecution(AgentAbstractExecutionScope.TOWN_LIFE);
@@ -128,6 +137,9 @@ public final class AgentTownLifeRuntime {
                 new AgentTravelVariationSettings(
                         Integer.toUnsignedLong(identitySeed), true, 1.30d,
                         false, 0.0d, 3_000L, 0L));
+        AgentTownLifeState state = entry.capabilityStates().require(AgentTownLifeState.STATE_KEY);
+        AgentTownLifeEventPublisher.arrival(entry, agent, state, nowMs);
+        AgentTownLifeCheckpointRuntime.persist(entry, agent, nowMs);
     }
 
     /**
@@ -176,38 +188,22 @@ public final class AgentTownLifeRuntime {
         if (AgentTownLifeFidelityPolicy.rendersAmbientActions(fidelity)) {
             AgentTownLifeEncounterCoordinator.tickPassive(entry, agent, state, gateway, nowMs);
         }
-        AgentTownLifeArrivalExtension arrival =
-                AgentTownLifeArrivalExtensionRepository.forTown(state.townMapId());
-        if (state.stage() == AgentTownLifeState.Stage.TRAVEL_TO_TOWN) {
-            if (agent.getMapId() == state.townMapId()
-                    && state.markArrivalIntentionPublished()) {
-                AgentTownLifeEventPublisher.arrival(entry, agent, state, nowMs);
-            }
-            return arrival.tickTravel(entry, agent, state, nowMs, gateway);
+        if (agent.getMapId() != state.townMapId()) {
+            stop(entry, agent);
+            return true;
         }
-        if (agent.getMapId() != state.townMapId()
-                && state.stage() != AgentTownLifeState.Stage.VISIT_SHOP
-                && state.stage() != AgentTownLifeState.Stage.RETURN_FROM_SHOP
-                && !(state.stage() == AgentTownLifeState.Stage.DWELL
-                && state.activity() == AgentTownLifeState.Activity.SHOP_VISIT)) {
-            AgentTownLifeDestinationService.release(agent);
-            AgentFidgetService.clear(entry);
-            state.transition(AgentTownLifeState.Stage.RETURN_FROM_SHOP, nowMs);
+        if (state.stage() == AgentTownLifeState.Stage.EXITING) {
+            stop(entry, agent);
+            return true;
         }
-        return switch (state.stage()) {
-            case DISABLED -> false;
-            case TRAVEL_TO_TOWN -> true;
-            case COMPLETE_ARRIVAL -> arrival.tickArrival(entry, agent, state, nowMs, gateway);
-            case SETTLING -> tickSettling(entry, agent, state, nowMs, gateway);
-            case CHOOSE_ACTIVITY -> chooseActivity(entry, agent, state, nowMs, gateway);
-            case MOVE_TO_ACTIVITY -> moveToActivity(entry, agent, state, nowMs, gateway);
-            case DWELL -> tickDwell(entry, agent, state, nowMs, gateway);
-            case VISIT_SHOP -> visitShop(entry, agent, state, nowMs, gateway);
-            case RETURN_FROM_SHOP -> returnFromShop(entry, agent, state, nowMs, gateway);
-        };
+        return AgentTownLifeActivityRuntime.tick(entry, agent, state, nowMs, gateway);
     }
 
     public static void stop(AgentRuntimeEntry entry, Character agent) {
+        AgentTownLifeLifecycleRuntime.stop(entry, agent, "requested");
+    }
+
+    static void terminateLocal(AgentRuntimeEntry entry, Character agent) {
         if (entry == null) {
             return;
         }
@@ -226,9 +222,10 @@ public final class AgentTownLifeRuntime {
                 != server.agents.runtime.simulation.AgentSimulationMode.BACKGROUND_ABSTRACT) {
             AgentPrimitiveCapabilityGatewayRuntime.gateway().stop(entry);
         }
+        AgentTownLifeCheckpointRuntime.delete(agent);
     }
 
-    private static boolean tickSettling(AgentRuntimeEntry entry,
+    static boolean tickSettling(AgentRuntimeEntry entry,
                                         Character agent,
                                         AgentTownLifeState state,
                                         long nowMs,
@@ -248,7 +245,7 @@ public final class AgentTownLifeRuntime {
         return true;
     }
 
-    private static boolean chooseActivity(AgentRuntimeEntry entry,
+    static boolean chooseActivity(AgentRuntimeEntry entry,
                                           Character agent,
                                           AgentTownLifeState state,
                                           long nowMs,
@@ -264,9 +261,9 @@ public final class AgentTownLifeRuntime {
         AgentTownLifeRolePolicy.resolve(entry, agent, state, nowMs);
         AgentTownLifeDecision decision = AgentTownLifeControllerRuntime.choose(entry, agent, state, nowMs);
         if (!AgentTownLifeFidelityPolicy.createsEncounters(state.fidelity())
-                && (decision.activity() == AgentTownLifeState.Activity.SOCIAL
-                || decision.activity() == AgentTownLifeState.Activity.WEAPON_FLOURISH)) {
-            decision = AgentTownLifeDecision.deterministic(AgentTownLifeState.Activity.ROAM);
+                && (decision.activity() == AgentTownLifeState.Activity.SOCIALIZE
+                || decision.activity() == AgentTownLifeState.Activity.SHOW_OFF)) {
+            decision = AgentTownLifeDecision.deterministic(AgentTownLifeState.Activity.STROLL);
         }
         AgentTownLifeDestinationService.Destination destination =
                 AgentTownLifeDestinationService.select(
@@ -284,8 +281,8 @@ public final class AgentTownLifeRuntime {
         entry.capabilityStates().require(AgentTownLifeActivitySequenceState.STATE_KEY).clear();
         AgentTownLifeEventPublisher.activity(
                 entry, agent, state, AgentTownLifeActivityEvent.Phase.SELECTED, nowMs);
-        if ((destination.activity() == AgentTownLifeState.Activity.SOCIAL
-                || destination.activity() == AgentTownLifeState.Activity.WEAPON_FLOURISH)
+        if ((destination.activity() == AgentTownLifeState.Activity.SOCIALIZE
+                || destination.activity() == AgentTownLifeState.Activity.SHOW_OFF)
                 && !AgentTownLifeEncounterCoordinator.begin(
                 entry, agent, state, decision.encounterType(), gateway, nowMs)) {
             abandonDestination(entry, agent, state, nowMs, gateway);
@@ -303,7 +300,7 @@ public final class AgentTownLifeRuntime {
         return true;
     }
 
-    private static boolean moveToActivity(AgentRuntimeEntry entry,
+    static boolean moveToActivity(AgentRuntimeEntry entry,
                                           Character agent,
                                           AgentTownLifeState state,
                                           long nowMs,
@@ -333,7 +330,7 @@ public final class AgentTownLifeRuntime {
             return false;
         }
         gateway.stop(entry);
-        if (state.activity() == AgentTownLifeState.Activity.ROAM) {
+        if (state.activity() == AgentTownLifeState.Activity.STROLL) {
             state.markInitialPlacementComplete();
         }
         Point facing = peerPosition(state, agent);
@@ -357,7 +354,7 @@ public final class AgentTownLifeRuntime {
         return true;
     }
 
-    private static boolean tickDwell(AgentRuntimeEntry entry,
+    static boolean tickDwell(AgentRuntimeEntry entry,
                                      Character agent,
                                      AgentTownLifeState state,
                                      long nowMs,
@@ -381,17 +378,12 @@ public final class AgentTownLifeRuntime {
                     && agent.getChair() >= 0) {
                 AgentChairService.stand(entry, agent);
             }
-            if (state.activity() == AgentTownLifeState.Activity.SHOP_VISIT
-                    && agent.getMapId() != state.townMapId()) {
-                state.transition(AgentTownLifeState.Stage.RETURN_FROM_SHOP, nowMs);
-            } else {
-                state.transition(AgentTownLifeState.Stage.CHOOSE_ACTIVITY,
-                        nowMs + delay(
-                                agent,
-                                state,
-                                ACTIVITY_TRANSITION_MIN_MS,
-                                ACTIVITY_TRANSITION_MAX_EXCLUSIVE_MS));
-            }
+            state.transition(AgentTownLifeState.Stage.COOLDOWN,
+                    nowMs + delay(
+                            agent,
+                            state,
+                            ACTIVITY_TRANSITION_MIN_MS,
+                            ACTIVITY_TRANSITION_MAX_EXCLUSIVE_MS));
             return true;
         }
         AgentTownLifeActivitySequenceState sequence = entry.capabilityStates()
@@ -442,7 +434,7 @@ public final class AgentTownLifeRuntime {
             gateway.facePosition(agent, facing);
         }
         if (render && phase == AgentTownLifeActivitySequenceState.Phase.PERFORMING
-                && state.activity() == AgentTownLifeState.Activity.WEAPON_FLOURISH
+                && state.activity() == AgentTownLifeState.Activity.SHOW_OFF
                 && !state.flourishShown()) {
             AgentTownLifeVisualService.flourish(agent, facing);
             state.markFlourishShown();
@@ -459,44 +451,11 @@ public final class AgentTownLifeRuntime {
         return true;
     }
 
-    private static boolean visitShop(AgentRuntimeEntry entry,
-                                     Character agent,
-                                     AgentTownLifeState state,
-                                     long nowMs,
-                                     PrimitiveCapabilityGateway gateway) {
-        AgentRouteOutcome outcome = gateway.travelTo(
-                entry, agent, state.destinationMapId(), nowMs);
-        if (outcome.status() == AgentRouteStatus.ARRIVED) {
-            gateway.stop(entry);
-            state.beginDwell(nowMs + delay(
-                    agent, state, SHOP_DWELL_MIN_MS, SHOP_DWELL_MAX_EXCLUSIVE_MS));
-            entry.capabilityStates().require(AgentTownLifeActivitySequenceState.STATE_KEY)
-                    .start(nowMs, state.nextActionAtMs());
-            AgentTownLifeEventPublisher.activity(
-                    entry, agent, state, AgentTownLifeActivityEvent.Phase.ORIENTING, nowMs);
-            return true;
+    static boolean tickCooldown(AgentTownLifeState state, long nowMs) {
+        if (nowMs >= state.nextActionAtMs()) {
+            state.transition(AgentTownLifeState.Stage.CHOOSE_ACTIVITY, nowMs);
         }
-        return outcome.status() != AgentRouteStatus.MOVING;
-    }
-
-    private static boolean returnFromShop(AgentRuntimeEntry entry,
-                                          Character agent,
-                                          AgentTownLifeState state,
-                                          long nowMs,
-                                          PrimitiveCapabilityGateway gateway) {
-        AgentRouteOutcome outcome = gateway.travelTo(
-                entry, agent, state.townMapId(), nowMs);
-        if (outcome.status() == AgentRouteStatus.ARRIVED) {
-            gateway.stop(entry);
-            state.transition(AgentTownLifeState.Stage.SETTLING,
-                    nowMs + delay(
-                            agent,
-                            state,
-                            RETURN_SETTLE_MIN_MS,
-                            RETURN_SETTLE_MAX_EXCLUSIVE_MS));
-            return true;
-        }
-        return outcome.status() != AgentRouteStatus.MOVING;
+        return true;
     }
 
     private static void beginDwellMotion(AgentRuntimeEntry entry,
@@ -519,12 +478,12 @@ public final class AgentTownLifeRuntime {
         }
         long duration = switch (state.activity()) {
             case REST -> delay(agent, state, REST_DWELL_MIN_MS, REST_DWELL_MAX_EXCLUSIVE_MS);
-            case SOCIAL -> delay(
-                    agent, state, SOCIAL_DWELL_MIN_MS, SOCIAL_DWELL_MAX_EXCLUSIVE_MS);
-            case NPC_PAUSE -> delay(agent, state, NPC_DWELL_MIN_MS, NPC_DWELL_MAX_EXCLUSIVE_MS);
-            case ROAM -> delay(agent, state, ROAM_DWELL_MIN_MS, ROAM_DWELL_MAX_EXCLUSIVE_MS);
-            case WEAPON_FLOURISH -> delay(
-                    agent, state, FLOURISH_DWELL_MIN_MS, FLOURISH_DWELL_MAX_EXCLUSIVE_MS);
+            case SOCIALIZE -> delay(
+                    agent, state, SOCIALIZE_DWELL_MIN_MS, SOCIALIZE_DWELL_MAX_EXCLUSIVE_MS);
+            case LINGER -> delay(agent, state, LINGER_DWELL_MIN_MS, LINGER_DWELL_MAX_EXCLUSIVE_MS);
+            case STROLL -> delay(agent, state, STROLL_DWELL_MIN_MS, STROLL_DWELL_MAX_EXCLUSIVE_MS);
+            case SHOW_OFF -> delay(
+                    agent, state, SHOW_OFF_DWELL_MIN_MS, SHOW_OFF_DWELL_MAX_EXCLUSIVE_MS);
             default -> DEFAULT_DWELL_MS;
         };
         return state.fidelity() == AgentTownLifeFidelity.PRESENTATION
@@ -581,12 +540,12 @@ public final class AgentTownLifeRuntime {
 
     private static int expressionFor(Character agent, AgentTownLifeState state) {
         return switch (state.activity()) {
-            case REST, ROAM, SHOP_VISIT -> AgentEmote.HAPPY.getValue();
-            case NPC_PAUSE -> varied(agent, state, 2, 127) == 0
+            case REST, STROLL, BROWSE -> AgentEmote.HAPPY.getValue();
+            case LINGER -> varied(agent, state, 2, 127) == 0
                     ? AgentEmote.GLARE.getValue() : AgentEmote.DISTURBED.getValue();
-            case SOCIAL -> varied(agent, state, 3, 131) == 0
+            case SOCIALIZE -> varied(agent, state, 3, 131) == 0
                     ? AgentEmote.ANNOYED.getValue() : AgentEmote.HAPPY.getValue();
-            case WEAPON_FLOURISH -> varied(agent, state, 2, 137) == 0
+            case SHOW_OFF -> varied(agent, state, 2, 137) == 0
                     ? AgentEmote.GLARE.getValue() : AgentEmote.ANGRY.getValue();
             default -> AgentEmote.HAPPY.getValue();
         };

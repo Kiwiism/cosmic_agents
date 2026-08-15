@@ -49,7 +49,7 @@ class AgentTownLifeControllerRuntimeTest {
         AgentTownLifeDecision decision =
                 AgentTownLifeControllerRuntime.choose(entry, agent, state, 5_000L);
 
-        assertEquals(AgentTownLifeState.Activity.ROAM, decision.activity());
+        assertEquals(AgentTownLifeState.Activity.STROLL, decision.activity());
         assertTrue(decision.venueId().isBlank());
     }
 

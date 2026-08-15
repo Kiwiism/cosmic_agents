@@ -7,6 +7,7 @@ import server.agents.progression.AgentCareerBuildBundleService;
 import server.agents.progression.AgentCareerBuildBundle;
 import server.agents.progression.AgentCareerProgressionCheckpointRuntime;
 import server.agents.objectives.AgentObjectiveCheckpointRuntime;
+import server.agents.capabilities.townlife.AgentTownLifeCheckpointRuntime;
 import server.agents.plans.AgentPlanReattachmentRuntime;
 import server.agents.plans.AgentPlanCheckpointRuntime;
 
@@ -75,6 +76,7 @@ public final class AgentRegistrationCoordinator {
         AgentCareerProgressionCheckpointRuntime.restore(entry, bundle);
         AgentPlanCheckpointRuntime.restore(entry);
         AgentPlanReattachmentRuntime.reattachIfNeeded(entry, agent, nowMs);
+        AgentTownLifeCheckpointRuntime.restore(entry, agent, nowMs);
         return entry;
     }
 

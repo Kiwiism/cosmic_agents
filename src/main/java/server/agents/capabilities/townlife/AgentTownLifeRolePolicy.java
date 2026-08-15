@@ -1,11 +1,9 @@
 package server.agents.capabilities.townlife;
 
 import client.Character;
-import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.personality.AgentPersonalityProfile;
 import server.agents.personality.AgentPersonalityState;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.agents.runtime.AgentRuntimeRegistry;
 
 final class AgentTownLifeRolePolicy {
     private static final String TUNING_PREFIX =
@@ -37,10 +35,7 @@ final class AgentTownLifeRolePolicy {
         if (nowMs < state.roleUntilMs()) {
             return state.role();
         }
-        long sameMap = AgentRuntimeRegistry.activeEntriesSnapshot().stream()
-                .map(AgentRuntimeIdentityRuntime::bot)
-                .filter(other -> other != null && other.getMapId() == agent.getMapId())
-                .count();
+        long sameMap = AgentTownLifePopulationRuntime.count(agent);
         int wanderThreshold = sameMap >= HEAVY_CROWD_AGENT_COUNT
                 ? HEAVY_CROWD_WANDER_PERCENT
                 : sameMap >= MODERATE_CROWD_AGENT_COUNT
