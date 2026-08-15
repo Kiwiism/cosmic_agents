@@ -10,14 +10,14 @@ public final class AgentDegenerateAttackStateRuntime {
     }
 
     public static boolean degenAttackDone(AgentRuntimeEntry entry) {
-        return entry.degenerateAttackState().done();
+        return AgentRangedTacticalStateRuntime.state(entry).degenerateAttack().done();
     }
 
     public static void markDegenAttackDone(AgentRuntimeEntry entry) {
-        entry.degenerateAttackState().markDone();
+        AgentRangedTacticalStateRuntime.state(entry).degenerateAttack().markDone();
     }
 
     public static void clear(AgentRuntimeEntry entry) {
-        entry.degenerateAttackState().clear();
+        AgentRangedTacticalStateRuntime.state(entry).degenerateAttack().clear();
     }
 }

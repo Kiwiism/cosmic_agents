@@ -12,19 +12,19 @@ public final class AgentRetreatHoldStateRuntime {
     }
 
     public static boolean hasHold(AgentRuntimeEntry entry) {
-        return entry.retreatHoldState().hasHold();
+        return AgentRangedTacticalStateRuntime.state(entry).retreatHold().hasHold();
     }
 
     public static boolean hasActiveHold(AgentRuntimeEntry entry, long nowMs) {
-        return entry.retreatHoldState().active(nowMs);
+        return AgentRangedTacticalStateRuntime.state(entry).retreatHold().active(nowMs);
     }
 
     public static Point holdPosition(AgentRuntimeEntry entry) {
-        return entry.retreatHoldState().position();
+        return AgentRangedTacticalStateRuntime.state(entry).retreatHold().position();
     }
 
     public static long holdUntilMs(AgentRuntimeEntry entry) {
-        return entry.retreatHoldState().untilMs();
+        return AgentRangedTacticalStateRuntime.state(entry).retreatHold().untilMs();
     }
 
     public static int distanceFromHoldX(AgentRuntimeEntry entry, Point botPos) {
@@ -33,10 +33,10 @@ public final class AgentRetreatHoldStateRuntime {
     }
 
     public static void setHold(AgentRuntimeEntry entry, Point position, long untilMs) {
-        entry.retreatHoldState().set(position, untilMs);
+        AgentRangedTacticalStateRuntime.state(entry).retreatHold().set(position, untilMs);
     }
 
     public static void clear(AgentRuntimeEntry entry) {
-        entry.retreatHoldState().clear();
+        AgentRangedTacticalStateRuntime.state(entry).retreatHold().clear();
     }
 }

@@ -16,10 +16,6 @@ import server.agents.capabilities.build.AgentBuildState;
 import server.agents.capabilities.build.profiles.AgentApBuildProfileState;
 import server.agents.capabilities.build.profiles.AgentSpBuildProfileState;
 import server.agents.capabilities.combat.AgentCombatBuffState;
-import server.agents.capabilities.combat.AgentAoeRepositionState;
-import server.agents.capabilities.combat.AgentBreakoutState;
-import server.agents.capabilities.combat.AgentDegenerateAttackState;
-import server.agents.capabilities.combat.AgentRetreatHoldState;
 import server.agents.capabilities.combat.AgentGrindWanderState;
 import server.agents.capabilities.combat.AgentGrindTargetState;
 import server.agents.capabilities.combat.AgentBuffState;
@@ -240,19 +236,7 @@ public class AgentRuntimeEntry implements AgentRuntimeHandle {
 
     private final AgentAmmoSupplyState ammoSupplyState = new AgentAmmoSupplyState();
 
-    private final AgentDegenerateAttackState degenerateAttackState = new AgentDegenerateAttackState();
-    private final AgentRetreatHoldState retreatHoldState = new AgentRetreatHoldState();
-    private final AgentBreakoutState breakoutState = new AgentBreakoutState();
-    private final AgentAoeRepositionState aoeRepositionState = new AgentAoeRepositionState();
     private final AgentGrindWanderState grindWanderState = new AgentGrindWanderState();
-
-    public AgentDegenerateAttackState degenerateAttackState() { return degenerateAttackState; }
-
-    public AgentRetreatHoldState retreatHoldState() { return retreatHoldState; }
-
-    public AgentBreakoutState breakoutState() { return breakoutState; }
-
-    public AgentAoeRepositionState aoeRepositionState() { return aoeRepositionState; }
 
     private final AgentShopState shopState = new AgentShopState();
 

@@ -12,26 +12,27 @@ public final class AgentAoeRepositionStateRuntime {
     }
 
     public static Point anchor(AgentRuntimeEntry entry) {
-        return entry.aoeRepositionState().anchor();
+        return AgentRangedTacticalStateRuntime.state(entry).aoeReposition().anchor();
     }
 
     public static boolean hasAnchor(AgentRuntimeEntry entry) {
-        return entry.aoeRepositionState().hasAnchor();
+        return AgentRangedTacticalStateRuntime.state(entry).aoeReposition().hasAnchor();
     }
 
     public static long deadlineMs(AgentRuntimeEntry entry) {
-        return entry.aoeRepositionState().deadlineMs();
+        return AgentRangedTacticalStateRuntime.state(entry).aoeReposition().deadlineMs();
     }
 
     public static void setAnchor(AgentRuntimeEntry entry, Point anchor, long deadlineMs) {
-        entry.aoeRepositionState().setAnchor(anchor, deadlineMs);
+        AgentRangedTacticalStateRuntime.state(entry).aoeReposition().setAnchor(anchor, deadlineMs);
     }
 
     public static void clear(AgentRuntimeEntry entry) {
-        entry.aoeRepositionState().clear();
+        AgentRangedTacticalStateRuntime.state(entry).aoeReposition().clear();
     }
 
     public static boolean isExpiredOrArrived(AgentRuntimeEntry entry, Point botPos, long nowMs, int arrivalX) {
-        return entry.aoeRepositionState().expiredOrArrived(botPos, nowMs, arrivalX);
+        return AgentRangedTacticalStateRuntime.state(entry).aoeReposition()
+                .expiredOrArrived(botPos, nowMs, arrivalX);
     }
 }

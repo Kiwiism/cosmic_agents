@@ -10,26 +10,26 @@ public final class AgentBreakoutStateRuntime {
     }
 
     public static boolean hasBreakoutCommitment(AgentRuntimeEntry entry) {
-        return entry.breakoutState().hasCommitment();
+        return AgentRangedTacticalStateRuntime.state(entry).breakout().hasCommitment();
     }
 
     public static int direction(AgentRuntimeEntry entry) {
-        return entry.breakoutState().direction();
+        return AgentRangedTacticalStateRuntime.state(entry).breakout().direction();
     }
 
     public static long untilMs(AgentRuntimeEntry entry) {
-        return entry.breakoutState().untilMs();
+        return AgentRangedTacticalStateRuntime.state(entry).breakout().untilMs();
     }
 
     public static void setBreakoutCommitment(AgentRuntimeEntry entry, int direction, long untilMs) {
-        entry.breakoutState().setCommitment(direction, untilMs);
+        AgentRangedTacticalStateRuntime.state(entry).breakout().setCommitment(direction, untilMs);
     }
 
     public static boolean isExpired(AgentRuntimeEntry entry, long nowMs) {
-        return entry.breakoutState().expired(nowMs);
+        return AgentRangedTacticalStateRuntime.state(entry).breakout().expired(nowMs);
     }
 
     public static void clear(AgentRuntimeEntry entry) {
-        entry.breakoutState().clear();
+        AgentRangedTacticalStateRuntime.state(entry).breakout().clear();
     }
 }
