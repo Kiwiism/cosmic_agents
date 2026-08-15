@@ -28,7 +28,6 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -52,7 +51,7 @@ public final class AgentCombatTargetRuntime {
             Point botPos = bot.getPosition();
             double rangeSq = (double) config.GRIND_SEEK_RANGE * config.GRIND_SEEK_RANGE;
             Foothold botFoothold = AgentCombatGroundRuntime.findGroundFoothold(botPos, bot);
-            List<Monster> candidates = AgentCombatTargetSelector.aliveMonstersInRange(bot, botPos, rangeSq);
+            List<Monster> candidates = AgentCombatCandidateProvider.local(bot, botPos, rangeSq);
             int baseCandidateCount = candidates.size();
             candidates.removeIf(monster -> !AgentCombatObjectiveTargetStateRuntime.allows(entry, monster.getId()));
             int objectiveCandidateCount = candidates.size();
@@ -189,7 +188,7 @@ public final class AgentCombatTargetRuntime {
             Point botPos = bot.getPosition();
             double rangeSq = (double) config.GRIND_SEEK_RANGE * config.GRIND_SEEK_RANGE;
             Foothold botFoothold = AgentCombatGroundRuntime.findGroundFoothold(botPos, bot);
-            List<Monster> candidates = AgentCombatTargetSelector.aliveMonstersInRange(bot, botPos, rangeSq);
+            List<Monster> candidates = AgentCombatCandidateProvider.local(bot, botPos, rangeSq);
             int baseCandidateCount = candidates.size();
             candidates.removeIf(monster -> !AgentCombatObjectiveTargetStateRuntime.allows(entry, monster.getId()));
             int objectiveCandidateCount = candidates.size();
@@ -290,7 +289,7 @@ public final class AgentCombatTargetRuntime {
                     AgentProjectileHitbox.CLIENT_PROJECTILE_BASE_RANGE
                             + AgentProjectileHitbox.passiveProjectileRangeBonus(bot),
                     config.ATTACK_RANGE_X + config.ATTACK_JUMP_X_EXTRA);
-            List<Monster> candidates = AgentCombatTargetSelector.aliveMonstersInRange(bot, botPos, range * range);
+            List<Monster> candidates = AgentCombatCandidateProvider.local(bot, botPos, range * range);
             if (candidates.isEmpty()) {
                 recordDecision(entry, AgentCombatDecisionTraceState.Mode.FOLLOW,
                         AgentCombatDecisionTraceState.Outcome.NO_CANDIDATES,
@@ -386,7 +385,7 @@ public final class AgentCombatTargetRuntime {
         Point botPos = bot.getPosition();
         double rangeSq = (double) AgentCombatConfig.cfg.GRIND_SEEK_RANGE
                 * AgentCombatConfig.cfg.GRIND_SEEK_RANGE;
-        List<Monster> preferred = AgentCombatTargetSelector.aliveMonstersInRange(
+        List<Monster> preferred = AgentCombatCandidateProvider.local(
                 bot, botPos, rangeSq).stream()
                 .filter(monster -> monster != currentTarget)
                 .filter(monster -> AgentCombatObjectiveTargetStateRuntime.allows(entry, monster.getId()))
@@ -497,8 +496,8 @@ public final class AgentCombatTargetRuntime {
         boolean localPreferredExhausted = searchMode == null || searchMode.observeLocalPreferred(
                 hasLocalPreferred, AgentCombatPolicyConfig.mapWideRecoveryEmptyScans(), nowMs);
         boolean travelWasActive = entry != null && entry.capabilityStates()
-                .find(AgentCombatLocalTargetLeaseState.STATE_KEY)
-                .map(state -> state.snapshot(nowMs).phase()
+                .find(AgentCombatDecisionState.STATE_KEY)
+                .map(state -> state.localTargetLease().snapshot(nowMs).phase()
                         == AgentCombatLocalTargetLeaseState.Phase.TRAVELLING)
                 .orElse(false);
         boolean mapWideAllowed = AgentCombatLocalTargetLeaseRuntime.allowsMapWidePromotion(
@@ -592,14 +591,7 @@ public final class AgentCombatTargetRuntime {
     private static List<Monster> mapWidePreferredTargets(
             AgentRuntimeEntry entry,
             Character bot) {
-        if (entry == null || bot == null || bot.getMap() == null) {
-            return List.of();
-        }
-        return AgentMapPerception.monsters(bot.getMap()).stream()
-                .filter(AgentCombatTargetEligibilityPolicy::isHostileLivingMonster)
-                .filter(monster -> AgentCombatObjectiveTargetStateRuntime.allows(entry, monster.getId()))
-                .filter(monster -> AgentCombatObjectiveTargetStateRuntime.prefers(entry, monster.getId()))
-                .collect(Collectors.toCollection(ArrayList::new));
+        return AgentCombatCandidateProvider.mapWidePreferred(entry, bot);
     }
 
     private static boolean allowsMapWideSpawnPressure(
@@ -621,16 +613,7 @@ public final class AgentCombatTargetRuntime {
     private static List<Monster> mapWideSpawnPressureTargets(
             AgentRuntimeEntry entry,
             Character bot) {
-        if (entry == null || bot == null || bot.getMap() == null) {
-            return List.of();
-        }
-        return AgentMapPerception.monsters(bot.getMap()).stream()
-                .filter(AgentCombatTargetEligibilityPolicy::isHostileLivingMonster)
-                .filter(monster -> AgentCombatObjectiveTargetStateRuntime.allows(
-                        entry, monster.getId()))
-                .filter(monster -> !AgentCombatObjectiveTargetStateRuntime.prefers(
-                        entry, monster.getId()))
-                .collect(Collectors.toCollection(ArrayList::new));
+        return AgentCombatCandidateProvider.mapWideIncidental(entry, bot);
     }
 
     private static List<Monster> boundedMapWideSpawnPressureTargets(
@@ -684,13 +667,13 @@ public final class AgentCombatTargetRuntime {
                 AgentProjectileHitbox.CLIENT_PROJECTILE_BASE_RANGE
                         + AgentProjectileHitbox.passiveProjectileRangeBonus(bot),
                 config.ATTACK_RANGE_X + config.ATTACK_JUMP_X_EXTRA);
-        List<Monster> candidates = AgentCombatTargetSelector.aliveMonstersInRange(
+        List<Monster> candidates = AgentCombatCandidateProvider.local(
                 bot, botPos, range * range);
         candidates.removeIf(monster -> !insideRouteCorridor(
                 botPos, movementTarget, monster.getPosition(),
                 AgentCombatPolicyConfig.routeBlockerCorridorWidth()));
         AgentRouteBlockerState blockerState =
-                entry.capabilityStates().require(AgentRouteBlockerState.STATE_KEY);
+                AgentCombatDecisionStateRuntime.state(entry).routeBlocker();
         if (candidates.isEmpty()) {
             blockerState.resumeTravel();
             recordDecision(entry, AgentCombatDecisionTraceState.Mode.ROUTE_BLOCKER,
@@ -961,8 +944,7 @@ public final class AgentCombatTargetRuntime {
             return Map.of();
         }
         Map<Monster, Integer> occupancy = new IdentityHashMap<>();
-        Map<Integer, Monster> monstersByObjectId = AgentMapPerception.monsters(bot.getMap()).stream()
-                .collect(Collectors.toMap(Monster::getObjectId, Function.identity(), (left, right) -> left));
+        Map<Integer, Monster> monstersByObjectId = AgentCombatCandidateProvider.byObjectId(bot);
         AgentPerceptionSnapshot snapshot = CosmicAgentPerceptionSnapshotFactory.capture(bot, System.currentTimeMillis());
         for (AgentPeerPerception peer : snapshot.agentPeers()) {
             Monster siblingTarget = monstersByObjectId.get(peer.targetObjectId());
@@ -1011,8 +993,8 @@ public final class AgentCombatTargetRuntime {
             return new PlatformBatchSelection(candidates, false);
         }
         String objectiveId = AgentProgressionEventPublisher.objectiveId(entry);
-        AgentCombatPlatformBatchState state = entry.capabilityStates()
-                .require(AgentCombatPlatformBatchState.STATE_KEY);
+        AgentCombatPlatformBatchState state =
+                AgentCombatDecisionStateRuntime.state(entry).platformBatch();
         if (!state.active(bot.getMapId(), objectiveId, nowMs)) {
             return new PlatformBatchSelection(candidates, false);
         }
@@ -1050,8 +1032,8 @@ public final class AgentCombatTargetRuntime {
             return;
         }
         String objectiveId = AgentProgressionEventPublisher.objectiveId(entry);
-        AgentCombatPlatformBatchState state = entry.capabilityStates()
-                .require(AgentCombatPlatformBatchState.STATE_KEY);
+        AgentCombatPlatformBatchState state =
+                AgentCombatDecisionStateRuntime.state(entry).platformBatch();
         if (state.active(bot.getMapId(), objectiveId, nowMs)) {
             return;
         }
@@ -1157,8 +1139,8 @@ public final class AgentCombatTargetRuntime {
         if (entry == null || bot == null) {
             return null;
         }
-        AgentCombatTargetSearchModeState state = entry.capabilityStates()
-                .require(AgentCombatTargetSearchModeState.STATE_KEY);
+        AgentCombatTargetSearchModeState state =
+                AgentCombatDecisionStateRuntime.state(entry).targetSearch();
         state.synchronizeScope(bot.getMapId(), AgentProgressionEventPublisher.objectiveId(entry), nowMs);
         return state;
     }

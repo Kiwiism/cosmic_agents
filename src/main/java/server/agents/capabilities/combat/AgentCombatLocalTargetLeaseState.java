@@ -1,15 +1,9 @@
 package server.agents.capabilities.combat;
 
-import server.agents.runtime.state.AgentCapabilityStateKey;
-
 import java.util.Objects;
 
 /** Per-Agent locality commitment created by a successful map-wide target promotion. */
 public final class AgentCombatLocalTargetLeaseState {
-    public static final AgentCapabilityStateKey<AgentCombatLocalTargetLeaseState> STATE_KEY =
-            new AgentCapabilityStateKey<>("combat.local-target-lease",
-                    AgentCombatLocalTargetLeaseState.class, AgentCombatLocalTargetLeaseState::new);
-
     private int mapId = Integer.MIN_VALUE;
     private String objectiveId = "";
     private int destinationRegionId = -1;

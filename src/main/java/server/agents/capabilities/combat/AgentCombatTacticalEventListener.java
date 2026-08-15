@@ -27,15 +27,15 @@ public final class AgentCombatTacticalEventListener implements AgentEventListene
                 entry, killed.mapId(), killed.objectiveId(),
                 AgentCombatObjectiveTargetStateRuntime.allows(entry, killed.mobId()),
                 killed.occurredAtMs());
-        entry.capabilityStates().find(AgentCombatPlatformBatchState.STATE_KEY)
-                .ifPresent(state -> state.killed(
+        entry.capabilityStates().find(AgentCombatDecisionState.STATE_KEY)
+                .ifPresent(state -> state.platformBatch().killed(
                         killed.mapId(), killed.objectiveId(), killed.occurredAtMs()));
         AgentCombatTacticalState.Snapshot previous =
                 AgentCombatDirectiveRuntime.tacticalSnapshot(entry);
         if (previous != null
                 && previous.lastDecision() == AgentCombatDecisionReason.ROUTE_BLOCKER
                 && previous.lastSelectedMobId() == killed.mobId()) {
-            entry.capabilityStates().require(AgentRouteBlockerState.STATE_KEY)
+            AgentCombatDecisionStateRuntime.state(entry).routeBlocker()
                     .killed(killed.occurredAtMs());
         }
         AgentCombatDirective directive = AgentCombatDirectiveRuntime.directive(entry);
@@ -57,7 +57,7 @@ public final class AgentCombatTacticalEventListener implements AgentEventListene
         if (previous != null
                 && previous.lastDecision() == AgentCombatDecisionReason.ROUTE_BLOCKER
                 && previous.lastSelectedMobId() == damaged.mobId()) {
-            entry.capabilityStates().require(AgentRouteBlockerState.STATE_KEY)
+            AgentCombatDecisionStateRuntime.state(entry).routeBlocker()
                     .damaged(damaged.occurredAtMs());
         }
     }

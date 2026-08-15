@@ -42,8 +42,8 @@ class AgentCombatLocalTargetLeasePolicyTest {
     @Test
     void activeLeaseKeepsNearbyEligibleMobAndReleasesOnlyAtEmptyThreshold() {
         Fixture fixture = fixture();
-        AgentCombatLocalTargetLeaseState state = fixture.entry.capabilityStates()
-                .require(AgentCombatLocalTargetLeaseState.STATE_KEY);
+        AgentCombatLocalTargetLeaseState state =
+                AgentCombatDecisionStateRuntime.state(fixture.entry).localTargetLease();
         state.beginMapWideTravel(100, "", 44, 1_000, 25_000);
         state.observeRegion(100, "", 44, 2_000, 25_000, 3);
 
@@ -58,8 +58,8 @@ class AgentCombatLocalTargetLeasePolicyTest {
     @Test
     void nearbyPreferredMobAlwaysRetainsLocalPriorityDuringLease() {
         Fixture fixture = fixture();
-        AgentCombatLocalTargetLeaseState state = fixture.entry.capabilityStates()
-                .require(AgentCombatLocalTargetLeaseState.STATE_KEY);
+        AgentCombatLocalTargetLeaseState state =
+                AgentCombatDecisionStateRuntime.state(fixture.entry).localTargetLease();
         state.beginMapWideTravel(100, "", 44, 1_000, 25_000);
         state.observeRegion(100, "", 44, 2_000, 25_000, 3);
 
@@ -72,8 +72,8 @@ class AgentCombatLocalTargetLeasePolicyTest {
     @Test
     void despawnedTravelTargetDoesNotBlockReplacementMapWideTarget() {
         Fixture fixture = fixture();
-        AgentCombatLocalTargetLeaseState state = fixture.entry.capabilityStates()
-                .require(AgentCombatLocalTargetLeaseState.STATE_KEY);
+        AgentCombatLocalTargetLeaseState state =
+                AgentCombatDecisionStateRuntime.state(fixture.entry).localTargetLease();
         state.beginMapWideTravel(100, "", 44, 1_000, 25_000);
 
         assertEquals(List.of(fixture.remotePreferred),
@@ -84,7 +84,7 @@ class AgentCombatLocalTargetLeasePolicyTest {
     void periodicSearchReusesLivingRemoteTargetWhileTravelling() {
         Fixture fixture = fixture();
         AgentGrindTargetStateRuntime.setTarget(fixture.entry, fixture.remotePreferred);
-        fixture.entry.capabilityStates().require(AgentCombatLocalTargetLeaseState.STATE_KEY)
+        AgentCombatDecisionStateRuntime.state(fixture.entry).localTargetLease()
                 .beginMapWideTravel(100, "", 44, 1_000, 25_000);
 
         assertEquals(List.of(fixture.remotePreferred),
@@ -95,8 +95,8 @@ class AgentCombatLocalTargetLeasePolicyTest {
     void preferredLocalRespawnCancelsRemoteTravelContinuation() {
         Fixture fixture = fixture();
         AgentGrindTargetStateRuntime.setTarget(fixture.entry, fixture.remotePreferred);
-        AgentCombatLocalTargetLeaseState state = fixture.entry.capabilityStates()
-                .require(AgentCombatLocalTargetLeaseState.STATE_KEY);
+        AgentCombatLocalTargetLeaseState state =
+                AgentCombatDecisionStateRuntime.state(fixture.entry).localTargetLease();
         state.beginMapWideTravel(100, "", 44, 1_000, 25_000);
 
         assertEquals(List.of(fixture.localPreferred),

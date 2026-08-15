@@ -42,7 +42,7 @@ class AgentRouteBlockerPolicyTest {
                 1, -1, 200, AgentCombatCandidateClass.INCIDENTAL,
                 AgentCombatDecisionReason.ROUTE_BLOCKER, 1_000L);
         AgentRouteBlockerState blocker =
-                entry.capabilityStates().require(AgentRouteBlockerState.STATE_KEY);
+                AgentCombatDecisionStateRuntime.state(entry).routeBlocker();
         blocker.canInterrupt(new Point(100, 0), 1_000L);
         AgentCombatTacticalEventListener listener = new AgentCombatTacticalEventListener(entry);
 
@@ -119,7 +119,7 @@ class AgentRouteBlockerPolicyTest {
                 1, -1, 200, AgentCombatCandidateClass.INCIDENTAL,
                 AgentCombatDecisionReason.ROUTE_BLOCKER, 1_000L);
         AgentRouteBlockerState blocker =
-                entry.capabilityStates().require(AgentRouteBlockerState.STATE_KEY);
+                AgentCombatDecisionStateRuntime.state(entry).routeBlocker();
         blocker.canInterrupt(new Point(100, 0), 1_000L);
         AgentCombatTacticalEventListener listener = new AgentCombatTacticalEventListener(entry);
 

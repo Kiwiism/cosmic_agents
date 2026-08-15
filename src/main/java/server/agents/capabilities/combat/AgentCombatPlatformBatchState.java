@@ -1,16 +1,10 @@
 package server.agents.capabilities.combat;
 
-import server.agents.runtime.state.AgentCapabilityStateKey;
-
 import java.awt.Point;
 import java.util.Objects;
 
 /** Bounded commitment to eligible monsters around one live combat platform. */
 public final class AgentCombatPlatformBatchState {
-    public static final AgentCapabilityStateKey<AgentCombatPlatformBatchState> STATE_KEY =
-            new AgentCapabilityStateKey<>("combat.platform-batch",
-                    AgentCombatPlatformBatchState.class, AgentCombatPlatformBatchState::new);
-
     private int mapId = Integer.MIN_VALUE;
     private String objectiveId = "";
     private int regionId = -1;

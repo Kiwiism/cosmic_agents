@@ -1,15 +1,9 @@
 package server.agents.capabilities.combat;
 
-import server.agents.runtime.state.AgentCapabilityStateKey;
-
 import java.awt.Point;
 
 /** Bounded interruption budget for combat encountered during scripted travel. */
 public final class AgentRouteBlockerState {
-    public static final AgentCapabilityStateKey<AgentRouteBlockerState> STATE_KEY =
-            new AgentCapabilityStateKey<>("combat.route-blocker",
-                    AgentRouteBlockerState.class, AgentRouteBlockerState::new);
-
     private Point routeTarget;
     private long startedAtMs;
     private long lastProgressAtMs;

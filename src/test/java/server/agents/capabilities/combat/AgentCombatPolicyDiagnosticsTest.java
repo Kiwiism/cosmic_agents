@@ -10,8 +10,8 @@ class AgentCombatPolicyDiagnosticsTest {
     @Test
     void snapshotExposesCombatLocalLeaseWithoutOwningNavigationDiagnostics() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
-        AgentCombatLocalTargetLeaseState lease = entry.capabilityStates()
-                .require(AgentCombatLocalTargetLeaseState.STATE_KEY);
+        AgentCombatLocalTargetLeaseState lease =
+                AgentCombatDecisionStateRuntime.state(entry).localTargetLease();
         lease.beginMapWideTravel(100, "quest", 44, 1_000, 25_000);
         lease.observeRegion(100, "quest", 44, 2_000, 25_000, 3);
 
@@ -27,7 +27,7 @@ class AgentCombatPolicyDiagnosticsTest {
     @Test
     void snapshotExposesRemainingPlatformBatchKills() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
-        entry.capabilityStates().require(AgentCombatPlatformBatchState.STATE_KEY)
+        AgentCombatDecisionStateRuntime.state(entry).platformBatch()
                 .begin(100, "quest", 44, new java.awt.Point(200, 300),
                         7, 1_000L, 30_000L);
 

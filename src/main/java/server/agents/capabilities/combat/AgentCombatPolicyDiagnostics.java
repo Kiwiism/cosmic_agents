@@ -21,10 +21,10 @@ public final class AgentCombatPolicyDiagnostics {
                 .find(AgentPostKillLootState.STATE_KEY)
                 .map(state -> state.snapshot(nowMs))
                 .orElse(null);
-        AgentRouteBlockerState.Snapshot route = entry.capabilityStates()
-                .find(AgentRouteBlockerState.STATE_KEY)
-                .map(state -> state.snapshot(nowMs))
-                .orElse(null);
+        AgentCombatDecisionState decisionState = entry.capabilityStates()
+                .find(AgentCombatDecisionState.STATE_KEY).orElse(null);
+        AgentRouteBlockerState.Snapshot route = decisionState == null
+                ? null : decisionState.routeBlocker().snapshot(nowMs);
         AgentCombatDecisionTraceState.Snapshot combatDecision = entry.capabilityStates()
                 .find(AgentCombatDecisionTraceState.STATE_KEY)
                 .map(AgentCombatDecisionTraceState::snapshot)
@@ -33,18 +33,12 @@ public final class AgentCombatPolicyDiagnostics {
                 .find(AgentLootDecisionTraceState.STATE_KEY)
                 .map(AgentLootDecisionTraceState::snapshot)
                 .orElse(null);
-        AgentCombatLocalTargetLeaseState.Snapshot localTargetLease = entry.capabilityStates()
-                .find(AgentCombatLocalTargetLeaseState.STATE_KEY)
-                .map(state -> state.snapshot(nowMs))
-                .orElse(null);
-        AgentCombatTargetSearchModeState.Snapshot targetSearchMode = entry.capabilityStates()
-                .find(AgentCombatTargetSearchModeState.STATE_KEY)
-                .map(AgentCombatTargetSearchModeState::snapshot)
-                .orElse(null);
-        AgentCombatPlatformBatchState.Snapshot platformBatch = entry.capabilityStates()
-                .find(AgentCombatPlatformBatchState.STATE_KEY)
-                .map(state -> state.snapshot(nowMs))
-                .orElse(null);
+        AgentCombatLocalTargetLeaseState.Snapshot localTargetLease = decisionState == null
+                ? null : decisionState.localTargetLease().snapshot(nowMs);
+        AgentCombatTargetSearchModeState.Snapshot targetSearchMode = decisionState == null
+                ? null : decisionState.targetSearch().snapshot();
+        AgentCombatPlatformBatchState.Snapshot platformBatch = decisionState == null
+                ? null : decisionState.platformBatch().snapshot(nowMs);
         return new Snapshot(
                 directive == null ? "" : directive.directiveId(),
                 directive == null ? "" : directive.objectiveId(),

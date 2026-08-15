@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import server.agents.capabilities.combat.AgentCombatTargetTraceRuntime;
 import server.agents.capabilities.combat.AgentCombatTargetTraceSnapshot;
 import server.agents.capabilities.combat.AgentCombatCooldownStateRuntime;
+import server.agents.capabilities.combat.AgentCombatDecisionStateRuntime;
 import server.agents.capabilities.combat.AgentDegenerateAttackStateRuntime;
 import server.agents.capabilities.combat.AgentRouteBlockerState;
 import server.agents.capabilities.navigation.AgentNavigationTraceRuntime;
@@ -253,8 +254,8 @@ public final class AgentVictoriaLiveValidationRunner {
         Point goal = AgentMoveTargetStateRuntime.moveTarget(entry);
         AgentSupplyProcurementState supplies = entry.capabilityStates().require(
                 AgentSupplyProcurementState.STATE_KEY);
-        AgentRouteBlockerState.Snapshot routeBlocker = entry.capabilityStates()
-                .require(AgentRouteBlockerState.STATE_KEY)
+        AgentRouteBlockerState.Snapshot routeBlocker = AgentCombatDecisionStateRuntime.state(entry)
+                .routeBlocker()
                 .snapshot(System.currentTimeMillis());
         return "edge=" + edge
                 + ",waypoint=" + (waypoint == null ? "none" : waypoint.x + ":" + waypoint.y)

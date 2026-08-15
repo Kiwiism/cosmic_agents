@@ -1,13 +1,7 @@
 package server.agents.capabilities.combat;
 
-import server.agents.runtime.state.AgentCapabilityStateKey;
-
 /** Ephemeral combat-policy state. It is safe to discard and reconstruct. */
 public final class AgentCombatTacticalState {
-    public static final AgentCapabilityStateKey<AgentCombatTacticalState> STATE_KEY =
-            new AgentCapabilityStateKey<>("combat.tactical-policy",
-                    AgentCombatTacticalState.class, AgentCombatTacticalState::new);
-
     private int leasedMapId = -1;
     private int leasedRegionId = -1;
     private long leaseExpiresAtMs;

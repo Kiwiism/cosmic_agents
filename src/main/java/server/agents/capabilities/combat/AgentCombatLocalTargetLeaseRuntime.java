@@ -30,7 +30,7 @@ final class AgentCombatLocalTargetLeaseRuntime {
                 AgentCombatPolicyConfig.localTargetLeaseKills());
         AgentCombatLocalTargetLeaseState.Snapshot snapshot = lease.snapshot(nowMs);
         if (snapshot.phase() == AgentCombatLocalTargetLeaseState.Phase.ACTIVE) {
-            entry.capabilityStates().require(AgentCombatTargetSearchModeState.STATE_KEY)
+            AgentCombatDecisionStateRuntime.state(entry).targetSearch()
                     .enter(AgentCombatTargetSearchMode.REGION_HARVEST,
                             "reached map-wide destination; harvesting local population",
                             snapshot.destinationRegionId(), nowMs);
@@ -89,7 +89,7 @@ final class AgentCombatLocalTargetLeaseRuntime {
     }
 
     private static AgentCombatLocalTargetLeaseState state(AgentRuntimeEntry entry) {
-        return entry.capabilityStates().require(AgentCombatLocalTargetLeaseState.STATE_KEY);
+        return AgentCombatDecisionStateRuntime.state(entry).localTargetLease();
     }
 
     private static boolean retainedTravelTargetMatches(

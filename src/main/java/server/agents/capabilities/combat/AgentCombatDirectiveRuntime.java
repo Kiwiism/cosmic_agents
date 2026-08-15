@@ -43,12 +43,8 @@ public final class AgentCombatDirectiveRuntime {
         }
         entry.capabilityStates().remove(AgentCombatDirectiveState.STATE_KEY)
                 .ifPresent(AgentCombatDirectiveState::clear);
-        entry.capabilityStates().remove(AgentCombatTacticalState.STATE_KEY)
-                .ifPresent(AgentCombatTacticalState::clear);
-        entry.capabilityStates().remove(AgentRouteBlockerState.STATE_KEY)
-                .ifPresent(AgentRouteBlockerState::clear);
-        entry.capabilityStates().remove(AgentCombatPlatformBatchState.STATE_KEY)
-                .ifPresent(AgentCombatPlatformBatchState::clear);
+        entry.capabilityStates().remove(AgentCombatDecisionState.STATE_KEY)
+                .ifPresent(AgentCombatDecisionState::clear);
     }
 
     /** Applies a coordinator-owned soft region lease without changing combat objective policy. */
@@ -83,7 +79,7 @@ public final class AgentCombatDirectiveRuntime {
                 .assign(directive);
         if (changed) {
             state(entry).clear();
-            entry.capabilityStates().require(AgentCombatPlatformBatchState.STATE_KEY).clear();
+            AgentCombatDecisionStateRuntime.state(entry).platformBatch().clear();
         }
     }
 
@@ -94,7 +90,7 @@ public final class AgentCombatDirectiveRuntime {
     }
 
     static AgentCombatTacticalState state(AgentRuntimeEntry entry) {
-        return entry.capabilityStates().require(AgentCombatTacticalState.STATE_KEY);
+        return AgentCombatDecisionStateRuntime.state(entry).tactical();
     }
 
     private static void assign(AgentRuntimeEntry entry,
@@ -118,7 +114,7 @@ public final class AgentCombatDirectiveRuntime {
                 .assign(directive);
         if (changed) {
             state(entry).clear();
-            entry.capabilityStates().require(AgentCombatPlatformBatchState.STATE_KEY).clear();
+            AgentCombatDecisionStateRuntime.state(entry).platformBatch().clear();
         }
     }
 }

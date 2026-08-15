@@ -1,17 +1,10 @@
 package server.agents.capabilities.combat;
 
-import server.agents.runtime.state.AgentCapabilityStateKey;
-
 import java.util.List;
 import java.util.Objects;
 
 /** Per-Agent quest target-search phase and compact decision evidence. */
 public final class AgentCombatTargetSearchModeState {
-    public static final AgentCapabilityStateKey<AgentCombatTargetSearchModeState> STATE_KEY =
-            new AgentCapabilityStateKey<>("combat.target-search-mode",
-                    AgentCombatTargetSearchModeState.class,
-                    AgentCombatTargetSearchModeState::new);
-
     private int mapId = Integer.MIN_VALUE;
     private String objectiveId = "";
     private AgentCombatTargetSearchMode mode = AgentCombatTargetSearchMode.LOCAL_CLEAR;
@@ -76,6 +69,19 @@ public final class AgentCombatTargetSearchModeState {
         return new Snapshot(mapId, objectiveId, mode, transitionReason, changedAtMs,
                 emptyPreferredScans, destinationRegionId, localCandidateCount,
                 preferredCandidateCount, rankedRegions);
+    }
+
+    public synchronized void clear() {
+        mapId = Integer.MIN_VALUE;
+        objectiveId = "";
+        mode = AgentCombatTargetSearchMode.LOCAL_CLEAR;
+        transitionReason = "cleared";
+        changedAtMs = 0L;
+        emptyPreferredScans = 0;
+        destinationRegionId = -1;
+        localCandidateCount = 0;
+        preferredCandidateCount = 0;
+        rankedRegions = List.of();
     }
 
     private void transition(AgentCombatTargetSearchMode nextMode,

@@ -37,8 +37,8 @@ public final class AgentCombatTargetTraceRuntime {
                 .map(AgentCombatDecisionTraceState::snapshot)
                 .orElse(null);
         AgentCombatTargetSearchModeState.Snapshot searchMode = entry.capabilityStates()
-                .find(AgentCombatTargetSearchModeState.STATE_KEY)
-                .map(AgentCombatTargetSearchModeState::snapshot)
+                .find(AgentCombatDecisionState.STATE_KEY)
+                .map(state -> state.targetSearch().snapshot())
                 .orElse(null);
         boolean exactDecision = target != null && decision != null
                 && decision.selectedObjectId() == target.getObjectId();
