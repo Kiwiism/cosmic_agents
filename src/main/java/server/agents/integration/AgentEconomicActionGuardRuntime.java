@@ -14,7 +14,10 @@ public final class AgentEconomicActionGuardRuntime {
     private AgentEconomicActionGuardRuntime() { }
 
     public static void install(NpcSaleGuard guard) { npcSaleGuard = Objects.requireNonNull(guard); }
-    public static void clear() { npcSaleGuard = NpcSaleGuard.allowAll(); }
+    public static void clear() {
+        npcSaleGuard = NpcSaleGuard.allowAll();
+        AgentEconomyRuntime.clear();
+    }
 
     public static Decision claimNpcSale(Character agent, InventoryType type, short slot,
                                         int itemId, short quantity) {

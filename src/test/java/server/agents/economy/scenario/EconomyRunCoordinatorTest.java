@@ -29,7 +29,8 @@ class EconomyRunCoordinatorTest {
 
         engine.advanceTo(engine.now().plus(Duration.ofHours(1)));
 
-        assertEquals(List.of("admit", "market", "leave", "settle", "return", "market"), world.actions);
+        assertEquals(List.of("admit", "market", "leave", "settle", "return", "admit", "market"),
+                world.actions);
         assertEquals(1, world.outcome.itemDrops().size());
         assertEquals("observed:test-session", world.outcome.calibrationId());
         assertEquals(EconomyRunCoordinator.Status.IN_FREE_MARKET,

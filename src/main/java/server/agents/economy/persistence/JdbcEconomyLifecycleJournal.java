@@ -87,7 +87,7 @@ public final class JdbcEconomyLifecycleJournal implements EconomyLifecycleJourna
     }
 
     @Override
-    public void presence(UUID runId, String agentId, server.agents.economy.scenario.EconomyWorldPort.Presence presence,
+    public void presence(UUID runId, String agentId, server.agents.economy.session.EconomySessionPort.Presence presence,
                          String reason, Instant logicalAt) {
         String raw = runId + ":" + agentId + ':' + logicalAt + ':' + reason + ':'
                 + presence.mapId() + ':' + presence.x() + ':' + presence.y() + ':' + presence.visible();
@@ -103,6 +103,32 @@ public final class JdbcEconomyLifecycleJournal implements EconomyLifecycleJourna
             statement.executeUpdate();
         } catch (SQLException failure) {
             throw new EconomyPersistenceException("Could not journal agent presence", failure);
+        }
+    }
+
+    @Override
+    public void sessionEvent(UUID runId, String agentId, UUID requestId, UUID sessionId,
+                             String eventKind, Instant logicalAt, String reason,
+                             Instant retryAt, Instant expiresAt) {
+        String raw = runId + ":" + agentId + ':' + requestId + ':' + sessionId + ':'
+                + eventKind + ':' + logicalAt;
+        UUID eventId = UUID.nameUUIDFromBytes(raw.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        String sql = "INSERT INTO economy_session_event(session_event_id,run_id,request_id,session_id,"
+                + "agent_id,event_kind,logical_at,reason,retry_at,expires_at) "
+                + "VALUES (?,?,?,?,?,?,?,?,?,?) ON CONFLICT DO NOTHING";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setObject(1, eventId); statement.setObject(2, runId);
+            statement.setObject(3, requestId); statement.setObject(4, sessionId);
+            statement.setString(5, agentId); statement.setString(6, eventKind);
+            statement.setTimestamp(7, Timestamp.from(logicalAt)); statement.setString(8, reason);
+            if (retryAt == null) statement.setNull(9, Types.TIMESTAMP_WITH_TIMEZONE);
+            else statement.setTimestamp(9, Timestamp.from(retryAt));
+            if (expiresAt == null) statement.setNull(10, Types.TIMESTAMP_WITH_TIMEZONE);
+            else statement.setTimestamp(10, Timestamp.from(expiresAt));
+            statement.executeUpdate();
+        } catch (SQLException failure) {
+            throw new EconomyPersistenceException("Could not journal economy session event", failure);
         }
     }
 

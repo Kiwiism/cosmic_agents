@@ -5,7 +5,7 @@
 1. Configure `economy-engine.yaml`. YAML contains behavior and scenario policy only; credentials are
    environment variables.
 2. Set distinct `ECONOMY_DB_*` credentials and initialize the separate PostgreSQL database through
-   migrations V001-V018.
+   migrations V001-V021.
 3. Start Cosmic MySQL and the game server normally.
 4. Have at least `population.maximumAgents` live autonomous characters. The runtime deterministically
    binds scenario slots to characters of the same real Cosmic job family; within each eligible pool,
@@ -84,7 +84,12 @@ require identical remaining event order and RNG state.
   public pending rows allow physically present interested buyers to make budget-constrained higher bids.
   `public_text` is display-only flavor and is never parsed to make an economic decision.
 - `private_trade_arrangement`: the accepted winning offer and exact-item rendezvous contract. It does
-  not itself transfer holdings; settlement must validate the fingerprint again through Cosmic.
+  not itself transfer holdings; the enabled arrangement worker physically reunites both agents and
+  validates the fingerprint again through Cosmic Trade before marking it executed.
+- `economic_intent`: structured buy/sell interest and numeric offers usable outside an active FM
+  session. Flavor text is display-only; only a participant may resolve a directed intent.
+- `economy_session_event`: accepted/deferred/rejected entries and released/deferred/rejected exits,
+  including deadline, retry, and reason evidence.
 - `item_valuation_query`: every agent valuation request, its private observation count/median, catalog
   anchor, selected source, and the audited YAML override reason when an override applies.
 - `agent_presence_event` and lifecycle tables: FM/offscreen state and physical location.
@@ -122,9 +127,18 @@ a completed price or imputing a meso price to barter.
   enabled only with matching live-session calibration. It shares the same Cosmic v83
   beginner/LUK/town/field-limit/safety-charm rule as live deaths, truncates unperformed kills and
   consumable use, cancels ordinary death state, and uses the configured Agent respawn delay.
-- Equipment offers are allowed because the offer identifies the exact listing fingerprint. An
-  accepted equipment offer remains `ACCEPTED_AWAITING_SETTLEMENT` until an exact-item settlement
-  path can physically reunite buyer and seller; the item-ID-only Trade selector is never used for it.
+- Equipment offers identify the exact listing fingerprint. Accepted equipment remains
+  `ACCEPTED_AWAITING_SETTLEMENT` until the arrangement worker physically reunites buyer and seller;
+  the item-ID-only Trade selector is never used for it.
+
+## Conservative first rollout
+
+Both supplied YAML files enable the necessary real paths: physical browsing, PlayerShop sales and
+buys, remote access to real NPC shop rules, private knowledge, durable inventory protection,
+structured intent calls, taxes, calibrated activity, and full evidence. The following implemented
+features start off: public offers/arrangements, barter, autonomous quest lifecycle mutation, scroll
+application, chair collection preference/direct trade, repricing, seasonal overlays, and ambient
+fidgets. Enable one family at a time and compare its journal/report output against a control run.
 
 For a local read-only report, run `tools/economy/Export-EconomyDashboard.ps1` and serve
 `economy-dashboard`. The exporter reads only PostgreSQL and includes raw transaction, listing,

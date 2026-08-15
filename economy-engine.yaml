@@ -41,6 +41,14 @@ world:
     - VICTORIA_ISLAND
   allowPhysicalActivityOutsideFreeMarket: false
 
+session:
+  defaultMaximumDuration: PT30M
+  maximumIdleDuration: PT5M
+  exitWhenPrimaryGoalsComplete: true
+  maximumConsecutiveUnproductiveStalls: 12
+  knowledgeOnlyBrowsingEnabled: true
+  implicitEconomicIntentsEnabled: true
+
 population:
   initialAgents: 50
   maximumAgents: 200
@@ -110,11 +118,11 @@ market:
   maximumStallsPerAgent: 1
   maximumListingsPerStall: 16
   hiredMerchantsEnabled: false
-  barterEnabled: true
+  barterEnabled: false
   sellerMustRemainAtStall: true
   maximumListingDuration: PT4H
   minimumRepriceInterval: PT30M
-  maximumReprices: 6
+  maximumReprices: 0
   coldStartNpcMarkupMinimum: 0.15
   coldStartNpcMarkupMaximum: 0.75
   actionPoll: PT5S
@@ -138,6 +146,7 @@ market:
   rejectSelfTrade: true
   # Durable multi-transaction cycle detection is not implemented in the first release.
   detectCircularTrade: false
+  publicOffersEnabled: false
 
 valuation:
   # Knowledge remains private to observations made by this agent; no global price oracle is exposed.
@@ -159,7 +168,7 @@ seasonalRules:
   overlays: []
 
 quests:
-  enabled: true
+  enabled: false
   demandRequiresAcceptedQuest: true
   demandRequiresRemainingObjective: true
   allowTradeAcquisition: true
@@ -189,7 +198,7 @@ demand:
     - { itemId: 2330000, npcId: 1001100, targetQuantity: 600, purchaseLot: 600, jobs: [pirate], urgency: 0.90 }
 
 scrolling:
-  enabled: true
+  enabled: false
   requireOwnedEquipment: true
   requireRemainingSlots: true
   preserveRealSuccessAndDestructionRates: true
@@ -198,11 +207,11 @@ chairs:
   enabled: true
   requireOwnedChair: true
   allowListing: true
-  allowDirectTrade: true
-  collectionPreferenceEnabled: true
+  allowDirectTrade: false
+  collectionPreferenceEnabled: false
 
 ambient:
-  enabled: true
+  enabled: false
   maximumConsecutiveActions: 4
   immediatelyYieldToEconomicWork: true
   modules:

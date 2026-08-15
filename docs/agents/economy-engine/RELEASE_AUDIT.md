@@ -15,8 +15,9 @@ logical-scheduler test is never represented as a physical Free Market soak.
   wall-clock ticks. This validates queue shape and bounded scheduling only, not live market throughput.
 - Checkpoint/restore produces the same remaining event order and named RNG state as an uninterrupted
   run. Changed configuration and catalog hashes are rejected.
-- Clean PostgreSQL 17 initialization through V014 passes the runtime schema verifier, deferred
-  double-entry balance trigger, item-flow projections, invariant audit, and atomic revision-0
+- Clean disposable PostgreSQL 16.4 initialization through V021 passes the runtime verifier, deferred
+  double-entry balance trigger, item-flow projections, invariant audit, session/intent contracts,
+  arrangement resolution, dashboard queries, and atomic revision-0
   configuration persistence (source YAML, normalized JSON, schema version, hash, effective logical
   timestamp, and validation result).
 - Local authoritative WZ gates verify Victoria quest facts and item `5140000`, Regular Store Permit.
@@ -35,7 +36,7 @@ logical-scheduler test is never represented as a physical Free Market soak.
 | Continuous 1x realtime without advance commands | Live verified | Run `2b4c511a-7519-4935-bea6-659be25d978b` advanced 0s to 30s automatically, rejected manual advance, resumed at 30s after 19s stopped, and advanced to 40s from new elapsed time |
 | Forward fast-forward for 30+ days | Automated for logical work | `SimulationRunEngineTest`; physical actions intentionally pause rather than being fabricated |
 | One channel, FM entrance and rooms 1-22 | Live verified | 50 agents produced 869 presence events across entrance plus rooms 1-22 in run `808c943d-c236-466c-b2ec-46459efb0c06` |
-| Offscreen agents cannot trade or remain visible | Automated | coordinator state machine and `CosmicEconomyWorldAdapter` guards |
+| Offscreen agents cannot trade or remain visible | Automated | separate session/activity ports, coordinator state machine, and activity ownership guards |
 | Farming output uses legitimate sources | Live partially verified | 50 calibrated sessions started, 17 completed before the retained failure; 320 mob-drop lots were journaled from authoritative resolution |
 | Return through FM entrance | Automated at adapter boundary, live soak pending | coordinator plus adapter postcondition |
 | Remote real-NPC buy/sell/recharge | Automated | real shop gateway, price/stock/restriction preservation, source NPC/map evidence |
@@ -50,7 +51,7 @@ logical-scheduler test is never represented as a physical Free Market soak.
 | Reconstruction from journal/checkpoints | Automated on controlled restart | full domain checkpoint, queue/RNG equality, idempotent relay |
 | Dashboard data queryable without live objects | Automated | item, meso, agent, decision, negotiation, provenance, velocity, wealth/Gini, seller HHI, room utilization/traffic, search, burn, fixed-basket coverage/index, scenario comparison, and invariant contracts execute in the clean PostgreSQL gate |
 | Ambient behavior cannot perturb loot | Automated | independent named streams and architecture boundary |
-| Adapter replacement does not rewrite domain | Automated | architecture test and `EconomyWorldPort`/Cosmic adapter boundary |
+| Adapter replacement does not rewrite domain | Automated | `EconomySessionPort`, `ExternalAgentActivityPort`, and no-farming-dependency architecture test; deprecated composite remains compatibility-only |
 | Human-safe participation | Schema and settlement flags implemented; live evidence pending | human-counterparty attribution exists, but no human/agent live test has run |
 
 ## Exact live-soak prerequisites for the default seed

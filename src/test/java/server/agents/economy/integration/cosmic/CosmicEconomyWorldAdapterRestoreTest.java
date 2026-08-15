@@ -14,11 +14,45 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
+import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 class CosmicEconomyWorldAdapterRestoreTest {
+    @Test
+    void typedSessionDrainsAfterMeaningfulIdleTimeout() {
+        Character warrior = character(101, 100);
+        when(warrior.getMapId()).thenReturn(910000000);
+        CosmicEconomyWorldAdapter.MarketBehavior market = mock(CosmicEconomyWorldAdapter.MarketBehavior.class);
+        when(market.perform(any(), any(), any())).thenReturn(new EconomyWorldPort.MarketDirective(
+                java.util.Optional.empty(), java.util.Optional.of(Instant.EPOCH.plusSeconds(1))));
+        when(market.drainForRelease(any(), any(), any())).thenAnswer(invocation ->
+                new EconomyWorldPort.MarketDirective(java.util.Optional.of(
+                        invocation.getArgument(2, Instant.class)), java.util.Optional.empty()));
+        CosmicEconomyWorldAdapter world = new CosmicEconomyWorldAdapter(UUID.randomUUID(), 1,
+                "config", "catalog", ignored -> warrior, market, ignored -> new EconomyTaxOverride(0, 0),
+                EconomyParticipantBindingStore.NO_OP, EconomyBootstrapStore.NO_OP,
+                (profile, character) -> { }, (profile, character) -> { });
+        EconomyAgentProfile profile = profile("agent-1", "warrior");
+        UUID sessionId = UUID.randomUUID();
+        world.restoreState(Map.of("schemaVersion", 1, "boundAgentIds", List.of("agent-1"),
+                "offscreenAgentIds", List.of(), "activeSessions", Map.of("agent-1", Map.of(
+                        "sessionId", sessionId.toString(), "requestId", UUID.randomUUID().toString(),
+                        "enteredAt", Instant.EPOCH.toString(),
+                        "expiresAt", Instant.EPOCH.plusSeconds(1800).toString(),
+                        "maximumIdleMillis", 300_000, "lastProgressRevision", 0,
+                        "lastProgressAt", Instant.EPOCH.toString())), "market", Map.of()),
+                Map.of("agent-1", profile));
+
+        world.performMarketCycle(sessionId, profile, Instant.EPOCH);
+        var timedOut = world.performMarketCycle(sessionId, profile, Instant.EPOCH.plusSeconds(300));
+
+        assertEquals(true, timedOut.releaseRequested());
+        assertEquals("SESSION_IDLE_TIMEOUT", timedOut.reason());
+        verify(market).drainForRelease(warrior, profile, Instant.EPOCH.plusSeconds(300));
+    }
+
     @Test
     void admittedAgentCanBeginPhysicalMarketCycleFromEntrance() {
         Character warrior = character(101, 100);

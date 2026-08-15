@@ -41,3 +41,21 @@ item with current code, tests, migrations, configuration, and runtime evidence.
 - Complete a 30-day 50-to-200 live-agent soak through shop sales/closures and a mid-stall restart,
   then run paired multi-seed scenarios.
 - Resolve every partial and pending gate in `RELEASE_AUDIT.md`.
+
+## Stable-ownership implementation sequence (phases 1-10)
+
+| Phase | Boundary/result | Local status |
+|---|---|---|
+| 1 | Freeze ownership: economy session owns economic decisions only | Complete |
+| 2 | Typed entry/defer/reject, bounded session, drain/release, checkpoint state | Complete |
+| 3 | Durable run identity and inventory safeguard outside active FM sessions | Complete |
+| 4 | Fresh entry inventory/need/knowledge plan and reason journal | Complete |
+| 5 | Physical per-stall browse, direct buy/offer decision, bounded search exit | Complete |
+| 6 | Physical seller lifecycle, one stall, room/spot fill from entrance | Complete baseline |
+| 7 | Structured intent API usable inside/outside FM; flavor text non-authoritative | Complete contract; autonomous callers adopt incrementally |
+| 8 | Public offer, outbid, acceptance, physical rendezvous, exact Cosmic Trade | Implemented; disabled by default pending live soak |
+| 9 | External activity/farming port and independently checkpointed ownership | Complete production composition; deprecated composite retained for checkpoint compatibility |
+| 10 | Session/intent/decision/provenance query contracts and conservative flags | Complete locally; live rollout gates remain |
+
+“Complete locally” means code and automated contracts exist. It does not replace the physical soak
+and human-readiness blockers in `RELEASE_AUDIT.md`.

@@ -50,7 +50,9 @@ class EconomyPostgresSchemaIntegrationTest {
                     var runs = new JdbcSimulationRunRepository(dataSource);
                     assertEquals("CREATED", runs.find(run).orElseThrow().status());
                     verifyOwnershipJournal(dataSource, connection, run);
+                    verifySessionJournal(dataSource, connection, run);
                     verifyStallOfferStore(dataSource, connection, run);
+                    verifyStructuredCommunication(dataSource, connection, run);
                     verifyAgentValuationKnowledge(dataSource, connection, run, loaded);
                     var checkpoint = new server.agents.economy.scenario.SimulationRunEngine.RunCheckpoint(
                             run, Instant.parse("2026-01-01T00:00:00Z"), loaded.sha256(),
@@ -116,6 +118,10 @@ class EconomyPostgresSchemaIntegrationTest {
                     dashboardQuery(connection, "agent_journal.sql", trace);
                     dashboardQuery(connection, "decision_trace.sql", trace);
                     dashboardQuery(connection, "economy_overview.sql", trace);
+                    dashboardQuery(connection, "economy_session_trace.sql", Map.of(
+                            ":run_id", runSql, ":agent_id", "'agent-1'"));
+                    dashboardQuery(connection, "economic_intent_trace.sql", Map.of(
+                            ":run_id", runSql, ":agent_id", "'agent-1'", ":item_id", "0"));
                 }
             } finally {
                 try (Connection connection = dataSource.getConnection()) { deleteRun(connection, run); }
@@ -189,6 +195,19 @@ class EconomyPostgresSchemaIntegrationTest {
                 ":item_id", "4000000")).contains("\"reviews\""));
     }
 
+    private static void verifySessionJournal(HikariDataSource dataSource, Connection connection,
+                                             UUID run) throws Exception {
+        UUID request = UUID.randomUUID();
+        UUID session = UUID.randomUUID();
+        var journal = new JdbcEconomyLifecycleJournal(dataSource);
+        journal.sessionEvent(run, "agent-1", request, session, "ENTRY_ACCEPTED", Instant.EPOCH,
+                "ACCEPTED", null, Instant.EPOCH.plusSeconds(1800));
+        journal.sessionEvent(run, "agent-1", null, session, "RELEASE_RELEASED",
+                Instant.EPOCH.plusSeconds(60), "MARKET_GOALS_COMPLETE", null, null);
+        assertEquals(2, scalar(connection, "SELECT COUNT(*) FROM economy_session_event WHERE run_id='"
+                + run + "' AND session_id='" + session + "'"));
+    }
+
     private static void verifyStallOfferStore(HikariDataSource dataSource, Connection connection,
                                               UUID run) throws Exception {
         UUID lowerId = UUID.randomUUID();
@@ -231,6 +250,40 @@ class EconomyPostgresSchemaIntegrationTest {
                 + lowerId + "' AND status='OUTBID'"));
         assertEquals(1, scalar(connection, "SELECT COUNT(*) FROM private_trade_arrangement WHERE arrangement_id='"
                 + arrangementId + "' AND status='PENDING_MEETUP' AND agreed_mesos=300000"));
+        assertEquals(arrangement, store.pendingArrangementForBuyer(run, "agent-3",
+                Instant.EPOCH.plusSeconds(41)).orElseThrow());
+        store.resolveArrangement(arrangementId,
+                server.agents.economy.market.PrivateTradeArrangement.Status.EXECUTED,
+                Instant.EPOCH.plusSeconds(42), "tx-arrangement", "EXACT_TRADE_SETTLED");
+        assertEquals(1, scalar(connection, "SELECT COUNT(*) FROM private_trade_arrangement WHERE arrangement_id='"
+                + arrangementId + "' AND status='EXECUTED' AND settlement_transaction_id='tx-arrangement' "
+                + "AND resolution_reason='EXACT_TRADE_SETTLED'"));
+    }
+
+    private static void verifyStructuredCommunication(HikariDataSource dataSource, Connection connection,
+                                                       UUID run) throws Exception {
+        var communication = new JdbcEconomyCommunicationPort(run, dataSource);
+        Instant at = Instant.EPOCH.plusSeconds(70);
+        var publicInterest = communication.publish("agent-1", null,
+                server.agents.economy.communication.EconomicIntent.Kind.BUY_INTEREST,
+                1302013, "", 1, 0, null, "buying a clean Korean Fan",
+                Map.of("build", "dexless"), at, java.time.Duration.ofMinutes(10));
+        var directedOffer = communication.publish("agent-2", "agent-1",
+                server.agents.economy.communication.EconomicIntent.Kind.MESO_OFFER,
+                1302013, "exact-kfan", 1, 250_000, 910000001,
+                "250k for your fan?", Map.of(), at.plusSeconds(1), java.time.Duration.ofMinutes(10));
+
+        var visible = communication.discover("agent-1", 1302013, at.plusSeconds(2), 10);
+        assertEquals(java.util.List.of(directedOffer), visible);
+        assertEquals(1, communication.discover("agent-3", 1302013, at.plusSeconds(2), 10).size());
+        assertEquals(true, communication.resolve("agent-1", directedOffer.intentId(),
+                server.agents.economy.communication.EconomicIntent.Status.ACCEPTED,
+                at.plusSeconds(3), "TERMS_ACCEPTED_PENDING_PHYSICAL_SETTLEMENT"));
+        assertEquals(1, scalar(connection, "SELECT COUNT(*) FROM economic_intent WHERE intent_id='"
+                + directedOffer.intentId() + "' AND status='ACCEPTED' AND preferred_map_id=910000001"));
+        assertEquals(1, scalar(connection, "SELECT COUNT(*) FROM economic_intent WHERE intent_id='"
+                + publicInterest.intentId() + "' AND preferred_map_id IS NULL "
+                + "AND attributes->>'build'='dexless'"));
     }
 
     private static void verifyAgentValuationKnowledge(HikariDataSource dataSource, Connection connection,
@@ -374,7 +427,8 @@ class EconomyPostgresSchemaIntegrationTest {
     }
 
     private static void deleteRun(Connection connection, UUID run) throws SQLException {
-        for (String table : java.util.List.of("private_trade_arrangement", "stall_offer",
+        for (String table : java.util.List.of("economy_session_event", "economic_intent",
+                "private_trade_arrangement", "stall_offer",
                 "item_valuation_query", "market_observation")) {
             try (PreparedStatement statement = connection.prepareStatement(
                     "DELETE FROM " + table + " WHERE run_id = ?")) {

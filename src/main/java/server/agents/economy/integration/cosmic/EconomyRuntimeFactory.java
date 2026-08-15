@@ -2,11 +2,13 @@ package server.agents.economy.integration.cosmic;
 
 import client.Character;
 import server.agents.economy.activity.VictoriaActivityMapCatalog;
+import server.agents.economy.activity.RuleExactFarmResolver;
 import server.agents.economy.ambient.ConstrainedAmbientBehaviorPolicy;
 import server.agents.economy.catalog.*;
 import server.agents.economy.persistence.*;
 import server.agents.economy.scenario.*;
 import server.agents.integration.AgentShopGatewayRuntime;
+import server.agents.simulation.activity.CosmicExternalAgentActivityAdapter;
 
 import javax.sql.DataSource;
 import java.nio.file.Path;
@@ -50,7 +52,10 @@ public final class EconomyRuntimeFactory {
         CosmicAgentEconomyFacade economyFacade = new CosmicAgentEconomyFacade(participants,
                 new server.agents.economy.ownership.DefaultAgentEconomyFacade(runId,
                         new server.agents.economy.ownership.ShadowEconomyEvaluator(catalog),
-                        new JdbcEconomyOwnershipJournal(economyDataSource)), valuations);
+                        new JdbcEconomyOwnershipJournal(economyDataSource)), valuations,
+                config.session.implicitEconomicIntentsEnabled
+                        ? new JdbcEconomyCommunicationPort(runId, economyDataSource)
+                        : server.agents.economy.communication.EconomyCommunicationPort.disabled());
         RemoteNpcCommerceService npc = new RemoteNpcCommerceService(catalog, AgentShopGatewayRuntime.shop());
         CosmicAgentNeedReader needReader = new CosmicAgentNeedReader(config.demand, catalog);
         AgentFreeMarketBuyerService buyer = new AgentFreeMarketBuyerService(
@@ -89,23 +94,34 @@ public final class EconomyRuntimeFactory {
                 evidenceJournal, sellerPlans, seller, economyFacade,
                 new CosmicNpcResourceProcurement(needReader, npc),
                 config.ambient.enabled ? ambient : AutonomousFreeMarketBehavior.AmbientBehavior.disabled(),
-                negotiation, new CosmicScrollProjectService(runId, marketRandom),
-                new CosmicStallOfferReviewService(runId, stallOffers,
+                config.market.publicOffersEnabled ? negotiation
+                        : AutonomousFreeMarketBehavior.NegotiationBehavior.disabled(),
+                config.scrolling.enabled ? new CosmicScrollProjectService(runId, marketRandom)
+                        : AutonomousFreeMarketBehavior.ScrollBehavior.disabled(),
+                config.market.publicOffersEnabled ? new CosmicStallOfferReviewService(runId, stallOffers,
                         duration(config.market.stallOfferReviewDelay),
-                        duration(config.market.stallOfferArrangementTimeout)),
-                new CosmicQuestLifecycleService(runId, config.quests, marketRandom, catalog, npcLocations),
+                        duration(config.market.stallOfferArrangementTimeout))
+                        : AutonomousFreeMarketBehavior.OfferReviewBehavior.disabled(),
+                config.quests.enabled
+                        ? new CosmicQuestLifecycleService(runId, config.quests, marketRandom, catalog, npcLocations)
+                        : AutonomousFreeMarketBehavior.QuestBehavior.disabled(),
+                config.market.publicOffersEnabled
+                        ? new CosmicPrivateTradeArrangementService(runId, stallOffers, participants,
+                        physical, seller, tradeExecutor)
+                        : AutonomousFreeMarketBehavior.ArrangementBehavior.disabled(),
                 config.world.firstFreeMarketRoomMapId, config.world.lastFreeMarketRoomMapId,
+                config.session,
                 duration(config.market.actionPoll), duration(config.market.postTripDelay),
                 duration(config.market.maximumListingDuration), duration(config.npcCommerce.logicalServiceDelay));
         CalibratedCosmicActivityPlanner activity = new CalibratedCosmicActivityPlanner(config.activity,
                 new JdbcActivityCalibrationRepository(economyDataSource),
                 new VictoriaActivityMapCatalog(config.activity.mapCatalogResource), catalog);
+        ConfiguredEconomyTaxPolicy taxPolicy = new ConfiguredEconomyTaxPolicy(config.tax);
         CosmicEconomyWorldAdapter world = new CosmicEconomyWorldAdapter(runId, config.world.channelId,
-                loaded.sha256(), bundle.version(), participants, market, activity,
-                new CosmicOffscreenPresence(), new CosmicFarmSettlementService(),
-                new ConfiguredEconomyTaxPolicy(config.tax),
+                loaded.sha256(), bundle.version(), participants, market, taxPolicy,
                 new JdbcEconomyParticipantBindingStore(economyDataSource),
-                new JdbcEconomyBootstrapStore(economyDataSource), participants::admitted);
+                new JdbcEconomyBootstrapStore(economyDataSource), participants::admitted,
+                participants::released);
 
         JdbcSimulationRunRepository runRepository = new JdbcSimulationRunRepository(economyDataSource);
         JdbcEconomyParticipantBindingStore bindingStore =
@@ -143,10 +159,25 @@ public final class EconomyRuntimeFactory {
                 throw failure;
             }
         }
+        CosmicOffscreenPresence offscreenPresence = new CosmicOffscreenPresence();
+        CosmicFarmSettlementService farmSettlement = new CosmicFarmSettlementService();
+        CosmicExternalAgentActivityAdapter externalActivity = new CosmicExternalAgentActivityAdapter(
+                runId, loaded.sha256(), bundle.version(), participants, activity::plan,
+                new RuleExactFarmResolver(catalog), new CosmicExternalAgentActivityAdapter.Presence() {
+                    @Override public void leave(Character agent, java.time.Instant at) {
+                        offscreenPresence.leaveVisibleFreeMarket(agent, at);
+                    }
+                    @Override public void enterEconomyEntrance(Character agent, java.time.Instant at) {
+                        offscreenPresence.enterFreeMarketEntrance(agent, at);
+                    }
+                    @Override public void restoreDetached(Character agent) {
+                        offscreenPresence.restoreDetached(agent);
+                    }
+                }, farmSettlement::settle, taxPolicy::at);
         EconomyRunApplication application = checkpoint == null
-                ? EconomyRunApplication.start(runId, loaded, bundle, catalog, world,
+                ? EconomyRunApplication.start(runId, loaded, bundle, catalog, world, externalActivity,
                         new JdbcEconomyLifecycleJournal(economyDataSource))
-                : EconomyRunApplication.restore(checkpoint, loaded, bundle, catalog, world,
+                : EconomyRunApplication.restore(checkpoint, loaded, bundle, catalog, world, externalActivity,
                         new JdbcEconomyLifecycleJournal(economyDataSource));
         if (resume) runRepository.updateLogicalTime(runId, checkpoint.logicalTime(), "RUNNING");
         EconomyOutboxRelay relay = new EconomyOutboxRelay(new JdbcCosmicOutboxSource(cosmicDataSource),
@@ -163,6 +194,37 @@ public final class EconomyRuntimeFactory {
             var permit = economyFacade.claimNpcSale(agent, type, slot, itemId, quantity, venue, at);
             return new server.agents.integration.AgentEconomicActionGuardRuntime.Decision(
                     permit.allowed(), permit.reason());
+        });
+        server.agents.integration.AgentEconomyRuntime.install(new server.agents.integration.AgentEconomyRuntime.Gateway() {
+            @Override public boolean available() { return true; }
+            @Override public server.agents.economy.market.AgentItemValuationService.Valuation valueItem(
+                    String agentId, int itemId, java.time.Instant at) {
+                return economyFacade.valueItem(agentId, itemId, at);
+            }
+            @Override public server.agents.economy.communication.EconomicIntent publishIntent(
+                    String actor, String counterparty,
+                    server.agents.economy.communication.EconomicIntent.Kind kind, int itemId,
+                    String fingerprint, int quantity, long mesos, Integer mapId, String text,
+                    java.util.Map<String, Object> attributes, java.time.Instant at,
+                    java.time.Duration lifetime) {
+                return economyFacade.publishIntent(actor, counterparty, kind, itemId, fingerprint,
+                        quantity, mesos, mapId, text, attributes, at, lifetime);
+            }
+            @Override public java.util.List<server.agents.economy.communication.EconomicIntent> discoverIntents(
+                    String agentId, int itemId, java.time.Instant at, int limit) {
+                return economyFacade.discoverIntents(agentId, itemId, at, limit);
+            }
+            @Override public boolean resolveIntent(String agentId, java.util.UUID intentId,
+                    server.agents.economy.communication.EconomicIntent.Status status,
+                    java.time.Instant at, String reason) {
+                return economyFacade.resolveIntent(agentId, intentId, status, at, reason);
+            }
+            @Override public server.agents.economy.ownership.InventoryReview reviewInventory(
+                    client.Character agent, String agentId,
+                    java.util.List<server.agents.economy.ownership.LegacyDispositionProposal> proposals,
+                    java.time.Instant at) {
+                return economyFacade.reviewInventory(agent, agentId, proposals, at);
+            }
         });
         return managed;
     }

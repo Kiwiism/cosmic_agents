@@ -2,6 +2,7 @@ package server.agents.economy.scenario;
 
 import server.agents.economy.activity.FarmSessionOutcome;
 import server.agents.economy.activity.FarmSessionPlan;
+import server.agents.economy.session.EconomySessionPort;
 
 import java.time.Instant;
 import java.util.Map;
@@ -9,7 +10,12 @@ import java.util.Optional;
 import java.util.function.LongSupplier;
 
 /** Replaceable live/headless boundary. Implementations must use real Cosmic rules and holdings. */
-public interface EconomyWorldPort {
+/**
+ * @deprecated Composite scenario adapter retained only for fast-forward compatibility. Live
+ * autonomous callers should use {@link EconomySessionPort}; external activity owns its own port.
+ */
+@Deprecated
+public interface EconomyWorldPort extends EconomySessionPort {
     void admit(EconomyAgentProfile profile, Instant logicalAt);
 
     MarketDirective performMarketCycle(EconomyAgentProfile profile, Instant logicalAt);
@@ -22,6 +28,32 @@ public interface EconomyWorldPort {
                                                Instant logicalAt, LongSupplier deterministicGameplayRandom);
 
     void returnThroughFreeMarketEntrance(EconomyAgentProfile profile, Instant logicalAt);
+
+    @Override
+    default EntryResult requestEntry(EconomyAgentProfile profile, EntryRequest request, Instant logicalAt) {
+        admit(profile, logicalAt);
+        java.util.UUID sessionId = java.util.UUID.nameUUIDFromBytes((profile.agentId() + ':'
+                + request.requestId()).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        return EntryResult.accepted(sessionId, logicalAt.plus(request.maximumDuration()),
+                "LEGACY_SCENARIO_ADAPTER");
+    }
+
+    @Override
+    default Directive performMarketCycle(java.util.UUID sessionId, EconomyAgentProfile profile,
+                                         Instant logicalAt) {
+        MarketDirective value = performMarketCycle(profile, logicalAt);
+        if (value.startActivityAt().isPresent())
+            return Directive.release(value.startActivityAt().orElseThrow(), "MARKET_GOALS_COMPLETE");
+        return value.revisitMarketAt().map(at -> Directive.revisit(at,
+                        value.externalActionPending(), "ECONOMIC_WORK_REMAINS"))
+                .orElseGet(() -> Directive.waiting("LEGACY_IDLE"));
+    }
+
+    @Override
+    default ReleaseResult release(java.util.UUID sessionId, EconomyAgentProfile profile,
+                                  Instant logicalAt, String reason) {
+        return ReleaseResult.released(reason);
+    }
 
     /** Serializable adapter-owned state that must advance atomically with the logical checkpoint. */
     default Map<String, Object> snapshotState() { return Map.of(); }

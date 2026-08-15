@@ -70,6 +70,8 @@ public final class PhysicalMarketTrip {
     public boolean complete() { return roomIndex >= rooms.size(); }
     public List<Integer> rooms() { return rooms; }
     public int roomIndex() { return roomIndex; }
+    /** Ends this itinerary without fabricating observations; the next tick reports COMPLETE. */
+    public void stop() { roomIndex = rooms.size(); approachingObjectId = null; }
 
     private static String key(FreeMarketPhysicalGateway.StallTarget target) {
         return target.roomMapId() + ":" + target.objectId();

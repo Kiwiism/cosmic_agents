@@ -10,6 +10,7 @@ import server.Trade;
 import server.agents.economy.social.TradeExecutionGateway;
 import server.agents.economy.social.TradeOffer;
 import server.economy.EconomyOperationContext;
+import server.economy.EconomyItemEvidence;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +34,48 @@ public final class CosmicNegotiatedTradeExecutor implements TradeExecutionGatewa
                           String secondAgentId, TradeOffer secondOffer) {
         return EconomyOperationContext.withParticipantFlags(true, true,
                 () -> executeAttributed(idempotencyKey, firstAgentId, firstOffer, secondAgentId, secondOffer));
+    }
+
+    /** Executes an arrangement against the exact fingerprint that was accepted from the stall. */
+    public Result executeExactItem(String idempotencyKey, String buyerAgentId, long buyerMesos,
+                                   String sellerAgentId, int itemId, String fingerprint,
+                                   int quantity) {
+        if (buyerMesos <= 0 || itemId <= 0 || fingerprint == null || fingerprint.isBlank()
+                || quantity <= 0) throw new IllegalArgumentException("invalid exact trade agreement");
+        return EconomyOperationContext.withParticipantFlags(true, true, () -> {
+            Character buyer = characters.apply(buyerAgentId);
+            Character seller = characters.apply(sellerAgentId);
+            if (!canInteract(buyer, seller))
+                return new Result(false, "", "counterparties are not physically nearby");
+            if (buyer.getTrade() != null || seller.getTrade() != null)
+                return new Result(false, "", "counterparty is already trading");
+            try {
+                Trade.startTrade(buyer, idempotencyKey);
+                Trade.inviteTrade(buyer, seller);
+                Trade.visitTrade(seller, buyer);
+                if (buyer.getTrade() == null || seller.getTrade() == null
+                        || !buyer.getTrade().isFullTrade() || !seller.getTrade().isFullTrade()) {
+                    cancel(buyer);
+                    return new Result(false, "", "Cosmic trade invitation was rejected");
+                }
+                if (!placeOffer(buyer, new TradeOffer(buyerMesos, Map.of()))
+                        || !placeExactItem(seller, itemId, fingerprint, quantity)) {
+                    cancel(buyer);
+                    return new Result(false, "", "exact offered holding changed before settlement");
+                }
+                buyer.getTrade().chat("Exact offer placed for agreement " + idempotencyKey);
+                seller.getTrade().chat("Exact offer accepted for agreement " + idempotencyKey);
+                Trade.completeTrade(buyer); Trade.completeTrade(seller);
+                boolean success = buyer.getTrade() == null && seller.getTrade() == null;
+                return new Result(success, idempotencyKey,
+                        success ? "Cosmic exact-item PLAYER_TRADE committed"
+                                : "Cosmic exact-item trade did not settle");
+            } catch (RuntimeException failure) {
+                cancel(buyer);
+                return new Result(false, idempotencyKey, failure.getMessage() == null
+                        ? failure.getClass().getSimpleName() : failure.getMessage());
+            }
+        });
     }
 
     private Result executeAttributed(String idempotencyKey, String firstAgentId, TradeOffer firstOffer,
@@ -110,6 +153,19 @@ public final class CosmicNegotiatedTradeExecutor implements TradeExecutionGatewa
             if (remaining != 0) return null;
         }
         return selections;
+    }
+
+    private static boolean placeExactItem(Character seller, int itemId, String fingerprint, int quantity) {
+        InventoryType type = ItemConstants.getInventoryType(itemId);
+        Item exact = seller.getInventory(type).listById(itemId).stream()
+                .filter(item -> EconomyItemEvidence.describe(item).fingerprint().equals(fingerprint))
+                .filter(item -> item.getQuantity() >= quantity).findFirst().orElse(null);
+        if (exact == null || quantity > Short.MAX_VALUE) return false;
+        Item tradeItem = exact.copy(); tradeItem.setQuantity((short) quantity); tradeItem.setPosition((byte) 1);
+        if (!seller.getTrade().addItem(tradeItem)) return false;
+        InventoryManipulator.removeFromSlot(seller.getClient(), type, exact.getPosition(),
+                (short) quantity, true);
+        return true;
     }
 
     private static void cancel(Character character) {

@@ -10,6 +10,7 @@ public final class EconomyEngineConfig {
     public Clock clock;
     public Catalog catalog;
     public World world;
+    public Session session;
     public Population population;
     public Bootstrap bootstrap;
     public NpcCommerce npcCommerce;
@@ -56,6 +57,16 @@ public final class EconomyEngineConfig {
         public int lastFreeMarketRoomMapId;
         public List<String> activityRegions;
         public boolean allowPhysicalActivityOutsideFreeMarket;
+    }
+
+    /** Bounded ownership policy for a single economy visit. */
+    public static final class Session {
+        public String defaultMaximumDuration;
+        public String maximumIdleDuration;
+        public boolean exitWhenPrimaryGoalsComplete;
+        public int maximumConsecutiveUnproductiveStalls;
+        public boolean knowledgeOnlyBrowsingEnabled;
+        public boolean implicitEconomicIntentsEnabled;
     }
 
     public static final class Population {
@@ -153,6 +164,7 @@ public final class EconomyEngineConfig {
         public boolean useCosmicTransactions;
         public boolean rejectSelfTrade;
         public boolean detectCircularTrade;
+        public boolean publicOffersEnabled;
     }
 
     public static final class Tax {

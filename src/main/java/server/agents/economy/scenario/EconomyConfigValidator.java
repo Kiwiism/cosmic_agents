@@ -59,6 +59,8 @@ public final class EconomyConfigValidator {
         require(!config.world.allowPhysicalActivityOutsideFreeMarket,
                 "Visible economy activity must remain inside the Free Market");
 
+        validateSession(config.session);
+
         validatePopulation(config.population);
         validateBootstrap(config.bootstrap);
         requireEnum(config.npcCommerce.accessMode, NPC_ACCESS_MODES, "npcCommerce.accessMode");
@@ -111,12 +113,13 @@ public final class EconomyConfigValidator {
         validateSeasonal(config.seasonalRules);
         validateAmbient(config.ambient);
         validateDemand(config.demand);
-        require(config.quests.enabled && config.quests.demandRequiresAcceptedQuest
-                        && config.quests.demandRequiresRemainingObjective
-                        && config.quests.allowRemoteQuestNpcFromFreeMarket
+        require(config.quests.demandRequiresAcceptedQuest
+                        && config.quests.demandRequiresRemainingObjective,
+                "quest demand must remain tied to accepted, unfinished live objectives");
+        if (config.quests.enabled) require(config.quests.allowRemoteQuestNpcFromFreeMarket
                         && config.quests.allowTradeAcquisition
                         && config.quests.allowNpcAcquisitionOnlyWhenGameSupportsIt,
-                "quest demand must remain tied to accepted, unfinished live objectives");
+                "enabled quest lifecycle must preserve real acquisition rules");
         require(config.quests.maximumConcurrentActive > 0,
                 "quests.maximumConcurrentActive must be positive");
         require(config.quests.acceptanceProbabilityPerMarketCycle >= 0
@@ -127,13 +130,15 @@ public final class EconomyConfigValidator {
         requireText(config.quests.selectionDisposition, "quests.selectionDisposition");
         require("WEARABLE_THEN_NPC_VALUE".equals(config.quests.rewardSelectionPolicy),
                 "quests.rewardSelectionPolicy must preserve the implemented exact utility policy");
-        require(config.chairs.enabled && config.chairs.requireOwnedChair
-                        && config.chairs.allowListing && config.chairs.allowDirectTrade,
-                "chair activity and trade must preserve real ownership and configured market access");
-        require(config.scrolling.enabled && config.scrolling.requireOwnedEquipment
+        if (config.chairs.enabled) require(config.chairs.requireOwnedChair
+                        && config.chairs.allowListing,
+                "enabled chair activity must preserve real ownership and market listing access");
+        require(config.scrolling.preserveRealSuccessAndDestructionRates,
+                "scroll projects must preserve real Cosmic outcome rates even while disabled");
+        if (config.scrolling.enabled) require(config.scrolling.requireOwnedEquipment
                         && config.scrolling.requireRemainingSlots
                         && config.scrolling.preserveRealSuccessAndDestructionRates,
-                "scroll projects must use owned equipment, real slots, and Cosmic outcome rates");
+                "enabled scroll projects must use owned equipment, real slots, and Cosmic outcome rates");
         require("POSTGRESQL".equals(config.persistence.provider),
                 "persistence.provider must be POSTGRESQL");
         requireText(config.persistence.database, "persistence.database");
@@ -157,15 +162,30 @@ public final class EconomyConfigValidator {
 
     private static void requireSections(EconomyEngineConfig config) {
         require(config.scenario != null && config.clock != null && config.catalog != null
-                        && config.world != null
+                        && config.world != null && config.session != null
                         && config.population != null && config.npcCommerce != null && config.demand != null
                         && config.bootstrap != null
-                        && config.activity != null && config.market != null && config.tax != null
+                        && config.activity != null && config.market != null && config.valuation != null
+                        && config.tax != null
                         && config.seasonalRules != null && config.quests != null
                         && config.scrolling != null && config.chairs != null
                         && config.ambient != null && config.persistence != null
                         && config.humanReadiness != null,
                 "Every top-level economy configuration section is required");
+    }
+
+    private static void validateSession(EconomyEngineConfig.Session session) {
+        Duration maximum = parsePositiveDuration(session.defaultMaximumDuration,
+                "session.defaultMaximumDuration");
+        Duration idle = parseDuration(session.maximumIdleDuration, "session.maximumIdleDuration");
+        require(idle.compareTo(maximum) <= 0,
+                "session.maximumIdleDuration cannot exceed the session maximum");
+        require(session.maximumConsecutiveUnproductiveStalls > 0,
+                "session.maximumConsecutiveUnproductiveStalls must be positive");
+        require(session.exitWhenPrimaryGoalsComplete,
+                "the basic session must permit early exit when primary goals complete");
+        require(session.implicitEconomicIntentsEnabled,
+                "structured implicit economic intents are part of the stable boundary");
     }
 
     private static void validateDemand(EconomyEngineConfig.Demand demand) {
@@ -296,6 +316,8 @@ public final class EconomyConfigValidator {
         require(market.rejectSelfTrade, "Self trading must be rejected");
         require(!market.detectCircularTrade,
                 "detectCircularTrade must remain false until durable multi-transaction cycle detection ships");
+        require(!market.barterEnabled || market.publicOffersEnabled,
+                "barter requires structured public offers");
     }
 
     private static void validateTax(EconomyEngineConfig.Tax tax) {

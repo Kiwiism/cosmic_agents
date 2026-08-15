@@ -109,6 +109,7 @@ class EconomyConfigLoaderTest {
     @Test
     void rejectsRepricingWithoutARealObservationWindow() {
         String source = javaResource("economy-engine.yaml")
+                .replace("maximumReprices: 0", "maximumReprices: 1")
                 .replace("minimumRepriceInterval: PT30M", "minimumRepriceInterval: PT0S");
 
         EconomyConfigException failure = assertThrows(

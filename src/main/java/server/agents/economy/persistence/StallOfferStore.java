@@ -26,6 +26,10 @@ public interface StallOfferStore {
         resolve(offer.offerId(), StallOffer.Status.ACCEPTED_AWAITING_SETTLEMENT,
                 response, respondedAt, null);
     }
+    default Optional<PrivateTradeArrangement> pendingArrangementForBuyer(
+            UUID runId, String buyerAgentId, Instant asOf) { return Optional.empty(); }
+    default void resolveArrangement(UUID arrangementId, PrivateTradeArrangement.Status status,
+                                    Instant resolvedAt, String transactionId, String reason) { }
 
     static StallOfferStore noop() {
         return new StallOfferStore() {

@@ -63,6 +63,51 @@ public final class JdbcStallOfferStore implements StallOfferStore {
     }
 
     @Override
+    public Optional<PrivateTradeArrangement> pendingArrangementForBuyer(
+            UUID runId, String buyerAgentId, Instant asOf) {
+        String sql = "SELECT arrangement_id,offer_id,buyer_id,seller_id,stall_id,listing_id,"
+                + "room_map_id,item_id,item_fingerprint,quantity,agreed_mesos,created_at,expires_at,status "
+                + "FROM private_trade_arrangement WHERE run_id=? AND buyer_id=? "
+                + "AND status='PENDING_MEETUP' AND created_at<=? ORDER BY created_at,arrangement_id LIMIT 1";
+        try (var connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setObject(1, runId); statement.setString(2, buyerAgentId);
+            statement.setTimestamp(3, Timestamp.from(asOf));
+            try (ResultSet rows = statement.executeQuery()) {
+                if (!rows.next()) return Optional.empty();
+                return Optional.of(new PrivateTradeArrangement(rows.getObject("arrangement_id", UUID.class),
+                        runId, rows.getObject("offer_id", UUID.class), rows.getString("buyer_id"),
+                        rows.getString("seller_id"), rows.getString("stall_id"),
+                        rows.getString("listing_id"), rows.getInt("room_map_id"), rows.getInt("item_id"),
+                        rows.getString("item_fingerprint"), rows.getInt("quantity"),
+                        rows.getLong("agreed_mesos"), rows.getTimestamp("created_at").toInstant(),
+                        rows.getTimestamp("expires_at").toInstant(),
+                        PrivateTradeArrangement.Status.valueOf(rows.getString("status"))));
+            }
+        } catch (SQLException failure) {
+            throw new EconomyPersistenceException("Could not read pending private arrangement", failure);
+        }
+    }
+
+    @Override
+    public void resolveArrangement(UUID arrangementId, PrivateTradeArrangement.Status status,
+                                   Instant resolvedAt, String transactionId, String reason) {
+        if (status == PrivateTradeArrangement.Status.PENDING_MEETUP)
+            throw new IllegalArgumentException("resolved arrangement cannot remain pending");
+        String sql = "UPDATE private_trade_arrangement SET status=?,settled_at=?,"
+                + "settlement_transaction_id=?,resolution_reason=? WHERE arrangement_id=? "
+                + "AND status='PENDING_MEETUP'";
+        try (var connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, status.name()); statement.setTimestamp(2, Timestamp.from(resolvedAt));
+            statement.setString(3, transactionId); statement.setString(4, reason);
+            statement.setObject(5, arrangementId); statement.executeUpdate();
+        } catch (SQLException failure) {
+            throw new EconomyPersistenceException("Could not resolve private arrangement", failure);
+        }
+    }
+
+    @Override
     public List<StallOffer> pendingForSeller(UUID runId, String sellerAgentId, Instant asOf, int limit) {
         if (limit <= 0) throw new IllegalArgumentException("offer query limit must be positive");
         String sql = "SELECT offer_id,buyer_id,seller_id,stall_id,listing_id,room_map_id,item_id,"

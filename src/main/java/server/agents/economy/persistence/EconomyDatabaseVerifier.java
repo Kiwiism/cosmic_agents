@@ -35,6 +35,9 @@ public final class EconomyDatabaseVerifier {
                 new Column("economic_action_guard_event", "allowed"),
                 new Column("stall_offer", "offered_mesos"),
                 new Column("private_trade_arrangement", "agreed_mesos"),
+                new Column("private_trade_arrangement", "resolution_reason"),
+                new Column("economic_intent", "attributes"),
+                new Column("economy_session_event", "event_kind"),
                 new Column("item_valuation_query", "unit_value_mesos"));
         try (Connection connection = dataSource.getConnection()) {
             if (!"PostgreSQL".equalsIgnoreCase(connection.getMetaData().getDatabaseProductName()))
@@ -46,7 +49,7 @@ public final class EconomyDatabaseVerifier {
                 try (ResultSet result = connection.getMetaData().getColumns(
                         null, "public", column.table(), column.column())) {
                     if (!result.next()) throw new IllegalStateException("economy schema is missing "
-                        + column.table() + '.' + column.column() + "; apply V001 through V018");
+                        + column.table() + '.' + column.column() + "; apply V001 through V021");
                 }
             }
             try (var statement = connection.createStatement(); var statuses = statement.executeQuery(

@@ -5,6 +5,9 @@ import server.agents.economy.activity.FarmSessionPlan;
 import server.agents.economy.activity.RuleExactFarmResolver;
 import server.agents.economy.clock.ScheduledEconomyEvent;
 import server.agents.economy.persistence.EconomyLifecycleJournal;
+import server.agents.economy.session.EconomySessionPort;
+import server.agents.simulation.activity.ExternalAgentActivityPort;
+import server.agents.simulation.activity.RuleExactExternalActivityAdapter;
 
 import java.time.Instant;
 import java.time.Duration;
@@ -22,19 +25,45 @@ public final class EconomyRunCoordinator {
     public static final String START_ACTIVITY = "START_ACTIVITY";
     public static final String COMPLETE_ACTIVITY = "COMPLETE_ACTIVITY";
     public static final String RETURN_TO_FM = "RETURN_TO_FM";
+    public static final String ENTER_ECONOMY = "ENTER_ECONOMY";
 
     private final SimulationRunEngine engine;
-    private final EconomyWorldPort world;
-    private final RuleExactFarmResolver resolver;
+    private final EconomySessionPort sessions;
+    private final ExternalAgentActivityPort activities;
     private final EconomyLifecycleJournal journal;
+    private final Duration maximumSessionDuration;
+    private final Duration maximumIdleDuration;
     private final Map<String, AgentState> agents = new LinkedHashMap<>();
 
+    public EconomyRunCoordinator(SimulationRunEngine engine, EconomySessionPort sessions,
+                                 ExternalAgentActivityPort activities,
+                                 EconomyLifecycleJournal journal) {
+        this.engine = Objects.requireNonNull(engine);
+        this.sessions = Objects.requireNonNull(sessions);
+        this.activities = Objects.requireNonNull(activities);
+        this.journal = Objects.requireNonNull(journal);
+        this.maximumSessionDuration = Duration.parse(engine.config().session.defaultMaximumDuration);
+        this.maximumIdleDuration = Duration.parse(engine.config().session.maximumIdleDuration);
+    }
+
+    /** Compatibility constructor for scenario fixtures; production composition passes separate ports. */
+    @Deprecated
     public EconomyRunCoordinator(SimulationRunEngine engine, EconomyWorldPort world,
                                  RuleExactFarmResolver resolver, EconomyLifecycleJournal journal) {
-        this.engine = Objects.requireNonNull(engine);
-        this.world = Objects.requireNonNull(world);
-        this.resolver = Objects.requireNonNull(resolver);
-        this.journal = Objects.requireNonNull(journal);
+        this(engine, world, new RuleExactExternalActivityAdapter(world::planOffscreenActivity,
+                resolver, new RuleExactExternalActivityAdapter.Lifecycle() {
+            @Override public void begin(EconomyAgentProfile profile, FarmSessionPlan plan, Instant at) {
+                world.leaveFreeMarket(profile, plan, at);
+            }
+            @Override public FarmSessionOutcome settle(EconomyAgentProfile profile,
+                                                       FarmSessionOutcome outcome, Instant at,
+                                                       java.util.function.LongSupplier random) {
+                return world.settleOffscreenActivity(profile, outcome, at, random);
+            }
+            @Override public void returnToEconomyEntrance(EconomyAgentProfile profile, Instant at) {
+                world.returnThroughFreeMarketEntrance(profile, at);
+            }
+        }), journal);
     }
 
     public void handle(ScheduledEconomyEvent event) {
@@ -44,6 +73,7 @@ public final class EconomyRunCoordinator {
             case START_ACTIVITY -> startActivity(event);
             case COMPLETE_ACTIVITY -> completeActivity(event);
             case RETURN_TO_FM -> returnToMarket(event);
+            case ENTER_ECONOMY -> enterEconomy(event);
             case SimulationRunEngine.CHECKPOINT -> { }
             default -> throw new IllegalStateException("Unknown economy event kind: " + event.kind());
         }
@@ -51,9 +81,18 @@ public final class EconomyRunCoordinator {
 
     private void admit(ScheduledEconomyEvent event) {
         EconomyAgentProfile profile = profile(event);
-        if (agents.putIfAbsent(profile.agentId(), new AgentState(profile, Status.IN_FREE_MARKET, null, null)) != null)
+        if (agents.containsKey(profile.agentId()))
             throw new IllegalStateException("agent admitted twice: " + profile.agentId());
-        world.admit(profile, event.dueAt());
+        EconomySessionPort.EntryResult entry = requestEntry(profile, event.dueAt());
+        if (entry.status() == EconomySessionPort.EntryResult.Status.DEFERRED) {
+            engine.schedule(entry.retryAt(), SimulationRunEngine.ADMIT_AGENT,
+                    event.subjectId(), event.parameters());
+            return;
+        }
+        if (entry.status() == EconomySessionPort.EntryResult.Status.REJECTED)
+            throw new IllegalStateException("economy admission rejected: " + entry.reason());
+        agents.put(profile.agentId(), new AgentState(profile, Status.IN_FREE_MARKET,
+                null, null, entry.sessionId()));
         recordPresence(profile, "ADMITTED", event.dueAt());
         journal.admitted(engine.runId(), profile, event.dueAt());
         journal.stateChanged(engine.runId(), profile.agentId(), Status.IN_FREE_MARKET, null, event.dueAt());
@@ -62,11 +101,27 @@ public final class EconomyRunCoordinator {
 
     private void market(ScheduledEconomyEvent event) {
         AgentState state = require(event.subjectId(), Status.IN_FREE_MARKET);
-        EconomyWorldPort.MarketDirective directive = world.performMarketCycle(state.profile, event.dueAt());
+        EconomySessionPort.Directive directive = sessions.performMarketCycle(
+                state.sessionId, state.profile, event.dueAt());
         recordPresence(state.profile, "MARKET_CYCLE", event.dueAt());
-        directive.startActivityAt().ifPresent(at -> engine.schedule(at, START_ACTIVITY,
-                event.subjectId(), Map.of()));
-        directive.revisitMarketAt().ifPresent(at -> engine.schedule(at, MARKET_CYCLE,
+        if (directive.releaseRequested()) {
+            EconomySessionPort.ReleaseResult release = sessions.release(state.sessionId,
+                    state.profile, event.dueAt(), directive.reason());
+            journal.sessionEvent(engine.runId(), state.profile.agentId(), null, state.sessionId,
+                    "RELEASE_" + release.status().name(), event.dueAt(), release.reason(),
+                    release.retryAt(), null);
+            if (release.status() == EconomySessionPort.ReleaseResult.Status.DEFERRED) {
+                engine.schedule(release.retryAt(), MARKET_CYCLE, event.subjectId(), Map.of());
+            } else if (release.status() == EconomySessionPort.ReleaseResult.Status.REJECTED) {
+                throw new IllegalStateException("economy release rejected: " + release.reason());
+            } else {
+                agents.put(event.subjectId(), new AgentState(state.profile, Status.IN_FREE_MARKET,
+                        null, null, null));
+                engine.schedule(directive.outsideAvailableAt().orElse(event.dueAt()), START_ACTIVITY,
+                        event.subjectId(), Map.of());
+            }
+        }
+        directive.revisitAt().ifPresent(at -> engine.schedule(at, MARKET_CYCLE,
                 event.subjectId(), Map.of()));
         if (directive.externalActionPending())
             engine.pauseAfterCurrentEvent("physical market capability pending for " + event.subjectId());
@@ -74,18 +129,19 @@ public final class EconomyRunCoordinator {
 
     private void startActivity(ScheduledEconomyEvent event) {
         AgentState state = require(event.subjectId(), Status.IN_FREE_MARKET);
-        FarmSessionPlan plan = world.planOffscreenActivity(state.profile, event.dueAt());
+        FarmSessionPlan plan = activities.plan(state.profile, event.dueAt());
         if (!plan.agentId().equals(event.subjectId()) || !plan.startedAt().equals(event.dueAt()))
             throw new IllegalStateException("activity plan is not for the scheduled agent/time");
         if ("explicit-work".equals(plan.calibrationId()))
             throw new IllegalStateException("production runs require live calibration evidence");
-        FarmSessionOutcome outcome = resolver.resolve(plan, engine.randomStreams());
-        world.leaveFreeMarket(state.profile, plan, event.dueAt());
+        FarmSessionOutcome outcome = activities.resolve(plan, engine.randomStreams());
+        activities.begin(state.profile, plan, event.dueAt());
         recordPresence(state.profile, "OFFSCREEN_ACTIVITY_STARTED", event.dueAt());
         journal.activityStarted(engine.runId(), plan);
         journal.stateChanged(engine.runId(), event.subjectId(), Status.OFFSCREEN_ACTIVITY,
                 plan.sessionId(), event.dueAt());
-        agents.put(event.subjectId(), new AgentState(state.profile, Status.OFFSCREEN_ACTIVITY, plan, outcome));
+        agents.put(event.subjectId(), new AgentState(state.profile, Status.OFFSCREEN_ACTIVITY,
+                plan, outcome, null));
         engine.schedule(outcome.completedAt(), COMPLETE_ACTIVITY,
                 event.subjectId(), Map.of("sessionId", plan.sessionId()));
     }
@@ -95,10 +151,10 @@ public final class EconomyRunCoordinator {
         if (!state.pendingActivity.sessionId().equals(event.parameters().get("sessionId")))
             throw new IllegalStateException("activity completion does not match pending session");
         FarmSessionOutcome outcome = state.pendingOutcome == null
-                ? resolver.resolve(state.pendingActivity, engine.randomStreams()) : state.pendingOutcome;
+                ? activities.resolve(state.pendingActivity, engine.randomStreams()) : state.pendingOutcome;
         if (!outcome.completedAt().equals(event.dueAt()))
             throw new IllegalStateException("activity completion event does not match resolved downtime");
-        outcome = world.settleOffscreenActivity(state.profile, outcome, event.dueAt(),
+        outcome = activities.settle(state.profile, outcome, event.dueAt(),
                 engine.randomStreams().stream("agent." + event.subjectId() + ".progression")::nextLong);
         if (!outcome.sessionId().equals(state.pendingActivity.sessionId())
                 || !outcome.completedAt().equals(event.dueAt()))
@@ -106,17 +162,40 @@ public final class EconomyRunCoordinator {
         journal.activityCompleted(engine.runId(), outcome);
         journal.stateChanged(engine.runId(), event.subjectId(), Status.RETURNING_TO_FM,
                 null, event.dueAt());
-        agents.put(event.subjectId(), new AgentState(state.profile, Status.RETURNING_TO_FM, null, null));
+        agents.put(event.subjectId(), new AgentState(state.profile, Status.RETURNING_TO_FM,
+                null, null, null));
         engine.schedule(event.dueAt(), RETURN_TO_FM, event.subjectId(), Map.of());
     }
 
     private void returnToMarket(ScheduledEconomyEvent event) {
         AgentState state = require(event.subjectId(), Status.RETURNING_TO_FM);
-        world.returnThroughFreeMarketEntrance(state.profile, event.dueAt());
+        activities.returnToEconomyEntrance(state.profile, event.dueAt());
         recordPresence(state.profile, "RETURNED_TO_FREE_MARKET", event.dueAt());
+        engine.schedule(event.dueAt(), ENTER_ECONOMY, event.subjectId(), Map.of());
+    }
+
+    private void enterEconomy(ScheduledEconomyEvent event) {
+        AgentState state = require(event.subjectId(), Status.RETURNING_TO_FM);
+        EconomySessionPort.EntryResult entry = requestEntry(state.profile, event.dueAt());
+        if (entry.status() == EconomySessionPort.EntryResult.Status.DEFERRED) {
+            engine.schedule(entry.retryAt(), ENTER_ECONOMY, event.subjectId(), Map.of());
+            return;
+        }
+        if (entry.status() == EconomySessionPort.EntryResult.Status.REJECTED)
+            throw new IllegalStateException("economy re-entry rejected: " + entry.reason());
         journal.stateChanged(engine.runId(), event.subjectId(), Status.IN_FREE_MARKET, null, event.dueAt());
-        agents.put(event.subjectId(), new AgentState(state.profile, Status.IN_FREE_MARKET, null, null));
+        agents.put(event.subjectId(), new AgentState(state.profile, Status.IN_FREE_MARKET,
+                null, null, entry.sessionId()));
         engine.schedule(event.dueAt(), MARKET_CYCLE, event.subjectId(), Map.of());
+    }
+
+    private EconomySessionPort.EntryResult requestEntry(EconomyAgentProfile profile, Instant at) {
+        EconomySessionPort.EntryRequest request = EconomySessionPort.EntryRequest.scheduled(
+                engine.runId(), profile.agentId(), at, maximumSessionDuration, maximumIdleDuration);
+        EconomySessionPort.EntryResult result = sessions.requestEntry(profile, request, at);
+        journal.sessionEvent(engine.runId(), profile.agentId(), request.requestId(), result.sessionId(),
+                "ENTRY_" + result.status().name(), at, result.reason(), result.retryAt(), result.expiresAt());
+        return result;
     }
 
     private AgentState require(String agentId, Status expected) {
@@ -127,7 +206,7 @@ public final class EconomyRunCoordinator {
     }
 
     private void recordPresence(EconomyAgentProfile profile, String reason, Instant at) {
-        world.currentPresence(profile).ifPresent(value ->
+        sessions.sessionPresence(profile).ifPresent(value ->
                 journal.presence(engine.runId(), profile.agentId(), value, reason, at));
     }
 
@@ -148,7 +227,7 @@ public final class EconomyRunCoordinator {
     public Map<String, AgentView> agentViews() {
         Map<String, AgentView> result = new LinkedHashMap<>();
         agents.forEach((id, state) -> result.put(id, new AgentView(state.profile, state.status,
-                state.pendingActivity == null ? null : state.pendingActivity.sessionId())));
+                state.pendingActivity == null ? null : state.pendingActivity.sessionId(), state.sessionId)));
         return Map.copyOf(result);
     }
 
@@ -157,25 +236,35 @@ public final class EconomyRunCoordinator {
         agents.forEach((id, state) -> agentState.put(id, Map.of(
                 "profile", profileMap(state.profile),
                 "status", state.status.name(),
+                "sessionId", state.sessionId == null ? "" : state.sessionId.toString(),
                 "pendingActivity", state.pendingActivity == null ? Map.of() : planMap(state.pendingActivity),
                 "pendingOutcome", state.pendingOutcome == null ? Map.of() : outcomeMap(state.pendingOutcome))));
-        return Map.of("schemaVersion", 2, "agents", Map.copyOf(agentState),
-                "world", world.snapshotState());
+        return Map.of("schemaVersion", 3, "agents", Map.copyOf(agentState),
+                "sessions", sessions.snapshotState(), "externalActivity", activities.snapshotState());
     }
 
     @SuppressWarnings("unchecked")
     public void restore(Map<String, Object> snapshot) {
         if (!agents.isEmpty()) throw new IllegalStateException("coordinator state is already initialized");
         Map<String, Object> agentState;
-        Map<String, Object> worldState;
+        Map<String, Object> sessionState;
+        Map<String, Object> activityState;
+        int coordinatorSchema;
         if (snapshot.containsKey("schemaVersion")) {
-            if (integer(snapshot, "schemaVersion") != 2)
+            int schemaVersion = integer(snapshot, "schemaVersion");
+            if (schemaVersion != 2 && schemaVersion != 3)
                 throw new IllegalStateException("unsupported coordinator checkpoint schema");
             agentState = (Map<String, Object>) snapshot.get("agents");
-            worldState = (Map<String, Object>) snapshot.get("world");
+            sessionState = schemaVersion == 3
+                    ? (Map<String, Object>) snapshot.get("sessions")
+                    : (Map<String, Object>) snapshot.get("world");
+            activityState = schemaVersion == 3
+                    ? (Map<String, Object>) snapshot.get("externalActivity") : Map.of();
+            coordinatorSchema = schemaVersion;
         } else {
             agentState = snapshot; // compatibility with checkpoints written before world state existed
-            worldState = Map.of();
+            sessionState = Map.of(); activityState = Map.of();
+            coordinatorSchema = 1;
         }
         agentState.forEach((id, value) -> {
             Map<String, Object> row = (Map<String, Object>) value;
@@ -190,11 +279,17 @@ public final class EconomyRunCoordinator {
                 throw new IllegalStateException("checkpoint activity state is inconsistent for " + id);
             if (status != Status.OFFSCREEN_ACTIVITY && outcome != null)
                 throw new IllegalStateException("checkpoint outcome state is inconsistent for " + id);
-            agents.put(id, new AgentState(profile, status, plan, outcome));
+            String sessionId = Objects.toString(row.get("sessionId"), "");
+            if (sessionId.isBlank() && coordinatorSchema == 2 && status == Status.IN_FREE_MARKET)
+                sessionId = java.util.UUID.nameUUIDFromBytes((engine.runId() + ":" + id
+                        + ":restored-session").getBytes(java.nio.charset.StandardCharsets.UTF_8)).toString();
+            agents.put(id, new AgentState(profile, status, plan, outcome,
+                    sessionId.isBlank() ? null : java.util.UUID.fromString(sessionId)));
         });
         Map<String, EconomyAgentProfile> profiles = new LinkedHashMap<>();
         agents.forEach((id, value) -> profiles.put(id, value.profile));
-        world.restoreState(worldState == null ? Map.of() : worldState, Map.copyOf(profiles));
+        sessions.restoreState(sessionState == null ? Map.of() : sessionState, Map.copyOf(profiles));
+        activities.restoreState(activityState == null ? Map.of() : activityState, Map.copyOf(profiles));
     }
 
     private static Map<String, Object> profileMap(EconomyAgentProfile p) {
@@ -332,7 +427,9 @@ public final class EconomyRunCoordinator {
     private static double decimal(Map<String, Object> values, String key) { return ((Number) values.get(key)).doubleValue(); }
 
     public enum Status { IN_FREE_MARKET, OFFSCREEN_ACTIVITY, RETURNING_TO_FM }
-    public record AgentView(EconomyAgentProfile profile, Status status, String pendingSessionId) { }
+    public record AgentView(EconomyAgentProfile profile, Status status, String pendingActivityId,
+                            java.util.UUID economySessionId) { }
     private record AgentState(EconomyAgentProfile profile, Status status,
-                              FarmSessionPlan pendingActivity, FarmSessionOutcome pendingOutcome) { }
+                              FarmSessionPlan pendingActivity, FarmSessionOutcome pendingOutcome,
+                              java.util.UUID sessionId) { }
 }
