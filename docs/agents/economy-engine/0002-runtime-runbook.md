@@ -32,20 +32,32 @@
    seller permit ownership, initial FM/channel presence, the separate evidence database, and matching
    current-level activity calibration coverage without starting or mutating a run. Later level bands
    remain fail-closed and must be calibrated before agents reach them.
-8. Run `!economy start`, then `!economy advance N`. Use `!economy status` to inspect logical time
-   and admitted population. One advance request remains active until its target is reached.
+8. Run `!economy start`. With the default `clock.mode: REALTIME`, logical time then advances
+   automatically at 1x wall-clock speed; no advance command is needed. Use `!economy status` to
+   inspect clock mode, logical time, and admitted population. For an analysis run configured with
+   `clock.mode: MAX_THROUGHPUT`, run `!economy advance N`; one request remains active until its
+   target is reached.
 
 `start` reruns the same audit and refuses to create a run when any blocker remains; `preflight` is
 not merely advisory.
 
-## Fast-forward semantics
+## Clock semantics
 
-`!economy advance N` advances monotonically by N logical days. Farm duration, population arrivals,
-stall duration, demand changes, and checkpoints skip through logical time. Physical portal travel,
-walking, stall opening, visiting, chat, and trades do not become fake instantaneous actions: the run
-pauses at those boundaries, lets the normal agent capability tick complete them, and automatically
-resumes toward the requested target. A second advance command is not required at every physical
-boundary. Rewinding is rejected.
+`REALTIME` is the production-equivalent mode. One elapsed wall-clock second advances the target by
+one logical second, capped by the configured scenario horizon. The runtime polls that target once
+per second. Physical walking, stalls, browsing, chat, trades, and external capability completion
+remain mandatory gates. If a physical action takes longer than expected, logical execution waits
+and catches up only after the real action finishes. Stopping the run or stopping the server pauses
+the clock: resume anchors wall time to the persisted logical checkpoint, so downtime is not counted.
+`!economy advance` is rejected in this mode.
+
+`MAX_THROUGHPUT` is the explicit experiment and fast-forward mode. It never starts advancing merely
+because wall time passes. `!economy advance N` advances monotonically by N logical days. Farm
+duration, population arrivals, stall duration, demand changes, and checkpoints skip through logical
+time. Physical portal travel, walking, stall opening, visiting, chat, and trades do not become fake
+instantaneous actions: the run pauses at those boundaries, lets the normal agent capability tick
+complete them, and automatically resumes toward the requested target. A second advance command is
+not required at every physical boundary. Rewinding is rejected.
 
 Evidence promotion is scoped to the active run. A quarantined or incomplete receipt belonging to a
 historical run remains visible for diagnosis but cannot block a new scenario.
@@ -91,9 +103,9 @@ a completed price or imputing a meso price to barter.
 
 ## Deliberate fail-closed limits
 
-- `MAX_THROUGHPUT` is the only accepted clock mode in this release. `REALTIME`, `ACCELERATED`, and
-  configuration-driven `REPLAY` are rejected until they have distinct tested runtime semantics;
-  checkpoint restore remains the supported deterministic recovery path.
+- `REALTIME` and `MAX_THROUGHPUT` have distinct runtime semantics. `ACCELERATED` and
+  configuration-driven `REPLAY` remain rejected; checkpoint restore is the supported deterministic
+  recovery path.
 - Dedicated-merchant population, durable circular-trade detection, declarative event partitioning,
   and checkpoint compression are not decorative toggles: the baseline pins them off and validation
   rejects attempts to advertise them before their implementations and recovery tests exist.

@@ -9,7 +9,8 @@ scenario:
   stopOnInvariantViolation: true
 
 clock:
-  mode: MAX_THROUGHPUT
+  # REALTIME is the production-equivalent 1x clock. Use MAX_THROUGHPUT only for analysis/soak runs.
+  mode: REALTIME
   logicalStart: 2026-01-01T00:00:00Z
   maximumEventsPerBatch: 5000
 

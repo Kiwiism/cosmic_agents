@@ -5,6 +5,7 @@ import com.zaxxer.hikari.HikariDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.TimerManager;
+import server.agents.economy.clock.RealtimeEconomyClock;
 import server.agents.economy.persistence.EconomyPostgresDataSource;
 import server.agents.economy.persistence.EconomyDatabaseVerifier;
 import server.agents.economy.persistence.JdbcActivityCalibrationRepository;
@@ -34,6 +35,7 @@ import java.util.concurrent.ScheduledFuture;
 public final class EconomySimulationRuntime {
     private static final Logger log = LoggerFactory.getLogger(EconomySimulationRuntime.class);
     private static final long AUTO_ADVANCE_POLL_MS = 500L;
+    private static final long REALTIME_POLL_MS = 1_000L;
     private static final int AUTO_ADVANCE_BATCH_ACTIONS = 64;
     private static ManagedEconomyRun run;
     private static HikariDataSource economyDatabase;
@@ -42,6 +44,8 @@ public final class EconomySimulationRuntime {
     private static Instant requestedLogicalTarget;
     private static Instant physicalBatchLogicalTime;
     private static ScheduledFuture<?> autoAdvanceTask;
+    private static RealtimeEconomyClock realtimeClock;
+    private static String clockMode;
 
     private EconomySimulationRuntime() { }
 
@@ -155,8 +159,10 @@ public final class EconomySimulationRuntime {
                     DatabaseConnection.dataSource(), database, mapped::get);
             economyDatabase = database; directory = Map.copyOf(mapped); run = started;
             controlOwner = owner;
+            activateClock(config.config().clock.mode);
             return status();
         } catch (RuntimeException failure) {
+            clearFailedStart(runId);
             AgentExclusiveControlRuntime.release(owner);
             if (database != null) database.close();
             throw failure;
@@ -195,8 +201,10 @@ public final class EconomySimulationRuntime {
                     DatabaseConnection.dataSource(), database, mapped::get);
             economyDatabase = database; directory = Map.copyOf(mapped); run = resumed;
             controlOwner = owner;
+            activateClock(config.config().clock.mode);
             return status();
         } catch (RuntimeException failure) {
+            clearFailedStart(runId);
             AgentExclusiveControlRuntime.release(controlOwner(runId));
             database.close(); throw failure;
         }
@@ -204,6 +212,8 @@ public final class EconomySimulationRuntime {
 
     public static synchronized ManagedEconomyRun.AdvanceResult advanceDays(long days) {
         requireRun();
+        if (realtimeClock != null)
+            throw new IllegalStateException("REALTIME runs advance automatically at 1x wall-clock speed");
         if (days < 0) throw new IllegalArgumentException("economy runs cannot move backward");
         Instant requested = run.application().now().plus(Duration.ofDays(days));
         if (requested.isAfter(run.application().targetAt())) requested = run.application().targetAt();
@@ -211,7 +221,7 @@ public final class EconomySimulationRuntime {
             requestedLogicalTarget = requested;
         }
         ManagedEconomyRun.AdvanceResult result = run.advanceTo(requestedLogicalTarget);
-        afterAdvance(result);
+        afterAdvance(result, requestedLogicalTarget, false);
         return result;
     }
 
@@ -236,9 +246,9 @@ public final class EconomySimulationRuntime {
     }
 
     public static synchronized Status status() {
-        if (run == null) return new Status(false, null, null, null, null, 0, 0);
+        if (run == null) return new Status(false, null, null, null, null, null, 0, 0);
         return new Status(true, run.application().runId(), run.application().now(),
-                run.application().targetAt(), run.status(),
+                run.application().targetAt(), run.status(), clockMode,
                 run.application().agents().size(), directory.size());
     }
 
@@ -248,20 +258,24 @@ public final class EconomySimulationRuntime {
             run.checkpoint("STOPPED");
         run = null; directory = Map.of();
         releaseControl();
+        clockMode = null;
         if (economyDatabase != null) economyDatabase.close();
         economyDatabase = null;
     }
 
     /**
-     * Continues a requested fast-forward without operator commands at every physical boundary.
+     * Advances the selected clock without operator commands at every physical boundary.
      * All events at one logical instant may assign independent real capabilities concurrently;
      * logical time does not proceed into the next batch until those capabilities have finished.
      */
     private static synchronized void autoAdvanceTick() {
         autoAdvanceTask = null;
-        if (run == null || requestedLogicalTarget == null) return;
+        if (run == null) return;
         try {
             Instant current = run.application().now();
+            boolean realtime = realtimeClock != null;
+            Instant target = realtime ? realtimeClock.targetAt(System.nanoTime()) : requestedLogicalTarget;
+            if (target == null) return;
             int activeCapabilities = activeEconomyCapabilities();
             if (physicalBatchLogicalTime == null) physicalBatchLogicalTime = current;
             if (activeCapabilities > 0 && !current.equals(physicalBatchLogicalTime)) {
@@ -273,10 +287,10 @@ public final class EconomySimulationRuntime {
             }
 
             for (int action = 0; action < AUTO_ADVANCE_BATCH_ACTIONS; action++) {
-                ManagedEconomyRun.AdvanceResult result = run.advanceTo(requestedLogicalTarget);
-                afterAdvance(result);
+                ManagedEconomyRun.AdvanceResult result = run.advanceTo(target);
+                afterAdvance(result, target, realtime);
                 if (!result.advance().waitingExternalAction() || run == null
-                        || requestedLogicalTarget == null) return;
+                        || (!realtime && requestedLogicalTarget == null)) return;
                 if (!result.advance().reachedAt().equals(physicalBatchLogicalTime)) break;
                 if (activeEconomyCapabilities() >= directory.size()) break;
             }
@@ -295,7 +309,8 @@ public final class EconomySimulationRuntime {
         }
     }
 
-    private static void afterAdvance(ManagedEconomyRun.AdvanceResult result) {
+    private static void afterAdvance(ManagedEconomyRun.AdvanceResult result,
+                                     Instant target, boolean realtime) {
         if (result.advance().waitingExternalAction()) {
             if (physicalBatchLogicalTime == null) {
                 physicalBatchLogicalTime = result.advance().reachedAt();
@@ -303,12 +318,18 @@ public final class EconomySimulationRuntime {
             scheduleAutoAdvance();
             return;
         }
-        if ("COMPLETED".equals(result.status())
-                || !run.application().now().isBefore(requestedLogicalTarget)) {
-            requestedLogicalTarget = null;
-            physicalBatchLogicalTime = null;
+        if ("COMPLETED".equals(result.status())) {
             cancelAutoAdvance();
-            if ("COMPLETED".equals(result.status())) releaseControl();
+            releaseControl();
+            return;
+        }
+        if (!run.application().now().isBefore(target)) {
+            physicalBatchLogicalTime = null;
+            if (realtime) scheduleAutoAdvance();
+            else {
+                requestedLogicalTarget = null;
+                cancelScheduledTask();
+            }
         }
     }
 
@@ -322,17 +343,45 @@ public final class EconomySimulationRuntime {
     }
 
     private static void scheduleAutoAdvance() {
-        if (autoAdvanceTask == null && run != null && requestedLogicalTarget != null) {
+        if (autoAdvanceTask == null && run != null
+                && (requestedLogicalTarget != null || realtimeClock != null)) {
             autoAdvanceTask = TimerManager.getInstance().schedule(
-                    EconomySimulationRuntime::autoAdvanceTick, AUTO_ADVANCE_POLL_MS);
+                    EconomySimulationRuntime::autoAdvanceTick,
+                    realtimeClock == null ? AUTO_ADVANCE_POLL_MS : REALTIME_POLL_MS);
         }
     }
 
     private static void cancelAutoAdvance() {
-        if (autoAdvanceTask != null) autoAdvanceTask.cancel(false);
-        autoAdvanceTask = null;
+        cancelScheduledTask();
         requestedLogicalTarget = null;
         physicalBatchLogicalTime = null;
+        realtimeClock = null;
+    }
+
+    private static void cancelScheduledTask() {
+        if (autoAdvanceTask != null) autoAdvanceTask.cancel(false);
+        autoAdvanceTask = null;
+    }
+
+    private static void activateClock(String mode) {
+        clockMode = mode;
+        if ("REALTIME".equals(mode)) {
+            realtimeClock = new RealtimeEconomyClock(
+                    run.application().now(), run.application().targetAt(), System.nanoTime());
+            scheduleAutoAdvance();
+        } else {
+            realtimeClock = null;
+        }
+    }
+
+    private static void clearFailedStart(UUID runId) {
+        if (run == null || !run.application().runId().equals(runId)) return;
+        cancelAutoAdvance();
+        run = null;
+        directory = Map.of();
+        economyDatabase = null;
+        controlOwner = null;
+        clockMode = null;
     }
 
     private static void requireRun() {
@@ -379,7 +428,7 @@ public final class EconomySimulationRuntime {
     }
 
     public record Status(boolean active, UUID runId, java.time.Instant logicalTime,
-                         java.time.Instant targetLogicalTime, String state,
+                         java.time.Instant targetLogicalTime, String state, String clockMode,
                          int admittedAgents, int reservedCharacters) { }
     public record Preflight(boolean ready, int liveCharacters, int requiredCharacters,
                             int mappedCharacters, int initialFmReady, int initialAgents,

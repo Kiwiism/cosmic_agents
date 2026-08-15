@@ -16,6 +16,8 @@ Status: accepted for implementation on `simulation/economy-engine`.
 ## Time
 
 - Economy runs use a monotonic logical clock and scheduled-event queue.
+- Realtime maps monotonic wall-clock elapsed time one-for-one to logical time. Stop/server downtime
+  pauses the mapping; resume anchors a new wall interval at the persisted logical checkpoint.
 - Fast-forward advances to the next meaningful event; it does not multiply wall-clock time.
 - Runs never move backward. A past checkpoint starts a new run.
 - Randomness is split into named streams so ambient changes cannot perturb loot or market draws.
@@ -41,4 +43,3 @@ Status: accepted for implementation on `simulation/economy-engine`.
 - Every item and meso delta has explicit provenance.
 - Policy never performs direct inventory mutation.
 - Agents learn from private, incomplete observations; global projections are administrative only.
-

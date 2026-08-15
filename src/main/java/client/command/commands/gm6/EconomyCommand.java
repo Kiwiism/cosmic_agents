@@ -92,6 +92,7 @@ public final class EconomyCommand extends Command {
         client.getPlayer().yellowMessage(status.active()
                 ? "Economy run=" + status.runId() + " logical=" + status.logicalTime()
                 + " target=" + status.targetLogicalTime() + " state=" + status.state()
+                + " mode=" + status.clockMode()
                 + " admitted=" + status.admittedAgents() + "/" + status.reservedCharacters()
                 : "Economy runtime is inactive.");
     }

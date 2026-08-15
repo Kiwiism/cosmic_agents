@@ -12,7 +12,7 @@ import java.util.Set;
 /** Fail-fast validation for settings whose violation would corrupt a run. */
 public final class EconomyConfigValidator {
     private static final double DISTRIBUTION_TOLERANCE = 0.000_001d;
-    private static final Set<String> CLOCK_MODES = Set.of("MAX_THROUGHPUT");
+    private static final Set<String> CLOCK_MODES = Set.of("REALTIME", "MAX_THROUGHPUT");
     private static final Set<String> NPC_ACCESS_MODES = Set.of("REMOTE_FROM_FREE_MARKET");
     private static final Set<String> NPC_ACCESS_SCOPES = Set.of("ALL_GAME");
     private static final Set<String> ACTIVITY_MODES = Set.of("RULE_EXACT");

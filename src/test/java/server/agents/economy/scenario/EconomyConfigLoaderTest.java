@@ -116,12 +116,16 @@ class EconomyConfigLoaderTest {
     }
 
     @Test
-    void rejectsClockModesThatDoNotYetHaveDistinctRuntimeSemantics() {
-        String source = javaResource("economy-engine.yaml")
-                .replace("mode: MAX_THROUGHPUT", "mode: REALTIME");
+    void acceptsRealtimeClockAndRejectsUnimplementedAcceleratedClock() {
+        String realtime = javaResource("economy-engine.yaml");
+        String maximumThroughput = realtime.replace("mode: REALTIME", "mode: MAX_THROUGHPUT");
+        String unsupported = realtime.replace("mode: REALTIME", "mode: ACCELERATED");
+
+        assertEquals("REALTIME", loader.load(realtime).config().clock.mode);
+        assertEquals("MAX_THROUGHPUT", loader.load(maximumThroughput).config().clock.mode);
 
         EconomyConfigException failure = assertThrows(
-                EconomyConfigException.class, () -> loader.load(source));
+                EconomyConfigException.class, () -> loader.load(unsupported));
 
         assertTrue(failure.getMessage().contains("clock.mode"));
     }

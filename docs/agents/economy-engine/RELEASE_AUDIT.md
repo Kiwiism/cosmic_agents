@@ -23,7 +23,8 @@ logical-scheduler test is never represented as a physical Free Market soak.
   Hired Merchant items (`503xxxx`) are rejected.
 - The selected economy, Cosmic economy-boundary, architecture, death, quest persistence, PlayerShop
   escrow, catalog, and deterministic replay suites pass.
-- Unsupported clock modes, dedicated merchants, circular-trade detection, PostgreSQL partitioning,
+- Realtime clock mapping and max-throughput scheduling have distinct automated contracts.
+  Unsupported clock modes, dedicated merchants, circular-trade detection, PostgreSQL partitioning,
   and checkpoint compression fail closed rather than accepting configuration with no runtime effect.
 
 ## Definition-of-done disposition
@@ -31,6 +32,7 @@ logical-scheduler test is never represented as a physical Free Market soak.
 | Requirement | Status | Evidence or remaining gate |
 |---|---|---|
 | YAML starts at 50 and grows by 10 to 200 | Automated | `PopulationAdmissionPlannerTest`, deterministic roster binding |
+| Continuous 1x realtime without advance commands | Live verified | Run `2b4c511a-7519-4935-bea6-659be25d978b` advanced 0s to 30s automatically, rejected manual advance, resumed at 30s after 19s stopped, and advanced to 40s from new elapsed time |
 | Forward fast-forward for 30+ days | Automated for logical work | `SimulationRunEngineTest`; physical actions intentionally pause rather than being fabricated |
 | One channel, FM entrance and rooms 1-22 | Live verified | 50 agents produced 869 presence events across entrance plus rooms 1-22 in run `808c943d-c236-466c-b2ec-46459efb0c06` |
 | Offscreen agents cannot trade or remain visible | Automated | coordinator state machine and `CosmicEconomyWorldAdapter` guards |
@@ -93,6 +95,13 @@ calibrated sessions, completed 17, and opened an attributed real PlayerShop. The
 and preserved a permit-escrow materialization defect; the patched ingestor reprocessed that exact
 receipt into one stall and two listings with zero quarantine and zero invariant violations. See the
 run-specific live validation report and dashboard export.
+
+Realtime run `2b4c511a-7519-4935-bea6-659be25d978b` then proved the production clock on the packaged
+server. It progressed without an advance command, admitted the initial 50 agents, and generated 377
+physical FM presence events while agents moved through rooms. `!economy advance 1` was rejected.
+Stopping at logical 30 seconds, waiting about 19 wall seconds, and resuming restarted at exactly 30
+seconds; ten new wall seconds reached logical 40 seconds. The stopped run retains 200 bindings, 50
+arrivals, 71 economic events, zero ingestion failures, and zero invariant violations.
 
 ## Remaining release blockers
 
