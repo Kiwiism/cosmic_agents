@@ -22,6 +22,7 @@ database-console/*.log
 /.settings
 /out
 *.onetoc2
+hs_err_pid*.log
 
 # Eclipse m2e generated files
 # Eclipse Core
