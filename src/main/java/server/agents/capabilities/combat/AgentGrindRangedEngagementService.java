@@ -81,7 +81,9 @@ public final class AgentGrindRangedEngagementService {
 
     @FunctionalInterface
     public interface AttackExecutor {
-        void attack(AgentRuntimeEntry entry, Character agent, AgentAttackPlan attackPlan);
+        AgentAttackTransactionResult attack(AgentRuntimeEntry entry,
+                                            Character agent,
+                                            AgentAttackPlan attackPlan);
     }
 
     @FunctionalInterface
@@ -147,13 +149,18 @@ public final class AgentGrindRangedEngagementService {
                 weaponType, agentPosition, targetPosition);
         boolean degenAttackDone = AgentDegenerateAttackStateRuntime.degenAttackDone(entry);
         AgentAttackRoute attackRoute = attackPlan != null ? attackPlan.route : AgentAttackRoute.CLOSE;
-        boolean allowOneDegenerateAttack = targetInDegenerateBand && !degenAttackDone && rangedPriorityTarget == null;
-        boolean shouldRetreatForRangedSpacing = degenAttackDone
-                || (hooks.retreatPolicy().shouldRetreat(weaponType, attackRoute, agentPosition, targetPosition)
-                && !allowOneDegenerateAttack);
         boolean canFireWithoutDegen = weaponType == null
                 || !hooks.degenerateAttackPolicy().shouldDegenerate(weaponType, agentPosition, targetPosition);
-        boolean attackGateOpen = !shouldRetreatForRangedSpacing || canFireWithoutDegen || allowOneDegenerateAttack;
+        AgentRangedEngagementPolicy.Decision spacingDecision = AgentRangedEngagementPolicy.decide(
+                new AgentRangedEngagementPolicy.Input(
+                        targetInDegenerateBand,
+                        degenAttackDone,
+                        rangedPriorityTarget != null,
+                        hooks.retreatPolicy().shouldRetreat(
+                                weaponType, attackRoute, agentPosition, targetPosition),
+                        canFireWithoutDegen));
+        boolean shouldRetreatForRangedSpacing = spacingDecision.retreat();
+        boolean attackGateOpen = spacingDecision.attackGateOpen();
         Point crossRegionRetreatPos = shouldRetreatForRangedSpacing
                 ? hooks.crossRegionRetreatSelector().select(entry, agentPosition, targetPosition)
                 : null;
@@ -188,9 +195,8 @@ public final class AgentGrindRangedEngagementService {
                     && hooks.attackPlanUsabilityPolicy().canUse(
                     AgentMovementStateRuntime.grounded(entry), weaponType, attackPlan.route)) {
                 attackAttemptedInRange = true;
-                int prevCooldown = AgentCombatCooldownStateRuntime.attackCooldownMs(entry);
-                hooks.attackExecutor().attack(entry, agent, attackPlan);
-                boolean attacked = AgentCombatCooldownStateRuntime.attackCooldownMs(entry) != prevCooldown;
+                AgentAttackTransactionResult attackResult = hooks.attackExecutor().attack(entry, agent, attackPlan);
+                boolean attacked = attackResult != null && attackResult.committed();
                 if (attacked && attackPlan.isCloseRangeRoute()
                         && hooks.rangedAmmoWeaponPolicy().isRangedAmmoWeapon(weaponType)) {
                     AgentDegenerateAttackStateRuntime.markDegenAttackDone(entry);

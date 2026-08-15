@@ -74,6 +74,8 @@ class AgentGrindModeTickServiceTest {
                         (entry, agent, target, attackPlan, agentPosition) -> null,
                         (grounded, weaponType, route) -> false,
                         (entry, agent, attackPlan) -> {
+                            return AgentAttackTransactionResult.deferred(
+                                    AgentAttackTransactionResult.Reason.ATTACK_COOLDOWN, 0, 0);
                         },
                         weaponType -> false,
                         (entry, agent, weaponType, agentPosition, targetPosition) -> null,

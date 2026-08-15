@@ -185,6 +185,8 @@ class AgentGrindRangedEngagementServiceTest {
                 (entry, agent, attackPlan) -> {
                     counters.attack.incrementAndGet();
                     AgentCombatCooldownStateRuntime.maxAttackCooldown(entry, 100);
+                    return AgentAttackTransactionResult.committed(
+                            100000000, attackPlan.skillId, List.of(), 1, 0, 1L);
                 },
                 ignored -> rangedAmmoWeapon,
                 (entry, agent, weaponType, agentPosition, targetPosition) -> crowdJumpTarget,
