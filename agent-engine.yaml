@@ -1788,6 +1788,10 @@ tuning:
     # Purpose: Controls the distance or margin used for presentation distance. Higher values allow action from farther away or leave more space; lower values require closer, more precise positioning.
     # Technical: the "town life encounter coordinator" component consumes this as an integer. Unit: MapleStory map pixels; horizontal and vertical values use the server map coordinate system.
     server.agents.capabilities.townlife.AgentTownLifeEncounterCoordinator.PRESENTATION_DISTANCE_PX: '150'
+    # Values: a positive power-of-two integer. Recommended: 32-128 around the tested baseline 64.
+    # Purpose: Limits unrelated-town encounter lock contention while keeping the fixed lock table bounded for long-running servers with many loaded town maps.
+    # Technical: AgentTownLifeScopeLocks hashes each town map identifier into this immutable stripe table; changing it requires a restart and concurrency regression testing.
+    server.agents.capabilities.townlife.AgentTownLifeScopeLocks.STRIPE_COUNT: '64'
     # Values: a finite non-negative integer. Recommended: 1-2 around the tested baseline 1; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how often Agents choose minimum activity when several valid behaviors are available. Higher values make it more common; lower values make it rarer.
     # Technical: the "town life activity policy" component consumes this as an integer. Domain: non-negative policy coefficient; it is meaningful relative to the other coefficients used by the same decision. The value participates in ranking or weighted selection and is not an absolute probability by itself.
@@ -2585,6 +2589,14 @@ tuning:
     # Purpose: Allows one controlled training-instance refresh before escalating to an ordinary external hunt map.
     # Technical: AgentHuntRecoveryRuntime increments the objective-local instance retry counter before activating external fallback candidate selection.
     server.agents.progression.AgentHuntRecoveryRuntime.MAX_INSTANCE_REENTRIES: '1'
+    # Values: a positive integer. Recommended: 1-3 around the tested baseline 2.
+    # Purpose: Supplies conservative party guidance when an authored shared quest hunt map does not define its own recommended Agent occupancy.
+    # Technical: AgentHuntObjectiveCompiler records this value in compiled HuntMap contracts; selectors may use it for occupancy scoring but it does not spawn Agents.
+    server.agents.progression.AgentHuntObjectiveCompiler.DEFAULT_RECOMMENDED_AGENTS: '2'
+    # Values: a positive integer not lower than DEFAULT_RECOMMENDED_AGENTS. Recommended: 3-6 around the tested baseline 4.
+    # Purpose: Prevents a compiled shared quest hunt from treating an unbounded number of Agents as efficient occupants when catalog-specific capacity is unavailable.
+    # Technical: AgentHuntObjectiveCompiler records this hard occupancy hint in each generated HuntMap contract and adaptive selection applies the normal crowd penalty above it.
+    server.agents.progression.AgentHuntObjectiveCompiler.DEFAULT_MAXIMUM_AGENTS: '4'
     # Values: a finite non-negative integer. Recommended: 20-80 around the tested baseline 40; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how strongly hunt efficiency affects Agent behavior. Higher values make the effect more noticeable; lower values soften it.
     # Technical: the "progression decision policy" component consumes this as an integer. Domain: non-negative policy coefficient; it is meaningful relative to the other coefficients used by the same decision.

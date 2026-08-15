@@ -197,6 +197,45 @@ class AgentArchitectureBoundaryTest {
                         + "current compatibility import count is " + imports[0]);
     }
 
+    @Test
+    void combatDecisionAndRangedTacticalStateRemainCapabilityOwned() throws IOException {
+        String runtimeEntry = Files.readString(AGENTS.resolve("runtime")
+                .resolve("AgentRuntimeEntry.java"));
+        assertFalse(runtimeEntry.contains("AgentCombatDecisionState"),
+                "combat decision frames belong in the capability-state registry");
+        assertFalse(runtimeEntry.contains("AgentRangedTacticalState"),
+                "ranged tactical commitments belong in the capability-state registry");
+
+        String rangedEngagement = Files.readString(AGENTS.resolve("capabilities")
+                .resolve("combat").resolve("AgentGrindRangedEngagementService.java"));
+        assertFalse(rangedEngagement.contains("prevCooldown"),
+                "attack success must come from AgentAttackTransactionResult, not cooldown mutation");
+        assertTrue(rangedEngagement.contains("attackResult.committed()"));
+    }
+
+    @Test
+    void townLifePolicyAndEncounterMutationRemainTownScoped() throws IOException {
+        String controller = Files.readString(AGENTS.resolve("capabilities")
+                .resolve("townlife").resolve("AgentTownLifeControllerRuntime.java"));
+        String encounters = Files.readString(AGENTS.resolve("capabilities")
+                .resolve("townlife").resolve("AgentTownLifeEncounterCoordinator.java"));
+        assertTrue(controller.contains("AgentTownLifeControllerRegistry"));
+        assertFalse(controller.contains("static volatile AgentTownLifeController"),
+                "one town's optional controller must not replace every town's policy");
+        assertTrue(encounters.contains("AgentTownLifeScopeLocks"));
+        assertFalse(encounters.contains("private static final Object LOCK"),
+                "unrelated towns must not serialize every encounter mutation");
+    }
+
+    @Test
+    void navigationBuildDiagnosticsRemainOutsideGraphConstructionService() throws IOException {
+        String graphService = Files.readString(AGENTS.resolve("capabilities")
+                .resolve("navigation").resolve("AgentNavigationGraphService.java"));
+        assertTrue(Files.exists(AGENTS.resolve("capabilities").resolve("navigation")
+                .resolve("AgentNavigationGraphBuildProfile.java")));
+        assertFalse(graphService.contains("class BuildProfileBuilder"));
+    }
+
     private static Map<String, Integer> dependencyCounts() throws IOException {
         Map<String, Integer> counts = new HashMap<>();
         Path capabilities = AGENTS.resolve("capabilities");

@@ -5,8 +5,10 @@ import java.util.List;
 
 /** Compiles authored quest-pack constraints into the universal hunt contract. */
 final class AgentHuntObjectiveCompiler {
-    private static final int DEFAULT_RECOMMENDED_AGENTS = 2;
-    private static final int DEFAULT_MAXIMUM_AGENTS = 4;
+    private static final int DEFAULT_RECOMMENDED_AGENTS = config.AgentTuning.intValue(
+            "server.agents.progression.AgentHuntObjectiveCompiler.DEFAULT_RECOMMENDED_AGENTS");
+    private static final int DEFAULT_MAXIMUM_AGENTS = config.AgentTuning.intValue(
+            "server.agents.progression.AgentHuntObjectiveCompiler.DEFAULT_MAXIMUM_AGENTS");
 
     private AgentHuntObjectiveCompiler() {
     }
