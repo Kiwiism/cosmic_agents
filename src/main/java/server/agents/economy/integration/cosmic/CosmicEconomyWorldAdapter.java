@@ -120,11 +120,11 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort {
     }
 
     @Override
-    public void settleOffscreenActivity(EconomyAgentProfile profile, FarmSessionOutcome outcome,
-                                        Instant logicalAt, LongSupplier deterministicGameplayRandom) {
+    public FarmSessionOutcome settleOffscreenActivity(EconomyAgentProfile profile, FarmSessionOutcome outcome,
+                                                      Instant logicalAt, LongSupplier deterministicGameplayRandom) {
         if (!offscreen.contains(profile.agentId())) throw new IllegalStateException("agent is still market-visible");
         Character agent = bound(profile.agentId());
-        EconomyOperationContext.with(metadata(profile, logicalAt, "FARM_RESULT", outcome.sessionId()),
+        return EconomyOperationContext.with(metadata(profile, logicalAt, "FARM_RESULT", outcome.sessionId()),
                 () -> settlement.settle(agent, outcome, deterministicGameplayRandom));
     }
 

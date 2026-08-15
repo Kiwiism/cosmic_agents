@@ -45,6 +45,8 @@ class EconomyPostgresSchemaIntegrationTest {
                             + "AND normalized_config ->> 'schemaVersion' = '1'"));
                     var runs = new JdbcSimulationRunRepository(dataSource);
                     assertEquals("CREATED", runs.find(run).orElseThrow().status());
+                    verifyOwnershipJournal(dataSource, connection, run);
+                    verifyStallOfferStore(dataSource, connection, run);
                     var checkpoint = new server.agents.economy.scenario.SimulationRunEngine.RunCheckpoint(
                             run, Instant.parse("2026-01-01T00:00:00Z"), loaded.sha256(),
                             catalog.version(), java.util.List.of(), Map.of("stream", 12L),
@@ -142,6 +144,67 @@ class EconomyPostgresSchemaIntegrationTest {
                 "DELETE FROM economy_experiment WHERE experiment_id = ?")) {
             statement.setString(1, experimentId); statement.executeUpdate();
         }
+    }
+
+    private static void verifyOwnershipJournal(HikariDataSource dataSource, Connection connection,
+                                               UUID run) throws Exception {
+        var item = new server.agents.economy.ownership.InventoryItemRef(
+                "ETC", (short) 1, 4000000, "a".repeat(64));
+        var snapshot = new server.agents.economy.ownership.InventorySnapshot(101, "b".repeat(64),
+                java.util.List.of(new server.agents.economy.ownership.InventoryItemSnapshot(
+                        item, 2, Map.of("source", "integration"))));
+        UUID authorizationId = UUID.randomUUID();
+        var review = new server.agents.economy.ownership.InventoryReview(UUID.randomUUID(), run,
+                "agent-1", snapshot, Instant.EPOCH,
+                server.agents.economy.ownership.InventoryReview.Purpose.FM_MARKET_APPRAISAL,
+                java.util.List.of(new server.agents.economy.ownership.InventoryDispositionDecision(
+                        item, 1,
+                        server.agents.economy.ownership.InventoryDispositionDecision.Disposition
+                                .NPC_SALE_AUTHORIZED,
+                        "integration", "SELL_TO_NPC", "SELL_TO_NPC", false)),
+                java.util.List.of(new server.agents.economy.ownership.InventoryReview.AssetReservation(
+                        UUID.randomUUID(), item, 1, "SELL_TO_NPC", "NPC_ANYWHERE")),
+                java.util.List.of(new server.agents.economy.ownership.InventoryReview.ActionAuthorization(
+                        authorizationId, item, 1, "SELL_TO_NPC", "NPC_ANYWHERE",
+                        snapshot.revision(), Instant.EPOCH.plusSeconds(60))));
+        var journal = new JdbcEconomyOwnershipJournal(dataSource);
+        journal.appendReview(review);
+        journal.markAuthorizationConsumed(authorizationId, Instant.EPOCH.plusSeconds(1));
+        journal.appendGuardEvent(run, "agent-1", 101, Instant.EPOCH.plusSeconds(1),
+                "SELL_TO_NPC", item, 1, true, "AUTHORIZED", authorizationId);
+
+        assertEquals(1, scalar(connection, "SELECT COUNT(*) FROM inventory_review WHERE run_id='"
+                + run + "' AND inventory_revision='" + snapshot.revision() + "'"));
+        assertEquals(1, scalar(connection, "SELECT COUNT(*) FROM economic_action_authorization "
+                + "WHERE authorization_id='" + authorizationId + "' AND status='CONSUMED'"));
+        assertEquals(1, scalar(connection, "SELECT COUNT(*) FROM economic_action_guard_event "
+                + "WHERE authorization_id='" + authorizationId + "' AND allowed"));
+        assertEquals(true, dashboardQuery(connection, "inventory_ownership_trace.sql", Map.of(
+                ":run_id", "'" + run + "'::uuid", ":agent_id", "'agent-1'",
+                ":item_id", "4000000")).contains("\"reviews\""));
+    }
+
+    private static void verifyStallOfferStore(HikariDataSource dataSource, Connection connection,
+                                              UUID run) throws Exception {
+        UUID offerId = UUID.randomUUID();
+        var offer = new server.agents.economy.market.StallOffer(offerId, run,
+                "agent-1", "agent-2", "stall-1", "stall-1:3", 910000001, 1302013,
+                "exact-kfan", Map.of("watk", 50), 1, 400_000, 250_000,
+                "untrusted public flavor", Instant.EPOCH.plusSeconds(10),
+                Instant.EPOCH.plusSeconds(130),
+                server.agents.economy.market.StallOffer.Status.PENDING);
+        var store = new JdbcStallOfferStore(dataSource);
+        store.create(offer);
+        assertEquals(offer, store.pendingForSeller(run, "agent-2",
+                Instant.EPOCH.plusSeconds(20), 10).getFirst());
+        store.resolve(offerId,
+                server.agents.economy.market.StallOffer.Status.ACCEPTED_AWAITING_SETTLEMENT,
+                "accepted", Instant.EPOCH.plusSeconds(30), null);
+        store.resolve(offerId, server.agents.economy.market.StallOffer.Status.EXECUTED,
+                "settled", Instant.EPOCH.plusSeconds(40), "tx-structured-offer");
+        assertEquals(1, scalar(connection, "SELECT COUNT(*) FROM stall_offer WHERE offer_id='"
+                + offerId + "' AND status='EXECUTED' AND offered_mesos=250000 "
+                + "AND settlement_transaction_id='tx-structured-offer'"));
     }
 
     private static void assertUnbalancedCommitFails(Connection connection) throws Exception {
@@ -249,6 +312,18 @@ class EconomyPostgresSchemaIntegrationTest {
     }
 
     private static void deleteRun(Connection connection, UUID run) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(
+                "DELETE FROM stall_offer WHERE run_id = ?")) {
+            statement.setObject(1, run); statement.executeUpdate();
+        }
+        try (PreparedStatement statement = connection.prepareStatement(
+                "DELETE FROM economic_action_guard_event WHERE run_id = ?")) {
+            statement.setObject(1, run); statement.executeUpdate();
+        }
+        try (PreparedStatement statement = connection.prepareStatement(
+                "DELETE FROM inventory_review WHERE run_id = ?")) {
+            statement.setObject(1, run); statement.executeUpdate();
+        }
         try (PreparedStatement statement = connection.prepareStatement(
                 "DELETE FROM agent_character_binding WHERE run_id = ?")) {
             statement.setObject(1, run); statement.executeUpdate();

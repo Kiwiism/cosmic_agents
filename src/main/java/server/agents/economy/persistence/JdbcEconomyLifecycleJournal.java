@@ -127,6 +127,7 @@ public final class JdbcEconomyLifecycleJournal implements EconomyLifecycleJourna
     private static Map<String, Object> outcomeEvidence(FarmSessionOutcome outcome) {
         return Map.of("calibrationId", outcome.calibrationId(), "experience", outcome.experience(),
                 "mesos", outcome.mesos(), "itemDrops", outcome.itemDrops(),
+                "uncollectedDrops", outcome.uncollectedDrops(),
                 "consumedItems", outcome.consumedItems(), "killCounts", outcome.killCounts(),
                 "death", outcome.death());
     }

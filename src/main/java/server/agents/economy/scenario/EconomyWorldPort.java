@@ -18,8 +18,8 @@ public interface EconomyWorldPort {
 
     void leaveFreeMarket(EconomyAgentProfile profile, FarmSessionPlan plan, Instant logicalAt);
 
-    void settleOffscreenActivity(EconomyAgentProfile profile, FarmSessionOutcome outcome,
-                                 Instant logicalAt, LongSupplier deterministicGameplayRandom);
+    FarmSessionOutcome settleOffscreenActivity(EconomyAgentProfile profile, FarmSessionOutcome outcome,
+                                               Instant logicalAt, LongSupplier deterministicGameplayRandom);
 
     void returnThroughFreeMarketEntrance(EconomyAgentProfile profile, Instant logicalAt);
 

@@ -351,10 +351,8 @@ public final class JdbcCosmicEconomicEventIngestor {
                         .add(new LotQuantity(posting.lotId(), posting.quantity()));
             }
         }
-        // Opening a real PlayerShop escrows its owned permit alongside the
-        // merchandise. It is lifecycle evidence, not a market listing.
-        int permitItemId = number(stall, "permitItemId").intValue();
-        take(available.get(permitItemId), 1L);
+        // The translator sends the consumed PlayerShop permit to a lifecycle sink.
+        // Only actual merchandise reaches escrow and may be allocated to listings.
         String listingSql = "INSERT INTO market_listing (run_id, listing_id, stall_id, seller_id, "
                 + "room_map_id, item_id, lot_id, quantity_per_bundle, bundles_initial, bundles_remaining, "
                 + "bundle_price, opened_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";

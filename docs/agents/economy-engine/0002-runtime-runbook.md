@@ -5,7 +5,7 @@
 1. Configure `economy-engine.yaml`. YAML contains behavior and scenario policy only; credentials are
    environment variables.
 2. Set distinct `ECONOMY_DB_*` credentials and initialize the separate PostgreSQL database through
-   migrations V001-V014.
+   migrations V001-V016.
 3. Start Cosmic MySQL and the game server normally.
 4. Have at least `population.maximumAgents` live autonomous characters. The runtime deterministically
    binds scenario slots to characters of the same real Cosmic job family; within each eligible pool,
@@ -80,6 +80,8 @@ require identical remaining event order and RNG state.
 - `market_observation`: private observed asks, exact item fingerprints, and rolled attributes.
 - `decision_journal`: alternatives, beliefs, needs, utilities, and reason codes.
 - `social_event` and `negotiation_session`: public dialogue, proposals, counteroffers, and outcomes.
+- `stall_offer`: authoritative numeric offers tied to an exact listing and item fingerprint. Its
+  `public_text` is display-only flavor and is never parsed to make an economic decision.
 - `agent_presence_event` and lifecycle tables: FM/offscreen state and physical location.
 - `item_market_daily`, `meso_flow_daily`, `agent_state_projection`: rebuildable dashboard read models.
 - `economy_invariant_violation`: durable accounting and lifecycle failures.
@@ -115,8 +117,9 @@ a completed price or imputing a meso price to barter.
   enabled only with matching live-session calibration. It shares the same Cosmic v83
   beginner/LUK/town/field-limit/safety-charm rule as live deaths, truncates unperformed kills and
   consumable use, cancels ordinary death state, and uses the configured Agent respawn delay.
-- Direct negotiation excludes equipment because the real Trade selector is item-id based; rolled
-equipment remains safely tradable through fingerprinted PlayerShop escrow.
+- Equipment offers are allowed because the offer identifies the exact listing fingerprint. An
+  accepted equipment offer remains `ACCEPTED_AWAITING_SETTLEMENT` until an exact-item settlement
+  path can physically reunite buyer and seller; the item-ID-only Trade selector is never used for it.
 
 For a local read-only report, run `tools/economy/Export-EconomyDashboard.ps1` and serve
 `economy-dashboard`. The exporter reads only PostgreSQL and includes raw transaction, listing,

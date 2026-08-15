@@ -95,6 +95,34 @@ class CosmicMarketSellerPlanReaderTest {
         assertEquals(10, plan.stallListings().getFirst().bundles());
     }
 
+    @Test
+    void choosesStallOnlyInsideConfiguredPhysicalRoomManifest() {
+        EconomyCatalog catalog = new EconomyCatalog() {
+            @Override public String version() { return "test"; }
+            @Override public Optional<ItemFact> item(int id) { return Optional.empty(); }
+            @Override public List<MonsterDropFact> monsterDrops(int monsterId) { return List.of(); }
+            @Override public Optional<NpcShopFact> npcShop(int npcId) { return Optional.empty(); }
+        };
+        Character agent = mock(Character.class);
+        for (InventoryType type : List.of(InventoryType.EQUIP, InventoryType.USE,
+                InventoryType.SETUP, InventoryType.ETC)) {
+            Inventory inventory = mock(Inventory.class);
+            when(inventory.list()).thenReturn(List.of());
+            when(agent.getInventory(type)).thenReturn(inventory);
+        }
+        when(agent.getId()).thenReturn(200);
+        when(agent.getName()).thenReturn("Seller");
+        CosmicMarketSellerPlanReader reader = new CosmicMarketSellerPlanReader(catalog, 1012004,
+                16, 5140000, .15, .75, 910000003, 910000004,
+                (id, quantity) -> 100);
+
+        MarketSellerPlan plan = reader.read(agent, profile(), new PrivateMarketKnowledge(),
+                List.of(), Instant.parse("2026-01-01T00:00:00Z"));
+
+        assertTrue(plan.preferredRoomMapId() >= 910000003);
+        assertTrue(plan.preferredRoomMapId() <= 910000004);
+    }
+
     private static EconomyAgentProfile profile() {
         return new EconomyAgentProfile("agent", "warrior", .5, .5, .5, .5,
                 .5, 1, 24, .5, .5);

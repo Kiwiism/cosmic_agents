@@ -8,6 +8,7 @@ import constants.inventory.ItemConstants;
 import server.Shop;
 import server.ShopFactory;
 import server.agents.integration.ShopGateway;
+import server.agents.integration.AgentEconomicActionGuardRuntime;
 import server.agents.events.AgentEventPriority;
 import server.agents.resources.events.AgentResourceEventPublisher;
 import server.agents.resources.events.AgentShopTransactionEvent;
@@ -28,6 +29,9 @@ public final class CosmicShopGateway implements ShopGateway {
         Inventory inventory = agent.getInventory(type);
         Item item = inventory == null ? null : inventory.getItem(slot);
         int itemId = item == null ? 0 : item.getItemId();
+        var permit = AgentEconomicActionGuardRuntime.claimNpcSale(
+                agent, type, slot, itemId, quantity);
+        if (!permit.allowed()) return Shop.TransactionResult.INVALID;
         int beforeQuantity = count(agent, type, itemId);
         int beforeMeso = agent.getMeso();
         Shop.TransactionResult result = shop.sellDirect(agent, type, slot, quantity);

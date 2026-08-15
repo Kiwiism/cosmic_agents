@@ -23,8 +23,11 @@ public final class CosmicMarketSellerGateway {
         this.stallOpenTimeoutMs = stallOpenTimeoutMs;
     }
 
-    public RemoteNpcCommerceService.Receipt sellNpc(Character agent, MarketSellerPlan.NpcSale sale) {
-        return npc.sell(agent, sale.npcId(), sale.inventoryType(), sale.slot(), sale.quantity());
+    public RemoteNpcCommerceService.Receipt sellNpc(Character agent, MarketSellerPlan.NpcSale sale,
+                                                     java.time.Instant logicalAt) {
+        return server.agents.integration.AgentEconomicActionGuardRuntime.withNpcSaleContext(
+                logicalAt, CosmicAgentEconomyFacade.FM_REMOTE_NPC,
+                () -> npc.sell(agent, sale.npcId(), sale.inventoryType(), sale.slot(), sale.quantity()));
     }
 
     public boolean hasPlayerShopPermit(Character agent) {

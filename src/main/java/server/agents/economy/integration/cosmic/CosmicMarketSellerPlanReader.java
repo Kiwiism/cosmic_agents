@@ -10,7 +10,9 @@ import server.agents.economy.catalog.ItemCategory;
 import server.agents.economy.decision.AgentNeed;
 import server.agents.economy.decision.ItemDispositionPolicy;
 import server.agents.economy.market.PrivateMarketKnowledge;
+import server.agents.economy.market.MarketRoomAllocator;
 import server.agents.economy.scenario.EconomyAgentProfile;
+import server.maps.reservation.FreeMarketCharacterSpaceCatalog;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -26,6 +28,9 @@ public final class CosmicMarketSellerPlanReader {
     private final double coldStartMarkupMinimum;
     private final double coldStartMarkupMaximum;
     private final NpcPriceCatalog npcPrices;
+    private final int firstRoomMapId;
+    private final int lastRoomMapId;
+    private final MarketRoomAllocator roomAllocator;
 
     public CosmicMarketSellerPlanReader(EconomyCatalog catalog, int dispositionNpcId,
                                         int maximumListings, int permitItemId) {
@@ -36,7 +41,16 @@ public final class CosmicMarketSellerPlanReader {
                                         int maximumListings, int permitItemId,
                                         double coldStartMarkupMinimum, double coldStartMarkupMaximum) {
         this(catalog, dispositionNpcId, maximumListings, permitItemId, coldStartMarkupMinimum,
-                coldStartMarkupMaximum, (itemId, quantity) -> Math.max(0,
+                coldStartMarkupMaximum, 910000001, 910000022, (itemId, quantity) -> Math.max(0,
+                        ItemInformationProvider.getInstance().getPrice(itemId, quantity)));
+    }
+
+    public CosmicMarketSellerPlanReader(EconomyCatalog catalog, int dispositionNpcId,
+                                        int maximumListings, int permitItemId,
+                                        double coldStartMarkupMinimum, double coldStartMarkupMaximum,
+                                        int firstRoomMapId, int lastRoomMapId) {
+        this(catalog, dispositionNpcId, maximumListings, permitItemId, coldStartMarkupMinimum,
+                coldStartMarkupMaximum, firstRoomMapId, lastRoomMapId, (itemId, quantity) -> Math.max(0,
                         ItemInformationProvider.getInstance().getPrice(itemId, quantity)));
     }
 
@@ -44,6 +58,26 @@ public final class CosmicMarketSellerPlanReader {
                                  int maximumListings, int permitItemId,
                                  double coldStartMarkupMinimum, double coldStartMarkupMaximum,
                                  NpcPriceCatalog npcPrices) {
+        this(catalog, dispositionNpcId, maximumListings, permitItemId, coldStartMarkupMinimum,
+                coldStartMarkupMaximum, 910000001, 910000022, npcPrices);
+    }
+
+    CosmicMarketSellerPlanReader(EconomyCatalog catalog, int dispositionNpcId,
+                                 int maximumListings, int permitItemId,
+                                 double coldStartMarkupMinimum, double coldStartMarkupMaximum,
+                                 int firstRoomMapId, int lastRoomMapId,
+                                 NpcPriceCatalog npcPrices) {
+        this(catalog, dispositionNpcId, maximumListings, permitItemId, coldStartMarkupMinimum,
+                coldStartMarkupMaximum, firstRoomMapId, lastRoomMapId, npcPrices,
+                new MarketRoomAllocator(firstRoomMapId, lastRoomMapId,
+                        room -> FreeMarketCharacterSpaceCatalog.spaces(room).size()));
+    }
+
+    CosmicMarketSellerPlanReader(EconomyCatalog catalog, int dispositionNpcId,
+                                 int maximumListings, int permitItemId,
+                                 double coldStartMarkupMinimum, double coldStartMarkupMaximum,
+                                 int firstRoomMapId, int lastRoomMapId,
+                                 NpcPriceCatalog npcPrices, MarketRoomAllocator roomAllocator) {
         this.catalog = Objects.requireNonNull(catalog); this.dispositionNpcId = dispositionNpcId;
         this.maximumListings = maximumListings; this.permitItemId = permitItemId;
         if (!Double.isFinite(coldStartMarkupMinimum) || !Double.isFinite(coldStartMarkupMaximum)
@@ -51,7 +85,13 @@ public final class CosmicMarketSellerPlanReader {
             throw new IllegalArgumentException("cold-start markups must be finite, non-negative, and ordered");
         this.coldStartMarkupMinimum = coldStartMarkupMinimum;
         this.coldStartMarkupMaximum = coldStartMarkupMaximum;
+        if (firstRoomMapId < 910000001 || lastRoomMapId > 910000022
+                || firstRoomMapId > lastRoomMapId)
+            throw new IllegalArgumentException("invalid configured FM room range");
+        this.firstRoomMapId = firstRoomMapId;
+        this.lastRoomMapId = lastRoomMapId;
         this.npcPrices = Objects.requireNonNull(npcPrices);
+        this.roomAllocator = Objects.requireNonNull(roomAllocator);
     }
 
     public MarketSellerPlan read(Character agent, EconomyAgentProfile profile,
@@ -110,8 +150,18 @@ public final class CosmicMarketSellerPlanReader {
                 }
             }
         }
-        int room = 910000001 + Math.floorMod(agent.getId(), 22);
+        int room;
+        if (listings.isEmpty()) {
+            roomAllocator.release(profile.agentId());
+            room = firstRoomMapId;
+        } else {
+            room = roomAllocator.roomFor(profile.agentId());
+        }
         return new MarketSellerPlan(npcSales, listings, room, "Selling real finds - " + agent.getName());
+    }
+
+    public void releaseRoom(String sellerAgentId) {
+        roomAllocator.release(sellerAgentId);
     }
 
     private long coldStartAsk(long npc, EconomyAgentProfile profile) {

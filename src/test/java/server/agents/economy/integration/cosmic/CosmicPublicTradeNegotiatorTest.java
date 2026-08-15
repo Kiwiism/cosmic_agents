@@ -8,8 +8,10 @@ import org.junit.jupiter.api.Test;
 import server.agents.economy.decision.AgentNeed;
 import server.agents.economy.market.EconomicReason;
 import server.agents.economy.market.MarketObservation;
+import server.agents.economy.market.StallOffer;
 import server.agents.economy.persistence.EconomyEvidenceJournal;
 import server.agents.economy.persistence.NegotiationEvidenceStore;
+import server.agents.economy.persistence.StallOfferStore;
 import server.agents.economy.scenario.EconomyAgentProfile;
 import server.agents.economy.social.TradeExecutionGateway;
 import server.maps.MapleMap;
@@ -37,19 +39,65 @@ class CosmicPublicTradeNegotiatorTest {
     private TradeExecutionGateway trades;
     private CosmicPublicTradeNegotiator.StallCloser closer;
     private CosmicPublicTradeNegotiator.PublicChatGateway chat;
+    private PlayerShop shop;
 
     @BeforeEach
     void setUp() {
         buyer = mock(Character.class); seller = mock(Character.class);
-        MapleMap room = mock(MapleMap.class); PlayerShop shop = mock(PlayerShop.class);
+        MapleMap room = mock(MapleMap.class); shop = mock(PlayerShop.class);
         when(buyer.getMap()).thenReturn(room); when(seller.getMap()).thenReturn(room);
         when(buyer.getMapId()).thenReturn(910000001); when(seller.getMapId()).thenReturn(910000001);
         when(buyer.getPosition()).thenReturn(new Point(100, 0));
+        when(buyer.getMeso()).thenReturn(10_000);
         when(seller.getPosition()).thenReturn(new Point(120, 0));
         when(seller.getPlayerShop()).thenReturn(shop); when(shop.isOpen()).thenReturn(true);
         journal = mock(EconomyEvidenceJournal.class); sessions = mock(NegotiationEvidenceStore.class);
         trades = mock(TradeExecutionGateway.class); closer = mock(CosmicPublicTradeNegotiator.StallCloser.class);
         chat = mock(CosmicPublicTradeNegotiator.PublicChatGateway.class);
+    }
+
+    @Test
+    void leavesStructuredOfferAndUsesStallChatOnlyAsItsPublicRendering() {
+        RecordingOffers offers = new RecordingOffers();
+        when(shop.visitShop(buyer)).thenReturn(true);
+        CosmicPublicTradeNegotiator.Participant participant =
+                new CosmicPublicTradeNegotiator.Participant(seller, profile("seller", 1));
+        CosmicPublicTradeNegotiator negotiator = new CosmicPublicTradeNegotiator(runId,
+                characterId -> characterId == 2 ? Optional.of(participant) : Optional.empty(),
+                closer, trades, journal, sessions, (item, quantity) -> 100, chat, false,
+                (character, profile, at) -> List.of(), offers, Duration.ofMinutes(2), 120);
+
+        var result = negotiator.attempt(buyer, profile("buyer", 0), List.of(need(950)),
+                List.of(observation()), now);
+
+        assertTrue(result.attempted()); assertFalse(result.success());
+        assertEquals("OFFER_LEFT", result.outcome());
+        assertEquals(1, offers.created.size());
+        StallOffer offer = offers.created.getFirst();
+        assertEquals("buyer", offer.buyerAgentId()); assertEquals("seller", offer.sellerAgentId());
+        assertEquals(4000000, offer.itemId()); assertEquals("fp", offer.itemFingerprint());
+        assertEquals(950, offer.offeredMesos()); assertEquals(StallOffer.Status.PENDING, offer.status());
+        verify(shop).chat(any(), eq(offer.publicText()));
+        verifyNoInteractions(closer, trades);
+        verify(journal).appendSocial(any());
+    }
+
+    @Test
+    void doesNotLeaveAnOfferBuyerCannotFund() {
+        when(buyer.getMeso()).thenReturn(0);
+        RecordingOffers offers = new RecordingOffers();
+        CosmicPublicTradeNegotiator.Participant participant =
+                new CosmicPublicTradeNegotiator.Participant(seller, profile("seller", 1));
+        CosmicPublicTradeNegotiator negotiator = new CosmicPublicTradeNegotiator(runId,
+                characterId -> characterId == 2 ? Optional.of(participant) : Optional.empty(),
+                closer, trades, journal, sessions, (item, quantity) -> 100, chat, false,
+                (character, profile, at) -> List.of(), offers, Duration.ofMinutes(2), 120);
+
+        var result = negotiator.attempt(buyer, profile("buyer", 0), List.of(need(950)),
+                List.of(observation()), now);
+
+        assertFalse(result.attempted()); assertTrue(offers.created.isEmpty());
+        verifyNoInteractions(closer, trades, journal);
     }
 
     @Test
@@ -137,5 +185,12 @@ class CosmicPublicTradeNegotiatorTest {
     private static EconomyAgentProfile profile(String id, double negotiationAggressiveness) {
         return new EconomyAgentProfile(id, "warrior", .5, .5, .5, .5, .5, .5,
                 24, negotiationAggressiveness, .5);
+    }
+
+    private static final class RecordingOffers implements StallOfferStore {
+        private final java.util.ArrayList<StallOffer> created = new java.util.ArrayList<>();
+        @Override public void create(StallOffer offer) { created.add(offer); }
+        @Override public void resolve(UUID offerId, StallOffer.Status status, String response,
+                                      Instant respondedAt, String settlementTransactionId) { }
     }
 }

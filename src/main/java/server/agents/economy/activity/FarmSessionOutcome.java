@@ -13,6 +13,7 @@ public record FarmSessionOutcome(
         long experience,
         long mesos,
         List<ItemDrop> itemDrops,
+        List<UncollectedDrop> uncollectedDrops,
         List<FarmSessionPlan.ItemConsumption> consumedItems,
         Map<Integer, Integer> killCounts,
         DeathOutcome death
@@ -22,14 +23,30 @@ public record FarmSessionOutcome(
                               List<FarmSessionPlan.ItemConsumption> consumedItems,
                               Map<Integer, Integer> killCounts) {
         this(sessionId, "explicit-work", agentId, mapId, completedAt, experience, mesos,
-                itemDrops, consumedItems, killCounts, DeathOutcome.survived());
+                itemDrops, List.of(), consumedItems, killCounts, DeathOutcome.survived());
+    }
+
+    public FarmSessionOutcome(String sessionId, String calibrationId, String agentId, int mapId,
+                              Instant completedAt, long experience, long mesos, List<ItemDrop> itemDrops,
+                              List<FarmSessionPlan.ItemConsumption> consumedItems,
+                              Map<Integer, Integer> killCounts, DeathOutcome death) {
+        this(sessionId, calibrationId, agentId, mapId, completedAt, experience, mesos,
+                itemDrops, List.of(), consumedItems, killCounts, death);
     }
 
     public FarmSessionOutcome {
         itemDrops = List.copyOf(itemDrops);
+        uncollectedDrops = List.copyOf(uncollectedDrops);
         consumedItems = List.copyOf(consumedItems);
         killCounts = Map.copyOf(killCounts);
         death = death == null ? DeathOutcome.survived() : death;
+    }
+
+    /** A real drop roll that could not enter the character's inventory under Cosmic rules. */
+    public record UncollectedDrop(ItemDrop drop, String reason) {
+        public UncollectedDrop {
+            if (drop == null || reason == null || reason.isBlank()) throw new IllegalArgumentException();
+        }
     }
 
     public record ItemDrop(String lotId, int monsterId, int killOrdinal, int itemId,

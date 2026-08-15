@@ -36,13 +36,20 @@ class CosmicOutboxEventTranslatorTest {
         CosmicOutboxEventTranslator translator = translator(lotResolver);
         var listing = receipt("PLAYER_SHOP_LIST", null,
                 "escrow=esc-1 map=910000001 listings=1", payloadWithEvidence(
-                        Map.of("marketStall", Map.of("stallId", "esc-1")),
+                        Map.of("marketStall", Map.of("stallId", "esc-1", "permitItemId", 5140000)),
                         participant(10, 1_000, 1_000,
-                                List.of(item(4000000, "ETC", "stack", 10, 0)))));
+                                List.of(item(5140000, "CASH", "permit", 1, 0),
+                                        item(4000000, "ETC", "stack", 10, 0)))));
         var listed = translator.translate(listing).event();
         assertTrue(listed.postings().stream().anyMatch(p -> p.account().equals(LedgerAccount.escrow("esc-1"))
                 && p.quantity() == 10 && p.lotId().equals("farm-lot")));
-        assertEquals(Map.of("stallId", "esc-1"), listed.evidence().get("marketStall"));
+        assertTrue(listed.postings().stream().anyMatch(p -> p.account().equals(
+                LedgerAccount.sink("PLAYER_SHOP_PERMIT")) && p.asset().equals(AssetKey.item(5140000))
+                && p.quantity() == 1));
+        assertFalse(listed.postings().stream().anyMatch(p -> p.account().equals(LedgerAccount.escrow("esc-1"))
+                && p.asset().equals(AssetKey.item(5140000))));
+        assertEquals(Map.of("stallId", "esc-1", "permitItemId", 5140000),
+                listed.evidence().get("marketStall"));
         assertEquals("910000001", listed.evidence().get("map"));
 
         var sale = new CosmicOutboxRecord(UUID.randomUUID(), UUID.randomUUID().toString(),

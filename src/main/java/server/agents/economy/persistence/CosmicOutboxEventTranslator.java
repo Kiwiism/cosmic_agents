@@ -106,13 +106,32 @@ public final class CosmicOutboxEventTranslator {
             }
             require(noNegativeItems(delta), "stall recovery removed owner inventory");
         } else {
+            int permitItemId = marketPermitItemId(builder.evidence);
+            long consumedPermits = 0;
             for (ItemDelta item : negative(delta.itemDeltas())) {
-                builder.withdrawAndTransfer(seller.account(), escrow, item, -(long) item.quantityDelta());
+                long quantity = -(long) item.quantityDelta();
+                if (item.itemId() == permitItemId) {
+                    builder.withdrawAndTransfer(seller.account(), LedgerAccount.sink("PLAYER_SHOP_PERMIT"),
+                            item, quantity);
+                    consumedPermits = Math.addExact(consumedPermits, quantity);
+                } else {
+                    builder.withdrawAndTransfer(seller.account(), escrow, item, quantity);
+                }
             }
+            if (permitItemId > 0) require(consumedPermits == 1,
+                    "opening a PlayerShop must consume exactly one declared permit");
             require(noPositiveItems(delta), "stall listing introduced owner inventory");
         }
         builder.kind = EconomicEventKind.STALL_LISTED;
         builder.evidence.put("escrowDirection", returnToOwner ? "RETURN_TO_OWNER" : "OWNER_TO_ESCROW");
+    }
+
+    @SuppressWarnings("unchecked")
+    private static int marketPermitItemId(Map<String, Object> evidence) {
+        Object raw = evidence.get("marketStall");
+        if (!(raw instanceof Map<?, ?> stall)) return -1;
+        Object value = ((Map<String, Object>) stall).get("permitItemId");
+        return value instanceof Number number ? number.intValue() : -1;
     }
 
     private void playerShopSale(Builder builder, Participant buyer, ParticipantDelta buyerDelta,

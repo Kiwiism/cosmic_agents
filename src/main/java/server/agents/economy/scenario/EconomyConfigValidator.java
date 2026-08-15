@@ -47,9 +47,11 @@ public final class EconomyConfigValidator {
         require(config.world.channelId > 0, "channelId must be positive");
         require(config.world.freeMarketEntranceMapId == 910000000,
                 "Free Market entrance must be map 910000000");
-        require(config.world.firstFreeMarketRoomMapId == 910000001
-                        && config.world.lastFreeMarketRoomMapId == 910000022,
-                "Free Market room range must be 910000001 through 910000022");
+        require(config.world.firstFreeMarketRoomMapId >= 910000001
+                        && config.world.lastFreeMarketRoomMapId <= 910000022
+                        && config.world.firstFreeMarketRoomMapId
+                        <= config.world.lastFreeMarketRoomMapId,
+                "Free Market room range must be an ordered subset of 910000001 through 910000022");
         require(config.world.activityRegions != null && !config.world.activityRegions.isEmpty(),
                 "At least one activity region is required");
         require(Set.copyOf(config.world.activityRegions).equals(Set.of("MAPLE_ISLAND", "VICTORIA_ISLAND")),
@@ -103,7 +105,7 @@ public final class EconomyConfigValidator {
                         && config.activity.consumeAmmunition,
                 "rule-exact activity must preserve calibrated potion and ammunition consumption");
 
-        validateMarket(config.market);
+        validateMarket(config.market, config.world);
         validateTax(config.tax);
         validateSeasonal(config.seasonalRules);
         validateAmbient(config.ambient);
@@ -225,7 +227,8 @@ public final class EconomyConfigValidator {
                 "dedicatedMerchantFraction must remain zero until the dedicated lifecycle ships");
     }
 
-    private static void validateMarket(EconomyEngineConfig.Market market) {
+    private static void validateMarket(EconomyEngineConfig.Market market,
+                                       EconomyEngineConfig.World world) {
         require("PLAYER_SHOP".equals(market.venue),
                 "PLAYER_SHOP is the only supported initial venue");
         require(market.maximumStallsPerAgent == 1,
@@ -242,8 +245,9 @@ public final class EconomyConfigValidator {
                 "Private observed-listing memory is required");
         require(market.minimumRoomsPerTrip > 0
                         && market.maximumRoomsPerTrip >= market.minimumRoomsPerTrip
-                        && market.maximumRoomsPerTrip <= 22,
-                "Room scan range must be ordered within the 22 FM rooms");
+                        && market.maximumRoomsPerTrip <= world.lastFreeMarketRoomMapId
+                        - world.firstFreeMarketRoomMapId + 1,
+                "Room scan range must fit inside the configured FM room range");
         Duration maximumListingDuration = parsePositiveDuration(
                 market.maximumListingDuration, "market.maximumListingDuration");
         Duration minimumRepriceInterval = parseDuration(

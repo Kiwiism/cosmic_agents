@@ -36,7 +36,11 @@ public final class EconomyCommand extends Command {
                 show(client, EconomySimulationRuntime.resume(java.util.UUID.fromString(params[1]))); return;
             }
             if ("preflight".equalsIgnoreCase(params[0])) {
-                preflight(client, EconomySimulationRuntime.preflight()); return;
+                if (params.length == 1) preflight(client, EconomySimulationRuntime.preflight());
+                else if (params.length == 2) preflight(client, EconomySimulationRuntime.preflight(
+                        java.nio.file.Path.of(params[1])));
+                else throw new IllegalArgumentException("preflight accepts an optional <config-path>");
+                return;
             }
             if ("advance".equalsIgnoreCase(params[0]) && params.length == 2) {
                 long days = Long.parseLong(params[1]);
@@ -66,7 +70,7 @@ public final class EconomyCommand extends Command {
             if ("calibration".equalsIgnoreCase(params[0])) {
                 calibration(client, params); return;
             }
-            client.getPlayer().yellowMessage("Usage: !economy preflight | start [run-uuid config-path] "
+            client.getPlayer().yellowMessage("Usage: !economy preflight [config-path] | start [run-uuid config-path] "
                     + "| resume <run-uuid> "
                     + "| advance <non-negative-days> | audit | complete | fail <reason> | status | stop "
                     + "| experiment plan <manifest-path> | experiment next <experiment-id> "

@@ -98,8 +98,11 @@ public final class EconomyRunCoordinator {
                 ? resolver.resolve(state.pendingActivity, engine.randomStreams()) : state.pendingOutcome;
         if (!outcome.completedAt().equals(event.dueAt()))
             throw new IllegalStateException("activity completion event does not match resolved downtime");
-        world.settleOffscreenActivity(state.profile, outcome, event.dueAt(),
+        outcome = world.settleOffscreenActivity(state.profile, outcome, event.dueAt(),
                 engine.randomStreams().stream("agent." + event.subjectId() + ".progression")::nextLong);
+        if (!outcome.sessionId().equals(state.pendingActivity.sessionId())
+                || !outcome.completedAt().equals(event.dueAt()))
+            throw new IllegalStateException("settlement result does not match pending activity");
         journal.activityCompleted(engine.runId(), outcome);
         journal.stateChanged(engine.runId(), event.subjectId(), Status.RETURNING_TO_FM,
                 null, event.dueAt());
@@ -246,6 +249,8 @@ public final class EconomyRunCoordinator {
             row.put("equipmentStats", drop.equipmentStats());
             return row;
         }).toList());
+        value.put("uncollectedDrops", o.uncollectedDrops().stream().map(uncollected -> Map.of(
+                "reason", uncollected.reason(), "drop", dropMap(uncollected.drop()))).toList());
         value.put("consumedItems", o.consumedItems().stream().map(item -> Map.of(
                 "itemId", item.itemId(), "quantity", item.quantity(), "lotId", item.lotId())).toList());
         Map<String, Object> kills = new LinkedHashMap<>();
@@ -279,12 +284,11 @@ public final class EconomyRunCoordinator {
     @SuppressWarnings("unchecked")
     private static FarmSessionOutcome outcomeFrom(Map<String, Object> p) {
         List<FarmSessionOutcome.ItemDrop> drops = ((List<Map<String, Object>>) p.get("itemDrops")).stream()
-                .map(row -> new FarmSessionOutcome.ItemDrop(text(row, "lotId"), integer(row, "monsterId"),
-                        integer(row, "killOrdinal"), integer(row, "itemId"), integer(row, "quantity"),
-                        integer(row, "questId"), integer(row, "baseChance"), integer(row, "effectiveChance"),
-                        ((Map<String, Number>) row.getOrDefault("equipmentStats", Map.of())).entrySet().stream()
-                                .collect(java.util.stream.Collectors.toMap(Map.Entry::getKey,
-                                        entry -> entry.getValue().intValue())))).toList();
+                .map(EconomyRunCoordinator::dropFrom).toList();
+        List<FarmSessionOutcome.UncollectedDrop> uncollected =
+                ((List<Map<String, Object>>) p.getOrDefault("uncollectedDrops", List.of())).stream()
+                        .map(row -> new FarmSessionOutcome.UncollectedDrop(
+                                dropFrom((Map<String, Object>) row.get("drop")), text(row, "reason"))).toList();
         List<FarmSessionPlan.ItemConsumption> consumed = ((List<Map<String, Object>>) p.get("consumedItems"))
                 .stream().map(row -> new FarmSessionPlan.ItemConsumption(integer(row, "itemId"),
                         integer(row, "quantity"), text(row, "lotId"))).toList();
@@ -301,7 +305,26 @@ public final class EconomyRunCoordinator {
         return new FarmSessionOutcome(text(p, "sessionId"), text(p, "calibrationId"), text(p, "agentId"),
                 integer(p, "mapId"), Instant.parse(text(p, "completedAt")),
                 ((Number) p.get("experience")).longValue(), ((Number) p.get("mesos")).longValue(),
-                drops, consumed, kills, deathOutcome);
+                drops, uncollected, consumed, kills, deathOutcome);
+    }
+
+    private static Map<String, Object> dropMap(FarmSessionOutcome.ItemDrop drop) {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("lotId", drop.lotId()); row.put("monsterId", drop.monsterId());
+        row.put("killOrdinal", drop.killOrdinal()); row.put("itemId", drop.itemId());
+        row.put("quantity", drop.quantity()); row.put("questId", drop.questId());
+        row.put("baseChance", drop.baseChance()); row.put("effectiveChance", drop.effectiveChance());
+        row.put("equipmentStats", drop.equipmentStats());
+        return row;
+    }
+
+    private static FarmSessionOutcome.ItemDrop dropFrom(Map<String, Object> row) {
+        return new FarmSessionOutcome.ItemDrop(text(row, "lotId"), integer(row, "monsterId"),
+                integer(row, "killOrdinal"), integer(row, "itemId"), integer(row, "quantity"),
+                integer(row, "questId"), integer(row, "baseChance"), integer(row, "effectiveChance"),
+                ((Map<String, Number>) row.getOrDefault("equipmentStats", Map.of())).entrySet().stream()
+                        .collect(java.util.stream.Collectors.toMap(Map.Entry::getKey,
+                                entry -> entry.getValue().intValue())));
     }
 
     private static String text(Map<String, Object> values, String key) { return values.get(key).toString(); }

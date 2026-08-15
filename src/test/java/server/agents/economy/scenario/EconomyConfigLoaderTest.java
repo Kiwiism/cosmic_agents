@@ -27,6 +27,19 @@ class EconomyConfigLoaderTest {
     }
 
     @Test
+    void loadsTenAgentOneRoomOwnershipProfile() {
+        LoadedEconomyConfig loaded = loader.load(
+                Path.of("config/economy/economy-engine-basic.yaml"));
+
+        assertEquals("victoria-fm-ownership-basic", loaded.config().scenario.id);
+        assertEquals(10, loaded.config().population.initialAgents);
+        assertEquals(10, loaded.config().population.maximumAgents);
+        assertEquals(910000001, loaded.config().world.firstFreeMarketRoomMapId);
+        assertEquals(910000001, loaded.config().world.lastFreeMarketRoomMapId);
+        assertEquals("REALTIME", loaded.config().clock.mode);
+    }
+
+    @Test
     void sourceChangesProduceDifferentRunHash() {
         String source = javaResource("economy-engine.yaml");
         String changed = source.replace("targetLogicalDays: 30", "targetLogicalDays: 31");

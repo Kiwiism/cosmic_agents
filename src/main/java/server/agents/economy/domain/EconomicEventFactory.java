@@ -51,6 +51,11 @@ public final class EconomicEventFactory {
         evidence.put("calibrationId", outcome.calibrationId());
         evidence.put("kills", outcome.killCounts().toString());
         evidence.put("dropCount", Integer.toString(outcome.itemDrops().size()));
+        evidence.put("uncollectedDropCount", Integer.toString(outcome.uncollectedDrops().size()));
+        if (!outcome.uncollectedDrops().isEmpty())
+            evidence.put("uncollectedDropReasons", outcome.uncollectedDrops().stream()
+                    .collect(java.util.stream.Collectors.groupingBy(FarmSessionOutcome.UncollectedDrop::reason,
+                            java.util.TreeMap::new, java.util.stream.Collectors.counting())).toString());
         evidence.put("reason", "rule-exact calibrated farm result");
         return event("farm:" + outcome.sessionId(), outcome.completedAt(), EconomicEventKind.FARM_RESULT,
                 List.of(outcome.agentId()), evidence, postings);

@@ -5,14 +5,17 @@ import constants.inventory.ItemConstants;
 import server.ItemInformationProvider;
 import server.agents.economy.decision.AgentNeed;
 import server.agents.economy.market.MarketObservation;
+import server.agents.economy.market.StallOffer;
 import server.agents.economy.persistence.EconomyEvidenceJournal;
 import server.agents.economy.persistence.NegotiationEvidenceStore;
 import server.agents.economy.persistence.SocialEvidence;
+import server.agents.economy.persistence.StallOfferStore;
 import server.agents.economy.scenario.EconomyAgentProfile;
 import server.agents.economy.social.PublicNegotiationSession;
 import server.agents.economy.social.TradeExecutionGateway;
 import server.agents.economy.social.TradeOffer;
 import server.agents.integration.AgentPacketGatewayRuntime;
+import server.maps.PlayerShop;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -33,6 +36,7 @@ public final class CosmicPublicTradeNegotiator implements AutonomousFreeMarketBe
     private final PublicChatGateway chat;
     private final boolean barterEnabled;
     private final CounterpartyNeedReader counterpartyNeeds;
+    private final StallOfferStore stallOffers;
 
     public CosmicPublicTradeNegotiator(UUID runId, ParticipantDirectory participants,
                                        CosmicMarketSellerGateway shops, TradeExecutionGateway trades,
@@ -41,7 +45,8 @@ public final class CosmicPublicTradeNegotiator implements AutonomousFreeMarketBe
         this(runId, participants, shops::close, trades, journal, sessions,
                 (itemId, quantity) -> Math.max(0, ItemInformationProvider.getInstance().getPrice(itemId, quantity)),
                 (speaker, text) -> AgentPacketGatewayRuntime.packets().broadcastChatText(speaker, text, false, 1),
-                false, (agent, profile, at) -> List.of(), timeout, interactionRangePixels);
+                false, (agent, profile, at) -> List.of(), StallOfferStore.noop(), timeout,
+                interactionRangePixels);
     }
 
     public CosmicPublicTradeNegotiator(UUID runId, ParticipantDirectory participants,
@@ -52,7 +57,19 @@ public final class CosmicPublicTradeNegotiator implements AutonomousFreeMarketBe
         this(runId, participants, shops::close, trades, journal, sessions,
                 (itemId, quantity) -> Math.max(0, ItemInformationProvider.getInstance().getPrice(itemId, quantity)),
                 (speaker, text) -> AgentPacketGatewayRuntime.packets().broadcastChatText(speaker, text, false, 1),
-                barterEnabled, counterpartyNeeds, timeout, interactionRangePixels);
+                barterEnabled, counterpartyNeeds, StallOfferStore.noop(), timeout, interactionRangePixels);
+    }
+
+    public CosmicPublicTradeNegotiator(UUID runId, ParticipantDirectory participants,
+                                       CosmicMarketSellerGateway shops, TradeExecutionGateway trades,
+                                       EconomyEvidenceJournal journal, NegotiationEvidenceStore sessions,
+                                       boolean barterEnabled, CounterpartyNeedReader counterpartyNeeds,
+                                       StallOfferStore stallOffers, Duration timeout,
+                                       int interactionRangePixels) {
+        this(runId, participants, shops::close, trades, journal, sessions,
+                (itemId, quantity) -> Math.max(0, ItemInformationProvider.getInstance().getPrice(itemId, quantity)),
+                (speaker, text) -> AgentPacketGatewayRuntime.packets().broadcastChatText(speaker, text, false, 1),
+                barterEnabled, counterpartyNeeds, stallOffers, timeout, interactionRangePixels);
     }
 
     CosmicPublicTradeNegotiator(UUID runId, ParticipantDirectory participants,
@@ -61,7 +78,7 @@ public final class CosmicPublicTradeNegotiator implements AutonomousFreeMarketBe
                                 NpcValueCatalog npcValues, PublicChatGateway chat,
                                 Duration timeout, int interactionRangePixels) {
         this(runId, participants, shops, trades, journal, sessions, npcValues, chat, false,
-                (agent, profile, at) -> List.of(), timeout, interactionRangePixels);
+                (agent, profile, at) -> List.of(), StallOfferStore.noop(), timeout, interactionRangePixels);
     }
 
     CosmicPublicTradeNegotiator(UUID runId, ParticipantDirectory participants,
@@ -70,6 +87,16 @@ public final class CosmicPublicTradeNegotiator implements AutonomousFreeMarketBe
                                 NpcValueCatalog npcValues, PublicChatGateway chat,
                                 boolean barterEnabled, CounterpartyNeedReader counterpartyNeeds,
                                 Duration timeout, int interactionRangePixels) {
+        this(runId, participants, shops, trades, journal, sessions, npcValues, chat, barterEnabled,
+                counterpartyNeeds, StallOfferStore.noop(), timeout, interactionRangePixels);
+    }
+
+    CosmicPublicTradeNegotiator(UUID runId, ParticipantDirectory participants,
+                                StallCloser shops, TradeExecutionGateway trades,
+                                EconomyEvidenceJournal journal, NegotiationEvidenceStore sessions,
+                                NpcValueCatalog npcValues, PublicChatGateway chat,
+                                boolean barterEnabled, CounterpartyNeedReader counterpartyNeeds,
+                                StallOfferStore stallOffers, Duration timeout, int interactionRangePixels) {
         this.runId = Objects.requireNonNull(runId); this.participants = Objects.requireNonNull(participants);
         this.shops = Objects.requireNonNull(shops); this.trades = Objects.requireNonNull(trades);
         this.journal = Objects.requireNonNull(journal); this.sessions = Objects.requireNonNull(sessions);
@@ -77,6 +104,7 @@ public final class CosmicPublicTradeNegotiator implements AutonomousFreeMarketBe
         this.chat = Objects.requireNonNull(chat);
         this.barterEnabled = barterEnabled;
         this.counterpartyNeeds = Objects.requireNonNull(counterpartyNeeds);
+        this.stallOffers = Objects.requireNonNull(stallOffers);
         if (timeout.isZero() || timeout.isNegative() || interactionRangePixels <= 0)
             throw new IllegalArgumentException("negotiation timing and range must be positive");
         this.interactionRangePixels = interactionRangePixels;
@@ -101,6 +129,8 @@ public final class CosmicPublicTradeNegotiator implements AutonomousFreeMarketBe
         long ask = candidate.observation().bundlePrice();
         long offer = Math.min(candidate.need().maximumWillingnessToPay(), Math.max(1,
                 Math.round(ask * (1d - .15d * buyerProfile.negotiationAggressiveness()))));
+        offer = Math.min(offer, Math.max(0, buyer.getMeso()));
+        if (offer <= 0) return Result.none();
         int quantity = Math.min(candidate.observation().quantityPerBundle(), candidate.need().deficit());
         long npcFloor = npcValues.sellValue(candidate.observation().itemId(), quantity);
         long reserve = Math.max(npcFloor, Math.round(ask *
@@ -108,13 +138,36 @@ public final class CosmicPublicTradeNegotiator implements AutonomousFreeMarketBe
         String id = UUID.nameUUIDFromBytes((runId + ":" + buyerProfile.agentId() + ":"
                 + seller.profile().agentId() + ":" + logicalAt + ":" + candidate.observation().listingId())
                 .getBytes(StandardCharsets.UTF_8)).toString();
+        String proposalText = StallOfferFlavorRenderer.render(candidate.observation(), offer);
+        StallOffer structuredOffer = null;
+        if (stallOffers.enabled()) {
+            structuredOffer = new StallOffer(UUID.fromString(id), runId, buyerProfile.agentId(),
+                    seller.profile().agentId(), stallId(candidate.observation().listingId()),
+                    candidate.observation().listingId(), candidate.observation().roomMapId(),
+                    candidate.observation().itemId(), candidate.observation().fingerprint(),
+                    candidate.observation().attributes(), quantity, ask, offer, proposalText,
+                    logicalAt, logicalAt.plus(timeout), StallOffer.Status.PENDING);
+            stallOffers.create(structuredOffer);
+            if (!postStallChat(buyer, seller.character(), proposalText)) {
+                resolveOffer(structuredOffer, StallOffer.Status.FAILED,
+                        "stall chat visitor slots were unavailable", logicalAt, null);
+                return new Result(true, false, id, "CHAT_DELIVERY_FAILED",
+                        candidate.observation().itemId(), offer, Map.of("ask", ask));
+            }
+            recordSocial(buyer, buyerProfile.agentId(), seller.profile().agentId(), logicalAt,
+                    "STALL_OFFER_LEFT", proposalText, candidate.observation().itemId(),
+                    Map.of("offerId", id, "listingId", candidate.observation().listingId(),
+                            "mesos", offer, "quantity", quantity, "ask", ask,
+                            "itemFingerprint", candidate.observation().fingerprint()));
+            return new Result(true, false, id, "OFFER_LEFT", candidate.observation().itemId(), offer,
+                    Map.of("ask", ask, "quantity", quantity,
+                            "itemFingerprint", candidate.observation().fingerprint()));
+        }
         PublicNegotiationSession session = new PublicNegotiationSession(id, buyerProfile.agentId(),
                 seller.profile().agentId(), logicalAt, timeout);
         speak(buyer, buyerProfile.agentId(), seller.profile().agentId(), logicalAt, "TRADE_INVITE",
                 "Would you negotiate for " + quantity + " of item " + candidate.observation().itemId() + "?",
                 candidate.observation().itemId(), Map.of("listingId", candidate.observation().listingId()));
-        String proposalText = "I offer " + offer + " mesos for " + quantity + " of item "
-                + candidate.observation().itemId() + ".";
         TradeOffer buyerOffer = new TradeOffer(offer, Map.of());
         TradeOffer sellerOffer = new TradeOffer(0, Map.of(candidate.observation().itemId(), quantity));
         session.propose(buyerProfile.agentId(), buyerOffer, sellerOffer, proposalText, logicalAt);
@@ -144,8 +197,24 @@ public final class CosmicPublicTradeNegotiator implements AutonomousFreeMarketBe
                     "REJECT", rejection, candidate.observation().itemId(),
                     Map.of("reserve", reserve, "npcFloor", npcFloor));
             sessions.record(runId, candidate.observation().itemId(), logicalAt, logicalAt, session, null);
+            resolveOffer(structuredOffer, StallOffer.Status.REJECTED, rejection, logicalAt, null);
             return new Result(true, false, id, "REJECTED", candidate.observation().itemId(), offer,
                     Map.of("ask", ask, "reserve", reserve, "npcFloor", npcFloor));
+        }
+
+        if (ItemConstants.getInventoryType(candidate.observation().itemId())
+                == client.inventory.InventoryType.EQUIP) {
+            String response = "Accepted in principle; waiting for fingerprint-exact settlement.";
+            session.agree(seller.profile().agentId(), response, logicalAt);
+            speak(seller.character(), seller.profile().agentId(), buyerProfile.agentId(), logicalAt,
+                    "ACCEPT_AWAITING_SETTLEMENT", response, candidate.observation().itemId(),
+                    Map.of("acceptedMesos", offer, "fingerprint", candidate.observation().fingerprint()));
+            sessions.record(runId, candidate.observation().itemId(), logicalAt, logicalAt, session, null);
+            resolveOffer(structuredOffer, StallOffer.Status.ACCEPTED_AWAITING_SETTLEMENT,
+                    response, logicalAt, null);
+            return new Result(true, false, id, "ACCEPTED_AWAITING_SETTLEMENT",
+                    candidate.observation().itemId(), offer,
+                    Map.of("ask", ask, "reserve", reserve, "fingerprintExact", true));
         }
 
         String acceptance = "Accepted. I will close my stall and trade here.";
@@ -160,6 +229,7 @@ public final class CosmicPublicTradeNegotiator implements AutonomousFreeMarketBe
         if (!shops.close(seller.character(), "NEGOTIATED_DIRECT_TRADE")) {
             session.markExecution(false, "stall close failed", logicalAt);
             sessions.record(runId, candidate.observation().itemId(), logicalAt, logicalAt, session, null);
+            resolveOffer(structuredOffer, StallOffer.Status.FAILED, "stall close failed", logicalAt, null);
             return new Result(true, false, id, "STALL_CLOSE_FAILED", candidate.observation().itemId(), offer,
                     Map.of("ask", ask, "reserve", reserve));
         }
@@ -171,6 +241,10 @@ public final class CosmicPublicTradeNegotiator implements AutonomousFreeMarketBe
                         : buyerProfile.agentId(), logicalAt, execution.succeeded() ? "EXECUTED" : "FAILED",
                 execution.evidence(), candidate.observation().itemId(), Map.of("transactionId", execution.transactionId()));
         sessions.record(runId, candidate.observation().itemId(), logicalAt, logicalAt, session,
+                execution.transactionId().isBlank() ? null : execution.transactionId());
+        resolveOffer(structuredOffer, execution.succeeded()
+                        ? StallOffer.Status.EXECUTED : StallOffer.Status.FAILED,
+                execution.evidence(), logicalAt,
                 execution.transactionId().isBlank() ? null : execution.transactionId());
         Map<String, Object> outcome = new LinkedHashMap<>();
         outcome.put("ask", ask); outcome.put("reserve", reserve); outcome.put("npcFloor", npcFloor);
@@ -215,8 +289,6 @@ public final class CosmicPublicTradeNegotiator implements AutonomousFreeMarketBe
 
     private Candidate candidate(Character buyer, MarketObservation observation, AgentNeed need) {
         if (observation.bundlePrice() <= need.maximumWillingnessToPay()) return null;
-        if (ItemConstants.getInventoryType(observation.itemId()) == client.inventory.InventoryType.EQUIP)
-            return null; // equipment identity must remain fingerprint-exact; fixed-price stalls support it today
         Participant seller = parseSeller(observation);
         if (seller == null || !nearby(buyer, seller.character())) return null;
         double surplus = need.urgency() + (need.maximumWillingnessToPay()
@@ -238,9 +310,38 @@ public final class CosmicPublicTradeNegotiator implements AutonomousFreeMarketBe
     private void speak(Character speaker, String speakerId, String targetId, Instant at, String kind,
                        String text, int itemId, Map<String, Object> intent) {
         chat.broadcast(speaker, text);
+        recordSocial(speaker, speakerId, targetId, at, kind, text, itemId, intent);
+    }
+
+    private void recordSocial(Character speaker, String speakerId, String targetId, Instant at, String kind,
+                              String text, int itemId, Map<String, Object> intent) {
         String raw = runId + ":" + speakerId + ":" + targetId + ":" + at + ":" + kind + ":" + text;
         journal.appendSocial(new SocialEvidence(UUID.nameUUIDFromBytes(raw.getBytes(StandardCharsets.UTF_8)),
                 runId, at, speaker.getMapId(), speakerId, targetId, kind, text, intent, itemId, null));
+    }
+
+    private static boolean postStallChat(Character buyer, Character seller, String text) {
+        PlayerShop shop = seller == null ? null : seller.getPlayerShop();
+        if (shop == null || !shop.isOpen() || shop.isOwner(buyer) || !shop.visitShop(buyer)) return false;
+        try {
+            shop.chat(buyer.getClient(), text);
+            return true;
+        } finally {
+            if (shop.isVisitor(buyer)) shop.removeVisitor(buyer);
+            buyer.setPlayerShop(null);
+        }
+    }
+
+    private void resolveOffer(StallOffer offer, StallOffer.Status status, String response,
+                              Instant respondedAt, String settlementTransactionId) {
+        if (offer != null) {
+            stallOffers.resolve(offer.offerId(), status, response, respondedAt, settlementTransactionId);
+        }
+    }
+
+    private static String stallId(String listingId) {
+        int separator = listingId.lastIndexOf(':');
+        return separator <= 0 ? listingId : listingId.substring(0, separator);
     }
 
     private static boolean matches(AgentNeed need, int itemId) {

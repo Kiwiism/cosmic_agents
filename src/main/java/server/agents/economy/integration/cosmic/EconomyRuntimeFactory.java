@@ -45,6 +45,10 @@ public final class EconomyRuntimeFactory {
         EconomyParticipantRegistry participants = new EconomyParticipantRegistry(liveAgents);
 
         JdbcEconomyEvidenceJournal evidenceJournal = new JdbcEconomyEvidenceJournal(economyDataSource);
+        CosmicAgentEconomyFacade economyFacade = new CosmicAgentEconomyFacade(participants,
+                new server.agents.economy.ownership.DefaultAgentEconomyFacade(runId,
+                        new server.agents.economy.ownership.ShadowEconomyEvaluator(catalog),
+                        new JdbcEconomyOwnershipJournal(economyDataSource)));
         RemoteNpcCommerceService npc = new RemoteNpcCommerceService(catalog, AgentShopGatewayRuntime.shop());
         CosmicAgentNeedReader needReader = new CosmicAgentNeedReader(config.demand, catalog);
         AgentFreeMarketBuyerService buyer = new AgentFreeMarketBuyerService(
@@ -61,12 +65,14 @@ public final class EconomyRuntimeFactory {
         CosmicMarketSellerPlanReader sellerPlans = new CosmicMarketSellerPlanReader(catalog,
                 config.npcCommerce.dispositionNpcId, config.market.maximumListingsPerStall,
                 config.bootstrap.shopPermitItemId, config.market.coldStartNpcMarkupMinimum,
-                config.market.coldStartNpcMarkupMaximum);
+                config.market.coldStartNpcMarkupMaximum, config.world.firstFreeMarketRoomMapId,
+                config.world.lastFreeMarketRoomMapId);
         CosmicNegotiatedTradeExecutor tradeExecutor = new CosmicNegotiatedTradeExecutor(
                 participants::admittedCharacter, config.market.interactionRangePixels);
+        JdbcStallOfferStore stallOffers = new JdbcStallOfferStore(economyDataSource);
         CosmicPublicTradeNegotiator negotiation = new CosmicPublicTradeNegotiator(runId, participants,
                 seller, tradeExecutor, evidenceJournal, new JdbcNegotiationEvidenceStore(economyDataSource),
-                config.market.barterEnabled, needReader::read,
+                config.market.barterEnabled, needReader::read, stallOffers,
                 duration(config.market.negotiationTimeout), config.market.interactionRangePixels);
         NamedRandomStreams marketRandom = new NamedRandomStreams(config.scenario.seed);
         CosmicMarketAmbientBehavior ambient = new CosmicMarketAmbientBehavior(
@@ -75,10 +81,13 @@ public final class EconomyRuntimeFactory {
         AutonomousFreeMarketBehavior market = new AutonomousFreeMarketBehavior(runId, loaded.sha256(),
                 bundle.version(), config.market, marketRandom, physical, needReader,
                 new CosmicObservedOfferNeedAugmenter(config.demand, config.scrolling, config.chairs),
-                evidenceJournal, sellerPlans, seller, new CosmicNpcResourceProcurement(needReader, npc),
+                evidenceJournal, sellerPlans, seller, economyFacade,
+                new CosmicNpcResourceProcurement(needReader, npc),
                 config.ambient.enabled ? ambient : AutonomousFreeMarketBehavior.AmbientBehavior.disabled(),
                 negotiation, new CosmicScrollProjectService(runId, marketRandom),
+                new CosmicStallOfferReviewService(runId, stallOffers),
                 new CosmicQuestLifecycleService(runId, config.quests, marketRandom, catalog, npcLocations),
+                config.world.firstFreeMarketRoomMapId, config.world.lastFreeMarketRoomMapId,
                 duration(config.market.actionPoll), duration(config.market.postTripDelay),
                 duration(config.market.maximumListingDuration), duration(config.npcCommerce.logicalServiceDelay));
         CalibratedCosmicActivityPlanner activity = new CalibratedCosmicActivityPlanner(config.activity,
@@ -139,9 +148,16 @@ public final class EconomyRuntimeFactory {
                 new JdbcCosmicEconomicEventIngestor(economyDataSource),
                 new JdbcEconomyProjectionService(economyDataSource),
                 new JdbcEconomyInvariantAuditor(economyDataSource));
-        return new ManagedEconomyRun(application, pipeline, runRepository,
+        ManagedEconomyRun managed = new ManagedEconomyRun(application, pipeline, runRepository,
                 config.persistence.evidenceBatchSize, config.scenario.stopOnInvariantViolation,
                 initialStatus);
+        server.agents.integration.AgentEconomicActionGuardRuntime.install((agent, type, slot, itemId,
+                                                                          quantity, venue, at) -> {
+            var permit = economyFacade.claimNpcSale(agent, type, slot, itemId, quantity, venue, at);
+            return new server.agents.integration.AgentEconomicActionGuardRuntime.Decision(
+                    permit.allowed(), permit.reason());
+        });
+        return managed;
     }
 
     private static Duration duration(String value) { return Duration.parse(value); }

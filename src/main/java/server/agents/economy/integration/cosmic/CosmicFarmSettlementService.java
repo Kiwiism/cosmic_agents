@@ -9,8 +9,10 @@ import client.inventory.manipulator.InventoryManipulator;
 import constants.inventory.ItemConstants;
 import server.agents.economy.activity.FarmSessionOutcome;
 import server.economy.EconomyOperationKind;
+import server.economy.EconomyOperationContext;
 import server.economy.EconomyTransactionCoordinator;
 import server.DeathPenaltyService;
+import server.ItemInformationProvider;
 import server.maps.MapleMap;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.recovery.AgentRespawnHealthPolicy;
@@ -18,13 +20,17 @@ import tools.Randomizer;
 import tools.StringUtil;
 
 import java.util.LinkedHashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.LongSupplier;
 
 /** Applies an already-resolved activity through real Character and inventory rules. */
 public final class CosmicFarmSettlementService {
-    public void settle(Character agent, FarmSessionOutcome outcome, LongSupplier gameplayRandom) {
+    public FarmSessionOutcome settle(Character agent, FarmSessionOutcome outcome, LongSupplier gameplayRandom) {
         Objects.requireNonNull(agent); Objects.requireNonNull(outcome); Objects.requireNonNull(gameplayRandom);
         if (agent.getClient() == null) throw new IllegalStateException("live agent client is required");
         if (outcome.mesos() > Integer.MAX_VALUE || outcome.experience() > Integer.MAX_VALUE)
@@ -33,13 +39,30 @@ public final class CosmicFarmSettlementService {
                 + " exp=" + outcome.experience() + " mesos=" + outcome.mesos()
                 + " drops=" + outcome.itemDrops().size() + " died=" + outcome.death().died()
                 + " downtimeMs=" + outcome.death().downtimeMillis();
-        EconomyTransactionCoordinator.execute("offscreen-farm:" + outcome.sessionId(), agent, null,
+        AtomicReference<FarmSessionOutcome> realized = new AtomicReference<>();
+        UUID runId = EconomyOperationContext.currentMetadata().runId();
+        EconomyTransactionCoordinator.execute(idempotencyKey(runId, outcome.sessionId()), agent, null,
                 EconomyOperationKind.OFFSCREEN_FARM_SETTLEMENT, summary, context -> {
                     MutationEvidence evidence = Randomizer.withLongSource(gameplayRandom,
                             () -> mutate(agent, outcome));
+                    realized.set(evidence.outcome());
                     context.recordEvidence("questKillProgress", evidence.questProgress());
                     context.recordEvidence("death", evidence.death());
+                    context.recordEvidence("collectedDropCount", evidence.outcome().itemDrops().size());
+                    context.recordEvidence("uncollectedDrops", evidence.outcome().uncollectedDrops());
                 });
+        FarmSessionOutcome result = realized.get();
+        if (result == null)
+            throw new IllegalStateException("farm settlement was already committed but its realized outcome "
+                    + "was not journaled; manual recovery is required");
+        return result;
+    }
+
+    static String idempotencyKey(UUID runId, String sessionId) {
+        if (runId == null) throw new IllegalStateException("farm settlement requires an attributed economy run");
+        if (sessionId == null || sessionId.isBlank())
+            throw new IllegalArgumentException("farm settlement session ID is required");
+        return "offscreen-farm:" + runId + ':' + sessionId;
     }
 
     private static MutationEvidence mutate(Character agent, FarmSessionOutcome outcome) {
@@ -50,12 +73,24 @@ public final class CosmicFarmSettlementService {
             InventoryManipulator.removeById(agent.getClient(), type, consumed.itemId(),
                     consumed.quantity(), false, true);
         }
+        List<FarmSessionOutcome.ItemDrop> collected = new ArrayList<>();
+        List<FarmSessionOutcome.UncollectedDrop> uncollected = new ArrayList<>(outcome.uncollectedDrops());
+        ItemInformationProvider items = ItemInformationProvider.getInstance();
         for (FarmSessionOutcome.ItemDrop drop : outcome.itemDrops()) {
+            if (drop.quantity() > Short.MAX_VALUE)
+                throw new IllegalStateException("drop quantity exceeds Cosmic item limit: " + drop.quantity());
+            String rejection = collectionRejection(agent, items, drop);
+            if (rejection != null) {
+                uncollected.add(new FarmSessionOutcome.UncollectedDrop(drop, rejection));
+                continue;
+            }
             Item item = drop.equipmentStats().isEmpty()
                     ? new Item(drop.itemId(), (short) 0, (short) drop.quantity())
                     : equipment(drop.itemId(), drop.equipmentStats());
             if (!InventoryManipulator.addFromDrop(agent.getClient(), item, false))
-                throw new IllegalStateException("inventory capacity changed before farm settlement");
+                throw new IllegalStateException("drop collection diverged after successful preflight: item="
+                        + drop.itemId() + " quantity=" + drop.quantity());
+            collected.add(drop);
         }
         if (outcome.mesos() > 0) {
             if (!agent.canHoldMeso((int) outcome.mesos()))
@@ -65,7 +100,19 @@ public final class CosmicFarmSettlementService {
         if (outcome.experience() > 0) agent.gainExp((int) outcome.experience(), false, false);
         Map<String, Object> questProgress = advanceQuestKills(agent, outcome.killCounts());
         Map<String, Object> death = applyDeath(agent, outcome);
-        return new MutationEvidence(questProgress, death);
+        FarmSessionOutcome realized = new FarmSessionOutcome(outcome.sessionId(), outcome.calibrationId(),
+                outcome.agentId(), outcome.mapId(), outcome.completedAt(), outcome.experience(), outcome.mesos(),
+                collected, uncollected, outcome.consumedItems(), outcome.killCounts(), outcome.death());
+        return new MutationEvidence(realized, questProgress, death);
+    }
+
+    private static String collectionRejection(Character agent, ItemInformationProvider items,
+                                               FarmSessionOutcome.ItemDrop drop) {
+        if (items.isPickupRestricted(drop.itemId(), agent) && agent.haveItemWithId(drop.itemId(), true))
+            return "PICKUP_RESTRICTED_ALREADY_OWNED";
+        if (!InventoryManipulator.checkSpace(agent.getClient(), drop.itemId(), drop.quantity(), ""))
+            return "INVENTORY_CAPACITY";
+        return null;
     }
 
     private static Map<String, Object> applyDeath(Character agent, FarmSessionOutcome outcome) {
@@ -142,5 +189,6 @@ public final class CosmicFarmSettlementService {
         return (short) stats.getOrDefault(key, 0).intValue();
     }
 
-    private record MutationEvidence(Map<String, Object> questProgress, Map<String, Object> death) { }
+    private record MutationEvidence(FarmSessionOutcome outcome, Map<String, Object> questProgress,
+                                    Map<String, Object> death) { }
 }

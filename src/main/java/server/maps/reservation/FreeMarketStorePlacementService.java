@@ -45,7 +45,7 @@ public final class FreeMarketStorePlacementService {
         }
         Optional<CharacterSpaceReservation> existing = reservation(character);
         if (existing.isPresent()) return existing;
-        Point origin = character.getPosition();
+        Point origin = roomEntrance(character).orElse(character.getPosition());
         List<CharacterSpace> spaces = FreeMarketCharacterSpaceCatalog.spaces(character.getMapId());
         List<CharacterSpace> candidates = spaces.stream()
                 .sorted(Comparator.comparingDouble(space -> space.position().distanceSq(origin)))
@@ -57,6 +57,13 @@ public final class FreeMarketStorePlacementService {
             if (reserved.isPresent()) return reserved;
         }
         return Optional.empty();
+    }
+
+    private static Optional<Point> roomEntrance(Character character) {
+        return character.getMap().getPortals().stream()
+                .filter(portal -> portal.getTargetMapId() == 910000000)
+                .min(Comparator.comparingInt(Portal::getId))
+                .map(Portal::getPosition);
     }
 
     public static Optional<CharacterSpaceReservation> reservation(Character character) {

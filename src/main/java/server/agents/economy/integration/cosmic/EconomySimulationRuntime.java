@@ -54,7 +54,11 @@ public final class EconomySimulationRuntime {
     }
 
     public static synchronized Preflight preflight() {
-        LoadedEconomyConfig loaded = new EconomyConfigLoader().load();
+        return preflight(EconomyConfigLoader.DEFAULT_PATH);
+    }
+
+    public static synchronized Preflight preflight(Path configPath) {
+        LoadedEconomyConfig loaded = new EconomyConfigLoader().load(configPath);
         List<Character> agents = AgentRuntimeRegistry.activeEntriesSnapshot().stream()
                 .map(AgentRuntimeEntry::bot).filter(java.util.Objects::nonNull)
                 .sorted(Comparator.comparingInt(Character::getId)).toList();
@@ -162,6 +166,7 @@ public final class EconomySimulationRuntime {
             activateClock(config.config().clock.mode);
             return status();
         } catch (RuntimeException failure) {
+            server.agents.integration.AgentEconomicActionGuardRuntime.clear();
             clearFailedStart(runId);
             AgentExclusiveControlRuntime.release(owner);
             if (database != null) database.close();
@@ -204,6 +209,7 @@ public final class EconomySimulationRuntime {
             activateClock(config.config().clock.mode);
             return status();
         } catch (RuntimeException failure) {
+            server.agents.integration.AgentEconomicActionGuardRuntime.clear();
             clearFailedStart(runId);
             AgentExclusiveControlRuntime.release(controlOwner(runId));
             database.close(); throw failure;
@@ -233,6 +239,7 @@ public final class EconomySimulationRuntime {
         requireRun();
         var result = run.complete();
         cancelAutoAdvance();
+        server.agents.integration.AgentEconomicActionGuardRuntime.clear();
         releaseControl();
         return result;
     }
@@ -241,6 +248,7 @@ public final class EconomySimulationRuntime {
         requireRun();
         var result = run.fail(reason);
         cancelAutoAdvance();
+        server.agents.integration.AgentEconomicActionGuardRuntime.clear();
         releaseControl();
         return result;
     }
@@ -254,6 +262,7 @@ public final class EconomySimulationRuntime {
 
     public static synchronized void stop() {
         cancelAutoAdvance();
+        server.agents.integration.AgentEconomicActionGuardRuntime.clear();
         if (run != null && !java.util.Set.of("COMPLETED", "FAILED", "STOPPED").contains(run.status()))
             run.checkpoint("STOPPED");
         run = null; directory = Map.of();
@@ -305,6 +314,7 @@ public final class EconomySimulationRuntime {
                 log.error("Could not persist automatic economy advancement failure", evidenceFailure);
             }
             cancelAutoAdvance();
+            server.agents.integration.AgentEconomicActionGuardRuntime.clear();
             releaseControl();
         }
     }
@@ -320,6 +330,7 @@ public final class EconomySimulationRuntime {
         }
         if ("COMPLETED".equals(result.status())) {
             cancelAutoAdvance();
+            server.agents.integration.AgentEconomicActionGuardRuntime.clear();
             releaseControl();
             return;
         }
