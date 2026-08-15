@@ -611,13 +611,9 @@ foreach ($mobId in @($victoriaMobIds | Sort-Object)) {
     })
 }
 
-$generatedAtUtc = @($sourcePaths.Values | ForEach-Object {
-    (Get-Item -LiteralPath $_).LastWriteTimeUtc
-} | Sort-Object -Descending | Select-Object -First 1)[0].ToString("o")
 $metadata = [ordered]@{
     schemaVersion = 1
     revision = $revision
-    generatedAtUtc = $generatedAtUtc
     sourcePaths = $sourcePaths
     sourceHashes = $sourceHashes
 }
@@ -628,7 +624,6 @@ $outputs = [ordered]@{
         schemaVersion = 1
         catalogId = "victoria-quest-facts-$shortRevision"
         revision = $revision
-        generatedAtUtc = $metadata.generatedAtUtc
         sourceHashes = $sourceHashes
         entries = @($questFacts)
     }
@@ -636,7 +631,6 @@ $outputs = [ordered]@{
         schemaVersion = 1
         catalogId = "victoria-mob-drop-facts-$shortRevision"
         revision = $revision
-        generatedAtUtc = $metadata.generatedAtUtc
         sourceHashes = $sourceHashes
         entries = @($mobDropFacts)
     }
@@ -644,7 +638,6 @@ $outputs = [ordered]@{
         schemaVersion = 1
         catalogId = "victoria-map-facts-$shortRevision"
         revision = $revision
-        generatedAtUtc = $metadata.generatedAtUtc
         sourceHashes = $sourceHashes
         entries = @($mapFacts)
     }
@@ -652,7 +645,6 @@ $outputs = [ordered]@{
         schemaVersion = 2
         catalogId = "victoria-quest-hunt-index-$shortRevision"
         revision = $revision
-        generatedAtUtc = $metadata.generatedAtUtc
         sourceHashes = $sourceHashes
         scoringPolicy = [ordered]@{
             purpose = "expected relevant quest progress with topology, concentration, drop, filler, and hazard evidence"
@@ -665,7 +657,6 @@ $outputs = [ordered]@{
         schemaVersion = 1
         catalogId = "victoria-quest-item-demand-index-$shortRevision"
         revision = $revision
-        generatedAtUtc = $metadata.generatedAtUtc
         sourceHashes = $sourceHashes
         demandHorizons = @(5, 15, 25)
         entries = @($questItemDemandIndex)

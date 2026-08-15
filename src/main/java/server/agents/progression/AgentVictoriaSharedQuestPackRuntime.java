@@ -221,23 +221,17 @@ final class AgentVictoriaSharedQuestPackRuntime {
                 entry, huntKey, progress, nowMs);
         Set<Integer> failedMaps = AgentHuntRecoveryRuntime.failedMaps(
                 entry, huntKey, progress, nowMs);
-        AgentVictoriaQuestRuntimeCatalog.HuntMap preferredMap =
-                new AgentVictoriaQuestRuntimeCatalog.HuntMap(
-                        1, step.mapId(), 2, 4, step.preferredMobIds());
+        AgentHuntObjectiveSpec objective = demands.isEmpty() ? null
+                : AgentHuntObjectiveCompiler.sharedQuestPack(huntKey, step, demands);
         AgentAdaptiveQuestHuntSelector.Selection selection = demands.isEmpty() ? null
                 : AgentAdaptiveQuestHuntSelector.defaultSelector()
                         .select(new AgentHuntSelectionRequest(
-                                entry, agent, huntKey, demands, List.of(preferredMap),
-                                failedMaps, true,
+                                entry, agent, objective, failedMaps,
                                 recovering ? AgentHuntSelectionRequest.Reason.EXHAUSTION_FALLBACK
                                         : AgentHuntSelectionRequest.Reason.NORMAL,
                                 nowMs))
                         .orElse(null);
-        int authoredFallbackMapId = authoredFallbackMapId(
-                step, failedMaps, agent.getMapId());
-        int huntMapId = authoredFallbackMapId > 0
-                ? authoredFallbackMapId
-                : selection == null ? step.mapId() : selection.map().mapId();
+        int huntMapId = selection == null ? step.mapId() : selection.map().mapId();
         if (agent.getMapId() != huntMapId) {
             if (step.skipReturnScrollPreparation()) {
                 AgentQuestReturnScrollPolicy.clear(entry);
@@ -293,20 +287,6 @@ final class AgentVictoriaSharedQuestPackRuntime {
                 AgentCombatPolicyConfig.spawnPressureMinTargetSharePercent());
         gateway.grind(entry, preferred, incidental);
         return Result.RUNNING;
-    }
-
-    static int authoredFallbackMapId(
-            AgentVictoriaSharedQuestPackCatalog.Step step,
-            Set<Integer> failedMaps,
-            int currentMapId) {
-        if (!failedMaps.contains(step.mapId())) {
-            return -1;
-        }
-        return step.fallbackMapIds().stream()
-                .filter(mapId -> !failedMaps.contains(mapId))
-                .filter(mapId -> AgentVictoriaTrainingRouteCatalog.canRoute(currentMapId, mapId))
-                .findFirst()
-                .orElse(-1);
     }
 
     private static List<AgentHuntSelectionRequest.ObjectiveDemand> huntDemands(

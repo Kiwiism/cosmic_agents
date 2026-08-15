@@ -32,7 +32,7 @@ class AgentVictoriaSharedQuestPackRuntimeTest {
     }
 
     @Test
-    void failedForestOfWisdomUsesAuthoredFieldNorthFallback() {
+    void forestOfWisdomFallbackCompilesIntoTheSharedHuntContract() {
         AgentVictoriaSharedQuestPackCatalog.Step hunt =
                 AgentVictoriaSharedQuestPackCatalog.require("nautilus-pre15").steps().stream()
                         .filter(step -> "HUNT".equals(step.type())
@@ -41,12 +41,16 @@ class AgentVictoriaSharedQuestPackRuntimeTest {
                         .findFirst()
                         .orElseThrow();
 
-        assertEquals(101010000,
-                AgentVictoriaSharedQuestPackRuntime.authoredFallbackMapId(
-                        hunt, Set.of(100040100), 100040100));
-        assertEquals(-1,
-                AgentVictoriaSharedQuestPackRuntime.authoredFallbackMapId(
-                        hunt, Set.of(100040100, 101010000), 100040100));
+        AgentHuntObjectiveSpec objective = AgentHuntObjectiveCompiler.sharedQuestPack(
+                "shared:nautilus-slimes",
+                hunt,
+                List.of(new AgentHuntSelectionRequest.ObjectiveDemand(
+                        28277, "28277:kill:210100", "kill-mob",
+                        210100, 30, 0, Set.of(210100))));
+
+        assertEquals(List.of(100040100, 101010000), objective.preferredMaps().stream()
+                .map(AgentVictoriaQuestRuntimeCatalog.HuntMap::mapId)
+                .toList());
     }
 
     @Test

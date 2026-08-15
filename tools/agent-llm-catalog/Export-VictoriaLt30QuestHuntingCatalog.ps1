@@ -355,7 +355,6 @@ $payload = [ordered]@{
     schemaVersion = 1
     catalogId = "victoria-lt30-quest-hunting-$($revision.Substring(0, 12))"
     revision = $revision
-    generatedAtUtc = [DateTime]::UtcNow.ToString("o")
     scope = [ordered]@{
         region = "Victoria Island"
         maximumStartLevel = 30

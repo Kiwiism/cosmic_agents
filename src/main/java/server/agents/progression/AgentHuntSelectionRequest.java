@@ -9,23 +9,48 @@ import java.util.Set;
 record AgentHuntSelectionRequest(
         AgentRuntimeEntry entry,
         Character agent,
-        String selectionId,
-        List<ObjectiveDemand> objectives,
-        List<AgentVictoriaQuestRuntimeCatalog.HuntMap> preferredMaps,
+        AgentHuntObjectiveSpec objective,
         Set<Integer> excludedMapIds,
-        boolean mvpPlan,
         Reason reason,
         long nowMs) {
 
     AgentHuntSelectionRequest {
-        if (entry == null || agent == null || selectionId == null || selectionId.isBlank()
-                || objectives == null || objectives.isEmpty()) {
+        if (entry == null || agent == null || objective == null) {
             throw new IllegalArgumentException("a hunt request requires an Agent and objectives");
         }
-        objectives = List.copyOf(objectives);
-        preferredMaps = preferredMaps == null ? List.of() : List.copyOf(preferredMaps);
         excludedMapIds = excludedMapIds == null ? Set.of() : Set.copyOf(excludedMapIds);
         reason = reason == null ? Reason.NORMAL : reason;
+    }
+
+    AgentHuntSelectionRequest(
+            AgentRuntimeEntry entry,
+            Character agent,
+            String selectionId,
+            List<ObjectiveDemand> objectives,
+            List<AgentVictoriaQuestRuntimeCatalog.HuntMap> preferredMaps,
+            Set<Integer> excludedMapIds,
+            boolean mvpPlan,
+            Reason reason,
+            long nowMs) {
+        this(entry, agent,
+                new AgentHuntObjectiveSpec(selectionId, objectives, preferredMaps, mvpPlan),
+                excludedMapIds, reason, nowMs);
+    }
+
+    String selectionId() {
+        return objective.selectionId();
+    }
+
+    List<ObjectiveDemand> objectives() {
+        return objective.objectives();
+    }
+
+    List<AgentVictoriaQuestRuntimeCatalog.HuntMap> preferredMaps() {
+        return objective.preferredMaps();
+    }
+
+    boolean mvpPlan() {
+        return objective.mvpPlan();
     }
 
     record ObjectiveDemand(
