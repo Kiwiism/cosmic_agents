@@ -12,7 +12,7 @@ import server.agents.economy.decision.ItemDispositionPolicy;
 import server.agents.economy.market.PrivateMarketKnowledge;
 import server.agents.economy.market.MarketRoomAllocator;
 import server.agents.economy.market.AgentItemValuationService;
-import server.agents.economy.scenario.EconomyAgentProfile;
+import server.agents.economy.session.CommerceParticipant;
 import server.maps.reservation.FreeMarketCharacterSpaceCatalog;
 
 import java.time.Duration;
@@ -122,7 +122,7 @@ public final class CosmicMarketSellerPlanReader {
         this.valuations = Objects.requireNonNull(valuations);
     }
 
-    public MarketSellerPlan read(Character agent, EconomyAgentProfile profile,
+    public MarketSellerPlan read(Character agent, CommerceParticipant profile,
                                  PrivateMarketKnowledge knowledge, List<AgentNeed> needs, Instant now) {
         Map<Integer, Integer> reserved = new HashMap<>();
         needs.forEach(need -> {
@@ -208,7 +208,7 @@ public final class CosmicMarketSellerPlanReader {
         roomAllocator.release(sellerAgentId);
     }
 
-    private long coldStartAsk(long npc, EconomyAgentProfile profile) {
+    private long coldStartAsk(long npc, CommerceParticipant profile) {
         double disposition = (profile.riskTolerance() + (1d - profile.liquidityPreference())) / 2d;
         double markup = coldStartMarkupMinimum
                 + (coldStartMarkupMaximum - coldStartMarkupMinimum) * disposition;

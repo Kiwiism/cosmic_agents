@@ -6,7 +6,7 @@ import constants.id.ItemId;
 import server.agents.capabilities.movement.AgentChairService;
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
 import server.agents.economy.ambient.AmbientBehaviorPolicy;
-import server.agents.economy.scenario.EconomyAgentProfile;
+import server.agents.economy.session.CommerceParticipant;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
 
@@ -25,7 +25,7 @@ public final class CosmicMarketAmbientBehavior implements AutonomousFreeMarketBe
     }
 
     @Override
-    public Result perform(Character agent, EconomyAgentProfile profile, Instant logicalAt,
+    public Result perform(Character agent, CommerceParticipant profile, Instant logicalAt,
                           boolean ownsOpenStall, boolean negotiating, int consecutiveActions) {
         Optional<Integer> chair = ownedChair(agent);
         AmbientBehaviorPolicy.Context context = new AmbientBehaviorPolicy.Context(profile.agentId(),

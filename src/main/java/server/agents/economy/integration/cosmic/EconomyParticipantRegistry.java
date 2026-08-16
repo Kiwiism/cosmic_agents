@@ -1,7 +1,7 @@
 package server.agents.economy.integration.cosmic;
 
 import client.Character;
-import server.agents.economy.scenario.EconomyAgentProfile;
+import server.agents.economy.session.CommerceParticipant;
 
 import java.util.Map;
 import java.util.Objects;
@@ -23,7 +23,7 @@ public final class EconomyParticipantRegistry implements CosmicEconomyWorldAdapt
 
     @Override public Character resolve(String logicalAgentId) { return source.apply(logicalAgentId); }
 
-    public void admitted(EconomyAgentProfile profile, Character character) {
+    public void admitted(CommerceParticipant profile, Character character) {
         CosmicPublicTradeNegotiator.Participant participant =
                 new CosmicPublicTradeNegotiator.Participant(character, profile);
         CosmicPublicTradeNegotiator.Participant logicalPrevious = byLogical.putIfAbsent(profile.agentId(), participant);
@@ -39,7 +39,7 @@ public final class EconomyParticipantRegistry implements CosmicEconomyWorldAdapt
         activeLogicalIds.add(profile.agentId());
     }
 
-    public void released(EconomyAgentProfile profile, Character character) {
+    public void released(CommerceParticipant profile, Character character) {
         CosmicPublicTradeNegotiator.Participant bound = byLogical.get(profile.agentId());
         if (bound == null || bound.character().getId() != character.getId())
             throw new IllegalStateException("economy participant release does not match its binding");

@@ -1,6 +1,6 @@
 package server.agents.runtime.activity.session.adapter;
 
-import server.agents.economy.scenario.EconomyAgentProfile;
+import server.agents.economy.session.CommerceParticipant;
 import server.agents.economy.session.EconomySessionPort;
 import server.agents.runtime.activity.session.AgentActivityAdmissionResult;
 import server.agents.runtime.activity.session.AgentActivityExitResult;
@@ -21,7 +21,7 @@ import java.util.UUID;
 public final class EconomyActivitySessionAdapter
         implements AgentActivitySourcePort, AgentActivityTargetPort, AgentActivityOutcomePort {
     private final EconomySessionPort sessions;
-    private final EconomyAgentProfile profile;
+    private final CommerceParticipant profile;
     private final EconomySessionPort.EntryRequest request;
     private UUID sessionId;
     private long startedAtMs;
@@ -30,7 +30,7 @@ public final class EconomyActivitySessionAdapter
 
     public EconomyActivitySessionAdapter(
             EconomySessionPort sessions,
-            EconomyAgentProfile profile,
+            CommerceParticipant profile,
             EconomySessionPort.EntryRequest request) {
         this.sessions = Objects.requireNonNull(sessions, "sessions");
         this.profile = Objects.requireNonNull(profile, "profile");

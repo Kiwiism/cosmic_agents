@@ -4,9 +4,10 @@ import client.Character;
 import client.Client;
 import client.Job;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
 import server.agents.economy.persistence.EconomyBootstrapStore;
 import server.agents.economy.persistence.EconomyParticipantBindingStore;
-import server.agents.economy.scenario.EconomyAgentProfile;
+import server.agents.economy.session.CommerceParticipant;
 import server.agents.economy.scenario.EconomyWorldPort;
 import server.economy.EconomyTaxOverride;
 
@@ -20,6 +21,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 class CosmicEconomyWorldAdapterRestoreTest {
+    private final List<UUID> runIds = new java.util.ArrayList<>();
+
+    @AfterEach
+    void releaseCommerceControl() {
+        runIds.forEach(runId -> server.agents.runtime.AgentCommerceControlRuntime.release(
+                "economy:" + runId));
+    }
+
     @Test
     void typedSessionDrainsAfterMeaningfulIdleTimeout() {
         Character warrior = character(101, 100);
@@ -30,11 +39,11 @@ class CosmicEconomyWorldAdapterRestoreTest {
         when(market.drainForRelease(any(), any(), any())).thenAnswer(invocation ->
                 new EconomyWorldPort.MarketDirective(java.util.Optional.of(
                         invocation.getArgument(2, Instant.class)), java.util.Optional.empty()));
-        CosmicEconomyWorldAdapter world = new CosmicEconomyWorldAdapter(UUID.randomUUID(), 1,
+        CosmicEconomyWorldAdapter world = new CosmicEconomyWorldAdapter(runId(), 1,
                 "config", "catalog", ignored -> warrior, market, ignored -> new EconomyTaxOverride(0, 0),
                 EconomyParticipantBindingStore.NO_OP, EconomyBootstrapStore.NO_OP,
                 (profile, character) -> { }, (profile, character) -> { });
-        EconomyAgentProfile profile = profile("agent-1", "warrior");
+        CommerceParticipant profile = profile("agent-1", "warrior");
         UUID sessionId = UUID.randomUUID();
         world.restoreState(Map.of("schemaVersion", 1, "boundAgentIds", List.of("agent-1"),
                 "offscreenAgentIds", List.of(), "activeSessions", Map.of("agent-1", Map.of(
@@ -59,13 +68,13 @@ class CosmicEconomyWorldAdapterRestoreTest {
         when(warrior.getMapId()).thenReturn(910000000);
         CosmicEconomyWorldAdapter.MarketBehavior market = mock(CosmicEconomyWorldAdapter.MarketBehavior.class);
         when(market.perform(any(), any(), any())).thenReturn(EconomyWorldPort.MarketDirective.idle());
-        CosmicEconomyWorldAdapter world = new CosmicEconomyWorldAdapter(UUID.randomUUID(), 1,
+        CosmicEconomyWorldAdapter world = new CosmicEconomyWorldAdapter(runId(), 1,
                 "config", "catalog", ignored -> warrior, market,
                 mock(CosmicEconomyWorldAdapter.ActivityPlanner.class),
                 mock(CosmicEconomyWorldAdapter.OffscreenPresence.class),
                 mock(CosmicFarmSettlementService.class), ignored -> new EconomyTaxOverride(0, 0),
                 EconomyParticipantBindingStore.NO_OP, EconomyBootstrapStore.NO_OP);
-        EconomyAgentProfile profile = profile("agent-1", "warrior");
+        CommerceParticipant profile = profile("agent-1", "warrior");
 
         world.restoreState(Map.of("schemaVersion", 1,
                         "boundAgentIds", List.of("agent-1"),
@@ -84,14 +93,14 @@ class CosmicEconomyWorldAdapterRestoreTest {
         CosmicEconomyWorldAdapter.MarketBehavior market = mock(CosmicEconomyWorldAdapter.MarketBehavior.class);
         CosmicEconomyWorldAdapter.OffscreenPresence presence = mock(CosmicEconomyWorldAdapter.OffscreenPresence.class);
         AtomicReference<List<String>> admitted = new AtomicReference<>(new java.util.ArrayList<>());
-        CosmicEconomyWorldAdapter world = new CosmicEconomyWorldAdapter(UUID.randomUUID(), 1,
+        CosmicEconomyWorldAdapter world = new CosmicEconomyWorldAdapter(runId(), 1,
                 "config", "catalog", directory::get, market,
                 mock(CosmicEconomyWorldAdapter.ActivityPlanner.class), presence,
                 mock(CosmicFarmSettlementService.class), ignored -> new EconomyTaxOverride(0, 0),
                 EconomyParticipantBindingStore.NO_OP, EconomyBootstrapStore.NO_OP,
                 (profile, character) -> admitted.get().add(profile.agentId() + ':' + character.getId()));
-        EconomyAgentProfile first = profile("agent-1", "warrior");
-        EconomyAgentProfile second = profile("agent-2", "magician");
+        CommerceParticipant first = profile("agent-1", "warrior");
+        CommerceParticipant second = profile("agent-2", "magician");
         Map<String, Object> marketState = Map.of("phase", "BROWSING");
         Map<String, Object> state = Map.of("schemaVersion", 1,
                 "boundAgentIds", List.of("agent-1", "agent-2"),
@@ -115,7 +124,13 @@ class CosmicEconomyWorldAdapterRestoreTest {
         return character;
     }
 
-    private static EconomyAgentProfile profile(String id, String family) {
-        return new EconomyAgentProfile(id, family, .5, .5, .5, .5, .5, .5, 24, .5, .5);
+    private UUID runId() {
+        UUID runId = UUID.randomUUID();
+        runIds.add(runId);
+        return runId;
+    }
+
+    private static CommerceParticipant profile(String id, String family) {
+        return new CommerceParticipant(id, family, .5, .5, .5, .5, .5, .5, 24, .5, .5);
     }
 }

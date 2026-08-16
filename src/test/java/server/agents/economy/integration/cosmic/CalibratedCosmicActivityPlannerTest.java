@@ -9,7 +9,7 @@ import server.agents.economy.activity.ActivityCalibrationRepository;
 import server.agents.economy.activity.FarmSessionPlan;
 import server.agents.economy.activity.VictoriaActivityMapCatalog;
 import server.agents.economy.catalog.*;
-import server.agents.economy.scenario.EconomyAgentProfile;
+import server.agents.economy.session.CommerceParticipant;
 import server.agents.economy.scenario.EconomyEngineConfig;
 
 import java.time.Instant;
@@ -85,8 +85,8 @@ class CalibratedCosmicActivityPlannerTest {
         return config;
     }
 
-    private static EconomyAgentProfile profile() {
-        return new EconomyAgentProfile("agent-1", "warrior", .5, .5, .5, .5,
+    private static CommerceParticipant profile() {
+        return new CommerceParticipant("agent-1", "warrior", .5, .5, .5, .5,
                 .5, .5, 24, .5, .5);
     }
 

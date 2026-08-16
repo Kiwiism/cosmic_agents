@@ -12,7 +12,7 @@ import server.agents.economy.market.StallOffer;
 import server.agents.economy.persistence.EconomyEvidenceJournal;
 import server.agents.economy.persistence.NegotiationEvidenceStore;
 import server.agents.economy.persistence.StallOfferStore;
-import server.agents.economy.scenario.EconomyAgentProfile;
+import server.agents.economy.session.CommerceParticipant;
 import server.agents.economy.social.TradeExecutionGateway;
 import server.maps.MapleMap;
 import server.maps.PlayerShop;
@@ -210,7 +210,7 @@ class CosmicPublicTradeNegotiatorTest {
         when(closer.close(seller, "NEGOTIATED_DIRECT_TRADE")).thenReturn(true);
         when(trades.execute(anyString(), eq("buyer"), any(), eq("seller"), any()))
                 .thenReturn(new TradeExecutionGateway.Result(true, "tx-barter", "committed"));
-        EconomyAgentProfile sellerProfile = profile("seller", 0);
+        CommerceParticipant sellerProfile = profile("seller", 0);
         CosmicPublicTradeNegotiator.Participant participant =
                 new CosmicPublicTradeNegotiator.Participant(seller, sellerProfile);
         AgentNeed sellerNeed = new AgentNeed(4000001, 0, 1, .8,
@@ -233,7 +233,7 @@ class CosmicPublicTradeNegotiatorTest {
         verify(chat, times(5)).broadcast(any(), anyString());
     }
 
-    private CosmicPublicTradeNegotiator negotiator(EconomyAgentProfile sellerProfile) {
+    private CosmicPublicTradeNegotiator negotiator(CommerceParticipant sellerProfile) {
         CosmicPublicTradeNegotiator.Participant participant =
                 new CosmicPublicTradeNegotiator.Participant(seller, sellerProfile);
         return new CosmicPublicTradeNegotiator(runId,
@@ -259,8 +259,8 @@ class CosmicPublicTradeNegotiatorTest {
                 now.minusSeconds(10), now.plusSeconds(60), StallOffer.Status.PENDING);
     }
 
-    private static EconomyAgentProfile profile(String id, double negotiationAggressiveness) {
-        return new EconomyAgentProfile(id, "warrior", .5, .5, .5, .5, .5, .5,
+    private static CommerceParticipant profile(String id, double negotiationAggressiveness) {
+        return new CommerceParticipant(id, "warrior", .5, .5, .5, .5, .5, .5,
                 24, negotiationAggressiveness, .5);
     }
 

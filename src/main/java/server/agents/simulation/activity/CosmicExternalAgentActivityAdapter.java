@@ -5,7 +5,7 @@ import server.agents.economy.activity.FarmSessionOutcome;
 import server.agents.economy.activity.FarmSessionPlan;
 import server.agents.economy.activity.RuleExactFarmResolver;
 import server.agents.economy.integration.cosmic.EconomyParticipantRegistry;
-import server.agents.economy.scenario.EconomyAgentProfile;
+import server.agents.economy.session.CommerceParticipant;
 import server.agents.economy.scenario.NamedRandomStreams;
 import server.economy.EconomyOperationContext;
 import server.economy.EconomyOperationMetadata;
@@ -48,7 +48,7 @@ public final class CosmicExternalAgentActivityAdapter implements ExternalAgentAc
         this.settlement = Objects.requireNonNull(settlement); this.taxes = Objects.requireNonNull(taxes);
     }
 
-    @Override public FarmSessionPlan plan(EconomyAgentProfile profile, Instant at) {
+    @Override public FarmSessionPlan plan(CommerceParticipant profile, Instant at) {
         Character agent = bound(profile.agentId());
         requireFreeMarket(agent);
         if (participants.byLogicalId(profile.agentId()).isPresent())
@@ -62,7 +62,7 @@ public final class CosmicExternalAgentActivityAdapter implements ExternalAgentAc
         return resolver.resolve(plan, random);
     }
 
-    @Override public void begin(EconomyAgentProfile profile, FarmSessionPlan plan, Instant at) {
+    @Override public void begin(CommerceParticipant profile, FarmSessionPlan plan, Instant at) {
         Character agent = bound(profile.agentId());
         requireFreeMarket(agent);
         if (!offscreen.add(profile.agentId()))
@@ -71,7 +71,7 @@ public final class CosmicExternalAgentActivityAdapter implements ExternalAgentAc
         catch (RuntimeException failure) { offscreen.remove(profile.agentId()); throw failure; }
     }
 
-    @Override public FarmSessionOutcome settle(EconomyAgentProfile profile, FarmSessionOutcome outcome,
+    @Override public FarmSessionOutcome settle(CommerceParticipant profile, FarmSessionOutcome outcome,
                                                Instant at, LongSupplier random) {
         if (!offscreen.contains(profile.agentId()))
             throw new IllegalStateException("external activity does not own agent " + profile.agentId());
@@ -79,7 +79,7 @@ public final class CosmicExternalAgentActivityAdapter implements ExternalAgentAc
                 () -> settlement.settle(bound(profile.agentId()), outcome, random));
     }
 
-    @Override public void returnToEconomyEntrance(EconomyAgentProfile profile, Instant at) {
+    @Override public void returnToEconomyEntrance(CommerceParticipant profile, Instant at) {
         if (!offscreen.remove(profile.agentId()))
             throw new IllegalStateException("external activity does not own agent " + profile.agentId());
         Character agent = bound(profile.agentId());
@@ -97,7 +97,7 @@ public final class CosmicExternalAgentActivityAdapter implements ExternalAgentAc
         return Map.of("schemaVersion", 1, "offscreenAgentIds", offscreen.stream().sorted().toList());
     }
 
-    @Override public void restoreState(Map<String, Object> state, Map<String, EconomyAgentProfile> profiles) {
+    @Override public void restoreState(Map<String, Object> state, Map<String, CommerceParticipant> profiles) {
         if (state == null || state.isEmpty()) return;
         if (((Number) state.get("schemaVersion")).intValue() != 1)
             throw new IllegalStateException("unsupported external activity checkpoint schema");
@@ -123,14 +123,14 @@ public final class CosmicExternalAgentActivityAdapter implements ExternalAgentAc
             throw new IllegalStateException("agent must leave from the configured Free Market venue");
     }
 
-    private EconomyOperationMetadata metadata(EconomyAgentProfile profile, Instant at, String activityId) {
+    private EconomyOperationMetadata metadata(CommerceParticipant profile, Instant at, String activityId) {
         String decision = runId + ":" + profile.agentId() + ':' + at + ":EXTERNAL_ACTIVITY";
         return new EconomyOperationMetadata(runId, at, decision, activityId, configRevision,
                 catalogRevision, "EXTERNAL_ACTIVITY_RESULT", true, false, taxes.apply(at));
     }
 
     @FunctionalInterface public interface Planner {
-        FarmSessionPlan plan(Character agent, EconomyAgentProfile profile, Instant at);
+        FarmSessionPlan plan(Character agent, CommerceParticipant profile, Instant at);
     }
     public interface Presence {
         void leave(Character agent, Instant at);

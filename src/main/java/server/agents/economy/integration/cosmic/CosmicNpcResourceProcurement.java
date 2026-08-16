@@ -4,7 +4,7 @@ import client.Character;
 import constants.inventory.ItemConstants;
 import client.inventory.Item;
 import server.ItemInformationProvider;
-import server.agents.economy.scenario.EconomyAgentProfile;
+import server.agents.economy.session.CommerceParticipant;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -29,7 +29,7 @@ public final class CosmicNpcResourceProcurement
     }
 
     @Override
-    public Optional<Result> buyNext(Character agent, EconomyAgentProfile profile,
+    public Optional<Result> buyNext(Character agent, CommerceParticipant profile,
                                     Set<Integer> attemptedItemIds) {
         return needs.missingNpcResources(agent, profile).stream()
                 .filter(value -> !attemptedItemIds.contains(value.itemId())).findFirst()

@@ -41,8 +41,8 @@ class CosmicNpcResourceProcurementTest {
         verify(commerce, never()).buy(any(), anyInt(), anyInt(), anyShort());
     }
 
-    private static server.agents.economy.scenario.EconomyAgentProfile profile() {
-        return new server.agents.economy.scenario.EconomyAgentProfile("agent", "thief", .5,
+    private static server.agents.economy.session.CommerceParticipant profile() {
+        return new server.agents.economy.session.CommerceParticipant("agent", "thief", .5,
                 .5, .5, .5, .5, .5, 24, .5, .5);
     }
 }

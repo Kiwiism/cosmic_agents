@@ -16,6 +16,7 @@ import java.time.Duration;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 /** Composes the decoupled economy module around already-live Cosmic agent characters. */
 public final class EconomyRuntimeFactory {
@@ -24,18 +25,40 @@ public final class EconomyRuntimeFactory {
     public static ManagedEconomyRun start(UUID runId, Path yaml, DataSource cosmicDataSource,
                                           DataSource economyDataSource,
                                           Function<String, Character> liveAgents) {
-        return build(runId, yaml, cosmicDataSource, economyDataSource, liveAgents, false);
+        return start(runId, yaml, cosmicDataSource, economyDataSource, liveAgents,
+                UnaryOperator.identity());
+    }
+
+    public static ManagedEconomyRun start(UUID runId, Path yaml, DataSource cosmicDataSource,
+                                          DataSource economyDataSource,
+                                          Function<String, Character> liveAgents,
+                                          UnaryOperator<server.agents.economy.session.EconomySessionPort>
+                                                  sessionDecorator) {
+        return build(runId, yaml, cosmicDataSource, economyDataSource, liveAgents, false,
+                sessionDecorator);
     }
 
     public static ManagedEconomyRun resume(UUID runId, Path yaml, DataSource cosmicDataSource,
                                            DataSource economyDataSource,
                                            Function<String, Character> liveAgents) {
-        return build(runId, yaml, cosmicDataSource, economyDataSource, liveAgents, true);
+        return resume(runId, yaml, cosmicDataSource, economyDataSource, liveAgents,
+                UnaryOperator.identity());
+    }
+
+    public static ManagedEconomyRun resume(UUID runId, Path yaml, DataSource cosmicDataSource,
+                                           DataSource economyDataSource,
+                                           Function<String, Character> liveAgents,
+                                           UnaryOperator<server.agents.economy.session.EconomySessionPort>
+                                                   sessionDecorator) {
+        return build(runId, yaml, cosmicDataSource, economyDataSource, liveAgents, true,
+                sessionDecorator);
     }
 
     private static ManagedEconomyRun build(UUID runId, Path yaml, DataSource cosmicDataSource,
                                            DataSource economyDataSource,
-                                           Function<String, Character> liveAgents, boolean resume) {
+                                           Function<String, Character> liveAgents, boolean resume,
+                                           UnaryOperator<server.agents.economy.session.EconomySessionPort>
+                                                   sessionDecorator) {
         Objects.requireNonNull(runId); Objects.requireNonNull(cosmicDataSource);
         Objects.requireNonNull(economyDataSource); Objects.requireNonNull(liveAgents);
         LoadedEconomyConfig loaded = new EconomyConfigLoader().load(yaml);
@@ -122,6 +145,9 @@ public final class EconomyRuntimeFactory {
                 new JdbcEconomyParticipantBindingStore(economyDataSource),
                 new JdbcEconomyBootstrapStore(economyDataSource), participants::admitted,
                 participants::released);
+        server.agents.economy.session.EconomySessionPort sessions =
+                Objects.requireNonNull(sessionDecorator, "Commerce session decorator").apply(world);
+        if (sessions == null) throw new IllegalStateException("Commerce session decorator returned null");
 
         JdbcSimulationRunRepository runRepository = new JdbcSimulationRunRepository(economyDataSource);
         JdbcEconomyParticipantBindingStore bindingStore =
@@ -175,9 +201,9 @@ public final class EconomyRuntimeFactory {
                     }
                 }, farmSettlement::settle, taxPolicy::at);
         EconomyRunApplication application = checkpoint == null
-                ? EconomyRunApplication.start(runId, loaded, bundle, catalog, world, externalActivity,
+                ? EconomyRunApplication.start(runId, loaded, bundle, catalog, sessions, externalActivity,
                         new JdbcEconomyLifecycleJournal(economyDataSource))
-                : EconomyRunApplication.restore(checkpoint, loaded, bundle, catalog, world, externalActivity,
+                : EconomyRunApplication.restore(checkpoint, loaded, bundle, catalog, sessions, externalActivity,
                         new JdbcEconomyLifecycleJournal(economyDataSource));
         if (resume) runRepository.updateLogicalTime(runId, checkpoint.logicalTime(), "RUNNING");
         EconomyOutboxRelay relay = new EconomyOutboxRelay(new JdbcCosmicOutboxSource(cosmicDataSource),

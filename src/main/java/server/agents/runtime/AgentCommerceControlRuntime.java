@@ -61,6 +61,13 @@ public final class AgentCommerceControlRuntime {
         LEASES.entrySet().removeIf(entry -> entry.getValue().owner().equals(owner));
     }
 
+    public static synchronized void releaseCharacter(int characterId, String owner) {
+        Lease lease = LEASES.get(characterId);
+        if (lease != null && Objects.equals(lease.owner(), owner)) {
+            LEASES.remove(characterId);
+        }
+    }
+
     static synchronized void clearForTests() {
         LEASES.clear();
     }

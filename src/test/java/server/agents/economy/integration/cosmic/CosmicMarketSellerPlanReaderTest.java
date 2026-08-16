@@ -10,7 +10,7 @@ import server.agents.economy.decision.AgentNeed;
 import server.agents.economy.market.EconomicReason;
 import server.agents.economy.market.MarketObservation;
 import server.agents.economy.market.PrivateMarketKnowledge;
-import server.agents.economy.scenario.EconomyAgentProfile;
+import server.agents.economy.session.CommerceParticipant;
 
 import java.time.Instant;
 import java.util.List;
@@ -123,8 +123,8 @@ class CosmicMarketSellerPlanReaderTest {
         assertTrue(plan.preferredRoomMapId() <= 910000004);
     }
 
-    private static EconomyAgentProfile profile() {
-        return new EconomyAgentProfile("agent", "warrior", .5, .5, .5, .5,
+    private static CommerceParticipant profile() {
+        return new CommerceParticipant("agent", "warrior", .5, .5, .5, .5,
                 .5, 1, 24, .5, .5);
     }
 }

@@ -1,4 +1,4 @@
-package server.agents.economy.integration.cosmic;
+package server.agents.observation.commerce;
 
 import client.Character;
 import com.zaxxer.hikari.HikariDataSource;
@@ -6,6 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.TimerManager;
 import server.agents.economy.clock.RealtimeEconomyClock;
+import server.agents.economy.integration.cosmic.EconomyAgentRosterBinder;
+import server.agents.economy.integration.cosmic.EconomyRuntimeFactory;
 import server.agents.economy.persistence.EconomyPostgresDataSource;
 import server.agents.economy.persistence.EconomyDatabaseVerifier;
 import server.agents.economy.persistence.JdbcActivityCalibrationRepository;
@@ -32,14 +34,14 @@ import java.time.Duration;
 import java.util.concurrent.ScheduledFuture;
 
 /** Process-level operator lifecycle for one economy run. Market actions remain autonomous. */
-public final class EconomySimulationRuntime {
-    private static final Logger log = LoggerFactory.getLogger(EconomySimulationRuntime.class);
+public final class CommerceScenarioRuntime {
+    private static final Logger log = LoggerFactory.getLogger(CommerceScenarioRuntime.class);
     private static final long AUTO_ADVANCE_POLL_MS = config.AgentTuning.longValue(
-            "server.agents.economy.integration.cosmic.EconomySimulationRuntime.AUTO_ADVANCE_POLL_MS");
+            "server.agents.observation.commerce.CommerceScenarioRuntime.AUTO_ADVANCE_POLL_MS");
     private static final long REALTIME_POLL_MS = config.AgentTuning.longValue(
-            "server.agents.economy.integration.cosmic.EconomySimulationRuntime.REALTIME_POLL_MS");
+            "server.agents.observation.commerce.CommerceScenarioRuntime.REALTIME_POLL_MS");
     private static final int AUTO_ADVANCE_BATCH_ACTIONS = config.AgentTuning.intValue(
-            "server.agents.economy.integration.cosmic.EconomySimulationRuntime.AUTO_ADVANCE_BATCH_ACTIONS");
+            "server.agents.observation.commerce.CommerceScenarioRuntime.AUTO_ADVANCE_BATCH_ACTIONS");
     private static ManagedEconomyRun run;
     private static HikariDataSource economyDatabase;
     private static Map<String, Character> directory = Map.of();
@@ -49,8 +51,9 @@ public final class EconomySimulationRuntime {
     private static ScheduledFuture<?> autoAdvanceTask;
     private static RealtimeEconomyClock realtimeClock;
     private static String clockMode;
+    private static CommerceObservationSessionPort cohortPresentation;
 
-    private EconomySimulationRuntime() { }
+    private CommerceScenarioRuntime() { }
 
     public static synchronized Status start() {
         return start(UUID.randomUUID(), EconomyConfigLoader.DEFAULT_PATH);
@@ -96,9 +99,6 @@ public final class EconomySimulationRuntime {
                     && character.getMapId() >= config.world.freeMarketEntranceMapId
                     && character.getMapId() <= config.world.lastFreeMarketRoomMapId) initialReady++;
         }
-        if (initialReady < config.population.initialAgents)
-            blockers.add("INITIAL_FM_PRESENCE:" + initialReady + '/' + config.population.initialAgents);
-
         int missingCalibrations = 0;
         Map<String, Integer> missingCalibrationCohorts = new java.util.TreeMap<>();
         boolean databaseReady = false;
@@ -163,7 +163,14 @@ public final class EconomySimulationRuntime {
                     "economy preflight blocked startup: " + String.join(" | ", readiness.blockers()));
             database = EconomyPostgresDataSource.fromEnvironment();
             ManagedEconomyRun started = EconomyRuntimeFactory.start(runId, configPath,
-                    DatabaseConnection.dataSource(), database, mapped::get);
+                    DatabaseConnection.dataSource(), database, mapped::get, sessions -> {
+                        CommerceObservationSessionPort decorated = new CommerceObservationSessionPort(
+                                sessions, mapped, admissions,
+                                Instant.parse(config.config().clock.logicalStart),
+                                config.config().world.freeMarketEntranceMapId);
+                        cohortPresentation = decorated;
+                        return decorated;
+                    });
             economyDatabase = database; directory = Map.copyOf(mapped); run = started;
             controlOwner = owner;
             activateClock(config.config().clock.mode);
@@ -205,8 +212,18 @@ public final class EconomySimulationRuntime {
             });
             String owner = controlOwner(runId);
             claim(owner, mapped);
+            var admissions = new PopulationAdmissionPlanner().plan(config.config().population,
+                    Instant.parse(config.config().clock.logicalStart),
+                    new NamedRandomStreams(config.config().scenario.seed));
             ManagedEconomyRun resumed = EconomyRuntimeFactory.resume(runId, configPath,
-                    DatabaseConnection.dataSource(), database, mapped::get);
+                    DatabaseConnection.dataSource(), database, mapped::get, sessions -> {
+                        CommerceObservationSessionPort decorated = new CommerceObservationSessionPort(
+                                sessions, mapped, admissions,
+                                Instant.parse(config.config().clock.logicalStart),
+                                config.config().world.freeMarketEntranceMapId);
+                        cohortPresentation = decorated;
+                        return decorated;
+                    });
             economyDatabase = database; directory = Map.copyOf(mapped); run = resumed;
             controlOwner = owner;
             activateClock(config.config().clock.mode);
@@ -243,6 +260,7 @@ public final class EconomySimulationRuntime {
         var result = run.complete();
         cancelAutoAdvance();
         server.agents.integration.AgentEconomicActionGuardRuntime.clear();
+        restoreStagedCohort();
         releaseControl();
         return result;
     }
@@ -252,6 +270,7 @@ public final class EconomySimulationRuntime {
         var result = run.fail(reason);
         cancelAutoAdvance();
         server.agents.integration.AgentEconomicActionGuardRuntime.clear();
+        restoreStagedCohort();
         releaseControl();
         return result;
     }
@@ -263,12 +282,51 @@ public final class EconomySimulationRuntime {
                 run.application().agents().size(), directory.size());
     }
 
+    /** Read-only live projection used by the detached Commerce observation harness. */
+    public static synchronized ObservationSnapshot observationSnapshot() {
+        requireRun();
+        List<ObservedAgent> agents = new ArrayList<>();
+        for (var entry : run.application().agents().entrySet()) {
+            Character character = directory.get(entry.getKey());
+            var view = entry.getValue();
+            agents.add(new ObservedAgent(entry.getKey(),
+                    character == null ? "" : character.getName(),
+                    view.profile().jobFamily(), view.status().name(),
+                    character == null ? 0 : character.getLevel(),
+                    character == null ? 0 : character.getMapId(),
+                    character == null || character.getPosition() == null
+                            ? 0 : character.getPosition().x,
+                    character == null || character.getPosition() == null
+                            ? 0 : character.getPosition().y,
+                    character != null && character.getPlayerShop() != null,
+                    character != null && character.getTrade() != null,
+                    view.economySessionId() == null ? "" : view.economySessionId().toString()));
+        }
+        agents.sort(Comparator.comparing(ObservedAgent::logicalAgentId));
+        Map<Integer, RoomObservation> rooms = new java.util.TreeMap<>();
+        for (ObservedAgent agent : agents) {
+            if (agent.mapId() < 910000000 || agent.mapId() > 910000022) continue;
+            RoomObservation current = rooms.getOrDefault(agent.mapId(),
+                    new RoomObservation(agent.mapId(), 0, 0, 0));
+            rooms.put(agent.mapId(), new RoomObservation(agent.mapId(),
+                    current.presentAgents() + 1,
+                    current.openStalls() + (agent.openStall() ? 1 : 0),
+                    current.activeTrades() + (agent.activeTrade() ? 1 : 0)));
+        }
+        Status status = status();
+        return new ObservationSnapshot(status.runId(), status.logicalTime(),
+                status.targetLogicalTime(), status.state(), List.copyOf(agents),
+                List.copyOf(rooms.values()),
+                cohortPresentation == null ? 0 : cohortPresentation.stagedCount());
+    }
+
     public static synchronized void stop() {
         cancelAutoAdvance();
         server.agents.integration.AgentEconomicActionGuardRuntime.clear();
         if (run != null && !java.util.Set.of("COMPLETED", "FAILED", "STOPPED").contains(run.status()))
             run.checkpoint("STOPPED");
         run = null; directory = Map.of();
+        restoreStagedCohort();
         releaseControl();
         clockMode = null;
         if (economyDatabase != null) economyDatabase.close();
@@ -360,7 +418,7 @@ public final class EconomySimulationRuntime {
         if (autoAdvanceTask == null && run != null
                 && (requestedLogicalTarget != null || realtimeClock != null)) {
             autoAdvanceTask = TimerManager.getInstance().schedule(
-                    EconomySimulationRuntime::autoAdvanceTick,
+                    CommerceScenarioRuntime::autoAdvanceTick,
                     realtimeClock == null ? AUTO_ADVANCE_POLL_MS : REALTIME_POLL_MS);
         }
     }
@@ -389,6 +447,7 @@ public final class EconomySimulationRuntime {
     }
 
     private static void clearFailedStart(UUID runId) {
+        restoreStagedCohort();
         if (run == null || !run.application().runId().equals(runId)) return;
         cancelAutoAdvance();
         run = null;
@@ -453,9 +512,23 @@ public final class EconomySimulationRuntime {
         controlOwner = null;
     }
 
+    private static void restoreStagedCohort() {
+        if (cohortPresentation == null) return;
+        cohortPresentation.restoreUnadmittedCharacters();
+        cohortPresentation = null;
+    }
+
     public record Status(boolean active, UUID runId, java.time.Instant logicalTime,
                          java.time.Instant targetLogicalTime, String state, String clockMode,
                          int admittedAgents, int reservedCharacters) { }
+    public record ObservedAgent(String logicalAgentId, String characterName, String jobFamily,
+                                String state, int level, int mapId, int x, int y,
+                                boolean openStall, boolean activeTrade, String sessionId) { }
+    public record RoomObservation(int mapId, int presentAgents, int openStalls,
+                                  int activeTrades) { }
+    public record ObservationSnapshot(UUID runId, Instant logicalTime, Instant targetLogicalTime,
+                                      String state, List<ObservedAgent> agents,
+                                      List<RoomObservation> rooms, int stagedCharacters) { }
     public record Preflight(boolean ready, int liveCharacters, int requiredCharacters,
                             int mappedCharacters, int initialFmReady, int initialAgents,
                             int configuredSellers, int realPermits, int missingCalibrations,

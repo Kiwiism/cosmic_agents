@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import server.agents.economy.market.StallOffer;
 import server.agents.economy.market.PrivateTradeArrangement;
 import server.agents.economy.persistence.StallOfferStore;
-import server.agents.economy.scenario.EconomyAgentProfile;
+import server.agents.economy.session.CommerceParticipant;
 import server.maps.PlayerShop;
 
 import java.time.Instant;
@@ -97,8 +97,8 @@ class CosmicStallOfferReviewServiceTest {
                 amount, text, now.minusSeconds(30), expires, StallOffer.Status.PENDING);
     }
 
-    private static EconomyAgentProfile profile(double negotiation) {
-        return new EconomyAgentProfile("seller", "thief", .5, .5, .5, .5, .5, .5,
+    private static CommerceParticipant profile(double negotiation) {
+        return new CommerceParticipant("seller", "thief", .5, .5, .5, .5, .5, .5,
                 24, negotiation, .5);
     }
 

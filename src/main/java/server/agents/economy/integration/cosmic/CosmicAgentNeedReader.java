@@ -7,7 +7,7 @@ import server.ItemInformationProvider;
 import server.agents.economy.catalog.EconomyCatalog;
 import server.agents.economy.decision.AgentDemandPortfolioService;
 import server.agents.economy.decision.AgentNeed;
-import server.agents.economy.scenario.EconomyAgentProfile;
+import server.agents.economy.session.CommerceParticipant;
 import server.agents.economy.scenario.EconomyEngineConfig;
 import server.quest.Quest;
 
@@ -25,7 +25,7 @@ public final class CosmicAgentNeedReader implements AutonomousFreeMarketBehavior
     }
 
     @Override
-    public List<AgentNeed> read(Character agent, EconomyAgentProfile profile, Instant logicalAt) {
+    public List<AgentNeed> read(Character agent, CommerceParticipant profile, Instant logicalAt) {
         List<AgentDemandPortfolioService.ResourceRequirement> resources = new ArrayList<>();
         for (EconomyEngineConfig.ResourceTarget target : config.resourceTargets) {
             if (!target.jobs.isEmpty() && target.jobs.stream().noneMatch(profile.jobFamily()::equalsIgnoreCase))
@@ -60,7 +60,7 @@ public final class CosmicAgentNeedReader implements AutonomousFreeMarketBehavior
         return portfolios.build(state, logicalAt);
     }
 
-    public List<ResourceProcurement> missingNpcResources(Character agent, EconomyAgentProfile profile) {
+    public List<ResourceProcurement> missingNpcResources(Character agent, CommerceParticipant profile) {
         List<ResourceProcurement> result = new ArrayList<>();
         for (EconomyEngineConfig.ResourceTarget target : config.resourceTargets) {
             if (!target.jobs.isEmpty() && target.jobs.stream().noneMatch(profile.jobFamily()::equalsIgnoreCase))

@@ -5,7 +5,7 @@ import client.Job;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import org.junit.jupiter.api.Test;
-import server.agents.economy.scenario.EconomyAgentProfile;
+import server.agents.economy.session.CommerceParticipant;
 import server.agents.economy.scenario.PopulationAdmissionPlanner;
 
 import java.time.Instant;
@@ -72,7 +72,7 @@ class EconomyAgentRosterBinderTest {
     }
 
     private static PopulationAdmissionPlanner.Admission admission(String id, String job, double stallWillingness) {
-        return new PopulationAdmissionPlanner.Admission(new EconomyAgentProfile(id, job,
+        return new PopulationAdmissionPlanner.Admission(new CommerceParticipant(id, job,
                 .5, .5, .5, .5, .5, stallWillingness, 24, .5, .5), Instant.EPOCH);
     }
 

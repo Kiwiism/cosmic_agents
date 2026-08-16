@@ -10,7 +10,7 @@ import server.agents.economy.persistence.EconomyEvidenceJournal;
 import server.agents.economy.persistence.NegotiationEvidenceStore;
 import server.agents.economy.persistence.SocialEvidence;
 import server.agents.economy.persistence.StallOfferStore;
-import server.agents.economy.scenario.EconomyAgentProfile;
+import server.agents.economy.session.CommerceParticipant;
 import server.agents.economy.social.PublicNegotiationSession;
 import server.agents.economy.social.TradeExecutionGateway;
 import server.agents.economy.social.TradeOffer;
@@ -148,7 +148,7 @@ public final class CosmicPublicTradeNegotiator implements AutonomousFreeMarketBe
     }
 
     @Override
-    public Result attempt(Character buyer, EconomyAgentProfile buyerProfile, List<AgentNeed> needs,
+    public Result attempt(Character buyer, CommerceParticipant buyerProfile, List<AgentNeed> needs,
                           List<MarketObservation> observations, Instant logicalAt) {
         Optional<Candidate> selected = observations.stream()
                 .filter(o -> o.state() == MarketObservation.State.LISTED && o.quantityPerBundle() > 0)
@@ -318,7 +318,7 @@ public final class CosmicPublicTradeNegotiator implements AutonomousFreeMarketBe
                 opportunityCost, sellerValue) : null;
     }
 
-    private Candidate candidate(Character buyer, EconomyAgentProfile buyerProfile,
+    private Candidate candidate(Character buyer, CommerceParticipant buyerProfile,
                                 MarketObservation observation, AgentNeed need, Instant logicalAt) {
         if (observation.bundlePrice() <= need.maximumWillingnessToPay()) return null;
         Participant seller = parseSeller(observation);
@@ -441,14 +441,14 @@ public final class CosmicPublicTradeNegotiator implements AutonomousFreeMarketBe
     public interface ParticipantDirectory {
         Optional<Participant> byCharacterId(int characterId);
     }
-    public record Participant(Character character, EconomyAgentProfile profile) {
+    public record Participant(Character character, CommerceParticipant profile) {
         public Participant { Objects.requireNonNull(character); Objects.requireNonNull(profile); }
     }
     @FunctionalInterface interface NpcValueCatalog { long sellValue(int itemId, int quantity); }
     @FunctionalInterface interface StallCloser { boolean close(Character seller, String reason); }
     @FunctionalInterface interface PublicChatGateway { void broadcast(Character speaker, String text); }
     @FunctionalInterface public interface CounterpartyNeedReader {
-        List<AgentNeed> read(Character character, EconomyAgentProfile profile, Instant logicalAt);
+        List<AgentNeed> read(Character character, CommerceParticipant profile, Instant logicalAt);
     }
     private record Candidate(MarketObservation observation, AgentNeed need, double surplus,
                              long offeredMesos, StallOffer previous, long committedMesos) { }

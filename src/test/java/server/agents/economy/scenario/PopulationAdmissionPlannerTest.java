@@ -54,4 +54,25 @@ class PopulationAdmissionPlannerTest {
         assertNotEquals(first.stream().map(PopulationAdmissionPlanner.Admission::profile).toList(),
                 second.stream().map(PopulationAdmissionPlanner.Admission::profile).toList());
     }
+
+    @Test
+    void observationScenarioStartsAtTenAndReachesOneHundredOnDayTen() {
+        EconomyEngineConfig config = new EconomyConfigLoader().load(
+                java.nio.file.Path.of(
+                        "config/economy/economy-commerce-observe-30day.yaml")).config();
+        Instant start = Instant.parse(config.clock.logicalStart);
+
+        var admissions = new PopulationAdmissionPlanner().plan(
+                config.population, start, new NamedRandomStreams(config.scenario.seed));
+
+        assertEquals(100, admissions.size());
+        for (int day = 1; day <= 10; day++) {
+            Instant boundary = start.plus(java.time.Duration.ofDays(day - 1L));
+            int expected = day * 10;
+            assertEquals(expected, admissions.stream()
+                    .filter(admission -> !admission.admittedAt().isAfter(boundary)).count());
+        }
+        assertTrue(admissions.stream().noneMatch(admission ->
+                admission.admittedAt().isAfter(start.plus(java.time.Duration.ofDays(9)))));
+    }
 }

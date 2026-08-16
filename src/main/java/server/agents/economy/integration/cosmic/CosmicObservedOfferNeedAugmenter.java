@@ -11,7 +11,7 @@ import server.ItemInformationProvider;
 import server.agents.economy.decision.AgentNeed;
 import server.agents.economy.market.EconomicReason;
 import server.agents.economy.market.MarketObservation;
-import server.agents.economy.scenario.EconomyAgentProfile;
+import server.agents.economy.session.CommerceParticipant;
 import server.agents.economy.scenario.EconomyEngineConfig;
 
 import java.time.Instant;
@@ -45,7 +45,7 @@ public final class CosmicObservedOfferNeedAugmenter
     }
 
     @Override
-    public List<AgentNeed> augment(Character agent, EconomyAgentProfile profile,
+    public List<AgentNeed> augment(Character agent, CommerceParticipant profile,
                                    List<MarketObservation> observations, List<AgentNeed> base,
                                    Instant logicalAt) {
         Map<Integer, AgentNeed> result = new LinkedHashMap<>();
@@ -60,7 +60,7 @@ public final class CosmicObservedOfferNeedAugmenter
         return List.copyOf(result.values());
     }
 
-    private Optional<AgentNeed> candidate(Character agent, EconomyAgentProfile profile,
+    private Optional<AgentNeed> candidate(Character agent, CommerceParticipant profile,
                                           MarketObservation observation, Instant at) {
         int itemId = observation.itemId();
         if (isEquipment(itemId)) return equipmentNeed(agent, observation, at);
@@ -118,7 +118,7 @@ public final class CosmicObservedOfferNeedAugmenter
                         + target.map(Equip::getItemId).orElse(0) + " expectedUtility=" + expected));
     }
 
-    private Optional<AgentNeed> chairNeed(Character agent, EconomyAgentProfile profile,
+    private Optional<AgentNeed> chairNeed(Character agent, CommerceParticipant profile,
                                           MarketObservation observation, Instant at) {
         if (count(agent, observation.itemId()) > 0 || profile.chairInterest() <= 0) return Optional.empty();
         double utility = profile.chairInterest();

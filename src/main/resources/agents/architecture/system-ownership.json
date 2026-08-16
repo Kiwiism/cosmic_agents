@@ -44,10 +44,22 @@
       "role": "PRIMARY",
       "activityKind": "COMMERCE",
       "sourceRoots": [
-        "server/agents/economy"
+        "server/agents/economy",
+        "server/agents/runtime/commerce"
       ],
       "entryPoints": [
-        "server/agents/economy/session/EconomySessionPort.java"
+        "server/agents/economy/session/EconomySessionPort.java",
+        "server/agents/runtime/commerce/AgentCommerceSessionRuntime.java"
+      ]
+    },
+    {
+      "id": "commerce-observation",
+      "role": "OBSERVATION",
+      "sourceRoots": [
+        "server/agents/observation/commerce"
+      ],
+      "entryPoints": [
+        "server/agents/observation/commerce/CommerceObservationRuntime.java"
       ]
     },
     {

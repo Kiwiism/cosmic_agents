@@ -6,7 +6,7 @@ import server.agents.economy.activity.FarmSessionPlan;
 import server.agents.economy.activity.EconomyJobFamily;
 import server.agents.economy.persistence.EconomyParticipantBindingStore;
 import server.agents.economy.persistence.EconomyBootstrapStore;
-import server.agents.economy.scenario.EconomyAgentProfile;
+import server.agents.economy.session.CommerceParticipant;
 import server.agents.economy.scenario.EconomyWorldPort;
 import server.agents.economy.session.EconomySessionPort;
 import server.economy.EconomyOperationContext;
@@ -105,7 +105,7 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort, Econom
     }
 
     @Override
-    public synchronized EntryResult requestEntry(EconomyAgentProfile profile, EntryRequest request,
+    public synchronized EntryResult requestEntry(CommerceParticipant profile, EntryRequest request,
                                                  Instant logicalAt) {
         Objects.requireNonNull(profile); Objects.requireNonNull(request); Objects.requireNonNull(logicalAt);
         SessionRecord active = activeSessions.get(profile.agentId());
@@ -125,16 +125,23 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort, Econom
         UUID sessionId = UUID.nameUUIDFromBytes((runId + ":" + profile.agentId() + ":"
                 + request.requestId()).getBytes(java.nio.charset.StandardCharsets.UTF_8));
         Instant expiresAt = logicalAt.plus(request.maximumDuration());
+        boolean controlAlreadyOwned = AgentCommerceControlRuntime.ownedBy(
+                agent.getId(), controlOwner());
+        AgentCommerceControlRuntime.claim(agent.getId(), controlOwner());
         SessionRecord created = new SessionRecord(sessionId, request.requestId(), logicalAt,
-                expiresAt, request.maximumIdleDuration(), market.progressRevision(profile.agentId()), logicalAt);
+                expiresAt, request.maximumIdleDuration(), market.progressRevision(profile.agentId()),
+                logicalAt, !controlAlreadyOwned);
         SessionRecord previous = activeSessions.putIfAbsent(profile.agentId(), created);
+        if (previous != null && !controlAlreadyOwned) {
+            previous.acquiredControlLease = true;
+        }
         SessionRecord result = previous == null ? created : previous;
         return EntryResult.accepted(result.sessionId(), result.expiresAt(),
                 previous == null ? "ACCEPTED" : "IDEMPOTENT_ACTIVE_SESSION");
     }
 
     @Override
-    public synchronized Directive performMarketCycle(UUID sessionId, EconomyAgentProfile profile,
+    public synchronized Directive performMarketCycle(UUID sessionId, CommerceParticipant profile,
                                                      Instant logicalAt) {
         SessionRecord active = activeSessions.get(profile.agentId());
         if (active == null || !active.sessionId().equals(sessionId))
@@ -167,7 +174,7 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort, Econom
     }
 
     @Override
-    public synchronized ReleaseResult release(UUID sessionId, EconomyAgentProfile profile,
+    public synchronized ReleaseResult release(UUID sessionId, CommerceParticipant profile,
                                               Instant logicalAt, String reason) {
         SessionRecord active = activeSessions.get(profile.agentId());
         if (active == null) return ReleaseResult.released("IDEMPOTENT_ALREADY_RELEASED");
@@ -177,12 +184,15 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort, Econom
             return ReleaseResult.deferred("ACTIVE_COMMERCE_MUST_DRAIN", logicalAt.plusSeconds(1));
         if (!activeSessions.remove(profile.agentId(), active))
             return ReleaseResult.deferred("CONCURRENT_SESSION_TRANSITION", logicalAt.plusSeconds(1));
+        if (active.acquiredControlLease()) {
+            AgentCommerceControlRuntime.releaseCharacter(agent.getId(), controlOwner());
+        }
         releaseObserver.released(profile, agent);
         return ReleaseResult.released(reason == null || reason.isBlank() ? "RELEASED" : reason);
     }
 
     @Override
-    public void admit(EconomyAgentProfile profile, Instant logicalAt) {
+    public void admit(CommerceParticipant profile, Instant logicalAt) {
         Character agent = agents.resolve(profile.agentId());
         requireLiveFm(agent, true);
         if (!profile.jobFamily().equals(EconomyJobFamily.of(agent)))
@@ -204,7 +214,7 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort, Econom
     }
 
     @Override
-    public MarketDirective performMarketCycle(EconomyAgentProfile profile, Instant logicalAt) {
+    public MarketDirective performMarketCycle(CommerceParticipant profile, Instant logicalAt) {
         Character agent = bound(profile.agentId());
         // The entrance is part of the configured venue. A newly admitted or
         // returning agent must be allowed to begin the physical room-browsing flow here.
@@ -218,7 +228,7 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort, Econom
     }
 
     @Override
-    public FarmSessionPlan planOffscreenActivity(EconomyAgentProfile profile, Instant logicalAt) {
+    public FarmSessionPlan planOffscreenActivity(CommerceParticipant profile, Instant logicalAt) {
         requireLegacyActivityComposition();
         Character agent = bound(profile.agentId());
         requireLiveFm(agent, false);
@@ -228,7 +238,7 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort, Econom
     }
 
     @Override
-    public void leaveFreeMarket(EconomyAgentProfile profile, FarmSessionPlan plan, Instant logicalAt) {
+    public void leaveFreeMarket(CommerceParticipant profile, FarmSessionPlan plan, Instant logicalAt) {
         requireLegacyActivityComposition();
         Character agent = bound(profile.agentId());
         requireLiveFm(agent, false);
@@ -238,7 +248,7 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort, Econom
     }
 
     @Override
-    public FarmSessionOutcome settleOffscreenActivity(EconomyAgentProfile profile, FarmSessionOutcome outcome,
+    public FarmSessionOutcome settleOffscreenActivity(CommerceParticipant profile, FarmSessionOutcome outcome,
                                                       Instant logicalAt, LongSupplier deterministicGameplayRandom) {
         requireLegacyActivityComposition();
         if (!offscreen.contains(profile.agentId())) throw new IllegalStateException("agent is still market-visible");
@@ -248,7 +258,7 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort, Econom
     }
 
     @Override
-    public void returnThroughFreeMarketEntrance(EconomyAgentProfile profile, Instant logicalAt) {
+    public void returnThroughFreeMarketEntrance(CommerceParticipant profile, Instant logicalAt) {
         requireLegacyActivityComposition();
         if (!offscreen.remove(profile.agentId())) throw new IllegalStateException("agent is not offscreen");
         Character agent = bound(profile.agentId());
@@ -279,7 +289,7 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort, Econom
 
     @Override
     @SuppressWarnings("unchecked")
-    public void restoreState(Map<String, Object> state, Map<String, EconomyAgentProfile> profiles) {
+    public void restoreState(Map<String, Object> state, Map<String, CommerceParticipant> profiles) {
         if (state == null || state.isEmpty()) return; // older coordinator checkpoints
         if (((Number) state.get("schemaVersion")).intValue() != 1)
             throw new IllegalStateException("unsupported Cosmic world checkpoint schema");
@@ -291,7 +301,7 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort, Econom
             if (agent == null || agent.getClient() == null || agent.getClient().getChannel() != channelId)
                 throw new IllegalStateException("checkpoint agent is not live on the configured channel: " + id);
             bindings.put(id, agent);
-            EconomyAgentProfile profile = profiles.get(id);
+            CommerceParticipant profile = profiles.get(id);
             if (profile == null)
                 throw new IllegalStateException("checkpoint profile is missing for bound agent: " + id);
             if (!profile.jobFamily().equals(EconomyJobFamily.of(agent)))
@@ -303,7 +313,7 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort, Econom
             if (!bindings.containsKey(id)) throw new IllegalStateException("offscreen checkpoint agent is unbound: " + id);
             offscreen.add(id);
             presence.restoreDetached(bindings.get(id));
-            EconomyAgentProfile profile = profiles.get(id);
+            CommerceParticipant profile = profiles.get(id);
             if (profile != null) releaseObserver.released(profile, bindings.get(id));
         }
         Object encodedSessions = state.get("activeSessions");
@@ -315,19 +325,25 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort, Econom
             UUID sessionId = UUID.nameUUIDFromBytes((runId + ":" + id + ":restored-session")
                     .getBytes(java.nio.charset.StandardCharsets.UTF_8));
             activeSessions.put(id, new SessionRecord(sessionId, sessionId, Instant.EPOCH,
-                    Instant.MAX, java.time.Duration.ZERO, market.progressRevision(id), Instant.EPOCH));
+                    Instant.MAX, java.time.Duration.ZERO, market.progressRevision(id), Instant.EPOCH,
+                    false));
         });
         bindings.forEach((id, character) -> {
             if (!activeSessions.containsKey(id)) {
-                EconomyAgentProfile profile = profiles.get(id);
+                CommerceParticipant profile = profiles.get(id);
                 if (profile != null) releaseObserver.released(profile, character);
+            } else {
+                boolean alreadyOwned = AgentCommerceControlRuntime.ownedBy(
+                        character.getId(), controlOwner());
+                AgentCommerceControlRuntime.claim(character.getId(), controlOwner());
+                if (!alreadyOwned) activeSessions.get(id).acquiredControlLease = true;
             }
         });
         market.restoreState((Map<String, Object>) state.get("market"));
     }
 
     @Override
-    public Optional<EconomyWorldPort.Presence> currentPresence(EconomyAgentProfile profile) {
+    public Optional<EconomyWorldPort.Presence> currentPresence(CommerceParticipant profile) {
         Character agent = bindings.get(profile.agentId());
         if (agent == null) return Optional.empty();
         java.awt.Point position = agent.getPosition();
@@ -336,7 +352,7 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort, Econom
     }
 
     @Override
-    public Optional<EconomySessionPort.Presence> sessionPresence(EconomyAgentProfile profile) {
+    public Optional<EconomySessionPort.Presence> sessionPresence(CommerceParticipant profile) {
         Character agent = bindings.get(profile.agentId());
         if (agent == null) return Optional.empty();
         java.awt.Point position = agent.getPosition();
@@ -365,23 +381,27 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort, Econom
                 + agent.getId() + " map=" + map + " entranceAllowed=" + entranceAllowed);
     }
 
-    private EconomyOperationMetadata metadata(EconomyAgentProfile profile, Instant logicalAt,
+    private EconomyOperationMetadata metadata(CommerceParticipant profile, Instant logicalAt,
                                                String reason, String activityId) {
         String decision = runId + ":" + profile.agentId() + ":" + logicalAt + ":" + reason;
         return new EconomyOperationMetadata(runId, logicalAt, decision, activityId, configRevision,
                 catalogRevision, reason, true, false, taxPolicy.at(logicalAt));
     }
 
+    private String controlOwner() {
+        return "economy:" + runId;
+    }
+
     @FunctionalInterface public interface AgentDirectory { Character resolve(String logicalAgentId); }
     @FunctionalInterface public interface AdmissionObserver {
-        void admitted(EconomyAgentProfile profile, Character character);
+        void admitted(CommerceParticipant profile, Character character);
     }
     @FunctionalInterface public interface ReleaseObserver {
-        void released(EconomyAgentProfile profile, Character character);
+        void released(CommerceParticipant profile, Character character);
     }
     public interface MarketBehavior {
-        MarketDirective perform(Character agent, EconomyAgentProfile profile, Instant logicalAt);
-        default MarketDirective drainForRelease(Character agent, EconomyAgentProfile profile,
+        MarketDirective perform(Character agent, CommerceParticipant profile, Instant logicalAt);
+        default MarketDirective drainForRelease(Character agent, CommerceParticipant profile,
                                                 Instant logicalAt) {
             return perform(agent, profile, logicalAt);
         }
@@ -394,7 +414,7 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort, Econom
         }
     }
     @FunctionalInterface public interface ActivityPlanner {
-        FarmSessionPlan plan(Character agent, EconomyAgentProfile profile, Instant logicalAt);
+        FarmSessionPlan plan(Character agent, CommerceParticipant profile, Instant logicalAt);
     }
     public interface OffscreenPresence {
         void leaveVisibleFreeMarket(Character agent, Instant logicalAt);
@@ -409,7 +429,8 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort, Econom
                 "expiresAt", session.expiresAt().toString(),
                 "maximumIdleMillis", session.maximumIdleDuration().toMillis(),
                 "lastProgressRevision", session.lastProgressRevision,
-                "lastProgressAt", session.lastProgressAt.toString());
+                "lastProgressAt", session.lastProgressAt.toString(),
+                "acquiredControlLease", session.acquiredControlLease());
     }
 
     private static SessionRecord sessionFrom(Map<String, Object> value) {
@@ -419,7 +440,8 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort, Econom
                 Instant.parse(value.get("expiresAt").toString()),
                 java.time.Duration.ofMillis(((Number) value.get("maximumIdleMillis")).longValue()),
                 ((Number) value.getOrDefault("lastProgressRevision", 0)).longValue(),
-                Instant.parse(value.getOrDefault("lastProgressAt", value.get("enteredAt")).toString()));
+                Instant.parse(value.getOrDefault("lastProgressAt", value.get("enteredAt")).toString()),
+                Boolean.parseBoolean(value.getOrDefault("acquiredControlLease", false).toString()));
     }
 
     private static final class SessionRecord {
@@ -430,18 +452,21 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort, Econom
         private final java.time.Duration maximumIdleDuration;
         private long lastProgressRevision;
         private Instant lastProgressAt;
+        private boolean acquiredControlLease;
 
         private SessionRecord(UUID sessionId, UUID requestId, Instant enteredAt, Instant expiresAt,
                               java.time.Duration maximumIdleDuration, long lastProgressRevision,
-                              Instant lastProgressAt) {
+                              Instant lastProgressAt, boolean acquiredControlLease) {
             this.sessionId = sessionId; this.requestId = requestId; this.enteredAt = enteredAt;
             this.expiresAt = expiresAt; this.maximumIdleDuration = maximumIdleDuration;
             this.lastProgressRevision = lastProgressRevision; this.lastProgressAt = lastProgressAt;
+            this.acquiredControlLease = acquiredControlLease;
         }
         private UUID sessionId() { return sessionId; }
         private UUID requestId() { return requestId; }
         private Instant enteredAt() { return enteredAt; }
         private Instant expiresAt() { return expiresAt; }
         private java.time.Duration maximumIdleDuration() { return maximumIdleDuration; }
+        private boolean acquiredControlLease() { return acquiredControlLease; }
     }
 }

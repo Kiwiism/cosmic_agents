@@ -1,5 +1,7 @@
 package server.agents.economy.scenario;
 
+import server.agents.economy.session.CommerceParticipant;
+
 import server.agents.economy.activity.RuleExactFarmResolver;
 import server.agents.economy.catalog.CatalogBundleDescriptor;
 import server.agents.economy.catalog.EconomyCatalog;
@@ -82,19 +84,19 @@ public final class EconomyRunApplication {
                                                              EconomyCatalog catalog) {
         return new RuleExactExternalActivityAdapter(world::planOffscreenActivity,
                 new RuleExactFarmResolver(catalog), new RuleExactExternalActivityAdapter.Lifecycle() {
-            @Override public void begin(EconomyAgentProfile profile,
+            @Override public void begin(CommerceParticipant profile,
                                         server.agents.economy.activity.FarmSessionPlan plan, Instant at) {
                 world.leaveFreeMarket(profile, plan, at);
             }
 
             @Override public server.agents.economy.activity.FarmSessionOutcome settle(
-                    EconomyAgentProfile profile,
+                    CommerceParticipant profile,
                     server.agents.economy.activity.FarmSessionOutcome outcome, Instant at,
                     java.util.function.LongSupplier random) {
                 return world.settleOffscreenActivity(profile, outcome, at, random);
             }
 
-            @Override public void returnToEconomyEntrance(EconomyAgentProfile profile, Instant at) {
+            @Override public void returnToEconomyEntrance(CommerceParticipant profile, Instant at) {
                 world.returnThroughFreeMarketEntrance(profile, at);
             }
         });

@@ -314,15 +314,15 @@ tuning:
     # Values: a positive integer; unit: milliseconds. Recommended: 250-1000; 500 preserves the validated simulation cadence.
     # Purpose: Controls how often automatic logical-time advancement polls for additional due economy work.
     # Technical: This is the process-level automatic economy scheduler interval; it controls polling frequency without changing logical event timestamps or scenario-authored session durations.
-    server.agents.economy.integration.cosmic.EconomySimulationRuntime.AUTO_ADVANCE_POLL_MS: '500'
+    server.agents.observation.commerce.CommerceScenarioRuntime.AUTO_ADVANCE_POLL_MS: '500'
     # Values: a positive integer. Recommended: 32-128; 64 bounds work per automatic scheduler pass.
     # Purpose: Limits how many due economy actions one automatic advancement pass may process before yielding.
     # Technical: This is a scheduling fairness and latency bound; it neither limits Agent population nor changes market capacity, session ownership, or scenario admission policy.
-    server.agents.economy.integration.cosmic.EconomySimulationRuntime.AUTO_ADVANCE_BATCH_ACTIONS: '64'
+    server.agents.observation.commerce.CommerceScenarioRuntime.AUTO_ADVANCE_BATCH_ACTIONS: '64'
     # Values: a positive integer; unit: milliseconds. Recommended: 500-2000; 1000 preserves the validated real-time cadence.
     # Purpose: Controls how often real-time economy mode polls its logical clock for newly due scenario work.
     # Technical: This is the process-level real-time scheduler interval; economic visit durations, idle deadlines, and market actions remain owned by the loaded economy scenario configuration.
-    server.agents.economy.integration.cosmic.EconomySimulationRuntime.REALTIME_POLL_MS: '1000'
+    server.agents.observation.commerce.CommerceScenarioRuntime.REALTIME_POLL_MS: '1000'
     # Independent Kiwi observer showcase
     # Values: 25-100 milliseconds. Recommended: 50. Lower values make Kiwi's server-driven walking smoother; higher values reduce work but can make motion look stepped.
     # Purpose: Sets how often only the independent observer controller updates. This does not change normal Agent plan, combat, or TownLife scheduling.
@@ -2598,8 +2598,17 @@ tuning:
     # Purpose: Gives tested or authored preferred maps a modest stability advantage without allowing them to dominate bad runtime evidence.
     # Technical: AgentAdaptiveQuestHuntSelector subtracts this credit from preferred-map completion cost when deficit-aware authority is enabled.
     server.agents.progression.AgentAdaptiveQuestHuntSelector.PREFERRED_MAP_CREDIT: '1500'
+    # Values: a finite non-negative integer. Recommended: 1000-8000 around the tested baseline 3500.
+    # Purpose: Prevents small score fluctuations from abandoning a still-viable hunt map immediately after objective evidence changes.
+    # Technical: A replacement quest-hunt map must improve the selector's completion-cost estimate by at least this margin before replanning.
     server.agents.progression.AgentAdaptiveQuestHuntSelector.REPLAN_SWITCH_MARGIN_COST: '3500'
+    # Values: a positive integer; unit: milliseconds. Recommended: 5000-60000 around the tested baseline 20000.
+    # Purpose: Bounds how long an Agent may harvest active pack objectives encountered while travelling to its selected hunt map.
+    # Technical: The shared Victoria quest-pack runtime yields back to the authored route after this elapsed en-route harvesting budget.
     server.agents.progression.AgentVictoriaSharedQuestPackRuntime.ROUTE_HARVEST_MAX_MS: '20000'
+    # Values: a positive integer. Recommended: 1-15 around the tested baseline 5.
+    # Purpose: Bounds objective progress earned during one en-route harvesting detour so travel cannot become an unbounded local hunt.
+    # Technical: The shared Victoria quest-pack runtime resumes its selected route after this many relevant kills or collection advances.
     server.agents.progression.AgentVictoriaSharedQuestPackRuntime.ROUTE_HARVEST_MAX_PROGRESS: '5'
     # Values: a positive integer. Recommended: 50000-250000 around the tested baseline 100000.
     # Purpose: Strongly discourages maps that cannot advance every currently combined objective unless no complete-coverage map is reachable.

@@ -5,7 +5,7 @@ import client.Character;
 import client.command.Command;
 import com.zaxxer.hikari.HikariDataSource;
 import server.agents.economy.activity.LiveActivityCalibrationRuntime;
-import server.agents.economy.integration.cosmic.EconomySimulationRuntime;
+import server.agents.observation.commerce.CommerceScenarioRuntime;
 import server.agents.economy.persistence.EconomyDatabaseVerifier;
 import server.agents.economy.persistence.EconomyPostgresDataSource;
 import server.agents.economy.persistence.JdbcActivityCalibrationStore;
@@ -23,28 +23,28 @@ public final class EconomyCommand extends Command {
     public void execute(Client client, String[] params) {
         try {
             if (params.length == 0 || "status".equalsIgnoreCase(params[0])) {
-                show(client, EconomySimulationRuntime.status()); return;
+                show(client, CommerceScenarioRuntime.status()); return;
             }
             if ("start".equalsIgnoreCase(params[0])) {
-                if (params.length == 1) show(client, EconomySimulationRuntime.start());
-                else if (params.length == 3) show(client, EconomySimulationRuntime.start(
+                if (params.length == 1) show(client, CommerceScenarioRuntime.start());
+                else if (params.length == 3) show(client, CommerceScenarioRuntime.start(
                         java.util.UUID.fromString(params[1]), java.nio.file.Path.of(params[2])));
                 else throw new IllegalArgumentException("start accepts no arguments or <run-uuid> <config-path>");
                 return;
             }
             if ("resume".equalsIgnoreCase(params[0]) && params.length == 2) {
-                show(client, EconomySimulationRuntime.resume(java.util.UUID.fromString(params[1]))); return;
+                show(client, CommerceScenarioRuntime.resume(java.util.UUID.fromString(params[1]))); return;
             }
             if ("preflight".equalsIgnoreCase(params[0])) {
-                if (params.length == 1) preflight(client, EconomySimulationRuntime.preflight());
-                else if (params.length == 2) preflight(client, EconomySimulationRuntime.preflight(
+                if (params.length == 1) preflight(client, CommerceScenarioRuntime.preflight());
+                else if (params.length == 2) preflight(client, CommerceScenarioRuntime.preflight(
                         java.nio.file.Path.of(params[1])));
                 else throw new IllegalArgumentException("preflight accepts an optional <config-path>");
                 return;
             }
             if ("advance".equalsIgnoreCase(params[0]) && params.length == 2) {
                 long days = Long.parseLong(params[1]);
-                var result = EconomySimulationRuntime.advanceDays(days);
+                var result = CommerceScenarioRuntime.advanceDays(days);
                 client.getPlayer().yellowMessage("Economy reached " + result.advance().reachedAt()
                         + "; events=" + result.advance().processedEvents() + "; status=" + result.status()
                         + (result.advance().waitingExternalAction()
@@ -52,20 +52,20 @@ public final class EconomyCommand extends Command {
                 return;
             }
             if ("audit".equalsIgnoreCase(params[0])) {
-                evidence(client, "Audit", EconomySimulationRuntime.audit()); return;
+                evidence(client, "Audit", CommerceScenarioRuntime.audit()); return;
             }
             if ("complete".equalsIgnoreCase(params[0])) {
-                evidence(client, "Completion", EconomySimulationRuntime.complete()); return;
+                evidence(client, "Completion", CommerceScenarioRuntime.complete()); return;
             }
             if ("fail".equalsIgnoreCase(params[0]) && params.length >= 2) {
                 String reason = String.join(" ", java.util.Arrays.copyOfRange(params, 1, params.length));
-                evidence(client, "Failure recorded", EconomySimulationRuntime.fail(reason)); return;
+                evidence(client, "Failure recorded", CommerceScenarioRuntime.fail(reason)); return;
             }
             if ("experiment".equalsIgnoreCase(params[0])) {
                 experiment(client, params); return;
             }
             if ("stop".equalsIgnoreCase(params[0])) {
-                EconomySimulationRuntime.stop(); client.getPlayer().yellowMessage("Economy runtime stopped."); return;
+                CommerceScenarioRuntime.stop(); client.getPlayer().yellowMessage("Economy runtime stopped."); return;
             }
             if ("calibration".equalsIgnoreCase(params[0])) {
                 calibration(client, params); return;
@@ -82,7 +82,7 @@ public final class EconomyCommand extends Command {
         }
     }
 
-    private static void preflight(Client client, EconomySimulationRuntime.Preflight value) {
+    private static void preflight(Client client, CommerceScenarioRuntime.Preflight value) {
         client.getPlayer().yellowMessage("Economy preflight " + (value.ready() ? "READY" : "BLOCKED")
                 + ": roster=" + value.mappedCharacters() + '/' + value.requiredCharacters()
                 + " initialFM=" + value.initialFmReady() + '/' + value.initialAgents()
@@ -92,7 +92,7 @@ public final class EconomyCommand extends Command {
         for (String blocker : value.blockers()) client.getPlayer().yellowMessage(" - " + blocker);
     }
 
-    private static void show(Client client, EconomySimulationRuntime.Status status) {
+    private static void show(Client client, CommerceScenarioRuntime.Status status) {
         client.getPlayer().yellowMessage(status.active()
                 ? "Economy run=" + status.runId() + " logical=" + status.logicalTime()
                 + " target=" + status.targetLogicalTime() + " state=" + status.state()

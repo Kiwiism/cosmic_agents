@@ -1,5 +1,7 @@
 package server.agents.economy.scenario;
 
+import server.agents.economy.session.CommerceParticipant;
+
 import org.junit.jupiter.api.Test;
 import server.agents.economy.activity.*;
 import server.agents.economy.catalog.*;
@@ -68,29 +70,29 @@ class EconomyRunCoordinatorTest {
         private boolean activityScheduled;
         private FarmSessionOutcome outcome;
 
-        public void admit(EconomyAgentProfile profile, Instant at) { actions.add("admit"); }
-        public MarketDirective performMarketCycle(EconomyAgentProfile profile, Instant at) {
+        public void admit(CommerceParticipant profile, Instant at) { actions.add("admit"); }
+        public MarketDirective performMarketCycle(CommerceParticipant profile, Instant at) {
             actions.add("market");
             if (activityScheduled) return MarketDirective.idle();
             activityScheduled = true;
             return new MarketDirective(Optional.of(at.plusSeconds(1)), Optional.empty());
         }
-        public FarmSessionPlan planOffscreenActivity(EconomyAgentProfile profile, Instant at) {
+        public FarmSessionPlan planOffscreenActivity(CommerceParticipant profile, Instant at) {
             return new FarmSessionPlan("session-1", "observed:test-session", profile.agentId(),
                     100000001, at, Duration.ofMinutes(10), 1,
                     List.of(new FarmSessionPlan.MonsterWork(100100, 1, 3)), Set.of(), List.of());
         }
-        public void leaveFreeMarket(EconomyAgentProfile profile, FarmSessionPlan plan, Instant at) {
+        public void leaveFreeMarket(CommerceParticipant profile, FarmSessionPlan plan, Instant at) {
             actions.add("leave");
         }
-        public FarmSessionOutcome settleOffscreenActivity(EconomyAgentProfile profile,
+        public FarmSessionOutcome settleOffscreenActivity(CommerceParticipant profile,
                                                            FarmSessionOutcome value, Instant at,
                                                            java.util.function.LongSupplier random) {
             actions.add("settle");
             outcome = value;
             return value;
         }
-        public void returnThroughFreeMarketEntrance(EconomyAgentProfile profile, Instant at) {
+        public void returnThroughFreeMarketEntrance(CommerceParticipant profile, Instant at) {
             actions.add("return");
         }
         public Map<String, Object> snapshotState() {
@@ -103,7 +105,7 @@ class EconomyRunCoordinatorTest {
 
     private static EconomyLifecycleJournal journal() {
         return new EconomyLifecycleJournal() {
-            public void admitted(UUID runId, EconomyAgentProfile profile, Instant at) { }
+            public void admitted(UUID runId, CommerceParticipant profile, Instant at) { }
             public void activityStarted(UUID runId, FarmSessionPlan plan) { }
             public void activityCompleted(UUID runId, FarmSessionOutcome outcome) { }
             public void stateChanged(UUID runId, String agentId, EconomyRunCoordinator.Status state,

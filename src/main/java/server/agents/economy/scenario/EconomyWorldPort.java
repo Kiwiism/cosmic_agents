@@ -3,6 +3,7 @@ package server.agents.economy.scenario;
 import server.agents.economy.activity.FarmSessionOutcome;
 import server.agents.economy.activity.FarmSessionPlan;
 import server.agents.economy.session.EconomySessionPort;
+import server.agents.economy.session.CommerceParticipant;
 
 import java.time.Instant;
 import java.util.Map;
@@ -16,21 +17,21 @@ import java.util.function.LongSupplier;
  */
 @Deprecated
 public interface EconomyWorldPort extends EconomySessionPort {
-    void admit(EconomyAgentProfile profile, Instant logicalAt);
+    void admit(CommerceParticipant profile, Instant logicalAt);
 
-    MarketDirective performMarketCycle(EconomyAgentProfile profile, Instant logicalAt);
+    MarketDirective performMarketCycle(CommerceParticipant profile, Instant logicalAt);
 
-    FarmSessionPlan planOffscreenActivity(EconomyAgentProfile profile, Instant logicalAt);
+    FarmSessionPlan planOffscreenActivity(CommerceParticipant profile, Instant logicalAt);
 
-    void leaveFreeMarket(EconomyAgentProfile profile, FarmSessionPlan plan, Instant logicalAt);
+    void leaveFreeMarket(CommerceParticipant profile, FarmSessionPlan plan, Instant logicalAt);
 
-    FarmSessionOutcome settleOffscreenActivity(EconomyAgentProfile profile, FarmSessionOutcome outcome,
+    FarmSessionOutcome settleOffscreenActivity(CommerceParticipant profile, FarmSessionOutcome outcome,
                                                Instant logicalAt, LongSupplier deterministicGameplayRandom);
 
-    void returnThroughFreeMarketEntrance(EconomyAgentProfile profile, Instant logicalAt);
+    void returnThroughFreeMarketEntrance(CommerceParticipant profile, Instant logicalAt);
 
     @Override
-    default EntryResult requestEntry(EconomyAgentProfile profile, EntryRequest request, Instant logicalAt) {
+    default EntryResult requestEntry(CommerceParticipant profile, EntryRequest request, Instant logicalAt) {
         admit(profile, logicalAt);
         java.util.UUID sessionId = java.util.UUID.nameUUIDFromBytes((profile.agentId() + ':'
                 + request.requestId()).getBytes(java.nio.charset.StandardCharsets.UTF_8));
@@ -39,7 +40,7 @@ public interface EconomyWorldPort extends EconomySessionPort {
     }
 
     @Override
-    default Directive performMarketCycle(java.util.UUID sessionId, EconomyAgentProfile profile,
+    default Directive performMarketCycle(java.util.UUID sessionId, CommerceParticipant profile,
                                          Instant logicalAt) {
         MarketDirective value = performMarketCycle(profile, logicalAt);
         if (value.startActivityAt().isPresent())
@@ -50,7 +51,7 @@ public interface EconomyWorldPort extends EconomySessionPort {
     }
 
     @Override
-    default ReleaseResult release(java.util.UUID sessionId, EconomyAgentProfile profile,
+    default ReleaseResult release(java.util.UUID sessionId, CommerceParticipant profile,
                                   Instant logicalAt, String reason) {
         return ReleaseResult.released(reason);
     }
@@ -65,11 +66,11 @@ public interface EconomyWorldPort extends EconomySessionPort {
     }
 
     /** Restores adapter state with the checkpoint's authoritative admitted profiles. */
-    default void restoreState(Map<String, Object> state, Map<String, EconomyAgentProfile> profiles) {
+    default void restoreState(Map<String, Object> state, Map<String, CommerceParticipant> profiles) {
         restoreState(state);
     }
 
-    default Optional<Presence> currentPresence(EconomyAgentProfile profile) { return Optional.empty(); }
+    default Optional<Presence> currentPresence(CommerceParticipant profile) { return Optional.empty(); }
 
     record Presence(int mapId, int x, int y, boolean visible) { }
 

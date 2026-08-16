@@ -84,6 +84,20 @@ class AgentArchitectureBoundaryTest {
     }
 
     @Test
+    void productionCommerceDoesNotDependOnObservationOrExternalActivitySimulation()
+            throws IOException {
+        for (Path root : List.of(
+                AGENTS.resolve("economy").resolve("session"),
+                AGENTS.resolve("runtime").resolve("commerce"))) {
+            assertTreeExcludes(root,
+                    List.of("import server.agents.observation.",
+                            "import server.agents.simulation.activity.",
+                            "SimulationRunEngine", "PopulationAdmissionPlanner"),
+                    "production Commerce contracts and sessions must remain simulator-free");
+        }
+    }
+
+    @Test
     void supportSystemsCannotAdmitOrStartPrimaryActivities() throws IOException {
         List<Path> roots = List.of(AGENTS.resolve("inventory"), AGENTS.resolve("socials"));
         for (Path root : roots) {

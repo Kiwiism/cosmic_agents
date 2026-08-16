@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import server.agents.economy.activity.FarmSessionOutcome;
 import server.agents.economy.activity.FarmSessionPlan;
-import server.agents.economy.scenario.EconomyAgentProfile;
+import server.agents.economy.session.CommerceParticipant;
 import server.agents.economy.scenario.EconomyRunCoordinator;
 
 import javax.sql.DataSource;
@@ -22,7 +22,7 @@ public final class JdbcEconomyLifecycleJournal implements EconomyLifecycleJourna
     }
 
     @Override
-    public void admitted(UUID runId, EconomyAgentProfile profile, Instant logicalAt) {
+    public void admitted(UUID runId, CommerceParticipant profile, Instant logicalAt) {
         try (Connection connection = dataSource.getConnection()) {
             connection.setAutoCommit(false);
             try (PreparedStatement arrival = connection.prepareStatement(

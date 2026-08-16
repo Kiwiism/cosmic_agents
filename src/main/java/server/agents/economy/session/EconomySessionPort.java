@@ -1,7 +1,5 @@
 package server.agents.economy.session;
 
-import server.agents.economy.scenario.EconomyAgentProfile;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
@@ -16,11 +14,11 @@ import java.util.UUID;
  * command economic behavior only between an accepted entry and a successful release.</p>
  */
 public interface EconomySessionPort {
-    EntryResult requestEntry(EconomyAgentProfile profile, EntryRequest request, Instant logicalAt);
+    EntryResult requestEntry(CommerceParticipant profile, EntryRequest request, Instant logicalAt);
 
-    Directive performMarketCycle(UUID sessionId, EconomyAgentProfile profile, Instant logicalAt);
+    Directive performMarketCycle(UUID sessionId, CommerceParticipant profile, Instant logicalAt);
 
-    ReleaseResult release(UUID sessionId, EconomyAgentProfile profile, Instant logicalAt, String reason);
+    ReleaseResult release(UUID sessionId, CommerceParticipant profile, Instant logicalAt, String reason);
 
     default Map<String, Object> snapshotState() { return Map.of(); }
 
@@ -29,11 +27,11 @@ public interface EconomySessionPort {
             throw new IllegalStateException("economy session adapter does not support checkpoint state");
     }
 
-    default void restoreState(Map<String, Object> state, Map<String, EconomyAgentProfile> profiles) {
+    default void restoreState(Map<String, Object> state, Map<String, CommerceParticipant> profiles) {
         restoreState(state);
     }
 
-    default Optional<Presence> sessionPresence(EconomyAgentProfile profile) { return Optional.empty(); }
+    default Optional<Presence> sessionPresence(CommerceParticipant profile) { return Optional.empty(); }
 
     record EntryRequest(UUID requestId, String reason, Duration maximumDuration,
                         Duration maximumIdleDuration, Map<String, String> attributes) {

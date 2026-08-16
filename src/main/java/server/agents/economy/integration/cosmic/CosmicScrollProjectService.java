@@ -8,7 +8,7 @@ import server.ItemInformationProvider;
 import server.ScrollTransactionService;
 import server.agents.economy.decision.AgentNeed;
 import server.agents.economy.market.EconomicReason;
-import server.agents.economy.scenario.EconomyAgentProfile;
+import server.agents.economy.session.CommerceParticipant;
 import server.agents.economy.scenario.NamedRandomStreams;
 import server.economy.EconomyOperationKind;
 import server.economy.EconomyTransactionCoordinator;
@@ -40,7 +40,7 @@ public final class CosmicScrollProjectService implements AutonomousFreeMarketBeh
     }
 
     @Override
-    public Result applyNext(Character agent, EconomyAgentProfile profile,
+    public Result applyNext(Character agent, CommerceParticipant profile,
                             List<AgentNeed> needs, Instant logicalAt) {
         Optional<AgentNeed> project = needs.stream()
                 .filter(need -> need.reason() == EconomicReason.SCROLL_UPGRADE)

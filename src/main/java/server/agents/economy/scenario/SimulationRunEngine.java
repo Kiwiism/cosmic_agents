@@ -1,5 +1,7 @@
 package server.agents.economy.scenario;
 
+import server.agents.economy.session.CommerceParticipant;
+
 import server.agents.economy.catalog.CatalogBundleDescriptor;
 import server.agents.economy.clock.LogicalClock;
 import server.agents.economy.clock.LogicalEventQueue;
@@ -131,7 +133,7 @@ public final class SimulationRunEngine {
             Map<String, String> parameters = new LinkedHashMap<>();
             parameters.put("jobFamily", admission.jobFamily());
             parameters.put("dailyActivityFraction", Double.toString(admission.dailyActivityFraction()));
-            EconomyAgentProfile profile = admission.profile();
+            CommerceParticipant profile = admission.profile();
             parameters.put("riskTolerance", Double.toString(profile.riskTolerance()));
             parameters.put("liquidityPreference", Double.toString(profile.liquidityPreference()));
             parameters.put("upgradeAggressiveness", Double.toString(profile.upgradeAggressiveness()));

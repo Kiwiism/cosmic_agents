@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import server.agents.economy.activity.FarmSessionPlan;
 import server.agents.economy.activity.RuleExactFarmResolver;
 import server.agents.economy.integration.cosmic.EconomyParticipantRegistry;
-import server.agents.economy.scenario.EconomyAgentProfile;
+import server.agents.economy.session.CommerceParticipant;
 import server.economy.EconomyTaxOverride;
 
 import java.time.Duration;
@@ -24,7 +24,7 @@ class CosmicExternalAgentActivityAdapterTest {
         Character character = mock(Character.class);
         when(character.getId()).thenReturn(101);
         when(character.getMapId()).thenReturn(910000001, 910000001, 910000001, 910000000);
-        EconomyAgentProfile profile = profile();
+        CommerceParticipant profile = profile();
         EconomyParticipantRegistry participants = new EconomyParticipantRegistry(id -> character);
         participants.admitted(profile, character);
         FarmSessionPlan plan = new FarmSessionPlan("farm-1", "calibration-1", "agent-1", 100000000,
@@ -44,8 +44,8 @@ class CosmicExternalAgentActivityAdapterTest {
         verify(presence).enterEconomyEntrance(character, Instant.EPOCH.plusSeconds(3600));
     }
 
-    private static EconomyAgentProfile profile() {
-        return new EconomyAgentProfile("agent-1", "BEGINNER", .5, .5, .5, .5, .5, .5,
+    private static CommerceParticipant profile() {
+        return new CommerceParticipant("agent-1", "BEGINNER", .5, .5, .5, .5, .5, .5,
                 24, .5, .5);
     }
 }

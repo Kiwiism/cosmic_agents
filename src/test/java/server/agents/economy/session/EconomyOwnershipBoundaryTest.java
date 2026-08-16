@@ -14,6 +14,7 @@ class EconomyOwnershipBoundaryTest {
         String source = Files.readString(Path.of("src/main/java/server/agents/economy/session/EconomySessionPort.java"));
         assertFalse(source.contains("economy.activity"));
         assertFalse(source.contains("FarmSession"));
+        assertFalse(source.contains("economy.scenario"));
         assertTrue(source.contains("requestEntry"));
         assertTrue(source.contains("release("));
     }

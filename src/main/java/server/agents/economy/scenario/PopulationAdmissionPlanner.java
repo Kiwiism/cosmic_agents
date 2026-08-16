@@ -1,5 +1,7 @@
 package server.agents.economy.scenario;
 
+import server.agents.economy.session.CommerceParticipant;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -27,7 +29,7 @@ public final class PopulationAdmissionPlanner {
                 double activity = weightedActivity(config.activityDistribution,
                         random.stream("population.activity"));
                 NamedRandomStreams.Stream traits = random.stream("population.profile");
-                EconomyAgentProfile profile = new EconomyAgentProfile("agent-" + ordinal, job, activity,
+                CommerceParticipant profile = new CommerceParticipant("agent-" + ordinal, job, activity,
                         traits.nextDouble(), traits.nextDouble(), traits.nextDouble(), traits.nextDouble(),
                         sellerWillingness(config, traits), 6 + traits.nextInt(67), traits.nextDouble(),
                         traits.nextDouble());
@@ -74,7 +76,7 @@ public final class PopulationAdmissionPlanner {
         };
     }
 
-    public record Admission(EconomyAgentProfile profile, Instant admittedAt) {
+    public record Admission(CommerceParticipant profile, Instant admittedAt) {
         public String agentId() { return profile.agentId(); }
         public String jobFamily() { return profile.jobFamily(); }
         public double dailyActivityFraction() { return profile.dailyActivityFraction(); }

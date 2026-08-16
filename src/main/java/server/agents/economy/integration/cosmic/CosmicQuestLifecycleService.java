@@ -4,7 +4,7 @@ import client.Character;
 import client.QuestStatus;
 import constants.inventory.ItemConstants;
 import server.ItemInformationProvider;
-import server.agents.economy.scenario.EconomyAgentProfile;
+import server.agents.economy.session.CommerceParticipant;
 import server.agents.economy.scenario.EconomyEngineConfig;
 import server.agents.economy.scenario.NamedRandomStreams;
 import server.agents.economy.catalog.EconomyCatalog;
@@ -72,7 +72,7 @@ public final class CosmicQuestLifecycleService implements AutonomousFreeMarketBe
     }
 
     @Override
-    public Result advance(Character agent, EconomyAgentProfile profile, Instant logicalAt) {
+    public Result advance(Character agent, CommerceParticipant profile, Instant logicalAt) {
         Optional<VictoriaQuestEconomyCatalog.Entry> completion = agent.getStartedQuests().stream()
                 .map(status -> catalog.find(status.getQuestID()))
                 .flatMap(Optional::stream)
@@ -96,7 +96,7 @@ public final class CosmicQuestLifecycleService implements AutonomousFreeMarketBe
         return start(agent, profile, starts.get(selected), logicalAt);
     }
 
-    private Result start(Character agent, EconomyAgentProfile profile,
+    private Result start(Character agent, CommerceParticipant profile,
                          VictoriaQuestEconomyCatalog.Entry entry, Instant logicalAt) {
         Quest quest = Quest.getInstance(entry.questId());
         if (!execute(agent, profile, entry, logicalAt, EconomyOperationKind.QUEST_START, null, () -> {
@@ -109,7 +109,7 @@ public final class CosmicQuestLifecycleService implements AutonomousFreeMarketBe
                 Map.of("catalog", catalog.version(), "questName", entry.questName()));
     }
 
-    private Result complete(Character agent, EconomyAgentProfile profile,
+    private Result complete(Character agent, CommerceParticipant profile,
                             VictoriaQuestEconomyCatalog.Entry entry, Instant logicalAt) {
         Quest quest = Quest.getInstance(entry.questId());
         List<Integer> selectable = quest.selectableRewardItemIds(agent);
@@ -127,7 +127,7 @@ public final class CosmicQuestLifecycleService implements AutonomousFreeMarketBe
                         "rewardSelectionPolicy", config.rewardSelectionPolicy));
     }
 
-    private boolean execute(Character agent, EconomyAgentProfile profile,
+    private boolean execute(Character agent, CommerceParticipant profile,
                          VictoriaQuestEconomyCatalog.Entry entry, Instant logicalAt,
                          EconomyOperationKind kind, Integer selection, Runnable mutation) {
         if (!agent.getClient().tryacquireClient()) return false;

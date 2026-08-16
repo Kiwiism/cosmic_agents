@@ -6,6 +6,7 @@ import server.agents.economy.activity.RuleExactFarmResolver;
 import server.agents.economy.clock.ScheduledEconomyEvent;
 import server.agents.economy.persistence.EconomyLifecycleJournal;
 import server.agents.economy.session.EconomySessionPort;
+import server.agents.economy.session.CommerceParticipant;
 import server.agents.simulation.activity.ExternalAgentActivityPort;
 import server.agents.simulation.activity.RuleExactExternalActivityAdapter;
 
@@ -52,15 +53,15 @@ public final class EconomyRunCoordinator {
                                  RuleExactFarmResolver resolver, EconomyLifecycleJournal journal) {
         this(engine, world, new RuleExactExternalActivityAdapter(world::planOffscreenActivity,
                 resolver, new RuleExactExternalActivityAdapter.Lifecycle() {
-            @Override public void begin(EconomyAgentProfile profile, FarmSessionPlan plan, Instant at) {
+            @Override public void begin(CommerceParticipant profile, FarmSessionPlan plan, Instant at) {
                 world.leaveFreeMarket(profile, plan, at);
             }
-            @Override public FarmSessionOutcome settle(EconomyAgentProfile profile,
+            @Override public FarmSessionOutcome settle(CommerceParticipant profile,
                                                        FarmSessionOutcome outcome, Instant at,
                                                        java.util.function.LongSupplier random) {
                 return world.settleOffscreenActivity(profile, outcome, at, random);
             }
-            @Override public void returnToEconomyEntrance(EconomyAgentProfile profile, Instant at) {
+            @Override public void returnToEconomyEntrance(CommerceParticipant profile, Instant at) {
                 world.returnThroughFreeMarketEntrance(profile, at);
             }
         }), journal);
@@ -80,7 +81,7 @@ public final class EconomyRunCoordinator {
     }
 
     private void admit(ScheduledEconomyEvent event) {
-        EconomyAgentProfile profile = profile(event);
+        CommerceParticipant profile = profile(event);
         if (agents.containsKey(profile.agentId()))
             throw new IllegalStateException("agent admitted twice: " + profile.agentId());
         EconomySessionPort.EntryResult entry = requestEntry(profile, event.dueAt());
@@ -189,7 +190,7 @@ public final class EconomyRunCoordinator {
         engine.schedule(event.dueAt(), MARKET_CYCLE, event.subjectId(), Map.of());
     }
 
-    private EconomySessionPort.EntryResult requestEntry(EconomyAgentProfile profile, Instant at) {
+    private EconomySessionPort.EntryResult requestEntry(CommerceParticipant profile, Instant at) {
         EconomySessionPort.EntryRequest request = EconomySessionPort.EntryRequest.scheduled(
                 engine.runId(), profile.agentId(), at, maximumSessionDuration, maximumIdleDuration);
         EconomySessionPort.EntryResult result = sessions.requestEntry(profile, request, at);
@@ -205,14 +206,14 @@ public final class EconomyRunCoordinator {
         return state;
     }
 
-    private void recordPresence(EconomyAgentProfile profile, String reason, Instant at) {
+    private void recordPresence(CommerceParticipant profile, String reason, Instant at) {
         sessions.sessionPresence(profile).ifPresent(value ->
                 journal.presence(engine.runId(), profile.agentId(), value, reason, at));
     }
 
-    private static EconomyAgentProfile profile(ScheduledEconomyEvent event) {
+    private static CommerceParticipant profile(ScheduledEconomyEvent event) {
         Map<String, String> p = event.parameters();
-        return new EconomyAgentProfile(event.subjectId(), p.get("jobFamily"),
+        return new CommerceParticipant(event.subjectId(), p.get("jobFamily"),
                 number(p, "dailyActivityFraction"), number(p, "riskTolerance"),
                 number(p, "liquidityPreference"), number(p, "upgradeAggressiveness"),
                 number(p, "shoppingPatience"), number(p, "stallWillingness"),
@@ -268,7 +269,7 @@ public final class EconomyRunCoordinator {
         }
         agentState.forEach((id, value) -> {
             Map<String, Object> row = (Map<String, Object>) value;
-            EconomyAgentProfile profile = profileFrom((Map<String, Object>) row.get("profile"));
+            CommerceParticipant profile = profileFrom((Map<String, Object>) row.get("profile"));
             Status status = Status.valueOf(row.get("status").toString());
             Map<String, Object> pending = (Map<String, Object>) row.get("pendingActivity");
             FarmSessionPlan plan = pending == null || pending.isEmpty() ? null : planFrom(pending);
@@ -286,13 +287,13 @@ public final class EconomyRunCoordinator {
             agents.put(id, new AgentState(profile, status, plan, outcome,
                     sessionId.isBlank() ? null : java.util.UUID.fromString(sessionId)));
         });
-        Map<String, EconomyAgentProfile> profiles = new LinkedHashMap<>();
+        Map<String, CommerceParticipant> profiles = new LinkedHashMap<>();
         agents.forEach((id, value) -> profiles.put(id, value.profile));
         sessions.restoreState(sessionState == null ? Map.of() : sessionState, Map.copyOf(profiles));
         activities.restoreState(activityState == null ? Map.of() : activityState, Map.copyOf(profiles));
     }
 
-    private static Map<String, Object> profileMap(EconomyAgentProfile p) {
+    private static Map<String, Object> profileMap(CommerceParticipant p) {
         Map<String, Object> value = new LinkedHashMap<>();
         value.put("agentId", p.agentId()); value.put("jobFamily", p.jobFamily());
         value.put("dailyActivityFraction", p.dailyActivityFraction());
@@ -305,8 +306,8 @@ public final class EconomyRunCoordinator {
         return value;
     }
 
-    private static EconomyAgentProfile profileFrom(Map<String, Object> p) {
-        return new EconomyAgentProfile(text(p, "agentId"), text(p, "jobFamily"), decimal(p, "dailyActivityFraction"),
+    private static CommerceParticipant profileFrom(Map<String, Object> p) {
+        return new CommerceParticipant(text(p, "agentId"), text(p, "jobFamily"), decimal(p, "dailyActivityFraction"),
                 decimal(p, "riskTolerance"), decimal(p, "liquidityPreference"),
                 decimal(p, "upgradeAggressiveness"), decimal(p, "shoppingPatience"),
                 decimal(p, "stallWillingness"), integer(p, "priceMemoryHours"),
@@ -427,9 +428,9 @@ public final class EconomyRunCoordinator {
     private static double decimal(Map<String, Object> values, String key) { return ((Number) values.get(key)).doubleValue(); }
 
     public enum Status { IN_FREE_MARKET, OFFSCREEN_ACTIVITY, RETURNING_TO_FM }
-    public record AgentView(EconomyAgentProfile profile, Status status, String pendingActivityId,
+    public record AgentView(CommerceParticipant profile, Status status, String pendingActivityId,
                             java.util.UUID economySessionId) { }
-    private record AgentState(EconomyAgentProfile profile, Status status,
+    private record AgentState(CommerceParticipant profile, Status status,
                               FarmSessionPlan pendingActivity, FarmSessionOutcome pendingOutcome,
                               java.util.UUID sessionId) { }
 }

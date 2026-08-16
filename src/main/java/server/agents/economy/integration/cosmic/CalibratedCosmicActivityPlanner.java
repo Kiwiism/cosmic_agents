@@ -9,7 +9,7 @@ import server.agents.economy.activity.ActivityCalibrationRepository;
 import server.agents.economy.activity.FarmSessionPlan;
 import server.agents.economy.activity.VictoriaActivityMapCatalog;
 import server.agents.economy.catalog.EconomyCatalog;
-import server.agents.economy.scenario.EconomyAgentProfile;
+import server.agents.economy.session.CommerceParticipant;
 import server.agents.economy.scenario.EconomyEngineConfig;
 
 import java.nio.charset.StandardCharsets;
@@ -32,7 +32,7 @@ public final class CalibratedCosmicActivityPlanner implements CosmicEconomyWorld
     }
 
     @Override
-    public FarmSessionPlan plan(Character agent, EconomyAgentProfile profile, Instant logicalAt) {
+    public FarmSessionPlan plan(Character agent, CommerceParticipant profile, Instant logicalAt) {
         ActivityCalibration calibration = maps.candidates(agent.getLevel()).stream()
                 .map(map -> calibrations.find(config.agentBuild, map.mapId(), agent.getLevel(),
                         profile.jobFamily(), config.minimumCalibrationSamples))
@@ -79,7 +79,7 @@ public final class CalibratedCosmicActivityPlanner implements CosmicEconomyWorld
                                         + value.monsterId)).experience())).toList();
     }
 
-    private List<FarmSessionPlan.ItemConsumption> consumption(Character agent, EconomyAgentProfile profile,
+    private List<FarmSessionPlan.ItemConsumption> consumption(Character agent, CommerceParticipant profile,
                                                                ActivityCalibration calibration, int minutes) {
         List<FarmSessionPlan.ItemConsumption> result = new ArrayList<>();
         new TreeMap<>(calibration.itemUsePerMinute()).forEach((itemId, rate) -> {

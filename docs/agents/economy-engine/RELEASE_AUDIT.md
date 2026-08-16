@@ -15,7 +15,7 @@ logical-scheduler test is never represented as a physical Free Market soak.
   wall-clock ticks. This validates queue shape and bounded scheduling only, not live market throughput.
 - Checkpoint/restore produces the same remaining event order and named RNG state as an uninterrupted
   run. Changed configuration and catalog hashes are rejected.
-- Clean disposable PostgreSQL 16.4 initialization through V021 passes the runtime verifier, deferred
+- Clean disposable PostgreSQL 16.4 initialization through V022 passes the runtime verifier, deferred
   double-entry balance trigger, item-flow projections, invariant audit, session/intent contracts,
   arrangement resolution, dashboard queries, and atomic revision-0
   configuration persistence (source YAML, normalized JSON, schema version, hash, effective logical

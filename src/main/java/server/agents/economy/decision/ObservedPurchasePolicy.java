@@ -2,7 +2,7 @@ package server.agents.economy.decision;
 
 import server.agents.economy.integration.cosmic.CosmicMarketObservationService;
 import server.agents.economy.market.EconomicReason;
-import server.agents.economy.scenario.EconomyAgentProfile;
+import server.agents.economy.session.CommerceParticipant;
 
 import java.util.Comparator;
 import java.util.List;
@@ -12,7 +12,7 @@ import java.util.Set;
 /** Chooses only from offers this agent physically observed during the current trip. */
 public final class ObservedPurchasePolicy {
     public Optional<Decision> choose(List<CosmicMarketObservationService.ObservedOffer> offers,
-                                     List<AgentNeed> needs, EconomyAgentProfile profile, long mesos) {
+                                     List<AgentNeed> needs, CommerceParticipant profile, long mesos) {
         long liquidityBudget = Math.max(0, Math.round(mesos * (1d - profile.liquidityPreference())));
         return offers.stream().flatMap(offer -> needs.stream()
                         .filter(need -> matches(need, offer.observation().itemId()) && need.deficit() > 0)

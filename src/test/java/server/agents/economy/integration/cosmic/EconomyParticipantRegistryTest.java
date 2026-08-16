@@ -2,7 +2,7 @@ package server.agents.economy.integration.cosmic;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.economy.scenario.EconomyAgentProfile;
+import server.agents.economy.session.CommerceParticipant;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
@@ -14,7 +14,7 @@ class EconomyParticipantRegistryTest {
         Character character = mock(Character.class);
         when(character.getId()).thenReturn(101);
         EconomyParticipantRegistry registry = new EconomyParticipantRegistry(id -> character);
-        EconomyAgentProfile profile = profile("agent-1");
+        CommerceParticipant profile = profile("agent-1");
 
         registry.admitted(profile, character);
         assertTrue(registry.isAdmittedCharacter(101));
@@ -34,7 +34,7 @@ class EconomyParticipantRegistryTest {
         when(first.getId()).thenReturn(101);
         when(second.getId()).thenReturn(102);
         EconomyParticipantRegistry registry = new EconomyParticipantRegistry(id -> first);
-        EconomyAgentProfile profile = profile("agent-1");
+        CommerceParticipant profile = profile("agent-1");
         registry.admitted(profile, first);
 
         assertThrows(IllegalStateException.class, () -> registry.admitted(profile, second));
@@ -42,7 +42,7 @@ class EconomyParticipantRegistryTest {
         assertFalse(registry.isBoundCharacter(102));
     }
 
-    private static EconomyAgentProfile profile(String id) {
-        return new EconomyAgentProfile(id, "BEGINNER", .5, .5, .5, .5, .5, .5, 24, .5, .5);
+    private static CommerceParticipant profile(String id) {
+        return new CommerceParticipant(id, "BEGINNER", .5, .5, .5, .5, .5, .5, 24, .5, .5);
     }
 }

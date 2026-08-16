@@ -5,12 +5,13 @@
 1. Configure `economy-engine.yaml`. YAML contains behavior and scenario policy only; credentials are
    environment variables.
 2. Set distinct `ECONOMY_DB_*` credentials and initialize the separate PostgreSQL database through
-   migrations V001-V021.
+   migrations V001-V022.
 3. Start Cosmic MySQL and the game server normally.
-4. Have at least `population.maximumAgents` live autonomous characters. The runtime deterministically
-   binds scenario slots to characters of the same real Cosmic job family; within each eligible pool,
-   ascending character id is the stable tie-breaker. Characters admitted at a future logical date
-   must still be live and in the FM entrance or rooms at admission time.
+4. Have at least `population.maximumAgents` live autonomous characters on the configured channel.
+   The runtime deterministically binds scenario slots to characters of the same real Cosmic job
+   family; within each eligible pool, ascending character id is the stable tie-breaker. The detached
+   observation harness stages future cohorts and materializes them at the FM entrance when their
+   admission becomes due; they do not need to be manually parked in the FM.
 5. Capture at least `activity.minimumCalibrationSamples` completed real autonomous sessions for every
    build/job/level/map cohort that may farm. Use
    `!economy calibration start <agent-character-id>` while that live agent is on the farm map, then
@@ -29,7 +30,7 @@
    Shop item and is neither a mob drop nor normal NPC stock. `503xxxx` items are Hired Merchants and
    are deliberately rejected.
 7. Run `!economy preflight`. It verifies the scenario-sized live roster, exact job-family binding,
-   seller permit ownership, initial FM/channel presence, the separate evidence database, and matching
+   configured-channel presence, seller permit ownership, the separate evidence database, and matching
    current-level activity calibration coverage without starting or mutating a run. Later level bands
    remain fail-closed and must be calibrated before agents reach them.
 8. Run `!economy start`. With the default `clock.mode: REALTIME`, logical time then advances

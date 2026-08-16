@@ -9,6 +9,7 @@ import server.agents.economy.market.*;
 import server.agents.economy.persistence.DecisionEvidence;
 import server.agents.economy.persistence.EconomyEvidenceJournal;
 import server.agents.economy.scenario.*;
+import server.agents.economy.session.CommerceParticipant;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -139,7 +140,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
     }
 
     @Override
-    public synchronized EconomyWorldPort.MarketDirective perform(Character agent, EconomyAgentProfile profile,
+    public synchronized EconomyWorldPort.MarketDirective perform(Character agent, CommerceParticipant profile,
                                                                   Instant logicalAt) {
         State state = states.computeIfAbsent(profile.agentId(), ignored -> new State(
                 new PrivateMarketKnowledge(), new PhysicalMarketTrip(roomPlanner.plan(
@@ -349,7 +350,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
 
     @Override
     public synchronized EconomyWorldPort.MarketDirective drainForRelease(
-            Character agent, EconomyAgentProfile profile, Instant logicalAt) {
+            Character agent, CommerceParticipant profile, Instant logicalAt) {
         if (agent.getTrade() != null || agent.getHiredMerchant() != null)
             return revisit(logicalAt, true);
         if (agent.getPlayerShop() != null && agent.getPlayerShop().isOpen()) {
@@ -520,7 +521,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
     private static int integer(Map<String, Object> value, String key) { return ((Number) value.get(key)).intValue(); }
     private static long number(Map<String, Object> value, String key) { return ((Number) value.get(key)).longValue(); }
 
-    private boolean attemptObservedPurchase(Character agent, EconomyAgentProfile profile, Instant logicalAt,
+    private boolean attemptObservedPurchase(Character agent, CommerceParticipant profile, Instant logicalAt,
                                             State state, List<CosmicMarketObservationService.ObservedOffer> offers) {
         List<AgentNeed> currentNeeds = observedNeeds.augment(agent, profile,
                 offers.stream().map(CosmicMarketObservationService.ObservedOffer::observation).toList(),
@@ -549,7 +550,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
         return result.success();
     }
 
-    private void appendNegotiation(EconomyAgentProfile profile, Instant logicalAt,
+    private void appendNegotiation(CommerceParticipant profile, Instant logicalAt,
                                    NegotiationBehavior.Result negotiated) {
         appendDecision(profile, logicalAt, "PUBLIC_NEGOTIATION",
                 Map.of("sessionId", negotiated.sessionId(), "outcome", negotiated.outcome(),
@@ -559,7 +560,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
                 Map.of("offeredMesos", (double) negotiated.offeredMesos()));
     }
 
-    private List<String> entryGoals(Character agent, EconomyAgentProfile profile, Instant at) {
+    private List<String> entryGoals(Character agent, CommerceParticipant profile, Instant at) {
         LinkedHashSet<String> goals = new LinkedHashSet<>();
         for (AgentNeed need : needs.read(agent, profile, at)) if (need.deficit() > 0) {
             goals.add(switch (need.reason()) {
@@ -580,7 +581,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
         return List.copyOf(goals);
     }
 
-    private void appendDecision(EconomyAgentProfile profile, Instant at, String kind,
+    private void appendDecision(CommerceParticipant profile, Instant at, String kind,
                                 Map<String, Object> action, List<Map<String, Object>> alternatives,
                                 Map<String, Object> beliefs, Map<String, Object> needs,
                                 Map<String, Object> utility) {
@@ -605,15 +606,15 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
     }
 
     @FunctionalInterface public interface AgentNeedReader {
-        List<AgentNeed> read(Character agent, EconomyAgentProfile profile, Instant logicalAt);
+        List<AgentNeed> read(Character agent, CommerceParticipant profile, Instant logicalAt);
     }
     @FunctionalInterface public interface ObservedNeedAugmenter {
-        List<AgentNeed> augment(Character agent, EconomyAgentProfile profile,
+        List<AgentNeed> augment(Character agent, CommerceParticipant profile,
                                List<MarketObservation> observations, List<AgentNeed> base,
                                Instant logicalAt);
     }
     @FunctionalInterface public interface AmbientBehavior {
-        Result perform(Character agent, EconomyAgentProfile profile, Instant logicalAt,
+        Result perform(Character agent, CommerceParticipant profile, Instant logicalAt,
                        boolean ownsOpenStall, boolean negotiating, int consecutiveActions);
         static AmbientBehavior disabled() { return (agent, profile, at, stall, negotiating, count) -> Result.none(); }
         record Result(boolean attempted, boolean success, String action, String reason,
@@ -623,7 +624,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
         }
     }
     @FunctionalInterface public interface NegotiationBehavior {
-        Result attempt(Character agent, EconomyAgentProfile profile, List<AgentNeed> needs,
+        Result attempt(Character agent, CommerceParticipant profile, List<AgentNeed> needs,
                        List<MarketObservation> observations, Instant logicalAt);
         static NegotiationBehavior disabled() { return (agent, profile, needs, observations, at) -> Result.none(); }
         record Result(boolean attempted, boolean success, String sessionId, String outcome,
@@ -633,7 +634,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
         }
     }
     @FunctionalInterface public interface OfferReviewBehavior {
-        Result reviewNext(Character seller, EconomyAgentProfile profile, Instant logicalAt);
+        Result reviewNext(Character seller, CommerceParticipant profile, Instant logicalAt);
         static OfferReviewBehavior disabled() { return (seller, profile, at) -> Result.none(); }
         record Result(boolean attempted, boolean accepted, String offerId, String outcome,
                       int itemId, Map<String, Object> evidence) {
@@ -642,7 +643,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
         }
     }
     @FunctionalInterface public interface ScrollBehavior {
-        Result applyNext(Character agent, EconomyAgentProfile profile,
+        Result applyNext(Character agent, CommerceParticipant profile,
                          List<AgentNeed> needs, Instant logicalAt);
         static ScrollBehavior disabled() { return (agent, profile, needs, at) -> Result.none(); }
         record Result(boolean attempted, boolean success, int scrollItemId,
@@ -652,7 +653,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
         }
     }
     @FunctionalInterface public interface QuestBehavior {
-        Result advance(Character agent, EconomyAgentProfile profile, Instant logicalAt);
+        Result advance(Character agent, CommerceParticipant profile, Instant logicalAt);
         static QuestBehavior disabled() { return (agent, profile, at) -> Result.none(); }
         record Result(boolean attempted, boolean success, String action, int questId,
                       int npcId, Integer selection, Map<String, Object> evidence) {
@@ -663,7 +664,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
         }
     }
     @FunctionalInterface public interface ArrangementBehavior {
-        Result progress(Character agent, EconomyAgentProfile profile, Instant logicalAt);
+        Result progress(Character agent, CommerceParticipant profile, Instant logicalAt);
         static ArrangementBehavior disabled() { return (agent, profile, at) -> Result.none(); }
         record Result(boolean attempted, boolean completed, boolean externalActionPending,
                       String arrangementId, String outcome, int itemId, Map<String, Object> evidence) {
@@ -695,7 +696,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
         return value;
     }
     @FunctionalInterface public interface ResourceProcurement {
-        Optional<Result> buyNext(Character agent, EconomyAgentProfile profile, Set<Integer> attemptedItemIds);
+        Optional<Result> buyNext(Character agent, CommerceParticipant profile, Set<Integer> attemptedItemIds);
         record Result(int itemId, int quantity, int npcId, boolean success, String result,
                       int mesoDelta, int sourceMapId, String commerceAction) {
             public Result(int itemId, int quantity, int npcId, boolean success, String result,

@@ -35,6 +35,19 @@ class AgentCommerceControlRuntimeTest {
     }
 
     @Test
+    void releasesOnlyTheMatchingCharacterLease() {
+        AgentCommerceControlRuntime.claim(7, "economy:one");
+        AgentCommerceControlRuntime.claim(8, "economy:one");
+
+        AgentCommerceControlRuntime.releaseCharacter(7, "economy:other");
+        assertTrue(AgentCommerceControlRuntime.claimed(7));
+
+        AgentCommerceControlRuntime.releaseCharacter(7, "economy:one");
+        assertFalse(AgentCommerceControlRuntime.claimed(7));
+        assertTrue(AgentCommerceControlRuntime.claimed(8));
+    }
+
+    @Test
     void carriesEconomyAttributionIntoAsynchronousWork() {
         UUID runId = UUID.randomUUID();
         EconomyOperationMetadata metadata = new EconomyOperationMetadata(runId,

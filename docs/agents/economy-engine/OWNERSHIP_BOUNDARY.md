@@ -37,6 +37,12 @@ The normal production composition passes `EconomySessionPort` and `ExternalAgent
 separately. `EconomyWorldPort` and the activity-bearing constructors on
 `CosmicEconomyWorldAdapter` are deprecated checkpoint/test compatibility only.
 
+Production admission is per Agent through `AgentCommerceSessionRuntime`; its restart state is
+stored through `AgentCommerceSessionStore`. Population growth, logical-day scheduling, and
+calibrated external activity live under `server.agents.observation.commerce` and may decorate the
+session port for an experiment, but are not Commerce dependencies. See
+`COMMERCE_TARGET_ARCHITECTURE_AND_12_PHASE_ROLLOUT.md` for the migration and rollout contract.
+
 An authorization is tied to character, logical agent, inventory type, slot, item ID, item fingerprint,
 quantity, venue, and source snapshot revision. Its guard validates the current physical item and then
 consumes the authorization once. Restart/resume fails closed and performs a new entry scan/appraisal;

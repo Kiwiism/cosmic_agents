@@ -40,6 +40,21 @@ class EconomyConfigLoaderTest {
     }
 
     @Test
+    void loadsDetachedThirtyDayObservationProfile() {
+        LoadedEconomyConfig loaded = loader.load(
+                Path.of("config/economy/economy-commerce-observe-30day.yaml"));
+
+        assertEquals("victoria-commerce-observe-30day-v1", loaded.config().scenario.id);
+        assertEquals(30, loaded.config().scenario.targetLogicalDays);
+        assertEquals("MAX_THROUGHPUT", loaded.config().clock.mode);
+        assertEquals(10, loaded.config().population.initialAgents);
+        assertEquals(100, loaded.config().population.maximumAgents);
+        assertEquals(10, loaded.config().population.growth.amount);
+        assertEquals(910000022, loaded.config().world.lastFreeMarketRoomMapId);
+        assertTrue(loaded.config().ambient.enabled);
+    }
+
+    @Test
     void sourceChangesProduceDifferentRunHash() {
         String source = javaResource("economy-engine.yaml");
         String changed = source.replace("targetLogicalDays: 30", "targetLogicalDays: 31");

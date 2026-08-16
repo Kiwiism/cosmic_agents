@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import server.agents.economy.decision.AgentNeed;
 import server.agents.economy.market.EconomicReason;
 import server.agents.economy.market.MarketObservation;
-import server.agents.economy.scenario.EconomyAgentProfile;
+import server.agents.economy.session.CommerceParticipant;
 import server.agents.economy.scenario.EconomyEngineConfig;
 
 import java.time.Instant;
@@ -130,8 +130,8 @@ class CosmicObservedOfferNeedAugmenterTest {
                 bundlePrice, "fingerprint", attributes, MarketObservation.State.LISTED);
     }
 
-    private static EconomyAgentProfile profile(double chairInterest) {
-        return new EconomyAgentProfile("agent-1", "warrior", .5, .5, .5, .5,
+    private static CommerceParticipant profile(double chairInterest) {
+        return new CommerceParticipant("agent-1", "warrior", .5, .5, .5, .5,
                 .5, .5, 24, .5, chairInterest);
     }
 }

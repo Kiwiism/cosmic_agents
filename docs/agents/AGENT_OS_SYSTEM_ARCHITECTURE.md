@@ -44,9 +44,11 @@ the World Director owns selection, source suspension, transfer, admission, and r
 The Activity Host and admission coordinator are the live scheduler boundary. Existing Questing
 steps may still retain a suspended plan while a bounded TownLife or Hunting visit executes; those
 visit leases are registered compatibility controllers and preserve checkpoint behavior. Commerce
-still uses a process-local roster lease, but it is non-interruptible by ordinary activity commands
-and can only be released by the Commerce run lifecycle. These are explicit migration seams, not
-general APIs for new features.
+now has a durable per-Agent session owner and neutral proposal model. The process-local roster lease
+remains only for the detached scenario/observation compatibility runtime and can only be released by
+that run lifecycle. Autonomous World Director ingestion stays gated until all four primary systems
+publish comparable proposal evidence. These are explicit migration seams, not general APIs for new
+features.
 
 ## Ownership levels
 
@@ -131,7 +133,7 @@ change must pass its own tests and the declared consumer matrix for shared capab
 ## Compatibility retirement targets
 
 - replace priority-named foreground types with the Activity Host vocabulary;
-- replace the process-level Commerce roster lease with per-Agent durable Commerce sessions;
+- retire the observation-only process Commerce roster lease after its scenario checkpoints migrate;
 - reduce the live tick gate to lifecycle, common safety, Activity Host, capability, and recovery;
 - migrate feature-specific objective authorities into Questing proposals;
 - route capability-to-plan reverse imports through neutral contracts;

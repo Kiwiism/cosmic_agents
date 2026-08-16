@@ -16,7 +16,7 @@ This ledger follows the attached master goal without redefining completion aroun
 | 9 | Public chat and direct negotiation | Baseline code complete: public transcript, meso and reciprocal item barter, real Trade settlement |
 | 10 | Replaceable ambient behavior | Baseline code complete: owned-chair and constrained fidget policy seam |
 | 11 | Rebuildable data projections and query contracts | Baseline code complete: item/meso/agent read models, explanation query, invariant audit |
-| 12 | Experiments, human readiness, soak and completion audit | PostgreSQL V001-V014 clean initialization, strict 200-agent preflight, live 50-agent FM traversal, calibrated farms, NPC commerce, real attributed PlayerShop opening, retained-failure replay, and interactive report export verified; 30-day sale/negotiation soak and counterfactual matrix remain pending |
+| 12 | Experiments, human readiness, soak and completion audit | PostgreSQL baseline plus additive V022 per-Agent Commerce checkpoints, strict preflight, live 50-agent FM traversal, calibrated farms, NPC commerce, real attributed PlayerShop opening, retained-failure replay, and interactive report export verified; detached 10-to-100 observation harness is locally complete, while its 30-day sale/negotiation soak and counterfactual matrix remain pending |
 
 ## Deliberate baseline constraint
 
@@ -59,3 +59,6 @@ item with current code, tests, migrations, configuration, and runtime evidence.
 
 “Complete locally” means code and automated contracts exist. It does not replace the physical soak
 and human-readiness blockers in `RELEASE_AUDIT.md`.
+
+The current two-deliverable Commerce split and its twelve-phase production/observation rollout are
+specified in `COMMERCE_TARGET_ARCHITECTURE_AND_12_PHASE_ROLLOUT.md`.

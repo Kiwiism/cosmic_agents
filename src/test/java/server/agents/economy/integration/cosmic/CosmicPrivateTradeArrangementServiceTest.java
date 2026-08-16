@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import server.agents.economy.market.FreeMarketPhysicalGateway;
 import server.agents.economy.market.PrivateTradeArrangement;
 import server.agents.economy.persistence.StallOfferStore;
-import server.agents.economy.scenario.EconomyAgentProfile;
+import server.agents.economy.session.CommerceParticipant;
 import server.agents.economy.social.TradeExecutionGateway;
 
 import java.time.Instant;
@@ -26,8 +26,8 @@ class CosmicPrivateTradeArrangementServiceTest {
         Character seller = mock(Character.class);
         when(buyer.getMeso()).thenReturn(300_000);
         when(seller.getId()).thenReturn(202);
-        EconomyAgentProfile buyerProfile = profile("buyer");
-        EconomyAgentProfile sellerProfile = profile("seller");
+        CommerceParticipant buyerProfile = profile("buyer");
+        CommerceParticipant sellerProfile = profile("seller");
         PrivateTradeArrangement agreement = new PrivateTradeArrangement(UUID.randomUUID(), run,
                 UUID.randomUUID(), "buyer", "seller", "stall-1", "stall-1:3", 910000001,
                 1302013, "exact-kfan", 1, 250_000, at.minusSeconds(1), at.plusSeconds(600),
@@ -58,8 +58,8 @@ class CosmicPrivateTradeArrangementServiceTest {
                 PrivateTradeArrangement.Status.EXECUTED, at, "tx-exact", "settled");
     }
 
-    private static EconomyAgentProfile profile(String id) {
-        return new EconomyAgentProfile(id, "BEGINNER", .5, .5, .5, .5, .5, .5,
+    private static CommerceParticipant profile(String id) {
+        return new CommerceParticipant(id, "BEGINNER", .5, .5, .5, .5, .5, .5,
                 24, .5, .5);
     }
 }

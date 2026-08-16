@@ -5,7 +5,7 @@ import server.ItemInformationProvider;
 import server.agents.economy.market.PrivateTradeArrangement;
 import server.agents.economy.market.StallOffer;
 import server.agents.economy.persistence.StallOfferStore;
-import server.agents.economy.scenario.EconomyAgentProfile;
+import server.agents.economy.session.CommerceParticipant;
 import server.agents.integration.AgentPacketGatewayRuntime;
 import server.maps.PlayerShop;
 
@@ -61,7 +61,7 @@ public final class CosmicStallOfferReviewService
     }
 
     @Override
-    public Result reviewNext(Character seller, EconomyAgentProfile profile, Instant logicalAt) {
+    public Result reviewNext(Character seller, CommerceParticipant profile, Instant logicalAt) {
         StallOffer offer = offers.pendingForSeller(runId, profile.agentId(), logicalAt, 1)
                 .stream().findFirst().orElse(null);
         if (offer == null) return Result.none();

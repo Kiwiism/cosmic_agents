@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 import server.agents.economy.integration.cosmic.CosmicMarketObservationService;
 import server.agents.economy.market.EconomicReason;
 import server.agents.economy.market.MarketObservation;
-import server.agents.economy.scenario.EconomyAgentProfile;
+import server.agents.economy.session.CommerceParticipant;
 
 import java.time.Instant;
 import java.util.List;
@@ -20,7 +20,7 @@ class ObservedPurchasePolicyTest {
                         4000000, 20, 100, 10, 2, 1_000, MarketObservation.State.LISTED));
         AgentNeed need = new AgentNeed(4000000, 0, 15, .8, EconomicReason.QUEST_REQUIREMENT,
                 Instant.EPOCH, 2_500, Set.of(), Set.of(), "accepted quest");
-        EconomyAgentProfile profile = new EconomyAgentProfile("a", "warrior", .5, .5,
+        CommerceParticipant profile = new CommerceParticipant("a", "warrior", .5, .5,
                 .2, .5, .5, .5, 24, .5, .2);
 
         var decision = new ObservedPurchasePolicy().choose(List.of(offer), List.of(need), profile, 10_000);
@@ -34,7 +34,7 @@ class ObservedPurchasePolicyTest {
     void cannotUseUnobservedGlobalPriceOrSpendLiquidityReserve() {
         AgentNeed need = new AgentNeed(4000000, 0, 1, 1, EconomicReason.QUEST_REQUIREMENT,
                 Instant.EPOCH, 10_000, Set.of(), Set.of(), "accepted quest");
-        EconomyAgentProfile profile = new EconomyAgentProfile("a", "warrior", .5, .5,
+        CommerceParticipant profile = new CommerceParticipant("a", "warrior", .5, .5,
                 .9, .5, .5, .5, 24, .5, .2);
         assertTrue(new ObservedPurchasePolicy().choose(List.of(), List.of(need), profile, 10_000).isEmpty());
     }

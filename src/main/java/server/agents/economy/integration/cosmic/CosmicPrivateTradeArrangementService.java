@@ -4,7 +4,7 @@ import client.Character;
 import server.agents.economy.market.FreeMarketPhysicalGateway;
 import server.agents.economy.market.PrivateTradeArrangement;
 import server.agents.economy.persistence.StallOfferStore;
-import server.agents.economy.scenario.EconomyAgentProfile;
+import server.agents.economy.session.CommerceParticipant;
 
 import java.time.Instant;
 import java.util.Map;
@@ -32,7 +32,7 @@ public final class CosmicPrivateTradeArrangementService
     }
 
     @Override
-    public Result progress(Character buyer, EconomyAgentProfile profile, Instant logicalAt) {
+    public Result progress(Character buyer, CommerceParticipant profile, Instant logicalAt) {
         PrivateTradeArrangement agreement = arrangements.pendingArrangementForBuyer(
                 runId, profile.agentId(), logicalAt).orElse(null);
         if (agreement == null) return Result.none();
