@@ -170,14 +170,17 @@ public final class AgentFieldCommandService {
         Integer mapId = null;
         if (params.length >= 3) {
             String selector = params[2].toLowerCase();
-            if (Set.of("all", "recommended", "exploratory").contains(selector)) {
+            if ("current".equals(selector)) {
+                mapId = operator.getMapId();
+                group = null;
+            } else if (Set.of("all", "recommended", "exploratory").contains(selector)) {
                 group = selector;
             } else {
                 try {
                     mapId = Integer.parseInt(params[2]);
                     group = null;
                 } catch (NumberFormatException invalid) {
-                    return List.of("Observation selector must be all, recommended, exploratory, or a catalog map ID.");
+                    return List.of("Observation selector must be current, all, recommended, exploratory, or a catalog map ID.");
                 }
             }
         }
@@ -228,7 +231,7 @@ public final class AgentFieldCommandService {
 
     private static List<String> observeHelp() {
         return List.of(
-                "!agentfield observe start <all|recommended|exploratory|map-id> [seed]",
+                "!agentfield observe start <current|all|recommended|exploratory|map-id> [seed]",
                 "!agentfield observe status | rotate | stop | catalog",
                 "This test-only harness reuses pooled Agents and does not raise the normal six-Agent field cap.");
     }
@@ -469,7 +472,7 @@ public final class AgentFieldCommandService {
                 "!agentfield prepare <agent-name> <warrior|bowman|magician|thief-dagger|pirate-gun>",
                 "!agentfield start <solo|party> <free|objective> <1-6> [agent names...]",
                 "!agentfield ladder <warrior> <bowman> <magician> <thief> <pirate>",
-                "!agentfield observe start <all|recommended|exploratory|map-id> [seed] | status | rotate | stop | catalog",
+                "!agentfield observe start <current|all|recommended|exploratory|map-id> [seed] | status | rotate | stop | catalog",
                 "!agentfield visit start <agent-name> [free|objective] | status | rest | stop",
                 "!agentfield add <agent-name> | remove <agent-name> | status | stop",
                 "Objective mode assigns the same configurable kill count to every live mob species.");
