@@ -466,6 +466,18 @@ public class Trade {
         }
     }
 
+    public static void startTrade(Character chr, String settlementId) {
+        startTrade(chr);
+        if (chr.getTrade() != null && chr.getTrade().partner == null
+                && chr.getTrade().items.isEmpty() && chr.getTrade().meso == 0) {
+            chr.getTrade().settlementId = settlementId;
+        }
+    }
+
+    public int getOfferedMesos() {
+        return meso;
+    }
+
     private static boolean hasTradeInviteBack(Character c1, Character c2) {
         Trade other = c2.getTrade();
         if (other != null) {

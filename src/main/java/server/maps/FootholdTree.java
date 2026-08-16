@@ -24,7 +24,6 @@ package server.maps;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -35,7 +34,7 @@ public class FootholdTree {
     private FootholdTree ne = null;
     private FootholdTree sw = null;
     private FootholdTree se = null;
-    private final List<Foothold> footholds = new LinkedList<>();
+    private final List<Foothold> footholds = new ArrayList<>();
     private final Point p1;
     private final Point p2;
     private final Point center;
@@ -43,6 +42,7 @@ public class FootholdTree {
     private static final int maxDepth = 8;
     private int maxDropX;
     private int minDropX;
+    private int minimumZMass = -1;
 
     public FootholdTree(Point p1, Point p2) {
         this.p1 = p1;
@@ -58,6 +58,9 @@ public class FootholdTree {
     }
 
     public void insert(Foothold f) {
+        if (f.getZMass() >= 0 && (minimumZMass < 0 || f.getZMass() < minimumZMass)) {
+            minimumZMass = f.getZMass();
+        }
         if (depth == 0) {
             if (f.getX1() > maxDropX) {
                 maxDropX = f.getX1();
@@ -95,24 +98,23 @@ public class FootholdTree {
         }
     }
 
-    private List<Foothold> getRelevants(Point p) {
-        return getRelevants(p, new LinkedList<>());
-    }
-
-    private List<Foothold> getRelevants(Point p, List<Foothold> list) {
-        list.addAll(footholds);
-        if (nw != null) {
-            if (p.x <= center.x && p.y <= center.y) {
-                nw.getRelevants(p, list);
-            } else if (p.x > center.x && p.y <= center.y) {
-                ne.getRelevants(p, list);
-            } else if (p.x <= center.x && p.y > center.y) {
-                sw.getRelevants(p, list);
-            } else {
-                se.getRelevants(p, list);
+    private void collectXMatches(Point p, List<Foothold> list) {
+        for (Foothold foothold : footholds) {
+            if (foothold.getX1() <= p.x && foothold.getX2() >= p.x) {
+                list.add(foothold);
             }
         }
-        return list;
+        if (nw != null) {
+            if (p.x <= center.x && p.y <= center.y) {
+                nw.collectXMatches(p, list);
+            } else if (p.x > center.x && p.y <= center.y) {
+                ne.collectXMatches(p, list);
+            } else if (p.x <= center.x && p.y > center.y) {
+                sw.collectXMatches(p, list);
+            } else {
+                se.collectXMatches(p, list);
+            }
+        }
     }
 
     private Foothold findWallR(Point p1, Point p2) {
@@ -158,13 +160,8 @@ public class FootholdTree {
     }
 
     public Foothold findBelow(Point p) {
-        List<Foothold> relevants = getRelevants(p);
-        List<Foothold> xMatches = new LinkedList<>();
-        for (Foothold fh : relevants) {
-            if (fh.getX1() <= p.x && fh.getX2() >= p.x) {
-                xMatches.add(fh);
-            }
-        }
+        List<Foothold> xMatches = new ArrayList<>();
+        collectXMatches(p, xMatches);
         Collections.sort(xMatches);
         for (Foothold fh : xMatches) {
             if (!fh.isWall()) {
@@ -232,5 +229,9 @@ public class FootholdTree {
 
     public int getMinDropX() {
         return minDropX;
+    }
+
+    public int getMinimumZMass() {
+        return minimumZMass;
     }
 }

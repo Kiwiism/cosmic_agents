@@ -2,6 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
 
 import java.awt.Point;
 import java.util.ArrayList;
@@ -14,6 +15,61 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class AgentLiveTickGateServiceTest {
+    @AfterEach
+    void releaseExclusiveControl() {
+        AgentExclusiveControlRuntime.clearForTests();
+    }
+
+    @Test
+    void exclusiveControlTicksOnlyItsForegroundOwner() {
+        Character agent = mock(Character.class);
+        when(agent.getId()).thenReturn(42);
+        when(agent.getChair()).thenReturn(-1);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        List<String> calls = new ArrayList<>();
+        AgentExclusiveControlRuntime.claim(42, "economy:test");
+
+        boolean consumed = AgentLiveTickGateService.tickLiveGates(
+                new AgentLiveTickGateService.Context(entry, agent, null, null, new Point(), true),
+                new AgentLiveTickGateService.Hooks(
+                        (commonEntry, commonAgent, leader, runAi) -> { calls.add("common"); return false; },
+                        (gateEntry, gateAgent, runAi) -> { calls.add("interlude"); return true; },
+                        (supervisionEntry, supervisionAgent) -> { calls.add("supervision"); return false; },
+                        (capabilityEntry, capabilityAgent) -> { calls.add("exclusive"); return true; },
+                        (tradeEntry, tradeAgent) -> { calls.add("trade"); return false; },
+                        (idleEntry, idleAgent) -> { calls.add("idle"); return false; },
+                        (recoveryEntry, recoveryAgent, anchor, target) -> { calls.add("recovery"); return false; },
+                        (mapEntry, mapAgent) -> { calls.add("mapChange"); return false; }));
+
+        assertTrue(consumed);
+        assertEquals(List.of("exclusive"), calls);
+    }
+
+    @Test
+    void exclusiveControlYieldsOnlyToTheMovementPhaseWhenCapabilityDoesNotConsume() {
+        Character agent = mock(Character.class);
+        when(agent.getId()).thenReturn(42);
+        when(agent.getChair()).thenReturn(-1);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        List<String> calls = new ArrayList<>();
+        AgentExclusiveControlRuntime.claim(42, "economy:test");
+
+        boolean consumed = AgentLiveTickGateService.tickLiveGates(
+                new AgentLiveTickGateService.Context(entry, agent, null, null, new Point(), true),
+                new AgentLiveTickGateService.Hooks(
+                        (commonEntry, commonAgent, leader, runAi) -> { calls.add("common"); return false; },
+                        (gateEntry, gateAgent, runAi) -> { calls.add("interlude"); return true; },
+                        (supervisionEntry, supervisionAgent) -> { calls.add("supervision"); return false; },
+                        (capabilityEntry, capabilityAgent) -> { calls.add("exclusive"); return false; },
+                        (tradeEntry, tradeAgent) -> { calls.add("trade"); return false; },
+                        (idleEntry, idleAgent) -> { calls.add("idle"); return false; },
+                        (recoveryEntry, recoveryAgent, anchor, target) -> { calls.add("recovery"); return false; },
+                        (mapEntry, mapAgent) -> { calls.add("mapChange"); return false; }));
+
+        assertFalse(consumed);
+        assertEquals(List.of("exclusive"), calls);
+    }
+
     @Test
     void planExecutionGateCanResumeASeatedAgentBeforeChairShortCircuit() {
         Character agent = mock(Character.class);

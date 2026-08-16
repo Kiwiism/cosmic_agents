@@ -7,6 +7,7 @@ import server.maps.Portal;
 import java.awt.Point;
 import java.util.List;
 import java.util.Optional;
+import java.util.Comparator;
 
 public final class FreeMarketStorePlacementService {
     public static final int MAXIMUM_SNAP_DISTANCE_PX = 125;
@@ -30,6 +31,39 @@ public final class FreeMarketStorePlacementService {
                 MAXIMUM_SNAP_DISTANCE_PX,
                 1,
                 position -> placementIsClear(character, position));
+    }
+
+    /**
+     * Autonomous sellers may enter a room far from every authored stall spot.
+     * Reserve the nearest legitimate spot without applying the interactive
+     * player's snap radius; the stall capability will physically walk there.
+     */
+    public static Optional<CharacterSpaceReservation> reserveNearestForWalking(Character character) {
+        if (character == null || character.getClient() == null
+                || !FreeMarketCharacterSpaceCatalog.isRoom(character.getMapId())) {
+            return Optional.empty();
+        }
+        Optional<CharacterSpaceReservation> existing = reservation(character);
+        if (existing.isPresent()) return existing;
+        Point origin = roomEntrance(character).orElse(character.getPosition());
+        List<CharacterSpace> spaces = FreeMarketCharacterSpaceCatalog.spaces(character.getMapId());
+        List<CharacterSpace> candidates = spaces.stream()
+                .sorted(Comparator.comparingDouble(space -> space.position().distanceSq(origin)))
+                .toList();
+        for (CharacterSpace candidate : candidates) {
+            Optional<CharacterSpaceReservation> reserved = CharacterSpaceReservationRuntime.reserveExact(
+                    scope(character), CharacterSpaceOwner.character(character.getId()),
+                    spaces, candidate, 1, position -> placementIsClear(character, position));
+            if (reserved.isPresent()) return reserved;
+        }
+        return Optional.empty();
+    }
+
+    private static Optional<Point> roomEntrance(Character character) {
+        return character.getMap().getPortals().stream()
+                .filter(portal -> portal.getTargetMapId() == 910000000)
+                .min(Comparator.comparingInt(Portal::getId))
+                .map(Portal::getPosition);
     }
 
     public static Optional<CharacterSpaceReservation> reservation(Character character) {

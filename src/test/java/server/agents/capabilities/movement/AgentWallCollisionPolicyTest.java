@@ -13,9 +13,20 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentWallCollisionPolicyTest {
+    @Test
+    void cachesMinimumNonnegativeZMassWhileFootholdsAreInserted() {
+        MapleMap map = mapWithFootholds(
+                foothold(1, 0, 100, 200, 100, 8),
+                foothold(2, 50, 0, 50, 100, -1),
+                foothold(3, 75, 0, 75, 100, 3));
+
+        assertEquals(3, map.getFootholds().getMinimumZMass());
+    }
+
     @Test
     void scopesWallsToBaseAndMoverZMassGroups() {
         MapleMap map = mapWithFootholds(

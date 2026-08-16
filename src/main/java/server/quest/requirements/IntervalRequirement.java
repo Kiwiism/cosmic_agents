@@ -27,6 +27,7 @@ import provider.Data;
 import provider.DataTool;
 import server.quest.Quest;
 import server.quest.QuestRequirementType;
+import server.quest.QuestTime;
 
 import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.MINUTES;
@@ -57,7 +58,7 @@ public class IntervalRequirement extends AbstractQuestRequirement {
         StringBuilder str = new StringBuilder();
 
         long futureTime = chr.getQuest(Quest.getInstance(r.questID)).getCompletionTime() + r.getInterval();
-        long leftTime = futureTime - System.currentTimeMillis();
+        long leftTime = futureTime - QuestTime.now();
 
         byte mode = 0;
         if (leftTime / MINUTES.toMillis(1) > 0) {
@@ -88,7 +89,7 @@ public class IntervalRequirement extends AbstractQuestRequirement {
     @Override
     public boolean check(Character chr, Integer npcid) {
         boolean check = !chr.getQuest(Quest.getInstance(questID)).getStatus().equals(QuestStatus.Status.COMPLETED);
-        boolean check2 = chr.getQuest(Quest.getInstance(questID)).getCompletionTime() <= System.currentTimeMillis() - interval;
+        boolean check2 = chr.getQuest(Quest.getInstance(questID)).getCompletionTime() <= QuestTime.now() - interval;
 
         if (check || check2) {
             return true;

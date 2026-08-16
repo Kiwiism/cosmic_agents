@@ -1,0 +1,249 @@
+schemaVersion: 1
+
+scenario:
+  id: victoria-fm-ownership-basic
+  seed: 4815162342
+  description: Ten-agent one-room ownership-boundary live validation
+  targetLogicalDays: 1
+  checkpointEveryLogicalHours: 6
+  stopOnInvariantViolation: true
+
+clock:
+  # REALTIME is the production-equivalent 1x clock. Use MAX_THROUGHPUT only for analysis/soak runs.
+  mode: REALTIME
+  logicalStart: 2026-01-01T00:00:00Z
+  maximumEventsPerBatch: 1000
+
+catalog:
+  bundleId: victoria-v83-authoritative
+  requireMatchingAdaptiveRevision: true
+  adaptiveResources:
+    - /agents/catalogs/adaptive/victoria-quest-facts.json
+    - /agents/catalogs/adaptive/victoria-mob-drop-facts.json
+    - /agents/catalogs/adaptive/victoria-map-facts.json
+    - /agents/catalogs/adaptive/victoria-quest-hunt-index.json
+    - /agents/catalogs/adaptive/victoria-quest-item-demand-index.json
+  sqlResources:
+    - /db/data/101-shops-data.sql
+    - /db/data/102-shopitems-data.sql
+    - /db/data/151-global-drop-data.sql
+    - /db/data/152-drop-data.sql
+  mechanicalResources:
+    - /agents/catalogs/economy/npc-locations.json
+
+world:
+  channelId: 1
+  freeMarketEntranceMapId: 910000000
+  firstFreeMarketRoomMapId: 910000001
+  lastFreeMarketRoomMapId: 910000001
+  activityRegions:
+    - MAPLE_ISLAND
+    - VICTORIA_ISLAND
+  allowPhysicalActivityOutsideFreeMarket: false
+
+session:
+  defaultMaximumDuration: PT30M
+  maximumIdleDuration: PT5M
+  exitWhenPrimaryGoalsComplete: true
+  maximumConsecutiveUnproductiveStalls: 12
+  knowledgeOnlyBrowsingEnabled: true
+  implicitEconomicIntentsEnabled: true
+
+population:
+  initialAgents: 10
+  maximumAgents: 10
+  growth:
+    type: FIXED_INTERVAL
+    amount: 1
+    everyLogicalDays: 1
+    spreadArrivalsAcrossInterval: true
+  classDistribution:
+    warrior: 0.20
+    magician: 0.20
+    bowman: 0.20
+    thief: 0.20
+    pirate: 0.20
+  activityDistribution:
+    casual: 0.30
+    regular: 0.50
+    intensive: 0.20
+  merchantParticipation:
+    willingSellerFraction: 0.65
+    # Dedicated-merchant lifecycle is not implemented; zero prevents a decorative no-op knob.
+    dedicatedMerchantFraction: 0.00
+
+# PlayerShop permits are Cash Shop assets in v83. The strict baseline does not invent or grant one.
+# Runs import exact live holdings and never create administrative startup stock.
+bootstrap:
+  holdingsMode: IMPORT_EXISTING_COSMIC_CHARACTERS
+  shopPermitPolicy: REQUIRE_OWNED_REAL_ITEM
+  shopPermitItemId: 5140000
+  allowAdministratorEndowment: false
+  journalAllEndowments: true
+
+npcCommerce:
+  accessMode: REMOTE_FROM_FREE_MARKET
+  accessScope: ALL_GAME
+  preserveRealNpcStock: true
+  preserveRealPrices: true
+  preserveRealRestrictions: true
+  logicalServiceDelay: PT10S
+  recordOriginalNpcAndMap: true
+  dispositionNpcId: 1012004
+
+activity:
+  executionMode: RULE_EXACT
+  agentBuild: cosmic-autonomous-v1
+  mapCatalogResource: /agents/catalogs/adaptive/victoria-map-facts.json
+  minimumCalibrationSamples: 5
+  visibleWhileActive: false
+  returnThroughFreeMarketEntrance: true
+  medianSessionMinutes: 90
+  maximumSessionMinutes: 240
+  congestionAware: false
+  levelAppropriate: true
+  jobAppropriate: true
+  objectiveAware: true
+  consumeHpPotions: true
+  consumeMpPotions: true
+  consumeAmmunition: true
+  enforceInventoryCapacity: true
+  allowDeath: true
+  deathOccurrenceSource: LIVE_ACTIVITY_CALIBRATION
+  deathPenaltySource: COSMIC_V83_RULES
+  deathDowntimeSource: AGENT_RESPAWN_CONFIGURATION
+
+market:
+  venue: PLAYER_SHOP
+  maximumStallsPerAgent: 1
+  maximumListingsPerStall: 16
+  hiredMerchantsEnabled: false
+  barterEnabled: false
+  sellerMustRemainAtStall: true
+  maximumListingDuration: PT30M
+  minimumRepriceInterval: PT10M
+  maximumReprices: 0
+  coldStartNpcMarkupMinimum: 0.15
+  coldStartNpcMarkupMaximum: 0.75
+  actionPoll: PT5S
+  postTripDelay: PT5M
+  portalTimeout: PT30S
+  approachTimeout: PT20S
+  stallOpenTimeout: PT30S
+  negotiationTimeout: PT2M
+  stallOfferReviewDelay: PT30S
+  stallOfferArrangementTimeout: PT10M
+  minimumPublicOfferIncrementMesos: 100
+  minimumPublicOfferIncrementBasisPoints: 100
+  stallOfferFlavorTemplate: "hey i wana offer {offer} meso for {item_stats} {item_name} thanks!"
+  interactionRangePixels: 160
+  approachRangePixels: 120
+  globalSearchAllowed: false
+  minimumRoomsPerTrip: 1
+  maximumRoomsPerTrip: 1
+  rememberObservedListings: true
+  useCosmicTransactions: true
+  rejectSelfTrade: true
+  # Durable multi-transaction cycle detection is not implemented in the first release.
+  detectCircularTrade: false
+  # Structured negotiation is retained but starts disabled until exact meetup settlement passes live validation.
+  publicOffersEnabled: false
+
+valuation:
+  observationMemory: PT168H
+  minimumObservedListings: 1
+  catalogAnchorMarkupBasisPoints: 5000
+  customOverrides: []
+
+tax:
+  enabled: true
+  policy: COSMIC_DEFAULT
+  buyerRateBasisPoints: 0
+  sellerRateBasisPoints: 0
+  maximumRateBasisPoints: 10000
+  scheduledChanges: []
+
+seasonalRules:
+  enabled: false
+  overlays: []
+
+quests:
+  # Existing accepted quests still create demand. Autonomous quest lifecycle mutation is introduced later.
+  enabled: false
+  demandRequiresAcceptedQuest: true
+  demandRequiresRemainingObjective: true
+  allowTradeAcquisition: true
+  allowRemoteQuestNpcFromFreeMarket: true
+  allowNpcAcquisitionOnlyWhenGameSupportsIt: true
+  maximumConcurrentActive: 8
+  acceptanceProbabilityPerMarketCycle: 0.45
+  catalogResource: /agents/catalogs/adaptive/victoria-quest-facts.json
+  victoriaMapCatalogResource: /agents/catalogs/adaptive/victoria-map-facts.json
+  selectionDisposition: eligible-now
+  rewardSelectionPolicy: WEARABLE_THEN_NPC_VALUE
+
+demand:
+  questMaximumWalletFraction: 0.35
+  equipmentMaximumWalletFraction: 0.50
+  scrollMaximumWalletFraction: 0.20
+  chairMaximumWalletFraction: 0.10
+  utilityMesoScale: 1000
+  minimumMarginalUtility: 0.01
+  resourceTargets:
+    - { itemId: 2000000, npcId: 1001100, targetQuantity: 100, purchaseLot: 20, jobs: [], urgency: 0.75 }
+    # Every first-job family consumes MP during calibrated skill use, not only magicians.
+    - { itemId: 2000003, npcId: 1001100, targetQuantity: 100, purchaseLot: 20, jobs: [], urgency: 0.75 }
+    - { itemId: 2060000, npcId: 1001100, targetQuantity: 1000, purchaseLot: 500, jobs: [bowman], urgency: 0.90 }
+    - { itemId: 2061000, npcId: 1001100, targetQuantity: 1000, purchaseLot: 500, jobs: [bowman], urgency: 0.90 }
+    - { itemId: 2070000, npcId: 1001100, targetQuantity: 500, purchaseLot: 500, jobs: [thief], urgency: 0.90 }
+    - { itemId: 2330000, npcId: 1001100, targetQuantity: 600, purchaseLot: 600, jobs: [pirate], urgency: 0.90 }
+
+scrolling:
+  enabled: false
+  requireOwnedEquipment: true
+  requireRemainingSlots: true
+  preserveRealSuccessAndDestructionRates: true
+
+chairs:
+  enabled: true
+  requireOwnedChair: true
+  allowListing: true
+  allowDirectTrade: false
+  collectionPreferenceEnabled: false
+
+ambient:
+  enabled: false
+  maximumConsecutiveActions: 4
+  immediatelyYieldToEconomicWork: true
+  modules:
+    idle:
+      enabled: true
+      weight: 30
+    walk:
+      enabled: true
+      weight: 20
+    sit:
+      enabled: true
+      weight: 15
+    fidget:
+      enabled: true
+      weight: 25
+
+persistence:
+  provider: POSTGRESQL
+  database: cosmic_economy
+  # V001-V012 are indexed by run/day but are not declaratively partitioned yet.
+  eventPartition: NONE
+  # Checkpoints remain hashed JSONB; enable only after a verified compressed codec ships.
+  checkpointCompression: false
+  retainRawEconomicEvents: FOREVER
+  retainDecisionEvents: FOREVER
+  retainChatEvents: FOREVER
+  retainMovementDebugDays: 7
+  evidenceBatchSize: 1000
+
+humanReadiness:
+  enabled: true
+  neverAssumeCounterpartyIsAgent: true
+  enforceHumanSafeValidation: true
+  separateHumanAndAgentPriceEvidence: true

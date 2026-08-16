@@ -1619,7 +1619,7 @@ foreach ($npc in $catalog) {
         $approach = $approachByPlacement[$placementKey]
         $candidateSpots = New-Object System.Collections.Generic.List[object]
         if ($null -ne $approach) {
-            foreach ($candidateSpot in @($approach.candidates)) {
+            foreach ($candidateSpot in $approach.candidates) {
                 [void] $candidateSpots.Add($candidateSpot)
             }
         }

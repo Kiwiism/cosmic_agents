@@ -30,6 +30,11 @@ import client.inventory.manipulator.InventoryManipulator;
 import client.inventory.manipulator.KarmaManipulator;
 import net.packet.Packet;
 import server.Trade;
+import server.economy.EconomyOperationKind;
+import server.economy.EconomyTransactionCoordinator;
+import server.economy.EconomyOperationContext;
+import server.economy.EconomyItemEvidence;
+import server.economy.EconomyTaxOverride;
 import tools.PacketCreator;
 import tools.Pair;
 
@@ -51,6 +56,7 @@ public class PlayerShop extends AbstractMapObject {
     private final AtomicBoolean open = new AtomicBoolean(false);
     private final Character owner;
     private final int itemid;
+    private String escrowId;
 
     private final Character[] visitors = new Character[3];
     private final List<PlayerShopItem> items = new ArrayList<>();
@@ -79,6 +85,17 @@ public class PlayerShop extends AbstractMapObject {
 
     public int getItemId() {
         return itemid;
+    }
+
+    public void enableDurableEscrow(String escrowId) {
+        if (this.escrowId != null || escrowId == null || escrowId.isBlank()) {
+            throw new IllegalStateException("invalid PlayerShop escrow registration");
+        }
+        this.escrowId = escrowId;
+    }
+
+    public String getEscrowId() {
+        return escrowId;
     }
 
     public boolean isOpen() {
@@ -223,10 +240,6 @@ public class PlayerShop extends AbstractMapObject {
         items.remove(slot);
     }
 
-    private static boolean canBuy(Client c, Item newItem) {
-        return InventoryManipulator.checkSpace(c, newItem.getItemId(), newItem.getQuantity(), newItem.getOwner()) && InventoryManipulator.addFromDrop(c, newItem, false);
-    }
-
     public void takeItemBack(int slot, Character chr) {
         synchronized (items) {
             PlayerShopItem shopItem = items.get(slot);
@@ -277,29 +290,64 @@ public class PlayerShop extends AbstractMapObject {
                 visitorLock.lock();
                 try {
                     int price = (int) Math.min((float) pItem.getPrice() * quantity, Integer.MAX_VALUE);
+                    EconomyTaxOverride taxOverride = EconomyOperationContext.currentMetadata().taxOverride();
+                    int buyerTax = taxOverride == null ? 0 : taxOverride.buyerTax(price);
+                    int sellerTax = taxOverride == null ? Trade.getFee(price) : taxOverride.sellerTax(price);
+                    int buyerDebit = (int) Math.min(Integer.MAX_VALUE, (long) price + buyerTax);
+                    int sellerProceeds = price - sellerTax;
 
-                    if (c.getPlayer().getMeso() >= price) {
-                        if (!owner.canHoldMeso(price)) {    // thanks Rohenn for noticing owner hold check misplaced
+                    if (c.getPlayer().getMeso() >= buyerDebit) {
+                        if (!owner.canHoldMeso(sellerProceeds)) {    // thanks Rohenn for noticing owner hold check misplaced
                             c.getPlayer().dropMessage(1, "Transaction failed since the shop owner can't hold any more mesos.");
                             c.sendPacket(PacketCreator.enableActions());
                             return false;
                         }
 
-                        if (canBuy(c, newItem)) {
-                            c.getPlayer().gainMeso(-price, false);
-                            price -= Trade.getFee(price);  // thanks BHB for pointing out trade fees not applying here
-                            owner.gainMeso(price, true);
+                        if (InventoryManipulator.checkSpace(c, newItem.getItemId(),
+                                newItem.getQuantity(), newItem.getOwner())) {
+                            int grossPrice = price;
+                            int fee = buyerTax + sellerTax;
+                            String summary = "shop=" + getObjectId() + " item=" + newItem.getItemId()
+                                    + " quantity=" + newItem.getQuantity() + " bundles=" + quantity
+                                    + " gross=" + grossPrice + " buyerTax=" + buyerTax
+                                    + " sellerTax=" + sellerTax + " fee=" + fee
+                                    + (escrowId == null ? "" : " escrow=" + escrowId);
+                            short priorBundles = pItem.getBundles();
+                            boolean priorExistence = pItem.isExist();
+                            EconomyTransactionCoordinator.execute(c.getPlayer(), owner,
+                                    EconomyOperationKind.PLAYER_SHOP_SALE, summary, context -> {
+                                        if (!InventoryManipulator.addFromDrop(c, newItem, false)) {
+                                            throw new IllegalStateException("PlayerShop inventory changed during purchase");
+                                        }
+                                        c.getPlayer().gainMeso(-buyerDebit, false);
+                                        owner.gainMeso(sellerProceeds, true);
+                                        pItem.setBundles((short) (pItem.getBundles() - quantity));
+                                        if (pItem.getBundles() < 1) pItem.setDoesExist(false);
+                                        context.recordEvidence("marketSale", Map.of(
+                                                "stallId", escrowId == null ? "legacy:" + getObjectId() : escrowId,
+                                                "listingId", (escrowId == null ? "legacy:" + getObjectId() : escrowId)
+                                                        + ':' + item,
+                                                "listingSlot", item, "bundlesPurchased", (int) quantity,
+                                                "bundlesRemaining", (int) pItem.getBundles()));
+                                        if (escrowId != null) {
+                                            PlayerShopEscrowSnapshot escrow = PlayerShopEscrowSnapshot.capture(this);
+                                            context.enlist(connection -> PlayerShopEscrowStore.persist(connection, escrow),
+                                                    () -> restoreListing(pItem, priorBundles, priorExistence));
+                                        } else {
+                                            context.enlist(connection -> { },
+                                                    () -> restoreListing(pItem, priorBundles, priorExistence));
+                                        }
+                                    });
 
-                            SoldItem soldItem = new SoldItem(c.getPlayer().getName(), pItem.getItem().getItemId(), quantity, price);
+                            SoldItem soldItem = new SoldItem(c.getPlayer().getName(),
+                                    pItem.getItem().getItemId(), quantity, sellerProceeds);
                             owner.sendPacket(PacketCreator.getPlayerShopOwnerUpdate(soldItem, item));
 
                             synchronized (sold) {
                                 sold.add(soldItem);
                             }
 
-                            pItem.setBundles((short) (pItem.getBundles() - quantity));
                             if (pItem.getBundles() < 1) {
-                                pItem.setDoesExist(false);
                                 if (++boughtnumber == items.size()) {
                                     owner.setPlayerShop(null);
                                     this.setOpen(false);
@@ -570,6 +618,79 @@ public class PlayerShop extends AbstractMapObject {
             }
         }
         return list;
+    }
+
+    public int getOwnerId() {
+        return owner.getId();
+    }
+
+    public String getOwnerName() {
+        return owner.getName();
+    }
+
+    private static void restoreListing(PlayerShopItem listing, short bundles, boolean exists) {
+        listing.setBundles(bundles);
+        listing.setDoesExist(exists);
+    }
+
+    /** Atomically restores all unsold escrow to the owner and clears its durable row. */
+    public boolean returnEscrowToOwner(Character chr) {
+        return returnEscrowToOwner(chr, "OWNER_CLOSED");
+    }
+
+    public boolean returnEscrowToOwner(Character chr, String closeReason) {
+        if (escrowId == null || !isOwner(chr)) return false;
+        String reason = closeReason == null || closeReason.isBlank() ? "OWNER_CLOSED" : closeReason;
+        synchronized (items) {
+            List<PlayerShopItem> remaining = items.stream()
+                    .filter(item -> item.isExist() && item.getBundles() > 0).toList();
+            List<Short> oldBundles = remaining.stream().map(PlayerShopItem::getBundles).toList();
+            EconomyTransactionCoordinator.execute("player-shop-close:" + escrowId, chr, null,
+                    EconomyOperationKind.PLAYER_SHOP_LIST, "close escrow=" + escrowId, context -> {
+                        for (PlayerShopItem listing : remaining) {
+                            Item returned = listing.getItem().copy();
+                            int total = Math.multiplyExact(returned.getQuantity(), listing.getBundles());
+                            if (total > Short.MAX_VALUE) throw new IllegalStateException("escrow stack exceeds limit");
+                            returned.setQuantity((short) total);
+                            if (!InventoryManipulator.addFromDrop(chr.getClient(), returned, false)) {
+                                throw new IllegalStateException("inventory has no room for stall escrow");
+                            }
+                            listing.setBundles((short) 0);
+                            listing.setDoesExist(false);
+                        }
+                        context.enlist(connection -> PlayerShopEscrowStore.delete(connection,
+                                chr.getId(), escrowId), () -> {
+                                    for (int index = 0; index < remaining.size(); index++) {
+                                        remaining.get(index).setBundles(oldBundles.get(index));
+                                        remaining.get(index).setDoesExist(true);
+                                    }
+                                });
+                        context.recordEvidence("marketStallClose", Map.of(
+                                "stallId", escrowId, "reason", reason));
+                    });
+            return true;
+        }
+    }
+
+    public List<ListingView> listingSnapshot() {
+        synchronized (items) {
+            List<ListingView> result = new ArrayList<>();
+            for (int slot = 0; slot < items.size(); slot++) {
+                PlayerShopItem item = items.get(slot);
+                if (item.isExist() && item.getBundles() > 0) {
+                    EconomyItemEvidence.Description evidence = EconomyItemEvidence.describe(item.getItem());
+                    result.add(new ListingView(slot, item.getItem().getItemId(),
+                            item.getItem().getQuantity(), item.getBundles(), item.getPrice(),
+                            evidence.fingerprint(), evidence.attributes()));
+                }
+            }
+            return List.copyOf(result);
+        }
+    }
+
+    public record ListingView(int slot, int itemId, short perBundle, short bundles, int bundlePrice,
+                              String fingerprint, Map<String, Object> attributes) {
+        public ListingView { attributes = Map.copyOf(attributes); }
     }
 
     public List<SoldItem> getSold() {

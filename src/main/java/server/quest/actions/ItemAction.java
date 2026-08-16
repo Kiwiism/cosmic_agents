@@ -36,6 +36,7 @@ import provider.DataTool;
 import server.ItemInformationProvider;
 import server.quest.Quest;
 import server.quest.QuestActionType;
+import server.quest.QuestTime;
 import tools.PacketCreator;
 import tools.Pair;
 import tools.Randomizer;
@@ -176,7 +177,8 @@ public class ItemAction extends AbstractQuestAction {
                     continue;
                 }
             }
-            InventoryManipulator.addById(chr.getClient(), itemid, (short) count, "", -1, period > 0 ? (System.currentTimeMillis() + MINUTES.toMillis(period)) : -1);
+            InventoryManipulator.addById(chr.getClient(), itemid, (short) count, "", -1,
+                    period > 0 ? (QuestTime.now() + MINUTES.toMillis(period)) : -1);
             chr.sendPacket(PacketCreator.getShowItemGain(itemid, (short) count, true));
         }
     }

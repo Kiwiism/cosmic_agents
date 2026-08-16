@@ -406,11 +406,11 @@ public class Quest {
         newStatus.setCompleted(chr.getQuest(this).getCompleted());
 
         if (timeLimit > 0) {
-            newStatus.setExpirationTime(System.currentTimeMillis() + SECONDS.toMillis(timeLimit));
+            newStatus.setExpirationTime(QuestTime.now() + SECONDS.toMillis(timeLimit));
             chr.questTimeLimit(this, timeLimit);
         }
         if (timeLimit2 > 0) {
-            newStatus.setExpirationTime(System.currentTimeMillis() + timeLimit2);
+            newStatus.setExpirationTime(QuestTime.now() + timeLimit2);
             chr.questTimeLimit2(this, newStatus.getExpirationTime());
         }
 
@@ -434,7 +434,7 @@ public class Quest {
         QuestStatus newStatus = new QuestStatus(this, QuestStatus.Status.COMPLETED, npc);
         newStatus.setForfeited(chr.getQuest(this).getForfeited());
         newStatus.setCompleted(chr.getQuest(this).getCompleted());
-        newStatus.setCompletionTime(System.currentTimeMillis());
+        newStatus.setCompletionTime(QuestTime.now());
         chr.updateQuestStatus(newStatus);
 
         chr.sendPacket(PacketCreator.showSpecialEffect(9)); // Quest completion
@@ -493,6 +493,31 @@ public class Quest {
 
         ItemRequirement ireq = (ItemRequirement) req;
         return ireq.getItemAmountNeeded(itemid, true);
+    }
+
+    /** Exact completion item requirements from Quest.wz, without a level-limited derived catalog. */
+    public Map<Integer, Integer> getCompleteItemRequirements() {
+        AbstractQuestRequirement req = completeReqs.get(QuestRequirementType.ITEM);
+        if (req == null) {
+            return Map.of();
+        }
+        return ((ItemRequirement) req).getRequiredItems();
+    }
+
+    public Map<Integer, Integer> getStartItemRequirements() {
+        AbstractQuestRequirement req = startReqs.get(QuestRequirementType.ITEM);
+        return req == null ? Map.of() : ((ItemRequirement) req).getRequiredItems();
+    }
+
+    public Map<Integer, Integer> getCompleteMobRequirements() {
+        AbstractQuestRequirement req = completeReqs.get(QuestRequirementType.MOB);
+        if (req == null) return Map.of();
+        Map<Integer, Integer> result = new HashMap<>();
+        for (Integer mobId : relevantMobs) {
+            int amount = ((MobRequirement) req).getRequiredMobCount(mobId);
+            if (amount > 0) result.put(mobId, amount);
+        }
+        return Map.copyOf(result);
     }
 
     public int getMobAmountNeeded(int mid) {
@@ -719,6 +744,26 @@ public class Quest {
         return mqa != null;
     }
 
+    public Set<QuestActionType> getStartActionTypes() {
+        return Set.copyOf(startActs.keySet());
+    }
+
+    public Set<QuestActionType> getCompleteActionTypes() {
+        return Set.copyOf(completeActs.keySet());
+    }
+
+    public Set<QuestRequirementType> getStartRequirementTypes() {
+        return Set.copyOf(startReqs.keySet());
+    }
+
+    public Set<QuestRequirementType> getCompleteRequirementTypes() {
+        return Set.copyOf(completeReqs.keySet());
+    }
+
+    public boolean hasTimeLimit() {
+        return timeLimit > 0 || timeLimit2 > 0;
+    }
+
     public String getName() {
         return name;
     }
@@ -769,5 +814,10 @@ public class Quest {
 
         Quest.quests = loadedQuests;
         Quest.infoNumberQuests = loadedInfoNumberQuests;
+    }
+
+    public static synchronized List<Quest> allQuests() {
+        loadAllQuests();
+        return quests.values().stream().sorted(java.util.Comparator.comparingInt(Quest::getId)).toList();
     }
 }

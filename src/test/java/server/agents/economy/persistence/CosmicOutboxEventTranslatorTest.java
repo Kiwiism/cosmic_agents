@@ -1,0 +1,260 @@
+package server.agents.economy.persistence;
+
+import org.junit.jupiter.api.Test;
+import server.agents.economy.domain.*;
+
+import java.time.Instant;
+import java.util.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class CosmicOutboxEventTranslatorTest {
+    private static final UUID RUN = UUID.randomUUID();
+
+    @Test
+    void npcPurchaseCreatesProvenanceAndBalancedSourceSinkPostings() {
+        CosmicOutboxEventTranslator translator = translator((run, account, item, fingerprint, quantity) -> List.of());
+        CosmicOutboxRecord receipt = receipt("SHOP_BUY", null,
+                "shop=1 npc=1012004 action=buy item=2000000 quantity=5 mesos=250",
+                payload(participant(10, 1_000, 750, List.of(item(2000000, "USE", "stack", 0, 5)))));
+
+        var plan = translator.translate(receipt);
+
+        assertEquals(EconomicEventKind.NPC_PURCHASE, plan.event().kind());
+        assertEquals(1, plan.createdLots().size());
+        assertEquals(5, plan.createdLots().getFirst().quantity());
+        assertEquals(0, balance(plan.event(), AssetKey.MESO));
+        assertEquals(0, balance(plan.event(), AssetKey.item(2000000)));
+        assertTrue(plan.event().postings().stream().anyMatch(p -> p.account().type().equals("SOURCE")
+                && p.quantity() == -5));
+    }
+
+    @Test
+    void stallListingMovesOwnedLotIntoEscrowAndSaleNeverDebitsSellerInventory() {
+        CosmicOutboxEventTranslator.LotResolver lotResolver = (run, account, item, fingerprint, quantity) ->
+                List.of(new CosmicOutboxEventTranslator.LotSlice("farm-lot", quantity));
+        CosmicOutboxEventTranslator translator = translator(lotResolver);
+        var listing = receipt("PLAYER_SHOP_LIST", null,
+                "escrow=esc-1 map=910000001 listings=1", payloadWithEvidence(
+                        Map.of("marketStall", Map.of("stallId", "esc-1", "permitItemId", 5140000)),
+                        participant(10, 1_000, 1_000,
+                                List.of(item(5140000, "CASH", "permit", 1, 0),
+                                        item(4000000, "ETC", "stack", 10, 0)))));
+        var listed = translator.translate(listing).event();
+        assertTrue(listed.postings().stream().anyMatch(p -> p.account().equals(LedgerAccount.escrow("esc-1"))
+                && p.quantity() == 10 && p.lotId().equals("farm-lot")));
+        assertTrue(listed.postings().stream().anyMatch(p -> p.account().equals(
+                LedgerAccount.sink("PLAYER_SHOP_PERMIT")) && p.asset().equals(AssetKey.item(5140000))
+                && p.quantity() == 1));
+        assertFalse(listed.postings().stream().anyMatch(p -> p.account().equals(LedgerAccount.escrow("esc-1"))
+                && p.asset().equals(AssetKey.item(5140000))));
+        assertEquals(Map.of("stallId", "esc-1", "permitItemId", 5140000),
+                listed.evidence().get("marketStall"));
+        assertEquals("910000001", listed.evidence().get("map"));
+
+        var sale = new CosmicOutboxRecord(UUID.randomUUID(), UUID.randomUUID().toString(),
+                "PLAYER_SHOP_SALE", 20, 10,
+                "shop=3 item=4000000 quantity=10 bundles=1 gross=1000 buyerTax=20 sellerTax=30 fee=50 escrow=esc-1",
+                payload(new CosmicOutboxEventTranslator.ParticipantDelta(20, 2_000, 980, -1_020,
+                                20, 20, 0, 0, List.of(item(4000000, "ETC", "stack", 0, 10))),
+                        participant(10, 1_000, 1_970, List.of())), RUN, Instant.EPOCH, "d", null,
+                "c".repeat(64), "catalog", "upgrade", true, true, Instant.EPOCH);
+        EconomicEvent sold = translator.translate(sale).event();
+
+        assertEquals(EconomicEventKind.STALL_SALE, sold.kind());
+        assertTrue(sold.postings().stream().anyMatch(p -> p.account().equals(LedgerAccount.escrow("esc-1"))
+                && p.asset().equals(AssetKey.item(4000000)) && p.quantity() == -10));
+        assertFalse(sold.postings().stream().anyMatch(p -> p.account().equals(LedgerAccount.agent("agent-10"))
+                && p.asset().equals(AssetKey.item(4000000))));
+        assertEquals(-1_020, sold.postings().stream().filter(p -> p.account().equals(LedgerAccount.agent("agent-20"))
+                && p.asset().equals(AssetKey.MESO)).mapToLong(LedgerPosting::quantity).sum());
+    }
+
+    @Test
+    void refusesUnattributedReceiptsInsteadOfInventingSimulationFacts() {
+        CosmicOutboxRecord receipt = new CosmicOutboxRecord(UUID.randomUUID(), "k", "SHOP_BUY",
+                10, null, "npc=1", "{\"participants\":[]}", null, null,
+                null, null, null, null, null, false, false, Instant.EPOCH);
+        assertThrows(CosmicOutboxEventTranslator.EvidenceMismatchException.class,
+                () -> translator((run, account, item, fingerprint, quantity) -> List.of()).translate(receipt));
+    }
+
+    @Test
+    void directTradeUsesIncomingSettlementEvidenceAndNativeFees() {
+        CosmicOutboxEventTranslator translator = translator((run, account, item, fingerprint, quantity) ->
+                List.of(new CosmicOutboxEventTranslator.LotSlice(account.ownerId() + ":lot", quantity)));
+        var first = new CosmicOutboxEventTranslator.ParticipantDelta(10, 1_000, 100_200, 99_200,
+                20, 20, 0, 0, List.of(item(4000001, "ETC", "b", 0, 2)));
+        var second = new CosmicOutboxEventTranslator.ParticipantDelta(20, 1_000, 5_821_000,
+                5_820_000, 20, 20, 0, 0, List.of(item(4000000, "ETC", "a", 0, 3)));
+        CosmicOutboxRecord receipt = new CosmicOutboxRecord(UUID.randomUUID(), "trade-key", "PLAYER_TRADE",
+                10, 20, "firstMesos=100000 secondMesos=6000000 firstItems=1 secondItems=1",
+                payload(first, second), RUN, Instant.EPOCH, "d", null, "c".repeat(64), "catalog",
+                "negotiated", true, true, Instant.EPOCH);
+
+        EconomicEvent event = translator.translate(receipt).event();
+
+        assertEquals(EconomicEventKind.DIRECT_TRADE, event.kind());
+        assertEquals(0, balance(event, AssetKey.MESO));
+        assertTrue(event.postings().stream().anyMatch(p -> p.account().equals(LedgerAccount.agent("agent-20"))
+                && p.asset().equals(AssetKey.item(4000001)) && p.quantity() == -2));
+        assertTrue(event.postings().stream().anyMatch(p -> p.account().equals(LedgerAccount.agent("agent-10"))
+                && p.asset().equals(AssetKey.item(4000000)) && p.quantity() == -3));
+    }
+
+    @Test
+    void scrollApplicationConsumesOwnedScrollAndTransformsExactEquipmentLot() {
+        CosmicOutboxEventTranslator translator = translator((run, account, item, fingerprint, quantity) ->
+                List.of(new CosmicOutboxEventTranslator.LotSlice(fingerprint + ":lot", quantity)));
+        var delta = participant(10, 1_000, 1_000, List.of(
+                item(2041000, "USE", "scroll-stack", 1, 0),
+                item(1102053, "EQUIP", "cape-before", 1, 0),
+                item(1102053, "EQUIP", "cape-after", 0, 1)));
+        CosmicOutboxRecord receipt = receipt("SCROLL_APPLY", null,
+                "scroll=2041000 equipment=1102053", payloadWithEvidence(
+                        Map.of("scrollApplication", Map.of("scrollItemId", 2041000,
+                                "equipmentItemId", 1102053, "outcome", "SUCCESS",
+                                "whiteScroll", false, "rngStream", "agent.agent-10.scroll")), delta));
+
+        CosmicOutboxEventTranslator.IngestionPlan plan = translator.translate(receipt);
+
+        assertEquals(EconomicEventKind.SCROLL_APPLIED, plan.event().kind());
+        assertEquals(1, plan.createdLots().size());
+        assertEquals("TRANSFORMATION", plan.createdLots().getFirst().sourceKind());
+        assertEquals("cape-after", plan.createdLots().getFirst().attributes().get("fingerprint"));
+        assertEquals(0, balance(plan.event(), AssetKey.item(2041000)));
+        assertEquals(0, balance(plan.event(), AssetKey.item(1102053)));
+        assertTrue(plan.event().postings().stream().anyMatch(posting ->
+                posting.account().equals(LedgerAccount.sink("SCROLL_CONSUMPTION"))
+                        && posting.quantity() == 1));
+    }
+
+    @Test
+    void questTurnInConsumesRequirementsAndCreatesExactRewards() {
+        CosmicOutboxEventTranslator translator = translator((run, account, item, fingerprint, quantity) ->
+                List.of(new CosmicOutboxEventTranslator.LotSlice(fingerprint + ":lot", quantity)));
+        var delta = new CosmicOutboxEventTranslator.ParticipantDelta(10, 1_000, 2_000, 1_000,
+                25, 25, 100, 450, List.of(
+                item(4000031, "ETC", "dolls", 100, 0),
+                item(1102053, "EQUIP", "ragged-cape", 0, 1)));
+        CosmicOutboxRecord receipt = receipt("QUEST_TURN_IN", null, "quest=2050 npc=1032102",
+                payloadWithEvidence(Map.of("questLifecycle", Map.of(
+                        "questId", 2050, "action", "TURN_IN", "npcId", 1032102,
+                        "selection", -1, "rngStream", "agent.agent-10.quest",
+                        "catalog", "victoria:test")), delta));
+
+        CosmicOutboxEventTranslator.IngestionPlan plan = translator.translate(receipt);
+
+        assertEquals(EconomicEventKind.QUEST_TURN_IN, plan.event().kind());
+        assertEquals("350", plan.event().evidence().get("realizedExperience"));
+        assertEquals("QUEST", plan.createdLots().getFirst().sourceKind());
+        assertEquals(0, balance(plan.event(), AssetKey.MESO));
+        assertEquals(0, balance(plan.event(), AssetKey.item(4000031)));
+        assertEquals(0, balance(plan.event(), AssetKey.item(1102053)));
+        assertEquals(0, balance(plan.event(), new AssetKey(AssetType.EXPERIENCE, "EXP")));
+        assertTrue(plan.event().postings().stream().anyMatch(posting ->
+                posting.account().equals(LedgerAccount.sink("QUEST_REQUIREMENT:2050"))
+                        && posting.quantity() == 100));
+    }
+
+    @Test
+    void farmDeathJournalsGrossExperienceAndExactPenaltySink() {
+        CosmicOutboxEventTranslator translator = new CosmicOutboxEventTranslator(
+                (run, character, agent) -> new CosmicOutboxEventTranslator.Participant(
+                        "agent-" + character, LedgerAccount.agent("agent-" + character)),
+                (run, account, item, fingerprint, quantity) -> List.of(),
+                (run, activity) -> new CosmicOutboxEventTranslator.FarmEvidence(
+                        1_000, 0, List.of(), List.of()));
+        var delta = new CosmicOutboxEventTranslator.ParticipantDelta(10, 1_000, 1_000, 0,
+                20, 20, 500, 1_300, List.of());
+        Map<String, Object> death = Map.of("died", true, "experienceLost", 200,
+                "consumedCharmItemId", 0, "downtimeMillis", 10_000);
+        CosmicOutboxRecord receipt = new CosmicOutboxRecord(UUID.randomUUID(), "farm-death",
+                "OFFSCREEN_FARM_SETTLEMENT", 10, null,
+                "activity=farm-1 map=100000001 exp=1000 mesos=0 drops=0 died=true downtimeMs=10000",
+                payloadWithEvidence(Map.of("death", death), delta), RUN, Instant.EPOCH,
+                "decision", "farm-1", "c".repeat(64), "catalog", "farm", true, false, Instant.EPOCH);
+
+        EconomicEvent event = translator.translate(receipt).event();
+
+        assertEquals(EconomicEventKind.FARM_RESULT, event.kind());
+        assertEquals(0, balance(event, new AssetKey(AssetType.EXPERIENCE, "EXP")));
+        assertTrue(event.postings().stream().anyMatch(posting ->
+                posting.account().equals(LedgerAccount.sink("DEATH_EXP_PENALTY"))
+                        && posting.quantity() == 200));
+    }
+
+    @Test
+    void farmDeathConsumesOwnedSafetyCharmInsteadOfExperience() {
+        CosmicOutboxEventTranslator translator = new CosmicOutboxEventTranslator(
+                (run, character, agent) -> new CosmicOutboxEventTranslator.Participant(
+                        "agent-" + character, LedgerAccount.agent("agent-" + character)),
+                (run, account, item, fingerprint, quantity) ->
+                        List.of(new CosmicOutboxEventTranslator.LotSlice("charm-lot", quantity)),
+                (run, activity) -> new CosmicOutboxEventTranslator.FarmEvidence(
+                        1_000, 0, List.of(), List.of()));
+        var delta = new CosmicOutboxEventTranslator.ParticipantDelta(10, 1_000, 1_000, 0,
+                20, 20, 500, 1_500,
+                List.of(item(5130000, "CASH", "safety-charm", 1, 0)));
+        Map<String, Object> death = Map.of("died", true, "experienceLost", 0,
+                "consumedCharmItemId", 5130000, "downtimeMillis", 10_000);
+        CosmicOutboxRecord receipt = new CosmicOutboxRecord(UUID.randomUUID(), "farm-charm",
+                "OFFSCREEN_FARM_SETTLEMENT", 10, null,
+                "activity=farm-2 map=100000001 exp=1000 mesos=0 drops=0 died=true downtimeMs=10000",
+                payloadWithEvidence(Map.of("death", death), delta), RUN, Instant.EPOCH,
+                "decision", "farm-2", "c".repeat(64), "catalog", "farm", true, false, Instant.EPOCH);
+
+        EconomicEvent event = translator.translate(receipt).event();
+
+        assertEquals(0, balance(event, AssetKey.item(5130000)));
+        assertTrue(event.postings().stream().anyMatch(posting ->
+                posting.account().equals(LedgerAccount.sink("DEATH_SAFETY_CHARM"))
+                        && posting.quantity() == 1));
+        assertFalse(event.postings().stream().anyMatch(posting ->
+                posting.account().equals(LedgerAccount.sink("DEATH_EXP_PENALTY"))));
+    }
+
+    private static CosmicOutboxEventTranslator translator(CosmicOutboxEventTranslator.LotResolver lots) {
+        return new CosmicOutboxEventTranslator((run, character, agent) -> {
+            String id = agent ? "agent-" + character : "character-" + character;
+            return new CosmicOutboxEventTranslator.Participant(id,
+                    agent ? LedgerAccount.agent(id) : new LedgerAccount("HUMAN", id));
+        }, lots, (run, activity) -> { throw new AssertionError("not a farm test"); });
+    }
+
+    private static CosmicOutboxRecord receipt(String kind, Integer secondary, String summary, String payload) {
+        return new CosmicOutboxRecord(UUID.randomUUID(), UUID.randomUUID().toString(), kind, 10,
+                secondary, summary, payload, RUN, Instant.EPOCH, "decision", null,
+                "c".repeat(64), "catalog", "reason", true, secondary != null, Instant.EPOCH);
+    }
+
+    private static CosmicOutboxEventTranslator.ParticipantDelta participant(int id, int before, int after,
+                                                                              List<CosmicOutboxEventTranslator.ItemDelta> items) {
+        return new CosmicOutboxEventTranslator.ParticipantDelta(id, before, after, after - before,
+                20, 20, 0, 0, items);
+    }
+
+    private static CosmicOutboxEventTranslator.ItemDelta item(int id, String type, String fingerprint,
+                                                               int before, int after) {
+        return new CosmicOutboxEventTranslator.ItemDelta(id, type, fingerprint, before, after,
+                after - before, Map.of("owner", ""));
+    }
+
+    private static String payload(CosmicOutboxEventTranslator.ParticipantDelta... participants) {
+        try { return new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(
+                new CosmicOutboxEventTranslator.MutationPayload(List.of(participants)) ); }
+        catch (com.fasterxml.jackson.core.JsonProcessingException e) { throw new AssertionError(e); }
+    }
+
+    private static String payloadWithEvidence(Map<String, Object> evidence,
+                                              CosmicOutboxEventTranslator.ParticipantDelta... participants) {
+        try { return new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(
+                new CosmicOutboxEventTranslator.MutationPayload(List.of(participants), evidence)); }
+        catch (com.fasterxml.jackson.core.JsonProcessingException e) { throw new AssertionError(e); }
+    }
+
+    private static long balance(EconomicEvent event, AssetKey asset) {
+        return event.postings().stream().filter(p -> p.asset().equals(asset))
+                .mapToLong(LedgerPosting::quantity).sum();
+    }
+}

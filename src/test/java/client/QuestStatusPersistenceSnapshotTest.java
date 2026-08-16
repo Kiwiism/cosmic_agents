@@ -66,6 +66,8 @@ class QuestStatusPersistenceSnapshotTest {
                 0L,
                 forfeited,
                 0,
+                0,
+                null,
                 progress,
                 medalMaps);
     }

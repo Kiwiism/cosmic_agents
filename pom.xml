@@ -65,6 +65,7 @@
         <jcip-annotations.version>1.0</jcip-annotations.version> <!-- Annotations for concurrency documentation -->
         <HikariCP.version>6.3.0</HikariCP.version> <!-- Database connection pool -->
         <mysql-connector-j.version>9.3.0</mysql-connector-j.version> <!-- MySQL JDBC driver -->
+        <postgresql.version>42.7.7</postgresql.version> <!-- Separate economy evidence database -->
         <jdbi-version>3.49.5</jdbi-version> <!-- Convenience wrapper around JDBC -->
         <liquibase-core.version>4.32.0</liquibase-core.version> <!-- Database migrations -->
         <jackson.version>2.19.0</jackson.version> <!-- JSON for internal admin bridge -->
@@ -95,6 +96,11 @@
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
             <version>${mysql-connector-j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${postgresql.version}</version>
         </dependency>
         <dependency>
             <groupId>org.jdbi</groupId>

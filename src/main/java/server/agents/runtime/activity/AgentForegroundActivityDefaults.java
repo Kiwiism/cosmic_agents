@@ -5,12 +5,13 @@ import server.agents.capabilities.runtime.AgentCapabilityRuntime;
 import server.agents.capabilities.townlife.AgentTownLifeRuntime;
 import server.agents.plans.AgentUniversalPlanRuntime;
 import server.agents.plans.mapleisland.AgentMapleIslandLithHandoffRuntime;
+import server.agents.runtime.AgentExclusiveControlRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.agents.runtime.townlife.AgentTownLifeVisitLeaseRuntime;
-import server.agents.runtime.interaction.AgentInteractionLeaseRuntime;
-import server.agents.runtime.townlife.AgentTownLifeTestScenarioRuntime;
 import server.agents.runtime.field.AgentFieldActivityRuntime;
 import server.agents.runtime.field.AgentFieldVisitLeaseRuntime;
+import server.agents.runtime.interaction.AgentInteractionLeaseRuntime;
+import server.agents.runtime.townlife.AgentTownLifeTestScenarioRuntime;
+import server.agents.runtime.townlife.AgentTownLifeVisitLeaseRuntime;
 
 import java.util.List;
 
@@ -31,6 +32,7 @@ public final class AgentForegroundActivityDefaults {
     private static final class Holder {
         private static final AgentForegroundActivityRegistry REGISTRY =
                 new AgentForegroundActivityRegistry(List.of(
+                    exclusiveControl(),
                     handoff(),
                     townLifeTestScenario(),
                     interactionLease(),
@@ -51,6 +53,21 @@ public final class AgentForegroundActivityDefaults {
 
     public static AgentForegroundActivityCoordinator coordinator() {
         return COORDINATOR;
+    }
+
+    private static AgentForegroundActivity exclusiveControl() {
+        return activity("exclusive-control", 1_000,
+                (entry, agent) -> AgentExclusiveControlRuntime.claimed(agent.getId()),
+                (entry, agent, nowMs) -> {
+                    if (entry.capabilityRuntimeState().hasActiveCapability()) {
+                        return AgentExclusiveControlRuntime.withAttribution(agent.getId(),
+                                () -> AgentCapabilityRuntime.tick(entry, agent, nowMs))
+                                ? AgentForegroundActivityTick.CONSUMED
+                                : AgentForegroundActivityTick.IDLE;
+                    }
+                    return AgentForegroundActivityTick.CONSUMED;
+                },
+                true, ActivityDeactivator.NONE);
     }
 
     private static AgentForegroundActivity handoff() {

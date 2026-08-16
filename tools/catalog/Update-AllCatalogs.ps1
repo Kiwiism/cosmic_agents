@@ -19,14 +19,19 @@ function Invoke-Step {
         [scriptblock] $Script
     )
 
-    if ($Json) {
-        & $Script > $null
-        return
+    if (!$Json) {
+        Write-Host ""
+        Write-Host "== $Name =="
     }
 
-    Write-Host ""
-    Write-Host "== $Name =="
-    & $Script
+    if ($Json) {
+        & $Script > $null
+    } else {
+        & $Script
+    }
+    if (!$? -or ($null -ne $LASTEXITCODE -and $LASTEXITCODE -ne 0)) {
+        throw "Catalog refresh step '$Name' failed with exit code $LASTEXITCODE."
+    }
 }
 
 function Copy-DirectorySnapshot {
