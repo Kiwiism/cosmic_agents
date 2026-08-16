@@ -79,7 +79,7 @@ public final class AgentFreeMarketStallCapability
 
         var reservation = FreeMarketStorePlacementService.reservation(context.agent());
         if (reservation.isEmpty()) {
-            reservation = FreeMarketStorePlacementService.reserveNearest(context.agent());
+            reservation = FreeMarketStorePlacementService.reserveNearestForWalking(context.agent());
         }
         if (reservation.isEmpty()) {
             return AgentCapabilityStep.retry("no designated Free Market stall spot is available nearby");

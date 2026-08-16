@@ -26,6 +26,12 @@ public final class AgentPlanSessionState {
     private String deferredSuccessorPlanId = "";
     private long nextActionAtMs;
     private String reason = "";
+    private AgentPlanSessionHandle sessionHandle;
+    private boolean suspended;
+    private AgentPlanExitMode pendingExitMode;
+    private String pendingExitReason = "";
+    private long pendingExitDeadlineMs;
+    private AgentPlanOutcome lastOutcome;
     private long revision;
     private long persistedRevision;
 
@@ -47,6 +53,41 @@ public final class AgentPlanSessionState {
         this.availableSuccessorPlanIds = List.of();
         this.nextActionAtMs = Math.max(0L, nowMs);
         this.reason = "";
+        this.sessionHandle = null;
+        this.suspended = false;
+        this.pendingExitMode = null;
+        this.pendingExitReason = "";
+        this.pendingExitDeadlineMs = 0L;
+        this.lastOutcome = null;
+        changed();
+    }
+
+    public synchronized void own(AgentPlanSessionHandle handle) {
+        sessionHandle = handle;
+        changed();
+    }
+
+    public synchronized void requestExit(AgentPlanExitRequest request) {
+        pendingExitMode = request.mode();
+        pendingExitReason = request.reason();
+        pendingExitDeadlineMs = request.deadlineMs();
+        changed();
+    }
+
+    public synchronized void suspendAtBoundary() {
+        suspended = true;
+        pendingExitMode = null;
+        pendingExitReason = "";
+        pendingExitDeadlineMs = 0L;
+        changed();
+    }
+
+    public synchronized void resume() {
+        if (!suspended) return;
+        suspended = false;
+        pendingExitMode = null;
+        pendingExitReason = "";
+        pendingExitDeadlineMs = 0L;
         changed();
     }
 
@@ -84,6 +125,20 @@ public final class AgentPlanSessionState {
         this.stepStarted = false;
         this.stepStartedAtMs = 0L;
         this.transientAttachment = null;
+        this.suspended = false;
+        this.pendingExitMode = null;
+        this.pendingExitReason = "";
+        this.pendingExitDeadlineMs = 0L;
+        changed();
+    }
+
+    public synchronized void captureOutcome(long nowMs) {
+        AgentPlanSessionPhase phase = phase();
+        if (!phase.terminal()) return;
+        lastOutcome = new AgentPlanOutcome(
+                phase, sessionHandle, reason,
+                phase == AgentPlanSessionPhase.BLOCKED || phase == AgentPlanSessionPhase.FAILED,
+                stepIndex, inputs, availableSuccessorPlanIds, Math.max(0L, nowMs));
         changed();
     }
 
@@ -129,6 +184,12 @@ public final class AgentPlanSessionState {
         deferredSuccessorPlanId = "";
         nextActionAtMs = 0L;
         reason = "";
+        sessionHandle = null;
+        suspended = false;
+        pendingExitMode = null;
+        pendingExitReason = "";
+        pendingExitDeadlineMs = 0L;
+        lastOutcome = null;
         changed();
     }
 
@@ -137,10 +198,16 @@ public final class AgentPlanSessionState {
             return null;
         }
         return new AgentPlanCheckpoint(
-                1, characterId, planId, planVersion, chainId, stepIndex, stepStarted,
+                2, characterId, planId, planVersion, chainId, stepIndex, stepStarted,
                 stepAttempt, stepStartedAtMs,
                 status, inputs, pendingSuccessorPlanId, availableSuccessorPlanIds,
-                deferredSuccessorPlanId, nextActionAtMs, reason, revision, nowMs);
+                deferredSuccessorPlanId, nextActionAtMs, reason,
+                sessionHandle == null ? "" : sessionHandle.sessionId(),
+                sessionHandle == null ? "" : sessionHandle.requestId(),
+                sessionHandle == null ? "" : sessionHandle.callerId(),
+                sessionHandle == null ? 0L : sessionHandle.startedAtMs(),
+                suspended, pendingExitMode, pendingExitReason, pendingExitDeadlineMs,
+                revision, nowMs);
     }
 
     public synchronized void restore(AgentPlanCheckpoint checkpoint) {
@@ -159,6 +226,21 @@ public final class AgentPlanSessionState {
         deferredSuccessorPlanId = checkpoint.deferredSuccessorPlanId();
         nextActionAtMs = checkpoint.nextActionAtMs();
         reason = checkpoint.reason();
+        if (!checkpoint.sessionId().isBlank()) {
+            sessionHandle = new AgentPlanSessionHandle(
+                    checkpoint.sessionId(), checkpoint.requestId(), checkpoint.callerId(),
+                    checkpoint.characterId(), checkpoint.planId(), checkpoint.sessionStartedAtMs());
+        } else {
+            sessionHandle = new AgentPlanSessionHandle(
+                    "restored:" + checkpoint.characterId() + ':' + checkpoint.updatedAtMs(),
+                    "legacy-checkpoint:" + checkpoint.characterId(), "legacy-runtime",
+                    checkpoint.characterId(), checkpoint.planId(), checkpoint.updatedAtMs());
+        }
+        suspended = checkpoint.suspended();
+        pendingExitMode = checkpoint.pendingExitMode();
+        pendingExitReason = checkpoint.pendingExitReason();
+        pendingExitDeadlineMs = checkpoint.pendingExitDeadlineMs();
+        lastOutcome = null;
         revision = checkpoint.stateRevision();
         persistedRevision = checkpoint.stateRevision();
     }
@@ -186,6 +268,33 @@ public final class AgentPlanSessionState {
     public synchronized String deferredSuccessorPlanId() { return deferredSuccessorPlanId; }
     public synchronized long nextActionAtMs() { return nextActionAtMs; }
     public synchronized String reason() { return reason; }
+    public synchronized AgentPlanSessionHandle sessionHandle() { return sessionHandle; }
+    public synchronized boolean suspended() { return suspended; }
+    public synchronized AgentPlanExitMode pendingExitMode() { return pendingExitMode; }
+    public synchronized String pendingExitReason() { return pendingExitReason; }
+    public synchronized long pendingExitDeadlineMs() { return pendingExitDeadlineMs; }
+    public synchronized AgentPlanOutcome lastOutcome() { return lastOutcome; }
+    public synchronized boolean atStepBoundary() { return !stepStarted; }
+    public synchronized AgentPlanSessionPhase phase() {
+        if (status == AgentPlanExecutionStatus.ACTIVE || !pendingSuccessorPlanId.isBlank()) {
+            if (pendingExitMode == AgentPlanExitMode.SUSPEND_AFTER_STEP) {
+                return AgentPlanSessionPhase.SUSPENDING;
+            }
+            if (pendingExitMode == AgentPlanExitMode.EXIT_AFTER_STEP
+                    || pendingExitMode == AgentPlanExitMode.FORCE_NOW) {
+                return AgentPlanSessionPhase.DRAINING;
+            }
+            return suspended ? AgentPlanSessionPhase.SUSPENDED : AgentPlanSessionPhase.ACTIVE;
+        }
+        return switch (status) {
+            case IDLE -> AgentPlanSessionPhase.IDLE;
+            case SUCCEEDED -> AgentPlanSessionPhase.COMPLETED;
+            case BLOCKED -> AgentPlanSessionPhase.BLOCKED;
+            case FAILED -> AgentPlanSessionPhase.FAILED;
+            case CANCELLED -> AgentPlanSessionPhase.CANCELLED;
+            case ACTIVE -> AgentPlanSessionPhase.ACTIVE;
+        };
+    }
     public synchronized boolean active() {
         return status == AgentPlanExecutionStatus.ACTIVE || !pendingSuccessorPlanId.isBlank();
     }

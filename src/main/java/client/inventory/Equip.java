@@ -94,6 +94,11 @@ public class Equip extends Item {
                 && ItemInformationProvider.getInstance().getEquipLevel(id, false) > 1;
     }
 
+    /** Creates an equipment shell for restoring already-persisted stats without consulting WZ metadata. */
+    public static Equip restored(int id, short position) {
+        return new Equip(id, position, 0, false);
+    }
+
     @Override
     public Item copy() {
         Equip ret = new Equip(getItemId(), getPosition(), getUpgradeSlots(), false);

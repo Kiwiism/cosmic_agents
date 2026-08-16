@@ -18,6 +18,9 @@ final class AgentEngineConfigValidator {
     }
 
     private static void validateDeployment(AgentEngineConfig agent) {
+        if (agent.AGENT_DEATH_RESPAWN_DELAY_MS <= 0) {
+            throw new IllegalStateException("AGENT_DEATH_RESPAWN_DELAY_MS must be positive");
+        }
         requirePercent("AGENT_DEATH_RESPAWN_HP_PERCENT", agent.AGENT_DEATH_RESPAWN_HP_PERCENT);
         requirePercent(
                 "AGENT_MAP_MAX_ACTIVE_COMBAT_PERCENT",

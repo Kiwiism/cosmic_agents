@@ -1,0 +1,61 @@
+# Economy engine implementation ledger
+
+This ledger follows the attached master goal without redefining completion around partial work.
+
+| Phase | Deliverable | Status |
+|---|---|---|
+| 0 | Architecture decisions and invariants | Complete |
+| 1 | Authoritative versioned catalog foundation | Baseline code complete: hashed current-scope bundle, WZ/SQL Cosmic adapter, NPC locations |
+| 2 | Economic event, outbox, and ledger foundation | Baseline code complete: atomic Cosmic outbox, exact receipt ingestion, lot ledger; live recovery soak pending |
+| 3 | Scenario, population, logical clock, RNG, checkpoints | Complete baseline for fixed growth, production-equivalent 1x realtime, and explicit max-throughput: monotonic wall-time mapping with downtime pause, named streams, monotonic fast-forward, recurring durable checkpoints, restart-equivalent event/RNG replay, zero-population growth, and a 1,000-profile scheduler gate; unimplemented clock modes fail closed |
+| 4 | Remote real-NPC commerce and full disposition | Baseline code complete: exact buy/sell/recharge with source NPC/map evidence |
+| 5 | Rule-exact offscreen production and calibration | Baseline complete: WZ drops, operational live-session calibration capture, exact resource runway, calibrated trip-ending death, shared Cosmic penalty rules, and logical respawn downtime |
+| 6 | Needs, quests, complements, valuation, beliefs | Baseline complete: heterogeneous logical quest acceptance, exact Cosmic start/turn-in, kill/item objectives, reward selection, accepted-demand waves, and owned scroll projects |
+| 7 | Physical FM seller lifecycle | Baseline code complete: physical room, spot, escrow, one-stall, evidence-driven repricing and closure |
+| 8 | Physical FM buyer lifecycle | Baseline code complete: walking, private observations, exact listing identity, real purchases |
+| 9 | Public chat and direct negotiation | Baseline code complete: public transcript, meso and reciprocal item barter, real Trade settlement |
+| 10 | Replaceable ambient behavior | Baseline code complete: owned-chair and constrained fidget policy seam |
+| 11 | Rebuildable data projections and query contracts | Baseline code complete: item/meso/agent read models, explanation query, invariant audit |
+| 12 | Experiments, human readiness, soak and completion audit | PostgreSQL V001-V014 clean initialization, strict 200-agent preflight, live 50-agent FM traversal, calibrated farms, NPC commerce, real attributed PlayerShop opening, retained-failure replay, and interactive report export verified; 30-day sale/negotiation soak and counterfactual matrix remain pending |
+
+## Deliberate baseline constraint
+
+The authoritative v83 WZ identifies `5140000` as the 16-listing Regular Store Permit. The
+`503xxxx` family is Hired Merchant inventory and is rejected by configuration validation. The
+PlayerShop permit is a Cash Shop asset. The default scenario uses
+`REQUIRE_OWNED_REAL_ITEM`; therefore an imported character without a real permit cannot open a
+stall. The strict YAML rejects administrative endowment. A valid stall experiment must provision
+legitimately held permits before the run; the engine never silently grants them.
+
+Before mutation, `!economy preflight` reproduces the seeded scenario roster and verifies maximum
+population capacity, exact real job-family binding, permits reserved for willing sellers, initial
+channel/FM presence, separate PostgreSQL compatibility, and current-level activity calibration.
+Start uses the same deterministic binding. A bound character whose real job family differs from its
+profile is rejected again at admission.
+
+The goal is complete only after the requirement-by-requirement audit proves every definition-of-done
+item with current code, tests, migrations, configuration, and runtime evidence.
+
+## Remaining release blockers
+
+- Complete a 30-day 50-to-200 live-agent soak through shop sales/closures and a mid-stall restart,
+  then run paired multi-seed scenarios.
+- Resolve every partial and pending gate in `RELEASE_AUDIT.md`.
+
+## Stable-ownership implementation sequence (phases 1-10)
+
+| Phase | Boundary/result | Local status |
+|---|---|---|
+| 1 | Freeze ownership: economy session owns economic decisions only | Complete |
+| 2 | Typed entry/defer/reject, bounded session, drain/release, checkpoint state | Complete |
+| 3 | Durable run identity and inventory safeguard outside active FM sessions | Complete |
+| 4 | Fresh entry inventory/need/knowledge plan and reason journal | Complete |
+| 5 | Physical per-stall browse, direct buy/offer decision, bounded search exit | Complete |
+| 6 | Physical seller lifecycle, one stall, room/spot fill from entrance | Complete baseline |
+| 7 | Structured intent API usable inside/outside FM; flavor text non-authoritative | Complete contract; autonomous callers adopt incrementally |
+| 8 | Public offer, outbid, acceptance, physical rendezvous, exact Cosmic Trade | Implemented; disabled by default pending live soak |
+| 9 | External activity/farming port and independently checkpointed ownership | Complete production composition; deprecated composite retained for checkpoint compatibility |
+| 10 | Session/intent/decision/provenance query contracts and conservative flags | Complete locally; live rollout gates remain |
+
+“Complete locally” means code and automated contracts exist. It does not replace the physical soak
+and human-readiness blockers in `RELEASE_AUDIT.md`.

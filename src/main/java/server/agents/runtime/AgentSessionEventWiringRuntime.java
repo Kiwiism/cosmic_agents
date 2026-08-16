@@ -169,6 +169,8 @@ public final class AgentSessionEventWiringRuntime {
                         server.agents.operations.events.AgentMobKilledEvent.TYPE,
                         new AgentFieldEventListener(entry)));
                 subscriptions.add(bus.subscribe("*", new AgentDurableEventJournalListener()));
+                subscriptions.add(bus.subscribe("*",
+                        new server.agents.economy.activity.ActivityCalibrationEventListener()));
                 subscriptions.add(bus.subscribe("*", new AgentJourneyEventListener()));
                 if (rollout.llmContextEnabled()) {
                     subscriptions.add(bus.subscribe("*", new AgentLlmContextProjectionService(entry)));

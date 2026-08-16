@@ -33,6 +33,7 @@ hs_err_pid*.log
 # Database
 database/docker-db-data
 database/docker-pg-db-data
+economy-database/docker-db-data
 .env
 
 # macOS files

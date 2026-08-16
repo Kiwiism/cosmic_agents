@@ -11,21 +11,37 @@ public final class EconomyDurableState {
         void persist(Connection connection) throws SQLException;
     }
 
-    private final List<EconomyParticipantSnapshot> participants;
+    private final List<ParticipantState> participants;
+    private final List<EconomyAtomicPersistence> additionalPersistence;
+    private final EconomyMutationEvidence evidence;
     private final Persistence testPersistence;
 
-    private EconomyDurableState(List<EconomyParticipantSnapshot> participants, Persistence testPersistence) {
+    private EconomyDurableState(List<ParticipantState> participants,
+                                List<EconomyAtomicPersistence> additionalPersistence,
+                                EconomyMutationEvidence evidence,
+                                Persistence testPersistence) {
         this.participants = List.copyOf(participants);
+        this.additionalPersistence = List.copyOf(additionalPersistence);
+        this.evidence = evidence;
         this.testPersistence = testPersistence;
     }
 
-    static EconomyDurableState capture(EconomyParticipantSnapshot primary,
-                                       EconomyParticipantSnapshot secondary) {
-        return new EconomyDurableState(secondary == null ? List.of(primary) : List.of(primary, secondary), null);
+    static EconomyDurableState capture(EconomyParticipantSnapshot primaryBefore,
+                                       EconomyParticipantSnapshot primaryAfter,
+                                       EconomyParticipantSnapshot secondaryBefore,
+                                       EconomyParticipantSnapshot secondaryAfter,
+                                       List<EconomyAtomicPersistence> additionalPersistence,
+                                       java.util.Map<String, Object> operationEvidence) {
+        return new EconomyDurableState(secondaryAfter == null
+                ? List.of(new ParticipantState(primaryBefore, primaryAfter))
+                : List.of(new ParticipantState(primaryBefore, primaryAfter),
+                        new ParticipantState(secondaryBefore, secondaryAfter)),
+                additionalPersistence, EconomyMutationEvidence.between(primaryBefore, primaryAfter,
+                secondaryBefore, secondaryAfter, operationEvidence), null);
     }
 
     static EconomyDurableState forTesting(Persistence persistence) {
-        return new EconomyDurableState(List.of(), persistence);
+        return new EconomyDurableState(List.of(), List.of(), new EconomyMutationEvidence(List.of()), persistence);
     }
 
     void persist(Connection connection) throws SQLException {
@@ -33,8 +49,16 @@ public final class EconomyDurableState {
             testPersistence.persist(connection);
             return;
         }
-        for (EconomyParticipantSnapshot participant : participants) {
-            participant.persist(connection);
+        for (ParticipantState participant : participants) {
+            participant.after().persist(connection, participant.before());
+        }
+        for (EconomyAtomicPersistence persistence : additionalPersistence) {
+            persistence.persist(connection);
         }
     }
+
+    String evidenceJson() { return evidence.json(); }
+
+    private record ParticipantState(EconomyParticipantSnapshot before,
+                                    EconomyParticipantSnapshot after) { }
 }

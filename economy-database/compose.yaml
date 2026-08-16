@@ -1,0 +1,20 @@
+services:
+  economy-postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: ${ECONOMY_DB_NAME:-cosmic_economy}
+      POSTGRES_USER: ${ECONOMY_DB_USER:-cosmic_economy}
+      POSTGRES_PASSWORD: ${ECONOMY_DB_PASSWORD:?Set ECONOMY_DB_PASSWORD}
+    ports:
+      - "127.0.0.1:${ECONOMY_DB_PORT:-5433}:5432"
+    volumes:
+      - economy-postgres-data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  economy-postgres-data:

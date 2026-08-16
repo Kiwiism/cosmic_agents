@@ -22,6 +22,7 @@
 package client;
 
 import server.quest.Quest;
+import server.quest.QuestTime;
 import tools.StringUtil;
 
 import java.util.Collections;
@@ -82,7 +83,7 @@ public class QuestStatus {
     public QuestStatus(Quest quest, Status status) {
         this.questID = quest.getId();
         this.setStatus(status);
-        this.completionTime = System.currentTimeMillis();
+        this.completionTime = QuestTime.now();
         this.expirationTime = 0;
         //this.updated = true;
         if (status == Status.STARTED) {
@@ -94,7 +95,7 @@ public class QuestStatus {
         this.questID = quest.getId();
         this.setStatus(status);
         this.setNpc(npc);
-        this.completionTime = System.currentTimeMillis();
+        this.completionTime = QuestTime.now();
         this.expirationTime = 0;
         //this.updated = true;
         if (status == Status.STARTED) {
@@ -326,15 +327,20 @@ public class QuestStatus {
 
     public synchronized PersistenceSnapshot persistenceSnapshot() {
         return new PersistenceSnapshot(questID, status.getId(), completionTime, expirationTime,
-                forfeited, completed, new LinkedHashMap<>(progress), new LinkedList<>(medalProgress));
+                forfeited, completed, npc, customData,
+                new LinkedHashMap<>(progress), new LinkedList<>(medalProgress));
     }
 
     static QuestStatus fromPersistenceSnapshot(Quest quest, PersistenceSnapshot snapshot) {
-        QuestStatus restored = new QuestStatus(quest, Status.getById(snapshot.status()));
+        // Progress is restored verbatim below; do not register WZ mob defaults and then overwrite them.
+        QuestStatus restored = new QuestStatus(quest, Status.NOT_STARTED);
+        restored.status = Status.getById(snapshot.status());
         restored.completionTime = snapshot.completionTime();
         restored.expirationTime = snapshot.expirationTime();
         restored.forfeited = snapshot.forfeited();
         restored.completed = snapshot.completed();
+        restored.npc = snapshot.npc();
+        restored.customData = snapshot.customData();
         restored.progress.clear();
         restored.progress.putAll(snapshot.progress());
         restored.medalProgress.clear();
@@ -344,6 +350,7 @@ public class QuestStatus {
 
     public record PersistenceSnapshot(short questId, int status, long completionTime,
                                       long expirationTime, int forfeited, int completed,
+                                      int npc, String customData,
                                       Map<Integer, String> progress, List<Integer> medalMaps) {
         public PersistenceSnapshot {
             progress = Collections.unmodifiableMap(new LinkedHashMap<>(progress));

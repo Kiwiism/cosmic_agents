@@ -7,6 +7,7 @@ import server.agents.capabilities.movement.AgentMovementStateResetService;
 import server.agents.events.AgentEventPriority;
 import server.agents.field.AgentFieldObservationState;
 import server.agents.field.AgentFieldRuntime;
+import server.agents.field.AgentFieldSnapshot;
 import server.agents.field.events.AgentFieldLifecycleEvent;
 import server.agents.field.events.AgentFieldRestEvent;
 import server.agents.runtime.AgentModeService;
@@ -80,7 +81,7 @@ public final class AgentFieldActivityRuntime {
         AgentFieldSessionHandle handle = new AgentFieldSessionHandle(
                 admitted.sessionId(), request.requestId(), request.callerId(),
                 agent.getId(), agent.getMapId(), nowMs);
-        state.start(handle, request.visit());
+        state.start(handle, request.visit(), agent.getLevel(), agent.getExp());
         entry.capabilityStates().require(AgentFieldObservationState.STATE_KEY)
                 .narrationLevel(request.visit().narrationLevel());
         AgentModeService.startGrind(entry, AgentMovementStateResetService::clearNavigationState);
@@ -263,6 +264,29 @@ public final class AgentFieldActivityRuntime {
                 .require(AgentFieldActivityState.STATE_KEY);
         AgentFieldActivityState.Snapshot snapshot = state.snapshot();
         if (!snapshot.active()) return;
+        AgentFieldSnapshot fieldSnapshot = agent == null ? null
+                : AgentFieldRuntime.snapshot(agent, nowMs);
+        AgentFieldSnapshot.Participant participant = fieldSnapshot == null ? null
+                : fieldSnapshot.participants().stream()
+                .filter(value -> value.agentId() == snapshot.handle().characterId())
+                .findFirst().orElse(null);
+        AgentFieldOutcome.Status outcomeStatus = phase == AgentFieldLifecycleEvent.Phase.FAILED
+                ? AgentFieldOutcome.Status.FAILED
+                : fieldSnapshot != null && fieldSnapshot.objectiveComplete()
+                ? AgentFieldOutcome.Status.COMPLETED
+                : AgentFieldOutcome.Status.EXITED;
+        state.recordOutcome(new AgentFieldOutcome(
+                snapshot.handle(), outcomeStatus, reason,
+                outcomeStatus == AgentFieldOutcome.Status.FAILED,
+                Math.max(0L, nowMs - snapshot.handle().startedAtMs()),
+                participant == null ? 0L : participant.kills(),
+                state.startingLevel(), state.startingExp(),
+                agent == null ? state.startingLevel() : agent.getLevel(),
+                agent == null ? state.startingExp() : agent.getExp(),
+                fieldSnapshot == null ? 0 : fieldSnapshot.liveMobs(),
+                fieldSnapshot != null && fieldSnapshot.objectiveComplete(),
+                fieldSnapshot == null ? java.util.Map.of() : fieldSnapshot.completedKills(),
+                java.util.Map.of()));
         if (agent != null) AgentFieldRuntime.removeManaged(
                 agent, snapshot.handle().characterId(), nowMs);
         AgentModeService.startStop(entry);
@@ -271,6 +295,12 @@ public final class AgentFieldActivityRuntime {
         publish(entry, agent, snapshot.handle(), snapshot.visit(), phase, reason, nowMs);
         state.clear();
         AgentFieldCheckpointRuntime.delete(agent);
+    }
+
+    public static AgentFieldOutcome outcome(AgentRuntimeEntry entry) {
+        return entry == null ? null : entry.capabilityStates()
+                .find(AgentFieldActivityState.STATE_KEY)
+                .map(AgentFieldActivityState::lastOutcome).orElse(null);
     }
 
     private static AgentFieldActivityState.Snapshot state(AgentRuntimeEntry entry) {

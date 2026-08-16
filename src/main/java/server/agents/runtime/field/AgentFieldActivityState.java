@@ -21,12 +21,27 @@ public final class AgentFieldActivityState {
     private long restUntilMs;
     private String restReason = "";
     private boolean restArrived;
+    private int startingLevel;
+    private int startingExp;
+    private AgentFieldOutcome lastOutcome;
 
-    public synchronized void start(AgentFieldSessionHandle next, AgentFieldVisitRequest request) {
+    public synchronized void start(
+            AgentFieldSessionHandle next,
+            AgentFieldVisitRequest request,
+            int currentLevel,
+            int currentExp) {
         handle = next;
         visit = request;
         phase = Phase.GRINDING;
+        startingLevel = Math.max(0, currentLevel);
+        startingExp = Math.max(0, currentExp);
+        lastOutcome = null;
         clearTransient();
+    }
+
+    public synchronized void start(
+            AgentFieldSessionHandle next, AgentFieldVisitRequest request) {
+        start(next, request, 0, 0);
     }
 
     public synchronized boolean active() {
@@ -42,6 +57,13 @@ public final class AgentFieldActivityState {
     public synchronized long restUntilMs() { return restUntilMs; }
     public synchronized String restReason() { return restReason; }
     public synchronized boolean restArrived() { return restArrived; }
+    public synchronized int startingLevel() { return startingLevel; }
+    public synchronized int startingExp() { return startingExp; }
+    public synchronized AgentFieldOutcome lastOutcome() { return lastOutcome; }
+
+    public synchronized void recordOutcome(AgentFieldOutcome outcome) {
+        lastOutcome = outcome;
+    }
 
     public synchronized void drain(String reason, long deadlineMs) {
         phase = Phase.DRAINING;
@@ -87,6 +109,8 @@ public final class AgentFieldActivityState {
         handle = null;
         visit = null;
         phase = Phase.IDLE;
+        startingLevel = 0;
+        startingExp = 0;
         clearTransient();
     }
 

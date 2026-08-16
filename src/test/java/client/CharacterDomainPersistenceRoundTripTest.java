@@ -25,6 +25,8 @@ class CharacterDomainPersistenceRoundTripTest {
         original.setExpirationTime(456_000L);
         original.setForfeited(2);
         original.setCompleted(3);
+        original.setNpc(1032101);
+        original.setCustomData("economy-quest-state");
         original.setProgress(100100, "007");
         original.addMedalMap(100000000);
 
@@ -36,6 +38,8 @@ class CharacterDomainPersistenceRoundTripTest {
         assertEquals(original.getExpirationTime(), restored.getExpirationTime());
         assertEquals(original.getForfeited(), restored.getForfeited());
         assertEquals(original.getCompleted(), restored.getCompleted());
+        assertEquals(original.getNpc(), restored.getNpc());
+        assertEquals(original.getCustomData(), restored.getCustomData());
         assertEquals(original.getProgress(), restored.getProgress());
         assertEquals(original.getMedalMaps(), restored.getMedalMaps());
     }

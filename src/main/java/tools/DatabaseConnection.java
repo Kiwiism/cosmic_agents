@@ -39,6 +39,12 @@ public class DatabaseConnection {
         return dataSource != null;
     }
 
+    /** Read-only pool access for modules that require a DataSource boundary. */
+    public static DataSource dataSource() {
+        if (dataSource == null) throw new IllegalStateException("Database connection pool is uninitialized");
+        return dataSource;
+    }
+
     public static String poolStats() {
         if (dataSource == null || dataSource.getHikariPoolMXBean() == null) {
             return "dbPool=uninitialized";

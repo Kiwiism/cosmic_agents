@@ -268,9 +268,9 @@ public final class AgentBuildService {
             if (skill == null) continue;
 
             int book = GameConstants.getSkillBook(step.skillId() / 10000);
-            if (bot.getRemainingSps()[book] < 1) continue;
+            if (remainingSp(bot, book) < 1) continue;
 
-            while (bot.getRemainingSps()[book] > 0) {
+            while (remainingSp(bot, book) > 0) {
                 int currentLevel = bot.getSkillLevel(skill);
                 if (currentLevel >= step.targetLevel()) break;
                 if (!canLevelSkill(bot, skill, currentLevel)) return;
@@ -285,7 +285,7 @@ public final class AgentBuildService {
                 if (bot.getId() > 0) {
                     AgentProgressionEventPublisher.publish(entry, new AgentSkillLearnedEvent(
                                     bot.getId(), System.currentTimeMillis(), bot.getLevel(), skill.getId(),
-                                    currentLevel, currentLevel + 1, bot.getRemainingSps()[book], "legacy",
+                                    currentLevel, currentLevel + 1, remainingSp(bot, book), "legacy",
                                     AgentProgressionEventPublisher.objectiveId(entry)),
                             AgentEventPriority.NORMAL);
                 }
@@ -361,6 +361,11 @@ public final class AgentBuildService {
         if (!AgentApBuildProfileService.autoAssign(entry, bot)) {
             autoAssignAp(entry, bot);
         }
+    }
+
+    private static int remainingSp(Character bot, int book) {
+        int[] remaining = bot == null ? null : bot.getRemainingSps();
+        return remaining == null || book < 0 || book >= remaining.length ? 0 : remaining[book];
     }
 
     /**

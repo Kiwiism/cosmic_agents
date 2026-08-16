@@ -88,7 +88,7 @@ public class Shop {
         c.sendPacket(PacketCreator.getNPCShop(c, getNpcId(), items));
     }
 
-    public enum TransactionResult { SUCCESS, NOT_ENOUGH_MESO, NO_SPACE, INVALID }
+    public enum TransactionResult { SUCCESS, NOT_ENOUGH_MESO, NO_SPACE, MESO_CAPACITY, INVALID }
 
     /** Core buy logic without response packets. Usable by bots.
      *  For rechargeable items, {@code quantity} is ignored — one slotMax stack is purchased. */
@@ -159,6 +159,23 @@ public class Shop {
                     item.setQuantity(slotMax);
                     player.forceUpdateItem(item);
                     player.gainMeso(-price, false, true, false);
+                });
+        return TransactionResult.SUCCESS;
+    }
+
+    /** Core NPC sale logic without response packets. Usable by agents and simulations. */
+    public TransactionResult sellDirect(client.Character player, InventoryType type, short slot, short quantity) {
+        if (quantity == 0xFFFF || quantity == 0) quantity = 1;
+        if (quantity < 0) return TransactionResult.INVALID;
+        Item item = player.getInventory(type).getItem(slot);
+        if (!canSell(item, quantity)) return TransactionResult.INVALID;
+        short sold = getSellingQuantity(item, quantity);
+        int receivedMesos = ItemInformationProvider.getInstance().getPrice(item.getItemId(), sold);
+        if (!canReceiveSaleProceeds(player, receivedMesos)) return TransactionResult.MESO_CAPACITY;
+        EconomyTransactionCoordinator.execute(player, null, EconomyOperationKind.SHOP_SELL,
+                shopSummary("sell", item.getItemId(), sold, receivedMesos), () -> {
+                    InventoryManipulator.removeFromSlot(player.getClient(), type, (byte) slot, sold, false);
+                    if (receivedMesos > 0) player.gainMeso(receivedMesos, false);
                 });
         return TransactionResult.SUCCESS;
     }

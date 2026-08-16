@@ -29,8 +29,14 @@ class AgentArchitectureBoundaryTest {
                 AGENTS.resolve("model"),
                 AGENTS.resolve("capabilities").resolve("contracts"),
                 AGENTS.resolve("policy").resolve("behavior"),
-                AGENTS.resolve("profiles"));
+                AGENTS.resolve("profiles"),
+                AGENTS.resolve("economy").resolve("domain"),
+                AGENTS.resolve("economy").resolve("clock"),
+                AGENTS.resolve("economy").resolve("scenario"));
         for (Path root : roots) {
+            if (!Files.exists(root)) {
+                continue;
+            }
             try (var files = Files.walk(root)) {
                 for (Path file : files.filter(path -> path.toString().endsWith(".java")).toList()) {
                     String source = Files.readString(file);
@@ -38,6 +44,42 @@ class AgentArchitectureBoundaryTest {
                             () -> file + " leaks a mutable Cosmic runtime type into a pure contract");
                 }
             }
+        }
+    }
+
+    @Test
+    void worldActivityHandoffCoreDoesNotDependOnChildImplementations() throws IOException {
+        Path root = AGENTS.resolve("runtime").resolve("activity").resolve("session");
+        try (var files = Files.list(root)) {
+            for (Path file : files.filter(path -> path.toString().endsWith(".java")).toList()) {
+                String source = Files.readString(file);
+                assertFalse(source.contains("import client."),
+                        () -> file + " must remain independent of live Character state");
+                assertFalse(source.contains("import server.agents.capabilities.townlife."),
+                        () -> file + " must not own TownLife internals");
+                assertFalse(source.contains("import server.agents.runtime.field."),
+                        () -> file + " must not own field internals");
+                assertFalse(source.contains("import server.agents.plans."),
+                        () -> file + " must not own quest-plan internals");
+                assertFalse(source.contains("import server.agents.economy."),
+                        () -> file + " must not own economy internals");
+            }
+        }
+    }
+
+    @Test
+    void childActivitiesDoNotStartWorldHandoffs() throws IOException {
+        List<Path> roots = List.of(
+                AGENTS.resolve("capabilities").resolve("townlife"),
+                AGENTS.resolve("runtime").resolve("field"),
+                AGENTS.resolve("plans"),
+                AGENTS.resolve("economy"));
+        for (Path root : roots) {
+            assertTreeExcludes(root,
+                    List.of(
+                            "AgentActivityHandoffCoordinator",
+                            "runtime.activity.session.adapter"),
+                    "child activity owners must not select or start sibling activities");
         }
     }
 

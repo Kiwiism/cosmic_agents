@@ -1,0 +1,165 @@
+package server.agents.economy.scenario;
+
+import server.agents.economy.catalog.CatalogBundleDescriptor;
+import server.agents.economy.clock.LogicalClock;
+import server.agents.economy.clock.LogicalEventQueue;
+import server.agents.economy.clock.ScheduledEconomyEvent;
+import server.agents.economy.clock.SimulationKernel;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.function.Consumer;
+
+/** Run aggregate supporting realtime or maximum-throughput progression over the same events. */
+public final class SimulationRunEngine {
+    public static final String ADMIT_AGENT = "ADMIT_AGENT";
+    public static final String CHECKPOINT = "CHECKPOINT";
+    private final UUID runId;
+    private final LoadedEconomyConfig loadedConfig;
+    private final CatalogBundleDescriptor catalog;
+    private final LogicalClock clock;
+    private final LogicalEventQueue queue;
+    private final SimulationKernel kernel;
+    private final NamedRandomStreams random;
+    private final Consumer<ScheduledEconomyEvent> eventHandler;
+    private Instant lastCheckpoint;
+    private boolean pauseRequested;
+    private String pauseReason;
+    private Runnable checkpointHook = () -> { };
+
+    public SimulationRunEngine(UUID runId, LoadedEconomyConfig loadedConfig,
+                               CatalogBundleDescriptor catalog,
+                               Consumer<ScheduledEconomyEvent> eventHandler) {
+        this.runId = Objects.requireNonNull(runId);
+        this.loadedConfig = Objects.requireNonNull(loadedConfig);
+        this.catalog = Objects.requireNonNull(catalog);
+        this.eventHandler = Objects.requireNonNull(eventHandler);
+        EconomyEngineConfig config = loadedConfig.config();
+        this.clock = new LogicalClock(Instant.parse(config.clock.logicalStart));
+        this.queue = new LogicalEventQueue();
+        this.kernel = new SimulationKernel(clock, queue, config.clock.maximumEventsPerBatch);
+        this.random = new NamedRandomStreams(config.scenario.seed);
+        schedulePopulation();
+        scheduleCheckpoints();
+    }
+
+    public AdvanceSummary advanceDays(long days) {
+        if (days < 0) throw new IllegalArgumentException("Cannot rewind a run");
+        return advanceTo(clock.now().plus(Duration.ofDays(days)));
+    }
+
+    public static SimulationRunEngine restore(RunCheckpoint checkpoint,
+                                              LoadedEconomyConfig loadedConfig,
+                                              CatalogBundleDescriptor catalog,
+                                              Consumer<ScheduledEconomyEvent> eventHandler) {
+        Objects.requireNonNull(checkpoint);
+        if (!checkpoint.configHash().equals(loadedConfig.sha256()))
+            throw new IllegalStateException("Checkpoint configuration hash does not match");
+        if (!checkpoint.catalogVersion().equals(catalog.version()))
+            throw new IllegalStateException("Checkpoint catalog version does not match");
+        SimulationRunEngine engine = new SimulationRunEngine(checkpoint.runId(), loadedConfig,
+                catalog, eventHandler);
+        engine.clock.advanceTo(checkpoint.logicalTime());
+        if (checkpoint.queue().stream().anyMatch(event -> event.dueAt().isBefore(checkpoint.logicalTime())))
+            throw new IllegalStateException("Checkpoint contains an event in the logical past");
+        engine.queue.restore(checkpoint.queue());
+        engine.random.restore(checkpoint.randomStates());
+        engine.lastCheckpoint = checkpoint.logicalTime();
+        return engine;
+    }
+
+    public AdvanceSummary advanceTo(Instant target) {
+        pauseRequested = false; pauseReason = null;
+        int processed = 0;
+        int batches = 0;
+        boolean limited;
+        do {
+            SimulationKernel.AdvanceResult result = kernel.advanceUntil(target, event -> {
+                boolean checkpoint = CHECKPOINT.equals(event.kind());
+                if (checkpoint) {
+                    lastCheckpoint = event.dueAt();
+                    scheduleNextCheckpoint(event.dueAt());
+                }
+                eventHandler.accept(event);
+                if (checkpoint) checkpointHook.run();
+            }, () -> pauseRequested);
+            processed = Math.addExact(processed, result.processedEvents());
+            batches++;
+            limited = result.batchLimitReached();
+            if (result.externallyStopped()) break;
+        } while (limited);
+        return new AdvanceSummary(clock.now(), processed, batches, queue.size(), pauseRequested, pauseReason);
+    }
+
+    public RunCheckpoint checkpoint(Map<String, Object> domainState) {
+        return new RunCheckpoint(runId, clock.now(), loadedConfig.sha256(), catalog.version(),
+                queue.snapshot(), random.snapshot(), domainState == null ? Map.of() : Map.copyOf(domainState));
+    }
+
+    public Instant now() { return clock.now(); }
+    public Instant targetAt() {
+        return Instant.parse(loadedConfig.config().clock.logicalStart)
+                .plus(Duration.ofDays(loadedConfig.config().scenario.targetLogicalDays));
+    }
+    public UUID runId() { return runId; }
+    public Instant lastCheckpoint() { return lastCheckpoint; }
+    public EconomyEngineConfig config() { return loadedConfig.config(); }
+    public NamedRandomStreams randomStreams() { return random; }
+
+    public void onCheckpoint(Runnable hook) {
+        checkpointHook = Objects.requireNonNull(hook);
+    }
+
+    public void pauseAfterCurrentEvent(String reason) {
+        pauseRequested = true;
+        pauseReason = reason == null || reason.isBlank() ? "external action pending" : reason;
+    }
+
+    public ScheduledEconomyEvent schedule(Instant dueAt, String kind, String subjectId,
+                                           Map<String, String> parameters) {
+        if (dueAt.isBefore(clock.now())) throw new IllegalArgumentException("Cannot schedule in the logical past");
+        return queue.schedule(dueAt, kind, subjectId, parameters);
+    }
+
+    private void schedulePopulation() {
+        for (PopulationAdmissionPlanner.Admission admission : new PopulationAdmissionPlanner().plan(
+                loadedConfig.config().population, clock.now(), random)) {
+            Map<String, String> parameters = new LinkedHashMap<>();
+            parameters.put("jobFamily", admission.jobFamily());
+            parameters.put("dailyActivityFraction", Double.toString(admission.dailyActivityFraction()));
+            EconomyAgentProfile profile = admission.profile();
+            parameters.put("riskTolerance", Double.toString(profile.riskTolerance()));
+            parameters.put("liquidityPreference", Double.toString(profile.liquidityPreference()));
+            parameters.put("upgradeAggressiveness", Double.toString(profile.upgradeAggressiveness()));
+            parameters.put("shoppingPatience", Double.toString(profile.shoppingPatience()));
+            parameters.put("stallWillingness", Double.toString(profile.stallWillingness()));
+            parameters.put("priceMemoryHours", Integer.toString(profile.priceMemoryHours()));
+            parameters.put("negotiationAggressiveness", Double.toString(profile.negotiationAggressiveness()));
+            parameters.put("chairInterest", Double.toString(profile.chairInterest()));
+            queue.schedule(admission.admittedAt(), ADMIT_AGENT, admission.agentId(), parameters);
+        }
+    }
+
+    private void scheduleCheckpoints() {
+        scheduleNextCheckpoint(clock.now());
+    }
+
+    private void scheduleNextCheckpoint(Instant after) {
+        Duration cadence = Duration.ofHours(loadedConfig.config().scenario.checkpointEveryLogicalHours);
+        queue.schedule(after.plus(cadence), CHECKPOINT, runId.toString(), Map.of());
+    }
+
+    public record AdvanceSummary(Instant reachedAt, int processedEvents, int batches, int queuedEvents,
+                                 boolean waitingExternalAction, String waitReason) {
+        public AdvanceSummary(Instant reachedAt, int processedEvents, int batches, int queuedEvents) {
+            this(reachedAt, processedEvents, batches, queuedEvents, false, null);
+        }
+    }
+    public record RunCheckpoint(UUID runId, Instant logicalTime, String configHash,
+                                String catalogVersion, java.util.List<ScheduledEconomyEvent> queue,
+                                Map<String, Long> randomStates, Map<String, Object> domainState) { }
+}
