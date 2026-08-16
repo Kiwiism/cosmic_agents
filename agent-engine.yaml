@@ -307,6 +307,22 @@ agent:
     AGENT_TRUSTED_TRADE_PLAYER_NAMES: Kiwi
 # Strict runtime/algorithm tuning. Keys mirror declaring classes for traceability.
 tuning:
+    # Values: a positive integer; unit: milliseconds. Recommended: 15000-60000; 30000 allows one bounded plan step to settle without making ownership replacement unbounded.
+    # Purpose: Sets the default deadline for a universal quest plan to finish its current atomic step before a forced ownership release.
+    # Technical: This deadline applies only to foreground replacement requests without a caller-authored deadline; explicit plan session exit requests retain their own validated timing.
+    server.agents.plans.AgentUniversalPlanRuntime.DEFAULT_GRACEFUL_EXIT_TIMEOUT_MS: '30000'
+    # Values: a positive integer; unit: milliseconds. Recommended: 250-1000; 500 preserves the validated simulation cadence.
+    # Purpose: Controls how often automatic logical-time advancement polls for additional due economy work.
+    # Technical: This is the process-level automatic economy scheduler interval; it controls polling frequency without changing logical event timestamps or scenario-authored session durations.
+    server.agents.economy.integration.cosmic.EconomySimulationRuntime.AUTO_ADVANCE_POLL_MS: '500'
+    # Values: a positive integer. Recommended: 32-128; 64 bounds work per automatic scheduler pass.
+    # Purpose: Limits how many due economy actions one automatic advancement pass may process before yielding.
+    # Technical: This is a scheduling fairness and latency bound; it neither limits Agent population nor changes market capacity, session ownership, or scenario admission policy.
+    server.agents.economy.integration.cosmic.EconomySimulationRuntime.AUTO_ADVANCE_BATCH_ACTIONS: '64'
+    # Values: a positive integer; unit: milliseconds. Recommended: 500-2000; 1000 preserves the validated real-time cadence.
+    # Purpose: Controls how often real-time economy mode polls its logical clock for newly due scenario work.
+    # Technical: This is the process-level real-time scheduler interval; economic visit durations, idle deadlines, and market actions remain owned by the loaded economy scenario configuration.
+    server.agents.economy.integration.cosmic.EconomySimulationRuntime.REALTIME_POLL_MS: '1000'
     # Independent Kiwi observer showcase
     # Values: 25-100 milliseconds. Recommended: 50. Lower values make Kiwi's server-driven walking smoother; higher values reduce work but can make motion look stepped.
     # Purpose: Sets how often only the independent observer controller updates. This does not change normal Agent plan, combat, or TownLife scheduling.

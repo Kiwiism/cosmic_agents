@@ -1,7 +1,6 @@
 package server.agents.runtime.townlife.ambient;
 
 import client.Character;
-import client.inventory.manipulator.InventoryManipulator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
@@ -19,6 +18,7 @@ import server.agents.capabilities.townlife.AgentTownLifeSessionResult;
 import server.agents.capabilities.townlife.AgentTownLifeState;
 import server.agents.capabilities.townlife.AgentTownLifeVisitRequest;
 import server.agents.integration.AgentClientGatewayRuntime;
+import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.integration.AgentMapGatewayRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.plans.mapleisland.cohort.MapleIslandCohortPoolSnapshot;
@@ -399,14 +399,14 @@ public final class AgentTownLifeAmbientRuntime {
     }
 
     private static void provisionChair(Character agent, List<Integer> chairIds, int ordinal) {
-        if (agent == null || agent.getClient() == null || chairIds.isEmpty()) {
+        if (agent == null || chairIds.isEmpty()) {
             return;
         }
         boolean hasChair = chairIds.stream().anyMatch(itemId ->
                 agent.getInventory(client.inventory.InventoryType.SETUP).countById(itemId) > 0);
         if (!hasChair) {
             int selected = chairIds.get(Math.floorMod(ordinal, chairIds.size()));
-            InventoryManipulator.addById(agent.getClient(), selected, (short) 1);
+            AgentInventoryGatewayRuntime.inventory().addItem(agent, selected, (short) 1);
         }
     }
 

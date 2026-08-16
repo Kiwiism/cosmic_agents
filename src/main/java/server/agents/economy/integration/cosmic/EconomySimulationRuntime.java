@@ -34,9 +34,12 @@ import java.util.concurrent.ScheduledFuture;
 /** Process-level operator lifecycle for one economy run. Market actions remain autonomous. */
 public final class EconomySimulationRuntime {
     private static final Logger log = LoggerFactory.getLogger(EconomySimulationRuntime.class);
-    private static final long AUTO_ADVANCE_POLL_MS = 500L;
-    private static final long REALTIME_POLL_MS = 1_000L;
-    private static final int AUTO_ADVANCE_BATCH_ACTIONS = 64;
+    private static final long AUTO_ADVANCE_POLL_MS = config.AgentTuning.longValue(
+            "server.agents.economy.integration.cosmic.EconomySimulationRuntime.AUTO_ADVANCE_POLL_MS");
+    private static final long REALTIME_POLL_MS = config.AgentTuning.longValue(
+            "server.agents.economy.integration.cosmic.EconomySimulationRuntime.REALTIME_POLL_MS");
+    private static final int AUTO_ADVANCE_BATCH_ACTIONS = config.AgentTuning.intValue(
+            "server.agents.economy.integration.cosmic.EconomySimulationRuntime.AUTO_ADVANCE_BATCH_ACTIONS");
     private static ManagedEconomyRun run;
     private static HikariDataSource economyDatabase;
     private static Map<String, Character> directory = Map.of();

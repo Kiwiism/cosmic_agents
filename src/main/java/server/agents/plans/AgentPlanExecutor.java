@@ -77,7 +77,17 @@ public final class AgentPlanExecutor implements AgentPlanRunner {
                 request == null ? AgentPlanStartRequest.EMPTY : request;
         String chainId = existingChainId == null || existingChainId.isBlank()
                 ? chainId(agent, nowMs) : existingChainId;
+        AgentPlanSessionHandle inheritedHandle = existingChainId == null
+                ? null : session.sessionHandle();
         session.start(plan, chainId, effectiveRequest, nowMs);
+        if (inheritedHandle != null) {
+            session.own(inheritedHandle);
+        } else {
+            session.own(new AgentPlanSessionHandle(
+                    "plan:" + agent.getId() + ':' + nowMs,
+                    "legacy:" + agent.getId() + ':' + nowMs,
+                    "legacy-runtime", agent.getId(), plan.planId(), nowMs));
+        }
         AgentPlanConditionEvaluator.Evaluation entryCheck =
                 AgentPlanConditionEvaluator.evaluateAll(
                         plan.entryCriteria(), entry, agent, session);
@@ -125,6 +135,28 @@ public final class AgentPlanExecutor implements AgentPlanRunner {
         AgentPlanSessionState session = entry.capabilityStates().require(AgentPlanSessionState.STATE_KEY);
         if (!session.active()) {
             return false;
+        }
+        AgentPlanExitMode pendingExit = session.pendingExitMode();
+        if (pendingExit != null) {
+            boolean deadlineExpired = session.pendingExitDeadlineMs() > 0L
+                    && wallNowMs >= session.pendingExitDeadlineMs();
+            if (pendingExit == AgentPlanExitMode.FORCE_NOW || deadlineExpired) {
+                cancel(entry, agent, session.pendingExitReason().isBlank()
+                        ? "plan ownership deadline expired" : session.pendingExitReason(), wallNowMs);
+                return true;
+            }
+            if (session.atStepBoundary()) {
+                if (pendingExit == AgentPlanExitMode.SUSPEND_AFTER_STEP) {
+                    session.suspendAtBoundary();
+                    AgentPlanCheckpointRuntime.persistIfDirty(entry, wallNowMs);
+                    return true;
+                }
+                cancel(entry, agent, session.pendingExitReason(), wallNowMs);
+                return true;
+            }
+        }
+        if (session.suspended()) {
+            return true;
         }
         if (AgentForegroundPauseRuntime.paused(entry)) {
             return true;
@@ -240,7 +272,7 @@ public final class AgentPlanExecutor implements AgentPlanRunner {
             return false;
         }
         AgentPlanDefinition plan = repository.require(session.planId());
-        if (session.stepIndex() < plan.steps().size()) {
+        if (session.stepStartedValue() && session.stepIndex() < plan.steps().size()) {
             AgentPlanDefinition.Step step = plan.steps().get(session.stepIndex());
             AgentAutonomyKernel.beginPlanStep(
                     entry, () -> CosmicAgentAutonomySnapshotFactory.capture(entry, agent, nowMs),
@@ -271,6 +303,10 @@ public final class AgentPlanExecutor implements AgentPlanRunner {
             return false;
         }
         session.reattach(plan, nowMs);
+        session.own(new AgentPlanSessionHandle(
+                "plan:reattach:" + agent.getId() + ':' + nowMs,
+                "reattach:" + agent.getId() + ':' + nowMs,
+                "legacy-runtime", agent.getId(), plan.planId(), nowMs));
         boolean attached = reattachCurrent(entry, agent, session, nowMs);
         AgentPlanCheckpointRuntime.persistIfDirty(entry, nowMs);
         return attached;
@@ -343,6 +379,9 @@ public final class AgentPlanExecutor implements AgentPlanRunner {
                 .findFirst()
                 .ifPresent(successor ->
                         session.waitForSuccessor(successor.planId(), nowMs + successor.delayMs()));
+        if (session.pendingSuccessorPlanId().isBlank()) {
+            session.captureOutcome(nowMs);
+        }
     }
 
     private boolean retryOrTerminate(AgentRuntimeEntry entry,
@@ -376,6 +415,7 @@ public final class AgentPlanExecutor implements AgentPlanRunner {
         };
         transitionObjective(entry, plan, objectiveStatus, reason, nowMs);
         session.terminal(status, reason);
+        session.captureOutcome(nowMs);
     }
 
     private static void startObjective(AgentRuntimeEntry entry,

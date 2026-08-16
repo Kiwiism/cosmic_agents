@@ -193,12 +193,39 @@ public final class AgentForegroundActivityDefaults {
     }
 
     private static AgentForegroundActivity universalPlan() {
-        return blockingBooleanActivity("universal-plan", 400,
-                (entry, agent) -> AgentUniversalPlanRuntime.foregroundActive(entry),
-                AgentUniversalPlanRuntime::foregroundTick,
-                (entry, agent, reason, nowMs) ->
-                        AgentUniversalPlanRuntime.foregroundCancel(
-                                entry, agent, reason, nowMs));
+        return new AgentForegroundActivity() {
+            @Override
+            public String id() { return "universal-plan"; }
+
+            @Override
+            public int priority() { return 400; }
+
+            @Override
+            public boolean active(AgentRuntimeEntry entry, Character agent) {
+                return AgentUniversalPlanRuntime.foregroundActive(entry);
+            }
+
+            @Override
+            public AgentForegroundActivityTick tick(
+                    AgentRuntimeEntry entry, Character agent, long nowMs) {
+                return AgentUniversalPlanRuntime.foregroundTick(entry, agent, nowMs)
+                        ? AgentForegroundActivityTick.CONSUMED
+                        : AgentForegroundActivityTick.IDLE;
+            }
+
+            @Override
+            public boolean requestDeactivate(
+                    AgentRuntimeEntry entry, Character agent, String reason, long nowMs) {
+                return AgentUniversalPlanRuntime.requestGracefulStop(
+                        entry, agent, reason, nowMs);
+            }
+
+            @Override
+            public void deactivate(
+                    AgentRuntimeEntry entry, Character agent, String reason, long nowMs) {
+                AgentUniversalPlanRuntime.foregroundCancel(entry, agent, reason, nowMs);
+            }
+        };
     }
 
     private static AgentForegroundActivity capability() {

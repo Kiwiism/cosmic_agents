@@ -1,19 +1,37 @@
-# Agent world activity ownership gaps
+# Agent world activity ownership and handoff baseline
 
 The intended composition is one selector above four self-contained session owners. The four systems
 must not directly start one another.
 
 ```text
-World activity coordinator (future: choose, travel, hand off, observe outcome)
+World activity coordinator (choose, travel, hand off, observe outcome)
   -> TownLife session
   -> Field/grind session
   -> Quest-plan session
   -> Economy session
 ```
 
-Each child owns its local runtime only after typed admission. The coordinator retains the next-goal
-decision, waits for a graceful terminal result, performs inter-map travel, and then requests the next
-session. A child may propose an exit or successor but must not start another child directly.
+Each child owns its local runtime only after typed admission. A selector retains the next-goal
+decision; the handoff coordinator waits for a graceful terminal result, delegates inter-map travel,
+and then requests the next session. A child may propose an exit or successor but must not start
+another child directly.
+
+## Shared lifecycle and handoff
+
+The neutral `runtime.activity.session` package now defines the common activity kind, lifecycle
+phase, admission, graceful-exit, snapshot, terminal-outcome, transfer, and handoff contracts. The
+two-phase coordinator follows this sequence:
+
+1. request a safe source exit;
+2. observe that the exact source session released ownership;
+3. let the external transfer port complete travel;
+4. request destination admission;
+5. retry explicit deferrals without replaying completed travel.
+
+It fails closed if source ownership changes, a deadline expires, travel fails, or destination
+identity does not match. It never calls a child tick or selects a goal. TownLife, field, quest, and
+economy adapters are confined to the adapter package, and architecture tests prevent children from
+starting sibling systems.
 
 ## TownLife
 
@@ -43,58 +61,69 @@ harness is an external pool owner rather than combat logic.
 Remaining gaps:
 
 1. Persist observation membership/rotation only if it becomes permanent world population.
-2. Define a typed field outcome containing XP, kills, drops, duration, depletion/no-spawn evidence,
-   and failure reason for the future coordinator.
+2. Populate collected-drop evidence in the typed field outcome; kill, level/EXP, duration, live-spawn,
+   objective progress, and failure evidence are already projected.
 3. Separate the 93-map observation catalog from autonomous suitability policy. It is evidence, not
    yet a selector for level, build, supplies, travel cost, crowd, or quest demand.
-4. Add coordinator-owned travel and admission retry/defer behavior. Field activity correctly rejects
-   an Agent that has not reached the requested map.
-5. Live-soak dynamic joins/leaves, maps larger than six Agents, and ranged/melee mixtures.
+4. Live-soak dynamic joins/leaves, maps larger than six Agents, and ranged/melee mixtures.
 
 ## Economy / Free Market
 
-The `simulation/economy-engine` branch has the strongest bounded ownership contract: typed
-entry/defer/reject, bounded sessions, graceful drain/release, restart-safe checkpoints, protected
+The economy engine is now merged into the integration baseline and retains its bounded ownership
+contract: typed entry/defer/reject, bounded sessions, graceful drain/release, restart-safe checkpoints, protected
 inventory authority, physical browsing/trading, and an explicit external farming port. It correctly
 does not own questing, farming, or the next objective.
 
 Remaining gaps:
 
-1. It is not on `master`; reconcile it with the newer foreground/session APIs before merging.
-2. Complete its documented 30-day 50-to-200 Agent soak, mid-stall restart, and paired experiments.
-3. Wire its typed session port into the future world coordinator and keep FM travel external.
-4. Provision legitimate store permits for seller experiments; the engine intentionally does not
+1. Complete its documented 30-day 50-to-200 Agent soak, mid-stall restart, and paired experiments.
+2. Keep FM travel external to its standard activity-session adapter.
+3. Provision legitimate store permits for seller experiments; the engine intentionally does not
    grant them administratively.
 
 ## Quest plans
 
 The universal plan executor is checkpointed, resumes individual steps, arbitrates foreground
 ownership, and delegates bounded TownLife and field visits through their public lease contracts.
-This is good capability composition, but the top-level plan is still an executor rather than a full
-external session contract.
+Its top-level contract now includes caller/request identity, a persisted session handle, explicit
+active/suspending/suspended/draining/terminal phases, safe-step-boundary suspend and exit, deadline
+and force paths, caller-authorized resume/cancel, and typed terminal outcomes with the last cursor,
+retryability, inputs, and suggested successors.
 
-Quest plans should gain:
+Remaining gaps:
 
-1. `AgentPlanEntryRequest(requestId, callerId, planId, inputs)` and typed accepted/deferred/rejected
-   admission results.
-2. A persisted `AgentPlanSessionHandle`.
-3. Explicit `ACTIVE`, `SUSPENDING`, `SUSPENDED`, `DRAINING`, and terminal phases.
-4. Graceful suspend/exit at an atomic step boundary, with deadline and force paths.
-5. A typed outcome with completion/failure, quest progress, last checkpoint, retryability, and
-   suggested successors.
-6. Caller-authorized resume/cancel so an ambient coordinator cannot steal a manually started run.
-7. A durable handoff event after all child TownLife/field/interaction leases are released.
+1. Add quest-specific progress evidence to the generic plan outcome without coupling the executor
+   to individual quest packs.
+2. Journal world handoff state if handoffs must survive a server restart in mid-travel. Child
+   sessions are checkpointed; the small coordinator is currently caller-owned and in-memory.
 
 The plan continues to own sequencing only. Navigation, combat, shopping, TownLife, and field
 formation remain child capabilities or sessions.
 
-## Recommended integration order
+## Completed integration order
 
-1. Live-soak and tune the seven-town ambient baseline.
-2. Add the top-level quest-plan entry/session/suspend/exit contract.
-3. Add typed field outcomes and durable deployment state if field population becomes permanent.
-4. Reconcile and merge the economy branch without weakening its inventory authority.
-5. Introduce a small world activity coordinator that selects one goal, owns travel/handoff, and
-   never ticks a child system's internals.
-6. Add policy for choosing quest, grind, town, or economy only after every child exposes the same
-   terminal-result shape.
+1. The seven-town ambient baseline remains isolated behind explicit TownLife admission.
+2. Quest plans expose a top-level owned session and safe lifecycle boundaries.
+3. Field sessions expose terminal kill, EXP, spawn, and objective evidence.
+4. Economy is reconciled with the current foreground arbiter without weakening inventory authority.
+5. All four child systems expose common snapshots, exits, admissions, and terminal outcomes through
+   adapters.
+6. The small world handoff coordinator owns release/transfer/admission order and no child internals.
+
+Autonomous goal-selection policy remains deliberately separate. It should rank quest, grind,
+TownLife, or economy using these outcomes only after live soak data is available; the handoff layer
+must remain policy-free.
+
+## Integration validation
+
+Focused TownLife, field, universal-plan, economy, foreground arbitration, configuration, architecture,
+and handoff suites pass after the merge. The full suite executes 5,973 tests. Its integration-caused
+failures were corrected during this rollout.
+
+Two movement-lab assertions remain red and reproduce unchanged at rollback commit `849926b50f`:
+
+- `BotMovementSimulationLabTest.shouldFollowOwnerUsingFormationOffsetOnFlatGround`
+- `BotMovementSimulationLabTest.shouldCommitJohnSecondJumpOnTheNextAiTickAfterLanding`
+
+They are pre-existing navigation/physics baseline work, not economy or world-activity ownership
+regressions, and are intentionally not altered in this integration commit.
