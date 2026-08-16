@@ -60,7 +60,7 @@
         <log4j.version>2.25.0</log4j.version> <!-- Slf4j implementation -->
         <graalvm-js.version>23.0.4</graalvm-js.version>
         <graalvm-js-scriptengine.version>24.0.1</graalvm-js-scriptengine.version> <!-- ScriptEngine implementation -->
-        <netty.version>4.2.2.Final</netty.version> <!-- Networking -->
+        <netty.version>4.2.16.Final</netty.version> <!-- Networking -->
         <yamlbeans.version>1.17</yamlbeans.version> <!-- Config file -->
         <jcip-annotations.version>1.0</jcip-annotations.version> <!-- Annotations for concurrency documentation -->
         <HikariCP.version>6.3.0</HikariCP.version> <!-- Database connection pool -->
