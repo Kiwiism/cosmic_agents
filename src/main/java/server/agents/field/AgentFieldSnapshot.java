@@ -58,15 +58,30 @@ public record AgentFieldSnapshot(
             long recoveries,
             long lifeTransitions,
             AgentFieldIntent.Type intent,
+            AgentFieldRole role,
+            String lifecycle,
+            String combatPosture,
+            Map<String, Long> postureTimeMs,
+            long attacks,
+            long hitLines,
+            long missLines,
+            long damage,
+            long assignmentChanges,
+            int targetMobId,
+            int targetX,
+            int targetY,
             List<String> cellIds,
             List<Integer> regionIds,
             int anchorX,
             int anchorY,
             long leaseRemainingMs,
-            String reason) {
+            String reason,
+            List<AgentFieldObservationState.TimelineEntry> timeline) {
         public Participant {
+            postureTimeMs = Map.copyOf(postureTimeMs);
             cellIds = List.copyOf(cellIds);
             regionIds = List.copyOf(regionIds);
+            timeline = List.copyOf(timeline);
         }
     }
 }

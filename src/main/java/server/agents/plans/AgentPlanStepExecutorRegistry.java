@@ -13,6 +13,7 @@ public final class AgentPlanStepExecutorRegistry {
                 new AgentOrderedObjectivePlanStepExecutor(),
                 new AgentSouthperryLithTransferStepExecutor(),
                 new AgentTownLifeVisitPlanStepExecutor(),
+                new AgentFieldVisitPlanStepExecutor(),
                 new AgentFirstJobPlanStepExecutor(),
                 new AgentVictoriaTrainingPlanStepExecutor()));
     }

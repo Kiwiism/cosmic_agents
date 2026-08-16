@@ -888,6 +888,30 @@ tuning:
     # Purpose: Controls how long Agents must wait before repeating ambient chat. Higher values make repeats less frequent; lower values let them repeat sooner.
     # Technical: the "town life dialogue reaction service" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled.
     server.agents.capabilities.dialogue.AgentTownLifeDialogueReactionService.AMBIENT_CHAT_COOLDOWN_MS: '75000'
+    # Values: 1000-30000 milliseconds. Recommended: 5000. Limits repeat narration for one Agent and semantic field state.
+    # Purpose: Keeps field intention chat readable while structured events retain every transition for diagnostics and later inspection.
+    # Technical: The field narration event projection uses this per-intent deduplication duration in milliseconds before publishing nearby-player dialogue.
+    server.agents.capabilities.dialogue.AgentFieldNarrationService.COOLDOWN_MS: '5000'
+    # Values: 1000-30000 milliseconds. Recommended: 5000. Defines the shared map chat admission window.
+    # Purpose: Prevents formation changes in large observation deployments from flooding nearby clients while preserving structured state changes.
+    # Technical: The field narration map-level rate limiter resets its admitted-message counter after this many elapsed wall-clock milliseconds.
+    server.agents.capabilities.dialogue.AgentFieldNarrationService.MAP_WINDOW_MS: '5000'
+    # Values: 1-20 messages. Recommended: 6. Bounds visible field narration per map window.
+    # Purpose: Structured telemetry remains complete even when excess visible messages are suppressed for a crowded observation map.
+    # Technical: The field narration map-level admission window permits at most this many visible dialogue intents before suppressing presentation only.
+    server.agents.capabilities.dialogue.AgentFieldNarrationService.MAP_MESSAGES_PER_WINDOW: '6'
+    # Values: 5000-120000 milliseconds. Recommended: 30000. Bounds graceful field drain after an external exit request.
+    # Purpose: Lets an Agent finish its committed attack or eligible loot without holding a stale managed field session indefinitely.
+    # Technical: Managed field activity uses this wall-clock duration when callers request graceful deactivation without supplying their own deadline.
+    server.agents.runtime.field.AgentFieldActivityRuntime.DEFAULT_GRACEFUL_EXIT_TIMEOUT_MS: '30000'
+    # Values: 4-64 map pixels. Recommended: 18. Arrival tolerance for a derived field rest anchor.
+    # Purpose: Prevents safe-spot resting from requiring an exact physics coordinate before the Agent can settle and stop moving.
+    # Technical: Managed field rest compares absolute horizontal and vertical coordinate differences against this inclusive map-pixel tolerance.
+    server.agents.runtime.field.AgentFieldActivityRuntime.REST_ARRIVAL_DISTANCE_PX: '18'
+    # Values: 24-512 timeline entries. Recommended: 96. Bounds diagnostic state retained for each Agent field observation.
+    # Purpose: Retains enough recent lifecycle and posture history for troubleshooting without allowing multi-hour observation sessions to grow memory.
+    # Technical: The field observation capability removes its oldest structured timeline entry before appending once this in-memory entry count is reached.
+    server.agents.field.AgentFieldObservationState.MAX_TIMELINE: '96'
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 15000-60000 around the tested baseline 30000; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how long Agents remain in or wait for automatic equip throttle. Higher values make that pause or state last longer; lower values make them continue sooner.
     # Technical: the "auto equip throttle" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled.
@@ -2921,6 +2945,38 @@ tuning:
     # Purpose: Makes autonomous farming less intrusive by preferring comparable cells that are not already occupied by a nearby human-controlled character.
     # Technical: Applied once per real player within the allocator's fixed local proximity check around a candidate anchor; it never moves or targets that player.
     server.agents.field.AgentFieldPolicyConfig.PLAYER_PROXIMITY_PENALTY: '20000'
+    # Values: 0-1000 score points per mob-preference unit. Recommended: 20. Higher values favor dense platforms for area-damage roles.
+    # Purpose: Lets formation tuning distinguish crowd-clearing roles without changing generic combat target selection or authored map data.
+    # Technical: The pure field allocator multiplies relevant live population and the immutable combat-profile density preference by this score weight.
+    server.agents.field.AgentFieldPolicyConfig.CAPABILITY_DENSITY_WEIGHT: '20'
+    # Values: 0-100 score points per pixel-preference unit. Recommended: 1. Higher values favor wider horizontal firing platforms for ranged roles.
+    # Purpose: Makes ranged formation placement prefer usable firing lanes while keeping attack legality and safe-shot execution inside combat services.
+    # Technical: The pure field allocator multiplies anchor horizontal span and the immutable combat-profile range preference by this score weight.
+    server.agents.field.AgentFieldPolicyConfig.CAPABILITY_RANGE_WEIGHT: '1'
+    # Values: 0-1000 score points per adjacency-preference unit. Recommended: 80. Higher values favor connected cells for mobile roles.
+    # Purpose: Gives roaming and mobile jobs more connected territory choices without introducing job-specific movement branches into navigation.
+    # Technical: The pure field allocator multiplies farming-cell adjacency count and the immutable combat-profile mobility preference by this weight.
+    server.agents.field.AgentFieldPolicyConfig.CAPABILITY_MOBILITY_WEIGHT: '80'
+    # Values: 0-2000 score points per adjacency-preference unit. Recommended: 160. Higher values favor central cells for support-capable profiles.
+    # Purpose: Keeps support-capable participants nearer connected territories where their generic combat and supply services can reach more teammates.
+    # Technical: The pure field allocator multiplies farming-cell adjacency count and immutable combat-profile support preference by this score weight.
+    server.agents.field.AgentFieldPolicyConfig.CAPABILITY_SUPPORT_WEIGHT: '160'
+    # Values: 0-10000 score points. Recommended: 600. Higher values keep roaming roles away from equivalent dead-end farming cells.
+    # Purpose: Reduces avoidable dead-end assignments for mobile participants while still allowing a dead end when it contains the useful objective spawn.
+    # Technical: The pure field allocator subtracts this score only for cells marked dead-end when the participant role is the generic roamer role.
+    server.agents.field.AgentFieldPolicyConfig.ROAMER_DEAD_END_PENALTY: '600'
+    # Values: 0-10000 score points. Recommended: 1000. Higher values keep reserve participants out of populated primary farming cells.
+    # Purpose: Allows inactive or standby formation members to yield useful mob coverage to active combat roles during population changes.
+    # Technical: The pure field allocator subtracts this score from populated cells only when the immutable participant role is marked reserve.
+    server.agents.field.AgentFieldPolicyConfig.RESERVE_POPULATION_PENALTY: '1000'
+    # Values: 0-100000 score points per relevant mob. Recommended: 10000. Higher values make rest anchors avoid monster pressure more strongly.
+    # Purpose: Directs explicit field rests toward low-pressure reachable cells so observation pauses do not become accidental combat engagements.
+    # Technical: The safe-spot policy multiplies the farming cell's relevant live population by this value before comparing reachable candidates.
+    server.agents.field.AgentFieldPolicyConfig.SAFE_SPOT_POPULATION_WEIGHT: '10000'
+    # Values: 0-50000 score points. Recommended: 2500. Higher values avoid dead ends when similarly quiet rest candidates are available.
+    # Purpose: Keeps temporary rest placement from trapping an Agent at a quiet but mechanically awkward terminal section of a large map.
+    # Technical: The safe-spot policy adds this score to graph-derived farming cells marked dead-end; distance remains the final tie-break pressure.
+    server.agents.field.AgentFieldPolicyConfig.SAFE_SPOT_DEAD_END_PENALTY: '2500'
     # Values: a positive integer. Recommended: 50-500 around the tested baseline 200; keep the quantity within a signed short because inventory gateway calls use short item counts.
     # Purpose: Sets how many potions and job ammunition items the guarded manual field-test fixture grants so a scaling exercise is not interrupted by resupply.
     # Technical: AgentFieldTestFixtureService casts this configured count to short before provisioning each benchmark item; it affects only an explicitly requested test fixture.

@@ -53,6 +53,38 @@ public final class AgentFieldPolicyConfig {
         return tuningLong("PLAYER_PROXIMITY_PENALTY");
     }
 
+    public static long capabilityDensityWeight() {
+        return tuningLong("CAPABILITY_DENSITY_WEIGHT");
+    }
+
+    public static long capabilityRangeWeight() {
+        return tuningLong("CAPABILITY_RANGE_WEIGHT");
+    }
+
+    public static long capabilityMobilityWeight() {
+        return tuningLong("CAPABILITY_MOBILITY_WEIGHT");
+    }
+
+    public static long capabilitySupportWeight() {
+        return tuningLong("CAPABILITY_SUPPORT_WEIGHT");
+    }
+
+    public static long roamerDeadEndPenalty() {
+        return tuningLong("ROAMER_DEAD_END_PENALTY");
+    }
+
+    public static long reservePopulationPenalty() {
+        return tuningLong("RESERVE_POPULATION_PENALTY");
+    }
+
+    public static long safeSpotPopulationWeight() {
+        return tuningLong("SAFE_SPOT_POPULATION_WEIGHT");
+    }
+
+    public static long safeSpotDeadEndPenalty() {
+        return tuningLong("SAFE_SPOT_DEAD_END_PENALTY");
+    }
+
     private static int tuningInt(String suffix) {
         return AgentTuning.intValue(TUNING_PREFIX + suffix);
     }

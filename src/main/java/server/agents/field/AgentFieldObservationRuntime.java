@@ -51,7 +51,7 @@ public final class AgentFieldObservationRuntime {
             Integer selectedMapId,
             long seed,
             long nowMs) {
-        if (operator == null || operator.getClient() == null) {
+        if (operator == null || !AgentClientGatewayRuntime.clients().hasClient(operator)) {
             return new StartResult(false, "A live GM operator is required.", "", 0, 0);
         }
         ShardKey key = ShardKey.of(operator);
@@ -79,7 +79,7 @@ public final class AgentFieldObservationRuntime {
         try {
             List<MapleIslandCohortPoolSnapshot.Agent> pooled = MapleIslandCohortRuntime.instance()
                     .acquireForExternalHarness(total, sessionId, operator.getId(), operator.getWorld(),
-                            operator.getClient().getChannel());
+                            AgentClientGatewayRuntime.clients().channel(operator));
             Run run = new Run(sessionId, operator, seed, nowMs,
                     repository.catalog().rotationWindowMs(), repository.catalog().supplyDurationMs());
             int offset = 0;
@@ -200,6 +200,8 @@ public final class AgentFieldObservationRuntime {
             AgentFieldObservationFixtureService.Prepared prepared =
                     AgentFieldObservationFixtureService.prepare(entry, mapRun.preset.level(), agentSeed,
                             System.currentTimeMillis());
+            entry.capabilityStates().require(AgentFieldObservationState.STATE_KEY)
+                    .narrationLevel(AgentFieldObservationState.NarrationLevel.VERBOSE);
             AgentMapGatewayRuntime.map().changeMap(agent, map, staging);
             AgentMovementStateResetService.resetEntryState(entry);
             AgentMovementBroadcastService.broadcastMovement(entry);
@@ -342,17 +344,26 @@ public final class AgentFieldObservationRuntime {
             if (agent == null) {
                 continue;
             }
-            long kills = field == null ? 0L : field.participants().stream()
-                    .filter(participant -> participant.agentId() == agent.getId())
-                    .mapToLong(AgentFieldSnapshot.Participant::kills).findFirst().orElse(0L);
+            AgentFieldSnapshot.Participant participant = field == null ? null : field.participants().stream()
+                    .filter(candidate -> candidate.agentId() == agent.getId())
+                    .findFirst().orElse(null);
+            long kills = participant == null ? 0L : participant.kills();
             agents.put(agent.getId(), new AgentSample(agent.getName(), agent.getJob().getId(), agent.getLevel(),
-                    mapRun.activeAgentIds.contains(agent.getId()), kills, agent.getExp(), totalExperience(agent)));
+                    mapRun.activeAgentIds.contains(agent.getId()), kills, agent.getExp(), totalExperience(agent),
+                    participant == null ? 0L : participant.attacks(),
+                    participant == null ? 0L : participant.hitLines(),
+                    participant == null ? 0L : participant.missLines(),
+                    participant == null ? 0L : participant.damage(),
+                    participant == null ? "IDLE" : participant.combatPosture(),
+                    participant == null ? "IDLE" : participant.lifecycle()));
         }
         List<StationSample> stations = field == null ? List.of() : field.participants().stream()
                 .map(participant -> new StationSample(participant.agentId(), participant.name(),
                         participant.partyId(), participant.cellIds(), participant.regionIds(),
                         participant.anchorX(), participant.anchorY(),
-                        participant.positionX(), participant.positionY()))
+                        participant.positionX(), participant.positionY(), participant.role().name(),
+                        participant.combatPosture(), participant.targetMobId(),
+                        participant.targetX(), participant.targetY()))
                 .toList();
         mapRun.samples.add(new WindowSample(mapRun.phase, mapRun.phaseStartedAtMs, nowMs,
                 mapRun.activeAgentIds.size(), List.copyOf(agents.values()), stations));
@@ -397,12 +408,15 @@ public final class AgentFieldObservationRuntime {
     }
 
     public record AgentSample(String name, int jobId, int level, boolean active, long kills,
-                              int exp, long totalExp) {
+                              int exp, long totalExp, long attacks, long hitLines,
+                              long missLines, long damage, String combatPosture,
+                              String lifecycle) {
     }
 
     public record StationSample(int agentId, String name, int partyId, List<String> cellIds,
                                 List<Integer> regionIds, int anchorX, int anchorY,
-                                int positionX, int positionY) {
+                                int positionX, int positionY, String role,
+                                String combatPosture, int targetMobId, int targetX, int targetY) {
         public StationSample {
             cellIds = List.copyOf(cellIds);
             regionIds = List.copyOf(regionIds);

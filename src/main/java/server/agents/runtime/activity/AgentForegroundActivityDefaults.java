@@ -9,6 +9,8 @@ import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.townlife.AgentTownLifeVisitLeaseRuntime;
 import server.agents.runtime.interaction.AgentInteractionLeaseRuntime;
 import server.agents.runtime.townlife.AgentTownLifeTestScenarioRuntime;
+import server.agents.runtime.field.AgentFieldActivityRuntime;
+import server.agents.runtime.field.AgentFieldVisitLeaseRuntime;
 
 import java.util.List;
 
@@ -34,6 +36,8 @@ public final class AgentForegroundActivityDefaults {
                     interactionLease(),
                     townLifeVisitLease(),
                     townLife(),
+                    fieldVisitLease(),
+                    fieldActivity(),
                     universalPlan(),
                     capability()));
     }
@@ -97,6 +101,49 @@ public final class AgentForegroundActivityDefaults {
                 AgentTownLifeRuntime.forceStop(entry, agent, reason);
             }
         };
+    }
+
+    private static AgentForegroundActivity fieldActivity() {
+        return new AgentForegroundActivity() {
+            @Override
+            public String id() { return AgentFieldActivityRuntime.ACTIVITY_ID; }
+
+            @Override
+            public int priority() { return 450; }
+
+            @Override
+            public boolean active(AgentRuntimeEntry entry, Character agent) {
+                return AgentFieldActivityRuntime.active(entry);
+            }
+
+            @Override
+            public AgentForegroundActivityTick tick(
+                    AgentRuntimeEntry entry, Character agent, long nowMs) {
+                return AgentFieldActivityRuntime.tick(entry, agent, nowMs);
+            }
+
+            @Override
+            public boolean requestDeactivate(
+                    AgentRuntimeEntry entry, Character agent, String reason, long nowMs) {
+                return AgentFieldActivityRuntime.requestGracefulStop(entry, agent, reason, nowMs);
+            }
+
+            @Override
+            public void deactivate(
+                    AgentRuntimeEntry entry, Character agent, String reason, long nowMs) {
+                AgentFieldActivityRuntime.forceStop(entry, agent, reason, nowMs);
+            }
+        };
+    }
+
+    private static AgentForegroundActivity fieldVisitLease() {
+        return activity("field-visit-lease", 475,
+                (entry, agent) -> AgentFieldVisitLeaseRuntime.active(entry),
+                (entry, agent, nowMs) -> {
+                    AgentFieldVisitLeaseRuntime.tick(entry, agent, nowMs);
+                    return AgentForegroundActivityTick.PASS;
+                },
+                false, ActivityDeactivator.NONE);
     }
 
     private static AgentForegroundActivity interactionLease() {

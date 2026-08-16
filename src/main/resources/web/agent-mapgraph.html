@@ -294,8 +294,21 @@
       }
       const anchor=worldToScreen(participant.anchorX,participant.anchorY);
       ctx.globalAlpha=.95;ctx.beginPath();ctx.arc(anchor.x,anchor.y,7,0,Math.PI*2);ctx.fill();
+      const position=worldToScreen(participant.positionX,participant.positionY);
+      ctx.globalAlpha=.9;ctx.lineWidth=1.5;ctx.setLineDash([4,4]);
+      ctx.beginPath();ctx.moveTo(position.x,position.y);ctx.lineTo(anchor.x,anchor.y);ctx.stroke();
+      if (participant.targetMobId>0){
+        const target=worldToScreen(participant.targetX,participant.targetY);
+        ctx.globalAlpha=.8;ctx.setLineDash([2,5]);ctx.lineWidth=2;
+        ctx.beginPath();ctx.moveTo(position.x,position.y);ctx.lineTo(target.x,target.y);ctx.stroke();
+        ctx.setLineDash([]);ctx.beginPath();ctx.arc(target.x,target.y,5,0,Math.PI*2);ctx.stroke();
+      }
+      ctx.setLineDash([]);ctx.globalAlpha=.95;
       ctx.font="600 11px system-ui,-apple-system,'Segoe UI',sans-serif";
-      ctx.fillText(participant.name,anchor.x+10,anchor.y-8);ctx.restore();
+      ctx.fillText(`${participant.name} · ${participant.role}`,anchor.x+10,anchor.y-9);
+      ctx.font="10px ui-monospace,Consolas,monospace";
+      ctx.fillText(`${participant.lifecycle} / ${participant.combatPosture}`,anchor.x+10,anchor.y+5);
+      ctx.restore();
     });
   }
 

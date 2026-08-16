@@ -4,6 +4,7 @@ import config.YamlConfig;
 import server.agents.capabilities.dialogue.AgentDialogueIntentEvent;
 import server.agents.capabilities.dialogue.AgentDialogueProjectionRuntime;
 import server.agents.capabilities.dialogue.AgentDialogueProjectionService;
+import server.agents.capabilities.dialogue.AgentFieldNarrationService;
 import server.agents.capabilities.dialogue.AgentSupplyDialogueReactionService;
 import server.agents.capabilities.dialogue.AgentTownLifeDialogueReactionService;
 import server.agents.capabilities.dialogue.AgentTownLifeTestNarrationService;
@@ -42,6 +43,7 @@ import server.agents.progression.events.AgentQuestStateChangedEvent;
 import server.agents.progression.AgentHuntRecoveryEventListener;
 import server.agents.journey.AgentJourneyEventListener;
 import server.agents.field.AgentFieldEventListener;
+import server.agents.field.AgentFieldObservationProjectionService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -84,6 +86,9 @@ public final class AgentSessionEventWiringRuntime {
                                 (agentId, audience) -> AgentDialogueProjectionRuntime.hasAudience(
                                         entry, agentId, audience),
                                 intent -> AgentDialogueProjectionRuntime.project(entry, intent))));
+                subscriptions.add(bus.subscribe("*",
+                        new AgentFieldObservationProjectionService(entry)));
+                subscriptions.add(bus.subscribe("*", new AgentFieldNarrationService(entry, bus)));
                 AgentProgressionMonitoringProjectionService progressionMonitoring =
                         new AgentProgressionMonitoringProjectionService(entry);
                 AgentProgressionDialogueReactionService progressionDialogue =

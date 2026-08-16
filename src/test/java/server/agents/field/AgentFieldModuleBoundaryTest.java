@@ -19,4 +19,18 @@ class AgentFieldModuleBoundaryTest {
             }
         }
     }
+
+    @Test
+    void fieldRuntimeDoesNotOwnConcreteAttackExecution() throws Exception {
+        Path field = Path.of("src/main/java/server/agents/field");
+        try (var files = Files.walk(field)) {
+            for (Path file : files.filter(path -> path.toString().endsWith(".java")).toList()) {
+                String source = Files.readString(file);
+                assertFalse(source.contains("AgentAttackExecutionProvider"),
+                        () -> file + " makes the field allocator execute attacks");
+                assertFalse(source.contains("AgentSkillAttackPlanner"),
+                        () -> file + " makes the field allocator select skills");
+            }
+        }
+    }
 }

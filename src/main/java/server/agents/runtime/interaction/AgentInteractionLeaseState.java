@@ -2,7 +2,7 @@ package server.agents.runtime.interaction;
 
 import server.agents.runtime.state.AgentCapabilityStateKey;
 
-/** One bounded foreground interaction layered over an active local mode such as TownLife. */
+/** One bounded foreground interaction layered over a resumable local activity. */
 public final class AgentInteractionLeaseState {
     public static final AgentCapabilityStateKey<AgentInteractionLeaseState> STATE_KEY =
             new AgentCapabilityStateKey<>("runtime.interaction-lease",
@@ -16,7 +16,8 @@ public final class AgentInteractionLeaseState {
     private String interactionId = "";
     private Type type;
     private int participantCharacterId;
-    private String townLifeSessionId = "";
+    private String parentActivityId = "";
+    private String parentSessionId = "";
     private long startedAtMs;
     private long minimumReleaseAtMs;
     private long deadlineMs;
@@ -24,7 +25,8 @@ public final class AgentInteractionLeaseState {
 
     synchronized String begin(Type nextType,
                               int nextParticipantCharacterId,
-                              String nextTownLifeSessionId,
+                              String nextParentActivityId,
+                              String nextParentSessionId,
                               long nowMs,
                               long minimumDurationMs,
                               long timeoutMs) {
@@ -41,7 +43,8 @@ public final class AgentInteractionLeaseState {
                 + ':' + Long.toUnsignedString(nowMs, 36);
         type = nextType;
         participantCharacterId = Math.max(0, nextParticipantCharacterId);
-        townLifeSessionId = normalize(nextTownLifeSessionId);
+        parentActivityId = normalize(nextParentActivityId);
+        parentSessionId = normalize(nextParentSessionId);
         startedAtMs = Math.max(0L, nowMs);
         minimumReleaseAtMs = nowMs + Math.max(0L, minimumDurationMs);
         deadlineMs = nowMs + Math.max(1L, timeoutMs);
@@ -64,7 +67,7 @@ public final class AgentInteractionLeaseState {
 
     public synchronized Snapshot snapshot() {
         return new Snapshot(active(), interactionId, type, participantCharacterId,
-                townLifeSessionId, startedAtMs, minimumReleaseAtMs, deadlineMs,
+                parentActivityId, parentSessionId, startedAtMs, minimumReleaseAtMs, deadlineMs,
                 operationComplete);
     }
 
@@ -72,7 +75,8 @@ public final class AgentInteractionLeaseState {
         interactionId = "";
         type = null;
         participantCharacterId = 0;
-        townLifeSessionId = "";
+        parentActivityId = "";
+        parentSessionId = "";
         startedAtMs = 0L;
         minimumReleaseAtMs = 0L;
         deadlineMs = 0L;
@@ -83,11 +87,15 @@ public final class AgentInteractionLeaseState {
                            String interactionId,
                            Type type,
                            int participantCharacterId,
-                           String townLifeSessionId,
+                           String parentActivityId,
+                           String parentSessionId,
                            long startedAtMs,
                            long minimumReleaseAtMs,
                            long deadlineMs,
                            boolean operationComplete) {
+        public String townLifeSessionId() {
+            return "town-life".equals(parentActivityId) ? parentSessionId : "";
+        }
     }
 
     private static String normalize(String value) {

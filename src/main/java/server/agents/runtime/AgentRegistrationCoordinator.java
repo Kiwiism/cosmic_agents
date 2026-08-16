@@ -9,6 +9,8 @@ import server.agents.progression.AgentCareerProgressionCheckpointRuntime;
 import server.agents.objectives.AgentObjectiveCheckpointRuntime;
 import server.agents.capabilities.townlife.AgentTownLifeCheckpointRuntime;
 import server.agents.runtime.townlife.AgentTownLifeVisitLeaseCheckpointRuntime;
+import server.agents.runtime.field.AgentFieldCheckpointRuntime;
+import server.agents.runtime.field.AgentFieldVisitLeaseCheckpointRuntime;
 import server.agents.plans.AgentPlanReattachmentRuntime;
 import server.agents.plans.AgentPlanCheckpointRuntime;
 
@@ -78,6 +80,8 @@ public final class AgentRegistrationCoordinator {
         AgentPlanCheckpointRuntime.restore(entry);
         AgentTownLifeCheckpointRuntime.restore(entry, agent, nowMs);
         AgentTownLifeVisitLeaseCheckpointRuntime.restore(entry, agent);
+        AgentFieldCheckpointRuntime.restore(entry, agent, nowMs);
+        AgentFieldVisitLeaseCheckpointRuntime.restore(entry, agent);
         AgentPlanReattachmentRuntime.reattachIfNeeded(entry, agent, nowMs);
         return entry;
     }

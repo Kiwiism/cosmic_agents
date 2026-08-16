@@ -7,6 +7,8 @@ import server.agents.capabilities.looting.AgentGrindLootStateRuntime;
 import server.agents.capabilities.combat.AgentGrindTargetStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
+import server.agents.operations.events.AgentCombatPostureChangedEvent;
+import server.agents.operations.events.AgentCombatPostureRuntime;
 
 import java.awt.Point;
 
@@ -65,6 +67,9 @@ public final class AgentGrindModeTickService {
             Point scheduledLootPosition = AgentGrindTargetPositionService.activeGrindLootPosition(
                     entry, agentPosition);
             if (scheduledLootPosition != null) {
+                AgentCombatPostureRuntime.observe(entry, agent,
+                        AgentCombatPostureChangedEvent.Posture.LOOTING, 0,
+                        scheduledLootPosition, "collecting eligible post-kill loot", now);
                 return new Result(false, scheduledLootPosition);
             }
         }
@@ -72,6 +77,9 @@ public final class AgentGrindModeTickService {
                 AgentGrindLootTargetService.immediateMeleeLootPosition(
                         entry, agent, agentPosition, hooks.lootRadius(), now);
         if (target == null) {
+            AgentCombatPostureRuntime.observe(entry, agent,
+                    AgentCombatPostureChangedEvent.Posture.SEARCHING, 0,
+                    agentPosition, "no committed target; running local search policy", now);
             if (immediateMeleeLootPosition != null) {
                 return new Result(false, immediateMeleeLootPosition);
             }

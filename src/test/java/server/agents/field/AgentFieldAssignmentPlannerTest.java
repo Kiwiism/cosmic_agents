@@ -67,6 +67,30 @@ class AgentFieldAssignmentPlannerTest {
         assertEquals(1_000, assignment.anchor().x);
     }
 
+    @Test
+    void rangedHolderPrefersAPlatformWithUsableHorizontalSpan() {
+        AgentFarmingCell densePocket = new AgentFarmingCell(
+                "dense", 100, Set.of(1), Map.of(100, 6), Map.of(100, 6),
+                List.of(new AgentFarmingAnchor("dense-a", new Point(0, 0), 100)),
+                Set.of("wide"), 1, false, false);
+        AgentFarmingCell widePlatform = new AgentFarmingCell(
+                "wide", 100, Set.of(2), Map.of(100, 2), Map.of(100, 2),
+                List.of(
+                        new AgentFarmingAnchor("wide-a", new Point(100, 0), 100),
+                        new AgentFarmingAnchor("wide-b", new Point(800, 0), 100)),
+                Set.of("dense"), 1, false, false);
+        AgentFieldParticipant ranged = new AgentFieldParticipant(
+                10, -1, new Point(0, 0), AgentFieldIntent.freeGrind("free"),
+                new AgentFieldCombatProfile(AgentFieldRole.RANGED_HOLDER, 100, 0, 0, 0),
+                Set.of(), 0L, 0L);
+
+        AgentFieldAssignment assignment = planner.plan(
+                "session", AgentFieldMode.SOLO, List.of(densePocket, widePlatform),
+                List.of(ranged), List.of(), 1_000L, 10_000L, 4L).get(10);
+
+        assertEquals(100, assignment.anchor().x);
+    }
+
     private static AgentFieldParticipant participant(int id, int x, Set<String> previous) {
         return new AgentFieldParticipant(id, -1, new Point(x, 0),
                 AgentFieldIntent.freeGrind("free"), previous, 0L, 0L);

@@ -174,6 +174,51 @@ public final class AgentDialogueProjectionRuntime {
                 default -> "";
             };
         }
+        if (AgentFieldNarrationService.LIFECYCLE_INTENT.equals(intent.intentKey())) {
+            return switch (intent.parameters().getOrDefault("phase", "")) {
+                case "REQUESTED" -> "I'm requesting a field assignment.";
+                case "ADMITTED" -> "I've joined this field session.";
+                case "FORMING" -> "I'm waiting for the formation assignment.";
+                case "GRINDING" -> "I'm starting my assigned grind routine.";
+                case "RESTING" -> "I'm taking a short break at a safe spot.";
+                case "SUSPENDED" -> "My field routine is paused for maintenance.";
+                case "RESUMED" -> "Maintenance is done; I'm resuming my field assignment.";
+                case "DRAINING" -> "I'll finish my current action, then leave this field session.";
+                case "EXITED" -> "I've left this field session.";
+                case "FAILED" -> "I couldn't continue this field session: "
+                        + intent.parameters().getOrDefault("reason", "unknown reason") + '.';
+                default -> "";
+            };
+        }
+        if (AgentFieldNarrationService.ASSIGNMENT_INTENT.equals(intent.intentKey())) {
+            String role = friendly(intent.parameters().getOrDefault("role", "roamer"));
+            String anchor = intent.parameters().getOrDefault("anchor", "the assigned anchor");
+            String regions = intent.parameters().getOrDefault("regions", "");
+            return "I'm the " + role + " in slot "
+                    + intent.parameters().getOrDefault("partySlot", "?") + ", covering " + anchor
+                    + (regions.isBlank() ? "." : " across regions " + regions + '.');
+        }
+        if (AgentFieldNarrationService.POPULATION_INTENT.equals(intent.intentKey())) {
+            return "The field population is now "
+                    + intent.parameters().getOrDefault("population", "?")
+                    + "; our formation will rebalance.";
+        }
+        if (AgentFieldNarrationService.REST_INTENT.equals(intent.intentKey())) {
+            return switch (intent.parameters().getOrDefault("phase", "")) {
+                case "STARTED" -> "I'm heading to a safe spot near "
+                        + intent.parameters().getOrDefault("target", "the portal") + " for about "
+                        + intent.parameters().getOrDefault("seconds", "a few") + " seconds.";
+                case "ARRIVED" -> "I've reached my field rest spot.";
+                case "COMPLETED" -> "My break is over; I'm returning to the grind.";
+                case "CANCELLED" -> "I'm cancelling the break and returning to my assignment.";
+                default -> "";
+            };
+        }
+        if (AgentFieldNarrationService.POSTURE_INTENT.equals(intent.intentKey())) {
+            String posture = friendly(intent.parameters().getOrDefault("phase", "combat"));
+            String reason = intent.parameters().getOrDefault("reason", "");
+            return "I'm switching to " + posture + (reason.isBlank() ? "." : ": " + reason + '.');
+        }
         if (!AgentSupplyDialogueReactionService.INTENT_KEY.equals(intent.intentKey())) {
             return "";
         }

@@ -13,15 +13,21 @@ public final class AgentFieldAssignmentState {
     private AgentFieldAssignment assignment;
     private long updatedAtMs;
 
-    public synchronized void update(
+    public synchronized boolean update(
             String currentSessionId,
             AgentFieldIntent currentIntent,
             AgentFieldAssignment currentAssignment,
             long nowMs) {
-        sessionId = currentSessionId == null ? "" : currentSessionId;
+        String nextSessionId = currentSessionId == null ? "" : currentSessionId;
+        boolean changed = !java.util.Objects.equals(sessionId, nextSessionId)
+                || intent == null || currentIntent == null
+                || intent.type() != currentIntent.type()
+                || !sameAssignment(assignment, currentAssignment);
+        sessionId = nextSessionId;
         intent = currentIntent;
         assignment = currentAssignment;
         updatedAtMs = Math.max(0L, nowMs);
+        return changed;
     }
 
     public synchronized void clear() {
@@ -40,5 +46,15 @@ public final class AgentFieldAssignmentState {
             AgentFieldIntent intent,
             AgentFieldAssignment assignment,
             long updatedAtMs) {
+    }
+
+    private static boolean sameAssignment(
+            AgentFieldAssignment left, AgentFieldAssignment right) {
+        if (left == right) return true;
+        if (left == null || right == null) return false;
+        return left.partySlot() == right.partySlot()
+                && left.cellIds().equals(right.cellIds())
+                && left.regionIds().equals(right.regionIds())
+                && left.anchor().equals(right.anchor());
     }
 }

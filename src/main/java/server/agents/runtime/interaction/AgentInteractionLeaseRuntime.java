@@ -7,8 +7,10 @@ import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentSessionEventRuntime;
 import server.agents.runtime.activity.AgentForegroundActivityTick;
+import server.agents.runtime.field.AgentFieldActivityRuntime;
+import server.agents.runtime.field.AgentFieldActivityState;
 
-/** Coordinates bounded chat/trade interruptions without transferring TownLife session ownership. */
+/** Coordinates bounded chat/trade interruptions without transferring parent-activity ownership. */
 public final class AgentInteractionLeaseRuntime {
     private static final String TUNING_PREFIX =
             "server.agents.runtime.interaction.AgentInteractionLeaseRuntime.";
@@ -48,7 +50,8 @@ public final class AgentInteractionLeaseRuntime {
                                 long nowMs,
                                 long minimumDurationMs,
                                 long timeoutMs) {
-        if (entry == null || agent == null || type == null || !AgentTownLifeRuntime.active(entry)) {
+        Parent parent = parent(entry);
+        if (entry == null || agent == null || type == null || parent == null) {
             return "";
         }
         AgentInteractionLeaseState state = entry.capabilityStates()
@@ -58,12 +61,11 @@ public final class AgentInteractionLeaseRuntime {
                 && type == AgentInteractionLeaseState.Type.CHAT) {
             return previous.interactionId();
         }
-        AgentTownLifeState townState = entry.capabilityStates()
-                .require(AgentTownLifeState.STATE_KEY);
-        String id = state.begin(type, participantCharacterId, townState.sessionId(), nowMs,
+        String id = state.begin(type, participantCharacterId,
+                parent.activityId(), parent.sessionId(), nowMs,
                 minimumDurationMs, timeoutMs);
         if (!previous.active() || !previous.interactionId().equals(id)) {
-            AgentTownLifeRuntime.suspendForExternalInteraction(entry, agent, nowMs);
+            suspendParent(entry, agent, parent, nowMs);
             publish(entry, agent, state.snapshot(), AgentInteractionLeaseEvent.Phase.STARTED,
                     "nested " + type.name().toLowerCase(java.util.Locale.ROOT), nowMs);
         }
@@ -91,12 +93,12 @@ public final class AgentInteractionLeaseRuntime {
         AgentInteractionLeaseState state = entry.capabilityStates()
                 .require(AgentInteractionLeaseState.STATE_KEY);
         AgentInteractionLeaseState.Snapshot snapshot = state.snapshot();
-        if (snapshot.active() && !AgentTownLifeRuntime.active(entry)) {
+        if (snapshot.active() && !parentMatches(entry, snapshot)) {
             finish(entry, agent, nowMs, AgentInteractionLeaseEvent.Phase.CANCELLED,
-                    "TownLife session ended");
+                    "parent activity session ended");
             return;
         }
-        if (agent.getTrade() != null && AgentTownLifeRuntime.active(entry)) {
+        if (agent.getTrade() != null && parent(entry) != null) {
             int partnerId = agent.getTrade().getPartner() == null
                     ? 0 : agent.getTrade().getPartner().getChr().getId();
             beginTrade(entry, agent, partnerId, nowMs);
@@ -115,11 +117,9 @@ public final class AgentInteractionLeaseRuntime {
         if (!snapshot.active()) {
             return AgentForegroundActivityTick.PASS;
         }
-        if (!AgentTownLifeRuntime.active(entry)
-                || !snapshot.townLifeSessionId().equals(entry.capabilityStates()
-                .require(AgentTownLifeState.STATE_KEY).sessionId())) {
+        if (!parentMatches(entry, snapshot)) {
             finish(entry, agent, nowMs, AgentInteractionLeaseEvent.Phase.CANCELLED,
-                    "TownLife session ended");
+                    "parent activity session ended");
             return AgentForegroundActivityTick.PASS;
         }
         if (snapshot.type() == AgentInteractionLeaseState.Type.TRADE
@@ -159,7 +159,7 @@ public final class AgentInteractionLeaseRuntime {
             return;
         }
         state.clear();
-        AgentTownLifeRuntime.resumeAfterExternalInteraction(entry, nowMs);
+        resumeParent(entry, agent, snapshot, nowMs);
         publish(entry, agent, snapshot, phase, reason, nowMs);
     }
 
@@ -174,8 +174,49 @@ public final class AgentInteractionLeaseRuntime {
         }
         AgentSessionEventRuntime.bus(entry).publish(new AgentInteractionLeaseEvent(
                 agent.getId(), nowMs, snapshot.interactionId(),
-                snapshot.type(), snapshot.participantCharacterId(), snapshot.townLifeSessionId(),
+                snapshot.type(), snapshot.participantCharacterId(), snapshot.parentSessionId(),
                 phase, reason));
+    }
+
+    private static Parent parent(AgentRuntimeEntry entry) {
+        if (entry == null) return null;
+        if (AgentTownLifeRuntime.active(entry)) {
+            AgentTownLifeState state = entry.capabilityStates().require(AgentTownLifeState.STATE_KEY);
+            return new Parent("town-life", state.sessionId());
+        }
+        AgentFieldActivityState.Snapshot field = entry.capabilityStates()
+                .require(AgentFieldActivityState.STATE_KEY).snapshot();
+        return field.active() ? new Parent(AgentFieldActivityRuntime.ACTIVITY_ID,
+                field.handle().sessionId()) : null;
+    }
+
+    private static boolean parentMatches(
+            AgentRuntimeEntry entry, AgentInteractionLeaseState.Snapshot snapshot) {
+        Parent parent = parent(entry);
+        return parent != null && parent.activityId().equals(snapshot.parentActivityId())
+                && parent.sessionId().equals(snapshot.parentSessionId());
+    }
+
+    private static void suspendParent(
+            AgentRuntimeEntry entry, Character agent, Parent parent, long nowMs) {
+        if ("town-life".equals(parent.activityId())) {
+            AgentTownLifeRuntime.suspendForExternalInteraction(entry, agent, nowMs);
+        } else {
+            AgentFieldActivityRuntime.suspend(entry, agent, "external interaction", nowMs);
+        }
+    }
+
+    private static void resumeParent(
+            AgentRuntimeEntry entry, Character agent,
+            AgentInteractionLeaseState.Snapshot snapshot, long nowMs) {
+        if ("town-life".equals(snapshot.parentActivityId())) {
+            AgentTownLifeRuntime.resumeAfterExternalInteraction(entry, nowMs);
+        } else if (AgentFieldActivityRuntime.ACTIVITY_ID.equals(snapshot.parentActivityId())) {
+            AgentFieldActivityRuntime.resume(entry, agent, "external interaction completed", nowMs);
+        }
+    }
+
+    private record Parent(String activityId, String sessionId) {
     }
 
     private static long tuningLong(String name) {

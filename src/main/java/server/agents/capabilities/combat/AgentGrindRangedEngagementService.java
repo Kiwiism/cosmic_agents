@@ -5,6 +5,8 @@ import client.inventory.WeaponType;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.operations.events.AgentCombatPostureChangedEvent;
+import server.agents.operations.events.AgentCombatPostureRuntime;
 import server.life.Monster;
 
 import java.awt.Point;
@@ -176,6 +178,9 @@ public final class AgentGrindRangedEngagementService {
             Point crowdJumpTarget = hooks.crowdJumpTargetSelector().select(
                     entry, agent, weaponType, agentPosition, targetPosition);
             if (crowdJumpTarget != null) {
+                AgentCombatPostureRuntime.observe(entry, agent,
+                        AgentCombatPostureChangedEvent.Posture.JUMP_ATTACK,
+                        target.getId(), targetPosition, "crowd jump attack", System.currentTimeMillis());
                 hooks.fixedArcJumpInitiator().initiate(
                         entry, agent, crowdJumpTarget.x - agentPosition.x);
                 return new Result(true, crowdJumpTarget, null, null,
@@ -206,10 +211,22 @@ public final class AgentGrindRangedEngagementService {
                         Point firingPosition = hooks.firingPositionSelector().select(
                                 entry, agentPosition, targetPosition);
                         if (firingPosition != null) {
+                            AgentCombatPostureRuntime.observe(entry, agent,
+                                    AgentCombatPostureChangedEvent.Posture.SAFE_SHOT,
+                                    target.getId(), targetPosition,
+                                    "holding a reachable firing anchor", System.currentTimeMillis());
                             return new Result(false, firingPosition, firingPosition, aoeRepositionPos,
                                     shouldRetreatForRangedSpacing, false, weaponType);
                         }
                     }
+                    AgentCombatPostureRuntime.observe(entry, agent,
+                            attackPlan.route == AgentAttackRoute.RANGED
+                                    || attackPlan.route == AgentAttackRoute.MAGIC
+                                    ? AgentCombatPostureChangedEvent.Posture.RANGED
+                                    : AgentCombatPostureChangedEvent.Posture.MELEE,
+                            target.getId(), targetPosition,
+                            AgentMovementStateRuntime.inAir(entry) ? "airborne committed attack"
+                                    : "committed in-range attack", System.currentTimeMillis());
                     return new Result(true, currentMovementTarget, crossRegionRetreatPos, aoeRepositionPos,
                             shouldRetreatForRangedSpacing, attackAttemptedInRange, weaponType);
                 }
@@ -223,6 +240,10 @@ public final class AgentGrindRangedEngagementService {
                     targetPosition,
                     hooks.jumpHeightCalculator().calculate(AgentMovementStateRuntime.movementProfile(entry)))) {
                 hooks.jumpInitiator().initiate(entry, agent, targetPosition.x - agentPosition.x);
+                AgentCombatPostureRuntime.observe(entry, agent,
+                        AgentCombatPostureChangedEvent.Posture.JUMP_ATTACK,
+                        target.getId(), targetPosition, "jumping into legal attack range",
+                        System.currentTimeMillis());
                 return new Result(true, currentMovementTarget, crossRegionRetreatPos, aoeRepositionPos,
                         shouldRetreatForRangedSpacing, attackAttemptedInRange, weaponType);
             }
@@ -237,6 +258,18 @@ public final class AgentGrindRangedEngagementService {
             hooks.movementBroadcaster().broadcast(entry);
             return new Result(true, currentMovementTarget, crossRegionRetreatPos, aoeRepositionPos,
                     shouldRetreatForRangedSpacing, attackAttemptedInRange, weaponType);
+        }
+
+        if (aoeRepositionPos != null) {
+            AgentCombatPostureRuntime.observe(entry, agent,
+                    AgentCombatPostureChangedEvent.Posture.AOE_REPOSITION,
+                    target.getId(), targetPosition, "seeking better multi-target coverage",
+                    System.currentTimeMillis());
+        } else if (shouldRetreatForRangedSpacing || crossRegionRetreatPos != null) {
+            AgentCombatPostureRuntime.observe(entry, agent,
+                    AgentCombatPostureChangedEvent.Posture.KITING,
+                    target.getId(), targetPosition, "restoring ranged spacing",
+                    System.currentTimeMillis());
         }
 
         return new Result(false, currentMovementTarget, crossRegionRetreatPos, aoeRepositionPos,

@@ -7,6 +7,13 @@ import server.agents.perception.AgentMapPerception;
 import server.agents.plans.AgentUniversalPlanRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
+import server.agents.runtime.field.AgentFieldActivityRuntime;
+import server.agents.runtime.field.AgentFieldActivityState;
+import server.agents.runtime.field.AgentFieldAdmissionMode;
+import server.agents.runtime.field.AgentFieldEntryRequest;
+import server.agents.runtime.field.AgentFieldExitRequest;
+import server.agents.runtime.field.AgentFieldSessionResult;
+import server.agents.runtime.field.AgentFieldVisitRequest;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,6 +38,7 @@ public final class AgentFieldCommandService {
             case "start" -> start(operator, params, nowMs);
             case "ladder" -> ladder(operator, params, nowMs);
             case "observe" -> observe(operator, params, nowMs);
+            case "visit" -> visit(operator, params, nowMs);
             case "prepare" -> prepare(operator, params, nowMs);
             case "add" -> add(operator, params, nowMs);
             case "remove" -> remove(operator, params, nowMs);
@@ -38,6 +46,100 @@ public final class AgentFieldCommandService {
             case "stop" -> stop(operator, nowMs);
             default -> help();
         };
+    }
+
+    private static List<String> visit(Character operator, String[] params, long nowMs) {
+        if (params.length < 3) return visitHelp();
+        AgentRuntimeEntry entry = AgentRuntimeRegistry.findByName(operator.getId(), params[2]);
+        Character agent = AgentRuntimeIdentityRuntime.bot(entry);
+        if (entry == null || agent == null || agent.getMap() != operator.getMap()) {
+            return List.of("That Agent is not active in your cohort and map instance.");
+        }
+        return switch (params[1]) {
+            case "start" -> visitStart(operator, entry, agent, params, nowMs);
+            case "status" -> visitStatus(entry);
+            case "rest" -> visitRest(entry, agent, params, nowMs);
+            case "stop" -> visitStop(entry, agent, params, nowMs);
+            default -> visitHelp();
+        };
+    }
+
+    private static List<String> visitStart(
+            Character operator, AgentRuntimeEntry entry, Character agent,
+            String[] params, long nowMs) {
+        if (params.length > 4) return visitHelp();
+        boolean objective = params.length == 4 && "objective".equals(params[3]);
+        if (params.length == 4 && !objective && !"free".equals(params[3])) return visitHelp();
+        Set<Integer> mobIds = objective ? liveMobIds(operator) : Set.of();
+        if (objective && mobIds.isEmpty()) {
+            return List.of("No live mob species are available for an automatic objective.");
+        }
+        Map<Integer, Integer> requirements = new java.util.LinkedHashMap<>();
+        mobIds.forEach(mobId -> requirements.put(
+                mobId, AgentFieldPolicyConfig.testObjectiveKillsPerMob()));
+        String requestId = "gm-field-" + operator.getId() + '-' + nowMs;
+        AgentFieldIntent intent = objective
+                ? AgentFieldIntent.partyCoverage(requestId, mobIds, requirements)
+                : AgentFieldIntent.freeGrind(requestId);
+        AgentFieldVisitRequest visit = new AgentFieldVisitRequest(
+                agent.getMapId(), intent, true,
+                AgentFieldPolicyConfig.maximumParticipants(), true,
+                AgentFieldObservationState.NarrationLevel.VERBOSE);
+        AgentFieldSessionResult result = AgentFieldActivityRuntime.requestSession(
+                entry, agent, new AgentFieldEntryRequest(
+                        requestId, "gm:" + operator.getId(), visit),
+                AgentFieldAdmissionMode.CREATE_OR_JOIN, nowMs);
+        return List.of(result.started()
+                ? "Started managed field visit " + result.handle().sessionId()
+                        + " for " + agent.getName() + "; narration is verbose."
+                : "Managed field visit was not started: " + result.status() + " " + result.reason());
+    }
+
+    private static List<String> visitStatus(AgentRuntimeEntry entry) {
+        AgentFieldActivityState.Snapshot state = entry.capabilityStates()
+                .require(AgentFieldActivityState.STATE_KEY).snapshot();
+        if (!state.active()) return List.of("That Agent has no managed field visit.");
+        return List.of("Managed field " + state.handle().sessionId() + " | phase="
+                + state.phase() + " | map=" + state.handle().mapId() + " | intent="
+                + state.visit().intent().type() + " | restAllowed=" + state.visit().restAllowed() + '.');
+    }
+
+    private static List<String> visitRest(
+            AgentRuntimeEntry entry, Character agent, String[] params, long nowMs) {
+        if (params.length != 4) return visitHelp();
+        long seconds;
+        try {
+            seconds = Long.parseLong(params[3]);
+        } catch (NumberFormatException invalid) {
+            return List.of("Rest duration must be a whole number of seconds.");
+        }
+        boolean accepted = seconds > 0L && AgentFieldActivityRuntime.requestRest(
+                entry, agent, seconds * 1_000L, "GM observation rest", nowMs);
+        return List.of(accepted ? "The Agent will move to a low-pressure rest anchor."
+                : "Rest was rejected; the visit must be grinding with rest enabled and a safe anchor available.");
+    }
+
+    private static List<String> visitStop(
+            AgentRuntimeEntry entry, Character agent, String[] params, long nowMs) {
+        AgentFieldActivityState.Snapshot state = entry.capabilityStates()
+                .require(AgentFieldActivityState.STATE_KEY).snapshot();
+        if (!state.active()) return List.of("That Agent has no managed field visit.");
+        boolean force = params.length == 4 && "force".equals(params[3]);
+        if (params.length > 4 || params.length == 4 && !force) return visitHelp();
+        AgentFieldExitRequest request = force
+                ? AgentFieldExitRequest.force(state.handle(), "GM stopped field observation", nowMs)
+                : AgentFieldExitRequest.graceful(state.handle(), "GM stopped field observation",
+                        nowMs, nowMs + AgentFieldActivityRuntime.DEFAULT_GRACEFUL_EXIT_TIMEOUT_MS);
+        AgentFieldActivityRuntime.requestExit(entry, agent, request);
+        return List.of(force ? "Stopped the managed field visit immediately."
+                : "The managed field visit is draining its current target or loot action before exit.");
+    }
+
+    private static List<String> visitHelp() {
+        return List.of(
+                "!agentfield visit start <agent-name> [free|objective]",
+                "!agentfield visit status <agent-name> | rest <agent-name> <seconds>",
+                "!agentfield visit stop <agent-name> [force]");
     }
 
     private static List<String> observe(Character operator, String[] params, long nowMs) {
@@ -287,7 +389,10 @@ public final class AgentFieldCommandService {
                 .map(participant -> AgentRuntimeRegistry.findByAgentCharacterId(participant.agentId()))
                 .filter(java.util.Objects::nonNull)
                 .toList();
-        AgentFieldRuntime.stop(operator, nowMs);
+        if (!AgentFieldRuntime.stop(operator, nowMs)) {
+            return List.of("This map contains an externally owned managed field visit; use "
+                    + "!agentfield visit stop <agent-name> so its exit contract can drain safely.");
+        }
         participants.forEach(AgentMovementCommandRuntime::stop);
         return List.of("Stopped the field session, its participant grind loops, and combat leases.");
     }
@@ -365,6 +470,7 @@ public final class AgentFieldCommandService {
                 "!agentfield start <solo|party> <free|objective> <1-6> [agent names...]",
                 "!agentfield ladder <warrior> <bowman> <magician> <thief> <pirate>",
                 "!agentfield observe start <all|recommended|exploratory|map-id> [seed] | status | rotate | stop | catalog",
+                "!agentfield visit start <agent-name> [free|objective] | status | rest | stop",
                 "!agentfield add <agent-name> | remove <agent-name> | status | stop",
                 "Objective mode assigns the same configurable kill count to every live mob species.");
     }

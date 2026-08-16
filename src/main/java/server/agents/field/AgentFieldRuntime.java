@@ -8,12 +8,17 @@ import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentClientGatewayRuntime;
 import server.agents.integration.cosmic.CosmicAgentPerceptionSnapshotFactory;
 import server.agents.model.AgentPosition;
+import server.agents.events.AgentEventPriority;
+import server.agents.field.events.AgentFieldAssignmentChangedEvent;
+import server.agents.field.events.AgentFieldLifecycleEvent;
+import server.agents.field.events.AgentFieldPopulationChangedEvent;
 import server.agents.operations.events.AgentMobKilledEvent;
 import server.agents.operations.events.AgentOperationalEventProjectionState;
 import server.agents.perception.AgentPerceptionSnapshot;
 import server.agents.runtime.AgentMailboxRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
+import server.agents.runtime.AgentSessionEventRuntime;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -35,6 +40,81 @@ public final class AgentFieldRuntime {
     }
 
     public record StartResult(boolean success, String message, String sessionId) {
+    }
+
+    public record AdmissionResult(
+            boolean success, String message, String sessionId, int population) {
+    }
+
+    /** Managed single-Agent admission used by FieldActivity; existing group commands remain unchanged. */
+    public static AdmissionResult admit(
+            Character agent,
+            AgentRuntimeEntry entry,
+            AgentFieldIntent intent,
+            boolean acceptingQuestVisitors,
+            int maximum,
+            long nowMs) {
+        if (agent == null || entry == null || intent == null || agent.getMap() == null) {
+            return new AdmissionResult(false, "Agent, map, and field intent are required.", "", 0);
+        }
+        int capacity = Math.max(1, Math.min(12, maximum));
+        FieldSession session;
+        boolean created = false;
+        synchronized (sessions) {
+            FieldKey key = FieldKey.of(agent);
+            session = sessions.get(key);
+            if (session == null) {
+                session = new FieldSession("field-managed-" + agent.getId() + '-'
+                        + UUID.randomUUID().toString().substring(0, 8), key,
+                        AgentFieldMode.PARTY, acceptingQuestVisitors,
+                        intent.requiredKills(), nowMs);
+                sessions.put(key, session);
+                created = true;
+            }
+        }
+        int population;
+        synchronized (session) {
+            if (session.participants.containsKey(agent.getId())) {
+                return new AdmissionResult(true, "Agent is already admitted.",
+                        session.sessionId, session.participants.size());
+            }
+            if (session.participants.size() >= capacity) {
+                return new AdmissionResult(false, "Field session is at capacity.",
+                        session.sessionId, session.participants.size());
+            }
+            AgentCombatDirective baseline = AgentCombatDirectiveRuntime.directive(entry);
+            session.participants.put(agent.getId(), new ParticipantBinding(
+                    agent.getId(), intent, baseline, true, true, nowMs));
+            if (!intent.requiredMobIds().isEmpty()) {
+                AgentCombatDirectiveRuntime.assignPreferences(entry, intent.requiredMobIds(), Set.of());
+            }
+            session.structureFingerprint = 0L;
+            session.lastActivityAtMs = nowMs;
+            population = session.participants.size();
+        }
+        publishPopulation(session, agent.getId(), AgentFieldPopulationChangedEvent.Change.JOINED,
+                population, created ? "created field session" : "joined existing field session", nowMs);
+        publishRebalance(session, agent.getName() + " joined", nowMs);
+        refresh(entry, agent, nowMs);
+        return new AdmissionResult(true, created ? "Created and joined field session."
+                : "Joined field session.", session.sessionId, population);
+    }
+
+    public static String sessionId(Character agent) {
+        if (agent == null || agent.getMap() == null) {
+            return "";
+        }
+        FieldSession session = sessions.get(FieldKey.of(agent));
+        if (session == null) {
+            return "";
+        }
+        synchronized (session) {
+            return session.participants.containsKey(agent.getId()) ? session.sessionId : "";
+        }
+    }
+
+    public static boolean hasSession(Character agent) {
+        return agent != null && agent.getMap() != null && sessions.containsKey(FieldKey.of(agent));
     }
 
     public static StartResult start(
@@ -86,6 +166,12 @@ public final class AgentFieldRuntime {
             return new StartResult(false, "Every selected Agent must already be in the operator's map instance.", "");
         }
         FieldKey key = FieldKey.of(operator);
+        FieldSession existing = sessions.get(key);
+        if (existing != null && hasManagedParticipants(existing)) {
+            return new StartResult(false,
+                    "A managed field visit is active in this map instance; drain it before replacing the session.",
+                    existing.sessionId);
+        }
         stop(key, nowMs);
         String sessionId = "field-" + operator.getId() + '-'
                 + UUID.randomUUID().toString().substring(0, 8);
@@ -103,13 +189,27 @@ public final class AgentFieldRuntime {
                     : AgentFieldIntent.partyCoverage(sessionId, normalizedMobIds, requiredKills);
             Character agent = AgentRuntimeIdentityRuntime.bot(entry);
             session.participants.put(agent.getId(), new ParticipantBinding(
-                    agent.getId(), intent, baseline, true, nowMs));
+                    agent.getId(), intent, baseline, true, false, nowMs));
             if (!normalizedMobIds.isEmpty()) {
                 AgentCombatDirectiveRuntime.assignPreferences(entry, normalizedMobIds, Set.of());
             }
         }
         sessions.put(key, session);
+        for (ParticipantBinding binding : session.participants.values()) {
+            publishLifecycle(session, binding, AgentFieldLifecycleEvent.Phase.REQUESTED,
+                    "group field session requested", nowMs);
+            publishLifecycle(session, binding, AgentFieldLifecycleEvent.Phase.ADMITTED,
+                    "joined initial field formation", nowMs);
+            publishLifecycle(session, binding, AgentFieldLifecycleEvent.Phase.FORMING,
+                    "field allocator is assigning territory", nowMs);
+            publishPopulation(session, binding.agentId, AgentFieldPopulationChangedEvent.Change.JOINED,
+                    session.participants.size(), "initial field formation", nowMs);
+        }
         refresh(entries.getFirst(), AgentRuntimeIdentityRuntime.bot(entries.getFirst()), nowMs);
+        for (ParticipantBinding binding : session.participants.values()) {
+            publishLifecycle(session, binding, AgentFieldLifecycleEvent.Phase.GRINDING,
+                    "group field assignment is active", nowMs);
+        }
         return new StartResult(true,
                 "Started " + mode.name().toLowerCase() + " field exercise with "
                         + entries.size() + " Agent(s).", sessionId);
@@ -135,6 +235,7 @@ public final class AgentFieldRuntime {
         if (session == null || agent == null || agent.getMap() != operator.getMap()) {
             return false;
         }
+        int population;
         synchronized (session) {
             if (session.participants.size() >= maximum) {
                 return false;
@@ -143,17 +244,40 @@ public final class AgentFieldRuntime {
                 return false;
             }
             session.participants.put(agent.getId(), new ParticipantBinding(
-                    agent.getId(), intent, AgentCombatDirectiveRuntime.directive(entry), true, nowMs));
+                    agent.getId(), intent, AgentCombatDirectiveRuntime.directive(entry),
+                    true, false, nowMs));
             if (!intent.requiredMobIds().isEmpty()) {
                 AgentCombatDirectiveRuntime.assignPreferences(entry, intent.requiredMobIds(), Set.of());
             }
             session.structureFingerprint = 0L;
+            population = session.participants.size();
         }
+        publishPopulation(session, agent.getId(), AgentFieldPopulationChangedEvent.Change.JOINED,
+                population, "joined field formation", nowMs);
+        ParticipantBinding added = session.participants.get(agent.getId());
+        publishLifecycle(session, added, AgentFieldLifecycleEvent.Phase.REQUESTED,
+                "group field admission requested", nowMs);
+        publishLifecycle(session, added, AgentFieldLifecycleEvent.Phase.ADMITTED,
+                "joined field formation", nowMs);
+        publishLifecycle(session, added, AgentFieldLifecycleEvent.Phase.FORMING,
+                "field allocator is assigning territory", nowMs);
+        publishRebalance(session, agent.getName() + " joined", nowMs);
         refresh(entry, agent, nowMs);
+        publishLifecycle(session, added, AgentFieldLifecycleEvent.Phase.GRINDING,
+                "group field assignment is active", nowMs);
         return true;
     }
 
     public static boolean remove(Character operator, int agentId, long nowMs) {
+        return remove(operator, agentId, nowMs, true);
+    }
+
+    public static boolean removeManaged(Character operator, int agentId, long nowMs) {
+        return remove(operator, agentId, nowMs, false);
+    }
+
+    private static boolean remove(
+            Character operator, int agentId, long nowMs, boolean publishGroupLifecycle) {
         if (operator == null) {
             return false;
         }
@@ -162,20 +286,35 @@ public final class AgentFieldRuntime {
             return false;
         }
         ParticipantBinding removed;
+        int population;
         synchronized (session) {
             removed = session.participants.remove(agentId);
             session.assignments.remove(agentId);
             session.structureFingerprint = 0L;
             session.lastActivityAtMs = nowMs;
+            population = session.participants.size();
+        }
+        if (removed != null && population == 0) {
+            sessions.remove(session.key, session);
         }
         if (removed != null) {
+            publishPopulation(session, removed.agentId, AgentFieldPopulationChangedEvent.Change.LEFT,
+                    population, "left field formation", nowMs);
+            publishRebalance(session, "participant left", nowMs);
+            if (publishGroupLifecycle) {
+                publishLifecycle(session, removed, AgentFieldLifecycleEvent.Phase.EXITED,
+                        "left field formation", nowMs);
+            }
             release(removed);
         }
         return removed != null;
     }
 
     public static boolean stop(Character operator, long nowMs) {
-        return operator != null && stop(FieldKey.of(operator), nowMs);
+        if (operator == null) return false;
+        FieldKey key = FieldKey.of(operator);
+        FieldSession session = sessions.get(key);
+        return session != null && !hasManagedParticipants(session) && stop(key, nowMs);
     }
 
     private static boolean stop(FieldKey key, long nowMs) {
@@ -189,6 +328,14 @@ public final class AgentFieldRuntime {
             removed.participants.clear();
             removed.assignments.clear();
             removed.lastActivityAtMs = nowMs;
+        }
+        for (ParticipantBinding binding : bindings) {
+            publishPopulation(removed, binding.agentId, AgentFieldPopulationChangedEvent.Change.LEFT,
+                    0, "field session stopped", nowMs);
+            if (!binding.managed) {
+                publishLifecycle(removed, binding, AgentFieldLifecycleEvent.Phase.EXITED,
+                        "field session stopped", nowMs);
+            }
         }
         bindings.forEach(AgentFieldRuntime::release);
         return true;
@@ -207,7 +354,7 @@ public final class AgentFieldRuntime {
         synchronized (session) {
             session.lastActivityAtMs = nowMs;
             autoEnrollVisitor(session, callerEntry, caller, nowMs);
-            pruneAbsentParticipants(session);
+            pruneAbsentParticipants(session, nowMs);
             boolean assignmentMissing = session.assignments.size() < session.participants.size();
             boolean leaseExpired = session.assignments.values().stream()
                     .anyMatch(assignment -> assignment.expiresAtMs() <= nowMs);
@@ -368,6 +515,9 @@ public final class AgentFieldRuntime {
         AgentOperationalEventProjectionState.Snapshot operations = entry == null
                 ? new AgentOperationalEventProjectionState().snapshot()
                 : entry.capabilityStates().require(AgentOperationalEventProjectionState.STATE_KEY).snapshot();
+        AgentFieldObservationState.Snapshot observation = entry == null
+                ? new AgentFieldObservationState().snapshot(nowMs)
+                : entry.capabilityStates().require(AgentFieldObservationState.STATE_KEY).snapshot(nowMs);
         java.awt.Point position = agent == null ? null : agent.getPosition();
         return new AgentFieldSnapshot.Participant(
                 binding.agentId,
@@ -385,12 +535,27 @@ public final class AgentFieldRuntime {
                 operations.recoveries(),
                 operations.lifeTransitions(),
                 binding.intent.type(),
+                observation.role(),
+                observation.lifecycle(),
+                observation.posture().name(),
+                observation.postureTimeMs().entrySet().stream().collect(
+                        java.util.stream.Collectors.toUnmodifiableMap(
+                                value -> value.getKey().name(), Map.Entry::getValue)),
+                observation.attacks(),
+                observation.hitLines(),
+                observation.missLines(),
+                observation.damage(),
+                observation.assignmentChanges(),
+                observation.targetMobId(),
+                observation.targetPosition().x,
+                observation.targetPosition().y,
                 assignment == null ? List.of() : assignment.cellIds().stream().sorted().toList(),
                 assignment == null ? List.of() : assignment.regionIds().stream().sorted().toList(),
                 assignment == null ? 0 : assignment.anchor().x,
                 assignment == null ? 0 : assignment.anchor().y,
                 assignment == null ? 0L : Math.max(0L, assignment.expiresAtMs() - nowMs),
-                assignment == null ? "awaiting navigation graph" : assignment.reason());
+                assignment == null ? "awaiting navigation graph" : assignment.reason(),
+                observation.timeline());
     }
 
     private static void autoEnrollVisitor(
@@ -407,11 +572,14 @@ public final class AgentFieldRuntime {
         session.participants.put(agent.getId(), new ParticipantBinding(
                 agent.getId(), AgentFieldIntent.questVisitor(
                         directive.objectiveId(), directive.requiredMobIds()),
-                baseline, false, nowMs));
+                baseline, false, false, nowMs));
         session.structureFingerprint = 0L;
+        publishPopulation(session, agent.getId(), AgentFieldPopulationChangedEvent.Change.JOINED,
+                session.participants.size(), "quest visitor joined field formation", nowMs);
+        publishRebalance(session, "quest visitor joined", nowMs);
     }
 
-    private static void pruneAbsentParticipants(FieldSession session) {
+    private static void pruneAbsentParticipants(FieldSession session, long nowMs) {
         List<Integer> absent = new ArrayList<>();
         for (ParticipantBinding binding : session.participants.values()) {
             AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(binding.agentId);
@@ -437,6 +605,10 @@ public final class AgentFieldRuntime {
             ParticipantBinding removed = session.participants.remove(agentId);
             session.assignments.remove(agentId);
             if (removed != null) {
+                publishPopulation(session, removed.agentId,
+                        AgentFieldPopulationChangedEvent.Change.LEFT,
+                        session.participants.size(), "visitor left field formation",
+                        nowMs);
                 release(removed);
             }
         }
@@ -456,6 +628,7 @@ public final class AgentFieldRuntime {
             AgentFieldAssignment previous = session.assignments.get(binding.agentId);
             participants.add(new AgentFieldParticipant(
                     binding.agentId, agent.getPartyId(), agent.getPosition(), binding.intent,
+                    AgentFieldRolePolicy.resolve(agent),
                     previous == null ? Set.of() : previous.cellIds(),
                     previous == null ? 0L : previous.expiresAtMs(), binding.joinedAtMs));
         }
@@ -478,8 +651,18 @@ public final class AgentFieldRuntime {
                 assignment.expiresAtMs());
         AgentMailboxRuntime.dispatch(entry, ignored -> {
             AgentCombatDirectiveRuntime.assignRegion(entry, region);
-            entry.capabilityStates().require(AgentFieldAssignmentState.STATE_KEY)
+            boolean changed = entry.capabilityStates().require(AgentFieldAssignmentState.STATE_KEY)
                     .update(session.sessionId, binding.intent, assignment, nowMs);
+            if (changed) {
+                AgentFieldCombatProfile profile = AgentFieldRolePolicy.resolve(
+                        AgentRuntimeIdentityRuntime.bot(entry));
+                AgentSessionEventRuntime.bus(entry).publish(new AgentFieldAssignmentChangedEvent(
+                        binding.agentId, nowMs, assignment.mapId(), session.sessionId,
+                        assignment.revision(), profile.role(), assignment.partySlot(),
+                        assignment.cellIds().stream().sorted().toList(),
+                        assignment.regionIds().stream().sorted().toList(), assignment.anchor(),
+                        assignment.reason(), binding.intent.objectiveId()), AgentEventPriority.IMPORTANT);
+            }
             return null;
         });
     }
@@ -551,7 +734,12 @@ public final class AgentFieldRuntime {
                 bindings = List.copyOf(session.participants.values());
             }
             if (sessions.remove(indexed.getKey(), session)) {
-                bindings.forEach(AgentFieldRuntime::release);
+                for (ParticipantBinding binding : bindings) {
+                    publishPopulation(session, binding.agentId,
+                            AgentFieldPopulationChangedEvent.Change.LEFT, 0,
+                            "stale field session expired", nowMs);
+                    release(binding);
+                }
             }
         }
     }
@@ -569,6 +757,59 @@ public final class AgentFieldRuntime {
             return new FieldKey(
                     clients.world(character), clients.channel(character), character.getMapId(),
                     System.identityHashCode(character.getMap()));
+        }
+    }
+
+    private static void publishRebalance(FieldSession session, String reason, long nowMs) {
+        List<Integer> participantIds;
+        int population;
+        synchronized (session) {
+            participantIds = session.participants.keySet().stream().sorted().toList();
+            population = participantIds.size();
+        }
+        for (Integer participantId : participantIds) {
+            publishPopulation(session, participantId,
+                    AgentFieldPopulationChangedEvent.Change.REBALANCED,
+                    population, reason, nowMs);
+        }
+    }
+
+    private static void publishPopulation(
+            FieldSession session,
+            int agentId,
+            AgentFieldPopulationChangedEvent.Change change,
+            int population,
+            String reason,
+            long nowMs) {
+        AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(agentId);
+        ParticipantBinding binding = session.participants.get(agentId);
+        String objectiveId = binding == null ? "" : binding.intent.objectiveId();
+        if (entry != null) {
+            AgentSessionEventRuntime.bus(entry).publish(new AgentFieldPopulationChangedEvent(
+                    agentId, nowMs, session.key.mapId, session.sessionId, change,
+                    population, reason, objectiveId), AgentEventPriority.IMPORTANT);
+        }
+    }
+
+    private static void publishLifecycle(
+            FieldSession session,
+            ParticipantBinding binding,
+            AgentFieldLifecycleEvent.Phase phase,
+            String reason,
+            long nowMs) {
+        if (session == null || binding == null || phase == null) return;
+        AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(binding.agentId);
+        if (entry != null) {
+            AgentSessionEventRuntime.bus(entry).publish(new AgentFieldLifecycleEvent(
+                    binding.agentId, nowMs, session.key.mapId, session.sessionId,
+                    session.sessionId + ':' + binding.agentId, "field-runtime", phase,
+                    reason, binding.intent.objectiveId()), AgentEventPriority.IMPORTANT);
+        }
+    }
+
+    private static boolean hasManagedParticipants(FieldSession session) {
+        synchronized (session) {
+            return session.participants.values().stream().anyMatch(binding -> binding.managed);
         }
     }
 
@@ -611,6 +852,7 @@ public final class AgentFieldRuntime {
         private AgentFieldIntent intent;
         private AgentCombatDirective baselineDirective;
         private final boolean explicit;
+        private final boolean managed;
         private final long joinedAtMs;
 
         private ParticipantBinding(
@@ -618,11 +860,13 @@ public final class AgentFieldRuntime {
                 AgentFieldIntent intent,
                 AgentCombatDirective baselineDirective,
                 boolean explicit,
+                boolean managed,
                 long joinedAtMs) {
             this.agentId = agentId;
             this.intent = intent;
             this.baselineDirective = baselineDirective;
             this.explicit = explicit;
+            this.managed = managed;
             this.joinedAtMs = joinedAtMs;
         }
     }

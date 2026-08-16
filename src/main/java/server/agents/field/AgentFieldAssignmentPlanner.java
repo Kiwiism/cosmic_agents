@@ -200,6 +200,7 @@ public final class AgentFieldAssignmentPlanner {
                 + coverage * AgentFieldPolicyConfig.objectiveCoverageWeight()
                 - distancePenalty
                 - (long) currentUsers * AgentFieldPolicyConfig.territorySizePenalty();
+        score += capabilityScore(participant.combatProfile(), cell, population);
         if (participant.previousLeaseExpiresAtMs() > nowMs
                 && participant.previousCellIds().contains(cell.cellId())) {
             score += AgentFieldPolicyConfig.retainedSeedBonus();
@@ -213,6 +214,30 @@ public final class AgentFieldAssignmentPlanner {
             score -= AgentFieldPolicyConfig.retainedSeedBonus();
         }
         return score;
+    }
+
+    private static long capabilityScore(
+            AgentFieldCombatProfile profile,
+            AgentFarmingCell cell,
+            int population) {
+        if (profile == null) {
+            return 0L;
+        }
+        int anchorSpan = cell.anchors().stream().mapToInt(anchor -> anchor.position().x)
+                .max().orElse(0) - cell.anchors().stream().mapToInt(anchor -> anchor.position().x)
+                .min().orElse(0);
+        return (long) population * profile.densityPreference()
+                * AgentFieldPolicyConfig.capabilityDensityWeight()
+                + (long) Math.max(0, anchorSpan) * profile.rangePreference()
+                * AgentFieldPolicyConfig.capabilityRangeWeight()
+                + (long) cell.adjacentCellIds().size() * profile.mobilityPreference()
+                * AgentFieldPolicyConfig.capabilityMobilityWeight()
+                + (long) cell.adjacentCellIds().size() * profile.supportPreference()
+                * AgentFieldPolicyConfig.capabilitySupportWeight()
+                - (cell.deadEnd() && profile.role() == AgentFieldRole.ROAMER
+                ? AgentFieldPolicyConfig.roamerDeadEndPenalty() : 0L)
+                - (population > 0 && profile.role() == AgentFieldRole.RESERVE
+                ? AgentFieldPolicyConfig.reservePopulationPenalty() : 0L);
     }
 
     private static AgentFieldAssignment assignment(
