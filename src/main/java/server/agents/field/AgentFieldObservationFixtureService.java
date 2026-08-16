@@ -68,7 +68,7 @@ final class AgentFieldObservationFixtureService {
         }
         AgentApBuildProfileService.autoAssign(entry, agent);
         AgentSpBuildProfileService.autoAssign(entry, agent);
-        List<Integer> equipment = applyDeterministicNpcShopLoadout(agent, seed);
+        List<Integer> equipment = applyDeterministicEquipmentLoadout(agent, seed);
         provisionTwoHourSupplies(agent);
         agent.healHpMp();
         agent.equipChanged();
@@ -77,7 +77,7 @@ final class AgentFieldObservationFixtureService {
                 bundle.spProfileId(), equipment, suppliedProjectile(agent));
     }
 
-    private static List<Integer> applyDeterministicNpcShopLoadout(Character agent, long seed) {
+    private static List<Integer> applyDeterministicEquipmentLoadout(Character agent, long seed) {
         InventoryGateway inventory = AgentInventoryGatewayRuntime.inventory();
         clearInventory(agent, InventoryType.EQUIP, agent.getInventory(InventoryType.EQUIP).getSlotLimit());
         clearInventory(agent, InventoryType.EQUIPPED, agent.getInventory(InventoryType.EQUIPPED).getSlotLimit());
@@ -104,19 +104,18 @@ final class AgentFieldObservationFixtureService {
         ArrayList<Integer> selected = new ArrayList<>();
         boolean overall = random.nextBoolean() && candidatesBySlot.containsKey("MaPn");
         List<String> slots = overall
-                ? List.of("Cp", "MaPn", "So", "Gv", "Ae", "Wp")
-                : List.of("Cp", "Ma", "Pn", "So", "Gv", "Ae", "Wp");
+                ? List.of("Cp", "MaPn", "So", "Gv", "Ae")
+                : List.of("Cp", "Ma", "Pn", "So", "Gv", "Ae");
         for (String slot : slots) {
-            List<Integer> candidates = candidatesBySlot.getOrDefault(slot, List.of()).stream()
-                    .sorted(Comparator.naturalOrder()).toList();
-            if (candidates.isEmpty()) {
-                continue;
-            }
-            int itemId = candidates.get(random.nextInt(candidates.size()));
-            if (!inventory.addItem(agent, itemId, (short) 1)) {
-                throw new IllegalStateException("could not add observation equipment " + itemId);
-            }
-            selected.add(itemId);
+            selectOne(agent, inventory, candidatesBySlot, slot, random, selected);
+        }
+        int weaponItemId = selectOne(agent, inventory, candidatesBySlot, "Wp", random, selected);
+        if (weaponItemId == 0) {
+            throw new IllegalStateException("deterministic observation preset has no compatible weapon");
+        }
+        WeaponType weaponType = inventory.getWeaponType(weaponItemId);
+        if (supportsShield(weaponType, inventory.getEquipmentSlot(weaponItemId))) {
+            selectOne(agent, inventory, candidatesBySlot, "Si", random, selected);
         }
         AgentEquipmentService.autoEquip(agent, null, null, true);
         Item weapon = agent.getInventory(InventoryType.EQUIPPED).getItem((short) -11);
@@ -124,6 +123,25 @@ final class AgentFieldObservationFixtureService {
             throw new IllegalStateException("deterministic observation preset has no compatible weapon");
         }
         return List.copyOf(selected);
+    }
+
+    private static int selectOne(Character agent,
+                                 InventoryGateway inventory,
+                                 Map<String, List<Integer>> candidatesBySlot,
+                                 String slot,
+                                 SplittableRandom random,
+                                 List<Integer> selected) {
+        List<Integer> candidates = candidatesBySlot.getOrDefault(slot, List.of()).stream()
+                .sorted(Comparator.naturalOrder()).toList();
+        if (candidates.isEmpty()) {
+            return 0;
+        }
+        int itemId = candidates.get(random.nextInt(candidates.size()));
+        if (!inventory.addItem(agent, itemId, (short) 1)) {
+            throw new IllegalStateException("could not add observation equipment " + itemId);
+        }
+        selected.add(itemId);
+        return itemId;
     }
 
     private static void provisionTwoHourSupplies(Character agent) {
@@ -165,16 +183,27 @@ final class AgentFieldObservationFixtureService {
         agent.setInventory(type, new Inventory(agent, type, slotLimit));
     }
 
-    private static String normalizedSlot(String slot) {
+    static String normalizedSlot(String slot) {
         if (slot == null) {
             return "";
         }
-        if (slot.contains("Wp")) {
+        if (slot.equals("Wp") || slot.equals("WpSi")) {
             return "Wp";
         }
         return switch (slot) {
-            case "Cp", "Ma", "Pn", "MaPn", "So", "Gv", "Ae" -> slot;
+            case "Cp", "Ma", "Pn", "MaPn", "So", "Gv", "Ae", "Si" -> slot;
             default -> "";
+        };
+    }
+
+    static boolean supportsShield(WeaponType weaponType, String equipmentSlot) {
+        if (equipmentSlot == null || equipmentSlot.contains("Si")) {
+            return false;
+        }
+        return switch (weaponType) {
+            case GENERAL1H_SWING, GENERAL1H_STAB, SWORD1H,
+                    DAGGER_THIEVES, DAGGER_OTHER, WAND, STAFF -> true;
+            default -> false;
         };
     }
 
