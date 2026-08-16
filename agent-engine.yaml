@@ -2598,6 +2598,9 @@ tuning:
     # Purpose: Gives tested or authored preferred maps a modest stability advantage without allowing them to dominate bad runtime evidence.
     # Technical: AgentAdaptiveQuestHuntSelector subtracts this credit from preferred-map completion cost when deficit-aware authority is enabled.
     server.agents.progression.AgentAdaptiveQuestHuntSelector.PREFERRED_MAP_CREDIT: '1500'
+    server.agents.progression.AgentAdaptiveQuestHuntSelector.REPLAN_SWITCH_MARGIN_COST: '3500'
+    server.agents.progression.AgentVictoriaSharedQuestPackRuntime.ROUTE_HARVEST_MAX_MS: '20000'
+    server.agents.progression.AgentVictoriaSharedQuestPackRuntime.ROUTE_HARVEST_MAX_PROGRESS: '5'
     # Values: a positive integer. Recommended: 50000-250000 around the tested baseline 100000.
     # Purpose: Strongly discourages maps that cannot advance every currently combined objective unless no complete-coverage map is reachable.
     # Technical: AgentAdaptiveQuestHuntSelector adds this cost for each unresolved demand lacking candidate yield evidence on the evaluated map.

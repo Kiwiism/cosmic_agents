@@ -5,6 +5,7 @@ import client.QuestStatus;
 import server.agents.capabilities.objective.AgentNpcInteractionReachabilityService;
 import server.agents.integration.PrimitiveCapabilityGateway;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.hunting.AgentHuntingVisitRequest;
 import server.agents.capabilities.inventory.demand.AgentQuestItemDemandRuntime;
 
 import java.awt.Point;
@@ -143,7 +144,9 @@ final class AgentVictoriaQuestPackRuntime {
             gateway.stop(entry);
             return Result.RUNNING;
         }
-        gateway.grind(entry, Set.copyOf(huntMap.targetMobIds()));
+        AgentQuestHuntingBridge.engage(entry, agent, gateway, huntKey,
+                AgentHuntingVisitRequest.Purpose.QUEST_OBJECTIVE,
+                Set.copyOf(huntMap.targetMobIds()), Set.of(), nowMs);
         return Result.RUNNING;
     }
 

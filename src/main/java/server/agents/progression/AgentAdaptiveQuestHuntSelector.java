@@ -45,11 +45,15 @@ final class AgentAdaptiveQuestHuntSelector {
             "server.agents.progression.AgentAdaptiveQuestHuntSelector.PREFERRED_MAP_CREDIT");
     private static final int MISSING_OBJECTIVE_COST = config.AgentTuning.intValue(
             "server.agents.progression.AgentAdaptiveQuestHuntSelector.MISSING_OBJECTIVE_COST");
+    private static final int REPLAN_SWITCH_MARGIN_COST = config.AgentTuning.intValue(
+            "server.agents.progression.AgentAdaptiveQuestHuntSelector.REPLAN_SWITCH_MARGIN_COST");
 
     private final AgentVictoriaQuestHuntPolicyRepository policyRepository;
     private final AgentVictoriaQuestHuntIndexRepository indexRepository;
     private final Map<Integer, String> lastShadowSignatureByAgent = new ConcurrentHashMap<>();
     private final Map<SharedSelectionKey, SharedSelectionLease> sharedSelectionLeases =
+            new ConcurrentHashMap<>();
+    private final Map<SharedSelectionKey, String> lastDecisionSignatures =
             new ConcurrentHashMap<>();
 
     AgentAdaptiveQuestHuntSelector(
@@ -129,8 +133,16 @@ final class AgentAdaptiveQuestHuntSelector {
         if (!leaseValid) {
             sharedSelectionLeases.remove(leaseKey);
         }
+        DeficitChoice best = choices.getFirst();
+        boolean materiallyBetter = leaseValid
+                && best.map().mapId() != leasedChoice.map().mapId()
+                && best.completionCost() + REPLAN_SWITCH_MARGIN_COST
+                < leasedChoice.completionCost();
         DeficitChoice selected = !deficitHasAuthority && preferred != null
-                ? preferred : leaseValid ? leasedChoice : choices.getFirst();
+                ? preferred : leaseValid && !materiallyBetter ? leasedChoice : best;
+        if (materiallyBetter) {
+            leaseValid = false;
+        }
         remember(leaseKey, selected.map().mapId(), objectiveSignature, request.nowMs());
         Source source = leaseValid
                 ? Source.STICKY_SELECTION : selected == preferred
@@ -138,7 +150,7 @@ final class AgentAdaptiveQuestHuntSelector {
                 : request.reason() == AgentHuntSelectionRequest.Reason.NORMAL
                 ? Source.DEFICIT_AWARE
                 : Source.RECOVERY_FALLBACK;
-        recordDeficitChoice(request, selected, choices, mode, source);
+        recordDeficitChoice(leaseKey, request, selected, choices, mode, source);
         return Optional.of(new Selection(selected.map(), mode, source,
                 selected.evidence() == null ? null
                         : new AdaptiveChoice(selected.map(), selected.evidence(),
@@ -196,6 +208,7 @@ final class AgentAdaptiveQuestHuntSelector {
     }
 
     private void recordDeficitChoice(
+            SharedSelectionKey key,
             AgentHuntSelectionRequest request,
             DeficitChoice selected,
             List<DeficitChoice> choices,
@@ -209,6 +222,11 @@ final class AgentAdaptiveQuestHuntSelector {
         String remaining = request.objectives().stream()
                 .map(demand -> demand.objectiveId() + "=" + demand.remainingCount())
                 .reduce((left, right) -> left + "," + right).orElse("none");
+        String signature = source + "|" + remaining + "|" + selected.map().mapId()
+                + "|" + selected.completionCost() + "|" + alternatives;
+        if (signature.equals(lastDecisionSignatures.put(key, signature))) {
+            return;
+        }
         log.info("Agent hunt choice agent={} selection={} reason={} mode={} source={} "
                         + "remaining={} selectedMap={} completionCost={} alternatives={}",
                 request.agent().getName(), request.selectionId(), request.reason(), mode, source,
@@ -375,7 +393,9 @@ final class AgentAdaptiveQuestHuntSelector {
 
     void clearCombinedSelection(int agentId, String selectionId) {
         if (agentId > 0 && selectionId != null && !selectionId.isBlank()) {
-            sharedSelectionLeases.remove(new SharedSelectionKey(agentId, selectionId));
+            SharedSelectionKey key = new SharedSelectionKey(agentId, selectionId);
+            sharedSelectionLeases.remove(key);
+            lastDecisionSignatures.remove(key);
         }
     }
 

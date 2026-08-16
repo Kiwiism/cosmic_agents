@@ -5,6 +5,7 @@ import server.agents.capabilities.objective.AgentNpcInteractionReachabilityServi
 import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
 import server.agents.integration.PrimitiveCapabilityGateway;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.hunting.AgentHuntingVisitRequest;
 
 import java.awt.Point;
 import java.util.ArrayList;
@@ -122,7 +123,8 @@ public final class AgentInstructorTrainingRuntime {
                     gateway.stop(entry);
                     return true;
                 }
-                grindWithLocalIncidental(entry, agent, step.mobIds(), gateway);
+                grindWithLocalIncidental(entry, agent, step.mobIds(), gateway,
+                        instructorObjectiveKey(step), nowMs);
                 return true;
             }
             if (AgentVictoriaRouteRuntime.travel(
@@ -144,7 +146,8 @@ public final class AgentInstructorTrainingRuntime {
         if (AgentVictoriaRouteRuntime.travel(entry, agent, step.huntingMapId(), gateway)) {
             return true;
         }
-        grindWithLocalIncidental(entry, agent, step.mobIds(), gateway);
+        grindWithLocalIncidental(entry, agent, step.mobIds(), gateway,
+                instructorObjectiveKey(step), nowMs);
         return true;
     }
 
@@ -196,23 +199,24 @@ public final class AgentInstructorTrainingRuntime {
             return true;
         }
         grindWithLocalIncidental(
-                entry, agent, Set.copyOf(huntMap.targetMobIds()), gateway);
+                entry, agent, Set.copyOf(huntMap.targetMobIds()), gateway,
+                huntKey, nowMs);
         return true;
     }
 
     private static void grindWithLocalIncidental(AgentRuntimeEntry entry,
                                                   Character agent,
                                                   Set<Integer> requiredMobIds,
-                                                  PrimitiveCapabilityGateway gateway) {
+                                                  PrimitiveCapabilityGateway gateway,
+                                                  String visitId,
+                                                  long nowMs) {
         Set<Integer> incidentals = AgentInstructorCombatPolicy.localIncidentalMobIds(
                 requiredMobIds,
                 gateway.configuredMonsterSpawnCounts(agent),
                 gateway.liveMonsterCounts(agent));
-        if (incidentals.isEmpty()) {
-            gateway.grind(entry, requiredMobIds);
-            return;
-        }
-        gateway.grind(entry, requiredMobIds, incidentals);
+        AgentQuestHuntingBridge.engage(entry, agent, gateway, visitId,
+                AgentHuntingVisitRequest.Purpose.QUEST_OBJECTIVE,
+                requiredMobIds, incidentals, nowMs);
     }
 
     private static String instructorObjectiveKey(AgentInstructorTrainingStep step) {

@@ -109,7 +109,10 @@ public final class AgentCombatTargetRuntime {
             Map<Monster, Integer> targetOccupancy = grindTargetOccupancy(entry, bot);
             candidates = AgentCombatBehaviorRuntime.respectClaims(entry, candidates, targetOccupancy);
             int claimCandidateCount = candidates.size();
-            if (!AgentCombatBehaviorRuntime.responseReady(
+            // A platform batch is already an explicit combat commitment. Re-applying the
+            // personality response delay after each kill created a visible pause between
+            // otherwise legal safe-spot shots and undermined the bounded local clear policy.
+            if (!platformBatch.retained() && !AgentCombatBehaviorRuntime.responseReady(
                     entry, bot, candidates, nowMs)) {
                 recordDecision(entry, AgentCombatDecisionTraceState.Mode.GRIND,
                         claimCandidateCount == 0

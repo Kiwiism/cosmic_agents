@@ -2,6 +2,8 @@ package server.agents.progression;
 
 import client.Character;
 import client.QuestStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import server.agents.capabilities.objective.AgentNpcInteractionReachabilityService;
 import server.agents.capabilities.shop.AgentShopService;
 import server.agents.capabilities.shop.AgentShopStateRuntime;
@@ -12,10 +14,10 @@ import server.agents.capabilities.looting.AgentPreExitLootRuntime;
 import server.agents.capabilities.objective.AgentNpcInteractionSpreadService;
 import server.agents.integration.PrimitiveCapabilityGateway;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.hunting.AgentHuntingVisitRequest;
 
 import java.awt.Point;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +26,8 @@ import java.util.stream.Collectors;
 
 /** Data-driven executor for reusable Victoria home and rotation quest packs. */
 final class AgentVictoriaSharedQuestPackRuntime {
+    private static final Logger log = LoggerFactory.getLogger(
+            AgentVictoriaSharedQuestPackRuntime.class);
     enum Result {
         RUNNING,
         COMPLETE,
@@ -34,6 +38,10 @@ final class AgentVictoriaSharedQuestPackRuntime {
             "server.agents.progression.AgentVictoriaSharedQuestPackRuntime.NPC_DISTANCE_PX");
     private static final long STEP_DELAY_MS = config.AgentTuning.longValue(
             "server.agents.progression.AgentVictoriaSharedQuestPackRuntime.STEP_DELAY_MS");
+    private static final long ROUTE_HARVEST_MAX_MS = config.AgentTuning.longValue(
+            "server.agents.progression.AgentVictoriaSharedQuestPackRuntime.ROUTE_HARVEST_MAX_MS");
+    private static final int ROUTE_HARVEST_MAX_PROGRESS = config.AgentTuning.intValue(
+            "server.agents.progression.AgentVictoriaSharedQuestPackRuntime.ROUTE_HARVEST_MAX_PROGRESS");
 
     private AgentVictoriaSharedQuestPackRuntime() {
     }
@@ -68,7 +76,7 @@ final class AgentVictoriaSharedQuestPackRuntime {
             case "SHOP_ITEM" -> shopItem(entry, agent, state, step, nowMs, gateway);
             case "LEVEL_GRIND" -> levelGrind(entry, agent, state, step, nowMs, gateway);
             case "MINI_DUNGEON_HUNT" ->
-                    miniDungeonHunt(entry, agent, state, step, nowMs, gateway);
+                    miniDungeonHunt(entry, agent, state, pack, step, nowMs, gateway);
             default -> throw new IllegalStateException(
                     "unsupported shared quest-pack step type " + step.type());
         };
@@ -197,7 +205,9 @@ final class AgentVictoriaSharedQuestPackRuntime {
                                long nowMs,
                                PrimitiveCapabilityGateway gateway) {
         String selectionId = packId + ":" + state.questPackIndex();
-        if (conditionsMet(agent, step, gateway)) {
+        AgentQuestPackDebtSnapshot debt = AgentQuestPackDebtSnapshot.capture(
+                pack, agent, gateway);
+        if (debt.conditionsMet(agent, step, gateway)) {
             if (AgentPreExitLootRuntime.drain(entry, agent, nowMs)) {
                 return Result.RUNNING;
             }
@@ -206,23 +216,20 @@ final class AgentVictoriaSharedQuestPackRuntime {
             AgentHuntRecoveryRuntime.clear(entry, "shared:" + selectionId);
             AgentAdaptiveQuestHuntSelector.defaultSelector()
                     .clearCombinedSelection(agent.getId(), "shared:" + selectionId);
+            entry.capabilityStates().require(AgentQuestRouteHarvestState.STATE_KEY).clear();
             advance(state, nowMs);
             return Result.RUNNING;
         }
 
-        List<AgentVictoriaQuestHuntIndexRepository.ObjectiveReference> objectives =
-                unresolvedObjectives(agent, state, pack, step, gateway);
-        List<AgentHuntSelectionRequest.ObjectiveDemand> demands = huntDemands(
-                agent, objectives, gateway);
-        int progress = demands.stream().mapToInt(
-                AgentHuntSelectionRequest.ObjectiveDemand::currentCount).sum();
+        List<AgentHuntSelectionRequest.ObjectiveDemand> demands = debt.demands();
+        int progress = debt.progressUnits();
         String huntKey = "shared:" + selectionId;
         boolean recovering = AgentHuntRecoveryRuntime.fallbackActive(
                 entry, huntKey, progress, nowMs);
         Set<Integer> failedMaps = AgentHuntRecoveryRuntime.failedMaps(
                 entry, huntKey, progress, nowMs);
         AgentHuntObjectiveSpec objective = demands.isEmpty() ? null
-                : AgentHuntObjectiveCompiler.sharedQuestPack(huntKey, step, demands);
+                : AgentHuntObjectiveCompiler.sharedQuestPack(huntKey, pack, step, demands);
         AgentAdaptiveQuestHuntSelector.Selection selection = demands.isEmpty() ? null
                 : AgentAdaptiveQuestHuntSelector.defaultSelector()
                         .select(new AgentHuntSelectionRequest(
@@ -233,6 +240,30 @@ final class AgentVictoriaSharedQuestPackRuntime {
                         .orElse(null);
         int huntMapId = selection == null ? step.mapId() : selection.map().mapId();
         if (agent.getMapId() != huntMapId) {
+            Set<Integer> routeTargets = debt.targetMobIdsForMap(agent.getMapId());
+            boolean liveRouteTargets = !routeTargets.isEmpty()
+                    && gateway.liveMonsterCount(agent, routeTargets) > 0;
+            AgentQuestRouteHarvestState.Decision harvest = entry.capabilityStates()
+                    .require(AgentQuestRouteHarvestState.STATE_KEY)
+                    .evaluate(huntKey, debt.scopeSignature(), agent.getMapId(), progress,
+                            liveRouteTargets, nowMs, ROUTE_HARVEST_MAX_MS,
+                            ROUTE_HARVEST_MAX_PROGRESS);
+            if (harvest == AgentQuestRouteHarvestState.Decision.STARTED) {
+                log.info("Agent quest route harvest start agent={} hunt={} map={} debt={} targets={}",
+                        agent.getName(), huntKey, agent.getMapId(),
+                        debt.diagnosticSummary(), routeTargets);
+            } else if (harvest == AgentQuestRouteHarvestState.Decision.FINISHED) {
+                log.info("Agent quest route harvest finish agent={} hunt={} map={} debt={}",
+                        agent.getName(), huntKey, agent.getMapId(), debt.diagnosticSummary());
+            }
+            if (harvest == AgentQuestRouteHarvestState.Decision.STARTED
+                    || harvest == AgentQuestRouteHarvestState.Decision.HARVEST) {
+                AgentQuestHuntingBridge.engage(entry, agent, gateway,
+                        huntKey + ":route:" + agent.getMapId(),
+                        AgentHuntingVisitRequest.Purpose.ROUTE_HARVEST,
+                        routeTargets, Set.of(), nowMs);
+                return Result.RUNNING;
+            }
             if (step.skipReturnScrollPreparation()) {
                 AgentQuestReturnScrollPolicy.clear(entry);
             } else {
@@ -259,8 +290,7 @@ final class AgentVictoriaSharedQuestPackRuntime {
                 return Result.RUNNING;
             }
         }
-        Set<Integer> preferred = unresolvedTargetMobIds(
-                agent, step, objectives, huntMapId, gateway);
+        Set<Integer> preferred = debt.targetMobIdsForMap(huntMapId);
         if (preferred.isEmpty()) {
             preferred = selection == null
                     ? new HashSet<>(step.preferredMobIds())
@@ -285,28 +315,10 @@ final class AgentVictoriaSharedQuestPackRuntime {
                 preferred,
                 incidentalCandidates,
                 AgentCombatPolicyConfig.spawnPressureMinTargetSharePercent());
-        gateway.grind(entry, preferred, incidental);
+        AgentQuestHuntingBridge.engage(entry, agent, gateway, huntKey,
+                AgentHuntingVisitRequest.Purpose.QUEST_OBJECTIVE,
+                preferred, incidental, nowMs);
         return Result.RUNNING;
-    }
-
-    private static List<AgentHuntSelectionRequest.ObjectiveDemand> huntDemands(
-            Character agent,
-            List<AgentVictoriaQuestHuntIndexRepository.ObjectiveReference> objectives,
-            PrimitiveCapabilityGateway gateway) {
-        return objectives.stream().map(reference -> {
-            AgentVictoriaQuestHuntIndex.Objective objective = reference.objective();
-            int current = objective.type().toLowerCase(java.util.Locale.ROOT).contains("collect")
-                    ? gateway.itemCount(agent, objective.targetId())
-                    : gateway.questProgress(agent, reference.questId(), objective.targetId());
-            Set<Integer> sourceMobIds = objective.sourceMobIds().isEmpty()
-                    ? objective.candidates().stream()
-                    .flatMap(candidate -> candidate.targetMobIds().stream())
-                    .collect(Collectors.toSet())
-                    : Set.copyOf(objective.sourceMobIds());
-            return new AgentHuntSelectionRequest.ObjectiveDemand(
-                    reference.questId(), objective.objectiveId(), objective.type(),
-                    objective.targetId(), objective.requiredCount(), current, sourceMobIds);
-        }).toList();
     }
 
     /**
@@ -322,37 +334,6 @@ final class AgentVictoriaSharedQuestPackRuntime {
         candidates.addAll(step.preferredMobIds());
         candidates.removeAll(unresolvedMobIds);
         return Set.copyOf(candidates);
-    }
-
-    private static Set<Integer> unresolvedTargetMobIds(
-            Character agent,
-            AgentVictoriaSharedQuestPackCatalog.Step step,
-            List<AgentVictoriaQuestHuntIndexRepository.ObjectiveReference> objectives,
-            int huntMapId,
-            PrimitiveCapabilityGateway gateway) {
-        Set<Integer> preferred = new LinkedHashSet<>();
-        for (AgentVictoriaSharedQuestPackCatalog.Condition condition : step.conditions()) {
-            if (conditionMet(agent, condition, gateway)) {
-                continue;
-            }
-            if ("QUEST_KILL".equals(condition.type())) {
-                preferred.add(condition.targetId());
-                continue;
-            }
-            if (!"ITEM".equals(condition.type())) {
-                continue;
-            }
-            for (AgentVictoriaQuestHuntIndexRepository.ObjectiveReference reference : objectives) {
-                if (reference.objective().targetId() != condition.targetId()) {
-                    continue;
-                }
-                reference.objective().candidates().stream()
-                        .filter(candidate -> candidate.mapId() == huntMapId)
-                        .flatMap(candidate -> candidate.targetMobIds().stream())
-                        .forEach(preferred::add);
-            }
-        }
-        return Set.copyOf(preferred);
     }
 
     static int returnPreparationMapId(
@@ -376,54 +357,17 @@ final class AgentVictoriaSharedQuestPackRuntime {
         return selectedMapId;
     }
 
-    private static List<AgentVictoriaQuestHuntIndexRepository.ObjectiveReference>
-    unresolvedObjectives(
-            Character agent,
-            AgentCareerProgressionState state,
-            AgentVictoriaSharedQuestPackCatalog.Pack pack,
-            AgentVictoriaSharedQuestPackCatalog.Step step,
-            PrimitiveCapabilityGateway gateway) {
-        Set<Integer> activeQuestIds = pack.steps().stream()
-                .limit(state.questPackIndex() + 1L)
-                .filter(candidate -> "QUEST".equals(candidate.type())
-                        && !candidate.complete() && candidate.questId() > 0)
-                .map(AgentVictoriaSharedQuestPackCatalog.Step::questId)
-                .filter(questId -> gateway.questStatus(agent, questId)
-                        == QuestStatus.Status.STARTED.getId())
-                .collect(Collectors.toCollection(LinkedHashSet::new));
-        Map<String, AgentVictoriaQuestHuntIndexRepository.ObjectiveReference> result =
-                new LinkedHashMap<>();
-        AgentVictoriaQuestHuntIndexRepository repository =
-                AgentVictoriaQuestHuntIndexRepository.defaultRepository();
-        for (AgentVictoriaSharedQuestPackCatalog.Condition condition : step.conditions()) {
-            if (conditionMet(agent, condition, gateway)) {
-                continue;
-            }
-            Set<Integer> questIds = condition.questId() > 0
-                    ? Set.of(condition.questId()) : activeQuestIds;
-            for (AgentVictoriaQuestHuntIndexRepository.ObjectiveReference reference
-                    : repository.findObjectivesForTarget(questIds, condition.targetId())) {
-                boolean expectedType = "QUEST_KILL".equals(condition.type())
-                        ? reference.objective().type().contains("kill")
-                        : reference.objective().type().contains("collect");
-                if (expectedType) {
-                    result.putIfAbsent(reference.questId() + ":"
-                            + reference.objective().objectiveId(), reference);
-                }
-            }
-        }
-        return List.copyOf(result.values());
-    }
-
     private static Result miniDungeonHunt(
             AgentRuntimeEntry entry,
             Character agent,
             AgentCareerProgressionState state,
+            AgentVictoriaSharedQuestPackCatalog.Pack pack,
             AgentVictoriaSharedQuestPackCatalog.Step step,
             long nowMs,
             PrimitiveCapabilityGateway gateway) {
         boolean inside = inMap(step, agent.getMapId());
-        if (conditionsMet(agent, step, gateway)) {
+        if (AgentQuestPackDebtSnapshot.capture(pack, agent, gateway)
+                .conditionsMet(agent, step, gateway)) {
             if (inside && AgentPreExitLootRuntime.drain(entry, agent, nowMs)) {
                 return Result.RUNNING;
             }
@@ -436,8 +380,11 @@ final class AgentVictoriaSharedQuestPackRuntime {
             return enterPortal(entry, agent, step.exitPortalId(), gateway);
         }
         if (inside) {
-            gateway.grind(entry, Set.copyOf(step.preferredMobIds()),
-                    Set.copyOf(step.incidentalMobIds()));
+            AgentQuestHuntingBridge.engage(entry, agent, gateway,
+                    "shared:mini-dungeon:" + state.questPackIndex(),
+                    AgentHuntingVisitRequest.Purpose.QUEST_OBJECTIVE,
+                    Set.copyOf(step.preferredMobIds()),
+                    Set.copyOf(step.incidentalMobIds()), nowMs);
             return Result.RUNNING;
         }
         if (AgentVictoriaRouteRuntime.travel(entry, agent, step.destinationMapId(), gateway)) {
@@ -464,18 +411,7 @@ final class AgentVictoriaSharedQuestPackRuntime {
         return Result.RUNNING;
     }
 
-    private static boolean conditionsMet(Character agent,
-                                         AgentVictoriaSharedQuestPackCatalog.Step step,
-                                         PrimitiveCapabilityGateway gateway) {
-        for (AgentVictoriaSharedQuestPackCatalog.Condition condition : step.conditions()) {
-            if (!conditionMet(agent, condition, gateway)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private static boolean conditionMet(
+    static boolean conditionMet(
             Character agent,
             AgentVictoriaSharedQuestPackCatalog.Condition condition,
             PrimitiveCapabilityGateway gateway) {
@@ -624,8 +560,11 @@ final class AgentVictoriaSharedQuestPackRuntime {
         if (AgentVictoriaRouteRuntime.travel(entry, agent, step.mapId(), gateway)) {
             return Result.RUNNING;
         }
-        gateway.grind(entry, Set.copyOf(step.preferredMobIds()),
-                Set.copyOf(step.incidentalMobIds()));
+        AgentQuestHuntingBridge.engage(entry, agent, gateway,
+                "shared:level-grind:" + state.questPackIndex(),
+                AgentHuntingVisitRequest.Purpose.LEVEL_TRAINING,
+                Set.copyOf(step.preferredMobIds()),
+                Set.copyOf(step.incidentalMobIds()), nowMs);
         return Result.RUNNING;
     }
 

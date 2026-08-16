@@ -9,6 +9,7 @@ import server.agents.objectives.AgentObjectiveKernel;
 import server.agents.objectives.AgentObjectiveSource;
 import server.agents.objectives.AgentObjectiveStatus;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.hunting.AgentHuntingVisitRequest;
 
 import java.util.Set;
 
@@ -161,7 +162,9 @@ public final class AgentVictoriaTrainingObjectiveRuntime {
             state.markUnavailable(selected.mapId(), nowMs + DESTINATION_RETRY_MS);
             return true;
         }
-        gateway.grind(entry, Set.copyOf(targets));
+        AgentQuestHuntingBridge.engage(entry, agent, gateway, objective.objectiveId(),
+                AgentHuntingVisitRequest.Purpose.LEVEL_TRAINING,
+                Set.copyOf(targets), Set.of(), nowMs);
         return true;
     }
 

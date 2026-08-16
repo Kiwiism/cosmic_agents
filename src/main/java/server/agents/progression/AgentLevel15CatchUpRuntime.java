@@ -9,6 +9,7 @@ import server.agents.capabilities.build.profiles.AgentApBuildProfileService;
 import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.integration.PrimitiveCapabilityGateway;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.hunting.AgentHuntingVisitRequest;
 import server.maps.MapleMap;
 
 import java.io.IOException;
@@ -167,7 +168,10 @@ final class AgentLevel15CatchUpRuntime {
         if (travel.status() != AgentVictoriaRouteRuntime.Status.ARRIVED) {
             return true;
         }
-        gateway.grind(entry, destination.mobIds());
+        AgentQuestHuntingBridge.engage(entry, agent, gateway,
+                "level15:catchup:" + bundle.bundleId(),
+                AgentHuntingVisitRequest.Purpose.LEVEL_TRAINING,
+                destination.mobIds(), Set.of(), nowMs);
         return true;
     }
 

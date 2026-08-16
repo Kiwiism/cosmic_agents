@@ -97,6 +97,19 @@ final class AgentVictoriaQuestHuntIndexRepository {
                 .toList();
     }
 
+    List<ObjectiveReference> findObjectivesForQuests(Set<Integer> questIds) {
+        if (questIds == null || questIds.isEmpty()) {
+            return List.of();
+        }
+        return questIds.stream()
+                .sorted()
+                .map(byQuestId::get)
+                .filter(java.util.Objects::nonNull)
+                .flatMap(entry -> entry.objectives().stream()
+                        .map(objective -> new ObjectiveReference(entry.questId(), objective)))
+                .toList();
+    }
+
     record ObjectiveReference(
             int questId,
             AgentVictoriaQuestHuntIndex.Objective objective) {

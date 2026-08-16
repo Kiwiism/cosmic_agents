@@ -17,6 +17,14 @@ final class AgentHuntObjectiveCompiler {
             String selectionId,
             AgentVictoriaSharedQuestPackCatalog.Step step,
             List<AgentHuntSelectionRequest.ObjectiveDemand> objectives) {
+        return sharedQuestPack(selectionId, null, step, objectives);
+    }
+
+    static AgentHuntObjectiveSpec sharedQuestPack(
+            String selectionId,
+            AgentVictoriaSharedQuestPackCatalog.Pack pack,
+            AgentVictoriaSharedQuestPackCatalog.Step step,
+            List<AgentHuntSelectionRequest.ObjectiveDemand> objectives) {
         if (step == null || step.mapId() <= 0) {
             throw new IllegalArgumentException("a shared hunt requires an authored primary map");
         }
@@ -26,7 +34,23 @@ final class AgentHuntObjectiveCompiler {
         for (int fallbackMapId : step.fallbackMapIds()) {
             preferredMaps.add(map(rank++, fallbackMapId, step.preferredMobIds()));
         }
-        return new AgentHuntObjectiveSpec(selectionId, objectives, preferredMaps, true);
+        if (pack != null) {
+            for (AgentVictoriaSharedQuestPackCatalog.Step candidate : pack.steps()) {
+                if (!"HUNT".equals(candidate.type()) || candidate.mapId() <= 0
+                        || preferredMaps.stream().anyMatch(map -> map.mapId() == candidate.mapId())) {
+                    continue;
+                }
+                preferredMaps.add(map(rank++, candidate.mapId(), candidate.preferredMobIds()));
+                for (int fallbackMapId : candidate.fallbackMapIds()) {
+                    if (preferredMaps.stream().noneMatch(map -> map.mapId() == fallbackMapId)) {
+                        preferredMaps.add(map(rank++, fallbackMapId,
+                                candidate.preferredMobIds()));
+                    }
+                }
+            }
+        }
+        // Authored maps are preference credits. Live debt and route cost retain final authority.
+        return new AgentHuntObjectiveSpec(selectionId, objectives, preferredMaps, false);
     }
 
     private static AgentVictoriaQuestRuntimeCatalog.HuntMap map(

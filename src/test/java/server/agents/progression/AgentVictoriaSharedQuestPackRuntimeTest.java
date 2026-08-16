@@ -51,6 +51,81 @@ class AgentVictoriaSharedQuestPackRuntimeTest {
         assertEquals(List.of(100040100, 101010000), objective.preferredMaps().stream()
                 .map(AgentVictoriaQuestRuntimeCatalog.HuntMap::mapId)
                 .toList());
+        assertEquals(false, objective.mvpPlan());
+    }
+
+    @Test
+    void liveDebtIncludesEveryActiveQuestInThePack() {
+        AgentVictoriaSharedQuestPackCatalog.Pack pack =
+                AgentVictoriaSharedQuestPackCatalog.require("nautilus-pre15");
+        Character agent = mock(Character.class);
+        PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
+        for (int questId : List.of(28276, 28277, 28278, 28279)) {
+            when(gateway.questStatus(agent, questId))
+                    .thenReturn(client.QuestStatus.Status.STARTED.getId());
+        }
+
+        AgentQuestPackDebtSnapshot debt = AgentQuestPackDebtSnapshot.capture(
+                pack, agent, gateway);
+
+        assertEquals(Set.of(1210102, 1210100, 1210101, 210100),
+                debt.allSourceMobIds());
+        assertEquals(4, debt.demands().size());
+        assertTrue(debt.demands().stream().anyMatch(demand -> demand.questId() == 28277));
+    }
+
+    @Test
+    void sharedCollectionStacksAreAggregatedAcrossActiveQuests() {
+        AgentVictoriaSharedQuestPackCatalog.Pack pack =
+                AgentVictoriaSharedQuestPackCatalog.require("ellinia-pre15");
+        Character agent = mock(Character.class);
+        PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
+        when(gateway.questStatus(agent, 28273))
+                .thenReturn(client.QuestStatus.Status.STARTED.getId());
+        when(gateway.questStatus(agent, 2089))
+                .thenReturn(client.QuestStatus.Status.STARTED.getId());
+        when(gateway.itemCount(agent, 4000004)).thenReturn(25);
+
+        AgentHuntSelectionRequest.ObjectiveDemand liquid =
+                AgentQuestPackDebtSnapshot.capture(pack, agent, gateway).demands().stream()
+                        .filter(demand -> demand.targetId() == 4000004)
+                        .findFirst().orElseThrow();
+
+        assertEquals(50, liquid.requiredCount());
+        assertEquals(25, liquid.currentCount());
+        assertEquals(25, liquid.remainingCount());
+    }
+
+    @Test
+    void completedQuestDoesNotRecreateConsumedItemDebt() {
+        AgentVictoriaSharedQuestPackCatalog.Pack pack =
+                AgentVictoriaSharedQuestPackCatalog.require("nautilus-pre15");
+        Character agent = mock(Character.class);
+        PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
+        when(gateway.questStatus(agent, 28279))
+                .thenReturn(client.QuestStatus.Status.COMPLETED.getId());
+        when(gateway.itemCount(agent, 4000002)).thenReturn(0);
+
+        AgentQuestPackDebtSnapshot debt = AgentQuestPackDebtSnapshot.capture(
+                pack, agent, gateway);
+
+        assertTrue(debt.demands().stream().noneMatch(demand -> demand.targetId() == 4000002));
+    }
+
+    @Test
+    void restoredHuntDoesNotTreatAnUnstartedQuestAsCompleted() {
+        AgentVictoriaSharedQuestPackCatalog.Pack pack =
+                AgentVictoriaSharedQuestPackCatalog.require("ellinia-pre15");
+        AgentVictoriaSharedQuestPackCatalog.Step branchHunt = pack.steps().stream()
+                .filter(step -> "HUNT".equals(step.type())
+                        && step.conditions().stream().anyMatch(
+                        condition -> condition.targetId() == 4000003))
+                .findFirst().orElseThrow();
+        Character agent = mock(Character.class);
+        PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
+
+        assertEquals(false, AgentQuestPackDebtSnapshot.capture(pack, agent, gateway)
+                .conditionsMet(agent, branchHunt, gateway));
     }
 
     @Test

@@ -17,6 +17,7 @@ import server.agents.objectives.AgentObjectiveDefinition;
 import server.agents.objectives.AgentObjectiveKernel;
 import server.agents.objectives.AgentObjectiveStatus;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.hunting.AgentHuntingVisitRequest;
 
 import java.awt.Point;
 import java.util.Set;
@@ -288,7 +289,9 @@ public final class AgentFirstJobJourneyRuntime {
         if (AgentVictoriaRouteRuntime.travel(entry, agent, handoff.grindMapId(), gateway)) {
             return true;
         }
-        gateway.grind(entry, Set.copyOf(handoff.grindMobIds()));
+        AgentQuestHuntingBridge.engage(entry, agent, gateway, "first-job:pre-job-grind",
+                AgentHuntingVisitRequest.Purpose.LEVEL_TRAINING,
+                Set.copyOf(handoff.grindMobIds()), Set.of(), nowMs);
         return true;
     }
 
