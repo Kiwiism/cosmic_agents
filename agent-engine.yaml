@@ -2170,6 +2170,11 @@ tuning:
     # Technical: The GM test service validates the requested whole-second duration against this long before session admission and lease persistence.
     server.agents.commands.townlife.AgentTownLifeTestService.MIN_DURATION_MS: '10000'
 
+    # Values: 0-2000 milliseconds. Recommended: 200 milliseconds.
+    # Purpose: Spreads reusable-pool logins and map placement during an ambient TownLife observation deployment.
+    # Technical: Delay multiplier for pooled ambient TownLife launches; spreads login/map work without changing activity policy.
+    server.agents.runtime.townlife.ambient.AgentTownLifeAmbientRuntime.LAUNCH_STAGGER_MS: '200'
+
     # Values: 0-5000 milliseconds. Recommended: 250 milliseconds.
     # Purpose: Prevents test-only TownLife intention narration from flooding nearby observers while preserving visibly distinct lifecycle phases.
     # Technical: The dialogue intent transport applies this deduplication cooldown independently per rendered test narration key and Agent identity.

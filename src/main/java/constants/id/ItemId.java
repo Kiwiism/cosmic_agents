@@ -59,6 +59,7 @@ public class ItemId {
 
     // Chair
     public static final int RELAXER = 3010000;
+    public static final int SKY_BLUE_WOODEN_CHAIR = 3010001;
     private static final int CHAIR_MIN = RELAXER;
     private static final int CHAIR_MAX = FISHING_CHAIR;
 

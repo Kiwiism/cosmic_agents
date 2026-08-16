@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "defaultPoolSize": 28,
+  "targetActivePercent": 50,
+  "rebalanceEveryMs": 5000,
+  "gracefulExitMs": 30000,
+  "standbyMode": "UNMATERIALIZED",
+  "chairItemIds": [3010000, 3010001],
+  "towns": [
+    { "profileId": "lith-harbor", "mapId": 104000000, "allocationWeight": 90, "minActive": 1, "maxActive": 8,
+      "activities": { "REST": {"targetPercent":30,"hardMax":4,"minimumDwellMs":20000,"maximumDwellMs":180000}, "SOCIALIZE":{"targetPercent":20,"hardMax":4,"minimumDwellMs":12000,"maximumDwellMs":60000}, "LINGER":{"targetPercent":15,"hardMax":3,"minimumDwellMs":15000,"maximumDwellMs":120000}, "STROLL":{"targetPercent":15,"hardMax":2,"minimumDwellMs":5000,"maximumDwellMs":18000}, "BROWSE":{"targetPercent":10,"hardMax":2,"minimumDwellMs":8000,"maximumDwellMs":30000}, "SHOW_OFF":{"targetPercent":10,"hardMax":2,"minimumDwellMs":5000,"maximumDwellMs":18000} } },
+    { "profileId": "henesys", "mapId": 100000000, "allocationWeight": 130, "minActive": 1, "maxActive": 12,
+      "activities": { "REST":{"targetPercent":25,"hardMax":6,"minimumDwellMs":18000,"maximumDwellMs":150000}, "SOCIALIZE":{"targetPercent":25,"hardMax":6,"minimumDwellMs":12000,"maximumDwellMs":60000}, "LINGER":{"targetPercent":10,"hardMax":3,"minimumDwellMs":12000,"maximumDwellMs":90000}, "STROLL":{"targetPercent":15,"hardMax":3,"minimumDwellMs":5000,"maximumDwellMs":18000}, "BROWSE":{"targetPercent":10,"hardMax":2,"minimumDwellMs":8000,"maximumDwellMs":30000}, "SHOW_OFF":{"targetPercent":15,"hardMax":3,"minimumDwellMs":5000,"maximumDwellMs":18000} } },
+    { "profileId": "kerning-city", "mapId": 103000000, "allocationWeight": 115, "minActive": 1, "maxActive": 10,
+      "activities": { "REST":{"targetPercent":25,"hardMax":5,"minimumDwellMs":18000,"maximumDwellMs":180000}, "SOCIALIZE":{"targetPercent":30,"hardMax":6,"minimumDwellMs":12000,"maximumDwellMs":70000}, "LINGER":{"targetPercent":15,"hardMax":4,"minimumDwellMs":15000,"maximumDwellMs":120000}, "STROLL":{"targetPercent":10,"hardMax":2,"minimumDwellMs":5000,"maximumDwellMs":18000}, "BROWSE":{"targetPercent":5,"hardMax":2,"minimumDwellMs":8000,"maximumDwellMs":30000}, "SHOW_OFF":{"targetPercent":15,"hardMax":3,"minimumDwellMs":5000,"maximumDwellMs":20000} } },
+    { "profileId": "perion", "mapId": 102000000, "allocationWeight": 85, "minActive": 1, "maxActive": 8,
+      "activities": { "REST":{"targetPercent":30,"hardMax":5,"minimumDwellMs":20000,"maximumDwellMs":180000}, "SOCIALIZE":{"targetPercent":15,"hardMax":3,"minimumDwellMs":12000,"maximumDwellMs":60000}, "LINGER":{"targetPercent":20,"hardMax":4,"minimumDwellMs":15000,"maximumDwellMs":120000}, "STROLL":{"targetPercent":10,"hardMax":2,"minimumDwellMs":5000,"maximumDwellMs":18000}, "BROWSE":{"targetPercent":10,"hardMax":2,"minimumDwellMs":8000,"maximumDwellMs":30000}, "SHOW_OFF":{"targetPercent":15,"hardMax":3,"minimumDwellMs":5000,"maximumDwellMs":20000} } },
+    { "profileId": "ellinia", "mapId": 101000000, "allocationWeight": 80, "minActive": 1, "maxActive": 8,
+      "activities": { "REST":{"targetPercent":30,"hardMax":5,"minimumDwellMs":20000,"maximumDwellMs":180000}, "SOCIALIZE":{"targetPercent":15,"hardMax":3,"minimumDwellMs":12000,"maximumDwellMs":60000}, "LINGER":{"targetPercent":20,"hardMax":4,"minimumDwellMs":15000,"maximumDwellMs":120000}, "STROLL":{"targetPercent":15,"hardMax":2,"minimumDwellMs":5000,"maximumDwellMs":18000}, "BROWSE":{"targetPercent":10,"hardMax":2,"minimumDwellMs":8000,"maximumDwellMs":30000}, "SHOW_OFF":{"targetPercent":10,"hardMax":2,"minimumDwellMs":5000,"maximumDwellMs":18000} } },
+    { "profileId": "nautilus", "mapId": 120000000, "allocationWeight": 85, "minActive": 1, "maxActive": 8,
+      "activities": { "REST":{"targetPercent":20,"hardMax":4,"minimumDwellMs":18000,"maximumDwellMs":150000}, "SOCIALIZE":{"targetPercent":20,"hardMax":4,"minimumDwellMs":12000,"maximumDwellMs":60000}, "LINGER":{"targetPercent":15,"hardMax":3,"minimumDwellMs":12000,"maximumDwellMs":90000}, "STROLL":{"targetPercent":15,"hardMax":3,"minimumDwellMs":5000,"maximumDwellMs":18000}, "BROWSE":{"targetPercent":10,"hardMax":2,"minimumDwellMs":8000,"maximumDwellMs":30000}, "SHOW_OFF":{"targetPercent":20,"hardMax":4,"minimumDwellMs":5000,"maximumDwellMs":20000} } },
+    { "profileId": "sleepywood", "mapId": 105040300, "allocationWeight": 65, "minActive": 1, "maxActive": 7,
+      "activities": { "REST":{"targetPercent":50,"hardMax":10,"minimumDwellMs":30000,"maximumDwellMs":300000}, "SOCIALIZE":{"targetPercent":15,"hardMax":3,"minimumDwellMs":15000,"maximumDwellMs":70000}, "LINGER":{"targetPercent":20,"hardMax":5,"minimumDwellMs":20000,"maximumDwellMs":180000}, "STROLL":{"targetPercent":5,"hardMax":2,"minimumDwellMs":5000,"maximumDwellMs":15000}, "BROWSE":{"targetPercent":5,"hardMax":2,"minimumDwellMs":8000,"maximumDwellMs":30000}, "SHOW_OFF":{"targetPercent":5,"hardMax":2,"minimumDwellMs":5000,"maximumDwellMs":15000} } }
+  ],
+  "transitions": { "continueInPlace": 35, "relocateSameActivity": 20, "switchActivity": 40, "requestExit": 5 }
+}

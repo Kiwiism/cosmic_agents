@@ -269,3 +269,28 @@ scheduler, Java policy class, combat change, or progression change.
 
 The design is complete when ordinary towns remain data-only and changes to combat, progression,
 or cross-map navigation do not require TownLife policy changes.
+
+## Ambient observation baseline
+
+The TownLife capability still has no autonomous population authority. The external observation
+coordinator under `server.agents.runtime.townlife.ambient` leases a reusable pool and calls the same
+public entry/exit contract as quest plans and future world coordination.
+
+`agents/town-life/ambient-deployment.json` configures Lith Harbor, Henesys, Kerning City, Perion,
+Ellinia, Nautilus, and Sleepywood. It owns only population concerns: the global active percentage,
+per-town allocation, per-activity soft targets and hard caps, long-tail dwell, post-activity
+continue/relocate/switch/exit weights, chair provisioning, and visible or unmaterialized standby.
+Town profiles continue to own all geometry, venues, traffic exclusions, facilities, and hotspots.
+
+```text
+!townlife ambient start [pool-size] [active-percent] [visible|unmaterialized]
+!townlife ambient status
+!townlife ambient percent <0-100>
+!townlife ambient rebalance
+!townlife ambient inspect <agent-name>
+!townlife ambient stop
+```
+
+Stop and population reductions request a graceful exit; the current committed activity finishes
+before the pool member is staged or unmaterialized. Ambient observation opts into the existing test
+intention narration. It does not choose quests, grinding, travel, or economic work.

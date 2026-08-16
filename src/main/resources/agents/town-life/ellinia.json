@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 2,
+  "profileId": "ellinia",
+  "mapId": 101000000,
+  "admission": { "mode": "AMBIENT", "maxAmbientAgents": 30, "minVisitMs": 60000, "maxVisitMs": 900000, "revisitCooldownMs": 120000 },
+  "geometry": { "upperMaxY": -2500, "middleMaxY": -900, "miniPlatformMaxWidth": 260, "minimumPlatformWidth": 48, "edgeInsetPx": 30, "slotSpacingPx": 80, "maxSlotsPerPlatform": 8 },
+  "distribution": { "upperWeight": 20, "middleWeight": 35, "lowerWeight": 35, "anyWeight": 10, "miniPlatformPercent": 35, "crossDistrictEveryActivities": 5 },
+  "extensions": { "activityHandlers": [] },
+  "activityWeights": { "REST": 110, "SOCIALIZE": 100, "LINGER": 120, "STROLL": 95, "BROWSE": 90, "SHOW_OFF": 80 },
+  "arrivalPortals": [{ "name": "west00", "weight": 60 }, { "name": "top00", "weight": 40 }],
+  "restSpots": [{ "x": -650, "y": 99, "seatId": -1 }, { "x": 520, "y": 256, "seatId": -1 }, { "x": 300, "y": -1023, "seatId": -1 }],
+  "roamFallbackSpots": [{ "x": -850, "y": 99 }, { "x": -183, "y": 146 }, { "x": 705, "y": 256 }, { "x": 116, "y": -1023 }, { "x": -545, "y": -1855 }, { "x": 344, "y": -3603 }],
+  "npcSpots": [], "trafficZones": [], "platformPolicies": [],
+  "venues": [
+    { "id": "lower-village", "label": "Lower village", "district": "LOWER", "platformKind": "MAIN", "capacity": 5, "affordances": ["REST", "SOCIALIZE", "LINGER", "STROLL"], "spots": [{ "x": -850, "y": 99, "seatId": -1 }, { "x": -650, "y": 99, "seatId": -1 }, { "x": -183, "y": 146, "seatId": -1 }, { "x": 520, "y": 256, "seatId": -1 }, { "x": 705, "y": 256, "seatId": -1 }] },
+    { "id": "middle-tree", "label": "Middle tree platforms", "district": "MIDDLE", "platformKind": "MINI", "capacity": 4, "affordances": ["REST", "LINGER", "STROLL", "SHOW_OFF"], "spots": [{ "x": 116, "y": -1023, "seatId": -1 }, { "x": -428, "y": -986, "seatId": -1 }, { "x": -545, "y": -1855, "seatId": -1 }, { "x": 452, "y": -1982, "seatId": -1 }] },
+    { "id": "upper-tree", "label": "Upper tree platforms", "district": "UPPER", "platformKind": "MINI", "capacity": 3, "affordances": ["LINGER", "STROLL", "SOCIALIZE"], "spots": [{ "x": -390, "y": -3142, "seatId": -1 }, { "x": 344, "y": -3603, "seatId": -1 }, { "x": 1063, "y": -3805, "seatId": -1 }] },
+    { "id": "shop-approach", "label": "Village shops", "district": "LOWER", "platformKind": "MAIN", "capacity": 2, "affordances": ["BROWSE"], "spots": [{ "x": -100, "y": 146, "seatId": -1 }, { "x": 650, "y": 256, "seatId": -1 }] }
+  ],
+  "facilities": [{ "id": "ellinia-shops", "type": "GENERAL_SHOP", "npcId": 0, "destinationMapId": 101000001, "approachPoints": [{ "x": 650, "y": 256 }], "services": ["browse", "buy", "sell"] }],
+  "hotspots": [{ "id": "ellinia-lower-crowd", "venueId": "lower-village", "attractionWeight": 125, "softCapacity": 3, "hardCapacity": 5 }]
+}

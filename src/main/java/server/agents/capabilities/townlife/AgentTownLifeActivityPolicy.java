@@ -52,10 +52,15 @@ final class AgentTownLifeActivityPolicy {
                 traits.routinePreference(), traits.expressiveness());
         AgentTownLifeProfile profile = AgentTownLifeProfileRepository.defaultRepository()
                 .require(state.townMapId());
-        return choose(new AgentTownLifeActivityContext(
+        AgentTownLifeState.Activity defaultActivity = choose(new AgentTownLifeActivityContext(
                 agent.getId(), personality == null ? agent.getId() : personality.behaviorSeed(),
                 state.initialPlacementComplete(), state.role(), state.sequence(), personalityView,
                 traits != null, profile.activityWeights(), state.memory().recentActivitiesSnapshot()));
+        AgentTownLifeAmbientState ambient = entry.capabilityStates()
+                .find(AgentTownLifeAmbientState.STATE_KEY).orElse(null);
+        return !state.initialPlacementComplete() || ambient == null || !ambient.active()
+                ? defaultActivity
+                : ambient.choose(defaultActivity, profile, AgentTownLifePopulationRuntime.sameTown(agent));
     }
 
     static AgentTownLifeState.Activity choose(AgentTownLifeActivityContext context) {

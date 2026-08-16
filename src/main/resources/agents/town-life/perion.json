@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 2,
+  "profileId": "perion",
+  "mapId": 102000000,
+  "admission": { "mode": "AMBIENT", "maxAmbientAgents": 30, "minVisitMs": 60000, "maxVisitMs": 900000, "revisitCooldownMs": 120000 },
+  "geometry": { "upperMaxY": 600, "middleMaxY": 1250, "miniPlatformMaxWidth": 260, "minimumPlatformWidth": 48, "edgeInsetPx": 30, "slotSpacingPx": 80, "maxSlotsPerPlatform": 8 },
+  "distribution": { "upperWeight": 20, "middleWeight": 35, "lowerWeight": 35, "anyWeight": 10, "miniPlatformPercent": 20, "crossDistrictEveryActivities": 6 },
+  "extensions": { "activityHandlers": [] },
+  "activityWeights": { "REST": 120, "SOCIALIZE": 100, "LINGER": 115, "STROLL": 85, "BROWSE": 80, "SHOW_OFF": 105 },
+  "arrivalPortals": [{ "name": "west00", "weight": 55 }, { "name": "east00", "weight": 45 }],
+  "restSpots": [{ "x": 520, "y": 1782, "seatId": -1 }, { "x": 1420, "y": 1760, "seatId": -1 }, { "x": 2040, "y": 1146, "seatId": -1 }],
+  "roamFallbackSpots": [{ "x": 170, "y": 1686 }, { "x": 600, "y": 1782 }, { "x": 1520, "y": 1760 }, { "x": 2147, "y": 1146 }, { "x": 2490, "y": 1244 }],
+  "npcSpots": [], "trafficZones": [], "platformPolicies": [],
+  "venues": [
+    { "id": "west-gate", "label": "West gate", "district": "LOWER", "platformKind": "MAIN", "capacity": 3, "affordances": ["STROLL", "LINGER", "SOCIALIZE"], "spots": [{ "x": 170, "y": 1686, "seatId": -1 }, { "x": 300, "y": 1686, "seatId": -1 }, { "x": 440, "y": 1686, "seatId": -1 }] },
+    { "id": "lower-square", "label": "Lower square", "district": "LOWER", "platformKind": "MAIN", "capacity": 4, "affordances": ["REST", "SOCIALIZE", "LINGER", "SHOW_OFF"], "spots": [{ "x": 520, "y": 1782, "seatId": -1 }, { "x": 760, "y": 1782, "seatId": -1 }, { "x": 1420, "y": 1760, "seatId": -1 }, { "x": 1750, "y": 1775, "seatId": -1 }] },
+    { "id": "middle-ledge", "label": "Middle ledge", "district": "MIDDLE", "platformKind": "MAIN", "capacity": 3, "affordances": ["REST", "STROLL", "LINGER"], "spots": [{ "x": 1220, "y": 1172, "seatId": -1 }, { "x": 2040, "y": 1146, "seatId": -1 }, { "x": 2490, "y": 1244, "seatId": -1 }] },
+    { "id": "market-approach", "label": "Market approach", "district": "UPPER", "platformKind": "MAIN", "capacity": 2, "affordances": ["BROWSE", "STROLL"], "spots": [{ "x": 1060, "y": 581, "seatId": -1 }, { "x": 1250, "y": 581, "seatId": -1 }] }
+  ],
+  "facilities": [{ "id": "perion-market", "type": "GENERAL_SHOP", "npcId": 0, "destinationMapId": 102000001, "approachPoints": [{ "x": 1157, "y": 581 }], "services": ["browse", "buy", "sell"] }],
+  "hotspots": [{ "id": "perion-lower-crowd", "venueId": "lower-square", "attractionWeight": 120, "softCapacity": 3, "hardCapacity": 4 }]
+}

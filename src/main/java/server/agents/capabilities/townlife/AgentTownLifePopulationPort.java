@@ -10,9 +10,11 @@ public interface AgentTownLifePopulationPort {
                      int world,
                      int channel,
                      int mapId,
-                     String venueId) {
+                     String venueId,
+                     AgentTownLifeState.Activity activity) {
         public AgentView {
             venueId = venueId == null ? "" : venueId;
+            activity = activity == null ? AgentTownLifeState.Activity.NONE : activity;
         }
     }
 }

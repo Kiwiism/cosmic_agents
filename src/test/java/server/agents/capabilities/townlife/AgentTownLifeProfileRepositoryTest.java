@@ -112,4 +112,21 @@ class AgentTownLifeProfileRepositoryTest {
         assertTrue(profile.extensions().activityHandlers().isEmpty());
         assertTrue(validation.valid(), () -> validation.errors().toString());
     }
+
+    @Test
+    void baselineProfilesCoverAllSevenVictoriaTowns() {
+        AgentTownLifeProfileRepository repository =
+                AgentTownLifeProfileRepository.defaultRepository();
+
+        assertEquals(7, repository.profiles().size());
+        for (int mapId : new int[]{104000000, 100000000, 103000000, 102000000,
+                101000000, 120000000, 105040300}) {
+            AgentTownLifeProfile profile = repository.require(mapId);
+            AgentTownLifeProfileValidator.Validation validation =
+                    AgentTownLifeProfileValidator.validate(profile);
+            assertTrue(validation.valid(), () -> profile.profileId() + validation.errors());
+            assertTrue(!profile.venues().isEmpty());
+            assertTrue(!profile.roamFallbackSpots().isEmpty());
+        }
+    }
 }

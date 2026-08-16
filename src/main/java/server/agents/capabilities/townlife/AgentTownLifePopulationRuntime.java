@@ -55,6 +55,7 @@ public final class AgentTownLifePopulationRuntime {
                 .find(AgentTownLifeState.STATE_KEY).orElse(null);
         return new AgentTownLifePopulationPort.AgentView(
                 agent.getId(), agent.getWorld(), AgentClientGatewayRuntime.clients().channel(agent),
-                agent.getMapId(), state == null ? "" : state.venueId());
+                agent.getMapId(), state == null ? "" : state.venueId(),
+                state == null ? AgentTownLifeState.Activity.NONE : state.activity());
     }
 }

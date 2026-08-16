@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 2,
+  "profileId": "nautilus",
+  "mapId": 120000000,
+  "admission": { "mode": "AMBIENT", "maxAmbientAgents": 28, "minVisitMs": 60000, "maxVisitMs": 900000, "revisitCooldownMs": 120000 },
+  "geometry": { "upperMaxY": -700, "middleMaxY": -250, "miniPlatformMaxWidth": 260, "minimumPlatformWidth": 48, "edgeInsetPx": 30, "slotSpacingPx": 80, "maxSlotsPerPlatform": 8 },
+  "distribution": { "upperWeight": 20, "middleWeight": 40, "lowerWeight": 30, "anyWeight": 10, "miniPlatformPercent": 20, "crossDistrictEveryActivities": 6 },
+  "extensions": { "activityHandlers": [] },
+  "activityWeights": { "REST": 100, "SOCIALIZE": 115, "LINGER": 95, "STROLL": 110, "BROWSE": 80, "SHOW_OFF": 120 },
+  "arrivalPortals": [{ "name": "st00", "weight": 65 }, { "name": "in00", "weight": 35 }],
+  "restSpots": [{ "x": 2050, "y": -406, "seatId": -1 }, { "x": 2450, "y": -256, "seatId": -1 }, { "x": 3950, "y": -620, "seatId": -1 }],
+  "roamFallbackSpots": [{ "x": -300, "y": 88 }, { "x": 1700, "y": -684 }, { "x": 2156, "y": -406 }, { "x": 2588, "y": -256 }, { "x": 4061, "y": -620 }, { "x": 4550, "y": -888 }],
+  "npcSpots": [], "trafficZones": [], "platformPolicies": [],
+  "venues": [
+    { "id": "harbor-entry", "label": "Nautilus harbor entry", "district": "LOWER", "platformKind": "MAIN", "capacity": 3, "affordances": ["STROLL", "LINGER", "SOCIALIZE"], "spots": [{ "x": -300, "y": 88, "seatId": -1 }, { "x": -100, "y": 88, "seatId": -1 }, { "x": 150, "y": 88, "seatId": -1 }] },
+    { "id": "ship-square", "label": "Ship square", "district": "MIDDLE", "platformKind": "MAIN", "capacity": 5, "affordances": ["REST", "SOCIALIZE", "LINGER", "STROLL", "SHOW_OFF"], "spots": [{ "x": 1700, "y": -684, "seatId": -1 }, { "x": 2050, "y": -406, "seatId": -1 }, { "x": 2300, "y": -406, "seatId": -1 }, { "x": 2588, "y": -256, "seatId": -1 }, { "x": 2850, "y": -256, "seatId": -1 }] },
+    { "id": "east-deck", "label": "East deck", "district": "UPPER", "platformKind": "MAIN", "capacity": 4, "affordances": ["REST", "STROLL", "LINGER", "SOCIALIZE"], "spots": [{ "x": 3950, "y": -620, "seatId": -1 }, { "x": 4200, "y": -777, "seatId": -1 }, { "x": 4450, "y": -808, "seatId": -1 }, { "x": 4550, "y": -888, "seatId": -1 }] },
+    { "id": "cabin-approach", "label": "Cabin approach", "district": "LOWER", "platformKind": "MAIN", "capacity": 2, "affordances": ["BROWSE"], "spots": [{ "x": 2230, "y": 141, "seatId": -1 }, { "x": 2430, "y": 141, "seatId": -1 }] }
+  ],
+  "facilities": [{ "id": "nautilus-cabin", "type": "JOB_INSTRUCTOR", "npcId": 0, "destinationMapId": 120000100, "approachPoints": [{ "x": 2334, "y": 141 }], "services": ["browse", "job-services"] }],
+  "hotspots": [{ "id": "nautilus-ship-crowd", "venueId": "ship-square", "attractionWeight": 130, "softCapacity": 3, "hardCapacity": 5 }]
+}

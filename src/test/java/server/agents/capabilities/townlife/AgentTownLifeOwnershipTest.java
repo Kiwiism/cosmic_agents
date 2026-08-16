@@ -83,6 +83,8 @@ class AgentTownLifeOwnershipTest {
                 assertFalse(source.contains("import server.agents.capabilities.combat."), file::toString);
                 assertFalse(source.contains("import server.agents.capabilities.shop."), file::toString);
                 assertFalse(source.contains("import server.agents.capabilities.trade."), file::toString);
+                assertFalse(source.contains("import server.agents.runtime.townlife.ambient."),
+                        file::toString);
                 assertFalse(source.contains(".travelTo("), file::toString);
                 assertFalse(source.contains(".changeMap("), file::toString);
                 assertFalse(source.contains(".gainItem("), file::toString);

@@ -471,8 +471,18 @@ public final class AgentTownLifeRuntime {
                 int mapSeatId = townProfile(state).mapSeatId(state.target());
                 if (mapSeatId >= 0) {
                     gateway.sitMapSeat(agent, mapSeatId, state.target());
-                } else if (gateway.itemCount(agent, ItemId.RELAXER) > 0) {
-                    gateway.sitChair(agent, ItemId.RELAXER);
+                } else {
+                    AgentTownLifeAmbientState ambient = entry.capabilityStates()
+                            .find(AgentTownLifeAmbientState.STATE_KEY).orElse(null);
+                    int preferredChair = ambient == null ? 0
+                            : ambient.preferredChairItemId(agent.getId());
+                    if (preferredChair > 0 && gateway.itemCount(agent, preferredChair) > 0) {
+                        gateway.sitChair(agent, preferredChair);
+                    } else if (gateway.itemCount(agent, ItemId.RELAXER) > 0) {
+                        gateway.sitChair(agent, ItemId.RELAXER);
+                    } else if (gateway.itemCount(agent, ItemId.SKY_BLUE_WOODEN_CHAIR) > 0) {
+                        gateway.sitChair(agent, ItemId.SKY_BLUE_WOODEN_CHAIR);
+                    }
                 }
             }
             return true;
@@ -522,6 +532,17 @@ public final class AgentTownLifeRuntime {
     }
 
     static long dwellDuration(Character agent, AgentTownLifeState state) {
+        AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(agent.getId());
+        AgentTownLifeAmbientState ambient = entry == null ? null : entry.capabilityStates()
+                .find(AgentTownLifeAmbientState.STATE_KEY).orElse(null);
+        long ambientDuration = ambient == null ? 0L
+                : ambient.dwellDuration(agent.getId(), state.sequence(), state.activity());
+        if (ambientDuration > 0L) {
+            return state.fidelity() == AgentTownLifeFidelity.PRESENTATION
+                    ? ambientDuration
+                    : Math.min(BACKGROUND_DWELL_MAX_MS,
+                    ambientDuration * BACKGROUND_DWELL_MULTIPLIER);
+        }
         AgentTownLifeProfile.PlatformPolicy platformPolicy = platformPolicy(state);
         if (platformPolicy != null) {
             return delay(agent, state, platformPolicy.dwellMinMs(),
@@ -580,6 +601,17 @@ public final class AgentTownLifeRuntime {
             long nowMs,
             AgentTownLifeActivityResult result,
             AgentTownLifeActivityEvent.Phase eventPhase) {
+        AgentTownLifeAmbientState ambient = entry.capabilityStates()
+                .find(AgentTownLifeAmbientState.STATE_KEY).orElse(null);
+        if (result == AgentTownLifeActivityResult.COMPLETED && !state.exitRequested()
+                && ambient != null && ambient.active()
+                && ambient.completed(agent.getId(), state.sequence(), state.activity())
+                == AgentTownLifeAmbientState.CompletionTransition.CONTINUE_IN_PLACE) {
+            state.beginDwell(nowMs + dwellDuration(agent, state));
+            entry.capabilityStates().require(AgentTownLifeActivitySequenceState.STATE_KEY)
+                    .start(nowMs, state.nextActionAtMs());
+            return true;
+        }
         state.markActivityResult(result);
         AgentTownLifeEventPublisher.activity(entry, agent, state, eventPhase, nowMs);
         AgentTownLifeEncounterCoordinator.finish(

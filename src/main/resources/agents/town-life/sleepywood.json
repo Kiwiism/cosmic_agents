@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 2,
+  "profileId": "sleepywood",
+  "mapId": 105040300,
+  "admission": { "mode": "AMBIENT", "maxAmbientAgents": 24, "minVisitMs": 90000, "maxVisitMs": 1200000, "revisitCooldownMs": 180000 },
+  "geometry": { "upperMaxY": -250, "middleMaxY": 120, "miniPlatformMaxWidth": 260, "minimumPlatformWidth": 48, "edgeInsetPx": 30, "slotSpacingPx": 80, "maxSlotsPerPlatform": 8 },
+  "distribution": { "upperWeight": 15, "middleWeight": 30, "lowerWeight": 45, "anyWeight": 10, "miniPlatformPercent": 20, "crossDistrictEveryActivities": 7 },
+  "extensions": { "activityHandlers": [] },
+  "activityWeights": { "REST": 160, "SOCIALIZE": 105, "LINGER": 130, "STROLL": 65, "BROWSE": 75, "SHOW_OFF": 55 },
+  "arrivalPortals": [{ "name": "west00", "weight": 55 }, { "name": "east00", "weight": 45 }],
+  "restSpots": [{ "x": -200, "y": -69, "seatId": -1 }, { "x": 605, "y": 142, "seatId": -1 }, { "x": 1358, "y": 130, "seatId": -1 }, { "x": 1877, "y": 219, "seatId": -1 }],
+  "roamFallbackSpots": [{ "x": -200, "y": -69 }, { "x": 337, "y": -459 }, { "x": 605, "y": 142 }, { "x": 1033, "y": -491 }, { "x": 1358, "y": 130 }, { "x": 1877, "y": 219 }],
+  "npcSpots": [], "trafficZones": [], "platformPolicies": [],
+  "venues": [
+    { "id": "west-camp", "label": "West camp", "district": "MIDDLE", "platformKind": "MAIN", "capacity": 4, "affordances": ["REST", "LINGER", "SOCIALIZE"], "spots": [{ "x": -260, "y": -69, "seatId": -1 }, { "x": -140, "y": -79, "seatId": -1 }, { "x": 50, "y": 74, "seatId": -1 }, { "x": 250, "y": 74, "seatId": -1 }] },
+    { "id": "central-camp", "label": "Central camp", "district": "LOWER", "platformKind": "MAIN", "capacity": 5, "affordances": ["REST", "SOCIALIZE", "LINGER", "STROLL"], "spots": [{ "x": 605, "y": 142, "seatId": -1 }, { "x": 800, "y": 142, "seatId": -1 }, { "x": 1100, "y": 253, "seatId": -1 }, { "x": 1358, "y": 130, "seatId": -1 }, { "x": 1550, "y": 230, "seatId": -1 }] },
+    { "id": "east-camp", "label": "East camp", "district": "LOWER", "platformKind": "MAIN", "capacity": 3, "affordances": ["REST", "LINGER", "SOCIALIZE", "SHOW_OFF"], "spots": [{ "x": 1675, "y": 230, "seatId": -1 }, { "x": 1877, "y": 219, "seatId": -1 }, { "x": 1969, "y": 222, "seatId": -1 }] },
+    { "id": "hotel-approach", "label": "Hotel and sauna approach", "district": "LOWER", "platformKind": "MAIN", "capacity": 2, "affordances": ["BROWSE", "STROLL"], "spots": [{ "x": 1140, "y": 253, "seatId": -1 }, { "x": 1330, "y": 253, "seatId": -1 }] }
+  ],
+  "facilities": [{ "id": "sleepywood-hotel", "type": "OTHER", "npcId": 0, "destinationMapId": 105040400, "approachPoints": [{ "x": 1238, "y": 253 }], "services": ["hotel", "sauna", "rest"] }],
+  "hotspots": [{ "id": "sleepywood-rest-crowd", "venueId": "central-camp", "attractionWeight": 140, "softCapacity": 3, "hardCapacity": 5 }]
+}
