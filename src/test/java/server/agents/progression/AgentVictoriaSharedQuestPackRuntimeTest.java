@@ -97,6 +97,27 @@ class AgentVictoriaSharedQuestPackRuntimeTest {
     }
 
     @Test
+    void completedCollectionDemandRemainsInMonotonicHuntProgress() {
+        AgentVictoriaSharedQuestPackCatalog.Pack pack =
+                AgentVictoriaSharedQuestPackCatalog.require("ellinia-pre15");
+        Character agent = mock(Character.class);
+        PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
+        when(gateway.questStatus(agent, 28273))
+                .thenReturn(client.QuestStatus.Status.STARTED.getId());
+        when(gateway.questStatus(agent, 2089))
+                .thenReturn(client.QuestStatus.Status.STARTED.getId());
+        when(gateway.itemCount(agent, 4000004)).thenReturn(7);
+        when(gateway.itemCount(agent, 4000010)).thenReturn(10);
+
+        AgentQuestPackDebtSnapshot debt = AgentQuestPackDebtSnapshot.capture(
+                pack, agent, gateway);
+
+        assertEquals(17, debt.progressUnits());
+        assertTrue(debt.demands().stream().noneMatch(demand -> demand.targetId() == 4000010));
+        assertTrue(debt.demands().stream().anyMatch(demand -> demand.targetId() == 4000004));
+    }
+
+    @Test
     void completedQuestDoesNotRecreateConsumedItemDebt() {
         AgentVictoriaSharedQuestPackCatalog.Pack pack =
                 AgentVictoriaSharedQuestPackCatalog.require("nautilus-pre15");

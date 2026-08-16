@@ -20,16 +20,19 @@ final class AgentQuestPackDebtSnapshot {
     private final Map<ConditionKey, Set<Integer>> objectiveQuestIds;
     private final Set<Integer> activeQuestIds;
     private final Set<Integer> completedQuestIds;
+    private final int progressUnits;
 
     private AgentQuestPackDebtSnapshot(
             List<Debt> debts,
             Map<ConditionKey, Set<Integer>> objectiveQuestIds,
             Set<Integer> activeQuestIds,
-            Set<Integer> completedQuestIds) {
+            Set<Integer> completedQuestIds,
+            int progressUnits) {
         this.debts = List.copyOf(debts);
         this.objectiveQuestIds = Map.copyOf(objectiveQuestIds);
         this.activeQuestIds = Set.copyOf(activeQuestIds);
         this.completedQuestIds = Set.copyOf(completedQuestIds);
+        this.progressUnits = Math.max(0, progressUnits);
     }
 
     static AgentQuestPackDebtSnapshot capture(
@@ -62,6 +65,7 @@ final class AgentQuestPackDebtSnapshot {
                 .toList();
 
         List<Debt> debts = new ArrayList<>();
+        int progressUnits = 0;
         Map<Integer, List<AgentVictoriaQuestHuntIndexRepository.ObjectiveReference>> collects =
                 active.stream().filter(AgentQuestPackDebtSnapshot::collectObjective)
                         .collect(Collectors.groupingBy(
@@ -73,6 +77,7 @@ final class AgentQuestPackDebtSnapshot {
             int required = references.stream()
                     .mapToInt(reference -> reference.objective().requiredCount()).sum();
             int current = gateway.itemCount(agent, entry.getKey());
+            progressUnits += Math.min(required, Math.max(0, current));
             if (current < required) {
                 Set<Integer> sources = references.stream()
                         .flatMap(reference -> sourceMobIds(reference.objective()).stream())
@@ -87,19 +92,21 @@ final class AgentQuestPackDebtSnapshot {
                 debts.add(new Debt(demand, references));
             }
         }
-        active.stream().filter(reference -> !collectObjective(reference)).forEach(reference -> {
+        for (AgentVictoriaQuestHuntIndexRepository.ObjectiveReference reference
+                : active.stream().filter(candidate -> !collectObjective(candidate)).toList()) {
             AgentVictoriaQuestHuntIndex.Objective objective = reference.objective();
             int current = gateway.questProgress(agent, reference.questId(), objective.targetId());
+            progressUnits += Math.min(objective.requiredCount(), Math.max(0, current));
             if (current < objective.requiredCount()) {
                 debts.add(new Debt(new AgentHuntSelectionRequest.ObjectiveDemand(
                         reference.questId(), objective.objectiveId(), objective.type(),
                         objective.targetId(), objective.requiredCount(), current,
                         sourceMobIds(objective)), List.of(reference)));
             }
-        });
+        }
         debts.sort(Comparator.comparingInt(debt -> debt.demand().questId()));
         return new AgentQuestPackDebtSnapshot(
-                debts, objectiveQuestIds, activeQuestIds, completedQuestIds);
+                debts, objectiveQuestIds, activeQuestIds, completedQuestIds, progressUnits);
     }
 
     List<AgentHuntSelectionRequest.ObjectiveDemand> demands() {
@@ -107,7 +114,7 @@ final class AgentQuestPackDebtSnapshot {
     }
 
     int progressUnits() {
-        return debts.stream().mapToInt(debt -> debt.demand().currentCount()).sum();
+        return progressUnits;
     }
 
     int remainingUnits() {

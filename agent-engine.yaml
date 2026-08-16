@@ -804,14 +804,14 @@ tuning:
     # Purpose: Controls the distance or margin used for support vertical range. Higher values allow action from farther away or leave more space; lower values require closer, more precise positioning.
     # Technical: the "combat config" component consumes this as an integer. Unit: MapleStory map pixels; horizontal and vertical values use the server map coordinate system.
     server.agents.capabilities.combat.AgentCombatConfig.SUPPORT_VERTICAL_RANGE: '220'
-    # Values: a finite non-negative integer. Recommended: 1500-6000 around the tested baseline 3000; benchmark or observe behavior before moving outside this band.
+    # Values: a finite non-negative integer. Recommended: 3000-9000 around the tested baseline 6000; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how strongly region crowd bonus cap is favored. A larger bonus makes the associated choice more attractive.
     # Technical: the "combat grind target policy" component consumes this as an integer. Domain: non-negative policy coefficient; it is meaningful relative to the other coefficients used by the same decision. The value participates in ranking or weighted selection and is not an absolute probability by itself.
-    server.agents.capabilities.combat.AgentCombatGrindTargetPolicy.REGION_CROWD_BONUS_CAP: '3000'
-    # Values: a finite non-negative integer. Recommended: 200-800 around the tested baseline 400; benchmark or observe behavior before moving outside this band.
+    server.agents.capabilities.combat.AgentCombatGrindTargetPolicy.REGION_CROWD_BONUS_CAP: '6000'
+    # Values: a finite non-negative integer. Recommended: 400-1200 around the tested baseline 800; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how strongly region crowd bonus per extra monster is favored. A larger bonus makes the associated choice more attractive.
     # Technical: the "combat grind target policy" component consumes this as an integer. Domain: non-negative policy coefficient; it is meaningful relative to the other coefficients used by the same decision. The value participates in ranking or weighted selection and is not an absolute probability by itself.
-    server.agents.capabilities.combat.AgentCombatGrindTargetPolicy.REGION_CROWD_BONUS_PER_EXTRA_MOB: '400'
+    server.agents.capabilities.combat.AgentCombatGrindTargetPolicy.REGION_CROWD_BONUS_PER_EXTRA_MOB: '800'
     # Values: a finite non-negative integer. Recommended: 12-50 around the tested baseline 25; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls the distance or margin used for retreat arrival tolerance horizontal. Higher values allow action from farther away or leave more space; lower values require closer, more precise positioning.
     # Technical: the "grind navigation target selector" component consumes this as an integer. Domain: component-specific policy value; startup validation rejects missing, blank, or malformed values.
@@ -2846,14 +2846,14 @@ tuning:
     # Purpose: Bounds SPAWN_PRESSURE expansion instead of allowing all incidental mobs on a large map to compete equally.
     # Technical: Retains incidental regions whose reliable route score is within this amount of the cheapest reachable incidental region.
     server.agents.capabilities.combat.AgentCombatPolicyConfig.SPAWN_PRESSURE_ROUTE_COST_WINDOW_MS: '2500'
-    # Values: 0-10 kills. Recommended: 5. Higher values let an Agent clear more non-objective monsters from its current platform before returning to a required target elsewhere; 0 disables incidental platform clearing.
+    # Values: 0-10 kills. Recommended: 3. Higher values let an Agent clear more non-objective monsters from its current platform before returning to a required target elsewhere; 0 disables incidental platform clearing.
     # Purpose: Prevents endless killing of convenient incidental monsters while still allowing short, natural platform sweeps that free spawn slots and reduce backtracking.
     # Technical: Maximum consecutive incidental kills selected by the quest-local-clear combat policy before required-target debt wins and the selector must return to a required candidate.
-    server.agents.capabilities.combat.AgentCombatPolicyConfig.MAX_CONSECUTIVE_INCIDENTAL_KILLS: '5'
-    # Values: 0-20 kills. Recommended: 7. Higher values make a platform sweep more thorough; lower values make the Agent leave sooner for its actual quest target.
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.MAX_CONSECUTIVE_INCIDENTAL_KILLS: '3'
+    # Values: 0-20 kills. Recommended: 5. Higher values make a platform sweep more thorough; lower values make the Agent leave sooner for its actual quest target.
     # Purpose: Bounds how many non-objective monsters an Agent clears during one stay on a platform.
     # Technical: Separate from the consecutive-kill limit so a required kill can reset the streak without creating an unlimited platform loop inside the same navigation-region lease.
-    server.agents.capabilities.combat.AgentCombatPolicyConfig.MAX_INCIDENTAL_KILLS_PER_PLATFORM_LEASE: '7'
+    server.agents.capabilities.combat.AgentCombatPolicyConfig.MAX_INCIDENTAL_KILLS_PER_PLATFORM_LEASE: '5'
     # Values: 1000-20000 milliseconds. Recommended: 6500. Higher values make Agents remain locally focused longer; lower values make them reconsider other platforms more often.
     # Purpose: Gives each Agent a short-lived platform focus so it clears nearby work before repeatedly climbing up and down.
     # Technical: Resets when map or navigation region changes and bounds the incidental-kill counter for that region without changing the underlying navigation graph or attack execution.

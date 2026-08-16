@@ -190,7 +190,7 @@ class AgentCombatGrindTargetPolicyTest {
                 .filter(target -> target.monster() == regionOneBest)
                 .findFirst()
                 .orElseThrow();
-        assertEquals(625L, regionOne.graphCost());
+        assertEquals(225L, regionOne.graphCost());
         assertEquals(125L, regionOne.localScore());
         assertEquals(400.0d, regionOne.distanceSq());
 
@@ -288,9 +288,17 @@ class AgentCombatGrindTargetPolicyTest {
                 group, 1_000, 50, 9_999);
 
         assertEquals(best, scored.monster());
-        assertEquals(650, scored.graphCost());
+        assertEquals(250, scored.graphCost());
         assertEquals(170, scored.localScore());
         assertEquals(25.0, scored.distanceSq());
+    }
+
+    @Test
+    void shouldAllowDenseReachableRegionToBeatSparseZeroCostRegion() {
+        assertEquals(-4_800L, AgentCombatGrindTargetPolicy.graphScore(
+                0L, 4_800L, 0L, 9_999L));
+        assertEquals(-1_800L, AgentCombatGrindTargetPolicy.graphScore(
+                3_000L, 4_800L, 0L, 9_999L));
     }
 
     @Test
@@ -301,7 +309,7 @@ class AgentCombatGrindTargetPolicyTest {
             group.add(i == 0 ? best : mock(Monster.class), 100 + i, i);
         }
 
-        assertEquals(3_000, AgentCombatGrindTargetPolicy.regionCrowdBonus(group.mobCount()));
+        assertEquals(6_000, AgentCombatGrindTargetPolicy.regionCrowdBonus(group.mobCount()));
         AgentScoredGrindTarget scored = AgentCombatGrindTargetPolicy.toScoredTarget(
                 group, 9_999, 50, 9_999);
         assertEquals(9_999, scored.graphCost());

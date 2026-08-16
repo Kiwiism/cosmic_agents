@@ -143,7 +143,10 @@ public final class AgentCombatGrindTargetPolicy {
         if (pathCost >= unreachableGraphCost) {
             return unreachableGraphCost;
         }
-        return Math.max(0L, pathCost - crowdBonus) + occupancyPenalty;
+        // Keep the density credit signed. Clamping it at zero made a sparse current
+        // platform unbeatable by a denser reachable platform once both scores reached
+        // zero, even when the denser region amortized a short climb over many kills.
+        return pathCost - crowdBonus + occupancyPenalty;
     }
 
     public static long graphPathCost(boolean hasValidRegions,

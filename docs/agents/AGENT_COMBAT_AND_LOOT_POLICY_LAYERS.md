@@ -123,8 +123,8 @@ All values live in `agent-engine.yaml`. The values below are the behavior-preser
 | Setting | Default | Effect |
 |---|---:|---|
 | `SPAWN_PRESSURE_MIN_TARGET_SHARE_PERCENT` | 80 | Begins incidental spawn-pressure clearing when required mobs are underrepresented |
-| `MAX_CONSECUTIVE_INCIDENTAL_KILLS` | 2 | Limits consecutive non-objective kills |
-| `MAX_INCIDENTAL_KILLS_PER_PLATFORM_LEASE` | 3 | Limits incidental clearing during one platform lease |
+| `MAX_CONSECUTIVE_INCIDENTAL_KILLS` | 3 | Limits consecutive non-objective kills before required debt regains priority |
+| `MAX_INCIDENTAL_KILLS_PER_PLATFORM_LEASE` | 5 | Limits incidental clearing during one platform lease |
 | `PLATFORM_LEASE_MS` | 6500 | Retains local platform focus for this duration |
 | `LOCAL_TARGET_LEASE_MS` | 25000 | Time bound after reaching the promoted region |
 | `LOCAL_TARGET_LEASE_KILLS` | 2 | Objective-eligible local kills before release |
