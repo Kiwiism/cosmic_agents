@@ -17,8 +17,8 @@ import server.agents.economy.scenario.NamedRandomStreams;
 import server.agents.economy.scenario.PopulationAdmissionPlanner;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
-import server.agents.runtime.AgentExclusiveControlRuntime;
-import server.agents.runtime.activity.AgentForegroundActivityDefaults;
+import server.agents.runtime.AgentCommerceControlRuntime;
+import server.agents.runtime.activity.AgentActivityBootstrap;
 import tools.DatabaseConnection;
 
 import java.nio.file.Path;
@@ -171,7 +171,7 @@ public final class EconomySimulationRuntime {
         } catch (RuntimeException failure) {
             server.agents.integration.AgentEconomicActionGuardRuntime.clear();
             clearFailedStart(runId);
-            AgentExclusiveControlRuntime.release(owner);
+            AgentCommerceControlRuntime.release(owner);
             if (database != null) database.close();
             throw failure;
         }
@@ -214,7 +214,7 @@ public final class EconomySimulationRuntime {
         } catch (RuntimeException failure) {
             server.agents.integration.AgentEconomicActionGuardRuntime.clear();
             clearFailedStart(runId);
-            AgentExclusiveControlRuntime.release(controlOwner(runId));
+            AgentCommerceControlRuntime.release(controlOwner(runId));
             database.close(); throw failure;
         }
     }
@@ -414,20 +414,32 @@ public final class EconomySimulationRuntime {
     }
 
     private static void claim(String owner, Map<String, Character> mapped) {
+        List<ReservedAgent> reservations = new ArrayList<>();
         try {
             for (Character character : mapped.values()) {
-                AgentExclusiveControlRuntime.claim(character.getId(), owner);
                 AgentRuntimeEntry entry = AgentRuntimeRegistry.findByCharacterInstance(character);
                 if (entry == null) {
                     throw new IllegalStateException("reserved economy character has no runtime entry: "
                             + character.getId());
                 }
-                AgentForegroundActivityDefaults.coordinator().prepareExclusive(
-                        "exclusive-control", entry, character, "economy run claimed character",
-                        System.currentTimeMillis());
+                reservations.add(new ReservedAgent(character, entry));
+            }
+            for (ReservedAgent reservation : reservations) {
+                if (!AgentActivityBootstrap.admission().prepare(
+                        AgentActivityBootstrap.COMMERCE_CONTROLLER_ID,
+                        reservation.entry(), reservation.character(),
+                        "economy run claimed character",
+                        System.currentTimeMillis())) {
+                    throw new IllegalStateException(
+                            "reserved Agent activity is still draining: "
+                                    + reservation.character().getId());
+                }
+            }
+            for (ReservedAgent reservation : reservations) {
+                AgentCommerceControlRuntime.claim(reservation.character().getId(), owner);
             }
         } catch (RuntimeException failure) {
-            AgentExclusiveControlRuntime.release(owner);
+            AgentCommerceControlRuntime.release(owner);
             throw failure;
         }
     }
@@ -437,7 +449,7 @@ public final class EconomySimulationRuntime {
     }
 
     private static void releaseControl() {
-        AgentExclusiveControlRuntime.release(controlOwner);
+        AgentCommerceControlRuntime.release(controlOwner);
         controlOwner = null;
     }
 
@@ -450,4 +462,6 @@ public final class EconomySimulationRuntime {
                             boolean databaseReady, List<String> blockers) {
         public Preflight { blockers = List.copyOf(blockers); }
     }
+
+    private record ReservedAgent(Character character, AgentRuntimeEntry entry) { }
 }

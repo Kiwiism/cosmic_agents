@@ -14,8 +14,8 @@ class AgentActivityHandoffCoordinatorTest {
     void drainsSourceBeforeTravelAndDestinationAdmission() {
         FakeSource source = new FakeSource();
         AgentActivityHandoffCoordinator.Handoff handoff = coordinator.begin(
-                "handoff-1", "world-selector", AgentActivityKind.FIELD_GRIND,
-                source, 1_000L, 10_000L);
+                "handoff-1", "world-selector", AgentActivityKind.HUNTING,
+                source, ready(), 1_000L, 10_000L);
         CountingTransfer transfer = new CountingTransfer();
         CountingTarget target = new CountingTarget();
 
@@ -47,8 +47,8 @@ class AgentActivityHandoffCoordinatorTest {
     void deferredAdmissionRetriesWithoutRestartingTravel() {
         FakeSource source = new FakeSource();
         AgentActivityHandoffCoordinator.Handoff handoff = coordinator.begin(
-                "handoff-2", "world-selector", AgentActivityKind.FIELD_GRIND,
-                source, 2_000L, 12_000L);
+                "handoff-2", "world-selector", AgentActivityKind.HUNTING,
+                source, ready(), 2_000L, 12_000L);
         CountingTransfer transfer = new CountingTransfer();
         CountingTarget target = new CountingTarget();
         target.deferOnce = true;
@@ -74,8 +74,8 @@ class AgentActivityHandoffCoordinatorTest {
     void failsClosedWhenSourceOwnershipChanges() {
         FakeSource source = new FakeSource();
         AgentActivityHandoffCoordinator.Handoff handoff = coordinator.begin(
-                "handoff-3", "world-selector", AgentActivityKind.ECONOMY,
-                source, 3_000L, 13_000L);
+                "handoff-3", "world-selector", AgentActivityKind.COMMERCE,
+                source, ready(), 3_000L, 13_000L);
         handoff = coordinator.advance(
                 handoff, source, now -> AgentActivityTransferPort.Result.ready(),
                 now -> AgentActivityAdmissionResult.rejected("unused"), 3_000L);
@@ -89,9 +89,28 @@ class AgentActivityHandoffCoordinatorTest {
         assertTrue(handoff.reason().contains("ownership changed"));
     }
 
+    @Test
+    void blockedPreflightLeavesSourceUntouched() {
+        FakeSource source = new FakeSource();
+        AgentActivityHandoffCoordinator.Handoff handoff = coordinator.begin(
+                "handoff-4", "world-selector", AgentActivityKind.HUNTING,
+                source, (agentId, kind, nowMs) ->
+                        AgentActivityPreflightPort.Result.blocked("map is full"),
+                4_000L, 14_000L);
+
+        assertEquals(AgentActivityHandoffCoordinator.Phase.FAILED, handoff.phase());
+        assertEquals(0, source.exitRequests);
+        assertTrue(source.active);
+    }
+
+    private static AgentActivityPreflightPort ready() {
+        return (agentId, kind, nowMs) -> AgentActivityPreflightPort.Result.allowed();
+    }
+
     private static final class FakeSource implements AgentActivitySourcePort {
         private boolean active = true;
         private String sessionId = "town-session";
+        private int exitRequests;
 
         @Override
         public AgentActivitySessionSnapshot snapshot(long nowMs) {
@@ -105,6 +124,7 @@ class AgentActivityHandoffCoordinatorTest {
         @Override
         public AgentActivityExitResult requestGracefulExit(
                 String reason, long nowMs, long deadlineMs) {
+            exitRequests++;
             return AgentActivityExitResult.requested(reason);
         }
 
@@ -132,7 +152,7 @@ class AgentActivityHandoffCoordinatorTest {
                 return AgentActivityAdmissionResult.deferred("capacity", nowMs + 500L);
             }
             return AgentActivityAdmissionResult.accepted(new AgentActivitySessionSnapshot(
-                    AgentActivityKind.FIELD_GRIND, AgentActivityPhase.ACTIVE,
+                    AgentActivityKind.HUNTING, AgentActivityPhase.ACTIVE,
                     "field-session", "field-request", "world-selector", "42", nowMs, ""));
         }
     }

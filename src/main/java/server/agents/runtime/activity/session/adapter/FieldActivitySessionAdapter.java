@@ -47,7 +47,7 @@ public final class FieldActivitySessionAdapter
                 .map(AgentFieldActivityState::snapshot).orElse(null);
         if (state == null || !state.active() || agent == null) {
             return AgentActivitySessionSnapshot.idle(
-                    AgentActivityKind.FIELD_GRIND, agent == null ? "" : Integer.toString(agent.getId()));
+                    AgentActivityKind.HUNTING, agent == null ? "" : Integer.toString(agent.getId()));
         }
         AgentActivityPhase phase = switch (state.phase()) {
             case SUSPENDED -> AgentActivityPhase.SUSPENDED;
@@ -56,7 +56,7 @@ public final class FieldActivitySessionAdapter
             case GRINDING, RESTING -> AgentActivityPhase.ACTIVE;
         };
         return new AgentActivitySessionSnapshot(
-                AgentActivityKind.FIELD_GRIND, phase, state.handle().sessionId(),
+                AgentActivityKind.HUNTING, phase, state.handle().sessionId(),
                 state.handle().requestId(), state.handle().callerId(),
                 Integer.toString(agent.getId()), state.handle().startedAtMs(), state.exitReason());
     }
@@ -112,7 +112,7 @@ public final class FieldActivitySessionAdapter
         evidence.put("completedObjectiveKills", outcome.completedObjectiveKills());
         evidence.put("collectedDrops", outcome.collectedDrops());
         return new AgentActivityTerminalOutcome(
-                AgentActivityKind.FIELD_GRIND, phase, outcome.handle().sessionId(),
+                AgentActivityKind.HUNTING, phase, outcome.handle().sessionId(),
                 Integer.toString(outcome.handle().characterId()), outcome.reason(),
                 outcome.retryable(), outcome.handle().startedAtMs(),
                 outcome.handle().startedAtMs() + outcome.durationMs(), evidence);

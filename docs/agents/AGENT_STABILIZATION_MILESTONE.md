@@ -5,7 +5,7 @@ more progression, social, economy, market, guild, expedition, or LLM behavior.
 
 ## Runtime ownership
 
-- `AgentForegroundActivityArbiter` selects one foreground owner from a registry.
+- `AgentActivityHost` selects one execution owner from the canonical controller registry.
   The scheduler no longer knows concrete plan or TownLife implementations.
 - New progression assignments use `AgentUniversalPlanRuntime` and the single
   `AgentPlanExecutor`. Old Amherst/Victoria foreground adapters exist only to

@@ -28,7 +28,7 @@ Classifications:
 | `AgentCommonTickService` | `RUNTIME_SERVICE` | Preserves ordered execution of systems shared by every live Agent tick. |
 | `AgentEventDispatchRuntime` | `RUNTIME_ADAPTER` | Exposes session-scoped operational event dispatch through the runtime entry. |
 | `AgentEventRolloutConfig` | `RUNTIME_STATE` | Holds validated rollout gates for optional Agent event consumers. |
-| `AgentExclusiveControlRuntime` | `RUNTIME_SERVICE` | Maintains the process-local exclusive-control lease and economy attribution boundary for one Agent. |
+| `AgentCommerceControlRuntime` | `RUNTIME_SERVICE` | Compatibility lease for Commerce roster control and economy attribution; Activity Host admission remains authoritative. |
 | `AgentFollowTargetSessionService` | `RUNTIME_SERVICE` | Refreshes an optional live follow relationship without making it an ownership requirement. |
 | `AgentForegroundPauseRuntime` | `RUNTIME_ADAPTER` | Applies named foreground pause leases without transferring objective ownership. |
 | `AgentForegroundPauseState` | `RUNTIME_STATE` | Stores active named foreground pauses for one Agent session. |

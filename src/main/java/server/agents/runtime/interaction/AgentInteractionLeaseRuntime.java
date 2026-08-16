@@ -6,7 +6,7 @@ import server.agents.capabilities.townlife.AgentTownLifeState;
 import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentSessionEventRuntime;
-import server.agents.runtime.activity.AgentForegroundActivityTick;
+import server.agents.runtime.activity.AgentActivityTick;
 import server.agents.runtime.field.AgentFieldActivityRuntime;
 import server.agents.runtime.field.AgentFieldActivityState;
 
@@ -109,18 +109,18 @@ public final class AgentInteractionLeaseRuntime {
         }
     }
 
-    public static AgentForegroundActivityTick tick(
+    public static AgentActivityTick tick(
             AgentRuntimeEntry entry, Character agent, long nowMs) {
         AgentInteractionLeaseState state = entry.capabilityStates()
                 .require(AgentInteractionLeaseState.STATE_KEY);
         AgentInteractionLeaseState.Snapshot snapshot = state.snapshot();
         if (!snapshot.active()) {
-            return AgentForegroundActivityTick.PASS;
+            return AgentActivityTick.PASS;
         }
         if (!parentMatches(entry, snapshot)) {
             finish(entry, agent, nowMs, AgentInteractionLeaseEvent.Phase.CANCELLED,
                     "parent activity session ended");
-            return AgentForegroundActivityTick.PASS;
+            return AgentActivityTick.PASS;
         }
         if (snapshot.type() == AgentInteractionLeaseState.Type.TRADE
                 && agent.getTrade() == null) {
@@ -132,10 +132,10 @@ public final class AgentInteractionLeaseRuntime {
                     timedOut ? AgentInteractionLeaseEvent.Phase.TIMED_OUT
                             : AgentInteractionLeaseEvent.Phase.COMPLETED,
                     timedOut ? "interaction deadline elapsed" : "interaction completed");
-            return AgentForegroundActivityTick.PASS;
+            return AgentActivityTick.PASS;
         }
         AgentPrimitiveCapabilityGatewayRuntime.gateway().stop(entry);
-        return AgentForegroundActivityTick.CONSUMED;
+        return AgentActivityTick.CONSUMED;
     }
 
     public static void cancel(AgentRuntimeEntry entry,

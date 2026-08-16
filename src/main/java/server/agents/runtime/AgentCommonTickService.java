@@ -1,7 +1,7 @@
 package server.agents.runtime;
 
 import server.agents.monitoring.AgentPerformanceMonitor;
-import server.agents.runtime.interaction.AgentInteractionLeaseRuntime;
+import server.agents.socials.AgentSocialsSystem;
 
 import client.Character;
 
@@ -66,7 +66,7 @@ public final class AgentCommonTickService {
         hooks.releaseControlledMonsters().accept(agent);
         if (perf) AgentPerformanceMonitor.record("common-release-mob", System.nanoTime() - startedAt);
 
-        AgentInteractionLeaseRuntime.reconcileTrade(
+        AgentSocialsSystem.reconcileTrade(
                 entry, agent, System.currentTimeMillis());
 
         if (agent.getTrade() == null) {

@@ -1,5 +1,9 @@
 # Agent world activity ownership and handoff baseline
 
+> Historical rollout record. Naming and ownership are superseded by
+> `AGENT_OS_SYSTEM_ARCHITECTURE.md`; field/grind is now Hunting, quest-plan is Questing, and economy
+> foreground ownership is Commerce.
+
 The intended composition is one selector above four self-contained session owners. The four systems
 must not directly start one another.
 

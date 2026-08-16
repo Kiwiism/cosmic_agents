@@ -46,10 +46,10 @@ public final class EconomyActivitySessionAdapter
     @Override
     public synchronized AgentActivitySessionSnapshot snapshot(long nowMs) {
         if (sessionId == null || !phase.ownsAgent()) {
-            return AgentActivitySessionSnapshot.idle(AgentActivityKind.ECONOMY, profile.agentId());
+            return AgentActivitySessionSnapshot.idle(AgentActivityKind.COMMERCE, profile.agentId());
         }
         return new AgentActivitySessionSnapshot(
-                AgentActivityKind.ECONOMY, phase, sessionId.toString(),
+                AgentActivityKind.COMMERCE, phase, sessionId.toString(),
                 request == null ? "" : request.requestId().toString(),
                 "economy-engine", profile.agentId(), startedAtMs, reason);
     }
@@ -102,7 +102,7 @@ public final class EconomyActivitySessionAdapter
     public synchronized AgentActivityTerminalOutcome terminalOutcome(long nowMs) {
         if (sessionId == null || !phase.terminal()) return null;
         return new AgentActivityTerminalOutcome(
-                AgentActivityKind.ECONOMY, phase, sessionId.toString(), profile.agentId(),
+                AgentActivityKind.COMMERCE, phase, sessionId.toString(), profile.agentId(),
                 reason, phase == AgentActivityPhase.FAILED, startedAtMs,
                 Math.max(startedAtMs, nowMs), Map.of());
     }

@@ -11,7 +11,7 @@ import server.agents.capabilities.townlife.AgentTownLifeVisitRequest;
 import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
 import server.agents.integration.PrimitiveCapabilityGateway;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.agents.runtime.activity.AgentForegroundActivityTick;
+import server.agents.runtime.activity.AgentActivityTick;
 
 import java.awt.Point;
 
@@ -59,9 +59,9 @@ class AgentInteractionLeaseRuntimeTest {
             assertTrue(AgentTownLifeRuntime.active(entry));
             AgentInteractionLeaseRuntime.complete(
                     entry, AgentInteractionLeaseState.Type.CHAT);
-            assertEquals(AgentForegroundActivityTick.CONSUMED,
+            assertEquals(AgentActivityTick.CONSUMED,
                     AgentInteractionLeaseRuntime.tick(entry, agent, 2_699L));
-            assertEquals(AgentForegroundActivityTick.PASS,
+            assertEquals(AgentActivityTick.PASS,
                     AgentInteractionLeaseRuntime.tick(entry, agent, 2_700L));
             assertFalse(townState.externalInteractionPaused());
             assertEquals(6_500L, townState.nextActionAtMs());

@@ -14,24 +14,24 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class AgentExclusiveControlRuntimeTest {
+class AgentCommerceControlRuntimeTest {
     @AfterEach
     void clear() {
-        AgentExclusiveControlRuntime.clearForTests();
+        AgentCommerceControlRuntime.clearForTests();
     }
 
     @Test
     void leaseIsIdempotentForOwnerAndRejectsCompetitors() {
-        AgentExclusiveControlRuntime.claim(7, "economy:one");
-        AgentExclusiveControlRuntime.claim(7, "economy:one");
+        AgentCommerceControlRuntime.claim(7, "economy:one");
+        AgentCommerceControlRuntime.claim(7, "economy:one");
 
-        assertTrue(AgentExclusiveControlRuntime.claimed(7));
-        assertTrue(AgentExclusiveControlRuntime.ownedBy(7, "economy:one"));
+        assertTrue(AgentCommerceControlRuntime.claimed(7));
+        assertTrue(AgentCommerceControlRuntime.ownedBy(7, "economy:one"));
         assertThrows(IllegalStateException.class,
-                () -> AgentExclusiveControlRuntime.claim(7, "economy:two"));
+                () -> AgentCommerceControlRuntime.claim(7, "economy:two"));
 
-        AgentExclusiveControlRuntime.release("economy:one");
-        assertFalse(AgentExclusiveControlRuntime.claimed(7));
+        AgentCommerceControlRuntime.release("economy:one");
+        assertFalse(AgentCommerceControlRuntime.claimed(7));
     }
 
     @Test
@@ -40,10 +40,10 @@ class AgentExclusiveControlRuntimeTest {
         EconomyOperationMetadata metadata = new EconomyOperationMetadata(runId,
                 Instant.parse("2026-01-01T00:00:05Z"), "decision", null,
                 "config", "catalog", "MARKET_CYCLE", true, false);
-        AgentExclusiveControlRuntime.claim(7, "economy:" + runId);
-        AgentExclusiveControlRuntime.attribute(7, metadata);
+        AgentCommerceControlRuntime.claim(7, "economy:" + runId);
+        AgentCommerceControlRuntime.attribute(7, metadata);
 
-        EconomyOperationMetadata observed = AgentExclusiveControlRuntime.withAttribution(
+        EconomyOperationMetadata observed = AgentCommerceControlRuntime.withAttribution(
                 7, EconomyOperationContext::currentMetadata);
 
         assertEquals(metadata, observed);

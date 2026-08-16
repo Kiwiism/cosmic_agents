@@ -14,7 +14,7 @@ import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
 import server.agents.integration.PrimitiveCapabilityGateway;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentSessionEventRuntime;
-import server.agents.runtime.activity.AgentForegroundActivityTick;
+import server.agents.runtime.activity.AgentActivityTick;
 
 import java.awt.Point;
 import java.util.Comparator;
@@ -74,24 +74,24 @@ public final class AgentTownLifeTestScenarioRuntime {
                 .map(AgentTownLifeTestScenarioState::active).orElse(false);
     }
 
-    public static AgentForegroundActivityTick tick(
+    public static AgentActivityTick tick(
             AgentRuntimeEntry entry, Character agent, long nowMs) {
         AgentTownLifeTestScenarioState state = entry.capabilityStates()
                 .require(AgentTownLifeTestScenarioState.STATE_KEY);
         AgentTownLifeTestScenarioState.Snapshot snapshot = state.snapshot();
         if (!snapshot.active()) {
-            return AgentForegroundActivityTick.PASS;
+            return AgentActivityTick.PASS;
         }
         if (agent.getMapId() != snapshot.request().townMapId()) {
             fail(entry, agent, state, "Agent left the test town", nowMs);
-            return AgentForegroundActivityTick.PASS;
+            return AgentActivityTick.PASS;
         }
         return switch (snapshot.phase()) {
             case IN_TOWN_LIFE -> tickTownLife(entry, agent, state, snapshot, nowMs);
             case STAGING -> tickStaging(entry, agent, state, snapshot, nowMs);
             case OUTSIDE_IDLE -> tickOutsideIdle(entry, agent, state, snapshot, nowMs);
             case STOPPING -> tickStopping(entry, agent, state, snapshot, nowMs);
-            case INACTIVE, COMPLETED, FAILED -> AgentForegroundActivityTick.PASS;
+            case INACTIVE, COMPLETED, FAILED -> AgentActivityTick.PASS;
         };
     }
 
@@ -114,14 +114,14 @@ public final class AgentTownLifeTestScenarioRuntime {
                 .require(AgentTownLifeTestScenarioState.STATE_KEY).snapshot();
     }
 
-    private static AgentForegroundActivityTick tickTownLife(
+    private static AgentActivityTick tickTownLife(
             AgentRuntimeEntry entry,
             Character agent,
             AgentTownLifeTestScenarioState state,
             AgentTownLifeTestScenarioState.Snapshot snapshot,
             long nowMs) {
         if (AgentTownLifeRuntime.active(entry)) {
-            return AgentForegroundActivityTick.PASS;
+            return AgentActivityTick.PASS;
         }
         AgentTownLifeVisitLeaseRuntime.clear(entry, agent);
         Point standby = resolveStandby(agent, snapshot.request(), snapshot.cyclesCompleted());
@@ -130,10 +130,10 @@ public final class AgentTownLifeTestScenarioRuntime {
                 "TownLife visit exited", nowMs);
         publish(entry, agent, state.snapshot(), AgentTownLifeTestScenarioEvent.Phase.STAGING,
                 snapshot.request().standbyTarget().display(), nowMs);
-        return AgentForegroundActivityTick.IDLE;
+        return AgentActivityTick.IDLE;
     }
 
-    private static AgentForegroundActivityTick tickStaging(
+    private static AgentActivityTick tickStaging(
             AgentRuntimeEntry entry,
             Character agent,
             AgentTownLifeTestScenarioState state,
@@ -142,7 +142,7 @@ public final class AgentTownLifeTestScenarioRuntime {
         Point target = snapshot.standbyPoint();
         if (target == null) {
             fail(entry, agent, state, "no safe standby point is available", nowMs);
-            return AgentForegroundActivityTick.PASS;
+            return AgentActivityTick.PASS;
         }
         PrimitiveCapabilityGateway gateway = AgentPrimitiveCapabilityGatewayRuntime.gateway();
         Point position = gateway.position(agent);
@@ -152,16 +152,16 @@ public final class AgentTownLifeTestScenarioRuntime {
                 <= (long) STANDBY_ARRIVAL_DISTANCE_PX * STANDBY_ARRIVAL_DISTANCE_PX;
         if (!arrived) {
             gateway.navigate(entry, target, false);
-            return AgentForegroundActivityTick.IDLE;
+            return AgentActivityTick.IDLE;
         }
         gateway.stop(entry);
         state.outsideIdle(nowMs + snapshot.request().outsideDurationMs());
         publish(entry, agent, state.snapshot(), AgentTownLifeTestScenarioEvent.Phase.OUTSIDE_IDLE,
                 snapshot.request().standbyTarget().display(), nowMs);
-        return AgentForegroundActivityTick.CONSUMED;
+        return AgentActivityTick.CONSUMED;
     }
 
-    private static AgentForegroundActivityTick tickOutsideIdle(
+    private static AgentActivityTick tickOutsideIdle(
             AgentRuntimeEntry entry,
             Character agent,
             AgentTownLifeTestScenarioState state,
@@ -169,11 +169,11 @@ public final class AgentTownLifeTestScenarioRuntime {
             long nowMs) {
         AgentPrimitiveCapabilityGatewayRuntime.gateway().stop(entry);
         if (nowMs < snapshot.nextActionAtMs()) {
-            return AgentForegroundActivityTick.CONSUMED;
+            return AgentActivityTick.CONSUMED;
         }
         if (snapshot.cyclesCompleted() >= snapshot.request().cycles()) {
             complete(entry, agent, state, "all requested cycles completed", nowMs);
-            return AgentForegroundActivityTick.PASS;
+            return AgentActivityTick.PASS;
         }
         publish(entry, agent, snapshot, AgentTownLifeTestScenarioEvent.Phase.REENTERING,
                 "starting the next TownLife visit", nowMs);
@@ -181,12 +181,12 @@ public final class AgentTownLifeTestScenarioRuntime {
         if (!result.started()
                 && result.status() != AgentTownLifeSessionResult.Status.ALREADY_ACTIVE_SAME_REQUEST) {
             fail(entry, agent, state, result.reason(), nowMs);
-            return AgentForegroundActivityTick.PASS;
+            return AgentActivityTick.PASS;
         }
-        return AgentForegroundActivityTick.PASS;
+        return AgentActivityTick.PASS;
     }
 
-    private static AgentForegroundActivityTick tickStopping(
+    private static AgentActivityTick tickStopping(
             AgentRuntimeEntry entry,
             Character agent,
             AgentTownLifeTestScenarioState state,
@@ -194,10 +194,10 @@ public final class AgentTownLifeTestScenarioRuntime {
             long nowMs) {
         if (AgentTownLifeRuntime.active(entry)) {
             requestTownLifeExit(entry, agent, snapshot, "test scenario stopped", nowMs);
-            return AgentForegroundActivityTick.PASS;
+            return AgentActivityTick.PASS;
         }
         complete(entry, agent, state, "test scenario stopped", nowMs);
-        return AgentForegroundActivityTick.PASS;
+        return AgentActivityTick.PASS;
     }
 
     private static AgentTownLifeSessionResult startVisit(

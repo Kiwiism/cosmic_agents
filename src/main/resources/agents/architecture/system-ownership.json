@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "systems": [
+    {
+      "id": "town-life",
+      "role": "PRIMARY",
+      "activityKind": "TOWN_LIFE",
+      "sourceRoots": [
+        "server/agents/capabilities/townlife",
+        "server/agents/runtime/townlife",
+        "server/agents/commands/townlife"
+      ],
+      "entryPoints": [
+        "server/agents/capabilities/townlife/AgentTownLifeRuntime.java"
+      ]
+    },
+    {
+      "id": "hunting",
+      "role": "PRIMARY",
+      "activityKind": "HUNTING",
+      "sourceRoots": [
+        "server/agents/field",
+        "server/agents/runtime/field"
+      ],
+      "entryPoints": [
+        "server/agents/runtime/field/AgentFieldActivityRuntime.java"
+      ]
+    },
+    {
+      "id": "questing",
+      "role": "PRIMARY",
+      "activityKind": "QUESTING",
+      "sourceRoots": [
+        "server/agents/plans",
+        "server/agents/progression",
+        "server/agents/objectives"
+      ],
+      "entryPoints": [
+        "server/agents/plans/AgentUniversalPlanRuntime.java"
+      ]
+    },
+    {
+      "id": "commerce",
+      "role": "PRIMARY",
+      "activityKind": "COMMERCE",
+      "sourceRoots": [
+        "server/agents/economy"
+      ],
+      "entryPoints": [
+        "server/agents/economy/session/EconomySessionPort.java"
+      ]
+    },
+    {
+      "id": "inventory",
+      "role": "SUPPORT",
+      "sourceRoots": [
+        "server/agents/inventory",
+        "server/agents/capabilities/inventory",
+        "server/agents/capabilities/equipment",
+        "server/agents/capabilities/supplies",
+        "server/agents/capabilities/shop",
+        "server/agents/resources"
+      ],
+      "entryPoints": [
+        "server/agents/inventory/AgentInventorySystem.java"
+      ]
+    },
+    {
+      "id": "socials",
+      "role": "SUPPORT",
+      "sourceRoots": [
+        "server/agents/socials",
+        "server/agents/capabilities/social",
+        "server/agents/capabilities/dialogue",
+        "server/agents/capabilities/trade",
+        "server/agents/runtime/interaction"
+      ],
+      "entryPoints": [
+        "server/agents/socials/AgentSocialsSystem.java"
+      ]
+    },
+    {
+      "id": "agent-context",
+      "role": "CONTEXT",
+      "sourceRoots": [
+        "server/agents/context",
+        "server/agents/memory",
+        "server/agents/personality",
+        "server/agents/model",
+        "server/agents/profiles"
+      ],
+      "entryPoints": [
+        "server/agents/context/AgentContextRuntime.java"
+      ]
+    },
+    {
+      "id": "agent-platform",
+      "role": "PLATFORM",
+      "sourceRoots": [
+        "server/agents"
+      ],
+      "entryPoints": [
+        "server/agents/runtime/AgentTickRuntime.java",
+        "server/agents/runtime/activity/session/AgentActivityHandoffCoordinator.java"
+      ]
+    }
+  ]
+}

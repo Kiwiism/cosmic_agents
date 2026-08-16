@@ -11,8 +11,19 @@ public enum AgentActivityPhase {
     FAILED,
     CANCELLED;
 
-    public boolean ownsAgent() {
+    /** A retained session may be resumed or drained, even while it does not execute. */
+    public boolean retainsSession() {
         return this == ACTIVE || this == SUSPENDING || this == SUSPENDED || this == DRAINING;
+    }
+
+    /** Only these phases may receive foreground execution ticks. */
+    public boolean ownsExecution() {
+        return this == ACTIVE || this == SUSPENDING || this == DRAINING;
+    }
+
+    /** Compatibility alias for session adapters written before ownership was split. */
+    public boolean ownsAgent() {
+        return retainsSession();
     }
 
     public boolean terminal() {

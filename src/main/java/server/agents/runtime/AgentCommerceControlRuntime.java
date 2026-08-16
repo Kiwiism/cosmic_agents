@@ -8,11 +8,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-/** Process-local lease that gives one subsystem exclusive control of an Agent character. */
-public final class AgentExclusiveControlRuntime {
+/** Process-local lease granting the Commerce system exclusive control of an Agent character. */
+public final class AgentCommerceControlRuntime {
     private static final Map<Integer, Lease> LEASES = new HashMap<>();
 
-    private AgentExclusiveControlRuntime() {
+    private AgentCommerceControlRuntime() {
     }
 
     public static synchronized void claim(int characterId, String owner) {
@@ -26,21 +26,21 @@ public final class AgentExclusiveControlRuntime {
         }
     }
 
-    /** Carries the latest logical operation into an asynchronously executed capability tick. */
     public static synchronized void attribute(int characterId, EconomyOperationMetadata metadata) {
         Objects.requireNonNull(metadata, "metadata");
         Lease lease = LEASES.get(characterId);
-        if (lease == null) throw new IllegalStateException("agent character is not exclusively controlled");
+        if (lease == null) throw new IllegalStateException("Agent is not controlled by Commerce");
         String expectedOwner = metadata.runId() == null ? "" : "economy:" + metadata.runId();
-        if (!lease.owner().equals(expectedOwner))
-            throw new IllegalStateException("economy attribution does not match exclusive owner");
+        if (!lease.owner().equals(expectedOwner)) {
+            throw new IllegalStateException("economy attribution does not match Commerce owner");
+        }
         LEASES.put(characterId, new Lease(lease.owner(), metadata));
     }
 
     public static <T> T withAttribution(int characterId, Supplier<T> action) {
         Objects.requireNonNull(action, "action");
         EconomyOperationMetadata metadata;
-        synchronized (AgentExclusiveControlRuntime.class) {
+        synchronized (AgentCommerceControlRuntime.class) {
             Lease lease = LEASES.get(characterId);
             metadata = lease == null ? null : lease.metadata();
         }

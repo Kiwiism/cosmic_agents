@@ -84,6 +84,35 @@ class AgentArchitectureBoundaryTest {
     }
 
     @Test
+    void supportSystemsCannotAdmitOrStartPrimaryActivities() throws IOException {
+        List<Path> roots = List.of(AGENTS.resolve("inventory"), AGENTS.resolve("socials"));
+        for (Path root : roots) {
+            assertTreeExcludes(root,
+                    List.of(
+                            "AgentActivityBootstrap",
+                            "AgentActivityAdmissionCoordinator",
+                            "import server.agents.plans.",
+                            "import server.agents.runtime.field.",
+                            "import server.agents.capabilities.townlife.",
+                            "import server.agents.economy."),
+                    "support systems may request work but cannot own primary admission");
+        }
+    }
+
+    @Test
+    void retiredForegroundVocabularyCannotReturn() throws IOException {
+        assertFalse(Files.exists(AGENTS.resolve("runtime")
+                .resolve("AgentExclusiveControlRuntime.java")));
+        try (var files = Files.walk(AGENTS)) {
+            for (Path file : files.filter(path -> path.toString().endsWith(".java")).toList()) {
+                String source = Files.readString(file);
+                assertFalse(source.contains("AgentForegroundActivity"),
+                        () -> file + " revives the retired foreground arbitration layer");
+            }
+        }
+    }
+
+    @Test
     void behaviorProfilesDoNotOwnCapabilityImplementations() throws IOException {
         assertTreeExcludes(
                 AGENTS.resolve("profiles"),

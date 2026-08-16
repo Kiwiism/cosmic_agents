@@ -12,12 +12,14 @@ public final class AgentActivityHandoffCoordinator {
             String callerId,
             AgentActivityKind targetKind,
             AgentActivitySourcePort source,
+            AgentActivityPreflightPort targetPreflight,
             long nowMs,
             long deadlineMs) {
         String id = required(handoffId, "handoff id");
         String caller = required(callerId, "handoff caller");
         Objects.requireNonNull(targetKind, "targetKind");
         Objects.requireNonNull(source, "source");
+        Objects.requireNonNull(targetPreflight, "targetPreflight");
         if (nowMs < 0L || deadlineMs <= nowMs) {
             throw new IllegalArgumentException("handoff requires a future deadline");
         }
@@ -27,6 +29,16 @@ public final class AgentActivityHandoffCoordinator {
         }
         if (snapshot.kind() == targetKind) {
             throw new IllegalArgumentException("handoff source and target must differ");
+        }
+        AgentActivityPreflightPort.Result preflight =
+                targetPreflight.inspect(snapshot.agentId(), targetKind, nowMs);
+        if (preflight == null) {
+            throw new IllegalStateException("destination preflight returned no result");
+        }
+        if (!preflight.ready()) {
+            return new Handoff(id, caller, snapshot.agentId(), snapshot.kind(), targetKind,
+                    snapshot.sessionId(), Phase.FAILED, nowMs, deadlineMs, nowMs,
+                    "destination preflight blocked: " + preflight.reason());
         }
         return new Handoff(id, caller, snapshot.agentId(), snapshot.kind(), targetKind,
                 snapshot.sessionId(), Phase.REQUEST_SOURCE_EXIT, nowMs, deadlineMs, nowMs, "");

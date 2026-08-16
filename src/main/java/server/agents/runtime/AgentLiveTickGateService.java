@@ -17,43 +17,43 @@ public final class AgentLiveTickGateService {
     }
 
     public record Hooks(CommonTickSystems commonTickSystems,
-                        PlanExecutionGateTick planExecutionGateTick,
+                        CompatibilityInterludeTick compatibilityInterludeTick,
                         ObjectiveSupervisionTick objectiveSupervisionTick,
                         ForegroundTravelCombatTick foregroundTravelCombatTick,
-                        ActiveCapabilityTick activeCapabilityTick,
+                        ActivityHostTick activityHostTick,
                         TradeWindowTick tradeWindowTick,
                         IdleModeTick idleModeTick,
                         RecoveryTick recoveryTick,
                         TrackedMapChangeTick trackedMapChangeTick) {
         public Hooks(CommonTickSystems commonTickSystems,
-                     PlanExecutionGateTick planExecutionGateTick,
+                     CompatibilityInterludeTick compatibilityInterludeTick,
                      ObjectiveSupervisionTick objectiveSupervisionTick,
-                     ActiveCapabilityTick activeCapabilityTick,
+                     ActivityHostTick activityHostTick,
                      TradeWindowTick tradeWindowTick,
                      IdleModeTick idleModeTick,
                      RecoveryTick recoveryTick,
                      TrackedMapChangeTick trackedMapChangeTick) {
-            this(commonTickSystems, planExecutionGateTick, objectiveSupervisionTick,
+            this(commonTickSystems, compatibilityInterludeTick, objectiveSupervisionTick,
                     (entry, agent, targetPosition, runAiTick) -> false,
-                    activeCapabilityTick, tradeWindowTick, idleModeTick, recoveryTick,
+                    activityHostTick, tradeWindowTick, idleModeTick, recoveryTick,
                     trackedMapChangeTick);
         }
 
         public Hooks(CommonTickSystems commonTickSystems,
                      ObjectiveSupervisionTick objectiveSupervisionTick,
-                     ActiveCapabilityTick activeCapabilityTick,
+                     ActivityHostTick activityHostTick,
                      TradeWindowTick tradeWindowTick,
                      IdleModeTick idleModeTick,
                      RecoveryTick recoveryTick,
                      TrackedMapChangeTick trackedMapChangeTick) {
             this(commonTickSystems, (entry, agent, runAiTick) -> false, objectiveSupervisionTick,
                     (entry, agent, targetPosition, runAiTick) -> false,
-                    activeCapabilityTick, tradeWindowTick, idleModeTick, recoveryTick, trackedMapChangeTick);
+                    activityHostTick, tradeWindowTick, idleModeTick, recoveryTick, trackedMapChangeTick);
         }
     }
 
     @FunctionalInterface
-    public interface PlanExecutionGateTick {
+    public interface CompatibilityInterludeTick {
         boolean tick(AgentRuntimeEntry entry, Character agent, boolean runAiTick);
     }
 
@@ -76,7 +76,7 @@ public final class AgentLiveTickGateService {
     }
 
     @FunctionalInterface
-    public interface ActiveCapabilityTick {
+    public interface ActivityHostTick {
         boolean tick(AgentRuntimeEntry entry, Character agent);
     }
 
@@ -101,13 +101,13 @@ public final class AgentLiveTickGateService {
     }
 
     public static boolean tickLiveGates(Context context, Hooks hooks) {
-        if (AgentExclusiveControlRuntime.claimed(context.agent().getId())) {
-            // Economy ownership suppresses every ordinary decision gate, but a
+        if (AgentCommerceControlRuntime.claimed(context.agent().getId())) {
+            // Commerce ownership suppresses every ordinary decision gate, but a
             // navigation capability deliberately returns a non-consuming tick
             // after installing its MOVE_TO target. Let that one tick reach the
             // existing movement phase so the character still walks physically.
-            return AgentExclusiveControlRuntime.withAttribution(context.agent().getId(),
-                    () -> hooks.activeCapabilityTick().tick(context.entry(), context.agent()));
+            return AgentCommerceControlRuntime.withAttribution(context.agent().getId(),
+                    () -> hooks.activityHostTick().tick(context.entry(), context.agent()));
         }
         if (hooks.trackedMapChangeTick().tick(context.entry(), context.agent())) {
             return true;
@@ -116,11 +116,11 @@ public final class AgentLiveTickGateService {
         // facing, fidget and loot ticks that can overwrite the chair pose after a successful
         // sit. The active capability still gets one chance to verify/finish the sit command.
         if (context.agent().getChair() >= 0) {
-            if (hooks.planExecutionGateTick().tick(
+            if (hooks.compatibilityInterludeTick().tick(
                     context.entry(), context.agent(), context.runAiTick())) {
                 return true;
             }
-            hooks.activeCapabilityTick().tick(context.entry(), context.agent());
+            hooks.activityHostTick().tick(context.entry(), context.agent());
             return true;
         }
         if (hooks.commonTickSystems().run(context.entry(), context.agent(), context.leader(), context.runAiTick())) {
@@ -132,14 +132,15 @@ public final class AgentLiveTickGateService {
             // but let the caller run the normal capability/movement phase for that mode.
             return false;
         }
-        if (hooks.planExecutionGateTick().tick(context.entry(), context.agent(), context.runAiTick())) {
+        if (hooks.compatibilityInterludeTick().tick(
+                context.entry(), context.agent(), context.runAiTick())) {
             return true;
         }
         if (hooks.foregroundTravelCombatTick().tick(
                 context.entry(), context.agent(), context.targetPosition(), context.runAiTick())) {
             return true;
         }
-        if (hooks.activeCapabilityTick().tick(context.entry(), context.agent())) {
+        if (hooks.activityHostTick().tick(context.entry(), context.agent())) {
             return true;
         }
         if (hooks.tradeWindowTick().tick(context.entry(), context.agent())) {

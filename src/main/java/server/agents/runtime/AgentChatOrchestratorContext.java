@@ -22,13 +22,12 @@ import server.agents.capabilities.build.AgentBuildStateRuntime;
 import server.agents.capabilities.dialogue.AgentChatReportOperationsRuntime;
 import server.agents.capabilities.dialogue.AgentChatStatusOrchestrator;
 import server.agents.capabilities.dialogue.AgentControlRuntime;
-import server.agents.capabilities.equipment.AgentEquipmentRuntime;
 import server.agents.capabilities.movement.AgentMovementRuntime;
 import server.agents.capabilities.dialogue.AgentPendingActionRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.commands.AgentSessionCommandCoordinator;
-import server.agents.capabilities.social.AgentSocialRuntime;
-import server.agents.capabilities.supplies.AgentSupplyRuntime;
+import server.agents.inventory.AgentInventorySystem;
+import server.agents.socials.AgentSocialsSystem;
 import server.agents.capabilities.trade.AgentTransferRuntime;
 import server.agents.capabilities.dialogue.AgentUtilityRuntime;
 
@@ -70,12 +69,12 @@ public final class AgentChatOrchestratorContext implements AgentChatOrchestrator
 
     @Override
     public AgentChatSupplyRequestFlow.SupplyRequestCallbacks supplyRequestCallbacks() {
-        return AgentSupplyRuntime.supplyRequestCallbacks(entry);
+        return AgentInventorySystem.supplyRequestCallbacks(entry);
     }
 
     @Override
     public AgentChatSocialFlow.SocialCallbacks socialCallbacks() {
-        return AgentSocialRuntime.socialCallbacks(entry);
+        return AgentSocialsSystem.socialCallbacks(entry);
     }
 
     @Override
@@ -95,7 +94,7 @@ public final class AgentChatOrchestratorContext implements AgentChatOrchestrator
 
     @Override
     public AgentChatEquipmentFlow.EquipmentCallbacks equipmentCallbacks() {
-        return AgentEquipmentRuntime.equipmentCallbacks(entry);
+        return AgentInventorySystem.equipmentCallbacks(entry);
     }
 
     @Override

@@ -8,7 +8,7 @@ import server.agents.objectives.AgentObjectiveKernel;
 import server.agents.objectives.AgentObjectiveStatus;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentForegroundPauseRuntime;
-import server.agents.runtime.activity.AgentForegroundActivityDefaults;
+import server.agents.runtime.activity.AgentActivityBootstrap;
 import server.agents.runtime.autonomy.AgentAutonomyKernel;
 import server.agents.runtime.autonomy.AgentAutonomySnapshot;
 import server.agents.runtime.autonomy.AgentGoalProposal;
@@ -66,8 +66,9 @@ public final class AgentPlanExecutor implements AgentPlanRunner {
         }
         AgentPlanDefinition plan = selection.plan();
         AgentPlanSessionState session = entry.capabilityStates().require(AgentPlanSessionState.STATE_KEY);
-        if (!AgentForegroundActivityDefaults.coordinator().prepareExclusive(
-                "universal-plan", entry, agent, "replaced by plan " + planId, nowMs)) {
+        if (!AgentActivityBootstrap.admission().prepare(
+                AgentActivityBootstrap.QUESTING_CONTROLLER_ID,
+                entry, agent, "replaced by plan " + planId, nowMs)) {
             return false;
         }
         if (session.active()) {

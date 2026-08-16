@@ -13,8 +13,8 @@ import server.agents.field.events.AgentFieldRestEvent;
 import server.agents.runtime.AgentModeService;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentSessionEventRuntime;
-import server.agents.runtime.activity.AgentForegroundActivityDefaults;
-import server.agents.runtime.activity.AgentForegroundActivityTick;
+import server.agents.runtime.activity.AgentActivityBootstrap;
+import server.agents.runtime.activity.AgentActivityTick;
 
 import java.awt.Point;
 
@@ -61,8 +61,9 @@ public final class AgentFieldActivityRuntime {
             return rejected(AgentFieldSessionResult.Status.REJECTED_NO_SESSION,
                     "no field session exists in this map instance");
         }
-        if (!AgentForegroundActivityDefaults.coordinator().prepareExclusive(
-                ACTIVITY_ID, entry, agent, "starting managed field visit", nowMs)) {
+        if (!AgentActivityBootstrap.admission().prepare(
+                AgentActivityBootstrap.HUNTING_CONTROLLER_ID,
+                entry, agent, "starting managed field visit", nowMs)) {
             return rejected(AgentFieldSessionResult.Status.REJECTED_FOREGROUND_BUSY,
                     "another foreground activity is still draining");
         }
@@ -102,27 +103,27 @@ public final class AgentFieldActivityRuntime {
                 .map(AgentFieldActivityState::active).orElse(false);
     }
 
-    public static AgentForegroundActivityTick tick(
+    public static AgentActivityTick tick(
             AgentRuntimeEntry entry, Character agent, long nowMs) {
         AgentFieldActivityState state = entry.capabilityStates()
                 .require(AgentFieldActivityState.STATE_KEY);
         AgentFieldActivityState.Snapshot snapshot = state.snapshot();
-        if (!snapshot.active()) return AgentForegroundActivityTick.PASS;
+        if (!snapshot.active()) return AgentActivityTick.PASS;
         if (agent == null || agent.getMapId() != snapshot.handle().mapId()) {
             terminate(entry, agent, AgentFieldLifecycleEvent.Phase.FAILED,
                     "Agent left the managed field map", nowMs);
-            return AgentForegroundActivityTick.CONSUMED;
+            return AgentActivityTick.CONSUMED;
         }
         if (snapshot.phase() == AgentFieldActivityState.Phase.SUSPENDED) {
-            return AgentForegroundActivityTick.IDLE;
+            return AgentActivityTick.IDLE;
         }
         if (snapshot.phase() == AgentFieldActivityState.Phase.DRAINING) {
             if (nowMs >= snapshot.exitDeadlineMs() || readyToExit(entry, agent)) {
                 terminate(entry, agent, AgentFieldLifecycleEvent.Phase.EXITED,
                         snapshot.exitReason(), nowMs);
-                return AgentForegroundActivityTick.CONSUMED;
+                return AgentActivityTick.CONSUMED;
             }
-            return AgentForegroundActivityTick.IDLE;
+            return AgentActivityTick.IDLE;
         }
         if (snapshot.phase() == AgentFieldActivityState.Phase.RESTING) {
             return tickRest(entry, agent, state, snapshot, nowMs);
@@ -131,7 +132,7 @@ public final class AgentFieldActivityRuntime {
             AgentModeService.startGrind(entry, AgentMovementStateResetService::clearNavigationState);
         }
         AgentFieldRuntime.refresh(entry, agent, nowMs);
-        return AgentForegroundActivityTick.IDLE;
+        return AgentActivityTick.IDLE;
     }
 
     public static boolean requestExit(
@@ -217,14 +218,14 @@ public final class AgentFieldActivityRuntime {
         return true;
     }
 
-    private static AgentForegroundActivityTick tickRest(
+    private static AgentActivityTick tickRest(
             AgentRuntimeEntry entry, Character agent, AgentFieldActivityState state,
             AgentFieldActivityState.Snapshot snapshot, long nowMs) {
         Point target = snapshot.restTarget();
         if (target == null) {
             state.completeRest();
             AgentModeService.startGrind(entry, AgentMovementStateResetService::clearNavigationState);
-            return AgentForegroundActivityTick.IDLE;
+            return AgentActivityTick.IDLE;
         }
         if (!state.restArrived() && close(agent.getPosition(), target)) {
             state.arriveRest();
@@ -243,7 +244,7 @@ public final class AgentFieldActivityRuntime {
                     "rest complete; returning to assigned territory", nowMs);
             AgentFieldCheckpointRuntime.persist(entry, agent, nowMs);
         }
-        return AgentForegroundActivityTick.IDLE;
+        return AgentActivityTick.IDLE;
     }
 
     private static boolean readyToExit(AgentRuntimeEntry entry, Character agent) {

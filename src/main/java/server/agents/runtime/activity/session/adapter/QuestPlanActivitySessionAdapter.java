@@ -43,10 +43,10 @@ public final class QuestPlanActivitySessionAdapter
         AgentPlanSessionPhase planPhase = AgentUniversalPlanRuntime.phase(entry);
         if (handle == null || !planPhase.ownsAgent()) {
             return AgentActivitySessionSnapshot.idle(
-                    AgentActivityKind.QUEST_PLAN, agent == null ? "" : Integer.toString(agent.getId()));
+                    AgentActivityKind.QUESTING, agent == null ? "" : Integer.toString(agent.getId()));
         }
         return new AgentActivitySessionSnapshot(
-                AgentActivityKind.QUEST_PLAN, phase(planPhase), handle.sessionId(),
+                AgentActivityKind.QUESTING, phase(planPhase), handle.sessionId(),
                 handle.requestId(), handle.callerId(), Integer.toString(handle.characterId()),
                 handle.startedAtMs(), "");
     }
@@ -102,7 +102,7 @@ public final class QuestPlanActivitySessionAdapter
         evidence.put("inputs", outcome.inputs());
         evidence.put("suggestedSuccessorPlanIds", outcome.suggestedSuccessorPlanIds());
         return new AgentActivityTerminalOutcome(
-                AgentActivityKind.QUEST_PLAN, phase(outcome.phase()),
+                AgentActivityKind.QUESTING, phase(outcome.phase()),
                 outcome.handle().sessionId(), Integer.toString(outcome.handle().characterId()),
                 outcome.reason(), outcome.retryable(), outcome.handle().startedAtMs(),
                 outcome.endedAtMs(), evidence);

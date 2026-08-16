@@ -9,8 +9,8 @@ import server.agents.capabilities.movement.AgentIdlePhysicsService;
 import server.agents.capabilities.trade.AgentTradeWindowTickService;
 import server.agents.capabilities.recovery.AgentRecoveryTickService;
 import server.agents.plans.AgentPlanReattachmentRuntime;
-import server.agents.plans.AgentForegroundPlanRuntime;
-import server.agents.runtime.maintenance.AgentMaintenanceSupervisor;
+import server.agents.runtime.activity.AgentActivityRuntime;
+import server.agents.inventory.AgentInventorySystem;
 import server.agents.capabilities.behavior.AgentCrowdRespiteRuntime;
 import server.agents.capabilities.behavior.AgentPioRelaxerInterludeRuntime;
 import server.agents.capabilities.combat.AgentLocalOpportunityAttackCoordinator;
@@ -62,7 +62,7 @@ public final class AgentLiveTickGateRuntime {
                 },
                 (entry, agent) -> tickObjectiveSupervision(entry, agent, System.currentTimeMillis()),
                 AgentLiveTickGateRuntime::tickForegroundTravelCombat,
-                (entry, agent) -> AgentForegroundPlanRuntime.tick(
+                (entry, agent) -> AgentActivityRuntime.tick(
                         entry, agent, System.currentTimeMillis()),
                 (tradeEntry, tradeAgent) -> AgentTradeWindowTickService.tickIfTradeWindowOpen(
                         tradeEntry,
@@ -125,7 +125,7 @@ public final class AgentLiveTickGateRuntime {
         if (AgentPlanReattachmentRuntime.reattachIfNeeded(entry, agent, nowMs)) {
             return true;
         }
-        return AgentMaintenanceSupervisor.tickRuntime(entry, agent, nowMs);
+        return AgentInventorySystem.tickMaintenance(entry, agent, nowMs);
     }
 
     private static void tickTradePhysics(AgentRuntimeEntry entry, Character agent, boolean perf) {

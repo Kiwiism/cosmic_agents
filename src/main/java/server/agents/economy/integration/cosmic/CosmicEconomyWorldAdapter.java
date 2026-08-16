@@ -12,7 +12,7 @@ import server.agents.economy.session.EconomySessionPort;
 import server.economy.EconomyOperationContext;
 import server.economy.EconomyOperationMetadata;
 import server.economy.EconomyTaxOverride;
-import server.agents.runtime.AgentExclusiveControlRuntime;
+import server.agents.runtime.AgentCommerceControlRuntime;
 
 import java.time.Instant;
 import java.util.Map;
@@ -211,8 +211,8 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort, Econom
         requireLiveFm(agent, true);
         if (offscreen.contains(profile.agentId())) throw new IllegalStateException("offscreen agent cannot trade");
         EconomyOperationMetadata metadata = metadata(profile, logicalAt, "MARKET_CYCLE", null);
-        if (AgentExclusiveControlRuntime.claimed(agent.getId()))
-            AgentExclusiveControlRuntime.attribute(agent.getId(), metadata);
+        if (AgentCommerceControlRuntime.claimed(agent.getId()))
+            AgentCommerceControlRuntime.attribute(agent.getId(), metadata);
         return EconomyOperationContext.with(metadata,
                 () -> market.perform(agent, profile, logicalAt));
     }
