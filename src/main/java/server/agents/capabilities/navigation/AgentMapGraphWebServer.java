@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.field.AgentFieldRuntime;
 import server.agents.field.AgentFieldLadderRuntime;
+import server.agents.field.AgentFieldObservationRuntime;
 import server.maps.MapleMap;
 
 import java.io.IOException;
@@ -186,11 +187,16 @@ public final class AgentMapGraphWebServer {
             if (ladder == null) {
                 ladder = Map.of();
             }
+            Object observation = AgentFieldObservationRuntime.statusForMapId(mapId);
+            if (observation == null) {
+                observation = Map.of();
+            }
             sendJson(exchange, 200, Map.of(
                     "mapId", mapId,
                     "sessions", AgentFieldRuntime.snapshotsForMapId(
                             mapId, System.currentTimeMillis()),
-                    "ladder", ladder));
+                    "ladder", ladder,
+                    "observation", observation));
         } catch (IllegalArgumentException exception) {
             sendJson(exchange, 400, Map.of("error", exception.getMessage()));
         } catch (RuntimeException exception) {

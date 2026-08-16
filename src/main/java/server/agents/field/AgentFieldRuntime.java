@@ -45,11 +45,32 @@ public final class AgentFieldRuntime {
             int killsPerMob,
             boolean acceptingQuestVisitors,
             long nowMs) {
+        return start(operator, requestedEntries, mode, objectiveMobIds, killsPerMob,
+                acceptingQuestVisitors, AgentFieldPolicyConfig.maximumParticipants(), nowMs);
+    }
+
+    static StartResult startObservation(
+            Character operator,
+            List<AgentRuntimeEntry> requestedEntries,
+            Set<Integer> allowedMobIds,
+            long nowMs) {
+        return start(operator, requestedEntries, AgentFieldMode.PARTY, allowedMobIds, Integer.MAX_VALUE,
+                false, 12, nowMs);
+    }
+
+    private static StartResult start(
+            Character operator,
+            List<AgentRuntimeEntry> requestedEntries,
+            AgentFieldMode mode,
+            Set<Integer> objectiveMobIds,
+            int killsPerMob,
+            boolean acceptingQuestVisitors,
+            int maximum,
+            long nowMs) {
         if (operator == null || operator.getMap() == null || requestedEntries == null
                 || requestedEntries.isEmpty() || mode == null) {
             return new StartResult(false, "Operator, map, participants, and mode are required.", "");
         }
-        int maximum = AgentFieldPolicyConfig.maximumParticipants();
         if (requestedEntries.size() > maximum) {
             return new StartResult(false, "Field exercises support at most " + maximum + " Agents.", "");
         }
@@ -96,6 +117,16 @@ public final class AgentFieldRuntime {
 
     public static boolean add(
             Character operator, AgentRuntimeEntry entry, AgentFieldIntent intent, long nowMs) {
+        return add(operator, entry, intent, AgentFieldPolicyConfig.maximumParticipants(), nowMs);
+    }
+
+    static boolean addObservation(
+            Character operator, AgentRuntimeEntry entry, AgentFieldIntent intent, long nowMs) {
+        return add(operator, entry, intent, 12, nowMs);
+    }
+
+    private static boolean add(
+            Character operator, AgentRuntimeEntry entry, AgentFieldIntent intent, int maximum, long nowMs) {
         if (operator == null || entry == null || intent == null) {
             return false;
         }
@@ -105,7 +136,7 @@ public final class AgentFieldRuntime {
             return false;
         }
         synchronized (session) {
-            if (session.participants.size() >= AgentFieldPolicyConfig.maximumParticipants()) {
+            if (session.participants.size() >= maximum) {
                 return false;
             }
             if (session.participants.containsKey(agent.getId())) {

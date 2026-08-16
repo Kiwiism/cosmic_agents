@@ -67,6 +67,7 @@ public final class MapleIslandCohortRuntime {
     private final MapleIslandCohortRunService runs;
     private final MapleIslandCohortRunService townLifeTests;
     private final MapleIslandCohortTelemetryService telemetry = new MapleIslandCohortTelemetryService();
+    private final Set<String> externalHarnessSessions = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     private MapleIslandCohortRuntime() throws IOException {
         MapleIslandCohortPoolRegistry registry = new MapleIslandCohortPoolRegistry(
@@ -156,6 +157,37 @@ public final class MapleIslandCohortRuntime {
 
     public MapleIslandCohortPoolSnapshot poolSnapshot() {
         return pool.snapshot();
+    }
+
+    /** Narrow lease bridge for Agent-owned harnesses that reuse the dedicated test pool. */
+    public List<MapleIslandCohortPoolSnapshot.Agent> acquireForExternalHarness(
+            int count, String sessionId, int ownerCharacterId, int world, int channel) throws Exception {
+        externalHarnessSessions.add(sessionId);
+        try {
+            return pool.acquire(count, sessionId, ownerCharacterId, world, channel, Set.of());
+        } catch (Exception | Error failure) {
+            externalHarnessSessions.remove(sessionId);
+            throw failure;
+        }
+    }
+
+    public void markExternalHarnessAgentActive(int characterId, String sessionId, long nowMs)
+            throws IOException {
+        pool.markActive(characterId, sessionId, nowMs);
+    }
+
+    public void markExternalHarnessAgentBroken(int characterId, String sessionId, String error)
+            throws IOException {
+        pool.markBroken(characterId, sessionId, error);
+    }
+
+    public void stopExternalHarnessAgent(int characterId) {
+        stopPooledAgent(characterId);
+    }
+
+    public int releaseExternalHarness(String sessionId) throws IOException {
+        externalHarnessSessions.remove(sessionId);
+        return pool.releaseSession(sessionId);
     }
 
     private MapleIslandCohortRunService.Hooks liveHooks() {
@@ -523,6 +555,7 @@ public final class MapleIslandCohortRuntime {
     private Set<String> activeSessionIds() {
         Set<String> active = new HashSet<>(runs.activeSessionIds());
         active.addAll(townLifeTests.activeSessionIds());
+        active.addAll(externalHarnessSessions);
         return Set.copyOf(active);
     }
 

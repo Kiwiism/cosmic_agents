@@ -2925,6 +2925,10 @@ tuning:
     # Purpose: Sets how many potions and job ammunition items the guarded manual field-test fixture grants so a scaling exercise is not interrupted by resupply.
     # Technical: AgentFieldTestFixtureService casts this configured count to short before provisioning each benchmark item; it affects only an explicitly requested test fixture.
     server.agents.field.AgentFieldTestFixtureService.BENCHMARK_SUPPLY_QUANTITY: '200'
+    # Values: 100-2000 milliseconds. Recommended: 250. Lower values provision a large roster faster; higher values reduce short-lived database and scheduler bursts.
+    # Purpose: Staggers reusable-pool Agent launches so the 105-Agent observation harness becomes visible promptly without admitting every character in one server tick.
+    # Technical: Delay multiplier applied to each scheduled launch ordinal by AgentFieldObservationRuntime; it affects only the explicit GM observation harness and not normal Agent spawning.
+    server.agents.field.AgentFieldObservationRuntime.LAUNCH_STAGGER_MS: '250'
     # Values: a positive integer. Recommended: 10-30 around the tested baseline 15; choose a level supported by the field-test build profiles being exercised.
     # Purpose: Sets the deterministic character level used by the guarded manual field-scaling fixture, keeping benchmark participants comparable across repeated sessions.
     # Technical: AgentFieldTestFixtureService levels the explicitly selected test Agent to this value and rejects an Agent already above it; ordinary Agent progression never reads this setting.

@@ -30,6 +30,7 @@ public final class AgentFieldCommandService {
         return switch (params[0]) {
             case "start" -> start(operator, params, nowMs);
             case "ladder" -> ladder(operator, params, nowMs);
+            case "observe" -> observe(operator, params, nowMs);
             case "prepare" -> prepare(operator, params, nowMs);
             case "add" -> add(operator, params, nowMs);
             case "remove" -> remove(operator, params, nowMs);
@@ -37,6 +38,97 @@ public final class AgentFieldCommandService {
             case "stop" -> stop(operator, nowMs);
             default -> help();
         };
+    }
+
+    private static List<String> observe(Character operator, String[] params, long nowMs) {
+        if (params.length < 2) {
+            return observeHelp();
+        }
+        return switch (params[1]) {
+            case "start" -> observeStart(operator, params, nowMs);
+            case "status" -> observeStatus(operator);
+            case "rotate" -> AgentFieldObservationRuntime.rotateNow(operator)
+                    ? List.of("Rotated every ready observation map to its next authored population window.")
+                    : List.of("No active observation deployment is ready to rotate.");
+            case "stop" -> {
+                AgentFieldObservationRuntime.StopResult stopped =
+                        AgentFieldObservationRuntime.stop(operator, nowMs);
+                yield List.of(stopped.message() + " Agents stopped: " + stopped.stoppedAgents() + '.');
+            }
+            case "catalog" -> observeCatalog();
+            default -> observeHelp();
+        };
+    }
+
+    private static List<String> observeStart(Character operator, String[] params, long nowMs) {
+        if (params.length > 4) {
+            return observeHelp();
+        }
+        String group = "all";
+        Integer mapId = null;
+        if (params.length >= 3) {
+            String selector = params[2].toLowerCase();
+            if (Set.of("all", "recommended", "exploratory").contains(selector)) {
+                group = selector;
+            } else {
+                try {
+                    mapId = Integer.parseInt(params[2]);
+                    group = null;
+                } catch (NumberFormatException invalid) {
+                    return List.of("Observation selector must be all, recommended, exploratory, or a catalog map ID.");
+                }
+            }
+        }
+        long seed = nowMs;
+        if (params.length == 4) {
+            try {
+                seed = Long.parseLong(params[3]);
+            } catch (NumberFormatException invalid) {
+                return List.of("Observation seed must be a whole number.");
+            }
+        }
+        AgentFieldObservationRuntime.StartResult result =
+                AgentFieldObservationRuntime.start(operator, group, mapId, seed, nowMs);
+        if (!result.success()) {
+            return List.of(result.message());
+        }
+        return List.of(result.message(), "Session " + result.sessionId() + " | maps=" + result.maps()
+                + " | pooled Agents=" + result.agents() + " | seed=" + seed + '.',
+                "Agents launch in 250ms waves; each ready map rotates every 120 seconds.");
+    }
+
+    private static List<String> observeStatus(Character operator) {
+        AgentFieldObservationRuntime.Status status = AgentFieldObservationRuntime.status(operator);
+        if (status == null) {
+            return List.of("No observation deployment is active in this world/channel.");
+        }
+        ArrayList<String> lines = new ArrayList<>();
+        lines.add("Observation " + status.sessionId() + " | seed=" + status.seed()
+                + " | roster=" + status.totalAgents() + " | supplies="
+                + (status.supplyDurationMs() / 3_600_000L) + "h | active=" + status.active() + '.');
+        for (AgentFieldObservationRuntime.MapStatus map : status.maps()) {
+            lines.add(map.mapId() + " " + map.mapName() + " | ready=" + map.readyAgents() + '/'
+                    + map.expectedAgents() + " | phase=" + map.phase() + " | grinding="
+                    + map.activeAgents() + " | rotation=" + map.activeCounts()
+                    + (map.failures().isEmpty() ? "" : " | failures=" + map.failures().size()));
+        }
+        return List.copyOf(lines);
+    }
+
+    private static List<String> observeCatalog() {
+        ArrayList<String> lines = new ArrayList<>();
+        AgentFieldObservationCatalogRepository.defaultRepository().maps().forEach(map -> lines.add(
+                map.mapId() + " " + map.mapName() + " | L" + map.level() + " | roster="
+                        + map.maximumAgents() + " | " + map.group() + " | active=" + map.activeCounts() + " | parties="
+                        + map.partySizes()));
+        return List.copyOf(lines);
+    }
+
+    private static List<String> observeHelp() {
+        return List.of(
+                "!agentfield observe start <all|recommended|exploratory|map-id> [seed]",
+                "!agentfield observe status | rotate | stop | catalog",
+                "This test-only harness reuses pooled Agents and does not raise the normal six-Agent field cap.");
     }
 
     private static List<String> ladder(Character operator, String[] params, long nowMs) {
@@ -272,6 +364,7 @@ public final class AgentFieldCommandService {
                 "!agentfield prepare <agent-name> <warrior|bowman|magician|thief-dagger|pirate-gun>",
                 "!agentfield start <solo|party> <free|objective> <1-6> [agent names...]",
                 "!agentfield ladder <warrior> <bowman> <magician> <thief> <pirate>",
+                "!agentfield observe start <all|recommended|exploratory|map-id> [seed] | status | rotate | stop | catalog",
                 "!agentfield add <agent-name> | remove <agent-name> | status | stop",
                 "Objective mode assigns the same configurable kill count to every live mob species.");
     }
