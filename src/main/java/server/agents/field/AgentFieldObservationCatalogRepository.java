@@ -9,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.IntStream;
 
 /** Loads and validates the reproducible level 15-25 observation manifest. */
 public final class AgentFieldObservationCatalogRepository {
@@ -19,6 +20,8 @@ public final class AgentFieldObservationCatalogRepository {
 
     private final AgentFieldObservationCatalog catalog;
     private final Map<Integer, AgentFieldObservationCatalog.MapPreset> byMapId;
+    private final List<NumberedMap> numberedMaps;
+    private final Map<Integer, Integer> numberByMapId;
 
     AgentFieldObservationCatalogRepository(AgentFieldObservationCatalog catalog) {
         this.catalog = catalog;
@@ -29,6 +32,13 @@ public final class AgentFieldObservationCatalogRepository {
             }
         }
         byMapId = Map.copyOf(indexed);
+        numberedMaps = IntStream.range(0, catalog.maps().size())
+                .mapToObj(index -> new NumberedMap(index + 1, catalog.maps().get(index)))
+                .toList();
+        LinkedHashMap<Integer, Integer> numbers = new LinkedHashMap<>();
+        numberedMaps.forEach(numbered -> numbers.put(
+                numbered.map().mapId(), numbered.number()));
+        numberByMapId = Map.copyOf(numbers);
     }
 
     public static AgentFieldObservationCatalogRepository defaultRepository() {
@@ -49,6 +59,42 @@ public final class AgentFieldObservationCatalogRepository {
 
     public Optional<AgentFieldObservationCatalog.MapPreset> find(int mapId) {
         return Optional.ofNullable(byMapId.get(mapId));
+    }
+
+    public List<NumberedMap> numberedMaps() {
+        return numberedMaps;
+    }
+
+    public Optional<NumberedMap> numberedMap(int number) {
+        return number < 1 || number > numberedMaps.size()
+                ? Optional.empty() : Optional.of(numberedMaps.get(number - 1));
+    }
+
+    public Optional<NumberedMap> numberedMapForMapId(int mapId) {
+        Integer number = numberByMapId.get(mapId);
+        return number == null ? Optional.empty() : numberedMap(number);
+    }
+
+    public NumberedMap relativeMap(int currentMapId, int offset) {
+        if (offset == 0) {
+            throw new IllegalArgumentException("observation map offset must not be zero");
+        }
+        Integer currentNumber = numberByMapId.get(currentMapId);
+        if (currentNumber == null) {
+            return offset > 0 ? numberedMaps.getFirst() : numberedMaps.getLast();
+        }
+        int targetIndex = Math.floorMod(currentNumber - 1 + offset, numberedMaps.size());
+        return numberedMaps.get(targetIndex);
+    }
+
+    public record NumberedMap(
+            int number,
+            AgentFieldObservationCatalog.MapPreset map) {
+        public NumberedMap {
+            if (number < 1 || map == null) {
+                throw new IllegalArgumentException("valid numbered observation map is required");
+            }
+        }
     }
 
     private static AgentFieldObservationCatalogRepository load() {

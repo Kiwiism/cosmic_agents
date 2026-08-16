@@ -38,6 +38,24 @@ class AgentFieldObservationCatalogRepositoryTest {
     }
 
     @Test
+    void numberedMapNavigationUsesStableCatalogOrderAndWraps() {
+        var repository = AgentFieldObservationCatalogRepository.defaultRepository();
+
+        assertEquals(93, repository.numberedMaps().size());
+        assertEquals(100020000, repository.numberedMap(1).orElseThrow().map().mapId());
+        assertEquals(100000004, repository.numberedMap(23).orElseThrow().map().mapId());
+        assertEquals(120010000, repository.numberedMap(93).orElseThrow().map().mapId());
+        assertTrue(repository.numberedMap(0).isEmpty());
+        assertTrue(repository.numberedMap(94).isEmpty());
+
+        assertEquals(1, repository.relativeMap(120010000, 1).number());
+        assertEquals(93, repository.relativeMap(100020000, -1).number());
+        assertEquals(1, repository.relativeMap(100000000, 1).number());
+        assertEquals(93, repository.relativeMap(100000000, -1).number());
+        assertEquals(79, repository.numberedMapForMapId(104040001).orElseThrow().number());
+    }
+
+    @Test
     void largeMapsUseStableSixOrSmallerPartyPartitions() {
         for (var map : AgentFieldObservationCatalogRepository.defaultRepository().maps()) {
             assertEquals(map.maximumAgents(), map.partySizes().stream().mapToInt(Integer::intValue).sum());
