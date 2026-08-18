@@ -1,16 +1,19 @@
 package server.agents.field;
 
 import client.Character;
+import client.BuffStat;
 import client.Job;
 import client.inventory.Equip;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.WeaponType;
+import server.StatEffect;
 import server.agents.capabilities.build.profiles.AgentApBuildProfileService;
 import server.agents.capabilities.build.profiles.AgentSpBuildProfileService;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
+import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
 import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
@@ -19,6 +22,9 @@ import server.agents.plans.AgentUniversalPlanRuntime;
 import server.agents.progression.AgentCareerBuildBundle;
 import server.agents.progression.VictoriaFirstJobMvpTestService;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.combat.CombatFormulaProvider;
+import server.life.LifeFactory;
+import server.life.Monster;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -26,7 +32,9 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SplittableRandom;
+import tools.Pair;
 
 /** Deterministically resets a dedicated pooled Agent for a long observation run. */
 final class AgentFieldObservationFixtureService {
@@ -36,48 +44,61 @@ final class AgentFieldObservationFixtureService {
     private static final int CROSSBOW_ARROW_ITEM_ID = 2_061_000;
     private static final int THROWING_STAR_ITEM_ID = 2_070_000;
     private static final int BULLET_ITEM_ID = 2_330_000;
+    private static final int SNIPER_PILL_ITEM_ID = 2_002_008;
     private static final short POWER_ELIXIRS = 2_000;
     private static final short ALL_CURES = 500;
+    private static final short SNIPER_PILLS = 100;
     private static final short PROJECTILES = 30_000;
     private static final byte OBSERVATION_USE_SLOTS = 96;
+    private static final double MINIMUM_ACCEPTABLE_HIT_CHANCE = 0.60d;
+    private static final int OBSERVATION_LEVEL_CAP = 25;
     private static final List<String> CAREERS = List.of(
             "warrior", "bowman", "magician", "thief-claw", "thief-dagger",
             "pirate-gun", "pirate-knuckle");
+    private static final String MAGICIAN_JOB_STYLE = "MAGICIAN";
 
     private AgentFieldObservationFixtureService() {
     }
 
     static Prepared prepare(AgentRuntimeEntry entry, int level, long seed, long nowMs) throws IOException {
+        return prepare(entry, level, Set.of(), seed, nowMs);
+    }
+
+    static Prepared prepare(AgentRuntimeEntry entry, int level, Set<Integer> allowedMobIds, long seed, long nowMs)
+            throws IOException {
         Character agent = AgentRuntimeIdentityRuntime.bot(entry);
         if (agent == null || level < 15 || level > 25) {
             throw new IllegalArgumentException("a spawned Agent and level 15-25 are required");
         }
-        String career = CAREERS.get((int) Math.floorMod(seed, CAREERS.size()));
-        AgentCareerBuildBundle bundle = VictoriaFirstJobMvpTestService.resetAndStart(
-                entry, career, "lv10", VictoriaFirstJobMvpTestService.Checkpoint.CHECKPOINT_2, nowMs);
-        AgentUniversalPlanRuntime.cancel(entry, agent, "field observation fixture", nowMs);
-        AgentUniversalPlanRuntime.clearCheckpoint(entry, agent.getId());
-        AgentMovementCommandRuntime.stop(entry);
-        while (agent.getLevel() < level) {
-            agent.levelUp(false);
-            AgentApBuildProfileService.autoAssign(entry, agent);
-            AgentSpBuildProfileService.autoAssign(entry, agent);
+        Set<Integer> allowed = allowedMobIds == null || allowedMobIds.isEmpty()
+                ? Set.of()
+                : Set.copyOf(allowedMobIds);
+
+        ObservationCandidate best = null;
+        ObservationCandidate bestMeetingThreshold = null;
+        int maxLevel = Math.min(level, OBSERVATION_LEVEL_CAP);
+        int startOffset = Math.floorMod(seed, CAREERS.size());
+        for (int index = 0; index < CAREERS.size(); index++) {
+            String career = CAREERS.get((index + startOffset) % CAREERS.size());
+            long careerSeed = mix(seed, index);
+            ObservationCandidate candidate = evaluateCareer(
+                    entry, career, maxLevel, allowed, careerSeed, (index + startOffset));
+            if (candidate == null) {
+                continue;
+            }
+            if (candidate.meetsAccuracyMinimum()) {
+                bestMeetingThreshold = betterCandidate(candidate, bestMeetingThreshold) ? candidate : bestMeetingThreshold;
+            }
+            best = betterCandidate(candidate, best) ? candidate : best;
         }
-        if (agent.getLevel() != level) {
-            throw new IllegalStateException("pooled fixture is already above requested level " + level);
+        ObservationCandidate selected = bestMeetingThreshold != null ? bestMeetingThreshold : best;
+        if (selected == null) {
+            throw new IllegalStateException("deterministic observation fixture has no compatible setup for the requested map");
         }
-        AgentApBuildProfileService.autoAssign(entry, agent);
-        AgentSpBuildProfileService.autoAssign(entry, agent);
-        List<Integer> equipment = applyDeterministicEquipmentLoadout(agent, seed);
-        provisionTwoHourSupplies(agent);
-        agent.healHpMp();
-        agent.equipChanged();
-        AgentCharacterGatewayRuntime.characters().save(agent, false);
-        return new Prepared(agent.getName(), level, bundle.bundleId(), bundle.apProfileId(),
-                bundle.spProfileId(), equipment, suppliedProjectile(agent));
+        return finalizeCandidate(entry, selected, nowMs);
     }
 
-    private static List<Integer> applyDeterministicEquipmentLoadout(Character agent, long seed) {
+    private static List<Integer> applyDeterministicEquipmentLoadout(Character agent, long seed, String career) {
         InventoryGateway inventory = AgentInventoryGatewayRuntime.inventory();
         clearInventory(agent, InventoryType.EQUIP, agent.getInventory(InventoryType.EQUIP).getSlotLimit());
         clearInventory(agent, InventoryType.EQUIPPED, agent.getInventory(InventoryType.EQUIPPED).getSlotLimit());
@@ -92,7 +113,7 @@ final class AgentFieldObservationFixtureService {
             }
             WeaponType weaponType = inventory.getWeaponType(itemId);
             if (weaponType != null && weaponType != WeaponType.NOT_A_WEAPON
-                    && !weaponCompatible(agent, weaponType)) {
+                    && !weaponCompatible(agent, weaponType, career)) {
                 continue;
             }
             String slot = normalizedSlot(inventory.getEquipmentSlot(itemId));
@@ -107,15 +128,15 @@ final class AgentFieldObservationFixtureService {
                 ? List.of("Cp", "MaPn", "So", "Gv", "Ae")
                 : List.of("Cp", "Ma", "Pn", "So", "Gv", "Ae");
         for (String slot : slots) {
-            selectOne(agent, inventory, candidatesBySlot, slot, random, selected);
+            selectOne(agent, inventory, candidatesBySlot, slot, random, false, selected);
         }
-        int weaponItemId = selectOne(agent, inventory, candidatesBySlot, "Wp", random, selected);
+        int weaponItemId = selectOne(agent, inventory, candidatesBySlot, "Wp", random, true, selected);
         if (weaponItemId == 0) {
             throw new IllegalStateException("deterministic observation preset has no compatible weapon");
         }
         WeaponType weaponType = inventory.getWeaponType(weaponItemId);
         if (supportsShield(weaponType, inventory.getEquipmentSlot(weaponItemId))) {
-            selectOne(agent, inventory, candidatesBySlot, "Si", random, selected);
+            selectOne(agent, inventory, candidatesBySlot, "Si", random, false, selected);
         }
         equipSelectedLoadout(agent, inventory, selected);
         Item weapon = agent.getInventory(InventoryType.EQUIPPED).getItem((short) -11);
@@ -127,6 +148,109 @@ final class AgentFieldObservationFixtureService {
             throw new IllegalStateException("deterministic observation preset has no complete outfit");
         }
         return List.copyOf(selected);
+    }
+
+    private static Prepared finalizeCandidate(AgentRuntimeEntry entry, ObservationCandidate selected, long nowMs)
+            throws IOException {
+        Character agent = AgentRuntimeIdentityRuntime.bot(entry);
+        if (agent == null) {
+            throw new IllegalArgumentException("a spawned Agent and level 15-25 are required");
+        }
+        AgentCareerBuildBundle bundle = VictoriaFirstJobMvpTestService.resetAndStart(
+                entry, selected.career(), "lv10", VictoriaFirstJobMvpTestService.Checkpoint.CHECKPOINT_2, nowMs);
+        AgentUniversalPlanRuntime.cancel(entry, agent, "field observation fixture", nowMs);
+        AgentUniversalPlanRuntime.clearCheckpoint(entry, agent.getId());
+        AgentMovementCommandRuntime.stop(entry);
+        while (agent.getLevel() < selected.level()) {
+            agent.levelUp(false);
+            AgentApBuildProfileService.autoAssign(entry, agent);
+            AgentSpBuildProfileService.autoAssign(entry, agent);
+        }
+        if (agent.getLevel() != selected.level()) {
+            throw new IllegalStateException("pooled fixture is already above requested level " + selected.level());
+        }
+        AgentApBuildProfileService.autoAssign(entry, agent);
+        AgentSpBuildProfileService.autoAssign(entry, agent);
+
+        List<Integer> equipment = applyDeterministicEquipmentLoadout(agent, selected.loadoutSeed(), selected.career());
+        provisionTwoHourSupplies(agent);
+        if (selected.meetsAccuracyMinimum()) {
+            applySniperPills(agent, selected.sniperPillsNeeded());
+        }
+        agent.healHpMp();
+        agent.equipChanged();
+        AgentCharacterGatewayRuntime.characters().save(agent, false);
+        return new Prepared(agent.getName(), selected.level(), bundle.bundleId(), bundle.apProfileId(),
+                bundle.spProfileId(), equipment, suppliedProjectile(agent));
+    }
+
+    private static ObservationCandidate evaluateCareer(
+            AgentRuntimeEntry entry,
+            String career,
+            int level,
+            Set<Integer> allowedMobIds,
+            long seed,
+            int careerOrder) throws IOException {
+        Character agent = AgentRuntimeIdentityRuntime.bot(entry);
+        if (agent == null) {
+            throw new IllegalArgumentException("a spawned Agent is required");
+        }
+        VictoriaFirstJobMvpTestService.resetAndStart(entry, career, "lv10",
+                VictoriaFirstJobMvpTestService.Checkpoint.CHECKPOINT_2, 0L);
+        AgentUniversalPlanRuntime.cancel(entry, agent, "field observation fixture", 0L);
+        AgentUniversalPlanRuntime.clearCheckpoint(entry, agent.getId());
+        AgentMovementCommandRuntime.stop(entry);
+
+        ObservationCandidate bestForCareer = null;
+        int bonusPerPill = sniperPillBonus();
+        for (int candidateLevel = level; candidateLevel <= OBSERVATION_LEVEL_CAP; candidateLevel++) {
+            while (agent.getLevel() < candidateLevel) {
+                agent.levelUp(false);
+                AgentApBuildProfileService.autoAssign(entry, agent);
+                AgentSpBuildProfileService.autoAssign(entry, agent);
+            }
+            if (agent.getLevel() != candidateLevel) {
+                continue;
+            }
+            AgentApBuildProfileService.autoAssign(entry, agent);
+            AgentSpBuildProfileService.autoAssign(entry, agent);
+
+            long loadoutSeed = mix(seed, candidateLevel);
+            try {
+                applyDeterministicEquipmentLoadout(agent, loadoutSeed, career);
+            } catch (IllegalStateException ignored) {
+                continue;
+            }
+            int requiredPills = requiredSniperPills(agent, allowedMobIds, bonusPerPill);
+            int effectivePills = requiredPills == Integer.MAX_VALUE ? SNIPER_PILLS : requiredPills;
+            double minimumHitChance = minimumHitChance(agent, allowedMobIds, effectivePills * bonusPerPill);
+            ObservationCandidate current = new ObservationCandidate(
+                    career, candidateLevel, loadoutSeed, requiredPills, minimumHitChance,
+                    requiredPills != Integer.MAX_VALUE, careerOrder);
+            if (betterCandidate(current, bestForCareer)) {
+                bestForCareer = current;
+            }
+        }
+        return bestForCareer;
+    }
+
+    private static boolean betterCandidate(ObservationCandidate candidate, ObservationCandidate best) {
+        if (best == null) {
+            return true;
+        }
+        if (candidate.meetsAccuracyMinimum() != best.meetsAccuracyMinimum()) {
+            return candidate.meetsAccuracyMinimum();
+        }
+        if (candidate.minimumHitChance() != best.minimumHitChance()) {
+            return candidate.minimumHitChance() > best.minimumHitChance();
+        }
+        if (candidate.sniperPillsNeeded() != best.sniperPillsNeeded()) {
+            return candidate.sniperPillsNeeded() < best.sniperPillsNeeded();
+        }
+        if (candidate.level() != best.level()) {
+            return candidate.level() > best.level();
+        }
+        return candidate.careerOrder() < best.careerOrder();
     }
 
     /**
@@ -171,18 +295,94 @@ final class AgentFieldObservationFixtureService {
                                  Map<String, List<Integer>> candidatesBySlot,
                                  String slot,
                                  SplittableRandom random,
+                                 boolean preferAccuracy,
                                  List<Integer> selected) {
-        List<Integer> candidates = candidatesBySlot.getOrDefault(slot, List.of()).stream()
-                .sorted(Comparator.naturalOrder()).toList();
+        List<Integer> candidates = candidatesBySlot.getOrDefault(slot, List.of());
         if (candidates.isEmpty()) {
             return 0;
         }
-        int itemId = candidates.get(random.nextInt(candidates.size()));
+        List<Integer> sortedCandidates = candidates.stream()
+                .sorted(preferAccuracy ? candidateAccuracyComparator(inventory) : Comparator.naturalOrder())
+                .toList();
+        int itemId;
+        if (preferAccuracy) {
+            itemId = sortedCandidates.get(0);
+        } else {
+            itemId = sortedCandidates.get(random.nextInt(sortedCandidates.size()));
+        }
         if (!inventory.addItem(agent, itemId, (short) 1)) {
             throw new IllegalStateException("could not add observation equipment " + itemId);
         }
         selected.add(itemId);
         return itemId;
+    }
+
+    private static Comparator<Integer> candidateAccuracyComparator(InventoryGateway inventory) {
+        return (left, right) -> {
+            int leftAcc = weaponOrEquipAccuracy(inventory, left);
+            int rightAcc = weaponOrEquipAccuracy(inventory, right);
+            int sort = Integer.compare(rightAcc, leftAcc);
+            if (sort != 0) {
+                return sort;
+            }
+            return Integer.compare(left, right);
+        };
+    }
+
+    private static int weaponOrEquipAccuracy(InventoryGateway inventory, int itemId) {
+        Equip equip = inventory.getEquipById(itemId);
+        return equip == null ? 0 : equip.getAcc();
+    }
+
+    private static int sniperPillBonus() {
+        InventoryGateway inventory = AgentInventoryGatewayRuntime.inventory();
+        StatEffect sniperPill = inventory.getItemEffect(SNIPER_PILL_ITEM_ID);
+        if (sniperPill == null) {
+            return 0;
+        }
+        for (Pair<BuffStat, Integer> stat : sniperPill.getStatups()) {
+            if (stat.getLeft() == BuffStat.ACC) {
+                return Math.max(0, stat.getRight());
+            }
+        }
+        return 0;
+    }
+
+    private static int requiredSniperPills(Character agent, Set<Integer> allowedMobIds, int bonusPerPill) {
+        for (int pills = 0; pills <= SNIPER_PILLS; pills++) {
+            if (minimumHitChance(agent, allowedMobIds, bonusPerPill * pills) >= MINIMUM_ACCEPTABLE_HIT_CHANCE) {
+                return pills;
+            }
+        }
+        return Integer.MAX_VALUE;
+    }
+
+    private static double minimumHitChance(Character agent, Set<Integer> allowedMobIds, int bonusAccuracy) {
+        if (allowedMobIds == null || allowedMobIds.isEmpty()) {
+            return 1.0;
+        }
+        CombatFormulaProvider combatFormula = CombatFormulaProvider.getInstance();
+        boolean isMage = agent.getJobStyle().name().equals(MAGICIAN_JOB_STYLE);
+        double minimum = 1.0;
+        for (int mobId : allowedMobIds) {
+            Monster mob = LifeFactory.getMonster(mobId);
+            if (mob == null) {
+                continue;
+            }
+            double hit = isMage
+                    ? combatFormula.calculateMobHitChance(agent, mob, true)
+                    : combatFormula.calculatePhysicalMobHitChance(
+                    combatFormula.getTotalAccuracy(agent) + bonusAccuracy, agent.getLevel(),
+                    mob.getLevel(), mob.getAvoidability());
+            minimum = Math.min(minimum, hit);
+        }
+        return minimum;
+    }
+
+    private static void applySniperPills(Character agent, int requiredPills) {
+        for (int used = 0; used < requiredPills; used++) {
+            AgentPrimitiveCapabilityGatewayRuntime.gateway().useItem(agent, SNIPER_PILL_ITEM_ID);
+        }
     }
 
     private static void provisionTwoHourSupplies(Character agent) {
@@ -192,6 +392,7 @@ final class AgentFieldObservationFixtureService {
         InventoryGateway inventory = AgentInventoryGatewayRuntime.inventory();
         require(inventory.addItem(agent, POWER_ELIXIR_ITEM_ID, POWER_ELIXIRS), "Power Elixirs");
         require(inventory.addItem(agent, ALL_CURE_ITEM_ID, ALL_CURES), "All Cure Potions");
+        require(inventory.addItem(agent, SNIPER_PILL_ITEM_ID, SNIPER_PILLS), "Sniper Pills");
         WeaponType weapon = equippedWeaponType(agent, inventory);
         int projectile = switch (weapon) {
             case BOW -> BOW_ARROW_ITEM_ID;
@@ -248,9 +449,19 @@ final class AgentFieldObservationFixtureService {
         };
     }
 
-    private static boolean weaponCompatible(Character agent, WeaponType weaponType) {
+    private static boolean weaponCompatible(Character agent, WeaponType weaponType, String career) {
         if (agent.getJob() != Job.WARRIOR) {
-            return AgentEquipmentService.isWeaponCompatible(agent, weaponType);
+            if (AgentEquipmentService.isWeaponCompatible(agent, weaponType)) {
+                return true;
+            }
+            if ("pirate-knuckle".equals(career)
+                    && switch (weaponType) {
+                        case SPEAR_STAB, SPEAR_SWING, POLE_ARM_STAB, POLE_ARM_SWING -> true;
+                        default -> false;
+                    }) {
+                return true;
+            }
+            return false;
         }
         return switch (weaponType) {
             case SWORD1H, SWORD2H, GENERAL1H_SWING, GENERAL1H_STAB,
@@ -272,6 +483,18 @@ final class AgentFieldObservationFixtureService {
         if (!added) {
             throw new IllegalStateException("could not provision " + description);
         }
+    }
+
+    private static long mix(long seed, long... values) {
+        long mixed = seed;
+        for (long value : values) {
+            mixed ^= value + 0x9E3779B97F4A7C15L + (mixed << 6) + (mixed >>> 2);
+        }
+        return mixed;
+    }
+
+    private record ObservationCandidate(String career, int level, long loadoutSeed, int sniperPillsNeeded,
+                                       double minimumHitChance, boolean meetsAccuracyMinimum, int careerOrder) {
     }
 
     record Prepared(String name, int level, String bundleId, String apProfileId, String spProfileId,

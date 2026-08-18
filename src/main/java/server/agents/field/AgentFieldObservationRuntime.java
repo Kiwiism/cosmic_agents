@@ -226,8 +226,8 @@ public final class AgentFieldObservationRuntime {
             AgentPartyLifecycleService.leaveAgentParty(agent);
             long agentSeed = mix(run.seed, mapRun.preset.mapId(), ordinal, agent.getId());
             AgentFieldObservationFixtureService.Prepared prepared =
-                    AgentFieldObservationFixtureService.prepare(entry, mapRun.preset.level(), agentSeed,
-                            System.currentTimeMillis());
+                    AgentFieldObservationFixtureService.prepare(entry, mapRun.preset.level(),
+                            mapRun.preset.allowedMobIds(), agentSeed, System.currentTimeMillis());
             AgentNavigationGraphService.warmGraphAsync(
                     entry, map, AgentMovementStateRuntime.movementProfileOrCharacter(entry, agent));
             entry.capabilityStates().require(AgentFieldObservationState.STATE_KEY)
