@@ -4,7 +4,6 @@ import client.Character;
 import com.zaxxer.hikari.HikariDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import server.TimerManager;
 import server.agents.economy.clock.RealtimeEconomyClock;
 import server.agents.economy.integration.cosmic.EconomyAgentRosterBinder;
 import server.agents.economy.integration.cosmic.EconomyRuntimeFactory;
@@ -20,8 +19,9 @@ import server.agents.economy.scenario.PopulationAdmissionPlanner;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentCommerceControlRuntime;
+import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.runtime.activity.AgentActivityBootstrap;
-import tools.DatabaseConnection;
+import server.agents.integration.AgentClientGatewayRuntime;
 
 import java.nio.file.Path;
 import java.util.Comparator;
@@ -94,8 +94,8 @@ public final class CommerceScenarioRuntime {
         for (var admission : admissions) {
             if (!admission.admittedAt().equals(start)) continue;
             Character character = mapped.get(admission.agentId());
-            if (character != null && character.getClient() != null
-                    && character.getClient().getChannel() == config.world.channelId
+            if (character != null && AgentClientGatewayRuntime.clients().hasClient(character)
+                    && AgentClientGatewayRuntime.clients().channel(character) == config.world.channelId
                     && character.getMapId() >= config.world.freeMarketEntranceMapId
                     && character.getMapId() <= config.world.lastFreeMarketRoomMapId) initialReady++;
         }
@@ -163,7 +163,7 @@ public final class CommerceScenarioRuntime {
                     "economy preflight blocked startup: " + String.join(" | ", readiness.blockers()));
             database = EconomyPostgresDataSource.fromEnvironment();
             ManagedEconomyRun started = EconomyRuntimeFactory.start(runId, configPath,
-                    DatabaseConnection.dataSource(), database, mapped::get, sessions -> {
+                    EconomyRuntimeFactory.serverDataSource(), database, mapped::get, sessions -> {
                         CommerceObservationSessionPort decorated = new CommerceObservationSessionPort(
                                 sessions, mapped, admissions,
                                 Instant.parse(config.config().clock.logicalStart),
@@ -204,8 +204,9 @@ public final class CommerceScenarioRuntime {
             Map<String, Character> mapped = new java.util.LinkedHashMap<>();
             persisted.forEach((logicalId, characterId) -> {
                 Character character = byId.get(characterId);
-                if (character == null || character.getClient() == null
-                        || character.getClient().getChannel() != config.config().world.channelId)
+                if (character == null || !AgentClientGatewayRuntime.clients().hasClient(character)
+                        || AgentClientGatewayRuntime.clients().channel(character)
+                        != config.config().world.channelId)
                     throw new IllegalStateException("reserved character is not live on channel "
                             + config.config().world.channelId + ": " + logicalId + " -> " + characterId);
                 mapped.put(logicalId, character);
@@ -216,7 +217,7 @@ public final class CommerceScenarioRuntime {
                     Instant.parse(config.config().clock.logicalStart),
                     new NamedRandomStreams(config.config().scenario.seed));
             ManagedEconomyRun resumed = EconomyRuntimeFactory.resume(runId, configPath,
-                    DatabaseConnection.dataSource(), database, mapped::get, sessions -> {
+                    EconomyRuntimeFactory.serverDataSource(), database, mapped::get, sessions -> {
                         CommerceObservationSessionPort decorated = new CommerceObservationSessionPort(
                                 sessions, mapped, admissions,
                                 Instant.parse(config.config().clock.logicalStart),
@@ -417,7 +418,7 @@ public final class CommerceScenarioRuntime {
     private static void scheduleAutoAdvance() {
         if (autoAdvanceTask == null && run != null
                 && (requestedLogicalTarget != null || realtimeClock != null)) {
-            autoAdvanceTask = TimerManager.getInstance().schedule(
+            autoAdvanceTask = AgentSchedulerRuntime.schedule(
                     CommerceScenarioRuntime::autoAdvanceTick,
                     realtimeClock == null ? AUTO_ADVANCE_POLL_MS : REALTIME_POLL_MS);
         }

@@ -309,7 +309,14 @@ public final class AgentAttackExecutionProvider {
     }
 
     public static WeaponType getEquippedWeaponType(Character bot) {
-        Item weapon = bot.getInventory(InventoryType.EQUIPPED).getItem((short) -11);
+        if (bot == null) {
+            return null;
+        }
+        Inventory equipped = bot.getInventory(InventoryType.EQUIPPED);
+        if (equipped == null) {
+            return null;
+        }
+        Item weapon = equipped.getItem((short) -11);
         if (weapon == null) {
             return null;
         }

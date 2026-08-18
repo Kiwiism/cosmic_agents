@@ -4,8 +4,10 @@ package server.agents.capabilities.partyquest.kpq;
 public final class AgentKpqRecruitmentPolicy {
     public static final int MIN_PARTY_SIZE = 3;
     public static final int MAX_PARTY_SIZE = 4;
-    private static final long THREE_MEMBER_MIN_WAIT_MS = 20_000L;
-    private static final long THREE_MEMBER_MAX_WAIT_MS = 45_000L;
+    private static final long THREE_MEMBER_MIN_WAIT_MS = config.AgentTuning.longValue(
+            "server.agents.capabilities.partyquest.kpq.AgentKpqRecruitmentPolicy.THREE_MEMBER_MIN_WAIT_MS");
+    private static final long THREE_MEMBER_MAX_WAIT_MS = config.AgentTuning.longValue(
+            "server.agents.capabilities.partyquest.kpq.AgentKpqRecruitmentPolicy.THREE_MEMBER_MAX_WAIT_MS");
 
     private AgentKpqRecruitmentPolicy() {
     }

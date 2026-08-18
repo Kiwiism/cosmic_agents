@@ -20,6 +20,7 @@ public final class AgentGatewayAffinityCatalog {
             NpcGateway.class,
             PacketGateway.class,
             PartyGateway.class,
+            PartyQuestGateway.class,
             PrimitiveCapabilityGateway.class,
             QuestGateway.class,
             SchedulerGateway.class,

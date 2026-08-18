@@ -53,6 +53,38 @@ public final class AgentFieldPolicyConfig {
         return tuningInt("SAFE_SPOT_SAMPLE_STEP_PX");
     }
 
+    public static boolean questVisitorPreemptionEnabled() {
+        return tuningBoolean("QUEST_VISITOR_PREEMPTION_ENABLED");
+    }
+
+    public static long minimumPreemptionLeaseAgeMs() {
+        return tuningLong("MINIMUM_PREEMPTION_LEASE_AGE_MS");
+    }
+
+    public static long preemptionCooldownMs() {
+        return tuningLong("PREEMPTION_COOLDOWN_MS");
+    }
+
+    public static long visitorProgressTimeoutMs() {
+        return tuningLong("VISITOR_PROGRESS_TIMEOUT_MS");
+    }
+
+    public static int preemptionPlayerExclusionRadiusPx() {
+        return tuningInt("PREEMPTION_PLAYER_EXCLUSION_RADIUS_PX");
+    }
+
+    public static int preemptionLivePopulationWeight() {
+        return tuningInt("PREEMPTION_LIVE_POPULATION_WEIGHT");
+    }
+
+    public static int preemptionSafeRestPenalty() {
+        return tuningInt("PREEMPTION_SAFE_REST_PENALTY");
+    }
+
+    public static long maximumDisplacementScore() {
+        return tuningLong("MAXIMUM_DISPLACEMENT_SCORE");
+    }
+
     public static int testObjectiveKillsPerMob() {
         return tuningInt("TEST_OBJECTIVE_KILLS_PER_MOB");
     }
@@ -115,6 +147,10 @@ public final class AgentFieldPolicyConfig {
 
     private static long tuningLong(String suffix) {
         return AgentTuning.longValue(TUNING_PREFIX + suffix);
+    }
+
+    private static boolean tuningBoolean(String suffix) {
+        return AgentTuning.booleanValue(TUNING_PREFIX + suffix);
     }
 
 }

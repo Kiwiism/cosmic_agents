@@ -42,6 +42,7 @@ class AgentCombatReportRuntimeTest {
         AgentCombatCooldownStateRuntime.maxAttackCooldown(entry, 250);
         when(target.isAlive()).thenReturn(true);
         when(target.getName()).thenReturn("Slime");
+        AgentGrindTargetStateRuntime.setTarget(entry, target);
 
         try (MockedStatic<AgentCombatTargetRuntime> targets = mockStatic(AgentCombatTargetRuntime.class);
              MockedStatic<AgentCombatPlanRuntime> plans = mockStatic(AgentCombatPlanRuntime.class)) {

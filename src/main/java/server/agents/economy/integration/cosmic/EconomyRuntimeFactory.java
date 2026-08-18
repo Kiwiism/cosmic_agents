@@ -9,6 +9,7 @@ import server.agents.economy.persistence.*;
 import server.agents.economy.scenario.*;
 import server.agents.integration.AgentShopGatewayRuntime;
 import server.agents.simulation.activity.CosmicExternalAgentActivityAdapter;
+import tools.DatabaseConnection;
 
 import javax.sql.DataSource;
 import java.nio.file.Path;
@@ -21,6 +22,11 @@ import java.util.function.UnaryOperator;
 /** Composes the decoupled economy module around already-live Cosmic agent characters. */
 public final class EconomyRuntimeFactory {
     private EconomyRuntimeFactory() { }
+
+    /** Cosmic persistence seam kept inside the economy integration adapter. */
+    public static DataSource serverDataSource() {
+        return DatabaseConnection.dataSource();
+    }
 
     public static ManagedEconomyRun start(UUID runId, Path yaml, DataSource cosmicDataSource,
                                           DataSource economyDataSource,

@@ -25,9 +25,11 @@ final class AgentKpqCoordinator {
     private static final PrimitiveCapabilityGateway ACTIONS = AgentPrimitiveCapabilityGatewayRuntime.gateway();
     private static final PartyQuestGateway KPQ = AgentPartyQuestGatewayRuntime.partyQuest();
     private static final Set<Integer> STAGE_1_MOBS = Set.of(9_300_001);
-    private static final long FORMATION_STABLE_MS = 900L;
+    private static final long FORMATION_STABLE_MS = config.AgentTuning.longValue(
+            "server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.FORMATION_STABLE_MS");
     private static final long PHASE_TIMEOUT_MS = 8 * 60_000L;
-    private static final int NEAR_PX = 85;
+    private static final int NEAR_PX = config.AgentTuning.intValue(
+            "server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.NEAR_PX");
 
     private AgentKpqCoordinator() {
     }

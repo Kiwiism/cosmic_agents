@@ -36,8 +36,10 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class AgentKpqTestService {
     private static final Logger log = LoggerFactory.getLogger(AgentKpqTestService.class);
     private static final AgentSpawnCommandExecutor PROVISIONING = new AgentSpawnCommandExecutor();
-    private static final long SPAWN_STAGGER_MS = 850L;
-    private static final int ROSTER_SIZE = 24;
+    private static final long SPAWN_STAGGER_MS = config.AgentTuning.longValue(
+            "server.agents.capabilities.partyquest.kpq.AgentKpqTestService.SPAWN_STAGGER_MS");
+    private static final int ROSTER_SIZE = config.AgentTuning.intValue(
+            "server.agents.capabilities.partyquest.kpq.AgentKpqTestService.ROSTER_SIZE");
     private static final ConcurrentHashMap<Integer, Run> RUNS = new ConcurrentHashMap<>();
 
     private AgentKpqTestService() {

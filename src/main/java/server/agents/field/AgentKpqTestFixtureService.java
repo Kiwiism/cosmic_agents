@@ -12,7 +12,7 @@ import java.io.IOException;
 
 /** Reuses the legal level-25 observation loadout and adds the requested KPQ accuracy reserve. */
 public final class AgentKpqTestFixtureService {
-    private static final int SNIPER_PILL = 2_002_008;
+    private static final int SNIPER_PILL_ITEM_ID = 2_002_008;
 
     private AgentKpqTestFixtureService() {
     }
@@ -23,9 +23,10 @@ public final class AgentKpqTestFixtureService {
         CosmicMapleIslandCohortIdentity.apply(agent,
                 MapleIslandCohortCharacterCatalog.template(appearance));
         AgentFieldObservationFixtureService.prepare(entry, 25, seed, nowMs);
-        if (!AgentInventoryGatewayRuntime.inventory().addItem(agent, SNIPER_PILL, (short) 100)) {
+        if (!AgentInventoryGatewayRuntime.inventory().addItem(
+                agent, SNIPER_PILL_ITEM_ID, (short) 100)) {
             throw new IllegalStateException("Could not add KPQ accuracy pills");
         }
-        AgentPrimitiveCapabilityGatewayRuntime.gateway().useItem(agent, SNIPER_PILL);
+        AgentPrimitiveCapabilityGatewayRuntime.gateway().useItem(agent, SNIPER_PILL_ITEM_ID);
     }
 }

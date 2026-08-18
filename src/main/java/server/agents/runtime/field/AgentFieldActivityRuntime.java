@@ -128,6 +128,9 @@ public final class AgentFieldActivityRuntime {
         if (snapshot.phase() == AgentFieldActivityState.Phase.RESTING) {
             return tickRest(entry, agent, state, snapshot, nowMs);
         }
+        if (AgentFieldRuntime.isDisplaced(agent)) {
+            return AgentActivityTick.IDLE;
+        }
         if (!entry.modeState().grinding()) {
             AgentModeService.startGrind(entry, AgentMovementStateResetService::clearNavigationState);
         }

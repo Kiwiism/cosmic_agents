@@ -754,7 +754,7 @@ tuning:
     server.agents.capabilities.combat.AgentCombatConfig.MOB_HIT_COOLDOWN_MS: '1500'
     # Values: comma-separated monster ids. Recommended: keep limited to scripted tutorial actors that must not deal touch damage.
     # Purpose: Declares data-driven exceptions to normal monster touch damage.
-    # Technical: parsed once at startup by the mob-touch policy.
+    # Technical: Parsed once at startup by AgentMobTouchPolicy into an immutable monster-id set consulted by server-authoritative touch collision handling.
     server.agents.capabilities.combat.AgentMobTouchPolicy.IGNORED_MOB_IDS: '9300018'
     # Values: a finite non-negative integer; unit: map pixels. Recommended: 25-100 around the tested baseline 50; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls the distance or margin used for monster touch sweep height. Higher values allow action from farther away or leave more space; lower values require closer, more precise positioning.
@@ -1560,6 +1560,30 @@ tuning:
     # Purpose: Controls how long Agents remain in or wait for wait. Higher values make that pause or state last longer; lower values make them continue sooner.
     # Technical: the "kpq stage1" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled.
     server.agents.capabilities.partyquest.kpq.AgentKpqStage1.WAIT_MS: '1800'
+    # Values: 100-5000 milliseconds. Recommended: 900. Increase only when formation members visibly oscillate before the KPQ stage advances.
+    # Purpose: Requires a KPQ formation to remain continuously settled before the coordinator accepts the group as ready for its next stage action.
+    # Technical: AgentKpqCoordinator compares the current wall clock with each participant's stable-since timestamp; this value does not affect navigation speed.
+    server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.FORMATION_STABLE_MS: '900'
+    # Values: 20-250 map pixels. Recommended: 85. Higher values allow pass delivery from farther away; lower values require tighter visual grouping.
+    # Purpose: Defines how close a KPQ member must stand to the event leader before dropping a collected pass for coordinated stage completion.
+    # Technical: AgentKpqCoordinator applies this Euclidean map-pixel threshold only to the ordinary pass-delivery interaction, not portal or NPC reachability.
+    server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.NEAR_PX: '85'
+    # Values: 5000-120000 milliseconds. Recommended: 20000. Higher values make three-member parties wait longer for a fourth participant.
+    # Purpose: Establishes the earliest point at which a valid three-member KPQ lobby may probabilistically launch instead of waiting for full capacity.
+    # Technical: AgentKpqRecruitmentPolicy adds deterministic seed jitter to this lower bound and caps the result with THREE_MEMBER_MAX_WAIT_MS.
+    server.agents.capabilities.partyquest.kpq.AgentKpqRecruitmentPolicy.THREE_MEMBER_MIN_WAIT_MS: '20000'
+    # Values: 5000-180000 milliseconds. Recommended: 45000. Keep this at or above the configured three-member minimum waiting duration.
+    # Purpose: Bounds how long a valid three-member KPQ party waits for a fourth member before it proceeds with the smaller legal roster.
+    # Technical: AgentKpqRecruitmentPolicy clamps its deterministic launch threshold to this wall-clock duration after recruitment started.
+    server.agents.capabilities.partyquest.kpq.AgentKpqRecruitmentPolicy.THREE_MEMBER_MAX_WAIT_MS: '45000'
+    # Values: 0-5000 milliseconds. Recommended: 850. Higher values reduce simultaneous login pressure but make observation setup take longer.
+    # Purpose: Spaces GM-only KPQ harness Agent launches so character registration and map placement remain visually observable and operationally stable.
+    # Technical: AgentKpqTestService multiplies this delay by each deterministic roster ordinal when scheduling initial and replacement participant launches.
+    server.agents.capabilities.partyquest.kpq.AgentKpqTestService.SPAWN_STAGGER_MS: '850'
+    # Values: 4-100 Agents. Recommended: 24. The roster must remain larger than one live KPQ party to support replacement observations.
+    # Purpose: Controls how many named fixture Agents the GM-only KPQ observation harness makes available for recruitment and participant replacement.
+    # Technical: AgentKpqTestService generates KPQer01 through this inclusive count before deterministic seeded shuffling; production KPQ admission is unaffected.
+    server.agents.capabilities.partyquest.kpq.AgentKpqTestService.ROSTER_SIZE: '24'
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 1250-5000 around the tested baseline 2500; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how long Agents remain in or wait for destination settle. Higher values make that pause or state last longer; lower values make them continue sooner.
     # Technical: the "portal travel capability" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled.
@@ -2951,6 +2975,38 @@ tuning:
     # Purpose: Provides a deterministic balance between safe-spot placement accuracy and graph sampling cost across the 93 maps.
     # Technical: Horizontal sample stride and minimum staging-point separation in the generated safe-spot policy.
     server.agents.field.AgentFieldPolicyConfig.SAFE_SPOT_SAMPLE_STEP_PX: '32'
+    # Values: true or false. Recommended: true. Disable to make full Hunting sessions reject quest visitors instead of temporarily lending an occupied station.
+    # Purpose: Allows urgent quest work to use a compatible crowded-map station while retaining a runtime kill switch for observation and troubleshooting.
+    # Technical: Global gate for quest-visitor incumbent selection; closed sessions and human player occupancy remain non-preemptible regardless of this value.
+    server.agents.field.AgentFieldPolicyConfig.QUEST_VISITOR_PREEMPTION_ENABLED: 'true'
+    # Values: 0-120000 milliseconds. Recommended: 15000. Higher values make station leases more stable before a general hunter can yield.
+    # Purpose: Prevents a newly placed hunter from immediately being moved when a quest visitor arrives.
+    # Technical: Minimum continuous age of the incumbent's current station assignment before the pure preemption policy accepts it.
+    server.agents.field.AgentFieldPolicyConfig.MINIMUM_PREEMPTION_LEASE_AGE_MS: '15000'
+    # Values: 0-600000 milliseconds. Recommended: 60000. Higher values protect a previously displaced hunter from repeated interruptions.
+    # Purpose: Adds fairness and hysteresis when several quest visitors enter the same crowded map.
+    # Technical: Per-map incumbent cooldown measured from its most recent completed displacement transaction.
+    server.agents.field.AgentFieldPolicyConfig.PREEMPTION_COOLDOWN_MS: '60000'
+    # Values: 10000-600000 milliseconds. Recommended: 180000. Higher values tolerate slower kills and unlucky quest drops.
+    # Purpose: Restores the displaced hunter when a visitor stops producing relevant combat progress instead of holding the station indefinitely.
+    # Technical: Sliding timeout renewed by the field visitor's recorded damage; objective completion and map departure still release immediately.
+    server.agents.field.AgentFieldPolicyConfig.VISITOR_PROGRESS_TIMEOUT_MS: '180000'
+    # Values: 100-1200 map pixels. Recommended: 500. Higher values reserve more space around actively present human players.
+    # Purpose: Prevents an autonomous preemption from assigning a quest visitor directly onto a player's occupied hunting platform.
+    # Technical: Euclidean exclusion radius checked against real-player perception for the incumbent station proposed for transfer.
+    server.agents.field.AgentFieldPolicyConfig.PREEMPTION_PLAYER_EXCLUSION_RADIUS_PX: '500'
+    # Values: 0-100000 score points per live mob. Recommended: 5000. Higher values protect productive incumbent stations more strongly.
+    # Purpose: Makes the coordinator prefer displacing a hunter whose current local opportunity is already low.
+    # Technical: Multiplier applied to the incumbent cell's live population when computing deterministic displacement cost.
+    server.agents.field.AgentFieldPolicyConfig.PREEMPTION_LIVE_POPULATION_WEIGHT: '5000'
+    # Values: 0-100000 score points. Recommended: 20000. Higher values prefer incumbents that have a productive replacement station.
+    # Purpose: Avoids staging a useful hunter at a safe spot when another legal station transfer can solve the crowd conflict.
+    # Technical: Additive displacement cost when no unoccupied replacement capacity exists for the incumbent.
+    server.agents.field.AgentFieldPolicyConfig.PREEMPTION_SAFE_REST_PENALTY: '20000'
+    # Values: 0-1000000 score points. Recommended: 80000. Lower values permit only very cheap displacements; 0 effectively rejects every positive-cost transfer.
+    # Purpose: Bounds the amount of map throughput and movement churn that one temporary quest visitor may impose.
+    # Technical: Maximum accepted cost from live population, visitor distance, and optional safe-rest penalty in AgentFieldPreemptionPolicy.
+    server.agents.field.AgentFieldPolicyConfig.MAXIMUM_DISPLACEMENT_SCORE: '80000'
     # Values: 1-100 kills per species. Recommended: 10. Higher values create longer observations; lower values make quick smoke exercises.
     # Purpose: Gives every live mob species an equal target in automatic field exercises so target selection and coverage can be compared without quest bias.
     # Technical: Initial authoritative kill requirement generated only by the GM harness; normal quest directives retain their own objective counters.

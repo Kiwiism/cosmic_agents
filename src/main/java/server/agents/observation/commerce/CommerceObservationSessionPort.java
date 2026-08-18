@@ -4,6 +4,7 @@ import client.Character;
 import server.agents.economy.scenario.PopulationAdmissionPlanner;
 import server.agents.economy.session.CommerceParticipant;
 import server.agents.economy.session.EconomySessionPort;
+import server.agents.economy.integration.cosmic.CosmicCommerceObservationPresenceAdapter;
 import server.maps.MapleMap;
 import server.maps.Portal;
 
@@ -20,6 +21,7 @@ public final class CommerceObservationSessionPort implements EconomySessionPort 
     private final EconomySessionPort delegate;
     private final Map<String, Character> directory;
     private final int freeMarketEntranceMapId;
+    private final CommerceObservationPresencePort presence;
     private final Map<String, OriginalPresence> staged = new ConcurrentHashMap<>();
 
     public CommerceObservationSessionPort(
@@ -28,8 +30,20 @@ public final class CommerceObservationSessionPort implements EconomySessionPort 
             List<PopulationAdmissionPlanner.Admission> admissions,
             Instant logicalStart,
             int freeMarketEntranceMapId) {
+        this(delegate, directory, admissions, logicalStart, freeMarketEntranceMapId,
+                CosmicCommerceObservationPresenceAdapter.INSTANCE);
+    }
+
+    CommerceObservationSessionPort(
+            EconomySessionPort delegate,
+            Map<String, Character> directory,
+            List<PopulationAdmissionPlanner.Admission> admissions,
+            Instant logicalStart,
+            int freeMarketEntranceMapId,
+            CommerceObservationPresencePort presence) {
         this.delegate = java.util.Objects.requireNonNull(delegate, "Commerce sessions");
         this.directory = Map.copyOf(directory);
+        this.presence = java.util.Objects.requireNonNull(presence, "Commerce presence");
         if (freeMarketEntranceMapId <= 0) {
             throw new IllegalArgumentException("Free Market entrance map id must be positive");
         }
@@ -90,9 +104,9 @@ public final class CommerceObservationSessionPort implements EconomySessionPort 
         for (String id : ids) {
             OriginalPresence original = staged.remove(id);
             Character agent = directory.get(id);
-            if (original == null || agent == null || agent.getClient() == null) continue;
-            MapleMap map = agent.getClient().getChannelServer().getMapFactory().getMap(original.mapId());
-            agent.changeMap(map, original.position());
+            if (original == null || !presence.live(agent)) continue;
+            MapleMap map = presence.resolveMap(agent, original.mapId());
+            presence.changeMap(agent, map, original.position());
         }
     }
 
@@ -121,8 +135,7 @@ public final class CommerceObservationSessionPort implements EconomySessionPort 
         if (original == null) return;
         Character agent = requireAgent(agentId);
         try {
-            MapleMap entrance = agent.getClient().getChannelServer()
-                    .getMapFactory().getMap(freeMarketEntranceMapId);
+            MapleMap entrance = presence.resolveMap(agent, freeMarketEntranceMapId);
             Portal spawn = entrance.getPortal(0);
             if (spawn == null) {
                 spawn = entrance.findClosestPlayerSpawnpoint(new Point());
@@ -130,7 +143,7 @@ public final class CommerceObservationSessionPort implements EconomySessionPort 
             if (spawn == null) {
                 throw new IllegalStateException("Free Market entrance has no spawn portal");
             }
-            agent.changeMap(entrance, spawn.getPosition());
+            presence.changeMap(agent, entrance, spawn.getPosition());
         } catch (RuntimeException failure) {
             staged.put(agentId, original);
             throw failure;
@@ -139,7 +152,7 @@ public final class CommerceObservationSessionPort implements EconomySessionPort 
 
     private Character requireAgent(String agentId) {
         Character agent = directory.get(agentId);
-        if (agent == null || agent.getClient() == null) {
+        if (!presence.live(agent)) {
             throw new IllegalStateException("Commerce observation participant is not live: " + agentId);
         }
         return agent;
