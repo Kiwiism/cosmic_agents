@@ -1,5 +1,7 @@
 package server.agents.capabilities.combat;
 
+import server.agents.runtime.state.AgentCapabilityStateKey;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -7,6 +9,10 @@ import java.util.Map;
  * Runtime toggles and cooldowns for automated skill buffs and support buffs.
  */
 public final class AgentCombatBuffState {
+    public static final AgentCapabilityStateKey<AgentCombatBuffState> STATE_KEY =
+            new AgentCapabilityStateKey<>("combat.skill-buffs",
+                    AgentCombatBuffState.class, AgentCombatBuffState::new);
+
     private final Map<Integer, Long> nextBuffAt = new HashMap<>();
     private final Map<Integer, Long> nextSupportBuffAt = new HashMap<>();
     private boolean supportHealsEnabled = true;

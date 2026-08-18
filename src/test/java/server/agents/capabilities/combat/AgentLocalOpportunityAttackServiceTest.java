@@ -87,6 +87,20 @@ class AgentLocalOpportunityAttackServiceTest {
                 agentPos, blockerPos, 100));
     }
 
+    @Test
+    void onlyCommittedTransactionsAuthorizeLocalAttackSideEffects() {
+        assertFalse(AgentLocalOpportunityAttackService.committed(null));
+        assertFalse(AgentLocalOpportunityAttackService.committed(
+                AgentAttackTransactionResult.deferred(
+                        AgentAttackTransactionResult.Reason.ATTACK_COOLDOWN, 100, 0)));
+        assertFalse(AgentLocalOpportunityAttackService.committed(
+                AgentAttackTransactionResult.rejected(
+                        AgentAttackTransactionResult.Reason.HANDLER_REJECTED, 100, 0)));
+        assertTrue(AgentLocalOpportunityAttackService.committed(
+                AgentAttackTransactionResult.committed(
+                        100, 0, java.util.List.of(1), 1, 0, 10L)));
+    }
+
     private static AgentLocalOpportunityAttackService.Hooks hooksCounting(AtomicInteger hookCalls) {
         return new AgentLocalOpportunityAttackService.Hooks(
                 (entry, agentPos, combatTargetPos) -> {
@@ -98,6 +112,11 @@ class AgentLocalOpportunityAttackServiceTest {
                     return 0;
                 },
                 (entry, agent, dx) -> hookCalls.incrementAndGet(),
-                (entry, agentPos, referencePos) -> hookCalls.incrementAndGet());
+                (entry, agentPos, referencePos) -> hookCalls.incrementAndGet(),
+                (entry, agent, attackPlan) -> {
+                    hookCalls.incrementAndGet();
+                    return AgentAttackTransactionResult.deferred(
+                            AgentAttackTransactionResult.Reason.ATTACK_COOLDOWN, 0, 0);
+                });
     }
 }

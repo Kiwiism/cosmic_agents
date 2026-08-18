@@ -5,7 +5,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 import java.awt.Point;
 
 /**
- * Agent-owned adapter for temporary AgentRuntimeEntry-backed ranged retreat hold state.
+ * Capability-owned adapter for ranged retreat hold state.
  */
 public final class AgentRetreatHoldStateRuntime {
     private AgentRetreatHoldStateRuntime() {

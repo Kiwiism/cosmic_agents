@@ -3,7 +3,7 @@ package server.agents.capabilities.combat;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**
- * Agent-owned adapter for temporary AgentRuntimeEntry-backed ranged degenerate-hit state.
+ * Capability-owned adapter for ranged degenerate-hit state.
  */
 public final class AgentDegenerateAttackStateRuntime {
     private AgentDegenerateAttackStateRuntime() {

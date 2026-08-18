@@ -53,13 +53,15 @@ public final class AgentGrindLootTargetService {
         AgentPostKillLootState postKillState =
                 entry.capabilityStates().require(AgentPostKillLootState.STATE_KEY);
         AgentPostKillLootState.Snapshot postKill = postKillState.snapshot(nowMs);
+        AgentLootCollectionContextState.Snapshot collectionContext =
+                AgentLootCollectionContextRuntime.snapshot(entry);
         WeaponType weaponType = equippedWeaponType(agent);
         boolean ranged = AgentPostKillLootPolicy.isRanged(weaponType);
         AgentLootDecisionTraceState.Mode traceMode = ranged
                 ? AgentLootDecisionTraceState.Mode.POST_KILL_RANGED
                 : AgentLootDecisionTraceState.Mode.POST_KILL_MELEE;
         if (!AgentPostKillLootPolicy.shouldCollect(
-                weaponType, postKill, hasCombatTarget, nowMs)) {
+                weaponType, postKill, hasCombatTarget, nowMs, collectionContext)) {
             recordLootDecision(entry, traceMode,
                     AgentLootDecisionTraceState.Outcome.POLICY_DEFERRED,
                     nowMs, postKill.killCount(), hasCombatTarget, null, 0L);
@@ -107,9 +109,11 @@ public final class AgentGrindLootTargetService {
             return false;
         }
         WeaponType weaponType = equippedWeaponType(agent);
-        if (AgentPostKillLootPolicy.isRanged(weaponType)
+        AgentLootCollectionContextState.Snapshot collectionContext =
+                AgentLootCollectionContextRuntime.snapshot(entry);
+        if ((AgentPostKillLootPolicy.isRanged(weaponType) || collectionContext.fieldGrinding())
                 && !AgentPostKillLootPolicy.shouldCollect(
-                weaponType, postKill, true, nowMs)) {
+                weaponType, postKill, true, nowMs, collectionContext)) {
             return false;
         }
         refreshGrindLootTarget(entry, agent, runAiTick, lootRadius, false);
@@ -166,6 +170,13 @@ public final class AgentGrindLootTargetService {
         AgentPostKillLootState.Snapshot postKill = entry.capabilityStates()
                 .require(AgentPostKillLootState.STATE_KEY)
                 .snapshot(nowMs);
+        AgentLootCollectionContextState.Snapshot collectionContext =
+                AgentLootCollectionContextRuntime.snapshot(entry);
+        if (collectionContext.fieldGrinding()
+                && !AgentPostKillLootPolicy.shouldCollect(
+                weaponType, postKill, true, nowMs, collectionContext)) {
+            return null;
+        }
         Set<Integer> recentKills = postKill.killedObjectIds();
         if (recentKills.isEmpty()) {
             return null;

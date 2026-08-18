@@ -54,7 +54,7 @@ import scripting.map.MapScriptManager;
 import server.ItemInformationProvider;
 import server.StatEffect;
 import server.TimerManager;
-import server.agents.capabilities.combat.AgentCombatConfig;
+import server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig;
 import server.agents.diagnostics.MapTransitionPacketTraceRuntime;
 import server.agents.diagnostics.MobReactionCaptureRuntime;
 import server.agents.events.AgentEventPriority;
@@ -2979,7 +2979,7 @@ public class MapleMap {
 
     /** Starts or restarts the post-arrival period in which Agent physics cannot be acquired. */
     public void beginMobPhysicsObserverWarmup() {
-        long durationMs = Math.max(0, AgentCombatConfig.cfg.MOB_PHYSICS_OBSERVER_WARMUP_MS);
+        long durationMs = Math.max(0, AgentMobPhysicsConfig.config().MOB_PHYSICS_OBSERVER_WARMUP_MS);
         mobPhysicsActivationBlockedUntilMillis = System.currentTimeMillis() + durationMs;
     }
 

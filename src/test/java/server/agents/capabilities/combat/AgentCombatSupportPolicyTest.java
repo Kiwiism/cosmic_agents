@@ -80,26 +80,26 @@ class AgentCombatSupportPolicyTest {
     void shouldPreserveSkillBuffTickPreflightPriorityAndMessages() {
         assertEquals(AgentCombatSupportPolicy.SkillBuffTickDecision.ATTACK_COOLDOWN,
                 AgentCombatSupportPolicy.skillBuffTickDecision(true, false, false, false, false));
-        assertNull(AgentCombatSupportPolicy.SkillBuffTickDecision.ATTACK_COOLDOWN.legacyDebugSummary());
+        assertNull(AgentCombatSupportPolicy.SkillBuffTickDecision.ATTACK_COOLDOWN.debugSummary());
 
         assertEquals(AgentCombatSupportPolicy.SkillBuffTickDecision.DISABLED,
                 AgentCombatSupportPolicy.skillBuffTickDecision(false, false, false, false, false));
         assertEquals("skill buffs disabled",
-                AgentCombatSupportPolicy.SkillBuffTickDecision.DISABLED.legacyDebugSummary());
+                AgentCombatSupportPolicy.SkillBuffTickDecision.DISABLED.debugSummary());
 
         assertEquals(AgentCombatSupportPolicy.SkillBuffTickDecision.IDLE,
                 AgentCombatSupportPolicy.skillBuffTickDecision(false, true, false, false, false));
         assertEquals("idle (not following or grinding)",
-                AgentCombatSupportPolicy.SkillBuffTickDecision.IDLE.legacyDebugSummary());
+                AgentCombatSupportPolicy.SkillBuffTickDecision.IDLE.debugSummary());
 
         assertEquals(AgentCombatSupportPolicy.SkillBuffTickDecision.NO_BUFF_SKILLS,
                 AgentCombatSupportPolicy.skillBuffTickDecision(false, true, true, false, false));
         assertEquals("no buff skills in cache",
-                AgentCombatSupportPolicy.SkillBuffTickDecision.NO_BUFF_SKILLS.legacyDebugSummary());
+                AgentCombatSupportPolicy.SkillBuffTickDecision.NO_BUFF_SKILLS.debugSummary());
 
         assertEquals(AgentCombatSupportPolicy.SkillBuffTickDecision.READY,
                 AgentCombatSupportPolicy.skillBuffTickDecision(false, true, false, true, true));
-        assertNull(AgentCombatSupportPolicy.SkillBuffTickDecision.READY.legacyDebugSummary());
+        assertNull(AgentCombatSupportPolicy.SkillBuffTickDecision.READY.debugSummary());
     }
 
     @Test
@@ -165,13 +165,13 @@ class AgentCombatSupportPolicyTest {
 
     @Test
     void shouldFormatLegacySupportCastReadinessSummaries() {
-        assertNull(AgentCombatSupportPolicy.SupportCastReadiness.READY.legacyDebugSummary("Bless"));
+        assertNull(AgentCombatSupportPolicy.SupportCastReadiness.READY.debugSummary("Bless"));
         assertEquals("missing skill level for Bless",
-                AgentCombatSupportPolicy.SupportCastReadiness.MISSING_SKILL_LEVEL.legacyDebugSummary("Bless"));
+                AgentCombatSupportPolicy.SupportCastReadiness.MISSING_SKILL_LEVEL.debugSummary("Bless"));
         assertEquals("can't cast while dead: Bless",
-                AgentCombatSupportPolicy.SupportCastReadiness.DEAD.legacyDebugSummary("Bless"));
+                AgentCombatSupportPolicy.SupportCastReadiness.DEAD.debugSummary("Bless"));
         assertEquals("can't pay cost for Bless",
-                AgentCombatSupportPolicy.SupportCastReadiness.CANNOT_PAY_COST.legacyDebugSummary("Bless"));
+                AgentCombatSupportPolicy.SupportCastReadiness.CANNOT_PAY_COST.debugSummary("Bless"));
     }
 
     @Test

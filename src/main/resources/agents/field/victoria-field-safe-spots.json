@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "maps": [
+    {
+      "mapId": 104040000,
+      "mapName": "Henesys Hunting Ground I",
+      "spots": [
+        { "x": 1045, "y": 37, "label": "lower-right hay roof 1" },
+        { "x": 1075, "y": 37, "label": "lower-right hay roof 2" },
+        { "x": 1105, "y": 37, "label": "lower-right hay roof 3" },
+        { "x": 1135, "y": 37, "label": "lower-right hay roof 4" },
+        { "x": 1165, "y": 37, "label": "lower-right hay roof 5" },
+        { "x": 1195, "y": 37, "label": "lower-right hay roof 6" },
+        { "x": 1225, "y": 37, "label": "lower-right hay roof 7" }
+      ]
+    }
+  ]
+}

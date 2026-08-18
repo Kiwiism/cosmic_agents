@@ -17,12 +17,40 @@ public final class AgentFieldPolicyConfig {
         return tuningLong("REFRESH_INTERVAL_MS");
     }
 
+    public static long emptyPlatformReleaseMs() {
+        return tuningLong("EMPTY_PLATFORM_RELEASE_MS");
+    }
+
+    public static long rebalanceIntervalMs() {
+        return tuningLong("REBALANCE_INTERVAL_MS");
+    }
+
     public static long staleSessionMs() {
         return tuningLong("STALE_SESSION_MS");
     }
 
     public static int maximumParticipants() {
         return tuningInt("MAXIMUM_PARTICIPANTS");
+    }
+
+    public static int maximumObservationParticipants() {
+        return tuningInt("MAXIMUM_OBSERVATION_PARTICIPANTS");
+    }
+
+    public static long graphWarmupRetryMs() {
+        return tuningLong("GRAPH_WARMUP_RETRY_MS");
+    }
+
+    public static int maximumGraphWarmupAttempts() {
+        return tuningInt("MAXIMUM_GRAPH_WARMUP_ATTEMPTS");
+    }
+
+    public static int safeSpotSpawnClearancePx() {
+        return tuningInt("SAFE_SPOT_SPAWN_CLEARANCE_PX");
+    }
+
+    public static int safeSpotSampleStepPx() {
+        return tuningInt("SAFE_SPOT_SAMPLE_STEP_PX");
     }
 
     public static int testObjectiveKillsPerMob() {
@@ -41,12 +69,8 @@ public final class AgentFieldPolicyConfig {
         return tuningLong("RETAINED_SEED_BONUS");
     }
 
-    public static long adjacencyBonus() {
-        return tuningLong("ADJACENCY_BONUS");
-    }
-
-    public static long territorySizePenalty() {
-        return tuningLong("TERRITORY_SIZE_PENALTY");
+    public static long sharedPlatformPenalty() {
+        return tuningLong("SHARED_PLATFORM_PENALTY");
     }
 
     public static long playerProximityPenalty() {

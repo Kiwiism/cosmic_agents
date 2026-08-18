@@ -12,82 +12,82 @@ public final class AgentCombatCooldownStateRuntime {
     }
 
     public static int attackCooldownMs(AgentRuntimeEntry entry) {
-        return entry.combatCooldownState().attackCooldownMs();
+        return entry.capabilityStates().require(AgentCombatCooldownState.STATE_KEY).attackCooldownMs();
     }
 
     public static boolean hasAttackCooldown(AgentRuntimeEntry entry) {
-        return entry.combatCooldownState().hasAttackCooldown();
+        return entry.capabilityStates().require(AgentCombatCooldownState.STATE_KEY).hasAttackCooldown();
     }
 
     public static void clearAttackCooldown(AgentRuntimeEntry entry) {
-        entry.combatCooldownState().clearAttackCooldown();
+        entry.capabilityStates().require(AgentCombatCooldownState.STATE_KEY).clearAttackCooldown();
     }
 
     public static void tickAttackCooldown(AgentRuntimeEntry entry, IntUnaryOperator tickDown) {
-        entry.combatCooldownState().tickAttackCooldown(tickDown);
+        entry.capabilityStates().require(AgentCombatCooldownState.STATE_KEY).tickAttackCooldown(tickDown);
     }
 
     public static void maxAttackCooldown(AgentRuntimeEntry entry, int cooldownMs) {
-        entry.combatCooldownState().maxAttackCooldown(cooldownMs);
+        entry.capabilityStates().require(AgentCombatCooldownState.STATE_KEY).maxAttackCooldown(cooldownMs);
     }
 
     public static int moveWindowMs(AgentRuntimeEntry entry) {
-        return entry.combatCooldownState().moveWindowMs();
+        return entry.capabilityStates().require(AgentCombatCooldownState.STATE_KEY).moveWindowMs();
     }
 
     public static boolean hasMoveWindow(AgentRuntimeEntry entry) {
-        return entry.combatCooldownState().hasMoveWindow();
+        return entry.capabilityStates().require(AgentCombatCooldownState.STATE_KEY).hasMoveWindow();
     }
 
     public static void clearMoveWindow(AgentRuntimeEntry entry) {
-        entry.combatCooldownState().clearMoveWindow();
+        entry.capabilityStates().require(AgentCombatCooldownState.STATE_KEY).clearMoveWindow();
     }
 
     public static void tickMoveWindow(AgentRuntimeEntry entry, IntUnaryOperator tickDown) {
-        entry.combatCooldownState().tickMoveWindow(tickDown);
+        entry.capabilityStates().require(AgentCombatCooldownState.STATE_KEY).tickMoveWindow(tickDown);
     }
 
     public static void setMoveWindowMs(AgentRuntimeEntry entry, int windowMs) {
-        entry.combatCooldownState().setMoveWindowMs(windowMs);
+        entry.capabilityStates().require(AgentCombatCooldownState.STATE_KEY).setMoveWindowMs(windowMs);
     }
 
     public static void maxMoveWindow(AgentRuntimeEntry entry, int windowMs) {
-        entry.combatCooldownState().maxMoveWindow(windowMs);
+        entry.capabilityStates().require(AgentCombatCooldownState.STATE_KEY).maxMoveWindow(windowMs);
     }
 
     public static boolean blocksGroundedAttack(AgentRuntimeEntry entry, boolean inAir) {
-        return entry.combatCooldownState().blocksGroundedAttack(inAir);
+        return entry.capabilityStates().require(AgentCombatCooldownState.STATE_KEY).blocksGroundedAttack(inAir);
     }
 
     public static long alertedUntilMs(AgentRuntimeEntry entry) {
-        return entry.combatCooldownState().alertedUntilMs();
+        return entry.capabilityStates().require(AgentCombatCooldownState.STATE_KEY).alertedUntilMs();
     }
 
     public static void setAlertedUntilMs(AgentRuntimeEntry entry, long untilMs) {
-        entry.combatCooldownState().setAlertedUntilMs(untilMs);
+        entry.capabilityStates().require(AgentCombatCooldownState.STATE_KEY).setAlertedUntilMs(untilMs);
     }
 
     public static boolean alertResetScheduled(AgentRuntimeEntry entry) {
-        return entry.combatCooldownState().alertResetScheduled();
+        return entry.capabilityStates().require(AgentCombatCooldownState.STATE_KEY).alertResetScheduled();
     }
 
     public static void setAlertResetScheduled(AgentRuntimeEntry entry, boolean scheduled) {
-        entry.combatCooldownState().setAlertResetScheduled(scheduled);
+        entry.capabilityStates().require(AgentCombatCooldownState.STATE_KEY).setAlertResetScheduled(scheduled);
     }
 
     public static int mobHitCooldownMs(AgentRuntimeEntry entry) {
-        return entry.combatCooldownState().mobHitCooldownMs();
+        return entry.capabilityStates().require(AgentCombatCooldownState.STATE_KEY).mobHitCooldownMs();
     }
 
     public static boolean hasMobHitCooldown(AgentRuntimeEntry entry) {
-        return entry.combatCooldownState().hasMobHitCooldown();
+        return entry.capabilityStates().require(AgentCombatCooldownState.STATE_KEY).hasMobHitCooldown();
     }
 
     public static void tickMobHitCooldown(AgentRuntimeEntry entry, IntUnaryOperator tickDown) {
-        entry.combatCooldownState().tickMobHitCooldown(tickDown);
+        entry.capabilityStates().require(AgentCombatCooldownState.STATE_KEY).tickMobHitCooldown(tickDown);
     }
 
     public static void setMobHitCooldownMs(AgentRuntimeEntry entry, int cooldownMs) {
-        entry.combatCooldownState().setMobHitCooldownMs(cooldownMs);
+        entry.capabilityStates().require(AgentCombatCooldownState.STATE_KEY).setMobHitCooldownMs(cooldownMs);
     }
 }

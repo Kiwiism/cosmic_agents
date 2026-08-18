@@ -5,22 +5,22 @@ import server.agents.runtime.AgentRuntimeEntry;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * Agent-owned adapter for temporary AgentRuntimeEntry-backed no-target grind wandering state.
+ * Capability-owned adapter for no-target grind wandering state.
  */
 public final class AgentGrindWanderStateRuntime {
     private AgentGrindWanderStateRuntime() {
     }
 
     public static int wanderDirection(AgentRuntimeEntry entry) {
-        return entry.grindWanderState().direction();
+        return entry.capabilityStates().require(AgentGrindWanderState.STATE_KEY).direction();
     }
 
     public static void setWanderDirection(AgentRuntimeEntry entry, int direction) {
-        entry.grindWanderState().setDirection(direction);
+        entry.capabilityStates().require(AgentGrindWanderState.STATE_KEY).setDirection(direction);
     }
 
     public static void clearWanderDirection(AgentRuntimeEntry entry) {
-        entry.grindWanderState().clear();
+        entry.capabilityStates().require(AgentGrindWanderState.STATE_KEY).clear();
     }
 
     public static int ensureWanderDirection(AgentRuntimeEntry entry) {

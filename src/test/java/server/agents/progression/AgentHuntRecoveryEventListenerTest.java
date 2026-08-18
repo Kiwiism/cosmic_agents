@@ -24,7 +24,7 @@ class AgentHuntRecoveryEventListenerTest {
         AgentHuntRecoveryEventListener listener = new AgentHuntRecoveryEventListener(entry);
 
         listener.onAgentEvent(new AgentMobDamagedEvent(
-                1, 45_000L, mapId, 1210100, 10, 5, objective));
+                1, 45_000L, mapId, 1210100, 10, 5, ""));
         assertEquals(AgentHuntRecoveryRuntime.Observation.RESELECT,
                 AgentHuntRecoveryRuntime.observe(
                         entry, objective, mapId, 19, 1, false, 46_001L));
@@ -32,14 +32,31 @@ class AgentHuntRecoveryEventListenerTest {
         AgentHuntRecoveryRuntime.clear(entry, objective);
         AgentHuntRecoveryRuntime.observe(entry, objective, mapId, 19, 1, false, 1_000L);
         listener.onAgentEvent(new AgentMobDamagedEvent(
-                1, 45_000L, mapId, 1210101, 11, 5, objective));
+                1, 45_000L, mapId, 1210101, 11, 5, ""));
         listener.onAgentEvent(new AgentMobKilledEvent(
-                1, 60_000L, mapId, 1210101, 11, 10, objective));
+                1, 60_000L, mapId, 1210101, 11, 10, ""));
         listener.onAgentEvent(new AgentMobDamagedEvent(
-                1, 134_999L, mapId, 1210101, 12, 5, objective));
+                1, 134_999L, mapId, 1210101, 12, 5, ""));
 
         assertEquals(AgentHuntRecoveryRuntime.Observation.STAY,
                 AgentHuntRecoveryRuntime.observe(
                         entry, objective, mapId, 19, 1, false, 134_999L));
+    }
+
+    @Test
+    void staleObjectiveEventsDoNotRenewTheCurrentRecoveryFrame() {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), null, null);
+        String huntKey = "shared:ribbon-pig-drop";
+        int mapId = 100030000;
+        AgentCombatObjectiveTargetStateRuntime.setTargetPreferences(
+                entry, Set.of(1210101), Set.of());
+        AgentHuntRecoveryRuntime.observe(entry, huntKey, mapId, 19, 1, false, 1_000L);
+
+        new AgentHuntRecoveryEventListener(entry).onAgentEvent(new AgentMobDamagedEvent(
+                1, 45_000L, mapId, 1210101, 11, 5, "stale-objective"));
+
+        assertEquals(AgentHuntRecoveryRuntime.Observation.RESELECT,
+                AgentHuntRecoveryRuntime.observe(
+                        entry, huntKey, mapId, 19, 1, false, 46_001L));
     }
 }

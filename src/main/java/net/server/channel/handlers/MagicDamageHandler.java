@@ -68,15 +68,15 @@ public final class MagicDamageHandler extends AbstractDealDamageHandler {
         applyMagicAttackEffects(attack, chr, c);
     }
 
-    public static void applyMagicAttackEffects(AttackInfo attack, Character chr, Client c) {
-        applyMagicAttackEffects(attack, chr, c, true);
+    public static boolean applyMagicAttackEffects(AttackInfo attack, Character chr, Client c) {
+        return applyMagicAttackEffects(attack, chr, c, true);
     }
 
-    public static void applyAgentMagicAttackEffects(AttackInfo attack, Character chr, Client c) {
-        applyMagicAttackEffects(attack, chr, c, false);
+    public static boolean applyAgentMagicAttackEffects(AttackInfo attack, Character chr, Client c) {
+        return applyMagicAttackEffects(attack, chr, c, false);
     }
 
-    private static void applyMagicAttackEffects(
+    private static boolean applyMagicAttackEffects(
             AttackInfo attack, Character chr, Client c, boolean rangeLimitedBroadcast) {
         int charge = (attack.skill == Evan.FIRE_BREATH || attack.skill == Evan.ICE_BREATH
                 || attack.skill == FPArchMage.BIG_BANG || attack.skill == ILArchMage.BIG_BANG
@@ -87,22 +87,25 @@ public final class MagicDamageHandler extends AbstractDealDamageHandler {
         chr.getMap().broadcastMessage(chr, packet, false, rangeLimitedBroadcast);
         StatEffect effect = attack.getAttackEffect(chr, null);
         if (effect == null) {
-            return;
+            return false;
         }
 
         Skill skill = SkillFactory.getSkill(attack.skill);
         StatEffect skillEffect = skill.getEffect(chr.getSkillLevel(skill));
         if (skillEffect.getCooldown() > 0) {
             if (chr.skillIsCooling(attack.skill)) {
-                return;
+                return false;
             }
 
             c.sendPacket(PacketCreator.skillCooldown(attack.skill, skillEffect.getCooldown()));
             chr.addCooldown(attack.skill, currentServerTime(), SECONDS.toMillis(skillEffect.getCooldown()));
         }
 
-        applyAttack(attack, chr, effect.getAttackCount());
+        if (!applyAttack(attack, chr, effect.getAttackCount())) {
+            return false;
+        }
         applyMpEater(attack, chr);
+        return true;
     }
 
     private static void applyMpEater(AttackInfo attack, Character chr) {

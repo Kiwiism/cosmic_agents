@@ -49,21 +49,21 @@ class MobPhysicsServiceTest {
 
     @BeforeEach
     void setUp() {
-        originalMode = AgentCombatConfig.cfg.AGENT_MOB_REACTION_MODE;
-        originalAggroTimeoutMs = AgentCombatConfig.cfg.MOB_PHYSICS_AGGRO_TIMEOUT_MS;
-        originalVirtualObserverStress = AgentCombatConfig.cfg.MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS;
-        AgentCombatConfig.cfg.AGENT_MOB_REACTION_MODE = AgentMobReactionMode.PHYSICS;
-        AgentCombatConfig.cfg.MOB_PHYSICS_AGGRO_TIMEOUT_MS = 7_000;
-        AgentCombatConfig.cfg.MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS = false;
+        originalMode = server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.AGENT_MOB_REACTION_MODE;
+        originalAggroTimeoutMs = server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_AGGRO_TIMEOUT_MS;
+        originalVirtualObserverStress = server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS;
+        server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.AGENT_MOB_REACTION_MODE = AgentMobReactionMode.PHYSICS;
+        server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_AGGRO_TIMEOUT_MS = 7_000;
+        server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS = false;
         service = new MobPhysicsService(false);
     }
 
     @AfterEach
     void tearDown() {
         service.dispose();
-        AgentCombatConfig.cfg.AGENT_MOB_REACTION_MODE = originalMode;
-        AgentCombatConfig.cfg.MOB_PHYSICS_AGGRO_TIMEOUT_MS = originalAggroTimeoutMs;
-        AgentCombatConfig.cfg.MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS = originalVirtualObserverStress;
+        server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.AGENT_MOB_REACTION_MODE = originalMode;
+        server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_AGGRO_TIMEOUT_MS = originalAggroTimeoutMs;
+        server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS = originalVirtualObserverStress;
     }
 
     @Test
@@ -180,7 +180,7 @@ class MobPhysicsServiceTest {
 
     @Test
     void virtualObserverStressRunsProductionPhysicsWithoutFakeRecipient() {
-        AgentCombatConfig.cfg.MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS = true;
+        server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS = true;
         Fixture fixture = fixture(false, 1);
 
         assertTrue(service.acceptedHit(fixture.agent, fixture.monster, 10, 0));
@@ -194,11 +194,11 @@ class MobPhysicsServiceTest {
 
     @Test
     void disablingVirtualObserverStressReleasesUnobservedSessions() {
-        AgentCombatConfig.cfg.MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS = true;
+        server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS = true;
         Fixture fixture = fixture(false, 1);
         assertTrue(service.acceptedHit(fixture.agent, fixture.monster, 10, 0));
 
-        AgentCombatConfig.cfg.MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS = false;
+        server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS = false;
         service.tickForTest(System.nanoTime() + 100_000_000L);
 
         assertEquals(0, service.activeSessionCountForTest());
@@ -207,7 +207,7 @@ class MobPhysicsServiceTest {
 
     @Test
     void virtualObserverStressCannotBypassClientTransitionGuard() {
-        AgentCombatConfig.cfg.MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS = true;
+        server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS = true;
         Fixture fixture = fixture(false, 1);
         when(fixture.map.hasTransitioningPlayerObserver()).thenReturn(true);
 

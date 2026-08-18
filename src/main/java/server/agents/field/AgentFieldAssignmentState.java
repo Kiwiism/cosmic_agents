@@ -55,6 +55,9 @@ public final class AgentFieldAssignmentState {
         return left.partySlot() == right.partySlot()
                 && left.cellIds().equals(right.cellIds())
                 && left.regionIds().equals(right.regionIds())
+                && left.stationId().equals(right.stationId())
+                && left.territoryMinX() == right.territoryMinX()
+                && left.territoryMaxX() == right.territoryMaxX()
                 && left.anchor().equals(right.anchor());
     }
 }

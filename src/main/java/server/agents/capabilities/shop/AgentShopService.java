@@ -4,7 +4,6 @@ import server.agents.capabilities.movement.AgentMovementTimers;
 
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentCombatAmmoCounter;
-import server.agents.capabilities.combat.AgentCombatConfig;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.shop.AgentShopAmmoPolicy;
@@ -13,6 +12,7 @@ import server.agents.capabilities.shop.AgentShopPotionPolicy;
 import server.agents.capabilities.supplies.AgentPotionInventoryPolicy;
 import server.agents.capabilities.supplies.AgentPotionRecoveryPolicy;
 import server.agents.capabilities.supplies.AgentPotionService;
+import server.agents.capabilities.supplies.AgentSupplyConfig;
 
 import client.Character;
 import client.inventory.InventoryType;
@@ -413,7 +413,7 @@ public final class AgentShopService {
             AgentShopRuntime.sayMapNow(sequence.bot(), AgentDialogueCatalog.shopBoughtReply(sequence.bought()));
             AgentPotionService.setupAutopotForBot(sequence.bot());
             AgentCombatAmmoCheckRuntime.tickAmmoCheck(sequence.entry(), sequence.bot(),
-                    AgentCombatConfig.cfg.AMMO_LOW_WARN, AgentRuntimeConfig.cfg.POT_LOW_WARN);
+                    AgentSupplyConfig.cfg.AMMO_LOW_WARN, AgentRuntimeConfig.cfg.POT_LOW_WARN);
             scheduleShopStep(sequence.entry(), finish);
             return;
         }
@@ -621,11 +621,11 @@ public final class AgentShopService {
     }
 
     private static int ammoTriggerThreshold() {
-        return AgentShopAmmoPolicy.triggerThreshold(AgentCombatConfig.cfg.AMMO_LOW_WARN, AMMO_TRIGGER_THRESHOLD);
+        return AgentShopAmmoPolicy.triggerThreshold(AgentSupplyConfig.cfg.AMMO_LOW_WARN, AMMO_TRIGGER_THRESHOLD);
     }
 
     private static int ammoTargetThreshold() {
-        return AgentShopAmmoPolicy.targetThreshold(AgentCombatConfig.cfg.AMMO_LOW_WARN, AMMO_TARGET_THRESHOLD);
+        return AgentShopAmmoPolicy.targetThreshold(AgentSupplyConfig.cfg.AMMO_LOW_WARN, AMMO_TARGET_THRESHOLD);
     }
 
     private static boolean needsFixedAmmoForShop(Character bot, Shop shop, WeaponType wt, int threshold) {

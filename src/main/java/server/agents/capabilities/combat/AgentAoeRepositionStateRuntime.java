@@ -5,7 +5,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 import java.awt.Point;
 
 /**
- * Agent-owned adapter for temporary AgentRuntimeEntry-backed AoE reposition commitment state.
+ * Capability-owned adapter for AoE reposition commitment state.
  */
 public final class AgentAoeRepositionStateRuntime {
     private AgentAoeRepositionStateRuntime() {

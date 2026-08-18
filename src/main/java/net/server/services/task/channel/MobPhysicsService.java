@@ -7,7 +7,7 @@ import net.server.services.BaseService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.TimerManager;
-import server.agents.capabilities.combat.AgentCombatConfig;
+import server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig;
 import server.agents.capabilities.mobcontrol.AgentMobReactionMode;
 import server.life.Monster;
 import server.integration.MobHitReactionContext;
@@ -188,7 +188,7 @@ public final class MobPhysicsService extends BaseService {
     }
 
     private static boolean eligible(Character attacker, Monster monster, int damage) {
-        if (AgentCombatConfig.cfg.AGENT_MOB_REACTION_MODE != AgentMobReactionMode.PHYSICS
+        if (AgentMobPhysicsConfig.config().AGENT_MOB_REACTION_MODE != AgentMobReactionMode.PHYSICS
                 || attacker == null || monster == null || damage <= 0
                 || !(attacker.getClient() instanceof BotClient) || !attacker.isAlive()
                 || !monster.isAlive()) {
@@ -203,7 +203,7 @@ public final class MobPhysicsService extends BaseService {
     private void tickSafely() {
         long started = System.nanoTime();
         try {
-            if (AgentCombatConfig.cfg.AGENT_MOB_REACTION_MODE != AgentMobReactionMode.PHYSICS) {
+            if (AgentMobPhysicsConfig.config().AGENT_MOB_REACTION_MODE != AgentMobReactionMode.PHYSICS) {
                 releaseAll(ReleaseReason.MODE_CHANGE);
                 return;
             }
@@ -213,7 +213,7 @@ public final class MobPhysicsService extends BaseService {
             tickCount.increment();
             totalTickNanos.add(elapsed);
             maximumTickNanos.accumulateAndGet(elapsed, Math::max);
-            if (AgentCombatConfig.cfg.MOB_PHYSICS_DIAGNOSTIC_LOGGING) {
+            if (AgentMobPhysicsConfig.config().MOB_PHYSICS_DIAGNOSTIC_LOGGING) {
                 long now = System.nanoTime();
                 long last = lastDiagnosticNanos.get();
                 if (now - last >= 30_000_000_000L
@@ -387,7 +387,7 @@ public final class MobPhysicsService extends BaseService {
      */
     private static boolean hasPhysicsAudience(MapleMap map) {
         return map.isObservedByPlayer()
-                || AgentCombatConfig.cfg.MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS;
+                || AgentMobPhysicsConfig.config().MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS;
     }
 
     private static ReleaseReason invalidReason(MobSimulationSession session,
@@ -620,7 +620,7 @@ public final class MobPhysicsService extends BaseService {
         }
         double averageMs = ticks == 0 ? 0.0 : total / 1_000_000.0 / ticks;
         return "mob physics: active=" + active + " maps=" + activeMaps.size()
-                + " virtualStress=" + AgentCombatConfig.cfg.MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS
+                + " virtualStress=" + AgentMobPhysicsConfig.config().MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS
                 + " virtualSessions=" + virtualSessions + " virtualMaps=" + virtualMaps.size()
                 + " acquisitions=" + acquired + " impacts=" + impactCount
                 + " substeps=" + steps + " publications=" + sent + " capped=" + capped

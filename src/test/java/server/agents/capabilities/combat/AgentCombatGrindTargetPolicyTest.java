@@ -149,11 +149,11 @@ class AgentCombatGrindTargetPolicyTest {
                 monster -> monster == near ? 50L : 0L);
 
         assertEquals(near, scoredTargets.get(0).monster());
-        assertEquals(100L, scoredTargets.get(0).graphCost());
+        assertEquals(100L, scoredTargets.get(0).routeCost());
         assertEquals(100L, scoredTargets.get(0).localScore());
         assertEquals(900.0d, scoredTargets.get(0).distanceSq());
         assertEquals(far, scoredTargets.get(1).monster());
-        assertEquals(300L, scoredTargets.get(1).graphCost());
+        assertEquals(300L, scoredTargets.get(1).routeCost());
         assertEquals(300L, scoredTargets.get(1).localScore());
         assertEquals(10_000.0d, scoredTargets.get(1).distanceSq());
     }
@@ -190,7 +190,7 @@ class AgentCombatGrindTargetPolicyTest {
                 .filter(target -> target.monster() == regionOneBest)
                 .findFirst()
                 .orElseThrow();
-        assertEquals(225L, regionOne.graphCost());
+        assertEquals(225L, regionOne.routeCost());
         assertEquals(125L, regionOne.localScore());
         assertEquals(400.0d, regionOne.distanceSq());
 
@@ -198,7 +198,7 @@ class AgentCombatGrindTargetPolicyTest {
                 .filter(target -> target.monster() == regionTwo)
                 .findFirst()
                 .orElseThrow();
-        assertEquals(500L, regionTwoScore.graphCost());
+        assertEquals(500L, regionTwoScore.routeCost());
         assertEquals(100L, regionTwoScore.localScore());
         assertEquals(40_000.0d, regionTwoScore.distanceSq());
     }
@@ -216,7 +216,7 @@ class AgentCombatGrindTargetPolicyTest {
                 group -> 25L,
                 9_999L).get(0);
 
-        assertEquals(9_999L, scored.graphCost());
+        assertEquals(9_999L, scored.routeCost());
         assertEquals(125L, scored.localScore());
     }
 
@@ -250,11 +250,11 @@ class AgentCombatGrindTargetPolicyTest {
 
         assertEquals(2, scoredTargets.size());
         assertEquals(near, scoredTargets.get(0).monster());
-        assertEquals(100L, scoredTargets.get(0).graphCost());
+        assertEquals(100L, scoredTargets.get(0).routeCost());
         assertEquals(100L, scoredTargets.get(0).localScore());
         assertEquals(900.0d, scoredTargets.get(0).distanceSq());
         assertEquals(far, scoredTargets.get(1).monster());
-        assertEquals(300L, scoredTargets.get(1).graphCost());
+        assertEquals(300L, scoredTargets.get(1).routeCost());
         assertEquals(300L, scoredTargets.get(1).localScore());
         assertEquals(10_000.0d, scoredTargets.get(1).distanceSq());
     }
@@ -288,7 +288,7 @@ class AgentCombatGrindTargetPolicyTest {
                 group, 1_000, 50, 9_999);
 
         assertEquals(best, scored.monster());
-        assertEquals(250, scored.graphCost());
+        assertEquals(250, scored.routeCost());
         assertEquals(170, scored.localScore());
         assertEquals(25.0, scored.distanceSq());
     }
@@ -312,7 +312,7 @@ class AgentCombatGrindTargetPolicyTest {
         assertEquals(6_000, AgentCombatGrindTargetPolicy.regionCrowdBonus(group.mobCount()));
         AgentScoredGrindTarget scored = AgentCombatGrindTargetPolicy.toScoredTarget(
                 group, 9_999, 50, 9_999);
-        assertEquals(9_999, scored.graphCost());
+        assertEquals(9_999, scored.routeCost());
         assertEquals(150, scored.localScore());
     }
 

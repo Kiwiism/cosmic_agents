@@ -13,6 +13,7 @@ import net.server.channel.handlers.CloseRangeDamageHandler;
 import net.server.channel.handlers.MagicDamageHandler;
 import net.server.channel.handlers.RangedAttackHandler;
 import server.agents.capabilities.combat.AgentAttackRoute;
+import server.agents.integration.CombatAttackApplicationResult;
 import server.agents.integration.CombatGateway;
 
 /**
@@ -55,13 +56,20 @@ public enum CosmicCombatGateway implements CombatGateway {
     }
 
     @Override
-    public void applyAttackEffects(AgentAttackRoute route, AbstractDealDamageHandler.AttackInfo attack, Character agent) {
-        switch (route) {
+    public CombatAttackApplicationResult applyAttackEffects(
+            AgentAttackRoute route,
+            AbstractDealDamageHandler.AttackInfo attack,
+            Character agent) {
+        boolean applied = switch (route) {
             case RANGED -> RangedAttackHandler.applyAgentRangedAttackEffects(
                     attack, agent, agent.getClient());
             case MAGIC -> MagicDamageHandler.applyAgentMagicAttackEffects(
                     attack, agent, agent.getClient());
             default -> CloseRangeDamageHandler.applyCloseRangeEffects(attack, agent, agent.getClient());
-        }
+        };
+        return applied
+                ? CombatAttackApplicationResult.appliedResult()
+                : CombatAttackApplicationResult.rejected(
+                        CombatAttackApplicationResult.Reason.HANDLER_REJECTED);
     }
 }

@@ -3,6 +3,7 @@ package server.agents.progression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.integration.AgentNavigationReadinessRuntime;
+import server.agents.progression.events.AgentProgressionEventPublisher;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.LinkedHashSet;
@@ -51,8 +52,7 @@ final class AgentHuntRecoveryRuntime {
             boolean instanceMap,
             boolean navigationWarmupPending,
             long nowMs) {
-        AgentHuntRecoveryState.Frame frame = entry.capabilityStates()
-                .require(AgentHuntRecoveryState.STATE_KEY).frame(objectiveKey, progress, nowMs);
+        AgentHuntRecoveryState.Frame frame = frame(entry, objectiveKey, progress, nowMs);
         frame.enterMap(mapId, nowMs);
         boolean advanced = frame.observeProgress(progress, nowMs);
         frame.observeTargets(liveTargets, nowMs);
@@ -88,13 +88,15 @@ final class AgentHuntRecoveryRuntime {
     static boolean fallbackActive(AgentRuntimeEntry entry, String objectiveKey, int progress,
                                   long nowMs) {
         return entry.capabilityStates().require(AgentHuntRecoveryState.STATE_KEY)
-                .frame(objectiveKey, progress, nowMs).fallbackActive();
+                .frame(objectiveKey, AgentProgressionEventPublisher.objectiveId(entry), progress, nowMs)
+                .fallbackActive();
     }
 
     static Set<Integer> failedMaps(AgentRuntimeEntry entry, String objectiveKey, int progress,
                                    long nowMs) {
         return entry.capabilityStates().require(AgentHuntRecoveryState.STATE_KEY)
-                .frame(objectiveKey, progress, nowMs).failedMaps(nowMs);
+                .frame(objectiveKey, AgentProgressionEventPublisher.objectiveId(entry), progress, nowMs)
+                .failedMaps(nowMs);
     }
 
     static void failMaps(AgentRuntimeEntry entry, String objectiveKey, int progress,
@@ -104,7 +106,7 @@ final class AgentHuntRecoveryRuntime {
             return;
         }
         entry.capabilityStates().require(AgentHuntRecoveryState.STATE_KEY)
-                .frame(objectiveKey, progress, nowMs)
+                .frame(objectiveKey, AgentProgressionEventPublisher.objectiveId(entry), progress, nowMs)
                 .failMaps(Set.copyOf(bounded), nowMs + FAILED_MAP_COOLDOWN_MS);
     }
 
@@ -113,14 +115,41 @@ final class AgentHuntRecoveryRuntime {
                 .ifPresent(state -> state.clear(objectiveKey));
     }
 
-    static void recordRelevantDamage(AgentRuntimeEntry entry, int mapId, long nowMs) {
+    static void recordRelevantDamage(
+            AgentRuntimeEntry entry,
+            String objectiveId,
+            int mapId,
+            long nowMs) {
         entry.capabilityStates().find(AgentHuntRecoveryState.STATE_KEY)
-                .ifPresent(state -> state.observeRelevantDamage(mapId, nowMs));
+                .ifPresent(state -> state.observeRelevantDamage(objectiveId, mapId, nowMs));
+    }
+
+    static void recordRelevantDamage(AgentRuntimeEntry entry, int mapId, long nowMs) {
+        recordRelevantDamage(
+                entry, AgentProgressionEventPublisher.objectiveId(entry), mapId, nowMs);
+    }
+
+    static void recordRelevantKill(
+            AgentRuntimeEntry entry,
+            String objectiveId,
+            int mapId,
+            long nowMs) {
+        entry.capabilityStates().find(AgentHuntRecoveryState.STATE_KEY)
+                .ifPresent(state -> state.observeRelevantKill(objectiveId, mapId, nowMs));
     }
 
     static void recordRelevantKill(AgentRuntimeEntry entry, int mapId, long nowMs) {
-        entry.capabilityStates().find(AgentHuntRecoveryState.STATE_KEY)
-                .ifPresent(state -> state.observeRelevantKill(mapId, nowMs));
+        recordRelevantKill(
+                entry, AgentProgressionEventPublisher.objectiveId(entry), mapId, nowMs);
+    }
+
+    private static AgentHuntRecoveryState.Frame frame(
+            AgentRuntimeEntry entry,
+            String objectiveKey,
+            int progress,
+            long nowMs) {
+        return entry.capabilityStates().require(AgentHuntRecoveryState.STATE_KEY)
+                .frame(objectiveKey, AgentProgressionEventPublisher.objectiveId(entry), progress, nowMs);
     }
 
     enum Observation {

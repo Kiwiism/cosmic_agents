@@ -14,12 +14,12 @@ import java.util.function.ToLongFunction;
 import server.life.Monster;
 import server.maps.Foothold;
 
-public final class AgentCombatGrindTargetPolicy {
+final class AgentCombatGrindTargetPolicy {
     private static final long REGION_CROWD_BONUS_CAP = config.AgentTuning.longValue("server.agents.capabilities.combat.AgentCombatGrindTargetPolicy.REGION_CROWD_BONUS_CAP");
     private static final long REGION_CROWD_BONUS_PER_EXTRA_MOB = config.AgentTuning.longValue("server.agents.capabilities.combat.AgentCombatGrindTargetPolicy.REGION_CROWD_BONUS_PER_EXTRA_MOB");
 
-    private static final Comparator<AgentScoredGrindTarget> LEGACY_TARGET_ORDER = Comparator
-            .comparingLong(AgentScoredGrindTarget::graphCost)
+    private static final Comparator<AgentScoredGrindTarget> TARGET_ORDER = Comparator
+            .comparingLong(AgentScoredGrindTarget::routeCost)
             .thenComparingLong(AgentScoredGrindTarget::localScore)
             .thenComparingDouble(AgentScoredGrindTarget::distanceSq);
 
@@ -43,15 +43,15 @@ public final class AgentCombatGrindTargetPolicy {
         return resolvedTargetRegionId >= 0 && resolvedTargetRegionId == startRegionId;
     }
 
-    public static void sortByLegacyTargetOrder(List<AgentScoredGrindTarget> scoredTargets) {
-        scoredTargets.sort(LEGACY_TARGET_ORDER);
+    public static void sortByTargetOrder(List<AgentScoredGrindTarget> scoredTargets) {
+        scoredTargets.sort(TARGET_ORDER);
     }
 
     public static Monster pickFromBestTargets(List<AgentScoredGrindTarget> scoredTargets) {
         if (scoredTargets.isEmpty()) {
             return null;
         }
-        sortByLegacyTargetOrder(scoredTargets);
+        sortByTargetOrder(scoredTargets);
         return scoredTargets.get(0).monster();
     }
 
@@ -60,12 +60,12 @@ public final class AgentCombatGrindTargetPolicy {
         if (scoredTargets.isEmpty()) {
             return null;
         }
-        sortByLegacyTargetOrder(scoredTargets);
+        sortByTargetOrder(scoredTargets);
         List<AgentScoredGrindTarget> reachableTargets = scoredTargets.stream()
-                .filter(target -> target.graphCost() < unreachableGraphCost)
+                .filter(target -> target.routeCost() < unreachableGraphCost)
                 .toList();
         List<AgentScoredGrindTarget> selectable = reachableTargets.isEmpty() ? scoredTargets : reachableTargets;
-        if (selectable.getFirst().graphCost() >= unreachableGraphCost) {
+        if (selectable.getFirst().routeCost() >= unreachableGraphCost) {
             return null;
         }
         return selectable.get(0).monster();

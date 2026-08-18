@@ -16,6 +16,15 @@ public final class AgentGrindTargetSearchPolicy {
                                                      Monster currentTarget,
                                                      AgentAttackPlan currentAttackPlan,
                                                      long now) {
+        // Treat the retarget gate as the cadence for expensive live route validation too. The
+        // previous order ran a full reliability-aware A* on every 50 ms movement tick and only
+        // afterwards discovered that the 400 ms search gate was still closed.
+        if (entry == null) {
+            return false;
+        }
+        if (currentTarget != null && AgentGrindSearchStateRuntime.searchBlocked(entry, now)) {
+            return false;
+        }
         // An already attackable target is reachable by definition. Do not let a cold/missing
         // navigation graph turn a valid in-range combat decision into an unnecessary retarget.
         boolean currentTargetAttackable = agent != null && currentTarget != null
@@ -96,14 +105,14 @@ public final class AgentGrindTargetSearchPolicy {
         }
         int searchedClusterSize = agent.getMap() == null || searched.getPosition() == null
                 ? 0
-                : AgentCombatScoringPolicy.legacyCappedAoeClusterSize(
+                : AgentCombatScoringPolicy.cappedAoeClusterSize(
                         searched,
                         server.agents.perception.AgentMapPerception.monsters(agent.getMap()),
                         AgentCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
                         AgentCombatSkillCacheStateRuntime.aoeSkillMobs(entry));
         int currentClusterSize = agent.getMap() == null || current.getPosition() == null
                 ? 0
-                : AgentCombatScoringPolicy.legacyCappedAoeClusterSize(
+                : AgentCombatScoringPolicy.cappedAoeClusterSize(
                         current,
                         server.agents.perception.AgentMapPerception.monsters(agent.getMap()),
                         AgentCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),

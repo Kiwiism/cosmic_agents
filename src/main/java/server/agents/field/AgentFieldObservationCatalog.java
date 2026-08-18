@@ -3,7 +3,7 @@ package server.agents.field;
 import java.util.List;
 import java.util.Set;
 
-/** Authored Victoria field-observation deployment and rotation policy. */
+/** Composed Victoria field-observation policy: authored eligibility plus generated capacity. */
 public record AgentFieldObservationCatalog(
         int schemaVersion,
         String harnessId,
@@ -12,7 +12,7 @@ public record AgentFieldObservationCatalog(
         List<MapPreset> maps) {
 
     public AgentFieldObservationCatalog {
-        if (schemaVersion != 1 || harnessId == null || harnessId.isBlank()
+        if (schemaVersion != 2 || harnessId == null || harnessId.isBlank()
                 || rotationWindowMs < 1L || supplyDurationMs < rotationWindowMs
                 || maps == null || maps.isEmpty()) {
             throw new IllegalArgumentException("valid field-observation catalog fields are required");
@@ -25,17 +25,24 @@ public record AgentFieldObservationCatalog(
             String mapName,
             String group,
             int level,
+            int recommendedMinimum,
+            int recommendedMaximum,
             int maximumAgents,
             List<Integer> activeCounts,
             List<Integer> partySizes,
+            String capacitySource,
+            String capacityConfidence,
             Set<Integer> allowedMobIds,
             Set<Integer> excludedMobIds) {
 
         public MapPreset {
             group = group == null || group.isBlank() ? "recommended" : group.trim().toLowerCase();
             if (mapId <= 0 || mapName == null || mapName.isBlank() || level < 1 || level > 25
-                    || maximumAgents < 1 || maximumAgents > 12 || activeCounts == null
+                    || recommendedMinimum < 1 || recommendedMinimum > recommendedMaximum
+                    || recommendedMaximum > maximumAgents || activeCounts == null
                     || activeCounts.isEmpty() || partySizes == null || partySizes.isEmpty()
+                    || capacitySource == null || capacitySource.isBlank()
+                    || capacityConfidence == null || capacityConfidence.isBlank()
                     || allowedMobIds == null || allowedMobIds.isEmpty()
                     || (!"recommended".equals(group) && !"exploratory".equals(group))) {
                 throw new IllegalArgumentException("valid field-observation map fields are required");

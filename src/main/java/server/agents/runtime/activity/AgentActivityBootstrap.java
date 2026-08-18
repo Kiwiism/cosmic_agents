@@ -2,6 +2,7 @@ package server.agents.runtime.activity;
 
 import client.Character;
 import server.agents.capabilities.runtime.AgentCapabilityRuntime;
+import server.agents.capabilities.partyquest.kpq.AgentKpqRuntime;
 import server.agents.capabilities.townlife.AgentTownLifeRuntime;
 import server.agents.plans.AgentUniversalPlanRuntime;
 import server.agents.plans.mapleisland.AgentMapleIslandLithHandoffRuntime;
@@ -23,6 +24,7 @@ public final class AgentActivityBootstrap {
     public static final String TOWN_LIFE_CONTROLLER_ID = "town-life";
     public static final String HUNTING_CONTROLLER_ID = "hunting";
     public static final String QUESTING_CONTROLLER_ID = "questing";
+    public static final String PARTY_QUEST_CONTROLLER_ID = "party-quest";
 
     private static final AgentActivityHost HOST = new AgentActivityHost(registry());
     private static final AgentActivityAdmissionCoordinator ADMISSION =
@@ -47,6 +49,7 @@ public final class AgentActivityBootstrap {
         private static final AgentActivityControllerRegistry REGISTRY =
                 new AgentActivityControllerRegistry(List.of(
                         commerce(),
+                        partyQuest(),
                         mapleIslandLithTransfer(),
                         townLifeTestScenario(),
                         interactionLease(),
@@ -56,6 +59,33 @@ public final class AgentActivityBootstrap {
                         hunting(),
                         questing(),
                         capability()));
+    }
+
+    private static AgentActivityController partyQuest() {
+        return new AgentActivityController() {
+            @Override public String id() { return PARTY_QUEST_CONTROLLER_ID; }
+            @Override public int precedence() { return 900; }
+            @Override public AgentActivityRole role() { return AgentActivityRole.PRIMARY; }
+            @Override public AgentActivityKind activityKind() { return AgentActivityKind.PARTY_QUEST; }
+            @Override public boolean active(AgentRuntimeEntry entry, Character agent) {
+                return AgentKpqRuntime.active(agent.getId());
+            }
+            @Override public AgentActivityTick tick(
+                    AgentRuntimeEntry entry, Character agent, long nowMs) {
+                AgentKpqRuntime.tick(entry, agent, nowMs);
+                // KPQ installs ordinary MOVE_TO/GRIND modes. IDLE retains activity
+                // ownership while allowing the existing movement/combat phase to advance.
+                return AgentActivityTick.IDLE;
+            }
+            @Override public boolean requestStop(
+                    AgentRuntimeEntry entry, Character agent, String reason, long nowMs) {
+                return AgentKpqRuntime.requestStop(agent.getId(), reason, nowMs);
+            }
+            @Override public void forceStop(
+                    AgentRuntimeEntry entry, Character agent, String reason, long nowMs) {
+                AgentKpqRuntime.forceStop(agent.getId(), reason, nowMs);
+            }
+        };
     }
 
     private static AgentActivityController commerce() {

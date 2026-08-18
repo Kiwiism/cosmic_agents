@@ -2,6 +2,7 @@ package server.agents.capabilities.quest;
 
 import client.Character;
 import server.agents.capabilities.behavior.AgentPioRelaxerInterludeRuntime;
+import server.agents.capabilities.combat.AgentCombatCooldownState;
 import server.agents.capabilities.combat.AgentCombatObjectiveTargetStateRuntime;
 import server.agents.capabilities.dialogue.AgentPendingActionStateRuntime;
 import server.agents.capabilities.looting.AgentGrindLootStateRuntime;
@@ -30,11 +31,11 @@ public final class AmherstTestRuntimeResetService {
         AgentGrindLootStateRuntime.clearGrindLootTarget(entry);
         AgentGrindLootStateRuntime.clearRetrySuppression(entry);
 
-        entry.combatCooldownState().clearAttackCooldown();
-        entry.combatCooldownState().clearMoveWindow();
-        entry.combatCooldownState().setMobHitCooldownMs(0);
-        entry.combatCooldownState().setAlertedUntilMs(0L);
-        entry.combatCooldownState().setAlertResetScheduled(false);
+        entry.capabilityStates().require(AgentCombatCooldownState.STATE_KEY).clearAttackCooldown();
+        entry.capabilityStates().require(AgentCombatCooldownState.STATE_KEY).clearMoveWindow();
+        entry.capabilityStates().require(AgentCombatCooldownState.STATE_KEY).setMobHitCooldownMs(0);
+        entry.capabilityStates().require(AgentCombatCooldownState.STATE_KEY).setAlertedUntilMs(0L);
+        entry.capabilityStates().require(AgentCombatCooldownState.STATE_KEY).setAlertResetScheduled(false);
         entry.inventoryCooldownState().setLootInhibitMs(0);
         entry.inventoryCooldownState().setInventoryFullWarnCooldownMs(0);
         entry.portalCooldownState().setUseCooldownUntilMs(0L);

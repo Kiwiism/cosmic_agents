@@ -5,6 +5,10 @@ import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import constants.inventory.ItemConstants;
 import server.agents.capabilities.partyquest.AgentPqRuntime;
+import server.agents.capabilities.partyquest.kpq.AgentKpqDefinition;
+import server.agents.capabilities.partyquest.kpq.AgentKpqMemberState;
+import server.agents.capabilities.partyquest.kpq.AgentKpqSession;
+import server.agents.capabilities.partyquest.kpq.AgentKpqSessionRegistry;
 import server.agents.runtime.AgentSessionLifecycleRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.partyquest.AgentPartyQuestHooks;
@@ -35,7 +39,24 @@ public final class AgentLootEligibility {
         }
 
         int itemId = drop.getItemId();
-        if (itemId == KPQ_PASS) {
+        AgentKpqSession kpqSession = AgentKpqSessionRegistry.forMember(bot.getId());
+        if (kpqSession != null) {
+            AgentKpqMemberState member = kpqSession.member(bot.getId());
+            if (itemId == KPQ_PASS && !AgentKpqSessionRegistry.canLootPass(bot.getId())) {
+                return false;
+            }
+            if (itemId == KPQ_COUPON && (member == null
+                    || !AgentKpqSessionRegistry.canLootCoupon(bot.getId())
+                    || member.couponTarget() <= 0
+                    || bot.getItemQuantity(KPQ_COUPON, false) >= member.couponTarget())) {
+                return false;
+            }
+            if (itemId == AgentKpqDefinition.SQUISHY_SHOES
+                    && !AgentKpqSessionRegistry.canLootSquishyShoes(bot.getId())) {
+                return false;
+            }
+        }
+        if (itemId == KPQ_PASS && kpqSession == null) {
             return false;
         }
         if (itemId == HPQ_RICE_CAKE) {

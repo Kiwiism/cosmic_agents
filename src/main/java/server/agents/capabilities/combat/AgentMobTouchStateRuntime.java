@@ -5,7 +5,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 import java.awt.Point;
 
 /**
- * Agent-owned adapter for temporary AgentRuntimeEntry-backed mob-touch sweep state.
+ * Capability-owned adapter for mob-touch sweep state.
  */
 public final class AgentMobTouchStateRuntime {
     private AgentMobTouchStateRuntime() {
@@ -15,10 +15,10 @@ public final class AgentMobTouchStateRuntime {
         if (entry == null) {
             return null;
         }
-        return entry.mobTouchState().previousCheckPositionOnMap(mapId);
+        return entry.capabilityStates().require(AgentMobTouchState.STATE_KEY).previousCheckPositionOnMap(mapId);
     }
 
     public static void rememberCheck(AgentRuntimeEntry entry, Point position, int mapId) {
-        entry.mobTouchState().rememberCheck(position, mapId);
+        entry.capabilityStates().require(AgentMobTouchState.STATE_KEY).rememberCheck(position, mapId);
     }
 }

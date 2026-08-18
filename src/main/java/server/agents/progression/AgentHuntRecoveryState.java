@@ -14,28 +14,38 @@ final class AgentHuntRecoveryState {
 
     private final Map<String, Frame> frames = new HashMap<>();
 
-    synchronized Frame frame(String objectiveKey, int progress, long nowMs) {
-        return frames.computeIfAbsent(objectiveKey,
-                ignored -> new Frame(progress, nowMs));
+    synchronized Frame frame(String objectiveKey, String objectiveId, int progress, long nowMs) {
+        String normalizedObjectiveId = objectiveId == null ? "" : objectiveId;
+        Frame frame = frames.get(objectiveKey);
+        if (frame == null || !frame.objectiveId().equals(normalizedObjectiveId)) {
+            frame = new Frame(normalizedObjectiveId, progress, nowMs);
+            frames.put(objectiveKey, frame);
+        }
+        return frame;
     }
 
     synchronized void clear(String objectiveKey) {
         frames.remove(objectiveKey);
     }
 
-    synchronized void observeRelevantDamage(int mapId, long nowMs) {
+    synchronized void observeRelevantDamage(String objectiveId, int mapId, long nowMs) {
+        String normalizedObjectiveId = objectiveId == null ? "" : objectiveId;
         frames.values().stream()
+                .filter(frame -> frame.objectiveId().equals(normalizedObjectiveId))
                 .filter(frame -> frame.mapId() == mapId)
                 .forEach(frame -> frame.observeRelevantDamage(nowMs));
     }
 
-    synchronized void observeRelevantKill(int mapId, long nowMs) {
+    synchronized void observeRelevantKill(String objectiveId, int mapId, long nowMs) {
+        String normalizedObjectiveId = objectiveId == null ? "" : objectiveId;
         frames.values().stream()
+                .filter(frame -> frame.objectiveId().equals(normalizedObjectiveId))
                 .filter(frame -> frame.mapId() == mapId)
                 .forEach(frame -> frame.observeRelevantKill(nowMs));
     }
 
     static final class Frame {
+        private final String objectiveId;
         private int mapId = -1;
         private int lastProgress;
         private long lastProgressAtMs;
@@ -48,7 +58,8 @@ final class AgentHuntRecoveryState {
         private boolean fallbackActive;
         private final Map<Integer, Long> failedMapUntilMs = new HashMap<>();
 
-        private Frame(int progress, long nowMs) {
+        private Frame(String objectiveId, int progress, long nowMs) {
+            this.objectiveId = objectiveId;
             lastProgress = Math.max(0, progress);
             lastProgressAtMs = nowMs;
             mapEnteredAtMs = nowMs;
@@ -81,6 +92,10 @@ final class AgentHuntRecoveryState {
 
         synchronized int mapId() {
             return mapId;
+        }
+
+        synchronized String objectiveId() {
+            return objectiveId;
         }
 
         synchronized void observeRelevantDamage(long nowMs) {

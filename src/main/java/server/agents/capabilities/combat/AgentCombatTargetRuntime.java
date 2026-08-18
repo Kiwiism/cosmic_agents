@@ -48,14 +48,16 @@ public final class AgentCombatTargetRuntime {
                         0, 0, 0, 0, 0, false, false, null);
                 return null;
             }
-            Point botPos = bot.getPosition();
+            AgentCombatDecisionContext decisionContext =
+                    AgentCombatDecisionContext.capture(entry, bot, nowMs);
+            Point botPos = decisionContext.startPos();
             double rangeSq = (double) config.GRIND_SEEK_RANGE * config.GRIND_SEEK_RANGE;
             Foothold botFoothold = AgentCombatGroundRuntime.findGroundFoothold(botPos, bot);
             List<Monster> candidates = AgentCombatCandidateProvider.local(bot, botPos, rangeSq);
             int baseCandidateCount = candidates.size();
             candidates.removeIf(monster -> !AgentCombatObjectiveTargetStateRuntime.allows(entry, monster.getId()));
             int objectiveCandidateCount = candidates.size();
-            GrindGraphContext assignmentContext = GrindGraphContext.resolve(entry, bot, botPos);
+            AgentCombatDecisionContext assignmentContext = decisionContext;
             AgentCombatRegionAssignmentPolicy.SearchScope<Monster> assignmentScope =
                     AgentCombatRegionAssignmentPolicy.begin(
                             entry, AgentCombatDirectiveRuntime.directive(entry), bot.getMapId(),
@@ -65,34 +67,36 @@ public final class AgentCombatTargetRuntime {
                                     assignmentContext.graph(), assignmentContext.entry(),
                                     assignmentContext.map(), monster.getPosition())
                                     : -1,
+                            monster -> monster.getPosition().x,
                             nowMs);
             candidates = new ArrayList<>(assignmentScope.localCandidates());
             int localPreferredCandidateCount = (int) candidates.stream()
                     .filter(monster -> AgentCombatObjectiveTargetStateRuntime.prefers(entry, monster.getId()))
                     .count();
             PlatformBatchSelection platformBatch = retainPlatformBatchCandidates(
-                    entry, bot, candidates, nowMs);
+                    entry, bot, candidates, nowMs, decisionContext);
             candidates = platformBatch.candidates();
             TargetPromotion promotion = platformBatch.retained()
                     ? new TargetPromotion(candidates, false)
                     : promoteMapWidePreferredTargetsResult(
                     entry, bot, candidates, nowMs,
-                    target -> hasCompleteRemoteCombatRoute(entry, bot, target));
+                    target -> hasCompleteRemoteCombatRoute(entry, bot, target, decisionContext));
             candidates = promotion.candidates();
             candidates = assignmentScope.apply(candidates,
                     monster -> assignmentContext.available()
                             ? AgentNavigationRegionService.resolveTargetRegionId(
                             assignmentContext.graph(), assignmentContext.entry(),
                             assignmentContext.map(), monster.getPosition())
-                            : -1);
+                            : -1,
+                    monster -> monster.getPosition().x);
             boolean mapWidePreferredEscalation = promotion.mapWide();
             if (mapWidePreferredEscalation) {
                 objectiveCandidateCount = candidates.size();
             }
             if (candidates.isEmpty()) {
                 AgentCombatBehaviorRuntime.noCandidateOpportunity(entry);
-                recordSearchRanking(entry, bot, botPos, List.of(),
-                        baseCandidateCount, localPreferredCandidateCount);
+                recordSearchRanking(entry, bot, List.of(),
+                        baseCandidateCount, localPreferredCandidateCount, decisionContext);
                 recordDecision(entry, AgentCombatDecisionTraceState.Mode.GRIND,
                         baseCandidateCount > 0
                                 ? AgentCombatDecisionTraceState.Outcome.OBJECTIVE_FILTERED
@@ -102,12 +106,16 @@ public final class AgentCombatTargetRuntime {
                 return null;
             }
             PolicySelection policySelection = applyObjectivePolicy(
-                    entry, bot, botPos, botFoothold, candidates, platformBatch.retained());
+                    entry, bot, botPos, botFoothold, candidates,
+                    platformBatch.retained(), decisionContext);
             candidates = policySelection.candidates();
             int policyCandidateCount = candidates.size();
 
-            Map<Monster, Integer> targetOccupancy = grindTargetOccupancy(entry, bot);
-            candidates = AgentCombatBehaviorRuntime.respectClaims(entry, candidates, targetOccupancy);
+            Map<Monster, Integer> targetOccupancy =
+                    grindTargetOccupancy(entry, bot, decisionContext);
+            candidates = territorialFieldAssignment(entry, bot, nowMs)
+                    ? AgentCombatBehaviorRuntime.respectFieldClaims(candidates, targetOccupancy)
+                    : AgentCombatBehaviorRuntime.respectClaims(entry, candidates, targetOccupancy);
             int claimCandidateCount = candidates.size();
             // A platform batch is already an explicit combat commitment. Re-applying the
             // personality response delay after each kill created a visible pause between
@@ -126,9 +134,9 @@ public final class AgentCombatTargetRuntime {
             }
             List<AgentScoredGrindTarget> scoredTargets = scoreGrindTargets(
                     entry, bot, botPos, botFoothold, candidates, targetOccupancy, config,
-                    mapWidePreferredEscalation);
-            recordSearchRanking(entry, bot, botPos, scoredTargets,
-                    baseCandidateCount, localPreferredCandidateCount);
+                    mapWidePreferredEscalation, decisionContext);
+            recordSearchRanking(entry, bot, scoredTargets,
+                    baseCandidateCount, localPreferredCandidateCount, decisionContext);
             if (scoredTargets.isEmpty()) {
                 recordDecision(entry, AgentCombatDecisionTraceState.Mode.GRIND,
                         claimCandidateCount == 0
@@ -144,12 +152,13 @@ public final class AgentCombatTargetRuntime {
             Monster selected = rankedSelection.target();
             if (!rankedSelection.variationDecisionConsumed()) {
                 selected = selectVariedTargetWithinWinningRegion(
-                        entry, bot, botPos, botFoothold, candidates, targetOccupancy, config, selected);
+                        entry, bot, botPos, botFoothold, candidates,
+                        targetOccupancy, config, selected, decisionContext);
             }
             AgentCombatVariationRuntime.maybeAnchorAtTarget(
-                    entry, bot, selected, targetRegionId(entry, bot, botPos, selected));
+                    entry, bot, selected, targetRegionId(decisionContext, selected));
             if (mapWidePreferredEscalation && selected != null) {
-                int selectedRegionId = targetRegionId(entry, bot, botPos, selected);
+                int selectedRegionId = targetRegionId(decisionContext, selected);
                 AgentCombatLocalTargetLeaseRuntime.beganMapWideTravel(
                         entry, bot, selectedRegionId);
                 AgentCombatTargetSearchModeState searchMode = searchModeState(entry, bot, nowMs);
@@ -161,7 +170,7 @@ public final class AgentCombatTargetRuntime {
                 }
             }
             if (!mapWidePreferredEscalation && selected != null) {
-                beginPlatformBatch(entry, bot, selected, nowMs);
+                beginPlatformBatch(entry, bot, selected, nowMs, decisionContext);
             }
             recordPolicySelection(entry, bot, selected, policySelection);
             AgentCombatBehaviorRuntime.targetAcquired(entry);
@@ -188,7 +197,9 @@ public final class AgentCombatTargetRuntime {
                         0, 0, 0, 0, 0, false, false, null);
                 return null;
             }
-            Point botPos = bot.getPosition();
+            AgentCombatDecisionContext decisionContext =
+                    AgentCombatDecisionContext.capture(entry, bot, System.currentTimeMillis());
+            Point botPos = decisionContext.startPos();
             double rangeSq = (double) config.GRIND_SEEK_RANGE * config.GRIND_SEEK_RANGE;
             Foothold botFoothold = AgentCombatGroundRuntime.findGroundFoothold(botPos, bot);
             List<Monster> candidates = AgentCombatCandidateProvider.local(bot, botPos, rangeSq);
@@ -210,7 +221,7 @@ public final class AgentCombatTargetRuntime {
                         false, false, null);
                 return null;
             }
-            GrindGraphContext graphContext = GrindGraphContext.resolve(entry, bot, botPos);
+            GrindGraphContext graphContext = GrindGraphContext.from(decisionContext);
             if (!graphContext.available()) {
                 recordDecision(entry, AgentCombatDecisionTraceState.Mode.PATROL,
                         AgentCombatDecisionTraceState.Outcome.GRAPH_UNAVAILABLE,
@@ -249,7 +260,7 @@ public final class AgentCombatTargetRuntime {
                 return null;
             }
             PolicySelection policySelection = applyObjectivePolicy(
-                    entry, bot, botPos, botFoothold, filtered, false);
+                    entry, bot, botPos, botFoothold, filtered, false, decisionContext);
             filtered = policySelection.candidates();
             int policyCandidateCount = filtered.size();
 
@@ -259,9 +270,10 @@ public final class AgentCombatTargetRuntime {
                     botPos,
                     botFoothold,
                     filtered,
-                    grindTargetOccupancy(entry, bot),
+                    grindTargetOccupancy(entry, bot, decisionContext),
                     config,
-                    false);
+                    false,
+                    decisionContext);
             if (scored.isEmpty()) {
                 recordDecision(entry, AgentCombatDecisionTraceState.Mode.PATROL,
                         policyCandidateCount == 0
@@ -313,7 +325,7 @@ public final class AgentCombatTargetRuntime {
                             entry == null ? 0 : AgentCombatSkillCacheStateRuntime.attackSkillId(entry)),
                     candidate -> grindTargetScore(
                             bot, botPos, botFoothold, candidate, Map.of(), config),
-                    candidate -> AgentCombatScoringPolicy.legacyAoeClusterBonus(
+                    candidate -> AgentCombatScoringPolicy.aoeClusterBonus(
                             candidate,
                             candidates,
                             entry != null && AgentCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
@@ -441,12 +453,31 @@ public final class AgentCombatTargetRuntime {
         if (targetRegionId < 0) {
             return UNREACHABLE_GRAPH_COST;
         }
-        return AgentNavigationPathService.reliableRouteCost(
-                context.graph(), context.map(), context.startPos(), context.startRegionId(),
-                target.getPosition(), targetRegionId,
-                AgentCombatScoringPolicy.estimateLocalTravelCostMs(
-                        context.startPos(), target.getPosition(), context.profile().walkVelocityPxs()),
-                entry, bot, UNREACHABLE_GRAPH_COST);
+        return reliableRouteCost(context, entry, bot, target.getPosition(), targetRegionId);
+    }
+
+    private static long reliableRouteCost(GrindGraphContext context,
+                                          AgentRuntimeEntry entry,
+                                          Character bot,
+                                          Point targetPosition,
+                                          int targetRegionId) {
+        if (context == null || !context.available() || targetPosition == null || targetRegionId < 0) {
+            return UNREACHABLE_GRAPH_COST;
+        }
+        if (targetRegionId == context.startRegionId()) {
+            return AgentCombatScoringPolicy.estimateLocalTravelCostMs(
+                    context.startPos(), targetPosition, context.profile().walkVelocityPxs());
+        }
+        // Map-wide filtering can inspect many monsters on one platform and then score that same
+        // platform again. Executability is a region property for this immutable decision frame;
+        // keep individual monster distance in localScore and perform the expensive A* once.
+        return context.routeCosts().computeIfAbsent(targetRegionId, ignored ->
+                AgentNavigationPathService.reliableRouteCost(
+                        context.graph(), context.map(), context.startPos(), context.startRegionId(),
+                        targetPosition, targetRegionId,
+                        AgentCombatScoringPolicy.estimateLocalTravelCostMs(
+                                context.startPos(), targetPosition, context.profile().walkVelocityPxs()),
+                        entry, bot, UNREACHABLE_GRAPH_COST));
     }
 
     private static List<AgentScoredGrindTarget> scoreGrindTargets(AgentRuntimeEntry entry,
@@ -456,8 +487,9 @@ public final class AgentCombatTargetRuntime {
                                                                   List<Monster> candidates,
                                                                   Map<Monster, Integer> targetOccupancy,
                                                                   AgentCombatConfig.Config config,
-                                                                  boolean requiresCompleteRemoteRoute) {
-        GrindGraphContext graphContext = GrindGraphContext.resolve(entry, bot, botPos);
+                                                                  boolean requiresCompleteRemoteRoute,
+                                                                  AgentCombatDecisionContext decisionContext) {
+        GrindGraphContext graphContext = GrindGraphContext.from(decisionContext);
         if (requiresCompleteRemoteRoute && !graphContext.available()) {
             return List.of();
         }
@@ -571,14 +603,29 @@ public final class AgentCombatTargetRuntime {
             return false;
         }
         return targetRegionId == context.startRegionId()
-                || AgentNavigationPathService.reliableRouteCost(
-                        context.graph(), context.map(), context.startPos(), context.startRegionId(),
-                        target.getPosition(), targetRegionId,
-                        AgentCombatScoringPolicy.estimateLocalTravelCostMs(
-                                context.startPos(), target.getPosition(),
-                                context.profile().walkVelocityPxs()),
-                        entry, bot, UNREACHABLE_GRAPH_COST)
-                        < UNREACHABLE_GRAPH_COST;
+                || reliableRouteCost(context, entry, bot, target.getPosition(), targetRegionId)
+                < UNREACHABLE_GRAPH_COST;
+    }
+
+    private static boolean hasCompleteRemoteCombatRoute(AgentRuntimeEntry entry,
+                                                        Character bot,
+                                                        Monster target,
+                                                        AgentCombatDecisionContext decisionContext) {
+        if (entry == null || bot == null || target == null || target.getPosition() == null) {
+            return false;
+        }
+        GrindGraphContext context = GrindGraphContext.from(decisionContext);
+        if (!context.available()) {
+            return false;
+        }
+        int targetRegionId = AgentNavigationRegionService.resolveTargetRegionId(
+                context.graph(), entry, context.map(), target.getPosition());
+        if (targetRegionId < 0) {
+            return false;
+        }
+        return targetRegionId == context.startRegionId()
+                || reliableRouteCost(context, entry, bot, target.getPosition(), targetRegionId)
+                < UNREACHABLE_GRAPH_COST;
     }
 
     private static boolean shouldEscalateToMapWidePreferredTarget(
@@ -726,22 +773,10 @@ public final class AgentCombatTargetRuntime {
                                        boolean mapWidePreferredEscalation,
                                        boolean rankedVariationConsumed,
                                        Monster selected) {
-        if (entry == null) {
-            return;
-        }
-        entry.capabilityStates().require(AgentCombatDecisionTraceState.STATE_KEY).record(
-                mode,
-                outcome,
-                System.currentTimeMillis(),
-                baseCandidates,
-                objectiveCandidates,
-                policyCandidates,
-                claimCandidates,
-                scoredCandidates,
-                mapWidePreferredEscalation,
-                rankedVariationConsumed,
-                selected == null ? 0 : selected.getObjectId(),
-                selected == null ? 0 : selected.getId());
+        AgentCombatTargetEvidenceRecorder.decision(
+                entry, mode, outcome, baseCandidates, objectiveCandidates, policyCandidates,
+                claimCandidates, scoredCandidates, mapWidePreferredEscalation,
+                rankedVariationConsumed, selected);
     }
 
     static boolean insideRouteCorridor(Point start, Point end, Point candidate, int halfWidth) {
@@ -779,13 +814,14 @@ public final class AgentCombatTargetRuntime {
                                                                   List<Monster> candidates,
                                                                   Map<Monster, Integer> targetOccupancy,
                                                                   AgentCombatConfig.Config config,
-                                                                  Monster selected) {
+                                                                  Monster selected,
+                                                                  AgentCombatDecisionContext decisionContext) {
         if (selected == null || candidates.size() < 3
                 || !AgentCombatVariationRuntime.settings(entry).targetSelectionVariationEnabled()) {
             return selected;
         }
 
-        GrindGraphContext context = GrindGraphContext.resolve(entry, bot, botPos);
+        GrindGraphContext context = GrindGraphContext.from(decisionContext);
         List<Monster> sameReachableRegion = candidates;
         if (context.available()) {
             int selectedRegionId = AgentNavigationRegionService.resolveTargetRegionId(
@@ -802,7 +838,7 @@ public final class AgentCombatTargetRuntime {
 
         List<AgentScoredGrindTarget> localScores = scoreLocalTargets(
                 entry, bot, botPos, botFoothold, sameReachableRegion, targetOccupancy, config);
-        AgentCombatGrindTargetPolicy.sortByLegacyTargetOrder(localScores);
+        AgentCombatGrindTargetPolicy.sortByTargetOrder(localScores);
         int index = AgentCombatVariationRuntime.selectTargetIndex(
                 entry, bot, localScores.size());
         return localScores.get(Math.min(index, localScores.size() - 1)).monster();
@@ -819,7 +855,7 @@ public final class AgentCombatTargetRuntime {
             return new RankedTargetSelection(best, false);
         }
         List<AgentScoredGrindTarget> reachableTargets = scoredTargets.stream()
-                .filter(target -> target.graphCost() < UNREACHABLE_GRAPH_COST)
+                .filter(target -> target.routeCost() < UNREACHABLE_GRAPH_COST)
                 .toList();
         if (reachableTargets.size() < 3) {
             return new RankedTargetSelection(best, false);
@@ -830,18 +866,14 @@ public final class AgentCombatTargetRuntime {
                 reachableTargets.get(Math.min(index, reachableTargets.size() - 1)).monster(), true);
     }
 
-    private static int targetRegionId(AgentRuntimeEntry entry,
-                                      Character bot,
-                                      Point botPos,
+    private static int targetRegionId(AgentCombatDecisionContext decisionContext,
                                       Monster target) {
-        if (target == null) {
+        if (target == null || !decisionContext.available()) {
             return -1;
         }
-        GrindGraphContext context = GrindGraphContext.resolve(entry, bot, botPos);
-        return context.available()
-                ? AgentNavigationRegionService.resolveTargetRegionId(
-                context.graph(), context.entry(), context.map(), target.getPosition())
-                : -1;
+        return AgentNavigationRegionService.resolveTargetRegionId(
+                decisionContext.graph(), decisionContext.entry(), decisionContext.map(),
+                target.getPosition());
     }
 
     private record RankedTargetSelection(Monster target, boolean variationDecisionConsumed) {
@@ -875,7 +907,7 @@ public final class AgentCombatTargetRuntime {
                 botPos,
                 candidate -> grindTargetScore(
                         bot, botPos, botFoothold, candidate, targetOccupancy, config),
-                candidate -> AgentCombatScoringPolicy.legacyAoeClusterBonus(
+                candidate -> AgentCombatScoringPolicy.aoeClusterBonus(
                         candidate,
                         candidates,
                         entry != null && AgentCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
@@ -897,19 +929,14 @@ public final class AgentCombatTargetRuntime {
                         context.graph(), context.entry(), context.map(), candidate.getPosition()),
                 candidate -> grindTargetScore(
                         bot, botPos, botFoothold, candidate, targetOccupancy, config)
-                        - AgentCombatScoringPolicy.legacyAoeClusterBonus(
+                        - AgentCombatScoringPolicy.aoeClusterBonus(
                         candidate,
                         candidates,
                         entry != null && AgentCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
                         entry == null ? 0 : AgentCombatSkillCacheStateRuntime.aoeSkillMobs(entry)),
                 group -> AgentCombatScoringPolicy.addReachableGraphPenalty(
-                        AgentNavigationPathService.reliableRouteCost(
-                                context.graph(), context.map(), context.startPos(), context.startRegionId(),
-                                group.bestMonster().getPosition(), group.regionId(),
-                                AgentCombatScoringPolicy.estimateLocalTravelCostMs(
-                                        context.startPos(), group.bestMonster().getPosition(),
-                                        context.profile().walkVelocityPxs()),
-                                entry, bot, UNREACHABLE_GRAPH_COST),
+                        reliableRouteCost(context, entry, bot,
+                                group.bestMonster().getPosition(), group.regionId()),
                         AgentCombatScoringPolicy.upwardPlatformPenalty(
                                 botPos, group.bestMonster().getPosition()),
                         UNREACHABLE_GRAPH_COST),
@@ -942,14 +969,14 @@ public final class AgentCombatTargetRuntime {
 
     private static Map<Monster, Integer> grindTargetOccupancy(
             AgentRuntimeEntry entry,
-            Character bot) {
+            Character bot,
+            AgentCombatDecisionContext decisionContext) {
         if (entry == null || bot == null || bot.getMap() == null) {
             return Map.of();
         }
         Map<Monster, Integer> occupancy = new IdentityHashMap<>();
         Map<Integer, Monster> monstersByObjectId = AgentCombatCandidateProvider.byObjectId(bot);
-        AgentPerceptionSnapshot snapshot = CosmicAgentPerceptionSnapshotFactory.capture(bot, System.currentTimeMillis());
-        for (AgentPeerPerception peer : snapshot.agentPeers()) {
+        for (AgentPeerPerception peer : decisionContext.perception().agentPeers()) {
             Monster siblingTarget = monstersByObjectId.get(peer.targetObjectId());
             if (peer.characterId() != bot.getId() && peer.grinding() && siblingTarget != null) {
                 occupancy.merge(siblingTarget, 1, Integer::sum);
@@ -958,20 +985,30 @@ public final class AgentCombatTargetRuntime {
         return occupancy;
     }
 
+    private static boolean territorialFieldAssignment(
+            AgentRuntimeEntry entry, Character bot, long nowMs) {
+        AgentCombatDirective directive = AgentCombatDirectiveRuntime.directive(entry);
+        var assignment = directive == null ? null : directive.regionAssignment();
+        return assignment != null && assignment.territorial()
+                && bot != null && assignment.mapId() == bot.getMapId()
+                && nowMs < assignment.expiresAtMs();
+    }
+
     private static PolicySelection applyObjectivePolicy(AgentRuntimeEntry entry,
                                                         Character bot,
                                                         Point botPos,
                                                         Foothold botFoothold,
                                                         List<Monster> candidates,
-                                                        boolean commitLocalPlatformBatch) {
+                                                        boolean commitLocalPlatformBatch,
+                                                        AgentCombatDecisionContext decisionContext) {
         AgentCombatDirective directive = AgentCombatDirectiveRuntime.directive(entry);
         if (directive == null) {
-            return legacyPolicySelection(entry, candidates);
+            return fallbackPolicySelection(entry, candidates);
         }
 
-        GrindGraphContext context = GrindGraphContext.resolve(entry, bot, botPos);
+        GrindGraphContext context = GrindGraphContext.from(decisionContext);
         int currentRegionId = context.available() ? context.startRegionId() : -1;
-        long nowMs = System.currentTimeMillis();
+        long nowMs = decisionContext.capturedAtMs();
         boolean allowSweep = directive.incidentalPolicy()
                 == AgentIncidentalMobPolicy.KILL_FOR_SPAWN_PRESSURE
                 && AgentCombatDirectiveRuntime.state(entry)
@@ -991,7 +1028,8 @@ public final class AgentCombatTargetRuntime {
             AgentRuntimeEntry entry,
             Character bot,
             List<Monster> candidates,
-            long nowMs) {
+            long nowMs,
+            AgentCombatDecisionContext decisionContext) {
         if (entry == null || bot == null) {
             return new PlatformBatchSelection(candidates, false);
         }
@@ -1001,7 +1039,7 @@ public final class AgentCombatTargetRuntime {
         if (!state.active(bot.getMapId(), objectiveId, nowMs)) {
             return new PlatformBatchSelection(candidates, false);
         }
-        GrindGraphContext context = GrindGraphContext.resolve(entry, bot, bot.getPosition());
+        GrindGraphContext context = GrindGraphContext.from(decisionContext);
         List<Monster> retained = candidates.stream()
                 .filter(monster -> state.includes(
                         bot.getMapId(), objectiveId,
@@ -1029,7 +1067,8 @@ public final class AgentCombatTargetRuntime {
     private static void beginPlatformBatch(AgentRuntimeEntry entry,
                                            Character bot,
                                            Monster selected,
-                                           long nowMs) {
+                                           long nowMs,
+                                           AgentCombatDecisionContext decisionContext) {
         if (entry == null || bot == null || bot.getMap() == null
                 || selected == null || selected.getPosition() == null) {
             return;
@@ -1041,7 +1080,7 @@ public final class AgentCombatTargetRuntime {
             return;
         }
         Point anchor = selected.getPosition();
-        GrindGraphContext context = GrindGraphContext.resolve(entry, bot, bot.getPosition());
+        GrindGraphContext context = GrindGraphContext.from(decisionContext);
         int selectedRegionId = context.available()
                 ? AgentNavigationRegionService.resolveTargetRegionId(
                 context.graph(), context.entry(), context.map(), anchor)
@@ -1080,7 +1119,7 @@ public final class AgentCombatTargetRuntime {
         }
     }
 
-    private static PolicySelection legacyPolicySelection(
+    private static PolicySelection fallbackPolicySelection(
             AgentRuntimeEntry entry, List<Monster> candidates) {
         List<Monster> preferred = candidates;
         if (AgentCombatObjectiveTargetStateRuntime.hasPreferredTargets(entry)) {
@@ -1093,84 +1132,42 @@ public final class AgentCombatTargetRuntime {
             }
         }
         return new PolicySelection(preferred, AgentCombatCandidateClass.REQUIRED,
-                AgentCombatDecisionReason.LEGACY_CLOSEST, -1);
+                AgentCombatDecisionReason.CLOSEST_ELIGIBLE, -1);
     }
 
     private static void recordPolicySelection(AgentRuntimeEntry entry,
                                               Character bot,
                                               Monster selected,
                                               PolicySelection policySelection) {
-        if (entry == null || bot == null || selected == null || policySelection == null) {
+        if (policySelection == null) {
             return;
         }
-        AgentCombatCandidateClass selectedClass = policySelection.candidateClass();
-        if (policySelection.reason() == AgentCombatDecisionReason.PLATFORM_BATCH_CLEAR) {
-            AgentCombatDirective directive = AgentCombatDirectiveRuntime.directive(entry);
-            selectedClass = directive != null
-                    && !directive.requiredMobIds().isEmpty()
-                    && !directive.requiredMobIds().contains(selected.getId())
-                    ? AgentCombatCandidateClass.INCIDENTAL
-                    : AgentCombatCandidateClass.REQUIRED;
-        }
-        AgentCombatDirectiveRuntime.state(entry).selected(
-                bot.getMapId(), policySelection.regionId(), selected.getId(),
-                selectedClass, policySelection.reason(),
-                System.currentTimeMillis());
-        AgentCombatTargetSearchModeState searchMode = searchModeState(
-                entry, bot, System.currentTimeMillis());
-        if (searchMode != null
-                && selectedClass == AgentCombatCandidateClass.INCIDENTAL
-                && searchMode.snapshot().mode() != AgentCombatTargetSearchMode.REGION_HARVEST) {
-            searchMode.enter(AgentCombatTargetSearchMode.SPAWN_PRESSURE,
-                    "clearing local incidental mobs while required population is unavailable",
-                    policySelection.regionId(), System.currentTimeMillis());
-        }
+        AgentCombatTargetEvidenceRecorder.policySelection(
+                entry, bot, selected, policySelection.candidateClass(),
+                policySelection.reason(), policySelection.regionId());
     }
 
     private static void synchronizeSearchMode(AgentRuntimeEntry entry,
                                               Character bot,
                                               long nowMs) {
-        AgentCombatTargetSearchModeState state = searchModeState(entry, bot, nowMs);
-        if (state != null) {
-            state.synchronizeScope(bot.getMapId(), AgentProgressionEventPublisher.objectiveId(entry), nowMs);
-        }
+        AgentCombatTargetEvidenceRecorder.synchronize(entry, bot, nowMs);
     }
 
     private static AgentCombatTargetSearchModeState searchModeState(AgentRuntimeEntry entry,
                                                                      Character bot,
                                                                      long nowMs) {
-        if (entry == null || bot == null) {
-            return null;
-        }
-        AgentCombatTargetSearchModeState state =
-                AgentCombatDecisionStateRuntime.state(entry).targetSearch();
-        state.synchronizeScope(bot.getMapId(), AgentProgressionEventPublisher.objectiveId(entry), nowMs);
-        return state;
+        return AgentCombatTargetEvidenceRecorder.state(entry, bot, nowMs);
     }
 
     private static void recordSearchRanking(AgentRuntimeEntry entry,
                                             Character bot,
-                                            Point botPos,
                                             List<AgentScoredGrindTarget> scoredTargets,
                                             int localCandidateCount,
-                                            int preferredCandidateCount) {
-        AgentCombatTargetSearchModeState state = searchModeState(
-                entry, bot, System.currentTimeMillis());
-        if (state == null) {
-            return;
-        }
-        List<AgentCombatTargetSearchModeState.RankedRegion> ranked = scoredTargets.stream()
-                .sorted(java.util.Comparator
-                        .comparingLong(AgentScoredGrindTarget::graphCost)
-                        .thenComparingLong(AgentScoredGrindTarget::localScore)
-                        .thenComparingDouble(AgentScoredGrindTarget::distanceSq))
-                .limit(3)
-                .map(target -> new AgentCombatTargetSearchModeState.RankedRegion(
-                        targetRegionId(entry, bot, botPos, target.monster()),
-                        target.graphCost(), target.localScore(),
-                        target.monster().getObjectId(), target.monster().getId()))
-                .toList();
-        state.recordEvidence(localCandidateCount, preferredCandidateCount, ranked);
+                                            int preferredCandidateCount,
+                                            AgentCombatDecisionContext decisionContext) {
+        AgentCombatTargetEvidenceRecorder.searchRanking(
+                entry, bot, scoredTargets, localCandidateCount, preferredCandidateCount,
+                target -> targetRegionId(decisionContext, target));
     }
 
     private record PolicySelection(List<Monster> candidates,
@@ -1185,6 +1182,55 @@ public final class AgentCombatTargetRuntime {
     private record PlatformBatchSelection(List<Monster> candidates, boolean retained) {
     }
 
+    /** One immutable live-world capture used throughout a combat target decision. */
+    private record AgentCombatDecisionContext(
+            AgentRuntimeEntry entry,
+            Character agent,
+            MapleMap map,
+            AgentNavigationGraph graph,
+            AgentMovementProfile profile,
+            Point startPos,
+            int startRegionId,
+            AgentPerceptionSnapshot perception,
+            Map<Integer, Long> routeCosts,
+            long capturedAtMs) {
+
+        static AgentCombatDecisionContext capture(
+                AgentRuntimeEntry entry,
+                Character agent,
+                long nowMs) {
+            Point position = agent == null || agent.getPosition() == null
+                    ? null : new Point(agent.getPosition());
+            MapleMap map = agent == null ? null : agent.getMap();
+            AgentMovementProfile profile =
+                    AgentMovementStateRuntime.movementProfileOrCharacter(entry, agent);
+            AgentPerceptionSnapshot perception = agent == null
+                    ? AgentPerceptionSnapshot.unavailable()
+                    : CosmicAgentPerceptionSnapshotFactory.capture(agent, nowMs);
+            if (map == null || position == null || map.getFootholds() == null) {
+                return new AgentCombatDecisionContext(
+                        entry, agent, map, null, profile, position, -1, perception,
+                        new java.util.HashMap<>(), nowMs);
+            }
+
+            AgentNavigationGraph graph = AgentNavigationGraphService.peekGraph(map, profile);
+            if (graph == null) {
+                AgentNavigationGraphService.warmGraphAsync(entry, map, profile);
+                graph = AgentNavigationGraphService.peekClosestGraph(map, profile);
+            }
+            int startRegionId = graph == null ? -1
+                    : AgentNavigationRegionService.resolveCurrentRegionId(
+                    graph, entry, map, position);
+            return new AgentCombatDecisionContext(
+                    entry, agent, map, graph, profile, position,
+                    startRegionId, perception, new java.util.HashMap<>(), nowMs);
+        }
+
+        boolean available() {
+            return graph != null && map != null && startPos != null && startRegionId >= 0;
+        }
+    }
+
     private static long grindRegionOccupancyPenalty(GrindGraphContext context, Character bot, int targetRegionId,
                                                     AgentCombatConfig.Config config) {
         if (!context.available() || bot == null || targetRegionId < 0) {
@@ -1192,7 +1238,7 @@ public final class AgentCombatTargetRuntime {
         }
 
         int occupiedCount = 0;
-        AgentPerceptionSnapshot snapshot = CosmicAgentPerceptionSnapshotFactory.capture(bot, System.currentTimeMillis());
+        AgentPerceptionSnapshot snapshot = context.perception();
         for (AgentPeerPerception peer : snapshot.agentPeers()) {
             boolean self = peer.characterId() == bot.getId();
             if (!AgentCombatGrindTargetPolicy.shouldInspectRegionOccupant(
@@ -1216,7 +1262,16 @@ public final class AgentCombatTargetRuntime {
                                      AgentNavigationGraph graph,
                                      AgentMovementProfile profile,
                                      Point startPos,
-                                     int startRegionId) {
+                                     int startRegionId,
+                                     AgentPerceptionSnapshot perception,
+                                     Map<Integer, Long> routeCosts) {
+        static GrindGraphContext from(AgentCombatDecisionContext context) {
+            return new GrindGraphContext(
+                    context.entry(), context.map(), context.graph(), context.profile(),
+                    context.startPos(), context.startRegionId(), context.perception(),
+                    context.routeCosts());
+        }
+
         static GrindGraphContext resolve(AgentRuntimeEntry entry, Character bot, Point botPos) {
             if (entry == null || bot == null || bot.getMap() == null || bot.getMap().getFootholds() == null) {
                 return unavailable(entry, bot, botPos);
@@ -1236,14 +1291,18 @@ public final class AgentCombatTargetRuntime {
             if (startRegionId < 0) {
                 return unavailable(entry, bot, botPos);
             }
-            return new GrindGraphContext(entry, bot.getMap(), graph, profile, new Point(botPos), startRegionId);
+            return new GrindGraphContext(entry, bot.getMap(), graph, profile, new Point(botPos),
+                    startRegionId,
+                    CosmicAgentPerceptionSnapshotFactory.capture(bot, System.currentTimeMillis()),
+                    new java.util.HashMap<>());
         }
 
         private static GrindGraphContext unavailable(AgentRuntimeEntry entry, Character bot, Point botPos) {
             MapleMap map = bot == null ? null : bot.getMap();
             AgentMovementProfile profile = AgentMovementStateRuntime.movementProfileOrCharacter(entry, bot);
             Point startPos = botPos == null ? null : new Point(botPos);
-            return new GrindGraphContext(entry, map, null, profile, startPos, -1);
+            return new GrindGraphContext(entry, map, null, profile, startPos, -1,
+                    AgentPerceptionSnapshot.unavailable(), new java.util.HashMap<>());
         }
 
         boolean available() {

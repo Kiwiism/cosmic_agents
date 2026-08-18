@@ -12,6 +12,7 @@ import server.agents.integration.MakerGateway;
 import server.agents.integration.MapGateway;
 import server.agents.integration.PacketGateway;
 import server.agents.integration.PartyGateway;
+import server.agents.integration.PartyQuestGateway;
 import server.agents.integration.SkillGateway;
 import server.agents.integration.ShopGateway;
 import server.agents.integration.SchedulerGateway;
@@ -69,6 +70,11 @@ public final class CosmicAgentServerAdapter implements AgentServerAdapter {
     @Override
     public PartyGateway party() {
         return CosmicPartyGateway.INSTANCE;
+    }
+
+    @Override
+    public PartyQuestGateway partyQuest() {
+        return CosmicPartyQuestGateway.INSTANCE;
     }
 
     @Override

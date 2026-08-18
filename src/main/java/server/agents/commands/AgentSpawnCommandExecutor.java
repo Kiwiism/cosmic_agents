@@ -89,6 +89,30 @@ public final class AgentSpawnCommandExecutor {
         player.yellowMessage("Agent '" + result.agent().getName() + "' spawned. Say 'follow me' or 'stop' to direct it.");
     }
 
+    /** Creates a named Agent-only backing character for a GM harness, if missing. */
+    public String ensureBackingCharacter(Character operator, String agentName) {
+        if (operator == null || agentName == null || agentName.isBlank()) {
+            return "An operator and Agent name are required.";
+        }
+        AgentControlService controlService = AgentControlService.getInstance();
+        if (controlService.resolveCharacterByName(agentName) != null) {
+            return null;
+        }
+        String denial = validateProvisioning(operator);
+        if (denial != null) return denial;
+        AgentAccountResolution account = resolveAgentAccount(agentName);
+        if (!account.isSuccess()) return account.failureMessage();
+        if (!lockAgentBackingAccount(account.accountId())) {
+            return "Failed to secure the Agent-only backing account for '" + agentName + "'.";
+        }
+        Client creationClient = AgentClientGatewayRuntime.clients().createHeadlessClient(
+                operator.getWorld(), AgentClientGatewayRuntime.clients().channel(operator));
+        creationClient.setAccID(account.accountId());
+        creationClient.setAccountName(agentName);
+        return AgentClientGatewayRuntime.clients().createBackingCharacter(creationClient, agentName) == -1
+                ? "Failed to create Agent backing character '" + agentName + "'." : null;
+    }
+
     private String validateProvisioning(Character player) {
         return PROVISIONING_POLICY.validateAndRecordAttempt(
                 player.getId(), player.gmLevel(), 0);

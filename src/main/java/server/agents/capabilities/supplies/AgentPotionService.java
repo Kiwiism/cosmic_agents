@@ -5,7 +5,6 @@ import server.agents.capabilities.trade.AgentPendingTradeStateRuntime;
 import server.agents.capabilities.movement.AgentMovementTimers;
 
 import server.agents.capabilities.dialogue.AgentEmote;
-import server.agents.capabilities.combat.AgentCombatConfig;
 
 import server.agents.monitoring.AgentPerformanceMonitor;
 
@@ -201,7 +200,7 @@ public final class AgentPotionService {
 
         startedAt = AgentPerformanceMonitor.start();
         AgentCombatAmmoCheckRuntime.tickAmmoCheck(entry, bot,
-                AgentCombatConfig.cfg.AMMO_LOW_WARN, AgentRuntimeConfig.cfg.POT_LOW_WARN);
+                AgentSupplyConfig.cfg.AMMO_LOW_WARN, AgentRuntimeConfig.cfg.POT_LOW_WARN);
         AgentPerformanceMonitor.recordSince("potion-ammo-check", startedAt);
 
         if (!AgentModeStateRuntime.grinding(entry) && !AgentModeStateRuntime.following(entry)) {

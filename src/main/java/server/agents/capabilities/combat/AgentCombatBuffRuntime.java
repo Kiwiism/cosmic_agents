@@ -36,9 +36,9 @@ public final class AgentCombatBuffRuntime {
                         AgentModeStateRuntime.grinding(entry),
                         AgentCombatSkillCacheStateRuntime.hasBuffSkillIds(entry));
         if (tickDecision != AgentCombatSupportPolicy.SkillBuffTickDecision.READY) {
-            if (tickDecision.legacyDebugSummary() != null) {
+            if (tickDecision.debugSummary() != null) {
                 AgentSkillBuffDebugStateRuntime.rememberAction(
-                        entry, System.currentTimeMillis(), tickDecision.legacyDebugSummary());
+                        entry, System.currentTimeMillis(), tickDecision.debugSummary());
             }
             return;
         }
@@ -142,7 +142,7 @@ public final class AgentCombatBuffRuntime {
         int skillLevel = bot.getSkillLevel(skill);
         AgentCombatSupportPolicy.SupportCastReadiness readiness =
                 AgentCombatSupportPolicy.supportCastReadiness(skillLevel, bot.isAlive(), () -> fx.canPaySkillCost(bot));
-        String readinessSummary = readiness.legacyDebugSummary(
+        String readinessSummary = readiness.debugSummary(
                 AgentCombatDialogueReporter.combatSkillLabel(skill.getId()));
         if (readinessSummary != null) {
             AgentSkillBuffDebugStateRuntime.rememberAction(entry, System.currentTimeMillis(), readinessSummary);

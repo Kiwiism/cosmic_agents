@@ -1,7 +1,6 @@
 package server.agents.capabilities.recovery;
 
 import client.Character;
-import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentDeathTickService;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentMovementPoseService;
@@ -20,7 +19,7 @@ public final class AgentRespawnCoordinator {
         respawnAtNearestTown(
                 entry,
                 agent,
-                AgentCombatConfig.cfg.RESPAWN_HP_PERCENT,
+                AgentDeathConfig.cfg.RESPAWN_HP_PERCENT,
                 new AgentDeathTickService.RespawnHooks(
                         AgentMapGatewayRuntime.map()::changeMapNear,
                         (respawnEntry, respawnAgent, point) ->

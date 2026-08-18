@@ -13,6 +13,7 @@ import net.server.channel.handlers.AbstractDealDamageHandler;
 import server.agents.capabilities.combat.data.AgentAttackDataProvider;
 import server.agents.capabilities.combat.data.AgentAttackTiming;
 import server.agents.integration.AgentCombatGatewayRuntime;
+import server.agents.integration.CombatAttackApplicationResult;
 import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.integration.InventoryGateway;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -247,18 +248,11 @@ public final class AgentAttackExecutionProvider {
         return sampleAttackAction(attackSpec.actions(), attackSpec.primaryAction());
     }
 
-    public static boolean applyAttackRoute(AgentAttackRoute route, AbstractDealDamageHandler.AttackInfo attack, Character bot) {
-        if (!mapReadyForAttack(bot)) {
-            return false;
-        }
-        AgentCombatGatewayRuntime.combat().applyAttackEffects(route, attack, bot);
-        return true;
-    }
-
-    static boolean mapReadyForAttack(Character bot) {
-        return bot != null && bot.getMap() != null
-                && !bot.getMap().hasTransitioningPlayerObserver()
-                && bot.getMap().isMobPhysicsObserverWarmupComplete();
+    public static CombatAttackApplicationResult applyAttackRoute(
+            AgentAttackRoute route,
+            AbstractDealDamageHandler.AttackInfo attack,
+            Character bot) {
+        return AgentCombatGatewayRuntime.combat().applyAttackEffects(route, attack, bot);
     }
 
     public static AgentAttackRoute determineBasicAttackRoute(Character bot) {

@@ -39,7 +39,8 @@ public final class AgentLocalOpportunityAttackCoordinator {
                 AgentGrindNavigationTargetSelector::selectGrindNavigationTarget,
                 AgentMovementKinematicsService::calculateMaxJumpHeight,
                 AgentJumpActionService::initiateJump,
-                AgentLocalOpportunityAttackCoordinator::setLocalAttackMoveWindow);
+                AgentLocalOpportunityAttackCoordinator::setLocalAttackMoveWindow,
+                AgentCombatAttackRuntime::attackMonster);
     }
 
     private static void setLocalAttackMoveWindow(AgentRuntimeEntry entry,

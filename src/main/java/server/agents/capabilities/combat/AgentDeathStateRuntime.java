@@ -10,26 +10,26 @@ public final class AgentDeathStateRuntime {
     }
 
     public static long deadUntilMs(AgentRuntimeEntry entry) {
-        return entry.deathState().deadUntilMs();
+        return entry.capabilityStates().require(AgentDeathState.STATE_KEY).deadUntilMs();
     }
 
     public static boolean isDead(AgentRuntimeEntry entry) {
-        return entry.deathState().isDead();
+        return entry.capabilityStates().require(AgentDeathState.STATE_KEY).isDead();
     }
 
     public static boolean shouldEnterDeadState(AgentRuntimeEntry entry, int hp) {
-        return entry.deathState().shouldEnterDeadState(hp);
+        return entry.capabilityStates().require(AgentDeathState.STATE_KEY).shouldEnterDeadState(hp);
     }
 
     public static boolean isRespawnDue(AgentRuntimeEntry entry, long nowMs) {
-        return entry.deathState().isRespawnDue(nowMs);
+        return entry.capabilityStates().require(AgentDeathState.STATE_KEY).isRespawnDue(nowMs);
     }
 
     public static void enterDeadState(AgentRuntimeEntry entry, long nowMs, long deadDurationMs) {
-        entry.deathState().enterDeadState(nowMs, deadDurationMs);
+        entry.capabilityStates().require(AgentDeathState.STATE_KEY).enterDeadState(nowMs, deadDurationMs);
     }
 
     public static void clear(AgentRuntimeEntry entry) {
-        entry.deathState().clear();
+        entry.capabilityStates().require(AgentDeathState.STATE_KEY).clear();
     }
 }

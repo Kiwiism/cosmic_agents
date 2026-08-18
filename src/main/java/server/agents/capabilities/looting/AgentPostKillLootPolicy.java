@@ -12,8 +12,21 @@ public final class AgentPostKillLootPolicy {
                                         AgentPostKillLootState.Snapshot state,
                                         boolean hasCombatTarget,
                                         long nowMs) {
+        return shouldCollect(weaponType, state, hasCombatTarget, nowMs,
+                new AgentLootCollectionContextState.Snapshot(
+                        AgentLootCollectionContextState.Mode.STANDARD, 0));
+    }
+
+    public static boolean shouldCollect(WeaponType weaponType,
+                                        AgentPostKillLootState.Snapshot state,
+                                        boolean hasCombatTarget,
+                                        long nowMs,
+                                        AgentLootCollectionContextState.Snapshot context) {
         if (state == null || !state.hasKills()) {
             return !hasCombatTarget;
+        }
+        if (context != null && context.fieldGrinding()) {
+            return !hasCombatTarget || state.killCount() >= Math.max(1, context.batchKills());
         }
         if (!isRanged(weaponType)) {
             return true;

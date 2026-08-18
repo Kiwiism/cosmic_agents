@@ -16,6 +16,17 @@ import static org.mockito.Mockito.when;
 
 class AgentGrindTargetSearchPolicyTest {
     @Test
+    void closedRetargetGateSkipsLiveRouteValidationEntirely() {
+        Character agent = mock(Character.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
+        Monster target = mock(Monster.class);
+        AgentGrindSearchStateRuntime.scheduleNextSearch(entry, 2_000L);
+
+        assertFalse(AgentGrindTargetSearchPolicy.shouldSearchForGrindTarget(
+                entry, agent, target, null, 1_000L));
+    }
+
+    @Test
     void keepsWalkingTowardReachableCommittedTarget() {
         Character agent = mock(Character.class);
         when(agent.getPosition()).thenReturn(new Point(0, 0));

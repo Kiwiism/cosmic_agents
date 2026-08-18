@@ -5,6 +5,7 @@ import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import org.junit.jupiter.api.Test;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.integration.CombatAttackApplicationResult;
 import server.life.Monster;
 import server.maps.MapleMap;
 
@@ -20,20 +21,10 @@ import static org.mockito.Mockito.when;
 
 class AgentCombatAttackRuntimeTest {
     @Test
-    void blocksAttacksUntilMapTransitionAndWarmupAreComplete() {
-        Character agent = mock(Character.class);
-        MapleMap map = mock(MapleMap.class);
-        when(agent.getMap()).thenReturn(map);
-
-        when(map.hasTransitioningPlayerObserver()).thenReturn(true);
-        when(map.isMobPhysicsObserverWarmupComplete()).thenReturn(false);
-        assertFalse(AgentAttackExecutionProvider.mapReadyForAttack(agent));
-
-        when(map.hasTransitioningPlayerObserver()).thenReturn(false);
-        assertFalse(AgentAttackExecutionProvider.mapReadyForAttack(agent));
-
-        when(map.isMobPhysicsObserverWarmupComplete()).thenReturn(true);
-        assertTrue(AgentAttackExecutionProvider.mapReadyForAttack(agent));
+    void sharedHandlerResultIsTheAuthoritativeApplicationSignal() {
+        assertTrue(CombatAttackApplicationResult.appliedResult().applied());
+        assertFalse(CombatAttackApplicationResult.rejected(
+                CombatAttackApplicationResult.Reason.HANDLER_REJECTED).applied());
     }
 
     @Test

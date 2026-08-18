@@ -12,15 +12,15 @@ public final class AgentCombatSkillCacheStateRuntime {
     }
 
     public static boolean matches(AgentRuntimeEntry entry, int jobId, int level, int signature) {
-        return entry.combatSkillCacheState().matches(jobId, level, signature);
+        return entry.capabilityStates().require(AgentCombatSkillCacheState.STATE_KEY).matches(jobId, level, signature);
     }
 
     public static void reset(AgentRuntimeEntry entry, int jobId, int level, int signature) {
-        entry.combatSkillCacheState().reset(jobId, level, signature);
+        entry.capabilityStates().require(AgentCombatSkillCacheState.STATE_KEY).reset(jobId, level, signature);
     }
 
     public static List<Integer> attackSkillIds(AgentRuntimeEntry entry) {
-        return entry.combatSkillCacheState().attackSkillIds();
+        return entry.capabilityStates().require(AgentCombatSkillCacheState.STATE_KEY).attackSkillIds();
     }
 
     public static boolean hasAttackSkillIds(AgentRuntimeEntry entry) {
@@ -28,11 +28,11 @@ public final class AgentCombatSkillCacheStateRuntime {
     }
 
     public static void addAttackSkillId(AgentRuntimeEntry entry, int skillId) {
-        entry.combatSkillCacheState().addAttackSkillId(skillId);
+        entry.capabilityStates().require(AgentCombatSkillCacheState.STATE_KEY).addAttackSkillId(skillId);
     }
 
     public static int attackSkillId(AgentRuntimeEntry entry) {
-        return entry.combatSkillCacheState().attackSkillId();
+        return entry.capabilityStates().require(AgentCombatSkillCacheState.STATE_KEY).attackSkillId();
     }
 
     public static boolean hasAttackSkill(AgentRuntimeEntry entry) {
@@ -40,15 +40,15 @@ public final class AgentCombatSkillCacheStateRuntime {
     }
 
     public static void setAttackSkillId(AgentRuntimeEntry entry, int skillId) {
-        entry.combatSkillCacheState().setAttackSkillId(skillId);
+        entry.capabilityStates().require(AgentCombatSkillCacheState.STATE_KEY).setAttackSkillId(skillId);
     }
 
     public static int aoeSkillId(AgentRuntimeEntry entry) {
-        return entry.combatSkillCacheState().aoeSkillId();
+        return entry.capabilityStates().require(AgentCombatSkillCacheState.STATE_KEY).aoeSkillId();
     }
 
     public static int aoeSkillMobs(AgentRuntimeEntry entry) {
-        return entry.combatSkillCacheState().aoeSkillMobs();
+        return entry.capabilityStates().require(AgentCombatSkillCacheState.STATE_KEY).aoeSkillMobs();
     }
 
     public static boolean hasAoeSkill(AgentRuntimeEntry entry) {
@@ -60,11 +60,11 @@ public final class AgentCombatSkillCacheStateRuntime {
     }
 
     public static void setAoeSkill(AgentRuntimeEntry entry, int skillId, int mobCount) {
-        entry.combatSkillCacheState().setAoeSkill(skillId, mobCount);
+        entry.capabilityStates().require(AgentCombatSkillCacheState.STATE_KEY).setAoeSkill(skillId, mobCount);
     }
 
     public static int healSkillId(AgentRuntimeEntry entry) {
-        return entry.combatSkillCacheState().healSkillId();
+        return entry.capabilityStates().require(AgentCombatSkillCacheState.STATE_KEY).healSkillId();
     }
 
     public static boolean hasHealSkill(AgentRuntimeEntry entry) {
@@ -72,11 +72,11 @@ public final class AgentCombatSkillCacheStateRuntime {
     }
 
     public static void setHealSkillId(AgentRuntimeEntry entry, int skillId) {
-        entry.combatSkillCacheState().setHealSkillId(skillId);
+        entry.capabilityStates().require(AgentCombatSkillCacheState.STATE_KEY).setHealSkillId(skillId);
     }
 
     public static List<Integer> buffSkillIds(AgentRuntimeEntry entry) {
-        return entry.combatSkillCacheState().buffSkillIds();
+        return entry.capabilityStates().require(AgentCombatSkillCacheState.STATE_KEY).buffSkillIds();
     }
 
     public static boolean hasBuffSkillIds(AgentRuntimeEntry entry) {
@@ -84,14 +84,14 @@ public final class AgentCombatSkillCacheStateRuntime {
     }
 
     public static void addBuffSkillId(AgentRuntimeEntry entry, int skillId) {
-        entry.combatSkillCacheState().addBuffSkillId(skillId);
+        entry.capabilityStates().require(AgentCombatSkillCacheState.STATE_KEY).addBuffSkillId(skillId);
     }
 
     public static List<Integer> summonSkillIds(AgentRuntimeEntry entry) {
-        return entry.combatSkillCacheState().summonSkillIds();
+        return entry.capabilityStates().require(AgentCombatSkillCacheState.STATE_KEY).summonSkillIds();
     }
 
     public static void addSummonSkillId(AgentRuntimeEntry entry, int skillId) {
-        entry.combatSkillCacheState().addSummonSkillId(skillId);
+        entry.capabilityStates().require(AgentCombatSkillCacheState.STATE_KEY).addSummonSkillId(skillId);
     }
 }

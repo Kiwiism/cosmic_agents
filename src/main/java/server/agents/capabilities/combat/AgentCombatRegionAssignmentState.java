@@ -11,6 +11,7 @@ public final class AgentCombatRegionAssignmentState {
 
     private String assignmentId = "";
     private int emptyScans;
+    private long emptySinceMs;
     private long borrowUntilMs;
 
     public synchronized boolean observe(
@@ -19,18 +20,37 @@ public final class AgentCombatRegionAssignmentState {
             int emptyScanThreshold,
             long nowMs,
             long borrowDurationMs) {
+        return observe(currentAssignmentId, assignedTargetPresent, emptyScanThreshold,
+                nowMs, borrowDurationMs, 0L);
+    }
+
+    public synchronized boolean observe(
+            String currentAssignmentId,
+            boolean assignedTargetPresent,
+            int emptyScanThreshold,
+            long nowMs,
+            long borrowDurationMs,
+            long emptyBorrowDelayMs) {
         if (!assignmentId.equals(currentAssignmentId)) {
             assignmentId = currentAssignmentId;
             emptyScans = 0;
+            emptySinceMs = 0L;
             borrowUntilMs = 0L;
         }
         if (assignedTargetPresent) {
             emptyScans = 0;
+            emptySinceMs = 0L;
             borrowUntilMs = 0L;
             return false;
         }
         if (nowMs < borrowUntilMs) {
             return true;
+        }
+        if (emptySinceMs == 0L) {
+            emptySinceMs = nowMs;
+        }
+        if (nowMs - emptySinceMs < Math.max(0L, emptyBorrowDelayMs)) {
+            return false;
         }
         emptyScans++;
         if (emptyScans >= Math.max(1, emptyScanThreshold)) {
@@ -42,9 +62,11 @@ public final class AgentCombatRegionAssignmentState {
     }
 
     public synchronized Snapshot snapshot(long nowMs) {
-        return new Snapshot(assignmentId, emptyScans, Math.max(0L, borrowUntilMs - nowMs));
+        return new Snapshot(assignmentId, emptyScans, Math.max(0L, borrowUntilMs - nowMs),
+                emptySinceMs == 0L ? 0L : Math.max(0L, nowMs - emptySinceMs));
     }
 
-    public record Snapshot(String assignmentId, int emptyScans, long borrowRemainingMs) {
+    public record Snapshot(
+            String assignmentId, int emptyScans, long borrowRemainingMs, long emptyForMs) {
     }
 }

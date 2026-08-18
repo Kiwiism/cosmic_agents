@@ -5,5 +5,6 @@ public enum AgentActivityKind {
     TOWN_LIFE,
     HUNTING,
     QUESTING,
-    COMMERCE
+    COMMERCE,
+    PARTY_QUEST
 }

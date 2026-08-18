@@ -102,10 +102,34 @@ public final class AgentFieldObservationCatalogRepository {
             if (input == null) {
                 throw new IllegalStateException("missing field-observation catalog " + RESOURCE);
             }
-            return new AgentFieldObservationCatalogRepository(
-                    MAPPER.readValue(input, AgentFieldObservationCatalog.class));
+            AgentFieldObservationManifest manifest = MAPPER.readValue(
+                    input, AgentFieldObservationManifest.class);
+            Map<Integer, AgentFieldCapacityCatalog.MapCapacity> capacities =
+                    AgentFieldCapacityCatalogRepository.index(AgentFieldCapacityCatalogRepository.load());
+            List<AgentFieldObservationCatalog.MapPreset> maps = manifest.maps().stream()
+                    .map(map -> compose(map, capacities.get(map.mapId())))
+                    .toList();
+            if (maps.size() != capacities.size()) {
+                throw new IllegalStateException("field capacity catalog must exactly cover observation maps");
+            }
+            return new AgentFieldObservationCatalogRepository(new AgentFieldObservationCatalog(
+                    manifest.schemaVersion(), manifest.harnessId(), manifest.rotationWindowMs(),
+                    manifest.supplyDurationMs(), maps));
         } catch (IOException failure) {
             throw new IllegalStateException("could not load field-observation catalog", failure);
         }
+    }
+
+    private static AgentFieldObservationCatalog.MapPreset compose(
+            AgentFieldObservationManifest.MapDefinition map,
+            AgentFieldCapacityCatalog.MapCapacity capacity) {
+        if (capacity == null) {
+            throw new IllegalStateException("missing generated capacity for observation map " + map.mapId());
+        }
+        return new AgentFieldObservationCatalog.MapPreset(
+                map.mapId(), map.mapName(), map.group(), map.level(),
+                capacity.recommendedMinimum(), capacity.recommendedMaximum(),
+                capacity.maximumAgents(), capacity.activeCounts(), capacity.partySizes(),
+                capacity.source(), capacity.confidence(), map.allowedMobIds(), map.excludedMobIds());
     }
 }

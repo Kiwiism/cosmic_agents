@@ -22,9 +22,12 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 
 /** Regenerates the NPC-shop and Victoria-drop equipment pool used by the observation harness. */
 class AgentFieldObservationEquipmentCatalogExportTest {
-    private static final Pattern SHOP_EQUIP = Pattern.compile("\\(\\s*\\d+\\s*,\\s*(1\\d{6})\\s*,");
+    private static final Pattern SHOP_EQUIP = Pattern.compile("\\(\\s*(\\d+)\\s*,\\s*(1\\d{6})\\s*,");
     private static final Pattern DROP_EQUIP = Pattern.compile(
             "\\(\\s*(\\d+)\\s*,\\s*(1\\d{6})\\s*,\\s*-?\\d+\\s*,\\s*-?\\d+\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)\\s*\\)");
+    private static final Set<Integer> ADMIN_SHOP_IDS = Set.of(
+            1337, 9_999_992, 9_999_993, 9_999_994, 9_999_995,
+            9_999_996, 9_999_997, 9_999_998, 9_999_999);
 
     @Test
     @Disabled("manual NPC-shop/Victoria-drop/WZ catalog regeneration tool")
@@ -37,7 +40,10 @@ class AgentFieldObservationEquipmentCatalogExportTest {
         Map<String, List<Integer>> shopsBySlot = new LinkedHashMap<>();
         Matcher matcher = SHOP_EQUIP.matcher(sql);
         while (matcher.find()) {
-            addEligible(items, shopsBySlot, Integer.parseInt(matcher.group(1)));
+            int shopId = Integer.parseInt(matcher.group(1));
+            if (!ADMIN_SHOP_IDS.contains(shopId)) {
+                addEligible(items, shopsBySlot, Integer.parseInt(matcher.group(2)));
+            }
         }
         Set<Integer> victoriaMobIds = AgentFieldObservationCatalogRepository.defaultRepository().maps().stream()
                 .flatMap(map -> map.allowedMobIds().stream()).collect(java.util.stream.Collectors.toSet());

@@ -199,7 +199,7 @@ public final class AgentFieldCommandService {
         }
         return List.of(result.message(), "Session " + result.sessionId() + " | maps=" + result.maps()
                 + " | pooled Agents=" + result.agents() + " | seed=" + seed + '.',
-                "Agents launch in 250ms waves; each ready map rotates every 120 seconds.");
+                "Agents launch in 250ms waves; each population window adds one minute per Agent above one.");
     }
 
     private static List<String> observeStatus(Character operator) {
@@ -216,6 +216,17 @@ public final class AgentFieldCommandService {
                     + map.expectedAgents() + " | phase=" + map.phase() + " | grinding="
                     + map.activeAgents() + " | rotation=" + map.activeCounts()
                     + (map.failures().isEmpty() ? "" : " | failures=" + map.failures().size()));
+            if (!map.capacityWindows().isEmpty()) {
+                AgentFieldObservationRuntime.CapacityWindow window = map.capacityWindows().getLast();
+                lines.add("  capacity sample: agents=" + window.activeAgents()
+                        + " kills/agent/min=" + String.format(java.util.Locale.ROOT, "%.2f",
+                        window.killsPerAgentMinuteBasisPoints() / 10_000.0d)
+                        + " non-combat=" + String.format(java.util.Locale.ROOT, "%.1f%%",
+                        window.nonCombatBasisPoints() / 100.0d)
+                        + " empty=" + window.emptyAssignedPlatforms()
+                        + " conflicts=" + window.platformConflicts()
+                        + " route/stuck=" + window.routeFailures() + '/' + window.stuckDetections());
+            }
         }
         return List.copyOf(lines);
     }
@@ -224,8 +235,10 @@ public final class AgentFieldCommandService {
         ArrayList<String> lines = new ArrayList<>();
         AgentFieldObservationCatalogRepository.defaultRepository().maps().forEach(map -> lines.add(
                 map.mapId() + " " + map.mapName() + " | L" + map.level() + " | roster="
-                        + map.maximumAgents() + " | " + map.group() + " | active=" + map.activeCounts() + " | parties="
-                        + map.partySizes()));
+                        + map.maximumAgents() + " | recommended=" + map.recommendedMinimum() + '-'
+                        + map.recommendedMaximum() + " | " + map.group() + " | active="
+                        + map.activeCounts() + " | parties=" + map.partySizes() + " | capacity="
+                        + map.capacitySource() + '/' + map.capacityConfidence()));
         return List.copyOf(lines);
     }
 

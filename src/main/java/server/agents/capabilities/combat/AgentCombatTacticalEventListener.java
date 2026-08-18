@@ -25,7 +25,7 @@ public final class AgentCombatTacticalEventListener implements AgentEventListene
         }
         AgentCombatLocalTargetLeaseRuntime.recordKill(
                 entry, killed.mapId(), killed.objectiveId(),
-                AgentCombatObjectiveTargetStateRuntime.allows(entry, killed.mobId()),
+                AgentCombatObjectiveTargetStateRuntime.prefers(entry, killed.mobId()),
                 killed.occurredAtMs());
         entry.capabilityStates().find(AgentCombatDecisionState.STATE_KEY)
                 .ifPresent(state -> state.platformBatch().killed(

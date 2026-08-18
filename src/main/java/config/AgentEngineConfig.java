@@ -10,9 +10,6 @@ package config;
  */
 public class AgentEngineConfig {
     public String AGENT_MOB_REACTION_MODE;
-    public int AGENT_SYNTHETIC_MOB_KNOCKBACK_DISTANCE_X;
-    public int AGENT_SYNTHETIC_MOB_KNOCKBACK_DURATION_MS;
-    public int AGENT_SYNTHETIC_MOB_CONTROL_HOLD_MS;
     public int AGENT_MOB_PHYSICS_PUBLICATION_INTERVAL_MS;
     public int AGENT_MOB_PHYSICS_MAX_CATCH_UP_STEPS;
     public int AGENT_MOB_PHYSICS_STOP_DISTANCE_X;

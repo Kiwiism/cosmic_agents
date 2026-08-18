@@ -4,7 +4,6 @@ import client.Character;
 import net.server.PlayerBuffValueHolder;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
-import server.agents.capabilities.combat.AgentCombatTargetRuntime;
 import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -15,18 +14,15 @@ import server.life.Monster;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Agent-owned combat report adapter. Live target search remains behind the
- * temporary integration target runtime until combat target gateways are split.
- */
+/** Read-only Agent combat reporting over capability-owned state. */
 public final class AgentCombatReportRuntime {
     private AgentCombatReportRuntime() {
     }
 
     public static String debugStatsReport(AgentRuntimeEntry entry, Character bot) {
         Monster target = AgentGrindTargetStateRuntime.target(entry);
-        if (target == null || !target.isAlive()) {
-            target = AgentCombatTargetRuntime.findGrindTarget(entry, bot, AgentCombatConfig.cfg);
+        if (target != null && !target.isAlive()) {
+            target = null;
         }
 
         AgentAttackPlan plan = target != null

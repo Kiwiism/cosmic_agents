@@ -6,6 +6,7 @@ import client.Character;
 import net.server.channel.handlers.AbstractDealDamageHandler;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.operations.events.AgentAttackResolvedEvent;
+import server.agents.integration.CombatAttackApplicationResult;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentSessionEventRuntime;
 import server.combat.CombatFormulaProvider;
@@ -52,10 +53,6 @@ public final class AgentCombatAttackRuntime {
         }
 
         MapleMap attackMap = bot.getMap();
-        if (!AgentAttackExecutionProvider.mapReadyForAttack(bot)) {
-            return AgentAttackTransactionResult.deferred(
-                    AgentAttackTransactionResult.Reason.MAP_NOT_READY, bot.getMapId(), attackPlan.skillId);
-        }
         if (primaryTarget.getMap() != attackMap) {
             return AgentAttackTransactionResult.rejected(
                     AgentAttackTransactionResult.Reason.TARGET_NOT_IN_AGENT_MAP,
@@ -94,7 +91,8 @@ public final class AgentCombatAttackRuntime {
 
         if (bot.getMap() != attackMap) {
             return AgentAttackTransactionResult.deferred(
-                    AgentAttackTransactionResult.Reason.MAP_NOT_READY, bot.getMapId(), attackPlan.skillId);
+                    AgentAttackTransactionResult.Reason.MAP_CHANGED_DURING_ATTACK,
+                    bot.getMapId(), attackPlan.skillId);
         }
         List<Monster> committedTargets = authoritativeTargets(authoritativeTargets, numAttacked, attackMap);
         if (committedTargets.isEmpty() || committedTargets.getFirst() != primaryTarget) {
@@ -109,9 +107,12 @@ public final class AgentCombatAttackRuntime {
             attack.numAttacked = committedTargets.size();
             attack.numAttackedAndDamage = AgentAttackPacketPolicy.packCounts(committedTargets.size(), numDamage);
         }
-        if (!AgentAttackExecutionProvider.applyAttackRoute(attackPlan.route, attack, bot)) {
-            return AgentAttackTransactionResult.deferred(
-                    AgentAttackTransactionResult.Reason.MAP_NOT_READY, bot.getMapId(), attackPlan.skillId);
+        CombatAttackApplicationResult application =
+                AgentAttackExecutionProvider.applyAttackRoute(attackPlan.route, attack, bot);
+        if (application == null || !application.applied()) {
+            return AgentAttackTransactionResult.rejected(
+                    AgentAttackTransactionResult.Reason.HANDLER_REJECTED,
+                    bot.getMapId(), attackPlan.skillId);
         }
         int hitLines = attack.targets.values().stream().flatMap(target -> target.damageLines().stream())
                 .mapToInt(damage -> damage > 0 ? 1 : 0).sum();

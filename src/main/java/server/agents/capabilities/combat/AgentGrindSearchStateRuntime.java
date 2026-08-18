@@ -3,14 +3,14 @@ package server.agents.capabilities.combat;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**
- * Agent-owned adapter for temporary AgentRuntimeEntry-backed grind retarget search cadence.
+ * Capability-owned adapter for grind retarget search cadence.
  */
 public final class AgentGrindSearchStateRuntime {
     private AgentGrindSearchStateRuntime() {
     }
 
     public static long nextSearchAtMs(AgentRuntimeEntry entry) {
-        return entry.grindTargetState().nextSearchAtMs();
+        return entry.capabilityStates().require(AgentGrindTargetState.STATE_KEY).nextSearchAtMs();
     }
 
     public static boolean searchBlocked(AgentRuntimeEntry entry, long nowMs) {
@@ -18,10 +18,10 @@ public final class AgentGrindSearchStateRuntime {
     }
 
     public static void scheduleNextSearch(AgentRuntimeEntry entry, long nextSearchAtMs) {
-        entry.grindTargetState().setNextSearchAtMs(nextSearchAtMs);
+        entry.capabilityStates().require(AgentGrindTargetState.STATE_KEY).setNextSearchAtMs(nextSearchAtMs);
     }
 
     public static void clear(AgentRuntimeEntry entry) {
-        entry.grindTargetState().clearNextSearchAtMs();
+        entry.capabilityStates().require(AgentGrindTargetState.STATE_KEY).clearNextSearchAtMs();
     }
 }

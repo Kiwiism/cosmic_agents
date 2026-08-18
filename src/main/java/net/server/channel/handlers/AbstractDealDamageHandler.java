@@ -192,10 +192,10 @@ public abstract class AbstractDealDamageHandler extends AbstractPacketHandler {
         return false;
     }
 
-    public static void applyAttack(AttackInfo attack, final Character player, int attackCount) {
+    public static boolean applyAttack(AttackInfo attack, final Character player, int attackCount) {
         final MapleMap map = player.getMap();
         if (map.isOwnershipRestricted(player)) {
-            return;
+            return false;
         }
 
         Skill theSkill = null;
@@ -203,14 +203,14 @@ public abstract class AbstractDealDamageHandler extends AbstractPacketHandler {
         final int job = player.getJob().getId();
         try {
             if (player.isBanned()) {
-                return;
+                return false;
             }
             if (attack.skill != 0) {
                 theSkill = SkillFactory.getSkill(attack.skill); // thanks Conrad for noticing some Aran skills not consuming MP
                 attackEffect = attack.getAttackEffect(player, theSkill); //returns back the player's attack effect so we are gucci
                 if (attackEffect == null) {
                     player.sendPacket(PacketCreator.enableActions());
-                    return;
+                    return false;
                 }
 
                 if (!attackEffect.canPaySkillCost(player)) {
@@ -218,7 +218,7 @@ public abstract class AbstractDealDamageHandler extends AbstractPacketHandler {
                         AutobanFactory.MPCON.addPoint(player.getAutobanManager(), "Skill: " + attack.skill + "; Player MP: " + player.getMp() + "; MP Needed: " + attackEffect.getMpCon());
                     }
                     player.sendPacket(PacketCreator.enableActions());
-                    return;
+                    return false;
                 }
 
                 int mobCount = attackEffect.getMobCount();
@@ -254,7 +254,7 @@ public abstract class AbstractDealDamageHandler extends AbstractPacketHandler {
                 }
             }
             if (!player.isAlive()) {
-                return;
+                return false;
             }
 
             int totDamage = 0;
@@ -589,7 +589,9 @@ public abstract class AbstractDealDamageHandler extends AbstractPacketHandler {
             }
         } catch (Exception e) {
             monitoring.RuntimeFailureLogger.log(e);
+            return false;
         }
+        return true;
     }
 
     private static void damageMonsterWithSkill(final Character attacker, final MapleMap map, final Monster monster,

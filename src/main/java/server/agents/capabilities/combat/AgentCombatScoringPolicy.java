@@ -102,7 +102,7 @@ public final class AgentCombatScoringPolicy {
         return neighbors * bonusPerMob;
     }
 
-    public static long legacyAoeClusterBonus(Monster target,
+    public static long aoeClusterBonus(Monster target,
                                              List<Monster> candidates,
                                              boolean hasMultiMobAoeSkill,
                                              int aoeMobCount) {
@@ -133,7 +133,7 @@ public final class AgentCombatScoringPolicy {
                 Math.max(1, aoeMobCount));
     }
 
-    public static int legacyCappedAoeClusterSize(Monster anchor,
+    public static int cappedAoeClusterSize(Monster anchor,
                                                  Iterable<Monster> candidates,
                                                  boolean hasMultiMobAoeSkill,
                                                  int aoeMobCount) {
@@ -189,7 +189,7 @@ public final class AgentCombatScoringPolicy {
         return cluster;
     }
 
-    public static List<Monster> legacyClusterMonsters(Monster primaryTarget,
+    public static List<Monster> clusterMonsters(Monster primaryTarget,
                                                       Iterable<Monster> candidates) {
         return clusterMonsters(primaryTarget, candidates, AgentCombatPolicyConfig.aoeClusterRadiusPx());
     }

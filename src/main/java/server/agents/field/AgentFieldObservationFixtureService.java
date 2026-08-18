@@ -117,12 +117,53 @@ final class AgentFieldObservationFixtureService {
         if (supportsShield(weaponType, inventory.getEquipmentSlot(weaponItemId))) {
             selectOne(agent, inventory, candidatesBySlot, "Si", random, selected);
         }
-        AgentEquipmentService.autoEquip(agent, null, null, true);
+        equipSelectedLoadout(agent, inventory, selected);
         Item weapon = agent.getInventory(InventoryType.EQUIPPED).getItem((short) -11);
         if (weapon == null) {
             throw new IllegalStateException("deterministic observation preset has no compatible weapon");
         }
+        if (agent.getInventory(InventoryType.EQUIPPED).getItem((short) -5) == null
+                || (!overall && agent.getInventory(InventoryType.EQUIPPED).getItem((short) -6) == null)) {
+            throw new IllegalStateException("deterministic observation preset has no complete outfit");
+        }
         return List.copyOf(selected);
+    }
+
+    /**
+     * Observation fixtures select a legal visual loadout, not a damage-maximizing plan. Sending
+     * the selection back through the generic optimizer allowed zero-stat shirts and pants to lose
+     * to its empty-slot option after the fixture had already cleared the default clothes.
+     */
+    private static void equipSelectedLoadout(Character agent,
+                                              InventoryGateway inventory,
+                                              List<Integer> selected) {
+        for (int itemId : selected) {
+            short equippedSlot = equippedSlot(normalizedSlot(inventory.getEquipmentSlot(itemId)));
+            if (equippedSlot == 0) {
+                continue;
+            }
+            Item item = agent.getInventory(InventoryType.EQUIP).list().stream()
+                    .filter(candidate -> candidate.getItemId() == itemId && candidate.getPosition() > 0)
+                    .findFirst().orElse(null);
+            if (item == null) {
+                throw new IllegalStateException("selected observation equipment is missing " + itemId);
+            }
+            inventory.moveItem(agent, InventoryType.EQUIP, item.getPosition(), equippedSlot, (short) 1);
+        }
+    }
+
+    static short equippedSlot(String normalizedSlot) {
+        return switch (normalizedSlot) {
+            case "Cp" -> -1;
+            case "Ae" -> -4;
+            case "Ma", "MaPn" -> -5;
+            case "Pn" -> -6;
+            case "So" -> -7;
+            case "Gv" -> -8;
+            case "Si" -> -10;
+            case "Wp" -> -11;
+            default -> 0;
+        };
     }
 
     private static int selectOne(Character agent,

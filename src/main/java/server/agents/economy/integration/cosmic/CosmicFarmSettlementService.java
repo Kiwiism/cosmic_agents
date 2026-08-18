@@ -14,7 +14,7 @@ import server.economy.EconomyTransactionCoordinator;
 import server.DeathPenaltyService;
 import server.ItemInformationProvider;
 import server.maps.MapleMap;
-import server.agents.capabilities.combat.AgentCombatConfig;
+import server.agents.capabilities.recovery.AgentDeathConfig;
 import server.agents.capabilities.recovery.AgentRespawnHealthPolicy;
 import tools.Randomizer;
 import tools.StringUtil;
@@ -128,7 +128,7 @@ public final class CosmicFarmSettlementService {
         DeathPenaltyService.Result result = agent.applyLogicalDeathConsequences(
                 deathMap, outcome.death().occurredAt().toEpochMilli());
         int restoredHp = AgentRespawnHealthPolicy.restoredHp(agent.getMaxHp(),
-                AgentCombatConfig.cfg.RESPAWN_HP_PERCENT);
+                AgentDeathConfig.cfg.RESPAWN_HP_PERCENT);
         agent.updateHp(restoredHp);
         evidence.put("occurredAt", outcome.death().occurredAt().toString());
         evidence.put("experienceLost", result.experienceLost());

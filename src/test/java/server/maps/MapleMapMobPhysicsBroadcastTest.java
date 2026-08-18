@@ -44,18 +44,18 @@ class MapleMapMobPhysicsBroadcastTest {
 
     @Test
     void observerWarmupBlocksAndCanBeDisabledLive() {
-        int previous = AgentCombatConfig.cfg.MOB_PHYSICS_OBSERVER_WARMUP_MS;
+        int previous = server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_OBSERVER_WARMUP_MS;
         MapleMap map = new MapleMap(1010100, 0, 1, 100000000, 1.0f);
         try {
-            AgentCombatConfig.cfg.MOB_PHYSICS_OBSERVER_WARMUP_MS = 2_000;
+            server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_OBSERVER_WARMUP_MS = 2_000;
             map.beginMobPhysicsObserverWarmup();
             assertFalse(map.isMobPhysicsObserverWarmupComplete());
 
-            AgentCombatConfig.cfg.MOB_PHYSICS_OBSERVER_WARMUP_MS = 0;
+            server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_OBSERVER_WARMUP_MS = 0;
             map.beginMobPhysicsObserverWarmup();
             assertTrue(map.isMobPhysicsObserverWarmupComplete());
         } finally {
-            AgentCombatConfig.cfg.MOB_PHYSICS_OBSERVER_WARMUP_MS = previous;
+            server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_OBSERVER_WARMUP_MS = previous;
         }
     }
 

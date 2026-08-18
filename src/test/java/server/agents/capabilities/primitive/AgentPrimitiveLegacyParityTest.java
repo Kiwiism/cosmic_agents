@@ -2,7 +2,9 @@ package server.agents.capabilities.primitive;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
+import server.agents.capabilities.combat.AgentCombatCooldownState;
 import server.agents.capabilities.combat.AgentCombatObjectiveTargetStateRuntime;
+import server.agents.capabilities.combat.AgentGrindTargetState;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
 import server.agents.capabilities.runtime.AgentCapabilityContext;
@@ -31,8 +33,8 @@ class AgentPrimitiveLegacyParityTest {
         AgentRuntimeEntry legacy = entry(agent);
         AgentRuntimeEntry adapted = entry(agent);
         Point destination = new Point(120, 15);
-        legacy.combatCooldownState().setAttackCooldownMs(75);
-        adapted.combatCooldownState().setAttackCooldownMs(75);
+        legacy.capabilityStates().require(AgentCombatCooldownState.STATE_KEY).setAttackCooldownMs(75);
+        adapted.capabilityStates().require(AgentCombatCooldownState.STATE_KEY).setAttackCooldownMs(75);
         AgentModeService.startMoveTo(legacy, destination, true);
 
         PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
@@ -50,8 +52,8 @@ class AgentPrimitiveLegacyParityTest {
         assertFalse(step.consumedTick());
         assertEquals(AgentMoveTargetStateRuntime.moveTarget(legacy), AgentMoveTargetStateRuntime.moveTarget(adapted));
         assertEquals(AgentMoveTargetStateRuntime.isPrecise(legacy), AgentMoveTargetStateRuntime.isPrecise(adapted));
-        assertEquals(legacy.combatCooldownState().attackCooldownMs(),
-                adapted.combatCooldownState().attackCooldownMs());
+        assertEquals(legacy.capabilityStates().require(AgentCombatCooldownState.STATE_KEY).attackCooldownMs(),
+                adapted.capabilityStates().require(AgentCombatCooldownState.STATE_KEY).attackCooldownMs());
     }
 
     @Test
@@ -59,8 +61,8 @@ class AgentPrimitiveLegacyParityTest {
         Character agent = mock(Character.class);
         AgentRuntimeEntry legacy = entry(agent);
         AgentRuntimeEntry adapted = entry(agent);
-        legacy.combatCooldownState().setAttackCooldownMs(75);
-        adapted.combatCooldownState().setAttackCooldownMs(75);
+        legacy.capabilityStates().require(AgentCombatCooldownState.STATE_KEY).setAttackCooldownMs(75);
+        adapted.capabilityStates().require(AgentCombatCooldownState.STATE_KEY).setAttackCooldownMs(75);
         AgentModeService.startGrind(legacy, AgentMovementStateResetService::clearNavigationState);
 
         PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
@@ -82,10 +84,10 @@ class AgentPrimitiveLegacyParityTest {
 
         assertFalse(step.consumedTick());
         assertEquals(AgentModeStateRuntime.grinding(legacy), AgentModeStateRuntime.grinding(adapted));
-        assertNull(legacy.grindTargetState().target());
-        assertNull(adapted.grindTargetState().target());
-        assertEquals(legacy.combatCooldownState().attackCooldownMs(),
-                adapted.combatCooldownState().attackCooldownMs());
+        assertNull(legacy.capabilityStates().require(AgentGrindTargetState.STATE_KEY).target());
+        assertNull(adapted.capabilityStates().require(AgentGrindTargetState.STATE_KEY).target());
+        assertEquals(legacy.capabilityStates().require(AgentCombatCooldownState.STATE_KEY).attackCooldownMs(),
+                adapted.capabilityStates().require(AgentCombatCooldownState.STATE_KEY).attackCooldownMs());
         assertTrue(AgentCombatObjectiveTargetStateRuntime.allows(adapted, 100100));
         assertFalse(AgentCombatObjectiveTargetStateRuntime.allows(adapted, 9300012));
     }

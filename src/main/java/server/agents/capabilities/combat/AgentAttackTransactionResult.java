@@ -26,7 +26,8 @@ public record AgentAttackTransactionResult(Status status,
         NO_AMMO,
         CANNOT_USE_SKILL,
         CANNOT_USE_ATTACK_PLAN,
-        MAP_NOT_READY
+        MAP_CHANGED_DURING_ATTACK,
+        HANDLER_REJECTED
     }
 
     public AgentAttackTransactionResult {

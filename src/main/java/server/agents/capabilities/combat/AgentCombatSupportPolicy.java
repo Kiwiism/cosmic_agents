@@ -11,7 +11,7 @@ import java.util.function.BooleanSupplier;
 import server.StatEffect;
 
 public final class AgentCombatSupportPolicy {
-    public static final int LEGACY_DRAGON_ROAR_MIN_TARGETS_WITHOUT_HEALER = 10;
+    public static final int DRAGON_ROAR_MIN_TARGETS_WITHOUT_HEALER = 10;
 
     public enum SupportCastReadiness {
         READY(null),
@@ -25,7 +25,7 @@ public final class AgentCombatSupportPolicy {
             this.legacyDebugPrefix = legacyDebugPrefix;
         }
 
-        public String legacyDebugSummary(String skillLabel) {
+        public String debugSummary(String skillLabel) {
             return legacyDebugPrefix == null ? null : legacyDebugPrefix + skillLabel;
         }
     }
@@ -37,14 +37,14 @@ public final class AgentCombatSupportPolicy {
         IDLE("idle (not following or grinding)"),
         NO_BUFF_SKILLS("no buff skills in cache");
 
-        private final String legacyDebugSummary;
+        private final String debugSummary;
 
-        SkillBuffTickDecision(String legacyDebugSummary) {
-            this.legacyDebugSummary = legacyDebugSummary;
+        SkillBuffTickDecision(String debugSummary) {
+            this.debugSummary = debugSummary;
         }
 
-        public String legacyDebugSummary() {
-            return legacyDebugSummary;
+        public String debugSummary() {
+            return debugSummary;
         }
     }
 
@@ -55,7 +55,7 @@ public final class AgentCombatSupportPolicy {
                                                int targetCount,
                                                boolean hasNearbyHealSkillAlly) {
         return canUseDragonRoarPlan(bot, targetCount,
-                LEGACY_DRAGON_ROAR_MIN_TARGETS_WITHOUT_HEALER, hasNearbyHealSkillAlly);
+                DRAGON_ROAR_MIN_TARGETS_WITHOUT_HEALER, hasNearbyHealSkillAlly);
     }
 
     public static boolean canUseDragonRoarPlan(Character bot,

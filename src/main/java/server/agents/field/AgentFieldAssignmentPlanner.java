@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/** Pure, deterministic party-size allocator with sticky seeds and contiguous-cell preference. */
+/** Pure, deterministic greedy capacitated auction with sticky platform leases. */
 public final class AgentFieldAssignmentPlanner {
     public Map<Integer, AgentFieldAssignment> plan(
             String sessionId,
@@ -64,8 +64,9 @@ public final class AgentFieldAssignmentPlanner {
                 relevant = cells;
             }
             AgentFarmingCell seed = bestCell(participant, relevant, Set.of(), realPlayers, nowMs, Map.of());
+            AgentFarmingAnchor station = stationFor(participant, seed, Set.of(), true);
             assignments.put(participant.agentId(), assignment(
-                    sessionId, participant, slot, relevant, seed,
+                    sessionId, participant, slot, relevant, seed, station,
                     nowMs + leaseMs, revision, "solo map coverage"));
         }
         return Map.copyOf(assignments);
@@ -80,67 +81,145 @@ public final class AgentFieldAssignmentPlanner {
             long leaseMs,
             long revision) {
         Map<Integer, AgentFarmingCell> seeds = new LinkedHashMap<>();
+        Map<Integer, AgentFarmingAnchor> stations = new LinkedHashMap<>();
         Map<String, Integer> seedUse = new HashMap<>();
-        Set<String> claimedSeeds = new LinkedHashSet<>();
+        Set<String> usedStationIds = new LinkedHashSet<>();
+        participants.stream()
+                .filter(participant -> participant.previousLeaseExpiresAtMs() > nowMs)
+                .sorted(Comparator.comparingInt(AgentFieldParticipant::agentId))
+                .forEach(participant -> cells.stream()
+                        .filter(cell -> participant.previousCellIds().contains(cell.cellId()))
+                        .filter(cell -> seedUse.getOrDefault(cell.cellId(), 0) < cell.capacity())
+                        .max(Comparator.comparingLong(cell -> cellScore(
+                                participant, cell, realPlayers, nowMs,
+                                seedUse.getOrDefault(cell.cellId(), 0))))
+                        .ifPresent(cell -> reserve(participant, cell, seeds, stations,
+                                seedUse, usedStationIds, false)));
+
+        auction(participants, cells, seeds, stations, seedUse, usedStationIds,
+                realPlayers, nowMs, true);
+        auction(participants, cells, seeds, stations, seedUse, usedStationIds,
+                realPlayers, nowMs, false);
         for (AgentFieldParticipant participant : participants) {
-            List<AgentFarmingCell> relevant = relevantCells(cells, participant.intent());
-            if (relevant.isEmpty()) {
-                relevant = cells;
-            }
-            AgentFarmingCell seed = bestCell(
-                    participant, relevant, claimedSeeds, realPlayers, nowMs, seedUse);
-            if (seed == null) {
+            if (seeds.containsKey(participant.agentId())) {
                 continue;
             }
-            seeds.put(participant.agentId(), seed);
-            seedUse.merge(seed.cellId(), 1, Integer::sum);
-            if (seedUse.get(seed.cellId()) >= seed.capacity()) {
-                claimedSeeds.add(seed.cellId());
+            AgentFarmingCell overflow = cells.stream()
+                    .min(Comparator
+                            .comparingInt((AgentFarmingCell cell) ->
+                                    seedUse.getOrDefault(cell.cellId(), 0))
+                            .thenComparing(Comparator.comparingLong(
+                                    (AgentFarmingCell cell) -> cellScore(
+                                            participant, cell, realPlayers, nowMs,
+                                            seedUse.getOrDefault(cell.cellId(), 0))).reversed()))
+                    .orElse(null);
+            if (overflow != null) {
+                reserve(participant, overflow, seeds, stations,
+                        seedUse, usedStationIds, true);
             }
-        }
-        if (seeds.isEmpty()) {
-            return Map.of();
-        }
-
-        Map<Integer, LinkedHashSet<AgentFarmingCell>> territories = new LinkedHashMap<>();
-        seeds.forEach((agentId, seed) -> territories
-                .computeIfAbsent(agentId, ignored -> new LinkedHashSet<>()).add(seed));
-        Set<String> assignedCellIds = new LinkedHashSet<>();
-        seeds.values().forEach(seed -> assignedCellIds.add(seed.cellId()));
-        List<AgentFarmingCell> remaining = cells.stream()
-                .filter(cell -> !assignedCellIds.contains(cell.cellId()))
-                .sorted(Comparator.comparing(AgentFarmingCell::cellId))
-                .toList();
-        Map<Integer, AgentFieldParticipant> participantById = participants.stream()
-                .collect(java.util.stream.Collectors.toMap(
-                        AgentFieldParticipant::agentId, participant -> participant));
-        for (AgentFarmingCell cell : remaining) {
-            int owner = seeds.keySet().stream()
-                    .max(Comparator
-                            .comparingLong((Integer agentId) -> territoryScore(
-                                    participantById.get(agentId), cell,
-                                    territories.get(agentId), realPlayers, nowMs))
-                            .thenComparingInt(agentId -> -agentId))
-                    .orElse(seeds.keySet().iterator().next());
-            territories.computeIfAbsent(owner, ignored -> new LinkedHashSet<>()).add(cell);
         }
 
         Map<Integer, AgentFieldAssignment> assignments = new LinkedHashMap<>();
         for (int slot = 0; slot < participants.size(); slot++) {
             AgentFieldParticipant participant = participants.get(slot);
             AgentFarmingCell seed = seeds.get(participant.agentId());
-            Set<AgentFarmingCell> territory = territories.get(participant.agentId());
-            if (seed == null || territory == null || territory.isEmpty()) {
+            AgentFarmingAnchor station = stations.get(participant.agentId());
+            if (seed == null || station == null) {
                 continue;
             }
             boolean retained = participant.previousLeaseExpiresAtMs() > nowMs
                     && participant.previousCellIds().contains(seed.cellId());
             assignments.put(participant.agentId(), assignment(
-                    sessionId, participant, slot, List.copyOf(territory), seed,
+                    sessionId, participant, slot, List.of(seed), seed, station,
                     nowMs + leaseMs, revision,
-                    retained ? "retained leased territory" : "party-size coverage rebalance"));
+                    retained ? "retained platform lease" : "density-and-distance platform auction"));
         }
         return Map.copyOf(assignments);
+    }
+
+    private static void auction(
+            List<AgentFieldParticipant> participants,
+            List<AgentFarmingCell> cells,
+            Map<Integer, AgentFarmingCell> seeds,
+            Map<Integer, AgentFarmingAnchor> stations,
+            Map<String, Integer> seedUse,
+            Set<String> usedStationIds,
+            List<AgentPosition> realPlayers,
+            long nowMs,
+            boolean unusedOnly) {
+        ArrayList<Bid> bids = new ArrayList<>();
+        for (AgentFieldParticipant participant : participants) {
+            if (seeds.containsKey(participant.agentId())) {
+                continue;
+            }
+            List<AgentFarmingCell> relevant = relevantCells(cells, participant.intent());
+            for (AgentFarmingCell cell : relevant.isEmpty() ? cells : relevant) {
+                int users = seedUse.getOrDefault(cell.cellId(), 0);
+                if ((unusedOnly && users > 0) || users >= cell.capacity()) {
+                    continue;
+                }
+                bids.add(new Bid(participant, cell,
+                        cellScore(participant, cell, realPlayers, nowMs, users)));
+            }
+        }
+        bids.sort(Comparator.comparingLong(Bid::score).reversed()
+                .thenComparingInt(bid -> bid.participant().agentId())
+                .thenComparing(bid -> bid.cell().cellId()));
+        for (Bid bid : bids) {
+            if (seeds.containsKey(bid.participant().agentId())) {
+                continue;
+            }
+            int users = seedUse.getOrDefault(bid.cell().cellId(), 0);
+            if ((unusedOnly && users > 0) || users >= bid.cell().capacity()) {
+                continue;
+            }
+            reserve(bid.participant(), bid.cell(), seeds, stations,
+                    seedUse, usedStationIds, false);
+        }
+    }
+
+    private static void reserve(
+            AgentFieldParticipant participant,
+            AgentFarmingCell cell,
+            Map<Integer, AgentFarmingCell> seeds,
+            Map<Integer, AgentFarmingAnchor> stations,
+            Map<String, Integer> seedUse,
+            Set<String> usedStationIds,
+            boolean allowReuse) {
+        AgentFarmingAnchor station = stationFor(participant, cell, usedStationIds, allowReuse);
+        if (station == null) {
+            return;
+        }
+        seeds.put(participant.agentId(), cell);
+        stations.put(participant.agentId(), station);
+        usedStationIds.add(station.anchorId());
+        seedUse.merge(cell.cellId(), 1, Integer::sum);
+    }
+
+    private static AgentFarmingAnchor stationFor(
+            AgentFieldParticipant participant,
+            AgentFarmingCell cell,
+            Set<String> usedStationIds,
+            boolean allowReuse) {
+        if (!participant.previousStationId().isBlank()) {
+            AgentFarmingAnchor retained = cell.anchors().stream()
+                    .filter(station -> station.anchorId().equals(participant.previousStationId()))
+                    .filter(station -> allowReuse || !usedStationIds.contains(station.anchorId()))
+                    .findFirst().orElse(null);
+            if (retained != null) {
+                return retained;
+            }
+        }
+        return cell.anchors().stream()
+                .filter(station -> allowReuse || !usedStationIds.contains(station.anchorId()))
+                .min(Comparator
+                        .comparingDouble((AgentFarmingAnchor station) ->
+                                participant.position().distanceSq(station.position()))
+                        .thenComparing(AgentFarmingAnchor::anchorId))
+                .orElseGet(() -> allowReuse ? cell.anchors().getFirst() : null);
+    }
+
+    private record Bid(AgentFieldParticipant participant, AgentFarmingCell cell, long score) {
     }
 
     private static List<AgentFarmingCell> relevantCells(
@@ -172,20 +251,6 @@ public final class AgentFieldAssignmentPlanner {
                         .orElse(null));
     }
 
-    private static long territoryScore(
-            AgentFieldParticipant participant,
-            AgentFarmingCell cell,
-            Set<AgentFarmingCell> territory,
-            List<AgentPosition> realPlayers,
-            long nowMs) {
-        boolean adjacent = territory.stream().anyMatch(owned ->
-                owned.adjacentCellIds().contains(cell.cellId())
-                        || cell.adjacentCellIds().contains(owned.cellId()));
-        return cellScore(participant, cell, realPlayers, nowMs, 0)
-                + (adjacent ? AgentFieldPolicyConfig.adjacencyBonus() : 0L)
-                - (long) territory.size() * AgentFieldPolicyConfig.territorySizePenalty();
-    }
-
     private static long cellScore(
             AgentFieldParticipant participant,
             AgentFarmingCell cell,
@@ -194,12 +259,12 @@ public final class AgentFieldAssignmentPlanner {
             int currentUsers) {
         int population = cell.relevantPopulation(participant.intent().requiredMobIds());
         int coverage = cell.objectiveCoverage(participant.intent().requiredMobIds());
-        Point anchor = cell.anchors().getFirst().position();
+        Point anchor = cell.centralAnchor().position();
         long distancePenalty = Math.round(Math.sqrt(participant.position().distanceSq(anchor)) * 10.0d);
         long score = population * AgentFieldPolicyConfig.objectivePopulationWeight()
                 + coverage * AgentFieldPolicyConfig.objectiveCoverageWeight()
                 - distancePenalty
-                - (long) currentUsers * AgentFieldPolicyConfig.territorySizePenalty();
+                - (long) currentUsers * AgentFieldPolicyConfig.sharedPlatformPenalty();
         score += capabilityScore(participant.combatProfile(), cell, population);
         if (participant.previousLeaseExpiresAtMs() > nowMs
                 && participant.previousCellIds().contains(cell.cellId())) {
@@ -246,6 +311,7 @@ public final class AgentFieldAssignmentPlanner {
             int slot,
             List<AgentFarmingCell> cells,
             AgentFarmingCell seed,
+            AgentFarmingAnchor station,
             long expiresAtMs,
             long revision,
             String reason) {
@@ -256,7 +322,8 @@ public final class AgentFieldAssignmentPlanner {
         return new AgentFieldAssignment(
                 sessionId + ':' + revision + ':' + participant.agentId(),
                 seed.mapId(), participant.agentId(), slot,
-                cellIds, regionIds, seed.anchors().getFirst().position(),
+                cellIds, regionIds, station.anchorId(), station.position(),
+                station.territoryMinX(), station.territoryMaxX(),
                 expiresAtMs, revision, reason);
     }
 

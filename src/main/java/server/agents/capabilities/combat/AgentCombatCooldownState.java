@@ -1,11 +1,17 @@
 package server.agents.capabilities.combat;
 
+import server.agents.runtime.state.AgentCapabilityStateKey;
+
 import java.util.function.IntUnaryOperator;
 
 /**
  * Mutable combat timing state for attack, movement, touch-damage, and alert reset gates.
  */
 public final class AgentCombatCooldownState {
+    public static final AgentCapabilityStateKey<AgentCombatCooldownState> STATE_KEY =
+            new AgentCapabilityStateKey<>("combat.cooldowns",
+                    AgentCombatCooldownState.class, AgentCombatCooldownState::new);
+
     private int attackCooldownMs = 0;
     private int moveWindowMs = 0;
     private int mobHitCooldownMs = 0;

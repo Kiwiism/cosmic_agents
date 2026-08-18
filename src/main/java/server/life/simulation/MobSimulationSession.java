@@ -1,7 +1,7 @@
 package server.life.simulation;
 
 import client.Character;
-import server.agents.capabilities.combat.AgentCombatConfig;
+import server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig;
 import server.life.Monster;
 import server.maps.MapleMap;
 import server.physics.FixedStepAccumulator;
@@ -114,7 +114,7 @@ public final class MobSimulationSession {
         progressAnchorX = body.x();
         nextStuckDecisionNanos = nowNanos + stuckWindowNanos();
         nextJumpNanos = nowNanos + randomMillis(
-                Math.max(0, AgentCombatConfig.cfg.MOB_PHYSICS_JUMP_COOLDOWN_JITTER_MS)) * 1_000_000L;
+                Math.max(0, AgentMobPhysicsConfig.config().MOB_PHYSICS_JUMP_COOLDOWN_JITTER_MS)) * 1_000_000L;
         lastPublishedPosition = new Point((int) Math.round(body.x()), (int) Math.round(body.y()));
     }
 
@@ -158,9 +158,9 @@ public final class MobSimulationSession {
         knockbackDirection = Integer.compare(direction, 0);
         impactFacingLeft = (monster.getStance() & 1) != 0;
         long scaledDelayMs = Math.max(0L, delayMs)
-                * Math.max(0, AgentCombatConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_PERCENT) / 100L;
+                * Math.max(0, AgentMobPhysicsConfig.config().MOB_PHYSICS_IMPACT_DELAY_PERCENT) / 100L;
         scaledDelayMs = Math.max(0L, scaledDelayMs
-                + AgentCombatConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_OFFSET_MS);
+                + AgentMobPhysicsConfig.config().MOB_PHYSICS_IMPACT_DELAY_OFFSET_MS);
         impactAtNanos = nowNanos + scaledDelayMs * 1_000_000L;
         motion = MobMotionState.PENDING_IMPACT;
         knockbackStepsRemaining = 0;
@@ -281,11 +281,11 @@ public final class MobSimulationSession {
         if (result.reachedEdge()) {
             edgeJumpOpportunity = true;
             beginTemporaryBehavior(
-                    AgentCombatConfig.cfg.MOB_PHYSICS_EDGE_RETREAT_CHANCE_PERCENT,
-                    AgentCombatConfig.cfg.MOB_PHYSICS_EDGE_IDLE_MIN_MS,
-                    AgentCombatConfig.cfg.MOB_PHYSICS_EDGE_IDLE_MAX_MS,
-                    AgentCombatConfig.cfg.MOB_PHYSICS_EDGE_RETREAT_MIN_MS,
-                    AgentCombatConfig.cfg.MOB_PHYSICS_EDGE_RETREAT_MAX_MS);
+                    AgentMobPhysicsConfig.config().MOB_PHYSICS_EDGE_RETREAT_CHANCE_PERCENT,
+                    AgentMobPhysicsConfig.config().MOB_PHYSICS_EDGE_IDLE_MIN_MS,
+                    AgentMobPhysicsConfig.config().MOB_PHYSICS_EDGE_IDLE_MAX_MS,
+                    AgentMobPhysicsConfig.config().MOB_PHYSICS_EDGE_RETREAT_MIN_MS,
+                    AgentMobPhysicsConfig.config().MOB_PHYSICS_EDGE_RETREAT_MAX_MS);
         }
     }
 
@@ -297,7 +297,7 @@ public final class MobSimulationSession {
             body.setVelocity(0.0, 0.0);
         }
         platformConstrainedKnockback = false;
-        int recoveryMs = Math.max(0, AgentCombatConfig.cfg.MOB_PHYSICS_FLINCH_RECOVERY_MS);
+        int recoveryMs = Math.max(0, AgentMobPhysicsConfig.config().MOB_PHYSICS_FLINCH_RECOVERY_MS);
         recoveryStepsRemaining = (recoveryMs + MaplePhysicsConstants.STEP_MS - 1)
                 / MaplePhysicsConstants.STEP_MS;
         motion = recoveryStepsRemaining > 0 ? MobMotionState.FLINCH : MobMotionState.CHASE;
@@ -321,9 +321,9 @@ public final class MobSimulationSession {
     }
 
     void markJump() {
-        long cooldownMs = Math.max(0, AgentCombatConfig.cfg.MOB_PHYSICS_JUMP_COOLDOWN_MS);
+        long cooldownMs = Math.max(0, AgentMobPhysicsConfig.config().MOB_PHYSICS_JUMP_COOLDOWN_MS);
         cooldownMs += randomMillis(Math.max(0,
-                AgentCombatConfig.cfg.MOB_PHYSICS_JUMP_COOLDOWN_JITTER_MS));
+                AgentMobPhysicsConfig.config().MOB_PHYSICS_JUMP_COOLDOWN_JITTER_MS));
         nextJumpNanos = tickNowNanos + cooldownMs * 1_000_000L;
         motion = MobMotionState.JUMPING;
         blockedDirection = 0;
@@ -431,17 +431,17 @@ public final class MobSimulationSession {
         if (!hasTemporaryBehavior() && tickNowNanos >= nextStuckDecisionNanos
                 && Math.abs(dx) > tuning.stopDistanceX()) {
             beginTemporaryBehavior(
-                    AgentCombatConfig.cfg.MOB_PHYSICS_STUCK_RETREAT_CHANCE_PERCENT,
-                    AgentCombatConfig.cfg.MOB_PHYSICS_EDGE_IDLE_MIN_MS,
-                    AgentCombatConfig.cfg.MOB_PHYSICS_EDGE_IDLE_MAX_MS,
-                    AgentCombatConfig.cfg.MOB_PHYSICS_EDGE_RETREAT_MIN_MS,
-                    AgentCombatConfig.cfg.MOB_PHYSICS_EDGE_RETREAT_MAX_MS);
+                    AgentMobPhysicsConfig.config().MOB_PHYSICS_STUCK_RETREAT_CHANCE_PERCENT,
+                    AgentMobPhysicsConfig.config().MOB_PHYSICS_EDGE_IDLE_MIN_MS,
+                    AgentMobPhysicsConfig.config().MOB_PHYSICS_EDGE_IDLE_MAX_MS,
+                    AgentMobPhysicsConfig.config().MOB_PHYSICS_EDGE_RETREAT_MIN_MS,
+                    AgentMobPhysicsConfig.config().MOB_PHYSICS_EDGE_RETREAT_MAX_MS);
         }
     }
 
     private void beginPostFlinchChaseRamp() {
         int rampMs = Math.max(0,
-                AgentCombatConfig.cfg.MOB_PHYSICS_POST_FLINCH_CHASE_RAMP_MS);
+                AgentMobPhysicsConfig.config().MOB_PHYSICS_POST_FLINCH_CHASE_RAMP_MS);
         chaseRampStepsTotal = (rampMs + MaplePhysicsConstants.STEP_MS - 1)
                 / MaplePhysicsConstants.STEP_MS;
         chaseRampStepsRemaining = chaseRampStepsTotal;
@@ -473,7 +473,7 @@ public final class MobSimulationSession {
         if (pendingChaseDirection != desired) {
             pendingChaseDirection = desired;
             directionChangeAtNanos = tickNowNanos + randomMillis(Math.max(0,
-                    AgentCombatConfig.cfg.MOB_PHYSICS_DIRECTION_REACTION_MAX_MS)) * 1_000_000L;
+                    AgentMobPhysicsConfig.config().MOB_PHYSICS_DIRECTION_REACTION_MAX_MS)) * 1_000_000L;
         }
         if (tickNowNanos >= directionChangeAtNanos) {
             chaseDirection = pendingChaseDirection;
@@ -493,8 +493,8 @@ public final class MobSimulationSession {
         temporaryRetreatStartX = body.x();
         temporaryRetreatDistancePx = retreat
                 ? randomRangeInclusive(
-                        AgentCombatConfig.cfg.MOB_PHYSICS_RETREAT_MIN_DISTANCE_PX,
-                        AgentCombatConfig.cfg.MOB_PHYSICS_RETREAT_MAX_DISTANCE_PX)
+                        AgentMobPhysicsConfig.config().MOB_PHYSICS_RETREAT_MIN_DISTANCE_PX,
+                        AgentMobPhysicsConfig.config().MOB_PHYSICS_RETREAT_MAX_DISTANCE_PX)
                 : 0.0;
         long durationMs = retreat
                 ? randomRangeInclusive(retreatMinMs, retreatMaxMs)
@@ -505,9 +505,9 @@ public final class MobSimulationSession {
     }
 
     private long stuckWindowNanos() {
-        long delayMs = Math.max(0, AgentCombatConfig.cfg.MOB_PHYSICS_STUCK_DETECT_MS);
+        long delayMs = Math.max(0, AgentMobPhysicsConfig.config().MOB_PHYSICS_STUCK_DETECT_MS);
         delayMs += randomMillis(Math.max(0,
-                AgentCombatConfig.cfg.MOB_PHYSICS_BEHAVIOR_JITTER_MS));
+                AgentMobPhysicsConfig.config().MOB_PHYSICS_BEHAVIOR_JITTER_MS));
         return delayMs * 1_000_000L;
     }
 

@@ -2,9 +2,18 @@ package server.agents.capabilities.combat;
 
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public final class AgentMobTouchPolicy {
-    static final int TUTORIAL_JR_SENTINEL_ID = 9300018;
+    private static final Set<Integer> IGNORED_MOB_IDS = Arrays.stream(config.AgentTuning.stringValue(
+                    "server.agents.capabilities.combat.AgentMobTouchPolicy.IGNORED_MOB_IDS")
+                    .split(","))
+            .map(String::trim)
+            .filter(value -> !value.isEmpty())
+            .map(Integer::parseInt)
+            .collect(Collectors.toUnmodifiableSet());
 
     private AgentMobTouchPolicy() {
     }
@@ -37,6 +46,6 @@ public final class AgentMobTouchPolicy {
     }
 
     public static boolean ignoresTouchDamage(int mobId) {
-        return mobId == TUTORIAL_JR_SENTINEL_ID;
+        return IGNORED_MOB_IDS.contains(mobId);
     }
 }

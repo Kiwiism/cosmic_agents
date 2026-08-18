@@ -1,6 +1,7 @@
 package server.agents.capabilities.combat;
 
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
+import server.agents.capabilities.recovery.AgentDeathConfig;
 
 import client.Character;
 import server.agents.capabilities.movement.AgentMovementPoseService;
@@ -14,12 +15,12 @@ public final class AgentCombatDeathRuntime {
     }
 
     public static void enterDeadState(AgentRuntimeEntry entry, Character bot,
-                                      boolean announceDeath,
-                                      AgentCombatConfig.Config config) {
+                                      boolean announceDeath) {
         AgentCombatActionStateRuntime.clearActionState(entry);
         AgentMovementPoseService.markDead(entry, bot);
         AgentMovementBroadcastService.broadcastMovement(entry);
-        AgentDeathStateRuntime.enterDeadState(entry, System.currentTimeMillis(), config.BOT_DEAD_MS);
+        AgentDeathStateRuntime.enterDeadState(
+                entry, System.currentTimeMillis(), AgentDeathConfig.cfg.RESPAWN_DELAY_MS);
         AgentOperationalEventPublisher.publish(entry,
                 objectiveId -> new AgentLifeStateChangedEvent(
                         bot.getId(), System.currentTimeMillis(), "ALIVE", "DEAD",

@@ -11,22 +11,10 @@
 # scheduler limits, and dependent coefficients must still be changed together and soak-tested.
 agent:
     # Mob reaction and server-side mob physics
-    # Values: OFF, SYNTHETIC, or PHYSICS. Recommended: PHYSICS; SYNTHETIC is deprecated compatibility-only behavior pending removal.
-    # Purpose: Chooses how monsters react to Agent attacks: PHYSICS uses full movement simulation, SYNTHETIC uses simplified reactions, and OFF disables Agent-driven monster reactions.
+    # Values: OFF or PHYSICS. Recommended: PHYSICS.
+    # Purpose: Chooses whether Agent attacks drive the full server-side monster physics simulation.
     # Technical: the Agent engine deployment configuration consumes this as a text. Domain: component-specific policy value; startup validation rejects missing, blank, or malformed values.
     AGENT_MOB_REACTION_MODE: PHYSICS
-    # Values: a finite non-negative integer; unit: map pixels. Recommended: 6-24 around the tested baseline 12; benchmark or observe behavior before moving outside this band.
-    # Purpose: Controls the distance or margin used for synthetic monster knockback distance horizontal. Higher values allow action from farther away or leave more space; lower values require closer, more precise positioning.
-    # Technical: the Agent engine deployment configuration consumes this as an integer. Unit: MapleStory map pixels; horizontal and vertical values use the server map coordinate system.
-    AGENT_SYNTHETIC_MOB_KNOCKBACK_DISTANCE_X: 12
-    # Values: a finite non-negative integer; unit: milliseconds. Recommended: 125-500 around the tested baseline 250; benchmark or observe behavior before moving outside this band.
-    # Purpose: Controls how long Agents remain in or wait for synthetic monster knockback duration. Higher values make that pause or state last longer; lower values make them continue sooner.
-    # Technical: the Agent engine deployment configuration consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled.
-    AGENT_SYNTHETIC_MOB_KNOCKBACK_DURATION_MS: 250
-    # Values: a finite non-negative integer; unit: milliseconds. Recommended: 175-700 around the tested baseline 350; benchmark or observe behavior before moving outside this band.
-    # Purpose: Controls how long Agents remain in or wait for synthetic monster control hold. Higher values make that pause or state last longer; lower values make them continue sooner.
-    # Technical: the Agent engine deployment configuration consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled.
-    AGENT_SYNTHETIC_MOB_CONTROL_HOLD_MS: 350
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 37-150 around the tested baseline 75; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how frequently monster physics publication interval updates. Lower values make Agents react more quickly and smoothly but use more server work; higher values react more slowly and reduce load.
     # Technical: the Agent engine deployment configuration consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled. It governs recurring work, so lowering it increases invocation frequency and operational load.
@@ -663,11 +651,7 @@ tuning:
     # Values: a finite non-negative integer. Recommended: 250-1000 around the tested baseline 500; benchmark or observe behavior before moving outside this band.
     # Purpose: Sets when ammo low warn triggers. Higher values let more pressure build before Agents or safeguards react; lower values make them react sooner.
     # Technical: the "combat config" component consumes this as an integer. Domain: component-specific policy value; startup validation rejects missing, blank, or malformed values.
-    server.agents.capabilities.combat.AgentCombatConfig.AMMO_LOW_WARN: '500'
-    # Values: a finite non-negative integer. Recommended: 1-4 around the tested baseline 2; benchmark or observe behavior before moving outside this band.
-    # Purpose: Controls how long Agents wait or remain in area-of-effect monster threshold. Higher values make the pause or activity last longer; lower values make them move on sooner.
-    # Technical: the "combat config" component consumes this as an integer. Domain: non-negative count, capacity, or threshold unless the owning component documents a sentinel.
-    server.agents.capabilities.combat.AgentCombatConfig.AOE_MOB_THRESHOLD: '2'
+    server.agents.capabilities.supplies.AgentSupplyConfig.AMMO_LOW_WARN: '500'
     # Values: a finite non-negative integer; unit: map pixels. Recommended: 10-40 around the tested baseline 20; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls the distance or margin used for area-of-effect reposition arrival horizontal. Higher values allow action from farther away or leave more space; lower values require closer, more precise positioning.
     # Technical: the "combat config" component consumes this as an integer. Unit: MapleStory map pixels; horizontal and vertical values use the server map coordinate system.
@@ -759,15 +743,19 @@ tuning:
     # Values: a finite non-negative number. Recommended: 0.75-3 around the tested baseline 1.5; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how strongly knockback horizontal speed changes visible movement. Higher values make its effect more noticeable; lower values make movement gentler or less pronounced.
     # Technical: the "combat config" component consumes this as a decimal number. Domain: component-specific policy value; startup validation rejects missing, blank, or malformed values.
-    server.agents.capabilities.combat.AgentCombatConfig.KNOCKBACK_HSPEED: '1.5'
+    server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.KNOCKBACK_HSPEED: '1.5'
     # Values: a finite non-negative number. Recommended: 1.75-7 around the tested baseline 3.5; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how strongly knockback vertical force changes visible movement. Higher values make its effect more noticeable; lower values make movement gentler or less pronounced.
     # Technical: the "combat config" component consumes this as a decimal number. Domain: component-specific policy value; startup validation rejects missing, blank, or malformed values.
-    server.agents.capabilities.combat.AgentCombatConfig.KNOCKBACK_VFORCE: '3.5'
+    server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.KNOCKBACK_VFORCE: '3.5'
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 750-3000 around the tested baseline 1500; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how long Agents must wait before repeating monster hit. Higher values make repeats less frequent; lower values let them repeat sooner.
     # Technical: the "combat config" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled.
     server.agents.capabilities.combat.AgentCombatConfig.MOB_HIT_COOLDOWN_MS: '1500'
+    # Values: comma-separated monster ids. Recommended: keep limited to scripted tutorial actors that must not deal touch damage.
+    # Purpose: Declares data-driven exceptions to normal monster touch damage.
+    # Technical: parsed once at startup by the mob-touch policy.
+    server.agents.capabilities.combat.AgentMobTouchPolicy.IGNORED_MOB_IDS: '9300018'
     # Values: a finite non-negative integer; unit: map pixels. Recommended: 25-100 around the tested baseline 50; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls the distance or margin used for monster touch sweep height. Higher values allow action from farther away or leave more space; lower values require closer, more precise positioning.
     # Technical: the "combat config" component consumes this as an integer. Unit: MapleStory map pixels; horizontal and vertical values use the server map coordinate system.
@@ -860,22 +848,6 @@ tuning:
     # Purpose: Controls the positional leeway for client projectile top. Higher values tolerate more separation before Agents correct course; lower values make them align sooner.
     # Technical: the "projectile hitbox" component consumes this as an integer. Domain: component-specific policy value; startup validation rejects missing, blank, or malformed values.
     server.agents.capabilities.combat.AgentProjectileHitbox.CLIENT_PROJECTILE_TOP: '50'
-    # Values: a finite non-negative integer; unit: milliseconds. Recommended: 25-100 around the tested baseline 50; benchmark or observe behavior before moving outside this band.
-    # Purpose: Controls how long Agents remain in or wait for assignment hold grace. Higher values make that pause or state last longer; lower values make them continue sooner.
-    # Technical: the "synthetic mob reaction service" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled.
-    server.agents.capabilities.combat.AgentSyntheticMobReactionService.ASSIGNMENT_HOLD_GRACE_MS: '50'
-    # Values: a finite non-negative integer. Recommended: 1-4 around the tested baseline 2; benchmark or observe behavior before moving outside this band.
-    # Purpose: Controls the vertical leeway for client monster vertical offset. Higher values let Agents drift farther up or down before correcting; lower values make them correct sooner.
-    # Technical: the "synthetic mob reaction service" component consumes this as an integer. Domain: component-specific policy value; startup validation rejects missing, blank, or malformed values.
-    server.agents.capabilities.combat.AgentSyntheticMobReactionService.CLIENT_MOB_Y_OFFSET: '2'
-    # Values: a finite non-negative integer. Recommended: 14-56 around the tested baseline 28; benchmark or observe behavior before moving outside this band.
-    # Purpose: Controls how quickly an Agent's maximum ground vertical adapts after this event. Values farther from zero cause a larger behavior change; values nearer zero make adaptation more gradual.
-    # Technical: the "synthetic mob reaction service" component consumes this as an integer. Domain: non-negative count, capacity, or threshold unless the owning component documents a sentinel. The owning adaptation state adds or subtracts this magnitude per event and clamps the result to its configured state bounds.
-    server.agents.capabilities.combat.AgentSyntheticMobReactionService.MAX_GROUND_Y_DELTA: '28'
-    # Values: a finite non-negative integer; unit: milliseconds. Recommended: 25-100 around the tested baseline 50; benchmark or observe behavior before moving outside this band.
-    # Purpose: Controls how long Agents remain in or wait for movement settle. Higher values make that pause or state last longer; lower values make them continue sooner.
-    # Technical: the "synthetic mob reaction service" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled.
-    server.agents.capabilities.combat.AgentSyntheticMobReactionService.MOVEMENT_SETTLE_MS: '50'
     # Values: a finite non-negative number. Recommended: 0.71-2.84 around the tested baseline 1.42; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how strongly attack speed base affects Agent behavior. Higher values make the effect more noticeable; lower values soften it.
     # Technical: the "attack timing" component consumes this as a decimal number. Domain: non-negative policy coefficient; it is meaningful relative to the other coefficients used by the same decision.
@@ -2942,6 +2914,14 @@ tuning:
     # Purpose: Bounds farming-cell and crowd observations so multi-Agent coordination remains responsive without rebuilding projections on every combat tick.
     # Technical: Minimum interval between coordinator observations while all participants already have unexpired assignments; missing assignments bypass this gate.
     server.agents.field.AgentFieldPolicyConfig.REFRESH_INTERVAL_MS: '1000'
+    # Values: 3000-30000 milliseconds. Recommended: 7000. Lower values relocate Agents sooner after a platform clears; higher values wait longer for the local respawn cycle.
+    # Purpose: Keeps an Agent on its assigned platform until the platform has remained genuinely empty, instead of reacting to a single target-search miss.
+    # Technical: Continuous zero-live-mob evidence required before the coordinator releases that Agent's sticky platform lease; combat uses the same delay before borrowing outside the lease.
+    server.agents.field.AgentFieldPolicyConfig.EMPTY_PLATFORM_RELEASE_MS: '7000'
+    # Values: 1000-30000 milliseconds. Recommended: 5000. Lower values retry saturated maps more often; higher values reduce map-wide assignment work.
+    # Purpose: Adds hysteresis when an empty Agent has no better unoccupied platform available, preventing a failed reassignment from running on every observation tick.
+    # Technical: Minimum interval between vacancy-triggered weighted platform auctions; membership and expired-lease changes still replan immediately.
+    server.agents.field.AgentFieldPolicyConfig.REBALANCE_INTERVAL_MS: '5000'
     # Values: 30000-600000 milliseconds. Recommended: 120000. Higher values retain exercises longer; lower values clean abandoned sessions sooner.
     # Purpose: Releases abandoned field sessions and restores participant combat directives when no participant tick or command has refreshed their activity.
     # Technical: Map-instance session inactivity threshold evaluated by the coordinator; cleanup dispatches through each Agent mailbox before removal.
@@ -2950,6 +2930,27 @@ tuning:
     # Purpose: Keeps dynamic farming exercises within the tested party-size range and prevents accidental unbounded coordination work from GM commands.
     # Technical: Admission bound shared by explicit participants and temporary quest visitors; the deterministic allocator itself never spawns characters.
     server.agents.field.AgentFieldPolicyConfig.MAXIMUM_PARTICIPANTS: '6'
+
+    # Values: 6-64 Agents. Recommended: 32. Lower values reduce observation load; the value must remain above the largest generated map allocation.
+    # Purpose: Lets large-map observation sessions coordinate multiple legal six-member parties without weakening the normal field command limit.
+    # Technical: Observation-only admission bound; the current generated catalog peaks at 25 Agents and party construction still partitions every roster into groups of six or fewer.
+    server.agents.field.AgentFieldPolicyConfig.MAXIMUM_OBSERVATION_PARTICIPANTS: '32'
+    # Values: 50-2000 milliseconds. Recommended: 250. Lower values retry graph lookup sooner; higher values reduce warmup polling.
+    # Purpose: Keeps a newly deployed observation Agent waiting for its asynchronously generated navigation graph without busy polling.
+    # Technical: Delay between bounded graph-readiness attempts in the explicit field observation harness; it does not affect live navigation ticks.
+    server.agents.field.AgentFieldPolicyConfig.GRAPH_WARMUP_RETRY_MS: '250'
+    # Values: 10-600 attempts. Recommended: 120. Higher values tolerate slower initial graph generation; lower values fail the launch sooner.
+    # Purpose: Prevents graph warmup from either failing prematurely on large maps or retrying indefinitely.
+    # Technical: Maximum scheduled readiness attempts per observation deployment, paired with GRAPH_WARMUP_RETRY_MS.
+    server.agents.field.AgentFieldPolicyConfig.MAXIMUM_GRAPH_WARMUP_ATTEMPTS: '120'
+    # Values: 80-400 map pixels. Recommended: 180. Higher values stage idle Agents farther from monster spawn points.
+    # Purpose: Keeps portal-near inactive roster members out of ordinary spawn pressure whenever reachable geometry permits it.
+    # Technical: Minimum Euclidean clearance used by the generated safe-spot candidate filter; authored safe spots remain authoritative.
+    server.agents.field.AgentFieldPolicyConfig.SAFE_SPOT_SPAWN_CLEARANCE_PX: '180'
+    # Values: 8-128 map pixels. Recommended: 32. Lower values search more precisely with more work; higher values make generation cheaper and coarser.
+    # Purpose: Provides a deterministic balance between safe-spot placement accuracy and graph sampling cost across the 93 maps.
+    # Technical: Horizontal sample stride and minimum staging-point separation in the generated safe-spot policy.
+    server.agents.field.AgentFieldPolicyConfig.SAFE_SPOT_SAMPLE_STEP_PX: '32'
     # Values: 1-100 kills per species. Recommended: 10. Higher values create longer observations; lower values make quick smoke exercises.
     # Purpose: Gives every live mob species an equal target in automatic field exercises so target selection and coverage can be compared without quest bias.
     # Technical: Initial authoritative kill requirement generated only by the GM harness; normal quest directives retain their own objective counters.
@@ -2966,14 +2967,10 @@ tuning:
     # Purpose: Prevents small position and spawn fluctuations from causing participants to oscillate between farming cells before their assignment lease expires.
     # Technical: Seed-selection bonus applied only when the previous cell remains under an unexpired assignment; structural rebalance still remains authoritative.
     server.agents.field.AgentFieldPolicyConfig.RETAINED_SEED_BONUS: '1000000'
-    # Values: 0-250000 score points. Recommended: 50000. Higher values favor compact territories; 0 permits disconnected partitions more readily.
-    # Purpose: Encourages each Agent's assigned farming cells to remain connected, reducing unnecessary cross-map traversal during party-size coverage changes.
-    # Technical: Territory-allocation bonus when a candidate cell is mutually adjacent to a cell already owned by that participant in the runtime nav graph.
-    server.agents.field.AgentFieldPolicyConfig.ADJACENCY_BONUS: '50000'
-    # Values: 0-50000 score points per cell. Recommended: 4000. Higher values balance territory sizes; 0 lets strong seeds absorb most cells.
-    # Purpose: Distributes usable farming cells across participants instead of allowing the objectively strongest seed to accumulate the whole map.
-    # Technical: Linear score penalty for each cell already owned during deterministic remaining-cell allocation and for additional users sharing a seed.
-    server.agents.field.AgentFieldPolicyConfig.TERRITORY_SIZE_PENALTY: '4000'
+    # Values: 0-50000 score points per Agent. Recommended: 4000. Higher values avoid sharing platforms more strongly; 0 ranks only density, travel, and role fit.
+    # Purpose: Keeps one Agent per usable platform where possible while still allowing a high-capacity dense platform to accept overflow.
+    # Technical: Linear weighted-auction penalty for each Agent already assigned to the candidate platform after all unoccupied platforms have been offered first.
+    server.agents.field.AgentFieldPolicyConfig.SHARED_PLATFORM_PENALTY: '4000'
     # Values: 0-250000 score points. Recommended: 20000. Higher values avoid real players more strongly; 0 ignores their observed positions.
     # Purpose: Makes autonomous farming less intrusive by preferring comparable cells that are not already occupied by a nearby human-controlled character.
     # Technical: Applied once per real player within the allocator's fixed local proximity check around a candidate anchor; it never moves or targets that player.
@@ -3038,10 +3035,18 @@ tuning:
     # Purpose: Prevents small ranged batches from being postponed forever when the kill-count threshold is not reached.
     # Technical: Maximum age of the oldest tracked ranged kill before collection becomes eligible; the bounded timer only schedules collection and never grants or moves an item directly.
     server.agents.capabilities.looting.AgentLootCollectionPolicyConfig.RANGED_BATCH_MAX_WAIT_MS: '4500'
+    # Values: 5-10 kills. Recommended: 7. Lower values interrupt field farming more often; higher values risk leaving the earliest drops behind on slow builds.
+    # Purpose: Establishes the lower bound of deterministic per-Agent loot batches while a field-grinding system owns the Agent.
+    # Technical: Field activity selects one stable threshold in FIELD_BATCH_MIN_KILLS..FIELD_BATCH_MAX_KILLS from the Agent id; passive walk-over pickup remains active.
+    server.agents.capabilities.looting.AgentLootCollectionPolicyConfig.FIELD_BATCH_MIN_KILLS: '7'
+    # Values: 8-16 kills. Recommended: 12. This must not exceed MAX_TRACKED_KILLS.
+    # Purpose: Lets field grinders clear a useful platform batch before deliberately routing to drops.
+    # Technical: Upper inclusive bound for the field-only deterministic loot cadence; quest and ordinary grind contexts retain their existing melee/ranged policy.
+    server.agents.capabilities.looting.AgentLootCollectionPolicyConfig.FIELD_BATCH_MAX_KILLS: '12'
     # Values: 4-16 kills. Recommended: 8. Higher values remember more possible drops; lower values keep less tactical history.
     # Purpose: Bounds recent-kill memory so loot selection remains predictable under long combat sessions.
     # Technical: Maximum number of killed monster object IDs retained per Agent in capability-owned ephemeral state, with oldest entries removed first when the bound is exceeded.
-    server.agents.capabilities.looting.AgentLootCollectionPolicyConfig.MAX_TRACKED_KILLS: '8'
+    server.agents.capabilities.looting.AgentLootCollectionPolicyConfig.MAX_TRACKED_KILLS: '16'
     # Values: 10000-30000 milliseconds. Recommended: 20000. Higher values keep ownership priority longer; lower values forget old combat drops sooner.
     # Purpose: Stops old kills from affecting current loot routing after their drops are likely gone or no longer useful.
     # Technical: Time-to-live for entries in the bounded recent-kill set; expiry only removes tactical priority and does not alter map drops, ownership, or inventory state.

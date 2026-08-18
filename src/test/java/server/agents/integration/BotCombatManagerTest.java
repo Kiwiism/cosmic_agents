@@ -1009,14 +1009,14 @@ class BotCombatManagerTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
         AgentCombatSkillCacheStateRuntime.setAoeSkill(entry, Warrior.SLASH_BLAST, AgentCombatSkillCacheStateRuntime.aoeSkillMobs(entry));
         AgentCombatSkillCacheStateRuntime.setAoeSkill(entry, AgentCombatSkillCacheStateRuntime.aoeSkillId(entry), 6);
-        assertEquals(3, AgentCombatScoringPolicy.legacyCappedAoeClusterSize(
+        assertEquals(3, AgentCombatScoringPolicy.cappedAoeClusterSize(
                 anchor,
                 bot.getMap().getAllMonsters(),
                 AgentCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
                 AgentCombatSkillCacheStateRuntime.aoeSkillMobs(entry)));
 
         AgentCombatSkillCacheStateRuntime.setAoeSkill(entry, AgentCombatSkillCacheStateRuntime.aoeSkillId(entry), 2); // cap below cluster size
-        assertEquals(2, AgentCombatScoringPolicy.legacyCappedAoeClusterSize(
+        assertEquals(2, AgentCombatScoringPolicy.cappedAoeClusterSize(
                 anchor,
                 bot.getMap().getAllMonsters(),
                 AgentCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
@@ -1333,7 +1333,7 @@ class BotCombatManagerTest {
         Character bot = mockBot(new Point(100, 200), mock(MapleMap.class), 20_000, null);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
 
-        AgentCombatDeathRuntime.enterDeadState(entry, bot, false, AgentCombatConfig.cfg);
+        AgentCombatDeathRuntime.enterDeadState(entry, bot, false);
 
         assertTrue(AgentDeathStateRuntime.deadUntilMs(entry) > System.currentTimeMillis());
     }

@@ -19,6 +19,8 @@ public interface AgentServerAdapter {
 
     PartyGateway party();
 
+    PartyQuestGateway partyQuest();
+
     LifeGateway life();
 
     SkillGateway skills();

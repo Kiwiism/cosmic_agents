@@ -10,11 +10,11 @@ public final class AgentBuffStateRuntime {
     }
 
     public static boolean enabled(AgentRuntimeEntry entry) {
-        return entry.buffState().consumablesEnabled();
+        return entry.capabilityStates().require(AgentBuffState.STATE_KEY).consumablesEnabled();
     }
 
     public static void setEnabled(AgentRuntimeEntry entry, boolean enabled) {
-        entry.buffState().setConsumablesEnabled(enabled);
+        entry.capabilityStates().require(AgentBuffState.STATE_KEY).setConsumablesEnabled(enabled);
     }
 
     public static void disable(AgentRuntimeEntry entry) {
@@ -22,34 +22,34 @@ public final class AgentBuffStateRuntime {
     }
 
     public static boolean cheapMode(AgentRuntimeEntry entry) {
-        return entry.buffState().cheapMode();
+        return entry.capabilityStates().require(AgentBuffState.STATE_KEY).cheapMode();
     }
 
     public static void setCheapMode(AgentRuntimeEntry entry, boolean cheapMode) {
-        entry.buffState().setCheapMode(cheapMode);
+        entry.capabilityStates().require(AgentBuffState.STATE_KEY).setCheapMode(cheapMode);
     }
 
     public static void resetScan(AgentRuntimeEntry entry) {
-        entry.buffState().resetLastConsumableScan();
+        entry.capabilityStates().require(AgentBuffState.STATE_KEY).resetLastConsumableScan();
     }
 
     public static boolean scanDue(AgentRuntimeEntry entry, long nowMs, long intervalMs) {
-        return entry.buffState().consumableScanDue(nowMs, intervalMs);
+        return entry.capabilityStates().require(AgentBuffState.STATE_KEY).consumableScanDue(nowMs, intervalMs);
     }
 
     public static void markScanned(AgentRuntimeEntry entry, long nowMs) {
-        entry.buffState().setLastConsumableScanMs(nowMs);
+        entry.capabilityStates().require(AgentBuffState.STATE_KEY).setLastConsumableScanMs(nowMs);
     }
 
     public static long lastActionAtMs(AgentRuntimeEntry entry) {
-        return entry.buffState().lastConsumableActionAtMs();
+        return entry.capabilityStates().require(AgentBuffState.STATE_KEY).lastConsumableActionAtMs();
     }
 
     public static String lastActionSummary(AgentRuntimeEntry entry) {
-        return entry.buffState().lastConsumableActionSummary();
+        return entry.capabilityStates().require(AgentBuffState.STATE_KEY).lastConsumableActionSummary();
     }
 
     public static void noteDecision(AgentRuntimeEntry entry, long nowMs, String summary) {
-        entry.buffState().rememberConsumableAction(nowMs, summary);
+        entry.capabilityStates().require(AgentBuffState.STATE_KEY).rememberConsumableAction(nowMs, summary);
     }
 }

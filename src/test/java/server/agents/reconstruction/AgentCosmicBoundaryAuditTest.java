@@ -27,8 +27,6 @@ class AgentCosmicBoundaryAuditTest {
             "ShopFactory",
             "TimerManager");
     private static final Set<String> APPROVED_OPERATIONAL_DEPENDENCIES = Set.of(
-            "src/main/java/server/agents/capabilities/combat/AgentSyntheticMobReactionService.java contains .getClient()",
-            "src/main/java/server/agents/capabilities/combat/AgentSyntheticMobReactionService.java contains PacketCreator",
             "src/main/java/server/agents/capabilities/shop/AgentFreeMarketStallService.java contains .getClient()",
             "src/main/java/server/agents/capabilities/shop/AgentFreeMarketStallService.java contains PacketCreator",
             "src/main/java/server/agents/diagnostics/MapTransitionPacketTraceRuntime.java contains import net.opcodes.",

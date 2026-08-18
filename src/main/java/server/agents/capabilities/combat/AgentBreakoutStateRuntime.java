@@ -3,7 +3,7 @@ package server.agents.capabilities.combat;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**
- * Agent-owned adapter for temporary AgentRuntimeEntry-backed surround-breakout state.
+ * Capability-owned adapter for surround-breakout state.
  */
 public final class AgentBreakoutStateRuntime {
     private AgentBreakoutStateRuntime() {

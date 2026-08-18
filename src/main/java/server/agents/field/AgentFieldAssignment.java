@@ -11,7 +11,10 @@ public record AgentFieldAssignment(
         int partySlot,
         Set<String> cellIds,
         Set<Integer> regionIds,
+        String stationId,
         Point anchor,
+        int territoryMinX,
+        int territoryMaxX,
         long expiresAtMs,
         long revision,
         String reason) {
@@ -19,7 +22,8 @@ public record AgentFieldAssignment(
     public AgentFieldAssignment {
         if (assignmentId == null || assignmentId.isBlank() || mapId < 0 || agentId <= 0
                 || partySlot < 0 || cellIds == null || cellIds.isEmpty()
-                || regionIds == null || regionIds.isEmpty() || anchor == null
+                || regionIds == null || regionIds.isEmpty() || stationId == null
+                || stationId.isBlank() || anchor == null || territoryMinX > territoryMaxX
                 || expiresAtMs < 0 || revision < 0 || reason == null) {
             throw new IllegalArgumentException("Valid field assignment identity, cells, regions, and lease are required");
         }

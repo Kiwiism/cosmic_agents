@@ -87,7 +87,7 @@ public final class CloseRangeDamageHandler extends AbstractDealDamageHandler {
      * its {@code sendPacket} is a no-op so UI feedback is silently skipped while
      * all game-state changes (orb consume, aggro, damage, drops) still apply.
      */
-    public static void applyCloseRangeEffects(AttackInfo attack, Character chr, Client c) {
+    public static boolean applyCloseRangeEffects(AttackInfo attack, Character chr, Client c) {
         chr.getMap().broadcastMessage(chr, PacketCreator.closeRangeAttack(chr, attack.skill, attack.skilllevel,
                 attack.stance, attack.numAttackedAndDamage, attack.targets, attack.speed, attack.direction,
                 attack.display), false, true);
@@ -173,11 +173,11 @@ public final class CloseRangeDamageHandler extends AbstractDealDamageHandler {
             attackCount = attack.getAttackEffect(chr, null).getAttackCount();
         }
         if (numFinisherOrbs == 0 && GameConstants.isFinisherSkill(attack.skill)) {
-            return;
+            return false;
         }
         if (attack.skill % 10000000 == 1009) { // bamboo
             if (chr.getDojoEnergy() < 10000) { // PE hacking or maybe just lagging
-                return;
+                return false;
             }
 
             chr.setDojoEnergy(0);
@@ -188,7 +188,7 @@ public final class CloseRangeDamageHandler extends AbstractDealDamageHandler {
             StatEffect effect_ = skill.getEffect(chr.getSkillLevel(skill));
             if (effect_.getCooldown() > 0) {
                 if (chr.skillIsCooling(attack.skill)) {
-                    return;
+                    return false;
                 } else {
                     c.sendPacket(PacketCreator.skillCooldown(attack.skill, effect_.getCooldown()));
                     chr.addCooldown(attack.skill, currentServerTime(), SECONDS.toMillis(effect_.getCooldown()));
@@ -203,6 +203,6 @@ public final class CloseRangeDamageHandler extends AbstractDealDamageHandler {
             chr.cancelBuffStats(BuffStat.WIND_WALK);
         }
 
-        applyAttack(attack, chr, attackCount);
+        return applyAttack(attack, chr, attackCount);
     }
 }

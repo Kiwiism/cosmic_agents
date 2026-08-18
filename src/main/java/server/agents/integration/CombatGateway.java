@@ -14,6 +14,9 @@ public interface CombatGateway {
 
     boolean dispatchSupportSpecialMove(Character agent, int skillId, int skillLevel, int packetTimestamp);
 
-    void applyAttackEffects(AgentAttackRoute route, AbstractDealDamageHandler.AttackInfo attack, Character agent);
+    CombatAttackApplicationResult applyAttackEffects(
+            AgentAttackRoute route,
+            AbstractDealDamageHandler.AttackInfo attack,
+            Character agent);
 }
 

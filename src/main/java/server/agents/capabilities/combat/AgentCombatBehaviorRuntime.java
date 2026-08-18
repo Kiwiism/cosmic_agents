@@ -71,6 +71,21 @@ public final class AgentCombatBehaviorRuntime {
         return candidates;
     }
 
+    /**
+     * Field territories use the existing peer target observation as a deterministic soft claim.
+     * An unclaimed alternative wins; sharing remains legal when every candidate is occupied.
+     */
+    public static List<Monster> respectFieldClaims(
+            List<Monster> candidates, Map<Monster, Integer> occupancy) {
+        if (candidates == null || candidates.size() < 2 || occupancy == null || occupancy.isEmpty()) {
+            return candidates;
+        }
+        List<Monster> unclaimed = candidates.stream()
+                .filter(candidate -> occupancy.getOrDefault(candidate, 0) == 0)
+                .toList();
+        return unclaimed.isEmpty() ? candidates : new ArrayList<>(unclaimed);
+    }
+
     public static int selectTargetIndex(
             AgentRuntimeEntry entry, Character agent, int candidateCount) {
         if (!AgentBehaviorRuntime.enabled(entry) || !AgentBehaviorFeatureProfile.current().enabled()

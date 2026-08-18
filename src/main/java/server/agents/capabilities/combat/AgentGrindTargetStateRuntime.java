@@ -11,14 +11,14 @@ import server.agents.operations.events.AgentOperationalEventPublisher;
 import java.awt.Point;
 
 /**
- * Agent-owned adapter for temporary AgentRuntimeEntry-backed active grind target state.
+ * Capability-owned adapter for active grind target state.
  */
 public final class AgentGrindTargetStateRuntime {
     private AgentGrindTargetStateRuntime() {
     }
 
     public static Monster target(AgentRuntimeEntry entry) {
-        return entry.grindTargetState().target();
+        return entry.capabilityStates().require(AgentGrindTargetState.STATE_KEY).target();
     }
 
     public static Monster activeTargetInMap(AgentRuntimeEntry entry, MapleMap map) {
@@ -62,8 +62,8 @@ public final class AgentGrindTargetStateRuntime {
     }
 
     public static void setTarget(AgentRuntimeEntry entry, Monster target) {
-        Monster previous = entry.grindTargetState().target();
-        entry.grindTargetState().setTarget(target);
+        Monster previous = entry.capabilityStates().require(AgentGrindTargetState.STATE_KEY).target();
+        entry.capabilityStates().require(AgentGrindTargetState.STATE_KEY).setTarget(target);
         publishTargetChange(entry, previous, target);
     }
 
@@ -71,23 +71,23 @@ public final class AgentGrindTargetStateRuntime {
                                     Monster target,
                                     long nowMs,
                                     long commitmentDurationMs) {
-        Monster previous = entry.grindTargetState().target();
-        entry.grindTargetState().commitTarget(
+        Monster previous = entry.capabilityStates().require(AgentGrindTargetState.STATE_KEY).target();
+        entry.capabilityStates().require(AgentGrindTargetState.STATE_KEY).commitTarget(
                 target, nowMs + Math.max(0L, commitmentDurationMs));
         publishTargetChange(entry, previous, target);
     }
 
     public static boolean committedTo(AgentRuntimeEntry entry, Monster target, long nowMs) {
-        return entry != null && entry.grindTargetState().committedTo(target, nowMs);
+        return entry != null && entry.capabilityStates().require(AgentGrindTargetState.STATE_KEY).committedTo(target, nowMs);
     }
 
     public static int targetSwitchCount(AgentRuntimeEntry entry) {
-        return entry == null ? 0 : entry.grindTargetState().targetSwitchCount();
+        return entry == null ? 0 : entry.capabilityStates().require(AgentGrindTargetState.STATE_KEY).targetSwitchCount();
     }
 
     public static void clear(AgentRuntimeEntry entry) {
-        Monster previous = entry.grindTargetState().target();
-        entry.grindTargetState().clearTarget();
+        Monster previous = entry.capabilityStates().require(AgentGrindTargetState.STATE_KEY).target();
+        entry.capabilityStates().require(AgentGrindTargetState.STATE_KEY).clearTarget();
         publishTargetChange(entry, previous, null);
     }
 

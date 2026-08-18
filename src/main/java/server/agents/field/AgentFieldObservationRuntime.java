@@ -6,7 +6,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
+import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
+import server.agents.capabilities.movement.AgentMovementStateRuntime;
+import server.agents.capabilities.navigation.AgentNavigationGraph;
+import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.party.AgentPartyLifecycleService;
 import server.agents.integration.AgentClientGatewayRuntime;
 import server.agents.integration.AgentMapGatewayRuntime;
@@ -17,6 +21,7 @@ import server.agents.plans.mapleisland.cohort.MapleIslandCohortRuntime;
 import server.agents.runtime.AgentInteractionRuntime;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.field.AgentFieldSafeSpotPolicy;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentSchedulerRuntime;
 import server.maps.MapleMap;
@@ -177,6 +182,12 @@ public final class AgentFieldObservationRuntime {
 
     private static void launch(Run run, MapRun mapRun,
                                MapleIslandCohortPoolSnapshot.Agent pooled, int ordinal) {
+        launch(run, mapRun, pooled, ordinal, 0);
+    }
+
+    private static void launch(Run run, MapRun mapRun,
+                               MapleIslandCohortPoolSnapshot.Agent pooled, int ordinal,
+                               int graphWarmupAttempt) {
         if (!run.active) {
             return;
         }
@@ -184,9 +195,26 @@ public final class AgentFieldObservationRuntime {
         try {
             MapleMap map = AgentMapGatewayRuntime.map().resolveMap(
                     run.world, run.channel, mapRun.preset.mapId());
-            Point staging = stagingPoint(map, ordinal);
+            AgentNavigationGraph baseGraph = AgentNavigationGraphService.peekGraph(
+                    map, AgentMovementProfile.base());
+            if (baseGraph == null) {
+                AgentNavigationGraphService.warmGraphAsync(map, AgentMovementProfile.base());
+                if (graphWarmupAttempt < AgentFieldPolicyConfig.maximumGraphWarmupAttempts()) {
+                    run.tasks.add(AgentSchedulerRuntime.schedule(
+                            () -> launch(run, mapRun, pooled, ordinal, graphWarmupAttempt + 1),
+                            AgentFieldPolicyConfig.graphWarmupRetryMs()));
+                    return;
+                }
+                throw new IllegalStateException("navigation graph did not warm before field entry");
+            }
+            Point staging = AgentFieldSafeSpotPolicy.staging(map, baseGraph, ordinal);
+            Point entryPoint = AgentFieldSafeSpotPolicy.nearestEntry(map, baseGraph, staging);
+            if (staging == null || entryPoint == null) {
+                throw new IllegalStateException(
+                        "map has no graph-connected safe spot and player-spawn portal");
+            }
             AgentLifecycleService.AgentSpawnResult spawned = AgentInteractionRuntime
-                    .spawnStationaryAgentForLeaderAt(run.operator, pooled.name(), map, staging);
+                    .spawnStationaryAgentForLeaderAt(run.operator, pooled.name(), map, entryPoint);
             if (!spawned.success()) {
                 throw new IllegalStateException(spawned.errorMessage());
             }
@@ -200,9 +228,11 @@ public final class AgentFieldObservationRuntime {
             AgentFieldObservationFixtureService.Prepared prepared =
                     AgentFieldObservationFixtureService.prepare(entry, mapRun.preset.level(), agentSeed,
                             System.currentTimeMillis());
+            AgentNavigationGraphService.warmGraphAsync(
+                    entry, map, AgentMovementStateRuntime.movementProfileOrCharacter(entry, agent));
             entry.capabilityStates().require(AgentFieldObservationState.STATE_KEY)
-                    .narrationLevel(AgentFieldObservationState.NarrationLevel.VERBOSE);
-            AgentMapGatewayRuntime.map().changeMap(agent, map, staging);
+                    .narrationLevel(AgentFieldObservationState.NarrationLevel.OFF);
+            AgentMapGatewayRuntime.map().changeMap(agent, map, entryPoint);
             AgentMovementStateResetService.resetEntryState(entry);
             AgentMovementBroadcastService.broadcastMovement(entry);
             AgentMovementCommandRuntime.stop(entry);
@@ -216,6 +246,7 @@ public final class AgentFieldObservationRuntime {
                 synchronized (mapRun) {
                     mapRun.roster.add(entry);
                     mapRun.prepared.put(agent.getId(), prepared);
+                    mapRun.idleStaging.put(agent.getId(), new Point(staging));
                     mapRun.completedLaunches++;
                 }
             }
@@ -252,7 +283,7 @@ public final class AgentFieldObservationRuntime {
         applyPhase(run, mapRun, 0);
         captureSample(mapRun, mapRun.phaseStartedAtMs);
         mapRun.rotationTask = AgentSchedulerRuntime.schedule(
-                () -> rotate(run, mapRun), run.rotationWindowMs);
+                () -> rotate(run, mapRun), phaseWindowMs(run, mapRun));
         run.tasks.add(mapRun.rotationTask);
     }
 
@@ -266,7 +297,7 @@ public final class AgentFieldObservationRuntime {
             applyPhase(run, mapRun, next);
             captureSample(mapRun, mapRun.phaseStartedAtMs);
             mapRun.rotationTask = AgentSchedulerRuntime.schedule(
-                    () -> rotate(run, mapRun), run.rotationWindowMs);
+                    () -> rotate(run, mapRun), phaseWindowMs(run, mapRun));
             run.tasks.add(mapRun.rotationTask);
         }
     }
@@ -280,6 +311,7 @@ public final class AgentFieldObservationRuntime {
         AgentFieldRuntime.stop(anchor, System.currentTimeMillis());
         mapRun.roster.forEach(AgentMovementCommandRuntime::stop);
         int activeCount = Math.min(mapRun.preset.activeCounts().get(phase), mapRun.roster.size());
+        mapRun.phaseActiveCount = activeCount;
         List<AgentRuntimeEntry> shuffled = new ArrayList<>(mapRun.roster);
         shuffle(shuffled, mix(run.seed, mapRun.preset.mapId(), phase, mapRun.samples.size()));
         Set<AgentRuntimeEntry> active = new LinkedHashSet<>(shuffled.subList(0, activeCount));
@@ -310,10 +342,14 @@ public final class AgentFieldObservationRuntime {
             if (agent == null || agent.getMap() == null) {
                 continue;
             }
-            Point staging = stagingPoint(agent.getMap(), index++);
-            AgentMapGatewayRuntime.map().changeMap(agent, agent.getMap(), staging);
-            AgentMovementStateResetService.resetEntryState(entry);
-            AgentMovementBroadcastService.broadcastMovement(entry);
+            Point staging = AgentFieldSafeSpotPolicy.staging(entry, agent, index++);
+            if (staging == null) {
+                staging = mapRun.idleStaging.get(agent.getId());
+            }
+            if (staging == null) {
+                continue;
+            }
+            AgentMovementCommandRuntime.moveTo(entry, staging, true);
         }
     }
 
@@ -348,12 +384,16 @@ public final class AgentFieldObservationRuntime {
                     .filter(candidate -> candidate.agentId() == agent.getId())
                     .findFirst().orElse(null);
             long kills = participant == null ? 0L : participant.kills();
-            agents.put(agent.getId(), new AgentSample(agent.getName(), agent.getJob().getId(), agent.getLevel(),
+            agents.put(agent.getId(), new AgentSample(agent.getId(), agent.getName(), agent.getJob().getId(), agent.getLevel(),
                     mapRun.activeAgentIds.contains(agent.getId()), kills, agent.getExp(), totalExperience(agent),
                     participant == null ? 0L : participant.attacks(),
                     participant == null ? 0L : participant.hitLines(),
                     participant == null ? 0L : participant.missLines(),
                     participant == null ? 0L : participant.damage(),
+                    participant == null ? 0L : participant.assignmentChanges(),
+                    participant == null ? 0L : participant.routeFailures(),
+                    participant == null ? 0L : participant.stuckDetections(),
+                    participant == null ? Map.of() : participant.postureTimeMs(),
                     participant == null ? "IDLE" : participant.combatPosture(),
                     participant == null ? "IDLE" : participant.lifecycle()));
         }
@@ -365,17 +405,118 @@ public final class AgentFieldObservationRuntime {
                         participant.combatPosture(), participant.targetMobId(),
                         participant.targetX(), participant.targetY()))
                 .toList();
+        int conflicts = platformConflicts(field, stations);
+        int offAnchor = (int) stations.stream().filter(station -> {
+            long dx = (long) station.positionX() - station.anchorX();
+            long dy = (long) station.positionY() - station.anchorY();
+            return dx * dx + dy * dy > 600L * 600L;
+        }).count();
+        int emptyAssignments = field == null ? 0 : emptyAssignments(field, stations);
         mapRun.samples.add(new WindowSample(mapRun.phase, mapRun.phaseStartedAtMs, nowMs,
-                mapRun.activeAgentIds.size(), List.copyOf(agents.values()), stations));
+                mapRun.activeAgentIds.size(), field == null ? 0 : field.liveMobs(),
+                emptyAssignments, conflicts, offAnchor,
+                List.copyOf(agents.values()), stations));
     }
 
-    private static Point stagingPoint(MapleMap map, int ordinal) {
-        Point portal = map.getPortal(0) == null
-                ? new Point(map.getRandomPlayerSpawnpoint().getPosition())
-                : new Point(map.getPortal(0).getPosition());
-        portal.translate((Math.floorMod(ordinal, 7) - 3) * 24, 0);
-        Point below = AgentMapGatewayRuntime.map().pointBelow(map, portal);
-        return below == null ? portal : below;
+    private static int platformConflicts(
+            AgentFieldSnapshot field, List<StationSample> stations) {
+        if (field == null) {
+            return 0;
+        }
+        Map<String, Integer> users = new LinkedHashMap<>();
+        stations.forEach(station -> station.cellIds().forEach(
+                cellId -> users.merge(cellId, 1, Integer::sum)));
+        Map<String, Integer> capacities = field.cells().stream().collect(
+                java.util.stream.Collectors.toMap(
+                        AgentFieldSnapshot.Cell::cellId, AgentFieldSnapshot.Cell::capacity));
+        int overCapacity = users.entrySet().stream().mapToInt(entry -> Math.max(
+                0, entry.getValue() - capacities.getOrDefault(entry.getKey(), 1))).sum();
+        Map<String, Integer> stationUsers = new LinkedHashMap<>();
+        stations.forEach(station -> station.cellIds().forEach(cellId -> stationUsers.merge(
+                cellId + ':' + station.anchorX() + ':' + station.anchorY(), 1, Integer::sum)));
+        int duplicateStations = stationUsers.values().stream()
+                .mapToInt(count -> Math.max(0, count - 1)).sum();
+        return Math.max(overCapacity, duplicateStations);
+    }
+
+    private static int emptyAssignments(AgentFieldSnapshot field, List<StationSample> stations) {
+        Map<String, AgentFieldSnapshot.Cell> cells = field.cells().stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        AgentFieldSnapshot.Cell::cellId, cell -> cell));
+        return (int) stations.stream().filter(station -> !station.cellIds().isEmpty()
+                && station.cellIds().stream().map(cells::get)
+                .filter(java.util.Objects::nonNull)
+                .allMatch(cell -> cell.mobCounts().values().stream()
+                        .mapToInt(Integer::intValue).sum() == 0)).count();
+    }
+
+    static List<CapacityWindow> capacityWindows(List<WindowSample> samples) {
+        ArrayList<CapacityWindow> windows = new ArrayList<>();
+        for (int index = 1; index < samples.size(); index++) {
+            WindowSample start = samples.get(index - 1);
+            WindowSample end = samples.get(index);
+            if (start.phase() != end.phase() || start.startedAtMs() != end.startedAtMs()
+                    || end.endedAtMs() <= start.endedAtMs()) {
+                continue;
+            }
+            long durationMs = end.endedAtMs() - start.endedAtMs();
+            Map<Integer, AgentSample> startingAgents = start.agents().stream()
+                    .collect(java.util.stream.Collectors.toMap(AgentSample::agentId, agent -> agent));
+            long kills = 0L;
+            long experience = 0L;
+            long attacks = 0L;
+            long assignments = 0L;
+            long routeFailures = 0L;
+            long stuckDetections = 0L;
+            long nonCombatMs = 0L;
+            for (AgentSample agent : end.agents()) {
+                if (!agent.active()) {
+                    continue;
+                }
+                AgentSample before = startingAgents.get(agent.agentId());
+                if (before == null) {
+                    continue;
+                }
+                kills += delta(agent.kills(), before.kills());
+                experience += delta(agent.totalExp(), before.totalExp());
+                attacks += delta(agent.attacks(), before.attacks());
+                assignments += delta(agent.assignmentChanges(), before.assignmentChanges());
+                routeFailures += delta(agent.routeFailures(), before.routeFailures());
+                stuckDetections += delta(agent.stuckDetections(), before.stuckDetections());
+                nonCombatMs += postureDelta(agent, before, "SEARCHING")
+                        + postureDelta(agent, before, "IDLE");
+            }
+            long activeTimeMs = durationMs * Math.max(1, end.activeAgents());
+            long nonCombatBasisPoints = Math.min(10_000L,
+                    nonCombatMs * 10_000L / Math.max(1L, activeTimeMs));
+            long killsPerAgentMinuteBasisPoints = kills * 60_000L * 10_000L
+                    / Math.max(1L, activeTimeMs);
+            windows.add(new CapacityWindow(
+                    end.phase(), end.activeAgents(), durationMs, kills, experience,
+                    attacks, assignments, routeFailures, stuckDetections,
+                    nonCombatBasisPoints, killsPerAgentMinuteBasisPoints,
+                    end.liveMobs(), end.emptyAssignedPlatforms(), end.platformConflicts(),
+                    end.offAnchorAgents()));
+        }
+        return List.copyOf(windows);
+    }
+
+    private static long postureDelta(AgentSample after, AgentSample before, String posture) {
+        return delta(after.postureTimeMs().getOrDefault(posture, 0L),
+                before.postureTimeMs().getOrDefault(posture, 0L));
+    }
+
+    private static long delta(long after, long before) {
+        return Math.max(0L, after - before);
+    }
+
+    static long phaseWindowMs(long baseWindowMs, int activeCount) {
+        return Math.max(1L, baseWindowMs)
+                + Math.max(0, activeCount - 1) * 60_000L;
+    }
+
+    private static long phaseWindowMs(Run run, MapRun mapRun) {
+        return phaseWindowMs(run.rotationWindowMs, mapRun.phaseActiveCount);
     }
 
     private static void shuffle(List<AgentRuntimeEntry> entries, long seed) {
@@ -407,10 +548,15 @@ public final class AgentFieldObservationRuntime {
     public record StopResult(boolean success, String message, int stoppedAgents) {
     }
 
-    public record AgentSample(String name, int jobId, int level, boolean active, long kills,
+    public record AgentSample(int agentId, String name, int jobId, int level, boolean active, long kills,
                               int exp, long totalExp, long attacks, long hitLines,
-                              long missLines, long damage, String combatPosture,
+                              long missLines, long damage, long assignmentChanges,
+                              long routeFailures, long stuckDetections,
+                              Map<String, Long> postureTimeMs, String combatPosture,
                               String lifecycle) {
+        public AgentSample {
+            postureTimeMs = Map.copyOf(postureTimeMs);
+        }
     }
 
     public record StationSample(int agentId, String name, int partyId, List<String> cellIds,
@@ -424,6 +570,8 @@ public final class AgentFieldObservationRuntime {
     }
 
     public record WindowSample(int phase, long startedAtMs, long endedAtMs, int activeAgents,
+                               int liveMobs, int emptyAssignedPlatforms,
+                               int platformConflicts, int offAnchorAgents,
                                List<AgentSample> agents, List<StationSample> stations) {
         public WindowSample {
             agents = List.copyOf(agents);
@@ -431,15 +579,34 @@ public final class AgentFieldObservationRuntime {
         }
     }
 
+    public record CapacityWindow(
+            int phase,
+            int activeAgents,
+            long durationMs,
+            long kills,
+            long experience,
+            long attacks,
+            long assignmentChanges,
+            long routeFailures,
+            long stuckDetections,
+            long nonCombatBasisPoints,
+            long killsPerAgentMinuteBasisPoints,
+            int liveMobs,
+            int emptyAssignedPlatforms,
+            int platformConflicts,
+            int offAnchorAgents) {
+    }
+
     public record MapStatus(int mapId, String mapName, int level, int readyAgents, int expectedAgents,
-                            int phase, int activeAgents, List<Integer> activeCounts,
-                            List<String> failures, List<PreparedAgent> preparedAgents,
-                            List<WindowSample> samples) {
+                             int phase, int activeAgents, List<Integer> activeCounts,
+                             List<String> failures, List<PreparedAgent> preparedAgents,
+                             List<WindowSample> samples, List<CapacityWindow> capacityWindows) {
         public MapStatus {
             activeCounts = List.copyOf(activeCounts);
             failures = List.copyOf(failures);
             preparedAgents = List.copyOf(preparedAgents);
             samples = List.copyOf(samples);
+            capacityWindows = List.copyOf(capacityWindows);
         }
     }
 
@@ -502,6 +669,7 @@ public final class AgentFieldObservationRuntime {
         private final List<MapleIslandCohortPoolSnapshot.Agent> pooled;
         private final List<AgentRuntimeEntry> roster = new ArrayList<>();
         private final Map<Integer, AgentFieldObservationFixtureService.Prepared> prepared = new LinkedHashMap<>();
+        private final Map<Integer, Point> idleStaging = new LinkedHashMap<>();
         private final List<String> failures = new ArrayList<>();
         private final List<WindowSample> samples = new ArrayList<>();
         private int completedLaunches;
@@ -510,6 +678,7 @@ public final class AgentFieldObservationRuntime {
         private long phaseStartedAtMs;
         private Set<Integer> activeAgentIds = Set.of();
         private ScheduledFuture<?> rotationTask;
+        private int phaseActiveCount;
 
         private MapRun(AgentFieldObservationCatalog.MapPreset preset,
                        List<MapleIslandCohortPoolSnapshot.Agent> pooled) {
@@ -531,7 +700,8 @@ public final class AgentFieldObservationRuntime {
                     phase, activeAgentIds.size(), preset.activeCounts(), failures,
                     prepared.values().stream().map(value -> new PreparedAgent(
                             value.name(), value.level(), value.bundleId(), value.apProfileId(), value.spProfileId(),
-                            value.equipmentItemIds(), value.projectileItemId())).toList(), samples);
+                            value.equipmentItemIds(), value.projectileItemId())).toList(), samples,
+                    capacityWindows(samples));
         }
     }
 }

@@ -1,8 +1,13 @@
 package server.agents.capabilities.combat;
 
 import server.life.Monster;
+import server.agents.runtime.state.AgentCapabilityStateKey;
 
 public final class AgentGrindTargetState {
+    public static final AgentCapabilityStateKey<AgentGrindTargetState> STATE_KEY =
+            new AgentCapabilityStateKey<>("combat.grind-target",
+                    AgentGrindTargetState.class, AgentGrindTargetState::new);
+
     private Monster target = null;
     private long targetCommittedUntilMs = 0L;
     private int targetSwitchCount = 0;

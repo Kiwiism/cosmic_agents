@@ -3,6 +3,7 @@ package server.agents.field;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Comparator;
 
 /** Stable runtime farming unit derived from navigation regions and live spawn evidence. */
 public record AgentFarmingCell(
@@ -45,5 +46,16 @@ public record AgentFarmingCell(
         Map<Integer, Integer> coverageCounts = expectedMobCounts.isEmpty()
                 ? mobCounts : expectedMobCounts;
         return (int) requiredMobIds.stream().filter(coverageCounts::containsKey).count();
+    }
+
+    /** Representative cell point; station ordering is left-to-right and is not semantic. */
+    public AgentFarmingAnchor centralAnchor() {
+        int minX = anchors.stream().mapToInt(AgentFarmingAnchor::territoryMinX).min().orElse(0);
+        int maxX = anchors.stream().mapToInt(AgentFarmingAnchor::territoryMaxX).max().orElse(minX);
+        int centerX = minX + (maxX - minX) / 2;
+        return anchors.stream().min(Comparator
+                .comparingInt((AgentFarmingAnchor anchor) ->
+                        Math.abs(anchor.position().x - centerX))
+                .thenComparing(AgentFarmingAnchor::anchorId)).orElseThrow();
     }
 }

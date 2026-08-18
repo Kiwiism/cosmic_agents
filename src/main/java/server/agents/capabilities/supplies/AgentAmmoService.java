@@ -4,7 +4,6 @@ import server.agents.capabilities.trade.AgentPendingTradeStateRuntime;
 
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentCombatAmmoCounter;
-import server.agents.capabilities.combat.AgentCombatConfig;
 
 import client.Character;
 import client.inventory.Item;
@@ -58,13 +57,13 @@ public final class AgentAmmoService {
         AgentSupplyNeed previous = entry.capabilityStates()
                 .require(AgentResourcePlanningState.STATE_KEY).need(category);
         AgentSupplyNeed observed = AgentResourcePlanningRuntime.observe(entry, category, ammo,
-                AgentCombatConfig.cfg.AMMO_LOW_WARN,
-                Math.max(1, AgentCombatConfig.cfg.AMMO_LOW_WARN / 4),
-                Math.max(AgentCombatConfig.cfg.AMMO_LOW_WARN * 2, ammo),
+                AgentSupplyConfig.cfg.AMMO_LOW_WARN,
+                Math.max(1, AgentSupplyConfig.cfg.AMMO_LOW_WARN / 4),
+                Math.max(AgentSupplyConfig.cfg.AMMO_LOW_WARN * 2, ammo),
                 System.currentTimeMillis());
         boolean thresholdEventPublished = previous == null
                 || previous.urgency() != observed.urgency();
-        if (ammo >= AgentCombatConfig.cfg.AMMO_LOW_WARN) {
+        if (ammo >= AgentSupplyConfig.cfg.AMMO_LOW_WARN) {
             AgentAmmoStateRuntime.clearAmmoShareRequested(entry);
             return false;
         }
@@ -117,7 +116,7 @@ public final class AgentAmmoService {
         if (bot.getTrade() != null || AgentPendingTradeStateRuntime.hasActiveSequence(entry)) {
             return false;
         }
-        if (!canRequestShare(weaponType) || currentAmmo >= AgentCombatConfig.cfg.AMMO_LOW_WARN) {
+        if (!canRequestShare(weaponType) || currentAmmo >= AgentSupplyConfig.cfg.AMMO_LOW_WARN) {
             return false;
         }
 
@@ -204,14 +203,14 @@ public final class AgentAmmoService {
                 continue;
             }
             int count = AgentCombatAmmoCounter.countAmmo(donorBot, needyWeaponType);
-            if (count < AgentCombatConfig.cfg.AMMO_LOW_WARN) {
+            if (count < AgentSupplyConfig.cfg.AMMO_LOW_WARN) {
                 continue;
             }
             WeaponType donorWeaponType = AgentAttackExecutionProvider.getEquippedWeaponType(donorBot);
             boolean donorNeedsSameAmmo = donorWeaponType == needyWeaponType;
             int donationQty = AgentAmmoSharePolicy.donationQuantity(
                     count,
-                    AgentCombatConfig.cfg.AMMO_LOW_WARN,
+                    AgentSupplyConfig.cfg.AMMO_LOW_WARN,
                     donorNeedsSameAmmo);
             if (donationQty <= 0) {
                 continue;

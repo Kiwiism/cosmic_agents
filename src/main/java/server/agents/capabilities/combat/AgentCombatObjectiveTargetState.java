@@ -1,9 +1,15 @@
 package server.agents.capabilities.combat;
 
+import server.agents.runtime.state.AgentCapabilityStateKey;
+
 import java.util.HashSet;
 import java.util.Set;
 
 public final class AgentCombatObjectiveTargetState {
+    public static final AgentCapabilityStateKey<AgentCombatObjectiveTargetState> STATE_KEY =
+            new AgentCapabilityStateKey<>("combat.objective-targets",
+                    AgentCombatObjectiveTargetState.class, AgentCombatObjectiveTargetState::new);
+
     private Set<Integer> preferredMobIds = Set.of();
     private Set<Integer> fallbackMobIds = Set.of();
 

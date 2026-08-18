@@ -45,7 +45,7 @@ public final class AgentCombatTargetTraceRuntime {
         AgentCombatDecisionReason reason = exactDecision && tactical != null
                 && tactical.lastSelectedMobId() == target.getId()
                 ? tactical.lastDecision()
-                : AgentCombatDecisionReason.LEGACY_CLOSEST;
+                : AgentCombatDecisionReason.CLOSEST_ELIGIBLE;
         AgentCombatCandidateClass candidateClass = exactDecision && tactical != null
                 && tactical.lastSelectedMobId() == target.getId()
                 ? tactical.selectedClass()
@@ -120,7 +120,7 @@ public final class AgentCombatTargetTraceRuntime {
             case CLOSEST_REACHABLE_FALLBACK -> "Closest reachable fallback target";
             case ROUTE_BLOCKER -> "Target is blocking the current route";
             case EVADE_BLOCKER -> "Avoiding a route-blocking target";
-            case LEGACY_CLOSEST -> "Nearest eligible combat target";
+            case CLOSEST_ELIGIBLE -> "Nearest eligible combat target";
         };
     }
 

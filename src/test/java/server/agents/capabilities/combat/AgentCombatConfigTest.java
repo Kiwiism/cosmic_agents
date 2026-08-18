@@ -17,7 +17,7 @@ class AgentCombatConfigTest {
                 AgentCombatConfig.configFieldLine("attack_range_x"));
         assertNull(AgentCombatConfig.configFieldLine("missing_field"));
         assertEquals("MOB_PHYSICS_SPEED_PERCENT = "
-                        + AgentCombatConfig.cfg.MOB_PHYSICS_SPEED_PERCENT,
+                        + server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_SPEED_PERCENT,
                 AgentCombatConfig.configFieldLine("mob_physics_speed_percent"));
     }
 
@@ -26,7 +26,7 @@ class AgentCombatConfigTest {
         int originalRange = AgentCombatConfig.cfg.ATTACK_RANGE_X;
         boolean originalDebug = AgentCombatConfig.cfg.AOE_REPOSITION_DEBUG;
         boolean originalVirtualObserverStress =
-                AgentCombatConfig.cfg.MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS;
+                server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS;
         try {
             assertEquals("OK: ATTACK_RANGE_X = 123",
                     AgentCombatConfig.setConfigField("attack_range_x", "123"));
@@ -39,7 +39,7 @@ class AgentCombatConfigTest {
             assertEquals("OK: MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS = true",
                     AgentCombatConfig.setConfigField(
                             "MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS", "on"));
-            assertTrue(AgentCombatConfig.cfg.MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS);
+            assertTrue(server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS);
 
             String badValue = AgentCombatConfig.setConfigField("ATTACK_RANGE_X", "abc");
             assertTrue(badValue.startsWith("bad value 'abc' for ATTACK_RANGE_X"));
@@ -50,69 +50,66 @@ class AgentCombatConfigTest {
         } finally {
             AgentCombatConfig.cfg.ATTACK_RANGE_X = originalRange;
             AgentCombatConfig.cfg.AOE_REPOSITION_DEBUG = originalDebug;
-            AgentCombatConfig.cfg.MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS =
+            server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS =
                     originalVirtualObserverStress;
         }
     }
 
     @Test
     void reactionModeSupportsCaseInsensitiveLiveValues() {
-        AgentMobReactionMode originalMode = AgentCombatConfig.cfg.AGENT_MOB_REACTION_MODE;
+        AgentMobReactionMode originalMode = server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.AGENT_MOB_REACTION_MODE;
         try {
             assertEquals("OK: AGENT_MOB_REACTION_MODE = OFF",
                     AgentCombatConfig.setConfigField(
                             "AGENT_MOB_REACTION_MODE", "off"));
-            assertEquals(AgentMobReactionMode.OFF, AgentCombatConfig.cfg.AGENT_MOB_REACTION_MODE);
+            assertEquals(AgentMobReactionMode.OFF, server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.AGENT_MOB_REACTION_MODE);
 
-            assertEquals("OK: AGENT_MOB_REACTION_MODE = SYNTHETIC",
-                    AgentCombatConfig.setConfigField(
-                            "AGENT_MOB_REACTION_MODE", "synthetic"));
-            assertEquals(AgentMobReactionMode.SYNTHETIC,
-                    AgentCombatConfig.cfg.AGENT_MOB_REACTION_MODE);
+            assertTrue(AgentCombatConfig.setConfigField(
+                    "AGENT_MOB_REACTION_MODE", "synthetic").startsWith("bad value"));
             assertTrue(AgentCombatConfig.setConfigField(
                     "AGENT_MOB_REACTION_MODE", "invalid").startsWith("bad value"));
         } finally {
-            AgentCombatConfig.cfg.AGENT_MOB_REACTION_MODE = originalMode;
+            server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.AGENT_MOB_REACTION_MODE = originalMode;
         }
     }
 
     @Test
     void rejectsUnsafeOrContradictoryLivePhysicsValues() {
-        int originalSpeed = AgentCombatConfig.cfg.MOB_PHYSICS_SPEED_PERCENT;
-        int originalChance = AgentCombatConfig.cfg.MOB_PHYSICS_EDGE_RETREAT_CHANCE_PERCENT;
-        int originalStop = AgentCombatConfig.cfg.MOB_PHYSICS_STOP_DISTANCE_X;
-        int originalWarmup = AgentCombatConfig.cfg.MOB_PHYSICS_OBSERVER_WARMUP_MS;
-        int originalAggroTimeout = AgentCombatConfig.cfg.MOB_PHYSICS_AGGRO_TIMEOUT_MS;
+        int originalSpeed = server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_SPEED_PERCENT;
+        int originalChance = server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_EDGE_RETREAT_CHANCE_PERCENT;
+        int originalStop = server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_STOP_DISTANCE_X;
+        int originalWarmup = server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_OBSERVER_WARMUP_MS;
+        int originalAggroTimeout = server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_AGGRO_TIMEOUT_MS;
         try {
             assertEquals("value for MOB_PHYSICS_SPEED_PERCENT must be between 0 and 300",
                     AgentCombatConfig.setConfigField("MOB_PHYSICS_SPEED_PERCENT", "301"));
-            assertEquals(originalSpeed, AgentCombatConfig.cfg.MOB_PHYSICS_SPEED_PERCENT);
+            assertEquals(originalSpeed, server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_SPEED_PERCENT);
 
             assertEquals("value for MOB_PHYSICS_EDGE_RETREAT_CHANCE_PERCENT must be between 0 and 100",
                     AgentCombatConfig.setConfigField(
                             "MOB_PHYSICS_EDGE_RETREAT_CHANCE_PERCENT", "101"));
             assertEquals(originalChance,
-                    AgentCombatConfig.cfg.MOB_PHYSICS_EDGE_RETREAT_CHANCE_PERCENT);
+                    server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_EDGE_RETREAT_CHANCE_PERCENT);
 
             assertEquals("MOB_PHYSICS_STOP_DISTANCE_X cannot exceed MOB_PHYSICS_RESUME_DISTANCE_X",
                     AgentCombatConfig.setConfigField("MOB_PHYSICS_STOP_DISTANCE_X",
-                            Integer.toString(AgentCombatConfig.cfg.MOB_PHYSICS_RESUME_DISTANCE_X + 1)));
-            assertEquals(originalStop, AgentCombatConfig.cfg.MOB_PHYSICS_STOP_DISTANCE_X);
+                            Integer.toString(server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_RESUME_DISTANCE_X + 1)));
+            assertEquals(originalStop, server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_STOP_DISTANCE_X);
 
             assertEquals("value for MOB_PHYSICS_OBSERVER_WARMUP_MS must be between 0 and 60000",
                     AgentCombatConfig.setConfigField("MOB_PHYSICS_OBSERVER_WARMUP_MS", "60001"));
-            assertEquals(originalWarmup, AgentCombatConfig.cfg.MOB_PHYSICS_OBSERVER_WARMUP_MS);
+            assertEquals(originalWarmup, server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_OBSERVER_WARMUP_MS);
 
             assertEquals("value for MOB_PHYSICS_AGGRO_TIMEOUT_MS must be between 0 and 60000",
                     AgentCombatConfig.setConfigField("MOB_PHYSICS_AGGRO_TIMEOUT_MS", "60001"));
             assertEquals(originalAggroTimeout,
-                    AgentCombatConfig.cfg.MOB_PHYSICS_AGGRO_TIMEOUT_MS);
+                    server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_AGGRO_TIMEOUT_MS);
         } finally {
-            AgentCombatConfig.cfg.MOB_PHYSICS_SPEED_PERCENT = originalSpeed;
-            AgentCombatConfig.cfg.MOB_PHYSICS_EDGE_RETREAT_CHANCE_PERCENT = originalChance;
-            AgentCombatConfig.cfg.MOB_PHYSICS_STOP_DISTANCE_X = originalStop;
-            AgentCombatConfig.cfg.MOB_PHYSICS_OBSERVER_WARMUP_MS = originalWarmup;
-            AgentCombatConfig.cfg.MOB_PHYSICS_AGGRO_TIMEOUT_MS = originalAggroTimeout;
+            server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_SPEED_PERCENT = originalSpeed;
+            server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_EDGE_RETREAT_CHANCE_PERCENT = originalChance;
+            server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_STOP_DISTANCE_X = originalStop;
+            server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_OBSERVER_WARMUP_MS = originalWarmup;
+            server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_AGGRO_TIMEOUT_MS = originalAggroTimeout;
         }
     }
 }

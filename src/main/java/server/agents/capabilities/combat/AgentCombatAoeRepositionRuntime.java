@@ -38,7 +38,7 @@ public final class AgentCombatAoeRepositionRuntime {
         if (botPos == null || tp == null) {
             return null;
         }
-        List<Monster> cluster = AgentCombatScoringPolicy.legacyClusterMonsters(
+        List<Monster> cluster = AgentCombatScoringPolicy.clusterMonsters(
                 primaryTarget, AgentCombatObjectiveTargetStateRuntime.allowedMonsters(
                         entry, server.agents.perception.AgentMapPerception.monsters(bot.getMap())));
         if (cluster.size() <= fireNowBest.targets.size()) {

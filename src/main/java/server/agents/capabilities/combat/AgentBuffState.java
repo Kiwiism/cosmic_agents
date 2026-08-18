@@ -1,9 +1,15 @@
 package server.agents.capabilities.combat;
 
+import server.agents.runtime.state.AgentCapabilityStateKey;
+
 /**
  * Mutable runtime state for consumable-buff automation and skill-buff debug reporting.
  */
 public final class AgentBuffState {
+    public static final AgentCapabilityStateKey<AgentBuffState> STATE_KEY =
+            new AgentCapabilityStateKey<>("combat.consumable-buffs",
+                    AgentBuffState.class, AgentBuffState::new);
+
     private boolean consumablesEnabled = false;
     private boolean cheapMode = true;
     private long lastConsumableScanMs = 0L;

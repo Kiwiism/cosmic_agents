@@ -35,4 +35,18 @@ class AgentFieldObservationFixtureServiceTest {
         assertFalse(AgentFieldObservationFixtureService.supportsShield(WeaponType.CLAW, "Wp"));
         assertFalse(AgentFieldObservationFixtureService.supportsShield(WeaponType.GUN, "Wp"));
     }
+
+    @Test
+    void mapsEveryObservationVisualSlotToItsEquippedPosition() {
+        assertEquals(-1, AgentFieldObservationFixtureService.equippedSlot("Cp"));
+        assertEquals(-4, AgentFieldObservationFixtureService.equippedSlot("Ae"));
+        assertEquals(-5, AgentFieldObservationFixtureService.equippedSlot("Ma"));
+        assertEquals(-5, AgentFieldObservationFixtureService.equippedSlot("MaPn"));
+        assertEquals(-6, AgentFieldObservationFixtureService.equippedSlot("Pn"));
+        assertEquals(-7, AgentFieldObservationFixtureService.equippedSlot("So"));
+        assertEquals(-8, AgentFieldObservationFixtureService.equippedSlot("Gv"));
+        assertEquals(-10, AgentFieldObservationFixtureService.equippedSlot("Si"));
+        assertEquals(-11, AgentFieldObservationFixtureService.equippedSlot("Wp"));
+        assertEquals(0, AgentFieldObservationFixtureService.equippedSlot("Pe"));
+    }
 }

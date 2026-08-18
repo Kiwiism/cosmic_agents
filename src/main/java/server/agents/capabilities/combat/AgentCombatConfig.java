@@ -3,6 +3,7 @@ package server.agents.capabilities.combat;
 import config.YamlConfig;
 import server.agents.capabilities.mobcontrol.AgentMobReactionMode;
 import server.agents.capabilities.mobcontrol.AgentMobReactionRouter;
+import server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,12 +17,12 @@ public final class AgentCombatConfig {
     /** Admin/debug: "FIELD = value" for every public combat config field, sorted. */
     public static List<String> configFieldLines() {
         List<String> out = new ArrayList<>();
-        for (java.lang.reflect.Field f : Config.class.getDeclaredFields()) {
+        for (java.lang.reflect.Field f : configFields()) {
             if (!java.lang.reflect.Modifier.isPublic(f.getModifiers())) {
                 continue;
             }
             try {
-                out.add(f.getName() + " = " + f.get(cfg));
+                out.add(f.getName() + " = " + f.get(fieldOwner(f)));
             } catch (IllegalAccessException ignored) {
             }
         }
@@ -31,10 +32,10 @@ public final class AgentCombatConfig {
 
     /** Admin/debug: "FIELD = value" for one field (case-insensitive), or null if unknown. */
     public static String configFieldLine(String name) {
-        for (java.lang.reflect.Field f : Config.class.getDeclaredFields()) {
+        for (java.lang.reflect.Field f : configFields()) {
             if (java.lang.reflect.Modifier.isPublic(f.getModifiers()) && f.getName().equalsIgnoreCase(name)) {
                 try {
-                    return f.getName() + " = " + f.get(cfg);
+                    return f.getName() + " = " + f.get(fieldOwner(f));
                 } catch (IllegalAccessException e) {
                     return null;
                 }
@@ -48,18 +49,19 @@ public final class AgentCombatConfig {
      * Returns a human-readable result; success messages start with "OK".
      */
     public static String setConfigField(String name, String rawValue) {
-        for (java.lang.reflect.Field f : Config.class.getDeclaredFields()) {
+        for (java.lang.reflect.Field f : configFields()) {
             if (!java.lang.reflect.Modifier.isPublic(f.getModifiers()) || !f.getName().equalsIgnoreCase(name)) {
                 continue;
             }
             try {
-                Object previous = f.get(cfg);
+                Object owner = fieldOwner(f);
+                Object previous = f.get(owner);
                 Object parsed = parseConfigValue(f.getType(), rawValue.trim());
                 String validationFailure = validateConfigValue(f.getName(), parsed);
                 if (validationFailure != null) {
                     return validationFailure;
                 }
-                f.set(cfg, parsed);
+                f.set(owner, parsed);
                 if (f.getName().equals("AGENT_MOB_REACTION_MODE")) {
                     AgentMobReactionRouter.modeChanged(
                             (AgentMobReactionMode) previous, (AgentMobReactionMode) parsed);
@@ -72,6 +74,19 @@ public final class AgentCombatConfig {
             }
         }
         return "unknown field: " + name;
+    }
+
+    private static List<java.lang.reflect.Field> configFields() {
+        List<java.lang.reflect.Field> fields = new ArrayList<>();
+        fields.addAll(List.of(Config.class.getFields()));
+        fields.addAll(List.of(AgentMobPhysicsConfig.Config.class.getFields()));
+        return fields;
+    }
+
+    private static Object fieldOwner(java.lang.reflect.Field field) {
+        return field.getDeclaringClass() == AgentMobPhysicsConfig.Config.class
+                ? AgentMobPhysicsConfig.cfg
+                : cfg;
     }
 
     private static Object parseConfigValue(Class<?> type, String v) {
@@ -120,9 +135,6 @@ public final class AgentCombatConfig {
         int minimum;
         int maximum;
         switch (name) {
-            case "SYNTHETIC_MOB_KNOCKBACK_DISTANCE_X" -> { minimum = 0; maximum = 1_000; }
-            case "SYNTHETIC_MOB_KNOCKBACK_DURATION_MS" -> { minimum = 20; maximum = 5_000; }
-            case "SYNTHETIC_MOB_CONTROL_HOLD_MS" -> { minimum = 0; maximum = 10_000; }
             case "MOB_PHYSICS_PUBLICATION_INTERVAL_MS" -> { minimum = 20; maximum = 1_000; }
             case "MOB_PHYSICS_MAX_CATCH_UP_STEPS" -> { minimum = 1; maximum = 100; }
             case "MOB_PHYSICS_STOP_DISTANCE_X", "MOB_PHYSICS_RESUME_DISTANCE_X",
@@ -158,105 +170,27 @@ public final class AgentCombatConfig {
 
     private static String validatePairedPhysicsValue(String name, int value) {
         return switch (name) {
-            case "MOB_PHYSICS_STOP_DISTANCE_X" -> value > cfg.MOB_PHYSICS_RESUME_DISTANCE_X
+            case "MOB_PHYSICS_STOP_DISTANCE_X" -> value > AgentMobPhysicsConfig.cfg.MOB_PHYSICS_RESUME_DISTANCE_X
                     ? "MOB_PHYSICS_STOP_DISTANCE_X cannot exceed MOB_PHYSICS_RESUME_DISTANCE_X" : null;
-            case "MOB_PHYSICS_RESUME_DISTANCE_X" -> value < cfg.MOB_PHYSICS_STOP_DISTANCE_X
+            case "MOB_PHYSICS_RESUME_DISTANCE_X" -> value < AgentMobPhysicsConfig.cfg.MOB_PHYSICS_STOP_DISTANCE_X
                     ? "MOB_PHYSICS_RESUME_DISTANCE_X cannot be below MOB_PHYSICS_STOP_DISTANCE_X" : null;
-            case "MOB_PHYSICS_EDGE_IDLE_MIN_MS" -> value > cfg.MOB_PHYSICS_EDGE_IDLE_MAX_MS
+            case "MOB_PHYSICS_EDGE_IDLE_MIN_MS" -> value > AgentMobPhysicsConfig.cfg.MOB_PHYSICS_EDGE_IDLE_MAX_MS
                     ? "MOB_PHYSICS_EDGE_IDLE_MIN_MS cannot exceed MOB_PHYSICS_EDGE_IDLE_MAX_MS" : null;
-            case "MOB_PHYSICS_EDGE_IDLE_MAX_MS" -> value < cfg.MOB_PHYSICS_EDGE_IDLE_MIN_MS
+            case "MOB_PHYSICS_EDGE_IDLE_MAX_MS" -> value < AgentMobPhysicsConfig.cfg.MOB_PHYSICS_EDGE_IDLE_MIN_MS
                     ? "MOB_PHYSICS_EDGE_IDLE_MAX_MS cannot be below MOB_PHYSICS_EDGE_IDLE_MIN_MS" : null;
-            case "MOB_PHYSICS_EDGE_RETREAT_MIN_MS" -> value > cfg.MOB_PHYSICS_EDGE_RETREAT_MAX_MS
+            case "MOB_PHYSICS_EDGE_RETREAT_MIN_MS" -> value > AgentMobPhysicsConfig.cfg.MOB_PHYSICS_EDGE_RETREAT_MAX_MS
                     ? "MOB_PHYSICS_EDGE_RETREAT_MIN_MS cannot exceed MOB_PHYSICS_EDGE_RETREAT_MAX_MS" : null;
-            case "MOB_PHYSICS_EDGE_RETREAT_MAX_MS" -> value < cfg.MOB_PHYSICS_EDGE_RETREAT_MIN_MS
+            case "MOB_PHYSICS_EDGE_RETREAT_MAX_MS" -> value < AgentMobPhysicsConfig.cfg.MOB_PHYSICS_EDGE_RETREAT_MIN_MS
                     ? "MOB_PHYSICS_EDGE_RETREAT_MAX_MS cannot be below MOB_PHYSICS_EDGE_RETREAT_MIN_MS" : null;
-            case "MOB_PHYSICS_RETREAT_MIN_DISTANCE_PX" -> value > cfg.MOB_PHYSICS_RETREAT_MAX_DISTANCE_PX
+            case "MOB_PHYSICS_RETREAT_MIN_DISTANCE_PX" -> value > AgentMobPhysicsConfig.cfg.MOB_PHYSICS_RETREAT_MAX_DISTANCE_PX
                     ? "MOB_PHYSICS_RETREAT_MIN_DISTANCE_PX cannot exceed MOB_PHYSICS_RETREAT_MAX_DISTANCE_PX" : null;
-            case "MOB_PHYSICS_RETREAT_MAX_DISTANCE_PX" -> value < cfg.MOB_PHYSICS_RETREAT_MIN_DISTANCE_PX
+            case "MOB_PHYSICS_RETREAT_MAX_DISTANCE_PX" -> value < AgentMobPhysicsConfig.cfg.MOB_PHYSICS_RETREAT_MIN_DISTANCE_PX
                     ? "MOB_PHYSICS_RETREAT_MAX_DISTANCE_PX cannot be below MOB_PHYSICS_RETREAT_MIN_DISTANCE_PX" : null;
             default -> null;
         };
     }
 
     public static class Config {
-        // Physics (combat use only)
-        // OpenStory Player::damage sets hspeed = +/-1.5 and vforce -= 3.5 on mob knockback.
-        public float KNOCKBACK_HSPEED = config.AgentTuning.floatValue("server.agents.capabilities.combat.AgentCombatConfig.KNOCKBACK_HSPEED");
-        public float KNOCKBACK_VFORCE = config.AgentTuning.floatValue("server.agents.capabilities.combat.AgentCombatConfig.KNOCKBACK_VFORCE");
-        public AgentMobReactionMode AGENT_MOB_REACTION_MODE = AgentMobReactionMode.parse(
-                config.AgentYamlConfig.config.agent.AGENT_MOB_REACTION_MODE);
-        public int SYNTHETIC_MOB_KNOCKBACK_DISTANCE_X =
-                config.AgentYamlConfig.config.agent.AGENT_SYNTHETIC_MOB_KNOCKBACK_DISTANCE_X;
-        public int SYNTHETIC_MOB_KNOCKBACK_DURATION_MS =
-                config.AgentYamlConfig.config.agent.AGENT_SYNTHETIC_MOB_KNOCKBACK_DURATION_MS;
-        public int SYNTHETIC_MOB_CONTROL_HOLD_MS =
-                config.AgentYamlConfig.config.agent.AGENT_SYNTHETIC_MOB_CONTROL_HOLD_MS;
-        public int MOB_PHYSICS_PUBLICATION_INTERVAL_MS =
-                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_PUBLICATION_INTERVAL_MS;
-        public int MOB_PHYSICS_MAX_CATCH_UP_STEPS =
-                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_MAX_CATCH_UP_STEPS;
-        public int MOB_PHYSICS_STOP_DISTANCE_X =
-                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_STOP_DISTANCE_X;
-        public int MOB_PHYSICS_RESUME_DISTANCE_X =
-                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_RESUME_DISTANCE_X;
-        public int MOB_PHYSICS_FLY_DEAD_ZONE_X =
-                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_FLY_DEAD_ZONE_X;
-        public int MOB_PHYSICS_FLY_DEAD_ZONE_Y =
-                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_FLY_DEAD_ZONE_Y;
-        public int MOB_PHYSICS_JUMP_COOLDOWN_MS =
-                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_JUMP_COOLDOWN_MS;
-        public int MOB_PHYSICS_JUMP_COOLDOWN_JITTER_MS =
-                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_JUMP_COOLDOWN_JITTER_MS;
-        public int MOB_PHYSICS_JUMP_TARGET_HEIGHT =
-                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_JUMP_TARGET_HEIGHT;
-        public int MOB_PHYSICS_MAX_SAFE_EDGE_PX =
-                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_MAX_SAFE_EDGE_PX;
-        public int MOB_PHYSICS_LEFT_EDGE_INSET_PX =
-                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_LEFT_EDGE_INSET_PX;
-        public int MOB_PHYSICS_RIGHT_EDGE_INSET_PX =
-                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_RIGHT_EDGE_INSET_PX;
-        public int MOB_PHYSICS_SPEED_PERCENT =
-                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_SPEED_PERCENT;
-        public int MOB_PHYSICS_BEHAVIOR_JITTER_MS =
-                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_BEHAVIOR_JITTER_MS;
-        public int MOB_PHYSICS_DIRECTION_REACTION_MAX_MS =
-                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_DIRECTION_REACTION_MAX_MS;
-        public int MOB_PHYSICS_EDGE_RETREAT_CHANCE_PERCENT =
-                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_EDGE_RETREAT_CHANCE_PERCENT;
-        public int MOB_PHYSICS_EDGE_IDLE_MIN_MS =
-                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_EDGE_IDLE_MIN_MS;
-        public int MOB_PHYSICS_EDGE_IDLE_MAX_MS =
-                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_EDGE_IDLE_MAX_MS;
-        public int MOB_PHYSICS_EDGE_RETREAT_MIN_MS =
-                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_EDGE_RETREAT_MIN_MS;
-        public int MOB_PHYSICS_EDGE_RETREAT_MAX_MS =
-                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_EDGE_RETREAT_MAX_MS;
-        public int MOB_PHYSICS_RETREAT_MIN_DISTANCE_PX =
-                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_RETREAT_MIN_DISTANCE_PX;
-        public int MOB_PHYSICS_RETREAT_MAX_DISTANCE_PX =
-                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_RETREAT_MAX_DISTANCE_PX;
-        public int MOB_PHYSICS_STUCK_DETECT_MS =
-                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_STUCK_DETECT_MS;
-        public int MOB_PHYSICS_STUCK_RETREAT_CHANCE_PERCENT =
-                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_STUCK_RETREAT_CHANCE_PERCENT;
-        public int MOB_PHYSICS_KNOCKBACK_PERCENT =
-                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_KNOCKBACK_PERCENT;
-        public int MOB_PHYSICS_FLINCH_RECOVERY_MS =
-                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_FLINCH_RECOVERY_MS;
-        public int MOB_PHYSICS_POST_FLINCH_CHASE_RAMP_MS =
-                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_POST_FLINCH_CHASE_RAMP_MS;
-        public int MOB_PHYSICS_IMPACT_DELAY_PERCENT =
-                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_IMPACT_DELAY_PERCENT;
-        public int MOB_PHYSICS_IMPACT_DELAY_OFFSET_MS =
-                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_IMPACT_DELAY_OFFSET_MS;
-        public boolean MOB_PHYSICS_DIAGNOSTIC_LOGGING =
-                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_DIAGNOSTIC_LOGGING;
-        public boolean MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS =
-                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_VIRTUAL_OBSERVER_STRESS;
-        public int MOB_PHYSICS_OBSERVER_WARMUP_MS =
-                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_OBSERVER_WARMUP_MS;
-        public int MOB_PHYSICS_AGGRO_TIMEOUT_MS =
-                config.AgentYamlConfig.config.agent.AGENT_MOB_PHYSICS_AGGRO_TIMEOUT_MS;
 
         // Basic attack fallback when weapon data cannot produce a real normal-attack hit box.
         public int ATTACK_RANGE_X = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentCombatConfig.ATTACK_RANGE_X");
@@ -270,13 +204,9 @@ public final class AgentCombatConfig {
         public int RANGED_RETREAT_DISTANCE_X = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentCombatConfig.RANGED_RETREAT_DISTANCE_X");
         public int BREAKOUT_MAX_MS = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentCombatConfig.BREAKOUT_MAX_MS");
 
-        // Ammo
-        public int AMMO_LOW_WARN = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentCombatConfig.AMMO_LOW_WARN");
-
         // Grind / AoE
         public int GRIND_SEEK_RANGE = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentCombatConfig.GRIND_SEEK_RANGE");
         public int GRIND_RETARGET_INTERVAL_MS = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentCombatConfig.GRIND_RETARGET_INTERVAL_MS");
-        public int AOE_MOB_THRESHOLD = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentCombatConfig.AOE_MOB_THRESHOLD");
         // AoE repositioning: when the best fire-now plan is single-target but stepping into the
         // cluster centroid would let the AoE skill beat it by this DPS factor, defer the shot and
         // walk in. Bounded by distance/time so the bot never chases scattering mobs.
@@ -296,9 +226,6 @@ public final class AgentCombatConfig {
         // Mob damage
         public int MOB_TOUCH_SWEEP_HEIGHT = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentCombatConfig.MOB_TOUCH_SWEEP_HEIGHT");
         public int MOB_HIT_COOLDOWN_MS = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentCombatConfig.MOB_HIT_COOLDOWN_MS");
-        public long BOT_DEAD_MS = config.AgentYamlConfig.config.agent.AGENT_DEATH_RESPAWN_DELAY_MS;
-        public int RESPAWN_HP_PERCENT = config.AgentYamlConfig.config.agent.AGENT_DEATH_RESPAWN_HP_PERCENT;
-
         // Support
         public int SUPPORT_RANGE = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentCombatConfig.SUPPORT_RANGE");
         public int SUPPORT_VERTICAL_RANGE = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentCombatConfig.SUPPORT_VERTICAL_RANGE");

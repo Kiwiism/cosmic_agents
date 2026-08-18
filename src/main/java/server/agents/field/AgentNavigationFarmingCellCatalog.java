@@ -56,6 +56,7 @@ public final class AgentNavigationFarmingCellCatalog implements AgentFarmingCell
             return List.of();
         }
         Map<Integer, Map<Integer, Integer>> mobsByRegion = new LinkedHashMap<>();
+        Map<Integer, List<Point>> livePositionsByRegion = new LinkedHashMap<>();
         for (AgentMobPerception mob : mobs) {
             if (!mob.alive() || mob.position() == null) {
                 continue;
@@ -69,8 +70,11 @@ public final class AgentNavigationFarmingCellCatalog implements AgentFarmingCell
             }
             mobsByRegion.computeIfAbsent(regionId, ignored -> new HashMap<>())
                     .merge(mob.mobId(), 1, Integer::sum);
+            livePositionsByRegion.computeIfAbsent(regionId, ignored -> new ArrayList<>())
+                    .add(new Point(position.x(), position.y()));
         }
         Map<Integer, Map<Integer, Integer>> spawnsByRegion = new LinkedHashMap<>();
+        Map<Integer, List<Point>> spawnPositionsByRegion = new LinkedHashMap<>();
         for (SpawnPoint spawn : spawnPoints) {
             if (spawn == null || spawn.getPosition() == null) {
                 continue;
@@ -83,6 +87,8 @@ public final class AgentNavigationFarmingCellCatalog implements AgentFarmingCell
             }
             spawnsByRegion.computeIfAbsent(regionId, ignored -> new HashMap<>())
                     .merge(spawn.getMonsterId(), 1, Integer::sum);
+            spawnPositionsByRegion.computeIfAbsent(regionId, ignored -> new ArrayList<>())
+                    .add(new Point(spawn.getPosition()));
         }
         Set<Integer> farmingRegionIds = new LinkedHashSet<>(spawnsByRegion.keySet());
         farmingRegionIds.addAll(mobsByRegion.keySet());
@@ -103,16 +109,16 @@ public final class AgentNavigationFarmingCellCatalog implements AgentFarmingCell
             Map<Integer, Integer> expectedCounts = spawnsByRegion.getOrDefault(regionId, Map.of());
             int population = (expectedCounts.isEmpty() ? liveCounts : expectedCounts)
                     .values().stream().mapToInt(Integer::intValue).sum();
-            int widthCapacity = Math.max(1, (region.width() + 599) / 600);
-            int spawnCapacity = Math.max(1, (population + 7) / 8);
-            int capacity = Math.min(3, Math.min(widthCapacity, spawnCapacity));
+            int capacity = AgentFieldCapacityEstimator.platformCapacity(region.width(), population);
+            List<Point> populationPositions = spawnPositionsByRegion.getOrDefault(
+                    regionId, livePositionsByRegion.getOrDefault(regionId, List.of()));
             result.add(new AgentFarmingCell(
                     cellIdByRegion.get(regionId),
                     agent.getMapId(),
                     Set.of(regionId),
                     liveCounts,
                     expectedCounts,
-                    anchors(region),
+                    stations(region, populationPositions, capacity),
                     adjacentCells,
                     capacity,
                     adjacentCells.size() <= 1,
@@ -151,25 +157,43 @@ public final class AgentNavigationFarmingCellCatalog implements AgentFarmingCell
         return Set.of();
     }
 
-    private static List<AgentFarmingAnchor> anchors(AgentNavigationGraph.Region region) {
-        int inset = Math.min(48, Math.max(0, region.width() / 4));
-        int leftX = region.minX + inset;
-        int rightX = region.maxX - inset;
-        int centerX = region.minX + region.width() / 2;
-        LinkedHashMap<String, Point> candidates = new LinkedHashMap<>();
-        candidates.put("center", region.pointAt(centerX));
-        candidates.put("left", region.pointAt(leftX));
-        candidates.put("right", region.pointAt(rightX));
-        int score = 100;
-        List<AgentFarmingAnchor> anchors = new ArrayList<>();
-        for (Map.Entry<String, Point> candidate : candidates.entrySet()) {
-            if (anchors.stream().anyMatch(anchor -> anchor.position().equals(candidate.getValue()))) {
-                continue;
+    /** Spawn-weighted station slots with midpoint (one-dimensional Voronoi) territories. */
+    private static List<AgentFarmingAnchor> stations(
+            AgentNavigationGraph.Region region, List<Point> populationPositions, int capacity) {
+        List<Integer> populationXs = populationPositions.stream()
+                .map(point -> Math.max(region.minX, Math.min(region.maxX, point.x)))
+                .sorted().toList();
+        int stationCount = Math.max(1, capacity);
+        ArrayList<Integer> stationXs = new ArrayList<>(stationCount);
+        for (int index = 0; index < stationCount; index++) {
+            int x;
+            if (populationXs.isEmpty()) {
+                x = region.minX + (int) Math.round(
+                        (index + 0.5d) * Math.max(1, region.width()) / stationCount);
+            } else {
+                int quantileIndex = Math.min(populationXs.size() - 1,
+                        (int) Math.floor((index + 0.5d) * populationXs.size() / stationCount));
+                x = populationXs.get(quantileIndex);
             }
-            anchors.add(new AgentFarmingAnchor(
-                    "region-" + region.id + '-' + candidate.getKey(), candidate.getValue(), score));
-            score = Math.max(0, score - 10);
+            int minimumX = index == 0 ? region.minX : stationXs.get(index - 1) + 1;
+            int maximumX = region.maxX - Math.max(0, stationCount - index - 1);
+            stationXs.add(Math.max(minimumX, Math.min(maximumX, x)));
         }
-        return List.copyOf(anchors);
+        ArrayList<AgentFarmingAnchor> stations = new ArrayList<>(stationCount);
+        for (int index = 0; index < stationCount; index++) {
+            int x = stationXs.get(index);
+            int territoryMinX = index == 0
+                    ? region.minX : midpoint(stationXs.get(index - 1), x) + 1;
+            int territoryMaxX = index == stationCount - 1
+                    ? region.maxX : midpoint(x, stationXs.get(index + 1));
+            stations.add(new AgentFarmingAnchor(
+                    "region-" + region.id + "-station-" + index,
+                    region.pointAt(x), 100, territoryMinX, territoryMaxX));
+        }
+        return List.copyOf(stations);
+    }
+
+    private static int midpoint(int left, int right) {
+        return left + (right - left) / 2;
     }
 }

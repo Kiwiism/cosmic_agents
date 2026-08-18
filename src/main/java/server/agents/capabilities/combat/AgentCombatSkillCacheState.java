@@ -1,5 +1,7 @@
 package server.agents.capabilities.combat;
 
+import server.agents.runtime.state.AgentCapabilityStateKey;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -7,6 +9,10 @@ import java.util.List;
  * Cached attack/support skill choices for the current job, level, and skill signature.
  */
 public final class AgentCombatSkillCacheState {
+    public static final AgentCapabilityStateKey<AgentCombatSkillCacheState> STATE_KEY =
+            new AgentCapabilityStateKey<>("combat.skill-cache",
+                    AgentCombatSkillCacheState.class, AgentCombatSkillCacheState::new);
+
     private int jobId = -1;
     private int level = -1;
     private int signature;

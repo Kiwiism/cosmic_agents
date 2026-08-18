@@ -7,7 +7,7 @@ CHROME = Path(r"C:\Program Files\Google\Chrome\Application\chrome.exe")
 CHECKPOINTS = {
     1: {"size": (460, 615), "centers": [(45,150),(45,207),(45,286),(45,365),(45,444),(45,561)], "names": ["advance-to-warrior","first-training-session","second-training-session","third-training-session","last-training-session","buy-potions-and-supplies"]},
     2: {"size": (460, 430), "centers": [(45,150),(45,252),(45,331)], "names": ["sweep-the-snails","the-stump-horror-story","preparations-for-the-traditional-ceremony"]},
-    3: {"size": (460, 615), "centers": [(45,150),(45,229),(45,354),(45,508)], "names": ["eww-its-slimy","i-need-help-on-my-homework","why-are-dark-stumps-so-dark","reach-level-15"]},
+    3: {"size": (460, 540), "centers": [(45,150),(45,229),(45,354),(45,477)], "names": ["eww-its-slimy","i-need-help-on-my-homework","why-are-dark-stumps-so-dark","reach-level-15"]},
 }
 
 def checked(x, y):

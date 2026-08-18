@@ -85,69 +85,71 @@ public final class RangedAttackHandler extends AbstractDealDamageHandler {
         applyRangedAttackEffects(attack, chr, c);
     }
 
-    public static void applyRangedAttackEffects(AttackInfo attack, Character chr, Client c) {
-        applyRangedAttackEffects(attack, chr, c, true);
+    public static boolean applyRangedAttackEffects(AttackInfo attack, Character chr, Client c) {
+        return applyRangedAttackEffects(attack, chr, c, true);
     }
 
-    public static void applyAgentRangedAttackEffects(AttackInfo attack, Character chr, Client c) {
-        applyRangedAttackEffects(attack, chr, c, false);
+    public static boolean applyAgentRangedAttackEffects(AttackInfo attack, Character chr, Client c) {
+        return applyRangedAttackEffects(attack, chr, c, false);
     }
 
-    private static void applyRangedAttackEffects(
+    private static boolean applyRangedAttackEffects(
             AttackInfo attack, Character chr, Client c, boolean rangeLimitedBroadcast) {
         if (attack.skill == Buccaneer.ENERGY_ORB || attack.skill == ThunderBreaker.SPARK || attack.skill == Shadower.TAUNT || attack.skill == NightLord.TAUNT) {
             chr.getMap().broadcastMessage(chr, PacketCreator.rangedAttack(chr, attack.skill, attack.skilllevel,
                     attack.stance, attack.numAttackedAndDamage, 0, attack.targets, attack.speed,
                     attack.direction, attack.display), false);
-            applyAttack(attack, chr, 1);
-            return;
+            return applyAttack(attack, chr, 1);
         }
 
         if (attack.skill == ThunderBreaker.SHARK_WAVE && chr.getSkillLevel(ThunderBreaker.SHARK_WAVE) > 0) {
             chr.getMap().broadcastMessage(chr, PacketCreator.rangedAttack(chr, attack.skill, attack.skilllevel,
                     attack.stance, attack.numAttackedAndDamage, 0, attack.targets, attack.speed,
                     attack.direction, attack.display), false);
-            applyAttack(attack, chr, 1);
+            boolean applied = applyAttack(attack, chr, 1);
 
-            for (int i = 0; i < attack.numAttacked; i++) {
-                chr.handleEnergyChargeGain();
+            if (applied) {
+                for (int i = 0; i < attack.numAttacked; i++) {
+                    chr.handleEnergyChargeGain();
+                }
             }
-            return;
+            return applied;
         }
 
         if (attack.skill == Aran.COMBO_SMASH || attack.skill == Aran.COMBO_FENRIR || attack.skill == Aran.COMBO_TEMPEST) {
             chr.getMap().broadcastMessage(chr, PacketCreator.rangedAttack(chr, attack.skill, attack.skilllevel,
                     attack.stance, attack.numAttackedAndDamage, 0, attack.targets, attack.speed,
                     attack.direction, attack.display), false);
+            boolean applied = false;
             if (attack.skill == Aran.COMBO_SMASH && chr.getCombo() >= 30) {
                 chr.setCombo((short) 0);
-                applyAttack(attack, chr, 1);
+                applied = applyAttack(attack, chr, 1);
             } else if (attack.skill == Aran.COMBO_FENRIR && chr.getCombo() >= 100) {
                 chr.setCombo((short) 0);
-                applyAttack(attack, chr, 2);
+                applied = applyAttack(attack, chr, 2);
             } else if (attack.skill == Aran.COMBO_TEMPEST && chr.getCombo() >= 200) {
                 chr.setCombo((short) 0);
-                applyAttack(attack, chr, 4);
+                applied = applyAttack(attack, chr, 4);
             }
-            return;
+            return applied;
         }
 
         Item weapon = chr.getInventory(InventoryType.EQUIPPED).getItem((short) -11);
         if (weapon == null) {
-            return;
+            return false;
         }
 
         WeaponType type = ItemInformationProvider.getInstance().getWeaponType(weapon.getItemId());
         if (type == WeaponType.NOT_A_WEAPON) {
-            return;
+            return false;
         }
 
         ProjectileContext projectileContext = resolveProjectileContext(attack, chr, c, weapon, type);
         if (!projectileContext.canAttack()) {
-            return;
+            return false;
         }
 
-        applyRangedWithProjectile(attack, chr, c, projectileContext.visibleProjectile,
+        return applyRangedWithProjectile(attack, chr, c, projectileContext.visibleProjectile,
                 projectileContext.bulletCount, rangeLimitedBroadcast);
     }
 
@@ -309,14 +311,14 @@ public final class RangedAttackHandler extends AbstractDealDamageHandler {
         };
     }
 
-    private static void applyRangedWithProjectile(AttackInfo attack, Character chr, Client c,
-                                                   int projectile, int bulletCount,
-                                                   boolean rangeLimitedBroadcast) {
+    private static boolean applyRangedWithProjectile(AttackInfo attack, Character chr, Client c,
+                                                      int projectile, int bulletCount,
+                                                      boolean rangeLimitedBroadcast) {
         Packet packet = createAttackPacket(attack, chr, projectile);
         chr.getMap().broadcastMessage(chr, packet, false, rangeLimitedBroadcast);
         applyCooldownIfNeeded(attack, chr, c);
         cancelStealthBuffsIfNeeded(attack, chr);
-        applyAttack(attack, chr, bulletCount);
+        return applyAttack(attack, chr, bulletCount);
     }
 
     static void applyCooldownIfNeeded(AttackInfo attack, Character chr, Client c) {

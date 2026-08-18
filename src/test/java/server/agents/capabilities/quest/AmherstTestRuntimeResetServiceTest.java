@@ -2,6 +2,7 @@ package server.agents.capabilities.quest;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
+import server.agents.capabilities.combat.AgentCombatCooldownState;
 import server.agents.capabilities.combat.AgentCombatObjectiveTargetStateRuntime;
 import server.agents.capabilities.dialogue.AgentPendingActionStateRuntime;
 import server.agents.capabilities.looting.AgentGrindLootStateRuntime;
@@ -52,9 +53,9 @@ class AmherstTestRuntimeResetServiceTest {
         AgentGrindLootStateRuntime.setGrindLootTarget(entry, mock(MapItem.class));
         AgentPendingActionStateRuntime.setPendingAction(entry, "trade");
         AgentPendingActionStateRuntime.setPendingDropCategory(entry, "etc");
-        entry.combatCooldownState().setAttackCooldownMs(100);
-        entry.combatCooldownState().setMoveWindowMs(100);
-        entry.combatCooldownState().setMobHitCooldownMs(100);
+        entry.capabilityStates().require(AgentCombatCooldownState.STATE_KEY).setAttackCooldownMs(100);
+        entry.capabilityStates().require(AgentCombatCooldownState.STATE_KEY).setMoveWindowMs(100);
+        entry.capabilityStates().require(AgentCombatCooldownState.STATE_KEY).setMobHitCooldownMs(100);
         entry.inventoryCooldownState().setLootInhibitMs(100);
         entry.portalCooldownState().setUseCooldownUntilMs(1000L);
         entry.pendingLootOfferState().set(mock(client.inventory.Item.class), 1, 1000L, true);
@@ -66,9 +67,9 @@ class AmherstTestRuntimeResetServiceTest {
         assertNull(AgentGrindLootStateRuntime.grindLootTarget(entry));
         assertFalse(AgentPendingActionStateRuntime.hasPendingAction(entry));
         assertNull(AgentPendingActionStateRuntime.pendingDropCategory(entry));
-        assertFalse(entry.combatCooldownState().hasAttackCooldown());
-        assertFalse(entry.combatCooldownState().hasMoveWindow());
-        assertFalse(entry.combatCooldownState().hasMobHitCooldown());
+        assertFalse(entry.capabilityStates().require(AgentCombatCooldownState.STATE_KEY).hasAttackCooldown());
+        assertFalse(entry.capabilityStates().require(AgentCombatCooldownState.STATE_KEY).hasMoveWindow());
+        assertFalse(entry.capabilityStates().require(AgentCombatCooldownState.STATE_KEY).hasMobHitCooldown());
         assertTrue(entry.inventoryCooldownState().lootInhibitMs() == 0);
         assertFalse(entry.portalCooldownState().onCooldown(0L));
         assertNull(entry.pendingLootOfferState().item());

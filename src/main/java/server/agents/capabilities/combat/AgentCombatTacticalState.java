@@ -8,7 +8,7 @@ public final class AgentCombatTacticalState {
     private int incidentalKillStreak;
     private int incidentalKillsOnLease;
     private AgentCombatCandidateClass selectedClass = AgentCombatCandidateClass.UNRELATED;
-    private AgentCombatDecisionReason lastDecision = AgentCombatDecisionReason.LEGACY_CLOSEST;
+    private AgentCombatDecisionReason lastDecision = AgentCombatDecisionReason.CLOSEST_ELIGIBLE;
     private int lastSelectedMobId;
     private long lastDecisionAtMs;
     private AgentCombatDecisionReason lastShadowDecision;
@@ -66,7 +66,7 @@ public final class AgentCombatTacticalState {
     public synchronized void clear() {
         clearLease();
         selectedClass = AgentCombatCandidateClass.UNRELATED;
-        lastDecision = AgentCombatDecisionReason.LEGACY_CLOSEST;
+        lastDecision = AgentCombatDecisionReason.CLOSEST_ELIGIBLE;
         lastSelectedMobId = 0;
         lastDecisionAtMs = 0L;
         lastShadowDecision = null;

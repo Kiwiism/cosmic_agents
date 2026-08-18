@@ -20,11 +20,11 @@ public final class AgentHuntRecoveryEventListener implements AgentEventListener<
         if (event instanceof AgentMobDamagedEvent damaged
                 && AgentCombatObjectiveTargetStateRuntime.prefers(entry, damaged.mobId())) {
             AgentHuntRecoveryRuntime.recordRelevantDamage(
-                    entry, damaged.mapId(), damaged.occurredAtMs());
+                    entry, damaged.objectiveId(), damaged.mapId(), damaged.occurredAtMs());
         } else if (event instanceof AgentMobKilledEvent killed
                 && AgentCombatObjectiveTargetStateRuntime.prefers(entry, killed.mobId())) {
             AgentHuntRecoveryRuntime.recordRelevantKill(
-                    entry, killed.mapId(), killed.occurredAtMs());
+                    entry, killed.objectiveId(), killed.mapId(), killed.occurredAtMs());
         }
     }
 }

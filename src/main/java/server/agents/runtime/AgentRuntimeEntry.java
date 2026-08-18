@@ -15,15 +15,6 @@ import server.agents.capabilities.objective.AgentObjectiveVariationState;
 import server.agents.capabilities.build.AgentBuildState;
 import server.agents.capabilities.build.profiles.AgentApBuildProfileState;
 import server.agents.capabilities.build.profiles.AgentSpBuildProfileState;
-import server.agents.capabilities.combat.AgentCombatBuffState;
-import server.agents.capabilities.combat.AgentGrindWanderState;
-import server.agents.capabilities.combat.AgentGrindTargetState;
-import server.agents.capabilities.combat.AgentBuffState;
-import server.agents.capabilities.combat.AgentCombatCooldownState;
-import server.agents.capabilities.combat.AgentCombatSkillCacheState;
-import server.agents.capabilities.combat.AgentCombatObjectiveTargetState;
-import server.agents.capabilities.combat.AgentMobTouchState;
-import server.agents.capabilities.combat.AgentDeathState;
 import server.agents.capabilities.follow.AgentFollowTargetMotionState;
 import server.agents.capabilities.follow.AgentLeaderActivityState;
 
@@ -211,32 +202,7 @@ public class AgentRuntimeEntry implements AgentRuntimeHandle {
     }
 
     // Grind mode
-    private final AgentCombatCooldownState combatCooldownState = new AgentCombatCooldownState();
-    private final AgentGrindTargetState grindTargetState = new AgentGrindTargetState();
-    private final AgentCombatObjectiveTargetState combatObjectiveTargetState = new AgentCombatObjectiveTargetState();
-
-    public AgentCombatObjectiveTargetState combatObjectiveTargetState() {
-        return combatObjectiveTargetState;
-    }
-
-    public AgentGrindTargetState grindTargetState() {
-        return grindTargetState;
-    }
-
-    private final AgentCombatSkillCacheState combatSkillCacheState = new AgentCombatSkillCacheState();
-    private final AgentCombatBuffState combatBuffState = new AgentCombatBuffState();
-
-    public AgentCombatBuffState combatBuffState() {
-        return combatBuffState;
-    }
-
-    public AgentCombatSkillCacheState combatSkillCacheState() {
-        return combatSkillCacheState;
-    }
-
     private final AgentAmmoSupplyState ammoSupplyState = new AgentAmmoSupplyState();
-
-    private final AgentGrindWanderState grindWanderState = new AgentGrindWanderState();
 
     private final AgentShopState shopState = new AgentShopState();
 
@@ -247,20 +213,10 @@ public class AgentRuntimeEntry implements AgentRuntimeHandle {
     // bumped whenever a new player directive resets scripted state (follow/stop/move/farm/patrol/grind);
     // background batches (Maker crafting / disassembly) capture it and self-interrupt when it changes
     private final AgentScriptTaskQueueState scriptTaskQueueState = new AgentScriptTaskQueueState();
-    private final AgentDeathState deathState = new AgentDeathState();
-
-    public AgentDeathState deathState() {
-        return deathState;
-    }
-
     private final AgentPortalCooldownState portalCooldownState = new AgentPortalCooldownState();
 
     public AgentPortalCooldownState portalCooldownState() {
         return portalCooldownState;
-    }
-
-    public AgentCombatCooldownState combatCooldownState() {
-        return combatCooldownState;
     }
 
     private final AgentLeaderActivityState leaderActivityState = new AgentLeaderActivityState();
@@ -301,16 +257,9 @@ public class AgentRuntimeEntry implements AgentRuntimeHandle {
     private final AgentMoveTargetState moveTargetState = new AgentMoveTargetState();
 
     public AgentMoveTargetState moveTargetState() { return moveTargetState; }
-    public AgentGrindWanderState grindWanderState() { return grindWanderState; }
     private final AgentGrindLootState grindLootState = new AgentGrindLootState();
 
     public AgentGrindLootState grindLootState() { return grindLootState; }
-    private final AgentMobTouchState mobTouchState = new AgentMobTouchState();
-
-    public AgentMobTouchState mobTouchState() {
-        return mobTouchState;
-    }
-
     // Loot and potions
     private final AgentPotionSupplyState potionSupplyState = new AgentPotionSupplyState();
     private final AgentInventoryCooldownState inventoryCooldownState = new AgentInventoryCooldownState();
@@ -391,12 +340,7 @@ public class AgentRuntimeEntry implements AgentRuntimeHandle {
     // "Farm here" anchor — bot returns to this fixed point and only takes local attacks.
     // "Patrol" region — bot wanders within this nav region and attacks opportunistically.
 
-    private final AgentBuffState buffState = new AgentBuffState();
     private final AgentUpgradeOfferState upgradeOfferState = new AgentUpgradeOfferState();
-
-    public AgentBuffState buffState() {
-        return buffState;
-    }
 
     public AgentUpgradeOfferState upgradeOfferState() {
         return upgradeOfferState;

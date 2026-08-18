@@ -1,7 +1,6 @@
 package server.agents.capabilities.combat;
 
 import client.Character;
-import constants.id.MapId;
 import server.agents.capabilities.movement.AgentPatrolStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
@@ -68,7 +67,6 @@ public final class AgentCombatVariationRuntime {
                                            int targetRegionId) {
         if (entry == null || agent == null || agent.getMap() == null || target == null
                 || targetRegionId < 0 || AgentPatrolStateRuntime.hasPatrolRegion(entry)
-                || !MapId.isMapleIsland(agent.getMapId())
                 || !isPlatformAnchorRole(entry, agent)) {
             return;
         }

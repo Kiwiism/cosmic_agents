@@ -26,6 +26,14 @@ public final class AgentLootCollectionPolicyConfig {
         return tuningLong("RANGED_BATCH_MAX_WAIT_MS");
     }
 
+    public static int fieldBatchMinKills() {
+        return tuningInt("FIELD_BATCH_MIN_KILLS");
+    }
+
+    public static int fieldBatchMaxKills() {
+        return tuningInt("FIELD_BATCH_MAX_KILLS");
+    }
+
     public static int maxTrackedKills() {
         return tuningInt("MAX_TRACKED_KILLS");
     }

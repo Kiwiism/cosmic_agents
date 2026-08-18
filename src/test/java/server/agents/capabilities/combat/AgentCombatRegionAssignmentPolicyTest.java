@@ -44,4 +44,32 @@ class AgentCombatRegionAssignmentPolicyTest {
         assertFalse(state.observe("b", true, 1, 1_001L, 5_000L));
         assertEquals("b", state.snapshot(1_001L).assignmentId());
     }
+
+    @Test
+    void territorialBoundsAreOptInSoQuestAssignmentsRemainUnrestrictedByX() {
+        AgentMapRegionAssignment quest = new AgentMapRegionAssignment(
+                "quest", 100, List.of("4"), 0, 1, 2_000L);
+        AgentMapRegionAssignment field = new AgentMapRegionAssignment(
+                "field", 100, List.of("4"), 0, 1, 2_000L,
+                7_000L, 200, 400, true);
+
+        assertTrue(AgentCombatRegionAssignmentPolicy.withinTerritory(quest, 50));
+        assertFalse(AgentCombatRegionAssignmentPolicy.withinTerritory(field, 199));
+        assertTrue(AgentCombatRegionAssignmentPolicy.withinTerritory(field, 200));
+        assertTrue(AgentCombatRegionAssignmentPolicy.withinTerritory(field, 400));
+        assertFalse(AgentCombatRegionAssignmentPolicy.withinTerritory(field, 401));
+    }
+
+    @Test
+    void fieldLeaseRequiresContinuousEmptyDelayBeforeBorrowing() {
+        AgentCombatRegionAssignmentState state = new AgentCombatRegionAssignmentState();
+
+        assertFalse(state.observe("field-a", false, 1, 1_000L, 5_000L, 7_000L));
+        assertFalse(state.observe("field-a", false, 1, 7_999L, 5_000L, 7_000L));
+        assertTrue(state.observe("field-a", false, 1, 8_000L, 5_000L, 7_000L));
+        assertEquals(7_000L, state.snapshot(8_000L).emptyForMs());
+
+        assertFalse(state.observe("field-a", true, 1, 8_001L, 5_000L, 7_000L));
+        assertEquals(0L, state.snapshot(8_001L).emptyForMs());
+    }
 }

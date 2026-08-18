@@ -3,6 +3,7 @@ package server.agents.field;
 import client.Character;
 import server.agents.capabilities.combat.AgentCombatDirective;
 import server.agents.capabilities.combat.AgentCombatDirectiveRuntime;
+import server.agents.capabilities.looting.AgentLootCollectionContextRuntime;
 import server.agents.catalog.AgentMapRegionAssignment;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentClientGatewayRuntime;
@@ -135,7 +136,7 @@ public final class AgentFieldRuntime {
             Set<Integer> allowedMobIds,
             long nowMs) {
         return start(operator, requestedEntries, AgentFieldMode.PARTY, allowedMobIds, Integer.MAX_VALUE,
-                false, 12, nowMs);
+                false, AgentFieldPolicyConfig.maximumObservationParticipants(), nowMs);
     }
 
     private static StartResult start(
@@ -222,7 +223,8 @@ public final class AgentFieldRuntime {
 
     static boolean addObservation(
             Character operator, AgentRuntimeEntry entry, AgentFieldIntent intent, long nowMs) {
-        return add(operator, entry, intent, 12, nowMs);
+        return add(operator, entry, intent,
+                AgentFieldPolicyConfig.maximumObservationParticipants(), nowMs);
     }
 
     private static boolean add(
@@ -375,11 +377,15 @@ public final class AgentFieldRuntime {
             if (session.cells.isEmpty() || session.participants.isEmpty()) {
                 return;
             }
+            Set<Integer> releasable = releasableParticipants(session, nowMs);
+            boolean vacancyRebalance = !releasable.isEmpty()
+                    && nowMs - session.lastRebalanceAtMs >= AgentFieldPolicyConfig.rebalanceIntervalMs();
             long fingerprint = structureFingerprint(session, perception);
-            if (fingerprint == session.structureFingerprint && !leaseExpired) {
+            if (fingerprint == session.structureFingerprint && !leaseExpired && !vacancyRebalance) {
                 return;
             }
-            List<AgentFieldParticipant> participants = plannerParticipants(session);
+            List<AgentFieldParticipant> participants = plannerParticipants(
+                    session, vacancyRebalance ? releasable : Set.of(), nowMs);
             List<AgentPosition> realPlayerPositions = perception.characters().stream()
                     .filter(character -> !character.agent())
                     .map(character -> character.position())
@@ -389,13 +395,21 @@ public final class AgentFieldRuntime {
                     session.sessionId, session.mode, List.copyOf(session.cells.values()),
                     participants, realPlayerPositions, nowMs,
                     AgentFieldPolicyConfig.assignmentLeaseMs(), nextRevision);
+            Map<Integer, AgentFieldAssignment> previous = Map.copyOf(session.assignments);
             session.assignments.clear();
             session.assignments.putAll(planned);
             session.revision = nextRevision;
             session.structureFingerprint = fingerprint;
+            if (vacancyRebalance) {
+                session.lastRebalanceAtMs = nowMs;
+            }
             for (Map.Entry<Integer, AgentFieldAssignment> assignment : planned.entrySet()) {
                 ParticipantBinding binding = session.participants.get(assignment.getKey());
                 if (binding != null) {
+                    AgentFieldAssignment old = previous.get(assignment.getKey());
+                    if (old == null || !old.cellIds().equals(assignment.getValue().cellIds())) {
+                        binding.platformLease.reset();
+                    }
                     apply(session, binding, assignment.getValue(), nowMs);
                 }
             }
@@ -617,7 +631,8 @@ public final class AgentFieldRuntime {
         }
     }
 
-    private static List<AgentFieldParticipant> plannerParticipants(FieldSession session) {
+    private static List<AgentFieldParticipant> plannerParticipants(
+            FieldSession session, Set<Integer> releasable, long nowMs) {
         List<AgentFieldParticipant> participants = new ArrayList<>();
         for (ParticipantBinding binding : session.participants.values()) {
             AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(binding.agentId);
@@ -626,13 +641,37 @@ public final class AgentFieldRuntime {
                 continue;
             }
             AgentFieldAssignment previous = session.assignments.get(binding.agentId);
+            long previousLease = previous == null || releasable.contains(binding.agentId)
+                    ? 0L : Math.max(previous.expiresAtMs(), nowMs + 1L);
             participants.add(new AgentFieldParticipant(
                     binding.agentId, agent.getPartyId(), agent.getPosition(), binding.intent,
                     AgentFieldRolePolicy.resolve(agent),
                     previous == null ? Set.of() : previous.cellIds(),
-                    previous == null ? 0L : previous.expiresAtMs(), binding.joinedAtMs));
+                    previous == null ? "" : previous.stationId(),
+                    previousLease, binding.joinedAtMs));
         }
         return List.copyOf(participants);
+    }
+
+    private static Set<Integer> releasableParticipants(FieldSession session, long nowMs) {
+        java.util.LinkedHashSet<Integer> releasable = new java.util.LinkedHashSet<>();
+        for (ParticipantBinding binding : session.participants.values()) {
+            AgentFieldAssignment assignment = session.assignments.get(binding.agentId);
+            if (assignment == null) {
+                binding.platformLease.reset();
+                continue;
+            }
+            int livePopulation = assignment.cellIds().stream()
+                    .map(session.cells::get)
+                    .filter(java.util.Objects::nonNull)
+                    .mapToInt(cell -> cell.relevantPopulation(binding.intent.requiredMobIds()))
+                    .sum();
+            if (binding.platformLease.releasable(
+                    livePopulation, nowMs, AgentFieldPolicyConfig.emptyPlatformReleaseMs())) {
+                releasable.add(binding.agentId);
+            }
+        }
+        return Set.copyOf(releasable);
     }
 
     private static void apply(
@@ -648,9 +687,11 @@ public final class AgentFieldRuntime {
                 assignment.assignmentId(), assignment.mapId(),
                 assignment.regionIds().stream().sorted().map(String::valueOf).toList(),
                 assignment.partySlot(), Math.max(1, assignment.cellIds().size()),
-                assignment.expiresAtMs());
+                assignment.expiresAtMs(), AgentFieldPolicyConfig.emptyPlatformReleaseMs(),
+                assignment.territoryMinX(), assignment.territoryMaxX(), true);
         AgentMailboxRuntime.dispatch(entry, ignored -> {
             AgentCombatDirectiveRuntime.assignRegion(entry, region);
+            AgentLootCollectionContextRuntime.enterFieldGrind(entry, binding.agentId);
             boolean changed = entry.capabilityStates().require(AgentFieldAssignmentState.STATE_KEY)
                     .update(session.sessionId, binding.intent, assignment, nowMs);
             if (changed) {
@@ -673,6 +714,7 @@ public final class AgentFieldRuntime {
             return;
         }
         AgentMailboxRuntime.dispatch(entry, ignored -> {
+            AgentLootCollectionContextRuntime.leaveFieldGrind(entry);
             if (binding.explicit) {
                 AgentCombatDirectiveRuntime.assignExact(entry, binding.baselineDirective);
             } else {
@@ -826,6 +868,7 @@ public final class AgentFieldRuntime {
         private long revision;
         private long structureFingerprint;
         private long lastObservedAtMs;
+        private long lastRebalanceAtMs;
         private long lastActivityAtMs;
         private int realPlayers;
         private int liveMobs;
@@ -854,6 +897,7 @@ public final class AgentFieldRuntime {
         private final boolean explicit;
         private final boolean managed;
         private final long joinedAtMs;
+        private final AgentFieldPlatformLeaseState platformLease = new AgentFieldPlatformLeaseState();
 
         private ParticipantBinding(
                 int agentId,

@@ -45,7 +45,7 @@ public final class AgentCommonTickRuntime {
                         entry, agent, AgentCombatConfig.cfg, AgentMovementTimers::tickDown),
                 (entry, agent) -> AgentDeathStateRuntime.isDead(entry),
                 (entry, agent) -> AgentCombatDeathRuntime.enterDeadState(
-                        entry, agent, false, AgentCombatConfig.cfg),
+                        entry, agent, false),
                 AgentMonsterControlService::releaseControlledMonsters,
                 AgentInventorySystem::tickPassiveLoot,
                 AgentInventorySystem::tickPotionCheck,

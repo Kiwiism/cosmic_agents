@@ -22,7 +22,8 @@ public final class AgentLocalOpportunityAttackService {
     public record Hooks(GrindNavigationTargetSelector grindNavigationTargetSelector,
                         JumpHeightCalculator jumpHeightCalculator,
                         JumpInitiator jumpInitiator,
-                        LocalAttackMoveWindowSetter localAttackMoveWindowSetter) {
+                        LocalAttackMoveWindowSetter localAttackMoveWindowSetter,
+                        AttackExecutor attackExecutor) {
     }
 
     @FunctionalInterface
@@ -43,6 +44,14 @@ public final class AgentLocalOpportunityAttackService {
     @FunctionalInterface
     public interface LocalAttackMoveWindowSetter {
         void set(AgentRuntimeEntry entry, Point agentPos, Point referencePos);
+    }
+
+    @FunctionalInterface
+    public interface AttackExecutor {
+        AgentAttackTransactionResult attack(
+                AgentRuntimeEntry entry,
+                Character agent,
+                AgentAttackPlan attackPlan);
     }
 
     public static Result tryLocalOpportunityAttack(AgentRuntimeEntry entry,
@@ -102,8 +111,9 @@ public final class AgentLocalOpportunityAttackService {
             if (AgentCombatRangePolicy.canUseAttackPlanNow(
                     AgentMovementStateRuntime.grounded(entry), weaponType, attackPlan.route)
                     && AgentCombatRangePolicy.isTargetInAttackRange(attackPlan, agent, localTarget)) {
-                AgentCombatAttackRuntime.attackMonster(entry, agent, attackPlan);
-                if (allowCombatMovement && attackPlan.isCloseRangeRoute()
+                AgentAttackTransactionResult attackResult =
+                        hooks.attackExecutor().attack(entry, agent, attackPlan);
+                if (committed(attackResult) && allowCombatMovement && attackPlan.isCloseRangeRoute()
                         && AgentCombatAmmoCounter.isRangedAmmoWeapon(weaponType)) {
                     AgentDegenerateAttackStateRuntime.markDegenAttackDone(entry);
                 }
@@ -126,7 +136,11 @@ public final class AgentLocalOpportunityAttackService {
 
         if (!AgentCombatCooldownStateRuntime.hasMoveWindow(entry)
                 && AgentCombatRangePolicy.isTargetInAttackRange(attackPlan, agent, localTarget)) {
-            AgentCombatAttackRuntime.attackMonster(entry, agent, attackPlan);
+            AgentAttackTransactionResult attackResult =
+                    hooks.attackExecutor().attack(entry, agent, attackPlan);
+            if (!committed(attackResult)) {
+                return new Result(false, targetPos);
+            }
             hooks.localAttackMoveWindowSetter().set(entry, agentPos, moveWindowReferencePos);
             if (allowCombatMovement && attackPlan.isCloseRangeRoute()
                     && AgentCombatAmmoCounter.isRangedAmmoWeapon(weaponType)) {
@@ -136,6 +150,10 @@ public final class AgentLocalOpportunityAttackService {
         }
 
         return new Result(false, targetPos);
+    }
+
+    static boolean committed(AgentAttackTransactionResult result) {
+        return result != null && result.committed();
     }
 
     static boolean shouldJumpTowardUnplannableCloseTarget(boolean allowJumpTowardTarget,

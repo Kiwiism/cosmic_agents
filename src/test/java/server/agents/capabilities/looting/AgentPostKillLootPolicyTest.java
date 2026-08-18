@@ -25,6 +25,38 @@ class AgentPostKillLootPolicyTest {
     }
 
     @Test
+    void fieldGrindingBatchesMeleeAndRangedLootWithoutATimeOverride() {
+        long now = 100_000L;
+        AgentLootCollectionContextState.Snapshot field =
+                new AgentLootCollectionContextState.Snapshot(
+                        AgentLootCollectionContextState.Mode.FIELD_GRIND, 9);
+
+        assertFalse(AgentPostKillLootPolicy.shouldCollect(
+                WeaponType.DAGGER_THIEVES,
+                new AgentPostKillLootState.Snapshot(Set.of(1), 8, now - 60_000L),
+                true, now, field));
+        assertFalse(AgentPostKillLootPolicy.shouldCollect(
+                WeaponType.BOW,
+                new AgentPostKillLootState.Snapshot(Set.of(1), 8, now - 60_000L),
+                true, now, field));
+        assertTrue(AgentPostKillLootPolicy.shouldCollect(
+                WeaponType.DAGGER_THIEVES,
+                new AgentPostKillLootState.Snapshot(Set.of(1), 9, now - 100L),
+                true, now, field));
+    }
+
+    @Test
+    void fieldBatchThresholdIsStableAndWithinConfiguredBounds() {
+        AgentLootCollectionContextState state = new AgentLootCollectionContextState();
+        state.fieldGrind(364);
+        int threshold = state.snapshot().batchKills();
+
+        assertTrue(threshold >= AgentLootCollectionPolicyConfig.fieldBatchMinKills());
+        assertTrue(threshold <= AgentLootCollectionPolicyConfig.fieldBatchMaxKills());
+        assertEquals(threshold, state.snapshot().batchKills());
+    }
+
+    @Test
     void rangedBatchesUntilKillOrTimeThreshold() {
         int threshold = AgentLootCollectionPolicyConfig.rangedBatchKills();
         long now = 10_000L;

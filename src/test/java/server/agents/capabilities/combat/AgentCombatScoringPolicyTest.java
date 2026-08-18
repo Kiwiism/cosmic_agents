@@ -79,7 +79,7 @@ class AgentCombatScoringPolicyTest {
         Monster nearTwo = mobAt(130, 100, true);
         Monster far = mobAt(260, 100, true);
 
-        assertEquals(400L, AgentCombatScoringPolicy.legacyAoeClusterBonus(
+        assertEquals(400L, AgentCombatScoringPolicy.aoeClusterBonus(
                 target, List.of(target, nearOne, nearTwo, far), true, 3));
     }
 
@@ -140,10 +140,10 @@ class AgentCombatScoringPolicyTest {
         Monster nearTwo = mobAt(130, 100, true);
         Monster far = mobAt(260, 100, true);
 
-        assertEquals(3, AgentCombatScoringPolicy.legacyCappedAoeClusterSize(
+        assertEquals(3, AgentCombatScoringPolicy.cappedAoeClusterSize(
                 target, List.of(target, nearOne, nearTwo, far), true, 6));
         assertEquals(List.of(target, nearOne, nearTwo),
-                AgentCombatScoringPolicy.legacyClusterMonsters(
+                AgentCombatScoringPolicy.clusterMonsters(
                         target, List.of(target, nearOne, nearTwo, far)));
     }
 

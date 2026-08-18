@@ -2,7 +2,7 @@ package server.agents.capabilities.combat;
 
 /** Explainable reason for the target tier selected before normal combat scoring. */
 public enum AgentCombatDecisionReason {
-    LEGACY_CLOSEST,
+    CLOSEST_ELIGIBLE,
     REQUIRED_LOCAL,
     PLATFORM_BATCH_CLEAR,
     INCIDENTAL_PLATFORM_SWEEP,
