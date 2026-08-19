@@ -51,7 +51,9 @@ final class AgentFieldObservationFixtureService {
     private static final short PROJECTILES = 30_000;
     private static final byte OBSERVATION_USE_SLOTS = 96;
     private static final double MINIMUM_ACCEPTABLE_HIT_CHANCE = 0.60d;
+    private static final double MINIMUM_FALLBACK_HIT_CHANCE = 0.50d;
     private static final int OBSERVATION_LEVEL_CAP = 25;
+    private static final int OBSERVATION_LEVEL_CAP_KPQ = 28;
     private static final List<String> CAREERS = List.of(
             "warrior", "bowman", "magician", "thief-claw", "thief-dagger",
             "pirate-gun", "pirate-knuckle");
@@ -61,39 +63,86 @@ final class AgentFieldObservationFixtureService {
     }
 
     static Prepared prepare(AgentRuntimeEntry entry, int level, long seed, long nowMs) throws IOException {
-        return prepare(entry, level, Set.of(), seed, nowMs);
+        return prepare(entry, level, Set.<Integer>of(), seed, nowMs, OBSERVATION_LEVEL_CAP,
+                MINIMUM_ACCEPTABLE_HIT_CHANCE, MINIMUM_ACCEPTABLE_HIT_CHANCE);
+    }
+
+    static Prepared prepareForKpq(AgentRuntimeEntry entry, int level, long seed, long nowMs) throws IOException {
+        return prepareForKpq(entry, level, Set.<Integer>of(), seed, nowMs);
+    }
+
+    static Prepared prepareForKpq(AgentRuntimeEntry entry,
+                                  int level,
+                                  Set<Integer> allowedMobIds,
+                                  long seed,
+                                  long nowMs)
+            throws IOException {
+        return prepare(entry, level, allowedMobIds, seed, nowMs, OBSERVATION_LEVEL_CAP_KPQ,
+                MINIMUM_ACCEPTABLE_HIT_CHANCE, MINIMUM_FALLBACK_HIT_CHANCE);
     }
 
     static Prepared prepare(AgentRuntimeEntry entry, int level, Set<Integer> allowedMobIds, long seed, long nowMs)
             throws IOException {
+        return prepare(entry, level, allowedMobIds, seed, nowMs, level,
+                MINIMUM_ACCEPTABLE_HIT_CHANCE, MINIMUM_ACCEPTABLE_HIT_CHANCE);
+    }
+
+    private static Prepared prepare(
+            AgentRuntimeEntry entry,
+            int level,
+            Set<Integer> allowedMobIds,
+            long seed,
+            long nowMs,
+            int maxLevelCap,
+            double minimumHitChance,
+            double fallbackHitChance)
+            throws IOException {
         Character agent = AgentRuntimeIdentityRuntime.bot(entry);
-        if (agent == null || level < 15 || level > 25) {
-            throw new IllegalArgumentException("a spawned Agent and level 15-25 are required");
+        if (agent == null || level < 15 || level > 28) {
+            throw new IllegalArgumentException("a spawned Agent and level 15-28 are required");
+        }
+        if (maxLevelCap < level) {
+            throw new IllegalArgumentException("requested maximum level cannot be lower than start level");
+        }
+        if (minimumHitChance < 0.0d || minimumHitChance > 1.0d
+                || fallbackHitChance < 0.0d || fallbackHitChance > 1.0d) {
+            throw new IllegalArgumentException("minimum hit chance must be in the 0.0-1.0 range");
+        }
+        if (fallbackHitChance > minimumHitChance) {
+            throw new IllegalArgumentException("fallback hit chance must not exceed primary hit chance");
         }
         Set<Integer> allowed = allowedMobIds == null || allowedMobIds.isEmpty()
                 ? Set.of()
                 : Set.copyOf(allowedMobIds);
 
-        ObservationCandidate best = null;
         ObservationCandidate bestMeetingThreshold = null;
-        int maxLevel = Math.min(level, OBSERVATION_LEVEL_CAP);
+        int cappedMaxLevel = Math.min(maxLevelCap, OBSERVATION_LEVEL_CAP_KPQ);
+        ObservationCandidate bestMeetingFallback = null;
         int startOffset = Math.floorMod(seed, CAREERS.size());
         for (int index = 0; index < CAREERS.size(); index++) {
             String career = CAREERS.get((index + startOffset) % CAREERS.size());
             long careerSeed = mix(seed, index);
             ObservationCandidate candidate = evaluateCareer(
-                    entry, career, maxLevel, allowed, careerSeed, (index + startOffset));
+                    entry, career, level, cappedMaxLevel, allowed, minimumHitChance,
+                    fallbackHitChance, careerSeed, (index + startOffset));
             if (candidate == null) {
                 continue;
             }
             if (candidate.meetsAccuracyMinimum()) {
                 bestMeetingThreshold = betterCandidate(candidate, bestMeetingThreshold) ? candidate : bestMeetingThreshold;
+            } else if (candidate.minimumHitChance() >= fallbackHitChance) {
+                bestMeetingFallback = betterCandidate(candidate, bestMeetingFallback) ? candidate : bestMeetingFallback;
             }
-            best = betterCandidate(candidate, best) ? candidate : best;
         }
-        ObservationCandidate selected = bestMeetingThreshold != null ? bestMeetingThreshold : best;
+        ObservationCandidate selected = bestMeetingThreshold != null ? bestMeetingThreshold : bestMeetingFallback;
         if (selected == null) {
-            throw new IllegalStateException("deterministic observation fixture has no compatible setup for the requested map");
+            if (minimumHitChance == fallbackHitChance) {
+                throw new IllegalStateException("observation fixture has no setup that meets the required "
+                        + Math.round(minimumHitChance * 100) + "% threshold");
+            }
+            throw new IllegalStateException("observation fixture has no setup that meets the required "
+                    + Math.round(minimumHitChance * 100) + "% threshold and no fallback setup >= "
+            + Math.round(fallbackHitChance * 100) + "%");
         }
         return finalizeCandidate(entry, selected, nowMs);
     }
@@ -174,21 +223,24 @@ final class AgentFieldObservationFixtureService {
 
         List<Integer> equipment = applyDeterministicEquipmentLoadout(agent, selected.loadoutSeed(), selected.career());
         provisionTwoHourSupplies(agent);
-        if (selected.meetsAccuracyMinimum()) {
+        if (selected.sniperPillsNeeded() >= 0 && selected.sniperPillsNeeded() <= SNIPER_PILLS) {
             applySniperPills(agent, selected.sniperPillsNeeded());
         }
         agent.healHpMp();
         agent.equipChanged();
         AgentCharacterGatewayRuntime.characters().save(agent, false);
         return new Prepared(agent.getName(), selected.level(), bundle.bundleId(), bundle.apProfileId(),
-                bundle.spProfileId(), equipment, suppliedProjectile(agent));
+                bundle.spProfileId(), equipment, suppliedProjectile(agent), selected.minimumHitChance());
     }
 
     private static ObservationCandidate evaluateCareer(
             AgentRuntimeEntry entry,
             String career,
             int level,
+            int maxLevel,
             Set<Integer> allowedMobIds,
+            double minimumHitChanceThreshold,
+            double fallbackHitChanceThreshold,
             long seed,
             int careerOrder) throws IOException {
         Character agent = AgentRuntimeIdentityRuntime.bot(entry);
@@ -203,7 +255,7 @@ final class AgentFieldObservationFixtureService {
 
         ObservationCandidate bestForCareer = null;
         int bonusPerPill = sniperPillBonus();
-        for (int candidateLevel = level; candidateLevel <= OBSERVATION_LEVEL_CAP; candidateLevel++) {
+        for (int candidateLevel = level; candidateLevel <= maxLevel; candidateLevel++) {
             while (agent.getLevel() < candidateLevel) {
                 agent.levelUp(false);
                 AgentApBuildProfileService.autoAssign(entry, agent);
@@ -221,12 +273,18 @@ final class AgentFieldObservationFixtureService {
             } catch (IllegalStateException ignored) {
                 continue;
             }
-            int requiredPills = requiredSniperPills(agent, allowedMobIds, bonusPerPill);
-            int effectivePills = requiredPills == Integer.MAX_VALUE ? SNIPER_PILLS : requiredPills;
-            double minimumHitChance = minimumHitChance(agent, allowedMobIds, effectivePills * bonusPerPill);
+            int requiredPills = requiredSniperPills(agent, allowedMobIds, bonusPerPill, minimumHitChanceThreshold);
+            boolean meetsPrimaryThreshold = requiredPills != Integer.MAX_VALUE;
+            if (!meetsPrimaryThreshold) {
+                requiredPills = requiredSniperPills(agent, allowedMobIds, bonusPerPill, fallbackHitChanceThreshold);
+                if (requiredPills == Integer.MAX_VALUE) {
+                    continue;
+                }
+            }
+            double candidateMinimumHitChance = minimumHitChance(agent, allowedMobIds, requiredPills * bonusPerPill);
             ObservationCandidate current = new ObservationCandidate(
-                    career, candidateLevel, loadoutSeed, requiredPills, minimumHitChance,
-                    requiredPills != Integer.MAX_VALUE, careerOrder);
+                    career, candidateLevel, loadoutSeed, requiredPills, candidateMinimumHitChance,
+                    meetsPrimaryThreshold, careerOrder);
             if (betterCandidate(current, bestForCareer)) {
                 bestForCareer = current;
             }
@@ -348,9 +406,10 @@ final class AgentFieldObservationFixtureService {
         return 0;
     }
 
-    private static int requiredSniperPills(Character agent, Set<Integer> allowedMobIds, int bonusPerPill) {
+    private static int requiredSniperPills(Character agent, Set<Integer> allowedMobIds, int bonusPerPill,
+                                           double minimumHitChance) {
         for (int pills = 0; pills <= SNIPER_PILLS; pills++) {
-            if (minimumHitChance(agent, allowedMobIds, bonusPerPill * pills) >= MINIMUM_ACCEPTABLE_HIT_CHANCE) {
+            if (minimumHitChance(agent, allowedMobIds, bonusPerPill * pills) >= minimumHitChance) {
                 return pills;
             }
         }
@@ -498,7 +557,7 @@ final class AgentFieldObservationFixtureService {
     }
 
     record Prepared(String name, int level, String bundleId, String apProfileId, String spProfileId,
-                    List<Integer> equipmentItemIds, int projectileItemId) {
+                    List<Integer> equipmentItemIds, int projectileItemId, double minimumHitChance) {
         Prepared {
             equipmentItemIds = List.copyOf(equipmentItemIds);
         }
