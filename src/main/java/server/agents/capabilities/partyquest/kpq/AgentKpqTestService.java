@@ -112,7 +112,16 @@ public final class AgentKpqTestService {
             Character agent = result.agent();
             launched = agent;
             AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(agent.getId());
-            AgentKpqTestFixtureService.prepare(entry, run.seed + ordinal * 10_007L, System.currentTimeMillis());
+            if (entry == null) {
+                throw new IllegalStateException("spawned Agent runtime is unavailable");
+            }
+            var prepared = AgentKpqTestFixtureService.prepare(
+                    entry, run.seed + ordinal * 10_007L, System.currentTimeMillis());
+            if (prepared.minimumHitChance() < 0.60d) {
+                session.addPreparationWarning("agent " + name + " could only reach "
+                        + String.format("%.0f", prepared.minimumHitChance() * 100) + "% hit rate on KPQ map 1 mobs at lv"
+                        + prepared.level() + " (target 60%, fallback threshold reached)");
+            }
             AgentMapGatewayRuntime.map().changeMapNear(agent, map, spawn);
             if (!AgentActivityBootstrap.admission().prepare(
                     AgentActivityBootstrap.PARTY_QUEST_CONTROLLER_ID, entry, agent,
@@ -173,6 +182,10 @@ public final class AgentKpqTestService {
                             + " number=" + member.partyNumber() + " coupons=" + member.couponTarget()
                             + " position=" + member.assignedPosition());
                 });
+        if (!session.preparationWarnings().isEmpty()) {
+            lines.add("preparation warnings:");
+            session.preparationWarnings().forEach(lines::add);
+        }
         if (!session.failure().isBlank()) lines.add("failure=" + session.failure());
         return lines;
     }

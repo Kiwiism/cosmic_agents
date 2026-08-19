@@ -24,6 +24,7 @@ public final class AgentKpqSession {
     private int eventLeaderId;
     private int coordinatorAgentId;
     private int formationCallerId;
+    private final List<String> preparationWarnings = new ArrayList<>();
     private int stageStep;
     private int attemptIndex;
     private int attemptId;
@@ -99,8 +100,19 @@ public final class AgentKpqSession {
         AgentKpqMemberState leader = members.get(eventLeaderId);
         if (leader != null) leader.setRole(AgentKpqMemberState.Role.EVENT_LEADER);
         failure = "";
+        preparationWarnings.clear();
         paused = false;
         transition(Phase.PREPARING, nowMs);
+    }
+
+    public synchronized void addPreparationWarning(String warning) {
+        if (warning != null && !warning.isBlank()) {
+            preparationWarnings.add(warning);
+        }
+    }
+
+    public synchronized List<String> preparationWarnings() {
+        return new ArrayList<>(preparationWarnings);
     }
 
     public synchronized void fail(String reason, long nowMs) {
