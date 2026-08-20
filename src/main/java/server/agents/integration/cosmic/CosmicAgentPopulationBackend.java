@@ -10,6 +10,7 @@ import server.agents.runtime.AgentInteractionRuntime;
 import server.agents.runtime.AgentRuntimeCleanupService;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
+import server.agents.capabilities.partyquest.kpq.AgentKpqRuntime;
 
 import java.sql.SQLException;
 
@@ -91,6 +92,10 @@ public final class CosmicAgentPopulationBackend implements AgentPopulationSessio
         Character agent = hooks.online(characterId);
         if (agent == null || !CosmicCharacterGateway.INSTANCE.isAgentCharacter(agent)) {
             return false;
+        }
+        if (AgentKpqRuntime.active(characterId)) {
+            AgentKpqRuntime.forceStop(
+                    characterId, "population session stopped", System.currentTimeMillis());
         }
         hooks.removeRuntime(characterId);
         hooks.disconnect(agent);

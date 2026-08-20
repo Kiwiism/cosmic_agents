@@ -532,6 +532,110 @@ class MobSimulationSessionTest {
     }
 
     @Test
+    void delayedImpactKeepsInheritedGroundVelocityInsideCapturedPlatform() {
+        int originalPercent = server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_PERCENT;
+        int originalOffset = server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_OFFSET_MS;
+        int originalLeftInset = server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_LEFT_EDGE_INSET_PX;
+        int originalRightInset = server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_RIGHT_EDGE_INSET_PX;
+        try {
+            server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_PERCENT = 100;
+            server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_OFFSET_MS = 0;
+            server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_LEFT_EDGE_INSET_PX = 18;
+            server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_RIGHT_EDGE_INSET_PX = 10;
+            Fixture fixture = fixture(new MobPhysicsProfile(0.08, 0.05, 1,
+                    true, false, false, false), 7, 91, 0, 100);
+            fixture.session.body().setVelocity(3.0, 0.0);
+
+            fixture.session.acceptHit(fixture.agent, 10, 40, 1, 0L);
+            fixture.session.advance(8_000_000L);
+
+            assertEquals(MobMotionState.PENDING_IMPACT, fixture.session.motion());
+            assertFalse(fixture.session.body().groundedSupportLocked());
+            assertEquals(90.0, fixture.session.body().x(), 1.0e-12);
+            assertTrue(fixture.session.body().grounded());
+
+            fixture.session.advance(40_000_000L);
+            assertEquals(MobMotionState.KNOCKBACK, fixture.session.motion());
+            assertTrue(fixture.session.body().groundedSupportLocked(),
+                    "handoff support should transfer into grounded knockback");
+        } finally {
+            server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_PERCENT = originalPercent;
+            server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_OFFSET_MS = originalOffset;
+            server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_LEFT_EDGE_INSET_PX = originalLeftInset;
+            server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_RIGHT_EDGE_INSET_PX = originalRightInset;
+        }
+    }
+
+    @Test
+    void delayedHitWithoutKnockbackReleasesCapturedPlatformSupport() {
+        int originalPercent = server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_PERCENT;
+        int originalOffset = server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_OFFSET_MS;
+        try {
+            server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_PERCENT = 100;
+            server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_OFFSET_MS = 0;
+            Fixture fixture = fixture(new MobPhysicsProfile(0.08, 0.05, 100,
+                    true, false, false, false));
+
+            fixture.session.acceptHit(fixture.agent, 10, 16, 1, 0L);
+            assertFalse(fixture.session.body().groundedSupportLocked());
+            fixture.session.advance(16_000_000L);
+
+            assertEquals(MobMotionState.CHASE, fixture.session.motion());
+            assertFalse(fixture.session.body().groundedSupportLocked());
+            assertTrue(fixture.session.body().grounded());
+        } finally {
+            server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_PERCENT = originalPercent;
+            server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_OFFSET_MS = originalOffset;
+        }
+    }
+
+    @Test
+    void delayedImpactDoesNotCaptureTrulyAirborneMob() {
+        Fixture fixture = fixture(new MobPhysicsProfile(0.08, 0.05, 1,
+                true, false, false, false));
+        fixture.session.body().setPosition(50.0, 70.0);
+        fixture.session.body().setGrounded(false);
+        fixture.session.body().setVelocity(1.0, -2.0);
+
+        fixture.session.acceptHit(fixture.agent, 10, 100, 1, 0L);
+        fixture.session.advance(8_000_000L);
+
+        assertEquals(MobMotionState.PENDING_IMPACT, fixture.session.motion());
+        assertFalse(fixture.session.body().groundedSupportLocked());
+        assertFalse(fixture.session.body().grounded());
+        assertTrue(fixture.session.body().y() < 70.0,
+                "a genuinely airborne mob must continue its airborne trajectory");
+    }
+
+    @Test
+    void freshGroundStanceAndFootholdCorrectMobOriginOffsetAtHandoff() {
+        MapleMap map = mock(MapleMap.class);
+        Monster monster = mock(Monster.class);
+        Character agent = mock(Character.class);
+        when(map.isSwim()).thenReturn(false);
+        when(map.getId()).thenReturn(103000800);
+        when(monster.getPosition()).thenReturn(new Point(91, 68));
+        when(monster.getFh()).thenReturn(1);
+        when(monster.getObjectId()).thenReturn(7);
+        when(monster.getLastClientMovement()).thenReturn(new MobMovementSnapshot(
+                91, 68, 3.0, 0.0, 1, 1, 0L));
+        when(agent.getPosition()).thenReturn(new Point(50, 100));
+        FootholdPhysicsIndex terrain = new FootholdPhysicsIndex(List.of(
+                new FootholdSegment(1, 0, 0, 1, 0, false, 0, 100, 100, 100)));
+
+        MobSimulationSession session = new MobSimulationSession(
+                map, monster, agent,
+                new MobPhysicsProfile(0.08, 0.05, 1, true, false, false, false),
+                terrain, 0L);
+        session.acceptHit(agent, 10, 40, 1, 0L);
+        session.advance(8_000_000L);
+
+        assertTrue(session.body().grounded());
+        assertEquals(100.0, session.body().y(), 1.0e-12);
+        assertTrue(session.body().x() < 100.0);
+    }
+
+    @Test
     void observedPublicationDoesNotChangeKnockbackTrajectory() {
         int originalImpactDelay = server.agents.capabilities.mobcontrol.AgentMobPhysicsConfig.cfg.MOB_PHYSICS_IMPACT_DELAY_PERCENT;
         try {

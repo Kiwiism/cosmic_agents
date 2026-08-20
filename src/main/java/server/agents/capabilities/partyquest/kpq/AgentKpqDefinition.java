@@ -58,6 +58,18 @@ public final class AgentKpqDefinition {
                 .orElseThrow(() -> new IllegalArgumentException("Not a KPQ combination stage: " + stageNumber));
     }
 
+    /** Mirrors the one-based occupied rectangles in scripts/npc/9020001.js. */
+    public static List<Integer> answerCombination(int stageNumber, int answerIndex) {
+        CombinationStage stage = combinationStage(stageNumber);
+        List<List<Integer>> combinations = AgentKpqCombinationOrder.forPositionCount(stage.positions().size());
+        if (answerIndex < 0 || answerIndex >= combinations.size()) {
+            throw new IllegalArgumentException("Invalid Stage " + stageNumber + " answer index " + answerIndex);
+        }
+        // The NPC script enumerates masks by excluded positions, which is the reverse of the
+        // coordinator's ascending occupied-position order.
+        return combinations.get(combinations.size() - answerIndex - 1);
+    }
+
     public static int stageForMap(int mapId) {
         return mapId >= STAGE_1_MAP && mapId <= STAGE_5_MAP
                 ? mapId - STAGE_1_MAP + 1 : 0;

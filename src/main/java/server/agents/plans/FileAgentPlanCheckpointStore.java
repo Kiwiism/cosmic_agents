@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 
 import java.io.IOException;
 import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -51,7 +52,10 @@ public final class FileAgentPlanCheckpointStore implements AgentPlanCheckpointSt
             try {
                 Files.move(temp, path, StandardCopyOption.ATOMIC_MOVE,
                         StandardCopyOption.REPLACE_EXISTING);
-            } catch (AtomicMoveNotSupportedException ignored) {
+            } catch (AtomicMoveNotSupportedException | AccessDeniedException ignored) {
+                // Windows can reject an atomic replacement while the destination is briefly
+                // inspected by another process. The ordinary replace path is still safe here:
+                // this store serializes all in-process checkpoint operations.
                 Files.move(temp, path, StandardCopyOption.REPLACE_EXISTING);
             }
         } finally {

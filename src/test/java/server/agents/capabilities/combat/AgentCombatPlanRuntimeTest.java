@@ -5,10 +5,12 @@ import client.Skill;
 import client.inventory.WeaponType;
 import org.junit.jupiter.api.Test;
 import server.StatEffect;
+import server.life.Monster;
 
 import java.util.List;
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -56,6 +58,19 @@ class AgentCombatPlanRuntimeTest {
 
         assertFalse(AgentCombatPlanRuntime.hasLearnedOffensiveMagicSkill(bot, Map.of(
                 passive, new Character.SkillEntry((byte) 5, 0, -1L))));
+    }
+
+    @Test
+    void rangedWeaponUsesRangedPlanAgainstBossInsteadOfWeaponNeutralMeleeSkill() {
+        Monster boss = mock(Monster.class);
+        when(boss.isBoss()).thenReturn(true);
+        AgentAttackPlan somersaultKick = plan(5001002, AgentAttackRoute.CLOSE);
+        AgentAttackPlan doubleShot = plan(5001003, AgentAttackRoute.RANGED);
+
+        assertEquals(List.of(doubleShot), AgentCombatPlanRuntime.preferRangedBossCandidates(
+                boss, WeaponType.GUN, List.of(somersaultKick, doubleShot)));
+        assertEquals(List.of(somersaultKick, doubleShot), AgentCombatPlanRuntime.preferRangedBossCandidates(
+                boss, WeaponType.KNUCKLE, List.of(somersaultKick, doubleShot)));
     }
 
     private static AgentAttackPlan plan(int skillId, AgentAttackRoute route) {

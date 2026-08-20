@@ -63,6 +63,8 @@ class AgentNavigationGraphServiceTest {
     private static final Supplier<MapleMap> kerningPharmacyS = lazyMap(103000002);
     private static final Supplier<MapleMap> kpqS1S = lazyMap(103000800);
     private static final Supplier<AgentNavigationGraph> kpqS1GraphS = lazyGraph(kpqS1S);
+    private static final Supplier<MapleMap> kpqS5S = lazyMap(103000804);
+    private static final Supplier<AgentNavigationGraph> kpqS5GraphS = lazyGraph(kpqS5S);
     private static final Supplier<MapleMap> mushroomShrineS = lazyMap(800000000);
     private static final Supplier<MapleMap> swamp1S = lazyMap(107000000);
     private static final Supplier<AgentNavigationGraph> swamp1GraphS = lazyGraph(swamp1S);
@@ -76,6 +78,8 @@ class AgentNavigationGraphServiceTest {
     private static MapleMap kerningPharmacy() { return kerningPharmacyS.get(); }
     private static MapleMap kpqS1() { return kpqS1S.get(); }
     private static AgentNavigationGraph kpqS1Graph() { return kpqS1GraphS.get(); }
+    private static MapleMap kpqS5() { return kpqS5S.get(); }
+    private static AgentNavigationGraph kpqS5Graph() { return kpqS5GraphS.get(); }
     private static MapleMap mushroomShrine() { return mushroomShrineS.get(); }
     private static MapleMap swamp1() { return swamp1S.get(); }
     private static AgentNavigationGraph swamp1Graph() { return swamp1GraphS.get(); }
@@ -231,6 +235,26 @@ class AgentNavigationGraphServiceTest {
 
         assertFalse(path.isEmpty(), "Left KPQ rope should route to the right upper platform");
         assertEquals(targetRegionId, path.getLast().toRegionId);
+    }
+
+    @Test
+    void shouldRouteKpqStageFiveFromUpperMobsToKingSlimeAndBackToCloto() {
+        Point upperMobs = new Point(297, -2188);
+        Point kingSlime = new Point(162, -451);
+        Point cloto = new Point(305, -2717);
+
+        List<AgentNavigationGraph.Edge> toBoss = findPath(
+                kpqS5Graph(), kpqS5(), upperMobs, kingSlime);
+        List<AgentNavigationGraph.Edge> toCloto = findPath(
+                kpqS5Graph(), kpqS5(), kingSlime, cloto);
+
+        assertFalse(toBoss.isEmpty());
+        assertFalse(toCloto.isEmpty());
+        assertEquals(kpqS5Graph().findRegionId(kpqS5(), kingSlime), toBoss.getLast().toRegionId);
+        assertEquals(kpqS5Graph().findRegionId(kpqS5(), cloto), toCloto.getLast().toRegionId);
+        assertTrue(toCloto.stream().anyMatch(edge -> edge.type == AgentNavigationGraph.EdgeType.PORTAL
+                        || edge.type == AgentNavigationGraph.EdgeType.CLIMB),
+                "Stage 5 return routing should use the authored vertical traversal graph");
     }
 
     @Test

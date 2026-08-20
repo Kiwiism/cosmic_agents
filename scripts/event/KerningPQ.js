@@ -36,7 +36,8 @@ var maxMapId = 103000805;
 
 var eventTime = 30;     // 30 minutes
 
-const maxLobbies = 1;
+const AgentKpqLobbyPolicy = Java.type('server.agents.capabilities.partyquest.kpq.AgentKpqLobbyPolicy');
+const maxLobbies = AgentKpqLobbyPolicy.maxLobbies();
 
 function init() {
     setEventRequirements();

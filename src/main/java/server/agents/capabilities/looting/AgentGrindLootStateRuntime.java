@@ -22,6 +22,20 @@ public final class AgentGrindLootStateRuntime {
         entry.grindLootState().setTarget(loot);
     }
 
+    public static void setObjectiveLootTarget(AgentRuntimeEntry entry, MapItem loot) {
+        entry.grindLootState().setObjectiveTarget(loot);
+    }
+
+    public static boolean hasObjectiveLootTarget(AgentRuntimeEntry entry) {
+        return entry != null && entry.grindLootState().isObjectiveTarget();
+    }
+
+    public static void clearObjectiveLootTarget(AgentRuntimeEntry entry) {
+        if (hasObjectiveLootTarget(entry)) {
+            clearGrindLootTarget(entry);
+        }
+    }
+
     public static void clearGrindLootTarget(AgentRuntimeEntry entry) {
         entry.grindLootState().clearTarget();
     }

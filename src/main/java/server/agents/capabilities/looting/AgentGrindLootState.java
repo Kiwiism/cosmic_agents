@@ -4,6 +4,7 @@ import server.maps.MapItem;
 
 public final class AgentGrindLootState {
     private MapItem target = null;
+    private boolean objectiveTarget;
     private int ignoredObjectId = 0;
     private long ignoredUntilMs = 0L;
 
@@ -17,10 +18,21 @@ public final class AgentGrindLootState {
 
     public void setTarget(MapItem target) {
         this.target = target;
+        objectiveTarget = false;
+    }
+
+    public void setObjectiveTarget(MapItem target) {
+        this.target = target;
+        objectiveTarget = target != null;
+    }
+
+    public boolean isObjectiveTarget() {
+        return objectiveTarget;
     }
 
     public void clearTarget() {
         target = null;
+        objectiveTarget = false;
     }
 
     public int ignoredObjectId() {

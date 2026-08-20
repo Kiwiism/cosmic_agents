@@ -39,6 +39,11 @@ public final class MobPhysicsSimulator {
         boolean turnAtEdges = false;
         double speedMultiplier = tuning.speedMultiplier();
 
+        if (session.motion() == MobMotionState.PENDING_IMPACT
+                && body.grounded() && !profile.flying()) {
+            turnAtEdges = true;
+        }
+
         if (session.motion() == MobMotionState.KNOCKBACK) {
             horizontal = session.knockbackDirection()
                     * (session.platformConstrainedKnockback()

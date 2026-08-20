@@ -9,7 +9,7 @@ class AgentRangedEngagementPolicyTest {
     @Test
     void permitsOneCloseAttackBeforeRetreating() {
         AgentRangedEngagementPolicy.Decision decision = AgentRangedEngagementPolicy.decide(
-                new AgentRangedEngagementPolicy.Input(true, false, false, true, false));
+                new AgentRangedEngagementPolicy.Input(true, false, false, true, false, false));
 
         assertTrue(decision.allowOneDegenerateAttack());
         assertFalse(decision.retreat());
@@ -19,7 +19,7 @@ class AgentRangedEngagementPolicyTest {
     @Test
     void retreatsAfterCloseAttackWasCommitted() {
         AgentRangedEngagementPolicy.Decision decision = AgentRangedEngagementPolicy.decide(
-                new AgentRangedEngagementPolicy.Input(true, true, false, true, false));
+                new AgentRangedEngagementPolicy.Input(true, true, false, true, false, false));
 
         assertFalse(decision.allowOneDegenerateAttack());
         assertTrue(decision.retreat());
@@ -29,10 +29,20 @@ class AgentRangedEngagementPolicyTest {
     @Test
     void keepsAttackGateOpenWhenProjectileCanStillFire() {
         AgentRangedEngagementPolicy.Decision decision = AgentRangedEngagementPolicy.decide(
-                new AgentRangedEngagementPolicy.Input(false, false, true, true, true));
+                new AgentRangedEngagementPolicy.Input(false, false, true, true, true, false));
 
         assertFalse(decision.allowOneDegenerateAttack());
         assertTrue(decision.retreat());
         assertTrue(decision.attackGateOpen());
+    }
+
+    @Test
+    void bossSpacingBlocksTheCloseFallbackUntilTheAgentRetreats() {
+        AgentRangedEngagementPolicy.Decision decision = AgentRangedEngagementPolicy.decide(
+                new AgentRangedEngagementPolicy.Input(true, false, false, true, false, true));
+
+        assertFalse(decision.allowOneDegenerateAttack());
+        assertTrue(decision.retreat());
+        assertFalse(decision.attackGateOpen());
     }
 }

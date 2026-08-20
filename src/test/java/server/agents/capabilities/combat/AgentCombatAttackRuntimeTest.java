@@ -3,7 +3,11 @@ package server.agents.capabilities.combat;
 import client.Character;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
+import client.inventory.WeaponType;
+import constants.skills.Pirate;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.integration.CombatAttackApplicationResult;
 import server.life.Monster;
@@ -69,5 +73,29 @@ class AgentCombatAttackRuntimeTest {
         assertEquals(AgentAttackTransactionResult.Status.REJECTED, result.status());
         assertEquals(AgentAttackTransactionResult.Reason.TARGET_NOT_IN_AGENT_MAP, result.reason());
         assertFalse(AgentCombatCooldownStateRuntime.hasAttackCooldown(entry));
+    }
+
+    @Test
+    void equipmentSwapRejectsAStaleWeaponIncompatibleSkillPlan() {
+        Character agent = mock(Character.class);
+        Monster target = mock(Monster.class);
+        when(target.isAlive()).thenReturn(true);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        AgentAttackPlan staleFlashFistPlan = new AgentAttackPlan(
+                Pirate.FLASH_FIST, 1, 1, null, List.of(target), AgentAttackRoute.CLOSE,
+                0, 0, 0, 0, 4, 0, 600, null);
+
+        try (MockedStatic<AgentAttackExecutionProvider> execution = Mockito.mockStatic(
+                AgentAttackExecutionProvider.class, Mockito.CALLS_REAL_METHODS)) {
+            execution.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(agent))
+                    .thenReturn(WeaponType.GUN);
+
+            AgentAttackTransactionResult result = AgentCombatAttackRuntime.attackMonster(
+                    entry, agent, staleFlashFistPlan);
+
+            assertEquals(AgentAttackTransactionResult.Status.DEFERRED, result.status());
+            assertEquals(AgentAttackTransactionResult.Reason.CANNOT_USE_SKILL, result.reason());
+            verify(agent, never()).getMap();
+        }
     }
 }

@@ -38,6 +38,7 @@ var stage1Questions = Array(
 var stage1Answers = Array(10, 35, 20, 25, 25, 30, 8);
 
 const Rectangle = Java.type('java.awt.Rectangle');
+const AgentKpqSessionRegistry = Java.type('server.agents.capabilities.partyquest.kpq.AgentKpqSessionRegistry');
 var stage2Rects = Array(new Rectangle(-755, -132, 4, 218), new Rectangle(-721, -340, 4, 166), new Rectangle(-586, -326, 4, 150), new Rectangle(-483, -181, 4, 222));
 var stage3Rects = Array(new Rectangle(608, -180, 140, 50), new Rectangle(791, -117, 140, 45),
     new Rectangle(958, -180, 140, 50), new Rectangle(876, -238, 140, 45),
@@ -66,6 +67,12 @@ function clearStage(stage, eim, curMap) {
     eim.linkToNextStage(stage, "kpq", curMap);  //opens the portal to the next map
 }
 
+function isLivePartyMember(eim, player) {
+    var eventLeader = eim == null ? null : eim.getLeader();
+    return eventLeader != null && player != null && eventLeader.getPartyId() > 0
+        && player.getPartyId() == eventLeader.getPartyId();
+}
+
 function rectangleStages(eim, property, areaCombos, areaRects) {
     var c = eim.getProperty(property);
     if (c == null) {
@@ -79,7 +86,11 @@ function rectangleStages(eim, property, areaCombos, areaRects) {
     var players = eim.getPlayers();
     var playerPlacement = [0, 0, 0, 0, 0, 0];
 
-    for (var i = 0; i < eim.getPlayerCount(); i++) {
+    for (var i = 0; i < players.size(); i++) {
+        // Detached observers can see the instance but must never affect a puzzle.
+        if (!isLivePartyMember(eim, players.get(i))) {
+            continue;
+        }
         for (var j = 0; j < areaRects.length; j++) {
             if (areaRects[j].contains(players.get(i).getPosition())) {
                 playerPlacement[j] += 1;
@@ -123,6 +134,12 @@ function action(mode, type, selection) {
             status--;
         }
 
+        if (status == 0 && !isLivePartyMember(eim, cm.getPlayer())) {
+            cm.sendOk("You may observe this party quest, but only current party members can participate or claim rewards.");
+            cm.dispose();
+            return;
+        }
+
         if (status == 0) {
             var curMap = cm.getMapId();
             var stage = curMap - 103000800 + 1;
@@ -135,13 +152,15 @@ function action(mode, type, selection) {
                 }
             } else if (curMap == 103000800) {   // stage 1
                 if (cm.isEventLeader()) {
-                    var numpasses = eim.getPlayerCount() - 1;     // minus leader
+                    // Stage 1 follows the current party, not every observer in the event map.
+                    var numpasses = cm.getParty() == null ? 0 : cm.getParty().getMembers().size() - 1;
 
                     if (cm.hasItem(4001008, numpasses)) {
+                        var heldPasses = cm.itemQuantity(4001008);
                         cm.sendNext("You gathered up " + numpasses + " passes! Congratulations on clearing the stage! I'll make the portal that sends you to the next stage. There's a time limit on getting there, so please hurry. Best of luck to you all!");
                         clearStage(stage, eim, curMap);
                         eim.gridClear();
-                        cm.gainItem(4001008, -numpasses);
+                        cm.gainItem(4001008, -heldPasses);
                     } else {
                         cm.sendNext("I'm sorry, but you are short on the number of passes. You need to give me the right number of passes; it should be the number of members of your party minus the leader, in this case the total of " + numpasses + " to clear the stage. Tell your party members to solve the questions, gather up the passes, and give them to you.");
                     }
@@ -188,6 +207,7 @@ function action(mode, type, selection) {
                     eim.setProperty(stgProperty, c.toString());
                 } else {
                     var accept = rectangleStages(eim, stgProperty, stgCombos, stgAreas);
+                    AgentKpqSessionRegistry.recordHumanPuzzleValidation(cm.getPlayer().getId(), stage, accept);
 
                     if (accept) {
                         clearStage(stage, eim, curMap);
@@ -215,6 +235,7 @@ function action(mode, type, selection) {
                     eim.setProperty(stgProperty, c.toString());
                 } else {
                     var accept = rectangleStages(eim, stgProperty, stgCombos, stgAreas);
+                    AgentKpqSessionRegistry.recordHumanPuzzleValidation(cm.getPlayer().getId(), stage, accept);
 
                     if (accept) {
                         clearStage(stage, eim, curMap);
@@ -242,6 +263,7 @@ function action(mode, type, selection) {
                     eim.setProperty(stgProperty, c.toString());
                 } else {
                     var accept = rectangleStages(eim, stgProperty, stgCombos, stgAreas);
+                    AgentKpqSessionRegistry.recordHumanPuzzleValidation(cm.getPlayer().getId(), stage, accept);
 
                     if (accept) {
                         clearStage(stage, eim, curMap);

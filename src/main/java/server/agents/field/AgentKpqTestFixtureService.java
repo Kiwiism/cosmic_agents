@@ -11,23 +11,41 @@ import java.util.Set;
 
 /** Reuses the legal observation loadout pipeline with KPQ-specific accuracy calibration. */
 public final class AgentKpqTestFixtureService {
-    private static final Set<Integer> KPQ_FIRST_MAP_MOBS = Set.of(9300000, 9300001);
-    private static final int KPQ_START_LEVEL = 25;
+    private static final Set<Integer> KPQ_FIRST_MAP_MOBS = Set.of(9300001);
+    private static final int KPQ_START_LEVEL = config.AgentTuning.intValue(
+            "server.agents.field.AgentKpqTestFixtureService.KPQ_START_LEVEL");
 
     private AgentKpqTestFixtureService() {
     }
 
     public static PreparationResult prepare(AgentRuntimeEntry entry, long seed, long nowMs)
             throws IOException {
+        return prepare(entry, null, seed, nowMs);
+    }
+
+    public static PreparationResult prepare(
+            AgentRuntimeEntry entry, String requestedCareer, long seed, long nowMs)
+            throws IOException {
         Character agent = AgentRuntimeIdentityRuntime.bot(entry);
         int appearance = (int) Math.floorMod(seed, MapleIslandCohortCharacterCatalog.COMBINATION_COUNT);
         CosmicMapleIslandCohortIdentity.apply(agent,
                 MapleIslandCohortCharacterCatalog.template(appearance));
-        AgentFieldObservationFixtureService.Prepared prepared = AgentFieldObservationFixtureService.prepareForKpq(
-                entry, KPQ_START_LEVEL, KPQ_FIRST_MAP_MOBS, seed, nowMs);
-        return new PreparationResult(prepared.level(), prepared.minimumHitChance());
+        AgentFieldObservationFixtureService.Prepared prepared = requestedCareer == null
+                ? AgentFieldObservationFixtureService.prepareForKpq(
+                        entry, KPQ_START_LEVEL, KPQ_FIRST_MAP_MOBS, seed, nowMs)
+                : AgentFieldObservationFixtureService.prepareForKpq(
+                        entry, KPQ_START_LEVEL, KPQ_FIRST_MAP_MOBS, requestedCareer, seed, nowMs);
+        if (!prepared.completeBuild()) {
+            throw new IllegalStateException("KPQ fixture left unspent AP/SP for " + prepared.name());
+        }
+        return new PreparationResult(prepared.level(), prepared.minimumHitChance(), prepared.career(),
+                prepared.completeBuild(),
+                prepared.remainingAp(), prepared.remainingSps(),
+                prepared.weaponItemId(), prepared.weaponAttack());
     }
 
-    public record PreparationResult(int level, double minimumHitChance) {
+    public record PreparationResult(int level, double minimumHitChance, String career, boolean completeBuild,
+                                   int remainingAp, int[] remainingSps,
+                                   int weaponItemId, int weaponAttack) {
     }
 }

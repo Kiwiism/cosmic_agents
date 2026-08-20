@@ -149,6 +149,30 @@ class AgentGrindRangedEngagementServiceTest {
         assertEquals(0, counters.attack.get());
     }
 
+    @Test
+    void gunCreatesFiringDistanceBeforeUsingCloseFallbackOnBoss() {
+        Character agent = mock(Character.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
+        Monster target = monsterAt(140, 100);
+        when(target.isBoss()).thenReturn(true);
+        AgentAttackPlan plan = plan(target, AgentAttackRoute.CLOSE);
+        Counters counters = new Counters();
+        Point firingPosition = new Point(20, 100);
+
+        AgentGrindRangedEngagementService.Result result = AgentGrindRangedEngagementService.engage(
+                entry, agent, new Point(100, 100), new Point(140, 100), target,
+                target.getPosition(), plan, null,
+                hooks(counters, true, true, false, WeaponType.GUN, true,
+                        null, firingPosition, true));
+
+        assertFalse(result.consumedTick());
+        assertTrue(result.shouldRetreatForRangedSpacing());
+        assertEquals(firingPosition, result.crossRegionRetreatPos());
+        assertEquals(AgentAttackRoute.RANGED, result.navigationAttackRoute());
+        assertEquals(AgentAttackRoute.RANGED, counters.retreatRoute);
+        assertEquals(0, counters.attack.get());
+    }
+
     private static AgentGrindRangedEngagementService.Hooks hooks(Counters counters,
                                                                 boolean inRange,
                                                                 boolean canUseAttack,
@@ -174,11 +198,27 @@ class AgentGrindRangedEngagementServiceTest {
                                                                 boolean rangedAmmoWeapon,
                                                                 Point crowdJumpTarget,
                                                                 Point firingPosition) {
+        return hooks(counters, inRange, canUseAttack, jumpable, resolvedWeaponType,
+                rangedAmmoWeapon, crowdJumpTarget, firingPosition, false);
+    }
+
+    private static AgentGrindRangedEngagementService.Hooks hooks(Counters counters,
+                                                                boolean inRange,
+                                                                boolean canUseAttack,
+                                                                boolean jumpable,
+                                                                WeaponType resolvedWeaponType,
+                                                                boolean rangedAmmoWeapon,
+                                                                Point crowdJumpTarget,
+                                                                Point firingPosition,
+                                                                boolean retreatRequested) {
         return new AgentGrindRangedEngagementService.Hooks(
                 agent -> resolvedWeaponType,
                 (weaponType, agentPosition, targetPosition) -> false,
-                (weaponType, route, agentPosition, targetPosition) -> false,
-                (entry, agentPosition, targetPosition) -> null,
+                (weaponType, route, agentPosition, targetPosition) -> {
+                    counters.retreatRoute = route;
+                    return retreatRequested;
+                },
+                (entry, agentPosition, targetPosition) -> retreatRequested ? firingPosition : null,
                 (attackPlan, agent, target) -> inRange,
                 (entry, agent, target, attackPlan, agentPosition) -> null,
                 (grounded, weaponType, route) -> canUseAttack,
@@ -237,5 +277,6 @@ class AgentGrindRangedEngagementServiceTest {
         private final AtomicInteger broadcast = new AtomicInteger();
         private int jumpDx;
         private int fixedArcJumpDx;
+        private AgentAttackRoute retreatRoute;
     }
 }

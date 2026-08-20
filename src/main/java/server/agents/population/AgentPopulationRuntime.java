@@ -4,10 +4,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.integration.AgentPersistenceGatewayRuntime;
 import server.agents.integration.cosmic.CosmicAgentPopulationBackend;
+import server.agents.capabilities.partyquest.kpq.AgentKpqPopulationRuntime;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.util.stream.Collectors;
 
 /** Process lifecycle and composition root for the external population module. */
 public final class AgentPopulationRuntime {
@@ -44,6 +46,11 @@ public final class AgentPopulationRuntime {
                         }
                     });
             scheduler.start();
+            AgentKpqPopulationRuntime.start(
+                    () -> registry.snapshot().enabled(),
+                    () -> registry.snapshot().agents().stream()
+                            .map(AgentPopulationRecord::characterId)
+                            .collect(Collectors.toUnmodifiableSet()));
             if (registry.snapshot().enabled()) scheduler.scheduleFastStart();
             log.info("Agent population runtime started: enabled={} managed={} store={}",
                     registry.snapshot().enabled(), registry.snapshot().agents().size(), storePath());
@@ -60,6 +67,7 @@ public final class AgentPopulationRuntime {
     }
 
     public static synchronized void stop() {
+        AgentKpqPopulationRuntime.stop();
         if (scheduler != null) scheduler.close();
         scheduler = null;
         admin = null;

@@ -43,4 +43,20 @@ class AgentGrindLootStateRuntimeTest {
         assertFalse(AgentGrindLootStateRuntime.isRetrySuppressed(entry, loot, 2_000L));
         assertFalse(AgentGrindLootStateRuntime.isRetrySuppressed(entry, loot, 2_001L));
     }
+
+    @Test
+    void objectiveTargetCanBeClearedWithoutDiscardingOrdinaryHuntingLoot() {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
+        MapItem objective = mock(MapItem.class);
+        MapItem ordinary = mock(MapItem.class);
+
+        AgentGrindLootStateRuntime.setObjectiveLootTarget(entry, objective);
+        assertTrue(AgentGrindLootStateRuntime.hasObjectiveLootTarget(entry));
+        AgentGrindLootStateRuntime.clearObjectiveLootTarget(entry);
+        assertNull(AgentGrindLootStateRuntime.grindLootTarget(entry));
+
+        AgentGrindLootStateRuntime.setGrindLootTarget(entry, ordinary);
+        AgentGrindLootStateRuntime.clearObjectiveLootTarget(entry);
+        assertSame(ordinary, AgentGrindLootStateRuntime.grindLootTarget(entry));
+    }
 }

@@ -178,6 +178,9 @@ public enum CosmicPrimitiveCapabilityGateway implements PrimitiveCapabilityGatew
 
     @Override
     public Point npcPosition(Character agent, int npcId) {
+        if (agent == null || agent.getMap() == null) {
+            return null;
+        }
         NPC npc = agent.getMap().getNPCById(npcId);
         return npc == null ? null : new Point(npc.getPosition());
     }
@@ -299,7 +302,10 @@ public enum CosmicPrimitiveCapabilityGateway implements PrimitiveCapabilityGatew
                       Set<Integer> fallbackMobIds) {
         Set<Integer> permittedMobIds = new LinkedHashSet<>(preferredMobIds);
         permittedMobIds.addAll(fallbackMobIds);
-        AgentCombatVariationRuntime.retainAutomaticAnchorFor(entry, permittedMobIds);
+        // An automatic platform anchor belongs to the active preference tier. Keeping an
+        // anchor merely because its mob remains in the fallback set can strand the Agent on an
+        // empty platform when an objective advances to a boss or another mob group.
+        AgentCombatVariationRuntime.retainAutomaticAnchorFor(entry, preferredMobIds);
         AgentCombatObjectiveTargetStateRuntime.setTargetPreferences(
                 entry, preferredMobIds, fallbackMobIds);
         if (!AgentModeStateRuntime.grinding(entry)) {

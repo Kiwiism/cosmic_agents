@@ -1,7 +1,12 @@
 package server.agents.capabilities.combat;
 
 import client.inventory.WeaponType;
+import constants.skills.Assassin;
+import constants.skills.Bandit;
 import constants.skills.DragonKnight;
+import constants.skills.Pirate;
+import constants.skills.Rogue;
+import constants.skills.Spearman;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -10,6 +15,52 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentCombatWeaponPolicyTest {
+    @Test
+    void somersaultKickRemainsWeaponNeutralForKpqAccuracySpear() {
+        assertTrue(AgentCombatWeaponPolicy.canUseAttackSkillWithWeapon(
+                Pirate.SOMERSAULT_KICK, WeaponType.SPEAR_STAB));
+    }
+
+    @Test
+    void gatesPirateWeaponSpecificSkillsWithoutRestrictingSomersaultKick() {
+        assertTrue(AgentCombatWeaponPolicy.canUseAttackSkillWithWeapon(
+                Pirate.FLASH_FIST, WeaponType.KNUCKLE));
+        assertFalse(AgentCombatWeaponPolicy.canUseAttackSkillWithWeapon(
+                Pirate.FLASH_FIST, WeaponType.SPEAR_STAB));
+
+        assertTrue(AgentCombatWeaponPolicy.canUseAttackSkillWithWeapon(
+                Pirate.DOUBLE_SHOT, WeaponType.GUN));
+        assertFalse(AgentCombatWeaponPolicy.canUseAttackSkillWithWeapon(
+                Pirate.DOUBLE_SHOT, WeaponType.SPEAR_STAB));
+
+        assertTrue(AgentCombatWeaponPolicy.canUseAttackSkillWithWeapon(
+                Pirate.SOMERSAULT_KICK, WeaponType.GUN));
+        assertTrue(AgentCombatWeaponPolicy.canUseAttackSkillWithWeapon(
+                Pirate.SOMERSAULT_KICK, WeaponType.SPEAR_STAB));
+    }
+
+    @Test
+    void gatesSinDitSkillsToTheCurrentlyEquippedWeapon() {
+        assertTrue(AgentCombatWeaponPolicy.canUseAttackSkillWithWeapon(
+                Rogue.LUCKY_SEVEN, WeaponType.CLAW));
+        assertTrue(AgentCombatWeaponPolicy.canUseAttackSkillWithWeapon(
+                Assassin.DRAIN, WeaponType.CLAW));
+        assertFalse(AgentCombatWeaponPolicy.canUseAttackSkillWithWeapon(
+                Rogue.LUCKY_SEVEN, WeaponType.DAGGER_THIEVES));
+
+        assertTrue(AgentCombatWeaponPolicy.canUseAttackSkillWithWeapon(
+                Rogue.DOUBLE_STAB, WeaponType.DAGGER_THIEVES));
+        assertTrue(AgentCombatWeaponPolicy.canUseAttackSkillWithWeapon(
+                Bandit.SAVAGE_BLOW, WeaponType.DAGGER_OTHER));
+        assertFalse(AgentCombatWeaponPolicy.canUseAttackSkillWithWeapon(
+                Rogue.DOUBLE_STAB, WeaponType.CLAW));
+
+        assertTrue(AgentCombatWeaponPolicy.canUseSkillWithWeapon(
+                Assassin.CLAW_BOOSTER, WeaponType.CLAW));
+        assertFalse(AgentCombatWeaponPolicy.canUseSkillWithWeapon(
+                Assassin.CLAW_BOOSTER, WeaponType.DAGGER_THIEVES));
+    }
+
     @Test
     void gatesDragonKnightSkillsToMatchingWeaponFamilies() {
         assertTrue(AgentCombatWeaponPolicy.canUseAttackSkillWithWeapon(
@@ -25,6 +76,13 @@ class AgentCombatWeaponPolicyTest {
                 DragonKnight.POLE_ARM_DRAGON_FURY, WeaponType.POLE_ARM_STAB));
         assertFalse(AgentCombatWeaponPolicy.canUseAttackSkillWithWeapon(
                 DragonKnight.SPEAR_CRUSHER, WeaponType.POLE_ARM_SWING));
+
+        assertTrue(AgentCombatWeaponPolicy.canUseSkillWithWeapon(
+                Spearman.SPEAR_BOOSTER, WeaponType.SPEAR_STAB));
+        assertFalse(AgentCombatWeaponPolicy.canUseSkillWithWeapon(
+                Spearman.SPEAR_BOOSTER, WeaponType.POLE_ARM_SWING));
+        assertTrue(AgentCombatWeaponPolicy.canUseSkillWithWeapon(
+                Spearman.POLEARM_BOOSTER, WeaponType.POLE_ARM_SWING));
     }
 
     @Test

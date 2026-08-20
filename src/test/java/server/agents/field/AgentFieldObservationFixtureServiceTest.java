@@ -1,11 +1,20 @@
 package server.agents.field;
 
+import client.Character;
+import client.Job;
 import client.inventory.WeaponType;
+import client.inventory.Equip;
 import org.junit.jupiter.api.Test;
+import server.combat.CombatFormulaProvider;
+import server.agents.integration.InventoryGateway;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class AgentFieldObservationFixtureServiceTest {
     @Test
@@ -48,5 +57,67 @@ class AgentFieldObservationFixtureServiceTest {
         assertEquals(-10, AgentFieldObservationFixtureService.equippedSlot("Si"));
         assertEquals(-11, AgentFieldObservationFixtureService.equippedSlot("Wp"));
         assertEquals(0, AgentFieldObservationFixtureService.equippedSlot("Pe"));
+    }
+
+    @Test
+    void choosesWeaponPowerAfterAccuracyInsteadOfLowestItemId() {
+        InventoryGateway inventory = mock(InventoryGateway.class);
+        Equip starter = mock(Equip.class);
+        Equip levelTwentyFive = mock(Equip.class);
+        when(starter.getAcc()).thenReturn((short) 0);
+        when(starter.getWatk()).thenReturn((short) 18);
+        when(levelTwentyFive.getAcc()).thenReturn((short) 0);
+        when(levelTwentyFive.getWatk()).thenReturn((short) 30);
+        when(inventory.getEquipById(1_482_000)).thenReturn(starter);
+        when(inventory.getEquipById(1_482_003)).thenReturn(levelTwentyFive);
+
+        List<Integer> sorted = List.of(1_482_000, 1_482_003).stream()
+                .sorted(AgentFieldObservationFixtureService.candidateWeaponComparator(inventory))
+                .toList();
+
+        assertEquals(List.of(1_482_003, 1_482_000), sorted);
+    }
+
+    @Test
+    void permitsAccuracySpearOnlyForKpqKnuckleFixture() {
+        Character pirate = mock(Character.class);
+        when(pirate.getJob()).thenReturn(Job.PIRATE);
+
+        assertTrue(AgentFieldObservationEquipmentRepository.itemIds().contains(1_432_008));
+        assertTrue(AgentFieldObservationFixtureService.weaponCompatible(
+                pirate, WeaponType.SPEAR_STAB, "pirate-knuckle"));
+        assertTrue(AgentFieldObservationFixtureService.weaponCompatible(
+                pirate, WeaponType.SPEAR_SWING, "pirate-knuckle"));
+        assertFalse(AgentFieldObservationFixtureService.weaponCompatible(
+                pirate, WeaponType.POLE_ARM_SWING, "pirate-knuckle"));
+        assertFalse(AgentFieldObservationFixtureService.weaponCompatible(
+                pirate, WeaponType.SPEAR_STAB, "pirate-gun"));
+    }
+
+    @Test
+    void kpqWarriorUsesFishSpearAndAccuracyHeadbandAboveFallbackHitRate() {
+        assertEquals(1_002_014,
+                AgentFieldObservationFixtureService.kpqPreferredEquipmentId("warrior", "Cp"));
+        assertEquals(1_432_008,
+                AgentFieldObservationFixtureService.kpqPreferredEquipmentId("warrior", "Wp"));
+        assertEquals(1_432_008,
+                AgentFieldObservationFixtureService.kpqPreferredEquipmentId("pirate-knuckle", "Wp"));
+
+        double hitChance = CombatFormulaProvider.getInstance()
+                .calculatePhysicalMobHitChance(33, 25, 32, 10);
+        assertTrue(hitChance >= 0.50d);
+        assertTrue(hitChance < 0.60d);
+    }
+
+    @Test
+    void fixtureShieldsAreCareerAwareAndNeverUseMapleShield() {
+        assertFalse(AgentFieldObservationFixtureService.shieldAllowedForCareer(1_092_030, "warrior"));
+        assertFalse(AgentFieldObservationFixtureService.shieldAllowedForCareer(1_092_030, "magician"));
+        assertTrue(AgentFieldObservationFixtureService.shieldAllowedForCareer(1_092_003, "magician"));
+        assertTrue(AgentFieldObservationFixtureService.shieldAllowedForCareer(1_092_008, "thief-dagger"));
+        assertTrue(AgentFieldObservationFixtureService.shieldAllowedForCareer(1_092_018, "thief-dagger"));
+        assertFalse(AgentFieldObservationFixtureService.shieldAllowedForCareer(1_092_018, "magician"));
+        assertTrue(AgentFieldObservationFixtureService.shieldAllowedForCareer(1_092_001, "warrior"));
+        assertFalse(AgentFieldObservationFixtureService.shieldAllowedForCareer(1_092_001, "thief-dagger"));
     }
 }

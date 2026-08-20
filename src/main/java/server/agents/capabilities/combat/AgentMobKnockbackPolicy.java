@@ -11,15 +11,23 @@ public final class AgentMobKnockbackPolicy {
 
     public static boolean shouldApplyMobKnockback(boolean climbing, int currentHp,
                                                   Integer stancePercent, float randomRoll) {
+        return shouldApplyMobKnockback(climbing, currentHp, stancePercent, 0, randomRoll);
+    }
+
+    public static boolean shouldApplyMobKnockback(boolean climbing, int currentHp,
+                                                  Integer stancePercent,
+                                                  int additionalResistancePercent,
+                                                  float randomRoll) {
         if (climbing || currentHp <= 0) {
             return false;
         }
-        if (stancePercent == null || stancePercent <= 0) {
-            return true;
-        }
-
-        float stanceChance = Math.max(0f, Math.min(1f, stancePercent / 100f));
-        return randomRoll > stanceChance;
+        float stanceChance = stancePercent == null
+                ? 0f : Math.max(0f, Math.min(1f, stancePercent / 100f));
+        float additionalChance = Math.max(0f, Math.min(1f, additionalResistancePercent / 100f));
+        float combinedResistance = 1f - (1f - stanceChance) * (1f - additionalChance);
+        if (combinedResistance <= 0f) return true;
+        if (combinedResistance >= 1f) return false;
+        return randomRoll > combinedResistance;
     }
 
     public static MobHitKnockback resolveMobHitKnockback(Point agentPosition,

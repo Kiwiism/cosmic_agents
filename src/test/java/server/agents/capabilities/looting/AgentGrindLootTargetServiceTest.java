@@ -78,6 +78,19 @@ class AgentGrindLootTargetServiceTest {
     }
 
     @Test
+    void refreshPreservesAnActivityAssignedLootObjective() {
+        Character agent = mock(Character.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
+        MapItem objective = mockLoot(10, false);
+        AgentGrindLootStateRuntime.setObjectiveLootTarget(entry, objective);
+
+        AgentGrindLootTargetService.refreshGrindLootTarget(entry, agent, true, 100);
+
+        assertSame(objective, AgentGrindLootStateRuntime.grindLootTarget(entry));
+        assertTrue(AgentGrindLootStateRuntime.hasObjectiveLootTarget(entry));
+    }
+
+    @Test
     void meleeWaitsBrieflyThenMovesToItsRecentDrop() {
         long now = System.currentTimeMillis();
         MapleMap map = mock(MapleMap.class);

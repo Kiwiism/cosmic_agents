@@ -36,6 +36,7 @@ import net.server.world.PartyOperation;
 import net.server.world.World;
 import server.agents.runtime.AgentInteractionRuntime;
 import server.agents.runtime.AgentLifecycleService;
+import server.agents.capabilities.partyquest.lobby.AgentPartyQuestLobbyRuntime;
 import tools.PacketCreator;
 
 import java.util.List;
@@ -96,8 +97,18 @@ public final class PartyOperationHandler extends AbstractPacketHandler {
                             if (InviteCoordinator.createInvite(InviteType.PARTY, player, party.getId(), invited.getId())) {
                                 invited.sendPacket(PacketCreator.partyInvite(player));
                                 if (invited.getClient() instanceof BotClient) {
-                                    InviteCoordinator.answerInvite(InviteType.PARTY, invited.getId(), party.getId(), true);
-                                    Party.joinParty(invited, party.getId(), false);
+                                    AgentPartyQuestLobbyRuntime.InviteDecision decision =
+                                            AgentPartyQuestLobbyRuntime.decidePartyInvite(invited, player);
+                                    boolean accept = decision
+                                            != AgentPartyQuestLobbyRuntime.InviteDecision.REJECT;
+                                    InviteCoordinator.answerInvite(
+                                            InviteType.PARTY, invited.getId(), party.getId(), accept);
+                                    if (accept) {
+                                        Party.joinParty(invited, party.getId(), false);
+                                    } else {
+                                        player.dropMessage(5,
+                                                AgentPartyQuestLobbyRuntime.inviteRejectionMessage(invited));
+                                    }
                                 }
                             } else {
                                 c.sendPacket(PacketCreator.partyStatusMessage(22, invited.getName()));

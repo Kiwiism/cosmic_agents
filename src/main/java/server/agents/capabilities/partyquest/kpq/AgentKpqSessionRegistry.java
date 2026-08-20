@@ -13,23 +13,33 @@ public final class AgentKpqSessionRegistry {
     private AgentKpqSessionRegistry() {
     }
 
-    public static synchronized void register(AgentKpqSession session) {
+    /** Atomically publishes a fully constructed session and all of its member indexes. */
+    public static synchronized void registerComplete(AgentKpqSession session) {
+        if (session == null) throw new IllegalArgumentException("KPQ session is required");
         if (sessionByOperator.containsKey(session.operatorId())) {
-            throw new IllegalStateException("Operator already owns a KPQ test session");
+            throw new IllegalStateException("Operator already owns a KPQ session");
+        }
+        for (AgentKpqMemberState member : session.members()) {
+            String existing = sessionByMember.get(member.characterId());
+            if (existing != null && !existing.equals(session.sessionId())) {
+                throw new IllegalStateException("Party member already belongs to another KPQ session");
+            }
         }
         sessions.put(session.sessionId(), session);
         sessionByOperator.put(session.operatorId(), session.sessionId());
+        session.members().forEach(member ->
+                sessionByMember.put(member.characterId(), session.sessionId()));
     }
 
-    public static synchronized void indexMember(AgentKpqSession session, int characterId) {
-        String old = sessionByMember.putIfAbsent(characterId, session.sessionId());
-        if (old != null && !old.equals(session.sessionId())) {
-            throw new IllegalStateException("Agent already belongs to another KPQ session");
+    public static synchronized String registrationBlocker(
+            int operatorId, Collection<Integer> characterIds) {
+        if (sessionByOperator.containsKey(operatorId)) return "operator-session";
+        if (characterIds != null) {
+            for (int characterId : characterIds) {
+                if (sessionByMember.containsKey(characterId)) return "member-" + characterId;
+            }
         }
-    }
-
-    public static synchronized void unindexMember(AgentKpqSession session, int characterId) {
-        if (session != null) sessionByMember.remove(characterId, session.sessionId());
+        return "";
     }
 
     public static AgentKpqSession forMember(int characterId) {
@@ -53,6 +63,10 @@ public final class AgentKpqSessionRegistry {
         session.members().forEach(member -> sessionByMember.remove(member.characterId(), session.sessionId()));
     }
 
+    public static synchronized void unindexMember(AgentKpqSession session, int characterId) {
+        if (session != null) sessionByMember.remove(characterId, session.sessionId());
+    }
+
     public static boolean active(int characterId) {
         return forMember(characterId) != null;
     }
@@ -73,5 +87,16 @@ public final class AgentKpqSessionRegistry {
     public static boolean canLootSquishyShoes(int characterId) {
         AgentKpqSession session = forMember(characterId);
         return session != null && session.squishyShoesWinnerId() == characterId;
+    }
+
+    /** Called by Cloto's ordinary NPC script after a human event leader checks a puzzle formation. */
+    public static void recordHumanPuzzleValidation(int characterId, int stage, boolean accepted) {
+        AgentKpqSession session = forMember(characterId);
+        AgentKpqMemberState member = session == null ? null : session.member(characterId);
+        if (session == null || session.eventLeaderId() != characterId || member == null
+                || member.memberType() != AgentKpqMemberState.MemberType.HUMAN) {
+            return;
+        }
+        session.recordHumanPuzzleValidation(stage, accepted);
     }
 }

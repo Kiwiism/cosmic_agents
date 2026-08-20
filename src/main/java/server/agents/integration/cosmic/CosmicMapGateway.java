@@ -58,11 +58,18 @@ public enum CosmicMapGateway implements MapGateway {
         if (agent == null || map == null) {
             return;
         }
+        if (position == null) {
+            position = new Point(agent.getPosition());
+        }
         int previousMapId = agent.getMapId();
         Portal portal = map.findClosestPortal(position);
+        if (portal == null) {
+            changeMap(agent, map, position);
+            return;
+        }
         agent.forceChangeMap(map, portal);
-        recordTransition(agent, previousMapId, -1, portal == null ? -1 : portal.getId());
-        publishTransition(agent, previousMapId, portal == null ? -1 : portal.getId(), "change-map-near");
+        recordTransition(agent, previousMapId, -1, portal.getId());
+        publishTransition(agent, previousMapId, portal.getId(), "change-map-near");
     }
 
     @Override

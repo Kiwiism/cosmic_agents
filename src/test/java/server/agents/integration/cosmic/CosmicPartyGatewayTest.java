@@ -49,6 +49,7 @@ class CosmicPartyGatewayTest {
         PartyCharacter second = mock(PartyCharacter.class);
         when(character.getParty()).thenReturn(party);
         when(party.getId()).thenReturn(42);
+        when(party.getLeaderId()).thenReturn(1);
         when(party.getMembers()).thenReturn(List.of(first, second));
         when(first.getId()).thenReturn(1);
         when(first.getName()).thenReturn("Leader");

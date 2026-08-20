@@ -368,7 +368,7 @@ class BotCombatManagerTest {
         }).when(bot).getSkillLevel(any(Skill.class));
 
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
+        rebuildSkillCacheWithWeapon(entry, bot, WeaponType.CLAW);
 
         assertEquals(Rogue.LUCKY_SEVEN, AgentCombatSkillCacheStateRuntime.attackSkillId(entry));
     }
@@ -510,7 +510,7 @@ class BotCombatManagerTest {
         }).when(bot).getSkillLevel(any(Skill.class));
 
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
+        rebuildSkillCacheWithWeapon(entry, bot, WeaponType.SPEAR_STAB);
 
         assertTrue(AgentCombatSkillCacheStateRuntime.attackSkillIds(entry).contains(DragonKnight.SPEAR_CRUSHER));
         assertTrue(AgentCombatSkillCacheStateRuntime.attackSkillIds(entry).contains(DragonKnight.SPEAR_DRAGON_FURY));
@@ -2066,7 +2066,12 @@ class BotCombatManagerTest {
         }).when(bot).getSkillLevel(any(Skill.class));
 
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
+        WeaponType weaponType = switch (job) {
+            case ASSASSIN -> WeaponType.CLAW;
+            case SPEARMAN -> WeaponType.SPEAR_STAB;
+            default -> null;
+        };
+        rebuildSkillCacheWithWeapon(entry, bot, weaponType);
 
         assertEquals(expectedAttackSkillId, AgentCombatSkillCacheStateRuntime.attackSkillId(entry));
         assertEquals(expectedAoeSkillId, AgentCombatSkillCacheStateRuntime.aoeSkillId(entry));
@@ -2078,6 +2083,17 @@ class BotCombatManagerTest {
             assertFalse(AgentCombatSkillCacheStateRuntime.attackSkillId(entry) == skillId
                     || AgentCombatSkillCacheStateRuntime.aoeSkillId(entry) == skillId,
                     "unexpected cached attack " + skillId);
+        }
+    }
+
+    private static void rebuildSkillCacheWithWeapon(AgentRuntimeEntry entry,
+                                                     Character bot,
+                                                     WeaponType weaponType) {
+        try (MockedStatic<AgentAttackExecutionProvider> execution = Mockito.mockStatic(
+                AgentAttackExecutionProvider.class, Mockito.CALLS_REAL_METHODS)) {
+            execution.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot))
+                    .thenReturn(weaponType);
+            AgentCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
         }
     }
 

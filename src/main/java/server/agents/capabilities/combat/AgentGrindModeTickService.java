@@ -107,7 +107,7 @@ public final class AgentGrindModeTickService {
                         entry, agent, agentPosition, currentTargetPos, target, targetPosition, attackPlan,
                         rangedPriorityTarget, hooks.rangedEngagementHooks());
         WeaponType grindWeaponType = engagement.weaponType();
-        AgentAttackRoute grindAttackRoute = attackPlan != null ? attackPlan.route : AgentAttackRoute.CLOSE;
+        AgentAttackRoute grindAttackRoute = engagement.navigationAttackRoute();
         boolean shouldRetreatForRangedSpacing = engagement.shouldRetreatForRangedSpacing();
         Point crossRegionRetreatPos = engagement.crossRegionRetreatPos();
         Point aoeRepositionPos = engagement.aoeRepositionPos();

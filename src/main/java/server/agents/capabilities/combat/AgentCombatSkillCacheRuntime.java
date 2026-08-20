@@ -2,6 +2,7 @@ package server.agents.capabilities.combat;
 
 import client.Character;
 import client.Skill;
+import client.inventory.WeaponType;
 import server.StatEffect;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -10,7 +11,9 @@ public final class AgentCombatSkillCacheRuntime {
     }
 
     public static void rebuildSkillCacheIfNeeded(AgentRuntimeEntry entry, Character bot) {
-        int skillSignature = AgentCombatSkillClassifier.skillCacheSignature(bot);
+        WeaponType weaponType = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
+        int skillSignature = equipmentAwareSignature(
+                AgentCombatSkillClassifier.skillCacheSignature(bot), weaponType);
         if (AgentCombatSkillCacheStateRuntime.matches(
                 entry, bot.getJob().getId(), bot.getLevel(), skillSignature)) {
             return;
@@ -41,6 +44,12 @@ public final class AgentCombatSkillCacheRuntime {
             }
 
             if (cacheBucket == AgentCombatSkillClassifier.SkillCacheBucket.ACTIVE_ATTACK) {
+                // Weapon-incompatible learned skills are intentionally absent from every attack
+                // cache slot. Target scoring and navigation consume these slots before a plan is
+                // built, so filtering only in the planner is too late for hybrid builds.
+                if (!AgentCombatWeaponPolicy.canUseSkillWithWeapon(skill.getId(), weaponType)) {
+                    continue;
+                }
                 AgentCombatSkillCacheStateRuntime.addAttackSkillId(entry, skill.getId());
                 if (mobs >= 2) {
                     long score = AgentCombatSkillClassifier.aoeSkillScore(fx, atk, mobs);
@@ -65,9 +74,16 @@ public final class AgentCombatSkillCacheRuntime {
                 continue;
             }
 
-            if (cacheBucket != AgentCombatSkillClassifier.SkillCacheBucket.SUPPORT_BUFF) continue;
+            if (cacheBucket != AgentCombatSkillClassifier.SkillCacheBucket.SUPPORT_BUFF
+                    || !AgentCombatWeaponPolicy.canUseSkillWithWeapon(skill.getId(), weaponType)) {
+                continue;
+            }
             AgentCombatSkillCacheStateRuntime.addBuffSkillId(entry, skill.getId());
             AgentCombatBuffStateRuntime.ensureNextBuffAt(entry, skill.getId(), 0L);
         }
+    }
+
+    static int equipmentAwareSignature(int learnedSkillSignature, WeaponType weaponType) {
+        return 31 * learnedSkillSignature + (weaponType == null ? 0 : weaponType.ordinal() + 1);
     }
 }

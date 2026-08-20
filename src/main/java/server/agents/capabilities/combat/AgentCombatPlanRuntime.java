@@ -2,6 +2,7 @@ package server.agents.capabilities.combat;
 
 import client.Character;
 import client.Skill;
+import client.inventory.WeaponType;
 import server.StatEffect;
 import server.agents.integration.AgentSkillGatewayRuntime;
 import server.agents.monitoring.AgentPerformanceMonitor;
@@ -44,7 +45,9 @@ public final class AgentCombatPlanRuntime {
                     candidates.add(basicAttack);
                 }
             }
-            return AgentAttackPlanScoringPolicy.selectBestAttackPlan(bot, candidates);
+            WeaponType weaponType = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
+            return AgentAttackPlanScoringPolicy.selectBestAttackPlan(
+                    bot, preferRangedBossCandidates(target, weaponType, candidates));
         } finally {
             AgentPerformanceMonitor.record("combat-plan", System.nanoTime() - startedAt);
         }
@@ -53,6 +56,19 @@ public final class AgentCombatPlanRuntime {
     static boolean hasUsableMagicSkill(List<AgentAttackPlan> candidates) {
         return candidates.stream().anyMatch(candidate -> candidate.skillId > 0
                 && candidate.route == AgentAttackRoute.MAGIC);
+    }
+
+    static List<AgentAttackPlan> preferRangedBossCandidates(Monster target,
+                                                             WeaponType weaponType,
+                                                             List<AgentAttackPlan> candidates) {
+        if (target == null || !target.isBoss()
+                || !AgentAttackExecutionProvider.isDegenerateCapableRangedWeapon(weaponType)) {
+            return candidates;
+        }
+        List<AgentAttackPlan> rangedCandidates = candidates.stream()
+                .filter(candidate -> candidate.route == AgentAttackRoute.RANGED)
+                .toList();
+        return rangedCandidates.isEmpty() ? candidates : rangedCandidates;
     }
 
     private static boolean hasLearnedMagicSkill(Character bot, List<Integer> skillIds) {

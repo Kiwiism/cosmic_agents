@@ -19,7 +19,8 @@ final class AgentKpqCheckpointService {
         }
         EventInstanceManager event = leader.getEventInstance();
         if (event == null) {
-            session.fail("Checkpoint requested without a live KPQ event", nowMs);
+            AgentKpqTerminationService.fail(
+                    session, "Checkpoint requested without a live KPQ event", nowMs);
             return;
         }
         for (int cleared = 1; cleared < stage; cleared++) {
@@ -27,7 +28,8 @@ final class AgentKpqCheckpointService {
         }
         MapleMap target = event.getMapInstance(AgentKpqDefinition.STAGE_1_MAP + stage - 1);
         if (target == null) {
-            session.fail("KPQ checkpoint map " + stage + " is unavailable", nowMs);
+            AgentKpqTerminationService.fail(
+                    session, "KPQ checkpoint map " + stage + " is unavailable", nowMs);
             return;
         }
         var spawn = target.getPortal(0).getPosition();

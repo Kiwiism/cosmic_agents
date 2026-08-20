@@ -13,6 +13,7 @@ import server.agents.progression.events.AgentProgressionDialogueReactionService;
 import server.agents.progression.events.AgentQuestProgressDialogueReactionService;
 import server.agents.resources.events.AgentResourceDialogueReactionService;
 import server.agents.operations.events.AgentOperationalDialogueReactionService;
+import server.agents.capabilities.partyquest.kpq.AgentKpqSessionRegistry;
 import client.Job;
 
 import java.util.List;
@@ -43,6 +44,9 @@ public final class AgentDialogueProjectionRuntime {
         if (agent == null || agent.getId() != intent.agentId()) {
             return;
         }
+        if (!shouldProject(intent, AgentKpqSessionRegistry.active(intent.agentId()))) {
+            return;
+        }
         String message = render(intent);
         if (!message.isBlank()) {
             AgentPacketGatewayRuntime.packets().broadcastChatText(
@@ -51,6 +55,11 @@ public final class AgentDialogueProjectionRuntime {
                     false,
                     0);
         }
+    }
+
+    static boolean shouldProject(AgentDialogueIntentEvent intent, boolean activeKpqMember) {
+        return intent != null && !(activeKpqMember
+                && AgentFieldNarrationService.POSTURE_INTENT.equals(intent.intentKey()));
     }
 
     static String render(AgentDialogueIntentEvent intent) {

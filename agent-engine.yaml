@@ -387,7 +387,7 @@ tuning:
     # Values: a finite non-negative integer. Recommended: 1-6 around the tested baseline 3; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how long Agents wait or remain in maximum per window. Higher values make the pause or activity last longer; lower values make them move on sooner.
     # Technical: the "provisioning policy" component consumes this as an integer. Domain: non-negative count, capacity, or threshold unless the owning component documents a sentinel.
-    server.agents.auth.AgentProvisioningPolicy.DEFAULT_MAX_PER_WINDOW: '3'
+    server.agents.auth.AgentProvisioningPolicy.DEFAULT_MAX_PER_WINDOW: '6'
     # Values: a finite non-negative integer. Recommended: 3-12 around the tested baseline 6; benchmark or observe behavior before moving outside this band.
     # Purpose: Sets when minimum game master level becomes available. Higher values make Agents wait for more of the condition; lower values let the behavior begin sooner.
     # Technical: the "provisioning policy" component consumes this as an integer. Domain: non-negative count, capacity, or threshold unless the owning component documents a sentinel.
@@ -1568,6 +1568,169 @@ tuning:
     # Purpose: Defines how close a KPQ member must stand to the event leader before dropping a collected pass for coordinated stage completion.
     # Technical: AgentKpqCoordinator applies this Euclidean map-pixel threshold only to the ordinary pass-delivery interaction, not portal or NPC reachability.
     server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.NEAR_PX: '85'
+    # Values: 60000-1200000 milliseconds. Recommended: 900000. Increase only when KPQ stage 1 can legitimately take longer and keep players engaged.
+    # Purpose: Maximum time without coupon-phase progress before stage 1 is force-closed and returned to Kerning for safety.
+    # Technical: AgentKpqCoordinator compares this timeout against the last progression timestamp and calls event exit for all phase-1 participants.
+    # Values: 5000-120000 milliseconds. Recommended: 18000. This is independently seeded per Agent so lobby messages do not appear in unison.
+    # Purpose: Minimum interval between an Agent's periodic party-quest recruitment or join-intention messages.
+    # Technical: The reusable party-quest lobby runtime applies this to every registered PQ profile, including KPQ.
+    server.agents.capabilities.partyquest.lobby.AgentPartyQuestLobbyRuntime.CHAT_MINIMUM_MS: '18000'
+    # Values: 5000-180000 milliseconds. Recommended: 38000. Keep this above the minimum to preserve visible timing variation.
+    # Purpose: Maximum interval between periodic party-quest lobby intention messages.
+    # Technical: A deterministic delay between the minimum and maximum is sampled from the lobby seed, Agent ID, and action count.
+    server.agents.capabilities.partyquest.lobby.AgentPartyQuestLobbyRuntime.CHAT_MAXIMUM_MS: '38000'
+    # Values: 2000-60000 milliseconds. Recommended: 7000. Short ambient intervals remain subtle because some selections deliberately idle.
+    # Purpose: Minimum delay between waiting-lobby movement, fidget, sit, stand, or idle decisions.
+    # Technical: Ambient actions are independent from chat cadence and use each PQ profile's NPC-relative lobby area.
+    server.agents.capabilities.partyquest.lobby.AgentPartyQuestLobbyRuntime.AMBIENT_MINIMUM_MS: '7000'
+    # Values: 3000-120000 milliseconds. Recommended: 18000. Increase when lobby movement appears too busy.
+    # Purpose: Maximum delay between waiting-lobby ambient decisions.
+    # Technical: Seated Agents and already-partied waiters are protected from conflicting movement actions.
+    server.agents.capabilities.partyquest.lobby.AgentPartyQuestLobbyRuntime.AMBIENT_MAXIMUM_MS: '18000'
+    # Values: 1000-30000 milliseconds. Recommended: 5000. This prevents repeated matching chat from generating invitation spam.
+    # Purpose: Minimum delay before one recruiting Agent may send another party invitation or waiter response.
+    # Technical: A declined or expired invite can be requested again after this cooldown without recreating the lobby.
+    server.agents.capabilities.partyquest.lobby.AgentPartyQuestLobbyRuntime.INVITE_COOLDOWN_MS: '5000'
+    # Values: 10000-300000 milliseconds. Recommended: 60000. A warning does not cancel a human-controlled lobby.
+    # Purpose: Surfaces a test lobby whose authoritative party roster has stopped changing while Agents remain safely owned by PARTY_QUEST.
+    # Technical: Owned Agent parties also attempt bounded roster repair before this diagnostic is emitted.
+    server.agents.capabilities.partyquest.kpq.AgentKpqTestService.ASSEMBLY_STALL_WARN_MS: '60000'
+    # Values: 5000-180000 milliseconds. Recommended: 30000. Use enough time to tolerate a brief client/runtime reconnect.
+    # Purpose: Safely closes an observation lobby when a required Agent runtime disappears instead of polling forever.
+    # Technical: The test harness disconnects its remaining owned fixtures and removes every lobby/engagement index atomically.
+    server.agents.capabilities.partyquest.kpq.AgentKpqTestService.MISSING_MEMBER_TIMEOUT_MS: '30000'
+    # Values: 1000-30000 milliseconds. Recommended: 3000. A failed repair remains in the owned lobby and is retried later.
+    # Purpose: Prevents a damaged test party from hammering party-create/join operations on every half-second lobby poll.
+    # Technical: Repair only touches KPQ-owned parties; human-owned external parties are never mutated by this fallback.
+    server.agents.capabilities.partyquest.kpq.AgentKpqTestService.PARTY_REPAIR_RETRY_MS: '3000'
+    # Values: 1000-30000 milliseconds. Recommended: 3000. Recovery retains PARTY_QUEST ownership between attempts, so no Agent becomes controller-less.
+    # Purpose: Spaces attempts to return a completed or failed production PQ participant to an ordinary TownLife system at the Kerning exit.
+    # Technical: The parent engagement closes only after every live Agent reports an active fallback system.
+    server.agents.capabilities.partyquest.AgentPartyQuestLifecycleRuntime.RECOVERY_RETRY_MS: '3000'
+    # Values: 5000-300000 milliseconds. Recommended: 30000. This emits diagnostics but deliberately does not abandon ownership.
+    # Purpose: Reports a prolonged post-PQ system handoff while keeping the Agent reachable inside the party-quest recovery state.
+    # Technical: A warning does not force-release the engagement because that would recreate the controller-less gap this guard prevents.
+    server.agents.capabilities.partyquest.AgentPartyQuestLifecycleRuntime.RECOVERY_WARN_MS: '30000'
+    # Values: 8-512 messages. Recommended: 64. Increase only when a longer in-memory failure trail is needed during soak testing.
+    # Purpose: Bounds the diagnostic history retained by each live party-quest engagement so repeated recovery failures cannot grow memory indefinitely.
+    # Technical: Consecutive duplicate messages are collapsed first; once this cap is reached, the oldest entry is discarded before appending a new one.
+    server.agents.capabilities.partyquest.AgentPartyQuestEngagement.MAX_DIAGNOSTICS: '64'
+    # Values: 60000-1800000 milliseconds. Recommended: 900000. This must remain below the authoritative thirty-minute event timer.
+    # Purpose: Terminates a KPQ phase that has made no meaningful progress, preventing an active event session from retaining Agents forever.
+    # Technical: Stage-specific blockers use shorter local deadlines; this aggregate deadline is the final safety net and Stage 1 exits through normal cleanup.
+    server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.KPQ_PHASE_TIMEOUT_MS: '900000'
+    # Values: 30000-150000 milliseconds. Recommended: 90000. Keep this comfortably below the server's three-minute item expiry.
+    # Purpose: Periodically assigns one Stage 1 coupon collector to prioritize coupons already lying on the map before those drops expire.
+    # Technical: Nearby passive pickup continues normally between sweeps; one unfinished collector explicitly loots while every other Agent keeps fighting, then the next collector takes over if floor coupons remain.
+    server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.COUPON_SWEEP_INTERVAL_MS: '90000'
+    # Values: 5000-60000 milliseconds. Recommended: 30000. Increase only if Stage 1 traversal regularly needs more time to reach visible coupon drops.
+    # Purpose: Prevents a periodic collection pass from indefinitely occupying one collector with an unreachable drop before rotating to the next unfinished collector.
+    # Technical: This is a per-collector limit inside the active map-wide rotation; unassigned collectors keep ordinary combat and nearby passive pickup.
+    server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.COUPON_SWEEP_MAXIMUM_MS: '30000'
+    # Values: 2000-30000 milliseconds. Recommended: 5000. Keep this long enough for a newly dropped pass to become pickup-eligible and appear in the next coordinator ticks.
+    # Purpose: Allows Stage 1 to recover when every non-leader completed their Cloto exchange but a pass vanished before reaching the leader.
+    # Technical: Recovery is blocked while any pass remains visible on the map; after this grace period the coordinator opens Stage 1 and writes a diagnostic warning.
+    server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.MISSING_PASS_GRACE_MS: '5000'
+    # Values: 3000-60000 milliseconds. Recommended: 10000. Keep this shorter than LOCAL_RECOVERY_TIMEOUT_MS so a complete party cannot remain stranded behind leader navigation.
+    # Purpose: Submits a complete Stage 1 pass set through Cloto if the Agent leader cannot finish its ordinary walk to the NPC.
+    # Technical: The ordinary navigation and NPC path runs first; the fallback uses the same authoritative Cloto script and emits a diagnostic if the stage still does not clear.
+    server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.STAGE1_SUBMIT_RECOVERY_MS: '10000'
+    # Values: 10000-180000 milliseconds. Recommended: 45000. Keep this below the overall KPQ phase timeout so local recovery runs first.
+    # Purpose: Bounds one stuck navigation, NPC, inventory, or transition operation before KPQ applies its targeted recovery or terminates safely.
+    # Technical: AgentKpqCoordinator records blocker-specific timestamps and compares them with this duration independently of ordinary stage progress.
+    server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.LOCAL_RECOVERY_TIMEOUT_MS: '45000'
+    # Values: 250-10000 milliseconds. Recommended: 1500. Lower values retry faster but increase NPC and portal script traffic.
+    # Purpose: Spaces repeated authoritative NPC and portal requests while an Agent waits for a transition receipt or event-state change.
+    # Technical: AgentKpqCoordinator stores a per-member next-retry timestamp; this delay never changes player interactions or event timers.
+    server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.INTERACTION_RETRY_MS: '1500'
+    # Values: 0-10000 milliseconds. Recommended: 2000. Set zero only when instant Agent puzzle checks are intentionally desired.
+    # Purpose: Adds a short realistic pause after a puzzle formation becomes stable before an Agent event leader asks Cloto to validate it.
+    # Technical: The delay begins only after formation stability and fidget completion; human leaders retain full manual control of their click timing.
+    server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.PUZZLE_CHECK_DELAY_MS: '2000'
+    # Values: 0-5000 milliseconds. Recommended: 650. Keep this below the base delay unless zero-duration checks are acceptable.
+    # Purpose: Varies Agent-led puzzle check timing so repeated parties do not all contact Cloto at one identical mechanical interval.
+    # Technical: AgentKpqCoordinator derives a deterministic signed offset from the session seed, stage, and attempt and clamps the final delay at zero.
+    server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.PUZZLE_CHECK_VARIANCE_MS: '650'
+    # Values: non-negative ratio. Recommended: 1. Ratios need not sum to one; 1/1/1 is uniform.
+    # Purpose: Weights a human puzzle participant toward the least-moving deterministic role.
+    # Technical: Roles are sampled without replacement for multiple humans; zero disables this rank until positive ranks are occupied.
+    server.agents.capabilities.partyquest.kpq.AgentKpqPuzzleParticipantOrder.HUMAN_LEAST_MOVEMENT_WEIGHT: '1'
+    # Values: non-negative ratio. Recommended: 1. Use with the least- and most-moving values as one ratio vector.
+    # Purpose: Weights a human puzzle participant toward the middle-moving deterministic role.
+    # Technical: The implementation normalizes the available ranks at selection time, so absolute magnitude is irrelevant.
+    server.agents.capabilities.partyquest.kpq.AgentKpqPuzzleParticipantOrder.HUMAN_MIDDLE_MOVEMENT_WEIGHT: '1'
+    # Values: non-negative ratio. Recommended: 1. Set zero when humans should avoid the most frequently moving role.
+    # Purpose: Weights a human puzzle participant toward the most-moving deterministic role.
+    # Technical: With multiple humans, occupied roles are removed and the next human samples the remaining ratio.
+    server.agents.capabilities.partyquest.kpq.AgentKpqPuzzleParticipantOrder.HUMAN_MOST_MOVEMENT_WEIGHT: '1'
+    # Values: 2000-30000 milliseconds. Recommended: 7000. Keep enough time for newly spawned passes to become visible and pickup-eligible.
+    # Purpose: Allows Stage 5 to recover when every monster is dead but one or more required passes have disappeared from inventories and the floor.
+    # Technical: Recovery requires zero live Stage 5 monsters and zero visible floor passes, then records a structured warning before clearing the stage.
+    server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.STAGE5_MISSING_PASS_GRACE_MS: '7000'
+    # Values: 0-30000 milliseconds. Recommended: 7000. Set zero only for Agent-only servers that do not require a human-first loot window.
+    # Purpose: Gives human party members exclusive first opportunity to pick up Squishy Shoes before the assigned Agent attempts the drop.
+    # Technical: The timer begins when the live shoe drop is first observed; other Agents may advance while only the selected shoe collector waits.
+    server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.SQUISHY_SHOES_HUMAN_PRIORITY_MS: '7000'
+    # Values: 1000-15000 milliseconds. Recommended: 3000. Keep this longer than normal foreground ticks but short enough for prompt failover.
+    # Purpose: Allows another live Agent member to take over the party coordinator when the current coordinator dies, disconnects, or stops ticking.
+    # Technical: AgentKpqSession grants one heartbeat lease at a time and deterministically updates the formation caller when an expired lease transfers.
+    server.agents.capabilities.partyquest.kpq.AgentKpqRuntime.COORDINATOR_LEASE_MS: '3000'
+    # Values: 250-5000 milliseconds. Recommended: 1000. Lower values detect lost coordinators faster but perform more registry scans.
+    # Purpose: Runs an independent KPQ liveness pass so event cleanup and coordinator failover never depend exclusively on one Agent's normal tick.
+    # Technical: AgentKpqWatchdogRuntime scans active KPQ sessions, renews expired coordinator work through a live member, or invokes idempotent termination.
+    server.agents.capabilities.partyquest.kpq.AgentKpqWatchdogRuntime.PERIOD_MS: '1000'
+    # Values: 1-8 lobbies per channel. Recommended: 2 during initial soak testing; the generic event manager rejects values above eight.
+    # Purpose: Controls how many isolated Kerning PQ event instances may coexist on one channel for human and autonomous parties combined.
+    # Technical: KerningPQ.js reads AgentKpqLobbyPolicy at event initialization and each EventInstanceManager creates a private MapManager for isolation.
+    server.agents.capabilities.partyquest.kpq.AgentKpqLobbyPolicy.MAX_LOBBIES: '2'
+    # Values: 0-16 parties. Recommended: 2 during initial rollout. Zero disables new background admissions without disabling manual mixed KPQ.
+    # Purpose: Caps exact off-screen autonomous KPQ parties across all channels so background combat and physics cannot consume unbounded server work.
+    # Technical: AgentKpqLobbyPolicy counts registered BACKGROUND_POPULATION sessions before the population director reserves and admits another party.
+    server.agents.capabilities.partyquest.kpq.AgentKpqLobbyPolicy.MAX_BACKGROUND_TOTAL: '2'
+    # Values: 0-7 parties per channel. Recommended: 1 while two total lobbies are configured and one remains reserved for human entry.
+    # Purpose: Limits autonomous KPQ concentration on an individual channel while still allowing the managed Agent population to participate.
+    # Technical: The effective limit is the lesser of this value and MAX_LOBBIES minus HUMAN_RESERVED_LOBBIES, so reservations cannot be overdrawn.
+    server.agents.capabilities.partyquest.kpq.AgentKpqLobbyPolicy.MAX_BACKGROUND_PER_CHANNEL: '1'
+    # Values: 0-7 lobbies per channel. Recommended: 1. Keep this below MAX_LOBBIES whenever human players should always retain entry capacity.
+    # Purpose: Reserves Kerning PQ lobby capacity from autonomous population admission so background Agents cannot monopolize every instance.
+    # Technical: AgentKpqLobbyPolicy subtracts this count before evaluating the per-channel background capacity; ordinary event entry remains authoritative.
+    server.agents.capabilities.partyquest.kpq.AgentKpqLobbyPolicy.HUMAN_RESERVED_LOBBIES: '1'
+    # Values: true or false. Recommended: true after focused KPQ tests pass; false disables only autonomous population selection.
+    # Purpose: Enables managed population Agents to form scarce background KPQ parties while retaining all manual and GM observation functionality.
+    # Technical: AgentKpqPopulationRuntime selects only IDs in the enabled managed population registry and always uses exact BACKGROUND_ACTIVE simulation.
+    server.agents.capabilities.partyquest.kpq.AgentKpqPopulationRuntime.ENABLED: 'true'
+    # Values: 5000-300000 milliseconds. Recommended: 60000. Lower values fill newly free background slots faster but scan the live roster more often.
+    # Purpose: Controls how frequently the autonomous KPQ director looks for a complete eligible managed-Agent party and available channel capacity.
+    # Technical: The self-contained director runs on AgentSchedulerRuntime and serializes sweeps so party and lobby reservations cannot overlap.
+    server.agents.capabilities.partyquest.kpq.AgentKpqPopulationRuntime.SWEEP_MS: '60000'
+    # Values: 3-4 members. Recommended: 4 for puzzle reliability and mixed-party parity with the primary observation scenario.
+    # Purpose: Chooses the party size used only for autonomous managed-population KPQ formation; manual and adopted parties keep their actual size.
+    # Technical: AgentKpqPopulationRuntime clamps this value to the local KerningPQ script's supported three-to-four-member admission range.
+    server.agents.capabilities.partyquest.kpq.AgentKpqPopulationRuntime.PARTY_SIZE: '4'
+    # Values: 0-3600000 milliseconds. Recommended: 900000. Higher values rotate KPQ participation across more managed Agents between repeat runs.
+    # Purpose: Prevents the same population Agent from being immediately reselected after completing or failing a background Kerning PQ session.
+    # Technical: The director stores the last successful admission time per character for the process lifetime and filters candidates before party creation.
+    server.agents.capabilities.partyquest.kpq.AgentKpqPopulationRuntime.REENTRY_COOLDOWN_MS: '900000'
+    # Values: 1000-15000 milliseconds. Recommended: 5000 so a gathered party is visibly ready before the Agent leader enters the event.
+    # Purpose: Controls the countdown between all KPQ members gathering near Lakelis and the Agent event leader starting the party quest.
+    # Technical: AgentKpqCoordinator sets one ready-at timestamp after every member passes the gathering check and resets it if anyone leaves the area.
+    server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.PREPARATION_DELAY_MS: '5000'
+    # Values: 8-100 map pixels. Recommended: 24. Higher values permit NPC interaction from farther away while lower values require more exact movement.
+    # Purpose: Defines when an Agent is considered close enough to its varied Cloto or Lakelis approach point to perform the next NPC operation.
+    # Technical: AgentKpqCoordinator compares horizontal and vertical map-pixel deltas after grounding each seeded approach point through the shared gateway.
+    server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.NPC_APPROACH_PX: '24'
+    # Values: 50-300 map pixels. Recommended: 125. Increase only when human members cannot comfortably gather near the Kerning entry NPC.
+    # Purpose: Defines the preparation-area radius accepted for human party members, who are instructed but never moved by the autonomous system.
+    # Technical: AgentKpqCoordinator applies this symmetric map-pixel threshold only to human readiness while Agents use their own varied grounded targets.
+    server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.GATHER_RADIUS_PX: '125'
+    # Values: 0-100 percent. Recommended: 50. This combines independently with any real Stance buff the Agent has.
+    # Purpose: Helps Agent movement remain viable on the narrow, vertically layered first KPQ map without changing HP damage.
+    # Technical: Applies only to registered Agent members while their KPQ session and map are both Stage 1; human players are never affected.
+    server.agents.capabilities.partyquest.kpq.AgentKpqKnockbackResistancePolicy.STAGE_1_RESISTANCE_PERCENT: '50'
+    # Values: 0-100 percent. Recommended: 100. At 100, each non-resisted Stage 1 knockback independently chooses left or right with equal probability.
+    # Purpose: Avoids every Agent reaction moving directly backward on KPQ Stage 1's narrow platforms.
+    # Technical: Applies only to registered Agent members in the Stage 1 map and phase; humans and all other maps retain ordinary source-relative knockback.
+    server.agents.capabilities.partyquest.kpq.AgentKpqKnockbackDirectionPolicy.RANDOM_DIRECTION_PERCENT: '100'
     # Values: 5000-120000 milliseconds. Recommended: 20000. Higher values make three-member parties wait longer for a fourth participant.
     # Purpose: Establishes the earliest point at which a valid three-member KPQ lobby may probabilistically launch instead of waiting for full capacity.
     # Technical: AgentKpqRecruitmentPolicy adds deterministic seed jitter to this lower bound and caps the result with THREE_MEMBER_MAX_WAIT_MS.
@@ -1584,6 +1747,26 @@ tuning:
     # Purpose: Controls how many named fixture Agents the GM-only KPQ observation harness makes available for recruitment and participant replacement.
     # Technical: AgentKpqTestService generates KPQer01 through this inclusive count before deterministic seeded shuffling; production KPQ admission is unaffected.
     server.agents.capabilities.partyquest.kpq.AgentKpqTestService.ROSTER_SIZE: '24'
+    # Values: 0.0-1.0 probability. Recommended: 0.60 for level-25 observation fixtures facing the first KPQ map's Ligators.
+    # Purpose: Requires ordinary observation fixture equipment selection to reach a useful minimum hit chance before accepting the generated build.
+    # Technical: AgentFieldObservationFixtureService compares calculated accuracy against this fraction while evaluating legal equipment combinations.
+    server.agents.field.AgentFieldObservationFixtureService.MINIMUM_ACCEPTABLE_HIT_CHANCE: '0.60'
+    # Values: 0.0-1.0 probability. Recommended: 0.50. Keep this at or below MINIMUM_ACCEPTABLE_HIT_CHANCE to preserve fallback ordering.
+    # Purpose: Allows the KPQ fixture builder to accept a bounded lower-accuracy build when no legal level-25 equipment combination reaches its target.
+    # Technical: AgentFieldObservationFixtureService uses this fraction only after exhaustive preferred equipment scoring and reports the fallback as a warning.
+    server.agents.field.AgentFieldObservationFixtureService.MINIMUM_FALLBACK_HIT_CHANCE: '0.50'
+    # Values: 1-200 character levels. Recommended: 25 for ordinary field observation profiles created by the GM-only fixture system.
+    # Purpose: Caps the level selected by general field observation fixtures so a requested scenario cannot silently create over-levelled test Agents.
+    # Technical: AgentFieldObservationFixtureService clamps requested fixture levels before AP, SP, equipment, accuracy, and combat preparation execute.
+    server.agents.field.AgentFieldObservationFixtureService.OBSERVATION_LEVEL_CAP: '25'
+    # Values: 21-30 character levels. Recommended: 25 to stay centered in the authoritative local Kerning PQ eligibility range.
+    # Purpose: Caps KPQ-specific field observation preparation independently from other fixtures while keeping its legal equipment and build validation shared.
+    # Technical: AgentFieldObservationFixtureService applies this cap to the KPQ target-mob accuracy search and never changes a real human character level.
+    server.agents.field.AgentFieldObservationFixtureService.OBSERVATION_LEVEL_CAP_KPQ: '25'
+    # Values: 21-30 character levels. Recommended: 25 for stable job coverage and legal Kerning PQ entry during GM observation runs.
+    # Purpose: Sets the generated level for KPQer fixture Agents before the shared AP, SP, equipment, projectile, supply, and accuracy preparation runs.
+    # Technical: AgentKpqTestFixtureService passes this value into AgentFieldObservationFixtureService; production population Agents retain their real levels.
+    server.agents.field.AgentKpqTestFixtureService.KPQ_START_LEVEL: '25'
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 1250-5000 around the tested baseline 2500; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how long Agents remain in or wait for destination settle. Higher values make that pause or state last longer; lower values make them continue sooner.
     # Technical: the "portal travel capability" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled.

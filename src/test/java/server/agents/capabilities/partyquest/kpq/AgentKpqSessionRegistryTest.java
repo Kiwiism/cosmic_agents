@@ -7,16 +7,33 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentKpqSessionRegistryTest {
     @Test
+    void partyLeaverIsUnindexedWithoutRemovingTheRemainingSession() {
+        AgentKpqSession session = new AgentKpqSession(
+                AgentKpqSession.Mode.TEST_OBSERVATION, 1L, 999, 3, 1_000L);
+        session.addMember(101, AgentKpqMemberState.MemberType.AGENT);
+        session.addMember(102, AgentKpqMemberState.MemberType.AGENT);
+        session.addMember(103, AgentKpqMemberState.MemberType.AGENT);
+        AgentKpqSessionRegistry.registerComplete(session);
+        try {
+            AgentKpqSessionRegistry.unindexMember(session, 103);
+
+            assertFalse(AgentKpqSessionRegistry.active(103));
+            assertTrue(AgentKpqSessionRegistry.active(101));
+            assertTrue(AgentKpqSessionRegistry.forOperator(999) == session);
+        } finally {
+            AgentKpqSessionRegistry.remove(session);
+        }
+    }
+
+    @Test
     void lootRightsFollowExplicitMemberRoles() {
         AgentKpqSession session = new AgentKpqSession(
                 AgentKpqSession.Mode.TEST_OBSERVATION, 1L, 999, 3, 1_000L);
         session.addMember(101, AgentKpqMemberState.MemberType.AGENT);
         session.addMember(102, AgentKpqMemberState.MemberType.AGENT);
         session.addMember(103, AgentKpqMemberState.MemberType.AGENT);
-        AgentKpqSessionRegistry.register(session);
+        AgentKpqSessionRegistry.registerComplete(session);
         try {
-            session.members().forEach(member -> AgentKpqSessionRegistry.indexMember(
-                    session, member.characterId()));
             session.member(102).setRole(AgentKpqMemberState.Role.COUPON_COLLECTOR);
             session.setSquishyShoesWinnerId(103);
 

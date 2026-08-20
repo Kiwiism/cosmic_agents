@@ -21,7 +21,8 @@ public final class AgentGrindRangedEngagementService {
                          Point aoeRepositionPos,
                          boolean shouldRetreatForRangedSpacing,
                          boolean attackAttemptedInRange,
-                         WeaponType weaponType) {
+                         WeaponType weaponType,
+                         AgentAttackRoute navigationAttackRoute) {
     }
 
     public record Hooks(WeaponTypeResolver weaponTypeResolver,
@@ -151,6 +152,13 @@ public final class AgentGrindRangedEngagementService {
                 weaponType, agentPosition, targetPosition);
         boolean degenAttackDone = AgentDegenerateAttackStateRuntime.degenAttackDone(entry);
         AgentAttackRoute attackRoute = attackPlan != null ? attackPlan.route : AgentAttackRoute.CLOSE;
+        AgentAttackRoute spacingRoute = target != null && target.isBoss()
+                && attackRoute == AgentAttackRoute.CLOSE
+                && hooks.rangedAmmoWeaponPolicy().isRangedAmmoWeapon(weaponType)
+                ? AgentAttackRoute.RANGED : attackRoute;
+        boolean retreatRequested = hooks.retreatPolicy().shouldRetreat(
+                weaponType, spacingRoute, agentPosition, targetPosition);
+        boolean bossSpacingRequired = target != null && target.isBoss() && retreatRequested;
         boolean canFireWithoutDegen = weaponType == null
                 || !hooks.degenerateAttackPolicy().shouldDegenerate(weaponType, agentPosition, targetPosition);
         AgentRangedEngagementPolicy.Decision spacingDecision = AgentRangedEngagementPolicy.decide(
@@ -158,9 +166,9 @@ public final class AgentGrindRangedEngagementService {
                         targetInDegenerateBand,
                         degenAttackDone,
                         rangedPriorityTarget != null,
-                        hooks.retreatPolicy().shouldRetreat(
-                                weaponType, attackRoute, agentPosition, targetPosition),
-                        canFireWithoutDegen));
+                        retreatRequested,
+                        canFireWithoutDegen,
+                        bossSpacingRequired));
         boolean shouldRetreatForRangedSpacing = spacingDecision.retreat();
         boolean attackGateOpen = spacingDecision.attackGateOpen();
         Point crossRegionRetreatPos = shouldRetreatForRangedSpacing
@@ -184,7 +192,7 @@ public final class AgentGrindRangedEngagementService {
                 hooks.fixedArcJumpInitiator().initiate(
                         entry, agent, crowdJumpTarget.x - agentPosition.x);
                 return new Result(true, crowdJumpTarget, null, null,
-                        shouldRetreatForRangedSpacing, false, weaponType);
+                        shouldRetreatForRangedSpacing, false, weaponType, spacingRoute);
             }
         }
 
@@ -216,7 +224,7 @@ public final class AgentGrindRangedEngagementService {
                                     target.getId(), targetPosition,
                                     "holding a reachable firing anchor", System.currentTimeMillis());
                             return new Result(false, firingPosition, firingPosition, aoeRepositionPos,
-                                    shouldRetreatForRangedSpacing, false, weaponType);
+                                    shouldRetreatForRangedSpacing, false, weaponType, spacingRoute);
                         }
                     }
                     AgentCombatPostureRuntime.observe(entry, agent,
@@ -228,7 +236,7 @@ public final class AgentGrindRangedEngagementService {
                             AgentMovementStateRuntime.inAir(entry) ? "airborne committed attack"
                                     : "committed in-range attack", System.currentTimeMillis());
                     return new Result(true, currentMovementTarget, crossRegionRetreatPos, aoeRepositionPos,
-                            shouldRetreatForRangedSpacing, attackAttemptedInRange, weaponType);
+                            shouldRetreatForRangedSpacing, attackAttemptedInRange, weaponType, spacingRoute);
                 }
             } else if (!AgentMovementStateRuntime.inAir(entry)
                     && attackPlan != null
@@ -245,7 +253,7 @@ public final class AgentGrindRangedEngagementService {
                         target.getId(), targetPosition, "jumping into legal attack range",
                         System.currentTimeMillis());
                 return new Result(true, currentMovementTarget, crossRegionRetreatPos, aoeRepositionPos,
-                        shouldRetreatForRangedSpacing, attackAttemptedInRange, weaponType);
+                        shouldRetreatForRangedSpacing, attackAttemptedInRange, weaponType, spacingRoute);
             }
         }
 
@@ -257,7 +265,7 @@ public final class AgentGrindRangedEngagementService {
             hooks.idleOnGround().idle(entry, agent);
             hooks.movementBroadcaster().broadcast(entry);
             return new Result(true, currentMovementTarget, crossRegionRetreatPos, aoeRepositionPos,
-                    shouldRetreatForRangedSpacing, attackAttemptedInRange, weaponType);
+                    shouldRetreatForRangedSpacing, attackAttemptedInRange, weaponType, spacingRoute);
         }
 
         if (aoeRepositionPos != null) {
@@ -268,11 +276,12 @@ public final class AgentGrindRangedEngagementService {
         } else if (shouldRetreatForRangedSpacing || crossRegionRetreatPos != null) {
             AgentCombatPostureRuntime.observe(entry, agent,
                     AgentCombatPostureChangedEvent.Posture.KITING,
-                    target.getId(), targetPosition, "restoring ranged spacing",
+                    target.getId(), targetPosition,
+                    bossSpacingRequired ? "creating boss firing distance" : "restoring ranged spacing",
                     System.currentTimeMillis());
         }
 
         return new Result(false, currentMovementTarget, crossRegionRetreatPos, aoeRepositionPos,
-                shouldRetreatForRangedSpacing, attackAttemptedInRange, weaponType);
+                shouldRetreatForRangedSpacing, attackAttemptedInRange, weaponType, spacingRoute);
     }
 }

@@ -10,6 +10,8 @@ import client.Character;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentKnockbackMovementService;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
+import server.agents.capabilities.partyquest.kpq.AgentKpqKnockbackResistancePolicy;
+import server.agents.capabilities.partyquest.kpq.AgentKpqKnockbackDirectionPolicy;
 import server.agents.capabilities.combat.data.AgentDefenseDataProvider;
 import server.agents.integration.AgentPacketGatewayRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -32,7 +34,9 @@ public final class AgentCombatDamageRuntime {
                 AgentMobKnockbackPolicy.resolveMobHitKnockback(
                         bot.getPosition(), mob.getPosition(), AgentMobPhysicsConfig.cfg.KNOCKBACK_HSPEED,
                         AgentMovementPhysicsConfig.configuredMovementTickMs());
-        applyDamage(entry, bot, dmg, -1, mob.getId(), kb.direction(), kb.airVelX(), config);
+        int airVelX = AgentKpqKnockbackDirectionPolicy.adjustAirVelocityX(bot, kb.airVelX());
+        int direction = airVelX == 0 ? kb.direction() : airVelX < 0 ? 0 : 1;
+        applyDamage(entry, bot, dmg, -1, mob.getId(), direction, airVelX, config);
     }
 
     public static void tickMobDamage(AgentRuntimeEntry entry, Character bot, AgentCombatConfig.Config config,
@@ -110,6 +114,7 @@ public final class AgentCombatDamageRuntime {
                 AgentMovementStateRuntime.climbing(entry),
                 bot.getHp(),
                 bot.getBuffedValue(BuffStat.STANCE),
+                AgentKpqKnockbackResistancePolicy.resistancePercent(bot),
                 ThreadLocalRandom.current().nextFloat())) {
             return;
         }

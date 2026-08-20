@@ -30,6 +30,18 @@ class AgentMobKnockbackPolicyTest {
     }
 
     @Test
+    void shouldCombineStageResistanceWithOrdinaryStance() {
+        assertFalse(AgentMobKnockbackPolicy.shouldApplyMobKnockback(
+                false, 100, null, 50, 0.50f));
+        assertTrue(AgentMobKnockbackPolicy.shouldApplyMobKnockback(
+                false, 100, null, 50, 0.51f));
+        assertFalse(AgentMobKnockbackPolicy.shouldApplyMobKnockback(
+                false, 100, 50, 50, 0.75f));
+        assertTrue(AgentMobKnockbackPolicy.shouldApplyMobKnockback(
+                false, 100, 50, 50, 0.76f));
+    }
+
+    @Test
     void shouldResolveMobHitKnockbackDirectionAndScaledVelocity() {
         AgentMobKnockbackPolicy.MobHitKnockback fromRight =
                 AgentMobKnockbackPolicy.resolveMobHitKnockback(

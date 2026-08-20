@@ -29,6 +29,7 @@ import server.life.Monster;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,15 +46,25 @@ final class AgentFieldObservationFixtureService {
     private static final int THROWING_STAR_ITEM_ID = 2_070_000;
     private static final int BULLET_ITEM_ID = 2_330_000;
     private static final int SNIPER_PILL_ITEM_ID = 2_002_008;
+    private static final int KPQ_ACCURACY_HEADBAND_ITEM_ID = 1_002_014;
+    private static final int KPQ_FISH_SPEAR_ITEM_ID = 1_432_008;
+    private static final int MAPLE_SHIELD_ITEM_ID = 1_092_030;
+    private static final Set<Integer> COMMON_MAGE_DAGGER_SHIELDS = Set.of(1_092_003, 1_092_008);
+    private static final Set<Integer> WARRIOR_SHIELDS = Set.of(1_092_000, 1_092_001, 1_092_005, 1_092_006);
+    private static final Set<Integer> THIEF_WRISTGUARDS = Set.of(1_092_018, 1_092_019, 1_092_020);
     private static final short POWER_ELIXIRS = 2_000;
     private static final short ALL_CURES = 500;
     private static final short SNIPER_PILLS = 100;
     private static final short PROJECTILES = 30_000;
     private static final byte OBSERVATION_USE_SLOTS = 96;
-    private static final double MINIMUM_ACCEPTABLE_HIT_CHANCE = 0.60d;
-    private static final double MINIMUM_FALLBACK_HIT_CHANCE = 0.50d;
-    private static final int OBSERVATION_LEVEL_CAP = 25;
-    private static final int OBSERVATION_LEVEL_CAP_KPQ = 28;
+    private static final double MINIMUM_ACCEPTABLE_HIT_CHANCE = config.AgentTuning.doubleValue(
+            "server.agents.field.AgentFieldObservationFixtureService.MINIMUM_ACCEPTABLE_HIT_CHANCE");
+    private static final double MINIMUM_FALLBACK_HIT_CHANCE = config.AgentTuning.doubleValue(
+            "server.agents.field.AgentFieldObservationFixtureService.MINIMUM_FALLBACK_HIT_CHANCE");
+    private static final int OBSERVATION_LEVEL_CAP = config.AgentTuning.intValue(
+            "server.agents.field.AgentFieldObservationFixtureService.OBSERVATION_LEVEL_CAP");
+    private static final int OBSERVATION_LEVEL_CAP_KPQ = config.AgentTuning.intValue(
+            "server.agents.field.AgentFieldObservationFixtureService.OBSERVATION_LEVEL_CAP_KPQ");
     private static final List<String> CAREERS = List.of(
             "warrior", "bowman", "magician", "thief-claw", "thief-dagger",
             "pirate-gun", "pirate-knuckle");
@@ -64,7 +75,7 @@ final class AgentFieldObservationFixtureService {
 
     static Prepared prepare(AgentRuntimeEntry entry, int level, long seed, long nowMs) throws IOException {
         return prepare(entry, level, Set.<Integer>of(), seed, nowMs, OBSERVATION_LEVEL_CAP,
-                MINIMUM_ACCEPTABLE_HIT_CHANCE, MINIMUM_ACCEPTABLE_HIT_CHANCE);
+                MINIMUM_ACCEPTABLE_HIT_CHANCE, MINIMUM_ACCEPTABLE_HIT_CHANCE, CAREERS, false);
     }
 
     static Prepared prepareForKpq(AgentRuntimeEntry entry, int level, long seed, long nowMs) throws IOException {
@@ -78,13 +89,27 @@ final class AgentFieldObservationFixtureService {
                                   long nowMs)
             throws IOException {
         return prepare(entry, level, allowedMobIds, seed, nowMs, OBSERVATION_LEVEL_CAP_KPQ,
-                MINIMUM_ACCEPTABLE_HIT_CHANCE, MINIMUM_FALLBACK_HIT_CHANCE);
+                MINIMUM_ACCEPTABLE_HIT_CHANCE, MINIMUM_FALLBACK_HIT_CHANCE, CAREERS, true);
+    }
+
+    static Prepared prepareForKpq(AgentRuntimeEntry entry,
+                                  int level,
+                                  Set<Integer> allowedMobIds,
+                                  String career,
+                                  long seed,
+                                  long nowMs)
+            throws IOException {
+        if (!CAREERS.contains(career)) {
+            throw new IllegalArgumentException("unknown observation career: " + career);
+        }
+        return prepare(entry, level, allowedMobIds, seed, nowMs, OBSERVATION_LEVEL_CAP_KPQ,
+                MINIMUM_ACCEPTABLE_HIT_CHANCE, MINIMUM_FALLBACK_HIT_CHANCE, List.of(career), true);
     }
 
     static Prepared prepare(AgentRuntimeEntry entry, int level, Set<Integer> allowedMobIds, long seed, long nowMs)
             throws IOException {
         return prepare(entry, level, allowedMobIds, seed, nowMs, level,
-                MINIMUM_ACCEPTABLE_HIT_CHANCE, MINIMUM_ACCEPTABLE_HIT_CHANCE);
+                MINIMUM_ACCEPTABLE_HIT_CHANCE, MINIMUM_ACCEPTABLE_HIT_CHANCE, CAREERS, false);
     }
 
     private static Prepared prepare(
@@ -95,7 +120,9 @@ final class AgentFieldObservationFixtureService {
             long nowMs,
             int maxLevelCap,
             double minimumHitChance,
-            double fallbackHitChance)
+            double fallbackHitChance,
+            List<String> careers,
+            boolean kpqLoadout)
             throws IOException {
         Character agent = AgentRuntimeIdentityRuntime.bot(entry);
         if (agent == null || level < 15 || level > 28) {
@@ -118,18 +145,21 @@ final class AgentFieldObservationFixtureService {
         ObservationCandidate bestMeetingThreshold = null;
         int cappedMaxLevel = Math.min(maxLevelCap, OBSERVATION_LEVEL_CAP_KPQ);
         ObservationCandidate bestMeetingFallback = null;
-        int startOffset = Math.floorMod(seed, CAREERS.size());
-        for (int index = 0; index < CAREERS.size(); index++) {
-            String career = CAREERS.get((index + startOffset) % CAREERS.size());
+        int startOffset = Math.floorMod(seed, careers.size());
+        for (int index = 0; index < careers.size(); index++) {
+            String career = careers.get((index + startOffset) % careers.size());
             long careerSeed = mix(seed, index);
             ObservationCandidate candidate = evaluateCareer(
                     entry, career, level, cappedMaxLevel, allowed, minimumHitChance,
-                    fallbackHitChance, careerSeed, (index + startOffset));
+                    fallbackHitChance, careerSeed, (index + startOffset), kpqLoadout);
             if (candidate == null) {
                 continue;
             }
-            if (candidate.meetsAccuracyMinimum()) {
-                bestMeetingThreshold = betterCandidate(candidate, bestMeetingThreshold) ? candidate : bestMeetingThreshold;
+            if (candidate.meetsAccuracyMinimum() && bestMeetingThreshold == null) {
+                // Career iteration begins at a seed-selected offset. Keep the first legal build
+                // that meets the target instead of collapsing every KPQ fixture to whichever
+                // career happens to produce the numerically highest hit chance.
+                bestMeetingThreshold = candidate;
             } else if (candidate.minimumHitChance() >= fallbackHitChance) {
                 bestMeetingFallback = betterCandidate(candidate, bestMeetingFallback) ? candidate : bestMeetingFallback;
             }
@@ -144,15 +174,16 @@ final class AgentFieldObservationFixtureService {
                     + Math.round(minimumHitChance * 100) + "% threshold and no fallback setup >= "
             + Math.round(fallbackHitChance * 100) + "%");
         }
-        return finalizeCandidate(entry, selected, nowMs);
+        return finalizeCandidate(entry, selected, nowMs, kpqLoadout);
     }
 
-    private static List<Integer> applyDeterministicEquipmentLoadout(Character agent, long seed, String career) {
+    private static List<Integer> applyDeterministicEquipmentLoadout(
+            Character agent, long seed, String career, boolean kpqLoadout) {
         InventoryGateway inventory = AgentInventoryGatewayRuntime.inventory();
         clearInventory(agent, InventoryType.EQUIP, agent.getInventory(InventoryType.EQUIP).getSlotLimit());
         clearInventory(agent, InventoryType.EQUIPPED, agent.getInventory(InventoryType.EQUIPPED).getSlotLimit());
         Map<String, List<Integer>> candidatesBySlot = new LinkedHashMap<>();
-        for (int itemId : AgentFieldObservationEquipmentRepository.itemIds()) {
+        for (int itemId : equipmentItemIdsForCareer(career)) {
             Equip equip = inventory.getEquipById(itemId);
             if (equip == null || inventory.getEquipLevelRequirement(itemId) > agent.getLevel()
                     || !genderCompatible(agent.getGender(), itemId)
@@ -166,6 +197,9 @@ final class AgentFieldObservationFixtureService {
                 continue;
             }
             String slot = normalizedSlot(inventory.getEquipmentSlot(itemId));
+            if ("Si".equals(slot) && !shieldAllowedForCareer(itemId, career)) {
+                continue;
+            }
             if (!slot.isEmpty()) {
                 candidatesBySlot.computeIfAbsent(slot, ignored -> new ArrayList<>()).add(itemId);
             }
@@ -177,15 +211,17 @@ final class AgentFieldObservationFixtureService {
                 ? List.of("Cp", "MaPn", "So", "Gv", "Ae")
                 : List.of("Cp", "Ma", "Pn", "So", "Gv", "Ae");
         for (String slot : slots) {
-            selectOne(agent, inventory, candidatesBySlot, slot, random, false, selected);
+            selectOne(agent, inventory, candidatesBySlot, slot, random, false,
+                    kpqLoadout ? kpqPreferredEquipmentId(career, slot) : 0, selected);
         }
-        int weaponItemId = selectOne(agent, inventory, candidatesBySlot, "Wp", random, true, selected);
+        int weaponItemId = selectOne(agent, inventory, candidatesBySlot, "Wp", random, true,
+                kpqLoadout ? kpqPreferredEquipmentId(career, "Wp") : 0, selected);
         if (weaponItemId == 0) {
             throw new IllegalStateException("deterministic observation preset has no compatible weapon");
         }
         WeaponType weaponType = inventory.getWeaponType(weaponItemId);
         if (supportsShield(weaponType, inventory.getEquipmentSlot(weaponItemId))) {
-            selectOne(agent, inventory, candidatesBySlot, "Si", random, false, selected);
+            selectOne(agent, inventory, candidatesBySlot, "Si", random, false, 0, selected);
         }
         equipSelectedLoadout(agent, inventory, selected);
         Item weapon = agent.getInventory(InventoryType.EQUIPPED).getItem((short) -11);
@@ -199,7 +235,8 @@ final class AgentFieldObservationFixtureService {
         return List.copyOf(selected);
     }
 
-    private static Prepared finalizeCandidate(AgentRuntimeEntry entry, ObservationCandidate selected, long nowMs)
+    private static Prepared finalizeCandidate(
+            AgentRuntimeEntry entry, ObservationCandidate selected, long nowMs, boolean kpqLoadout)
             throws IOException {
         Character agent = AgentRuntimeIdentityRuntime.bot(entry);
         if (agent == null) {
@@ -221,16 +258,25 @@ final class AgentFieldObservationFixtureService {
         AgentApBuildProfileService.autoAssign(entry, agent);
         AgentSpBuildProfileService.autoAssign(entry, agent);
 
-        List<Integer> equipment = applyDeterministicEquipmentLoadout(agent, selected.loadoutSeed(), selected.career());
+        List<Integer> equipment = applyDeterministicEquipmentLoadout(
+                agent, selected.loadoutSeed(), selected.career(), kpqLoadout);
+        Item equippedWeaponItem = agent.getInventory(InventoryType.EQUIPPED).getItem((short) -11);
+        int weaponItemId = equippedWeaponItem == null ? 0 : equippedWeaponItem.getItemId();
+        int weaponAttack = equippedWeaponItem instanceof Equip equip
+                ? Math.max(equip.getWatk(), equip.getMatk()) : 0;
         provisionTwoHourSupplies(agent);
         if (selected.sniperPillsNeeded() >= 0 && selected.sniperPillsNeeded() <= SNIPER_PILLS) {
             applySniperPills(agent, selected.sniperPillsNeeded());
         }
+        int remainingAp = Math.max(0, agent.getRemainingAp());
+        int[] remainingSps = agent.getRemainingSps().clone();
         agent.healHpMp();
         agent.equipChanged();
         AgentCharacterGatewayRuntime.characters().save(agent, false);
-        return new Prepared(agent.getName(), selected.level(), bundle.bundleId(), bundle.apProfileId(),
-                bundle.spProfileId(), equipment, suppliedProjectile(agent), selected.minimumHitChance());
+        return new Prepared(agent.getName(), selected.level(), selected.career(), bundle.bundleId(), bundle.apProfileId(),
+                bundle.spProfileId(), equipment, suppliedProjectile(agent), selected.minimumHitChance(),
+                remainingAp == 0 && Arrays.stream(remainingSps).allMatch(sp -> sp <= 0),
+                remainingAp, remainingSps, weaponItemId, weaponAttack);
     }
 
     private static ObservationCandidate evaluateCareer(
@@ -242,7 +288,8 @@ final class AgentFieldObservationFixtureService {
             double minimumHitChanceThreshold,
             double fallbackHitChanceThreshold,
             long seed,
-            int careerOrder) throws IOException {
+            int careerOrder,
+            boolean kpqLoadout) throws IOException {
         Character agent = AgentRuntimeIdentityRuntime.bot(entry);
         if (agent == null) {
             throw new IllegalArgumentException("a spawned Agent is required");
@@ -269,7 +316,7 @@ final class AgentFieldObservationFixtureService {
 
             long loadoutSeed = mix(seed, candidateLevel);
             try {
-                applyDeterministicEquipmentLoadout(agent, loadoutSeed, career);
+                applyDeterministicEquipmentLoadout(agent, loadoutSeed, career, kpqLoadout);
             } catch (IllegalStateException ignored) {
                 continue;
             }
@@ -354,16 +401,19 @@ final class AgentFieldObservationFixtureService {
                                  String slot,
                                  SplittableRandom random,
                                  boolean preferAccuracy,
+                                 int preferredItemId,
                                  List<Integer> selected) {
         List<Integer> candidates = candidatesBySlot.getOrDefault(slot, List.of());
         if (candidates.isEmpty()) {
             return 0;
         }
         List<Integer> sortedCandidates = candidates.stream()
-                .sorted(preferAccuracy ? candidateAccuracyComparator(inventory) : Comparator.naturalOrder())
+                .sorted(preferAccuracy ? candidateWeaponComparator(inventory) : Comparator.naturalOrder())
                 .toList();
         int itemId;
-        if (preferAccuracy) {
+        if (preferredItemId > 0 && candidates.contains(preferredItemId)) {
+            itemId = preferredItemId;
+        } else if (preferAccuracy) {
             itemId = sortedCandidates.get(0);
         } else {
             itemId = sortedCandidates.get(random.nextInt(sortedCandidates.size()));
@@ -375,11 +425,50 @@ final class AgentFieldObservationFixtureService {
         return itemId;
     }
 
-    private static Comparator<Integer> candidateAccuracyComparator(InventoryGateway inventory) {
+    static int kpqPreferredEquipmentId(String career, String slot) {
+        if ("warrior".equals(career) && "Cp".equals(slot)) {
+            return KPQ_ACCURACY_HEADBAND_ITEM_ID;
+        }
+        if (("warrior".equals(career) || "pirate-knuckle".equals(career)) && "Wp".equals(slot)) {
+            return KPQ_FISH_SPEAR_ITEM_ID;
+        }
+        return 0;
+    }
+
+    private static List<Integer> equipmentItemIdsForCareer(String career) {
+        if (!"thief-dagger".equals(career)) {
+            return AgentFieldObservationEquipmentRepository.itemIds();
+        }
+        return java.util.stream.Stream.concat(
+                        AgentFieldObservationEquipmentRepository.itemIds().stream(),
+                        THIEF_WRISTGUARDS.stream())
+                .distinct().toList();
+    }
+
+    static boolean shieldAllowedForCareer(int itemId, String career) {
+        if (itemId == MAPLE_SHIELD_ITEM_ID) {
+            return false;
+        }
+        return switch (career) {
+            case "magician" -> COMMON_MAGE_DAGGER_SHIELDS.contains(itemId);
+            case "thief-dagger" -> COMMON_MAGE_DAGGER_SHIELDS.contains(itemId)
+                    || THIEF_WRISTGUARDS.contains(itemId);
+            case "warrior" -> WARRIOR_SHIELDS.contains(itemId);
+            default -> false;
+        };
+    }
+
+    static Comparator<Integer> candidateWeaponComparator(InventoryGateway inventory) {
         return (left, right) -> {
             int leftAcc = weaponOrEquipAccuracy(inventory, left);
             int rightAcc = weaponOrEquipAccuracy(inventory, right);
             int sort = Integer.compare(rightAcc, leftAcc);
+            if (sort != 0) {
+                return sort;
+            }
+            int leftPower = weaponOrEquipPower(inventory, left);
+            int rightPower = weaponOrEquipPower(inventory, right);
+            sort = Integer.compare(rightPower, leftPower);
             if (sort != 0) {
                 return sort;
             }
@@ -390,6 +479,11 @@ final class AgentFieldObservationFixtureService {
     private static int weaponOrEquipAccuracy(InventoryGateway inventory, int itemId) {
         Equip equip = inventory.getEquipById(itemId);
         return equip == null ? 0 : equip.getAcc();
+    }
+
+    private static int weaponOrEquipPower(InventoryGateway inventory, int itemId) {
+        Equip equip = inventory.getEquipById(itemId);
+        return equip == null ? 0 : Math.max(equip.getWatk(), equip.getMatk());
     }
 
     private static int sniperPillBonus() {
@@ -408,11 +502,9 @@ final class AgentFieldObservationFixtureService {
 
     private static int requiredSniperPills(Character agent, Set<Integer> allowedMobIds, int bonusPerPill,
                                            double minimumHitChance) {
-        for (int pills = 0; pills <= SNIPER_PILLS; pills++) {
-            if (minimumHitChance(agent, allowedMobIds, bonusPerPill * pills) >= minimumHitChance) {
-                return pills;
-            }
-        }
+        if (minimumHitChance(agent, allowedMobIds, 0) >= minimumHitChance) return 0;
+        if (bonusPerPill > 0
+                && minimumHitChance(agent, allowedMobIds, bonusPerPill) >= minimumHitChance) return 1;
         return Integer.MAX_VALUE;
     }
 
@@ -508,14 +600,17 @@ final class AgentFieldObservationFixtureService {
         };
     }
 
-    private static boolean weaponCompatible(Character agent, WeaponType weaponType, String career) {
+    static boolean weaponCompatible(Character agent, WeaponType weaponType, String career) {
         if (agent.getJob() != Job.WARRIOR) {
             if (AgentEquipmentService.isWeaponCompatible(agent, weaponType)) {
                 return true;
             }
+            // The level-20 Fish Spear is an all-job accuracy weapon. The KPQ knuckle
+            // fixture uses weapon-neutral Somersault Kick, so retaining this narrow
+            // career exception is both legal and avoids inventing stacked pill buffs.
             if ("pirate-knuckle".equals(career)
                     && switch (weaponType) {
-                        case SPEAR_STAB, SPEAR_SWING, POLE_ARM_STAB, POLE_ARM_SWING -> true;
+                        case SPEAR_STAB, SPEAR_SWING -> true;
                         default -> false;
                     }) {
                 return true;
@@ -556,10 +651,13 @@ final class AgentFieldObservationFixtureService {
                                        double minimumHitChance, boolean meetsAccuracyMinimum, int careerOrder) {
     }
 
-    record Prepared(String name, int level, String bundleId, String apProfileId, String spProfileId,
-                    List<Integer> equipmentItemIds, int projectileItemId, double minimumHitChance) {
+    record Prepared(String name, int level, String career, String bundleId, String apProfileId, String spProfileId,
+                    List<Integer> equipmentItemIds, int projectileItemId, double minimumHitChance,
+                    boolean completeBuild, int remainingAp, int[] remainingSps,
+                    int weaponItemId, int weaponAttack) {
         Prepared {
             equipmentItemIds = List.copyOf(equipmentItemIds);
+            remainingSps = remainingSps == null ? new int[0] : remainingSps.clone();
         }
     }
 }

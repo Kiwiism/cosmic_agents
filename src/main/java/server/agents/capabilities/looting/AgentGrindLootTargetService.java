@@ -48,6 +48,9 @@ public final class AgentGrindLootTargetService {
         if (!runAiTick || AgentPatrolStateRuntime.hasPatrolRegion(entry)) {
             return;
         }
+        if (AgentGrindLootStateRuntime.hasObjectiveLootTarget(entry)) {
+            return;
+        }
 
         long nowMs = System.currentTimeMillis();
         AgentPostKillLootState postKillState =

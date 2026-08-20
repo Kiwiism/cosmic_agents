@@ -9,7 +9,8 @@ public final class AgentRangedEngagementPolicy {
                         boolean degenerateAttackAlreadyCommitted,
                         boolean priorityTargetPresent,
                         boolean retreatRequested,
-                        boolean canFireWithoutDegenerateAttack) {
+                        boolean canFireWithoutDegenerateAttack,
+                        boolean bossSpacingRequired) {
     }
 
     public record Decision(boolean allowOneDegenerateAttack,
@@ -20,12 +21,13 @@ public final class AgentRangedEngagementPolicy {
     public static Decision decide(Input input) {
         boolean allowOneDegenerateAttack = input.targetInDegenerateBand()
                 && !input.degenerateAttackAlreadyCommitted()
-                && !input.priorityTargetPresent();
-        boolean retreat = input.degenerateAttackAlreadyCommitted()
+                && !input.priorityTargetPresent()
+                && !input.bossSpacingRequired();
+        boolean retreat = input.bossSpacingRequired()
+                || input.degenerateAttackAlreadyCommitted()
                 || (input.retreatRequested() && !allowOneDegenerateAttack);
-        boolean attackGateOpen = !retreat
-                || input.canFireWithoutDegenerateAttack()
-                || allowOneDegenerateAttack;
+        boolean attackGateOpen = !input.bossSpacingRequired()
+                && (!retreat || input.canFireWithoutDegenerateAttack() || allowOneDegenerateAttack);
         return new Decision(allowOneDegenerateAttack, retreat, attackGateOpen);
     }
 }

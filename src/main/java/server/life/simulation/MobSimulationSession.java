@@ -97,7 +97,8 @@ public final class MobSimulationSession {
         if (foothold != null) {
             double ground = foothold.groundY(position.x);
             boolean grounded = mode == PhysicsMode.NORMAL
-                    && Math.abs(ground - position.y) <= GROUNDED_TOLERANCE_PX;
+                    && (Math.abs(ground - position.y) <= GROUNDED_TOLERANCE_PX
+                    || reportsGroundedSupport(movementSnapshot, foothold));
             body.setFoothold(foothold.id(), foothold.slope(), foothold.layer());
             body.setGrounded(grounded);
             body.setGroundBelow(ground);
@@ -255,6 +256,15 @@ public final class MobSimulationSession {
         progressAnchorX = body.x();
         nextStuckDecisionNanos = stepTimeNanos + stuckWindowNanos();
         immediatePublication = true;
+    }
+
+    private static boolean reportsGroundedSupport(
+            MobMovementSnapshot snapshot, FootholdSegment foothold) {
+        if (snapshot == null || foothold == null || snapshot.footholdId() != foothold.id()) {
+            return false;
+        }
+        int stance = snapshot.stance() & 0xff;
+        return stance == 0 || stance == 1 || stance == 4 || stance == 5;
     }
 
     void afterStep(PhysicsStepResult result) {

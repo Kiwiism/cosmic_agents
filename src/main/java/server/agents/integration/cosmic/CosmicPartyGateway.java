@@ -1,12 +1,14 @@
 package server.agents.integration.cosmic;
 
 import client.Character;
+import net.server.coordinator.world.InviteCoordinator;
 import net.server.world.Party;
 import net.server.world.PartyCharacter;
 import net.server.world.PartyOperation;
 import server.agents.integration.AgentPartyMemberSnapshot;
 import server.agents.integration.AgentPartySnapshot;
 import server.agents.integration.PartyGateway;
+import tools.PacketCreator;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,6 +36,21 @@ public final class CosmicPartyGateway implements PartyGateway {
     }
 
     @Override
+    public boolean invitePartyMember(Character leader, Character invitee) {
+        Party party = leader == null ? null : leader.getParty();
+        if (party == null || invitee == null || invitee.getParty() != null
+                || party.getMembers().size() >= 6) {
+            return false;
+        }
+        if (!InviteCoordinator.createInvite(
+                InviteCoordinator.InviteType.PARTY, leader, party.getId(), invitee.getId())) {
+            return false;
+        }
+        invitee.sendPacket(PacketCreator.partyInvite(leader));
+        return true;
+    }
+
+    @Override
     public void publishAgentOnline(Character agent, int partyId) {
         PartyCharacter partyCharacter = new PartyCharacter(agent);
         partyCharacter.setChannel(agent.getClient().getChannel());
@@ -58,9 +75,10 @@ public final class CosmicPartyGateway implements PartyGateway {
             return null;
         }
         List<AgentPartyMemberSnapshot> members = new ArrayList<>();
+        int leaderId = party.getLeaderId();
         for (PartyCharacter member : party.getMembers()) {
             members.add(member == null ? null : new AgentPartyMemberSnapshot(
-                    member.getId(), member.getName(), member.isLeader(), member.getMapId()));
+                    member.getId(), member.getName(), member.getId() == leaderId, member.getMapId()));
         }
         return new AgentPartySnapshot(party.getId(), Collections.unmodifiableList(members));
     }

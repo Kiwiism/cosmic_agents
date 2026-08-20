@@ -41,8 +41,11 @@ public final class AgentCombatAttackRuntime {
                         AgentCombatCooldownStateRuntime.hasAttackCooldown(entry),
                         AgentAmmoStateRuntime.noAmmo(entry) && attackPlan.route == AgentAttackRoute.RANGED,
                         attackPlan.skillId,
-                        () -> AgentCombatSkillUsePolicy.canPaySkillCost(
-                                bot, attackPlan.skillId, attackPlan.skillLevel),
+                        () -> AgentCombatWeaponPolicy.canUseAttackSkillWithWeapon(
+                                        attackPlan.skillId,
+                                        AgentAttackExecutionProvider.getEquippedWeaponType(bot))
+                                && AgentCombatSkillUsePolicy.canPaySkillCost(
+                                        bot, attackPlan.skillId, attackPlan.skillLevel),
                         () -> entry != null && attackPlan != null && AgentCombatRangePolicy.canUseAttackPlanNow(
                                 AgentMovementStateRuntime.grounded(entry),
                                 AgentAttackExecutionProvider.getEquippedWeaponType(bot),

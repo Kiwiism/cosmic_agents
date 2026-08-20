@@ -28,6 +28,7 @@
 var status = 0;
 var state;
 var em = null;
+const AgentKpqSessionRegistry = Java.type('server.agents.capabilities.partyquest.kpq.AgentKpqSessionRegistry');
 
 function start() {
     status = -1;
@@ -62,7 +63,11 @@ function action(mode, type, selection) {
                     return;
                 }
 
-                cm.sendSimple("#e#b<Party Quest: 1st Accompaniment>\r\n#k#n" + em.getProperty("party") + "\r\n\r\nHow about you and your party members collectively beating a quest? Here you'll find obstacles and problems where you won't be able to beat it without great teamwork. If you want to try it, please tell the #bleader of your party#k to talk to me.#b\r\n#L0#I want to participate in the party quest.\r\n#L1#I would like to " + (cm.getPlayer().isRecvPartySearchInviteEnabled() ? "disable" : "enable") + " Party Search.\r\n#L2#I would like to hear more details.");
+                var menu = "#e#b<Party Quest: 1st Accompaniment>\r\n#k#n" + em.getProperty("party") + "\r\n\r\nHow about you and your party collectively beating a quest? Here you'll find obstacles and problems where you won't be able to beat it without great teamwork. If you want to try it, please tell the #bleader of your party#k to talk to me.#b\r\n#L0#I want to participate in the party quest.\r\n#L1#I would like to " + (cm.getPlayer().isRecvPartySearchInviteEnabled() ? "disable" : "enable") + " Party Search.\r\n#L2#I would like to hear more details.";
+                if (cm.getPlayer().isGM()) {
+                    menu += "\r\n#L3#[GM] Warp to current KPQ agent leader.";
+                }
+                cm.sendSimple(menu);
             }
         } else if (status == 1) {
             if (state == 1) {
@@ -92,11 +97,40 @@ function action(mode, type, selection) {
                     var psState = cm.getPlayer().toggleRecvPartySearchInvite();
                     cm.sendOk("Your Party Search status is now: #b" + (psState ? "enabled" : "disabled") + "#k. Talk to me whenever you want to change it back.");
                     cm.dispose();
-                } else {
+                } else if (selection == 2) {
                     cm.sendOk("#e#b<Party Quest: 1st Accompaniment>#k#n\r\nYour party must pass through many obstacles and puzzles while traversing the sub-objectives of this Party Quest. Coordinate with your team in order to further advance and defeat the final boss and collect the dropped item in order to access the rewards and bonus stage.");
                     cm.dispose();
+                } else if (selection == 3 && cm.getPlayer().isGM()) {
+                    warpToCurrentKpqLeader();
                 }
             }
         }
     }
+}
+
+function warpToCurrentKpqLeader() {
+    var player = cm.getPlayer();
+    var sessions = AgentKpqSessionRegistry.sessions();
+    for (var i = 0; i < sessions.size(); i++) {
+        var session = sessions.get(i);
+        if (session == null || session.eventLeaderId() <= 0) {
+            continue;
+        }
+        var leader = cm.getClient().getChannelServer().getPlayerStorage().getCharacterById(session.eventLeaderId());
+        if (leader == null) {
+            leader = cm.getClient().getWorldServer().getPlayerStorage().getCharacterById(session.eventLeaderId());
+        }
+        if (leader == null || leader.getClient() == null || leader.getClient().getChannel() != player.getClient().getChannel()) {
+            continue;
+        }
+        if (leader.getEventInstance() == null) {
+            continue;
+        }
+        player.forceChangeMap(leader.getMap(), leader.getMap().findClosestPortal(leader.getPosition()));
+        cm.sendOk("Warping to KPQ agent leader " + leader.getName() + ".");
+        cm.dispose();
+        return;
+    }
+    cm.sendOk("No active KPQ agent leader is currently available on this channel.");
+    cm.dispose();
 }

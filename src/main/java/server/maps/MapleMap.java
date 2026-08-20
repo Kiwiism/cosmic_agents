@@ -2743,6 +2743,9 @@ public class MapleMap {
         Portal closest = null;
         double shortestDistance = Double.POSITIVE_INFINITY;
         for (Portal portal : portals.values()) {
+            if (portal == null || portal.getPosition() == null) {
+                continue;
+            }
             double distance = portal.getPosition().distanceSq(from);
             if (distance < shortestDistance) {
                 closest = portal;

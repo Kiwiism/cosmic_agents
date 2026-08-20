@@ -5813,7 +5813,11 @@ public class Character extends AbstractCharacterObject {
 
     public List<Character> getPartyMembersOnSameMap() {
         List<Character> list = new LinkedList<>();
-        int thisMapHash = this.getMap().hashCode();
+        MapleMap currentMap = this.getMap();
+        if (currentMap == null) {
+            return list;
+        }
+        int thisMapHash = currentMap.hashCode();
 
         prtLock.lock();
         try {

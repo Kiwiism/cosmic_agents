@@ -14,6 +14,8 @@ public interface PartyGateway {
 
     boolean joinAgentParty(Character agent, int partyId);
 
+    boolean invitePartyMember(Character leader, Character invitee);
+
     void publishAgentOnline(Character agent, int partyId);
 
     boolean sendPartyChat(Character speaker, String message);

@@ -141,7 +141,12 @@ public final class AgentCombatBuffRuntime {
     private static boolean castSupportSkill(AgentRuntimeEntry entry, Character bot, Skill skill, StatEffect fx, long now) {
         int skillLevel = bot.getSkillLevel(skill);
         AgentCombatSupportPolicy.SupportCastReadiness readiness =
-                AgentCombatSupportPolicy.supportCastReadiness(skillLevel, bot.isAlive(), () -> fx.canPaySkillCost(bot));
+                AgentCombatSupportPolicy.supportCastReadiness(
+                        skillLevel,
+                        bot.isAlive(),
+                        () -> AgentCombatWeaponPolicy.canUseSkillWithWeapon(
+                                skill.getId(), AgentAttackExecutionProvider.getEquippedWeaponType(bot))
+                                && fx.canPaySkillCost(bot));
         String readinessSummary = readiness.debugSummary(
                 AgentCombatDialogueReporter.combatSkillLabel(skill.getId()));
         if (readinessSummary != null) {
