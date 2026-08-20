@@ -62,4 +62,17 @@ class AgentKpqIsolationTest {
         assertTrue(npc.contains("cm.gainItem(4001008, -heldPasses)"));
         assertTrue(event.contains("var itemSet = [4001007, 4001008]"));
     }
+
+    @Test
+    void clotoLetsOnlyGmSixObserversFollowAfterStageFiveWithoutAReward() throws Exception {
+        String npc = Files.readString(Path.of("scripts/npc/9020001.js"));
+
+        assertTrue(npc.contains("function canGmObserverFollowThrough"));
+        assertTrue(npc.contains("player.gmLevel() >= 6"));
+        assertTrue(npc.contains("!isLivePartyMember(eim, player)"));
+        assertTrue(npc.contains("player.getMapId() == 103000804"));
+        assertTrue(npc.contains("eim.getProperty(\"5stageclear\") != null"));
+        assertTrue(npc.contains("if (canGmObserverFollowThrough(eim, cm.getPlayer())) {\n"
+                + "                cm.warp(103000805, \"st00\");"));
+    }
 }

@@ -73,6 +73,13 @@ function isLivePartyMember(eim, player) {
         && player.getPartyId() == eventLeader.getPartyId();
 }
 
+function canGmObserverFollowThrough(eim, player) {
+    return eim != null && player != null && player.gmLevel() >= 6
+        && !isLivePartyMember(eim, player)
+        && player.getMapId() == 103000804
+        && eim.getProperty("5stageclear") != null;
+}
+
 function rectangleStages(eim, property, areaCombos, areaRects) {
     var c = eim.getProperty(property);
     if (c == null) {
@@ -135,8 +142,12 @@ function action(mode, type, selection) {
         }
 
         if (status == 0 && !isLivePartyMember(eim, cm.getPlayer())) {
-            cm.sendOk("You may observe this party quest, but only current party members can participate or claim rewards.");
-            cm.dispose();
+            if (canGmObserverFollowThrough(eim, cm.getPlayer())) {
+                cm.sendYesNo("Stage 5 is clear. Would you like to follow the party into the final reward area as an observer? You will not receive a party quest reward.");
+            } else {
+                cm.sendOk("You may observe this party quest, but only current party members can participate or claim rewards.");
+                cm.dispose();
+            }
             return;
         }
 
@@ -293,7 +304,9 @@ function action(mode, type, selection) {
                 cm.dispose();
             }
         } else if (status == 1) {
-            if (!eim.giveEventReward(cm.getPlayer())) {
+            if (canGmObserverFollowThrough(eim, cm.getPlayer())) {
+                cm.warp(103000805, "st00");
+            } else if (!eim.giveEventReward(cm.getPlayer())) {
                 cm.sendNext("Please make room on your inventory first!");
             } else {
                 cm.warp(103000805, "st00");
