@@ -2,11 +2,15 @@ package server.agents.capabilities.partyquest.kpq;
 
 import client.Character;
 import scripting.event.EventInstanceManager;
+import server.agents.capabilities.movement.AgentMovementPoseService;
+import server.agents.capabilities.movement.AgentMovementStateResetService;
 import server.agents.integration.AgentMapGatewayRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.maps.MapleMap;
+
+import java.awt.Point;
 
 /** GM-test-only stage bootstrap. Never used by production KPQ sessions. */
 final class AgentKpqCheckpointService {
@@ -36,7 +40,14 @@ final class AgentKpqCheckpointService {
         for (AgentKpqMemberState member : session.members()) {
             AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(member.characterId());
             Character agent = entry == null ? null : AgentRuntimeIdentityRuntime.bot(entry);
-            if (agent != null) AgentMapGatewayRuntime.map().changeMap(agent, target, spawn);
+            if (agent != null) {
+                AgentMapGatewayRuntime.map().changeMap(agent, target, spawn);
+                // Direct checkpoint warps do not traverse a portal, so synchronize the
+                // Agent-owned physics pose explicitly. Otherwise the next physics tick can
+                // restore the Stage 1 coordinates on this map before normal recovery catches it.
+                AgentMovementPoseService.teleportTo(entry, agent, new Point(agent.getPosition()));
+                AgentMovementStateResetService.resetEntryStateAfterTeleport(entry);
+            }
         }
         session.transition(switch (stage) {
             case 2 -> AgentKpqSession.Phase.STAGE_2;

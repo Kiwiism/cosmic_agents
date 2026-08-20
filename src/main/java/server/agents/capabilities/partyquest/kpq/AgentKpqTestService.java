@@ -65,6 +65,8 @@ public final class AgentKpqTestService {
             "server.agents.capabilities.partyquest.kpq.AgentKpqTestService.MISSING_MEMBER_TIMEOUT_MS");
     private static final long PARTY_REPAIR_RETRY_MS = config.AgentTuning.longValue(
             "server.agents.capabilities.partyquest.kpq.AgentKpqTestService.PARTY_REPAIR_RETRY_MS");
+    private static final long ACCURACY_PILL_POLL_MS = config.AgentTuning.longValue(
+            "server.agents.capabilities.partyquest.kpq.AgentKpqTestService.ACCURACY_PILL_POLL_MS");
     private static final List<String> MELEE_CAREERS = List.of(
             "warrior", "thief-dagger", "pirate-knuckle");
     private static final List<String> RANGED_CAREERS = List.of(
@@ -465,12 +467,13 @@ public final class AgentKpqTestService {
     }
 
     private static void monitorAssembly(Run run) {
-        if (RUNS.get(run.operator.getId()) != run || run.lobby == null
-                || !run.lobby.active()
+        AgentPartyQuestLobbySession lobby = run.lobby;
+        if (RUNS.get(run.operator.getId()) != run || lobby == null
+                || !lobby.active()
                 || run.engagement.state() != AgentPartyQuestEngagement.State.LOBBY_FORMING) {
             return;
         }
-        if (run.lobby.paused()) {
+        if (lobby.paused()) {
             AgentSchedulerRuntime.schedule(() -> monitorAssembly(run), 500L);
             return;
         }
@@ -480,7 +483,12 @@ public final class AgentKpqTestService {
         if (attemptLobbyHandoff(run)) {
             return;
         }
-        if (nowMs - run.lobby.lastProgressAtMs() >= Math.max(10_000L, ASSEMBLY_STALL_WARN_MS)
+        // A successful handoff clears run.lobby while this monitor is still scheduled.
+        if (run.lobby != lobby || !lobby.active()
+                || run.engagement.state() != AgentPartyQuestEngagement.State.LOBBY_FORMING) {
+            return;
+        }
+        if (nowMs - lobby.lastProgressAtMs() >= Math.max(10_000L, ASSEMBLY_STALL_WARN_MS)
                 && nowMs - run.lastLobbyWarningAtMs >= Math.max(10_000L, ASSEMBLY_STALL_WARN_MS)) {
             run.lastLobbyWarningAtMs = nowMs;
             String diagnostic = "Lobby assembly is waiting for a valid "
@@ -571,12 +579,36 @@ public final class AgentKpqTestService {
             run.lobby = null;
             run.assemblyMonitorStarted = false;
             run.runOrdinal++;
+            startFixtureMonitor(run);
             run.operator.dropMessage(6, "KPQ party assembled. Gather at Lakelis; "
                     + (run.eventLeaderId == run.operator.getId()
                     ? "you will be prompted to start the PQ."
                     : "the Agent leader will start the PQ."));
             return true;
         }
+    }
+
+    private static void startFixtureMonitor(Run run) {
+        if (run.fixtureMonitorStarted) return;
+        run.fixtureMonitorStarted = true;
+        AgentSchedulerRuntime.schedule(() -> monitorFixture(run), 1_000L);
+    }
+
+    private static void monitorFixture(Run run) {
+        if (RUNS.get(run.operator.getId()) != run
+                || run.engagement.state() != AgentPartyQuestEngagement.State.ACTIVE_EVENT) {
+            run.fixtureMonitorStarted = false;
+            return;
+        }
+        for (int agentId : run.engagement.agentIds()) {
+            if ("magician".equals(run.assignedCareerByCharacterId.get(agentId))) continue;
+            AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(agentId);
+            if (entry != null && !AgentKpqTestFixtureService.ensureAccuracyPillActive(entry)) {
+                log.warn("KPQ fixture could not refresh accuracy pill for Agent {}", agentId);
+            }
+        }
+        AgentSchedulerRuntime.schedule(
+                () -> monitorFixture(run), Math.max(5_000L, ACCURACY_PILL_POLL_MS));
     }
 
     private static List<String> checkpoint(Character operator, String[] params, long nowMs) throws Exception {
@@ -1071,6 +1103,7 @@ public final class AgentKpqTestService {
         private volatile AgentPartyQuestLobbySession lobby;
         private volatile AgentKpqSession session;
         private volatile boolean assemblyMonitorStarted;
+        private volatile boolean fixtureMonitorStarted;
         private volatile int eventLeaderId;
         private volatile int requestedCheckpointStage;
         private volatile int runOrdinal;

@@ -1603,6 +1603,9 @@ tuning:
     # Purpose: Prevents a damaged test party from hammering party-create/join operations on every half-second lobby poll.
     # Technical: Repair only touches KPQ-owned parties; human-owned external parties are never mutated by this fallback.
     server.agents.capabilities.partyquest.kpq.AgentKpqTestService.PARTY_REPAIR_RETRY_MS: '3000'
+    # How often the GM-only KPQ observation harness checks the normal accuracy consumable. The pill itself remains an ordinary inventory item and production KPQ behavior is unchanged.
+    # Values: milliseconds. Recommended: 60000. Minimum effective value: 5000.
+    server.agents.capabilities.partyquest.kpq.AgentKpqTestService.ACCURACY_PILL_POLL_MS: '60000'
     # Values: 1000-30000 milliseconds. Recommended: 3000. Recovery retains PARTY_QUEST ownership between attempts, so no Agent becomes controller-less.
     # Purpose: Spaces attempts to return a completed or failed production PQ participant to an ordinary TownLife system at the Kerning exit.
     # Technical: The parent engagement closes only after every live Agent reports an active fallback system.

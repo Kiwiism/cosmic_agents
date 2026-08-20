@@ -1,6 +1,8 @@
 package server.agents.field;
 
+import client.BuffStat;
 import client.Character;
+import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.integration.cosmic.CosmicMapleIslandCohortIdentity;
@@ -11,6 +13,7 @@ import java.util.Set;
 
 /** Reuses the legal observation loadout pipeline with KPQ-specific accuracy calibration. */
 public final class AgentKpqTestFixtureService {
+    private static final int SNIPER_PILL_ITEM_ID = 2_002_008;
     private static final Set<Integer> KPQ_FIRST_MAP_MOBS = Set.of(9300001);
     private static final int KPQ_START_LEVEL = config.AgentTuning.intValue(
             "server.agents.field.AgentKpqTestFixtureService.KPQ_START_LEVEL");
@@ -42,6 +45,14 @@ public final class AgentKpqTestFixtureService {
                 prepared.completeBuild(),
                 prepared.remainingAp(), prepared.remainingSps(),
                 prepared.weaponItemId(), prepared.weaponAttack());
+    }
+
+    /** Keeps the ordinary accuracy consumable active during long observation runs. */
+    public static boolean ensureAccuracyPillActive(AgentRuntimeEntry entry) {
+        Character agent = AgentRuntimeIdentityRuntime.bot(entry);
+        if (agent == null) return false;
+        if (agent.getBuffedValue(BuffStat.ACC) != null) return true;
+        return AgentPrimitiveCapabilityGatewayRuntime.gateway().useItem(agent, SNIPER_PILL_ITEM_ID);
     }
 
     public record PreparationResult(int level, double minimumHitChance, String career, boolean completeBuild,

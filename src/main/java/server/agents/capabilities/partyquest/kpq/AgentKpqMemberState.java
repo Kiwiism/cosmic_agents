@@ -33,6 +33,10 @@ public final class AgentKpqMemberState {
     private long nextRetryAtMs;
     private int enteredStage;
     private long stageMovementNotBeforeMs;
+    private long stage5BossBaselineAttacks = -1L;
+    private long stage5BossBaselineHitLines = -1L;
+    private long stage5BossBaselineMissLines = -1L;
+    private long stage5BossBaselineDamage = -1L;
 
     public AgentKpqMemberState(int characterId, MemberType memberType, int partyNumber) {
         this.characterId = characterId;
@@ -109,6 +113,42 @@ public final class AgentKpqMemberState {
         if (enteredStage == stage) return;
         enteredStage = stage;
         stageMovementNotBeforeMs = Math.max(0L, notBeforeMs);
+    }
+
+    public boolean hasStage5BossCombatBaseline() {
+        return stage5BossBaselineAttacks >= 0L;
+    }
+
+    public void beginStage5BossCombat(long attacks, long hitLines, long missLines, long damage) {
+        if (hasStage5BossCombatBaseline()) return;
+        stage5BossBaselineAttacks = Math.max(0L, attacks);
+        stage5BossBaselineHitLines = Math.max(0L, hitLines);
+        stage5BossBaselineMissLines = Math.max(0L, missLines);
+        stage5BossBaselineDamage = Math.max(0L, damage);
+    }
+
+    public BossCombatDelta stage5BossCombatDelta(
+            long attacks, long hitLines, long missLines, long damage) {
+        if (!hasStage5BossCombatBaseline()) return new BossCombatDelta(0L, 0L, 0L, 0L);
+        return new BossCombatDelta(
+                delta(attacks, stage5BossBaselineAttacks),
+                delta(hitLines, stage5BossBaselineHitLines),
+                delta(missLines, stage5BossBaselineMissLines),
+                delta(damage, stage5BossBaselineDamage));
+    }
+
+    public void resetStage5BossCombat() {
+        stage5BossBaselineAttacks = -1L;
+        stage5BossBaselineHitLines = -1L;
+        stage5BossBaselineMissLines = -1L;
+        stage5BossBaselineDamage = -1L;
+    }
+
+    private static long delta(long value, long baseline) {
+        return Math.max(0L, value - baseline);
+    }
+
+    public record BossCombatDelta(long attacks, long hitLines, long missLines, long damage) {
     }
 
 }

@@ -205,6 +205,20 @@ class AgentKpqCoordinatorTest {
                 stageThree, 1, stageThree.center(1), false));
     }
 
+    @Test
+    void kingSlimeCombatAssessmentFlagsInactiveAndVeryLowContributors() {
+        assertEquals("no-attacks", AgentKpqCoordinator.bossCombatConcern(
+                new AgentKpqMemberState.BossCombatDelta(0, 0, 0, 0), 1_000));
+        assertEquals("all-misses", AgentKpqCoordinator.bossCombatConcern(
+                new AgentKpqMemberState.BossCombatDelta(4, 0, 4, 0), 1_000));
+        assertEquals("accuracy-limited", AgentKpqCoordinator.bossCombatConcern(
+                new AgentKpqMemberState.BossCombatDelta(10, 3, 7, 250), 1_000));
+        assertEquals("below-10%-of-party-maximum", AgentKpqCoordinator.bossCombatConcern(
+                new AgentKpqMemberState.BossCombatDelta(4, 4, 0, 99), 1_000));
+        assertEquals("ok", AgentKpqCoordinator.bossCombatConcern(
+                new AgentKpqMemberState.BossCombatDelta(4, 4, 0, 100), 1_000));
+    }
+
     private static AgentKpqMemberState member(int characterId, int partyNumber, int position) {
         AgentKpqMemberState member = new AgentKpqMemberState(
                 characterId, AgentKpqMemberState.MemberType.AGENT, partyNumber);

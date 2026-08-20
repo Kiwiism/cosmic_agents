@@ -51,6 +51,7 @@ public final class AgentKpqSession {
     private int couponSweepCollectorId;
     private long missingPassSinceMs;
     private long puzzleCheckAtMs;
+    private int puzzleCheckLoggedAttemptId = -1;
     private long squishyShoesSeenAtMs;
     private boolean squishyShoesResolved;
     private String blockerKey = "";
@@ -61,6 +62,8 @@ public final class AgentKpqSession {
     private int stage5LastMobCount = -1;
     private int stage5LastPassCount = -1;
     private long stage5BossDefeatedAtMs;
+    private long stage5BossCombatStartedAtMs;
+    private boolean stage5BossCombatReported;
 
     public AgentKpqSession(Mode mode, long seed, int operatorId, int requestedPartySize, long nowMs) {
         if (requestedPartySize < 3 || requestedPartySize > 4) {
@@ -165,12 +168,15 @@ public final class AgentKpqSession {
         couponSweepCollectorId = 0;
         missingPassSinceMs = 0L;
         puzzleCheckAtMs = 0L;
+        puzzleCheckLoggedAttemptId = -1;
         blockerKey = "";
         blockerSinceMs = 0L;
         blockerAttempts = 0;
         stage5LastMobCount = -1;
         stage5LastPassCount = -1;
         stage5BossDefeatedAtMs = 0L;
+        stage5BossCombatStartedAtMs = 0L;
+        stage5BossCombatReported = false;
         members.values().forEach(member -> {
             member.setAssignedPosition(0);
             member.setStableSinceMs(0L);
@@ -178,6 +184,7 @@ public final class AgentKpqSession {
             member.setFidgetedAttemptId(-1);
             member.clearFidget();
             member.clearBlocker();
+            member.resetStage5BossCombat();
         });
     }
 
@@ -292,6 +299,11 @@ public final class AgentKpqSession {
     }
     public synchronized long puzzleCheckAtMs() { return puzzleCheckAtMs; }
     public synchronized void setPuzzleCheckAtMs(long value) { puzzleCheckAtMs = Math.max(0L, value); }
+    public synchronized boolean markPuzzleCheckLogged(int currentAttemptId) {
+        if (puzzleCheckLoggedAttemptId == currentAttemptId) return false;
+        puzzleCheckLoggedAttemptId = currentAttemptId;
+        return true;
+    }
     public synchronized long squishyShoesSeenAtMs() { return squishyShoesSeenAtMs; }
     public synchronized void setSquishyShoesSeenAtMs(long value) {
         squishyShoesSeenAtMs = Math.max(0L, value);
@@ -323,6 +335,22 @@ public final class AgentKpqSession {
             stage5BossDefeatedAtMs = nowMs;
         }
         return nowMs - stage5BossDefeatedAtMs < Math.max(0L, graceMs);
+    }
+
+    public synchronized boolean beginStage5BossCombat(long nowMs) {
+        if (stage5BossCombatStartedAtMs > 0L) return false;
+        stage5BossCombatStartedAtMs = Math.max(1L, nowMs);
+        return true;
+    }
+
+    public synchronized long stage5BossCombatStartedAtMs() {
+        return stage5BossCombatStartedAtMs;
+    }
+
+    public synchronized boolean claimStage5BossCombatReport() {
+        if (stage5BossCombatStartedAtMs <= 0L || stage5BossCombatReported) return false;
+        stage5BossCombatReported = true;
+        return true;
     }
 
     public record PuzzleValidation(int revision, boolean accepted) {

@@ -19,6 +19,7 @@ import server.agents.capabilities.partyquest.AgentPartyQuestEngagement;
 import server.agents.capabilities.partyquest.AgentPartyQuestEngagementRegistry;
 import server.agents.capabilities.partyquest.AgentPartyQuestLifecycleRuntime;
 import server.agents.capabilities.looting.AgentGrindLootStateRuntime;
+import server.agents.field.AgentFieldObservationState;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
 import scripting.event.EventInstanceManager;
@@ -586,10 +587,30 @@ final class AgentKpqCoordinator {
         }
         if (isAgent(session, leader.getId())) {
             if (session.puzzleCheckAtMs() == 0L) {
-                session.setPuzzleCheckAtMs(nowMs + puzzleCheckDelayMs(session.seed(), stage, attempt));
+                long delayMs = puzzleCheckDelayMs(session.seed(), stage, attempt);
+                session.setPuzzleCheckAtMs(nowMs + delayMs);
+                if (session.mode() == AgentKpqSession.Mode.TEST_OBSERVATION) {
+                    log.info("KPQ puzzle check scheduled: session={} stage={} attempt={} attemptId={} "
+                                    + "delayMs={} fidgeters={}",
+                            session.sessionId(), stage, attempt, session.attemptId(), delayMs,
+                            participants.subList(0, 3).stream()
+                                    .filter(member -> member.fidgetTarget() != null).count());
+                }
                 return;
             }
             if (nowMs < session.puzzleCheckAtMs()) return;
+            if (session.mode() == AgentKpqSession.Mode.TEST_OBSERVATION
+                    && session.markPuzzleCheckLogged(session.attemptId())) {
+                log.info("KPQ puzzle check executing: session={} stage={} attempt={} attemptId={} "
+                                + "latenessMs={} fidgeters={} positions={}",
+                        session.sessionId(), stage, attempt, session.attemptId(),
+                        Math.max(0L, nowMs - session.puzzleCheckAtMs()),
+                        participants.subList(0, 3).stream()
+                                .filter(member -> member.fidgetTarget() != null).count(),
+                        participants.subList(0, 3).stream()
+                                .map(member -> member.characterId() + "->" + member.assignedPosition())
+                                .toList());
+            }
         }
         if (!isAgent(session, leader.getId())) {
             AgentKpqSession.PuzzleValidation validation = session.consumeHumanPuzzleValidation(stage);
@@ -631,6 +652,7 @@ final class AgentKpqCoordinator {
         int leaderPasses = leader.getItemQuantity(AgentKpqDefinition.PASS_ITEM, false);
         int normalAlive = ACTIONS.liveMonsterCount(leader, STAGE_5_NORMAL_MOBS);
         int bossAlive = ACTIONS.liveMonsterCount(leader, STAGE_5_BOSS_MOBS);
+        observeStageFiveBossCombat(session, normalAlive, bossAlive, nowMs);
         int stage5MobCount = normalAlive + bossAlive;
         boolean reviveGraceActive = session.stage5ReviveGraceActive(
                 bossAlive, nowMs, KING_SLIME_REVIVE_GRACE_MS);
@@ -692,6 +714,87 @@ final class AgentKpqCoordinator {
                                           int bossAlive,
                                           boolean reviveGraceActive) {
         return leaderPasses >= 10 && normalAlive == 0 && bossAlive == 0 && !reviveGraceActive;
+    }
+
+    private static void observeStageFiveBossCombat(
+            AgentKpqSession session, int normalAlive, int bossAlive, long nowMs) {
+        if (normalAlive == 0 && bossAlive > 0 && session.beginStage5BossCombat(nowMs)) {
+            for (AgentKpqMemberState member : session.members()) {
+                if (member.memberType() != AgentKpqMemberState.MemberType.AGENT) continue;
+                AgentRuntimeEntry entry = entry(member.characterId());
+                if (entry == null) continue;
+                AgentFieldObservationState.Snapshot snapshot = entry.capabilityStates()
+                        .require(AgentFieldObservationState.STATE_KEY).snapshot(nowMs);
+                member.beginStage5BossCombat(snapshot.attacks(), snapshot.hitLines(),
+                        snapshot.missLines(), snapshot.damage());
+            }
+            log.info("KPQ King Slime combat started: session={} agents={}",
+                    session.sessionId(), session.members().stream()
+                            .filter(member -> member.memberType() == AgentKpqMemberState.MemberType.AGENT)
+                            .map(AgentKpqMemberState::characterId).toList());
+            return;
+        }
+        if (bossAlive > 0 || !session.claimStage5BossCombatReport()) return;
+        reportStageFiveBossCombat(session, nowMs);
+    }
+
+    private static void reportStageFiveBossCombat(AgentKpqSession session, long nowMs) {
+        long durationMs = Math.max(1L, nowMs - session.stage5BossCombatStartedAtMs());
+        record Result(String name, AgentKpqMemberState.BossCombatDelta delta,
+                      AgentFieldObservationState.Snapshot snapshot) { }
+        List<Result> results = session.members().stream()
+                .filter(member -> member.memberType() == AgentKpqMemberState.MemberType.AGENT)
+                .map(member -> {
+                    Character agent = memberCharacter(member.characterId(), firstCharacter(session));
+                    AgentRuntimeEntry entry = entry(member.characterId());
+                    if (entry == null) return null;
+                    AgentFieldObservationState.Snapshot snapshot = entry.capabilityStates()
+                            .require(AgentFieldObservationState.STATE_KEY).snapshot(nowMs);
+                    return new Result(agent == null ? "#" + member.characterId() : agent.getName(),
+                            member.stage5BossCombatDelta(snapshot.attacks(), snapshot.hitLines(),
+                                    snapshot.missLines(), snapshot.damage()), snapshot);
+                })
+                .filter(java.util.Objects::nonNull)
+                .toList();
+        long maximumDamage = results.stream().map(Result::delta)
+                .mapToLong(AgentKpqMemberState.BossCombatDelta::damage).max().orElse(0L);
+        for (Result result : results) {
+            AgentKpqMemberState.BossCombatDelta delta = result.delta();
+            String concern = bossCombatConcern(delta, maximumDamage);
+            String message = "KPQ King Slime combat: session=" + session.sessionId()
+                    + " agent=" + result.name() + " durationMs=" + durationMs
+                    + " attacks=" + delta.attacks() + " hits=" + delta.hitLines()
+                    + " misses=" + delta.missLines() + " damage=" + delta.damage()
+                    + " dps=" + (delta.damage() * 1000L / durationMs)
+                    + " posture=" + result.snapshot().posture()
+                    + " target=" + result.snapshot().targetMobId()
+                    + " assessment=" + concern;
+            if ("ok".equals(concern)) log.info(message);
+            else log.warn(message);
+        }
+        AgentPartyQuestEngagement engagement =
+                AgentPartyQuestEngagementRegistry.forOperator(session.operatorId());
+        if (engagement != null) {
+            String summary = results.stream().map(result -> result.name() + ':'
+                            + result.delta().damage() + '/' + result.delta().attacks())
+                    .collect(java.util.stream.Collectors.joining(","));
+            engagement.addDiagnostic("King Slime " + durationMs + "ms damage/attacks " + summary, nowMs);
+        }
+    }
+
+    static String bossCombatConcern(
+            AgentKpqMemberState.BossCombatDelta delta, long maximumPartyDamage) {
+        if (delta == null || delta.attacks() == 0L) return "no-attacks";
+        if (delta.damage() == 0L && delta.missLines() > 0L) return "all-misses";
+        if (delta.damage() == 0L) return "no-damage";
+        long attemptedLines = delta.hitLines() + delta.missLines();
+        if (attemptedLines >= 5L && delta.missLines() * 5L >= attemptedLines * 3L) {
+            return "accuracy-limited";
+        }
+        if (maximumPartyDamage > 0L && delta.damage() * 10L < maximumPartyDamage) {
+            return "below-10%-of-party-maximum";
+        }
+        return "ok";
     }
 
     private static void claimRewards(AgentKpqSession session, long nowMs) {
