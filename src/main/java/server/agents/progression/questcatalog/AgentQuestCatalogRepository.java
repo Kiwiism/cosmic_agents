@@ -64,6 +64,15 @@ public final class AgentQuestCatalogRepository {
         if (quest.selectionDisposition() == AgentQuestSelectionDisposition.CAPABILITY_GATED) {
             return result(AgentQuestEligibility.Status.CAPABILITY_GATED, "quest requires an unavailable capability");
         }
+        int questState = context.questStates().getOrDefault(questId, 0);
+        if (questState >= 2) {
+            return result(AgentQuestEligibility.Status.ALREADY_COMPLETED,
+                    "quest is already complete in authoritative state");
+        }
+        if (questState == 1) {
+            return result(AgentQuestEligibility.Status.ALREADY_IN_PROGRESS,
+                    "quest is already active and should be resumed instead of selected");
+        }
         if ((quest.minimumLevel() != null && context.level() < quest.minimumLevel())
                 || (quest.maximumLevel() != null && context.level() > quest.maximumLevel())) {
             return result(AgentQuestEligibility.Status.LEVEL_LOCKED, "server quest level bounds are not satisfied");

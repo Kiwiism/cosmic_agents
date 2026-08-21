@@ -4,6 +4,8 @@ package server.agents.progression.questcatalog;
 public record AgentQuestEligibility(Status status, String reason) {
     public enum Status {
         ELIGIBLE,
+        ALREADY_IN_PROGRESS,
+        ALREADY_COMPLETED,
         LEVEL_LOCKED,
         JOB_LOCKED,
         PREREQUISITE_LOCKED,

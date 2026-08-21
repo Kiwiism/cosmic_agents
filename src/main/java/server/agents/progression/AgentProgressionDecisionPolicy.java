@@ -1,5 +1,7 @@
 package server.agents.progression;
 
+import server.agents.progression.questcatalog.AgentQuestDefinition;
+
 /** Pure deterministic scoring used by quest, grind-map, and hunt-map selection. */
 final class AgentProgressionDecisionPolicy {
     private static final String TUNING_PREFIX =
@@ -75,6 +77,30 @@ final class AgentProgressionDecisionPolicy {
         score += local
                 ? (long) profile.routinePreference() * QUEST_LOCAL_ROUTINE_MULTIPLIER
                 : (long) profile.travelTolerance() * QUEST_TRAVEL_MULTIPLIER;
+        score += (long) deterministicVariation(characterId, level, quest.questId())
+                * profile.explorationPreference();
+        return score;
+    }
+
+    static long questScore(
+            AgentProgressionProfile profile,
+            int characterId,
+            int level,
+            int currentMapId,
+            int routeHops,
+            AgentQuestDefinition quest) {
+        int levelFit = Math.max(0,
+                QUEST_LEVEL_FIT_BASE - Math.abs(level - quest.recommendedLevel()));
+        boolean local = quest.start().mapIds().contains(currentMapId);
+        long score = (long) levelFit * profile.efficiencyPreference()
+                * QUEST_LEVEL_FIT_MULTIPLIER;
+        score -= (long) quest.objectives().size() * profile.efficiencyPreference()
+                * QUEST_OBJECTIVE_BURDEN_MULTIPLIER;
+        score += local
+                ? (long) profile.routinePreference() * QUEST_LOCAL_ROUTINE_MULTIPLIER
+                : (long) profile.travelTolerance() * QUEST_TRAVEL_MULTIPLIER;
+        score -= (long) routeHops * (PERCENT_MAX - profile.travelTolerance())
+                * QUEST_TRAVEL_MULTIPLIER;
         score += (long) deterministicVariation(characterId, level, quest.questId())
                 * profile.explorationPreference();
         return score;
