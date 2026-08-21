@@ -42,7 +42,8 @@ final class AgentKpqCoordinator {
     private static final Set<Integer> STAGE_1_MOBS = Set.of(9_300_001);
     static final Set<Integer> STAGE_5_NORMAL_MOBS = Set.of(9_300_000, 9_300_002, 210_100);
     static final Set<Integer> STAGE_5_BOSS_MOBS = Set.of(9_300_003);
-    private static final long KING_SLIME_REVIVE_GRACE_MS = 2_000L;
+    private static final long KING_SLIME_REVIVE_GRACE_MS = config.AgentTuning.longValue(
+            "server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.KING_SLIME_REVIVE_GRACE_MS");
     private static final long FORMATION_STABLE_MS = config.AgentTuning.longValue(
             "server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.FORMATION_STABLE_MS");
     private static final long KPQ_PHASE_TIMEOUT_MS = config.AgentTuning.longValue(

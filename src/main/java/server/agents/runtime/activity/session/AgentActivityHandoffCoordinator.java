@@ -7,7 +7,8 @@ import java.util.Objects;
  * never advances a child runtime itself.
  */
 public final class AgentActivityHandoffCoordinator {
-    private static final long RELEASE_OBSERVATION_RETRY_MS = 250L;
+    private static final long RELEASE_OBSERVATION_RETRY_MS = config.AgentTuning.longValue(
+            "server.agents.runtime.activity.session.AgentActivityHandoffCoordinator.RELEASE_OBSERVATION_RETRY_MS");
 
     public Handoff begin(
             String handoffId,

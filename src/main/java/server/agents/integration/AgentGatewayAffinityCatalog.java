@@ -12,6 +12,7 @@ public final class AgentGatewayAffinityCatalog {
             AgentQuestSyncHandle.class,
             CharacterGateway.class,
             CombatGateway.class,
+            ExpeditionGateway.class,
             InventoryGateway.class,
             LifeGateway.class,
             MakerGateway.class,
