@@ -26,8 +26,9 @@ public final class AgentKpqRuntime {
         int previousCoordinator = session.coordinatorAgentId();
         if (!session.claimCoordinatorTick(agent.getId(), nowMs, COORDINATOR_LEASE_MS)) return true;
         if (previousCoordinator != session.coordinatorAgentId()) {
-            log.warn("KPQ coordinator lease transferred: session={} from={} to={}",
-                    session.sessionId(), previousCoordinator, session.coordinatorAgentId());
+            log.warn("KPQ execution lease transferred without changing the party caller: session={} from={} to={} caller={}",
+                    session.sessionId(), previousCoordinator, session.coordinatorAgentId(),
+                    session.formationCallerId());
         }
         AgentKpqCoordinator.tick(session, nowMs);
         return true;

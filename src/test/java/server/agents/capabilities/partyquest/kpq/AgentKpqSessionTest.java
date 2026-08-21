@@ -36,7 +36,7 @@ class AgentKpqSessionTest {
         assertFalse(session.claimCoordinatorTick(10, 4_999L, 3_000L));
         assertTrue(session.claimCoordinatorTick(10, 5_000L, 3_000L));
         assertEquals(10, session.coordinatorAgentId());
-        assertEquals(10, session.formationCallerId());
+        assertEquals(20, session.formationCallerId());
     }
 
     @Test
@@ -98,12 +98,29 @@ class AgentKpqSessionTest {
         assertEquals(20, session.formationCallerId());
         assertTrue(session.claimCoordinatorTick(20, 2_000L));
         assertFalse(session.claimCoordinatorTick(100, 2_001L));
+        assertTrue(session.claimCoordinatorTick(21, 5_000L, 3_000L));
+        assertEquals(21, session.coordinatorAgentId());
+        assertEquals(20, session.formationCallerId());
 
         session.recordHumanPuzzleValidation(2, false);
         assertFalse(session.consumeHumanPuzzleValidation(2).accepted());
         assertNull(session.consumeHumanPuzzleValidation(2));
         session.recordHumanPuzzleValidation(2, true);
         assertTrue(session.consumeHumanPuzzleValidation(2).accepted());
+    }
+
+    @Test
+    void agentEventLeaderRemainsFormationCallerWhenAnotherAgentExecutes() {
+        AgentKpqSession session = new AgentKpqSession(
+                AgentKpqSession.Mode.PRODUCTION, 7L, 100, 3, 1_000L);
+        session.addMember(20, AgentKpqMemberState.MemberType.AGENT);
+        session.addMember(10, AgentKpqMemberState.MemberType.AGENT);
+        session.addMember(30, AgentKpqMemberState.MemberType.AGENT);
+        session.setLeadership(20, 10);
+
+        assertEquals(20, session.eventLeaderId());
+        assertEquals(10, session.coordinatorAgentId());
+        assertEquals(20, session.formationCallerId());
     }
 
     @Test

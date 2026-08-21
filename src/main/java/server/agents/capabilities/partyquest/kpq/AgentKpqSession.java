@@ -104,7 +104,9 @@ public final class AgentKpqSession {
                 .forEach(member -> member.setRole(AgentKpqMemberState.Role.WAITING));
         this.eventLeaderId = eventLeaderId;
         this.coordinatorAgentId = coordinatorAgentId;
-        this.formationCallerId = coordinatorAgentId;
+        this.formationCallerId = eventLeader.memberType() == AgentKpqMemberState.MemberType.AGENT
+                ? eventLeaderId
+                : coordinatorAgentId;
         eventLeader.setRole(AgentKpqMemberState.Role.EVENT_LEADER);
     }
 
@@ -132,7 +134,6 @@ public final class AgentKpqSession {
         if (!current && !expired) return false;
         if (!current) {
             coordinatorAgentId = characterId;
-            formationCallerId = characterId;
         }
         lastCoordinatorTickMs = nowMs;
         return true;
@@ -146,7 +147,6 @@ public final class AgentKpqSession {
             return false;
         }
         coordinatorAgentId = characterId;
-        formationCallerId = characterId;
         lastCoordinatorTickMs = nowMs;
         return true;
     }
