@@ -14,4 +14,8 @@ public final class AgentSpBuildProfileState {
     public boolean hasProfile() {
         return profile != null;
     }
+
+    public void clear() {
+        profile = null;
+    }
 }

@@ -13,6 +13,7 @@ import server.agents.capabilities.build.AgentBuildService;
 import server.agents.integration.InventoryGateway;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.equipment.AgentEquipmentService;
+import server.agents.capabilities.build.profiles.BuildStep;
 
 import java.util.EnumMap;
 import java.util.List;
@@ -26,6 +27,20 @@ public final class AgentStarterKitService {
         Job oldJob = bot.getJob();
         bot.changeJob(newJob);
         AgentBuildService.handleJobAdvance(entry, bot, oldJob, newJob);
+        grantStarterKitIfEligible(bot, oldJob, newJob, AgentInventoryGatewayRuntime.inventory());
+        AgentEquipmentService.autoEquip(bot, null, null);
+        AgentBuildStatusRuntime.checkBuildStatus(entry, bot);
+    }
+
+    public static void advanceJob(AgentRuntimeEntry entry, Job newJob, List<BuildStep> spBuild) {
+        if (spBuild == null) {
+            advanceJob(entry, newJob);
+            return;
+        }
+        Character bot = AgentRuntimeIdentityRuntime.bot(entry);
+        Job oldJob = bot.getJob();
+        bot.changeJob(newJob);
+        AgentBuildService.handleJobAdvance(entry, bot, oldJob, newJob, spBuild);
         grantStarterKitIfEligible(bot, oldJob, newJob, AgentInventoryGatewayRuntime.inventory());
         AgentEquipmentService.autoEquip(bot, null, null);
         AgentBuildStatusRuntime.checkBuildStatus(entry, bot);

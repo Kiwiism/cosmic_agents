@@ -198,6 +198,7 @@ import client.command.commands.gm6.ClearQuestCacheCommand;
 import client.command.commands.gm6.AgentPopCommand;
 import client.command.commands.gm6.AgentSchedulerCommand;
 import client.command.commands.gm6.KpqTestCommand;
+import client.command.commands.gm6.BalrogTestCommand;
 import client.command.commands.gm6.AgentFieldCommand;
 import client.command.commands.gm6.AmherstCommand;
 import client.command.commands.gm6.VictoriaCommand;
@@ -607,6 +608,7 @@ public class CommandsExecutor {
         addCommand("agentpop", 6, AgentPopCommand.class);
         addCommand("agentscheduler", 6, AgentSchedulerCommand.class);
         addCommand("kpqtest", 6, KpqTestCommand.class);
+        addCommand("balrogtest", 6, BalrogTestCommand.class);
         addCommand("agentfield", 6, AgentFieldCommand.class);
         addCommand("townlife", 6, TownLifeCommand.class);
         addCommand("amherst", 6, AmherstCommand.class);

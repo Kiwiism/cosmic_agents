@@ -11,6 +11,9 @@ import client.inventory.WeaponType;
 import server.StatEffect;
 import server.agents.capabilities.build.profiles.AgentApBuildProfileService;
 import server.agents.capabilities.build.profiles.AgentSpBuildProfileService;
+import server.agents.capabilities.build.AgentBuildService;
+import server.agents.capabilities.build.AgentBuildStateRuntime;
+import server.agents.capabilities.build.AgentStarterKitService;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
 import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
@@ -30,6 +33,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -104,6 +108,96 @@ final class AgentFieldObservationFixtureService {
         }
         return prepare(entry, level, allowedMobIds, seed, nowMs, OBSERVATION_LEVEL_CAP_KPQ,
                 MINIMUM_ACCEPTABLE_HIT_CHANCE, MINIMUM_FALLBACK_HIT_CHANCE, List.of(career), true);
+    }
+
+    static Prepared prepareForBalrog(AgentRuntimeEntry entry,
+                                     AgentBalrogTestFixtureService.Build build,
+                                     int level,
+                                     Set<Integer> allowedMobIds,
+                                     long nowMs) throws IOException {
+        if (build == null || !CAREERS.contains(build.career()) || level < 30 || level >= 70) {
+            throw new IllegalArgumentException("a known weapon build and level 30-69 are required");
+        }
+        Character agent = AgentRuntimeIdentityRuntime.bot(entry);
+        if (agent == null) {
+            throw new IllegalArgumentException("a spawned Agent is required");
+        }
+
+        AgentCareerBuildBundle bundle = VictoriaFirstJobMvpTestService.resetAndStart(
+                entry, build.career(), "lv10", VictoriaFirstJobMvpTestService.Checkpoint.CHECKPOINT_2, nowMs);
+        AgentUniversalPlanRuntime.cancel(entry, agent, "Balrog observation fixture", nowMs);
+        AgentUniversalPlanRuntime.clearCheckpoint(entry, agent.getId());
+        AgentMovementCommandRuntime.stop(entry);
+        while (agent.getLevel() < 30) {
+            agent.levelUp(false);
+            AgentApBuildProfileService.autoAssign(entry, agent);
+            AgentSpBuildProfileService.autoAssign(entry, agent);
+        }
+        entry.apBuildProfileState().clear();
+        entry.spBuildProfileState().clear();
+        AgentBuildStateRuntime.setApBuild(entry, build.apBuild());
+        AgentStarterKitService.advanceJob(entry, build.job(), build.spBuild());
+        while (agent.getLevel() < level) {
+            agent.levelUp(false);
+            AgentBuildService.autoAssignAp(entry, agent);
+            AgentBuildService.autoAssignSp(entry, agent, build.spBuild());
+        }
+        AgentBuildService.autoAssignAp(entry, agent);
+        AgentBuildService.autoAssignSp(entry, agent, build.spBuild());
+
+        List<Integer> equipment = applyBalrogEquipmentLoadout(agent, build);
+        provisionTwoHourSupplies(agent);
+        int accuracyBonus = sniperPillBonus();
+        if (accuracyBonus > 0) {
+            applySniperPills(agent, 1);
+        }
+        double hitChance = minimumHitChance(agent, allowedMobIds, accuracyBonus);
+        Item weapon = agent.getInventory(InventoryType.EQUIPPED).getItem((short) -11);
+        int weaponItemId = weapon == null ? 0 : weapon.getItemId();
+        int weaponAttack = weapon instanceof Equip equip ? Math.max(equip.getWatk(), equip.getMatk()) : 0;
+        int remainingAp = Math.max(0, agent.getRemainingAp());
+        int[] remainingSps = agent.getRemainingSps().clone();
+        agent.healHpMp();
+        agent.equipChanged();
+        AgentCharacterGatewayRuntime.characters().save(agent, false);
+        return new Prepared(agent.getName(), level, build.job().name().toLowerCase(), bundle.bundleId(),
+                bundle.apProfileId(), bundle.spProfileId(), equipment, suppliedProjectile(agent), hitChance,
+                remainingAp == 0 && Arrays.stream(remainingSps).allMatch(sp -> sp <= 0),
+                remainingAp, remainingSps, weaponItemId, weaponAttack);
+    }
+
+    private static List<Integer> applyBalrogEquipmentLoadout(
+            Character agent, AgentBalrogTestFixtureService.Build build) {
+        InventoryGateway inventory = AgentInventoryGatewayRuntime.inventory();
+        clearInventory(agent, InventoryType.EQUIP, agent.getInventory(InventoryType.EQUIP).getSlotLimit());
+        clearInventory(agent, InventoryType.EQUIPPED, agent.getInventory(InventoryType.EQUIPPED).getSlotLimit());
+        List<Integer> selected = build.equipment(agent.getGender());
+        HashSet<String> occupiedSlots = new HashSet<>();
+        for (int itemId : selected) {
+            Equip equip = inventory.getEquipById(itemId);
+            int requiredLevel = inventory.getEquipLevelRequirement(itemId);
+            if (equip == null || requiredLevel > agent.getLevel()
+                    || (itemId == build.weaponItemId()
+                    && requiredLevel < AgentBalrogTestFixtureService.MINIMUM_WEAPON_LEVEL)
+                    || !genderCompatible(agent.getGender(), itemId)
+                    || !inventory.meetsEquipRequirements(equip, agent.getJob(), agent.getLevel(),
+                    agent.getStr(), agent.getDex(), agent.getInt(), agent.getLuk(), agent.getFame())) {
+                throw new IllegalStateException("Balrog build cannot legally equip item " + itemId);
+            }
+            String slot = normalizedSlot(inventory.getEquipmentSlot(itemId));
+            if (slot.isEmpty() || !occupiedSlots.add(slot)) {
+                throw new IllegalStateException("Balrog build has an invalid or duplicate slot for " + itemId);
+            }
+            if (!inventory.addItem(agent, itemId, (short) 1)) {
+                throw new IllegalStateException("could not add Balrog equipment " + itemId);
+            }
+        }
+        equipSelectedLoadout(agent, inventory, selected);
+        Item weapon = agent.getInventory(InventoryType.EQUIPPED).getItem((short) -11);
+        if (weapon == null || weapon.getItemId() != build.weaponItemId()) {
+            throw new IllegalStateException("Balrog build did not equip its selected weapon");
+        }
+        return selected;
     }
 
     static Prepared prepare(AgentRuntimeEntry entry, int level, Set<Integer> allowedMobIds, long seed, long nowMs)

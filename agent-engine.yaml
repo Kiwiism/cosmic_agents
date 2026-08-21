@@ -3633,3 +3633,31 @@ tuning:
     # Purpose: Limits how many Agents a single detailed Journey run can enroll, even if a command requests more. Raise it only after checking disk throughput and report size.
     # Technical: Hard per-run enrollment bound; it does not limit the total Agent population or normal scheduler capacity.
     server.agents.journey.AgentJourneyConfig.MAX_DETAILED_AGENTS: '100'
+    # Values: a positive integer in milliseconds. Recommended: 200-750; 350 keeps a 30-member expedition launch bounded while avoiding a simultaneous login burst.
+    # Purpose: Spaces expedition Agent spawns so character admission and fixture preparation do not arrive on the channel in one large burst.
+    # Technical: Multiplied by each member ordinal before scheduling the spawn task; larger values increase total assembly time and must remain comfortably below the assembly timeout.
+    server.agents.capabilities.expedition.AgentExpeditionLobbyService.SPAWN_STAGGER_MS: '350'
+    # Values: a positive integer in milliseconds. Recommended: 250-1000; 500 gives responsive lobby transitions without excessive scheduler traffic.
+    # Purpose: Controls how frequently an active Agent expedition checks assembly, navigation, registration, event startup, combat, and clear state.
+    # Technical: Delay between state-machine monitor invocations on the owning Agent scheduler; reducing it increases gateway polling and combat-policy evaluation frequency.
+    server.agents.capabilities.expedition.AgentExpeditionLobbyService.MONITOR_MS: '500'
+    # Values: a positive integer in milliseconds. Recommended: 60000-300000; 120000 allows a staggered 30-member fixture cohort to finish loading.
+    # Purpose: Bounds how long the reusable expedition lobby waits for all requested backing characters to spawn and complete scenario-specific preparation.
+    # Technical: Applied only in ASSEMBLING; expiration fails the run and releases all spawned Agents, so it must exceed the maximum spawn stagger plus fixture setup duration.
+    server.agents.capabilities.expedition.AgentExpeditionLobbyService.ASSEMBLY_TIMEOUT_MS: '120000'
+    # Values: a positive integer in milliseconds. Recommended: 15000-120000; 30000 catches stalled party, NPC, and event transitions promptly.
+    # Purpose: Bounds each non-navigation expedition setup phase so a failed party mutation or NPC interaction cannot leave an orphaned lobby indefinitely.
+    # Technical: Applied to party formation, expedition creation, member registration, and event startup; expiration triggers shared cleanup and preserves backing characters.
+    server.agents.capabilities.expedition.AgentExpeditionLobbyService.PHASE_TIMEOUT_MS: '30000'
+    # Values: a positive integer in milliseconds. Recommended: 300000-1800000; 900000 permits ordinary portal travel across the Victoria route graph.
+    # Purpose: Limits the total time expedition members may spend physically travelling from the operator's staging map to the entrance NPC rally point.
+    # Technical: Applied throughout NAVIGATING across portal routing and local movement; NO_ROUTE still fails immediately, while slow but progressing routes retain this overall bound.
+    server.agents.capabilities.expedition.AgentExpeditionLobbyService.TRAVEL_TIMEOUT_MS: '900000'
+    # Values: a positive integer in milliseconds. Recommended: 60000-900000; 600000 leaves enough time to inspect a cleared event before automatic cleanup.
+    # Purpose: Controls how long a successfully cleared expedition remains available for status inspection before Agents and the event instance are released.
+    # Technical: Schedules terminal cleanup after CLEARED and does not affect rewards or combat; an explicit stop command can release the retained observation state earlier.
+    server.agents.capabilities.expedition.AgentExpeditionLobbyService.CLEARED_RETENTION_MS: '600000'
+    # Values: a positive integer in pixels. Recommended: 60-140; 90 accepts a tight visible formation around the entrance NPC without requiring exact overlap.
+    # Purpose: Defines when a travelling expedition Agent is close enough to its assigned entrance rally position to stop moving and begin registration.
+    # Technical: Compared as squared map-space distance after ground-point resolution; values that are too small can cause movement oscillation, while large values loosen visual formation.
+    server.agents.capabilities.expedition.AgentExpeditionLobbyService.RALLY_DISTANCE_PX: '90'

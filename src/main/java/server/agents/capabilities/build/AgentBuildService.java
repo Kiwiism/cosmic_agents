@@ -146,6 +146,14 @@ public final class AgentBuildService {
     }
 
     public static void handleJobAdvance(AgentRuntimeEntry entry, Character bot, Job oldJob, Job newJob) {
+        handleJobAdvance(entry, bot, oldJob, newJob, null);
+    }
+
+    public static void handleJobAdvance(AgentRuntimeEntry entry,
+                                        Character bot,
+                                        Job oldJob,
+                                        Job newJob,
+                                        List<BuildStep> spBuild) {
         if (oldJob != newJob && bot.getId() > 0) {
             AgentProgressionEventPublisher.publish(entry, new AgentJobAdvancedEvent(
                             bot.getId(), System.currentTimeMillis(), oldJob.getId(), newJob.getId(),
@@ -157,7 +165,11 @@ public final class AgentBuildService {
             reallocateAp(entry, bot);
         }
 
-        autoAssignSp(entry, bot);
+        if (spBuild == null) {
+            autoAssignSp(entry, bot);
+        } else {
+            autoAssignSp(entry, bot, spBuild);
+        }
         autoAssignConfiguredAp(entry, bot);
     }
 
@@ -192,6 +204,15 @@ public final class AgentBuildService {
      */
     public static void autoAssignSp(AgentRuntimeEntry entry, Character bot) {
         autoAssignSp(entry, bot, AgentSkillGatewayRuntime.skills());
+    }
+
+    public static void autoAssignSp(AgentRuntimeEntry entry,
+                                    Character bot,
+                                    List<BuildStep> steps) {
+        if (entry == null || bot == null || steps == null || steps.isEmpty()) {
+            throw new IllegalArgumentException("an Agent, character, and SP build are required");
+        }
+        autoAssignSp(entry, bot, List.copyOf(steps), AgentSkillGatewayRuntime.skills());
     }
 
     static void autoAssignSp(AgentRuntimeEntry entry, Character bot, SkillGateway skills) {

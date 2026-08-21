@@ -9,6 +9,7 @@ import org.mockito.MockedStatic;
 import server.agents.integration.InventoryGateway;
 import server.agents.capabilities.build.AgentBuildStatusRuntime;
 import server.agents.capabilities.build.AgentBuildService;
+import server.agents.capabilities.build.profiles.BuildStep;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 
@@ -83,6 +84,27 @@ class AgentStarterKitServiceTest {
 
             verify(bot).changeJob(Job.HUNTER);
             buildManager.verify(() -> AgentBuildService.handleJobAdvance(entry, bot, Job.BOWMAN, Job.HUNTER));
+            equipManager.verify(() -> AgentEquipmentService.autoEquip(bot, null, null));
+            statusRuntime.verify(() -> AgentBuildStatusRuntime.checkBuildStatus(entry, bot));
+        }
+    }
+
+    @Test
+    void advanceJobCanUseAnExplicitFixtureSpBuild() {
+        Character bot = mock(Character.class);
+        Character owner = mock(Character.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, mock(ScheduledFuture.class));
+        List<BuildStep> steps = List.of(new BuildStep(3110000, 20));
+        when(bot.getJob()).thenReturn(Job.BOWMAN);
+
+        try (MockedStatic<AgentBuildService> buildManager = mockStatic(AgentBuildService.class);
+             MockedStatic<AgentBuildStatusRuntime> statusRuntime = mockStatic(AgentBuildStatusRuntime.class);
+             MockedStatic<AgentEquipmentService> equipManager = mockStatic(AgentEquipmentService.class)) {
+            AgentStarterKitService.advanceJob(entry, Job.HUNTER, steps);
+
+            verify(bot).changeJob(Job.HUNTER);
+            buildManager.verify(() -> AgentBuildService.handleJobAdvance(
+                    entry, bot, Job.BOWMAN, Job.HUNTER, steps));
             equipManager.verify(() -> AgentEquipmentService.autoEquip(bot, null, null));
             statusRuntime.verify(() -> AgentBuildStatusRuntime.checkBuildStatus(entry, bot));
         }
