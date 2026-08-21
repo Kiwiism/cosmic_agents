@@ -209,6 +209,21 @@ class AgentArchitectureBoundaryTest {
     }
 
     @Test
+    void worldDirectorCoreCannotCaptureOrMutateCosmicStateDirectly() throws IOException {
+        assertTreeExcludes(
+                AGENTS.resolve("runtime").resolve("activity").resolve("world"),
+                List.of(
+                        "import client.",
+                        "import server.maps.",
+                        "import server.life.",
+                        "import server.agents.integration.cosmic.",
+                        ".requestEntry(",
+                        ".requestGracefulExit(",
+                        "AgentActivityHandoffCoordinator"),
+                "World Director preparation consumes immutable facts and cannot own execution");
+    }
+
+    @Test
     void featureSpecificTopLevelObjectiveAuthoritiesCannotIncrease() throws IOException {
         Set<String> migrationAllowlist = Set.of(
                 "src/main/java/server/agents/plans/AgentPlanExecutor.java",
