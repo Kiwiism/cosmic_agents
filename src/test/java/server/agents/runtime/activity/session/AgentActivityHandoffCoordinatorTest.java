@@ -35,6 +35,7 @@ class AgentActivityHandoffCoordinatorTest {
 
         handoff = coordinator.advance(handoff, source, transfer, target, 1_500L);
         assertEquals(AgentActivityHandoffCoordinator.Phase.REQUEST_TARGET_ENTRY, handoff.phase());
+        assertTrue(handoff.sourceReleased());
         assertEquals(1, transfer.calls);
 
         handoff = coordinator.advance(handoff, source, transfer, target, 1_500L);
@@ -103,8 +104,85 @@ class AgentActivityHandoffCoordinatorTest {
         assertTrue(source.active);
     }
 
+    @Test
+    void restoredHandoffReconcilesAReleasedSourceWithoutRepeatingItsExit() {
+        FakeSource source = new FakeSource();
+        AgentActivityHandoffCoordinator.Handoff handoff = coordinator.begin(
+                "handoff-restore", "world-selector", AgentActivityKind.HUNTING,
+                source, ready(), 5_000L, 15_000L);
+        source.release();
+
+        handoff = coordinator.reconcile(
+                handoff, source, idle(AgentActivityKind.HUNTING, "42"), 5_500L);
+
+        assertEquals(AgentActivityHandoffCoordinator.Phase.TRANSFER, handoff.phase());
+        assertTrue(handoff.sourceReleased());
+        assertEquals(0, source.exitRequests);
+    }
+
+    @Test
+    void restoredHandoffRecognizesAnAlreadyAdmittedDestination() {
+        FakeSource source = new FakeSource();
+        AgentActivityHandoffCoordinator.Handoff handoff = coordinator.begin(
+                "handoff-admitted", "world-selector", AgentActivityKind.HUNTING,
+                source, ready(), 6_000L, 16_000L);
+        source.release();
+
+        handoff = coordinator.reconcile(handoff, source,
+                owning(AgentActivityKind.HUNTING, "field-restored", "42"), 6_500L);
+
+        assertEquals(AgentActivityHandoffCoordinator.Phase.COMPLETED, handoff.phase());
+        assertTrue(handoff.sourceReleased());
+    }
+
+    @Test
+    void destinationRejectionAfterReleaseRequiresSafeFallback() {
+        FakeSource source = new FakeSource();
+        AgentActivityHandoffCoordinator.Handoff handoff = coordinator.begin(
+                "handoff-rejected", "world-selector", AgentActivityKind.HUNTING,
+                source, ready(), 7_000L, 17_000L);
+        handoff = coordinator.advance(handoff, source,
+                now -> AgentActivityTransferPort.Result.ready(),
+                now -> AgentActivityAdmissionResult.rejected("capacity removed"), 7_000L);
+        source.release();
+        handoff = coordinator.advance(handoff, source,
+                now -> AgentActivityTransferPort.Result.ready(),
+                now -> AgentActivityAdmissionResult.rejected("capacity removed"), 7_250L);
+        handoff = coordinator.advance(handoff, source,
+                now -> AgentActivityTransferPort.Result.ready(),
+                now -> AgentActivityAdmissionResult.rejected("capacity removed"), 7_250L);
+        handoff = coordinator.advance(handoff, source,
+                now -> AgentActivityTransferPort.Result.ready(),
+                now -> AgentActivityAdmissionResult.rejected("capacity removed"), 7_250L);
+
+        assertEquals(AgentActivityHandoffCoordinator.Phase.FAILED, handoff.phase());
+        assertTrue(handoff.requiresSafeFallback());
+        assertTrue(handoff.reason().contains("safe fallback required"));
+    }
+
     private static AgentActivityPreflightPort ready() {
         return (agentId, kind, nowMs) -> AgentActivityPreflightPort.Result.allowed();
+    }
+
+    private static AgentActivitySourcePort idle(AgentActivityKind kind, String agentId) {
+        return observer(AgentActivitySessionSnapshot.idle(kind, agentId));
+    }
+
+    private static AgentActivitySourcePort owning(
+            AgentActivityKind kind, String sessionId, String agentId) {
+        return observer(new AgentActivitySessionSnapshot(
+                kind, AgentActivityPhase.ACTIVE, sessionId, "request", "caller",
+                agentId, 1_000L, ""));
+    }
+
+    private static AgentActivitySourcePort observer(AgentActivitySessionSnapshot snapshot) {
+        return new AgentActivitySourcePort() {
+            @Override public AgentActivitySessionSnapshot snapshot(long nowMs) { return snapshot; }
+            @Override public AgentActivityExitResult requestGracefulExit(
+                    String reason, long nowMs, long deadlineMs) {
+                throw new AssertionError("read-only observer cannot receive exit requests");
+            }
+        };
     }
 
     private static final class FakeSource implements AgentActivitySourcePort {

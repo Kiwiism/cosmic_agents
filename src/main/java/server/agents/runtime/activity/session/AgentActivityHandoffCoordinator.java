@@ -7,6 +7,8 @@ import java.util.Objects;
  * never advances a child runtime itself.
  */
 public final class AgentActivityHandoffCoordinator {
+    private static final long RELEASE_OBSERVATION_RETRY_MS = 250L;
+
     public Handoff begin(
             String handoffId,
             String callerId,
@@ -37,11 +39,12 @@ public final class AgentActivityHandoffCoordinator {
         }
         if (!preflight.ready()) {
             return new Handoff(id, caller, snapshot.agentId(), snapshot.kind(), targetKind,
-                    snapshot.sessionId(), Phase.FAILED, nowMs, deadlineMs, nowMs,
+                    snapshot.sessionId(), Phase.FAILED, nowMs, deadlineMs, nowMs, false,
                     "destination preflight blocked: " + preflight.reason());
         }
         return new Handoff(id, caller, snapshot.agentId(), snapshot.kind(), targetKind,
-                snapshot.sessionId(), Phase.REQUEST_SOURCE_EXIT, nowMs, deadlineMs, nowMs, "");
+                snapshot.sessionId(), Phase.REQUEST_SOURCE_EXIT, nowMs, deadlineMs, nowMs,
+                false, "");
     }
 
     public Handoff advance(
@@ -56,7 +59,11 @@ public final class AgentActivityHandoffCoordinator {
         Objects.requireNonNull(target, "target");
         if (handoff.terminal() || nowMs < handoff.updatedAtMs()) return handoff;
         if (nowMs >= handoff.deadlineMs()) {
-            return handoff.transition(Phase.FAILED, nowMs, "handoff deadline expired", 0L);
+            return handoff.transition(Phase.FAILED, nowMs,
+                    handoff.sourceReleased()
+                            ? "handoff deadline expired after source release; safe fallback required"
+                            : "handoff deadline expired while source retained ownership",
+                    0L);
         }
         if (handoff.nextActionAtMs() > nowMs) return handoff;
         return switch (handoff.phase()) {
@@ -66,6 +73,56 @@ public final class AgentActivityHandoffCoordinator {
             case REQUEST_TARGET_ENTRY -> requestTargetEntry(handoff, target, nowMs);
             case COMPLETED, FAILED -> handoff;
         };
+    }
+
+    /**
+     * Reconciles a restored handoff against authoritative child-session ownership. The caller must
+     * restore child sessions before invoking this method.
+     */
+    public Handoff reconcile(
+            Handoff handoff,
+            AgentActivitySourcePort source,
+            AgentActivitySourcePort targetObserver,
+            long nowMs) {
+        Objects.requireNonNull(handoff, "handoff");
+        Objects.requireNonNull(source, "source");
+        Objects.requireNonNull(targetObserver, "targetObserver");
+        if (handoff.terminal() || nowMs < handoff.updatedAtMs()) return handoff;
+        if (nowMs >= handoff.deadlineMs()) {
+            return handoff.transition(Phase.FAILED, nowMs,
+                    "restored handoff deadline expired", 0L);
+        }
+        AgentActivitySessionSnapshot sourceState = source.snapshot(nowMs);
+        AgentActivitySessionSnapshot targetState = targetObserver.snapshot(nowMs);
+        boolean sourceOwns = sameSource(handoff, sourceState);
+        boolean targetOwns = sameTarget(handoff, targetState);
+        boolean sourceConflict = retains(sourceState) && !sourceOwns;
+        boolean targetConflict = retains(targetState) && !targetOwns;
+        if (sourceOwns && targetOwns) {
+            return handoff.restate(Phase.FAILED, nowMs, handoff.sourceReleased(),
+                    "dual foreground ownership detected during handoff restore", 0L);
+        }
+        if (sourceConflict || targetConflict) {
+            return handoff.restate(Phase.FAILED, nowMs, handoff.sourceReleased(),
+                    "conflicting foreground ownership detected during handoff restore", 0L);
+        }
+        if (targetOwns) {
+            return handoff.restate(Phase.COMPLETED, nowMs, true,
+                    "destination ownership restored", 0L);
+        }
+        if (sourceOwns) {
+            Phase phase = handoff.phase() == Phase.WAIT_SOURCE_RELEASE
+                    ? Phase.WAIT_SOURCE_RELEASE : Phase.REQUEST_SOURCE_EXIT;
+            return handoff.restate(phase, nowMs, false,
+                    "source ownership restored", nowMs);
+        }
+        Phase phase = switch (handoff.phase()) {
+            case REQUEST_SOURCE_EXIT, WAIT_SOURCE_RELEASE -> Phase.TRANSFER;
+            case TRANSFER, REQUEST_TARGET_ENTRY -> handoff.phase();
+            case COMPLETED, FAILED -> handoff.phase();
+        };
+        return handoff.restate(phase, nowMs, true,
+                "source release confirmed during restore", nowMs);
     }
 
     private Handoff requestSourceExit(
@@ -78,7 +135,8 @@ public final class AgentActivityHandoffCoordinator {
             case REQUESTED -> handoff.transition(
                     Phase.WAIT_SOURCE_RELEASE, nowMs, result.reason(), nowMs);
             case DEFERRED -> handoff.transition(
-                    Phase.REQUEST_SOURCE_EXIT, nowMs, result.reason(), result.retryAtMs());
+                    Phase.REQUEST_SOURCE_EXIT, nowMs, result.reason(),
+                    retryAt(handoff, nowMs, result.retryAtMs()));
             case REJECTED -> handoff.transition(Phase.FAILED, nowMs, result.reason(), 0L);
         };
     }
@@ -94,7 +152,8 @@ public final class AgentActivityHandoffCoordinator {
                     "source ownership changed during handoff", 0L);
         }
         return handoff.transition(Phase.WAIT_SOURCE_RELEASE, nowMs,
-                "waiting for source activity boundary", nowMs);
+                "waiting for source activity boundary",
+                retryAt(handoff, nowMs, nowMs + RELEASE_OBSERVATION_RETRY_MS));
     }
 
     private Handoff advanceTransfer(
@@ -103,8 +162,10 @@ public final class AgentActivityHandoffCoordinator {
         return switch (result.status()) {
             case READY -> handoff.transition(Phase.REQUEST_TARGET_ENTRY, nowMs, "", nowMs);
             case PENDING -> handoff.transition(
-                    Phase.TRANSFER, nowMs, result.reason(), result.retryAtMs());
-            case FAILED -> handoff.transition(Phase.FAILED, nowMs, result.reason(), 0L);
+                    Phase.TRANSFER, nowMs, result.reason(),
+                    retryAt(handoff, nowMs, result.retryAtMs()));
+            case FAILED -> handoff.transition(Phase.FAILED, nowMs,
+                    result.reason() + "; source released, safe fallback required", 0L);
         };
     }
 
@@ -122,9 +183,33 @@ public final class AgentActivityHandoffCoordinator {
                 yield handoff.transition(Phase.COMPLETED, nowMs, "destination admitted", 0L);
             }
             case DEFERRED -> handoff.transition(
-                    Phase.REQUEST_TARGET_ENTRY, nowMs, result.reason(), result.retryAtMs());
-            case REJECTED -> handoff.transition(Phase.FAILED, nowMs, result.reason(), 0L);
+                    Phase.REQUEST_TARGET_ENTRY, nowMs, result.reason(),
+                    retryAt(handoff, nowMs, result.retryAtMs()));
+            case REJECTED -> handoff.transition(Phase.FAILED, nowMs,
+                    result.reason() + "; source released, safe fallback required", 0L);
         };
+    }
+
+    private static boolean retains(AgentActivitySessionSnapshot snapshot) {
+        return snapshot != null && snapshot.phase().retainsSession();
+    }
+
+    private static boolean sameSource(
+            Handoff handoff, AgentActivitySessionSnapshot snapshot) {
+        return retains(snapshot) && snapshot.kind() == handoff.sourceKind()
+                && snapshot.agentId().equals(handoff.agentId())
+                && snapshot.sessionId().equals(handoff.sourceSessionId());
+    }
+
+    private static boolean sameTarget(
+            Handoff handoff, AgentActivitySessionSnapshot snapshot) {
+        return retains(snapshot) && snapshot.kind() == handoff.targetKind()
+                && snapshot.agentId().equals(handoff.agentId());
+    }
+
+    private static long retryAt(Handoff handoff, long nowMs, long requestedAtMs) {
+        long future = Math.max(nowMs + 1L, requestedAtMs);
+        return Math.min(handoff.deadlineMs(), future);
     }
 
     private static String required(String value, String label) {
@@ -154,6 +239,7 @@ public final class AgentActivityHandoffCoordinator {
             long deadlineMs,
             long updatedAtMs,
             long nextActionAtMs,
+            boolean sourceReleased,
             String reason) {
         private Handoff(
                 String handoffId,
@@ -166,9 +252,11 @@ public final class AgentActivityHandoffCoordinator {
                 long startedAtMs,
                 long deadlineMs,
                 long updatedAtMs,
+                boolean sourceReleased,
                 String reason) {
             this(handoffId, callerId, agentId, sourceKind, targetKind, sourceSessionId,
-                    phase, startedAtMs, deadlineMs, updatedAtMs, updatedAtMs, reason);
+                    phase, startedAtMs, deadlineMs, updatedAtMs, updatedAtMs,
+                    sourceReleased, reason);
         }
 
         public Handoff {
@@ -188,11 +276,23 @@ public final class AgentActivityHandoffCoordinator {
             return phase == Phase.COMPLETED || phase == Phase.FAILED;
         }
 
+        public boolean requiresSafeFallback() {
+            return phase == Phase.FAILED && sourceReleased;
+        }
+
         private Handoff transition(
                 Phase next, long nowMs, String nextReason, long nextActionAtMs) {
+            boolean released = sourceReleased || next == Phase.TRANSFER
+                    || next == Phase.REQUEST_TARGET_ENTRY || next == Phase.COMPLETED;
+            return restate(next, nowMs, released, nextReason, nextActionAtMs);
+        }
+
+        private Handoff restate(
+                Phase next, long nowMs, boolean released,
+                String nextReason, long nextActionAtMs) {
             return new Handoff(handoffId, callerId, agentId, sourceKind, targetKind,
                     sourceSessionId, next, startedAtMs, deadlineMs, nowMs,
-                    Math.max(0L, nextActionAtMs), nextReason);
+                    Math.max(0L, nextActionAtMs), released, nextReason);
         }
     }
 }

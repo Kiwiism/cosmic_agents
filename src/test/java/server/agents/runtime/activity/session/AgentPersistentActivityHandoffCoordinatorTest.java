@@ -7,6 +7,7 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class AgentPersistentActivityHandoffCoordinatorTest {
     @TempDir
@@ -50,6 +51,47 @@ class AgentPersistentActivityHandoffCoordinatorTest {
         assertTrue(coordinator.restore("blocked").isEmpty());
     }
 
+    @Test
+    void startupCanDiscoverAndReconcileAllRetainedHandoffs() {
+        AgentPersistentActivityHandoffCoordinator coordinator =
+                new AgentPersistentActivityHandoffCoordinator(
+                        new AgentFileActivityHandoffStore(directory));
+        AgentActivityHandoffCoordinator.Handoff started = coordinator.begin(
+                "restore-all", "world-director", AgentActivityKind.HUNTING,
+                source(), (agentId, kind, nowMs) -> AgentActivityPreflightPort.Result.allowed(),
+                1_000L, 10_000L);
+
+        AgentPersistentActivityHandoffCoordinator restarted =
+                new AgentPersistentActivityHandoffCoordinator(
+                        new AgentFileActivityHandoffStore(directory));
+        assertEquals(java.util.List.of(started), restarted.restoreAll());
+
+        AgentActivityHandoffCoordinator.Handoff reconciled = restarted.reconcile(
+                started.handoffId(), idleTownSource(), idleHuntingTarget(), 1_500L);
+        assertEquals(AgentActivityHandoffCoordinator.Phase.TRANSFER, reconciled.phase());
+        assertTrue(reconciled.sourceReleased());
+    }
+
+    @Test
+    void repeatedBeginIsIdempotentAndSecondHandoffForAgentIsRejected() {
+        AgentPersistentActivityHandoffCoordinator coordinator =
+                new AgentPersistentActivityHandoffCoordinator(
+                        new AgentFileActivityHandoffStore(directory));
+        AgentActivityHandoffCoordinator.Handoff first = coordinator.begin(
+                "same-request", "world-director", AgentActivityKind.HUNTING,
+                source(), (agentId, kind, nowMs) -> AgentActivityPreflightPort.Result.allowed(),
+                1_000L, 10_000L);
+
+        assertEquals(first, coordinator.begin(
+                "same-request", "world-director", AgentActivityKind.HUNTING,
+                source(), (agentId, kind, nowMs) -> AgentActivityPreflightPort.Result.allowed(),
+                1_100L, 10_000L));
+        assertThrows(IllegalStateException.class, () -> coordinator.begin(
+                "competing-request", "world-director", AgentActivityKind.COMMERCE,
+                source(), (agentId, kind, nowMs) -> AgentActivityPreflightPort.Result.allowed(),
+                1_200L, 10_000L));
+    }
+
     private static AgentActivitySourcePort source() {
         return new AgentActivitySourcePort() {
             @Override
@@ -63,6 +105,24 @@ class AgentPersistentActivityHandoffCoordinatorTest {
             public AgentActivityExitResult requestGracefulExit(
                     String reason, long nowMs, long deadlineMs) {
                 return AgentActivityExitResult.requested(reason);
+            }
+        };
+    }
+
+    private static AgentActivitySourcePort idleTownSource() {
+        return observer(AgentActivitySessionSnapshot.idle(AgentActivityKind.TOWN_LIFE, "42"));
+    }
+
+    private static AgentActivitySourcePort idleHuntingTarget() {
+        return observer(AgentActivitySessionSnapshot.idle(AgentActivityKind.HUNTING, "42"));
+    }
+
+    private static AgentActivitySourcePort observer(AgentActivitySessionSnapshot snapshot) {
+        return new AgentActivitySourcePort() {
+            @Override public AgentActivitySessionSnapshot snapshot(long nowMs) { return snapshot; }
+            @Override public AgentActivityExitResult requestGracefulExit(
+                    String reason, long nowMs, long deadlineMs) {
+                throw new AssertionError("read-only observer cannot receive exit requests");
             }
         };
     }

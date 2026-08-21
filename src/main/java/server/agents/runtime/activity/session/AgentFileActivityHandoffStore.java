@@ -11,6 +11,7 @@ import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
+import java.util.List;
 import java.util.Optional;
 
 /** Atomic JSON persistence for handoffs that must survive a server restart. */
@@ -58,6 +59,26 @@ public final class AgentFileActivityHandoffStore implements AgentActivityHandoff
                     source.toFile(), AgentActivityHandoffCoordinator.Handoff.class));
         } catch (IOException failure) {
             throw new IllegalStateException("could not restore activity handoff", failure);
+        }
+    }
+
+    @Override
+    public List<AgentActivityHandoffCoordinator.Handoff> list() {
+        if (!Files.isDirectory(directory)) return List.of();
+        try (var files = Files.list(directory)) {
+            return files.filter(path -> path.getFileName().toString().endsWith(".json"))
+                    .sorted()
+                    .map(path -> {
+                        try {
+                            return mapper.readValue(path.toFile(),
+                                    AgentActivityHandoffCoordinator.Handoff.class);
+                        } catch (IOException failure) {
+                            throw new IllegalStateException(
+                                    "could not restore activity handoff " + path, failure);
+                        }
+                    }).toList();
+        } catch (IOException failure) {
+            throw new IllegalStateException("could not enumerate activity handoffs", failure);
         }
     }
 
