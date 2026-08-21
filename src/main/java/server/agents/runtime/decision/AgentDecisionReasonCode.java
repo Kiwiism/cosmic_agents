@@ -1,0 +1,21 @@
+package server.agents.runtime.decision;
+
+/** Stable machine-readable reasons shared by deterministic and future external advisors. */
+public enum AgentDecisionReasonCode {
+    PROGRESS_CONTINUES,
+    LOCAL_RETRY_APPROPRIATE,
+    CURRENT_ACTIVITY_REPLAN_REQUIRED,
+    SAFE_BOUNDARY_REQUESTED,
+    SUPPLIES_REQUIRED,
+    BETTER_ACTIVITY_AVAILABLE,
+    NAVIGATION_BLOCKED,
+    TARGET_UNAVAILABLE,
+    RESOURCE_BUDGET_EXCEEDED,
+    INVENTORY_BLOCKED,
+    ADMISSION_UNAVAILABLE,
+    RETRIES_EXHAUSTED,
+    RECOVERABLE_FAILURE,
+    TERMINAL_FAILURE,
+    NO_ELIGIBLE_ACTIVITY,
+    POLICY_DEFAULT
+}
