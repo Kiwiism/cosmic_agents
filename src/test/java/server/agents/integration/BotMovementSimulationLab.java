@@ -39,6 +39,7 @@ import server.agents.capabilities.movement.AgentMovementTargetRuntime;
 import server.agents.capabilities.follow.AgentOwnerMotionStateRuntime;
 import server.agents.runtime.AgentTickCadenceStateRuntime;
 import server.agents.runtime.AgentTickStateRuntime;
+import server.agents.runtime.AgentMailboxRuntime;
 import server.agents.capabilities.movement.AgentFormationService;
 import server.agents.capabilities.movement.AgentFormationRuntime;
 import server.agents.runtime.AgentMovementOnlyTickCoordinator;
@@ -178,6 +179,7 @@ final class BotMovementSimulationLab {
             List<PendingStep> pending = new ArrayList<>(bots.size());
             for (Map.Entry<String, AgentRuntimeEntry> AgentRuntimeEntry : bots.entrySet()) {
                 AgentRuntimeEntry entry = AgentRuntimeEntry.getValue();
+                AgentMailboxRuntime.drain(entry);
                 boolean runAiTick = consumeAiTick(entry);
                 AgentMovementTargetSnapshot targetSnapshot = AgentMovementTargetRuntime.captureTargetSnapshot(entry);
                 Point ownerPos = targetSnapshot.rawOwnerPosition();

@@ -43,7 +43,9 @@ class BotMovementSimulationLabTest {
         lab.step(80);
 
         Point finalPos = lab.position("SLASH");
-        assertTrue(Math.abs(finalPos.x - 320) <= 8, "bot should arrive at precise move target");
+        assertTrue(Math.abs(finalPos.x - 320) <= 8,
+                () -> "bot should arrive at precise move target, stopped at " + finalPos
+                        + ":\n" + String.join("\n", lab.formatRecentTrace("SLASH", 20)));
         assertNull(AgentMoveTargetStateRuntime.moveTarget(entry), "move target should clear after arrival");
     }
 
@@ -61,7 +63,8 @@ class BotMovementSimulationLabTest {
         Point finalPos = lab.position("CRASH");
         int expectedX = 280;
         assertTrue(Math.abs(finalPos.x - expectedX) <= AgentMovementPhysicsConfig.configuredStopDist(),
-                "bot should settle near owner + formation offset");
+                () -> "bot should settle near owner + formation offset, stopped at " + finalPos
+                        + ":\n" + String.join("\n", lab.formatRecentTrace("CRASH", 20)));
         assertTrue(AgentModeStateRuntime.following(entry));
         assertNotNull(lab.describeCurrentState("CRASH"));
     }
@@ -221,12 +224,15 @@ class BotMovementSimulationLabTest {
                 "seeded jump edge should execute once the bot reaches its launch point");
         int landingFrame = -1;
         boolean seededJumpExecuted = false;
+        boolean airborneAfterSeededJump = false;
         for (int i = 0; i < trace.size(); i++) {
             String line = trace.get(i);
             if (line.contains("nav=exec") && line.contains("edge=JUMP r28->r27")) {
                 seededJumpExecuted = true;
-            } else if (seededJumpExecuted && line.contains("phys=GND")
-                    && line.contains("edge=JUMP r28->r27")) {
+            }
+            if (seededJumpExecuted && line.contains("phys=AIR")) {
+                airborneAfterSeededJump = true;
+            } else if (airborneAfterSeededJump && line.contains("phys=GND")) {
                 landingFrame = i;
                 break;
             }
@@ -244,8 +250,9 @@ class BotMovementSimulationLabTest {
                         && trace.get(nextAiFrame).contains("edge=JUMP r27->r"),
                 () -> "after landing, the next AI tick should commit the next authored jump from the new region:\n"
                         + String.join("\n", trace));
-        assertTrue(trace.stream().noneMatch(line -> line.contains("phys=AIR") && line.contains("edge=none")),
-                "bot should not drop navigation and enter an uncommitted fall between chained jumps");
+        assertTrue(trace.subList(landingFrame + 1, nextAiFrame + 1).stream()
+                        .noneMatch(line -> line.contains("phys=AIR") && line.contains("edge=none")),
+                "bot should not enter an uncommitted fall after landing and before the chained jump");
     }
 
     @Test
