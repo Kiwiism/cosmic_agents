@@ -8,8 +8,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -25,16 +27,18 @@ class AgentSystemOwnershipManifestTest {
     @Test
     void everyAgentSourceAndEntrypointHasOneDeclaredOwner() throws IOException {
         JsonNode root = new ObjectMapper().readTree(MANIFEST.toFile());
-        assertEquals(1, root.path("schemaVersion").asInt());
+        assertEquals(2, root.path("schemaVersion").asInt());
         JsonNode systems = root.path("systems");
         assertTrue(systems.isArray());
 
         Set<String> ids = new HashSet<>();
         Set<String> activityKinds = new HashSet<>();
         List<Owner> owners = new ArrayList<>();
+        Map<String, JsonNode> declaredSystems = new LinkedHashMap<>();
         for (JsonNode system : systems) {
             String id = required(system, "id");
             assertTrue(ids.add(id), () -> "duplicate Agent system id: " + id);
+            declaredSystems.put(id, system);
             String role = required(system, "role");
             if ("PRIMARY".equals(role)) {
                 String kind = required(system, "activityKind");
@@ -52,10 +56,25 @@ class AgentSystemOwnershipManifestTest {
                 assertTrue(Files.isRegularFile(SOURCE.resolve(normalized)),
                         () -> "declared Agent entry point does not exist: " + normalized);
             }
+            assertTrue(system.path("responsibilities").isArray()
+                            && !system.path("responsibilities").isEmpty(),
+                    () -> "system responsibilities are required: " + id);
         }
 
-        assertEquals(Set.of("TOWN_LIFE", "HUNTING", "QUESTING", "COMMERCE"),
+        assertEquals(Set.of("TOWN_LIFE", "HUNTING", "QUESTING", "COMMERCE", "PARTY_QUEST"),
                 activityKinds);
+        for (Map.Entry<String, JsonNode> declared : declaredSystems.entrySet()) {
+            JsonNode collaborators = declared.getValue().path("collaborators");
+            assertTrue(collaborators.isArray(),
+                    () -> "system collaborators are required: " + declared.getKey());
+            for (JsonNode collaborator : collaborators) {
+                String collaboratorId = collaborator.asText("").trim();
+                assertTrue(declaredSystems.containsKey(collaboratorId),
+                        () -> declared.getKey() + " names unknown collaborator " + collaboratorId);
+                assertFalse(declared.getKey().equals(collaboratorId),
+                        () -> declared.getKey() + " cannot collaborate with itself");
+            }
+        }
         try (var files = Files.walk(AGENTS)) {
             files.filter(path -> path.toString().endsWith(".java")).forEach(path -> {
                 String relative = normalize(SOURCE.relativize(path).toString());

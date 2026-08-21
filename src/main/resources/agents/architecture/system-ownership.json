@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "systems": [
     {
       "id": "town-life",
@@ -12,6 +12,17 @@
       ],
       "entryPoints": [
         "server/agents/capabilities/townlife/AgentTownLifeRuntime.java"
+      ],
+      "responsibilities": [
+        "town visit lifecycle",
+        "town-local activity selection",
+        "graceful town exit"
+      ],
+      "collaborators": [
+        "inventory",
+        "socials",
+        "agent-context",
+        "agent-platform"
       ]
     },
     {
@@ -24,6 +35,17 @@
       ],
       "entryPoints": [
         "server/agents/runtime/field/AgentFieldActivityRuntime.java"
+      ],
+      "responsibilities": [
+        "field visit lifecycle",
+        "station and crowd allocation",
+        "map-local hunting intent"
+      ],
+      "collaborators": [
+        "inventory",
+        "socials",
+        "agent-context",
+        "agent-platform"
       ]
     },
     {
@@ -37,6 +59,18 @@
       ],
       "entryPoints": [
         "server/agents/plans/AgentUniversalPlanRuntime.java"
+      ],
+      "responsibilities": [
+        "quest and plan lifecycle",
+        "quest objective debt",
+        "quest suspension and resume cursor"
+      ],
+      "collaborators": [
+        "hunting",
+        "inventory",
+        "socials",
+        "agent-context",
+        "agent-platform"
       ]
     },
     {
@@ -50,6 +84,39 @@
       "entryPoints": [
         "server/agents/economy/session/EconomySessionPort.java",
         "server/agents/runtime/commerce/AgentCommerceSessionRuntime.java"
+      ],
+      "responsibilities": [
+        "commerce visit lifecycle",
+        "market participation",
+        "trade and stall settlement"
+      ],
+      "collaborators": [
+        "inventory",
+        "socials",
+        "agent-context",
+        "agent-platform"
+      ]
+    },
+    {
+      "id": "party-quest",
+      "role": "PRIMARY",
+      "activityKind": "PARTY_QUEST",
+      "sourceRoots": [
+        "server/agents/capabilities/partyquest"
+      ],
+      "entryPoints": [
+        "server/agents/capabilities/partyquest/AgentPartyQuestLifecycleRuntime.java"
+      ],
+      "responsibilities": [
+        "party-quest lifecycle",
+        "party admission and stage coordination",
+        "party-quest reward and recovery"
+      ],
+      "collaborators": [
+        "inventory",
+        "socials",
+        "agent-context",
+        "agent-platform"
       ]
     },
     {
@@ -60,6 +127,13 @@
       ],
       "entryPoints": [
         "server/agents/observation/commerce/CommerceObservationRuntime.java"
+      ],
+      "responsibilities": [
+        "commerce scenario observation"
+      ],
+      "collaborators": [
+        "commerce",
+        "agent-context"
       ]
     },
     {
@@ -75,6 +149,15 @@
       ],
       "entryPoints": [
         "server/agents/inventory/AgentInventorySystem.java"
+      ],
+      "responsibilities": [
+        "item ownership",
+        "equipment and supply workflows",
+        "inventory readiness evidence"
+      ],
+      "collaborators": [
+        "agent-context",
+        "agent-platform"
       ]
     },
     {
@@ -89,6 +172,14 @@
       ],
       "entryPoints": [
         "server/agents/socials/AgentSocialsSystem.java"
+      ],
+      "responsibilities": [
+        "social interaction leases",
+        "agent relationship and dialogue state"
+      ],
+      "collaborators": [
+        "agent-context",
+        "agent-platform"
       ]
     },
     {
@@ -103,6 +194,13 @@
       ],
       "entryPoints": [
         "server/agents/context/AgentContextRuntime.java"
+      ],
+      "responsibilities": [
+        "immutable agent context",
+        "memory and personality facts"
+      ],
+      "collaborators": [
+        "agent-platform"
       ]
     },
     {
@@ -114,6 +212,14 @@
       "entryPoints": [
         "server/agents/runtime/AgentTickRuntime.java",
         "server/agents/runtime/activity/session/AgentActivityHandoffCoordinator.java"
+      ],
+      "responsibilities": [
+        "agent scheduling",
+        "foreground activity ownership",
+        "activity admission and handoff"
+      ],
+      "collaborators": [
+        "agent-context"
       ]
     }
   ]

@@ -71,6 +71,7 @@ class AgentArchitectureBoundaryTest {
     void childActivitiesDoNotStartWorldHandoffs() throws IOException {
         List<Path> roots = List.of(
                 AGENTS.resolve("capabilities").resolve("townlife"),
+                AGENTS.resolve("capabilities").resolve("partyquest"),
                 AGENTS.resolve("runtime").resolve("field"),
                 AGENTS.resolve("plans"),
                 AGENTS.resolve("economy"));
@@ -81,6 +82,52 @@ class AgentArchitectureBoundaryTest {
                             "runtime.activity.session.adapter"),
                     "child activity owners must not select or start sibling activities");
         }
+    }
+
+    @Test
+    void concretePrimarySystemDependenciesCannotIncreaseDuringContractMigration()
+            throws IOException {
+        Map<String, List<Path>> systems = Map.of(
+                "townlife", List.of(
+                        AGENTS.resolve("capabilities").resolve("townlife"),
+                        AGENTS.resolve("runtime").resolve("townlife"),
+                        AGENTS.resolve("commands").resolve("townlife")),
+                "hunting", List.of(
+                        AGENTS.resolve("field"),
+                        AGENTS.resolve("runtime").resolve("field")),
+                "questing", List.of(
+                        AGENTS.resolve("plans"),
+                        AGENTS.resolve("progression"),
+                        AGENTS.resolve("objectives")),
+                "commerce", List.of(
+                        AGENTS.resolve("economy"),
+                        AGENTS.resolve("runtime").resolve("commerce")),
+                "partyquest", List.of(
+                        AGENTS.resolve("capabilities").resolve("partyquest")));
+        Map<String, List<String>> prefixes = Map.of(
+                "townlife", List.of("server.agents.capabilities.townlife.",
+                        "server.agents.runtime.townlife.", "server.agents.commands.townlife."),
+                "hunting", List.of("server.agents.field.", "server.agents.runtime.field."),
+                "questing", List.of("server.agents.plans.", "server.agents.progression.",
+                        "server.agents.objectives."),
+                "commerce", List.of("server.agents.economy.",
+                        "server.agents.runtime.commerce."),
+                "partyquest", List.of("server.agents.capabilities.partyquest."));
+        Map<String, Integer> ceilings = Map.of(
+                "townlife->questing", 2,
+                "hunting->questing", 11,
+                "questing->townlife", 18,
+                "questing->hunting", 13,
+                "partyquest->townlife", 3,
+                "partyquest->hunting", 2,
+                "partyquest->questing", 7);
+
+        Map<String, Integer> actual = primaryDependencyCounts(systems, prefixes);
+        actual.forEach((edge, count) -> assertTrue(ceilings.containsKey(edge),
+                () -> "new concrete primary-system dependency requires a neutral contract: "
+                        + edge + "=" + count));
+        ceilings.forEach((edge, ceiling) -> assertTrue(actual.getOrDefault(edge, 0) <= ceiling,
+                () -> edge + " concrete imports increased above migration ceiling " + ceiling));
     }
 
     @Test
@@ -349,6 +396,35 @@ class AgentArchitectureBoundaryTest {
                             String target = matcher.group(1);
                             if (!target.equals(sourceName)) {
                                 counts.merge(sourceName + "->" + target, 1, Integer::sum);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return counts;
+    }
+
+    private static Map<String, Integer> primaryDependencyCounts(
+            Map<String, List<Path>> systems,
+            Map<String, List<String>> prefixes) throws IOException {
+        Map<String, Integer> counts = new HashMap<>();
+        for (Map.Entry<String, List<Path>> source : systems.entrySet()) {
+            for (Path root : source.getValue()) {
+                if (!Files.exists(root)) continue;
+                try (var files = Files.walk(root)) {
+                    for (Path file : files.filter(path -> path.toString().endsWith(".java")).toList()) {
+                        String text = Files.readString(file);
+                        for (Map.Entry<String, List<String>> target : prefixes.entrySet()) {
+                            if (source.getKey().equals(target.getKey())) continue;
+                            for (String prefix : target.getValue()) {
+                                int from = 0;
+                                String token = "import " + prefix;
+                                while ((from = text.indexOf(token, from)) >= 0) {
+                                    counts.merge(source.getKey() + "->" + target.getKey(), 1,
+                                            Integer::sum);
+                                    from += token.length();
+                                }
                             }
                         }
                     }
