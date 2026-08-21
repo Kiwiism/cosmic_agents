@@ -2961,6 +2961,26 @@ tuning:
     # Purpose: Controls how strongly training travel affects Agent behavior. Higher values make the effect more noticeable; lower values soften it.
     # Technical: the "progression decision policy" component consumes this as an integer. Domain: non-negative policy coefficient; it is meaningful relative to the other coefficients used by the same decision.
     server.agents.progression.AgentProgressionDecisionPolicy.TRAINING_TRAVEL_MULTIPLIER: '4'
+    # Values: milliseconds from 30000 to 600000. Recommended: 180000; collection quests may legitimately need several kills before an item drops.
+    # Purpose: Sets how long a quest attempt may continue without an authoritative objective increment before the fallback advisor requests suspension.
+    # Technical: AgentQuestStruggleAdvisor compares event timestamps only after legitimate waits and recent relevant damage/navigation have been considered; it emits advice and cannot suspend execution itself.
+    server.agents.progression.questwork.AgentQuestStruggleAdvisor.OBJECTIVE_PROGRESS_TIMEOUT_MS: '180000'
+    # Values: milliseconds from 30000 to 300000. Recommended: 120000; keep longer than the expected time-to-kill for low-damage early jobs.
+    # Purpose: Prevents slow kills and unlucky collection drops from being mistaken for a stalled quest while relevant targets are still taking damage.
+    # Technical: AgentQuestStruggleAdvisor treats relevant-mob damage within this window as progress evidence; unrelated blocker damage must not populate this signal.
+    server.agents.progression.questwork.AgentQuestStruggleAdvisor.RELEVANT_DAMAGE_GRACE_MS: '120000'
+    # Values: milliseconds from 10000 to 180000. Recommended: 60000; it should cover ordinary map traversal without masking a genuinely stalled hunt.
+    # Purpose: Allows useful map, region, or position progress to protect travel-heavy quest attempts from premature no-progress suspension.
+    # Technical: AgentQuestStruggleAdvisor accepts only navigation progress emitted by the quest route; graph warmup and scripted waits use the separate legitimate-wait signal.
+    server.agents.progression.questwork.AgentQuestStruggleAdvisor.NAVIGATION_PROGRESS_GRACE_MS: '60000'
+    # Values: integer from 1 to 10. Recommended: 3; increase only if route generation is known to be noisy on otherwise reachable maps.
+    # Purpose: Limits repeated navigation failures before the fallback advisor requests a route or hunt-map replan for the current quest.
+    # Technical: AgentQuestStruggleAdvisor counts bounded executor failures for the current work unit; it does not blacklist edges or choose the replacement route itself.
+    server.agents.progression.questwork.AgentQuestStruggleAdvisor.NAVIGATION_FAILURE_LIMIT: '3'
+    # Values: integer from 1 to 10. Recommended: 3; keep bounded so a broken quest cannot consume an Agent indefinitely.
+    # Purpose: Limits local recovery attempts before the fallback advisor recommends suspending the quest for an external lifecycle decision.
+    # Technical: AgentQuestStruggleAdvisor reads the durable work-unit retry count and emits a recommendation only; Activity Host and World Director retain transfer authority.
+    server.agents.progression.questwork.AgentQuestStruggleAdvisor.RETRY_LIMIT: '3'
     # Values: a finite non-negative integer; unit: map pixels. Recommended: 50-200 around the tested baseline 100; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls the distance or margin used for interaction distance. Higher values allow action from farther away or leave more space; lower values require closer, more precise positioning.
     # Technical: the "victoria quest pack runtime" component consumes this as an integer. Unit: MapleStory map pixels; horizontal and vertical values use the server map coordinate system.
