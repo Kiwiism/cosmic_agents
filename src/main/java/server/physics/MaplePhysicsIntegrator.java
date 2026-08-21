@@ -179,7 +179,14 @@ public final class MaplePhysicsIntegrator {
                 reachedEdge = collision;
             }
             if (collision) {
-                body.setPosition(boundary, body.y());
+                FootholdSegment support = body.grounded() && velocityY == 0.0
+                        ? connectedGroundAt(terrain, body.footholdId(), boundary, velocityX)
+                        : null;
+                body.setPosition(boundary,
+                        support == null ? body.y() : support.groundY(boundary));
+                if (support != null) {
+                    body.setFoothold(support.id(), support.slope(), support.layer());
+                }
                 body.setVelocity(0.0, velocityY);
                 body.clearFlag(PhysicsFlags.TURN_AT_EDGES);
                 hitWall = !reachedEdge;

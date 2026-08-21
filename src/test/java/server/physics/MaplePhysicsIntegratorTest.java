@@ -121,6 +121,31 @@ class MaplePhysicsIntegratorTest {
     }
 
     @Test
+    void edgeClampKeepsGroundedBodyOnSlopedPlatform() {
+        FootholdSegment slope = segment(1, 0, 0, 0, 100, 100, 80);
+        PhysicsTerrain terrain = new FootholdPhysicsIndex(List.of(slope));
+        PhysicsBody body = groundedBody(5.0, slope.groundY(5.0), 1);
+        body.setFoothold(1, slope.slope(), slope.layer());
+        body.setVelocity(-2.0, 0.0);
+
+        PhysicsStepResult edge = integrator.step(body,
+                new PhysicsInput(0.0, 0.0, true, false, 4.0, 7.0), terrain);
+
+        assertTrue(edge.reachedEdge());
+        assertEquals(4.0, body.x(), EPSILON);
+        assertEquals(slope.groundY(4.0), body.y(), EPSILON);
+        assertTrue(body.grounded());
+
+        PhysicsStepResult settled = integrator.step(body,
+                new PhysicsInput(0.0, 0.0, true, false, 4.0, 7.0), terrain);
+
+        assertFalse(settled.leftGround(),
+                "the edge clamp must not leave a slope-height mismatch for the next step");
+        assertTrue(body.grounded());
+        assertEquals(slope.groundY(body.x()), body.y(), EPSILON);
+    }
+
+    @Test
     void flyingAndSwimmingUseTheirReferenceFriction() {
         PhysicsTerrain terrain = flatTerrain();
         PhysicsBody flying = new PhysicsBody(50.0, 50.0, PhysicsMode.FLYING);
