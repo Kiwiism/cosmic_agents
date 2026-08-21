@@ -5,6 +5,7 @@ import server.agents.progression.questcatalog.AgentQuestDefinition;
 import server.agents.progression.questcatalog.AgentQuestSelectionDisposition;
 
 import java.util.List;
+import java.util.Optional;
 
 /** Idempotent durable lifecycle facade; it performs no NPC, travel, combat, or inventory action. */
 public final class AgentQuestWorkUnitService {
@@ -124,6 +125,10 @@ public final class AgentQuestWorkUnitService {
 
     public synchronized List<AgentQuestWorkUnit> restoreAll() {
         return store.loadAll();
+    }
+
+    public synchronized Optional<AgentQuestWorkUnit> find(String workUnitId) {
+        return store.load(workUnitId);
     }
 
     private AgentQuestWorkUnit require(String workUnitId) {
