@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "catalogId": "victoria-universal-quest-catalog-v1",
+  "revision": "victoria-attempt-guidance-v1",
+  "defaults": {
+    "minimumHitChanceBasisPoints": 0,
+    "minimumFreeInventorySlots": 2,
+    "minimumHpPotionReserve": 0,
+    "minimumMpPotionReserve": 0
+  },
+  "quests": [
+    {
+      "questId": 2018,
+      "recommendedLevel": 20,
+      "minimumHitChanceBasisPoints": 6000,
+      "minimumFreeInventorySlots": 3,
+      "minimumHpPotionReserve": 30,
+      "minimumMpPotionReserve": 10,
+      "rationale": "Luke's Jr. Necki objective is materially harder than its server minimum; require a measured 60% hit chance and a conservative supply reserve."
+    },
+    {
+      "questId": 2032,
+      "recommendedLevel": 25,
+      "minimumHitChanceBasisPoints": 6000,
+      "minimumFreeInventorySlots": 3,
+      "minimumHpPotionReserve": 30,
+      "minimumMpPotionReserve": 10,
+      "rationale": "The repeated Jr. Necki material objective should not be selected until the build can hit it reliably."
+    }
+  ]
+}
