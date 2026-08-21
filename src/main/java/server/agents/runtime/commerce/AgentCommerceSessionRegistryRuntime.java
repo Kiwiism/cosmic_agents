@@ -2,6 +2,8 @@ package server.agents.runtime.commerce;
 
 import server.agents.economy.session.EconomySessionPort;
 import server.agents.runtime.activity.session.AgentActivityExitResult;
+import server.agents.runtime.activity.session.AgentActivityKind;
+import server.agents.runtime.activity.session.AgentActivitySessionSnapshot;
 import server.agents.runtime.activity.session.AgentActivityTargetPort;
 import server.agents.runtime.activity.session.AgentActivityTerminalOutcome;
 
@@ -43,6 +45,14 @@ public final class AgentCommerceSessionRegistryRuntime {
     public static boolean tick(int characterId, long nowMs) {
         AgentCommerceSessionRuntime runtime = SESSIONS.get(characterId);
         return runtime != null && runtime.tick(nowMs);
+    }
+
+    public static AgentActivitySessionSnapshot snapshot(int characterId, long nowMs) {
+        AgentCommerceSessionRuntime runtime = SESSIONS.get(characterId);
+        return runtime == null
+                ? AgentActivitySessionSnapshot.idle(
+                        AgentActivityKind.COMMERCE, Integer.toString(characterId))
+                : runtime.snapshot(nowMs);
     }
 
     public static AgentActivityExitResult requestStop(

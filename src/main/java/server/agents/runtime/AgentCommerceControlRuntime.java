@@ -1,5 +1,8 @@
 package server.agents.runtime;
 
+import server.agents.runtime.activity.session.AgentActivityKind;
+import server.agents.runtime.activity.session.AgentActivityPhase;
+import server.agents.runtime.activity.session.AgentActivitySessionSnapshot;
 import server.economy.EconomyOperationContext;
 import server.economy.EconomyOperationMetadata;
 
@@ -49,6 +52,20 @@ public final class AgentCommerceControlRuntime {
 
     public static synchronized boolean claimed(int characterId) {
         return LEASES.containsKey(characterId);
+    }
+
+    /** Read-only compatibility projection for scenario-owned Commerce leases. */
+    public static synchronized AgentActivitySessionSnapshot snapshot(int characterId) {
+        Lease lease = LEASES.get(characterId);
+        if (lease == null) {
+            return AgentActivitySessionSnapshot.idle(
+                    AgentActivityKind.COMMERCE, Integer.toString(characterId));
+        }
+        String sessionId = "commerce-control:" + characterId + ':' + lease.owner();
+        return new AgentActivitySessionSnapshot(
+                AgentActivityKind.COMMERCE, AgentActivityPhase.ACTIVE,
+                sessionId, sessionId, lease.owner(), Integer.toString(characterId), 0L,
+                "compatibility Commerce control lease");
     }
 
     public static synchronized boolean ownedBy(int characterId, String owner) {

@@ -21,6 +21,7 @@ public final class AgentKpqSession {
     private final String sessionId;
     private final Mode mode;
     private final long seed;
+    private final long startedAtMs;
     private final int operatorId;
     private final int requestedPartySize;
     private PartyOwnership partyOwnership = PartyOwnership.EXTERNAL;
@@ -73,6 +74,7 @@ public final class AgentKpqSession {
         this.sessionId = "kpq-" + UUID.randomUUID();
         this.mode = mode;
         this.seed = seed;
+        this.startedAtMs = nowMs;
         this.operatorId = operatorId;
         this.requestedPartySize = requestedPartySize;
         this.phaseEnteredAtMs = nowMs;
@@ -248,6 +250,7 @@ public final class AgentKpqSession {
         partyOwnership = ownership == null ? PartyOwnership.EXTERNAL : ownership;
     }
     public synchronized long seed() { return seed; }
+    public synchronized long startedAtMs() { return startedAtMs; }
     public synchronized int operatorId() { return operatorId; }
     public synchronized int requestedPartySize() { return requestedPartySize; }
     public synchronized Phase phase() { return phase; }

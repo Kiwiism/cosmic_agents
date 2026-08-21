@@ -35,4 +35,43 @@ public final class AgentActivitySessionContractVerifier {
         }
         return List.copyOf(issues);
     }
+
+    public static List<String> admissionIssues(
+            AgentActivityAdmissionResult result,
+            AgentActivityKind expectedKind,
+            String expectedAgentId,
+            long nowMs) {
+        if (result == null) return List.of("adapter returned no admission result");
+        List<String> issues = new ArrayList<>();
+        if (result.status() == AgentActivityAdmissionResult.Status.ACCEPTED) {
+            issues.addAll(snapshotIssues(result.session()));
+            if (result.session() != null && result.session().kind() != expectedKind) {
+                issues.add("admission returned the wrong activity kind");
+            }
+            if (result.session() != null && expectedAgentId != null
+                    && !expectedAgentId.equals(result.session().agentId())) {
+                issues.add("admission returned the wrong Agent id");
+            }
+        }
+        if (result.status() == AgentActivityAdmissionResult.Status.DEFERRED
+                && result.retryAtMs() <= nowMs) {
+            issues.add("deferred admission does not retry in the future");
+        }
+        return List.copyOf(issues);
+    }
+
+    public static List<String> exitIssues(AgentActivityExitResult result, long nowMs) {
+        if (result == null) return List.of("adapter returned no exit result");
+        List<String> issues = new ArrayList<>();
+        if (result.status() == AgentActivityExitResult.Status.DEFERRED
+                && result.retryAtMs() <= nowMs) {
+            issues.add("deferred exit does not retry in the future");
+        }
+        if ((result.status() == AgentActivityExitResult.Status.DEFERRED
+                || result.status() == AgentActivityExitResult.Status.REJECTED)
+                && result.reason().isBlank()) {
+            issues.add("non-successful exit has no reason");
+        }
+        return List.copyOf(issues);
+    }
 }

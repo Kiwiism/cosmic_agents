@@ -7,12 +7,15 @@ import server.agents.plans.AgentPlanSessionHandle;
 import server.agents.plans.AgentUniversalPlanRuntime;
 import server.agents.progression.AgentCareerProgressionState;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.AgentCommerceControlRuntime;
 import server.agents.runtime.activity.AgentActivityHostState;
 import server.agents.runtime.activity.session.AgentActivityKind;
 import server.agents.runtime.activity.session.AgentActivitySessionSnapshot;
 import server.agents.runtime.activity.session.adapter.FieldActivitySessionAdapter;
+import server.agents.runtime.activity.session.adapter.PartyQuestActivitySessionAdapter;
 import server.agents.runtime.activity.session.adapter.QuestPlanActivitySessionAdapter;
 import server.agents.runtime.activity.session.adapter.TownLifeActivitySessionAdapter;
+import server.agents.runtime.commerce.AgentCommerceSessionRegistryRuntime;
 import server.agents.runtime.activity.world.AgentWorldContext;
 import server.quest.Quest;
 
@@ -82,7 +85,16 @@ public final class CosmicAgentWorldContextFactory {
                     .snapshot(nowMs);
             case TOWN_LIFE -> new TownLifeActivitySessionAdapter(
                     entry, agent, null, null, agent.getId()).snapshot(nowMs);
-            case COMMERCE, PARTY_QUEST -> null;
+            case COMMERCE -> commerceSnapshot(agent.getId(), nowMs);
+            case PARTY_QUEST -> new PartyQuestActivitySessionAdapter(agent.getId(), null)
+                    .snapshot(nowMs);
         };
+    }
+
+    private static AgentActivitySessionSnapshot commerceSnapshot(int characterId, long nowMs) {
+        AgentActivitySessionSnapshot managed =
+                AgentCommerceSessionRegistryRuntime.snapshot(characterId, nowMs);
+        return managed.phase().retainsSession() || !AgentCommerceControlRuntime.claimed(characterId)
+                ? managed : AgentCommerceControlRuntime.snapshot(characterId);
     }
 }

@@ -19,5 +19,14 @@ class AgentActivitySessionContractVerifierTest {
                 new AgentActivityTerminalOutcome(AgentActivityKind.QUESTING,
                         AgentActivityPhase.COMPLETED, "session", "27", "done", false,
                         1_000L, 2_000L, Map.of())).isEmpty());
+        assertTrue(AgentActivitySessionContractVerifier.admissionIssues(
+                AgentActivityAdmissionResult.accepted(
+                        new AgentActivitySessionSnapshot(AgentActivityKind.QUESTING,
+                                AgentActivityPhase.ACTIVE, "session", "request", "caller",
+                                "27", 1_000L, "")),
+                AgentActivityKind.QUESTING, "27", 1_000L).isEmpty());
+        assertTrue(AgentActivitySessionContractVerifier.exitIssues(
+                AgentActivityExitResult.deferred("protected operation", 2_000L),
+                1_000L).isEmpty());
     }
 }

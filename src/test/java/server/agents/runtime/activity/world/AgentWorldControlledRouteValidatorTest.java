@@ -9,11 +9,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentWorldControlledRouteValidatorTest {
     @Test
-    void level15RouteIsStructurallyReadyButLevel30ReportsKpqAdapterGap() {
+    void level15RouteIsReadyAndLevel30OnlyReportsTheMissingSecondJobPlan() {
         AgentWorldActivityAdapterCatalog adapters = AgentWorldActivityAdapterCatalog.current();
         java.util.Set<String> planIds = AgentPlanRepository.defaultRepository().all().stream()
                 .map(AgentPlanDefinition::planId)
                 .collect(java.util.stream.Collectors.toUnmodifiableSet());
+
+        assertTrue(adapters.all().stream().allMatch(
+                AgentWorldActivityAdapterCatalog.Coverage::complete));
 
         adapters.all().stream().filter(
                 AgentWorldActivityAdapterCatalog.Coverage::complete).forEach(coverage -> {
@@ -32,7 +35,7 @@ class AgentWorldControlledRouteValidatorTest {
                         AgentWorldControlledRoute.level30(), adapters, planIds);
 
         assertFalse(level30.valid());
-        assertTrue(level30.issues().stream().anyMatch(issue -> issue.contains("PARTY_QUEST")));
+        assertFalse(level30.issues().stream().anyMatch(issue -> issue.contains("PARTY_QUEST")));
         assertTrue(level30.issues().stream().anyMatch(
                 issue -> issue.contains("victoria-second-job")));
     }

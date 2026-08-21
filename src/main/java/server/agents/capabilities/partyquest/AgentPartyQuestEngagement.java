@@ -28,6 +28,7 @@ public final class AgentPartyQuestEngagement {
     private final String questKey;
     private final Mode mode;
     private final long seed;
+    private final long startedAtMs;
     private final int operatorId;
     private final int requestedPartySize;
     private final Map<Integer, MemberType> members = new LinkedHashMap<>();
@@ -53,6 +54,7 @@ public final class AgentPartyQuestEngagement {
         this.questKey = questKey.trim().toLowerCase();
         this.mode = mode;
         this.seed = seed;
+        this.startedAtMs = nowMs;
         this.operatorId = operatorId;
         this.requestedPartySize = requestedPartySize;
         this.stateEnteredAtMs = nowMs;
@@ -191,6 +193,7 @@ public final class AgentPartyQuestEngagement {
     public synchronized String questKey() { return questKey; }
     public synchronized Mode mode() { return mode; }
     public synchronized long seed() { return seed; }
+    public synchronized long startedAtMs() { return startedAtMs; }
     public synchronized int operatorId() { return operatorId; }
     public synchronized int requestedPartySize() { return requestedPartySize; }
     public synchronized State state() { return state; }

@@ -35,8 +35,9 @@ public final class AgentWorldActivityAdapterCatalog {
                 new Coverage(AgentActivityKind.COMMERCE,
                         "server.agents.runtime.activity.session.adapter.EconomyActivitySessionAdapter",
                         true, "standard session adapter exists"),
-                new Coverage(AgentActivityKind.PARTY_QUEST, "", false,
-                        "KPQ has a primary controller but no standard activity session adapter")));
+                new Coverage(AgentActivityKind.PARTY_QUEST,
+                        "server.agents.runtime.activity.session.adapter.PartyQuestActivitySessionAdapter",
+                        true, "standard session adapter exists")));
     }
 
     public Coverage coverage(AgentActivityKind kind) {
