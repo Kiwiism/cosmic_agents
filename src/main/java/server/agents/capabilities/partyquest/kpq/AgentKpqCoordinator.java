@@ -67,6 +67,10 @@ final class AgentKpqCoordinator {
             "server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.STAGE5_MISSING_PASS_GRACE_MS");
     private static final long SQUISHY_SHOES_HUMAN_PRIORITY_MS = config.AgentTuning.longValue(
             "server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.SQUISHY_SHOES_HUMAN_PRIORITY_MS");
+    private static final long KING_SLIME_LOOT_DELAY_MS = config.AgentTuning.longValue(
+            "server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.KING_SLIME_LOOT_DELAY_MS");
+    private static final long BONUS_MAP_DWELL_MS = config.AgentTuning.longValue(
+            "server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.BONUS_MAP_DWELL_MS");
     private static final long PREPARATION_DELAY_MS = config.AgentTuning.longValue(
             "server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.PREPARATION_DELAY_MS");
     private static final int NEAR_PX = config.AgentTuning.intValue(
@@ -644,15 +648,20 @@ final class AgentKpqCoordinator {
         }
         narrate(session, narrator, "stage5-enter",
                 "Clearing the monsters and collecting 10 passes.");
-        boolean shoesPending = handleSquishyShoes(session, leader, nowMs);
         boolean agentLeader = isAgent(session, leader.getId());
-        if (agentLeader) KPQ.lootNearby(leader, Set.of(AgentKpqDefinition.PASS_ITEM));
-        else narrate(session, narrator, "human-stage5-collect",
-                leader.getName() + ", please collect the 10 passes while we clear the monsters.");
-        int leaderPasses = leader.getItemQuantity(AgentKpqDefinition.PASS_ITEM, false);
         int normalAlive = ACTIONS.liveMonsterCount(leader, STAGE_5_NORMAL_MOBS);
         int bossAlive = ACTIONS.liveMonsterCount(leader, STAGE_5_BOSS_MOBS);
         observeStageFiveBossCombat(session, normalAlive, bossAlive, nowMs);
+        session.beginStage5LootDelayIfBossDefeated(bossAlive, nowMs, KING_SLIME_LOOT_DELAY_MS);
+        boolean lootDelayActive = session.stage5LootDelayActive(nowMs);
+        boolean shoesPending = handleSquishyShoes(session, leader, nowMs);
+        if (agentLeader && !lootDelayActive) {
+            KPQ.lootNearby(leader, Set.of(AgentKpqDefinition.PASS_ITEM));
+        } else if (!agentLeader) {
+            narrate(session, narrator, "human-stage5-collect",
+                    leader.getName() + ", please collect the 10 passes while we clear the monsters.");
+        }
+        int leaderPasses = leader.getItemQuantity(AgentKpqDefinition.PASS_ITEM, false);
         int stage5MobCount = normalAlive + bossAlive;
         boolean reviveGraceActive = session.stage5ReviveGraceActive(
                 bossAlive, nowMs, KING_SLIME_REVIVE_GRACE_MS);
@@ -842,7 +851,11 @@ final class AgentKpqCoordinator {
                 }
             } else if (agent.getMapId() == AgentKpqDefinition.BONUS_MAP) {
                 member.clearBlocker();
-                member.markRewardClaimed();
+                if (!member.rewardClaimed()) {
+                    member.markRewardClaimed();
+                    log.info("KPQ reward confirmed by bonus-map entry: session={} member={} name={}",
+                            session.sessionId(), member.characterId(), agent.getName());
+                }
             } else if (member.rewardClaimed()
                     && agent.getMapId() == AgentKpqDefinition.RECRUIT_MAP) {
                 // Bounded Agent recovery may deliberately leave without a reward.
@@ -871,6 +884,14 @@ final class AgentKpqCoordinator {
                     || agent.getMapId() == AgentKpqDefinition.EXIT_MAP) {
                 allOutside = false;
                 if (member.memberType() == AgentKpqMemberState.MemberType.AGENT) {
+                    if (agent.getMapId() == AgentKpqDefinition.BONUS_MAP
+                            && bonusMapDwellActive(session.phaseEnteredAtMs(), nowMs,
+                                    BONUS_MAP_DWELL_MS)) {
+                        AgentRuntimeEntry agentEntry = entry(member.characterId());
+                        if (agentEntry != null) ACTIONS.stop(agentEntry);
+                        allGathered = false;
+                        continue;
+                    }
                     member.observeBlocker("exit-npc", nowMs);
                     if (nowMs >= member.nextRetryAtMs()) {
                         member.setNextRetryAtMs(nowMs + INTERACTION_RETRY_MS);
@@ -1413,19 +1434,27 @@ final class AgentKpqCoordinator {
             session.markSquishyShoesResolved();
             return false;
         }
+        if (lootDelayActive(session.squishyShoesSeenAtMs(), nowMs, KING_SLIME_LOOT_DELAY_MS)) {
+            return true;
+        }
         boolean humanPriority = hasHumanPartyMember(session);
         if (squishyShoesHumanWindowActive(humanPriority,
                 session.squishyShoesSeenAtMs(), nowMs, SQUISHY_SHOES_HUMAN_PRIORITY_MS)) {
             return true;
         }
+        narrate(session, winner, "squishy-shoes-pickup-" + winner.getId(),
+                "I'll pick up the Squishy Shoes.");
         KPQ.lootNearby(winner, Set.of(AgentKpqDefinition.SQUISHY_SHOES));
         if (winner.getItemQuantity(AgentKpqDefinition.SQUISHY_SHOES, false) > 0
                 || liveSquishyShoesDrops(stageFiveMap).isEmpty()) {
             session.markSquishyShoesResolved();
             return false;
         }
+        long exclusiveWindowMs = humanPriority
+                ? Math.max(KING_SLIME_LOOT_DELAY_MS, SQUISHY_SHOES_HUMAN_PRIORITY_MS)
+                : KING_SLIME_LOOT_DELAY_MS;
         if (nowMs - session.squishyShoesSeenAtMs()
-                >= SQUISHY_SHOES_HUMAN_PRIORITY_MS + LOCAL_RECOVERY_TIMEOUT_MS) {
+                >= exclusiveWindowMs + LOCAL_RECOVERY_TIMEOUT_MS) {
             log.warn("KPQ Squishy Shoes collection abandoned after bounded priority window: "
                             + "session={} winner={} map={} floorDrops={}",
                     session.sessionId(), winner.getId(), winner.getMapId(),
@@ -1466,6 +1495,16 @@ final class AgentKpqCoordinator {
             boolean humanPresent, long dropSeenAtMs, long nowMs, long graceMs) {
         return humanPresent && dropSeenAtMs > 0L
                 && nowMs - dropSeenAtMs < Math.max(0L, graceMs);
+    }
+
+    static boolean lootDelayActive(
+            long startedAtMs, long nowMs, long delayMs) {
+        return startedAtMs > 0L && nowMs - startedAtMs < Math.max(0L, delayMs);
+    }
+
+    static boolean bonusMapDwellActive(
+            long phaseEnteredAtMs, long nowMs, long dwellMs) {
+        return nowMs - phaseEnteredAtMs < Math.max(0L, dwellMs);
     }
 
     static boolean hasHumanPartyMember(AgentKpqSession session) {

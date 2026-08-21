@@ -48,9 +48,10 @@ will enter.
 7. Stage 5 preferred normal-mob then King Slime combat, obsolete platform-anchor
    release, leader-only pass collection, return navigation, missing-pass recovery,
    and a seeded shoe winner that prefers an Agent without Squishy Shoes. If a human
-   is present, the human party has the first seven seconds to loot the drop. Only
-   the assigned Agent waits; everyone else may advance and claim rewards.
-8. Normal reward NPC flow, immediate bonus-map exit, event-session release, and
+   is present, the human party has the first seven seconds to loot the drop. Agent
+   pickup never begins during the first three seconds, and the assigned collector
+   announces the shoe pickup. Only that collector waits; everyone else may advance.
+8. Normal reward NPC flow, a short observable bonus-map dwell, event-session release, and
    parent engagement outside waiting state.
 9. Transition-only narration, coupon milestones, per-pass leader progress, seeded
    timing/formation fidgets, mixed jobs/genders/appearance, legal level-25 equipment,

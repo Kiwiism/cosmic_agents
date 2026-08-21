@@ -1084,10 +1084,15 @@ public class EventInstanceManager {
         AbstractPlayerInteraction api = player.getAbstractPlayerInteraction();
         int rnd = (int) Math.floor(Math.random() * rewardsSet.size());
 
-        api.gainItem(rewardsSet.get(rnd), rewardsQty.get(rnd).shortValue());
+        int rewardItemId = rewardsSet.get(rnd);
+        int rewardQuantity = rewardsQty.get(rnd);
+        api.gainItem(rewardItemId, (short) rewardQuantity);
         if (rewardExp > 0) {
             player.gainExpRateScaled(rewardExp, true, true);
         }
+        log.info("Event reward granted: event={} instance={} player={}({}) item={} quantity={} exp={}",
+                em.getName(), name, player.getName(), player.getId(), rewardItemId,
+                rewardQuantity, rewardExp);
         return true;
     }
 

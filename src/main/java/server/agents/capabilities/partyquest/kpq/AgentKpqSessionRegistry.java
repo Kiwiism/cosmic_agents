@@ -80,13 +80,15 @@ public final class AgentKpqSessionRegistry {
     public static boolean canLootPass(int characterId) {
         AgentKpqSession session = forMember(characterId);
         AgentKpqMemberState member = session == null ? null : session.member(characterId);
-        return member != null && (member.role() == AgentKpqMemberState.Role.EVENT_LEADER
-                || member.role() == AgentKpqMemberState.Role.STAGE5_PASS_COLLECTOR);
+        return member != null && !session.stage5LootDelayActive(System.currentTimeMillis())
+                && (member.role() == AgentKpqMemberState.Role.EVENT_LEADER
+                        || member.role() == AgentKpqMemberState.Role.STAGE5_PASS_COLLECTOR);
     }
 
     public static boolean canLootSquishyShoes(int characterId) {
         AgentKpqSession session = forMember(characterId);
-        return session != null && session.squishyShoesWinnerId() == characterId;
+        return session != null && !session.stage5LootDelayActive(System.currentTimeMillis())
+                && session.squishyShoesWinnerId() == characterId;
     }
 
     /** Called by Cloto's ordinary NPC script after a human event leader checks a puzzle formation. */

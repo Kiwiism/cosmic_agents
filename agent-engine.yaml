@@ -1674,6 +1674,14 @@ tuning:
     # Purpose: Gives human party members exclusive first opportunity to pick up Squishy Shoes before the assigned Agent attempts the drop.
     # Technical: The timer begins when the live shoe drop is first observed; other Agents may advance while only the selected shoe collector waits.
     server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.SQUISHY_SHOES_HUMAN_PRIORITY_MS: '7000'
+    # Values: 0-10000 milliseconds. Recommended: 3000. Keep this below the human-priority window so mixed parties retain their full first chance.
+    # Purpose: Leaves King Slime drops visible briefly before any Agent collects passes or the assigned Agent takes Squishy Shoes.
+    # Technical: Shared hunting eligibility and explicit KPQ pickup both observe the same session deadline after King Slime is defeated.
+    server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.KING_SLIME_LOOT_DELAY_MS: '3000'
+    # Values: 0-30000 milliseconds. Recommended: 5000. Increase only when observers need more time to follow the party through Cloto.
+    # Purpose: Keeps Agents visibly inside the KPQ bonus map before they use its exit NPC.
+    # Technical: The dwell begins after the final party member reaches the bonus map; reward claiming still occurs individually before entry.
+    server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.BONUS_MAP_DWELL_MS: '5000'
     # Values: 1000-15000 milliseconds. Recommended: 3000. Keep this longer than normal foreground ticks but short enough for prompt failover.
     # Purpose: Allows another live Agent member to take over the party coordinator when the current coordinator dies, disconnects, or stops ticking.
     # Technical: AgentKpqSession grants one heartbeat lease at a time and deterministically updates the formation caller when an expired lease transfers.

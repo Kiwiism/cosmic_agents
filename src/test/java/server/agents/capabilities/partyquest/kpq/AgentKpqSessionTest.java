@@ -166,4 +166,18 @@ class AgentKpqSessionTest {
         assertTrue(session.stage5ReviveGraceActive(0, 4_999L, 2_000L));
         assertFalse(session.stage5ReviveGraceActive(0, 5_000L, 2_000L));
     }
+
+    @Test
+    void kingSlimeLootDelayStartsOnlyAfterObservedBossCombatEnds() {
+        AgentKpqSession session = new AgentKpqSession(
+                AgentKpqSession.Mode.TEST_OBSERVATION, 7L, 1, 3, 1_000L);
+
+        session.beginStage5LootDelayIfBossDefeated(0, 2_000L, 3_000L);
+        assertFalse(session.stage5LootDelayActive(2_001L));
+
+        assertTrue(session.beginStage5BossCombat(2_500L));
+        session.beginStage5LootDelayIfBossDefeated(0, 3_000L, 3_000L);
+        assertTrue(session.stage5LootDelayActive(5_999L));
+        assertFalse(session.stage5LootDelayActive(6_000L));
+    }
 }

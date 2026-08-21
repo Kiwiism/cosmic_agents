@@ -119,6 +119,19 @@ class AgentKpqCoordinatorTest {
     }
 
     @Test
+    void kingSlimeDropsRemainVisibleForThreeSeconds() {
+        assertTrue(AgentKpqCoordinator.lootDelayActive(1_000L, 3_999L, 3_000L));
+        assertFalse(AgentKpqCoordinator.lootDelayActive(1_000L, 4_000L, 3_000L));
+        assertFalse(AgentKpqCoordinator.lootDelayActive(0L, 1_000L, 3_000L));
+    }
+
+    @Test
+    void bonusMapExitWaitsForConfiguredDwell() {
+        assertTrue(AgentKpqCoordinator.bonusMapDwellActive(1_000L, 5_999L, 5_000L));
+        assertFalse(AgentKpqCoordinator.bonusMapDwellActive(1_000L, 6_000L, 5_000L));
+    }
+
+    @Test
     void humanLootPriorityOnlyUsesCurrentSessionPartyMembers() {
         AgentKpqSession session = new AgentKpqSession(
                 AgentKpqSession.Mode.TEST_OBSERVATION, 1L, 999, 4, 1_000L);

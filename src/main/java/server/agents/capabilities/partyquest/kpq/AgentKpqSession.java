@@ -62,6 +62,7 @@ public final class AgentKpqSession {
     private int stage5LastMobCount = -1;
     private int stage5LastPassCount = -1;
     private long stage5BossDefeatedAtMs;
+    private long stage5LootNotBeforeMs;
     private long stage5BossCombatStartedAtMs;
     private boolean stage5BossCombatReported;
 
@@ -335,6 +336,17 @@ public final class AgentKpqSession {
             stage5BossDefeatedAtMs = nowMs;
         }
         return nowMs - stage5BossDefeatedAtMs < Math.max(0L, graceMs);
+    }
+
+    public synchronized void beginStage5LootDelayIfBossDefeated(
+            int bossCount, long nowMs, long delayMs) {
+        if (bossCount == 0 && stage5BossCombatStartedAtMs > 0L && stage5LootNotBeforeMs == 0L) {
+            stage5LootNotBeforeMs = nowMs + Math.max(0L, delayMs);
+        }
+    }
+
+    public synchronized boolean stage5LootDelayActive(long nowMs) {
+        return stage5LootNotBeforeMs > 0L && nowMs < stage5LootNotBeforeMs;
     }
 
     public synchronized boolean beginStage5BossCombat(long nowMs) {
