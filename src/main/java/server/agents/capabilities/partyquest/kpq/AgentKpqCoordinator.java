@@ -59,6 +59,14 @@ final class AgentKpqCoordinator {
             "server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.LOCAL_RECOVERY_TIMEOUT_MS");
     private static final long INTERACTION_RETRY_MS = config.AgentTuning.longValue(
             "server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.INTERACTION_RETRY_MS");
+    private static final long STAGE1_QUESTION_DELAY_MS = config.AgentTuning.longValue(
+            "server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.STAGE1_QUESTION_DELAY_MS");
+    private static final long STAGE1_QUESTION_VARIANCE_MS = config.AgentTuning.longValue(
+            "server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.STAGE1_QUESTION_VARIANCE_MS");
+    private static final long STAGE1_SUBMIT_DELAY_MS = config.AgentTuning.longValue(
+            "server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.STAGE1_SUBMIT_DELAY_MS");
+    private static final long STAGE1_SUBMIT_VARIANCE_MS = config.AgentTuning.longValue(
+            "server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.STAGE1_SUBMIT_VARIANCE_MS");
     private static final long PUZZLE_CHECK_DELAY_MS = config.AgentTuning.longValue(
             "server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.PUZZLE_CHECK_DELAY_MS");
     private static final long PUZZLE_CHECK_VARIANCE_MS = config.AgentTuning.longValue(
@@ -328,15 +336,14 @@ final class AgentKpqCoordinator {
                 continue;
             }
             if (!member.questionRequested()) {
-                long questionAt = session.phaseEnteredAtMs() + 300L * member.partyNumber()
-                        + Math.floorMod(session.seed() + member.characterId(), 350L);
-                if (nowMs < questionAt) {
-                    allDelivered = false;
-                    continue;
-                }
                 Point approach = npcApproachPoint(session, member, agent,
                         ACTIONS.npcPosition(agent, AgentKpqDefinition.CLOTO_NPC), 101);
                 if (!walkToPoint(agent, approach, entry, NPC_APPROACH_PX)) {
+                    allDelivered = false;
+                    continue;
+                }
+                if (!stageOneNpcDelayElapsed(session, member, entry, nowMs, 101,
+                        STAGE1_QUESTION_DELAY_MS, STAGE1_QUESTION_VARIANCE_MS)) {
                     allDelivered = false;
                     continue;
                 }
@@ -351,6 +358,7 @@ final class AgentKpqCoordinator {
                     member.clearBlocker();
                     member.markQuestionRequested();
                     member.setCouponTarget(target);
+                    member.setActionNotBeforeMs(0L);
                     member.setRole(AgentKpqMemberState.Role.COUPON_COLLECTOR);
                     narrate(session, agent, "coupon-target-" + agent.getId(),
                             "I need " + target + " coupons.");
@@ -379,12 +387,17 @@ final class AgentKpqCoordinator {
                     if (!walkToPoint(agent, approach, entry, NPC_APPROACH_PX)) {
                         continue;
                     }
+                    if (!stageOneNpcDelayElapsed(session, member, entry, nowMs, 151,
+                            STAGE1_SUBMIT_DELAY_MS, STAGE1_SUBMIT_VARIANCE_MS)) {
+                        continue;
+                    }
                     if (nowMs < member.nextRetryAtMs()) continue;
                     member.setNextRetryAtMs(nowMs + INTERACTION_RETRY_MS);
                     KPQ.runNpc(agent, AgentKpqDefinition.CLOTO_NPC);
                     if (agent.getItemQuantity(AgentKpqDefinition.PASS_ITEM, false) > 0) {
                         member.clearBlocker();
                         member.markPassCreated();
+                        member.setActionNotBeforeMs(0L);
                         member.setRole(AgentKpqMemberState.Role.PASS_DELIVERER);
                         session.markProgress(nowMs);
                     } else {
@@ -446,6 +459,10 @@ final class AgentKpqCoordinator {
             Point approach = npcApproachPoint(session, leaderState, leader, cloto, 191);
             if (walkToPoint(leader, approach, leaderEntry, NPC_APPROACH_PX)) {
                 ACTIONS.stop(leaderEntry);
+                if (!stageOneNpcDelayElapsed(session, leaderState, leaderEntry, nowMs, 191,
+                        STAGE1_SUBMIT_DELAY_MS, STAGE1_SUBMIT_VARIANCE_MS)) {
+                    return;
+                }
                 if (nowMs >= leaderState.nextRetryAtMs()) {
                     leaderState.setNextRetryAtMs(nowMs + INTERACTION_RETRY_MS);
                     if (submitReadyStageOne(session, leader, nowMs, "npc-approach")) {
@@ -1540,6 +1557,40 @@ final class AgentKpqCoordinator {
 
     static boolean passDropConfirmed(int passesBeforeDrop, int passesAfterDrop) {
         return passesBeforeDrop > 0 && passesAfterDrop < passesBeforeDrop;
+    }
+
+    private static boolean stageOneNpcDelayElapsed(
+            AgentKpqSession session,
+            AgentKpqMemberState member,
+            AgentRuntimeEntry entry,
+            long nowMs,
+            int interactionSalt,
+            long baseDelayMs,
+            long varianceMs) {
+        if (member.actionNotBeforeMs() == 0L) {
+            member.setActionNotBeforeMs(nowMs + stageOneNpcDelayMs(
+                    session.seed(), member.characterId(), member.partyNumber(), interactionSalt,
+                    baseDelayMs, varianceMs));
+        }
+        if (nowMs < member.actionNotBeforeMs()) {
+            ACTIONS.stop(entry);
+            return false;
+        }
+        return true;
+    }
+
+    static long stageOneNpcDelayMs(
+            long seed,
+            int characterId,
+            int partyNumber,
+            int interactionSalt,
+            long baseDelayMs,
+            long varianceMs) {
+        long boundedBase = Math.max(0L, baseDelayMs);
+        long boundedVariance = Math.max(0L, varianceMs);
+        if (boundedVariance == 0L) return boundedBase;
+        long mixed = seed * 31L + characterId * 17L + partyNumber * 13L + interactionSalt * 37L;
+        return boundedBase + Math.floorMod(mixed, boundedVariance + 1L);
     }
 
     static boolean shouldBypassMissingPasses(

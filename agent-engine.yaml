@@ -1646,6 +1646,22 @@ tuning:
     # Purpose: Spaces repeated authoritative NPC and portal requests while an Agent waits for a transition receipt or event-state change.
     # Technical: AgentKpqCoordinator stores a per-member next-retry timestamp; this delay never changes player interactions or event timers.
     server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.INTERACTION_RETRY_MS: '1500'
+    # Values: 0-10000 milliseconds. Recommended: 1200. This is the minimum pause after reaching Cloto, before asking for the Stage 1 coupon target.
+    # Purpose: Prevents Agents from contacting Cloto immediately upon reaching her at the start of Stage 1.
+    # Technical: The pause begins only after navigation completes and combines with the configured seeded variance below.
+    server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.STAGE1_QUESTION_DELAY_MS: '1200'
+    # Values: 0-10000 milliseconds. Recommended: 1800. At the defaults each Agent waits 1.2-3.0 seconds.
+    # Purpose: Gives individual Agents visibly different thinking time before requesting their coupon requirement.
+    # Technical: A deterministic mix of session seed, character id, party number, and interaction kind selects the offset.
+    server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.STAGE1_QUESTION_VARIANCE_MS: '1800'
+    # Values: 0-10000 milliseconds. Recommended: 800. This is the minimum pause after reaching Cloto with completed Stage 1 items.
+    # Purpose: Avoids an immediate NPC click when a member exchanges coupons or the leader submits the collected passes.
+    # Technical: Failed NPC attempts retain the elapsed pause and use the ordinary interaction retry rather than repeating the full delay.
+    server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.STAGE1_SUBMIT_DELAY_MS: '800'
+    # Values: 0-10000 milliseconds. Recommended: 1700. At the defaults each Agent waits 0.8-2.5 seconds.
+    # Purpose: Varies Stage 1 coupon and pass submission timing without delaying human-controlled interactions.
+    # Technical: The same deterministic delay policy is salted separately for member exchange and leader stage submission.
+    server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.STAGE1_SUBMIT_VARIANCE_MS: '1700'
     # Values: 0-10000 milliseconds. Recommended: 2000. Set zero only when instant Agent puzzle checks are intentionally desired.
     # Purpose: Adds a short realistic pause after a puzzle formation becomes stable before an Agent event leader asks Cloto to validate it.
     # Technical: The delay begins only after formation stability and fidget completion; human leaders retain full manual control of their click timing.

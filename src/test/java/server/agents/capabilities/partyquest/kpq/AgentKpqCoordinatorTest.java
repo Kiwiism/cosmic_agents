@@ -86,6 +86,20 @@ class AgentKpqCoordinatorTest {
     }
 
     @Test
+    void stageOneNpcDelayIsDeterministicAndWithinItsConfiguredWindow() {
+        long first = AgentKpqCoordinator.stageOneNpcDelayMs(
+                77L, 101, 2, 101, 1_200L, 1_800L);
+        long repeated = AgentKpqCoordinator.stageOneNpcDelayMs(
+                77L, 101, 2, 101, 1_200L, 1_800L);
+        long submission = AgentKpqCoordinator.stageOneNpcDelayMs(
+                77L, 101, 2, 151, 800L, 1_700L);
+
+        assertEquals(first, repeated);
+        assertTrue(first >= 1_200L && first <= 3_000L);
+        assertTrue(submission >= 800L && submission <= 2_500L);
+    }
+
+    @Test
     void bypassesOnlyAfterEveryDeliveryIsDoneAndNoPassRemainsOnTheFloor() {
         assertTrue(AgentKpqCoordinator.shouldBypassMissingPasses(
                 true, 2, 3, 0, 1_000L, 6_000L, 5_000L));
