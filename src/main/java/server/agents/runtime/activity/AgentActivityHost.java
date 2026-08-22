@@ -9,12 +9,14 @@ import java.util.List;
 /** Selects the single controller that owns foreground execution for this tick. */
 public final class AgentActivityHost {
     private final AgentActivityControllerRegistry registry;
+    private final AgentActivityOwnershipReconciler ownershipReconciler;
 
     public AgentActivityHost(AgentActivityControllerRegistry registry) {
         if (registry == null) {
             throw new IllegalArgumentException("Activity controller registry is required");
         }
         this.registry = registry;
+        this.ownershipReconciler = new AgentActivityOwnershipReconciler(registry);
     }
 
     public boolean tick(AgentRuntimeEntry entry, Character agent, long nowMs) {
@@ -24,7 +26,17 @@ public final class AgentActivityHost {
         AgentActivityOwnershipState ownership =
                 entry.capabilityStates().require(AgentActivityOwnershipState.STATE_KEY);
         if (!ownership.permitsExecution()) {
-            return false;
+            AgentActivityOwnershipReconciliation retained = ownership.snapshot();
+            if (retained.status() != AgentActivityOwnershipReconciliation.Status.DRAINING) {
+                return true;
+            }
+            AgentActivityOwnershipReconciliation reconciled = ownershipReconciler.reconcile(
+                    entry, agent, retained.expectedOwner(), nowMs);
+            ownership.record(reconciled, nowMs);
+            if (!reconciled.permitsExecution()) {
+                tickConflictingDrain(entry, agent, reconciled.expectedOwner(), nowMs);
+                return true;
+            }
         }
         AgentActivityHostState state =
                 entry.capabilityStates().require(AgentActivityHostState.STATE_KEY);
@@ -54,5 +66,19 @@ public final class AgentActivityHost {
                     "no admitted controller retained foreground execution", "", List.of());
         }
         return false;
+    }
+
+    private void tickConflictingDrain(
+            AgentRuntimeEntry entry,
+            Character agent,
+            server.agents.runtime.activity.session.AgentActivityKind expectedOwner,
+            long nowMs) {
+        for (AgentActivityController controller : registry.controllers()) {
+            if (controller.exclusive() && controller.activityKind() != expectedOwner
+                    && controller.active(entry, agent)) {
+                controller.tick(entry, agent, nowMs);
+                return;
+            }
+        }
     }
 }
