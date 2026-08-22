@@ -55,6 +55,24 @@ class AgentWorldDirectorPanelFacadeTest {
         assertEquals(5, restored.activityCoverage().size());
     }
 
+    @Test
+    void rejectsAggregateTargetsUntilTheirAdmissionOwnerIsConnected() {
+        AgentFileWorldDirectorSessionStore sessions =
+                new AgentFileWorldDirectorSessionStore(directory.resolve("sessions"));
+        AgentFileWorldDirectiveInbox directives =
+                new AgentFileWorldDirectiveInbox(directory.resolve("directives"));
+        AgentWorldDirectorPanelFacade panel = panel(sessions, directives);
+        panel.setMode(27, AgentWorldDirectorMode.MANUAL, "operator", 1_000L);
+        AgentWorldDirective commerce = directive("commerce", AgentActivityKind.COMMERCE,
+                AgentWorldActivityRequestType.COMMERCE_VISIT, Map.of());
+
+        AgentWorldDirectivePreview preview = panel.preview(commerce, 1_001L);
+
+        assertFalse(preview.accepted());
+        assertTrue(preview.reason().contains("aggregate admission"));
+        assertTrue(directives.list(27).isEmpty());
+    }
+
     private AgentWorldDirectorPanelFacade panel(
             AgentFileWorldDirectorSessionStore sessions,
             AgentFileWorldDirectiveInbox directives) {

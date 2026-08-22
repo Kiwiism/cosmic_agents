@@ -86,15 +86,24 @@ public final class AgentWorldDirectiveProcessor {
             AgentActivityKind sourceKind,
             String sourceSessionId,
             long nowMs) {
+        AgentActivityKind retainedSourceKind = session.phase() == AgentWorldDirectorPhase.HANDOFF
+                && session.observedActivityKind() != null
+                ? session.observedActivityKind() : sourceKind;
+        String retainedSourceSessionId = session.phase() == AgentWorldDirectorPhase.HANDOFF
+                && !session.observedSessionId().isBlank()
+                ? session.observedSessionId() : sourceSessionId;
         AgentWorldActivityBinding binding;
         try {
-            binding = bindings.bind(directive, entry, agent, sourceKind, sourceSessionId);
+            binding = bindings.bind(directive, entry, agent,
+                    retainedSourceKind, retainedSourceSessionId);
         } catch (RuntimeException invalidBinding) {
             return reject(directive, session,
                     "activity binding failed: " + invalidBinding.getMessage(), nowMs);
         }
         AgentActivitySessionSnapshot source = binding.source().snapshot(nowMs);
-        boolean switchRequired = source != null && source.phase().ownsExecution()
+        String handoffId = directive.directiveId() + ":handoff";
+        AgentActivityHandoffCoordinator.Handoff restored = handoffs.restore(handoffId).orElse(null);
+        boolean switchRequired = restored != null || source != null && source.phase().retainsSession()
                 && source.kind() != directive.targetActivityKind();
         if (!switchRequired) {
             AgentActivityAdmissionResult admission = binding.target().requestEntry(nowMs);
@@ -104,13 +113,12 @@ public final class AgentWorldDirectiveProcessor {
                 case REJECTED -> reject(directive, session, admission.reason(), nowMs);
             };
         }
-        String handoffId = directive.directiveId() + ":handoff";
-        AgentActivityHandoffCoordinator.Handoff handoff = handoffs.restore(handoffId)
-                .orElseGet(() -> handoffs.begin(handoffId, "world-director:" + directive.directiveId(),
+        AgentActivityHandoffCoordinator.Handoff handoff = restored != null ? restored
+                : handoffs.begin(handoffId, "world-director:" + directive.directiveId(),
                         directive.targetActivityKind(), binding.source(), binding.targetPreflight(),
-                        nowMs, nowMs + handoffTimeoutMs));
+                        nowMs, nowMs + handoffTimeoutMs);
         sessions.save(session.transition(AgentWorldDirectorPhase.HANDOFF,
-                sourceKind, sourceSessionId, handoffId, handoff.reason(), nowMs));
+                retainedSourceKind, retainedSourceSessionId, handoffId, handoff.reason(), nowMs));
         if (!handoff.terminal()) {
             handoff = handoffs.advance(handoffId, binding.source(), binding.transfer(),
                     binding.target(), binding.rollback(), nowMs);
@@ -120,12 +128,18 @@ public final class AgentWorldDirectiveProcessor {
             // Target adapters are idempotent for the same request and recover the admitted handle.
             AgentActivityAdmissionResult admitted = binding.target().requestEntry(nowMs);
             if (admitted.status() == AgentActivityAdmissionResult.Status.ACCEPTED) {
-                return completeAdmission(directive, session, admitted.session(), nowMs);
+                Result result = completeAdmission(directive, session, admitted.session(), nowMs);
+                handoffs.acknowledgeTerminal(handoffId);
+                return result;
             }
-            return reject(directive, session,
+            Result result = reject(directive, session,
                     "completed handoff could not recover target session: " + admitted.reason(), nowMs);
+            handoffs.acknowledgeTerminal(handoffId);
+            return result;
         }
-        return reject(directive, session, handoff.reason(), nowMs);
+        Result result = reject(directive, session, handoff.reason(), nowMs);
+        handoffs.acknowledgeTerminal(handoffId);
+        return result;
     }
 
     private Result completeAdmission(

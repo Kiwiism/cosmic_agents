@@ -1,6 +1,7 @@
 package server.agents.runtime.activity.control;
 
 import server.agents.runtime.activity.control.binding.AgentWorldDirectiveRequestCompiler;
+import server.agents.runtime.activity.control.binding.AgentStandardWorldActivityBindingResolver;
 import server.agents.runtime.activity.outcome.AgentActivityOutcomeInbox;
 import server.agents.runtime.activity.outcome.AgentActivityOutcomeEnvelope;
 import server.agents.runtime.activity.world.AgentWorldActivityAdapterCatalog;
@@ -43,6 +44,11 @@ public final class AgentWorldDirectorPanelFacade {
     public AgentWorldDirectivePreview preview(AgentWorldDirective directive, long nowMs) {
         AgentWorldDirectivePreview authority = control.preview(directive, nowMs);
         if (!authority.accepted() || directive.targetActivityKind() == null) return authority;
+        if (!AgentStandardWorldActivityBindingResolver.supportedTargets()
+                .contains(directive.targetActivityKind())) {
+            return new AgentWorldDirectivePreview(directive, authority.mode(), false,
+                    "target aggregate admission is not connected to Director execution");
+        }
         AgentWorldActivityAdapterCatalog.Coverage adapter =
                 coverage.coverage(directive.targetActivityKind());
         if (adapter == null || !adapter.complete()) {

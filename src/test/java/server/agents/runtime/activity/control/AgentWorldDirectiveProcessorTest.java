@@ -26,6 +26,7 @@ import server.agents.runtime.activity.world.AgentWorldInterruptionPolicy;
 
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -79,6 +80,47 @@ class AgentWorldDirectiveProcessorTest {
                 inbox.load(27, "start-quest").orElseThrow().status());
     }
 
+    @Test
+    void retainsSuspendedSourceUntilDurableHandoffCompletes() {
+        AgentFileWorldDirectorSessionStore sessions =
+                new AgentFileWorldDirectorSessionStore(directory.resolve("sessions"));
+        AgentFileWorldDirectiveInbox inbox =
+                new AgentFileWorldDirectiveInbox(directory.resolve("directives"));
+        AgentFileActivityHandoffStore handoffStore =
+                new AgentFileActivityHandoffStore(directory.resolve("handoffs"));
+        sessions.save(AgentWorldDirectorSession.create(27, AgentWorldDirectorMode.MANUAL, 1_000L));
+        inbox.submit(directive(), 1_000L);
+        AtomicReference<AgentActivitySessionSnapshot> source = new AtomicReference<>(
+                new AgentActivitySessionSnapshot(AgentActivityKind.HUNTING,
+                        AgentActivityPhase.ACTIVE, "field-session", "hunt",
+                        "test", "27", 1_000L, ""));
+        AgentWorldDirectiveProcessor processor = new AgentWorldDirectiveProcessor(
+                sessions, inbox,
+                new AgentPersistentActivityHandoffCoordinator(handoffStore),
+                (directive, entry, agent, sourceKind, sourceSessionId) -> handoffBinding(source),
+                (session, directive, entry, agent, nowMs) ->
+                        AgentWorldDirectorRolloutGateResult.allow("test gate"),
+                60_000L);
+        Character agent = mock(Character.class);
+        when(agent.getId()).thenReturn(27);
+        AgentRuntimeEntry entry = mock(AgentRuntimeEntry.class);
+
+        assertEquals(AgentWorldDirectiveProcessor.Result.Status.PROGRESSED,
+                processor.tick(entry, agent, AgentActivityKind.HUNTING,
+                        "field-session", 1_001L).status());
+        assertEquals(AgentActivityPhase.SUSPENDED, source.get().phase());
+        assertEquals(AgentWorldDirectiveProcessor.Result.Status.PROGRESSED,
+                processor.tick(entry, agent, null, "", 1_002L).status());
+        assertEquals(AgentWorldDirectiveProcessor.Result.Status.PROGRESSED,
+                processor.tick(entry, agent, null, "", 1_003L).status());
+        assertEquals(AgentWorldDirectiveProcessor.Result.Status.COMPLETED,
+                processor.tick(entry, agent, null, "", 1_004L).status());
+
+        assertEquals(AgentWorldDirectiveStatus.COMPLETED,
+                inbox.load(27, "start-quest").orElseThrow().status());
+        assertTrue(handoffStore.list().isEmpty());
+    }
+
     private AgentWorldDirectiveProcessor processor(
             AgentFileWorldDirectorSessionStore sessions, AgentFileWorldDirectiveInbox inbox) {
         return new AgentWorldDirectiveProcessor(sessions, inbox,
@@ -102,6 +144,36 @@ class AgentWorldDirectiveProcessorTest {
                     @Override public server.agents.runtime.activity.session.AgentActivityExitResult
                             requestGracefulExit(String reason, long nowMs, long deadlineMs) {
                         return server.agents.runtime.activity.session.AgentActivityExitResult.released(reason);
+                    }
+                },
+                (agentId, kind, nowMs) ->
+                        server.agents.runtime.activity.session.AgentActivityPreflightPort.Result.allowed(),
+                nowMs -> server.agents.runtime.activity.session.AgentActivityTransferPort.Result.ready(),
+                nowMs -> AgentActivityAdmissionResult.accepted(active),
+                (sessionId, nowMs) ->
+                        server.agents.runtime.activity.session.AgentActivityRollbackPort.Result.resumed("test"),
+                nowMs -> null);
+    }
+
+    private static AgentWorldActivityBinding handoffBinding(
+            AtomicReference<AgentActivitySessionSnapshot> source) {
+        AgentActivitySessionSnapshot active = new AgentActivitySessionSnapshot(
+                AgentActivityKind.QUESTING, AgentActivityPhase.ACTIVE, "quest-session",
+                "start-quest", "world-director", "27", 1_004L, "");
+        return new AgentWorldActivityBinding(
+                new server.agents.runtime.activity.session.AgentActivitySourcePort() {
+                    @Override public AgentActivitySessionSnapshot snapshot(long nowMs) {
+                        return source.get();
+                    }
+                    @Override public server.agents.runtime.activity.session.AgentActivityExitResult
+                            requestGracefulExit(String reason, long nowMs, long deadlineMs) {
+                        AgentActivitySessionSnapshot current = source.get();
+                        source.set(new AgentActivitySessionSnapshot(current.kind(),
+                                AgentActivityPhase.SUSPENDED, current.sessionId(),
+                                current.requestId(), current.callerId(), current.agentId(),
+                                nowMs, reason));
+                        return server.agents.runtime.activity.session.AgentActivityExitResult.requested(
+                                reason);
                     }
                 },
                 (agentId, kind, nowMs) ->

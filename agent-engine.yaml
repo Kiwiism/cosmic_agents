@@ -3524,6 +3524,14 @@ tuning:
     # Purpose: Restores persisted Observe or Shadow mode at registration without reading Director files on every Agent tick.
     # Technical: Live modes use the directive cadence; this interval only controls read-only World Director samples.
     server.agents.runtime.AgentRegistrationCoordinator.WORLD_DIRECTOR_OBSERVE_INTERVAL_MS: '5000'
+    # Values: 250-5000 milliseconds. Recommended: 1000 so manual commands feel responsive without reading durable inbox files on movement ticks.
+    # Purpose: Controls how often a live Agent checks for a pending World Director directive after its persisted mode authorizes execution.
+    # Technical: The session-local poll state claims this cadence before any filesystem access; disabled and observation-only modes never poll the directive inbox.
+    server.agents.runtime.activity.control.AgentWorldDirectorExecutionRuntime.POLL_INTERVAL_MS: '1000'
+    # Values: 15000-120000 milliseconds. Recommended: 60000 to permit graceful child boundaries while keeping every ownership transfer bounded.
+    # Purpose: Sets the durable deadline for releasing, transferring, admitting, or rolling back one World Director activity handoff.
+    # Technical: The deadline is persisted with the handoff and survives restart; expiry enters rollback rather than hard-teleporting or discarding the source session.
+    server.agents.runtime.activity.control.AgentWorldDirectorExecutionRuntime.HANDOFF_TIMEOUT_MS: '60000'
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 250-1002 around the tested baseline 501; benchmark or observe behavior before moving outside this band.
     # Purpose: Sets the longest initial skip delay time an Agent may receive. Higher values allow longer occurrences; lower values end them sooner.
     # Technical: the "tick state" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled. Paired minimum/maximum values define an inclusive random or validation range and must not be inverted.
