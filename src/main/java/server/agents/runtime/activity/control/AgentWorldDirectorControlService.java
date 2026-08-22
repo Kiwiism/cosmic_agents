@@ -11,6 +11,8 @@ import server.agents.runtime.activity.world.AgentWorldDirectiveType;
 import server.agents.runtime.activity.world.AgentWorldDirectorMode;
 import server.agents.runtime.activity.world.AgentWorldDirectorSession;
 import server.agents.runtime.activity.world.AgentWorldDirectorSessionStore;
+import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.AgentRuntimeRegistry;
 
 /** Headless operator API. It owns durable intent, never child-system execution. */
 public final class AgentWorldDirectorControlService {
@@ -43,6 +45,13 @@ public final class AgentWorldDirectorControlService {
         AgentWorldDirectorSession updated = current.mode() == mode
                 ? current : current.withMode(mode, reason, nowMs);
         sessions.save(updated);
+        AgentRuntimeEntry live = AgentRuntimeRegistry.findByAgentCharacterId(agentId);
+        if (live != null) {
+            new AgentWorldDirectorModeRestoreRuntime(sessions,
+                    config.AgentTuning.longValue(
+                            "server.agents.runtime.AgentRegistrationCoordinator.WORLD_DIRECTOR_OBSERVE_INTERVAL_MS"))
+                    .apply(live, updated, nowMs);
+        }
         return updated;
     }
 

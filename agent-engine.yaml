@@ -3466,6 +3466,10 @@ tuning:
     # Purpose: Controls how frequently heartbeat interval updates. Lower values make Agents react more quickly and smoothly but use more server work; higher values react more slowly and reduce load.
     # Technical: the "tick preflight runtime" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled. It governs recurring work, so lowering it increases invocation frequency and operational load.
     server.agents.runtime.AgentTickPreflightRuntime.HEARTBEAT_INTERVAL_MS: '600000'
+    # Values: 1000-60000 milliseconds. Recommended: 5000 for low-cost shadow diagnostics.
+    # Purpose: Restores persisted Observe or Shadow mode at registration without reading Director files on every Agent tick.
+    # Technical: Live modes use the directive cadence; this interval only controls read-only World Director samples.
+    server.agents.runtime.AgentRegistrationCoordinator.WORLD_DIRECTOR_OBSERVE_INTERVAL_MS: '5000'
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 250-1002 around the tested baseline 501; benchmark or observe behavior before moving outside this band.
     # Purpose: Sets the longest initial skip delay time an Agent may receive. Higher values allow longer occurrences; lower values end them sooner.
     # Technical: the "tick state" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled. Paired minimum/maximum values define an inclusive random or validation range and must not be inverted.

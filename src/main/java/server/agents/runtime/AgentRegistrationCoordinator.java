@@ -15,6 +15,8 @@ import server.agents.plans.AgentPlanReattachmentRuntime;
 import server.agents.plans.AgentPlanCheckpointRuntime;
 import server.agents.runtime.activity.AgentActivityBootstrap;
 import server.agents.runtime.activity.AgentActivityOwnershipReconciliation;
+import server.agents.runtime.activity.control.AgentWorldDirectorModeRestoreRuntime;
+import server.agents.runtime.activity.world.AgentFileWorldDirectorSessionStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,6 +26,12 @@ import org.slf4j.LoggerFactory;
  */
 public final class AgentRegistrationCoordinator {
     private static final Logger log = LoggerFactory.getLogger(AgentRegistrationCoordinator.class);
+    private static final long WORLD_DIRECTOR_OBSERVE_INTERVAL_MS = config.AgentTuning.longValue(
+            "server.agents.runtime.AgentRegistrationCoordinator.WORLD_DIRECTOR_OBSERVE_INTERVAL_MS");
+    private static final AgentWorldDirectorModeRestoreRuntime WORLD_DIRECTOR_MODES =
+            new AgentWorldDirectorModeRestoreRuntime(
+                    AgentFileWorldDirectorSessionStore.runtimeDefault(),
+                    WORLD_DIRECTOR_OBSERVE_INTERVAL_MS);
     private AgentRegistrationCoordinator() {
     }
 
@@ -87,6 +95,7 @@ public final class AgentRegistrationCoordinator {
         AgentTownLifeVisitLeaseCheckpointRuntime.restore(entry, agent);
         AgentFieldCheckpointRuntime.restore(entry, agent, nowMs);
         AgentFieldVisitLeaseCheckpointRuntime.restore(entry, agent);
+        WORLD_DIRECTOR_MODES.restore(entry, agent.getId(), nowMs);
         AgentActivityOwnershipReconciliation ownership = entry.capabilityStates() == null
                 ? null : AgentActivityBootstrap.reconcileRestoredOwnership(entry, agent, nowMs);
         if (ownership == null || ownership.permitsExecution()) {
