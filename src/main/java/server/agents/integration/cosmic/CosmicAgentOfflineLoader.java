@@ -6,6 +6,7 @@ import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.integration.AgentClientGatewayRuntime;
 import server.agents.integration.AgentMapGatewayRuntime;
 import server.agents.runtime.AgentSpawnPositionService;
+import server.agents.runtime.AgentCharacterMaintenanceRuntime;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -24,13 +25,15 @@ public final class CosmicAgentOfflineLoader {
                                              int channel,
                                              MapleMap targetMap,
                                              Point desiredPosition) throws SQLException {
-        return loadOfflineAgent(
-                characterId,
-                world,
-                channel,
-                targetMap,
-                desiredPosition,
-                hooks());
+        try (var ignored = AgentCharacterMaintenanceRuntime.acquire(characterId)) {
+            return loadOfflineAgent(
+                    characterId,
+                    world,
+                    channel,
+                    targetMap,
+                    desiredPosition,
+                    hooks());
+        }
     }
 
     static Character loadOfflineAgent(int characterId,

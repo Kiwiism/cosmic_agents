@@ -7053,7 +7053,7 @@ Current physics correction:
   `getPartyMembersOnline()` reads are isolated in `CosmicPartyGateway`.
 - SPI/gateway extraction: runtime, registry, loot, quest, dialogue, and trade
   code now classifies live Agent characters through
-  `CharacterGateway.isAgentCharacter`. The exact `character.getClient()
+  `CharacterGateway.isHeadlessControlled`. The exact `character.getClient()
   instanceof BotClient` rule is isolated in `CosmicCharacterGateway`; all
   existing null behavior, human/Agent filtering, ownership checks, and target
   selection remain unchanged.

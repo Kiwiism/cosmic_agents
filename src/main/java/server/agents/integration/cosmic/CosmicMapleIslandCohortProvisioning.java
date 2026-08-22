@@ -6,6 +6,8 @@ import server.agents.integration.AgentAccountResolution;
 import server.agents.integration.AgentBackingAccountSecurityRuntime;
 import server.agents.integration.AgentClientGatewayRuntime;
 import server.agents.integration.AgentPersistenceGatewayRuntime;
+import server.agents.integration.AgentIdentityGatewayRuntime;
+import server.agents.integration.AgentIdentityOrigin;
 import server.agents.plans.mapleisland.cohort.MapleIslandCohortPoolProvisioner;
 import server.agents.plans.mapleisland.cohort.MapleIslandCohortCharacterTemplate;
 import tools.DatabaseConnection;
@@ -143,11 +145,11 @@ public final class CosmicMapleIslandCohortProvisioning implements MapleIslandCoh
                                String characterName,
                                int world,
                                int channel,
-                               MapleIslandCohortCharacterTemplate characterTemplate) {
+                               MapleIslandCohortCharacterTemplate characterTemplate) throws Exception {
         Client client = AgentClientGatewayRuntime.clients().createHeadlessClient(world, channel);
         client.setAccID(accountId);
         client.setAccountName(accountName);
-        return BotCreator.createCharacter(
+        int characterId = BotCreator.createCharacter(
                 client,
                 characterName,
                 characterTemplate.face(),
@@ -158,5 +160,10 @@ public final class CosmicMapleIslandCohortProvisioning implements MapleIslandCoh
                 characterTemplate.bottom(),
                 characterTemplate.shoes(),
                 characterTemplate.weapon());
+        if (characterId > 0) {
+            AgentIdentityGatewayRuntime.identities().register(
+                    characterId, AgentIdentityOrigin.PROVISIONED, false);
+        }
+        return characterId;
     }
 }

@@ -8,7 +8,7 @@ public final class AgentUseItemBridge {
     }
 
     public static boolean consumeUseItem(Character agent, short slot, int itemId) {
-        if (agent == null || !AgentCharacterGatewayRuntime.characters().isAgentCharacter(agent)) {
+        if (agent == null || !AgentCharacterGatewayRuntime.characters().isHeadlessControlled(agent)) {
             return false;
         }
         return UseItemHandler.consumeServerSideUseItem(agent, slot, itemId);

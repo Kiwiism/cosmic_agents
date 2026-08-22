@@ -2980,8 +2980,8 @@ Recent capability extraction notes:
   party-quest sync now use `PartyGateway.hasParty`/`onlineMembers`. Live online
   party-member collection is isolated in `CosmicPartyGateway`; ordering,
   filtering, duplicate handling, and BotClient detection remain unchanged.
-- SPI/gateway extraction: repeated live Agent-character classification now uses
-  `CharacterGateway.isAgentCharacter`. The concrete `BotClient` type check is
+- SPI/gateway extraction: repeated live headless-control classification now uses
+  `CharacterGateway.isHeadlessControlled`. The concrete `BotClient` type check is
   isolated in `CosmicCharacterGateway`; registry, loot, quest, dialogue, trade,
   and runtime filtering behavior remains unchanged.
 - SPI/gateway extraction: spawn and offline-load paths now obtain headless

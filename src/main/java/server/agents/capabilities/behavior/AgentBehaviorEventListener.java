@@ -85,7 +85,7 @@ public final class AgentBehaviorEventListener implements AgentEventListener<Agen
                 || AgentMovementStateRuntime.climbing(entry)
                 || AgentBehaviorRuntime.calibration(entry).nextPercent(channel) >= chance
                 || agent.getMap().getCharacters().stream().noneMatch(character ->
-                !AgentCharacterGatewayRuntime.characters().isAgentCharacter(character))) return false;
+                !AgentCharacterGatewayRuntime.characters().isHeadlessControlled(character))) return false;
         return MAP_BUDGETS.computeIfAbsent(agent.getMapId(), ignored -> new MapBudget()).tryAcquire(
                 nowMs, Math.max(1, config.AgentYamlConfig.config.agent.AGENT_COMBAT_EMOTE_MAP_BUDGET_PER_10S));
     }

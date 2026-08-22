@@ -6,6 +6,8 @@ import net.server.Server;
 import server.agents.integration.AgentAccountResolution;
 import server.agents.integration.AgentBackingAccountSecurityRuntime;
 import server.agents.integration.AgentClientGatewayRuntime;
+import server.agents.integration.AgentIdentityGatewayRuntime;
+import server.agents.integration.AgentIdentityOrigin;
 import server.agents.integration.AgentPersistenceGatewayRuntime;
 import server.agents.integration.cosmic.CosmicAgentBackingAccountSecurity;
 import server.agents.population.AgentPopulationRecord;
@@ -72,6 +74,8 @@ public final class AgentSoakRosterProvisionMain {
             String name = AgentSoakRosterProvisioning.name(options.prefix(), sequence);
             AgentResolvedCharacter existing = AgentPersistenceGatewayRuntime.persistence().findCharacterByName(name);
             if (existing != null) {
+                require(AgentIdentityGatewayRuntime.identities().isActiveAgent(existing.id()),
+                        "Existing character '" + name + "' is not registered as an active Agent");
                 require(CosmicAgentBackingAccountSecurity.isAgentOnlyAccount(existing.accountId()),
                         "Existing character '" + name + "' is not on an Agent-only account");
                 records.add(new AgentPopulationRecord(existing.id(), existing.name(), null));
@@ -101,6 +105,8 @@ public final class AgentSoakRosterProvisionMain {
             client.setAccountName(name);
             int characterId = AgentClientGatewayRuntime.clients().createBackingCharacter(client, name);
             require(characterId > 0, "Backing character creation failed for '" + name + "'");
+            AgentIdentityGatewayRuntime.identities().register(
+                    characterId, AgentIdentityOrigin.PROVISIONED, false);
             return new AgentPopulationRecord(characterId, name, null);
         } catch (Throwable failure) {
             deleteAccount(account.accountId());

@@ -4,6 +4,7 @@ import client.Character;
 import net.server.Server;
 import server.agents.integration.AgentPersistenceGatewayRuntime;
 import server.agents.integration.AgentCharacterGatewayRuntime;
+import server.agents.integration.AgentIdentityGatewayRuntime;
 import server.agents.registry.AgentResolvedCharacter;
 import server.agents.runtime.AgentInteractionRuntime;
 import server.agents.runtime.AgentRuntimeCleanupService;
@@ -54,9 +55,9 @@ public final class CosmicAgentDirectorSessionService implements AgentDirectorSes
             resolved = AgentPersistenceGatewayRuntime.persistence().findCharacterById(characterId);
             if (resolved == null) return AgentDirectorSessionPort.SpawnResult.rejected(
                     "unknown backing character");
-            if (!CosmicAgentBackingAccountSecurity.isAgentOnlyAccount(resolved.accountId())) {
+            if (!AgentIdentityGatewayRuntime.identities().isActiveAgent(characterId)) {
                 return AgentDirectorSessionPort.SpawnResult.rejected(
-                        "character is not on an Agent-only backing account");
+                        "character is not registered as an active Agent");
             }
         } catch (SQLException failure) {
             return AgentDirectorSessionPort.SpawnResult.rejected(

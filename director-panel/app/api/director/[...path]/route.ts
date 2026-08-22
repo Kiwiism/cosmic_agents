@@ -24,7 +24,7 @@ async function proxy(request: NextRequest, context: RouteContext) {
         Authorization: `Bearer ${token}`,
         ...(body ? { "Content-Type": "application/json" } : {}),
       },
-      signal: AbortSignal.timeout(15_000),
+      signal: AbortSignal.timeout(50_000),
     });
     const payload = await response.text();
     return new NextResponse(payload, {

@@ -27,9 +27,10 @@ such operations in the current catalog.
 | Gateway | Classification | Reason |
 | --- | --- | --- |
 | `AgentClientGateway` | `ASYNC_EXTERNAL` | Headless client/backing-character creation and loading are lifecycle and SQL work. |
+| `AgentIdentityGateway` | `ASYNC_EXTERNAL` | Durable Agent identity reads and registration use Cosmic persistence and stay outside scheduler ticks. |
 | `AgentPersistenceGateway` | `ASYNC_EXTERNAL` | Registry/account queries and writes use the bounded persistence lane. |
 | `AgentQuestSyncGateway`, `AgentQuestSyncHandle` | `SHARD_SAFE_DIRECT` | Quest actions target the owning Agent through authoritative quest APIs. |
-| `CharacterGateway` | `SHARD_SAFE_DIRECT` | Online lookup, heartbeat, disconnect, and identity use existing concurrent Cosmic services. |
+| `CharacterGateway` | `SHARD_SAFE_DIRECT` | Online lookup, heartbeat, disconnect, and live headless-control checks use existing concurrent Cosmic services. Durable identity uses the async `AgentIdentityGateway`. |
 | `CharacterGateway.loadStoredDiseases`, `CharacterGateway.save` | `ASYNC_EXTERNAL` | These method overrides perform persistence work. |
 | `CombatGateway` | `SHARD_SAFE_DIRECT` | Synthetic attacks use normal packet handlers and one writer for the acting Agent. |
 | `InventoryGateway` | `SHARD_SAFE_DIRECT` | Mutations target the owning Agent and use Cosmic inventory manipulators. |

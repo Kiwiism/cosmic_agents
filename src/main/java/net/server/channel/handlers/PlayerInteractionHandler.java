@@ -309,8 +309,8 @@ public final class PlayerInteractionHandler extends AbstractPacketHandler {
                     return;
                 }
 
-                if (AgentCharacterGatewayRuntime.characters().isAgentCharacter(other)
-                        && !AgentCharacterGatewayRuntime.characters().isAgentCharacter(chr)) {
+                if (AgentCharacterGatewayRuntime.characters().isHeadlessControlled(other)
+                        && !AgentCharacterGatewayRuntime.characters().isHeadlessControlled(chr)) {
                     if (!AgentAuthorityService.isTrustedTradePlayer(chr)) {
                         chr.dropMessage(1, "That Agent is not configured to accept your trade requests.");
                         return;

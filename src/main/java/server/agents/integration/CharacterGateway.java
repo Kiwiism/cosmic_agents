@@ -9,7 +9,7 @@ import java.util.Map;
 
 @AgentGatewayAffinity(
         value = AgentGatewayThreadAffinity.SHARD_SAFE_DIRECT,
-        rationale = "Online lookup, heartbeat, disconnect, and Agent identity use existing concurrent Cosmic APIs.")
+        rationale = "Online lookup, heartbeat, disconnect, and live control mode use existing concurrent Cosmic APIs.")
 public interface CharacterGateway {
     Character findWorldCharacterById(int world, int characterId);
 
@@ -33,6 +33,12 @@ public interface CharacterGateway {
 
     void disconnect(Character agent, boolean shutdown, boolean cashShop);
 
-    boolean isAgentCharacter(Character character);
+    boolean isHeadlessControlled(Character character);
+
+    /** @deprecated Agent identity is durable; this compatibility alias only reports live control mode. */
+    @Deprecated
+    default boolean isAgentCharacter(Character character) {
+        return isHeadlessControlled(character);
+    }
 }
 

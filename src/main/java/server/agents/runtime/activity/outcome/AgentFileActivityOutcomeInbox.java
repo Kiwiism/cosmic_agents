@@ -87,6 +87,21 @@ public final class AgentFileActivityOutcomeInbox implements AgentActivityOutcome
         return acknowledged;
     }
 
+    public synchronized void deleteAgent(int agentId) {
+        String expected = Integer.toString(agentId);
+        if (agentId <= 0 || !Files.isDirectory(directory)) return;
+        try (var files = Files.list(directory)) {
+            for (Path source : files.filter(path -> path.getFileName().toString().endsWith(".json"))
+                    .toList()) {
+                if (read(source).outcome().agentId().equals(expected)) {
+                    Files.deleteIfExists(source);
+                }
+            }
+        } catch (IOException failure) {
+            throw new IllegalStateException("could not delete Agent activity outcomes", failure);
+        }
+    }
+
     private AgentActivityOutcomeEnvelope read(Path source) {
         try {
             return mapper.readValue(source.toFile(), AgentActivityOutcomeEnvelope.class);

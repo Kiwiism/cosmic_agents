@@ -31,6 +31,8 @@ public interface AgentServerAdapter {
 
     AgentPersistenceGateway persistence();
 
+    AgentIdentityGateway identities();
+
     SchedulerGateway scheduler();
 
     PrimitiveCapabilityGateway primitiveCapabilities();

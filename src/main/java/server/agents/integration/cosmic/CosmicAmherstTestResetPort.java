@@ -37,7 +37,7 @@ public enum CosmicAmherstTestResetPort implements AmherstTestResetPort {
     @Override
     public AmherstTestResetResult reset(AmherstTestResetRequest request) {
         Character agent = CosmicCharacterGateway.INSTANCE.findOnlineCharacterById(request.characterId());
-        if (agent == null || !CosmicCharacterGateway.INSTANCE.isAgentCharacter(agent)) {
+        if (agent == null || !CosmicCharacterGateway.INSTANCE.isHeadlessControlled(agent)) {
             return AmherstTestResetResult.blocked(
                     server.agents.capabilities.AgentCapabilityStatus.MISSING_REQUIREMENT,
                     "allowlisted character is not an online Agent");

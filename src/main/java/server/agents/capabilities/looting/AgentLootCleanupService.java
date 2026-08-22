@@ -18,7 +18,7 @@ public final class AgentLootCleanupService {
         }
 
         for (Character player : agent.getMap().getAllPlayers()) {
-            if (AgentCharacterGatewayRuntime.characters().isAgentCharacter(player)) {
+            if (AgentCharacterGatewayRuntime.characters().isHeadlessControlled(player)) {
                 continue;
             }
             if (!player.isMapObjectVisible(drop)) {

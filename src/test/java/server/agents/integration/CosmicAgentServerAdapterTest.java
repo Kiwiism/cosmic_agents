@@ -14,6 +14,7 @@ import server.agents.integration.cosmic.CosmicMapGateway;
 import server.agents.integration.cosmic.CosmicPacketGateway;
 import server.agents.integration.cosmic.CosmicPartyGateway;
 import server.agents.integration.cosmic.CosmicAgentPersistenceGateway;
+import server.agents.integration.cosmic.CosmicAgentIdentityGateway;
 import server.agents.integration.cosmic.CosmicShopGateway;
 import server.agents.integration.cosmic.CosmicTradeGateway;
 import server.agents.integration.cosmic.CosmicPrimitiveCapabilityGateway;
@@ -82,13 +83,18 @@ class CosmicAgentServerAdapterTest {
     }
 
     @Test
+    void exposesCosmicAgentIdentityGateway() {
+        assertSame(CosmicAgentIdentityGateway.INSTANCE, CosmicAgentServerAdapter.INSTANCE.identities());
+    }
+
+    @Test
     void exposesPrimitiveCapabilityGateway() {
         assertSame(CosmicPrimitiveCapabilityGateway.INSTANCE,
                 CosmicAgentServerAdapter.INSTANCE.primitiveCapabilities());
     }
 
     @Test
-    void installsBotClientAgentPresenceProvider() {
+    void installsHeadlessAgentPresenceProvider() {
         CosmicAgentServerAdapter adapter = CosmicAgentServerAdapter.INSTANCE;
         Character agent = mock(Character.class);
         Character player = mock(Character.class);

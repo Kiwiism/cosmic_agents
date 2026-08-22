@@ -13,13 +13,26 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class CosmicAgentPopulationBackendTest {
     @Test
-    void offlineCharacterRequiresAgentOnlyAccountLock() {
+    void offlineCharacterRequiresActiveAgentIdentity() {
         StubHooks hooks = new StubHooks();
         hooks.resolved = new AgentResolvedCharacter(7, "agent", 70, null);
         CosmicAgentPopulationBackend backend = new CosmicAgentPopulationBackend(0, 1, hooks);
 
         assertFalse(backend.isEligibleAgent(7));
-        hooks.agentOnly = true;
+        hooks.activeAgent = true;
+        assertTrue(backend.isEligibleAgent(7));
+    }
+
+    @Test
+    void onlineAgentMustAlsoBeHeadlessControlled() {
+        StubHooks hooks = new StubHooks();
+        hooks.resolved = new AgentResolvedCharacter(7, "agent", 70, null);
+        hooks.activeAgent = true;
+        hooks.onlineCharacter = hooks.loadedCharacter;
+        CosmicAgentPopulationBackend backend = new CosmicAgentPopulationBackend(0, 1, hooks);
+
+        assertFalse(backend.isEligibleAgent(7));
+        hooks.headlessControlled = true;
         assertTrue(backend.isEligibleAgent(7));
     }
 
@@ -47,17 +60,20 @@ class CosmicAgentPopulationBackendTest {
 
     private static final class StubHooks implements CosmicAgentPopulationBackend.Hooks {
         AgentResolvedCharacter resolved;
-        boolean agentOnly;
+        boolean activeAgent;
+        boolean headlessControlled;
         boolean channelAvailable = true;
         boolean throwOnRegister;
         final Character loadedCharacter = newCharacter();
+        Character onlineCharacter;
         final AtomicBoolean loaded = new AtomicBoolean();
         final AtomicBoolean runtimeRemoved = new AtomicBoolean();
         final AtomicBoolean disconnected = new AtomicBoolean();
 
         @Override public AgentResolvedCharacter resolve(int characterId) { return resolved; }
-        @Override public boolean isAgentOnlyAccount(int accountId) throws SQLException { return agentOnly; }
-        @Override public Character online(int characterId) { return null; }
+        @Override public boolean isActiveAgent(int characterId) throws SQLException { return activeAgent; }
+        @Override public boolean isHeadlessControlled(Character character) { return headlessControlled; }
+        @Override public Character online(int characterId) { return onlineCharacter; }
         @Override public Character load(int characterId, int world, int channel) {
             loaded.set(true); return loadedCharacter;
         }

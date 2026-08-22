@@ -45,7 +45,7 @@ public final class AgentOwnerItemNotificationService {
     }
 
     static boolean isItemFromOwnedAgent(Character owner, Character source) {
-        if (owner == null || !AgentCharacterGatewayRuntime.characters().isAgentCharacter(source)) {
+        if (owner == null || !AgentCharacterGatewayRuntime.characters().isHeadlessControlled(source)) {
             return false;
         }
         Character activeOwner = AgentRuntimeRegistry.activeLeaderByAgentCharacterId(

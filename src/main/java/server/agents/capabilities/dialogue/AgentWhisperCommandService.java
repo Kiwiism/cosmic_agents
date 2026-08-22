@@ -31,7 +31,7 @@ public final class AgentWhisperCommandService {
         if (leader == null || target == null || message == null) {
             return;
         }
-        if (!AgentCharacterGatewayRuntime.characters().isAgentCharacter(target)) {
+        if (!AgentCharacterGatewayRuntime.characters().isHeadlessControlled(target)) {
             return;
         }
 

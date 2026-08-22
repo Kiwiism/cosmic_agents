@@ -5,9 +5,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import server.agents.integration.cosmic.CosmicAgentWorldDirectorApplicationFactory;
+import server.agents.integration.cosmic.CosmicAgentCleanSlateResetFactory;
+import server.agents.administration.AgentCleanSlateResetService;
 import server.agents.integration.ollama.DirectorLlmSettings;
 import server.agents.integration.ollama.OllamaDirectorProposalProvider;
 import server.agents.presentation.director.AgentDirectorApiView;
+import server.agents.presentation.director.AgentCleanSlateApiView;
 import server.agents.runtime.activity.control.AgentWorldDirectorApplication;
 import server.agents.runtime.activity.control.chat.AgentDirectorChatService;
 import server.agents.runtime.activity.control.proposal.AgentDirectorProposalService;
@@ -40,7 +43,9 @@ public final class AgentDirectorBridgeServer {
     private final AgentWorldDirectorApplication application;
     private final AgentDirectorProposalService proposals;
     private final AgentDirectorChatService chat;
+    private final AgentCleanSlateResetService resets;
     private final DirectorLlmSettings llmSettings;
+    private final OllamaDirectorProposalProvider llm;
 
     public AgentDirectorBridgeServer() throws IOException {
         int port = intEnv("COSMIC_DIRECTOR_PORT", DEFAULT_PORT);
@@ -50,8 +55,9 @@ public final class AgentDirectorBridgeServer {
         this.proposals = new AgentDirectorProposalService(
                 AgentFileDirectorProposalStore.runtimeDefault());
         this.llmSettings = DirectorLlmSettings.runtime();
-        this.chat = new AgentDirectorChatService(
-                new OllamaDirectorProposalProvider(llmSettings), proposals);
+        this.llm = new OllamaDirectorProposalProvider(llmSettings);
+        this.chat = new AgentDirectorChatService(llm, proposals);
+        this.resets = CosmicAgentCleanSlateResetFactory.create();
         this.server = HttpServer.create(new InetSocketAddress("127.0.0.1", port), 0);
         this.server.setExecutor(new ThreadPoolExecutor(2, 4, 30L, TimeUnit.SECONDS,
                 new ArrayBlockingQueue<>(64), r -> {
@@ -68,7 +74,10 @@ public final class AgentDirectorBridgeServer {
                 || "0".equals(value) || "no".equalsIgnoreCase(value));
     }
 
-    public void start() { server.start(); }
+    public void start() {
+        server.start();
+        llm.prewarmAsync();
+    }
     public void stop() { server.stop(0); }
 
     private void handle(HttpExchange exchange) throws IOException {
@@ -90,15 +99,19 @@ public final class AgentDirectorBridgeServer {
         }
     }
 
-    private void route(HttpExchange exchange) throws IOException {
+    private void route(HttpExchange exchange) throws Exception {
         String method = exchange.getRequestMethod();
         String path = exchange.getRequestURI().getPath();
         long nowMs = System.currentTimeMillis();
         if ("GET".equals(method) && "/internal/director/health".equals(path)) {
+            var llmHealth = llm.health();
             send(exchange, 200, Map.of(
                     "status", "UP", "checkedAt", Instant.ofEpochMilli(nowMs).toString(),
                     "ollama", Map.of("enabled", llmSettings.enabled(),
-                            "model", llmSettings.model(), "endpoint", llmSettings.endpoint()),
+                            "ready", llmHealth.ready(),
+                            "reachable", llmHealth.reachable(),
+                            "modelAvailable", llmHealth.modelAvailable(),
+                            "model", llmHealth.model(), "status", llmHealth.status()),
                     "socialDatabase", Map.of("enabled", SocialPostgresDataSource.enabled(),
                             "available", !SocialPostgresDataSource.enabled()
                                     || SocialMemoryDatabaseRuntime.store().isPresent())));
@@ -131,6 +144,20 @@ public final class AgentDirectorBridgeServer {
                     requiredInt(body, "world"), requiredInt(body, "channel"), nowMs));
             return;
         }
+        if ("POST".equals(method) && "/reset/preview".equals(operation)) {
+            JsonNode body = readBody(exchange);
+            send(exchange, 200, AgentCleanSlateApiView.preview(resets.preview(
+                    agentId, "local-director-operator", requiredText(body, "reason"), nowMs)));
+            return;
+        }
+        if ("POST".equals(method) && "/reset/execute".equals(operation)) {
+            JsonNode body = readBody(exchange);
+            send(exchange, 200, AgentCleanSlateApiView.result(resets.execute(
+                    agentId, requiredText(body, "resetId"),
+                    requiredText(body, "confirmationToken"),
+                    requiredText(body, "confirmationPhrase"), nowMs)));
+            return;
+        }
         if ("PUT".equals(method) && "/mode".equals(operation)) {
             JsonNode body = readBody(exchange);
             AgentWorldDirectorMode mode = AgentWorldDirectorMode.valueOf(
@@ -157,6 +184,16 @@ public final class AgentDirectorBridgeServer {
             send(exchange, 200, proposals.proposeRecommended(
                     application.view(agentId, 12, nowMs),
                     AgentDirectorProposalSource.POLICY, nowMs));
+            return;
+        }
+        if ("POST".equals(method) && "/proposals".equals(operation)) {
+            JsonNode body = readBody(exchange);
+            var view = application.view(agentId, 12, nowMs);
+            send(exchange, 200, proposals.propose(
+                    view, requiredText(body, "actionId"),
+                    AgentDirectorProposalSource.OPERATOR,
+                    optionalText(body, "rationale"),
+                    body.path("expectedEnergyDelta").asInt(0), nowMs));
             return;
         }
         if ("POST".equals(method) && "/chat".equals(operation)) {

@@ -68,14 +68,14 @@ class CosmicCharacterGatewayTest {
     }
 
     @Test
-    void classifiesOnlyCharactersBackedByBotClientAsAgents() {
+    void reportsHeadlessControlOnlyForCharactersBackedByBotClient() {
         Character agent = mock(Character.class);
         Character player = mock(Character.class);
         when(agent.getClient()).thenReturn(mock(BotClient.class));
         when(player.getClient()).thenReturn(mock(Client.class));
 
-        assertTrue(CosmicCharacterGateway.INSTANCE.isAgentCharacter(agent));
-        assertFalse(CosmicCharacterGateway.INSTANCE.isAgentCharacter(player));
-        assertFalse(CosmicCharacterGateway.INSTANCE.isAgentCharacter(null));
+        assertTrue(CosmicCharacterGateway.INSTANCE.isHeadlessControlled(agent));
+        assertFalse(CosmicCharacterGateway.INSTANCE.isHeadlessControlled(player));
+        assertFalse(CosmicCharacterGateway.INSTANCE.isHeadlessControlled(null));
     }
 }

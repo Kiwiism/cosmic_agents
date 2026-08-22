@@ -16,7 +16,7 @@ class AgentResolvedCharacterTest {
         AgentResolvedCharacter character = new AgentResolvedCharacter(1, "agent123", 2, null);
 
         assertFalse(character.isOnline());
-        assertFalse(character.isOnlineAsBot());
+        assertFalse(character.isOnlineHeadlessControlled());
     }
 
     @Test
@@ -28,7 +28,7 @@ class AgentResolvedCharacterTest {
         AgentResolvedCharacter character = new AgentResolvedCharacter(1, "agent123", 2, online);
 
         assertTrue(character.isOnline());
-        assertTrue(character.isOnlineAsBot());
+        assertTrue(character.isOnlineHeadlessControlled());
         assertSame(online, character.onlineCharacter());
     }
 }

@@ -77,7 +77,7 @@ public final class AgentPartyQuestSyncService {
 
     static List<Character> partyAgents(Character source) {
         if (source == null || !AgentPartyGatewayRuntime.party().hasParty(source)
-                || AgentCharacterGatewayRuntime.characters().isAgentCharacter(source)) {
+                || AgentCharacterGatewayRuntime.characters().isHeadlessControlled(source)) {
             return List.of();
         }
 
@@ -86,7 +86,7 @@ public final class AgentPartyQuestSyncService {
             if (member == null || member.getId() == source.getId()) {
                 continue;
             }
-            if (AgentCharacterGatewayRuntime.characters().isAgentCharacter(member)) {
+            if (AgentCharacterGatewayRuntime.characters().isHeadlessControlled(member)) {
                 partyAgents.add(member);
             }
         }

@@ -55,6 +55,14 @@ public final class AgentBehaviorAdaptationFileStore {
         }
     }
 
+    public synchronized void delete(int agentId) {
+        try {
+            Files.deleteIfExists(path(agentId));
+        } catch (IOException failure) {
+            throw new IllegalStateException("could not delete Agent energy checkpoint", failure);
+        }
+    }
+
     private Path path(int agentId) {
         if (agentId <= 0) throw new IllegalArgumentException("positive Agent id is required");
         return directory.resolve(agentId + ".json");

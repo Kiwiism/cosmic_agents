@@ -129,6 +129,18 @@ public final class AgentFileWorldDirectiveInbox implements AgentWorldDirectiveIn
         }
     }
 
+    public synchronized void deleteAgent(int agentId) {
+        Path target = agentDirectory(agentId);
+        if (!Files.exists(target)) return;
+        try (var paths = Files.walk(target)) {
+            for (Path path : paths.sorted(Comparator.reverseOrder()).toList()) {
+                Files.deleteIfExists(path);
+            }
+        } catch (IOException failure) {
+            throw new IllegalStateException("could not delete Agent Director directives", failure);
+        }
+    }
+
     private AgentWorldDirectiveEnvelope required(int agentId, String directiveId) {
         return load(agentId, directiveId)
                 .orElseThrow(() -> new IllegalStateException("unknown World Director directive"));

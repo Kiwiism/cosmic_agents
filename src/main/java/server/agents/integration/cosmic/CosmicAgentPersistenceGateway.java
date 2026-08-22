@@ -68,12 +68,12 @@ public final class CosmicAgentPersistenceGateway implements AgentPersistenceGate
     @Override
     public List<AgentPersistedCharacterSummary> listAgentCharacters() throws SQLException {
         String sql = "SELECT c.id, c.name, c.accountid, c.level, c.job, c.map "
-                + "FROM characters c JOIN accounts a ON a.id = c.accountid "
-                + "WHERE a.banned = 1 AND a.banreason = ? ORDER BY LOWER(c.name), c.id";
+                + "FROM characters c JOIN agent_characters ai ON ai.character_id = c.id "
+                + "WHERE ai.status = ? ORDER BY LOWER(c.name), c.id";
         List<AgentPersistedCharacterSummary> result = new ArrayList<>();
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, CosmicAgentBackingAccountSecurity.AGENT_ONLY_BAN_REASON);
+            ps.setString(1, server.agents.integration.AgentIdentityStatus.ACTIVE.name());
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     result.add(new AgentPersistedCharacterSummary(

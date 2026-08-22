@@ -197,7 +197,7 @@ public final class AgentLifecycleService {
         if (resolved == null) {
             return AgentSpawnResult.fail("No character named '" + agentName + "' exists.");
         }
-        if (resolved.isOnline() && !resolved.isOnlineAsBot()) {
+        if (resolved.isOnline() && !resolved.isOnlineHeadlessControlled()) {
             return AgentSpawnResult.fail("'" + agentName + "' is currently being played by a real player.");
         }
 

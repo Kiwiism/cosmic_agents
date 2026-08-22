@@ -52,7 +52,7 @@ public final class AgentSocialDialogueRuntime {
         int speakerId = speaker.getId();
         String speakerName = speaker.getName();
         SocialCounterpartyType counterpartyType = AgentCharacterGatewayRuntime.characters()
-                .isAgentCharacter(speaker)
+                .isHeadlessControlled(speaker)
                 ? SocialCounterpartyType.AGENT
                 : SocialCounterpartyType.PLAYER;
         String normalized = message.trim();

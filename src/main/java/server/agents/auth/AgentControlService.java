@@ -2,6 +2,7 @@ package server.agents.auth;
 
 import client.Character;
 import server.agents.integration.AgentCharacterGatewayRuntime;
+import server.agents.integration.AgentIdentityGatewayRuntime;
 import server.agents.integration.AgentPersistenceGatewayRuntime;
 import server.agents.registry.AgentResolvedCharacter;
 
@@ -54,6 +55,14 @@ public final class AgentControlService implements AgentControlAccess {
         }
         if (!AgentAuthorityService.mayOperate(actor)) {
             return AgentAuthorizationResult.denied("You are not configured as an Agent operator.");
+        }
+        try {
+            if (!AgentIdentityGatewayRuntime.identities().isActiveAgent(agent.id())) {
+                return AgentAuthorizationResult.denied(
+                        "Character '" + agent.name() + "' is not registered as an active Agent.");
+            }
+        } catch (SQLException failure) {
+            return AgentAuthorizationResult.denied("Agent identity could not be verified.");
         }
         if (actor.getId() == agent.id()) {
             return AgentAuthorizationResult.denied("You cannot spawn your current character as an Agent.");

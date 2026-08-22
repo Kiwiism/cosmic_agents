@@ -2,6 +2,7 @@ package server.agents.integration.cosmic;
 
 import client.Character;
 import net.server.Server;
+import server.agents.integration.AgentIdentityGatewayRuntime;
 import server.agents.integration.AgentPersistenceGatewayRuntime;
 import server.agents.population.AgentPopulationRecord;
 import server.agents.population.AgentPopulationSessionService;
@@ -21,7 +22,8 @@ public final class CosmicAgentPopulationBackend implements AgentPopulationSessio
 
     interface Hooks {
         AgentResolvedCharacter resolve(int characterId);
-        boolean isAgentOnlyAccount(int accountId) throws SQLException;
+        boolean isActiveAgent(int characterId) throws SQLException;
+        boolean isHeadlessControlled(Character character);
         Character online(int characterId);
         Character load(int characterId, int world, int channel) throws SQLException;
         AgentRuntimeEntry register(int characterId, Character agent);
@@ -51,15 +53,15 @@ public final class CosmicAgentPopulationBackend implements AgentPopulationSessio
         if (resolved == null) {
             return false;
         }
-        Character online = hooks.online(characterId);
-        if (online != null) {
-            return CosmicCharacterGateway.INSTANCE.isAgentCharacter(online);
-        }
         try {
-            return hooks.isAgentOnlyAccount(resolved.accountId());
+            if (!hooks.isActiveAgent(characterId)) {
+                return false;
+            }
         } catch (SQLException failure) {
             return false;
         }
+        Character online = hooks.online(characterId);
+        return online == null || hooks.isHeadlessControlled(online);
     }
 
     @Override
@@ -90,7 +92,7 @@ public final class CosmicAgentPopulationBackend implements AgentPopulationSessio
     @Override
     public boolean stop(int characterId) {
         Character agent = hooks.online(characterId);
-        if (agent == null || !CosmicCharacterGateway.INSTANCE.isAgentCharacter(agent)) {
+        if (agent == null || !hooks.isHeadlessControlled(agent)) {
             return false;
         }
         if (AgentKpqRuntime.active(characterId)) {
@@ -111,8 +113,11 @@ public final class CosmicAgentPopulationBackend implements AgentPopulationSessio
                     return null;
                 }
             }
-            @Override public boolean isAgentOnlyAccount(int accountId) throws SQLException {
-                return CosmicAgentBackingAccountSecurity.isAgentOnlyAccount(accountId);
+            @Override public boolean isActiveAgent(int characterId) throws SQLException {
+                return AgentIdentityGatewayRuntime.identities().isActiveAgent(characterId);
+            }
+            @Override public boolean isHeadlessControlled(Character character) {
+                return CosmicCharacterGateway.INSTANCE.isHeadlessControlled(character);
             }
             @Override public Character online(int characterId) {
                 return CosmicCharacterGateway.INSTANCE.findOnlineCharacterById(characterId);

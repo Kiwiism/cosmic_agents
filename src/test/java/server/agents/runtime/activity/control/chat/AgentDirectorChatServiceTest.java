@@ -22,6 +22,8 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -52,6 +54,30 @@ class AgentDirectorChatServiceTest {
         assertEquals("town-life:101000000", result.proposal().actionId());
     }
 
+    @Test
+    void trainingQuestionReturnsThreeCatalogGroundedChoicesWithoutProposal() {
+        AgentDirectorExecutiveView view = mock(AgentDirectorExecutiveView.class);
+        when(view.context()).thenReturn(new AgentWorldContext(1, 1_000L, 27, "Mira",
+                16, 200, 101000000, 500, 500, 800, 800, 10_000, true, false,
+                Set.of(), Set.of(), null, "", "", "", "VICTORIA", Map.of()));
+        when(view.actions()).thenReturn(List.of(
+                huntingAction(100020100, "Henesys Pig Farm"),
+                huntingAction(101010101, "The Tree That Grew II"),
+                huntingAction(104030001, "Mushroom Garden")));
+        AgentDirectorChatService service = new AgentDirectorChatService(null,
+                new AgentDirectorProposalService(new AgentFileDirectorProposalStore(directory)));
+
+        AgentDirectorChatResult result = service.respond(
+                view, "For lv16, what are the top 3 maps we can consider grinding?", 1_000L);
+
+        assertNull(result.proposal());
+        assertEquals(3, result.recommendations().size());
+        assertEquals("hunting-map:100020100", result.recommendations().get(0).actionId());
+        assertTrue(result.recommendations().stream().allMatch(
+                AgentDirectorChatRecommendation::selectable));
+        assertEquals("deterministic-training-catalog", result.provider());
+    }
+
     private static AgentWorldContext context() {
         return new AgentWorldContext(1, 1_000L, 27, "Mira", 20, 200,
                 101000000, 500, 500, 800, 800, 10_000, true, false,
@@ -68,5 +94,17 @@ class AgentDirectorChatServiceTest {
                 "town-life:101000000", Map.of("mapId", "101000000"),
                 AgentWorldInterruptionPolicy.WAIT_FOR_SAFE_BOUNDARY,
                 AgentWorldCompletionPolicy.REQUEST_NEXT_DECISION, 200, false);
+    }
+
+    private static AgentDirectorAction huntingAction(int mapId, String mapName) {
+        return new AgentDirectorAction(
+                "hunting-map:" + mapId, "Hunt — " + mapName,
+                AgentDirectorActionAvailability.AVAILABLE, "level-appropriate training map",
+                AgentWorldDirectiveType.START_ACTIVITY,
+                server.agents.runtime.activity.session.AgentActivityKind.HUNTING,
+                server.agents.runtime.activity.world.AgentWorldActivityRequestType.FIELD_VISIT,
+                "training-map:" + mapId, Map.of("mapId", Integer.toString(mapId)),
+                AgentWorldInterruptionPolicy.WAIT_FOR_SAFE_BOUNDARY,
+                AgentWorldCompletionPolicy.REQUEST_NEXT_DECISION, 500, false);
     }
 }

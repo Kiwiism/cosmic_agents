@@ -21,7 +21,7 @@ public enum CosmicAgentPresenceProvider implements AgentPresenceProvider {
 
     @Override
     public boolean isAgent(Character chr) {
-        return CosmicCharacterGateway.INSTANCE.isAgentCharacter(chr);
+        return CosmicCharacterGateway.INSTANCE.isHeadlessControlled(chr);
     }
 
     @Override

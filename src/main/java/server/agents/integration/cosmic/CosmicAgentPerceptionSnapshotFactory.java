@@ -52,7 +52,7 @@ public final class CosmicAgentPerceptionSnapshotFactory {
                 .toList();
         List<AgentCharacterPerception> characters = liveCharacters.stream()
                 .map(character -> character(character,
-                        AgentCharacterGatewayRuntime.characters().isAgentCharacter(character)))
+                        AgentCharacterGatewayRuntime.characters().isHeadlessControlled(character)))
                 .toList();
         int realPlayers = (int) characters.stream()
                 .filter(character -> !character.agent())

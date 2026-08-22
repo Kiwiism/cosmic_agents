@@ -28,9 +28,9 @@ public record DirectorLlmSettings(
                         value(env, "SOCIAL_OLLAMA_ENDPOINT", "http://127.0.0.1:11434")),
                 value(env, "DIRECTOR_OLLAMA_MODEL",
                         value(env, "SOCIAL_OLLAMA_MODEL", "qwen3.5:9b-q4_K_M")),
-                integer(env, "DIRECTOR_OLLAMA_TIMEOUT_MS", 15_000),
+                integer(env, "DIRECTOR_OLLAMA_TIMEOUT_MS", 45_000),
                 integer(env, "DIRECTOR_OLLAMA_NUM_CTX", 4096),
-                integer(env, "DIRECTOR_OLLAMA_MAX_PREDICT", 160));
+                integer(env, "DIRECTOR_OLLAMA_MAX_PREDICT", 384));
     }
 
     private static int integer(Map<String, String> env, String key, int fallback) {

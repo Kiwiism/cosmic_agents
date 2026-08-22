@@ -8,4 +8,11 @@ import java.util.Optional;
 public interface AgentDirectorProposalProvider {
     Optional<AgentDirectorModelSelection> select(
             AgentDirectorExecutiveView view, String operatorPrompt);
+
+    default Optional<AgentDirectorModelAdvice> recommendTrainingMaps(
+            AgentDirectorExecutiveView view,
+            String operatorPrompt,
+            AgentDirectorDomainContext domainContext) {
+        return Optional.empty();
+    }
 }

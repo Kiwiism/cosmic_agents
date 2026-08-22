@@ -77,6 +77,10 @@ public final class AgentFileDirectorProposalStore implements AgentDirectorPropos
         }
     }
 
+    public synchronized void deleteAgent(int agentId) {
+        deleteDirectory(agentDirectory(agentId), "Director proposals");
+    }
+
     private AgentDirectorProposal read(Path source) {
         try {
             return mapper.readValue(source.toFile(), AgentDirectorProposal.class);
@@ -95,6 +99,17 @@ public final class AgentFileDirectorProposalStore implements AgentDirectorPropos
     private Path agentDirectory(int agentId) {
         if (agentId <= 0) throw new IllegalArgumentException("positive Agent id is required");
         return directory.resolve(Integer.toString(agentId));
+    }
+
+    private static void deleteDirectory(Path directory, String description) {
+        if (!Files.exists(directory)) return;
+        try (var paths = Files.walk(directory)) {
+            for (Path path : paths.sorted(Comparator.reverseOrder()).toList()) {
+                Files.deleteIfExists(path);
+            }
+        } catch (IOException failure) {
+            throw new IllegalStateException("could not delete " + description, failure);
+        }
     }
 
     private static String digest(String value) {

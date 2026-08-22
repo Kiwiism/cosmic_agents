@@ -8,7 +8,7 @@ public record AgentResolvedCharacter(int id, String name, int accountId, Charact
         return onlineCharacter != null;
     }
 
-    public boolean isOnlineAsBot() {
-        return AgentCharacterGatewayRuntime.characters().isAgentCharacter(onlineCharacter);
+    public boolean isOnlineHeadlessControlled() {
+        return AgentCharacterGatewayRuntime.characters().isHeadlessControlled(onlineCharacter);
     }
 }

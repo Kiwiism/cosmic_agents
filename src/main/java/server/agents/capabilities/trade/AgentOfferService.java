@@ -302,7 +302,7 @@ public final class AgentOfferService {
     }
 
     private static void scheduleBotLootOfferAutoAccept(AgentRuntimeEntry entry, Character recipient, long promptDelayMs) {
-        if (!AgentCharacterGatewayRuntime.characters().isAgentCharacter(recipient)) {
+        if (!AgentCharacterGatewayRuntime.characters().isHeadlessControlled(recipient)) {
             return;
         }
         long replyDelayMs = promptDelayMs + AgentOfferRuntime.randomDelayMs(1800, 2200);
@@ -605,7 +605,7 @@ public final class AgentOfferService {
                 .filter(member -> member != null)
                 .filter(member -> member.getId() != owner.getId())
                 .filter(member -> member.getId() != donor.getId())
-                .filter(member -> AgentCharacterGatewayRuntime.characters().isAgentCharacter(member))
+                .filter(member -> AgentCharacterGatewayRuntime.characters().isHeadlessControlled(member))
                 .toList();
     }
 

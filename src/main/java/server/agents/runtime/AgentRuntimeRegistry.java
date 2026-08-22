@@ -284,7 +284,7 @@ public final class AgentRuntimeRegistry {
 
     public static boolean isUnclaimedBotClientCharacter(Character candidate) {
         return candidate != null
-                && AgentCharacterGatewayRuntime.characters().isAgentCharacter(candidate)
+                && AgentCharacterGatewayRuntime.characters().isHeadlessControlled(candidate)
                 && activeLeaderByAgentCharacterId(candidate.getId()) == null;
     }
 

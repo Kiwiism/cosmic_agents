@@ -9,6 +9,8 @@ import server.agents.integration.AgentClientGatewayRuntime;
 import server.agents.integration.AgentAccountResolution;
 import server.agents.integration.AgentPersistenceGatewayRuntime;
 import server.agents.integration.AgentBackingAccountSecurityRuntime;
+import server.agents.integration.AgentIdentityGatewayRuntime;
+import server.agents.integration.AgentIdentityOrigin;
 import server.agents.runtime.AgentInteractionRuntime;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.capabilities.party.AgentPartyLifecycleService;
@@ -71,6 +73,11 @@ public final class AgentSpawnCommandExecutor {
                 player.yellowMessage("Failed to create bot character '" + botName + "'. Name may be invalid or already taken.");
                 return;
             }
+            if (!registerAgentIdentity(createdCharId, botName)) {
+                player.yellowMessage("Bot character '" + botName
+                        + "' was created, but its Agent identity could not be registered. It was not spawned.");
+                return;
+            }
 
             bot = controlService.resolveCharacterByName(botName);
             if (account.created()) {
@@ -95,8 +102,15 @@ public final class AgentSpawnCommandExecutor {
             return "An operator and Agent name are required.";
         }
         AgentControlService controlService = AgentControlService.getInstance();
-        if (controlService.resolveCharacterByName(agentName) != null) {
-            return null;
+        AgentResolvedCharacter existing = controlService.resolveCharacterByName(agentName);
+        if (existing != null) {
+            try {
+                return AgentIdentityGatewayRuntime.identities().isActiveAgent(existing.id())
+                        ? null
+                        : "Character '" + agentName + "' exists but is not registered as an active Agent.";
+            } catch (SQLException failure) {
+                return "Could not verify the Agent identity for '" + agentName + "'.";
+            }
         }
         String denial = validateProvisioning(operator);
         if (denial != null) return denial;
@@ -109,8 +123,14 @@ public final class AgentSpawnCommandExecutor {
                 operator.getWorld(), AgentClientGatewayRuntime.clients().channel(operator));
         creationClient.setAccID(account.accountId());
         creationClient.setAccountName(agentName);
-        return AgentClientGatewayRuntime.clients().createBackingCharacter(creationClient, agentName) == -1
-                ? "Failed to create Agent backing character '" + agentName + "'." : null;
+        int characterId = AgentClientGatewayRuntime.clients().createBackingCharacter(creationClient, agentName);
+        if (characterId == -1) {
+            return "Failed to create Agent backing character '" + agentName + "'.";
+        }
+        return registerAgentIdentity(characterId, agentName)
+                ? null
+                : "Agent backing character '" + agentName
+                        + "' was created, but its Agent identity could not be registered.";
     }
 
     private String validateProvisioning(Character player) {
@@ -132,6 +152,18 @@ public final class AgentSpawnCommandExecutor {
             return AgentBackingAccountSecurityRuntime.lockInteractiveLogin(accountId);
         } catch (SQLException e) {
             log.warn("Failed to lock interactive login for Agent backing account {}", accountId, e);
+            return false;
+        }
+    }
+
+    private boolean registerAgentIdentity(int characterId, String name) {
+        try {
+            AgentIdentityGatewayRuntime.identities().register(
+                    characterId, AgentIdentityOrigin.PROVISIONED, false);
+            return true;
+        } catch (SQLException failure) {
+            log.warn("Failed to register durable Agent identity for '{}' ({})",
+                    name, characterId, failure);
             return false;
         }
     }

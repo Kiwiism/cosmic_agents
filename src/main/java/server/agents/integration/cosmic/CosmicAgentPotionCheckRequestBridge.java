@@ -23,7 +23,7 @@ public final class CosmicAgentPotionCheckRequestBridge {
 
     public static AutopotSelection selectAutopotForCurrentDeficit(
             Character agent, boolean forHp) {
-        if (!AgentCharacterGatewayRuntime.characters().isAgentCharacter(agent)) {
+        if (!AgentCharacterGatewayRuntime.characters().isHeadlessControlled(agent)) {
             return null;
         }
         var choice = AgentPotionService.selectAutopotForCurrentDeficit(agent, forHp);

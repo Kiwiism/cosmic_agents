@@ -7,6 +7,7 @@ import java.util.List;
 public final class AgentGatewayAffinityCatalog {
     private static final List<Class<?>> GATEWAY_TYPES = List.of(
             AgentClientGateway.class,
+            AgentIdentityGateway.class,
             AgentPersistenceGateway.class,
             AgentQuestSyncGateway.class,
             AgentQuestSyncHandle.class,

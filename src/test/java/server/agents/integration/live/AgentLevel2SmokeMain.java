@@ -10,6 +10,8 @@ import server.agents.capabilities.movement.AgentMovementCommandRuntime;
 import server.agents.integration.AgentAccountResolution;
 import server.agents.integration.AgentBackingAccountSecurityRuntime;
 import server.agents.integration.AgentClientGatewayRuntime;
+import server.agents.integration.AgentIdentityGatewayRuntime;
+import server.agents.integration.AgentIdentityOrigin;
 import server.agents.integration.AgentMapGatewayRuntime;
 import server.agents.integration.AgentPersistenceGatewayRuntime;
 import server.agents.integration.cosmic.CosmicAgentOfflineLoader;
@@ -78,6 +80,8 @@ public final class AgentLevel2SmokeMain {
             creationClient.setAccountName(name);
             int characterId = AgentClientGatewayRuntime.clients().createBackingCharacter(creationClient, name);
             require(characterId > 0, "temporary Agent character creation failed");
+            AgentIdentityGatewayRuntime.identities().register(
+                    characterId, AgentIdentityOrigin.PROVISIONED, false);
             System.out.printf("[AGENT-LEVEL2] created account=%d character=%d name=%s%n",
                     account.accountId(), characterId, name);
             return new TestIdentity(account.accountId(), characterId, name);
