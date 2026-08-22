@@ -138,6 +138,12 @@ public class Shop {
 
     /** Core recharge logic without response packets. Usable by bots. */
     public TransactionResult rechargeDirect(client.Character player, short slot) {
+        return rechargeDirect(player, slot, 0);
+    }
+
+    /** Core recharge logic with a caller-owned wallet floor. */
+    public TransactionResult rechargeDirect(
+            client.Character player, short slot, int minimumMesoReserve) {
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
         Item item = player.getInventory(InventoryType.USE).getItem(slot);
         if (item == null || !ItemConstants.isRechargeable(item.getItemId())) {
@@ -151,7 +157,7 @@ public class Shop {
             return TransactionResult.SUCCESS; // already full
         }
         int price = (int) Math.ceil(ii.getUnitPrice(item.getItemId()) * (slotMax - item.getQuantity()));
-        if (player.getMeso() < price) {
+        if ((long) player.getMeso() - price < Math.max(0, minimumMesoReserve)) {
             return TransactionResult.NOT_ENOUGH_MESO;
         }
         EconomyTransactionCoordinator.execute(player, null, EconomyOperationKind.SHOP_RECHARGE,

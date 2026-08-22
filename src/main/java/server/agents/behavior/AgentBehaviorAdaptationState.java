@@ -1,6 +1,7 @@
 package server.agents.behavior;
 
 import server.agents.runtime.state.AgentCapabilityStateKey;
+import server.agents.runtime.activity.session.AgentActivityKind;
 
 /** Bounded live modifiers; never replaces the durable personality profile. */
 public final class AgentBehaviorAdaptationState {
@@ -37,6 +38,8 @@ public final class AgentBehaviorAdaptationState {
     private int frustration;
     private int restDebt;
     private int consecutiveMisses;
+    private long lastEnergyObservationAtMs;
+    private AgentActivityKind lastObservedActivity;
 
     public synchronized void targetLost() {
         frustration = clamp(frustration + TARGET_LOST_FRUSTRATION_DELTA);
@@ -78,6 +81,60 @@ public final class AgentBehaviorAdaptationState {
     public synchronized int consecutiveMisses() { return consecutiveMisses; }
     public synchronized int frustration() { return frustration; }
     public synchronized int restDebt() { return restDebt; }
+
+    /**
+     * Applies coarse human-like activity recovery/drain without putting a timer on the
+     * Agent thread. The next observation catches up the previous known activity.
+     */
+    public synchronized AgentBehaviorAdaptationSnapshot observe(
+            AgentActivityKind currentActivity, long nowMs) {
+        if (nowMs < 0L) throw new IllegalArgumentException("valid observation time is required");
+        if (lastEnergyObservationAtMs > 0L && nowMs > lastEnergyObservationAtMs) {
+            long elapsedMinutes = (nowMs - lastEnergyObservationAtMs) / 60_000L;
+            if (elapsedMinutes > 0L) {
+                long rawDelta = elapsedMinutes * energyRatePerMinute(lastObservedActivity);
+                int delta = (int) Math.max(-100L, Math.min(100L, rawDelta));
+                energy = clamp(energy + delta);
+                restDebt = clamp(restDebt - Math.max(0, delta));
+                lastEnergyObservationAtMs += elapsedMinutes * 60_000L;
+            }
+        } else if (lastEnergyObservationAtMs == 0L) {
+            lastEnergyObservationAtMs = nowMs;
+        }
+        lastObservedActivity = currentActivity;
+        return new AgentBehaviorAdaptationSnapshot(
+                energy, confidence, frustration, restDebt, consecutiveMisses, nowMs);
+    }
+
+    public synchronized AgentBehaviorAdaptationSnapshot snapshot(long nowMs) {
+        return new AgentBehaviorAdaptationSnapshot(
+                energy, confidence, frustration, restDebt, consecutiveMisses, nowMs);
+    }
+
+    /** Restores the last durable checkpoint and applies fastest-rate offline recovery. */
+    public synchronized void restoreOffline(
+            AgentBehaviorAdaptationSnapshot checkpoint, long nowMs) {
+        if (checkpoint == null || nowMs < checkpoint.observedAtMs()) {
+            throw new IllegalArgumentException("valid behavior checkpoint is required");
+        }
+        long offlineMinutes = (nowMs - checkpoint.observedAtMs()) / 60_000L;
+        int recovery = (int) Math.min(100L, offlineMinutes * 3L);
+        energy = clamp(checkpoint.energyPercent() + recovery);
+        confidence = checkpoint.confidencePercent();
+        frustration = clamp(checkpoint.frustrationPercent() - recovery);
+        restDebt = clamp(checkpoint.restDebtPercent() - recovery);
+        consecutiveMisses = checkpoint.consecutiveMisses();
+        lastEnergyObservationAtMs = nowMs;
+        lastObservedActivity = null;
+    }
+
+    private static int energyRatePerMinute(AgentActivityKind activity) {
+        if (activity == null) return 2;
+        return switch (activity) {
+            case HUNTING, QUESTING, PARTY_QUEST -> -1;
+            case TOWN_LIFE, COMMERCE -> 1;
+        };
+    }
 
     private static int clamp(int value) {
         return Math.max(MIN_STATE_VALUE, Math.min(MAX_STATE_VALUE, value));

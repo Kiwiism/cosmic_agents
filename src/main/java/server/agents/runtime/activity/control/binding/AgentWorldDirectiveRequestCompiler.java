@@ -25,7 +25,8 @@ public final class AgentWorldDirectiveRequestCompiler {
             throw new IllegalArgumentException("an activity directive is required");
         }
         AgentWorldTypedActivityRequest compiled = switch (directive.requestType()) {
-            case AUTHORED_PLAN, INDIVIDUAL_QUEST -> questing(directive);
+            case AUTHORED_PLAN -> questing(directive);
+            case INDIVIDUAL_QUEST -> individualQuest(directive);
             case FIELD_VISIT -> hunting(directive);
             case TOWN_LIFE_VISIT -> townLife(directive);
             case COMMERCE_VISIT -> commerce(directive);
@@ -47,6 +48,19 @@ public final class AgentWorldDirectiveRequestCompiler {
         String planId = directive.parameters().getOrDefault("planId", directive.requestId());
         return new AgentWorldTypedActivityRequest.Questing(new AgentPlanEntryRequest(
                 directive.directiveId(), caller(directive), planId, inputs, null));
+    }
+
+    private AgentWorldTypedActivityRequest individualQuest(AgentWorldDirective directive) {
+        Map<String, String> values = directive.parameters();
+        int questId = positiveInt(values, "questId");
+        int targetLevel = positiveInt(values, "targetLevel");
+        if (targetLevel < 16 || targetLevel > 30) {
+            throw new IllegalArgumentException("targetLevel must be between 16 and 30");
+        }
+        return new AgentWorldTypedActivityRequest.Questing(new AgentPlanEntryRequest(
+                directive.directiveId(), caller(directive), "victoria-training",
+                Map.of("targetLevel", targetLevel, "questsEnabled", true,
+                        "questId", questId), null));
     }
 
     private AgentWorldTypedActivityRequest hunting(AgentWorldDirective directive) {

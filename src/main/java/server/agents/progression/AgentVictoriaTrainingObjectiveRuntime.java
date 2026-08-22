@@ -43,7 +43,11 @@ public final class AgentVictoriaTrainingObjectiveRuntime {
                     "durable Victoria target level is already reached", nowMs);
             return AgentObjectiveAttachment.TERMINAL;
         }
-        state.start(target, !objective.correlationId().endsWith(":mode-grind"), nowMs);
+        int requestedQuestId = requestedQuestId(objective.correlationId());
+        state.start(target, !objective.correlationId().contains(":mode-grind"),
+                requestedQuestId, nowMs);
+        entry.capabilityStates().require(AgentVictoriaQuestSchedulerState.STATE_KEY)
+                .requestQuest(requestedQuestId);
         return AgentObjectiveAttachment.ATTACHED;
     }
 
@@ -57,9 +61,19 @@ public final class AgentVictoriaTrainingObjectiveRuntime {
                                 int targetLevel,
                                 boolean questsEnabled,
                                 long nowMs) {
+        return start(entry, agent, targetLevel, questsEnabled, 0, nowMs);
+    }
+
+    public static boolean start(AgentRuntimeEntry entry,
+                                Character agent,
+                                int targetLevel,
+                                boolean questsEnabled,
+                                int requestedQuestId,
+                                long nowMs) {
         if (entry == null || agent == null || agent.getJob().getId() == 0
                 || agent.getLevel() < 15 || targetLevel < 16 || targetLevel > 30
-                || targetLevel <= agent.getLevel() || AgentObjectiveKernel.active(entry) != null) {
+                || targetLevel <= agent.getLevel() || requestedQuestId < 0
+                || AgentObjectiveKernel.active(entry) != null) {
             return false;
         }
         String catalogId = AgentVictoriaTrainingCatalogRepository.defaultRepository()
@@ -68,9 +82,12 @@ public final class AgentVictoriaTrainingObjectiveRuntime {
                 objectiveId(agent.getId(), targetLevel), OBJECTIVE_TYPE, 80, Long.MAX_VALUE, 5,
                 AgentObjectiveSource.OPERATOR_COMMAND, catalogId,
                 agent.getId() + ":level-" + targetLevel + ":mode-"
-                        + (questsEnabled ? "mixed" : "grind")), nowMs);
+                        + (questsEnabled ? "mixed" : "grind")
+                        + (requestedQuestId > 0 ? ":quest-" + requestedQuestId : "")), nowMs);
         entry.capabilityStates().require(AgentVictoriaTrainingState.STATE_KEY)
-                .start(targetLevel, questsEnabled, nowMs);
+                .start(targetLevel, questsEnabled, requestedQuestId, nowMs);
+        entry.capabilityStates().require(AgentVictoriaQuestSchedulerState.STATE_KEY)
+                .requestQuest(requestedQuestId);
         return true;
     }
 
@@ -105,12 +122,20 @@ public final class AgentVictoriaTrainingObjectiveRuntime {
                         "durable Victoria objective has an invalid target level", nowMs);
                 return false;
             }
-            state.start(target, !objective.correlationId().endsWith(":mode-grind"), nowMs);
+            int requestedQuestId = requestedQuestId(objective.correlationId());
+            state.start(target, !objective.correlationId().contains(":mode-grind"),
+                    requestedQuestId, nowMs);
+            entry.capabilityStates().require(AgentVictoriaQuestSchedulerState.STATE_KEY)
+                    .requestQuest(requestedQuestId);
         }
         AgentVictoriaProgressionDiagnostics.captureIfLevelChanged(entry, agent, nowMs);
-        if (agent.getLevel() >= state.targetLevel()) {
-            AgentVictoriaQuestSchedulerState quests = entry.capabilityStates().require(
-                    AgentVictoriaQuestSchedulerState.STATE_KEY);
+        AgentVictoriaQuestSchedulerState quests = entry.capabilityStates().require(
+                AgentVictoriaQuestSchedulerState.STATE_KEY);
+        if (finishRequestedQuestIfTerminal(
+                entry, agent, state, quests, objective, gateway, nowMs)) {
+            return false;
+        }
+        if (state.requestedQuestId() == 0 && agent.getLevel() >= state.targetLevel()) {
             if (quests.active()
                     && AgentVictoriaQuestSchedulerRuntime.tick(entry, agent, nowMs, gateway)) {
                 return true;
@@ -125,6 +150,11 @@ public final class AgentVictoriaTrainingObjectiveRuntime {
             return true;
         }
         if (AgentVictoriaQuestSchedulerRuntime.tick(entry, agent, nowMs, gateway)) {
+            return true;
+        }
+        if (state.requestedQuestId() > 0) {
+            finishRequestedQuestIfTerminal(
+                    entry, agent, state, quests, objective, gateway, nowMs);
             return true;
         }
 
@@ -182,5 +212,44 @@ public final class AgentVictoriaTrainingObjectiveRuntime {
         } catch (NumberFormatException ignored) {
             return -1;
         }
+    }
+
+    private static int requestedQuestId(String correlationId) {
+        if (correlationId == null) return 0;
+        int marker = correlationId.lastIndexOf(":quest-");
+        if (marker < 0) return 0;
+        try {
+            return Integer.parseInt(correlationId.substring(marker + ":quest-".length()));
+        } catch (NumberFormatException ignored) {
+            return 0;
+        }
+    }
+
+    private static boolean finishRequestedQuestIfTerminal(
+            AgentRuntimeEntry entry,
+            Character agent,
+            AgentVictoriaTrainingState state,
+            AgentVictoriaQuestSchedulerState quests,
+            AgentObjectiveDefinition objective,
+            PrimitiveCapabilityGateway gateway,
+            long nowMs) {
+        int questId = state.requestedQuestId();
+        if (questId <= 0) return false;
+        boolean completed = gateway.questStatus(agent, questId)
+                == client.QuestStatus.Status.COMPLETED.getId();
+        boolean failed = quests.failed(questId);
+        boolean suspended = quests.suspended(questId);
+        if (!completed && !failed && !suspended) return false;
+        gateway.stop(entry);
+        state.stop();
+        AgentObjectiveKernel.transition(entry, objective.objectiveId(),
+                completed ? AgentObjectiveStatus.SUCCEEDED : AgentObjectiveStatus.BLOCKED,
+                completed ? "requested quest " + questId + " completed"
+                        : suspended
+                        ? "requested quest " + questId
+                                + " was suspended by the bounded struggle policy"
+                        : "requested quest " + questId + " is not currently executable",
+                nowMs);
+        return true;
     }
 }

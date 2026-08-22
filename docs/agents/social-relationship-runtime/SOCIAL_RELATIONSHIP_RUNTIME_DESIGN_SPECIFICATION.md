@@ -9,8 +9,9 @@ decisions can be influenced by history without hard-coding personality inside
 capabilities.
 ```
 
-This package is post-reconstruction implementation work. Before Agent
-reconstruction is complete, it is documentation-only.
+The generic-chat relationship-memory slice is now implemented under
+`server.agents.social.memory` with an independent PostgreSQL adapter. Party,
+trade, help, avoidance, and group-graph reducers remain future extensions.
 
 Recommended package:
 
@@ -322,7 +323,7 @@ The package is ready when:
 - it can support privacy-safe player references.
 - it never bypasses hard policy or anti-abuse validation.
 
-## Deferred Until After Reconstruction
+## Deferred beyond the generic-chat slice
 
 - live party invite handling.
 - live trade behavior.

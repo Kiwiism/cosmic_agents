@@ -1,6 +1,5 @@
 package server.agents.capabilities.dialogue;
 
-import server.agents.capabilities.dialogue.llm.AgentLlmReplyCoordinator;
 import server.agents.commands.AgentLifecycleCommandCoordinator;
 import server.agents.commands.AgentFormationCommandCoordinator;
 import server.agents.commands.AgentDismissCommandService;
@@ -13,7 +12,8 @@ import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 
 import client.Character;
 import server.agents.commands.AgentTargetedCommandMatch;
-import server.agents.capabilities.dialogue.llm.AgentLlmConfig;
+import server.agents.social.conversation.AgentSocialDialogueRuntime;
+import server.agents.social.policy.AgentSocialResponderElection;
 import server.agents.capabilities.supplies.AgentGroupSupplyResponderSelector;
 import server.agents.capabilities.trade.AgentPendingOfferChatRouteService;
 import server.agents.commands.AgentCommandTypoSuggester;
@@ -145,15 +145,15 @@ public final class AgentChatRouteCoordinator {
                 AgentChatCommandClassifier::matchFollowTarget,
                 AgentChatRouteCoordinator::dispatchFollowTargetCommand,
                 AgentChatRouteCoordinator::setReplyChannel,
-                () -> AgentLlmConfig.typoSuggesterEnabled,
+                () -> false,
                 AgentCommandTypoSuggester::suggest,
                 AgentChatRouteCoordinator::queueReply,
                 AgentChatRouteCoordinator::handleAgentChat,
                 System::currentTimeMillis,
                 AgentRelationshipRuntime::interactionTarget,
                 AgentActivityStateRuntime::recordLastOwnerCommand,
-                () -> AgentLlmConfig.enabled,
-                AgentLlmReplyCoordinator::maybeRespond,
+                AgentSocialDialogueRuntime::enabled,
+                AgentSocialDialogueRuntime::maybeRespond,
                 Character::yellowMessage);
     }
 
@@ -168,9 +168,13 @@ public final class AgentChatRouteCoordinator {
                         AgentRuntimeIdentityRuntime::botMapId),
                 AgentChatRouteCoordinator::setReplyChannel,
                 AgentChatRouteCoordinator::handleAgentChat,
-                () -> AgentLlmConfig.typoSuggesterEnabled,
+                () -> false,
                 AgentCommandTypoSuggester::suggest,
-                AgentChatRouteCoordinator::queueReply);
+                AgentChatRouteCoordinator::queueReply,
+                (speaker, entries, message) -> AgentSocialResponderElection.elect(
+                        speaker, entries, message, AgentRuntimeIdentityRuntime::botId),
+                AgentSocialDialogueRuntime::enabled,
+                AgentSocialDialogueRuntime::maybeRespond);
     }
 
     private static void queueReply(

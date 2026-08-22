@@ -66,7 +66,8 @@ public final class AgentWorldDirectorControlService {
             return new AgentWorldDirectivePreview(directive, mode, true, "mode changes are permitted");
         }
         if (mode == AgentWorldDirectorMode.EMERGENCY_HOLD
-                && directive.type() != AgentWorldDirectiveType.RESUME) {
+                && directive.type() != AgentWorldDirectiveType.RESUME
+                && directive.type() != AgentWorldDirectiveType.RESUME_ACTIVITY) {
             return new AgentWorldDirectivePreview(
                     directive, mode, false, "Agent is in Emergency Hold");
         }
@@ -86,6 +87,12 @@ public final class AgentWorldDirectorControlService {
 
     public AgentWorldDirectiveEnvelope cancel(
             int agentId, String directiveId, String reason, long nowMs) {
+        AgentWorldDirectiveEnvelope current = directives.load(agentId, directiveId)
+                .orElseThrow(() -> new IllegalStateException("unknown World Director directive"));
+        if (current.status() != AgentWorldDirectiveStatus.PENDING) {
+            throw new IllegalStateException(
+                    "only a queued directive can be cancelled; claimed work must finish its safe boundary");
+        }
         return directives.resolve(agentId, directiveId,
                 AgentWorldDirectiveStatus.CANCELLED, reason, nowMs);
     }

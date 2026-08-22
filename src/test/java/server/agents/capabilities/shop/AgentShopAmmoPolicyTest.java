@@ -25,6 +25,11 @@ class AgentShopAmmoPolicyTest {
         assertTrue(AgentShopAmmoPolicy.isRechargeWeaponType(WeaponType.GUN));
         assertFalse(AgentShopAmmoPolicy.isRechargeWeaponType(WeaponType.BOW));
         assertFalse(AgentShopAmmoPolicy.isRechargeWeaponType(null));
+
+        assertTrue(AgentShopAmmoPolicy.needsSeedRechargeAmmo(WeaponType.CLAW, 0));
+        assertTrue(AgentShopAmmoPolicy.needsSeedRechargeAmmo(WeaponType.GUN, 0));
+        assertFalse(AgentShopAmmoPolicy.needsSeedRechargeAmmo(WeaponType.GUN, 1));
+        assertFalse(AgentShopAmmoPolicy.needsSeedRechargeAmmo(WeaponType.BOW, 0));
     }
 
     @Test

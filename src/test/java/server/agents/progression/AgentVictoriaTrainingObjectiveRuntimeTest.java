@@ -2,6 +2,7 @@ package server.agents.progression;
 
 import client.Character;
 import client.Job;
+import client.QuestStatus;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.PrimitiveCapabilityGateway;
 import server.agents.objectives.AgentObjectiveDefinition;
@@ -13,9 +14,11 @@ import java.awt.Point;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -48,6 +51,42 @@ class AgentVictoriaTrainingObjectiveRuntimeTest {
 
         assertNull(AgentObjectiveKernel.active(entry));
         assertFalse(entry.capabilityStates().require(AgentVictoriaTrainingState.STATE_KEY).active());
+    }
+
+    @Test
+    void individualQuestObjectiveEndsWhenRequestedQuestCompletes() {
+        Character agent = agent(79, 20, 100000000);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        assertTrue(AgentVictoriaTrainingObjectiveRuntime.start(
+                entry, agent, 21, true, 1115, 100L));
+        PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
+        when(gateway.questStatus(agent, 1115))
+                .thenReturn(QuestStatus.Status.COMPLETED.getId());
+
+        assertFalse(AgentVictoriaTrainingObjectiveRuntime.tick(entry, agent, 200L, gateway));
+
+        assertNull(AgentObjectiveKernel.active(entry));
+        assertFalse(entry.capabilityStates()
+                .require(AgentVictoriaTrainingState.STATE_KEY).active());
+    }
+
+    @Test
+    void unavailableIndividualQuestBlocksInsteadOfFallingThroughToGrinding() {
+        Character agent = agent(80, 20, 100000000);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        assertTrue(AgentVictoriaTrainingObjectiveRuntime.start(
+                entry, agent, 21, true, 999_999, 100L));
+        PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
+
+        assertTrue(AgentVictoriaTrainingObjectiveRuntime.tick(entry, agent, 200L, gateway));
+
+        assertNull(AgentObjectiveKernel.active(entry));
+        assertEquals(server.agents.objectives.AgentObjectiveStatus.BLOCKED,
+                entry.capabilityStates().require(
+                                server.agents.objectives.AgentObjectiveState.STATE_KEY)
+                        .journalSnapshot().getLast().status());
+        verify(gateway, never()).grind(
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anySet());
     }
 
     private static Character agent(int id, int level, int mapId) {

@@ -73,7 +73,7 @@ class AgentUntargetedChatRouteServiceTest {
     }
 
     @Test
-    void broadcastsToEveryEntryWhenNoSpecialRouteMatches() {
+    void processesCommandsForAllEntriesButElectsOneSocialResponder() {
         List<String> calls = new ArrayList<>();
         Character leader = character(1, "Leader");
         AgentRuntimeEntry first = entry(character(2, "Agent"), leader);
@@ -93,7 +93,10 @@ class AgentUntargetedChatRouteServiceTest {
                 "channel:Agent:PARTY",
                 "chat:Agent:hello",
                 "channel:Other:PARTY",
-                "chat:Other:hello"), calls);
+                "chat:Other:hello",
+                "selectSocial",
+                "channel:Agent:PARTY",
+                "social:Agent:hello"), calls);
     }
 
     private static AgentUntargetedChatRouteService.Hooks<AgentRuntimeEntry> hooks(AgentRuntimeEntry groupResponder,
@@ -123,7 +126,14 @@ class AgentUntargetedChatRouteServiceTest {
                     calls.add("typo:" + message);
                     return message.equals("potsz") ? "pots" : null;
                 },
-                (entry, reply) -> calls.add("reply:" + entry.bot().getName() + ":" + reply));
+                (entry, reply) -> calls.add("reply:" + entry.bot().getName() + ":" + reply),
+                (speaker, entries, message) -> {
+                    calls.add("selectSocial");
+                    return entries.getFirst();
+                },
+                () -> true,
+                (entry, speaker, message) -> calls.add(
+                        "social:" + entry.bot().getName() + ":" + message));
     }
 
     private static AgentRuntimeEntry entry(Character agent, Character leader) {

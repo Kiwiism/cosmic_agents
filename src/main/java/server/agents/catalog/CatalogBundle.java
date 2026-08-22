@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.List;
 
 public final class CatalogBundle {
     private final CatalogLoadOptions options;
@@ -51,5 +52,11 @@ public final class CatalogBundle {
 
     ObjectMapper mapper() {
         return mapper;
+    }
+
+    List<CatalogFile> loadedFiles() {
+        return files.keySet().stream()
+                .sorted(java.util.Comparator.comparing(CatalogFile::key))
+                .toList();
     }
 }

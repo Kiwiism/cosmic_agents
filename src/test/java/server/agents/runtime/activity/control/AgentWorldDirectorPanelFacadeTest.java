@@ -56,20 +56,30 @@ class AgentWorldDirectorPanelFacadeTest {
     }
 
     @Test
-    void rejectsAggregateTargetsUntilTheirAdmissionOwnerIsConnected() {
+    void acceptsCommerceContractNowThatItsAdmissionOwnerIsConnected() {
         AgentFileWorldDirectorSessionStore sessions =
                 new AgentFileWorldDirectorSessionStore(directory.resolve("sessions"));
         AgentFileWorldDirectiveInbox directives =
                 new AgentFileWorldDirectiveInbox(directory.resolve("directives"));
         AgentWorldDirectorPanelFacade panel = panel(sessions, directives);
         panel.setMode(27, AgentWorldDirectorMode.MANUAL, "operator", 1_000L);
+        Map<String, String> parameters = new java.util.LinkedHashMap<>();
+        parameters.put("jobFamily", "warrior");
+        parameters.put("purpose", "periodic_market_visit");
+        parameters.put("maximumDurationMs", "300000");
+        parameters.put("maximumIdleMs", "60000");
+        parameters.put("priceMemoryHours", "72");
+        for (String key : new String[]{"dailyActivityFraction", "riskTolerance",
+                "liquidityPreference", "upgradeAggressiveness", "shoppingPatience",
+                "stallWillingness", "negotiationAggressiveness", "chairInterest"}) {
+            parameters.put(key, "0.5");
+        }
         AgentWorldDirective commerce = directive("commerce", AgentActivityKind.COMMERCE,
-                AgentWorldActivityRequestType.COMMERCE_VISIT, Map.of());
+                AgentWorldActivityRequestType.COMMERCE_VISIT, parameters);
 
         AgentWorldDirectivePreview preview = panel.preview(commerce, 1_001L);
 
-        assertFalse(preview.accepted());
-        assertTrue(preview.reason().contains("aggregate admission"));
+        assertTrue(preview.accepted());
         assertTrue(directives.list(27).isEmpty());
     }
 

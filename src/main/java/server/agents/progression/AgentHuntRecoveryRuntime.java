@@ -143,6 +143,11 @@ final class AgentHuntRecoveryRuntime {
                 entry, AgentProgressionEventPublisher.objectiveId(entry), mapId, nowMs);
     }
 
+    static long lastRelevantDamageAt(
+            AgentRuntimeEntry entry, String objectiveKey, int progress, long nowMs) {
+        return frame(entry, objectiveKey, progress, nowMs).lastRelevantDamageAtMs();
+    }
+
     private static AgentHuntRecoveryState.Frame frame(
             AgentRuntimeEntry entry,
             String objectiveKey,

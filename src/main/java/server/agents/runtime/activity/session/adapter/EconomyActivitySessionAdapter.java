@@ -25,6 +25,7 @@ public final class EconomyActivitySessionAdapter
     private final EconomySessionPort.EntryRequest request;
     private UUID sessionId;
     private long startedAtMs;
+    private long endedAtMs;
     private AgentActivityPhase phase = AgentActivityPhase.IDLE;
     private String reason = "";
 
@@ -40,6 +41,7 @@ public final class EconomyActivitySessionAdapter
     public synchronized void attach(UUID existingSessionId, long existingStartedAtMs) {
         sessionId = Objects.requireNonNull(existingSessionId, "existingSessionId");
         startedAtMs = Math.max(0L, existingStartedAtMs);
+        endedAtMs = 0L;
         phase = AgentActivityPhase.ACTIVE;
     }
 
@@ -66,6 +68,7 @@ public final class EconomyActivitySessionAdapter
         return switch (result.status()) {
             case RELEASED -> {
                 phase = AgentActivityPhase.COMPLETED;
+                endedAtMs = nowMs;
                 yield AgentActivityExitResult.released(result.reason());
             }
             case DEFERRED -> {
@@ -89,6 +92,7 @@ public final class EconomyActivitySessionAdapter
             case ACCEPTED -> {
                 sessionId = result.sessionId();
                 startedAtMs = nowMs;
+                endedAtMs = 0L;
                 phase = AgentActivityPhase.ACTIVE;
                 yield AgentActivityAdmissionResult.accepted(snapshot(nowMs));
             }
@@ -104,6 +108,6 @@ public final class EconomyActivitySessionAdapter
         return new AgentActivityTerminalOutcome(
                 AgentActivityKind.COMMERCE, phase, sessionId.toString(), profile.agentId(),
                 reason, phase == AgentActivityPhase.FAILED, startedAtMs,
-                Math.max(startedAtMs, nowMs), Map.of());
+                Math.max(startedAtMs, endedAtMs), Map.of());
     }
 }

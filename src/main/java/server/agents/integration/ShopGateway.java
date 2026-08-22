@@ -14,5 +14,8 @@ public interface ShopGateway {
 
     Shop.TransactionResult recharge(Character agent, Shop shop, short slot);
 
+    Shop.TransactionResult recharge(
+            Character agent, Shop shop, short slot, int minimumMesoReserve);
+
     Shop.TransactionResult buy(Character agent, Shop shop, short slot, int itemId, short quantity);
 }

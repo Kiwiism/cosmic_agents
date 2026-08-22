@@ -2,6 +2,7 @@ package server.agents.journey;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
+import server.agents.events.AgentEvent;
 
 import java.io.InputStream;
 import java.util.List;
@@ -9,6 +10,10 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class AgentJourneyContractTest {
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -54,6 +59,35 @@ class AgentJourneyContractTest {
                 List.of(new AgentJourneyManifest.Participant(10, "TestAgent", "warrior"))));
         assertThrows(IllegalArgumentException.class,
                 () -> new AgentJourneyManifest.Participant(0, "", ""));
+    }
+
+    @Test
+    void acceptsCleanStartScenarioWithDecisionFocusedEvidence() {
+        AgentJourneyManifest manifest = new AgentJourneyManifest(
+                1, "run-clean", "victoria-lv1-21", "decisions", 100L, 21,
+                List.of(new AgentJourneyManifest.Participant(
+                        10, "CleanAgent", "pirate-gun")));
+
+        assertEquals("victoria-lv1-21", manifest.scenarioId());
+        assertEquals("decisions", manifest.simulationMode());
+        assertEquals(21, manifest.targetLevel());
+    }
+
+    @Test
+    void decisionEvidenceOmitsPerAttackNoiseButKeepsRouteDecisions() {
+        AgentEvent attack = event("combat.attack-resolved");
+        AgentEvent damage = event("combat.mob-damaged");
+        AgentEvent route = event("progression.quest-map-selected");
+
+        assertFalse(AgentJourneyRun.retainDecisionEvent(attack));
+        assertFalse(AgentJourneyRun.retainDecisionEvent(damage));
+        assertTrue(AgentJourneyRun.retainDecisionEvent(route));
+    }
+
+    private static AgentEvent event(String type) {
+        AgentEvent event = mock(AgentEvent.class);
+        when(event.type()).thenReturn(type);
+        return event;
     }
 
     @Test

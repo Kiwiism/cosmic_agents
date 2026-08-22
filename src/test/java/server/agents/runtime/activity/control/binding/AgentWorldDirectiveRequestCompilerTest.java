@@ -24,6 +24,13 @@ class AgentWorldDirectiveRequestCompilerTest {
         assertEquals(AgentActivityKind.QUESTING,
                 compiler.compile(directive(AgentActivityKind.QUESTING,
                         AgentWorldActivityRequestType.AUTHORED_PLAN, Map.of())).kind());
+        AgentWorldTypedActivityRequest.Questing individual =
+                (AgentWorldTypedActivityRequest.Questing) compiler.compile(directive(
+                        AgentActivityKind.QUESTING,
+                        AgentWorldActivityRequestType.INDIVIDUAL_QUEST,
+                        Map.of("questId", "2000", "targetLevel", "21")));
+        assertEquals("victoria-training", individual.request().planId());
+        assertEquals(2000, individual.request().inputs().get("questId"));
         assertEquals(AgentActivityKind.HUNTING,
                 compiler.compile(directive(AgentActivityKind.HUNTING,
                         AgentWorldActivityRequestType.FIELD_VISIT, Map.of(
@@ -66,6 +73,9 @@ class AgentWorldDirectiveRequestCompilerTest {
         assertThrows(IllegalArgumentException.class, () -> compiler.compile(directive(
                 AgentActivityKind.PARTY_QUEST, AgentWorldActivityRequestType.PARTY_QUEST_VISIT,
                 Map.of("scenarioId", "kpq", "partySize", "4", "maximumRuns", "2"))));
+        assertThrows(IllegalArgumentException.class, () -> compiler.compile(directive(
+                AgentActivityKind.QUESTING, AgentWorldActivityRequestType.INDIVIDUAL_QUEST,
+                Map.of())));
     }
 
     private AgentWorldDirective directive(

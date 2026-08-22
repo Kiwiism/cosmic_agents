@@ -113,6 +113,9 @@ public final class AgentAmmoService {
                                             boolean bypassShareLimits,
                                             InventoryGateway inventory,
                                             boolean thresholdEventPublished) {
+        if (selfSustaining(entry)) {
+            return false;
+        }
         if (bot.getTrade() != null || AgentPendingTradeStateRuntime.hasActiveSequence(entry)) {
             return false;
         }
@@ -167,6 +170,9 @@ public final class AgentAmmoService {
     }
 
     public static OwnerAmmoShareResult offerAmmoShareToOwner(AgentRuntimeEntry entry, WeaponType weaponType, InventoryGateway inventory) {
+        if (selfSustaining(entry)) {
+            return OwnerAmmoShareResult.BLOCKED;
+        }
         Character owner = AgentRelationshipRuntime.interactionTarget(entry);
         if (owner == null || owner.getTrade() != null || !canRequestShare(weaponType)) {
             return OwnerAmmoShareResult.BLOCKED;
@@ -199,7 +205,8 @@ public final class AgentAmmoService {
         AgentAmmoDonorPlan<AgentRuntimeEntry> best = null;
         for (AgentRuntimeEntry sibling : AgentSessionLifecycleRuntime.getCohortEntries(requesterEntry)) {
             Character donorBot = AgentRuntimeIdentityRuntime.bot(sibling);
-            if (sibling == excludedEntry || donorBot == null || donorBot.getMapId() != mapId) {
+            if (sibling == excludedEntry || selfSustaining(sibling)
+                    || donorBot == null || donorBot.getMapId() != mapId) {
                 continue;
             }
             int count = AgentCombatAmmoCounter.countAmmo(donorBot, needyWeaponType);
@@ -221,6 +228,12 @@ public final class AgentAmmoService {
             }
         }
         return best;
+    }
+
+    private static boolean selfSustaining(AgentRuntimeEntry entry) {
+        return entry != null && entry.capabilityStates()
+                .find(AgentResourceAutonomyState.STATE_KEY)
+                .map(AgentResourceAutonomyState::selfSustaining).orElse(false);
     }
 
     private static void scheduleAmmoShare(AgentAmmoDonorPlan<AgentRuntimeEntry> plan,

@@ -30,7 +30,7 @@ public final class AgentWorldBaselineProposalProvider implements AgentWorldPropo
         if (!milestones.achieved(AgentWorldMilestone.FIRST_JOB_COMPLETE)) {
             intents.add(intent("milestone:first-job", AgentActivityKind.QUESTING,
                     900, 100L, true, "first job is incomplete",
-                    AgentWorldActivityRequestType.AUTHORED_PLAN, "victoria-first-job"));
+                    AgentWorldActivityRequestType.AUTHORED_PLAN, "victoria-level15-mvp"));
             return List.copyOf(intents);
         }
         if (!milestones.achieved(AgentWorldMilestone.LEVEL_15_FOUNDATION_COMPLETE)) {
@@ -47,7 +47,7 @@ public final class AgentWorldBaselineProposalProvider implements AgentWorldPropo
         if (context.level() < 30) {
             intents.add(intent("progression:individual-quest", AgentActivityKind.QUESTING,
                     500, 70L, context.level() >= 15,
-                    "individual Victoria quest candidate; compiler remains rollout-gated",
+                    "individual Victoria quests are exposed as concrete Director catalog actions",
                     AgentWorldActivityRequestType.INDIVIDUAL_QUEST, "catalog:auto"));
             intents.add(intent("progression:hunting", AgentActivityKind.HUNTING,
                     500, 60L, context.level() >= 15,

@@ -45,12 +45,19 @@ public final class CosmicShopGateway implements ShopGateway {
 
     @Override
     public Shop.TransactionResult recharge(Character agent, Shop shop, short slot) {
+        return recharge(agent, shop, slot, 0);
+    }
+
+    @Override
+    public Shop.TransactionResult recharge(
+            Character agent, Shop shop, short slot, int minimumMesoReserve) {
         Inventory inventory = agent.getInventory(InventoryType.USE);
         Item item = inventory == null ? null : inventory.getItem(slot);
         int itemId = item == null ? 0 : item.getItemId();
         int beforeQuantity = item == null ? 0 : item.getQuantity();
         int beforeMeso = agent.getMeso();
-        Shop.TransactionResult result = shop.rechargeDirect(agent, slot);
+        Shop.TransactionResult result = shop.rechargeDirect(
+                agent, slot, minimumMesoReserve);
         int currentQuantity = item == null ? 0 : item.getQuantity();
         if (itemId > 0) {
             publish(agent, shop, "RECHARGE", itemId,

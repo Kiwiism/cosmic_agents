@@ -30,6 +30,10 @@ public final class AgentShopAmmoPolicy {
         return weaponType == WeaponType.CLAW || weaponType == WeaponType.GUN;
     }
 
+    public static boolean needsSeedRechargeAmmo(WeaponType weaponType, int currentCount) {
+        return isRechargeWeaponType(weaponType) && currentCount <= 0;
+    }
+
     public static boolean matchesRechargeWeapon(int itemId, WeaponType weaponType) {
         return switch (weaponType) {
             case CLAW -> ItemConstants.isThrowingStar(itemId);

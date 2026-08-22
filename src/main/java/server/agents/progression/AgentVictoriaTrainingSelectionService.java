@@ -1,7 +1,9 @@
 package server.agents.progression;
 
 import client.Character;
+import server.agents.events.AgentDomainEvent;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.AgentSessionEventRuntime;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -38,9 +40,19 @@ final class AgentVictoriaTrainingSelectionService {
         AgentProgressionProfile profile = AgentProgressionProfileRuntime.profile(entry);
         Optional<AgentVictoriaTrainingMapSelector.Selection> selection = selector.select(
                 selectionLevel, agent.getMapId(), occupancy, eligible, profile, agent.getId());
-        selection.ifPresent(value -> state.selected(
-                value.map().mapId(), selectionLevel,
-                value.reason() + "; occupancy=" + value.occupancy(), nowMs));
+        selection.ifPresent(value -> {
+            String reason = value.reason() + "; occupancy=" + value.occupancy();
+            state.selected(value.map().mapId(), selectionLevel, reason, nowMs);
+            AgentSessionEventRuntime.bus(entry).publish(new AgentDomainEvent(
+                    agent.getId(), nowMs, "progression.map-selected",
+                    "training:" + agent.getId() + ':' + nowMs,
+                    Map.of("mapId", Integer.toString(value.map().mapId()),
+                            "mapName", value.map().mapName(),
+                            "level", Integer.toString(selectionLevel),
+                            "occupancy", Integer.toString(value.occupancy()),
+                            "reason", reason,
+                            "purpose", "level-training")));
+        });
         return selection.map(AgentVictoriaTrainingMapSelector.Selection::map);
     }
 

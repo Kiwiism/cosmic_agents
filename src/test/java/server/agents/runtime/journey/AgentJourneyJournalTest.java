@@ -5,6 +5,10 @@ import org.junit.jupiter.api.io.TempDir;
 import server.agents.runtime.activity.session.AgentActivityHandoffCoordinator;
 import server.agents.runtime.activity.session.AgentActivityHandoffJourneyRecorder;
 import server.agents.runtime.activity.session.AgentActivityKind;
+import server.agents.runtime.activity.session.AgentActivityPhase;
+import server.agents.runtime.activity.session.AgentActivityTerminalJourneyRecorder;
+import server.agents.runtime.activity.session.AgentActivityTerminalOutcome;
+import server.agents.runtime.activity.outcome.AgentActivityOutcomeEnvelope;
 import server.agents.runtime.decision.AgentDecisionAssessment;
 import server.agents.runtime.decision.AgentDecisionJourneyRecorder;
 import server.agents.runtime.decision.AgentDecisionReasonCode;
@@ -72,5 +76,27 @@ class AgentJourneyJournalTest {
                         "event:1", "agent/1", 101, 101L,
                         AgentJourneyEventType.ACTIVITY_TERMINAL, AgentActivityKind.HUNTING,
                         "activity-outcome", "hunt-1", "different", Map.of())));
+    }
+
+    @Test
+    void terminalActivityOutcomeIsRecordedOnceWithStructuredEvidence() {
+        AgentFileJourneyJournalStore store = new AgentFileJourneyJournalStore(directory);
+        AgentActivityTerminalOutcome outcome = new AgentActivityTerminalOutcome(
+                AgentActivityKind.HUNTING, AgentActivityPhase.COMPLETED,
+                "hunt-session-1", "101", "objective complete", false,
+                100L, 200L, Map.of("kills", 12, "mapId", 100000001));
+        AgentActivityOutcomeEnvelope envelope = AgentActivityOutcomeEnvelope.published(
+                "hunting:hunt-session-1:completed", outcome, 200L);
+        AgentActivityTerminalJourneyRecorder recorder =
+                new AgentActivityTerminalJourneyRecorder(store);
+
+        recorder.record(envelope);
+        recorder.record(envelope);
+
+        List<AgentJourneyEvent> events = store.read("101");
+        assertEquals(1, events.size());
+        assertEquals(AgentJourneyEventType.ACTIVITY_TERMINAL, events.getFirst().type());
+        assertEquals("12", events.getFirst().evidence().get("kills"));
+        assertEquals("200", events.getFirst().evidence().get("endedAtMs"));
     }
 }

@@ -26,7 +26,7 @@ class AgentShopGatewayBoundaryTest {
         assertTrue(service.contains(".buy(bot, shop,"));
         assertTrue(gateway.contains("AgentEconomicActionGuardRuntime.claimNpcSale("));
         assertTrue(gateway.contains("shop.sellDirect(agent, type, slot, quantity)"));
-        assertTrue(gateway.contains("shop.rechargeDirect(agent, slot)"));
+        assertTrue(gateway.contains("shop.rechargeDirect(\n                agent, slot, minimumMesoReserve)"));
         assertTrue(gateway.contains("shop.buyDirect(agent, slot, itemId, quantity)"));
     }
 }

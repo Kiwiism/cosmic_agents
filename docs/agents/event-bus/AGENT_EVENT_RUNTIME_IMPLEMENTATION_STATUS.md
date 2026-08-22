@@ -162,18 +162,18 @@ API. It queries the current and one rotated segment by Agent, objective,
 correlation, event type, and time. Results are capped at 1,000. It must not be
 called from an Agent tick or listener.
 
-## LLM Context Boundary
+## Social Dialogue Context Boundary
 
-`AgentLlmContextProjectionRuntime.snapshot` exposes structured state only:
+`AgentSocialContextProjectionRuntime.snapshot` exposes structured state only:
 
 - current progression, map, objective, blocker, life, supply, inventory,
   equipment, shopping, and recovery facts;
 - at most 48 current fact keys;
 - at most 24 recent significant milestones.
 
-It performs no model call and produces no chat. Future LLM adapters should read
-this projection outside event dispatch, add profile/relationship context, and
-submit validated commands through normal capability boundaries.
+It performs no model call and produces no chat. The social request factory reads
+this projection on the owning mailbox, adds bounded personality and relationship
+context, and sends only immutable data to optional providers.
 
 ## Rollout And Rollback
 

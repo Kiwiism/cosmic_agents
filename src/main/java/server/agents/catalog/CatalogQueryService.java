@@ -9,6 +9,7 @@ public final class CatalogQueryService {
     private final ReactorCatalogQuery reactor;
     private final MapleIslandMvpCatalogQuery mapleIslandMvp;
     private final ServerKnowledgeCatalogQuery knowledge;
+    private final CatalogExplorerQuery explorer;
 
     CatalogQueryService(CatalogBundle bundle) {
         this.npc = new NpcCatalogQuery(bundle);
@@ -19,6 +20,7 @@ public final class CatalogQueryService {
         this.reactor = new ReactorCatalogQuery(bundle);
         this.mapleIslandMvp = new MapleIslandMvpCatalogQuery(bundle);
         this.knowledge = new ServerKnowledgeCatalogQuery(bundle);
+        this.explorer = new CatalogExplorerQuery(bundle);
     }
 
     public NpcCatalogQuery npc() {
@@ -51,5 +53,10 @@ public final class CatalogQueryService {
 
     public ServerKnowledgeCatalogQuery knowledge() {
         return knowledge;
+    }
+
+    /** Bounded, read-only dataset discovery for operator UI and future LLM tools. */
+    public CatalogExplorerQuery explorer() {
+        return explorer;
     }
 }

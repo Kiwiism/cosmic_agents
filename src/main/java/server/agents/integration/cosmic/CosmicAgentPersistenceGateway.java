@@ -3,6 +3,7 @@ package server.agents.integration.cosmic;
 import client.DefaultDates;
 import server.agents.integration.AgentAccountResolution;
 import server.agents.integration.AgentPersistenceGateway;
+import server.agents.integration.AgentPersistedCharacterSummary;
 import server.agents.registry.AgentResolvedCharacter;
 import tools.BCrypt;
 import tools.DatabaseConnection;
@@ -16,6 +17,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.Base64;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class CosmicAgentPersistenceGateway implements AgentPersistenceGateway {
     public static final CosmicAgentPersistenceGateway INSTANCE = new CosmicAgentPersistenceGateway();
@@ -60,6 +63,26 @@ public final class CosmicAgentPersistenceGateway implements AgentPersistenceGate
                         null);
             }
         }
+    }
+
+    @Override
+    public List<AgentPersistedCharacterSummary> listAgentCharacters() throws SQLException {
+        String sql = "SELECT c.id, c.name, c.accountid, c.level, c.job, c.map "
+                + "FROM characters c JOIN accounts a ON a.id = c.accountid "
+                + "WHERE a.banned = 1 AND a.banreason = ? ORDER BY LOWER(c.name), c.id";
+        List<AgentPersistedCharacterSummary> result = new ArrayList<>();
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, CosmicAgentBackingAccountSecurity.AGENT_ONLY_BAN_REASON);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    result.add(new AgentPersistedCharacterSummary(
+                            rs.getInt("id"), rs.getString("name"), rs.getInt("accountid"),
+                            rs.getInt("level"), rs.getInt("job"), rs.getInt("map")));
+                }
+            }
+        }
+        return List.copyOf(result);
     }
 
     @Override

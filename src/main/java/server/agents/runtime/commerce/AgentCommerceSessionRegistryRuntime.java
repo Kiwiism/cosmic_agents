@@ -18,7 +18,7 @@ public final class AgentCommerceSessionRegistryRuntime {
     private AgentCommerceSessionRegistryRuntime() {
     }
 
-    public static AgentActivityTargetPort prepare(
+    public static AgentCommerceSessionRuntime prepare(
             int characterId,
             EconomySessionPort sessions,
             AgentCommerceSessionStore store,
@@ -29,6 +29,9 @@ public final class AgentCommerceSessionRegistryRuntime {
         AgentCommerceSessionRuntime created =
                 new AgentCommerceSessionRuntime(sessions, store, request);
         AgentCommerceSessionRuntime previous = SESSIONS.putIfAbsent(characterId, created);
+        if (previous != null && previous.matches(request)) {
+            return previous;
+        }
         if (previous != null) {
             throw new IllegalStateException("Commerce visit already prepared for character "
                     + characterId);

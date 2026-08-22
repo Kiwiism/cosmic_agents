@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.behavior.AgentBehaviorRuntime;
+import server.agents.runtime.activity.AgentActivityHostState;
 import server.agents.runtime.simulation.AgentAbstractTickRuntime;
 import server.agents.runtime.simulation.AgentSimulationMode;
 
@@ -14,10 +16,14 @@ public final class AgentTickRuntime {
                             int agentCharId,
                             Consumer<AgentRuntimeEntry> issueGrind,
                             Consumer<AgentRuntimeEntry> issueFollow) {
+        long nowMs = System.currentTimeMillis();
+        AgentBehaviorRuntime.adaptation(entry).observe(entry.capabilityStates()
+                .find(AgentActivityHostState.STATE_KEY)
+                .map(AgentActivityHostState::activityKind).orElse(null), nowMs);
         if (entry.simulationState().mode() == AgentSimulationMode.BACKGROUND_ABSTRACT) {
             entry.tickSliceState().clear();
             try {
-                AgentAbstractTickRuntime.tick(entry, System.currentTimeMillis());
+                AgentAbstractTickRuntime.tick(entry, nowMs);
                 AgentTickFailurePolicy.resetFailures(entry);
             } catch (Throwable failure) {
                 AgentTickFailureRuntime.handleFailure(

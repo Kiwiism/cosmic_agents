@@ -9,6 +9,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import server.agents.economy.session.EconomySessionPort;
 import server.agents.economy.ownership.InventoryReview;
 import server.agents.economy.ownership.LegacyDispositionProposal;
 
@@ -20,6 +22,9 @@ public final class AgentEconomyRuntime {
     public static void install(Gateway value) { gateway = Objects.requireNonNull(value); }
     public static void clear() { gateway = Gateway.disabled(); }
     public static boolean available() { return gateway.available(); }
+
+    /** Installed per-Agent Commerce admission port; absent outside a managed economy run. */
+    public static Optional<EconomySessionPort> sessionPort() { return gateway.sessionPort(); }
 
     public static AgentItemValuationService.Valuation valueItem(String agentId, int itemId, Instant at) {
         return gateway.valueItem(agentId, itemId, at);
@@ -52,6 +57,7 @@ public final class AgentEconomyRuntime {
 
     public interface Gateway {
         boolean available();
+        default Optional<EconomySessionPort> sessionPort() { return Optional.empty(); }
         AgentItemValuationService.Valuation valueItem(String agentId, int itemId, Instant at);
         EconomicIntent publishIntent(String actorAgentId, String counterpartyAgentId,
                                      EconomicIntent.Kind kind, int itemId, String fingerprint,

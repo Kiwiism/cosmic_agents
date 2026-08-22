@@ -66,6 +66,7 @@ import net.server.task.RankingLoginTask;
 import net.server.task.RespawnTask;
 import net.server.world.World;
 import net.server.admin.DatabaseConsoleBridgeServer;
+import net.server.admin.AgentDirectorBridgeServer;
 import org.apache.logging.log4j.LogManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -156,6 +157,7 @@ public class Server {
 
     private LoginServer loginServer;
     private DatabaseConsoleBridgeServer databaseConsoleBridgeServer;
+    private AgentDirectorBridgeServer agentDirectorBridgeServer;
     private AgentMapGraphWebServer agentMapGraphWebServer;
     private final List<Map<Integer, String>> channels = new LinkedList<>();
     private final List<World> worlds = new ArrayList<>();
@@ -1007,6 +1009,7 @@ public class Server {
 
         AgentPopulationRuntime.start();
         startDatabaseConsoleBridge();
+        startAgentDirectorBridge();
         startAgentMapGraphViewer();
     }
 
@@ -1031,6 +1034,22 @@ public class Server {
             return false;
         }
         return !("false".equalsIgnoreCase(value) || "0".equals(value) || "no".equalsIgnoreCase(value));
+    }
+
+    private void startAgentDirectorBridge() {
+        if (!AgentDirectorBridgeServer.enabled()) {
+            log.info("Agent Director panel bridge disabled. Set {}=true to enable it.",
+                    AgentDirectorBridgeServer.ENABLED_ENV);
+            return;
+        }
+        try {
+            agentDirectorBridgeServer = new AgentDirectorBridgeServer();
+            agentDirectorBridgeServer.start();
+            log.info("Agent Director panel bridge listening on 127.0.0.1:{}",
+                    System.getenv().getOrDefault("COSMIC_DIRECTOR_PORT", "8790"));
+        } catch (IOException | IllegalStateException failure) {
+            log.warn("Agent Director panel bridge did not start", failure);
+        }
     }
 
     private void startAgentMapGraphViewer() {
@@ -2262,6 +2281,10 @@ public class Server {
         if (databaseConsoleBridgeServer != null) {
             databaseConsoleBridgeServer.stop();
             databaseConsoleBridgeServer = null;
+        }
+        if (agentDirectorBridgeServer != null) {
+            agentDirectorBridgeServer.stop();
+            agentDirectorBridgeServer = null;
         }
         if (agentMapGraphWebServer != null) {
             agentMapGraphWebServer.stop();

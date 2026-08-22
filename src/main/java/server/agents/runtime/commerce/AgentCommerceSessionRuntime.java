@@ -124,7 +124,7 @@ public final class AgentCommerceSessionRuntime
                 AgentActivityKind.COMMERCE, checkpoint.phase(), checkpoint.sessionId(),
                 request.participant().agentId(), checkpoint.reason(),
                 checkpoint.phase() == AgentActivityPhase.FAILED,
-                checkpoint.startedAtMs(), Math.max(checkpoint.updatedAtMs(), nowMs),
+                checkpoint.startedAtMs(), checkpoint.updatedAtMs(),
                 Map.of("purpose", request.purpose().name(), "callerId", request.callerId()));
     }
 
@@ -138,6 +138,11 @@ public final class AgentCommerceSessionRuntime
 
     public synchronized AgentCommerceSessionCheckpoint checkpoint() {
         return checkpoint;
+    }
+
+    synchronized boolean matches(AgentCommerceVisitRequest candidate) {
+        return candidate != null && request.requestId().equals(candidate.requestId())
+                && request.participant().agentId().equals(candidate.participant().agentId());
     }
 
     public synchronized AgentActivityExitResult suspendExact(String reason, long nowMs) {

@@ -78,7 +78,11 @@ public record AgentWorldDirectorSession(
             case DISABLED -> AgentWorldDirectorPhase.DISABLED;
             case SHADOW, OBSERVE -> AgentWorldDirectorPhase.OBSERVING;
             case EMERGENCY_HOLD -> AgentWorldDirectorPhase.PAUSED;
-            case MANUAL, CONTROLLED, ASSISTED, AUTONOMOUS -> AgentWorldDirectorPhase.WAITING;
+            case MANUAL, CONTROLLED, ASSISTED, AUTONOMOUS ->
+                    phase == AgentWorldDirectorPhase.RUNNING
+                            || phase == AgentWorldDirectorPhase.HANDOFF
+                            || phase == AgentWorldDirectorPhase.PAUSED
+                            ? phase : AgentWorldDirectorPhase.WAITING;
         };
         return new AgentWorldDirectorSession(schemaVersion, agentId, goalId, nextMode,
                 nextPhase, observedActivityKind, observedSessionId, selectedProposalId,

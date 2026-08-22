@@ -58,6 +58,9 @@ public record AgentWorldDirective(
                 && (targetActivityKind == null || requestType == null || requestId.isEmpty())) {
             throw new IllegalArgumentException("activity directives require a target and request identity");
         }
+        if (type == AgentWorldDirectiveType.CONFIGURE_CAREER_BUILD && requestId.isEmpty()) {
+            throw new IllegalArgumentException("career configuration requires a bundle identity");
+        }
     }
 
     private static String normalize(String value) {

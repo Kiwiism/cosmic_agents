@@ -16,12 +16,25 @@ public final class AgentSupplyProcurementState {
     private int supplierMapId;
     private int supplierNpcId;
     private int returnMapId;
+    private int quantityBefore;
+    private int mesosBefore;
+    private AgentSupplyProcurementOutcome lastOutcome;
+    private int recoveryAttempts;
+    private long recoveryStartedAtMs;
+    private long recoveryDeadlineAtMs;
+    private int recoveryMapId;
+    private int recoveryBaselineMeso;
+    private int recoveryTargetMeso;
+    private String stalledReason = "";
 
     public enum Phase {
         IDLE,
         TRAVEL_TO_SUPPLIER,
         SHOPPING,
-        RETURNING
+        RETURNING,
+        RESTING,
+        INCOME_RECOVERY,
+        STALLED
     }
 
     public synchronized boolean isActive() {
@@ -60,6 +73,46 @@ public final class AgentSupplyProcurementState {
         return returnMapId;
     }
 
+    public synchronized int quantityBefore() {
+        return quantityBefore;
+    }
+
+    public synchronized int mesosBefore() {
+        return mesosBefore;
+    }
+
+    public synchronized AgentSupplyProcurementOutcome lastOutcome() {
+        return lastOutcome;
+    }
+
+    public synchronized int recoveryAttempts() {
+        return recoveryAttempts;
+    }
+
+    public synchronized long recoveryStartedAtMs() {
+        return recoveryStartedAtMs;
+    }
+
+    public synchronized long recoveryDeadlineAtMs() {
+        return recoveryDeadlineAtMs;
+    }
+
+    public synchronized int recoveryMapId() {
+        return recoveryMapId;
+    }
+
+    public synchronized int recoveryBaselineMeso() {
+        return recoveryBaselineMeso;
+    }
+
+    public synchronized int recoveryTargetMeso() {
+        return recoveryTargetMeso;
+    }
+
+    public synchronized String stalledReason() {
+        return stalledReason;
+    }
+
     public synchronized void start(String requestId, String objectiveId, AgentResourceCategory category) {
         start(requestId, objectiveId, category, 0, 0, 0, Phase.SHOPPING);
     }
@@ -71,6 +124,19 @@ public final class AgentSupplyProcurementState {
                                    int supplierNpcId,
                                    int returnMapId,
                                    Phase phase) {
+        start(requestId, objectiveId, category, supplierMapId, supplierNpcId,
+                returnMapId, phase, 0, 0);
+    }
+
+    public synchronized void start(String requestId,
+                                   String objectiveId,
+                                   AgentResourceCategory category,
+                                   int supplierMapId,
+                                   int supplierNpcId,
+                                   int returnMapId,
+                                   Phase phase,
+                                   int quantityBefore,
+                                   int mesosBefore) {
         this.requestId = requestId;
         this.objectiveId = objectiveId;
         this.category = category;
@@ -78,7 +144,20 @@ public final class AgentSupplyProcurementState {
         this.supplierNpcId = supplierNpcId;
         this.returnMapId = returnMapId;
         this.phase = phase;
+        this.quantityBefore = Math.max(0, quantityBefore);
+        this.mesosBefore = Math.max(0, mesosBefore);
         shopRequested = false;
+        recoveryAttempts = 0;
+        recoveryStartedAtMs = 0L;
+        recoveryDeadlineAtMs = 0L;
+        recoveryMapId = 0;
+        recoveryBaselineMeso = 0;
+        recoveryTargetMeso = 0;
+        stalledReason = "";
+    }
+
+    public synchronized void complete(AgentSupplyProcurementOutcome outcome) {
+        lastOutcome = outcome;
     }
 
     public synchronized void markShopRequested() {
@@ -90,6 +169,40 @@ public final class AgentSupplyProcurementState {
         phase = Phase.RETURNING;
     }
 
+    public synchronized void beginRecovery(
+            int mapId, int baselineMeso, int targetMeso, long nowMs, long deadlineAtMs) {
+        recoveryAttempts++;
+        recoveryStartedAtMs = nowMs;
+        recoveryDeadlineAtMs = Math.max(nowMs, deadlineAtMs);
+        recoveryMapId = mapId;
+        recoveryBaselineMeso = Math.max(0, baselineMeso);
+        recoveryTargetMeso = Math.max(recoveryBaselineMeso, targetMeso);
+        shopRequested = false;
+        phase = Phase.RESTING;
+    }
+
+    public synchronized void markResting(long nowMs, long deadlineAtMs) {
+        recoveryStartedAtMs = nowMs;
+        recoveryDeadlineAtMs = Math.max(nowMs, deadlineAtMs);
+        phase = Phase.RESTING;
+    }
+
+    public synchronized void markIncomeRecovery(long nowMs, long deadlineAtMs) {
+        recoveryStartedAtMs = nowMs;
+        recoveryDeadlineAtMs = Math.max(nowMs, deadlineAtMs);
+        phase = Phase.INCOME_RECOVERY;
+    }
+
+    public synchronized void retrySupplier(boolean supplierIsCurrentMap) {
+        shopRequested = false;
+        phase = supplierIsCurrentMap ? Phase.SHOPPING : Phase.TRAVEL_TO_SUPPLIER;
+    }
+
+    public synchronized void markStalled(String reason) {
+        stalledReason = reason == null ? "" : reason.trim();
+        phase = Phase.STALLED;
+    }
+
     public synchronized void clear() {
         requestId = "";
         objectiveId = "";
@@ -99,5 +212,14 @@ public final class AgentSupplyProcurementState {
         supplierMapId = 0;
         supplierNpcId = 0;
         returnMapId = 0;
+        quantityBefore = 0;
+        mesosBefore = 0;
+        recoveryAttempts = 0;
+        recoveryStartedAtMs = 0L;
+        recoveryDeadlineAtMs = 0L;
+        recoveryMapId = 0;
+        recoveryBaselineMeso = 0;
+        recoveryTargetMeso = 0;
+        stalledReason = "";
     }
 }

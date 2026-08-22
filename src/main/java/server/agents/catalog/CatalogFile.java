@@ -50,6 +50,14 @@ enum CatalogFile {
         return key;
     }
 
+    String group() {
+        return directory.name().toLowerCase(java.util.Locale.ROOT);
+    }
+
+    String fileName() {
+        return fileName;
+    }
+
     boolean required() {
         return required;
     }

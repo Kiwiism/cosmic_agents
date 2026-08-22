@@ -15,6 +15,8 @@ import java.util.Optional;
 
 /** Atomic JSON persistence for per-Agent Commerce visits. */
 public final class AgentFileCommerceSessionStore implements AgentCommerceSessionStore {
+    private static final AgentFileCommerceSessionStore RUNTIME_DEFAULT =
+            new AgentFileCommerceSessionStore(Path.of(".runtime", "agents", "commerce-visits"));
     private final Path directory;
     private final ObjectMapper mapper = new ObjectMapper();
 
@@ -23,6 +25,10 @@ public final class AgentFileCommerceSessionStore implements AgentCommerceSession
             throw new IllegalArgumentException("Commerce session directory is required");
         }
         this.directory = directory.toAbsolutePath().normalize();
+    }
+
+    public static AgentFileCommerceSessionStore runtimeDefault() {
+        return RUNTIME_DEFAULT;
     }
 
     @Override

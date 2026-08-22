@@ -26,6 +26,20 @@ import static org.mockito.Mockito.when;
 
 class AgentSupplyProcurementRuntimeTest {
     @Test
+    void automaticProcurementRequiresAnExplicitSelfSustainingSession() {
+        Character agent = mock(Character.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+
+        assertFalse(AgentSupplyProcurementRuntime.tickIfSelfSustaining(
+                entry, agent, 100L));
+
+        entry.capabilityStates().require(AgentResourceAutonomyState.STATE_KEY)
+                .requireSelfSustaining();
+        assertFalse(AgentSupplyProcurementRuntime.tickIfSelfSustaining(
+                entry, agent, 200L));
+    }
+
+    @Test
     void combatIntentSurvivesLowPotionShopInterruptionAndReturn() {
         Character agent = mock(Character.class);
         when(agent.getId()).thenReturn(90);

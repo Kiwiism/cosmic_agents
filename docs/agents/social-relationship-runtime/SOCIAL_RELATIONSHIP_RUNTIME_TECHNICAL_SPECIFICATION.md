@@ -7,9 +7,10 @@ Define the portable data models, APIs, storage, decay rules, validation, and
 tests for Agent relationship memory and social graph summaries.
 ```
 
-This is implementation guidance for after Agent reconstruction. It must not be
-implemented against live Agent runtime files before stable reconstructed entry
-points exist.
+The stable Agent OS entry points now exist. The generic-chat slice implements
+directional relationship summaries, bounded recent turns, async persistence,
+and PostgreSQL storage under `server.agents.social`; the wider event reducer and
+social graph APIs in this document remain planned work.
 
 ## Suggested Package Layout
 
@@ -444,19 +445,20 @@ Requires:
 - Economy Engine counterparty-risk consumer, for trade use cases.
 - reconstructed Agent runtime entry points, for live social/party/trade use.
 
-## Safe Pre-Reconstruction Work
+## Current implementation boundary
 
-Allowed now:
+Implemented now:
 
-- maintain this specification.
-- maintain schema drafts.
-- maintain docs for privacy, decay, and summaries.
-- add offline replay fixtures later.
+- generic targeted and elected untargeted chat presentation;
+- stable Agent/player relationship keys;
+- compact persistent relationship summaries;
+- seven-day bounded raw turn retention;
+- optional model context reads with no mutation authority.
 
-Not allowed now:
+Still excluded:
 
-- live Agent party/trade/chat behavior.
-- live Agent sidetrack behavior.
-- edits to `src/main/java/server/agents`.
-- edits to `src/main/java/server/bots`.
+- relationship-based party/trade authority changes;
+- live Agent sidetrack decisions;
+- direct LLM memory patches;
+- unvalidated model-generated gameplay proposals.
 - BotClient behavior changes.

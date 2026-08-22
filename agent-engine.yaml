@@ -3035,6 +3035,54 @@ tuning:
     # Purpose: Limits local recovery attempts before the fallback advisor recommends suspending the quest for an external lifecycle decision.
     # Technical: AgentQuestStruggleAdvisor reads the durable work-unit retry count and emits a recommendation only; Activity Host and World Director retain transfer authority.
     server.agents.progression.questwork.AgentQuestStruggleAdvisor.RETRY_LIMIT: '3'
+    # Values: positive potion-equivalent units from 1 to 80. Recommended: 15 for early Victoria quest attempts.
+    # Purpose: Establishes the base consumable allowance before a quest attempt is considered too expensive to continue safely.
+    # Technical: AgentQuestAttemptBudgetPolicy adds the level-scaled allowance and clamps the result before AgentQuestStruggleAdvisor evaluates resource pressure.
+    server.agents.progression.questwork.AgentQuestAttemptBudgetPolicy.BASE_UNITS: '15'
+    # Values: non-negative potion-equivalent units per level from 0 to 5. Recommended: 2 for levels one through thirty.
+    # Purpose: Scales the quest-attempt resource allowance gradually without introducing job-specific watchdog thresholds or quest scripts.
+    # Technical: AgentQuestAttemptBudgetPolicy multiplies this integer by the current level using long arithmetic and then applies the configured hard cap.
+    server.agents.progression.questwork.AgentQuestAttemptBudgetPolicy.UNITS_PER_LEVEL: '2'
+    # Values: positive potion-equivalent units from 20 to 200. Recommended: 80 as the early-game maximum for one attempt.
+    # Purpose: Prevents one difficult quest attempt from draining an Agent's complete early-game potion inventory before reassessment.
+    # Technical: AgentQuestAttemptBudgetPolicy clamps its base-plus-level calculation to this value before the advisor receives the immutable observation.
+    server.agents.progression.questwork.AgentQuestAttemptBudgetPolicy.MAXIMUM_UNITS: '80'
+    # Values: non-negative mesos from 0 to 10000. Recommended: 500 as the fixed protected amount before level scaling.
+    # Purpose: Preserves a minimum wallet balance during resupply so an Agent retains money for travel and another bounded recovery attempt.
+    # Technical: AgentSupplyRecoveryPolicy adds the configured per-level reserve and passes the resulting floor to the existing NPC-shop visit contract.
+    server.agents.capabilities.supplies.AgentSupplyRecoveryPolicy.WALLET_RESERVE_BASE: '500'
+    # Values: non-negative mesos per level from 0 to 500. Recommended: 50 throughout the level-one-to-thirty journey.
+    # Purpose: Scales the protected wallet floor gradually as travel and consumable costs rise during early Victoria progression.
+    # Technical: AgentSupplyRecoveryPolicy multiplies this value by the live level and adds it to WALLET_RESERVE_BASE before each shop request.
+    server.agents.capabilities.supplies.AgentSupplyRecoveryPolicy.WALLET_RESERVE_PER_LEVEL: '50'
+    # Values: positive mesos from 100 to 10000. Recommended: 1000 as the smallest bounded income-recovery target.
+    # Purpose: Defines the smallest useful amount of income to recover before retrying a supply purchase that previously made no progress.
+    # Technical: AgentSupplyRecoveryPolicy clamps the procurement budget between this value and MAXIMUM_INCOME_TARGET, then adds the wallet reserve.
+    server.agents.capabilities.supplies.AgentSupplyRecoveryPolicy.MINIMUM_INCOME_TARGET: '1000'
+    # Values: positive mesos from 1000 to 50000 and not below the minimum target. Recommended: 5000 for early-game recovery.
+    # Purpose: Caps the income target for one recovery attempt so an Agent cannot turn a failed shopping visit into indefinite farming.
+    # Technical: AgentSupplyRecoveryPolicy clamps the requested shopping budget to this ceiling before AgentSupplyProcurementState records its target.
+    server.agents.capabilities.supplies.AgentSupplyRecoveryPolicy.MAXIMUM_INCOME_TARGET: '5000'
+    # Values: integer attempts from 1 to 5. Recommended: 3 before the Journey participant is classified as stalled.
+    # Purpose: Bounds repeated rest, low-risk income, and shopping cycles while preserving the exact suspended foreground objective for inspection.
+    # Technical: AgentSupplyProcurementRuntime compares the durable recovery counter with this limit and emits resource.recovery-stalled on exhaustion.
+    server.agents.capabilities.supplies.AgentSupplyRecoveryPolicy.MAX_RECOVERY_ATTEMPTS: '3'
+    # Values: percentage from 50 to 100. Recommended: 90 for both HP and MP before returning to low-risk combat.
+    # Purpose: Requires adequate natural chair recovery before an under-supplied Agent begins the bounded income-recovery hunting phase.
+    # Technical: AgentSupplyRecoveryPolicy evaluates live HP and MP ratios; AgentSupplyProcurementRuntime remains seated until both meet this threshold.
+    server.agents.capabilities.supplies.AgentSupplyRecoveryPolicy.REST_TARGET_PERCENT: '90'
+    # Values: HP percentage from 10 to 60. Recommended: 45 as the emergency stop threshold during income recovery.
+    # Purpose: Stops low-risk income combat before an under-supplied Agent reaches a dangerous health level or risks an avoidable death.
+    # Technical: AgentSupplyProcurementRuntime checks this policy on each recovery tick, stops combat, and returns to chair recovery when breached.
+    server.agents.capabilities.supplies.AgentSupplyRecoveryPolicy.CRITICAL_HP_PERCENT: '45'
+    # Values: milliseconds from 30000 to 300000. Recommended: 120000 as the maximum duration of one chair-rest phase.
+    # Purpose: Bounds passive recovery so a missing chair, suppressed regeneration, or invalid recovery state cannot wait indefinitely.
+    # Technical: AgentSupplyProcurementState stores this deadline and AgentSupplyProcurementRuntime either advances safely or records a typed stall reason.
+    server.agents.capabilities.supplies.AgentSupplyRecoveryPolicy.REST_TIMEOUT_MS: '120000'
+    # Values: milliseconds from 60000 to 600000. Recommended: 240000 before retrying the suspended shopping request.
+    # Purpose: Bounds each low-risk income phase while allowing enough time for weak early-game builds to earn a meaningful amount of mesos.
+    # Technical: AgentSupplyProcurementState records this deadline; reaching it causes a supplier retry or a typed bounded-recovery stall outcome.
+    server.agents.capabilities.supplies.AgentSupplyRecoveryPolicy.INCOME_TIMEOUT_MS: '240000'
     # Values: a finite non-negative integer; unit: map pixels. Recommended: 50-200 around the tested baseline 100; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls the distance or margin used for interaction distance. Higher values allow action from farther away or leave more space; lower values require closer, more precise positioning.
     # Technical: the "victoria quest pack runtime" component consumes this as an integer. Unit: MapleStory map pixels; horizontal and vertical values use the server map coordinate system.
@@ -3047,6 +3095,24 @@ tuning:
     # Purpose: Controls the distance or margin used for interaction distance. Higher values allow action from farther away or leave more space; lower values require closer, more precise positioning.
     # Technical: the "victoria quest scheduler runtime" component consumes this as an integer. Unit: MapleStory map pixels; horizontal and vertical values use the server map coordinate system.
     server.agents.progression.AgentVictoriaQuestSchedulerRuntime.INTERACTION_DISTANCE_PX: '100'
+    # Values: milliseconds from 1000 to 30000. Recommended: 5000 for ordinary quest-attempt assessment cadence.
+    # Purpose: Limits quest-watchdog evaluation and decision-journal frequency while keeping route, resource, and progress advice responsive.
+    # Technical: AgentVictoriaQuestSchedulerState stores the next assessment timestamp; combat and navigation continue normally between evaluations.
+    server.agents.progression.AgentVictoriaQuestSchedulerRuntime.ATTEMPT_ASSESSMENT_INTERVAL_MS: '5000'
+
+    # Values: milliseconds from 30000 to 300000. Recommended: 120000 to cover cold graph preparation without hiding a persistent navigation stall.
+    # Purpose: Defines the bounded period in which navigation graph preparation counts as legitimate quest waiting instead of failed hunt progress.
+    # Technical: AgentVictoriaQuestSchedulerRuntime postpones struggle recommendations only while the current map reports pending graph warmup and this elapsed-time ceiling has not expired.
+    server.agents.progression.AgentVictoriaQuestSchedulerRuntime.NAVIGATION_WARMUP_GRACE_MS: '120000'
+    # Values: milliseconds from 300000 to 3600000. Recommended: 900000 as the terminal semantic-stall floor for a long journey.
+    # Purpose: Prevents a Journey participant from remaining non-terminal forever after every bounded plan and resource recovery path stops progressing.
+    # Technical: AgentJourneyRuntime combines this floor with three times the configured map-dwell threshold and records STALLED without repairing gameplay.
+    server.agents.journey.AgentJourneyRuntime.TERMINAL_STALL_MIN_MS: '900000'
+
+    # Values: milliseconds from 10000 to 300000. Recommended: 60000 to bound persistence traffic while retaining recent behavior adaptation energy.
+    # Purpose: Sets the minimum interval between ordinary persistence writes for one Agent's accumulated behavior-adaptation snapshot.
+    # Technical: AgentBehaviorAdaptationPersistenceRuntime throttles observation-triggered checkpoints with this value while session cleanup can still force an immediate final checkpoint.
+    server.agents.behavior.AgentBehaviorAdaptationPersistenceRuntime.CHECKPOINT_INTERVAL_MS: '60000'
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 60000-240000 around the tested baseline 120000; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how long Agents remain in or wait for failed edge block. Higher values make that pause or state last longer; lower values make them continue sooner.
     # Technical: the "victoria route runtime" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled.
@@ -3532,6 +3598,10 @@ tuning:
     # Purpose: Sets the durable deadline for releasing, transferring, admitting, or rolling back one World Director activity handoff.
     # Technical: The deadline is persisted with the handoff and survives restart; expiry enters rollback rather than hard-teleporting or discarding the source session.
     server.agents.runtime.activity.control.AgentWorldDirectorExecutionRuntime.HANDOFF_TIMEOUT_MS: '60000'
+    # Values: 15000-120000 milliseconds. Recommended: 60000 so graph warmup can finish before a suspended Agent retreats to the map return town.
+    # Purpose: Bounds local spawn-free parking before suspension escalates to ordinary portal travel toward the map's safe return destination.
+    # Technical: Expiry never hard-teleports the Agent; normal route travel remains authoritative and failure is reported explicitly.
+    server.agents.runtime.activity.control.AgentStandardWorldActivityLifecycleHandler.DEFAULT_DEADLINE_MS: '60000'
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 250-1002 around the tested baseline 501; benchmark or observe behavior before moving outside this band.
     # Purpose: Sets the longest initial skip delay time an Agent may receive. Higher values allow longer occurrences; lower values end them sooner.
     # Technical: the "tick state" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled. Paired minimum/maximum values define an inclusive random or validation range and must not be inverted.
@@ -3683,7 +3753,7 @@ tuning:
     # Values: 0 disables quest-aware ETC sale proposals, 1 records shadow proposals without selling, and 2 permits validated surplus sales. Recommended: keep 1 while reviewing logs, then use 2 only after no reserved-item violations are observed.
     # Purpose: Controls whether Agents merely report or actually sell extra ETC items after protecting everything needed by active, committed, and eligible future quests. Higher modes move from observation to real shop sales; unknown or reserved items remain protected.
     # Technical: The inventory demand policy reads this integer at shop time. Enforced mode still recalculates the live unreserved quantity immediately before each sale, while disabled and shadow modes never mutate ETC inventory.
-    server.agents.capabilities.inventory.demand.AgentQuestItemSellMode.MODE: '1'
+    server.agents.capabilities.inventory.demand.AgentQuestItemSellMode.MODE: '2'
     # Values: a finite non-negative integer. Recommended: 700-900 around the tested baseline 800, above ordinary convenience reservations but below any emergency invariant that must always win.
     # Purpose: Sets how strongly active and committed quest-item needs are protected when another Agent capability wants to consume, transfer, drop, or sell the same ETC item. Higher values make quest demand win more reservation conflicts.
     # Technical: The quest-item demand adapter writes this integer into the shared typed reservation ledger. It is a relative arbitration priority rather than an item quantity and does not alter quest requirements.

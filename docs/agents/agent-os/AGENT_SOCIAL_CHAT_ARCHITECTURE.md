@@ -2,12 +2,28 @@
 
 ## Status
 
-This is a review document for a future implementation. It defines how
-Agent-to-Agent and Agent-to-player conversation should fit into Agent OS
-without disrupting plans or giving an LLM mutation authority.
+The provider-neutral generic-chat foundation is implemented. Targeted generic
+chat and elected untargeted replies now use Agent OS immutable projections,
+bounded async lanes, deterministic fallback, personality presentation styles,
+and an optional independent PostgreSQL social-memory store. Typed gameplay
+proposals and autonomous ambient conversations remain later phases.
 
-The existing deterministic command chat remains supported while this design is
-reviewed and implemented incrementally.
+## Adopted direction
+
+The legacy `capabilities.dialogue.llm` orchestration, mutable prompt builder,
+file memory, and raw Ollama gateway have been removed. New social features must
+target `server.agents.social`; external providers belong under integration
+adapters and receive `DialogueRequest` only.
+
+Social dialogue is optional presentation, never an Agent OS dependency. Every
+visible dialogue request carries deterministic catalog replies. The runtime may
+enrich one with a model in `DIALOGUE_ONLY` mode, but missing hardware, disabled
+configuration, load shedding, timeout, invalid output, or provider failure must
+select a deterministic reply without changing the Agent's operational outcome.
+
+The initial implementation deliberately permits text only. World decisions and
+Agent-to-Agent operational coordination remain typed, deterministic Agent OS
+contracts and do not pass through the dialogue provider.
 
 ## Goals
 
@@ -46,14 +62,14 @@ The repository already contains useful pieces:
 | Existing component | Keep | Limitation to address |
 |---|---|---|
 | `AgentChatIngressService` | Server-facing chat entry and routing order | Uses leader/owner-era concepts and mutable `Character` inputs |
-| `AgentTargetedChatRouteService` | Named-Agent resolution and deterministic-first handling | LLM fallback and command recording are coupled to the route callback |
-| `AgentUntargetedChatRouteService` | Group request routing | Broadcasts general messages to every entry after special cases |
+| `AgentTargetedChatRouteService` | Named-Agent resolution and deterministic-first handling | Generic fallback now hands off to the social application |
+| `AgentUntargetedChatRouteService` | Group request routing | Deterministic commands still reach the group; generic replies elect one responder |
 | `AgentChatOrchestrator` and flows | Existing deterministic commands and reports | A command router, not a social conversation engine |
 | `AgentDialogueIntentEvent` projection | Observer-gated event presentation | Covers reactions/intention lines, not multi-turn social sessions |
 | `AgentCoordinationEnvelope` | TTL, correlation, scope, acknowledgement metadata | Needs a typed social protocol family and delivery policy |
 | `AgentInteractionSessionRegistry` | Bounded accepted/declined/expired sessions | Needs conversation turn, interruption, and outcome semantics |
-| `AgentReadOnlyLlmGateway` | Correct text-only mutation boundary | Provider API lacks structured context, budgets, cancellation, and provenance |
-| Agent mailbox and async lanes | Generation-safe delivery and off-thread work | Need a dialogue work lane and per-Agent conversation admission |
+| `DialogueProvider` | Immutable, text-only optional provider contract | Gameplay proposals remain intentionally unsupported |
+| Agent mailbox and async lanes | Generation-safe delivery, bounded LLM/persistence work, load shedding | Live population soak remains required |
 
 The implementation should evolve these seams rather than add a second
 unrelated chat engine.

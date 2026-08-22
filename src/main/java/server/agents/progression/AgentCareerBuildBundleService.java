@@ -44,6 +44,35 @@ public final class AgentCareerBuildBundleService {
                 AgentCareerBuildBundleRepository.defaultRepository(), STORE);
     }
 
+    /** Explicit beginner-only selection used by the World Director before first-job work starts. */
+    public static AgentCareerBuildBundle assignExplicit(
+            AgentRuntimeEntry entry, String bundleId, long nowMs) throws IOException {
+        Character agent = entry == null ? null : entry.bot();
+        if (agent == null || agent.getId() <= 0 || bundleId == null || bundleId.isBlank()) {
+            throw new IllegalArgumentException("a live Agent and career bundle are required");
+        }
+        AgentCareerProgressionState state = entry.capabilityStates()
+                .require(AgentCareerProgressionState.STATE_KEY);
+        AgentCareerBuildBundle current = state.bundle();
+        if (current != null && current.bundleId().equals(bundleId)) return current;
+        if (agent.getJob().getId() != 0
+                || state.stage() != AgentCareerProgressionState.Stage.WAITING_FOR_MAPLE_ISLAND) {
+            throw new IllegalStateException(
+                    "career build can only change before first-job progression begins");
+        }
+        AgentCareerBuildBundle selected = AgentCareerBuildBundleRepository.defaultRepository()
+                .find(bundleId)
+                .orElseThrow(() -> new IllegalArgumentException("unknown career bundle " + bundleId));
+        AgentProgressionProfile profile = AgentProgressionProfileRepository.defaultRepository()
+                .deterministicFor(agent.getId());
+        STORE.save(new AgentCareerAssignment(2, agent.getId(), agent.getName(),
+                selected.bundleId(), selected.bundleVersion(), profile.profileId(), nowMs));
+        assignProfiles(entry, selected, profile);
+        state.reset(selected, AgentCareerProgressionState.RunMode.LEVEL15,
+                AgentCareerProgressionState.Stage.WAITING_FOR_MAPLE_ISLAND, nowMs);
+        return selected;
+    }
+
     static AgentCareerBuildBundle assignForTest(AgentRuntimeEntry entry,
                                                  Character agent,
                                                  String bundleId,

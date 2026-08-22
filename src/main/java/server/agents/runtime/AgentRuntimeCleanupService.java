@@ -8,7 +8,7 @@ import server.agents.capabilities.reactor.AgentReactorTargetReservationRuntime;
 import server.agents.capabilities.recovery.AgentLeaderSafetyService;
 import server.agents.capabilities.supplies.AgentAutopotCleanupService;
 import server.agents.capabilities.build.AgentMakerService;
-import server.agents.capabilities.dialogue.llm.AgentLlmReplyService;
+import server.agents.social.conversation.AgentSocialDialogueRuntime;
 import server.agents.capabilities.equipment.AgentAutoEquipThrottle;
 import server.agents.capabilities.navigation.AgentNavigationWarmupService;
 import server.agents.capabilities.supplies.AgentAmmoService;
@@ -104,7 +104,7 @@ public final class AgentRuntimeCleanupService {
         AgentAutoEquipThrottle.clearAgentRuntimeState(agentId);
         AgentAsyncTaskGateway.runtime().clearSession(agentId);
         AgentTransferRuntime.clearAgentRuntimeState(agentId);
-        AgentLlmReplyService.clearAgentRuntimeState(agentId);
+        AgentSocialDialogueRuntime.clearAgentRuntimeState(agentId);
         AgentMakerService.clearAgentRuntimeState(agentId);
         AgentManualTradeService.clearAgentRuntimeState(agentId);
         CharacterSpaceReservationRuntime.release(CharacterSpaceOwner.character(agentId));

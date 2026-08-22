@@ -229,6 +229,10 @@ public final class EconomyRuntimeFactory {
         });
         server.agents.integration.AgentEconomyRuntime.install(new server.agents.integration.AgentEconomyRuntime.Gateway() {
             @Override public boolean available() { return true; }
+            @Override public java.util.Optional<server.agents.economy.session.EconomySessionPort>
+                    sessionPort() {
+                return java.util.Optional.of(sessions);
+            }
             @Override public server.agents.economy.market.AgentItemValuationService.Valuation valueItem(
                     String agentId, int itemId, java.time.Instant at) {
                 return economyFacade.valueItem(agentId, itemId, at);

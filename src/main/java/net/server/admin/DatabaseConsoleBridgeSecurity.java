@@ -12,9 +12,14 @@ final class DatabaseConsoleBridgeSecurity {
     }
 
     static String requireStrongToken(String token) {
+        return requireStrongToken(token, "COSMIC_BRIDGE_TOKEN");
+    }
+
+    static String requireStrongToken(String token, String settingName) {
         if (token == null || token.isBlank() || token.length() < 32
                 || "development-only-change-me".equals(token)) {
-            throw new IllegalStateException("COSMIC_BRIDGE_TOKEN must contain at least 32 non-default characters");
+            throw new IllegalStateException(settingName
+                    + " must contain at least 32 non-default characters");
         }
         return token;
     }

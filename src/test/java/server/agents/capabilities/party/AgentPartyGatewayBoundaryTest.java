@@ -18,10 +18,6 @@ class AgentPartyGatewayBoundaryTest {
                 "src/main/java/server/agents/integration/cosmic/CosmicPartyGateway.java"));
         String replies = Files.readString(Path.of(
                 "src/main/java/server/agents/integration/AgentDialogueTransportRuntime.java"));
-        String relation = Files.readString(Path.of(
-                "src/main/java/server/agents/capabilities/dialogue/llm/AgentSenderRelation.java"));
-        String situation = Files.readString(Path.of(
-                "src/main/java/server/agents/capabilities/dialogue/llm/AgentSituationBuilder.java"));
         String followCandidates = Files.readString(Path.of(
                 "src/main/java/server/agents/capabilities/follow/AgentFollowTargetCandidateService.java"));
         String followAnchor = Files.readString(Path.of(
@@ -50,11 +46,7 @@ class AgentPartyGatewayBoundaryTest {
         assertTrue(replies.contains("AgentPartyGatewayRuntime.party().sendPartyChat("));
         assertTrue(gateway.contains("getWorldServer().partyChat(party, message, speaker.getName())"));
         assertFalse(lifecycle.contains("import net.server.world.Party"));
-        assertFalse(relation.contains("import net.server.world.Party"));
-        assertFalse(situation.contains("import net.server.world.Party"));
         assertTrue(lifecycle.contains("AgentPartyGatewayRuntime.party().snapshot("));
-        assertTrue(relation.contains("AgentPartyGatewayRuntime.party().snapshot(agent)"));
-        assertTrue(situation.contains("AgentPartyGatewayRuntime.party().snapshot(bot)"));
         assertFalse(followCandidates.contains("leader.getParty()"));
         assertFalse(followAnchor.contains("leader.getParty()"));
         assertFalse(tradeRecipient.contains("owner.getParty()"));

@@ -152,6 +152,18 @@ class AgentShopServiceTest {
     }
 
     @Test
+    void shouldBuyInitialRechargeStackWhenClawHasNoThrowingStars() {
+        Character bot = clawBotWithStars();
+
+        assertTrue(AgentShopService.shouldBuySeedRechargeAmmoWhileShopping(
+                bot, WeaponType.CLAW));
+
+        bot.getInventory(InventoryType.USE).addItem(Items.itemWithQuantity(2070000, 1_000));
+        assertFalse(AgentShopService.shouldBuySeedRechargeAmmoWhileShopping(
+                bot, WeaponType.CLAW));
+    }
+
+    @Test
     void shouldTriggerSellTrashShopVisitEvenWhenNoResupplyIsNeeded() {
         Character bot = mock(Character.class);
         MapleMap map = mock(MapleMap.class);

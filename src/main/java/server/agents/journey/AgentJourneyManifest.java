@@ -17,7 +17,8 @@ public record AgentJourneyManifest(
         simulationMode = simulationMode == null ? "" : simulationMode;
         if (schemaVersion <= 0 || runId == null || runId.isBlank()
                 || scenarioId == null || scenarioId.isBlank() || startedAtMs < 0
-                || targetLevel <= 0 || !Set.of("off", "light", "full").contains(simulationMode)) {
+                || targetLevel <= 0
+                || !Set.of("off", "light", "full", "decisions").contains(simulationMode)) {
             throw new IllegalArgumentException("Valid journey manifest identity is required");
         }
         participants = participants == null ? List.of() : List.copyOf(participants);

@@ -7,6 +7,7 @@ import server.agents.runtime.async.AgentAsyncTaskGateway;
 import server.agents.runtime.async.AgentAsyncWorkKind;
 import server.agents.runtime.scheduler.AgentShardedTickScheduler;
 import server.agents.runtime.scheduler.AgentTickScheduler;
+import server.agents.social.persistence.SocialMemoryDatabaseRuntime;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -108,6 +109,7 @@ public final class AgentRuntimeShutdownCoordinator {
                 AgentAsyncExecutorRegistry.runtime().shutdownAllAndAwait(
                         Math.max(0L, remaining(deadlineNs).toNanos()),
                         java.util.concurrent.TimeUnit.NANOSECONDS);
+        SocialMemoryDatabaseRuntime.close();
 
         List<Integer> failedSessionIds = new ArrayList<>();
         for (AgentRuntimeEntry entry : entries) {

@@ -1,6 +1,7 @@
 package server.agents.catalog;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
@@ -13,6 +14,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentCatalogServiceTest {
+    private static AgentCatalogService sharedCatalog;
+
+    @BeforeAll
+    static void loadSharedCatalogOnce() {
+        sharedCatalog = AgentCatalogService.loadFromRepoRoot(Path.of("."));
+    }
+
     @TempDir
     Path tempDir;
 
@@ -215,7 +223,26 @@ class AgentCatalogServiceTest {
         assertThrows(UnsupportedOperationException.class, () -> sourceMaps.add(1));
     }
 
+    @Test
+    void genericExplorerListsSearchesAndFindsLoadedDatasetsWithoutExposingJsonNodes() {
+        CatalogExplorerQuery explorer = loadCatalog().queries().explorer();
+
+        CatalogDatasetDescriptor maps = explorer.dataset("maps").orElseThrow();
+        assertTrue(maps.recordCount() > 1_000);
+        assertEquals("$", maps.recordField());
+        assertFalse(explorer.datasets().isEmpty());
+
+        CatalogDatasetPage page = explorer.search("maps", "Mushroom Town", 0, 10);
+        assertTrue(page.total() >= 1);
+        CatalogRecord mushroomTown = explorer.find("maps", "mapId", "10000").orElseThrow();
+        assertEquals("Mushroom Town", mushroomTown.stringValue("mapName").orElseThrow());
+        assertThrows(UnsupportedOperationException.class, () -> page.records().clear());
+
+        CatalogRecord mvpRoot = explorer.root("mapleIslandMvp").orElseThrow();
+        assertEquals("maple-island-mvp", mvpRoot.stringValue("planId").orElseThrow());
+    }
+
     private static AgentCatalogService loadCatalog() {
-        return AgentCatalogService.loadFromRepoRoot(Path.of("."));
+        return sharedCatalog;
     }
 }

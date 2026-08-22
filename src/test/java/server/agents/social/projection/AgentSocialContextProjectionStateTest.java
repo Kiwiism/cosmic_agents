@@ -1,0 +1,62 @@
+package server.agents.social.projection;
+
+import org.junit.jupiter.api.Test;
+import server.agents.operations.events.AgentMapTransitionedEvent;
+import server.agents.operations.events.AgentNavigationRouteFailedEvent;
+import server.agents.operations.events.AgentRecoveryPerformedEvent;
+import server.agents.progression.events.AgentLevelChangedEvent;
+import server.agents.capabilities.townlife.AgentTownLifeActivityEvent;
+import server.agents.capabilities.townlife.AgentTownLifeState;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+class AgentSocialContextProjectionStateTest {
+    @Test
+    void exposesStructuredCurrentFactsAndClearsRecoveredBlocker() {
+        AgentSocialContextProjectionState state = new AgentSocialContextProjectionState();
+        state.record(new AgentLevelChangedEvent(7, 10L, 14, 15, 100,
+                102000000, "career:7"));
+        state.record(new AgentNavigationRouteFailedEvent(7, 20L, 102000000,
+                1, 2, 200, 100, "no path", "career:7"));
+        state.record(new AgentRecoveryPerformedEvent(7, 30L, 102000000,
+                "replan", 10, 20, 15, 20, "career:7"));
+
+        AgentSocialContextProjectionState.Snapshot snapshot = state.snapshot();
+        assertEquals("15", snapshot.facts().get("progression.level"));
+        assertEquals("100", snapshot.facts().get("progression.jobId"));
+        assertEquals("102000000", snapshot.facts().get("world.mapId"));
+        assertEquals("career:7", snapshot.facts().get("objective.active"));
+        assertEquals("", snapshot.facts().get("navigation.blocker"));
+        assertEquals(3, snapshot.milestones().size());
+        assertEquals(3, snapshot.revision());
+    }
+
+    @Test
+    void retainsOnlyTheMostRecentMilestones() {
+        AgentSocialContextProjectionState state = new AgentSocialContextProjectionState();
+        for (int index = 0; index < AgentSocialContextProjectionState.MAX_MILESTONES + 5; index++) {
+            state.record(new AgentMapTransitionedEvent(7, index, 100000000 + index,
+                    100000001 + index, -1, "test", "route"));
+        }
+
+        AgentSocialContextProjectionState.Snapshot snapshot = state.snapshot();
+        assertEquals(AgentSocialContextProjectionState.MAX_MILESTONES, snapshot.milestones().size());
+        assertEquals(5L, snapshot.milestones().getFirst().occurredAtMs());
+    }
+
+    @Test
+    void projectsTownLifeControllerVenueAndActivityWithoutLiveMapObjects() {
+        AgentSocialContextProjectionState state = new AgentSocialContextProjectionState();
+
+        state.record(new AgentTownLifeActivityEvent(
+                7, 40L, 104000000, "lith-harbor", AgentTownLifeState.Activity.REST,
+                AgentTownLifeActivityEvent.Phase.SELECTED, "central-benches", 0,
+                "external:test", "town-decision-1"));
+
+        AgentSocialContextProjectionState.Snapshot snapshot = state.snapshot();
+        assertEquals("REST", snapshot.facts().get("townlife.activity"));
+        assertEquals("central-benches", snapshot.facts().get("townlife.venue"));
+        assertEquals("external:test", snapshot.facts().get("townlife.controller"));
+        assertEquals("104000000", snapshot.facts().get("world.mapId"));
+    }
+}

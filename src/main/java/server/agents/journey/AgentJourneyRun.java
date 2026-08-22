@@ -27,6 +27,12 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /** In-memory projection for one bounded cohort experiment. */
 final class AgentJourneyRun {
+    private static final Set<String> DECISION_MODE_DETAIL_EVENTS = Set.of(
+            "combat.attack-resolved",
+            "combat.mob-damaged",
+            "combat.mob-killed",
+            "combat.posture-changed",
+            "combat.target-changed");
     enum Status {
         RUNNING,
         COMPLETED,
@@ -78,7 +84,9 @@ final class AgentJourneyRun {
                 category(event.type()), event.type(), context.objectiveId(),
                 context.mapId(), critical, attributes);
         trace.onEvent(event, record, config);
-        store.append(record);
+        if (!decisionOnly() || retainDecisionEvent(event)) {
+            store.append(record);
+        }
     }
 
     void sample(AgentJourneySnapshot snapshot) {
@@ -91,13 +99,17 @@ final class AgentJourneyRun {
                 "snapshot", "journey.agent-snapshot", snapshot.objectiveId(),
                 snapshot.mapId(), false, MAPPER.convertValue(snapshot, Map.class));
         trace.retain(sample, config.flightRecorderWindowMs());
-        store.append(sample);
+        if (!decisionOnly()) {
+            store.append(sample);
+        }
         for (AgentJourneyDerivedEvidence evidence : analysis.evidence()) {
             AgentJourneyEventRecord event = record(trace, snapshot.capturedAtMs(),
                     evidence.category(), evidence.eventType(), snapshot.objectiveId(),
                     snapshot.mapId(), evidence.critical(), evidence.attributes());
             trace.retain(event, config.flightRecorderWindowMs());
-            store.append(event);
+            if (!decisionOnly() || retainDecisionEvidence(evidence)) {
+                store.append(event);
+            }
         }
         for (Detection detection : analysis.detections()) {
             AgentJourneyEventRecord event = record(trace, snapshot.capturedAtMs(),
@@ -120,6 +132,19 @@ final class AgentJourneyRun {
         }
         trace.markFailed(reason, nowMs);
         store.append(record(trace, nowMs, "lifecycle", "journey.agent-failed",
+                trace.last == null ? "" : trace.last.objectiveId(),
+                trace.last == null ? -1 : trace.last.mapId(), true,
+                Map.of("reason", reason == null ? "" : reason)));
+        completeWhenAllAgentsAreTerminal(nowMs);
+    }
+
+    void markAgentStalled(int agentId, String reason, long nowMs) {
+        Trace trace = traces.get(agentId);
+        if (trace == null || trace.terminal()) {
+            return;
+        }
+        trace.markStalled(reason, nowMs);
+        store.append(record(trace, nowMs, "lifecycle", "journey.agent-stalled",
                 trace.last == null ? "" : trace.last.objectiveId(),
                 trace.last == null ? -1 : trace.last.mapId(), true,
                 Map.of("reason", reason == null ? "" : reason)));
@@ -172,7 +197,8 @@ final class AgentJourneyRun {
         int succeeded = (int) agentSummaries.stream()
                 .filter(summary -> "SUCCEEDED".equals(summary.status())).count();
         int failed = (int) agentSummaries.stream()
-                .filter(summary -> "FAILED".equals(summary.status())).count();
+                .filter(summary -> "FAILED".equals(summary.status())
+                        || "STALLED".equals(summary.status())).count();
         String agentsCsv = agentsCsv(agentSummaries);
         String questsCsv = questsCsv(quests);
         String mapsCsv = mapsCsv(maps);
@@ -191,6 +217,20 @@ final class AgentJourneyRun {
                 .map(Trace::view)
                 .sorted(Comparator.comparing(AgentJourneyTraceView::agentName))
                 .toList();
+    }
+
+    private boolean decisionOnly() {
+        return "decisions".equals(manifest.simulationMode());
+    }
+
+    static boolean retainDecisionEvent(AgentEvent event) {
+        return event != null && !DECISION_MODE_DETAIL_EVENTS.contains(event.type());
+    }
+
+    private static boolean retainDecisionEvidence(AgentJourneyDerivedEvidence evidence) {
+        return evidence.critical()
+                || Set.of("plan", "progression", "quest", "diagnostic")
+                .contains(evidence.category());
     }
 
     private AgentJourneyEventRecord record(Trace trace,
@@ -493,6 +533,13 @@ final class AgentJourneyRun {
 
         synchronized void markFailed(String reason, long nowMs) {
             terminalStatus = "FAILED";
+            failureReason = reason == null ? "" : reason;
+            terminalAtMs = nowMs;
+            closeMap(nowMs);
+        }
+
+        synchronized void markStalled(String reason, long nowMs) {
+            terminalStatus = "STALLED";
             failureReason = reason == null ? "" : reason;
             terminalAtMs = nowMs;
             closeMap(nowMs);

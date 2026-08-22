@@ -3,18 +3,41 @@ package server.agents.progression;
 import client.Character;
 import client.QuestStatus;
 import server.agents.capabilities.objective.AgentNpcInteractionReachabilityService;
+import server.agents.capabilities.contracts.AgentProcurementMethod;
+import server.agents.capabilities.contracts.AgentSupplyUrgency;
+import server.agents.capabilities.supplies.AgentPotionService;
+import server.agents.capabilities.supplies.AgentResourcePlanningState;
+import server.agents.events.AgentDomainEvent;
 import server.agents.integration.PrimitiveCapabilityGateway;
+import server.agents.integration.AgentNavigationReadinessRuntime;
+import server.agents.progression.questwork.AgentQuestAttemptBudgetPolicy;
+import server.agents.progression.questwork.AgentQuestAttemptObservation;
+import server.agents.progression.questwork.AgentQuestStruggleAssessmentFactory;
+import server.agents.progression.questwork.AgentQuestStruggleAdvisor;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.AgentSessionEventRuntime;
+import server.agents.runtime.decision.AgentDecisionAdvisoryService;
+import server.agents.runtime.decision.AgentDecisionRecommendation;
+import server.agents.runtime.decision.AgentRecommendedAction;
 import server.agents.runtime.hunting.AgentHuntingVisitRequest;
 
 import java.awt.Point;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /** Conservative generic quest compiler for local Victoria hunting and interaction quests. */
 final class AgentVictoriaQuestSchedulerRuntime {
     private static final int INTERACTION_DISTANCE_PX = config.AgentTuning.intValue("server.agents.progression.AgentVictoriaQuestSchedulerRuntime.INTERACTION_DISTANCE_PX");
+    private static final long ATTEMPT_ASSESSMENT_INTERVAL_MS = config.AgentTuning.longValue(
+            "server.agents.progression.AgentVictoriaQuestSchedulerRuntime.ATTEMPT_ASSESSMENT_INTERVAL_MS");
+    private static final long NAVIGATION_WARMUP_GRACE_MS = config.AgentTuning.longValue(
+            "server.agents.progression.AgentVictoriaQuestSchedulerRuntime.NAVIGATION_WARMUP_GRACE_MS");
+    private static final AgentDecisionAdvisoryService QUEST_ADVISOR =
+            new AgentDecisionAdvisoryService(new AgentQuestStruggleAdvisor());
+    private static final AgentQuestStruggleAssessmentFactory QUEST_ASSESSMENTS =
+            new AgentQuestStruggleAssessmentFactory();
 
     private AgentVictoriaQuestSchedulerRuntime() {
     }
@@ -51,6 +74,7 @@ final class AgentVictoriaQuestSchedulerRuntime {
                 || state.stage() == AgentVictoriaQuestSchedulerState.Stage.START)) {
             state.stage(AgentVictoriaQuestSchedulerState.Stage.HUNT);
         }
+        ensureAttemptStarted(agent, quest, state, gateway, nowMs);
         return switch (state.stage()) {
             case TRAVEL_TO_START -> travel(entry, agent, state.startMapId(), gateway, nowMs,
                     () -> state.stage(AgentVictoriaQuestSchedulerState.Stage.START), state);
@@ -74,10 +98,17 @@ final class AgentVictoriaQuestSchedulerRuntime {
                                   AgentVictoriaQuestSchedulerState state,
                                   AgentVictoriaQuestRuntimeCatalogRepository repository) {
         List<AgentVictoriaQuestRuntimeCatalog.Entry> eligible = repository.eligibleAtLevel(agent.getLevel());
+        int requestedQuestId = state.requestedQuestId();
+        if (requestedQuestId > 0) {
+            eligible = eligible.stream()
+                    .filter(quest -> quest.questId() == requestedQuestId)
+                    .toList();
+        }
         AgentVictoriaQuestRuntimeCatalog.Entry started = eligible.stream()
                 .filter(quest -> gateway.questStatus(agent, quest.questId())
                         == QuestStatus.Status.STARTED.getId())
                 .filter(quest -> !state.failed(quest.questId()))
+                .filter(quest -> !state.suspendedAtLevel(quest.questId(), agent.getLevel()))
                 .findFirst().orElse(null);
         if (started != null) {
             int completionMap = firstReachable(agent.getMapId(), started.completeMapIds());
@@ -86,14 +117,14 @@ final class AgentVictoriaQuestSchedulerRuntime {
                 return true;
             }
         }
-        if (state.deferUntilLevel() == agent.getLevel()) {
+        if (state.deferUntilLevel() == agent.getLevel() && requestedQuestId == 0) {
             return false;
         }
         AgentProgressionProfile profile = AgentProgressionProfileRuntime.profile(entry);
         int decision = Math.floorMod(agent.getId() * 31 + agent.getLevel() * 17, 100);
         int questDecisionPercent = AgentProgressionDecisionPolicy.questDecisionPercent(profile,
                 AgentVictoriaProgressionPolicy.defaultPolicy().questDecisionPercent());
-        if (decision >= questDecisionPercent) {
+        if (requestedQuestId == 0 && decision >= questDecisionPercent) {
             state.defer(agent.getLevel());
             return false;
         }
@@ -110,7 +141,11 @@ final class AgentVictoriaQuestSchedulerRuntime {
                         .thenComparingInt(AgentVictoriaQuestRuntimeCatalog.Entry::questId))
                 .findFirst().orElse(null);
         if (selected == null) {
-            state.defer(agent.getLevel());
+            if (requestedQuestId > 0) {
+                state.failRequestedAndDefer(agent.getLevel());
+            } else {
+                state.defer(agent.getLevel());
+            }
             return false;
         }
         int startMap = firstReachable(agent.getMapId(), selected.startMapIds());
@@ -151,6 +186,31 @@ final class AgentVictoriaQuestSchedulerRuntime {
                 ? gateway.itemCount(agent, objective.targetId())
                 : gateway.questProgress(agent, quest.questId(), objective.targetId());
         String huntKey = "scheduler:" + quest.questId() + ":" + objective.objectiveId();
+        state.observeAttempt(agent.getMapId(), currentCount, nowMs);
+        AgentDecisionRecommendation recommendation = assessAttempt(
+                entry, agent, quest, state, huntKey, currentCount, nowMs);
+        if (recommendation != null && recommendation.action() != AgentRecommendedAction.CONTINUE) {
+            publishDecision(entry, agent, quest, state, recommendation, nowMs);
+            if (recommendation.action() == AgentRecommendedAction.REPLAN_CURRENT) {
+                state.recordRetry();
+                state.huntMapId(0);
+                gateway.stop(entry);
+                return true;
+            }
+            if (recommendation.action() == AgentRecommendedAction.RESUPPLY
+                    && criticalShopMaintenanceAvailable(entry)) {
+                gateway.stop(entry);
+                return false;
+            }
+            if (recommendation.action() == AgentRecommendedAction.RESUPPLY
+                    || recommendation.action() == AgentRecommendedAction.SUSPEND
+                    || recommendation.action() == AgentRecommendedAction.ABANDON_OBJECTIVE
+                    || recommendation.action() == AgentRecommendedAction.SAFE_FALLBACK) {
+                gateway.stop(entry);
+                state.suspendAndDefer(agent.getLevel());
+                return false;
+            }
+        }
         AgentVictoriaQuestRuntimeCatalog.HuntMap huntMap = state.huntMapId() == 0 ? null
                 : objective.huntMaps().stream()
                 .filter(map -> map.mapId() == state.huntMapId())
@@ -160,7 +220,8 @@ final class AgentVictoriaQuestSchedulerRuntime {
             state.huntMapId(0);
             boolean recovering = AgentHuntRecoveryRuntime.fallbackActive(
                     entry, huntKey, currentCount, nowMs);
-            huntMap = AgentAdaptiveQuestHuntSelector.defaultSelector()
+            AgentAdaptiveQuestHuntSelector.Selection selection =
+                    AgentAdaptiveQuestHuntSelector.defaultSelector()
                     .select(new AgentHuntSelectionRequest(
                             entry, agent, huntKey,
                             List.of(new AgentHuntSelectionRequest.ObjectiveDemand(
@@ -171,14 +232,15 @@ final class AgentVictoriaQuestSchedulerRuntime {
                                     entry, huntKey, currentCount, nowMs), false,
                             recovering ? AgentHuntSelectionRequest.Reason.EXHAUSTION_FALLBACK
                                     : AgentHuntSelectionRequest.Reason.NORMAL,
-                            nowMs))
-                    .map(AgentAdaptiveQuestHuntSelector.Selection::map)
-                    .orElse(null);
+                            nowMs)).orElse(null);
+            huntMap = selection == null ? null : selection.map();
             if (huntMap == null) {
                 state.failAndDefer(agent.getLevel());
                 return false;
             }
             state.huntMapId(huntMap.mapId());
+            publishHuntMapSelection(entry, agent, quest, objective, huntMap,
+                    selection, recovering, currentCount, nowMs);
         }
         if (agent.getMapId() != huntMap.mapId()
                 && AgentQuestReturnScrollPolicy.prepare(
@@ -191,6 +253,7 @@ final class AgentVictoriaQuestSchedulerRuntime {
         AgentVictoriaRouteRuntime.TravelOutcome outcome = AgentVictoriaRouteRuntime.travelStatus(
                 entry, agent, huntMap.mapId(), gateway, nowMs);
         if (outcome.status() == AgentVictoriaRouteRuntime.Status.NO_ROUTE) {
+            state.recordNavigationFailure();
             state.huntMapId(0);
             return true;
         }
@@ -201,6 +264,7 @@ final class AgentVictoriaQuestSchedulerRuntime {
                 entry, huntKey, agent.getMapId(), currentCount,
                 gateway.liveMonsterCount(agent, Set.copyOf(huntMap.targetMobIds())), false, nowMs);
         if (observation == AgentHuntRecoveryRuntime.Observation.RESELECT) {
+            state.recordRetry();
             AgentHuntRecoveryRuntime.failMaps(entry, huntKey, currentCount,
                     Set.of(huntMap.mapId()), nowMs);
             state.huntMapId(0);
@@ -211,6 +275,124 @@ final class AgentVictoriaQuestSchedulerRuntime {
                 AgentHuntingVisitRequest.Purpose.QUEST_OBJECTIVE,
                 Set.copyOf(huntMap.targetMobIds()), Set.of(), nowMs);
         return true;
+    }
+
+    private static void ensureAttemptStarted(
+            Character agent,
+            AgentVictoriaQuestRuntimeCatalog.Entry quest,
+            AgentVictoriaQuestSchedulerState state,
+            PrimitiveCapabilityGateway gateway,
+            long nowMs) {
+        if (state.attemptStartedAtMs() > 0L) {
+            return;
+        }
+        int progress = quest.huntingObjectives().stream().mapToInt(objective ->
+                objective.type().contains("collect")
+                        ? gateway.itemCount(agent, objective.targetId())
+                        : gateway.questProgress(agent, quest.questId(), objective.targetId())).sum();
+        state.beginAttempt(nowMs, agent.getMapId(), progress, resourceUnits(agent),
+                AgentQuestAttemptBudgetPolicy.budgetForLevel(agent.getLevel()));
+    }
+
+    private static AgentDecisionRecommendation assessAttempt(
+            AgentRuntimeEntry entry,
+            Character agent,
+            AgentVictoriaQuestRuntimeCatalog.Entry quest,
+            AgentVictoriaQuestSchedulerState state,
+            String huntKey,
+            int currentCount,
+            long nowMs) {
+        if (state.attemptStartedAtMs() <= 0L || nowMs < state.nextAssessmentAtMs()) {
+            return null;
+        }
+        state.assessedAt(nowMs + ATTEMPT_ASSESSMENT_INTERVAL_MS);
+        int consumed = Math.max(0, state.initialResourceUnits() - resourceUnits(agent));
+        AgentQuestAttemptObservation observation = new AgentQuestAttemptObservation(
+                Integer.toString(agent.getId()), "quest:" + quest.questId(), quest.questId(),
+                state.attemptStartedAtMs(), nowMs, state.lastObjectiveProgressAtMs(),
+                AgentHuntRecoveryRuntime.lastRelevantDamageAt(
+                        entry, huntKey, currentCount, nowMs),
+                state.lastNavigationProgressAtMs(), legitimateWaitUntil(entry, agent, state, nowMs),
+                state.navigationFailureCount(), state.retryCount(), consumed,
+                state.resourceBudget());
+        AgentDecisionRecommendation recommendation = QUEST_ADVISOR.evaluate(
+                QUEST_ASSESSMENTS.create(observation));
+        QUEST_ADVISOR.record(entry, recommendation);
+        return recommendation;
+    }
+
+    private static long legitimateWaitUntil(
+            AgentRuntimeEntry entry,
+            Character agent,
+            AgentVictoriaQuestSchedulerState state,
+            long nowMs) {
+        long waitUntil = Math.max(nowMs, state.nextActionAtMs());
+        if (AgentNavigationReadinessRuntime.warmupPending(entry, agent.getMapId())
+                && nowMs - state.attemptStartedAtMs() < NAVIGATION_WARMUP_GRACE_MS) {
+            waitUntil = Math.max(waitUntil, nowMs + ATTEMPT_ASSESSMENT_INTERVAL_MS);
+        }
+        return waitUntil;
+    }
+
+    private static boolean criticalShopMaintenanceAvailable(AgentRuntimeEntry entry) {
+        return entry.capabilityStates().require(AgentResourcePlanningState.STATE_KEY)
+                .procurementSnapshot().values().stream()
+                .anyMatch(request -> request.urgency().ordinal()
+                        >= AgentSupplyUrgency.CRITICAL.ordinal()
+                        && request.permittedMethods().contains(AgentProcurementMethod.NPC_SHOP));
+    }
+
+    private static int resourceUnits(Character agent) {
+        int[] potions = AgentPotionService.countPotions(agent);
+        return Math.max(0, potions[0]) + Math.max(0, potions[1]);
+    }
+
+    private static void publishDecision(
+            AgentRuntimeEntry entry,
+            Character agent,
+            AgentVictoriaQuestRuntimeCatalog.Entry quest,
+            AgentVictoriaQuestSchedulerState state,
+            AgentDecisionRecommendation recommendation,
+            long nowMs) {
+        AgentSessionEventRuntime.bus(entry).publish(new AgentDomainEvent(
+                agent.getId(), nowMs, "progression.quest-decision",
+                recommendation.correlationId(), Map.of(
+                "questId", Integer.toString(quest.questId()),
+                "action", recommendation.action().name(),
+                "reasonCode", recommendation.reasonCode().name(),
+                "reason", recommendation.explanation(),
+                "stage", state.stage().name(),
+                "mapId", Integer.toString(agent.getMapId()),
+                "resourceBudget", Integer.toString(state.resourceBudget()))));
+    }
+
+    private static void publishHuntMapSelection(
+            AgentRuntimeEntry entry,
+            Character agent,
+            AgentVictoriaQuestRuntimeCatalog.Entry quest,
+            AgentVictoriaQuestRuntimeCatalog.HuntingObjective objective,
+            AgentVictoriaQuestRuntimeCatalog.HuntMap map,
+            AgentAdaptiveQuestHuntSelector.Selection selection,
+            boolean recovering,
+            int currentCount,
+            long nowMs) {
+        String source = selection == null ? "UNKNOWN" : selection.source().name();
+        String mode = selection == null ? "UNKNOWN" : selection.mode().name();
+        AgentSessionEventRuntime.bus(entry).publish(new AgentDomainEvent(
+                agent.getId(), nowMs, "progression.quest-map-selected",
+                "quest-map:" + agent.getId() + ':' + quest.questId() + ':'
+                        + objective.objectiveId() + ':' + nowMs,
+                Map.of("questId", Integer.toString(quest.questId()),
+                        "objectiveId", objective.objectiveId(),
+                        "mapId", Integer.toString(map.mapId()),
+                        "source", source,
+                        "selectionMode", mode,
+                        "recoveryFallback", Boolean.toString(recovering),
+                        "currentCount", Integer.toString(currentCount),
+                        "requiredCount", Integer.toString(objective.requiredCount()),
+                        "reason", recovering
+                                ? "spawn or progress exhaustion fallback"
+                                : "ranked quest-debt hunt selection")));
     }
 
     private static boolean complete(Character agent,

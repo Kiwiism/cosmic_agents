@@ -25,8 +25,8 @@ public final class AgentTargetedChatRouteService {
                         LongSupplier nowMs,
                         LeaderResolver<E> leaderResolver,
                         OwnerCommandRecorder<E> ownerCommandRecorder,
-                        BooleanSupplier llmEnabled,
-                        LlmResponder<E> llmResponder,
+                        BooleanSupplier socialDialogueEnabled,
+                        SocialDialogueResponder<E> socialDialogueResponder,
                         LeaderMessage leaderMessage) {
     }
 
@@ -76,7 +76,7 @@ public final class AgentTargetedChatRouteService {
     }
 
     @FunctionalInterface
-    public interface LlmResponder<E extends AgentRuntimeHandle> {
+    public interface SocialDialogueResponder<E extends AgentRuntimeHandle> {
         void maybeRespond(E entry, Character sender, String commandText);
     }
 
@@ -115,8 +115,8 @@ public final class AgentTargetedChatRouteService {
                 if (handled && owner != null && leader.getId() == owner.getId()) {
                     hooks.ownerCommandRecorder().record(entry, commandText, hooks.nowMs().getAsLong());
                 }
-                if (hooks.llmEnabled().getAsBoolean() && !handled) {
-                    hooks.llmResponder().maybeRespond(entry, leader, commandText);
+                if (hooks.socialDialogueEnabled().getAsBoolean() && !handled) {
+                    hooks.socialDialogueResponder().maybeRespond(entry, leader, commandText);
                 }
             });
             return true;

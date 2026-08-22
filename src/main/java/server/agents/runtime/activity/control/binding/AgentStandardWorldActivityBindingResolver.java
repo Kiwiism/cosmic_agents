@@ -16,10 +16,10 @@ import server.agents.runtime.activity.session.adapter.FieldActivitySessionAdapte
 import server.agents.runtime.activity.session.adapter.PartyQuestActivitySessionAdapter;
 import server.agents.runtime.activity.session.adapter.QuestPlanActivitySessionAdapter;
 import server.agents.runtime.activity.session.adapter.TownLifeActivitySessionAdapter;
+import server.agents.integration.AgentEconomyRuntime;
+import server.agents.runtime.commerce.AgentCommerceSessionRegistryRuntime;
+import server.agents.runtime.commerce.AgentFileCommerceSessionStore;
 import server.agents.runtime.field.AgentFieldAdmissionMode;
-import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
-import server.agents.progression.AgentVictoriaRouteRuntime;
-
 import java.util.Set;
 
 /** Live map-local bindings for independently admissible primary activities. */
@@ -27,19 +27,30 @@ public final class AgentStandardWorldActivityBindingResolver
         implements AgentWorldActivityBindingResolver {
     private static final Set<AgentActivityKind> SUPPORTED = Set.of(
             AgentActivityKind.QUESTING, AgentActivityKind.HUNTING,
-            AgentActivityKind.TOWN_LIFE, AgentActivityKind.PARTY_QUEST);
+            AgentActivityKind.TOWN_LIFE, AgentActivityKind.COMMERCE,
+            AgentActivityKind.PARTY_QUEST);
 
     private final AgentWorldDirectiveRequestCompiler compiler;
     private final AgentLiveActivityFacadeRegistry facades;
+    private final AgentWorldMapTransfer mapTransfer;
 
     public AgentStandardWorldActivityBindingResolver(
             AgentWorldDirectiveRequestCompiler compiler,
             AgentLiveActivityFacadeRegistry facades) {
-        if (compiler == null || facades == null) {
-            throw new IllegalArgumentException("request compiler and live facades are required");
+        this(compiler, facades, new AgentVictoriaWorldMapTransfer());
+    }
+
+    public AgentStandardWorldActivityBindingResolver(
+            AgentWorldDirectiveRequestCompiler compiler,
+            AgentLiveActivityFacadeRegistry facades,
+            AgentWorldMapTransfer mapTransfer) {
+        if (compiler == null || facades == null || mapTransfer == null) {
+            throw new IllegalArgumentException(
+                    "request compiler, live facades, and map transfer are required");
         }
         this.compiler = compiler;
         this.facades = facades;
+        this.mapTransfer = mapTransfer;
     }
 
     public static Set<AgentActivityKind> supportedTargets() {
@@ -67,12 +78,12 @@ public final class AgentStandardWorldActivityBindingResolver
         if (request instanceof AgentWorldTypedActivityRequest.Questing questing) {
             QuestPlanActivitySessionAdapter target =
                     new QuestPlanActivitySessionAdapter(entry, agent, questing.request());
-            return binding(source, rollback, target, target, agent, 0);
+            return binding(source, rollback, target, target, entry, agent, 0);
         }
         if (request instanceof AgentWorldTypedActivityRequest.Hunting hunting) {
             FieldActivitySessionAdapter target = new FieldActivitySessionAdapter(
                     entry, agent, hunting.request(), AgentFieldAdmissionMode.CREATE_OR_JOIN);
-            return binding(source, rollback, target, target, agent,
+            return binding(source, rollback, target, target, entry, agent,
                     hunting.request().visit().mapId());
         }
         if (request instanceof AgentWorldTypedActivityRequest.PartyQuest partyQuest) {
@@ -90,30 +101,26 @@ public final class AgentStandardWorldActivityBindingResolver
                                 ? server.agents.runtime.activity.session.AgentActivityPreflightPort.Result.allowed()
                                 : server.agents.runtime.activity.session.AgentActivityPreflightPort.Result.blocked(blocker);
                     },
-                    nowMs -> kpqTransfer(entry, agent, nowMs), target, rollback, target);
+                    nowMs -> mapTransfer.travel(
+                            entry, agent, AgentKpqDefinition.RECRUIT_MAP, nowMs),
+                    target, rollback, target);
+        }
+        if (request instanceof AgentWorldTypedActivityRequest.Commerce commerce) {
+            var sessions = AgentEconomyRuntime.sessionPort().orElseThrow(() ->
+                    new IllegalStateException("managed Commerce runtime is not installed"));
+            var target = AgentCommerceSessionRegistryRuntime.prepare(
+                    agent.getId(), sessions, AgentFileCommerceSessionStore.runtimeDefault(),
+                    commerce.request());
+            return binding(source, rollback, target, target, entry, agent,
+                    constants.id.MapId.FM_ENTRANCE);
         }
         AgentWorldTypedActivityRequest.TownLife town =
                 (AgentWorldTypedActivityRequest.TownLife) request;
         TownLifeActivitySessionAdapter target = new TownLifeActivitySessionAdapter(
                 entry, agent, town.request(), AgentTownLifeAdmissionMode.MANUAL_ONLY,
                 agent.getId());
-        return binding(source, rollback, target, target, agent,
+        return binding(source, rollback, target, target, entry, agent,
                 town.request().visit().townMapId());
-    }
-
-    private server.agents.runtime.activity.session.AgentActivityTransferPort.Result kpqTransfer(
-            AgentRuntimeEntry entry, Character agent, long nowMs) {
-        AgentVictoriaRouteRuntime.TravelOutcome outcome = AgentVictoriaRouteRuntime.travelStatus(
-                entry, agent, AgentKpqDefinition.RECRUIT_MAP,
-                AgentPrimitiveCapabilityGatewayRuntime.gateway(), nowMs);
-        return switch (outcome.status()) {
-            case ARRIVED -> server.agents.runtime.activity.session.AgentActivityTransferPort.Result.ready();
-            case MOVING, PORTAL_UNAVAILABLE ->
-                    server.agents.runtime.activity.session.AgentActivityTransferPort.Result.pending(
-                            "traveling normally to the Kerning KPQ lobby", nowMs + 500L);
-            case NO_ROUTE -> server.agents.runtime.activity.session.AgentActivityTransferPort.Result.failed(
-                    "no Victoria route reaches the Kerning KPQ lobby");
-        };
     }
 
     private AgentWorldActivityBinding binding(
@@ -121,17 +128,15 @@ public final class AgentStandardWorldActivityBindingResolver
             AgentActivityRollbackPort rollback,
             server.agents.runtime.activity.session.AgentActivityTargetPort target,
             server.agents.runtime.activity.session.AgentActivityOutcomePort outcome,
+            AgentRuntimeEntry entry,
             Character agent,
             int requiredMapId) {
         return new AgentWorldActivityBinding(source,
-                (agentId, kind, nowMs) -> requiredMapId == 0 || agent.getMapId() == requiredMapId
-                        ? server.agents.runtime.activity.session.AgentActivityPreflightPort.Result.allowed()
-                        : server.agents.runtime.activity.session.AgentActivityPreflightPort.Result.blocked(
-                        "travel must place the Agent in map " + requiredMapId + " first"),
+                (agentId, kind, nowMs) ->
+                        server.agents.runtime.activity.session.AgentActivityPreflightPort.Result.allowed(),
                 nowMs -> requiredMapId == 0 || agent.getMapId() == requiredMapId
                         ? server.agents.runtime.activity.session.AgentActivityTransferPort.Result.ready()
-                        : server.agents.runtime.activity.session.AgentActivityTransferPort.Result.failed(
-                        "Director does not hard-teleport between activity maps"),
+                        : mapTransfer.travel(entry, agent, requiredMapId, nowMs),
                 target, rollback, outcome);
     }
 

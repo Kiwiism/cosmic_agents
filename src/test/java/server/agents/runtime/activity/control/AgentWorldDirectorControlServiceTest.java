@@ -49,6 +49,22 @@ class AgentWorldDirectorControlServiceTest {
                 () -> service.submit(directive(AgentWorldDirectiveSource.OPERATOR), 1_003L));
     }
 
+    @Test
+    void refusesUnsafeCancellationAfterExecutionHasClaimedDirective() {
+        AgentFileWorldDirectorSessionStore sessions =
+                new AgentFileWorldDirectorSessionStore(directory.resolve("claimed-sessions"));
+        AgentFileWorldDirectiveInbox directives =
+                new AgentFileWorldDirectiveInbox(directory.resolve("claimed-directives"));
+        AgentWorldDirectorControlService service =
+                new AgentWorldDirectorControlService(sessions, directives);
+        service.setMode(27, AgentWorldDirectorMode.MANUAL, "manual", 1_000L);
+        service.submit(directive(AgentWorldDirectiveSource.OPERATOR), 1_001L);
+        directives.claim(27, "manual-1", 1_002L);
+
+        assertThrows(IllegalStateException.class,
+                () -> service.cancel(27, "manual-1", "too late", 1_003L));
+    }
+
     private AgentWorldDirectorControlService service() {
         return new AgentWorldDirectorControlService(
                 new AgentFileWorldDirectorSessionStore(directory.resolve("sessions")),

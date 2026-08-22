@@ -4,10 +4,30 @@
 
 The Journey Observatory runs a bounded cohort through an existing Agent OS progression path and
 produces enough evidence to explain success, delay, resource use, recovery, or failure for every
-Agent. It is an experiment controller and a read-only projection. It does not execute quest steps,
-move characters, award rewards, repair navigation, or bypass the universal plan executor.
+Agent. Its evidence projection is read-only. A scenario may perform a declared admission fixture
+through an existing capability service and may dispatch a universal plan at a stage boundary; it
+does not execute quest steps, move characters, award rewards, repair navigation, or bypass the
+universal plan executor.
 
-The first supported scenario is `victoria-lv10-20`:
+The clean-start sustainability scenario is `victoria-lv1-21`:
+
+1. It admits 25 already-live reusable Agents, resets each participant atomically to a legitimate
+   level-1 Maple Island start, and dispatches `maple-island-full-mvp` itself.
+2. Career allocation is five Agents per Explorer family. Thief builds alternate dagger/claw and
+   Pirate builds alternate knuckle/gun.
+3. Maple Island hands off to the existing first-job and level-15 plan, then to resumable individual
+   Victoria quests and level-appropriate Hunting until level 21.
+4. TownLife is disabled for this scenario. Shopping, chairs, low-risk income recovery, questing,
+   and Hunting continue through their existing public contracts.
+5. Participants receive no cohort resource transfers. They preserve legitimate starting resources,
+   sell only unreserved surplus ETC items, retain a wallet reserve, buy supplies (including an
+   initial throwing-star or bullet stack), and may sit on an owned Relaxer or Sky Blue Chair.
+6. An objective stays suspended while resupply recovery runs. Recovery is bounded; a participant
+   ends as `SUCCEEDED` at level 21 or `STALLED` with an explicit reason.
+7. The `decisions` evidence mode retains plans, quest and map choices, resource maintenance,
+   recovery, progression, and terminal reasons while omitting individual combat actions.
+
+The older `victoria-lv10-20` scenario remains available:
 
 1. Existing live Agents in the command issuer's cohort are reset to the level-10 fixture.
 2. Careers rotate through Warrior, Bowman, Magician, Thief (dagger), and Pirate (knuckle).
@@ -92,19 +112,29 @@ inventory reconciliation covers mutations that do not yet publish a dedicated Ag
 
 ## Commands
 
-Spawn or activate the reusable test Agents in the same Agent cohort as the GM, then run:
+Populate the GM cohort first. Wait until all 25 reusable Agents are live; early progress is safe
+because Journey owns and atomically reapplies the clean-start baseline on admission:
 
 ```text
-!journey run victoria-lv10-20 10 full
+!mapleisland run 25 25 1 off
+!journey run victoria-lv1-21 25 decisions
 ```
 
-`10` is the participant count. Careers rotate in this order:
+Do not start the full run merely to validate a build. Use one participant for the smoke gate:
 
 ```text
-warrior, bowman, magician, thief-dagger, pirate-knuckle
+!mapleisland run 1 1 1 off
+!journey run victoria-lv1-21 1 decisions
 ```
 
-The final argument is an experiment label (`off`, `light`, or `full`) retained in the manifest.
+Careers are balanced across Explorer families; alternate builds are deterministic:
+
+```text
+warrior, bowman, magician, thief-dagger/thief-claw, pirate-knuckle/pirate-gun
+```
+
+For `victoria-lv1-21`, use `decisions` unless detailed combat evidence is specifically needed.
+The older scenario also accepts `off`, `light`, and `full`.
 The Agent engine's normal observation-aware simulation tier remains authoritative; the Journey
 controller does not force a tier or change combat personality.
 
@@ -115,6 +145,11 @@ Inspect a run:
 !journey agent <run-id> <ign>
 !journey report <run-id>
 ```
+
+For periodic unattended inspection, use `!journey status` for the cohort, then
+`!journey agent <run-id> <ign>` for any delayed participant. The durable evidence is under
+`.runtime/agents/journeys/<run-id>/agents/`; `summaries/report.md` and the CSV summaries are
+refreshed by `!journey report <run-id>` without mutating gameplay.
 
 Stop the run and cancel only the universal plan dispatched by it:
 
@@ -127,10 +162,11 @@ Per-Agent inspection always requires the run ID and IGN.
 
 ## Proposed validation sequence
 
-### Smoke
+### Clean-start smoke
 
 ```text
-!journey run victoria-lv10-20 1 full
+!mapleisland run 1 1 1 off
+!journey run victoria-lv1-21 1 decisions
 !journey status
 !journey agent <run-id> <ign>
 !journey report <run-id>
@@ -142,16 +178,16 @@ report generation does not cancel the active plan.
 ### Five-career parity
 
 ```text
-!journey run victoria-lv10-20 5 full
+!journey run victoria-lv1-21 5 decisions
 ```
 
 Confirm exactly one of each career reaches the normal first-job/instructor path, continues through
 the expected home/rotation pack, and enters the free-pick pool after level 15.
 
-### Repetition target
+### Repetition target (only after smoke/parity pass)
 
 ```text
-!journey run victoria-lv10-20 25 light
+!journey run victoria-lv1-21 25 decisions
 ```
 
 This supplies five samples per career. Compare `quests.csv` and `maps.csv` for route variance,

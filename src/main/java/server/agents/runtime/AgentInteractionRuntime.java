@@ -56,6 +56,14 @@ public final class AgentInteractionRuntime {
                 log);
     }
 
+    /** Registers an offline Director selection without implicitly starting grind or follow. */
+    public static AgentRuntimeEntry registerDirectorIdleAgent(Character agent) {
+        AgentRuntimeEntry entry = AgentRegistrationCoordinator.registerStationarySpawnedAgent(
+                agent.getId(), agent, agent, AgentInteractionRuntime::tick);
+        AgentModeService.startStop(entry);
+        return entry;
+    }
+
     public static AgentLifecycleService.AgentSpawnResult spawnStationaryAgentForLeader(
             Character leader, String agentName) {
         AgentLifecycleService.RegisterSpawnedAgent registerStationaryAgent =

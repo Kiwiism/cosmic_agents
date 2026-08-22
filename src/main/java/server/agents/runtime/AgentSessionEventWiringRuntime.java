@@ -13,7 +13,7 @@ import server.agents.capabilities.townlife.AgentTownLifeArrivalEvent;
 import server.agents.capabilities.townlife.AgentTownLifeActivityEvent;
 import server.agents.capabilities.townlife.AgentTownLifeLifecycleEvent;
 import server.agents.runtime.townlife.AgentTownLifeTestScenarioEvent;
-import server.agents.capabilities.dialogue.llm.context.AgentLlmContextProjectionService;
+import server.agents.social.projection.AgentSocialContextProjectionService;
 import server.agents.capabilities.supplies.AgentSupplyCoordinationProjectionService;
 import server.agents.capabilities.supplies.AgentSupplyMaintenanceEventListener;
 import server.agents.capabilities.supplies.AgentSupplyMonitoringProjectionService;
@@ -173,7 +173,7 @@ public final class AgentSessionEventWiringRuntime {
                         new server.agents.economy.activity.ActivityCalibrationEventListener()));
                 subscriptions.add(bus.subscribe("*", new AgentJourneyEventListener()));
                 if (rollout.llmContextEnabled()) {
-                    subscriptions.add(bus.subscribe("*", new AgentLlmContextProjectionService(entry)));
+                    subscriptions.add(bus.subscribe("*", new AgentSocialContextProjectionService(entry)));
                 }
                 state.attach(subscriptions);
             } catch (RuntimeException failure) {

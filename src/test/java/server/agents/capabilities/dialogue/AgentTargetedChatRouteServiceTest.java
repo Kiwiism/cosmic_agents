@@ -90,7 +90,7 @@ class AgentTargetedChatRouteServiceTest {
     }
 
     @Test
-    void recordsMatchedOwnerCommandAndSkipsLlm() {
+    void recordsMatchedOwnerCommandAndSkipsSocialDialogue() {
         List<String> calls = new ArrayList<>();
         Character leader = character(1, "Leader");
         AgentRuntimeEntry entry = entry(character(2, "Agent"), leader);
@@ -112,7 +112,7 @@ class AgentTargetedChatRouteServiceTest {
     }
 
     @Test
-    void unmatchedCommandFallsThroughToLlmWhenEnabled() {
+    void unmatchedCommandFallsThroughToSocialDialogueWhenEnabled() {
         List<String> calls = new ArrayList<>();
         Character leader = character(1, "Leader");
         AgentRuntimeEntry entry = entry(character(2, "Agent"), leader);
@@ -130,7 +130,7 @@ class AgentTargetedChatRouteServiceTest {
                 "follow:hi",
                 "channel:PARTY",
                 "chat:hi",
-                "llm:hi"), calls);
+                "social:hi"), calls);
     }
 
     @Test
@@ -200,7 +200,7 @@ class AgentTargetedChatRouteServiceTest {
                 AgentRuntimeEntry::owner,
                 (entry, commandText, commandAtMs) -> calls.add("record:" + commandText + ":" + commandAtMs),
                 () -> true,
-                (entry, sender, commandText) -> calls.add("llm:" + commandText),
+                (entry, sender, commandText) -> calls.add("social:" + commandText),
                 (leader, message) -> calls.add("leader:" + message));
     }
 

@@ -1,6 +1,8 @@
 package server.agents.capabilities.supplies;
 
 import client.Character;
+import client.inventory.InventoryType;
+import constants.id.ItemId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.capabilities.contracts.AgentProcurementMethod;
@@ -10,6 +12,7 @@ import server.agents.capabilities.contracts.AgentSupplyUrgency;
 import server.agents.capabilities.shop.AgentShopService;
 import server.agents.capabilities.shop.AgentShopStateRuntime;
 import server.agents.capabilities.shop.AgentShopWorkflowPhase;
+import server.agents.capabilities.movement.AgentChairService;
 import server.agents.capabilities.navigation.AgentRouteOutcome;
 import server.agents.capabilities.navigation.AgentRouteStatus;
 import server.agents.integration.AgentInventoryGatewayRuntime;
@@ -22,12 +25,15 @@ import server.agents.progression.AgentCareerBuildBundle;
 import server.agents.progression.AgentCareerProgressionState;
 import server.agents.progression.AgentCareerShopCatalog;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.AgentSessionEventRuntime;
+import server.agents.events.AgentDomainEvent;
 import server.agents.runtime.maintenance.AgentRemediationCoordinator;
 import server.agents.runtime.maintenance.AgentRemediationFrame;
 import server.agents.runtime.maintenance.AgentRemediationKind;
 import server.agents.runtime.maintenance.AgentRemediationState;
 
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /** Executes urgent supply requests as route-aware maintenance without destroying foreground intent. */
@@ -36,6 +42,18 @@ public final class AgentSupplyProcurementRuntime {
     private static final String OBJECTIVE_PREFIX = "maintenance:resupply:";
 
     private AgentSupplyProcurementRuntime() {
+    }
+
+    /** Runs automatic maintenance only for explicitly self-sustaining sessions. */
+    public static boolean tickIfSelfSustaining(
+            AgentRuntimeEntry entry, Character agent, long nowMs) {
+        if (entry == null || agent == null || !entry.capabilityStates()
+                .find(AgentResourceAutonomyState.STATE_KEY)
+                .map(AgentResourceAutonomyState::selfSustaining)
+                .orElse(false)) {
+            return false;
+        }
+        return tick(entry, agent, nowMs);
     }
 
     public static boolean tick(AgentRuntimeEntry entry, Character agent, long nowMs) {
@@ -49,9 +67,6 @@ public final class AgentSupplyProcurementRuntime {
         AgentProcurementRequest request;
         if (execution.isActive()) {
             request = planning.procurement(execution.category());
-            if (request != null && request.expiresAtMs() < nowMs) {
-                request = null;
-            }
         } else {
             signal = evaluations.next();
             request = signal == null
@@ -68,9 +83,9 @@ public final class AgentSupplyProcurementRuntime {
             if (!execution.isActive()) {
                 return false;
             }
-            finish(entry, planning, execution, AgentObjectiveStatus.FAILED,
+            stall(entry, agent, execution,
                     "supply request expired before targets were restored", nowMs);
-            return false;
+            return true;
         }
 
         if (!execution.isActive()) {
@@ -84,6 +99,9 @@ public final class AgentSupplyProcurementRuntime {
             case TRAVEL_TO_SUPPLIER -> travelToSupplier(entry, agent, planning, execution, nowMs);
             case SHOPPING -> shop(entry, agent, planning, execution, nowMs);
             case RETURNING -> returnToPlan(entry, agent, planning, execution, nowMs);
+            case RESTING -> restForRecovery(entry, agent, planning, execution, request, nowMs);
+            case INCOME_RECOVERY -> recoverIncome(entry, agent, planning, execution, request, nowMs);
+            case STALLED -> true;
             case IDLE -> false;
         };
     }
@@ -147,7 +165,15 @@ public final class AgentSupplyProcurementRuntime {
             return false;
         }
         execution.start(request.requestId(), maintenanceId, request.category(), supplierMapId,
-                supplierNpcId, agent.getMapId(), phase);
+                supplierNpcId, agent.getMapId(), phase,
+                AgentSupplyInventorySnapshot.quantity(agent, request.category()),
+                Math.max(0, agent.getMeso()));
+        journal(entry, agent, request, "started", "supply shortage interrupted foreground work",
+                Map.of("phase", phase.name(),
+                        "sourceMapId", Integer.toString(agent.getMapId()),
+                        "supplierMapId", Integer.toString(supplierMapId),
+                        "quantityBefore", Integer.toString(execution.quantityBefore()),
+                        "mesosBefore", Integer.toString(execution.mesosBefore())), nowMs);
         log.info("Agent '{}' suspended foreground work for {} resupply: phase={} sourceMap={} supplierMap={} supplierNpc={} existingShopVisit={}",
                 agent.getName(), request.category(), phase, agent.getMapId(), supplierMapId,
                 supplierNpcId, AgentShopStateRuntime.shopVisitPending(entry));
@@ -165,17 +191,23 @@ public final class AgentSupplyProcurementRuntime {
         AgentRouteOutcome outcome = AgentPrimitiveCapabilityGatewayRuntime.gateway().travelTo(
                 entry, agent, execution.supplierMapId(), nowMs);
         if (outcome.status() == AgentRouteStatus.NO_ROUTE) {
-            finish(entry, planning, execution, AgentObjectiveStatus.FAILED,
+            recordFailure(entry, agent, execution, AgentSupplyProcurementOutcome.Status.ROUTE_FAILED,
                     "no portal route reaches the selected supplier", nowMs);
-            return false;
+            stall(entry, agent, execution,
+                    "no portal route reaches the selected supplier", nowMs);
+            return true;
         }
         if (outcome.status() != AgentRouteStatus.ARRIVED) {
             return true;
         }
-        if (!AgentShopService.requestVisitAtNpc(entry, agent, execution.supplierNpcId())) {
-            finish(entry, planning, execution, AgentObjectiveStatus.FAILED,
+        AgentShopStateRuntime.setShopSellTrashPending(entry, true);
+        if (!AgentShopService.requestVisitAtNpc(entry, agent, execution.supplierNpcId(),
+                AgentSupplyRecoveryPolicy.minimumWalletReserve(agent))) {
+            recordFailure(entry, agent, execution, AgentSupplyProcurementOutcome.Status.SHOP_FAILED,
                     "selected supplier NPC is unavailable", nowMs);
-            return false;
+            stall(entry, agent, execution,
+                    "selected supplier NPC is unavailable", nowMs);
+            return true;
         }
         execution.markShopRequested();
         return true;
@@ -187,10 +219,14 @@ public final class AgentSupplyProcurementRuntime {
                                 AgentSupplyProcurementState execution,
                                 long nowMs) {
         if (!execution.shopRequested()) {
-            if (!AgentShopService.requestVisitAtNpc(entry, agent, execution.supplierNpcId())) {
-                finish(entry, planning, execution, AgentObjectiveStatus.FAILED,
+            AgentShopStateRuntime.setShopSellTrashPending(entry, true);
+            if (!AgentShopService.requestVisitAtNpc(entry, agent, execution.supplierNpcId(),
+                    AgentSupplyRecoveryPolicy.minimumWalletReserve(agent))) {
+                recordFailure(entry, agent, execution, AgentSupplyProcurementOutcome.Status.SHOP_FAILED,
                         "selected supplier NPC is unavailable", nowMs);
-                return false;
+                stall(entry, agent, execution,
+                        "selected supplier NPC is unavailable", nowMs);
+                return true;
             }
             execution.markShopRequested();
         }
@@ -200,13 +236,29 @@ public final class AgentSupplyProcurementRuntime {
         }
         AgentShopWorkflowPhase phase = AgentShopStateRuntime.workflow(entry).phase();
         if (phase == AgentShopWorkflowPhase.COMPLETED) {
+            AgentProcurementRequest request = planning.procurement(execution.category());
+            int after = AgentSupplyInventorySnapshot.quantity(agent, execution.category());
+            int target = request == null ? after : request.quantity() + execution.quantityBefore();
+            AgentSupplyProcurementOutcome outcome = reconcile(
+                    execution, agent, after, target, nowMs);
+            execution.complete(outcome);
+            journalOutcome(entry, agent, execution.requestId(), outcome);
+            if (!outcome.restored()) {
+                if (outcome.requiresRecoveryIncome()) {
+                    return beginRecovery(entry, agent, execution, request, outcome, nowMs);
+                }
+                stall(entry, agent, execution, outcome.reason(), nowMs);
+                return true;
+            }
             execution.markReturning();
             return true;
         }
         if (phase == AgentShopWorkflowPhase.BLOCKED || phase == AgentShopWorkflowPhase.CANCELLED) {
-            finish(entry, planning, execution, AgentObjectiveStatus.FAILED,
+            recordFailure(entry, agent, execution, AgentSupplyProcurementOutcome.Status.SHOP_FAILED,
                     "shop transaction ended in " + phase, nowMs);
-            return false;
+            stall(entry, agent, execution,
+                    "shop transaction ended in " + phase, nowMs);
+            return true;
         }
         return true;
     }
@@ -219,9 +271,11 @@ public final class AgentSupplyProcurementRuntime {
         AgentRouteOutcome outcome = AgentPrimitiveCapabilityGatewayRuntime.gateway().travelTo(
                 entry, agent, execution.returnMapId(), nowMs);
         if (outcome.status() == AgentRouteStatus.NO_ROUTE) {
-            finish(entry, planning, execution, AgentObjectiveStatus.FAILED,
+            recordFailure(entry, agent, execution, AgentSupplyProcurementOutcome.Status.ROUTE_FAILED,
                     "supplier visit completed but no return route reaches the suspended plan", nowMs);
-            return false;
+            stall(entry, agent, execution,
+                    "supplier visit completed but no return route reaches the suspended plan", nowMs);
+            return true;
         }
         if (outcome.status() != AgentRouteStatus.ARRIVED) {
             return true;
@@ -229,6 +283,175 @@ public final class AgentSupplyProcurementRuntime {
         finish(entry, planning, execution, AgentObjectiveStatus.SUCCEEDED,
                 "shop transaction completed and plan location restored", nowMs);
         return false;
+    }
+
+    private static boolean beginRecovery(
+            AgentRuntimeEntry entry,
+            Character agent,
+            AgentSupplyProcurementState execution,
+            AgentProcurementRequest request,
+            AgentSupplyProcurementOutcome outcome,
+            long nowMs) {
+        if (request == null) {
+            stall(entry, agent, execution,
+                    "supply request disappeared before recovery could begin", nowMs);
+            return true;
+        }
+        if (execution.recoveryAttempts()
+                >= AgentSupplyRecoveryPolicy.maximumRecoveryAttempts()) {
+            stall(entry, agent, execution,
+                    "resource recovery exhausted after " + execution.recoveryAttempts()
+                            + " attempts: " + outcome.reason(), nowMs);
+            return true;
+        }
+        AgentPrimitiveCapabilityGatewayRuntime.gateway().stop(entry);
+        AgentSupplyRecoveryPolicy.RecoveryMap map =
+                AgentSupplyRecoveryPolicy.selectRecoveryMap(agent).orElse(null);
+        execution.beginRecovery(map == null ? 0 : map.mapId(),
+                Math.max(0, agent.getMeso()),
+                AgentSupplyRecoveryPolicy.recoveryMesoTarget(agent, request),
+                nowMs, nowMs + AgentSupplyRecoveryPolicy.restTimeoutMs());
+        journal(entry, agent, request, "recovery-started",
+                "shopping did not restore supplies; foreground remains suspended",
+                Map.of("attempt", Integer.toString(execution.recoveryAttempts()),
+                        "recoveryMapId", Integer.toString(execution.recoveryMapId()),
+                        "mesoTarget", Integer.toString(execution.recoveryTargetMeso())), nowMs);
+        return true;
+    }
+
+    private static boolean restForRecovery(
+            AgentRuntimeEntry entry,
+            Character agent,
+            AgentResourcePlanningState planning,
+            AgentSupplyProcurementState execution,
+            AgentProcurementRequest request,
+            long nowMs) {
+        int chairId = ownedRecoveryChair(agent);
+        boolean recovered = AgentSupplyRecoveryPolicy.recoveredForCombat(agent);
+        if (!recovered && chairId > 0 && nowMs < execution.recoveryDeadlineAtMs()) {
+            if (agent.getChair() != chairId) {
+                AgentChairService.sit(entry, agent, chairId);
+            }
+            return true;
+        }
+        if (agent.getChair() >= 0) {
+            AgentChairService.stand(entry, agent);
+        }
+        if (!recovered && AgentSupplyRecoveryPolicy.criticallyLowHp(agent)) {
+            stall(entry, agent, execution,
+                    chairId <= 0
+                            ? "no owned recovery chair and HP is unsafe for income recovery"
+                            : "chair recovery timed out below the safe combat threshold",
+                    nowMs);
+            return true;
+        }
+        if (execution.recoveryMapId() <= 0) {
+            stall(entry, agent, execution,
+                    "no bounded low-risk income map is available for this level and job",
+                    nowMs);
+            return true;
+        }
+        execution.markIncomeRecovery(
+                nowMs, nowMs + AgentSupplyRecoveryPolicy.incomeTimeoutMs());
+        if (request != null) {
+            journal(entry, agent, request, "income-recovery",
+                    "rest completed; starting bounded low-risk income recovery",
+                    Map.of("attempt", Integer.toString(execution.recoveryAttempts()),
+                            "mapId", Integer.toString(execution.recoveryMapId()),
+                            "mesos", Integer.toString(Math.max(0, agent.getMeso()))), nowMs);
+        }
+        return true;
+    }
+
+    private static boolean recoverIncome(
+            AgentRuntimeEntry entry,
+            Character agent,
+            AgentResourcePlanningState planning,
+            AgentSupplyProcurementState execution,
+            AgentProcurementRequest request,
+            long nowMs) {
+        if (AgentSupplyRecoveryPolicy.criticallyLowHp(agent)) {
+            AgentPrimitiveCapabilityGatewayRuntime.gateway().stop(entry);
+            execution.markResting(nowMs, nowMs + AgentSupplyRecoveryPolicy.restTimeoutMs());
+            return true;
+        }
+        boolean targetReached = agent.getMeso() >= execution.recoveryTargetMeso();
+        boolean timedOut = nowMs >= execution.recoveryDeadlineAtMs();
+        if (targetReached || timedOut) {
+            AgentPrimitiveCapabilityGatewayRuntime.gateway().stop(entry);
+            if (timedOut
+                    && agent.getMeso() <= execution.recoveryBaselineMeso()
+                    && execution.recoveryAttempts()
+                    >= AgentSupplyRecoveryPolicy.maximumRecoveryAttempts()) {
+                stall(entry, agent, execution,
+                        "bounded income recovery produced no mesos after "
+                                + execution.recoveryAttempts() + " attempts", nowMs);
+                return true;
+            }
+            execution.retrySupplier(agent.getMapId() == execution.supplierMapId());
+            if (request != null) {
+                journal(entry, agent, request, "shop-retry",
+                        targetReached
+                                ? "income target reached; retrying suspended resupply"
+                                : "income window ended; retrying with recovered mesos",
+                        Map.of("attempt", Integer.toString(execution.recoveryAttempts()),
+                                "mesos", Integer.toString(Math.max(0, agent.getMeso())),
+                                "targetReached", Boolean.toString(targetReached)), nowMs);
+            }
+            return true;
+        }
+        AgentSupplyRecoveryPolicy.RecoveryMap map = AgentSupplyRecoveryPolicy
+                .recoveryMap(execution.recoveryMapId(), agent.getLevel()).orElse(null);
+        if (map == null) {
+            stall(entry, agent, execution,
+                    "selected income recovery map is no longer eligible", nowMs);
+            return true;
+        }
+        AgentRouteOutcome travel = AgentPrimitiveCapabilityGatewayRuntime.gateway().travelTo(
+                entry, agent, map.mapId(), nowMs);
+        if (travel.status() == AgentRouteStatus.NO_ROUTE) {
+            stall(entry, agent, execution,
+                    "no route reaches the bounded income recovery map " + map.mapId(), nowMs);
+            return true;
+        }
+        if (travel.status() == AgentRouteStatus.ARRIVED) {
+            AgentPrimitiveCapabilityGatewayRuntime.gateway().grind(entry, map.mobIds());
+        }
+        return true;
+    }
+
+    private static int ownedRecoveryChair(Character agent) {
+        if (agent == null || agent.getInventory(InventoryType.SETUP) == null) {
+            return 0;
+        }
+        if (agent.getInventory(InventoryType.SETUP).countById(ItemId.RELAXER) > 0) {
+            return ItemId.RELAXER;
+        }
+        return agent.getInventory(InventoryType.SETUP)
+                .countById(ItemId.SKY_BLUE_WOODEN_CHAIR) > 0
+                ? ItemId.SKY_BLUE_WOODEN_CHAIR : 0;
+    }
+
+    private static void stall(
+            AgentRuntimeEntry entry,
+            Character agent,
+            AgentSupplyProcurementState execution,
+            String reason,
+            long nowMs) {
+        AgentPrimitiveCapabilityGatewayRuntime.gateway().stop(entry);
+        if (agent.getChair() >= 0) {
+            AgentChairService.stand(entry, agent);
+        }
+        String failedPhase = execution.phase().name();
+        execution.markStalled(reason);
+        publish(entry, agent, "resource.recovery-stalled",
+                "resource-stalled:" + execution.requestId() + ':' + nowMs,
+                reason, Map.of(
+                        "requestId", execution.requestId(),
+                        "attempts", Integer.toString(execution.recoveryAttempts()),
+                        "phase", failedPhase), nowMs);
+        log.warn("Agent '{}' left foreground objective suspended after supply recovery stalled: {}",
+                agent.getName(), reason);
     }
 
     private static void finish(AgentRuntimeEntry entry,
@@ -256,5 +479,93 @@ public final class AgentSupplyProcurementRuntime {
                     category == null ? Map.of() : Map.of("resourceCategory", category.name())));
         }
         AgentRemediationCoordinator.finish(entry, frameId, status, reason, nowMs);
+    }
+
+    private static AgentSupplyProcurementOutcome reconcile(
+            AgentSupplyProcurementState execution,
+            Character agent,
+            int quantityAfter,
+            int targetQuantity,
+            long nowMs) {
+        int mesosAfter = Math.max(0, agent.getMeso());
+        AgentSupplyProcurementOutcome.Status status;
+        String reason;
+        if (quantityAfter >= targetQuantity) {
+            status = AgentSupplyProcurementOutcome.Status.RESTORED;
+            reason = "supply target restored after liquidation and purchase";
+        } else if (quantityAfter > execution.quantityBefore()) {
+            status = AgentSupplyProcurementOutcome.Status.PARTIALLY_RESTORED;
+            reason = "shop improved supplies but did not restore the resume target";
+        } else if (mesosAfter <= 0) {
+            status = AgentSupplyProcurementOutcome.Status.INSUFFICIENT_MESO;
+            reason = "safe liquidation produced insufficient mesos for the required supply";
+        } else {
+            status = AgentSupplyProcurementOutcome.Status.NO_PROGRESS;
+            reason = "shop completed without increasing the required supply";
+        }
+        return new AgentSupplyProcurementOutcome(status, execution.category(),
+                execution.quantityBefore(), quantityAfter, execution.mesosBefore(),
+                mesosAfter, nowMs, reason);
+    }
+
+    private static void recordFailure(
+            AgentRuntimeEntry entry,
+            Character agent,
+            AgentSupplyProcurementState execution,
+            AgentSupplyProcurementOutcome.Status status,
+            String reason,
+            long nowMs) {
+        AgentSupplyProcurementOutcome outcome = new AgentSupplyProcurementOutcome(
+                status, execution.category(), execution.quantityBefore(),
+                AgentSupplyInventorySnapshot.quantity(agent, execution.category()),
+                execution.mesosBefore(), Math.max(0, agent.getMeso()), nowMs, reason);
+        execution.complete(outcome);
+        journalOutcome(entry, agent, execution.requestId(), outcome);
+    }
+
+    private static void journalOutcome(
+            AgentRuntimeEntry entry,
+            Character agent, String requestId, AgentSupplyProcurementOutcome outcome) {
+        Map<String, String> evidence = new LinkedHashMap<>();
+        evidence.put("status", outcome.status().name());
+        evidence.put("category", outcome.category().name());
+        evidence.put("quantityBefore", Integer.toString(outcome.quantityBefore()));
+        evidence.put("quantityAfter", Integer.toString(outcome.quantityAfter()));
+        evidence.put("mesosBefore", Integer.toString(outcome.mesosBefore()));
+        evidence.put("mesosAfter", Integer.toString(outcome.mesosAfter()));
+        publish(entry, agent, "resource.maintenance-outcome",
+                "resource:" + requestId + ':' + outcome.occurredAtMs(),
+                outcome.reason(), evidence, outcome.occurredAtMs());
+    }
+
+    private static void journal(
+            AgentRuntimeEntry entry,
+            Character agent,
+            AgentProcurementRequest request,
+            String phase,
+            String reason,
+            Map<String, String> facts,
+            long nowMs) {
+        Map<String, String> evidence = new LinkedHashMap<>(facts);
+        evidence.put("phase", phase);
+        evidence.put("category", request.category().name());
+        evidence.put("targetShortfall", Integer.toString(request.quantity()));
+        publish(entry, agent, "resource.maintenance-decision",
+                "resource:" + request.requestId() + ':' + phase + ':' + nowMs,
+                reason, evidence, nowMs);
+    }
+
+    private static void publish(
+            AgentRuntimeEntry entry,
+            Character agent,
+            String type,
+            String dedupeKey,
+            String reason,
+            Map<String, String> evidence,
+            long nowMs) {
+        Map<String, String> attributes = new LinkedHashMap<>(evidence);
+        attributes.put("reason", reason == null ? "" : reason);
+        AgentSessionEventRuntime.bus(entry).publish(new AgentDomainEvent(
+                agent.getId(), nowMs, type, dedupeKey, attributes));
     }
 }

@@ -16,6 +16,7 @@ public final class AgentVictoriaTrainingState {
     private boolean active;
     private boolean questsEnabled;
     private int targetLevel;
+    private int requestedQuestId;
     private int selectedMapId;
     private int selectedAtLevel;
     private String selectionReason = "";
@@ -27,9 +28,15 @@ public final class AgentVictoriaTrainingState {
     }
 
     public synchronized void start(int targetLevel, boolean questsEnabled, long nowMs) {
+        start(targetLevel, questsEnabled, 0, nowMs);
+    }
+
+    public synchronized void start(
+            int targetLevel, boolean questsEnabled, int requestedQuestId, long nowMs) {
         active = true;
         this.targetLevel = targetLevel;
         this.questsEnabled = questsEnabled;
+        this.requestedQuestId = Math.max(0, requestedQuestId);
         selectedMapId = 0;
         selectedAtLevel = 0;
         selectionReason = "";
@@ -53,6 +60,10 @@ public final class AgentVictoriaTrainingState {
 
     public synchronized boolean questsEnabled() {
         return questsEnabled;
+    }
+
+    public synchronized int requestedQuestId() {
+        return requestedQuestId;
     }
 
     public synchronized int selectedMapId() {

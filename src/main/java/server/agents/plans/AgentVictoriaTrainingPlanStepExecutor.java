@@ -2,6 +2,8 @@ package server.agents.plans;
 
 import server.agents.progression.AgentVictoriaTrainingObjectiveRuntime;
 import server.agents.progression.AgentVictoriaTrainingState;
+import server.agents.objectives.AgentObjectiveState;
+import server.agents.objectives.AgentObjectiveStatus;
 
 public final class AgentVictoriaTrainingPlanStepExecutor implements AgentPlanStepExecutor {
     public static final String OPERATION = "victoria-training";
@@ -35,8 +37,10 @@ public final class AgentVictoriaTrainingPlanStepExecutor implements AgentPlanSte
                 context.request().intInput("targetLevel", -1));
         boolean questsEnabled = booleanParameter(context, "questsEnabled",
                 context.request().booleanInput("questsEnabled", true));
+        int requestedQuestId = context.request().intInput("questId", 0);
         if (!AgentVictoriaTrainingObjectiveRuntime.start(
-                context.entry(), context.agent(), targetLevel, questsEnabled, context.nowMs())) {
+                context.entry(), context.agent(), targetLevel, questsEnabled,
+                requestedQuestId, context.nowMs())) {
             if (context.agent().getLevel() >= targetLevel && targetLevel > 0) {
                 return AgentPlanStepExecution.terminal(AgentPlanExecutionStatus.SUCCEEDED,
                         "target level already reached");
@@ -54,6 +58,18 @@ public final class AgentVictoriaTrainingPlanStepExecutor implements AgentPlanSte
         AgentVictoriaTrainingState state = context.entry().capabilityStates()
                 .require(AgentVictoriaTrainingState.STATE_KEY);
         if (!state.active()) {
+            var terminal = context.entry().capabilityStates()
+                    .require(AgentObjectiveState.STATE_KEY).journalSnapshot().reversed().stream()
+                    .filter(event -> event.objectiveId().startsWith("victoria:training:"))
+                    .findFirst().orElse(null);
+            if (terminal != null && terminal.status() == AgentObjectiveStatus.BLOCKED) {
+                return AgentPlanStepExecution.terminal(
+                        AgentPlanExecutionStatus.BLOCKED, terminal.reason());
+            }
+            if (terminal != null && terminal.status() == AgentObjectiveStatus.FAILED) {
+                return AgentPlanStepExecution.terminal(
+                        AgentPlanExecutionStatus.FAILED, terminal.reason());
+            }
             return AgentPlanStepExecution.terminal(AgentPlanExecutionStatus.SUCCEEDED,
                     "Victoria training target reached");
         }

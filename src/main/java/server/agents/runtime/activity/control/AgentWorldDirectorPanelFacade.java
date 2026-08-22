@@ -11,7 +11,11 @@ import server.agents.runtime.activity.world.AgentWorldDirectorJournalStore;
 import server.agents.runtime.activity.world.AgentWorldDirectorMode;
 import server.agents.runtime.activity.world.AgentWorldDirectorSession;
 
-/** Headless manual/automatic control surface intended to back a later non-technical UI. */
+/**
+ * Legacy preparation facade. New transports must use {@link AgentWorldDirectorApplication}
+ * so revision checks, action eligibility, lifecycle routing, and journaling cannot be bypassed.
+ */
+@Deprecated(forRemoval = true)
 public final class AgentWorldDirectorPanelFacade {
     private final AgentWorldDirectorControlService control;
     private final AgentActivityOutcomeInbox outcomes;

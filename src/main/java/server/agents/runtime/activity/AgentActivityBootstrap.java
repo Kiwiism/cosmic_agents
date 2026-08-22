@@ -50,6 +50,37 @@ public final class AgentActivityBootstrap {
         return ADMISSION;
     }
 
+    /** Requests that one primary owner finish its protected unit of work and terminate. */
+    public static boolean requestPrimaryStop(
+            AgentRuntimeEntry entry,
+            Character agent,
+            AgentActivityKind kind,
+            String reason,
+            long nowMs) {
+        AgentActivityController controller = primary(kind);
+        if (!controller.active(entry, agent)) return true;
+        boolean stopped = controller.requestStop(entry, agent, reason, nowMs);
+        return stopped || !controller.active(entry, agent);
+    }
+
+    /** Explicit abandon boundary. Callers must expose this as a destructive action. */
+    public static boolean forcePrimaryStop(
+            AgentRuntimeEntry entry,
+            Character agent,
+            AgentActivityKind kind,
+            String reason,
+            long nowMs) {
+        AgentActivityController controller = primary(kind);
+        if (!controller.active(entry, agent)) return true;
+        controller.forceStop(entry, agent, reason, nowMs);
+        return !controller.active(entry, agent);
+    }
+
+    public static boolean primaryActive(
+            AgentRuntimeEntry entry, Character agent, AgentActivityKind kind) {
+        return primary(kind).active(entry, agent);
+    }
+
     public static AgentActivityOwnershipReconciliation reconcileRestoredOwnership(
             AgentRuntimeEntry entry, Character agent, long nowMs) {
         AgentActivityKind expected = RESTORED_HANDOFF_OWNER.expectedOwner(agent.getId())
@@ -63,6 +94,15 @@ public final class AgentActivityBootstrap {
 
     private static AgentActivityControllerRegistry registry() {
         return Holder.REGISTRY;
+    }
+
+    private static AgentActivityController primary(AgentActivityKind kind) {
+        if (kind == null) throw new IllegalArgumentException("primary activity kind is required");
+        return registry().controllers().stream()
+                .filter(controller -> controller.role() == AgentActivityRole.PRIMARY)
+                .filter(controller -> controller.activityKind() == kind)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("no primary controller for " + kind));
     }
 
     private static final class Holder {

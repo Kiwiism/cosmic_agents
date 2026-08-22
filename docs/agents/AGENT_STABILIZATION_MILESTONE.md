@@ -42,12 +42,13 @@ more progression, social, economy, market, guild, expedition, or LLM behavior.
 
 ## LLM boundary
 
-`AgentReadOnlyLlmGateway` is dialogue-only. A provider receives immutable prompt
-text and system instructions and returns text. It never receives `Character`,
-`MapleMap`, `AgentRuntimeEntry`, a capability command gateway, or a mutation
-handle. Decision support can later be introduced as a separate, version-routed
-proposal interface; proposals must still pass deterministic policy validation
-and capability/resource arbitration.
+`DialogueProvider` is dialogue-only. A provider receives a bounded immutable
+`DialogueRequest` and returns an attributed `DialogueResult`. It never receives
+`Character`, `MapleMap`, `AgentRuntimeEntry`, a capability command gateway, or a
+mutation handle. External calls run on the bounded LLM lane and return through
+the generation-safe mailbox. A predefined catalog reply is always available.
+Decision support remains a separate proposal interface whose output must pass
+deterministic policy validation and capability/resource arbitration.
 
 ## Required gates
 

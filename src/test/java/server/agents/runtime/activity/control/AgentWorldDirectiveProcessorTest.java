@@ -21,12 +21,14 @@ import server.agents.runtime.activity.world.AgentWorldDirectiveSource;
 import server.agents.runtime.activity.world.AgentWorldDirectiveStatus;
 import server.agents.runtime.activity.world.AgentWorldDirectiveType;
 import server.agents.runtime.activity.world.AgentWorldDirectorMode;
+import server.agents.runtime.activity.world.AgentWorldDirectorPhase;
 import server.agents.runtime.activity.world.AgentWorldDirectorSession;
 import server.agents.runtime.activity.world.AgentWorldInterruptionPolicy;
 
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -119,6 +121,94 @@ class AgentWorldDirectiveProcessorTest {
         assertEquals(AgentWorldDirectiveStatus.COMPLETED,
                 inbox.load(27, "start-quest").orElseThrow().status());
         assertTrue(handoffStore.list().isEmpty());
+    }
+
+    @Test
+    void suspendsThroughBoundLifecycleAndRetainsExactSession() {
+        AgentFileWorldDirectorSessionStore sessions =
+                new AgentFileWorldDirectorSessionStore(directory.resolve("sessions-lifecycle"));
+        AgentFileWorldDirectiveInbox inbox =
+                new AgentFileWorldDirectiveInbox(directory.resolve("directives-lifecycle"));
+        sessions.save(AgentWorldDirectorSession.create(27, AgentWorldDirectorMode.MANUAL, 1_000L));
+        AgentWorldDirective suspend = new AgentWorldDirective(
+                1, "suspend-active", 27, AgentWorldDirectiveType.SUSPEND_ACTIVITY,
+                AgentWorldDirectiveSource.OPERATOR, null, null, null, "", Map.of(),
+                AgentWorldInterruptionPolicy.WAIT_FOR_SAFE_BOUNDARY,
+                AgentWorldCompletionPolicy.REQUEST_NEXT_DECISION,
+                10, 1_000L, 0L, "operator pause");
+        inbox.submit(suspend, 1_000L);
+        AtomicInteger attempts = new AtomicInteger();
+        AgentWorldDirectiveProcessor processor = new AgentWorldDirectiveProcessor(
+                sessions, inbox,
+                new AgentPersistentActivityHandoffCoordinator(
+                        new AgentFileActivityHandoffStore(directory.resolve("handoffs-lifecycle"))),
+                (directive, entry, agent, sourceKind, sourceSessionId) -> binding(),
+                (session, directive, entry, agent, nowMs) ->
+                        AgentWorldDirectorRolloutGateResult.allow("test gate"),
+                (directive, session, entry, agent, kind, sessionId, nowMs) ->
+                        attempts.incrementAndGet() == 1
+                                ? AgentWorldActivityLifecycleHandler.Result.progressed(
+                                "walking to safe spot", AgentActivityKind.HUNTING, "field-session")
+                                : AgentWorldActivityLifecycleHandler.Result.completed(
+                                "parked safely", AgentActivityKind.HUNTING, "field-session"),
+                60_000L);
+        Character agent = mock(Character.class);
+        when(agent.getId()).thenReturn(27);
+
+        assertEquals(AgentWorldDirectiveProcessor.Result.Status.PROGRESSED,
+                processor.tick(mock(AgentRuntimeEntry.class), agent,
+                        AgentActivityKind.HUNTING, "field-session", 1_001L).status());
+        assertEquals(AgentWorldDirectorPhase.HANDOFF,
+                sessions.load(27).orElseThrow().phase());
+        assertEquals(AgentWorldDirectiveProcessor.Result.Status.COMPLETED,
+                processor.tick(mock(AgentRuntimeEntry.class), agent,
+                        null, "", 1_002L).status());
+        AgentWorldDirectorSession retained = sessions.load(27).orElseThrow();
+        assertEquals(AgentWorldDirectorPhase.PAUSED, retained.phase());
+        assertEquals(AgentActivityKind.HUNTING, retained.observedActivityKind());
+        assertEquals("field-session", retained.observedSessionId());
+    }
+
+    @Test
+    void idleStartCompletesNormalTransferBeforeDestinationAdmission() {
+        AgentFileWorldDirectorSessionStore sessions =
+                new AgentFileWorldDirectorSessionStore(directory.resolve("sessions-transfer"));
+        AgentFileWorldDirectiveInbox inbox =
+                new AgentFileWorldDirectiveInbox(directory.resolve("directives-transfer"));
+        sessions.save(AgentWorldDirectorSession.create(27, AgentWorldDirectorMode.MANUAL, 1_000L));
+        inbox.submit(directive(), 1_000L);
+        AtomicInteger transfers = new AtomicInteger();
+        AtomicInteger admissions = new AtomicInteger();
+        AgentWorldActivityBinding base = binding();
+        AgentWorldActivityBinding traveling = new AgentWorldActivityBinding(
+                base.source(), base.targetPreflight(), nowMs ->
+                transfers.incrementAndGet() == 1
+                        ? server.agents.runtime.activity.session.AgentActivityTransferPort.Result
+                        .pending("walking through portals", nowMs + 500L)
+                        : server.agents.runtime.activity.session.AgentActivityTransferPort.Result.ready(),
+                nowMs -> {
+                    admissions.incrementAndGet();
+                    return base.target().requestEntry(nowMs);
+                }, base.rollback(), base.outcome());
+        AgentWorldDirectiveProcessor processor = new AgentWorldDirectiveProcessor(
+                sessions, inbox,
+                new AgentPersistentActivityHandoffCoordinator(
+                        new AgentFileActivityHandoffStore(directory.resolve("handoffs-transfer"))),
+                (directive, entry, agent, sourceKind, sourceSessionId) -> traveling,
+                (session, directive, entry, agent, nowMs) ->
+                        AgentWorldDirectorRolloutGateResult.allow("test gate"),
+                60_000L);
+        Character agent = mock(Character.class);
+        when(agent.getId()).thenReturn(27);
+
+        assertEquals(AgentWorldDirectiveProcessor.Result.Status.PROGRESSED,
+                processor.tick(mock(AgentRuntimeEntry.class), agent, null, "", 1_001L).status());
+        assertEquals(AgentWorldDirectorPhase.STARTING,
+                sessions.load(27).orElseThrow().phase());
+        assertEquals(0, admissions.get());
+        assertEquals(AgentWorldDirectiveProcessor.Result.Status.COMPLETED,
+                processor.tick(mock(AgentRuntimeEntry.class), agent, null, "", 1_501L).status());
+        assertEquals(1, admissions.get());
     }
 
     private AgentWorldDirectiveProcessor processor(

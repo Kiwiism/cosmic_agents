@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "intents": {
+    "casual.greeting": {
+      "default": ["hey", "hello", "yo, what's up?"],
+      "quiet-practical-v1": ["hey", "yo", "sup"],
+      "friendly-casual-v1": ["hey, what's up?", "yo, how's it going?", "heyy"],
+      "playful-social-v1": ["yooo what's good", "ayyy, u made it", "yo bro"],
+      "curious-millennial-v1": ["hey! how's it going?", "oh hey, what's up?", "hello there haha"]
+    },
+    "casual.status": {
+      "default": ["doing alright", "pretty good, you?"],
+      "quiet-practical-v1": ["good rn", "doing fine", "all good"],
+      "friendly-casual-v1": ["pretty good lol, you?", "just chilling, how about you?"],
+      "playful-social-v1": ["living the dream lmao, u?", "im good bro, whats up"],
+      "curious-millennial-v1": ["doing pretty well haha, how about you?", "not bad! what are you up to?"]
+    },
+    "casual.thanks": {
+      "default": ["no problem", "you're welcome"],
+      "quiet-practical-v1": ["np", "sure", "anytime"],
+      "friendly-casual-v1": ["no worries!", "anytime", "np haha"],
+      "playful-social-v1": ["gotchu bro", "np lmao", "anytime fr"],
+      "curious-millennial-v1": ["no problem!", "happy to help", "anytime haha"]
+    },
+    "casual.goodbye": {
+      "default": ["see you", "later"],
+      "quiet-practical-v1": ["later", "cya", "take care"],
+      "friendly-casual-v1": ["cya later", "see you around!", "later haha"],
+      "playful-social-v1": ["later bro", "cyaaa", "peace lol"],
+      "curious-millennial-v1": ["see you later!", "take care", "catch you around"]
+    },
+    "casual.question": {
+      "default": ["not sure tbh", "good question", "i don't really know"],
+      "quiet-practical-v1": ["not sure rn", "idk tbh", "good question"],
+      "friendly-casual-v1": ["hmm not sure tbh", "good question lol", "i actually don't know"],
+      "playful-social-v1": ["bro i got no clue lmao", "ngl im not sure", "good question fr"],
+      "curious-millennial-v1": ["hmm, I'm not totally sure", "good question actually", "I don't know, what do you think?"]
+    },
+    "casual.general": {
+      "default": ["yeah", "i get you", "fair enough"],
+      "quiet-practical-v1": ["yeah", "got it", "fair"],
+      "friendly-casual-v1": ["yeah haha", "i get you", "that's fair"],
+      "playful-social-v1": ["fr", "yeah bro", "wild lmao"],
+      "curious-millennial-v1": ["yeah, I get that", "that's pretty interesting", "fair enough haha"]
+    }
+  }
+}

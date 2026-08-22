@@ -19,7 +19,7 @@ class AgentAsyncQueueBoundaryTest {
         assertFalse(registrySource.contains("Executors.new"), registry.toString());
 
         List<Path> workers = List.of(
-                Path.of("src/main/java/server/agents/capabilities/dialogue/llm/AgentLlmReplyService.java"),
+                Path.of("src/main/java/server/agents/social/conversation/AgentSocialDialogueApplication.java"),
                 Path.of("src/main/java/server/agents/capabilities/navigation/AgentNavigationGraphService.java"),
                 Path.of("src/main/java/server/agents/capabilities/trade/AgentTransferRuntime.java"),
                 Path.of("src/main/java/server/agents/plans/amherst/AmherstPlanRuntimeRunner.java"));

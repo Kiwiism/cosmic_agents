@@ -4,13 +4,21 @@ package server.agents.runtime.activity.session;
 public final class AgentPersistentActivityHandoffCoordinator {
     private final AgentActivityHandoffCoordinator coordinator;
     private final AgentActivityHandoffStore store;
+    private final AgentActivityHandoffJourneyRecorder journey;
 
     public AgentPersistentActivityHandoffCoordinator(AgentActivityHandoffStore store) {
+        this(store, null);
+    }
+
+    public AgentPersistentActivityHandoffCoordinator(
+            AgentActivityHandoffStore store,
+            AgentActivityHandoffJourneyRecorder journey) {
         if (store == null) {
             throw new IllegalArgumentException("handoff store is required");
         }
         this.coordinator = new AgentActivityHandoffCoordinator();
         this.store = store;
+        this.journey = journey;
     }
 
     public AgentActivityHandoffCoordinator.Handoff begin(
@@ -42,6 +50,7 @@ public final class AgentPersistentActivityHandoffCoordinator {
                             + candidate.handoffId());
                 });
         store.save(handoff);
+        record(handoff);
         return handoff;
     }
 
@@ -57,6 +66,7 @@ public final class AgentPersistentActivityHandoffCoordinator {
         AgentActivityHandoffCoordinator.Handoff next = coordinator.advance(
                 current, source, transfer, target, nowMs);
         store.save(next);
+        record(next);
         return next;
     }
 
@@ -73,6 +83,7 @@ public final class AgentPersistentActivityHandoffCoordinator {
         AgentActivityHandoffCoordinator.Handoff next = coordinator.advance(
                 current, source, transfer, target, rollback, nowMs);
         store.save(next);
+        record(next);
         return next;
     }
 
@@ -95,6 +106,7 @@ public final class AgentPersistentActivityHandoffCoordinator {
         AgentActivityHandoffCoordinator.Handoff reconciled = coordinator.reconcile(
                 current, source, targetObserver, nowMs);
         store.save(reconciled);
+        record(reconciled);
         return reconciled;
     }
 
@@ -106,5 +118,14 @@ public final class AgentPersistentActivityHandoffCoordinator {
             throw new IllegalStateException("an in-flight handoff cannot be acknowledged");
         }
         store.delete(handoffId);
+    }
+
+    private void record(AgentActivityHandoffCoordinator.Handoff handoff) {
+        if (journey == null || handoff == null) return;
+        try {
+            journey.record(Integer.parseInt(handoff.agentId()), handoff);
+        } catch (NumberFormatException ignored) {
+            // Non-Cosmic string Agent identities retain the durable handoff without a character journal.
+        }
     }
 }

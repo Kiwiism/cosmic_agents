@@ -43,7 +43,9 @@ public final class AgentJourneyCommandService {
             player.yellowMessage("Journey Agent count must be positive.");
             return;
         }
-        String mode = params.length >= 4 ? params[3] : "full";
+        String mode = params.length >= 4 ? params[3]
+                : AgentJourneyRuntime.VICTORIA_LEVEL_1_TO_21.equalsIgnoreCase(params[1])
+                ? "decisions" : "full";
         List<AgentRuntimeEntry> available = AgentRuntimeRegistry.agentEntriesForLeader(
                         player.getId()).stream()
                 .filter(entry -> AgentRuntimeIdentityRuntime.bot(entry) != null)
@@ -63,8 +65,8 @@ public final class AgentJourneyCommandService {
         }
         player.yellowMessage("Journey " + result.runId() + " started with "
                 + result.participants() + " Agents. Evidence: " + result.directory());
-        player.yellowMessage("Careers rotate warrior, bowman, magician, thief-dagger, "
-                + "pirate-knuckle; Lv15+ continues through the universal Victoria quest pool.");
+        player.yellowMessage("Careers rotate by Explorer family; thief and pirate builds alternate. "
+                + "Lv15+ continues through the universal Victoria quest pool.");
     }
 
     private static void status(Character player, String[] params) {
@@ -78,10 +80,12 @@ public final class AgentJourneyCommandService {
                 .filter(agent -> "SUCCEEDED".equals(agent.status())).count();
         long failed = result.agents().stream()
                 .filter(agent -> "FAILED".equals(agent.status())).count();
+        long stalled = result.agents().stream()
+                .filter(agent -> "STALLED".equals(agent.status())).count();
         player.yellowMessage("Journey " + result.runId() + " status=" + result.status()
                 + " scenario=" + result.scenarioId() + " target=Lv" + result.targetLevel()
                 + " agents=" + result.agents().size() + " succeeded=" + succeeded
-                + " failed=" + failed + ".");
+                + " stalled=" + stalled + " failed=" + failed + ".");
         result.agents().stream().limit(8).forEach(agent ->
                 player.yellowMessage(agent.agentName() + " " + agent.career() + " Lv"
                         + agent.level() + " map=" + agent.mapId() + " plan=" + agent.planId()
@@ -135,6 +139,7 @@ public final class AgentJourneyCommandService {
         if (player == null) {
             return;
         }
+        player.yellowMessage("!journey run victoria-lv1-21 <count> [decisions|light|full]");
         player.yellowMessage("!journey run victoria-lv10-20 <count> [off|light|full]");
         player.yellowMessage("!journey status [run-id]");
         player.yellowMessage("!journey agent <run-id> <ign>");

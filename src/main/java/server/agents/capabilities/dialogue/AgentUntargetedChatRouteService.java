@@ -6,6 +6,7 @@ import server.agents.runtime.AgentRuntimeHandle;
 
 import java.util.List;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.BooleanSupplier;
 
 public final class AgentUntargetedChatRouteService {
@@ -20,7 +21,10 @@ public final class AgentUntargetedChatRouteService {
                         AgentChatHandler<E> agentChatHandler,
                         BooleanSupplier typoSuggesterEnabled,
                         TypoSuggester typoSuggester,
-                        AgentReplyQueue<E> agentReplyQueue) {
+                        AgentReplyQueue<E> agentReplyQueue,
+                        SocialResponderSelector<E> socialResponderSelector,
+                        BooleanSupplier socialDialogueEnabled,
+                        SocialDialogueResponder<E> socialDialogueResponder) {
     }
 
     @FunctionalInterface
@@ -63,6 +67,16 @@ public final class AgentUntargetedChatRouteService {
         void queue(E entry, String reply);
     }
 
+    @FunctionalInterface
+    public interface SocialResponderSelector<E extends AgentRuntimeHandle> {
+        E select(Character speaker, List<E> entries, String message);
+    }
+
+    @FunctionalInterface
+    public interface SocialDialogueResponder<E extends AgentRuntimeHandle> {
+        void maybeRespond(E entry, Character speaker, String message);
+    }
+
     public static <E extends AgentRuntimeHandle> void handleUntargetedChat(Character leader,
                                             List<E> entries,
                                             String message,
@@ -93,9 +107,24 @@ public final class AgentUntargetedChatRouteService {
             }
         }
 
+        List<CompletableFuture<Boolean>> handledResults = new java.util.ArrayList<>();
         for (E entry : entries) {
             hooks.replyChannelSetter().set(entry, channel);
-            hooks.agentChatHandler().handle(entry, message, channel);
+            handledResults.add(hooks.agentChatHandler().handle(entry, message, channel)
+                    .handle((handled, failure) -> failure == null && Boolean.TRUE.equals(handled))
+                    .toCompletableFuture());
         }
+        CompletableFuture.allOf(handledResults.toArray(CompletableFuture[]::new))
+                .thenRun(() -> {
+                    boolean handled = handledResults.stream().anyMatch(result -> result.getNow(false));
+                    if (handled || !hooks.socialDialogueEnabled().getAsBoolean()) {
+                        return;
+                    }
+                    E responder = hooks.socialResponderSelector().select(leader, entries, message);
+                    if (responder != null) {
+                        hooks.replyChannelSetter().set(responder, channel);
+                        hooks.socialDialogueResponder().maybeRespond(responder, leader, message);
+                    }
+                });
     }
 }

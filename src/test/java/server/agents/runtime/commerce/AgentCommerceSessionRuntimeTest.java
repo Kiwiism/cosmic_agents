@@ -32,7 +32,9 @@ class AgentCommerceSessionRuntimeTest {
         assertTrue(runtime.tick(2_000L));
 
         assertEquals(AgentActivityPhase.COMPLETED, store.value.phase());
-        assertNotNull(runtime.terminalOutcome(2_000L));
+        var terminal = runtime.terminalOutcome(2_000L);
+        assertNotNull(terminal);
+        assertEquals(terminal, runtime.terminalOutcome(9_000L));
         runtime.acknowledgeTerminal();
         assertNull(store.value);
     }

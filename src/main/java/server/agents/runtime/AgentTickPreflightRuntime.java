@@ -6,6 +6,7 @@ import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.navigation.AgentCollisionPortalService;
 import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.capabilities.social.airshow.AgentAirshowStateRuntime;
+import server.agents.capabilities.supplies.AgentSupplyProcurementRuntime;
 import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.journey.AgentJourneyRuntime;
@@ -32,6 +33,11 @@ public final class AgentTickPreflightRuntime {
                 hooks());
         if (result.agent() != null) {
             AgentJourneyRuntime.tick(entry, result.agent(), nowMs);
+            if (AgentSupplyProcurementRuntime.tickIfSelfSustaining(
+                    entry, result.agent(), nowMs)) {
+                return new AgentTickPreflightService.Result(
+                        true, result.agent(), result.runAiTick());
+            }
             AgentWorldDirectorObserveRuntime.tick(entry, result.agent(), nowMs);
             AgentWorldDirectorExecutionRuntime.tick(entry, result.agent(), nowMs);
         }

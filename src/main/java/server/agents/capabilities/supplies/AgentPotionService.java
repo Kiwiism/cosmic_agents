@@ -333,6 +333,10 @@ public final class AgentPotionService {
                                            boolean bypassShareLimits,
                                            boolean thresholdEventPublished) {
         long startedAt = AgentPerformanceMonitor.start();
+        if (selfSustaining(entry)) {
+            AgentPerformanceMonitor.recordSince("potion-request", startedAt);
+            return false;
+        }
         if (bot.getTrade() != null || AgentPendingTradeStateRuntime.hasActiveSequence(entry)) {
             AgentPerformanceMonitor.recordSince("potion-request", startedAt);
             return false;
@@ -406,6 +410,9 @@ public final class AgentPotionService {
     }
 
     public static OwnerPotShareResult offerPotShareToOwner(AgentRuntimeEntry entry, boolean forHp) {
+        if (selfSustaining(entry)) {
+            return OwnerPotShareResult.BLOCKED;
+        }
         Character owner = AgentRelationshipRuntime.interactionTarget(entry);
         if (owner == null || owner.getTrade() != null) {
             return OwnerPotShareResult.BLOCKED;
@@ -426,7 +433,8 @@ public final class AgentPotionService {
         int bestCount = 0;
         for (AgentRuntimeEntry sibling : AgentSessionLifecycleRuntime.getCohortEntries(requesterEntry)) {
             Character siblingBot = AgentRuntimeIdentityRuntime.bot(sibling);
-            if (sibling == excludedEntry || siblingBot == null || siblingBot.getMapId() != recipient.getMapId()) {
+            if (sibling == excludedEntry || selfSustaining(sibling)
+                    || siblingBot == null || siblingBot.getMapId() != recipient.getMapId()) {
                 continue;
             }
             int[] pots = countPotions(siblingBot);
@@ -438,6 +446,12 @@ public final class AgentPotionService {
         }
         AgentPerformanceMonitor.recordSince("potion-donor-select", startedAt);
         return bestEntry != null ? new AgentPotionDonorPlan<>(bestEntry, bestCount) : null;
+    }
+
+    private static boolean selfSustaining(AgentRuntimeEntry entry) {
+        return entry != null && entry.capabilityStates()
+                .find(AgentResourceAutonomyState.STATE_KEY)
+                .map(AgentResourceAutonomyState::selfSustaining).orElse(false);
     }
 
     private static void schedulePotShare(AgentPotionDonorPlan<AgentRuntimeEntry> plan, Character recipient, boolean forHp, long initialDelayMs) {

@@ -95,10 +95,12 @@ public final class AgentShopService {
 
         WeaponType wt = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
         boolean needsRecharge = needsRechargeForShop(bot, wt, ammoTriggerThreshold(), inventory);
+        boolean needsSeedRechargeAmmo = needsSeedRechargeAmmoForShop(bot, match.shop, wt);
         boolean needsAmmoForShop = needsFixedAmmoForShop(bot, match.shop, wt, ammoTriggerThreshold());
         boolean needsHpPots = needsPotionStock(bot, match.shop, true);
         boolean needsMpPots = needsPotionStock(bot, match.shop, false);
-        if (!needsRecharge && !needsAmmoForShop && !needsHpPots && !needsMpPots) {
+        if (!needsRecharge && !needsSeedRechargeAmmo && !needsAmmoForShop
+                && !needsHpPots && !needsMpPots) {
             return;
         }
 
@@ -290,6 +292,9 @@ public final class AgentShopService {
         if (needsRechargeForShop(bot, wt, ammoTriggerThreshold(), inventory)) {
             return true;
         }
+        if (needsSeedRechargeAmmoForShop(bot, shop, wt)) {
+            return true;
+        }
         if (needsPotionStock(bot, shop, true)) {
             return true;
         }
@@ -302,6 +307,13 @@ public final class AgentShopService {
     private static void executePurchases(AgentRuntimeEntry entry, Character bot, InventoryGateway inventory, Point npcPos) {
         if (!isShopSequenceValid(entry, bot, npcPos)) {
             abortShop(entry, bot, AgentDialogueCatalog.shopKeeperUnreachableReply());
+            return;
+        }
+
+        if (AgentShopStateRuntime.shopSellTrashPending(entry)) {
+            startSellTrashSequence(new AgentShopPurchaseSequence<>(
+                    entry, bot, inventory, npcPos, List.of(), new ArrayList<>(), null),
+                    () -> executePurchases(entry, bot, inventory, npcPos));
             return;
         }
 
@@ -333,10 +345,16 @@ public final class AgentShopService {
         }
 
         if (!itemOnlyVisit
-                && minimumMesoReserve == 0
+                && shouldBuySeedRechargeAmmoWhileShopping(bot, wt)) {
+            actions.add((sequence, shop) -> appendBuyReport(
+                    sequence, buySeedRechargeAmmo(bot, shop, wt, minimumMesoReserve),
+                    wt == WeaponType.GUN ? "bullet set" : "throwing-star set"));
+        }
+        if (!itemOnlyVisit
                 && shouldRechargeWhileShopping(bot, wt, inventory)) {
             actions.add((sequence, shop) -> {
-                AgentShopBuyReport recharge = doRecharge(bot, shop, wt, sequence.inventory());
+                AgentShopBuyReport recharge = doRecharge(
+                        bot, shop, wt, sequence.inventory(), minimumMesoReserve);
                 if (recharge.quantity() > 0) {
                     int recharged = recharge.quantity();
                     String ammoName = wt == WeaponType.GUN ? "bullets" : "throwing stars";
@@ -364,11 +382,7 @@ public final class AgentShopService {
             return;
         }
         if (index >= sequence.actions().size()) {
-            if (AgentShopStateRuntime.shopSellTrashPending(sequence.entry())) {
-                startSellTrashSequence(sequence);
-            } else {
-                finishPurchaseSequence(sequence, true);
-            }
+            finishPurchaseSequence(sequence, true);
             return;
         }
 
@@ -421,7 +435,9 @@ public final class AgentShopService {
         finish.run();
     }
 
-    private static void startSellTrashSequence(AgentShopPurchaseSequence<AgentRuntimeEntry> sequence) {
+    private static void startSellTrashSequence(
+            AgentShopPurchaseSequence<AgentRuntimeEntry> sequence,
+            Runnable afterSale) {
         List<Item> items = AgentInventorySellTrashService.collectSellTrashEquips(
                 sequence.entry(), sequence.bot(), sequence.inventory());
         List<AgentEtcSaleCandidate> etcPlan =
@@ -431,16 +447,16 @@ public final class AgentShopService {
         if (items.isEmpty() && etcPlan.isEmpty()) {
             AgentShopStateRuntime.setShopSellTrashPending(sequence.entry(), false);
             AgentShopRuntime.sayMapNow(sequence.bot(), AgentDialogueCatalog.shopNoTrashEquipsReply());
-            finishPurchaseSequence(sequence, false);
+            afterSale.run();
             return;
         }
 
         if (items.isEmpty()) {
             scheduleShopStep(sequence.entry(), SELL_TRASH_STEP_DELAY_MS,
                     () -> runEtcSaleStep(
-                            sequence.entry(), sequence.bot(), sequence.npcPos(), 0, 0, 0,
-                            etcPlan, sequence.bought(), sequence.firstShortfall(),
-                            sequence.inventory()));
+                             sequence.entry(), sequence.bot(), sequence.npcPos(), 0, 0, 0,
+                             etcPlan, sequence.bought(), sequence.firstShortfall(),
+                             sequence.inventory(), afterSale));
             return;
         }
 
@@ -454,14 +470,24 @@ public final class AgentShopService {
                         Collections.newSetFromMap(new IdentityHashMap<>()),
                         plan,
                         etcPlan,
-                        sequence.bought(),
-                        sequence.firstShortfall(),
-                        sequence.inventory()));
+                         sequence.bought(),
+                         sequence.firstShortfall(),
+                         sequence.inventory(),
+                         afterSale));
     }
 
-    private static void runSellTrashStep(AgentRuntimeEntry entry, Character bot, Point npcPos, int soldCount, Set<Item> failedItems, List<Item> plan,
-                                         List<AgentEtcSaleCandidate> etcPlan,
-                                         List<String> bought, AgentShopBuyReport firstShortfall, InventoryGateway inventory) {
+    private static void runSellTrashStep(
+            AgentRuntimeEntry entry,
+            Character bot,
+            Point npcPos,
+            int soldCount,
+            Set<Item> failedItems,
+            List<Item> plan,
+            List<AgentEtcSaleCandidate> etcPlan,
+            List<String> bought,
+            AgentShopBuyReport firstShortfall,
+            InventoryGateway inventory,
+            Runnable afterSale) {
         if (!isShopSequenceValid(entry, bot, npcPos)) {
             abortShop(entry, bot, AgentDialogueCatalog.shopSellInterruptedReply());
             return;
@@ -478,11 +504,11 @@ public final class AgentShopService {
                 scheduleShopStep(entry, SELL_TRASH_STEP_DELAY_MS,
                         () -> runEtcSaleStep(entry, bot, npcPos, soldCount,
                                 failedItems.size(), 0, etcPlan, bought, firstShortfall,
-                                inventory));
+                                inventory, afterSale));
                 return;
             }
             finishSellTrashSequence(entry, bot, inventory, npcPos, soldCount,
-                    failedItems.size(), bought, firstShortfall);
+                    failedItems.size(), bought, firstShortfall, afterSale);
             return;
         }
 
@@ -490,13 +516,13 @@ public final class AgentShopService {
         if (!AgentInventoryReservationRuntime.mayConsume(entry, item, System.currentTimeMillis())) {
             scheduleShopStep(entry, SELL_TRASH_STEP_DELAY_MS,
                     () -> runSellTrashStep(entry, bot, npcPos, soldCount, failedItems,
-                            plan, etcPlan, bought, firstShortfall, inventory));
+                            plan, etcPlan, bought, firstShortfall, inventory, afterSale));
             return;
         }
         if (!AgentInventoryItemPolicy.hasItem(bot, item)) {
             scheduleShopStep(entry, SELL_TRASH_STEP_DELAY_MS,
                     () -> runSellTrashStep(entry, bot, npcPos, soldCount, failedItems,
-                            plan, etcPlan, bought, firstShortfall, inventory));
+                            plan, etcPlan, bought, firstShortfall, inventory, afterSale));
             return;
         }
 
@@ -516,14 +542,14 @@ public final class AgentShopService {
             failedItems.add(item);
             scheduleShopStep(entry, SELL_TRASH_STEP_DELAY_MS,
                     () -> runSellTrashStep(entry, bot, npcPos, soldCount, failedItems,
-                            plan, etcPlan, bought, firstShortfall, inventory));
+                            plan, etcPlan, bought, firstShortfall, inventory, afterSale));
             return;
         }
 
         int nextSoldCount = soldCount + 1;
         scheduleShopStep(entry, SELL_TRASH_STEP_DELAY_MS,
                 () -> runSellTrashStep(entry, bot, npcPos, nextSoldCount, failedItems,
-                        plan, etcPlan, bought, firstShortfall, inventory));
+                        plan, etcPlan, bought, firstShortfall, inventory, afterSale));
     }
 
     private static void runEtcSaleStep(
@@ -536,14 +562,15 @@ public final class AgentShopService {
             List<AgentEtcSaleCandidate> plan,
             List<String> bought,
             AgentShopBuyReport firstShortfall,
-            InventoryGateway inventory) {
+            InventoryGateway inventory,
+            Runnable afterSale) {
         if (!isShopSequenceValid(entry, bot, npcPos)) {
             abortShop(entry, bot, AgentDialogueCatalog.shopSellInterruptedReply());
             return;
         }
         if (index >= plan.size()) {
             finishSellTrashSequence(entry, bot, inventory, npcPos, soldCount,
-                    failedCount, bought, firstShortfall);
+                    failedCount, bought, firstShortfall, afterSale);
             return;
         }
 
@@ -558,7 +585,7 @@ public final class AgentShopService {
         if (!AgentInventoryItemPolicy.hasItem(bot, item) || quantity <= 0) {
             scheduleShopStep(entry, SELL_TRASH_STEP_DELAY_MS,
                     () -> runEtcSaleStep(entry, bot, npcPos, soldCount, failedCount,
-                            index + 1, plan, bought, firstShortfall, inventory));
+                            index + 1, plan, bought, firstShortfall, inventory, afterSale));
             return;
         }
 
@@ -578,9 +605,9 @@ public final class AgentShopService {
         int after = bot.getInventory(InventoryType.ETC).countById(item.getItemId());
         int sold = Math.max(0, before - after);
         scheduleShopStep(entry, SELL_TRASH_STEP_DELAY_MS,
-                () -> runEtcSaleStep(entry, bot, npcPos, soldCount + sold,
-                        sold > 0 ? failedCount : failedCount + 1,
-                        index + 1, plan, bought, firstShortfall, inventory));
+                 () -> runEtcSaleStep(entry, bot, npcPos, soldCount + sold,
+                         sold > 0 ? failedCount : failedCount + 1,
+                         index + 1, plan, bought, firstShortfall, inventory, afterSale));
     }
 
     private static void finishSellTrashSequence(
@@ -591,7 +618,8 @@ public final class AgentShopService {
             int soldCount,
             int failedCount,
             List<String> bought,
-            AgentShopBuyReport firstShortfall) {
+            AgentShopBuyReport firstShortfall,
+            Runnable afterSale) {
         AgentShopStateRuntime.setShopSellTrashPending(entry, false);
         if (soldCount > 0) {
             AgentShopRuntime.sayMapNow(bot, AgentDialogueCatalog.shopSoldTrashReply(soldCount));
@@ -602,8 +630,7 @@ public final class AgentShopService {
         } else if (soldCount == 0) {
             AgentShopRuntime.sayMapNow(bot, AgentDialogueCatalog.shopNoTrashEquipsReply());
         }
-        finishPurchaseSequence(new AgentShopPurchaseSequence<>(
-                entry, bot, inventory, npcPos, List.of(), bought, firstShortfall), false);
+        afterSale.run();
     }
 
     private static AgentShopPurchaseSequence<AgentRuntimeEntry> appendBuyReport(
@@ -652,6 +679,11 @@ public final class AgentShopService {
         return needsRechargeForShop(bot, wt, ammoTriggerThreshold(), inventory);
     }
 
+    static boolean shouldBuySeedRechargeAmmoWhileShopping(Character bot, WeaponType wt) {
+        return AgentShopAmmoPolicy.needsSeedRechargeAmmo(
+                wt, AgentCombatAmmoCounter.countAmmo(bot, wt));
+    }
+
     static boolean shouldBuyFixedAmmoWhileShopping(Character bot, WeaponType wt) {
         return AgentShopAmmoPolicy.shouldBuyFixedAmmo(wt, AgentCombatAmmoCounter.countAmmo(bot, wt),
                 ammoTargetThreshold());
@@ -682,6 +714,34 @@ public final class AgentShopService {
         return best;
     }
 
+    private static ShopSlotItem findSeedRechargeAmmoItem(Shop shop, WeaponType wt) {
+        List<ShopItem> items = shop.getItems();
+        ShopSlotItem best = null;
+        for (int i = 0; i < items.size(); i++) {
+            ShopItem item = items.get(i);
+            if (item.getPrice() <= 0
+                    || !AgentShopAmmoPolicy.matchesRechargeWeapon(item.getItemId(), wt)) {
+                continue;
+            }
+            if (best == null || item.getPrice() < best.shopItem.getPrice()) {
+                best = new ShopSlotItem((short) i, item, null);
+            }
+        }
+        return best;
+    }
+
+    private static boolean needsSeedRechargeAmmoForShop(
+            Character bot, Shop shop, WeaponType wt) {
+        return shouldBuySeedRechargeAmmoWhileShopping(bot, wt)
+                && (shop == null || findSeedRechargeAmmoItem(shop, wt) != null);
+    }
+
+    private static AgentShopBuyReport buySeedRechargeAmmo(
+            Character bot, Shop shop, WeaponType wt, int minimumMesoReserve) {
+        return buyFixedCostItem(bot, shop, findSeedRechargeAmmoItem(shop, wt),
+                1, 1, minimumMesoReserve);
+    }
+
     private static AgentShopBuyReport buyAmmo(
             Character bot, Shop shop, WeaponType wt, int minimumMesoReserve) {
         ShopSlotItem ammo = findAmmoItem(shop, wt);
@@ -699,7 +759,12 @@ public final class AgentShopService {
         return AgentShopAmmoPolicy.matchesRechargeWeapon(itemId, wt);
     }
 
-    private static AgentShopBuyReport doRecharge(Character bot, Shop shop, WeaponType wt, InventoryGateway inventory) {
+    private static AgentShopBuyReport doRecharge(
+            Character bot,
+            Shop shop,
+            WeaponType wt,
+            InventoryGateway inventory,
+            int minimumMesoReserve) {
         // Only recharge ammo matching the equipped weapon (claw->stars, gun->bullets) and only
         // the best stacks by attack: recharging off-weapon or low-tier leftovers just wastes meso,
         // and an off-weapon failure must never short-circuit the real ammo refill.
@@ -725,7 +790,8 @@ public final class AgentShopService {
             if (recharged >= RECHARGE_MAX_SETS) {
                 break;
             }
-            Shop.TransactionResult result = AgentShopGatewayRuntime.shop().recharge(bot, shop, item.getPosition());
+            Shop.TransactionResult result = AgentShopGatewayRuntime.shop().recharge(
+                    bot, shop, item.getPosition(), minimumMesoReserve);
             if (result == Shop.TransactionResult.SUCCESS) {
                 recharged++;
                 attempted++;

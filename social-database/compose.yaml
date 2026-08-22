@@ -1,0 +1,21 @@
+services:
+  social-postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${SOCIAL_DB_NAME:-cosmic_social}
+      POSTGRES_USER: ${SOCIAL_DB_USER:-cosmic_social}
+      POSTGRES_PASSWORD: ${SOCIAL_DB_PASSWORD:?Set SOCIAL_DB_PASSWORD}
+    ports:
+      - "127.0.0.1:${SOCIAL_DB_PORT:-5434}:5432"
+    volumes:
+      - social-postgres-data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  social-postgres-data:

@@ -115,6 +115,10 @@ final class AgentHuntRecoveryState {
                     && nowMs - lastRelevantDamageAtMs < graceMs;
         }
 
+        synchronized long lastRelevantDamageAtMs() {
+            return lastRelevantDamageAtMs > 0L ? lastRelevantDamageAtMs : -1L;
+        }
+
         synchronized boolean hardKillGraceElapsed(long nowMs, long graceMs) {
             return firstRelevantDamageAtMs > 0L
                     && nowMs - firstRelevantDamageAtMs >= graceMs;

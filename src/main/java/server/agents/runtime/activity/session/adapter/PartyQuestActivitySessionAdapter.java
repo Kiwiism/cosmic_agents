@@ -92,7 +92,7 @@ public final class PartyQuestActivitySessionAdapter
                     AgentActivityKind.PARTY_QUEST, phase, engagement.engagementId(),
                     Integer.toString(characterId), engagement.failure(),
                     phase == AgentActivityPhase.FAILED, engagement.startedAtMs(),
-                    Math.max(nowMs, engagement.lastProgressAtMs()),
+                    Math.max(engagement.startedAtMs(), engagement.lastProgressAtMs()),
                     Map.of("questKey", engagement.questKey(),
                             "partySize", engagement.memberIds().size()));
         }
@@ -105,7 +105,7 @@ public final class PartyQuestActivitySessionAdapter
                 AgentActivityKind.PARTY_QUEST, phase, session.sessionId(),
                 Integer.toString(characterId), session.failure(),
                 phase == AgentActivityPhase.FAILED, session.startedAtMs(),
-                Math.max(nowMs, session.lastProgressAtMs()),
+                Math.max(session.startedAtMs(), session.lastProgressAtMs()),
                 Map.of("partySize", session.memberCount(), "mode", session.mode().name()));
     }
 

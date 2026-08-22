@@ -17,6 +17,7 @@ import server.agents.runtime.activity.AgentActivityBootstrap;
 import server.agents.runtime.activity.AgentActivityOwnershipReconciliation;
 import server.agents.runtime.activity.control.AgentWorldDirectorModeRestoreRuntime;
 import server.agents.runtime.activity.world.AgentFileWorldDirectorSessionStore;
+import server.agents.behavior.AgentBehaviorAdaptationPersistenceRuntime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -88,6 +89,8 @@ public final class AgentRegistrationCoordinator {
         long nowMs = System.currentTimeMillis();
         AgentCareerBuildBundle bundle = AgentCareerBuildBundleService.restoreOrAssign(entry, nowMs);
         AgentPersonalityRuntime.restoreOrAssign(entry, false, nowMs);
+        AgentBehaviorAdaptationPersistenceRuntime.hydrateSession(
+                entry, agent.getId(), nowMs);
         AgentObjectiveCheckpointRuntime.restore(entry);
         AgentCareerProgressionCheckpointRuntime.restore(entry, bundle);
         AgentPlanCheckpointRuntime.restore(entry);
