@@ -73,6 +73,21 @@ class AgentWorldDirectorPanelFacadeTest {
         assertTrue(directives.list(27).isEmpty());
     }
 
+    @Test
+    void acceptsKpqLobbyDirectiveNowThatItsAdmissionOwnerIsConnected() {
+        AgentFileWorldDirectorSessionStore sessions =
+                new AgentFileWorldDirectorSessionStore(directory.resolve("sessions"));
+        AgentFileWorldDirectiveInbox directives =
+                new AgentFileWorldDirectiveInbox(directory.resolve("directives"));
+        AgentWorldDirectorPanelFacade panel = panel(sessions, directives);
+        panel.setMode(27, AgentWorldDirectorMode.MANUAL, "operator", 1_000L);
+        AgentWorldDirective kpq = directive("kpq", AgentActivityKind.PARTY_QUEST,
+                AgentWorldActivityRequestType.PARTY_QUEST_VISIT, Map.of(
+                        "scenarioId", "kpq", "partySize", "4", "maximumRuns", "1"));
+
+        assertTrue(panel.preview(kpq, 1_001L).accepted());
+    }
+
     private AgentWorldDirectorPanelFacade panel(
             AgentFileWorldDirectorSessionStore sessions,
             AgentFileWorldDirectiveInbox directives) {

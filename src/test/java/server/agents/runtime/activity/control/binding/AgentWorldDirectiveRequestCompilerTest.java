@@ -51,7 +51,7 @@ class AgentWorldDirectiveRequestCompilerTest {
         assertEquals(AgentActivityKind.PARTY_QUEST,
                 compiler.compile(directive(AgentActivityKind.PARTY_QUEST,
                         AgentWorldActivityRequestType.PARTY_QUEST_VISIT, Map.of(
-                                "scenarioId", "kpq", "partySize", "4", "maximumRuns", "3"))).kind());
+                                "scenarioId", "kpq", "partySize", "4", "maximumRuns", "1"))).kind());
     }
 
     @Test
@@ -63,6 +63,9 @@ class AgentWorldDirectiveRequestCompilerTest {
         assertThrows(IllegalArgumentException.class, () -> compiler.compile(directive(
                 AgentActivityKind.HUNTING, AgentWorldActivityRequestType.FIELD_VISIT,
                 Map.of("mapId", "100000001"))));
+        assertThrows(IllegalArgumentException.class, () -> compiler.compile(directive(
+                AgentActivityKind.PARTY_QUEST, AgentWorldActivityRequestType.PARTY_QUEST_VISIT,
+                Map.of("scenarioId", "kpq", "partySize", "4", "maximumRuns", "2"))));
     }
 
     private AgentWorldDirective directive(

@@ -105,10 +105,22 @@ public final class AgentWorldDirectiveRequestCompiler {
 
     private AgentWorldTypedActivityRequest partyQuest(AgentWorldDirective directive) {
         Map<String, String> values = directive.parameters();
+        String scenarioId = required(values, "scenarioId");
+        int partySize = positiveInt(values, "partySize");
+        int maximumRuns = positiveInt(values, "maximumRuns");
+        if (!"kpq".equalsIgnoreCase(scenarioId)) {
+            throw new IllegalArgumentException("only the KPQ lobby is currently available");
+        }
+        if (partySize < 3 || partySize > 4) {
+            throw new IllegalArgumentException("KPQ partySize must be three or four");
+        }
+        if (maximumRuns != 1) {
+            throw new IllegalArgumentException("KPQ maximumRuns must be one");
+        }
         return new AgentWorldTypedActivityRequest.PartyQuest(
                 new AgentWorldTypedActivityRequest.AgentPartyQuestVisitRequest(
-                        directive.directiveId(), caller(directive), required(values, "scenarioId"),
-                        positiveInt(values, "partySize"), positiveInt(values, "maximumRuns")));
+                        directive.directiveId(), caller(directive), scenarioId,
+                        partySize, maximumRuns));
     }
 
     private String caller(AgentWorldDirective directive) {

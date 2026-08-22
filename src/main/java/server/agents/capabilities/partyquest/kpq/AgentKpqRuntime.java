@@ -21,7 +21,10 @@ public final class AgentKpqRuntime {
 
     public static boolean tick(AgentRuntimeEntry entry, Character agent, long nowMs) {
         AgentKpqSession session = AgentKpqSessionRegistry.forMember(agent.getId());
-        if (session == null) return AgentPartyQuestLifecycleRuntime.tick(agent.getId(), nowMs);
+        if (session == null) {
+            AgentKpqLobbyAdmissionRuntime.tick(agent.getId(), nowMs);
+            return AgentPartyQuestLifecycleRuntime.tick(agent.getId(), nowMs);
+        }
         if (session.paused()) return true;
         int previousCoordinator = session.coordinatorAgentId();
         if (!session.claimCoordinatorTick(agent.getId(), nowMs, COORDINATOR_LEASE_MS)) return true;
@@ -37,7 +40,10 @@ public final class AgentKpqRuntime {
     public static boolean requestStop(int characterId, String reason, long nowMs) {
         AgentKpqSession session = AgentKpqSessionRegistry.forMember(characterId);
         if (session == null) {
-            return AgentPartyQuestLifecycleRuntime.requestStop(characterId, reason, nowMs);
+            AgentKpqLobbyAdmissionRuntime.releaseTracking(characterId);
+            boolean stopped = AgentPartyQuestLifecycleRuntime.requestStop(
+                    characterId, reason, nowMs);
+            return stopped;
         }
         boolean safe = session.phase() == AgentKpqSession.Phase.COMPLETED
                 || session.phase() == AgentKpqSession.Phase.FAILED;
@@ -53,7 +59,10 @@ public final class AgentKpqRuntime {
 
     public static void forceStop(int characterId, String reason, long nowMs) {
         AgentKpqSession session = AgentKpqSessionRegistry.forMember(characterId);
-        if (session == null) AgentPartyQuestLifecycleRuntime.forceStop(characterId, reason, nowMs);
+        if (session == null) {
+            AgentKpqLobbyAdmissionRuntime.releaseTracking(characterId);
+            AgentPartyQuestLifecycleRuntime.forceStop(characterId, reason, nowMs);
+        }
         else AgentKpqTerminationService.fail(session, reason, nowMs);
     }
 
@@ -62,6 +71,7 @@ public final class AgentKpqRuntime {
         if (session != null) {
             AgentKpqTerminationService.fail(session, "Agent runtime was removed", nowMs);
         } else {
+            AgentKpqLobbyAdmissionRuntime.releaseTracking(characterId);
             AgentPartyQuestLifecycleRuntime.runtimeRemoved(
                     characterId, "Agent runtime was removed", nowMs);
         }

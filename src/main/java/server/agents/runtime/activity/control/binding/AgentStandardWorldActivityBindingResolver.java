@@ -1,20 +1,24 @@
 package server.agents.runtime.activity.control.binding;
 
 import client.Character;
+import server.agents.capabilities.partyquest.kpq.AgentKpqDefinition;
+import server.agents.capabilities.partyquest.kpq.AgentKpqLobbyAdmissionRuntime;
 import server.agents.capabilities.townlife.AgentTownLifeAdmissionMode;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.activity.control.facade.AgentLiveActivityFacade;
 import server.agents.runtime.activity.control.facade.AgentLiveActivityFacadeRegistry;
-import server.agents.runtime.activity.session.AgentActivityAdmissionResult;
 import server.agents.runtime.activity.session.AgentActivityExitResult;
 import server.agents.runtime.activity.session.AgentActivityKind;
 import server.agents.runtime.activity.session.AgentActivityRollbackPort;
 import server.agents.runtime.activity.session.AgentActivitySessionSnapshot;
 import server.agents.runtime.activity.session.AgentActivitySourcePort;
 import server.agents.runtime.activity.session.adapter.FieldActivitySessionAdapter;
+import server.agents.runtime.activity.session.adapter.PartyQuestActivitySessionAdapter;
 import server.agents.runtime.activity.session.adapter.QuestPlanActivitySessionAdapter;
 import server.agents.runtime.activity.session.adapter.TownLifeActivitySessionAdapter;
 import server.agents.runtime.field.AgentFieldAdmissionMode;
+import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
+import server.agents.progression.AgentVictoriaRouteRuntime;
 
 import java.util.Set;
 
@@ -23,7 +27,7 @@ public final class AgentStandardWorldActivityBindingResolver
         implements AgentWorldActivityBindingResolver {
     private static final Set<AgentActivityKind> SUPPORTED = Set.of(
             AgentActivityKind.QUESTING, AgentActivityKind.HUNTING,
-            AgentActivityKind.TOWN_LIFE);
+            AgentActivityKind.TOWN_LIFE, AgentActivityKind.PARTY_QUEST);
 
     private final AgentWorldDirectiveRequestCompiler compiler;
     private final AgentLiveActivityFacadeRegistry facades;
@@ -71,6 +75,23 @@ public final class AgentStandardWorldActivityBindingResolver
             return binding(source, rollback, target, target, agent,
                     hunting.request().visit().mapId());
         }
+        if (request instanceof AgentWorldTypedActivityRequest.PartyQuest partyQuest) {
+            AgentWorldTypedActivityRequest.AgentPartyQuestVisitRequest visit =
+                    partyQuest.request();
+            PartyQuestActivitySessionAdapter target = new PartyQuestActivitySessionAdapter(
+                    agent.getId(), nowMs -> AgentKpqLobbyAdmissionRuntime.requestEntry(
+                    entry, agent, visit.scenarioId(), visit.partySize(),
+                    visit.maximumRuns(), nowMs));
+            return new AgentWorldActivityBinding(source,
+                    (agentId, kind, nowMs) -> {
+                        String blocker = AgentKpqLobbyAdmissionRuntime.blocker(
+                                agent, visit.scenarioId(), visit.partySize(), visit.maximumRuns());
+                        return blocker.isEmpty()
+                                ? server.agents.runtime.activity.session.AgentActivityPreflightPort.Result.allowed()
+                                : server.agents.runtime.activity.session.AgentActivityPreflightPort.Result.blocked(blocker);
+                    },
+                    nowMs -> kpqTransfer(entry, agent, nowMs), target, rollback, target);
+        }
         AgentWorldTypedActivityRequest.TownLife town =
                 (AgentWorldTypedActivityRequest.TownLife) request;
         TownLifeActivitySessionAdapter target = new TownLifeActivitySessionAdapter(
@@ -78,6 +99,21 @@ public final class AgentStandardWorldActivityBindingResolver
                 agent.getId());
         return binding(source, rollback, target, target, agent,
                 town.request().visit().townMapId());
+    }
+
+    private server.agents.runtime.activity.session.AgentActivityTransferPort.Result kpqTransfer(
+            AgentRuntimeEntry entry, Character agent, long nowMs) {
+        AgentVictoriaRouteRuntime.TravelOutcome outcome = AgentVictoriaRouteRuntime.travelStatus(
+                entry, agent, AgentKpqDefinition.RECRUIT_MAP,
+                AgentPrimitiveCapabilityGatewayRuntime.gateway(), nowMs);
+        return switch (outcome.status()) {
+            case ARRIVED -> server.agents.runtime.activity.session.AgentActivityTransferPort.Result.ready();
+            case MOVING, PORTAL_UNAVAILABLE ->
+                    server.agents.runtime.activity.session.AgentActivityTransferPort.Result.pending(
+                            "traveling normally to the Kerning KPQ lobby", nowMs + 500L);
+            case NO_ROUTE -> server.agents.runtime.activity.session.AgentActivityTransferPort.Result.failed(
+                    "no Victoria route reaches the Kerning KPQ lobby");
+        };
     }
 
     private AgentWorldActivityBinding binding(
