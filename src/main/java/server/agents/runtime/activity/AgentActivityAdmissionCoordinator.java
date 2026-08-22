@@ -42,6 +42,41 @@ public final class AgentActivityAdmissionCoordinator {
         return true;
     }
 
+    /** Admits a child owned by an already-active primary without stopping that parent. */
+    public boolean prepareDelegated(
+            String parentControllerId,
+            String childControllerId,
+            AgentRuntimeEntry entry,
+            Character agent,
+            String reason,
+            long nowMs) {
+        if (parentControllerId == null || parentControllerId.isBlank()
+                || childControllerId == null || childControllerId.isBlank()
+                || parentControllerId.equals(childControllerId)) {
+            return false;
+        }
+        AgentActivityController parent = registry.find(parentControllerId).orElseThrow(() ->
+                new IllegalArgumentException("Unknown parent activity controller: "
+                        + parentControllerId));
+        AgentActivityController child = registry.find(childControllerId).orElseThrow(() ->
+                new IllegalArgumentException("Unknown child activity controller: "
+                        + childControllerId));
+        if (!parent.exclusive() || !child.exclusive() || entry == null || agent == null
+                || !parent.active(entry, agent)) {
+            return false;
+        }
+        for (AgentActivityController controller : registry.controllers()) {
+            if (!controller.id().equals(parentControllerId)
+                    && !controller.id().equals(childControllerId)
+                    && controller.exclusive()
+                    && controller.active(entry, agent)
+                    && !controller.requestStop(entry, agent, reason, nowMs)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     /** Emergency-only replacement path; ordinary callers use {@link #prepare}. */
     public void prepareNow(
             String targetControllerId,

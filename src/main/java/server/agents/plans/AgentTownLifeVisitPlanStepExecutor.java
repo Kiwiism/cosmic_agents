@@ -11,12 +11,16 @@ import server.agents.capabilities.townlife.AgentTownLifeVisitRequest;
 import server.agents.runtime.townlife.AgentTownLifeTerminalState;
 import server.agents.runtime.townlife.AgentTownLifeVisitLeaseRequest;
 import server.agents.runtime.townlife.AgentTownLifeVisitLeaseRuntime;
+import server.agents.runtime.activity.delegation.AgentDelegatedActivityCoordinator;
+import server.agents.runtime.activity.session.AgentActivityKind;
 
 /** Reusable universal-plan step for a bounded, externally owned TownLife visit. */
 public final class AgentTownLifeVisitPlanStepExecutor implements AgentPlanStepExecutor {
     public static final String OPERATION = "town-life-visit";
     private static final long DEFAULT_GRACEFUL_TIMEOUT_MS = config.AgentTuning.longValue(
             "server.agents.plans.AgentTownLifeVisitPlanStepExecutor.DEFAULT_GRACEFUL_TIMEOUT_MS");
+    private static final AgentDelegatedActivityCoordinator DELEGATION =
+            new AgentDelegatedActivityCoordinator();
 
     @Override
     public String operation() {
@@ -76,6 +80,10 @@ public final class AgentTownLifeVisitPlanStepExecutor implements AgentPlanStepEx
         }
         context.entry().capabilityStates().require(AgentTownLifeVisitStepState.STATE_KEY)
                 .attach(attachmentKey, requestId, result.handle().sessionId());
+        if (context.entry().capabilityStates().require(AgentPlanSessionState.STATE_KEY)
+                .sessionHandle() != null) {
+            attachDelegation(context, attachmentKey, result.handle().sessionId(), 0L);
+        }
         return AgentPlanStepExecution.active(false);
     }
 
@@ -92,6 +100,7 @@ public final class AgentTownLifeVisitPlanStepExecutor implements AgentPlanStepEx
             return AgentPlanStepExecution.active(false);
         }
         AgentTownLifeVisitLeaseRuntime.clear(context.entry(), context.agent());
+        DELEGATION.release(context.entry(), "delegated TownLife visit ended");
         AgentTownLifeTerminalState.Snapshot terminal = context.entry().capabilityStates()
                 .require(AgentTownLifeTerminalState.STATE_KEY).snapshot();
         String sessionId = state.sessionId();
@@ -116,6 +125,10 @@ public final class AgentTownLifeVisitPlanStepExecutor implements AgentPlanStepEx
         if (townState != null && townState.enabled() && requestId.equals(townState.requestId())) {
             context.entry().capabilityStates().require(AgentTownLifeVisitStepState.STATE_KEY)
                     .attach(attachmentKey, requestId, townState.sessionId());
+            if (context.entry().capabilityStates().require(AgentPlanSessionState.STATE_KEY)
+                    .sessionHandle() != null) {
+                attachDelegation(context, attachmentKey, townState.sessionId(), 0L);
+            }
             return AgentPlanStepExecution.active(false);
         }
         // TownLife and its lease checkpoints are restored before universal-plan reattachment.
@@ -142,7 +155,21 @@ public final class AgentTownLifeVisitPlanStepExecutor implements AgentPlanStepEx
             }
         }
         AgentTownLifeVisitLeaseRuntime.clear(context.entry(), context.agent());
+        DELEGATION.release(context.entry(), "owning universal plan cancelled TownLife visit");
         stepState.clear();
+    }
+
+    private static void attachDelegation(
+            AgentPlanExecutionContext context,
+            String attachmentKey,
+            String childSessionId,
+            long deadlineMs) {
+        AgentPlanSessionHandle parent = context.entry().capabilityStates()
+                .require(AgentPlanSessionState.STATE_KEY).sessionHandle();
+        if (parent == null) throw new IllegalStateException("TownLife visit has no owning plan session");
+        DELEGATION.attach(context.entry(), attachmentKey + ":delegation",
+                AgentActivityKind.QUESTING, parent.sessionId(), AgentActivityKind.TOWN_LIFE,
+                childSessionId, context.nowMs(), deadlineMs, "universal-plan TownLife visit");
     }
 
     private static int intParameter(AgentPlanDefinition.Step step, String key, int fallback) {

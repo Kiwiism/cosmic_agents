@@ -13,6 +13,8 @@ import server.agents.runtime.field.AgentFieldTerminalState;
 import server.agents.runtime.field.AgentFieldVisitLeaseRequest;
 import server.agents.runtime.field.AgentFieldVisitLeaseRuntime;
 import server.agents.runtime.field.AgentFieldVisitRequest;
+import server.agents.runtime.activity.delegation.AgentDelegatedActivityCoordinator;
+import server.agents.runtime.activity.session.AgentActivityKind;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -25,6 +27,8 @@ public final class AgentFieldVisitPlanStepExecutor implements AgentPlanStepExecu
     public static final String OPERATION = "field-visit";
     private static final long DEFAULT_GRACEFUL_TIMEOUT_MS = config.AgentTuning.longValue(
             "server.agents.runtime.field.AgentFieldActivityRuntime.DEFAULT_GRACEFUL_EXIT_TIMEOUT_MS");
+    private static final AgentDelegatedActivityCoordinator DELEGATION =
+            new AgentDelegatedActivityCoordinator();
 
     @Override
     public String operation() { return OPERATION; }
@@ -88,8 +92,13 @@ public final class AgentFieldVisitPlanStepExecutor implements AgentPlanStepExecu
                 context.nowMs() + longParameter(context.step(), "durationMs", 0L),
                 longParameter(context.step(), "gracefulTimeoutMs", DEFAULT_GRACEFUL_TIMEOUT_MS),
                 "planned field duration elapsed");
-        AgentFieldSessionResult result = AgentFieldVisitLeaseRuntime.start(
-                context.entry(), context.agent(), lease, context.nowMs());
+        AgentPlanSessionHandle parent = context.entry().capabilityStates()
+                .require(AgentPlanSessionState.STATE_KEY).sessionHandle();
+        AgentFieldSessionResult result = parent == null
+                ? AgentFieldVisitLeaseRuntime.start(
+                        context.entry(), context.agent(), lease, context.nowMs())
+                : AgentFieldVisitLeaseRuntime.startDelegated(
+                        context.entry(), context.agent(), lease, context.nowMs());
         if (!result.started()
                 && result.status() != AgentFieldSessionResult.Status.ALREADY_ACTIVE_SAME_REQUEST) {
             return AgentPlanStepExecution.terminal(AgentPlanExecutionStatus.BLOCKED,
@@ -97,6 +106,9 @@ public final class AgentFieldVisitPlanStepExecutor implements AgentPlanStepExecu
         }
         context.entry().capabilityStates().require(AgentFieldVisitStepState.STATE_KEY)
                 .attach(attachmentKey, requestId, result.handle().sessionId());
+        if (parent != null) {
+            attachDelegation(context, attachmentKey, result.handle().sessionId(), 0L);
+        }
         return AgentPlanStepExecution.active(false);
     }
 
@@ -111,6 +123,7 @@ public final class AgentFieldVisitPlanStepExecutor implements AgentPlanStepExecu
             return AgentPlanStepExecution.active(false);
         }
         AgentFieldVisitLeaseRuntime.clear(context.entry(), context.agent());
+        DELEGATION.release(context.entry(), "delegated field visit ended");
         AgentFieldTerminalState.Snapshot terminal = context.entry().capabilityStates()
                 .require(AgentFieldTerminalState.STATE_KEY).snapshot();
         String sessionId = stepState.sessionId();
@@ -133,6 +146,10 @@ public final class AgentFieldVisitPlanStepExecutor implements AgentPlanStepExecu
         if (field.active() && requestId.equals(field.handle().requestId())) {
             context.entry().capabilityStates().require(AgentFieldVisitStepState.STATE_KEY)
                     .attach(attachmentKey, requestId, field.handle().sessionId());
+            if (context.entry().capabilityStates().require(AgentPlanSessionState.STATE_KEY)
+                    .sessionHandle() != null) {
+                attachDelegation(context, attachmentKey, field.handle().sessionId(), 0L);
+            }
             return AgentPlanStepExecution.active(false);
         }
         context.entry().capabilityStates().require(AgentFieldVisitStepState.STATE_KEY).clear();
@@ -152,7 +169,21 @@ public final class AgentFieldVisitPlanStepExecutor implements AgentPlanStepExecu
                             "owning universal plan was cancelled", context.nowMs()));
         }
         AgentFieldVisitLeaseRuntime.clear(context.entry(), context.agent());
+        DELEGATION.release(context.entry(), "owning universal plan cancelled field visit");
         step.clear();
+    }
+
+    private static void attachDelegation(
+            AgentPlanExecutionContext context,
+            String attachmentKey,
+            String childSessionId,
+            long deadlineMs) {
+        AgentPlanSessionHandle parent = context.entry().capabilityStates()
+                .require(AgentPlanSessionState.STATE_KEY).sessionHandle();
+        if (parent == null) throw new IllegalStateException("field visit has no owning plan session");
+        DELEGATION.attach(context.entry(), attachmentKey + ":delegation",
+                AgentActivityKind.QUESTING, parent.sessionId(), AgentActivityKind.HUNTING,
+                childSessionId, context.nowMs(), deadlineMs, "universal-plan field visit");
     }
 
     private static AgentPlanValidationException invalid(

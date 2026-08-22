@@ -10,6 +10,20 @@ public final class AgentFieldVisitLeaseRuntime {
 
     public static AgentFieldSessionResult start(
             AgentRuntimeEntry entry, Character agent, AgentFieldVisitLeaseRequest request, long nowMs) {
+        return start(entry, agent, request, false, nowMs);
+    }
+
+    public static AgentFieldSessionResult startDelegated(
+            AgentRuntimeEntry entry, Character agent, AgentFieldVisitLeaseRequest request, long nowMs) {
+        return start(entry, agent, request, true, nowMs);
+    }
+
+    private static AgentFieldSessionResult start(
+            AgentRuntimeEntry entry,
+            Character agent,
+            AgentFieldVisitLeaseRequest request,
+            boolean delegated,
+            long nowMs) {
         if (entry == null || agent == null || request == null) {
             return new AgentFieldSessionResult(
                     AgentFieldSessionResult.Status.REJECTED_INVALID_REQUEST, null,
@@ -18,8 +32,11 @@ public final class AgentFieldVisitLeaseRuntime {
         if (request.exitAtMs() <= nowMs) {
             throw new IllegalArgumentException("field lease exit must be in the future");
         }
-        AgentFieldSessionResult result = AgentFieldActivityRuntime.requestSession(
-                entry, agent, request.entryRequest(), request.admissionMode(), nowMs);
+        AgentFieldSessionResult result = delegated
+                ? AgentFieldActivityRuntime.requestDelegatedSession(
+                        entry, agent, request.entryRequest(), request.admissionMode(), nowMs)
+                : AgentFieldActivityRuntime.requestSession(
+                        entry, agent, request.entryRequest(), request.admissionMode(), nowMs);
         AgentFieldVisitLeaseState state = entry.capabilityStates()
                 .require(AgentFieldVisitLeaseState.STATE_KEY);
         boolean initialize = result.status() == AgentFieldSessionResult.Status.STARTED

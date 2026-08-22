@@ -12,6 +12,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.activity.session.AgentActivityKind;
 import server.agents.runtime.activity.session.AgentFileActivityHandoffStore;
 import server.agents.runtime.activity.session.AgentRestoredHandoffOwnerResolver;
+import server.agents.runtime.activity.delegation.AgentDelegatedActivityCoordinator;
 import server.agents.runtime.field.AgentFieldActivityRuntime;
 import server.agents.runtime.field.AgentFieldVisitLeaseRuntime;
 import server.agents.runtime.townlife.AgentTownLifeTestScenarioRuntime;
@@ -35,6 +36,8 @@ public final class AgentActivityBootstrap {
             new AgentActivityOwnershipReconciler(registry());
     private static final AgentRestoredHandoffOwnerResolver RESTORED_HANDOFF_OWNER =
             new AgentRestoredHandoffOwnerResolver(AgentFileActivityHandoffStore.runtimeDefault());
+    private static final AgentDelegatedActivityCoordinator DELEGATION =
+            new AgentDelegatedActivityCoordinator();
 
     private AgentActivityBootstrap() {
     }
@@ -195,7 +198,9 @@ public final class AgentActivityBootstrap {
             @Override public AgentActivityRole role() { return AgentActivityRole.PRIMARY; }
             @Override public AgentActivityKind activityKind() { return AgentActivityKind.TOWN_LIFE; }
             @Override public boolean active(AgentRuntimeEntry entry, Character agent) {
-                return AgentTownLifeRuntime.active(entry);
+                return AgentTownLifeRuntime.active(entry)
+                        && !DELEGATION.childOf(entry, AgentActivityKind.QUESTING,
+                        AgentActivityKind.TOWN_LIFE);
             }
             @Override public AgentActivityTick tick(
                     AgentRuntimeEntry entry, Character agent, long nowMs) {
@@ -230,7 +235,9 @@ public final class AgentActivityBootstrap {
             @Override public AgentActivityRole role() { return AgentActivityRole.PRIMARY; }
             @Override public AgentActivityKind activityKind() { return AgentActivityKind.HUNTING; }
             @Override public boolean active(AgentRuntimeEntry entry, Character agent) {
-                return AgentFieldActivityRuntime.active(entry);
+                return AgentFieldActivityRuntime.active(entry)
+                        && !DELEGATION.childOf(entry, AgentActivityKind.QUESTING,
+                        AgentActivityKind.HUNTING);
             }
             @Override public AgentActivityTick tick(
                     AgentRuntimeEntry entry, Character agent, long nowMs) {
@@ -258,6 +265,15 @@ public final class AgentActivityBootstrap {
             }
             @Override public AgentActivityTick tick(
                     AgentRuntimeEntry entry, Character agent, long nowMs) {
+                if (DELEGATION.childOf(entry, AgentActivityKind.QUESTING,
+                        AgentActivityKind.HUNTING, nowMs)) {
+                    AgentFieldVisitLeaseRuntime.tick(entry, agent, nowMs);
+                    AgentFieldActivityRuntime.tick(entry, agent, nowMs);
+                } else if (DELEGATION.childOf(entry, AgentActivityKind.QUESTING,
+                        AgentActivityKind.TOWN_LIFE, nowMs)) {
+                    AgentTownLifeVisitLeaseRuntime.tick(entry, agent, nowMs);
+                    AgentTownLifeRuntime.tick(entry, agent, nowMs);
+                }
                 return AgentUniversalPlanRuntime.foregroundTick(entry, agent, nowMs)
                         ? AgentActivityTick.CONSUMED : AgentActivityTick.IDLE;
             }

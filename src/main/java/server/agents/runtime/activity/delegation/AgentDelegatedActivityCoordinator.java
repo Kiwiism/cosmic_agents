@@ -38,4 +38,27 @@ public final class AgentDelegatedActivityCoordinator {
             entry.capabilityStates().require(AgentDelegatedActivityState.STATE_KEY).release(reason);
         }
     }
+
+    public boolean childOf(
+            AgentRuntimeEntry entry,
+            AgentActivityKind parentKind,
+            AgentActivityKind childKind,
+            long nowMs) {
+        if (entry == null) return false;
+        AgentDelegatedActivityState state = entry.capabilityStates()
+                .require(AgentDelegatedActivityState.STATE_KEY);
+        AgentDelegatedActivityLease lease = state.lease();
+        return lease != null && lease.parentKind() == parentKind && lease.childKind() == childKind
+                && state.retainForParent(parentKind, lease.parentSessionId(), nowMs);
+    }
+
+    public boolean childOf(
+            AgentRuntimeEntry entry,
+            AgentActivityKind parentKind,
+            AgentActivityKind childKind) {
+        if (entry == null) return false;
+        AgentDelegatedActivityLease lease = entry.capabilityStates()
+                .require(AgentDelegatedActivityState.STATE_KEY).lease();
+        return lease != null && lease.parentKind() == parentKind && lease.childKind() == childKind;
+    }
 }

@@ -104,6 +104,28 @@ class AgentActivityAdmissionCoordinatorTest {
         }
     }
 
+    @Test
+    void delegatedAdmissionRetainsItsActiveParentAndStopsUnrelatedOwners() {
+        AtomicInteger parentStops = new AtomicInteger();
+        AtomicInteger childStops = new AtomicInteger();
+        AtomicInteger unrelatedStops = new AtomicInteger();
+        AgentActivityController parent = controller("questing", AgentActivityRole.PRIMARY,
+                AgentActivityKind.QUESTING, parentStops);
+        AgentActivityController child = controller("hunting", AgentActivityRole.PRIMARY,
+                AgentActivityKind.HUNTING, childStops);
+        AgentActivityController unrelated = controller("town-life", AgentActivityRole.PRIMARY,
+                AgentActivityKind.TOWN_LIFE, unrelatedStops);
+        AgentActivityAdmissionCoordinator coordinator = new AgentActivityAdmissionCoordinator(
+                new AgentActivityControllerRegistry(List.of(parent, child, unrelated)));
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), null, null);
+
+        assertTrue(coordinator.prepareDelegated(
+                "questing", "hunting", entry, entry.bot(), "field child", 100L));
+        assertEquals(0, parentStops.get());
+        assertEquals(0, childStops.get());
+        assertEquals(1, unrelatedStops.get());
+    }
+
     private static AgentActivityController controller(
             String id, AgentActivityRole role, AgentActivityKind kind, AtomicInteger stops) {
         return new AgentActivityController() {

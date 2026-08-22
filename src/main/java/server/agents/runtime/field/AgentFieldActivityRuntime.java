@@ -35,6 +35,25 @@ public final class AgentFieldActivityRuntime {
             AgentFieldEntryRequest request,
             AgentFieldAdmissionMode admissionMode,
             long nowMs) {
+        return requestSession(entry, agent, request, admissionMode, false, nowMs);
+    }
+
+    public static AgentFieldSessionResult requestDelegatedSession(
+            AgentRuntimeEntry entry,
+            Character agent,
+            AgentFieldEntryRequest request,
+            AgentFieldAdmissionMode admissionMode,
+            long nowMs) {
+        return requestSession(entry, agent, request, admissionMode, true, nowMs);
+    }
+
+    private static AgentFieldSessionResult requestSession(
+            AgentRuntimeEntry entry,
+            Character agent,
+            AgentFieldEntryRequest request,
+            AgentFieldAdmissionMode admissionMode,
+            boolean delegated,
+            long nowMs) {
         if (entry == null || agent == null || request == null || admissionMode == null) {
             return rejected(AgentFieldSessionResult.Status.REJECTED_INVALID_REQUEST,
                     "entry, Agent, request, and admission mode are required");
@@ -61,9 +80,15 @@ public final class AgentFieldActivityRuntime {
             return rejected(AgentFieldSessionResult.Status.REJECTED_NO_SESSION,
                     "no field session exists in this map instance");
         }
-        if (!AgentActivityBootstrap.admission().prepare(
-                AgentActivityBootstrap.HUNTING_CONTROLLER_ID,
-                entry, agent, "starting managed field visit", nowMs)) {
+        boolean prepared = delegated
+                ? AgentActivityBootstrap.admission().prepareDelegated(
+                        AgentActivityBootstrap.QUESTING_CONTROLLER_ID,
+                        AgentActivityBootstrap.HUNTING_CONTROLLER_ID,
+                        entry, agent, "starting delegated field visit", nowMs)
+                : AgentActivityBootstrap.admission().prepare(
+                        AgentActivityBootstrap.HUNTING_CONTROLLER_ID,
+                        entry, agent, "starting managed field visit", nowMs);
+        if (!prepared) {
             return rejected(AgentFieldSessionResult.Status.REJECTED_FOREGROUND_BUSY,
                     "another foreground activity is still draining");
         }
