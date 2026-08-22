@@ -160,6 +160,46 @@ class AgentActivityHandoffCoordinatorTest {
         assertTrue(handoff.reason().contains("safe fallback required"));
     }
 
+    @Test
+    void destinationRejectionResumesExactSourceWhenRollbackIsAvailable() {
+        FakeSource source = new FakeSource();
+        AgentActivityHandoffCoordinator.Handoff handoff = coordinator.begin(
+                "handoff-rollback", "world-selector", AgentActivityKind.HUNTING,
+                source, ready(), 8_000L, 18_000L);
+        AgentActivityRollbackPort rollback = (sourceSessionId, nowMs) -> {
+            assertEquals("town-session", sourceSessionId);
+            return AgentActivityRollbackPort.Result.resumed("town session restored");
+        };
+
+        handoff = coordinator.advance(handoff, source,
+                now -> AgentActivityTransferPort.Result.ready(),
+                now -> AgentActivityAdmissionResult.rejected("capacity removed"),
+                rollback, 8_000L);
+        source.release();
+        handoff = coordinator.advance(handoff, source,
+                now -> AgentActivityTransferPort.Result.ready(),
+                now -> AgentActivityAdmissionResult.rejected("capacity removed"),
+                rollback, 8_250L);
+        handoff = coordinator.advance(handoff, source,
+                now -> AgentActivityTransferPort.Result.ready(),
+                now -> AgentActivityAdmissionResult.rejected("capacity removed"),
+                rollback, 8_250L);
+        handoff = coordinator.advance(handoff, source,
+                now -> AgentActivityTransferPort.Result.ready(),
+                now -> AgentActivityAdmissionResult.rejected("capacity removed"),
+                rollback, 8_250L);
+
+        assertEquals(AgentActivityHandoffCoordinator.Phase.ROLLBACK_SOURCE, handoff.phase());
+        handoff = coordinator.advance(handoff, source,
+                now -> AgentActivityTransferPort.Result.ready(),
+                now -> AgentActivityAdmissionResult.rejected("unused"),
+                rollback, 8_251L);
+
+        assertEquals(AgentActivityHandoffCoordinator.Phase.ROLLED_BACK, handoff.phase());
+        assertTrue(handoff.terminal());
+        assertFalse(handoff.requiresSafeFallback());
+    }
+
     private static AgentActivityPreflightPort ready() {
         return (agentId, kind, nowMs) -> AgentActivityPreflightPort.Result.allowed();
     }

@@ -60,6 +60,22 @@ public final class AgentPersistentActivityHandoffCoordinator {
         return next;
     }
 
+    public AgentActivityHandoffCoordinator.Handoff advance(
+            String handoffId,
+            AgentActivitySourcePort source,
+            AgentActivityTransferPort transfer,
+            AgentActivityTargetPort target,
+            AgentActivityRollbackPort rollback,
+            long nowMs) {
+        AgentActivityHandoffCoordinator.Handoff current = store.load(handoffId)
+                .orElseThrow(() -> new IllegalStateException(
+                        "no persisted activity handoff " + handoffId));
+        AgentActivityHandoffCoordinator.Handoff next = coordinator.advance(
+                current, source, transfer, target, rollback, nowMs);
+        store.save(next);
+        return next;
+    }
+
     public java.util.Optional<AgentActivityHandoffCoordinator.Handoff> restore(String handoffId) {
         return store.load(handoffId);
     }

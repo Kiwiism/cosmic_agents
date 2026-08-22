@@ -92,6 +92,43 @@ class AgentPersistentActivityHandoffCoordinatorTest {
                 1_200L, 10_000L));
     }
 
+    @Test
+    void rollbackPhaseSurvivesCoordinatorRestart() {
+        AgentPersistentActivityHandoffCoordinator coordinator =
+                new AgentPersistentActivityHandoffCoordinator(
+                        new AgentFileActivityHandoffStore(directory));
+        FakeReleasableSource source = new FakeReleasableSource();
+        coordinator.begin("rollback-restart", "world-director", AgentActivityKind.HUNTING,
+                source, (agentId, kind, nowMs) -> AgentActivityPreflightPort.Result.allowed(),
+                2_000L, 12_000L);
+        AgentActivityRollbackPort rollback = (sessionId, nowMs) ->
+                AgentActivityRollbackPort.Result.resumed("restored");
+        coordinator.advance("rollback-restart", source,
+                now -> AgentActivityTransferPort.Result.ready(),
+                now -> AgentActivityAdmissionResult.rejected("capacity"), rollback, 2_000L);
+        source.active = false;
+        coordinator.advance("rollback-restart", source,
+                now -> AgentActivityTransferPort.Result.ready(),
+                now -> AgentActivityAdmissionResult.rejected("capacity"), rollback, 2_250L);
+        coordinator.advance("rollback-restart", source,
+                now -> AgentActivityTransferPort.Result.ready(),
+                now -> AgentActivityAdmissionResult.rejected("capacity"), rollback, 2_250L);
+        AgentActivityHandoffCoordinator.Handoff rollingBack = coordinator.advance(
+                "rollback-restart", source, now -> AgentActivityTransferPort.Result.ready(),
+                now -> AgentActivityAdmissionResult.rejected("capacity"), rollback, 2_250L);
+        assertEquals(AgentActivityHandoffCoordinator.Phase.ROLLBACK_SOURCE,
+                rollingBack.phase());
+
+        AgentPersistentActivityHandoffCoordinator restarted =
+                new AgentPersistentActivityHandoffCoordinator(
+                        new AgentFileActivityHandoffStore(directory));
+        AgentActivityHandoffCoordinator.Handoff restored = restarted.advance(
+                "rollback-restart", source, now -> AgentActivityTransferPort.Result.ready(),
+                now -> AgentActivityAdmissionResult.rejected("unused"), rollback, 2_251L);
+
+        assertEquals(AgentActivityHandoffCoordinator.Phase.ROLLED_BACK, restored.phase());
+    }
+
     private static AgentActivitySourcePort source() {
         return new AgentActivitySourcePort() {
             @Override
@@ -107,6 +144,24 @@ class AgentPersistentActivityHandoffCoordinatorTest {
                 return AgentActivityExitResult.requested(reason);
             }
         };
+    }
+
+    private static final class FakeReleasableSource implements AgentActivitySourcePort {
+        private boolean active = true;
+
+        @Override
+        public AgentActivitySessionSnapshot snapshot(long nowMs) {
+            return active
+                    ? new AgentActivitySessionSnapshot(AgentActivityKind.TOWN_LIFE,
+                    AgentActivityPhase.ACTIVE, "town-1", "request-1", "test", "42", 500L, "")
+                    : AgentActivitySessionSnapshot.idle(AgentActivityKind.TOWN_LIFE, "42");
+        }
+
+        @Override
+        public AgentActivityExitResult requestGracefulExit(
+                String reason, long nowMs, long deadlineMs) {
+            return AgentActivityExitResult.requested(reason);
+        }
     }
 
     private static AgentActivitySourcePort idleTownSource() {

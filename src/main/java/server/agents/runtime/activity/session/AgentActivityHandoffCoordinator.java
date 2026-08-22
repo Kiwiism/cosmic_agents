@@ -54,12 +54,37 @@ public final class AgentActivityHandoffCoordinator {
             AgentActivityTransferPort transfer,
             AgentActivityTargetPort target,
             long nowMs) {
+        return advanceInternal(handoff, source, transfer, target, null, nowMs);
+    }
+
+    public Handoff advance(
+            Handoff handoff,
+            AgentActivitySourcePort source,
+            AgentActivityTransferPort transfer,
+            AgentActivityTargetPort target,
+            AgentActivityRollbackPort rollback,
+            long nowMs) {
+        Objects.requireNonNull(rollback, "rollback");
+        return advanceInternal(handoff, source, transfer, target, rollback, nowMs);
+    }
+
+    private Handoff advanceInternal(
+            Handoff handoff,
+            AgentActivitySourcePort source,
+            AgentActivityTransferPort transfer,
+            AgentActivityTargetPort target,
+            AgentActivityRollbackPort rollback,
+            long nowMs) {
         Objects.requireNonNull(handoff, "handoff");
         Objects.requireNonNull(source, "source");
         Objects.requireNonNull(transfer, "transfer");
         Objects.requireNonNull(target, "target");
         if (handoff.terminal() || nowMs < handoff.updatedAtMs()) return handoff;
         if (nowMs >= handoff.deadlineMs()) {
+            if (handoff.sourceReleased() && rollback != null) {
+                return requestRollback(handoff, rollback, nowMs,
+                        "handoff deadline expired after source release");
+            }
             return handoff.transition(Phase.FAILED, nowMs,
                     handoff.sourceReleased()
                             ? "handoff deadline expired after source release; safe fallback required"
@@ -70,9 +95,10 @@ public final class AgentActivityHandoffCoordinator {
         return switch (handoff.phase()) {
             case REQUEST_SOURCE_EXIT -> requestSourceExit(handoff, source, nowMs);
             case WAIT_SOURCE_RELEASE -> observeSourceRelease(handoff, source, nowMs);
-            case TRANSFER -> advanceTransfer(handoff, transfer, nowMs);
-            case REQUEST_TARGET_ENTRY -> requestTargetEntry(handoff, target, nowMs);
-            case COMPLETED, FAILED -> handoff;
+            case TRANSFER -> advanceTransfer(handoff, transfer, rollback, nowMs);
+            case REQUEST_TARGET_ENTRY -> requestTargetEntry(handoff, target, rollback, nowMs);
+            case ROLLBACK_SOURCE -> requestRollback(handoff, rollback, nowMs, handoff.reason());
+            case COMPLETED, ROLLED_BACK, FAILED -> handoff;
         };
     }
 
@@ -112,6 +138,10 @@ public final class AgentActivityHandoffCoordinator {
                     "destination ownership restored", 0L);
         }
         if (sourceOwns) {
+            if (handoff.phase() == Phase.ROLLBACK_SOURCE) {
+                return handoff.restate(Phase.ROLLED_BACK, nowMs, true,
+                        "source rollback restored", 0L);
+            }
             Phase phase = handoff.phase() == Phase.WAIT_SOURCE_RELEASE
                     ? Phase.WAIT_SOURCE_RELEASE : Phase.REQUEST_SOURCE_EXIT;
             return handoff.restate(phase, nowMs, false,
@@ -119,8 +149,8 @@ public final class AgentActivityHandoffCoordinator {
         }
         Phase phase = switch (handoff.phase()) {
             case REQUEST_SOURCE_EXIT, WAIT_SOURCE_RELEASE -> Phase.TRANSFER;
-            case TRANSFER, REQUEST_TARGET_ENTRY -> handoff.phase();
-            case COMPLETED, FAILED -> handoff.phase();
+            case TRANSFER, REQUEST_TARGET_ENTRY, ROLLBACK_SOURCE -> handoff.phase();
+            case COMPLETED, ROLLED_BACK, FAILED -> handoff.phase();
         };
         return handoff.restate(phase, nowMs, true,
                 "source release confirmed during restore", nowMs);
@@ -158,36 +188,82 @@ public final class AgentActivityHandoffCoordinator {
     }
 
     private Handoff advanceTransfer(
-            Handoff handoff, AgentActivityTransferPort transfer, long nowMs) {
+            Handoff handoff,
+            AgentActivityTransferPort transfer,
+            AgentActivityRollbackPort rollback,
+            long nowMs) {
         AgentActivityTransferPort.Result result = transfer.advance(nowMs);
         return switch (result.status()) {
             case READY -> handoff.transition(Phase.REQUEST_TARGET_ENTRY, nowMs, "", nowMs);
             case PENDING -> handoff.transition(
                     Phase.TRANSFER, nowMs, result.reason(),
                     retryAt(handoff, nowMs, result.retryAtMs()));
-            case FAILED -> handoff.transition(Phase.FAILED, nowMs,
-                    result.reason() + "; source released, safe fallback required", 0L);
+            case FAILED -> afterReleaseFailure(handoff, rollback, nowMs, result.reason());
         };
     }
 
     private Handoff requestTargetEntry(
-            Handoff handoff, AgentActivityTargetPort target, long nowMs) {
+            Handoff handoff,
+            AgentActivityTargetPort target,
+            AgentActivityRollbackPort rollback,
+            long nowMs) {
         AgentActivityAdmissionResult result = target.requestEntry(nowMs);
         return switch (result.status()) {
             case ACCEPTED -> {
                 AgentActivitySessionSnapshot session = result.session();
                 if (session.kind() != handoff.targetKind()
                         || !session.agentId().equals(handoff.agentId())) {
-                    yield handoff.transition(Phase.FAILED, nowMs,
-                            "destination admitted a mismatched activity session", 0L);
+                    yield afterReleaseFailure(handoff, rollback, nowMs,
+                            "destination admitted a mismatched activity session");
                 }
                 yield handoff.transition(Phase.COMPLETED, nowMs, "destination admitted", 0L);
             }
             case DEFERRED -> handoff.transition(
                     Phase.REQUEST_TARGET_ENTRY, nowMs, result.reason(),
                     retryAt(handoff, nowMs, result.retryAtMs()));
+            case REJECTED -> afterReleaseFailure(handoff, rollback, nowMs, result.reason());
+        };
+    }
+
+    private Handoff afterReleaseFailure(
+            Handoff handoff,
+            AgentActivityRollbackPort rollback,
+            long nowMs,
+            String reason) {
+        if (rollback == null) {
+            return handoff.transition(Phase.FAILED, nowMs,
+                    reason + "; source released, safe fallback required", 0L);
+        }
+        return handoff.transition(Phase.ROLLBACK_SOURCE, nowMs,
+                reason + "; resuming source activity", nowMs);
+    }
+
+    private Handoff requestRollback(
+            Handoff handoff,
+            AgentActivityRollbackPort rollback,
+            long nowMs,
+            String failureReason) {
+        if (rollback == null) {
+            return handoff.transition(Phase.FAILED, nowMs,
+                    failureReason + "; rollback unavailable, safe fallback required", 0L);
+        }
+        AgentActivityRollbackPort.Result result = rollback.requestResume(
+                handoff.sourceSessionId(), nowMs);
+        return switch (result.status()) {
+            case RESUMED -> handoff.transition(Phase.ROLLED_BACK, nowMs,
+                    failureReason + "; source resumed: " + result.reason(), 0L);
+            case DEFERRED -> {
+                if (nowMs >= handoff.deadlineMs()) {
+                    yield handoff.transition(Phase.FAILED, nowMs,
+                            failureReason + "; rollback missed deadline: " + result.reason(), 0L);
+                }
+                yield handoff.transition(Phase.ROLLBACK_SOURCE, nowMs,
+                        failureReason + "; rollback deferred: " + result.reason(),
+                        retryAt(handoff, nowMs, result.retryAtMs()));
+            }
             case REJECTED -> handoff.transition(Phase.FAILED, nowMs,
-                    result.reason() + "; source released, safe fallback required", 0L);
+                    failureReason + "; rollback rejected: " + result.reason()
+                            + "; safe fallback required", 0L);
         };
     }
 
@@ -224,7 +300,9 @@ public final class AgentActivityHandoffCoordinator {
         WAIT_SOURCE_RELEASE,
         TRANSFER,
         REQUEST_TARGET_ENTRY,
+        ROLLBACK_SOURCE,
         COMPLETED,
+        ROLLED_BACK,
         FAILED
     }
 
@@ -274,7 +352,8 @@ public final class AgentActivityHandoffCoordinator {
         }
 
         public boolean terminal() {
-            return phase == Phase.COMPLETED || phase == Phase.FAILED;
+            return phase == Phase.COMPLETED || phase == Phase.ROLLED_BACK
+                    || phase == Phase.FAILED;
         }
 
         public boolean requiresSafeFallback() {
