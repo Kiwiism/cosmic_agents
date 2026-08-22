@@ -43,8 +43,8 @@ public record AgentWorldDirectorSession(
 
     public AgentWorldDirectorSession observe(
             AgentWorldActivityDecision decision, AgentWorldContext context, long nowMs) {
-        if (mode != AgentWorldDirectorMode.SHADOW || phase != AgentWorldDirectorPhase.OBSERVING) {
-            throw new IllegalStateException("only an observing shadow session accepts samples");
+        if (!mode.isObservationOnly() || phase != AgentWorldDirectorPhase.OBSERVING) {
+            throw new IllegalStateException("only an observing Director session accepts samples");
         }
         return new AgentWorldDirectorSession(schemaVersion, agentId, goalId, mode, phase,
                 context.currentActivityKind(), context.currentSessionId(),
@@ -58,6 +58,21 @@ public record AgentWorldDirectorSession(
                 AgentWorldDirectorPhase.PAUSED, observedActivityKind, observedSessionId,
                 selectedProposalId, activeHandoffId, cooldownUntilMs, startedAtMs, nowMs,
                 observationCount, reason);
+    }
+
+    public AgentWorldDirectorSession withMode(AgentWorldDirectorMode nextMode, String reason, long nowMs) {
+        if (nextMode == null || nowMs < updatedAtMs) {
+            throw new IllegalArgumentException("a valid mode transition is required");
+        }
+        AgentWorldDirectorPhase nextPhase = switch (nextMode) {
+            case DISABLED -> AgentWorldDirectorPhase.DISABLED;
+            case SHADOW, OBSERVE -> AgentWorldDirectorPhase.OBSERVING;
+            case EMERGENCY_HOLD -> AgentWorldDirectorPhase.PAUSED;
+            case MANUAL, CONTROLLED, ASSISTED, AUTONOMOUS -> AgentWorldDirectorPhase.WAITING;
+        };
+        return new AgentWorldDirectorSession(schemaVersion, agentId, goalId, nextMode,
+                nextPhase, observedActivityKind, observedSessionId, selectedProposalId,
+                activeHandoffId, cooldownUntilMs, startedAtMs, nowMs, observationCount, reason);
     }
 
     /** Hard safety gate used by future bootstraps before live integration exists. */
