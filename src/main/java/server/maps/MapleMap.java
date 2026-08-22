@@ -4534,6 +4534,10 @@ public class MapleMap {
         }
     }
 
+    public Character getMapOwner() {
+        return mapOwner;
+    }
+
     public Character unclaimOwnership() {
         Character lastOwner = this.mapOwner;
         return unclaimOwnership(lastOwner) ? lastOwner : null;

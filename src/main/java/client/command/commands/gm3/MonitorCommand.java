@@ -26,6 +26,7 @@ package client.command.commands.gm3;
 import client.Character;
 import client.Client;
 import client.command.Command;
+import client.command.CommandTargetPolicy;
 import net.packet.logging.MonitoredChrLogger;
 import net.server.Server;
 import tools.PacketCreator;
@@ -47,6 +48,7 @@ public class MonitorCommand extends Command {
             player.message("Player '" + params[0] + "' could not be found on this world.");
             return;
         }
+        if (!CommandTargetPolicy.canAffect(player, victim, true)) return;
         boolean monitored = MonitoredChrLogger.toggleMonitored(victim.getId());
         player.yellowMessage(victim.getId() + " is " + (monitored ? "now being monitored." : "no longer being monitored."));
         String message = player.getName() + (monitored ? " has started monitoring " : " has stopped monitoring ") + victim.getId() + ".";

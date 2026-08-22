@@ -26,6 +26,7 @@ package client.command.commands.gm2;
 import client.Character;
 import client.Client;
 import client.command.Command;
+import client.command.CommandTargetPolicy;
 import server.maps.MapleMap;
 
 import java.util.Collection;
@@ -53,6 +54,7 @@ public class WarpMapCommand extends Command {
             Collection<Character> characters = player.getMap().getAllPlayers();
 
             for (Character victim : characters) {
+                if (!CommandTargetPolicy.includeInHumanCommand(player, victim)) continue;
                 victim.saveLocationOnWarp();
                 victim.changeMap(target, target.getRandomPlayerSpawnpoint());
             }

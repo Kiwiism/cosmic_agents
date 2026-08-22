@@ -56,7 +56,7 @@ public class WhatDropsFromCommand extends Command {
 
         MonsterInformationProvider mip = MonsterInformationProvider.getInstance();
         if (params.length < 1) { // No parameters provided; get monsters from the map's spawn points.
-            player.dropMessage(5, "Do @whatdropsfrom <monster name> for specific mob info, defaulting to map mobs");
+            player.dropMessage(5, "Use @mobdrops <monster name> for specific mob info; defaulting to map mobs.");
             uniqueMobs = player.getMap().getMonsterSpawn()
                     .stream()
                     .map(SpawnPoint::getMonsterId)
@@ -76,7 +76,7 @@ public class WhatDropsFromCommand extends Command {
         }
 
         if (monsters.isEmpty()) {
-            player.dropMessage(5, "Do @whatdropsfrom <monster name> for specific mob info, defaulting to map mobs");
+            player.dropMessage(5, "Use @mobdrops <monster name> for specific mob info; defaulting to map mobs.");
         } else {
             Iterator<Pair<Integer, String>> listIterator = monsters.iterator();
             for (int i = 0; i < limit && listIterator.hasNext(); i++) {

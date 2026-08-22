@@ -23,7 +23,6 @@ package net.server;
 
 import client.Character;
 import client.Client;
-import client.ExpDebugTracker;
 import client.Family;
 import client.SkillFactory;
 import client.command.CommandsExecutor;
@@ -1181,15 +1180,12 @@ public class Server {
 
     private void logScaleHealth() {
         ServerMetricsSnapshot snapshot = buildMetricsSnapshot();
-        int cleanedExpDebugSessions = ExpDebugTracker.cleanupExpiredSessions();
         int previousHighWatermark = loadedMapHighWatermark;
         loadedMapHighWatermark = Math.max(loadedMapHighWatermark, snapshot.loadedMaps());
 
         SessionCoordinator sessionCoordinator = SessionCoordinator.getInstance();
-        log.info("Scale health {} expDebugCleaned={} expDebugActive={} monitoredChr={} npcPendingRuntime={} npcConversations={} npcScripts={} questActions={} questScripts={} loginAttemptAccounts={} loginBypass={} newYearCards={} inLoginState={} loadedMapHighWatermark={} {} {}",
+        log.info("Scale health {} monitoredChr={} npcPendingRuntime={} npcConversations={} npcScripts={} questActions={} questScripts={} loginAttemptAccounts={} loginBypass={} newYearCards={} inLoginState={} loadedMapHighWatermark={} {} {}",
                 snapshot.compact(),
-                cleanedExpDebugSessions,
-                ExpDebugTracker.activeSessionCount(),
                 net.packet.logging.MonitoredChrLogger.monitoredCharacterCount(),
                 AbstractPlayerInteraction.pendingCharacterRuntimeStateCount(),
                 NPCScriptManager.getInstance().activeConversationCount(),
@@ -1224,8 +1220,7 @@ public class Server {
         }
 
         lines.add("Server health: " + snapshot.compact());
-        lines.add("Runtime caches: expDebug=" + ExpDebugTracker.activeSessionCount()
-                + " monitoredChr=" + net.packet.logging.MonitoredChrLogger.monitoredCharacterCount()
+        lines.add("Runtime caches: monitoredChr=" + net.packet.logging.MonitoredChrLogger.monitoredCharacterCount()
                 + " npcPendingRuntime=" + AbstractPlayerInteraction.pendingCharacterRuntimeStateCount()
                 + " npcConversations=" + NPCScriptManager.getInstance().activeConversationCount()
                 + " npcScripts=" + NPCScriptManager.getInstance().activeScriptCount()

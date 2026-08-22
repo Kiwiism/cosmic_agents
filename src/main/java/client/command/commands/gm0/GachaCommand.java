@@ -36,6 +36,10 @@ public class GachaCommand extends Command {
 
     @Override
     public void execute(Client c, String[] params) {
+        if (params.length == 0) {
+            c.getAbstractPlayerInteraction().openNpc(10000, "gachaponInfo");
+            return;
+        }
         Gachapon.GachaponType gacha = null;
         String search = c.getPlayer().getLastCommandMessage();
         String gachaName = "";

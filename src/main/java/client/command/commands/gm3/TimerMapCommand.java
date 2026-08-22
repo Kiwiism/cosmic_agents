@@ -26,6 +26,7 @@ package client.command.commands.gm3;
 import client.Character;
 import client.Client;
 import client.command.Command;
+import client.command.CommandTargetPolicy;
 import tools.PacketCreator;
 
 public class TimerMapCommand extends Command {
@@ -43,13 +44,13 @@ public class TimerMapCommand extends Command {
 
         if (params[0].equalsIgnoreCase("remove")) {
             for (Character victim : player.getMap().getCharacters()) {
-                victim.sendPacket(PacketCreator.removeClock());
+                if (CommandTargetPolicy.includeInHumanCommand(player, victim)) victim.sendPacket(PacketCreator.removeClock());
             }
         } else {
             try {
                 int seconds = Integer.parseInt(params[0]);
                 for (Character victim : player.getMap().getCharacters()) {
-                    victim.sendPacket(PacketCreator.getClock(seconds));
+                    if (CommandTargetPolicy.includeInHumanCommand(player, victim)) victim.sendPacket(PacketCreator.getClock(seconds));
                 }
             } catch (NumberFormatException e) {
                 player.yellowMessage("Syntax: !timermap <seconds>|remove");

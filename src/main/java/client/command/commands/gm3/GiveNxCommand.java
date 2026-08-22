@@ -26,6 +26,7 @@ package client.command.commands.gm3;
 import client.Character;
 import client.Client;
 import client.command.Command;
+import client.command.CommandTargetPolicy;
 
 public class GiveNxCommand extends Command {
     {
@@ -74,6 +75,7 @@ public class GiveNxCommand extends Command {
 
         Character victim = c.getWorldServer().getPlayerStorage().getCharacterByName(recv);
         if (victim != null) {
+            if (!CommandTargetPolicy.canAffect(player, victim, false)) return;
             victim.getCashShop().gainCash(type, value);
             player.message(typeStr.toUpperCase() + " given.");
         } else {

@@ -26,6 +26,7 @@ package client.command.commands.gm3;
 import client.Character;
 import client.Client;
 import client.command.Command;
+import client.command.CommandTargetPolicy;
 
 public class GiveVpCommand extends Command {
     {
@@ -42,6 +43,7 @@ public class GiveVpCommand extends Command {
 
         Character victim = c.getWorldServer().getPlayerStorage().getCharacterByName(params[0]);
         if (victim != null) {
+            if (!CommandTargetPolicy.canAffect(player, victim, false)) return;
             victim.getClient().addVotePoints(Integer.parseInt(params[1]));
             player.message("VP given.");
         } else {

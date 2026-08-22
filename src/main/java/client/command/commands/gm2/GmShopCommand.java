@@ -36,10 +36,18 @@ public class GmShopCommand extends Command {
 
     @Override
     public void execute(Client c, String[] params) {
-        int shopId = GM_SHOP_ID;
-        if (params.length > 0) {
-            shopId = Integer.parseInt(params[0]);
+        if (params.length == 0 || (params.length == 1 && "3".equals(params[0]))) {
+            ShopFactory.getInstance().getShop(GM_SHOP_ID).sendShop(c);
+            return;
         }
-        ShopFactory.getInstance().getShop(shopId).sendShop(c);
+        if (params.length == 1 && "4".equals(params[0])) {
+            if (c.getPlayer().gmLevel() < 4) {
+                c.getPlayer().yellowMessage("You need GM level 4 to access the senior GM shop.");
+            } else {
+                c.getPlayer().yellowMessage("The GM4 shop is not configured yet. Use !gmshop 3.");
+            }
+            return;
+        }
+        c.getPlayer().yellowMessage("Syntax: !gmshop [3|4]");
     }
 }

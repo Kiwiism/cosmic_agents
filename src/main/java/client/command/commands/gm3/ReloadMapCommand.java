@@ -26,6 +26,7 @@ package client.command.commands.gm3;
 import client.Character;
 import client.Client;
 import client.command.Command;
+import client.command.CommandTargetPolicy;
 import server.maps.MapleMap;
 
 import java.util.Collection;
@@ -38,10 +39,14 @@ public class ReloadMapCommand extends Command {
     @Override
     public void execute(Client c, String[] params) {
         Character player = c.getPlayer();
+        Collection<Character> characters = player.getMap().getAllPlayers();
+        if (player.gmLevel() < CommandTargetPolicy.AGENT_CONTROL_GM_LEVEL
+                && characters.stream().anyMatch(CommandTargetPolicy::isAgent)) {
+            player.yellowMessage("Reload refused: an Agent is present. GM6 is required to reload this map.");
+            return;
+        }
         MapleMap newMap = c.getChannelServer().getMapFactory().resetMap(player.getMapId());
         int callerid = c.getPlayer().getId();
-
-        Collection<Character> characters = player.getMap().getAllPlayers();
 
         for (Character chr : characters) {
             chr.saveLocationOnWarp();

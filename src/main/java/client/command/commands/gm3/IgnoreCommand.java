@@ -27,6 +27,7 @@ import client.Character;
 import client.Client;
 import client.autoban.AutobanFactory;
 import client.command.Command;
+import client.command.CommandTargetPolicy;
 import net.server.Server;
 import tools.PacketCreator;
 
@@ -47,6 +48,7 @@ public class IgnoreCommand extends Command {
             player.message("Player '" + params[0] + "' could not be found on this world.");
             return;
         }
+        if (!CommandTargetPolicy.canAffect(player, victim, false)) return;
 
         boolean ignored = AutobanFactory.toggleIgnored(victim.getId());
         player.yellowMessage(victim.getName() + " is " + (ignored ? "now being ignored." : "no longer being ignored."));

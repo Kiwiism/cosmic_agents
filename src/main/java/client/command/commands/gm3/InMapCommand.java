@@ -26,6 +26,7 @@ package client.command.commands.gm3;
 import client.Character;
 import client.Client;
 import client.command.Command;
+import client.command.CommandTargetPolicy;
 
 public class InMapCommand extends Command {
     {
@@ -37,7 +38,7 @@ public class InMapCommand extends Command {
         Character player = c.getPlayer();
         String st = "";
         for (Character chr : player.getMap().getCharacters()) {
-            st += chr.getName() + " ";
+            if (CommandTargetPolicy.includeInHumanCommand(player, chr)) st += chr.getName() + " ";
         }
         player.message(st);
 

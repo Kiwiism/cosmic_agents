@@ -23,6 +23,7 @@
 package client;
 
 import client.autoban.AutobanManager;
+import client.command.StatResetCalculator;
 import client.creator.CharacterFactoryRecipe;
 import client.inventory.Equip;
 import client.inventory.Inventory;
@@ -3338,9 +3339,6 @@ public class Character extends AbstractCharacterObject {
         long total = Math.max(gain + equip + party, -exp.get());
 
         if (level < getMaxLevel() && (allowExpGain || this.getEventInstance() != null)) {
-            // EXP debug tracking
-            ExpDebugTracker.recordExpGain(this, (int) gain, party, equip);
-
             long leftover = 0;
             long nextExp = exp.get() + total;
 
@@ -8331,6 +8329,37 @@ public class Character extends AbstractCharacterObject {
             statWlock.unlock();
             effLock.unlock();
         }
+    }
+
+    /**
+     * Returns all normally earned AP to the unassigned pool while preserving AP
+     * already spent on HP/MP. This is intentionally independent of the starter
+     * auto-assignment setting so staff resets always produce a legal pool.
+     */
+    public synchronized int resetAbilityPointsForCurrentLevel() {
+        int availableAp = StatResetCalculator.availableAp(
+                job, level, getHpMpApUsed(), YamlConfig.config.server.USE_STARTING_AP_4);
+        updateStrDexIntLuk(4, 4, 4, 4, availableAp);
+        return availableAp;
+    }
+
+    /**
+     * Clears learned job skills and rebuilds the unassigned SP pools from the
+     * character's current level and advancement. Beginner/event skills remain.
+     */
+    public synchronized int resetSkillPointsForCurrentLevel() {
+        for (Skill skill : new ArrayList<>(getSkills().keySet())) {
+            if (!skill.isBeginnerSkill() && Job.getById(skill.getId() / 10000) != null) {
+                changeSkillLevel(skill, (byte) -1, 0, -1);
+            }
+        }
+
+        int[] rebuilt = StatResetCalculator.availableSp(job, level);
+
+        setRemainingSp(rebuilt);
+        int currentBook = GameConstants.getSkillBook(job.getId());
+        updateRemainingSp(rebuilt[currentBook], currentBook);
+        return Arrays.stream(rebuilt).sum();
     }
 
     public void resetBattleshipHp() {

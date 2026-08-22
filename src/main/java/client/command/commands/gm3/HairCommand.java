@@ -27,6 +27,7 @@ import client.Character;
 import client.Client;
 import client.Stat;
 import client.command.Command;
+import client.command.CommandTargetPolicy;
 import constants.inventory.ItemConstants;
 import server.ItemInformationProvider;
 
@@ -63,6 +64,7 @@ public class HairCommand extends Command {
 
                 Character victim = c.getChannelServer().getPlayerStorage().getCharacterByName(params[0]);
                 if (victim != null) {
+                    if (!CommandTargetPolicy.canAffect(player, victim, false)) return;
                     victim.setHair(itemId);
                     victim.updateSingleStat(Stat.HAIR, itemId);
                     victim.equipChanged();

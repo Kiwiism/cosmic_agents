@@ -34,7 +34,7 @@ public class ChangeLanguageCommand extends Command {
     @Override
     public void execute(Client c, String[] params) {
         if (params.length < 1) {
-            c.getPlayer().yellowMessage("Syntax: !changel <0=ptb, 1=esp, 2=eng>");
+            c.getPlayer().yellowMessage("Syntax: @language <0=ptb, 1=esp, 2=eng>");
             return;
         }
         c.setLanguage(Integer.parseInt(params[0]));

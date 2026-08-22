@@ -27,6 +27,7 @@ import client.Character;
 import client.Client;
 import client.Disease;
 import client.command.Command;
+import client.command.CommandTargetPolicy;
 import server.life.MobSkill;
 import server.life.MobSkillFactory;
 import server.life.MobSkillType;
@@ -103,7 +104,7 @@ public class DebuffCommand extends Command {
         for (MapObject mmo : player.getMap().getMapObjectsInRange(player.getPosition(), 777777.7, Arrays.asList(MapObjectType.PLAYER))) {
             Character chr = (Character) mmo;
 
-            if (chr.getId() != player.getId()) {
+            if (chr.getId() != player.getId() && CommandTargetPolicy.includeInHumanCommand(player, chr)) {
                 chr.giveDebuff(disease, skill.get());
             }
         }

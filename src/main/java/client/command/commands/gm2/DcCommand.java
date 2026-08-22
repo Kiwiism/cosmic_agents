@@ -26,6 +26,7 @@ package client.command.commands.gm2;
 import client.Character;
 import client.Client;
 import client.command.Command;
+import client.command.CommandTargetPolicy;
 
 public class DcCommand extends Command {
     {
@@ -45,21 +46,14 @@ public class DcCommand extends Command {
             victim = c.getChannelServer().getPlayerStorage().getCharacterByName(params[0]);
             if (victim == null) {
                 victim = player.getMap().getCharacterByName(params[0]);
-                if (victim != null) {
-                    try {//sometimes bugged because the map = null
-                        victim.getClient().disconnect(true, false);
-                        player.getMap().removePlayer(victim);
-                    } catch (Exception e) {
-                        monitoring.RuntimeFailureLogger.log(e);
-                    }
-                } else {
-                    return;
-                }
+                if (victim == null) return;
             }
         }
-        if (player.gmLevel() < victim.gmLevel()) {
-            victim = player;
+        if (!CommandTargetPolicy.canAffect(player, victim, false)) return;
+        try {
+            victim.getClient().disconnect(false, false);
+        } catch (Exception exception) {
+            monitoring.RuntimeFailureLogger.log(exception);
         }
-        victim.getClient().disconnect(false, false);
     }
 }

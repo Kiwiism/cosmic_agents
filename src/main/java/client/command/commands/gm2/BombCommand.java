@@ -26,6 +26,7 @@ package client.command.commands.gm2;
 import client.Character;
 import client.Client;
 import client.command.Command;
+import client.command.CommandTargetPolicy;
 import constants.id.MobId;
 import net.server.Server;
 import server.life.LifeFactory;
@@ -42,6 +43,7 @@ public class BombCommand extends Command {
         if (params.length > 0) {
             Character victim = c.getWorldServer().getPlayerStorage().getCharacterByName(params[0]);
             if (victim != null) {
+                if (!CommandTargetPolicy.canAffect(player, victim, false)) return;
                 victim.getMap().spawnMonsterOnGroundBelow(LifeFactory.getMonster(MobId.ARPQ_BOMB), victim.getPosition());
                 Server.getInstance().broadcastGMMessage(c.getWorld(), PacketCreator.serverNotice(5, player.getName() + " used !bomb on " + victim.getName()));
             } else {

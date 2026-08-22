@@ -26,6 +26,7 @@ package client.command.commands.gm2;
 import client.Character;
 import client.Client;
 import client.command.Command;
+import client.command.CommandTargetPolicy;
 import constants.id.MapId;
 import server.maps.MapleMap;
 import server.maps.Portal;
@@ -56,6 +57,7 @@ public class JailCommand extends Command {
 
         Character victim = c.getWorldServer().getPlayerStorage().getCharacterByName(params[0]);
         if (victim != null) {
+            if (!CommandTargetPolicy.canAffect(player, victim, false)) return;
             victim.addJailExpirationTime(MINUTES.toMillis(minutesJailed));
 
             if (victim.getMapId() != MapId.JAIL) {    // those gone to jail won't be changing map anyway

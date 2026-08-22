@@ -3,6 +3,7 @@ package client.command.commands.gm5;
 import client.Character;
 import client.Client;
 import client.command.Command;
+import client.command.CommandTargetPolicy;
 import server.agents.diagnostics.ClimbMovementCaptureRuntime;
 
 /** GM command for bounded, opt-in native/Agent movement packet capture. */
@@ -38,6 +39,7 @@ public final class ClimbCaptureCommand extends Command {
                     player.yellowMessage("Character '" + params[1] + "' is not online or present on this map.");
                     return;
                 }
+                if (!CommandTargetPolicy.canAffect(player, target, true)) return;
             }
         }
         if (params.length >= 3) {

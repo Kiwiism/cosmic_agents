@@ -3,6 +3,7 @@ package client.command.commands.gm3;
 import client.Character;
 import client.Client;
 import client.command.Command;
+import client.command.CommandTargetPolicy;
 
 public class GiveRpCommand extends Command {
     {
@@ -19,6 +20,7 @@ public class GiveRpCommand extends Command {
 
         Character victim = client.getWorldServer().getPlayerStorage().getCharacterByName(params[0]);
         if (victim != null) {
+            if (!CommandTargetPolicy.canAffect(player, victim, false)) return;
             victim.setRewardPoints(victim.getRewardPoints() + Integer.parseInt(params[1]));
             player.message("RP given. Player " + params[0] + " now has " + victim.getRewardPoints()
                     + " reward points.");

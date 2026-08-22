@@ -26,6 +26,7 @@ package client.command.commands.gm4;
 import client.Character;
 import client.Client;
 import client.command.Command;
+import client.command.CommandTargetPolicy;
 import server.life.PlayerNPC;
 
 public class PlayerNpcCommand extends Command {
@@ -41,7 +42,13 @@ public class PlayerNpcCommand extends Command {
             return;
         }
 
-        if (!PlayerNPC.spawnPlayerNPC(player.getMapId(), player.getPosition(), c.getChannelServer().getPlayerStorage().getCharacterByName(params[0]))) {
+        Character target = c.getChannelServer().getPlayerStorage().getCharacterByName(params[0]);
+        if (target == null) {
+            player.yellowMessage("Player '" + params[0] + "' could not be found on this channel.");
+            return;
+        }
+        if (!CommandTargetPolicy.canAffect(player, target, false)) return;
+        if (!PlayerNPC.spawnPlayerNPC(player.getMapId(), player.getPosition(), target)) {
             player.dropMessage(5, "Could not deploy PlayerNPC. Either there's no room available here or depleted out scriptids to use.");
         }
     }

@@ -44,11 +44,15 @@ public class ItemCommand extends Command {
 
     @Override
     public void execute(Client c, String[] params) {
-        Character player = c.getPlayer();
+        grantItem(c, c.getPlayer(), params);
+    }
+
+    public static boolean grantItem(Client targetClient, Character actor, String[] params) {
+        Character player = targetClient.getPlayer();
 
         if (params.length < 1) {
-            player.yellowMessage("Syntax: !item <itemid> <quantity>");
-            return;
+            actor.yellowMessage("Syntax: !item <itemid|name> [quantity]");
+            return false;
         }
 
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
@@ -79,20 +83,20 @@ public class ItemCommand extends Command {
             }
             ArrayList<Pair<Integer, String>> searchResult = ItemInformationProvider.getInstance().getItemDataByName(query.toString());
             if (searchResult == null || searchResult.isEmpty() || searchResult.getFirst() == null) {
-                player.yellowMessage("Item '" + query + "' does not exist.");
-                return;
+                actor.yellowMessage("Item '" + query + "' does not exist.");
+                return false;
             }
             itemId = searchResult.getFirst().getLeft();
         }
 
         if (ii.getName(itemId) == null || !ii.hasData(itemId)) {
-            player.yellowMessage("Item id '" + params[0] + "' does not exist.");
-            return;
+            actor.yellowMessage("Item id '" + params[0] + "' does not exist.");
+            return false;
         }
 
         if (YamlConfig.config.server.BLOCK_GENERATE_CASH_ITEM && ii.isCash(itemId)) {
-            player.yellowMessage("You cannot create a cash item with this command.");
-            return;
+            actor.yellowMessage("You cannot create a cash item with this command.");
+            return false;
         }
 
         if (ItemConstants.isPet(itemId)) {
@@ -102,21 +106,22 @@ public class ItemCommand extends Command {
                 long expiration = System.currentTimeMillis() + DAYS.toMillis(days);
                 int petid = Pet.createPet(itemId);
 
-                InventoryManipulator.addById(c, itemId, quantity, player.getName(), petid, expiration);
-                return;
+                InventoryManipulator.addById(targetClient, itemId, quantity, actor.getName(), petid, expiration);
+                return true;
             } else {
-                player.yellowMessage("Pet Syntax: !item <itemid> <expiration>");
-                return;
+                actor.yellowMessage("Pet Syntax: !item <itemid> <expiration>");
+                return false;
             }
         }
 
         short flag = 0;
-        if (player.gmLevel() < 3) {
+        if (actor.gmLevel() < 3) {
             flag |= ItemConstants.ACCOUNT_SHARING;
             flag |= ItemConstants.UNTRADEABLE;
         }
 
-        InventoryManipulator.addById(c, itemId, quantity, player.getName(), -1, flag, -1);
+        InventoryManipulator.addById(targetClient, itemId, quantity, actor.getName(), -1, flag, -1);
+        return true;
     }
 
     private static boolean isNumber(String string) {

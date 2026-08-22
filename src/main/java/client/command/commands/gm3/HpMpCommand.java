@@ -26,6 +26,7 @@ package client.command.commands.gm3;
 import client.Character;
 import client.Client;
 import client.command.Command;
+import client.command.CommandTargetPolicy;
 
 public class HpMpCommand extends Command {
     {
@@ -45,9 +46,11 @@ public class HpMpCommand extends Command {
             statUpdate = Integer.parseInt(params[0]);
         } else {
             player.yellowMessage("Syntax: !hpmp [<playername>] <value>");
+            return;
         }
 
         if (victim != null) {
+            if (!CommandTargetPolicy.canAffect(player, victim, true)) return;
             victim.updateHpMp(statUpdate);
         } else {
             player.message("Player '" + params[0] + "' could not be found on this world.");

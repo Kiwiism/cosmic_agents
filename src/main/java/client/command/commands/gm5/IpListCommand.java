@@ -22,6 +22,7 @@ package client.command.commands.gm5;
 import client.Character;
 import client.Client;
 import client.command.Command;
+import client.command.CommandTargetPolicy;
 import constants.game.GameConstants;
 import net.server.Server;
 import net.server.world.World;
@@ -49,6 +50,7 @@ public class IpListCommand extends Command {
                 str += "\r\n" + GameConstants.WORLD_NAMES[w.getId()] + "\r\n";
 
                 for (Character chr : chars) {
+                    if (!CommandTargetPolicy.includeInHumanCommand(c.getPlayer(), chr)) continue;
                     str += "  " + chr.getName() + " - " + chr.getClient().getRemoteAddress() + "\r\n";
                 }
             }

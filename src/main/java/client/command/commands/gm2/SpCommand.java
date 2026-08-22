@@ -37,7 +37,7 @@ public class SpCommand extends Command {
     public void execute(Client c, String[] params) {
         Character player = c.getPlayer();
         if (params.length < 1) {
-            player.yellowMessage("Syntax: !sp [<playername>] <newsp>");
+            player.yellowMessage("Syntax: !sp <newsp>");
             return;
         }
 
@@ -51,21 +51,7 @@ public class SpCommand extends Command {
 
             player.updateRemainingSp(newSp);
         } else {
-            Character victim = c.getWorldServer().getPlayerStorage().getCharacterByName(params[0]);
-            if (victim != null) {
-                int newSp = Integer.parseInt(params[1]);
-                if (newSp < 0) {
-                    newSp = 0;
-                } else if (newSp > YamlConfig.config.server.MAX_AP) {
-                    newSp = YamlConfig.config.server.MAX_AP;
-                }
-
-                victim.updateRemainingSp(newSp);
-
-                player.dropMessage(5, "SP given.");
-            } else {
-                player.message("Player '" + params[0] + "' could not be found.");
-            }
+            player.yellowMessage("Syntax: !sp <newsp>");
         }
     }
 }

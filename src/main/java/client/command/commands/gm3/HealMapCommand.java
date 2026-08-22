@@ -26,6 +26,7 @@ package client.command.commands.gm3;
 import client.Character;
 import client.Client;
 import client.command.Command;
+import client.command.CommandTargetPolicy;
 
 public class HealMapCommand extends Command {
     {
@@ -36,7 +37,7 @@ public class HealMapCommand extends Command {
     public void execute(Client c, String[] params) {
         Character player = c.getPlayer();
         for (Character mch : player.getMap().getCharacters()) {
-            if (mch != null) {
+            if (CommandTargetPolicy.includeInOwnerAwareCommand(player, mch)) {
                 mch.healHpMp();
             }
         }

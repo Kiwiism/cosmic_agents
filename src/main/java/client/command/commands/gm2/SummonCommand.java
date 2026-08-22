@@ -26,6 +26,7 @@ package client.command.commands.gm2;
 import client.Character;
 import client.Client;
 import client.command.Command;
+import client.command.CommandTargetPolicy;
 import net.server.Server;
 import net.server.channel.Channel;
 import server.maps.MapleMap;
@@ -55,6 +56,7 @@ public class SummonCommand extends Command {
             }
         }
         if (victim != null) {
+            if (!CommandTargetPolicy.canAffect(player, victim, false)) return;
             if (!victim.isLoggedinWorld()) {
                 player.dropMessage(6, "Player currently not logged in or unreachable.");
                 return;

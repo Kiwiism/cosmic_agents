@@ -27,6 +27,7 @@ import client.Character;
 import client.Client;
 import client.Stat;
 import client.command.Command;
+import client.command.CommandTargetPolicy;
 
 public class FameCommand extends Command {
     {
@@ -43,6 +44,7 @@ public class FameCommand extends Command {
 
         Character victim = c.getWorldServer().getPlayerStorage().getCharacterByName(params[0]);
         if (victim != null) {
+            if (!CommandTargetPolicy.canAffect(player, victim, false)) return;
             victim.setFame(Integer.parseInt(params[1]));
             victim.updateSingleStat(Stat.FAME, victim.getFame());
             player.message("FAME given.");

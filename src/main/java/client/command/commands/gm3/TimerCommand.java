@@ -26,6 +26,7 @@ package client.command.commands.gm3;
 import client.Character;
 import client.Client;
 import client.command.Command;
+import client.command.CommandTargetPolicy;
 import tools.PacketCreator;
 
 public class TimerCommand extends Command {
@@ -43,6 +44,7 @@ public class TimerCommand extends Command {
 
         Character victim = c.getWorldServer().getPlayerStorage().getCharacterByName(params[0]);
         if (victim != null) {
+            if (!CommandTargetPolicy.canAffect(player, victim, false)) return;
             if (params[1].equalsIgnoreCase("remove")) {
                 victim.sendPacket(PacketCreator.removeClock());
             } else {

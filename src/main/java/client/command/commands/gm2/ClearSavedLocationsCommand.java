@@ -30,27 +30,20 @@ import server.maps.SavedLocationType;
 
 public class ClearSavedLocationsCommand extends Command {
     {
-        setDescription("Clear saved locations for a player.");
+        setDescription("Clear your saved locations.");
     }
 
     @Override
     public void execute(Client c, String[] params) {
-        Character player = c.getPlayer(), victim;
-
-        if (params.length > 0) {
-            victim = c.getWorldServer().getPlayerStorage().getCharacterByName(params[0]);
-            if (victim == null) {
-                player.message("Player '" + params[0] + "' could not be found.");
-                return;
-            }
-        } else {
-            victim = c.getPlayer();
+        Character player = c.getPlayer();
+        if (params.length != 0) {
+            player.yellowMessage("Syntax: !clearsavelocs");
+            return;
         }
 
         for (SavedLocationType type : SavedLocationType.values()) {
-            victim.clearSavedLocation(type);
+            player.clearSavedLocation(type);
         }
-
-        player.message("Cleared " + params[0] + "'s saved locations.");
+        player.message("Cleared your saved locations.");
     }
 }

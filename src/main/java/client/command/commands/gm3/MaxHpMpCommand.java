@@ -26,6 +26,7 @@ package client.command.commands.gm3;
 import client.Character;
 import client.Client;
 import client.command.Command;
+import client.command.CommandTargetPolicy;
 
 public class MaxHpMpCommand extends Command {
     {
@@ -45,9 +46,11 @@ public class MaxHpMpCommand extends Command {
             statUpdate = Integer.parseInt(params[0]);
         } else {
             player.yellowMessage("Syntax: !maxhpmp [<playername>] <value>");
+            return;
         }
 
         if (victim != null) {
+            if (!CommandTargetPolicy.canAffect(player, victim, true)) return;
             int extraHp = victim.getCurrentMaxHp() - victim.getClientMaxHp();
             int extraMp = victim.getCurrentMaxMp() - victim.getClientMaxMp();
             statUpdate = Math.max(1 + Math.max(extraHp, extraMp), statUpdate);

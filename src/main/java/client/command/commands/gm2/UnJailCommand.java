@@ -26,6 +26,7 @@ package client.command.commands.gm2;
 import client.Character;
 import client.Client;
 import client.command.Command;
+import client.command.CommandTargetPolicy;
 
 public class UnJailCommand extends Command {
     {
@@ -42,6 +43,7 @@ public class UnJailCommand extends Command {
 
         Character victim = c.getWorldServer().getPlayerStorage().getCharacterByName(params[0]);
         if (victim != null) {
+            if (!CommandTargetPolicy.canAffect(player, victim, false)) return;
             if (victim.getJailExpirationTimeLeft() <= 0) {
                 player.message("This player is already free.");
                 return;

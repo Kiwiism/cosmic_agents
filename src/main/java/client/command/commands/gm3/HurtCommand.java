@@ -26,6 +26,7 @@ package client.command.commands.gm3;
 import client.Character;
 import client.Client;
 import client.command.Command;
+import client.command.CommandTargetPolicy;
 
 public class HurtCommand extends Command {
     {
@@ -35,8 +36,13 @@ public class HurtCommand extends Command {
     @Override
     public void execute(Client c, String[] params) {
         Character player = c.getPlayer();
+        if (params.length != 1) {
+            player.yellowMessage("Syntax: !hurt <playername>");
+            return;
+        }
         Character victim = c.getWorldServer().getPlayerStorage().getCharacterByName(params[0]);
         if (victim != null) {
+            if (!CommandTargetPolicy.canAffect(player, victim, false)) return;
             victim.updateHp(1);
         } else {
             player.message("Player '" + params[0] + "' could not be found.");

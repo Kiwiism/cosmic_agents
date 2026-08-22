@@ -26,6 +26,7 @@ package client.command.commands.gm3;
 import client.Character;
 import client.Client;
 import client.command.Command;
+import client.command.CommandTargetPolicy;
 import net.server.Server;
 import server.TimerManager;
 import tools.DatabaseConnection;
@@ -51,6 +52,7 @@ public class BanCommand extends Command {
         String reason = joinStringFrom(params, 1);
         Character target = c.getChannelServer().getPlayerStorage().getCharacterByName(ign);
         if (target != null) {
+            if (!CommandTargetPolicy.canAffect(player, target, false)) return;
             String readableTargetName = Character.makeMapleReadable(target.getName());
             String ip = target.getClient().getRemoteAddress();
             //Ban ip
@@ -77,11 +79,20 @@ public class BanCommand extends Command {
             final Character rip = target;
             TimerManager.getInstance().schedule(() -> rip.getClient().disconnect(false, false), 5000); //5 Seconds
             Server.getInstance().broadcastMessage(c.getWorld(), PacketCreator.serverNotice(6, "[RIP]: " + ign + " has been banned."));
-        } else if (Character.ban(ign, reason, false)) {
-            c.sendPacket(PacketCreator.getGMEffect(4, (byte) 0));
-            Server.getInstance().broadcastMessage(c.getWorld(), PacketCreator.serverNotice(6, "[RIP]: " + ign + " has been banned."));
         } else {
-            c.sendPacket(PacketCreator.getGMEffect(6, (byte) 1));
+            try {
+                if (CommandTargetPolicy.isActiveAgentName(ign)) {
+                    player.yellowMessage("Only GM6 owner commands may affect Agents.");
+                } else if (Character.ban(ign, reason, false)) {
+                    c.sendPacket(PacketCreator.getGMEffect(4, (byte) 0));
+                    Server.getInstance().broadcastMessage(c.getWorld(), PacketCreator.serverNotice(6, "[RIP]: " + ign + " has been banned."));
+                } else {
+                    c.sendPacket(PacketCreator.getGMEffect(6, (byte) 1));
+                }
+            } catch (SQLException exception) {
+                monitoring.RuntimeFailureLogger.log(exception);
+                player.yellowMessage("Unable to verify whether that character is an Agent; ban refused.");
+            }
         }
     }
 }

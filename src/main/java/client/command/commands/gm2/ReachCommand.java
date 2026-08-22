@@ -37,7 +37,7 @@ public class ReachCommand extends Command {
     public void execute(Client c, String[] params) {
         Character player = c.getPlayer();
         if (params.length < 1) {
-            player.yellowMessage("Syntax: !reach <playername>");
+            player.yellowMessage("Syntax: !warpto <playername>");
             return;
         }
 

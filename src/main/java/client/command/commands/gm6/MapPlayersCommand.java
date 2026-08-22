@@ -26,6 +26,7 @@ package client.command.commands.gm6;
 import client.Character;
 import client.Client;
 import client.command.Command;
+import client.command.CommandTargetPolicy;
 import net.server.Server;
 import net.server.world.World;
 
@@ -41,6 +42,7 @@ public class MapPlayersCommand extends Command {
         int map = player.getMapId();
         for (World world : Server.getInstance().getWorlds()) {
             for (Character chr : world.getPlayerStorage().getAllCharacters()) {
+                if (!CommandTargetPolicy.includeInHumanCommand(player, chr)) continue;
                 int curMap = chr.getMapId();
                 String hp = Integer.toString(chr.getHp());
                 String maxhp = Integer.toString(chr.getCurrentMaxHp());
