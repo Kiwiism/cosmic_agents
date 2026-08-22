@@ -41,6 +41,16 @@ public record AgentWorldDirectorSession(
                 "shadow observation explicitly enabled; live control remains disabled");
     }
 
+    public static AgentWorldDirectorSession create(
+            int agentId, AgentWorldDirectorMode mode, long nowMs) {
+        AgentWorldDirectorSession disabled = new AgentWorldDirectorSession(
+                1, agentId, "operator-directed-world-lifecycle",
+                AgentWorldDirectorMode.DISABLED, AgentWorldDirectorPhase.DISABLED,
+                null, "", "", "", Map.of(), nowMs, nowMs, 0L,
+                "World Director session created");
+        return disabled.withMode(mode, "World Director mode initialized", nowMs);
+    }
+
     public AgentWorldDirectorSession observe(
             AgentWorldActivityDecision decision, AgentWorldContext context, long nowMs) {
         if (!mode.isObservationOnly() || phase != AgentWorldDirectorPhase.OBSERVING) {
