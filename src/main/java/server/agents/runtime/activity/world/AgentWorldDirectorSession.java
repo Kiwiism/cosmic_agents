@@ -85,9 +85,26 @@ public record AgentWorldDirectorSession(
                 activeHandoffId, cooldownUntilMs, startedAtMs, nowMs, observationCount, reason);
     }
 
-    /** Hard safety gate used by future bootstraps before live integration exists. */
+    public AgentWorldDirectorSession transition(
+            AgentWorldDirectorPhase nextPhase,
+            AgentActivityKind activityKind,
+            String activitySessionId,
+            String handoffId,
+            String reason,
+            long nowMs) {
+        if (nextPhase == null || nowMs < updatedAtMs) {
+            throw new IllegalArgumentException("a valid Director phase transition is required");
+        }
+        return new AgentWorldDirectorSession(schemaVersion, agentId, goalId, mode, nextPhase,
+                activityKind, activitySessionId, selectedProposalId, handoffId,
+                cooldownUntilMs, startedAtMs, nowMs, observationCount, reason);
+    }
+
     public boolean mayOwnActivity() {
-        return false;
+        return mode.acceptsOperatorDirectives()
+                && (phase == AgentWorldDirectorPhase.STARTING
+                || phase == AgentWorldDirectorPhase.RUNNING
+                || phase == AgentWorldDirectorPhase.HANDOFF);
     }
 
     private static String normalize(String value) {
