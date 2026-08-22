@@ -293,6 +293,60 @@ agent:
     # Purpose: Lists the character names used for trusted trade player names. Separate multiple names with commas; an empty value grants the role to nobody.
     # Technical: the Agent engine deployment configuration consumes this as a text. Domain: component-specific policy value; startup validation rejects missing, blank, or malformed values.
     AGENT_TRUSTED_TRADE_PLAYER_NAMES: Kiwi
+
+    # World Director rollout
+    # Values: true or false. Recommended: false until a named Agent canary has passed manual rollback tests.
+    # Purpose: Enables policy-produced Assisted-mode handoffs only for the explicitly configured Agent cohort below.
+    # Technical: This deployment gate is checked before directive claim; false leaves durable directives pending and cannot release an activity owner.
+    AGENT_WORLD_DIRECTOR_ASSISTED_ENABLED: false
+    # Values: comma-separated positive character ids, or none. Recommended: one test Agent id before expanding a canary.
+    # Purpose: Restricts Assisted-mode execution to reviewed Agent identities so observation and manual control remain unaffected.
+    # Technical: The loader parses this allowlist strictly before constructing the immutable canary policy; invalid ids fail startup on first access.
+    AGENT_WORLD_DIRECTOR_ASSISTED_AGENT_IDS: none
+    # Values: a finite non-negative integer. Recommended: 0 while disabled and 1 during the first Assisted canary.
+    # Purpose: Bounds simultaneous Assisted ownership transfers to prevent a configuration mistake from moving a large Agent cohort.
+    # Technical: Capacity is evaluated immediately before directive claim and is independent of ordinary child-system scheduler concurrency.
+    AGENT_WORLD_DIRECTOR_ASSISTED_MAX_CONCURRENT_HANDOFFS: 0
+    # Values: comma-separated QUESTING,HUNTING,TOWN_LIFE,COMMERCE,PARTY_QUEST, or none. Recommended: none while disabled.
+    # Purpose: Limits which destination systems an Assisted-mode policy may request while manual operator directives remain separately governed.
+    # Technical: Values map strictly to AgentActivityKind and are checked before source suspension, transfer, or destination admission begins.
+    AGENT_WORLD_DIRECTOR_ASSISTED_ALLOWED_TARGETS: none
+    # Values: true or false. Recommended: true so every canary source must support exact-session rollback.
+    # Purpose: Prevents an Assisted transfer from releasing a source activity that cannot be restored if destination admission later fails.
+    # Technical: The gate reads the source system's live facade readiness evidence before the durable handoff coordinator is allowed to begin.
+    AGENT_WORLD_DIRECTOR_ASSISTED_REQUIRE_ROLLBACK: true
+    # Values: true or false. Recommended: false until Assisted canary evidence and restart recovery have been accepted.
+    # Purpose: Enables policy-produced Autonomous directives only after every independent cohort, evidence, capacity, and rollback gate passes.
+    # Technical: False is fail-closed before directive claim and does not disable read-only Observe sampling or explicitly submitted manual work.
+    AGENT_WORLD_DIRECTOR_AUTONOMOUS_ENABLED: false
+    # Values: 0-10000 basis points. Recommended: 0 while disabled, then no more than 100 for the first percentage rollout.
+    # Purpose: Selects a deterministic portion of Agent ids for Autonomous eligibility without changing identities between server restarts.
+    # Technical: Explicit ids are included independently; remaining ids use a stable integer hash compared with this basis-point threshold.
+    AGENT_WORLD_DIRECTOR_AUTONOMOUS_ROLLOUT_BASIS_POINTS: 0
+    # Values: comma-separated positive character ids, or none. Recommended: reviewed test Agents before percentage rollout.
+    # Purpose: Allows precise Autonomous canaries without enabling an entire hashed cohort while lifecycle behavior is still being observed.
+    # Technical: The immutable rollout policy combines this explicit set with the deterministic basis-point cohort and rejects malformed ids.
+    AGENT_WORLD_DIRECTOR_AUTONOMOUS_AGENT_IDS: none
+    # Values: a finite non-negative integer. Recommended: 0 while disabled and 1 during the first Autonomous canary.
+    # Purpose: Bounds simultaneous Autonomous ownership transfers independently from Assisted and ordinary activity scheduler capacity.
+    # Technical: The live execution gate compares the current durable handoff count before a policy-produced directive can be claimed.
+    AGENT_WORLD_DIRECTOR_AUTONOMOUS_MAX_CONCURRENT_HANDOFFS: 0
+    # Values: a finite non-negative integer. Recommended: at least 100 read-only samples before initial Autonomous eligibility.
+    # Purpose: Requires enough prior Observe evidence to expose unstable proposals before automatic activity ownership is permitted.
+    # Technical: This threshold consumes session-local restored sample evidence and never grants authority by itself when other gates are closed.
+    AGENT_WORLD_DIRECTOR_AUTONOMOUS_MIN_OBSERVE_SAMPLES: 100
+    # Values: a finite non-negative integer. Recommended: 0 during the first rollout and raise only after failure handling is validated.
+    # Purpose: Blocks Autonomous execution when recent Director failures exceed the explicitly accepted deployment error budget.
+    # Technical: The count is evaluated before directive claim; blocking preserves the current child owner and the pending durable directive.
+    AGENT_WORLD_DIRECTOR_AUTONOMOUS_MAX_RECENT_FAILURES: 0
+    # Values: comma-separated QUESTING,HUNTING,TOWN_LIFE,COMMERCE,PARTY_QUEST, or none. Recommended: none while disabled.
+    # Purpose: Limits Autonomous destination systems independently of proposal generation, allowing each activity adapter to be rolled out safely.
+    # Technical: Values map strictly to AgentActivityKind and a mismatch blocks before source suspension or destination-specific code executes.
+    AGENT_WORLD_DIRECTOR_AUTONOMOUS_ALLOWED_TARGETS: none
+    # Values: true or false. Recommended: true for every Autonomous deployment stage.
+    # Purpose: Requires exact source-session recovery so rejected travel or destination admission cannot discard the Agent's previous work.
+    # Technical: The source facade must report rollback support before the persistent handoff state machine is allowed to release execution.
+    AGENT_WORLD_DIRECTOR_AUTONOMOUS_REQUIRE_ROLLBACK: true
 # Strict runtime/algorithm tuning. Keys mirror declaring classes for traceability.
 tuning:
     # Values: a positive integer; unit: milliseconds. Recommended: 15000-60000; 30000 allows one bounded plan step to settle without making ownership replacement unbounded.
