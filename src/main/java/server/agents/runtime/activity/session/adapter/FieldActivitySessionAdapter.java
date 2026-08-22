@@ -7,6 +7,7 @@ import server.agents.runtime.activity.session.AgentActivityExitResult;
 import server.agents.runtime.activity.session.AgentActivityKind;
 import server.agents.runtime.activity.session.AgentActivityOutcomePort;
 import server.agents.runtime.activity.session.AgentActivityPhase;
+import server.agents.runtime.activity.session.AgentActivityRollbackPort;
 import server.agents.runtime.activity.session.AgentActivitySessionSnapshot;
 import server.agents.runtime.activity.session.AgentActivitySourcePort;
 import server.agents.runtime.activity.session.AgentActivityTargetPort;
@@ -15,7 +16,6 @@ import server.agents.runtime.field.AgentFieldActivityRuntime;
 import server.agents.runtime.field.AgentFieldActivityState;
 import server.agents.runtime.field.AgentFieldAdmissionMode;
 import server.agents.runtime.field.AgentFieldEntryRequest;
-import server.agents.runtime.field.AgentFieldExitRequest;
 import server.agents.runtime.field.AgentFieldSessionResult;
 
 import java.util.LinkedHashMap;
@@ -70,11 +70,25 @@ public final class FieldActivitySessionAdapter
         if (state == null || !state.active()) {
             return AgentActivityExitResult.released("field activity is not active");
         }
-        boolean accepted = AgentFieldActivityRuntime.requestExit(
-                entry, agent, AgentFieldExitRequest.graceful(
-                        state.handle(), reason, nowMs, deadlineMs));
+        if (state.phase() == AgentFieldActivityState.Phase.SUSPENDED) {
+            return AgentActivityExitResult.released("field activity is suspended");
+        }
+        boolean accepted = AgentFieldActivityRuntime.suspend(entry, agent, reason, nowMs);
         return accepted ? AgentActivityExitResult.requested(reason)
-                : AgentActivityExitResult.rejected("field exit request was rejected");
+                : AgentActivityExitResult.rejected("field suspension request was rejected");
+    }
+
+    public AgentActivityRollbackPort.Result resumeExact(String sessionId, long nowMs) {
+        AgentFieldActivityState.Snapshot state = entry == null ? null : entry.capabilityStates()
+                .find(AgentFieldActivityState.STATE_KEY)
+                .map(AgentFieldActivityState::snapshot).orElse(null);
+        if (state == null || !state.active() || state.handle() == null
+                || !state.handle().sessionId().equals(sessionId)) {
+            return AgentActivityRollbackPort.Result.rejected("field source session is not retained");
+        }
+        return AgentFieldActivityRuntime.resume(entry, agent, "World Director rollback", nowMs)
+                ? AgentActivityRollbackPort.Result.resumed("field session resumed")
+                : AgentActivityRollbackPort.Result.rejected("field session is not suspended");
     }
 
     @Override

@@ -10,6 +10,7 @@ import server.agents.runtime.activity.session.AgentActivityExitResult;
 import server.agents.runtime.activity.session.AgentActivityKind;
 import server.agents.runtime.activity.session.AgentActivityOutcomePort;
 import server.agents.runtime.activity.session.AgentActivityPhase;
+import server.agents.runtime.activity.session.AgentActivityRollbackPort;
 import server.agents.runtime.activity.session.AgentActivitySessionSnapshot;
 import server.agents.runtime.activity.session.AgentActivitySourcePort;
 import server.agents.runtime.activity.session.AgentActivityTargetPort;
@@ -47,14 +48,28 @@ public final class PartyQuestActivitySessionAdapter
         if (!AgentKpqRuntime.active(characterId)) {
             return AgentActivityExitResult.released("party quest is not active");
         }
-        if (AgentKpqRuntime.requestStop(characterId, reason, nowMs)) {
-            return AgentKpqRuntime.active(characterId)
-                    ? AgentActivityExitResult.requested(reason)
-                    : AgentActivityExitResult.released(reason);
+        AgentKpqSession session = AgentKpqSessionRegistry.forMember(characterId);
+        if (session != null) {
+            if (session.paused()) return AgentActivityExitResult.released("party quest is suspended");
+            session.setPaused(true);
+            return AgentActivityExitResult.requested(reason);
         }
-        long retryAtMs = Math.max(nowMs + 1L, Math.min(deadlineMs, nowMs + 1_000L));
         return AgentActivityExitResult.deferred(
-                "party quest is inside a protected active stage", retryAtMs);
+                "party-quest lifecycle has not reached a resumable aggregate boundary",
+                Math.min(deadlineMs, nowMs + 1L));
+    }
+
+    public AgentActivityRollbackPort.Result resumeExact(String sessionId, long nowMs) {
+        AgentKpqSession session = AgentKpqSessionRegistry.forMember(characterId);
+        if (session == null || !session.sessionId().equals(sessionId)) {
+            return AgentActivityRollbackPort.Result.rejected("party-quest source session is not retained");
+        }
+        if (!session.paused()) {
+            return AgentActivityRollbackPort.Result.rejected("party-quest session is not suspended");
+        }
+        session.setPaused(false);
+        session.markProgress(nowMs);
+        return AgentActivityRollbackPort.Result.resumed("party-quest session resumed");
     }
 
     @Override

@@ -63,6 +63,19 @@ public final class AgentCommerceSessionRegistryRuntime {
                 : runtime.requestGracefulExit(reason, nowMs, deadlineMs);
     }
 
+    public static AgentActivityExitResult suspendExact(
+            int characterId, String reason, long nowMs) {
+        AgentCommerceSessionRuntime runtime = SESSIONS.get(characterId);
+        return runtime == null
+                ? AgentActivityExitResult.released("Commerce session is not active")
+                : runtime.suspendExact(reason, nowMs);
+    }
+
+    public static boolean resumeExact(int characterId, String sessionId, long nowMs) {
+        AgentCommerceSessionRuntime runtime = SESSIONS.get(characterId);
+        return runtime != null && runtime.resumeExact(sessionId, nowMs);
+    }
+
     public static AgentActivityTerminalOutcome terminalOutcome(int characterId, long nowMs) {
         AgentCommerceSessionRuntime runtime = SESSIONS.get(characterId);
         return runtime == null ? null : runtime.terminalOutcome(nowMs);

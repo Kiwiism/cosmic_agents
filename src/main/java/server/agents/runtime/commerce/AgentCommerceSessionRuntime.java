@@ -140,6 +140,31 @@ public final class AgentCommerceSessionRuntime
         return checkpoint;
     }
 
+    public synchronized AgentActivityExitResult suspendExact(String reason, long nowMs) {
+        if (checkpoint == null || !checkpoint.phase().retainsSession()) {
+            return AgentActivityExitResult.released("Commerce session is not active");
+        }
+        if (checkpoint.phase() == AgentActivityPhase.SUSPENDED) {
+            return AgentActivityExitResult.released("Commerce session is suspended");
+        }
+        if (checkpoint.phase() == AgentActivityPhase.DRAINING) {
+            return AgentActivityExitResult.rejected("Commerce session is already draining");
+        }
+        checkpoint = checkpoint(AgentActivityPhase.SUSPENDED, nowMs,
+                checkpoint.revisitAtMs(), reason);
+        persist();
+        return AgentActivityExitResult.requested(reason);
+    }
+
+    public synchronized boolean resumeExact(String sessionId, long nowMs) {
+        if (checkpoint == null || checkpoint.phase() != AgentActivityPhase.SUSPENDED
+                || !checkpoint.sessionId().equals(sessionId)) return false;
+        checkpoint = checkpoint(AgentActivityPhase.ACTIVE, nowMs, nowMs,
+                "World Director rollback resumed Commerce");
+        persist();
+        return true;
+    }
+
     private AgentActivityExitResult release(String reason, long nowMs) {
         EconomySessionPort.ReleaseResult result = sessions.release(
                 sessionId(), request.participant(), Instant.ofEpochMilli(nowMs), reason);

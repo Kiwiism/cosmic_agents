@@ -32,6 +32,12 @@ class PartyQuestActivitySessionAdapterTest {
             assertTrue(AgentActivitySessionContractVerifier.snapshotIssues(snapshot).isEmpty());
             assertEquals(AgentActivityAdmissionResult.Status.REJECTED,
                     adapter.requestEntry(2_000L).status());
+            assertEquals(server.agents.runtime.activity.session.AgentActivityExitResult.Status.REQUESTED,
+                    adapter.requestGracefulExit("handoff", 2_001L, 3_000L).status());
+            assertEquals(AgentActivityPhase.SUSPENDED, adapter.snapshot(2_002L).phase());
+            assertEquals(server.agents.runtime.activity.session.AgentActivityRollbackPort.Result.Status.RESUMED,
+                    adapter.resumeExact(session.sessionId(), 2_003L).status());
+            assertEquals(AgentActivityPhase.ACTIVE, adapter.snapshot(2_004L).phase());
         } finally {
             AgentKpqSessionRegistry.remove(session);
         }

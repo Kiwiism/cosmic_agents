@@ -48,20 +48,17 @@ public final class AgentStandardLiveActivityFacades {
 
     private static AgentLiveActivityFacade hunting(AgentRuntimeEntry entry, Character agent) {
         FieldActivitySessionAdapter adapter = new FieldActivitySessionAdapter(entry, agent, null, null);
-        AgentActivityRollbackPort rollback = (sessionId, nowMs) ->
-                AgentFieldActivityRuntime.resume(entry, agent, "World Director rollback", nowMs)
-                        ? AgentActivityRollbackPort.Result.resumed("field session resumed")
-                        : AgentActivityRollbackPort.Result.rejected("field session is not suspended");
+        AgentActivityRollbackPort rollback = adapter::resumeExact;
         return new AgentLiveActivityFacade(AgentActivityKind.HUNTING, adapter, adapter,
-                rollback, false,
-                "source and outcome are live; graceful handoff does not yet suspend field state");
+                rollback, true, "exact field session suspension and resume are available");
     }
 
     private static AgentLiveActivityFacade townLife(AgentRuntimeEntry entry, Character agent) {
         TownLifeActivitySessionAdapter adapter =
                 new TownLifeActivitySessionAdapter(entry, agent, null, null, agent.getId());
-        return incomplete(AgentActivityKind.TOWN_LIFE, adapter, adapter,
-                "TownLife has safe drain but no exact-session rollback after release");
+        return new AgentLiveActivityFacade(AgentActivityKind.TOWN_LIFE, adapter, adapter,
+                adapter::resumeExact, true,
+                "TownLife finishes its activity then retains an exact suspended session");
     }
 
     private static AgentLiveActivityFacade commerce(AgentRuntimeEntry entry, Character agent) {
@@ -73,20 +70,25 @@ public final class AgentStandardLiveActivityFacades {
             }
             @Override public AgentActivityExitResult requestGracefulExit(
                     String reason, long nowMs, long deadlineMs) {
-                return AgentCommerceSessionRegistryRuntime.requestStop(
-                        characterId, reason, nowMs, deadlineMs);
+                return AgentCommerceSessionRegistryRuntime.suspendExact(characterId, reason, nowMs);
             }
         };
-        return incomplete(AgentActivityKind.COMMERCE, source,
+        return new AgentLiveActivityFacade(AgentActivityKind.COMMERCE, source,
                 nowMs -> AgentCommerceSessionRegistryRuntime.terminalOutcome(characterId, nowMs),
-                "Commerce protects shop state but has no exact-session rollback after release");
+                (sessionId, nowMs) -> AgentCommerceSessionRegistryRuntime.resumeExact(
+                        characterId, sessionId, nowMs)
+                        ? AgentActivityRollbackPort.Result.resumed("Commerce session resumed")
+                        : AgentActivityRollbackPort.Result.rejected(
+                        "Commerce source session is not retained and suspended"),
+                true, "Commerce checkpoint retains exact suspended market session state");
     }
 
     private static AgentLiveActivityFacade partyQuest(AgentRuntimeEntry entry, Character agent) {
         PartyQuestActivitySessionAdapter adapter =
                 new PartyQuestActivitySessionAdapter(agent.getId(), null);
-        return incomplete(AgentActivityKind.PARTY_QUEST, adapter, adapter,
-                "party quest has protected-stage drain but no exact-session rollback");
+        return new AgentLiveActivityFacade(AgentActivityKind.PARTY_QUEST, adapter, adapter,
+                adapter::resumeExact, true,
+                "KPQ aggregate pauses and resumes the exact party session");
     }
 
     private static AgentLiveActivityFacade incomplete(

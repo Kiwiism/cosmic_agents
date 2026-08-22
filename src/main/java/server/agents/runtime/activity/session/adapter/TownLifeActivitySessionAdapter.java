@@ -3,8 +3,6 @@ package server.agents.runtime.activity.session.adapter;
 import client.Character;
 import server.agents.capabilities.townlife.AgentTownLifeAdmissionMode;
 import server.agents.capabilities.townlife.AgentTownLifeEntryRequest;
-import server.agents.capabilities.townlife.AgentTownLifeExitRequest;
-import server.agents.capabilities.townlife.AgentTownLifeExitResult;
 import server.agents.capabilities.townlife.AgentTownLifeRuntime;
 import server.agents.capabilities.townlife.AgentTownLifeSessionHandle;
 import server.agents.capabilities.townlife.AgentTownLifeSessionResult;
@@ -15,6 +13,7 @@ import server.agents.runtime.activity.session.AgentActivityExitResult;
 import server.agents.runtime.activity.session.AgentActivityKind;
 import server.agents.runtime.activity.session.AgentActivityOutcomePort;
 import server.agents.runtime.activity.session.AgentActivityPhase;
+import server.agents.runtime.activity.session.AgentActivityRollbackPort;
 import server.agents.runtime.activity.session.AgentActivitySessionSnapshot;
 import server.agents.runtime.activity.session.AgentActivitySourcePort;
 import server.agents.runtime.activity.session.AgentActivityTargetPort;
@@ -54,8 +53,9 @@ public final class TownLifeActivitySessionAdapter
             return AgentActivitySessionSnapshot.idle(
                     AgentActivityKind.TOWN_LIFE, agent == null ? "" : Integer.toString(agent.getId()));
         }
-        AgentActivityPhase phase = state.exitRequested()
-                ? AgentActivityPhase.DRAINING : AgentActivityPhase.ACTIVE;
+        AgentActivityPhase phase = state.externalInteractionPaused()
+                ? AgentActivityPhase.SUSPENDED
+                : state.exitRequested() ? AgentActivityPhase.DRAINING : AgentActivityPhase.ACTIVE;
         lastOwningSnapshot = new AgentActivitySessionSnapshot(
                 AgentActivityKind.TOWN_LIFE, phase, state.sessionId(), state.requestId(),
                 state.callerId(), Integer.toString(agent.getId()), state.sessionStartedAtMs(),
@@ -71,15 +71,28 @@ public final class TownLifeActivitySessionAdapter
         AgentTownLifeSessionHandle handle = state == null || agent == null
                 ? null : state.sessionHandle(agent.getId());
         if (handle == null) return AgentActivityExitResult.released("TownLife is not active");
-        AgentTownLifeExitResult result = AgentTownLifeRuntime.requestExit(
-                entry, agent, AgentTownLifeExitRequest.graceful(
-                        handle, reason, nowMs, deadlineMs));
-        return switch (result.status()) {
-            case EXITED, FORCED, NOT_ACTIVE -> AgentActivityExitResult.released(result.reason());
-            case EXIT_REQUESTED, ALREADY_DRAINING -> AgentActivityExitResult.requested(result.reason());
-            case REJECTED_STALE_SESSION, REJECTED_CALLER_MISMATCH,
-                    REJECTED_INVALID_REQUEST -> AgentActivityExitResult.rejected(result.reason());
-        };
+        if (state.externalInteractionPaused()) {
+            return AgentActivityExitResult.released("TownLife is suspended");
+        }
+        if (state.hasCommittedActivity()) {
+            return AgentActivityExitResult.deferred(
+                    "TownLife is finishing its current activity", Math.min(deadlineMs, nowMs + 1L));
+        }
+        AgentTownLifeRuntime.suspendForExternalInteraction(entry, agent, nowMs);
+        return AgentActivityExitResult.requested(reason);
+    }
+
+    public AgentActivityRollbackPort.Result resumeExact(String sessionId, long nowMs) {
+        AgentTownLifeState state = entry == null ? null : entry.capabilityStates()
+                .find(AgentTownLifeState.STATE_KEY).orElse(null);
+        if (state == null || !state.enabled() || !state.sessionId().equals(sessionId)) {
+            return AgentActivityRollbackPort.Result.rejected("TownLife source session is not retained");
+        }
+        if (!state.externalInteractionPaused()) {
+            return AgentActivityRollbackPort.Result.rejected("TownLife session is not suspended");
+        }
+        AgentTownLifeRuntime.resumeAfterExternalInteraction(entry, nowMs);
+        return AgentActivityRollbackPort.Result.resumed("TownLife session resumed");
     }
 
     @Override
