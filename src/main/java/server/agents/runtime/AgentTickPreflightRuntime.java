@@ -10,6 +10,7 @@ import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.journey.AgentJourneyRuntime;
 import server.agents.runtime.AgentTickCadenceStateRuntime;
+import server.agents.runtime.activity.control.AgentWorldDirectorObserveRuntime;
 
 public final class AgentTickPreflightRuntime {
     private static final long HEARTBEAT_INTERVAL_MS = config.AgentTuning.longValue("server.agents.runtime.AgentTickPreflightRuntime.HEARTBEAT_INTERVAL_MS");
@@ -30,6 +31,7 @@ public final class AgentTickPreflightRuntime {
                 hooks());
         if (result.agent() != null) {
             AgentJourneyRuntime.tick(entry, result.agent(), nowMs);
+            AgentWorldDirectorObserveRuntime.tick(entry, result.agent(), nowMs);
         }
         return result;
     }
