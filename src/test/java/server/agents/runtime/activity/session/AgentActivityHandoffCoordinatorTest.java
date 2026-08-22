@@ -136,6 +136,25 @@ class AgentActivityHandoffCoordinatorTest {
     }
 
     @Test
+    void suspendedSourceIsReleasedForTransferButRetainedForRollback() {
+        FakeSource source = new FakeSource();
+        AgentActivityHandoffCoordinator.Handoff handoff = coordinator.begin(
+                "handoff-suspended", "world-selector", AgentActivityKind.HUNTING,
+                source, ready(), 6_500L, 16_500L);
+        handoff = coordinator.advance(handoff, source,
+                now -> AgentActivityTransferPort.Result.ready(),
+                now -> AgentActivityAdmissionResult.rejected("unused"), 6_500L);
+        source.suspend();
+
+        handoff = coordinator.advance(handoff, source,
+                now -> AgentActivityTransferPort.Result.ready(),
+                now -> AgentActivityAdmissionResult.rejected("unused"), 6_750L);
+
+        assertEquals(AgentActivityHandoffCoordinator.Phase.TRANSFER, handoff.phase());
+        assertTrue(handoff.sourceReleased());
+    }
+
+    @Test
     void destinationRejectionAfterReleaseRequiresSafeFallback() {
         FakeSource source = new FakeSource();
         AgentActivityHandoffCoordinator.Handoff handoff = coordinator.begin(
@@ -227,6 +246,7 @@ class AgentActivityHandoffCoordinatorTest {
 
     private static final class FakeSource implements AgentActivitySourcePort {
         private boolean active = true;
+        private boolean suspended;
         private String sessionId = "town-session";
         private int exitRequests;
 
@@ -234,7 +254,8 @@ class AgentActivityHandoffCoordinatorTest {
         public AgentActivitySessionSnapshot snapshot(long nowMs) {
             return active
                     ? new AgentActivitySessionSnapshot(
-                    AgentActivityKind.TOWN_LIFE, AgentActivityPhase.DRAINING,
+                    AgentActivityKind.TOWN_LIFE,
+                    suspended ? AgentActivityPhase.SUSPENDED : AgentActivityPhase.DRAINING,
                     sessionId, "town-request", "world-selector", "42", 500L, "")
                     : AgentActivitySessionSnapshot.idle(AgentActivityKind.TOWN_LIFE, "42");
         }
@@ -247,6 +268,7 @@ class AgentActivityHandoffCoordinatorTest {
         }
 
         void release() { active = false; }
+        void suspend() { suspended = true; }
     }
 
     private static final class CountingTransfer implements AgentActivityTransferPort {

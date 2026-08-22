@@ -59,7 +59,7 @@ public final class QuestPlanActivitySessionAdapter
             return AgentActivityExitResult.released("quest plan is not active");
         }
         AgentPlanExitResult result = AgentUniversalPlanRuntime.requestExit(
-                entry, agent, AgentPlanExitRequest.graceful(handle, reason, nowMs, deadlineMs));
+                entry, agent, AgentPlanExitRequest.suspend(handle, reason, nowMs, deadlineMs));
         return switch (result.status()) {
             case REQUESTED, SUSPENDED -> AgentActivityExitResult.requested(result.reason());
             case EXITED, NOT_ACTIVE -> AgentActivityExitResult.released(result.reason());

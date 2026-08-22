@@ -27,7 +27,7 @@ public final class AgentActivityHandoffCoordinator {
             throw new IllegalArgumentException("handoff requires a future deadline");
         }
         AgentActivitySessionSnapshot snapshot = source.snapshot(nowMs);
-        if (snapshot == null || !snapshot.phase().ownsAgent()) {
+        if (snapshot == null || !snapshot.phase().ownsExecution()) {
             throw new IllegalArgumentException("handoff source must own the Agent");
         }
         if (snapshot.kind() == targetKind) {
@@ -121,10 +121,12 @@ public final class AgentActivityHandoffCoordinator {
         }
         AgentActivitySessionSnapshot sourceState = source.snapshot(nowMs);
         AgentActivitySessionSnapshot targetState = targetObserver.snapshot(nowMs);
-        boolean sourceOwns = sameSource(handoff, sourceState);
-        boolean targetOwns = sameTarget(handoff, targetState);
-        boolean sourceConflict = retains(sourceState) && !sourceOwns;
-        boolean targetConflict = retains(targetState) && !targetOwns;
+        boolean sourceRetained = sameSource(handoff, sourceState);
+        boolean sourceOwns = sourceRetained && sourceState.phase().ownsExecution();
+        boolean targetOwns = sameTarget(handoff, targetState)
+                && targetState.phase().ownsExecution();
+        boolean sourceConflict = executes(sourceState) && !sourceOwns;
+        boolean targetConflict = executes(targetState) && !targetOwns;
         if (sourceOwns && targetOwns) {
             return handoff.restate(Phase.FAILED, nowMs, handoff.sourceReleased(),
                     "dual foreground ownership detected during handoff restore", 0L);
@@ -146,6 +148,10 @@ public final class AgentActivityHandoffCoordinator {
                     ? Phase.WAIT_SOURCE_RELEASE : Phase.REQUEST_SOURCE_EXIT;
             return handoff.restate(phase, nowMs, false,
                     "source ownership restored", nowMs);
+        }
+        if (sourceRetained && handoff.sourceReleased()) {
+            return handoff.restate(handoff.phase(), nowMs, true,
+                    "suspended source session retained for rollback", nowMs);
         }
         Phase phase = switch (handoff.phase()) {
             case REQUEST_SOURCE_EXIT, WAIT_SOURCE_RELEASE -> Phase.TRANSFER;
@@ -175,7 +181,12 @@ public final class AgentActivityHandoffCoordinator {
     private Handoff observeSourceRelease(
             Handoff handoff, AgentActivitySourcePort source, long nowMs) {
         AgentActivitySessionSnapshot snapshot = source.snapshot(nowMs);
-        if (snapshot == null || !snapshot.phase().ownsAgent()) {
+        if (snapshot == null || !snapshot.phase().ownsExecution()) {
+            if (snapshot != null && snapshot.phase().retainsSession()
+                    && !sameSource(handoff, snapshot)) {
+                return handoff.transition(Phase.FAILED, nowMs,
+                        "source session changed while yielding for handoff", 0L);
+            }
             return handoff.transition(Phase.TRANSFER, nowMs, "source released", nowMs);
         }
         if (!snapshot.sessionId().equals(handoff.sourceSessionId())) {
@@ -269,6 +280,10 @@ public final class AgentActivityHandoffCoordinator {
 
     private static boolean retains(AgentActivitySessionSnapshot snapshot) {
         return snapshot != null && snapshot.phase().retainsSession();
+    }
+
+    private static boolean executes(AgentActivitySessionSnapshot snapshot) {
+        return snapshot != null && snapshot.phase().ownsExecution();
     }
 
     private static boolean sameSource(
