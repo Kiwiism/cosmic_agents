@@ -27,6 +27,11 @@ public final class AgentFileActivityHandoffStore implements AgentActivityHandoff
         this.mapper = new ObjectMapper();
     }
 
+    public static AgentFileActivityHandoffStore runtimeDefault() {
+        return new AgentFileActivityHandoffStore(
+                Path.of(".runtime", "agents", "activity-handoffs"));
+    }
+
     @Override
     public void save(AgentActivityHandoffCoordinator.Handoff handoff) {
         if (handoff == null) {

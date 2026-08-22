@@ -21,6 +21,11 @@ public final class AgentActivityHost {
         if (entry == null || agent == null) {
             return false;
         }
+        AgentActivityOwnershipState ownership =
+                entry.capabilityStates().require(AgentActivityOwnershipState.STATE_KEY);
+        if (!ownership.permitsExecution()) {
+            return false;
+        }
         AgentActivityHostState state =
                 entry.capabilityStates().require(AgentActivityHostState.STATE_KEY);
         for (AgentActivityController controller : registry.controllers()) {

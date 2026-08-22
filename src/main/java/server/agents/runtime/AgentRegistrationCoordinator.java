@@ -13,12 +13,17 @@ import server.agents.runtime.field.AgentFieldCheckpointRuntime;
 import server.agents.runtime.field.AgentFieldVisitLeaseCheckpointRuntime;
 import server.agents.plans.AgentPlanReattachmentRuntime;
 import server.agents.plans.AgentPlanCheckpointRuntime;
+import server.agents.runtime.activity.AgentActivityBootstrap;
+import server.agents.runtime.activity.AgentActivityOwnershipReconciliation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Runtime coordinator for Agent registration, scheduling, formation defaults,
  * and optional spawn-state normalization.
  */
 public final class AgentRegistrationCoordinator {
+    private static final Logger log = LoggerFactory.getLogger(AgentRegistrationCoordinator.class);
     private AgentRegistrationCoordinator() {
     }
 
@@ -82,7 +87,14 @@ public final class AgentRegistrationCoordinator {
         AgentTownLifeVisitLeaseCheckpointRuntime.restore(entry, agent);
         AgentFieldCheckpointRuntime.restore(entry, agent, nowMs);
         AgentFieldVisitLeaseCheckpointRuntime.restore(entry, agent);
-        AgentPlanReattachmentRuntime.reattachIfNeeded(entry, agent, nowMs);
+        AgentActivityOwnershipReconciliation ownership = entry.capabilityStates() == null
+                ? null : AgentActivityBootstrap.reconcileRestoredOwnership(entry, agent, nowMs);
+        if (ownership == null || ownership.permitsExecution()) {
+            AgentPlanReattachmentRuntime.reattachIfNeeded(entry, agent, nowMs);
+        } else {
+            log.warn("Agent '{}' registration paused by retained ownership reconciliation: {} {}",
+                    agent.getName(), ownership.status(), ownership.reason());
+        }
         return entry;
     }
 

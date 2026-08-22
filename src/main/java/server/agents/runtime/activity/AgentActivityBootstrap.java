@@ -10,6 +10,8 @@ import server.agents.runtime.AgentCommerceControlRuntime;
 import server.agents.runtime.commerce.AgentCommerceSessionRegistryRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.activity.session.AgentActivityKind;
+import server.agents.runtime.activity.session.AgentFileActivityHandoffStore;
+import server.agents.runtime.activity.session.AgentRestoredHandoffOwnerResolver;
 import server.agents.runtime.field.AgentFieldActivityRuntime;
 import server.agents.runtime.field.AgentFieldVisitLeaseRuntime;
 import server.agents.runtime.townlife.AgentTownLifeTestScenarioRuntime;
@@ -29,6 +31,10 @@ public final class AgentActivityBootstrap {
     private static final AgentActivityHost HOST = new AgentActivityHost(registry());
     private static final AgentActivityAdmissionCoordinator ADMISSION =
             new AgentActivityAdmissionCoordinator(registry());
+    private static final AgentActivityOwnershipReconciler OWNERSHIP =
+            new AgentActivityOwnershipReconciler(registry());
+    private static final AgentRestoredHandoffOwnerResolver RESTORED_HANDOFF_OWNER =
+            new AgentRestoredHandoffOwnerResolver(AgentFileActivityHandoffStore.runtimeDefault());
 
     private AgentActivityBootstrap() {
     }
@@ -39,6 +45,17 @@ public final class AgentActivityBootstrap {
 
     public static AgentActivityAdmissionCoordinator admission() {
         return ADMISSION;
+    }
+
+    public static AgentActivityOwnershipReconciliation reconcileRestoredOwnership(
+            AgentRuntimeEntry entry, Character agent, long nowMs) {
+        AgentActivityKind expected = RESTORED_HANDOFF_OWNER.expectedOwner(agent.getId())
+                .orElse(null);
+        AgentActivityOwnershipReconciliation result =
+                OWNERSHIP.reconcile(entry, agent, expected, nowMs);
+        entry.capabilityStates().require(AgentActivityOwnershipState.STATE_KEY)
+                .record(result, nowMs);
+        return result;
     }
 
     private static AgentActivityControllerRegistry registry() {
