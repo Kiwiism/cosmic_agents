@@ -86,8 +86,13 @@ public final class AgentWorldDirectiveProcessor {
             AgentActivityKind sourceKind,
             String sourceSessionId,
             long nowMs) {
-        AgentWorldActivityBinding binding = bindings.bind(
-                directive, entry, agent, sourceKind, sourceSessionId);
+        AgentWorldActivityBinding binding;
+        try {
+            binding = bindings.bind(directive, entry, agent, sourceKind, sourceSessionId);
+        } catch (RuntimeException invalidBinding) {
+            return reject(directive, session,
+                    "activity binding failed: " + invalidBinding.getMessage(), nowMs);
+        }
         AgentActivitySessionSnapshot source = binding.source().snapshot(nowMs);
         boolean switchRequired = source != null && source.phase().ownsExecution()
                 && source.kind() != directive.targetActivityKind();
