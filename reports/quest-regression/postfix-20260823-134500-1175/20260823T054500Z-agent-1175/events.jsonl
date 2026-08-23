@@ -1,0 +1,15 @@
+{"occurredAt":"2026-08-23T05:45:02.1805703Z","agentId":1175,"questId":28274,"type":"submitted","evidence":{"mapId":104000100,"questName":"Start quest — [Hunt] Why Are Dark Stumps So Dark?"}}
+{"occurredAt":"2026-08-23T05:45:29.3660831Z","agentId":1175,"questId":28274,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":104000200}}
+{"occurredAt":"2026-08-23T05:45:59.5357964Z","agentId":1175,"questId":28274,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":104000300}}
+{"occurredAt":"2026-08-23T05:46:14.6187401Z","agentId":1175,"questId":28274,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":104000400}}
+{"occurredAt":"2026-08-23T05:46:35.7463125Z","agentId":1175,"questId":28274,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":104010000}}
+{"occurredAt":"2026-08-23T05:47:24.0579402Z","agentId":1175,"questId":28274,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":104020000}}
+{"occurredAt":"2026-08-23T05:47:54.2375991Z","agentId":1175,"questId":28274,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":104030000}}
+{"occurredAt":"2026-08-23T05:48:39.5580313Z","agentId":1175,"questId":28274,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":104040000}}
+{"occurredAt":"2026-08-23T05:49:06.8816584Z","agentId":1175,"questId":28274,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":100000000}}
+{"occurredAt":"2026-08-23T05:49:40.0780071Z","agentId":1175,"questId":28274,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":100000002}}
+{"occurredAt":"2026-08-23T05:49:49.1320293Z","agentId":1175,"questId":28274,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":100000003}}
+{"occurredAt":"2026-08-23T05:53:23.7836626Z","agentId":1175,"questId":28274,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":100000002}}
+{"occurredAt":"2026-08-23T05:53:53.9957485Z","agentId":1175,"questId":28274,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":100000003}}
+{"occurredAt":"2026-08-23T05:54:15.1123716Z","agentId":1175,"questId":28274,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":100000002}}
+{"occurredAt":"2026-08-23T05:54:30.2133388Z","agentId":1175,"questId":28274,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":100000000}}

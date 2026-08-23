@@ -1,0 +1,2 @@
+"agentId","agentName","questId","questName","status","reason","elapsedSeconds","startMapId","endMapId","mapTrail"
+"1177","QuestReg25","2017","Start quest ? Arwen and the Glass Shoe","TIMEOUT","no terminal outcome within 18 minute(s)","1082.6","104000000","104030000","104000000>104000100>104000200>104000300>104000400>104010000>104020000>104030000"

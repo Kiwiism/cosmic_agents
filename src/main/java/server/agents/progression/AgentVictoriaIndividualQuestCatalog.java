@@ -5,6 +5,7 @@ import client.QuestStatus;
 import server.agents.progression.questcatalog.AgentQuestCatalogRepository;
 import server.agents.progression.questcatalog.AgentQuestDefinition;
 import server.agents.progression.questcatalog.AgentQuestSelectionDisposition;
+import server.quest.Quest;
 
 import java.util.Comparator;
 import java.util.List;
@@ -22,6 +23,7 @@ public final class AgentVictoriaIndividualQuestCatalog {
         return AgentVictoriaQuestRuntimeCatalogRepository.defaultRepository()
                 .eligibleAtLevel(agent.getLevel()).stream()
                 .filter(entry -> supportedForAgent(agent, guidance.find(entry.questId()).orElse(null)))
+                .filter(entry -> liveStartableOrActive(agent, entry))
                 .map(entry -> option(agent, entry))
                 .filter(option -> option.status() != QuestStatus.Status.COMPLETED.getId())
                 .sorted(Comparator
@@ -32,6 +34,19 @@ public final class AgentVictoriaIndividualQuestCatalog {
                                 agent.getLevel() - option.recommendedLevel()))
                         .thenComparingInt(Option::questId))
                 .toList();
+    }
+
+    private static boolean liveStartableOrActive(
+            Character agent, AgentVictoriaQuestRuntimeCatalog.Entry entry) {
+        int status = agent.getQuestStatus(entry.questId());
+        if (status == QuestStatus.Status.STARTED.getId()) {
+            return true;
+        }
+        Quest quest = Quest.getInstance(entry.questId());
+        // Lightweight Director projections used by tooling/tests may not materialize the
+        // authoritative QuestStatus object. Production Characters always do; fail open only
+        // for that incomplete projection and let the scheduler perform the final admission.
+        return agent.getQuest(quest) == null || quest.canStart(agent, entry.startNpcId());
     }
 
     private static boolean supportedForAgent(Character agent, AgentQuestDefinition quest) {

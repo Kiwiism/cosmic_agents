@@ -20,9 +20,16 @@ provisioning paths register identity immediately after character creation. The
 account sentinel remains as a login lock and destructive-test safety layer; it is
 no longer the Agent roster.
 
-`interactive_allowed` is stored for the future player/Agent takeover policy, but
-this change does not enable interactive Agent login. `RETIRED` is reserved for a
-future non-destructive retirement workflow.
+`interactive_allowed` normally remains false. A GM6 Agent operator may explicitly
+adopt an offline character from the operator's own account with
+`!adopttestagent <name> confirm`. That compatibility path records
+`LEGACY_TEST_FIXTURE` with `interactive_allowed=true`; it is intended only for
+older named test fixtures that predate dedicated Agent accounts. It does not
+permit simultaneous interactive and headless control: spawning still fails while
+the character is being played by a real client. Other existing player characters
+remain ineligible, and normal Agent provisioning continues to use dedicated,
+login-locked accounts. `RETIRED` is reserved for a future non-destructive
+retirement workflow and cannot be reactivated through test-fixture adoption.
 
 The Director panel exposes a separate clean-slate operation for active Agents.
 It does not delete the character or its `agent_characters` row. The operation is

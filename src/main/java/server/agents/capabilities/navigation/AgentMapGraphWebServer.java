@@ -8,10 +8,14 @@ import net.server.channel.Channel;
 import net.server.world.World;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import server.agents.capabilities.combat.AgentCombatPolicyDiagnostics;
+import server.agents.capabilities.combat.AgentCombatTargetTraceRuntime;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.field.AgentFieldRuntime;
 import server.agents.field.AgentFieldLadderRuntime;
 import server.agents.field.AgentFieldObservationRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.AgentRuntimeRegistry;
 import server.maps.MapleMap;
 
 import java.io.IOException;
@@ -53,6 +57,7 @@ public final class AgentMapGraphWebServer {
         this.server.createContext("/api/mapgraph", this::serveMapGraph);
         this.server.createContext("/api/pathfind", this::servePathfind);
         this.server.createContext("/api/agentfield", this::serveAgentField);
+        this.server.createContext("/api/agenttrace", this::serveAgentTrace);
         this.server.createContext("/api/health", this::serveHealth);
     }
 
@@ -202,6 +207,34 @@ public final class AgentMapGraphWebServer {
         } catch (RuntimeException exception) {
             log.warn("Agent field diagnostics request failed", exception);
             sendJson(exchange, 500, Map.of("error", "Agent field diagnostics request failed"));
+        }
+    }
+
+    private void serveAgentTrace(HttpExchange exchange) throws IOException {
+        if (!requireGet(exchange)) {
+            return;
+        }
+        try {
+            int characterId = requiredInt(query(exchange), "id");
+            AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(characterId);
+            if (entry == null) {
+                sendJson(exchange, 404, Map.of(
+                        "error", "Active Agent " + characterId + " was not found"));
+                return;
+            }
+            long nowMs = System.currentTimeMillis();
+            sendJson(exchange, 200, Map.of(
+                    "characterId", characterId,
+                    "sampledAtMs", nowMs,
+                    "navigation", AgentNavigationTraceRuntime.snapshot(entry, nowMs),
+                    "edgeReliability", AgentNavigationEdgeReliabilityRuntime.snapshot(entry, nowMs),
+                    "combatTarget", AgentCombatTargetTraceRuntime.snapshot(entry, nowMs),
+                    "combatPolicy", AgentCombatPolicyDiagnostics.snapshot(entry, nowMs)));
+        } catch (IllegalArgumentException exception) {
+            sendJson(exchange, 400, Map.of("error", exception.getMessage()));
+        } catch (RuntimeException exception) {
+            log.warn("Agent trace diagnostics request failed", exception);
+            sendJson(exchange, 500, Map.of("error", "Agent trace diagnostics request failed"));
         }
     }
 

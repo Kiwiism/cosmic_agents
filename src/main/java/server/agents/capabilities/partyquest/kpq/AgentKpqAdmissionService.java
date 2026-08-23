@@ -196,8 +196,7 @@ public final class AgentKpqAdmissionService {
         if (isAgent(eventLeader)) {
             AgentKpqDialogue.sayMapNow(eventLeader, "Party ready.");
         } else {
-            AgentKpqDialogue.sayMapNow(coordinator,
-                    "Joining " + eventLeader.getName() + "'s KPQ party.");
+            AgentKpqDialogue.sayMapNow(coordinator, "Party ready.");
         }
         return new AdmissionResult(true, "KPQ party admitted", session, engagement);
     }

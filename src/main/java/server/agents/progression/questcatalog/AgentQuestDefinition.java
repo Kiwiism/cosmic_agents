@@ -12,6 +12,7 @@ public record AgentQuestDefinition(
         int recommendedLevel,
         Set<Integer> allowedJobIds,
         List<Prerequisite> prerequisites,
+        List<StartItemRequirement> startItemRequirements,
         boolean autonomousStartAllowed,
         AgentQuestSelectionDisposition selectionDisposition,
         Endpoint start,
@@ -26,6 +27,8 @@ public record AgentQuestDefinition(
         recommendationRationale = text(recommendationRationale);
         allowedJobIds = Set.copyOf(allowedJobIds == null ? Set.of() : allowedJobIds);
         prerequisites = List.copyOf(prerequisites == null ? List.of() : prerequisites);
+        startItemRequirements = List.copyOf(
+                startItemRequirements == null ? List.of() : startItemRequirements);
         objectives = List.copyOf(objectives == null ? List.of() : objectives);
         warnings = List.copyOf(warnings == null ? List.of() : warnings);
         if (questId <= 0 || questName.isEmpty() || recommendedLevel <= 0
@@ -42,6 +45,23 @@ public record AgentQuestDefinition(
         public Prerequisite {
             if (questId <= 0 || requiredState < 0) {
                 throw new IllegalArgumentException("valid quest prerequisite is required");
+            }
+        }
+    }
+
+    public record StartItemRequirement(
+            int itemId,
+            String itemName,
+            int requiredCount,
+            boolean consumedOnStart,
+            List<Integer> producerQuestIds) {
+        public StartItemRequirement {
+            itemName = text(itemName);
+            producerQuestIds = List.copyOf(
+                    producerQuestIds == null ? List.of() : producerQuestIds);
+            if (itemId <= 0 || requiredCount <= 0
+                    || producerQuestIds.stream().anyMatch(id -> id == null || id <= 0)) {
+                throw new IllegalArgumentException("valid quest start-item requirement is required");
             }
         }
     }

@@ -1,0 +1,12 @@
+{"occurredAt":"2026-08-23T04:20:57.9104093Z","agentId":1175,"questId":2090,"type":"adopted-terminal-outcome","evidence":{"mapId":103000000,"status":"FAILED","reason":"exit criteria failed: character.level gte-input targetLevel (actual=15)"}}
+{"occurredAt":"2026-08-23T04:20:58.0180318Z","agentId":1175,"questId":28280,"type":"submitted","evidence":{"questName":"Start quest — [Hunt] Sweep the Snails!","mapId":103000000}}
+{"occurredAt":"2026-08-23T04:21:43.1795766Z","agentId":1175,"questId":28280,"type":"map-changed","evidence":{"activity":"questing — victoria-training","mapId":102050000}}
+{"occurredAt":"2026-08-23T04:22:18.2963355Z","agentId":1175,"questId":28280,"type":"map-changed","evidence":{"activity":"questing — victoria-training","mapId":102040000}}
+{"occurredAt":"2026-08-23T04:22:48.3941442Z","agentId":1175,"questId":28280,"type":"map-changed","evidence":{"activity":"questing — victoria-training","mapId":102030000}}
+{"occurredAt":"2026-08-23T04:23:38.6180876Z","agentId":1175,"questId":28280,"type":"map-changed","evidence":{"activity":"questing — victoria-training","mapId":102020000}}
+{"occurredAt":"2026-08-23T04:24:08.8002670Z","agentId":1175,"questId":28280,"type":"map-changed","evidence":{"activity":"questing — victoria-training","mapId":102010000}}
+{"occurredAt":"2026-08-23T04:24:54.0085692Z","agentId":1175,"questId":28280,"type":"map-changed","evidence":{"activity":"questing — victoria-training","mapId":102000000}}
+{"occurredAt":"2026-08-23T04:25:34.1940190Z","agentId":1175,"questId":28280,"type":"map-changed","evidence":{"activity":"questing — victoria-training","mapId":101040000}}
+{"occurredAt":"2026-08-23T04:26:49.5439429Z","agentId":1175,"questId":28280,"type":"map-changed","evidence":{"activity":"questing — victoria-training","mapId":102000000}}
+{"occurredAt":"2026-08-23T04:27:04.5915782Z","agentId":1175,"questId":28280,"type":"map-changed","evidence":{"activity":"questing — victoria-training","mapId":102010000}}
+{"occurredAt":"2026-08-23T04:28:14.8767903Z","agentId":1175,"questId":28280,"type":"map-changed","evidence":{"activity":"questing — victoria-training","mapId":102000000}}

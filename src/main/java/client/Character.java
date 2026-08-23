@@ -4896,6 +4896,11 @@ public class Character extends AbstractCharacterObject {
         }
     }
 
+    /** Immutable membership snapshot for read-only integrations and diagnostics. */
+    public final List<QuestStatus> getQuestStatusesSnapshot() {
+        return getQuests();
+    }
+
     public final List<QuestStatus> getCompletedQuests() {
         List<QuestStatus> ret = new LinkedList<>();
         for (QuestStatus qs : getQuests()) {

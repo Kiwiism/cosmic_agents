@@ -9,6 +9,7 @@ public record AgentQuestEligibility(Status status, String reason) {
         LEVEL_LOCKED,
         JOB_LOCKED,
         PREREQUISITE_LOCKED,
+        START_ITEM_LOCKED,
         ACCURACY_INSUFFICIENT,
         INVENTORY_INSUFFICIENT,
         SUPPLIES_INSUFFICIENT,

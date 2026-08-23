@@ -11,6 +11,29 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentKpqSessionTest {
     @Test
+    void tracksDelayedDialogueFromTheSpecificTaskFirstObservation() {
+        AgentKpqSession session = new AgentKpqSession(
+                AgentKpqSession.Mode.TEST_OBSERVATION, 1L, 1, 4, 1_000L);
+
+        assertEquals(0L, session.dialogueWaitElapsedMs("rope-2", 10_000L));
+        assertEquals(5_000L, session.dialogueWaitElapsedMs("rope-2", 15_000L));
+        assertEquals(0L, session.dialogueWaitElapsedMs("cloto-check", 15_000L));
+    }
+
+    @Test
+    void dialogueClaimsAreThrottledAndResetOnPhaseChange() {
+        AgentKpqSession session = new AgentKpqSession(
+                AgentKpqSession.Mode.TEST_OBSERVATION, 1L, 7, 4, 1_000L);
+
+        assertTrue(session.claimDialogue("coupon-help", 2_000L, 2_500L));
+        assertFalse(session.claimDialogue("coupon-help", 4_000L, 2_500L));
+        assertTrue(session.claimDialogue("coupon-help", 4_500L, 2_500L));
+
+        session.transition(AgentKpqSession.Phase.STAGE_1, 5_000L);
+        assertTrue(session.claimDialogue("coupon-help", 5_000L, 2_500L));
+    }
+
+    @Test
     void firstMemberOwnsLeadershipAndOnlyCoordinatorTicksOncePerTimestamp() {
         AgentKpqSession session = new AgentKpqSession(
                 AgentKpqSession.Mode.TEST_OBSERVATION, 7L, 100, 3, 1_000L);
@@ -179,5 +202,37 @@ class AgentKpqSessionTest {
         session.beginStage5LootDelayIfBossDefeated(0, 3_000L, 3_000L);
         assertTrue(session.stage5LootDelayActive(5_999L));
         assertFalse(session.stage5LootDelayActive(6_000L));
+    }
+
+    @Test
+    void stageFiveCleanupIsBoundedAndResetsAtTheNextPhase() {
+        AgentKpqSession session = new AgentKpqSession(
+                AgentKpqSession.Mode.TEST_OBSERVATION, 7L, 1, 4, 1_000L);
+
+        assertTrue(session.beginStage5Cleanup(2_000L, 8_000L));
+        assertFalse(session.beginStage5Cleanup(3_000L, 8_000L));
+        assertTrue(session.stage5CleanupActive(9_999L));
+        assertFalse(session.stage5CleanupActive(10_000L));
+
+        session.transition(AgentKpqSession.Phase.CLAIMING_REWARDS, 11_000L);
+        assertFalse(session.stage5CleanupStarted());
+        assertEquals(0L, session.stage5CleanupDeadlineMs());
+    }
+
+    @Test
+    void changingOrClearingABlockerAllowsOneFreshRecoveryAttempt() {
+        AgentKpqMemberState member = new AgentKpqMemberState(
+                7, AgentKpqMemberState.MemberType.AGENT, 1);
+
+        member.observeBlocker("stage2-cloto-anchor", 1_000L);
+        member.markBlockerRecoveryAttempted();
+        assertTrue(member.blockerRecoveryAttempted());
+
+        member.observeBlocker("stage3-cloto-anchor", 2_000L);
+        assertFalse(member.blockerRecoveryAttempted());
+
+        member.markBlockerRecoveryAttempted();
+        member.clearBlocker();
+        assertFalse(member.blockerRecoveryAttempted());
     }
 }

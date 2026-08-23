@@ -3,6 +3,8 @@ package server.agents.progression;
 import client.Character;
 import client.QuestStatus;
 import server.agents.capabilities.objective.AgentNpcInteractionReachabilityService;
+import server.agents.capabilities.navigation.AgentNavigationTraceRuntime;
+import server.agents.capabilities.navigation.AgentNavigationTraceSnapshot;
 import server.agents.capabilities.contracts.AgentProcurementMethod;
 import server.agents.capabilities.contracts.AgentSupplyUrgency;
 import server.agents.capabilities.supplies.AgentPotionService;
@@ -74,7 +76,7 @@ final class AgentVictoriaQuestSchedulerRuntime {
                 || state.stage() == AgentVictoriaQuestSchedulerState.Stage.START)) {
             state.stage(AgentVictoriaQuestSchedulerState.Stage.HUNT);
         }
-        ensureAttemptStarted(agent, quest, state, gateway, nowMs);
+        ensureAttemptStarted(entry, agent, quest, state, gateway, nowMs);
         return switch (state.stage()) {
             case TRAVEL_TO_START -> travel(entry, agent, state.startMapId(), gateway, nowMs,
                     () -> state.stage(AgentVictoriaQuestSchedulerState.Stage.START), state);
@@ -142,7 +144,14 @@ final class AgentVictoriaQuestSchedulerRuntime {
                 .findFirst().orElse(null);
         if (selected == null) {
             if (requestedQuestId > 0) {
-                state.failRequestedAndDefer(agent.getLevel());
+                String reason = eligible.stream()
+                        .filter(quest -> quest.questId() == requestedQuestId)
+                        .map(quest -> startRequirementFailure(agent, quest, gateway))
+                        .filter(value -> !value.isEmpty())
+                        .findFirst()
+                        .orElse("live quest prerequisites or start-script requirements are not satisfied");
+                state.failRequestedAndDefer(agent.getLevel(),
+                        reason);
             } else {
                 state.defer(agent.getLevel());
             }
@@ -158,6 +167,35 @@ final class AgentVictoriaQuestSchedulerRuntime {
         return true;
     }
 
+    private static String startRequirementFailure(
+            Character agent,
+            AgentVictoriaQuestRuntimeCatalog.Entry quest,
+            PrimitiveCapabilityGateway gateway) {
+        for (AgentVictoriaQuestRuntimeCatalog.PrerequisiteRequirement prerequisite
+                : quest.prerequisiteRequirements()) {
+            int state = gateway.questStatus(agent, prerequisite.questId());
+            if (state >= prerequisite.requiredState()) {
+                continue;
+            }
+            return "requires quest " + prerequisite.questId() + " at state "
+                    + prerequisite.requiredState() + " before quest start; current state " + state;
+        }
+        for (AgentVictoriaQuestRuntimeCatalog.StartItemRequirement requirement
+                : quest.startItemRequirements()) {
+            int owned = gateway.itemCount(agent, requirement.itemId());
+            if (owned >= requirement.requiredCount()) {
+                continue;
+            }
+            String item = requirement.itemName().isEmpty()
+                    ? "item " + requirement.itemId() : requirement.itemName();
+            String producers = requirement.producerQuestIds().isEmpty() ? ""
+                    : "; prerequisite source quest(s) " + requirement.producerQuestIds();
+            return "requires " + requirement.requiredCount() + " " + item
+                    + " before quest start; owned " + owned + producers;
+        }
+        return "";
+    }
+
     private static boolean hunt(AgentRuntimeEntry entry,
                                 Character agent,
                                 AgentVictoriaQuestRuntimeCatalog.Entry quest,
@@ -168,25 +206,62 @@ final class AgentVictoriaQuestSchedulerRuntime {
             state.stage(AgentVictoriaQuestSchedulerState.Stage.TRAVEL_TO_COMPLETE);
             return true;
         }
-        List<AgentVictoriaQuestRuntimeCatalog.HuntingObjective> objectives = quest.huntingObjectives();
+        List<AgentVictoriaQuestRuntimeCatalog.ShopProcurementObjective> procurementObjectives =
+                quest.shopProcurementObjectives();
         int objectiveIndex = state.objectiveIndex();
-        while (objectiveIndex < objectives.size()
-                && complete(agent, quest.questId(), objectives.get(objectiveIndex), gateway)) {
-            AgentHuntRecoveryRuntime.clear(entry, "scheduler:" + quest.questId() + ":"
-                    + objectives.get(objectiveIndex).objectiveId());
+        while (objectiveIndex < procurementObjectives.size()
+                && complete(agent, procurementObjectives.get(objectiveIndex), gateway)) {
             objectiveIndex++;
             state.objectiveIndex(objectiveIndex);
         }
-        if (objectiveIndex >= objectives.size()) {
+        if (objectiveIndex < procurementObjectives.size()) {
+            AgentVictoriaQuestRuntimeCatalog.ShopProcurementObjective objective =
+                    procurementObjectives.get(objectiveIndex);
+            int currentCount = gateway.itemCount(agent, objective.targetId());
+            AgentNavigationTraceSnapshot navigation = AgentNavigationTraceRuntime.snapshot(entry, nowMs);
+            state.observeAttempt(agent.getMapId(),
+                    navigation == null ? -1 : navigation.currentRegionId(),
+                    agent.getPosition(), currentCount, nowMs);
+            AgentVictoriaQuestShopProcurementRuntime.Outcome outcome =
+                    AgentVictoriaQuestShopProcurementRuntime.tick(
+                            entry, agent, quest.questId(), objective,
+                            state.shopAttemptedForCurrentObjective(), gateway, nowMs);
+            if (outcome.purchaseStarted()) {
+                state.markShopAttemptedForCurrentObjective();
+            }
+            if (outcome.status() == AgentVictoriaQuestShopProcurementRuntime.Status.COMPLETE) {
+                state.objectiveIndex(objectiveIndex + 1);
+            } else if (outcome.status() == AgentVictoriaQuestShopProcurementRuntime.Status.FAILED) {
+                gateway.stop(entry);
+                state.suspendAndDefer(agent.getLevel(), "QUEST_SHOP_PROCUREMENT_FAILED: "
+                        + outcome.reason());
+                return false;
+            }
+            return true;
+        }
+        List<AgentVictoriaQuestRuntimeCatalog.HuntingObjective> objectives = quest.huntingObjectives();
+        int huntingObjectiveIndex = objectiveIndex - procurementObjectives.size();
+        while (huntingObjectiveIndex < objectives.size()
+                && complete(agent, quest.questId(), objectives.get(huntingObjectiveIndex), gateway)) {
+            AgentHuntRecoveryRuntime.clear(entry, "scheduler:" + quest.questId() + ":"
+                    + objectives.get(huntingObjectiveIndex).objectiveId());
+            huntingObjectiveIndex++;
+            state.objectiveIndex(procurementObjectives.size() + huntingObjectiveIndex);
+        }
+        if (huntingObjectiveIndex >= objectives.size()) {
             state.stage(AgentVictoriaQuestSchedulerState.Stage.TRAVEL_TO_COMPLETE);
             return true;
         }
-        AgentVictoriaQuestRuntimeCatalog.HuntingObjective objective = objectives.get(objectiveIndex);
+        AgentVictoriaQuestRuntimeCatalog.HuntingObjective objective =
+                objectives.get(huntingObjectiveIndex);
         int currentCount = objective.type().contains("collect")
                 ? gateway.itemCount(agent, objective.targetId())
                 : gateway.questProgress(agent, quest.questId(), objective.targetId());
         String huntKey = "scheduler:" + quest.questId() + ":" + objective.objectiveId();
-        state.observeAttempt(agent.getMapId(), currentCount, nowMs);
+        AgentNavigationTraceSnapshot navigation = AgentNavigationTraceRuntime.snapshot(entry, nowMs);
+        state.observeAttempt(agent.getMapId(),
+                navigation == null ? -1 : navigation.currentRegionId(),
+                agent.getPosition(), currentCount, nowMs);
         AgentDecisionRecommendation recommendation = assessAttempt(
                 entry, agent, quest, state, huntKey, currentCount, nowMs);
         if (recommendation != null && recommendation.action() != AgentRecommendedAction.CONTINUE) {
@@ -207,7 +282,9 @@ final class AgentVictoriaQuestSchedulerRuntime {
                     || recommendation.action() == AgentRecommendedAction.ABANDON_OBJECTIVE
                     || recommendation.action() == AgentRecommendedAction.SAFE_FALLBACK) {
                 gateway.stop(entry);
-                state.suspendAndDefer(agent.getLevel());
+                state.suspendAndDefer(agent.getLevel(),
+                        recommendation.reasonCode().name() + ": "
+                                + recommendation.explanation());
                 return false;
             }
         }
@@ -278,6 +355,7 @@ final class AgentVictoriaQuestSchedulerRuntime {
     }
 
     private static void ensureAttemptStarted(
+            AgentRuntimeEntry entry,
             Character agent,
             AgentVictoriaQuestRuntimeCatalog.Entry quest,
             AgentVictoriaQuestSchedulerState state,
@@ -286,11 +364,17 @@ final class AgentVictoriaQuestSchedulerRuntime {
         if (state.attemptStartedAtMs() > 0L) {
             return;
         }
-        int progress = quest.huntingObjectives().stream().mapToInt(objective ->
+        int progress = quest.shopProcurementObjectives().stream().mapToInt(objective ->
+                gateway.itemCount(agent, objective.targetId())).sum()
+                + quest.huntingObjectives().stream().mapToInt(objective ->
                 objective.type().contains("collect")
                         ? gateway.itemCount(agent, objective.targetId())
                         : gateway.questProgress(agent, quest.questId(), objective.targetId())).sum();
-        state.beginAttempt(nowMs, agent.getMapId(), progress, resourceUnits(agent),
+        AgentNavigationTraceSnapshot navigation = AgentNavigationTraceRuntime.snapshot(
+                entry, nowMs);
+        state.beginAttempt(nowMs, agent.getMapId(),
+                navigation == null ? -1 : navigation.currentRegionId(),
+                agent.getPosition(), progress, resourceUnits(agent),
                 AgentQuestAttemptBudgetPolicy.budgetForLevel(agent.getLevel()));
     }
 
@@ -403,6 +487,13 @@ final class AgentVictoriaQuestSchedulerRuntime {
             return gateway.itemCount(agent, objective.targetId()) >= objective.requiredCount();
         }
         return gateway.questProgress(agent, questId, objective.targetId()) >= objective.requiredCount();
+    }
+
+    private static boolean complete(
+            Character agent,
+            AgentVictoriaQuestRuntimeCatalog.ShopProcurementObjective objective,
+            PrimitiveCapabilityGateway gateway) {
+        return gateway.itemCount(agent, objective.targetId()) >= objective.requiredCount();
     }
 
     private static boolean travel(AgentRuntimeEntry entry,

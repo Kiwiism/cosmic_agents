@@ -6,7 +6,8 @@ import java.util.Set;
 public final class AgentPlanSchemaValidator {
     public static final int CURRENT_SCHEMA_VERSION = 1;
     private static final Set<String> CONDITION_OPERATORS = Set.of(
-            "present", "eq", "gte", "gte-input", "in", "between", "active", "all-succeeded");
+            "present", "eq", "gte", "gte-input", "in", "between", "active",
+            "completed", "all-succeeded");
 
     private AgentPlanSchemaValidator() {
     }

@@ -1,6 +1,7 @@
 package server.agents.capabilities.supplies;
 
 import client.Character;
+import client.Job;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.contracts.AgentProcurementMethod;
 import server.agents.capabilities.contracts.AgentProcurementRequest;
@@ -37,6 +38,53 @@ class AgentSupplyProcurementRuntimeTest {
                 .requireSelfSustaining();
         assertFalse(AgentSupplyProcurementRuntime.tickIfSelfSustaining(
                 entry, agent, 200L));
+    }
+
+    @Test
+    void activePotionMaintenanceReleasesAFullHealthBeginnerPlan() {
+        Character agent = mock(Character.class);
+        when(agent.getId()).thenReturn(92);
+        when(agent.getJob()).thenReturn(Job.BEGINNER);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        AgentObjectiveDefinition plan = new AgentObjectiveDefinition(
+                "maple:plan:92", "plan.maple-island", 80, Long.MAX_VALUE, 5,
+                AgentObjectiveSource.QUEST_PLAN, "maple-v1", "maple:92");
+        AgentObjectiveDefinition maintenance = new AgentObjectiveDefinition(
+                "maintenance:resupply:supply:HP_POTION:92", "maintenance.resupply", 1_000,
+                10_000L, 2, AgentObjectiveSource.RECOVERY_POLICY,
+                "supply-procurement-v2", plan.objectiveId());
+        AgentObjectiveKernel.start(entry, plan, 10L);
+        AgentObjectiveKernel.suspendFor(entry, maintenance, "HP potions empty", 20L);
+        entry.capabilityStates().require(AgentSupplyProcurementState.STATE_KEY).start(
+                "supply:HP_POTION:92", maintenance.objectiveId(),
+                AgentResourceCategory.HP_POTION, 10000, 0, 10000,
+                AgentSupplyProcurementState.Phase.SHOPPING);
+
+        assertFalse(AgentSupplyProcurementRuntime.tick(entry, agent, 30L));
+        assertEquals(plan, AgentObjectiveKernel.active(entry));
+        assertFalse(entry.capabilityStates().require(
+                AgentSupplyProcurementState.STATE_KEY).isActive());
+    }
+
+    @Test
+    void restoredPotionMaintenanceAlsoReleasesAFullHealthBeginnerPlan() {
+        Character agent = mock(Character.class);
+        when(agent.getId()).thenReturn(93);
+        when(agent.getJob()).thenReturn(Job.BEGINNER);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        AgentObjectiveDefinition plan = new AgentObjectiveDefinition(
+                "maple:plan:93", "plan.maple-island", 80, Long.MAX_VALUE, 5,
+                AgentObjectiveSource.QUEST_PLAN, "maple-v1", "maple:93");
+        AgentObjectiveDefinition maintenance = new AgentObjectiveDefinition(
+                "maintenance:resupply:supply:MP_POTION:93", "maintenance.resupply", 1_000,
+                10_000L, 2, AgentObjectiveSource.RECOVERY_POLICY,
+                "supply-procurement-v2", plan.objectiveId());
+        AgentObjectiveKernel.start(entry, plan, 10L);
+        AgentObjectiveKernel.suspendFor(entry, maintenance, "MP potions empty", 20L);
+
+        assertFalse(AgentSupplyProcurementRuntime.tickIfSelfSustaining(
+                entry, agent, 30L));
+        assertEquals(plan, AgentObjectiveKernel.active(entry));
     }
 
     @Test

@@ -1,0 +1,7 @@
+{"occurredAt":"2026-08-23T07:24:00.3264580Z","agentId":1175,"questId":2090,"type":"submitted","evidence":{"questName":"Start quest — I'm Bored 1","mapId":104010000}}
+{"occurredAt":"2026-08-23T07:26:01.1709466Z","agentId":1175,"questId":2090,"type":"map-changed","evidence":{"mapId":103030000,"activity":"questing — victoria-individual-quest"}}
+{"occurredAt":"2026-08-23T07:27:53.6964771Z","agentId":1175,"questId":2090,"type":"map-changed","evidence":{"mapId":103020200,"activity":"questing — victoria-individual-quest"}}
+{"occurredAt":"2026-08-23T07:30:30.4049689Z","agentId":1175,"questId":2090,"type":"map-changed","evidence":{"mapId":103020100,"activity":"questing — victoria-individual-quest"}}
+{"occurredAt":"2026-08-23T07:32:15.0699795Z","agentId":1175,"questId":2090,"type":"timeout","evidence":{"phase":"quest not yet accepted; travel to the start NPC still in progress","classification":"TIMEOUT_TRAVEL","reason":"time budget expired after 8 minute(s); quest not yet accepted; travel to the start NPC still in progress","hp":892,"waitingOn":"","blockedBy":"","mapTransitions":3,"mp":255,"meso":5000307,"activity":"questing — victoria-individual-quest","mapId":103020100}}
+{"occurredAt":"2026-08-23T07:32:17.2130668Z","agentId":1175,"questId":2165,"type":"submitted","evidence":{"questName":"Start quest — The Prince's Request","mapId":103020100}}
+{"occurredAt":"2026-08-23T07:33:29.5733728Z","agentId":1175,"questId":2165,"type":"map-changed","evidence":{"mapId":103020200,"activity":"questing — victoria-individual-quest"}}

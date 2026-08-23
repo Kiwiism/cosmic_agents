@@ -1,6 +1,7 @@
 package server.agents.capabilities.combat;
 
 import client.Character;
+import client.inventory.WeaponType;
 import org.junit.jupiter.api.Test;
 import server.agents.operations.events.AgentMobKilledEvent;
 import server.agents.operations.events.AgentMobDamagedEvent;
@@ -32,6 +33,21 @@ class AgentRouteBlockerPolicyTest {
                 start, end, new Point(201, 0), 40));
         assertFalse(AgentCombatTargetRuntime.insideRouteCorridor(
                 start, end, new Point(80, 41), 40));
+    }
+
+    @Test
+    void blockerSearchStartsAtMechanicalWeaponRange() {
+        AgentCombatConfig.Config config = new AgentCombatConfig.Config();
+
+        assertEquals(config.ATTACK_RANGE_X + config.ATTACK_JUMP_X_EXTRA,
+                AgentCombatTargetRuntime.routeBlockerSeekRange(
+                        WeaponType.SWORD1H, 400, config));
+        assertEquals(400,
+                AgentCombatTargetRuntime.routeBlockerSeekRange(
+                        WeaponType.BOW, 400, config));
+        assertEquals(400,
+                AgentCombatTargetRuntime.routeBlockerSeekRange(
+                        WeaponType.STAFF, 400, config));
     }
 
     @Test

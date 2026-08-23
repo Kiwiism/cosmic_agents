@@ -11,6 +11,9 @@ import java.util.UUID;
 
 /** Party-level KPQ state. All mutation is synchronized through this aggregate. */
 public final class AgentKpqSession {
+    private static final boolean DEFAULT_MEMBER_COORDINATION_CHAT_ENABLED =
+            config.AgentTuning.booleanValue(
+                    "server.agents.capabilities.partyquest.kpq.AgentKpqSession.MEMBER_COORDINATION_CHAT_ENABLED");
     public enum Mode { PRODUCTION, BACKGROUND_POPULATION, TEST_OBSERVATION }
     public enum PartyOwnership { EXTERNAL, KPQ_OWNED }
     public enum Phase {
@@ -39,8 +42,11 @@ public final class AgentKpqSession {
     private long readyAtMs;
     private long lastCoordinatorTickMs = Long.MIN_VALUE;
     private boolean paused;
+    private boolean memberCoordinationChatEnabled = DEFAULT_MEMBER_COORDINATION_CHAT_ENABLED;
     private String failure = "";
     private final LinkedHashSet<String> narrationKeys = new LinkedHashSet<>();
+    private final Map<String, Long> dialogueTimes = new LinkedHashMap<>();
+    private final Map<String, Long> dialogueWaitStartedAtMs = new LinkedHashMap<>();
     private int squishyShoesWinnerId;
     private int requestedCheckpointStage = 1;
     private int puzzleValidationRevision;
@@ -64,6 +70,8 @@ public final class AgentKpqSession {
     private int stage5LastPassCount = -1;
     private long stage5BossDefeatedAtMs;
     private long stage5LootNotBeforeMs;
+    private long stage5CleanupStartedAtMs;
+    private long stage5CleanupDeadlineMs;
     private long stage5BossCombatStartedAtMs;
     private boolean stage5BossCombatReported;
 
@@ -111,6 +119,18 @@ public final class AgentKpqSession {
                 ? eventLeaderId
                 : coordinatorAgentId;
         eventLeader.setRole(AgentKpqMemberState.Role.EVENT_LEADER);
+    }
+
+    static boolean defaultMemberCoordinationChatEnabled() {
+        return DEFAULT_MEMBER_COORDINATION_CHAT_ENABLED;
+    }
+
+    public synchronized boolean memberCoordinationChatEnabled() {
+        return memberCoordinationChatEnabled;
+    }
+
+    public synchronized void setMemberCoordinationChatEnabled(boolean enabled) {
+        memberCoordinationChatEnabled = enabled;
     }
 
     private int nextPartyNumber() {
@@ -178,8 +198,13 @@ public final class AgentKpqSession {
         stage5LastMobCount = -1;
         stage5LastPassCount = -1;
         stage5BossDefeatedAtMs = 0L;
+        stage5LootNotBeforeMs = 0L;
+        stage5CleanupStartedAtMs = 0L;
+        stage5CleanupDeadlineMs = 0L;
         stage5BossCombatStartedAtMs = 0L;
         stage5BossCombatReported = false;
+        dialogueTimes.clear();
+        dialogueWaitStartedAtMs.clear();
         members.values().forEach(member -> {
             member.setAssignedPosition(0);
             member.setStableSinceMs(0L);
@@ -226,6 +251,20 @@ public final class AgentKpqSession {
 
     public synchronized boolean narrateOnce(String key) {
         return key != null && narrationKeys.add(key);
+    }
+
+    public synchronized boolean claimDialogue(String key, long nowMs, long cooldownMs) {
+        if (key == null) return false;
+        Long previous = dialogueTimes.get(key);
+        if (previous != null && nowMs - previous < Math.max(0L, cooldownMs)) return false;
+        dialogueTimes.put(key, nowMs);
+        return true;
+    }
+
+    public synchronized long dialogueWaitElapsedMs(String key, long nowMs) {
+        if (key == null) return 0L;
+        Long startedAtMs = dialogueWaitStartedAtMs.putIfAbsent(key, nowMs);
+        return startedAtMs == null ? 0L : Math.max(0L, nowMs - startedAtMs);
     }
 
     public synchronized void recordHumanPuzzleValidation(int stage, boolean accepted) {
@@ -350,6 +389,25 @@ public final class AgentKpqSession {
 
     public synchronized boolean stage5LootDelayActive(long nowMs) {
         return stage5LootNotBeforeMs > 0L && nowMs < stage5LootNotBeforeMs;
+    }
+
+    public synchronized boolean beginStage5Cleanup(long nowMs, long durationMs) {
+        if (stage5CleanupStartedAtMs > 0L) return false;
+        stage5CleanupStartedAtMs = Math.max(1L, nowMs);
+        stage5CleanupDeadlineMs = stage5CleanupStartedAtMs + Math.max(0L, durationMs);
+        return true;
+    }
+
+    public synchronized boolean stage5CleanupStarted() {
+        return stage5CleanupStartedAtMs > 0L;
+    }
+
+    public synchronized boolean stage5CleanupActive(long nowMs) {
+        return stage5CleanupStartedAtMs > 0L && nowMs < stage5CleanupDeadlineMs;
+    }
+
+    public synchronized long stage5CleanupDeadlineMs() {
+        return stage5CleanupDeadlineMs;
     }
 
     public synchronized boolean beginStage5BossCombat(long nowMs) {

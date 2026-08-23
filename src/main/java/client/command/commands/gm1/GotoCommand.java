@@ -28,6 +28,7 @@ import client.Client;
 import client.command.Command;
 import constants.game.GameConstants;
 import constants.id.NpcId;
+import server.agents.field.AgentFieldObservationCatalogRepository;
 import server.maps.FieldLimit;
 import server.maps.MapFactory;
 import server.maps.MapleMap;
@@ -36,13 +37,15 @@ import server.maps.Portal;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class GotoCommand extends Command {
 
     {
-        setDescription("Warp to a predefined town.");
+        setDescription("Warp to a predefined town or numbered observation map.");
 
         List<Entry<String, Integer>> towns = new ArrayList<>(GameConstants.GOTO_TOWNS.entrySet());
         sortGotoEntries(towns);
@@ -88,6 +91,11 @@ public class GotoCommand extends Command {
             return;
         }
 
+        if ("map".equalsIgnoreCase(params[0])) {
+            executeObservationMapGoto(c, player, params);
+            return;
+        }
+
         Map<String, Integer> gotomaps = GameConstants.GOTO_TOWNS;
 
         if (gotomaps.containsKey(params[0])) {
@@ -107,5 +115,87 @@ public class GotoCommand extends Command {
         Portal targetPortal = target.getRandomPlayerSpawnpoint();
         player.saveLocationOnWarp();
         player.changeMap(target, targetPortal);
+    }
+
+    private static void executeObservationMapGoto(Client client, Character player, String[] params) {
+        if (!player.isGM()) {
+            player.dropMessage(1, "Numbered observation maps are available only to GMs.");
+            return;
+        }
+        AgentFieldObservationCatalogRepository repository =
+                AgentFieldObservationCatalogRepository.defaultRepository();
+        if (params.length < 2 || "list".equalsIgnoreCase(params[1])) {
+            showObservationMapList(player, repository, parsePage(params));
+            return;
+        }
+
+        String selector = params[1].toLowerCase(Locale.ROOT);
+        AgentFieldObservationCatalogRepository.NumberedMap selected;
+        switch (selector) {
+            case "next" -> selected = repository.relativeMap(player.getMapId(), 1);
+            case "prev", "previous" -> selected = repository.relativeMap(player.getMapId(), -1);
+            case "rand", "random" -> selected = randomObservationMap(repository, player.getMapId());
+            default -> {
+                try {
+                    int number = Integer.parseInt(selector);
+                    selected = repository.numberedMap(number).orElse(null);
+                } catch (NumberFormatException invalid) {
+                    selected = null;
+                }
+                if (selected == null) {
+                    player.dropMessage(1, "Use @goto map <1-" + repository.numberedMaps().size()
+                            + "|next|prev|rand|list>.");
+                    return;
+                }
+            }
+        }
+
+        MapleMap target = client.getChannelServer().getMapFactory().getMap(selected.map().mapId());
+        warp(player, target);
+        player.dropMessage(5, "Observation map " + selected.number() + '/'
+                + repository.numberedMaps().size() + ": " + selected.map().mapName()
+                + " (" + selected.map().mapId() + ").");
+    }
+
+    private static AgentFieldObservationCatalogRepository.NumberedMap randomObservationMap(
+            AgentFieldObservationCatalogRepository repository, int currentMapId) {
+        List<AgentFieldObservationCatalogRepository.NumberedMap> maps = repository.numberedMaps();
+        var current = repository.numberedMapForMapId(currentMapId);
+        if (maps.size() <= 1 || current.isEmpty()) {
+            return maps.get(ThreadLocalRandom.current().nextInt(maps.size()));
+        }
+        int index = ThreadLocalRandom.current().nextInt(maps.size() - 1);
+        int currentIndex = current.get().number() - 1;
+        return maps.get(index >= currentIndex ? index + 1 : index);
+    }
+
+    private static int parsePage(String[] params) {
+        if (params.length < 3) return 1;
+        try {
+            return Math.max(1, Integer.parseInt(params[2]));
+        } catch (NumberFormatException invalid) {
+            return 1;
+        }
+    }
+
+    private static void showObservationMapList(
+            Character player,
+            AgentFieldObservationCatalogRepository repository,
+            int requestedPage) {
+        int pageSize = 20;
+        int pages = (repository.numberedMaps().size() + pageSize - 1) / pageSize;
+        int page = Math.min(requestedPage, pages);
+        int start = (page - 1) * pageSize;
+        int end = Math.min(start + pageSize, repository.numberedMaps().size());
+        StringBuilder message = new StringBuilder("#rObservation maps " + page + '/' + pages + "#k\r\n");
+        for (int index = start; index < end; index++) {
+            var numbered = repository.numberedMaps().get(index);
+            message.append(numbered.number()).append(" - #b")
+                    .append(numbered.map().mapName()).append("#k (")
+                    .append(numbered.map().mapId()).append(")\r\n");
+        }
+        message.append("\r\n@goto map <number|next|prev|rand>\r\n")
+                .append("@goto map list <1-").append(pages).append('>');
+        player.getAbstractPlayerInteraction().npcTalk(NpcId.SPINEL, message.toString());
     }
 }

@@ -36,6 +36,10 @@ public final class AgentPartyQuestLobbyRuntime {
             "server.agents.capabilities.partyquest.lobby.AgentPartyQuestLobbyRuntime.AMBIENT_MAXIMUM_MS");
     private static final long INVITE_COOLDOWN_MS = config.AgentTuning.longValue(
             "server.agents.capabilities.partyquest.lobby.AgentPartyQuestLobbyRuntime.INVITE_COOLDOWN_MS");
+    private static final long INVITE_RESPONSE_MINIMUM_MS = config.AgentTuning.longValue(
+            "server.agents.capabilities.partyquest.lobby.AgentPartyQuestLobbyRuntime.INVITE_RESPONSE_MINIMUM_MS");
+    private static final long INVITE_RESPONSE_MAXIMUM_MS = config.AgentTuning.longValue(
+            "server.agents.capabilities.partyquest.lobby.AgentPartyQuestLobbyRuntime.INVITE_RESPONSE_MAXIMUM_MS");
     private static final Map<String, Presentation> presentations = new ConcurrentHashMap<>();
     private static ScheduledFuture<?> tickTask;
 
@@ -150,8 +154,26 @@ public final class AgentPartyQuestLobbyRuntime {
                 .map(AgentPartyQuestLobbyRuntime::character)
                 .filter(java.util.Objects::nonNull).findFirst().orElse(null);
         if (recruiter == null || recruiter.getMapId() != lobby.profile().mapId()
+                || !sameWorldAndChannel(recruiter, speaker)) return;
+        long delayMs = inviteResponseDelayMs(lobby.seed(), recruiter.getId(), speaker.getId(),
+                INVITE_RESPONSE_MINIMUM_MS, INVITE_RESPONSE_MAXIMUM_MS);
+        AgentSchedulerRuntime.schedule(() -> sendInvitation(
+                lobby.lobbyId(), recruiter.getId(), speaker.getId()), delayMs);
+    }
+
+    private static void sendInvitation(String lobbyId, int recruiterId, int speakerId) {
+        AgentPartyQuestLobbySession lobby = AgentPartyQuestLobbyRegistry.byId(lobbyId);
+        Character recruiter = character(recruiterId);
+        Character speaker = character(speakerId);
+        if (lobby == null || !lobby.active() || lobby.paused()
+                || !lobby.recruiterIds().contains(recruiterId)
+                || !eligibleHuman(lobby, speaker)
+                || AgentPartyGatewayRuntime.party().hasParty(speaker)
+                || recruiter == null || recruiter.getMapId() != lobby.profile().mapId()
                 || !sameWorldAndChannel(recruiter, speaker)
-                || !AgentPartyGatewayRuntime.party().invitePartyMember(recruiter, speaker)) return;
+                || !AgentPartyGatewayRuntime.party().invitePartyMember(recruiter, speaker)) {
+            return;
+        }
         say(recruiter, "I'll invite you to " + lobby.profile().questKey().toUpperCase() + ".");
     }
 
@@ -266,6 +288,15 @@ public final class AgentPartyQuestLobbyRuntime {
         long min = Math.max(1_000L, Math.min(minimum, maximum));
         long max = Math.max(min, Math.max(minimum, maximum));
         return min + Math.floorMod(seed + memberId * 101L + count * 307L, max - min + 1L);
+    }
+
+    static long inviteResponseDelayMs(
+            long seed, int recruiterId, int speakerId, long minimumMs, long maximumMs) {
+        long minimum = Math.max(0L, Math.min(minimumMs, maximumMs));
+        long maximum = Math.max(minimum, Math.max(minimumMs, maximumMs));
+        if (minimum == maximum) return minimum;
+        return minimum + Math.floorMod(seed + recruiterId * 101L + speakerId * 307L,
+                maximum - minimum + 1L);
     }
 
     private static void say(Character speaker, String message) {

@@ -23,6 +23,7 @@ class AgentCareerBuildBundleRepositoryTest {
         for (AgentCareerBuildBundle bundle : repository.all()) {
             assertTrue(AgentApBuildProfileRepository.defaultRepository().find(bundle.apProfileId()).isPresent());
             assertTrue(AgentSpBuildProfileRepository.defaultRepository().find(bundle.spProfileId()).isPresent());
+            assertTrue(bundle.spProfileId().startsWith("mapleroyals-optimal-2026-"));
             assertEquals(4, bundle.instructorTrainingQuestIds().size());
             assertEquals(15, bundle.milestoneLevel());
         }

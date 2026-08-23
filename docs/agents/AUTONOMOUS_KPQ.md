@@ -106,15 +106,25 @@ not set a stage-clear flag: Stage 1 receives its missing coupons and submits the
 Stages 2-4 form the live answer and let Cloto validate it, and Stage 5 receives
 the missing passes after removing test monsters before navigating back to Cloto.
 
-`withme` creates a human-led party and adds three Agents automatically. `invite`
+`withme` spawns three unpartied Agents that periodically advertise generally for
+a KPQ party. The operator creates the party and manually invites each Agent;
+`wait` is retained as an alias for this flow. `invite`
 creates an Agent-led party of three that periodically advertises nearby; the
 operator requests the real party invitation through matching map chat and then
-accepts it. `wait`
-spawns three named, unpartied Agents for manual invitations. Those waiters accept
+accepts it. The unpartied Agents accept
 only the invoking character while that character is a level-21-30 party leader
 at the Kerning entrance on the same world and channel. Once all three have joined,
 the mixed party is admitted and the human leader receives the ordinary Lakelis
 prompt. All three modes require the operator to begin without a party.
+
+Human-led observation runs keep Agent execution coordination active but hide its
+shared progress and assignment chat by default. This prevents one Agent from
+appearing to claim the human leader's pass count. Use
+`!kpqtest coordination on` to show member coordination during the active lobby,
+event, or later rerun, and `!kpqtest coordination off` to hide it again. Individual
+Agent coupon targets/progress, delayed human assistance, and terminal failures
+remain visible because they are not proxy-leader narration. When enabled, shared
+Stage 1 totals are explicitly labeled `Passes with leader`.
 
 ## Reusable party-quest lobby
 

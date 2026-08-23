@@ -1041,6 +1041,12 @@ public final class AgentNavigationGraphService {
             if (dropLaunchStep(from, map, anchor, movementProfile) != 0) {
                 continue;
             }
+            // The live down-jump executor must honor the WZ foothold's forbid-fall flag.
+            // Authoring a straight DROP here would create a graph edge that can never be
+            // executed and can consequently be selected forever by route planning.
+            if (from.isForbidFallDownAt(anchor.x)) {
+                continue;
+            }
 
             JumpLaunchWindow launchWindow = expandDownJumpLaunchWindow(
                     from, map, regionIdByFootholdId, anchor.x, movementProfile);

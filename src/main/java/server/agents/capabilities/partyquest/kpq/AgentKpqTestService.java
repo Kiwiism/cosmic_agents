@@ -88,7 +88,7 @@ public final class AgentKpqTestService {
                 case "4" -> start(operator, new StartOptions(4, seed(params, 1, nowMs), false),
                         1, nowMs, FIXED_FOUR_AGENT_CAREERS);
                 case "start" -> start(operator, startOptions(params, 1, nowMs), 1, nowMs);
-                case "withme" -> startMixed(operator, MixedFlow.HUMAN_LEADS_AUTOMATIC,
+                case "withme" -> startMixed(operator, MixedFlow.HUMAN_INVITES_AGENTS,
                         seed(params, 1, nowMs), nowMs);
                 case "invite" -> startMixed(operator, MixedFlow.AGENT_INVITES_HUMAN,
                         seed(params, 1, nowMs), nowMs);
@@ -100,6 +100,7 @@ public final class AgentKpqTestService {
                 case "status" -> status(operator);
                 case "pause" -> pause(operator, true);
                 case "resume", "continue" -> pause(operator, false);
+                case "coordination", "membercoord" -> memberCoordination(operator, params);
                 case "run" -> runAgain(operator, nowMs);
                 case "rotate", "switch" -> rotate(operator, count(params, 1), nowMs);
                 case "stop" -> stop(operator);
@@ -193,11 +194,6 @@ public final class AgentKpqTestService {
 
         List<String> names = shuffledRoster(seed).subList(0, 3);
         for (String name : names) ensureBackingCharacter(operator, name);
-        if (flow == MixedFlow.HUMAN_LEADS_AUTOMATIC
-                && !AgentPartyGatewayRuntime.party().createAgentParty(operator)) {
-            return List.of("Could not create your human-led KPQ party.");
-        }
-
         AgentPartyQuestEngagement engagement = new AgentPartyQuestEngagement(
                 "kpq", AgentPartyQuestEngagement.Mode.TEST_OBSERVATION,
                 seed, operator.getId(), 4, nowMs);
@@ -216,10 +212,6 @@ public final class AgentKpqTestService {
             openLobby(run, nowMs);
         } catch (RuntimeException failure) {
             RUNS.remove(operator.getId(), run);
-            if (flow == MixedFlow.HUMAN_LEADS_AUTOMATIC
-                    && AgentPartyGatewayRuntime.party().hasParty(operator)) {
-                AgentPartyGatewayRuntime.party().leaveCurrentParty(operator);
-            }
             throw failure;
         }
         for (int i = 0; i < names.size(); i++) {
@@ -228,11 +220,11 @@ public final class AgentKpqTestService {
             AgentSchedulerRuntime.schedule(() -> launch(run, name, ordinal, false), SPAWN_STAGGER_MS * i);
         }
         response.add(switch (flow) {
-            case HUMAN_LEADS_AUTOMATIC -> "Creating a human-led KPQ party with you and " + names + '.';
-            case AGENT_INVITES_HUMAN -> "Creating an Agent-led KPQ party. Say something like "
-                    + "'looking for kpq' nearby, then accept " + names.getFirst() + "'s invitation.";
-            case HUMAN_INVITES_AGENTS -> "Spawned KPQ invite waiters " + names
-                    + ". Create a party and invite each Agent by name.";
+            case AGENT_INVITES_HUMAN -> "Creating an Agent-led KPQ party. Say 'I'm joining' "
+                    + "or 'looking for kpq' nearby, then accept "
+                    + names.getFirst() + "'s invitation.";
+            case HUMAN_INVITES_AGENTS -> "Spawned unpartied KPQ seekers " + names
+                    + ". They will advertise for a party; create one and invite each Agent yourself.";
             default -> throw new IllegalStateException("Unsupported mixed KPQ flow");
         });
         if (flow == MixedFlow.HUMAN_INVITES_AGENTS) {
@@ -368,7 +360,7 @@ public final class AgentKpqTestService {
                     if (lobby.coordinatorAgentId() == 0) lobby.setCoordinatorAgentId(agent.getId());
                 }
                 if (run.flow == MixedFlow.HUMAN_INVITES_AGENTS) {
-                    AgentKpqDialogue.sayMapNow(agent, "Waiting for a KPQ party invite.");
+                    AgentKpqDialogue.sayMapNow(agent, "Looking for a KPQ party.");
                 } else if (agent.getId() == run.eventLeaderId) {
                     AgentKpqDialogue.sayMapNow(agent, "Recruiting for KPQ.");
                 } else {
@@ -445,7 +437,7 @@ public final class AgentKpqTestService {
 
     private static void rosterLaunchProgress(Run run) {
         switch (run.flow) {
-            case AGENTS_ONLY, HUMAN_LEADS_AUTOMATIC -> attemptLobbyHandoff(run);
+            case AGENTS_ONLY -> attemptLobbyHandoff(run);
             case AGENT_INVITES_HUMAN -> {
                 if (run.engagement.agentIds().size() == 3) {
                     startAssemblyMonitor(run);
@@ -575,6 +567,7 @@ public final class AgentKpqTestService {
                 return false;
             }
             run.session = result.session();
+            run.session.setMemberCoordinationChatEnabled(run.memberCoordinationChatEnabled);
             run.session.setRequestedCheckpointStage(run.requestedCheckpointStage);
             run.lobby = null;
             run.assemblyMonitorStarted = false;
@@ -794,6 +787,7 @@ public final class AgentKpqTestService {
                 + " lobby=" + (run.lobby == null ? "none" : run.lobby.lobbyId() + ':' + run.lobby.state())
                 + " members=" + run.engagement.memberIds().size() + '/'
                 + run.engagement.requestedPartySize() + " seed=" + run.seed + " flow=" + run.flow
+                + " memberCoordination=" + (run.memberCoordinationChatEnabled ? "on" : "off")
                 + ((session != null && session.paused()) || (run.lobby != null && run.lobby.paused())
                 ? " PAUSED" : ""));
         if (session != null && AgentKpqSessionRegistry.forOperator(operator.getId()) == session) {
@@ -841,6 +835,28 @@ public final class AgentKpqTestService {
                     + (paused ? "pause." : "resume."));
         }
         return List.of("KPQ test " + (paused ? "paused" : "resumed") + '.');
+    }
+
+    private static List<String> memberCoordination(Character operator, String[] params) {
+        Run run = RUNS.get(operator.getId());
+        if (run == null) return List.of("No KPQ test engagement is active.");
+        if (params == null || params.length < 2) {
+            return List.of("Member coordination chat is "
+                    + (run.memberCoordinationChatEnabled ? "on" : "off")
+                    + ". Use !kpqtest coordination <on|off>.");
+        }
+        boolean enabled;
+        switch (params[1].toLowerCase()) {
+            case "on", "true", "1" -> enabled = true;
+            case "off", "false", "0" -> enabled = false;
+            default -> {
+                return List.of("Use !kpqtest coordination <on|off>.");
+            }
+        }
+        run.memberCoordinationChatEnabled = enabled;
+        if (run.session != null) run.session.setMemberCoordinationChatEnabled(enabled);
+        return List.of("Agent member coordination chat " + (enabled ? "enabled" : "disabled")
+                + ". Execution coordination is unchanged.");
     }
 
     private static List<String> runAgain(Character operator, long nowMs) {
@@ -1079,12 +1095,13 @@ public final class AgentKpqTestService {
     private static List<String> help() {
         return List.of("!kpqtest 4 [seed] (claw thief, knuckle pirate, warrior, magician)",
                 "!kpqtest start [3|4] [balanced] [seed]",
-                "!kpqtest withme [seed] (you lead with 3 Agents)",
+                "!kpqtest withme [seed] (spawn 3 unpartied Agents; invite them yourself)",
                 "!kpqtest invite [seed] (request Agent invite through nearby KPQ chat)",
-                "!kpqtest wait [seed] (invite 3 waiting Agents yourself)",
+                "!kpqtest wait [seed] (alias for withme)",
                 "!kpqtest party [seed] (adopt current mixed party)",
                 "!kpqtest checkpoint <1-5> [3|4] [balanced] [seed]",
                 "!kpqtest complete [1-5]",
+                "!kpqtest coordination <on|off>",
                 "!kpqtest status | pause | resume | run | switch <1|2> | stop");
     }
 
@@ -1110,6 +1127,8 @@ public final class AgentKpqTestService {
         private volatile long lastLobbyWarningAtMs;
         private volatile long missingAgentSinceMs;
         private volatile long nextPartyRepairAtMs;
+        private volatile boolean memberCoordinationChatEnabled =
+                AgentKpqSession.defaultMemberCoordinationChatEnabled();
 
         private Run(Character operator,
                     AgentPartyQuestEngagement engagement,
@@ -1138,7 +1157,6 @@ public final class AgentKpqTestService {
 
     private enum MixedFlow {
         AGENTS_ONLY,
-        HUMAN_LEADS_AUTOMATIC,
         AGENT_INVITES_HUMAN,
         HUMAN_INVITES_AGENTS,
         ADOPTED

@@ -124,6 +124,28 @@ class AgentNavigationGraphServiceTest {
     }
 
     @Test
+    void shouldNotAuthorStraightDropFromForbidFallDownFoothold() {
+        MapleMap map = new MapleMap(910000046, 0, 0, 910000046, 1.0f);
+        Foothold upper = new Foothold(new Point(0, 100), new Point(220, 100), 1);
+        upper.setForbidFallDown(true);
+        Foothold lower = new Foothold(new Point(-100, 240), new Point(320, 240), 2);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(
+                new Point(-1000, -1000), new Point(1000, 1000));
+        footholds.insert(upper);
+        footholds.insert(lower);
+        map.setFootholds(footholds);
+
+        AgentNavigationGraph graph = AgentNavigationGraphService.rebuildGraph(map);
+        int upperRegionId = graph.regionIdByFootholdId.getOrDefault(upper.getId(), -1);
+
+        assertTrue(upperRegionId >= 0);
+        assertTrue(graph.getOutgoing(upperRegionId).stream()
+                        .noneMatch(edge -> edge.type == AgentNavigationGraph.EdgeType.DROP
+                                && edge.launchStepX == 0),
+                "forbid-fall footholds must not advertise an unexecutable down-jump edge");
+    }
+
+    @Test
     void shouldKeepHenesysLowerTownStreetInOneMergedRegion() {
         int firstRegionId = henesysGraph().findRegionId(henesys(), new Point(990, 334));
         int secondRegionId = henesysGraph().findRegionId(henesys(), new Point(1080, 334));

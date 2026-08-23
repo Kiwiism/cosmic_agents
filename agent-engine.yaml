@@ -280,7 +280,7 @@ agent:
     # Values: a comma-separated IGN allowlist; an empty string means nobody. Recommended: keep the list minimal and grant only the narrowest required authority (tested baseline Kiwi).
     # Purpose: Lists the character names used for authority administrator names. Separate multiple names with commas; an empty value grants the role to nobody.
     # Technical: the Agent engine deployment configuration consumes this as a text. Domain: non-negative count, capacity, or threshold unless the owning component documents a sentinel.
-    AGENT_AUTHORITY_ADMINISTRATOR_NAMES: Kiwi
+    AGENT_AUTHORITY_ADMINISTRATOR_NAMES: Kiwi,AgentForSure
     # Values: a comma-separated IGN allowlist; an empty string means nobody. Recommended: keep the list minimal and grant only the narrowest required authority (tested baseline empty).
     # Purpose: Lists the character names used for authority operator names. Separate multiple names with commas; an empty value grants the role to nobody.
     # Technical: the Agent engine deployment configuration consumes this as a text. Domain: component-specific policy value; startup validation rejects missing, blank, or malformed values.
@@ -1622,6 +1622,10 @@ tuning:
     # Purpose: Defines how close a KPQ member must stand to the event leader before dropping a collected pass for coordinated stage completion.
     # Technical: AgentKpqCoordinator applies this Euclidean map-pixel threshold only to the ordinary pass-delivery interaction, not portal or NPC reachability.
     server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.NEAR_PX: '85'
+    # Values: true or false. Recommended: false when a human is the party leader.
+    # Purpose: Allows an Agent member to visibly announce shared KPQ assignments, leader pass totals, and immediate NPC reminders for a human-led party.
+    # Technical: Execution coordination remains active regardless; this flag controls presentation only and never changes puzzle solving, combat, navigation, or recovery.
+    server.agents.capabilities.partyquest.kpq.AgentKpqSession.MEMBER_COORDINATION_CHAT_ENABLED: 'false'
     # Values: 60000-1200000 milliseconds. Recommended: 900000. Increase only when KPQ stage 1 can legitimately take longer and keep players engaged.
     # Purpose: Maximum time without coupon-phase progress before stage 1 is force-closed and returned to Kerning for safety.
     # Technical: AgentKpqCoordinator compares this timeout against the last progression timestamp and calls event exit for all phase-1 participants.
@@ -1645,6 +1649,30 @@ tuning:
     # Purpose: Minimum delay before one recruiting Agent may send another party invitation or waiter response.
     # Technical: A declined or expired invite can be requested again after this cooldown without recreating the lobby.
     server.agents.capabilities.partyquest.lobby.AgentPartyQuestLobbyRuntime.INVITE_COOLDOWN_MS: '5000'
+    # Values: 250-5000 milliseconds. Recommended: 900. Keep this below INVITE_RESPONSE_MAXIMUM_MS.
+    # Purpose: Adds a visible thinking delay after a nearby player asks to join an Agent-led PQ party.
+    # Technical: The lobby claims the request immediately, then revalidates both players and the live lobby before sending the invitation.
+    server.agents.capabilities.partyquest.lobby.AgentPartyQuestLobbyRuntime.INVITE_RESPONSE_MINIMUM_MS: '900'
+    # Values: 250-8000 milliseconds. Recommended: 1800. Keep this well below the invitation cooldown.
+    # Purpose: Caps the varied delay before an Agent leader responds and sends its party invitation.
+    # Technical: The deterministic delay is seeded by the lobby and both character IDs, so retries remain bounded and reproducible.
+    server.agents.capabilities.partyquest.lobby.AgentPartyQuestLobbyRuntime.INVITE_RESPONSE_MAXIMUM_MS: '1800'
+    # Values: 250-5000 milliseconds. Recommended: 900. Keep this below RESPONSE_MAXIMUM_MS.
+    # Purpose: Prevents an Agent from answering a human KPQ coupon question on the same instant as the chat message.
+    # Technical: The response is scheduled through the shared Agent scheduler and revalidates the live Stage 1 session before speaking.
+    server.agents.capabilities.partyquest.kpq.AgentKpqHumanDialogueRuntime.RESPONSE_MINIMUM_MS: '900'
+    # Values: 250-8000 milliseconds. Recommended: 1800. Keep this short enough for practical Stage 1 coordination.
+    # Purpose: Caps the deterministic human-like delay for Agent answers to explicit KPQ coupon questions.
+    # Technical: The delay is derived from the KPQ seed and human character ID, without delaying ordinary coordinator work.
+    server.agents.capabilities.partyquest.kpq.AgentKpqHumanDialogueRuntime.RESPONSE_MAXIMUM_MS: '1800'
+    # Values: 10000-120000 milliseconds. Recommended: 30000. Increase if mixed-party guidance still feels impatient.
+    # Purpose: Requires one specific human task to remain unresolved before an Agent offers a reminder or tease.
+    # Technical: Each phase, human, and task text receives an independent wait clock; unrelated session progress cannot trigger an early prompt.
+    server.agents.capabilities.partyquest.kpq.AgentKpqHumanDialogueRuntime.DELAYED_PROMPT_AFTER_MS: '30000'
+    # Values: 10000-120000 milliseconds. Recommended: 30000. This spaces repeated reminders for the same human.
+    # Purpose: Prevents mixed-party guidance from becoming chat spam after its first task-specific delayed prompt.
+    # Technical: The first delayed line is always supportive; only later cooldown turns may select the rare teasing variant.
+    server.agents.capabilities.partyquest.kpq.AgentKpqHumanDialogueRuntime.DELAYED_PROMPT_COOLDOWN_MS: '30000'
     # Values: 10000-300000 milliseconds. Recommended: 60000. A warning does not cancel a human-controlled lobby.
     # Purpose: Surfaces a test lobby whose authoritative party roster has stopped changing while Agents remain safely owned by PARTY_QUEST.
     # Technical: Owned Agent parties also attempt bounded roster repair before this diagnostic is emitted.
@@ -1697,6 +1725,10 @@ tuning:
     # Purpose: Bounds one stuck navigation, NPC, inventory, or transition operation before KPQ applies its targeted recovery or terminates safely.
     # Technical: AgentKpqCoordinator records blocker-specific timestamps and compares them with this duration independently of ordinary stage progress.
     server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.LOCAL_RECOVERY_TIMEOUT_MS: '45000'
+    # Values: 2000-30000 milliseconds. Recommended: 10000. Keep this below LOCAL_RECOVERY_TIMEOUT_MS.
+    # Purpose: Replans a failed Stage 2-4 route to Cloto once before the local KPQ blocker terminates the session.
+    # Technical: The objective and puzzle state remain intact while only the Agent's active navigation route is invalidated and rewarmed.
+    server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.CLOTO_ANCHOR_REPLAN_MS: '10000'
     # Values: 250-10000 milliseconds. Recommended: 1500. Lower values retry faster but increase NPC and portal script traffic.
     # Purpose: Spaces repeated authoritative NPC and portal requests while an Agent waits for a transition receipt or event-state change.
     # Technical: AgentKpqCoordinator stores a per-member next-retry timestamp; this delay never changes player interactions or event timers.
@@ -1717,6 +1749,18 @@ tuning:
     # Purpose: Varies Stage 1 coupon and pass submission timing without delaying human-controlled interactions.
     # Technical: The same deterministic delay policy is salted separately for member exchange and leader stage submission.
     server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.STAGE1_SUBMIT_VARIANCE_MS: '1700'
+    # Values: 20-200 pixels. Recommended: 80. This is reduced automatically on short platforms.
+    # Purpose: Keeps a Rogue landing from a Stage 1 rope away from the platform edge before combat resumes.
+    # Technical: The nearest point inside this margin is selected from the existing navigation region; no KPQ-only route graph is created.
+    server.agents.capabilities.partyquest.kpq.AgentKpqStageOneThiefLandingRuntime.EDGE_MARGIN_PX: '80'
+    # Values: 5-60 pixels. Recommended: 18. Keep this below EDGE_MARGIN_PX.
+    # Purpose: Defines when the bounded Dark Sight landing reposition is complete.
+    # Technical: Ordinary Stage 1 combat resumes immediately once the Agent reaches this horizontal/ground tolerance.
+    server.agents.capabilities.partyquest.kpq.AgentKpqStageOneThiefLandingRuntime.TARGET_REACHED_PX: '18'
+    # Values: 1000-10000 milliseconds. Recommended: 4500. Keep this well below the KPQ local recovery timeout.
+    # Purpose: Prevents an unreachable interior landing point from holding a Rogue in Dark Sight indefinitely.
+    # Technical: At expiry the managed buff is cancelled and control returns to the shared Stage 1 grind routine.
+    server.agents.capabilities.partyquest.kpq.AgentKpqStageOneThiefLandingRuntime.REPOSITION_TIMEOUT_MS: '4500'
     # Values: 0-10000 milliseconds. Recommended: 2000. Set zero only when instant Agent puzzle checks are intentionally desired.
     # Purpose: Adds a short realistic pause after a puzzle formation becomes stable before an Agent event leader asks Cloto to validate it.
     # Technical: The delay begins only after formation stability and fidget completion; human leaders retain full manual control of their click timing.
@@ -1749,6 +1793,14 @@ tuning:
     # Purpose: Leaves King Slime drops visible briefly before any Agent collects passes or the assigned Agent takes Squishy Shoes.
     # Technical: Shared hunting eligibility and explicit KPQ pickup both observe the same session deadline after King Slime is defeated.
     server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.KING_SLIME_LOOT_DELAY_MS: '3000'
+    # Values: 0-30000 milliseconds. Recommended: 6000. Keep this at or below STAGE5_CLEANUP_MAX_MS.
+    # Purpose: Bounds the final Stage 5 ordinary-drop sweep before the party returns to Cloto.
+    # Technical: A deterministic per-session duration is selected at or above this minimum; fresh eligible party drops may keep cleanup active until the deadline.
+    server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.STAGE5_CLEANUP_MIN_MS: '6000'
+    # Values: 0-30000 milliseconds. Recommended: 10000. Keep this at or above STAGE5_CLEANUP_MIN_MS.
+    # Purpose: Caps the final Stage 5 ordinary-drop sweep so unreachable, full-inventory, or ineligible drops cannot stall KPQ.
+    # Technical: A deterministic per-session duration never exceeds this maximum; Cloto submission resumes when the deadline is reached.
+    server.agents.capabilities.partyquest.kpq.AgentKpqCoordinator.STAGE5_CLEANUP_MAX_MS: '10000'
     # Values: 0-30000 milliseconds. Recommended: 5000. Increase only when observers need more time to follow the party through Cloto.
     # Purpose: Keeps Agents visibly inside the KPQ bonus map before they use its exit NPC.
     # Technical: The dwell begins after the final party member reaches the bonus map; reward claiming still occurs individually before entry.
@@ -3019,6 +3071,10 @@ tuning:
     # Purpose: Sets how long a quest attempt may continue without an authoritative objective increment before the fallback advisor requests suspension.
     # Technical: AgentQuestStruggleAdvisor compares event timestamps only after legitimate waits and recent relevant damage/navigation have been considered; it emits advice and cannot suspend execution itself.
     server.agents.progression.questwork.AgentQuestStruggleAdvisor.OBJECTIVE_PROGRESS_TIMEOUT_MS: '180000'
+    # Values: 32-256 pixels. Recommended: 96. Keep this above normal combat spacing jitter.
+    # Purpose: Treats meaningful same-map travel as quest-attempt progress so long Victoria routes do not trip the no-progress watchdog.
+    # Technical: Map or navigation-region changes refresh progress immediately; otherwise the scheduler compares the current position with the last accepted progress anchor.
+    server.agents.progression.AgentVictoriaQuestSchedulerState.NAVIGATION_PROGRESS_DISTANCE_PX: '96'
     # Values: milliseconds from 30000 to 300000. Recommended: 120000; keep longer than the expected time-to-kill for low-damage early jobs.
     # Purpose: Prevents slow kills and unlucky collection drops from being mistaken for a stalled quest while relevant targets are still taking damage.
     # Technical: AgentQuestStruggleAdvisor treats relevant-mob damage within this window as progress evidence; unrelated blocker damage must not populate this signal.

@@ -1,0 +1,7 @@
+{"occurredAt":"2026-08-23T07:14:53.7851141Z","agentId":1176,"questId":2106,"type":"submitted","evidence":{"questName":"Start quest — DANGER! <2-H. Mushroom>","mapId":104000000}}
+{"occurredAt":"2026-08-23T07:16:34.3422847Z","agentId":1176,"questId":2106,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":104000100}}
+{"occurredAt":"2026-08-23T07:19:39.1547353Z","agentId":1176,"questId":2106,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":104000200}}
+{"occurredAt":"2026-08-23T07:21:31.6381820Z","agentId":1176,"questId":2106,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":104000300}}
+{"occurredAt":"2026-08-23T07:22:39.9627381Z","agentId":1176,"questId":2106,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":104000400}}
+{"occurredAt":"2026-08-23T07:23:08.2728046Z","agentId":1176,"questId":2106,"type":"timeout","evidence":{"phase":"quest not yet accepted; travel to the start NPC still in progress","meso":5000028,"mapTransitions":4,"mp":1373,"blockedBy":"","mapId":104000400,"activity":"questing — victoria-individual-quest","classification":"TIMEOUT_TRAVEL","waitingOn":"","reason":"time budget expired after 8 minute(s); quest not yet accepted; travel to the start NPC still in progress","hp":650}}
+{"occurredAt":"2026-08-23T07:23:10.3796987Z","agentId":1176,"questId":2065,"type":"submitted","evidence":{"questName":"Start quest — Searching for Fossils","mapId":104000400}}

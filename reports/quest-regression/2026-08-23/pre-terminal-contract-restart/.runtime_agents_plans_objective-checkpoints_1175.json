@@ -1,0 +1,41 @@
+{
+  "schemaVersion" : 1,
+  "characterId" : 1175,
+  "updatedAtMs" : 1787458858196,
+  "activeObjective" : {
+    "objectiveId" : "victoria:training:1175:16",
+    "type" : "progression.victoria-training",
+    "priority" : 80,
+    "deadlineMs" : 9223372036854775807,
+    "retryBudget" : 5,
+    "source" : "OPERATOR_COMMAND",
+    "behaviorVersion" : "victoria-level15-30-training-v1",
+    "correlationId" : "1175:level-16:mode-mixed:quest-28280"
+  },
+  "suspendedObjectives" : [ ],
+  "journal" : [ {
+    "timestampMs" : 1787457022575,
+    "objectiveId" : "victoria:training:1175:16",
+    "status" : "ACTIVE",
+    "reason" : "objective started",
+    "source" : "OPERATOR_COMMAND",
+    "behaviorVersion" : "victoria-level15-30-training-v1",
+    "correlationId" : "1175:level-16:mode-mixed:quest-2090"
+  }, {
+    "timestampMs" : 1787458609689,
+    "objectiveId" : "victoria:training:1175:16",
+    "status" : "SUCCEEDED",
+    "reason" : "requested quest 2090 completed",
+    "source" : "OPERATOR_COMMAND",
+    "behaviorVersion" : "victoria-level15-30-training-v1",
+    "correlationId" : "1175:level-16:mode-mixed:quest-2090"
+  }, {
+    "timestampMs" : 1787458858196,
+    "objectiveId" : "victoria:training:1175:16",
+    "status" : "ACTIVE",
+    "reason" : "objective started",
+    "source" : "OPERATOR_COMMAND",
+    "behaviorVersion" : "victoria-level15-30-training-v1",
+    "correlationId" : "1175:level-16:mode-mixed:quest-28280"
+  } ]
+}

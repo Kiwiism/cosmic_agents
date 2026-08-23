@@ -35,6 +35,21 @@ class AgentSupplyRecoveryPolicyTest {
     }
 
     @Test
+    void beginnersDoNotRequirePotionReservesBeforeFirstJobAdvancement() {
+        Character beginner = character(1, 50, 5, 50, 5, Job.BEGINNER);
+        Character warrior = character(10, 100, 20, 100, 20, Job.WARRIOR);
+
+        assertFalse(AgentSupplyRecoveryPolicy.requiresAutomaticReserve(
+                beginner, AgentResourceCategory.HP_POTION));
+        assertFalse(AgentSupplyRecoveryPolicy.requiresAutomaticReserve(
+                beginner, AgentResourceCategory.MP_POTION));
+        assertTrue(AgentSupplyRecoveryPolicy.requiresAutomaticReserve(
+                warrior, AgentResourceCategory.HP_POTION));
+        assertTrue(AgentSupplyRecoveryPolicy.requiresAutomaticReserve(
+                beginner, AgentResourceCategory.THROWING_STAR));
+    }
+
+    @Test
     void procurementStateRetainsRequestAcrossRecoveryAndStall() {
         AgentSupplyProcurementState state = new AgentSupplyProcurementState();
         state.start("supply:hp:1", "maintenance:1", AgentResourceCategory.HP_POTION,
@@ -55,9 +70,14 @@ class AgentSupplyRecoveryPolicyTest {
 
     private static Character character(
             int level, int hp, int mp, int maximumHp, int maximumMp) {
+        return character(level, hp, mp, maximumHp, maximumMp, Job.THIEF);
+    }
+
+    private static Character character(
+            int level, int hp, int mp, int maximumHp, int maximumMp, Job job) {
         Character agent = mock(Character.class);
         when(agent.getLevel()).thenReturn(level);
-        when(agent.getJob()).thenReturn(Job.THIEF);
+        when(agent.getJob()).thenReturn(job);
         when(agent.getHp()).thenReturn(hp);
         when(agent.getMp()).thenReturn(mp);
         when(agent.getCurrentMaxHp()).thenReturn(maximumHp);

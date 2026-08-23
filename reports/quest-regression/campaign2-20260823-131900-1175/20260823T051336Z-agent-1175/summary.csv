@@ -1,0 +1,3 @@
+"agentId","agentName","questId","questName","status","reason","elapsedSeconds","startMapId","endMapId","mapTrail"
+"1175","QuestReg15","28280","[Hunt] Sweep the Snails!","TIMEOUT","no terminal outcome within 8 minute(s)","482.8","103000000","102000000","103000000>102050000>102040000>102030000>102020000>102010000>102000000>101040000>102000000>102010000>102000000>101040000>102000000"
+"1175","QuestReg15","28274","[Hunt] Why Are Dark Stumps So Dark?","TIMEOUT","no terminal outcome within 8 minute(s)","484.7","102000000","101040000","102000000>101040000"

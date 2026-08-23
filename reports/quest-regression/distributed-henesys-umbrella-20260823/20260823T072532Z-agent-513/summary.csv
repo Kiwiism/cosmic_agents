@@ -1,0 +1,2 @@
+"agentId","agentName","questId","questName","status","reason","elapsedSeconds","startMapId","endMapId","mapTrail"
+"513","Aeri00","28267","[Collect] I Need an Umbrella!","TIMEOUT_ACTIVE","time budget expired after 8 minute(s); quest accepted; objective or return trip still in progress","496.5","100000000","100000102","100000000>100000002>100000003>100000002>100000000>100000100"

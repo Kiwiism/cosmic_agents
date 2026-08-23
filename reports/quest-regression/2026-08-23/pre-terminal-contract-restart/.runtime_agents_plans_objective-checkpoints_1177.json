@@ -1,0 +1,25 @@
+{
+  "schemaVersion" : 1,
+  "characterId" : 1177,
+  "updatedAtMs" : 1787458858049,
+  "activeObjective" : {
+    "objectiveId" : "victoria:training:1177:26",
+    "type" : "progression.victoria-training",
+    "priority" : 80,
+    "deadlineMs" : 9223372036854775807,
+    "retryBudget" : 5,
+    "source" : "OPERATOR_COMMAND",
+    "behaviorVersion" : "victoria-level15-30-training-v1",
+    "correlationId" : "1177:level-26:mode-mixed:quest-2017"
+  },
+  "suspendedObjectives" : [ ],
+  "journal" : [ {
+    "timestampMs" : 1787458858049,
+    "objectiveId" : "victoria:training:1177:26",
+    "status" : "ACTIVE",
+    "reason" : "objective started",
+    "source" : "OPERATOR_COMMAND",
+    "behaviorVersion" : "victoria-level15-30-training-v1",
+    "correlationId" : "1177:level-26:mode-mixed:quest-2017"
+  } ]
+}

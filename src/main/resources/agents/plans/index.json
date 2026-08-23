@@ -7,10 +7,13 @@
     "southperry-to-lith-harbor.plan.json",
     "victoria-level15-mvp.plan.json",
     "victoria-training.plan.json",
+    "victoria-individual-quest.plan.json",
     "victoria-warrior-level30.plan.json",
     "victoria-bowman-level30.plan.json",
     "victoria-magician-level30.plan.json",
     "victoria-thief-level30.plan.json",
-    "victoria-pirate-level30.plan.json"
+    "victoria-pirate-level30.plan.json",
+    "victoria-second-job.plan.json",
+    "mushroom-kingdom-questline.plan.json"
   ]
 }

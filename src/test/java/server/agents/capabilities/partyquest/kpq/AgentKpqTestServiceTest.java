@@ -86,6 +86,18 @@ class AgentKpqTestServiceTest {
     }
 
     @Test
+    void failedObservationRunReturnsAgentsInsteadOfLeavingThemInTheExitMap() {
+        assertTrue(AgentKpqTerminationService.shouldReturnTestAgentsToKerning(
+                AgentKpqSession.Mode.TEST_OBSERVATION, false));
+        org.junit.jupiter.api.Assertions.assertFalse(
+                AgentKpqTerminationService.shouldReturnTestAgentsToKerning(
+                        AgentKpqSession.Mode.TEST_OBSERVATION, true));
+        org.junit.jupiter.api.Assertions.assertFalse(
+                AgentKpqTerminationService.shouldReturnTestAgentsToKerning(
+                        AgentKpqSession.Mode.PRODUCTION, false));
+    }
+
+    @Test
     void watchdogDisposesEventWhenEveryAgentRuntimeDisappears() {
         EventInstanceManager event = mock(EventInstanceManager.class);
         when(event.getPlayers()).thenReturn(List.of());

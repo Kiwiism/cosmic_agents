@@ -93,6 +93,17 @@ public final class AgentLootEligibility {
                 && now - drop.getDropTime() >= requiredTargetLootAgeMs(bot, drop, minimumTargetAgeMs);
     }
 
+    public static boolean isWaitingForTargetAge(AgentRuntimeEntry entry,
+                                                Character bot,
+                                                MapleMap map,
+                                                MapItem drop,
+                                                long now,
+                                                long minimumTargetAgeMs) {
+        return isPresent(map, drop)
+                && canBotLoot(entry, bot, drop)
+                && now - drop.getDropTime() < requiredTargetLootAgeMs(bot, drop, minimumTargetAgeMs);
+    }
+
     static boolean isInventoryFull(Character bot, MapItem drop) {
         if (bot == null || drop == null || drop.getMeso() > 0 || drop.getItemId() <= 0) {
             return false;

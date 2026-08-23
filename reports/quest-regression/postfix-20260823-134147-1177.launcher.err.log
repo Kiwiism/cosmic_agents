@@ -1,0 +1,5 @@
+Exception: C:\Users\user\Documents\Cosmic Agents\tools\scripts\Invoke-AgentQuestPoolRegression.ps1:124
+Line |
+ 124 |      throw "Agent $AgentId still has a Director directive in progress"
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Agent 1177 still has a Director directive in progress

@@ -1,0 +1,6 @@
+{"occurredAt":"2026-08-23T06:49:18.8638979Z","agentId":1175,"questId":28274,"type":"submitted","evidence":{"questName":"Start quest — [Hunt] Why Are Dark Stumps So Dark?","mapId":104000000}}
+{"occurredAt":"2026-08-23T06:50:58.5438362Z","agentId":1175,"questId":28274,"type":"map-changed","evidence":{"mapId":104000100,"activity":"questing — victoria-individual-quest"}}
+{"occurredAt":"2026-08-23T06:53:50.5249450Z","agentId":1175,"questId":28274,"type":"map-changed","evidence":{"mapId":104000200,"activity":"questing — victoria-individual-quest"}}
+{"occurredAt":"2026-08-23T06:56:00.2723826Z","agentId":1175,"questId":28274,"type":"map-changed","evidence":{"mapId":104000300,"activity":"questing — victoria-individual-quest"}}
+{"occurredAt":"2026-08-23T06:57:06.6726394Z","agentId":1175,"questId":28274,"type":"map-changed","evidence":{"mapId":104000400,"activity":"questing — victoria-individual-quest"}}
+{"occurredAt":"2026-08-23T06:57:28.9497584Z","agentId":1175,"questId":28274,"type":"timeout","evidence":{"meso":5000162,"mapId":104000400,"phase":"quest not yet accepted; travel to the start NPC still in progress","blockedBy":"","hp":900,"mp":300,"mapTransitions":4,"waitingOn":"","activity":"questing — victoria-individual-quest","reason":"time budget expired after 8 minute(s); quest not yet accepted; travel to the start NPC still in progress"}}

@@ -1,0 +1,2 @@
+"agentId","agentName","questId","questName","status","reason","elapsedSeconds","startMapId","endMapId","mapTrail"
+"1175","QuestReg15","28274","[Hunt] Why Are Dark Stumps So Dark?","TIMEOUT","time budget expired after 8 minute(s); quest not yet accepted; travel to the start NPC still in progress","496.4","104000000","104000100","104000000>104000100"

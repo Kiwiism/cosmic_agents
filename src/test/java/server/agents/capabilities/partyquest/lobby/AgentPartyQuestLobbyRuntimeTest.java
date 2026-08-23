@@ -10,6 +10,7 @@ import server.TimerManager;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -59,6 +60,17 @@ class AgentPartyQuestLobbyRuntimeTest {
 
         assertEquals(AgentPartyQuestLobbyRuntime.InviteDecision.REJECT,
                 AgentPartyQuestLobbyRuntime.decidePartyInvite(agent, owner));
+    }
+
+    @Test
+    void agentLeaderInviteResponseUsesConfiguredHumanDelayBounds() {
+        long delay = AgentPartyQuestLobbyRuntime.inviteResponseDelayMs(
+                17L, AGENT_ID, OWNER_ID, 900L, 1_800L);
+
+        assertTrue(delay >= 900L);
+        assertTrue(delay <= 1_800L);
+        assertEquals(delay, AgentPartyQuestLobbyRuntime.inviteResponseDelayMs(
+                17L, AGENT_ID, OWNER_ID, 900L, 1_800L));
     }
 
     private void registerWaiter() {

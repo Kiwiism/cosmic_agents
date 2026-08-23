@@ -192,10 +192,12 @@ import client.command.commands.gm5.ShowMoveLifeCommand;
 import client.command.commands.gm5.ShowPacketsCommand;
 import client.command.commands.gm5.ShowSessionsCommand;
 import client.command.commands.gm6.ClearQuestCacheCommand;
+import client.command.commands.gm6.AdoptTestAgentCommand;
 import client.command.commands.gm6.AgentPopCommand;
 import client.command.commands.gm6.AgentSchedulerCommand;
 import client.command.commands.gm6.AgentWorldCommand;
 import client.command.commands.gm6.KpqTestCommand;
+import client.command.commands.gm6.MushroomTestCommand;
 import client.command.commands.gm6.BalrogTestCommand;
 import client.command.commands.gm6.AgentFieldCommand;
 import client.command.commands.gm6.AmherstCommand;
@@ -590,6 +592,7 @@ public class CommandsExecutor {
     private void registerLv6Commands() {
         levelCommandsCursor = new Pair<>(new ArrayList<String>(), new ArrayList<String>());
 
+        addCommand("adopttestagent", 6, AdoptTestAgentCommand.class);
         addCommand("healagent", 6, HealAgentCommand.class);
         addCommand("deleteagent", 6, DeleteAgentCommand.class);
         addCommand("spawnbot", 6, SpawnBotCommand.class);
@@ -608,6 +611,7 @@ public class CommandsExecutor {
         addCommand("agentscheduler", 6, AgentSchedulerCommand.class);
         addCommand("agentworld", 6, AgentWorldCommand.class);
         addCommand("kpqtest", 6, KpqTestCommand.class);
+        addCommand("mushroomtest", 6, MushroomTestCommand.class);
         addCommand("balrogtest", 6, BalrogTestCommand.class);
         addCommand("agentfield", 6, AgentFieldCommand.class);
         addCommand("townlife", 6, TownLifeCommand.class);

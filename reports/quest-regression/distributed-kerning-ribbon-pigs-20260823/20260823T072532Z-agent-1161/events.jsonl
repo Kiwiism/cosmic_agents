@@ -1,0 +1,7 @@
+{"occurredAt":"2026-08-23T07:26:04.1321734Z","agentId":1161,"questId":28271,"type":"submitted","evidence":{"questName":"Start quest — [Hunt] That Red Isn't For Everyone!","mapId":103000000}}
+{"occurredAt":"2026-08-23T07:27:04.3494050Z","agentId":1161,"questId":28271,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":103000002}}
+{"occurredAt":"2026-08-23T07:28:04.5842206Z","agentId":1161,"questId":28271,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":103000000}}
+{"occurredAt":"2026-08-23T07:30:09.0319459Z","agentId":1161,"questId":28271,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":103010000}}
+{"occurredAt":"2026-08-23T07:30:33.1362373Z","agentId":1161,"questId":28271,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":103020000}}
+{"occurredAt":"2026-08-23T07:33:21.7020566Z","agentId":1161,"questId":28271,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":103020100}}
+{"occurredAt":"2026-08-23T07:34:18.0454976Z","agentId":1161,"questId":28271,"type":"timeout","evidence":{"phase":"quest accepted; objective or return trip still in progress","waitingOn":"","classification":"TIMEOUT_ACTIVE","blockedBy":"","meso":77,"mapId":103020100,"mapTransitions":5,"hp":602,"mp":313,"reason":"time budget expired after 8 minute(s); quest accepted; objective or return trip still in progress","activity":"questing — victoria-individual-quest"}}

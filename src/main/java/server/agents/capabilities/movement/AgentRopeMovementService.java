@@ -146,6 +146,21 @@ public final class AgentRopeMovementService {
                 true);
     }
 
+    /**
+     * Completes a graph-authored zero-step rope exit onto its adjacent platform.
+     *
+     * <p>The graph has already verified that the rope head and destination foothold meet. Using
+     * that authored landing point avoids probing {@code getPointBelow} from a coordinate exactly
+     * level with the foothold, which can skip the adjacent surface and make an Agent repeatedly
+     * climb and fall from an otherwise valid rope.</p>
+     */
+    public static void stepOffRopeOntoGround(AgentRuntimeEntry entry, Character agent, Point landing) {
+        if (entry == null || agent == null || landing == null || !AgentClimbStateRuntime.climbing(entry)) {
+            return;
+        }
+        landOnTopGround(entry, agent, new Point(landing));
+    }
+
     private static void setClimbPosition(AgentRuntimeEntry entry, Character agent, Rope rope, int y) {
         Point position = new Point(rope.x(), y);
         agent.setPosition(position);

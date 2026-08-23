@@ -1,0 +1,32 @@
+{
+  "schemaVersion" : 2,
+  "characterId" : 1175,
+  "planId" : "victoria-training",
+  "planVersion" : "1",
+  "chainId" : "chain:1175:1787458858170",
+  "stepIndex" : 0,
+  "stepStarted" : true,
+  "stepAttempt" : 1,
+  "stepStartedAtMs" : 1787458858196,
+  "status" : "ACTIVE",
+  "inputs" : {
+    "questsEnabled" : true,
+    "targetLevel" : 16,
+    "questId" : 28280
+  },
+  "pendingSuccessorPlanId" : "",
+  "availableSuccessorPlanIds" : [ ],
+  "deferredSuccessorPlanId" : "",
+  "nextActionAtMs" : 1787458858170,
+  "reason" : "",
+  "sessionId" : "plan:1175:1787458858170:quest-regression-1175-20260823T042057Z-69223657-98bc-43e1-9792-52e85213679b",
+  "requestId" : "quest-regression-1175-20260823T042057Z-69223657-98bc-43e1-9792-52e85213679b",
+  "callerId" : "world-director:operator",
+  "sessionStartedAtMs" : 1787458858170,
+  "suspended" : false,
+  "pendingExitMode" : null,
+  "pendingExitReason" : "",
+  "pendingExitDeadlineMs" : 0,
+  "stateRevision" : 69,
+  "updatedAtMs" : 1787458858196
+}

@@ -16,9 +16,9 @@ class AgentQuestCatalogRepositoryTest {
     void exposesEveryGeneratedVictoriaQuestAsAnIndividualDefinition() {
         AgentQuestCatalog catalog = repository.catalog();
 
-        assertEquals(183, catalog.entries().size());
-        assertEquals(183, catalog.entries().stream().map(AgentQuestDefinition::questId).distinct().count());
-        assertEquals(83, catalog.entries().stream()
+        assertEquals(185, catalog.entries().size());
+        assertEquals(185, catalog.entries().stream().map(AgentQuestDefinition::questId).distinct().count());
+        assertEquals(82, catalog.entries().stream()
                 .filter(entry -> entry.objectives().stream()
                         .anyMatch(objective -> !objective.huntMaps().isEmpty()))
                 .count());
@@ -55,5 +55,41 @@ class AgentQuestCatalogRepositoryTest {
         assertTrue(repository.evaluate(2003,
                 new AgentQuestEligibilityContext(20, 100, 10_000, 10, 100, 100,
                         Map.of(2002, 2))).eligible());
+    }
+
+    @Test
+    void modelsPossessionOnlyStartItemsAndTheirProducerQuests() {
+        AgentQuestDefinition seal = repository.find(28257).orElseThrow();
+        AgentQuestDefinition.StartItemRequirement necklace =
+                seal.startItemRequirements().getFirst();
+
+        assertEquals(4032496, necklace.itemId());
+        assertEquals("Devil Hunter's Necklace", necklace.itemName());
+        assertEquals(1, necklace.requiredCount());
+        assertFalse(necklace.consumedOnStart());
+        assertEquals(java.util.List.of(28179, 28198, 28219, 28238, 28256),
+                necklace.producerQuestIds());
+
+        AgentQuestEligibility missing = repository.evaluate(28257,
+                new AgentQuestEligibilityContext(20, 100, 10_000, 10, 100, 100,
+                        Map.of(), Map.of()));
+        AgentQuestEligibility owned = repository.evaluate(28257,
+                new AgentQuestEligibilityContext(20, 100, 10_000, 10, 100, 100,
+                        Map.of(), Map.of(4032496, 1)));
+
+        assertEquals(AgentQuestEligibility.Status.START_ITEM_LOCKED, missing.status());
+        assertTrue(missing.reason().contains("Devil Hunter's Necklace"));
+        assertTrue(owned.eligible());
+    }
+
+    @Test
+    void parsesEveryPrerequisiteInMultiQuestChains() {
+        AgentQuestDefinition revealed = repository.find(28262).orElseThrow();
+
+        assertEquals(5, revealed.prerequisites().size());
+        assertEquals(java.util.Set.of(28257, 28258, 28259, 28260, 28261),
+                revealed.prerequisites().stream()
+                        .map(AgentQuestDefinition.Prerequisite::questId)
+                        .collect(java.util.stream.Collectors.toSet()));
     }
 }

@@ -1,0 +1,10 @@
+{"occurredAt":"2026-08-23T07:35:20.1289686Z","agentId":945,"questId":2204,"type":"submitted","evidence":{"mapId":120000200,"questName":"Start quest — Strange Dish 1"}}
+{"occurredAt":"2026-08-23T07:35:48.2701344Z","agentId":945,"questId":2204,"type":"map-changed","evidence":{"mapId":120000100,"activity":"questing — victoria-individual-quest"}}
+{"occurredAt":"2026-08-23T07:36:12.3707166Z","agentId":945,"questId":2204,"type":"map-changed","evidence":{"mapId":120000103,"activity":"questing — victoria-individual-quest"}}
+{"occurredAt":"2026-08-23T07:36:56.5343127Z","agentId":945,"questId":2204,"type":"map-changed","evidence":{"mapId":120000100,"activity":"questing — victoria-individual-quest"}}
+{"occurredAt":"2026-08-23T07:37:24.6514039Z","agentId":945,"questId":2204,"type":"map-changed","evidence":{"mapId":120000200,"activity":"questing — victoria-individual-quest"}}
+{"occurredAt":"2026-08-23T07:38:44.9691144Z","agentId":945,"questId":2204,"type":"map-changed","evidence":{"mapId":120000000,"activity":"questing — victoria-individual-quest"}}
+{"occurredAt":"2026-08-23T07:40:57.5169161Z","agentId":945,"questId":2204,"type":"map-changed","evidence":{"mapId":120010000,"activity":"questing — victoria-individual-quest"}}
+{"occurredAt":"2026-08-23T07:41:33.6493736Z","agentId":945,"questId":2204,"type":"map-changed","evidence":{"mapId":100030000,"activity":"questing — victoria-individual-quest"}}
+{"occurredAt":"2026-08-23T07:42:25.8340536Z","agentId":945,"questId":2204,"type":"map-changed","evidence":{"mapId":100040000,"activity":"questing — victoria-individual-quest"}}
+{"occurredAt":"2026-08-23T07:43:34.1792217Z","agentId":945,"questId":2204,"type":"timeout","evidence":{"meso":500,"blockedBy":"","phase":"quest accepted; objective or return trip still in progress","reason":"time budget expired after 8 minute(s); quest accepted; objective or return trip still in progress","waitingOn":"","mapTransitions":8,"mp":339,"hp":593,"mapId":100040000,"activity":"questing — victoria-individual-quest","classification":"TIMEOUT_ACTIVE"}}

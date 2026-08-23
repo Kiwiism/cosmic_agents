@@ -69,7 +69,7 @@ public final class AgentNavigationTraceRuntime {
                 route.plannedAtMs(), route.source(), route.reason(),
                 AgentProgressionEventPublisher.objectiveId(entry),
                 position(agentPosition), progress.currentRegionId(),
-                entry.navigationTargetState().regionId(), position(target),
+                route.targetRegionId(), position(target),
                 position(waypoint), entry.navigationTargetState().precise(),
                 entry.navigationDebugState().lastDecision(),
                 entry.navigationDebugState().lastEdgeBlockReason(), route.path(),

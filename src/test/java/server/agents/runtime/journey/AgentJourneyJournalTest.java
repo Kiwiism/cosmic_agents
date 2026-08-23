@@ -20,6 +20,9 @@ import server.agents.runtime.decision.AgentRecommendedAction;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -98,5 +101,34 @@ class AgentJourneyJournalTest {
         assertEquals(AgentJourneyEventType.ACTIVITY_TERMINAL, events.getFirst().type());
         assertEquals("12", events.getFirst().evidence().get("kills"));
         assertEquals("200", events.getFirst().evidence().get("endedAtMs"));
+    }
+
+    @Test
+    void coordinatesSequenceAllocationAcrossStoreInstances() throws Exception {
+        int eventCount = 32;
+        CountDownLatch ready = new CountDownLatch(eventCount);
+        CountDownLatch start = new CountDownLatch(1);
+        try (var executor = Executors.newFixedThreadPool(eventCount)) {
+            var futures = java.util.stream.IntStream.range(0, eventCount)
+                    .mapToObj(index -> executor.submit(() -> {
+                        ready.countDown();
+                        start.await();
+                        return new AgentFileJourneyJournalStore(directory).append(
+                                new AgentJourneyEventDraft(
+                                        "event:" + index, "concurrent-agent", 101,
+                                        100L + index, AgentJourneyEventType.ACTIVITY_TERMINAL,
+                                        AgentActivityKind.QUESTING, "concurrency-test",
+                                        "quest-" + index, "complete", Map.of()));
+                    })).toList();
+            ready.await(5, TimeUnit.SECONDS);
+            start.countDown();
+            for (var future : futures) future.get(10, TimeUnit.SECONDS);
+        }
+
+        List<AgentJourneyEvent> events =
+                new AgentFileJourneyJournalStore(directory).read("concurrent-agent");
+        assertEquals(eventCount, events.size());
+        assertEquals(eventCount, events.stream().map(AgentJourneyEvent::sequence)
+                .distinct().count());
     }
 }

@@ -132,6 +132,16 @@ public final class AgentGrindLootTargetService {
                                                 boolean runAiTick,
                                                 int passiveLootRadius,
                                                 int maximumSeekRadius) {
+        refreshPreExitLootTarget(entry, agent, runAiTick, passiveLootRadius,
+                maximumSeekRadius, Set.of());
+    }
+
+    public static void refreshPreExitLootTarget(AgentRuntimeEntry entry,
+                                                Character agent,
+                                                boolean runAiTick,
+                                                int passiveLootRadius,
+                                                int maximumSeekRadius,
+                                                Set<Integer> excludedObjectIds) {
         if (!runAiTick || AgentPatrolStateRuntime.hasPatrolRegion(entry)) {
             return;
         }
@@ -140,7 +150,7 @@ public final class AgentGrindLootTargetService {
                 entry.capabilityStates().require(AgentPostKillLootState.STATE_KEY);
         WeaponType weaponType = equippedWeaponType(agent);
         AgentPostKillLootState.Snapshot postKill = postKillState.snapshot(nowMs);
-        MapItem selected = AgentLootTargetService.findBestGrindLootTarget(
+        MapItem selected = AgentLootTargetService.findBestPreExitLootTarget(
                 entry,
                 agent,
                 passiveLootRadius,
@@ -148,7 +158,8 @@ public final class AgentGrindLootTargetService {
                 postKill.killedObjectIds(),
                 currentRegionId(entry, agent),
                 maximumSeekRadius,
-                AgentPostKillLootPolicy.targetLootAgeMs(weaponType, true));
+                AgentPostKillLootPolicy.targetLootAgeMs(weaponType, true),
+                excludedObjectIds);
         AgentGrindLootStateRuntime.setGrindLootTarget(entry, selected);
         recordLootDecision(entry, AgentLootDecisionTraceState.Mode.PRE_EXIT,
                 selected == null

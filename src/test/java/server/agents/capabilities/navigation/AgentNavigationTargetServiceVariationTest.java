@@ -30,6 +30,19 @@ class AgentNavigationTargetServiceVariationTest {
     }
 
     @Test
+    void climbingFallbackRetainsCallerDestinationAcrossTransientNoEdgeReplan() {
+        Point ropePosition = new Point(-980, 1665);
+        Point portal = new Point(-1002, 1453);
+
+        assertEquals(portal,
+                AgentNavigationTargetService.safeFallbackTarget(
+                        ropePosition, portal, 33, 8, true));
+        assertEquals(portal,
+                AgentNavigationTargetService.safeFallbackTarget(
+                        ropePosition, portal, 33, -1, true));
+    }
+
+    @Test
     void variationOnlyAppliesToTheActiveScriptedMoveTarget() {
         Character bot = mock(Character.class);
         when(bot.getId()).thenReturn(51);

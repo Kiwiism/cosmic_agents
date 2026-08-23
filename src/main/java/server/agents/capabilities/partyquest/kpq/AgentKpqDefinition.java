@@ -27,8 +27,8 @@ public final class AgentKpqDefinition {
 
     private static final List<CombinationStage> COMBINATION_STAGES = List.of(
             stage(2, STAGE_2_MAP, "2stageclear", "stg2Property", HoldMode.ROPE,
-                    rect(-755, -132, 4, 218), rect(-721, -340, 4, 166),
-                    rect(-586, -326, 4, 150), rect(-483, -181, 4, 222)),
+                    rect(-721, -340, 4, 166), rect(-586, -326, 4, 150),
+                    rect(-755, -132, 4, 218), rect(-483, -181, 4, 222)),
             stage(3, STAGE_3_MAP, "3stageclear", "stg3Property", HoldMode.GROUNDED,
                     rect(608, -180, 140, 50), rect(791, -117, 140, 45),
                     rect(958, -180, 140, 50), rect(876, -238, 140, 45),

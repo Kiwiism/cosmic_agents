@@ -1,0 +1,2 @@
+"agentId","agentName","questId","questName","status","reason","elapsedSeconds","startMapId","endMapId","mapTrail"
+"1175","QuestReg15","2090","Start quest ? I'm Bored 1","TIMEOUT","no terminal outcome within 18 minute(s)","1085","104000000","104000100","104000000>104000100"

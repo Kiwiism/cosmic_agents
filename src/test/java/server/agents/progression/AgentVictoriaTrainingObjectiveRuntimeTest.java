@@ -71,6 +71,23 @@ class AgentVictoriaTrainingObjectiveRuntimeTest {
     }
 
     @Test
+    void matchingIndividualQuestStartIsIdempotentAfterAdmissionRetry() {
+        Character agent = agent(81, 15, 102000000);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+
+        assertTrue(AgentVictoriaTrainingObjectiveRuntime.start(
+                entry, agent, 16, true, 28276, 100L));
+        assertTrue(AgentVictoriaTrainingObjectiveRuntime.start(
+                entry, agent, 16, true, 28276, 200L));
+
+        AgentVictoriaTrainingState state = entry.capabilityStates()
+                .require(AgentVictoriaTrainingState.STATE_KEY);
+        assertTrue(state.active());
+        assertEquals(16, state.targetLevel());
+        assertEquals(28276, state.requestedQuestId());
+    }
+
+    @Test
     void unavailableIndividualQuestBlocksInsteadOfFallingThroughToGrinding() {
         Character agent = agent(80, 20, 100000000);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);

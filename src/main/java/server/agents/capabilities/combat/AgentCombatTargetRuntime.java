@@ -8,6 +8,7 @@ import server.agents.perception.AgentMapPerception;
 import server.agents.perception.AgentPeerPerception;
 import server.agents.perception.AgentPerceptionSnapshot;
 import server.agents.capabilities.movement.AgentMovementProfile;
+import server.agents.capabilities.movement.AgentMovementKinematicsService;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.monitoring.AgentPerformanceMonitor;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -21,6 +22,7 @@ import server.agents.progression.events.AgentProgressionEventPublisher;
 import server.life.Monster;
 import server.maps.Foothold;
 import server.maps.MapleMap;
+import client.inventory.WeaponType;
 
 import java.awt.Point;
 import java.util.ArrayList;
@@ -713,15 +715,19 @@ public final class AgentCombatTargetRuntime {
             return null;
         }
         Point botPos = bot.getPosition();
-        double range = Math.max(
+        WeaponType weaponType = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
+        double range = routeBlockerSeekRange(
+                weaponType,
                 AgentProjectileHitbox.CLIENT_PROJECTILE_BASE_RANGE
                         + AgentProjectileHitbox.passiveProjectileRangeBonus(bot),
-                config.ATTACK_RANGE_X + config.ATTACK_JUMP_X_EXTRA);
+                config);
         List<Monster> candidates = AgentCombatCandidateProvider.local(
                 bot, botPos, range * range);
         candidates.removeIf(monster -> !insideRouteCorridor(
                 botPos, movementTarget, monster.getPosition(),
                 AgentCombatPolicyConfig.routeBlockerCorridorWidth()));
+        candidates.removeIf(monster -> !routeBlockerActionableNow(
+                entry, bot, monster, config));
         AgentRouteBlockerState blockerState =
                 AgentCombatDecisionStateRuntime.state(entry).routeBlocker();
         if (candidates.isEmpty()) {
@@ -760,6 +766,44 @@ public final class AgentCombatTargetRuntime {
                 candidates.size(), candidates.size(), candidates.size(), candidates.size(),
                 selected == null ? 0 : candidates.size(), false, false, selected);
         return selected;
+    }
+
+    static double routeBlockerSeekRange(WeaponType weaponType,
+                                        int projectileRange,
+                                        AgentCombatConfig.Config config) {
+        boolean rangedOrMagic = weaponType == WeaponType.BOW
+                || weaponType == WeaponType.CROSSBOW
+                || weaponType == WeaponType.CLAW
+                || weaponType == WeaponType.GUN
+                || weaponType == WeaponType.WAND
+                || weaponType == WeaponType.STAFF;
+        return rangedOrMagic
+                ? Math.max(1, projectileRange)
+                : Math.max(1, config.ATTACK_RANGE_X + config.ATTACK_JUMP_X_EXTRA);
+    }
+
+    private static boolean routeBlockerActionableNow(AgentRuntimeEntry entry,
+                                                     Character bot,
+                                                     Monster monster,
+                                                     AgentCombatConfig.Config config) {
+        AgentAttackPlan attackPlan = AgentCombatPlanRuntime.planAttack(
+                entry, bot, monster, config);
+        if (attackPlan != null
+                && AgentCombatRangePolicy.isTargetInAttackRange(attackPlan, bot, monster)) {
+            return true;
+        }
+        WeaponType weaponType = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
+        AgentAttackRoute route = attackPlan == null
+                ? AgentAttackExecutionProvider.determineBasicWeaponRoute(weaponType)
+                : attackPlan.route;
+        AgentMovementProfile movementProfile = AgentMovementStateRuntime.movementProfile(entry);
+        return AgentCombatRangePolicy.isTargetJumpable(
+                movementProfile,
+                weaponType,
+                route,
+                bot.getPosition(),
+                monster.getPosition(),
+                AgentMovementKinematicsService.calculateMaxJumpHeight(movementProfile));
     }
 
     private static void recordDecision(AgentRuntimeEntry entry,

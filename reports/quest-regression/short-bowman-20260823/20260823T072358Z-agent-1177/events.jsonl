@@ -1,0 +1,7 @@
+{"occurredAt":"2026-08-23T07:24:00.3096020Z","agentId":1177,"questId":2017,"type":"submitted","evidence":{"mapId":104010000,"questName":"Start quest — Arwen and the Glass Shoe"}}
+{"occurredAt":"2026-08-23T07:27:57.4772552Z","agentId":1177,"questId":2017,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":104020000}}
+{"occurredAt":"2026-08-23T07:30:50.2225768Z","agentId":1177,"questId":2017,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":104030000}}
+{"occurredAt":"2026-08-23T07:32:14.8558378Z","agentId":1177,"questId":2017,"type":"timeout","evidence":{"classification":"TIMEOUT_TRAVEL","blockedBy":"","phase":"quest not yet accepted; travel to the start NPC still in progress","activity":"questing — victoria-individual-quest","mp":418,"mapTransitions":2,"meso":4996681,"mapId":104030000,"reason":"time budget expired after 8 minute(s); quest not yet accepted; travel to the start NPC still in progress","waitingOn":"","hp":972}}
+{"occurredAt":"2026-08-23T07:32:17.0133741Z","agentId":1177,"questId":2207,"type":"submitted","evidence":{"mapId":104030000,"questName":"Start quest — Lazy Little Calico"}}
+{"occurredAt":"2026-08-23T07:33:53.4945014Z","agentId":1177,"questId":2207,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":104040000}}
+{"occurredAt":"2026-08-23T07:35:17.8914106Z","agentId":1177,"questId":2207,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":100000000}}

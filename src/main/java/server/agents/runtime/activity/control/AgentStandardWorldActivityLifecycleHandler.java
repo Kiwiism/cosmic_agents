@@ -125,6 +125,15 @@ public final class AgentStandardWorldActivityLifecycleHandler
             long nowMs,
             long deadlineMs,
             String sessionId) {
+        // Towns and other maps with no authored monster spawns are already safe. Requiring an
+        // idle Agent to cross an entire town to a field-observation staging point adds no safety
+        // and can leave a Director spawn directive needlessly claimed while pathfinding.
+        if (agent.getMap() != null && agent.getMap().getMonsterSpawn() != null
+                && agent.getMap().getMonsterSpawn().isEmpty()) {
+            AgentModeService.startStop(entry);
+            return Result.completed(reason + "; current spawn-free map is already safe",
+                    kind, sessionId);
+        }
         Point target = AgentFieldSafeSpotPolicy.select(entry, agent, Set.of());
         Point current = agent.getPosition();
         if (target == null || current == null) {
@@ -138,6 +147,9 @@ public final class AgentStandardWorldActivityLifecycleHandler
         if (current.distanceSq(target) <= SAFE_SPOT_ARRIVAL_DISTANCE_SQ) {
             AgentModeService.startStop(entry);
             return Result.completed(reason + "; parked at a spawn-free safe spot", kind, sessionId);
+        }
+        if (nowMs >= deadlineMs) {
+            return retreatToReturnMap(entry, agent, kind, reason, sessionId, nowMs);
         }
         AgentModeService.startMoveTo(entry, target, true);
         return Result.progressed(reason + "; walking normally to a spawn-free safe spot",

@@ -4,6 +4,9 @@ import server.agents.progression.AgentVictoriaTrainingObjectiveRuntime;
 import server.agents.progression.AgentVictoriaTrainingState;
 import server.agents.objectives.AgentObjectiveState;
 import server.agents.objectives.AgentObjectiveStatus;
+import server.agents.objectives.AgentObjectiveAttachment;
+import server.agents.objectives.AgentObjectiveDefinition;
+import server.agents.objectives.AgentObjectiveKernel;
 
 public final class AgentVictoriaTrainingPlanStepExecutor implements AgentPlanStepExecutor {
     public static final String OPERATION = "victoria-training";
@@ -49,6 +52,25 @@ public final class AgentVictoriaTrainingPlanStepExecutor implements AgentPlanSte
                     "Victoria training could not start for target level " + targetLevel);
         }
         return AgentPlanStepExecution.active(true);
+    }
+
+    @Override
+    public AgentPlanStepExecution reattach(AgentPlanExecutionContext context) {
+        AgentObjectiveDefinition objective = AgentObjectiveKernel.active(context.entry());
+        if (objective == null
+                || !AgentVictoriaTrainingObjectiveRuntime.OBJECTIVE_TYPE.equals(objective.type())) {
+            return start(context);
+        }
+        AgentObjectiveAttachment attachment = AgentVictoriaTrainingObjectiveRuntime.reattach(
+                context.entry(), context.agent(), objective, context.nowMs());
+        AgentVictoriaTrainingState state = context.entry().capabilityStates()
+                .require(AgentVictoriaTrainingState.STATE_KEY);
+        if ((attachment == AgentObjectiveAttachment.ATTACHED
+                || attachment == AgentObjectiveAttachment.ALREADY_ATTACHED)
+                && state.active()) {
+            return AgentPlanStepExecution.active(true);
+        }
+        return tick(context);
     }
 
     @Override

@@ -7,27 +7,27 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
-final class AgentFieldObservationEquipmentRepository {
+public final class AgentFieldObservationEquipmentRepository {
     private static final String RESOURCE = "/agents/field/victoria-level0-25-equipment.json";
     private static final AgentFieldObservationEquipmentCatalog CATALOG = load();
 
     private AgentFieldObservationEquipmentRepository() {
     }
 
-    static List<Integer> itemIds() {
+    public static List<Integer> itemIds() {
         return java.util.stream.Stream.concat(npcShopItemIds().stream(), victoriaDropItemIds().stream())
                 .distinct().toList();
     }
 
-    static List<Integer> npcShopItemIds() {
+    public static List<Integer> npcShopItemIds() {
         return flattened(CATALOG.npcShopItemIdsBySlot());
     }
 
-    static List<Integer> victoriaDropItemIds() {
+    public static List<Integer> victoriaDropItemIds() {
         return flattened(CATALOG.victoriaDropItemIdsBySlot());
     }
 
-    static java.util.Set<String> sourceSlots() {
+    public static java.util.Set<String> sourceSlots() {
         return java.util.stream.Stream.concat(
                         CATALOG.npcShopItemIdsBySlot().keySet().stream(),
                         CATALOG.victoriaDropItemIdsBySlot().keySet().stream())

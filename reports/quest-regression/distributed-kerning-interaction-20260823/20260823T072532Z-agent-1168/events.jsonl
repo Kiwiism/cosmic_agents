@@ -1,0 +1,2 @@
+{"occurredAt":"2026-08-23T07:26:04.0914976Z","agentId":1168,"questId":2090,"type":"submitted","evidence":{"mapId":103000000,"questName":"Start quest — I'm Bored 1"}}
+{"occurredAt":"2026-08-23T07:27:00.3386323Z","agentId":1168,"questId":2090,"type":"terminal","evidence":{"reason":"plan exit criteria satisfied","mapId":103000000,"status":"COMPLETED"}}

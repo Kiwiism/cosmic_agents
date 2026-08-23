@@ -1,0 +1,13 @@
+{"occurredAt":"2026-08-23T07:24:00.2688099Z","agentId":1176,"questId":28257,"type":"submitted","evidence":{"questName":"Start quest — Who Broke the Seal of Andras?","mapId":104010000}}
+{"occurredAt":"2026-08-23T07:24:04.3023975Z","agentId":1176,"questId":28257,"type":"terminal","evidence":{"status":"FAILED","mapId":104010000,"reason":"requested quest 28257 is not currently executable"}}
+{"occurredAt":"2026-08-23T07:24:04.3909960Z","agentId":1176,"questId":28258,"type":"submitted","evidence":{"questName":"Start quest — Who Broke the Seal of Valefor?","mapId":104010000}}
+{"occurredAt":"2026-08-23T07:24:08.4091887Z","agentId":1176,"questId":28258,"type":"terminal","evidence":{"status":"FAILED","mapId":104010000,"reason":"requested quest 28258 is not currently executable"}}
+{"occurredAt":"2026-08-23T07:24:08.4786243Z","agentId":1176,"questId":28260,"type":"submitted","evidence":{"questName":"Start quest — Who Broke the Seal of Crocell?","mapId":104010000}}
+{"occurredAt":"2026-08-23T07:24:12.5108257Z","agentId":1176,"questId":28260,"type":"terminal","evidence":{"status":"FAILED","mapId":104010000,"reason":"requested quest 28260 is not currently executable"}}
+{"occurredAt":"2026-08-23T07:24:12.5732847Z","agentId":1176,"questId":28262,"type":"submitted","evidence":{"questName":"Start quest — Revealed Identity","mapId":104010000}}
+{"occurredAt":"2026-08-23T07:24:16.5886877Z","agentId":1176,"questId":28262,"type":"terminal","evidence":{"status":"FAILED","mapId":104010000,"reason":"requested quest 28262 is not currently executable"}}
+{"occurredAt":"2026-08-23T07:24:16.6394970Z","agentId":1176,"questId":2122,"type":"submitted","evidence":{"questName":"Start quest — Manji and the Secret Group","mapId":104010000}}
+{"occurredAt":"2026-08-23T07:26:01.2754796Z","agentId":1176,"questId":2122,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":103030000}}
+{"occurredAt":"2026-08-23T07:28:01.8079718Z","agentId":1176,"questId":2122,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":103020200}}
+{"occurredAt":"2026-08-23T07:30:42.5032370Z","agentId":1176,"questId":2122,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":103020100}}
+{"occurredAt":"2026-08-23T07:32:31.2034291Z","agentId":1176,"questId":2122,"type":"timeout","evidence":{"activity":"questing — victoria-individual-quest","mapId":103020100,"waitingOn":"","mp":1216,"mapTransitions":3,"blockedBy":"","classification":"TIMEOUT_TRAVEL","meso":5000093,"hp":650,"reason":"time budget expired after 8 minute(s); quest not yet accepted; travel to the start NPC still in progress","phase":"quest not yet accepted; travel to the start NPC still in progress"}}

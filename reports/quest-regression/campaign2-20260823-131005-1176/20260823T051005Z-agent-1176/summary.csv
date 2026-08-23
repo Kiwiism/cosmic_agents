@@ -1,0 +1,4 @@
+"agentId","agentName","questId","questName","status","reason","elapsedSeconds","startMapId","endMapId","mapTrail"
+"1176","QuestReg20","2122","Manji and the Secret Group","TIMEOUT","no terminal outcome within 8 minute(s)","485","104000000","105050100","104000000>104000100>104000200>104000300>104000400>104010000>104020000>104030000>104040000>100000000>106010000>106010100>105040000>105040300>105050000>105050100"
+"1176","QuestReg20","2106","DANGER! <2-H. Mushroom>","TIMEOUT","no terminal outcome within 8 minute(s)","486.6","105050100","105050100","105050100"
+"1176","QuestReg20","2065","Searching for Fossils","TIMEOUT","no terminal outcome within 8 minute(s)","484.6","105050100","105050100","105050100"

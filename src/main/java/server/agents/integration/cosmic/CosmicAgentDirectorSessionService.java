@@ -23,6 +23,7 @@ import server.agents.runtime.journey.AgentFileJourneyJournalStore;
 
 import java.sql.SQLException;
 import java.util.Map;
+import java.util.UUID;
 
 /** Loads a selected offline backing character into a neutral, Director-owned live session. */
 public final class CosmicAgentDirectorSessionService implements AgentDirectorSessionPort {
@@ -68,12 +69,12 @@ public final class CosmicAgentDirectorSessionService implements AgentDirectorSes
             // Null destination preserves the stored map and ordinary player-spawn placement.
             agent = CosmicAgentOfflineLoader.loadOfflineAgent(
                     characterId, world, channel, null, null);
-            AgentRuntimeEntry entry = AgentInteractionRuntime.registerDirectorIdleAgent(agent);
+            AgentInteractionRuntime.registerDirectorIdleAgent(agent);
             AgentWorldDirectorControlService control = AgentWorldDirectorControlService.runtimeDefault();
             control.setMode(characterId, AgentWorldDirectorMode.MANUAL,
                     "spawned for manual Director control", nowMs);
             AgentWorldDirective park = new AgentWorldDirective(
-                    1, "director-spawn-park:" + characterId + ':' + entry.sessionGeneration(),
+                    1, "director-spawn-park:" + characterId + ':' + UUID.randomUUID(),
                     characterId, AgentWorldDirectiveType.SUSPEND_ACTIVITY,
                     AgentWorldDirectiveSource.OPERATOR, null, null, null, "", Map.of(),
                     AgentWorldInterruptionPolicy.WAIT_FOR_SAFE_BOUNDARY,

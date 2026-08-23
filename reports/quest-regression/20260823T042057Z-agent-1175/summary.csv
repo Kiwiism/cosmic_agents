@@ -1,0 +1,2 @@
+"agentId","agentName","questId","questName","status","reason","elapsedSeconds","startMapId","endMapId","mapTrail"
+"1175","QuestReg15","2090","","FAILED","exit criteria failed: character.level gte-input targetLevel (actual=15)","0","103000000","103000000","103000000"

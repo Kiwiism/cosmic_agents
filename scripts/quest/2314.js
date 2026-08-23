@@ -26,16 +26,12 @@ function start(mode, type, selection) {
     } else if (status == 1) {
         qm.sendNext("You'll run into the barrier at the Mushroom Forest by heading east of where you are standing right now. Please be careful. I hear that the area is infested with crazy, fear-inducing monsters.");
     } else if (status == 2) {
-        //qm.forceStartQuest();
-        //qm.forceStartQuest(2314,"1");
-        qm.gainExp(8300);
-        qm.sendOk("I see, so it was indeed not a regular barrier by any means. Great work there. If not for you help, we wouldn't have had a clue as to what that was all about.");
-        qm.forceCompleteQuest();
+        qm.forceStartQuest();
+        qm.sendOk("Investigate the barrier in the forest, then return and tell me what you found.");
     } else if (status == 3) {
         qm.dispose();
     }
 }
-
 function end(mode, type, selection) {
     status++;
     if (mode != 1) {
@@ -56,4 +52,3 @@ function end(mode, type, selection) {
         qm.dispose();
     }
 }
-	

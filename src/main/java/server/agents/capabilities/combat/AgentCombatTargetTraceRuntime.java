@@ -20,7 +20,17 @@ public final class AgentCombatTargetTraceRuntime {
             return null;
         }
         Character agent = AgentRuntimeIdentityRuntime.bot(entry);
+        AgentCombatDecisionTraceState.Snapshot decision = entry.capabilityStates()
+                .find(AgentCombatDecisionTraceState.STATE_KEY)
+                .map(AgentCombatDecisionTraceState::snapshot)
+                .orElse(null);
         Monster target = AgentGrindTargetStateRuntime.activeTargetInMap(entry, agent.getMap());
+        if (target == null && decision != null && decision.selectedObjectId() > 0) {
+            Monster selected = agent.getMap().getMonsterByOid(decision.selectedObjectId());
+            if (selected != null && selected.isAlive()) {
+                target = selected;
+            }
+        }
         Reactor reactorTarget = target == null
                 ? AgentReactorTargetReservationRuntime
                 .reservedObjectId(agent.getId(), agent.getMap())
@@ -32,10 +42,6 @@ public final class AgentCombatTargetTraceRuntime {
                 : null;
         AgentCombatTacticalState.Snapshot tactical =
                 AgentCombatDirectiveRuntime.tacticalSnapshot(entry);
-        AgentCombatDecisionTraceState.Snapshot decision = entry.capabilityStates()
-                .find(AgentCombatDecisionTraceState.STATE_KEY)
-                .map(AgentCombatDecisionTraceState::snapshot)
-                .orElse(null);
         AgentCombatTargetSearchModeState.Snapshot searchMode = entry.capabilityStates()
                 .find(AgentCombatDecisionState.STATE_KEY)
                 .map(state -> state.targetSearch().snapshot())

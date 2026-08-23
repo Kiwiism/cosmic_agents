@@ -12,9 +12,12 @@ import java.nio.file.StandardCopyOption;
 import java.util.Base64;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 /** Atomic one-event-per-file journal; duplicate event IDs are idempotent. */
 public final class AgentFileJourneyJournalStore implements AgentJourneyJournalStore {
+    private static final ConcurrentHashMap<Path, Object> JOURNAL_LOCKS =
+            new ConcurrentHashMap<>();
     private final Path directory;
     private final ObjectMapper mapper;
 
@@ -33,32 +36,35 @@ public final class AgentFileJourneyJournalStore implements AgentJourneyJournalSt
     public synchronized AgentJourneyEvent append(AgentJourneyEventDraft draft) {
         if (draft == null) throw new IllegalArgumentException("journey event draft is required");
         Path agentDirectory = agentDirectory(draft.agentId());
-        Path target = agentDirectory.resolve(encoded(draft.eventId()) + ".json");
-        if (Files.isRegularFile(target)) {
-            AgentJourneyEvent existing = load(target);
-            if (!existing.draft().equals(draft)) {
-                throw new IllegalStateException("journey event id is already bound to different evidence");
+        synchronized (journalLock(agentDirectory)) {
+            Path target = agentDirectory.resolve(encoded(draft.eventId()) + ".json");
+            if (Files.isRegularFile(target)) {
+                AgentJourneyEvent existing = load(target);
+                if (!existing.draft().equals(draft)) {
+                    throw new IllegalStateException("journey event id is already bound to different evidence");
+                }
+                return existing;
             }
-            return existing;
-        }
-        List<AgentJourneyEvent> current = read(draft.agentId());
-        long nextSequence = current.stream().mapToLong(AgentJourneyEvent::sequence).max().orElse(0L) + 1L;
-        AgentJourneyEvent event = AgentJourneyEvent.sequence(nextSequence, draft);
-        Path temporary = null;
-        try {
-            Files.createDirectories(agentDirectory);
-            temporary = Files.createTempFile(agentDirectory, "journey-", ".tmp");
-            mapper.writeValue(temporary.toFile(), event);
-            move(temporary, target);
-            return event;
-        } catch (IOException failure) {
-            throw new IllegalStateException("could not persist Agent journey event", failure);
-        } finally {
-            if (temporary != null) {
-                try {
-                    Files.deleteIfExists(temporary);
-                } catch (IOException ignored) {
-                    // Best-effort cleanup after either an atomic win or failed append.
+            List<AgentJourneyEvent> current = read(draft.agentId());
+            long nextSequence = current.stream().mapToLong(AgentJourneyEvent::sequence)
+                    .max().orElse(0L) + 1L;
+            AgentJourneyEvent event = AgentJourneyEvent.sequence(nextSequence, draft);
+            Path temporary = null;
+            try {
+                Files.createDirectories(agentDirectory);
+                temporary = Files.createTempFile(agentDirectory, "journey-", ".tmp");
+                mapper.writeValue(temporary.toFile(), event);
+                move(temporary, target);
+                return event;
+            } catch (IOException failure) {
+                throw new IllegalStateException("could not persist Agent journey event", failure);
+            } finally {
+                if (temporary != null) {
+                    try {
+                        Files.deleteIfExists(temporary);
+                    } catch (IOException ignored) {
+                        // Best-effort cleanup after either an atomic win or failed append.
+                    }
                 }
             }
         }
@@ -68,24 +74,31 @@ public final class AgentFileJourneyJournalStore implements AgentJourneyJournalSt
     public synchronized List<AgentJourneyEvent> read(String agentId) {
         String normalizedAgentId = required(agentId, "Agent id");
         Path agentDirectory = agentDirectory(normalizedAgentId);
-        if (!Files.isDirectory(agentDirectory)) return List.of();
-        try (var files = Files.list(agentDirectory)) {
-            List<AgentJourneyEvent> events = files
-                    .filter(path -> path.getFileName().toString().endsWith(".json"))
-                    .map(this::load)
-                    .sorted(Comparator.comparingLong(AgentJourneyEvent::sequence))
-                    .toList();
-            if (events.stream().anyMatch(event -> !event.agentId().equals(normalizedAgentId))) {
-                throw new IllegalStateException("journey event identity does not match directory");
+        synchronized (journalLock(agentDirectory)) {
+            if (!Files.isDirectory(agentDirectory)) return List.of();
+            try (var files = Files.list(agentDirectory)) {
+                List<AgentJourneyEvent> events = files
+                        .filter(path -> path.getFileName().toString().endsWith(".json"))
+                        .map(this::load)
+                        .sorted(Comparator.comparingLong(AgentJourneyEvent::sequence))
+                        .toList();
+                if (events.stream().anyMatch(event -> !event.agentId().equals(normalizedAgentId))) {
+                    throw new IllegalStateException("journey event identity does not match directory");
+                }
+                long distinctSequences = events.stream().map(AgentJourneyEvent::sequence).distinct().count();
+                if (distinctSequences != events.size()) {
+                    throw new IllegalStateException("journey contains duplicate sequence numbers");
+                }
+                return List.copyOf(events);
+            } catch (IOException failure) {
+                throw new IllegalStateException("could not read Agent journey", failure);
             }
-            long distinctSequences = events.stream().map(AgentJourneyEvent::sequence).distinct().count();
-            if (distinctSequences != events.size()) {
-                throw new IllegalStateException("journey contains duplicate sequence numbers");
-            }
-            return List.copyOf(events);
-        } catch (IOException failure) {
-            throw new IllegalStateException("could not read Agent journey", failure);
         }
+    }
+
+    private static Object journalLock(Path agentDirectory) {
+        Path key = agentDirectory.toAbsolutePath().normalize();
+        return JOURNAL_LOCKS.computeIfAbsent(key, ignored -> new Object());
     }
 
     private AgentJourneyEvent load(Path path) {

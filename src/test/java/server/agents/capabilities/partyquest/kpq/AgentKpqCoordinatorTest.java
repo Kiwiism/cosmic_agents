@@ -17,6 +17,54 @@ import static org.mockito.Mockito.when;
 
 class AgentKpqCoordinatorTest {
     @Test
+    void stageOnePassDropLineBelongsToTheDeliveringAgent() {
+        assertEquals("AgentForSure, I dropped my pass beside you.",
+                AgentKpqCoordinator.stageOnePassDropMessage("AgentForSure"));
+    }
+
+    @Test
+    void humanLeaderControlsWhetherAgentMemberCoordinationIsVisible() {
+        AgentKpqSession session = new AgentKpqSession(
+                AgentKpqSession.Mode.TEST_OBSERVATION, 1L, 100, 4, 1_000L);
+        session.addMember(100, AgentKpqMemberState.MemberType.HUMAN);
+        session.addMember(101, AgentKpqMemberState.MemberType.AGENT);
+        session.addMember(102, AgentKpqMemberState.MemberType.AGENT);
+        session.addMember(103, AgentKpqMemberState.MemberType.AGENT);
+        session.setLeadership(100, 101);
+        session.setMemberCoordinationChatEnabled(false);
+
+        assertFalse(AgentKpqCoordinator.memberCoordinationVisible(session));
+
+        session.setMemberCoordinationChatEnabled(true);
+        assertTrue(AgentKpqCoordinator.memberCoordinationVisible(session));
+    }
+
+    @Test
+    void agentLeaderAlwaysRetainsVisibleCoordination() {
+        AgentKpqSession session = new AgentKpqSession(
+                AgentKpqSession.Mode.TEST_OBSERVATION, 1L, 100, 3, 1_000L);
+        session.addMember(101, AgentKpqMemberState.MemberType.AGENT);
+        session.addMember(102, AgentKpqMemberState.MemberType.AGENT);
+        session.addMember(103, AgentKpqMemberState.MemberType.AGENT);
+        session.setLeadership(101, 102);
+        session.setMemberCoordinationChatEnabled(false);
+
+        assertTrue(AgentKpqCoordinator.memberCoordinationVisible(session));
+    }
+
+    @Test
+    void preparationAcceptsACompletePartyThatHumanLeaderAlreadyEntered() {
+        assertTrue(AgentKpqCoordinator.shouldAcceptEnteredStageOneDuringPreparation(
+                AgentKpqDefinition.STAGE_1_MAP, true, true));
+        assertFalse(AgentKpqCoordinator.shouldAcceptEnteredStageOneDuringPreparation(
+                AgentKpqDefinition.RECRUIT_MAP, true, true));
+        assertFalse(AgentKpqCoordinator.shouldAcceptEnteredStageOneDuringPreparation(
+                AgentKpqDefinition.STAGE_1_MAP, false, true));
+        assertFalse(AgentKpqCoordinator.shouldAcceptEnteredStageOneDuringPreparation(
+                AgentKpqDefinition.STAGE_1_MAP, true, false));
+    }
+
+    @Test
     void completeCommandRecoversPassesThatEveryMemberAlreadyDelivered() {
         Character leader = mock(Character.class);
         MapleMap map = mock(MapleMap.class);
@@ -182,6 +230,38 @@ class AgentKpqCoordinatorTest {
         assertFalse(AgentKpqCoordinator.stageFiveReadyToReturn(10, 1, 0, false));
         assertFalse(AgentKpqCoordinator.stageFiveReadyToReturn(10, 0, 0, true));
         assertTrue(AgentKpqCoordinator.stageFiveReadyToReturn(10, 0, 0, false));
+    }
+
+    @Test
+    void fourMemberLeaderStaysAtClotoWhileThreeMemberLeaderMaySolve() {
+        List<AgentKpqMemberState> puzzleMembers = List.of(
+                member(102, 2, 0), member(103, 3, 0), member(104, 4, 0));
+        List<AgentKpqMemberState> threeMemberParty = List.of(
+                member(101, 1, 0), member(102, 2, 0), member(103, 3, 0));
+
+        assertTrue(AgentKpqCoordinator.leaderHasDedicatedClotoRole(
+                puzzleMembers, 101));
+        assertFalse(AgentKpqCoordinator.leaderHasDedicatedClotoRole(
+                threeMemberParty, 101));
+    }
+
+    @Test
+    void stageFiveCleanupCanReachTheWholeMap() {
+        MapleMap map = mock(MapleMap.class);
+        when(map.getMapArea()).thenReturn(new java.awt.Rectangle(0, 0, 1_200, 900));
+
+        assertEquals(1_500, AgentKpqCoordinator.stageFiveCleanupSeekRadius(map));
+    }
+
+    @Test
+    void stageFiveCleanupDeadlineIsDeterministicWithinSixToTenSeconds() {
+        long first = AgentKpqCoordinator.stageFiveCleanupDurationMs(
+                77L, 6_000L, 10_000L);
+        long repeated = AgentKpqCoordinator.stageFiveCleanupDurationMs(
+                77L, 6_000L, 10_000L);
+
+        assertEquals(first, repeated);
+        assertTrue(first >= 6_000L && first <= 10_000L);
     }
 
     @Test

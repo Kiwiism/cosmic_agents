@@ -1,0 +1,2 @@
+"agentId","agentName","questId","questName","status","reason","elapsedSeconds","startMapId","endMapId","mapTrail"
+"1177","QuestReg25","2010","Jane and the Wild Boar","TIMEOUT_ACTIVE","time budget expired after 8 minute(s); quest accepted; objective or return trip still in progress","496.6","104000000","104000400","104000000>104000100>104000200>104000300>104000400"

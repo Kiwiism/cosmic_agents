@@ -1,0 +1,2 @@
+"agentId","agentName","questId","questName","status","reason","elapsedSeconds","startMapId","endMapId","mapTrail"
+"554","Boba33","28278","[Hunt] Destructively Strong Pigs","TIMEOUT_ACTIVE","time budget expired after 8 minute(s); quest accepted; objective or return trip still in progress","496.2","120000300","100020000","120000300>120000200>120000000>120010000>100030000>100020000"

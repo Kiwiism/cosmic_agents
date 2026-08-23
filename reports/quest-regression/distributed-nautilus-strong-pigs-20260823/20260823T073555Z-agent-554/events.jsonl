@@ -1,0 +1,7 @@
+{"occurredAt":"2026-08-23T07:35:55.2853491Z","agentId":554,"questId":28278,"type":"submitted","evidence":{"mapId":120000300,"questName":"Start quest — [Hunt] Destructively Strong Pigs"}}
+{"occurredAt":"2026-08-23T07:37:43.7187644Z","agentId":554,"questId":28278,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":120000200}}
+{"occurredAt":"2026-08-23T07:38:51.9854635Z","agentId":554,"questId":28278,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":120000000}}
+{"occurredAt":"2026-08-23T07:40:44.4509784Z","agentId":554,"questId":28278,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":120010000}}
+{"occurredAt":"2026-08-23T07:41:12.5490779Z","agentId":554,"questId":28278,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":100030000}}
+{"occurredAt":"2026-08-23T07:43:21.0334773Z","agentId":554,"questId":28278,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":100020000}}
+{"occurredAt":"2026-08-23T07:44:09.3848007Z","agentId":554,"questId":28278,"type":"timeout","evidence":{"waitingOn":"","mapId":100020000,"hp":486,"meso":533,"blockedBy":"","phase":"quest accepted; objective or return trip still in progress","mp":295,"classification":"TIMEOUT_ACTIVE","mapTransitions":5,"activity":"questing — victoria-individual-quest","reason":"time budget expired after 8 minute(s); quest accepted; objective or return trip still in progress"}}

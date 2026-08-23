@@ -1,0 +1,8 @@
+{"occurredAt":"2026-08-23T07:14:54.8254035Z","agentId":1175,"questId":28274,"type":"submitted","evidence":{"questName":"Start quest — [Hunt] Why Are Dark Stumps So Dark?","mapId":104000000}}
+{"occurredAt":"2026-08-23T07:16:35.3842061Z","agentId":1175,"questId":28274,"type":"map-changed","evidence":{"mapId":104000100,"activity":"questing — victoria-individual-quest"}}
+{"occurredAt":"2026-08-23T07:19:28.1741421Z","agentId":1175,"questId":28274,"type":"map-changed","evidence":{"mapId":104000200,"activity":"questing — victoria-individual-quest"}}
+{"occurredAt":"2026-08-23T07:21:20.6685554Z","agentId":1175,"questId":28274,"type":"map-changed","evidence":{"mapId":104000300,"activity":"questing — victoria-individual-quest"}}
+{"occurredAt":"2026-08-23T07:22:24.9564587Z","agentId":1175,"questId":28274,"type":"map-changed","evidence":{"mapId":104000400,"activity":"questing — victoria-individual-quest"}}
+{"occurredAt":"2026-08-23T07:23:09.3156997Z","agentId":1175,"questId":28274,"type":"timeout","evidence":{"meso":5000152,"mp":299,"waitingOn":"","mapTransitions":4,"hp":900,"blockedBy":"","reason":"time budget expired after 8 minute(s); quest not yet accepted; travel to the start NPC still in progress","mapId":104000400,"activity":"questing — victoria-individual-quest","classification":"TIMEOUT_TRAVEL","phase":"quest not yet accepted; travel to the start NPC still in progress"}}
+{"occurredAt":"2026-08-23T07:23:11.4497893Z","agentId":1175,"questId":2179,"type":"submitted","evidence":{"questName":"Start quest — Protect The Nautilus' Emergency Food Supply","mapId":104000400}}
+{"occurredAt":"2026-08-23T07:23:35.5772799Z","agentId":1175,"questId":2179,"type":"map-changed","evidence":{"mapId":104010000,"activity":"questing — victoria-individual-quest"}}

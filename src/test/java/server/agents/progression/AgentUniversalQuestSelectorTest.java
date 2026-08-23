@@ -71,6 +71,7 @@ class AgentUniversalQuestSelectorTest {
         AgentQuestDefinition.Endpoint endpoint = new AgentQuestDefinition.Endpoint(1000, List.of(startMapId));
         return new AgentQuestDefinition(
                 id, "Quest " + id, 1, null, recommendedLevel, Set.of(), List.of(),
+                List.of(),
                 true, AgentQuestSelectionDisposition.ELIGIBLE, endpoint, endpoint,
                 List.of(new AgentQuestDefinition.Objective(
                         "kill-" + id, "kill-mob", 100100, "Mob", 10, List.of(100100),

@@ -85,7 +85,7 @@ class AgentQuestWorkShadowAdapterTest {
         AgentQuestDefinition.Endpoint endpoint =
                 new AgentQuestDefinition.Endpoint(1000, List.of(100));
         return new AgentQuestDefinition(
-                1, "Quest", 1, null, 15, Set.of(), List.of(), true,
+                1, "Quest", 1, null, 15, Set.of(), List.of(), List.of(), true,
                 AgentQuestSelectionDisposition.ELIGIBLE, endpoint, endpoint,
                 List.of(new AgentQuestDefinition.Objective(
                         "kill-1", "kill-mob", 100100, "Mob", 10, List.of(100100),

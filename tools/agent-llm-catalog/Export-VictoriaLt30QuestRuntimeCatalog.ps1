@@ -14,7 +14,9 @@ $source = Get-Content -Raw -LiteralPath $InputPath | ConvertFrom-Json
 $entries = @($source.entries |
     Where-Object {
         $_.autonomousStartAllowed -and
-        (@($_.huntingObjectives).Count -gt 0 -or $_.questId -in $InteractionOnlyQuestIds) -and
+        (@($_.huntingObjectives).Count -gt 0 `
+            -or @($_.shopProcurementObjectives).Count -gt 0 `
+            -or $_.questId -in $InteractionOnlyQuestIds) -and
         @($_.nonHuntingAcquisitionObjectives).Count -eq 0 -and
         @($_.startVictoriaMapIds).Count -gt 0 -and
         @($_.completeVictoriaMapIds).Count -gt 0 -and
@@ -31,6 +33,36 @@ $entries = @($source.entries |
             startMapIds = @($quest.startVictoriaMapIds | ForEach-Object { [int]$_ })
             completeNpcId = [int]$quest.completeNpcId
             completeMapIds = @($quest.completeVictoriaMapIds | ForEach-Object { [int]$_ })
+            prerequisiteRequirements = @($quest.prerequisiteRequirements | ForEach-Object {
+                [ordered]@{
+                    questId = [int]$_.questId
+                    requiredState = [int]$_.state
+                }
+            })
+            startItemRequirements = @($quest.startItemRequirements | ForEach-Object {
+                [ordered]@{
+                    itemId = [int]$_.itemId
+                    itemName = [string]$_.itemName
+                    requiredCount = [int]$_.requiredCount
+                    consumedOnStart = [bool]$_.consumedOnStart
+                    producerQuestIds = @($_.producerQuestIds | ForEach-Object { [int]$_ })
+                }
+            })
+            shopProcurementObjectives = @($quest.shopProcurementObjectives | ForEach-Object {
+                [ordered]@{
+                    objectiveId = [string]$_.objectiveId
+                    type = [string]$_.type
+                    targetId = [int]$_.targetId
+                    requiredCount = [int]$_.requiredCount
+                    shopSources = @($_.shopSources | ForEach-Object {
+                        [ordered]@{
+                            npcId = [int]$_.npcId
+                            mapId = [int]$_.mapId
+                            unitPrice = [int]$_.unitPrice
+                        }
+                    })
+                }
+            })
             huntingObjectives = @($quest.huntingObjectives | ForEach-Object {
                 $objective = $_
                 [ordered]@{

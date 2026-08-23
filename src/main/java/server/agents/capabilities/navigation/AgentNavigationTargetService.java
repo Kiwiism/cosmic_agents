@@ -223,7 +223,12 @@ public final class AgentNavigationTargetService {
                     return new NavigationDirective(new Point(rawTargetPos), false);
                 }
                 return new NavigationDirective(
-                        safeFallbackTarget(botPos, rawTargetPos, startRegionId, targetRegionId),
+                        safeFallbackTarget(
+                                botPos,
+                                rawTargetPos,
+                                startRegionId,
+                                targetRegionId,
+                                AgentClimbStateRuntime.climbing(entry)),
                         false);
             }
 
@@ -432,6 +437,21 @@ public final class AgentNavigationTargetService {
                                     Point rawTargetPos,
                                     int startRegionId,
                                     int targetRegionId) {
+        return safeFallbackTarget(botPos, rawTargetPos, startRegionId, targetRegionId, false);
+    }
+
+    static Point safeFallbackTarget(Point botPos,
+                                    Point rawTargetPos,
+                                    int startRegionId,
+                                    int targetRegionId,
+                                    boolean climbing) {
+        // Once attached to a rope or ladder, holding the current position during a transient
+        // no-edge replan removes the vertical intent and can strand the Agent indefinitely.
+        // The caller-owned destination remains the safe mechanical input here: climbing physics
+        // constrains motion to the attached climbable and can dismount normally at its boundary.
+        if (climbing && rawTargetPos != null) {
+            return new Point(rawTargetPos);
+        }
         boolean sameResolvedRegion = startRegionId >= 0 && startRegionId == targetRegionId;
         return sameResolvedRegion && rawTargetPos != null
                 ? new Point(rawTargetPos)
@@ -472,6 +492,13 @@ public final class AgentNavigationTargetService {
             return AgentTraversalResult.deferred("observation-only");
         }
         long nowMs = System.currentTimeMillis();
+        // Observe the complete committed-edge attempt, including the approach to its launch or
+        // attachment point. Validation can remain DEFERRED forever when a bad approach repeatedly
+        // sends the Agent through an adjacent region, so starting only after READY made that class
+        // of A/B oscillation invisible to edge reliability. Monotonic destination progress keeps
+        // legitimate approaches and long climbs alive while bounded non-progress is rejected.
+        AgentNavigationEdgeReliabilityRuntime.beganAttempt(
+                entry, bot.getMapId(), edge, currentRegionId, botPos, nowMs);
         AgentNavigationEdgeValidationService.Result validation =
                 AgentNavigationEdgeValidationService.validate(
                         graph, entry, bot, bot.getMapId(), currentRegionId, botPos, edge, nowMs);
@@ -485,11 +512,6 @@ public final class AgentNavigationTargetService {
         if (!validation.ready()) {
             return AgentTraversalResult.deferred(validation.reason());
         }
-        // A READY edge that the live executor still cannot start is a graph/executor contract
-        // failure. Start the same progress timeout so it is counted without penalizing a normal
-        // approach tick or treating one transient refusal as an immediate hard failure.
-        AgentNavigationEdgeReliabilityRuntime.beganAttempt(
-                entry, bot.getMapId(), edge, currentRegionId, botPos, nowMs);
         return AgentNavigationEdgeExecutor.INSTANCE.execute(
                 entry, bot, new AgentTraversalCommand(graph, edge, botPos, rawTargetPos));
     }

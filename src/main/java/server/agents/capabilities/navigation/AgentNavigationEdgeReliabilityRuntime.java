@@ -80,6 +80,12 @@ public final class AgentNavigationEdgeReliabilityRuntime {
         return timedOut;
     }
 
+    public static void deferAttemptTimeout(AgentRuntimeEntry entry, int mapId, long nowMs) {
+        if (entry != null && AgentNavigationReliabilityConfig.tracksReliability()) {
+            state(entry).deferAttemptTimeout(mapId, nowMs);
+        }
+    }
+
     public static AgentNavigationEdgeReliabilityState.Snapshot snapshot(
             AgentRuntimeEntry entry, long nowMs) {
         if (entry == null) {

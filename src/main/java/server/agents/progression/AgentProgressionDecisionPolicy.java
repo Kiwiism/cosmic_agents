@@ -68,7 +68,8 @@ final class AgentProgressionDecisionPolicy {
                            AgentVictoriaQuestRuntimeCatalog.Entry quest) {
         int minLevel = quest.minLevel() == null ? 1 : quest.minLevel();
         int levelFit = Math.max(0, QUEST_LEVEL_FIT_BASE - Math.abs(level - minLevel));
-        int objectiveBurden = quest.huntingObjectives().size();
+        int objectiveBurden = quest.huntingObjectives().size()
+                + quest.shopProcurementObjectives().size();
         boolean local = quest.startMapIds().contains(currentMapId);
         long score = (long) levelFit * profile.efficiencyPreference()
                 * QUEST_LEVEL_FIT_MULTIPLIER;

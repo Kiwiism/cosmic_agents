@@ -58,7 +58,7 @@ public final class AgentWorldDirectiveRequestCompiler {
             throw new IllegalArgumentException("targetLevel must be between 16 and 30");
         }
         return new AgentWorldTypedActivityRequest.Questing(new AgentPlanEntryRequest(
-                directive.directiveId(), caller(directive), "victoria-training",
+                directive.directiveId(), caller(directive), "victoria-individual-quest",
                 Map.of("targetLevel", targetLevel, "questsEnabled", true,
                         "questId", questId), null));
     }

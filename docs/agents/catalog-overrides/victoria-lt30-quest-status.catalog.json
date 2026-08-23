@@ -33,7 +33,7 @@
     "manual-review-required": "Not ready for autonomous scheduling."
   },
   "summary": {
-    "totalQuestArea30Candidates": 183,
+    "totalQuestArea30Candidates": 185,
     "statusCounts": [
       {
         "status": "manual-review-required",
@@ -41,7 +41,7 @@
       },
       {
         "status": "normal",
-        "count": 104
+        "count": 106
       },
       {
         "status": "postpone-outside-current-region",
@@ -80,8 +80,8 @@
         "count": 9
       }
     ],
-    "runnableNow": 104,
-    "runnableAfterCapabilities": 116,
+    "runnableNow": 106,
+    "runnableAfterCapabilities": 118,
     "reviewRequired": 67
   },
   "fastIndexes": {
@@ -170,7 +170,9 @@
         28136,
         28257,
         28258,
+        28259,
         28260,
+        28261,
         28262,
         28263,
         28264,
@@ -376,7 +378,9 @@
       28136,
       28257,
       28258,
+      28259,
       28260,
+      28261,
       28262,
       28263,
       28264,
@@ -494,7 +498,9 @@
       28136,
       28257,
       28258,
+      28259,
       28260,
+      28261,
       28262,
       28263,
       28264,
@@ -670,7 +676,9 @@
         28136,
         28257,
         28258,
+        28259,
         28260,
+        28261,
         28262,
         28263,
         28264,
@@ -776,7 +784,9 @@
         28136,
         28257,
         28258,
+        28259,
         28260,
+        28261,
         28262,
         28263,
         28264,
@@ -882,7 +892,9 @@
         28136,
         28257,
         28258,
+        28259,
         28260,
+        28261,
         28262,
         28263,
         28264,
@@ -988,7 +1000,9 @@
         28136,
         28257,
         28258,
+        28259,
         28260,
+        28261,
         28262,
         28263,
         28264,
@@ -1094,7 +1108,9 @@
         28136,
         28257,
         28258,
+        28259,
         28260,
+        28261,
         28262,
         28263,
         28264,
@@ -1200,7 +1216,9 @@
         28136,
         28257,
         28258,
+        28259,
         28260,
+        28261,
         28262,
         28263,
         28264,
@@ -8304,6 +8322,52 @@
       }
     },
     {
+      "questId": 28259,
+      "name": "Who Broke the Seal of Amdusias?",
+      "minLevel": null,
+      "maxLevel": null,
+      "area": 30,
+      "status": "normal",
+      "secondaryStatuses": [],
+      "agentRunnableNow": true,
+      "agentRunnableAfterCapabilities": true,
+      "requiredCapabilities": [
+        "navigation",
+        "npc-interaction",
+        "quest-state",
+        "combat",
+        "loot",
+        "inventory"
+      ],
+      "reviewRequired": false,
+      "sourceSeverity": "ok",
+      "sourceFlags": [],
+      "notes": [
+        "Deemed runnable by current scan and policy once core agent capabilities exist."
+      ],
+      "start": {
+        "npcId": 1012100,
+        "npcName": "Athena Pierce",
+        "victoriaMaps": [
+          100000201
+        ]
+      },
+      "complete": {
+        "npcId": 1012100,
+        "npcName": "Athena Pierce",
+        "victoriaMaps": [
+          100000201
+        ],
+        "autoCompleteCandidate": false
+      },
+      "requirements": {
+        "items": [
+          "4001369 x1 Ripped Paper-3"
+        ],
+        "mobs": []
+      }
+    },
+    {
       "questId": 28260,
       "name": "Who Broke the Seal of Crocell?",
       "minLevel": null,
@@ -8345,6 +8409,52 @@
       "requirements": {
         "items": [
           "4001370 x1 Ripped Paper-4"
+        ],
+        "mobs": []
+      }
+    },
+    {
+      "questId": 28261,
+      "name": "Who Broke the Seal of Marbas?",
+      "minLevel": null,
+      "maxLevel": null,
+      "area": 30,
+      "status": "normal",
+      "secondaryStatuses": [],
+      "agentRunnableNow": true,
+      "agentRunnableAfterCapabilities": true,
+      "requiredCapabilities": [
+        "navigation",
+        "npc-interaction",
+        "quest-state",
+        "combat",
+        "loot",
+        "inventory"
+      ],
+      "reviewRequired": false,
+      "sourceSeverity": "ok",
+      "sourceFlags": [],
+      "notes": [
+        "Deemed runnable by current scan and policy once core agent capabilities exist."
+      ],
+      "start": {
+        "npcId": 1032001,
+        "npcName": "Grendel the Really Old",
+        "victoriaMaps": [
+          101000003
+        ]
+      },
+      "complete": {
+        "npcId": 1032001,
+        "npcName": "Grendel the Really Old",
+        "victoriaMaps": [
+          101000003
+        ],
+        "autoCompleteCandidate": false
+      },
+      "requirements": {
+        "items": [
+          "4001371 x1 Ripped Paper-5"
         ],
         "mobs": []
       }

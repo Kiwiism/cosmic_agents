@@ -75,6 +75,36 @@ public final class AgentCombatBuffRuntime {
         return tryCastCriticalSurvivalBuff(entry, bot, AgentSkillGatewayRuntime.skills());
     }
 
+    /**
+     * Casts an explicitly requested utility buff through the same validated
+     * animation, resource, packet, and cooldown path as ordinary combat buffs.
+     * Scenario capabilities own the intent; this method deliberately bypasses
+     * automatic-buff selection and its blacklist without bypassing execution.
+     */
+    public static boolean tryCastExplicitUtilityBuff(
+            AgentRuntimeEntry entry, Character bot, int skillId) {
+        if (entry == null
+                || bot == null
+                || !bot.isAlive()
+                || AgentCombatCooldownStateRuntime.hasAttackCooldown(entry)
+                || AgentMovementStateRuntime.inAir(entry)
+                || AgentMovementStateRuntime.climbing(entry)
+                || bot.skillIsCooling(skillId)) {
+            return false;
+        }
+
+        Skill skill = AgentSkillGatewayRuntime.skills().getSkill(skillId);
+        int skillLevel = skill == null ? 0 : bot.getSkillLevel(skill);
+        if (skillLevel <= 0) {
+            return false;
+        }
+        StatEffect effect = skill.getEffect(skillLevel);
+        if (!AgentCombatSkillClassifier.isActiveSupportSkill(skill, effect)) {
+            return false;
+        }
+        return castSupportSkill(entry, bot, skill, effect, System.currentTimeMillis());
+    }
+
     static boolean tryCastCriticalSurvivalBuff(AgentRuntimeEntry entry, Character bot, SkillGateway skills) {
         if (AgentCombatCooldownStateRuntime.hasAttackCooldown(entry)
                 || AgentMovementStateRuntime.inAir(entry)

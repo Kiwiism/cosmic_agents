@@ -91,6 +91,7 @@ public class Quest {
     private static final Logger log = LoggerFactory.getLogger(Quest.class);
     private static volatile Map<Integer, Quest> quests = new HashMap<>();
     private static volatile Map<Integer, Integer> infoNumberQuests = new HashMap<>();
+    private static volatile List<Quest> allQuestSnapshot;
     private static final Map<Short, Integer> medals = new HashMap<>();
 
     private static final Set<Short> exploitableQuests = new HashSet<>();
@@ -789,7 +790,7 @@ public class Quest {
         return ret;
     }
 
-    public static void loadAllQuests() {
+    public static synchronized void loadAllQuests() {
         final Map<Integer, Quest> loadedQuests = new HashMap<>();
         final Map<Integer, Integer> loadedInfoNumberQuests = new HashMap<>();
 
@@ -814,10 +815,14 @@ public class Quest {
 
         Quest.quests = loadedQuests;
         Quest.infoNumberQuests = loadedInfoNumberQuests;
+        Quest.allQuestSnapshot = loadedQuests.values().stream()
+                .sorted(java.util.Comparator.comparingInt(Quest::getId)).toList();
     }
 
     public static synchronized List<Quest> allQuests() {
-        loadAllQuests();
-        return quests.values().stream().sorted(java.util.Comparator.comparingInt(Quest::getId)).toList();
+        if (allQuestSnapshot == null) {
+            loadAllQuests();
+        }
+        return allQuestSnapshot;
     }
 }

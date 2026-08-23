@@ -1,0 +1,1 @@
+{"schemaVersion":1,"sequence":2,"eventId":"director-mode:1177:1787456723859:MANUAL","agentId":"1177","characterId":1177,"occurredAtMs":1787456723859,"type":"DIRECTOR_MODE_CHANGED","activityKind":null,"source":"world-director","correlationId":"mode:1177","reason":"random quest regression campaign","evidence":{"phase":"PAUSED","mode":"MANUAL"}}

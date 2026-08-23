@@ -12,9 +12,11 @@ import server.agents.runtime.activity.world.AgentWorldDirectiveType;
 import server.agents.runtime.activity.world.AgentWorldDirectorMode;
 import server.agents.runtime.activity.world.AgentWorldDirectorSession;
 import server.agents.runtime.activity.world.AgentWorldInterruptionPolicy;
+import server.life.SpawnPoint;
 import server.maps.MapleMap;
 
 import java.util.Map;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -24,6 +26,28 @@ import static org.mockito.Mockito.when;
 
 class AgentStandardWorldActivityLifecycleHandlerTest {
     @Test
+    void idleAgentOnSpawnFreeMapIsAlreadySafelyParked() {
+        Character agent = mock(Character.class);
+        MapleMap town = mock(MapleMap.class);
+        when(agent.getId()).thenReturn(27);
+        when(agent.getMap()).thenReturn(town);
+        when(agent.getMapId()).thenReturn(102000000);
+        when(town.getMonsterSpawn()).thenReturn(List.of());
+        AgentStandardWorldActivityLifecycleHandler handler =
+                new AgentStandardWorldActivityLifecycleHandler(
+                        mock(AgentLiveActivityFacadeRegistry.class));
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+
+        var result = handler.advance(suspend(),
+                AgentWorldDirectorSession.create(27, AgentWorldDirectorMode.MANUAL, 1_000L),
+                entry, agent, null, "", 1_050L);
+
+        assertEquals(AgentWorldActivityLifecycleHandler.Result.Status.COMPLETED,
+                result.status());
+        assertTrue(result.reason().contains("already safe"));
+    }
+
+    @Test
     void retreatsThroughNormalTravelWhenNoSafeSpotAppearsBeforeDeadline() {
         Character agent = mock(Character.class);
         MapleMap field = mock(MapleMap.class);
@@ -32,6 +56,7 @@ class AgentStandardWorldActivityLifecycleHandlerTest {
         when(agent.getMap()).thenReturn(field);
         when(agent.getMapId()).thenReturn(100000001);
         when(agent.getPosition()).thenReturn(null);
+        when(field.getMonsterSpawn()).thenReturn(List.of(mock(SpawnPoint.class)));
         when(field.getReturnMap()).thenReturn(returnMap);
         when(returnMap.getId()).thenReturn(100000000);
         AtomicInteger transfers = new AtomicInteger();

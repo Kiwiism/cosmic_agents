@@ -88,6 +88,16 @@ public enum CosmicPrimitiveCapabilityGateway implements PrimitiveCapabilityGatew
     }
 
     @Override
+    public int characterCount(Character agent, int mapId) {
+        if (agent == null || agent.getClient() == null
+                || agent.getClient().getChannelServer() == null) {
+            return 0;
+        }
+        MapleMap map = agent.getClient().getChannelServer().getMapFactory().getMap(mapId);
+        return map == null ? 0 : map.getCharacters().size();
+    }
+
+    @Override
     public AgentCharacterStateSnapshot characterState(Character agent) {
         return new AgentCharacterStateSnapshot(
                 agent.getJob().getId(),
@@ -161,7 +171,9 @@ public enum CosmicPrimitiveCapabilityGateway implements PrimitiveCapabilityGatew
             return null;
         }
         var portal = agent.getMap().getPortal(portalId);
-        return portal == null ? null : new Point(portal.getPosition());
+        return portal == null ? null
+                : server.agents.capabilities.navigation.AgentPortalApproachService
+                        .navigableTarget(agent.getMap(), portal);
     }
 
     @Override
@@ -357,6 +369,17 @@ public enum CosmicPrimitiveCapabilityGateway implements PrimitiveCapabilityGatew
     }
 
     @Override
+    public boolean runPortalNpcScript(Character agent, int portalId, int npcId, int... selections) {
+        Point portal = portalPosition(agent, portalId);
+        Point position = agent == null ? null : agent.getPosition();
+        if (portal == null || position == null || !grounded(agent)
+                || portal.distance(position) > 210.0d) {
+            return false;
+        }
+        return CosmicHeadlessNpcScriptGateway.execute(agent, npcId, selections);
+    }
+
+    @Override
     public boolean startQuest(Character agent, int questId, int npcId) {
         int previousStatus = agent.getQuestStatus(questId);
         Quest quest = Quest.getInstance(questId);
@@ -396,6 +419,15 @@ public enum CosmicPrimitiveCapabilityGateway implements PrimitiveCapabilityGatew
         }
         AgentNavigationGraphService.warmGraphAsync(
                 entry, agent.getMap(), AgentMovementStateRuntime.movementProfile(entry));
+    }
+
+    @Override
+    public void refreshNavigation(AgentRuntimeEntry entry, Character agent) {
+        if (entry == null || agent == null || agent.getMap() == null) {
+            return;
+        }
+        AgentMovementStateResetService.clearNavigationState(entry);
+        prepareNavigation(entry, agent);
     }
 
     @Override

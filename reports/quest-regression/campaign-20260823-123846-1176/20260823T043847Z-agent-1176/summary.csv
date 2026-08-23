@@ -1,0 +1,2 @@
+"agentId","agentName","questId","questName","status","reason","elapsedSeconds","startMapId","endMapId","mapTrail"
+"1176","QuestReg20","2122","Start quest ? Manji and the Secret Group","TIMEOUT","no terminal outcome within 18 minute(s)","1086.6","104000000","104000100","104000000>104000100"

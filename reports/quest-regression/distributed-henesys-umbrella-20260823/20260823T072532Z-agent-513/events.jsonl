@@ -1,0 +1,7 @@
+{"occurredAt":"2026-08-23T07:25:33.5679327Z","agentId":513,"questId":28267,"type":"submitted","evidence":{"mapId":100000000,"questName":"Start quest — [Collect] I Need an Umbrella!"}}
+{"occurredAt":"2026-08-23T07:27:26.0527399Z","agentId":513,"questId":28267,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":100000002}}
+{"occurredAt":"2026-08-23T07:28:14.2709717Z","agentId":513,"questId":28267,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":100000003}}
+{"occurredAt":"2026-08-23T07:29:34.6038889Z","agentId":513,"questId":28267,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":100000002}}
+{"occurredAt":"2026-08-23T07:30:34.8655070Z","agentId":513,"questId":28267,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":100000000}}
+{"occurredAt":"2026-08-23T07:32:23.2702842Z","agentId":513,"questId":28267,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":100000100}}
+{"occurredAt":"2026-08-23T07:33:47.7794066Z","agentId":513,"questId":28267,"type":"timeout","evidence":{"classification":"TIMEOUT_ACTIVE","phase":"quest accepted; objective or return trip still in progress","blockedBy":"","mp":150,"meso":1502,"mapId":100000102,"mapTransitions":5,"reason":"time budget expired after 8 minute(s); quest accepted; objective or return trip still in progress","waitingOn":"","hp":397,"activity":"questing — victoria-individual-quest"}}

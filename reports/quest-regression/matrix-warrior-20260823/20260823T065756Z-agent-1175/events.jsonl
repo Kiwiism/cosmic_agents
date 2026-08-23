@@ -1,0 +1,6 @@
+{"occurredAt":"2026-08-23T06:57:57.1390619Z","agentId":1175,"questId":28267,"type":"submitted","evidence":{"mapId":104000400,"questName":"Start quest — [Collect] I Need an Umbrella!"}}
+{"occurredAt":"2026-08-23T06:58:49.4343945Z","agentId":1175,"questId":28267,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":104010000}}
+{"occurredAt":"2026-08-23T07:02:54.5102894Z","agentId":1175,"questId":28267,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":104020000}}
+{"occurredAt":"2026-08-23T07:05:11.4511099Z","agentId":1175,"questId":28267,"type":"timeout","evidence":{"mp":283,"mapId":104020000,"activity":"questing — victoria-individual-quest","phase":"quest not yet accepted; travel to the start NPC still in progress","meso":5000327,"waitingOn":"","reason":"time budget expired after 7 minute(s); quest not yet accepted; travel to the start NPC still in progress","mapTransitions":2,"blockedBy":"","hp":879}}
+{"occurredAt":"2026-08-23T07:05:13.5697933Z","agentId":1175,"questId":2179,"type":"submitted","evidence":{"mapId":104020000,"questName":"Start quest — Protect The Nautilus' Emergency Food Supply"}}
+{"occurredAt":"2026-08-23T07:05:49.7385016Z","agentId":1175,"questId":2179,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":104030000}}

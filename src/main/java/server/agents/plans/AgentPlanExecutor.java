@@ -141,6 +141,14 @@ public final class AgentPlanExecutor implements AgentPlanRunner {
         if (pendingExit != null) {
             boolean deadlineExpired = session.pendingExitDeadlineMs() > 0L
                     && wallNowMs >= session.pendingExitDeadlineMs();
+            if (deadlineExpired && pendingExit == AgentPlanExitMode.SUSPEND_AFTER_STEP) {
+                // A suspend deadline bounds how long the owner waits for a natural step boundary;
+                // it is not permission to destroy the retained plan. Freeze the exact in-flight
+                // step so a later resume can reattach it from the durable checkpoint.
+                session.suspendAtBoundary();
+                AgentPlanCheckpointRuntime.persistIfDirty(entry, wallNowMs);
+                return true;
+            }
             if (pendingExit == AgentPlanExitMode.FORCE_NOW || deadlineExpired) {
                 cancel(entry, agent, session.pendingExitReason().isBlank()
                         ? "plan ownership deadline expired" : session.pendingExitReason(), wallNowMs);

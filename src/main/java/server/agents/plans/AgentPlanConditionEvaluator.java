@@ -62,6 +62,14 @@ public final class AgentPlanConditionEvaluator {
             AgentPlanDefinition plan = AgentPlanRepository.defaultRepository().require(session.planId());
             return session.stepIndex() >= plan.steps().size();
         }
+        if ("quest.requested".equals(fact)) {
+            Object requested = session.inputs().get("questId");
+            try {
+                return agent.getQuestStatus(Integer.parseInt(String.valueOf(requested)));
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
         if (fact.startsWith("input.")) return session.inputs().get(fact.substring("input.".length()));
         if (fact.startsWith("quest.")) {
             try {
@@ -101,6 +109,10 @@ public final class AgentPlanConditionEvaluator {
         if ("active".equals(operator) && actual instanceof Number status) {
             return Boolean.TRUE.equals(expected)
                     == (status.intValue() == QuestStatus.Status.STARTED.getId());
+        }
+        if ("completed".equals(operator) && actual instanceof Number status) {
+            return Boolean.TRUE.equals(expected)
+                    == (status.intValue() == QuestStatus.Status.COMPLETED.getId());
         }
         if ("all-succeeded".equals(operator)) {
             return Boolean.TRUE.equals(expected) == truthy(actual);

@@ -1,7 +1,9 @@
 package server.agents.capabilities.supplies;
 
 import client.Character;
+import client.Job;
 import server.agents.capabilities.contracts.AgentProcurementRequest;
+import server.agents.capabilities.contracts.AgentResourceCategory;
 import server.agents.progression.AgentVictoriaTrainingCatalog;
 import server.agents.progression.AgentVictoriaTrainingCatalogRepository;
 
@@ -30,6 +32,22 @@ public final class AgentSupplyRecoveryPolicy {
     public static int minimumWalletReserve(Character agent) {
         int level = agent == null ? 1 : Math.max(1, agent.getLevel());
         return Math.max(0, WALLET_RESERVE_BASE + level * WALLET_RESERVE_PER_LEVEL);
+    }
+
+    /**
+     * Beginners are intentionally viable without a potion reserve. Their early progression
+     * relies on passive recovery and combat safety, and there is no useful income-recovery
+     * route before first-job advancement. Treating an empty potion slot as an emergency here
+     * would suspend the very progression that unlocks normal resupply.
+     */
+    public static boolean requiresAutomaticReserve(
+            Character agent, AgentResourceCategory category) {
+        if (agent == null || category == null) {
+            return false;
+        }
+        boolean potion = category == AgentResourceCategory.HP_POTION
+                || category == AgentResourceCategory.MP_POTION;
+        return !potion || agent.getJob() != Job.BEGINNER;
     }
 
     public static int recoveryMesoTarget(Character agent, AgentProcurementRequest request) {

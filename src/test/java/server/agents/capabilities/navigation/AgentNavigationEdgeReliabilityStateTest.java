@@ -83,14 +83,38 @@ class AgentNavigationEdgeReliabilityStateTest {
     }
 
     @Test
-    void motionRefreshesAttemptButMotionlessAttemptTimesOut() {
+    void progressTowardEdgeDestinationRefreshesAttemptButMotionlessAttemptTimesOut() {
         AgentNavigationEdgeReliabilityState state = new AgentNavigationEdgeReliabilityState();
         AgentNavigationGraph.Edge edge = edge(1, 2, 0);
-        state.beginAttempt(100, edge, 1, new Point(0, 100), 1_000);
+        state.beginAttempt(100, edge, 1, new Point(-20, 100), 1_000);
 
-        assertNull(state.observeAttempt(100, 1, new Point(10, 100), 4_400, 3_500, 6));
-        assertNull(state.observeAttempt(100, 1, new Point(10, 100), 7_899, 3_500, 6));
-        assertNotNull(state.observeAttempt(100, 1, new Point(10, 100), 7_900, 3_500, 6));
+        assertNull(state.observeAttempt(100, 1, new Point(-10, 100), 4_400, 3_500, 6));
+        assertNull(state.observeAttempt(100, 1, new Point(-10, 100), 7_899, 3_500, 6));
+        assertNotNull(state.observeAttempt(100, 1, new Point(-10, 100), 7_900, 3_500, 6));
+    }
+
+    @Test
+    void foregroundBlockerCombatDoesNotChargeItsTimeToTheTraversalEdge() {
+        AgentNavigationEdgeReliabilityState state = new AgentNavigationEdgeReliabilityState();
+        AgentNavigationGraph.Edge edge = edge(1, 2, 0);
+        state.beginAttempt(100, edge, 1, new Point(-20, 100), 1_000);
+
+        state.deferAttemptTimeout(100, 4_400);
+
+        assertNull(state.observeAttempt(100, 1, new Point(-20, 100), 7_899, 3_500, 6));
+        assertNotNull(state.observeAttempt(100, 1, new Point(-20, 100), 7_900, 3_500, 6));
+    }
+
+    @Test
+    void repeatedMotionAcrossUnexpectedRegionsDoesNotHideFailedEdge() {
+        AgentNavigationEdgeReliabilityState state = new AgentNavigationEdgeReliabilityState();
+        AgentNavigationGraph.Edge edge = edge(22, 20, 2_211);
+        state.beginAttempt(100, edge, 22, new Point(2_211, 100), 1_000);
+
+        assertNull(state.observeAttempt(100, 28, new Point(2_180, 140), 2_000, 3_500, 6));
+        assertNull(state.observeAttempt(100, 22, new Point(2_211, 100), 3_000, 3_500, 6));
+        assertNull(state.observeAttempt(100, 28, new Point(2_180, 140), 4_499, 3_500, 6));
+        assertNotNull(state.observeAttempt(100, 22, new Point(2_211, 100), 4_500, 3_500, 6));
     }
 
     @Test

@@ -17,7 +17,6 @@ import server.agents.runtime.activity.session.adapter.QuestPlanActivitySessionAd
 import server.agents.runtime.activity.session.adapter.TownLifeActivitySessionAdapter;
 import server.agents.runtime.commerce.AgentCommerceSessionRegistryRuntime;
 import server.agents.runtime.activity.world.AgentWorldContext;
-import server.quest.Quest;
 
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -38,12 +37,12 @@ public final class CosmicAgentWorldContextFactory {
         }
         Set<Integer> activeQuests = new LinkedHashSet<>();
         Set<Integer> completedQuests = new LinkedHashSet<>();
-        for (Quest quest : Quest.allQuests()) {
-            int questId = quest.getId();
-            int status = agent.getQuestStatus(questId);
-            if (status == QuestStatus.Status.STARTED.getId()) {
+        for (QuestStatus quest : agent.getQuestStatusesSnapshot()) {
+            int questId = quest.getQuestID();
+            QuestStatus.Status status = quest.getStatus();
+            if (status == QuestStatus.Status.STARTED) {
                 activeQuests.add(questId);
-            } else if (status == QuestStatus.Status.COMPLETED.getId()) {
+            } else if (status == QuestStatus.Status.COMPLETED) {
                 completedQuests.add(questId);
             }
         }

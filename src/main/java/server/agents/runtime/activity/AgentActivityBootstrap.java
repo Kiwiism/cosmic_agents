@@ -314,8 +314,11 @@ public final class AgentActivityBootstrap {
                     AgentTownLifeVisitLeaseRuntime.tick(entry, agent, nowMs);
                     AgentTownLifeRuntime.tick(entry, agent, nowMs);
                 }
-                return AgentUniversalPlanRuntime.foregroundTick(entry, agent, nowMs)
-                        ? AgentActivityTick.CONSUMED : AgentActivityTick.IDLE;
+                AgentUniversalPlanRuntime.foregroundTick(entry, agent, nowMs);
+                // Quest execution selects targets, starts child visits and performs bounded
+                // interactions. Ordinary walking and combat remain owned by the shared live
+                // movement phase, so retaining Questing must not consume that phase.
+                return AgentActivityTick.IDLE;
             }
             @Override public boolean requestStop(
                     AgentRuntimeEntry entry, Character agent, String reason, long nowMs) {

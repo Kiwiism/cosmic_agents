@@ -1,0 +1,2 @@
+"agentId","agentName","questId","questName","status","reason","elapsedSeconds","startMapId","endMapId","mapTrail"
+"1176","QuestReg20","2106","DANGER! <2-H. Mushroom>","TIMEOUT","time budget expired after 7 minute(s); quest not yet accepted; travel to the start NPC still in progress","436.2","104000000","104010000","104000000>104000100>104000200>104000300>104000400>104010000"

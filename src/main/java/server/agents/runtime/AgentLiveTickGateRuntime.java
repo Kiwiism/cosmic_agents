@@ -16,6 +16,7 @@ import server.agents.capabilities.behavior.AgentPioRelaxerInterludeRuntime;
 import server.agents.capabilities.combat.AgentLocalOpportunityAttackCoordinator;
 import server.agents.capabilities.combat.AgentLocalOpportunityAttackService;
 import server.agents.progression.AgentVictoriaRouteRuntime;
+import server.agents.capabilities.navigation.AgentNavigationEdgeReliabilityRuntime;
 
 import client.Character;
 import java.awt.Point;
@@ -118,6 +119,10 @@ public final class AgentLiveTickGateRuntime {
                         targetPosition,
                         true,
                         true);
+        if (result.consumedTick()) {
+            AgentNavigationEdgeReliabilityRuntime.deferAttemptTimeout(
+                    entry, agent.getMapId(), System.currentTimeMillis());
+        }
         return result.consumedTick();
     }
 

@@ -3,6 +3,7 @@ package server.agents.capabilities.build.profiles;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -11,8 +12,72 @@ class AgentSpBuildProfileRepositoryTest {
     private final AgentSpBuildProfileRepository repository = AgentSpBuildProfileRepository.defaultRepository();
 
     @Test
-    void catalogContainsAllIndependentFirstJobProfiles() {
-        assertEquals(7, repository.all().size());
+    void catalogContainsFirstJobAndSecondJobHandoffProfiles() {
+        assertEquals(66, repository.all().size());
+        assertTargets("fighter-second-job-lv30-v1", 1, Map.of(1100000, 1));
+        assertTargets("cleric-second-job-lv30-v1", 1, Map.of(2300000, 1));
+        assertTargets("gunslinger-second-job-lv30-v1", 1, Map.of(5200000, 1));
+    }
+
+    @Test
+    void mapleRoyalsOptimal2026ProfilesCoverEveryExplorerPathThroughFourthJob() {
+        List<AgentSpBuildProfile> profiles = repository.all().stream()
+                .filter(AgentSpBuildProfile::isMapleRoyalsOptimal2026)
+                .toList();
+        assertEquals(45, profiles.size());
+        assertEquals(7, profiles.stream().filter(profile -> profile.startingLevel() <= 10).count());
+        assertEquals(12, profiles.stream().filter(profile -> profile.startingLevel() == 30).count());
+        assertEquals(13, profiles.stream().filter(profile -> profile.startingLevel() == 70).count());
+        assertEquals(13, profiles.stream().filter(profile -> profile.startingLevel() == 120).count());
+    }
+
+    @Test
+    void localWzAdaptationsRemainExplicitAndLegal() {
+        AgentSpBuildProfile page = repository.find("mapleroyals-optimal-2026-page").orElseThrow();
+        assertBefore(page, 1201006, 1201007);
+        AgentSpBuildProfile whiteKnight = repository.find(
+                "mapleroyals-optimal-2026-white-knight").orElseThrow();
+        assertBefore(whiteKnight, 1211002, 1211009);
+        assertEquals(5, repository.skill(1121011).maxLevel());
+    }
+
+    @Test
+    void intentionalSaveBreakpointsAreRepresentedAsMinimumLevels() {
+        AgentSpBuildProfile dragonKnight = repository.find(
+                "mapleroyals-optimal-2026-dragon-knight-hybrid").orElseThrow();
+        assertEquals(90, dragonKnight.segments().stream()
+                .filter(segment -> segment.skillId() == 1311001)
+                .reduce((first, second) -> second).orElseThrow().minimumLevel());
+        AgentSpBuildProfile outlaw = repository.find(
+                "mapleroyals-optimal-2026-outlaw").orElseThrow();
+        assertEquals(74, outlaw.segments().stream()
+                .filter(segment -> segment.skillId() == 5210000)
+                .findFirst().orElseThrow().minimumLevel());
+    }
+
+    @Test
+    void assassinFollowsTheExecutableCriticalHasteBoosterMasteryBuild() {
+        assertTargets("assassin-second-job-lv70-v1", 121, Map.of(
+                4100000, 20,
+                4100001, 30,
+                4100002, 3,
+                4101003, 20,
+                4101004, 20,
+                4101005, 28));
+    }
+
+    @Test
+    void spearmanFollowsTheDualWeaponHyperBodyBuild() {
+        assertEquals(Map.of(1000001, 10), repository.find("spearman-second-job-lv70-v1")
+                .orElseThrow().inheritedSkillLevels());
+        assertTargets("spearman-second-job-lv70-v1", 121, Map.of(
+                1000002, 2,
+                1300000, 20,
+                1300001, 20,
+                1301004, 20,
+                1301005, 20,
+                1301006, 9,
+                1301007, 30));
     }
 
     @Test
@@ -57,5 +122,13 @@ class AgentSpBuildProfileRepositoryTest {
         }
         assertEquals(0, remaining);
         assertEquals(expected, levels);
+    }
+
+    private static void assertBefore(AgentSpBuildProfile profile, int firstSkillId, int secondSkillId) {
+        List<Integer> order = profile.segments().stream()
+                .map(AgentSpBuildProfile.AllocationSegment::skillId)
+                .toList();
+        org.junit.jupiter.api.Assertions.assertTrue(
+                order.indexOf(firstSkillId) < order.indexOf(secondSkillId));
     }
 }

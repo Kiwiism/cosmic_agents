@@ -50,13 +50,25 @@ class AgentPlanRepositoryTest {
     void catalogUsesOneStrictSchemaAndContainsTheIntendedProgressionChain() {
         AgentPlanRepository repository = AgentPlanRepository.defaultRepository();
 
-        assertEquals(11, repository.all().size());
+        assertEquals(14, repository.all().size());
         assertTrue(repository.all().stream()
                 .allMatch(plan -> plan.schemaVersion() == AgentPlanSchemaValidator.CURRENT_SCHEMA_VERSION));
 
         AgentPlanDefinition full = repository.require("maple-island-full-mvp");
         assertEquals(List.of("southperry-to-lith-harbor"),
                 full.successors().stream().map(AgentPlanDefinition.Successor::planId).toList());
+
+        AgentPlanDefinition individual = repository.require("victoria-individual-quest");
+        assertTrue(individual.exitCriteria().stream().anyMatch(condition ->
+                condition.fact().equals("quest.requested")
+                        && condition.operator().equals("completed")));
+        assertEquals("second-job-advancement",
+                repository.require("victoria-second-job").steps().getFirst().operation());
+        AgentPlanDefinition mushroom = repository.require("mushroom-kingdom-questline");
+        assertEquals("mushroom-kingdom-questline", mushroom.steps().getFirst().operation());
+        assertTrue(mushroom.exitCriteria().stream().anyMatch(condition ->
+                condition.fact().equals("quest.2336")
+                        && condition.operator().equals("completed")));
 
         Set<String> careers = repository.require("southperry-to-lith-harbor").successors().stream()
                 .map(AgentPlanDefinition.Successor::planId)

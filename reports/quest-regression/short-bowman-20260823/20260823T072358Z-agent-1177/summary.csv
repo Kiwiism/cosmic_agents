@@ -1,0 +1,2 @@
+"agentId","agentName","questId","questName","status","reason","elapsedSeconds","startMapId","endMapId","mapTrail"
+"1177","QuestReg25","2017","Arwen and the Glass Shoe","TIMEOUT_TRAVEL","time budget expired after 8 minute(s); quest not yet accepted; travel to the start NPC still in progress","496.7","104010000","104030000","104010000>104020000>104030000"

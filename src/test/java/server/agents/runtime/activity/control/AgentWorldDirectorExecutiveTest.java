@@ -103,6 +103,34 @@ class AgentWorldDirectorExecutiveTest {
                 action.requestId().equals("maple-island-full-mvp")));
     }
 
+    @Test
+    void exposesRemoteIndividualQuestsBecauseQuestRuntimeOwnsTravelToStart() {
+        Character agent = agent();
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        AgentFileWorldDirectorSessionStore sessions =
+                new AgentFileWorldDirectorSessionStore(directory.resolve("remote-sessions"));
+        sessions.save(server.agents.runtime.activity.world.AgentWorldDirectorSession.create(
+                27, AgentWorldDirectorMode.MANUAL, 1_000L));
+        AgentWorldDirectorExecutive executive = new AgentWorldDirectorExecutive(
+                new AgentWorldDirectorControlService(sessions,
+                        new AgentFileWorldDirectiveInbox(directory.resolve("remote-directives"))),
+                sessions, new AgentFileWorldDirectiveInbox(directory.resolve("remote-directives")),
+                new AgentFileActivityOutcomeInbox(directory.resolve("remote-outcomes")),
+                new AgentFileJourneyJournalStore(directory.resolve("remote-journey")),
+                new AgentDirectorActionCatalog());
+
+        AgentDirectorExecutiveView view = executive.view(entry, agent, 10, 1_001L);
+        int remoteQuestId = server.agents.progression.AgentVictoriaIndividualQuestCatalog
+                .available(agent).stream()
+                .filter(option -> !option.localStart())
+                .findFirst().orElseThrow().questId();
+
+        AgentDirectorAction remoteQuest = view.actions().stream()
+                .filter(action -> action.actionId().equals("individual-quest:" + remoteQuestId))
+                .findFirst().orElseThrow();
+        assertTrue(remoteQuest.availability().executable());
+    }
+
     private static Character agent() {
         Character agent = mock(Character.class);
         when(agent.getId()).thenReturn(27);

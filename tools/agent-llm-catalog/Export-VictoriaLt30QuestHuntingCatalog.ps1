@@ -1,7 +1,9 @@
 param(
     [string] $QuestObjectiveCatalogPath = "tmp/agent-llm-catalog/generated_quest_objective_catalog.json",
+    [string] $ItemSourceIndexPath = "tmp/agent-llm-catalog/generated_item_source_index.json",
     [string] $MobSpawnCatalogPath = "tmp/agent-llm-catalog/generated_mob_spawn_catalog.json",
     [string] $MapCatalogPath = "tmp/game-catalog/generated_map_catalog.json",
+    [string] $ItemCatalogPath = "tmp/game-catalog/generated_item_catalog.json",
     [string] $QuestStatusCatalogPath = "docs/agents/catalog-overrides/victoria-lt30-quest-status.catalog.json",
     [string] $TrainingCatalogPath = "src/main/resources/agents/catalogs/victoria-level15-30-training-catalog.json",
     [string] $PolicyPath = "docs/agents/catalog-overrides/victoria-lt30-quest-hunting-policy.json",
@@ -168,16 +170,29 @@ function Get-PreferredMaps {
 
 $MaximumPreferredMaps = [Math]::Max(1, $MaximumPreferredMaps)
 $questObjectives = Read-Json $QuestObjectiveCatalogPath
+$itemSources = @(Read-Json $ItemSourceIndexPath)
 $mobSpawns = Read-Json $MobSpawnCatalogPath
 $maps = Read-Json $MapCatalogPath
+$items = @(Read-Json $ItemCatalogPath)
 $statusCatalog = Read-Json $QuestStatusCatalogPath
 $trainingCatalog = Read-Json $TrainingCatalogPath
 $policy = Read-Json $PolicyPath
 
 $objectiveByQuest = @{}
 foreach ($plan in $questObjectives) { $objectiveByQuest[[int] $plan.questId] = $plan }
+$itemSourceById = @{}
+foreach ($item in $itemSources) { $itemSourceById[[int] $item.itemId] = $item }
 $mapById = @{}
 foreach ($map in $maps) { $mapById[[int] $map.mapId] = $map }
+$itemById = @{}
+foreach ($item in $items) { $itemById[[int] $item.itemId] = $item }
+$rewardQuestIdsByItem = @{}
+foreach ($questPlan in $questObjectives) {
+    foreach ($reward in @($questPlan.rewards.start.items) + @($questPlan.rewards.complete.items)) {
+        if ([int] $reward.itemId -le 0 -or [int] $reward.count -le 0) { continue }
+        Add-ToListIndex $rewardQuestIdsByItem ([int] $reward.itemId) ([int] $questPlan.questId)
+    }
+}
 $spawnMapsByMob = @{}
 foreach ($spawnMap in $mobSpawns) {
     foreach ($mob in @($spawnMap.mobs)) {
@@ -239,14 +254,74 @@ foreach ($status in @($statusCatalog.quests | Sort-Object questId)) {
     }
 
     $huntObjectives = [System.Collections.Generic.List[object]]::new()
+    $shopProcurementObjectives = [System.Collections.Generic.List[object]]::new()
     $nonHuntingAcquisitionObjectives = [System.Collections.Generic.List[object]]::new()
     $allTargetMobIds = [System.Collections.Generic.HashSet[int]]::new()
+    $startObjective = @($plan.objectives | Where-Object {
+        [string] $_.type -eq "interact-npc-start-quest"
+    } | Select-Object -First 1)
+    $startItemRequirements = @($startObjective.preconditions.items | Where-Object {
+        [int] $_.itemId -gt 0 -and [int] $_.count -gt 0
+    } | ForEach-Object {
+        $itemId = [int] $_.itemId
+        $item = $itemById[$itemId]
+        [ordered]@{
+            itemId = $itemId
+            itemName = if ($null -eq $item) { "" } else { [string] $item.name }
+            requiredCount = [int] $_.count
+            consumedOnStart = @($plan.rewards.start.items | Where-Object {
+                [int] $_.itemId -eq $itemId -and [int] $_.count -lt 0
+            }).Count -gt 0
+            producerQuestIds = @($rewardQuestIdsByItem[$itemId] | Sort-Object -Unique)
+        }
+    })
+    $prerequisiteRequirements = @($startObjective.preconditions.prerequisiteQuests | Where-Object {
+        [int] $_.questId -gt 0 -and [int] $_.state -gt 0
+    } | ForEach-Object {
+        [ordered]@{
+            questId = [int] $_.questId
+            state = [int] $_.state
+        }
+    })
     foreach ($objective in @($plan.objectives)) {
         $targetMobIds = @()
         $objectiveType = [string] $objective.type
         if ($objectiveType -eq "kill-mob") {
             $targetMobIds = @([int] $objective.mobId)
         } elseif ($objectiveType -eq "collect-item") {
+            $itemSource = $itemSourceById[[int] $objective.itemId]
+            if ($null -ne $itemSource -and @($itemSource.shopSources).Count -gt 0) {
+                $victoriaShopSources = @($itemSource.shopSources | ForEach-Object {
+                    $shop = $_
+                    @($shop.mapIds | Where-Object { Test-VictoriaMapId ([int] $_) } | ForEach-Object {
+                        [ordered]@{
+                            npcId = [int] $shop.npcId
+                            mapId = [int] $_
+                            unitPrice = [int] $shop.price
+                        }
+                    })
+                } | Sort-Object unitPrice, mapId, npcId)
+                if ($victoriaShopSources.Count -gt 0) {
+                    [void] $shopProcurementObjectives.Add([ordered]@{
+                        objectiveId = [string] $objective.objectiveId
+                        type = "shop-item"
+                        targetId = [int] $objective.itemId
+                        targetName = [string] $objective.itemName
+                        requiredCount = [int] $objective.count
+                        shopSources = $victoriaShopSources
+                    })
+                    continue
+                }
+                [void] $nonHuntingAcquisitionObjectives.Add([ordered]@{
+                    objectiveId = [string] $objective.objectiveId
+                    type = $objectiveType
+                    targetId = [int] $objective.itemId
+                    targetName = [string] $objective.itemName
+                    requiredCount = [int] $objective.count
+                    reason = "NPC shop item has no cataloged Victoria vendor map"
+                })
+                continue
+            }
             $targetMobIds = @($objective.candidateDropSources | Where-Object {
                 $_.sourceType -eq "mob" -and ([int] $_.questId -eq 0 -or [int] $_.questId -eq $questId)
             } | ForEach-Object { [int] $_.sourceId } | Sort-Object -Unique)
@@ -297,6 +372,9 @@ foreach ($status in @($statusCatalog.quests | Sort-Object questId)) {
     } else {
         @(Get-PreferredMaps @($allTargetMobIds) $planningLevel)
     }
+    if ($nonHuntingAcquisitionObjectives.Count -gt 0) {
+        $autonomousStartAllowed = $false
+    }
     $disposition = if ($status.status -eq "postpone-outside-current-region" `
             -or ($null -ne $manualPolicy -and $manualPolicy.autonomousStartAllowed -eq $false)) {
         "excluded-off-island-or-chain-boundary"
@@ -321,11 +399,14 @@ foreach ($status in @($statusCatalog.quests | Sort-Object questId)) {
         completeNpcId = [int] $status.complete.npcId
         completeVictoriaMapIds = @($status.complete.victoriaMaps)
         questScriptWarpMapIds = @($scriptWarpMapIds)
+        prerequisiteRequirements = @($prerequisiteRequirements)
+        startItemRequirements = @($startItemRequirements)
         blockAutoFollowupQuestIds = @(
             if ($null -ne $manualPolicy) { @($manualPolicy.blockAutoFollowupQuestIds) }
         )
         warnings = @($warnings | Where-Object { ![string]::IsNullOrWhiteSpace($_) } | Sort-Object -Unique)
         huntingObjectives = @($huntObjectives)
+        shopProcurementObjectives = @($shopProcurementObjectives)
         nonHuntingAcquisitionObjectives = @($nonHuntingAcquisitionObjectives)
         combinedPreferredMaps = @($combinedPreferredMaps)
     })
@@ -334,8 +415,10 @@ foreach ($status in @($statusCatalog.quests | Sort-Object questId)) {
 $sourcePaths = [ordered]@{
     generator = (Resolve-Path -LiteralPath $PSCommandPath).Path
     questObjectives = (Resolve-Path -LiteralPath $QuestObjectiveCatalogPath).Path
+    itemSources = (Resolve-Path -LiteralPath $ItemSourceIndexPath).Path
     mobSpawns = (Resolve-Path -LiteralPath $MobSpawnCatalogPath).Path
     maps = (Resolve-Path -LiteralPath $MapCatalogPath).Path
+    items = (Resolve-Path -LiteralPath $ItemCatalogPath).Path
     questStatuses = (Resolve-Path -LiteralPath $QuestStatusCatalogPath).Path
     training = (Resolve-Path -LiteralPath $TrainingCatalogPath).Path
     policy = (Resolve-Path -LiteralPath $PolicyPath).Path
@@ -371,6 +454,9 @@ $payload = [ordered]@{
     summary = [ordered]@{
         questCount = $entries.Count
         autonomousStartAllowedCount = @($entries | Where-Object autonomousStartAllowed).Count
+        conditionalStartItemQuestCount = @($entries | Where-Object {
+            @($_.startItemRequirements).Count -gt 0
+        }).Count
         huntingQuestCount = @($entries | Where-Object { $_.huntingObjectives.Count -gt 0 }).Count
         huntingObjectiveCount = @($entries | ForEach-Object { $_.huntingObjectives }).Count
         nonHuntingAcquisitionObjectiveCount = @($entries | ForEach-Object { $_.nonHuntingAcquisitionObjectives }).Count

@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentKpqDefinitionTest {
     @Test
@@ -17,6 +18,16 @@ class AgentKpqDefinitionTest {
         assertEquals(4, AgentKpqDefinition.combinationStage(2).positions().size());
         assertEquals(5, AgentKpqDefinition.combinationStage(3).positions().size());
         assertEquals(6, AgentKpqDefinition.combinationStage(4).positions().size());
+    }
+
+    @Test
+    void stageTwoRopesUseTopRowThenBottomRowPlayerFacingNumbers() {
+        AgentKpqDefinition.CombinationStage stage = AgentKpqDefinition.combinationStage(2);
+
+        assertTrue(stage.center(1).y < stage.center(3).y);
+        assertTrue(stage.center(2).y < stage.center(4).y);
+        assertTrue(stage.center(1).x < stage.center(2).x);
+        assertTrue(stage.center(3).x < stage.center(4).x);
     }
 
     @Test

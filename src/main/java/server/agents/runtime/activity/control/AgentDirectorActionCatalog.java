@@ -201,7 +201,7 @@ public final class AgentDirectorActionCatalog {
             result.add(new AgentDirectorAction(
                     "individual-quest:" + quest.questId(),
                     (active ? "Resume quest — " : "Start quest — ") + quest.questName(),
-                    availability(operatorEnabled, active || quest.localStart()),
+                    availability(operatorEnabled, true),
                     operatorEnabled ? reason
                             : "Director is not in an operator-controlled mode",
                     AgentWorldDirectiveType.START_ACTIVITY, AgentActivityKind.QUESTING,

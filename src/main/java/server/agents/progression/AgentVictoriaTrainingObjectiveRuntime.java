@@ -70,10 +70,21 @@ public final class AgentVictoriaTrainingObjectiveRuntime {
                                 boolean questsEnabled,
                                 int requestedQuestId,
                                 long nowMs) {
+        AgentObjectiveDefinition active = entry == null || agent == null
+                ? null : AgentObjectiveKernel.active(entry);
+        if (active != null
+                && OBJECTIVE_TYPE.equals(active.type())
+                && active.objectiveId().equals(objectiveId(agent.getId(), targetLevel))
+                && requestedQuestId(active.correlationId()) == requestedQuestId
+                && active.correlationId().contains(questsEnabled ? ":mode-mixed" : ":mode-grind")) {
+            AgentObjectiveAttachment attachment = reattach(entry, agent, active, nowMs);
+            return attachment == AgentObjectiveAttachment.ATTACHED
+                    || attachment == AgentObjectiveAttachment.ALREADY_ATTACHED;
+        }
         if (entry == null || agent == null || agent.getJob().getId() == 0
                 || agent.getLevel() < 15 || targetLevel < 16 || targetLevel > 30
                 || targetLevel <= agent.getLevel() || requestedQuestId < 0
-                || AgentObjectiveKernel.active(entry) != null) {
+                || active != null) {
             return false;
         }
         String catalogId = AgentVictoriaTrainingCatalogRepository.defaultRepository()
@@ -248,7 +259,11 @@ public final class AgentVictoriaTrainingObjectiveRuntime {
                         : suspended
                         ? "requested quest " + questId
                                 + " was suspended by the bounded struggle policy"
-                        : "requested quest " + questId + " is not currently executable",
+                                + (quests.terminalReason().isBlank()
+                                ? "" : ": " + quests.terminalReason())
+                        : "requested quest " + questId + " is not currently executable"
+                                + (quests.terminalReason().isBlank()
+                                ? "" : ": " + quests.terminalReason()),
                 nowMs);
         return true;
     }

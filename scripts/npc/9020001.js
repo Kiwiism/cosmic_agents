@@ -39,7 +39,8 @@ var stage1Answers = Array(10, 35, 20, 25, 25, 30, 8);
 
 const Rectangle = Java.type('java.awt.Rectangle');
 const AgentKpqSessionRegistry = Java.type('server.agents.capabilities.partyquest.kpq.AgentKpqSessionRegistry');
-var stage2Rects = Array(new Rectangle(-755, -132, 4, 218), new Rectangle(-721, -340, 4, 166), new Rectangle(-586, -326, 4, 150), new Rectangle(-483, -181, 4, 222));
+// Player-facing order: 1 top-left, 2 top-right, 3 bottom-left, 4 bottom-right.
+var stage2Rects = Array(new Rectangle(-721, -340, 4, 166), new Rectangle(-586, -326, 4, 150), new Rectangle(-755, -132, 4, 218), new Rectangle(-483, -181, 4, 222));
 var stage3Rects = Array(new Rectangle(608, -180, 140, 50), new Rectangle(791, -117, 140, 45),
     new Rectangle(958, -180, 140, 50), new Rectangle(876, -238, 140, 45),
     new Rectangle(702, -238, 140, 45));

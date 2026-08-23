@@ -30,6 +30,7 @@ public final class AgentKpqMemberState {
     private String blocker = "";
     private long blockerSinceMs;
     private int blockerAttempts;
+    private boolean blockerRecoveryAttempted;
     private long nextRetryAtMs;
     private int enteredStage;
     private long stageMovementNotBeforeMs;
@@ -37,6 +38,12 @@ public final class AgentKpqMemberState {
     private long stage5BossBaselineHitLines = -1L;
     private long stage5BossBaselineMissLines = -1L;
     private long stage5BossBaselineDamage = -1L;
+    private boolean stage1RopeObserved;
+    private boolean stage1DescendingRopeObserved;
+    private int stage1LastRopeY;
+    private Point stage1LandingSafetyTarget;
+    private long stage1LandingSafetyDeadlineMs;
+    private boolean stage1ManagedDarkSight;
 
     public AgentKpqMemberState(int characterId, MemberType memberType, int partyNumber) {
         this.characterId = characterId;
@@ -94,15 +101,19 @@ public final class AgentKpqMemberState {
             blocker = next;
             blockerSinceMs = nowMs;
             blockerAttempts = 1;
+            blockerRecoveryAttempted = false;
         } else {
             blockerAttempts++;
         }
         return blockerAttempts;
     }
+    public boolean blockerRecoveryAttempted() { return blockerRecoveryAttempted; }
+    public void markBlockerRecoveryAttempted() { blockerRecoveryAttempted = true; }
     public void clearBlocker() {
         blocker = "";
         blockerSinceMs = 0L;
         blockerAttempts = 0;
+        blockerRecoveryAttempted = false;
         nextRetryAtMs = 0L;
     }
     public long nextRetryAtMs() { return nextRetryAtMs; }
@@ -113,6 +124,35 @@ public final class AgentKpqMemberState {
         if (enteredStage == stage) return;
         enteredStage = stage;
         stageMovementNotBeforeMs = Math.max(0L, notBeforeMs);
+    }
+
+    boolean stage1RopeObserved() { return stage1RopeObserved; }
+    boolean stage1DescendingRopeObserved() { return stage1DescendingRopeObserved; }
+    int stage1LastRopeY() { return stage1LastRopeY; }
+    void observeStage1Rope(int y, boolean descending) {
+        stage1RopeObserved = true;
+        stage1DescendingRopeObserved |= descending;
+        stage1LastRopeY = y;
+    }
+    void clearStage1RopeObservation() {
+        stage1RopeObserved = false;
+        stage1DescendingRopeObserved = false;
+        stage1LastRopeY = 0;
+    }
+    Point stage1LandingSafetyTarget() {
+        return stage1LandingSafetyTarget == null ? null : new Point(stage1LandingSafetyTarget);
+    }
+    long stage1LandingSafetyDeadlineMs() { return stage1LandingSafetyDeadlineMs; }
+    boolean stage1ManagedDarkSight() { return stage1ManagedDarkSight; }
+    void beginStage1LandingSafety(Point target, long deadlineMs, boolean managedDarkSight) {
+        stage1LandingSafetyTarget = target == null ? null : new Point(target);
+        stage1LandingSafetyDeadlineMs = target == null ? 0L : Math.max(0L, deadlineMs);
+        stage1ManagedDarkSight = target != null && managedDarkSight;
+    }
+    void clearStage1LandingSafety() {
+        stage1LandingSafetyTarget = null;
+        stage1LandingSafetyDeadlineMs = 0L;
+        stage1ManagedDarkSight = false;
     }
 
     public boolean hasStage5BossCombatBaseline() {

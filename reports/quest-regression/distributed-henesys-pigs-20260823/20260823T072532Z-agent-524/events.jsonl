@@ -1,0 +1,6 @@
+{"occurredAt":"2026-08-23T07:25:33.5926039Z","agentId":524,"questId":28268,"type":"submitted","evidence":{"mapId":100000000,"questName":"Start quest — [Hunt] The Pigs Are Ruining the Produce!"}}
+{"occurredAt":"2026-08-23T07:27:30.1079061Z","agentId":524,"questId":28268,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":100010000}}
+{"occurredAt":"2026-08-23T07:29:22.5372316Z","agentId":524,"questId":28268,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":100020000}}
+{"occurredAt":"2026-08-23T07:31:11.0223401Z","agentId":524,"questId":28268,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":100010000}}
+{"occurredAt":"2026-08-23T07:33:23.6206550Z","agentId":524,"questId":28268,"type":"map-changed","evidence":{"activity":"questing — victoria-individual-quest","mapId":100000000}}
+{"occurredAt":"2026-08-23T07:33:47.8657531Z","agentId":524,"questId":28268,"type":"timeout","evidence":{"activity":"questing — victoria-individual-quest","mapId":104040000,"mp":116,"reason":"time budget expired after 8 minute(s); quest accepted; objective or return trip still in progress","blockedBy":"","classification":"TIMEOUT_ACTIVE","meso":1536,"waitingOn":"","mapTransitions":4,"phase":"quest accepted; objective or return trip still in progress","hp":401}}

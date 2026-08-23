@@ -48,6 +48,7 @@ final class AgentKpqLobbyProfile {
                 "looking for kpq", "looking for pq", "looking for kerning pq",
                 "looking to join kpq", "looking to join pq", "want to join kpq", "want to join pq",
                 "can i join kpq", "can i join pq",
+                "im joining", "i'm joining", "i am joining",
                 "lf kpq", "lf pq", "join kpq", "join pq", "joining kpq", "joining pq",
                 "kerning pq", "kerning party quest", "any kpq", "anyone doing kpq",
                 "kpq anyone", "doing kpq", "kpq run", "need kpq", "need a kpq",

@@ -32,6 +32,11 @@ public interface PrimitiveCapabilityGateway {
         return false;
     }
 
+    /** Characters already occupying a map, used by exclusive activity admission. */
+    default int characterCount(Character agent, int mapId) {
+        return 0;
+    }
+
     AgentCharacterStateSnapshot characterState(Character agent);
 
     int stuckDurationMs(AgentRuntimeEntry entry);
@@ -76,6 +81,11 @@ public interface PrimitiveCapabilityGateway {
 
     /** Warms navigation data without exposing movement-profile implementation details to callers. */
     default void prepareNavigation(AgentRuntimeEntry entry, Character agent) {
+    }
+
+    /** Invalidates one failed local route and warms a replacement without changing the objective. */
+    default void refreshNavigation(AgentRuntimeEntry entry, Character agent) {
+        prepareNavigation(entry, agent);
     }
 
     /**
@@ -136,6 +146,11 @@ public interface PrimitiveCapabilityGateway {
 
     /** Runs an ordinary NPC script with explicit menu selections for a headless Agent. */
     default boolean runNpcScript(Character agent, int npcId, int... selections) {
+        return false;
+    }
+
+    /** Runs an NPC dialogue opened by a nearby scripted portal whose NPC is not a map life object. */
+    default boolean runPortalNpcScript(Character agent, int portalId, int npcId, int... selections) {
         return false;
     }
 

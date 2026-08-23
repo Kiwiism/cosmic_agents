@@ -30,6 +30,9 @@ class AgentKpqLobbyProfileTest {
         assertEquals(AgentPartyQuestLobbyIntent.REQUEST_TO_JOIN,
                 AgentPartyQuestLobbyIntentMatcher.match(
                         AgentKpqLobbyProfile.profile(), "LF...   KPQ!!!"));
+        assertEquals(AgentPartyQuestLobbyIntent.REQUEST_TO_JOIN,
+                AgentPartyQuestLobbyIntentMatcher.match(
+                        AgentKpqLobbyProfile.profile(), "I'm joining"));
     }
 
     @Test

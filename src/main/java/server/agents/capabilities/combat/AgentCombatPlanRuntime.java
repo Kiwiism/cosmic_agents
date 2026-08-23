@@ -27,6 +27,13 @@ public final class AgentCombatPlanRuntime {
                     AgentCombatSkillCacheStateRuntime.attackSkillIds(entry),
                     AgentCombatSkillCacheStateRuntime.attackSkillId(entry),
                     AgentCombatSkillCacheStateRuntime.aoeSkillId(entry));
+            int requiredSkillId = entry.capabilityStates()
+                    .require(AgentCombatSkillConstraintState.STATE_KEY).requiredSkillId();
+            if (requiredSkillId > 0) {
+                attackSkillIds = attackSkillIds.stream()
+                        .filter(skillId -> skillId == requiredSkillId)
+                        .toList();
+            }
             for (int skillId : attackSkillIds) {
                 AgentAttackPlan skillAttack = AgentSkillAttackPlanRuntime.planSkillAttack(bot, target, skillId, config);
                 skillAttack = AgentCombatObjectiveTargetStateRuntime.restrictAttackPlan(entry, skillAttack);

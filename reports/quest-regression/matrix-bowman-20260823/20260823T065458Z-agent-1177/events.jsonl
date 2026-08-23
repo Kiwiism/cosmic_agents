@@ -1,0 +1,10 @@
+{"occurredAt":"2026-08-23T06:56:01.4873308Z","agentId":1177,"questId":2010,"type":"submitted","evidence":{"questName":"Start quest — Jane and the Wild Boar","mapId":104000000}}
+{"occurredAt":"2026-08-23T06:59:06.2932222Z","agentId":1177,"questId":2010,"type":"terminal","evidence":{"mapId":104000000,"reason":"requested quest 2010 was suspended by the bounded struggle policy","status":"FAILED"}}
+{"occurredAt":"2026-08-23T06:59:06.3551470Z","agentId":1177,"questId":2108,"type":"submitted","evidence":{"questName":"Start quest — POLLUTED! <1-Evil Eye>","mapId":104000000}}
+{"occurredAt":"2026-08-23T06:59:38.4910161Z","agentId":1177,"questId":2108,"type":"map-changed","evidence":{"mapId":104000100,"activity":"questing — victoria-individual-quest"}}
+{"occurredAt":"2026-08-23T07:01:47.0066637Z","agentId":1177,"questId":2108,"type":"map-changed","evidence":{"mapId":104000200,"activity":"questing — victoria-individual-quest"}}
+{"occurredAt":"2026-08-23T07:03:27.4410585Z","agentId":1177,"questId":2108,"type":"map-changed","evidence":{"mapId":104000300,"activity":"questing — victoria-individual-quest"}}
+{"occurredAt":"2026-08-23T07:04:35.8062283Z","agentId":1177,"questId":2108,"type":"map-changed","evidence":{"mapId":104000400,"activity":"questing — victoria-individual-quest"}}
+{"occurredAt":"2026-08-23T07:05:32.0596006Z","agentId":1177,"questId":2108,"type":"map-changed","evidence":{"mapId":104010000,"activity":"questing — victoria-individual-quest"}}
+{"occurredAt":"2026-08-23T07:06:20.4265824Z","agentId":1177,"questId":2108,"type":"timeout","evidence":{"meso":4996555,"blockedBy":"","mapId":104010000,"mp":460,"reason":"time budget expired after 7 minute(s); quest not yet accepted; travel to the start NPC still in progress","phase":"quest not yet accepted; travel to the start NPC still in progress","waitingOn":"","activity":"questing — victoria-individual-quest","mapTransitions":5,"hp":1005}}
+{"occurredAt":"2026-08-23T07:06:22.5175608Z","agentId":1177,"questId":2204,"type":"submitted","evidence":{"questName":"Start quest — Strange Dish 1","mapId":104010000}}

@@ -2,6 +2,8 @@ package server.agents.progression;
 
 import client.Character;
 import server.agents.capabilities.party.AgentPartyLifecycleService;
+import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
+import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.integration.AgentMapGatewayRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentClientGatewayRuntime;
@@ -10,6 +12,7 @@ import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentMailboxRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
+import server.agents.runtime.activity.AgentActivityHostState;
 import server.agents.objectives.AgentObjectiveDefinition;
 import server.agents.objectives.AgentObjectiveKernel;
 import server.agents.plans.AgentPlanStartRequest;
@@ -246,7 +249,23 @@ public final class VictoriaFirstJobMvpCommandService {
             player.yellowMessage("Training target=Lv" + training.targetLevel()
                     + " selectedMap=" + training.selectedMapId()
                     + " reason=" + training.selectionReason() + ".");
+            AgentVictoriaQuestSchedulerState questScheduler = entry.capabilityStates()
+                    .require(AgentVictoriaQuestSchedulerState.STATE_KEY);
+            player.yellowMessage("Quest scheduler active=" + questScheduler.active()
+                    + " quest=" + questScheduler.questId()
+                    + " requested=" + questScheduler.requestedQuestId()
+                    + " stage=" + questScheduler.stage()
+                    + " startMap=" + questScheduler.startMapId()
+                    + " huntMap=" + questScheduler.huntMapId()
+                    + " completeMap=" + questScheduler.completeMapId() + ".");
         }
+        AgentActivityHostState host = entry.capabilityStates()
+                .require(AgentActivityHostState.STATE_KEY);
+        player.yellowMessage("Runtime position=" + agent.getPosition()
+                + " inAir=" + AgentMovementStateRuntime.inAir(entry)
+                + " climbing=" + AgentMovementStateRuntime.climbing(entry)
+                + " moveTarget=" + AgentMoveTargetStateRuntime.moveTarget(entry)
+                + " owner=" + host.controllerId() + ".");
     }
 
     private static void usage(Character player) {

@@ -47,10 +47,15 @@ public final class AgentSupplyProcurementRuntime {
     /** Runs automatic maintenance only for explicitly self-sustaining sessions. */
     public static boolean tickIfSelfSustaining(
             AgentRuntimeEntry entry, Character agent, long nowMs) {
-        if (entry == null || agent == null || !entry.capabilityStates()
+        if (entry == null || agent == null) {
+            return false;
+        }
+        boolean selfSustaining = entry.capabilityStates()
                 .find(AgentResourceAutonomyState.STATE_KEY)
                 .map(AgentResourceAutonomyState::selfSustaining)
-                .orElse(false)) {
+                .orElse(false);
+        if (!selfSustaining) {
+            releaseInapplicableRestoredMaintenance(entry, agent, nowMs);
             return false;
         }
         return tick(entry, agent, nowMs);
@@ -63,19 +68,30 @@ public final class AgentSupplyProcurementRuntime {
                 AgentSupplyProcurementState.STATE_KEY);
         AgentSupplyMaintenanceEvaluationState evaluations = entry.capabilityStates().require(
                 AgentSupplyMaintenanceEvaluationState.STATE_KEY);
+        if (!execution.isActive()
+                && releaseInapplicableRestoredMaintenance(
+                entry, agent, planning, evaluations, nowMs)) {
+            return false;
+        }
         AgentSupplyThresholdChangedEvent signal = null;
         AgentProcurementRequest request;
         if (execution.isActive()) {
+            if (!AgentSupplyRecoveryPolicy.requiresAutomaticReserve(
+                    agent, execution.category())) {
+                finish(entry, planning, execution, AgentObjectiveStatus.CANCELLED,
+                        "beginner progression does not require a potion reserve", nowMs);
+                return false;
+            }
             request = planning.procurement(execution.category());
         } else {
             signal = evaluations.next();
             request = signal == null
-                    ? null : selectRequest(planning, nowMs, signal.category());
+                    ? null : selectRequest(planning, agent, nowMs, signal.category());
             if (signal != null && request == null) {
                 evaluations.resolve(signal.category());
             }
             if (request == null) {
-                request = selectRequest(planning, nowMs, null);
+                request = selectRequest(planning, agent, nowMs, null);
             }
         }
 
@@ -106,13 +122,53 @@ public final class AgentSupplyProcurementRuntime {
         };
     }
 
+    private static boolean releaseInapplicableRestoredMaintenance(
+            AgentRuntimeEntry entry, Character agent, long nowMs) {
+        return releaseInapplicableRestoredMaintenance(
+                entry,
+                agent,
+                entry.capabilityStates().require(AgentResourcePlanningState.STATE_KEY),
+                entry.capabilityStates().require(AgentSupplyMaintenanceEvaluationState.STATE_KEY),
+                nowMs);
+    }
+
+    private static boolean releaseInapplicableRestoredMaintenance(
+            AgentRuntimeEntry entry,
+            Character agent,
+            AgentResourcePlanningState planning,
+            AgentSupplyMaintenanceEvaluationState evaluations,
+            long nowMs) {
+        AgentObjectiveDefinition active = AgentObjectiveKernel.active(entry);
+        if (active == null || !"maintenance.resupply".equals(active.type())) {
+            return false;
+        }
+        AgentResourceCategory category = java.util.Arrays.stream(
+                        new AgentResourceCategory[]{
+                                AgentResourceCategory.HP_POTION,
+                                AgentResourceCategory.MP_POTION})
+                .filter(candidate -> active.objectiveId().contains(':' + candidate.name() + ':'))
+                .findFirst().orElse(null);
+        if (category == null
+                || AgentSupplyRecoveryPolicy.requiresAutomaticReserve(agent, category)) {
+            return false;
+        }
+        planning.resolve(category);
+        evaluations.resolve(category);
+        return AgentObjectiveKernel.finishAndResume(
+                entry, active.objectiveId(), AgentObjectiveStatus.CANCELLED,
+                "beginner progression does not require a potion reserve", nowMs);
+    }
+
     private static AgentProcurementRequest selectRequest(AgentResourcePlanningState planning,
+                                                         Character agent,
                                                          long nowMs,
                                                          AgentResourceCategory category) {
         return planning.procurementSnapshot().values().stream()
                 .filter(candidate -> candidate.expiresAtMs() >= nowMs)
                 .filter(candidate -> candidate.urgency().ordinal() >= AgentSupplyUrgency.CRITICAL.ordinal())
                 .filter(candidate -> candidate.permittedMethods().contains(AgentProcurementMethod.NPC_SHOP))
+                .filter(candidate -> AgentSupplyRecoveryPolicy.requiresAutomaticReserve(
+                        agent, candidate.category()))
                 .filter(candidate -> category == null || candidate.category() == category)
                 .max(Comparator.comparingInt(candidate -> candidate.urgency().ordinal()))
                 .orElse(null);

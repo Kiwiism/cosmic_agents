@@ -1,0 +1,5155 @@
+{
+  "schemaVersion": 2,
+  "skills": {
+    "1100002": {
+      "name": "Final Attack : Sword",
+      "maxLevel": 30,
+      "requirements": [
+        {
+          "skillId": 1100000,
+          "level": 3
+        }
+      ]
+    },
+    "1101004": {
+      "name": "Sword Booster",
+      "maxLevel": 20,
+      "requirements": [
+        {
+          "skillId": 1100000,
+          "level": 5
+        }
+      ]
+    },
+    "1101006": {
+      "name": "Rage",
+      "maxLevel": 20,
+      "requirements": []
+    },
+    "1101007": {
+      "name": "Power Guard",
+      "maxLevel": 30,
+      "requirements": [
+        {
+          "skillId": 1101006,
+          "level": 3
+        }
+      ]
+    },
+    "1110000": {
+      "name": "Improving MP Recovery",
+      "maxLevel": 20,
+      "requirements": []
+    },
+    "1111002": {
+      "name": "Combo Attack",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "1111003": {
+      "name": "Panic : Sword",
+      "maxLevel": 30,
+      "requirements": [
+        {
+          "skillId": 1111002,
+          "level": 1
+        }
+      ]
+    },
+    "1111005": {
+      "name": "Coma: Sword",
+      "maxLevel": 30,
+      "requirements": [
+        {
+          "skillId": 1111002,
+          "level": 1
+        }
+      ]
+    },
+    "1111007": {
+      "name": "Armor Crash",
+      "maxLevel": 20,
+      "requirements": [
+        {
+          "skillId": 1111008,
+          "level": 3
+        }
+      ]
+    },
+    "1111008": {
+      "name": "Shout",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "1120003": {
+      "name": "Advanced Combo Attack",
+      "maxLevel": 30,
+      "requirements": [
+        {
+          "skillId": 1111002,
+          "level": 30
+        }
+      ]
+    },
+    "1120004": {
+      "name": "Achilles",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "1120005": {
+      "name": "Guardian",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "1121000": {
+      "name": "Maple Warrior",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "1121001": {
+      "name": "Monster Magnet",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "1121002": {
+      "name": "Power Stance",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "1121006": {
+      "name": "Rush",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "1121008": {
+      "name": "Brandish",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "1121010": {
+      "name": "Enrage",
+      "maxLevel": 30,
+      "requirements": [
+        {
+          "skillId": 1120003,
+          "level": 25
+        }
+      ]
+    },
+    "1121011": {
+      "name": "Hero's Will",
+      "maxLevel": 5,
+      "requirements": []
+    },
+    "1200002": {
+      "name": "Final Attack : Sword",
+      "maxLevel": 30,
+      "requirements": [
+        {
+          "skillId": 1200000,
+          "level": 3
+        }
+      ]
+    },
+    "1201004": {
+      "name": "Sword Booster",
+      "maxLevel": 20,
+      "requirements": [
+        {
+          "skillId": 1200000,
+          "level": 5
+        }
+      ]
+    },
+    "1201006": {
+      "name": "Threaten",
+      "maxLevel": 20,
+      "requirements": []
+    },
+    "1201007": {
+      "name": "Power Guard",
+      "maxLevel": 30,
+      "requirements": [
+        {
+          "skillId": 1201006,
+          "level": 3
+        }
+      ]
+    },
+    "1210000": {
+      "name": "Improving MP Recovery",
+      "maxLevel": 20,
+      "requirements": []
+    },
+    "1211002": {
+      "name": "Charged Blow",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "1211003": {
+      "name": "Fire Charge: Sword",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "1211005": {
+      "name": "Ice Charge: Sword",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "1211007": {
+      "name": "Thunder Charge: Sword",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "1211009": {
+      "name": "Magic Crash",
+      "maxLevel": 20,
+      "requirements": [
+        {
+          "skillId": 1211002,
+          "level": 3
+        }
+      ]
+    },
+    "1220005": {
+      "name": "Achilles",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "1220006": {
+      "name": "Guardian",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "1220010": {
+      "name": "Advanced Charge",
+      "maxLevel": 10,
+      "requirements": [
+        {
+          "skillId": 1211002,
+          "level": 30
+        }
+      ]
+    },
+    "1221000": {
+      "name": "Maple Warrior",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "1221001": {
+      "name": "Monster Magnet",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "1221002": {
+      "name": "Power Stance",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "1221003": {
+      "name": "Holy Charge : Sword",
+      "maxLevel": 20,
+      "requirements": []
+    },
+    "1221007": {
+      "name": "Rush",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "1221009": {
+      "name": "Blast",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "1221011": {
+      "name": "Heaven's Hammer",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "1221012": {
+      "name": "Hero's Will",
+      "maxLevel": 5,
+      "requirements": []
+    },
+    "1310000": {
+      "name": "Elemental Resistance",
+      "maxLevel": 20,
+      "requirements": []
+    },
+    "1311001": {
+      "name": "Spear Crusher",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "1311003": {
+      "name": "Dragon Fury: Spear",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "1311004": {
+      "name": "Dragon Fury: Pole Arm",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "1311005": {
+      "name": "Sacrifice",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "1311006": {
+      "name": "Dragon Roar",
+      "maxLevel": 30,
+      "requirements": [
+        {
+          "skillId": 1311005,
+          "level": 3
+        }
+      ]
+    },
+    "1311007": {
+      "name": "Power Crash",
+      "maxLevel": 20,
+      "requirements": [
+        {
+          "skillId": 1311008,
+          "level": 3
+        }
+      ]
+    },
+    "1311008": {
+      "name": "Dragon Blood",
+      "maxLevel": 20,
+      "requirements": []
+    },
+    "1320005": {
+      "name": "Achilles",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "1320006": {
+      "name": "Berserk",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "1320008": {
+      "name": "Aura of the Beholder",
+      "maxLevel": 25,
+      "requirements": [
+        {
+          "skillId": 1321007,
+          "level": 1
+        }
+      ]
+    },
+    "1320009": {
+      "name": "Hex of the Beholder",
+      "maxLevel": 25,
+      "requirements": [
+        {
+          "skillId": 1321007,
+          "level": 1
+        }
+      ]
+    },
+    "1321000": {
+      "name": "Maple Warrior",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "1321001": {
+      "name": "Monster Magnet",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "1321002": {
+      "name": "Power Stance",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "1321003": {
+      "name": "Rush",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "1321007": {
+      "name": "Beholder",
+      "maxLevel": 10,
+      "requirements": []
+    },
+    "1321010": {
+      "name": "Hero's Will",
+      "maxLevel": 5,
+      "requirements": []
+    },
+    "2101001": {
+      "name": "Meditation",
+      "maxLevel": 20,
+      "requirements": [
+        {
+          "skillId": 2100000,
+          "level": 3
+        }
+      ]
+    },
+    "2101002": {
+      "name": "Teleport",
+      "maxLevel": 20,
+      "requirements": []
+    },
+    "2101003": {
+      "name": "Slow",
+      "maxLevel": 20,
+      "requirements": [
+        {
+          "skillId": 2101002,
+          "level": 5
+        }
+      ]
+    },
+    "2101004": {
+      "name": "Fire Arrow",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "2101005": {
+      "name": "Poison Breath",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "2110000": {
+      "name": "Partial Resistance",
+      "maxLevel": 20,
+      "requirements": []
+    },
+    "2110001": {
+      "name": "Element Amplification",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "2111002": {
+      "name": "Explosion",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "2111003": {
+      "name": "Poison Mist",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "2111004": {
+      "name": "Seal",
+      "maxLevel": 20,
+      "requirements": [
+        {
+          "skillId": 2110001,
+          "level": 3
+        }
+      ]
+    },
+    "2111005": {
+      "name": "Spell Booster",
+      "maxLevel": 20,
+      "requirements": [
+        {
+          "skillId": 2110001,
+          "level": 3
+        }
+      ]
+    },
+    "2111006": {
+      "name": "Element Composition",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "2121000": {
+      "name": "Maple Warrior",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "2121001": {
+      "name": "Big Bang",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "2121002": {
+      "name": "Mana Reflection",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "2121003": {
+      "name": "Fire Demon",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "2121004": {
+      "name": "Infinity",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "2121005": {
+      "name": "Elquines",
+      "maxLevel": 30,
+      "requirements": [
+        {
+          "skillId": 2121003,
+          "level": 5
+        }
+      ]
+    },
+    "2121006": {
+      "name": "Paralyze",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "2121007": {
+      "name": "Meteor Shower",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "2121008": {
+      "name": "Hero's Will",
+      "maxLevel": 5,
+      "requirements": []
+    },
+    "2201001": {
+      "name": "Meditation",
+      "maxLevel": 20,
+      "requirements": [
+        {
+          "skillId": 2200000,
+          "level": 3
+        }
+      ]
+    },
+    "2201002": {
+      "name": "Teleport",
+      "maxLevel": 20,
+      "requirements": []
+    },
+    "2201003": {
+      "name": "Slow",
+      "maxLevel": 20,
+      "requirements": [
+        {
+          "skillId": 2201002,
+          "level": 5
+        }
+      ]
+    },
+    "2201004": {
+      "name": "Cold Beam",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "2201005": {
+      "name": "Thunder Bolt",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "2210000": {
+      "name": "Partial Resistance",
+      "maxLevel": 20,
+      "requirements": []
+    },
+    "2210001": {
+      "name": "Element Amplification",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "2211002": {
+      "name": "Ice Strike",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "2211003": {
+      "name": "Thunder Spear",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "2211004": {
+      "name": "Seal",
+      "maxLevel": 20,
+      "requirements": [
+        {
+          "skillId": 2210001,
+          "level": 3
+        }
+      ]
+    },
+    "2211005": {
+      "name": "Spell Booster",
+      "maxLevel": 20,
+      "requirements": [
+        {
+          "skillId": 2210001,
+          "level": 3
+        }
+      ]
+    },
+    "2211006": {
+      "name": "Element Composition",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "2221000": {
+      "name": "Maple Warrior",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "2221001": {
+      "name": "Big Bang",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "2221002": {
+      "name": "Mana Reflection",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "2221003": {
+      "name": "Ice Demon",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "2221004": {
+      "name": "Infinity",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "2221005": {
+      "name": "Ifrit",
+      "maxLevel": 30,
+      "requirements": [
+        {
+          "skillId": 2221003,
+          "level": 5
+        }
+      ]
+    },
+    "2221006": {
+      "name": "Chain Lightning",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "2221007": {
+      "name": "Blizzard",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "2221008": {
+      "name": "Hero's Will",
+      "maxLevel": 5,
+      "requirements": []
+    },
+    "2301001": {
+      "name": "Teleport",
+      "maxLevel": 20,
+      "requirements": []
+    },
+    "2301002": {
+      "name": "Heal",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "2301003": {
+      "name": "Invincible",
+      "maxLevel": 20,
+      "requirements": [
+        {
+          "skillId": 2301002,
+          "level": 5
+        }
+      ]
+    },
+    "2301004": {
+      "name": "Bless",
+      "maxLevel": 20,
+      "requirements": [
+        {
+          "skillId": 2301003,
+          "level": 5
+        }
+      ]
+    },
+    "2301005": {
+      "name": "Holy Arrow",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "2310000": {
+      "name": "Elemental Resistance",
+      "maxLevel": 20,
+      "requirements": []
+    },
+    "2311001": {
+      "name": "Dispel",
+      "maxLevel": 20,
+      "requirements": []
+    },
+    "2311002": {
+      "name": "Mystic Door",
+      "maxLevel": 20,
+      "requirements": [
+        {
+          "skillId": 2311001,
+          "level": 3
+        }
+      ]
+    },
+    "2311003": {
+      "name": "Holy Symbol",
+      "maxLevel": 30,
+      "requirements": [
+        {
+          "skillId": 2311001,
+          "level": 3
+        }
+      ]
+    },
+    "2311004": {
+      "name": "Shining Ray",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "2311005": {
+      "name": "Doom",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "2311006": {
+      "name": "Summon Dragon",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "2321000": {
+      "name": "Maple Warrior",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "2321001": {
+      "name": "Big Bang",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "2321002": {
+      "name": "Mana Reflection",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "2321003": {
+      "name": "Bahamut",
+      "maxLevel": 30,
+      "requirements": [
+        {
+          "skillId": 2311006,
+          "level": 15
+        }
+      ]
+    },
+    "2321004": {
+      "name": "Infinity",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "2321005": {
+      "name": "Holy Shield",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "2321006": {
+      "name": "Resurrection",
+      "maxLevel": 10,
+      "requirements": []
+    },
+    "2321007": {
+      "name": "Angel Ray",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "2321008": {
+      "name": "Genesis",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "2321009": {
+      "name": "Hero's Will",
+      "maxLevel": 5,
+      "requirements": []
+    },
+    "3101002": {
+      "name": "Bow Booster",
+      "maxLevel": 20,
+      "requirements": [
+        {
+          "skillId": 3100000,
+          "level": 5
+        }
+      ]
+    },
+    "3101003": {
+      "name": "Power Knock-Back",
+      "maxLevel": 20,
+      "requirements": []
+    },
+    "3101004": {
+      "name": "Soul Arrow : Bow",
+      "maxLevel": 20,
+      "requirements": [
+        {
+          "skillId": 3101002,
+          "level": 5
+        }
+      ]
+    },
+    "3101005": {
+      "name": "Arrow Bomb : Bow",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "3110000": {
+      "name": "Thrust",
+      "maxLevel": 20,
+      "requirements": []
+    },
+    "3110001": {
+      "name": "Mortal Blow",
+      "maxLevel": 20,
+      "requirements": []
+    },
+    "3111002": {
+      "name": "Puppet",
+      "maxLevel": 20,
+      "requirements": []
+    },
+    "3111003": {
+      "name": "Inferno",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "3111004": {
+      "name": "Arrow Rain",
+      "maxLevel": 30,
+      "requirements": [
+        {
+          "skillId": 3110001,
+          "level": 5
+        }
+      ]
+    },
+    "3111005": {
+      "name": "Silver Hawk",
+      "maxLevel": 30,
+      "requirements": [
+        {
+          "skillId": 3111002,
+          "level": 5
+        }
+      ]
+    },
+    "3111006": {
+      "name": "Strafe",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "3120005": {
+      "name": "Bow Expert",
+      "maxLevel": 30,
+      "requirements": [
+        {
+          "skillId": 3100000,
+          "level": 20
+        }
+      ]
+    },
+    "3121000": {
+      "name": "Maple Warrior",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "3121002": {
+      "name": "Sharp Eyes",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "3121003": {
+      "name": "Dragon's Breath",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "3121004": {
+      "name": "Hurricane",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "3121006": {
+      "name": "Phoenix",
+      "maxLevel": 30,
+      "requirements": [
+        {
+          "skillId": 3111005,
+          "level": 15
+        }
+      ]
+    },
+    "3121007": {
+      "name": "Hamstring",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "3121008": {
+      "name": "Concentrate",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "3121009": {
+      "name": "Hero's Will",
+      "maxLevel": 5,
+      "requirements": []
+    },
+    "3201002": {
+      "name": "Crossbow Booster",
+      "maxLevel": 20,
+      "requirements": [
+        {
+          "skillId": 3200000,
+          "level": 5
+        }
+      ]
+    },
+    "3201003": {
+      "name": "Power Knock-Back",
+      "maxLevel": 20,
+      "requirements": []
+    },
+    "3201004": {
+      "name": "Soul Arrow : Crossbow",
+      "maxLevel": 20,
+      "requirements": [
+        {
+          "skillId": 3201002,
+          "level": 5
+        }
+      ]
+    },
+    "3201005": {
+      "name": "Iron Arrow : Crossbow",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "3210000": {
+      "name": "Thrust",
+      "maxLevel": 20,
+      "requirements": []
+    },
+    "3210001": {
+      "name": "Mortal Blow",
+      "maxLevel": 20,
+      "requirements": []
+    },
+    "3211002": {
+      "name": "Puppet",
+      "maxLevel": 20,
+      "requirements": []
+    },
+    "3211003": {
+      "name": "Blizzard",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "3211004": {
+      "name": "Arrow Eruption",
+      "maxLevel": 30,
+      "requirements": [
+        {
+          "skillId": 3210001,
+          "level": 5
+        }
+      ]
+    },
+    "3211005": {
+      "name": "Golden Eagle",
+      "maxLevel": 30,
+      "requirements": [
+        {
+          "skillId": 3211002,
+          "level": 5
+        }
+      ]
+    },
+    "3211006": {
+      "name": "Strafe",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "3220004": {
+      "name": "Marksman Boost",
+      "maxLevel": 30,
+      "requirements": [
+        {
+          "skillId": 3200000,
+          "level": 20
+        }
+      ]
+    },
+    "3221000": {
+      "name": "Maple Warrior",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "3221001": {
+      "name": "Piercing Arrow",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "3221002": {
+      "name": "Sharp Eyes",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "3221003": {
+      "name": "Dragon's Breath",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "3221005": {
+      "name": "Frostprey",
+      "maxLevel": 30,
+      "requirements": [
+        {
+          "skillId": 3211005,
+          "level": 15
+        }
+      ]
+    },
+    "3221006": {
+      "name": "Blind",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "3221007": {
+      "name": "Snipe",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "3221008": {
+      "name": "Hero's Will",
+      "maxLevel": 5,
+      "requirements": []
+    },
+    "4110000": {
+      "name": "Alchemist",
+      "maxLevel": 20,
+      "requirements": []
+    },
+    "4111001": {
+      "name": "Meso Up",
+      "maxLevel": 20,
+      "requirements": []
+    },
+    "4111002": {
+      "name": "Shadow Partner",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "4111003": {
+      "name": "Shadow Web",
+      "maxLevel": 20,
+      "requirements": []
+    },
+    "4111004": {
+      "name": "Shadow Meso",
+      "maxLevel": 30,
+      "requirements": [
+        {
+          "skillId": 4111001,
+          "level": 5
+        }
+      ]
+    },
+    "4111005": {
+      "name": "Avenger",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "4111006": {
+      "name": "Flash Jump",
+      "maxLevel": 20,
+      "requirements": [
+        {
+          "skillId": 4111005,
+          "level": 5
+        }
+      ]
+    },
+    "4120002": {
+      "name": "Shadow Shifter",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "4120005": {
+      "name": "Venomous Star",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "4121000": {
+      "name": "Maple Warrior",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "4121003": {
+      "name": "Taunt",
+      "maxLevel": 30,
+      "requirements": [
+        {
+          "skillId": 4120002,
+          "level": 10
+        }
+      ]
+    },
+    "4121006": {
+      "name": "Shadow Stars",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "4121007": {
+      "name": "Triple Throw",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "4121008": {
+      "name": "Ninja Storm",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "4121009": {
+      "name": "Hero's Will",
+      "maxLevel": 5,
+      "requirements": []
+    },
+    "4200001": {
+      "name": "Endure",
+      "maxLevel": 20,
+      "requirements": []
+    },
+    "4201002": {
+      "name": "Dagger Booster",
+      "maxLevel": 20,
+      "requirements": [
+        {
+          "skillId": 4200000,
+          "level": 5
+        }
+      ]
+    },
+    "4201003": {
+      "name": "Haste",
+      "maxLevel": 20,
+      "requirements": []
+    },
+    "4201004": {
+      "name": "Steal",
+      "maxLevel": 30,
+      "requirements": [
+        {
+          "skillId": 4201003,
+          "level": 5
+        }
+      ]
+    },
+    "4201005": {
+      "name": "Savage Blow",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "4211001": {
+      "name": "Chakra",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "4211002": {
+      "name": "Assaulter",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "4211003": {
+      "name": "Pickpocket",
+      "maxLevel": 20,
+      "requirements": [
+        {
+          "skillId": 4211006,
+          "level": 3
+        }
+      ]
+    },
+    "4211004": {
+      "name": "Band of Thieves",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "4211005": {
+      "name": "Meso Guard",
+      "maxLevel": 20,
+      "requirements": [
+        {
+          "skillId": 4211001,
+          "level": 3
+        }
+      ]
+    },
+    "4211006": {
+      "name": "Meso Explosion",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "4220002": {
+      "name": "Shadow Shifter",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "4220005": {
+      "name": "Venomous Stab",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "4221000": {
+      "name": "Maple Warrior",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "4221001": {
+      "name": "Assassinate",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "4221003": {
+      "name": "Taunt",
+      "maxLevel": 30,
+      "requirements": [
+        {
+          "skillId": 4220002,
+          "level": 10
+        }
+      ]
+    },
+    "4221004": {
+      "name": "Ninja Ambush",
+      "maxLevel": 30,
+      "requirements": [
+        {
+          "skillId": 4220002,
+          "level": 5
+        }
+      ]
+    },
+    "4221006": {
+      "name": "Smokescreen",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "4221007": {
+      "name": "Boomerang Step",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "4221008": {
+      "name": "Hero's Will",
+      "maxLevel": 5,
+      "requirements": []
+    },
+    "5100001": {
+      "name": "Knuckler Mastery",
+      "maxLevel": 20,
+      "requirements": []
+    },
+    "5101002": {
+      "name": "Backspin Blow",
+      "maxLevel": 20,
+      "requirements": []
+    },
+    "5101003": {
+      "name": "Double Uppercut",
+      "maxLevel": 20,
+      "requirements": []
+    },
+    "5101004": {
+      "name": "Corkscrew Blow",
+      "maxLevel": 20,
+      "requirements": []
+    },
+    "5101005": {
+      "name": "MP Recovery",
+      "maxLevel": 10,
+      "requirements": []
+    },
+    "5101006": {
+      "name": "Knuckler Booster",
+      "maxLevel": 20,
+      "requirements": [
+        {
+          "skillId": 5100001,
+          "level": 5
+        }
+      ]
+    },
+    "5101007": {
+      "name": "Oak Barrel",
+      "maxLevel": 10,
+      "requirements": []
+    },
+    "5110000": {
+      "name": "Stun Mastery",
+      "maxLevel": 20,
+      "requirements": []
+    },
+    "5110001": {
+      "name": "Energy Charge",
+      "maxLevel": 40,
+      "requirements": []
+    },
+    "5111002": {
+      "name": "Energy Blast",
+      "maxLevel": 30,
+      "requirements": [
+        {
+          "skillId": 5110001,
+          "level": 1
+        }
+      ]
+    },
+    "5111004": {
+      "name": "Energy Drain",
+      "maxLevel": 20,
+      "requirements": [
+        {
+          "skillId": 5110001,
+          "level": 1
+        }
+      ]
+    },
+    "5111005": {
+      "name": "Transformation",
+      "maxLevel": 20,
+      "requirements": []
+    },
+    "5111006": {
+      "name": "Shockwave",
+      "maxLevel": 30,
+      "requirements": [
+        {
+          "skillId": 5111005,
+          "level": 1
+        }
+      ]
+    },
+    "5121000": {
+      "name": "Maple Warrior",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "5121001": {
+      "name": "Dragon Strike",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "5121002": {
+      "name": "Energy Orb",
+      "maxLevel": 30,
+      "requirements": [
+        {
+          "skillId": 5110001,
+          "level": 1
+        }
+      ]
+    },
+    "5121003": {
+      "name": "Super Transformation",
+      "maxLevel": 20,
+      "requirements": [
+        {
+          "skillId": 5111005,
+          "level": 20
+        }
+      ]
+    },
+    "5121004": {
+      "name": "Demolition",
+      "maxLevel": 30,
+      "requirements": [
+        {
+          "skillId": 5121003,
+          "level": 1
+        }
+      ]
+    },
+    "5121005": {
+      "name": "Snatch",
+      "maxLevel": 30,
+      "requirements": [
+        {
+          "skillId": 5121003,
+          "level": 1
+        }
+      ]
+    },
+    "5121007": {
+      "name": "Barrage",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "5121008": {
+      "name": "Pirate's Rage",
+      "maxLevel": 5,
+      "requirements": []
+    },
+    "5121009": {
+      "name": "Speed Infusion",
+      "maxLevel": 20,
+      "requirements": [
+        {
+          "skillId": 5101006,
+          "level": 20
+        }
+      ]
+    },
+    "5121010": {
+      "name": "Time Leap",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "5201001": {
+      "name": "Invisible Shot",
+      "maxLevel": 20,
+      "requirements": []
+    },
+    "5201002": {
+      "name": "Grenade",
+      "maxLevel": 20,
+      "requirements": []
+    },
+    "5201003": {
+      "name": "Gun Booster",
+      "maxLevel": 20,
+      "requirements": [
+        {
+          "skillId": 5200000,
+          "level": 5
+        }
+      ]
+    },
+    "5201004": {
+      "name": "Blank Shot",
+      "maxLevel": 20,
+      "requirements": []
+    },
+    "5201005": {
+      "name": "Wings",
+      "maxLevel": 10,
+      "requirements": []
+    },
+    "5201006": {
+      "name": "Recoil Shot",
+      "maxLevel": 20,
+      "requirements": [
+        {
+          "skillId": 5201005,
+          "level": 5
+        }
+      ]
+    },
+    "5210000": {
+      "name": "Burst Fire",
+      "maxLevel": 20,
+      "requirements": [
+        {
+          "skillId": 5001003,
+          "level": 20
+        }
+      ]
+    },
+    "5211001": {
+      "name": "Octopus",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "5211002": {
+      "name": "Gaviota",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "5211004": {
+      "name": "Flamethrower",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "5211005": {
+      "name": "Ice Splitter",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "5211006": {
+      "name": "Homing Beacon",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "5220001": {
+      "name": "Elemental Boost",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "5220002": {
+      "name": "Wrath of the Octopi",
+      "maxLevel": 20,
+      "requirements": [
+        {
+          "skillId": 5211001,
+          "level": 30
+        }
+      ]
+    },
+    "5220011": {
+      "name": "Bullseye",
+      "maxLevel": 20,
+      "requirements": [
+        {
+          "skillId": 5211006,
+          "level": 30
+        }
+      ]
+    },
+    "5221000": {
+      "name": "Maple Warrior",
+      "maxLevel": 30,
+      "requirements": []
+    },
+    "5221003": {
+      "name": "Aerial Strike",
+      "maxLevel": 30,
+      "requirements": [
+        {
+          "skillId": 5211002,
+          "level": 15
+        }
+      ]
+    },
+    "5221004": {
+      "name": "Rapid Fire",
+      "maxLevel": 30,
+      "requirements": [
+        {
+          "skillId": 5210000,
+          "level": 20
+        }
+      ]
+    },
+    "5221006": {
+      "name": "Battleship",
+      "maxLevel": 10,
+      "requirements": []
+    },
+    "5221007": {
+      "name": "Battleship Cannon",
+      "maxLevel": 30,
+      "requirements": [
+        {
+          "skillId": 5221006,
+          "level": 1
+        }
+      ]
+    },
+    "5221008": {
+      "name": "Battleship Torpedo",
+      "maxLevel": 30,
+      "requirements": [
+        {
+          "skillId": 5221006,
+          "level": 1
+        }
+      ]
+    },
+    "5221009": {
+      "name": "Hypnotize",
+      "maxLevel": 20,
+      "requirements": []
+    },
+    "5221010": {
+      "name": "Speed Infusion",
+      "maxLevel": 5,
+      "requirements": []
+    }
+  },
+  "profiles": [
+    {
+      "profileId": "mapleroyals-optimal-2026-warrior-first-job",
+      "profileVersion": 1,
+      "jobFamily": "WARRIOR",
+      "inheritedSkillLevels": {},
+      "supportedThroughLevel": 30,
+      "exactJobId": 100,
+      "startingLevel": 10,
+      "entrySp": 1,
+      "segments": [
+        {
+          "minimumLevel": 10,
+          "skillId": 1000000,
+          "points": 5
+        },
+        {
+          "minimumLevel": 10,
+          "skillId": 1000001,
+          "points": 10
+        },
+        {
+          "minimumLevel": 10,
+          "skillId": 1001004,
+          "points": 1
+        },
+        {
+          "minimumLevel": 10,
+          "skillId": 1001005,
+          "points": 20
+        },
+        {
+          "minimumLevel": 10,
+          "skillId": 1001004,
+          "points": 19
+        },
+        {
+          "minimumLevel": 10,
+          "skillId": 1000002,
+          "points": 3
+        },
+        {
+          "minimumLevel": 10,
+          "skillId": 1001003,
+          "points": 3
+        }
+      ],
+      "dumpSkillIds": []
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-magician-first-job",
+      "profileVersion": 1,
+      "jobFamily": "MAGICIAN",
+      "inheritedSkillLevels": {},
+      "supportedThroughLevel": 30,
+      "exactJobId": 200,
+      "startingLevel": 8,
+      "entrySp": 1,
+      "segments": [
+        {
+          "minimumLevel": 8,
+          "skillId": 2001004,
+          "points": 1
+        },
+        {
+          "minimumLevel": 8,
+          "skillId": 2000000,
+          "points": 5
+        },
+        {
+          "minimumLevel": 8,
+          "skillId": 2000001,
+          "points": 10
+        },
+        {
+          "minimumLevel": 8,
+          "skillId": 2001005,
+          "points": 20
+        },
+        {
+          "minimumLevel": 8,
+          "skillId": 2000000,
+          "points": 11
+        },
+        {
+          "minimumLevel": 8,
+          "skillId": 2001002,
+          "points": 20
+        }
+      ],
+      "dumpSkillIds": []
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-bowman-first-job",
+      "profileVersion": 1,
+      "jobFamily": "BOWMAN",
+      "inheritedSkillLevels": {},
+      "supportedThroughLevel": 30,
+      "exactJobId": 300,
+      "startingLevel": 10,
+      "entrySp": 1,
+      "segments": [
+        {
+          "minimumLevel": 10,
+          "skillId": 3001004,
+          "points": 1
+        },
+        {
+          "minimumLevel": 10,
+          "skillId": 3001005,
+          "points": 1
+        },
+        {
+          "minimumLevel": 10,
+          "skillId": 3000000,
+          "points": 3
+        },
+        {
+          "minimumLevel": 10,
+          "skillId": 3000002,
+          "points": 8
+        },
+        {
+          "minimumLevel": 10,
+          "skillId": 3000001,
+          "points": 20
+        },
+        {
+          "minimumLevel": 10,
+          "skillId": 3001005,
+          "points": 19
+        },
+        {
+          "minimumLevel": 10,
+          "skillId": 3001003,
+          "points": 9
+        }
+      ],
+      "dumpSkillIds": []
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-rogue-assassin-first-job",
+      "profileVersion": 1,
+      "jobFamily": "THIEF",
+      "inheritedSkillLevels": {},
+      "supportedThroughLevel": 30,
+      "exactJobId": 400,
+      "startingLevel": 10,
+      "entrySp": 1,
+      "segments": [
+        {
+          "minimumLevel": 10,
+          "skillId": 4001344,
+          "points": 1
+        },
+        {
+          "minimumLevel": 10,
+          "skillId": 4000000,
+          "points": 3
+        },
+        {
+          "minimumLevel": 10,
+          "skillId": 4000001,
+          "points": 8
+        },
+        {
+          "minimumLevel": 10,
+          "skillId": 4001344,
+          "points": 19
+        },
+        {
+          "minimumLevel": 10,
+          "skillId": 4000000,
+          "points": 7
+        },
+        {
+          "minimumLevel": 10,
+          "skillId": 4001002,
+          "points": 3
+        },
+        {
+          "minimumLevel": 10,
+          "skillId": 4001003,
+          "points": 20
+        }
+      ],
+      "dumpSkillIds": []
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-rogue-bandit-first-job",
+      "profileVersion": 1,
+      "jobFamily": "THIEF",
+      "inheritedSkillLevels": {},
+      "supportedThroughLevel": 30,
+      "exactJobId": 400,
+      "startingLevel": 10,
+      "entrySp": 1,
+      "segments": [
+        {
+          "minimumLevel": 10,
+          "skillId": 4001334,
+          "points": 10
+        },
+        {
+          "minimumLevel": 10,
+          "skillId": 4000000,
+          "points": 20
+        },
+        {
+          "minimumLevel": 10,
+          "skillId": 4001002,
+          "points": 3
+        },
+        {
+          "minimumLevel": 10,
+          "skillId": 4001003,
+          "points": 20
+        },
+        {
+          "minimumLevel": 10,
+          "skillId": 4000001,
+          "points": 8
+        }
+      ],
+      "dumpSkillIds": []
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-pirate-brawler-first-job",
+      "profileVersion": 1,
+      "jobFamily": "PIRATE",
+      "inheritedSkillLevels": {},
+      "supportedThroughLevel": 30,
+      "exactJobId": 500,
+      "startingLevel": 10,
+      "entrySp": 1,
+      "segments": [
+        {
+          "minimumLevel": 10,
+          "skillId": 5001001,
+          "points": 1
+        },
+        {
+          "minimumLevel": 10,
+          "skillId": 5001002,
+          "points": 20
+        },
+        {
+          "minimumLevel": 10,
+          "skillId": 5001001,
+          "points": 19
+        },
+        {
+          "minimumLevel": 10,
+          "skillId": 5000000,
+          "points": 20
+        },
+        {
+          "minimumLevel": 10,
+          "skillId": 5001005,
+          "points": 1
+        }
+      ],
+      "dumpSkillIds": []
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-pirate-gunslinger-first-job",
+      "profileVersion": 1,
+      "jobFamily": "PIRATE",
+      "inheritedSkillLevels": {},
+      "supportedThroughLevel": 30,
+      "exactJobId": 500,
+      "startingLevel": 10,
+      "entrySp": 1,
+      "segments": [
+        {
+          "minimumLevel": 10,
+          "skillId": 5001003,
+          "points": 1
+        },
+        {
+          "minimumLevel": 10,
+          "skillId": 5001002,
+          "points": 1
+        },
+        {
+          "minimumLevel": 10,
+          "skillId": 5001003,
+          "points": 19
+        },
+        {
+          "minimumLevel": 10,
+          "skillId": 5001002,
+          "points": 19
+        },
+        {
+          "minimumLevel": 10,
+          "skillId": 5001005,
+          "points": 10
+        },
+        {
+          "minimumLevel": 10,
+          "skillId": 5000000,
+          "points": 11
+        }
+      ],
+      "dumpSkillIds": []
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-fighter",
+      "profileVersion": 1,
+      "jobFamily": "WARRIOR",
+      "inheritedSkillLevels": {
+        "1001003": 3,
+        "1001005": 20,
+        "1001004": 20,
+        "1000002": 3,
+        "1000001": 10,
+        "1000000": 5
+      },
+      "supportedThroughLevel": 70,
+      "exactJobId": 110,
+      "startingLevel": 30,
+      "entrySp": 1,
+      "segments": [
+        {
+          "minimumLevel": 30,
+          "skillId": 1100000,
+          "points": 5
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 1101004,
+          "points": 6
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 1100000,
+          "points": 14
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 1101004,
+          "points": 10
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 1101006,
+          "points": 20
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 1100000,
+          "points": 1
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 1101007,
+          "points": 30
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 1100002,
+          "points": 30
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 1101004,
+          "points": 4
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 1001003,
+          "points": 1
+        }
+      ],
+      "dumpSkillIds": []
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-page",
+      "profileVersion": 1,
+      "jobFamily": "WARRIOR",
+      "inheritedSkillLevels": {
+        "1001003": 3,
+        "1001005": 20,
+        "1001004": 20,
+        "1000002": 3,
+        "1000001": 10,
+        "1000000": 5
+      },
+      "supportedThroughLevel": 70,
+      "exactJobId": 120,
+      "startingLevel": 30,
+      "entrySp": 1,
+      "segments": [
+        {
+          "minimumLevel": 30,
+          "skillId": 1200000,
+          "points": 5
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 1201004,
+          "points": 6
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 1200000,
+          "points": 14
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 1201004,
+          "points": 14
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 1200000,
+          "points": 1
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 1201006,
+          "points": 3
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 1201007,
+          "points": 30
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 1200002,
+          "points": 30
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 1201006,
+          "points": 17
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 1001003,
+          "points": 1
+        }
+      ],
+      "dumpSkillIds": []
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-spearman",
+      "profileVersion": 1,
+      "jobFamily": "WARRIOR",
+      "inheritedSkillLevels": {
+        "1001003": 3,
+        "1001005": 20,
+        "1001004": 20,
+        "1000002": 3,
+        "1000001": 10,
+        "1000000": 5
+      },
+      "supportedThroughLevel": 70,
+      "exactJobId": 130,
+      "startingLevel": 30,
+      "entrySp": 1,
+      "segments": [
+        {
+          "minimumLevel": 30,
+          "skillId": 1300000,
+          "points": 5
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 1301004,
+          "points": 6
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 1300000,
+          "points": 14
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 1301004,
+          "points": 14
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 1300000,
+          "points": 1
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 1301006,
+          "points": 3
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 1301007,
+          "points": 30
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 1300001,
+          "points": 20
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 1301005,
+          "points": 20
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 1301006,
+          "points": 8
+        }
+      ],
+      "dumpSkillIds": []
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-fp-wizard",
+      "profileVersion": 1,
+      "jobFamily": "MAGICIAN",
+      "inheritedSkillLevels": {
+        "2001005": 20,
+        "2001004": 1,
+        "2000001": 10,
+        "2000000": 16,
+        "2001002": 20
+      },
+      "supportedThroughLevel": 70,
+      "exactJobId": 210,
+      "startingLevel": 30,
+      "entrySp": 1,
+      "segments": [
+        {
+          "minimumLevel": 30,
+          "skillId": 2101002,
+          "points": 1
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 2101004,
+          "points": 30
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 2101002,
+          "points": 19
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 2101005,
+          "points": 30
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 2100000,
+          "points": 20
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 2101001,
+          "points": 20
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 2101003,
+          "points": 1
+        }
+      ],
+      "dumpSkillIds": []
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-il-wizard",
+      "profileVersion": 1,
+      "jobFamily": "MAGICIAN",
+      "inheritedSkillLevels": {
+        "2001005": 20,
+        "2001004": 1,
+        "2000001": 10,
+        "2000000": 16,
+        "2001002": 20
+      },
+      "supportedThroughLevel": 70,
+      "exactJobId": 220,
+      "startingLevel": 30,
+      "entrySp": 1,
+      "segments": [
+        {
+          "minimumLevel": 30,
+          "skillId": 2201002,
+          "points": 1
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 2201004,
+          "points": 1
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 2201005,
+          "points": 30
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 2200000,
+          "points": 1
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 2201002,
+          "points": 19
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 2201004,
+          "points": 29
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 2200000,
+          "points": 19
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 2201001,
+          "points": 20
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 2201003,
+          "points": 1
+        }
+      ],
+      "dumpSkillIds": []
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-cleric",
+      "profileVersion": 1,
+      "jobFamily": "MAGICIAN",
+      "inheritedSkillLevels": {
+        "2001005": 20,
+        "2001004": 1,
+        "2000001": 10,
+        "2000000": 16,
+        "2001002": 20
+      },
+      "supportedThroughLevel": 70,
+      "exactJobId": 230,
+      "startingLevel": 30,
+      "entrySp": 1,
+      "segments": [
+        {
+          "minimumLevel": 30,
+          "skillId": 2301001,
+          "points": 1
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 2301002,
+          "points": 30
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 2300000,
+          "points": 1
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 2301001,
+          "points": 19
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 2300000,
+          "points": 19
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 2301003,
+          "points": 20
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 2301004,
+          "points": 20
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 2301005,
+          "points": 11
+        }
+      ],
+      "dumpSkillIds": []
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-hunter",
+      "profileVersion": 1,
+      "jobFamily": "BOWMAN",
+      "inheritedSkillLevels": {
+        "3001003": 9,
+        "3001005": 20,
+        "3001004": 1,
+        "3000002": 8,
+        "3000001": 20,
+        "3000000": 3
+      },
+      "supportedThroughLevel": 70,
+      "exactJobId": 310,
+      "startingLevel": 30,
+      "entrySp": 1,
+      "segments": [
+        {
+          "minimumLevel": 30,
+          "skillId": 3101005,
+          "points": 1
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 3100000,
+          "points": 5
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 3101002,
+          "points": 6
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 3100000,
+          "points": 14
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 3101005,
+          "points": 29
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 3101002,
+          "points": 14
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 3101003,
+          "points": 20
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 3101004,
+          "points": 7
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 3001003,
+          "points": 11
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 3100000,
+          "points": 1
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 3101004,
+          "points": 13
+        }
+      ],
+      "dumpSkillIds": []
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-crossbowman",
+      "profileVersion": 1,
+      "jobFamily": "BOWMAN",
+      "inheritedSkillLevels": {
+        "3001003": 9,
+        "3001005": 20,
+        "3001004": 1,
+        "3000002": 8,
+        "3000001": 20,
+        "3000000": 3
+      },
+      "supportedThroughLevel": 70,
+      "exactJobId": 320,
+      "startingLevel": 30,
+      "entrySp": 1,
+      "segments": [
+        {
+          "minimumLevel": 30,
+          "skillId": 3201005,
+          "points": 1
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 3200000,
+          "points": 5
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 3201002,
+          "points": 6
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 3200000,
+          "points": 14
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 3201005,
+          "points": 29
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 3201002,
+          "points": 14
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 3201003,
+          "points": 20
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 3201004,
+          "points": 7
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 3001003,
+          "points": 11
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 3200000,
+          "points": 1
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 3201004,
+          "points": 13
+        }
+      ],
+      "dumpSkillIds": []
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-assassin",
+      "profileVersion": 1,
+      "jobFamily": "THIEF",
+      "inheritedSkillLevels": {
+        "4001003": 20,
+        "4000001": 8,
+        "4001344": 20,
+        "4001002": 3,
+        "4000000": 10
+      },
+      "supportedThroughLevel": 70,
+      "exactJobId": 410,
+      "startingLevel": 30,
+      "entrySp": 1,
+      "segments": [
+        {
+          "minimumLevel": 30,
+          "skillId": 4100000,
+          "points": 3
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 4100001,
+          "points": 30
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 4100000,
+          "points": 2
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 4101003,
+          "points": 6
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 4101004,
+          "points": 6
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 4101003,
+          "points": 14
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 4101004,
+          "points": 14
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 4100002,
+          "points": 3
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 4101005,
+          "points": 28
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 4100000,
+          "points": 15
+        }
+      ],
+      "dumpSkillIds": []
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-bandit",
+      "profileVersion": 1,
+      "jobFamily": "THIEF",
+      "inheritedSkillLevels": {
+        "4001003": 20,
+        "4001002": 3,
+        "4000000": 20,
+        "4001334": 10,
+        "4000001": 8
+      },
+      "supportedThroughLevel": 70,
+      "exactJobId": 420,
+      "startingLevel": 30,
+      "entrySp": 1,
+      "segments": [
+        {
+          "minimumLevel": 30,
+          "skillId": 4200000,
+          "points": 19
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 4201002,
+          "points": 6
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 4201005,
+          "points": 30
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 4201003,
+          "points": 6
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 4201002,
+          "points": 14
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 4201003,
+          "points": 14
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 4200001,
+          "points": 20
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 4201004,
+          "points": 11
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 4200000,
+          "points": 1
+        }
+      ],
+      "dumpSkillIds": []
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-brawler",
+      "profileVersion": 1,
+      "jobFamily": "PIRATE",
+      "inheritedSkillLevels": {
+        "5001002": 20,
+        "5001001": 20,
+        "5000000": 20,
+        "5001005": 1
+      },
+      "supportedThroughLevel": 70,
+      "exactJobId": 510,
+      "startingLevel": 30,
+      "entrySp": 1,
+      "segments": [
+        {
+          "minimumLevel": 30,
+          "skillId": 5100000,
+          "points": 10
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 5100001,
+          "points": 1
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 5101002,
+          "points": 1
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 5101004,
+          "points": 1
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 5100001,
+          "points": 4
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 5101006,
+          "points": 6
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 5100001,
+          "points": 14
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 5101006,
+          "points": 14
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 5101004,
+          "points": 19
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 5001005,
+          "points": 9
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 5101002,
+          "points": 19
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 5001003,
+          "points": 1
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 5101005,
+          "points": 10
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 5100001,
+          "points": 1
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 5101007,
+          "points": 10
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 5101003,
+          "points": 1
+        }
+      ],
+      "dumpSkillIds": []
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-gunslinger",
+      "profileVersion": 1,
+      "jobFamily": "PIRATE",
+      "inheritedSkillLevels": {
+        "5001002": 20,
+        "5000000": 11,
+        "5001005": 10,
+        "5001003": 20
+      },
+      "supportedThroughLevel": 70,
+      "exactJobId": 520,
+      "startingLevel": 30,
+      "entrySp": 1,
+      "segments": [
+        {
+          "minimumLevel": 30,
+          "skillId": 5201001,
+          "points": 1
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 5200000,
+          "points": 5
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 5201003,
+          "points": 6
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 5200000,
+          "points": 14
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 5201001,
+          "points": 19
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 5201005,
+          "points": 5
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 5201006,
+          "points": 20
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 5201005,
+          "points": 5
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 5201003,
+          "points": 14
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 5201004,
+          "points": 20
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 5000000,
+          "points": 9
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 5200000,
+          "points": 1
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 5201002,
+          "points": 1
+        },
+        {
+          "minimumLevel": 30,
+          "skillId": 5001001,
+          "points": 1
+        }
+      ],
+      "dumpSkillIds": []
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-crusader",
+      "profileVersion": 1,
+      "jobFamily": "WARRIOR",
+      "inheritedSkillLevels": {
+        "1101004": 20,
+        "1100000": 20,
+        "1000000": 5,
+        "1001005": 20,
+        "1000001": 10,
+        "1001003": 4,
+        "1001004": 20,
+        "1000002": 3,
+        "1101007": 30,
+        "1101006": 20,
+        "1100002": 30
+      },
+      "supportedThroughLevel": 120,
+      "exactJobId": 111,
+      "startingLevel": 70,
+      "entrySp": 1,
+      "segments": [
+        {
+          "minimumLevel": 70,
+          "skillId": 1111002,
+          "points": 30
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 1111003,
+          "points": 30
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 1111005,
+          "points": 30
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 1111008,
+          "points": 30
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 1111007,
+          "points": 20
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 1110000,
+          "points": 11
+        }
+      ],
+      "dumpSkillIds": []
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-white-knight",
+      "profileVersion": 1,
+      "jobFamily": "WARRIOR",
+      "inheritedSkillLevels": {
+        "1000000": 5,
+        "1001005": 20,
+        "1000001": 10,
+        "1001003": 4,
+        "1201007": 30,
+        "1201006": 20,
+        "1001004": 20,
+        "1000002": 3,
+        "1200000": 20,
+        "1201004": 20,
+        "1200002": 30
+      },
+      "supportedThroughLevel": 120,
+      "exactJobId": 121,
+      "startingLevel": 70,
+      "entrySp": 1,
+      "segments": [
+        {
+          "minimumLevel": 70,
+          "skillId": 1211007,
+          "points": 30
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 1211005,
+          "points": 30
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 1211003,
+          "points": 30
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 1211002,
+          "points": 3
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 1211009,
+          "points": 20
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 1210000,
+          "points": 11
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 1211002,
+          "points": 27
+        }
+      ],
+      "dumpSkillIds": []
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-dragon-knight-hybrid",
+      "profileVersion": 1,
+      "jobFamily": "WARRIOR",
+      "inheritedSkillLevels": {
+        "1301005": 20,
+        "1301007": 30,
+        "1300000": 20,
+        "1000000": 5,
+        "1001005": 20,
+        "1000001": 10,
+        "1001003": 3,
+        "1301004": 20,
+        "1001004": 20,
+        "1000002": 3,
+        "1301006": 11,
+        "1300001": 20
+      },
+      "supportedThroughLevel": 120,
+      "exactJobId": 131,
+      "startingLevel": 70,
+      "entrySp": 1,
+      "segments": [
+        {
+          "minimumLevel": 70,
+          "skillId": 1311004,
+          "points": 30
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 1311003,
+          "points": 1
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 1311001,
+          "points": 15
+        },
+        {
+          "minimumLevel": 90,
+          "skillId": 1311001,
+          "points": 15
+        },
+        {
+          "minimumLevel": 90,
+          "skillId": 1311008,
+          "points": 20
+        },
+        {
+          "minimumLevel": 90,
+          "skillId": 1311005,
+          "points": 3
+        },
+        {
+          "minimumLevel": 90,
+          "skillId": 1311006,
+          "points": 30
+        },
+        {
+          "minimumLevel": 90,
+          "skillId": 1310000,
+          "points": 20
+        },
+        {
+          "minimumLevel": 90,
+          "skillId": 1311007,
+          "points": 17
+        }
+      ],
+      "dumpSkillIds": []
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-dragon-knight-spear",
+      "profileVersion": 1,
+      "jobFamily": "WARRIOR",
+      "inheritedSkillLevels": {
+        "1301005": 20,
+        "1301007": 30,
+        "1300000": 20,
+        "1000000": 5,
+        "1001005": 20,
+        "1000001": 10,
+        "1001003": 3,
+        "1301004": 20,
+        "1001004": 20,
+        "1000002": 3,
+        "1301006": 11,
+        "1300001": 20
+      },
+      "supportedThroughLevel": 120,
+      "exactJobId": 131,
+      "startingLevel": 70,
+      "entrySp": 1,
+      "segments": [
+        {
+          "minimumLevel": 70,
+          "skillId": 1311003,
+          "points": 1
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 1311001,
+          "points": 15
+        },
+        {
+          "minimumLevel": 80,
+          "skillId": 1311001,
+          "points": 15
+        },
+        {
+          "minimumLevel": 80,
+          "skillId": 1311008,
+          "points": 20
+        },
+        {
+          "minimumLevel": 80,
+          "skillId": 1311005,
+          "points": 3
+        },
+        {
+          "minimumLevel": 80,
+          "skillId": 1311006,
+          "points": 30
+        },
+        {
+          "minimumLevel": 80,
+          "skillId": 1311003,
+          "points": 12
+        },
+        {
+          "minimumLevel": 80,
+          "skillId": 1310000,
+          "points": 20
+        },
+        {
+          "minimumLevel": 80,
+          "skillId": 1311007,
+          "points": 20
+        },
+        {
+          "minimumLevel": 80,
+          "skillId": 1311005,
+          "points": 15
+        }
+      ],
+      "dumpSkillIds": []
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-fp-mage",
+      "profileVersion": 1,
+      "jobFamily": "MAGICIAN",
+      "inheritedSkillLevels": {
+        "2001004": 1,
+        "2100000": 20,
+        "2101005": 30,
+        "2101004": 30,
+        "2101003": 1,
+        "2101002": 20,
+        "2101001": 20,
+        "2001005": 20,
+        "2000001": 10,
+        "2000000": 16,
+        "2001002": 20
+      },
+      "supportedThroughLevel": 120,
+      "exactJobId": 211,
+      "startingLevel": 70,
+      "entrySp": 1,
+      "segments": [
+        {
+          "minimumLevel": 70,
+          "skillId": 2111002,
+          "points": 1
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 2111003,
+          "points": 30
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 2111002,
+          "points": 27
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 2110001,
+          "points": 3
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 2111004,
+          "points": 1
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 2111005,
+          "points": 11
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 2111004,
+          "points": 19
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 2111002,
+          "points": 2
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 2110001,
+          "points": 27
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 2111005,
+          "points": 9
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 2110000,
+          "points": 20
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 2111006,
+          "points": 1
+        }
+      ],
+      "dumpSkillIds": []
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-il-mage",
+      "profileVersion": 1,
+      "jobFamily": "MAGICIAN",
+      "inheritedSkillLevels": {
+        "2200000": 20,
+        "2001004": 1,
+        "2201004": 30,
+        "2201003": 1,
+        "2201002": 20,
+        "2201001": 20,
+        "2201005": 30,
+        "2001005": 20,
+        "2000001": 10,
+        "2000000": 16,
+        "2001002": 20
+      },
+      "supportedThroughLevel": 120,
+      "exactJobId": 221,
+      "startingLevel": 70,
+      "entrySp": 1,
+      "segments": [
+        {
+          "minimumLevel": 70,
+          "skillId": 2211002,
+          "points": 30
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 2210001,
+          "points": 3
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 2211005,
+          "points": 11
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 2210001,
+          "points": 27
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 2211004,
+          "points": 1
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 2211005,
+          "points": 9
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 2211004,
+          "points": 19
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 2210000,
+          "points": 1
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 2211003,
+          "points": 30
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 2210000,
+          "points": 19
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 2211006,
+          "points": 1
+        }
+      ],
+      "dumpSkillIds": []
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-priest",
+      "profileVersion": 1,
+      "jobFamily": "MAGICIAN",
+      "inheritedSkillLevels": {
+        "2301004": 20,
+        "2001004": 1,
+        "2301001": 20,
+        "2301003": 20,
+        "2301002": 30,
+        "2300000": 20,
+        "2301005": 11,
+        "2001005": 20,
+        "2000001": 10,
+        "2000000": 16,
+        "2001002": 20
+      },
+      "supportedThroughLevel": 120,
+      "exactJobId": 231,
+      "startingLevel": 70,
+      "entrySp": 1,
+      "segments": [
+        {
+          "minimumLevel": 70,
+          "skillId": 2311004,
+          "points": 1
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 2311001,
+          "points": 3
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 2311003,
+          "points": 30
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 2311002,
+          "points": 4
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 2311004,
+          "points": 29
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 2311005,
+          "points": 30
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 2311002,
+          "points": 16
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 2311001,
+          "points": 17
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 2310000,
+          "points": 6
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 2311006,
+          "points": 15
+        }
+      ],
+      "dumpSkillIds": []
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-ranger",
+      "profileVersion": 1,
+      "jobFamily": "BOWMAN",
+      "inheritedSkillLevels": {
+        "3101003": 20,
+        "3101002": 20,
+        "3000000": 3,
+        "3001005": 20,
+        "3000001": 20,
+        "3001003": 20,
+        "3001004": 1,
+        "3000002": 8,
+        "3100000": 20,
+        "3101005": 30,
+        "3101004": 20
+      },
+      "supportedThroughLevel": 120,
+      "exactJobId": 311,
+      "startingLevel": 70,
+      "entrySp": 1,
+      "segments": [
+        {
+          "minimumLevel": 70,
+          "skillId": 3111006,
+          "points": 1
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 3110001,
+          "points": 5
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 3111004,
+          "points": 30
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 3111006,
+          "points": 29
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 3111002,
+          "points": 6
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 3111003,
+          "points": 30
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 3111002,
+          "points": 14
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 3110000,
+          "points": 7
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 3111005,
+          "points": 29
+        }
+      ],
+      "dumpSkillIds": []
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-sniper",
+      "profileVersion": 1,
+      "jobFamily": "BOWMAN",
+      "inheritedSkillLevels": {
+        "3201002": 20,
+        "3000000": 3,
+        "3001005": 20,
+        "3000001": 20,
+        "3001003": 20,
+        "3201005": 30,
+        "3001004": 1,
+        "3000002": 8,
+        "3200000": 20,
+        "3201003": 20,
+        "3201004": 20
+      },
+      "supportedThroughLevel": 120,
+      "exactJobId": 321,
+      "startingLevel": 70,
+      "entrySp": 1,
+      "segments": [
+        {
+          "minimumLevel": 70,
+          "skillId": 3211006,
+          "points": 1
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 3211003,
+          "points": 1
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 3210001,
+          "points": 5
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 3211004,
+          "points": 30
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 3211006,
+          "points": 29
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 3211002,
+          "points": 6
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 3211003,
+          "points": 20
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 3211002,
+          "points": 14
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 3210000,
+          "points": 20
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 3211003,
+          "points": 9
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 3211005,
+          "points": 15
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 3210001,
+          "points": 1
+        }
+      ],
+      "dumpSkillIds": []
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-hermit",
+      "profileVersion": 1,
+      "jobFamily": "THIEF",
+      "inheritedSkillLevels": {
+        "4100001": 30,
+        "4101005": 28,
+        "4100000": 20,
+        "4001003": 20,
+        "4000001": 8,
+        "4101003": 20,
+        "4101004": 20,
+        "4100002": 3,
+        "4001344": 20,
+        "4000000": 10,
+        "4001002": 3
+      },
+      "supportedThroughLevel": 120,
+      "exactJobId": 411,
+      "startingLevel": 70,
+      "entrySp": 1,
+      "segments": [
+        {
+          "minimumLevel": 70,
+          "skillId": 4111005,
+          "points": 1
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 4111002,
+          "points": 30
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 4111005,
+          "points": 4
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 4111006,
+          "points": 20
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 4111005,
+          "points": 25
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 4111003,
+          "points": 20
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 4110000,
+          "points": 20
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 4111001,
+          "points": 20
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 4101005,
+          "points": 2
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 4000000,
+          "points": 9
+        }
+      ],
+      "dumpSkillIds": []
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-chief-bandit",
+      "profileVersion": 1,
+      "jobFamily": "THIEF",
+      "inheritedSkillLevels": {
+        "4201005": 30,
+        "4201004": 11,
+        "4201003": 20,
+        "4201002": 20,
+        "4001334": 10,
+        "4001003": 20,
+        "4200001": 20,
+        "4000001": 8,
+        "4000000": 20,
+        "4001002": 3,
+        "4200000": 20
+      },
+      "supportedThroughLevel": 120,
+      "exactJobId": 421,
+      "startingLevel": 70,
+      "entrySp": 1,
+      "segments": [
+        {
+          "minimumLevel": 70,
+          "skillId": 4211006,
+          "points": 1
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 4211002,
+          "points": 1
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 4211001,
+          "points": 3
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 4211005,
+          "points": 1
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 4211006,
+          "points": 29
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 4211004,
+          "points": 30
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 4211002,
+          "points": 29
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 4211005,
+          "points": 19
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 4201004,
+          "points": 19
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 4211001,
+          "points": 18
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 4211003,
+          "points": 1
+        }
+      ],
+      "dumpSkillIds": []
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-marauder",
+      "profileVersion": 1,
+      "jobFamily": "PIRATE",
+      "inheritedSkillLevels": {
+        "5101004": 20,
+        "5101003": 1,
+        "5101002": 20,
+        "5100001": 20,
+        "5100000": 10,
+        "5001005": 10,
+        "5001003": 1,
+        "5001002": 20,
+        "5001001": 20,
+        "5000000": 20,
+        "5101007": 10,
+        "5101006": 20,
+        "5101005": 10
+      },
+      "supportedThroughLevel": 120,
+      "exactJobId": 511,
+      "startingLevel": 70,
+      "entrySp": 1,
+      "segments": [
+        {
+          "minimumLevel": 70,
+          "skillId": 5111005,
+          "points": 1
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 5111006,
+          "points": 1
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 5110001,
+          "points": 1
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 5111002,
+          "points": 1
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 5111004,
+          "points": 1
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 5110001,
+          "points": 39
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 5111002,
+          "points": 29
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 5111006,
+          "points": 20
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 5111004,
+          "points": 19
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 5110000,
+          "points": 20
+        },
+        {
+          "minimumLevel": 70,
+          "skillId": 5111005,
+          "points": 19
+        }
+      ],
+      "dumpSkillIds": []
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-outlaw",
+      "profileVersion": 1,
+      "jobFamily": "PIRATE",
+      "inheritedSkillLevels": {
+        "5200000": 20,
+        "5001005": 10,
+        "5000000": 20,
+        "5001003": 20,
+        "5001002": 20,
+        "5201006": 20,
+        "5201005": 10,
+        "5201004": 20,
+        "5201003": 20,
+        "5201002": 1,
+        "5201001": 20,
+        "5001001": 1
+      },
+      "supportedThroughLevel": 120,
+      "exactJobId": 521,
+      "startingLevel": 70,
+      "entrySp": 1,
+      "segments": [
+        {
+          "minimumLevel": 70,
+          "skillId": 5211005,
+          "points": 1
+        },
+        {
+          "minimumLevel": 74,
+          "skillId": 5210000,
+          "points": 20
+        },
+        {
+          "minimumLevel": 74,
+          "skillId": 5211004,
+          "points": 6
+        },
+        {
+          "minimumLevel": 74,
+          "skillId": 5211005,
+          "points": 6
+        },
+        {
+          "minimumLevel": 74,
+          "skillId": 5211004,
+          "points": 6
+        },
+        {
+          "minimumLevel": 74,
+          "skillId": 5211005,
+          "points": 6
+        },
+        {
+          "minimumLevel": 74,
+          "skillId": 5211004,
+          "points": 6
+        },
+        {
+          "minimumLevel": 74,
+          "skillId": 5211005,
+          "points": 6
+        },
+        {
+          "minimumLevel": 74,
+          "skillId": 5211004,
+          "points": 6
+        },
+        {
+          "minimumLevel": 74,
+          "skillId": 5211005,
+          "points": 6
+        },
+        {
+          "minimumLevel": 74,
+          "skillId": 5211004,
+          "points": 6
+        },
+        {
+          "minimumLevel": 74,
+          "skillId": 5211005,
+          "points": 1
+        },
+        {
+          "minimumLevel": 74,
+          "skillId": 5211002,
+          "points": 1
+        },
+        {
+          "minimumLevel": 74,
+          "skillId": 5211001,
+          "points": 30
+        },
+        {
+          "minimumLevel": 74,
+          "skillId": 5211002,
+          "points": 14
+        },
+        {
+          "minimumLevel": 74,
+          "skillId": 5211006,
+          "points": 30
+        }
+      ],
+      "dumpSkillIds": []
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-hero",
+      "profileVersion": 1,
+      "jobFamily": "WARRIOR",
+      "inheritedSkillLevels": {
+        "1101007": 30,
+        "1101006": 20,
+        "1101004": 20,
+        "1100002": 30,
+        "1111002": 30,
+        "1100000": 20,
+        "1111005": 30,
+        "1111008": 30,
+        "1111007": 20,
+        "1001005": 20,
+        "1001004": 20,
+        "1001003": 4,
+        "1111003": 30,
+        "1000002": 3,
+        "1000001": 10,
+        "1000000": 5,
+        "1110000": 11
+      },
+      "supportedThroughLevel": 200,
+      "exactJobId": 112,
+      "startingLevel": 120,
+      "entrySp": 3,
+      "segments": [
+        {
+          "minimumLevel": 120,
+          "skillId": 1120003,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1121006,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1121008,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1120003,
+          "points": 29
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1121002,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1121001,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1121011,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1121010,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1121000,
+          "points": 19
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1121006,
+          "points": 27
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1121011,
+          "points": 4
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1120004,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1121000,
+          "points": 1
+        }
+      ],
+      "dumpSkillIds": [
+        1110000,
+        1120005
+      ]
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-paladin",
+      "profileVersion": 1,
+      "jobFamily": "WARRIOR",
+      "inheritedSkillLevels": {
+        "1211009": 20,
+        "1211007": 30,
+        "1211005": 30,
+        "1211003": 30,
+        "1211002": 30,
+        "1210000": 11,
+        "1201007": 30,
+        "1201006": 20,
+        "1201004": 20,
+        "1200002": 30,
+        "1200000": 20,
+        "1001005": 20,
+        "1001004": 20,
+        "1001003": 4,
+        "1000002": 3,
+        "1000001": 10,
+        "1000000": 5
+      },
+      "supportedThroughLevel": 200,
+      "exactJobId": 122,
+      "startingLevel": 120,
+      "entrySp": 3,
+      "segments": [
+        {
+          "minimumLevel": 120,
+          "skillId": 1221007,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1221011,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1220010,
+          "points": 10
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1221009,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1221002,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1221001,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1221012,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1221011,
+          "points": 29
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1221000,
+          "points": 19
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1221003,
+          "points": 20
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1221007,
+          "points": 27
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1221012,
+          "points": 4
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1220005,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1221000,
+          "points": 1
+        }
+      ],
+      "dumpSkillIds": [
+        1210000,
+        1220006
+      ]
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-dark-knight-hybrid",
+      "profileVersion": 1,
+      "jobFamily": "WARRIOR",
+      "inheritedSkillLevels": {
+        "1311003": 1,
+        "1311008": 20,
+        "1311007": 17,
+        "1311006": 30,
+        "1311005": 3,
+        "1311004": 30,
+        "1001004": 20,
+        "1311001": 30,
+        "1310000": 20,
+        "1300000": 20,
+        "1301007": 30,
+        "1301006": 11,
+        "1301005": 20,
+        "1301004": 20,
+        "1001005": 20,
+        "1300001": 20,
+        "1001003": 3,
+        "1000002": 3,
+        "1000001": 10,
+        "1000000": 5
+      },
+      "supportedThroughLevel": 200,
+      "exactJobId": 132,
+      "startingLevel": 120,
+      "entrySp": 3,
+      "segments": [
+        {
+          "minimumLevel": 120,
+          "skillId": 1321003,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1321007,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1320006,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1321002,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1321007,
+          "points": 9
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1321001,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1320005,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1321010,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1321000,
+          "points": 19
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1311007,
+          "points": 3
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1320009,
+          "points": 21
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1321003,
+          "points": 27
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1311003,
+          "points": 29
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1321010,
+          "points": 4
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1321000,
+          "points": 1
+        }
+      ],
+      "dumpSkillIds": [
+        1320008
+      ]
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-dark-knight-spear",
+      "profileVersion": 1,
+      "jobFamily": "WARRIOR",
+      "inheritedSkillLevels": {
+        "1311003": 13,
+        "1311008": 20,
+        "1311007": 20,
+        "1311006": 30,
+        "1311005": 18,
+        "1001004": 20,
+        "1311001": 30,
+        "1310000": 20,
+        "1300000": 20,
+        "1301007": 30,
+        "1301006": 11,
+        "1301005": 20,
+        "1301004": 20,
+        "1001005": 20,
+        "1300001": 20,
+        "1001003": 3,
+        "1000002": 3,
+        "1000001": 10,
+        "1000000": 5
+      },
+      "supportedThroughLevel": 200,
+      "exactJobId": 132,
+      "startingLevel": 120,
+      "entrySp": 3,
+      "segments": [
+        {
+          "minimumLevel": 120,
+          "skillId": 1321003,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1321007,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1320006,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1321002,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1321007,
+          "points": 9
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1321001,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1320005,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1321010,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1321000,
+          "points": 19
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1320009,
+          "points": 21
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1321003,
+          "points": 27
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1311003,
+          "points": 17
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1321010,
+          "points": 4
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1320009,
+          "points": 4
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 1321000,
+          "points": 1
+        }
+      ],
+      "dumpSkillIds": [
+        1320008
+      ]
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-fp-arch-mage",
+      "profileVersion": 1,
+      "jobFamily": "MAGICIAN",
+      "inheritedSkillLevels": {
+        "2101005": 30,
+        "2101004": 30,
+        "2101003": 1,
+        "2101002": 20,
+        "2101001": 20,
+        "2100000": 20,
+        "2111002": 30,
+        "2111006": 1,
+        "2111003": 30,
+        "2001005": 20,
+        "2001004": 1,
+        "2111004": 20,
+        "2001002": 20,
+        "2110001": 30,
+        "2000001": 10,
+        "2000000": 16,
+        "2110000": 20,
+        "2111005": 20
+      },
+      "supportedThroughLevel": 200,
+      "exactJobId": 212,
+      "startingLevel": 120,
+      "entrySp": 3,
+      "segments": [
+        {
+          "minimumLevel": 120,
+          "skillId": 2121006,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 2121007,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 2121000,
+          "points": 19
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 2121007,
+          "points": 29
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 2121006,
+          "points": 29
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 2121003,
+          "points": 5
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 2121005,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 2121004,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 2121008,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 2121003,
+          "points": 25
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 2121001,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 2121008,
+          "points": 4
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 2121002,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 2121000,
+          "points": 1
+        }
+      ],
+      "dumpSkillIds": [
+        2101003,
+        2001003
+      ]
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-il-arch-mage",
+      "profileVersion": 1,
+      "jobFamily": "MAGICIAN",
+      "inheritedSkillLevels": {
+        "2211006": 1,
+        "2211005": 20,
+        "2211004": 20,
+        "2211003": 30,
+        "2211002": 30,
+        "2210001": 30,
+        "2210000": 20,
+        "2201005": 30,
+        "2201004": 30,
+        "2201003": 1,
+        "2201002": 20,
+        "2201001": 20,
+        "2200000": 20,
+        "2001005": 20,
+        "2001004": 1,
+        "2001002": 20,
+        "2000001": 10,
+        "2000000": 16
+      },
+      "supportedThroughLevel": 200,
+      "exactJobId": 222,
+      "startingLevel": 120,
+      "entrySp": 3,
+      "segments": [
+        {
+          "minimumLevel": 120,
+          "skillId": 2221007,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 2221006,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 2221000,
+          "points": 19
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 2221007,
+          "points": 29
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 2221006,
+          "points": 29
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 2221003,
+          "points": 5
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 2221005,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 2221003,
+          "points": 25
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 2221008,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 2221004,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 2221001,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 2221008,
+          "points": 4
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 2221002,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 2221000,
+          "points": 1
+        }
+      ],
+      "dumpSkillIds": [
+        2201003,
+        2001003
+      ]
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-bishop",
+      "profileVersion": 1,
+      "jobFamily": "MAGICIAN",
+      "inheritedSkillLevels": {
+        "2001005": 20,
+        "2311006": 15,
+        "2311005": 30,
+        "2311004": 30,
+        "2311003": 30,
+        "2311002": 20,
+        "2311001": 20,
+        "2310000": 6,
+        "2301005": 11,
+        "2301004": 20,
+        "2301003": 20,
+        "2301002": 30,
+        "2301001": 20,
+        "2001004": 1,
+        "2300000": 20,
+        "2001002": 20,
+        "2000001": 10,
+        "2000000": 16
+      },
+      "supportedThroughLevel": 200,
+      "exactJobId": 232,
+      "startingLevel": 120,
+      "entrySp": 3,
+      "segments": [
+        {
+          "minimumLevel": 120,
+          "skillId": 2321008,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 2321000,
+          "points": 19
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 2321006,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 2321008,
+          "points": 29
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 2321003,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 2321005,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 2321009,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 2321007,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 2310000,
+          "points": 14
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 2321009,
+          "points": 4
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 2321004,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 2321006,
+          "points": 9
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 2321001,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 2321000,
+          "points": 1
+        }
+      ],
+      "dumpSkillIds": [
+        2321002
+      ]
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-bowmaster",
+      "profileVersion": 1,
+      "jobFamily": "BOWMAN",
+      "inheritedSkillLevels": {
+        "3101005": 30,
+        "3101004": 20,
+        "3101003": 20,
+        "3101002": 20,
+        "3100000": 20,
+        "3111004": 30,
+        "3110001": 5,
+        "3111005": 29,
+        "3111006": 30,
+        "3001005": 20,
+        "3001004": 1,
+        "3001003": 20,
+        "3111003": 30,
+        "3000002": 8,
+        "3000001": 20,
+        "3000000": 3,
+        "3110000": 7,
+        "3111002": 20
+      },
+      "supportedThroughLevel": 200,
+      "exactJobId": 312,
+      "startingLevel": 120,
+      "entrySp": 3,
+      "segments": [
+        {
+          "minimumLevel": 120,
+          "skillId": 3121004,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 3120005,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 3121003,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 3121002,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 3121004,
+          "points": 29
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 3121006,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 3120005,
+          "points": 25
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 3121000,
+          "points": 19
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 3121009,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 3120005,
+          "points": 4
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 3121007,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 3121006,
+          "points": 29
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 3121009,
+          "points": 4
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 3121003,
+          "points": 20
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 3121008,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 3121000,
+          "points": 1
+        }
+      ],
+      "dumpSkillIds": [
+        3110001,
+        3110000
+      ]
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-marksman",
+      "profileVersion": 1,
+      "jobFamily": "BOWMAN",
+      "inheritedSkillLevels": {
+        "3211006": 30,
+        "3211005": 15,
+        "3211004": 30,
+        "3211003": 30,
+        "3211002": 20,
+        "3210001": 6,
+        "3210000": 20,
+        "3201005": 30,
+        "3201004": 20,
+        "3201003": 20,
+        "3201002": 20,
+        "3200000": 20,
+        "3001005": 20,
+        "3001004": 1,
+        "3001003": 20,
+        "3000002": 8,
+        "3000001": 20,
+        "3000000": 3
+      },
+      "supportedThroughLevel": 200,
+      "exactJobId": 322,
+      "startingLevel": 120,
+      "entrySp": 3,
+      "segments": [
+        {
+          "minimumLevel": 120,
+          "skillId": 3221007,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 3221005,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 3220004,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 3221002,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 3221003,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 3221007,
+          "points": 29
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 3220004,
+          "points": 29
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 3221008,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 3221001,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 3221000,
+          "points": 19
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 3221006,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 3221005,
+          "points": 29
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 3221008,
+          "points": 4
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 3221003,
+          "points": 20
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 3221000,
+          "points": 1
+        }
+      ],
+      "dumpSkillIds": [
+        3210001,
+        3211005
+      ]
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-night-lord",
+      "profileVersion": 1,
+      "jobFamily": "THIEF",
+      "inheritedSkillLevels": {
+        "4101005": 30,
+        "4101004": 20,
+        "4101003": 20,
+        "4100002": 3,
+        "4100001": 30,
+        "4100000": 20,
+        "4111001": 20,
+        "4111003": 20,
+        "4001344": 20,
+        "4111006": 20,
+        "4111005": 30,
+        "4001003": 20,
+        "4001002": 3,
+        "4111002": 30,
+        "4000001": 8,
+        "4000000": 19,
+        "4110000": 20
+      },
+      "supportedThroughLevel": 200,
+      "exactJobId": 412,
+      "startingLevel": 120,
+      "entrySp": 3,
+      "segments": [
+        {
+          "minimumLevel": 120,
+          "skillId": 4121007,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 4121006,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 4121007,
+          "points": 29
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 4121000,
+          "points": 19
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 4120002,
+          "points": 10
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 4121003,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 4120002,
+          "points": 20
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 4121006,
+          "points": 29
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 4121009,
+          "points": 5
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 4121008,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 4121003,
+          "points": 29
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 4120005,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 4121000,
+          "points": 1
+        }
+      ],
+      "dumpSkillIds": [
+        4100002,
+        4111004
+      ]
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-shadower",
+      "profileVersion": 1,
+      "jobFamily": "THIEF",
+      "inheritedSkillLevels": {
+        "4211006": 30,
+        "4211005": 20,
+        "4211004": 30,
+        "4211003": 1,
+        "4211002": 30,
+        "4211001": 21,
+        "4201005": 30,
+        "4201004": 30,
+        "4201003": 20,
+        "4201002": 20,
+        "4200001": 20,
+        "4200000": 20,
+        "4001003": 20,
+        "4001002": 3,
+        "4001334": 10,
+        "4000001": 8,
+        "4000000": 20
+      },
+      "supportedThroughLevel": 200,
+      "exactJobId": 422,
+      "startingLevel": 120,
+      "entrySp": 3,
+      "segments": [
+        {
+          "minimumLevel": 120,
+          "skillId": 4221007,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 4221006,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 4221001,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 4221007,
+          "points": 29
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 4221006,
+          "points": 29
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 4220002,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 4221008,
+          "points": 5
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 4221000,
+          "points": 19
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 4221003,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 4220005,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 4211001,
+          "points": 9
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 4221000,
+          "points": 1
+        }
+      ],
+      "dumpSkillIds": [
+        4001002,
+        4221004
+      ]
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-buccaneer",
+      "profileVersion": 1,
+      "jobFamily": "PIRATE",
+      "inheritedSkillLevels": {
+        "5101004": 20,
+        "5101003": 1,
+        "5101002": 20,
+        "5100001": 20,
+        "5100000": 10,
+        "5111004": 20,
+        "5111006": 21,
+        "5110001": 40,
+        "5111002": 30,
+        "5001005": 10,
+        "5111005": 20,
+        "5001003": 1,
+        "5001002": 20,
+        "5001001": 20,
+        "5000000": 20,
+        "5110000": 20,
+        "5101007": 10,
+        "5101006": 20,
+        "5101005": 10
+      },
+      "supportedThroughLevel": 200,
+      "exactJobId": 512,
+      "startingLevel": 120,
+      "entrySp": 3,
+      "segments": [
+        {
+          "minimumLevel": 120,
+          "skillId": 5121007,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 5121001,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 5121010,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 5121003,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 5121004,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 5121009,
+          "points": 11
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 5121007,
+          "points": 29
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 5121001,
+          "points": 29
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 5121004,
+          "points": 29
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 5121003,
+          "points": 19
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 5121008,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 5121005,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 5121000,
+          "points": 19
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 5121010,
+          "points": 29
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 5121009,
+          "points": 9
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 5121008,
+          "points": 4
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 5121000,
+          "points": 1
+        }
+      ],
+      "dumpSkillIds": [
+        5121002
+      ]
+    },
+    {
+      "profileId": "mapleroyals-optimal-2026-corsair",
+      "profileVersion": 1,
+      "jobFamily": "PIRATE",
+      "inheritedSkillLevels": {
+        "5211005": 26,
+        "5211004": 30,
+        "5211002": 15,
+        "5211001": 30,
+        "5210000": 20,
+        "5201006": 20,
+        "5201005": 10,
+        "5201004": 20,
+        "5201003": 20,
+        "5201002": 1,
+        "5201001": 20,
+        "5200000": 20,
+        "5001005": 10,
+        "5001003": 20,
+        "5001002": 20,
+        "5001001": 1,
+        "5000000": 20,
+        "5211006": 30
+      },
+      "supportedThroughLevel": 200,
+      "exactJobId": 522,
+      "startingLevel": 120,
+      "entrySp": 3,
+      "segments": [
+        {
+          "minimumLevel": 120,
+          "skillId": 5221004,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 5220001,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 5221003,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 5220002,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 5221006,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 5221007,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 5220011,
+          "points": 20
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 5220002,
+          "points": 10
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 5221004,
+          "points": 29
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 5221010,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 5221006,
+          "points": 9
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 5220002,
+          "points": 9
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 5221000,
+          "points": 19
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 5221009,
+          "points": 1
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 5221008,
+          "points": 30
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 5220001,
+          "points": 29
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 5211005,
+          "points": 4
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 5221003,
+          "points": 29
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 5221010,
+          "points": 4
+        },
+        {
+          "minimumLevel": 120,
+          "skillId": 5221000,
+          "points": 1
+        }
+      ],
+      "dumpSkillIds": [
+        5211002,
+        5221009
+      ]
+    }
+  ]
+}

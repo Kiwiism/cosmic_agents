@@ -29,7 +29,7 @@ class AgentWorldDirectiveRequestCompilerTest {
                         AgentActivityKind.QUESTING,
                         AgentWorldActivityRequestType.INDIVIDUAL_QUEST,
                         Map.of("questId", "2000", "targetLevel", "21")));
-        assertEquals("victoria-training", individual.request().planId());
+        assertEquals("victoria-individual-quest", individual.request().planId());
         assertEquals(2000, individual.request().inputs().get("questId"));
         assertEquals(AgentActivityKind.HUNTING,
                 compiler.compile(directive(AgentActivityKind.HUNTING,

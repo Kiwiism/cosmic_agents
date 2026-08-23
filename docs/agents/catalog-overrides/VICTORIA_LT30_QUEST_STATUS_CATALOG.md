@@ -10,7 +10,7 @@ Source policy: `docs/agents/VICTORIA_LT30_QUEST_EDGE_CASE_REVIEW.md`
 | Status | Count | Meaning |
 | --- | ---: | --- |
 | `manual-review-required` | 17 | Not ready for autonomous scheduling. |
-| `normal` | 104 | Runnable with core navigation, NPC interaction, quest state, combat, loot, and inventory capabilities. |
+| `normal` | 106 | Runnable with core navigation, NPC interaction, quest state, combat, loot, and inventory capabilities. |
 | `postpone-outside-current-region` | 4 | Valid quest, but plan should postpone when objective leaves the current Victoria progression scope. |
 | `requires-chain-source-review` | 12 | Needs quest item source or chain dependency review. |
 | `requires-event-policy` | 7 | Seasonal/admin/special flow; disabled unless an event policy explicitly enables it. |
@@ -21,8 +21,8 @@ Source policy: `docs/agents/VICTORIA_LT30_QUEST_EDGE_CASE_REVIEW.md`
 | `requires-reactor-capability` | 3 | Runnable after agents can locate, hit/activate, and collect quest reactor outputs. |
 | `requires-script-review` | 9 | Needs script or auto-complete behavior review. |
 
-Runnable now with core capabilities: `104`
-Runnable after known capability gates: `116`
+Runnable now with core capabilities: `106`
+Runnable after known capability gates: `118`
 Review required before autonomous scheduling: `67`
 
 ## Scheduling Rule
@@ -143,7 +143,9 @@ Review required before autonomous scheduling: `67`
 | `28136` | The Wandering Alchemist Eurek's New Skill |  | Eurek the Alchemist (`2040050`) | Eurek the Alchemist (`2040050`) |  | Deemed runnable by current scan and policy once core agent capabilities exist. |
 | `28257` | Who Broke the Seal of Andras? |  | Dances with Balrog (`1022000`) | Dances with Balrog (`1022000`) | 4001367 x1 Ripped Paper-1 | Deemed runnable by current scan and policy once core agent capabilities exist. |
 | `28258` | Who Broke the Seal of Valefor? |  | Dark Lord (`1052001`) | Dark Lord (`1052001`) | 4001368 x1 Ripped Paper-2 | Deemed runnable by current scan and policy once core agent capabilities exist. |
+| `28259` | Who Broke the Seal of Amdusias? |  | Athena Pierce (`1012100`) | Athena Pierce (`1012100`) | 4001369 x1 Ripped Paper-3 | Deemed runnable by current scan and policy once core agent capabilities exist. |
 | `28260` | Who Broke the Seal of Crocell? |  | Kyrin (`1090000`) | Kyrin (`1090000`) | 4001370 x1 Ripped Paper-4 | Deemed runnable by current scan and policy once core agent capabilities exist. |
+| `28261` | Who Broke the Seal of Marbas? |  | Grendel the Really Old (`1032001`) | Grendel the Really Old (`1032001`) | 4001371 x1 Ripped Paper-5 | Deemed runnable by current scan and policy once core agent capabilities exist. |
 | `28262` | Revealed Identity |  | The Rememberer (`1061011`) | The Rememberer (`1061011`) | 4001371 x1 Ripped Paper-5<br>4001367 x1 Ripped Paper-1<br>4001368 x1 Ripped Paper-2<br>4001369 x1 Ripped Paper-3<br>4001370 x1 Ripped Paper-4 | Deemed runnable by current scan and policy once core agent capabilities exist. |
 | `28263` | The Rememberer's Training-1 | 25 | The Rememberer (`1061011`) | The Rememberer (`1061011`) | 2110200 x50 Horny Mushroom | Deemed runnable by current scan and policy once core agent capabilities exist. |
 | `28264` | The Rememberer's Training-2 | 25 | The Rememberer (`1061011`) | The Rememberer (`1061011`) | 2230101 x50 Zombie Mushroom | Deemed runnable by current scan and policy once core agent capabilities exist. |

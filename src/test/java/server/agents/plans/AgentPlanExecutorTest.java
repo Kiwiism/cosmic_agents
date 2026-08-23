@@ -154,6 +154,34 @@ class AgentPlanExecutorTest {
     }
 
     @Test
+    void expiredSuspendDeadlineRetainsTheExactInFlightPlan() {
+        ActiveStepExecutor steps = new ActiveStepExecutor();
+        AgentPlanDefinition durable = plan("suspendable", List.of(step("active", 0)), List.of());
+        AgentPlanExecutor executor = new AgentPlanExecutor(
+                new AgentPlanRepository(List.of(durable)),
+                new AgentPlanStepExecutorRegistry(List.of(steps)));
+        Character agent = agent(79);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+
+        assertTrue(executor.start(entry, agent, durable.planId(), AgentPlanStartRequest.EMPTY, 1_000L));
+        assertTrue(executor.tick(entry, agent, 1_001L));
+        AgentPlanSessionState state = entry.capabilityStates()
+                .require(AgentPlanSessionState.STATE_KEY);
+        AgentPlanSessionHandle handle = new AgentPlanSessionHandle(
+                "session-79", "request-79", "test", 79, durable.planId(), 1_000L);
+        state.own(handle);
+        state.requestExit(AgentPlanExitRequest.suspend(
+                handle, "operator pause", 1_002L, 1_100L));
+
+        assertTrue(executor.tick(entry, agent, 1_100L));
+
+        assertEquals(AgentPlanExecutionStatus.ACTIVE, state.status());
+        assertTrue(state.suspended());
+        assertEquals(AgentPlanSessionPhase.SUSPENDED, state.phase());
+        assertEquals(0, steps.ticks.get(), "suspension must not advance or cancel the step");
+    }
+
+    @Test
     void foregroundPauseStopsStepTicksAndPreservesTheEffectiveClock() {
         ActiveStepExecutor steps = new ActiveStepExecutor();
         AgentPlanDefinition durable = plan("pauseable", List.of(step("active", 0)), List.of());
@@ -221,6 +249,33 @@ class AgentPlanExecutorTest {
                         "autonomy-command", "autonomy-result"),
                 entry.capabilityStates().require(AgentDecisionProvenanceState.STATE_KEY)
                         .snapshot().stream().map(record -> record.domain()).toList());
+    }
+
+    @Test
+    void individualQuestPlanExitsOnRequestedQuestCompletionInsteadOfLevelGain() {
+        CompletingStepExecutor steps = new CompletingStepExecutor();
+        AgentPlanDefinition plan = new AgentPlanDefinition(
+                1, "individual", "1", "individual", "executable",
+                new AgentPlanDefinition.ObjectivePolicy(
+                        "test", 1, Long.MAX_VALUE, 0,
+                        AgentObjectiveSource.OPERATOR_COMMAND, "test-v1",
+                        AgentPlanDefinition.Registration.STEP),
+                List.of(), List.of(step("quest", 0)),
+                List.of(new AgentPlanDefinition.Condition(
+                        "quest.requested", "completed", true)), List.of());
+        AgentPlanExecutor executor = new AgentPlanExecutor(
+                new AgentPlanRepository(List.of(plan)),
+                new AgentPlanStepExecutorRegistry(List.of(steps)));
+        Character agent = agent(80);
+        when(agent.getQuestStatus(2000)).thenReturn((byte) 2);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+
+        assertTrue(executor.start(entry, agent, plan.planId(),
+                new AgentPlanStartRequest(Map.of("questId", 2000), null), 1_000L));
+        assertTrue(executor.tick(entry, agent, 1_001L));
+
+        assertEquals(AgentPlanExecutionStatus.SUCCEEDED, entry.capabilityStates()
+                .require(AgentPlanSessionState.STATE_KEY).status());
     }
 
     private static AgentPlanDefinition plan(

@@ -102,8 +102,22 @@ public final class AgentNavigationEdgeReliabilityState {
         if (attempt != null && attempt.edge.equals(signature)) {
             return;
         }
-        attempt = new Attempt(signature, currentRegionId, currentRegionId,
-                new Point(position), nowMs);
+        attempt = new Attempt(signature, currentRegionId,
+                position.distance(signature.endPoint()), nowMs);
+    }
+
+    /**
+     * Keeps an active traversal attempt alive while an owning foreground route deliberately
+     * spends a tick clearing a blocking monster. Combat is useful route progress even though
+     * the character position does not change; charging that time to the structural edge made
+     * the only usable jump or climb look unreliable and could suppress it for 30 seconds.
+     */
+    public synchronized void deferAttemptTimeout(int currentMapId, long nowMs) {
+        synchronizeMap(currentMapId);
+        if (attempt != null) {
+            attempt = new Attempt(attempt.edge, attempt.startedRegionId,
+                    attempt.bestDistanceToEndPx, nowMs);
+        }
     }
 
     /** Returns the edge whose attempt timed out, or null while progress remains valid. */
@@ -123,11 +137,10 @@ public final class AgentNavigationEdgeReliabilityState {
             attempt = null;
             return null;
         }
-        long toleranceSq = (long) Math.max(0, progressTolerancePx) * progressTolerancePx;
-        if (currentRegionId != attempt.lastRegionId
-                || attempt.lastPosition.distanceSq(position) > toleranceSq) {
+        double distanceToEnd = position.distance(attempt.edge.endPoint());
+        if (distanceToEnd + Math.max(0, progressTolerancePx) < attempt.bestDistanceToEndPx) {
             attempt = new Attempt(attempt.edge, attempt.startedRegionId,
-                    currentRegionId, new Point(position), nowMs);
+                    distanceToEnd, nowMs);
             return null;
         }
         if (nowMs - attempt.lastProgressAtMs < Math.max(1L, timeoutMs)) {
@@ -257,8 +270,7 @@ public final class AgentNavigationEdgeReliabilityState {
 
     private record Attempt(EdgeSignature edge,
                            int startedRegionId,
-                           int lastRegionId,
-                           Point lastPosition,
+                           double bestDistanceToEndPx,
                            long lastProgressAtMs) {
     }
 
@@ -283,6 +295,10 @@ public final class AgentNavigationEdgeReliabilityState {
 
         boolean matches(AgentNavigationGraph.Edge edge) {
             return edge != null && equals(of(edge));
+        }
+
+        Point endPoint() {
+            return new Point(endX, endY);
         }
 
         AgentNavigationGraph.Edge toEdge(int fromRegionId) {

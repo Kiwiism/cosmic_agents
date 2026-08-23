@@ -87,6 +87,17 @@ public final class AgentQuestCatalogRepository {
                         "quest " + prerequisite.questId() + " prerequisite is incomplete");
             }
         }
+        for (AgentQuestDefinition.StartItemRequirement requirement : quest.startItemRequirements()) {
+            if (context.itemCounts().getOrDefault(requirement.itemId(), 0)
+                    < requirement.requiredCount()) {
+                String item = requirement.itemName().isEmpty()
+                        ? "item " + requirement.itemId() : requirement.itemName();
+                String producers = requirement.producerQuestIds().isEmpty() ? ""
+                        : "; obtainable from quest(s) " + requirement.producerQuestIds();
+                return result(AgentQuestEligibility.Status.START_ITEM_LOCKED,
+                        "requires " + requirement.requiredCount() + " " + item + producers);
+            }
+        }
         AgentQuestAttemptRequirements requirements = quest.attemptRequirements();
         if (context.estimatedHitChanceBasisPoints() < requirements.minimumHitChanceBasisPoints()) {
             return result(AgentQuestEligibility.Status.ACCURACY_INSUFFICIENT,
@@ -176,10 +187,17 @@ public final class AgentQuestCatalogRepository {
                     objective.path("requiredCount").asInt(), List.of(), List.of()));
         }
         List<AgentQuestDefinition.Prerequisite> prerequisites = new ArrayList<>();
-        JsonNode prerequisite = node.path("prerequisiteRequirements");
-        if (prerequisite.path("questId").asInt() > 0) {
+        for (JsonNode prerequisite : nodes(node.get("prerequisiteRequirements"))) {
             prerequisites.add(new AgentQuestDefinition.Prerequisite(
                     prerequisite.path("questId").asInt(), prerequisite.path("state").asInt()));
+        }
+        List<AgentQuestDefinition.StartItemRequirement> startItemRequirements = new ArrayList<>();
+        for (JsonNode requirement : nodes(node.get("startItemRequirements"))) {
+            startItemRequirements.add(new AgentQuestDefinition.StartItemRequirement(
+                    requirement.path("itemId").asInt(), requirement.path("itemName").asText(""),
+                    requirement.path("requiredCount").asInt(),
+                    requirement.path("consumedOnStart").asBoolean(false),
+                    integers(requirement.path("producerQuestIds"))));
         }
         AgentQuestAttemptRequirements requirements = new AgentQuestAttemptRequirements(
                 guidance.minimumHitChanceBasisPoints(defaults),
@@ -198,6 +216,7 @@ public final class AgentQuestCatalogRepository {
         return new AgentQuestDefinition(
                 questId, requiredText(node, "questName"), minLevel, nullableInt(node.get("maxLevel")),
                 recommendedLevel, Set.copyOf(integers(node.path("jobs"))), prerequisites,
+                startItemRequirements,
                 node.path("autonomousStartAllowed").asBoolean(false)
                         && start.complete() && completion.complete(),
                 disposition, start, completion,
@@ -269,6 +288,14 @@ public final class AgentQuestCatalogRepository {
         if (node == null || !node.isArray()) return List.of();
         List<String> values = new ArrayList<>();
         node.forEach(value -> values.add(value.asText("")));
+        return List.copyOf(values);
+    }
+
+    private static List<JsonNode> nodes(JsonNode node) {
+        if (node == null || node.isNull() || node.isMissingNode()) return List.of();
+        if (!node.isArray()) return List.of(node);
+        List<JsonNode> values = new ArrayList<>();
+        node.forEach(values::add);
         return List.copyOf(values);
     }
 

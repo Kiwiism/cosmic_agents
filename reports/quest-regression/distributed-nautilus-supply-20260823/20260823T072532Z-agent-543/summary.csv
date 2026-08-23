@@ -1,0 +1,2 @@
+"agentId","agentName","questId","questName","status","reason","elapsedSeconds","startMapId","endMapId","mapTrail"
+"543","Aluna90","2179","Protect The Nautilus' Emergency Food Supply","TIMEOUT_ACTIVE","time budget expired after 8 minute(s); quest accepted; objective or return trip still in progress","496.2","120000200","100020000","120000200>120000100>120000103>120000100>120000200>120000000>120010000>100030000"

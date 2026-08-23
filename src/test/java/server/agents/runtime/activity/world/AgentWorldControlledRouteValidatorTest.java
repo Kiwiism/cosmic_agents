@@ -4,12 +4,11 @@ import org.junit.jupiter.api.Test;
 import server.agents.plans.AgentPlanDefinition;
 import server.agents.plans.AgentPlanRepository;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentWorldControlledRouteValidatorTest {
     @Test
-    void level15RouteIsReadyAndLevel30OnlyReportsTheMissingSecondJobPlan() {
+    void level15AndLevel30RoutesAreReady() {
         AgentWorldActivityAdapterCatalog adapters = AgentWorldActivityAdapterCatalog.current();
         java.util.Set<String> planIds = AgentPlanRepository.defaultRepository().all().stream()
                 .map(AgentPlanDefinition::planId)
@@ -34,9 +33,6 @@ class AgentWorldControlledRouteValidatorTest {
                 AgentWorldControlledRouteValidator.validate(
                         AgentWorldControlledRoute.level30(), adapters, planIds);
 
-        assertFalse(level30.valid());
-        assertFalse(level30.issues().stream().anyMatch(issue -> issue.contains("PARTY_QUEST")));
-        assertTrue(level30.issues().stream().anyMatch(
-                issue -> issue.contains("victoria-second-job")));
+        assertTrue(level30.valid(), () -> String.join("; ", level30.issues()));
     }
 }

@@ -28,6 +28,9 @@ class AgentMapGraphWebServerTest {
             HttpResponse<String> missingFieldMap = client.send(
                     HttpRequest.newBuilder(URI.create(root + "/api/agentfield")).GET().build(),
                     HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> missingAgent = client.send(
+                    HttpRequest.newBuilder(URI.create(root + "/api/agenttrace?id=999999")).GET().build(),
+                    HttpResponse.BodyHandlers.ofString());
 
             assertEquals(200, page.statusCode());
             assertTrue(page.body().contains("Agent Map Graph"));
@@ -35,6 +38,8 @@ class AgentMapGraphWebServerTest {
             assertEquals(200, health.statusCode());
             assertTrue(health.body().contains("\"status\":\"UP\""));
             assertEquals(400, missingFieldMap.statusCode());
+            assertEquals(404, missingAgent.statusCode());
+            assertTrue(missingAgent.body().contains("Active Agent 999999 was not found"));
         } finally {
             server.stop();
         }

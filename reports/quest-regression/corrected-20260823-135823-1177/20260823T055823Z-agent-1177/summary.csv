@@ -1,0 +1,2 @@
+"agentId","agentName","questId","questName","status","reason","elapsedSeconds","startMapId","endMapId","mapTrail"
+"1177","QuestReg25","2010","Jane and the Wild Boar","FAILED","requested quest 2010 was suspended by the bounded struggle policy","166.3","104000000","104000100","104000000>104000100"

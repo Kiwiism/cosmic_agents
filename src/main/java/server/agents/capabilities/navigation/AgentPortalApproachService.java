@@ -30,6 +30,26 @@ public final class AgentPortalApproachService {
         return reachable != null ? reachable : center;
     }
 
+    /**
+     * Resolves the point navigation should approach before explicitly entering any portal.
+     * Ordinary map portals are sometimes authored a few pixels outside a foothold region;
+     * targeting that raw WZ coordinate leaves pathfinding with destination region {@code -1}.
+     * Keep the approach inside the portal activation box while grounding it on live geometry.
+     */
+    public static Point navigableTarget(MapleMap map, Portal portal) {
+        if (portal == null) {
+            return null;
+        }
+        Point specialized = target(map, portal);
+        if (map == null || portal.getType() == COLLISION_PORTAL_TYPE
+                || portal.getType() == SCRIPTED_COLLISION_PORTAL_TYPE) {
+            return specialized;
+        }
+        Point grounded = reachableApproachInBox(map, portal.getPosition(),
+                COLLISION_ENTER_X, COLLISION_ENTER_Y);
+        return grounded != null ? grounded : specialized;
+    }
+
     static Point reachableApproachInBox(MapleMap map, Point center, int radiusX, int radiusY) {
         if (map == null || center == null) {
             return null;

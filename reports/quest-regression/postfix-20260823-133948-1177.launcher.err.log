@@ -1,0 +1,6 @@
+Invoke-RestMethod: C:\Users\user\Documents\Cosmic Agents\tools\scripts\Invoke-AgentQuestPoolRegression.ps1:39
+Line |
+  39 |      Invoke-RestMethod -Method Get -Headers $headers -Uri $agentUrl
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     |  {   "code": "AGENT_OFFLINE",   "message": "Agent is offline; create an idle Director session before executing
+     | actions" }

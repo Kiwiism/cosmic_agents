@@ -430,6 +430,15 @@ $questFacts = foreach ($quest in @($questHunting.entries | Sort-Object questId))
                 }
             })
         }
+        startItemRequirements = @($quest.startItemRequirements | ForEach-Object {
+            [ordered]@{
+                itemId = [int] $_.itemId
+                itemName = [string] $_.itemName
+                requiredCount = [int] $_.requiredCount
+                consumedOnStart = [bool] $_.consumedOnStart
+                producerQuestIds = @($_.producerQuestIds | ForEach-Object { [int] $_ })
+            }
+        })
         autonomousStartAllowed = [bool] $quest.autonomousStartAllowed
         selectionDisposition = [string] $quest.selectionDisposition
         startNpcId = [int] $quest.startNpcId
@@ -446,6 +455,7 @@ $questFacts = foreach ($quest in @($questHunting.entries | Sort-Object questId))
                 sourceMobIds = @($_.sourceMobIds | ForEach-Object { [int] $_ })
             }
         })
+        shopProcurementObjectives = @($quest.shopProcurementObjectives)
         nonHuntingAcquisitionObjectives = @($quest.nonHuntingAcquisitionObjectives)
         warnings = @($quest.warnings)
     }
@@ -453,7 +463,8 @@ $questFacts = foreach ($quest in @($questHunting.entries | Sort-Object questId))
 
 $questItemDemandRows = @{}
 foreach ($quest in $questFacts) {
-    $collectObjectives = @($quest.objectives) + @($quest.nonHuntingAcquisitionObjectives)
+    $collectObjectives = @($quest.objectives) + @($quest.shopProcurementObjectives) `
+        + @($quest.nonHuntingAcquisitionObjectives)
     foreach ($objective in @($collectObjectives | Where-Object {
         [string] $_.type -eq "collect-item" -and [int] $_.targetId -gt 0 -and [int] $_.requiredCount -gt 0
     })) {

@@ -17,6 +17,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
+import server.agents.capabilities.build.profiles.AgentSpBuildProfileRepository;
+import server.agents.capabilities.build.profiles.AgentSpBuildProfileService;
 import server.agents.capabilities.build.AgentBuildRuntime;
 import server.agents.integration.SkillGateway;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -37,6 +39,55 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class AgentBuildServiceTest {
+    @Test
+    void sourceProfileTransitionsFromRogueToAssassinAndSpendsTheAdvancementPoint() {
+        Character bot = mock(Character.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
+        entry.spBuildProfileState().assign(AgentSpBuildProfileRepository.defaultRepository()
+                .find("mapleroyals-optimal-2026-rogue-assassin-first-job").orElseThrow());
+        int[] remainingSps = new int[5];
+        int book = GameConstants.getSkillBook(4100000 / 10000);
+        remainingSps[book] = 1;
+        Map<Integer, Integer> skillLevels = new HashMap<>();
+        Skill mastery = mockSkill(4100000, 20, false);
+        SkillGateway skills = mock(SkillGateway.class);
+        when(skills.getSkill(4100000)).thenReturn(mastery);
+        when(bot.getJob()).thenReturn(Job.ASSASSIN);
+        when(bot.getLevel()).thenReturn(30);
+        stubSkillState(bot, remainingSps, skillLevels);
+
+        AgentSpBuildProfileService.autoAssign(entry, bot, skills);
+
+        assertEquals("mapleroyals-optimal-2026-assassin",
+                entry.spBuildProfileState().profile().profileId());
+        assertEquals(1, skillLevels.getOrDefault(4100000, 0));
+        assertEquals(0, remainingSps[book]);
+    }
+
+    @Test
+    void fourthJobSourceProfileDoesNotBypassMasteryBookLimit() {
+        Character bot = mock(Character.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
+        entry.spBuildProfileState().assign(AgentSpBuildProfileRepository.defaultRepository()
+                .find("mapleroyals-optimal-2026-hero").orElseThrow());
+        int[] remainingSps = new int[5];
+        int book = GameConstants.getSkillBook(1120003 / 10000);
+        remainingSps[book] = 3;
+        Map<Integer, Integer> skillLevels = new HashMap<>();
+        Skill advancedCombo = mockSkill(1120003, 30, true);
+        SkillGateway skills = mock(SkillGateway.class);
+        when(skills.getSkill(1120003)).thenReturn(advancedCombo);
+        when(bot.getJob()).thenReturn(Job.HERO);
+        when(bot.getLevel()).thenReturn(120);
+        when(bot.getMasterLevel(advancedCombo)).thenReturn(0);
+        stubSkillState(bot, remainingSps, skillLevels);
+
+        AgentSpBuildProfileService.autoAssign(entry, bot, skills);
+
+        assertEquals(0, skillLevels.getOrDefault(1120003, 0));
+        assertEquals(3, remainingSps[book]);
+    }
+
     @Test
     void setApBuildConfirmsThroughAgentBuildRuntime() {
         Character bot = mock(Character.class);

@@ -26,16 +26,12 @@ function start(mode, type, selection) {
     } else if (status == 1) {
         qm.sendNext("Walk past the Mushroom Forest and when you reach the #bSplit Road of Choice#k, just walk towards the castle. Good luck.");
     } else if (status == 2) {
-        //qm.forceStartQuest();
-        //qm.forceStartQuest(2322, "1");
-        qm.gainExp(11000);
-        qm.sendOk("Good job navigating through the area.");
-        qm.forceCompleteQuest();
+        qm.forceStartQuest();
+        qm.sendOk("Inspect the sealed castle entrance, then return and report what you found.");
     } else if (status == 3) {
         qm.dispose();
     }
 }
-
 function end(mode, type, selection) {
     status++;
     if (mode != 1) {
@@ -56,4 +52,3 @@ function end(mode, type, selection) {
         qm.dispose();
     }
 }
-	

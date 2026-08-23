@@ -1,0 +1,2 @@
+{"occurredAt":"2026-08-23T07:25:34.5919986Z","agentId":535,"questId":28279,"type":"submitted","evidence":{"questName":"Start quest — [Collect] Red Ribbons Around the Pig's Neck","mapId":120000200}}
+{"occurredAt":"2026-08-23T07:26:38.8381073Z","agentId":535,"questId":28279,"type":"terminal","evidence":{"status":"COMPLETED","mapId":120000200,"reason":"plan exit criteria satisfied"}}

@@ -194,6 +194,25 @@ class AgentRopeMovementServiceTest {
     }
 
     @Test
+    void graphAuthoredStepOffLandsWithoutReprobingTheFoothold() {
+        Character agent = mock(Character.class);
+        when(agent.getPosition()).thenReturn(new Point(100, 20));
+        when(agent.getHp()).thenReturn(1);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        Rope rope = new Rope(100, 20, 80, false);
+        AgentRopeMovementService.attachToRope(entry, agent, rope, 20, -1);
+
+        Point authoredLanding = new Point(106, 18);
+        AgentRopeMovementService.stepOffRopeOntoGround(entry, agent, authoredLanding);
+
+        verify(agent).setPosition(authoredLanding);
+        assertFalse(AgentClimbStateRuntime.climbing(entry));
+        assertFalse(AgentMovementStateRuntime.inAir(entry));
+        assertEquals(0, AgentMovementStateRuntime.movementVelocityX(entry));
+        assertEquals(0, AgentMovementStateRuntime.movementVelocityY(entry));
+    }
+
+    @Test
     void beginGroundJumpInSwimMapUsesSwimImpulseWithoutPacketVelocityConversion() {
         MapleMap map = mock(MapleMap.class);
         when(map.isSwim()).thenReturn(true);
