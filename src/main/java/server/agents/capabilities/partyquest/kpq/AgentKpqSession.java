@@ -31,7 +31,8 @@ public final class AgentKpqSession {
     private final Map<Integer, AgentKpqMemberState> members = new LinkedHashMap<>();
     private Phase phase = Phase.PREPARING;
     private int eventLeaderId;
-    private int coordinatorAgentId;
+    /** Agent currently holding the central execution lease; this is not a visible party role. */
+    private int executionAgentId;
     private int formationCallerId;
     private int stageStep;
     private int attemptIndex;
@@ -40,7 +41,7 @@ public final class AgentKpqSession {
     private long phaseEnteredAtMs;
     private long lastProgressAtMs;
     private long readyAtMs;
-    private long lastCoordinatorTickMs = Long.MIN_VALUE;
+    private long lastExecutionTickMs = Long.MIN_VALUE;
     private boolean paused;
     private boolean memberCoordinationChatEnabled = DEFAULT_MEMBER_COORDINATION_CHAT_ENABLED;
     private String failure = "";
@@ -93,7 +94,7 @@ public final class AgentKpqSession {
         members.putIfAbsent(characterId, new AgentKpqMemberState(characterId, type, nextPartyNumber()));
         if (eventLeaderId == 0) {
             eventLeaderId = characterId;
-            coordinatorAgentId = characterId;
+            executionAgentId = characterId;
             formationCallerId = characterId;
             members.get(characterId).setRole(AgentKpqMemberState.Role.EVENT_LEADER);
         }
@@ -103,21 +104,22 @@ public final class AgentKpqSession {
         members.remove(characterId);
     }
 
-    public synchronized void setLeadership(int eventLeaderId, int coordinatorAgentId) {
+    public synchronized void setLeadership(int eventLeaderId, int executionAgentId) {
         AgentKpqMemberState eventLeader = members.get(eventLeaderId);
-        AgentKpqMemberState coordinator = members.get(coordinatorAgentId);
-        if (eventLeader == null || coordinator == null
-                || coordinator.memberType() != AgentKpqMemberState.MemberType.AGENT) {
-            throw new IllegalArgumentException("KPQ leadership requires a member leader and an Agent coordinator");
+        AgentKpqMemberState executionAgent = members.get(executionAgentId);
+        if (eventLeader == null || executionAgent == null
+                || executionAgent.memberType() != AgentKpqMemberState.MemberType.AGENT) {
+            throw new IllegalArgumentException(
+                    "KPQ leadership requires a member leader and an Agent execution owner");
         }
         members.values().stream()
                 .filter(member -> member.role() == AgentKpqMemberState.Role.EVENT_LEADER)
                 .forEach(member -> member.setRole(AgentKpqMemberState.Role.WAITING));
         this.eventLeaderId = eventLeaderId;
-        this.coordinatorAgentId = coordinatorAgentId;
+        this.executionAgentId = executionAgentId;
         this.formationCallerId = eventLeader.memberType() == AgentKpqMemberState.MemberType.AGENT
                 ? eventLeaderId
-                : coordinatorAgentId;
+                : 0;
         eventLeader.setRole(AgentKpqMemberState.Role.EVENT_LEADER);
     }
 
@@ -141,36 +143,36 @@ public final class AgentKpqSession {
         throw new IllegalStateException("No KPQ party number is available");
     }
 
-    public synchronized boolean claimCoordinatorTick(int characterId, long nowMs) {
-        return claimCoordinatorTick(characterId, nowMs, 3_000L);
+    public synchronized boolean claimExecutionTick(int characterId, long nowMs) {
+        return claimExecutionTick(characterId, nowMs, 3_000L);
     }
 
-    public synchronized boolean claimCoordinatorTick(int characterId, long nowMs, long leaseMs) {
+    public synchronized boolean claimExecutionTick(int characterId, long nowMs, long leaseMs) {
         AgentKpqMemberState candidate = members.get(characterId);
         if (candidate == null || candidate.memberType() != AgentKpqMemberState.MemberType.AGENT
-                || nowMs == lastCoordinatorTickMs) {
+                || nowMs == lastExecutionTickMs) {
             return false;
         }
-        boolean current = characterId == coordinatorAgentId;
-        boolean expired = lastCoordinatorTickMs == Long.MIN_VALUE
-                || nowMs - lastCoordinatorTickMs >= Math.max(1L, leaseMs);
+        boolean current = characterId == executionAgentId;
+        boolean expired = lastExecutionTickMs == Long.MIN_VALUE
+                || nowMs - lastExecutionTickMs >= Math.max(1L, leaseMs);
         if (!current && !expired) return false;
         if (!current) {
-            coordinatorAgentId = characterId;
+            executionAgentId = characterId;
         }
-        lastCoordinatorTickMs = nowMs;
+        lastExecutionTickMs = nowMs;
         return true;
     }
 
-    public synchronized boolean claimExpiredCoordinatorTick(int characterId, long nowMs, long leaseMs) {
+    public synchronized boolean claimExpiredExecutionTick(int characterId, long nowMs, long leaseMs) {
         AgentKpqMemberState candidate = members.get(characterId);
         if (candidate == null || candidate.memberType() != AgentKpqMemberState.MemberType.AGENT
-                || (lastCoordinatorTickMs != Long.MIN_VALUE
-                && nowMs - lastCoordinatorTickMs < Math.max(1L, leaseMs))) {
+                || (lastExecutionTickMs != Long.MIN_VALUE
+                && nowMs - lastExecutionTickMs < Math.max(1L, leaseMs))) {
             return false;
         }
-        coordinatorAgentId = characterId;
-        lastCoordinatorTickMs = nowMs;
+        executionAgentId = characterId;
+        lastExecutionTickMs = nowMs;
         return true;
     }
 
@@ -294,8 +296,8 @@ public final class AgentKpqSession {
     public synchronized int requestedPartySize() { return requestedPartySize; }
     public synchronized Phase phase() { return phase; }
     public synchronized int eventLeaderId() { return eventLeaderId; }
-    public synchronized int coordinatorAgentId() { return coordinatorAgentId; }
-    public synchronized void setCoordinatorAgentId(int id) { coordinatorAgentId = id; }
+    public synchronized int executionAgentId() { return executionAgentId; }
+    public synchronized void setExecutionAgentId(int id) { executionAgentId = id; }
     public synchronized int formationCallerId() { return formationCallerId; }
     public synchronized void setFormationCallerId(int id) { formationCallerId = id; }
     public synchronized List<AgentKpqMemberState> members() { return new ArrayList<>(members.values()); }

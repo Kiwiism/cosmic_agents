@@ -164,8 +164,8 @@ public final class AgentKpqAdmissionService {
                     ? AgentKpqMemberState.MemberType.AGENT : AgentKpqMemberState.MemberType.HUMAN;
             session.addMember(member.getId(), memberType);
         }
-        Character coordinator = validation.agentMembers().getFirst();
-        session.setLeadership(eventLeader.getId(), coordinator.getId());
+        Character executionAgent = validation.agentMembers().getFirst();
+        session.setLeadership(eventLeader.getId(), executionAgent.getId());
 
         boolean published = false;
         try {
@@ -187,16 +187,12 @@ public final class AgentKpqAdmissionService {
         }
 
         for (Character member : validation.members()) {
-            if (isAgent(member) && member.getId() != eventLeader.getId()
-                    && !(validation.eventLeaderIsHuman()
-                    && member.getId() == coordinator.getId())) {
+            if (isAgent(member) && member.getId() != eventLeader.getId()) {
                 AgentKpqDialogue.sayMapNow(member, "Joining KPQ.");
             }
         }
         if (isAgent(eventLeader)) {
             AgentKpqDialogue.sayMapNow(eventLeader, "Party ready.");
-        } else {
-            AgentKpqDialogue.sayMapNow(coordinator, "Party ready.");
         }
         return new AdmissionResult(true, "KPQ party admitted", session, engagement);
     }
@@ -231,7 +227,9 @@ public final class AgentKpqAdmissionService {
             return Validation.failure("The current Kerning event accepts three or four members");
         }
         List<Character> agents = unique.stream().filter(AgentKpqAdmissionService::isAgent).toList();
-        if (agents.isEmpty()) return Validation.failure("Autonomous KPQ requires at least one Agent coordinator");
+        if (agents.isEmpty()) {
+            return Validation.failure("Agent-assisted KPQ requires at least one Agent execution participant");
+        }
         AgentPartySnapshot party = AgentPartyGatewayRuntime.party().snapshot(eventLeader);
         if (party == null) return Validation.failure("The event leader has no party");
         Set<Integer> requestedIds = unique.stream().map(Character::getId)

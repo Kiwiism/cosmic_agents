@@ -66,7 +66,7 @@ public final class AgentKpqDefinition {
             throw new IllegalArgumentException("Invalid Stage " + stageNumber + " answer index " + answerIndex);
         }
         // The NPC script enumerates masks by excluded positions, which is the reverse of the
-        // coordinator's ascending occupied-position order.
+        // central solver's ascending occupied-position order.
         return combinations.get(combinations.size() - answerIndex - 1);
     }
 

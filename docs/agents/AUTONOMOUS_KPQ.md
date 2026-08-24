@@ -62,8 +62,10 @@ will enter.
    Shared combat-posture switching narration
    is suppressed for active KPQ members without changing combat decisions.
 10. Human leader/member seams. A human leader keeps every authoritative NPC and
-    pass action while an Agent coordinator narrates prompts and observes Cloto's
-    real puzzle verdict. A human member can occupy a puzzle position and receives
+    pass action while the central KPQ runtime silently assigns Agent work and
+    observes Cloto's real puzzle verdict. No Agent inherits a coordinator or
+    narrator identity merely by holding the execution lease. A human member can
+    occupy a puzzle position and receives
     a named assignment before the Agent assignments. Humans are never moved,
     clicked, looted for, or made to chat by the system.
 11. GM harness, stage checkpoints, pause/resume/status, rerun, stop, and random
@@ -117,14 +119,15 @@ at the Kerning entrance on the same world and channel. Once all three have joine
 the mixed party is admitted and the human leader receives the ordinary Lakelis
 prompt. All three modes require the operator to begin without a party.
 
-Human-led observation runs keep Agent execution coordination active but hide its
-shared progress and assignment chat by default. This prevents one Agent from
-appearing to claim the human leader's pass count. Use
+Human-led observation runs retain a transferable internal Agent execution lease,
+but have no formation caller or default Agent narrator. This prevents an execution
+participant from appearing to speak for the human leader. Use
 `!kpqtest coordination on` to show member coordination during the active lobby,
 event, or later rerun, and `!kpqtest coordination off` to hide it again. Individual
 Agent coupon targets/progress, delayed human assistance, and terminal failures
-remain visible because they are not proxy-leader narration. When enabled, shared
-Stage 1 totals are explicitly labeled `Passes with leader`.
+remain visible because they are bound to their acting Agent. When coordination is
+enabled, the current execution participant is explicitly allowed to speak shared
+instructions, and Stage 1 totals are labeled `Passes with leader`.
 
 ## Reusable party-quest lobby
 

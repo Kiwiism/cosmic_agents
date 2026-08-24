@@ -26,11 +26,11 @@ public final class AgentKpqRuntime {
             return AgentPartyQuestLifecycleRuntime.tick(agent.getId(), nowMs);
         }
         if (session.paused()) return true;
-        int previousCoordinator = session.coordinatorAgentId();
-        if (!session.claimCoordinatorTick(agent.getId(), nowMs, COORDINATOR_LEASE_MS)) return true;
-        if (previousCoordinator != session.coordinatorAgentId()) {
+        int previousExecutionAgent = session.executionAgentId();
+        if (!session.claimExecutionTick(agent.getId(), nowMs, COORDINATOR_LEASE_MS)) return true;
+        if (previousExecutionAgent != session.executionAgentId()) {
             log.warn("KPQ execution lease transferred without changing the party caller: session={} from={} to={} caller={}",
-                    session.sessionId(), previousCoordinator, session.coordinatorAgentId(),
+                    session.sessionId(), previousExecutionAgent, session.executionAgentId(),
                     session.formationCallerId());
         }
         AgentKpqCoordinator.tick(session, nowMs);

@@ -34,7 +34,7 @@ class AgentKpqSessionTest {
     }
 
     @Test
-    void firstMemberOwnsLeadershipAndOnlyCoordinatorTicksOncePerTimestamp() {
+    void firstMemberOwnsLeadershipAndOnlyExecutionOwnerTicksOncePerTimestamp() {
         AgentKpqSession session = new AgentKpqSession(
                 AgentKpqSession.Mode.TEST_OBSERVATION, 7L, 100, 3, 1_000L);
         session.addMember(20, AgentKpqMemberState.MemberType.AGENT);
@@ -43,36 +43,36 @@ class AgentKpqSessionTest {
         assertEquals(20, session.eventLeaderId());
         assertEquals(1, session.member(20).partyNumber());
         assertEquals(2, session.member(10).partyNumber());
-        assertTrue(session.claimCoordinatorTick(20, 2_000L));
-        assertFalse(session.claimCoordinatorTick(20, 2_000L));
-        assertFalse(session.claimCoordinatorTick(10, 2_001L));
+        assertTrue(session.claimExecutionTick(20, 2_000L));
+        assertFalse(session.claimExecutionTick(20, 2_000L));
+        assertFalse(session.claimExecutionTick(10, 2_001L));
     }
 
     @Test
-    void liveAgentTakesCoordinatorLeaseAfterHeartbeatExpires() {
+    void liveAgentTakesExecutionLeaseAfterHeartbeatExpires() {
         AgentKpqSession session = new AgentKpqSession(
                 AgentKpqSession.Mode.PRODUCTION, 7L, 100, 3, 1_000L);
         session.addMember(20, AgentKpqMemberState.MemberType.AGENT);
         session.addMember(10, AgentKpqMemberState.MemberType.AGENT);
 
-        assertTrue(session.claimCoordinatorTick(20, 2_000L, 3_000L));
-        assertFalse(session.claimCoordinatorTick(10, 4_999L, 3_000L));
-        assertTrue(session.claimCoordinatorTick(10, 5_000L, 3_000L));
-        assertEquals(10, session.coordinatorAgentId());
+        assertTrue(session.claimExecutionTick(20, 2_000L, 3_000L));
+        assertFalse(session.claimExecutionTick(10, 4_999L, 3_000L));
+        assertTrue(session.claimExecutionTick(10, 5_000L, 3_000L));
+        assertEquals(10, session.executionAgentId());
         assertEquals(20, session.formationCallerId());
     }
 
     @Test
-    void watchdogClaimDoesNotDuplicateAHealthyCoordinatorTick() {
+    void watchdogClaimDoesNotDuplicateAHealthyExecutionTick() {
         AgentKpqSession session = new AgentKpqSession(
                 AgentKpqSession.Mode.PRODUCTION, 7L, 100, 3, 1_000L);
         session.addMember(20, AgentKpqMemberState.MemberType.AGENT);
         session.addMember(10, AgentKpqMemberState.MemberType.AGENT);
 
-        assertTrue(session.claimCoordinatorTick(20, 2_000L, 3_000L));
-        assertFalse(session.claimExpiredCoordinatorTick(20, 2_500L, 3_000L));
-        assertTrue(session.claimExpiredCoordinatorTick(10, 5_000L, 3_000L));
-        assertEquals(10, session.coordinatorAgentId());
+        assertTrue(session.claimExecutionTick(20, 2_000L, 3_000L));
+        assertFalse(session.claimExpiredExecutionTick(20, 2_500L, 3_000L));
+        assertTrue(session.claimExpiredExecutionTick(10, 5_000L, 3_000L));
+        assertEquals(10, session.executionAgentId());
     }
 
     @Test
@@ -107,7 +107,7 @@ class AgentKpqSessionTest {
     }
 
     @Test
-    void humanLeaderUsesAgentCoordinatorAndNpcVerdictsAreConsumedOnce() {
+    void humanLeaderHasNoFormationCallerWhileExecutionLeaseRemainsAvailable() {
         AgentKpqSession session = new AgentKpqSession(
                 AgentKpqSession.Mode.PRODUCTION, 7L, 100, 4, 1_000L);
         session.addMember(100, AgentKpqMemberState.MemberType.HUMAN);
@@ -117,13 +117,13 @@ class AgentKpqSessionTest {
         session.setLeadership(100, 20);
 
         assertEquals(100, session.eventLeaderId());
-        assertEquals(20, session.coordinatorAgentId());
-        assertEquals(20, session.formationCallerId());
-        assertTrue(session.claimCoordinatorTick(20, 2_000L));
-        assertFalse(session.claimCoordinatorTick(100, 2_001L));
-        assertTrue(session.claimCoordinatorTick(21, 5_000L, 3_000L));
-        assertEquals(21, session.coordinatorAgentId());
-        assertEquals(20, session.formationCallerId());
+        assertEquals(20, session.executionAgentId());
+        assertEquals(0, session.formationCallerId());
+        assertTrue(session.claimExecutionTick(20, 2_000L));
+        assertFalse(session.claimExecutionTick(100, 2_001L));
+        assertTrue(session.claimExecutionTick(21, 5_000L, 3_000L));
+        assertEquals(21, session.executionAgentId());
+        assertEquals(0, session.formationCallerId());
 
         session.recordHumanPuzzleValidation(2, false);
         assertFalse(session.consumeHumanPuzzleValidation(2).accepted());
@@ -133,7 +133,7 @@ class AgentKpqSessionTest {
     }
 
     @Test
-    void agentEventLeaderRemainsFormationCallerWhenAnotherAgentExecutes() {
+    void agentEventLeaderRemainsFormationCallerWhenAnotherAgentOwnsExecution() {
         AgentKpqSession session = new AgentKpqSession(
                 AgentKpqSession.Mode.PRODUCTION, 7L, 100, 3, 1_000L);
         session.addMember(20, AgentKpqMemberState.MemberType.AGENT);
@@ -142,7 +142,7 @@ class AgentKpqSessionTest {
         session.setLeadership(20, 10);
 
         assertEquals(20, session.eventLeaderId());
-        assertEquals(10, session.coordinatorAgentId());
+        assertEquals(10, session.executionAgentId());
         assertEquals(20, session.formationCallerId());
     }
 

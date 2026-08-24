@@ -738,7 +738,7 @@ public final class AgentKpqTestService {
         List<List<Integer>> order = AgentKpqCombinationOrder.forPositionCount(definition.positions().size());
         int attempt = order.indexOf(combination);
         if (attempt < 0) {
-            return List.of("The live Stage " + stage + " answer is not in the coordinator's formation order.");
+            return List.of("The live Stage " + stage + " answer is not in the central formation order.");
         }
         session.setAttemptIndex(attempt);
         session.setCombination(List.of());

@@ -34,9 +34,12 @@ class AgentKpqCoordinatorTest {
         session.setMemberCoordinationChatEnabled(false);
 
         assertFalse(AgentKpqCoordinator.memberCoordinationVisible(session));
+        assertEquals(0, AgentKpqCoordinator.narrationSpeakerId(session));
+        assertEquals(101, AgentKpqCoordinator.failureSpeakerId(session));
 
         session.setMemberCoordinationChatEnabled(true);
         assertTrue(AgentKpqCoordinator.memberCoordinationVisible(session));
+        assertEquals(101, AgentKpqCoordinator.narrationSpeakerId(session));
     }
 
     @Test
@@ -50,6 +53,7 @@ class AgentKpqCoordinatorTest {
         session.setMemberCoordinationChatEnabled(false);
 
         assertTrue(AgentKpqCoordinator.memberCoordinationVisible(session));
+        assertEquals(101, AgentKpqCoordinator.narrationSpeakerId(session));
     }
 
     @Test

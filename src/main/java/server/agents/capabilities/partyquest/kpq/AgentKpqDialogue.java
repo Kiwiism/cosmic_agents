@@ -10,6 +10,7 @@ final class AgentKpqDialogue {
     }
 
     static void sayMapNow(Character speaker, String message) {
+        if (speaker == null) return;
         AgentPacketGatewayRuntime.packets().broadcastChatText(
                 speaker, AgentChatTextSanitizer.sanitize(message), false, 0);
     }

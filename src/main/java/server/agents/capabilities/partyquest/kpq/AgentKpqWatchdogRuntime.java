@@ -55,13 +55,13 @@ final class AgentKpqWatchdogRuntime {
                 .findFirst().orElse(null);
         if (candidateEntry == null) {
             AgentKpqTerminationService.fail(
-                    session, "No live Agent coordinator remains", nowMs);
+                    session, "No live Agent execution participant remains", nowMs);
             return;
         }
         Character candidate = AgentRuntimeIdentityRuntime.bot(candidateEntry);
         long leaseMs = config.AgentTuning.longValue(
                 "server.agents.capabilities.partyquest.kpq.AgentKpqRuntime.COORDINATOR_LEASE_MS");
-        if (session.claimExpiredCoordinatorTick(candidate.getId(), nowMs, leaseMs)) {
+        if (session.claimExpiredExecutionTick(candidate.getId(), nowMs, leaseMs)) {
             AgentKpqCoordinator.tick(session, nowMs);
         }
     }

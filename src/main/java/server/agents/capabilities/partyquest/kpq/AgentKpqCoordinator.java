@@ -139,10 +139,6 @@ final class AgentKpqCoordinator {
             fail(session, "The KPQ event instance disappeared or the leader left it", nowMs);
             return;
         }
-        if (narrator == null) {
-            fail(session, "The Agent coordinator is no longer active", nowMs);
-            return;
-        }
         switch (session.phase()) {
             case PREPARING -> prepare(session, leader, narrator, nowMs);
             case ENTERING -> enter(session, leader, narrator, nowMs);
@@ -1258,8 +1254,11 @@ final class AgentKpqCoordinator {
     }
 
     private static void fail(AgentKpqSession session, String reason, long nowMs) {
-        Character narrator = narrator(session);
-        if (narrator != null) narrate(session, narrator, "failed", "KPQ stopped: " + reason + '.');
+        int failureSpeakerId = failureSpeakerId(session);
+        Character failureSpeaker = failureSpeakerId <= 0 ? null : character(failureSpeakerId);
+        if (failureSpeaker != null) {
+            narrate(session, failureSpeaker, "failed", "KPQ stopped: " + reason + '.');
+        }
         log.error("KPQ session failure: session={} phase={} reason={} blocker={} blockerMs={} diagnostics={}",
                 session.sessionId(), session.phase(), reason, session.blockerKey(),
                 session.blockerSinceMs(), sessionDiagnostics(session));
@@ -1568,23 +1567,23 @@ final class AgentKpqCoordinator {
             fail(session, "The live KPQ party leader is not an event member; no rewards were awarded", nowMs);
             return false;
         }
-        int coordinatorId = session.member(session.coordinatorAgentId()) != null
-                ? session.coordinatorAgentId()
+        int executionAgentId = session.member(session.executionAgentId()) != null
+                ? session.executionAgentId()
                 : session.members().stream()
                 .filter(member -> member.memberType() == AgentKpqMemberState.MemberType.AGENT)
                 .mapToInt(AgentKpqMemberState::characterId).findFirst().orElse(0);
         if (liveLeaderId != session.eventLeaderId()
-                || coordinatorId != session.coordinatorAgentId()) {
-            if (coordinatorId <= 0) {
-                fail(session, "No Agent coordinator remained after the KPQ leader changed", nowMs);
+                || executionAgentId != session.executionAgentId()) {
+            if (executionAgentId <= 0) {
+                fail(session, "No Agent execution owner remained after the KPQ leader changed", nowMs);
                 return false;
             }
             Character newLeader = memberCharacter(liveLeaderId, partyAnchor);
-            session.setLeadership(liveLeaderId, coordinatorId);
+            session.setLeadership(liveLeaderId, executionAgentId);
             if (newLeader != null) event.setLeader(newLeader);
             session.markProgress(nowMs);
-            log.info("KPQ leadership reconciled to live party: session={} leader={} coordinator={} members={}",
-                    session.sessionId(), liveLeaderId, coordinatorId, session.memberCount());
+            log.info("KPQ leadership reconciled to live party: session={} leader={} executionAgent={} members={}",
+                    session.sessionId(), liveLeaderId, executionAgentId, session.memberCount());
             return false;
         }
         return true;
@@ -1611,8 +1610,22 @@ final class AgentKpqCoordinator {
     }
 
     private static Character narrator(AgentKpqSession session) {
-        Character caller = character(session.formationCallerId());
-        return caller != null ? caller : character(session.coordinatorAgentId());
+        int speakerId = narrationSpeakerId(session);
+        return speakerId <= 0 ? null : character(speakerId);
+    }
+
+    static int narrationSpeakerId(AgentKpqSession session) {
+        if (session == null) return 0;
+        if (session.formationCallerId() > 0) return session.formationCallerId();
+        return session.memberCoordinationChatEnabled() ? session.executionAgentId() : 0;
+    }
+
+    static int failureSpeakerId(AgentKpqSession session) {
+        if (session == null) return 0;
+        return session.members().stream()
+                .filter(member -> member.memberType() == AgentKpqMemberState.MemberType.AGENT)
+                .min(Comparator.comparingInt(AgentKpqMemberState::partyNumber))
+                .map(AgentKpqMemberState::characterId).orElse(0);
     }
 
     private static boolean isAgent(AgentKpqSession session, int characterId) {
