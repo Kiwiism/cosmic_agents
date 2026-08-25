@@ -125,8 +125,16 @@ public enum CosmicPrimitiveCapabilityGateway implements PrimitiveCapabilityGatew
         if (status == null) {
             return 0;
         }
+        int resolvedProgressId = progressId;
+        if (progressId > 0 && status.getInfoNumber() == progressId) {
+            status = agent.getQuestNoAdd(Quest.getInstance(progressId));
+            resolvedProgressId = 0;
+            if (status == null) {
+                return 0;
+            }
+        }
         try {
-            return Integer.parseInt(status.getProgress(progressId));
+            return Integer.parseInt(status.getProgress(resolvedProgressId));
         } catch (NumberFormatException ignored) {
             return 0;
         }
@@ -339,6 +347,9 @@ public enum CosmicPrimitiveCapabilityGateway implements PrimitiveCapabilityGatew
 
     @Override
     public boolean useItem(Character agent, int itemId) {
+        if (CosmicHeadlessItemScriptGateway.execute(agent, itemId)) {
+            return true;
+        }
         Inventory inventory = agent.getInventory(ItemConstants.getInventoryType(itemId));
         Item item = inventory == null ? null : inventory.findById(itemId);
         return item != null && CosmicInventoryGateway.INSTANCE.consumeUseItem(

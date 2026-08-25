@@ -30,14 +30,12 @@ function action(mode, type, selection) {
                 if (!(cm.haveItem(4031856, 15))) {
                     cm.sendSimple("You haven't brought me all the crystals yet. I'm looking forward for your progress, mate! \r\n#b#L1#I would like to leave#l");
                 } else {
-                    status++;
                     cm.sendNext("Wow, you have brought me 15 #b#t4031856##k! Congratulations. Let me warp you out now.");
                 }
             } else if (cm.getMapId() == 108000501) {
                 if (!(cm.haveItem(4031857, 15))) {
                     cm.sendSimple("You haven't brought me all the crystals yet. I'm looking forward for your progress, mate! \r\n#b#L1#I would like to leave#l");
                 } else {
-                    status++;
                     cm.sendNext("Wow, you have brought me 15 #b#t4031857##k! Congratulations. Let me warp you out now.");
                 }
             } else {

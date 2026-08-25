@@ -150,6 +150,7 @@ public final class AgentNavigationTargetService {
                 if (edge != null && ((!AgentNavigationRouteOverlayPolicy.allows(graph, targetRegionId, edge))
                         || AgentNavigationEdgeReliabilityRuntime.suppressed(
                                 entry, bot.getMapId(), edge, nowMs)
+                        || progressState.blocks(edge, nowMs)
                         || AgentVerticalTraversalService.blocksRecentInverseEntry(
                                 graph, entry, edge, nowMs))) {
                     AgentNavigationDebugStateRuntime.clearActiveNavigationEdge(entry);
@@ -390,8 +391,11 @@ public final class AgentNavigationTargetService {
         boolean authoredRouteOverlay = AgentNavigationRouteOverlayPolicy.applies(graph, targetRegionId);
         Predicate<AgentNavigationGraph.Edge> reliabilityFilter =
                 AgentNavigationEdgeReliabilityRuntime.edgeFilter(entry, graph.mapId, nowMs);
+        AgentNavigationProgressState progressState =
+                entry.capabilityStates().require(AgentNavigationProgressState.STATE_KEY);
         Predicate<AgentNavigationGraph.Edge> edgeFilter = edge ->
                 reliabilityFilter.test(edge)
+                        && !progressState.blocks(edge, nowMs)
                         && !AgentVerticalTraversalService.blocksRecentInverseEntry(
                                 graph, entry, edge, nowMs);
         ToIntFunction<AgentNavigationGraph.Edge> edgePenalty =

@@ -22,6 +22,7 @@ import java.util.Set;
 /** Resumable, live-state-reconciled Explorer second-job advancement. */
 public final class AgentSecondJobAdvancementRuntime {
     private static final int INTERACTION_DISTANCE_PX = 180;
+    private static final long TRIAL_REBALANCE_MS = 15_000L;
     private static final long TRIAL_TIMEOUT_MS = 20 * 60_000L;
 
     private AgentSecondJobAdvancementRuntime() { }
@@ -37,7 +38,13 @@ public final class AgentSecondJobAdvancementRuntime {
         if (state.branchId().isBlank()) return false;
         AgentSecondJobCatalog.Branch branch = AgentSecondJobCatalog.require(state.branchId());
         if (state.phase() == AgentSecondJobAdvancementState.Phase.BLOCKED) return false;
+        AgentSecondJobAdvancementState.Phase previousPhase = state.phase();
         AgentSecondJobAdvancementState.Phase phase = reconcile(agent, branch, gateway);
+        if (phase == AgentSecondJobAdvancementState.Phase.EXAMINER && previousPhase != phase) {
+            // End the trial combat once, then preserve the examiner approach route across ticks.
+            // Repeated stop calls used to reset navigation continuously on tall trial maps.
+            gateway.stop(entry);
+        }
         state.phase(phase, phaseReason(phase, branch, agent, gateway), nowMs);
 
         if (phase == AgentSecondJobAdvancementState.Phase.COMPLETE) {
@@ -67,7 +74,7 @@ public final class AgentSecondJobAdvancementRuntime {
         return switch (phase) {
             case LEADER -> leader(entry, agent, branch, gateway);
             case INSTRUCTOR -> instructor(entry, agent, branch, gateway);
-            case TRIAL -> trial(entry, agent, branch, gateway);
+            case TRIAL -> trial(entry, agent, branch, state, nowMs, gateway);
             case EXAMINER -> examiner(entry, agent, branch, gateway);
             case RETURN_TO_LEADER -> finalLeader(entry, agent, branch, state, nowMs, gateway);
             case VERIFY -> verify(entry, agent, branch, state, nowMs, gateway);
@@ -146,11 +153,18 @@ public final class AgentSecondJobAdvancementRuntime {
 
     private static boolean trial(AgentRuntimeEntry entry, Character agent,
                                  AgentSecondJobCatalog.Branch branch,
+                                 AgentSecondJobAdvancementState state, long nowMs,
                                  PrimitiveCapabilityGateway gateway) {
         if (!AgentSecondJobTrialRegistry.claim(branch.trialMapId(), agent.getId())) return false;
         if (branch.requiredSkillId() > 0) {
             entry.capabilityStates().require(AgentCombatSkillConstraintState.STATE_KEY)
                     .require(branch.requiredSkillId());
+        }
+        int itemCount = gateway.itemCount(agent, branch.collectionItemId());
+        if (state.trialRebalanceDue(itemCount, nowMs, TRIAL_REBALANCE_MS)) {
+            // Preserve collected items and the advancement phase, but discard stale target,
+            // lease, platform-batch, and navigation state before selecting the remaining mobs.
+            gateway.stop(entry);
         }
         gateway.lootNearby(agent, Set.of(branch.collectionItemId()));
         gateway.grind(entry, branch.trialMobIds(), Set.of());
@@ -161,7 +175,6 @@ public final class AgentSecondJobAdvancementRuntime {
                                     AgentSecondJobCatalog.Branch branch,
                                     PrimitiveCapabilityGateway gateway) {
         entry.capabilityStates().require(AgentCombatSkillConstraintState.STATE_KEY).clear();
-        gateway.stop(entry);
         if (!nearNpc(entry, agent, branch.examinerNpcId(), gateway)) return true;
         gateway.runNpcScript(agent, branch.examinerNpcId());
         AgentSecondJobTrialRegistry.release(branch.trialMapId(), agent.getId());

@@ -15,7 +15,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentPlanRepositoryTest {
@@ -64,6 +63,11 @@ class AgentPlanRepositoryTest {
                         && condition.operator().equals("completed")));
         assertEquals("second-job-advancement",
                 repository.require("victoria-second-job").steps().getFirst().operation());
+        assertEquals(List.of("mushroom-kingdom-questline"),
+                repository.require("victoria-second-job").successors().stream()
+                        .map(AgentPlanDefinition.Successor::planId).toList());
+        assertEquals(AgentPlanDefinition.Activation.AUTOMATIC,
+                repository.require("victoria-second-job").successors().getFirst().activation());
         AgentPlanDefinition mushroom = repository.require("mushroom-kingdom-questline");
         assertEquals("mushroom-kingdom-questline", mushroom.steps().getFirst().operation());
         assertTrue(mushroom.exitCriteria().stream().anyMatch(condition ->
@@ -80,14 +84,11 @@ class AgentPlanRepositoryTest {
                 "victoria-thief-level30",
                 "victoria-pirate-level30"), careers);
 
-        assertTrue(repository.all().stream()
+        assertEquals(1L, repository.all().stream()
                 .flatMap(plan -> plan.successors().stream())
-                .allMatch(successor ->
-                        successor.activation() == AgentPlanDefinition.Activation.AVAILABLE));
-        assertFalse(repository.all().stream()
-                .flatMap(plan -> plan.successors().stream())
-                .anyMatch(successor ->
-                        successor.activation() == AgentPlanDefinition.Activation.AUTOMATIC));
+                .filter(successor ->
+                        successor.activation() == AgentPlanDefinition.Activation.AUTOMATIC)
+                .count());
     }
 
     @Test

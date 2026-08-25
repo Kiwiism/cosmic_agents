@@ -33,15 +33,18 @@ import java.util.SplittableRandom;
 
 /** Deterministic, legal level-30 fixture for one Mushroom Kingdom cohort member. */
 public final class AgentMushroomKingdomFixtureService {
-    private static final int OLD_RAGGEDY_CAPE = 1_102_053;
-    private static final int POWER_ELIXIR = 2_000_005;
-    private static final int ALL_CURE = 2_050_004;
-    private static final int SNIPER_PILL = 2_002_008;
-    private static final int BOW_ARROW = 2_060_000;
-    private static final int CROSSBOW_ARROW = 2_061_000;
-    private static final int THROWING_STAR = 2_070_000;
-    private static final int BULLET = 2_330_000;
+    private static final int OLD_RAGGEDY_CAPE_ITEM_ID = 1_102_053;
+    private static final int POWER_ELIXIR_ITEM_ID = 2_000_005;
+    private static final int ALL_CURE_ITEM_ID = 2_050_004;
+    private static final int SNIPER_PILL_ITEM_ID = 2_002_008;
+    private static final int BOW_ARROW_ITEM_ID = 2_060_000;
+    private static final int CROSSBOW_ARROW_ITEM_ID = 2_061_000;
+    private static final int THROWING_STAR_ITEM_ID = 2_070_000;
+    private static final int BULLET_ITEM_ID = 2_330_000;
     private static final byte LARGE_INVENTORY = 96;
+    private static final Map<Integer, Integer> LEGAL_SUB_LEVEL_25_WEAPON_BY_JOB = Map.of(
+            320, 1_462_003,
+            420, 1_332_013);
     private static final Map<AgentApBuildProfile.JobFamily, List<String>> EQUIPMENT_LEGAL_AP = Map.of(
             AgentApBuildProfile.JobFamily.WARRIOR,
             List.of("warrior-dex20-str-lv30-v1", "warrior-dex40-str-lv30-v1"),
@@ -60,6 +63,24 @@ public final class AgentMushroomKingdomFixtureService {
     public static Prepared prepare(AgentRuntimeEntry entry,
                                    AgentSecondJobCatalog.Branch branch,
                                    int ordinal, long seed, long nowMs) throws IOException {
+        return prepare(entry, branch, ordinal, seed, nowMs, true);
+    }
+
+    /**
+     * Uses the same level-30 build, equipment, and supply fixture as Mushroom Kingdom while
+     * deliberately retaining the first job so the real second-job plan can be exercised.
+     */
+    public static Prepared prepareForSecondJobAdvancement(AgentRuntimeEntry entry,
+                                                           AgentSecondJobCatalog.Branch branch,
+                                                           int ordinal, long seed,
+                                                           long nowMs) throws IOException {
+        return prepare(entry, branch, ordinal, seed, nowMs, false);
+    }
+
+    private static Prepared prepare(AgentRuntimeEntry entry,
+                                    AgentSecondJobCatalog.Branch branch,
+                                    int ordinal, long seed, long nowMs,
+                                    boolean advanceSecondJob) throws IOException {
         Character agent = entry == null ? null : entry.bot();
         if (agent == null || branch == null) throw new IllegalArgumentException("live Agent and branch required");
         String career = firstJobCareer(branch);
@@ -77,23 +98,38 @@ public final class AgentMushroomKingdomFixtureService {
             AgentSpBuildProfileService.autoAssign(entry, agent);
         }
         if (agent.getLevel() != 30) throw new IllegalStateException("fixture character is above level 30");
-        AgentStarterKitService.advanceJob(entry, Job.getById(branch.targetJobId()));
+        if (advanceSecondJob) {
+            AgentStarterKitService.advanceJob(entry, Job.getById(branch.targetJobId()));
+        } else if (agent.getJob().getId() != branch.firstJobId()) {
+            throw new IllegalStateException("fixture expected first job " + branch.firstJobId()
+                    + " but found " + agent.getJob().getId());
+        }
 
         List<String> legalProfiles = legalProfiles(branch);
         String apProfile = legalProfiles.get(new SplittableRandom(seed).nextInt(legalProfiles.size()));
         agent.resetAbilityPointsForCurrentLevel();
         entry.apBuildProfileState().clear();
         AgentApBuildProfileService.select(entry, apProfile);
-        AgentSpBuildProfileService.select(entry, branch.spProfileId());
+        if (advanceSecondJob) AgentSpBuildProfileService.select(entry, branch.spProfileId());
 
         List<Integer> equipment = equip(agent, branch, seed);
         provisionSupplies(agent, branch);
-        resetQuestline(agent, branch);
+        if (advanceSecondJob) resetQuestline(agent, branch);
+        else resetSecondJobAdvancement(entry, agent);
         agent.healHpMp();
         agent.equipChanged();
         AgentCharacterGatewayRuntime.characters().save(agent, false);
         return new Prepared(agent.getName(), branch.id(), branch.targetJobId(), apProfile,
                 branch.spProfileId(), agent.getGender(), equipment);
+    }
+
+    private static void resetSecondJobAdvancement(AgentRuntimeEntry entry, Character agent) {
+        entry.capabilityStates().remove(AgentSecondJobAdvancementState.STATE_KEY);
+        for (int questId = 100000; questId <= 100011; questId++) {
+            Quest.getInstance(questId).reset(agent);
+        }
+        Quest.getInstance(2191).reset(agent);
+        Quest.getInstance(2192).reset(agent);
     }
 
     private static List<String> legalProfiles(AgentSecondJobCatalog.Branch branch) {
@@ -106,8 +142,8 @@ public final class AgentMushroomKingdomFixtureService {
         };
         List<String> candidates = EQUIPMENT_LEGAL_AP.get(family);
         if (branch.targetJobId() == 510) return List.of("pirate-dex30-str-lv30-v1");
-        if (branch.targetJobId() == 520) return candidates.stream()
-                .filter(id -> !id.contains("dex30-str")).toList();
+        // The level-25 gun requires 25 STR; the low-STR level-30 profile is not equipment-legal.
+        if (branch.targetJobId() == 520) return List.of("pirate-str30-dex-lv30-v1");
         return candidates;
     }
 
@@ -126,9 +162,21 @@ public final class AgentMushroomKingdomFixtureService {
             if (!slot.isBlank()) candidates.computeIfAbsent(slot, ignored -> new ArrayList<>()).add(itemId);
         }
         int weaponId = pick(candidates, "Wp", random, true);
+        if (weaponId == 0 && LEGAL_SUB_LEVEL_25_WEAPON_BY_JOB.containsKey(branch.targetJobId())) {
+            int fallbackItemId = LEGAL_SUB_LEVEL_25_WEAPON_BY_JOB.get(branch.targetJobId());
+            Equip fallback = items.getEquipById(fallbackItemId);
+            if (fallback != null && items.meetsEquipRequirements(fallback, agent.getJob(), agent.getLevel(),
+                    agent.getStr(), agent.getDex(), agent.getInt(), agent.getLuk(), agent.getFame())) {
+                weaponId = fallbackItemId;
+            }
+        }
         int shoesId = pick(candidates, "So", random, false);
         if (weaponId == 0 || shoesId == 0) {
-            throw new IllegalStateException(branch.id() + " has no legal level 25-30 weapon/shoes preset");
+            throw new IllegalStateException(branch.id() + " has no legal level 25-30 "
+                    + (weaponId == 0 ? "weapon" : "shoes") + " preset at STR=" + agent.getStr()
+                    + ", DEX=" + agent.getDex() + ", INT=" + agent.getInt() + ", LUK=" + agent.getLuk()
+                    + "; legal weapon candidates=" + candidates.getOrDefault("Wp", List.of())
+                    + ", shoes candidates=" + candidates.getOrDefault("So", List.of()));
         }
         ArrayList<Integer> selected = new ArrayList<>();
         selected.add(weaponId);
@@ -145,18 +193,22 @@ public final class AgentMushroomKingdomFixtureService {
         if (supportsShield(weaponId) && candidates.containsKey("Si")) {
             addIfPresent(selected, pick(candidates, "Si", random, false));
         }
-        selected.add(OLD_RAGGEDY_CAPE);
+        selected.add(OLD_RAGGEDY_CAPE_ITEM_ID);
 
         Inventory equipped = new Inventory(agent, InventoryType.EQUIPPED,
                 agent.getInventory(InventoryType.EQUIPPED).getSlotLimit());
         for (int itemId : selected) {
             Equip equip = items.getEquipById(itemId);
             if (equip == null) throw new IllegalStateException("missing fixture equipment " + itemId);
-            short position = itemId == OLD_RAGGEDY_CAPE ? -9 : equippedSlot(normalizedSlot(items.getEquipmentSlot(itemId)));
+            short position = itemId == OLD_RAGGEDY_CAPE_ITEM_ID ? -9
+                    : equippedSlot(normalizedSlot(items.getEquipmentSlot(itemId)));
             if (position == 0) throw new IllegalStateException("unsupported fixture slot for " + itemId);
             if (itemId == weaponId) applyFiveWeaponScrolls(equip, itemId);
             if (itemId == shoesId) applyShoesFixture(equip);
-            if (itemId == OLD_RAGGEDY_CAPE) applyCapeFixture(equip, branch);
+            if (position == -1 && needsMeleeAccuracyFixture(branch)) {
+                applyMeleeAccuracyFixture(equip);
+            }
+            if (itemId == OLD_RAGGEDY_CAPE_ITEM_ID) applyCapeFixture(equip, branch);
             equip.setPosition(position);
             equipped.addItemFromDB(equip);
         }
@@ -185,6 +237,22 @@ public final class AgentMushroomKingdomFixtureService {
         equip.setLevel((byte) (equip.getLevel() + 5));
     }
 
+    private static boolean needsMeleeAccuracyFixture(AgentSecondJobCatalog.Branch branch) {
+        return branch.family() == AgentSecondJobCatalog.Family.WARRIOR
+                || branch.targetJobId() == 510;
+    }
+
+    private static void applyMeleeAccuracyFixture(Equip equip) {
+        Map<String, Integer> stats = ItemInformationProvider.getInstance()
+                .getEquipStats(2_040_016); // Helmet Accuracy 10%: +4 ACC, +2 DEX.
+        if (stats == null || stats.isEmpty() || equip.getUpgradeSlots() < 5) {
+            throw new IllegalStateException("melee helmet lacks five accuracy-scroll slots");
+        }
+        for (int i = 0; i < 5; i++) ItemInformationProvider.improveEquipStats(equip, stats);
+        equip.setUpgradeSlots((byte) (equip.getUpgradeSlots() - 5));
+        equip.setLevel((byte) (equip.getLevel() + 5));
+    }
+
     private static void applyCapeFixture(Equip equip, AgentSecondJobCatalog.Branch branch) {
         if (equip.getUpgradeSlots() < 5) throw new IllegalStateException("cape lacks five upgrade slots");
         switch (branch.family()) {
@@ -201,14 +269,14 @@ public final class AgentMushroomKingdomFixtureService {
         agent.setInventory(InventoryType.USE, new Inventory(agent, InventoryType.USE, LARGE_INVENTORY));
         agent.setInventory(InventoryType.ETC, new Inventory(agent, InventoryType.ETC, LARGE_INVENTORY));
         InventoryGateway inventory = AgentInventoryGatewayRuntime.inventory();
-        require(inventory.addItem(agent, POWER_ELIXIR, (short) 2_000), "Power Elixirs");
-        require(inventory.addItem(agent, ALL_CURE, (short) 500), "All Cures");
-        require(inventory.addItem(agent, SNIPER_PILL, (short) 200), "Sniper Pills");
+        require(inventory.addItem(agent, POWER_ELIXIR_ITEM_ID, (short) 2_000), "Power Elixirs");
+        require(inventory.addItem(agent, ALL_CURE_ITEM_ID, (short) 500), "All Cures");
+        require(inventory.addItem(agent, SNIPER_PILL_ITEM_ID, (short) 200), "Sniper Pills");
         int projectile = switch (branch.targetJobId()) {
-            case 310 -> BOW_ARROW;
-            case 320 -> CROSSBOW_ARROW;
-            case 410 -> THROWING_STAR;
-            case 520 -> BULLET;
+            case 310 -> BOW_ARROW_ITEM_ID;
+            case 320 -> CROSSBOW_ARROW_ITEM_ID;
+            case 410 -> THROWING_STAR_ITEM_ID;
+            case 520 -> BULLET_ITEM_ID;
             default -> 0;
         };
         if (projectile > 0) require(inventory.addItem(agent, projectile, (short) 30_000), "projectiles");
@@ -220,11 +288,8 @@ public final class AgentMushroomKingdomFixtureService {
             Quest.getInstance(node.questId()).reset(agent);
         }
         for (int questId : List.of(2337, 2338, 2342)) Quest.getInstance(questId).reset(agent);
-        Quest.getInstance(100202).reset(agent);
-        int entryQuest = AgentMushroomKingdomCatalog.entryQuestForJob(branch.targetJobId());
-        Quest.getInstance(entryQuest).forceStart(agent, AgentMushroomKingdomCatalog.entryLeaderNpc(entryQuest));
-        require(AgentInventoryGatewayRuntime.inventory().addItem(agent, 4_032_375, (short) 1),
-                "Explorer recommendation letter");
+        Quest.getInstance(AgentMushroomKingdomRuntime.FIRST_THORN_BARRIER_UNLOCK_QUEST_ID)
+                .reset(agent);
     }
 
     private static boolean branchWeapon(AgentSecondJobCatalog.Branch branch, int itemId) {

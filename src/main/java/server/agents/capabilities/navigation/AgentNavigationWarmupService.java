@@ -25,7 +25,7 @@ public final class AgentNavigationWarmupService {
 
     public static void notifyWarmup(AgentRuntimeEntry entry, Character agent) {
         Character leader = AgentRelationshipRuntime.interactionTarget(entry);
-        if (leader == null) {
+        if (leader == null || leader.getClient() == null || agent == null || agent.getMap() == null) {
             return;
         }
         int leaderId = leader.getId();

@@ -1,5 +1,6 @@
 package server.agents.plans;
 
+import server.agents.progression.AgentMushroomKingdomCatalog;
 import server.agents.progression.AgentMushroomKingdomRuntime;
 import server.agents.progression.AgentMushroomKingdomState;
 
@@ -11,6 +12,14 @@ public final class AgentMushroomKingdomPlanStepExecutor implements AgentPlanStep
 
     @Override
     public AgentPlanStepExecution start(AgentPlanExecutionContext context) {
+        if (context.agent().getLevel() < 30 || context.agent().getLevel() > 38) {
+            return AgentPlanStepExecution.terminal(AgentPlanExecutionStatus.BLOCKED,
+                    "Mushroom Kingdom requires level 30 through 38");
+        }
+        if (!AgentMushroomKingdomCatalog.supportedSecondJob(context.agent().getJob().getId())) {
+            return AgentPlanStepExecution.terminal(AgentPlanExecutionStatus.BLOCKED,
+                    "Mushroom Kingdom currently supports Explorer second jobs only");
+        }
         context.entry().capabilityStates().require(AgentMushroomKingdomState.STATE_KEY)
                 .begin(context.nowMs());
         return AgentPlanStepExecution.active(true);
@@ -18,7 +27,9 @@ public final class AgentMushroomKingdomPlanStepExecutor implements AgentPlanStep
 
     @Override
     public AgentPlanStepExecution reattach(AgentPlanExecutionContext context) {
-        return tick(context);
+        AgentMushroomKingdomState state = context.entry().capabilityStates()
+                .require(AgentMushroomKingdomState.STATE_KEY);
+        return state.progressAtMs() == 0L ? start(context) : tick(context);
     }
 
     @Override

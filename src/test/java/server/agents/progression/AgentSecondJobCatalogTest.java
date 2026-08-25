@@ -24,6 +24,14 @@ class AgentSecondJobCatalogTest {
         assertEquals(30, fighter.requiredCount());
         assertEquals(4031013, fighter.collectionItemId());
         assertEquals(0, fighter.requiredSkillId());
+        assertEquals(Set.of(9000100, 9000101), fighter.trialMobIds());
+
+        assertEquals(Set.of(9000001, 9000002),
+                AgentSecondJobCatalog.require("cleric").trialMobIds());
+        assertEquals(Set.of(9000200, 9000201),
+                AgentSecondJobCatalog.require("hunter").trialMobIds());
+        assertEquals(Set.of(9000300, 9000301),
+                AgentSecondJobCatalog.require("assassin").trialMobIds());
 
         var gunslinger = AgentSecondJobCatalog.require("gunslinger");
         assertEquals(15, gunslinger.requiredCount());

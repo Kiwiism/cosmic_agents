@@ -119,9 +119,10 @@ class AgentFieldObservationCatalogRepositoryTest {
     @Test
     void equipmentSourcePoolIsExhaustiveAndDeduplicated() {
         var ids = AgentFieldObservationEquipmentRepository.itemIds();
-        assertEquals(420, ids.size());
+        assertEquals(421, ids.size());
         assertEquals(389, AgentFieldObservationEquipmentRepository.npcShopItemIds().size());
-        assertEquals(195, AgentFieldObservationEquipmentRepository.victoriaDropItemIds().size());
+        assertEquals(196, AgentFieldObservationEquipmentRepository.victoriaDropItemIds().size());
+        assertTrue(AgentFieldObservationEquipmentRepository.victoriaDropItemIds().contains(1_072_291));
         assertEquals(ids.size(), new HashSet<>(ids).size());
         assertTrue(ids.stream().allMatch(itemId -> itemId >= 1_000_000 && itemId < 2_000_000));
         assertTrue(java.util.Collections.disjoint(ids, Set.of(

@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentMushroomKingdomCatalogTest {
@@ -16,6 +17,12 @@ class AgentMushroomKingdomCatalogTest {
         assertEquals(2302, AgentMushroomKingdomCatalog.entryQuestForJob(410));
         assertEquals(2303, AgentMushroomKingdomCatalog.entryQuestForJob(320));
         assertEquals(2304, AgentMushroomKingdomCatalog.entryQuestForJob(520));
+        assertEquals(102000003, AgentMushroomKingdomCatalog.entryLeaderMap(2300));
+        assertEquals(120000101, AgentMushroomKingdomCatalog.entryLeaderMap(2304));
+        assertTrue(AgentMushroomKingdomCatalog.supportedSecondJob(110));
+        assertTrue(AgentMushroomKingdomCatalog.supportedSecondJob(520));
+        assertFalse(AgentMushroomKingdomCatalog.supportedSecondJob(100));
+        assertFalse(AgentMushroomKingdomCatalog.supportedSecondJob(111));
     }
 
     @Test

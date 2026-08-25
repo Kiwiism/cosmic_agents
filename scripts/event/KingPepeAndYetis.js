@@ -3,13 +3,24 @@ var timeLimit = 20; //20 minutes
 var eventTimer = 1000 * 60 * timeLimit;
 var exitMap = 106021400;
 var eventMap = 106021500;
+var bossMobIds = [3300005, 3300006, 3300007];
+var bossSpawnX = 0;
+var bossSpawnY = -68;
 
 function init() {}
 
 function setup(difficulty, lobbyId) {
     var eim = em.newInstance("KingPepe_" + lobbyId);
-    eim.getInstanceMap(eventMap).resetFully();
-    eim.getInstanceMap(eventMap).allowSummonState(false);
+    var yetiMap = eim.getInstanceMap(eventMap);
+    yetiMap.resetFully();
+    yetiMap.allowSummonState(false);
+
+    var bossMobId = bossMobIds[Math.floor(Math.random() * bossMobIds.length)];
+    eim.setProperty("bossMobId", bossMobId);
+    const LifeFactory = Java.type('server.life.LifeFactory');
+    const Point = Java.type('java.awt.Point');
+    yetiMap.spawnMonsterOnGroundBelow(
+        LifeFactory.getMonster(bossMobId), new Point(bossSpawnX, bossSpawnY));
 
     eim.startEventTimer(eventTimer);
     return eim;

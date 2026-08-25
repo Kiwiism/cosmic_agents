@@ -61,28 +61,28 @@ public final class AgentSecondJobCatalog {
         Map<String, Branch> values = new LinkedHashMap<>();
         add(values, standard("fighter", Family.WARRIOR, 100, 110, 102000003, 1022000,
                 102020300, 1072000, 108000300, 1072004, 100003, 100004, 100005,
-                4031008, Set.of(9000001, 9000002), 0, "mapleroyals-optimal-2026-fighter"));
+                4031008, Set.of(9000100, 9000101), 0, "mapleroyals-optimal-2026-fighter"));
         add(values, standard("page", Family.WARRIOR, 100, 120, 102000003, 1022000,
                 102020300, 1072000, 108000300, 1072004, 100003, 100004, 100005,
-                4031008, Set.of(9000001, 9000002), 1, "mapleroyals-optimal-2026-page"));
+                4031008, Set.of(9000100, 9000101), 1, "mapleroyals-optimal-2026-page"));
         add(values, standard("spearman", Family.WARRIOR, 100, 130, 102000003, 1022000,
                 102020300, 1072000, 108000300, 1072004, 100003, 100004, 100005,
-                4031008, Set.of(9000001, 9000002), 2, "mapleroyals-optimal-2026-spearman"));
+                4031008, Set.of(9000100, 9000101), 2, "mapleroyals-optimal-2026-spearman"));
         add(values, standard("fp-wizard", Family.MAGICIAN, 200, 210, 101000003, 1032001,
                 101020000, 1072001, 108000200, 1072005, 100006, 100007, 100008,
-                4031009, Set.of(9000200, 9000201), 0, "mapleroyals-optimal-2026-fp-wizard"));
+                4031009, Set.of(9000001, 9000002), 0, "mapleroyals-optimal-2026-fp-wizard"));
         add(values, standard("il-wizard", Family.MAGICIAN, 200, 220, 101000003, 1032001,
                 101020000, 1072001, 108000200, 1072005, 100006, 100007, 100008,
-                4031009, Set.of(9000200, 9000201), 1, "mapleroyals-optimal-2026-il-wizard"));
+                4031009, Set.of(9000001, 9000002), 1, "mapleroyals-optimal-2026-il-wizard"));
         add(values, standard("cleric", Family.MAGICIAN, 200, 230, 101000003, 1032001,
                 101020000, 1072001, 108000200, 1072005, 100006, 100007, 100008,
-                4031009, Set.of(9000200, 9000201), 2, "mapleroyals-optimal-2026-cleric"));
+                4031009, Set.of(9000001, 9000002), 2, "mapleroyals-optimal-2026-cleric"));
         add(values, standard("hunter", Family.BOWMAN, 300, 310, 100000201, 1012100,
                 106010000, 1072002, 108000100, 1072006, 100000, 100001, 100002,
-                4031010, Set.of(9000100, 9000101), 0, "mapleroyals-optimal-2026-hunter"));
+                4031010, Set.of(9000200, 9000201), 0, "mapleroyals-optimal-2026-hunter"));
         add(values, standard("crossbowman", Family.BOWMAN, 300, 320, 100000201, 1012100,
                 106010000, 1072002, 108000100, 1072006, 100000, 100001, 100002,
-                4031010, Set.of(9000100, 9000101), 1, "mapleroyals-optimal-2026-crossbowman"));
+                4031010, Set.of(9000200, 9000201), 1, "mapleroyals-optimal-2026-crossbowman"));
         add(values, standard("assassin", Family.THIEF, 400, 410, 103000003, 1052001,
                 102040000, 1072003, 108000400, 1072007, 100009, 100010, 100011,
                 4031011, Set.of(9000300, 9000301), 0, "mapleroyals-optimal-2026-assassin"));

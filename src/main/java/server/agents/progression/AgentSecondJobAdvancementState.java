@@ -17,6 +17,8 @@ public final class AgentSecondJobAdvancementState {
     private String reason = "";
     private long phaseSinceMs;
     private int consecutiveCapabilityFailures;
+    private int trialItemCount = -1;
+    private long trialItemProgressAtMs;
     private final ArrayDeque<Transition> journal = new ArrayDeque<>();
 
     public synchronized void begin(String branchId, long nowMs) {
@@ -25,6 +27,8 @@ public final class AgentSecondJobAdvancementState {
         }
         this.branchId = branchId;
         consecutiveCapabilityFailures = 0;
+        trialItemCount = -1;
+        trialItemProgressAtMs = 0L;
         phase(Phase.READY, "branch committed", nowMs);
     }
 
@@ -44,6 +48,16 @@ public final class AgentSecondJobAdvancementState {
     public synchronized long phaseSinceMs() { return phaseSinceMs; }
     public synchronized int capabilityFailure() { return ++consecutiveCapabilityFailures; }
     public synchronized void capabilityProgress() { consecutiveCapabilityFailures = 0; }
+    public synchronized boolean trialRebalanceDue(int itemCount, long nowMs, long intervalMs) {
+        if (trialItemCount != itemCount || trialItemProgressAtMs == 0L) {
+            trialItemCount = itemCount;
+            trialItemProgressAtMs = nowMs;
+            return false;
+        }
+        if (nowMs - trialItemProgressAtMs < intervalMs) return false;
+        trialItemProgressAtMs = nowMs;
+        return true;
+    }
     public synchronized List<Transition> journalSnapshot() { return List.copyOf(journal); }
 
     public record Transition(long occurredAtMs, Phase phase, String reason) { }

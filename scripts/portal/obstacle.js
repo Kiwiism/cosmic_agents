@@ -5,7 +5,8 @@
  */
 
 function enter(pi) {
-    if (pi.isQuestStarted(100202)) {
+    // Quest 30000 is the v83-compatible persistent flag set by killarmush.js.
+    if (pi.isQuestStarted(30000) || pi.isQuestCompleted(30000)) {
         pi.playPortalSound();
         pi.warp(106020400, 2);
         return true;

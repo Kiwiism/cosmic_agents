@@ -91,6 +91,25 @@ public final class AgentMushroomKingdomCatalog {
         };
     }
 
+    public static int entryLeaderMap(int questId) {
+        return switch (questId) {
+            case 2300 -> 102000003;
+            case 2301 -> 101000003;
+            case 2302 -> 103000003;
+            case 2303 -> 100000201;
+            case 2304 -> 120000101;
+            default -> throw new IllegalArgumentException("Unknown Mushroom Kingdom entry quest " + questId);
+        };
+    }
+
+    public static boolean supportedSecondJob(int jobId) {
+        return switch (jobId) {
+            case 110, 120, 130, 210, 220, 230,
+                    310, 320, 410, 420, 510, 520 -> true;
+            default -> false;
+        };
+    }
+
     private static QuestNode talk(int questId, int startMap, int startNpc, int endMap, int endNpc) {
         return talk(questId, startMap, startNpc, endMap, endNpc, 0, 0, Set.of(), 0);
     }

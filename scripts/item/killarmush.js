@@ -43,8 +43,10 @@ function action(mode, type, selection) {
             if (im.getMapId() == 106020300) {
                 var portal = im.getMap().getPortal("obstacle");
                 if (portal != null && portal.getPosition().distance(im.getPlayer().getPosition()) < 210) {
-                    if (!(im.isQuestStarted(100202) || im.isQuestCompleted(100202))) {
-                        im.startQuest(100202);
+                    // v83 stores quest ids as signed shorts, so the original post-BB id
+                    // 100202 cannot persist here. Quest 30000 is the server-local barrier flag.
+                    if (!(im.isQuestStarted(30000) || im.isQuestCompleted(30000))) {
+                        im.forceCompleteQuest(30000);
                     }
                     im.removeAll(2430014);
 

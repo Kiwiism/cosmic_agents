@@ -19,6 +19,8 @@ final class AgentNavigationProgressState {
             "server.agents.capabilities.navigation.AgentNavigationProgressState.TARGET_SCOPE_RADIUS_PX");
     private static final int MAX_TRANSITIONS = config.AgentTuning.intValue(
             "server.agents.capabilities.navigation.AgentNavigationProgressState.MAX_TRANSITIONS");
+    private static final long CYCLE_EDGE_SUPPRESSION_MS = config.AgentTuning.longValue(
+            "server.agents.capabilities.navigation.AgentNavigationProgressState.CYCLE_EDGE_SUPPRESSION_MS");
 
     private int mapId = Integer.MIN_VALUE;
     private Point target;
@@ -28,6 +30,8 @@ final class AgentNavigationProgressState {
             new ArrayDeque<>();
     private long lastProgressAtMs;
     private String loopKind = "";
+    private AgentNavigationTraceSnapshot.Edge suppressedEdge;
+    private long suppressedUntilMs;
 
     synchronized void observe(int currentMapId, Point currentTarget, int currentRegionId, long nowMs) {
         if (!sameScope(currentMapId, currentTarget)) {
@@ -56,11 +60,30 @@ final class AgentNavigationProgressState {
         LoopDetection loop = detectLoop();
         loopKind = loop.kind();
         detectedCycleLength = loop.length();
+        if (confirmedAlternatingCycle()) {
+            AgentNavigationTraceSnapshot.Transition latest = transitions.getLast();
+            suppressedEdge = new AgentNavigationTraceSnapshot.Edge(
+                    latest.toRegionId(), latest.fromRegionId(), AgentNavigationGraph.EdgeType.WALK,
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+            suppressedUntilMs = nowMs + CYCLE_EDGE_SUPPRESSION_MS;
+        }
     }
 
     synchronized Snapshot snapshot(long nowMs) {
+        if (nowMs >= suppressedUntilMs) {
+            suppressedEdge = null;
+            suppressedUntilMs = 0L;
+        }
         return new Snapshot(observedRegionId, lastProgressAtMs, loopKind,
-                null, 0L, List.copyOf(transitions));
+                suppressedEdge, suppressedUntilMs, List.copyOf(transitions));
+    }
+
+    synchronized boolean blocks(AgentNavigationGraph.Edge edge, long nowMs) {
+        if (edge == null || nowMs >= suppressedUntilMs || suppressedEdge == null) {
+            return false;
+        }
+        return edge.fromRegionId == suppressedEdge.fromRegionId()
+                && edge.toRegionId == suppressedEdge.toRegionId();
     }
 
     private boolean sameScope(int currentMapId, Point currentTarget) {
@@ -79,6 +102,26 @@ final class AgentNavigationProgressState {
         transitions.clear();
         lastProgressAtMs = nowMs;
         loopKind = "";
+        suppressedEdge = null;
+        suppressedUntilMs = 0L;
+    }
+
+    private boolean confirmedAlternatingCycle() {
+        if (detectedCycleLength != 2 || transitions.size() < 4) {
+            return false;
+        }
+        List<AgentNavigationTraceSnapshot.Transition> recent = new ArrayList<>(transitions);
+        int start = recent.size() - 4;
+        AgentNavigationTraceSnapshot.Transition first = recent.get(start);
+        AgentNavigationTraceSnapshot.Transition second = recent.get(start + 1);
+        AgentNavigationTraceSnapshot.Transition third = recent.get(start + 2);
+        AgentNavigationTraceSnapshot.Transition fourth = recent.get(start + 3);
+        return first.fromRegionId() == second.toRegionId()
+                && first.toRegionId() == second.fromRegionId()
+                && first.fromRegionId() == third.fromRegionId()
+                && first.toRegionId() == third.toRegionId()
+                && second.fromRegionId() == fourth.fromRegionId()
+                && second.toRegionId() == fourth.toRegionId();
     }
 
     private LoopDetection detectLoop() {
