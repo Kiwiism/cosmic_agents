@@ -43,6 +43,7 @@ logical-scheduler test is never represented as a physical Free Market soak.
 | Physical browsing and private knowledge | Live verified for cold-start traversal | physical portal movement and per-agent presence evidence; no global price feed |
 | At most one real PlayerShop | Live verified for opening | attributed real shop, owned permit escrow, one stall and two exact listings; purchase/closure soak pending |
 | Public negotiation and normal Trade settlement | Automated at integration boundary, live soak pending | structured/public transcript and real Cosmic Trade lifecycle |
+| Open-chat inventory sale | Automated candidate/reservation/intent/checkpoint contracts; physical matrix pending | exact real stack, bounded advertising, human/agent meso-only Trade, shutdown cleanup |
 | Chairs require legitimate ownership | Automated | owned-chair ambient eligibility and real inventory settlement |
 | Quest and scroll demand follows actual state | Automated and WZ-backed | exact quest start/turn-in/consumption and real deterministic Cosmic scrolling |
 | Configurable tax and seasonal preparation | Automated | scheduled tax execution; seasonal overlays typed and fail closed while disabled |
@@ -52,7 +53,7 @@ logical-scheduler test is never represented as a physical Free Market soak.
 | Dashboard data queryable without live objects | Automated | item, meso, agent, decision, negotiation, provenance, velocity, wealth/Gini, seller HHI, room utilization/traffic, search, burn, fixed-basket coverage/index, scenario comparison, and invariant contracts execute in the clean PostgreSQL gate |
 | Ambient behavior cannot perturb loot | Automated | independent named streams and architecture boundary |
 | Adapter replacement does not rewrite domain | Automated | `EconomySessionPort`, `ExternalAgentActivityPort`, and no-farming-dependency architecture test; deprecated composite remains compatibility-only |
-| Human-safe participation | Schema and settlement flags implemented; live evidence pending | human-counterparty attribution exists, but no human/agent live test has run |
+| Human-safe participation | Schema, incoming open-chat Trade handling, and settlement flags implemented; live evidence pending | human-counterparty attribution exists, but no human/agent live settlement has run |
 
 ## Exact live-soak prerequisites for the default seed
 
@@ -67,13 +68,12 @@ The current seed samples this maximum roster by real job family:
 | Pirate | 36 |
 | Total | 200 |
 
-It also samples 147 willing sellers, including 38 of the initial 50. Consequently the strict run
-requires 147 characters to already own real `5140000` permits. This is intentionally demanding:
-the permit is a Cash Shop asset and cannot be produced by Victoria farming or ordinary NPC access.
-The engine will not manufacture it. A practical experiment must therefore do one of the following
-explicitly in YAML and real provisioning: acquire those permits through a modeled legitimate Cash
-Shop/NX path, lower merchant participation, or define and approve an evented bootstrap exception.
-The last option changes the current no-administrative-endowment invariant and must not be inferred.
+It also samples 147 willing sellers, including 38 of the initial 50. The current default explicitly
+adopts the approved evented FM participation exception: an entrant who owns no verified PlayerShop
+permit receives one random real `514xxxx` permit. Every grant is a `VENUE_SUBSIDY` transaction and
+lot, so the 147 possible grants remain measurable and removable from organic supply analysis. For a
+strict no-subsidy comparison, set `bootstrap.shopPermitPolicy: REQUIRE_OWNED_REAL_ITEM`; that profile
+again requires pre-owned permits or a modeled Cash Shop/NX acquisition path.
 
 Every mapped character must also:
 
@@ -85,7 +85,7 @@ Every mapped character must also:
 - gain new calibration coverage before progression reaches an uncovered level band.
 
 Run `!economy preflight` before mutation. It reproduces the same seeded roster and reports roster,
-permit, initial FM, evidence database, and current-level calibration blockers.
+permit-policy, initial FM, evidence database, and current-level calibration blockers.
 Startup reruns this audit and creates no run while a blocker remains.
 
 ## Current environment result

@@ -4,8 +4,10 @@
 
 With either supplied YAML, a run-bound character requests a bounded economy session only after it is
 at the FM entrance or in a room. Accepted agents walk through real portals, approach physically
-visible stalls, learn only what they inspect, decide at each stall, use real PlayerShop/NPC
-transactions, and either open one owned-permit stall or release the session. Room assignment fills
+visible stalls, enter each PlayerShop for the configured per-listing dwell, learn only that stall,
+decide at each stall, use real PlayerShop/NPC transactions, and either open one owned-permit stall or
+release the session. NPC buy/sell/recharge and temporary storage access are available only after the
+Agent reaches the FM entrance. Room assignment fills
 the lowest room first; spot assignment uses distance from the real entrance portal, not authored spot
 number.
 
@@ -16,7 +18,7 @@ and a fresh inventory/needs/knowledge scan. In `REALTIME`, this repeats without 
 
 ## First real-agent test
 
-Start with `config/economy/economy-engine-basic.yaml`, real shop permits on intended sellers, and
+Start with `config/economy/economy-engine-basic.yaml` and
 calibration coverage for the chosen agents. From an administrator character:
 
 ```text
@@ -32,7 +34,8 @@ Expected first-pass observations:
 - agents enter room 1 before later rooms and take the nearest safe unoccupied stall positions;
 - buyers walk to stalls instead of consuming a global listing feed;
 - ordinary potion/ammunition restocking and inventory disposition use real NPC catalog rules;
-- one character owns at most one PlayerShop and must own item `5140000` to open it;
+- one character owns at most one PlayerShop and must own one verified `514xxxx` permit to open it;
+  an entrant with none receives one explicitly journaled FM venue-subsidy permit by default;
 - agents with no remaining work release after their post-trip delay; an unproductive non-stall
   session is drained after five logical minutes and every session after 30 logical minutes;
 - no public bargaining, barter, autonomous quest start/turn-in, scrolling, repricing, chair collecting,

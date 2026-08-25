@@ -42,4 +42,24 @@ class SimulationKernelTest {
         assertEquals(start.plusSeconds(1), result.reachedAt());
         assertEquals(1, result.queuedEvents());
     }
+
+    @Test
+    void exclusiveAdvanceLeavesNewDayEventsQueuedAtTheBoundary() {
+        Instant start = Instant.EPOCH;
+        Instant boundary = start.plusSeconds(86_400);
+        LogicalClock clock = new LogicalClock(start);
+        LogicalEventQueue queue = new LogicalEventQueue();
+        queue.schedule(boundary.minusSeconds(1), "old-day", "", Map.of());
+        queue.schedule(boundary, "new-day", "", Map.of());
+        var handled = new ArrayList<String>();
+
+        var close = new SimulationKernel(clock, queue, 10)
+                .advanceUntilExclusive(boundary, event -> handled.add(event.kind()), () -> false);
+
+        assertEquals(java.util.List.of("old-day"), handled);
+        assertEquals(boundary, close.reachedAt());
+        assertEquals(1, close.queuedEvents());
+        new SimulationKernel(clock, queue, 10).advanceUntil(boundary, event -> handled.add(event.kind()));
+        assertEquals(java.util.List.of("old-day", "new-day"), handled);
+    }
 }

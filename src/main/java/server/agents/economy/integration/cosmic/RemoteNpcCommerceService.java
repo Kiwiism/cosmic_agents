@@ -14,10 +14,17 @@ import java.util.Objects;
 public final class RemoteNpcCommerceService {
     private final EconomyCatalog catalog;
     private final ShopGateway shops;
+    private final int entranceMapId;
 
     public RemoteNpcCommerceService(EconomyCatalog catalog, ShopGateway shops) {
+        this(catalog, shops, 910000000);
+    }
+
+    public RemoteNpcCommerceService(EconomyCatalog catalog, ShopGateway shops, int entranceMapId) {
         this.catalog = Objects.requireNonNull(catalog);
         this.shops = Objects.requireNonNull(shops);
+        if (entranceMapId <= 0) throw new IllegalArgumentException("FM entrance map is required");
+        this.entranceMapId = entranceMapId;
     }
 
     public Receipt buy(Character agent, int npcId, int itemId, short quantity) {
@@ -44,8 +51,9 @@ public final class RemoteNpcCommerceService {
     }
 
     private Access access(Character agent, int npcId) {
-        if (agent == null || agent.getClient() == null || !isFreeMarket(agent.getMapId()))
-            throw new IllegalStateException("Remote NPC commerce is available only while physically in Free Market");
+        if (agent == null || agent.getClient() == null || agent.getMapId() != entranceMapId)
+            throw new IllegalStateException(
+                    "Remote NPC commerce is available only at the Free Market entrance");
         NpcShopFact fact = catalog.npcShop(npcId)
                 .orElseThrow(() -> new IllegalArgumentException("NPC has no real shop: " + npcId));
         if (fact.sourceMapId() == null)
@@ -64,20 +72,16 @@ public final class RemoteNpcCommerceService {
         return -1;
     }
 
-    private static boolean isFreeMarket(int mapId) {
-        return mapId == 910000000 || mapId >= 910000001 && mapId <= 910000022;
-    }
-
     private static Receipt receipt(int npcId, int mapId, Shop.TransactionResult result, int mesoDelta) {
         return new Receipt(result == Shop.TransactionResult.SUCCESS, result.name(), npcId, mapId,
-                mesoDelta, "REMOTE_FROM_FREE_MARKET");
+                mesoDelta, "REMOTE_FROM_FREE_MARKET_ENTRANCE");
     }
 
     private record Access(Shop shop, int sourceMapId) { }
     public record Receipt(boolean success, String result, int npcId, int sourceMapId,
                           int mesoDelta, String accessMode) {
         private static Receipt failed(int npcId, int mapId, String message) {
-            return new Receipt(false, message, npcId, mapId, 0, "REMOTE_FROM_FREE_MARKET");
+            return new Receipt(false, message, npcId, mapId, 0, "REMOTE_FROM_FREE_MARKET_ENTRANCE");
         }
     }
 }

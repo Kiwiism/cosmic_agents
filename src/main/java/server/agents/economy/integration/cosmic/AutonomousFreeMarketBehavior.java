@@ -39,6 +39,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
     private final ScrollBehavior scrolling;
     private final QuestBehavior quests;
     private final ArrangementBehavior arrangements;
+    private final OpenChatBehavior openChat;
     private final ObservedPurchasePolicy purchasePolicy = new ObservedPurchasePolicy();
     private final RoomVisitPlanner roomPlanner;
     private final Duration actionPoll;
@@ -46,6 +47,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
     private final Duration maximumStallDuration;
     private final Duration minimumRepriceInterval;
     private final Duration npcServiceDelay;
+    private final Duration stallInspectionDurationPerListing;
     private final int maximumConsecutiveUnproductiveStalls;
     private final Map<String, State> states = new ConcurrentHashMap<>();
     private final Map<String, Long> progressRevisions = new ConcurrentHashMap<>();
@@ -110,6 +112,33 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
                                         EconomyEngineConfig.Session sessionConfig,
                                         Duration actionPoll, Duration postTripDelay,
                                         Duration maximumStallDuration, Duration npcServiceDelay) {
+        this(runId, configHash, catalogVersion, config, random, physical, needs, observedNeeds,
+                journal, sellerPlans, seller, economy, procurement, ambient, negotiation, scrolling,
+                offerReviews, quests, arrangements, firstRoomMapId, lastRoomMapId, sessionConfig,
+                actionPoll, postTripDelay, maximumStallDuration, npcServiceDelay,
+                OpenChatBehavior.disabled());
+    }
+
+    public AutonomousFreeMarketBehavior(UUID runId, String configHash, String catalogVersion,
+                                        EconomyEngineConfig.Market config, NamedRandomStreams random,
+                                        FreeMarketPhysicalGateway physical, AgentNeedReader needs,
+                                        ObservedNeedAugmenter observedNeeds,
+                                        EconomyEvidenceJournal journal,
+                                        CosmicMarketSellerPlanReader sellerPlans,
+                                        CosmicMarketSellerGateway seller,
+                                        CosmicAgentEconomyFacade economy,
+                                        ResourceProcurement procurement,
+                                        AmbientBehavior ambient,
+                                        NegotiationBehavior negotiation,
+                                        ScrollBehavior scrolling,
+                                        OfferReviewBehavior offerReviews,
+                                        QuestBehavior quests,
+                                        ArrangementBehavior arrangements,
+                                        int firstRoomMapId, int lastRoomMapId,
+                                        EconomyEngineConfig.Session sessionConfig,
+                                        Duration actionPoll, Duration postTripDelay,
+                                        Duration maximumStallDuration, Duration npcServiceDelay,
+                                        OpenChatBehavior openChat) {
         this.runId = Objects.requireNonNull(runId); this.configHash = Objects.requireNonNull(configHash);
         this.catalogVersion = Objects.requireNonNull(catalogVersion); this.config = Objects.requireNonNull(config);
         this.sessionConfig = Objects.requireNonNull(sessionConfig);
@@ -125,6 +154,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
         this.scrolling = Objects.requireNonNull(scrolling);
         this.quests = Objects.requireNonNull(quests);
         this.arrangements = Objects.requireNonNull(arrangements);
+        this.openChat = Objects.requireNonNull(openChat);
         this.roomPlanner = new RoomVisitPlanner(firstRoomMapId, lastRoomMapId);
         if (sessionConfig.maximumConsecutiveUnproductiveStalls <= 0)
             throw new IllegalArgumentException("maximum unproductive stalls must be positive");
@@ -135,6 +165,8 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
         this.actionPoll = actionPoll; this.postTripDelay = postTripDelay;
         this.maximumStallDuration = maximumStallDuration;
         this.minimumRepriceInterval = Duration.parse(config.minimumRepriceInterval);
+        this.stallInspectionDurationPerListing = Duration.parse(
+                config.stallInspectionDurationPerListing);
         if (npcServiceDelay.isNegative()) throw new IllegalArgumentException("NPC service delay cannot be negative");
         this.npcServiceDelay = npcServiceDelay;
     }
@@ -144,7 +176,8 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
                                                                   Instant logicalAt) {
         State state = states.computeIfAbsent(profile.agentId(), ignored -> new State(
                 new PrivateMarketKnowledge(), new PhysicalMarketTrip(roomPlanner.plan(
-                        config.minimumRoomsPerTrip, config.maximumRoomsPerTrip, random))));
+                        config.minimumRoomsPerTrip, config.maximumRoomsPerTrip, random),
+                        stallInspectionDurationPerListing)));
         if (!state.entryAppraised) {
             economy.onFreeMarketEntry(agent, profile.agentId(), logicalAt);
             if (state.sellerPlan != null)
@@ -171,6 +204,12 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
                             "Keep the exact accepted agreement pending until a later bounded tick"),
                     arrangement.evidence(), Map.of("itemId", arrangement.itemId()), Map.of());
             if (!arrangement.completed()) return revisit(logicalAt, arrangement.externalActionPending());
+        }
+        if (!state.questEvaluated || state.phase == Phase.PROCURING) {
+            FreeMarketPhysicalGateway.ActionStatus entrance = physical.requestEntrance(agent);
+            if (entrance != FreeMarketPhysicalGateway.ActionStatus.ARRIVED)
+                return revisit(logicalAt, entrance == FreeMarketPhysicalGateway.ActionStatus.ASSIGNED
+                        || entrance == FreeMarketPhysicalGateway.ActionStatus.IN_PROGRESS);
         }
         if (!state.questEvaluated) {
             state.questEvaluated = true;
@@ -204,8 +243,25 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
             state.phase = Phase.BROWSING;
         }
         if (state.phase == Phase.BROWSING) {
+            OpenChatBehavior.Result publicSale = openChat.attemptPurchase(agent, profile,
+                    needs.read(agent, profile, logicalAt), logicalAt);
+            if (publicSale.attempted()) {
+                appendOpenChatDecision(profile, logicalAt, "OPEN_CHAT_PURCHASE", publicSale);
+                if (publicSale.sold()) return revisit(logicalAt, false);
+                if (publicSale.outcome().startsWith("APPROACH_")) return revisit(logicalAt,
+                        Boolean.TRUE.equals(publicSale.evidence().get("externalActionPending")));
+            }
             PhysicalMarketTrip.Step step = state.trip.tick(agent, profile.agentId(), logicalAt,
                     state.knowledge, physical);
+            if (step.inspectionStarted()) {
+                appendDecision(profile, logicalAt, "STALL_INSPECTION_STARTED",
+                        Map.of("room", step.roomMapId(), "stallObjectId", step.stallObjectId(),
+                                "listingCount", step.listingCount(), "durationMillis",
+                                stallInspectionDurationPerListing.multipliedBy(step.listingCount()).toMillis()),
+                        alternatives("SKIP_STALL", "Continue without learning these listed asks"),
+                        Map.of("source", "PHYSICAL_PLAYER_SHOP"),
+                        Map.of("reason", "CONFIGURED_PER_LISTING_DWELL"), Map.of());
+            }
             if (!step.offers().isEmpty()) {
                 boolean purchased = attemptObservedPurchase(agent, profile, logicalAt, state, step.offers());
                 List<AgentNeed> currentNeeds = observedNeeds.augment(agent, profile,
@@ -237,12 +293,6 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
                 }
                 state.sellerPlan = sellerPlans.read(agent, profile, state.knowledge, currentNeeds, logicalAt);
                 state.sellerPlan = economy.appraise(agent, profile.agentId(), state.sellerPlan, logicalAt);
-                if (!seller.hasPlayerShopPermit(agent)
-                        || random.stream("agent." + profile.agentId() + ".stall-participation").nextDouble()
-                        > profile.stallWillingness()) {
-                    state.sellerPlan = new MarketSellerPlan(state.sellerPlan.npcSales(), List.of(),
-                            state.sellerPlan.preferredRoomMapId(), state.sellerPlan.stallDescription());
-                }
                 state.phase = Phase.DISPOSING;
                 return revisit(logicalAt, false);
             }
@@ -252,9 +302,15 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
                                 "Release the blocked physical route and re-plan rooms"),
                         Map.of(), Map.of(), Map.of("result", 0d));
             }
+            if (step.revisitAt().isPresent())
+                return new EconomyWorldPort.MarketDirective(Optional.empty(), step.revisitAt(), false);
             return revisit(logicalAt, step.status() == PhysicalMarketTrip.Status.PHYSICAL_ACTION_PENDING);
         }
         if (state.phase == Phase.DISPOSING) {
+            FreeMarketPhysicalGateway.ActionStatus entrance = physical.requestEntrance(agent);
+            if (entrance != FreeMarketPhysicalGateway.ActionStatus.ARRIVED)
+                return revisit(logicalAt, entrance == FreeMarketPhysicalGateway.ActionStatus.ASSIGNED
+                        || entrance == FreeMarketPhysicalGateway.ActionStatus.IN_PROGRESS);
             if (state.npcSaleIndex < state.sellerPlan.npcSales().size()) {
                 MarketSellerPlan.NpcSale sale = state.sellerPlan.npcSales().get(state.npcSaleIndex++);
                 RemoteNpcCommerceService.Receipt receipt = seller.sellNpc(agent, sale, logicalAt);
@@ -266,8 +322,36 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
                         Map.of("reason", sale.reason(), "evidence", sale.evidence()), Map.of());
                 return revisitAfter(logicalAt, npcServiceDelay, false);
             }
+            if (!state.openChatPrepared) {
+                OpenChatBehavior.Preparation preparation = openChat.prepare(
+                        agent, profile, state.sellerPlan, logicalAt);
+                state.sellerPlan = preparation.plan();
+                state.openChatPrepared = true;
+                if (preparation.selected()) {
+                    appendDecision(profile, logicalAt, "OPEN_CHAT_SALE_OPENED",
+                            Map.of("offerId", preparation.offerId(), "itemId", preparation.itemId(),
+                                    "quantity", preparation.quantity(), "askMesos", preparation.askMesos(),
+                                    "reserveMesos", preparation.reserveMesos()),
+                            alternatives("KEEP_FOR_STALL_OR_LATER",
+                                    "Do not reserve this real holding for direct public Trade"),
+                            Map.of("source", "APPRAISED_REAL_INVENTORY"),
+                            Map.of("reason", "CONFIGURED_OPEN_CHAT_SELLER_SAMPLE"), Map.of());
+                    state.phase = Phase.OPEN_CHAT_SELLING;
+                    return revisit(logicalAt, false);
+                }
+                finalizeStallParticipation(agent, profile, state);
+            }
             if (state.sellerPlan.stallListings().isEmpty()) return finish(profile.agentId(), logicalAt);
             state.phase = Phase.OPENING_STALL;
+        }
+        if (state.phase == Phase.OPEN_CHAT_SELLING) {
+            OpenChatBehavior.Result result = openChat.progressSeller(agent, profile, logicalAt);
+            if (result.attempted() && result.done()) {
+                appendOpenChatDecision(profile, logicalAt, "OPEN_CHAT_SALE_CLOSED", result);
+                finalizeStallParticipation(agent, profile, state);
+                if (state.sellerPlan.stallListings().isEmpty()) return finish(profile.agentId(), logicalAt);
+                state.phase = Phase.OPENING_STALL;
+            } else return revisit(logicalAt, false);
         }
         if (state.phase == Phase.OPENING_STALL) {
             FreeMarketPhysicalGateway.ActionStatus travel = physical.requestRoom(
@@ -351,8 +435,11 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
     @Override
     public synchronized EconomyWorldPort.MarketDirective drainForRelease(
             Character agent, CommerceParticipant profile, Instant logicalAt) {
+        State state = states.get(profile.agentId());
+        if (state != null) state.trip.cancel(agent, physical);
         if (agent.getTrade() != null || agent.getHiredMerchant() != null)
             return revisit(logicalAt, true);
+        openChat.cancel(profile.agentId(), logicalAt, "ECONOMY_SESSION_DEADLINE");
         if (agent.getPlayerShop() != null && agent.getPlayerShop().isOpen()) {
             boolean closed = seller.close(agent, "ECONOMY_SESSION_DEADLINE");
             appendDecision(profile, logicalAt, "SESSION_DEADLINE_DRAIN",
@@ -374,7 +461,8 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
         Map<String, Object> encodedStates = new TreeMap<>();
         states.forEach((agentId, state) -> encodedStates.put(agentId, stateMap(state)));
         return Map.of("schemaVersion", 1, "agents", encodedStates, "randomStates", random.snapshot(),
-                "progressRevisions", Map.copyOf(progressRevisions));
+                "progressRevisions", Map.copyOf(progressRevisions),
+                "openChat", openChat.snapshotState());
     }
 
     @Override
@@ -390,6 +478,9 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
             values.forEach((key, value) -> restored.put(key.toString(), ((Number) value).longValue()));
             random.restore(restored);
         }
+        Object openChatState = snapshot.get("openChat");
+        if (openChatState instanceof Map<?, ?> values)
+            openChat.restoreState((Map<String, Object>) values);
         Map<String, Object> encodedStates = (Map<String, Object>) snapshot.get("agents");
         encodedStates.forEach((agentId, value) -> states.put(agentId,
                 stateFrom((Map<String, Object>) value)));
@@ -407,8 +498,17 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
         Map<String, Object> tripValue = new LinkedHashMap<>();
         tripValue.put("rooms", trip.rooms()); tripValue.put("inspected", trip.inspected());
         tripValue.put("roomIndex", trip.roomIndex());
+        tripValue.put("inspectionMillisPerListing", trip.inspectionMillisPerListing());
         if (trip.approachingObjectId() != null)
             tripValue.put("approachingObjectId", trip.approachingObjectId());
+        if (trip.inspectingStall() != null) {
+            var stall = trip.inspectingStall();
+            tripValue.put("inspectingStall", Map.of("objectId", stall.objectId(),
+                    "ownerCharacterId", stall.ownerCharacterId(), "roomMapId", stall.roomMapId(),
+                    "x", stall.x(), "y", stall.y()));
+            tripValue.put("inspectionCompletesAt", trip.inspectionCompletesAt().toString());
+            tripValue.put("inspectionListingCount", trip.inspectionListingCount());
+        }
         value.put("trip", tripValue);
         value.put("attemptedResourceItems", state.attemptedResourceItems.stream().sorted().toList());
         value.put("sellerPlan", state.sellerPlan == null ? Map.of() : sellerPlanMap(state.sellerPlan));
@@ -420,6 +520,8 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
         value.put("entryGoals", state.entryGoals);
         value.put("consecutiveAmbientActions", state.consecutiveAmbientActions);
         value.put("consecutiveUnproductiveStalls", state.consecutiveUnproductiveStalls);
+        value.put("openChatPrepared", state.openChatPrepared);
+        value.put("stallParticipationFinalized", state.stallParticipationFinalized);
         if (state.stallOpenedAt != null) value.put("stallOpenedAt", state.stallOpenedAt.toString());
         return value;
     }
@@ -434,8 +536,21 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
                 .map(Object::toString).toList();
         Integer approaching = tripValue.containsKey("approachingObjectId")
                 ? integer(tripValue, "approachingObjectId") : null;
+        FreeMarketPhysicalGateway.StallTarget inspectingStall = null;
+        Instant inspectionCompletesAt = null;
+        int inspectionListingCount = 0;
+        if (tripValue.get("inspectingStall") instanceof Map<?, ?> encodedStall) {
+            Map<String, Object> stall = (Map<String, Object>) encodedStall;
+            inspectingStall = new FreeMarketPhysicalGateway.StallTarget(integer(stall, "objectId"),
+                    integer(stall, "ownerCharacterId"), integer(stall, "roomMapId"),
+                    integer(stall, "x"), integer(stall, "y"));
+            inspectionCompletesAt = Instant.parse(text(tripValue, "inspectionCompletesAt"));
+            inspectionListingCount = integer(tripValue, "inspectionListingCount");
+        }
         State state = new State(PrivateMarketKnowledge.restore(observations), PhysicalMarketTrip.restore(
-                new PhysicalMarketTrip.Snapshot(rooms, inspected, integer(tripValue, "roomIndex"), approaching)));
+                new PhysicalMarketTrip.Snapshot(rooms, inspected, integer(tripValue, "roomIndex"), approaching,
+                        ((Number) tripValue.getOrDefault("inspectionMillisPerListing", 0)).longValue(),
+                        inspectingStall, inspectionCompletesAt, inspectionListingCount)));
         state.phase = Phase.valueOf(text(value, "phase"));
         ((List<Number>) value.get("attemptedResourceItems")).stream().map(Number::intValue)
                 .forEach(state.attemptedResourceItems::add);
@@ -456,6 +571,10 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
                 ? integer(value, "consecutiveAmbientActions") : 0;
         state.consecutiveUnproductiveStalls = value.containsKey("consecutiveUnproductiveStalls")
                 ? integer(value, "consecutiveUnproductiveStalls") : 0;
+        state.openChatPrepared = value.containsKey("openChatPrepared")
+                && Boolean.TRUE.equals(value.get("openChatPrepared"));
+        state.stallParticipationFinalized = value.containsKey("stallParticipationFinalized")
+                && Boolean.TRUE.equals(value.get("stallParticipationFinalized"));
         if (value.containsKey("stallOpenedAt")) state.stallOpenedAt = Instant.parse(text(value, "stallOpenedAt"));
         if (state.phase.ordinal() >= Phase.DISPOSING.ordinal() && state.sellerPlan == null)
             throw new IllegalStateException("restored market phase requires a seller plan");
@@ -558,6 +677,27 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
                         "Keep searching physically observed PlayerShop listings"), negotiated.evidence(),
                 Map.of("itemId", negotiated.itemId()),
                 Map.of("offeredMesos", (double) negotiated.offeredMesos()));
+    }
+
+    private void appendOpenChatDecision(CommerceParticipant profile, Instant logicalAt, String kind,
+                                        OpenChatBehavior.Result result) {
+        appendDecision(profile, logicalAt, kind,
+                Map.of("offerId", result.offerId(), "outcome", result.outcome(),
+                        "sold", result.sold()),
+                alternatives("CONTINUE_MARKET_SEARCH",
+                        "Retain the holding or liquidity and continue the bounded market visit"),
+                result.evidence(), Map.of("itemId", result.itemId()),
+                Map.of("mesos", (double) result.mesos()));
+    }
+
+    private void finalizeStallParticipation(Character agent, CommerceParticipant profile, State state) {
+        if (state.stallParticipationFinalized) return;
+        state.stallParticipationFinalized = true;
+        if (!seller.hasPlayerShopPermit(agent)
+                || random.stream("agent." + profile.agentId() + ".stall-participation").nextDouble()
+                > profile.stallWillingness())
+            state.sellerPlan = new MarketSellerPlan(state.sellerPlan.npcSales(), List.of(),
+                    state.sellerPlan.preferredRoomMapId(), state.sellerPlan.stallDescription());
     }
 
     private List<String> entryGoals(Character agent, CommerceParticipant profile, Instant at) {
@@ -674,6 +814,49 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
             }
         }
     }
+    public interface OpenChatBehavior {
+        Preparation prepare(Character seller, CommerceParticipant profile,
+                            MarketSellerPlan plan, Instant logicalAt);
+        Result progressSeller(Character seller, CommerceParticipant profile, Instant logicalAt);
+        Result attemptPurchase(Character buyer, CommerceParticipant profile,
+                               List<AgentNeed> needs, Instant logicalAt);
+        void cancel(String sellerAgentId, Instant logicalAt, String reason);
+        default Map<String, Object> snapshotState() { return Map.of(); }
+        default void restoreState(Map<String, Object> snapshot) {
+            if (snapshot != null && !snapshot.isEmpty())
+                throw new IllegalStateException("open-chat behavior does not support checkpoint restore");
+        }
+
+        static OpenChatBehavior disabled() {
+            return new OpenChatBehavior() {
+                @Override public Preparation prepare(Character seller, CommerceParticipant profile,
+                        MarketSellerPlan plan, Instant logicalAt) { return Preparation.none(plan); }
+                @Override public Result progressSeller(Character seller, CommerceParticipant profile,
+                        Instant logicalAt) { return Result.none(); }
+                @Override public Result attemptPurchase(Character buyer, CommerceParticipant profile,
+                        List<AgentNeed> needs, Instant logicalAt) { return Result.none(); }
+                @Override public void cancel(String sellerAgentId, Instant logicalAt, String reason) { }
+            };
+        }
+
+        record Preparation(MarketSellerPlan plan, boolean selected, String offerId,
+                           int itemId, int quantity, long askMesos, long reserveMesos) {
+            public Preparation { Objects.requireNonNull(plan); offerId = offerId == null ? "" : offerId; }
+            public static Preparation none(MarketSellerPlan plan) {
+                return new Preparation(plan, false, "", 0, 0, 0, 0);
+            }
+        }
+        record Result(boolean attempted, boolean done, boolean sold, String outcome,
+                      String offerId, int itemId, long mesos, Map<String, Object> evidence) {
+            public Result {
+                outcome = outcome == null ? "" : outcome; offerId = offerId == null ? "" : offerId;
+                evidence = evidence == null ? Map.of() : Map.copyOf(evidence);
+            }
+            public static Result none() {
+                return new Result(false, false, false, "NONE", "", 0, 0, Map.of());
+            }
+        }
+    }
     private EconomyWorldPort.MarketDirective revisit(Instant at, boolean externalPending) {
         return revisitAfter(at, actionPoll, externalPending);
     }
@@ -681,6 +864,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
         return new EconomyWorldPort.MarketDirective(Optional.empty(), Optional.of(at.plus(delay)), externalPending);
     }
     private EconomyWorldPort.MarketDirective finish(String agentId, Instant at) {
+        openChat.cancel(agentId, at, "ECONOMY_SESSION_FINISHED");
         states.remove(agentId);
         sellerPlans.releaseRoom(agentId);
         return new EconomyWorldPort.MarketDirective(Optional.of(at.plus(postTripDelay)), Optional.empty());
@@ -705,7 +889,7 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
             }
         }
     }
-    private enum Phase { PROCURING, BROWSING, DISPOSING, OPENING_STALL, OWNING_STALL }
+    private enum Phase { PROCURING, BROWSING, DISPOSING, OPEN_CHAT_SELLING, OPENING_STALL, OWNING_STALL }
     private static final class State {
         private final PrivateMarketKnowledge knowledge;
         private PhysicalMarketTrip trip;
@@ -721,17 +905,22 @@ public final class AutonomousFreeMarketBehavior implements CosmicEconomyWorldAda
         private List<String> entryGoals = List.of();
         private int consecutiveAmbientActions;
         private int consecutiveUnproductiveStalls;
+        private boolean openChatPrepared;
+        private boolean stallParticipationFinalized;
         private Instant stallOpenedAt;
         private State(PrivateMarketKnowledge knowledge, PhysicalMarketTrip trip) {
             this.knowledge = knowledge; this.trip = trip;
         }
         private void prepareReprice(List<Integer> rooms) {
             phase = Phase.BROWSING;
-            trip = new PhysicalMarketTrip(rooms);
+            trip = new PhysicalMarketTrip(rooms, Duration.ofMillis(
+                    trip.snapshot().inspectionMillisPerListing()));
             sellerPlan = null;
             npcSaleIndex = 0;
             openAttempts = 0;
             consecutiveAmbientActions = 0;
+            openChatPrepared = false;
+            stallParticipationFinalized = false;
             stallOpenedAt = null;
             repriceCount++;
         }

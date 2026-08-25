@@ -34,7 +34,7 @@ WITH wallet_balances AS (
 ), seller_sales AS (
     SELECT seller_id, SUM(COALESCE(gross_mesos, 0))::numeric sales
     FROM economic_transaction
-    WHERE run_id = :run_id AND transaction_kind = 'PLAYER_SHOP_SALE'
+    WHERE run_id = :run_id AND transaction_kind IN ('PLAYER_SHOP_SALE','PLAYER_TRADE')
       AND seller_id IS NOT NULL AND logical_at BETWEEN :from_logical_at AND :to_logical_at
     GROUP BY seller_id
 ), seller_shares AS (
@@ -74,7 +74,8 @@ WITH wallet_balances AS (
     GROUP BY item_id
     HAVING SUM(consumed_quantity + npc_destroyed_quantity) > 0
 ), item_prices AS (
-    SELECT logical_date, item_id, vwap, completed_quantity, completed_trade_count, meso_volume
+    SELECT logical_day, logical_date, item_id, vwap, completed_quantity,
+           completed_trade_count, meso_volume
     FROM item_market_daily
     WHERE run_id = :run_id AND logical_date BETWEEN :from_logical_at::date AND :to_logical_at::date
       AND completed_trade_count > 0
@@ -117,7 +118,7 @@ SELECT jsonb_build_object(
     'itemCreationAndBurn', COALESCE((SELECT jsonb_agg(to_jsonb(item_burn)
                                   ORDER BY consumed_quantity DESC, item_id) FROM item_burn), '[]'),
     'itemPriceSeries', COALESCE((SELECT jsonb_agg(to_jsonb(item_prices)
-                              ORDER BY logical_date, item_id) FROM item_prices), '[]'),
+                              ORDER BY logical_day, item_id) FROM item_prices), '[]'),
     'searchOutcomes', (SELECT to_jsonb(decision_failures) FROM decision_failures),
     'unmetDemand', (SELECT to_jsonb(demand) FROM demand),
     'invariants', (SELECT to_jsonb(invariant_counts) FROM invariant_counts)

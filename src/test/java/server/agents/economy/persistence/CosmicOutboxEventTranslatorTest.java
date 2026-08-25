@@ -30,6 +30,28 @@ class CosmicOutboxEventTranslatorTest {
     }
 
     @Test
+    void venuePermitSubsidyHasExplicitSourceAndBalancedProvenance() {
+        CosmicOutboxEventTranslator translator = translator(
+                (run, account, item, fingerprint, quantity) -> List.of());
+        var delta = participant(10, 1_000, 1_000,
+                List.of(item(5140006, "CASH", "permit", 0, 1)));
+        CosmicOutboxRecord receipt = receipt("VENUE_SUBSIDY", null,
+                "venue=FREE_MARKET_ENTRY item=5140006 quantity=1",
+                payloadWithEvidence(Map.of("venueSubsidy", Map.of("venue", "FREE_MARKET_ENTRY",
+                        "policy", "GRANT_RANDOM_REAL_PERMIT_ON_ENTRY", "itemId", 5140006,
+                        "quantity", 1)), delta));
+
+        CosmicOutboxEventTranslator.IngestionPlan plan = translator.translate(receipt);
+
+        assertEquals(EconomicEventKind.VENUE_SUBSIDY, plan.event().kind());
+        assertEquals("VENUE_SUBSIDY", plan.createdLots().getFirst().sourceKind());
+        assertEquals(0, balance(plan.event(), AssetKey.item(5140006)));
+        assertTrue(plan.event().postings().stream().anyMatch(posting ->
+                posting.account().equals(LedgerAccount.source("VENUE_SUBSIDY:FREE_MARKET_ENTRY"))
+                        && posting.quantity() == -1));
+    }
+
+    @Test
     void stallListingMovesOwnedLotIntoEscrowAndSaleNeverDebitsSellerInventory() {
         CosmicOutboxEventTranslator.LotResolver lotResolver = (run, account, item, fingerprint, quantity) ->
                 List.of(new CosmicOutboxEventTranslator.LotSlice("farm-lot", quantity));

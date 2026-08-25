@@ -44,6 +44,28 @@ class CosmicMarketObservationServiceTest {
     }
 
     @Test
+    void exactStallInspectionDoesNotLearnNearbyCompetitorListings() {
+        UUID runId = UUID.randomUUID();
+        AgentFreeMarketBuyerService buyer = mock(AgentFreeMarketBuyerService.class);
+        Character agent = mock(Character.class);
+        var listing = new PlayerShop.ListingView(0, 4000000, (short) 1, (short) 2,
+                100, "fingerprint", Map.of());
+        when(buyer.observe(agent, 90)).thenReturn(List.of(
+                new AgentFreeMarketBuyerService.ObservedStall(
+                        90, 12, "seller", 910000001, 25, "escrow", List.of(listing))));
+        CosmicMarketObservationService service = new CosmicMarketObservationService(
+                runId, buyer, mock(EconomyEvidenceJournal.class));
+
+        var offers = service.inspectStall(agent, "agent-1", 90, Instant.EPOCH,
+                new PrivateMarketKnowledge());
+
+        assertEquals(1, offers.size());
+        assertEquals(90, offers.getFirst().shopObjectId());
+        verify(buyer).observe(agent, 90);
+        verify(buyer, never()).observeNearby(agent);
+    }
+
+    @Test
     void rejectsCrossAgentOrCrossRoomUseOfPrivateKnowledge() {
         AgentFreeMarketBuyerService buyer = mock(AgentFreeMarketBuyerService.class);
         Character agent = mock(Character.class);

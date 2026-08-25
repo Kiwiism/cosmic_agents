@@ -34,18 +34,30 @@ public final class CosmicExternalAgentActivityAdapter implements ExternalAgentAc
     private final Presence presence;
     private final Settlement settlement;
     private final Function<Instant, EconomyTaxOverride> taxes;
+    private final QuestLifecycle quests;
     private final Set<String> offscreen = ConcurrentHashMap.newKeySet();
 
     public CosmicExternalAgentActivityAdapter(UUID runId, String configRevision, String catalogRevision,
                                               EconomyParticipantRegistry participants, Planner planner,
                                               RuleExactFarmResolver resolver, Presence presence,
-                                              Settlement settlement,
-                                              Function<Instant, EconomyTaxOverride> taxes) {
+                                               Settlement settlement,
+                                               Function<Instant, EconomyTaxOverride> taxes) {
+        this(runId, configRevision, catalogRevision, participants, planner, resolver, presence,
+                settlement, taxes, QuestLifecycle.disabled());
+    }
+
+    public CosmicExternalAgentActivityAdapter(UUID runId, String configRevision, String catalogRevision,
+                                               EconomyParticipantRegistry participants, Planner planner,
+                                               RuleExactFarmResolver resolver, Presence presence,
+                                               Settlement settlement,
+                                               Function<Instant, EconomyTaxOverride> taxes,
+                                               QuestLifecycle quests) {
         this.runId = Objects.requireNonNull(runId); this.configRevision = Objects.requireNonNull(configRevision);
         this.catalogRevision = Objects.requireNonNull(catalogRevision);
         this.participants = Objects.requireNonNull(participants); this.planner = Objects.requireNonNull(planner);
         this.resolver = Objects.requireNonNull(resolver); this.presence = Objects.requireNonNull(presence);
         this.settlement = Objects.requireNonNull(settlement); this.taxes = Objects.requireNonNull(taxes);
+        this.quests = Objects.requireNonNull(quests);
     }
 
     @Override public FarmSessionPlan plan(CommerceParticipant profile, Instant at) {
@@ -55,6 +67,7 @@ public final class CosmicExternalAgentActivityAdapter implements ExternalAgentAc
             throw new IllegalStateException("economy session must release before external activity planning");
         if (agent.getPlayerShop() != null || agent.getHiredMerchant() != null || agent.getTrade() != null)
             throw new IllegalStateException("active commerce must drain before external activity");
+        quests.advance(agent, profile, at);
         return planner.plan(agent, profile, at);
     }
 
@@ -75,8 +88,11 @@ public final class CosmicExternalAgentActivityAdapter implements ExternalAgentAc
                                                Instant at, LongSupplier random) {
         if (!offscreen.contains(profile.agentId()))
             throw new IllegalStateException("external activity does not own agent " + profile.agentId());
-        return EconomyOperationContext.with(metadata(profile, at, outcome.sessionId()),
-                () -> settlement.settle(bound(profile.agentId()), outcome, random));
+        Character agent = bound(profile.agentId());
+        FarmSessionOutcome settled = EconomyOperationContext.with(metadata(profile, at, outcome.sessionId()),
+                () -> settlement.settle(agent, outcome, random));
+        quests.advance(agent, profile, at);
+        return settled;
     }
 
     @Override public void returnToEconomyEntrance(CommerceParticipant profile, Instant at) {
@@ -139,5 +155,9 @@ public final class CosmicExternalAgentActivityAdapter implements ExternalAgentAc
     }
     @FunctionalInterface public interface Settlement {
         FarmSessionOutcome settle(Character agent, FarmSessionOutcome outcome, LongSupplier random);
+    }
+    @FunctionalInterface public interface QuestLifecycle {
+        void advance(Character agent, CommerceParticipant profile, Instant at);
+        static QuestLifecycle disabled() { return (agent, profile, at) -> { }; }
     }
 }

@@ -13,6 +13,7 @@ import server.agents.economy.session.CommerceParticipant;
 import server.agents.economy.scenario.EconomyEngineConfig;
 
 import java.time.Instant;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -76,11 +77,31 @@ class CalibratedCosmicActivityPlannerTest {
         assertEquals(30, plan.consumedItems().getFirst().quantity());
     }
 
+    @Test
+    void derivesOutsideDurationFromConfiguredMarketParticipationShare() {
+        Character agent = mock(Character.class);
+        when(agent.getLevel()).thenReturn(10); when(agent.getStartedQuests()).thenReturn(List.of());
+        ActivityCalibration calibration = new ActivityCalibration("observed:ratio", "build",
+                100010000, 10, "warrior", AT, 8, 2, Map.of(100100, 1d), Map.of(), 0d);
+        EconomyEngineConfig.Activity config = config();
+        config.targetMarketParticipationFraction = .40d;
+        CalibratedCosmicActivityPlanner planner = new CalibratedCosmicActivityPlanner(config,
+                (build, map, level, job, samples) -> map == 100010000
+                        ? Optional.of(calibration) : Optional.empty(),
+                new VictoriaActivityMapCatalog("/agents/catalogs/adaptive/victoria-map-facts.json"),
+                catalog(), Duration.ofMinutes(30));
+
+        FarmSessionPlan plan = planner.plan(agent, profile(), AT);
+
+        assertEquals(45, plan.duration().toMinutes());
+    }
+
     private static EconomyEngineConfig.Activity config() {
         EconomyEngineConfig.Activity config = new EconomyEngineConfig.Activity();
         config.agentBuild = "build"; config.minimumCalibrationSamples = 5;
         config.medianSessionMinutes = 60; config.maximumSessionMinutes = 120;
         config.objectiveAware = true; config.consumeAmmunition = true;
+        config.questHuntIndexResource = "/agents/catalogs/adaptive/victoria-quest-hunt-index.json";
         config.consumeHpPotions = true; config.consumeMpPotions = true;
         return config;
     }

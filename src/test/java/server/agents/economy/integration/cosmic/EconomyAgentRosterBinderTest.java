@@ -57,6 +57,20 @@ class EconomyAgentRosterBinderTest {
     }
 
     @Test
+    void acceptsAnyVerifiedPermitFromTheConfiguredPool() {
+        Character buyer = character(10, Job.WARRIOR, false);
+        Character alternatePermitSeller = character(20, Job.WARRIOR, 5140006);
+        var admissions = List.of(admission("agent-1", "warrior", .8),
+                admission("agent-2", "warrior", .1));
+
+        var bound = new EconomyAgentRosterBinder().bind(admissions,
+                List.of(buyer, alternatePermitSeller), List.of(5140000, 5140006));
+
+        assertEquals(alternatePermitSeller, bound.get("agent-1"));
+        assertEquals(buyer, bound.get("agent-2"));
+    }
+
+    @Test
     void failsClosedWhenAConfiguredSellerHasNoRealPermit() {
         var admissions = List.of(admission("agent-1", "warrior", .8));
 
@@ -81,11 +95,15 @@ class EconomyAgentRosterBinderTest {
     }
 
     private static Character character(int id, Job job, boolean permit) {
+        return character(id, job, permit ? 5140000 : 0);
+    }
+
+    private static Character character(int id, Job job, int permitItemId) {
         Character character = mock(Character.class);
         when(character.getId()).thenReturn(id);
         when(character.getJob()).thenReturn(job);
         Inventory cash = mock(Inventory.class);
-        when(cash.countById(5140000)).thenReturn(permit ? 1 : 0);
+        if (permitItemId != 0) when(cash.countById(permitItemId)).thenReturn(1);
         when(character.getInventory(InventoryType.CASH)).thenReturn(cash);
         return character;
     }

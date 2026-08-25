@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.time.Instant;
+import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
@@ -86,6 +87,33 @@ class CosmicEconomyWorldAdapterRestoreTest {
     }
 
     @Test
+    void acceptedEntryRunsProvisioningBeforeCreatingSession() {
+        Character warrior = character(101, 100);
+        when(warrior.getMapId()).thenReturn(910000000);
+        CosmicEconomyWorldAdapter.EntryProvisioner provisioner = mock(
+                CosmicEconomyWorldAdapter.EntryProvisioner.class);
+        when(provisioner.provision(any(), anyString(), any())).thenReturn(
+                new CosmicEconomyWorldAdapter.EntryProvisioner.Result(
+                        true, true, 5140006, "GRANTED_VENUE_SUBSIDY"));
+        UUID runId = runId();
+        CosmicEconomyWorldAdapter world = new CosmicEconomyWorldAdapter(runId, 1,
+                "config", "catalog", ignored -> warrior,
+                mock(CosmicEconomyWorldAdapter.MarketBehavior.class),
+                ignored -> new EconomyTaxOverride(0, 0), EconomyParticipantBindingStore.NO_OP,
+                EconomyBootstrapStore.NO_OP, (profile, character) -> { },
+                (profile, character) -> { }, provisioner);
+        CommerceParticipant profile = profile("agent-1", "warrior");
+        UUID requestId = UUID.randomUUID();
+
+        var result = world.requestEntry(profile, new server.agents.economy.session.EconomySessionPort.EntryRequest(
+                requestId, "TEST", Duration.ofMinutes(30), Duration.ofMinutes(5), Map.of()), Instant.EPOCH);
+
+        assertEquals(server.agents.economy.session.EconomySessionPort.EntryResult.Status.ACCEPTED,
+                result.status());
+        verify(provisioner).provision(warrior, "agent-1", requestId);
+    }
+
+    @Test
     void restoresBindingsParticipantsMarketAndDetachedPresence() {
         Character warrior = character(101, 100);
         Character magician = character(102, 200);
@@ -121,6 +149,13 @@ class CosmicEconomyWorldAdapterRestoreTest {
         when(character.getClient()).thenReturn(gameClient);
         when(gameClient.getChannel()).thenReturn(1);
         when(character.getJob()).thenReturn(Job.getById(jobId));
+        client.inventory.Inventory inventory = mock(client.inventory.Inventory.class);
+        when(inventory.list()).thenReturn(List.of());
+        for (client.inventory.InventoryType type : client.inventory.InventoryType.values())
+            when(character.getInventory(type)).thenReturn(inventory);
+        Character.EconomyProgressionSnapshot progression = mock(Character.EconomyProgressionSnapshot.class);
+        when(progression.level()).thenReturn(20);
+        when(character.captureEconomyProgression()).thenReturn(progression);
         return character;
     }
 

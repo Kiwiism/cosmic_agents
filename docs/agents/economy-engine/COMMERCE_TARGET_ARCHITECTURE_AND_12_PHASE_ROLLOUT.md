@@ -49,7 +49,8 @@ flowchart TD
   owns market intent and valuation. Cosmic gateways alone mutate items, mesos, shops, or trades.
 - Test population growth, logical-day scheduling, and calibrated offscreen farming are observation
   concerns. They are not production Commerce APIs.
-- PlayerShop permit `5140000` must be real. Hired Merchant items and administrative permit grants
+- PlayerShop permits must come from the WZ-verified `514xxxx` pool. The default FM participation
+  subsidy is an explicit journaled source; Hired Merchant items and unlabeled administrative grants
   remain rejected.
 
 ## Per-Agent visit lifecycle
@@ -98,8 +99,9 @@ a physical 30-day client-visible soak has occurred.
 
 ## Operator commands
 
-Apply database migrations through V022, start at least 100 live Agents on channel 1, provision real
-PlayerShop permits for configured sellers, and capture the required activity calibrations.
+Apply database migrations through V022, start at least 100 live Agents on channel 1, and capture the
+required activity calibrations. The default entry policy provisions one journaled real permit only
+for entrants who own none.
 
 ```text
 !commerce observe preflight
@@ -117,7 +119,7 @@ PlayerShop permits for configured sellers, and capture the required activity cal
 
 `preflight` reports how many reserved characters happen to be in the FM, but it no longer requires
 them to be manually parked there: cohort presentation owns deployment. It still fails closed for
-roster, job binding, channel, database, calibration, and real-permit problems.
+roster, job binding, channel, database, calibration, and permit-policy problems.
 
 ## Phase-12 rollout and rollback
 
@@ -147,6 +149,5 @@ forcibly closing protected shops/trades.
 - Autonomous World Director ingestion is intentionally not activated system-wide yet. Selecting
   Commerce before TownLife, Hunting, and Questing expose comparable proposal evidence would create a
   new hidden priority policy.
-- A real v83 PlayerShop permit is mandatory. This implementation does not manufacture one and does
-  not substitute a Hired Merchant.
-
+- A real v83 PlayerShop permit remains mandatory to open a stall. The default policy creates one
+  only as a visible `VENUE_SUBSIDY`; it never substitutes a Hired Merchant or hides the source.

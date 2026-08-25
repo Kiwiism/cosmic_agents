@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class EconomyDemandCatalogIntegrityTest {
     @Test
-    void configuredStallPermitIsTheRealRegularPlayerShopPermitInWz() throws Exception {
+    void configuredStallPermitPoolContainsOnlyVerifiedPlayerShopPermitsInWz() throws Exception {
         String wzPath = System.getProperty("wz-path");
         Assumptions.assumeTrue(wzPath != null, "set -Dwz-path for authoritative WZ integration");
         int permitId = new EconomyConfigLoader().load().config().bootstrap.shopPermitItemId;
@@ -29,6 +29,11 @@ class EconomyDemandCatalogIntegrityTest {
         assertTrue(!ItemConstants.isHiredMerchant(permitId));
 
         String cashNames = Files.readString(Path.of(wzPath, "String.wz", "Cash.img.xml"));
+        for (int configured : new EconomyConfigLoader().load().config().bootstrap.shopPermitItemIds) {
+            assertTrue(ItemConstants.isPlayerShop(configured));
+            assertTrue(cashNames.contains("<imgdir name=\"" + configured + "\">"),
+                    "missing configured permit " + configured);
+        }
         assertTrue(cashNames.contains("<imgdir name=\"5140000\"><string name=\"name\" value=\"Regular Store Permit\""));
         assertTrue(cashNames.contains("Can sell up to 16 items at once."));
         String cashItems = Files.readString(Path.of(wzPath, "Item.wz", "Cash", "0514.img.xml"));

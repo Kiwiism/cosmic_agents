@@ -70,6 +70,14 @@ public final class EconomyRunApplication {
     }
 
     public SimulationRunEngine.AdvanceSummary advanceDays(long days) { return engine.advanceDays(days); }
+    public SimulationRunEngine.AdvanceSummary advanceDay() {
+        return engine.advanceTo(min(engine.nextDayBoundary(), engine.targetAt()));
+    }
+    public SimulationRunEngine.AdvanceSummary advanceToDayBoundary(Instant boundary) {
+        if (!boundary.equals(engine.nextDayBoundary()) && !boundary.equals(engine.targetAt()))
+            throw new IllegalArgumentException("target is not the next logical day boundary");
+        return engine.advanceToExclusive(min(boundary, engine.targetAt()));
+    }
     public SimulationRunEngine.AdvanceSummary advanceTo(Instant target) { return engine.advanceTo(target); }
     public SimulationRunEngine.RunCheckpoint checkpoint() {
         return engine.checkpoint(Map.of("coordinator", coordinator.snapshot()));
@@ -77,8 +85,15 @@ public final class EconomyRunApplication {
     public Map<String, EconomyRunCoordinator.AgentView> agents() { return coordinator.agentViews(); }
     public Instant now() { return engine.now(); }
     public Instant targetAt() { return engine.targetAt(); }
+    public Instant nextDayBoundary() { return engine.nextDayBoundary(); }
+    public Instant logicalStart() { return engine.logicalStart(); }
+    public SimulationRunEngine.LogicalRunTime logicalRunTime() { return engine.logicalRunTime(); }
     public UUID runId() { return engine.runId(); }
     public void onCheckpoint(Runnable hook) { engine.onCheckpoint(hook); }
+
+    private static Instant min(Instant left, Instant right) {
+        return left.isBefore(right) ? left : right;
+    }
 
     private static ExternalAgentActivityPort legacyActivity(EconomyWorldPort world,
                                                              EconomyCatalog catalog) {

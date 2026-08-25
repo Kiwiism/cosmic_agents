@@ -53,12 +53,16 @@ public final class JdbcEconomyProjectionService {
     }
 
     private static final String ITEM_DAILY = """
-            INSERT INTO item_market_daily (run_id, logical_date, item_id, completed_quantity,
+            INSERT INTO item_market_daily (run_id, logical_date, logical_day, item_id, completed_quantity,
                 completed_trade_count, meso_volume, vwap, minimum_price, maximum_price,
                 npc_created_quantity, farm_created_quantity, quest_created_quantity,
                 transformed_created_quantity, npc_destroyed_quantity, consumed_quantity)
             WITH item_flow AS (
-                SELECT e.run_id, e.logical_time::date logical_date, p.asset_identifier::integer item_id,
+                SELECT e.run_id,
+                    r.logical_started_at::date + FLOOR(EXTRACT(EPOCH FROM
+                        (e.logical_time - r.logical_started_at)) / 86400)::integer logical_date,
+                    1 + FLOOR(EXTRACT(EPOCH FROM (e.logical_time - r.logical_started_at)) / 86400)::integer logical_day,
+                    p.asset_identifier::integer item_id,
                     SUM(CASE WHEN e.event_kind IN ('STALL_SALE','DIRECT_TRADE')
                         AND p.account_type IN ('AGENT','HUMAN') AND p.quantity > 0 THEN p.quantity ELSE 0 END) completed_quantity,
                     COUNT(DISTINCT e.event_id) FILTER (WHERE e.event_kind IN ('STALL_SALE','DIRECT_TRADE')) completed_trade_count,
@@ -82,35 +86,51 @@ public final class JdbcEconomyProjectionService {
                             OR (p.account_owner_id = 'SCROLL_INPUT'
                                 AND e.evidence->'scrollApplication'->>'outcome' = 'CURSE'))
                         THEN p.quantity ELSE 0 END) consumed_quantity
-                FROM economic_event e JOIN ledger_posting p ON p.event_id = e.event_id
+                FROM economic_event e JOIN simulation_run r ON r.run_id = e.run_id
+                    JOIN ledger_posting p ON p.event_id = e.event_id
                 WHERE e.run_id = ? AND p.asset_type = 'ITEM'
-                GROUP BY e.run_id, e.logical_time::date, p.asset_identifier::integer
+                GROUP BY e.run_id, r.logical_started_at,
+                    FLOOR(EXTRACT(EPOCH FROM (e.logical_time - r.logical_started_at)) / 86400)::integer,
+                    p.asset_identifier::integer
             ), priced AS (
-                SELECT run_id, logical_at::date logical_date, item_id, SUM(gross_mesos) meso_volume,
-                    SUM(gross_mesos)::numeric / NULLIF(SUM(quantity), 0) vwap,
-                    MIN(gross_mesos / NULLIF(quantity, 0)) minimum_price,
-                    MAX(gross_mesos / NULLIF(quantity, 0)) maximum_price
-                FROM economic_transaction
-                WHERE run_id = ? AND transaction_kind = 'PLAYER_SHOP_SALE'
-                    AND item_id IS NOT NULL AND quantity > 0 AND gross_mesos IS NOT NULL
-                GROUP BY run_id, logical_at::date, item_id
+                SELECT t.run_id,
+                    r.logical_started_at::date + FLOOR(EXTRACT(EPOCH FROM
+                        (t.logical_at - r.logical_started_at)) / 86400)::integer logical_date,
+                    1 + FLOOR(EXTRACT(EPOCH FROM (t.logical_at - r.logical_started_at)) / 86400)::integer logical_day,
+                    t.item_id, SUM(t.gross_mesos) meso_volume,
+                    SUM(t.gross_mesos)::numeric / NULLIF(SUM(t.quantity), 0) vwap,
+                    MIN(t.gross_mesos / NULLIF(t.quantity, 0)) minimum_price,
+                    MAX(t.gross_mesos / NULLIF(t.quantity, 0)) maximum_price
+                FROM economic_transaction t JOIN simulation_run r ON r.run_id = t.run_id
+                WHERE t.run_id = ? AND t.transaction_kind IN ('PLAYER_SHOP_SALE','PLAYER_TRADE')
+                    AND t.item_id IS NOT NULL AND t.quantity > 0 AND t.gross_mesos IS NOT NULL
+                GROUP BY t.run_id, r.logical_started_at,
+                    FLOOR(EXTRACT(EPOCH FROM (t.logical_at - r.logical_started_at)) / 86400)::integer,
+                    t.item_id
             )
-            SELECT f.run_id, f.logical_date, f.item_id, f.completed_quantity, f.completed_trade_count,
+            SELECT f.run_id, f.logical_date, f.logical_day, f.item_id,
+                f.completed_quantity, f.completed_trade_count,
                 COALESCE(p.meso_volume, 0), p.vwap, p.minimum_price, p.maximum_price,
                 f.npc_created_quantity, f.farm_created_quantity, f.quest_created_quantity,
                 f.transformed_created_quantity, f.npc_destroyed_quantity, f.consumed_quantity
-            FROM item_flow f LEFT JOIN priced p USING (run_id, logical_date, item_id)
+            FROM item_flow f LEFT JOIN priced p USING (run_id, logical_date, logical_day, item_id)
             """;
 
     private static final String MESO_DAILY = """
-            INSERT INTO meso_flow_daily(run_id, logical_date, flow_kind, meso_amount, transaction_count)
-            SELECT e.run_id, e.logical_time::date,
+            INSERT INTO meso_flow_daily(run_id, logical_date, logical_day, flow_kind, meso_amount, transaction_count)
+            SELECT e.run_id,
+                r.logical_started_at::date + FLOOR(EXTRACT(EPOCH FROM
+                    (e.logical_time - r.logical_started_at)) / 86400)::integer,
+                1 + FLOOR(EXTRACT(EPOCH FROM (e.logical_time - r.logical_started_at)) / 86400)::integer,
                 CASE WHEN p.account_type = 'SOURCE' THEN 'CREATED:' || p.account_owner_id
                      ELSE 'DESTROYED:' || p.account_owner_id END,
                 SUM(ABS(p.quantity)), COUNT(DISTINCT e.event_id)
-            FROM economic_event e JOIN ledger_posting p ON p.event_id = e.event_id
+            FROM economic_event e JOIN simulation_run r ON r.run_id = e.run_id
+                JOIN ledger_posting p ON p.event_id = e.event_id
             WHERE e.run_id = ? AND p.asset_type = 'MESO' AND p.account_type IN ('SOURCE','SINK')
-            GROUP BY e.run_id, e.logical_time::date, p.account_type, p.account_owner_id
+            GROUP BY e.run_id, r.logical_started_at,
+                FLOOR(EXTRACT(EPOCH FROM (e.logical_time - r.logical_started_at)) / 86400)::integer,
+                p.account_type, p.account_owner_id
             """;
 
     private static final String AGENT_STATE = """

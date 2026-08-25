@@ -8,6 +8,7 @@ import server.agents.economy.activity.ActivityCalibration;
 import server.agents.economy.activity.ActivityCalibrationRepository;
 import server.agents.economy.activity.FarmSessionPlan;
 import server.agents.economy.activity.VictoriaActivityMapCatalog;
+import server.agents.economy.activity.QuestObjectiveMapIndex;
 import server.agents.economy.catalog.EconomyCatalog;
 import server.agents.economy.session.CommerceParticipant;
 import server.agents.economy.scenario.EconomyEngineConfig;
@@ -22,25 +23,64 @@ public final class CalibratedCosmicActivityPlanner implements CosmicEconomyWorld
     private final EconomyEngineConfig.Activity config;
     private final ActivityCalibrationRepository calibrations;
     private final VictoriaActivityMapCatalog maps;
+    private final QuestObjectiveMapIndex questMaps;
     private final EconomyCatalog catalog;
+    private final Duration maximumMarketVisit;
+    private final server.agents.economy.scenario.PopulationMarketParticipationSchedule participation;
 
     public CalibratedCosmicActivityPlanner(EconomyEngineConfig.Activity config,
                                            ActivityCalibrationRepository calibrations,
                                            VictoriaActivityMapCatalog maps, EconomyCatalog catalog) {
+        this(config, calibrations, maps, catalog, Duration.ZERO, null,
+                new QuestObjectiveMapIndex(config.questHuntIndexResource));
+    }
+
+    public CalibratedCosmicActivityPlanner(EconomyEngineConfig.Activity config,
+                                           ActivityCalibrationRepository calibrations,
+                                           VictoriaActivityMapCatalog maps, EconomyCatalog catalog,
+                                           Duration maximumMarketVisit) {
+        this(config, calibrations, maps, catalog, maximumMarketVisit, null,
+                new QuestObjectiveMapIndex(config.questHuntIndexResource));
+    }
+
+    public CalibratedCosmicActivityPlanner(EconomyEngineConfig.Activity config,
+                                           ActivityCalibrationRepository calibrations,
+                                           VictoriaActivityMapCatalog maps, EconomyCatalog catalog,
+                                           Duration maximumMarketVisit,
+                                           server.agents.economy.scenario.PopulationMarketParticipationSchedule participation) {
+        this(config, calibrations, maps, catalog, maximumMarketVisit, participation,
+                new QuestObjectiveMapIndex(config.questHuntIndexResource));
+    }
+
+    CalibratedCosmicActivityPlanner(EconomyEngineConfig.Activity config,
+                                    ActivityCalibrationRepository calibrations,
+                                    VictoriaActivityMapCatalog maps, EconomyCatalog catalog,
+                                    Duration maximumMarketVisit,
+                                    server.agents.economy.scenario.PopulationMarketParticipationSchedule participation,
+                                    QuestObjectiveMapIndex questMaps) {
         this.config = Objects.requireNonNull(config); this.calibrations = Objects.requireNonNull(calibrations);
         this.maps = Objects.requireNonNull(maps); this.catalog = Objects.requireNonNull(catalog);
+        this.questMaps = Objects.requireNonNull(questMaps);
+        this.maximumMarketVisit = Objects.requireNonNull(maximumMarketVisit);
+        this.participation = participation;
     }
 
     @Override
     public FarmSessionPlan plan(Character agent, CommerceParticipant profile, Instant logicalAt) {
+        Set<Integer> quests = new TreeSet<>();
+        if (config.objectiveAware) agent.getStartedQuests().forEach(status -> quests.add((int) status.getQuestID()));
+        List<Integer> preferred = questMaps.preferredMaps(quests);
         ActivityCalibration calibration = maps.candidates(agent.getLevel()).stream()
+                .sorted(Comparator.comparingInt((VictoriaActivityMapCatalog.MapFact map) -> {
+                    int rank = preferred.indexOf(map.mapId());
+                    return rank < 0 ? Integer.MAX_VALUE : rank;
+                }))
                 .map(map -> calibrations.find(config.agentBuild, map.mapId(), agent.getLevel(),
                         profile.jobFamily(), config.minimumCalibrationSamples))
                 .flatMap(Optional::stream).findFirst()
                 .orElseThrow(() -> new MissingActivityCalibrationException("No real activity calibration for build="
                         + config.agentBuild + " job=" + profile.jobFamily() + " level=" + agent.getLevel()));
-        int desiredMinutes = Math.max(1, Math.min(config.maximumSessionMinutes,
-                (int) Math.round(config.medianSessionMinutes * (.5d + profile.dailyActivityFraction()))));
+        int desiredMinutes = desiredMinutes(profile, logicalAt);
         int minutes = resourceBoundMinutes(agent, calibration, desiredMinutes);
         if (minutes <= 0) throw new InsufficientCalibratedResourcesException(
                 "No calibrated farm minute is supportable by actual consumable holdings for " + profile.agentId());
@@ -49,8 +89,6 @@ public final class CalibratedCosmicActivityPlanner implements CosmicEconomyWorld
                 Math.round(calibration.killsPerMinute() * minutes));
         List<FarmSessionPlan.MonsterWork> work = allocateKills(calibration, totalKills);
         List<FarmSessionPlan.ItemConsumption> consumed = consumption(agent, profile, calibration, minutes);
-        Set<Integer> quests = new TreeSet<>();
-        if (config.objectiveAware) agent.getStartedQuests().forEach(status -> quests.add((int) status.getQuestID()));
         String raw = profile.agentId() + ':' + logicalAt + ':' + calibration.calibrationId();
         String sessionId = UUID.nameUUIDFromBytes(raw.getBytes(StandardCharsets.UTF_8)).toString();
         return new FarmSessionPlan(sessionId, calibration.calibrationId(), profile.agentId(),
@@ -59,6 +97,20 @@ public final class CalibratedCosmicActivityPlanner implements CosmicEconomyWorld
                 config.allowDeath ? Duration.ofMillis(AgentYamlConfig.config.agent.AGENT_DEATH_RESPAWN_DELAY_MS)
                         : Duration.ZERO,
                 work, quests, consumed);
+    }
+
+    private int desiredMinutes(CommerceParticipant profile, Instant logicalAt) {
+        double target = config.targetMarketParticipationFraction;
+        if (participation != null) target = participation.eligibleTarget(
+                profile.agentId(), logicalAt, target).orElse(0d);
+        if (target <= 0d || maximumMarketVisit.isZero())
+            return Math.max(1, Math.min(config.maximumSessionMinutes,
+                    (int) Math.round(config.medianSessionMinutes * (.5d + profile.dailyActivityFraction()))));
+        double outsidePerVisit = maximumMarketVisit.toMinutes() * (1d - target) / target;
+        // Small profile variation avoids lockstep cohorts while preserving the configured aggregate share.
+        double activityVariation = .85d + .30d * profile.dailyActivityFraction();
+        return Math.max(1, Math.min(config.maximumSessionMinutes,
+                (int) Math.round(outsidePerVisit * activityVariation)));
     }
 
     private List<FarmSessionPlan.MonsterWork> allocateKills(ActivityCalibration calibration, int total) {

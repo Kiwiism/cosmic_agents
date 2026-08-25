@@ -38,6 +38,7 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort, Econom
     private final EconomyBootstrapStore bootstrapStore;
     private final AdmissionObserver admissionObserver;
     private final ReleaseObserver releaseObserver;
+    private final EntryProvisioner entryProvisioner;
     private final Map<String, Character> bindings = new ConcurrentHashMap<>();
     private final java.util.Set<String> offscreen = ConcurrentHashMap.newKeySet();
     private final Map<String, SessionRecord> activeSessions = new ConcurrentHashMap<>();
@@ -50,6 +51,19 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort, Econom
                                      EconomyBootstrapStore bootstrapStore,
                                      AdmissionObserver admissionObserver,
                                      ReleaseObserver releaseObserver) {
+        this(runId, channelId, configRevision, catalogRevision, agents, market, taxPolicy,
+                participantBindings, bootstrapStore, admissionObserver, releaseObserver,
+                EntryProvisioner.disabled());
+    }
+
+    public CosmicEconomyWorldAdapter(UUID runId, int channelId, String configRevision,
+                                     String catalogRevision, AgentDirectory agents,
+                                     MarketBehavior market, TaxPolicy taxPolicy,
+                                     EconomyParticipantBindingStore participantBindings,
+                                     EconomyBootstrapStore bootstrapStore,
+                                     AdmissionObserver admissionObserver,
+                                     ReleaseObserver releaseObserver,
+                                     EntryProvisioner entryProvisioner) {
         this.runId = Objects.requireNonNull(runId); this.channelId = channelId;
         this.configRevision = Objects.requireNonNull(configRevision);
         this.catalogRevision = Objects.requireNonNull(catalogRevision);
@@ -60,6 +74,7 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort, Econom
         this.bootstrapStore = Objects.requireNonNull(bootstrapStore);
         this.admissionObserver = Objects.requireNonNull(admissionObserver);
         this.releaseObserver = Objects.requireNonNull(releaseObserver);
+        this.entryProvisioner = Objects.requireNonNull(entryProvisioner);
     }
 
     public CosmicEconomyWorldAdapter(UUID runId, int channelId, String configRevision,
@@ -102,6 +117,7 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort, Econom
         this.bootstrapStore = Objects.requireNonNull(bootstrapStore);
         this.admissionObserver = Objects.requireNonNull(admissionObserver);
         this.releaseObserver = Objects.requireNonNull(releaseObserver);
+        this.entryProvisioner = EntryProvisioner.disabled();
     }
 
     @Override
@@ -122,6 +138,11 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort, Econom
         if (map != 910000000 && (map < 910000001 || map > 910000022))
             return EntryResult.deferred("AGENT_HAS_NOT_REACHED_FREE_MARKET", logicalAt.plusSeconds(5));
         admit(profile, logicalAt);
+        EntryProvisioner.Result provisioned = EconomyOperationContext.with(
+                metadata(profile, logicalAt, "FM_ENTRY_PROVISIONING", null),
+                () -> entryProvisioner.provision(agent, profile.agentId(), request.requestId()));
+        if (!provisioned.success())
+            return EntryResult.deferred(provisioned.reason(), logicalAt.plusSeconds(5));
         UUID sessionId = UUID.nameUUIDFromBytes((runId + ":" + profile.agentId() + ":"
                 + request.requestId()).getBytes(java.nio.charset.StandardCharsets.UTF_8));
         Instant expiresAt = logicalAt.plus(request.maximumDuration());
@@ -398,6 +419,20 @@ public final class CosmicEconomyWorldAdapter implements EconomyWorldPort, Econom
     }
     @FunctionalInterface public interface ReleaseObserver {
         void released(CommerceParticipant profile, Character character);
+    }
+    @FunctionalInterface public interface EntryProvisioner {
+        Result provision(Character agent, String logicalAgentId, UUID requestId);
+
+        static EntryProvisioner disabled() {
+            return (agent, logicalAgentId, requestId) -> Result.unchanged("DISABLED");
+        }
+
+        record Result(boolean success, boolean granted, int itemId, String reason) {
+            public Result { reason = reason == null ? "" : reason; }
+            public static Result unchanged(String reason) {
+                return new Result(true, false, 0, reason);
+            }
+        }
     }
     public interface MarketBehavior {
         MarketDirective perform(Character agent, CommerceParticipant profile, Instant logicalAt);

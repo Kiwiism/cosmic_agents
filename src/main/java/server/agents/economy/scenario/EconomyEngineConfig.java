@@ -72,6 +72,8 @@ public final class EconomyEngineConfig {
     public static final class Population {
         public int initialAgents;
         public int maximumAgents;
+        /** Exact external-activity warm-up before a cohort may transact. */
+        public String onboardingDuration;
         public Growth growth;
         public Map<String, Double> classDistribution;
         public Map<String, Double> activityDistribution;
@@ -94,6 +96,7 @@ public final class EconomyEngineConfig {
         public String holdingsMode;
         public String shopPermitPolicy;
         public int shopPermitItemId;
+        public List<Integer> shopPermitItemIds;
         public boolean allowAdministratorEndowment;
         public boolean journalAllEndowments;
     }
@@ -107,17 +110,21 @@ public final class EconomyEngineConfig {
         public String logicalServiceDelay;
         public boolean recordOriginalNpcAndMap;
         public int dispositionNpcId;
+        public int storageNpcId;
     }
 
     public static final class Activity {
         public String executionMode;
         public String agentBuild;
         public String mapCatalogResource;
+        public String questHuntIndexResource;
         public int minimumCalibrationSamples;
         public boolean visibleWhileActive;
         public boolean returnThroughFreeMarketEntrance;
         public int medianSessionMinutes;
         public int maximumSessionMinutes;
+        /** Target share of each market/activity cycle spent inside Commerce. */
+        public double targetMarketParticipationFraction;
         public boolean congestionAware;
         public boolean levelAppropriate;
         public boolean jobAppropriate;
@@ -146,6 +153,9 @@ public final class EconomyEngineConfig {
         public double coldStartNpcMarkupMaximum;
         public String actionPoll;
         public String postTripDelay;
+        public String stallInspectionDurationPerListing;
+        public String interactionBehaviorProvider;
+        public int approachJitterPixels;
         public String portalTimeout;
         public String approachTimeout;
         public String stallOpenTimeout;
@@ -165,6 +175,26 @@ public final class EconomyEngineConfig {
         public boolean rejectSelfTrade;
         public boolean detectCircularTrade;
         public boolean publicOffersEnabled;
+        public OpenChatSelling openChatSelling;
+    }
+
+    public static final class OpenChatSelling {
+        public boolean enabled;
+        public double eligibleAgentRatio;
+        public int maximumActiveOffersPerAgent;
+        public int maximumActiveOffersPerRoom;
+        public int minimumNpcPremiumBasisPoints;
+        public int maximumNegotiatedDiscountBasisPoints;
+        public String initialAdvertisementDelay;
+        public String minimumRepeatDelay;
+        public String maximumRepeatDelay;
+        public int maximumAdvertisements;
+        public String offerLifetime;
+        public String negotiationTimeout;
+        public boolean humanTradeEnabled;
+        public boolean agentTradeEnabled;
+        public List<Integer> allowedMaps;
+        public String flavorTemplate;
     }
 
     public static final class Tax {
@@ -217,7 +247,7 @@ public final class EconomyEngineConfig {
         public boolean allowRemoteQuestNpcFromFreeMarket;
         public boolean allowNpcAcquisitionOnlyWhenGameSupportsIt;
         public int maximumConcurrentActive;
-        public double acceptanceProbabilityPerMarketCycle;
+        public double acceptanceProbabilityPerActivityCycle;
         public String catalogResource;
         public String victoriaMapCatalogResource;
         public String selectionDisposition;

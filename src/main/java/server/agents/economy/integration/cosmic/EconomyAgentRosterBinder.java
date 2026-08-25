@@ -19,26 +19,33 @@ import java.util.TreeMap;
 public final class EconomyAgentRosterBinder {
     public Map<String, Character> bind(List<PopulationAdmissionPlanner.Admission> admissions,
                                        List<Character> liveCharacters) {
-        return bind(admissions, liveCharacters, 0);
+        return bind(admissions, liveCharacters, List.of());
     }
 
     public Map<String, Character> bind(List<PopulationAdmissionPlanner.Admission> admissions,
                                        List<Character> liveCharacters, int shopPermitItemId) {
+        return bind(admissions, liveCharacters,
+                shopPermitItemId == 0 ? List.of() : List.of(shopPermitItemId));
+    }
+
+    public Map<String, Character> bind(List<PopulationAdmissionPlanner.Admission> admissions,
+                                       List<Character> liveCharacters, List<Integer> shopPermitItemIds) {
         Objects.requireNonNull(admissions); Objects.requireNonNull(liveCharacters);
-        if (shopPermitItemId != 0 && !ItemConstants.isPlayerShop(shopPermitItemId))
-            throw new IllegalArgumentException("configured shop permit is not a real PlayerShop item");
+        Objects.requireNonNull(shopPermitItemIds);
+        if (shopPermitItemIds.stream().anyMatch(itemId -> itemId == null || !ItemConstants.isPlayerShop(itemId)))
+            throw new IllegalArgumentException("configured shop permit pool contains a non-PlayerShop item");
         Map<String, Deque<Character>> withoutPermit = new TreeMap<>();
         Map<String, Deque<Character>> withPermit = new TreeMap<>();
         liveCharacters.stream().filter(Objects::nonNull)
                 .sorted(Comparator.comparingInt(Character::getId))
-                .forEach(character -> (hasPermit(character, shopPermitItemId) ? withPermit : withoutPermit)
+                .forEach(character -> (hasPermit(character, shopPermitItemIds) ? withPermit : withoutPermit)
                         .computeIfAbsent(EconomyJobFamily.of(character), ignored -> new ArrayDeque<>())
                         .addLast(character));
         Map<String, Character> result = new LinkedHashMap<>();
         Map<String, Integer> missing = new TreeMap<>();
         Map<String, Integer> missingPermits = new TreeMap<>();
         for (PopulationAdmissionPlanner.Admission admission : admissions) {
-            boolean seller = shopPermitItemId != 0 && admission.profile().stallWillingness() >= .5d;
+            boolean seller = !shopPermitItemIds.isEmpty() && admission.profile().stallWillingness() >= .5d;
             Character character = seller ? poll(withPermit, admission.jobFamily())
                     : poll(withoutPermit, admission.jobFamily());
             if (character == null && !seller) character = poll(withPermit, admission.jobFamily());
@@ -59,8 +66,9 @@ public final class EconomyAgentRosterBinder {
         return Map.copyOf(result);
     }
 
-    private static boolean hasPermit(Character character, int itemId) {
-        return itemId != 0 && character.getInventory(InventoryType.CASH).countById(itemId) > 0;
+    private static boolean hasPermit(Character character, List<Integer> itemIds) {
+        return itemIds.stream().anyMatch(itemId ->
+                character.getInventory(InventoryType.CASH).countById(itemId) > 0);
     }
 
     private static Character poll(Map<String, Deque<Character>> values, String family) {

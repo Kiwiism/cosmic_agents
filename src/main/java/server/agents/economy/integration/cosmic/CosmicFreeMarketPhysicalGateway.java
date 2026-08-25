@@ -6,6 +6,7 @@ import server.agents.capabilities.primitive.AgentPortalTravelCapability;
 import server.agents.capabilities.runtime.AgentCapabilityInvocation;
 import server.agents.capabilities.runtime.AgentCapabilityRuntime;
 import server.agents.economy.market.FreeMarketPhysicalGateway;
+import server.agents.economy.market.MarketInteractionBehavior;
 import server.agents.economy.market.PrivateMarketKnowledge;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
@@ -29,11 +30,20 @@ public final class CosmicFreeMarketPhysicalGateway implements FreeMarketPhysical
     private final long portalTimeoutMs;
     private final long approachTimeoutMs;
     private final int approachRangePixels;
+    private final MarketInteractionBehavior interactions;
 
     public CosmicFreeMarketPhysicalGateway(CosmicMarketObservationService observations,
                                            int entranceMapId, int firstRoomMapId, int lastRoomMapId,
                                            long portalTimeoutMs, long approachTimeoutMs,
                                            int approachRangePixels) {
+        this(observations, entranceMapId, firstRoomMapId, lastRoomMapId, portalTimeoutMs,
+                approachTimeoutMs, approachRangePixels, MarketInteractionBehavior.disabled());
+    }
+
+    public CosmicFreeMarketPhysicalGateway(CosmicMarketObservationService observations,
+                                           int entranceMapId, int firstRoomMapId, int lastRoomMapId,
+                                           long portalTimeoutMs, long approachTimeoutMs,
+                                           int approachRangePixels, MarketInteractionBehavior interactions) {
         this.observations = Objects.requireNonNull(observations);
         if (entranceMapId <= 0 || firstRoomMapId <= entranceMapId || lastRoomMapId < firstRoomMapId)
             throw new IllegalArgumentException("invalid Free Market map manifest");
@@ -43,6 +53,14 @@ public final class CosmicFreeMarketPhysicalGateway implements FreeMarketPhysical
         this.lastRoomMapId = lastRoomMapId;
         this.portalTimeoutMs = portalTimeoutMs; this.approachTimeoutMs = approachTimeoutMs;
         this.approachRangePixels = approachRangePixels;
+        this.interactions = Objects.requireNonNull(interactions);
+    }
+
+    @Override
+    public ActionStatus requestEntrance(Character agent) {
+        if (agent.getMapId() == entranceMapId) return ActionStatus.ARRIVED;
+        if (!isRoom(agent.getMapId())) return ActionStatus.UNAVAILABLE;
+        return requestPortal(agent, entranceMapId);
     }
 
     @Override
@@ -50,10 +68,14 @@ public final class CosmicFreeMarketPhysicalGateway implements FreeMarketPhysical
         requireRoom(roomMapId);
         if (agent.getMapId() == roomMapId) return ActionStatus.ARRIVED;
         if (!inFreeMarket(agent.getMapId())) return ActionStatus.UNAVAILABLE;
+        int nextMap = agent.getMapId() == entranceMapId ? roomMapId : entranceMapId;
+        return requestPortal(agent, nextMap);
+    }
+
+    private ActionStatus requestPortal(Character agent, int nextMap) {
         AgentRuntimeEntry entry = AgentRuntimeRegistry.findByCharacterInstance(agent);
         if (entry == null) return ActionStatus.UNAVAILABLE;
         if (entry.capabilityRuntimeState().hasActiveCapability()) return ActionStatus.IN_PROGRESS;
-        int nextMap = agent.getMapId() == entranceMapId ? roomMapId : entranceMapId;
         Portal portal = agent.getMap().getPortals().stream()
                 .filter(value -> value.getTargetMapId() == nextMap && value.getPortalStatus())
                 .min(Comparator.comparingInt(Portal::getId)).orElse(null);
@@ -70,9 +92,10 @@ public final class CosmicFreeMarketPhysicalGateway implements FreeMarketPhysical
         if (agent.getMapId() != stall.roomMapId()) return ActionStatus.UNAVAILABLE;
         if (!(agent.getMap().getMapObject(stall.objectId()) instanceof PlayerShop shop) || !shop.isOpen())
             return ActionStatus.UNAVAILABLE;
-        Point target = shop.getPosition();
-        if (agent.getPosition().distanceSq(target) <= (long) approachRangePixels * approachRangePixels)
+        Point shopPosition = shop.getPosition();
+        if (agent.getPosition().distanceSq(shopPosition) <= (long) approachRangePixels * approachRangePixels)
             return ActionStatus.ARRIVED;
+        Point target = interactions.approachPoint(agent, stall);
         AgentRuntimeEntry entry = AgentRuntimeRegistry.findByCharacterInstance(agent);
         if (entry == null) return ActionStatus.UNAVAILABLE;
         if (entry.capabilityRuntimeState().hasActiveCapability()) return ActionStatus.IN_PROGRESS;
@@ -94,14 +117,49 @@ public final class CosmicFreeMarketPhysicalGateway implements FreeMarketPhysical
                         shop.getPosition().x, shop.getPosition().y));
             }
         }
-        result.sort(Comparator.comparingInt(StallTarget::objectId));
-        return List.copyOf(result);
+        return result.stream().sorted(java.util.Comparator.comparingInt(
+                FreeMarketPhysicalGateway.StallTarget::objectId)).toList();
     }
 
     @Override
-    public List<CosmicMarketObservationService.ObservedOffer> inspectNearby(
-            Character agent, String logicalAgentId, Instant logicalAt, PrivateMarketKnowledge knowledge) {
-        return observations.inspectNearby(agent, logicalAgentId, logicalAt, knowledge);
+    public InspectionStatus enterStall(Character agent, StallTarget stall) {
+        if (agent.getMapId() != stall.roomMapId()) return new InspectionStatus(ActionStatus.UNAVAILABLE, 0);
+        if (!(agent.getMap().getMapObject(stall.objectId()) instanceof PlayerShop shop)
+                || !shop.isOpen() || shop.isOwner(agent))
+            return new InspectionStatus(ActionStatus.UNAVAILABLE, 0);
+        if (agent.getPosition().distanceSq(shop.getPosition())
+                > (long) approachRangePixels * approachRangePixels)
+            return new InspectionStatus(ActionStatus.UNAVAILABLE, 0);
+        if (shop.isVisitor(agent))
+            return new InspectionStatus(ActionStatus.ARRIVED, shop.listingSnapshot().size());
+        if (agent.getPlayerShop() != null)
+            return new InspectionStatus(ActionStatus.IN_PROGRESS, 0);
+        return shop.visitShop(agent)
+                ? new InspectionStatus(ActionStatus.ARRIVED, shop.listingSnapshot().size())
+                : new InspectionStatus(ActionStatus.IN_PROGRESS, 0);
+    }
+
+    @Override
+    public List<CosmicMarketObservationService.ObservedOffer> inspectAndExit(
+            Character agent, String logicalAgentId, StallTarget stall, Instant logicalAt,
+            PrivateMarketKnowledge knowledge) {
+        if (!(agent.getMap().getMapObject(stall.objectId()) instanceof PlayerShop shop)
+                || !shop.isOpen() || !shop.isVisitor(agent)) return List.of();
+        try {
+            return observations.inspectStall(agent, logicalAgentId, stall.objectId(), logicalAt, knowledge);
+        } finally {
+            shop.removeVisitor(agent);
+            agent.setPlayerShop(null);
+        }
+    }
+
+    @Override
+    public void cancelStallVisit(Character agent, StallTarget stall) {
+        if (agent == null || agent.getMap() == null) return;
+        if (agent.getMap().getMapObject(stall.objectId()) instanceof PlayerShop shop
+                && shop.isVisitor(agent)) shop.removeVisitor(agent);
+        if (agent.getPlayerShop() != null && !agent.getPlayerShop().isOwner(agent))
+            agent.setPlayerShop(null);
     }
 
     @Override

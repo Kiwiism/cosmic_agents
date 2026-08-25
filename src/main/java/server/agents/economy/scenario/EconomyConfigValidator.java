@@ -13,11 +13,14 @@ import java.util.Set;
 public final class EconomyConfigValidator {
     private static final double DISTRIBUTION_TOLERANCE = 0.000_001d;
     private static final Set<String> CLOCK_MODES = Set.of("REALTIME", "MAX_THROUGHPUT");
-    private static final Set<String> NPC_ACCESS_MODES = Set.of("REMOTE_FROM_FREE_MARKET");
+    private static final Set<String> NPC_ACCESS_MODES = Set.of("REMOTE_FROM_FREE_MARKET_ENTRANCE");
     private static final Set<String> NPC_ACCESS_SCOPES = Set.of("ALL_GAME");
-    private static final Set<String> ACTIVITY_MODES = Set.of("RULE_EXACT");
+    private static final Set<String> ACTIVITY_MODES = Set.of("RULE_EXACT", "DISABLED");
     private static final Set<String> HOLDINGS_MODES = Set.of("IMPORT_EXISTING_COSMIC_CHARACTERS");
-    private static final Set<String> SHOP_PERMIT_POLICIES = Set.of("REQUIRE_OWNED_REAL_ITEM");
+    private static final Set<String> SHOP_PERMIT_POLICIES = Set.of(
+            "REQUIRE_OWNED_REAL_ITEM", "GRANT_RANDOM_REAL_PERMIT_ON_ENTRY");
+    private static final Set<String> INTERACTION_BEHAVIOR_PROVIDERS = Set.of(
+            "DISABLED", "SOLOMAPLING_INSPIRED");
 
     private EconomyConfigValidator() {
     }
@@ -66,7 +69,7 @@ public final class EconomyConfigValidator {
         requireEnum(config.npcCommerce.accessMode, NPC_ACCESS_MODES, "npcCommerce.accessMode");
         requireEnum(config.npcCommerce.accessScope, NPC_ACCESS_SCOPES, "npcCommerce.accessScope");
         parseDuration(config.npcCommerce.logicalServiceDelay, "npcCommerce.logicalServiceDelay");
-        if ("REMOTE_FROM_FREE_MARKET".equals(config.npcCommerce.accessMode)) {
+        if ("REMOTE_FROM_FREE_MARKET_ENTRANCE".equals(config.npcCommerce.accessMode)) {
             require(config.npcCommerce.preserveRealNpcStock
                             && config.npcCommerce.preserveRealPrices
                             && config.npcCommerce.preserveRealRestrictions,
@@ -76,24 +79,33 @@ public final class EconomyConfigValidator {
         }
         require(config.npcCommerce.dispositionNpcId > 0,
                 "npcCommerce.dispositionNpcId must identify a configured real shop NPC");
+        require(config.npcCommerce.storageNpcId > 0,
+                "npcCommerce.storageNpcId must identify a real storage NPC");
 
         requireEnum(config.activity.executionMode, ACTIVITY_MODES, "activity.executionMode");
         requireText(config.activity.agentBuild, "activity.agentBuild");
         requireText(config.activity.mapCatalogResource, "activity.mapCatalogResource");
+        if (config.activity.objectiveAware)
+            requireText(config.activity.questHuntIndexResource, "activity.questHuntIndexResource");
         require(config.activity.minimumCalibrationSamples > 0,
                 "activity.minimumCalibrationSamples must be positive");
         require(config.activity.medianSessionMinutes > 0,
                 "medianSessionMinutes must be positive");
         require(config.activity.maximumSessionMinutes >= config.activity.medianSessionMinutes,
                 "maximumSessionMinutes must not be below the median");
-        require(!config.activity.visibleWhileActive,
-                "Offscreen activity agents cannot remain visible in the Free Market");
-        require(config.activity.returnThroughFreeMarketEntrance,
-                "Offscreen activity must return through the Free Market entrance");
-        require(config.activity.levelAppropriate && config.activity.jobAppropriate
-                        && config.activity.enforceInventoryCapacity,
-                "Rule-exact activity requires level/job matching and real inventory capacity");
-        if (config.activity.allowDeath) {
+        require(config.activity.targetMarketParticipationFraction > 0d
+                        && config.activity.targetMarketParticipationFraction < 1d,
+                "activity.targetMarketParticipationFraction must be between zero and one");
+        if ("RULE_EXACT".equals(config.activity.executionMode)) {
+            require(!config.activity.visibleWhileActive,
+                    "Offscreen activity agents cannot remain visible in the Free Market");
+            require(config.activity.returnThroughFreeMarketEntrance,
+                    "Offscreen activity must return through the Free Market entrance");
+            require(config.activity.levelAppropriate && config.activity.jobAppropriate
+                            && config.activity.enforceInventoryCapacity,
+                    "Rule-exact activity requires level/job matching and real inventory capacity");
+        }
+        if ("RULE_EXACT".equals(config.activity.executionMode) && config.activity.allowDeath) {
             require("LIVE_ACTIVITY_CALIBRATION".equals(config.activity.deathOccurrenceSource),
                     "death occurrence must come from matching live activity calibration");
             require("COSMIC_V83_RULES".equals(config.activity.deathPenaltySource),
@@ -101,13 +113,18 @@ public final class EconomyConfigValidator {
             require("AGENT_RESPAWN_CONFIGURATION".equals(config.activity.deathDowntimeSource),
                     "death downtime must use the ordinary Agent respawn configuration");
         }
-        require(!config.activity.congestionAware,
-                "offscreen congestion must remain disabled until active-session occupancy is journaled");
-        require(config.activity.consumeHpPotions && config.activity.consumeMpPotions
-                        && config.activity.consumeAmmunition,
-                "rule-exact activity must preserve calibrated potion and ammunition consumption");
+        if ("RULE_EXACT".equals(config.activity.executionMode)) {
+            require(!config.activity.congestionAware,
+                    "offscreen congestion must remain disabled until active-session occupancy is journaled");
+            require(config.activity.consumeHpPotions && config.activity.consumeMpPotions
+                            && config.activity.consumeAmmunition,
+                    "rule-exact activity must preserve calibrated potion and ammunition consumption");
+        }
 
         validateMarket(config.market, config.world);
+        if (config.market.openChatSelling.enabled)
+            require(config.session.implicitEconomicIntentsEnabled,
+                    "open-chat selling requires structured economic intents");
         validateValuation(config.valuation);
         validateTax(config.tax);
         validateSeasonal(config.seasonalRules);
@@ -122,9 +139,9 @@ public final class EconomyConfigValidator {
                 "enabled quest lifecycle must preserve real acquisition rules");
         require(config.quests.maximumConcurrentActive > 0,
                 "quests.maximumConcurrentActive must be positive");
-        require(config.quests.acceptanceProbabilityPerMarketCycle >= 0
-                        && config.quests.acceptanceProbabilityPerMarketCycle <= 1,
-                "quests.acceptanceProbabilityPerMarketCycle must be within zero and one");
+        require(config.quests.acceptanceProbabilityPerActivityCycle >= 0
+                        && config.quests.acceptanceProbabilityPerActivityCycle <= 1,
+                "quests.acceptanceProbabilityPerActivityCycle must be within zero and one");
         requireText(config.quests.catalogResource, "quests.catalogResource");
         requireText(config.quests.victoriaMapCatalogResource, "quests.victoriaMapCatalogResource");
         requireText(config.quests.selectionDisposition, "quests.selectionDisposition");
@@ -218,6 +235,16 @@ public final class EconomyConfigValidator {
         require(bootstrap.shopPermitItemId > 0, "bootstrap.shopPermitItemId must be positive");
         require(ItemConstants.isPlayerShop(bootstrap.shopPermitItemId),
                 "bootstrap.shopPermitItemId must be a real Cosmic PlayerShop permit (514xxxx), not a Hired Merchant");
+        require(bootstrap.shopPermitItemIds != null && !bootstrap.shopPermitItemIds.isEmpty(),
+                "bootstrap.shopPermitItemIds must contain verified PlayerShop permits");
+        require(new HashSet<>(bootstrap.shopPermitItemIds).size() == bootstrap.shopPermitItemIds.size(),
+                "bootstrap.shopPermitItemIds must not contain duplicates");
+        require(bootstrap.shopPermitItemIds.contains(bootstrap.shopPermitItemId),
+                "bootstrap.shopPermitItemIds must include shopPermitItemId");
+        for (int permitItemId : bootstrap.shopPermitItemIds) {
+            require(ItemConstants.isPlayerShop(permitItemId),
+                    "bootstrap.shopPermitItemIds must contain only real Cosmic PlayerShop permits");
+        }
         require(bootstrap.journalAllEndowments, "Every bootstrap endowment must be journaled");
         require(!bootstrap.allowAdministratorEndowment,
                 "Administrator endowment is forbidden in rule-exact economy runs");
@@ -227,6 +254,7 @@ public final class EconomyConfigValidator {
         require(population.initialAgents >= 0, "initialAgents must be non-negative");
         require(population.maximumAgents >= population.initialAgents,
                 "maximumAgents must not be below initialAgents");
+        parseDuration(population.onboardingDuration, "population.onboardingDuration");
         require(population.growth != null, "population.growth is required");
         require("FIXED_INTERVAL".equals(population.growth.type),
                 "Only FIXED_INTERVAL population growth is currently supported");
@@ -275,6 +303,13 @@ public final class EconomyConfigValidator {
                 market.minimumRepriceInterval, "market.minimumRepriceInterval");
         parsePositiveDuration(market.actionPoll, "market.actionPoll");
         parseDuration(market.postTripDelay, "market.postTripDelay");
+        parseDuration(market.stallInspectionDurationPerListing,
+                "market.stallInspectionDurationPerListing");
+        requireEnum(market.interactionBehaviorProvider, INTERACTION_BEHAVIOR_PROVIDERS,
+                "market.interactionBehaviorProvider");
+        require(market.approachJitterPixels >= 0
+                        && market.approachJitterPixels < market.approachRangePixels,
+                "market.approachJitterPixels must be non-negative and below approachRangePixels");
         parsePositiveDuration(market.portalTimeout, "market.portalTimeout");
         parsePositiveDuration(market.approachTimeout, "market.approachTimeout");
         parsePositiveDuration(market.stallOpenTimeout, "market.stallOpenTimeout");
@@ -318,6 +353,57 @@ public final class EconomyConfigValidator {
                 "detectCircularTrade must remain false until durable multi-transaction cycle detection ships");
         require(!market.barterEnabled || market.publicOffersEnabled,
                 "barter requires structured public offers");
+        validateOpenChatSelling(market.openChatSelling, world);
+    }
+
+    private static void validateOpenChatSelling(EconomyEngineConfig.OpenChatSelling openChat,
+                                                 EconomyEngineConfig.World world) {
+        require(openChat != null, "market.openChatSelling is required");
+        requireFraction(openChat.eligibleAgentRatio, "market.openChatSelling.eligibleAgentRatio");
+        require(openChat.maximumActiveOffersPerAgent == 1,
+                "open-chat selling initially supports exactly one offer per agent");
+        require(openChat.maximumActiveOffersPerRoom > 0,
+                "open-chat room capacity must be positive");
+        require(openChat.minimumNpcPremiumBasisPoints >= 0
+                        && openChat.minimumNpcPremiumBasisPoints <= 10_000,
+                "open-chat NPC premium must be between 0 and 10000 basis points");
+        require(openChat.maximumNegotiatedDiscountBasisPoints >= 0
+                        && openChat.maximumNegotiatedDiscountBasisPoints <= 10_000,
+                "open-chat maximum discount must be between 0 and 10000 basis points");
+        Duration initialDelay = parseDuration(openChat.initialAdvertisementDelay,
+                "market.openChatSelling.initialAdvertisementDelay");
+        Duration minimumRepeat = parsePositiveDuration(openChat.minimumRepeatDelay,
+                "market.openChatSelling.minimumRepeatDelay");
+        Duration maximumRepeat = parsePositiveDuration(openChat.maximumRepeatDelay,
+                "market.openChatSelling.maximumRepeatDelay");
+        Duration lifetime = parsePositiveDuration(openChat.offerLifetime,
+                "market.openChatSelling.offerLifetime");
+        Duration negotiation = parsePositiveDuration(openChat.negotiationTimeout,
+                "market.openChatSelling.negotiationTimeout");
+        require(maximumRepeat.compareTo(minimumRepeat) >= 0,
+                "open-chat maximum repeat delay must not be below the minimum");
+        require(initialDelay.compareTo(lifetime) < 0 && minimumRepeat.compareTo(lifetime) < 0,
+                "open-chat advertisement delays must be below the offer lifetime");
+        require(negotiation.compareTo(lifetime) <= 0,
+                "open-chat negotiation timeout must not exceed the offer lifetime");
+        require(openChat.maximumAdvertisements > 0,
+                "open-chat maximum advertisements must be positive");
+        require(openChat.allowedMaps != null && !openChat.allowedMaps.isEmpty(),
+                "open-chat selling requires at least one allowed map");
+        require(new HashSet<>(openChat.allowedMaps).size() == openChat.allowedMaps.size(),
+                "open-chat allowed maps must not contain duplicates");
+        if (openChat.enabled) for (int mapId : openChat.allowedMaps)
+            require(mapId == world.freeMarketEntranceMapId
+                            || mapId >= world.firstFreeMarketRoomMapId
+                            && mapId <= world.lastFreeMarketRoomMapId,
+                    "open-chat allowed maps must be within the configured Free Market");
+        require(openChat.flavorTemplate != null && !openChat.flavorTemplate.isBlank()
+                        && openChat.flavorTemplate.contains("{ask}")
+                        && openChat.flavorTemplate.contains("{item_stats}")
+                        && openChat.flavorTemplate.contains("{item_name}"),
+                "open-chat flavor template must contain ask, item_stats, and item_name placeholders");
+        if (openChat.enabled) require(openChat.humanTradeEnabled || openChat.agentTradeEnabled,
+                "enabled open-chat selling requires at least one buyer type");
     }
 
     private static void validateTax(EconomyEngineConfig.Tax tax) {

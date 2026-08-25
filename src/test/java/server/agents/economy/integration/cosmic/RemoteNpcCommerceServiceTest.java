@@ -26,6 +26,20 @@ class RemoteNpcCommerceServiceTest {
     }
 
     @Test
+    void refusesRemoteNpcAccessFromAFreeMarketRoom() {
+        Character agent = mock(Character.class);
+        when(agent.getMapId()).thenReturn(910000001);
+        when(agent.getClient()).thenReturn(mock(client.Client.class));
+        EconomyCatalog catalog = mock(EconomyCatalog.class);
+        ShopGateway shops = mock(ShopGateway.class);
+
+        assertThrows(IllegalStateException.class,
+                () -> new RemoteNpcCommerceService(catalog, shops).buy(
+                        agent, 1001000, 2000000, (short) 1));
+        verifyNoInteractions(catalog, shops);
+    }
+
+    @Test
     void refusesCatalogWithoutOriginalNpcMapEvidence() {
         Character agent = mock(Character.class);
         when(agent.getMapId()).thenReturn(910000000);

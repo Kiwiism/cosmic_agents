@@ -24,6 +24,17 @@ public final class SimulationKernel {
 
     public AdvanceResult advanceUntil(Instant target, Consumer<ScheduledEconomyEvent> handler,
                                       BooleanSupplier stopRequested) {
+        return advance(target, handler, stopRequested, true);
+    }
+
+    /** Advances the clock to target while leaving events timestamped exactly at target queued. */
+    public AdvanceResult advanceUntilExclusive(Instant target, Consumer<ScheduledEconomyEvent> handler,
+                                               BooleanSupplier stopRequested) {
+        return advance(target, handler, stopRequested, false);
+    }
+
+    private AdvanceResult advance(Instant target, Consumer<ScheduledEconomyEvent> handler,
+                                  BooleanSupplier stopRequested, boolean inclusive) {
         Objects.requireNonNull(target);
         Objects.requireNonNull(handler);
         if (target.isBefore(clock.now())) throw new IllegalArgumentException("Cannot rewind a run");
@@ -31,7 +42,8 @@ public final class SimulationKernel {
         boolean externallyStopped = false;
         while (processed < maxEventsPerBatch) {
             ScheduledEconomyEvent next = queue.peek().orElse(null);
-            if (next == null || next.dueAt().isAfter(target)) break;
+            if (next == null || next.dueAt().isAfter(target)
+                    || (!inclusive && next.dueAt().equals(target))) break;
             queue.poll();
             clock.advanceTo(next.dueAt());
             handler.accept(next);
@@ -39,7 +51,8 @@ public final class SimulationKernel {
             if (stopRequested.getAsBoolean()) { externallyStopped = true; break; }
         }
         boolean batchLimitReached = processed == maxEventsPerBatch
-                && queue.peek().map(event -> !event.dueAt().isAfter(target)).orElse(false);
+                && queue.peek().map(event -> !event.dueAt().isAfter(target)
+                        && (inclusive || !event.dueAt().equals(target))).orElse(false);
         if (!batchLimitReached && !externallyStopped) clock.advanceTo(target);
         return new AdvanceResult(clock.now(), processed, batchLimitReached, externallyStopped, queue.size());
     }

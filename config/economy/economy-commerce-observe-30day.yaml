@@ -52,6 +52,8 @@ session:
 population:
   initialAgents: 10
   maximumAgents: 100
+  # Every cohort first completes exact, calibrated external activity for one logical day.
+  onboardingDuration: PT24H
   growth:
     type: FIXED_INTERVAL
     amount: 10
@@ -72,17 +74,18 @@ population:
     # Dedicated-merchant lifecycle is not implemented; zero prevents a decorative no-op knob.
     dedicatedMerchantFraction: 0.00
 
-# PlayerShop permits are Cash Shop assets in v83. The strict baseline does not invent or grant one.
-# Runs import exact live holdings and never create administrative startup stock.
+# PlayerShop permits are real v83 assets. The FM grants one as a separately journaled venue subsidy
+# when an entrant owns none; this source can be excluded from ordinary item-production reports.
 bootstrap:
   holdingsMode: IMPORT_EXISTING_COSMIC_CHARACTERS
-  shopPermitPolicy: REQUIRE_OWNED_REAL_ITEM
+  shopPermitPolicy: GRANT_RANDOM_REAL_PERMIT_ON_ENTRY
   shopPermitItemId: 5140000
+  shopPermitItemIds: [5140000, 5140001, 5140002, 5140003, 5140004, 5140006]
   allowAdministratorEndowment: false
   journalAllEndowments: true
 
 npcCommerce:
-  accessMode: REMOTE_FROM_FREE_MARKET
+  accessMode: REMOTE_FROM_FREE_MARKET_ENTRANCE
   accessScope: ALL_GAME
   preserveRealNpcStock: true
   preserveRealPrices: true
@@ -90,16 +93,20 @@ npcCommerce:
   logicalServiceDelay: PT10S
   recordOriginalNpcAndMap: true
   dispositionNpcId: 1012004
+  storageNpcId: 1002005
 
 activity:
   executionMode: RULE_EXACT
   agentBuild: cosmic-autonomous-v1
   mapCatalogResource: /agents/catalogs/adaptive/victoria-map-facts.json
+  questHuntIndexResource: /agents/catalogs/adaptive/victoria-quest-hunt-index.json
   minimumCalibrationSamples: 5
   visibleWhileActive: false
   returnThroughFreeMarketEntrance: true
   medianSessionMinutes: 90
   maximumSessionMinutes: 240
+  # With a 30-minute Commerce visit this targets roughly 40% of each cycle in the FM.
+  targetMarketParticipationFraction: 0.40
   congestionAware: false
   levelAppropriate: true
   jobAppropriate: true
@@ -127,6 +134,9 @@ market:
   coldStartNpcMarkupMaximum: 0.75
   actionPoll: PT5S
   postTripDelay: PT5M
+  stallInspectionDurationPerListing: PT0.5S
+  interactionBehaviorProvider: SOLOMAPLING_INSPIRED
+  approachJitterPixels: 24
   portalTimeout: PT30S
   approachTimeout: PT20S
   stallOpenTimeout: PT30S
@@ -148,6 +158,24 @@ market:
   detectCircularTrade: false
   # Structured negotiation is retained but starts disabled until exact meetup settlement passes live validation.
   publicOffersEnabled: false
+  openChatSelling:
+    # Separate real-inventory street-sale venue, deliberately limited to a small cohort.
+    enabled: true
+    eligibleAgentRatio: 0.10
+    maximumActiveOffersPerAgent: 1
+    maximumActiveOffersPerRoom: 8
+    minimumNpcPremiumBasisPoints: 1000
+    maximumNegotiatedDiscountBasisPoints: 1000
+    initialAdvertisementDelay: PT5S
+    minimumRepeatDelay: PT1M
+    maximumRepeatDelay: PT3M
+    maximumAdvertisements: 3
+    offerLifetime: PT10M
+    negotiationTimeout: PT2M
+    humanTradeEnabled: true
+    agentTradeEnabled: true
+    allowedMaps: [910000000, 910000001, 910000002]
+    flavorTemplate: "S> {item_stats} {item_name} {ask} meso, trade me"
 
 valuation:
   observationMemory: PT168H
@@ -168,15 +196,15 @@ seasonalRules:
   overlays: []
 
 quests:
-  # Existing accepted quests still create demand. Autonomous quest lifecycle mutation is introduced later.
-  enabled: false
+  # Quest start/turn-in belongs to external activity, never to a Commerce market cycle.
+  enabled: true
   demandRequiresAcceptedQuest: true
   demandRequiresRemainingObjective: true
   allowTradeAcquisition: true
   allowRemoteQuestNpcFromFreeMarket: true
   allowNpcAcquisitionOnlyWhenGameSupportsIt: true
   maximumConcurrentActive: 8
-  acceptanceProbabilityPerMarketCycle: 0.45
+  acceptanceProbabilityPerActivityCycle: 0.45
   catalogResource: /agents/catalogs/adaptive/victoria-quest-facts.json
   victoriaMapCatalogResource: /agents/catalogs/adaptive/victoria-map-facts.json
   selectionDisposition: eligible-now
@@ -212,7 +240,8 @@ chairs:
   collectionPreferenceEnabled: false
 
 ambient:
-  enabled: true
+  # Presentation stays detached during accelerated runs until its wall-clock scheduler is installed.
+  enabled: false
   maximumConsecutiveActions: 4
   immediatelyYieldToEconomicWork: true
   modules:
@@ -247,5 +276,3 @@ humanReadiness:
   neverAssumeCounterpartyIsAgent: true
   enforceHumanSafeValidation: true
   separateHumanAndAgentPriceEvidence: true
-
-

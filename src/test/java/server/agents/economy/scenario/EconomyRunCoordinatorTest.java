@@ -17,6 +17,28 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class EconomyRunCoordinatorTest {
     @Test
+    void commerceOnlyModeReentersWithoutPlanningOrSettlingSyntheticActivity() {
+        LoadedEconomyConfig loaded = new EconomyConfigLoader().load(
+                java.nio.file.Path.of("config/economy/economy-engine-basic.yaml"));
+        loaded.config().population.initialAgents = 1;
+        loaded.config().population.maximumAgents = 1;
+        CatalogBundleDescriptor bundle = new CatalogBundleLoader().load(loaded.config().catalog);
+        TestWorld world = new TestWorld();
+        AtomicReference<EconomyRunCoordinator> coordinator = new AtomicReference<>();
+        SimulationRunEngine engine = new SimulationRunEngine(UUID.randomUUID(), loaded, bundle,
+                event -> coordinator.get().handle(event));
+        coordinator.set(new EconomyRunCoordinator(engine, world,
+                new RuleExactFarmResolver(new StubCatalog()), journal()));
+
+        engine.advanceTo(engine.now().plus(Duration.ofMinutes(2)));
+
+        assertEquals(List.of("admit", "market", "admit", "market"), world.actions);
+        assertNull(world.outcome);
+        assertEquals(EconomyRunCoordinator.Status.IN_FREE_MARKET,
+                coordinator.get().agentViews().get("agent-1").status());
+    }
+
+    @Test
     void runsAdmissionCalibratedActivitySettlementAndFmReturnInLogicalTime() {
         LoadedEconomyConfig loaded = new EconomyConfigLoader().load();
         loaded.config().population.initialAgents = 1;
@@ -63,6 +85,32 @@ class EconomyRunCoordinatorTest {
         assertEquals(1, afterRestart.actions.stream().filter("settle"::equals).count());
         assertEquals(EconomyRunCoordinator.Status.IN_FREE_MARKET,
                 restored.agents().get("agent-1").status());
+    }
+
+    @Test
+    void cohortCompletesConfiguredExternalOnboardingBeforeFirstMarketCycle() {
+        LoadedEconomyConfig loaded = new EconomyConfigLoader().load();
+        loaded.config().population.initialAgents = 1;
+        loaded.config().population.maximumAgents = 1;
+        loaded.config().population.onboardingDuration = "PT20M";
+        CatalogBundleDescriptor bundle = new CatalogBundleLoader().load(loaded.config().catalog);
+        TestWorld world = new TestWorld();
+        AtomicReference<EconomyRunCoordinator> coordinator = new AtomicReference<>();
+        SimulationRunEngine engine = new SimulationRunEngine(UUID.randomUUID(), loaded, bundle,
+                event -> coordinator.get().handle(event));
+        coordinator.set(new EconomyRunCoordinator(engine, world,
+                new RuleExactFarmResolver(new StubCatalog()), journal()));
+
+        engine.advanceTo(engine.now().plus(Duration.ofMinutes(19)));
+        assertFalse(world.actions.contains("market"));
+        assertEquals(EconomyRunCoordinator.Status.ONBOARDING_ACTIVITY,
+                coordinator.get().agentViews().get("agent-1").status());
+
+        engine.advanceTo(engine.now().plus(Duration.ofMinutes(1)));
+        assertTrue(world.actions.contains("market"));
+        assertEquals(2, world.actions.stream().filter("settle"::equals).count());
+        assertEquals(EconomyRunCoordinator.Status.IN_FREE_MARKET,
+                coordinator.get().agentViews().get("agent-1").status());
     }
 
     private static final class TestWorld implements EconomyWorldPort {

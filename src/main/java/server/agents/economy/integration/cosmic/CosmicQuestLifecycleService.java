@@ -82,7 +82,7 @@ public final class CosmicQuestLifecycleService implements AutonomousFreeMarketBe
         if (completion.isPresent()) return complete(agent, profile, completion.orElseThrow(), logicalAt);
 
         if (agent.getStartedQuests().size() >= config.maximumConcurrentActive) return Result.none();
-        double acceptance = config.acceptanceProbabilityPerMarketCycle
+        double acceptance = config.acceptanceProbabilityPerActivityCycle
                 * (0.5d + profile.dailyActivityFraction() * 0.5d);
         if (random.stream("agent." + profile.agentId() + ".quest-acceptance").nextDouble()
                 >= acceptance) return Result.none();

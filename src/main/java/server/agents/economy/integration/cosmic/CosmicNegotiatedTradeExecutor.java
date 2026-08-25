@@ -63,8 +63,8 @@ public final class CosmicNegotiatedTradeExecutor implements TradeExecutionGatewa
                     cancel(buyer);
                     return new Result(false, "", "exact offered holding changed before settlement");
                 }
-                buyer.getTrade().chat("Exact offer placed for agreement " + idempotencyKey);
-                seller.getTrade().chat("Exact offer accepted for agreement " + idempotencyKey);
+                buyer.getTrade().chat("Offer placed.");
+                seller.getTrade().chat("Offer accepted.");
                 Trade.completeTrade(buyer); Trade.completeTrade(seller);
                 boolean success = buyer.getTrade() == null && seller.getTrade() == null;
                 return new Result(success, idempotencyKey,
@@ -98,8 +98,8 @@ public final class CosmicNegotiatedTradeExecutor implements TradeExecutionGatewa
                 cancel(first);
                 return new Result(false, "", "offered holdings changed before settlement");
             }
-            first.getTrade().chat("Offer placed for agreement " + idempotencyKey);
-            second.getTrade().chat("Offer accepted for agreement " + idempotencyKey);
+            first.getTrade().chat("Offer placed.");
+            second.getTrade().chat("Offer accepted.");
             Trade.completeTrade(first);
             Trade.completeTrade(second);
             boolean success = first.getTrade() == null && second.getTrade() == null;
@@ -160,12 +160,8 @@ public final class CosmicNegotiatedTradeExecutor implements TradeExecutionGatewa
         Item exact = seller.getInventory(type).listById(itemId).stream()
                 .filter(item -> EconomyItemEvidence.describe(item).fingerprint().equals(fingerprint))
                 .filter(item -> item.getQuantity() >= quantity).findFirst().orElse(null);
-        if (exact == null || quantity > Short.MAX_VALUE) return false;
-        Item tradeItem = exact.copy(); tradeItem.setQuantity((short) quantity); tradeItem.setPosition((byte) 1);
-        if (!seller.getTrade().addItem(tradeItem)) return false;
-        InventoryManipulator.removeFromSlot(seller.getClient(), type, exact.getPosition(),
-                (short) quantity, true);
-        return true;
+        return exact != null && CosmicTradeOfferPlacer.placeExact(seller, type, exact.getPosition(),
+                itemId, fingerprint, quantity, (byte) 1);
     }
 
     private static void cancel(Character character) {

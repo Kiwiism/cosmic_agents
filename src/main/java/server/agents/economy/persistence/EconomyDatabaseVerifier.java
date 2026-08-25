@@ -39,7 +39,10 @@ public final class EconomyDatabaseVerifier {
                 new Column("economic_intent", "attributes"),
                 new Column("economy_session_event", "event_kind"),
                 new Column("item_valuation_query", "unit_value_mesos"),
-                new Column("agent_commerce_session_checkpoint", "checkpoint"));
+                new Column("agent_commerce_session_checkpoint", "checkpoint"),
+                new Column("economy_day_close", "checkpoint_hash"),
+                new Column("item_market_daily", "logical_day"),
+                new Column("meso_flow_daily", "logical_day"));
         try (Connection connection = dataSource.getConnection()) {
             if (!"PostgreSQL".equalsIgnoreCase(connection.getMetaData().getDatabaseProductName()))
                 throw new IllegalStateException("economy evidence database must be PostgreSQL");
@@ -50,15 +53,17 @@ public final class EconomyDatabaseVerifier {
                 try (ResultSet result = connection.getMetaData().getColumns(
                         null, "public", column.table(), column.column())) {
                     if (!result.next()) throw new IllegalStateException("economy schema is missing "
-                        + column.table() + '.' + column.column() + "; apply V001 through V022");
+                        + column.table() + '.' + column.column() + "; apply V001 through V023");
                 }
             }
             try (var statement = connection.createStatement(); var statuses = statement.executeQuery(
                     "SELECT pg_get_constraintdef(oid) FROM pg_constraint "
                             + "WHERE conname = 'simulation_run_status_check'")) {
                 if (!statuses.next() || !statuses.getString(1).contains("WAITING_PHYSICAL_ACTION")
-                        || !statuses.getString(1).contains("INVARIANT_VIOLATION"))
-                    throw new IllegalStateException("economy schema is missing V013 runtime run statuses");
+                        || !statuses.getString(1).contains("INVARIANT_VIOLATION")
+                        || !statuses.getString(1).contains("DAY_CLOSED")
+                        || !statuses.getString(1).contains("DAY_CLOSE_BLOCKED"))
+                    throw new IllegalStateException("economy schema is missing V023 runtime run statuses");
             }
         } catch (SQLException failure) {
             throw new EconomyPersistenceException("Could not verify economy database schema", failure);

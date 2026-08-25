@@ -10,5 +10,6 @@ public enum EconomyOperationKind {
     OFFSCREEN_FARM_SETTLEMENT,
     SCROLL_APPLY,
     QUEST_START,
-    QUEST_TURN_IN
+    QUEST_TURN_IN,
+    VENUE_SUBSIDY
 }

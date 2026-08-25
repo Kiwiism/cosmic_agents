@@ -34,6 +34,8 @@ public final class EconomyRunCoordinator {
     private final EconomyLifecycleJournal journal;
     private final Duration maximumSessionDuration;
     private final Duration maximumIdleDuration;
+    private final Duration onboardingDuration;
+    private final boolean externalActivityEnabled;
     private final Map<String, AgentState> agents = new LinkedHashMap<>();
 
     public EconomyRunCoordinator(SimulationRunEngine engine, EconomySessionPort sessions,
@@ -45,6 +47,8 @@ public final class EconomyRunCoordinator {
         this.journal = Objects.requireNonNull(journal);
         this.maximumSessionDuration = Duration.parse(engine.config().session.defaultMaximumDuration);
         this.maximumIdleDuration = Duration.parse(engine.config().session.maximumIdleDuration);
+        this.onboardingDuration = Duration.parse(engine.config().population.onboardingDuration);
+        this.externalActivityEnabled = "RULE_EXACT".equals(engine.config().activity.executionMode);
     }
 
     /** Compatibility constructor for scenario fixtures; production composition passes separate ports. */
@@ -92,12 +96,27 @@ public final class EconomyRunCoordinator {
         }
         if (entry.status() == EconomySessionPort.EntryResult.Status.REJECTED)
             throw new IllegalStateException("economy admission rejected: " + entry.reason());
+        Instant onboardingUntil = onboardingDuration.isZero() ? null : event.dueAt().plus(onboardingDuration);
         agents.put(profile.agentId(), new AgentState(profile, Status.IN_FREE_MARKET,
-                null, null, entry.sessionId()));
+                null, null, entry.sessionId(), onboardingUntil));
         recordPresence(profile, "ADMITTED", event.dueAt());
         journal.admitted(engine.runId(), profile, event.dueAt());
         journal.stateChanged(engine.runId(), profile.agentId(), Status.IN_FREE_MARKET, null, event.dueAt());
-        engine.schedule(event.dueAt(), MARKET_CYCLE, profile.agentId(), Map.of());
+        if (onboardingUntil == null) {
+            engine.schedule(event.dueAt(), MARKET_CYCLE, profile.agentId(), Map.of());
+            return;
+        }
+        EconomySessionPort.ReleaseResult release = sessions.release(entry.sessionId(), profile,
+                event.dueAt(), "COHORT_ONBOARDING_ACTIVITY");
+        journal.sessionEvent(engine.runId(), profile.agentId(), null, entry.sessionId(),
+                "RELEASE_" + release.status().name(), event.dueAt(), release.reason(),
+                release.retryAt(), null);
+        if (release.status() != EconomySessionPort.ReleaseResult.Status.RELEASED)
+            throw new IllegalStateException("onboarding requires an immediately releasable bootstrap session: "
+                    + release.reason());
+        agents.put(profile.agentId(), new AgentState(profile, Status.IN_FREE_MARKET,
+                null, null, null, onboardingUntil));
+        engine.schedule(event.dueAt(), START_ACTIVITY, profile.agentId(), Map.of("phase", "ONBOARDING"));
     }
 
     private void market(ScheduledEconomyEvent event) {
@@ -116,10 +135,17 @@ public final class EconomyRunCoordinator {
             } else if (release.status() == EconomySessionPort.ReleaseResult.Status.REJECTED) {
                 throw new IllegalStateException("economy release rejected: " + release.reason());
             } else {
-                agents.put(event.subjectId(), new AgentState(state.profile, Status.IN_FREE_MARKET,
-                        null, null, null));
-                engine.schedule(directive.outsideAvailableAt().orElse(event.dueAt()), START_ACTIVITY,
-                        event.subjectId(), Map.of());
+                if (externalActivityEnabled) {
+                    agents.put(event.subjectId(), new AgentState(state.profile, Status.IN_FREE_MARKET,
+                            null, null, null, null));
+                    engine.schedule(directive.outsideAvailableAt().orElse(event.dueAt()), START_ACTIVITY,
+                            event.subjectId(), Map.of());
+                } else {
+                    agents.put(event.subjectId(), new AgentState(state.profile, Status.IN_FREE_MARKET,
+                            null, null, null, null));
+                    engine.schedule(directive.outsideAvailableAt().orElse(event.dueAt()), ENTER_ECONOMY,
+                            event.subjectId(), Map.of("reason", "COMMERCE_ONLY_COOLDOWN"));
+                }
             }
         }
         directive.revisitAt().ifPresent(at -> engine.schedule(at, MARKET_CYCLE,
@@ -139,16 +165,21 @@ public final class EconomyRunCoordinator {
         activities.begin(state.profile, plan, event.dueAt());
         recordPresence(state.profile, "OFFSCREEN_ACTIVITY_STARTED", event.dueAt());
         journal.activityStarted(engine.runId(), plan);
-        journal.stateChanged(engine.runId(), event.subjectId(), Status.OFFSCREEN_ACTIVITY,
+        Status activityStatus = state.onboardingUntil == null
+                ? Status.OFFSCREEN_ACTIVITY : Status.ONBOARDING_ACTIVITY;
+        journal.stateChanged(engine.runId(), event.subjectId(), activityStatus,
                 plan.sessionId(), event.dueAt());
-        agents.put(event.subjectId(), new AgentState(state.profile, Status.OFFSCREEN_ACTIVITY,
-                plan, outcome, null));
+        agents.put(event.subjectId(), new AgentState(state.profile, activityStatus,
+                plan, outcome, null, state.onboardingUntil));
         engine.schedule(outcome.completedAt(), COMPLETE_ACTIVITY,
                 event.subjectId(), Map.of("sessionId", plan.sessionId()));
     }
 
     private void completeActivity(ScheduledEconomyEvent event) {
-        AgentState state = require(event.subjectId(), Status.OFFSCREEN_ACTIVITY);
+        AgentState state = agents.get(event.subjectId());
+        if (state == null || (state.status != Status.OFFSCREEN_ACTIVITY
+                && state.status != Status.ONBOARDING_ACTIVITY))
+            throw new IllegalStateException(event.subjectId() + " must own external activity");
         if (!state.pendingActivity.sessionId().equals(event.parameters().get("sessionId")))
             throw new IllegalStateException("activity completion does not match pending session");
         FarmSessionOutcome outcome = state.pendingOutcome == null
@@ -161,10 +192,18 @@ public final class EconomyRunCoordinator {
                 || !outcome.completedAt().equals(event.dueAt()))
             throw new IllegalStateException("settlement result does not match pending activity");
         journal.activityCompleted(engine.runId(), outcome);
+        if (state.onboardingUntil != null && event.dueAt().isBefore(state.onboardingUntil)) {
+            activities.returnToEconomyEntrance(state.profile, event.dueAt());
+            recordPresence(state.profile, "ONBOARDING_ACTIVITY_SEGMENT_COMPLETED", event.dueAt());
+            agents.put(event.subjectId(), new AgentState(state.profile, Status.IN_FREE_MARKET,
+                    null, null, null, state.onboardingUntil));
+            engine.schedule(event.dueAt(), START_ACTIVITY, event.subjectId(), Map.of("phase", "ONBOARDING"));
+            return;
+        }
         journal.stateChanged(engine.runId(), event.subjectId(), Status.RETURNING_TO_FM,
                 null, event.dueAt());
         agents.put(event.subjectId(), new AgentState(state.profile, Status.RETURNING_TO_FM,
-                null, null, null));
+                null, null, null, state.onboardingUntil));
         engine.schedule(event.dueAt(), RETURN_TO_FM, event.subjectId(), Map.of());
     }
 
@@ -176,17 +215,19 @@ public final class EconomyRunCoordinator {
     }
 
     private void enterEconomy(ScheduledEconomyEvent event) {
-        AgentState state = require(event.subjectId(), Status.RETURNING_TO_FM);
+        Status expected = "COMMERCE_ONLY_COOLDOWN".equals(event.parameters().get("reason"))
+                ? Status.IN_FREE_MARKET : Status.RETURNING_TO_FM;
+        AgentState state = require(event.subjectId(), expected);
         EconomySessionPort.EntryResult entry = requestEntry(state.profile, event.dueAt());
         if (entry.status() == EconomySessionPort.EntryResult.Status.DEFERRED) {
-            engine.schedule(entry.retryAt(), ENTER_ECONOMY, event.subjectId(), Map.of());
+            engine.schedule(entry.retryAt(), ENTER_ECONOMY, event.subjectId(), event.parameters());
             return;
         }
         if (entry.status() == EconomySessionPort.EntryResult.Status.REJECTED)
             throw new IllegalStateException("economy re-entry rejected: " + entry.reason());
         journal.stateChanged(engine.runId(), event.subjectId(), Status.IN_FREE_MARKET, null, event.dueAt());
         agents.put(event.subjectId(), new AgentState(state.profile, Status.IN_FREE_MARKET,
-                null, null, entry.sessionId()));
+                null, null, entry.sessionId(), null));
         engine.schedule(event.dueAt(), MARKET_CYCLE, event.subjectId(), Map.of());
     }
 
@@ -228,7 +269,8 @@ public final class EconomyRunCoordinator {
     public Map<String, AgentView> agentViews() {
         Map<String, AgentView> result = new LinkedHashMap<>();
         agents.forEach((id, state) -> result.put(id, new AgentView(state.profile, state.status,
-                state.pendingActivity == null ? null : state.pendingActivity.sessionId(), state.sessionId)));
+                state.pendingActivity == null ? null : state.pendingActivity.sessionId(), state.sessionId,
+                state.onboardingUntil)));
         return Map.copyOf(result);
     }
 
@@ -238,9 +280,10 @@ public final class EconomyRunCoordinator {
                 "profile", profileMap(state.profile),
                 "status", state.status.name(),
                 "sessionId", state.sessionId == null ? "" : state.sessionId.toString(),
+                "onboardingUntil", state.onboardingUntil == null ? "" : state.onboardingUntil.toString(),
                 "pendingActivity", state.pendingActivity == null ? Map.of() : planMap(state.pendingActivity),
                 "pendingOutcome", state.pendingOutcome == null ? Map.of() : outcomeMap(state.pendingOutcome))));
-        return Map.of("schemaVersion", 3, "agents", Map.copyOf(agentState),
+        return Map.of("schemaVersion", 4, "agents", Map.copyOf(agentState),
                 "sessions", sessions.snapshotState(), "externalActivity", activities.snapshotState());
     }
 
@@ -253,13 +296,13 @@ public final class EconomyRunCoordinator {
         int coordinatorSchema;
         if (snapshot.containsKey("schemaVersion")) {
             int schemaVersion = integer(snapshot, "schemaVersion");
-            if (schemaVersion != 2 && schemaVersion != 3)
+            if (schemaVersion != 2 && schemaVersion != 3 && schemaVersion != 4)
                 throw new IllegalStateException("unsupported coordinator checkpoint schema");
             agentState = (Map<String, Object>) snapshot.get("agents");
-            sessionState = schemaVersion == 3
+            sessionState = schemaVersion >= 3
                     ? (Map<String, Object>) snapshot.get("sessions")
                     : (Map<String, Object>) snapshot.get("world");
-            activityState = schemaVersion == 3
+            activityState = schemaVersion >= 3
                     ? (Map<String, Object>) snapshot.get("externalActivity") : Map.of();
             coordinatorSchema = schemaVersion;
         } else {
@@ -276,16 +319,18 @@ public final class EconomyRunCoordinator {
             Map<String, Object> pendingResult = (Map<String, Object>) row.get("pendingOutcome");
             FarmSessionOutcome outcome = pendingResult == null || pendingResult.isEmpty()
                     ? null : outcomeFrom(pendingResult);
-            if ((status == Status.OFFSCREEN_ACTIVITY) != (plan != null))
+            if ((status == Status.OFFSCREEN_ACTIVITY || status == Status.ONBOARDING_ACTIVITY) != (plan != null))
                 throw new IllegalStateException("checkpoint activity state is inconsistent for " + id);
-            if (status != Status.OFFSCREEN_ACTIVITY && outcome != null)
+            if (status != Status.OFFSCREEN_ACTIVITY && status != Status.ONBOARDING_ACTIVITY && outcome != null)
                 throw new IllegalStateException("checkpoint outcome state is inconsistent for " + id);
             String sessionId = Objects.toString(row.get("sessionId"), "");
             if (sessionId.isBlank() && coordinatorSchema == 2 && status == Status.IN_FREE_MARKET)
                 sessionId = java.util.UUID.nameUUIDFromBytes((engine.runId() + ":" + id
                         + ":restored-session").getBytes(java.nio.charset.StandardCharsets.UTF_8)).toString();
+            String onboarding = Objects.toString(row.get("onboardingUntil"), "");
             agents.put(id, new AgentState(profile, status, plan, outcome,
-                    sessionId.isBlank() ? null : java.util.UUID.fromString(sessionId)));
+                    sessionId.isBlank() ? null : java.util.UUID.fromString(sessionId),
+                    onboarding.isBlank() ? null : Instant.parse(onboarding)));
         });
         Map<String, CommerceParticipant> profiles = new LinkedHashMap<>();
         agents.forEach((id, value) -> profiles.put(id, value.profile));
@@ -427,10 +472,10 @@ public final class EconomyRunCoordinator {
     private static int integer(Map<String, Object> values, String key) { return ((Number) values.get(key)).intValue(); }
     private static double decimal(Map<String, Object> values, String key) { return ((Number) values.get(key)).doubleValue(); }
 
-    public enum Status { IN_FREE_MARKET, OFFSCREEN_ACTIVITY, RETURNING_TO_FM }
+    public enum Status { IN_FREE_MARKET, ONBOARDING_ACTIVITY, OFFSCREEN_ACTIVITY, RETURNING_TO_FM }
     public record AgentView(CommerceParticipant profile, Status status, String pendingActivityId,
-                            java.util.UUID economySessionId) { }
+                            java.util.UUID economySessionId, Instant onboardingUntil) { }
     private record AgentState(CommerceParticipant profile, Status status,
                               FarmSessionPlan pendingActivity, FarmSessionOutcome pendingOutcome,
-                              java.util.UUID sessionId) { }
+                              java.util.UUID sessionId, Instant onboardingUntil) { }
 }

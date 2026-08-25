@@ -147,4 +147,32 @@ public final class JdbcSimulationRunRepository implements SimulationRunRepositor
             throw new EconomyPersistenceException("Could not load simulation run", failure);
         }
     }
+
+    @Override
+    public void saveDayClose(DayCloseRecord close) {
+        String sql = "INSERT INTO economy_day_close (run_id, day_index, day_started_at, day_closed_at, "
+                + "checkpoint_hash, relayed_count, relay_failure_count, ingested_count, quarantined_count, "
+                + "audit_clean, violation_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
+                + "ON CONFLICT (run_id, day_index) DO UPDATE SET checkpoint_hash = EXCLUDED.checkpoint_hash, "
+                + "relayed_count = EXCLUDED.relayed_count, relay_failure_count = EXCLUDED.relay_failure_count, "
+                + "ingested_count = EXCLUDED.ingested_count, quarantined_count = EXCLUDED.quarantined_count, "
+                + "audit_clean = EXCLUDED.audit_clean, violation_count = EXCLUDED.violation_count";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setObject(1, close.runId());
+            statement.setInt(2, close.dayIndex());
+            statement.setTimestamp(3, Timestamp.from(close.dayStartedAt()));
+            statement.setTimestamp(4, Timestamp.from(close.dayClosedAt()));
+            statement.setString(5, close.checkpointHash());
+            statement.setInt(6, close.relayed());
+            statement.setInt(7, close.relayFailures());
+            statement.setInt(8, close.ingested());
+            statement.setInt(9, close.quarantined());
+            statement.setBoolean(10, close.auditClean());
+            statement.setInt(11, close.violationCount());
+            statement.executeUpdate();
+        } catch (SQLException failure) {
+            throw new EconomyPersistenceException("Could not persist economy day close", failure);
+        }
+    }
 }

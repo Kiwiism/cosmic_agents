@@ -48,6 +48,18 @@ class CosmicMarketSellerGatewayTest {
                 gateway.requestOpen(agent, plan(910000001)));
     }
 
+    @Test
+    void acceptsAnyConfiguredRealPermit() {
+        CosmicMarketSellerGateway pooled = new CosmicMarketSellerGateway(
+                mock(RemoteNpcCommerceService.class), List.of(5140000, 5140006), 30_000);
+        Character agent = mock(Character.class);
+        Inventory cash = mock(Inventory.class);
+        when(agent.getInventory(InventoryType.CASH)).thenReturn(cash);
+        when(cash.countById(5140006)).thenReturn(1);
+
+        assertTrue(pooled.hasPlayerShopPermit(agent));
+    }
+
     private static MarketSellerPlan plan(int room) {
         return new MarketSellerPlan(List.of(), List.of(), room, "test stall");
     }

@@ -77,8 +77,9 @@ SELECT
     AND (agent_id,logical_time) IN (SELECT agent_id,MAX(logical_time) FROM agent_state_projection
                                    WHERE run_id='$RunId' GROUP BY agent_id)) AS agent_mesos;
 "@)[0]
-    mesoDaily = Invoke-EconomyQuery "SELECT logical_date,flow_kind,meso_amount,transaction_count FROM meso_flow_daily WHERE run_id='$RunId' ORDER BY logical_date,flow_kind;"
-    itemDaily = Invoke-EconomyQuery "SELECT * FROM item_market_daily WHERE run_id='$RunId' ORDER BY logical_date,item_id;"
+    dayCloses = Invoke-EconomyQuery "SELECT day_index,day_started_at,day_closed_at,checkpoint_hash,relayed_count,relay_failure_count,ingested_count,quarantined_count,audit_clean,violation_count FROM economy_day_close WHERE run_id='$RunId' ORDER BY day_index;"
+    mesoDaily = Invoke-EconomyQuery "SELECT logical_day,logical_date,flow_kind,meso_amount,transaction_count FROM meso_flow_daily WHERE run_id='$RunId' ORDER BY logical_day,flow_kind;"
+    itemDaily = Invoke-EconomyQuery "SELECT * FROM item_market_daily WHERE run_id='$RunId' ORDER BY logical_day,item_id;"
     transactions = Invoke-EconomyQuery "SELECT transaction_id,transaction_kind,buyer_id,seller_id,item_id,quantity,gross_mesos,tax_mesos,human_counterparty,logical_at,evidence,listing_id FROM economic_transaction WHERE run_id='$RunId' ORDER BY logical_at,transaction_id;"
     lots = Invoke-EconomyQuery "SELECT lot_id,item_id,source_kind,source_identifier,original_quantity,attributes,fingerprint FROM item_lot WHERE run_id='$RunId' ORDER BY item_id,lot_id;"
     stalls = Invoke-EconomyQuery "SELECT stall_id,seller_id,room_map_id,spot_x,opened_at,closed_at,close_reason FROM market_stall WHERE run_id='$RunId' ORDER BY opened_at,stall_id;"
@@ -89,7 +90,7 @@ SELECT
 SELECT DISTINCT ON (agent_id) agent_id,logical_time,level,experience,meso,map_id,activity_state,stall_id,needs,beliefs
 FROM agent_state_projection WHERE run_id='$RunId' ORDER BY agent_id,logical_time DESC;
 "@
-    presence = Invoke-EconomyQuery "SELECT logical_at::date AS logical_date,map_id,reason,visible,COUNT(*) AS event_count,COUNT(DISTINCT agent_id) AS unique_agents FROM agent_presence_event WHERE run_id='$RunId' GROUP BY 1,2,3,4 ORDER BY 1,2,3,4;"
+    presence = Invoke-EconomyQuery "SELECT 1+FLOOR(EXTRACT(EPOCH FROM (p.logical_at-r.logical_started_at))/86400)::integer AS logical_day,p.map_id,p.reason,p.visible,COUNT(*) AS event_count,COUNT(DISTINCT p.agent_id) AS unique_agents FROM agent_presence_event p JOIN simulation_run r USING(run_id) WHERE p.run_id='$RunId' GROUP BY 1,2,3,4 ORDER BY 1,2,3,4;"
     activities = Invoke-EconomyQuery "SELECT activity_id,agent_id,calibration_id,map_id,started_at,due_at,completed_at,status,explicit_work,outcome FROM activity_session WHERE run_id='$RunId' ORDER BY started_at,activity_id;"
     social = Invoke-EconomyQuery "SELECT social_event_id,logical_time,room_map_id,speaker_agent_id,target_agent_id,event_kind,public_text,structured_intent,related_item_id FROM social_event WHERE run_id='$RunId' ORDER BY logical_time,social_event_id;"
     negotiations = Invoke-EconomyQuery "SELECT negotiation_id,buyer_id,seller_id,item_id,opened_at,closed_at,status,transcript,settlement_transaction_id FROM negotiation_session WHERE run_id='$RunId' ORDER BY opened_at,negotiation_id;"

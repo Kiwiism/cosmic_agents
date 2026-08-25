@@ -12,8 +12,7 @@ import java.awt.Point;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 class CosmicFreeMarketPhysicalGatewayTest {
     private final CosmicMarketObservationService observations = mock(CosmicMarketObservationService.class);
@@ -58,6 +57,25 @@ class CosmicFreeMarketPhysicalGatewayTest {
     }
 
     @Test
+    void optionalMotionLayerCannotReorderCommerceItinerary() {
+        CosmicFreeMarketPhysicalGateway styled = new CosmicFreeMarketPhysicalGateway(
+                observations, 910000000, 910000001, 910000022, 30_000, 20_000, 120,
+                new SoloMaplingInspiredMarketInteractionBehavior(24));
+        Character agent = mock(Character.class);
+        MapleMap map = mock(MapleMap.class);
+        PlayerShop far = shop(4, 101, false, true, new Point(500, 0));
+        PlayerShop near = shop(12, 102, false, true, new Point(50, 0));
+        when(agent.getId()).thenReturn(77);
+        when(agent.getMapId()).thenReturn(910000003);
+        when(agent.getMap()).thenReturn(map);
+        when(agent.getPosition()).thenReturn(new Point(0, 0));
+        when(map.getMapObjects()).thenReturn(List.<MapObject>of(far, near));
+
+        assertEquals(List.of(4, 12), styled.visibleStalls(agent).stream()
+                .map(FreeMarketPhysicalGateway.StallTarget::objectId).toList());
+    }
+
+    @Test
     void approachRejectsStaleShopAndAcceptsNearbyOpenShop() {
         Character agent = mock(Character.class);
         MapleMap map = mock(MapleMap.class);
@@ -71,6 +89,32 @@ class CosmicFreeMarketPhysicalGatewayTest {
         assertEquals(FreeMarketPhysicalGateway.ActionStatus.ARRIVED, gateway.requestApproach(agent, target));
         when(shop.isOpen()).thenReturn(false);
         assertEquals(FreeMarketPhysicalGateway.ActionStatus.UNAVAILABLE, gateway.requestApproach(agent, target));
+    }
+
+    @Test
+    void entersActualPlayerShopVisitorStateAndExitsAfterExactInspection() {
+        Character agent = mock(Character.class);
+        MapleMap map = mock(MapleMap.class);
+        PlayerShop shop = shop(9, 101, false, true, new Point(100, 100));
+        when(agent.getMapId()).thenReturn(910000002);
+        when(agent.getMap()).thenReturn(map);
+        when(agent.getPosition()).thenReturn(new Point(110, 100));
+        when(map.getMapObject(9)).thenReturn(shop);
+        when(shop.visitShop(agent)).thenReturn(true);
+        when(shop.isVisitor(agent)).thenReturn(false, true);
+        when(shop.listingSnapshot()).thenReturn(List.of(mock(PlayerShop.ListingView.class),
+                mock(PlayerShop.ListingView.class)));
+        when(observations.inspectStall(eq(agent), eq("agent-1"), eq(9), any(), any()))
+                .thenReturn(List.of());
+        var target = new FreeMarketPhysicalGateway.StallTarget(9, 101, 910000002, 100, 100);
+
+        assertEquals(2, gateway.enterStall(agent, target).listingCount());
+        gateway.inspectAndExit(agent, "agent-1", target, java.time.Instant.EPOCH,
+                new server.agents.economy.market.PrivateMarketKnowledge());
+
+        verify(shop).visitShop(agent);
+        verify(shop).removeVisitor(agent);
+        verify(agent).setPlayerShop(null);
     }
 
     private static PlayerShop shop(int objectId, int ownerId, boolean owner, boolean open, Point position) {

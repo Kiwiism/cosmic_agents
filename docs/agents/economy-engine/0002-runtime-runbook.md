@@ -5,14 +5,15 @@
 1. Configure `economy-engine.yaml`. YAML contains behavior and scenario policy only; credentials are
    environment variables.
 2. Set distinct `ECONOMY_DB_*` credentials and initialize the separate PostgreSQL database through
-   migrations V001-V022.
+   migrations V001-V023.
 3. Start Cosmic MySQL and the game server normally.
 4. Have at least `population.maximumAgents` live autonomous characters on the configured channel.
    The runtime deterministically binds scenario slots to characters of the same real Cosmic job
    family; within each eligible pool, ascending character id is the stable tie-breaker. The detached
    observation harness stages future cohorts and materializes them at the FM entrance when their
    admission becomes due; they do not need to be manually parked in the FM.
-5. Capture at least `activity.minimumCalibrationSamples` completed real autonomous sessions for every
+5. For `activity.executionMode: RULE_EXACT`, capture at least
+   `activity.minimumCalibrationSamples` completed real autonomous sessions for every
    build/job/level/map cohort that may farm. Use
    `!economy calibration start <agent-character-id>` while that live agent is on the farm map, then
    `!economy calibration stop <agent-character-id> [died]`. The event bus records actual kills and
@@ -25,12 +26,16 @@
    `!economy calibration start-all <map-id>` and `!economy calibration stop-all <map-id> [died]`.
    These batch commands only observe live autonomous characters on that exact map; they do not move,
    equip, heal, reward, or otherwise mutate the cohort.
-6. Ensure every configured stall owner legitimately possesses the configured real PlayerShop permit.
-   The baseline uses WZ item `5140000`, Regular Store Permit (16 listings). In v83 this is a Cash
-   Shop item and is neither a mob drop nor normal NPC stock. `503xxxx` items are Hired Merchants and
-   are deliberately rejected.
+   The independent Commerce profile uses `activity.executionMode: DISABLED`; preflight then skips
+   calibration and released agents re-enter Commerce after their configured cooldown without farming,
+   drops, EXP, mesos, consumable use, or any other synthetic settlement.
+6. The default entry policy grants exactly one configured real PlayerShop permit when an entrant owns
+   none. The verified pool is `5140000`, `5140001`, `5140002`, `5140003`, `5140004`, and `5140006`;
+   `503xxxx` Hired Merchants remain rejected. Each grant is a Cosmic transaction and an explicit
+   `VENUE_SUBSIDY` lot, never a mob drop or ordinary production. Set
+   `bootstrap.shopPermitPolicy: REQUIRE_OWNED_REAL_ITEM` for a no-subsidy experiment.
 7. Run `!economy preflight`. It verifies the scenario-sized live roster, exact job-family binding,
-   configured-channel presence, seller permit ownership, the separate evidence database, and matching
+   configured-channel presence, permit-policy validity, the separate evidence database, and matching
    current-level activity calibration coverage without starting or mutating a run. Later level bands
    remain fail-closed and must be calibrated before agents reach them.
 8. Run `!economy start`. With the default `clock.mode: REALTIME`, logical time then advances
@@ -60,6 +65,14 @@ instantaneous actions: the run pauses at those boundaries, lets the normal agent
 complete them, and automatically resumes toward the requested target. A second advance command is
 not required at every physical boundary. Rewinding is rejected.
 
+`!economy advance-day` closes one run-relative 24-hour interval. The instant passed to `start` is
+always Day 1 Hour 0, regardless of its civil date or timezone. Day advancement is half-open: events
+at exactly the next day’s Hour 0 remain queued until that new day begins, so a new cohort cannot be
+counted in the prior day. Use `!economy advance 0` to process those Hour 0 events without moving the
+clock. A clean close writes `economy_day_close`; relay failures, quarantine, invariant violations,
+or live-character/escrow holdings mismatches leave the run retryably `DAY_CLOSE_BLOCKED`. Fix the
+evidence issue and run `advance-day` again to reconcile at the same instant without skipping a day.
+
 Evidence promotion is scoped to the active run. A quarantined or incomplete receipt belonging to a
 historical run remains visible for diagnosis but cannot block a new scenario.
 
@@ -76,6 +89,7 @@ require identical remaining event order and RNG state.
 ## Evidence available to a future dashboard
 
 - `economic_event` and `ledger_posting`: immutable authority and balanced meso/item flows.
+- `VENUE_SUBSIDY` events/lots: FM-issued permits, separable from organic item production.
 - `item_lot` and `market_listing_lot`: item provenance and escrow allocation.
 - `market_stall`, `market_listing`, `economic_transaction`: stall lifecycle and settlement.
 - `market_observation`: private observed asks, exact item fingerprints, and rolled attributes.
@@ -89,18 +103,28 @@ require identical remaining event order and RNG state.
   validates the fingerprint again through Cosmic Trade before marking it executed.
 - `economic_intent`: structured buy/sell interest and numeric offers usable outside an active FM
   session. Flavor text is display-only; only a participant may resolve a directed intent.
+- Active open-chat sales are `SELL_INTEREST` intents over one exact real inventory fingerprint and
+  bundle. The shared inventory ledger reserves that holding; bounded advertisements are social events;
+  an interested agent physically approaches the seller before agent or human purchases settle through
+  Cosmic `PLAYER_TRADE`. `!economy openchat` exposes the
+  current in-memory execution state while the durable intent, Trade receipt, decision, and social
+  evidence remain dashboard sources.
 - `economy_session_event`: accepted/deferred/rejected entries and released/deferred/rejected exits,
   including deadline, retry, and reason evidence.
 - `item_valuation_query`: every agent valuation request, its private observation count/median, catalog
   anchor, selected source, and the audited YAML override reason when an override applies.
 - `agent_presence_event` and lifecycle tables: FM/offscreen state and physical location.
 - `item_market_daily`, `meso_flow_daily`, `agent_state_projection`: rebuildable dashboard read models.
+- `economy_day_close`: immutable internal-day checkpoint hash, relay/ingestion counts, and clean-close gate.
 - `economy_invariant_violation`: durable accounting and lifecycle failures.
 
 `economy-database/queries/macro_dashboard.sql` returns ending meso supply and velocity, wealth
 distribution/Gini, seller HHI, stall-room utilization, room traffic, disposition channels, item
 creation/burn, price series, search failures, unmet demand, and invariant counts. It is an
 administrator projection and is never an agent price source.
+`item_economy_detail.sql` supplies price/volume, every settlement, listing exposure, demand reasons,
+and lot provenance for one item. `internal_day_reconciliation.sql` supplies the day-close, meso
+creation/destruction, market volume, and transaction series used by a future day slider.
 `fixed_basket_price_index.sql` accepts an explicit item/quantity basket and reports price coverage;
 it never imputes an unobserved clearing price. `scenario_comparison.sql` reports baseline/candidate
 ledger deltas and explicitly refuses to label an unpaired difference as causal.
@@ -134,10 +158,11 @@ a completed price or imputing a meso price to barter.
 
 ## Conservative first rollout
 
-Both supplied YAML files enable the necessary real paths: physical browsing, PlayerShop sales and
-buys, remote access to real NPC shop rules, private knowledge, durable inventory protection,
-structured intent calls, taxes, calibrated activity, and full evidence. The following implemented
-features start off: public offers/arrangements, barter, autonomous quest lifecycle mutation, scroll
+The production YAML files enable the necessary real paths: physical browsing, PlayerShop sales and
+buys, entrance-only remote access to real NPC shop rules, private knowledge, durable inventory protection,
+structured intent calls, taxes, calibrated activity, external quest lifecycle, a ten-percent
+open-chat seller cohort, and full evidence. The following implemented
+features start off: public stall offers/arrangements, barter, scroll
 application, chair collection preference/direct trade, repricing, seasonal overlays, and ambient
 fidgets. Enable one family at a time and compare its journal/report output against a control run.
 
@@ -145,17 +170,39 @@ For a local read-only report, run `tools/economy/Export-EconomyDashboard.ps1` an
 `economy-dashboard`. The exporter reads only PostgreSQL and includes raw transaction, listing,
 lot-provenance, decision, social, agent, daily price, meso-flow, and validation evidence for later
 UI filtering.
+- Browsers enter the actual PlayerShop visitor state and remain for
+  `market.stallInspectionDurationPerListing × listing rows` before learning that exact stall.
+  `market.interactionBehaviorProvider` can disable the optional locality/jitter presentation layer
+  without disabling mandatory physical proximity or changing economic decisions.
+- `AgentEconomyRuntime.requestStorage` walks an Agent back to the FM entrance and then opens the real
+  account storage with its ordinary level, fee, capacity, and security rules. It is a temporary
+  service seam for the future entrance storage NPC.
 - A zero-NPC-floor collectible receives no invented cold-start meso value. It can be retained or
   exchanged through reciprocal-need barter. Positive-floor scarce items can seed an ask from their
   exact NPC opportunity cost and configured seller markup.
-- Humans can later transact through normal Cosmic PlayerShop/Trade validation. They are not marked
-  as agents, do not receive agent-only tax metadata, and are absent from the default scenario.
-- Quest acceptance and turn-in use Cosmic's authoritative Quest.wz requirements/actions under the
-  logical clock and a named RNG stream. The reviewed Victoria policy catalog is extended at runtime
+- Humans can transact through normal Cosmic PlayerShop validation and can answer an active open-chat
+  seller by opening Trade and placing a meso-only offer. The seller places its exact reserved item,
+  accepts at or above its structured reserve, and rejects unvalued item barter. Humans are not marked
+  as agents and do not receive agent-only participant attribution.
+- Quest acceptance and turn-in are owned by external activity and use Cosmic's authoritative Quest.wz
+  requirements/actions under the logical clock and a named RNG stream. The reviewed Victoria policy catalog is extended at runtime
   only with WZ quests whose NPCs and objective sources are proven on generated Victoria maps.
   Timed, scripted, field-entry, buff, pet, reactor-only, and otherwise unsupported state remains
-  fail-closed. One quest action is considered per physical market cycle and concurrent acceptance is
+  fail-closed. One quest action is considered per external activity boundary and concurrent acceptance is
   YAML-bounded, preventing synchronized mass acceptance.
+
+The 30-day profile sets `population.onboardingDuration: PT24H`. Each cohort opens and immediately
+releases a bootstrap session (so starting holdings have provenance), then completes repeated exact
+calibration-backed external activity segments. It cannot execute a market cycle until a fresh
+admission after that deadline. This is deliberately not a synthetic “Maple Island completion” or
+automatic character reset: the bound characters’ real starting levels, jobs, quests, inventories,
+and matching calibration coverage remain authoritative. A true fresh-beginner/job-advancement
+cohort therefore still requires prepared characters and captured beginner/advancement activity;
+the economy engine will not invent that progression.
+`activity.targetMarketParticipationFraction: 0.40` applies to the whole arrived population, not
+only cohorts already eligible to trade. While newer cohorts are onboarding, the planner raises the
+required FM share of eligible cohorts (bounded below 100%); it converges to 40% once all cohorts are
+eligible. Small deterministic profile variation prevents an otherwise lockstep market/farm cycle.
 - Farm settlement advances actual Cosmic kill counters from calibrated kill evidence. Quest costs,
   item rewards, mesos, realized EXP across level boundaries, selection, NPC, and input/output lots
   are committed through the same outbox transaction as quest status, fame, skill, inventory, and
@@ -163,3 +210,24 @@ UI filtering.
 - Owned scroll projects use the same authoritative Cosmic mutation as player packets. The transaction
   consumes the real scroll, applies success/failure/curse with a named deterministic RNG stream, and
   records the input equipment lot and transformed or destroyed result in the economy outbox.
+
+## Independent Commerce test
+
+Use `config/economy/economy-engine-basic.yaml`. It is a one-room, ten-agent, real-time profile with
+external farming disabled and open-chat selling enabled for a fifty-percent seller sample. It still
+requires the separate PostgreSQL evidence database, ten live autonomous characters on channel 1,
+and real imported inventories; it deliberately does not create test items or mesos.
+
+1. Park or stage the agents in the FM, then run
+   `!economy preflight config/economy/economy-engine-basic.yaml`.
+2. Start with an explicit run id so it can be resumed:
+   `!economy start <uuid> config/economy/economy-engine-basic.yaml`.
+3. Watch room 1 and the entrance. Use `!economy status` for lifecycle state and
+   `!economy openchat` for offer id, seller, exact item, ask, reserve, room, advertisement count,
+   expiry, and Trade state.
+4. From a human client, Trade an advertising seller and place mesos. A confirmed offer below reserve
+   is declined and the item is returned; an offer at or above reserve commits through normal Trade.
+5. Run `!economy audit`, then `!economy stop` when finished.
+
+For code-only isolation, run
+`./mvnw.cmd -q '-Dtest=EconomyConfigLoaderTest,CosmicOpenChatSaleServiceTest,EconomyRunCoordinatorTest,CosmicNegotiatedTradeExecutorTest' test`.

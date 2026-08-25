@@ -12,6 +12,7 @@ import server.agents.economy.persistence.EconomyDatabaseVerifier;
 import server.agents.economy.persistence.JdbcActivityCalibrationRepository;
 import server.agents.economy.persistence.JdbcEconomyParticipantBindingStore;
 import server.agents.economy.scenario.EconomyConfigLoader;
+import server.agents.economy.scenario.EconomyEngineConfig;
 import server.agents.economy.scenario.LoadedEconomyConfig;
 import server.agents.economy.scenario.ManagedEconomyRun;
 import server.agents.economy.scenario.NamedRandomStreams;
@@ -47,6 +48,7 @@ public final class CommerceScenarioRuntime {
     private static Map<String, Character> directory = Map.of();
     private static String controlOwner;
     private static Instant requestedLogicalTarget;
+    private static Instant requestedDayCloseTarget;
     private static Instant physicalBatchLogicalTime;
     private static ScheduledFuture<?> autoAdvanceTask;
     private static RealtimeEconomyClock realtimeClock;
@@ -84,7 +86,7 @@ public final class CommerceScenarioRuntime {
         Map<String, Character> mapped = Map.of();
         try {
             mapped = new EconomyAgentRosterBinder().bind(admissions, agents,
-                    config.bootstrap.shopPermitItemId);
+                    requiredOwnedPermit(config));
         } catch (RuntimeException failure) {
             blockers.add("ROSTER_BINDING:" + message(failure));
         }
@@ -105,23 +107,25 @@ public final class CommerceScenarioRuntime {
         try (HikariDataSource database = EconomyPostgresDataSource.fromEnvironment()) {
             new EconomyDatabaseVerifier(database).verify(config.persistence.database);
             databaseReady = true;
-            var repository = new JdbcActivityCalibrationRepository(database);
-            var maps = new server.agents.economy.activity.VictoriaActivityMapCatalog(
-                    config.activity.mapCatalogResource);
-            for (var admission : admissions) {
-                Character character = mapped.get(admission.agentId());
-                if (character == null) {
-                    missingCalibrations++;
-                    missingCalibrationCohorts.merge(admission.jobFamily() + "@UNBOUND", 1, Integer::sum);
-                    continue;
-                }
-                boolean present = maps.candidates(character.getLevel()).stream().anyMatch(map ->
-                        repository.find(config.activity.agentBuild, map.mapId(), character.getLevel(),
-                                admission.jobFamily(), config.activity.minimumCalibrationSamples).isPresent());
-                if (!present) {
-                    missingCalibrations++;
-                    missingCalibrationCohorts.merge(admission.jobFamily() + "@L" + character.getLevel(),
-                            1, Integer::sum);
+            if ("RULE_EXACT".equals(config.activity.executionMode)) {
+                var repository = new JdbcActivityCalibrationRepository(database);
+                var maps = new server.agents.economy.activity.VictoriaActivityMapCatalog(
+                        config.activity.mapCatalogResource);
+                for (var admission : admissions) {
+                    Character character = mapped.get(admission.agentId());
+                    if (character == null) {
+                        missingCalibrations++;
+                        missingCalibrationCohorts.merge(admission.jobFamily() + "@UNBOUND", 1, Integer::sum);
+                        continue;
+                    }
+                    boolean present = maps.candidates(character.getLevel()).stream().anyMatch(map ->
+                            repository.find(config.activity.agentBuild, map.mapId(), character.getLevel(),
+                                    admission.jobFamily(), config.activity.minimumCalibrationSamples).isPresent());
+                    if (!present) {
+                        missingCalibrations++;
+                        missingCalibrationCohorts.merge(admission.jobFamily() + "@L" + character.getLevel(),
+                                1, Integer::sum);
+                    }
                 }
             }
         } catch (RuntimeException failure) {
@@ -132,9 +136,9 @@ public final class CommerceScenarioRuntime {
                     + ":cohorts=" + missingCalibrationCohorts);
 
         long sellers = admissions.stream().filter(value -> value.profile().stallWillingness() >= .5d).count();
-        long permits = mapped.values().stream().filter(character -> character
-                .getInventory(client.inventory.InventoryType.CASH)
-                .countById(config.bootstrap.shopPermitItemId) > 0).count();
+        long permits = mapped.values().stream().filter(character -> config.bootstrap.shopPermitItemIds.stream()
+                .anyMatch(itemId -> character.getInventory(client.inventory.InventoryType.CASH)
+                        .countById(itemId) > 0)).count();
         return new Preflight(blockers.isEmpty(), agents.size(), config.population.maximumAgents,
                 mapped.size(), initialReady, config.population.initialAgents,
                 (int) sellers, (int) permits, missingCalibrations, databaseReady, List.copyOf(blockers));
@@ -150,7 +154,7 @@ public final class CommerceScenarioRuntime {
                 java.time.Instant.parse(config.config().clock.logicalStart),
                 new NamedRandomStreams(config.config().scenario.seed));
         Map<String, Character> mapped = new EconomyAgentRosterBinder().bind(admissions, agents,
-                config.config().bootstrap.shopPermitItemId);
+                requiredOwnedPermit(config.config()));
         String owner = controlOwner(runId);
         HikariDataSource database = null;
         try {
@@ -182,6 +186,11 @@ public final class CommerceScenarioRuntime {
             if (database != null) database.close();
             throw failure;
         }
+    }
+
+    private static List<Integer> requiredOwnedPermit(EconomyEngineConfig config) {
+        return "REQUIRE_OWNED_REAL_ITEM".equals(config.bootstrap.shopPermitPolicy)
+                ? config.bootstrap.shopPermitItemIds : List.of();
     }
 
     public static synchronized Status resume(UUID runId) {
@@ -252,6 +261,23 @@ public final class CommerceScenarioRuntime {
         return result;
     }
 
+    public static synchronized ManagedEconomyRun.AdvanceResult advanceDay() {
+        requireRun();
+        if (realtimeClock != null)
+            throw new IllegalStateException("REALTIME runs advance automatically at 1x wall-clock speed");
+        if (requestedLogicalTarget != null)
+            throw new IllegalStateException("an economy advance is already in progress");
+        requestedDayCloseTarget = "DAY_CLOSE_BLOCKED".equals(run.status())
+                ? run.application().now() : run.application().nextDayBoundary();
+        if (requestedDayCloseTarget.isAfter(run.application().targetAt()))
+            requestedDayCloseTarget = run.application().targetAt();
+        requestedLogicalTarget = requestedDayCloseTarget;
+        ManagedEconomyRun.AdvanceResult result = "DAY_CLOSE_BLOCKED".equals(run.status())
+                ? run.retryDayClose() : run.advanceToDayBoundary(requestedDayCloseTarget);
+        afterAdvance(result, requestedDayCloseTarget, false);
+        return result;
+    }
+
     public static synchronized server.agents.economy.persistence.EconomyEvidencePipeline.Result audit() {
         requireRun(); return run.audit();
     }
@@ -277,10 +303,12 @@ public final class CommerceScenarioRuntime {
     }
 
     public static synchronized Status status() {
-        if (run == null) return new Status(false, null, null, null, null, null, 0, 0);
+        if (run == null) return new Status(false, null, null, null, null, null, 0, 0, 0, 0, 0);
+        var logical = run.application().logicalRunTime();
         return new Status(true, run.application().runId(), run.application().now(),
                 run.application().targetAt(), run.status(), clockMode,
-                run.application().agents().size(), directory.size());
+                run.application().agents().size(), directory.size(), logical.day(),
+                logical.hour(), logical.minute());
     }
 
     /** Read-only live projection used by the detached Commerce observation harness. */
@@ -358,7 +386,9 @@ public final class CommerceScenarioRuntime {
             }
 
             for (int action = 0; action < AUTO_ADVANCE_BATCH_ACTIONS; action++) {
-                ManagedEconomyRun.AdvanceResult result = run.advanceTo(target);
+                ManagedEconomyRun.AdvanceResult result = requestedDayCloseTarget != null
+                        ? run.advanceToDayBoundary(requestedDayCloseTarget)
+                        : run.advanceTo(target);
                 afterAdvance(result, target, realtime);
                 if (!result.advance().waitingExternalAction() || run == null
                         || (!realtime && requestedLogicalTarget == null)) return;
@@ -401,6 +431,7 @@ public final class CommerceScenarioRuntime {
             if (realtime) scheduleAutoAdvance();
             else {
                 requestedLogicalTarget = null;
+                requestedDayCloseTarget = null;
                 cancelScheduledTask();
             }
         }
@@ -427,6 +458,7 @@ public final class CommerceScenarioRuntime {
     private static void cancelAutoAdvance() {
         cancelScheduledTask();
         requestedLogicalTarget = null;
+        requestedDayCloseTarget = null;
         physicalBatchLogicalTime = null;
         realtimeClock = null;
     }
@@ -521,7 +553,8 @@ public final class CommerceScenarioRuntime {
 
     public record Status(boolean active, UUID runId, java.time.Instant logicalTime,
                          java.time.Instant targetLogicalTime, String state, String clockMode,
-                         int admittedAgents, int reservedCharacters) { }
+                         int admittedAgents, int reservedCharacters, long logicalDay,
+                         int logicalHour, int logicalMinute) { }
     public record ObservedAgent(String logicalAgentId, String characterName, String jobFamily,
                                 String state, int level, int mapId, int x, int y,
                                 boolean openStall, boolean activeTrade, String sessionId) { }

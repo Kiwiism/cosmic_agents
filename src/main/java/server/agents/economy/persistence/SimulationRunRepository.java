@@ -17,8 +17,13 @@ public interface SimulationRunRepository {
     void saveCheckpoint(SimulationRunEngine.RunCheckpoint checkpoint);
     Optional<SimulationRunEngine.RunCheckpoint> latestCheckpoint(UUID runId);
     default Optional<RunRecord> find(UUID runId) { return Optional.empty(); }
+    default void saveDayClose(DayCloseRecord close) { }
 
     record RunRecord(UUID runId, String status, Instant logicalStartedAt,
                      Instant logicalCurrentAt, Instant targetLogicalAt,
                      String configHash, String catalogVersion, String failureReason) { }
+
+    record DayCloseRecord(UUID runId, int dayIndex, Instant dayStartedAt, Instant dayClosedAt,
+                          String checkpointHash, int relayed, int relayFailures, int ingested,
+                          int quarantined, boolean auditClean, int violationCount) { }
 }

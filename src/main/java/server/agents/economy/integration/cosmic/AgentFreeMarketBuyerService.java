@@ -27,12 +27,21 @@ public final class AgentFreeMarketBuyerService {
     }
 
     public List<ObservedStall> observeNearby(Character buyer) {
+        return observeNearby(buyer, ignored -> true);
+    }
+
+    public List<ObservedStall> observe(Character buyer, int shopObjectId) {
+        return observeNearby(buyer, objectId -> objectId == shopObjectId);
+    }
+
+    private List<ObservedStall> observeNearby(Character buyer, IntPredicate objectFilter) {
         requireFreeMarketRoom(buyer);
         long maximumDistance = (long) interactionRangePixels * interactionRangePixels;
         List<ObservedStall> result = new ArrayList<>();
         for (MapObject object : buyer.getMap().getMapObjectsInRange(buyer.getPosition(), maximumDistance,
                 List.of(MapObjectType.SHOP))) {
-            if (object instanceof PlayerShop shop && shop.isOpen() && !shop.isOwner(buyer)) {
+            if (object instanceof PlayerShop shop && objectFilter.test(shop.getObjectId())
+                    && shop.isOpen() && !shop.isOwner(buyer)) {
                 result.add(new ObservedStall(shop.getObjectId(), shop.getOwnerId(), shop.getOwnerName(),
                         buyer.getMapId(), shop.getPosition().x,
                         shop.getEscrowId() == null ? "legacy:" + shop.getObjectId() : shop.getEscrowId(),

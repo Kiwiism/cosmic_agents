@@ -27,8 +27,19 @@ public final class CosmicMarketObservationService {
 
     public List<ObservedOffer> inspectNearby(Character agent, String logicalAgentId,
                                              Instant logicalAt, PrivateMarketKnowledge knowledge) {
+        return inspect(agent, logicalAgentId, logicalAt, knowledge, buyer.observeNearby(agent));
+    }
+
+    public List<ObservedOffer> inspectStall(Character agent, String logicalAgentId, int shopObjectId,
+                                            Instant logicalAt, PrivateMarketKnowledge knowledge) {
+        return inspect(agent, logicalAgentId, logicalAt, knowledge, buyer.observe(agent, shopObjectId));
+    }
+
+    private List<ObservedOffer> inspect(Character agent, String logicalAgentId,
+                                        Instant logicalAt, PrivateMarketKnowledge knowledge,
+                                        List<AgentFreeMarketBuyerService.ObservedStall> stalls) {
         List<ObservedOffer> result = new ArrayList<>();
-        for (AgentFreeMarketBuyerService.ObservedStall stall : buyer.observeNearby(agent)) {
+        for (AgentFreeMarketBuyerService.ObservedStall stall : stalls) {
             for (PlayerShop.ListingView listing : stall.listings()) {
                 String listingId = stall.listingNamespace() + ":" + listing.slot();
                 long unitPrice = ((long) listing.bundlePrice() + listing.perBundle() - 1)

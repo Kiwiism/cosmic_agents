@@ -119,6 +119,19 @@ class SimulationRunEngineTest {
     }
 
     @Test
+    void logicalStartIsAlwaysDayOneHourZeroRegardlessOfCivilTime() {
+        LoadedEconomyConfig loaded = new EconomyConfigLoader().load();
+        loaded.config().clock.logicalStart = "2026-01-01T15:30:00Z";
+        var catalog = new CatalogBundleLoader().load(loaded.config().catalog);
+        SimulationRunEngine engine = new SimulationRunEngine(UUID.randomUUID(), loaded, catalog, ignored -> { });
+
+        assertEquals(Instant.parse("2026-01-02T15:30:00Z"), engine.nextDayBoundary());
+        assertEquals(new SimulationRunEngine.LogicalRunTime(1, 0, 0), engine.logicalRunTime());
+        engine.advanceTo(Instant.parse("2026-01-02T03:45:00Z"));
+        assertEquals(new SimulationRunEngine.LogicalRunTime(1, 12, 15), engine.logicalRunTime());
+    }
+
+    @Test
     void schedulerScalesToOneThousandProfilesWithoutWallClockTicks() {
         LoadedEconomyConfig loaded = new EconomyConfigLoader().load();
         loaded.config().population.maximumAgents = 1_000;

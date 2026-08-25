@@ -13,7 +13,7 @@ This ledger follows the attached master goal without redefining completion aroun
 | 6 | Needs, quests, complements, valuation, beliefs | Baseline complete: heterogeneous logical quest acceptance, exact Cosmic start/turn-in, kill/item objectives, reward selection, accepted-demand waves, and owned scroll projects |
 | 7 | Physical FM seller lifecycle | Baseline code complete: physical room, spot, escrow, one-stall, evidence-driven repricing and closure |
 | 8 | Physical FM buyer lifecycle | Baseline code complete: walking, private observations, exact listing identity, real purchases |
-| 9 | Public chat and direct negotiation | Baseline code complete: public transcript, meso and reciprocal item barter, real Trade settlement |
+| 9 | Public chat and direct negotiation | Baseline code complete: public transcript, structured stall offers, real-inventory open-chat sales, human/agent meso offers, shared inventory reservation, and real Trade settlement |
 | 10 | Replaceable ambient behavior | Baseline code complete: owned-chair and constrained fidget policy seam |
 | 11 | Rebuildable data projections and query contracts | Baseline code complete: item/meso/agent read models, explanation query, invariant audit |
 | 12 | Experiments, human readiness, soak and completion audit | PostgreSQL baseline plus additive V022 per-Agent Commerce checkpoints, strict preflight, live 50-agent FM traversal, calibrated farms, NPC commerce, real attributed PlayerShop opening, retained-failure replay, and interactive report export verified; detached 10-to-100 observation harness is locally complete, while its 30-day sale/negotiation soak and counterfactual matrix remain pending |
@@ -22,13 +22,14 @@ This ledger follows the attached master goal without redefining completion aroun
 
 The authoritative v83 WZ identifies `5140000` as the 16-listing Regular Store Permit. The
 `503xxxx` family is Hired Merchant inventory and is rejected by configuration validation. The
-PlayerShop permit is a Cash Shop asset. The default scenario uses
-`REQUIRE_OWNED_REAL_ITEM`; therefore an imported character without a real permit cannot open a
-stall. The strict YAML rejects administrative endowment. A valid stall experiment must provision
-legitimately held permits before the run; the engine never silently grants them.
+default scenario uses `GRANT_RANDOM_REAL_PERMIT_ON_ENTRY`: if an entrant owns none of the six
+WZ-verified PlayerShop permits, the FM grants one through a Cosmic transaction. The analytical lot
+source and event kind are `VENUE_SUBSIDY`, so this deliberate participation subsidy cannot be
+mistaken for farming, NPC stock, or organic wealth. Administrative endowment remains forbidden;
+`REQUIRE_OWNED_REAL_ITEM` remains available for experiments that require pre-owned permits.
 
 Before mutation, `!economy preflight` reproduces the seeded scenario roster and verifies maximum
-population capacity, exact real job-family binding, permits reserved for willing sellers, initial
+population capacity, exact real job-family binding, the selected permit policy, initial
 channel/FM presence, separate PostgreSQL compatibility, and current-level activity calibration.
 Start uses the same deterministic binding. A bound character whose real job family differs from its
 profile is rejected again at admission.
@@ -40,6 +41,8 @@ item with current code, tests, migrations, configuration, and runtime evidence.
 
 - Complete a 30-day 50-to-200 live-agent soak through shop sales/closures and a mid-stall restart,
   then run paired multi-seed scenarios.
+- Complete the open-chat physical acceptance matrix: human below-reserve rejection, human settlement,
+  agent settlement, disconnect during Trade, and restart while an offer is open.
 - Resolve every partial and pending gate in `RELEASE_AUDIT.md`.
 
 ## Stable-ownership implementation sequence (phases 1-10)

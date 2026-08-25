@@ -20,7 +20,11 @@ public final class AgentEconomyRuntime {
     private AgentEconomyRuntime() { }
 
     public static void install(Gateway value) { gateway = Objects.requireNonNull(value); }
-    public static void clear() { gateway = Gateway.disabled(); }
+    public static void clear() {
+        Gateway previous = gateway;
+        gateway = Gateway.disabled();
+        previous.close();
+    }
     public static boolean available() { return gateway.available(); }
 
     /** Installed per-Agent Commerce admission port; absent outside a managed economy run. */
@@ -55,6 +59,16 @@ public final class AgentEconomyRuntime {
         return gateway.reviewInventory(agent, agentId, proposals, at);
     }
 
+    /** Requests the temporary FM-entrance storage service; callers retry while movement is pending. */
+    public static FmServiceAccess requestStorage(Character agent) {
+        return gateway.requestStorage(agent);
+    }
+
+    /** Gives an active Commerce sale first refusal over an incoming player Trade invitation. */
+    public static boolean handleManualTrade(Character agent) { return gateway.handleManualTrade(agent); }
+
+    public static List<OpenChatOffer> openChatOffers() { return gateway.openChatOffers(); }
+
     public interface Gateway {
         boolean available();
         default Optional<EconomySessionPort> sessionPort() { return Optional.empty(); }
@@ -69,6 +83,12 @@ public final class AgentEconomyRuntime {
                               Instant at, String reason);
         InventoryReview reviewInventory(Character agent, String agentId,
                                         List<LegacyDispositionProposal> proposals, Instant at);
+        default FmServiceAccess requestStorage(Character agent) {
+            return new FmServiceAccess(FmServiceAccess.Status.UNAVAILABLE, "NOT_CONFIGURED");
+        }
+        default boolean handleManualTrade(Character agent) { return false; }
+        default List<OpenChatOffer> openChatOffers() { return List.of(); }
+        default void close() { }
 
         static Gateway disabled() {
             return new Gateway() {
@@ -95,4 +115,16 @@ public final class AgentEconomyRuntime {
             };
         }
     }
+
+    public record FmServiceAccess(Status status, String reason) {
+        public FmServiceAccess {
+            Objects.requireNonNull(status);
+            reason = reason == null ? "" : reason;
+        }
+        public enum Status { MOVING_TO_ENTRANCE, OPENED, DENIED, UNAVAILABLE }
+    }
+
+    public record OpenChatOffer(String offerId, String sellerAgentId, int sellerCharacterId,
+                                int itemId, int quantity, long askMesos, long reserveMesos,
+                                int mapId, Instant expiresAt, int advertisements, String state) { }
 }

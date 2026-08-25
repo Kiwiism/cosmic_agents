@@ -44,7 +44,8 @@ class RuleExactFarmResolverTest {
                         Set.of(ItemCategory.EQUIPMENT), Map.of()));
             }
             @Override public List<GlobalDropFact> globalDrops(int mapId) {
-                return List.of(new GlobalDropFact(1002001, 1_000_000, 1, 1, 1, 0));
+                return List.of(new GlobalDropFact(1002001, 1_000_000, 1, 1, 1, 0),
+                        new GlobalDropFact(1002002, 1_000_000, 1, 1, 1, 99));
             }
             @Override public Optional<EquipmentRollFact> rollEquipment(
                     int itemId, java.util.function.DoubleSupplier random) {
@@ -60,6 +61,7 @@ class RuleExactFarmResolverTest {
 
         assertEquals(3, outcome.itemDrops().size());
         assertEquals(2, outcome.itemDrops().stream().filter(drop -> drop.itemId() == 1002000).count());
+        assertTrue(outcome.itemDrops().stream().noneMatch(drop -> drop.itemId() == 1002002));
         assertTrue(outcome.itemDrops().stream().allMatch(drop -> drop.quantity() == 1));
     }
 

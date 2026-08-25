@@ -9,6 +9,7 @@ import server.agents.capabilities.trade.AgentTradeLifecycleRuntimeService;
 import server.agents.capabilities.trade.AgentTradeTickRuntimeService;
 import server.agents.capabilities.trade.AgentTradeTransferAvailabilityRuntimeService;
 import server.agents.integration.AgentInventoryRuntimeAdapters;
+import server.agents.integration.AgentEconomyRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentRelationshipRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -28,6 +29,7 @@ public final class AgentInventoryTickRuntime {
     }
 
     public static void tickManualTrade(AgentRuntimeEntry entry, Character agent) {
+        if (AgentEconomyRuntime.handleManualTrade(agent)) return;
         AgentManualTradeRuntimeService.tickManualTrade(
                 entry,
                 agent,

@@ -293,6 +293,12 @@ public final class JdbcCosmicEconomicEventIngestor {
         String buyer = null, seller = null;
         if (receipt.operationKind().equals("PLAYER_SHOP_SALE")) {
             buyer = event.actorIds().get(0); seller = event.actorIds().get(1);
+        } else if (receipt.operationKind().equals("PLAYER_TRADE")) {
+            DirectTradeProjection projection = directTradeProjection(event);
+            if (projection != null) {
+                buyer = projection.buyer(); seller = projection.seller();
+                itemId = projection.itemId(); quantity = projection.quantity(); gross = projection.grossMesos();
+            }
         } else if (receipt.operationKind().equals("SHOP_BUY") || receipt.operationKind().equals("SHOP_RECHARGE")) {
             buyer = event.actorIds().getFirst();
         } else if (receipt.operationKind().equals("SHOP_SELL")) seller = event.actorIds().getFirst();
@@ -311,6 +317,38 @@ public final class JdbcCosmicEconomicEventIngestor {
             s.executeUpdate();
         }
     }
+
+    /** Prices only one-way, one-item-kind trades. Barter and mixed baskets intentionally remain unpriced. */
+    private static DirectTradeProjection directTradeProjection(EconomicEvent event) {
+        Map<String, Long> receivedItems = new LinkedHashMap<>();
+        Map<String, Long> sentItems = new LinkedHashMap<>();
+        Integer itemId = null;
+        for (LedgerPosting posting : event.postings()) {
+            if (posting.asset().type() != AssetType.ITEM
+                    || !(posting.account().type().equals("AGENT") || posting.account().type().equals("HUMAN")))
+                continue;
+            int current = Integer.parseInt(posting.asset().identifier());
+            if (itemId != null && itemId != current) return null;
+            itemId = current;
+            Map<String, Long> side = posting.quantity() > 0 ? receivedItems : sentItems;
+            side.merge(posting.account().ownerId(), Math.abs(posting.quantity()), Math::addExact);
+        }
+        if (itemId == null || receivedItems.size() != 1 || sentItems.size() != 1) return null;
+        String buyer = receivedItems.keySet().iterator().next();
+        String seller = sentItems.keySet().iterator().next();
+        long received = receivedItems.get(buyer);
+        if (received <= 0 || received != sentItems.get(seller)) return null;
+        long gross = 0;
+        for (LedgerPosting posting : event.postings()) {
+            if (posting.asset().type() == AssetType.MESO && posting.account().ownerId().equals(buyer)
+                    && posting.quantity() < 0) gross = Math.addExact(gross, -posting.quantity());
+        }
+        if (gross <= 0) return null;
+        return new DirectTradeProjection(buyer, seller, itemId, Math.toIntExact(received), gross);
+    }
+
+    private record DirectTradeProjection(String buyer, String seller, int itemId,
+                                         int quantity, long grossMesos) { }
 
     @SuppressWarnings("unchecked")
     private static void materializeMarketLifecycle(Connection connection, CosmicOutboxRecord receipt,

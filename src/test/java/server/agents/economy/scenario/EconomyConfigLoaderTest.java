@@ -19,11 +19,14 @@ class EconomyConfigLoaderTest {
         assertEquals("victoria-fm-baseline", loaded.config().scenario.id);
         assertEquals(50, loaded.config().population.initialAgents);
         assertEquals(200, loaded.config().population.maximumAgents);
-        assertEquals("REMOTE_FROM_FREE_MARKET", loaded.config().npcCommerce.accessMode);
+        assertEquals("REMOTE_FROM_FREE_MARKET_ENTRANCE", loaded.config().npcCommerce.accessMode);
         assertEquals("cosmic_economy", loaded.config().persistence.database);
         assertEquals(64, loaded.sha256().length());
         assertTrue(loaded.normalizedJson().contains("\"schemaVersion\":1"));
         assertTrue(loaded.normalizedJson().contains("\"shopPermitItemId\":5140000"));
+        assertEquals(6, loaded.config().bootstrap.shopPermitItemIds.size());
+        assertEquals("PT0.5S", loaded.config().market.stallInspectionDurationPerListing);
+        assertTrue(!loaded.config().market.openChatSelling.enabled);
     }
 
     @Test
@@ -37,6 +40,8 @@ class EconomyConfigLoaderTest {
         assertEquals(910000001, loaded.config().world.firstFreeMarketRoomMapId);
         assertEquals(910000001, loaded.config().world.lastFreeMarketRoomMapId);
         assertEquals("REALTIME", loaded.config().clock.mode);
+        assertEquals("DISABLED", loaded.config().activity.executionMode);
+        assertTrue(loaded.config().market.openChatSelling.enabled);
     }
 
     @Test
@@ -51,7 +56,9 @@ class EconomyConfigLoaderTest {
         assertEquals(100, loaded.config().population.maximumAgents);
         assertEquals(10, loaded.config().population.growth.amount);
         assertEquals(910000022, loaded.config().world.lastFreeMarketRoomMapId);
-        assertTrue(loaded.config().ambient.enabled);
+        assertTrue(!loaded.config().ambient.enabled);
+        assertTrue(loaded.config().quests.enabled);
+        assertTrue(loaded.config().market.openChatSelling.enabled);
     }
 
     @Test
@@ -100,7 +107,7 @@ class EconomyConfigLoaderTest {
         String source = javaResource("economy-engine.yaml")
                 .replace("holdingsMode: IMPORT_EXISTING_COSMIC_CHARACTERS",
                         "holdingsMode: EXPLICIT_BOOTSTRAP_ENDOWMENT")
-                .replace("shopPermitPolicy: REQUIRE_OWNED_REAL_ITEM",
+                .replace("shopPermitPolicy: GRANT_RANDOM_REAL_PERMIT_ON_ENTRY",
                         "shopPermitPolicy: EXPLICIT_BOOTSTRAP_ENDOWMENT")
                 .replace("allowAdministratorEndowment: false", "allowAdministratorEndowment: true");
 
@@ -122,6 +129,20 @@ class EconomyConfigLoaderTest {
     }
 
     @Test
+    void rejectsUnverifiedPermitPoolAndUnknownInteractionProvider() {
+        String invalidPermit = javaResource("economy-engine.yaml")
+                .replace("5140006]", "5030000]");
+        String invalidProvider = javaResource("economy-engine.yaml")
+                .replace("interactionBehaviorProvider: SOLOMAPLING_INSPIRED",
+                        "interactionBehaviorProvider: PROCEDURAL_ORACLE");
+
+        assertTrue(assertThrows(EconomyConfigException.class,
+                () -> loader.load(invalidPermit)).getMessage().contains("PlayerShop permits"));
+        assertTrue(assertThrows(EconomyConfigException.class,
+                () -> loader.load(invalidProvider)).getMessage().contains("interactionBehaviorProvider"));
+    }
+
+    @Test
     void rejectsRepricingWithoutARealObservationWindow() {
         String source = javaResource("economy-engine.yaml")
                 .replace("maximumReprices: 0", "maximumReprices: 1")
@@ -136,7 +157,7 @@ class EconomyConfigLoaderTest {
     @Test
     void rejectsAdvertisedButUnimplementedNpcTravelMode() {
         String source = javaResource("economy-engine.yaml")
-                .replace("accessMode: REMOTE_FROM_FREE_MARKET", "accessMode: PHYSICAL_TRAVEL");
+                .replace("accessMode: REMOTE_FROM_FREE_MARKET_ENTRANCE", "accessMode: PHYSICAL_TRAVEL");
 
         EconomyConfigException failure = assertThrows(
                 EconomyConfigException.class, () -> loader.load(source));
@@ -199,6 +220,24 @@ class EconomyConfigLoaderTest {
                 EconomyConfigException.class, () -> loader.load(source));
 
         assertTrue(failure.getMessage().contains("Cosmic outcome rates"));
+    }
+
+    @Test
+    void enabledOpenChatRequiresStructuredIntentsAndConfiguredFmMaps() {
+        String withoutIntents = javaResource("economy-engine.yaml")
+                .replaceFirst("(?s)(openChatSelling:.*?enabled:) false", "$1 true")
+                .replace("implicitEconomicIntentsEnabled: true", "implicitEconomicIntentsEnabled: false");
+        String outsideConfiguredRooms = javaResource("config/economy/economy-engine-basic.yaml")
+                .replace("allowedMaps: [910000000, 910000001]",
+                        "allowedMaps: [910000000, 910000002]");
+
+        EconomyConfigException withoutIntentFailure = assertThrows(EconomyConfigException.class,
+                () -> loader.load(withoutIntents));
+        assertTrue(withoutIntentFailure.getMessage().contains("structured implicit economic intents"),
+                withoutIntentFailure.getMessage());
+        EconomyConfigException roomFailure = assertThrows(EconomyConfigException.class,
+                () -> loader.load(outsideConfiguredRooms));
+        assertTrue(roomFailure.getMessage().contains("configured Free Market"), roomFailure.getMessage());
     }
 
     private static String javaResource(String path) {

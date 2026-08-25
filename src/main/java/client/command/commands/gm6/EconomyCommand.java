@@ -51,8 +51,19 @@ public final class EconomyCommand extends Command {
                         ? "; waiting=" + result.advance().waitReason() : ""));
                 return;
             }
+            if ("advance-day".equalsIgnoreCase(params[0]) && params.length == 1) {
+                var result = CommerceScenarioRuntime.advanceDay();
+                client.getPlayer().yellowMessage("Economy day boundary=" + result.advance().reachedAt()
+                        + "; events=" + result.advance().processedEvents() + "; status=" + result.status()
+                        + (result.advance().waitingExternalAction()
+                        ? "; waiting=" + result.advance().waitReason() : ""));
+                return;
+            }
             if ("audit".equalsIgnoreCase(params[0])) {
                 evidence(client, "Audit", CommerceScenarioRuntime.audit()); return;
+            }
+            if ("openchat".equalsIgnoreCase(params[0])) {
+                openChat(client); return;
             }
             if ("complete".equalsIgnoreCase(params[0])) {
                 evidence(client, "Completion", CommerceScenarioRuntime.complete()); return;
@@ -72,7 +83,9 @@ public final class EconomyCommand extends Command {
             }
             client.getPlayer().yellowMessage("Usage: !economy preflight [config-path] | start [run-uuid config-path] "
                     + "| resume <run-uuid> "
-                    + "| advance <non-negative-days> | audit | complete | fail <reason> | status | stop "
+                    + "| advance-day | advance <non-negative-24h-periods> | audit | complete "
+                    + "| fail <reason> | status | stop "
+                    + "| openchat "
                     + "| experiment plan <manifest-path> | experiment next <experiment-id> "
                     + "| calibration start|stop|status <agent-character-id> [died] "
                     + "| calibration start-all|stop-all <map-id> [died]");
@@ -95,6 +108,8 @@ public final class EconomyCommand extends Command {
     private static void show(Client client, CommerceScenarioRuntime.Status status) {
         client.getPlayer().yellowMessage(status.active()
                 ? "Economy run=" + status.runId() + " logical=" + status.logicalTime()
+                + " day=" + status.logicalDay() + " hour=" + status.logicalHour()
+                + ":" + String.format("%02d", status.logicalMinute())
                 + " target=" + status.targetLogicalTime() + " state=" + status.state()
                 + " mode=" + status.clockMode()
                 + " admitted=" + status.admittedAgents() + "/" + status.reservedCharacters()
@@ -108,6 +123,17 @@ public final class EconomyCommand extends Command {
                 + " quarantined=" + result.ingestion().quarantined()
                 + " invariantClean=" + result.audit().clean()
                 + " violations=" + result.audit().violations().size());
+    }
+
+    private static void openChat(Client client) {
+        var offers = server.agents.integration.AgentEconomyRuntime.openChatOffers();
+        client.getPlayer().yellowMessage("Open-chat offers active=" + offers.size());
+        for (var offer : offers) client.getPlayer().yellowMessage(" - " + offer.offerId()
+                + " seller=" + offer.sellerAgentId() + '/' + offer.sellerCharacterId()
+                + " item=" + offer.itemId() + "x" + offer.quantity()
+                + " ask=" + offer.askMesos() + " reserve=" + offer.reserveMesos()
+                + " map=" + offer.mapId() + " ads=" + offer.advertisements()
+                + " state=" + offer.state() + " expires=" + offer.expiresAt());
     }
 
     private static void experiment(Client client, String[] params) {

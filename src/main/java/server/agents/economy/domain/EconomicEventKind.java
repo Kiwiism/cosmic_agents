@@ -16,5 +16,6 @@ public enum EconomicEventKind {
     QUEST_TURN_IN,
     SCROLL_APPLIED,
     ITEM_DESTROYED,
+    VENUE_SUBSIDY,
     CHECKPOINT
 }

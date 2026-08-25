@@ -59,6 +59,7 @@ public final class CosmicOutboxEventTranslator {
             case "SCROLL_APPLY" -> scrollApply(builder, primary, primaryDelta);
             case "QUEST_START" -> questLifecycle(builder, primary, primaryDelta, "START");
             case "QUEST_TURN_IN" -> questLifecycle(builder, primary, primaryDelta, "TURN_IN");
+            case "VENUE_SUBSIDY" -> venueSubsidy(builder, primary, primaryDelta);
             default -> throw new EvidenceMismatchException("unsupported operation " + receipt.operationKind());
         }
         return builder.build();
@@ -92,6 +93,26 @@ public final class CosmicOutboxEventTranslator {
         if (delta.mesoDelta() > 0) builder.transfer(LedgerAccount.source("NPC_BUYBACK:" + npc),
                 participant.account(), AssetKey.MESO, delta.mesoDelta(), "");
         builder.kind = EconomicEventKind.NPC_SALE;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void venueSubsidy(Builder builder, Participant participant, ParticipantDelta delta) {
+        require(delta.mesoDelta() == 0, "venue subsidy cannot change mesos");
+        Object raw = builder.evidence.get("venueSubsidy");
+        require(raw instanceof Map<?, ?>, "venue subsidy evidence is missing");
+        Map<String, Object> subsidy = (Map<String, Object>) raw;
+        int itemId = number(subsidy, "itemId");
+        require("FREE_MARKET_ENTRY".equals(Objects.toString(subsidy.get("venue"), "")),
+                "venue subsidy must identify the Free Market entry source");
+        List<ItemDelta> gained = positive(delta.itemDeltas());
+        require(gained.size() == 1 && gained.getFirst().itemId() == itemId
+                        && gained.getFirst().quantityDelta() == 1,
+                "venue subsidy must introduce exactly one declared permit");
+        require(noNegativeItems(delta), "venue subsidy removed an item");
+        for (CreatedLot lot : builder.createLots("VENUE_SUBSIDY", "FREE_MARKET_ENTRY", gained.getFirst()))
+            builder.transfer(LedgerAccount.source("VENUE_SUBSIDY:FREE_MARKET_ENTRY"), participant.account(),
+                    AssetKey.item(itemId), lot.quantity(), lot.lotId());
+        builder.kind = EconomicEventKind.VENUE_SUBSIDY;
     }
 
     private void playerShopList(Builder builder, Participant seller, ParticipantDelta delta) {

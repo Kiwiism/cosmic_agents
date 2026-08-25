@@ -54,6 +54,14 @@ public final class SimulationRunEngine {
         return advanceTo(clock.now().plus(Duration.ofDays(days)));
     }
 
+    /** The next 24-hour boundary relative to logicalStart (which is Day 1, Hour 0). */
+    public Instant nextDayBoundary() {
+        Instant start = logicalStart();
+        long elapsedSeconds = Duration.between(start, clock.now()).getSeconds();
+        long nextDay = Math.addExact(Math.floorDiv(elapsedSeconds, Duration.ofDays(1).getSeconds()), 1L);
+        return start.plus(Duration.ofDays(nextDay));
+    }
+
     public static SimulationRunEngine restore(RunCheckpoint checkpoint,
                                               LoadedEconomyConfig loadedConfig,
                                               CatalogBundleDescriptor catalog,
@@ -75,12 +83,21 @@ public final class SimulationRunEngine {
     }
 
     public AdvanceSummary advanceTo(Instant target) {
+        return advanceTo(target, true);
+    }
+
+    /** Day-close path: boundary events belong to the new day and remain queued. */
+    public AdvanceSummary advanceToExclusive(Instant target) {
+        return advanceTo(target, false);
+    }
+
+    private AdvanceSummary advanceTo(Instant target, boolean inclusive) {
         pauseRequested = false; pauseReason = null;
         int processed = 0;
         int batches = 0;
         boolean limited;
         do {
-            SimulationKernel.AdvanceResult result = kernel.advanceUntil(target, event -> {
+            java.util.function.Consumer<ScheduledEconomyEvent> handler = event -> {
                 boolean checkpoint = CHECKPOINT.equals(event.kind());
                 if (checkpoint) {
                     lastCheckpoint = event.dueAt();
@@ -88,7 +105,10 @@ public final class SimulationRunEngine {
                 }
                 eventHandler.accept(event);
                 if (checkpoint) checkpointHook.run();
-            }, () -> pauseRequested);
+            };
+            SimulationKernel.AdvanceResult result = inclusive
+                    ? kernel.advanceUntil(target, handler, () -> pauseRequested)
+                    : kernel.advanceUntilExclusive(target, handler, () -> pauseRequested);
             processed = Math.addExact(processed, result.processedEvents());
             batches++;
             limited = result.batchLimitReached();
@@ -104,8 +124,15 @@ public final class SimulationRunEngine {
 
     public Instant now() { return clock.now(); }
     public Instant targetAt() {
-        return Instant.parse(loadedConfig.config().clock.logicalStart)
-                .plus(Duration.ofDays(loadedConfig.config().scenario.targetLogicalDays));
+        return logicalStart().plus(Duration.ofDays(loadedConfig.config().scenario.targetLogicalDays));
+    }
+    public Instant logicalStart() { return Instant.parse(loadedConfig.config().clock.logicalStart); }
+    public LogicalRunTime logicalRunTime() {
+        long seconds = Duration.between(logicalStart(), now()).getSeconds();
+        long dayOffset = Math.floorDiv(seconds, Duration.ofDays(1).getSeconds());
+        long withinDay = Math.floorMod(seconds, Duration.ofDays(1).getSeconds());
+        return new LogicalRunTime(Math.addExact(dayOffset, 1), (int) (withinDay / 3_600),
+                (int) ((withinDay % 3_600) / 60));
     }
     public UUID runId() { return runId; }
     public Instant lastCheckpoint() { return lastCheckpoint; }
@@ -161,6 +188,7 @@ public final class SimulationRunEngine {
             this(reachedAt, processedEvents, batches, queuedEvents, false, null);
         }
     }
+    public record LogicalRunTime(long day, int hour, int minute) { }
     public record RunCheckpoint(UUID runId, Instant logicalTime, String configHash,
                                 String catalogVersion, java.util.List<ScheduledEconomyEvent> queue,
                                 Map<String, Long> randomStates, Map<String, Object> domainState) { }

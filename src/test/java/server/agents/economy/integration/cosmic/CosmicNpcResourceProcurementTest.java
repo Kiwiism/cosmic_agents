@@ -28,7 +28,7 @@ class CosmicNpcResourceProcurementTest {
                 new CosmicAgentNeedReader.ResourceProcurement(1001100, 2070000, 400)));
         when(commerce.recharge(agent, 1001100, (short) 3)).thenReturn(
                 new RemoteNpcCommerceService.Receipt(true, "SUCCESS", 1001100, 100000000,
-                        -500, "REMOTE_FROM_FREE_MARKET"));
+                        -500, "REMOTE_FROM_FREE_MARKET_ENTRANCE"));
         CosmicNpcResourceProcurement procurement = new CosmicNpcResourceProcurement(
                 needs, commerce, (character, itemId) -> 1000);
 

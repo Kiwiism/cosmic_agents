@@ -5,6 +5,7 @@ param(
     [string] $DropCatalogPath = "tmp/game-catalog/generated_drop_catalog.json",
     [string] $TopologyCatalogPath = "tmp/agent-llm-catalog/generated_navigation_topology_catalog.json",
     [string] $QuestChainCatalogPath = "tmp/agent-llm-catalog/generated_quest_chain_policy_catalog.json",
+    [string] $MapleIslandMvpCatalogPath = "tmp/agent-llm-catalog/generated_maple_island_mvp_catalog.json",
     [string] $OutputDirectory = "src/main/resources/agents/catalogs/adaptive",
     [int] $MaximumCandidatesPerObjective = 10,
     [int] $MaximumCombinedCandidates = 10
@@ -27,7 +28,8 @@ function Source-Hash {
 
 function Test-VictoriaMapId {
     param([int] $MapId)
-    ($MapId -ge 100000000 -and $MapId -lt 108000000) `
+    $mapleIslandMapIds.Contains($MapId) `
+        -or ($MapId -ge 100000000 -and $MapId -lt 108000000) `
         -or ($MapId -ge 110000000 -and $MapId -lt 111000000) `
         -or ($MapId -ge 120000000 -and $MapId -lt 121000000)
 }
@@ -260,6 +262,11 @@ $maps = Read-Json $MapCatalogPath
 $drops = Read-Json $DropCatalogPath
 $topologies = Read-Json $TopologyCatalogPath
 $questChains = Read-Json $QuestChainCatalogPath
+$mapleIslandMvp = Read-Json $MapleIslandMvpCatalogPath
+$mapleIslandMapIds = [System.Collections.Generic.HashSet[int]]::new()
+foreach ($mapId in @($mapleIslandMvp.reachableMapIds)) {
+    [void] $mapleIslandMapIds.Add([int] $mapId)
+}
 
 $sourcePaths = [ordered]@{
     generator = (Resolve-Path -LiteralPath $PSCommandPath).Path
@@ -269,6 +276,7 @@ $sourcePaths = [ordered]@{
     drops = (Resolve-Path -LiteralPath $DropCatalogPath).Path
     topology = (Resolve-Path -LiteralPath $TopologyCatalogPath).Path
     questChains = (Resolve-Path -LiteralPath $QuestChainCatalogPath).Path
+    mapleIslandMvp = (Resolve-Path -LiteralPath $MapleIslandMvpCatalogPath).Path
 }
 $sourceHashes = [ordered]@{}
 foreach ($key in $sourcePaths.Keys) {

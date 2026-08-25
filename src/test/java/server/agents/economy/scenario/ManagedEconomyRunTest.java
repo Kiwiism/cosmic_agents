@@ -88,8 +88,104 @@ class ManagedEconomyRunTest {
         assertThrows(IllegalStateException.class, managed::audit);
     }
 
+    @Test
+    void cleanCalendarAdvancePersistsDayCloseManifest() {
+        EconomyRunApplication application = mock(EconomyRunApplication.class);
+        EconomyEvidencePipeline evidence = mock(EconomyEvidencePipeline.class);
+        SimulationRunRepository runs = mock(SimulationRunRepository.class);
+        java.util.UUID runId = java.util.UUID.randomUUID();
+        java.time.Instant start = java.time.Instant.parse("2026-01-01T00:00:00Z");
+        java.time.Instant boundary = java.time.Instant.parse("2026-01-02T00:00:00Z");
+        java.time.Instant horizon = java.time.Instant.parse("2026-01-31T00:00:00Z");
+        when(application.runId()).thenReturn(runId);
+        when(application.now()).thenReturn(boundary);
+        when(application.logicalStart()).thenReturn(start);
+        when(application.nextDayBoundary()).thenReturn(boundary);
+        when(application.targetAt()).thenReturn(horizon);
+        when(application.advanceToDayBoundary(boundary)).thenReturn(
+                new SimulationRunEngine.AdvanceSummary(boundary, 12, 2, 3, false, null));
+        when(application.checkpoint()).thenReturn(new SimulationRunEngine.RunCheckpoint(runId, boundary,
+                "config", "catalog", java.util.List.of(), java.util.Map.of(), java.util.Map.of()));
+        cleanEvidence(evidence);
+        ManagedEconomyRun managed = new ManagedEconomyRun(application, evidence, runs, 100, true);
+
+        ManagedEconomyRun.AdvanceResult result = managed.advanceDay();
+
+        assertEquals("DAY_CLOSED", result.status());
+        assertEquals("DAY_CLOSED", managed.status());
+        verify(runs).saveDayClose(org.mockito.ArgumentMatchers.argThat(close ->
+                close.dayIndex() == 1 && close.dayClosedAt().equals(boundary) && close.auditClean()));
+        verify(runs).updateLogicalTime(runId, boundary, "DAY_CLOSED");
+    }
+
+    @Test
+    void holdingsMismatchBlocksBoundaryAndCanBeRetriedWithoutAdvancingTime() {
+        EconomyRunApplication application = mock(EconomyRunApplication.class);
+        EconomyEvidencePipeline evidence = mock(EconomyEvidencePipeline.class);
+        SimulationRunRepository runs = mock(SimulationRunRepository.class);
+        EconomyDayCloseReconciler reconciler = mock(EconomyDayCloseReconciler.class);
+        java.util.UUID runId = java.util.UUID.randomUUID();
+        java.time.Instant start = java.time.Instant.parse("2026-01-01T00:00:00Z");
+        java.time.Instant boundary = start.plus(java.time.Duration.ofDays(1));
+        when(application.runId()).thenReturn(runId);
+        when(application.now()).thenReturn(boundary);
+        when(application.logicalStart()).thenReturn(start);
+        when(application.nextDayBoundary()).thenReturn(boundary.plus(java.time.Duration.ofDays(1)));
+        when(application.targetAt()).thenReturn(start.plus(java.time.Duration.ofDays(30)));
+        when(application.advanceToDayBoundary(boundary)).thenReturn(
+                new SimulationRunEngine.AdvanceSummary(boundary, 12, 2, 3, false, null));
+        when(application.agents()).thenReturn(java.util.Map.of());
+        when(application.checkpoint()).thenReturn(new SimulationRunEngine.RunCheckpoint(runId, boundary,
+                "config", "catalog", java.util.List.of(), java.util.Map.of(), java.util.Map.of()));
+        cleanEvidence(evidence);
+        when(reconciler.reconcile(runId, java.util.Map.of(), boundary))
+                .thenReturn(new EconomyDayCloseReconciler.Result(false, java.util.List.of("MESO_MISMATCH")))
+                .thenReturn(new EconomyDayCloseReconciler.Result(true, java.util.List.of()));
+        ManagedEconomyRun managed = new ManagedEconomyRun(application, evidence, runs, 100, true,
+                "RUNNING", reconciler);
+
+        ManagedEconomyRun.AdvanceResult blocked = managed.advanceToDayBoundary(boundary);
+        ManagedEconomyRun.AdvanceResult retried = managed.retryDayClose();
+
+        assertEquals("DAY_CLOSE_BLOCKED", blocked.status());
+        assertEquals("DAY_CLOSED", retried.status());
+        verify(application, org.mockito.Mockito.times(1)).advanceToDayBoundary(boundary);
+        verify(runs).updateLogicalTime(runId, boundary, "DAY_CLOSE_BLOCKED");
+        verify(runs).saveDayClose(org.mockito.ArgumentMatchers.argThat(close -> close.dayIndex() == 1));
+    }
+
+    @Test
+    void finalBoundaryIsReconciledAndManifestedBeforeCompletion() {
+        EconomyRunApplication application = mock(EconomyRunApplication.class);
+        EconomyEvidencePipeline evidence = mock(EconomyEvidencePipeline.class);
+        SimulationRunRepository runs = mock(SimulationRunRepository.class);
+        java.util.UUID runId = java.util.UUID.randomUUID();
+        java.time.Instant start = java.time.Instant.parse("2026-01-01T00:00:00Z");
+        java.time.Instant boundary = start.plus(java.time.Duration.ofDays(1));
+        when(application.runId()).thenReturn(runId);
+        when(application.now()).thenReturn(boundary);
+        when(application.logicalStart()).thenReturn(start);
+        when(application.nextDayBoundary()).thenReturn(boundary);
+        when(application.targetAt()).thenReturn(boundary);
+        when(application.advanceToDayBoundary(boundary)).thenReturn(
+                new SimulationRunEngine.AdvanceSummary(boundary, 1, 1, 0, false, null));
+        when(application.checkpoint()).thenReturn(new SimulationRunEngine.RunCheckpoint(runId, boundary,
+                "config", "catalog", java.util.List.of(), java.util.Map.of(), java.util.Map.of()));
+        cleanEvidence(evidence);
+        ManagedEconomyRun managed = new ManagedEconomyRun(application, evidence, runs, 100, true);
+
+        ManagedEconomyRun.AdvanceResult result = managed.advanceDay();
+
+        assertEquals("COMPLETED", result.status());
+        verify(runs).saveDayClose(org.mockito.ArgumentMatchers.any());
+        verify(runs).updateLogicalTime(runId, boundary, "COMPLETED");
+    }
+
     private static EconomyEvidencePipeline.Result cleanEvidence(EconomyEvidencePipeline evidence) {
         EconomyEvidencePipeline.Result result = mock(EconomyEvidencePipeline.Result.class);
+        when(result.relay()).thenReturn(new server.agents.economy.persistence.EconomyOutboxRelay.Result(0, 0));
+        when(result.ingestion()).thenReturn(
+                new server.agents.economy.persistence.JdbcCosmicEconomicEventIngestor.Result(0, 0, null));
         when(result.audit()).thenReturn(new server.agents.economy.persistence.JdbcEconomyInvariantAuditor.Audit(
                 true, java.util.List.of()));
         when(evidence.process(org.mockito.ArgumentMatchers.any(),

@@ -14,12 +14,19 @@ import java.util.Objects;
 
 public final class CosmicMarketSellerGateway {
     private final RemoteNpcCommerceService npc;
-    private final int permitItemId;
+    private final java.util.List<Integer> permitItemIds;
     private final long stallOpenTimeoutMs;
 
     public CosmicMarketSellerGateway(RemoteNpcCommerceService npc, int permitItemId,
                                      long stallOpenTimeoutMs) {
-        this.npc = Objects.requireNonNull(npc); this.permitItemId = permitItemId;
+        this(npc, java.util.List.of(permitItemId), stallOpenTimeoutMs);
+    }
+
+    public CosmicMarketSellerGateway(RemoteNpcCommerceService npc, java.util.List<Integer> permitItemIds,
+                                     long stallOpenTimeoutMs) {
+        this.npc = Objects.requireNonNull(npc);
+        this.permitItemIds = java.util.List.copyOf(permitItemIds);
+        if (this.permitItemIds.isEmpty()) throw new IllegalArgumentException("shop permit pool is required");
         this.stallOpenTimeoutMs = stallOpenTimeoutMs;
     }
 
@@ -31,7 +38,7 @@ public final class CosmicMarketSellerGateway {
     }
 
     public boolean hasPlayerShopPermit(Character agent) {
-        return agent.getInventory(InventoryType.CASH).countById(permitItemId) > 0;
+        return ownedPermit(agent) != 0;
     }
 
     public FreeMarketPhysicalGateway.ActionStatus requestOpen(Character agent, MarketSellerPlan plan) {
@@ -40,6 +47,7 @@ public final class CosmicMarketSellerGateway {
         if (agent.getMapId() != plan.preferredRoomMapId()) return FreeMarketPhysicalGateway.ActionStatus.UNAVAILABLE;
         if (!hasPlayerShopPermit(agent))
             return FreeMarketPhysicalGateway.ActionStatus.UNAVAILABLE;
+        int permitItemId = ownedPermit(agent);
         AgentRuntimeEntry entry = AgentRuntimeRegistry.findByCharacterInstance(agent);
         if (entry == null) return FreeMarketPhysicalGateway.ActionStatus.UNAVAILABLE;
         if (entry.capabilityRuntimeState().hasActiveCapability())
@@ -50,6 +58,11 @@ public final class CosmicMarketSellerGateway {
                 stallOpenTimeoutMs, 2));
         return assigned ? FreeMarketPhysicalGateway.ActionStatus.ASSIGNED
                 : FreeMarketPhysicalGateway.ActionStatus.IN_PROGRESS;
+    }
+
+    private int ownedPermit(Character agent) {
+        return permitItemIds.stream().filter(itemId ->
+                agent.getInventory(InventoryType.CASH).countById(itemId) > 0).findFirst().orElse(0);
     }
 
     public boolean close(Character agent, String reason) {
