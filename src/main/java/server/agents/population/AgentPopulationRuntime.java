@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.integration.AgentPersistenceGatewayRuntime;
 import server.agents.integration.cosmic.CosmicAgentPopulationBackend;
+import server.agents.capabilities.partyquest.hpq.AgentHpqPopulationRuntime;
 import server.agents.capabilities.partyquest.kpq.AgentKpqPopulationRuntime;
 
 import java.io.IOException;
@@ -51,6 +52,11 @@ public final class AgentPopulationRuntime {
                     () -> registry.snapshot().agents().stream()
                             .map(AgentPopulationRecord::characterId)
                             .collect(Collectors.toUnmodifiableSet()));
+            AgentHpqPopulationRuntime.start(
+                    () -> registry.snapshot().enabled(),
+                    () -> registry.snapshot().agents().stream()
+                            .map(AgentPopulationRecord::characterId)
+                            .collect(Collectors.toUnmodifiableSet()));
             if (registry.snapshot().enabled()) scheduler.scheduleFastStart();
             log.info("Agent population runtime started: enabled={} managed={} store={}",
                     registry.snapshot().enabled(), registry.snapshot().agents().size(), storePath());
@@ -67,6 +73,7 @@ public final class AgentPopulationRuntime {
     }
 
     public static synchronized void stop() {
+        AgentHpqPopulationRuntime.stop();
         AgentKpqPopulationRuntime.stop();
         if (scheduler != null) scheduler.close();
         scheduler = null;

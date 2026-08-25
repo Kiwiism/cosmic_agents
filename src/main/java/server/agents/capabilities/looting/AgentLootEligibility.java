@@ -5,10 +5,13 @@ import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import constants.inventory.ItemConstants;
 import server.agents.capabilities.partyquest.AgentPqRuntime;
+import server.agents.capabilities.partyquest.hpq.AgentHpqSessionRegistry;
 import server.agents.capabilities.partyquest.kpq.AgentKpqDefinition;
 import server.agents.capabilities.partyquest.kpq.AgentKpqMemberState;
 import server.agents.capabilities.partyquest.kpq.AgentKpqSession;
 import server.agents.capabilities.partyquest.kpq.AgentKpqSessionRegistry;
+import server.agents.capabilities.partyquest.lpq.AgentLpqDefinition;
+import server.agents.capabilities.partyquest.lpq.AgentLpqSessionRegistry;
 import server.agents.runtime.AgentSessionLifecycleRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.partyquest.AgentPartyQuestHooks;
@@ -59,7 +62,12 @@ public final class AgentLootEligibility {
         if (itemId == KPQ_PASS && kpqSession == null) {
             return false;
         }
-        if (itemId == HPQ_RICE_CAKE) {
+        if (itemId == HPQ_RICE_CAKE
+                && !AgentHpqSessionRegistry.canLootRiceCake(bot)) {
+            return false;
+        }
+        if ((itemId == AgentLpqDefinition.PASS || itemId == AgentLpqDefinition.BOSS_KEY)
+                && !AgentLpqSessionRegistry.canLootExclusive(bot, itemId)) {
             return false;
         }
         int kpqCouponTarget = AgentPqRuntime.kpqCouponTarget(entry);

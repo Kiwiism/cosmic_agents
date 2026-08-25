@@ -742,6 +742,115 @@ tuning:
     # Purpose: Controls the vertical leeway for attack jump vertical. Higher values let Agents drift farther up or down before correcting; lower values make them correct sooner.
     # Technical: the "combat config" component consumes this as an integer. Domain: component-specific policy value; startup validation rejects missing, blank, or malformed values.
     server.agents.capabilities.combat.AgentCombatConfig.ATTACK_JUMP_Y: '130'
+    # Values: 300000-900000 milliseconds. Recommended: 600000, matching the ordinary HPQ event timer.
+    # Purpose: Bounds one HPQ phase without changing the event script's authoritative ten-minute run timer.
+    # Technical: AgentHpqCoordinator compares this value only with the isolated HPQ session's last-progress timestamp and never with another PQ clock.
+    server.agents.capabilities.partyquest.hpq.AgentHpqCoordinator.PHASE_TIMEOUT_MS: '600000'
+    # Values: 500-3000 milliseconds. Recommended: 1200.
+    # Purpose: Prevents an HPQ planter from repeatedly dropping seeds while the ordinary reactor resolves the previous drop.
+    # Technical: AgentHpqMemberState stores this deadline per HPQ member after an ordinary item drop; it does not affect any other PQ interaction cadence.
+    server.agents.capabilities.partyquest.hpq.AgentHpqCoordinator.INTERACTION_RETRY_MS: '1200'
+    # Values: 20-100 map pixels. Recommended: 55.
+    # Purpose: Controls how closely an HPQ seed planter approaches its matching moonflower bed before dropping one seed.
+    # Technical: AgentHpqCoordinator applies this threshold only to authored HPQ reactor geometry and does not alter shared navigation precision or another PQ.
+    server.agents.capabilities.partyquest.hpq.AgentHpqCoordinator.REACTOR_DROP_RADIUS_PX: '55'
+    # Values: 500-5000 milliseconds. Recommended: 3000.
+    # Purpose: Allows one live HPQ Agent to coordinate the party while another takes over after a stalled heartbeat.
+    # Technical: AgentHpqSession owns and renews this execution lease; KPQ, LPQ, and OPQ retain independent coordinator identities, leases, and failover timing.
+    server.agents.capabilities.partyquest.hpq.AgentHpqRuntime.COORDINATOR_LEASE_MS: '3000'
+    # Values: 250-5000 milliseconds. Recommended: 1000 for prompt recovery without excessive registry scanning.
+    # Purpose: Runs an HPQ-only liveness pass independently of ordinary Agent activity ticks and the coordinators they drive.
+    # Technical: AgentHpqWatchdogRuntime scans registered HPQ sessions, claims only expired execution leases, and invokes idempotent HPQ termination when no live Agent remains.
+    server.agents.capabilities.partyquest.hpq.AgentHpqWatchdogRuntime.PERIOD_MS: '1000'
+    # Values: true or false. Recommended: false until the optional Pig Town behavior passes its focused live observation.
+    # Purpose: Selects whether an Agent-led HPQ party enters the optional Pig Town bonus after completing the main objective.
+    # Technical: AgentHpqAdmissionService copies this HPQ-only boolean into each new Agent-led session; human-led sessions retain HUMAN_CHOICE and ignore this default.
+    server.agents.capabilities.partyquest.hpq.AgentHpqBonusPolicy.ENTER_BY_DEFAULT: 'false'
+    # Values: 0-300000 milliseconds. Recommended: 60000 to show useful farming without always consuming the full bonus timer.
+    # Purpose: Controls how long an Agent party deliberately farms inside the optional HPQ Pig Town bonus before exiting.
+    # Technical: AgentHpqCoordinator compares this value only with BONUS_FARMING phase entry time; the authored five-minute event timer remains authoritative.
+    server.agents.capabilities.partyquest.hpq.AgentHpqBonusPolicy.DWELL_MS: '60000'
+    # Values: 0-60000 milliseconds. Recommended: 15000 so a human leader can choose Tommy or Tory without Agents racing to exit.
+    # Purpose: Gives a human HPQ leader an explicit clear-map decision window before Agent members take the direct reward route.
+    # Technical: AgentHpqCoordinator waits only in a human-led BONUS_DECISION phase and immediately follows the authored bonus warp when the human selects Tommy.
+    server.agents.capabilities.partyquest.hpq.AgentHpqBonusPolicy.HUMAN_DECISION_MS: '15000'
+    # Values: 100-2000 milliseconds. Recommended: 500.
+    # Purpose: Spaces HPQ observation fixture launches to avoid simultaneous login and build initialization pressure.
+    # Technical: AgentHpqTestService applies this delay only while launching GM-only observation fixtures; production population admission never reads the value.
+    server.agents.capabilities.partyquest.hpq.AgentHpqTestService.SPAWN_STAGGER_MS: '500'
+    # Values: 6-30 fixed backing characters. Recommended: 18.
+    # Purpose: Provides a reusable, seeded HPQ observation roster without touching production population identities.
+    # Technical: AgentHpqTestService creates HPQer01 through this inclusive count, then shuffles that isolated reusable roster deterministically per observation seed.
+    server.agents.capabilities.partyquest.hpq.AgentHpqTestService.ROSTER_SIZE: '18'
+    # Values: 15-28. Recommended: 25.
+    # Purpose: Selects the legal fixture level used by HPQ observation Agents.
+    # Technical: Reuses the ordinary build and equipment pipeline; production Agents keep their real levels.
+    server.agents.field.AgentHpqTestFixtureService.HPQ_START_LEVEL: '25'
+    # Values: 1-8 lobbies per channel. Recommended: 2 so one autonomous instance can coexist with one human instance.
+    # Purpose: Controls isolated Henesys PQ event-instance capacity without sharing KPQ, LPQ, or OPQ tuning.
+    # Technical: HenesysPQ.js reads AgentHpqLobbyPolicy when its EventManager initializes, and the resulting private event instances remain channel-local.
+    server.agents.capabilities.partyquest.hpq.AgentHpqLobbyPolicy.MAX_LOBBIES: '2'
+    # Values: 0-16 parties. Recommended: 1 for the initial rollout; zero blocks background HPQ admission.
+    # Purpose: Caps exact autonomous HPQ parties across all worlds and channels.
+    # Technical: AgentHpqLobbyPolicy counts only registered HPQ sessions in BACKGROUND_POPULATION mode and ignores production or observation sessions.
+    server.agents.capabilities.partyquest.hpq.AgentHpqLobbyPolicy.MAX_BACKGROUND_TOTAL: '1'
+    # Values: 0-7 parties per channel. Recommended: 1 while one human lobby is reserved.
+    # Purpose: Prevents background HPQ parties from concentrating on one channel.
+    # Technical: AgentHpqLobbyPolicy bounds this value again by MAX_LOBBIES minus HUMAN_RESERVED_LOBBIES before admitting a party on the channel.
+    server.agents.capabilities.partyquest.hpq.AgentHpqLobbyPolicy.MAX_BACKGROUND_PER_CHANNEL: '1'
+    # Values: 0-7 lobbies per channel. Recommended: 1.
+    # Purpose: Guarantees ordinary players retain HPQ entry capacity when autonomous HPQ is enabled.
+    # Technical: Only the HPQ background director consumes the reservation; normal event admission remains authoritative.
+    server.agents.capabilities.partyquest.hpq.AgentHpqLobbyPolicy.HUMAN_RESERVED_LOBBIES: '1'
+    # Values: true or false. Recommended: false until the observed HPQ smoke test passes.
+    # Purpose: Enables only managed-population autonomous HPQ selection; manual and GM-observed HPQ remain available while false.
+    # Technical: AgentHpqPopulationRuntime reads this HPQ-only switch at process startup; every other PQ director and manual HPQ admission remain independent.
+    server.agents.capabilities.partyquest.hpq.AgentHpqPopulationRuntime.ENABLED: 'false'
+    # Values: 5000-300000 milliseconds. Recommended: 60000.
+    # Purpose: Controls how often the isolated HPQ director seeks a complete eligible party.
+    # Technical: AgentHpqPopulationRuntime schedules serialized sweeps over enabled managed-population Agent identities and fails each sweep closed on errors.
+    server.agents.capabilities.partyquest.hpq.AgentHpqPopulationRuntime.SWEEP_MS: '60000'
+    # Values: 3-6 members. Recommended: 4.
+    # Purpose: Chooses the autonomous HPQ party size without changing manual party admission.
+    # Technical: AgentHpqPopulationRuntime clamps this value to the local HenesysPQ.js three-to-six-member contract before selecting any candidates.
+    server.agents.capabilities.partyquest.hpq.AgentHpqPopulationRuntime.PARTY_SIZE: '4'
+    # Values: 0-3600000 milliseconds. Recommended: 900000.
+    # Purpose: Rotates HPQ participation instead of immediately selecting the same Agents again.
+    # Technical: AgentHpqPopulationRuntime stores the last successful HPQ admission time per character for the process lifetime; no other PQ reads the map.
+    server.agents.capabilities.partyquest.hpq.AgentHpqPopulationRuntime.REENTRY_COOLDOWN_MS: '900000'
+
+    # Values: 300000-1200000 milliseconds. Recommended: 600000 for bounded recovery well inside the authored 45-minute event.
+    # Purpose: Fails an LPQ phase that has made no observable progress instead of leaving a private event and its party orphaned indefinitely.
+    # Technical: AgentLpqCoordinator compares this LPQ session's progress clock only; the event script remains authoritative for the overall 45-minute timeout.
+    server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.PHASE_TIMEOUT_MS: '600000'
+    # Values: 500-3000 milliseconds. Recommended: 1200 to let ordinary reactors, NPC scripts, and item drops settle between repeated actions.
+    # Purpose: Prevents LPQ Agents from flooding the same authored interaction while still allowing responsive box, submission, and combination attempts.
+    # Technical: AgentLpqMemberState owns each deadline and AgentLpqCoordinator consumes it only inside the isolated LPQ aggregate and test session.
+    server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.INTERACTION_RETRY_MS: '1200'
+    # Values: 10000-120000 milliseconds. Recommended: 30000 so disconnected or abandoned split rooms can be reassigned without rapid duplication.
+    # Purpose: Bounds ownership of Stage 4 and Stage 5 room assignments while allowing active human or Agent runners to retain their selected room.
+    # Technical: AgentLpqRoomAssignment refreshes this lease from observed room presence and releases only the LPQ-local reservation, never another PQ's work.
+    server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.ROOM_LEASE_MS: '30000'
+    # Values: 40-140 map pixels. Recommended: 75 for the local LPQ NPC, portal, reactor, and pass-handoff geometry.
+    # Purpose: Controls how close an LPQ Agent approaches an authored interaction point before executing the corresponding ordinary server action.
+    # Technical: AgentLpqCoordinator applies this threshold after LPQ navigation and does not change global path precision, attack reach, or other PQ interaction ranges.
+    server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.INTERACTION_RADIUS_PX: '75'
+    # Values: 500-5000 milliseconds. Recommended: 3000 for prompt LPQ coordinator failover without allowing two Agents to drive the party concurrently.
+    # Purpose: Grants one live LPQ Agent temporary authority to coordinate the party while permitting another participant to take over after a stalled tick.
+    # Technical: AgentLpqSession stores this LPQ-only execution lease; HPQ, KPQ, OPQ, and shared lobby ownership use independent state and timing.
+    server.agents.capabilities.partyquest.lpq.AgentLpqRuntime.COORDINATOR_LEASE_MS: '3000'
+    # Values: 250-5000 milliseconds. Recommended: 1000 for timely LPQ liveness checks with modest scheduler overhead.
+    # Purpose: Scans active LPQ sessions for an expired coordinator or the loss of every live Agent execution participant and initiates bounded cleanup.
+    # Technical: AgentLpqWatchdogRuntime iterates only AgentLpqSessionRegistry and invokes the idempotent LPQ termination path after LPQ-specific validation.
+    server.agents.capabilities.partyquest.lpq.AgentLpqWatchdogRuntime.PERIOD_MS: '1000'
+    # Values: 100-2000 milliseconds. Recommended: 500 to avoid simultaneous login, second-job build, and equipment initialization pressure.
+    # Purpose: Spaces the six dedicated LPQ observation fixtures while leaving production population admission and ordinary player entry unaffected.
+    # Technical: AgentLpqTestService reads this only when scheduling GM harness characters named LPQer01 through LPQer06 on the operator's channel.
+    server.agents.capabilities.partyquest.lpq.AgentLpqTestService.SPAWN_STAGGER_MS: '500'
+    # Values: 35-50. Recommended: 45 to provide learned second-job utility skills and legal equipment without approaching the entry ceiling.
+    # Purpose: Selects the legal test-fixture level for role-covered LPQ observation parties while production Agents retain their real progression state.
+    # Technical: AgentLpqTestFixtureService applies this level through the existing second-job build pipeline and admission revalidates the authored LPQ range.
+    server.agents.field.AgentLpqTestFixtureService.LPQ_START_LEVEL: '45'
     # Values: a finite non-negative integer; unit: map pixels. Recommended: 40-160 around the tested baseline 80; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls the distance or margin used for attack range horizontal. Higher values allow action from farther away or leave more space; lower values require closer, more precise positioning.
     # Technical: the "combat config" component consumes this as an integer. Unit: MapleStory map pixels; horizontal and vertical values use the server map coordinate system.

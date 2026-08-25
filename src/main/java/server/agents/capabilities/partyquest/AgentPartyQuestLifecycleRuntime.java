@@ -93,7 +93,15 @@ public final class AgentPartyQuestLifecycleRuntime {
             Character agent = entry == null ? null : AgentRuntimeIdentityRuntime.bot(entry);
             if (entry == null || agent == null) continue;
             if (AgentTownLifeRuntime.active(entry)) continue;
-            if (agent.getMapId() != 103000000) moveToKerning(agent);
+            AgentPartyQuestDefinition definition = AgentPartyQuestCatalog.find(engagement.questKey());
+            if (definition == null) {
+                allRecovered = false;
+                engagement.addDiagnostic("No recovery definition for " + engagement.questKey(), nowMs);
+                continue;
+            }
+            if (agent.getMapId() != definition.recoveryMapId()) {
+                moveToRecoveryMap(agent, definition.recoveryMapId());
+            }
             var result = AgentTownLifeRuntime.requestLocal(
                     entry, agent, AgentTownLifeVisitRequest.leisure(agent.getMapId()),
                     AgentTownLifeAdmissionMode.MANUAL_ONLY, nowMs, agent.getId());
@@ -123,7 +131,16 @@ public final class AgentPartyQuestLifecycleRuntime {
         AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(characterId);
         Character agent = entry == null ? null : AgentRuntimeIdentityRuntime.bot(entry);
         if (entry == null || agent == null) return;
-        if (agent.getMapId() != 103000000) moveToKerning(agent);
+        AgentPartyQuestEngagement engagement = AgentPartyQuestEngagementRegistry.forMember(characterId);
+        AgentPartyQuestDefinition definition = engagement == null
+                ? null : AgentPartyQuestCatalog.find(engagement.questKey());
+        // A detached member may already have been removed from the engagement index.
+        // Preserve the legacy KPQ recovery destination for that compatibility path;
+        // new PQ systems should recover before unindexing or use their own definition.
+        int recoveryMapId = definition == null
+                ? AgentPartyQuestCatalog.require("kpq").recoveryMapId()
+                : definition.recoveryMapId();
+        if (agent.getMapId() != recoveryMapId) moveToRecoveryMap(agent, recoveryMapId);
         if (!AgentTownLifeRuntime.active(entry)) {
             AgentTownLifeRuntime.requestLocal(
                     entry, agent, AgentTownLifeVisitRequest.leisure(agent.getMapId()),
@@ -131,10 +148,10 @@ public final class AgentPartyQuestLifecycleRuntime {
         }
     }
 
-    private static void moveToKerning(Character agent) {
+    private static void moveToRecoveryMap(Character agent, int recoveryMapId) {
         MapleMap map = AgentMapGatewayRuntime.map().resolveMap(
                 AgentClientGatewayRuntime.clients().world(agent),
-                AgentClientGatewayRuntime.clients().channel(agent), 103000000);
+                AgentClientGatewayRuntime.clients().channel(agent), recoveryMapId);
         var portal = map == null ? null : map.getRandomPlayerSpawnpoint();
         Point spawn = portal == null ? new Point(0, 0) : portal.getPosition();
         if (map != null) AgentMapGatewayRuntime.map().changeMapNear(agent, map, spawn);

@@ -11,6 +11,8 @@ import server.agents.runtime.activity.world.AgentWorldDirective;
 import server.agents.runtime.commerce.AgentCommerceVisitRequest;
 import server.agents.runtime.field.AgentFieldEntryRequest;
 import server.agents.runtime.field.AgentFieldVisitRequest;
+import server.agents.capabilities.partyquest.AgentPartyQuestCatalog;
+import server.agents.capabilities.partyquest.AgentPartyQuestDefinition;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -122,18 +124,18 @@ public final class AgentWorldDirectiveRequestCompiler {
         String scenarioId = required(values, "scenarioId");
         int partySize = positiveInt(values, "partySize");
         int maximumRuns = positiveInt(values, "maximumRuns");
-        if (!"kpq".equalsIgnoreCase(scenarioId)) {
-            throw new IllegalArgumentException("only the KPQ lobby is currently available");
-        }
-        if (partySize < 3 || partySize > 4) {
-            throw new IllegalArgumentException("KPQ partySize must be three or four");
+        AgentPartyQuestDefinition definition = AgentPartyQuestCatalog.require(scenarioId);
+        if (!definition.acceptsPartySize(partySize)) {
+            throw new IllegalArgumentException(definition.questKey().toUpperCase()
+                    + " partySize must be between " + definition.minimumPartySize()
+                    + " and " + definition.maximumPartySize());
         }
         if (maximumRuns != 1) {
-            throw new IllegalArgumentException("KPQ maximumRuns must be one");
+            throw new IllegalArgumentException("party-quest maximumRuns must be one");
         }
         return new AgentWorldTypedActivityRequest.PartyQuest(
                 new AgentWorldTypedActivityRequest.AgentPartyQuestVisitRequest(
-                        directive.directiveId(), caller(directive), scenarioId,
+                        directive.directiveId(), caller(directive), definition.questKey(),
                         partySize, maximumRuns));
     }
 

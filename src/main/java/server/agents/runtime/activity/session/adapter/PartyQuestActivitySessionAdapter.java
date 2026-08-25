@@ -2,9 +2,8 @@ package server.agents.runtime.activity.session.adapter;
 
 import server.agents.capabilities.partyquest.AgentPartyQuestEngagement;
 import server.agents.capabilities.partyquest.AgentPartyQuestEngagementRegistry;
-import server.agents.capabilities.partyquest.kpq.AgentKpqRuntime;
-import server.agents.capabilities.partyquest.kpq.AgentKpqSession;
-import server.agents.capabilities.partyquest.kpq.AgentKpqSessionRegistry;
+import server.agents.capabilities.partyquest.AgentPartyQuestRuntime;
+import server.agents.capabilities.partyquest.AgentPartyQuestSessionView;
 import server.agents.runtime.activity.session.AgentActivityAdmissionResult;
 import server.agents.runtime.activity.session.AgentActivityExitResult;
 import server.agents.runtime.activity.session.AgentActivityKind;
@@ -36,7 +35,7 @@ public final class PartyQuestActivitySessionAdapter
         AgentPartyQuestEngagement engagement =
                 AgentPartyQuestEngagementRegistry.forMember(characterId);
         if (engagement != null) return engagementSnapshot(engagement);
-        AgentKpqSession session = AgentKpqSessionRegistry.forMember(characterId);
+        AgentPartyQuestSessionView session = AgentPartyQuestRuntime.sessionView(characterId);
         if (session != null) return sessionSnapshot(session);
         return AgentActivitySessionSnapshot.idle(
                 AgentActivityKind.PARTY_QUEST, Integer.toString(characterId));
@@ -45,13 +44,19 @@ public final class PartyQuestActivitySessionAdapter
     @Override
     public AgentActivityExitResult requestGracefulExit(
             String reason, long nowMs, long deadlineMs) {
-        if (!AgentKpqRuntime.active(characterId)) {
+        if (!AgentPartyQuestRuntime.active(characterId)) {
             return AgentActivityExitResult.released("party quest is not active");
         }
-        AgentKpqSession session = AgentKpqSessionRegistry.forMember(characterId);
+        AgentPartyQuestSessionView session = AgentPartyQuestRuntime.sessionView(characterId);
         if (session != null) {
-            if (session.paused()) return AgentActivityExitResult.released("party quest is suspended");
-            session.setPaused(true);
+            if (session.phase() == AgentPartyQuestSessionView.Phase.SUSPENDED) {
+                return AgentActivityExitResult.released("party quest is suspended");
+            }
+            if (!AgentPartyQuestRuntime.pause(characterId)) {
+                return AgentActivityExitResult.deferred(
+                        "party-quest session cannot pause at its current boundary",
+                        Math.min(deadlineMs, nowMs + 1L));
+            }
             return AgentActivityExitResult.requested(reason);
         }
         return AgentActivityExitResult.deferred(
@@ -60,15 +65,16 @@ public final class PartyQuestActivitySessionAdapter
     }
 
     public AgentActivityRollbackPort.Result resumeExact(String sessionId, long nowMs) {
-        AgentKpqSession session = AgentKpqSessionRegistry.forMember(characterId);
+        AgentPartyQuestSessionView session = AgentPartyQuestRuntime.sessionView(characterId);
         if (session == null || !session.sessionId().equals(sessionId)) {
             return AgentActivityRollbackPort.Result.rejected("party-quest source session is not retained");
         }
-        if (!session.paused()) {
+        if (session.phase() != AgentPartyQuestSessionView.Phase.SUSPENDED) {
             return AgentActivityRollbackPort.Result.rejected("party-quest session is not suspended");
         }
-        session.setPaused(false);
-        session.markProgress(nowMs);
+        if (!AgentPartyQuestRuntime.resumeExact(characterId, sessionId, nowMs)) {
+            return AgentActivityRollbackPort.Result.rejected("party-quest session could not resume");
+        }
         return AgentActivityRollbackPort.Result.resumed("party-quest session resumed");
     }
 
@@ -96,17 +102,17 @@ public final class PartyQuestActivitySessionAdapter
                     Map.of("questKey", engagement.questKey(),
                             "partySize", engagement.memberIds().size()));
         }
-        AgentKpqSession session = AgentKpqSessionRegistry.forMember(characterId);
-        if (session == null || (session.phase() != AgentKpqSession.Phase.COMPLETED
-                && session.phase() != AgentKpqSession.Phase.FAILED)) return null;
-        AgentActivityPhase phase = session.phase() == AgentKpqSession.Phase.COMPLETED
+        AgentPartyQuestSessionView session = AgentPartyQuestRuntime.sessionView(characterId);
+        if (session == null || !session.terminal()) return null;
+        AgentActivityPhase phase = session.phase() == AgentPartyQuestSessionView.Phase.COMPLETED
                 ? AgentActivityPhase.COMPLETED : AgentActivityPhase.FAILED;
         return new AgentActivityTerminalOutcome(
                 AgentActivityKind.PARTY_QUEST, phase, session.sessionId(),
                 Integer.toString(characterId), session.failure(),
                 phase == AgentActivityPhase.FAILED, session.startedAtMs(),
                 Math.max(session.startedAtMs(), session.lastProgressAtMs()),
-                Map.of("partySize", session.memberCount(), "mode", session.mode().name()));
+                Map.of("questKey", session.questKey(),
+                        "partySize", session.memberCount(), "mode", session.mode()));
     }
 
     private AgentActivitySessionSnapshot engagementSnapshot(
@@ -124,19 +130,17 @@ public final class PartyQuestActivitySessionAdapter
                 Integer.toString(characterId), engagement.startedAtMs(), engagement.failure());
     }
 
-    private AgentActivitySessionSnapshot sessionSnapshot(AgentKpqSession session) {
+    private AgentActivitySessionSnapshot sessionSnapshot(AgentPartyQuestSessionView session) {
         AgentActivityPhase phase = switch (session.phase()) {
-            case EXITING -> AgentActivityPhase.DRAINING;
+            case DRAINING -> AgentActivityPhase.DRAINING;
             case COMPLETED -> AgentActivityPhase.COMPLETED;
             case FAILED -> AgentActivityPhase.FAILED;
-            default -> session.paused() ? AgentActivityPhase.SUSPENDED
-                    : AgentActivityPhase.ACTIVE;
+            case SUSPENDED -> AgentActivityPhase.SUSPENDED;
+            case ACTIVE -> AgentActivityPhase.ACTIVE;
         };
-        int caller = session.formationCallerId() > 0
-                ? session.formationCallerId() : session.operatorId();
         return new AgentActivitySessionSnapshot(
                 AgentActivityKind.PARTY_QUEST, phase, session.sessionId(), session.sessionId(),
-                "pq-caller:" + caller, Integer.toString(characterId), session.startedAtMs(),
+                "pq-caller:" + session.callerId(), Integer.toString(characterId), session.startedAtMs(),
                 session.failure());
     }
 }

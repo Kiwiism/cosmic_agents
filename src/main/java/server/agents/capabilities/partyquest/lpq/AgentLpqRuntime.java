@@ -1,0 +1,38 @@
+package server.agents.capabilities.partyquest.lpq;
+
+import client.Character;
+import server.agents.capabilities.partyquest.AgentPartyQuestLifecycleRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
+
+/** Activity facade for the isolated LPQ aggregate. */
+public final class AgentLpqRuntime {
+    private static final long LEASE_MS = config.AgentTuning.longValue(
+            "server.agents.capabilities.partyquest.lpq.AgentLpqRuntime.COORDINATOR_LEASE_MS");
+    private AgentLpqRuntime() { }
+
+    public static boolean tick(AgentRuntimeEntry entry, Character agent, long nowMs) {
+        AgentLpqSession session = AgentLpqSessionRegistry.forMember(agent.getId());
+        if (session == null) return AgentPartyQuestLifecycleRuntime.tick(agent.getId(), nowMs);
+        if (session.paused()) return true;
+        if (!session.claimExecutionTick(agent.getId(), nowMs, LEASE_MS)) return true;
+        AgentLpqCoordinator.tick(session, nowMs);
+        return true;
+    }
+
+    public static boolean requestStop(int id, String reason, long nowMs) {
+        AgentLpqSession session = AgentLpqSessionRegistry.forMember(id);
+        if (session == null) return AgentPartyQuestLifecycleRuntime.requestStop(id, reason, nowMs);
+        if (!session.terminal()) return false;
+        if (session.phase() == AgentLpqSession.Phase.COMPLETED) AgentLpqTerminationService.complete(session, nowMs);
+        else AgentLpqTerminationService.fail(session, reason, nowMs);
+        return true;
+    }
+
+    public static void forceStop(int id, String reason, long nowMs) {
+        AgentLpqSession session = AgentLpqSessionRegistry.forMember(id);
+        if (session == null) AgentPartyQuestLifecycleRuntime.forceStop(id, reason, nowMs);
+        else AgentLpqTerminationService.fail(session, reason, nowMs);
+    }
+
+    public static void runtimeRemoved(int id, long nowMs) { forceStop(id, "Agent runtime removed", nowMs); }
+}

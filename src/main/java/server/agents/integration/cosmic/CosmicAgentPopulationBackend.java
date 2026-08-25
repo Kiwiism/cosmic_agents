@@ -11,7 +11,7 @@ import server.agents.runtime.AgentInteractionRuntime;
 import server.agents.runtime.AgentRuntimeCleanupService;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
-import server.agents.capabilities.partyquest.kpq.AgentKpqRuntime;
+import server.agents.capabilities.partyquest.AgentPartyQuestRuntime;
 
 import java.sql.SQLException;
 
@@ -95,8 +95,8 @@ public final class CosmicAgentPopulationBackend implements AgentPopulationSessio
         if (agent == null || !hooks.isHeadlessControlled(agent)) {
             return false;
         }
-        if (AgentKpqRuntime.active(characterId)) {
-            AgentKpqRuntime.forceStop(
+        if (AgentPartyQuestRuntime.active(characterId)) {
+            AgentPartyQuestRuntime.forceStop(
                     characterId, "population session stopped", System.currentTimeMillis());
         }
         hooks.removeRuntime(characterId);

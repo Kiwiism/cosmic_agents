@@ -1,7 +1,7 @@
 package server.agents.runtime;
 
 import server.agents.capabilities.movement.AgentFormationService;
-import server.agents.capabilities.partyquest.kpq.AgentKpqRuntime;
+import server.agents.capabilities.partyquest.AgentPartyQuestRuntime;
 import server.maps.reservation.CharacterSpaceOwner;
 import server.maps.reservation.CharacterSpaceReservationRuntime;
 import server.agents.capabilities.reactor.AgentReactorTargetReservationRuntime;
@@ -100,7 +100,7 @@ public final class AgentRuntimeCleanupService {
         if (AgentRuntimeRegistry.hasActiveAgentCharacterId(agentId)) {
             return;
         }
-        AgentKpqRuntime.runtimeRemoved(agentId, System.currentTimeMillis());
+        AgentPartyQuestRuntime.runtimeRemoved(agentId, System.currentTimeMillis());
         AgentAutoEquipThrottle.clearAgentRuntimeState(agentId);
         AgentAsyncTaskGateway.runtime().clearSession(agentId);
         AgentTransferRuntime.clearAgentRuntimeState(agentId);

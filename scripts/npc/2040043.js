@@ -141,10 +141,16 @@ function action(mode, type, selection) {
                             }
                         }
                         if (correctCombo || cm.getPlayer().gmLevel() > 1) {
+                            Java.type('server.agents.capabilities.partyquest.lpq.AgentLpqHumanInteractionRuntime')
+                                .stageEightChecked(cm.getPlayer(), true,
+                                    Java.type('java.lang.System').currentTimeMillis());
                             eim.setProperty("statusStg" + stage, 1);
                             clearStage(stage, eim, curMap);
                             cm.dispose();
                         } else {
+                            Java.type('server.agents.capabilities.partyquest.lpq.AgentLpqHumanInteractionRuntime')
+                                .stageEightChecked(cm.getPlayer(), false,
+                                    Java.type('java.lang.System').currentTimeMillis());
                             eim.showWrongEffect();
                             cm.dispose();
                         }

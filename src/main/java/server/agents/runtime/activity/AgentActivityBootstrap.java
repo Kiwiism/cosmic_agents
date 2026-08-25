@@ -2,7 +2,7 @@ package server.agents.runtime.activity;
 
 import client.Character;
 import server.agents.capabilities.runtime.AgentCapabilityRuntime;
-import server.agents.capabilities.partyquest.kpq.AgentKpqRuntime;
+import server.agents.capabilities.partyquest.AgentPartyQuestRuntime;
 import server.agents.capabilities.townlife.AgentTownLifeRuntime;
 import server.agents.plans.AgentUniversalPlanRuntime;
 import server.agents.plans.mapleisland.AgentMapleIslandLithHandoffRuntime;
@@ -128,22 +128,22 @@ public final class AgentActivityBootstrap {
             @Override public AgentActivityRole role() { return AgentActivityRole.PRIMARY; }
             @Override public AgentActivityKind activityKind() { return AgentActivityKind.PARTY_QUEST; }
             @Override public boolean active(AgentRuntimeEntry entry, Character agent) {
-                return AgentKpqRuntime.active(agent.getId());
+                return AgentPartyQuestRuntime.active(agent.getId());
             }
             @Override public AgentActivityTick tick(
                     AgentRuntimeEntry entry, Character agent, long nowMs) {
-                AgentKpqRuntime.tick(entry, agent, nowMs);
+                AgentPartyQuestRuntime.tick(entry, agent, nowMs);
                 // KPQ installs ordinary MOVE_TO/GRIND modes. IDLE retains activity
                 // ownership while allowing the existing movement/combat phase to advance.
                 return AgentActivityTick.IDLE;
             }
             @Override public boolean requestStop(
                     AgentRuntimeEntry entry, Character agent, String reason, long nowMs) {
-                return AgentKpqRuntime.requestStop(agent.getId(), reason, nowMs);
+                return AgentPartyQuestRuntime.requestStop(agent.getId(), reason, nowMs);
             }
             @Override public void forceStop(
                     AgentRuntimeEntry entry, Character agent, String reason, long nowMs) {
-                AgentKpqRuntime.forceStop(agent.getId(), reason, nowMs);
+                AgentPartyQuestRuntime.forceStop(agent.getId(), reason, nowMs);
             }
         };
     }

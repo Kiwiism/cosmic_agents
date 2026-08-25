@@ -1,8 +1,8 @@
 package server.agents.runtime.activity.control.binding;
 
 import client.Character;
-import server.agents.capabilities.partyquest.kpq.AgentKpqDefinition;
-import server.agents.capabilities.partyquest.kpq.AgentKpqLobbyAdmissionRuntime;
+import server.agents.capabilities.partyquest.AgentPartyQuestRuntime;
+import server.agents.capabilities.partyquest.AgentPartyQuestSystem;
 import server.agents.capabilities.townlife.AgentTownLifeAdmissionMode;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.activity.control.facade.AgentLiveActivityFacade;
@@ -89,20 +89,21 @@ public final class AgentStandardWorldActivityBindingResolver
         if (request instanceof AgentWorldTypedActivityRequest.PartyQuest partyQuest) {
             AgentWorldTypedActivityRequest.AgentPartyQuestVisitRequest visit =
                     partyQuest.request();
+            AgentPartyQuestSystem system = AgentPartyQuestRuntime.requireSystem(visit.scenarioId());
             PartyQuestActivitySessionAdapter target = new PartyQuestActivitySessionAdapter(
-                    agent.getId(), nowMs -> AgentKpqLobbyAdmissionRuntime.requestEntry(
+                    agent.getId(), nowMs -> system.requestEntry(
                     entry, agent, visit.scenarioId(), visit.partySize(),
                     visit.maximumRuns(), nowMs));
             return new AgentWorldActivityBinding(source,
                     (agentId, kind, nowMs) -> {
-                        String blocker = AgentKpqLobbyAdmissionRuntime.blocker(
+                        String blocker = system.entryBlocker(
                                 agent, visit.scenarioId(), visit.partySize(), visit.maximumRuns());
                         return blocker.isEmpty()
                                 ? server.agents.runtime.activity.session.AgentActivityPreflightPort.Result.allowed()
                                 : server.agents.runtime.activity.session.AgentActivityPreflightPort.Result.blocked(blocker);
                     },
                     nowMs -> mapTransfer.travel(
-                            entry, agent, AgentKpqDefinition.RECRUIT_MAP, nowMs),
+                            entry, agent, system.definition().recruitMapId(), nowMs),
                     target, rollback, target);
         }
         if (request instanceof AgentWorldTypedActivityRequest.Commerce commerce) {
