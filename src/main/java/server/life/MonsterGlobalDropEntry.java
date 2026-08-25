@@ -25,14 +25,25 @@ package server.life;
  */
 public class MonsterGlobalDropEntry {
     public MonsterGlobalDropEntry(int itemId, int chance, int continent, int Minimum, int Maximum, short questid) {
+        this(itemId, chance, continent, Minimum, Maximum, questid, 0, 255);
+    }
+
+    public MonsterGlobalDropEntry(int itemId, int chance, int continent, int Minimum, int Maximum, short questid,
+                                  int minimumMobLevel, int maximumMobLevel) {
         this.itemId = itemId;
         this.chance = chance;
         this.questid = questid;
         this.continentid = continent;
         this.Minimum = Minimum;
         this.Maximum = Maximum;
+        this.minimumMobLevel = minimumMobLevel;
+        this.maximumMobLevel = maximumMobLevel;
     }
 
-    public int itemId, chance, Minimum, Maximum, continentid;
+    public boolean isEligibleForMobLevel(int mobLevel) {
+        return mobLevel >= minimumMobLevel && mobLevel <= maximumMobLevel;
+    }
+
+    public int itemId, chance, Minimum, Maximum, continentid, minimumMobLevel, maximumMobLevel;
     public short questid;
 }

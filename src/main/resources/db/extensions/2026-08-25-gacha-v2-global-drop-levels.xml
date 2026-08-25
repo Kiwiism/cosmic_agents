@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="2026-08-25-gacha-v2-global-drop-minimum-level" author="codex">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="drop_data_global"/>
+            <not><columnExists tableName="drop_data_global" columnName="minimum_mob_level"/></not>
+        </preConditions>
+        <addColumn tableName="drop_data_global">
+            <column name="minimum_mob_level" type="SMALLINT UNSIGNED" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="2026-08-25-gacha-v2-global-drop-maximum-level" author="codex">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="drop_data_global"/>
+            <not><columnExists tableName="drop_data_global" columnName="maximum_mob_level"/></not>
+        </preConditions>
+        <addColumn tableName="drop_data_global">
+            <column name="maximum_mob_level" type="SMALLINT UNSIGNED" defaultValueNumeric="255">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

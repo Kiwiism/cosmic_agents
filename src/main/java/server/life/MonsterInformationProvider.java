@@ -98,7 +98,9 @@ public class MonsterInformationProvider {
                         rs.getByte("continent"),
                         rs.getInt("minimum_quantity"),
                         rs.getInt("maximum_quantity"),
-                        rs.getShort("questid")));
+                        rs.getShort("questid"),
+                        rs.getInt("minimum_mob_level"),
+                        rs.getInt("maximum_mob_level")));
             }
         } catch (SQLException e) {
             log.error("Error retrieving global drops", e);

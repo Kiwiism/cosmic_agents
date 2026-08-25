@@ -2,6 +2,7 @@ package server.agents.economy.integration.cosmic;
 
 import constants.id.ItemId;
 import constants.inventory.ItemConstants;
+import config.YamlConfig;
 import server.ItemInformationProvider;
 import server.Shop;
 import server.ShopFactory;
@@ -83,9 +84,12 @@ public final class CosmicEconomyCatalog implements EconomyCatalog {
 
     @Override
     public List<GlobalDropFact> globalDrops(int mapId) {
+        boolean useLevelEligibility = YamlConfig.config.server.USE_GACHA_V2;
         return drops.getRelevantGlobalDrops(mapId).stream()
                 .map(drop -> new GlobalDropFact(drop.itemId, drop.chance, drop.continentid,
-                        drop.Minimum, drop.Maximum, drop.questid)).toList();
+                        drop.Minimum, drop.Maximum, drop.questid,
+                        useLevelEligibility ? drop.minimumMobLevel : 0,
+                        useLevelEligibility ? drop.maximumMobLevel : 255)).toList();
     }
 
     @Override

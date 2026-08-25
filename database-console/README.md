@@ -99,6 +99,27 @@ npm run dev
 
 Open `http://localhost:3000`. The API defaults to `http://localhost:8081`.
 
+## Optional Gacha V2 workspace
+
+Stock Cosmic behavior is the default. The separate `Gacha V2` page and its mob-level global-drop
+editor stay hidden until both sides are deliberately configured:
+
+```yaml
+# config.yaml
+server:
+    USE_GACHA_V2: true
+```
+
+```dotenv
+# database-console/.env
+COSMIC_GACHA_V2_ENABLED=true
+```
+
+Restart Cosmic and the Database Console after changing these flags. The Console may save level
+ranges while the server is offline, but Cosmic applies `minimum_mob_level` and
+`maximum_mob_level` only when `USE_GACHA_V2` is enabled. With the flag disabled, existing global
+drop rows and the stock Java gachapon rolls retain their original behavior.
+
 ## First login
 
 When `console_users` is empty, `POST /api/setup` creates the first Owner account. Setup closes

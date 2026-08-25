@@ -52,6 +52,8 @@ public final class RuleExactFarmResolver {
                     }
                 }
                 for (GlobalDropFact drop : catalog.globalDrops(plan.mapId())) {
+                    if (!drop.isEligibleForMobLevel(catalog.monster(work.monsterId())
+                            .map(monster -> monster.level()).orElse(0))) continue;
                     if (loot.nextInt(DROP_DENOMINATOR) >= drop.chance()) continue;
                     int quantity = inclusive(loot, drop.minimumQuantity(), drop.maximumQuantity());
                     appendDrop(itemDrops, plan, work, kill, drop.itemId(), quantity,

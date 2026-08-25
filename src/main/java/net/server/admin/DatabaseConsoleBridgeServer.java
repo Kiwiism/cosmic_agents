@@ -82,6 +82,7 @@ public class DatabaseConsoleBridgeServer {
                         "onlinePlayers", metrics.onlinePlayers(),
                         "onlineAgents", metrics.onlineAgents(),
                         "onlineCharacters", metrics.onlinePlayers() + metrics.onlineAgents(),
+                        "gachaV2Enabled", config.YamlConfig.config.server.USE_GACHA_V2,
                         "loadedMaps", metrics.loadedMaps(),
                         "disk", metrics.disk(),
                         "loadLevel", metrics.loadLevel().name()));

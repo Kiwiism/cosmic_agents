@@ -289,6 +289,7 @@ server:
     USE_BUFF_MOST_SIGNIFICANT: true                         # When applying buffs, the player will stick with the highest stat boost among the listed, rather than overwriting stats.
     USE_BUFF_EVERLASTING: false                             # Every applied buff on players holds expiration time so high it'd be considered permanent. Suggestion thanks to Vcoc.
     USE_MULTIPLE_SAME_EQUIP_DROP: true                      # Enables multiple drops by mobs of the same equipment, number of possible drops based on the quantities provided at the drop data.
+    USE_GACHA_V2: false                                     # Opt-in database-console gachapon and mob-level global-drop eligibility. False preserves stock Cosmic rolls.
     USE_ENABLE_FULL_RESPAWN: false                          # At respawn task, always respawn missing mobs when they're available. Spawn count doesn't depend on how many players are currently there.
     USE_ENABLE_CHAT_LOG: false                              # Write in-game chat to log
     USE_MAP_OWNERSHIP_SYSTEM: false                         # Flag to enable/disable map ownership system

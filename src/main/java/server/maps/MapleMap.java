@@ -771,6 +771,9 @@ public class MapleMap {
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
 
         for (final MonsterGlobalDropEntry de : globalEntry) {
+            if (YamlConfig.config.server.USE_GACHA_V2 && !de.isEligibleForMobLevel(mob.getLevel())) {
+                continue;
+            }
             if (Randomizer.nextInt(1_000_000) < de.chance) {
                 if (droptype == 3) {
                     pos.x = mobpos + (d % 2 == 0 ? (40 * (d + 1) / 2) : -(40 * (d / 2)));
@@ -821,7 +824,7 @@ public class MapleMap {
         List<MonsterDropEntry> lootEntry = YamlConfig.config.server.USE_SPAWN_RELEVANT_LOOT ? mob.retrieveRelevantDrops() : mi.retrieveEffectiveDrop(mob.getId());
         sortDropEntries(lootEntry, dropEntry, visibleQuestEntry, otherQuestEntry, chr);     // thanks Articuno, Limit, Rohenn for noticing quest loots not showing up in only-quest item drops scenario
 
-        if (lootEntry.isEmpty()) {   // thanks resinate
+        if (lootEntry.isEmpty() && (!YamlConfig.config.server.USE_GACHA_V2 || globalEntry.isEmpty())) {   // thanks resinate
             return;
         }
 

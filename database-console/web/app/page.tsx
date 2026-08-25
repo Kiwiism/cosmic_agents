@@ -17,7 +17,7 @@ type View =
   | "character-stats" | "inventory" | "character-equipment" | "character-quests"
   | "mobs"
   | "items"
-  | "maps" | "npcs" | "shops" | "gacha"
+  | "maps" | "npcs" | "shops" | "gacha" | "gacha-v2"
   | "audit" | "quality-settings";
 type Entity = {
   entity_type:string; entity_id:number; name:string; description?:string; category?:string;
@@ -31,7 +31,7 @@ type HistoryEntry={type:string;id:number;name?:string};
 type Notify=(message:string)=>void;
 type Toast={id:number;message:string};
 
-const nav:readonly ConsoleNavItem<View>[] = [
+const baseNav:readonly ConsoleNavItem<View>[] = [
   {key:"dashboard",label:"Dashboard",icon:Activity},
   {label:"Account",icon:UsersRound,children:[
     {key:"accounts",label:"Account Search",icon:UsersRound},
@@ -115,6 +115,9 @@ const characterTabs:readonly [View,string][]=[
 const worldTabs:readonly [View,string][]=[
   ["maps","Maps"],["npcs","NPCs"],["shops","Shops"],["gacha","Gachapon"]
 ];
+function availableWorldTabs(gachaV2Enabled:boolean):readonly [View,string][]{
+  return gachaV2Enabled?[...worldTabs,["gacha-v2","Gacha V2"]]:worldTabs;
+}
 const auditTabs:readonly [View,string][]=[
   ["audit","Global Audit"]
 ];
@@ -135,6 +138,7 @@ const qualityGradeLabels:Record<QualityGrade,string>={below:"Grey",normal:"White
 export default function App(){
   const [view,setView]=useState<View>("dashboard");
   const [apiReady,setApiReady]=useState<boolean|null>(null);
+  const [gachaV2Status,setGachaV2Status]=useState<any>({consoleEnabled:false,runtimeEnabled:false,active:false});
   const [startupError,setStartupError]=useState("");
   const [theme,setTheme]=useState<"light"|"dark">("light");
   const [themeReady,setThemeReady]=useState(false);
@@ -153,6 +157,7 @@ export default function App(){
     setStartupError("The Console API is offline or its database credentials are not configured.");
     setApiReady(false);
   })},[]);
+  useEffect(()=>{if(apiReady)api<any>("/api/gacha-v2/status").then(setGachaV2Status).catch(()=>setGachaV2Status({consoleEnabled:false,runtimeEnabled:false,active:false}))},[apiReady]);
   useEffect(()=>{
     const saved=window.localStorage.getItem("database-console-theme");
     setTheme(saved==="dark"?"dark":"light");
@@ -175,14 +180,17 @@ export default function App(){
   function nameHistory(type:string,id:number,name:string){setViewHistory(previous=>previous.map(entry=>entry.type===type&&entry.id===id?{...entry,name}:entry))}
   if(apiReady===null)return <div className="splash">Preparing Cosmic Database Console...</div>;
   if(startupError)return <ConsoleConnectionError mark="DC" productName="Database Console" message={startupError}/>;
-  const headerSection=sectionHeader(view);
+  const gachaV2Enabled=Boolean(gachaV2Status.consoleEnabled);
+  const activeWorldTabs=availableWorldTabs(gachaV2Enabled);
+  const navigation=baseNav.map(item=>item.label!=="World Data"?item:{...item,children:[...(item.children||[]),...(gachaV2Enabled?[{key:"gacha-v2" as View,label:"Gacha V2",icon:Ticket,badge:"OPT-IN"}]:[])]});
+  const headerSection=sectionHeader(view,gachaV2Enabled);
   const headerTabs=headerSection&&<div className="planned-tabs header-tabs">{headerSection.tabs.map(([key,label],index)=><button type="button" className={index===headerSection.activeIndex?"active":""} key={`header-${headerSection.title}-${key}-${label}`} onClick={()=>setView(key)}>{label}</button>)}</div>;
   const inspector=accountDrawer
     ? <AccountDrawer account={accountDrawer.account} characters={accountDrawer.characters} close={()=>setAccountDrawer(null)} notify={notify} onCharacter={(targetView,id)=>{setAccountDrawer(null);jump({view:targetView,id})}}/>
     : drawer&&<EntityDrawer entity={drawer} close={()=>setDrawer(null)} jump={jump} history={viewHistory} historyIndex={historyIndex} moveHistory={moveHistory} named={nameHistory}/>;
   return <ConsoleShell activeView={view} brandMark="DC" brandSubtitle="Database Console" eyebrow={headerSection?.title.toUpperCase()||"COSMIC OPERATIONS"}
     headerTitle={headerSection?.label} headerTabs={headerTabs} inspectorOpen={Boolean(drawer)||Boolean(accountDrawer)||embeddedInspector!=="none"}
-    inspectorSize={embeddedInspector==="wide"?"wide":"standard"} navigation={nav}
+    inspectorSize={embeddedInspector==="wide"?"wide":"standard"} navigation={navigation}
     onNavigate={next=>{setView(next);setFocusId(undefined);setDrawer(null);setAccountDrawer(null);setEmbeddedInspector("none")}}
     sidebarStatus={<><Database size={16}/> MySQL connected</>} theme={theme} onToggleTheme={()=>setTheme(current=>current==="dark"?"light":"dark")} onOpenSettings={()=>{setView("quality-settings");setFocusId(undefined);setDrawer(null);setAccountDrawer(null);setEmbeddedInspector("none")}} inspector={inspector}>
       {notices.length>0&&<div className="notice-stack">{notices.map(toast=><button type="button" className="notice" key={toast.id} onClick={()=>setNotices(previous=>previous.filter(row=>row.id!==toast.id))}>{toast.message}</button>)}</div>}
@@ -195,10 +203,11 @@ export default function App(){
         {view==="character-quests"&&<SectionFrame title="Account > Character" tabs={characterTabs} active={view} setView={setView}><CharacterQuestsMonsterBook notify={notify} focusCharacter={focusId||selectedCharacterId} onCharacterSelect={id=>{setSelectedCharacterId(id);setFocusId(undefined)}} onOpen={inspectEntity}/></SectionFrame>}
         {view==="items"&&<SectionFrame title="Items" tabs={[["items","Catalog"]]} active={view} setView={setView}><Library fixedType="ITEM" onOpen={inspectEntity}/></SectionFrame>}
         {view==="mobs"&&<SectionFrame title="Mobs" tabs={[["mobs","Catalog / Drop Table"]]} active={view} setView={setView}><Drops notify={notify} focusMob={focusId} onOpen={(type,id)=>openDrawer(type,id)}/></SectionFrame>}
-        {view==="maps"&&<SectionFrame title="World Data" tabs={worldTabs} active={view} setView={setView}><Maps focusMap={focusId} onOpen={inspectEntity}/></SectionFrame>}
-        {view==="npcs"&&<SectionFrame title="World Data" tabs={worldTabs} active={view} setView={setView}><Library fixedType="NPC" onOpen={inspectEntity}/></SectionFrame>}
-        {view==="shops"&&<SectionFrame title="World Data" tabs={worldTabs} active={view} setView={setView}><Shops notify={notify} focusShop={focusId} onOpen={inspectEntity}/></SectionFrame>}
-        {view==="gacha"&&<SectionFrame title="World Data" tabs={worldTabs} active={view} setView={setView}><Gachapon notify={notify} focusLocation={focusLocation} onOpen={inspectEntity}/></SectionFrame>}
+        {view==="maps"&&<SectionFrame title="World Data" tabs={activeWorldTabs} active={view} setView={setView}><Maps focusMap={focusId} onOpen={inspectEntity}/></SectionFrame>}
+        {view==="npcs"&&<SectionFrame title="World Data" tabs={activeWorldTabs} active={view} setView={setView}><Library fixedType="NPC" onOpen={inspectEntity}/></SectionFrame>}
+        {view==="shops"&&<SectionFrame title="World Data" tabs={activeWorldTabs} active={view} setView={setView}><Shops notify={notify} focusShop={focusId} onOpen={inspectEntity}/></SectionFrame>}
+        {view==="gacha"&&<SectionFrame title="World Data" tabs={activeWorldTabs} active={view} setView={setView}><Gachapon notify={notify} focusLocation={focusLocation} onOpen={inspectEntity}/></SectionFrame>}
+        {view==="gacha-v2"&&gachaV2Enabled&&<SectionFrame title="World Data" tabs={activeWorldTabs} active={view} setView={setView}><GachaV2 notify={notify} status={gachaV2Status} onOpen={inspectEntity}/></SectionFrame>}
         {view==="audit"&&<SectionFrame title="Audit & Tools" tabs={auditTabs} active={view} setView={setView}><Audit/></SectionFrame>}
         {view==="quality-settings"&&<SectionFrame title="Settings" tabs={[["quality-settings","Quality Colors"]]} active={view} setView={setView}><QualityColorSettings notify={notify}/></SectionFrame>}
   </ConsoleShell>
@@ -280,13 +289,13 @@ function AccountCharacterCreate({notify,onCreated,initialAccount,onInspect}:{not
   </div>
 }
 
-function sectionHeader(view:View){
+function sectionHeader(view:View,gachaV2Enabled=false){
   const groups:{title:string;tabs:readonly [View,string][]}[]=[
     {title:"Account",tabs:[["accounts","Account Search"],["create-account","Create"]]},
     {title:"Account > Character",tabs:characterTabs},
     {title:"Items",tabs:[["items","Catalog"]]},
     {title:"Mobs",tabs:[["mobs","Catalog / Drop Table"]]},
-    {title:"World Data",tabs:worldTabs},
+    {title:"World Data",tabs:availableWorldTabs(gachaV2Enabled)},
     {title:"Audit & Tools",tabs:auditTabs},
     {title:"Settings",tabs:[["quality-settings","Quality Colors"]]},
   ];
@@ -480,6 +489,22 @@ function Gachapon({notify,focusLocation,onOpen}:{notify:Notify;focusLocation?:st
             <select className={`tier-select tier-${row.tier}`} value={Number(row.tier||0)} onChange={event=>patchTier(row,Number(event.target.value))}><option value={0}>Common</option><option value={1}>Uncommon</option><option value={2}>Rare</option></select><span className="gacha-chance"><strong>{gachaChance(row).percent}</strong><small>{gachaChance(row).one}</small></span><small className="source-line">{row.source_kind}</small><button className="danger-icon" onClick={()=>setDeleteReward(row)}><Trash2 size={15}/></button></div>)}</div></>}</article></div>
     {pendingReward&&<RarityDialog item={pendingReward} onCancel={()=>setPendingReward(null)} onConfirm={tier=>add(pendingReward,tier)}/>}
     {deleteReward&&<ConfirmDialog title="Delete Gachapon reward?" message={`${deleteReward.item_name||`Item ${deleteReward.item_id}`} will be removed from ${selected==="GLOBAL"?"Global Gachapon":`Gachapon: ${gachaponTown(selected||"")}`}. This cannot be undone.`} confirmLabel="Delete reward" onCancel={()=>setDeleteReward(null)} onConfirm={()=>remove(deleteReward)}/>}</>
+}
+
+function GachaV2({notify,status,onOpen}:{notify:Notify;status:any;onOpen:(type:string,id:number)=>void}){
+  const [rows,setRows]=useState<any[]>([]);const [item,setItem]=useState<Entity|null>(null);const [deleteRow,setDeleteRow]=useState<any|null>(null);
+  const load=()=>api<any[]>("/api/gacha-v2/global-drops").then(setRows);
+  useEffect(()=>{void load()},[]);
+  function body(row:any,overrides:Record<string,any>={}){return {continent:Number(row.continent),itemId:Number(row.itemid),minimumQuantity:Number(row.minimum_quantity),maximumQuantity:Number(row.maximum_quantity),questId:Number(row.questid||0),chance:Number(row.chance),minimumMobLevel:Number(row.minimum_mob_level??0),maximumMobLevel:Number(row.maximum_mob_level??255),comments:row.comments||"",reason:"Updated in Gacha V2 Console",...overrides}}
+  async function patch(row:any,field:string,value:number){await api(`/api/gacha-v2/global-drops/${row.id}`,{method:"PUT",body:JSON.stringify(body(row,{[field]:value}))});notify("Gacha V2 eligibility updated");load()}
+  async function add(event:FormEvent<HTMLFormElement>){event.preventDefault();if(!item)return;const f=new FormData(event.currentTarget);await api("/api/gacha-v2/global-drops",{method:"POST",body:JSON.stringify({continent:Number(f.get("continent")||-1),itemId:item.entity_id,minimumQuantity:Number(f.get("minimumQuantity")||1),maximumQuantity:Number(f.get("maximumQuantity")||1),questId:0,chance:Number(f.get("chance")||0),minimumMobLevel:Number(f.get("minimumMobLevel")||0),maximumMobLevel:Number(f.get("maximumMobLevel")||255),comments:String(f.get("comments")||""),reason:"Added in Gacha V2 Console"})});setItem(null);notify("Gacha V2 global drop added");load()}
+  async function remove(row:any){await api(`/api/gacha-v2/global-drops/${row.id}?reason=Deleted%20from%20Gacha%20V2%20Console`,{method:"DELETE"});setDeleteRow(null);notify("Gacha V2 global drop deleted");load()}
+  return <><div className="source-banner"><Ticket className="gacha-ticket-icon" size={18}/><div><strong>Opt-in Gacha V2 eligibility</strong><span>{status.runtimeEnabled?"The game server is applying these mob-level ranges.":"The Console page is enabled, but the game server still has USE_GACHA_V2 disabled. Saved ranges remain inactive."}</span></div></div>
+    <div className="two-column wide-left drops-layout"><article className="panel"><PanelTitle title="Global ticket and reward drops" subtitle={`${rows.length} entries. Level eligibility applies only while Gacha V2 is enabled.`}/>
+      <div className="rich-list drop-list">{rows.map(row=><div className="rich-row drop-row" key={row.id}><button className="icon-link" onClick={()=>onOpen("ITEM",row.itemid)}><img src={assetUrl("ITEM",row.itemid)} alt=""/></button><button className="row-identity" onClick={()=>onOpen("ITEM",row.itemid)}><strong>{row.item_name||`Item ${row.itemid}`}</strong><code>{row.itemid}</code></button><span className="tag soft">Continent {row.continent}</span>
+        <InlineNumber value={row.minimum_mob_level??0} save={v=>patch(row,"minimumMobLevel",v)} label="Mob Lv. Min"/><InlineNumber value={row.maximum_mob_level??255} save={v=>patch(row,"maximumMobLevel",v)} label="Mob Lv. Max"/><InlineNumber value={row.chance} save={v=>patch(row,"chance",v)} label="Chance"/><Chance value={row.chance}/><button className="danger-icon" onClick={()=>setDeleteRow(row)} title="Delete Gacha V2 global drop"><Trash2 size={15}/></button></div>)}</div></article>
+      <form className="panel editor-form drop-add-panel" onSubmit={add}><PanelTitle title="Add eligible global drop" subtitle="Use this for Common, Uncommon, and Rare tickets or other V2 rewards"/><Autocomplete type="ITEM" value={item} onSelect={setItem} placeholder="Search ticket or reward item"/>{item&&<SelectedEntity entity={item}/>}<label>Continent<input name="continent" type="number" defaultValue="-1"/></label><div className="form-row"><label>Minimum mob level<input name="minimumMobLevel" type="number" min="0" max="255" defaultValue="0"/></label><label>Maximum mob level<input name="maximumMobLevel" type="number" min="0" max="255" defaultValue="255"/></label></div><div className="form-row"><label>Minimum quantity<input name="minimumQuantity" type="number" min="0" defaultValue="1"/></label><label>Maximum quantity<input name="maximumQuantity" type="number" min="0" defaultValue="1"/></label></div><label>Chance <small>numerator per 1,000,000 kills</small><input name="chance" type="number" min="0" max="1000000" defaultValue="1000" required/></label><label>Comments<input name="comments" placeholder="Common ticket, Rare ticket…"/></label><button className="primary" disabled={!item}>Add V2 drop</button></form></div>
+    {deleteRow&&<ConfirmDialog title="Delete Gacha V2 global drop?" message={`${deleteRow.item_name||`Item ${deleteRow.itemid}`} will be removed from the global table.`} confirmLabel="Delete" onCancel={()=>setDeleteRow(null)} onConfirm={()=>remove(deleteRow)}/>}</>
 }
 
 function Accounts({notify,onInspect,onCreateCharacter}:{notify:Notify;onInspect:(account:any,characters:any[])=>void;onCreateCharacter:(account:any)=>void}){

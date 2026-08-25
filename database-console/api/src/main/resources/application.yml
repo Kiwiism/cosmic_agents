@@ -25,3 +25,5 @@ cosmic:
   wz-path: ${COSMIC_WZ_PATH:../../wz}
   project-path: ${COSMIC_PROJECT_PATH:../..}
   allowed-origin: ${DATABASE_CONSOLE_ALLOWED_ORIGIN:http://localhost:3000}
+  gacha-v2:
+    enabled: ${COSMIC_GACHA_V2_ENABLED:false}
