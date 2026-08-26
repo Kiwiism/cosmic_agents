@@ -33,6 +33,8 @@ public interface CharacterGateway {
 
     void disconnect(Character agent, boolean shutdown, boolean cashShop);
 
+    boolean hasLiveClient(Character character);
+
     boolean isHeadlessControlled(Character character);
 
     /** @deprecated Agent identity is durable; this compatibility alias only reports live control mode. */
@@ -41,4 +43,3 @@ public interface CharacterGateway {
         return isHeadlessControlled(character);
     }
 }
-

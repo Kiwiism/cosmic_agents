@@ -26,6 +26,9 @@
  */
 
 function act() {
+    if (!rm.claimEventReactorAction("lpq")) {
+        return;
+    }
     if (rm.getPlayer().getMapId() == 922010900) {
         rm.mapMessage(5, "Alishar has been summoned.");
         rm.spawnMonster(9300012, 941, 184);

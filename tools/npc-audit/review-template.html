@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cosmic NPC Town Review</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #2c241a;
+      --muted: #756a5c;
+      --paper: #fffaf0;
+      --panel: rgba(255,255,255,.9);
+      --line: #dfcfb7;
+      --green: #34785a;
+      --green-soft: #e6f4eb;
+      --orange: #b9632d;
+      --orange-soft: #fff0df;
+      --red: #a9473f;
+      --red-soft: #fbe8e5;
+      --blue: #356f8d;
+      --blue-soft: #e6f3f8;
+      --shadow: 0 12px 35px rgba(75, 52, 25, .12);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 15% 0%, rgba(255,218,138,.42), transparent 27rem),
+        radial-gradient(circle at 93% 9%, rgba(126,200,166,.28), transparent 25rem),
+        #f4ead7;
+      font: 15px/1.45 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    .topbar {
+      position: sticky;
+      z-index: 10;
+      top: 0;
+      border-bottom: 1px solid rgba(113,86,49,.22);
+      background: rgba(255,250,240,.94);
+      backdrop-filter: blur(16px);
+    }
+    .topbar-inner, main { width: min(1440px, calc(100% - 32px)); margin: auto; }
+    .topbar-inner { padding: 18px 0 14px; }
+    .brand-row, .action-row, .card-head, .placement, .selection-actions { display: flex; align-items: center; }
+    .brand-row { gap: 14px; justify-content: space-between; }
+    h1 { margin: 0; font: 800 clamp(22px,3vw,34px)/1.05 Georgia, serif; letter-spacing: -.02em; }
+    .subtitle { margin: 5px 0 0; color: var(--muted); }
+    .selected-pill { border-radius: 999px; padding: 8px 12px; color: white; background: var(--green); font-weight: 800; white-space: nowrap; }
+    .action-row { gap: 9px; flex-wrap: wrap; margin-top: 14px; }
+    .control, .btn {
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: white;
+      color: var(--ink);
+    }
+    .control { padding: 8px 11px; }
+    #search { flex: 1 1 300px; min-width: 180px; }
+    .btn { padding: 8px 13px; font-weight: 750; }
+    .btn:hover { border-color: #af8e63; transform: translateY(-1px); }
+    .btn.primary { border-color: var(--green); color: white; background: var(--green); }
+    .btn.danger { color: var(--red); }
+    main { padding: 24px 0 60px; }
+    .stats { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; margin-bottom: 18px; }
+    .stat { padding: 15px; border: 1px solid rgba(127,94,49,.18); border-radius: 16px; background: rgba(255,255,255,.7); }
+    .stat strong { display: block; font-size: 24px; }
+    .stat span { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+    .notice { padding: 13px 15px; margin-bottom: 18px; border-left: 4px solid var(--blue); border-radius: 10px; background: var(--blue-soft); color: #294b5b; }
+    .list { display: grid; gap: 13px; }
+    .npc-card { overflow: hidden; border: 1px solid var(--line); border-radius: 18px; background: var(--panel); box-shadow: var(--shadow); }
+    .npc-card.selected { border-color: #70a489; box-shadow: 0 12px 35px rgba(49,117,85,.18); }
+    .card-head { align-items: stretch; gap: 14px; padding: 15px; }
+    .select-wrap { display: grid; place-items: center; padding: 0 2px; }
+    input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--green); }
+    .portrait {
+      display: grid;
+      flex: 0 0 92px;
+      place-items: center;
+      min-height: 92px;
+      overflow: hidden;
+      border: 1px solid #dbc8a8;
+      border-radius: 14px;
+      background: linear-gradient(#eef8ff 0 62%, #d9efc9 62%);
+    }
+    .portrait img { max-width: 86px; max-height: 86px; image-rendering: pixelated; object-fit: contain; }
+    .portrait .fallback { display: none; color: var(--muted); font-weight: 800; font-size: 12px; text-align: center; }
+    .identity { min-width: 0; flex: 1; }
+    .name-line { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; }
+    .name-line h2 { margin: 0; font: 800 21px/1.2 Georgia, serif; }
+    .id { color: var(--muted); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+    .badges { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+    .badge { padding: 4px 8px; border-radius: 999px; background: #eee6d9; color: #685844; font-size: 11px; font-weight: 800; }
+    .badge.event { color: var(--orange); background: var(--orange-soft); }
+    .badge.none { color: var(--red); background: var(--red-soft); }
+    .badge.dialogue { color: var(--blue); background: var(--blue-soft); }
+    .purpose { color: var(--muted); }
+    .head-tools { display: flex; align-items: center; gap: 8px; }
+    .details-btn { border: 0; border-radius: 10px; padding: 8px 10px; background: #efe5d4; font-weight: 800; }
+    .placement-list { display: grid; gap: 7px; padding: 0 15px 15px 143px; }
+    .placement { gap: 10px; padding: 10px 12px; border: 1px solid #e5d8c5; border-radius: 12px; background: #fffdf8; }
+    .placement-text { min-width: 0; flex: 1; }
+    .placement-title { font-weight: 800; }
+    .placement-meta { color: var(--muted); font: 12px/1.45 ui-monospace, SFMono-Regular, Consolas, monospace; }
+    .details { display: none; padding: 15px; border-top: 1px solid #eadfce; background: rgba(251,247,239,.8); }
+    .npc-card.open .details { display: block; }
+    .detail-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
+    .detail-block { min-width: 0; padding: 12px; border: 1px solid #e8dccb; border-radius: 12px; background: white; }
+    .detail-block.wide { grid-column: 1 / -1; }
+    .detail-block h3 { margin: 0 0 7px; color: #6c5941; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+    .detail-block p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .empty { padding: 60px 20px; color: var(--muted); text-align: center; }
+    .selection-bar { position: fixed; right: 18px; bottom: 18px; z-index: 20; display: none; width: min(460px,calc(100% - 36px)); padding: 13px; border: 1px solid #85aa94; border-radius: 16px; background: rgba(239,250,243,.96); box-shadow: var(--shadow); backdrop-filter: blur(12px); }
+    .selection-bar.visible { display: block; }
+    .selection-actions { gap: 8px; margin-top: 9px; flex-wrap: wrap; }
+    .selection-actions .btn { flex: 1; }
+    .source-note { margin-top: 20px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 820px) {
+      .stats { grid-template-columns: repeat(2,minmax(0,1fr)); }
+      .card-head { flex-wrap: wrap; }
+      .portrait { flex-basis: 75px; min-height: 75px; }
+      .placement-list { padding-left: 15px; }
+      .detail-grid { grid-template-columns: 1fr; }
+      .detail-block.wide { grid-column: auto; }
+      .head-tools { margin-left: auto; }
+    }
+    @media (max-width: 520px) {
+      .topbar-inner, main { width: min(100% - 20px,1440px); }
+      .brand-row { align-items: flex-start; }
+      .selected-pill { font-size: 12px; }
+      .stats { gap: 8px; }
+      .stat { padding: 11px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand-row">
+        <div>
+          <h1>Cosmic NPC Town Review</h1>
+          <p class="subtitle">Choose exact regular-town placements to remove. Event-map-only NPCs are excluded.</p>
+        </div>
+        <div class="selected-pill"><span id="selected-count">0</span> selected</div>
+      </div>
+      <div class="action-row">
+        <input class="control" id="search" type="search" placeholder="Search NPC, ID, map, quest, shop…">
+        <select class="control" id="recommendation-filter" aria-label="Filter by recommendation">
+          <option value="">All review types</option>
+          <option value="REVIEW_EVENT_FUNCTIONAL">Event-related</option>
+          <option value="REVIEW_NO_FUNCTION">No detected function</option>
+          <option value="REVIEW_DIALOGUE_ONLY">Dialogue-only</option>
+        </select>
+        <select class="control" id="map-filter" aria-label="Filter by town"><option value="">All towns</option></select>
+        <label class="control"><input id="selected-only" type="checkbox"> Selected only</label>
+        <button class="btn" id="expand-visible">Expand visible</button>
+        <button class="btn danger" id="clear-all">Clear selection</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="stats">
+      <div class="stat"><strong id="npc-total">0</strong><span>NPCs in review</span></div>
+      <div class="stat"><strong id="placement-total">0</strong><span>Town placements</span></div>
+      <div class="stat"><strong id="visible-total">0</strong><span>Visible NPCs</span></div>
+      <div class="stat"><strong id="selected-total">0</strong><span>Removal placements</span></div>
+    </section>
+    <div class="notice">Checking an NPC selects all its visible regular-town placements. Expand a card to review evidence; use each map checkbox when only one placement should be removed.</div>
+    <section class="list" id="npc-list"></section>
+    <div class="empty" id="empty" hidden>No NPCs match the current filters.</div>
+    <p class="source-note">Artwork is loaded from MapleStory.IO’s GMS v83 NPC icon endpoint. Missing artwork falls back to the NPC ID. Selections are saved in this browser only until exported.</p>
+  </main>
+
+  <aside class="selection-bar" id="selection-bar">
+    <strong>Removal plan ready</strong>
+    <div id="selection-summary">0 placements selected</div>
+    <div class="selection-actions">
+      <button class="btn primary" id="export-json">Download JSON plan</button>
+      <button class="btn" id="export-csv">Download CSV</button>
+      <button class="btn" id="copy-summary">Copy summary</button>
+    </div>
+  </aside>
+
+  <script>
+    const payload = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob('__NPC_AUDIT_BASE64__'), c => c.charCodeAt(0))));
+    const records = payload.records;
+    const stateKey = 'cosmic-npc-removal-selection-v1';
+    let selected = new Set(JSON.parse(localStorage.getItem(stateKey) || '[]'));
+    let visibleRecords = records;
+    let expandedVisible = false;
+
+    const byId = id => document.getElementById(id);
+    const esc = value => String(value ?? '').replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
+    const splitList = value => String(value || '').split(';').map(x => x.trim()).filter(Boolean);
+    const placementKey = (npc, placement) => `${npc.npcId}:${placement.mapId}:${placement.lifeKey}`;
+    const iconUrl = npcId => payload.mapleStoryIo.npcIconTemplate.replace('{npcId}', npcId);
+    const recommendationLabel = value => ({
+      REVIEW_EVENT_FUNCTIONAL: 'Event-related',
+      REVIEW_NO_FUNCTION: 'No detected function',
+      REVIEW_DIALOGUE_ONLY: 'Dialogue-only'
+    }[value] || value);
+    const badgeClass = value => value.includes('EVENT') ? 'event' : value.includes('NO_FUNCTION') ? 'none' : 'dialogue';
+
+    function saveSelection() {
+      localStorage.setItem(stateKey, JSON.stringify([...selected]));
+      if (byId('selected-only').checked) applyFilters();
+      else updateSelectionUi();
+    }
+
+    function selectedPlacements() {
+      const output = [];
+      for (const npc of records) {
+        for (const placement of npc.placements) {
+          if (selected.has(placementKey(npc, placement))) output.push({npc, placement});
+        }
+      }
+      return output;
+    }
+
+    function updateSelectionUi() {
+      const count = selected.size;
+      byId('selected-count').textContent = count;
+      byId('selected-total').textContent = count;
+      byId('selection-summary').textContent = `${count} exact map placement${count === 1 ? '' : 's'} selected`;
+      byId('selection-bar').classList.toggle('visible', count > 0);
+      document.querySelectorAll('.npc-card').forEach(card => {
+        const npc = records.find(record => String(record.npcId) === card.dataset.npcId);
+        if (!npc) return;
+        const keys = npc.placements.map(p => placementKey(npc,p));
+        const checkedCount = keys.filter(key => selected.has(key)).length;
+        const master = card.querySelector('.npc-check');
+        master.checked = checkedCount === keys.length && keys.length > 0;
+        master.indeterminate = checkedCount > 0 && checkedCount < keys.length;
+        card.classList.toggle('selected', checkedCount > 0);
+        card.querySelectorAll('.placement-check').forEach(input => input.checked = selected.has(input.dataset.key));
+      });
+    }
+
+    function detailBlock(title, content, wide = false) {
+      if (!content) content = 'None detected';
+      return `<section class="detail-block${wide ? ' wide' : ''}"><h3>${esc(title)}</h3><p>${esc(content)}</p></section>`;
+    }
+
+    function cardHtml(npc) {
+      const placements = npc.placements.map(placement => {
+        const key = placementKey(npc, placement);
+        return `<label class="placement">
+          <input class="placement-check" type="checkbox" data-key="${esc(key)}" ${selected.has(key) ? 'checked' : ''}>
+          <span class="placement-text">
+            <span class="placement-title">${esc(placement.mapName || 'Unnamed map')} <span class="id">${placement.mapId}</span></span><br>
+            <span class="placement-meta">life ${esc(placement.lifeKey)} · x ${placement.x}, y ${placement.y} · foothold ${placement.foothold} · range ${placement.rx0}…${placement.rx1}${placement.hidden ? ' · hidden' : ''}</span>
+          </span>
+        </label>`;
+      }).join('');
+      const facts = [
+        npc.hasScript && 'script', npc.hasWarp && 'warp', npc.hasShop && `shop (${npc.shopItemCount})`,
+        npc.hasRewardOrExchange && 'reward/exchange', npc.questCount && `${npc.questCount} quest ref${npc.questCount === 1 ? '' : 's'}`
+      ].filter(Boolean).join(' · ') || 'No functional hooks detected';
+      return `<article class="npc-card" data-npc-id="${npc.npcId}">
+        <div class="card-head">
+          <label class="select-wrap" title="Select every regular-town placement"><input class="npc-check" type="checkbox"></label>
+          <div class="portrait">
+            <img loading="lazy" src="${iconUrl(npc.npcId)}" alt="${esc(npc.name || `NPC ${npc.npcId}`)}" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+            <span class="fallback">NPC<br>${npc.npcId}</span>
+          </div>
+          <div class="identity">
+            <div class="name-line"><h2>${esc(npc.name || 'Unnamed NPC')}</h2><span class="id">${npc.npcId}</span></div>
+            <div class="badges">
+              <span class="badge ${badgeClass(npc.recommendation)}">${esc(recommendationLabel(npc.recommendation))}</span>
+              <span class="badge">${npc.placements.length} town placement${npc.placements.length === 1 ? '' : 's'}</span>
+              ${npc.eventEvidence ? '<span class="badge event">event evidence</span>' : ''}
+            </div>
+            <div class="purpose">${esc(facts)}</div>
+          </div>
+          <div class="head-tools"><button class="details-btn" type="button">Details</button></div>
+        </div>
+        <div class="placement-list">${placements}</div>
+        <div class="details">
+          <div class="detail-grid">
+            ${detailBlock('Purpose classification', npc.purpose || 'None detected')}
+            ${detailBlock('Script', npc.hasScript ? `${npc.scriptPath}\nWarp: ${npc.hasWarp ? 'yes' : 'no'} · Reward/exchange: ${npc.hasRewardOrExchange ? 'yes' : 'no'}` : 'No exact-ID NPC script')}
+            ${detailBlock('Event evidence', npc.eventEvidence ? npc.eventEvidenceDetail || 'Detected' : 'None detected')}
+            ${detailBlock('Quest references', npc.quests ? `${npc.quests}\nDirect: ${npc.directQuestCount} · Text mentions: ${npc.mentionedQuestCount} · Expired: ${npc.expiredQuestCount} · Undated: ${npc.undatedQuestCount}` : '', true)}
+            ${detailBlock('Shop inventory', npc.hasShop ? `Shop IDs: ${npc.shopIds}\n${npc.shopItems}` : '', true)}
+            ${detailBlock(`String.wz text preview (${npc.npcTextCount} fields)`, npc.npcTextPreview, true)}
+            ${detailBlock('Other/event-map placements (not selectable)', npc.eventMaps, true)}
+          </div>
+        </div>
+      </article>`;
+    }
+
+    function applyFilters() {
+      const query = byId('search').value.trim().toLowerCase();
+      const recommendation = byId('recommendation-filter').value;
+      const mapId = byId('map-filter').value;
+      const onlySelected = byId('selected-only').checked;
+      visibleRecords = records.filter(npc => {
+        if (recommendation && npc.recommendation !== recommendation) return false;
+        if (mapId && !npc.placements.some(p => String(p.mapId) === mapId)) return false;
+        if (onlySelected && !npc.placements.some(p => selected.has(placementKey(npc,p)))) return false;
+        if (query) {
+          const haystack = [npc.npcId,npc.name,npc.purpose,npc.quests,npc.shopItems,npc.npcTextPreview,...npc.placements.map(p => `${p.mapId} ${p.mapName}`)].join(' ').toLowerCase();
+          if (!haystack.includes(query)) return false;
+        }
+        return true;
+      });
+      render();
+    }
+
+    function render() {
+      byId('npc-list').innerHTML = visibleRecords.map(cardHtml).join('');
+      byId('visible-total').textContent = visibleRecords.length;
+      byId('empty').hidden = visibleRecords.length > 0;
+      if (expandedVisible) document.querySelectorAll('.npc-card').forEach(card => card.classList.add('open'));
+      updateSelectionUi();
+    }
+
+    function removalPlan() {
+      const chosen = selectedPlacements();
+      return {
+        schemaVersion: 1,
+        generatedAt: new Date().toISOString(),
+        intent: 'remove-npc-map-placements',
+        scope: 'regular-town-map-placements-only',
+        sourceAuditGeneratedAt: payload.generatedAt,
+        selectionCount: chosen.length,
+        placements: chosen.map(({npc,placement}) => ({
+          npcId: npc.npcId,
+          npcName: npc.name,
+          mapId: placement.mapId,
+          mapName: placement.mapName,
+          lifeKey: placement.lifeKey,
+          coordinates: {x: placement.x, y: placement.y, cy: placement.cy, foothold: placement.foothold, rx0: placement.rx0, rx1: placement.rx1},
+          reviewReason: recommendationLabel(npc.recommendation),
+          evidence: {purpose: npc.purpose, quests: npc.quests, scriptPath: npc.scriptPath, shopIds: npc.shopIds, eventEvidence: npc.eventEvidenceDetail}
+        }))
+      };
+    }
+
+    function download(name, content, type) {
+      const url = URL.createObjectURL(new Blob([content], {type}));
+      const link = document.createElement('a');
+      link.href = url; link.download = name; link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function csvPlan(plan) {
+      const quote = value => `"${String(value ?? '').replaceAll('"','""')}"`;
+      const header = ['npcId','npcName','mapId','mapName','lifeKey','x','y','foothold','reviewReason'];
+      const lines = plan.placements.map(p => [p.npcId,p.npcName,p.mapId,p.mapName,p.lifeKey,p.coordinates.x,p.coordinates.y,p.coordinates.foothold,p.reviewReason].map(quote).join(','));
+      return [header.join(','),...lines].join('\r\n');
+    }
+
+    const mapOptions = new Map();
+    records.flatMap(npc => npc.placements).forEach(p => mapOptions.set(String(p.mapId), p.mapName));
+    [...mapOptions.entries()].sort((a,b) => (a[1] || '').localeCompare(b[1] || '')).forEach(([id,name]) => {
+      const option = document.createElement('option'); option.value = id; option.textContent = `${name || 'Unnamed map'} (${id})`; byId('map-filter').append(option);
+    });
+    byId('npc-total').textContent = records.length;
+    byId('placement-total').textContent = records.reduce((sum,npc) => sum + npc.placements.length, 0);
+    ['search','recommendation-filter','map-filter','selected-only'].forEach(id => byId(id).addEventListener(id === 'search' ? 'input' : 'change', applyFilters));
+    byId('npc-list').addEventListener('click', event => {
+      const card = event.target.closest('.npc-card'); if (!card) return;
+      const npc = records.find(record => String(record.npcId) === card.dataset.npcId);
+      if (event.target.classList.contains('details-btn')) { card.classList.toggle('open'); return; }
+      if (event.target.classList.contains('npc-check')) {
+        npc.placements.forEach(p => event.target.checked ? selected.add(placementKey(npc,p)) : selected.delete(placementKey(npc,p)));
+        saveSelection(); return;
+      }
+      if (event.target.classList.contains('placement-check')) {
+        event.target.checked ? selected.add(event.target.dataset.key) : selected.delete(event.target.dataset.key);
+        saveSelection();
+      }
+    });
+    byId('clear-all').addEventListener('click', () => { if (selected.size && confirm('Clear every selected placement?')) { selected.clear(); saveSelection(); applyFilters(); } });
+    byId('expand-visible').addEventListener('click', () => { expandedVisible = !expandedVisible; byId('expand-visible').textContent = expandedVisible ? 'Collapse visible' : 'Expand visible'; document.querySelectorAll('.npc-card').forEach(card => card.classList.toggle('open', expandedVisible)); });
+    byId('export-json').addEventListener('click', () => download('npc-removal-plan.json', JSON.stringify(removalPlan(), null, 2), 'application/json'));
+    byId('export-csv').addEventListener('click', () => download('npc-removal-plan.csv', csvPlan(removalPlan()), 'text/csv'));
+    byId('copy-summary').addEventListener('click', async () => {
+      const plan = removalPlan();
+      const text = plan.placements.map(p => `${p.npcId} ${p.npcName}: remove from ${p.mapId} ${p.mapName} (life ${p.lifeKey})`).join('\n');
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch {
+        const helper = document.createElement('textarea');
+        helper.value = text; helper.style.position = 'fixed'; helper.style.opacity = '0';
+        document.body.append(helper); helper.select(); document.execCommand('copy'); helper.remove();
+      }
+      byId('copy-summary').textContent = 'Copied'; setTimeout(() => byId('copy-summary').textContent = 'Copy summary', 1400);
+    });
+    render();
+  </script>
+</body>
+</html>

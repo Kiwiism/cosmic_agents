@@ -25,6 +25,7 @@ package client.processor.stat;
 
 import client.Character;
 import client.Client;
+import client.HpMpGrowthPolicy;
 import client.Job;
 import client.Skill;
 import client.SkillFactory;
@@ -506,6 +507,12 @@ public class AssignAPProcessor {
         try {
             Character player = c.getPlayer();
 
+            if (HpMpGrowthPolicy.isHpMpApStat(APFrom) || HpMpGrowthPolicy.isHpMpApStat(APTo)) {
+                player.message("HP and MP cannot be changed with AP or AP Reset items.");
+                c.sendPacket(PacketCreator.enableActions());
+                return false;
+            }
+
             switch (APFrom) {
                 case 64: // str
                     if (player.getStr() < 5) {
@@ -664,19 +671,10 @@ public class AssignAPProcessor {
                 }
                 break;
             case 2048:
-                if (!chr.assignHP(calcHpChange(chr, usedAPReset), 1)) {
-                    chr.message("Couldn't execute AP assign operation.");
-                    chr.sendPacket(PacketCreator.enableActions());
-                    return false;
-                }
-                break;
             case 8192:
-                if (!chr.assignMP(calcMpChange(chr, usedAPReset), 1)) {
-                    chr.message("Couldn't execute AP assign operation.");
-                    chr.sendPacket(PacketCreator.enableActions());
-                    return false;
-                }
-                break;
+                chr.message("HP and MP cannot be increased with AP.");
+                chr.sendPacket(PacketCreator.enableActions());
+                return false;
             default:
                 chr.sendPacket(PacketCreator.updatePlayerStats(PacketCreator.EMPTY_STATUPDATE, true, chr));
                 return false;

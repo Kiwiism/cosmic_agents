@@ -1,9 +1,15 @@
 package net.server.admin;
 
+import client.Character;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
+import net.server.Server;
+import net.server.world.World;
+import server.agents.capabilities.partyquest.hpq.AgentHpqTestService;
+import server.agents.capabilities.partyquest.kpq.AgentKpqTestService;
+import server.agents.capabilities.partyquest.lpq.AgentLpqTestService;
 import server.agents.integration.cosmic.CosmicAgentWorldDirectorApplicationFactory;
 import server.agents.integration.cosmic.CosmicAgentCleanSlateResetFactory;
 import server.agents.administration.AgentCleanSlateResetService;
@@ -123,6 +129,10 @@ public final class AgentDirectorBridgeServer {
                             .map(AgentDirectorApiView::roster).toList()));
             return;
         }
+        if ("POST".equals(method) && "/internal/director/pq-observation".equals(path)) {
+            executePartyQuestObservation(exchange, nowMs);
+            return;
+        }
         if (!path.matches("/internal/director/agents/\\d+(/.*)?")) {
             send(exchange, 404, error("NOT_FOUND", "Unknown Director endpoint"));
             return;
@@ -231,6 +241,41 @@ public final class AgentDirectorBridgeServer {
             return;
         }
         send(exchange, 404, error("NOT_FOUND", "Unknown Director endpoint"));
+    }
+
+    private void executePartyQuestObservation(HttpExchange exchange, long nowMs) throws IOException {
+        JsonNode body = readBody(exchange);
+        Character operator = onlineGm(requiredText(body, "operator"));
+        if (body.has("mapId")) {
+            int mapId = requiredInt(body, "mapId");
+            var map = operator.getClient().getChannelServer().getMapFactory().getMap(mapId);
+            if (map == null) throw new IllegalArgumentException("Unknown map: " + mapId);
+            operator.changeMap(map, map.getRandomPlayerSpawnpoint());
+        }
+        List<String> arguments = new ArrayList<>();
+        JsonNode values = body.path("arguments");
+        if (!values.isArray()) throw new IllegalArgumentException("arguments must be an array");
+        values.forEach(value -> arguments.add(value.asText()));
+        String[] params = arguments.toArray(String[]::new);
+        List<String> lines = switch (requiredText(body, "quest").toLowerCase()) {
+            case "hpq" -> AgentHpqTestService.execute(operator, params, nowMs);
+            case "kpq" -> AgentKpqTestService.execute(operator, params, nowMs);
+            case "lpq" -> AgentLpqTestService.execute(operator, params, nowMs);
+            default -> throw new IllegalArgumentException("quest must be hpq, kpq, or lpq");
+        };
+        send(exchange, 200, Map.of("status", "OK", "operator", operator.getName(), "lines", lines));
+    }
+
+    private static Character onlineGm(String name) {
+        for (World world : Server.getInstance().getWorlds()) {
+            Character character = world.getPlayerStorage().getCharacterByName(name);
+            if (character == null) continue;
+            if (character.gmLevel() < 6) {
+                throw new IllegalStateException("PQ observation requires an online GM level 6 operator");
+            }
+            return character;
+        }
+        throw new IllegalStateException("PQ observation operator is offline");
     }
 
     private boolean authorized(HttpExchange exchange) {

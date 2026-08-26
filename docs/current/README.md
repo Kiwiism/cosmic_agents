@@ -10,3 +10,8 @@ Operational deployment guidance:
 
 - [Privacy, retention, and AGPL deployment baseline](PRIVACY_RETENTION_AND_AGPL_DEPLOYMENT.md)
 - [Hardening implementation status and remaining proof gates](HARDENING_IMPLEMENTATION_STATUS.md)
+
+Current game-content design:
+
+- [Free Market convenience shop and Gachapon V2](FREE_MARKET_SHOP_AND_GACHAPON_DESIGN.md)
+- [Deterministic HP/MP progression and no-washing policy](DETERMINISTIC_HP_MP_PROGRESSION.md)

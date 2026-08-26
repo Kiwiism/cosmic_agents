@@ -30,11 +30,14 @@ final class AgentLpqTerminationService {
             }
             try { event.dispose(); } catch (RuntimeException ignored) { }
         }
-        session.members().stream().filter(member -> session.partyOwnership() == AgentLpqSession.PartyOwnership.LPQ_OWNED
-                        || member.memberType() == AgentLpqMemberState.MemberType.AGENT)
-                .map(member -> character(member.characterId())).filter(java.util.Objects::nonNull)
-                .filter(AgentPartyGatewayRuntime.party()::hasParty)
-                .forEach(AgentPartyGatewayRuntime.party()::leaveCurrentParty);
+        boolean postRunTestHold = completed && session.mode() == AgentLpqSession.Mode.TEST_OBSERVATION;
+        if (!postRunTestHold) {
+            session.members().stream().filter(member -> session.partyOwnership() == AgentLpqSession.PartyOwnership.LPQ_OWNED
+                            || member.memberType() == AgentLpqMemberState.MemberType.AGENT)
+                    .map(member -> character(member.characterId())).filter(java.util.Objects::nonNull)
+                    .filter(AgentPartyGatewayRuntime.party()::hasParty)
+                    .forEach(AgentPartyGatewayRuntime.party()::leaveCurrentParty);
+        }
         session.clearEventInstance();
         if (completed) session.complete(nowMs); else session.fail(reason, nowMs);
         AgentLpqSessionRegistry.remove(session);

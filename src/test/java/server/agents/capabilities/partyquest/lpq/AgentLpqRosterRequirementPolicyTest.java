@@ -1,6 +1,7 @@
 package server.agents.capabilities.partyquest.lpq;
 
 import client.Character;
+import client.Job;
 import constants.skills.Archer;
 import constants.skills.FPWizard;
 import constants.skills.Magician;
@@ -43,8 +44,48 @@ class AgentLpqRosterRequirementPolicyTest {
                 coverage.missingRequirements());
     }
 
+    @Test
+    void stageSevenBoxWackersAreWeaponRangedBranchesRatherThanMages() {
+        assertTrue(AgentLpqRosterRequirementPolicy.stageSevenBoxWacker(character(Job.HUNTER)));
+        assertTrue(AgentLpqRosterRequirementPolicy.stageSevenBoxWacker(character(Job.CROSSBOWMAN)));
+        assertTrue(AgentLpqRosterRequirementPolicy.stageSevenBoxWacker(character(Job.ASSASSIN)));
+        assertTrue(AgentLpqRosterRequirementPolicy.stageSevenBoxWacker(character(Job.GUNSLINGER)));
+        assertFalse(AgentLpqRosterRequirementPolicy.stageSevenBoxWacker(character(Job.IL_WIZARD)));
+        assertFalse(AgentLpqRosterRequirementPolicy.stageSevenBoxWacker(character(Job.BANDIT)));
+    }
+
+    @Test
+    void stageFourMagicCoverageDoesNotRequireTeleport() {
+        Character magicOnly = character(Magician.MAGIC_CLAW);
+
+        assertTrue(AgentLpqRosterRequirementPolicy.magicAttack(magicOnly));
+        assertFalse(AgentLpqRosterRequirementPolicy.teleportMagic(magicOnly));
+    }
+
+    @Test
+    void spearmanHasFirstClaimOnTheTwoMonsterPhysicalRoom() {
+        assertEquals(0, AgentLpqRosterRequirementPolicy.stageFourTwoMonsterRoomPriority(
+                character(Job.SPEARMAN, Warrior.POWER_STRIKE)));
+        assertEquals(1, AgentLpqRosterRequirementPolicy.stageFourTwoMonsterRoomPriority(
+                character(Job.FIGHTER, Warrior.POWER_STRIKE)));
+        assertEquals(2, AgentLpqRosterRequirementPolicy.stageFourTwoMonsterRoomPriority(
+                character(Job.ASSASSIN, Rogue.LUCKY_SEVEN)));
+    }
+
     private static Character character(int... skillIds) {
         Character character = mock(Character.class);
+        for (int skillId : skillIds) when(character.getSkillLevel(skillId)).thenReturn(1);
+        return character;
+    }
+
+    private static Character character(Job job) {
+        Character character = mock(Character.class);
+        when(character.getJob()).thenReturn(job);
+        return character;
+    }
+
+    private static Character character(Job job, int... skillIds) {
+        Character character = character(job);
         for (int skillId : skillIds) when(character.getSkillLevel(skillId)).thenReturn(1);
         return character;
     }

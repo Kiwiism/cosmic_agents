@@ -34,7 +34,8 @@ var clearMap = 922011000;
 var minMapId = 922010100;
 var maxMapId = 922011100;
 
-var eventTime = 45;     // 45 minutes
+var eventTime = 45;     // authored LPQ duration
+var bonusTime = 1;      // authored LPQ bonus duration
 
 const maxLobbies = 1;
 
@@ -135,7 +136,6 @@ function setup(level, lobbyid) {
     eim.getInstanceMap(922010403).resetPQ(level);
     eim.getInstanceMap(922010404).resetPQ(level);
     eim.getInstanceMap(922010405).resetPQ(level);
-    eim.getInstanceMap(922010500).resetPQ(level);
     eim.getInstanceMap(922010500).resetPQ(level);
     eim.getInstanceMap(922010501).resetPQ(level);
     eim.getInstanceMap(922010502).resetPQ(level);
@@ -260,7 +260,7 @@ function clearPQ(eim) {
     eim.stopEventTimer();
     eim.setEventCleared();
 
-    eim.startEventTimer(1 * 60000);
+    eim.startEventTimer(bonusTime * 60000);
     eim.warpEventTeam(922011000);
 }
 

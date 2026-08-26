@@ -76,6 +76,7 @@ class AgentStarterKitServiceTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, mock(ScheduledFuture.class));
 
         when(bot.getJob()).thenReturn(Job.BOWMAN);
+        when(bot.changeJob(Job.HUNTER)).thenReturn(true);
 
         try (MockedStatic<AgentBuildService> buildManager = mockStatic(AgentBuildService.class);
              MockedStatic<AgentBuildStatusRuntime> statusRuntime = mockStatic(AgentBuildStatusRuntime.class);
@@ -96,6 +97,7 @@ class AgentStarterKitServiceTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, mock(ScheduledFuture.class));
         List<BuildStep> steps = List.of(new BuildStep(3110000, 20));
         when(bot.getJob()).thenReturn(Job.BOWMAN);
+        when(bot.changeJob(Job.HUNTER)).thenReturn(true);
 
         try (MockedStatic<AgentBuildService> buildManager = mockStatic(AgentBuildService.class);
              MockedStatic<AgentBuildStatusRuntime> statusRuntime = mockStatic(AgentBuildStatusRuntime.class);

@@ -1,6 +1,7 @@
 package server.agents.capabilities.partyquest.lpq;
 
 import client.Character;
+import client.Job;
 import constants.skills.Archer;
 import constants.skills.BlazeWizard;
 import constants.skills.Cleric;
@@ -44,6 +45,10 @@ public final class AgentLpqRosterRequirementPolicy {
         return hasAny(character, TELEPORT_SKILLS) && hasAny(character, MAGIC_ATTACK_SKILLS);
     }
 
+    public static boolean magicAttack(Character character) {
+        return hasAny(character, MAGIC_ATTACK_SKILLS);
+    }
+
     public static boolean darkSight(Character character) {
         return hasAny(character, Rogue.DARK_SIGHT, NightWalker.DARK_SIGHT);
     }
@@ -54,6 +59,22 @@ public final class AgentLpqRosterRequirementPolicy {
 
     public static boolean physicalAttack(Character character) {
         return hasAny(character, PHYSICAL_ATTACK_SKILLS);
+    }
+
+    /** Prefer the party's spear warrior for Stage 4's two-monster physical room. */
+    public static int stageFourTwoMonsterRoomPriority(Character character) {
+        if (character == null || character.getJob() == null) return 3;
+        Job job = character.getJob();
+        if (job.isA(Job.SPEARMAN)) return 0;
+        if (job.isA(Job.WARRIOR)) return 1;
+        return physicalAttack(character) ? 2 : 3;
+    }
+
+    /** Weapon-ranged branches that can close-wack the Stage 7 trigger boxes. */
+    public static boolean stageSevenBoxWacker(Character character) {
+        if (character == null || character.getJob() == null) return false;
+        Job job = character.getJob();
+        return job.isA(Job.BOWMAN) || job.isA(Job.ASSASSIN) || job.isA(Job.GUNSLINGER);
     }
 
     public static Coverage evaluate(List<Character> members) {

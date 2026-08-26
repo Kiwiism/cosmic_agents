@@ -14,14 +14,25 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentDialogueProjectionRuntimeTest {
     @Test
-    void suppressesFieldPostureChatForActiveKpqMembersOnly() {
+    void suppressesInternalCombatPostureChatEverywhere() {
         AgentDialogueIntentEvent posture = new AgentDialogueIntentEvent(
                 1, 1L, AgentFieldNarrationService.POSTURE_INTENT,
                 AgentDialogueAudience.NEARBY_REAL_PLAYER, "posture", 0L,
                 java.util.Map.of("phase", "KITING"));
 
         assertFalse(AgentDialogueProjectionRuntime.shouldProject(posture, true));
-        assertTrue(AgentDialogueProjectionRuntime.shouldProject(posture, false));
+        assertFalse(AgentDialogueProjectionRuntime.shouldProject(posture, false));
+    }
+
+    @Test
+    void suppressesGenericDialogueDuringAnActiveHpqSession() {
+        AgentDialogueIntentEvent level = new AgentDialogueIntentEvent(
+                1, 1L, AgentProgressionDialogueReactionService.LEVEL_INTENT,
+                AgentDialogueAudience.NEARBY_REAL_PLAYER, "level", 0L,
+                Map.of("level", "30"));
+
+        assertFalse(AgentDialogueProjectionRuntime.shouldProject(level, true));
+        assertTrue(AgentDialogueProjectionRuntime.shouldProject(level, false));
     }
 
     @Test

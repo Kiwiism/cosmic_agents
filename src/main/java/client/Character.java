@@ -1282,10 +1282,26 @@ public class Character extends AbstractCharacterObject {
         }, 777);
     }
 
-    public synchronized void changeJob(Job newJob) {
-        if (newJob == null) {
-            return;//the fuck you doing idiot!
+    public synchronized boolean changeJob(Job newJob) {
+        Job oldJob = this.job;
+        if (!JobProgressionPolicy.isLegalAdvancement(oldJob, newJob, level)) {
+            log.warn("Rejected illegal or replayed job advancement for character {}: {} -> {} at level {}",
+                    id, oldJob, newJob, level);
+            return false;
         }
+        return changeJobInternal(newJob, true);
+    }
+
+    /** Administrative override that rebuilds formula HP/MP without AP, SP, or slot rewards. */
+    public synchronized boolean forceChangeJobForAdmin(Job newJob) {
+        if (!isGM() || newJob == null) {
+            return false;
+        }
+        return changeJobInternal(newJob, false);
+    }
+
+    private boolean changeJobInternal(Job newJob, boolean grantAdvancementRewards) {
+        Job oldJob = this.job;
         if (canRecvPartySearchInvite && getParty() == null) {
             this.updatePartySearchAvailability(false);
             this.job = newJob;
@@ -1295,80 +1311,61 @@ public class Character extends AbstractCharacterObject {
         }
         markPersistenceDirty(PersistenceSection.STATS);
 
-        int spGain = 1;
-        if (GameConstants.hasSPTable(newJob)) {
-            spGain += 2;
-        } else {
-            if (newJob.getId() % 10 == 2) {
+        if (grantAdvancementRewards) {
+            int spGain = 1;
+            if (GameConstants.hasSPTable(newJob)) {
                 spGain += 2;
-            }
-
-            if (YamlConfig.config.server.USE_ENFORCE_JOB_SP_RANGE) {
-                spGain = getChangedJobSp(newJob);
-            }
-        }
-
-        if (spGain > 0) {
-            gainSp(spGain, GameConstants.getSkillBook(newJob.getId()), true);
-        }
-
-        // thanks xinyifly for finding out missing AP awards (AP Reset can be used as a compass)
-        if (newJob.getId() % 100 >= 1) {
-            if (this.isCygnus()) {
-                gainAp(7, true);
             } else {
-                if (YamlConfig.config.server.USE_STARTING_AP_4 || newJob.getId() % 10 >= 1) {
-                    gainAp(5, true);
+                if (newJob.getId() % 10 == 2) {
+                    spGain += 2;
+                }
+
+                if (YamlConfig.config.server.USE_ENFORCE_JOB_SP_RANGE) {
+                    spGain = getChangedJobSp(newJob);
                 }
             }
-        } else {    // thanks Periwinks for noticing an AP shortage from lower levels
-            if (YamlConfig.config.server.USE_STARTING_AP_4 && newJob.getId() % 1000 >= 1) {
-                gainAp(4, true);
+
+            if (spGain > 0) {
+                gainSp(spGain, GameConstants.getSkillBook(newJob.getId()), true);
+            }
+
+            // thanks xinyifly for finding out missing AP awards (AP Reset can be used as a compass)
+            if (newJob.getId() % 100 >= 1) {
+                if (this.isCygnus()) {
+                    gainAp(7, true);
+                } else {
+                    if (YamlConfig.config.server.USE_STARTING_AP_4 || newJob.getId() % 10 >= 1) {
+                        gainAp(5, true);
+                    }
+                }
+            } else {    // thanks Periwinks for noticing an AP shortage from lower levels
+                if (YamlConfig.config.server.USE_STARTING_AP_4 && newJob.getId() % 1000 >= 1) {
+                    gainAp(4, true);
+                }
+            }
+
+            if (!isGM()) {
+                for (byte i = 1; i < 5; i++) {
+                    gainSlots(i, 4, true);
+                }
             }
         }
 
-        if (!isGM()) {
-            for (byte i = 1; i < 5; i++) {
-                gainSlots(i, 4, true);
-            }
-        }
-
-        int addhp = 0, addmp = 0;
-        int job_ = job.getId() % 1000; // lame temp "fix"
-        if (job_ == 100) {                      // 1st warrior
-            addhp += Randomizer.rand(200, 250);
-        } else if (job_ == 200) {               // 1st mage
-            addmp += Randomizer.rand(100, 150);
-        } else if (job_ % 100 == 0) {           // 1st others
-            addhp += Randomizer.rand(100, 150);
-            addmp += Randomizer.rand(25, 50);
-        } else if (job_ > 0 && job_ < 200) {    // 2nd~4th warrior
-            addhp += Randomizer.rand(300, 350);
-        } else if (job_ < 300) {                // 2nd~4th mage
-            addmp += Randomizer.rand(450, 500);
-        } else if (job_ > 0) {                  // 2nd~4th others
-            addhp += Randomizer.rand(300, 350);
-            addmp += Randomizer.rand(150, 200);
-        }
-        
-        /*
-        //aran perks?
-        int newJobId = newJob.getId();
-        if(newJobId == 2100) {          // become aran1
-            addhp += 275;
-            addmp += 15;
-        } else if(newJobId == 2110) {   // become aran2
-            addmp += 275;
-        } else if(newJobId == 2111) {   // become aran3
-            addhp += 275;
-            addmp += 275;
-        }
-        */
+        HpMpGrowthPolicy.Growth hpMpChange = grantAdvancementRewards
+                ? HpMpGrowthPolicy.jobAdvancementGain(oldJob, newJob, level)
+                : HpMpGrowthPolicy.baseForJobAtLevel(newJob, level).plus(totalRetroactivePassiveBonus(level));
 
         effLock.lock();
         statWlock.lock();
         try {
-            addMaxMPMaxHP(addhp, addmp, true);
+            if (grantAdvancementRewards) {
+                addMaxMPMaxHP(hpMpChange.hp(), hpMpChange.mp(), true);
+            } else {
+                setMaxHp(hpMpChange.hp());
+                setMaxMp(hpMpChange.mp());
+                setHp(Math.min(hp, maxhp));
+                setMp(Math.min(mp, maxmp));
+            }
             recalcLocalStats();
 
             List<Pair<Stat, Integer>> statup = new ArrayList<>(7);
@@ -1421,7 +1418,9 @@ public class Character extends AbstractCharacterObject {
                 this,
                 server.observer.ObserverInterestService.Type.JOB_ADVANCE,
                 95,
-                "Advanced to " + GameConstants.getJobName(newJob.getId()));
+                (grantAdvancementRewards ? "Advanced to " : "Admin changed job to ")
+                        + GameConstants.getJobName(newJob.getId()));
+        return true;
     }
 
     public void broadcastAcquaintances(int type, String message) {
@@ -1967,7 +1966,17 @@ public class Character extends AbstractCharacterObject {
         this.currentPage = page;
     }
 
-    public void changeSkillLevel(Skill skill, byte newLevel, int newMasterlevel, long expiration) {
+    public boolean changeSkillLevel(Skill skill, byte newLevel, int newMasterlevel, long expiration) {
+        if (skill == null || newLevel < -1 || newLevel > skill.getMaxLevel()) {
+            return false;
+        }
+        int oldLevel = getSkillLevel(skill);
+        if (newLevel > oldLevel && HpMpGrowthPolicy.isRetroactivePassive(skill.getId())
+                && (!GameConstants.isInJobTree(skill.getId(), job.getId())
+                || !HpMpGrowthPolicy.hasPassivePrerequisite(this, skill.getId()))) {
+            return false;
+        }
+        HpMpGrowthPolicy.Growth oldPassiveBonus = retroactivePassiveBonus(skill, oldLevel, level);
         chrLock.lock();
         try {
             if (newLevel > -1) {
@@ -1979,6 +1988,14 @@ public class Character extends AbstractCharacterObject {
             chrLock.unlock();
         }
         markPersistenceDirty(PersistenceSection.SKILLS);
+
+        int effectiveNewLevel = Math.max(0, newLevel);
+        HpMpGrowthPolicy.Growth newPassiveBonus = retroactivePassiveBonus(skill, effectiveNewLevel, level);
+        HpMpGrowthPolicy.Growth passiveDelta = newPassiveBonus.minus(oldPassiveBonus);
+        if (passiveDelta.hp() != 0 || passiveDelta.mp() != 0) {
+            addMaxMPMaxHP(passiveDelta.hp(), passiveDelta.mp(), false);
+        }
+
         if (newLevel > -1) {
             if (!GameConstants.isHiddenSkills(skill.getId())) {
                 sendPacket(PacketCreator.updateSkill(skill.getId(), newLevel, newMasterlevel, expiration));
@@ -1994,6 +2011,32 @@ public class Character extends AbstractCharacterObject {
                 monitoring.RuntimeFailureLogger.log(ex);
             }
         }
+        return true;
+    }
+
+    private static HpMpGrowthPolicy.Growth retroactivePassiveBonus(Skill skill, int skillLevel, int characterLevel) {
+        if (skill == null || skillLevel <= 0) {
+            return HpMpGrowthPolicy.Growth.ZERO;
+        }
+        return HpMpGrowthPolicy.retroactivePassiveBonus(
+                skill.getId(), skill.getEffect(skillLevel).getX(), characterLevel);
+    }
+
+    private HpMpGrowthPolicy.Growth totalRetroactivePassiveBonus(int characterLevel) {
+        HpMpGrowthPolicy.Growth total = HpMpGrowthPolicy.Growth.ZERO;
+        int[] passiveSkillIds = {
+                Warrior.IMPROVED_MAXHP,
+                Magician.IMPROVED_MAX_MP_INCREASE,
+                Brawler.IMPROVE_MAX_HP
+        };
+        for (int skillId : passiveSkillIds) {
+            if (!GameConstants.isInJobTree(skillId, job.getId())) {
+                continue;
+            }
+            Skill skill = SkillFactory.getSkill(skillId);
+            total = total.plus(retroactivePassiveBonus(skill, getSkillLevel(skill), characterLevel));
+        }
+        return total;
     }
 
     public void changeTab(int tab) {
@@ -5600,7 +5643,7 @@ public class Character extends AbstractCharacterObject {
     }
 
     public int getMaxClassLevel() {
-        return isCygnus() ? 250 : 255;
+        return JobProgressionPolicy.classLevelCap(job, isGM());
     }
 
     public int getMaxLevel() {
@@ -6619,11 +6662,10 @@ public class Character extends AbstractCharacterObject {
     }
 
     public synchronized void levelUp(boolean takeexp) {
-        Skill improvingMaxHP = null;
-        Skill improvingMaxMP = null;
-        int improvingMaxHPLevel = 0;
-        int improvingMaxMPLevel = 0;
-
+        if (level >= getMaxLevel()) {
+            exp.set(0);
+            return;
+        }
         boolean isBeginner = isBeginnerJob();
         if (YamlConfig.config.server.USE_AUTOASSIGN_STARTERS_AP && isBeginner && level < 11) {
             effLock.lock();
@@ -6660,57 +6702,12 @@ public class Character extends AbstractCharacterObject {
             gainAp(remainingAp, true);
         }
 
-        int addhp = 0, addmp = 0;
-        if (isBeginner) {
-            addhp += Randomizer.rand(12, 16);
-            addmp += Randomizer.rand(10, 12);
-        } else if (job.isA(Job.WARRIOR) || job.isA(Job.DAWNWARRIOR1)) {
-            improvingMaxHP = isCygnus() ? SkillFactory.getSkill(DawnWarrior.MAX_HP_INCREASE) : SkillFactory.getSkill(Warrior.IMPROVED_MAXHP);
-            if (job.isA(Job.CRUSADER)) {
-                improvingMaxMP = SkillFactory.getSkill(1210000);
-            } else if (job.isA(Job.DAWNWARRIOR2)) {
-                improvingMaxMP = SkillFactory.getSkill(11110000);
-            }
-            improvingMaxHPLevel = getSkillLevel(improvingMaxHP);
-            addhp += Randomizer.rand(24, 28);
-            addmp += Randomizer.rand(4, 6);
-        } else if (job.isA(Job.MAGICIAN) || job.isA(Job.BLAZEWIZARD1)) {
-            improvingMaxMP = isCygnus() ? SkillFactory.getSkill(BlazeWizard.INCREASING_MAX_MP) : SkillFactory.getSkill(Magician.IMPROVED_MAX_MP_INCREASE);
-            improvingMaxMPLevel = getSkillLevel(improvingMaxMP);
-            addhp += Randomizer.rand(10, 14);
-            addmp += Randomizer.rand(22, 24);
-        } else if (job.isA(Job.BOWMAN) || job.isA(Job.THIEF) || (job.getId() > 1299 && job.getId() < 1500)) {
-            addhp += Randomizer.rand(20, 24);
-            addmp += Randomizer.rand(14, 16);
-        } else if (job.isA(Job.GM)) {
-            addhp += 300000;
-            addmp += 300000;
-        } else if (job.isA(Job.PIRATE) || job.isA(Job.THUNDERBREAKER1)) {
-            improvingMaxHP = isCygnus() ? SkillFactory.getSkill(ThunderBreaker.IMPROVE_MAX_HP) : SkillFactory.getSkill(Brawler.IMPROVE_MAX_HP);
-            improvingMaxHPLevel = getSkillLevel(improvingMaxHP);
-            addhp += Randomizer.rand(22, 28);
-            addmp += Randomizer.rand(18, 23);
-        } else if (job.isA(Job.ARAN1)) {
-            addhp += Randomizer.rand(44, 48);
-            int aids = Randomizer.rand(4, 8);
-            addmp += aids + Math.floor(aids * 0.1);
-        }
-        if (improvingMaxHPLevel > 0 && (job.isA(Job.WARRIOR) || job.isA(Job.PIRATE) || job.isA(Job.DAWNWARRIOR1) || job.isA(Job.THUNDERBREAKER1))) {
-            addhp += improvingMaxHP.getEffect(improvingMaxHPLevel).getX();
-        }
-        if (improvingMaxMPLevel > 0 && (job.isA(Job.MAGICIAN) || job.isA(Job.CRUSADER) || job.isA(Job.BLAZEWIZARD1))) {
-            addmp += improvingMaxMP.getEffect(improvingMaxMPLevel).getX();
-        }
-
-        if (YamlConfig.config.server.USE_RANDOMIZE_HPMP_GAIN) {
-            if (getJobStyle() == Job.MAGICIAN) {
-                addmp += localint_ / 20;
-            } else {
-                addmp += localint_ / 10;
-            }
-        }
-
-        addMaxMPMaxHP(addhp, addmp, true);
+        HpMpGrowthPolicy.Growth levelGrowth = HpMpGrowthPolicy.levelGain(job);
+        HpMpGrowthPolicy.Growth oldPassiveBonus = totalRetroactivePassiveBonus(level);
+        HpMpGrowthPolicy.Growth newPassiveBonus = totalRetroactivePassiveBonus(level + 1);
+        HpMpGrowthPolicy.Growth passiveGrowth = newPassiveBonus.minus(oldPassiveBonus);
+        HpMpGrowthPolicy.Growth totalGrowth = levelGrowth.plus(passiveGrowth);
+        addMaxMPMaxHP(totalGrowth.hp(), totalGrowth.mp(), true);
 
         if (takeexp) {
             exp.addAndGet(-ExpTable.getExpNeededForLevel(level));
@@ -7148,9 +7145,9 @@ public class Character extends AbstractCharacterObject {
         ret.int_ = this.getInt();
         ret.luk = this.getLuk();
         ret.hp = this.getHp();
-        ret.setMaxHp(this.getMaxHp());
+        ret.setMaxHp(this.getRawMaxHp());
         ret.mp = this.getMp();
-        ret.setMaxMp(this.getMaxMp());
+        ret.setMaxMp(this.getRawMaxMp());
         ret.remainingAp = this.getRemainingAp();
         ret.setRemainingSp(this.getRemainingSps());
         ret.exp.set(this.getExp());
@@ -8534,8 +8531,8 @@ public class Character extends AbstractCharacterObject {
                     ps.setInt(16, world);
                     ps.setInt(17, hp);
                     ps.setInt(18, mp);
-                    ps.setInt(19, maxhp);
-                    ps.setInt(20, maxmp);
+                    ps.setInt(19, rawmaxhp);
+                    ps.setInt(20, rawmaxmp);
                     ps.setInt(21, level);
                     ps.setInt(22, remainingAp);
 
@@ -8865,8 +8862,8 @@ public class Character extends AbstractCharacterObject {
                         ps.setInt(8, Math.abs(gachaexp.get()));
                         ps.setInt(9, hp);
                         ps.setInt(10, mp);
-                        ps.setInt(11, maxhp);
-                        ps.setInt(12, maxmp);
+                        ps.setInt(11, rawmaxhp);
+                        ps.setInt(12, rawmaxmp);
 
                         StringBuilder sps = new StringBuilder();
                         for (int j : remainingSp) {
@@ -9425,7 +9422,7 @@ public class Character extends AbstractCharacterObject {
             Map<Integer, SkillEntry> skillCopy = new LinkedHashMap<>();
             skills.forEach((skill, entry) -> skillCopy.put(skill.getId(), entry.persistenceCopy()));
             return new EconomyProgressionSnapshot(level, exp.get(), str, dex, int_, luk, hp, mp,
-                    maxhp, maxmp, remainingAp, remainingSp, lastExpGainTime,
+                    rawmaxhp, rawmaxmp, remainingAp, remainingSp, lastExpGainTime,
                     fame, quest_fame, skillCopy);
         } finally {
             statRlock.unlock();
@@ -9439,7 +9436,8 @@ public class Character extends AbstractCharacterObject {
         try {
             level = snapshot.level(); exp.set(snapshot.experience()); str = snapshot.str();
             dex = snapshot.dex(); int_ = snapshot.intelligence(); luk = snapshot.luk();
-            hp = snapshot.hp(); mp = snapshot.mp(); maxhp = snapshot.maxHp(); maxmp = snapshot.maxMp();
+            setMaxHp(snapshot.maxHp()); setMaxMp(snapshot.maxMp());
+            hp = Math.min(snapshot.hp(), maxhp); mp = Math.min(snapshot.mp(), maxmp);
             remainingAp = snapshot.remainingAp(); remainingSp = snapshot.remainingSp();
             lastExpGainTime = snapshot.lastExpGainTime();
             fame = snapshot.fame(); quest_fame = snapshot.questFame();
@@ -9918,8 +9916,8 @@ public class Character extends AbstractCharacterObject {
             luk = 4;
             remainingAp = 0;
             Arrays.fill(remainingSp, 0);
-            maxhp = 50;
-            maxmp = 5;
+            setMaxHp(50);
+            setMaxMp(5);
             hp = maxhp;
             mp = maxmp;
             meso.set(0);
@@ -9998,8 +9996,8 @@ public class Character extends AbstractCharacterObject {
             remainingAp = availableAp;
             Arrays.fill(remainingSp, 0);
             hpMpApUsed = 0;
-            maxhp = 140 - ((10 - startLevel) * 14);
-            maxmp = 50 - ((10 - startLevel) * 11);
+            setMaxHp(140 - ((10 - startLevel) * 14));
+            setMaxMp(50 - ((10 - startLevel) * 11));
             hp = maxhp;
             mp = maxmp;
             meso.set(startingMesos);
@@ -10054,10 +10052,10 @@ public class Character extends AbstractCharacterObject {
             System.arraycopy(baselineSp, 0, remainingSp, 0,
                     Math.min(baselineSp.length, remainingSp.length));
             hpMpApUsed = 0;
-            maxhp = state.maxHp();
-            maxmp = state.maxMp();
-            hp = state.hp();
-            mp = state.mp();
+            setMaxHp(state.maxHp());
+            setMaxMp(state.maxMp());
+            hp = Math.min(state.hp(), maxhp);
+            mp = Math.min(state.mp(), maxmp);
             meso.set(state.mesos());
             skills.clear();
             removeAllCooldownsExcept(-1, false);
@@ -10086,7 +10084,7 @@ public class Character extends AbstractCharacterObject {
             }
             for (VictoriaCheckpointBaseline.SkillState skillState : baseline.skills()) {
                 Skill skill = SkillFactory.getSkill(skillState.skillId());
-                changeSkillLevel(skill, (byte) skillState.level(), skillState.masterLevel(), -1);
+                restoreFixtureSkillLevel(skill, skillState.level(), skillState.masterLevel());
             }
 
             recalcLocalStats();
@@ -10097,6 +10095,15 @@ public class Character extends AbstractCharacterObject {
             statWlock.unlock();
             effLock.unlock();
         }
+    }
+
+    void restoreFixtureSkillLevel(Skill skill, int skillLevel, int masterLevel) {
+        if (skill == null || skillLevel < 0 || skillLevel > skill.getMaxLevel()) {
+            throw new IllegalStateException("invalid skill in character fixture");
+        }
+        // Fixture pools already include every captured effect. Store the skill
+        // snapshot without invoking the gameplay mutation and its passive delta.
+        skills.put(skill, new SkillEntry((byte) skillLevel, masterLevel, -1));
     }
 
     /** Test-fixture mutation restoring AmherstRun immediately after the validated Amherst MVP. */
@@ -10123,10 +10130,10 @@ public class Character extends AbstractCharacterObject {
             int[] baselineSp = state.remainingSp();
             System.arraycopy(baselineSp, 0, remainingSp, 0, Math.min(baselineSp.length, remainingSp.length));
             hpMpApUsed = 0;
-            maxhp = state.maxHp();
-            maxmp = state.maxMp();
-            hp = state.hp();
-            mp = state.mp();
+            setMaxHp(state.maxHp());
+            setMaxMp(state.maxMp());
+            hp = Math.min(state.hp(), maxhp);
+            mp = Math.min(state.mp(), maxmp);
             meso.set(state.mesos());
             skinColor = SkinColor.getById(state.skinColorId());
             gender = state.gender();

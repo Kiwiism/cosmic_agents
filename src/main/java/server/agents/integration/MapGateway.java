@@ -2,6 +2,7 @@ package server.agents.integration;
 
 import client.Character;
 import server.maps.MapleMap;
+import server.maps.MapItem;
 
 import java.awt.Point;
 
@@ -37,5 +38,7 @@ public interface MapGateway {
     int activeCharacterCountIfLoaded(int world, int channel, int mapId);
 
     Point pointBelow(MapleMap map, Point position);
+
+    void removeItemDrop(MapleMap map, MapItem drop, int animation, int fromCharacterId);
 }
 

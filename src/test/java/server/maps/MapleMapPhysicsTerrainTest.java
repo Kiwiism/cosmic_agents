@@ -29,4 +29,17 @@ class MapleMapPhysicsTerrainTest {
         assertTrue(segment.forbidFallDown());
         assertEquals(90.0, segment.groundY(0.0), 1.0e-12);
     }
+
+    @Test
+    void findBelowOrdersOverlappingFootholdsByTheirHeightAtTheQueryX() {
+        FootholdTree tree = new FootholdTree(new Point(-200, -200), new Point(200, 300));
+        tree.insert(new Foothold(new Point(-100, 100), new Point(100, 100), 1));
+        tree.insert(new Foothold(new Point(-100, 50), new Point(100, 150), 2));
+        tree.insert(new Foothold(new Point(-100, 80), new Point(100, 80), 3));
+
+        Foothold below = tree.findBelow(new Point(0, 0));
+
+        assertNotNull(below);
+        assertEquals(3, below.getId());
+    }
 }

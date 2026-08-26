@@ -1938,6 +1938,9 @@ class BotCombatManagerTest {
         when(bot.getTotalWatk()).thenReturn(100);
         when(bot.getEnergyBar()).thenReturn(0);
         when(bot.getAllBuffs()).thenReturn(Collections.emptyList());
+        // Mockito returns numeric zero for an unstubbed boxed Integer, but the live
+        // Character API uses null to mean that a buff is absent.
+        when(bot.getBuffedValue(any(BuffStat.class))).thenReturn(null);
         when(bot.calculateMaxBaseDamage(anyInt())).thenReturn(1_000);
         when(bot.calculateMinBaseDamage(anyInt())).thenReturn(500);
         when(bot.getInventory(InventoryType.EQUIPPED)).thenReturn(equipped);
@@ -2084,6 +2087,22 @@ class BotCombatManagerTest {
                     || AgentCombatSkillCacheStateRuntime.aoeSkillId(entry) == skillId,
                     "unexpected cached attack " + skillId);
         }
+    }
+
+    @Test
+    void darkSightNegatesAgentMobContactDamageAndKnockback() {
+        MapleMap map = mock(MapleMap.class);
+        Character bot = mockBot(new Point(100, 200), map, 20_000, null);
+        when(bot.getBuffedValue(BuffStat.DARKSIGHT)).thenReturn(1);
+        Monster mob = mockMob(new Point(140, 200), 9300013);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
+
+        runWithStubbedBotAfter(() ->
+                AgentCombatDamageRuntime.applyMobHit(entry, bot, mob, AgentCombatConfig.cfg));
+
+        verify(bot, never()).addMPHPAndTriggerAutopot(anyInt(), anyInt());
+        assertFalse(AgentMovementStateRuntime.inAir(entry));
+        assertDamageDirection(map, bot, 1, 0);
     }
 
     private static void rebuildSkillCacheWithWeapon(AgentRuntimeEntry entry,

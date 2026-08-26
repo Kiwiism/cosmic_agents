@@ -12,7 +12,8 @@ import java.util.List;
 
 /** Mixed-party KPQ guidance driven by authoritative session and NPC state. */
 public final class AgentKpqHumanDialogueRuntime {
-    private static final long CHAT_RESPONSE_COOLDOWN_MS = 2_500L;
+    private static final long CHAT_RESPONSE_COOLDOWN_MS = config.AgentTuning.longValue(
+            "server.agents.capabilities.partyquest.kpq.AgentKpqHumanDialogueRuntime.CHAT_RESPONSE_COOLDOWN_MS");
     private static final long RESPONSE_MINIMUM_MS = config.AgentTuning.longValue(
             "server.agents.capabilities.partyquest.kpq.AgentKpqHumanDialogueRuntime.RESPONSE_MINIMUM_MS");
     private static final long RESPONSE_MAXIMUM_MS = config.AgentTuning.longValue(

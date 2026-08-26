@@ -28,10 +28,14 @@ public final class AgentMushroomKingdomRuntime {
     private static final long INTERACTION_RETRY_MS = config.AgentTuning.longValue(
             "server.agents.progression.AgentMushroomKingdomRuntime.INTERACTION_RETRY_MS");
     private static final long OBJECTIVE_TIMEOUT_MS = 45 * 60_000L;
-    private static final long UNOBSERVED_NPC_STAGING_DELAY_MS = 20_000L;
-    private static final long BOSS_INSTANCE_RETRY_MS = 5_000L;
-    private static final double SCRIPTED_PORTAL_INTERACTION_DISTANCE_PX = 160.0d;
-    private static final int BELOW_MAP_RECOVERY_MARGIN_PX = 180;
+    private static final long UNOBSERVED_NPC_STAGING_DELAY_MS = config.AgentTuning.longValue(
+            "server.agents.progression.AgentMushroomKingdomRuntime.UNOBSERVED_NPC_STAGING_DELAY_MS");
+    private static final long BOSS_INSTANCE_RETRY_MS = config.AgentTuning.longValue(
+            "server.agents.progression.AgentMushroomKingdomRuntime.BOSS_INSTANCE_RETRY_MS");
+    private static final double SCRIPTED_PORTAL_INTERACTION_DISTANCE_PX = config.AgentTuning.doubleValue(
+            "server.agents.progression.AgentMushroomKingdomRuntime.SCRIPTED_PORTAL_INTERACTION_DISTANCE_PX");
+    private static final int BELOW_MAP_RECOVERY_MARGIN_PX = config.AgentTuning.intValue(
+            "server.agents.progression.AgentMushroomKingdomRuntime.BELOW_MAP_RECOVERY_MARGIN_PX");
     private static final int SNIPER_PILL_ITEM_ID = 2_002_008;
     private static final int FIRST_THORN_WALL_PORTAL_ID = 3;
     static final int FIRST_THORN_BARRIER_UNLOCK_QUEST_ID = 30_000;

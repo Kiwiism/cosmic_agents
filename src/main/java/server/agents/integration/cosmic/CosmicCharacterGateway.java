@@ -81,6 +81,11 @@ public enum CosmicCharacterGateway implements CharacterGateway {
     }
 
     @Override
+    public boolean hasLiveClient(Character character) {
+        return character != null && character.getClient() != null;
+    }
+
+    @Override
     public boolean isHeadlessControlled(Character character) {
         return character != null && character.getClient() instanceof BotClient;
     }

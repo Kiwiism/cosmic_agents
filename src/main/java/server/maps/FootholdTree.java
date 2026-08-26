@@ -23,7 +23,7 @@ package server.maps;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -162,7 +162,13 @@ public class FootholdTree {
     public Foothold findBelow(Point p) {
         List<Foothold> xMatches = new ArrayList<>();
         collectXMatches(p, xMatches);
-        Collections.sort(xMatches);
+        // Foothold.compareTo compares overlapping vertical spans as equal, which is
+        // not transitive for a mixed set of slopes and horizontals. Large tower maps
+        // can therefore make TimSort reject the comparison contract. At a fixed x,
+        // findBelow only needs the actual crossing height, so sort by that total key.
+        xMatches.sort(Comparator
+                .comparingDouble((Foothold foothold) -> footingY(foothold, p.x))
+                .thenComparingInt(Foothold::getId));
         for (Foothold fh : xMatches) {
             if (!fh.isWall()) {
                 if (fh.getY1() != fh.getY2()) {
@@ -189,6 +195,15 @@ public class FootholdTree {
             }
         }
         return null;
+    }
+
+    private static double footingY(Foothold foothold, int x) {
+        if (foothold.isWall()) return Double.POSITIVE_INFINITY;
+        int dx = foothold.getX2() - foothold.getX1();
+        if (dx == 0) return Double.POSITIVE_INFINITY;
+        return foothold.getY1()
+                + (double) (foothold.getY2() - foothold.getY1())
+                * (x - foothold.getX1()) / dx;
     }
 
     public int getX1() {

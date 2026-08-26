@@ -58,3 +58,5 @@ nul
 /exports/
 /tools/WzToNxBatch/bin/
 /tools/WzToNxBatch/obj/
+/tools/string-cleanup/ServerXmlToImg/bin/
+/tools/string-cleanup/ServerXmlToImg/obj/

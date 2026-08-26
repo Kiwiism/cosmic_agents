@@ -15,6 +15,7 @@ import server.agents.capabilities.partyquest.kpq.AgentKpqKnockbackDirectionPolic
 import server.agents.capabilities.combat.data.AgentDefenseDataProvider;
 import server.agents.integration.AgentPacketGatewayRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.combat.PhysicalContactDamagePolicy;
 import server.life.Monster;
 
 import java.awt.Point;
@@ -82,6 +83,11 @@ public final class AgentCombatDamageRuntime {
                                     int broadcastDirection, int knockbackAirVelX,
                                     AgentCombatConfig.Config config) {
         Point botPos = bot.getPosition();
+
+        if (PhysicalContactDamagePolicy.isNegated(
+                damageFrom, bot.getBuffedValue(BuffStat.DARKSIGHT) != null)) {
+            dmg = 0;
+        }
 
         if (dmg <= 0) {
             AgentPacketGatewayRuntime.packets().broadcastDamagePlayer(

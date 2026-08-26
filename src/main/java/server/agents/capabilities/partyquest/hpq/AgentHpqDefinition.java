@@ -3,6 +3,7 @@ package server.agents.capabilities.partyquest.hpq;
 import java.awt.Point;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /** Authoritative local Henesys PQ content contract. */
 public final class AgentHpqDefinition {
@@ -19,6 +20,12 @@ public final class AgentHpqDefinition {
     public static final int MOON_BUNNY = 9_300_061;
     public static final int RICE_CAKE = 4_001_101;
     public static final int REQUIRED_RICE_CAKES = 10;
+    public static final int FLOWER_DROP_X_PX = 18;
+    public static final int FLOWER_DROP_Y_PX = 40;
+
+    /** Breakable primroses that produce the six seed colors used by the flower beds. */
+    public static final Set<Integer> SEED_SOURCE_REACTORS = Set.of(
+            9_102_002, 9_102_003, 9_102_004, 9_102_005, 9_102_006, 9_102_007);
 
     public static final Point MOON_BUNNY_POSITION = new Point(-183, -433);
 

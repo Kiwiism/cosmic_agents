@@ -754,6 +754,10 @@ tuning:
     # Purpose: Controls how closely an HPQ seed planter approaches its matching moonflower bed before dropping one seed.
     # Technical: AgentHpqCoordinator applies this threshold only to authored HPQ reactor geometry and does not alter shared navigation precision or another PQ.
     server.agents.capabilities.partyquest.hpq.AgentHpqCoordinator.REACTOR_DROP_RADIUS_PX: '55'
+    # Values: 1000-15000 milliseconds. Recommended: 6000 so the ordinary moonflower reactor has time to consume one dropped seed.
+    # Purpose: Prevents an HPQ planter from dropping another seed while the matching moonflower activation is still resolving.
+    # Technical: AgentHpqMemberState owns this per-planter deadline after the normal inventory drop and no reactor state or item reward is synthesized by the coordinator.
+    server.agents.capabilities.partyquest.hpq.AgentHpqCoordinator.FLOWER_ACTIVATION_WAIT_MS: '6000'
     # Values: 500-5000 milliseconds. Recommended: 3000.
     # Purpose: Allows one live HPQ Agent to coordinate the party while another takes over after a stalled heartbeat.
     # Technical: AgentHpqSession owns and renews this execution lease; KPQ, LPQ, and OPQ retain independent coordinator identities, leases, and failover timing.
@@ -823,18 +827,78 @@ tuning:
     # Purpose: Fails an LPQ phase that has made no observable progress instead of leaving a private event and its party orphaned indefinitely.
     # Technical: AgentLpqCoordinator compares this LPQ session's progress clock only; the event script remains authoritative for the overall 45-minute timeout.
     server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.PHASE_TIMEOUT_MS: '600000'
+    # Values: jms or gms. Recommended: jms for the shorter physical movement order.
+    # Purpose: Selects the player-authored Stage 8 box-combination attempt method used by LPQ Agents.
+    # Technical: JMS enumerates five-of-nine combinations over 1,3,6,7,4,8,2,5,9; GMS enumerates them over 1,2,3,4,5,6,7,8,9. No other PQ reads this setting.
+    server.agents.capabilities.partyquest.lpq.AgentLpqCombinationOrder.STAGE_8_ATTEMPT_ORDER: 'jms'
+    # Values: 1000-15000 milliseconds. Recommended: 5000 to make the assembled party visible before entry.
+    # Purpose: Gives LPQ parties a short, observable lobby countdown after all six members gather at the Red Sign.
+    # Technical: The isolated LPQ session owns this deadline; fixture job advancement finishes off-screen before Agents enter the recruitment map.
+    server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.PREPARATION_DELAY_MS: '5000'
     # Values: 500-3000 milliseconds. Recommended: 1200 to let ordinary reactors, NPC scripts, and item drops settle between repeated actions.
     # Purpose: Prevents LPQ Agents from flooding the same authored interaction while still allowing responsive box, submission, and combination attempts.
     # Technical: AgentLpqMemberState owns each deadline and AgentLpqCoordinator consumes it only inside the isolated LPQ aggregate and test session.
     server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.INTERACTION_RETRY_MS: '1200'
+    # Values: 10000-120000 milliseconds. Recommended: 30000 so authored NPC navigation remains the primary submission path.
+    # Purpose: Submits a complete LPQ pass set through the stage balloon if leader navigation remains stalled after the party is ready.
+    # Technical: Recovery invokes the same stage NPC script and cannot run until the leader holds the authored submission count continuously for this interval.
+    server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.SUBMISSION_RECOVERY_GRACE_MS: '30000'
     # Values: 10000-120000 milliseconds. Recommended: 30000 so disconnected or abandoned split rooms can be reassigned without rapid duplication.
     # Purpose: Bounds ownership of Stage 4 and Stage 5 room assignments while allowing active human or Agent runners to retain their selected room.
     # Technical: AgentLpqRoomAssignment refreshes this lease from observed room presence and releases only the LPQ-local reservation, never another PQ's work.
     server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.ROOM_LEASE_MS: '30000'
+    # Values: 30000-120000 milliseconds. Recommended: 45000 so real split-room movement remains primary without adding a multi-minute handoff stall.
+    # Purpose: Recovers an LPQ collection stage only after the party-wide pass count has stopped changing for a bounded interval.
+    # Technical: Recovery first transfers real member-held passes and vacuums real drops; mob/drop recovery and an exact missing award occur only in later bounded passes.
+    server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.MISSING_PASS_GRACE_MS: '45000'
+    # Values: 5000-60000 milliseconds. Recommended: 15000 so the leader visibly sweeps Stage 7 before unreachable drops are recovered.
+    # Purpose: Bounds how long cleared Stage 7 passes may remain on the map after all trigger boxes and Rombards are gone.
+    # Technical: The leader follows the authored sweep first; the fallback atomically transfers only existing pass drops and never creates passes.
+    server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.STAGE_7_FORCE_LOOT_DELAY_MS: '15000'
+    # Values: 10000-120000 milliseconds. Recommended: 30000 to preserve the authored Stage 2 return portal as the normal route.
+    # Purpose: Returns Agents from the Stage 2 trap room only when ordinary ladder and portal navigation remains stalled.
+    # Technical: Recovery changes maps inside the same LPQ event instance and does not alter any other PQ portal behavior.
+    server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.PORTAL_RECOVERY_GRACE_MS: '30000'
+    # Values: 45000-180000 milliseconds. Recommended: 90000 so normal navgraph traversal remains authoritative.
+    # Purpose: Bounds how long a committed LPQ reactor target may remain unreachable before the Agent retries the same authored hit remotely.
+    # Technical: The fallback is Agent-only, retains the committed reactor object ID, and reactor scripts remain atomically guarded against duplicate human or Agent execution.
+    server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.REACTOR_TARGET_RECOVERY_GRACE_MS: '90000'
+    # Values: 30000-90000 milliseconds. Recommended: 45000 to allow every authored LPQ ladder route while avoiding two-minute stalls.
+    # Purpose: Recovers an Agent that stops making measurable forward progress toward an authored stage or split-room exit.
+    # Technical: AgentLpqMemberState owns an independent source-map, destination-map, and best-distance clock; ordinary movement resets this timer before any same-event force-warp is allowed.
+    server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.STAGE_TRAVERSAL_RECOVERY_GRACE_MS: '45000'
     # Values: 40-140 map pixels. Recommended: 75 for the local LPQ NPC, portal, reactor, and pass-handoff geometry.
     # Purpose: Controls how close an LPQ Agent approaches an authored interaction point before executing the corresponding ordinary server action.
     # Technical: AgentLpqCoordinator applies this threshold after LPQ navigation and does not change global path precision, attack reach, or other PQ interaction ranges.
     server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.INTERACTION_RADIUS_PX: '75'
+    # Values: 500-5000 milliseconds. Recommended: 2000 so late bonus reactor drops settle without consuming meaningful bonus time.
+    # Purpose: Requires an LPQ bonus map to remain drained briefly before Agents leave for the clear lobby.
+    # Technical: AgentLpqSession resets this clock whenever any live reactor, box, or unpicked drop reappears, so it never grants or removes bonus loot.
+    server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.BONUS_DRAIN_SETTLE_MS: '2000'
+    # Values: 5000-30000 milliseconds. Recommended: 10000 to refresh Dark Sight before the Stage 5 hazard can expire it.
+    # Purpose: Reserves enough remaining Dark Sight duration for the assigned thief to traverse the King Block Golem hazard safely.
+    # Technical: The coordinator compares the authoritative buff start and WZ-derived duration, then recasts through the normal combat buff runtime at a safe location.
+    server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.DARK_SIGHT_REFRESH_WINDOW_MS: '10000'
+    # Values: 5000-30000 milliseconds. Recommended: 15000 to distinguish closed-eye invulnerability from a genuinely stalled Stage 4 attack.
+    # Purpose: Releases and retries an unchanged Stage 4 eye-monster target after authoritative HP fails to decrease for a bounded interval.
+    # Technical: The per-member room combat observation requires the same map, object ID, and HP before this clock can trigger a normal grind-target reselection.
+    server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.STAGE_4_COMBAT_STALL_MS: '15000'
+    # Values: 250-3000 milliseconds. Recommended: 750 to avoid immediately selecting the same closed-eye Stage 4 monster again.
+    # Purpose: Adds a short pause between a detected Stage 4 no-damage stall and the next legal combat target-selection attempt.
+    # Technical: AgentLpqMemberState owns this retry deadline, while all subsequent attacks still pass through shared combat legality, hitbox, and transaction handling.
+    server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.STAGE_4_EYE_RETRY_MS: '750'
+    # Values: 100-500 map pixels. Recommended: 250 so HP-stall observations apply only when the assigned room monster is locally engageable.
+    # Purpose: Prevents distant Stage 4 navigation time from being misclassified as a failed authoritative combat transaction.
+    # Technical: The coordinator squares this configured map-pixel radius only for the local target-position comparison and does not widen any attack hitbox.
+    server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.STAGE_4_STALL_OBSERVATION_RANGE_PX: '250'
+    # Values: 5000-60000 milliseconds. Recommended: 10000 for useful split-room diagnostics without per-tick log noise.
+    # Purpose: Periodically records LPQ room reactor, monster, pass, loose-drop, and active-target progress while a room remains assigned.
+    # Technical: AgentLpqMemberState suppresses identical signatures until this interval elapses; changed authoritative room state is reported immediately.
+    server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.ROOM_PROGRESS_LOG_INTERVAL_MS: '10000'
+    # Values: true or false. Recommended: true for the authored LPQ Stage 5 route.
+    # Purpose: Lets the assigned LPQ Teleport runner traverse the Stage 5 entrance and Teleport room without activating Teleport navigation globally.
+    # Technical: Only maps 922010500 and 922010501 receive Teleport graph edges, and execution still requires an active Stage 5 LPQ Agent assigned the TELEPORT_RUNNER role, a learned skill, field permission, MP reserve, and cooldown eligibility.
+    server.agents.capabilities.partyquest.lpq.AgentLpqMovementSkillPolicy.ENABLE_TELEPORT_NAVIGATION: 'true'
     # Values: 500-5000 milliseconds. Recommended: 3000 for prompt LPQ coordinator failover without allowing two Agents to drive the party concurrently.
     # Purpose: Grants one live LPQ Agent temporary authority to coordinate the party while permitting another participant to take over after a stalled tick.
     # Technical: AgentLpqSession stores this LPQ-only execution lease; HPQ, KPQ, OPQ, and shared lobby ownership use independent state and timing.
@@ -851,6 +915,10 @@ tuning:
     # Purpose: Selects the legal test-fixture level for role-covered LPQ observation parties while production Agents retain their real progression state.
     # Technical: AgentLpqTestFixtureService applies this level through the existing second-job build pipeline and admission revalidates the authored LPQ range.
     server.agents.field.AgentLpqTestFixtureService.LPQ_START_LEVEL: '45'
+    # Values: 60-10000 mesos. Recommended: 1000 so all six fixtures can visibly mark Stage 4 and Stage 5 doors.
+    # Purpose: Ensures an LPQ observation fixture has enough mesos for every authored ten-meso split-room marker in a complete run.
+    # Technical: AgentLpqTestFixtureService grants only the shortfall during GM fixture preparation; production Agents and human characters never read this value.
+    server.agents.field.AgentLpqTestFixtureService.ROOM_MARKER_MESO_RESERVE: '1000'
     # Values: a finite non-negative integer; unit: map pixels. Recommended: 40-160 around the tested baseline 80; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls the distance or margin used for attack range horizontal. Higher values allow action from farther away or leave more space; lower values require closer, more precise positioning.
     # Technical: the "combat config" component consumes this as an integer. Unit: MapleStory map pixels; horizontal and vertical values use the server map coordinate system.
@@ -1770,6 +1838,10 @@ tuning:
     # Purpose: Caps the varied delay before an Agent leader responds and sends its party invitation.
     # Technical: The deterministic delay is seeded by the lobby and both character IDs, so retries remain bounded and reproducible.
     server.agents.capabilities.partyquest.lobby.AgentPartyQuestLobbyRuntime.INVITE_RESPONSE_MAXIMUM_MS: '1800'
+    # Values: 1000-10000 milliseconds. Recommended: 2500 to prevent duplicate replies to the same human coupon question.
+    # Purpose: Claims one bounded KPQ dialogue response window before scheduling an Agent answer to a human party member.
+    # Technical: AgentKpqSession scopes the claim by human character and task key, independently of ordinary coordinator combat and coupon collection ticks.
+    server.agents.capabilities.partyquest.kpq.AgentKpqHumanDialogueRuntime.CHAT_RESPONSE_COOLDOWN_MS: '2500'
     # Values: 250-5000 milliseconds. Recommended: 900. Keep this below RESPONSE_MAXIMUM_MS.
     # Purpose: Prevents an Agent from answering a human KPQ coupon question on the same instant as the chat message.
     # Technical: The response is scheduled through the shared Agent scheduler and revalidates the live Stage 1 session before speaking.
@@ -2980,6 +3052,34 @@ tuning:
     # Purpose: Prevents repeated Mushroom Kingdom NPC and portal actions from firing every scheduler tick.
     # Technical: Applies after a headless quest interaction or recoverable capability failure and is compared against the runtime clock before retrying.
     server.agents.progression.AgentMushroomKingdomRuntime.INTERACTION_RETRY_MS: '650'
+    # Values: 5000-60000 milliseconds. Recommended: 20000 before staging an unobserved Agent beside an otherwise unreachable NPC.
+    # Purpose: Preserves visible navigation for Mushroom Kingdom NPC interactions while bounding headless fixture stalls on malformed geometry.
+    # Technical: The runtime requires no observing player and unchanged objective progress before using the ordinary grounded NPC staging adapter after this delay.
+    server.agents.progression.AgentMushroomKingdomRuntime.UNOBSERVED_NPC_STAGING_DELAY_MS: '20000'
+    # Values: 1000-15000 milliseconds. Recommended: 5000 to allow the Prime Minister instance transfer to settle before another portal request.
+    # Purpose: Prevents repeated Mushroom Kingdom boss-instance portal entry attempts while the prior authored transfer remains pending.
+    # Technical: The objective state owns the next-action deadline and revalidates the live map and quest phase before the runtime can try the portal again.
+    server.agents.progression.AgentMushroomKingdomRuntime.BOSS_INSTANCE_RETRY_MS: '5000'
+    # Values: 80-300 map pixels. Recommended: 160 for scripted Mushroom Kingdom portals whose sprite origin differs from their walkable approach.
+    # Purpose: Controls the final grounded approach distance before an Agent invokes a scripted Mushroom Kingdom portal interaction.
+    # Technical: The value affects only the portal-distance check; shared navigation, collision portals, and NPC interaction reachability retain independent bounds.
+    server.agents.progression.AgentMushroomKingdomRuntime.SCRIPTED_PORTAL_INTERACTION_DISTANCE_PX: '160'
+    # Values: 50-500 map pixels. Recommended: 180 beyond the authored map rectangle before applying below-map recovery.
+    # Purpose: Avoids treating ordinary edge movement as a Mushroom Kingdom below-map fault while still recovering genuinely fallen Agents.
+    # Technical: The runtime compares live character Y with the loaded map-area bottom plus this margin before staging at the authored spawn portal.
+    server.agents.progression.AgentMushroomKingdomRuntime.BELOW_MAP_RECOVERY_MARGIN_PX: '180'
+    # Values: 60-300 map pixels. Recommended: 180 for Explorer instructor and job-advancement NPC sprite geometry.
+    # Purpose: Controls how close an Agent must approach a second-job advancement NPC before invoking its ordinary quest script.
+    # Technical: AgentSecondJobAdvancementRuntime passes this bound to the shared grounded NPC reachability service without changing any other progression flow.
+    server.agents.progression.AgentSecondJobAdvancementRuntime.INTERACTION_DISTANCE_PX: '180'
+    # Values: 5000-60000 milliseconds. Recommended: 15000 before discarding a stale second-job trial target and platform lease.
+    # Purpose: Rebalances a second-job trial only after its collected-item count stops changing for a bounded observation interval.
+    # Technical: The runtime preserves authoritative trial items and quest phase while clearing only Agent-owned combat, navigation, and target-selection state.
+    server.agents.progression.AgentSecondJobAdvancementRuntime.TRIAL_REBALANCE_MS: '15000'
+    # Values: 1000-10000 milliseconds. Recommended: 4000 to serialize full fixture snapshots and avoid overlapping quest-progress replacement transactions.
+    # Purpose: Spaces GM second-job cohort fixture launches so character preparation does not deadlock persistence work under one database connection pool.
+    # Technical: AgentSecondJobCohortService multiplies this delay by each fixture ordinal on the shared scheduler; ordinary second-job advancement does not read it.
+    server.agents.progression.AgentSecondJobCohortService.SPAWN_STAGGER_MS: '4000'
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 250-1000 around the tested baseline 450.
     # Purpose: Spaces Mushroom Kingdom cohort launches to reduce simultaneous character and navigation initialization pressure.
     # Technical: Multiplies each cohort member's zero-based ordinal to schedule one launch on the shared Agent scheduler without blocking its caller.

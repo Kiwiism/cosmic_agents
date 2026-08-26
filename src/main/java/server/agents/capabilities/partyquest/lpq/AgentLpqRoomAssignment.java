@@ -2,11 +2,14 @@ package server.agents.capabilities.partyquest.lpq;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 /** Session-owned reservations for LPQ split rooms. */
 public final class AgentLpqRoomAssignment {
+    public record ExpiredReservation(int roomMapId, int characterId) { }
+
     private final Map<Integer, Integer> memberByRoom = new LinkedHashMap<>();
     private final Map<Integer, Long> progressAtByRoom = new LinkedHashMap<>();
     private final Set<Integer> completedRooms = new LinkedHashSet<>();
@@ -15,6 +18,7 @@ public final class AgentLpqRoomAssignment {
         if (roomMapId <= 0 || characterId <= 0 || nowMs < 0L) {
             throw new IllegalArgumentException("valid LPQ room reservation values are required");
         }
+        if (completedRooms.contains(roomMapId)) return false;
         Integer owner = memberByRoom.get(roomMapId);
         if (owner != null && owner != characterId) return false;
         memberByRoom.put(roomMapId, characterId);
@@ -36,13 +40,16 @@ public final class AgentLpqRoomAssignment {
         completedRooms.add(roomMapId);
     }
 
-    public synchronized void releaseExpired(long nowMs, long leaseMs) {
+    public synchronized List<ExpiredReservation> releaseExpired(long nowMs, long leaseMs) {
+        java.util.ArrayList<ExpiredReservation> expired = new java.util.ArrayList<>();
         memberByRoom.entrySet().removeIf(entry -> {
             long progressAt = progressAtByRoom.getOrDefault(entry.getKey(), 0L);
             if (nowMs - progressAt < Math.max(1L, leaseMs)) return false;
+            expired.add(new ExpiredReservation(entry.getKey(), entry.getValue()));
             progressAtByRoom.remove(entry.getKey());
             return true;
         });
+        return List.copyOf(expired);
     }
 
     public synchronized Integer owner(int roomMapId) { return memberByRoom.get(roomMapId); }

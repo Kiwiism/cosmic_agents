@@ -15,6 +15,16 @@ import java.util.Optional;
 
 public class NoteService {
     private static final Logger log = LoggerFactory.getLogger(NoteService.class);
+    static final int MAX_PLAYER_NOTE_LENGTH = 200;
+    static final int MAX_UNREAD_PLAYER_NOTES = 100;
+
+    public enum PlayerNoteResult {
+        SUCCESS,
+        INVALID_RECIPIENT,
+        INVALID_MESSAGE,
+        INBOX_FULL,
+        FAILED
+    }
 
     private final NoteDao noteDao;
 
@@ -30,6 +40,35 @@ public class NoteService {
     public boolean sendNormal(String message, String senderName, String receiverName) {
         Note normalNote = Note.createNormal(message, senderName, receiverName, Server.getInstance().getCurrentTime());
         return send(normalNote);
+    }
+
+    /**
+     * Send a player-authored cash Note after validating client-controlled fields.
+     */
+    public PlayerNoteResult sendPlayerNote(String message, String senderName, String receiverName) {
+        if (receiverName == null || receiverName.isBlank() || receiverName.length() > 13) {
+            return PlayerNoteResult.INVALID_RECIPIENT;
+        }
+        if (message == null || message.isBlank() || message.length() > MAX_PLAYER_NOTE_LENGTH) {
+            return PlayerNoteResult.INVALID_MESSAGE;
+        }
+
+        try {
+            Optional<String> canonicalReceiver = noteDao.findCharacterName(receiverName);
+            if (canonicalReceiver.isEmpty()) {
+                return PlayerNoteResult.INVALID_RECIPIENT;
+            }
+            if (noteDao.countUnreadByTo(canonicalReceiver.get()) >= MAX_UNREAD_PLAYER_NOTES) {
+                return PlayerNoteResult.INBOX_FULL;
+            }
+
+            Note note = Note.createNormal(message, senderName, canonicalReceiver.get(), Server.getInstance().getCurrentTime());
+            noteDao.save(note);
+            return PlayerNoteResult.SUCCESS;
+        } catch (DaoException e) {
+            log.error("Failed to send player note from {} to {}", senderName, receiverName, e);
+            return PlayerNoteResult.FAILED;
+        }
     }
 
     /**

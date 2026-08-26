@@ -11,6 +11,36 @@ import java.util.Optional;
 
 public class NoteDao {
 
+    public Optional<String> findCharacterName(String name) {
+        try (Handle handle = DatabaseConnection.getHandle()) {
+            return handle.createQuery("""
+                            SELECT name
+                            FROM characters
+                            WHERE name = ?
+                            LIMIT 1""")
+                    .bind(0, name)
+                    .mapTo(String.class)
+                    .findOne();
+        } catch (JdbiException e) {
+            throw new DaoException("Failed to find character name: %s".formatted(name), e);
+        }
+    }
+
+    public int countUnreadByTo(String to) {
+        try (Handle handle = DatabaseConnection.getHandle()) {
+            return handle.createQuery("""
+                            SELECT COUNT(*)
+                            FROM notes
+                            WHERE `deleted` = 0
+                            AND `to` = ?""")
+                    .bind(0, to)
+                    .mapTo(Integer.class)
+                    .one();
+        } catch (JdbiException e) {
+            throw new DaoException("Failed to count notes sent to: %s".formatted(to), e);
+        }
+    }
+
     public void save(Note note) {
         try (Handle handle = DatabaseConnection.getHandle()) {
             handle.createUpdate("""

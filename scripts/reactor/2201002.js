@@ -25,6 +25,9 @@
  */
 
 function act() {
+    if (!rm.claimEventReactorAction("lpq")) {
+        return;
+    }
     rm.mapMessage(5, "Rombard has been summoned somewhere in the map.");
     rm.spawnMonster(9300010, 1, -211);
 }

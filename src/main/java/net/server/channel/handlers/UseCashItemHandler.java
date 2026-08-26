@@ -23,6 +23,7 @@ package net.server.channel.handlers;
 
 import client.Character;
 import client.Client;
+import client.HpMpGrowthPolicy;
 import client.Skill;
 import client.SkillFactory;
 import client.SkillMacro;
@@ -43,11 +44,14 @@ import client.inventory.manipulator.KarmaManipulator;
 import client.processor.npc.DueyProcessor;
 import client.processor.stat.AssignAPProcessor;
 import client.processor.stat.AssignSPProcessor;
+import client.processor.stat.SpResetPolicy;
 import config.YamlConfig;
 import constants.game.GameConstants;
 import constants.id.ItemId;
 import constants.id.MapId;
 import constants.inventory.ItemConstants;
+import constants.skills.Magician;
+import constants.skills.Warrior;
 import net.AbstractPacketHandler;
 import net.packet.InPacket;
 import net.packet.out.SendNoteSuccessPacket;
@@ -66,6 +70,7 @@ import server.maps.MapleMap;
 import server.maps.MapleTVEffect;
 import server.maps.PlayerShopItem;
 import service.NoteService;
+import service.NoteService.PlayerNoteResult;
 import tools.PacketCreator;
 import tools.Pair;
 
@@ -78,6 +83,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 public final class UseCashItemHandler extends AbstractPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(UseCashItemHandler.class);
+    static final int MAX_CHALKBOARD_MESSAGE_LENGTH = 100;
 
     private final NoteService noteService;
 
@@ -184,41 +190,69 @@ public final class UseCashItemHandler extends AbstractPacketHandler {
                 int SPFrom = p.readInt();
                 Skill skillSPTo = SkillFactory.getSkill(SPTo);
                 Skill skillSPFrom = SkillFactory.getSkill(SPFrom);
+                if (!SpResetPolicy.isValidTransfer(itemId, SPFrom, SPTo, player.getJob())
+                        || skillSPTo == null
+                        || skillSPFrom == null
+                        || !HpMpGrowthPolicy.hasPassivePrerequisite(player, SPTo)) {
+                    player.message("That SP Reset transfer is not valid for this job tier.");
+                    player.sendPacket(PacketCreator.enableActions());
+                    return;
+                }
                 byte curLevel = player.getSkillLevel(skillSPTo);
                 byte curLevelSPFrom = player.getSkillLevel(skillSPFrom);
-                if ((curLevel < skillSPTo.getMaxLevel()) && curLevelSPFrom > 0) {
-                    player.changeSkillLevel(skillSPFrom, (byte) (curLevelSPFrom - 1), player.getMasterLevel(skillSPFrom), -1);
-                    player.changeSkillLevel(skillSPTo, (byte) (curLevel + 1), player.getMasterLevel(skillSPTo), -1);
+                if (!SpResetPolicy.preservesHpMpPassivePrerequisites(
+                        SPFrom, curLevelSPFrom,
+                        player.getSkillLevel(Warrior.IMPROVED_MAXHP),
+                        player.getSkillLevel(Magician.IMPROVED_MAX_MP_INCREASE))) {
+                    player.message("That SP Reset would invalidate a learned HP/MP passive.");
+                    player.sendPacket(PacketCreator.enableActions());
+                    return;
+                }
+                if (curLevel >= skillSPTo.getMaxLevel() || curLevelSPFrom <= 0) {
+                    player.message("That SP Reset has no valid point to transfer.");
+                    player.sendPacket(PacketCreator.enableActions());
+                    return;
+                }
+                if (!player.changeSkillLevel(skillSPTo, (byte) (curLevel + 1),
+                        player.getMasterLevel(skillSPTo), -1)) {
+                    player.sendPacket(PacketCreator.enableActions());
+                    return;
+                }
+                if (!player.changeSkillLevel(skillSPFrom, (byte) (curLevelSPFrom - 1),
+                        player.getMasterLevel(skillSPFrom), -1)) {
+                    player.changeSkillLevel(skillSPTo, curLevel, player.getMasterLevel(skillSPTo), -1);
+                    player.sendPacket(PacketCreator.enableActions());
+                    return;
+                }
 
-                    // update macros, thanks to Arnah
-                    if ((curLevelSPFrom - 1) == 0) {
-                        boolean updated = false;
-                        for (SkillMacro macro : player.getMacros()) {
-                            if (macro == null) {
-                                continue;
-                            }
+                // update macros, thanks to Arnah
+                if ((curLevelSPFrom - 1) == 0) {
+                    boolean updated = false;
+                    for (SkillMacro macro : player.getMacros()) {
+                        if (macro == null) {
+                            continue;
+                        }
 
-                            boolean update = false;// cleaner?
-                            if (macro.getSkill1() == SPFrom) {
-                                update = true;
-                                macro.setSkill1(0);
-                            }
-                            if (macro.getSkill2() == SPFrom) {
-                                update = true;
-                                macro.setSkill2(0);
-                            }
-                            if (macro.getSkill3() == SPFrom) {
-                                update = true;
-                                macro.setSkill3(0);
-                            }
-                            if (update) {
-                                updated = true;
-                                player.updateMacros(macro.getPosition(), macro);
-                            }
+                        boolean update = false;// cleaner?
+                        if (macro.getSkill1() == SPFrom) {
+                            update = true;
+                            macro.setSkill1(0);
                         }
-                        if (updated) {
-                            player.sendMacros();
+                        if (macro.getSkill2() == SPFrom) {
+                            update = true;
+                            macro.setSkill2(0);
                         }
+                        if (macro.getSkill3() == SPFrom) {
+                            update = true;
+                            macro.setSkill3(0);
+                        }
+                        if (update) {
+                            updated = true;
+                            player.updateMacros(macro.getPosition(), macro);
+                        }
+                    }
+                    if (updated) {
+                        player.sendMacros();
                     }
                 }
             } else {
@@ -384,10 +418,22 @@ public final class UseCashItemHandler extends AbstractPacketHandler {
         } else if (itemType == 509) {
             String sendTo = p.readString();
             String msg = p.readString();
-            boolean sendSuccess = noteService.sendNormal(msg, player.getName(), sendTo);
-            if (sendSuccess) {
-                remove(c, position, itemId);
-                c.sendPacket(new SendNoteSuccessPacket());
+            PlayerNoteResult result = noteService.sendPlayerNote(msg, player.getName(), sendTo);
+            switch (result) {
+                case SUCCESS -> {
+                    remove(c, position, itemId);
+                    c.sendPacket(new SendNoteSuccessPacket());
+                }
+                case INVALID_RECIPIENT -> c.sendPacket(PacketCreator.noteError((byte) 1));
+                case INBOX_FULL -> c.sendPacket(PacketCreator.noteError((byte) 2));
+                case INVALID_MESSAGE -> {
+                    player.dropMessage(1, "Notes must contain between 1 and 200 characters.");
+                    c.sendPacket(PacketCreator.enableActions());
+                }
+                case FAILED -> {
+                    player.dropMessage(1, "The note could not be sent. Please try again later.");
+                    c.sendPacket(PacketCreator.enableActions());
+                }
             }
         } else if (itemType == 510) {
             player.getMap().broadcastMessage(PacketCreator.musicChange("Jukebox/Congratulation"));
@@ -466,7 +512,14 @@ public final class UseCashItemHandler extends AbstractPacketHandler {
                 return;
             }
 
-            player.setChalkboard(p.readString());
+            String message = p.readString();
+            if (!isValidChalkboardMessage(message)) {
+                player.dropMessage(1, "Chalkboard messages must contain between 1 and 100 characters.");
+                player.sendPacket(PacketCreator.enableActions());
+                return;
+            }
+
+            player.setChalkboard(message);
             player.getMap().broadcastMessage(PacketCreator.useChalkboard(player, false));
             player.sendPacket(PacketCreator.enableActions());
             //remove(c, position, itemId);  thanks Conrad for noticing chalkboards shouldn't be depleted upon use
@@ -491,6 +544,11 @@ public final class UseCashItemHandler extends AbstractPacketHandler {
             remove(c, position, itemId);
             c.sendPacket(PacketCreator.enableActions());
         } else if (itemType == 543) {
+            if (ItemConstants.isMapleLife(itemId)) {
+                player.dropMessage(1, "Maple Life character creation is disabled on this server.");
+                c.sendPacket(PacketCreator.enableActions());
+                return;
+            }
             if (itemId == ItemId.MAPLE_LIFE_B && !c.gainCharacterSlot()) {
                 player.dropMessage(1, "You have already used up all 12 extra character slots.");
                 c.sendPacket(PacketCreator.enableActions());
@@ -557,18 +615,30 @@ public final class UseCashItemHandler extends AbstractPacketHandler {
             p.readInt();
             int itemSlot = p.readInt();
             p.readInt();
-            final Equip equip = (Equip) player.getInventory(InventoryType.EQUIP).getItem((short) itemSlot);
-            if (equip.getVicious() >= 2 || player.getInventory(InventoryType.CASH).findById(ItemId.VICIOUS_HAMMER) == null) {
-                return;
+            c.lockClient();
+            try {
+                Item target = player.getInventory(InventoryType.EQUIP).getItem((short) itemSlot);
+                Item hammer = player.getInventory(InventoryType.CASH).getItem(position);
+                if (!(target instanceof Equip equip)
+                        || hammer == null
+                        || hammer.getItemId() != ItemId.VICIOUS_HAMMER
+                        || !ii.canUseViciousHammer(equip)) {
+                    c.sendPacket(PacketCreator.enableActions());
+                    return;
+                }
+
+                equip.setVicious(equip.getVicious() + 1);
+                equip.setUpgradeSlots(equip.getUpgradeSlots() + 1);
+                remove(c, position, itemId);
+                c.sendPacket(PacketCreator.enableActions());
+                c.sendPacket(PacketCreator.sendHammerData(equip.getVicious()));
+                player.forceUpdateItem(equip);
+            } finally {
+                c.unlockClient();
             }
-            equip.setVicious(equip.getVicious() + 1);
-            equip.setUpgradeSlots(equip.getUpgradeSlots() + 1);
-            remove(c, position, itemId);
-            c.sendPacket(PacketCreator.enableActions());
-            c.sendPacket(PacketCreator.sendHammerData(equip.getVicious()));
-            player.forceUpdateItem(equip);
         } else if (itemType == 561) { //VEGA'S SPELL
             if (p.readInt() != 1) {
+                c.sendPacket(PacketCreator.enableActions());
                 return;
             }
 
@@ -576,24 +646,24 @@ public final class UseCashItemHandler extends AbstractPacketHandler {
             final Item eitem = player.getInventory(InventoryType.EQUIP).getItem(eSlot);
 
             if (p.readInt() != 2) {
+                c.sendPacket(PacketCreator.enableActions());
                 return;
             }
 
             final byte uSlot = (byte) p.readInt();
             final Item uitem = player.getInventory(InventoryType.USE).getItem(uSlot);
-            if (eitem == null || uitem == null) {
+            if (!(eitem instanceof Equip toScroll)
+                    || uitem == null
+                    || !ii.isVegaCompatible(uitem.getItemId(), itemId)) {
+                c.sendPacket(PacketCreator.sendVegaScroll(0x42));
+                c.sendPacket(PacketCreator.enableActions());
                 return;
             }
 
-            Equip toScroll = (Equip) eitem;
             if (toScroll.getUpgradeSlots() < 1) {
                 c.sendPacket(PacketCreator.getInventoryFull());
+                c.sendPacket(PacketCreator.enableActions());
                 return;
-            }
-
-            //should have a check here against PE hacks
-            if (itemId / 1000000 != 5) {
-                itemId = 0;
             }
 
             player.toggleBlockCashShop();
@@ -652,6 +722,10 @@ public final class UseCashItemHandler extends AbstractPacketHandler {
         } finally {
             cashInv.unlockInventory();
         }
+    }
+
+    static boolean isValidChalkboardMessage(String message) {
+        return message != null && !message.isBlank() && message.length() <= MAX_CHALKBOARD_MESSAGE_LENGTH;
     }
 
     private static boolean getIncubatedItem(Client c, int id) {

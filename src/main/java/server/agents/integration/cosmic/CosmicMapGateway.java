@@ -11,8 +11,10 @@ import server.agents.events.AgentEventPriority;
 import server.agents.operations.events.AgentMapTransitionedEvent;
 import server.agents.operations.events.AgentOperationalEventPublisher;
 import server.maps.MapleMap;
+import server.maps.MapItem;
 import server.maps.Portal;
 import net.server.Server;
+import tools.PacketCreator;
 
 import java.awt.Point;
 
@@ -67,7 +69,13 @@ public enum CosmicMapGateway implements MapGateway {
             changeMap(agent, map, position);
             return;
         }
-        agent.forceChangeMap(map, portal);
+        // forceChangeMap unregisters and re-registers event participants. Within the same
+        // instance that can dispose the event when this is its last registered character.
+        if (agent.getEventInstance() != null && agent.getEventInstance() == map.getEventInstance()) {
+            agent.changeMap(map, portal);
+        } else {
+            agent.forceChangeMap(map, portal);
+        }
         recordTransition(agent, previousMapId, -1, portal.getId());
         publishTransition(agent, previousMapId, portal.getId(), "change-map-near");
     }
@@ -150,5 +158,12 @@ public enum CosmicMapGateway implements MapGateway {
             return null;
         }
         return map.getPointBelow(position);
+    }
+
+    @Override
+    public void removeItemDrop(MapleMap map, MapItem drop, int animation, int fromCharacterId) {
+        if (map == null || drop == null) return;
+        map.pickItemDrop(PacketCreator.removeItemFromMap(
+                drop.getObjectId(), animation, fromCharacterId), drop);
     }
 }

@@ -115,6 +115,44 @@ final class AgentFieldObservationFixtureService {
                                      int level,
                                      Set<Integer> allowedMobIds,
                                      long nowMs) throws IOException {
+        return prepareSecondJobFixture(entry, build, level, allowedMobIds, nowMs, true);
+    }
+
+    static Prepared prepareForPartyQuest(AgentRuntimeEntry entry,
+                                         AgentBalrogTestFixtureService.Build build,
+                                         int level,
+                                         Set<Integer> allowedMobIds,
+                                         List<Integer> equipment,
+                                         int weaponScrollItemId,
+                                         int shoesScrollItemId,
+                                         int capeScrollItemId,
+                                         long nowMs) throws IOException {
+        return prepareSecondJobFixture(entry, build, level, allowedMobIds, nowMs, false,
+                equipment, weaponScrollItemId, shoesScrollItemId, capeScrollItemId);
+    }
+
+    private static Prepared prepareSecondJobFixture(
+            AgentRuntimeEntry entry,
+            AgentBalrogTestFixtureService.Build build,
+            int level,
+            Set<Integer> allowedMobIds,
+            long nowMs,
+            boolean includeLevelSixtyArmor) throws IOException {
+        return prepareSecondJobFixture(entry, build, level, allowedMobIds, nowMs,
+                includeLevelSixtyArmor, List.of(), 0, 0, 0);
+    }
+
+    private static Prepared prepareSecondJobFixture(
+            AgentRuntimeEntry entry,
+            AgentBalrogTestFixtureService.Build build,
+            int level,
+            Set<Integer> allowedMobIds,
+            long nowMs,
+            boolean includeLevelSixtyArmor,
+            List<Integer> partyQuestEquipment,
+            int weaponScrollItemId,
+            int shoesScrollItemId,
+            int capeScrollItemId) throws IOException {
         if (build == null || !CAREERS.contains(build.career()) || level < 30 || level >= 70) {
             throw new IllegalArgumentException("a known weapon build and level 30-69 are required");
         }
@@ -145,7 +183,11 @@ final class AgentFieldObservationFixtureService {
         AgentBuildService.autoAssignAp(entry, agent);
         AgentBuildService.autoAssignSp(entry, agent, build.spBuild());
 
-        List<Integer> equipment = applyBalrogEquipmentLoadout(agent, build);
+        List<Integer> equipment = applySecondJobEquipmentLoadout(
+                agent, build, includeLevelSixtyArmor, partyQuestEquipment);
+        if (!includeLevelSixtyArmor) {
+            applyPartyQuestScrolls(agent, weaponScrollItemId, shoesScrollItemId, capeScrollItemId);
+        }
         provisionTwoHourSupplies(agent);
         int accuracyBonus = sniperPillBonus();
         if (accuracyBonus > 0) {
@@ -166,38 +208,101 @@ final class AgentFieldObservationFixtureService {
                 remainingAp, remainingSps, weaponItemId, weaponAttack);
     }
 
-    private static List<Integer> applyBalrogEquipmentLoadout(
-            Character agent, AgentBalrogTestFixtureService.Build build) {
+    private static List<Integer> applySecondJobEquipmentLoadout(
+            Character agent, AgentBalrogTestFixtureService.Build build,
+            boolean includeLevelSixtyArmor, List<Integer> partyQuestEquipment) {
         InventoryGateway inventory = AgentInventoryGatewayRuntime.inventory();
         clearInventory(agent, InventoryType.EQUIP, agent.getInventory(InventoryType.EQUIP).getSlotLimit());
         clearInventory(agent, InventoryType.EQUIPPED, agent.getInventory(InventoryType.EQUIPPED).getSlotLimit());
-        List<Integer> selected = build.equipment(agent.getGender());
+        List<Integer> selected;
+        if (includeLevelSixtyArmor) {
+            selected = build.equipment(agent.getGender());
+        } else {
+            selected = List.copyOf(partyQuestEquipment);
+        }
         HashSet<String> occupiedSlots = new HashSet<>();
         for (int itemId : selected) {
             Equip equip = inventory.getEquipById(itemId);
             int requiredLevel = inventory.getEquipLevelRequirement(itemId);
             if (equip == null || requiredLevel > agent.getLevel()
-                    || (itemId == build.weaponItemId()
+                    || (includeLevelSixtyArmor && itemId == build.weaponItemId()
                     && requiredLevel < AgentBalrogTestFixtureService.MINIMUM_WEAPON_LEVEL)
                     || !genderCompatible(agent.getGender(), itemId)
                     || !inventory.meetsEquipRequirements(equip, agent.getJob(), agent.getLevel(),
                     agent.getStr(), agent.getDex(), agent.getInt(), agent.getLuk(), agent.getFame())) {
-                throw new IllegalStateException("Balrog build cannot legally equip item " + itemId);
+                throw new IllegalStateException("Second-job build cannot legally equip item " + itemId
+                        + " at level " + agent.getLevel() + " with STR/DEX/INT/LUK "
+                        + agent.getStr() + "/" + agent.getDex() + "/" + agent.getInt() + "/" + agent.getLuk());
             }
             String slot = normalizedSlot(inventory.getEquipmentSlot(itemId));
             if (slot.isEmpty() || !occupiedSlots.add(slot)) {
-                throw new IllegalStateException("Balrog build has an invalid or duplicate slot for " + itemId);
+                throw new IllegalStateException("Second-job build has an invalid or duplicate slot for " + itemId);
             }
             if (!inventory.addItem(agent, itemId, (short) 1)) {
-                throw new IllegalStateException("could not add Balrog equipment " + itemId);
+                throw new IllegalStateException("could not add second-job equipment " + itemId);
             }
         }
         equipSelectedLoadout(agent, inventory, selected);
         Item weapon = agent.getInventory(InventoryType.EQUIPPED).getItem((short) -11);
         if (weapon == null || weapon.getItemId() != build.weaponItemId()) {
-            throw new IllegalStateException("Balrog build did not equip its selected weapon");
+            throw new IllegalStateException("Second-job build did not equip its selected weapon");
         }
         return selected;
+    }
+
+    private static void applyPartyQuestScrolls(Character agent, int weaponScrollItemId,
+                                                int shoesScrollItemId, int capeScrollItemId) {
+        applySuccessfulScrolls(requireEquipped(agent, (short) -11, "weapon"), weaponScrollItemId, 7);
+        applySuccessfulScrolls(requireEquipped(agent, (short) -7, "shoes"), shoesScrollItemId, 5);
+        applySuccessfulScrolls(requireEquipped(agent, (short) -9, "cape"), capeScrollItemId, 5);
+    }
+
+    private static Equip requireEquipped(Character agent, short slot, String description) {
+        Item item = agent.getInventory(InventoryType.EQUIPPED).getItem(slot);
+        if (!(item instanceof Equip equip)) {
+            throw new IllegalStateException("LPQ fixture did not equip its selected " + description);
+        }
+        return equip;
+    }
+
+    private static void applySuccessfulScrolls(Equip equip, int scrollItemId, int successes) {
+        Map<String, Integer> effects = AgentInventoryGatewayRuntime.inventory().getEquipStats(scrollItemId);
+        if (effects == null || effects.isEmpty()) {
+            throw new IllegalStateException("LPQ fixture scroll has no effects " + scrollItemId);
+        }
+        applySuccessfulScrollEffects(equip, effects, successes);
+    }
+
+    static void applySuccessfulScrollEffects(Equip equip, Map<String, Integer> effects, int successes) {
+        if (equip == null || effects == null || successes <= 0 || equip.getUpgradeSlots() < successes) {
+            throw new IllegalArgumentException("equipment needs enough slots for every guaranteed scroll success");
+        }
+        for (int applied = 0; applied < successes; applied++) {
+            applyScrollEffects(equip, effects);
+        }
+        equip.setUpgradeSlots(equip.getUpgradeSlots() - successes);
+        equip.setLevel((byte) (equip.getLevel() + successes));
+    }
+
+    private static void applyScrollEffects(Equip equip, Map<String, Integer> effects) {
+        for (Map.Entry<String, Integer> effect : effects.entrySet()) {
+            int value = effect.getValue();
+            switch (effect.getKey()) {
+                case "STR" -> equip.setStr(add(equip.getStr(), value));
+                case "DEX" -> equip.setDex(add(equip.getDex(), value));
+                case "INT" -> equip.setInt(add(equip.getInt(), value));
+                case "LUK" -> equip.setLuk(add(equip.getLuk(), value));
+                case "PAD" -> equip.setWatk(add(equip.getWatk(), value));
+                case "MAD" -> equip.setMatk(add(equip.getMatk(), value));
+                case "ACC" -> equip.setAcc(add(equip.getAcc(), value));
+                case "Speed" -> equip.setSpeed(add(equip.getSpeed(), value));
+                default -> { }
+            }
+        }
+    }
+
+    private static short add(short current, int value) {
+        return (short) Math.min(Short.MAX_VALUE, Math.max(0, current + value));
     }
 
     static Prepared prepare(AgentRuntimeEntry entry, int level, Set<Integer> allowedMobIds, long seed, long nowMs)
@@ -483,6 +588,7 @@ final class AgentFieldObservationFixtureService {
             case "Pn" -> -6;
             case "So" -> -7;
             case "Gv" -> -8;
+            case "Sr" -> -9;
             case "Si" -> -10;
             case "Wp" -> -11;
             default -> 0;
@@ -678,7 +784,7 @@ final class AgentFieldObservationFixtureService {
             return "Wp";
         }
         return switch (slot) {
-            case "Cp", "Ma", "Pn", "MaPn", "So", "Gv", "Ae", "Si" -> slot;
+            case "Cp", "Ma", "Pn", "MaPn", "So", "Gv", "Ae", "Sr", "Si" -> slot;
             default -> "";
         };
     }

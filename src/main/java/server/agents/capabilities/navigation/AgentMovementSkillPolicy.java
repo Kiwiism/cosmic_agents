@@ -12,6 +12,7 @@ import constants.skills.ILWizard;
 import constants.skills.NightWalker;
 import server.agents.capabilities.movement.AgentMovementSkillConfig;
 import server.agents.capabilities.movement.AgentMovementSkillStateRuntime;
+import server.agents.capabilities.partyquest.lpq.AgentLpqMovementSkillPolicy;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.FieldLimit;
 
@@ -44,7 +45,7 @@ public final class AgentMovementSkillPolicy {
 
     public static boolean canUseActivePath(Character agent, AgentNavigationGraph.Edge edge) {
         return switch (edge.type) {
-            case TELEPORT -> AgentMovementSkillConfig.TELEPORT_MODE.active()
+            case TELEPORT -> activeModeAllowed(agent, edge.type)
                     && baseEligibility(agent, edge)
                     && affordableWithReserve(agent, edge);
             case FLASH_JUMP -> AgentMovementSkillConfig.FLASH_JUMP_MODE.active()
@@ -60,7 +61,7 @@ public final class AgentMovementSkillPolicy {
     }
 
     public static boolean canUseAnyActiveMovementSkill(Character agent) {
-        return (AgentMovementSkillConfig.TELEPORT_MODE.active()
+        return (activeModeAllowed(agent, AgentNavigationGraph.EdgeType.TELEPORT)
                 && activeEligibility(agent, AgentNavigationGraph.EdgeType.TELEPORT))
                 || (AgentMovementSkillConfig.FLASH_JUMP_MODE.active()
                 && activeEligibility(agent, AgentNavigationGraph.EdgeType.FLASH_JUMP));
@@ -126,6 +127,16 @@ public final class AgentMovementSkillPolicy {
             case TELEPORT -> AgentMovementSkillConfig.TELEPORT_MODE;
             case FLASH_JUMP -> AgentMovementSkillConfig.FLASH_JUMP_MODE;
             default -> throw new IllegalArgumentException("Not a movement-skill edge: " + edgeType);
+        };
+    }
+
+    private static boolean activeModeAllowed(Character agent,
+                                             AgentNavigationGraph.EdgeType edgeType) {
+        return switch (edgeType) {
+            case TELEPORT -> AgentMovementSkillConfig.TELEPORT_MODE.active()
+                    || AgentLpqMovementSkillPolicy.allowsActiveTeleport(agent);
+            case FLASH_JUMP -> AgentMovementSkillConfig.FLASH_JUMP_MODE.active();
+            default -> false;
         };
     }
 

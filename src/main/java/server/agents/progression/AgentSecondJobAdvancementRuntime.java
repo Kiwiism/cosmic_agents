@@ -21,8 +21,10 @@ import java.util.Set;
 
 /** Resumable, live-state-reconciled Explorer second-job advancement. */
 public final class AgentSecondJobAdvancementRuntime {
-    private static final int INTERACTION_DISTANCE_PX = 180;
-    private static final long TRIAL_REBALANCE_MS = 15_000L;
+    private static final int INTERACTION_DISTANCE_PX = config.AgentTuning.intValue(
+            "server.agents.progression.AgentSecondJobAdvancementRuntime.INTERACTION_DISTANCE_PX");
+    private static final long TRIAL_REBALANCE_MS = config.AgentTuning.longValue(
+            "server.agents.progression.AgentSecondJobAdvancementRuntime.TRIAL_REBALANCE_MS");
     private static final long TRIAL_TIMEOUT_MS = 20 * 60_000L;
 
     private AgentSecondJobAdvancementRuntime() { }

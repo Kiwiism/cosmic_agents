@@ -41,6 +41,9 @@ public final class AgentFieldNarrationService implements AgentEventListener<Agen
 
     @Override
     public void onAgentEvent(AgentEvent event) {
+        if (event instanceof AgentCombatPostureChangedEvent) {
+            return;
+        }
         AgentFieldObservationState.NarrationLevel level = entry.capabilityStates()
                 .require(AgentFieldObservationState.STATE_KEY).narrationLevel();
         if (level == AgentFieldObservationState.NarrationLevel.OFF) {

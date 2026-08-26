@@ -142,6 +142,7 @@ public class ItemInformationProvider {
     protected Map<Integer, Data> skillUpgradeInfoCache = new HashMap<>();
     protected Map<Integer, Pair<Integer, Set<Integer>>> cashPetFoodCache = new HashMap<>();
     protected Map<Integer, QuestConsItem> questItemConsCache = new HashMap<>();
+    private final Map<Integer, Integer> vegaSpellByScroll;
 
     private ItemInformationProvider() {
         loadCardIdData();
@@ -155,9 +156,28 @@ public class ItemInformationProvider {
         etcStringData = stringData.getData("Etc.img");
         insStringData = stringData.getData("Ins.img");
         petStringData = stringData.getData("Pet.img");
+        vegaSpellByScroll = loadVegaSpellScrolls();
 
         isQuestItemCache.put(0, false);
         isPartyQuestItemCache.put(0, false);
+    }
+
+    private Map<Integer, Integer> loadVegaSpellScrolls() {
+        Data vegaData = etcData.getData("VegaSpell.img");
+        if (vegaData == null) {
+            log.error("Unable to load Etc.wz/VegaSpell.img; Vega's Spell will reject all scrolls");
+            return Map.of();
+        }
+        return CashItemEligibility.loadVegaSpellScrolls(vegaData);
+    }
+
+    public boolean isVegaCompatible(int scrollId, int vegaSpellId) {
+        return vegaSpellByScroll.getOrDefault(scrollId, 0) == vegaSpellId;
+    }
+
+    public boolean canUseViciousHammer(Equip equip) {
+        return CashItemEligibility.canUseViciousHammer(equip,
+                equip == null ? null : getEquipStats(equip.getItemId()));
     }
 
 

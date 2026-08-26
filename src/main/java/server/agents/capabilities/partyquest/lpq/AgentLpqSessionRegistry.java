@@ -58,4 +58,16 @@ public final class AgentLpqSessionRegistry {
                 && character.getEventInstance() == session.eventInstance()
                 && AgentLpqDefinition.isEventMap(character.getMapId());
     }
+
+    /** Keeps the low-potion door claims visible while Agents fan out into Stage 4/5 rooms. */
+    public static boolean preservesRoomDoorMarker(Character character, int itemId) {
+        if (character == null || !AgentLpqDefinition.ROOM_MARKER_ITEMS.contains(itemId)) return false;
+        AgentLpqSession session = forMember(character.getId());
+        if (session == null) return false;
+        return switch (session.phase()) {
+            case STAGE_4 -> character.getMapId() == AgentLpqDefinition.stage(4).mapId();
+            case STAGE_5 -> character.getMapId() == AgentLpqDefinition.stage(5).mapId();
+            default -> false;
+        };
+    }
 }

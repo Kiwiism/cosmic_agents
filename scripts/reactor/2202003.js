@@ -25,5 +25,8 @@
  */
 
 function act() {
+    if (!rm.claimEventReactorAction("lpq")) {
+        return;
+    }
     rm.dropItems();
 }

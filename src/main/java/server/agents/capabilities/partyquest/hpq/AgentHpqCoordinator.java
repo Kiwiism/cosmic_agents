@@ -11,9 +11,13 @@ import server.agents.integration.PrimitiveCapabilityGateway;
 import server.agents.plans.AgentScriptItemActionService;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
+import server.maps.Reactor;
 
 import java.awt.Point;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 /** HPQ-only stage coordinator using ordinary NPC, combat, loot, and reactor paths. */
@@ -27,6 +31,8 @@ final class AgentHpqCoordinator {
             "server.agents.capabilities.partyquest.hpq.AgentHpqCoordinator.INTERACTION_RETRY_MS");
     private static final int REACTOR_DROP_RADIUS_PX = config.AgentTuning.intValue(
             "server.agents.capabilities.partyquest.hpq.AgentHpqCoordinator.REACTOR_DROP_RADIUS_PX");
+    private static final long FLOWER_ACTIVATION_WAIT_MS = config.AgentTuning.longValue(
+            "server.agents.capabilities.partyquest.hpq.AgentHpqCoordinator.FLOWER_ACTIVATION_WAIT_MS");
 
     private AgentHpqCoordinator() {
     }
@@ -104,11 +110,19 @@ final class AgentHpqCoordinator {
             session.transition(AgentHpqSession.Phase.DEFENDING_BUNNY, nowMs);
             return;
         }
+        // MapleMap activates type-100 item reactors five seconds after a drop. During
+        // that window nobody may run the broad PQ seed-loot scan or the planted item
+        // will be picked back up before the flower consumes it.
+        if (session.members().stream().anyMatch(member ->
+                member.role() == AgentHpqMemberState.Role.SEED_PLANTER
+                        && member.nextActionAtMs() > nowMs)) {
+            return;
+        }
         Set<Integer> seedIds = AgentHpqDefinition.seedBeds().stream()
                 .map(AgentHpqDefinition.SeedBed::seedItemId)
                 .collect(java.util.stream.Collectors.toUnmodifiableSet());
-        Set<Integer> monsters = stageMonsters(leader);
         boolean hasSeed = false;
+        int collectorIndex = 0;
         for (AgentHpqMemberState member : session.members()) {
             if (member.memberType() != AgentHpqMemberState.MemberType.AGENT) continue;
             Character agent = character(member.characterId());
@@ -124,7 +138,7 @@ final class AgentHpqCoordinator {
                 plant(entry, agent, member, carriedSeed, nowMs);
             } else {
                 member.assign(AgentHpqMemberState.Role.SEED_COLLECTOR, member.assignedSeedItemId());
-                ACTIONS.grind(entry, monsters);
+                collectSeed(entry, agent, member, collectorIndex++, nowMs);
             }
         }
         if (hasSeed && session.phase() == AgentHpqSession.Phase.COLLECTING_SEEDS) {
@@ -132,20 +146,52 @@ final class AgentHpqCoordinator {
         }
     }
 
+    private static void collectSeed(AgentRuntimeEntry entry, Character agent,
+                                    AgentHpqMemberState member, int collectorIndex, long nowMs) {
+        if (nowMs < member.nextActionAtMs()) return;
+        List<Reactor> sources = new ArrayList<>();
+        for (Reactor reactor : ACTIONS.reactors(agent)) {
+            if (reactor != null && reactor.isAlive() && reactor.isActive()
+                    && AgentHpqDefinition.SEED_SOURCE_REACTORS.contains(reactor.getId())) {
+                sources.add(reactor);
+            }
+        }
+        if (sources.isEmpty()) return;
+        sources.sort(Comparator.comparingInt(Reactor::getObjectId));
+        Reactor target = sources.get(Math.floorMod(collectorIndex, sources.size()));
+        if (!near(agent.getPosition(), target.getPosition(), REACTOR_DROP_RADIUS_PX)) {
+            ACTIONS.navigate(entry, target.getPosition(), true);
+            return;
+        }
+        ACTIONS.stop(entry);
+        if (ACTIONS.hitReactor(agent, target.getObjectId())) {
+            member.deferUntil(nowMs + Math.max(500L, INTERACTION_RETRY_MS));
+        }
+    }
+
     private static void plant(AgentRuntimeEntry entry, Character agent,
                               AgentHpqMemberState member, int seedItemId, long nowMs) {
         if (nowMs < member.nextActionAtMs()) return;
         AgentHpqDefinition.SeedBed bed = AgentHpqDefinition.seedBed(seedItemId);
-        Point reactor = ACTIONS.nearestActiveReactorPosition(agent, bed.reactorId(), bed.reactorName());
+        Point reactor = ACTIONS.reactors(agent).stream()
+                .filter(Reactor::isAlive)
+                .filter(candidate -> candidate.getId() == bed.reactorId())
+                .filter(candidate -> bed.reactorName().equalsIgnoreCase(candidate.getName()))
+                .min(Comparator.comparingDouble(candidate ->
+                        candidate.getPosition().distance(agent.getPosition())))
+                .map(candidate -> new Point(candidate.getPosition()))
+                .orElse(null);
         if (reactor == null) return;
-        if (!near(agent.getPosition(), reactor, REACTOR_DROP_RADIUS_PX)) {
+        // Reactor.wz item bounds are x [-19,20], y [-42,16]; stay just inside them.
+        if (!near(agent.getPosition(), reactor,
+                AgentHpqDefinition.FLOWER_DROP_X_PX, AgentHpqDefinition.FLOWER_DROP_Y_PX)) {
             ACTIONS.navigate(entry, reactor, true);
             return;
         }
         ACTIONS.stop(entry);
         if (AgentScriptItemActionService.dropItem(
                 entry, InventoryType.ETC, seedItemId, (short) 1)) {
-            member.deferUntil(nowMs + Math.max(500L, INTERACTION_RETRY_MS));
+            member.deferUntil(nowMs + FLOWER_ACTIVATION_WAIT_MS);
         }
     }
 
@@ -269,9 +315,13 @@ final class AgentHpqCoordinator {
     }
 
     private static boolean near(Point first, Point second, int radius) {
+        return near(first, second, radius, radius);
+    }
+
+    private static boolean near(Point first, Point second, int horizontalRadius, int verticalRadius) {
         return first != null && second != null
-                && Math.abs(first.x - second.x) <= radius
-                && Math.abs(first.y - second.y) <= radius;
+                && Math.abs(first.x - second.x) <= horizontalRadius
+                && Math.abs(first.y - second.y) <= verticalRadius;
     }
 
     private static boolean insideEvent(AgentHpqSession.Phase phase) {

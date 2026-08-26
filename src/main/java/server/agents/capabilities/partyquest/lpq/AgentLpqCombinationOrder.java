@@ -1,48 +1,68 @@
 package server.agents.capabilities.partyquest.lpq;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import config.AgentTuning;
 
-/** Deterministic one-mover Gray order for LPQ Stage 8's five-of-nine puzzle. */
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
+/** Authored GMS and JMS attempt orders for LPQ Stage 8's five-of-nine puzzle. */
 public final class AgentLpqCombinationOrder {
+    enum Method { GMS, JMS }
+
+    private static final String STAGE_8_ATTEMPT_ORDER = AgentTuning.stringValue(
+            "server.agents.capabilities.partyquest.lpq.AgentLpqCombinationOrder.STAGE_8_ATTEMPT_ORDER");
+    private static final List<Integer> GMS_PLATFORM_ORDER =
+            List.of(1, 2, 3, 4, 5, 6, 7, 8, 9);
+    private static final List<Integer> JMS_PLATFORM_ORDER =
+            List.of(1, 3, 6, 7, 4, 8, 2, 5, 9);
+
     private AgentLpqCombinationOrder() {
     }
 
     public static List<List<Integer>> fiveOfNine() {
-        return combinations(9, 5);
+        return fiveOfNine(parseMethod(STAGE_8_ATTEMPT_ORDER));
     }
 
-    static List<List<Integer>> combinations(int positions, int occupied) {
-        if (positions < 1 || occupied < 1 || occupied > positions) {
+    static List<List<Integer>> fiveOfNine(Method method) {
+        if (method == null) throw new IllegalArgumentException("LPQ Stage 8 method is required");
+        return combinations(method == Method.JMS ? JMS_PLATFORM_ORDER : GMS_PLATFORM_ORDER, 5);
+    }
+
+    static Method parseMethod(String value) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException("LPQ Stage 8 attempt order is required");
+        }
+        try {
+            return Method.valueOf(value.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException failure) {
+            throw new IllegalArgumentException(
+                    "LPQ Stage 8 attempt order must be 'gms' or 'jms'", failure);
+        }
+    }
+
+    static List<List<Integer>> combinations(List<Integer> platformOrder, int occupied) {
+        if (platformOrder == null || platformOrder.isEmpty()
+                || occupied < 1 || occupied > platformOrder.size()) {
             throw new IllegalArgumentException("valid LPQ combination dimensions are required");
         }
-        List<List<Integer>> output = reflected(positions, occupied);
-        return output.stream().map(values -> values.stream().sorted().toList()).toList();
-    }
-
-    private static List<List<Integer>> reflected(int n, int k) {
-        if (k == 0) return List.of(List.of());
-        if (n == k) {
-            List<Integer> all = new ArrayList<>();
-            for (int value = 1; value <= n; value++) all.add(value);
-            return List.of(List.copyOf(all));
-        }
-        List<List<Integer>> output = new ArrayList<>(reflected(n - 1, k));
-        List<List<Integer>> withLast = reflected(n - 1, k - 1);
-        for (int index = withLast.size() - 1; index >= 0; index--) {
-            List<Integer> combination = new ArrayList<>(withLast.get(index));
-            combination.add(n);
-            output.add(List.copyOf(combination));
-        }
+        List<List<Integer>> output = new ArrayList<>();
+        appendCombinations(platformOrder, occupied, 0, new ArrayList<>(), output);
         return List.copyOf(output);
     }
 
-    public static boolean oneMover(List<Integer> first, List<Integer> second) {
-        if (first == null || second == null || first.size() != second.size()) return false;
-        Set<Integer> intersection = new HashSet<>(first);
-        intersection.retainAll(second);
-        return intersection.size() == first.size() - 1;
+    private static void appendCombinations(
+            List<Integer> platformOrder, int occupied, int start,
+            List<Integer> current, List<List<Integer>> output) {
+        if (current.size() == occupied) {
+            output.add(List.copyOf(current));
+            return;
+        }
+        int needed = occupied - current.size();
+        for (int index = start; index <= platformOrder.size() - needed; index++) {
+            current.add(platformOrder.get(index));
+            appendCombinations(platformOrder, occupied, index + 1, current, output);
+            current.removeLast();
+        }
     }
 }

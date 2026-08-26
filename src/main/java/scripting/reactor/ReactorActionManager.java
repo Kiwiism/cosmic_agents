@@ -292,6 +292,25 @@ public class ReactorActionManager extends AbstractPlayerInteraction {
         return reactor;
     }
 
+    /**
+     * Atomically claims a one-shot reactor side effect inside the current event instance.
+     * The map id is part of the key because one event may clone the same reactor template
+     * into several stage maps whose object ids are only map-local.
+     */
+    public boolean claimEventReactorAction(String scope) {
+        var event = getEventInstance();
+        if (event == null) {
+            return true;
+        }
+        String key = eventReactorActionKey(scope, getMapId(), reactor.getObjectId());
+        return event.setProperty(key, "true", true) == null;
+    }
+
+    public static String eventReactorActionKey(String scope, int mapId, int objectId) {
+        String normalizedScope = scope == null || scope.isBlank() ? "event" : scope.trim();
+        return "reactorAction:" + normalizedScope + ':' + mapId + ':' + objectId;
+    }
+
     public void spawnFakeMonster(int id) {
         reactor.getMap().spawnFakeMonsterOnGroundBelow(LifeFactory.getMonster(id), getPosition());
     }

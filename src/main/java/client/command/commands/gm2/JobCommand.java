@@ -44,8 +44,13 @@ public class JobCommand extends Command {
                 return;
             }
 
-            player.changeJob(targetJob);
-            player.equipChanged();
+            if (player.forceChangeJobForAdmin(targetJob)) {
+                player.equipChanged();
+                player.message("Job changed to " + targetJob + "; base HP/MP rebuilt for level "
+                        + player.getLevel() + ".");
+            } else {
+                player.message("The requested job could not be applied.");
+            }
         } else {
             player.message("Syntax: !job <job id>");
         }

@@ -25,7 +25,10 @@ public final class AgentStarterKitService {
     public static void advanceJob(AgentRuntimeEntry entry, Job newJob) {
         Character bot = AgentRuntimeIdentityRuntime.bot(entry);
         Job oldJob = bot.getJob();
-        bot.changeJob(newJob);
+        if (!bot.changeJob(newJob)) {
+            log.warn("Rejected Agent job advancement for '{}' from {} to {}", bot.getName(), oldJob, newJob);
+            return;
+        }
         AgentBuildService.handleJobAdvance(entry, bot, oldJob, newJob);
         grantStarterKitIfEligible(bot, oldJob, newJob, AgentInventoryGatewayRuntime.inventory());
         AgentEquipmentService.autoEquip(bot, null, null);
@@ -39,7 +42,10 @@ public final class AgentStarterKitService {
         }
         Character bot = AgentRuntimeIdentityRuntime.bot(entry);
         Job oldJob = bot.getJob();
-        bot.changeJob(newJob);
+        if (!bot.changeJob(newJob)) {
+            log.warn("Rejected Agent job advancement for '{}' from {} to {}", bot.getName(), oldJob, newJob);
+            return;
+        }
         AgentBuildService.handleJobAdvance(entry, bot, oldJob, newJob, spBuild);
         grantStarterKitIfEligible(bot, oldJob, newJob, AgentInventoryGatewayRuntime.inventory());
         AgentEquipmentService.autoEquip(bot, null, null);

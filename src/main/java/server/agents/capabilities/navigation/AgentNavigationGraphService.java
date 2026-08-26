@@ -11,6 +11,7 @@ import server.agents.physics.AgentWallCollisionPolicy;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
+import server.agents.capabilities.partyquest.lpq.AgentLpqMovementSkillPolicy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -489,13 +490,22 @@ public final class AgentNavigationGraphService {
                                                        AgentMovementProfile movementProfile,
                                                        GraphCacheKey key) {
         AgentNavigationGraph cached = loadGraph(key);
-        if (cached != null) {
+        if (cached != null && satisfiesScopedMovementRequirements(cached)) {
             return cached;
         }
 
         AgentNavigationGraph built = buildGraph(map, movementProfile);
         saveGraph(built);
         return built;
+    }
+
+    private static boolean satisfiesScopedMovementRequirements(AgentNavigationGraph graph) {
+        if (!AgentLpqMovementSkillPolicy.authorsTeleportEdges(graph.mapId)) {
+            return true;
+        }
+        return graph.regions.stream()
+                .flatMap(region -> graph.getOutgoing(region.id).stream())
+                .anyMatch(edge -> edge.type == AgentNavigationGraph.EdgeType.TELEPORT);
     }
 
     private static AgentNavigationGraph loadGraph(GraphCacheKey key) {
@@ -1222,7 +1232,8 @@ public final class AgentNavigationGraphService {
             for (Point anchor : anchors) {
                 throwIfBuildInterrupted();
                 if (server.agents.capabilities.movement.AgentMovementSkillConfig
-                        .TELEPORT_MODE.visibleToShadowRouting()) {
+                        .TELEPORT_MODE.visibleToShadowRouting()
+                        || AgentLpqMovementSkillPolicy.authorsTeleportEdges(map.getId())) {
                     addTeleportEdges(map, from, regionsById, regionIdByFootholdId,
                             anchor, outgoing, edgeKeys);
                 }

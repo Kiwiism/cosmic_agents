@@ -92,7 +92,8 @@ public final class CashOperationHandler extends AbstractPacketHandler {
                             chr.dropMessage(1, "Rate coupons are currently unavailable to purchase.");
                             c.enableCSActions();
                             return;
-                        } else if (ItemConstants.isMapleLife(cItem.getItemId()) && chr.getLevel() < 30) {
+                        } else if (ItemConstants.isMapleLife(cItem.getItemId())) {
+                            chr.dropMessage(1, "Maple Life character creation is disabled on this server.");
                             c.enableCSActions();
                             return;
                         }

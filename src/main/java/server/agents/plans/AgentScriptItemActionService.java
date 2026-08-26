@@ -17,6 +17,17 @@ public final class AgentScriptItemActionService {
         return dropItem(entry, type, itemId, quantity, AgentInventoryGatewayRuntime.inventory());
     }
 
+    public static boolean dropMesos(AgentRuntimeEntry entry, int amount) {
+        Character agent = AgentRuntimeIdentityRuntime.bot(entry);
+        if (agent == null || agent.getMap() == null || amount < 10 || amount > agent.getMeso()) {
+            return false;
+        }
+        agent.gainMeso(-amount, false, true, false);
+        agent.getMap().spawnMesoDrop(amount, agent.getPosition(), agent, agent,
+                true, (byte) 2, (short) 0);
+        return true;
+    }
+
     static boolean dropItem(AgentRuntimeEntry entry, InventoryType type, int itemId, short quantity,
                             InventoryGateway inventoryGateway) {
         Character agent = AgentRuntimeIdentityRuntime.bot(entry);

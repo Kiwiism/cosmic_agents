@@ -59,6 +59,47 @@ class NoteServiceTest {
     }
 
     @Test
+    void sendPlayerNoteValidatesAndUsesCanonicalRecipientName() {
+        when(noteDao.findCharacterName("receiver")).thenReturn(Optional.of("Receiver"));
+        when(noteDao.countUnreadByTo("Receiver")).thenReturn(99);
+
+        NoteService.PlayerNoteResult result = noteService.sendPlayerNote("hello", "Sender", "receiver");
+
+        assertEquals(NoteService.PlayerNoteResult.SUCCESS, result);
+        var noteCaptor = ArgumentCaptor.forClass(Note.class);
+        verify(noteDao).save(noteCaptor.capture());
+        assertEquals("Receiver", noteCaptor.getValue().to());
+    }
+
+    @Test
+    void sendPlayerNoteRejectsInvalidRecipient() {
+        when(noteDao.findCharacterName("missing")).thenReturn(Optional.empty());
+
+        assertEquals(NoteService.PlayerNoteResult.INVALID_RECIPIENT,
+                noteService.sendPlayerNote("hello", "Sender", "missing"));
+        verify(noteDao, never()).save(any());
+    }
+
+    @Test
+    void sendPlayerNoteRejectsInvalidMessage() {
+        assertEquals(NoteService.PlayerNoteResult.INVALID_MESSAGE,
+                noteService.sendPlayerNote(" ", "Sender", "Receiver"));
+        assertEquals(NoteService.PlayerNoteResult.INVALID_MESSAGE,
+                noteService.sendPlayerNote("x".repeat(NoteService.MAX_PLAYER_NOTE_LENGTH + 1), "Sender", "Receiver"));
+        verify(noteDao, never()).findCharacterName(any());
+    }
+
+    @Test
+    void sendPlayerNoteRejectsFullInbox() {
+        when(noteDao.findCharacterName("Receiver")).thenReturn(Optional.of("Receiver"));
+        when(noteDao.countUnreadByTo("Receiver")).thenReturn(NoteService.MAX_UNREAD_PLAYER_NOTES);
+
+        assertEquals(NoteService.PlayerNoteResult.INBOX_FULL,
+                noteService.sendPlayerNote("hello", "Sender", "Receiver"));
+        verify(noteDao, never()).save(any());
+    }
+
+    @Test
     void sendWithFameSuccess() {
         String message = "fameMessage";
         String from = "fameFrom";

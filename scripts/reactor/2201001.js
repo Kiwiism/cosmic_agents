@@ -25,6 +25,9 @@
  */
 
 function act() {
+    if (!rm.claimEventReactorAction("lpq")) {
+        return;
+    }
     for (var i = 0; i < 3; i++) {
         rm.spawnMonster(9300007);
     }

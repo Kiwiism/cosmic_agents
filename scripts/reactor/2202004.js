@@ -26,5 +26,8 @@
  */
 
 function act() {
+    if (!rm.claimEventReactorAction("lpq")) {
+        return;
+    }
     rm.sprayItems(true, 1, 30, 60, 15);
 }

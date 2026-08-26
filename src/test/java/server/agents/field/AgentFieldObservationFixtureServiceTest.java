@@ -9,6 +9,7 @@ import server.combat.CombatFormulaProvider;
 import server.agents.integration.InventoryGateway;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -23,6 +24,7 @@ class AgentFieldObservationFixtureServiceTest {
         assertEquals("Wp", AgentFieldObservationFixtureService.normalizedSlot("WpSi"));
         assertEquals("Si", AgentFieldObservationFixtureService.normalizedSlot("Si"));
         assertEquals("Ae", AgentFieldObservationFixtureService.normalizedSlot("Ae"));
+        assertEquals("Sr", AgentFieldObservationFixtureService.normalizedSlot("Sr"));
 
         assertEquals("", AgentFieldObservationFixtureService.normalizedSlot("Pe"));
         assertEquals("", AgentFieldObservationFixtureService.normalizedSlot("Sd"));
@@ -54,9 +56,45 @@ class AgentFieldObservationFixtureServiceTest {
         assertEquals(-6, AgentFieldObservationFixtureService.equippedSlot("Pn"));
         assertEquals(-7, AgentFieldObservationFixtureService.equippedSlot("So"));
         assertEquals(-8, AgentFieldObservationFixtureService.equippedSlot("Gv"));
+        assertEquals(-9, AgentFieldObservationFixtureService.equippedSlot("Sr"));
         assertEquals(-10, AgentFieldObservationFixtureService.equippedSlot("Si"));
         assertEquals(-11, AgentFieldObservationFixtureService.equippedSlot("Wp"));
         assertEquals(0, AgentFieldObservationFixtureService.equippedSlot("Pe"));
+    }
+
+    @Test
+    void appliesEveryGuaranteedScrollEffectAndConsumesEverySlot() {
+        Equip weapon = Equip.restored(1_302_039, (short) -11);
+        weapon.setUpgradeSlots(7);
+        weapon.setWatk((short) 77);
+
+        AgentFieldObservationFixtureService.applySuccessfulScrollEffects(
+                weapon, Map.of("PAD", 2, "STR", 1, "success", 60), 7);
+
+        assertEquals(91, weapon.getWatk());
+        assertEquals(7, weapon.getStr());
+        assertEquals(0, weapon.getUpgradeSlots());
+        assertEquals(7, weapon.getLevel());
+    }
+
+    @Test
+    void appliesFiveTenPercentShoeAndCapeSuccesses() {
+        Equip shoes = Equip.restored(1_072_127, (short) -7);
+        shoes.setUpgradeSlots(5);
+        Equip cape = Equip.restored(1_102_055, (short) -9);
+        cape.setUpgradeSlots(5);
+
+        AgentFieldObservationFixtureService.applySuccessfulScrollEffects(
+                shoes, Map.of("Speed", 3, "success", 10), 5);
+        AgentFieldObservationFixtureService.applySuccessfulScrollEffects(
+                cape, Map.of("STR", 3, "success", 10), 5);
+
+        assertEquals(15, shoes.getSpeed());
+        assertEquals(15, cape.getStr());
+        assertEquals(0, shoes.getUpgradeSlots());
+        assertEquals(0, cape.getUpgradeSlots());
+        assertEquals(5, shoes.getLevel());
+        assertEquals(5, cape.getLevel());
     }
 
     @Test

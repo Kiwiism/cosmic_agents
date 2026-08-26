@@ -4,6 +4,7 @@ import client.Character;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import org.junit.jupiter.api.Test;
+import server.maps.MapleMap;
 import server.agents.integration.InventoryGateway;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.contracts.AgentDisposition;
@@ -11,10 +12,12 @@ import server.agents.capabilities.inventory.AgentInventoryReservationRuntime;
 import testutil.Items;
 
 import java.util.Map;
+import java.awt.Point;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.same;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -91,5 +94,32 @@ class AgentScriptItemActionServiceTest {
 
         assertFalse(AgentScriptItemActionService.dropItem(
                 entry, InventoryType.ETC, 4000000, (short) 3, gateway));
+    }
+
+    @Test
+    void dropsAPlayerOwnedTenMesoRoomMarker() {
+        Character agent = mock(Character.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
+        MapleMap map = mock(MapleMap.class);
+        Point position = new Point(25, 50);
+        when(agent.getMeso()).thenReturn(100);
+        when(agent.getMap()).thenReturn(map);
+        when(agent.getPosition()).thenReturn(position);
+
+        assertTrue(AgentScriptItemActionService.dropMesos(entry, 10));
+
+        verify(agent).gainMeso(-10, false, true, false);
+        verify(map).spawnMesoDrop(10, position, agent, agent, true, (byte) 2, (short) 0);
+    }
+
+    @Test
+    void refusesInvalidOrUnaffordableMesoMarkers() {
+        Character agent = mock(Character.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
+        when(agent.getMap()).thenReturn(mock(MapleMap.class));
+        when(agent.getMeso()).thenReturn(9);
+
+        assertFalse(AgentScriptItemActionService.dropMesos(entry, 9));
+        assertFalse(AgentScriptItemActionService.dropMesos(entry, 10));
     }
 }

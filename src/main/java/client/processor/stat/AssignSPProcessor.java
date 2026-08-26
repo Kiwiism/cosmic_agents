@@ -25,6 +25,7 @@ package client.processor.stat;
 
 import client.Character;
 import client.Client;
+import client.HpMpGrowthPolicy;
 import client.Skill;
 import client.SkillFactory;
 import client.autoban.AutobanFactory;
@@ -78,6 +79,10 @@ public class AssignSPProcessor {
                 isBeginnerSkill = true;
             }
             Skill skill = SkillFactory.getSkill(skillid);
+            if (skill == null || !HpMpGrowthPolicy.hasPassivePrerequisite(player, skillid)) {
+                player.sendPacket(PacketCreator.enableActions());
+                return;
+            }
             int curLevel = player.getSkillLevel(skill);
             if ((remainingSp > 0 && curLevel + 1 <= (skill.isFourthJob() ? player.getMasterLevel(skill) : skill.getMaxLevel()))) {
                 if (!isBeginnerSkill) {

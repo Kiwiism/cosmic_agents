@@ -98,6 +98,8 @@ public final class AgentKpqTestService {
                 case "checkpoint" -> checkpoint(operator, params, nowMs);
                 case "complete" -> complete(operator, integerAt(params, 1), nowMs);
                 case "status" -> status(operator);
+                case "spectate" -> spectate(operator);
+                case "return" -> returnFromSpectating(operator);
                 case "pause" -> pause(operator, true);
                 case "resume", "continue" -> pause(operator, false);
                 case "coordination", "membercoord" -> memberCoordination(operator, params);
@@ -821,6 +823,33 @@ public final class AgentKpqTestService {
         run.engagement.diagnostics().stream().skip(Math.max(0, run.engagement.diagnostics().size() - 3L))
                 .forEach(diagnostic -> lines.add("diagnostic=" + diagnostic));
         return lines;
+    }
+
+    private static List<String> spectate(Character operator) {
+        Run run = RUNS.get(operator.getId());
+        if (run == null || run.flow != MixedFlow.AGENTS_ONLY || run.session == null) {
+            return List.of("Spectating is available after an Agent-only KPQ session enters its event.");
+        }
+        Character leader = onlineCharacter(run.session.eventLeaderId());
+        EventInstanceManager event = leader == null ? null : KPQ.event(leader);
+        if (event == null) return List.of("The Agent party has not entered its private KPQ instance yet.");
+        MapleMap map = event.getMapInstance(leader.getMapId());
+        var portal = map == null ? null : map.getRandomPlayerSpawnpoint();
+        if (map == null || portal == null) return List.of("The current KPQ instance map is unavailable.");
+        AgentMapGatewayRuntime.map().changeMapNear(operator, map, portal.getPosition());
+        return List.of("Attached to the Agent-only KPQ instance as a non-participant observer.",
+                "Do not attack, loot, use NPCs, portals, or formation positions. Use !kpqtest return to leave.");
+    }
+
+    private static List<String> returnFromSpectating(Character operator) {
+        MapleMap recruit = AgentMapGatewayRuntime.map().resolveMap(
+                operator.getWorld(), AgentClientGatewayRuntime.clients().channel(operator),
+                AgentKpqDefinition.RECRUIT_MAP);
+        var portal = recruit == null ? null : recruit.getRandomPlayerSpawnpoint();
+        if (recruit == null) return List.of("The Kerning City return map is unavailable.");
+        AgentMapGatewayRuntime.map().changeMapNear(operator, recruit,
+                portal == null ? new Point(0, 0) : portal.getPosition());
+        return List.of("Returned to Kerning City from KPQ spectating.");
     }
 
     private static List<String> pause(Character operator, boolean paused) {
