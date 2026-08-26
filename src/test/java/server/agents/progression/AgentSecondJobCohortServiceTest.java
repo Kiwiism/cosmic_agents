@@ -58,4 +58,13 @@ class AgentSecondJobCohortServiceTest {
         assertEquals(55L, selection.seed());
         assertEquals(12, selection.roster().size());
     }
+
+    @Test
+    void namedCharacterSelectionPreservesRequestedIdentityAndBranch() {
+        var selection = AgentSecondJobCohortService.parseNamedStart(
+                new String[]{"startfor", "KiwiAgent", "spearman", "20260827"}, 1L);
+        assertEquals(20260827L, selection.seed());
+        assertEquals(List.of(new AgentSecondJobCohortService.CohortMember(
+                "KiwiAgent", "spearman")), selection.roster());
+    }
 }

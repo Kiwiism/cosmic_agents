@@ -155,8 +155,12 @@ public final class AgentPartyQuestLobbyRuntime {
                 .filter(java.util.Objects::nonNull).findFirst().orElse(null);
         if (recruiter == null || recruiter.getMapId() != lobby.profile().mapId()
                 || !sameWorldAndChannel(recruiter, speaker)) return;
-        long delayMs = inviteResponseDelayMs(lobby.seed(), recruiter.getId(), speaker.getId(),
-                INVITE_RESPONSE_MINIMUM_MS, INVITE_RESPONSE_MAXIMUM_MS);
+        long minimumMs = lobby.profile().inviteResponseMinimumMs() > 0L
+                ? lobby.profile().inviteResponseMinimumMs() : INVITE_RESPONSE_MINIMUM_MS;
+        long maximumMs = lobby.profile().inviteResponseMaximumMs() > 0L
+                ? lobby.profile().inviteResponseMaximumMs() : INVITE_RESPONSE_MAXIMUM_MS;
+        long delayMs = inviteResponseDelayMs(
+                lobby.seed(), recruiter.getId(), speaker.getId(), minimumMs, maximumMs);
         AgentSchedulerRuntime.schedule(() -> sendInvitation(
                 lobby.lobbyId(), recruiter.getId(), speaker.getId()), delayMs);
     }

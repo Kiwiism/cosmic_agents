@@ -26,6 +26,17 @@
  */
 var status = 0;
 
+function isLivePartyMember(eim, player) {
+    var eventLeader = eim == null ? null : eim.getLeader();
+    return eventLeader != null && player != null && eventLeader.getPartyId() > 0
+        && player.getPartyId() == eventLeader.getPartyId();
+}
+
+function isGmObserver(eim, player) {
+    return eim != null && player != null && player.gmLevel() >= 6
+        && !isLivePartyMember(eim, player);
+}
+
 function start() {
     status = -1;
     action(1, 0, 0);
@@ -37,6 +48,21 @@ function action(mode, type, selection) {
     } else {
         status++;
         if (cm.getPlayer().getMap().getId() == 910010100) { //Clear map
+            var eim = cm.getEventInstance();
+            if (isGmObserver(eim, cm.getPlayer())) {
+                if (status == 0) {
+                    if (eim.getProperty("hpqBonusEntered") == "true") {
+                        cm.sendYesNo("The party entered Pig Town. Follow them as an observer? You will not receive a party quest reward.");
+                    } else {
+                        cm.sendOk("Wait for the party leader to choose whether the party will enter Pig Town.");
+                        cm.dispose();
+                    }
+                } else {
+                    cm.warp(910010200, "st00");
+                    cm.dispose();
+                }
+                return;
+            }
             if (status == 0) {
                 cm.sendNext("Hello, there! I'm Tommy. There's a Pig Town nearby where we're standing. The pigs there are rowdy and uncontrollable to the point where they have stolen numerous weapons from travelers. They were kicked out from their towns, and are currently hiding out at the Pig Town.");
             } else if (status == 1) {
@@ -48,8 +74,9 @@ function action(mode, type, selection) {
 
                 }
             } else if (status == 2) {
-                cm.getEventInstance().startEventTimer(5 * 60000);
-                cm.getEventInstance().warpEventTeam(910010200);
+                eim.setProperty("hpqBonusEntered", "true");
+                eim.startEventTimer(5 * 60000);
+                eim.warpEventTeam(910010200);
 
                 cm.dispose();
 

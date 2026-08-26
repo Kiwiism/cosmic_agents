@@ -138,13 +138,14 @@ public final class AgentHpqTestService {
             return List.of(
                     "Preparing HPQ observers " + names + ". Create a party and invite each Agent.",
                     "Once the party reaches " + partySize
-                            + " members, talk to Tory normally and remain with the party to observe.",
+                            + " members, gather at Tory and wait for the five-second announcement before entering.",
                     "Use !hpqtest status, checkpoint <seeds|bunny|ninecakes>, complete, or stop.");
         }
         if (flow == Flow.AGENT_LEADS_HUMAN) {
             return List.of(
                     "Preparing an Agent-led HPQ party with " + agentCount + " Agents.",
-                    "Accept the party invitation from the Agent leader. The Agent will enter through Tory.",
+                    "Once the party is ready, say 'looking for HPQ' or 'invite me HPQ' nearby; the leader replies in 2-5 seconds.",
+                    "Accept the invitation and gather at Tory. The Agent enters after the five-second announcement.",
                     "Use !hpqtest invite if the invitation expires, then !hpqtest status to inspect the run.");
         }
         return List.of("Preparing an Agent-only HPQ party of " + partySize
@@ -198,6 +199,7 @@ public final class AgentHpqTestService {
                 AgentCombatVariationRuntime.configure(entry, new AgentCombatVariationSettings(
                         run.seed + ordinal * 10_007L, true, 0.35d, 8, true, 0.50d));
                 AgentMapGatewayRuntime.map().changeMapNear(agent, map, spawn);
+                AgentHpqTestFixtureService.ensureRiceCakeHat(agent);
                 if (!AgentActivityBootstrap.admission().prepare(
                         AgentActivityBootstrap.PARTY_QUEST_CONTROLLER_ID, entry, agent,
                         "entering HPQ observation", System.currentTimeMillis())) {
@@ -221,7 +223,6 @@ public final class AgentHpqTestService {
                 }
                 log.info("HPQ fixture launched: name={} career={} level={} weapon={}",
                         name, prepared.career(), prepared.level(), prepared.weaponItemId());
-                maybeInviteOperator(run);
             } catch (Exception failure) {
                 if (launched != null) disconnect(launched.getId());
                 failRun(run, "Could not launch " + name + ": " + failure.getMessage());
@@ -254,7 +255,6 @@ public final class AgentHpqTestService {
     private static void monitor(Run run) {
         if (RUNS.get(run.operator.getId()) != run) return;
         try {
-            maybeInviteOperator(run);
             if (run.session == null) attemptHandoff(run);
             if (run.session != null && run.session.terminal()) {
                 String outcome = run.session.phase() == AgentHpqSession.Phase.COMPLETED
@@ -295,10 +295,10 @@ public final class AgentHpqTestService {
             run.session = result.session();
             run.lobby = null;
             run.operator.dropMessage(6, run.flow == Flow.HUMAN_INVITES_AGENTS
-                    ? "HPQ party assembled. Talk to Tory to enter and observe normally."
+                    ? "HPQ party assembled. Gather at Tory; enter after the five-second announcement."
                     : run.flow == Flow.AGENT_LEADS_HUMAN
-                    ? "Agent-led mixed HPQ assembled. The Agent leader will enter normally."
-                    : "Agent-only HPQ party assembled; use !hpqtest spectate after entry to observe it.");
+                    ? "Agent-led mixed HPQ assembled. Gather at Tory; the Agent enters after the countdown."
+                    : "Agent-only HPQ party assembled and gathering at Tory; use !hpqtest spectate after entry.");
         }
     }
 
@@ -572,10 +572,20 @@ public final class AgentHpqTestService {
     }
 
     private static void finishRun(Run run, String outcome) {
+        if (holdAfterTerminal(run.session == null ? null : run.session.phase())) {
+            returnObserver(run);
+            run.operator.dropMessage(6, "HPQ observation " + outcome
+                    + ". The party is standing by at Tory; use !hpqtest start for the next run or !hpqtest stop to dismiss it.");
+            return;
+        }
         if (!RUNS.remove(run.operator.getId(), run)) return;
         returnObserver(run);
         run.engagement.agentIds().forEach(AgentHpqTestService::disconnect);
         run.operator.dropMessage(6, "HPQ observation " + outcome + ".");
+    }
+
+    static boolean holdAfterTerminal(AgentHpqSession.Phase phase) {
+        return phase == AgentHpqSession.Phase.COMPLETED;
     }
 
     private static void failRun(Run run, String reason) {

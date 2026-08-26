@@ -34,6 +34,27 @@ class AgentHpqSessionTest {
     }
 
     @Test
+    void lobbyPreparationDeadlineRemainsSessionLocal() {
+        AgentHpqSession first = session();
+        AgentHpqSession second = session();
+
+        first.setReadyAtMs(6_000L);
+
+        assertEquals(6_000L, first.readyAtMs());
+        assertEquals(0L, second.readyAtMs());
+    }
+
+    @Test
+    void preparationCountdownStartsOnceAndResetsWhenThePartyDisperses() {
+        assertEquals(6_000L, AgentHpqCoordinator.preparationReadyAtMs(
+                true, 0L, 1_000L, 5_000L));
+        assertEquals(6_000L, AgentHpqCoordinator.preparationReadyAtMs(
+                true, 6_000L, 2_000L, 5_000L));
+        assertEquals(0L, AgentHpqCoordinator.preparationReadyAtMs(
+                false, 6_000L, 2_000L, 5_000L));
+    }
+
+    @Test
     void watchdogDisposesAnOrphanedHpqEvent() {
         EventInstanceManager event = mock(EventInstanceManager.class);
         when(event.getPlayers()).thenReturn(List.of());

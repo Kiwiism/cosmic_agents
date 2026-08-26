@@ -73,6 +73,20 @@ class AgentPartyQuestLobbyRuntimeTest {
                 17L, AGENT_ID, OWNER_ID, 900L, 1_800L));
     }
 
+    @Test
+    void profileMayOverrideOnlyItsOwnInviteResponseBounds() {
+        AgentPartyQuestLobbyProfile profile = new AgentPartyQuestLobbyProfile(
+                "hpq", 1000, 9000, 10, 255, 6, -50, 50,
+                List.of(), List.of(), List.of(), 2_000L, 5_000L);
+
+        assertEquals(2_000L, profile.inviteResponseMinimumMs());
+        assertEquals(5_000L, profile.inviteResponseMaximumMs());
+        long delay = AgentPartyQuestLobbyRuntime.inviteResponseDelayMs(
+                17L, AGENT_ID, OWNER_ID,
+                profile.inviteResponseMinimumMs(), profile.inviteResponseMaximumMs());
+        assertTrue(delay >= 2_000L && delay <= 5_000L);
+    }
+
     private void registerWaiter() {
         lobby = new AgentPartyQuestLobbySession(
                 "engagement-test", profile(), 1L, OWNER_ID, 4,

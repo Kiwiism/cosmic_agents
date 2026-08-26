@@ -17,12 +17,34 @@ public record AgentPartyQuestLobbyProfile(
         int maximumXOffset,
         List<Phrase> phrases,
         List<MemberRequirement> memberRequirements,
-        List<String> waiterMessages) {
+        List<String> waiterMessages,
+        long inviteResponseMinimumMs,
+        long inviteResponseMaximumMs) {
+
+    public AgentPartyQuestLobbyProfile(
+            String questKey,
+            int mapId,
+            int entryNpcId,
+            int minimumLevel,
+            int maximumLevel,
+            int maximumPartySize,
+            int minimumXOffset,
+            int maximumXOffset,
+            List<Phrase> phrases,
+            List<MemberRequirement> memberRequirements,
+            List<String> waiterMessages) {
+        this(questKey, mapId, entryNpcId, minimumLevel, maximumLevel, maximumPartySize,
+                minimumXOffset, maximumXOffset, phrases, memberRequirements, waiterMessages,
+                0L, 0L);
+    }
 
     public AgentPartyQuestLobbyProfile {
         if (questKey == null || questKey.isBlank() || minimumLevel < 1
                 || maximumLevel < minimumLevel || maximumPartySize < 2
-                || minimumXOffset > maximumXOffset) {
+                || minimumXOffset > maximumXOffset
+                || inviteResponseMinimumMs < 0L
+                || inviteResponseMaximumMs < inviteResponseMinimumMs
+                || (inviteResponseMinimumMs == 0L) != (inviteResponseMaximumMs == 0L)) {
             throw new IllegalArgumentException("Valid party-quest lobby profile values are required");
         }
         phrases = List.copyOf(phrases == null ? List.of() : phrases);

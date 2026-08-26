@@ -746,6 +746,34 @@ tuning:
     # Purpose: Bounds one HPQ phase without changing the event script's authoritative ten-minute run timer.
     # Technical: AgentHpqCoordinator compares this value only with the isolated HPQ session's last-progress timestamp and never with another PQ clock.
     server.agents.capabilities.partyquest.hpq.AgentHpqCoordinator.PHASE_TIMEOUT_MS: '600000'
+    # Values: 1000-15000 milliseconds. Recommended: 5000 to match the visible KPQ lobby countdown.
+    # Purpose: Keeps a fully gathered HPQ party at Tory long enough for players and observers to see that entry is about to begin.
+    # Technical: AgentHpqSession owns this deadline; leaving Tory's gather radius resets only that HPQ session's countdown.
+    server.agents.capabilities.partyquest.hpq.AgentHpqCoordinator.PREPARATION_DELAY_MS: '5000'
+    # Values: 20-100 map pixels. Recommended: 55.
+    # Purpose: Determines when an Agent has reached its deterministic HPQ lobby position beside Tory.
+    # Technical: Applies only to HPQ preparation navigation and does not alter shared movement arrival tolerances.
+    server.agents.capabilities.partyquest.hpq.AgentHpqCoordinator.NPC_APPROACH_PX: '55'
+    # Values: 80-300 map pixels. Recommended: 160 so a human participant remains visibly part of the Tory formation.
+    # Purpose: Requires human HPQ participants to gather with the Agent party before the visible entry countdown starts.
+    # Technical: Applies only while the HPQ session is PREPARING and does not move or warp human characters.
+    server.agents.capabilities.partyquest.hpq.AgentHpqCoordinator.GATHER_RADIUS_PX: '160'
+    # Values: 0-5000 milliseconds. Recommended: 2500.
+    # Purpose: Staggers HPQ defenders' first reaction to an invasion so the whole party does not begin moving on the same tick.
+    # Technical: Applies once when an HPQ session enters its bunny-defense phase; ordinary combat and every other PQ keep their existing reaction timing.
+    server.agents.capabilities.partyquest.hpq.AgentHpqCoordinator.DEFENSE_REACTION_MAX_MS: '2500'
+    # Values: 50-500 map pixels. Recommended: 220.
+    # Purpose: Lets a waiting HPQ defender react early when an invading monster moves close enough to threaten that character.
+    # Technical: Applies only during the HPQ defense-entry stagger and does not change shared aggro, targeting, or navigation ranges.
+    server.agents.capabilities.partyquest.hpq.AgentHpqCoordinator.DEFENSE_WAKE_RADIUS_PX: '220'
+    # Values: 500-5000 milliseconds. Recommended: 2000.
+    # Purpose: Gives an HPQ Agent leader a natural pause after a nearby eligible player asks to join its party.
+    # Technical: Overrides only HPQ's shared-lobby invitation delay; KPQ, LPQ, and other lobby profiles retain their own or the shared defaults.
+    server.agents.capabilities.partyquest.hpq.AgentHpqLobbyProfile.INVITE_RESPONSE_MINIMUM_MS: '2000'
+    # Values: 2000-10000 milliseconds. Recommended: 5000.
+    # Purpose: Caps the varied response time before the HPQ leader sends the requested party invitation.
+    # Technical: The delay is deterministic per HPQ lobby and character pair, and both participants are revalidated before the invite is sent.
+    server.agents.capabilities.partyquest.hpq.AgentHpqLobbyProfile.INVITE_RESPONSE_MAXIMUM_MS: '5000'
     # Values: 500-3000 milliseconds. Recommended: 1200.
     # Purpose: Prevents an HPQ planter from repeatedly dropping seeds while the ordinary reactor resolves the previous drop.
     # Technical: AgentHpqMemberState stores this deadline per HPQ member after an ordinary item drop; it does not affect any other PQ interaction cadence.

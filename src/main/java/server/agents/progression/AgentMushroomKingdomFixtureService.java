@@ -41,6 +41,8 @@ public final class AgentMushroomKingdomFixtureService {
     private static final int CROSSBOW_ARROW_ITEM_ID = 2_061_000;
     private static final int THROWING_STAR_ITEM_ID = 2_070_000;
     private static final int BULLET_ITEM_ID = 2_330_000;
+    private static final int NEAREST_TOWN_SCROLL_ITEM_ID = 2_030_000;
+    private static final int SECOND_JOB_TRAVEL_MESO = 100_000;
     private static final byte LARGE_INVENTORY = 96;
     private static final Map<Integer, Integer> LEGAL_SUB_LEVEL_25_WEAPON_BY_JOB = Map.of(
             320, 1_462_003,
@@ -63,7 +65,7 @@ public final class AgentMushroomKingdomFixtureService {
     public static Prepared prepare(AgentRuntimeEntry entry,
                                    AgentSecondJobCatalog.Branch branch,
                                    int ordinal, long seed, long nowMs) throws IOException {
-        return prepare(entry, branch, ordinal, seed, nowMs, true);
+        return prepare(entry, branch, ordinal, seed, nowMs, true, false, false);
     }
 
     /**
@@ -74,13 +76,21 @@ public final class AgentMushroomKingdomFixtureService {
                                                            AgentSecondJobCatalog.Branch branch,
                                                            int ordinal, long seed,
                                                            long nowMs) throws IOException {
-        return prepare(entry, branch, ordinal, seed, nowMs, false);
+        return prepare(entry, branch, ordinal, seed, nowMs, false, false, false);
+    }
+
+    /** Prepares a named test Agent while retaining its saved skin, face, hair, and gender. */
+    public static Prepared prepareExistingCharacterForSecondJobAdvancement(
+            AgentRuntimeEntry entry, AgentSecondJobCatalog.Branch branch,
+            int ordinal, long seed, long nowMs) throws IOException {
+        return prepare(entry, branch, ordinal, seed, nowMs, false, true, true);
     }
 
     private static Prepared prepare(AgentRuntimeEntry entry,
                                     AgentSecondJobCatalog.Branch branch,
                                     int ordinal, long seed, long nowMs,
-                                    boolean advanceSecondJob) throws IOException {
+                                    boolean advanceSecondJob, boolean preserveAppearance,
+                                    boolean provisionTravel) throws IOException {
         Character agent = entry == null ? null : entry.bot();
         if (agent == null || branch == null) throw new IllegalArgumentException("live Agent and branch required");
         String career = firstJobCareer(branch);
@@ -90,8 +100,10 @@ public final class AgentMushroomKingdomFixtureService {
         AgentUniversalPlanRuntime.clearCheckpoint(entry, agent.getId());
         AgentMovementCommandRuntime.stop(entry);
 
-        CosmicMapleIslandCohortIdentity.apply(agent,
-                MapleIslandCohortCharacterCatalog.template(ordinal));
+        if (!preserveAppearance) {
+            CosmicMapleIslandCohortIdentity.apply(agent,
+                    MapleIslandCohortCharacterCatalog.template(ordinal));
+        }
         while (agent.getLevel() < 30) {
             agent.levelUp(false);
             AgentApBuildProfileService.autoAssign(entry, agent);
@@ -114,6 +126,7 @@ public final class AgentMushroomKingdomFixtureService {
 
         List<Integer> equipment = equip(agent, branch, seed);
         provisionSupplies(agent, branch);
+        if (provisionTravel) provisionSecondJobTravel(agent, branch);
         if (advanceSecondJob) resetQuestline(agent, branch);
         else resetSecondJobAdvancement(entry, agent);
         agent.healHpMp();
@@ -280,6 +293,31 @@ public final class AgentMushroomKingdomFixtureService {
             default -> 0;
         };
         if (projectile > 0) require(inventory.addItem(agent, projectile, (short) 30_000), "projectiles");
+    }
+
+    private static void provisionSecondJobTravel(
+            Character agent, AgentSecondJobCatalog.Branch branch) {
+        if (agent.getMeso() < SECOND_JOB_TRAVEL_MESO) {
+            agent.gainMeso(SECOND_JOB_TRAVEL_MESO - agent.getMeso(), false, false, false);
+        }
+        InventoryGateway inventory = AgentInventoryGatewayRuntime.inventory();
+        require(inventory.addItem(agent, NEAREST_TOWN_SCROLL_ITEM_ID, (short) 10),
+                "Return Scrolls - Nearest Town");
+        int townScrollItemId = secondJobTownScrollItemId(branch);
+        if (townScrollItemId != NEAREST_TOWN_SCROLL_ITEM_ID) {
+            require(inventory.addItem(agent, townScrollItemId, (short) 5),
+                    "second-job town return scrolls");
+        }
+    }
+
+    static int secondJobTownScrollItemId(AgentSecondJobCatalog.Branch branch) {
+        return switch (branch.family()) {
+            case WARRIOR -> 2_030_003; // Perion
+            case MAGICIAN -> 2_030_002; // Ellinia
+            case BOWMAN -> 2_030_001; // Henesys
+            case THIEF -> 2_030_005; // Kerning City
+            case PIRATE -> NEAREST_TOWN_SCROLL_ITEM_ID;
+        };
     }
 
     private static void resetQuestline(Character agent, AgentSecondJobCatalog.Branch branch) {

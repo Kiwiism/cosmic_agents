@@ -40,13 +40,15 @@ final class AgentHpqTerminationService {
         if (disposeEvent && event != null) {
             tryCleanup(session, "dispose-event", () -> closeEvent(event));
         }
-        tryCleanup(session, "cleanup-party", () -> session.members().stream()
-                    .filter(member -> session.partyOwnership() == AgentHpqSession.PartyOwnership.HPQ_OWNED
-                            || member.memberType() == AgentHpqMemberState.MemberType.AGENT)
-                    .map(member -> character(member.characterId()))
-                    .filter(java.util.Objects::nonNull)
-                    .filter(AgentPartyGatewayRuntime.party()::hasParty)
-                    .forEach(AgentPartyGatewayRuntime.party()::leaveCurrentParty));
+        if (!keepPartyAfterRelease(session.mode(), completed)) {
+            tryCleanup(session, "cleanup-party", () -> session.members().stream()
+                        .filter(member -> session.partyOwnership() == AgentHpqSession.PartyOwnership.HPQ_OWNED
+                                || member.memberType() == AgentHpqMemberState.MemberType.AGENT)
+                        .map(member -> character(member.characterId()))
+                        .filter(java.util.Objects::nonNull)
+                        .filter(AgentPartyGatewayRuntime.party()::hasParty)
+                        .forEach(AgentPartyGatewayRuntime.party()::leaveCurrentParty));
+        }
         session.clearEventInstance();
         if (completed) session.complete(nowMs);
         else session.fail(reason, nowMs);
@@ -55,6 +57,10 @@ final class AgentHpqTerminationService {
                 session.sessionId(), completed, reason, nowMs);
         log.info("HPQ session released: session={} outcome={} members={}",
                 session.sessionId(), completed ? "completed" : reason, session.memberCount());
+    }
+
+    static boolean keepPartyAfterRelease(AgentHpqSession.Mode mode, boolean completed) {
+        return completed && mode == AgentHpqSession.Mode.TEST_OBSERVATION;
     }
 
     private static void closeEvent(EventInstanceManager event) {

@@ -15,6 +15,19 @@ function clearStage(stage, eim) {
     eim.giveEventPlayersStageReward(stage);
 }
 
+function isLivePartyMember(eim, player) {
+    var eventLeader = eim == null ? null : eim.getLeader();
+    return eventLeader != null && player != null && eventLeader.getPartyId() > 0
+        && player.getPartyId() == eventLeader.getPartyId();
+}
+
+function canGmObserverFollowThrough(eim, player) {
+    return eim != null && player != null && player.gmLevel() >= 6
+        && !isLivePartyMember(eim, player)
+        && player.getMapId() == 910010000
+        && eim.getProperty("1stageclear") != null;
+}
+
 function start() {
     status = -1;
     action(1, 0, 0);
@@ -33,6 +46,22 @@ function action(mode, type, selection) {
             status += ((chosen == 2) ? 1 : -1);
         } else {
             status++;
+        }
+
+        var observerEvent = cm.getEventInstance();
+        if (status == 0 && !isLivePartyMember(observerEvent, cm.getPlayer())) {
+            if (canGmObserverFollowThrough(observerEvent, cm.getPlayer())) {
+                cm.sendYesNo("The Moon Bunny stage is clear. Follow the party to the clear area as an observer? You will not receive a party quest reward.");
+            } else {
+                cm.sendOk("You may observe this party quest, but only current party members can participate or claim rewards.");
+                cm.dispose();
+            }
+            return;
+        }
+        if (status == 1 && canGmObserverFollowThrough(observerEvent, cm.getPlayer())) {
+            cm.warp(910010100, "st00");
+            cm.dispose();
+            return;
         }
 
         if (status == 0) {

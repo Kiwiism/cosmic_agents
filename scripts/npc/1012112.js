@@ -27,6 +27,18 @@
 
 var status = 0;
 var em = null;
+const AgentHpqSessionRegistry = Java.type('server.agents.capabilities.partyquest.hpq.AgentHpqSessionRegistry');
+
+function isLivePartyMember(eim, player) {
+    var eventLeader = eim == null ? null : eim.getLeader();
+    return eventLeader != null && player != null && eventLeader.getPartyId() > 0
+        && player.getPartyId() == eventLeader.getPartyId();
+}
+
+function isGmObserver(eim, player) {
+    return eim != null && player != null && player.gmLevel() >= 6
+        && !isLivePartyMember(eim, player);
+}
 
 function start() {
     status = -1;
@@ -59,7 +71,11 @@ function action(mode, type, selection) {
                     return;
                 }
 
-                cm.sendSimple("#e#b<Party Quest: Primrose Hill>\r\n#k#n" + em.getProperty("party") + "\r\n\r\nI'm Tory. Inside here is a beautiful hill where the primrose blooms. There's a tiger that lives in the hill, Growlie, and he seems to be looking for something to eat. Would you like to head over to the hill of primrose and join forces with your party members to help Growlie out?#b\r\n#L0#I want to participate in the party quest.\r\n#L1#I would like to " + (cm.getPlayer().isRecvPartySearchInviteEnabled() ? "disable" : "enable") + " Party Search.\r\n#L2#I would like to hear more details.\r\n#L3#I would like to redeem an instance hat.");
+                var menu = "#e#b<Party Quest: Primrose Hill>\r\n#k#n" + em.getProperty("party") + "\r\n\r\nI'm Tory. Inside here is a beautiful hill where the primrose blooms. There's a tiger that lives in the hill, Growlie, and he seems to be looking for something to eat. Would you like to head over to the hill of primrose and join forces with your party members to help Growlie out?#b\r\n#L0#I want to participate in the party quest.\r\n#L1#I would like to " + (cm.getPlayer().isRecvPartySearchInviteEnabled() ? "disable" : "enable") + " Party Search.\r\n#L2#I would like to hear more details.\r\n#L3#I would like to redeem an instance hat.";
+                if (cm.getPlayer().gmLevel() >= 6) {
+                    menu += "\r\n#L4#[GM6] Warp to current HPQ leader.";
+                }
+                cm.sendSimple(menu);
             } else if (status == 1) {
                 if (selection == 0) {
                     if (cm.getParty() == null) {
@@ -87,8 +103,12 @@ function action(mode, type, selection) {
                 } else if (selection == 2) {
                     cm.sendOk("#e#b<Party Quest: Primrose Hill>#k#n\r\nCollect primrose seeds from the flowers at the bottom part of the map and drop them by the platforms above the stage. Primrose seed color must match to grow the seeds, so test until you find the correct combination. When all the seeds have been planted, that is, starting second part of the mission, scout the Moon Bunny while it prepares Rice Cakes for the hungry Growlie. Once Growlie becomes satisfied, your mission is complete.");
                     cm.dispose();
-                } else {
+                } else if (selection == 3) {
                     cm.sendYesNo("So you want to exchange #b20 #b#t4001158##k for the instance-designed hat?");
+                } else if (selection == 4 && cm.getPlayer().gmLevel() >= 6) {
+                    warpToCurrentHpqLeader();
+                } else {
+                    cm.dispose();
                 }
             } else {
                 if (cm.hasItem(4001158, 20)) {
@@ -105,9 +125,15 @@ function action(mode, type, selection) {
             }
         } else if (cm.getMapId() == 910010100) {
             if (status == 0) {
-                cm.sendYesNo("Thank you for aiding in the effort of feeding the Growlie. As a matter of fact, your team has already been rewarded for reaching this far. With this problem now solved, there is another issue happening right now, if you are interessed check #bTommy#k there for the info. So, are you returning straight to Henesys now?");
+                if (isGmObserver(cm.getEventInstance(), cm.getPlayer())) {
+                    cm.sendYesNo("Would you like to leave this HPQ observation without receiving a party quest reward?");
+                } else {
+                    cm.sendYesNo("Thank you for aiding in the effort of feeding the Growlie. As a matter of fact, your team has already been rewarded for reaching this far. With this problem now solved, there is another issue happening right now, if you are interessed check #bTommy#k there for the info. So, are you returning straight to Henesys now?");
+                }
             } else if (status == 1) {
-                if (cm.getEventInstance().giveEventReward(cm.getPlayer())) {
+                if (isGmObserver(cm.getEventInstance(), cm.getPlayer())) {
+                    cm.warp(100000200);
+                } else if (cm.getEventInstance().giveEventReward(cm.getPlayer())) {
                     cm.warp(100000200);
                 } else {
                     cm.sendOk("It seems you are short on space in one of your inventories. Please check that first to get rewarded properly.");
@@ -116,9 +142,15 @@ function action(mode, type, selection) {
             }
         } else if (cm.getMapId() == 910010400) {
             if (status == 0) {
-                cm.sendYesNo("So, are you returning to Henesys now?");
+                if (isGmObserver(cm.getEventInstance(), cm.getPlayer())) {
+                    cm.sendYesNo("Would you like to leave this HPQ observation without receiving a party quest reward?");
+                } else {
+                    cm.sendYesNo("So, are you returning to Henesys now?");
+                }
             } else if (status == 1) {
-                if (cm.getEventInstance() == null) {
+                if (isGmObserver(cm.getEventInstance(), cm.getPlayer())) {
+                    cm.warp(100000200);
+                } else if (cm.getEventInstance() == null) {
                     cm.warp(100000200);
                 } else if (cm.getEventInstance().giveEventReward(cm.getPlayer())) {
                     cm.warp(100000200);
@@ -129,4 +161,31 @@ function action(mode, type, selection) {
             }
         }
     }
+}
+
+function warpToCurrentHpqLeader() {
+    var player = cm.getPlayer();
+    var sessions = AgentHpqSessionRegistry.sessions();
+    for (var i = 0; i < sessions.size(); i++) {
+        var session = sessions.get(i);
+        if (session == null || session.eventLeaderId() <= 0) {
+            continue;
+        }
+        var leader = cm.getClient().getChannelServer().getPlayerStorage().getCharacterById(session.eventLeaderId());
+        if (leader == null) {
+            leader = cm.getClient().getWorldServer().getPlayerStorage().getCharacterById(session.eventLeaderId());
+        }
+        if (leader == null || leader.getClient() == null || leader.getClient().getChannel() != player.getClient().getChannel()) {
+            continue;
+        }
+        if (leader.getEventInstance() == null) {
+            continue;
+        }
+        player.forceChangeMap(leader.getMap(), leader.getMap().findClosestPortal(leader.getPosition()));
+        cm.sendOk("Warping to HPQ leader " + leader.getName() + ".");
+        cm.dispose();
+        return;
+    }
+    cm.sendOk("No active HPQ leader is currently available on this channel.");
+    cm.dispose();
 }

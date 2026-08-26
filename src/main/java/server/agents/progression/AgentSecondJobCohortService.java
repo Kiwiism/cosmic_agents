@@ -64,7 +64,11 @@ public final class AgentSecondJobCohortService {
             return switch (action) {
                 case "start" -> {
                     StartSelection selection = parseStart(params, nowMs);
-                    yield start(operator, selection.seed(), selection.roster(), nowMs);
+                    yield start(operator, selection.seed(), selection.roster(), false, nowMs);
+                }
+                case "startfor" -> {
+                    StartSelection selection = parseNamedStart(params, nowMs);
+                    yield start(operator, selection.seed(), selection.roster(), true, nowMs);
                 }
                 case "status" -> status(operator);
                 case "stage" -> stage(operator, params);
@@ -78,14 +82,14 @@ public final class AgentSecondJobCohortService {
     }
 
     private static List<String> start(Character operator, long seed, List<CohortMember> roster,
-                                      long nowMs) throws Exception {
+                                      boolean preserveAppearance, long nowMs) throws Exception {
         if (RUNS.containsKey(operator.getId())) stop(operator);
         if (roster.isEmpty()) return List.of("No matching second-job branches were requested.");
         for (CohortMember member : roster) {
             String failure = PROVISIONING.ensureBackingCharacter(operator, member.name());
             if (failure != null) return List.of(failure);
         }
-        Run run = new Run(operator, seed, roster);
+        Run run = new Run(operator, seed, roster, preserveAppearance);
         RUNS.put(operator.getId(), run);
         for (int ordinal = 0; ordinal < roster.size(); ordinal++) {
             CohortMember member = roster.get(ordinal);
@@ -114,8 +118,14 @@ public final class AgentSecondJobCohortService {
             if (entry == null) throw new IllegalStateException("spawned Agent runtime is unavailable");
             AgentSecondJobCatalog.Branch branch = AgentSecondJobCatalog.require(member.branchId());
             AgentMushroomKingdomFixtureService.Prepared prepared =
-                    AgentMushroomKingdomFixtureService.prepareForSecondJobAdvancement(
-                            entry, branch, ordinal, mix(run.seed, ordinal), System.currentTimeMillis());
+                    run.preserveAppearance
+                            ? AgentMushroomKingdomFixtureService
+                            .prepareExistingCharacterForSecondJobAdvancement(
+                                    entry, branch, ordinal, mix(run.seed, ordinal),
+                                    System.currentTimeMillis())
+                            : AgentMushroomKingdomFixtureService.prepareForSecondJobAdvancement(
+                                    entry, branch, ordinal, mix(run.seed, ordinal),
+                                    System.currentTimeMillis());
             AgentMapGatewayRuntime.map().changeMapNear(launched, map, point);
             AgentPrimitiveCapabilityGatewayRuntime.gateway().prepareNavigation(entry, launched);
             AgentPlanStartRequest request = new AgentPlanStartRequest(Map.of(
@@ -271,6 +281,17 @@ public final class AgentSecondJobCohortService {
         return new StartSelection(seed, roster);
     }
 
+    static StartSelection parseNamedStart(String[] params, long fallbackSeed) {
+        if (params == null || params.length < 3 || params[1].isBlank()) {
+            throw new IllegalArgumentException(
+                    "Usage: !secondjobtest startfor <Agent name> <branch> [seed]");
+        }
+        AgentSecondJobCatalog.Branch branch = AgentSecondJobCatalog.require(params[2]);
+        long seed = fallbackSeed;
+        if (params.length >= 4) seed = Long.parseLong(params[3]);
+        return new StartSelection(seed, List.of(new CohortMember(params[1], branch.id())));
+    }
+
     private static List<CohortMember> members(String... branchIds) {
         List<String> selected = List.of(branchIds);
         return ALL_BRANCH_ROSTER.stream()
@@ -290,6 +311,7 @@ public final class AgentSecondJobCohortService {
     private static List<String> help() {
         return List.of("!secondjobtest start [seed] [branches...] - launch one representative per family or selected branches",
                 "!secondjobtest start [seed] all - launch all 12 Explorer branches",
+                "!secondjobtest startfor <Agent name> <branch> [seed] - reset an existing Agent without changing its appearance",
                 "!secondjobtest status - show job, map, phase, reason, and trial-item progress",
                 "!secondjobtest stage <Agent name|branch> - fast-stage the current non-trial NPC phase",
                 "!secondjobtest stop - disconnect the cohort and retain backing characters");
@@ -307,14 +329,17 @@ public final class AgentSecondJobCohortService {
         private final Character operator;
         private final long seed;
         private final List<CohortMember> roster;
+        private final boolean preserveAppearance;
         private final Map<String, Integer> agentIds = new LinkedHashMap<>();
         private final Map<String, AgentMushroomKingdomFixtureService.Prepared> prepared = new LinkedHashMap<>();
         private final Map<String, String> failures = new LinkedHashMap<>();
 
-        private Run(Character operator, long seed, List<CohortMember> roster) {
+        private Run(Character operator, long seed, List<CohortMember> roster,
+                    boolean preserveAppearance) {
             this.operator = operator;
             this.seed = seed;
             this.roster = List.copyOf(roster);
+            this.preserveAppearance = preserveAppearance;
         }
     }
 }

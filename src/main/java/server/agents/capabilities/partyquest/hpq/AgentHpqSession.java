@@ -31,6 +31,7 @@ public final class AgentHpqSession {
     private long executionLeaseUntilMs;
     private long lastProgressAtMs;
     private long phaseEnteredAtMs;
+    private long readyAtMs;
     private boolean paused;
     private boolean terminating;
     private String failure = "";
@@ -130,6 +131,10 @@ public final class AgentHpqSession {
     public synchronized int executionAgentId() { return executionAgentId; }
     public synchronized long lastProgressAtMs() { return lastProgressAtMs; }
     public synchronized long phaseEnteredAtMs() { return phaseEnteredAtMs; }
+    public synchronized long readyAtMs() { return readyAtMs; }
+    public synchronized void setReadyAtMs(long readyAtMs) {
+        this.readyAtMs = Math.max(0L, readyAtMs);
+    }
     public synchronized boolean paused() { return paused; }
     public synchronized void setPaused(boolean paused) { this.paused = paused; }
     public synchronized String failure() { return failure; }
