@@ -5,12 +5,7 @@ function enter(pi) {
     }
 
     if (pi.isQuestCompleted(2333) && pi.isQuestStarted(2331) && !pi.hasItem(4001318)) {
-        pi.getPlayer().message("Lost the Royal Seal, eh? Worry not! Kevin's code here to save your hide.");
-        if (pi.canHold(4001318)) {
-            pi.gainItem(4001318, 1);
-        } else {
-            pi.getPlayer().message("Hey, how do you plan to hold this Seal when your inventory is full?");
-        }
+        pi.getPlayer().message("You lost the Royal Seal. Ask Princess Violetta for a replacement.");
     }
 
     if (pi.isQuestCompleted(2333)) {

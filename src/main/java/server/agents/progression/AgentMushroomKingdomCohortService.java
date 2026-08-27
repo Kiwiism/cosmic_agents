@@ -2,6 +2,7 @@ package server.agents.progression;
 
 import client.Character;
 import client.QuestStatus;
+import constants.inventory.ItemConstants;
 import constants.game.ExpTable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +46,8 @@ public final class AgentMushroomKingdomCohortService {
     private static final int ACCELERATION_SAMPLE_COUNT = config.AgentTuning.intValue(
             "server.agents.progression.AgentMushroomKingdomCohortService.ACCELERATION_SAMPLE_COUNT");
     private static final int RECOMMENDATION_LETTER_ITEM_ID = 4_032_375;
+    private static final int KILLER_MUSHROOM_SPORE_ITEM_ID = 2_430_014;
+    private static final int ROYAL_SEAL_ITEM_ID = 4_001_318;
     private static final int THORN_REMOVER_ITEM_ID = 2_430_015;
     private static final int WEDDING_HALL_KEY_ITEM_ID = 4_032_388;
     private static final int SECRET_ROOM_KEY_ITEM_ID = 4_032_405;
@@ -75,7 +78,8 @@ public final class AgentMushroomKingdomCohortService {
         String action = params == null || params.length == 0 ? "help" : params[0].toLowerCase();
         try {
             return switch (action) {
-                case "start" -> start(operator, seed(params, nowMs), accelerated(params), tenPercent(params));
+                case "start" -> start(operator, seed(params, nowMs), accelerated(params), tenPercent(params),
+                        includeSelf(params));
                 case "status" -> status(operator);
                 case "stop" -> stop(operator);
                 case "fill", "complete" -> fillControlledCharacterCondition(operator);
@@ -88,18 +92,40 @@ public final class AgentMushroomKingdomCohortService {
     }
 
     private static List<String> start(Character operator, long seed,
-                                      boolean accelerated, boolean tenPercent) throws Exception {
+                                      boolean accelerated, boolean tenPercent,
+                                      boolean includeSelf) throws Exception {
         ArrayList<String> response = new ArrayList<>();
         if (accelerated && tenPercent) {
             return List.of("Choose either accelerated or ten-percent mode, not both.");
+        }
+        if (includeSelf && !tenPercent) {
+            return List.of("include-self is available only with ten-percent mode.");
+        }
+        if (includeSelf) {
+            int entryQuest = AgentMushroomKingdomCatalog.supportedSecondJob(operator.getJob().getId())
+                    ? AgentMushroomKingdomCatalog.entryQuestForJob(operator.getJob().getId()) : 0;
+            String validation = controlledParticipantValidation(operator.getLevel(), operator.getJob().getId(),
+                    entryQuest == 0 ? QuestStatus.Status.NOT_STARTED.getId()
+                            : operator.getQuestStatus(entryQuest),
+                    hasMushroomQuestlineProgress(operator));
+            if (validation != null) return List.of(validation);
         }
         if (RUNS.containsKey(operator.getId())) response.addAll(stop(operator));
         for (CohortMember member : ROSTER) {
             String failure = PROVISIONING.ensureBackingCharacter(operator, member.name());
             if (failure != null) return List.of(failure);
         }
-        Run run = new Run(operator, seed, accelerated, tenPercent);
+        Run run = new Run(operator, seed, accelerated, tenPercent, includeSelf);
         RUNS.put(operator.getId(), run);
+        if (includeSelf) {
+            try {
+                prepareControlledParticipant(run, operator);
+                scheduleControlledAcceleration(run);
+            } catch (RuntimeException failure) {
+                RUNS.remove(operator.getId(), run);
+                throw failure;
+            }
+        }
         for (int ordinal = 0; ordinal < ROSTER.size(); ordinal++) {
             CohortMember member = ROSTER.get(ordinal);
             int index = ordinal;
@@ -113,10 +139,17 @@ public final class AgentMushroomKingdomCohortService {
                     + "the harness then supplies only the remainder. Bosses and story actions stay live.");
         }
         if (tenPercent) {
-            response.add("Every Agent starts at the Mushroom Kingdom entrance and must personally complete "
+            response.add("Every Agent starts at the Mushroom Kingdom entrance with its recommendation "
+                    + "quest active and letter ready to submit, then must personally complete "
                     + "ceil(10%) of each large item objective. The harness supplies the remainder, then pays "
                     + "9x the demonstrated EXP/meso only after submission. One-off objectives and all three "
-                    + "colored Yetis remain fully live.");
+                    + "colored Yetis remain fully live. The test deliberately loses and recovers the Killer "
+                    + "Mushroom Spore through q2338 and the Royal Seal through q2342.");
+        }
+        if (includeSelf) {
+            response.add(operator.getName() + " is included as a manual 13th participant. The harness moved you "
+                    + "to the entrance, activated your recommendation quest, and will apply the same 10%/9x rules; "
+                    + "you retain control of all movement, combat, dialogue, item use, and portals.");
         }
         response.add("Six male and six female Agents cover: "
                 + ROSTER.stream().map(CohortMember::branchId).toList());
@@ -145,15 +178,7 @@ public final class AgentMushroomKingdomCohortService {
             int entryQuest = AgentMushroomKingdomCatalog.entryQuestForJob(branch.targetJobId());
             if (run.tenPercent) {
                 AgentMapGatewayRuntime.map().changeMapNear(launched, map, point);
-                Quest.getInstance(entryQuest).forceComplete(
-                        launched, AgentMushroomKingdomCatalog.entryLeaderNpc(entryQuest));
-                Quest.getInstance(2312).forceStartWithActions(launched, 1_300_005);
-                if (launched.getQuestStatus(2312) != QuestStatus.Status.STARTED.getId()) {
-                    throw new IllegalStateException("could not initialize entrance quest 2312");
-                }
-                synchronized (run) {
-                    run.baselines.put(objective(member, 2312), snapshot(launched));
-                }
+                prepareEntranceTurnIn(launched, entryQuest);
             } else {
                 MapleMap leaderMap = AgentMapGatewayRuntime.map().resolveMap(
                         run.operator.getWorld(), AgentClientGatewayRuntime.clients().channel(run.operator),
@@ -185,6 +210,15 @@ public final class AgentMushroomKingdomCohortService {
         lines.add("Mushroom Kingdom cohort: " + run.agentIds.size() + "/12 launched, seed " + run.seed
                 + ", mode " + run.modeLabel() + '.');
         synchronized (run) {
+            if (run.includeSelf) {
+                Character controlled = AgentCharacterGatewayRuntime.characters()
+                        .findOnlineCharacterById(run.operator.getId());
+                String state = controlled == null ? "offline" : "map " + controlled.getMapId() + ", "
+                        + controlledQuestStatus(controlled);
+                lines.add(run.controlledName + " [controlled " + run.controlledBranchId + "]: " + state
+                        + (run.accelerationActivity.containsKey(run.controlledName)
+                        ? ", " + run.accelerationActivity.get(run.controlledName) : ""));
+            }
             for (CohortMember member : ROSTER) {
                 Integer id = run.agentIds.get(member.name());
                 if (id == null) {
@@ -261,6 +295,59 @@ public final class AgentMushroomKingdomCohortService {
         return false;
     }
 
+    static boolean includeSelf(String[] params) {
+        if (params == null) return false;
+        for (int index = 1; index < params.length; index++) {
+            if ("include-self".equalsIgnoreCase(params[index])) return true;
+        }
+        return false;
+    }
+
+    private static void prepareControlledParticipant(Run run, Character controlled) {
+        MapleMap entrance = AgentMapGatewayRuntime.map().resolveMap(
+                controlled.getWorld(), AgentClientGatewayRuntime.clients().channel(controlled),
+                AgentMushroomKingdomCatalog.ENTRANCE_MAP_ID);
+        AgentMapGatewayRuntime.map().changeMapNear(controlled, entrance, spawnPoint(entrance, ROSTER.size()));
+        prepareEntranceTurnIn(controlled, AgentMushroomKingdomCatalog.entryQuestForJob(
+                controlled.getJob().getId()));
+        synchronized (run) {
+            run.accelerationActivity.put(run.controlledName, "entry recommendation ready to submit");
+        }
+    }
+
+    private static void scheduleControlledAcceleration(Run run) {
+        AgentSchedulerRuntime.schedule(() -> accelerateControlled(run), ACCELERATION_POLL_MS);
+    }
+
+    private static void accelerateControlled(Run run) {
+        if (RUNS.get(run.operator.getId()) != run || !run.includeSelf) return;
+        Character controlled = AgentCharacterGatewayRuntime.characters()
+                .findOnlineCharacterById(run.operator.getId());
+        if (controlled == null) {
+            synchronized (run) {
+                run.accelerationActivity.put(run.controlledName, "offline; 10% watcher waiting");
+            }
+            scheduleControlledAcceleration(run);
+            return;
+        }
+        settlePendingBonuses(run, run.controlledName, controlled);
+        if (controlled.getQuestStatus(AgentMushroomKingdomCatalog.FINAL_QUEST_ID)
+                == QuestStatus.Status.COMPLETED.getId()) {
+            synchronized (run) {
+                run.accelerationActivity.put(run.controlledName, "main story complete through q2336");
+            }
+            return;
+        }
+        int questId = controlledMainlineQuest(controlled);
+        exerciseTenPercentRecoveryQuests(run, run.controlledName, controlled, questId);
+        AgentMushroomKingdomCatalog.QuestNode node = AgentMushroomKingdomCatalog.mainline().stream()
+                .filter(candidate -> candidate.questId() == questId)
+                .findFirst().orElse(null);
+        accelerateTenPercent(run, run.controlledName, controlled, node,
+                objective(run.controlledName, questId));
+        scheduleControlledAcceleration(run);
+    }
+
     private static void scheduleAcceleration(Run run, CohortMember member,
                                              AgentRuntimeEntry entry) {
         AgentSchedulerRuntime.schedule(entry,
@@ -277,15 +364,16 @@ public final class AgentMushroomKingdomCohortService {
             scheduleAcceleration(run, member, entry);
             return;
         }
-        settlePendingBonuses(run, member, agent);
+        settlePendingBonuses(run, member.name(), agent);
         if (state.phase() != AgentMushroomKingdomState.Phase.ACTIVE) return;
+        exerciseTenPercentRecoveryQuests(run, member.name(), agent, state.currentQuestId());
         int questId = state.currentQuestId();
         AgentMushroomKingdomCatalog.QuestNode node = AgentMushroomKingdomCatalog.mainline().stream()
                 .filter(candidate -> candidate.questId() == questId)
                 .findFirst().orElse(null);
-        String objective = objective(member, questId);
+        String objective = objective(member.name(), questId);
         if (run.tenPercent) {
-            accelerateTenPercent(run, member, agent, node, objective);
+            accelerateTenPercent(run, member.name(), agent, node, objective);
             scheduleAcceleration(run, member, entry);
             return;
         }
@@ -315,7 +403,7 @@ public final class AgentMushroomKingdomCohortService {
         scheduleAcceleration(run, member, entry);
     }
 
-    private static void accelerateTenPercent(Run run, CohortMember member, Character agent,
+    private static void accelerateTenPercent(Run run, String participantName, Character agent,
                                              AgentMushroomKingdomCatalog.QuestNode node,
                                              String objective) {
         if (node == null || agent.getQuestStatus(node.questId()) != QuestStatus.Status.STARTED.getId()) {
@@ -336,7 +424,7 @@ public final class AgentMushroomKingdomCohortService {
         int topUp = required - owned;
         if (!AgentInventoryGatewayRuntime.inventory().addItem(agent, node.itemId(), (short) topUp)) {
             synchronized (run) {
-                run.accelerationActivity.put(member.name(), "q" + node.questId()
+                run.accelerationActivity.put(participantName, "q" + node.questId()
                         + " top-up waiting for ETC space");
             }
             return;
@@ -345,21 +433,94 @@ public final class AgentMushroomKingdomCohortService {
         synchronized (run) {
             run.acceleratedObjectives.add(objective);
             run.pendingBonuses.put(objective, bonus);
-            run.accelerationActivity.put(member.name(), "10% q" + node.questId() + ' '
+            run.accelerationActivity.put(participantName, "10% q" + node.questId() + ' '
                     + owned + "->" + required + ", pending +" + bonus.experience()
                     + " EXP/+" + bonus.mesos() + " mesos after submission");
         }
         log.info("Mushroom Kingdom 10-percent test topped up {} quest {} item {} from {} to {}; "
                         + "pending bonus exp={} meso={}",
-                member.name(), node.questId(), node.itemId(), owned, required,
+                participantName, node.questId(), node.itemId(), owned, required,
                 bonus.experience(), bonus.mesos());
     }
 
-    private static void settlePendingBonuses(Run run, CohortMember member, Character agent) {
+    static void prepareEntranceTurnIn(Character agent, int entryQuestId) {
+        Quest entryQuest = Quest.getInstance(entryQuestId);
+        int leaderNpcId = AgentMushroomKingdomCatalog.entryLeaderNpc(entryQuestId);
+        entryQuest.forceStartWithActions(agent, leaderNpcId);
+        if (agent.getQuestStatus(entryQuestId) != QuestStatus.Status.STARTED.getId()) {
+            throw new IllegalStateException("could not activate Mushroom Kingdom entry quest "
+                    + entryQuestId);
+        }
+        int letters = AgentPrimitiveCapabilityGatewayRuntime.gateway()
+                .itemCount(agent, RECOMMENDATION_LETTER_ITEM_ID);
+        if (letters < 1 && !AgentInventoryGatewayRuntime.inventory().addItem(
+                agent, RECOMMENDATION_LETTER_ITEM_ID, (short) 1)) {
+            throw new IllegalStateException("could not supply the Mushroom Kingdom recommendation letter");
+        }
+    }
+
+    private static void exerciseTenPercentRecoveryQuests(
+            Run run, String participantName, Character agent, int currentQuestId) {
+        if (!run.tenPercent) return;
+        String sporeRecovery = objective(participantName, 2338);
+        if (currentQuestId == 2322 && claimRecoveryLoss(run, sporeRecovery)) {
+            removeAll(agent, KILLER_MUSHROOM_SPORE_ITEM_ID);
+            synchronized (run) {
+                run.accelerationActivity.put(participantName,
+                        "removed Killer Mushroom Spore; waiting for q2338 recovery");
+            }
+        }
+        recordRecoveryCompletion(run, participantName, agent, 2338,
+                KILLER_MUSHROOM_SPORE_ITEM_ID, "Killer Mushroom Spore");
+
+        String sealRecovery = objective(participantName, 2342);
+        if (agent.getQuestStatus(2333) == QuestStatus.Status.COMPLETED.getId()
+                && agent.getQuestStatus(2331) == QuestStatus.Status.STARTED.getId()
+                && claimRecoveryLoss(run, sealRecovery)) {
+            removeAll(agent, ROYAL_SEAL_ITEM_ID);
+            synchronized (run) {
+                run.accelerationActivity.put(participantName,
+                        "removed Royal Seal; waiting for q2342 recovery");
+            }
+        }
+        recordRecoveryCompletion(run, participantName, agent, 2342,
+                ROYAL_SEAL_ITEM_ID, "Royal Seal");
+    }
+
+    private static void recordRecoveryCompletion(Run run, String participantName, Character agent,
+                                                 int questId, int itemId, String itemName) {
+        String recovery = objective(participantName, questId);
+        if (agent.getQuestStatus(questId) != QuestStatus.Status.COMPLETED.getId()
+                || AgentPrimitiveCapabilityGatewayRuntime.gateway().itemCount(agent, itemId) < 1) {
+            return;
+        }
+        synchronized (run) {
+            if (run.recoveryLosses.contains(recovery)
+                    && run.recoveryCompletions.add(recovery)) {
+                run.accelerationActivity.put(participantName,
+                        "completed q" + questId + " and recovered " + itemName);
+            }
+        }
+    }
+
+    private static boolean claimRecoveryLoss(Run run, String recovery) {
+        synchronized (run) {
+            return run.recoveryLosses.add(recovery);
+        }
+    }
+
+    private static void removeAll(Character agent, int itemId) {
+        int owned = AgentPrimitiveCapabilityGatewayRuntime.gateway().itemCount(agent, itemId);
+        if (owned <= 0) return;
+        AgentInventoryGatewayRuntime.inventory().removeById(
+                agent, ItemConstants.getInventoryType(itemId), itemId, owned, false, false);
+    }
+
+    private static void settlePendingBonuses(Run run, String participantName, Character agent) {
         ArrayList<Map.Entry<String, PendingBonus>> payable = new ArrayList<>();
         synchronized (run) {
             for (Map.Entry<String, PendingBonus> entry : run.pendingBonuses.entrySet()) {
-                if (!entry.getKey().startsWith(member.name() + ':')) continue;
+                if (!entry.getKey().startsWith(participantName + ':')) continue;
                 int questId = Integer.parseInt(entry.getKey().substring(entry.getKey().indexOf(':') + 1));
                 if (agent.getQuestStatus(questId) == QuestStatus.Status.COMPLETED.getId()) {
                     payable.add(entry);
@@ -372,7 +533,7 @@ public final class AgentMushroomKingdomCohortService {
             if (bonus.experience() > 0) agent.gainExp(bonus.experience(), false, false);
             if (bonus.mesos() > 0) agent.gainMeso(bonus.mesos(), false);
             synchronized (run) {
-                run.accelerationActivity.put(member.name(), "paid " + entry.getKey().substring(
+                run.accelerationActivity.put(participantName, "paid " + entry.getKey().substring(
                         entry.getKey().indexOf(':') + 1) + ": +" + bonus.experience()
                         + " EXP/+" + bonus.mesos() + " mesos");
             }
@@ -434,8 +595,57 @@ public final class AgentMushroomKingdomCohortService {
         return (int) Math.min(Integer.MAX_VALUE, Math.max(0L, gained) * 9L);
     }
 
-    private static String objective(CohortMember member, int questId) {
-        return member.name() + ':' + questId;
+    private static String objective(String participantName, int questId) {
+        return participantName + ':' + questId;
+    }
+
+    static String controlledParticipantValidation(int level, int jobId,
+                                                  int entryQuestStatus,
+                                                  boolean hasQuestlineProgress) {
+        if (level != 30) {
+            return "include-self requires an exact level-30 test character; current level is " + level + '.';
+        }
+        if (!AgentMushroomKingdomCatalog.supportedSecondJob(jobId)) {
+            return "include-self requires one of the 12 Explorer second jobs; current job is " + jobId + '.';
+        }
+        if (entryQuestStatus != QuestStatus.Status.NOT_STARTED.getId() || hasQuestlineProgress) {
+            return "include-self requires a fresh Mushroom Kingdom quest state. Reset the entry, main-story, "
+                    + "q2337/q2338/q2342, and thorn-barrier quest records first.";
+        }
+        return null;
+    }
+
+    private static boolean hasMushroomQuestlineProgress(Character controlled) {
+        int notStarted = QuestStatus.Status.NOT_STARTED.getId();
+        for (AgentMushroomKingdomCatalog.QuestNode node : AgentMushroomKingdomCatalog.mainline()) {
+            if (controlled.getQuestStatus(node.questId()) != notStarted) return true;
+        }
+        for (int questId : List.of(2337, 2338, 2342,
+                AgentMushroomKingdomRuntime.FIRST_THORN_BARRIER_UNLOCK_QUEST_ID)) {
+            if (controlled.getQuestStatus(questId) != notStarted) return true;
+        }
+        return false;
+    }
+
+    private static int controlledMainlineQuest(Character controlled) {
+        for (AgentMushroomKingdomCatalog.QuestNode node : AgentMushroomKingdomCatalog.mainline()) {
+            if (controlled.getQuestStatus(node.questId()) == QuestStatus.Status.STARTED.getId()) {
+                return node.questId();
+            }
+        }
+        return 0;
+    }
+
+    private static String controlledQuestStatus(Character controlled) {
+        int entryQuest = AgentMushroomKingdomCatalog.entryQuestForJob(controlled.getJob().getId());
+        if (controlled.getQuestStatus(entryQuest) == QuestStatus.Status.STARTED.getId()) {
+            return "entry q" + entryQuest + " active";
+        }
+        int questId = controlledMainlineQuest(controlled);
+        if (questId > 0) return "q" + questId + " active";
+        if (controlled.getQuestStatus(AgentMushroomKingdomCatalog.FINAL_QUEST_ID)
+                == QuestStatus.Status.COMPLETED.getId()) return "main story complete";
+        return "between story quests";
     }
 
     private static List<String> fillControlledCharacterCondition(Character player) {
@@ -569,8 +779,10 @@ public final class AgentMushroomKingdomCohortService {
     private static List<String> help() {
         return List.of("!mushroomtest start [accelerated] [seed] - launch one level-30 Agent per Explorer second job",
                 "  accelerated: require 30 real cohort drops and at least one per Agent, then supply the remainder",
-                "!mushroomtest start ten-percent [seed] - start all 12 at the entrance; each demonstrates ceil(10%)",
-                "  after item top-up and quest submission, pay 9x demonstrated EXP/meso; Yetis stay one each",
+                "!mushroomtest start ten-percent [seed] - start all 12 at the entrance with recommendation letters",
+                "  submit the entry quest, demonstrate ceil(10%), recover q2338/q2342, and keep Yetis one each",
+                "!mushroomtest start ten-percent include-self [seed] - add your fresh level-30 second-job character",
+                "  you remain manual while the harness applies the same 10% top-ups and 9x catch-up rewards",
                 "!mushroomtest fill - fill the controlled character's current Mushroom Kingdom count/item condition",
                 "!mushroomtest status - show each branch, map, quest, and runtime reason",
                 "!mushroomtest stop - disconnect the cohort and retain backing characters");
@@ -586,6 +798,9 @@ public final class AgentMushroomKingdomCohortService {
         private final long seed;
         private final boolean accelerated;
         private final boolean tenPercent;
+        private final boolean includeSelf;
+        private final String controlledName;
+        private final String controlledBranchId;
         private final Map<String, Integer> agentIds = new LinkedHashMap<>();
         private final Map<String, AgentMushroomKingdomFixtureService.Prepared> prepared = new LinkedHashMap<>();
         private final Map<String, String> failures = new LinkedHashMap<>();
@@ -594,16 +809,24 @@ public final class AgentMushroomKingdomCohortService {
         private final Map<String, Integer> observedCounts = new LinkedHashMap<>();
         private final Map<String, ObjectiveBaseline> baselines = new LinkedHashMap<>();
         private final Map<String, PendingBonus> pendingBonuses = new LinkedHashMap<>();
+        private final Set<String> recoveryLosses = new HashSet<>();
+        private final Set<String> recoveryCompletions = new HashSet<>();
 
-        private Run(Character operator, long seed, boolean accelerated, boolean tenPercent) {
+        private Run(Character operator, long seed, boolean accelerated, boolean tenPercent,
+                    boolean includeSelf) {
             this.operator = operator;
             this.seed = seed;
             this.accelerated = accelerated;
             this.tenPercent = tenPercent;
+            this.includeSelf = includeSelf;
+            this.controlledName = operator.getName();
+            this.controlledBranchId = includeSelf
+                    ? AgentSecondJobCatalog.forTargetJob(operator.getJob().getId()).id() : "";
         }
 
         private String modeLabel() {
-            if (tenPercent) return "10-percent per-Agent test";
+            if (tenPercent) return includeSelf
+                    ? "10-percent per-Agent + controlled test" : "10-percent per-Agent test";
             return accelerated ? "accelerated observation" : "full objectives";
         }
     }

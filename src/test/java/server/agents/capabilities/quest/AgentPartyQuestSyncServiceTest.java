@@ -83,6 +83,47 @@ class AgentPartyQuestSyncServiceTest {
         verify(quest, never()).forceStartWithActions(agent, 2000);
     }
 
+    @Test
+    void sharesKingPepeYetiProgressBetweenAgentsInTheSameInstance() {
+        Character source = character(1, new BotClient(0, 0));
+        Character agent = character(2, new BotClient(0, 0));
+        Character otherMapAgent = character(3, new BotClient(0, 0));
+        Character human = character(4, mock(Client.class));
+        AgentQuestSyncHandle quest = mock(AgentQuestSyncHandle.class);
+        AgentQuestSyncGateway quests = questGateway(2330, quest);
+        when(source.getParty()).thenReturn(mock(Party.class));
+        when(source.getPartyMembersOnline()).thenReturn(List.of(source, agent, otherMapAgent, human));
+        when(source.getMapId()).thenReturn(106021500);
+        when(agent.getMapId()).thenReturn(106021500);
+        when(otherMapAgent.getMapId()).thenReturn(106021400);
+        when(human.getMapId()).thenReturn(106021500);
+        when(quest.status(agent)).thenReturn(QuestStatus.Status.STARTED);
+        when(quest.status(otherMapAgent)).thenReturn(QuestStatus.Status.STARTED);
+        when(quest.status(human)).thenReturn(QuestStatus.Status.STARTED);
+
+        AgentPartyQuestSyncService.syncKingPepeYetiPartyProgress(
+                source, 2330, 3300006, "1", quests);
+
+        verify(agent).setQuestProgress(2330, 3300006, "1");
+        verify(human).setQuestProgress(2330, 3300006, "1");
+        verify(otherMapAgent, never()).setQuestProgress(2330, 3300006, "1");
+    }
+
+    @Test
+    void doesNotShareOrdinaryKillProgressFromAgentParties() {
+        Character source = character(1, new BotClient(0, 0));
+        Character agent = character(2, new BotClient(0, 0));
+        AgentQuestSyncHandle quest = mock(AgentQuestSyncHandle.class);
+        AgentQuestSyncGateway quests = questGateway(2330, quest);
+        when(source.getParty()).thenReturn(mock(Party.class));
+        when(source.getPartyMembersOnline()).thenReturn(List.of(source, agent));
+
+        AgentPartyQuestSyncService.syncKingPepeYetiPartyProgress(
+                source, 2330, 3300004, "1", quests);
+
+        verify(agent, never()).setQuestProgress(2330, 3300004, "1");
+    }
+
     private static AgentQuestSyncGateway questGateway(int questId, AgentQuestSyncHandle quest) {
         AgentQuestSyncGateway quests = mock(AgentQuestSyncGateway.class);
         when(quests.getQuest(questId)).thenReturn(quest);

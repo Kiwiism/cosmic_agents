@@ -16,6 +16,10 @@ public interface PartyGateway {
 
     boolean invitePartyMember(Character leader, Character invitee);
 
+    boolean hasPendingPartyInvite(int inviteeId);
+
+    void cancelPartyInvite(int inviteeId);
+
     void publishAgentOnline(Character agent, int partyId);
 
     boolean sendPartyChat(Character speaker, String message);

@@ -1,5 +1,7 @@
 package server.agents.runtime.activity.world;
 
+import server.agents.progression.AgentMushroomKingdomCatalog;
+
 import java.util.EnumMap;
 
 /** Pure milestone derivation; it never receives a mutable Cosmic object. */
@@ -72,6 +74,21 @@ public final class AgentWorldMilestoneEvaluator {
                 secondJob ? AgentWorldMilestoneStatus.ACHIEVED
                         : AgentWorldMilestoneStatus.NOT_ACHIEVED,
                 "job=" + context.jobId());
+        boolean mushroomStoryComplete = context.completedQuestIds().contains(
+                AgentMushroomKingdomCatalog.FINAL_QUEST_ID);
+        put(statuses, evidence, AgentWorldMilestone.MUSHROOM_KINGDOM_STORY_COMPLETE,
+                mushroomStoryComplete ? AgentWorldMilestoneStatus.ACHIEVED
+                        : AgentWorldMilestoneStatus.NOT_ACHIEVED,
+                "quest.2336.completed=" + mushroomStoryComplete);
+        put(statuses, evidence, AgentWorldMilestone.PEPE_WEAPON_ACQUIRED,
+                context.pepeEquipment().owned() ? AgentWorldMilestoneStatus.ACHIEVED
+                        : AgentWorldMilestoneStatus.NOT_ACHIEVED,
+                "desiredPepeWeapon=" + context.pepeEquipment().desiredWeaponItemId()
+                        + ",owned=" + context.pepeEquipment().owned());
+        put(statuses, evidence, AgentWorldMilestone.PEPE_WEAPON_SCROLLABLE,
+                context.pepeEquipment().scrollable() ? AgentWorldMilestoneStatus.ACHIEVED
+                        : AgentWorldMilestoneStatus.NOT_ACHIEVED,
+                "remainingUpgradeSlots=" + context.pepeEquipment().remainingUpgradeSlots());
         return new AgentWorldMilestoneSnapshot(context.capturedAtMs(), statuses, evidence);
     }
 

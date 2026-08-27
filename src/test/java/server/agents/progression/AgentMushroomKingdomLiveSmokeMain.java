@@ -4,6 +4,7 @@ import client.Character;
 import client.CharacterDeletionService;
 import client.Client;
 import client.QuestStatus;
+import constants.inventory.ItemConstants;
 import net.server.Server;
 import server.agents.integration.AgentAccountResolution;
 import server.agents.integration.AgentBackingAccountSecurityRuntime;
@@ -49,6 +50,8 @@ public final class AgentMushroomKingdomLiveSmokeMain {
     private static final Duration RUN_TIMEOUT = Duration.ofMinutes(180);
     private static final long STATUS_INTERVAL_MS = 10_000L;
     private static final long OFFLINE_MAP_MAINTENANCE_INTERVAL_MS = 5_000L;
+    private static final boolean TEN_PERCENT_MODE =
+            Boolean.getBoolean("mushroom.live.tenPercent");
     private static final Set<Integer> YETI_VARIANTS = Set.of(3300005, 3300006, 3300007);
     private static final AtomicBoolean CLEANUP_STARTED = new AtomicBoolean();
 
@@ -71,6 +74,9 @@ public final class AgentMushroomKingdomLiveSmokeMain {
                         ? Integer.getInteger("mushroom.live.startAt", 0)
                         : snapshot.startAtQuestId();
                 List<AgentSecondJobCatalog.Branch> branches = selectedBranches(args);
+                System.out.printf("[MUSHROOM-LIVE] mode=%s branches=%s%n",
+                        TEN_PERCENT_MODE ? "ten-percent" : "thirty-drop",
+                        branches.stream().map(AgentSecondJobCatalog.Branch::id).toList());
                 for (int ordinal = 0; ordinal < branches.size(); ordinal++) {
                     agents.add(launch(branches.get(ordinal), ordinal, startAtQuestId, snapshot));
                 }
@@ -121,10 +127,17 @@ public final class AgentMushroomKingdomLiveSmokeMain {
                     AgentMushroomKingdomFixtureService.prepare(
                             entry, branch, ordinal, mix(System.nanoTime(), ordinal),
                             System.currentTimeMillis());
-            fastForwardForDiagnostic(agent, branch, startAtQuestId);
-            activateDiagnosticStart(agent, startAtQuestId,
-                    snapshot == null ? Boolean.getBoolean("mushroom.live.activateStart")
-                            : snapshot.activateQuest());
+            boolean entranceReady = entranceReadyScenario(startAtQuestId, snapshot);
+            if (entranceReady) {
+                AgentMushroomKingdomCohortService.prepareEntranceTurnIn(agent, entryQuest);
+                System.out.printf("[MUSHROOM-LIVE] entrance-ready branch=%s q%d letter=4032375%n",
+                        branch.id(), entryQuest);
+            } else {
+                fastForwardForDiagnostic(agent, branch, startAtQuestId);
+                activateDiagnosticStart(agent, startAtQuestId,
+                        snapshot == null ? Boolean.getBoolean("mushroom.live.activateStart")
+                                : snapshot.activateQuest());
+            }
             applyDiagnosticSnapshotItems(agent, snapshot);
             int stagedMapId = snapshot == null
                     ? Integer.getInteger("mushroom.live.stageMap", 0)
@@ -190,6 +203,10 @@ public final class AgentMushroomKingdomLiveSmokeMain {
             default -> throw new IllegalArgumentException(
                     "unknown Mushroom Kingdom diagnostic snapshot: " + value);
         };
+    }
+
+    static boolean entranceReadyScenario(int startAtQuestId, DiagnosticSnapshot snapshot) {
+        return TEN_PERCENT_MODE && startAtQuestId == 2312 && snapshot == null;
     }
 
     private static void fastForwardForDiagnostic(Character agent,
@@ -266,6 +283,14 @@ public final class AgentMushroomKingdomLiveSmokeMain {
             }
             if (allComplete) {
                 for (LiveAgent live : agents) {
+                    if (TEN_PERCENT_MODE) {
+                        require(recoveryCoverageComplete(
+                                        live.killerSporeLossInjected,
+                                        live.killerSporeRecoveryConfirmed,
+                                        live.royalSealLossInjected,
+                                        live.royalSealRecoveryConfirmed),
+                                live.branch.id() + " completed q2336 without proving q2338/q2342 recovery");
+                    }
                     System.out.printf("[MUSHROOM-LIVE] complete branch=%s level=%d exp=%d map=%d accelerated=%s%n",
                             live.branch.id(), live.agent.getLevel(), live.agent.getExp(),
                             live.agent.getMapId(), live.acceleratedObjectives);
@@ -300,12 +325,17 @@ public final class AgentMushroomKingdomLiveSmokeMain {
                 || live.acceleratedObjectives.contains(questId)
                 || live.agent.getQuestStatus(questId) != QuestStatus.Status.STARTED.getId()) return;
         int owned = AgentPrimitiveCapabilityGatewayRuntime.gateway().itemCount(live.agent, node.itemId());
-        live.observedCounts.merge(questId, Math.min(30, Math.max(0, owned)), Math::max);
+        int observationLimit = TEN_PERCENT_MODE
+                ? AgentMushroomKingdomCohortService.tenPercentRequirement(node.requiredCount())
+                : 30;
+        live.observedCounts.merge(
+                questId, Math.min(observationLimit, Math.max(0, owned)), Math::max);
     }
 
     private static void accelerate(LiveAgent live, AgentMushroomKingdomState state,
                                    List<LiveAgent> agents) {
         if (state == null) return;
+        exerciseRecoveryQuests(live, state);
         int questId = state.currentQuestId();
         if (accelerateRepeatedCastleTravel(live, questId, agents)) return;
         if (questId == 2335
@@ -313,8 +343,25 @@ public final class AgentMushroomKingdomLiveSmokeMain {
                 && AgentPrimitiveCapabilityGatewayRuntime.gateway()
                 .itemCount(live.agent, 4032405) > 0
                 && !live.stagedSecretRoom) {
-            stageForLiveProof(live, 106021000, "secret-room doorway");
+            stageAtPortalForLiveProof(live, 106021000, 3, "secret-room doorway");
+            require(AgentPrimitiveCapabilityGatewayRuntime.gateway()
+                            .enterPortal(live.agent, 3),
+                    "live-proof secret-room portal rejected entry");
             live.stagedSecretRoom = true;
+            return;
+        }
+        if (questId == 2331
+                && live.agent.getQuestStatus(2331) == QuestStatus.Status.STARTED.getId()
+                && live.agent.getQuestStatus(2335) == QuestStatus.Status.COMPLETED.getId()
+                && AgentPrimitiveCapabilityGatewayRuntime.gateway()
+                .itemCount(live.agent, 4001318) < 1
+                && !live.stagedRoyalSealRecovery) {
+            stageAtPortalForLiveProof(live, 106021402, 2,
+                    "Royal Seal recovery doorway");
+            require(AgentPrimitiveCapabilityGatewayRuntime.gateway()
+                            .enterPortal(live.agent, 2),
+                    "live-proof Royal Seal recovery portal rejected entry");
+            live.stagedRoyalSealRecovery = true;
             return;
         }
         if (questId == 2331
@@ -348,7 +395,9 @@ public final class AgentMushroomKingdomLiveSmokeMain {
         }
         if (node == null || node.itemId() <= 0) return;
         int owned = AgentPrimitiveCapabilityGatewayRuntime.gateway().itemCount(live.agent, node.itemId());
-        if (questId == 2331 && owned == 0 && live.combatProof.contains(2333)) {
+        if (questId == 2331 && owned == 0 && live.combatProof.contains(2333)
+                && !(TEN_PERCENT_MODE && live.royalSealLossInjected
+                && !live.royalSealRecoveryConfirmed)) {
             require(AgentInventoryGatewayRuntime.inventory().addItem(
                             live.agent, node.itemId(), (short) 1),
                     live.branch.id() + " could not supply the demonstrated Prime Minister drop");
@@ -370,13 +419,16 @@ public final class AgentMushroomKingdomLiveSmokeMain {
         }
         int demonstrated = agents.stream()
                 .mapToInt(candidate -> candidate.observedCounts.getOrDefault(questId, 0)).sum();
-        int topUp = AgentMushroomKingdomCohortService.accelerationTopUp(
-                node, owned, demonstrated);
+        int topUp = TEN_PERCENT_MODE
+                ? tenPercentTopUp(node, owned)
+                : AgentMushroomKingdomCohortService.accelerationTopUp(
+                        node, owned, demonstrated);
         // This opt-in live runner validates each build's combat separately and the
         // authored drop collectively. Do not make a zero-drop branch repeat a long
         // route solely until RNG gives it a personal copy once the cohort has
         // produced the requested 30 real drops.
-        if (topUp <= 0 && owned == 0 && node.requiredCount() > 30 && demonstrated >= 30
+        if (!TEN_PERCENT_MODE && topUp <= 0 && owned == 0
+                && node.requiredCount() > 30 && demonstrated >= 30
                 && live.combatProof.contains(questId)) {
             topUp = node.requiredCount();
         }
@@ -386,6 +438,66 @@ public final class AgentMushroomKingdomLiveSmokeMain {
         live.acceleratedObjectives.add(questId);
         System.out.printf("[MUSHROOM-LIVE] accelerated branch=%s quest=%d item=%d count=%d->%d%n",
                 live.branch.id(), questId, node.itemId(), owned, node.requiredCount());
+    }
+
+    static int tenPercentTopUp(AgentMushroomKingdomCatalog.QuestNode node, int owned) {
+        if (node == null || node.itemId() <= 0) return 0;
+        int required = node.requiredCount();
+        int threshold = AgentMushroomKingdomCohortService.tenPercentRequirement(required);
+        if (threshold >= required || owned < threshold || owned >= required) return 0;
+        return required - owned;
+    }
+
+    private static void exerciseRecoveryQuests(LiveAgent live,
+                                                AgentMushroomKingdomState state) {
+        if (!TEN_PERCENT_MODE) return;
+        var gateway = AgentPrimitiveCapabilityGatewayRuntime.gateway();
+        if (state.currentQuestId() == 2322 && !live.killerSporeLossInjected) {
+            removeAll(live.agent, 2430014);
+            live.killerSporeLossInjected = true;
+            System.out.printf("[MUSHROOM-LIVE] recovery branch=%s removed Killer Mushroom Spore; "
+                    + "expecting q2338%n", live.branch.id());
+        }
+        if (live.killerSporeLossInjected && !live.killerSporeRecoveryConfirmed
+                && live.agent.getQuestStatus(2338) == QuestStatus.Status.COMPLETED.getId()
+                && gateway.itemCount(live.agent, 2430014) > 0) {
+            live.killerSporeRecoveryConfirmed = true;
+            System.out.printf("[MUSHROOM-LIVE] recovery branch=%s q2338=complete item=2430014%n",
+                    live.branch.id());
+        }
+        if (live.agent.getQuestStatus(2333) == QuestStatus.Status.COMPLETED.getId()
+                && live.agent.getQuestStatus(2331) == QuestStatus.Status.STARTED.getId()
+                && !live.royalSealLossInjected) {
+            removeAll(live.agent, 4001318);
+            live.royalSealLossInjected = true;
+            System.out.printf("[MUSHROOM-LIVE] recovery branch=%s removed Royal Seal; "
+                    + "expecting q2342%n", live.branch.id());
+        }
+        if (live.royalSealLossInjected && !live.royalSealRecoveryConfirmed
+                && live.agent.getQuestStatus(2342) == QuestStatus.Status.COMPLETED.getId()
+                && gateway.itemCount(live.agent, 4001318) > 0) {
+            live.royalSealRecoveryConfirmed = true;
+            System.out.printf("[MUSHROOM-LIVE] recovery branch=%s q2342=complete item=4001318%n",
+                    live.branch.id());
+        }
+    }
+
+    private static void removeAll(Character agent, int itemId) {
+        int owned = AgentPrimitiveCapabilityGatewayRuntime.gateway().itemCount(agent, itemId);
+        if (owned > 0) {
+            AgentInventoryGatewayRuntime.inventory().removeById(
+                    agent, ItemConstants.getInventoryType(itemId), itemId, owned, false, false);
+        }
+        require(AgentPrimitiveCapabilityGatewayRuntime.gateway().itemCount(agent, itemId) == 0,
+                "test could not remove item " + itemId);
+    }
+
+    static boolean recoveryCoverageComplete(boolean killerSporeLossInjected,
+                                            boolean killerSporeRecoveryConfirmed,
+                                            boolean royalSealLossInjected,
+                                            boolean royalSealRecoveryConfirmed) {
+        return killerSporeLossInjected && killerSporeRecoveryConfirmed
+                && royalSealLossInjected && royalSealRecoveryConfirmed;
     }
 
     private static boolean accelerateRepeatedCastleTravel(LiveAgent live, int questId,
@@ -466,7 +578,8 @@ public final class AgentMushroomKingdomLiveSmokeMain {
         }
         boolean atBossRouteProofMap = mapId == 106021400 || mapId == 106021401
                 || mapId == 106021402 || mapId == 106021600;
-        if (questId == 2332 && !atBossRouteProofMap) {
+        if (questId == 2332 && bossRouteStagingReady(live.agent.getQuestStatus(2331))
+                && !atBossRouteProofMap) {
             stageForLiveProof(live, 106021400, "boss-route junction",
                     !live.stagedBossRoute);
             live.stagedBossRoute = true;
@@ -487,6 +600,10 @@ public final class AgentMushroomKingdomLiveSmokeMain {
             return true;
         }
         return false;
+    }
+
+    static boolean bossRouteStagingReady(int royalSealQuestStatus) {
+        return royalSealQuestStatus != QuestStatus.Status.NOT_STARTED.getId();
     }
 
     private static void accelerateFinaleTravel(LiveAgent live) {
@@ -520,6 +637,22 @@ public final class AgentMushroomKingdomLiveSmokeMain {
         }
     }
 
+    private static void stageAtPortalForLiveProof(LiveAgent live, int mapId, int portalId,
+                                                   String label) {
+        MapleMap map = AgentMapGatewayRuntime.map().resolveMap(WORLD, CHANNEL, mapId);
+        require(map != null, "live-proof stage map is unavailable: " + mapId);
+        require(map.getPortal(portalId) != null,
+                "live-proof portal is unavailable: " + mapId + ':' + portalId);
+        Point portal = new Point(map.getPortal(portalId).getPosition());
+        AgentMapGatewayRuntime.map().changeMapNear(live.agent, map, portal);
+        AgentPrimitiveCapabilityGatewayRuntime.gateway()
+                .stagePosition(live.entry, live.agent, portal);
+        AgentPrimitiveCapabilityGatewayRuntime.gateway().prepareNavigation(live.entry, live.agent);
+        System.out.printf("[MUSHROOM-LIVE] staged finale branch=%s at %s map=%d portal=%d "
+                        + "after natural route proof%n",
+                live.branch.id(), label, mapId, portalId);
+    }
+
     private static void printStatus(LiveAgent live) {
         AgentMushroomKingdomState state = live.entry.capabilityStates()
                 .find(AgentMushroomKingdomState.STATE_KEY).orElse(null);
@@ -549,13 +682,21 @@ public final class AgentMushroomKingdomLiveSmokeMain {
                 AgentMushroomKingdomRuntime.FIRST_THORN_BARRIER_UNLOCK_QUEST_ID);
         int killerSporeCount = AgentPrimitiveCapabilityGatewayRuntime.gateway()
                 .itemCount(live.agent, 2430014);
+        int weddingHallKeys = AgentPrimitiveCapabilityGatewayRuntime.gateway()
+                .itemCount(live.agent, 4032388);
+        int royalSealStatus = live.agent.getQuestStatus(2331);
+        int princessRescueStatus = live.agent.getQuestStatus(2332);
+        int killerSporeRecoveryStatus = live.agent.getQuestStatus(2338);
+        int royalSealRecoveryStatus = live.agent.getQuestStatus(2342);
         String yetiProgress = YETI_VARIANTS.stream().sorted()
                 .map(mobId -> Integer.toString(AgentPrimitiveCapabilityGatewayRuntime.gateway()
                         .questProgress(live.agent, 2330, mobId)))
                 .reduce((left, right) -> left + '/' + right).orElse("0/0/0");
         System.out.printf("[MUSHROOM-LIVE] status branch=%s map=%d pos=%s hp=%d/%d grind=%s target=%s "
                         + "combat=%s items=%d mobs=%d visit=%s entry=q%d:%d letter=%d "
-                        + "info=%d barrier=%d spore=%d yeti=%s %s%n",
+                        + "info=%d barrier=%d spore=%d key=%d sealQ=%d rescueQ=%d "
+                        + "sporeRecoveryQ=%d sealRecoveryQ=%d "
+                        + "yeti=%s %s%n",
                 live.branch.id(), live.agent.getMapId(), live.agent.getPosition(),
                 live.agent.getHp(), live.agent.getMaxHp(),
                 AgentModeStateRuntime.grinding(live.entry),
@@ -565,7 +706,9 @@ public final class AgentMushroomKingdomLiveSmokeMain {
                         + "h/" + combat.missLines() + "m/" + combat.damage() + "d",
                 items, mobs, visit == null || visit.request() == null ? "none" : visit.request().visitId(),
                 entryQuest, entryStatus, recommendationLetters,
-                infoProgress, barrierQuestStatus, killerSporeCount, yetiProgress, status);
+                infoProgress, barrierQuestStatus, killerSporeCount, weddingHallKeys,
+                royalSealStatus, princessRescueStatus, killerSporeRecoveryStatus,
+                royalSealRecoveryStatus, yetiProgress, status);
     }
 
     private static List<AgentSecondJobCatalog.Branch> selectedBranches(String[] args) {
@@ -696,6 +839,7 @@ public final class AgentMushroomKingdomLiveSmokeMain {
         private final Set<Integer> combatProof = new HashSet<>();
         private final Set<Integer> shortenedYetiInstances = new HashSet<>();
         private boolean stagedSecretRoom;
+        private boolean stagedRoyalSealRecovery;
         private boolean stagedSealReturn;
         private boolean stagedFinaleStart;
         private boolean stagedFinaleReturn;
@@ -708,6 +852,10 @@ public final class AgentMushroomKingdomLiveSmokeMain {
         private boolean stagedYetiReturn;
         private boolean stagedBossRoute;
         private boolean stagedBossOuterGate;
+        private boolean killerSporeLossInjected;
+        private boolean killerSporeRecoveryConfirmed;
+        private boolean royalSealLossInjected;
+        private boolean royalSealRecoveryConfirmed;
 
         private LiveAgent(TestIdentity identity, AgentSecondJobCatalog.Branch branch,
                           Character agent, AgentRuntimeEntry entry) {

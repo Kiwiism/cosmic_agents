@@ -17,6 +17,8 @@ public final class AgentPlanStepExecutorRegistry {
                 new AgentFirstJobPlanStepExecutor(),
                 new AgentSecondJobPlanStepExecutor(),
                 new AgentMushroomKingdomPlanStepExecutor(),
+                new AgentMushroomKingdomYetiFarmPlanStepExecutor(),
+                new AgentMushroomKingdomPepeScrollPlanStepExecutor(),
                 new AgentVictoriaTrainingPlanStepExecutor()));
     }
 

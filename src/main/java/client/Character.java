@@ -7794,6 +7794,8 @@ public class Character extends AbstractCharacterObject {
                             announceUpdateQuest(DelayedQuestUpdate.UPDATE, qs, true);
                         }
                         AgentPartyQuestSyncService.syncPartyAgentsQuestProgress(this, qs.getQuest().getId(), id, qs.getProgress(id));
+                        AgentPartyQuestSyncService.syncKingPepeYetiPartyProgress(
+                                this, qs.getQuest().getId(), id, qs.getProgress(id));
                     }
                 }
             }

@@ -35,6 +35,26 @@ class AgentPortalApproachServiceTest {
     }
 
     @Test
+    void mushroomKingdomBossDoorHasAReachableApproachFromTheJunctionSpawn() {
+        System.setProperty("wz-path", "wz");
+        MapleMap map = AgentNavigationMapLoader.loadMapGeometry(106021400);
+        AgentNavigationGraph graph = AgentNavigationGraphService.rebuildGraph(map);
+        Portal portal = map.getPortal(2);
+        Point start = new Point(-190, 141);
+
+        Point target = AgentPortalApproachService.navigableTarget(map, portal);
+        int startRegionId = AgentNavigationRegionService.resolvePointTargetRegionId(
+                graph, map, start);
+        int targetRegionId = AgentNavigationRegionService.resolvePointTargetRegionId(
+                graph, map, target);
+        var path = AgentNavigationPathService.findPath(
+                graph, map, start, startRegionId, targetRegionId, target);
+
+        assertFalse(path.isEmpty());
+        assertEquals(targetRegionId, path.getLast().toRegionId);
+    }
+
+    @Test
     void plainPortalKeepsItsCenter() {
         Portal portal = portal(Portal.MAP_PORTAL, new Point(10, 20));
 

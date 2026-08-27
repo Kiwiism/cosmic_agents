@@ -49,7 +49,7 @@ class AgentPlanRepositoryTest {
     void catalogUsesOneStrictSchemaAndContainsTheIntendedProgressionChain() {
         AgentPlanRepository repository = AgentPlanRepository.defaultRepository();
 
-        assertEquals(14, repository.all().size());
+        assertEquals(16, repository.all().size());
         assertTrue(repository.all().stream()
                 .allMatch(plan -> plan.schemaVersion() == AgentPlanSchemaValidator.CURRENT_SCHEMA_VERSION));
 
@@ -63,16 +63,24 @@ class AgentPlanRepositoryTest {
                         && condition.operator().equals("completed")));
         assertEquals("second-job-advancement",
                 repository.require("victoria-second-job").steps().getFirst().operation());
-        assertEquals(List.of("mushroom-kingdom-questline"),
-                repository.require("victoria-second-job").successors().stream()
-                        .map(AgentPlanDefinition.Successor::planId).toList());
-        assertEquals(AgentPlanDefinition.Activation.AUTOMATIC,
-                repository.require("victoria-second-job").successors().getFirst().activation());
+        assertEquals(List.of(), repository.require("victoria-second-job").successors());
         AgentPlanDefinition mushroom = repository.require("mushroom-kingdom-questline");
         assertEquals("mushroom-kingdom-questline", mushroom.steps().getFirst().operation());
         assertTrue(mushroom.exitCriteria().stream().anyMatch(condition ->
                 condition.fact().equals("quest.2336")
                         && condition.operator().equals("completed")));
+        assertTrue(mushroom.entryCriteria().stream().anyMatch(condition ->
+                condition.fact().equals("character.secondJob")));
+        assertTrue(mushroom.entryCriteria().stream().anyMatch(condition ->
+                condition.fact().equals("quest.2336")
+                        && condition.operator().equals("completed")
+                        && Boolean.FALSE.equals(condition.value())));
+        assertEquals("mushroom-kingdom-yeti-farm",
+                repository.require("mushroom-kingdom-yeti-farm")
+                        .steps().getFirst().operation());
+        assertEquals("mushroom-kingdom-pepe-scroll",
+                repository.require("mushroom-kingdom-pepe-scroll")
+                        .steps().getFirst().operation());
 
         Set<String> careers = repository.require("southperry-to-lith-harbor").successors().stream()
                 .map(AgentPlanDefinition.Successor::planId)
@@ -84,7 +92,7 @@ class AgentPlanRepositoryTest {
                 "victoria-thief-level30",
                 "victoria-pirate-level30"), careers);
 
-        assertEquals(1L, repository.all().stream()
+        assertEquals(0L, repository.all().stream()
                 .flatMap(plan -> plan.successors().stream())
                 .filter(successor ->
                         successor.activation() == AgentPlanDefinition.Activation.AUTOMATIC)

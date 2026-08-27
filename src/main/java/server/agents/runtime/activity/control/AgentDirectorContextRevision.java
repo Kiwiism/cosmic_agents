@@ -31,6 +31,8 @@ final class AgentDirectorContextRevision {
                 .append(context.currentSessionId()).append('|').append(context.currentPlanId()).append('|')
                 .append(new TreeSet<>(context.activeQuestIds())).append('|')
                 .append(new TreeSet<>(context.completedQuestIds())).append('|')
+                .append(context.pepeEquipment()).append('|')
+                .append(context.mushroomKingdomFarming()).append('|')
                 .append(resources.exp()).append('|').append(resources.remainingAp()).append('|')
                 .append(resources.remainingSp()).append('|').append(resources.hpPotions()).append('|')
                 .append(resources.mpPotions()).append('|').append(resources.weaponType()).append('|')

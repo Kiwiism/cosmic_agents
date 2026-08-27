@@ -134,7 +134,9 @@ public final class AgentLootEligibility {
         if (isBotInventoryDrop(drop)) {
             return BOT_INVENTORY_DROP_TARGET_LOOT_AGE_MS;
         }
-        return Math.max(SERVER_PICKUP_MIN_AGE_MS, minimumTargetAgeMs);
+        long ordinaryMinimum = Math.max(SERVER_PICKUP_MIN_AGE_MS, minimumTargetAgeMs);
+        return AgentYetiClassBoxPriorityPolicy.minimumTargetAgeMs(
+                bot, drop, ordinaryMinimum);
     }
 
     private static boolean isBotInventoryDrop(MapItem drop) {

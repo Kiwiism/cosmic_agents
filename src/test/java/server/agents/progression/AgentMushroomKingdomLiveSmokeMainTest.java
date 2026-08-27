@@ -40,4 +40,39 @@ class AgentMushroomKingdomLiveSmokeMainTest {
         assertThrows(IllegalArgumentException.class,
                 () -> AgentMushroomKingdomLiveSmokeMain.diagnosticSnapshot("q9999"));
     }
+
+    @Test
+    void tenPercentModeRequiresTheRoundedUpSampleBeforeSupplyingTheRemainder() {
+        var fifty = AgentMushroomKingdomCatalog.require(2312);
+        var twoHundred = AgentMushroomKingdomCatalog.require(2328);
+        var oneOff = AgentMushroomKingdomCatalog.require(2326);
+
+        assertEquals(0, AgentMushroomKingdomLiveSmokeMain.tenPercentTopUp(fifty, 4));
+        assertEquals(45, AgentMushroomKingdomLiveSmokeMain.tenPercentTopUp(fifty, 5));
+        assertEquals(180, AgentMushroomKingdomLiveSmokeMain.tenPercentTopUp(twoHundred, 20));
+        assertEquals(0, AgentMushroomKingdomLiveSmokeMain.tenPercentTopUp(oneOff, 0));
+        assertEquals(0, AgentMushroomKingdomLiveSmokeMain.tenPercentTopUp(oneOff, 1));
+    }
+
+    @Test
+    void bossRouteStagingWaitsForTheRoyalSealQuestToStartAtTheEntrance() {
+        assertFalse(AgentMushroomKingdomLiveSmokeMain.bossRouteStagingReady(
+                client.QuestStatus.Status.NOT_STARTED.getId()));
+        assertTrue(AgentMushroomKingdomLiveSmokeMain.bossRouteStagingReady(
+                client.QuestStatus.Status.STARTED.getId()));
+        assertTrue(AgentMushroomKingdomLiveSmokeMain.bossRouteStagingReady(
+                client.QuestStatus.Status.COMPLETED.getId()));
+    }
+
+    @Test
+    void recoveryCoverageRequiresBothRecoveryQuestsAndRestoredItems() {
+        assertTrue(AgentMushroomKingdomLiveSmokeMain.recoveryCoverageComplete(
+                true, true, true, true));
+        assertFalse(AgentMushroomKingdomLiveSmokeMain.recoveryCoverageComplete(
+                false, true, true, true));
+        assertFalse(AgentMushroomKingdomLiveSmokeMain.recoveryCoverageComplete(
+                true, false, true, true));
+        assertFalse(AgentMushroomKingdomLiveSmokeMain.recoveryCoverageComplete(
+                true, true, true, false));
+    }
 }

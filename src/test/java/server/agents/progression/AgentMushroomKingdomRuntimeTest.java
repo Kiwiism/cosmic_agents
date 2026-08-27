@@ -3,6 +3,7 @@ package server.agents.progression;
 import client.Character;
 import client.Job;
 import client.QuestStatus;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.navigation.AgentRouteOutcome;
 import server.agents.capabilities.navigation.AgentRouteStatus;
@@ -18,6 +19,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -31,6 +33,13 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class AgentMushroomKingdomRuntimeTest {
+    private static final AtomicInteger NEXT_AGENT_ID = new AtomicInteger(1_000);
+
+    @AfterEach
+    void clearMapReservations() {
+        AgentMushroomKingdomMapReservationRuntime.clear();
+    }
+
     @Test
     void stagesAnUnobservedAgentAfterNpcTopologyMakesNoProgress() {
         Harness harness = new Harness(110, List.of(3300005, 3300006, 3300007));
@@ -113,6 +122,21 @@ class AgentMushroomKingdomRuntimeTest {
 
         assertEquals(Set.of(3300002), harness.lastPreferredMobIds);
         assertEquals(Set.of(3300001), harness.lastFallbackMobIds);
+    }
+
+    @Test
+    void fullPreferredFieldRoutesTheQuestToTheNextRankedMap() {
+        Harness harness = new Harness(110, List.of(3300005, 3300006, 3300007));
+        harness.completeBefore(2312);
+        harness.statuses.put(2312, QuestStatus.Status.STARTED.getId());
+        harness.items.put(4000499, 0);
+        harness.occupancy.put(106020100, 4);
+        harness.occupancy.put(106020200, 1);
+
+        harness.tick();
+
+        assertEquals(106020200, harness.mapId);
+        assertEquals(106020200, harness.state.selectedHuntMap(2312));
     }
 
     private static final List<Integer> EXPLORER_SECOND_JOBS = List.of(
@@ -276,6 +300,53 @@ class AgentMushroomKingdomRuntimeTest {
         secretRoomExit.tick();
         assertTrue(secretRoomExit.portalEntries.contains("106021001:1"));
         assertEquals(106021000, secretRoomExit.mapId);
+
+        Harness castleReentry = new Harness(110, List.of(3300005, 3300006, 3300007));
+        castleReentry.completeBefore(2331);
+        castleReentry.statuses.put(2331, QuestStatus.Status.STARTED.getId());
+        castleReentry.items.put(4001318, 0);
+        castleReentry.mapId = 106021000;
+        castleReentry.tick();
+        assertTrue(castleReentry.portalEntries.contains("106021000:2"));
+        assertEquals(106021100, castleReentry.mapId);
+    }
+
+    @Test
+    void stalledUnobservedCastlePortalApproachStagesAtThePortalAndContinues() {
+        Harness harness = new Harness(110, List.of(3300005, 3300006, 3300007));
+        harness.completeBefore(2325);
+        harness.statuses.put(2325, QuestStatus.Status.STARTED.getId());
+        harness.statuses.put(2324, QuestStatus.Status.COMPLETED.getId());
+        harness.mapId = 106021000;
+        harness.position = new Point(1_700, 262);
+        when(harness.gateway.portalPosition(harness.agent, 2))
+                .thenReturn(new Point(1_900, 262));
+
+        harness.tick();
+        assertEquals(106021000, harness.mapId);
+
+        harness.nowMs += 20_001L;
+        harness.tick();
+        assertEquals(new Point(1_900, 262), harness.position);
+        assertEquals(106021000, harness.mapId);
+
+        harness.tick();
+        assertEquals(106021100, harness.mapId);
+        assertTrue(harness.portalEntries.contains("106021000:2"));
+    }
+
+    @Test
+    void lowerIntoxicatedPigFieldUsesItsExplicitReturnPortal() {
+        Harness harness = new Harness(210, List.of(3300005, 3300006, 3300007));
+        harness.completeBefore(2323);
+        harness.statuses.put(2323, QuestStatus.Status.STARTED.getId());
+        harness.items.put(4000503, 100);
+        harness.mapId = 106020402;
+
+        harness.tick();
+
+        assertTrue(harness.portalEntries.contains("106020402:3"));
+        assertEquals(106020401, harness.mapId);
     }
 
     @Test
@@ -398,6 +469,7 @@ class AgentMushroomKingdomRuntimeTest {
     }
 
     private static final class Harness {
+        private final int agentId = NEXT_AGENT_ID.getAndIncrement();
         private final Character agent = mock(Character.class);
         private final MapleMap map = mock(MapleMap.class);
         private final PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
@@ -407,6 +479,7 @@ class AgentMushroomKingdomRuntimeTest {
         private final Map<Integer, Integer> statuses = new HashMap<>();
         private final Map<Integer, Integer> items = new HashMap<>();
         private final Map<String, Integer> progress = new HashMap<>();
+        private final Map<Integer, Integer> occupancy = new HashMap<>();
         private final List<String> transitions = new ArrayList<>();
         private final Set<String> portalEntries = new HashSet<>();
         private final List<Integer> yetiRolls;
@@ -434,6 +507,7 @@ class AgentMushroomKingdomRuntimeTest {
             items.put(4000503, 200);
 
             when(agent.getJob()).thenReturn(Job.getById(jobId));
+            when(agent.getId()).thenReturn(agentId);
             when(agent.getLevel()).thenReturn(30);
             when(agent.getMapId()).thenAnswer(ignored -> mapId);
             when(agent.getMap()).thenReturn(map);
@@ -462,6 +536,8 @@ class AgentMushroomKingdomRuntimeTest {
             });
             when(gateway.itemCount(eq(agent), anyInt())).thenAnswer(invocation ->
                     itemCount(invocation.getArgument(1)));
+            when(gateway.characterCount(eq(agent), anyInt())).thenAnswer(invocation ->
+                    occupancy.getOrDefault(invocation.getArgument(1), 0));
             when(gateway.freeSlots(eq(agent), anyInt())).thenAnswer(ignored -> freeSlots);
             when(gateway.travelTo(eq(entry), eq(agent), anyInt(), anyLong())).thenAnswer(invocation -> {
                 int source = mapId;
@@ -603,6 +679,8 @@ class AgentMushroomKingdomRuntimeTest {
                 }
             } else if (mapId == 106020401 && portalId == 4) {
                 mapId = 106020400;
+            } else if (mapId == 106020402 && portalId == 3) {
+                mapId = 106020401;
             } else if (mapId == 106021400 && portalId == 1) {
                 mapId = 106021300;
             } else if (mapId == 106021400 && portalId == 2) {
@@ -631,6 +709,8 @@ class AgentMushroomKingdomRuntimeTest {
                 mapId = 106021402;
             } else if (mapId == 106021001 && portalId == 1) {
                 mapId = 106021000;
+            } else if (mapId == 106021000 && portalId == 2) {
+                mapId = 106021100;
             } else if (mapId == 106021000 && portalId == 3) {
                 statuses.put(2335, QuestStatus.Status.COMPLETED.getId());
                 items.put(4032405, 0);

@@ -22,6 +22,19 @@ With no arguments, the runner covers all 12 Explorer second jobs. Pass one or mo
 & "$env:JAVA_HOME\bin\java.exe" -Xms512m -Xmx2048m -cp $cp server.agents.progression.AgentMushroomKingdomLiveSmokeMain fighter cleric gunslinger
 ```
 
+For the shortened story-flow test, start one branch at the Mushroom Kingdom entrance. Its family-specific recommendation quest (`2300`-`2304`) is active and recommendation letter `4032375` is present, so the Agent first submits the real entry quest and then starts `2312` normally. The runner requires the character to obtain 10% of each collection (rounded up) before supplying the remainder. One-off objectives, all three randomized Yetis, and the Prime Minister still require real combat and completion. The runner deliberately removes the first Killer Mushroom Spore and Royal Seal so recovery quests `2338` and `2342` must complete and restore their items before the run can pass:
+
+```powershell
+& "$env:JAVA_HOME\bin\java.exe" -Xms512m -Xmx2048m `
+  -Dmushroom.live.tenPercent=true `
+  -Dmushroom.live.startAt=2312 `
+  -Dmushroom.live.activateStart=true `
+  -Dmushroom.live.stageMap=106020000 `
+  -cp $cp server.agents.progression.AgentMushroomKingdomLiveSmokeMain il-wizard
+```
+
+The live runner uses disposable characters, so it does not apply the production cohort command's x9 EXP/meso catch-up payout; that payout remains covered by the cohort service tests.
+
 Named diagnostic snapshots provide reproducible development checkpoints without replacing the final full run:
 
 ```powershell

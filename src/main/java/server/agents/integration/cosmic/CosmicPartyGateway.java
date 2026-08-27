@@ -51,6 +51,16 @@ public final class CosmicPartyGateway implements PartyGateway {
     }
 
     @Override
+    public boolean hasPendingPartyInvite(int inviteeId) {
+        return InviteCoordinator.hasInvite(InviteCoordinator.InviteType.PARTY, inviteeId);
+    }
+
+    @Override
+    public void cancelPartyInvite(int inviteeId) {
+        InviteCoordinator.removeInvite(InviteCoordinator.InviteType.PARTY, inviteeId);
+    }
+
+    @Override
     public void publishAgentOnline(Character agent, int partyId) {
         PartyCharacter partyCharacter = new PartyCharacter(agent);
         partyCharacter.setChannel(agent.getClient().getChannel());

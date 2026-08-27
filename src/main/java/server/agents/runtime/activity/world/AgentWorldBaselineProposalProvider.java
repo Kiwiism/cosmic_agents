@@ -1,5 +1,7 @@
 package server.agents.runtime.activity.world;
 
+import server.agents.progression.AgentMushroomKingdomCatalog;
+import server.agents.progression.AgentMushroomKingdomFarmProgressRuntime;
 import server.agents.runtime.activity.session.AgentActivityKind;
 
 import java.util.ArrayList;
@@ -63,6 +65,50 @@ public final class AgentWorldBaselineProposalProvider implements AgentWorldPropo
             intents.add(intent("milestone:second-job", AgentActivityKind.QUESTING,
                     900, 100L, true, "level 30 reached and second job is incomplete",
                     AgentWorldActivityRequestType.AUTHORED_PLAN, "victoria-second-job"));
+        } else if (context.level() <= 38) {
+            boolean supported = AgentMushroomKingdomCatalog.supportedSecondJob(context.jobId());
+            boolean storyComplete = milestones.achieved(
+                    AgentWorldMilestone.MUSHROOM_KINGDOM_STORY_COMPLETE);
+            intents.add(intent("progression:mushroom-kingdom-story", AgentActivityKind.QUESTING,
+                    520, 80L, supported && !storyComplete,
+                    !supported ? "Mushroom Kingdom supports Explorer second jobs"
+                            : storyComplete ? "Mushroom Kingdom story quest 2336 is complete"
+                            : "optional Mushroom Kingdom story progression is available",
+                    AgentWorldActivityRequestType.AUTHORED_PLAN,
+                    "mushroom-kingdom-questline"));
+
+            boolean ownsWeapon = milestones.achieved(AgentWorldMilestone.PEPE_WEAPON_ACQUIRED);
+            boolean cooldown = context.mushroomKingdomFarming()
+                    .yetiCooldownActive(context.capturedAtMs());
+            boolean campaignAvailable = context.mushroomKingdomFarming().yetiRuns()
+                    < AgentMushroomKingdomFarmProgressRuntime.MAX_YETI_RUNS
+                    || context.mushroomKingdomFarming().yetiCooldownUntilMs() > 0L && !cooldown;
+            boolean yetiEligible = supported && storyComplete && !ownsWeapon && !cooldown
+                    && campaignAvailable;
+            intents.add(intent("equipment:mushroom-kingdom-yeti", AgentActivityKind.QUESTING,
+                    510, 75L, yetiEligible,
+                    ownsWeapon ? "the desired Pepe weapon is already owned"
+                            : cooldown ? "the ten-run Yeti campaign is on cooldown"
+                            : !storyComplete ? "complete Mushroom Kingdom before farming Yetis"
+                            : "up to ten Yeti runs may obtain the exact planned Pepe weapon",
+                    AgentWorldActivityRequestType.AUTHORED_PLAN,
+                    "mushroom-kingdom-yeti-farm"));
+
+            boolean scrollEligible = supported && storyComplete
+                    && milestones.achieved(AgentWorldMilestone.PEPE_WEAPON_SCROLLABLE);
+            intents.add(intent("equipment:mushroom-kingdom-pepe-scroll",
+                    AgentActivityKind.QUESTING, 505, 65L, scrollEligible,
+                    !storyComplete ? "complete Mushroom Kingdom before repeating quest 2337"
+                            : !ownsWeapon ? "the exact planned Pepe weapon is not owned"
+                            : context.pepeEquipment().remainingUpgradeSlots() <= 0
+                            ? "the planned Pepe weapon has no upgrade slots"
+                            : "one bounded King Pepe's Scroll completion is useful",
+                    AgentWorldActivityRequestType.AUTHORED_PLAN,
+                    "mushroom-kingdom-pepe-scroll"));
+
+            intents.add(intent("progression:hunting-30-38", AgentActivityKind.HUNTING,
+                    500, 60L, true, "level-appropriate hunting remains an alternative",
+                    AgentWorldActivityRequestType.FIELD_VISIT, "field:auto"));
         }
         intents.add(intent("optional:town-life", AgentActivityKind.TOWN_LIFE,
                 100, 20L, true, "bounded rest and town activity are available",

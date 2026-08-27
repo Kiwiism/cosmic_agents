@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentMushroomKingdomContentTest {
@@ -16,6 +17,16 @@ class AgentMushroomKingdomContentTest {
         assertTrue(script.contains("Math.floor(Math.random() * bossMobIds.length)"));
         assertTrue(script.contains("LifeFactory.getMonster(bossMobId)"));
         assertTrue(script.contains("spawnMonsterOnGroundBelow"));
+        assertTrue(script.contains("var maxPlayers = 3"));
+        assertTrue(script.contains("function getEligibleParty(party)"));
+        assertTrue(script.contains("mismatchedProgress"));
+        assertTrue(script.contains("player.getQuestStatus(2336) == 2 ? \"farm\""));
+        assertTrue(script.contains("expectedMode != mode"));
+
+        String npc = Files.readString(Path.of("scripts/npc/1300013.js"));
+        assertTrue(npc.contains("pepe.startInstance(party, cm.getMap(), 1)"));
+        assertTrue(npc.contains("identical Yeti quest progress"));
+        assertTrue(npc.contains("var farmReady = cm.isQuestCompleted(2336)"));
     }
 
     @Test
@@ -41,9 +52,12 @@ class AgentMushroomKingdomContentTest {
     void recoveryQuestsRemainAuthoredServerContent() throws Exception {
         String sporeRecovery = Files.readString(Path.of("scripts/quest/2338.js"));
         String sealRecovery = Files.readString(Path.of("scripts/quest/2342.js"));
+        String bossDoor = Files.readString(Path.of("scripts/portal/TD_MC_enterboss2.js"));
 
         assertTrue(sporeRecovery.contains("qm.gainItem(2430014, 1)"));
         assertTrue(sealRecovery.contains("qm.gainItem(4001318, 1)"));
+        assertFalse(bossDoor.contains("pi.gainItem(4001318, 1)"));
+        assertTrue(bossDoor.contains("Ask Princess Violetta for a replacement"));
     }
 
     @Test

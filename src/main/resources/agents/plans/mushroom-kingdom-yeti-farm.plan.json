@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "planId": "mushroom-kingdom-yeti-farm",
+  "planVersion": "1",
+  "title": "Mushroom Kingdom Yeti Weapon Farm",
+  "status": "executable",
+  "objective": {
+    "type": "equipment.mushroom-kingdom-yeti",
+    "priority": 75,
+    "deadlineMs": 9223372036854775807,
+    "retryBudget": 3,
+    "source": "PROGRESSION_POLICY",
+    "behaviorVersion": "mushroom-kingdom-yeti-farm-v1",
+    "registration": "STEP"
+  },
+  "entryCriteria": [
+    { "fact": "character.level", "operator": "between", "value": [30, 38] },
+    { "fact": "character.secondJob", "operator": "present", "value": true },
+    { "fact": "quest.2336", "operator": "completed", "value": true }
+  ],
+  "steps": [
+    {
+      "stepId": "farm-up-to-ten-yetis",
+      "operation": "mushroom-kingdom-yeti-farm",
+      "capabilityIds": [
+        "navigation.portal-route",
+        "interaction.npc-script",
+        "combat.generic-grind",
+        "loot.combat-drops",
+        "party.yeti-matchmaking",
+        "inventory.capacity-management",
+        "recovery.physics"
+      ],
+      "parameters": { "maximumRuns": 10 },
+      "timeoutMs": 0,
+      "retryBudget": 3
+    }
+  ],
+  "exitCriteria": [
+    { "fact": "plan.steps", "operator": "all-succeeded", "value": true }
+  ],
+  "successors": []
+}

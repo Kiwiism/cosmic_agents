@@ -30,12 +30,5 @@
   "exitCriteria": [
     { "fact": "character.level", "operator": "gte", "value": 30 }
   ],
-  "successors": [
-    {
-      "planId": "mushroom-kingdom-questline",
-      "on": "SUCCEEDED",
-      "activation": "AUTOMATIC",
-      "delayMs": 0
-    }
-  ]
+  "successors": []
 }

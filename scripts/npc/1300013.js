@@ -5,6 +5,17 @@
 
 var status;
 
+function startKingPepeInstance() {
+    var pepe = cm.getEventManager("KingPepeAndYetis");
+    pepe.setProperty("player", cm.getPlayer().getName());
+    var party = cm.getPlayer().getParty();
+    if (party == null) {
+        return pepe.startInstance(cm.getPlayer());
+    }
+    var eligible = pepe.getEligibleParty(party);
+    return eligible.size() > 0 && pepe.startInstance(party, cm.getMap(), 1);
+}
+
 function start() {
     status = -1;
     action(1, 0, 0);
@@ -34,9 +45,9 @@ function action(mode, type, selection) {
             cm.sendSimple("#L0#Enter to fight #bKing Pepe#k and #bYeti Brothers#k.#l\r\n#L1#Enter to fight #bPrime Minister#k.#l");
         } else if (status == 1) {
             if (selection == 0) {
-                var pepe = cm.getEventManager("KingPepeAndYetis");
-                pepe.setProperty("player", cm.getPlayer().getName());
-                pepe.startInstance(cm.getPlayer());
+                if (!startKingPepeInstance()) {
+                    cm.sendOk("Your party must have 1 to 3 members here with identical Yeti quest progress.");
+                }
                 cm.dispose();
 
             } else if (selection == 1) {
@@ -59,7 +70,9 @@ function action(mode, type, selection) {
         }
     } else {
         var questProgress = cm.getQuestProgressInt(2330, 3300005) + cm.getQuestProgressInt(2330, 3300006) + cm.getQuestProgressInt(2330, 3300007); //3 Yetis
-        if (!(cm.isQuestStarted(2330) && questProgress < 3)) {  // thanks Vcoc for finding an exploit with boss entry through NPC
+        var storyReady = cm.isQuestStarted(2330) && questProgress < 3;
+        var farmReady = cm.isQuestCompleted(2336);
+        if (!(storyReady || farmReady)) {  // story progression or an explicit post-story rematch
             cm.dispose();
             return;
         }
@@ -68,9 +81,9 @@ function action(mode, type, selection) {
             cm.sendSimple("#L1#Enter to fight #bKing Pepe#k and #bYeti Brothers#k.#l");
         } else if (status == 1) {
             if (selection == 1) {
-                var pepe = cm.getEventManager("KingPepeAndYetis");
-                pepe.setProperty("player", cm.getPlayer().getName());
-                pepe.startInstance(cm.getPlayer());
+                if (!startKingPepeInstance()) {
+                    cm.sendOk("Your party must have 1 to 3 members here in the same story or post-story farming mode.");
+                }
                 cm.dispose();
 
             }

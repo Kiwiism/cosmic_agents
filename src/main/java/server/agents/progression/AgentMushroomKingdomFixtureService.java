@@ -42,7 +42,8 @@ public final class AgentMushroomKingdomFixtureService {
     private static final int THROWING_STAR_ITEM_ID = 2_070_000;
     private static final int BULLET_ITEM_ID = 2_330_000;
     private static final int NEAREST_TOWN_SCROLL_ITEM_ID = 2_030_000;
-    private static final int SECOND_JOB_TRAVEL_MESO = 100_000;
+    private static final int SECOND_JOB_TRAVEL_MESO = config.AgentTuning.intValue(
+            "server.agents.progression.AgentMushroomKingdomFixtureService.SECOND_JOB_TRAVEL_MESO");
     private static final byte LARGE_INVENTORY = 96;
     private static final Map<Integer, Integer> LEGAL_SUB_LEVEL_25_WEAPON_BY_JOB = Map.of(
             320, 1_462_003,

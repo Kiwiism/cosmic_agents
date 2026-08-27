@@ -42,6 +42,12 @@ class AgentVictoriaTrainingRouteCatalogTest {
     }
 
     @Test
+    void routesForwardThroughMushroomCastleAfterLeavingSecretRoom() {
+        assertEquals(106021100,
+                AgentVictoriaTrainingRouteCatalog.nextHop(106021000, 106021400));
+    }
+
+    @Test
     void measuresQuestReturnDistanceInMapTransitions() {
         assertEquals(2, AgentVictoriaTrainingRouteCatalog.distance(102040000, 103000000));
         assertTrue(AgentVictoriaTrainingRouteCatalog.distance(100050000, 103000000) > 2);

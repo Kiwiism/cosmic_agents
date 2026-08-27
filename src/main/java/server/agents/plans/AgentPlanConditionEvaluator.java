@@ -3,6 +3,7 @@ package server.agents.plans;
 import client.Character;
 import client.QuestStatus;
 import server.agents.progression.AgentCareerProgressionState;
+import server.agents.progression.AgentMushroomKingdomCatalog;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
@@ -44,6 +45,9 @@ public final class AgentPlanConditionEvaluator {
         if ("region".equals(fact)) return agent.getMapId() < 100_000_000 ? "maple-island" : "victoria";
         if ("character.level".equals(fact)) return agent.getLevel();
         if ("character.firstJob".equals(fact)) return agent.getJob().getId() != 0;
+        if ("character.secondJob".equals(fact)) {
+            return AgentMushroomKingdomCatalog.supportedSecondJob(agent.getJob().getId());
+        }
         if ("career.bundle".equals(fact)) return entry.capabilityStates()
                 .require(AgentCareerProgressionState.STATE_KEY).bundle() != null;
         if ("career.bundleId".equals(fact)) {

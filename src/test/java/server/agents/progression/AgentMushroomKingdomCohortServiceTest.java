@@ -14,6 +14,8 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
@@ -110,6 +112,32 @@ class AgentMushroomKingdomCohortServiceTest {
                 AgentMushroomKingdomCohortService.pendingBonus(reached, baseline, 50, 5));
         assertEquals(new AgentMushroomKingdomCohortService.PendingBonus(0, 0),
                 AgentMushroomKingdomCohortService.pendingBonus(baseline, reached, 1, 1));
+    }
+
+    @Test
+    void includeSelfTokenIsExplicitAndOrderIndependent() {
+        assertFalse(AgentMushroomKingdomCohortService.includeSelf(null));
+        assertFalse(AgentMushroomKingdomCohortService.includeSelf(
+                new String[]{"start", "ten-percent", "123"}));
+        assertTrue(AgentMushroomKingdomCohortService.includeSelf(
+                new String[]{"start", "include-self", "ten-percent", "123"}));
+    }
+
+    @Test
+    void controlledParticipantMustBeFreshLevelThirtyExplorerSecondJob() {
+        int fresh = QuestStatus.Status.NOT_STARTED.getId();
+        int started = QuestStatus.Status.STARTED.getId();
+
+        assertNull(AgentMushroomKingdomCohortService
+                .controlledParticipantValidation(30, Job.BANDIT.getId(), fresh, false));
+        assertNotNull(AgentMushroomKingdomCohortService
+                .controlledParticipantValidation(31, Job.BANDIT.getId(), fresh, false));
+        assertNotNull(AgentMushroomKingdomCohortService
+                .controlledParticipantValidation(30, Job.THIEF.getId(), fresh, false));
+        assertNotNull(AgentMushroomKingdomCohortService
+                .controlledParticipantValidation(30, Job.BANDIT.getId(), started, false));
+        assertNotNull(AgentMushroomKingdomCohortService
+                .controlledParticipantValidation(30, Job.BANDIT.getId(), fresh, true));
     }
 
     @Test

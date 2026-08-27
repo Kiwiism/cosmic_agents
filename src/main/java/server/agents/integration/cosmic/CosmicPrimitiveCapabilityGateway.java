@@ -93,7 +93,7 @@ public enum CosmicPrimitiveCapabilityGateway implements PrimitiveCapabilityGatew
                 || agent.getClient().getChannelServer() == null) {
             return 0;
         }
-        MapleMap map = agent.getClient().getChannelServer().getMapFactory().getMap(mapId);
+        MapleMap map = agent.getClient().getChannelServer().getMapFactory().getLoadedMap(mapId);
         return map == null ? 0 : map.getCharacters().size();
     }
 

@@ -6,6 +6,8 @@ import server.agents.capabilities.partyquest.kpq.AgentKpqDefinition;
 import server.agents.plans.AgentPlanSessionHandle;
 import server.agents.plans.AgentUniversalPlanRuntime;
 import server.agents.progression.AgentCareerProgressionState;
+import server.agents.progression.AgentMushroomKingdomFarmProgressRuntime;
+import server.agents.progression.AgentPepeEquipmentCatalog;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentCommerceControlRuntime;
 import server.agents.runtime.activity.AgentActivityHostState;
@@ -70,6 +72,8 @@ public final class CosmicAgentWorldContextFactory {
                 activity == null ? "" : activity.sessionId(),
                 plan == null ? "" : plan.planId(),
                 careerStage,
+                AgentPepeEquipmentCatalog.capture(agent),
+                AgentMushroomKingdomFarmProgressRuntime.snapshot(agent.getId(), nowMs),
                 Map.of("captureMode", "read-only", "sessionGeneration",
                         Long.toString(entry.sessionGeneration())));
     }

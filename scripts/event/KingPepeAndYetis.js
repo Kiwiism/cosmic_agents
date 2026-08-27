@@ -1,13 +1,56 @@
 var minPlayers = 1;
+var maxPlayers = 3;
 var timeLimit = 20; //20 minutes
 var eventTimer = 1000 * 60 * timeLimit;
 var exitMap = 106021400;
 var eventMap = 106021500;
+var recruitMap = 106021400;
 var bossMobIds = [3300005, 3300006, 3300007];
 var bossSpawnX = 0;
 var bossSpawnY = -68;
 
 function init() {}
+
+function getEligibleParty(party) {
+    var eligible = [];
+    var hasLeader = false;
+    var expectedProgress = null;
+    var expectedMode = null;
+    var mismatchedProgress = false;
+    var partyList = party.toArray();
+
+    for (var i = 0; i < party.size(); i++) {
+        var partyCharacter = partyList[i];
+        var player = partyCharacter.getPlayer();
+        if (player == null || partyCharacter.getMapId() != recruitMap) {
+            continue;
+        }
+        var mode = player.getQuestStatus(2330) == 1 ? "story"
+                : player.getQuestStatus(2336) == 2 ? "farm" : "";
+        if (mode == "") continue;
+        if (expectedMode == null) expectedMode = mode;
+        else if (expectedMode != mode) mismatchedProgress = true;
+        var api = player.getClient().getAbstractPlayerInteraction();
+        if (mode == "story") {
+            var progress = Math.min(1, api.getQuestProgressInt(2330, 3300005)) + ":"
+                    + Math.min(1, api.getQuestProgressInt(2330, 3300006)) + ":"
+                    + Math.min(1, api.getQuestProgressInt(2330, 3300007));
+            if (expectedProgress == null) {
+                expectedProgress = progress;
+            } else if (expectedProgress != progress) {
+                mismatchedProgress = true;
+            }
+        }
+        if (partyCharacter.isLeader()) hasLeader = true;
+        eligible.push(partyCharacter);
+    }
+
+    if (!hasLeader || mismatchedProgress || eligible.length < minPlayers
+            || eligible.length > maxPlayers || eligible.length != party.size()) {
+        eligible = [];
+    }
+    return Java.to(eligible, Java.type('net.server.world.PartyCharacter[]'));
+}
 
 function setup(difficulty, lobbyId) {
     var eim = em.newInstance("KingPepe_" + lobbyId);

@@ -90,6 +90,7 @@ public final class AgentPlanSchemaValidator {
     private static boolean supportedFact(String fact) {
         return Set.of(
                 "map.id", "region", "character.level", "character.firstJob",
+                "character.secondJob",
                 "career.bundle", "career.bundleId", "career.stage",
                 "navigation.lithTownSide", "plan.steps").contains(fact)
                 || fact.startsWith("input.")

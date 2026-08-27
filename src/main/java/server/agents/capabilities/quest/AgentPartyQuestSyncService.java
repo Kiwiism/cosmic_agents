@@ -12,6 +12,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class AgentPartyQuestSyncService {
+    private static final int KING_PEPE_YETI_QUEST_ID = 2330;
+    private static final int FIRST_KING_PEPE_YETI_ID = 3300005;
+    private static final int LAST_KING_PEPE_YETI_ID = 3300007;
+
     private AgentPartyQuestSyncService() {
     }
 
@@ -38,6 +42,39 @@ public final class AgentPartyQuestSyncService {
             return;
         }
         syncPartyAgentsQuestProgress(source, questId, infoNumber, progress, AgentQuestSyncGatewayRuntime.quests());
+    }
+
+    /**
+     * King Pepe's three random Yeti variants are a shared party objective. Keep every party member
+     * in the same instance on the exact same per-color progress even though ordinary Agent parties
+     * award quest kill credit only to their highest damager.
+     */
+    public static void syncKingPepeYetiPartyProgress(Character source, int questId, int mobId, String progress) {
+        syncKingPepeYetiPartyProgress(source, questId, mobId, progress, AgentQuestSyncGatewayRuntime.quests());
+    }
+
+    static void syncKingPepeYetiPartyProgress(Character source, int questId, int mobId, String progress,
+                                               AgentQuestSyncGateway quests) {
+        if (source == null || progress == null || questId != KING_PEPE_YETI_QUEST_ID
+                || mobId < FIRST_KING_PEPE_YETI_ID || mobId > LAST_KING_PEPE_YETI_ID
+                || !AgentCharacterGatewayRuntime.characters().isHeadlessControlled(source)
+                || !AgentPartyGatewayRuntime.party().hasParty(source)) {
+            return;
+        }
+
+        AgentQuestSyncHandle quest = quests.getQuest(questId);
+        if (quest == null) {
+            return;
+        }
+
+        for (Character member : AgentPartyGatewayRuntime.party().onlineMembers(source)) {
+            if (member == null || member.getId() == source.getId()
+                    || member.getMapId() != source.getMapId()
+                    || quest.status(member) != QuestStatus.Status.STARTED) {
+                continue;
+            }
+            member.setQuestProgress(questId, mobId, progress);
+        }
     }
 
     static void syncPartyAgentsQuestProgress(Character source, int questId, int infoNumber, String progress,

@@ -3116,6 +3116,58 @@ tuning:
     # Purpose: Avoids treating ordinary edge movement as a Mushroom Kingdom below-map fault while still recovering genuinely fallen Agents.
     # Technical: The runtime compares live character Y with the loaded map-area bottom plus this margin before staging at the authored spawn portal.
     server.agents.progression.AgentMushroomKingdomRuntime.BELOW_MAP_RECOVERY_MARGIN_PX: '180'
+    # Values: 30000-300000 milliseconds. Recommended: 120000 to cover ordinary castle travel without retaining abandoned map claims indefinitely.
+    # Purpose: Reserves one selected Mushroom Kingdom hunting-map slot while an Agent travels there and while it remains in that field.
+    # Technical: The reservation is renewed after arrival, released when the Agent leaves or its objective ends, and purged when this deadline expires.
+    server.agents.progression.AgentMushroomKingdomRuntime.HUNT_MAP_RESERVATION_MS: '120000'
+    # Values: 1000-15000 milliseconds. Recommended: 5000 to discover exact-progress Agents without delaying the boss approach.
+    # Purpose: Gives Mushroom Kingdom Agents a short lobby scan before considering compatible solo human players.
+    # Technical: Agents form deterministic groups while walking to King Pepe; a full three-member party may enter immediately.
+    server.agents.progression.AgentMushroomKingdomRuntime.YETI_AGENT_SCAN_MS: '5000'
+    # Values: 1000-15000 milliseconds. Recommended: 7000 to give an invited human time to accept without holding the Agent indefinitely.
+    # Purpose: Bounds the consent window for a compatible solo human invited to a King Pepe Yeti party.
+    # Technical: Unanswered invitations are cancelled before the Agent enters, preventing a late acceptance from joining an active instance party.
+    server.agents.progression.AgentMushroomKingdomRuntime.YETI_HUMAN_RESPONSE_MS: '7000'
+    # Values: 7000-30000 milliseconds. Recommended: 15000 to cover both human and Agent class-box priority windows.
+    # Purpose: Keeps the Yeti party inside the instance long enough for prioritized class-box pickup after the boss dies.
+    # Technical: Passive loot remains active during this grace period; only the authored exit action is deferred.
+    server.agents.progression.AgentMushroomKingdomRuntime.YETI_LOOT_GRACE_MS: '15000'
+    # Values: 60-300 map pixels. Recommended: 170 for the post-story Mushroom Kingdom NPC sprite geometry.
+    # Purpose: Controls how close a post-story farming Agent must stand before invoking King Pepe quest dialogue.
+    # Technical: The shared grounded NPC reachability service compares this value with the live NPC position before running quest 2337 actions.
+    server.agents.progression.AgentMushroomKingdomPostStorySupport.NPC_DISTANCE_PX: '170'
+    # Values: 80-320 map pixels. Recommended: 210 for the authored King Pepe entrance and exit portal geometry.
+    # Purpose: Controls the final approach distance before a post-story Agent invokes a Yeti instance portal.
+    # Technical: Only post-story Mushroom Kingdom portal proximity uses this bound; ordinary route navigation remains unchanged.
+    server.agents.progression.AgentMushroomKingdomPostStorySupport.PORTAL_DISTANCE_PX: '210'
+    # Values: 250-5000 milliseconds. Recommended: 1000 to avoid repeated post-story NPC and portal actions on adjacent ticks.
+    # Purpose: Spaces recoverable Mushroom Kingdom farming interactions while keeping retries responsive.
+    # Technical: The post-story state stores the resulting next-action deadline against the runtime clock.
+    server.agents.progression.AgentMushroomKingdomPostStorySupport.RETRY_MS: '1000'
+    # Values: 1000-15000 milliseconds. Recommended: 5000 to discover compatible farming Agents while approaching King Pepe.
+    # Purpose: Gives post-story Yeti farmers a short deterministic Agent-only matchmaking window.
+    # Technical: The leader may proceed sooner with three members; otherwise human invitation consideration begins after this deadline.
+    server.agents.progression.AgentMushroomKingdomYetiFarmRuntime.AGENT_SCAN_MS: '5000'
+    # Values: 1000-15000 milliseconds. Recommended: 7000 to allow an invited human to respond without stalling a farm run.
+    # Purpose: Bounds the consent window for a compatible solo human invited to a post-story Yeti party.
+    # Technical: Pending invitations are cancelled when this runtime-clock deadline expires before instance entry.
+    server.agents.progression.AgentMushroomKingdomYetiFarmRuntime.HUMAN_RESPONSE_MS: '7000'
+    # Values: 7000-30000 milliseconds. Recommended: 15000 to cover both human and Agent class-box priority windows.
+    # Purpose: Keeps a post-story Yeti party in the instance long enough for relevant class-box pickup.
+    # Technical: Combat has stopped but passive loot remains available until this runtime-clock grace period ends.
+    server.agents.progression.AgentMushroomKingdomYetiFarmRuntime.LOOT_GRACE_MS: '15000'
+    # Values: 1000-15000 milliseconds. Recommended: 5000 to distinguish ordinary spawn delay from a resumed empty instance.
+    # Purpose: Prevents an Agent restarted after a Yeti death from waiting in an empty instance until the global stall timeout.
+    # Technical: After this no-boss observation window the Agent exits without awarding run credit and starts a fresh rematch.
+    server.agents.progression.AgentMushroomKingdomYetiFarmRuntime.EMPTY_INSTANCE_RECOVERY_MS: '5000'
+    # Values: 30000-300000 milliseconds. Recommended: 120000 to cover ordinary Mushroom Kingdom field travel.
+    # Purpose: Reserves a selected quest-2337 hunting-map slot while the Agent travels there and remains in the field.
+    # Technical: The process-local reservation is renewed on arrival, released on departure or plan end, and purged at this deadline.
+    server.agents.progression.AgentMushroomKingdomPepeScrollRuntime.RESERVATION_MS: '120000'
+    # Values: 10000-1000000 mesos. Recommended: 100000 to cover second-job transport without affecting ordinary characters.
+    # Purpose: Funds only explicit Mushroom Kingdom test fixtures that begin before Explorer second-job advancement.
+    # Technical: Fixture provisioning raises the test character to this balance before adding nearest-town scrolls; production progression never reads it.
+    server.agents.progression.AgentMushroomKingdomFixtureService.SECOND_JOB_TRAVEL_MESO: '100000'
     # Values: 60-300 map pixels. Recommended: 180 for Explorer instructor and job-advancement NPC sprite geometry.
     # Purpose: Controls how close an Agent must approach a second-job advancement NPC before invoking its ordinary quest script.
     # Technical: AgentSecondJobAdvancementRuntime passes this bound to the shared grounded NPC reachability service without changing any other progression flow.

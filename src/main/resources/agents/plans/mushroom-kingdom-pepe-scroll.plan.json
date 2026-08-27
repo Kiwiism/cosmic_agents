@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "planId": "mushroom-kingdom-pepe-scroll",
+  "planVersion": "1",
+  "title": "King Pepe's Scroll",
+  "status": "executable",
+  "objective": {
+    "type": "equipment.mushroom-kingdom-scroll",
+    "priority": 65,
+    "deadlineMs": 9223372036854775807,
+    "retryBudget": 3,
+    "source": "PROGRESSION_POLICY",
+    "behaviorVersion": "mushroom-kingdom-pepe-scroll-v1",
+    "registration": "STEP"
+  },
+  "entryCriteria": [
+    { "fact": "character.level", "operator": "between", "value": [30, 38] },
+    { "fact": "character.secondJob", "operator": "present", "value": true },
+    { "fact": "quest.2336", "operator": "completed", "value": true }
+  ],
+  "steps": [
+    {
+      "stepId": "complete-one-pepe-scroll",
+      "operation": "mushroom-kingdom-pepe-scroll",
+      "capabilityIds": [
+        "quest.repeatable",
+        "navigation.portal-route",
+        "interaction.npc-script",
+        "combat.generic-grind",
+        "loot.combat-drops",
+        "equipment.scroll-apply",
+        "inventory.capacity-management",
+        "recovery.physics"
+      ],
+      "parameters": { "questId": 2337, "maximumCompletions": 1 },
+      "timeoutMs": 0,
+      "retryBudget": 3
+    }
+  ],
+  "exitCriteria": [
+    { "fact": "plan.steps", "operator": "all-succeeded", "value": true }
+  ],
+  "successors": []
+}
