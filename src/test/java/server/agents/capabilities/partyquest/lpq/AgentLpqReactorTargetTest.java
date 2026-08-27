@@ -134,8 +134,9 @@ class AgentLpqReactorTargetTest {
     void includesDynamicallySpawnedStageSevenAndBossMonsters() {
         assertEquals(java.util.Set.of(9_300_170, AgentLpqDefinition.ROMBARD),
                 AgentLpqCoordinator.stageCombatTargets(7, java.util.Set.of(9_300_170)));
-        assertEquals(java.util.Set.of(9_300_006, AgentLpqDefinition.ALISHAR),
-                AgentLpqCoordinator.stageCombatTargets(9, java.util.Set.of(9_300_006)));
+        assertEquals(java.util.Set.of(
+                        AgentLpqDefinition.BOSS_TRIGGER_RATZ, AgentLpqDefinition.ALISHAR),
+                AgentLpqCoordinator.stageCombatTargets(9, java.util.Set.of()));
         assertEquals(java.util.Set.of(9_300_001),
                 AgentLpqCoordinator.stageCombatTargets(5, java.util.Set.of(9_300_001)));
     }

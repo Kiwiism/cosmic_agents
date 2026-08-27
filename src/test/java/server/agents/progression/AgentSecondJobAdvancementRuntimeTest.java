@@ -7,13 +7,68 @@ import server.agents.integration.PrimitiveCapabilityGateway;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
+import java.util.Set;
 
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class AgentSecondJobAdvancementRuntimeTest {
+    @Test
+    void trialUsesPhysicalGrindLootInsteadOfVacuumPickup() {
+        Character agent = mock(Character.class);
+        PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        AgentSecondJobCatalog.Branch branch = AgentSecondJobCatalog.require("fighter");
+        entry.capabilityStates().require(AgentSecondJobAdvancementState.STATE_KEY)
+                .begin(branch.id(), 1L);
+
+        when(agent.getId()).thenReturn(9_101);
+        when(gateway.characterState(agent)).thenReturn(
+                new AgentCharacterStateSnapshot(100, 30, 1_000, 1_000, 100, 100, true));
+        when(gateway.mapId(agent)).thenReturn(branch.trialMapId());
+        when(gateway.freeSlots(agent, branch.collectionItemId())).thenReturn(1);
+        when(gateway.itemCount(agent, branch.collectionItemId())).thenReturn(0);
+
+        try {
+            AgentSecondJobAdvancementRuntime.tick(entry, agent, 10L, gateway);
+
+            verify(gateway).grind(entry, branch.trialMobIds(), Set.of());
+            verify(gateway, never()).lootNearby(agent, Set.of(branch.collectionItemId()));
+        } finally {
+            AgentSecondJobTrialRegistry.release(branch.trialMapId(), agent.getId());
+        }
+    }
+
+    @Test
+    void leaderTravelUsesCurrentTownTaxiBeforePortalRouting() {
+        Character agent = mock(Character.class);
+        PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        AgentSecondJobCatalog.Branch branch = AgentSecondJobCatalog.require("assassin");
+        entry.capabilityStates().require(AgentSecondJobAdvancementState.STATE_KEY)
+                .begin(branch.id(), 1L);
+
+        when(gateway.characterState(agent)).thenReturn(
+                new AgentCharacterStateSnapshot(400, 30, 1_000, 1_000, 500, 500, true));
+        when(gateway.mapId(agent)).thenReturn(100000000);
+        when(gateway.freeSlots(agent, branch.collectionItemId())).thenReturn(1);
+        when(gateway.npcPosition(agent, 1012000)).thenReturn(new Point(10, 0));
+        when(gateway.grounded(agent)).thenReturn(true);
+        when(agent.getPosition()).thenReturn(new Point(10, 0));
+
+        AgentSecondJobAdvancementRuntime.tick(entry, agent, 10L, gateway);
+
+        verify(gateway).runNpcScript(agent, 1012000, 0, 3, 0);
+        verify(gateway, never()).travelTo(
+                same(entry), same(agent), eq(branch.leaderMapId()), anyLong());
+    }
+
     @Test
     void examinerTransitionStopsCombatOnceWithoutDiscardingApproachRouteEveryTick() {
         Character agent = mock(Character.class);

@@ -10,6 +10,15 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class AgentSecondJobCatalogTest {
     @Test
+    void everyBranchStartsFromItsTaxiServedCareerTown() {
+        assertEquals(102000000, AgentSecondJobCatalog.require("spearman").homeTownMapId());
+        assertEquals(101000000, AgentSecondJobCatalog.require("fp-wizard").homeTownMapId());
+        assertEquals(100000000, AgentSecondJobCatalog.require("crossbowman").homeTownMapId());
+        assertEquals(103000000, AgentSecondJobCatalog.require("assassin").homeTownMapId());
+        assertEquals(120000000, AgentSecondJobCatalog.require("brawler").homeTownMapId());
+    }
+
+    @Test
     void containsEveryExplorerSecondJobBranch() {
         assertEquals(12, AgentSecondJobCatalog.all().size());
         assertEquals(Set.of(110, 120, 130, 210, 220, 230, 310, 320, 410, 420, 510, 520),

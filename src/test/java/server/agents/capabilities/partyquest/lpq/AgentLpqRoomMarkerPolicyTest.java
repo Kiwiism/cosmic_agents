@@ -3,12 +3,24 @@ package server.agents.capabilities.partyquest.lpq;
 import client.Character;
 import org.junit.jupiter.api.Test;
 
+import java.awt.Point;
+
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class AgentLpqRoomMarkerPolicyTest {
+    @Test
+    void markerRequiresTheActualDoorPlatformInsteadOfTheFootholdBelow() {
+        Point door = new Point(120, -600);
+
+        assertTrue(AgentLpqCoordinator.atDoorMarkerPosition(
+                new Point(142, -590), door));
+        assertFalse(AgentLpqCoordinator.atDoorMarkerPosition(
+                new Point(120, -540), door));
+    }
+
     @Test
     void preservesLowPotionMarkersOnlyBesideActiveStageFourAndFiveDoors() {
         AgentLpqSession session = new AgentLpqSession(

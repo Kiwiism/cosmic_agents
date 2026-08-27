@@ -22,6 +22,9 @@ public final class SpawnTimeOverridePolicy {
     }
 
     public static int reactorRespawnMilliseconds(int mapId, int sourceMilliseconds) {
+        if (sourceMilliseconds < 0) {
+            return sourceMilliseconds;
+        }
         int seconds = overrideSeconds(
                 mapId,
                 -1,

@@ -33,15 +33,17 @@ class AgentLpqDarkSightRefreshTest {
     }
 
     @Test
-    void darkSightIsRecastOnceBeforeLeavingTheCompletedHazardRoom() {
+    void darkSightIsOnlyRecastBeforeRoomExitWhenItsRefreshWindowIsDue() {
         assertTrue(AgentLpqCoordinator.requiresDarkSightBeforeRoomExit(
-                5, 922_010_506, false));
+                5, 922_010_506, false, true));
         assertFalse(AgentLpqCoordinator.requiresDarkSightBeforeRoomExit(
-                5, 922_010_506, true));
+                5, 922_010_506, false, false));
         assertFalse(AgentLpqCoordinator.requiresDarkSightBeforeRoomExit(
-                4, 922_010_506, false));
+                5, 922_010_506, true, true));
         assertFalse(AgentLpqCoordinator.requiresDarkSightBeforeRoomExit(
-                5, 922_010_505, false));
+                4, 922_010_506, false, true));
+        assertFalse(AgentLpqCoordinator.requiresDarkSightBeforeRoomExit(
+                5, 922_010_505, false, true));
     }
 
     @Test

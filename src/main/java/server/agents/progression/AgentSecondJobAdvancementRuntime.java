@@ -11,6 +11,7 @@ import server.agents.capabilities.combat.AgentCombatAmmoCounter;
 import server.agents.capabilities.combat.AgentCombatSkillConstraintState;
 import server.agents.capabilities.navigation.AgentRouteOutcome;
 import server.agents.capabilities.navigation.AgentRouteStatus;
+import server.agents.capabilities.looting.AgentGrindLootTargetService;
 import server.agents.capabilities.objective.AgentNpcInteractionReachabilityService;
 import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
 import server.agents.integration.PrimitiveCapabilityGateway;
@@ -127,7 +128,7 @@ public final class AgentSecondJobAdvancementRuntime {
     private static boolean leader(AgentRuntimeEntry entry, Character agent,
                                   AgentSecondJobCatalog.Branch branch,
                                   PrimitiveCapabilityGateway gateway) {
-        if (!travel(entry, agent, branch.leaderMapId(), gateway)) return true;
+        if (!travel(entry, agent, branch, branch.leaderMapId(), gateway)) return true;
         if (!nearNpc(entry, agent, branch.leaderNpcId(), gateway)) return true;
         if (branch.pirate()
                 && gateway.questStatus(agent, branch.startQuestId())
@@ -145,7 +146,7 @@ public final class AgentSecondJobAdvancementRuntime {
     private static boolean instructor(AgentRuntimeEntry entry, Character agent,
                                       AgentSecondJobCatalog.Branch branch,
                                       PrimitiveCapabilityGateway gateway) {
-        if (!travel(entry, agent, branch.instructorMapId(), gateway)) return true;
+        if (!travel(entry, agent, branch, branch.instructorMapId(), gateway)) return true;
         if (!nearNpc(entry, agent, branch.instructorNpcId(), gateway)) return true;
         if (!claimTrial(agent, branch, gateway)) return false;
         gateway.stop(entry);
@@ -168,8 +169,9 @@ public final class AgentSecondJobAdvancementRuntime {
             // lease, platform-batch, and navigation state before selecting the remaining mobs.
             gateway.stop(entry);
         }
-        gateway.lootNearby(agent, Set.of(branch.collectionItemId()));
         gateway.grind(entry, branch.trialMobIds(), Set.of());
+        AgentGrindLootTargetService.prepareNearestObjectiveItem(
+                entry, agent, Set.of(branch.collectionItemId()));
         return true;
     }
 
@@ -187,7 +189,7 @@ public final class AgentSecondJobAdvancementRuntime {
                                        AgentSecondJobCatalog.Branch branch,
                                        AgentSecondJobAdvancementState state, long nowMs,
                                        PrimitiveCapabilityGateway gateway) {
-        if (!travel(entry, agent, branch.leaderMapId(), gateway)) return true;
+        if (!travel(entry, agent, branch, branch.leaderMapId(), gateway)) return true;
         if (!nearNpc(entry, agent, branch.leaderNpcId(), gateway)) return true;
         Job oldJob = agent.getJob();
         gateway.stop(entry);
@@ -245,13 +247,25 @@ public final class AgentSecondJobAdvancementRuntime {
         return null;
     }
 
-    private static boolean travel(AgentRuntimeEntry entry, Character agent, int mapId,
+    private static boolean travel(AgentRuntimeEntry entry, Character agent,
+                                  AgentSecondJobCatalog.Branch branch, int mapId,
                                   PrimitiveCapabilityGateway gateway) {
         AgentSecondJobAdvancementState state = entry.capabilityStates()
                 .require(AgentSecondJobAdvancementState.STATE_KEY);
         if (gateway.mapId(agent) == mapId) {
             state.capabilityProgress();
             return true;
+        }
+        if (mapId == branch.leaderMapId()) {
+            AgentVictoriaTaxiRuntime.Result taxi = AgentVictoriaTaxiRuntime.travelFromCurrentTown(
+                    entry, agent, branch.homeTownMapId(), INTERACTION_DISTANCE_PX, gateway);
+            if (taxi == AgentVictoriaTaxiRuntime.Result.MOVING) {
+                state.capabilityProgress();
+                return false;
+            }
+            // ARRIVED means the taxi leg is complete and the ordinary route may now
+            // navigate from the town map into the instructor interior. UNAVAILABLE
+            // preserves support for starts outside a taxi-served town.
         }
         AgentRouteOutcome outcome = gateway.travelTo(entry, agent, mapId, System.currentTimeMillis());
         if (outcome.status() == AgentRouteStatus.MOVING) {

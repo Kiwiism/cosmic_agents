@@ -18,6 +18,7 @@ public final class AgentLpqDefinition {
     public static final int MAX_PARTY_SIZE = 6;
     public static final int RECOMMENDED_PARTY_SIZE = 6;
     public static final int ALISHAR = 9_300_012;
+    public static final int BOSS_TRIGGER_RATZ = 9_300_006;
     public static final int ROMBARD = 9_300_010;
     public static final int STAGE_7_TRIGGER_REACTOR = 2_201_002;
     public static final int STAGE_4_MAGIC_MOB = 9_300_008;

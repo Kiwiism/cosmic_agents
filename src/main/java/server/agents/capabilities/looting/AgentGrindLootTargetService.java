@@ -15,6 +15,7 @@ import server.maps.MapItem;
 import server.maps.MapleMap;
 
 import java.awt.Point;
+import java.util.Comparator;
 import java.util.Set;
 
 public final class AgentGrindLootTargetService {
@@ -31,6 +32,37 @@ public final class AgentGrindLootTargetService {
             AgentGrindLootStateRuntime.clearGrindLootTarget(entry);
             resolveRecentKillIfDrained(entry, agent.getMap(), dropperObjectId(loot));
         }
+    }
+
+    /**
+     * Commits the nearest eligible required-item drop to the ordinary physical grind-loot path.
+     * The caller supplies objective item ids; collection still requires the Agent to navigate to
+     * the drop and enter normal pickup range.
+     */
+    public static boolean prepareNearestObjectiveItem(AgentRuntimeEntry entry,
+                                                      Character agent,
+                                                      Set<Integer> itemIds) {
+        if (entry == null || agent == null || agent.getMap() == null
+                || itemIds == null || itemIds.isEmpty()) {
+            return false;
+        }
+        validateCachedGrindLootTarget(entry, agent);
+        if (AgentGrindLootStateRuntime.hasObjectiveLootTarget(entry)) {
+            return true;
+        }
+        long nowMs = System.currentTimeMillis();
+        Point position = agent.getPosition();
+        MapItem nearest = agent.getMap().getDroppedItems().stream()
+                .filter(drop -> drop.getMeso() <= 0 && itemIds.contains(drop.getItemId()))
+                .filter(drop -> AgentLootEligibility.canBotTargetLoot(
+                        entry, agent, agent.getMap(), drop, nowMs))
+                .min(Comparator
+                        .comparingDouble((MapItem drop) ->
+                                drop.getPosition().distanceSq(position))
+                        .thenComparingInt(MapItem::getObjectId))
+                .orElse(null);
+        AgentGrindLootStateRuntime.setObjectiveLootTarget(entry, nearest);
+        return nearest != null;
     }
 
     public static void refreshGrindLootTarget(AgentRuntimeEntry entry,

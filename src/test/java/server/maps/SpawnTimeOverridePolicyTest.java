@@ -25,4 +25,10 @@ class SpawnTimeOverridePolicyTest {
     void oneShotMobDelayIsNeverOverridden() {
         assertEquals(-1, SpawnTimeOverridePolicy.mobRespawnSeconds(1_010_100, -1));
     }
+
+    @Test
+    void oneShotReactorDelayIsNeverOverridden() {
+        assertEquals(-1_000,
+                SpawnTimeOverridePolicy.reactorRespawnMilliseconds(922_010_200, -1_000));
+    }
 }

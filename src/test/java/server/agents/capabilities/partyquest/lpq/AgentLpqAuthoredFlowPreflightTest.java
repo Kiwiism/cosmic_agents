@@ -11,8 +11,11 @@ import server.maps.Portal;
 
 import java.util.List;
 import java.util.Set;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -33,7 +36,7 @@ class AgentLpqAuthoredFlowPreflightTest {
                 new Exit(922_010_404, 2, 922_010_400),
                 new Exit(922_010_405, 2, 922_010_400),
                 new Exit(922_010_500, 8, 922_010_600),
-                new Exit(922_010_501, 2, 922_010_500),
+                new Exit(922_010_501, 3, 922_010_500),
                 new Exit(922_010_502, 2, 922_010_500),
                 new Exit(922_010_503, 2, 922_010_500),
                 new Exit(922_010_504, 2, 922_010_500),
@@ -101,5 +104,35 @@ class AgentLpqAuthoredFlowPreflightTest {
                         == AgentLpqDefinition.STAGE_7_TRIGGER_REACTOR)
                 .count();
         assertEquals(3L, triggerReactors);
+    }
+
+    @Test
+    void bossStageContainsTheAuthoredRatzPrerequisiteAndAlisharReactor() {
+        Data map = DataProviderFactory.getDataProvider(WZFiles.MAP)
+                .getData("Map/Map9/922010900.img");
+        assertNotNull(map);
+        Data life = map.getChildByPath("life");
+        Data reactors = map.getChildByPath("reactor");
+        assertNotNull(life);
+        assertNotNull(reactors);
+
+        assertTrue(life.getChildren().stream().anyMatch(entry ->
+                "m".equals(DataTool.getString("type", entry, ""))
+                        && AgentLpqDefinition.BOSS_TRIGGER_RATZ == Integer.parseInt(
+                        DataTool.getString("id", entry, "0"))));
+        assertTrue(reactors.getChildren().stream().anyMatch(reactor ->
+                DataTool.getInt("id", reactor, 0) == 2_201_003));
+    }
+
+    @Test
+    void redSignOffersAQuietGm6ObserverWarp() throws Exception {
+        String source = Files.readString(Path.of("scripts", "npc", "2040034.js"));
+
+        assertTrue(source.contains("[GM6] Warp into the active LPQ as an observer."));
+        assertTrue(source.contains("player.forceChangeMap(leader.getMap()"));
+        int warp = source.indexOf("player.forceChangeMap(leader.getMap()");
+        int dispose = source.indexOf("cm.dispose();", warp);
+        assertTrue(warp >= 0 && dispose > warp);
+        assertFalse(source.substring(warp, dispose).contains("sendOk"));
     }
 }

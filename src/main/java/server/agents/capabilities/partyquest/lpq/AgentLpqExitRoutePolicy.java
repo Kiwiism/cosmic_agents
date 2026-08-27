@@ -36,12 +36,15 @@ final class AgentLpqExitRoutePolicy {
             route(922_010_500, 922_010_504, 5),
             route(922_010_500, 922_010_505, 6),
             route(922_010_500, 922_010_506, 7),
-            route(922_010_501, 922_010_500, 2),
+            // The Teleport room is cleared from top to bottom. Leave through the
+            // authored bottom portal instead of retracing the entire room.
+            route(922_010_501, 922_010_500, 3),
             route(922_010_502, 922_010_500, 2, p(-8, -2_488), p(13, -3_533)),
             route(922_010_503, 922_010_500, 2, p(-8, -2_488), p(13, -3_533)),
             route(922_010_504, 922_010_500, 2, p(-8, -2_488), p(13, -3_533)),
             route(922_010_505, 922_010_500, 2, p(-8, -2_488), p(13, -3_533)),
-            route(922_010_506, 922_010_500, 2),
+            route(922_010_506, 922_010_500, 2,
+                    p(-8, -2_488), p(13, -3_533)),
             route(922_010_700, 922_010_800, 2),
             route(922_010_800, 922_010_900, 2));
 
@@ -55,10 +58,6 @@ final class AgentLpqExitRoutePolicy {
     static List<Integer> portalIds(int sourceMapId, int destinationMapId) {
         Integer primary = portalId(sourceMapId, destinationMapId);
         if (primary == null) return List.of();
-        if (destinationMapId == 922_010_500
-                && (sourceMapId == 922_010_501 || sourceMapId == 922_010_506)) {
-            return List.of(primary, 3);
-        }
         return List.of(primary);
     }
 

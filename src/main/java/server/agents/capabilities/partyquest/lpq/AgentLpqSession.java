@@ -61,8 +61,7 @@ public final class AgentLpqSession {
     private long passHandoffRecoveryStartedAtMs;
     private Phase submissionReadyPhase;
     private long submissionReadyAtMs;
-    private int stage6SequenceChatIndex;
-    private long stage6SequenceNextChatAtMs;
+    private boolean stage6SequenceAnnounced;
     private boolean stage2ScoutPlanAnnounced;
     private boolean stage2TrapClearAnnounced;
     private long bonusDrainedAtMs;
@@ -251,14 +250,12 @@ public final class AgentLpqSession {
         submissionReadyPhase = null;
         submissionReadyAtMs = 0L;
     }
-    public synchronized boolean stage6SequenceAnnounced() { return stage6SequenceChatIndex >= 5; }
-    public synchronized int stage6SequenceChatIndex() { return stage6SequenceChatIndex; }
+    public synchronized boolean stage6SequenceAnnounced() { return stage6SequenceAnnounced; }
     public synchronized boolean stage6SequenceChatReady(long nowMs) {
-        return !stage6SequenceAnnounced() && nowMs >= stage6SequenceNextChatAtMs;
+        return !stage6SequenceAnnounced;
     }
-    public synchronized void markStage6SequenceChunkAnnounced(long nowMs, long intervalMs) {
-        if (stage6SequenceChatIndex < 5) stage6SequenceChatIndex++;
-        stage6SequenceNextChatAtMs = nowMs + Math.max(0L, intervalMs);
+    public synchronized void markStage6SequenceAnnounced(long nowMs) {
+        stage6SequenceAnnounced = true;
         markProgress(nowMs);
     }
 

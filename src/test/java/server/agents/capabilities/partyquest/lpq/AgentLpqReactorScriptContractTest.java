@@ -1,6 +1,10 @@
 package server.agents.capabilities.partyquest.lpq;
 
 import org.junit.jupiter.api.Test;
+import provider.Data;
+import provider.DataProviderFactory;
+import provider.DataTool;
+import provider.wz.WZFiles;
 import scripting.reactor.ReactorActionManager;
 
 import java.io.IOException;
@@ -40,6 +44,22 @@ class AgentLpqReactorScriptContractTest {
         assertTrue(script.contains("var bonusTime = 1;"));
         assertTrue(script.contains("eim.startEventTimer(bonusTime * 60000);"));
         assertEquals(1, occurrences(script, "eim.getInstanceMap(922010500).resetPQ(level);"));
+    }
+
+    @Test
+    void everyLpqBoxMapIsAuthoredWithOneShotReactors() {
+        for (int mapId : List.of(
+                922_010_200, 922_010_201, 922_010_300,
+                922_010_501, 922_010_502, 922_010_503,
+                922_010_504, 922_010_505, 922_010_506,
+                922_010_700, 922_011_000)) {
+            Data map = DataProviderFactory.getDataProvider(WZFiles.MAP)
+                    .getData("Map/Map9/" + mapId + ".img");
+            Data reactors = map.getChildByPath("reactor");
+            assertTrue(reactors.getChildren().stream().allMatch(reactor ->
+                    DataTool.getInt("reactorTime", reactor, 0) == -1),
+                    () -> "LPQ boxes must not respawn during map " + mapId);
+        }
     }
 
     private static int occurrences(String source, String value) {

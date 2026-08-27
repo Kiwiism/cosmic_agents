@@ -902,7 +902,7 @@ tuning:
     # Values: 5000-60000 milliseconds. Recommended: 15000 so the leader visibly sweeps Stage 7 before unreachable drops are recovered.
     # Purpose: Bounds how long cleared Stage 7 passes may remain on the map after all trigger boxes and Rombards are gone.
     # Technical: The leader follows the authored sweep first; the fallback atomically transfers only existing pass drops and never creates passes.
-    server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.STAGE_7_FORCE_LOOT_DELAY_MS: '15000'
+    server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.STAGE_7_FORCE_LOOT_DELAY_MS: '45000'
     # Values: 10000-120000 milliseconds. Recommended: 30000 to preserve the authored Stage 2 return portal as the normal route.
     # Purpose: Returns Agents from the Stage 2 trap room only when ordinary ladder and portal navigation remains stalled.
     # Technical: Recovery changes maps inside the same LPQ event instance and does not alter any other PQ portal behavior.

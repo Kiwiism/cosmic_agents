@@ -18,8 +18,7 @@ class AgentLpqStageSixRouteTest {
 
     @Test
     void announcesTheCanonicalPlayerFacingBoxSequence() {
-        assertEquals(List.of("Stage 6: 133", "Stage 6: 221", "Stage 6: 333",
-                        "Stage 6: 123", "Stage 6: 111"),
+        assertEquals(List.of("Stage 6 sequence: 133 221 333 123 111"),
                 AgentLpqCoordinator.stageSixSequenceChats());
     }
 
@@ -37,18 +36,14 @@ class AgentLpqStageSixRouteTest {
     }
 
     @Test
-    void sequenceAnnouncementAdvancesOneThreeDigitChunkAtATime() {
+    void sequenceAnnouncementCompletesAfterTheFullRouteMessage() {
         AgentLpqSession session = new AgentLpqSession(
                 AgentLpqSession.Mode.PRODUCTION, 1L, 1, 6, 100L);
 
-        for (int index = 0; index < 5; index++) {
-            long nowMs = 200L + index * 750L;
-            assertTrue(session.stage6SequenceChatReady(nowMs));
-            assertEquals(index, session.stage6SequenceChatIndex());
-            session.markStage6SequenceChunkAnnounced(nowMs, 750L);
-        }
+        assertTrue(session.stage6SequenceChatReady(200L));
+        session.markStage6SequenceAnnounced(200L);
 
         assertTrue(session.stage6SequenceAnnounced());
-        assertEquals(3_200L, session.lastProgressAtMs());
+        assertEquals(200L, session.lastProgressAtMs());
     }
 }

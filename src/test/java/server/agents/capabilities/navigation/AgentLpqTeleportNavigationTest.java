@@ -14,7 +14,6 @@ import server.maps.MapleMap;
 
 import java.awt.Point;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -88,27 +87,18 @@ class AgentLpqTeleportNavigationTest {
             }
             assertTrue(reactorRouteUsesTeleport);
 
-            Point portalTwo = room.getPortal(2).getPosition();
-            int portalTwoRegion = roomGraph.findRegionId(room, portalTwo);
-            assertTrue(AgentNavigationRouteOverlayPolicy.applies(roomGraph, portalTwoRegion));
-            Map<Point, List<Integer>> exitRegions = Map.of(
-                    new Point(-96, -1_914), List.of(10, 9, 8, 7, 6, 5, 15, 4, 3),
-                    new Point(101, -2_132), List.of(8, 7, 6, 5, 15, 4, 3),
-                    new Point(-78, -2_350), List.of(6, 5, 15, 4, 3),
-                    new Point(-106, -3_379), List.of(4, 3));
-            for (Map.Entry<Point, List<Integer>> expected : exitRegions.entrySet()) {
-                Point reactor = expected.getKey();
+            Point bottomExit = room.getPortal(3).getPosition();
+            int bottomExitRegion = roomGraph.findRegionId(room, bottomExit);
+            for (Point reactor : java.util.List.of(
+                    new Point(-96, -1_914), new Point(101, -2_132),
+                    new Point(-78, -2_350), new Point(-106, -3_379))) {
                 int reactorRegion = roomGraph.findRegionId(room, reactor);
                 AgentNavigationPathService.MovementPathSelection exitSelection =
                         AgentNavigationPathService.findNextEdgeSelectionVaried(
                                 roomGraph, agent, reactor, reactorRegion,
-                                portalTwoRegion, portalTwo, null, edge -> true);
+                                bottomExitRegion, bottomExit, null, edge -> true);
                 assertEquals(AgentNavigationPathService.RouteCompleteness.COMPLETE,
-                        exitSelection.completeness());
-                java.util.ArrayList<Integer> actual = new java.util.ArrayList<>();
-                actual.add(reactorRegion);
-                exitSelection.path().forEach(edge -> actual.add(edge.toRegionId));
-                assertEquals(expected.getValue(), actual);
+                        exitSelection.completeness(), "bottom exit from reactor " + reactor);
             }
         } finally {
             AgentLpqSessionRegistry.remove(session);

@@ -30,7 +30,6 @@ import java.util.concurrent.ConcurrentHashMap;
 /** GM observation harness for real Explorer second-job advancements. */
 public final class AgentSecondJobCohortService {
     private static final Logger log = LoggerFactory.getLogger(AgentSecondJobCohortService.class);
-    private static final int HENESYS_MAP_ID = 100_000_000;
     // Fixture preparation persists a full character snapshot. Keep those transactions serial in
     // practice; overlapping five saves can deadlock MySQL's quest-progress replacement work.
     private static final long SPAWN_STAGGER_MS = config.AgentTuning.longValue(
@@ -96,7 +95,8 @@ public final class AgentSecondJobCohortService {
             int index = ordinal;
             AgentSchedulerRuntime.schedule(() -> launch(run, member, index), SPAWN_STAGGER_MS * ordinal);
         }
-        return List.of("Launching " + roster.size() + " level-30 first-job Agent(s) in Henesys (seed "
+        return List.of("Launching " + roster.size()
+                        + " level-30 first-job Agent(s) beside their career-town taxis (seed "
                         + seed + ").",
                 "Pass condition: every requested Agent reaches its selected second-job ID.",
                 "Use !secondjobtest status or !secondjobtest stop.");
@@ -106,17 +106,17 @@ public final class AgentSecondJobCohortService {
         if (RUNS.get(run.operator.getId()) != run) return;
         Character launched = null;
         try {
+            AgentSecondJobCatalog.Branch branch = AgentSecondJobCatalog.require(member.branchId());
             MapleMap map = AgentMapGatewayRuntime.map().resolveMap(
                     run.operator.getWorld(), AgentClientGatewayRuntime.clients().channel(run.operator),
-                    HENESYS_MAP_ID);
-            Point point = spawnPoint(map, ordinal);
+                    branch.homeTownMapId());
+            Point point = taxiSpawnPoint(map, branch.homeTownMapId(), ordinal);
             AgentLifecycleService.AgentSpawnResult result = AgentInteractionRuntime
                     .spawnStationaryAgentForLeaderAt(run.operator, member.name(), map, point);
             if (!result.success()) throw new IllegalStateException(result.errorMessage());
             launched = result.agent();
             AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(launched.getId());
             if (entry == null) throw new IllegalStateException("spawned Agent runtime is unavailable");
-            AgentSecondJobCatalog.Branch branch = AgentSecondJobCatalog.require(member.branchId());
             AgentMushroomKingdomFixtureService.Prepared prepared =
                     run.preserveAppearance
                             ? AgentMushroomKingdomFixtureService
@@ -256,6 +256,19 @@ public final class AgentSecondJobCohortService {
         Point candidate = new Point(base.x + (ordinal - 2) * 45, base.y);
         Point grounded = AgentPrimitiveCapabilityGatewayRuntime.gateway().groundPoint(map, candidate);
         return grounded == null ? new Point(base) : grounded;
+    }
+
+    private static Point taxiSpawnPoint(MapleMap map, int townMapId, int ordinal) {
+        AgentVictoriaSharedQuestPackCatalog.Town town =
+                AgentVictoriaSharedQuestPackCatalog.town(townMapId);
+        NPC taxi = town == null ? null : map.getNPCById(town.taxiNpcId());
+        if (taxi == null) {
+            return spawnPoint(map, ordinal);
+        }
+        int localSlot = Math.floorMod(ordinal, 3) - 1;
+        Point candidate = new Point(taxi.getPosition().x + localSlot * 45, taxi.getPosition().y);
+        Point grounded = AgentPrimitiveCapabilityGatewayRuntime.gateway().groundPoint(map, candidate);
+        return grounded == null ? new Point(taxi.getPosition()) : grounded;
     }
 
     static StartSelection parseStart(String[] params, long fallbackSeed) {

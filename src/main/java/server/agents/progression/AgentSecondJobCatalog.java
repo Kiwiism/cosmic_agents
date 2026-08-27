@@ -20,6 +20,17 @@ public final class AgentSecondJobCatalog {
         }
 
         public boolean pirate() { return family == Family.PIRATE; }
+
+        /** Taxi-served Victoria town containing this branch's first instructor. */
+        public int homeTownMapId() {
+            return switch (family) {
+                case WARRIOR -> 102000000;
+                case MAGICIAN -> 101000000;
+                case BOWMAN -> 100000000;
+                case THIEF -> 103000000;
+                case PIRATE -> 120000000;
+            };
+        }
     }
 
     private static final Map<String, Branch> BY_ID = build();

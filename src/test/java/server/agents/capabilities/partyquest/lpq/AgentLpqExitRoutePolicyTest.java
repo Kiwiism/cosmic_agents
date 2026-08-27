@@ -13,16 +13,17 @@ class AgentLpqExitRoutePolicyTest {
         for (int room = 922_010_401; room <= 922_010_405; room++) {
             assertEquals(2, AgentLpqExitRoutePolicy.portalId(room, 922_010_400));
         }
-        for (int room = 922_010_501; room <= 922_010_506; room++) {
+        assertEquals(3, AgentLpqExitRoutePolicy.portalId(922_010_501, 922_010_500));
+        for (int room = 922_010_502; room <= 922_010_506; room++) {
             assertEquals(2, AgentLpqExitRoutePolicy.portalId(room, 922_010_500));
         }
     }
 
     @Test
-    void stageFiveEndRoomsExposeBothAuthoredExits() {
-        assertEquals(java.util.List.of(2, 3),
+    void specializedStageFiveRoomsUseTheirFlowAppropriateExit() {
+        assertEquals(java.util.List.of(3),
                 AgentLpqExitRoutePolicy.portalIds(922_010_501, 922_010_500));
-        assertEquals(java.util.List.of(2, 3),
+        assertEquals(java.util.List.of(2),
                 AgentLpqExitRoutePolicy.portalIds(922_010_506, 922_010_500));
         assertEquals(java.util.List.of(2),
                 AgentLpqExitRoutePolicy.portalIds(922_010_505, 922_010_500));
@@ -31,7 +32,7 @@ class AgentLpqExitRoutePolicyTest {
     @Test
     void standardStageFiveRoomsUseTheirAuthoredTwoRopeWaypoints() {
         Point portal = new Point(-147, -3_535);
-        for (int room = 922_010_502; room <= 922_010_505; room++) {
+        for (int room = 922_010_502; room <= 922_010_506; room++) {
             assertEquals(new Point(-8, -2_488), AgentLpqExitRoutePolicy.nextWaypoint(
                     room, 922_010_500, new Point(215, -2_014), portal));
             assertEquals(new Point(13, -3_533), AgentLpqExitRoutePolicy.nextWaypoint(
@@ -39,8 +40,6 @@ class AgentLpqExitRoutePolicyTest {
         }
         assertNull(AgentLpqExitRoutePolicy.nextWaypoint(
                 922_010_501, 922_010_500, new Point(215, -2_014), portal));
-        assertNull(AgentLpqExitRoutePolicy.nextWaypoint(
-                922_010_506, 922_010_500, new Point(215, -2_014), portal));
     }
 
     @Test

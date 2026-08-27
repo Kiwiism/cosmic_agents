@@ -200,6 +200,7 @@ class AgentVictoriaSharedQuestPackRuntimeTest {
         state.questPackIndex(taxiStep);
 
         PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
+        when(gateway.mapId(agent)).thenReturn(103000000);
         when(gateway.grounded(agent)).thenReturn(true);
         when(gateway.npcPosition(agent, 1052016)).thenReturn(new Point(10, 0));
 

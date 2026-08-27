@@ -132,22 +132,10 @@ final class AgentVictoriaSharedQuestPackRuntime {
         if (town == null) {
             return Result.BLOCKED;
         }
-        int selection = town.selectionFor(step.destinationMapId());
-        Point taxi = gateway.npcPosition(agent, town.taxiNpcId());
-        if (selection < 0 || taxi == null) {
-            return Result.BLOCKED;
-        }
-        if (!gateway.grounded(agent)
-                || !AgentNpcInteractionReachabilityService.canInteract(
-                entry, agent, taxi, NPC_DISTANCE_PX)) {
-            gateway.navigate(entry, taxi, true);
-            return Result.RUNNING;
-        }
-        gateway.facePosition(agent, taxi);
-        gateway.stop(entry);
-        gateway.runNpcScript(agent, town.taxiNpcId(),
-                AgentTaxiDialogueSequence.regularTownCab(selection));
-        return Result.RUNNING;
+        AgentVictoriaTaxiRuntime.Result taxi = AgentVictoriaTaxiRuntime.travelFromCurrentTown(
+                entry, agent, step.destinationMapId(), NPC_DISTANCE_PX, gateway);
+        return taxi == AgentVictoriaTaxiRuntime.Result.UNAVAILABLE
+                ? Result.BLOCKED : Result.RUNNING;
     }
 
     private static Result quest(AgentRuntimeEntry entry,

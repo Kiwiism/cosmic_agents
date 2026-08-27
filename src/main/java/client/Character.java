@@ -1261,7 +1261,8 @@ public class Character extends AbstractCharacterObject {
     }
 
     private void broadcastChangeJob() {
-        for (Character chr : map.getAllPlayers()) {
+        MapleMap advancementMap = map;
+        for (Character chr : advancementMap.getAllPlayers()) {
             Client chrC = chr.getClient();
 
             if (chrC != null) {     // propagate new job 3rd-person effects (FJ, Aran 1st strike, etc)
@@ -1274,10 +1275,13 @@ public class Character extends AbstractCharacterObject {
             @Override
             public void run() {
                 Character thisChr = Character.this;
-                MapleMap map = thisChr.getMap();
+                MapleMap currentMap = thisChr.getMap();
 
-                if (map != null) {
-                    map.broadcastMessage(thisChr, PacketCreator.showForeignEffect(thisChr.getId(), 8), false);
+                // Do not let the delayed advancement effect follow a character through a portal.
+                // Fixture-driven PQ agents advance in an off-screen staging map before entering the lobby.
+                if (currentMap == advancementMap) {
+                    advancementMap.broadcastMessage(
+                            thisChr, PacketCreator.showForeignEffect(thisChr.getId(), 8), false);
                 }
             }
         }, 777);

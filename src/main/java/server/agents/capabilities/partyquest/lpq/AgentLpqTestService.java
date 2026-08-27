@@ -62,6 +62,7 @@ public final class AgentLpqTestService {
                 case "invite" -> invite(operator);
                 case "spectate", "attach" -> spectate(operator);
                 case "follow" -> follow(operator, params);
+                case "stay", "unfollow" -> stay(operator);
                 case "return", "detach" -> returnFromSpectating(operator);
                 case "status" -> status(operator);
                 case "pause" -> pause(operator, true);
@@ -212,7 +213,7 @@ public final class AgentLpqTestService {
         if (RUNS.get(run.operator.getId()) != run) return;
         try {
             if (run.session == null) attemptHandoff(run);
-            if (run.spectating) updateSpectator(run);
+            if (run.spectating && run.autoFollow) updateSpectator(run);
             if (run.session != null && run.session.terminal()) {
                 if (run.session.phase() == AgentLpqSession.Phase.COMPLETED) holdCompletedRun(run);
                 else finishRun(run, "failed: " + run.session.failure());
@@ -286,7 +287,9 @@ public final class AgentLpqTestService {
         run.spectating = true;
         run.followId = leader.getId();
         updateSpectator(run);
-        return List.of("Attached as a non-party LPQ spectator. Use !lpqtest follow <leader|name> or return.",
+        run.autoFollow = false;
+        return List.of("Attached as a non-party LPQ spectator. Manual warps will not auto-follow.",
+                "Use !lpqtest follow <leader|name> to follow stage changes, !lpqtest stay to stop following, or return.",
                 "Do not attack, loot, use portals/NPCs, or hit reactors.");
     }
 
@@ -303,6 +306,7 @@ public final class AgentLpqTestService {
             if (target == null) return List.of("That LPQ participant is unavailable.");
             run.followId = target.getId();
         }
+        run.autoFollow = true;
         updateSpectator(run);
         Character target = online(run.followId);
         return List.of("Following " + (target == null ? run.followId : target.getName()) + '.');
@@ -328,6 +332,7 @@ public final class AgentLpqTestService {
             return List.of("That LPQ participant is currently unavailable.");
         }
         run.followId = target.getId();
+        run.autoFollow = false;
         AgentMapGatewayRuntime.map().changeMapNear(
                 operator, target.getMap(), target.getPosition());
         return List.of("Warped to LPQ slot " + memberSlot(run.session, target.getId())
@@ -436,6 +441,13 @@ public final class AgentLpqTestService {
         return List.of("Returned to the LPQ recruitment map.");
     }
 
+    private static List<String> stay(Character operator) {
+        Run run = RUNS.get(operator.getId());
+        if (run == null || !run.spectating) return List.of("You are not spectating LPQ.");
+        run.autoFollow = false;
+        return List.of("Automatic LPQ following is off. Use !warplpq freely or !lpqtest follow <leader|name> to resume it.");
+    }
+
     private static void returnObserver(Run run) {
         if (!run.spectating) return;
         MapleMap map = AgentMapGatewayRuntime.map().resolveMap(run.operator.getWorld(),
@@ -444,6 +456,7 @@ public final class AgentLpqTestService {
         if (map != null) AgentMapGatewayRuntime.map().changeMapNear(run.operator, map,
                 portal == null ? new Point(0, 0) : portal.getPosition());
         run.spectating = false;
+        run.autoFollow = false;
         run.followId = 0;
     }
 
@@ -614,7 +627,7 @@ public final class AgentLpqTestService {
                 "!lpqtest humanleader [seed] (you lead five Agents)",
                 "!lpqtest agentleader [seed] (chat a join request; Agent leads you and four other Agents)",
                 "!lpqtest invite (manual Agent-leader invitation resend)",
-                "!lpqtest spectate | follow <leader|AgentName> | return",
+                "!lpqtest spectate | follow <leader|AgentName> | stay | return",
                 "!warplpq <1-6|leader|scout [1-2]|teleport|darksight|magic|physical|top|bottom|platform|boss|room 501-506>",
                 "!lpqtest stage8chat <on|off> (IGN->box chat; default off)",
                 "!lpqtest status | pause | resume | bonus <skip|enter> | run | stop");
@@ -633,6 +646,7 @@ public final class AgentLpqTestService {
         volatile int eventLeaderId;
         volatile boolean inviteSent;
         volatile boolean spectating;
+        volatile boolean autoFollow;
         volatile boolean stage8AssignmentChatEnabled;
         volatile int followId;
         Run(Character operator, AgentPartyQuestEngagement engagement, long seed, Flow flow, Set<String> names) {

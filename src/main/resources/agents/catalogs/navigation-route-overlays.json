@@ -72,13 +72,6 @@
       "rationale": "Exit LPQ Stage 4 room 405 along its authored ground and two-rope route to portal 2."
     },
     {
-      "mapId": 922010501,
-      "graphVersion": 59,
-      "targetRegionId": 3,
-      "regionPath": [10, 9, 8, 7, 6, 5, 15, 4, 3],
-      "rationale": "Exit LPQ Stage 5 room 501 through its authored Teleport and two-rope spine to portal 2."
-    },
-    {
       "mapId": 922010502,
       "graphVersion": 59,
       "targetRegionId": 3,
