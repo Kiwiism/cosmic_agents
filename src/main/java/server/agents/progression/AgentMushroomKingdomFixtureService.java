@@ -50,7 +50,7 @@ public final class AgentMushroomKingdomFixtureService {
             420, 1_332_013);
     private static final Map<AgentApBuildProfile.JobFamily, List<String>> EQUIPMENT_LEGAL_AP = Map.of(
             AgentApBuildProfile.JobFamily.WARRIOR,
-            List.of("warrior-dex20-str-lv30-v1", "warrior-dex40-str-lv30-v1"),
+            List.of("warrior-dex40-str-lv30-v1"),
             AgentApBuildProfile.JobFamily.MAGICIAN,
             List.of("magician-luk33-int-lv30-v1"),
             AgentApBuildProfile.JobFamily.BOWMAN,

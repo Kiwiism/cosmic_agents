@@ -156,7 +156,7 @@ agent:
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 5000-20000 around the tested baseline 10000; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how long Agents remain in or wait for death respawn delay. Higher values make that pause or state last longer; lower values make them continue sooner.
     # Technical: the Agent engine deployment configuration consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled.
-    AGENT_DEATH_RESPAWN_DELAY_MS: 10000
+    AGENT_DEATH_RESPAWN_DELAY_MS: 5000
     # Values: integer from 0 to 100 inclusive. Recommended: 0-25 for initial tuning around the tested baseline 0; change gradually and observe crowd/load effects.
     # Purpose: Controls the visible strength or frequency of death respawn health. Higher values make the effect stronger or more common; lower values make it weaker or rarer.
     # Technical: the Agent engine deployment configuration consumes this as an integer. Domain: percentage from 0 to 100 inclusive.
@@ -3132,6 +3132,10 @@ tuning:
     # Purpose: Keeps the Yeti party inside the instance long enough for prioritized class-box pickup after the boss dies.
     # Technical: Passive loot remains active during this grace period; only the authored exit action is deferred.
     server.agents.progression.AgentMushroomKingdomRuntime.YETI_LOOT_GRACE_MS: '15000'
+    # Values: 1-500 verified kills. Recommended: 50. Sets the rare-item fallback threshold for Helmet Pepe.
+    # Purpose: Prevents an Agent from remaining indefinitely on the rare quest-2326 Helmet Pepe drop after sustained legitimate hunting.
+    # Technical: The Mushroom Kingdom invariant repair may grant item 4001317 only after its per-objective mob-kill listener has recorded at least this many Helmet Pepe kills.
+    server.agents.progression.AgentMushroomKingdomInvariantRecovery.HELMET_PEPE_PITY_KILLS: '50'
     # Values: 60-300 map pixels. Recommended: 170 for the post-story Mushroom Kingdom NPC sprite geometry.
     # Purpose: Controls how close a post-story farming Agent must stand before invoking King Pepe quest dialogue.
     # Technical: The shared grounded NPC reachability service compares this value with the live NPC position before running quest 2337 actions.

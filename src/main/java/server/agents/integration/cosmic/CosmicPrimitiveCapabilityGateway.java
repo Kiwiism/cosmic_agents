@@ -505,6 +505,43 @@ public enum CosmicPrimitiveCapabilityGateway implements PrimitiveCapabilityGatew
         return agent.getQuestStatus(questId) == QuestStatus.Status.COMPLETED.getId();
     }
 
+    @Override
+    public boolean forceStartQuest(Character agent, int questId, int npcId) {
+        int previousStatus = agent.getQuestStatus(questId);
+        Quest.getInstance(questId).forceStartWithActions(agent, npcId);
+        publishQuestTransition(agent, questId, previousStatus, npcId, null);
+        int status = agent.getQuestStatus(questId);
+        return status == QuestStatus.Status.STARTED.getId()
+                || status == QuestStatus.Status.COMPLETED.getId();
+    }
+
+    @Override
+    public boolean grantItem(Character agent, int itemId, int quantity) {
+        return quantity > 0 && quantity <= Short.MAX_VALUE
+                && CosmicInventoryGateway.INSTANCE.addItem(agent, itemId, (short) quantity);
+    }
+
+    @Override
+    public boolean setQuestProgress(Character agent, int questId, int progressId, int value) {
+        if (agent == null || questId <= 0 || progressId <= 0 || value < 0) return false;
+        agent.setQuestProgress(questId, progressId, Integer.toString(value));
+        return questProgress(agent, questId, progressId) >= value;
+    }
+
+    @Override
+    public boolean recoverToMap(AgentRuntimeEntry entry, Character agent, int mapId) {
+        if (entry == null || agent == null || agent.getClient() == null || mapId <= 0) return false;
+        MapleMap destination = CosmicMapGateway.INSTANCE.resolveMap(
+                agent.getWorld(), agent.getClient().getChannel(), mapId);
+        if (destination == null) return false;
+        Point point = destination.getPortal(0) == null
+                ? new Point() : new Point(destination.getPortal(0).getPosition());
+        CosmicMapGateway.INSTANCE.changeMapNear(agent, destination, point);
+        AgentMovementStateResetService.resetEntryStateAfterTeleport(entry);
+        prepareNavigation(entry, agent);
+        return agent.getMapId() == mapId;
+    }
+
     private static void publishQuestTransition(Character agent,
                                                int questId,
                                                int previousStatus,

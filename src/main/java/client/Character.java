@@ -268,6 +268,7 @@ public class Character extends AbstractCharacterObject {
     private int localchairrate;
     private boolean hidden, equipchanged = true, berserk, hasMerchant, hasSandboxItem = false, whiteChat = false, canRecvPartySearchInvite = true;
     private boolean equippedMesoMagnet = false, equippedItemPouch = false, equippedPetItemIgnore = false;
+    private transient volatile int agentMushroomYetiPityVariant;
     private boolean usedSafetyCharm = false;
     private float autopotHpAlert, autopotMpAlert;
     private int linkedLevel = 0;
@@ -5551,6 +5552,17 @@ public class Character extends AbstractCharacterObject {
             return map.getId();
         }
         return mapid;
+    }
+
+    /** One-shot Agent recovery hint consumed by the King Pepe instance script. */
+    public void requestAgentMushroomYetiPityVariant(int mobId) {
+        agentMushroomYetiPityVariant = mobId >= 3_300_005 && mobId <= 3_300_007 ? mobId : 0;
+    }
+
+    public int consumeAgentMushroomYetiPityVariant() {
+        int requested = agentMushroomYetiPityVariant;
+        agentMushroomYetiPityVariant = 0;
+        return requested;
     }
 
     public Ring getMarriageRing() {

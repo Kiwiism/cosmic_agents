@@ -20,8 +20,14 @@ public final class AgentMushroomKingdomState implements AgentMushroomKingdomYeti
     private int observedMapId;
     private Point observedPosition;
     private long progressAtMs;
+    private long objectiveProgressAtMs;
     private long nextActionAtMs;
     private int capabilityFailures;
+    private int recoveryStage;
+    private int checkpointRecoveries;
+    private String lastRecovery = "";
+    private int helmetPepeKills;
+    private int yetiUnwantedRolls;
     private int huntMapQuestId;
     private int selectedHuntMapId;
     private long yetiLobbyVisitStartedAtMs;
@@ -38,8 +44,14 @@ public final class AgentMushroomKingdomState implements AgentMushroomKingdomYeti
         observedMapId = 0;
         observedPosition = null;
         progressAtMs = nowMs;
+        objectiveProgressAtMs = nowMs;
         nextActionAtMs = 0L;
         capabilityFailures = 0;
+        recoveryStage = 0;
+        checkpointRecoveries = 0;
+        lastRecovery = "";
+        helmetPepeKills = 0;
+        yetiUnwantedRolls = 0;
         huntMapQuestId = 0;
         selectedHuntMapId = 0;
         clearYetiLobbyVisit();
@@ -51,15 +63,24 @@ public final class AgentMushroomKingdomState implements AgentMushroomKingdomYeti
         boolean moved = observedPosition == null || safe == null
                 || observedPosition.distanceSq(safe) >= 24L * 24L;
         boolean questChanged = currentQuestId != questId;
-        if (questChanged || metric != observedMetric || observedMapId != mapId || moved) {
+        boolean objectiveChanged = questChanged || metric != observedMetric;
+        if (objectiveChanged || observedMapId != mapId || moved) {
             progressAtMs = nowMs;
             capabilityFailures = 0;
+        }
+        if (objectiveChanged) {
+            objectiveProgressAtMs = nowMs;
+            recoveryStage = 0;
+            checkpointRecoveries = 0;
+            lastRecovery = "";
         }
         if (questChanged) {
             huntMapQuestId = 0;
             selectedHuntMapId = 0;
             clearYetiLobbyVisit();
             yetiBossDefeatedAtMs = 0L;
+            helmetPepeKills = 0;
+            yetiUnwantedRolls = 0;
         }
         currentQuestId = questId;
         observedMetric = metric;
@@ -86,10 +107,31 @@ public final class AgentMushroomKingdomState implements AgentMushroomKingdomYeti
     public synchronized String reason() { return reason; }
     public synchronized int currentQuestId() { return currentQuestId; }
     public synchronized long progressAtMs() { return progressAtMs; }
+    public synchronized long objectiveProgressAtMs() { return objectiveProgressAtMs; }
     public synchronized long nextActionAtMs() { return nextActionAtMs; }
     public synchronized void nextActionAtMs(long value) { nextActionAtMs = value; }
     public synchronized int capabilityFailure() { return ++capabilityFailures; }
     public synchronized void capabilityProgress() { capabilityFailures = 0; }
+    public synchronized int capabilityFailures() { return capabilityFailures; }
+
+    public synchronized int recoveryStage() { return recoveryStage; }
+
+    public synchronized void recoveryApplied(int stage, String recovery) {
+        recoveryStage = Math.max(recoveryStage, stage);
+        lastRecovery = recovery == null ? "" : recovery;
+        if (stage == AgentMushroomKingdomRecoveryPolicy.CHECKPOINT_STAGE) checkpointRecoveries++;
+        capabilityFailures = 0;
+    }
+
+    public synchronized int checkpointRecoveries() { return checkpointRecoveries; }
+    public synchronized String lastRecovery() { return lastRecovery; }
+
+    public synchronized void recordHelmetPepeKill() { helmetPepeKills++; }
+    public synchronized int helmetPepeKills() { return helmetPepeKills; }
+
+    public synchronized int recordUnwantedYetiRoll() { return ++yetiUnwantedRolls; }
+    public synchronized void resetUnwantedYetiRolls() { yetiUnwantedRolls = 0; }
+    public synchronized int yetiUnwantedRolls() { return yetiUnwantedRolls; }
 
     public synchronized int selectedHuntMap(int questId) {
         return huntMapQuestId == questId ? selectedHuntMapId : 0;

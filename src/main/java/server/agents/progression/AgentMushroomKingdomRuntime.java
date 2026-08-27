@@ -30,7 +30,6 @@ public final class AgentMushroomKingdomRuntime {
             "server.agents.progression.AgentMushroomKingdomRuntime.INTERACTION_DISTANCE_PX");
     private static final long INTERACTION_RETRY_MS = config.AgentTuning.longValue(
             "server.agents.progression.AgentMushroomKingdomRuntime.INTERACTION_RETRY_MS");
-    private static final long OBJECTIVE_TIMEOUT_MS = 45 * 60_000L;
     private static final long UNOBSERVED_NPC_STAGING_DELAY_MS = config.AgentTuning.longValue(
             "server.agents.progression.AgentMushroomKingdomRuntime.UNOBSERVED_NPC_STAGING_DELAY_MS");
     private static final long BOSS_INSTANCE_RETRY_MS = config.AgentTuning.longValue(
@@ -97,10 +96,15 @@ public final class AgentMushroomKingdomRuntime {
         int metric = objectiveMetric(agent, node, gateway);
         state.observe(node.questId(), metric, gateway.mapId(agent), gateway.position(agent), nowMs);
         state.active(reason(node, metric));
-        if (nowMs - state.progressAtMs() > OBJECTIVE_TIMEOUT_MS) {
-            return block(entry, state, gateway, "quest " + node.questId()
-                    + " made no quest, map, or physical progress for 45 minutes");
+        if (node.questId() == 2326 && metric < node.requiredCount()) {
+            AgentMushroomKingdomInvariantRecovery.Result rareItemRecovery =
+                    AgentMushroomKingdomInvariantRecovery.recover(agent, state, gateway);
+            if (rareItemRecovery.recovered()) {
+                state.active(rareItemRecovery.reason());
+                return true;
+            }
         }
+        if (recoverStalledObjective(entry, agent, node, state, gateway, nowMs)) return true;
 
         return switch (node.questId()) {
             case 2314 -> scriptedInvestigation(entry, agent, node, 106020300, 1,
@@ -114,6 +118,90 @@ public final class AgentMushroomKingdomRuntime {
             case 2331 -> royalSeal(entry, agent, state, gateway, nowMs);
             case 2336 -> truthAndReturn(entry, agent, state, gateway, nowMs);
             default -> ordinary(entry, agent, node, state, gateway, nowMs);
+        };
+    }
+
+    private static boolean recoverStalledObjective(
+            AgentRuntimeEntry entry, Character agent,
+            AgentMushroomKingdomCatalog.QuestNode node,
+            AgentMushroomKingdomState state, PrimitiveCapabilityGateway gateway, long nowMs) {
+        long elapsedMs = Math.max(0L, nowMs - state.objectiveProgressAtMs());
+        AgentMushroomKingdomRecoveryPolicy.Action action =
+                AgentMushroomKingdomRecoveryPolicy.next(elapsedMs, node.hunting(),
+                        state.recoveryStage(), state.checkpointRecoveries());
+        if (action == AgentMushroomKingdomRecoveryPolicy.Action.NONE) return false;
+        int stage = AgentMushroomKingdomRecoveryPolicy.stage(action);
+        switch (action) {
+            case RESET_TRANSIENT -> {
+                gateway.stop(entry);
+                gateway.refreshNavigation(entry, agent);
+                state.recoveryApplied(stage, "cleared transient movement and combat state");
+                state.active("recovering quest " + node.questId() + " after no durable progress");
+            }
+            case STAGE_LOCAL -> {
+                gateway.stop(entry);
+                stageAtObjectiveNpc(entry, agent, node, gateway);
+                gateway.refreshNavigation(entry, agent);
+                state.recoveryApplied(stage, "restaged at the local objective interaction");
+                state.active("restaging quest " + node.questId() + " after no durable progress");
+            }
+            case RESET_CHECKPOINT -> {
+                gateway.stop(entry);
+                releaseHuntMap(agent, state);
+                if (node.questId() == 2330) AgentMushroomKingdomYetiPartyRuntime.leaveLobby(state);
+                int checkpoint = recoveryCheckpoint(agent, node, gateway);
+                if (!gateway.recoverToMap(entry, agent, checkpoint)) {
+                    return capabilityFailure(entry, state, gateway,
+                            "could not reset quest " + node.questId() + " to checkpoint " + checkpoint,
+                            nowMs);
+                }
+                state.recoveryApplied(stage, "reset to checkpoint map " + checkpoint);
+                state.active("resuming quest " + node.questId() + " from a clean checkpoint");
+            }
+            case RECONCILE -> {
+                AgentMushroomKingdomInvariantRecovery.Result result =
+                        AgentMushroomKingdomInvariantRecovery.recover(agent, state, gateway);
+                state.recoveryApplied(stage, result.reason());
+                if (result.recovered()) {
+                    state.active(result.reason());
+                } else {
+                    gateway.stop(entry);
+                    gateway.refreshNavigation(entry, agent);
+                    state.active("quest " + node.questId()
+                            + " has no safe invariant repair; retrying until the terminal deadline");
+                }
+            }
+            case BLOCK -> {
+                block(entry, state, gateway, "quest " + node.questId()
+                        + " made no durable objective progress after staged recovery; last recovery: "
+                        + state.lastRecovery());
+            }
+            case NONE -> { }
+        }
+        return true;
+    }
+
+    private static void stageAtObjectiveNpc(AgentRuntimeEntry entry, Character agent,
+                                             AgentMushroomKingdomCatalog.QuestNode node,
+                                             PrimitiveCapabilityGateway gateway) {
+        int npcId = gateway.questStatus(agent, node.questId())
+                == QuestStatus.Status.NOT_STARTED.getId() ? node.startNpcId() : node.completeNpcId();
+        Point npc = gateway.npcPosition(agent, npcId);
+        if (npc == null) return;
+        Point grounded = gateway.groundPoint(agent.getMap(), npc);
+        gateway.stagePosition(entry, agent, grounded == null ? npc : grounded);
+    }
+
+    private static int recoveryCheckpoint(Character agent,
+                                          AgentMushroomKingdomCatalog.QuestNode node,
+                                          PrimitiveCapabilityGateway gateway) {
+        return switch (node.questId()) {
+            case 2330 -> AgentMushroomKingdomYetiPartyRuntime.LOBBY_MAP_ID;
+            case 2332, 2333 -> 106021402;
+            case 2334, 2335, 2336 -> gateway.questStatus(agent, 2333)
+                    == QuestStatus.Status.COMPLETED.getId() ? 106021600 : 106021402;
+            case 2331 -> AgentMushroomKingdomCatalog.ENTRANCE_MAP_ID;
+            default -> node.startMapId();
         };
     }
 
@@ -137,15 +225,13 @@ public final class AgentMushroomKingdomRuntime {
             if (!travel(entry, agent, AgentMushroomKingdomCatalog.entryLeaderMap(questId),
                     state, gateway, nowMs)) return true;
             int leaderNpc = AgentMushroomKingdomCatalog.entryLeaderNpc(questId);
-            return interact(entry, agent, leaderNpc, state, gateway, nowMs,
-                    () -> gateway.startQuest(agent, questId, leaderNpc));
+            return interactQuestStart(entry, agent, questId, leaderNpc, state, gateway, nowMs);
         }
         state.active("presenting Explorer recommendation at Mushroom Kingdom entrance");
         if (!travel(entry, agent, AgentMushroomKingdomCatalog.ENTRANCE_MAP_ID, state, gateway, nowMs)) {
             return true;
         }
-        return interact(entry, agent, 1300005, state, gateway, nowMs,
-                () -> gateway.completeQuest(agent, questId, 1300005));
+        return interactQuestComplete(entry, agent, questId, 1300005, state, gateway, nowMs);
     }
 
     private static boolean ordinary(AgentRuntimeEntry entry, Character agent,
@@ -166,7 +252,13 @@ public final class AgentMushroomKingdomRuntime {
                 state.capabilityProgress();
                 state.active("waiting for the Prime Minister instance map transfer");
             } else {
-                state.active("Prime Minister instance is busy; waiting to retry");
+                int failures = state.capabilityFailure();
+                if (failures >= 3 && gateway.runPortalNpcScript(agent, 2, 1300013, 1)) {
+                    state.capabilityProgress();
+                    state.active("recovered the Prime Minister portal dialogue");
+                } else {
+                    state.active("Prime Minister instance is busy; waiting to retry");
+                }
             }
             return true;
         }
@@ -176,8 +268,8 @@ public final class AgentMushroomKingdomRuntime {
                     && !requireCapacity(entry, agent, startRewardItem, 1,
                     "quest " + node.questId() + " start reward", state, gateway)) return false;
             if (!travel(entry, agent, node.startMapId(), state, gateway, nowMs)) return true;
-            return interact(entry, agent, node.startNpcId(), state, gateway, nowMs,
-                    () -> gateway.startQuest(agent, node.questId(), node.startNpcId()));
+            return interactQuestStart(entry, agent, node.questId(), node.startNpcId(),
+                    state, gateway, nowMs);
         }
         if (node.questId() == 2333 && gateway.itemCount(agent, 4001318) < 1) {
             gateway.lootNearby(agent, Set.of(4001318));
@@ -211,8 +303,8 @@ public final class AgentMushroomKingdomRuntime {
                 && !requireCapacity(entry, agent, 2430014, 1,
                 "Killer Mushroom Spore reward", state, gateway)) return false;
         if (!travel(entry, agent, node.completeMapId(), state, gateway, nowMs)) return true;
-        return interact(entry, agent, node.completeNpcId(), state, gateway, nowMs,
-                () -> gateway.completeQuest(agent, node.questId(), node.completeNpcId()));
+        return interactQuestComplete(entry, agent, node.questId(), node.completeNpcId(),
+                state, gateway, nowMs);
     }
 
     private static int selectedHuntMap(Character agent,
@@ -308,11 +400,8 @@ public final class AgentMushroomKingdomRuntime {
                     "Killer Mushroom Spore did not open the first thorn barrier", nowMs);
         }
         state.capabilityProgress();
-        if (!gateway.enterPortal(agent, FIRST_THORN_WALL_PORTAL_ID)) {
-            return capabilityFailure(entry, state, gateway,
-                    "first thorn barrier portal did not open", nowMs);
-        }
-        return true;
+        return enterExpectedPortal(entry, agent, FIRST_THORN_WALL_PORTAL_ID, 106020400,
+                "first thorn barrier portal", state, gateway, nowMs);
     }
 
     private static boolean recoverKillerSpore(AgentRuntimeEntry entry, Character agent,
@@ -325,7 +414,9 @@ public final class AgentMushroomKingdomRuntime {
         return interact(entry, agent, 1300007, state, gateway, nowMs, () -> {
             gateway.startQuest(agent, 2338, 1300007);
             return gateway.itemCount(agent, 2430014) > 0;
-        });
+        }, () -> gateway.forceStartQuest(agent, 2338, 1300007)
+                && (gateway.itemCount(agent, 2430014) > 0
+                || gateway.grantItem(agent, 2430014, 1)));
     }
 
     private static boolean scriptedInvestigation(AgentRuntimeEntry entry, Character agent,
@@ -346,12 +437,26 @@ public final class AgentMushroomKingdomRuntime {
             if (!travel(entry, agent, mapId, state, gateway, nowMs)) return true;
             if (!nearPortal(entry, agent, portalId, gateway)) return true;
             gateway.stop(entry);
-            gateway.enterPortal(agent, portalId);
+            boolean entered = gateway.enterPortal(agent, portalId);
+            if (gateway.questProgress(agent, node.questId(), node.questId()) >= 1) {
+                state.capabilityProgress();
+                return true;
+            }
+            int failures = state.capabilityFailure();
+            if (failures >= 3
+                    && gateway.setQuestProgress(agent, node.questId(), node.questId(), 1)) {
+                state.capabilityProgress();
+                state.active("recovered scripted investigation marker for quest " + node.questId());
+                return true;
+            }
+            state.active((entered ? "scripted investigation did not record progress"
+                    : "scripted investigation portal rejected entry") + "; retrying");
+            state.nextActionAtMs(nowMs + INTERACTION_RETRY_MS);
             return true;
         }
         if (!travel(entry, agent, node.completeMapId(), state, gateway, nowMs)) return true;
-        return interact(entry, agent, node.completeNpcId(), state, gateway, nowMs,
-                () -> gateway.completeQuest(agent, node.questId(), node.completeNpcId()));
+        return interactQuestComplete(entry, agent, node.questId(), node.completeNpcId(),
+                state, gateway, nowMs);
     }
 
     private static boolean thornBarrier(AgentRuntimeEntry entry, Character agent,
@@ -373,11 +478,8 @@ public final class AgentMushroomKingdomRuntime {
                     "Thorn Remover did not clear the castle route", nowMs);
         }
         state.capabilityProgress();
-        if (!gateway.enterPortal(agent, 3)) {
-            return capabilityFailure(entry, state, gateway,
-                    "castle thorn portal did not open", nowMs);
-        }
-        return true;
+        return enterExpectedPortal(entry, agent, 3, 106020501,
+                "castle thorn portal", state, gateway, nowMs);
     }
 
     private static boolean pepeKings(AgentRuntimeEntry entry, Character agent,
@@ -401,22 +503,46 @@ public final class AgentMushroomKingdomRuntime {
                         "Wedding Hall key", state, gateway)) return false;
                 if (waitForYetiLoot(state, nowMs)) return true;
                 if (!nearPortal(entry, agent, 1, gateway)) return true;
-                if (!gateway.enterPortal(agent, 1)) {
-                    return capabilityFailure(entry, state, gateway,
-                            "Yeti instance exit did not grant the Wedding Hall key", nowMs);
-                }
-                return true;
+                return enterExpectedPortal(entry, agent, 1,
+                        AgentMushroomKingdomYetiPartyRuntime.LOBBY_MAP_ID,
+                        "Yeti instance exit", state, gateway, nowMs);
             }
             if (gateway.itemCount(agent, 4032388) < 1) {
-                return block(entry, state, gateway,
-                        "Wedding Hall key is missing after all three Yeti variants were credited");
+                AgentMushroomKingdomInvariantRecovery.Result recovered =
+                        AgentMushroomKingdomInvariantRecovery.recover(agent, state, gateway);
+                if (!recovered.recovered() || gateway.itemCount(agent, 4032388) < 1) {
+                    return block(entry, state, gateway,
+                            "Wedding Hall key is missing after all three Yeti variants were credited");
+                }
+                state.active(recovered.reason());
+                return true;
             }
             AgentMushroomKingdomYetiPartyRuntime.leaveLobby(state);
             if (!ensureSolo(agent, state)) return true;
             return ordinary(entry, agent, AgentMushroomKingdomCatalog.require(2330), state, gateway, nowMs);
         }
         if (gateway.mapId(agent) == 106021500) {
+            int spawnedVariant = spawnedYetiVariant(agent, gateway);
+            if (spawnedVariant > 0
+                    && gateway.questProgress(agent, 2330, spawnedVariant) >= 1) {
+                int unwantedRolls = state.recordUnwantedYetiRoll();
+                int missingVariant = missingYetiVariant(agent, gateway);
+                if (unwantedRolls >= 3 && missingVariant > 0) {
+                    agent.requestAgentMushroomYetiPityVariant(missingVariant);
+                    state.resetUnwantedYetiRolls();
+                    state.active("requesting missing Yeti variant " + missingVariant
+                            + " after three duplicate rolls");
+                } else {
+                    state.active("leaving duplicate Yeti variant " + spawnedVariant
+                            + " without wasting a boss kill (reroll " + unwantedRolls + "/3)");
+                }
+                if (!nearPortal(entry, agent, 1, gateway)) return true;
+                return enterExpectedPortal(entry, agent, 1,
+                        AgentMushroomKingdomYetiPartyRuntime.LOBBY_MAP_ID,
+                        "duplicate Yeti reroll exit", state, gateway, nowMs);
+            }
             if (gateway.liveMonsterCount(agent, PEPE_KING_VARIANTS) > 0) {
+                state.resetUnwantedYetiRolls();
                 state.clearYetiLootGrace();
                 refreshMeleeAccuracySupply(agent, gateway);
                 AgentQuestHuntingBridge.engage(entry, agent, gateway, "mushroom-kingdom:2330",
@@ -426,11 +552,9 @@ public final class AgentMushroomKingdomRuntime {
             }
             if (waitForYetiLoot(state, nowMs)) return true;
             if (!nearPortal(entry, agent, 1, gateway)) return true;
-            if (!gateway.enterPortal(agent, 1)) {
-                return capabilityFailure(entry, state, gateway,
-                        "empty Yeti instance could not be exited for a reroll", nowMs);
-            }
-            return true;
+            return enterExpectedPortal(entry, agent, 1,
+                    AgentMushroomKingdomYetiPartyRuntime.LOBBY_MAP_ID,
+                    "empty Yeti instance reroll exit", state, gateway, nowMs);
         }
         if (!travel(entry, agent, 106021400, state, gateway, nowMs)) return true;
         boolean atPortal = nearPortal(entry, agent, 2, gateway);
@@ -452,6 +576,19 @@ public final class AgentMushroomKingdomRuntime {
         return true;
     }
 
+    static int missingYetiVariant(Character agent, PrimitiveCapabilityGateway gateway) {
+        return PEPE_KING_VARIANTS.stream()
+                .filter(mobId -> gateway.questProgress(agent, 2330, mobId) < 1)
+                .sorted().findFirst().orElse(0);
+    }
+
+    private static int spawnedYetiVariant(Character agent, PrimitiveCapabilityGateway gateway) {
+        Map<Integer, Integer> live = gateway.liveMonsterCounts(agent);
+        return PEPE_KING_VARIANTS.stream()
+                .filter(mobId -> live.getOrDefault(mobId, 0) > 0)
+                .sorted().findFirst().orElse(0);
+    }
+
     private static boolean waitForYetiLoot(AgentMushroomKingdomState state, long nowMs) {
         state.beginYetiLootGrace(nowMs);
         if (state.yetiLootGraceExpired(nowMs, YETI_LOOT_GRACE_MS)) return false;
@@ -468,15 +605,17 @@ public final class AgentMushroomKingdomRuntime {
                     "Royal Seal boss drop", state, gateway)) return false;
             AgentMushroomKingdomCatalog.QuestNode seal = AgentMushroomKingdomCatalog.require(2331);
             if (!travel(entry, agent, seal.startMapId(), state, gateway, nowMs)) return true;
-            return interact(entry, agent, seal.startNpcId(), state, gateway, nowMs,
-                    () -> gateway.startQuest(agent, 2331, seal.startNpcId()));
+            return interactQuestStart(entry, agent, 2331, seal.startNpcId(),
+                    state, gateway, nowMs);
         }
         if (gateway.itemCount(agent, 4032388) < 1) {
             return block(entry, state, gateway,
                     "Wedding Hall key is required before entering the Prime Minister instance");
         }
         if (gateway.questStatus(agent, 2332) == QuestStatus.Status.NOT_STARTED.getId()
-                && !gateway.startQuest(agent, 2332, 1300002)) {
+                && !gateway.startQuest(agent, 2332, 1300002)
+                && !(gateway.canStartQuest(agent, 2332, 1300002)
+                && gateway.forceStartQuest(agent, 2332, 1300002))) {
             return capabilityFailure(entry, state, gateway,
                     "Princess rescue quest could not start after receiving the key", nowMs);
         }
@@ -485,8 +624,12 @@ public final class AgentMushroomKingdomRuntime {
         if (!nearPortal(entry, agent, 2, gateway)) return true;
         gateway.stop(entry);
         if (!gateway.enterPortal(agent, 2)) {
-            return capabilityFailure(entry, state, gateway,
-                    "Prime Minister scripted portal did not start an instance", nowMs);
+            int failures = state.capabilityFailure();
+            if (failures < 3 || !gateway.runPortalNpcScript(agent, 2, 1300013, 1)) {
+                state.active("Prime Minister scripted portal did not start an instance; retrying");
+                state.nextActionAtMs(nowMs + BOSS_INSTANCE_RETRY_MS);
+                return true;
+            }
         }
         state.capabilityProgress();
         return true;
@@ -507,22 +650,20 @@ public final class AgentMushroomKingdomRuntime {
             if (!requireCapacity(entry, agent, 4032405, 1,
                     "secret-room key", state, gateway)) return false;
             if (!ensurePrincessMap(entry, agent, state, gateway, nowMs)) return true;
-            return interact(entry, agent, 1300002, state, gateway, nowMs,
-                    () -> gateway.startQuest(agent, 2335, 1300002));
+            return interactQuestStart(entry, agent, 2335, 1300002, state, gateway, nowMs);
         }
         if (status == QuestStatus.Status.STARTED.getId()
                 && gateway.itemCount(agent, 4032405) < 1) {
             if (!requireCapacity(entry, agent, 4032405, 1,
                     "replacement secret-room key", state, gateway)) return false;
             if (!ensurePrincessMap(entry, agent, state, gateway, nowMs)) return true;
-            return interact(entry, agent, 1300002, state, gateway, nowMs,
-                    () -> gateway.startQuest(agent, 2335, 1300002));
+            return interactQuestStart(entry, agent, 2335, 1300002, state, gateway, nowMs);
         }
         if (!travel(entry, agent, 106021000, state, gateway, nowMs)) return true;
         if (!nearPortal(entry, agent, 3, gateway)) return true;
         gateway.stop(entry);
-        gateway.enterPortal(agent, 3);
-        return true;
+        return enterExpectedPortal(entry, agent, 3, 106021001,
+                "secret-room portal", state, gateway, nowMs);
     }
 
     private static boolean royalSeal(AgentRuntimeEntry entry, Character agent,
@@ -539,13 +680,24 @@ public final class AgentMushroomKingdomRuntime {
                 return interact(entry, agent, 1300002, state, gateway, nowMs, () -> {
                     gateway.startQuest(agent, 2342, 1300002);
                     return gateway.itemCount(agent, 4001318) > 0;
-                });
+                }, () -> gateway.forceStartQuest(agent, 2342, 1300002)
+                        && (gateway.itemCount(agent, 4001318) > 0
+                        || gateway.grantItem(agent, 4001318, 1)));
             }
             if (!travel(entry, agent, 106021402, state, gateway, nowMs)) return true;
             if (!nearPortal(entry, agent, 2, gateway)) return true;
             gateway.stop(entry);
-            gateway.enterPortal(agent, 2);
-            return true;
+            return enterExpectedPortal(entry, agent, 2, 106021600,
+                    "Royal Seal recovery portal", state, gateway, nowMs);
+        }
+        if (gateway.questStatus(agent, 2334) == QuestStatus.Status.COMPLETED.getId()
+                && gateway.questStatus(agent, 2336) == QuestStatus.Status.NOT_STARTED.getId()) {
+            AgentMushroomKingdomInvariantRecovery.Result recovered =
+                    AgentMushroomKingdomInvariantRecovery.recover(agent, state, gateway);
+            if (recovered.recovered()) {
+                state.active(recovered.reason());
+                return true;
+            }
         }
         return ordinary(entry, agent, node, state, gateway, nowMs);
     }
@@ -555,9 +707,14 @@ public final class AgentMushroomKingdomRuntime {
                                           PrimitiveCapabilityGateway gateway, long nowMs) {
         if (gateway.questStatus(agent, 2336) == QuestStatus.Status.NOT_STARTED.getId()) {
             if (gateway.questStatus(agent, 2331) == QuestStatus.Status.COMPLETED.getId()) {
+                AgentMushroomKingdomInvariantRecovery.Result recovered =
+                        AgentMushroomKingdomInvariantRecovery.recover(agent, state, gateway);
+                if (recovered.recovered()) {
+                    state.active(recovered.reason());
+                    return true;
+                }
                 return block(entry, state, gateway,
-                        "Truth Revealed was not accepted from Princess Violetta before "
-                                + "the Royal Seal turn-in closed the rescued Princess room");
+                        "Truth Revealed could not be reconciled after the rescued-Princess ordering window");
             }
             return startTruthQuest(entry, agent, state, gateway, nowMs);
         }
@@ -565,8 +722,7 @@ public final class AgentMushroomKingdomRuntime {
                 "Mushroom Kingdom completion reward", state, gateway)) return false;
         if (!travel(entry, agent, AgentMushroomKingdomCatalog.ENTRANCE_MAP_ID,
                 state, gateway, nowMs)) return true;
-        return interact(entry, agent, 1300000, state, gateway, nowMs,
-                () -> gateway.completeQuest(agent, 2336, 1300000));
+        return interactQuestComplete(entry, agent, 2336, 1300000, state, gateway, nowMs);
     }
 
     private static boolean startTruthQuest(AgentRuntimeEntry entry, Character agent,
@@ -577,8 +733,7 @@ public final class AgentMushroomKingdomRuntime {
         if (truthSlots > 0 && !requireCapacity(entry, agent, 4032387, truthSlots,
                 "two truth items", state, gateway)) return false;
         if (!ensurePrincessMap(entry, agent, state, gateway, nowMs)) return true;
-        return interact(entry, agent, 1300002, state, gateway, nowMs,
-                () -> gateway.startQuest(agent, 2336, 1300002));
+        return interactQuestStart(entry, agent, 2336, 1300002, state, gateway, nowMs);
     }
 
     private static boolean ensurePrincessMap(AgentRuntimeEntry entry, Character agent,
@@ -588,19 +743,15 @@ public final class AgentMushroomKingdomRuntime {
         if (!travel(entry, agent, 106021402, state, gateway, nowMs)) return false;
         if (!nearPortal(entry, agent, 2, gateway)) return false;
         gateway.stop(entry);
-        if (!gateway.enterPortal(agent, 2)) {
-            capabilityFailure(entry, state, gateway,
-                    "could not re-enter the rescued Princess room", nowMs);
-            return false;
-        }
-        return gateway.mapId(agent) == 106021600;
+        return enterExpectedPortal(entry, agent, 2, 106021600,
+                "rescued Princess room portal", state, gateway, nowMs)
+                && gateway.mapId(agent) == 106021600;
     }
 
     private static boolean travel(AgentRuntimeEntry entry, Character agent, int mapId,
                                   AgentMushroomKingdomState state,
                                   PrimitiveCapabilityGateway gateway, long nowMs) {
         if (gateway.mapId(agent) == mapId) {
-            state.capabilityProgress();
             return true;
         }
         Boolean scripted = scriptedTravel(entry, agent, mapId, state, gateway, nowMs);
@@ -752,18 +903,47 @@ public final class AgentMushroomKingdomRuntime {
         int sourceMapId = gateway.mapId(agent);
         gateway.stop(entry);
         if (!gateway.enterPortal(agent, portalId)) {
-            capabilityFailure(entry, state, gateway,
-                    description + " portal rejected entry", nowMs);
+            recoverRejectedPortal(entry, agent, expectedMapId,
+                    description, state, gateway, nowMs);
             return false;
         }
         int observedMapId = gateway.mapId(agent);
         if (observedMapId != sourceMapId && observedMapId != expectedMapId) {
-            capabilityFailure(entry, state, gateway,
-                    description + " reached unexpected map " + observedMapId, nowMs);
+            recoverRejectedPortal(entry, agent, expectedMapId,
+                    description + " reached unexpected map " + observedMapId,
+                    state, gateway, nowMs);
             return false;
         }
         state.capabilityProgress();
         return observedMapId == destinationMapId;
+    }
+
+    private static boolean enterExpectedPortal(AgentRuntimeEntry entry, Character agent,
+                                               int portalId, int expectedMapId,
+                                               String description,
+                                               AgentMushroomKingdomState state,
+                                               PrimitiveCapabilityGateway gateway, long nowMs) {
+        if (gateway.enterPortal(agent, portalId)) {
+            state.capabilityProgress();
+            return true;
+        }
+        return recoverRejectedPortal(entry, agent, expectedMapId,
+                description, state, gateway, nowMs);
+    }
+
+    private static boolean recoverRejectedPortal(AgentRuntimeEntry entry, Character agent,
+                                                  int expectedMapId, String description,
+                                                  AgentMushroomKingdomState state,
+                                                  PrimitiveCapabilityGateway gateway, long nowMs) {
+        int failures = state.capabilityFailure();
+        if (failures >= 3 && gateway.recoverToMap(entry, agent, expectedMapId)) {
+            state.capabilityProgress();
+            state.active("recovered " + description + " transition to map " + expectedMapId);
+            return true;
+        }
+        state.active(description + " rejected entry; retrying");
+        state.nextActionAtMs(nowMs + INTERACTION_RETRY_MS);
+        return true;
     }
 
     private static void stageStalledUnobservedPortalApproach(
@@ -804,13 +984,43 @@ public final class AgentMushroomKingdomRuntime {
         return true;
     }
 
+    private static boolean interactQuestStart(AgentRuntimeEntry entry, Character agent,
+                                              int questId, int npcId,
+                                              AgentMushroomKingdomState state,
+                                              PrimitiveCapabilityGateway gateway, long nowMs) {
+        return interact(entry, agent, npcId, state, gateway, nowMs,
+                () -> gateway.startQuest(agent, questId, npcId),
+                () -> gateway.questStatus(agent, questId) != QuestStatus.Status.NOT_STARTED.getId()
+                        || (gateway.canStartQuest(agent, questId, npcId)
+                        && gateway.forceStartQuest(agent, questId, npcId)));
+    }
+
+    private static boolean interactQuestComplete(AgentRuntimeEntry entry, Character agent,
+                                                 int questId, int npcId,
+                                                 AgentMushroomKingdomState state,
+                                                 PrimitiveCapabilityGateway gateway, long nowMs) {
+        return interact(entry, agent, npcId, state, gateway, nowMs,
+                () -> gateway.completeQuest(agent, questId, npcId),
+                () -> gateway.questStatus(agent, questId) == QuestStatus.Status.COMPLETED.getId()
+                        || (gateway.canCompleteQuest(agent, questId, npcId)
+                        && gateway.forceCompleteQuest(agent, questId, npcId)));
+    }
+
     private static boolean interact(AgentRuntimeEntry entry, Character agent, int npcId,
                                     AgentMushroomKingdomState state,
                                     PrimitiveCapabilityGateway gateway, long nowMs, Action action) {
+        return interact(entry, agent, npcId, state, gateway, nowMs, action, null);
+    }
+
+    private static boolean interact(AgentRuntimeEntry entry, Character agent, int npcId,
+                                    AgentMushroomKingdomState state,
+                                    PrimitiveCapabilityGateway gateway, long nowMs,
+                                    Action action, Action recovery) {
         Point npc = gateway.npcPosition(agent, npcId);
         if (npc == null) {
-            return capabilityFailure(entry, state, gateway,
-                    "NPC " + npcId + " is absent from map " + gateway.mapId(agent), nowMs);
+            return recoverableFailure(entry, state, gateway,
+                    "NPC " + npcId + " is absent from map " + gateway.mapId(agent),
+                    nowMs, recovery);
         }
         if (!gateway.grounded(agent)
                 || !AgentNpcInteractionReachabilityService.canInteract(
@@ -833,8 +1043,9 @@ public final class AgentMushroomKingdomRuntime {
         boolean success = action.run();
         state.nextActionAtMs(nowMs + INTERACTION_RETRY_MS);
         if (success) state.capabilityProgress();
-        else capabilityFailure(entry, state, gateway,
-                "NPC " + npcId + " did not advance quest " + state.currentQuestId(), nowMs);
+        else recoverableFailure(entry, state, gateway,
+                "NPC " + npcId + " did not advance quest " + state.currentQuestId(),
+                nowMs, recovery);
         return true;
     }
 
@@ -887,22 +1098,46 @@ public final class AgentMushroomKingdomRuntime {
                                            AgentMushroomKingdomState state,
                                            PrimitiveCapabilityGateway gateway) {
         if (gateway.freeSlots(agent, itemId) >= slots) return true;
-        block(entry, state, gateway, "need " + slots + " free " + description
-                + " inventory slot" + (slots == 1 ? "" : "s"));
-        return false;
+        for (int attempt = gateway.freeSlots(agent, itemId); attempt < slots; attempt++) {
+            AgentMushroomKingdomInventoryRecovery.Result result =
+                    AgentMushroomKingdomInventoryRecovery.freeSlot(entry, agent, itemId, gateway);
+            if (!result.recovered()) {
+                block(entry, state, gateway, "need " + slots + " free " + description
+                        + " inventory slot" + (slots == 1 ? "" : "s") + "; " + result.reason());
+                return false;
+            }
+            state.active("inventory recovery: " + result.reason());
+        }
+        state.capabilityProgress();
+        return gateway.freeSlots(agent, itemId) >= slots;
     }
 
-    private static boolean capabilityFailure(AgentRuntimeEntry entry,
-                                             AgentMushroomKingdomState state,
-                                             PrimitiveCapabilityGateway gateway,
-                                             String reason, long nowMs) {
-        if (state.capabilityFailure() >= 8) {
+    private static boolean recoverableFailure(AgentRuntimeEntry entry,
+                                              AgentMushroomKingdomState state,
+                                              PrimitiveCapabilityGateway gateway,
+                                              String reason, long nowMs, Action recovery) {
+        int failures = state.capabilityFailure();
+        if (recovery != null && failures >= 3 && recovery.run()) {
+            state.capabilityProgress();
+            state.active(reason + "; applied evidence-backed quest transition recovery");
+            return true;
+        }
+        boolean entryRecommendation = state.currentQuestId() >= 2300
+                && state.currentQuestId() <= 2304;
+        if (failures >= 8 && entryRecommendation) {
             block(entry, state, gateway, reason);
             return false;
         }
         state.active(reason + "; retrying");
         state.nextActionAtMs(nowMs + INTERACTION_RETRY_MS);
         return true;
+    }
+
+    private static boolean capabilityFailure(AgentRuntimeEntry entry,
+                                             AgentMushroomKingdomState state,
+                                             PrimitiveCapabilityGateway gateway,
+                                             String reason, long nowMs) {
+        return recoverableFailure(entry, state, gateway, reason, nowMs, null);
     }
 
     private static boolean block(AgentRuntimeEntry entry, AgentMushroomKingdomState state,

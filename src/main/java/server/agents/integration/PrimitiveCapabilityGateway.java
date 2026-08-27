@@ -166,6 +166,26 @@ public interface PrimitiveCapabilityGateway {
         return false;
     }
 
+    /** Evidence-backed recovery start that retains the quest's normal start actions. */
+    default boolean forceStartQuest(Character agent, int questId, int npcId) {
+        return false;
+    }
+
+    /** Supplies one proven deterministic quest reward during recovery. */
+    default boolean grantItem(Character agent, int itemId, int quantity) {
+        return false;
+    }
+
+    /** Repairs a scripted investigation marker after the authored portal was attempted. */
+    default boolean setQuestProgress(Character agent, int questId, int progressId, int value) {
+        return false;
+    }
+
+    /** Clears transient movement state and moves the Agent to a durable recovery checkpoint. */
+    default boolean recoverToMap(AgentRuntimeEntry entry, Character agent, int mapId) {
+        return false;
+    }
+
     default boolean beginFieldAbsence(Character agent, long safetyRestoreDelayMs) {
         return false;
     }

@@ -15,6 +15,7 @@ class AgentMushroomKingdomContentTest {
 
         assertTrue(script.contains("[3300005, 3300006, 3300007]"));
         assertTrue(script.contains("Math.floor(Math.random() * bossMobIds.length)"));
+        assertTrue(script.contains("bossMobIds.indexOf(difficulty) >= 0"));
         assertTrue(script.contains("LifeFactory.getMonster(bossMobId)"));
         assertTrue(script.contains("spawnMonsterOnGroundBelow"));
         assertTrue(script.contains("var maxPlayers = 3"));
@@ -24,7 +25,8 @@ class AgentMushroomKingdomContentTest {
         assertTrue(script.contains("expectedMode != mode"));
 
         String npc = Files.readString(Path.of("scripts/npc/1300013.js"));
-        assertTrue(npc.contains("pepe.startInstance(party, cm.getMap(), 1)"));
+        assertTrue(npc.contains("consumeAgentMushroomYetiPityVariant"));
+        assertTrue(npc.contains("pepe.startInstance(party, cm.getMap(), difficulty)"));
         assertTrue(npc.contains("identical Yeti quest progress"));
         assertTrue(npc.contains("var farmReady = cm.isQuestCompleted(2336)"));
     }

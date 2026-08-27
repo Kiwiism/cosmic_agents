@@ -8,12 +8,15 @@ var status;
 function startKingPepeInstance() {
     var pepe = cm.getEventManager("KingPepeAndYetis");
     pepe.setProperty("player", cm.getPlayer().getName());
+    var requestedVariant = cm.getPlayer().consumeAgentMushroomYetiPityVariant();
+    var difficulty = requestedVariant >= 3300005 && requestedVariant <= 3300007
+            ? requestedVariant : 1;
     var party = cm.getPlayer().getParty();
     if (party == null) {
-        return pepe.startInstance(cm.getPlayer());
+        return pepe.startInstance(-1, cm.getPlayer(), cm.getPlayer(), difficulty);
     }
     var eligible = pepe.getEligibleParty(party);
-    return eligible.size() > 0 && pepe.startInstance(party, cm.getMap(), 1);
+    return eligible.size() > 0 && pepe.startInstance(party, cm.getMap(), difficulty);
 }
 
 function start() {

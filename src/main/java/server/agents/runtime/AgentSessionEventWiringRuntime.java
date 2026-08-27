@@ -168,6 +168,9 @@ public final class AgentSessionEventWiringRuntime {
                 subscriptions.add(bus.subscribe(
                         server.agents.operations.events.AgentMobKilledEvent.TYPE,
                         new AgentFieldEventListener(entry)));
+                subscriptions.add(bus.subscribe(
+                        server.agents.operations.events.AgentMobKilledEvent.TYPE,
+                        new server.agents.progression.AgentMushroomKingdomEventListener(entry)));
                 subscriptions.add(bus.subscribe("*", new AgentDurableEventJournalListener()));
                 subscriptions.add(bus.subscribe("*",
                         new server.agents.economy.activity.ActivityCalibrationEventListener()));

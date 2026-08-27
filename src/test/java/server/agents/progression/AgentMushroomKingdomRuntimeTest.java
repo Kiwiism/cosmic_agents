@@ -432,6 +432,108 @@ class AgentMushroomKingdomRuntimeTest {
     }
 
     @Test
+    void missingCatalogNpcUsesQuestTransitionRecoveryAfterThreeAttempts() {
+        Harness harness = new Harness(110, List.of(3300005, 3300006, 3300007));
+        harness.completeBefore(2312);
+        AgentMushroomKingdomCatalog.QuestNode node = AgentMushroomKingdomCatalog.require(2312);
+        harness.mapId = node.startMapId();
+        when(harness.gateway.npcPosition(eq(harness.agent), eq(node.startNpcId()))).thenReturn(null);
+        when(harness.gateway.canStartQuest(harness.agent, 2312, node.startNpcId())).thenReturn(true);
+        when(harness.gateway.forceStartQuest(harness.agent, 2312, node.startNpcId()))
+                .thenAnswer(ignored -> {
+                    harness.startQuest(2312);
+                    return true;
+                });
+
+        harness.tick();
+        harness.tick();
+        harness.tick();
+
+        assertEquals(QuestStatus.Status.STARTED.getId(), harness.status(2312));
+        assertTrue(harness.state.reason().contains("evidence-backed"));
+    }
+
+    @Test
+    void failedInvestigationPortalRepairsItsMarkerAfterThreeAuthoredAttempts() {
+        Harness harness = new Harness(110, List.of(3300005, 3300006, 3300007));
+        harness.completeBefore(2314);
+        harness.statuses.put(2314, QuestStatus.Status.STARTED.getId());
+        harness.mapId = 106020300;
+        doAnswer(ignored -> false).when(harness.gateway).enterPortal(harness.agent, 1);
+        when(harness.gateway.setQuestProgress(harness.agent, 2314, 2314, 1))
+                .thenAnswer(ignored -> {
+                    harness.progress.put("2314:2314", 1);
+                    return true;
+                });
+
+        harness.tick();
+        harness.tick();
+        harness.tick();
+
+        assertEquals(1, harness.progress.get("2314:2314"));
+        assertEquals(0, harness.state.capabilityFailures());
+    }
+
+    @Test
+    void failedDeterministicPortalRelocatesToItsProvenDestination() {
+        Harness harness = new Harness(110, List.of(3300005, 3300006, 3300007));
+        harness.completeBefore(2335);
+        harness.statuses.put(2335, QuestStatus.Status.STARTED.getId());
+        harness.statuses.put(2331, QuestStatus.Status.COMPLETED.getId());
+        harness.statuses.put(2336, QuestStatus.Status.STARTED.getId());
+        harness.items.put(4032387, 1);
+        harness.items.put(4032386, 1);
+        harness.items.put(4032405, 1);
+        harness.mapId = 106021000;
+        doAnswer(ignored -> false).when(harness.gateway).enterPortal(harness.agent, 3);
+        when(harness.gateway.recoverToMap(harness.entry, harness.agent, 106021001))
+                .thenAnswer(ignored -> {
+                    harness.mapId = 106021001;
+                    return true;
+                });
+
+        harness.tick();
+        harness.tick();
+        harness.tick();
+
+        assertEquals(106021001, harness.mapId);
+        assertTrue(harness.state.reason().contains("recovered secret-room portal"));
+    }
+
+    @Test
+    void selectsTheFirstMissingYetiForPityRecovery() {
+        Harness harness = new Harness(110, List.of(3300005, 3300006, 3300007));
+        harness.progress.put("2330:3300005", 1);
+        harness.progress.put("2330:3300007", 1);
+
+        assertEquals(3300006,
+                AgentMushroomKingdomRuntime.missingYetiVariant(harness.agent, harness.gateway));
+    }
+
+    @Test
+    void prolongedObjectiveStallResetsToItsDurableCheckpoint() {
+        Harness harness = new Harness(110, List.of(3300005, 3300006, 3300007));
+        harness.completeBefore(2312);
+        harness.statuses.put(2312, QuestStatus.Status.STARTED.getId());
+        harness.items.put(4000499, 0);
+        AgentMushroomKingdomCatalog.QuestNode node = AgentMushroomKingdomCatalog.require(2312);
+        harness.tick();
+        when(harness.gateway.recoverToMap(harness.entry, harness.agent, node.startMapId()))
+                .thenAnswer(ignored -> {
+                    harness.mapId = node.startMapId();
+                    return true;
+                });
+
+        harness.nowMs += 20 * 60_000L;
+        harness.tick();
+
+        assertEquals(node.startMapId(), harness.mapId);
+        assertEquals(AgentMushroomKingdomRecoveryPolicy.CHECKPOINT_STAGE,
+                harness.state.recoveryStage());
+        assertTrue(harness.state.reason().contains("clean checkpoint"));
+    }
+
+    @Test
     void fullInventoryBlocksBeforeTheFinalYetiExitLosesTheKey() {
         Harness harness = new Harness(110, List.of(3300005, 3300006, 3300007));
         harness.completeBefore(2330);
@@ -465,7 +567,7 @@ class AgentMushroomKingdomRuntimeTest {
         stalled.nowMs += 45 * 60_000L + 1L;
         stalled.tick();
         assertEquals(AgentMushroomKingdomState.Phase.BLOCKED, stalled.state.phase());
-        assertTrue(stalled.state.reason().contains("45 minutes"));
+        assertTrue(stalled.state.reason().contains("no durable objective progress"));
     }
 
     private static final class Harness {

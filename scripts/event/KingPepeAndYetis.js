@@ -58,7 +58,8 @@ function setup(difficulty, lobbyId) {
     yetiMap.resetFully();
     yetiMap.allowSummonState(false);
 
-    var bossMobId = bossMobIds[Math.floor(Math.random() * bossMobIds.length)];
+    var bossMobId = bossMobIds.indexOf(difficulty) >= 0
+            ? difficulty : bossMobIds[Math.floor(Math.random() * bossMobIds.length)];
     eim.setProperty("bossMobId", bossMobId);
     const LifeFactory = Java.type('server.life.LifeFactory');
     const Point = Java.type('java.awt.Point');
