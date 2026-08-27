@@ -71,6 +71,10 @@ final class AgentLpqCoordinator {
             "server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.STAGE_TRAVERSAL_RECOVERY_GRACE_MS");
     private static final int INTERACTION_RADIUS = config.AgentTuning.intValue(
             "server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.INTERACTION_RADIUS_PX");
+    private static final int NPC_APPROACH_PX = config.AgentTuning.intValue(
+            "server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.NPC_APPROACH_PX");
+    private static final int GATHER_RADIUS_PX = config.AgentTuning.intValue(
+            "server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.GATHER_RADIUS_PX");
     private static final long BONUS_DRAIN_SETTLE_MS = config.AgentTuning.longValue(
             "server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.BONUS_DRAIN_SETTLE_MS");
     private static final long DARK_SIGHT_REFRESH_WINDOW_MS = config.AgentTuning.longValue(
@@ -145,6 +149,10 @@ final class AgentLpqCoordinator {
     static String liveEventFailure(AgentLpqSession session, Character leader) {
         if (session == null || !requiresLiveEvent(session.phase())) return "";
         EventInstanceManager event = session.eventInstance();
+        if (session.phase() == AgentLpqSession.Phase.CLAIMING_REWARD) {
+            return event == null || event.isEventDisposed()
+                    ? "The LPQ reward instance ended before all claims were resolved" : "";
+        }
         EventInstanceManager leaderEvent = LPQ.event(leader);
         if (event == null || leaderEvent == null) {
             return "The LPQ event instance ended or expired";
@@ -198,10 +206,16 @@ final class AgentLpqCoordinator {
     private static void synchronizePhase(AgentLpqSession session, Character leader, long nowMs) {
         int mapId = leader.getMapId();
         if (mapId == AgentLpqDefinition.CLEAR_MAP) {
+            session.freezeRewardEligibility();
             session.transition(AgentLpqSession.Phase.BONUS, nowMs);
             return;
         }
         if (mapId == AgentLpqDefinition.BONUS_MAP) {
+            boolean bonusMemberStillInside = session.members().stream()
+                    .map(member -> character(member.characterId()))
+                    .filter(java.util.Objects::nonNull)
+                    .anyMatch(member -> member.getMapId() == AgentLpqDefinition.CLEAR_MAP);
+            if (session.phase() == AgentLpqSession.Phase.BONUS && bonusMemberStillInside) return;
             session.transition(AgentLpqSession.Phase.CLAIMING_REWARD, nowMs);
             return;
         }
@@ -231,12 +245,19 @@ final class AgentLpqCoordinator {
                 allGathered = false;
                 continue;
             }
-            if (near(participant.getPosition(), npc, INTERACTION_RADIUS)) continue;
-            allGathered = false;
             AgentRuntimeEntry participantEntry = entry(member.characterId());
-            if (member.memberType() == AgentLpqMemberState.MemberType.AGENT
-                    && participantEntry != null) {
-                ACTIONS.navigate(participantEntry, npc, true);
+            if (member.memberType() == AgentLpqMemberState.MemberType.AGENT) {
+                if (participantEntry == null) {
+                    allGathered = false;
+                    continue;
+                }
+                Point target = lobbyApproachPoint(session, member, participant, npc);
+                if (!near(participant.getPosition(), target, NPC_APPROACH_PX)) {
+                    ACTIONS.navigate(participantEntry, target, true);
+                    allGathered = false;
+                }
+            } else if (!near(participant.getPosition(), npc, GATHER_RADIUS_PX)) {
+                allGathered = false;
             }
         }
         if (!allGathered) {
@@ -260,6 +281,15 @@ final class AgentLpqCoordinator {
         AgentRuntimeEntry entry = entry(leader.getId());
         if (entry == null) return;
         if (LPQ.runNpc(leader, AgentLpqDefinition.ENTRY_NPC, 0)) session.markProgress(nowMs);
+    }
+
+    private static Point lobbyApproachPoint(
+            AgentLpqSession session, AgentLpqMemberState member, Character character, Point npc) {
+        long mixed = session.seed() + member.characterId() * 131L;
+        int offset = 24 + Math.floorMod(mixed, Math.max(1, NPC_APPROACH_PX));
+        Point target = new Point(npc.x - offset, npc.y);
+        Point grounded = ACTIONS.groundPoint(character.getMap(), target);
+        return grounded == null ? target : grounded;
     }
 
     private static void enter(AgentLpqSession session, Character leader, long nowMs) {
@@ -2105,12 +2135,21 @@ final class AgentLpqCoordinator {
 
     private static void bonus(AgentLpqSession session, long nowMs) {
         List<Character> bonusAgents = new ArrayList<>();
+        boolean participantRemaining = false;
         Set<Integer> reactorClaims = activeReactorClaims(session, AgentLpqDefinition.CLEAR_MAP);
         for (AgentLpqMemberState member : session.members()) {
-            if (member.memberType() != AgentLpqMemberState.MemberType.AGENT) continue;
             Character agent = character(member.characterId());
+            if (agent == null || agent.getMapId() != AgentLpqDefinition.CLEAR_MAP) continue;
+            participantRemaining = true;
+            if (member.memberType() == AgentLpqMemberState.MemberType.HUMAN) {
+                if (nowMs >= member.nextActionAtMs()) {
+                    agent.dropMessage(6, "Talk to the Pink Balloon when you are ready to leave the LPQ bonus stage.");
+                    member.deferUntil(nowMs + 5_000L);
+                }
+                continue;
+            }
             AgentRuntimeEntry entry = entry(member.characterId());
-            if (agent == null || entry == null || agent.getMapId() != AgentLpqDefinition.CLEAR_MAP) continue;
+            if (entry == null) continue;
             bonusAgents.add(agent);
             if (session.bonusMode() == AgentLpqSession.BonusMode.SKIP) continue;
 
@@ -2122,10 +2161,12 @@ final class AgentLpqCoordinator {
             }
             if (member.reactorTargetObjectId() != 0) reactorClaims.add(member.reactorTargetObjectId());
         }
-        if (bonusAgents.isEmpty()) {
+        if (!participantRemaining) {
             session.transition(AgentLpqSession.Phase.CLAIMING_REWARD, nowMs);
             return;
         }
+
+        if (bonusAgents.isEmpty()) return;
 
         boolean drained = session.bonusMode() == AgentLpqSession.BonusMode.SKIP
                 || bonusMapDrained(bonusAgents.getFirst());
@@ -2137,27 +2178,40 @@ final class AgentLpqCoordinator {
     }
 
     private static void claim(AgentLpqSession session, long nowMs) {
-        List<Character> waitingAgents = session.members().stream()
-                .filter(member -> member.memberType() == AgentLpqMemberState.MemberType.AGENT)
-                .map(member -> character(member.characterId()))
-                .filter(java.util.Objects::nonNull)
-                .filter(agent -> agent.getMapId() == AgentLpqDefinition.BONUS_MAP)
-                .toList();
-        for (Character agent : waitingAgents) {
-            if (agent.getId() == session.eventLeaderId()) continue;
-            if (LPQ.runNpc(agent, AgentLpqDefinition.REWARD_NPC, 1)) session.markProgress(nowMs);
+        session.freezeRewardEligibility();
+        boolean nonLeaderRewardsResolved = session.members().stream()
+                .filter(member -> member.characterId() != session.eventLeaderId())
+                .allMatch(AgentLpqMemberState::rewardResolved);
+        for (AgentLpqMemberState member : session.members()) {
+            if (member.rewardResolved()) continue;
+            Character participant = character(member.characterId());
+            if (participant == null) {
+                session.forfeitReward(member.characterId());
+                continue;
+            }
+            if (participant.getMapId() == AgentLpqDefinition.CLEAR_MAP) {
+                if (member.memberType() == AgentLpqMemberState.MemberType.AGENT) {
+                    if (LPQ.runNpc(participant, AgentLpqDefinition.CLEAR_NPC, 1)) {
+                        session.markProgress(nowMs);
+                    }
+                } else if (nowMs >= member.nextActionAtMs()) {
+                    participant.dropMessage(6, "Talk to the Pink Balloon to proceed to your LPQ reward.");
+                    member.deferUntil(nowMs + 5_000L);
+                }
+                continue;
+            }
+            if (participant.getMapId() != AgentLpqDefinition.BONUS_MAP) continue;
+            if (member.memberType() == AgentLpqMemberState.MemberType.HUMAN) {
+                if (nowMs >= member.nextActionAtMs()) {
+                    participant.dropMessage(6, "Talk to Arturo to claim your LPQ reward.");
+                    member.deferUntil(nowMs + 5_000L);
+                }
+                continue;
+            }
+            if (member.characterId() == session.eventLeaderId() && !nonLeaderRewardsResolved) continue;
+            if (LPQ.runNpc(participant, AgentLpqDefinition.REWARD_NPC, 1)) session.markProgress(nowMs);
         }
-        boolean nonLeaderRemaining = waitingAgents.stream()
-                .filter(agent -> agent.getId() != session.eventLeaderId())
-                .anyMatch(agent -> agent.getMapId() == AgentLpqDefinition.BONUS_MAP);
-        if (nonLeaderRemaining) return;
-        Character leader = character(session.eventLeaderId());
-        if (leader != null && leader.getMapId() == AgentLpqDefinition.BONUS_MAP
-                && LPQ.runNpc(leader, AgentLpqDefinition.REWARD_NPC, 1)) {
-            session.markProgress(nowMs);
-        }
-        boolean remaining = leader != null && leader.getMapId() == AgentLpqDefinition.BONUS_MAP;
-        if (!remaining) session.transition(AgentLpqSession.Phase.EXITING, nowMs);
+        if (session.allRewardsResolved()) session.transition(AgentLpqSession.Phase.EXITING, nowMs);
     }
 
     static Set<Integer> bonusDropIds(Collection<MapItem> drops) {

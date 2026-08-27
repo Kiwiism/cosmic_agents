@@ -58,7 +58,7 @@ class AgentKpqIsolationTest {
 
         assertTrue(npc.contains("cm.getParty().getMembers().size() - 1"));
         assertTrue(npc.contains("!isLivePartyMember(eim, players.get(i))"));
-        assertTrue(npc.contains("status == 0 && !isLivePartyMember(eim, cm.getPlayer())"));
+        assertTrue(npc.contains("status == 0 && !managedParticipant && !isLivePartyMember(eim, cm.getPlayer())"));
         assertTrue(npc.contains("cm.gainItem(4001008, -heldPasses)"));
         assertTrue(event.contains("var itemSet = [4001007, 4001008]"));
     }
@@ -70,6 +70,8 @@ class AgentKpqIsolationTest {
         assertTrue(npc.contains("function canGmObserverFollowThrough"));
         assertTrue(npc.contains("player.gmLevel() >= 6"));
         assertTrue(npc.contains("!isLivePartyMember(eim, player)"));
+        assertTrue(npc.contains("!AgentKpqSessionRegistry.isRegisteredParticipant(player)"));
+        assertTrue(npc.contains("AgentKpqSessionRegistry.beginRewardClaim(player)"));
         assertTrue(npc.contains("player.getMapId() == 103000804"));
         assertTrue(npc.contains("eim.getProperty(\"5stageclear\") != null"));
         assertTrue(npc.contains("if (canGmObserverFollowThrough(eim, cm.getPlayer())) {\n"

@@ -55,6 +55,37 @@ class AgentHpqSessionTest {
     }
 
     @Test
+    void eachNewInvasionWaveIsDetectedOnlyOnItsRisingEdge() {
+        AgentHpqSession session = session();
+
+        assertFalse(session.observeDefenseHostiles(false));
+        assertTrue(session.observeDefenseHostiles(true));
+        assertFalse(session.observeDefenseHostiles(true));
+        assertFalse(session.observeDefenseHostiles(false));
+        assertTrue(session.observeDefenseHostiles(true));
+        assertEquals(2, session.defenseWaveOrdinal());
+    }
+
+    @Test
+    void rewardClaimsAreFrozenAtomicAndResolvedPerRegisteredMember() {
+        AgentHpqSession session = session();
+
+        assertFalse(session.beginRewardClaim(101));
+        session.freezeRewardEligibility();
+        assertTrue(session.beginRewardClaim(101));
+        assertFalse(session.beginRewardClaim(101));
+        session.cancelRewardClaim(101);
+        assertTrue(session.beginRewardClaim(101));
+        assertTrue(session.completeRewardClaim(101));
+        assertFalse(session.beginRewardClaim(999));
+        session.forfeitReward(102);
+        session.forfeitReward(103);
+
+        assertTrue(session.member(101).rewardClaimed());
+        assertTrue(session.allRewardsResolved());
+    }
+
+    @Test
     void watchdogDisposesAnOrphanedHpqEvent() {
         EventInstanceManager event = mock(EventInstanceManager.class);
         when(event.getPlayers()).thenReturn(List.of());

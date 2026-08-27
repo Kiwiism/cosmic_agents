@@ -75,6 +75,12 @@ function isLivePartyMember(eim, player) {
 }
 
 function canGmObserverFollowThrough(eim, player) {
+    if (AgentKpqSessionRegistry.isManagedEvent(player)) {
+        return player != null && player.gmLevel() >= 6
+            && !AgentKpqSessionRegistry.isRegisteredParticipant(player)
+            && player.getMapId() == 103000804
+            && eim.getProperty("5stageclear") != null;
+    }
     return eim != null && player != null && player.gmLevel() >= 6
         && !isLivePartyMember(eim, player)
         && player.getMapId() == 103000804
@@ -142,7 +148,9 @@ function action(mode, type, selection) {
             status--;
         }
 
-        if (status == 0 && !isLivePartyMember(eim, cm.getPlayer())) {
+        var managedParticipant = AgentKpqSessionRegistry.isManagedEvent(cm.getPlayer())
+            && AgentKpqSessionRegistry.isRegisteredParticipant(cm.getPlayer());
+        if (status == 0 && !managedParticipant && !isLivePartyMember(eim, cm.getPlayer())) {
             if (canGmObserverFollowThrough(eim, cm.getPlayer())) {
                 cm.sendYesNo("Stage 5 is clear. Would you like to follow the party into the final reward area as an observer? You will not receive a party quest reward.");
             } else {
@@ -307,10 +315,18 @@ function action(mode, type, selection) {
         } else if (status == 1) {
             if (canGmObserverFollowThrough(eim, cm.getPlayer())) {
                 cm.warp(103000805, "st00");
-            } else if (!eim.giveEventReward(cm.getPlayer())) {
-                cm.sendNext("Please make room on your inventory first!");
             } else {
-                cm.warp(103000805, "st00");
+                var player = cm.getPlayer();
+                var managed = AgentKpqSessionRegistry.isManagedEvent(player);
+                if (managed && !AgentKpqSessionRegistry.beginRewardClaim(player)) {
+                    cm.sendNext("This KPQ reward is only available once to registered members of this run.");
+                } else if (!eim.giveEventReward(player)) {
+                    if (managed) AgentKpqSessionRegistry.cancelRewardClaim(player);
+                    cm.sendNext("Please make room on your inventory first!");
+                } else {
+                    if (managed) AgentKpqSessionRegistry.completeRewardClaim(player);
+                    cm.warp(103000805, "st00");
+                }
             }
 
             cm.dispose();

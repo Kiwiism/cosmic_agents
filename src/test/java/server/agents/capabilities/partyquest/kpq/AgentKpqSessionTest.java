@@ -235,4 +235,27 @@ class AgentKpqSessionTest {
         member.clearBlocker();
         assertFalse(member.blockerRecoveryAttempted());
     }
+
+    @Test
+    void rewardClaimsAreFrozenAtomicAndResolvedPerRegisteredMember() {
+        AgentKpqSession session = new AgentKpqSession(
+                AgentKpqSession.Mode.TEST_OBSERVATION, 7L, 100, 3, 1_000L);
+        session.addMember(20, AgentKpqMemberState.MemberType.AGENT);
+        session.addMember(21, AgentKpqMemberState.MemberType.AGENT);
+        session.addMember(100, AgentKpqMemberState.MemberType.HUMAN);
+
+        assertFalse(session.beginRewardClaim(100));
+        session.freezeRewardEligibility();
+        assertTrue(session.beginRewardClaim(100));
+        assertFalse(session.beginRewardClaim(100));
+        session.cancelRewardClaim(100);
+        assertTrue(session.beginRewardClaim(100));
+        assertTrue(session.completeRewardClaim(100));
+        assertFalse(session.beginRewardClaim(999));
+        session.forfeitReward(20);
+        session.forfeitReward(21);
+
+        assertTrue(session.member(100).rewardClaimed());
+        assertTrue(session.allRewardsResolved());
+    }
 }

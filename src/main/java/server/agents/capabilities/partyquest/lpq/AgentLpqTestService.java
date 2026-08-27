@@ -113,9 +113,9 @@ public final class AgentLpqTestService {
                     SPAWN_STAGGER_MS * index);
         }
         return switch (flow) {
-            case AGENTS_ONLY -> List.of("Preparing six-Agent LPQ. Use !lpqtest status, then !lpqtest spectate after entry.");
-            case HUMAN_LEADER -> List.of("Preparing five LPQ Agents. Create a party, invite all five, then enter through Red Sign normally.");
-            case AGENT_LEADER -> List.of("Preparing an Agent-led LPQ. Accept its party invitation; use !lpqtest invite to resend.");
+            case AGENTS_ONLY -> List.of("Six LPQ Agents are preparing off-screen, then will form up at the Red Sign and announce the five-second start. Use !lpqtest spectate after entry.");
+            case HUMAN_LEADER -> List.of("Five LPQ Agents are preparing off-screen. Create a party, invite all five, gather at the Red Sign, then talk to it after the five-second announcement.");
+            case AGENT_LEADER -> List.of("Five LPQ Agents are preparing off-screen. Chat 'looking for LPQ' or 'invite me LPQ', accept the invitation, and gather for the five-second start. !lpqtest invite remains a manual resend.");
         };
     }
 
@@ -187,7 +187,6 @@ public final class AgentLpqTestService {
                                 : AgentPartyQuestLobbySession.MemberRole.JOINED_MEMBER, now);
                 if (run.lobby.coordinatorAgentId() == 0) run.lobby.setCoordinatorAgentId(launched.getId());
                 log.info("LPQ fixture launched: name={} career={} level={}", name, prepared.career(), prepared.level());
-                maybeInviteOperator(run);
             } catch (Exception failure) {
                 if (launched != null) disconnect(launched.getId());
                 failRun(run, "Could not launch " + name + ": " + failure.getMessage());
@@ -212,7 +211,6 @@ public final class AgentLpqTestService {
     private static void monitor(Run run) {
         if (RUNS.get(run.operator.getId()) != run) return;
         try {
-            maybeInviteOperator(run);
             if (run.session == null) attemptHandoff(run);
             if (run.spectating) updateSpectator(run);
             if (run.session != null && run.session.terminal()) {
@@ -252,8 +250,8 @@ public final class AgentLpqTestService {
             run.operator.dropMessage(6, run.flow == Flow.AGENTS_ONLY
                     ? "Six-Agent LPQ assembled. Use !lpqtest spectate after they enter."
                     : run.flow == Flow.HUMAN_LEADER
-                    ? "Mixed LPQ assembled. Enter through Red Sign and perform leader submissions."
-                    : "Agent-led mixed LPQ assembled. Follow the Agent leader's instructions.");
+                    ? "Mixed LPQ assembled. Gather at the Red Sign; after the five-second announcement, talk to it to enter."
+                    : "Agent-led mixed LPQ assembled. Gather at the Red Sign for the five-second start.");
         }
     }
 
@@ -614,7 +612,8 @@ public final class AgentLpqTestService {
     private static List<String> help() {
         return List.of("!lpqtest start [seed] (six Agents; spectator remains outside party)",
                 "!lpqtest humanleader [seed] (you lead five Agents)",
-                "!lpqtest agentleader [seed] | invite (Agent leads you and four Agents)",
+                "!lpqtest agentleader [seed] (chat a join request; Agent leads you and four other Agents)",
+                "!lpqtest invite (manual Agent-leader invitation resend)",
                 "!lpqtest spectate | follow <leader|AgentName> | return",
                 "!warplpq <1-6|leader|scout [1-2]|teleport|darksight|magic|physical|top|bottom|platform|boss|room 501-506>",
                 "!lpqtest stage8chat <on|off> (IGN->box chat; default off)",

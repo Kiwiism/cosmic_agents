@@ -45,7 +45,11 @@ class AgentLpqEventGuardTest {
         assertEquals("", AgentLpqCoordinator.liveEventFailure(fixture.session, fixture.leader));
 
         when(fixture.leader.getEventInstance()).thenReturn(null);
-        assertEquals("The LPQ event instance ended or expired",
+        assertEquals("",
+                AgentLpqCoordinator.liveEventFailure(fixture.session, fixture.leader));
+
+        when(fixture.event.isEventDisposed()).thenReturn(true);
+        assertEquals("The LPQ reward instance ended before all claims were resolved",
                 AgentLpqCoordinator.liveEventFailure(fixture.session, fixture.leader));
     }
 

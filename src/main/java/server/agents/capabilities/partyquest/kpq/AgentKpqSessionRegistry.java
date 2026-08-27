@@ -1,5 +1,7 @@
 package server.agents.capabilities.partyquest.kpq;
 
+import client.Character;
+
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -100,5 +102,47 @@ public final class AgentKpqSessionRegistry {
             return;
         }
         session.recordHumanPuzzleValidation(stage, accepted);
+    }
+
+    public static boolean isManagedEvent(Character character) {
+        return managedSession(character) != null;
+    }
+
+    public static boolean isRegisteredParticipant(Character character) {
+        AgentKpqSession session = managedSession(character);
+        return character != null && session != null && session.member(character.getId()) != null;
+    }
+
+    public static boolean beginRewardClaim(Character character) {
+        AgentKpqSession session = managedSession(character);
+        if (character != null && session != null && !session.rewardEligibilityFrozen()
+                && character.getEventInstance().isEventCleared()) {
+            session.freezeRewardEligibility();
+        }
+        return character != null && session != null && session.beginRewardClaim(character.getId());
+    }
+
+    public static boolean completeRewardClaim(Character character) {
+        AgentKpqSession session = managedSession(character);
+        return character != null && session != null && session.completeRewardClaim(character.getId());
+    }
+
+    public static void cancelRewardClaim(Character character) {
+        AgentKpqSession session = managedSession(character);
+        if (character != null && session != null) session.cancelRewardClaim(character.getId());
+    }
+
+    public static void forfeitUnclaimedReward(Character character) {
+        AgentKpqSession session = character == null ? null : forMember(character.getId());
+        if (session != null && session.eventInstance() == character.getEventInstance()) {
+            session.forfeitReward(character.getId());
+        }
+    }
+
+    private static AgentKpqSession managedSession(Character character) {
+        if (character == null || character.getEventInstance() == null) return null;
+        return sessions.values().stream()
+                .filter(session -> session.eventInstance() == character.getEventInstance())
+                .findFirst().orElse(null);
     }
 }

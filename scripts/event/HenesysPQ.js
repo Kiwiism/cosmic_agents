@@ -37,6 +37,7 @@ var maxMapId = 910010400;
 var eventTime = 10;     // 10 minutes
 
 const AgentHpqLobbyPolicy = Java.type('server.agents.capabilities.partyquest.hpq.AgentHpqLobbyPolicy');
+const AgentHpqSessionRegistry = Java.type('server.agents.capabilities.partyquest.hpq.AgentHpqSessionRegistry');
 const maxLobbies = AgentHpqLobbyPolicy.maxLobbies();
 
 function init() {
@@ -159,7 +160,9 @@ function bunnyDefeated(eim) {
     end(eim);
 }
 
-function playerUnregistered(eim, player) {}
+function playerUnregistered(eim, player) {
+    AgentHpqSessionRegistry.forfeitUnclaimedReward(player);
+}
 
 function playerExit(eim, player) {
     eim.unregisterPlayer(player);

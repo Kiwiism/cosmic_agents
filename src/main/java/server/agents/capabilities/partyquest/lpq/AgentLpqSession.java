@@ -70,6 +70,7 @@ public final class AgentLpqSession {
     private long stage7CombatClearedAtMs;
     private int stage7LootSweepIndex;
     private boolean stage7ForceLootAttempted;
+    private boolean rewardEligibilityFrozen;
 
     public AgentLpqSession(Mode mode, long seed, int operatorId, int requestedPartySize, long nowMs) {
         if (mode == null || operatorId <= 0
@@ -411,4 +412,26 @@ public final class AgentLpqSession {
     public synchronized AgentLpqMemberState member(int id) { return members.get(id); }
     public synchronized Collection<AgentLpqMemberState> members() { return List.copyOf(members.values()); }
     public synchronized int memberCount() { return members.size(); }
+    public synchronized void freezeRewardEligibility() { rewardEligibilityFrozen = true; }
+    public synchronized boolean rewardEligibilityFrozen() { return rewardEligibilityFrozen; }
+    public synchronized boolean beginRewardClaim(int characterId) {
+        AgentLpqMemberState member = members.get(characterId);
+        return rewardEligibilityFrozen && member != null && member.beginRewardClaim();
+    }
+    public synchronized boolean completeRewardClaim(int characterId) {
+        AgentLpqMemberState member = members.get(characterId);
+        return member != null && member.completeRewardClaim();
+    }
+    public synchronized void cancelRewardClaim(int characterId) {
+        AgentLpqMemberState member = members.get(characterId);
+        if (member != null) member.cancelRewardClaim();
+    }
+    public synchronized void forfeitReward(int characterId) {
+        AgentLpqMemberState member = members.get(characterId);
+        if (member != null) member.forfeitReward();
+    }
+    public synchronized boolean allRewardsResolved() {
+        return rewardEligibilityFrozen && members.values().stream()
+                .allMatch(AgentLpqMemberState::rewardResolved);
+    }
 }

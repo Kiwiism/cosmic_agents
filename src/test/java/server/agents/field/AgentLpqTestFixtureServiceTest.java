@@ -1,6 +1,8 @@
 package server.agents.field;
 
+import client.Character;
 import client.Job;
+import client.SkinColor;
 import constants.skills.ILWizard;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +14,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 class AgentLpqTestFixtureServiceTest {
     private static final Set<Integer> EXCLUDED_FAMILIES = Set.of(101, 102, 114);
@@ -68,7 +72,7 @@ class AgentLpqTestFixtureServiceTest {
     }
 
     @Test
-    void appearanceCatalogUsesAllRegularAndCashStyleRangesDeterministically() {
+    void appearanceCatalogUsesAllStylesGendersAndRequestedSkinTonesDeterministically() {
         assertTrue(AgentLpqAppearanceCatalog.faces(0).size() > 200);
         assertTrue(AgentLpqAppearanceCatalog.faces(1).size() > 200);
         assertTrue(AgentLpqAppearanceCatalog.hair(0).size() > 700);
@@ -76,13 +80,34 @@ class AgentLpqTestFixtureServiceTest {
         assertTrue(AgentLpqAppearanceCatalog.hair(0).stream().anyMatch(id -> id / 1_000 == 33));
         assertTrue(AgentLpqAppearanceCatalog.hair(1).stream().anyMatch(id -> id / 1_000 == 34));
 
-        for (int gender = 0; gender <= 1; gender++) {
+        Set<Integer> genders = new HashSet<>();
+        Set<SkinColor> skins = new HashSet<>();
+        for (long seed = 0; seed < 500; seed++) {
             AgentLpqAppearanceCatalog.Appearance first =
-                    AgentLpqAppearanceCatalog.select(gender, 91_337L);
-            assertEquals(first, AgentLpqAppearanceCatalog.select(gender, 91_337L));
-            assertTrue(AgentLpqAppearanceCatalog.faces(gender).contains(first.faceId()));
-            assertTrue(AgentLpqAppearanceCatalog.hair(gender).contains(first.hairId()));
+                    AgentLpqAppearanceCatalog.select(seed);
+            assertEquals(first, AgentLpqAppearanceCatalog.select(seed));
+            assertTrue(first.gender() == 0 || first.gender() == 1);
+            assertTrue(AgentLpqAppearanceCatalog.faces(first.gender()).contains(first.faceId()));
+            assertTrue(AgentLpqAppearanceCatalog.hair(first.gender()).contains(first.hairId()));
+            assertTrue(AgentLpqAppearanceCatalog.SKIN_COLORS.contains(first.skinColor()));
+            genders.add(first.gender());
+            skins.add(first.skinColor());
         }
+        assertEquals(Set.of(0, 1), genders);
+        assertEquals(Set.of(
+                SkinColor.LIGHT, SkinColor.TANNED, SkinColor.DARK, SkinColor.PALE), skins);
+    }
+
+    @Test
+    void appliesTheSelectedGenderSkinHairAndFaceTogether() {
+        Character agent = mock(Character.class);
+        AgentLpqAppearanceCatalog.Appearance appearance =
+                AgentLpqTestFixtureService.applyAppearance(agent, 91_337L);
+
+        verify(agent).setGender(appearance.gender());
+        verify(agent).setSkinColor(appearance.skinColor());
+        verify(agent).setHair(appearance.hairId());
+        verify(agent).setFace(appearance.faceId());
     }
 
     private static void assertScrolls(String buildId, int weaponScroll, int capeScroll) {

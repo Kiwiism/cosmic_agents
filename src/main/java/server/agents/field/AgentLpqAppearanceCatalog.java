@@ -1,5 +1,6 @@
 package server.agents.field;
 
+import client.SkinColor;
 import provider.wz.WZFiles;
 
 import java.io.IOException;
@@ -13,6 +14,8 @@ import java.util.regex.Pattern;
 /** LPQ fixture appearances drawn from every gender-compatible WZ face and hair entry. */
 final class AgentLpqAppearanceCatalog {
     private static final Pattern WZ_ENTRY = Pattern.compile("^(\\d+)\\.img\\.xml$");
+    static final List<SkinColor> SKIN_COLORS =
+            List.of(SkinColor.LIGHT, SkinColor.TANNED, SkinColor.DARK, SkinColor.PALE);
     private static final List<Integer> MALE_FACES = load("Face", 20);
     private static final List<Integer> FEMALE_FACES = load("Face", 21);
     private static final List<Integer> MALE_HAIR = load("Hair", 30, 33);
@@ -20,11 +23,14 @@ final class AgentLpqAppearanceCatalog {
 
     private AgentLpqAppearanceCatalog() { }
 
-    static Appearance select(int gender, long seed) {
+    static Appearance select(long seed) {
+        SplittableRandom random = new SplittableRandom(seed);
+        int gender = random.nextInt(2);
+        SkinColor skinColor = SKIN_COLORS.get(random.nextInt(SKIN_COLORS.size()));
         List<Integer> faces = faces(gender);
         List<Integer> hair = hair(gender);
-        SplittableRandom random = new SplittableRandom(seed);
-        return new Appearance(faces.get(random.nextInt(faces.size())),
+        return new Appearance(gender, skinColor,
+                faces.get(random.nextInt(faces.size())),
                 hair.get(random.nextInt(hair.size())));
     }
 
@@ -68,5 +74,5 @@ final class AgentLpqAppearanceCatalog {
         return false;
     }
 
-    record Appearance(int faceId, int hairId) { }
+    record Appearance(int gender, SkinColor skinColor, int faceId, int hairId) { }
 }

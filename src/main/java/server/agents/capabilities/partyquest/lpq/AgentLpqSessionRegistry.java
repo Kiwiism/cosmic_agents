@@ -70,4 +70,46 @@ public final class AgentLpqSessionRegistry {
             default -> false;
         };
     }
+
+    public static boolean isManagedEvent(Character character) {
+        return managedSession(character) != null;
+    }
+
+    public static boolean isRegisteredParticipant(Character character) {
+        AgentLpqSession session = managedSession(character);
+        return character != null && session != null && session.member(character.getId()) != null;
+    }
+
+    public static boolean beginRewardClaim(Character character) {
+        AgentLpqSession session = managedSession(character);
+        if (character != null && session != null && !session.rewardEligibilityFrozen()
+                && character.getEventInstance().isEventCleared()) {
+            session.freezeRewardEligibility();
+        }
+        return character != null && session != null && session.beginRewardClaim(character.getId());
+    }
+
+    public static boolean completeRewardClaim(Character character) {
+        AgentLpqSession session = managedSession(character);
+        return character != null && session != null && session.completeRewardClaim(character.getId());
+    }
+
+    public static void cancelRewardClaim(Character character) {
+        AgentLpqSession session = managedSession(character);
+        if (character != null && session != null) session.cancelRewardClaim(character.getId());
+    }
+
+    public static void forfeitUnclaimedReward(Character character) {
+        AgentLpqSession session = character == null ? null : forMember(character.getId());
+        if (session != null && session.eventInstance() == character.getEventInstance()) {
+            session.forfeitReward(character.getId());
+        }
+    }
+
+    private static AgentLpqSession managedSession(Character character) {
+        if (character == null || character.getEventInstance() == null) return null;
+        return SESSIONS.values().stream()
+                .filter(session -> session.eventInstance() == character.getEventInstance())
+                .findFirst().orElse(null);
+    }
 }

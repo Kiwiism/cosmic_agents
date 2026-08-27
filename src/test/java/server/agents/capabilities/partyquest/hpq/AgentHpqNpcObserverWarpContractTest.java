@@ -32,7 +32,9 @@ class AgentHpqNpcObserverWarpContractTest {
         assertTrue(growlie.contains("cm.warp(910010100, \"st00\")"));
         assertTrue(tommy.contains("eim.setProperty(\"hpqBonusEntered\", \"true\")"));
         assertTrue(tommy.contains("cm.warp(910010200, \"st00\")"));
-        assertTrue(tory.contains("isGmObserver(cm.getEventInstance(), cm.getPlayer())"));
+        assertTrue(tory.contains("isRewardObserver(cm.getEventInstance(), cm.getPlayer())"));
+        assertTrue(tory.contains("AgentHpqSessionRegistry.isRegisteredParticipant(player)"));
+        assertTrue(tory.contains("AgentHpqSessionRegistry.beginRewardClaim(player)"));
         assertTrue(tory.contains("cm.warp(100000200)"));
     }
 }

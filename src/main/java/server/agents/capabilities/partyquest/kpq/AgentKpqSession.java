@@ -75,6 +75,7 @@ public final class AgentKpqSession {
     private long stage5CleanupDeadlineMs;
     private long stage5BossCombatStartedAtMs;
     private boolean stage5BossCombatReported;
+    private boolean rewardEligibilityFrozen;
 
     public AgentKpqSession(Mode mode, long seed, int operatorId, int requestedPartySize, long nowMs) {
         if (requestedPartySize < 3 || requestedPartySize > 4) {
@@ -362,6 +363,28 @@ public final class AgentKpqSession {
     public synchronized EventInstanceManager eventInstance() { return eventInstance; }
     public synchronized void bindEventInstance(EventInstanceManager event) { eventInstance = event; }
     public synchronized void clearEventInstance() { eventInstance = null; }
+    public synchronized void freezeRewardEligibility() { rewardEligibilityFrozen = true; }
+    public synchronized boolean rewardEligibilityFrozen() { return rewardEligibilityFrozen; }
+    public synchronized boolean beginRewardClaim(int characterId) {
+        AgentKpqMemberState member = members.get(characterId);
+        return rewardEligibilityFrozen && member != null && member.beginRewardClaim();
+    }
+    public synchronized boolean completeRewardClaim(int characterId) {
+        AgentKpqMemberState member = members.get(characterId);
+        return member != null && member.completeRewardClaim();
+    }
+    public synchronized void cancelRewardClaim(int characterId) {
+        AgentKpqMemberState member = members.get(characterId);
+        if (member != null) member.cancelRewardClaim();
+    }
+    public synchronized void forfeitReward(int characterId) {
+        AgentKpqMemberState member = members.get(characterId);
+        if (member != null) member.forfeitReward();
+    }
+    public synchronized boolean allRewardsResolved() {
+        return rewardEligibilityFrozen && members.values().stream()
+                .allMatch(AgentKpqMemberState::rewardResolved);
+    }
     public synchronized boolean observeStage5Progress(int mobCount, int passCount) {
         boolean changed = stage5LastMobCount < 0 || mobCount < stage5LastMobCount
                 || passCount > stage5LastPassCount;

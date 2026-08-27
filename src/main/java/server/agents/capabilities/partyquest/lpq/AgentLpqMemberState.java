@@ -10,6 +10,7 @@ public final class AgentLpqMemberState {
         TELEPORT_RUNNER, DARK_SIGHT_RUNNER, RANGED_TRIGGER,
         PLATFORM_HOLDER, PLATFORM_MOVER, BOSS_ATTACKER
     }
+    public enum RewardState { PENDING, CLAIMING, CLAIMED, FORFEITED }
 
     private final int characterId;
     private final MemberType memberType;
@@ -46,6 +47,7 @@ public final class AgentLpqMemberState {
     private int passReportStage;
     private int passReportMapId;
     private int passReportCount;
+    private RewardState rewardState = RewardState.PENDING;
 
     public AgentLpqMemberState(int characterId, MemberType memberType) {
         if (characterId <= 0 || memberType == null) {
@@ -61,6 +63,27 @@ public final class AgentLpqMemberState {
     public int assignedMapId() { return assignedMapId; }
     public int assignedPlatform() { return assignedPlatform; }
     public long nextActionAtMs() { return nextActionAtMs; }
+    public RewardState rewardState() { return rewardState; }
+    public boolean rewardClaimed() { return rewardState == RewardState.CLAIMED; }
+    public boolean rewardResolved() {
+        return rewardState == RewardState.CLAIMED || rewardState == RewardState.FORFEITED;
+    }
+    boolean beginRewardClaim() {
+        if (rewardState != RewardState.PENDING) return false;
+        rewardState = RewardState.CLAIMING;
+        return true;
+    }
+    boolean completeRewardClaim() {
+        if (rewardState != RewardState.CLAIMING) return false;
+        rewardState = RewardState.CLAIMED;
+        return true;
+    }
+    void cancelRewardClaim() {
+        if (rewardState == RewardState.CLAIMING) rewardState = RewardState.PENDING;
+    }
+    void forfeitReward() {
+        if (rewardState == RewardState.PENDING) rewardState = RewardState.FORFEITED;
+    }
     public int reactorTargetMapId() { return reactorTargetMapId; }
     public int reactorTargetObjectId() { return reactorTargetObjectId; }
     public long reactorTargetCommittedAtMs() { return reactorTargetCommittedAtMs; }

@@ -32,12 +32,15 @@ public final class AgentHpqSession {
     private long lastProgressAtMs;
     private long phaseEnteredAtMs;
     private long readyAtMs;
+    private boolean defenseHostilesPresent;
+    private int defenseWaveOrdinal;
     private boolean paused;
     private boolean terminating;
     private String failure = "";
     private EventInstanceManager eventInstance;
     private PartyOwnership partyOwnership = PartyOwnership.EXTERNAL;
     private BonusMode bonusMode = BonusMode.SKIP;
+    private boolean rewardEligibilityFrozen;
 
     public AgentHpqSession(Mode mode, long seed, int operatorId, int requestedPartySize, long nowMs) {
         if (mode == null || operatorId <= 0 || requestedPartySize < 3 || requestedPartySize > 6
@@ -135,6 +138,13 @@ public final class AgentHpqSession {
     public synchronized void setReadyAtMs(long readyAtMs) {
         this.readyAtMs = Math.max(0L, readyAtMs);
     }
+    public synchronized boolean observeDefenseHostiles(boolean present) {
+        boolean newWave = present && !defenseHostilesPresent;
+        defenseHostilesPresent = present;
+        if (newWave) defenseWaveOrdinal++;
+        return newWave;
+    }
+    public synchronized int defenseWaveOrdinal() { return defenseWaveOrdinal; }
     public synchronized boolean paused() { return paused; }
     public synchronized void setPaused(boolean paused) { this.paused = paused; }
     public synchronized String failure() { return failure; }
@@ -156,4 +166,27 @@ public final class AgentHpqSession {
     public synchronized AgentHpqMemberState member(int characterId) { return members.get(characterId); }
     public synchronized Collection<AgentHpqMemberState> members() { return java.util.List.copyOf(members.values()); }
     public synchronized int memberCount() { return members.size(); }
+
+    public synchronized void freezeRewardEligibility() { rewardEligibilityFrozen = true; }
+    public synchronized boolean rewardEligibilityFrozen() { return rewardEligibilityFrozen; }
+    public synchronized boolean beginRewardClaim(int characterId) {
+        AgentHpqMemberState member = members.get(characterId);
+        return rewardEligibilityFrozen && member != null && member.beginRewardClaim();
+    }
+    public synchronized boolean completeRewardClaim(int characterId) {
+        AgentHpqMemberState member = members.get(characterId);
+        return member != null && member.completeRewardClaim();
+    }
+    public synchronized void cancelRewardClaim(int characterId) {
+        AgentHpqMemberState member = members.get(characterId);
+        if (member != null) member.cancelRewardClaim();
+    }
+    public synchronized void forfeitReward(int characterId) {
+        AgentHpqMemberState member = members.get(characterId);
+        if (member != null) member.forfeitReward();
+    }
+    public synchronized boolean allRewardsResolved() {
+        return rewardEligibilityFrozen && members.values().stream()
+                .allMatch(AgentHpqMemberState::rewardResolved);
+    }
 }

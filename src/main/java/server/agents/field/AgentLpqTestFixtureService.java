@@ -71,10 +71,7 @@ public final class AgentLpqTestFixtureService {
         build = new AgentBalrogTestFixtureService.Build(
                 build.buildId(), build.career(), build.job(), build.weaponClass(),
                 loadout.weaponItemId(), loadout.shieldItemId(), build.apBuild(), build.spBuild());
-        AgentLpqAppearanceCatalog.Appearance appearance =
-                AgentLpqAppearanceCatalog.select(agent.getGender(), seed);
-        agent.setFace(appearance.faceId());
-        agent.setHair(appearance.hairId());
+        applyAppearance(agent, seed);
         AgentFieldObservationFixtureService.Prepared prepared =
                 AgentFieldObservationFixtureService.prepareForPartyQuest(
                         entry, build, LPQ_START_LEVEL, LPQ_COMBAT_MOBS,
@@ -87,6 +84,15 @@ public final class AgentLpqTestFixtureService {
         }
         return new PreparationResult(prepared.level(), prepared.career(),
                 prepared.weaponItemId(), prepared.weaponAttack());
+    }
+
+    static AgentLpqAppearanceCatalog.Appearance applyAppearance(Character agent, long seed) {
+        AgentLpqAppearanceCatalog.Appearance appearance = AgentLpqAppearanceCatalog.select(seed);
+        agent.setGender(appearance.gender());
+        agent.setSkinColor(appearance.skinColor());
+        agent.setHair(appearance.hairId());
+        agent.setFace(appearance.faceId());
+        return appearance;
     }
 
     static AgentBalrogTestFixtureService.Build build(String buildId) {

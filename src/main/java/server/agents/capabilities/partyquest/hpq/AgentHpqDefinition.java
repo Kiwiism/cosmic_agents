@@ -29,6 +29,15 @@ public final class AgentHpqDefinition {
 
     public static final Point MOON_BUNNY_POSITION = new Point(-183, -433);
 
+    /** Reachable upper footholds used as sparse guard posts after the Moon Bunny appears. */
+    private static final List<Point> DEFENSE_GUARD_POINTS = List.of(
+            new Point(-800, -493),
+            new Point(-501, -636),
+            new Point(-184, -732),
+            new Point(120, -637),
+            new Point(300, -575),
+            new Point(400, -388));
+
     private static final List<SeedBed> SEED_BEDS = List.of(
             new SeedBed(4_001_095, 9_108_000, "moonflower1"),
             new SeedBed(4_001_096, 9_108_001, "moonflower2"),
@@ -54,6 +63,10 @@ public final class AgentHpqDefinition {
 
     public static boolean isSeed(int itemId) {
         return BED_BY_SEED.containsKey(itemId);
+    }
+
+    public static List<Point> defenseGuardPoints() {
+        return DEFENSE_GUARD_POINTS.stream().map(Point::new).toList();
     }
 
     public record SeedBed(int seedItemId, int reactorId, String reactorName) {

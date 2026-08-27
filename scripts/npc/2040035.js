@@ -27,6 +27,8 @@
 	Gives LudiPQ Reward.
  */
 
+const AgentLpqSessionRegistry = Java.type('server.agents.capabilities.partyquest.lpq.AgentLpqSessionRegistry');
+
 function start() {
     status = -1;
     action(1, 0, 0);
@@ -42,13 +44,26 @@ function action(mode, type, selection) {
             status--;
         }
         if (status == 0 && mode == 1) {
-            cm.sendNext("Congratulations on sealing the dimensional crack! For all of your hard work, I have a gift for you! Here take this prize.");
+            if (AgentLpqSessionRegistry.isManagedEvent(cm.getPlayer())
+                    && !AgentLpqSessionRegistry.isRegisteredParticipant(cm.getPlayer())) {
+                cm.sendNext("The LPQ is complete. You may return to Ludibrium as an observer, but only registered members receive a reward.");
+            } else {
+                cm.sendNext("Congratulations on sealing the dimensional crack! For all of your hard work, I have a gift for you! Here take this prize.");
+            }
         } else if (status == 1) {
             var eim = cm.getEventInstance();
+            var player = cm.getPlayer();
+            var managed = AgentLpqSessionRegistry.isManagedEvent(player);
 
-            if (!eim.giveEventReward(cm.getPlayer())) {
+            if (managed && !AgentLpqSessionRegistry.isRegisteredParticipant(player)) {
+                cm.warp(221024500);
+            } else if (managed && !AgentLpqSessionRegistry.beginRewardClaim(player)) {
+                cm.sendNext("This LPQ reward is only available once to registered members of this run.");
+            } else if (!eim.giveEventReward(player)) {
+                if (managed) AgentLpqSessionRegistry.cancelRewardClaim(player);
                 cm.sendNext("It seems you don't have a free slot in either your #rEquip#k, #rUse#k or #rEtc#k inventories. Please make some room and try again.");
             } else {
+                if (managed) AgentLpqSessionRegistry.completeRewardClaim(player);
                 cm.warp(221024500);
             }
 

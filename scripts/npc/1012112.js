@@ -40,6 +40,33 @@ function isGmObserver(eim, player) {
         && !isLivePartyMember(eim, player);
 }
 
+function isRewardObserver(eim, player) {
+    if (AgentHpqSessionRegistry.isManagedEvent(player)) {
+        return !AgentHpqSessionRegistry.isRegisteredParticipant(player);
+    }
+    return isGmObserver(eim, player);
+}
+
+function giveRewardAndWarp(eim, destinationMap) {
+    var player = cm.getPlayer();
+    var managed = AgentHpqSessionRegistry.isManagedEvent(player);
+    if (managed && !AgentHpqSessionRegistry.beginRewardClaim(player)) {
+        cm.sendOk("This HPQ reward is only available once to registered members of this run.");
+        return;
+    }
+    if (eim != null && eim.giveEventReward(player)) {
+        if (managed) {
+            AgentHpqSessionRegistry.completeRewardClaim(player);
+        }
+        cm.warp(destinationMap);
+    } else {
+        if (managed) {
+            AgentHpqSessionRegistry.cancelRewardClaim(player);
+        }
+        cm.sendOk("It seems you are short on space in one of your inventories. Please check that first to get rewarded properly.");
+    }
+}
+
 function start() {
     status = -1;
     action(1, 0, 0);
@@ -125,37 +152,33 @@ function action(mode, type, selection) {
             }
         } else if (cm.getMapId() == 910010100) {
             if (status == 0) {
-                if (isGmObserver(cm.getEventInstance(), cm.getPlayer())) {
+                if (isRewardObserver(cm.getEventInstance(), cm.getPlayer())) {
                     cm.sendYesNo("Would you like to leave this HPQ observation without receiving a party quest reward?");
                 } else {
                     cm.sendYesNo("Thank you for aiding in the effort of feeding the Growlie. As a matter of fact, your team has already been rewarded for reaching this far. With this problem now solved, there is another issue happening right now, if you are interessed check #bTommy#k there for the info. So, are you returning straight to Henesys now?");
                 }
             } else if (status == 1) {
-                if (isGmObserver(cm.getEventInstance(), cm.getPlayer())) {
-                    cm.warp(100000200);
-                } else if (cm.getEventInstance().giveEventReward(cm.getPlayer())) {
+                if (isRewardObserver(cm.getEventInstance(), cm.getPlayer())) {
                     cm.warp(100000200);
                 } else {
-                    cm.sendOk("It seems you are short on space in one of your inventories. Please check that first to get rewarded properly.");
+                    giveRewardAndWarp(cm.getEventInstance(), 100000200);
                 }
                 cm.dispose();
             }
         } else if (cm.getMapId() == 910010400) {
             if (status == 0) {
-                if (isGmObserver(cm.getEventInstance(), cm.getPlayer())) {
+                if (isRewardObserver(cm.getEventInstance(), cm.getPlayer())) {
                     cm.sendYesNo("Would you like to leave this HPQ observation without receiving a party quest reward?");
                 } else {
                     cm.sendYesNo("So, are you returning to Henesys now?");
                 }
             } else if (status == 1) {
-                if (isGmObserver(cm.getEventInstance(), cm.getPlayer())) {
+                if (isRewardObserver(cm.getEventInstance(), cm.getPlayer())) {
                     cm.warp(100000200);
                 } else if (cm.getEventInstance() == null) {
                     cm.warp(100000200);
-                } else if (cm.getEventInstance().giveEventReward(cm.getPlayer())) {
-                    cm.warp(100000200);
                 } else {
-                    cm.sendOk("It seems you are short on space in one of your inventories. Please check that first to get rewarded properly.");
+                    giveRewardAndWarp(cm.getEventInstance(), 100000200);
                 }
                 cm.dispose();
             }

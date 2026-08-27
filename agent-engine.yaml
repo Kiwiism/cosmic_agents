@@ -766,6 +766,10 @@ tuning:
     # Purpose: Lets a waiting HPQ defender react early when an invading monster moves close enough to threaten that character.
     # Technical: Applies only during the HPQ defense-entry stagger and does not change shared aggro, targeting, or navigation ranges.
     server.agents.capabilities.partyquest.hpq.AgentHpqCoordinator.DEFENSE_WAKE_RADIUS_PX: '220'
+    # Values: 20-120 map pixels. Recommended: 70.
+    # Purpose: Determines when an HPQ defender has reached its separate upper guard foothold after the Moon Bunny appears.
+    # Technical: Applies only to the authored HPQ defense posts; shared navigation arrival tolerances and every other combat activity are unchanged.
+    server.agents.capabilities.partyquest.hpq.AgentHpqCoordinator.DEFENSE_GUARD_ARRIVAL_PX: '70'
     # Values: 500-5000 milliseconds. Recommended: 2000.
     # Purpose: Gives an HPQ Agent leader a natural pause after a nearby eligible player asks to join its party.
     # Technical: Overrides only HPQ's shared-lobby invitation delay; KPQ, LPQ, and other lobby profiles retain their own or the shared defaults.
@@ -863,6 +867,22 @@ tuning:
     # Purpose: Gives LPQ parties a short, observable lobby countdown after all six members gather at the Red Sign.
     # Technical: The isolated LPQ session owns this deadline; fixture job advancement finishes off-screen before Agents enter the recruitment map.
     server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.PREPARATION_DELAY_MS: '5000'
+    # Values: 20-100 map pixels. Recommended: 55.
+    # Purpose: Lets LPQ Agents form a visible, slightly spread group beside the Red Sign before entry.
+    # Technical: This is LPQ-local approach geometry and does not alter navigation precision in another PQ.
+    server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.NPC_APPROACH_PX: '55'
+    # Values: 80-220 map pixels. Recommended: 160.
+    # Purpose: Requires a participating human to stand with the prepared party before the LPQ countdown begins.
+    # Technical: Only LPQ human participants use this wider lobby gathering radius; spectators remain outside the session.
+    server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.GATHER_RADIUS_PX: '160'
+    # Values: 1000-10000 milliseconds. Recommended: 2000.
+    # Purpose: Makes an Agent-led LPQ invitation arrive naturally after the human asks to join in lobby chat.
+    # Technical: The shared lobby runtime applies this override only to LPQ sessions.
+    server.agents.capabilities.partyquest.lpq.AgentLpqLobbyProfile.INVITE_RESPONSE_MINIMUM_MS: '2000'
+    # Values: 1000-10000 milliseconds. Recommended: 5000.
+    # Purpose: Caps the natural LPQ invitation delay after a recognized human join request.
+    # Technical: Must remain at or above LPQ's minimum invitation delay and does not change KPQ or HPQ.
+    server.agents.capabilities.partyquest.lpq.AgentLpqLobbyProfile.INVITE_RESPONSE_MAXIMUM_MS: '5000'
     # Values: 500-3000 milliseconds. Recommended: 1200 to let ordinary reactors, NPC scripts, and item drops settle between repeated actions.
     # Purpose: Prevents LPQ Agents from flooding the same authored interaction while still allowing responsive box, submission, and combination attempts.
     # Technical: AgentLpqMemberState owns each deadline and AgentLpqCoordinator consumes it only inside the isolated LPQ aggregate and test session.

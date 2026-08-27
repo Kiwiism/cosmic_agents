@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import server.maps.MapItem;
 
 import java.io.IOException;
+import java.awt.Point;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -68,6 +69,19 @@ class AgentHpqCoordinatorPolicyTest {
         assertTrue(third >= 450L && third <= 2500L);
         assertEquals(second,
                 AgentHpqCoordinator.defenseReactionDelayMs(77L, 1002, 1, 2500L));
+    }
+
+    @Test
+    void defendersReceiveSeparateUpperGuardFootholdsAroundTheMoonBunny() {
+        Point leader = AgentHpqDefinition.defenseGuardPoints().get(2);
+        Point leftGuard = AgentHpqCoordinator.defenseGuardPoint(0, 2, true);
+        Point rightGuard = AgentHpqCoordinator.defenseGuardPoint(1, 2, true);
+
+        assertTrue(leader.y < AgentHpqDefinition.MOON_BUNNY_POSITION.y);
+        assertTrue(leftGuard.y < -300 && rightGuard.y < -300);
+        assertTrue(leftGuard.distance(rightGuard) > 500.0d);
+        assertTrue(leftGuard.distance(leader) > 250.0d);
+        assertTrue(rightGuard.distance(leader) > 250.0d);
     }
 
     private static MapItem drop(int itemId, boolean playerDrop, boolean pickedUp) {

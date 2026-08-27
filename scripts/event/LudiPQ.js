@@ -38,6 +38,7 @@ var eventTime = 45;     // authored LPQ duration
 var bonusTime = 1;      // authored LPQ bonus duration
 
 const maxLobbies = 1;
+const AgentLpqSessionRegistry = Java.type('server.agents.capabilities.partyquest.lpq.AgentLpqSessionRegistry');
 
 function init() {
     setEventRequirements();
@@ -175,7 +176,9 @@ function scheduledTimeout(eim) {
     }
 }
 
-function playerUnregistered(eim, player) {}
+function playerUnregistered(eim, player) {
+    AgentLpqSessionRegistry.forfeitUnclaimedReward(player);
+}
 
 function playerExit(eim, player) {
     eim.unregisterPlayer(player);

@@ -218,4 +218,28 @@ class AgentLpqSessionTest {
         assertEquals(0, session.stage7LootSweepIndex());
         assertFalse(session.stage7ForceLootAttempted());
     }
+
+    @Test
+    void rewardClaimsAreFrozenAtomicAndResolvedPerRegisteredMember() {
+        AgentLpqSession session = new AgentLpqSession(
+                AgentLpqSession.Mode.TEST_OBSERVATION, 1L, 900, 5, 1_000L);
+        session.addMember(101, AgentLpqMemberState.MemberType.AGENT);
+        session.addMember(102, AgentLpqMemberState.MemberType.AGENT);
+        session.addMember(103, AgentLpqMemberState.MemberType.AGENT);
+        session.addMember(104, AgentLpqMemberState.MemberType.AGENT);
+        session.addMember(900, AgentLpqMemberState.MemberType.HUMAN);
+
+        assertFalse(session.beginRewardClaim(900));
+        session.freezeRewardEligibility();
+        assertTrue(session.beginRewardClaim(900));
+        assertFalse(session.beginRewardClaim(900));
+        session.cancelRewardClaim(900);
+        assertTrue(session.beginRewardClaim(900));
+        assertTrue(session.completeRewardClaim(900));
+        assertFalse(session.beginRewardClaim(999));
+        for (int id = 101; id <= 104; id++) session.forfeitReward(id);
+
+        assertTrue(session.member(900).rewardClaimed());
+        assertTrue(session.allRewardsResolved());
+    }
 }

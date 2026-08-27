@@ -51,6 +51,8 @@ final class AgentHpqCoordinator {
             "server.agents.capabilities.partyquest.hpq.AgentHpqCoordinator.DEFENSE_REACTION_MAX_MS");
     private static final int DEFENSE_WAKE_RADIUS_PX = config.AgentTuning.intValue(
             "server.agents.capabilities.partyquest.hpq.AgentHpqCoordinator.DEFENSE_WAKE_RADIUS_PX");
+    private static final int DEFENSE_GUARD_ARRIVAL_PX = config.AgentTuning.intValue(
+            "server.agents.capabilities.partyquest.hpq.AgentHpqCoordinator.DEFENSE_GUARD_ARRIVAL_PX");
 
     private AgentHpqCoordinator() {
     }
@@ -176,7 +178,7 @@ final class AgentHpqCoordinator {
 
     private static void seeds(AgentHpqSession session, Character leader, long nowMs) {
         if (eventStage(leader) >= AgentHpqDefinition.seedBeds().size()) {
-            assignDefenseRoles(session, nowMs);
+            assignDefenseRoles(session);
             session.transition(AgentHpqSession.Phase.DEFENDING_BUNNY, nowMs);
             return;
         }
@@ -330,8 +332,7 @@ final class AgentHpqCoordinator {
         }
     }
 
-    private static void assignDefenseRoles(AgentHpqSession session, long nowMs) {
-        int agentOrdinal = 0;
+    private static void assignDefenseRoles(AgentHpqSession session) {
         for (AgentHpqMemberState member : session.members()) {
             AgentGrindLootStateRuntime.clearObjectiveLootTarget(
                     AgentRuntimeRegistry.findByAgentCharacterId(member.characterId()));
@@ -341,39 +342,92 @@ final class AgentHpqCoordinator {
                 member.assign(AgentHpqMemberState.Role.BUNNY_GUARD, 0);
             }
             if (member.memberType() == AgentHpqMemberState.MemberType.AGENT) {
-                member.deferUntil(nowMs + defenseReactionDelayMs(
-                        session.seed(), member.characterId(), agentOrdinal++, DEFENSE_REACTION_MAX_MS));
+                member.deferUntil(0L);
             }
         }
     }
 
     private static void defend(AgentHpqSession session, Character leader, long nowMs) {
         Set<Integer> monsters = stageMonsters(leader);
+        List<Monster> liveHostiles = AgentMapPerception.monsters(leader.getMap()).stream()
+                .filter(java.util.Objects::nonNull)
+                .filter(Monster::isAlive)
+                .filter(monster -> monsters.contains(monster.getId()))
+                .toList();
+        boolean hostilesPresent = !liveHostiles.isEmpty();
+        if (session.observeDefenseHostiles(hostilesPresent)) {
+            assignDefenseReactionDelays(session, nowMs);
+        }
         List<MapItem> cakes = leader.getMap().getDroppedItems().stream()
                 .filter(drop -> drop != null && !drop.isPickedUp() && drop.getMeso() <= 0
                         && drop.getItemId() == AgentHpqDefinition.RICE_CAKE)
                 .toList();
+        List<AgentHpqMemberState> agents = session.members().stream()
+                .filter(member -> member.memberType() == AgentHpqMemberState.MemberType.AGENT)
+                .toList();
+        boolean centerReserved = agents.stream().anyMatch(
+                member -> member.characterId() == session.eventLeaderId());
+        int ordinaryCount = agents.size() - (centerReserved ? 1 : 0);
+        int ordinaryOrdinal = 0;
         for (AgentHpqMemberState member : session.members()) {
             if (member.memberType() != AgentHpqMemberState.MemberType.AGENT) continue;
             Character agent = character(member.characterId());
             AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(member.characterId());
             if (agent == null || entry == null) continue;
-            if (nowMs < member.nextActionAtMs()
-                    && !hostileNear(agent, monsters, DEFENSE_WAKE_RADIUS_PX)) {
+
+            boolean eventLeader = centerReserved
+                    && member.characterId() == session.eventLeaderId();
+            Point authoredPost = eventLeader
+                    ? AgentHpqDefinition.defenseGuardPoints().get(2)
+                    : defenseGuardPoint(ordinaryOrdinal++, ordinaryCount, centerReserved);
+            Point guardPost = ACTIONS.groundPoint(agent.getMap(), authoredPost);
+            if (guardPost == null) guardPost = authoredPost;
+            boolean hostileClose = hostileNear(agent, liveHostiles, DEFENSE_WAKE_RADIUS_PX);
+            if (!near(agent.getPosition(), guardPost, DEFENSE_GUARD_ARRIVAL_PX)
+                    && !hostileClose) {
+                AgentGrindLootStateRuntime.clearObjectiveLootTarget(entry);
+                ACTIONS.navigate(entry, guardPost, true);
+                continue;
+            }
+            if (hostilesPresent && nowMs < member.nextActionAtMs() && !hostileClose) {
                 ACTIONS.stop(entry);
                 continue;
             }
-            ACTIONS.grind(entry, monsters);
-            if (member.characterId() == session.eventLeaderId()) {
-                MapItem cake = nearestUnassignedDrop(agent, cakes, Set.of());
+
+            MapItem cake = member.characterId() == session.eventLeaderId()
+                    ? nearestUnassignedDrop(agent, cakes, Set.of()) : null;
+            if (hostilesPresent || cake != null) {
+                ACTIONS.grind(entry, hostilesPresent ? monsters : Set.of());
                 if (cake != null) AgentGrindLootStateRuntime.setObjectiveLootTarget(entry, cake);
                 else AgentGrindLootStateRuntime.clearObjectiveLootTarget(entry);
+            } else {
+                AgentGrindLootStateRuntime.clearObjectiveLootTarget(entry);
+                ACTIONS.stop(entry);
             }
         }
         if (leader.getItemQuantity(AgentHpqDefinition.RICE_CAKE, false)
                 >= AgentHpqDefinition.REQUIRED_RICE_CAKES) {
             session.transition(AgentHpqSession.Phase.DELIVERING_CAKES, nowMs);
         }
+    }
+
+    private static void assignDefenseReactionDelays(AgentHpqSession session, long nowMs) {
+        int agentOrdinal = 0;
+        long waveSeed = session.seed()
+                ^ (session.defenseWaveOrdinal() * 0x94D049BB133111EBL);
+        for (AgentHpqMemberState member : session.members()) {
+            if (member.memberType() != AgentHpqMemberState.MemberType.AGENT) continue;
+            member.deferUntil(nowMs + defenseReactionDelayMs(
+                    waveSeed, member.characterId(), agentOrdinal++, DEFENSE_REACTION_MAX_MS));
+        }
+    }
+
+    static Point defenseGuardPoint(
+            int ordinal, int participantCount, boolean centerReserved) {
+        List<Point> points = new ArrayList<>(AgentHpqDefinition.defenseGuardPoints());
+        if (centerReserved) points.remove(2);
+        int index = distributedSourceIndex(ordinal, Math.max(1, participantCount), points.size());
+        return new Point(points.get(index));
     }
 
     static long defenseReactionDelayMs(
@@ -386,12 +440,12 @@ final class AgentHpqCoordinator {
         return minimumDelayMs + Math.floorMod(mixed, span);
     }
 
-    private static boolean hostileNear(Character agent, Set<Integer> allowedMobIds, int radiusPx) {
+    private static boolean hostileNear(
+            Character agent, List<Monster> hostiles, int radiusPx) {
         if (agent == null || agent.getPosition() == null || radiusPx < 0) return false;
         long radiusSquared = (long) radiusPx * radiusPx;
-        for (Monster monster : AgentMapPerception.monsters(agent.getMap())) {
-            if (monster != null && monster.isAlive() && allowedMobIds.contains(monster.getId())
-                    && monster.getPosition() != null
+        for (Monster monster : hostiles) {
+            if (monster != null && monster.getPosition() != null
                     && monster.getPosition().distanceSq(agent.getPosition()) <= radiusSquared) {
                 return true;
             }
@@ -401,6 +455,7 @@ final class AgentHpqCoordinator {
 
     private static void deliver(AgentHpqSession session, Character leader, long nowMs) {
         if (leader.getMapId() == AgentHpqDefinition.CLEAR_MAP) {
+            session.freezeRewardEligibility();
             session.transition(AgentHpqSession.Phase.BONUS_DECISION, nowMs);
             return;
         }
@@ -456,28 +511,38 @@ final class AgentHpqCoordinator {
     }
 
     private static void claim(AgentHpqSession session, long nowMs) {
-        boolean agentRemaining = false;
+        session.freezeRewardEligibility();
+        boolean nonLeaderRewardsResolved = session.members().stream()
+                .filter(member -> member.characterId() != session.eventLeaderId())
+                .allMatch(AgentHpqMemberState::rewardResolved);
         for (AgentHpqMemberState member : session.members()) {
-            if (member.memberType() != AgentHpqMemberState.MemberType.AGENT) continue;
-            Character agent = character(member.characterId());
-            if (agent == null) continue;
-            if (agent.getMapId() == AgentHpqDefinition.CLEAR_MAP
-                    || agent.getMapId() == AgentHpqDefinition.REWARD_EXIT_MAP) {
-                agentRemaining = true;
+            if (member.rewardResolved()) continue;
+            Character participant = character(member.characterId());
+            if (participant == null) continue;
+            if (participant.getMapId() == AgentHpqDefinition.CLEAR_MAP
+                    || participant.getMapId() == AgentHpqDefinition.REWARD_EXIT_MAP) {
+                if (member.memberType() == AgentHpqMemberState.MemberType.HUMAN) {
+                    if (nowMs >= member.nextActionAtMs()) {
+                        participant.dropMessage(6, "Talk to Tory to claim your HPQ reward and return to Henesys.");
+                        member.deferUntil(nowMs + 5_000L);
+                    }
+                    continue;
+                }
+                if (member.characterId() == session.eventLeaderId() && !nonLeaderRewardsResolved) {
+                    continue;
+                }
                 AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(
                         member.characterId());
-                Point tory = ACTIONS.npcPosition(agent, AgentHpqDefinition.ENTRY_NPC);
+                Point tory = ACTIONS.npcPosition(participant, AgentHpqDefinition.ENTRY_NPC);
                 if (entry != null && tory != null
-                        && !near(agent.getPosition(), tory, NPC_APPROACH_PX)) {
+                        && !near(participant.getPosition(), tory, NPC_APPROACH_PX)) {
                     ACTIONS.navigate(entry, tory, true);
                 } else if (tory != null) {
-                    HPQ.runNpc(agent, AgentHpqDefinition.ENTRY_NPC);
+                    HPQ.runNpc(participant, AgentHpqDefinition.ENTRY_NPC);
                 }
-            } else if (agent.getMapId() != AgentHpqDefinition.RECRUIT_MAP) {
-                agentRemaining = true;
             }
         }
-        if (!agentRemaining) session.transition(AgentHpqSession.Phase.EXITING, nowMs);
+        if (session.allRewardsResolved()) session.transition(AgentHpqSession.Phase.EXITING, nowMs);
     }
 
     private static void exit(AgentHpqSession session, long nowMs) {

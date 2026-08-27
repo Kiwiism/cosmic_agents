@@ -1,12 +1,16 @@
 package server.agents.capabilities.partyquest.hpq;
 
+import client.Character;
 import org.junit.jupiter.api.Test;
+import scripting.event.EventInstanceManager;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class AgentHpqSessionRegistryTest {
     @Test
@@ -45,6 +49,31 @@ class AgentHpqSessionRegistryTest {
         } finally {
             AgentHpqSessionRegistry.remove(first);
             AgentHpqSessionRegistry.remove(second);
+        }
+    }
+
+    @Test
+    void managedEventDistinguishesRegisteredParticipantFromObserverForReward() {
+        AgentHpqSession session = session(301);
+        EventInstanceManager event = mock(EventInstanceManager.class);
+        Character participant = mock(Character.class);
+        Character observer = mock(Character.class);
+        session.bindEventInstance(event);
+        session.freezeRewardEligibility();
+        when(participant.getId()).thenReturn(302);
+        when(participant.getEventInstance()).thenReturn(event);
+        when(observer.getId()).thenReturn(999);
+        when(observer.getEventInstance()).thenReturn(event);
+        AgentHpqSessionRegistry.registerComplete(session);
+        try {
+            assertTrue(AgentHpqSessionRegistry.isManagedEvent(observer));
+            assertFalse(AgentHpqSessionRegistry.isRegisteredParticipant(observer));
+            assertFalse(AgentHpqSessionRegistry.beginRewardClaim(observer));
+            assertTrue(AgentHpqSessionRegistry.isRegisteredParticipant(participant));
+            assertTrue(AgentHpqSessionRegistry.beginRewardClaim(participant));
+            assertTrue(AgentHpqSessionRegistry.completeRewardClaim(participant));
+        } finally {
+            AgentHpqSessionRegistry.remove(session);
         }
     }
 

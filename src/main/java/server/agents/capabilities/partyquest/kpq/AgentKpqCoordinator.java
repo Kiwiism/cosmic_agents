@@ -726,6 +726,7 @@ final class AgentKpqCoordinator {
         if ("true".equals(KPQ.property(leader, "5stageclear"))) {
             clearStageFiveLootTargets(session);
             stopAll(session);
+            session.freezeRewardEligibility();
             transition(session, AgentKpqSession.Phase.CLAIMING_REWARDS, nowMs);
             return;
         }
@@ -924,13 +925,15 @@ final class AgentKpqCoordinator {
     }
 
     private static void claimRewards(AgentKpqSession session, long nowMs) {
+        session.freezeRewardEligibility();
         Character anchor = firstCharacter(session);
         boolean shoesPending = anchor != null && handleSquishyShoes(session, anchor, nowMs);
         boolean allInBonus = true;
         for (AgentKpqMemberState member : session.members()) {
             Character agent = memberCharacter(member.characterId(), firstCharacter(session));
             if (agent == null || agent.getMap() == null) {
-                allInBonus = false;
+                session.forfeitReward(member.characterId());
+                if (!member.rewardResolved()) allInBonus = false;
                 continue;
             }
             if (agent.getMapId() == AgentKpqDefinition.STAGE_5_MAP) {
@@ -950,7 +953,7 @@ final class AgentKpqCoordinator {
                                     session.sessionId(), member.characterId(), agent.getMapId());
                             EventInstanceManager event = session.eventInstance();
                             if (event != null) event.exitPlayer(agent);
-                            member.markRewardClaimed();
+                            session.forfeitReward(member.characterId());
                         }
                         continue;
                     }
@@ -969,18 +972,22 @@ final class AgentKpqCoordinator {
             } else if (agent.getMapId() == AgentKpqDefinition.BONUS_MAP) {
                 member.clearBlocker();
                 if (!member.rewardClaimed()) {
-                    member.markRewardClaimed();
+                    if (session.beginRewardClaim(member.characterId())) {
+                        session.completeRewardClaim(member.characterId());
+                    }
                     log.info("KPQ reward confirmed by bonus-map entry: session={} member={} name={}",
                             session.sessionId(), member.characterId(), agent.getName());
                 }
-            } else if (member.rewardClaimed()
+            } else if (member.rewardResolved()
                     && agent.getMapId() == AgentKpqDefinition.RECRUIT_MAP) {
                 // Bounded Agent recovery may deliberately leave without a reward.
             } else {
                 allInBonus = false;
             }
         }
-        if (allInBonus) transition(session, AgentKpqSession.Phase.EXITING, nowMs);
+        if (allInBonus && session.allRewardsResolved()) {
+            transition(session, AgentKpqSession.Phase.EXITING, nowMs);
+        }
     }
 
     private static void exit(AgentKpqSession session, long nowMs) {
@@ -1664,7 +1671,7 @@ final class AgentKpqCoordinator {
 
     private static boolean insideEventPhase(AgentKpqSession.Phase phase) {
         return switch (phase) {
-            case STAGE_1, STAGE_2, STAGE_3, STAGE_4, STAGE_5, CLAIMING_REWARDS -> true;
+            case STAGE_1, STAGE_2, STAGE_3, STAGE_4, STAGE_5 -> true;
             default -> false;
         };
     }

@@ -9,6 +9,7 @@ public final class AgentKpqMemberState {
         EVENT_LEADER, COUPON_COLLECTOR, PASS_DELIVERER, COMBAT_HELPER,
         PUZZLE_PARTICIPANT, STAGE5_PASS_COLLECTOR, SQUISHY_SHOES_COLLECTOR, WAITING
     }
+    public enum RewardState { PENDING, CLAIMING, CLAIMED, FORFEITED }
 
     private final int characterId;
     private final MemberType memberType;
@@ -18,7 +19,7 @@ public final class AgentKpqMemberState {
     private boolean questionRequested;
     private boolean passCreated;
     private boolean passDelivered;
-    private boolean rewardClaimed;
+    private RewardState rewardState = RewardState.PENDING;
     private int assignedPosition;
     private long stableSinceMs;
     private long actionNotBeforeMs;
@@ -64,8 +65,32 @@ public final class AgentKpqMemberState {
     public void markPassCreated() { passCreated = true; }
     public boolean passDelivered() { return passDelivered; }
     public void markPassDelivered() { passDelivered = true; }
-    public boolean rewardClaimed() { return rewardClaimed; }
-    public void markRewardClaimed() { rewardClaimed = true; }
+    public RewardState rewardState() { return rewardState; }
+    public boolean rewardClaimed() { return rewardState == RewardState.CLAIMED; }
+    public boolean rewardResolved() {
+        return rewardState == RewardState.CLAIMED || rewardState == RewardState.FORFEITED;
+    }
+    boolean beginRewardClaim() {
+        if (rewardState != RewardState.PENDING) return false;
+        rewardState = RewardState.CLAIMING;
+        return true;
+    }
+    boolean completeRewardClaim() {
+        if (rewardState != RewardState.CLAIMING) return false;
+        rewardState = RewardState.CLAIMED;
+        return true;
+    }
+    void cancelRewardClaim() {
+        if (rewardState == RewardState.CLAIMING) rewardState = RewardState.PENDING;
+    }
+    void forfeitReward() {
+        if (rewardState == RewardState.PENDING) rewardState = RewardState.FORFEITED;
+    }
+    public void markRewardClaimed() {
+        if (rewardState == RewardState.PENDING || rewardState == RewardState.CLAIMING) {
+            rewardState = RewardState.CLAIMED;
+        }
+    }
     public int assignedPosition() { return assignedPosition; }
     public void setAssignedPosition(int assignedPosition) {
         if (this.assignedPosition != assignedPosition) stableSinceMs = 0L;
