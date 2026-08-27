@@ -53,6 +53,12 @@ public final class AgentMushroomKingdomCohortService {
     private static final int SECRET_ROOM_KEY_ITEM_ID = 4_032_405;
     private static final int VIOLETTA_TRUTH_ITEM_ID = 4_032_387;
     private static final int PRIME_MINISTER_TRUTH_ITEM_ID = 4_032_386;
+    private static final List<Integer> RESET_ITEM_IDS = List.of(
+            RECOMMENDATION_LETTER_ITEM_ID,
+            4_000_499, 4_000_500, 4_000_501, 4_001_317, 4_000_502, 4_000_503,
+            KILLER_MUSHROOM_SPORE_ITEM_ID, THORN_REMOVER_ITEM_ID,
+            WEDDING_HALL_KEY_ITEM_ID, SECRET_ROOM_KEY_ITEM_ID,
+            VIOLETTA_TRUTH_ITEM_ID, PRIME_MINISTER_TRUTH_ITEM_ID, ROYAL_SEAL_ITEM_ID);
     private static final List<Integer> YETI_MOB_IDS = List.of(3_300_005, 3_300_006, 3_300_007);
     private static final List<CohortMember> ROSTER = List.of(
             new CohortMember("SporeFighter", "fighter"),
@@ -83,6 +89,7 @@ public final class AgentMushroomKingdomCohortService {
                 case "status" -> status(operator);
                 case "stop" -> stop(operator);
                 case "fill", "complete" -> fillControlledCharacterCondition(operator);
+                case "reset-self" -> resetControlledParticipant(operator);
                 default -> help();
             };
         } catch (Exception failure) {
@@ -627,6 +634,56 @@ public final class AgentMushroomKingdomCohortService {
         return false;
     }
 
+    private static List<String> resetControlledParticipant(Character controlled) {
+        if (RUNS.containsKey(controlled.getId())) {
+            return List.of("Stop the active cohort with !mushroomtest stop before resetting yourself.");
+        }
+        int jobId = controlled.getJob().getId();
+        if (!AgentMushroomKingdomCatalog.supportedSecondJob(jobId)) {
+            return List.of("reset-self requires one of the 12 Explorer second jobs; current job is "
+                    + jobId + '.');
+        }
+
+        int resetRecords = 0;
+        for (int questId : resetQuestIdsForJob(jobId)) {
+            if (controlled.getQuestStatus(questId) == QuestStatus.Status.NOT_STARTED.getId()) continue;
+            Quest.getInstance(questId).reset(controlled);
+            resetRecords++;
+        }
+
+        int removedItems = 0;
+        for (int itemId : RESET_ITEM_IDS) {
+            int owned = AgentPrimitiveCapabilityGatewayRuntime.gateway().itemCount(controlled, itemId);
+            if (owned <= 0) continue;
+            removeAll(controlled, itemId);
+            removedItems += owned;
+        }
+
+        int entryQuest = AgentMushroomKingdomCatalog.entryQuestForJob(jobId);
+        String validation = controlledParticipantValidation(controlled.getLevel(), jobId,
+                controlled.getQuestStatus(entryQuest), hasMushroomQuestlineProgress(controlled));
+        ArrayList<String> response = new ArrayList<>();
+        response.add("Mushroom Kingdom reset complete: " + resetRecords + " quest records reset and "
+                + removedItems + " quest-condition items removed.");
+        if (validation == null) {
+            response.add("Ready. Run !mushroomtest start ten-percent include-self");
+        } else {
+            response.add("Quest state is clean, but include-self is not ready: " + validation);
+        }
+        return response;
+    }
+
+    static List<Integer> resetQuestIdsForJob(int jobId) {
+        ArrayList<Integer> questIds = new ArrayList<>();
+        questIds.add(AgentMushroomKingdomCatalog.entryQuestForJob(jobId));
+        AgentMushroomKingdomCatalog.mainline().stream()
+                .map(AgentMushroomKingdomCatalog.QuestNode::questId)
+                .forEach(questIds::add);
+        questIds.addAll(List.of(2337, 2338, 2342,
+                AgentMushroomKingdomRuntime.FIRST_THORN_BARRIER_UNLOCK_QUEST_ID));
+        return List.copyOf(questIds);
+    }
+
     private static int controlledMainlineQuest(Character controlled) {
         for (AgentMushroomKingdomCatalog.QuestNode node : AgentMushroomKingdomCatalog.mainline()) {
             if (controlled.getQuestStatus(node.questId()) == QuestStatus.Status.STARTED.getId()) {
@@ -784,6 +841,7 @@ public final class AgentMushroomKingdomCohortService {
                 "!mushroomtest start ten-percent include-self [seed] - add your fresh level-30 second-job character",
                 "  you remain manual while the harness applies the same 10% top-ups and 9x catch-up rewards",
                 "!mushroomtest fill - fill the controlled character's current Mushroom Kingdom count/item condition",
+                "!mushroomtest reset-self - clear your Mushroom Kingdom test quests and quest-condition items",
                 "!mushroomtest status - show each branch, map, quest, and runtime reason",
                 "!mushroomtest stop - disconnect the cohort and retain backing characters");
     }

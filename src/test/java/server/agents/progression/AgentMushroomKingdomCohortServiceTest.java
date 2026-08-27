@@ -141,6 +141,18 @@ class AgentMushroomKingdomCohortServiceTest {
     }
 
     @Test
+    void resetCoversTheCurrentEntryMainStoryRecoveryAndThornRecords() {
+        var resetIds = AgentMushroomKingdomCohortService.resetQuestIdsForJob(Job.BANDIT.getId());
+
+        assertEquals(1 + AgentMushroomKingdomCatalog.mainline().size() + 4, resetIds.size());
+        assertEquals(2302, resetIds.getFirst());
+        assertTrue(resetIds.containsAll(AgentMushroomKingdomCatalog.mainline().stream()
+                .map(AgentMushroomKingdomCatalog.QuestNode::questId).toList()));
+        assertTrue(resetIds.containsAll(Set.of(2337, 2338, 2342, 30_000)));
+        assertEquals(resetIds.size(), resetIds.stream().distinct().count());
+    }
+
+    @Test
     void controlledCharacterFillSuppliesExactMissingItemCount() {
         Character player = mock(Character.class);
         InventoryGateway inventory = mock(InventoryGateway.class);

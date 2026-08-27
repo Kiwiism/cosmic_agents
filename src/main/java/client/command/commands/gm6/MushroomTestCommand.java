@@ -8,7 +8,7 @@ import server.agents.progression.AgentMushroomKingdomCohortService;
 /** GM-only Mushroom Kingdom twelve-branch observation harness. */
 public final class MushroomTestCommand extends Command {
     {
-        setDescription("Run/inspect the 12-job Mushroom Kingdom cohort or fill a controlled test quest.");
+        setDescription("Run/inspect the 12-job Mushroom Kingdom cohort or manage a controlled test character.");
     }
 
     @Override

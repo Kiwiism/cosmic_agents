@@ -438,10 +438,10 @@ tuning:
     # Purpose: Limits how many maximum per controller can be handled in one pass or kept at once. Higher values let more Agent work progress together; lower values spread the work out and reduce peak load.
     # Technical: the "provisioning policy" component consumes this as an integer. Domain: non-negative count, capacity, or threshold unless the owning component documents a sentinel.
     server.agents.auth.AgentProvisioningPolicy.DEFAULT_MAX_PER_CONTROLLER: '25'
-    # Values: a finite non-negative integer. Recommended: 1-6 around the tested baseline 3; benchmark or observe behavior before moving outside this band.
+    # Values: a finite non-negative integer. Recommended: 1-12 around the tested baseline 3; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how long Agents wait or remain in maximum per window. Higher values make the pause or activity last longer; lower values make them move on sooner.
     # Technical: the "provisioning policy" component consumes this as an integer. Domain: non-negative count, capacity, or threshold unless the owning component documents a sentinel.
-    server.agents.auth.AgentProvisioningPolicy.DEFAULT_MAX_PER_WINDOW: '6'
+    server.agents.auth.AgentProvisioningPolicy.DEFAULT_MAX_PER_WINDOW: '12'
     # Values: a finite non-negative integer. Recommended: 3-12 around the tested baseline 6; benchmark or observe behavior before moving outside this band.
     # Purpose: Sets when minimum game master level becomes available. Higher values make Agents wait for more of the condition; lower values let the behavior begin sooner.
     # Technical: the "provisioning policy" component consumes this as an integer. Domain: non-negative count, capacity, or threshold unless the owning component documents a sentinel.
