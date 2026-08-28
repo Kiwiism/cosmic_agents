@@ -23,6 +23,7 @@ class AgentMovementTickCoordinatorTest {
                             eq(entry),
                             eq(target),
                             eq(true),
+                            eq(1),
                             any(AgentMovementTickService.MovementTickHooks.class)))
                     .thenAnswer(invocation -> null);
 
@@ -32,6 +33,7 @@ class AgentMovementTickCoordinatorTest {
                     eq(entry),
                     eq(target),
                     eq(true),
+                    eq(1),
                     any(AgentMovementTickService.MovementTickHooks.class)));
         }
     }

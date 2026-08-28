@@ -450,6 +450,13 @@ public final class AgentLpqTestService {
 
     private static void returnObserver(Run run) {
         if (!run.spectating) return;
+        if (run.operator.getClient() == null
+                || run.operator.getClient().getPlayer() != run.operator) {
+            run.spectating = false;
+            run.autoFollow = false;
+            run.followId = 0;
+            return;
+        }
         MapleMap map = AgentMapGatewayRuntime.map().resolveMap(run.operator.getWorld(),
                 AgentClientGatewayRuntime.clients().channel(run.operator), AgentLpqDefinition.RECRUIT_MAP);
         var portal = map == null ? null : map.getRandomPlayerSpawnpoint();

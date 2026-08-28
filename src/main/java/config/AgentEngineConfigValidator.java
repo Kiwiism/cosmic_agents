@@ -71,7 +71,7 @@ final class AgentEngineConfigValidator {
             if ("true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value)) {
                 continue;
             }
-            if (validEnumTuning(key, value)) {
+            if (validNonNumericTuning(key, value)) {
                 continue;
             }
             final double numeric;
@@ -105,7 +105,7 @@ final class AgentEngineConfigValidator {
         }
     }
 
-    private static boolean validEnumTuning(String key, String value) {
+    private static boolean validNonNumericTuning(String key, String value) {
         if (key.endsWith("AgentNavigationReliabilityConfig.ROUTING_MODE")) {
             return "OBSERVE".equalsIgnoreCase(value) || "ACTIVE".equalsIgnoreCase(value);
         }
@@ -120,6 +120,10 @@ final class AgentEngineConfigValidator {
         }
         if (key.endsWith("AgentLpqCombinationOrder.STAGE_8_ATTEMPT_ORDER")) {
             return "GMS".equalsIgnoreCase(value) || "JMS".equalsIgnoreCase(value);
+        }
+        if (key.matches(".*AgentLpqStageRecoveryPolicy\\.STAGE_[1-9]_PROFILE")) {
+            return value.matches("submission=\\d+;missingPass=\\d+;portal=\\d+;reactor=\\d+;"
+                    + "traversal=\\d+;roomExitPlacement=\\d+;rallyRetry=\\d+;rallyRecovery=\\d+");
         }
         return false;
     }

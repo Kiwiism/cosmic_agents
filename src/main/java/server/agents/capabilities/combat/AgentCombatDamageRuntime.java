@@ -12,6 +12,7 @@ import server.agents.capabilities.movement.AgentKnockbackMovementService;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.capabilities.partyquest.kpq.AgentKpqKnockbackResistancePolicy;
 import server.agents.capabilities.partyquest.kpq.AgentKpqKnockbackDirectionPolicy;
+import server.agents.capabilities.partyquest.lpq.AgentLpqSessionRegistry;
 import server.agents.capabilities.combat.data.AgentDefenseDataProvider;
 import server.agents.integration.AgentPacketGatewayRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -27,6 +28,9 @@ public final class AgentCombatDamageRuntime {
     }
 
     public static void applyMobHit(AgentRuntimeEntry entry, Character bot, Monster mob, AgentCombatConfig.Config config) {
+        if (AgentLpqSessionRegistry.suppressesDarkSightRoomTouch(bot)) {
+            return;
+        }
         if (AgentMobTouchPolicy.ignoresTouchDamage(mob.getId())) {
             return;
         }

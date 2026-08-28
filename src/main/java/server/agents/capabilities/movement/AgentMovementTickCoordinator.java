@@ -28,6 +28,7 @@ public final class AgentMovementTickCoordinator {
                 entry,
                 targetPosition,
                 runAiTick,
+                AgentMovementSubstepPolicy.substeps(entry),
                 hooks(entry, stopDistance));
     }
 
@@ -40,6 +41,7 @@ public final class AgentMovementTickCoordinator {
                     return new AgentMovementTickService.NavigationResult(directive.consumedTick(), directive.targetPos());
                 },
                 (ignored, targetPosition, runAiTick) -> AgentFidgetService.tryHandleTick(entry, targetPosition, runAiTick),
+                (ignored, targetPosition) -> AgentFidgetService.tickMovementSubstep(entry, targetPosition),
                 (ignored, targetPosition, runAiTick) -> AgentMovementPhaseService.tickMovementPhase(entry, targetPosition, runAiTick),
                 (ignored, targetPosition) -> AgentNavigationTargetService.tryExecuteCommittedEdgeAfterGroundMovement(entry, targetPosition),
                 ignored -> AgentStuckDetectionService.tickStuckDetection(entry),

@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import server.maps.Reactor;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -52,6 +53,25 @@ class AgentLpqStageTwoStrategyTest {
 
         assertEquals(List.of(trap),
                 AgentLpqCoordinator.stageTwoTrapReactors(List.of(ordinary, trap)));
+    }
+
+    @Test
+    void scoutsRallyOnlyWhenNoMainMapBoxOrSpawnNeedsTheirHelp() {
+        assertEquals(true, AgentLpqCoordinator.ordinaryStageShouldRallyAtNpc(2, 0));
+        assertEquals(false, AgentLpqCoordinator.ordinaryStageShouldRallyAtNpc(2, 1));
+        assertEquals(true, AgentLpqCoordinator.ordinaryStageShouldRallyAtNpc(3, 0));
+        assertEquals(false, AgentLpqCoordinator.ordinaryStageShouldRallyAtNpc(3, 1));
+        assertEquals(false, AgentLpqCoordinator.ordinaryStageShouldRallyAtNpc(1, 0));
+    }
+
+    @Test
+    void stageThreeTargetsReactorSpawnedMobsThatAreAbsentFromAuthoredLifeSpawns() {
+        assertEquals(Set.of(930_000_3, 930_000_4),
+                AgentLpqCoordinator.collectionCombatTargets(
+                        3, Set.of(930_000_3), Set.of(930_000_4)));
+        assertEquals(Set.of(930_000_3),
+                AgentLpqCoordinator.collectionCombatTargets(
+                        2, Set.of(930_000_3), Set.of(930_000_4)));
     }
 
     private static AgentLpqMemberState member(int id, AgentLpqMemberState.MemberType type) {

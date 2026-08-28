@@ -39,6 +39,22 @@ class AgentSimulationPolicyTest {
     }
 
     @Test
+    void fullRateRequirementKeepsAnUnobservedAgentInPresentationMode() {
+        MapleMap map = mock(MapleMap.class);
+        MapGateway maps = mock(MapGateway.class);
+        AgentRuntimeEntry entry = entryWithMap(map);
+        AgentSimulationPolicy policy = new AgentDefaultSimulationPolicy(
+                true, false, maps, AgentBackgroundExecutionPolicy.denyAll());
+        when(maps.isObservedByPlayer(map)).thenReturn(false);
+
+        entry.simulationState().requireFullRateSimulation();
+        assertEquals(AgentSimulationMode.PRESENTATION, policy.selectMode(entry));
+
+        entry.simulationState().clearFullRateSimulationRequirement();
+        assertEquals(AgentSimulationMode.BACKGROUND_ACTIVE, policy.selectMode(entry));
+    }
+
+    @Test
     void abstractModeRequiresBothFlagAndExecutionPolicyApproval() {
         MapleMap map = mock(MapleMap.class);
         MapGateway maps = mock(MapGateway.class);

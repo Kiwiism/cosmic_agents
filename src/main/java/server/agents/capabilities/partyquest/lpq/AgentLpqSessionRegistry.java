@@ -1,5 +1,6 @@
 package server.agents.capabilities.partyquest.lpq;
 
+import client.BuffStat;
 import client.Character;
 
 import java.util.Collection;
@@ -46,7 +47,7 @@ public final class AgentLpqSessionRegistry {
 
     public static synchronized void remove(AgentLpqSession session) {
         if (session == null) return;
-        SESSIONS.remove(session.sessionId(), session);
+        if (!SESSIONS.remove(session.sessionId(), session)) return;
         BY_OPERATOR.remove(session.operatorId(), session.sessionId());
         session.members().forEach(member -> BY_MEMBER.remove(member.characterId(), session.sessionId()));
     }
@@ -69,6 +70,21 @@ public final class AgentLpqSessionRegistry {
             case STAGE_5 -> character.getMapId() == AgentLpqDefinition.stage(5).mapId();
             default -> false;
         };
+    }
+
+    /** Dark Sight makes the authored Stage 5 hazard fully non-interactive for LPQ Agents. */
+    public static boolean suppressesDarkSightRoomTouch(Character character) {
+        AgentLpqSession session = character == null ? null : forMember(character.getId());
+        AgentLpqMemberState member = session == null ? null : session.member(character.getId());
+        return character != null
+                && session != null
+                && session.phase() == AgentLpqSession.Phase.STAGE_5
+                && session.eventInstance() != null
+                && character.getEventInstance() == session.eventInstance()
+                && character.getMapId() == AgentLpqDefinition.STAGE_5_DARK_SIGHT_ROOM
+                && character.getBuffedValue(BuffStat.DARKSIGHT) != null
+                && member != null
+                && member.memberType() == AgentLpqMemberState.MemberType.AGENT;
     }
 
     public static boolean isManagedEvent(Character character) {

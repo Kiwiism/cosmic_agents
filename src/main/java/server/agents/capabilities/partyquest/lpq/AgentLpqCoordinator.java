@@ -7,8 +7,17 @@ import client.inventory.InventoryType;
 import constants.skills.Rogue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import server.agents.capabilities.combat.AgentAttackExecutionProvider;
+import server.agents.capabilities.combat.AgentAttackPlan;
+import server.agents.capabilities.combat.AgentAttackRoute;
+import server.agents.capabilities.combat.AgentAttackTransactionResult;
 import server.agents.capabilities.combat.AgentCombatBuffRuntime;
+import server.agents.capabilities.combat.AgentCombatAttackRuntime;
+import server.agents.capabilities.combat.AgentCombatConfig;
+import server.agents.capabilities.combat.AgentCombatHitCounter;
+import server.agents.capabilities.combat.AgentCombatPlanRuntime;
 import server.agents.capabilities.combat.AgentCombatTargetRuntime;
+import server.agents.capabilities.combat.AgentCombatWeaponPolicy;
 import server.agents.capabilities.combat.AgentGrindTargetStateRuntime;
 import server.agents.capabilities.dialogue.AgentDialogueReportFormatter;
 import server.agents.integration.AgentCharacterGatewayRuntime;
@@ -25,6 +34,7 @@ import server.agents.integration.PrimitiveCapabilityGateway;
 import server.agents.plans.AgentScriptItemActionService;
 import server.agents.perception.AgentMapPerception;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
+import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
 import scripting.reactor.ReactorActionManager;
@@ -41,13 +51,16 @@ import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.IntPredicate;
 
 /** LPQ-only coordinator that advances the authored NPC, portal, reactor, combat, and loot flow. */
 final class AgentLpqCoordinator {
+    enum PassHandoffExitAction { NAVIGATE, PLACE_AT_PORTAL, MOVE_TO_STAGE }
     private static final Logger log = LoggerFactory.getLogger(AgentLpqCoordinator.class);
     private static final PrimitiveCapabilityGateway ACTIONS = AgentPrimitiveCapabilityGatewayRuntime.gateway();
     private static final PartyQuestGateway LPQ = AgentPartyQuestGatewayRuntime.partyQuest();
@@ -58,20 +71,14 @@ final class AgentLpqCoordinator {
             "server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.PREPARATION_DELAY_MS");
     private static final long INTERACTION_RETRY_MS = config.AgentTuning.longValue(
             "server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.INTERACTION_RETRY_MS");
-    private static final long SUBMISSION_RECOVERY_GRACE_MS = config.AgentTuning.longValue(
-            "server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.SUBMISSION_RECOVERY_GRACE_MS");
     private static final long ROOM_LEASE_MS = config.AgentTuning.longValue(
             "server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.ROOM_LEASE_MS");
-    private static final long MISSING_PASS_GRACE_MS = config.AgentTuning.longValue(
-            "server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.MISSING_PASS_GRACE_MS");
-    private static final long PORTAL_RECOVERY_GRACE_MS = config.AgentTuning.longValue(
-            "server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.PORTAL_RECOVERY_GRACE_MS");
-    private static final long REACTOR_TARGET_RECOVERY_GRACE_MS = config.AgentTuning.longValue(
-            "server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.REACTOR_TARGET_RECOVERY_GRACE_MS");
-    private static final long STAGE_TRAVERSAL_RECOVERY_GRACE_MS = config.AgentTuning.longValue(
-            "server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.STAGE_TRAVERSAL_RECOVERY_GRACE_MS");
+    private static final long STAGE_1_MAX_NATURAL_COMBAT_MS = config.AgentTuning.longValue(
+            "server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.STAGE_1_MAX_NATURAL_COMBAT_MS");
     private static final int INTERACTION_RADIUS = config.AgentTuning.intValue(
             "server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.INTERACTION_RADIUS_PX");
+    /** Ordinary LPQ boxes must be struck from their own platform, not an adjacent floor. */
+    private static final int REACTOR_PLATFORM_VERTICAL_TOLERANCE_PX = 40;
     private static final int NPC_APPROACH_PX = config.AgentTuning.intValue(
             "server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.NPC_APPROACH_PX");
     private static final int GATHER_RADIUS_PX = config.AgentTuning.intValue(
@@ -90,7 +97,16 @@ final class AgentLpqCoordinator {
             "server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.ROOM_PROGRESS_LOG_INTERVAL_MS");
     private static final int DARK_SIGHT_SAFE_PORTAL_ID = 0;
     private static final Point STAGE_7_BOTTOM = new Point(1, -211);
-    private static final int STAGE_7_FIRING_ANCHOR_RADIUS = 10;
+    private static final int STAGE_7_FIRING_ANCHOR_RADIUS = config.AgentTuning.intValue(
+            "server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.STAGE_7_FIRING_ANCHOR_RADIUS");
+    /**
+     * The Stage 9 balloon NPC stands on authored foothold 89 at y=74. Ranged party
+     * members must finish navigating onto that platform before the LPQ-only Black
+     * Ratz shot or Alishar reactor strike is allowed.
+     */
+    private static final Point STAGE_9_BALLOON_PLATFORM_ANCHOR = new Point(222, 74);
+    private static final int STAGE_9_RATZ_FIRING_ANCHOR_RADIUS = config.AgentTuning.intValue(
+            "server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.STAGE_9_RATZ_FIRING_ANCHOR_RADIUS");
     private static final long STAGE_7_FORCE_LOOT_DELAY_MS = config.AgentTuning.longValue(
             "server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.STAGE_7_FORCE_LOOT_DELAY_MS");
     private static final List<Point> STAGE_7_LOOT_SWEEP = List.of(
@@ -109,6 +125,10 @@ final class AgentLpqCoordinator {
             "Stage 2 trap clear. Everyone enter now.";
 
     private AgentLpqCoordinator() { }
+
+    private static AgentLpqStageRecoveryPolicy recovery(int stage) {
+        return AgentLpqStageRecoveryPolicy.forStage(stage);
+    }
 
     static void tick(AgentLpqSession session, long nowMs) {
         synchronized (session) {
@@ -129,6 +149,7 @@ final class AgentLpqCoordinator {
                 AgentLpqTerminationService.fail(session, eventFailure, nowMs);
                 return;
             }
+            recalculateStageAssignments(session, nowMs);
             switch (session.phase()) {
                 case PREPARING -> prepare(session, leader, nowMs);
                 case ENTERING -> enter(session, leader, nowMs);
@@ -139,10 +160,57 @@ final class AgentLpqCoordinator {
                 case STAGE_9 -> boss(session, leader, nowMs);
                 case BONUS -> bonus(session, nowMs);
                 case CLAIMING_REWARD -> claim(session, nowMs);
-                case EXITING -> AgentLpqTerminationService.complete(session, nowMs);
+                case EXITING -> exitAfterRewardWarpSettles(session, nowMs);
                 default -> { }
             }
         }
+    }
+
+    /** Rebuilds authoritative stage ownership once, after transition cleared the old stage. */
+    private static void recalculateStageAssignments(AgentLpqSession session, long nowMs) {
+        if (!session.stageAssignmentsNeedRecalculation()) return;
+        if (session.members().stream().anyMatch(member -> character(member.characterId()) == null)) return;
+        int stage = stage(session.phase());
+        switch (stage) {
+            case 4, 5 -> assignRooms(session, stage, AgentLpqDefinition.roomMaps(stage), nowMs);
+            case 7 -> assignStageSevenRoles(session);
+            case 8 -> {
+                if (!assignStageEightRoles(session)) return;
+            }
+            case 9 -> assignStageNineRoles(session);
+            default -> {
+                // The transition baseline (leader + general members) is the full plan.
+            }
+        }
+        session.markStageAssignmentsRecalculated(nowMs);
+    }
+
+    private static void assignStageSevenRoles(AgentLpqSession session) {
+        List<Integer> topIds = stageSevenTopMemberIds(
+                session.members(), id -> AgentLpqRosterRequirementPolicy.stageSevenBoxWacker(character(id)),
+                session.eventLeaderId());
+        for (AgentLpqMemberState member : session.members()) {
+            int topIndex = topIds.indexOf(member.characterId());
+            member.assign(topIndex >= 0 ? AgentLpqMemberState.Role.RANGED_TRIGGER
+                    : AgentLpqMemberState.Role.BOSS_ATTACKER, AgentLpqDefinition.stage(7).mapId());
+            member.assignPlatform(topIndex >= 0 ? topIndex + 1 : 0);
+        }
+    }
+
+    private static boolean assignStageEightRoles(AgentLpqSession session) {
+        List<AgentLpqMemberState> participants = session.members().stream()
+                .filter(member -> member.characterId() != session.eventLeaderId())
+                .sorted(Comparator.comparingInt(AgentLpqMemberState::characterId)).toList();
+        if (participants.size() < 5) return false;
+        Map<Integer, Integer> assignments = session.stage8Assignments(
+                participants.stream().map(AgentLpqMemberState::characterId).toList());
+        for (int index = 0; index < 5; index++) {
+            AgentLpqMemberState member = participants.get(index);
+            member.assign(index == 4 ? AgentLpqMemberState.Role.PLATFORM_MOVER
+                    : AgentLpqMemberState.Role.PLATFORM_HOLDER, AgentLpqDefinition.stage(8).mapId());
+            member.assignPlatform(assignments.get(member.characterId()));
+        }
+        return true;
     }
 
     static String liveEventFailure(AgentLpqSession session, Character leader) {
@@ -312,6 +380,10 @@ final class AgentLpqCoordinator {
     private static void collectionStage(AgentLpqSession session, Character leader, long nowMs) {
         int stage = stage(session.phase());
         AgentLpqDefinition.Stage contract = AgentLpqDefinition.stage(stage);
+        if (LPQ.property(leader, stage + "stageclear") != null) {
+            movePartyToNextStage(session, stage, nowMs);
+            return;
+        }
         if (stage == 2 && (!session.stage2TrapClearAnnounced()
                 || leader.getMapId() == AgentLpqDefinition.stage(1).mapId())) {
             advanceStageTwoScoutProtocol(session, nowMs);
@@ -340,6 +412,27 @@ final class AgentLpqCoordinator {
         if (!session.couponRegrouping(stage)) {
             int partyPasses = partyPassCount(session);
             if (partyPasses >= contract.submissionCount()) {
+                if (passHandoffRecoveryApplicable(
+                        stage, partyPasses, contract.submissionCount())
+                        && memberOutsideStageMap(session, contract.mapId())) {
+                    runCollectionObjectives(session, stage, nowMs);
+                    boolean allOutsideRoomsComplete = outsideMembersHaveCompletedRooms(
+                            session, stage, contract.mapId());
+                    long stalledForMs = splitRoomCompletionInactivity(
+                            session, stage, partyPasses, nowMs);
+                    if ((allOutsideRoomsComplete
+                            || stalledForMs >= recovery(stage).missingPassMs())
+                            && session.beginPassHandoffRecovery(nowMs)) {
+                        session.members().forEach(AgentLpqMemberState::clearTraversalProgress);
+                        log.info("LPQ Stage {} coordinated pass-handoff exit started: "
+                                        + "session={} partyPasses={}/{} stalledForMs={} "
+                                        + "allOutsideRoomsComplete={}",
+                                stage, session.sessionId(), partyPasses,
+                                contract.submissionCount(), stalledForMs,
+                                allOutsideRoomsComplete);
+                    }
+                    return;
+                }
                 if (!allLoosePassesCollected(session, stage, nowMs)) return;
                 session.beginCouponRegroup(stage, nowMs);
             } else {
@@ -371,12 +464,10 @@ final class AgentLpqCoordinator {
     private static void regroupCouponsAtNpc(AgentLpqSession session, Character leader,
                                             AgentLpqDefinition.Stage contract, long nowMs) {
         if (contract.number() == 2) {
-            boolean returningFromTrap = false;
             for (AgentLpqMemberState member : session.members()) {
                 Character participant = character(member.characterId());
                 AgentRuntimeEntry participantEntry = entry(member.characterId());
                 if (participant == null || participant.getMapId() != 922_010_201) continue;
-                returningFromTrap = true;
                 if (member.memberType() == AgentLpqMemberState.MemberType.AGENT
                         && participantEntry != null) {
                     useStageTwoTrapExit(session, participantEntry, participant, nowMs);
@@ -385,10 +476,15 @@ final class AgentLpqCoordinator {
                     member.deferUntil(nowMs + 5_000L);
                 }
             }
-            if (returningFromTrap) return;
         }
         Point npc = ACTIONS.npcPosition(leader, contract.npcId());
         if (npc == null) return;
+        boolean everyoneOnMainMap = session.members().stream()
+                .map(member -> character(member.characterId()))
+                .allMatch(participant -> participant != null
+                        && participant.getMapId() == contract.mapId());
+        long regroupElapsedMs = session.observeMainMapRally(
+                contract.mapId(), everyoneOnMainMap, nowMs);
 
         boolean everyoneAtNpc = true;
         for (AgentLpqMemberState member : session.members()) {
@@ -397,22 +493,73 @@ final class AgentLpqCoordinator {
                 everyoneAtNpc = false;
                 continue;
             }
-            if (near(participant.getPosition(), npc, INTERACTION_RADIUS)) {
+            if (member.couponRegroupRecoveredFor(contract.number())) {
                 AgentRuntimeEntry participantEntry = entry(participant.getId());
                 if (participantEntry != null && participant.getId() != leader.getId()) {
                     ACTIONS.stop(participantEntry);
                 }
                 continue;
             }
-            everyoneAtNpc = false;
+            if (near(participant.getPosition(), npc, INTERACTION_RADIUS)) {
+                AgentRuntimeEntry participantEntry = entry(participant.getId());
+                if (participantEntry != null && participant.getId() != leader.getId()) {
+                    ACTIONS.stop(participantEntry);
+                }
+                if (member.memberType() == AgentLpqMemberState.MemberType.AGENT) {
+                    member.deferUntil(nowMs);
+                }
+                continue;
+            }
             if (member.memberType() == AgentLpqMemberState.MemberType.AGENT) {
                 AgentRuntimeEntry participantEntry = entry(participant.getId());
-                if (participantEntry != null) ACTIONS.navigate(participantEntry, npc, true);
+                if (participantEntry != null) {
+                    if (nowMs < member.nextActionAtMs()) {
+                        everyoneAtNpc = false;
+                        continue;
+                    }
+                    everyoneAtNpc = false;
+                    rallyMemberAtNpc(session, contract.number(), member,
+                            participant, participantEntry, npc, nowMs);
+                } else {
+                    everyoneAtNpc = false;
+                }
             } else if (nowMs >= member.nextActionAtMs()) {
+                everyoneAtNpc = false;
                 participant.dropMessage(6, "LPQ Stage " + contract.number()
                         + " is complete. Return to the balloon with your passes.");
                 member.deferUntil(nowMs + 5_000L);
+            } else {
+                everyoneAtNpc = false;
             }
+        }
+        if (!everyoneAtNpc && couponRegroupPositionRecoveryDue(
+                contract.number(), regroupElapsedMs)) {
+            int recovered = 0;
+            for (AgentLpqMemberState member : session.members()) {
+                if (member.memberType() != AgentLpqMemberState.MemberType.AGENT
+                        || member.couponRegroupRecoveredFor(contract.number())) continue;
+                Character participant = character(member.characterId());
+                AgentRuntimeEntry participantEntry = entry(member.characterId());
+                if (participant == null || participantEntry == null
+                        || participant.getMapId() != contract.mapId()
+                        || near(participant.getPosition(), npc, INTERACTION_RADIUS)) continue;
+                int offset = Math.floorMod(participant.getId() * 37, 81) - 40;
+                Point desired = new Point(npc.x + offset, npc.y);
+                Point grounded = ACTIONS.groundPoint(participant.getMap(), desired);
+                Point target = grounded == null ? desired : grounded;
+                ACTIONS.stop(participantEntry);
+                ACTIONS.stagePosition(participantEntry, participant, target);
+                member.markCouponRegroupRecovered(contract.number());
+                member.clearNpcRallyProgress();
+                recovered++;
+            }
+            if (recovered > 0) {
+                session.markProgress(nowMs);
+                log.warn("LPQ Stage {} coupon-regroup position recovery moved {} lagging "
+                                + "members to the NPC after {}ms: session={}",
+                        contract.number(), recovered, regroupElapsedMs, session.sessionId());
+            }
+            return;
         }
         if (!everyoneAtNpc) return;
 
@@ -443,8 +590,11 @@ final class AgentLpqCoordinator {
         if (isAgent(leader)) {
             AgentRuntimeEntry leaderEntry = entry(leader.getId());
             if (leaderEntry != null) {
-                collectNearestDrop(leaderEntry, leader,
-                        Set.of(AgentLpqDefinition.PASS), new LinkedHashSet<>());
+                if (collectNearbyDrops(
+                        leaderEntry, leader, Set.of(AgentLpqDefinition.PASS)) == 0) {
+                    collectNearestDrop(leaderEntry, leader,
+                            Set.of(AgentLpqDefinition.PASS), new LinkedHashSet<>());
+                }
             }
         } else if (leader.getItemQuantity(AgentLpqDefinition.PASS, false) < contract.submissionCount()) {
             AgentLpqMemberState leaderState = session.member(leader.getId());
@@ -452,6 +602,18 @@ final class AgentLpqCoordinator {
                 leader.dropMessage(6, "Your party dropped its Stage " + contract.number()
                         + " passes here. Loot them, then talk to the balloon.");
                 leaderState.deferUntil(nowMs + 5_000L);
+            }
+        }
+        if (regroupElapsedMs >= recovery(contract.number()).missingPassMs()
+                && leader.getItemQuantity(AgentLpqDefinition.PASS, false)
+                < contract.submissionCount()) {
+            int vacuumed = vacuumPassDrops(leader, Set.of(leader.getMap()));
+            if (vacuumed > 0) {
+                session.markProgress(nowMs);
+                log.warn("LPQ Stage {} coupon-regroup recovery vacuumed {} real pass drops: "
+                                + "session={} leader={}({}) elapsedMs={}",
+                        contract.number(), vacuumed, session.sessionId(), leader.getName(),
+                        leader.getId(), regroupElapsedMs);
             }
         }
     }
@@ -463,6 +625,9 @@ final class AgentLpqCoordinator {
      */
     private static void catchUpLaggingMembers(AgentLpqSession session, int stage,
                                               int destination, long nowMs) {
+        long phaseElapsedMs = Math.max(0L, nowMs - session.phaseEnteredAtMs());
+        boolean absoluteRecoveryDue = stageTransitionCatchUpRecoveryDue(
+                stage, phaseElapsedMs);
         for (AgentLpqMemberState member : session.members()) {
             if (member.memberType() != AgentLpqMemberState.MemberType.AGENT) continue;
             Character agent = character(member.characterId());
@@ -474,6 +639,18 @@ final class AgentLpqCoordinator {
             }
             int currentStage = AgentLpqDefinition.stageNumber(agent.getMapId());
             if (currentStage <= 0 || currentStage >= stage) continue;
+            if (absoluteRecoveryDue) {
+                int sourceMapId = agent.getMapId();
+                if (moveWithinEvent(session, agent, destination, nowMs)) {
+                    member.clearTraversalProgress();
+                    log.warn("LPQ lagging-member absolute transition recovery: session={} "
+                                    + "member={}({}) source={} stage={} destination={} "
+                                    + "phaseElapsedMs={}",
+                            session.sessionId(), agent.getName(), agent.getId(), sourceMapId,
+                            stage, destination, phaseElapsedMs);
+                }
+                continue;
+            }
             if (currentStage == 2 && agent.getMapId() == 922_010_201) {
                 recoverStageTwoTrap(session, agent, nowMs);
                 continue;
@@ -487,7 +664,7 @@ final class AgentLpqCoordinator {
                     : traversalInactivity(member, agent, nextMapId, nowMs);
             if (nextMapId != 0) enterPortalTo(entry, agent, nextMapId);
             if (agent.getMapId() != destination
-                    && inactiveForMs >= STAGE_TRAVERSAL_RECOVERY_GRACE_MS) {
+                    && inactiveForMs >= recovery(stage).traversalMs()) {
                 log.warn("LPQ lagging-member traversal recovery: session={} member={}({}) "
                                 + "source={} stage={} destination={} inactiveForMs={}",
                         session.sessionId(), agent.getName(), agent.getId(), agent.getMapId(),
@@ -500,20 +677,22 @@ final class AgentLpqCoordinator {
 
     private static void ordinaryObjectives(AgentLpqSession session, int stage, long nowMs) {
         int mapId = AgentLpqDefinition.stage(stage).mapId();
-        Point npc = ACTIONS.npcPosition(character(session.eventLeaderId()),
-                AgentLpqDefinition.stage(stage).npcId());
+        Point npc = stageNpcPosition(session, stage);
         Set<Integer> reactorClaims = stage == 2 || stage == 3
                 ? activeReactorClaims(session, mapId) : new LinkedHashSet<>();
         Set<Integer> trapReactorClaims = stage == 2
                 ? activeReactorClaims(session, 922_010_201) : Set.of();
-        Set<Integer> lootClaims = new LinkedHashSet<>();
+        Map<Integer, Set<Integer>> lootClaimsByMap = new LinkedHashMap<>();
         for (AgentLpqMemberState member : session.members()) {
             if (member.memberType() != AgentLpqMemberState.MemberType.AGENT) continue;
             Character agent = character(member.characterId());
             AgentRuntimeEntry entry = entry(member.characterId());
             if (agent == null || entry == null) continue;
             if (stage == 2 && agent.getMapId() == 922_010_201) {
-                if (collectNearestDrop(entry, agent, Set.of(AgentLpqDefinition.PASS), lootClaims)) {
+                Set<Integer> mapLootClaims = lootClaimsByMap.computeIfAbsent(
+                        agent.getMapId(), ignored -> new LinkedHashSet<>());
+                if (collectNearestDrop(entry, agent,
+                        Set.of(AgentLpqDefinition.PASS), mapLootClaims)) {
                     continue;
                 }
                 announcePassProgress(session, member, agent, stage, agent.getMapId(),
@@ -535,7 +714,10 @@ final class AgentLpqCoordinator {
                 continue;
             }
             if (agent.getMapId() != mapId) continue;
-            if (collectNearestDrop(entry, agent, Set.of(AgentLpqDefinition.PASS), lootClaims)) {
+            Set<Integer> mapLootClaims = lootClaimsByMap.computeIfAbsent(
+                    agent.getMapId(), ignored -> new LinkedHashSet<>());
+            if (collectNearestDrop(entry, agent,
+                    Set.of(AgentLpqDefinition.PASS), mapLootClaims)) {
                 continue;
             }
             announcePassProgress(session, member, agent, stage, mapId,
@@ -549,17 +731,37 @@ final class AgentLpqCoordinator {
             }
             if (!hitReactor) {
                 if (stageMapObjectivesExhausted(agent) && npc != null) {
-                    rallyMemberAtNpc(member, agent, entry, npc);
+                    rallyMemberAtNpc(session, stage, member, agent, entry, npc, nowMs);
                     continue;
                 }
                 if (stage == 1) {
                     announceStageOneMeleeIntent(session, member, agent);
                     grindReachableStageOneMobs(entry, agent);
+                } else {
+                    Set<Integer> liveTargets = agent.getMap().getAllMonsters().stream()
+                            .map(Monster::getId).collect(java.util.stream.Collectors.toSet());
+                    Set<Integer> combatTargets = collectionCombatTargets(
+                            stage, ACTIONS.configuredMonsterSpawnIds(agent), liveTargets);
+                    if (ordinaryStageShouldRallyAtNpc(
+                            stage, ACTIONS.liveMonsterCount(agent, combatTargets)) && npc != null) {
+                        rallyMemberAtNpc(session, stage, member, agent, entry, npc, nowMs);
+                    } else {
+                        ACTIONS.grind(entry, combatTargets);
+                    }
                 }
-                else ACTIONS.grind(entry, stageCombatTargets(
-                            stage, ACTIONS.configuredMonsterSpawnIds(agent)));
             }
         }
+    }
+
+    static boolean ordinaryStageShouldRallyAtNpc(int stage, int liveCombatTargets) {
+        return (stage == 2 || stage == 3) && liveCombatTargets <= 0;
+    }
+
+    static Set<Integer> collectionCombatTargets(
+            int stage, Set<Integer> configuredTargets, Set<Integer> liveTargets) {
+        Set<Integer> targets = new LinkedHashSet<>(stageCombatTargets(stage, configuredTargets));
+        if (stage == 3 && liveTargets != null) targets.addAll(liveTargets);
+        return Set.copyOf(targets);
     }
 
     private static Set<Integer> activeReactorClaims(AgentLpqSession session, int mapId) {
@@ -578,19 +780,52 @@ final class AgentLpqCoordinator {
     private static boolean allLoosePassesCollected(AgentLpqSession session, int stage, long nowMs) {
         Set<MapleMap> maps = collectionMaps(session, stage);
         int before = maps.stream().mapToInt(map -> unpickedPassDropCount(map.getDroppedItems())).sum();
-        if (before == 0) return true;
-        Set<Integer> claims = new LinkedHashSet<>();
+        if (before == 0) {
+            session.observeLoosePasses(0, nowMs);
+            return true;
+        }
+        long inactiveForMs = session.observeLoosePasses(before, nowMs);
+        Map<Integer, Set<Integer>> claimsByMap = new LinkedHashMap<>();
         for (AgentLpqMemberState member : session.members()) {
             if (member.memberType() != AgentLpqMemberState.MemberType.AGENT) continue;
             Character agent = character(member.characterId());
             AgentRuntimeEntry entry = entry(member.characterId());
             if (agent != null && entry != null && maps.contains(agent.getMap())) {
-                collectNearestDrop(entry, agent, Set.of(AgentLpqDefinition.PASS), claims);
+                Set<Integer> mapClaims = claimsByMap.computeIfAbsent(
+                        agent.getMapId(), ignored -> new LinkedHashSet<>());
+                collectNearestDrop(entry, agent, Set.of(AgentLpqDefinition.PASS), mapClaims);
             }
         }
         int after = maps.stream().mapToInt(map -> unpickedPassDropCount(map.getDroppedItems())).sum();
-        if (after < before) session.markProgress(nowMs);
+        if (after < before) {
+            session.markProgress(nowMs);
+            session.observeLoosePasses(after, nowMs);
+        }
+        if (after > 0 && inactiveForMs >= recovery(stage).missingPassMs()) {
+            Character leader = character(session.eventLeaderId());
+            int vacuumed = leader == null ? 0 : vacuumPassDrops(leader, maps);
+            int remaining = maps.stream()
+                    .mapToInt(map -> unpickedPassDropCount(map.getDroppedItems())).sum();
+            if (vacuumed > 0) {
+                session.markProgress(nowMs);
+                session.observeLoosePasses(remaining, nowMs);
+                log.warn("LPQ Stage {} loose-pass recovery vacuumed {} stranded drops "
+                                + "after {}ms of natural collection: session={} remaining={}",
+                        stage, vacuumed, inactiveForMs, session.sessionId(), remaining);
+            }
+            return remaining == 0;
+        }
         return after == 0;
+    }
+
+    private static long splitRoomCompletionInactivity(
+            AgentLpqSession session, int stage, int partyPasses, long nowMs) {
+        Set<MapleMap> maps = collectionMaps(session, stage);
+        int liveMobs = maps.stream().mapToInt(map -> map.getAllMonsters().size()).sum();
+        long liveMobHp = maps.stream().flatMap(map -> map.getAllMonsters().stream())
+                .mapToLong(Monster::getHp).sum();
+        return session.observePassRecoveryProgress(
+                partyPasses, liveMobs, activeReactorCount(session, maps), liveMobHp, nowMs);
     }
 
     static int unpickedPassDropCount(Collection<MapItem> drops) {
@@ -627,26 +862,99 @@ final class AgentLpqCoordinator {
         return true;
     }
 
+    /** Collects only drops already lying at the character's feet; this is not a vacuum. */
+    private static int collectNearbyDrops(
+            AgentRuntimeEntry entry, Character agent, Set<Integer> itemIds) {
+        if (entry == null || agent == null || agent.getMap() == null
+                || agent.getPosition() == null) return 0;
+        int radius = server.agents.runtime.AgentRuntimeConfig.cfg.LOOT_RADIUS;
+        List<MapItem> nearby = agent.getMap().getDroppedItems().stream()
+                .filter(java.util.Objects::nonNull)
+                .filter(drop -> !drop.isPickedUp())
+                .filter(drop -> itemIds == null || itemIds.contains(drop.getItemId()))
+                .filter(drop -> Math.abs(drop.getPosition().x - agent.getPosition().x) <= radius
+                        && Math.abs(drop.getPosition().y - agent.getPosition().y) <= radius)
+                .toList();
+        if (nearby.isEmpty()) return 0;
+        ACTIONS.stop(entry);
+        int collected = 0;
+        for (MapItem drop : nearby) {
+            if (drop.isPickedUp()) continue;
+            agent.pickupItem(drop);
+            collected++;
+        }
+        return collected;
+    }
+
     private static boolean stageMapObjectivesExhausted(Character agent) {
         return agent != null && activeReactors(agent).isEmpty()
                 && agent.getMap().getAllMonsters().isEmpty()
                 && unpickedPassDropCount(agent.getMap().getDroppedItems()) == 0;
     }
 
+    private static Point stageNpcPosition(AgentLpqSession session, int stage) {
+        int mapId = AgentLpqDefinition.stage(stage).mapId();
+        Character observer = session.members().stream()
+                .map(member -> character(member.characterId()))
+                .filter(java.util.Objects::nonNull)
+                .filter(member -> member.getMapId() == mapId)
+                .findFirst().orElse(null);
+        return observer == null ? null
+                : ACTIONS.npcPosition(observer, AgentLpqDefinition.stage(stage).npcId());
+    }
+
     private static void rallyMemberAtNpc(
-            AgentLpqMemberState member, Character agent,
-            AgentRuntimeEntry entry, Point npc) {
+            AgentLpqSession session, int stage, AgentLpqMemberState member,
+            Character agent, AgentRuntimeEntry entry, Point npc, long nowMs) {
         if (agent == null || entry == null || npc == null) return;
+        if (member != null) {
+            member.assign(AgentLpqMemberState.Role.NPC_RALLY, 0);
+        }
+        if (member != null && member.couponRegroupRecoveredFor(stage)) {
+            ACTIONS.stop(entry);
+            return;
+        }
         int offset = Math.floorMod(agent.getId() * 37, 81) - 40;
         Point desired = new Point(npc.x + offset, npc.y);
         Point grounded = ACTIONS.groundPoint(agent.getMap(), desired);
-        Point target = grounded == null ? desired : grounded;
-        if (near(agent.getPosition(), target, 30)) {
+        Point finalTarget = grounded == null ? desired : grounded;
+        Point target = finalTarget;
+        int nextMapId = AgentLpqDefinition.nextTraversalMap(agent.getMapId());
+        Point authoredWaypoint = nextMapId == 0 ? null
+                : AgentLpqExitRoutePolicy.nextWaypoint(
+                agent.getMapId(), nextMapId, agent.getPosition(), finalTarget);
+        if (authoredWaypoint != null) target = authoredWaypoint;
+        if (near(agent.getPosition(), finalTarget, 30)) {
             ACTIONS.stop(entry);
-            if (member != null) member.clearTraversalProgress();
-        } else {
-            ACTIONS.navigate(entry, target, true);
+            if (member != null) member.clearNpcRallyProgress();
+            return;
         }
+        long distanceSq = agent.getPosition() == null
+                ? Long.MAX_VALUE : (long) agent.getPosition().distanceSq(finalTarget);
+        long inactiveForMs = member == null ? 0L : member.observeNpcRallyProgress(
+                stage, agent.getMapId(), agent.getPosition(), distanceSq, nowMs);
+        AgentLpqStageRecoveryPolicy recovery = recovery(stage);
+        boolean partyRallyRecoveryReady = session.mainMapRallyElapsed(
+                agent.getMapId(), nowMs)
+                >= recovery(stage).rallyRecoveryMs();
+        if (partyRallyRecoveryReady && npcRallyRecoveryDue(stage, inactiveForMs)) {
+            ACTIONS.stop(entry);
+            ACTIONS.stagePosition(entry, agent, finalTarget);
+            member.markCouponRegroupRecovered(stage);
+            member.clearNpcRallyProgress();
+            session.markProgress(nowMs);
+            log.warn("LPQ Stage {} NPC rally position recovery: session={} member={}({}) "
+                            + "map={} target={} inactiveForMs={}", stage, session.sessionId(),
+                    agent.getName(), agent.getId(), agent.getMapId(), finalTarget, inactiveForMs);
+            return;
+        }
+        if (member != null && member.claimNpcRallyRetry(
+                inactiveForMs, nowMs, recovery.rallyRetryMs())) {
+            log.info("LPQ Stage {} NPC rally watchdog retry: session={} member={}({}) "
+                            + "map={} waypoint={} inactiveForMs={}", stage, session.sessionId(),
+                    agent.getName(), agent.getId(), agent.getMapId(), target, inactiveForMs);
+        }
+        ACTIONS.navigate(entry, target, true);
     }
 
     private static boolean rallyPartyAtNpc(
@@ -663,7 +971,8 @@ final class AgentLpqCoordinator {
             if (near(participant.getPosition(), npc, INTERACTION_RADIUS)) continue;
             gathered = false;
             if (member.memberType() == AgentLpqMemberState.MemberType.AGENT) {
-                rallyMemberAtNpc(member, participant, entry(member.characterId()), npc);
+                rallyMemberAtNpc(session, stage, member, participant,
+                        entry(member.characterId()), npc, nowMs);
             } else if (nowMs >= member.nextActionAtMs()) {
                 participant.dropMessage(6, "LPQ Stage " + stage
                         + ": gather at the balloon with the party.");
@@ -797,13 +1106,14 @@ final class AgentLpqCoordinator {
             if (entry == null) continue;
             if (combatCleared) {
                 if (member.characterId() != session.eventLeaderId() && npc != null) {
-                    rallyMemberAtNpc(member, participant, entry, npc);
+                    rallyMemberAtNpc(session, 7, member, participant, entry, npc, nowMs);
                 }
                 continue;
             }
             if (topIndex >= 0) {
                 if (liveTriggerReactors.isEmpty()) {
-                    if (npc != null) rallyMemberAtNpc(member, participant, entry, npc);
+                    if (npc != null) rallyMemberAtNpc(
+                            session, 7, member, participant, entry, npc, nowMs);
                     continue;
                 }
                 boolean workingReactor = hitStageSevenTrigger(
@@ -821,7 +1131,7 @@ final class AgentLpqCoordinator {
             if (ACTIONS.liveMonsterCount(participant, Set.of(AgentLpqDefinition.ROMBARD)) > 0) {
                 ACTIONS.grind(entry, Set.of(AgentLpqDefinition.ROMBARD));
             } else if (npc != null) {
-                rallyMemberAtNpc(member, participant, entry, npc);
+                rallyMemberAtNpc(session, 7, member, participant, entry, npc, nowMs);
             } else {
                 ACTIONS.stop(entry);
             }
@@ -907,7 +1217,8 @@ final class AgentLpqCoordinator {
         boolean sweepComplete = session.stage7LootSweepIndex() >= STAGE_7_LOOT_SWEEP.size();
         if (sweepComplete && leaderEntry != null) {
             Point npc = ACTIONS.npcPosition(leader, AgentLpqDefinition.stage(7).npcId());
-            if (npc != null) rallyMemberAtNpc(leaderState, leader, leaderEntry, npc);
+            if (npc != null) rallyMemberAtNpc(
+                    session, 7, leaderState, leader, leaderEntry, npc, nowMs);
         }
         if (session.stage7ForceLootAttempted() || !sweepComplete
                 || combatClearedForMs < STAGE_7_FORCE_LOOT_DELAY_MS) return;
@@ -926,6 +1237,7 @@ final class AgentLpqCoordinator {
         for (AgentLpqMemberState member : session.members()) {
             Character participant = character(member.characterId());
             if (participant == null || !rooms.contains(participant.getMapId())) continue;
+            session.rooms().markEntered(participant.getMapId());
             if (session.rooms().completed(participant.getMapId())) continue;
             if (java.util.Objects.equals(session.rooms().owner(participant.getMapId()), participant.getId())) {
                 session.rooms().markProgress(participant.getMapId(), nowMs);
@@ -959,9 +1271,8 @@ final class AgentLpqCoordinator {
             }
         }
         assignRooms(session, stage, rooms, nowMs);
-        Point npc = ACTIONS.npcPosition(character(session.eventLeaderId()),
-                AgentLpqDefinition.stage(stage).npcId());
-        Set<Integer> lootClaims = new LinkedHashSet<>();
+        Point npc = stageNpcPosition(session, stage);
+        Map<Integer, Set<Integer>> lootClaimsByMap = new LinkedHashMap<>();
         for (AgentLpqMemberState member : session.members()) {
             if (member.memberType() != AgentLpqMemberState.MemberType.AGENT) continue;
             Character agent = character(member.characterId());
@@ -969,20 +1280,28 @@ final class AgentLpqCoordinator {
             if (agent == null || entry == null) continue;
             if (!rooms.contains(agent.getMapId())) member.clearRoomExitProgress();
             if (rooms.contains(agent.getMapId())) {
+                // Map object ids are scoped to one MapleMap. Sharing one bare OID set
+                // across all five/six split rooms makes, for example, room 503's pass
+                // look claimed merely because room 502 happened to allocate the same
+                // object id. Keep the cooperative claim set map-scoped.
+                Set<Integer> roomLootClaims = lootClaimsByMap.computeIfAbsent(
+                        agent.getMapId(), ignored -> new LinkedHashSet<>());
                 if (collectNearestDrop(entry, agent,
-                        Set.of(AgentLpqDefinition.PASS), lootClaims)) continue;
+                        Set.of(AgentLpqDefinition.PASS), roomLootClaims)) continue;
             }
             int assigned = member.assignedMapId();
             if (agent.getMapId() == mainMap && assigned != 0) {
                 if (session.rooms().completed(assigned)) {
                     member.assign(AgentLpqMemberState.Role.GENERAL, 0);
                     member.clearTraversalProgress();
-                    if (npc != null) rallyMemberAtNpc(member, agent, entry, npc);
+                    if (npc != null) rallyMemberAtNpc(
+                            session, stage, member, agent, entry, npc, nowMs);
                     continue;
                 }
                 if (!java.util.Objects.equals(session.rooms().owner(assigned), agent.getId())) {
                     member.assign(AgentLpqMemberState.Role.GENERAL, 0);
-                    if (npc != null) rallyMemberAtNpc(member, agent, entry, npc);
+                    if (npc != null) rallyMemberAtNpc(
+                            session, stage, member, agent, entry, npc, nowMs);
                     continue;
                 }
                 if (member.observeRoomApproachProgress(assigned, agent.getPosition())) {
@@ -992,7 +1311,8 @@ final class AgentLpqCoordinator {
                 continue;
             }
             if (agent.getMapId() == mainMap && assigned == 0) {
-                if (npc != null) rallyMemberAtNpc(member, agent, entry, npc);
+                if (npc != null) rallyMemberAtNpc(
+                        session, stage, member, agent, entry, npc, nowMs);
                 continue;
             }
             if (!rooms.contains(agent.getMapId())) continue;
@@ -1000,20 +1320,22 @@ final class AgentLpqCoordinator {
             session.rooms().markProgress(roomMapId, nowMs);
             if (session.rooms().completed(roomMapId)) {
                 member.beginRoomExit(roomMapId, nowMs);
-                long inactiveForMs = traversalInactivity(member, agent, mainMap, nowMs);
                 if (prepareDarkSightRoomExit(
                         stage, roomMapId, entry, agent, member, nowMs)) {
                     continue;
                 }
-                if (inactiveForMs >= STAGE_TRAVERSAL_RECOVERY_GRACE_MS
-                        || member.roomExitElapsed(nowMs) >= STAGE_TRAVERSAL_RECOVERY_GRACE_MS) {
+                long exitInactiveMs = traversalInactivity(member, agent, mainMap, nowMs);
+                long exitElapsedMs = member.roomExitElapsed(roomMapId, nowMs);
+                if (exitInactiveMs >= recovery(stage).roomExitPlacementMs()
+                        && exitElapsedMs >= recovery(stage).roomExitPlacementMs()) {
                     forceRoomExitThroughPortal(session, member, entry, agent, mainMap, nowMs);
                 } else {
                     enterPortalTo(entry, agent, mainMap);
                     if (agent.getMapId() == mainMap) {
                         member.assign(AgentLpqMemberState.Role.GENERAL, 0);
                         member.clearTraversalProgress();
-                        if (npc != null) rallyMemberAtNpc(member, agent, entry, npc);
+                        if (npc != null) rallyMemberAtNpc(
+                                session, stage, member, agent, entry, npc, nowMs);
                     }
                 }
                 continue;
@@ -1082,7 +1404,8 @@ final class AgentLpqCoordinator {
                 if (agent.getMapId() == mainMap) {
                     member.assign(AgentLpqMemberState.Role.GENERAL, 0);
                     member.clearTraversalProgress();
-                    if (npc != null) rallyMemberAtNpc(member, agent, entry, npc);
+                    if (npc != null) rallyMemberAtNpc(
+                            session, stage, member, agent, entry, npc, nowMs);
                 }
                 session.markProgress(nowMs);
             }
@@ -1222,6 +1545,12 @@ final class AgentLpqCoordinator {
         int passCount = character == null ? 0
                 : character.getItemQuantity(AgentLpqDefinition.PASS, false);
         member.beginRoomPassCollection(roomMapId, passCount);
+        if (stage == 5 && character != null && session.eventInstance() != null) {
+            MapleMap room = session.eventInstance().getMapInstance(roomMapId);
+            AgentRuntimeEntry entry = entry(member.characterId());
+            AgentNavigationGraphService.warmGraphAsync(
+                    room, AgentMovementStateRuntime.movementProfileOrCharacter(entry, character));
+        }
         announceRoomIntent(session, member, character, stage, roomMapId, role, helper);
     }
 
@@ -1355,13 +1684,31 @@ final class AgentLpqCoordinator {
 
     private static void recoverMissingPasses(AgentLpqSession session, Character leader,
                                              int stage, int required, long nowMs) {
-        int partyPasses = partyPassCount(session);
-        int leaderPasses = leader.getItemQuantity(AgentLpqDefinition.PASS, false);
-        if (leaderPasses >= required
-                || session.observePassRecovery(partyPasses, nowMs) < MISSING_PASS_GRACE_MS) {
+        if (stage == 5 && !allSplitRoomsEntered(session, stage)) {
+            session.markPassRecoveryConsolidation(nowMs);
             return;
         }
+        if (session.passHandoffRecoveryActive()) {
+            recoverPassHandoffAtNpc(
+                    session, leader, AgentLpqDefinition.stage(stage), nowMs);
+            return;
+        }
+        int partyPasses = partyPassCount(session);
+        int leaderPasses = leader.getItemQuantity(AgentLpqDefinition.PASS, false);
         Set<MapleMap> maps = collectionMaps(session, stage);
+        int liveMobs = maps.stream().mapToInt(map -> map.getAllMonsters().size()).sum();
+        int activeReactorCount = activeReactorCount(session, maps);
+        long liveMobHp = maps.stream().flatMap(map -> map.getAllMonsters().stream())
+                .mapToLong(Monster::getHp).sum();
+        long inactiveForMs = session.observePassRecoveryProgress(
+                partyPasses, liveMobs, activeReactorCount, liveMobHp, nowMs);
+        boolean stageOneCombatCeilingReached = stageOneCombatCeilingReached(
+                stage, session.phaseEnteredAtMs(), nowMs, STAGE_1_MAX_NATURAL_COMBAT_MS);
+        if (leaderPasses >= required
+                || (!stageOneCombatCeilingReached
+                && inactiveForMs < recovery(stage).missingPassMs())) {
+            return;
+        }
         int vacuumed = recoverPassDrops(session, leader, stage, maps);
         partyPasses = partyPassCount(session);
         if (passHandoffRecoveryApplicable(stage, partyPasses, required)) {
@@ -1385,24 +1732,24 @@ final class AgentLpqCoordinator {
             return;
         }
         if (partyPasses >= required) return;
-        int liveMobs = maps.stream().mapToInt(map -> map.getAllMonsters().size()).sum();
         if (stage == 5) {
-            int recoveredReactors = recoverStageFiveReactors(session, nowMs);
-            if (recoveredReactors > 0) {
+            int resumedReactors = recoverStageFiveReactors(session, nowMs);
+            if (resumedReactors > 0) {
                 session.markPassRecoveryConsolidation(nowMs);
-                log.warn("LPQ Stage 5 missing-pass recovery hit {} stalled box reactors; "
-                                + "hazard mobs were left untouched: session={} partyPasses={}/{}",
-                        recoveredReactors, session.sessionId(), partyPasses, required);
+                log.warn("LPQ Stage 5 missing-pass recovery resumed normal navigation for {} "
+                                + "stalled box workers; hazard mobs were left untouched: "
+                                + "session={} partyPasses={}/{}",
+                        resumedReactors, session.sessionId(), partyPasses, required);
                 return;
             }
         }
         if (stage == 7) {
-            int recoveredReactors = recoverStageSevenReactors(session, nowMs);
-            if (recoveredReactors > 0) {
+            int resumedReactors = recoverStageSevenReactors(session, nowMs);
+            if (resumedReactors > 0) {
                 session.markPassRecoveryConsolidation(nowMs);
-                log.warn("LPQ Stage 7 recovery hit {} stalled trigger reactors before "
+                log.warn("LPQ Stage 7 recovery resumed {} ranged trigger workers before "
                                 + "considering any Rombard or pass fallback: session={} partyPasses={}/{}",
-                        recoveredReactors, session.sessionId(), partyPasses, required);
+                        resumedReactors, session.sessionId(), partyPasses, required);
                 return;
             }
         }
@@ -1415,9 +1762,10 @@ final class AgentLpqCoordinator {
             }
             session.markPassRecoveryMobSweep(nowMs);
             log.warn("LPQ Stage {} missing-pass recovery killed {} stalled mobs with drops: "
-                            + "session={} partyPasses={}/{} maps={}",
+                            + "session={} partyPasses={}/{} maps={} phaseElapsedMs={} inactiveForMs={}",
                     stage, liveMobs, session.sessionId(), partyPasses, required,
-                    maps.stream().map(MapleMap::getId).toList());
+                    maps.stream().map(MapleMap::getId).toList(),
+                    Math.max(0L, nowMs - session.phaseEnteredAtMs()), inactiveForMs);
             return;
         }
         int missing = Math.max(0, required - partyPasses);
@@ -1435,8 +1783,45 @@ final class AgentLpqCoordinator {
                 partyPasses, required, liveMobs, maps.stream().map(MapleMap::getId).toList());
     }
 
+    private static boolean memberOutsideStageMap(AgentLpqSession session, int stageMapId) {
+        return session.members().stream()
+                .map(member -> character(member.characterId()))
+                .anyMatch(participant -> participant == null || participant.getMapId() != stageMapId);
+    }
+
+    private static boolean outsideMembersHaveCompletedRooms(
+            AgentLpqSession session, int stage, int stageMapId) {
+        List<Integer> rooms = AgentLpqDefinition.roomMaps(stage);
+        for (AgentLpqMemberState member : session.members()) {
+            Character participant = character(member.characterId());
+            if (participant == null) return false;
+            if (participant.getMapId() == stageMapId) continue;
+            if (!rooms.contains(participant.getMapId())
+                    || !session.rooms().completed(participant.getMapId())) return false;
+        }
+        return true;
+    }
+
+    private static void purgeResidualPasses(AgentLpqSession session, int clearedStage) {
+        int removed = 0;
+        for (AgentLpqMemberState member : session.members()) {
+            Character participant = character(member.characterId());
+            int quantity = participant == null ? 0
+                    : participant.getItemQuantity(AgentLpqDefinition.PASS, false);
+            if (quantity <= 0) continue;
+            AgentInventoryGatewayRuntime.inventory().removeById(
+                    participant, InventoryType.ETC, AgentLpqDefinition.PASS,
+                    quantity, false, false);
+            removed += quantity;
+        }
+        if (removed > 0) {
+            log.info("LPQ cleared Stage {} residual pass cleanup removed {} coupons: session={}",
+                    clearedStage, removed, session.sessionId());
+        }
+    }
+
     private static int recoverStageFiveReactors(AgentLpqSession session, long nowMs) {
-        int hit = 0;
+        int resumed = 0;
         for (int roomMapId : AgentLpqDefinition.roomMaps(5)) {
             AgentLpqMemberState workerState = session.members().stream()
                     .filter(member -> member.memberType() == AgentLpqMemberState.MemberType.AGENT)
@@ -1450,48 +1835,106 @@ final class AgentLpqCoordinator {
                     .findFirst().orElse(null);
             if (workerState == null) continue;
             Character worker = character(workerState.characterId());
+            AgentRuntimeEntry workerEntry = entry(workerState.characterId());
+            if (workerEntry == null) continue;
             List<Reactor> stalled = activeReactors(worker);
             if (stalled.isEmpty()) continue;
-            log.warn("LPQ Stage 5 recovery found stalled box reactors: map={} owner={} "
-                            + "member={}({}) reactorOids={}",
-                    roomMapId, session.rooms().owner(roomMapId), worker.getName(), worker.getId(),
-                    stalled.stream().map(Reactor::getObjectId).toList());
-            for (Reactor reactor : stalled) {
-                if (ACTIONS.hitReactor(worker, reactor.getObjectId())) hit++;
+            if (hitReactorFromCandidates(workerEntry, worker, nowMs, workerState,
+                    false, Set.of(), stalled, true)) {
+                resumed++;
+                log.warn("LPQ Stage 5 recovery resumed committed-box navigation: map={} "
+                                + "owner={} member={}({}) reactorOids={}",
+                        roomMapId, session.rooms().owner(roomMapId), worker.getName(),
+                        worker.getId(), stalled.stream().map(Reactor::getObjectId).toList());
             }
-            LPQ.lootNearby(worker, Set.of(AgentLpqDefinition.PASS));
-            session.rooms().markProgress(roomMapId, nowMs);
         }
-        if (hit > 0) session.markProgress(nowMs);
-        return hit;
+        return resumed;
     }
 
     private static int recoverStageSevenReactors(AgentLpqSession session, long nowMs) {
-        Character worker = session.members().stream()
+        AgentLpqMemberState workerState = session.members().stream()
                 .filter(member -> member.memberType() == AgentLpqMemberState.MemberType.AGENT)
-                .map(member -> character(member.characterId()))
-                .filter(java.util.Objects::nonNull)
-                .filter(agent -> agent.getMapId() == AgentLpqDefinition.stage(7).mapId())
+                .filter(member -> member.role() == AgentLpqMemberState.Role.RANGED_TRIGGER)
+                .filter(member -> {
+                    Character worker = character(member.characterId());
+                    return worker != null
+                            && worker.getMapId() == AgentLpqDefinition.stage(7).mapId();
+                })
                 .findFirst().orElse(null);
-        if (worker == null) return 0;
+        if (workerState == null) return 0;
+        Character worker = character(workerState.characterId());
+        AgentRuntimeEntry workerEntry = entry(workerState.characterId());
+        if (worker == null || workerEntry == null) return 0;
         List<Reactor> stalled = activeReactors(worker).stream()
                 .filter(reactor -> reactor.getId() == AgentLpqDefinition.STAGE_7_TRIGGER_REACTOR)
                 .toList();
-        int hit = 0;
-        for (Reactor reactor : stalled) {
-            if (ACTIONS.hitReactor(worker, reactor.getObjectId())) hit++;
-        }
-        if (hit > 0) session.markProgress(nowMs);
-        return hit;
+        if (stalled.isEmpty()) return 0;
+        return hitStageSevenTrigger(session, workerEntry, worker, nowMs, workerState,
+                Set.of(), stalled) ? 1 : 0;
     }
 
     static boolean missingPassMobSweepAllowed(int stage) {
         return stage != 5;
     }
 
+    static boolean npcRallyRecoveryDue(int stage, long inactiveForMs) {
+        return inactiveForMs >= recovery(stage).rallyRecoveryMs();
+    }
+
+    static boolean couponRegroupPositionRecoveryDue(int stage, long regroupElapsedMs) {
+        return regroupElapsedMs >= recovery(stage).rallyRecoveryMs();
+    }
+
+    static boolean postClearTransitionRecoveryDue(int stage, long transitionElapsedMs) {
+        return transitionElapsedMs >= recovery(stage).rallyRecoveryMs();
+    }
+
+    static boolean stageTransitionCatchUpRecoveryDue(int destinationStage, long phaseElapsedMs) {
+        return destinationStage != 2
+                && phaseElapsedMs >= recovery(destinationStage).rallyRecoveryMs();
+    }
+
+    static boolean stageOneCombatCeilingReached(int stage, long phaseEnteredAtMs,
+                                                long nowMs, long ceilingMs) {
+        return stage == 1
+                && ceilingMs > 0L
+                && nowMs - phaseEnteredAtMs >= ceilingMs;
+    }
+
+    static boolean allSplitRoomsEntered(AgentLpqSession session, int stage) {
+        if (session == null) return false;
+        List<Integer> rooms = AgentLpqDefinition.roomMaps(stage);
+        return rooms.isEmpty() || session.rooms().enteredAll(rooms);
+    }
+
+    private static int activeReactorCount(AgentLpqSession session, Set<MapleMap> maps) {
+        EventInstanceManager event = session.eventInstance();
+        int count = 0;
+        for (MapleMap map : maps) {
+            for (Reactor reactor : map.getAllReactors()) {
+                if (reactor == null || !reactor.isAlive() || !reactor.isActive()) continue;
+                if (event != null && event.getProperty(ReactorActionManager.eventReactorActionKey(
+                        "lpq", map.getId(), reactor.getObjectId())) != null) continue;
+                count++;
+            }
+        }
+        return count;
+    }
+
     static boolean passHandoffRecoveryApplicable(int stage, int partyPasses, int required) {
         if (partyPasses < required) return false;
         return stage == 4 || stage == 5 || stage == 7;
+    }
+
+    static PassHandoffExitAction passHandoffExitAction(int stage, long exitInactiveMs) {
+        AgentLpqStageRecoveryPolicy recovery = recovery(stage);
+        if (exitInactiveMs >= recovery.portalMs()) {
+            return PassHandoffExitAction.MOVE_TO_STAGE;
+        }
+        if (exitInactiveMs >= recovery.roomExitPlacementMs()) {
+            return PassHandoffExitAction.PLACE_AT_PORTAL;
+        }
+        return PassHandoffExitAction.NAVIGATE;
     }
 
     private static boolean recoverPassHandoffAtNpc(
@@ -1509,7 +1952,39 @@ final class AgentLpqCoordinator {
             }
             if (participant.getMapId() == mainMapId) continue;
             everyoneOnMainMap = false;
-            if (recoveryElapsedMs >= PORTAL_RECOVERY_GRACE_MS) {
+            PassHandoffExitAction exitAction = passHandoffExitAction(
+                    contract.number(), recoveryElapsedMs);
+            if (roomMaps.contains(participant.getMapId())
+                    && member.memberType() == AgentLpqMemberState.MemberType.AGENT) {
+                AgentRuntimeEntry participantEntry = entry(participant.getId());
+                if (participantEntry == null) continue;
+                int roomMapId = participant.getMapId();
+                member.beginRoomExit(roomMapId, nowMs);
+                if (exitAction == PassHandoffExitAction.NAVIGATE
+                        && prepareDarkSightRoomExit(contract.number(), roomMapId,
+                        participantEntry, participant, member, nowMs)) {
+                    continue;
+                }
+                if (exitAction == PassHandoffExitAction.NAVIGATE) {
+                    enterPortalTo(participantEntry, participant, mainMapId);
+                    continue;
+                }
+                if (exitAction == PassHandoffExitAction.PLACE_AT_PORTAL) {
+                    forceRoomExitThroughPortal(
+                            session, member, participantEntry, participant, mainMapId, nowMs);
+                    continue;
+                }
+            } else if (roomMaps.contains(participant.getMapId())
+                    && member.memberType() == AgentLpqMemberState.MemberType.HUMAN
+                    && exitAction != PassHandoffExitAction.MOVE_TO_STAGE) {
+                if (nowMs >= member.nextActionAtMs()) {
+                    participant.dropMessage(6, "LPQ Stage " + contract.number()
+                            + " is ready. Use the room's exit portal and return to the balloon.");
+                    member.deferUntil(nowMs + 5_000L);
+                }
+                continue;
+            }
+            if (exitAction == PassHandoffExitAction.MOVE_TO_STAGE) {
                 int sourceMapId = participant.getMapId();
                 if (moveWithinEvent(session, participant, mainMapId, nowMs)) {
                     member.assign(AgentLpqMemberState.Role.GENERAL, 0);
@@ -1519,43 +1994,37 @@ final class AgentLpqCoordinator {
                             session.sessionId(), contract.number(), participant.getName(),
                             participant.getId(), sourceMapId, mainMapId, recoveryElapsedMs);
                 }
-                continue;
-            }
-            if (!roomMaps.contains(participant.getMapId())) continue;
-            AgentRuntimeEntry participantEntry = entry(participant.getId());
-            if (member.memberType() == AgentLpqMemberState.MemberType.AGENT
-                    && participantEntry != null) {
-                int roomMapId = participant.getMapId();
-                member.beginRoomExit(roomMapId, nowMs);
-                if (prepareDarkSightRoomExit(contract.number(), roomMapId,
-                        participantEntry, participant, member, nowMs)) {
-                    continue;
-                }
-                forceRoomExitThroughPortal(
-                        session, member, participantEntry, participant, mainMapId, nowMs);
-            } else {
-                int sourceMapId = participant.getMapId();
-                Integer portalId = portalIdTo(participant, mainMapId);
-                if (portalId != null && LPQ.enterPortal(participant, portalId)) {
-                    session.markProgress(nowMs);
-                    log.warn("LPQ authored room-exit recovery moved human member: session={} "
-                                    + "stage={} member={}({}) sourceMap={} portal={} destination={}",
-                            session.sessionId(), contract.number(), participant.getName(),
-                            participant.getId(), sourceMapId, portalId, mainMapId);
-                }
             }
         }
-        if (!everyoneOnMainMap) return false;
+        if (!everyoneOnMainMap) {
+            session.observeMainMapRally(mainMapId, false, nowMs);
+            return false;
+        }
 
         regroupCouponsAtNpc(session, leader, contract, nowMs);
         Point npc = ACTIONS.npcPosition(leader, contract.npcId());
-        if (npc == null || leader.getItemQuantity(
-                AgentLpqDefinition.PASS, false) < contract.submissionCount()) return false;
-        return session.members().stream()
-                .map(member -> character(member.characterId()))
-                .allMatch(participant -> participant != null
-                        && participant.getMapId() == mainMapId
-                        && near(participant.getPosition(), npc, INTERACTION_RADIUS));
+        if (npc == null) return false;
+        boolean everyoneAtNpc = true;
+        for (AgentLpqMemberState member : session.members()) {
+            Character participant = character(member.characterId());
+            if (participant == null || participant.getMapId() != mainMapId) {
+                everyoneAtNpc = false;
+                continue;
+            }
+            if (near(participant.getPosition(), npc, INTERACTION_RADIUS)) continue;
+            AgentRuntimeEntry participantEntry = entry(participant.getId());
+            if (member.memberType() == AgentLpqMemberState.MemberType.AGENT
+                    && participantEntry != null) {
+                rallyMemberAtNpc(session, contract.number(), member,
+                        participant, participantEntry, npc, nowMs);
+                everyoneAtNpc = false;
+                continue;
+            } else {
+                everyoneAtNpc = false;
+            }
+        }
+        return everyoneAtNpc && leader.getItemQuantity(
+                AgentLpqDefinition.PASS, false) >= contract.submissionCount();
     }
 
     private static boolean forceRoomExitThroughPortal(
@@ -1569,6 +2038,7 @@ final class AgentLpqCoordinator {
         ACTIONS.stagePosition(entry, agent, portal);
         boolean exited = LPQ.enterPortal(agent, portalId);
         if (!exited) return false;
+        session.rooms().release(sourceMapId);
         member.assign(AgentLpqMemberState.Role.GENERAL, 0);
         member.clearTraversalProgress();
         session.markProgress(nowMs);
@@ -1677,7 +2147,7 @@ final class AgentLpqCoordinator {
         long inactiveForMs = member == null ? 0L
                 : traversalInactivity(member, agent, destinationMapId, nowMs);
         Integer portalId = portalIdTo(agent, destinationMapId);
-        boolean stalled = inactiveForMs >= PORTAL_RECOVERY_GRACE_MS;
+        boolean stalled = inactiveForMs >= recovery(2).portalMs();
         if (portalId != null && !stalled) return enterPortalTo(entry, agent, destinationMapId);
         ACTIONS.stop(entry);
         boolean recovered = recoverStageTwoTrap(session, agent, nowMs);
@@ -1731,7 +2201,7 @@ final class AgentLpqCoordinator {
         Point npc = ACTIONS.npcPosition(leader, stage.npcId());
         if (entry == null) return;
         boolean nearNpc = npc != null && near(leader.getPosition(), npc, INTERACTION_RADIUS);
-        if (!nearNpc && readyForMs < SUBMISSION_RECOVERY_GRACE_MS) {
+        if (!nearNpc && readyForMs < recovery(stage.number()).submissionMs()) {
             if (npc != null) ACTIONS.navigate(entry, npc, true);
             return;
         }
@@ -1741,6 +2211,7 @@ final class AgentLpqCoordinator {
             if (leaderState != null) leaderState.deferUntil(nowMs + INTERACTION_RETRY_MS);
             String clearAfter = LPQ.property(leader, stage.number() + "stageclear");
             if (clearBefore == null && clearAfter != null) {
+                purgeResidualPasses(session, stage.number());
                 session.markProgress(nowMs);
             }
             if (!nearNpc && clearAfter != null) {
@@ -1756,32 +2227,18 @@ final class AgentLpqCoordinator {
             advanceStageTwoScoutProtocol(session, nowMs);
             return;
         }
-        int destination = stage == 9 ? AgentLpqDefinition.CLEAR_MAP : AgentLpqDefinition.stage(stage + 1).mapId();
-        for (AgentLpqMemberState member : session.members()) {
-            if (member.memberType() != AgentLpqMemberState.MemberType.AGENT) continue;
-            Character agent = character(member.characterId());
-            AgentRuntimeEntry entry = entry(member.characterId());
-            if (agent != null && entry != null && AgentLpqDefinition.stageNumber(agent.getMapId()) == stage) {
-                long inactiveForMs = traversalInactivity(member, agent, destination, nowMs);
-                enterPortalTo(entry, agent, destination);
-                if (agent.getMapId() != destination
-                        && inactiveForMs >= STAGE_TRAVERSAL_RECOVERY_GRACE_MS) {
-                    log.warn("LPQ stage traversal recovery: session={} member={}({}) "
-                                    + "stage={} destination={} inactiveForMs={}",
-                            session.sessionId(), agent.getName(), agent.getId(), stage,
-                            destination, inactiveForMs);
-                    moveWithinEvent(session, agent, destination, nowMs);
-                    member.clearTraversalProgress();
-                }
-            }
-        }
+        movePartyToNextStageTogether(session, stage, nowMs);
     }
 
     private static void movePartyToNextStageTogether(
             AgentLpqSession session, int stage, long nowMs) {
         int source = AgentLpqDefinition.stage(stage).mapId();
-        int destination = AgentLpqDefinition.stage(stage + 1).mapId();
+        int destination = stage == 9
+                ? AgentLpqDefinition.CLEAR_MAP : AgentLpqDefinition.stage(stage + 1).mapId();
+        long transitionElapsedMs = session.beginOrObservePostClearTransition(nowMs);
+        boolean recoveryDue = postClearTransitionRecoveryDue(stage, transitionElapsedMs);
         boolean allReady = true;
+        int recovered = 0;
         for (AgentLpqMemberState member : session.members()) {
             Character participant = character(member.characterId());
             if (participant == null) {
@@ -1791,6 +2248,12 @@ final class AgentLpqCoordinator {
             if (participant.getMapId() == destination) continue;
             if (participant.getMapId() != source) {
                 allReady = false;
+                if (recoveryDue
+                        && member.memberType() == AgentLpqMemberState.MemberType.AGENT
+                        && moveWithinEvent(session, participant, destination, nowMs)) {
+                    member.clearTraversalProgress();
+                    recovered++;
+                }
                 continue;
             }
             Integer portalId = portalIdTo(participant, destination);
@@ -1799,13 +2262,34 @@ final class AgentLpqCoordinator {
                 allReady = false;
                 if (member.memberType() == AgentLpqMemberState.MemberType.AGENT) {
                     AgentRuntimeEntry entry = entry(member.characterId());
-                    if (entry != null && portal != null) ACTIONS.navigate(entry, portal, true);
+                    if (entry != null && recoveryDue) {
+                        if (portal == null) {
+                            if (moveWithinEvent(session, participant, destination, nowMs)) {
+                                member.clearTraversalProgress();
+                                recovered++;
+                            }
+                        } else {
+                            ACTIONS.stop(entry);
+                            ACTIONS.stagePosition(entry, participant, portal);
+                            member.clearTraversalProgress();
+                            recovered++;
+                        }
+                    } else if (entry != null && portal != null) {
+                        ACTIONS.navigate(entry, portal, true);
+                    }
                 } else if (nowMs >= member.nextActionAtMs()) {
                     participant.dropMessage(6, "LPQ Stage " + stage
                             + " is clear. Gather with the party at the exit portal.");
                     member.deferUntil(nowMs + 5_000L);
                 }
             }
+        }
+        if (recovered > 0) {
+            session.markProgress(nowMs);
+            log.warn("LPQ Stage {} shared post-clear transition recovery moved {} lagging "
+                            + "members after {}ms: session={} destination={}",
+                    stage, recovered, transitionElapsedMs, session.sessionId(), destination);
+            return;
         }
         if (!allReady) return;
         for (AgentLpqMemberState member : session.members()) {
@@ -1855,16 +2339,14 @@ final class AgentLpqCoordinator {
             holdStageTwoWaitingAgents(session, scoutIds, stageOneMap);
             if (!allScoutsReady) return;
 
-            int triggerId = scoutIds.getFirst();
-            Character trigger = character(triggerId);
-            AgentRuntimeEntry triggerEntry = entry(triggerId);
-            AgentLpqMemberState triggerState = session.member(triggerId);
-            if (trigger != null && triggerEntry != null && triggerState != null) {
-                hitStageTwoTrapReactor(triggerEntry, trigger, nowMs, triggerState);
-            }
-            for (int i = 1; i < scoutIds.size(); i++) {
-                AgentRuntimeEntry waitingScout = entry(scoutIds.get(i));
-                if (waitingScout != null) ACTIONS.stop(waitingScout);
+            for (int scoutId : scoutIds) {
+                Character scout = character(scoutId);
+                AgentRuntimeEntry scoutEntry = entry(scoutId);
+                AgentLpqMemberState scoutState = session.member(scoutId);
+                if (scout != null && scoutEntry != null && scoutState != null
+                        && scout.getMapId() == stageTwoMap) {
+                    hitStageTwoTrapReactor(scoutEntry, scout, nowMs, scoutState);
+                }
             }
             return;
         }
@@ -1898,8 +2380,9 @@ final class AgentLpqCoordinator {
         long inactiveForMs = member == null ? 0L
                 : traversalInactivity(member, agent, destinationMapId, nowMs);
         enterPortalTo(entry, agent, destinationMapId);
-        if (agent.getMapId() == destinationMapId
-                || inactiveForMs < STAGE_TRAVERSAL_RECOVERY_GRACE_MS) return;
+        int sourceStage = AgentLpqDefinition.stageNumber(agent.getMapId());
+        if (agent.getMapId() == destinationMapId || sourceStage < 1 || sourceStage > 9
+                || inactiveForMs < recovery(sourceStage).traversalMs()) return;
         int sourceMapId = agent.getMapId();
         if (!moveWithinEvent(session, agent, destinationMapId, nowMs)) return;
         if (member != null) member.clearTraversalProgress();
@@ -1957,7 +2440,20 @@ final class AgentLpqCoordinator {
             if (agent == null || entry == null || agent.getMapId() != 922_010_600) continue;
             advancePortalMazeMember(session, member, agent, entry, nowMs);
         }
-        if (leader.getMapId() == 922_010_700) session.transition(AgentLpqSession.Phase.STAGE_7, nowMs);
+        if (stageSixPartyFinishedMaze(session)) {
+            movePartyToNextStageTogether(session, 6, nowMs);
+        }
+    }
+
+    private static boolean stageSixPartyFinishedMaze(AgentLpqSession session) {
+        for (AgentLpqMemberState member : session.members()) {
+            Character participant = character(member.characterId());
+            if (participant == null) return false;
+            if (participant.getMapId() == AgentLpqDefinition.stage(7).mapId()) continue;
+            if (participant.getMapId() != AgentLpqDefinition.stage(6).mapId()
+                    || participant.getPosition().y >= -3_050) return false;
+        }
+        return true;
     }
 
     private static void announceStageSixSequence(AgentLpqSession session, Character leader, long nowMs) {
@@ -1988,10 +2484,8 @@ final class AgentLpqCoordinator {
         if (agent.getPosition().y < -3_050) {
             Integer portalId = portalIdTo(agent, 922_010_700);
             Point portal = portalId == null ? null : ACTIONS.portalPosition(agent, portalId);
-            if (portal != null && approachWithRecovery(session, member, entry, agent,
-                    922_010_700, portal, "Stage 6 exit", nowMs)) {
-                enterMazePortal(session, member, agent, portalId, nowMs, -1);
-            }
+            if (portal != null) approachWithRecovery(session, member, entry, agent,
+                    922_010_700, portal, "Stage 6 exit", nowMs);
             return;
         }
         int row = mazeRow(agent);
@@ -2180,8 +2674,8 @@ final class AgentLpqCoordinator {
         long distanceSq = agent.getPosition() == null
                 ? Long.MAX_VALUE : (long) agent.getPosition().distanceSq(target);
         long inactiveForMs = member.observeTraversalProgress(
-                agent.getMapId(), 922_010_800, distanceSq, nowMs);
-        if (inactiveForMs < STAGE_TRAVERSAL_RECOVERY_GRACE_MS) {
+                agent.getMapId(), 922_010_800, agent.getPosition(), distanceSq, nowMs);
+        if (inactiveForMs < recovery(8).traversalMs()) {
             ACTIONS.navigate(entry, target, true);
             return false;
         }
@@ -2196,9 +2690,18 @@ final class AgentLpqCoordinator {
     }
 
     private static void boss(AgentLpqSession session, Character leader, long nowMs) {
+        if (LPQ.property(leader, "9stageclear") != null) {
+            movePartyToNextStageTogether(session, 9, nowMs);
+            return;
+        }
         catchUpLaggingMembers(session, 9, AgentLpqDefinition.stage(9).mapId(), nowMs);
-        Set<Integer> reactorClaims = activeReactorClaims(session, AgentLpqDefinition.stage(9).mapId());
         Set<Integer> lootClaims = new LinkedHashSet<>();
+        boolean triggerRatzAlive = ACTIONS.liveMonsterCount(
+                leader, Set.of(AgentLpqDefinition.BOSS_TRIGGER_RATZ)) > 0;
+        boolean alisharAlive = ACTIONS.liveMonsterCount(
+                leader, Set.of(AgentLpqDefinition.ALISHAR)) > 0;
+        Reactor alisharReactor = activeReactors(leader).stream().findFirst().orElse(null);
+        assignStageNineRoles(session);
         for (AgentLpqMemberState member : session.members()) {
             if (member.memberType() != AgentLpqMemberState.MemberType.AGENT) continue;
             Character agent = character(member.characterId());
@@ -2208,20 +2711,33 @@ final class AgentLpqCoordinator {
                     Set.of(AgentLpqDefinition.BOSS_KEY), lootClaims)) continue;
             Set<Integer> combatTargets = stageCombatTargets(
                     9, ACTIONS.configuredMonsterSpawnIds(agent));
-            if (ACTIONS.liveMonsterCount(agent, Set.of(AgentLpqDefinition.ALISHAR)) > 0) {
+            if (alisharAlive) {
+                member.assign(AgentLpqMemberState.Role.BOSS_ATTACKER, 922_010_900);
                 ACTIONS.grind(entry, Set.of(AgentLpqDefinition.ALISHAR));
                 continue;
             }
+            if ((triggerRatzAlive || alisharReactor != null)
+                    && AgentLpqRosterRequirementPolicy.rangedAttack(agent)) {
+                member.assign(AgentLpqMemberState.Role.RANGED_TRIGGER, 922_010_900);
+                if (triggerRatzAlive) {
+                    engageBossTriggerRatz(session, member, entry, agent, nowMs);
+                } else {
+                    hitBossReactorFromFiringPlatform(session, member, entry,
+                            agent, alisharReactor, nowMs);
+                }
+                continue;
+            }
+            if (triggerRatzAlive || alisharReactor != null) {
+                member.assign(AgentLpqMemberState.Role.BOSS_ATTACKER, 922_010_900);
+                ACTIONS.stop(entry);
+                continue;
+            }
             if (!agent.getMap().getAllMonsters().isEmpty()) {
+                member.assign(AgentLpqMemberState.Role.BOSS_ATTACKER, 922_010_900);
                 ACTIONS.grind(entry, combatTargets);
                 continue;
             }
-            boolean workingReactor = hitNearestReactor(
-                    entry, agent, nowMs, member, false, reactorClaims);
-            if (member.reactorTargetObjectId() != 0) {
-                reactorClaims.add(member.reactorTargetObjectId());
-            }
-            if (!workingReactor) ACTIONS.stop(entry);
+            ACTIONS.stop(entry);
         }
         consolidateBossKey(session, leader, nowMs);
         recoverBossKey(session, leader, nowMs);
@@ -2229,6 +2745,117 @@ final class AgentLpqCoordinator {
             if (isAgent(leader)) submit(session, leader, AgentLpqDefinition.stage(9), nowMs);
             else leader.dropMessage(6, "Alishar's key is ready. Talk to the balloon to finish LPQ.");
         }
+    }
+
+    private static void assignStageNineRoles(AgentLpqSession session) {
+        for (AgentLpqMemberState member : session.members()) {
+            if (member.memberType() != AgentLpqMemberState.MemberType.AGENT) continue;
+            Character participant = character(member.characterId());
+            member.assign(AgentLpqRosterRequirementPolicy.rangedAttack(participant)
+                    ? AgentLpqMemberState.Role.RANGED_TRIGGER
+                    : AgentLpqMemberState.Role.BOSS_ATTACKER, AgentLpqDefinition.stage(9).mapId());
+        }
+    }
+
+    static int stageNineTriggerPriority(Character character) {
+        if (character == null || character.getJob() == null) return 4;
+        if (character.getJob().isA(client.Job.BOWMAN)) return 0;
+        if (character.getJob().isA(client.Job.ASSASSIN)) return 1;
+        if (character.getJob().isA(client.Job.GUNSLINGER)) return 2;
+        return AgentLpqRosterRequirementPolicy.rangedAttack(character) ? 3 : 4;
+    }
+
+    private static void engageBossTriggerRatz(
+            AgentLpqSession session, AgentLpqMemberState member,
+            AgentRuntimeEntry entry, Character agent, long nowMs) {
+        if (!reachStageNineBalloonPlatform(session, member, entry, agent, nowMs)) return;
+        ACTIONS.facePosition(agent, new Point(588, -3));
+        Monster trigger = agent.getMap().getAllMonsters().stream()
+                .filter(monster -> monster.getId() == AgentLpqDefinition.BOSS_TRIGGER_RATZ)
+                .findFirst().orElse(null);
+        if (trigger == null) return;
+        int hpBefore = trigger.getHp();
+        AgentAttackPlan attackPlan = AgentCombatPlanRuntime.planAttack(
+                entry, agent, trigger, AgentCombatConfig.cfg);
+        if (attackPlan == null) attackPlan = authoredBossTriggerAttackPlan(agent, trigger);
+        if (attackPlan == null) {
+            ACTIONS.grind(entry, Set.of(AgentLpqDefinition.BOSS_TRIGGER_RATZ));
+            return;
+        }
+        AgentAttackTransactionResult result = AgentCombatAttackRuntime.attackMonster(
+                entry, agent, attackPlan);
+        if (result.status() == AgentAttackTransactionResult.Status.REJECTED
+                && member.claimIntentAnnouncement("stage9:ratz-rejected:" + result.reason())) {
+            log.warn("LPQ Stage 9 Black Ratz attack rejected: session={} member={}({}) reason={}",
+                    session.sessionId(), agent.getName(), agent.getId(), result.reason());
+        }
+        if (result.status() == AgentAttackTransactionResult.Status.REJECTED) {
+            member.deferUntil(nowMs + INTERACTION_RETRY_MS);
+        }
+        if (trigger.getHp() < hpBefore) session.markProgress(nowMs);
+        member.observeRoomCombatTarget(
+                922_010_900, trigger.getObjectId(), trigger.getHp(), nowMs);
+    }
+
+    /**
+     * LPQ's Black Ratz is an authored trigger target 187 px above the continuous firing
+     * floor. The v83 client permits the shot from that platform, but the general combat
+     * planner's conservative +/-50 px projectile band correctly rejects it for ordinary
+     * grinding. Preserve the normal weapon animation, ammo, cooldown, damage formula and
+     * authoritative attack transaction while extending only this LPQ objective hit box.
+     */
+    private static AgentAttackPlan authoredBossTriggerAttackPlan(Character agent, Monster trigger) {
+        if (agent == null || trigger == null || agent.getPosition() == null
+                || trigger.getPosition() == null) return null;
+        AgentAttackExecutionProvider.BasicAttackData attack =
+                AgentAttackExecutionProvider.buildBasicAttackData(agent, trigger.getPosition());
+        if (attack == null || attack.route() != AgentAttackRoute.RANGED) return null;
+        Rectangle hitBox = authoredBossTriggerHitBox(attack.hitBox(), trigger.getPosition());
+        return new AgentAttackPlan(0, 0,
+                AgentCombatHitCounter.packetSafeHitCount(agent, attack.route(), 1),
+                hitBox, List.of(trigger), attack.route(), attack.display(), attack.direction(),
+                attack.rangedDirection(), attack.stance(), attack.speed(), attack.hitDelayMs(),
+                attack.cooldownMs(), AgentCombatWeaponPolicy.damageWeaponTypeForAction(
+                0, AgentAttackExecutionProvider.getEquippedWeaponType(agent), attack.action()));
+    }
+
+    static Rectangle authoredBossTriggerHitBox(Rectangle ordinaryHitBox, Point triggerPosition) {
+        if (triggerPosition == null) throw new IllegalArgumentException("trigger position is required");
+        Rectangle triggerPoint = new Rectangle(triggerPosition.x, triggerPosition.y, 1, 1);
+        return ordinaryHitBox == null ? triggerPoint : ordinaryHitBox.union(triggerPoint);
+    }
+
+    private static void hitBossReactorFromFiringPlatform(
+            AgentLpqSession session, AgentLpqMemberState member,
+            AgentRuntimeEntry entry, Character agent, Reactor reactor, long nowMs) {
+        if (reactor == null) return;
+        if (!reachStageNineBalloonPlatform(session, member, entry, agent, nowMs)) return;
+        ACTIONS.facePosition(agent, reactor.getPosition());
+        if (ACTIONS.hitReactor(agent, reactor.getObjectId())) session.markProgress(nowMs);
+    }
+
+    private static boolean reachStageNineBalloonPlatform(
+            AgentLpqSession session, AgentLpqMemberState member,
+            AgentRuntimeEntry entry, Character agent, long nowMs) {
+        Point firingAnchor = stageNineRatzFiringAnchor(agent.getId());
+        if (stageNineRatzFiringReady(
+                agent.getPosition(), ACTIONS.grounded(agent), firingAnchor)) {
+            member.clearTraversalProgress();
+            return true;
+        }
+        approachWithRecovery(session, member, entry, agent, 922_010_900,
+                firingAnchor, STAGE_9_RATZ_FIRING_ANCHOR_RADIUS,
+                "Stage 9 balloon firing platform", nowMs);
+        return false;
+    }
+
+    static Point stageNineRatzFiringAnchor(int characterId) {
+        return new Point(STAGE_9_BALLOON_PLATFORM_ANCHOR);
+    }
+
+    static boolean stageNineRatzFiringReady(
+            Point position, boolean grounded, Point firingAnchor) {
+        return grounded && near(position, firingAnchor, STAGE_9_RATZ_FIRING_ANCHOR_RADIUS);
     }
 
     private static void recoverBossKey(AgentLpqSession session, Character leader, long nowMs) {
@@ -2239,7 +2866,8 @@ final class AgentLpqCoordinator {
         // the missing-key grace starts at clear rather than at stage entry.
         int recoverySignature = partyKeys + (bossMapCleared ? 1_000_000 : 0);
         if (leader.getItemQuantity(AgentLpqDefinition.BOSS_KEY, false) > 0
-                || session.observePassRecovery(recoverySignature, nowMs) < MISSING_PASS_GRACE_MS) return;
+                || session.observePassRecovery(recoverySignature, nowMs)
+                < recovery(7).missingPassMs()) return;
 
         int vacuumed = vacuumItemDrops(
                 leader, Set.of(leader.getMap()), AgentLpqDefinition.BOSS_KEY);
@@ -2348,8 +2976,17 @@ final class AgentLpqCoordinator {
                 || bonusMapDrained(bonusAgents.getFirst());
         if (session.bonusMode() != AgentLpqSession.BonusMode.SKIP
                 && session.observeBonusDrained(drained, nowMs) < BONUS_DRAIN_SETTLE_MS) return;
-        for (Character agent : bonusAgents) {
-            if (LPQ.runNpc(agent, AgentLpqDefinition.CLEAR_NPC, 1)) session.markProgress(nowMs);
+        for (AgentLpqMemberState member : session.members()) {
+            if (member.memberType() != AgentLpqMemberState.MemberType.AGENT) continue;
+            Character agent = character(member.characterId());
+            AgentRuntimeEntry entry = entry(member.characterId());
+            if (agent == null || entry == null
+                    || agent.getMapId() != AgentLpqDefinition.CLEAR_MAP) continue;
+            if (approachRewardNpc(session, member, entry, agent,
+                    AgentLpqDefinition.CLEAR_NPC, "bonus exit balloon", nowMs)
+                    && LPQ.runNpc(agent, AgentLpqDefinition.CLEAR_NPC, 1)) {
+                session.markProgress(nowMs);
+            }
         }
     }
 
@@ -2367,7 +3004,11 @@ final class AgentLpqCoordinator {
             }
             if (participant.getMapId() == AgentLpqDefinition.CLEAR_MAP) {
                 if (member.memberType() == AgentLpqMemberState.MemberType.AGENT) {
-                    if (LPQ.runNpc(participant, AgentLpqDefinition.CLEAR_NPC, 1)) {
+                    AgentRuntimeEntry participantEntry = entry(member.characterId());
+                    if (participantEntry != null && approachRewardNpc(
+                            session, member, participantEntry, participant,
+                            AgentLpqDefinition.CLEAR_NPC, "bonus exit balloon", nowMs)
+                            && LPQ.runNpc(participant, AgentLpqDefinition.CLEAR_NPC, 1)) {
                         session.markProgress(nowMs);
                     }
                 } else if (nowMs >= member.nextActionAtMs()) {
@@ -2385,9 +3026,59 @@ final class AgentLpqCoordinator {
                 continue;
             }
             if (member.characterId() == session.eventLeaderId() && !nonLeaderRewardsResolved) continue;
-            if (LPQ.runNpc(participant, AgentLpqDefinition.REWARD_NPC, 1)) session.markProgress(nowMs);
+            AgentRuntimeEntry participantEntry = entry(member.characterId());
+            if (participantEntry != null && approachRewardNpc(
+                    session, member, participantEntry, participant,
+                    AgentLpqDefinition.REWARD_NPC, "Arturo reward", nowMs)
+                    && LPQ.runNpc(participant, AgentLpqDefinition.REWARD_NPC, 1)) {
+                session.markProgress(nowMs);
+            }
         }
         if (session.allRewardsResolved()) session.transition(AgentLpqSession.Phase.EXITING, nowMs);
+    }
+
+    private static boolean approachRewardNpc(
+            AgentLpqSession session, AgentLpqMemberState member, AgentRuntimeEntry entry,
+            Character agent, int npcId, String context, long nowMs) {
+        Point npc = ACTIONS.npcPosition(agent, npcId);
+        if (npc == null) return false;
+        Point grounded = ACTIONS.groundPoint(agent.getMap(), npc);
+        Point target = grounded == null ? npc : grounded;
+        if (near(agent.getPosition(), target, INTERACTION_RADIUS) && ACTIONS.grounded(agent)) {
+            ACTIONS.stop(entry);
+            member.clearNpcRallyProgress();
+            return true;
+        }
+        long distanceSq = agent.getPosition() == null
+                ? Long.MAX_VALUE : (long) agent.getPosition().distanceSq(target);
+        long inactiveForMs = member.observeNpcRallyProgress(
+                9, agent.getMapId(), agent.getPosition(), distanceSq, nowMs);
+        if (inactiveForMs >= recovery(9).rallyRecoveryMs()) {
+            ACTIONS.stop(entry);
+            ACTIONS.stagePosition(entry, agent, target);
+            member.clearNpcRallyProgress();
+            session.markProgress(nowMs);
+            log.warn("LPQ {} approach recovery: session={} member={}({}) map={} "
+                            + "target={} inactiveForMs={}", context, session.sessionId(),
+                    agent.getName(), agent.getId(), agent.getMapId(), target, inactiveForMs);
+            return false;
+        }
+        if (member.claimNpcRallyRetry(
+                inactiveForMs, nowMs, recovery(9).rallyRetryMs())) {
+            ACTIONS.refreshNavigation(entry, agent);
+        }
+        ACTIONS.navigate(entry, target, true);
+        return false;
+    }
+
+    private static void exitAfterRewardWarpSettles(AgentLpqSession session, long nowMs) {
+        boolean agentStillInEventMap = session.members().stream()
+                .filter(member -> member.memberType() == AgentLpqMemberState.MemberType.AGENT)
+                .map(member -> character(member.characterId()))
+                .filter(java.util.Objects::nonNull)
+                .anyMatch(agent -> AgentLpqDefinition.isEventMap(agent.getMapId()));
+        if (agentStillInEventMap || nowMs - session.phaseEnteredAtMs() < 2_000L) return;
+        AgentLpqTerminationService.complete(session, nowMs);
     }
 
     static Set<Integer> bonusDropIds(Collection<MapItem> drops) {
@@ -2446,29 +3137,61 @@ final class AgentLpqCoordinator {
         Reactor reactor = selectCommittedReactor(member, agent.getMapId(), agent.getPosition(),
                 candidates, waitForSpawnCleanup, claimedByParty);
         if (reactor == null) return false;
-        if (!near(agent.getPosition(), reactor.getPosition(), INTERACTION_RADIUS)) {
-            if (allowRemoteRecovery && member.reactorTargetCommittedAtMs() > 0L
+        if (member.reactorTargetHitOnce()) {
+            // Once a box has been reached and struck, hold that authored interaction
+            // instead of letting the movement planner climb away and rediscover it
+            // between every reactor state hit.
+            if (!reactorInteractionReady(agent, reactor)) {
+                ACTIONS.navigate(entry, reactor.getPosition(), true);
+                return true;
+            }
+            ACTIONS.stop(entry);
+            if (ACTIONS.hitReactor(agent, reactor.getObjectId())) {
+                member.deferUntil(nowMs + INTERACTION_RETRY_MS);
+            }
+            return true;
+        }
+        if (!reactorInteractionReady(agent, reactor)) {
+            int stage = AgentLpqDefinition.stageNumber(agent.getMapId());
+            if (allowRemoteRecovery && stage >= 1 && stage <= 9
+                    && member.reactorTargetCommittedAtMs() > 0L
                     && nowMs - member.reactorTargetCommittedAtMs()
-                    >= REACTOR_TARGET_RECOVERY_GRACE_MS) {
+                    >= recovery(stage).reactorMs()) {
                 ACTIONS.stop(entry);
-                if (ACTIONS.hitReactor(agent, reactor.getObjectId())) {
-                    member.deferUntil(nowMs + INTERACTION_RETRY_MS);
-                    log.debug("LPQ reactor target recovery hit committed reactor: member={}({}) "
-                                    + "map={} reactor={} committedForMs={}",
-                            agent.getName(), agent.getId(), agent.getMapId(), reactor.getObjectId(),
-                            nowMs - member.reactorTargetCommittedAtMs());
-                    return true;
-                }
+                Point grounded = ACTIONS.groundPoint(agent.getMap(), reactor.getPosition());
+                Point recoveryTarget = grounded == null ? reactor.getPosition() : grounded;
+                ACTIONS.stagePosition(entry, agent, recoveryTarget);
+                member.deferUntil(nowMs + INTERACTION_RETRY_MS);
+                log.warn("LPQ reactor approach recovery placed member beside committed reactor: "
+                                + "member={}({}) map={} reactor={} committedForMs={}",
+                        agent.getName(), agent.getId(), agent.getMapId(), reactor.getObjectId(),
+                        nowMs - member.reactorTargetCommittedAtMs());
+                return true;
             }
             ACTIONS.navigate(entry, reactor.getPosition(), true);
             return true;
         }
         ACTIONS.stop(entry);
         if (ACTIONS.hitReactor(agent, reactor.getObjectId())) {
+            member.markReactorTargetHit();
             member.deferUntil(nowMs + INTERACTION_RETRY_MS);
             return true;
         }
         return false;
+    }
+
+    private static boolean reactorInteractionReady(Character agent, Reactor reactor) {
+        return agent != null && reactor != null
+                && reactorInteractionReady(agent.getPosition(), ACTIONS.grounded(agent),
+                reactor.getPosition());
+    }
+
+    static boolean reactorInteractionReady(
+            Point agentPosition, boolean grounded, Point reactorPosition) {
+        return grounded && agentPosition != null && reactorPosition != null
+                && Math.abs(agentPosition.x - reactorPosition.x) <= INTERACTION_RADIUS
+                && Math.abs(agentPosition.y - reactorPosition.y)
+                <= REACTOR_PLATFORM_VERTICAL_TOLERANCE_PX;
     }
 
     static List<Reactor> stageTwoTrapReactors(List<Reactor> active) {
@@ -2503,10 +3226,15 @@ final class AgentLpqCoordinator {
         }
         if (member.reactorSpawnCleanupPending()) return null;
         Set<Integer> excluded = claimedByParty == null ? Set.of() : claimedByParty;
-        Reactor selected = active.stream()
+        List<Reactor> available = active.stream()
                 .filter(candidate -> !excluded.contains(candidate.getObjectId()))
-                .min(Comparator.comparingDouble(candidate -> candidate.getPosition().distance(position)))
-                .orElse(null);
+                .toList();
+        Reactor selected = AgentLpqStageFiveReactorOrder.select(mapId, available);
+        if (selected == null) {
+            selected = available.stream()
+                    .min(Comparator.comparingDouble(candidate -> candidate.getPosition().distance(position)))
+                    .orElse(null);
+        }
         if (selected != null) member.commitReactorTarget(mapId, selected.getObjectId());
         return selected;
     }
@@ -2576,23 +3304,32 @@ final class AgentLpqCoordinator {
         long distanceSq = portal == null || agent.getPosition() == null
                 ? Long.MAX_VALUE : (long) agent.getPosition().distanceSq(portal);
         return member.observeTraversalProgress(
-                agent.getMapId(), destinationMapId, distanceSq, nowMs);
+                agent.getMapId(), destinationMapId, agent.getPosition(), distanceSq, nowMs);
     }
 
     private static boolean approachWithRecovery(
             AgentLpqSession session, AgentLpqMemberState member,
             AgentRuntimeEntry entry, Character agent, int destinationMapId,
             Point target, String context, long nowMs) {
+        return approachWithRecovery(session, member, entry, agent, destinationMapId,
+                target, INTERACTION_RADIUS, context, nowMs);
+    }
+
+    private static boolean approachWithRecovery(
+            AgentLpqSession session, AgentLpqMemberState member,
+            AgentRuntimeEntry entry, Character agent, int destinationMapId,
+            Point target, int arrivalRadius, String context, long nowMs) {
         if (target == null) return false;
-        if (near(agent.getPosition(), target, INTERACTION_RADIUS)) {
+        if (near(agent.getPosition(), target, arrivalRadius)) {
             member.clearTraversalProgress();
             return true;
         }
         long distanceSq = agent.getPosition() == null
                 ? Long.MAX_VALUE : (long) agent.getPosition().distanceSq(target);
         long inactiveForMs = member.observeTraversalProgress(
-                agent.getMapId(), destinationMapId, distanceSq, nowMs);
-        if (inactiveForMs < STAGE_TRAVERSAL_RECOVERY_GRACE_MS) {
+                agent.getMapId(), destinationMapId, agent.getPosition(), distanceSq, nowMs);
+        int stage = AgentLpqDefinition.stageNumber(agent.getMapId());
+        if (stage < 1 || stage > 9 || inactiveForMs < recovery(stage).traversalMs()) {
             ACTIONS.navigate(entry, target, true);
             return false;
         }

@@ -20,6 +20,11 @@ public final class AgentMovementTickService {
     }
 
     @FunctionalInterface
+    public interface FidgetMovementSubstep {
+        boolean tick(AgentRuntimeEntry entry, Point targetPosition);
+    }
+
+    @FunctionalInterface
     public interface MovementPhaseTick {
         void tick(AgentRuntimeEntry entry, Point targetPosition, boolean runAiTick);
     }
@@ -34,6 +39,7 @@ public final class AgentMovementTickService {
 
     public record MovementTickHooks(NavigationResolver navigationResolver,
                                     FidgetTick fidgetTick,
+                                    FidgetMovementSubstep fidgetMovementSubstep,
                                     MovementPhaseTick movementPhaseTick,
                                     CommittedEdgeExecutor committedEdgeExecutor,
                                     RunnableTick stuckDetection,
@@ -52,6 +58,14 @@ public final class AgentMovementTickService {
                                         Point targetPosition,
                                         boolean runAiTick,
                                         MovementTickHooks hooks) {
+        stepMovementCore(entry, targetPosition, runAiTick, 1, hooks);
+    }
+
+    public static void stepMovementCore(AgentRuntimeEntry entry,
+                                        Point targetPosition,
+                                        boolean runAiTick,
+                                        int movementSubsteps,
+                                        MovementTickHooks hooks) {
         NavigationResult navigation = hooks.navigationResolver().resolve(entry, targetPosition, runAiTick);
         if (navigation.consumedTick()) {
             return;
@@ -60,10 +74,17 @@ public final class AgentMovementTickService {
         Point steeringTarget = navigation.targetPosition();
         AgentNavigationPreciseTargetService.markPreciseNavigationTargetIfNeeded(entry);
         if (hooks.fidgetTick().tryHandle(entry, steeringTarget, runAiTick)) {
+            for (int step = 1; step < Math.max(1, movementSubsteps); step++) {
+                if (!hooks.fidgetMovementSubstep().tick(entry, steeringTarget)) {
+                    break;
+                }
+            }
             return;
         }
 
-        hooks.movementPhaseTick().tick(entry, steeringTarget, runAiTick);
+        for (int step = 0; step < Math.max(1, movementSubsteps); step++) {
+            hooks.movementPhaseTick().tick(entry, steeringTarget, step == 0 && runAiTick);
+        }
         if (runAiTick && !AgentMovementStateRuntime.inAir(entry) && !AgentMovementStateRuntime.climbing(entry)) {
             hooks.committedEdgeExecutor().tryExecute(entry, targetPosition);
         }

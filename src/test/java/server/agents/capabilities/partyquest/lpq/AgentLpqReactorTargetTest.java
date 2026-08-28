@@ -1,12 +1,17 @@
 package server.agents.capabilities.partyquest.lpq;
 
 import org.junit.jupiter.api.Test;
+import provider.Data;
+import provider.DataProviderFactory;
+import provider.DataTool;
+import provider.wz.WZFiles;
 import server.maps.Reactor;
 import server.maps.MapItem;
 
 import java.awt.Point;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -32,10 +37,13 @@ class AgentLpqReactorTargetTest {
         assertSame(first, AgentLpqCoordinator.selectCommittedReactor(
                 member, 922_010_502, new Point(100, 0), List.of(first, second), true));
         assertEquals(101, member.reactorTargetObjectId());
+        member.markReactorTargetHit();
+        assertTrue(member.reactorTargetHitOnce());
 
         assertNull(AgentLpqCoordinator.selectCommittedReactor(
                 member, 922_010_502, new Point(100, 0), List.of(second), true));
         assertTrue(member.reactorSpawnCleanupPending());
+        assertFalse(member.reactorTargetHitOnce());
         assertNull(AgentLpqCoordinator.selectCommittedReactor(
                 member, 922_010_502, new Point(100, 0), List.of(second), true));
 
@@ -53,6 +61,7 @@ class AgentLpqReactorTargetTest {
         member.commitReactorTarget(922_010_502, 201);
         member.assign(AgentLpqMemberState.Role.GENERAL, 0);
         assertEquals(0, member.reactorTargetObjectId());
+        assertFalse(member.reactorTargetHitOnce());
         assertFalse(member.reactorSpawnCleanupPending());
 
         AgentLpqSession session = new AgentLpqSession(
@@ -64,7 +73,37 @@ class AgentLpqReactorTargetTest {
     }
 
     @Test
-    void reactorRecoveryClockSpansEveryTargetInOneRoomAndClearsOnExit() {
+    void stageFiveUsesAuthoredRoomOrderInsteadOfStraightLineDistance() {
+        AgentLpqMemberState member = new AgentLpqMemberState(
+                71_008, AgentLpqMemberState.MemberType.AGENT);
+        Reactor authoredFirst = reactor(401, new Point(226, -921));
+        Reactor geometricallyNearest = reactor(402, new Point(215, -3_009));
+
+        assertSame(authoredFirst, AgentLpqCoordinator.selectCommittedReactor(
+                member, 922_010_503, new Point(215, -3_000),
+                List.of(geometricallyNearest, authoredFirst), false));
+    }
+
+    @Test
+    void stageFiveOrderCatalogMatchesEveryAuthoredRoomReactor() {
+        for (int roomMapId : AgentLpqDefinition.roomMaps(5)) {
+            Data mapData = DataProviderFactory.getDataProvider(WZFiles.MAP)
+                    .getData("Map/Map9/" + roomMapId + ".img");
+            Data reactors = mapData.getChildByPath("reactor");
+            Set<Point> authored = reactors.getChildren().stream()
+                    .map(reactor -> new Point(
+                            DataTool.getInt("x", reactor, 0),
+                            DataTool.getInt("y", reactor, 0)))
+                    .collect(Collectors.toSet());
+
+            assertEquals(4, AgentLpqStageFiveReactorOrder.positions(roomMapId).size());
+            assertEquals(authored, Set.copyOf(
+                    AgentLpqStageFiveReactorOrder.positions(roomMapId)));
+        }
+    }
+
+    @Test
+    void reactorRecoveryClockRestartsForEveryBoxAndClearsOnExit() {
         AgentLpqMemberState member = new AgentLpqMemberState(
                 71_007, AgentLpqMemberState.MemberType.AGENT);
         member.assign(AgentLpqMemberState.Role.GENERAL, 922_010_503);
@@ -72,10 +111,24 @@ class AgentLpqReactorTargetTest {
         member.markReactorTargetBroken(false);
         member.commitReactorTarget(922_010_503, 302, 80_000L);
 
-        assertEquals(10_000L, member.reactorTargetCommittedAtMs());
+        assertEquals(80_000L, member.reactorTargetCommittedAtMs());
 
         member.assign(AgentLpqMemberState.Role.GENERAL, 0);
         assertEquals(0L, member.reactorTargetCommittedAtMs());
+    }
+
+    @Test
+    void ordinaryBoxesRequireGroundedSamePlatformInteraction() {
+        Point box = new Point(100, 200);
+
+        assertTrue(AgentLpqCoordinator.reactorInteractionReady(
+                new Point(45, 200), true, box));
+        assertFalse(AgentLpqCoordinator.reactorInteractionReady(
+                new Point(45, 200), false, box));
+        assertFalse(AgentLpqCoordinator.reactorInteractionReady(
+                new Point(100, 145), true, box));
+        assertFalse(AgentLpqCoordinator.reactorInteractionReady(
+                new Point(20, 200), true, box));
     }
 
     @Test

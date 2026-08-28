@@ -35,6 +35,10 @@ public final class AgentLpqSession {
     private final AgentLpqRoomAssignment rooms = new AgentLpqRoomAssignment();
     private final AgentLpqPortalMazeState maze = new AgentLpqPortalMazeState();
     private int couponRegroupStage;
+    private long couponRegroupStartedAtMs;
+    private Phase mainMapRallyPhase;
+    private int mainMapRallyMapId;
+    private long mainMapRallyStartedAtMs;
     private Phase phase = Phase.PREPARING;
     private int eventLeaderId;
     private int executionAgentId;
@@ -54,16 +58,25 @@ public final class AgentLpqSession {
     private final Map<Integer, Integer> stage8PlatformByMember = new LinkedHashMap<>();
     private Phase passRecoveryPhase;
     private int passRecoveryObservedCount = -1;
+    private int passRecoveryObservedLiveMobs = -1;
+    private int passRecoveryObservedActiveReactors = -1;
+    private long passRecoveryLowestLiveMobHp = Long.MAX_VALUE;
     private long passRecoveryObservedAtMs;
     private boolean passRecoveryMobSweepAttempted;
     private boolean passRecoveryPassesAwarded;
     private Phase passHandoffRecoveryPhase;
     private long passHandoffRecoveryStartedAtMs;
+    private Phase postClearTransitionPhase;
+    private long postClearTransitionStartedAtMs;
     private Phase submissionReadyPhase;
     private long submissionReadyAtMs;
+    private Phase loosePassPhase;
+    private int loosePassObservedCount = -1;
+    private long loosePassObservedAtMs;
     private boolean stage6SequenceAnnounced;
     private boolean stage2ScoutPlanAnnounced;
     private boolean stage2TrapClearAnnounced;
+    private Phase assignmentsCalculatedPhase;
     private long bonusDrainedAtMs;
     private long readyAtMs;
     private long stage7CombatClearedAtMs;
@@ -127,18 +140,46 @@ public final class AgentLpqSession {
         logPhaseEnd(next, nowMs);
         phase = next;
         phaseEnteredAtMs = nowMs;
+        assignmentsCalculatedPhase = null;
         readyAtMs = 0L;
         resetPassRecovery();
         resetSubmissionRecovery();
-        members.values().forEach(AgentLpqMemberState::clearTraversalProgress);
+        resetLoosePassRecovery();
+        resetPostClearTransition();
+        resetMainMapRally();
+        members.values().forEach(member -> {
+            member.resetForStage(member.characterId() == eventLeaderId
+                    ? AgentLpqMemberState.Role.EVENT_LEADER
+                    : AgentLpqMemberState.Role.GENERAL);
+        });
         resetStage7LootSweep();
         rooms.reset();
         members.values().forEach(AgentLpqMemberState::clearReactorWork);
         int nextStage = next.name().startsWith("STAGE_")
                 ? Integer.parseInt(next.name().substring("STAGE_".length())) : 0;
-        if (nextStage != couponRegroupStage) couponRegroupStage = 0;
+        if (nextStage != couponRegroupStage) {
+            couponRegroupStage = 0;
+            couponRegroupStartedAtMs = 0L;
+        }
         if (next != Phase.STAGE_6) maze.reset();
         if (next != Phase.BONUS) bonusDrainedAtMs = 0L;
+        markProgress(nowMs);
+    }
+
+    /**
+     * Stage roles are deliberately recalculated once after every phase transition. The
+     * transition itself first clears the previous stage atomically; the coordinator then
+     * installs the new room/platform/combat ownership from the current party roster.
+     */
+    public synchronized boolean stageAssignmentsNeedRecalculation() {
+        return phase.name().startsWith("STAGE_") && assignmentsCalculatedPhase != phase;
+    }
+
+    public synchronized void markStageAssignmentsRecalculated(long nowMs) {
+        if (!phase.name().startsWith("STAGE_")) {
+            throw new IllegalStateException("LPQ stage assignments require an active stage");
+        }
+        assignmentsCalculatedPhase = phase;
         markProgress(nowMs);
     }
 
@@ -174,6 +215,30 @@ public final class AgentLpqSession {
         if (passRecoveryPhase != phase || passRecoveryObservedCount != partyPassCount) {
             passRecoveryPhase = phase;
             passRecoveryObservedCount = partyPassCount;
+            passRecoveryObservedAtMs = nowMs;
+            passRecoveryMobSweepAttempted = false;
+            return 0L;
+        }
+        return Math.max(0L, nowMs - passRecoveryObservedAtMs);
+    }
+
+    public synchronized long observePassRecoveryProgress(
+            int partyPassCount, int liveMobs, int activeReactors,
+            long liveMobHp, long nowMs) {
+        boolean newPhase = passRecoveryPhase != phase;
+        boolean passProgress = !newPhase && passRecoveryObservedCount != partyPassCount;
+        boolean mobCountProgress = !newPhase
+                && passRecoveryObservedLiveMobs != liveMobs;
+        boolean reactorProgress = !newPhase
+                && passRecoveryObservedActiveReactors != activeReactors;
+        boolean damageProgress = !newPhase && !mobCountProgress && !reactorProgress
+                && liveMobHp < passRecoveryLowestLiveMobHp;
+        if (newPhase || passProgress || mobCountProgress || reactorProgress || damageProgress) {
+            passRecoveryPhase = phase;
+            passRecoveryObservedCount = partyPassCount;
+            passRecoveryObservedLiveMobs = liveMobs;
+            passRecoveryObservedActiveReactors = activeReactors;
+            passRecoveryLowestLiveMobHp = liveMobHp;
             passRecoveryObservedAtMs = nowMs;
             passRecoveryMobSweepAttempted = false;
             return 0L;
@@ -226,11 +291,29 @@ public final class AgentLpqSession {
     private void resetPassRecovery() {
         passRecoveryPhase = null;
         passRecoveryObservedCount = -1;
+        passRecoveryObservedLiveMobs = -1;
+        passRecoveryObservedActiveReactors = -1;
+        passRecoveryLowestLiveMobHp = Long.MAX_VALUE;
         passRecoveryObservedAtMs = 0L;
         passRecoveryMobSweepAttempted = false;
         passRecoveryPassesAwarded = false;
         passHandoffRecoveryPhase = null;
         passHandoffRecoveryStartedAtMs = 0L;
+    }
+
+    public synchronized long beginOrObservePostClearTransition(long nowMs) {
+        if (postClearTransitionPhase != phase) {
+            postClearTransitionPhase = phase;
+            postClearTransitionStartedAtMs = Math.max(0L, nowMs);
+            markProgress(nowMs);
+            return 0L;
+        }
+        return Math.max(0L, nowMs - postClearTransitionStartedAtMs);
+    }
+
+    private void resetPostClearTransition() {
+        postClearTransitionPhase = null;
+        postClearTransitionStartedAtMs = 0L;
     }
 
     public synchronized long observeSubmissionReady(boolean ready, long nowMs) {
@@ -249,6 +332,27 @@ public final class AgentLpqSession {
     private void resetSubmissionRecovery() {
         submissionReadyPhase = null;
         submissionReadyAtMs = 0L;
+    }
+
+    /** Returns how long the same set of loose passes has remained uncollected. */
+    public synchronized long observeLoosePasses(int loosePassCount, long nowMs) {
+        if (loosePassCount <= 0) {
+            resetLoosePassRecovery();
+            return 0L;
+        }
+        if (loosePassPhase != phase || loosePassObservedCount != loosePassCount) {
+            loosePassPhase = phase;
+            loosePassObservedCount = loosePassCount;
+            loosePassObservedAtMs = nowMs;
+            return 0L;
+        }
+        return Math.max(0L, nowMs - loosePassObservedAtMs);
+    }
+
+    private void resetLoosePassRecovery() {
+        loosePassPhase = null;
+        loosePassObservedCount = -1;
+        loosePassObservedAtMs = 0L;
     }
     public synchronized boolean stage6SequenceAnnounced() { return stage6SequenceAnnounced; }
     public synchronized boolean stage6SequenceChatReady(long nowMs) {
@@ -321,7 +425,46 @@ public final class AgentLpqSession {
         if (stage < 1 || stage > 3 || phase != Phase.valueOf("STAGE_" + stage)
                 || couponRegroupStage == stage) return;
         couponRegroupStage = stage;
+        couponRegroupStartedAtMs = nowMs;
         markProgress(nowMs);
+    }
+
+    public synchronized long couponRegroupElapsed(int stage, long nowMs) {
+        if (!couponRegrouping(stage) || couponRegroupStartedAtMs <= 0L) return 0L;
+        return Math.max(0L, nowMs - couponRegroupStartedAtMs);
+    }
+
+    /**
+     * Starts the balloon recovery grace only after every registered participant has returned
+     * to the stage's main map. A room/trap occupant resets the clock, so time spent finishing
+     * an authored exit can never consume the subsequent walk-to-balloon allowance.
+     */
+    public synchronized long observeMainMapRally(
+            int mapId, boolean everyoneOnMainMap, long nowMs) {
+        if (mapId <= 0 || nowMs < 0L || !everyoneOnMainMap) {
+            resetMainMapRally();
+            return 0L;
+        }
+        if (mainMapRallyPhase != phase || mainMapRallyMapId != mapId
+                || mainMapRallyStartedAtMs == 0L) {
+            mainMapRallyPhase = phase;
+            mainMapRallyMapId = mapId;
+            mainMapRallyStartedAtMs = nowMs;
+            return 0L;
+        }
+        return Math.max(0L, nowMs - mainMapRallyStartedAtMs);
+    }
+
+    public synchronized long mainMapRallyElapsed(int mapId, long nowMs) {
+        if (mapId <= 0 || mainMapRallyPhase != phase || mainMapRallyMapId != mapId
+                || mainMapRallyStartedAtMs <= 0L) return 0L;
+        return Math.max(0L, nowMs - mainMapRallyStartedAtMs);
+    }
+
+    private void resetMainMapRally() {
+        mainMapRallyPhase = null;
+        mainMapRallyMapId = 0;
+        mainMapRallyStartedAtMs = 0L;
     }
 
     public synchronized void initializeStage8Order() {

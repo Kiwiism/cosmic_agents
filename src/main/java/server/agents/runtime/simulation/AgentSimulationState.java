@@ -7,6 +7,7 @@ public final class AgentSimulationState {
     private volatile long modeSinceMs;
     private volatile long transitionCount;
     private volatile AgentSimulationTransitionEvidence lastTransitionEvidence;
+    private volatile boolean fullRateSimulationRequired;
     private final AgentBackgroundOutcomeLedger backgroundOutcomes =
             new AgentBackgroundOutcomeLedger();
 
@@ -32,6 +33,18 @@ public final class AgentSimulationState {
 
     public AgentBackgroundOutcomeLedger backgroundOutcomes() {
         return backgroundOutcomes;
+    }
+
+    public boolean fullRateSimulationRequired() {
+        return fullRateSimulationRequired;
+    }
+
+    public void requireFullRateSimulation() {
+        fullRateSimulationRequired = true;
+    }
+
+    public void clearFullRateSimulationRequirement() {
+        fullRateSimulationRequired = false;
     }
 
     public void allowAbstractExecution(AgentAbstractExecutionScope scope) {

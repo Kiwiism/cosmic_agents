@@ -877,44 +877,72 @@ tuning:
     server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.GATHER_RADIUS_PX: '160'
     # Values: 1000-10000 milliseconds. Recommended: 2000.
     # Purpose: Makes an Agent-led LPQ invitation arrive naturally after the human asks to join in lobby chat.
-    # Technical: The shared lobby runtime applies this override only to LPQ sessions.
+    # Technical: The shared lobby runtime applies this override only to LPQ sessions and leaves every KPQ, HPQ, and ordinary party invitation delay unchanged.
     server.agents.capabilities.partyquest.lpq.AgentLpqLobbyProfile.INVITE_RESPONSE_MINIMUM_MS: '2000'
     # Values: 1000-10000 milliseconds. Recommended: 5000.
     # Purpose: Caps the natural LPQ invitation delay after a recognized human join request.
-    # Technical: Must remain at or above LPQ's minimum invitation delay and does not change KPQ or HPQ.
+    # Technical: Must remain at or above LPQ's minimum invitation delay and is consumed exclusively by the LPQ lobby profile without changing KPQ or HPQ.
     server.agents.capabilities.partyquest.lpq.AgentLpqLobbyProfile.INVITE_RESPONSE_MAXIMUM_MS: '5000'
     # Values: 500-3000 milliseconds. Recommended: 1200 to let ordinary reactors, NPC scripts, and item drops settle between repeated actions.
     # Purpose: Prevents LPQ Agents from flooding the same authored interaction while still allowing responsive box, submission, and combination attempts.
     # Technical: AgentLpqMemberState owns each deadline and AgentLpqCoordinator consumes it only inside the isolated LPQ aggregate and test session.
     server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.INTERACTION_RETRY_MS: '1200'
-    # Values: 10000-120000 milliseconds. Recommended: 30000 so authored NPC navigation remains the primary submission path.
-    # Purpose: Submits a complete LPQ pass set through the stage balloon if leader navigation remains stalled after the party is ready.
-    # Technical: Recovery invokes the same stage NPC script and cannot run until the leader holds the authored submission count continuously for this interval.
-    server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.SUBMISSION_RECOVERY_GRACE_MS: '30000'
+    # Values: Semicolon-delimited positive milliseconds. Recommended: tune Stage 1 independently while retaining the listed natural-navigation-first ordering.
+    # Purpose: Defines every recovery threshold used while the LPQ session is authoritatively in Stage 1, without sharing clocks with another stage.
+    # Technical: Fields are submission, missingPass, portal, reactor, traversal, roomExitPlacement, rallyRetry, and rallyRecovery; ordering constraints are validated at startup.
+    server.agents.capabilities.partyquest.lpq.AgentLpqStageRecoveryPolicy.STAGE_1_PROFILE: 'submission=30000;missingPass=45000;portal=30000;reactor=90000;traversal=45000;roomExitPlacement=15000;rallyRetry=10000;rallyRecovery=15000'
+    # Values: Semicolon-delimited positive milliseconds. Recommended: tune Stage 2 independently while retaining the listed natural-navigation-first ordering.
+    # Purpose: Defines every recovery threshold used while the LPQ session is authoritatively in Stage 2, including the isolated trap-room portal route.
+    # Technical: Fields are submission, missingPass, portal, reactor, traversal, roomExitPlacement, rallyRetry, and rallyRecovery; ordering constraints are validated at startup.
+    server.agents.capabilities.partyquest.lpq.AgentLpqStageRecoveryPolicy.STAGE_2_PROFILE: 'submission=30000;missingPass=45000;portal=30000;reactor=90000;traversal=45000;roomExitPlacement=15000;rallyRetry=10000;rallyRecovery=15000'
+    # Values: Semicolon-delimited positive milliseconds. Recommended: tune Stage 3 independently while retaining the listed natural-navigation-first ordering.
+    # Purpose: Defines every recovery threshold used while the LPQ session is authoritatively in Stage 3, including reactor, mob, pass, and rally progress.
+    # Technical: Fields are submission, missingPass, portal, reactor, traversal, roomExitPlacement, rallyRetry, and rallyRecovery; ordering constraints are validated at startup.
+    server.agents.capabilities.partyquest.lpq.AgentLpqStageRecoveryPolicy.STAGE_3_PROFILE: 'submission=30000;missingPass=45000;portal=30000;reactor=90000;traversal=45000;roomExitPlacement=15000;rallyRetry=10000;rallyRecovery=15000'
+    # Values: Semicolon-delimited positive milliseconds. Recommended: tune Stage 4 independently while retaining the listed natural-navigation-first ordering.
+    # Purpose: Defines every recovery threshold used while the LPQ session is authoritatively in Stage 4, including each darkness room and balloon handoff.
+    # Technical: Fields are submission, missingPass, portal, reactor, traversal, roomExitPlacement, rallyRetry, and rallyRecovery; ordering constraints are validated at startup.
+    server.agents.capabilities.partyquest.lpq.AgentLpqStageRecoveryPolicy.STAGE_4_PROFILE: 'submission=30000;missingPass=45000;portal=30000;reactor=90000;traversal=45000;roomExitPlacement=15000;rallyRetry=10000;rallyRecovery=15000'
+    # Values: Semicolon-delimited positive milliseconds. Recommended: tune Stage 5 independently while retaining the listed natural-navigation-first ordering.
+    # Purpose: Defines every recovery threshold used while the LPQ session is authoritatively in Stage 5, including Teleport and Dark Sight room exits.
+    # Technical: Fields are submission, missingPass, portal, reactor, traversal, roomExitPlacement, rallyRetry, and rallyRecovery; ordering constraints are validated at startup.
+    server.agents.capabilities.partyquest.lpq.AgentLpqStageRecoveryPolicy.STAGE_5_PROFILE: 'submission=30000;missingPass=45000;portal=30000;reactor=90000;traversal=45000;roomExitPlacement=15000;rallyRetry=10000;rallyRecovery=15000'
+    # Values: Semicolon-delimited positive milliseconds. Recommended: tune Stage 6 independently while retaining the listed natural-navigation-first ordering.
+    # Purpose: Defines every recovery threshold used while the LPQ session is authoritatively in Stage 6, keeping its fixed portal sequence isolated.
+    # Technical: Fields are submission, missingPass, portal, reactor, traversal, roomExitPlacement, rallyRetry, and rallyRecovery; ordering constraints are validated at startup.
+    server.agents.capabilities.partyquest.lpq.AgentLpqStageRecoveryPolicy.STAGE_6_PROFILE: 'submission=30000;missingPass=45000;portal=30000;reactor=90000;traversal=45000;roomExitPlacement=15000;rallyRetry=10000;rallyRecovery=15000'
+    # Values: Semicolon-delimited positive milliseconds. Recommended: tune Stage 7 independently while retaining the listed natural-navigation-first ordering.
+    # Purpose: Defines every recovery threshold used while the LPQ session is authoritatively in Stage 7, including box, Rombard, pass, and rally work.
+    # Technical: Fields are submission, missingPass, portal, reactor, traversal, roomExitPlacement, rallyRetry, and rallyRecovery; ordering constraints are validated at startup.
+    server.agents.capabilities.partyquest.lpq.AgentLpqStageRecoveryPolicy.STAGE_7_PROFILE: 'submission=30000;missingPass=45000;portal=30000;reactor=90000;traversal=45000;roomExitPlacement=15000;rallyRetry=10000;rallyRecovery=15000'
+    # Values: Semicolon-delimited positive milliseconds. Recommended: tune Stage 8 independently while retaining the listed natural-navigation-first ordering.
+    # Purpose: Defines every recovery threshold used while the LPQ session is authoritatively in Stage 8, including platform positioning and synchronized traversal.
+    # Technical: Fields are submission, missingPass, portal, reactor, traversal, roomExitPlacement, rallyRetry, and rallyRecovery; ordering constraints are validated at startup.
+    server.agents.capabilities.partyquest.lpq.AgentLpqStageRecoveryPolicy.STAGE_8_PROFILE: 'submission=30000;missingPass=45000;portal=30000;reactor=90000;traversal=45000;roomExitPlacement=15000;rallyRetry=10000;rallyRecovery=15000'
+    # Values: Semicolon-delimited positive milliseconds. Recommended: tune Stage 9 independently while retaining the listed natural-navigation-first ordering.
+    # Purpose: Defines every recovery threshold used while the LPQ session is authoritatively in Stage 9, including Black Ratz targeting and boss completion.
+    # Technical: Fields are submission, missingPass, portal, reactor, traversal, roomExitPlacement, rallyRetry, and rallyRecovery; ordering constraints are validated at startup.
+    server.agents.capabilities.partyquest.lpq.AgentLpqStageRecoveryPolicy.STAGE_9_PROFILE: 'submission=30000;missingPass=45000;portal=30000;reactor=90000;traversal=45000;roomExitPlacement=15000;rallyRetry=10000;rallyRecovery=15000'
     # Values: 10000-120000 milliseconds. Recommended: 30000 so disconnected or abandoned split rooms can be reassigned without rapid duplication.
     # Purpose: Bounds ownership of Stage 4 and Stage 5 room assignments while allowing active human or Agent runners to retain their selected room.
     # Technical: AgentLpqRoomAssignment refreshes this lease from observed room presence and releases only the LPQ-local reservation, never another PQ's work.
     server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.ROOM_LEASE_MS: '30000'
-    # Values: 30000-120000 milliseconds. Recommended: 45000 so real split-room movement remains primary without adding a multi-minute handoff stall.
-    # Purpose: Recovers an LPQ collection stage only after the party-wide pass count has stopped changing for a bounded interval.
-    # Technical: Recovery first transfers real member-held passes and vacuums real drops; mob/drop recovery and an exact missing award occur only in later bounded passes.
-    server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.MISSING_PASS_GRACE_MS: '45000'
+    # Values: 180000-600000 milliseconds. Recommended: 360000 to bound rare Stage 1 platform stalls while preserving ordinary combat and looting.
+    # Purpose: Prevents occasional chip damage to one reachable mob from postponing unreachable-mob recovery for the entire LPQ timer.
+    # Technical: Applies only to LPQ Stage 1; after the ceiling the normal real-drop mob sweep runs, and Agents still collect the resulting passes before any synthetic award is considered.
+    server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.STAGE_1_MAX_NATURAL_COMBAT_MS: '360000'
     # Values: 5000-60000 milliseconds. Recommended: 15000 so the leader visibly sweeps Stage 7 before unreachable drops are recovered.
     # Purpose: Bounds how long cleared Stage 7 passes may remain on the map after all trigger boxes and Rombards are gone.
     # Technical: The leader follows the authored sweep first; the fallback atomically transfers only existing pass drops and never creates passes.
     server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.STAGE_7_FORCE_LOOT_DELAY_MS: '45000'
-    # Values: 10000-120000 milliseconds. Recommended: 30000 to preserve the authored Stage 2 return portal as the normal route.
-    # Purpose: Returns Agents from the Stage 2 trap room only when ordinary ladder and portal navigation remains stalled.
-    # Technical: Recovery changes maps inside the same LPQ event instance and does not alter any other PQ portal behavior.
-    server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.PORTAL_RECOVERY_GRACE_MS: '30000'
-    # Values: 45000-180000 milliseconds. Recommended: 90000 so normal navgraph traversal remains authoritative.
-    # Purpose: Bounds how long a committed LPQ reactor target may remain unreachable before the Agent retries the same authored hit remotely.
-    # Technical: The fallback is Agent-only, retains the committed reactor object ID, and reactor scripts remain atomically guarded against duplicate human or Agent execution.
-    server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.REACTOR_TARGET_RECOVERY_GRACE_MS: '90000'
-    # Values: 30000-90000 milliseconds. Recommended: 45000 to allow every authored LPQ ladder route while avoiding two-minute stalls.
-    # Purpose: Recovers an Agent that stops making measurable forward progress toward an authored stage or split-room exit.
-    # Technical: AgentLpqMemberState owns an independent source-map, destination-map, and best-distance clock; ordinary movement resets this timer before any same-event force-warp is allowed.
-    server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.STAGE_TRAVERSAL_RECOVERY_GRACE_MS: '45000'
+    # Values: 5-40 map pixels. Recommended: 10 to hold a ranged Agent at the authored Stage 7 firing location without visible jitter.
+    # Purpose: Defines the LPQ-only arrival radius for a ranged Stage 7 member assigned to strike the upper trigger boxes.
+    # Technical: The threshold applies only to the authored Stage 7 firing anchor and never changes general combat range, navgraph precision, or another PQ's movement.
+    server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.STAGE_7_FIRING_ANCHOR_RADIUS: '10'
+    # Values: 10-60 map pixels. Recommended: 24 to keep ranged boss trigger members grounded on the authored balloon platform.
+    # Purpose: Defines the LPQ-only arrival radius for the Stage 9 balloon-platform firing anchor used to kill the disconnected Black Ratz trigger.
+    # Technical: The threshold applies only to Stage 9 boss triggering and never changes monster targeting distance, attack reach, navgraph precision, or another PQ.
+    server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.STAGE_9_RATZ_FIRING_ANCHOR_RADIUS: '24'
     # Values: 40-140 map pixels. Recommended: 75 for the local LPQ NPC, portal, reactor, and pass-handoff geometry.
     # Purpose: Controls how close an LPQ Agent approaches an authored interaction point before executing the corresponding ordinary server action.
     # Technical: AgentLpqCoordinator applies this threshold after LPQ navigation and does not change global path precision, attack reach, or other PQ interaction ranges.
@@ -1283,10 +1311,10 @@ tuning:
     # Purpose: Controls how strongly slopefactor affects Agent behavior. Higher values make the effect more noticeable; lower values soften it.
     # Technical: the "movement kinematics service" component consumes this as a decimal number. Domain: non-negative policy coefficient; it is meaningful relative to the other coefficients used by the same decision.
     server.agents.capabilities.movement.AgentMovementKinematicsService.SLOPEFACTOR: '0.1'
-    # Values: a finite non-negative integer; unit: map pixels. Recommended: 50-200 around the tested baseline 100; benchmark or observe behavior before moving outside this band.
+    # Values: a finite non-negative integer; unit: map pixels. Recommended: 80-240 around the tested baseline 160; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how strongly climb speed pxs changes visible movement. Higher values make its effect more noticeable; lower values make movement gentler or less pronounced.
     # Technical: the "movement physics config" component consumes this as a decimal number. Unit: MapleStory map pixels per second.
-    server.agents.capabilities.movement.AgentMovementPhysicsConfig.CLIMB_SPEED_PXS: '100.0'
+    server.agents.capabilities.movement.AgentMovementPhysicsConfig.CLIMB_SPEED_PXS: '160.0'
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 175-700 around the tested baseline 350; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how long Agents remain in or wait for down jump grace. Higher values make that pause or state last longer; lower values make them continue sooner.
     # Technical: the "movement physics config" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled.

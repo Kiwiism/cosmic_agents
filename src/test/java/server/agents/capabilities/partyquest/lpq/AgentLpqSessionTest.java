@@ -9,6 +9,32 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentLpqSessionTest {
     @Test
+    void phaseTransitionClearsStaleStageAssignmentsAtomically() {
+        AgentLpqSession session = new AgentLpqSession(
+                AgentLpqSession.Mode.TEST_OBSERVATION, 17L, 900, 6, 1_000L);
+        session.addMember(71_001, AgentLpqMemberState.MemberType.AGENT);
+        session.addMember(71_002, AgentLpqMemberState.MemberType.AGENT);
+        session.setLeadership(71_001, 71_001);
+        session.member(71_002).assign(AgentLpqMemberState.Role.PLATFORM_HOLDER, 922_010_800);
+        session.member(71_002).assignPlatform(7);
+
+        session.transition(AgentLpqSession.Phase.STAGE_9, 1_100L);
+
+        assertTrue(session.stageAssignmentsNeedRecalculation());
+        assertEquals(AgentLpqMemberState.Role.EVENT_LEADER, session.member(71_001).role());
+        assertEquals(AgentLpqMemberState.Role.GENERAL, session.member(71_002).role());
+        assertEquals(0, session.member(71_002).assignedMapId());
+        assertEquals(0, session.member(71_002).assignedPlatform());
+
+        session.markStageAssignmentsRecalculated(1_101L);
+        assertFalse(session.stageAssignmentsNeedRecalculation());
+        session.transition(AgentLpqSession.Phase.BONUS, 1_200L);
+        assertFalse(session.stageAssignmentsNeedRecalculation());
+        session.transition(AgentLpqSession.Phase.STAGE_1, 1_300L);
+        assertTrue(session.stageAssignmentsNeedRecalculation());
+    }
+
+    @Test
     void ownsLeadershipLeaseAndStageEightOrder() {
         AgentLpqSession session = new AgentLpqSession(
                 AgentLpqSession.Mode.TEST_OBSERVATION, 17L, 900, 6, 1_000L);
@@ -107,6 +133,101 @@ class AgentLpqSessionTest {
     }
 
     @Test
+    void combatRecoveryUsesNewLowHpRatherThanMonsterRegenerationAsProgress() {
+        AgentLpqSession session = new AgentLpqSession(
+                AgentLpqSession.Mode.TEST_OBSERVATION, 1L, 900, 6, 1_000L);
+        session.transition(AgentLpqSession.Phase.STAGE_4, 1_100L);
+
+        assertEquals(0L, session.observePassRecoveryProgress(2, 4, 3, 20_000L, 2_000L));
+        assertEquals(30_000L,
+                session.observePassRecoveryProgress(2, 4, 3, 21_000L, 32_000L));
+        assertEquals(0L,
+                session.observePassRecoveryProgress(2, 4, 3, 19_500L, 33_000L));
+        assertEquals(10_000L,
+                session.observePassRecoveryProgress(2, 4, 3, 20_500L, 43_000L));
+        assertEquals(0L,
+                session.observePassRecoveryProgress(2, 4, 2, 20_500L, 43_500L));
+        assertEquals(0L,
+                session.observePassRecoveryProgress(3, 3, 2, 14_000L, 44_000L));
+
+        session.transition(AgentLpqSession.Phase.STAGE_5, 45_000L);
+        assertEquals(0L,
+                session.observePassRecoveryProgress(0, 0, 0, 0L, 46_000L));
+    }
+
+    @Test
+    void stageOneCombatCeilingCannotBeExtendedBySparseChipDamage() {
+        assertFalse(AgentLpqCoordinator.stageOneCombatCeilingReached(
+                1, 1_000L, 360_999L, 360_000L));
+        assertTrue(AgentLpqCoordinator.stageOneCombatCeilingReached(
+                1, 1_000L, 361_000L, 360_000L));
+        assertFalse(AgentLpqCoordinator.stageOneCombatCeilingReached(
+                2, 1_000L, 900_000L, 360_000L));
+        assertFalse(AgentLpqCoordinator.stageOneCombatCeilingReached(
+                1, 1_000L, 900_000L, 0L));
+    }
+
+    @Test
+    void npcRallyAllowsNaturalNavigationBeforeItsHardCap() {
+        assertFalse(AgentLpqCoordinator.npcRallyRecoveryDue(4, 14_999L));
+        assertTrue(AgentLpqCoordinator.npcRallyRecoveryDue(4, 15_000L));
+    }
+
+    @Test
+    void couponRegroupHasAPartyLevelHardCapIndependentOfMovementJitter() {
+        assertFalse(AgentLpqCoordinator.couponRegroupPositionRecoveryDue(1, 14_999L));
+        assertTrue(AgentLpqCoordinator.couponRegroupPositionRecoveryDue(1, 15_000L));
+        assertFalse(AgentLpqCoordinator.couponRegroupPositionRecoveryDue(5, 14_999L));
+        assertTrue(AgentLpqCoordinator.couponRegroupPositionRecoveryDue(5, 15_000L));
+    }
+
+    @Test
+    void everyPostClearTransitionUsesTheStageLocalAbsoluteCap() {
+        for (int stage = 2; stage <= 9; stage++) {
+            assertFalse(AgentLpqCoordinator.postClearTransitionRecoveryDue(stage, 14_999L));
+            assertTrue(AgentLpqCoordinator.postClearTransitionRecoveryDue(stage, 15_000L));
+        }
+    }
+
+    @Test
+    void prematurePhaseCatchUpUsesTheSameCapExceptForStageTwoScouting() {
+        assertFalse(AgentLpqCoordinator.stageTransitionCatchUpRecoveryDue(2, 15_000L));
+        for (int stage = 3; stage <= 9; stage++) {
+            assertFalse(AgentLpqCoordinator.stageTransitionCatchUpRecoveryDue(stage, 14_999L));
+            assertTrue(AgentLpqCoordinator.stageTransitionCatchUpRecoveryDue(stage, 15_000L));
+        }
+    }
+
+    @Test
+    void postClearTransitionClockIsPartyLevelAndResetsOnStageChange() {
+        AgentLpqSession session = new AgentLpqSession(
+                AgentLpqSession.Mode.TEST_OBSERVATION, 1L, 900, 6, 1_000L);
+        session.transition(AgentLpqSession.Phase.STAGE_4, 1_100L);
+
+        assertEquals(0L, session.beginOrObservePostClearTransition(2_000L));
+        assertEquals(15_000L, session.beginOrObservePostClearTransition(17_000L));
+
+        session.transition(AgentLpqSession.Phase.STAGE_5, 18_000L);
+        assertEquals(0L, session.beginOrObservePostClearTransition(19_000L));
+    }
+
+    @Test
+    void npcRallyWatchdogRetriesAStaleRouteWithoutResettingTheHardClock() {
+        AgentLpqMemberState member = new AgentLpqMemberState(
+                101, AgentLpqMemberState.MemberType.AGENT);
+
+        assertEquals(0L, member.observeNpcRallyProgress(
+                4, 922_010_400, 100_000L, 1_000L));
+        assertFalse(member.claimNpcRallyRetry(9_999L, 10_999L, 10_000L));
+        assertTrue(member.claimNpcRallyRetry(10_000L, 11_000L, 10_000L));
+        assertFalse(member.claimNpcRallyRetry(15_000L, 16_000L, 10_000L));
+        assertTrue(member.claimNpcRallyRetry(20_000L, 21_000L, 10_000L));
+        assertEquals(20_000L, member.observeNpcRallyProgress(
+                4, 922_010_400, 100_000L, 21_000L));
+        assertTrue(AgentLpqCoordinator.npcRallyRecoveryDue(4, 15_000L));
+    }
+
+    @Test
     void passHandoffRecoveryKeepsItsOwnExitGraceAndResetsOnStageChange() {
         AgentLpqSession session = new AgentLpqSession(
                 AgentLpqSession.Mode.TEST_OBSERVATION, 1L, 900, 6, 1_000L);
@@ -132,6 +253,16 @@ class AgentLpqSessionTest {
     }
 
     @Test
+    void passHandoffRecoveryGetsItsOwnNaturalExitThenPortalThenMapFallback() {
+        assertEquals(AgentLpqCoordinator.PassHandoffExitAction.NAVIGATE,
+                AgentLpqCoordinator.passHandoffExitAction(5, 14_999L));
+        assertEquals(AgentLpqCoordinator.PassHandoffExitAction.PLACE_AT_PORTAL,
+                AgentLpqCoordinator.passHandoffExitAction(5, 15_000L));
+        assertEquals(AgentLpqCoordinator.PassHandoffExitAction.MOVE_TO_STAGE,
+                AgentLpqCoordinator.passHandoffExitAction(5, 30_000L));
+    }
+
+    @Test
     void tracksSubmissionReadinessPerStageAndResetsWhenPassesAreNoLongerReady() {
         AgentLpqSession session = new AgentLpqSession(
                 AgentLpqSession.Mode.TEST_OBSERVATION, 1L, 900, 6, 1_000L);
@@ -147,6 +278,20 @@ class AgentLpqSessionTest {
     }
 
     @Test
+    void loosePassRecoveryWaitsForStableCountAndResetsOnCollection() {
+        AgentLpqSession session = new AgentLpqSession(
+                AgentLpqSession.Mode.TEST_OBSERVATION, 1L, 900, 6, 1_000L);
+        session.transition(AgentLpqSession.Phase.STAGE_4, 1_100L);
+
+        assertEquals(0L, session.observeLoosePasses(2, 2_000L));
+        assertEquals(30_000L, session.observeLoosePasses(2, 32_000L));
+        assertEquals(0L, session.observeLoosePasses(1, 33_000L));
+        assertEquals(10_000L, session.observeLoosePasses(1, 43_000L));
+        assertEquals(0L, session.observeLoosePasses(0, 44_000L));
+        assertEquals(0L, session.observeLoosePasses(1, 45_000L));
+    }
+
+    @Test
     void retainsCouponRegroupAcrossDropsAndClearsItOnStageChange() {
         AgentLpqSession session = new AgentLpqSession(
                 AgentLpqSession.Mode.TEST_OBSERVATION, 1L, 900, 6, 1_000L);
@@ -157,9 +302,11 @@ class AgentLpqSessionTest {
         session.transition(AgentLpqSession.Phase.STAGE_1, 1_100L);
         session.beginCouponRegroup(1, 1_200L);
         assertTrue(session.couponRegrouping(1));
+        assertEquals(45_000L, session.couponRegroupElapsed(1, 46_200L));
 
         session.transition(AgentLpqSession.Phase.STAGE_2, 1_300L);
         assertFalse(session.couponRegrouping(1));
+        assertEquals(0L, session.couponRegroupElapsed(1, 46_300L));
         session.beginCouponRegroup(2, 1_400L);
         assertTrue(session.couponRegrouping(2));
 
@@ -167,6 +314,38 @@ class AgentLpqSessionTest {
         assertFalse(session.couponRegrouping(2));
         session.beginCouponRegroup(3, 1_600L);
         assertTrue(session.couponRegrouping(3));
+    }
+
+    @Test
+    void couponRegroupPositionRecoveryIsAcceptedOnlyForItsStage() {
+        AgentLpqMemberState member = new AgentLpqMemberState(
+                101, AgentLpqMemberState.MemberType.AGENT);
+
+        assertFalse(member.couponRegroupRecoveredFor(1));
+        member.markCouponRegroupRecovered(1);
+        assertTrue(member.couponRegroupRecoveredFor(1));
+        assertFalse(member.couponRegroupRecoveredFor(2));
+        assertThrows(IllegalArgumentException.class,
+                () -> member.markCouponRegroupRecovered(0));
+    }
+
+    @Test
+    void balloonRecoveryClockStartsOnlyAfterEveryoneReturnsAndResetsIfAnyoneLeaves() {
+        AgentLpqSession session = new AgentLpqSession(
+                AgentLpqSession.Mode.TEST_OBSERVATION, 1L, 900, 6, 1_000L);
+        session.transition(AgentLpqSession.Phase.STAGE_5, 2_000L);
+
+        assertEquals(0L, session.observeMainMapRally(922_010_500, false, 10_000L));
+        assertEquals(0L, session.mainMapRallyElapsed(922_010_500, 30_000L));
+        assertEquals(0L, session.observeMainMapRally(922_010_500, true, 40_000L));
+        assertEquals(15_000L, session.mainMapRallyElapsed(922_010_500, 55_000L));
+
+        assertEquals(0L, session.observeMainMapRally(922_010_500, false, 56_000L));
+        assertEquals(0L, session.observeMainMapRally(922_010_500, true, 70_000L));
+        assertEquals(1_000L, session.mainMapRallyElapsed(922_010_500, 71_000L));
+
+        session.transition(AgentLpqSession.Phase.STAGE_6, 72_000L);
+        assertEquals(0L, session.mainMapRallyElapsed(922_010_500, 90_000L));
     }
 
     @Test

@@ -85,6 +85,41 @@ class AgentMovementTickServiceTest {
         assertEquals(List.of("nav", "fidget", "phase", "stuck", "cleanup"), calls);
     }
 
+    @Test
+    void backgroundSubstepsRepeatOnlyMovementPhase() {
+        AgentRuntimeEntry entry = entry();
+        List<String> calls = new ArrayList<>();
+
+        AgentMovementTickService.stepMovementCore(
+                entry,
+                new Point(10, 20),
+                true,
+                5,
+                hooks(calls, false, false));
+
+        assertEquals(List.of(
+                "nav", "fidget",
+                "phase", "phase", "phase", "phase", "phase",
+                "edge", "stuck", "cleanup"), calls);
+    }
+
+    @Test
+    void backgroundFidgetSubstepsDoNotRunTheRestOfMovementPipeline() {
+        AgentRuntimeEntry entry = entry();
+        List<String> calls = new ArrayList<>();
+
+        AgentMovementTickService.stepMovementCore(
+                entry,
+                new Point(10, 20),
+                true,
+                5,
+                hooks(calls, false, true));
+
+        assertEquals(List.of(
+                "nav", "fidget",
+                "fidget-substep", "fidget-substep", "fidget-substep", "fidget-substep"), calls);
+    }
+
     private static AgentMovementTickService.MovementTickHooks hooks(List<String> calls,
                                                                     boolean navigationConsumed,
                                                                     boolean fidgetConsumed) {
@@ -96,6 +131,10 @@ class AgentMovementTickServiceTest {
                 (entry, targetPosition, runAiTick) -> {
                     calls.add("fidget");
                     return fidgetConsumed;
+                },
+                (entry, targetPosition) -> {
+                    calls.add("fidget-substep");
+                    return true;
                 },
                 (entry, targetPosition, runAiTick) -> calls.add("phase"),
                 (entry, targetPosition) -> calls.add("edge"),

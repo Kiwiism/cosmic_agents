@@ -5,10 +5,15 @@ import provider.Data;
 import provider.DataProviderFactory;
 import provider.DataTool;
 import provider.wz.WZFiles;
+import server.agents.capabilities.navigation.AgentNavigationGraph;
+import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationMapLoader;
+import server.agents.capabilities.navigation.AgentNavigationPathService;
 import server.maps.MapleMap;
 import server.maps.Portal;
 
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.util.List;
 import java.util.Set;
 import java.nio.file.Files;
@@ -17,6 +22,7 @@ import java.nio.file.Path;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentLpqAuthoredFlowPreflightTest {
@@ -122,6 +128,65 @@ class AgentLpqAuthoredFlowPreflightTest {
                         DataTool.getString("id", entry, "0"))));
         assertTrue(reactors.getChildren().stream().anyMatch(reactor ->
                 DataTool.getInt("id", reactor, 0) == 2_201_003));
+    }
+
+    @Test
+    void bossTriggerFiringAnchorsStayOnAuthoredBalloonPlatform() {
+        Data map = DataProviderFactory.getDataProvider(WZFiles.MAP)
+                .getData("Map/Map9/922010900.img");
+        Data ratz = map.getChildByPath("life").getChildren().stream()
+                .filter(entry -> AgentLpqDefinition.BOSS_TRIGGER_RATZ == Integer.parseInt(
+                        DataTool.getString("id", entry, "0")))
+                .findFirst().orElseThrow();
+        assertEquals(588, DataTool.getInt("x", ratz, 0));
+        assertEquals(-3, DataTool.getInt("y", ratz, 0));
+        assertEquals(92, DataTool.getInt("fh", ratz, 0));
+
+        for (int characterId = 1; characterId <= 32; characterId++) {
+            Point anchor = AgentLpqCoordinator.stageNineRatzFiringAnchor(characterId);
+            assertEquals(74, anchor.y);
+            assertEquals(222, anchor.x,
+                    () -> "ranged anchor must remain on the authored balloon platform: " + anchor);
+        }
+    }
+
+    @Test
+    void bossTriggerAttackWaitsUntilRangedAgentIsGroundedOnBalloonPlatform() {
+        Point anchor = AgentLpqCoordinator.stageNineRatzFiringAnchor(1);
+
+        assertTrue(AgentLpqCoordinator.stageNineRatzFiringReady(anchor, true, anchor));
+        assertFalse(AgentLpqCoordinator.stageNineRatzFiringReady(anchor, false, anchor));
+        assertFalse(AgentLpqCoordinator.stageNineRatzFiringReady(
+                new Point(588, 184), true, anchor));
+    }
+
+    @Test
+    void bossStageEntryCanNavigateToAuthoredBalloonPlatform() {
+        MapleMap map = AgentNavigationMapLoader.loadMapGeometry(922_010_900);
+        Portal entry = map.getPortal(0);
+        Point anchor = AgentLpqCoordinator.stageNineRatzFiringAnchor(1);
+        AgentNavigationGraph graph = AgentNavigationGraphService.rebuildGraph(map);
+        int entryRegion = graph.findRegionId(map, entry.getPosition());
+        int anchorRegion = graph.findRegionId(map, anchor);
+
+        assertNotEquals(-1, entryRegion);
+        assertNotEquals(-1, anchorRegion);
+        assertFalse(AgentNavigationPathService.findPath(
+                graph, map, entry.getPosition(), entryRegion, anchorRegion, anchor).isEmpty());
+    }
+
+    @Test
+    void bossTriggerObjectiveExtendsOnlyTheAuthoredShotToTheRatz() {
+        Rectangle ordinaryProjectile = new Rectangle(588, 134, 400, 100);
+        Point ratz = new Point(588, -3);
+
+        Rectangle objectiveHitBox = AgentLpqCoordinator.authoredBossTriggerHitBox(
+                ordinaryProjectile, ratz);
+
+        assertTrue(objectiveHitBox.contains(ratz));
+        assertTrue(objectiveHitBox.contains(ordinaryProjectile));
+        assertEquals(ordinaryProjectile.x, objectiveHitBox.x);
+        assertEquals(ratz.y, objectiveHitBox.y);
     }
 
     @Test

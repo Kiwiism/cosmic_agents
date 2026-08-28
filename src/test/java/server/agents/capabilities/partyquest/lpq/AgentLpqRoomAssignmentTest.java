@@ -43,6 +43,24 @@ class AgentLpqRoomAssignmentTest {
     }
 
     @Test
+    void enteredRoomsRemainKnownAfterMembersExitButResetForTheNextStage() {
+        AgentLpqRoomAssignment rooms = new AgentLpqRoomAssignment();
+        java.util.List<Integer> authored = java.util.List.of(501, 502);
+
+        rooms.reserve(501, 101, 1_000L);
+        rooms.reserve(502, 102, 1_000L);
+        assertFalse(rooms.enteredAll(authored));
+        rooms.markEntered(501);
+        rooms.complete(501);
+        assertFalse(rooms.enteredAll(authored));
+        rooms.markEntered(502);
+        assertTrue(rooms.enteredAll(authored));
+
+        rooms.reset();
+        assertFalse(rooms.enteredAll(authored));
+    }
+
+    @Test
     void visibleDoorMarkerPersistsForAssignmentAndResetsWhenRoomChanges() {
         AgentLpqMemberState member = new AgentLpqMemberState(
                 101, AgentLpqMemberState.MemberType.AGENT);
@@ -97,19 +115,16 @@ class AgentLpqRoomAssignmentTest {
     }
 
     @Test
-    void completedRoomExitContextSurvivesAssignmentClearAndCanBeReset() {
+    void assignmentHandoverClearsCompletedRoomExitContext() {
         AgentLpqMemberState member = new AgentLpqMemberState(
                 101, AgentLpqMemberState.MemberType.AGENT);
         member.assign(AgentLpqMemberState.Role.TELEPORT_RUNNER, 922_010_501);
 
-        member.beginRoomExit(922_010_501);
+        member.beginRoomExit(922_010_501, 1_000L);
         member.assign(AgentLpqMemberState.Role.GENERAL, 0);
-        member.markRoomExitProtectionPrepared(922_010_501);
-        assertTrue(member.roomExitProtectionPreparedFor(922_010_501));
-
-        member.clearRoomExitProgress();
         assertThrows(IllegalArgumentException.class,
                 () -> member.markRoomExitProtectionPrepared(922_010_501));
+        assertFalse(member.roomExitProtectionPreparedFor(922_010_501));
     }
 
     @Test
@@ -117,7 +132,7 @@ class AgentLpqRoomAssignmentTest {
         AgentLpqMemberState member = new AgentLpqMemberState(
                 101, AgentLpqMemberState.MemberType.AGENT);
         member.assign(AgentLpqMemberState.Role.DARK_SIGHT_RUNNER, 922_010_506);
-        member.beginRoomExit(922_010_506);
+        member.beginRoomExit(922_010_506, 1_000L);
 
         assertFalse(member.roomExitProtectionPreparedFor(922_010_506));
         member.markRoomExitProtectionPrepared(922_010_506);
@@ -125,22 +140,21 @@ class AgentLpqRoomAssignmentTest {
         assertFalse(member.roomExitProtectionPreparedFor(922_010_505));
 
         member.assign(AgentLpqMemberState.Role.GENERAL, 0);
-        assertTrue(member.roomExitProtectionPreparedFor(922_010_506));
-        member.clearRoomExitProgress();
         assertFalse(member.roomExitProtectionPreparedFor(922_010_506));
     }
 
     @Test
-    void roomExitDeadlineIsAbsoluteAndDoesNotResetWhenReobserved() {
+    void completedRoomGetsItsOwnNaturalExitGrace() {
         AgentLpqMemberState member = new AgentLpqMemberState(
                 101, AgentLpqMemberState.MemberType.AGENT);
+        member.assign(AgentLpqMemberState.Role.MAGIC_ATTACKER, 922_010_401);
 
-        member.beginRoomExit(922_010_503, 1_000L);
-        member.beginRoomExit(922_010_503, 20_000L);
+        member.beginRoomExit(922_010_401, 10_000L);
+        assertEquals(0L, member.roomExitElapsed(922_010_401, 10_000L));
+        assertEquals(15_000L, member.roomExitElapsed(922_010_401, 25_000L));
 
-        assertEquals(44_000L, member.roomExitElapsed(45_000L));
-        member.clearRoomExitProgress();
-        assertEquals(0L, member.roomExitElapsed(60_000L));
+        member.assign(AgentLpqMemberState.Role.GENERAL, 0);
+        assertEquals(0L, member.roomExitElapsed(922_010_401, 40_000L));
     }
 
     @Test
@@ -154,6 +168,37 @@ class AgentLpqRoomAssignmentTest {
         assertTrue(member.shouldReportPassProgress(5, 922_010_503, 1, 4));
         assertTrue(member.shouldReportPassProgress(5, 922_010_503, 2, 4));
         assertFalse(member.shouldReportPassProgress(5, 922_010_503, 2, 4));
+    }
+
+    @Test
+    void stageResetAtomicallyDiscardsPriorStageWorkAndProgressClocks() {
+        AgentLpqMemberState member = new AgentLpqMemberState(
+                101, AgentLpqMemberState.MemberType.AGENT);
+        member.assign(AgentLpqMemberState.Role.DARK_SIGHT_RUNNER, 922_010_506);
+        member.assignPlatform(4);
+        member.deferUntil(99_000L);
+        member.commitReactorTarget(922_010_506, 55, 1_000L);
+        member.beginRoomExit(922_010_506, 1_000L);
+        member.markRoomExitProtectionPrepared(922_010_506);
+        member.observeTraversalProgress(922_010_506, 922_010_500, 10_000L, 1_000L);
+        member.observeNpcRallyProgress(5, 922_010_500, 10_000L, 1_000L);
+        member.markCouponRegroupRecovered(5);
+        assertTrue(member.shouldReportPassProgress(5, 922_010_506, 1, 4));
+
+        member.resetForStage(AgentLpqMemberState.Role.GENERAL);
+
+        assertEquals(AgentLpqMemberState.Role.GENERAL, member.role());
+        assertEquals(0, member.assignedMapId());
+        assertEquals(0, member.assignedPlatform());
+        assertEquals(0L, member.nextActionAtMs());
+        assertEquals(0, member.reactorTargetObjectId());
+        assertFalse(member.roomExitProtectionPreparedFor(922_010_506));
+        assertFalse(member.couponRegroupRecoveredFor(5));
+        assertEquals(0L, member.observeTraversalProgress(
+                922_010_500, 922_010_600, 20_000L, 2_000L));
+        assertEquals(0L, member.observeNpcRallyProgress(
+                6, 922_010_600, 20_000L, 2_000L));
+        assertTrue(member.shouldReportPassProgress(5, 922_010_506, 1, 4));
     }
 
     @Test
@@ -195,5 +240,37 @@ class AgentLpqRoomAssignmentTest {
         member.clearTraversalProgress();
         assertEquals(0L, member.observeTraversalProgress(
                 922_010_500, 922_010_600, 90_000L, 68_000L));
+    }
+
+    @Test
+    void authoredDetourMovementResetsRecoveryEvenWhenFartherFromTheFinalPortal() {
+        AgentLpqMemberState member = new AgentLpqMemberState(
+                101, AgentLpqMemberState.MemberType.AGENT);
+
+        assertEquals(0L, member.observeTraversalProgress(
+                922_010_401, 922_010_400, new Point(0, 0), 100_000L, 1_000L));
+        assertEquals(10_000L, member.observeTraversalProgress(
+                922_010_401, 922_010_400, new Point(8, 0), 101_000L, 11_000L));
+        assertEquals(0L, member.observeTraversalProgress(
+                922_010_401, 922_010_400, new Point(24, 0), 110_000L, 12_000L));
+        assertEquals(14_999L, member.observeTraversalProgress(
+                922_010_401, 922_010_400, new Point(24, 0), 110_000L, 26_999L));
+    }
+
+    @Test
+    void npcRallyRecoveryDoesNotReusePortalTraversalHistory() {
+        AgentLpqMemberState member = new AgentLpqMemberState(
+                101, AgentLpqMemberState.MemberType.AGENT);
+
+        member.observeTraversalProgress(922_010_200, 922_010_201, 10_000L, 1_000L);
+        assertEquals(0L, member.observeNpcRallyProgress(
+                2, 922_010_200, 90_000L, 80_000L));
+        assertEquals(44_999L, member.observeNpcRallyProgress(
+                2, 922_010_200, 90_000L, 124_999L));
+        assertEquals(0L, member.observeNpcRallyProgress(
+                3, 922_010_300, 90_000L, 125_000L));
+        member.clearNpcRallyProgress();
+        assertEquals(0L, member.observeNpcRallyProgress(
+                3, 922_010_300, 90_000L, 200_000L));
     }
 }

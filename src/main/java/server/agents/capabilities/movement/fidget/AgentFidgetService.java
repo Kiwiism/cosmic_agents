@@ -166,6 +166,25 @@ public final class AgentFidgetService {
         return handleActiveTick(entry, botPos, targetPos, now);
     }
 
+    public static boolean tickMovementSubstep(AgentRuntimeEntry entry, Point targetPos) {
+        if (entry == null || targetPos == null) {
+            return false;
+        }
+        Character bot = AgentRuntimeIdentityRuntime.bot(entry);
+        if (bot == null || AgentFidgetStateRuntime.inactive(entry)) {
+            return false;
+        }
+        if (AgentMovementStateRuntime.inAir(entry)) {
+            AgentMovementPhaseDispatchService.tickAirborne(entry, null);
+            return true;
+        }
+        if (AgentFidgetStateRuntime.mode(entry) != AgentFidgetMode.SPAM_SIDEWAYS) {
+            return false;
+        }
+        tickSidewaysMovement(entry, bot, bot.getPosition(), System.currentTimeMillis());
+        return true;
+    }
+
     static boolean invalidBoundedAirborneState(AgentRuntimeEntry entry) {
         return AgentMovementStateRuntime.inAir(entry)
                 && !isJumpFidget(AgentFidgetStateRuntime.mode(entry));

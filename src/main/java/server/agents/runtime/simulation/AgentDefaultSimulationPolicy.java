@@ -26,7 +26,7 @@ public final class AgentDefaultSimulationPolicy implements AgentSimulationPolicy
 
     @Override
     public AgentSimulationMode selectMode(AgentRuntimeEntry entry) {
-        if (!enabled) {
+        if (!enabled || entry.simulationState().fullRateSimulationRequired()) {
             return AgentSimulationMode.PRESENTATION;
         }
         MapleMap map = AgentRuntimeIdentityRuntime.botMap(entry);

@@ -1,7 +1,5 @@
 package server.agents.capabilities.partyquest.lpq;
 
-import config.AgentTuning;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -10,7 +8,7 @@ import java.util.Locale;
 public final class AgentLpqCombinationOrder {
     enum Method { GMS, JMS }
 
-    private static final String STAGE_8_ATTEMPT_ORDER = AgentTuning.stringValue(
+    private static final String STAGE_8_ATTEMPT_ORDER = config.AgentTuning.stringValue(
             "server.agents.capabilities.partyquest.lpq.AgentLpqCombinationOrder.STAGE_8_ATTEMPT_ORDER");
     private static final List<Integer> GMS_PLATFORM_ORDER =
             List.of(1, 2, 3, 4, 5, 6, 7, 8, 9);

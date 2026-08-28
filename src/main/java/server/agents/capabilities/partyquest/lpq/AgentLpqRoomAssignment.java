@@ -13,6 +13,7 @@ public final class AgentLpqRoomAssignment {
     private final Map<Integer, Integer> memberByRoom = new LinkedHashMap<>();
     private final Map<Integer, Long> progressAtByRoom = new LinkedHashMap<>();
     private final Set<Integer> completedRooms = new LinkedHashSet<>();
+    private final Set<Integer> enteredRooms = new LinkedHashSet<>();
 
     public synchronized boolean reserve(int roomMapId, int characterId, long nowMs) {
         if (roomMapId <= 0 || characterId <= 0 || nowMs < 0L) {
@@ -30,12 +31,22 @@ public final class AgentLpqRoomAssignment {
         if (memberByRoom.containsKey(roomMapId)) progressAtByRoom.put(roomMapId, nowMs);
     }
 
+    public synchronized void markEntered(int roomMapId) {
+        if (roomMapId <= 0) throw new IllegalArgumentException("valid LPQ room id is required");
+        enteredRooms.add(roomMapId);
+    }
+
+    public synchronized boolean enteredAll(java.util.Collection<Integer> roomMapIds) {
+        return roomMapIds != null && enteredRooms.containsAll(roomMapIds);
+    }
+
     public synchronized void release(int roomMapId) {
         memberByRoom.remove(roomMapId);
         progressAtByRoom.remove(roomMapId);
     }
 
     public synchronized void complete(int roomMapId) {
+        markEntered(roomMapId);
         release(roomMapId);
         completedRooms.add(roomMapId);
     }
@@ -60,5 +71,6 @@ public final class AgentLpqRoomAssignment {
         memberByRoom.clear();
         progressAtByRoom.clear();
         completedRooms.clear();
+        enteredRooms.clear();
     }
 }
